@@ -839,7 +839,7 @@ void ParseMarvinSmartsLine(RWMol *mol, const std::string &text,
   try {
     m = SmartsToMol(sma);
   } catch (...) {
-    // Is this every used?
+    // Is this ever used?
   }
 
   if (m) {
@@ -2661,11 +2661,13 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     throw FileParseException(errout.str());
   }
 }
-// Not much documentation on this, only
+// The documentation about MRV_COORDINATE_BOND_TYPE in
 // https://docs.chemaxon.com/display/docs/chemaxon-specific-information-in-mdl-mol-files.md
-// According to it, there's just 1 data field, containing just 1 atom index
-// for the coordinate atom. Also, all examples I have seen have one of these
-// groups for each separate coordinate bond.
+// seems to be wrong: it says the only data field in this group contains the
+// index for the coordinate atom. But behavior in Marvin Sketch seems to
+// indicate that it references the bond index instead (see
+// https://github.com/rdkit/rdkit/issues/4473)
+
 void processMrvCoordinateBond(RWMol &mol, const SubstanceGroup &sg) {
   std::vector<std::string> dataFields;
   if (sg.getPropIfPresent("DATAFIELDS", dataFields)) {
@@ -2676,51 +2678,97 @@ void processMrvCoordinateBond(RWMol &mol, const SubstanceGroup &sg) {
       return;
     }
 
-    auto coordinate_atom_idx =
+    auto coordinate_bond_idx =
         FileParserUtils::toUnsigned(dataFields[0], true) - 1;
 
     if (dataFields.size() > 1) {
       BOOST_LOG(rdWarningLog) << "ignoring extra data fields in "
-                                 "MRV_COORDINATE_BOND_TYPE SGroup for atom "
-                              << coordinate_atom_idx << '.' << std::endl;
+                                 "MRV_COORDINATE_BOND_TYPE SGroup for bond "
+                              << coordinate_bond_idx << '.' << std::endl;
     }
 
-    auto atoms = sg.getAtoms();
-    if (atoms.size() != 2) {
-      BOOST_LOG(rdWarningLog)
-          << "ignoring MRV_COORDINATE_BOND_TYPE SGroup for atom "
-          << coordinate_atom_idx << " due to unexpected number of atoms."
-          << std::endl;
-      return;
-    }
-
-    // Coordinate bonds are directional, make sure we have the right order
-    if (atoms[0] == coordinate_atom_idx) {
-      std::swap(atoms[0], atoms[1]);
-    }
-    if (atoms[1] != coordinate_atom_idx) {
-      BOOST_LOG(rdWarningLog)
-          << "MRV_COORDINATE_BOND_TYPE SGroup for atom " << coordinate_atom_idx
-          << " does not contain the coordinate atom, ignoring." << std::endl;
-      return;
-    }
-
-    auto old_bond = mol.getBondBetweenAtoms(atoms[0], atoms[1]);
-    if (old_bond == nullptr) {
+    Bond *old_bond = nullptr;
+    try {
+      old_bond = mol.getBondWithIdx(coordinate_bond_idx);
+    } catch (const Invar::Invariant &) {
       BOOST_LOG(rdWarningLog)
           << "molecule does not contain a bond matching the "
-             "MRV_COORDINATE_BOND_TYPE SGroup for atom "
-          << coordinate_atom_idx << ", ignoring." << std::endl;
+             "MRV_COORDINATE_BOND_TYPE SGroup for bond "
+          << coordinate_bond_idx << ", ignoring." << std::endl;
       return;
     }
-    // Make sure the bond points the right way
-    old_bond->setBeginAtomIdx(atoms[0]);
-    old_bond->setEndAtomIdx(atoms[1]);
+
+    if (!old_bond || old_bond->getBondType() != Bond::BondType::UNSPECIFIED) {
+      BOOST_LOG(rdWarningLog)
+          << "MRV_COORDINATE_BOND_TYPE SGroup with value "
+          << coordinate_bond_idx
+          << " does not reference a query bond, ignoring." << std::endl;
+      return;
+    }
 
     Bond new_bond(Bond::BondType::DATIVE);
     auto preserveProps = true;
     auto keepSGroups = true;
-    mol.replaceBond(old_bond->getIdx(), &new_bond, preserveProps, keepSGroups);
+    mol.replaceBond(coordinate_bond_idx, &new_bond, preserveProps, keepSGroups);
+  }
+}
+
+void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
+  std::string field;
+  if (sg.getPropIfPresent("QUERYOP", field) && field != "=") {
+    BOOST_LOG(rdWarningLog) << "unrecognized QUERYOP '" << field
+                            << "' for SMARTSQ. Query ignored." << std::endl;
+    return;
+  }
+  std::vector<std::string> dataFields;
+  if (!sg.getPropIfPresent("DATAFIELDS", dataFields) || dataFields.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "empty FIELDDATA for SMARTSQ. Query ignored." << std::endl;
+    return;
+  }
+  if (dataFields.size() > 1) {
+    BOOST_LOG(rdWarningLog)
+        << "multiple FIELDDATA values for SMARTSQ. Taking the first."
+        << std::endl;
+  }
+  const std::string& sma = dataFields[0];
+  if (sma.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "Skipping empty SMARTS value for SMARTSQ." << std::endl;
+    return;
+  }
+
+  for (auto aidx : sg.getAtoms()) {
+    auto at = mol.getAtomWithIdx(aidx);
+
+    std::unique_ptr<RWMol> m;
+    try {
+      m.reset(SmartsToMol(sma));
+    } catch (...) {
+      // Is this ever used?
+    }
+
+    if (!m || !m->getNumAtoms()) {
+      BOOST_LOG(rdWarningLog)
+          << "SMARTS for SMARTSQ '" << sma
+          << "' could not be parsed or has no atoms. Ignoring it." << std::endl;
+      return;
+    }
+
+    if (!at->hasQuery()) {
+      QueryAtom qAt(*at);
+      int oidx = at->getIdx();
+      mol.replaceAtom(oidx, &qAt);
+      at = mol.getAtomWithIdx(oidx);
+    }
+    QueryAtom::QUERYATOM_QUERY *query = nullptr;
+    if (m->getNumAtoms() == 1) {
+      query = m->getAtomWithIdx(0)->getQuery()->copy();
+    } else {
+      query = new RecursiveStructureQuery(m.release());
+    }
+    at->setQuery(query);
+    at->setProp(common_properties::_MolFileAtomQuery, 1);
   }
 }
 
@@ -2772,17 +2820,25 @@ void processSGroups(RWMol *mol) {
   unsigned int sgIdx = 0;
   for (auto &sg : getSubstanceGroups(*mol)) {
     if (sg.getProp<std::string>("TYPE") == "DAT") {
-      std::string fieldn;
-      if (sg.getPropIfPresent("FIELDNAME", fieldn)) {
-        if (fieldn == "MRV_COORDINATE_BOND_TYPE") {
+      std::string field;
+      if (sg.getPropIfPresent("FIELDNAME", field)) {
+        if (field == "MRV_COORDINATE_BOND_TYPE") {
           // V2000 support for coordinate bonds
           processMrvCoordinateBond(*mol, sg);
           sgsToRemove.push_back(sgIdx);
-        } else if (fieldn == "MRV_IMPLICIT_H") {
+          continue;
+        } else if (field == "MRV_IMPLICIT_H") {
           // CXN extension to specify implicit Hs, used for aromatic rings
           processMrvImplicitH(*mol, sg);
           sgsToRemove.push_back(sgIdx);
+          continue;
         }
+      }
+      if (sg.getPropIfPresent("QUERYTYPE", field) &&
+          (field == "SMARTSQ" || field == "SQ")) {
+        processSMARTSQ(*mol, sg);
+        sgsToRemove.push_back(sgIdx);
+        continue;
       }
     }
     ++sgIdx;
