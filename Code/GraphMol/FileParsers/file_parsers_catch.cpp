@@ -3573,10 +3573,11 @@ M  END)CTAB"_ctab;
   CHECK(m->getBondBetweenAtoms(1, 2)->getBondDir() == Bond::EITHERDOUBLE);
 }
 
-TEST_CASE(
-    "Convert SDF V200 MRV_COORDINATE_BOND_TYPE data Substance Groups "
-    "into coordinate bonds") {
-  auto m = R"CTAB(
+TEST_CASE("Handle MRV_COORDINATE_BOND_TYPE data Substance Groups") {
+  SECTION(
+      "Convert SDF V2000 MRV_COORDINATE_BOND_TYPE data Substance Groups "
+      "into coordinate bonds") {
+    auto m = R"CTAB(
   Mrv2111 06302118332D          
 
   9  9  0  0  0  0            999 V2000
@@ -3613,19 +3614,124 @@ M  SDD   3     0.0000    0.0000    DR    ALL  0       0
 M  SED   3 9
 M  END
 )CTAB"_ctab;
-  REQUIRE(m);
+    REQUIRE(m);
 
-  std::vector<std::pair<unsigned, unsigned>> coordinate_bonds{
-      {5, 6}, {3, 7}, {1, 8}};
+    std::vector<std::pair<unsigned, unsigned>> coordinate_bonds{
+        {5, 6}, {3, 7}, {1, 8}};
 
-  for (const auto &bond_atoms : coordinate_bonds) {
-    auto bnd = m->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
-    REQUIRE(bnd);
-    CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
-    CHECK(typeid(*bnd) == typeid(Bond));
+    for (const auto &bond_atoms : coordinate_bonds) {
+      auto bnd = m->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+      CHECK(typeid(*bnd) == typeid(Bond));
+    }
+
+    CHECK(getSubstanceGroups(*m).empty());
   }
 
-  CHECK(getSubstanceGroups(*m).empty());
+  SECTION(
+      "GitHub Issue #4473: MRV_COORDINATE_BOND_TYPE SGroup may reference bond "
+      "index, instead of atom") {
+    // Same input as previous test, just shuffled the bonds and changed
+    // the indexes in the SGroups
+
+    auto m1 = R"CTAB(
+  Mrv2111 06302118332D          
+
+  9  9  0  0  0  0            999 V2000
+   -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -0.8697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5175    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -1.6947    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3754    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  6  7  8  0  0  0  0
+  4  8  8  0  0  0  0
+  2  9  8  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  STY  3   1 DAT   2 DAT   3 DAT
+M  SAL   1  2   6   7
+M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 1
+M  SAL   2  2   4   8
+M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SED   2 2
+M  SAL   3  2   2   9
+M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SED   3 3
+M  END
+)CTAB"_ctab;
+
+    // Same input, but changing the type of 2 of the bonds, and giving
+    // a random value to the other SGroup to check that we fail
+    auto m2 = R"CTAB(
+  Mrv2111 06302118332D          
+
+  9  9  0  0  0  0            999 V2000
+   -2.9465    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6609   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -0.8697    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320   -0.4572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2320    0.3679    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5175    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9465   -1.6947    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3754    0.7804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  6  7  1  0  0  0  0
+  4  8  1  0  0  0  0
+  2  9  1  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  STY  3   1 DAT   2 DAT   3 DAT
+M  SAL   1  2   6   7
+M  SDT   1 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   1     0.0000    0.0000    DR    ALL  0       0  
+M  SED   1 1
+M  SAL   2  2   4   8
+M  SDT   2 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   2     0.0000    0.0000    DR    ALL  0       0  
+M  SED   2 2
+M  SAL   3  2   2   9
+M  SDT   3 MRV_COORDINATE_BOND_TYPE                              
+M  SDD   3     0.0000    0.0000    DR    ALL  0       0  
+M  SED   3 100
+M  END
+)CTAB"_ctab;
+
+    std::vector<std::pair<unsigned, unsigned>> coordinate_bonds{
+        {5, 6}, {3, 7}, {1, 8}};
+
+    for (const auto &bond_atoms : coordinate_bonds) {
+      auto bnd = m1->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() == Bond::BondType::DATIVE);
+      CHECK(typeid(*bnd) == typeid(Bond));
+    }
+    CHECK(getSubstanceGroups(*m1).empty());
+
+    REQUIRE(m2);
+    for (const auto &bond_atoms : coordinate_bonds) {
+      auto bnd = m2->getBondBetweenAtoms(bond_atoms.first, bond_atoms.second);
+      REQUIRE(bnd);
+      CHECK(bnd->getBondType() != Bond::BondType::DATIVE);
+    }
+    CHECK(getSubstanceGroups(*m2).empty());
+  }
 }
 
 TEST_CASE(
@@ -3771,6 +3877,79 @@ M  END)CTAB"_ctab;
     std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
     REQUIRE(m2);
     CHECK(getSubstanceGroups(*m2).size() == 5);
+  }
+
+  SECTION(
+      "GitHub Issue #4471: SDF SGroups may be missing the final space in the "
+      "\"M V30 \" prefix") {
+    auto m = R"CTAB(bogus mol with unspaced SGroup field
+  Mrv2114 09022123382D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.7917 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=Data -
+M  V30 FIELDDISP="    0.0000    0.0000    DRU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 -
+M  V30 FIELDDATA=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA-
+M  V30 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 1);
+    auto mb = MolToV3KMolBlock(*m);
+    std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+    REQUIRE(m2);
+    CHECK(getSubstanceGroups(*m2).size() == 1);
+  }
+
+  SECTION(
+      "GitHub Issue #4477: Same SDF SGroup lines may be written multiple "
+      "times") {
+    auto m = R"CTAB(
+  Mrv2014 03112117322D
+
+  6  6  0  0  0  0            999 V2000
+   -1.8270   -1.5114    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2764   -0.8194    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.1002   -0.8626    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4748   -1.5977    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0255   -2.2896    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2016   -2.2465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+M  STY  1   1 DAT
+M  SAL   1  6   1   2   3   4   5   6
+M  SDT   1
+M  SDD   1    -2.4921   -3.0466    DA  123456789012345  ALL  1       5
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(getSubstanceGroups(*m).size() == 1);
+    auto mb = MolToV3KMolBlock(*m);
+
+    auto pos = 0;
+    auto count = 0;
+    std::string target{"FIELDDISP"};
+    while (pos < mb.size()) {
+      pos = mb.find(target, pos);
+      if (pos < mb.size()) {
+        pos += target.size();
+        ++count;
+      }
+    }
+
+    CHECK(count == 1);
   }
 }
 

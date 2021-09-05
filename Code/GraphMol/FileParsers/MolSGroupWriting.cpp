@@ -639,6 +639,9 @@ std::string FormatV3000AttachPointBlock(
 namespace {
 void addBlockToSGroupString(std::string block, std::string &currentLine,
                             std::ostringstream &os) {
+  if (block.empty()) {
+    return;
+  }
   if (currentLine.length() + block.length() < 78) {
     currentLine += block;
   } else {
@@ -647,6 +650,9 @@ void addBlockToSGroupString(std::string block, std::string &currentLine,
     unsigned int start = 0;
     while (length - start >= 73) {
       os << "M  V30";
+      if (start) {
+        os << ' ';
+      }
       os << block.substr(start, 72);
       start += 72;
       if (start < length) {
