@@ -297,6 +297,36 @@ void generateReactantCombinations(
   }
 }  // end of generateReactantCombinations()
 
+bool updatePropsFromImplicitProps(Atom *templateAtom, Atom *atom) {
+  PRECONDITION(templateAtom, "no atom");
+  PRECONDITION(atom, "no atom");
+  bool res = false;
+  int val;
+  if (templateAtom->getPropIfPresent(common_properties::_QueryFormalCharge,
+                                     val) &&
+      val != atom->getFormalCharge()) {
+    atom->setFormalCharge(val);
+    res = true;
+  }
+  if (templateAtom->getPropIfPresent(common_properties::_QueryHCount, val)) {
+    if (!atom->getNoImplicit() || atom->getNumExplicitHs() != val) {
+      atom->setNumExplicitHs(val);
+      atom->setNoImplicit(true);  // this was github #1544
+      res = true;
+    }
+  }
+  if (templateAtom->getPropIfPresent(common_properties::_QueryMass, val)) {
+    // FIX: technically should do something with this
+    // atom->setMass(val);
+  }
+  if (templateAtom->getPropIfPresent(common_properties::_QueryIsotope, val) &&
+      val != atom->getIsotope()) {
+    atom->setIsotope(val);
+    res = true;
+  }
+  return res;
+}
+
 RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
   const ROMol *prodTemplate = prodTemplateSptr.get();
   auto *res = new RWMol();
@@ -335,21 +365,7 @@ RWMOL_SPTR convertTemplateToMol(const ROMOL_SPTR prodTemplateSptr) {
     }
 
     // check for properties we need to set:
-    int val;
-    if (newAtom->getPropIfPresent(common_properties::_QueryFormalCharge, val)) {
-      newAtom->setFormalCharge(val);
-    }
-    if (newAtom->getPropIfPresent(common_properties::_QueryHCount, val)) {
-      newAtom->setNumExplicitHs(val);
-      newAtom->setNoImplicit(true);  // this was github #1544
-    }
-    if (newAtom->getPropIfPresent(common_properties::_QueryMass, val)) {
-      // FIX: technically should do something with this
-      // newAtom->setMass(val);
-    }
-    if (newAtom->getPropIfPresent(common_properties::_QueryIsotope, val)) {
-      newAtom->setIsotope(val);
-    }
+    updatePropsFromImplicitProps(newAtom, newAtom);
   }
   // and the bonds:
   ROMol::BOND_ITER_PAIR bondItP = prodTemplate->getEdges();
@@ -1448,7 +1464,8 @@ void traverseToFindAtomsToRemove(const ROMol &reactant, const ROMol &templ,
   }
   for (const auto tpl : reactantMatch) {
     std::deque<const Atom *> toConsider;
-    if (templ.getAtomWithIdx(tpl.first)->getAtomMapNum() && !atoms[tpl.first]) {
+    if (templ.getAtomWithIdx(tpl.first)->getAtomMapNum() &&
+        !atoms[tpl.second]) {
       toConsider.push_back(reactant.getAtomWithIdx(tpl.second));
     }
 
@@ -1533,13 +1550,16 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
         "initMatchers() must be called before runReactants()");
   }
 
-  std::map<unsigned int, unsigned int> productAtomMap;
+  std::map<unsigned int, unsigned int>
+      productAtomMap;  // atom mapnum -> product atom index
   for (const auto atom : productTemplate->atoms()) {
     if (atom->getAtomMapNum()) {
       productAtomMap[atom->getAtomMapNum()] = atom->getIdx();
     }
   }
-  std::map<unsigned int, unsigned int> reactantProductMap;
+  std::map<unsigned int, unsigned int>
+      reactantProductMap;  // atom mapnum -> reactant atom index, for atoms
+                           // which are also mapped in the product
   for (const auto atom : reactantTemplate->atoms()) {
     if (atom->getAtomMapNum()) {
       if (productAtomMap.find(atom->getAtomMapNum()) != productAtomMap.end()) {
@@ -1551,7 +1571,8 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
   // we don't support reactions with unmapped or new atoms in the products
   for (const auto atom : productTemplate->atoms()) {
     if (!atom->getAtomMapNum() ||
-        productAtomMap.find(atom->getAtomMapNum()) == productAtomMap.end()) {
+        reactantProductMap.find(atom->getAtomMapNum()) ==
+            reactantProductMap.end()) {
       throw ChemicalReactionException(
           "single component reactions which add atoms in the product "
           "are not supported");
@@ -1567,18 +1588,33 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
   if (reactantMatch.empty()) {
     return false;
   }
+  const auto &match = reactantMatch[0];
   // we now have a match for the reactant, so we can work on it
   // start by removing atoms which are in the reactants, but not in the product
   boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
   // finds atoms in the reactantTemplate which aren't in the productTemplate
   ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
       *reactantTemplate, *productTemplate, atomsToRemove, reactantProductMap,
-      reactantMatch[0]);
+      match);
   // identify atoms which should be removed from the molecule
-  ReactionRunnerUtils::traverseToFindAtomsToRemove(
-      reactant, *reactantTemplate, atomsToRemove, reactantMatch[0]);
-
+  ReactionRunnerUtils::traverseToFindAtomsToRemove(reactant, *reactantTemplate,
+                                                   atomsToRemove, match);
   bool res = false;
+  // update atoms which are modified
+  for (const auto &pr : reactantProductMap) {
+    const auto rAtom = reactantTemplate->getAtomWithIdx(pr.second);
+    const auto pAtom =
+        productTemplate->getAtomWithIdx(productAtomMap[pr.first]);
+    const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
+    if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
+      atom->setAtomicNum(pAtom->getAtomicNum());
+      res = true;
+    }
+    if (ReactionRunnerUtils::updatePropsFromImplicitProps(pAtom, atom)) {
+      res = true;
+    }
+  }
+
   if (atomsToRemove.count()) {
     res = true;
     reactant.beginBatchEdit();

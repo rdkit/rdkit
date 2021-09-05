@@ -693,6 +693,7 @@ TEST_CASE("one-component reactions") {
     {
       auto mol = "CNCC"_smiles;
       REQUIRE(mol);
+      std::cerr << "---------" << std::endl;
       CHECK(rxn->runReactant(*mol));
       CHECK(mol->getNumAtoms() == 2);
       CHECK(MolToSmiles(*mol) == "CN");
@@ -740,6 +741,78 @@ TEST_CASE("one-component reactions") {
       auto mol = "N"_smiles;
       REQUIRE(mol);
       CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+  }
+  SECTION("modifying atoms") {
+    {
+      auto rxn = "[C:2][N:1]>>[C:2][O:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CCO");
+    }
+#if 0
+// does not currently work properly either here or in the main reaction code
+    {
+      auto rxn = "[C:2][N+1:1]>>[C:2][N+0:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[NH3+]"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CCN");
+    }
+#endif
+    {
+      auto rxn = "[C:2][N+0:1]>>[C:2][N+1:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CC[NH3+]");
+    }
+    {
+      auto rxn = "[C:2][N:1]>>[15N:1][C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CC[15NH2]");
+    }
+    {
+      auto rxn = "[C:2][15N:1]>>[0N:1][C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[15NH2]"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CCN");
+    }
+  }
+  SECTION("modifying bonds") {
+    {
+      auto rxn = "[C:2]-[N:1]>>[C:2]=[O:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CC=O");
     }
   }
 }
