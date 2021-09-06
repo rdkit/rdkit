@@ -1600,12 +1600,90 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
   ReactionRunnerUtils::traverseToFindAtomsToRemove(reactant, *reactantTemplate,
                                                    atomsToRemove, match);
   bool res = false;
-  // update atoms which are modified
+  // update atoms which are modified by the reaction
   for (const auto &pr : reactantProductMap) {
     const auto rAtom = reactantTemplate->getAtomWithIdx(pr.second);
     const auto pAtom =
         productTemplate->getAtomWithIdx(productAtomMap[pr.first]);
     const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
+    if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
+      atom->setAtomicNum(pAtom->getAtomicNum());
+      res = true;
+    }
+    if (ReactionRunnerUtils::updatePropsFromImplicitProps(pAtom, atom)) {
+      res = true;
+    }
+  }
+  // update bonds which are modified by the reaction
+  boost::dynamic_bitset<> modifiedBonds(reactant.getNumAtoms() *
+                                        reactant.getNumAtoms());
+  for (const auto &pr : reactantProductMap) {
+    const auto rAtom = reactantTemplate->getAtomWithIdx(pr.second);
+    const auto pAtom =
+        productTemplate->getAtomWithIdx(productAtomMap[pr.first]);
+    const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
+    for (auto nbri :
+         boost::make_iterator_range(productTemplate->getAtomNeighbors(pAtom))) {
+      const auto nbr = (*productTemplate)[nbri];
+      if (nbr->getAtomMapNum() &&
+          reactantProductMap.find(nbr->getAtomMapNum()) !=
+              reactantProductMap.end()) {
+        const auto pBond = productTemplate->getBondBetweenAtoms(pAtom->getIdx(),
+                                                                nbr->getIdx());
+        ASSERT_INVARIANT(pBond,
+                         "missing bond between known neighbors in product");
+        const auto rBond = reactantTemplate->getBondBetweenAtoms(
+            rAtom->getIdx(), reactantProductMap[nbr->getAtomMapNum()]);
+        if (rBond) {
+          if (pBond->getBondType() != Bond::BondType::UNSPECIFIED &&
+              pBond->getBondType() != rBond->getBondType()) {
+            const auto bond = reactant.getBondBetweenAtoms(
+                match[rBond->getBeginAtomIdx()].second,
+                match[rBond->getEndAtomIdx()].second);
+            ASSERT_INVARIANT(
+                bond, "missing bond between known neighbors in reactant");
+            bond->setBondType(pBond->getBondType());
+            res = true;
+          }
+        } else {
+          // there was no corresponding bond in the reactant template, was there
+          // one in the reactant?
+          const auto bond = reactant.getBondBetweenAtoms(
+              match[rAtom->getIdx()].second,
+              match[reactantProductMap[nbr->getAtomMapNum()]].second);
+          if (!bond) {
+            auto begIdx =
+                match
+                    [reactantProductMap[pBond->getBeginAtom()->getAtomMapNum()]]
+                        .second;
+            auto endIdx =
+                match[reactantProductMap[pBond->getEndAtom()->getAtomMapNum()]]
+                    .second;
+
+            reactant.addBond(begIdx, endIdx, pBond->getBondType());
+            res = true;
+          } else if (bond->getBondType() != pBond->getBondType()) {
+            bond->setBondType(pBond->getBondType());
+            res = true;
+          }
+        }
+      }
+    }
+    // now look for bonds which were in the reactant template but are not in the
+    // product template
+    for (auto nbri : boost::make_iterator_range(
+             reactantTemplate->getAtomNeighbors(rAtom))) {
+      const auto nbr = (*reactantTemplate)[nbri];
+      if (nbr->getAtomMapNum() &&
+          productAtomMap.find(nbr->getAtomMapNum()) != productAtomMap.end() &&
+          !productTemplate->getBondBetweenAtoms(
+              pAtom->getIdx(), productAtomMap[nbr->getAtomMapNum()])) {
+        // remove the bond in the reactant
+        reactant.removeBond(atom->getIdx(), match[nbr->getIdx()].second);
+        res = true;
+      }
+    }
+
     if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
       atom->setAtomicNum(pAtom->getAtomicNum());
       res = true;

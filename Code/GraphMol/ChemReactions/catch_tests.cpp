@@ -693,7 +693,6 @@ TEST_CASE("one-component reactions") {
     {
       auto mol = "CNCC"_smiles;
       REQUIRE(mol);
-      std::cerr << "---------" << std::endl;
       CHECK(rxn->runReactant(*mol));
       CHECK(mol->getNumAtoms() == 2);
       CHECK(MolToSmiles(*mol) == "CN");
@@ -805,7 +804,75 @@ TEST_CASE("one-component reactions") {
   }
   SECTION("modifying bonds") {
     {
+      auto rxn = "[C:2]-[N:1]>>([N:1].[C:2])"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CC.N");
+    }
+    {
+      auto rxn = "([C:2].[N:1])>>[N:1]-[C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC.N"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CCN");
+    }
+    {
+      auto rxn = "([CH3:2].[N:1])>>[N:1]-[C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "C1CN1");
+    }
+    {
+      auto rxn = "([CH2:2].[N:1])>>[N:1]-[C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(!rxn->runReactant(*mol));
+    }
+    {
+      auto rxn = "([CH2:2].[N:1])>>[N:1]=[C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CC=N");
+    }
+    {
       auto rxn = "[C:2]-[N:1]>>[C:2]=[O:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CC=O");
+    }
+    {
+      auto rxn = "[C:2]-[N:1]>>[C:2]~[O:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CCO");
+    }
+    {
+      auto rxn = "[C:2]~[N:1]>>[C:2]=[O:1]"_rxnsmarts;
       REQUIRE(rxn);
       rxn->initReactantMatchers();
       auto mol = "CCN"_smiles;
