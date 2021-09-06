@@ -2190,11 +2190,76 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
 
 // removes chirality markers from sp and sp2 hybridized centers:
 void cleanupChirality(RWMol &mol) {
-  for (ROMol::AtomIterator atomIt = mol.beginAtoms(); atomIt != mol.endAtoms();
+  unsigned int degree,perm;
+  for (ROMol::AtomIterator atomIt = mol.beginAtoms();
+       atomIt != mol.endAtoms();
        ++atomIt) {
-    if ((*atomIt)->getChiralTag() != Atom::CHI_UNSPECIFIED &&
-        (*atomIt)->getHybridization() < Atom::SP3) {
-      (*atomIt)->setChiralTag(Atom::CHI_UNSPECIFIED);
+    Atom *atom = *atomIt;
+    switch (atom->getChiralTag()) {
+      case Atom::CHI_TETRAHEDRAL_CW:
+      case Atom::CHI_TETRAHEDRAL_CCW:
+        if (atom->getHybridization() < Atom::SP3)
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        break;
+
+      case Atom::CHI_TETRAHEDRAL:
+        if (atom->getHybridization() < Atom::SP3)
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        else {
+          perm = 0;
+          atom->getPropIfPresent(common_properties::_chiralPermutation,perm);
+          if (perm > 2) {
+            perm = 0;
+            atom->setProp(common_properties::_chiralPermutation,perm);
+          }
+        }
+        break;
+
+      case Atom::CHI_SQUAREPLANAR:
+        degree = atom->getTotalDegree();
+        if (degree < 2 || degree > 4)
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        else {
+          perm = 0;
+          atom->getPropIfPresent(common_properties::_chiralPermutation,perm);
+          if (perm > 3) {
+            perm = 0;
+            atom->setProp(common_properties::_chiralPermutation,perm);
+          }
+        }
+        break;
+
+      case Atom::CHI_TRIGONALBIPYRAMIDAL:
+        degree = atom->getTotalDegree();
+        if (degree < 2 || degree > 5)
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        else {
+          perm = 0;
+          atom->getPropIfPresent(common_properties::_chiralPermutation,perm);
+          if (perm > 20) {
+            perm = 0;
+            atom->setProp(common_properties::_chiralPermutation,perm);
+          }
+        }
+        break;
+
+      case Atom::CHI_OCTAHEDRAL:
+        degree = atom->getTotalDegree();
+        if (degree < 2 || degree > 6)
+          atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        else {
+          perm = 0;
+          atom->getPropIfPresent(common_properties::_chiralPermutation,perm);
+          if (perm > 30) {
+            perm = 0;
+            atom->setProp(common_properties::_chiralPermutation,perm);
+          }
+        }
+        break;
+
+      default:
+        /* ??? Handle other types in future.  */
+        break;
     }
   }
 }

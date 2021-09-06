@@ -241,7 +241,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! sets our \c chiralTag
   void setChiralTag(ChiralType what) { d_chiralTag = what; }
   //! inverts our \c chiralTag
-  void invertChirality();
+  bool invertChirality();
   //! returns our \c chiralTag
   ChiralType getChiralTag() const {
     return static_cast<ChiralType>(d_chiralTag);
