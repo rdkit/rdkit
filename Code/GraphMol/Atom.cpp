@@ -785,7 +785,7 @@ bool Atom::invertChirality() {
       break;
     case CHI_OCTAHEDRAL:
       if (getPropIfPresent(common_properties::_chiralPermutation, perm)) {
-        perm = (perm <= 20) ? octahedral_invert[perm] : 0;
+        perm = (perm <= 30) ? octahedral_invert[perm] : 0;
         setProp(common_properties::_chiralPermutation, perm);
         return perm != 0;
       }
