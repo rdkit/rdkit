@@ -179,7 +179,7 @@ struct sparseIntVec_wrapper {
         .def("GetNonzeroElements", &pyGetNonzeroElements<IndexType>,
              "returns a dictionary of the nonzero elements")
         .def("ToList", pyToList<IndexType>,
-	   "Return the Intvector as a python list (faster than list(vect))")
+	   "Return the SparseIntVect as a python list")
         .def_pickle(siv_pickle_suite<IndexType>());
 
     python::def(
