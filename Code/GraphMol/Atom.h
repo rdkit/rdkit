@@ -81,6 +81,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     SP,
     SP2,
     SP3,
+    SP2D,
     SP3D,
     SP3D2,
     OTHER  //!< unrecognized hybridization

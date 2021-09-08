@@ -28,7 +28,6 @@ void inorganicSanitize(RDKit::RWMol &mol) {
   unsigned int flags = RDKit::MolOps::SANITIZE_ALL;
   flags &= ~RDKit::MolOps::SANITIZE_CLEANUP;
   flags &= ~RDKit::MolOps::SANITIZE_PROPERTIES;
-  flags &= ~RDKit::MolOps::SANITIZE_CLEANUPCHIRALITY;
 
   mol.updatePropertyCache(false);
   RDKit::MolOps::sanitizeMol(mol, failed, flags);
