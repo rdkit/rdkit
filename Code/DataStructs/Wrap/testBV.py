@@ -338,6 +338,20 @@ class TestCase(unittest.TestCase):
             nbrs = nbrSim(qs,db)
             self.assertEqual(tgts,nbrs)
 
+    def test12ToList(self):
+        nbits = 2048
+        for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
+            bv = cls(nbits)
+            l = [0]*2048
+            for j in range(nbits):
+                x = random.randrange(0, nbits)
+                l[x] = 1
+                bv.SetBit(x)
 
+            l2 = list(bv)
+            l3 = bv.ToList()
+            self.assertEqual(l, l2)
+            self.assertEqual(l, l3)
+            
 if __name__ == '__main__':
     unittest.main()
