@@ -1613,6 +1613,73 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
     if (ReactionRunnerUtils::updatePropsFromImplicitProps(pAtom, atom)) {
       res = true;
     }
+    // check if we need to modify stereo
+    int molInversionFlag;
+    if (pAtom->getPropIfPresent(common_properties::molInversionFlag,
+                                molInversionFlag)) {
+      auto atomTag = atom->getChiralTag();
+      switch (molInversionFlag) {
+        case 0:  // no chiral impact, do nothing
+        case 2:  // retention, do nothing
+          break;
+        case 1:
+          // inversion
+          if (atomTag != Atom::ChiralType::CHI_OTHER &&
+              atomTag != Atom::ChiralType::CHI_UNSPECIFIED) {
+            atom->invertChirality();
+            res = true;
+          }
+          break;
+        case 3:
+          // destroy
+          atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+          res = true;
+          break;
+        case 4:
+          // create
+          atom->setChiralTag(pAtom->getChiralTag());
+          res = true;
+          // check swaps
+          {
+            std::vector<int> porder;
+            for (const auto &nbri : boost::make_iterator_range(
+                     productTemplate->getAtomNeighbors(pAtom))) {
+              const auto &nbrAtom = (*productTemplate)[nbri];
+              if (nbrAtom->getAtomMapNum()) {
+                porder.push_back(nbrAtom->getAtomMapNum());
+              }
+            }
+            // get the ordered vect of atom map numbers for the neighbors
+            // of atom
+            std::vector<int> aorder;
+            for (const auto &nbri :
+                 boost::make_iterator_range(reactant.getAtomNeighbors(atom))) {
+              const auto &nbrAtom = reactant[nbri];
+              auto aidx = nbrAtom->getIdx();
+              auto miter = std::find_if(
+                  match.begin(), match.end(),
+                  [aidx](const auto &pr) { return pr.second == aidx; });
+              if (miter != match.end()) {
+                auto rNbr = reactantTemplate->getAtomWithIdx(miter->first);
+                if (rNbr->getAtomMapNum()) {
+                  aorder.push_back(rNbr->getAtomMapNum());
+                }
+              }
+            }
+            if (porder.size() == aorder.size()) {
+              auto nswaps = countSwapsToInterconvert(aorder, porder);
+              if (nswaps % 2) {
+                atom->invertChirality();
+              }
+            }
+          }
+          break;
+        default:
+          BOOST_LOG(rdWarningLog)
+              << "unrecognized chiral inversion/retention flag "
+                 "on product atom ignored\n";
+      }
+    }
   }
   // update bonds which are modified by the reaction
   boost::dynamic_bitset<> modifiedBonds(reactant.getNumAtoms() *

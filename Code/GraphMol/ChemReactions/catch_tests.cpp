@@ -882,4 +882,57 @@ TEST_CASE("one-component reactions") {
       CHECK(MolToSmiles(*mol) == "CC=O");
     }
   }
+  SECTION("atom stereo") {
+    {  // remove
+      auto rxn =
+          "[C:1][C@:2]([F:3])([Cl:4])[I:5]>>[C:1][C:2]([F:3])([Cl:4])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CCC(F)(Cl)I");
+    }
+    {  // create
+      auto rxn =
+          "[C:1][C:2]([F:3])([Cl:4])[I:5]>>[C:1][C@@:2]([F:3])([Cl:4])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CC[C@@](F)(Cl)I");
+    }
+    {  // create, swap order
+      auto rxn =
+          "[C:1][C:2]([F:3])([Cl:4])[I:5]>>[C:1][C@@:2]([Cl:4])([F:3])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CC[C@](F)(Cl)I");
+    }
+
+    {  // invert
+      auto rxn =
+          "[C:1][C@:2]([F:3])([Cl:4])[I:5]>>[C:1][C@@:2]([F:3])([Cl:4])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CC[C@@](F)(Cl)I");
+    }
+    {  // preserve, but order swap
+      auto rxn =
+          "[C:1][C@:2]([F:3])([Cl:4])[I:5]>>[C:1][C@@:2]([Cl:4])([F:3])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(!rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CC[C@](F)(Cl)I");
+    }
+  }
 }
