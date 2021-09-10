@@ -1883,9 +1883,9 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
        ++bondIt) {
     if (cleanIt) {
       // enforce no stereo on small rings
-      if (!shouldDetectDoubleBondStereo(*bondIt) &&
-          ((*bondIt)->getBondType() == Bond::DOUBLE ||
-           (*bondIt)->getBondType() == Bond::AROMATIC)) {
+      if (((*bondIt)->getBondType() == Bond::DOUBLE ||
+           (*bondIt)->getBondType() == Bond::AROMATIC) && 
+           !shouldDetectDoubleBondStereo(*bondIt)) {
         if ((*bondIt)->getBondDir() == Bond::EITHERDOUBLE) {
           (*bondIt)->setBondDir(Bond::NONE);
         }
