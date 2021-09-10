@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase):
         nbits = 10
         bv1 = DataStructs.ExplicitBitVect(nbits)
         bv1[0]
-        with self.assertRaisesRegexp(IndexError, ""):
+        with self.assertRaisesRegex(IndexError, ""):
             bv1[11]
 
     def test4OnBitsInCommon(self):
@@ -314,5 +314,44 @@ class TestCase(unittest.TestCase):
             self.assertTrue(feq(sim, sims[i]))
 
 
+    def test11BulkNeighbors(self):
+        nbits = 2048
+        bvs = []
+        for bvi in range(1000):
+            bv = DataStructs.ExplicitBitVect(nbits)
+            for j in range(nbits):
+                x = random.randrange(0, nbits)
+                bv.SetBit(x)
+            bvs.append(bv)
+        qs = bvs[:10]
+        db = bvs[10:]
+        for metric in ['Tanimoto','Cosine', 'Kulczynski', 'Dice', 'Sokal', 
+                       'McConnaughey', 'Asymmetric', 'BraunBlanquet', 'Russel', 
+                       'RogotGoldberg']:
+            bulkSim = getattr(DataStructs,f'Bulk{metric}Similarity')
+            nbrSim = getattr(DataStructs,f'{metric}SimilarityNeighbors')
+            tgts = []
+            for q in qs:
+                sims = bulkSim(q,db)
+                sim, idx = max((sim, -idx) for idx, sim in enumerate(sims))
+                tgts.append((-idx,sim))
+            nbrs = nbrSim(qs,db)
+            self.assertEqual(tgts,nbrs)
+
+    def test12ToList(self):
+        nbits = 2048
+        for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
+            bv = cls(nbits)
+            l = [0]*2048
+            for j in range(nbits):
+                x = random.randrange(0, nbits)
+                l[x] = 1
+                bv.SetBit(x)
+
+            l2 = list(bv)
+            l3 = bv.ToList()
+            self.assertEqual(l, l2)
+            self.assertEqual(l, l3)
+            
 if __name__ == '__main__':
     unittest.main()

@@ -43,7 +43,7 @@ class Catalog {
   typedef paramType paramType_t;
 
   //------------------------------------
-  Catalog() :  dp_cParams(nullptr){};
+  Catalog() : dp_cParams(nullptr) {}
 
   //------------------------------------
   virtual ~Catalog() { delete dp_cParams; }
@@ -107,7 +107,7 @@ class Catalog {
   // id of the entry in the catalog.
   // this is more along the lines of bitId
   unsigned int d_fpLength{0};  //!< the length of our fingerprint
-  paramType *dp_cParams;    //!< our params object
+  paramType *dp_cParams;       //!< our params object
 };
 
 //-----------------------------------------------------------------------------
@@ -175,7 +175,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
   //------------------------------------
-  ~HierarchCatalog() { destroy(); }
+  ~HierarchCatalog() override { destroy(); }
 
   //------------------------------------
   //! serializes this object to a stream
@@ -225,7 +225,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
 
   //------------------------------------
   //! serializes this object and returns the resulting \c pickle
-  std::string Serialize() const {
+  std::string Serialize() const override {
     std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                          std::ios_base::in);
     this->toStream(ss);
@@ -282,7 +282,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   }
 
   //------------------------------------
-  unsigned int getNumEntries() const {
+  unsigned int getNumEntries() const override {
     return static_cast<unsigned int>(boost::num_vertices(d_graph));
   }
 
@@ -306,7 +306,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
     fingerprint length will also be updated.
 
   */
-  unsigned int addEntry(entryType *entry, bool updateFPLength = true) {
+  unsigned int addEntry(entryType *entry, bool updateFPLength = true) override {
     PRECONDITION(entry, "bad arguments");
     if (updateFPLength) {
       unsigned int fpl = this->getFPLength();
@@ -357,7 +357,7 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
 
   //------------------------------------
   //! returns a pointer to our entry with a particular index
-  const entryType *getEntryWithIdx(unsigned int idx) const {
+  const entryType *getEntryWithIdx(unsigned int idx) const override {
     URANGE_CHECK(idx, getNumEntries());
     int vd = static_cast<int>(boost::vertex(idx, d_graph));
     typename boost::property_map<CatalogGraph, vertex_entry_t>::const_type

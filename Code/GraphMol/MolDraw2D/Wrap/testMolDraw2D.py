@@ -1,6 +1,7 @@
 from rdkit import RDConfig
 import unittest
 import random
+import re
 from os import environ
 from rdkit import Chem
 from rdkit.Chem import Draw, AllChem, rdDepictor
@@ -59,6 +60,15 @@ class TestCase(unittest.TestCase):
     nm = rdMolDraw2D.PrepareMolForDrawing(m, addChiralHs=False)
     self.assertEqual(nm.GetNumAtoms(), 10)
     self.assertEqual(nm.GetNumConformers(), 1)
+
+    m = Chem.MolFromSmiles('CC=CC')
+    m.GetBondWithIdx(1).SetStereo(Chem.BondStereo.STEREOANY)
+    nm = rdMolDraw2D.PrepareMolForDrawing(m)
+    self.assertEqual(nm.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOANY)
+    self.assertEqual(nm.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.NONE)
+    nm = rdMolDraw2D.PrepareMolForDrawing(m, wavyBonds=True)
+    self.assertEqual(nm.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
+    self.assertEqual(nm.GetBondWithIdx(0).GetBondDir(), Chem.BondDir.UNKNOWN)
 
   def testRepeatedPrepareForDrawingCalls(self):
     m = Chem.MolFromMolBlock("""
@@ -571,7 +581,7 @@ M  END
     smi = 'CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]'
     smarts = ['CONN', 'N#CC~CO', 'C=CON', 'CONNCN']
     txt = do_a_picture(smi, smarts, 'pyTest2')
-    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:5.5'), -1)
+    self.assertGreater(txt.find('stroke:#FF8C00;stroke-width:8.0'), -1)
     self.assertEqual(
       txt.find("ellipse cx='244.253' cy='386.518'"
                " rx='11.9872' ry='12.8346'"
@@ -606,6 +616,70 @@ M  END''')
     txt = d.GetDrawingText()
     nm = Chem.MolFromPNGString(txt)
     self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(nm))
+
+  def testUpdateParamsFromJSON(self):
+    m = Chem.MolFromSmiles('c1ccccc1NC(=O)C1COC1')
+    d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    txt = d2d.GetDrawingText()
+    self.assertFalse('>8</text>' in txt)
+
+    d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
+    Draw.UpdateDrawerParamsFromJSON(d2d, '{"addAtomIndices": 1}')
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    txt = d2d.GetDrawingText()
+    self.assertTrue('>8</text>' in txt)
+
+  def testIsotopeLabels(self):
+    m = Chem.MolFromSmiles("[1*]c1cc([2*])c([3*])c[14c]1")
+    regex = re.compile(r"<text\s+.*>\d</text>")
+    self.assertIsNotNone(m)
+
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textIsoDummyIso = d2d.GetDrawingText()
+    nIsoDummyIso = len(regex.findall(textIsoDummyIso))
+    self.assertEqual(nIsoDummyIso, 5)
+
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.drawOptions().isotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textNoIsoDummyIso = d2d.GetDrawingText()
+    nNoIsoDummyIso = len(regex.findall(textNoIsoDummyIso))
+    self.assertEqual(nNoIsoDummyIso, 3)
+
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.drawOptions().dummyIsotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textIsoNoDummyIso = d2d.GetDrawingText()
+    nIsoNoDummyIso = len(regex.findall(textIsoNoDummyIso))
+    self.assertEqual(nIsoNoDummyIso, 2)
+
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.drawOptions().isotopeLabels = False
+    d2d.drawOptions().dummyIsotopeLabels = False
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textNoIsoNoDummyIso = d2d.GetDrawingText()
+    nNoIsoNoDummyIso = len(regex.findall(textNoIsoNoDummyIso))
+    self.assertEqual(nNoIsoNoDummyIso, 0)
+
+    m = Chem.MolFromSmiles("C([1H])([2H])([3H])[H]")
+    deuteriumTritiumRegex = re.compile(r"<text\s+.*>[DT]</text>")
+    d2d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    d2d.drawOptions().isotopeLabels = False
+    d2d.drawOptions().dummyIsotopeLabels = False
+    d2d.drawOptions().atomLabelDeuteriumTritium = True
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    textDeuteriumTritium = d2d.GetDrawingText()
+    nDeuteriumTritium = len(deuteriumTritiumRegex.findall(textDeuteriumTritium))
+    self.assertEqual(nDeuteriumTritium, 2)
 
 
 if __name__ == "__main__":

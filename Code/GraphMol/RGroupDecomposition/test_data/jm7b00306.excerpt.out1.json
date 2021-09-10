@@ -1,0 +1,27 @@
+[
+    {
+        "Core": "Cn1c(=O)n(C)c2cc([*:3])c(N3C(=O)c4cccc5c([*:1])ccc(c45)C3=O)cc21",
+        "R1": "OCCC[*:1]",
+        "R3": "C[*:3]"
+    },
+    {
+        "Core": "Cn1c(=O)n(C)c2cc([*:3])c(N3C(=O)c4cccc5c([*:1])ccc(c45)C3=O)cc21",
+        "R1": "[H][*:1]",
+        "R3": "[H][*:3]"
+    },
+    {
+        "Core": "Cn1c(=O)n(C)c2cc([*:3])c(N3C(=O)c4cccc5c([*:1])ccc(c45)C3=O)cc21",
+        "R1": "[H][*:1]",
+        "R3": "C[*:3]"
+    },
+    {
+        "Core": "Cn1c(=O)n(C)c2cc([*:3])c(N3C(=O)c4cccc5c([*:1])ccc(c45)C3=O)cc21",
+        "R1": "[H][*:1]",
+        "R3": "CO[*:3]"
+    },
+    {
+        "Core": "Cn1c(=O)n(C)c2cc([*:3])c(N3C(=O)c4cccc5c([*:1])ccc(c45)C3=O)cc21",
+        "R1": "[H][*:1]",
+        "R3": "CN(C)[*:3]"
+    }
+]

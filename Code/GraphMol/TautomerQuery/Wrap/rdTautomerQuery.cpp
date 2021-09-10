@@ -8,11 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 
-
-
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/Wrap/substructmethods.h>
 
@@ -36,8 +33,8 @@ bool tautomerIsSubstructOf(const TautomerQuery &self, const ROMol &target,
 }
 
 bool tautomerIsSubstructOfWithParams(const TautomerQuery &self,
-                                    const ROMol &target,
-                                    const SubstructMatchParameters &params) {
+                                     const ROMol &target,
+                                     const SubstructMatchParameters &params) {
   return helpHasSubstructMatch(target, self, params);
 }
 
@@ -48,15 +45,15 @@ PyObject *tautomerGetSubstructMatch(const TautomerQuery &self,
   return GetSubstructMatch(target, self, useChirality, useQueryQueryMatches);
 }
 
-PyObject *tautomerGetSubstructMatchWithParams(const TautomerQuery &self,
-                                    const ROMol &target,
-                                    const SubstructMatchParameters &params) {
+PyObject *tautomerGetSubstructMatchWithParams(
+    const TautomerQuery &self, const ROMol &target,
+    const SubstructMatchParameters &params) {
   return helpGetSubstructMatch(target, self, params);
 }
 
-PyObject *tautomerGetSubstructMatchesWithParams(const TautomerQuery &self,
-                                    const ROMol &target,
-                                    const SubstructMatchParameters &params) {
+PyObject *tautomerGetSubstructMatchesWithParams(
+    const TautomerQuery &self, const ROMol &target,
+    const SubstructMatchParameters &params) {
   return helpGetSubstructMatches(target, self, params);
 }
 
@@ -139,6 +136,7 @@ PyObject *tautomerGetSubstructMatchesWithTautomers(
 struct TautomerQuery_wrapper {
   static void wrap() {
     RegisterVectorConverter<size_t>("UnsignedLong_Vect");
+
     auto docString =
         "The Tautomer Query Class.\n\
   Creates a query that enables structure search accounting for matching of\n\
@@ -153,25 +151,25 @@ struct TautomerQuery_wrapper {
               python::arg("recursionPossible") = true,
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false))
-        .def("IsSubstructOf", tautomerIsSubstructOfWithParams,
-             (python::arg("self"), python::arg("target"),
-             python::arg("params")))
+        .def(
+            "IsSubstructOf", tautomerIsSubstructOfWithParams,
+            (python::arg("self"), python::arg("target"), python::arg("params")))
         .def("GetSubstructMatch", tautomerGetSubstructMatch,
              (python::arg("self"), python::arg("target"),
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false))
-        .def("GetSubstructMatch", tautomerGetSubstructMatchWithParams,
-             (python::arg("self"), python::arg("target"),
-             python::arg("params")))
+        .def(
+            "GetSubstructMatch", tautomerGetSubstructMatchWithParams,
+            (python::arg("self"), python::arg("target"), python::arg("params")))
         .def("GetSubstructMatches", tautomerGetSubstructMatches,
              (python::arg("self"), python::arg("target"),
               python::arg("uniquify") = true,
               python::arg("useChirality") = false,
               python::arg("useQueryQueryMatches") = false,
               python::arg("maxMatches") = 1000))
-        .def("GetSubstructMatches", tautomerGetSubstructMatchesWithParams,
-             (python::arg("self"), python::arg("target"),
-             python::arg("params")))
+        .def(
+            "GetSubstructMatches", tautomerGetSubstructMatchesWithParams,
+            (python::arg("self"), python::arg("target"), python::arg("params")))
         .def("GetSubstructMatchesWithTautomers",
              tautomerGetSubstructMatchesWithTautomers,
              (python::arg("self"), python::arg("target"),

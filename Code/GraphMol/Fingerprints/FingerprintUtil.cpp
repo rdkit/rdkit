@@ -13,7 +13,6 @@
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/foreach.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -21,7 +20,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
-#include <boost/foreach.hpp>
 #include <algorithm>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
@@ -50,10 +48,17 @@ unsigned int numPiElectrons(const Atom *atom) {
     res = 1;
   } else if (atom->getHybridization() != Atom::SP3) {
     auto val = static_cast<unsigned int>(atom->getExplicitValence());
-    val -= atom->getNumExplicitHs();
-    CHECK_INVARIANT(val >= atom->getDegree(),
+    unsigned int physical_bonds = atom->getNumExplicitHs();
+    const auto &mol = atom->getOwningMol();
+    for (const auto &bndi :
+         boost::make_iterator_range(mol.getAtomBonds(atom))) {
+      if (mol[bndi]->getValenceContrib(atom) != 0.0) {
+        ++physical_bonds;
+      }
+    }
+    CHECK_INVARIANT(val >= physical_bonds,
                     "explicit valence exceeds atom degree");
-    res = val - atom->getDegree();
+    res = val - physical_bonds;
   }
   return res;
 }
@@ -303,7 +308,7 @@ void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
       allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, true, useHs);
     }
   } else {
-    BOOST_FOREACH (std::uint32_t aidx, *fromAtoms) {
+    for (auto aidx : *fromAtoms) {
       INT_PATH_LIST_MAP tPaths;
       if (branchedPaths) {
         tPaths =
@@ -317,7 +322,7 @@ void enumerateAllPaths(const ROMol &mol, INT_PATH_LIST_MAP &allPaths,
 #ifdef VERBOSE_FINGERPRINTING
         std::cerr << "paths from " << aidx << " size: " << tpit->first
                   << std::endl;
-        BOOST_FOREACH (PATH_TYPE path, tpit->second) {
+        for (auto path : tpit->second) {
           std::cerr << " path: ";
           std::copy(path.begin(), path.end(),
                     std::ostream_iterator<int>(std::cerr, ", "));

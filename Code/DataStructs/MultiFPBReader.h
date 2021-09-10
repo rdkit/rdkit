@@ -22,7 +22,6 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/FPBReader.h>
 #include <boost/tuple/tuple.hpp>
-#include <boost/foreach.hpp>
 
 namespace RDKit {
 
@@ -54,8 +53,7 @@ namespace RDKit {
 class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
  public:
   typedef boost::tuple<double, unsigned int, unsigned int> ResultTuple;
-  MultiFPBReader()
-       {};
+  MultiFPBReader() {}
 
   /*!
     \param initOnSearch: if this is true, the \c init() method on child readers
@@ -65,7 +63,7 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
   MultiFPBReader(bool initOnSearch)
       : df_init(false),
         df_initOnSearch(initOnSearch),
-        df_takeOwnership(false){};
+        df_takeOwnership(false) {}
   /*!
     \param readers: the set of FPBReader objects to use.
     \param takeOwnership: if true, we own the memory for the FPBReaders
@@ -79,10 +77,12 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
   ~MultiFPBReader() {
     df_init = false;
     if (df_takeOwnership) {
-      BOOST_FOREACH (FPBReader *rdr, d_readers) { delete rdr; };
+      for (auto &rdr : d_readers) {
+        delete rdr;
+      }
       d_readers.clear();
     }
-  };
+  }
 
   //! Read the data from the file and initialize internal data structures
   /*!
@@ -93,7 +93,7 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
   void init();
 
   //! returns the number of readers
-  unsigned int length() const { return d_readers.size(); };
+  unsigned int length() const { return d_readers.size(); }
   //! returns the number of bits in our fingerprints (all readers are expected
   //! to have the same length)
   unsigned int nBits() const;
@@ -123,7 +123,7 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
     d_readers.push_back(rdr);
     if (df_init) rdr->init();
     return d_readers.size();
-  };
+  }
 
   //! returns tanimoto neighbors that are within a similarity threshold
   /*!
@@ -145,7 +145,7 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
       boost::shared_array<std::uint8_t> bv, double threshold = 0.7,
       int numThreads = 1) const {
     return getTanimotoNeighbors(bv.get(), threshold, numThreads);
-  };
+  }
   //! \overload
   std::vector<ResultTuple> getTanimotoNeighbors(const ExplicitBitVect &ebv,
                                                 double threshold = 0.7,
@@ -174,7 +174,7 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
       boost::shared_array<std::uint8_t> bv, double ca, double cb,
       double threshold = 0.7, int numThreads = 1) const {
     return getTverskyNeighbors(bv.get(), ca, cb, threshold, numThreads);
-  };
+  }
   //! \overload
   std::vector<ResultTuple> getTverskyNeighbors(const ExplicitBitVect &ebv,
                                                double ca, double cb,
@@ -191,7 +191,7 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
   std::vector<std::pair<unsigned int, unsigned int>> getContainingNeighbors(
       boost::shared_array<std::uint8_t> bv, int numThreads = 1) const {
     return getContainingNeighbors(bv.get(), numThreads);
-  };
+  }
   //! \overload
   std::vector<std::pair<unsigned int, unsigned int>> getContainingNeighbors(
       const ExplicitBitVect &ebv, int numThreads = 1) const;

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2019 Greg Landrum
+# Copyright (C) 2006-2021 Greg Landrum
 #  All Rights Reserved
 #
 #  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 #  of the RDKit source tree.
 #
 import os
-import re
 import warnings
+from importlib.util import find_spec
 
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
@@ -149,6 +149,39 @@ def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas
     return img
 
 
+def _sip_available():
+  if find_spec('PyQt5') and find_spec('PyQt5.sip'):
+    return True
+  elif find_spec('sip'):
+    return True
+  return False
+
+
+if find_spec('rdkit.Chem.Draw.rdMolDraw2DQt') and _sip_available():
+
+  def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
+    from PyQt5.Qt import QPainter
+    try:
+      # Prefer the PyQt5-bundled sip
+      from PyQt5 import sip
+    except ImportError:
+      # No bundled sip, try the standalone package
+      import sip
+    from rdkit.Chem.Draw import rdMolDraw2DQt
+
+    if not isinstance(qpainter, QPainter):
+      raise ValueError("argument must be a QPainter instance")
+    if width <= 0:
+      width = qpainter.viewport().width()
+    if height <= 0:
+      height = qpainter.viewport().height()
+    ptr = sip.unwrapinstance(qpainter)
+    d2d = rdMolDraw2DQt.MolDraw2DFromQPainter_(width, height, ptr, panelWidth, panelWidth)
+    # tie the lifetime of the QPainter to this MolDraw2D object
+    d2d._qptr = qpainter
+    return d2d
+
+
 def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=False, options=None,
                canvas=None, **kwargs):
   """Returns a PIL image containing a drawing of the molecule
@@ -162,8 +195,6 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
         - wedgeBonds: draw wedge (stereo) bonds (default True)
 
         - highlightAtoms: list of atoms to highlight (default [])
-
-        - highlightMap: dictionary of (atom, color) pairs (default None)
 
         - highlightBonds: list of bonds to highlight (default [])
 
@@ -192,8 +223,9 @@ def MolToImage(mol, size=(300, 300), kekulize=True, wedgeBonds=True, fitImage=Fa
       DeprecationWarning)
     options = None
   return _moltoimg(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''),
-                   highlightBonds=kwargs.get('highlightBonds', []), drawOptions=options,
-                   kekulize=kekulize, wedgeBonds=wedgeBonds)
+                   highlightBonds=kwargs.get('highlightBonds',
+                                             []), drawOptions=options, kekulize=kekulize,
+                   wedgeBonds=wedgeBonds, highlightColor=kwargs.get('highlightColor', None))
 
 
 def _legacyMolToFile(mol, fileName, size, kekulize, wedgeBonds, imageType, fitImage, options,
@@ -437,13 +469,16 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
     d2d = rdMolDraw2D.MolDraw2DCairo(sz[0], sz[1])
     if drawOptions is not None:
       d2d.SetDrawOptions(drawOptions)
-    if 'highlightColor' in kwargs:
-      d2d.drawOptions().setHighlightColor(kwargs['highlightColor'])
+    if 'highlightColor' in kwargs and kwargs['highlightColor']:
+      d2d.drawOptions().setHighlightColour(kwargs['highlightColor'])
     # we already prepared the molecule:
     d2d.drawOptions().prepareMolsBeforeDrawing = False
     bondHighlights = kwargs.get('highlightBonds', None)
-    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
-                     highlightBonds=bondHighlights or [])
+    if bondHighlights is not None:
+      d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
+                       highlightBonds=bondHighlights)
+    else:
+      d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [])
     d2d.FinishDrawing()
     if returnPNG:
       img = d2d.GetDrawingText()
@@ -471,8 +506,11 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
     d2d.SetDrawOptions(drawOptions)
 
   bondHighlights = kwargs.get('highlightBonds', None)
-  d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
-                   highlightBonds=bondHighlights or [])
+  if bondHighlights is not None:
+    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],
+                     highlightBonds=bondHighlights)
+  else:
+    d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [])
   d2d.FinishDrawing()
   svg = d2d.GetDrawingText()
   return svg
@@ -790,11 +828,10 @@ def DrawMorganEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSV
     drawer = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
 
   if drawOptions is None:
-    drawopt = drawer.drawOptions()
-    drawopt.continuousHighlight = False
-  else:
-    drawOptions.continuousHighlight = False
-    drawer.SetDrawOptions(drawOptions)
+    drawOptions = drawer.drawOptions()
+  drawOptions.continuousHighlight = False
+  drawOptions.includeMetadata = False
+  drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecules(submols, legends=legends, highlightAtoms=highlightAtoms,
                        highlightAtomColors=atomColors, highlightBonds=highlightBonds,
                        highlightBondColors=bondColors, highlightAtomRadii=highlightRadii, **kwargs)
@@ -816,12 +853,10 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=T
     drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
 
   if drawOptions is None:
-    drawopt = drawer.drawOptions()
-    drawopt.continuousHighlight = False
-  else:
-    drawOptions.continuousHighlight = False
-    drawer.SetDrawOptions(drawOptions)
-
+    drawOptions = drawer.drawOptions()
+  drawOptions.continuousHighlight = False
+  drawOptions.includeMetadata = False
+  drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
                       highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
                       highlightBondColors=menv.bondColors, highlightAtomRadii=menv.highlightRadii,
@@ -935,11 +970,10 @@ def DrawRDKitEnvs(envs, molsPerRow=3, subImgSize=(150, 150), baseRad=0.3, useSVG
     drawer = rdMolDraw2D.MolDraw2DCairo(fullSize[0], fullSize[1], subImgSize[0], subImgSize[1])
 
   if drawOptions is None:
-    drawopt = drawer.drawOptions()
-    drawopt.continuousHighlight = False
-  else:
-    drawOptions.continuousHighlight = False
-    drawer.SetDrawOptions(drawOptions)
+    drawOptions = drawer.drawOptions()
+  drawOptions.continuousHighlight = False
+  drawOptions.includeMetadata = False
+  drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecules(submols, legends=legends, highlightAtoms=highlightAtoms,
                        highlightAtomColors=atomColors, highlightBonds=highlightBonds,
                        highlightBondColors=bondColors, highlightAtomRadii=highlightRadii, **kwargs)
@@ -959,12 +993,10 @@ def DrawRDKitEnv(mol, bondPath, molSize=(150, 150), baseRad=0.3, useSVG=True,
     drawer = rdMolDraw2D.MolDraw2DCairo(molSize[0], molSize[1])
 
   if drawOptions is None:
-    drawopt = drawer.drawOptions()
-    drawopt.continuousHighlight = False
-  else:
-    drawOptions.continuousHighlight = False
-    drawer.SetDrawOptions(drawOptions)
-
+    drawOptions = drawer.drawOptions()
+  drawOptions.continuousHighlight = False
+  drawOptions.includeMetadata = False
+  drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
                       highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
                       highlightBondColors=menv.bondColors, highlightAtomRadii=menv.highlightRadii,

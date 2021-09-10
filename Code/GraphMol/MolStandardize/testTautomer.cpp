@@ -23,16 +23,9 @@ void testEnumerator() {
 
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+      rdbase + "/Code/GraphMol/MolStandardize/test_data/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -697,17 +690,8 @@ void testCanonicalize() {
       << "-----------------------\n Testing tautomer canonicalization"
       << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -728,17 +712,8 @@ void testPickCanonical() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing pickCanonical"
                        << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -762,17 +737,8 @@ void testCustomScoreFunc() {
       << "-----------------------\n Testing custom scoring functions"
       << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -840,17 +806,8 @@ void testEnumerationProblems() {
       << "-----------------------\n Testing tautomer enumeration problems"
       << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -882,18 +839,8 @@ void testPickCanonical2() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing pickCanonical"
                        << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
-
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
 
@@ -926,18 +873,8 @@ void testEnumerateDetails() {
       << "-----------------------\n Testing getting details back "
          "from tautomer enumeration"
       << std::endl;
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
-
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
@@ -991,17 +928,8 @@ void testGithub2990() {
                           "Tautomer enumeration "
                           "should remove stereo in all tautomers"
                        << std::endl;
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -1416,6 +1344,24 @@ void testGithub3430() {
   }
 }
 
+void testGithub3755() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n testGithub3755"
+                       << std::endl;
+  // hydrates, aminals and hemiaminals should be scored lower than
+  // carboxylic acids, amides, amidines, and guanidines
+  std::vector<std::pair<std::string, std::string>> orig_vs_expected{
+      {"OC(=O)C(N)CO", "NC(CO)C(=O)O"}, {"C([C@@H](C(=O)O)N)O", "NC(CO)C(=O)O"},
+      {"OC(=O)C(N)CN", "NCC(N)C(=O)O"}, {"NC(=O)C(N)CO", "NC(=O)C(N)CO"},
+      {"NC(=N)C(N)CO", "N=C(N)C(N)CO"}, {"NC(=N)NC(N)CO", "N=C(N)NC(N)CO"}};
+  TautomerEnumerator te;
+  for (const auto &pair : orig_vs_expected) {
+    ROMOL_SPTR orig(SmilesToMol(pair.first));
+    TEST_ASSERT(orig);
+    ROMOL_SPTR canonical(te.canonicalize(*orig));
+    TEST_ASSERT(MolToSmiles(*canonical) == pair.second);
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -1433,5 +1379,6 @@ int main() {
   testPickCanonicalCIPChangeOnChiralCenter();
   testTautomerEnumeratorResult_const_iterator();
   testGithub3430();
+  testGithub3755();
   return 0;
 }

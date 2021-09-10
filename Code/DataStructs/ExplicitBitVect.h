@@ -28,12 +28,12 @@
  */
 class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
  public:
-  ExplicitBitVect()  {};
+  ExplicitBitVect() {}
   //! initialize with a particular size;
   explicit ExplicitBitVect(unsigned int size)
       : dp_bits(nullptr), d_size(0), d_numOnBits(0) {
     _initForSize(size);
-  };
+  }
   //! initialize with a particular size and all bits set
   ExplicitBitVect(unsigned int size, bool bitsSet);
   ExplicitBitVect(const ExplicitBitVect &other);
@@ -42,19 +42,19 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
   //! construct from a text pickle
   ExplicitBitVect(const char *, const unsigned int);
   //! construct directly from a dynamic_bitset pointer
-  //  takes ownership of the pointer
+  /// takes ownership of the pointer
   ExplicitBitVect(boost::dynamic_bitset<> *bits)
       : dp_bits(bits),
         d_size(static_cast<unsigned int>(bits->size())),
-        d_numOnBits(static_cast<unsigned int>(bits->count())){};
+        d_numOnBits(static_cast<unsigned int>(bits->count())) {}
 
-  ~ExplicitBitVect();
+  ~ExplicitBitVect() override;
 
   ExplicitBitVect &operator=(const ExplicitBitVect &other);
-  bool operator[](const unsigned int which) const;
-  bool setBit(const unsigned int which);
-  bool unsetBit(const unsigned int which);
-  bool getBit(const unsigned int which) const;
+  bool operator[](const unsigned int which) const override;
+  bool setBit(const unsigned int which) override;
+  bool unsetBit(const unsigned int which) override;
+  bool getBit(const unsigned int which) const override;
 
   ExplicitBitVect operator^(const ExplicitBitVect &other) const;
   ExplicitBitVect operator&(const ExplicitBitVect &other) const;
@@ -69,14 +69,14 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
   /* concatenate two ExplicitBitVects */
   ExplicitBitVect &operator+=(const ExplicitBitVect &other);
 
-  unsigned int getNumBits() const;
-  unsigned int getNumOnBits() const;
-  unsigned int getNumOffBits() const;
+  unsigned int getNumBits() const override;
+  unsigned int getNumOnBits() const override;
+  unsigned int getNumOffBits() const override;
 
-  void getOnBits(IntVect &v) const;
+  void getOnBits(IntVect &v) const override;
 
-  void clearBits() { dp_bits->reset(); };
-  std::string toString() const;
+  void clearBits() override { dp_bits->reset(); }
+  std::string toString() const override;
 
   boost::dynamic_bitset<> *dp_bits{nullptr};  //!< our raw storage
 
@@ -90,7 +90,7 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
  private:
   unsigned int d_size{0};
   unsigned int d_numOnBits{0};
-  void _initForSize(const unsigned int size);
+  void _initForSize(const unsigned int size) override;
 };
 
 #endif

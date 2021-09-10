@@ -42,13 +42,14 @@ std::pair<int, double> UFFOptimizeMolecule(
     bool ignoreInterfragInteractions = true) {
   ForceFields::ForceField *ff = UFF::constructForceField(
       mol, vdwThresh, confId, ignoreInterfragInteractions);
-  std::pair<int, double> res = ForceFieldsHelper::OptimizeMolecule(*ff, maxIters);
+  std::pair<int, double> res =
+      ForceFieldsHelper::OptimizeMolecule(*ff, maxIters);
   delete ff;
   return res;
 }
 
 //! Convenience function for optimizing all of a molecule's conformations using
-// UFF
+/// UFF
 /*
   \param mol        the molecule to use
   \param res        vector of (needsMore,energy)
@@ -71,8 +72,8 @@ void UFFOptimizeMoleculeConfs(ROMol &mol,
                               int numThreads = 1, int maxIters = 1000,
                               double vdwThresh = 10.0,
                               bool ignoreInterfragInteractions = true) {
-  ForceFields::ForceField *ff = UFF::constructForceField(
-      mol, vdwThresh, -1, ignoreInterfragInteractions);
+  ForceFields::ForceField *ff =
+      UFF::constructForceField(mol, vdwThresh, -1, ignoreInterfragInteractions);
   ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads, maxIters);
   delete ff;
 }

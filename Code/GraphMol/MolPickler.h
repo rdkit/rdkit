@@ -1,5 +1,5 @@
 ///
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_MOLPICKLE_H
-#define _RD_MOLPICKLE_H
+#ifndef RD_MOLPICKLE_H
+#define RD_MOLPICKLE_H
 
 #include <Geometry/point.h>
 #include <GraphMol/Atom.h>
@@ -18,6 +18,9 @@
 #include <GraphMol/QueryBond.h>
 #include <RDGeneral/StreamOps.h>
 #include <boost/utility/binary.hpp>
+#include <boost/variant.hpp>
+#include <Query/QueryObjects.h>
+
 // Std stuff
 #include <iostream>
 #include <string>
@@ -35,10 +38,10 @@ class RingInfo;
 //! used to indicate exceptions whilst pickling (serializing) molecules
 class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
  public:
-  MolPicklerException(const char *msg) : _msg(msg){};
-  MolPicklerException(const std::string msg) : _msg(msg){};
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~MolPicklerException() noexcept {};
+  MolPicklerException(const char *msg) : _msg(msg) {}
+  MolPicklerException(const std::string msg) : _msg(msg) {}
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~MolPicklerException() noexcept override = default;
 
  private:
   std::string _msg;
@@ -47,17 +50,19 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
 namespace PicklerOps {
 typedef enum {
   NoProps = 0,  // no data pickled (default pickling, single-precision coords)
-  MolProps = BOOST_BINARY(1),  // only public non computed properties
-  AtomProps = BOOST_BINARY(10),
-  BondProps = BOOST_BINARY(100),
-  QueryAtomData = BOOST_BINARY(
-      10),  // n.b. DEPRECATED and set to AtomProps (does the same work)
-  PrivateProps = BOOST_BINARY(10000),
-  ComputedProps = BOOST_BINARY(100000),
-  AllProps = 0x0000FFFF,       // all data pickled
-  CoordsAsDouble = 0x0001FFFF  // save coordinates in double precision
+  MolProps = 0x1,  // only public non computed properties
+  AtomProps = 0x2,
+  BondProps = 0x4,
+  QueryAtomData =
+      0x2,  // n.b. DEPRECATED and set to AtomProps (does the same work)
+  PrivateProps = 0x10,
+  ComputedProps = 0x20,
+  AllProps = 0x0000FFFF,        // all data pickled
+  CoordsAsDouble = 0x0001FFFF,  // save coordinates in double precision
+  NoConformers =
+      0x00020000  // do not include conformers or associated properties
 } PropertyPickleOptions;
-}
+}  // namespace PicklerOps
 
 //! handles pickling (serializing) molecules
 class RDKIT_GRAPHMOL_EXPORT MolPickler {
@@ -69,7 +74,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
-  // otherwise
+  /// otherwise
   //! you will break old pickles.
   typedef enum {
     VERSION = 0,
@@ -158,7 +163,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void pickleMol(const ROMol &mol, std::ostream &ss,
                         unsigned int propertyFlags) {
     MolPickler::pickleMol(&mol, ss, propertyFlags);
-  };
+  }
 
   //! pickles a molecule and adds the results to string \c res
   static void pickleMol(const ROMol *mol, std::string &res);
@@ -168,19 +173,35 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void pickleMol(const ROMol &mol, std::string &res,
                         unsigned int propertyFlags) {
     MolPickler::pickleMol(&mol, res, propertyFlags);
-  };
+  }
 
   //! constructs a molecule from a pickle stored in a string
-  static void molFromPickle(const std::string &pickle, ROMol *mol);
+  static void molFromPickle(const std::string &pickle, ROMol *mol,
+                            unsigned int propertyFlags);
+  static void molFromPickle(const std::string &pickle, ROMol &mol,
+                            unsigned int propertyFlags) {
+    MolPickler::molFromPickle(pickle, &mol, propertyFlags);
+  }
+  static void molFromPickle(const std::string &pickle, ROMol *mol) {
+    MolPickler::molFromPickle(pickle, mol, PicklerOps::AllProps);
+  }
   static void molFromPickle(const std::string &pickle, ROMol &mol) {
-    MolPickler::molFromPickle(pickle, &mol);
-  };
+    MolPickler::molFromPickle(pickle, &mol, PicklerOps::AllProps);
+  }
 
   //! constructs a molecule from a pickle stored in a stream
-  static void molFromPickle(std::istream &ss, ROMol *mol);
+  static void molFromPickle(std::istream &ss, ROMol *mol,
+                            unsigned int propertyFlags);
+  static void molFromPickle(std::istream &ss, ROMol &mol,
+                            unsigned int propertyFlags) {
+    MolPickler::molFromPickle(ss, &mol, propertyFlags);
+  }
+  static void molFromPickle(std::istream &ss, ROMol *mol) {
+    MolPickler::molFromPickle(ss, mol, PicklerOps::AllProps);
+  }
   static void molFromPickle(std::istream &ss, ROMol &mol) {
-    MolPickler::molFromPickle(ss, &mol);
-  };
+    MolPickler::molFromPickle(ss, &mol, PicklerOps::AllProps);
+  }
 
  private:
   //! Pickle nonquery atom data
@@ -228,11 +249,11 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! do the actual work of de-pickling a molecule
   template <typename T>
-  static void _depickle(std::istream &ss, ROMol *mol, int version,
-                        int numAtoms);
+  static void _depickle(std::istream &ss, ROMol *mol, int version, int numAtoms,
+                        unsigned int propertyFlags);
 
   //! extract atomic data from a pickle and add the resulting Atom to the
-  // molecule
+  /// molecule
   template <typename T>
   static Atom *_addAtomFromPickle(std::istream &ss, ROMol *mol,
                                   RDGeom::Point3D &pos, int version,
@@ -244,7 +265,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
                                   bool directMap = false);
 
   //! extract ring info from a pickle and add the resulting RingInfo to the
-  // molecule
+  /// molecule
   template <typename T>
   static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
                                      bool directMap = false);
@@ -276,6 +297,18 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! backwards compatibility
   static void _addBondFromPickleV1(std::istream &ss, ROMol *mol);
 };
+
+namespace PicklerOps {
+using QueryDetails = boost::variant<
+    MolPickler::Tags, std::tuple<MolPickler::Tags, int32_t>,
+    std::tuple<MolPickler::Tags, int32_t, int32_t>,
+    std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,
+    std::tuple<MolPickler::Tags, std::set<int32_t>>>;
+template <class T>
+QueryDetails getQueryDetails(const Queries::Query<int, T const *, true> *query);
+
+}  // namespace PicklerOps
+
 };  // namespace RDKit
 
 #endif

@@ -46,7 +46,6 @@
 #include <Numerics/Matrix.h>
 #include <Numerics/SquareMatrix.h>
 #include <Numerics/SymmMatrix.h>
-#include <boost/foreach.hpp>
 #include <cmath>
 #include <Eigen/Dense>
 #include <Eigen/SVD>
@@ -112,8 +111,7 @@ int countZeros(std::string ta) {
   return nbzero;
 }
 
-bool IsClose2(double a, double b, unsigned int precision) {
-  RDUNUSED_PARAM(precision);
+bool IsClose2(double a, double b, unsigned int) {
   bool isclose = false;
 
   std::string sa, sb;
@@ -151,8 +149,7 @@ bool IsClose2(double a, double b, unsigned int precision) {
   return isclose;
 }
 
-bool IsClose3(double a, double b, unsigned int precision) {
-  RDUNUSED_PARAM(precision);
+bool IsClose3(double a, double b, unsigned int) {
   bool isclose = false;
   std::string sa, sb;
   std::string ta, tb;
@@ -266,7 +263,7 @@ std::vector<double> GetGeodesicMatrix(const double* dist, int lag,
   std::vector<double> Geodesic;
   Geodesic.reserve(sizeArray);
   std::transform(dist, dist + sizeArray, Geodesic.begin(),
-                 [&lag](const double& dist) { return int(dist == lag); });
+                 [lag](double dist) { return int(dist == lag); });
 
   return Geodesic;
 }

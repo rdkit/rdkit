@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_CHARGE_H
 #define RD_CHARGE_H
+#include <utility>
 
 #include "MolStandardize.h"
 #include <Catalogs/Catalog.h>
@@ -40,7 +41,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT ChargeCorrection {
   int Charge;
 
   ChargeCorrection(std::string name, std::string smarts, int charge)
-      : Name(name), Smarts(smarts), Charge(charge) {}
+      : Name(std::move(name)), Smarts(std::move(smarts)), Charge(charge) {}
 };
 
 // The default list of ChargeCorrections.
@@ -48,7 +49,7 @@ RDKIT_MOLSTANDARDIZE_EXPORT extern std::vector<ChargeCorrection>
     CHARGE_CORRECTIONS;
 
 //! The reionizer class to fix charges and reionize a molecule such that the
-// strongest acids ionize first.
+/// strongest acids ionize first.
 /*!
 
   <b>Notes:</b>
@@ -60,14 +61,23 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
   Reionizer();
   //! construct a Reionizer with a particular acidbaseFile
   Reionizer(const std::string acidbaseFile);
+  //! construct a Reionizer with parameter data
+  Reionizer(const std::vector<std::tuple<std::string, std::string, std::string>>
+                &data);
   //! construct a Reionizer with a particular acidbaseFile and charge
-  // corrections
+  /// corrections
   Reionizer(const std::string acidbaseFile,
             const std::vector<ChargeCorrection> ccs);
   //! construct a Reionizer with a particular acidbaseFile and charge
-  // corrections
+  /// corrections
   Reionizer(std::istream &acidbaseStream,
             const std::vector<ChargeCorrection> ccs);
+
+  //! construct a Reionizer with parameter data and charge corrections
+  Reionizer(const std::vector<std::tuple<std::string, std::string, std::string>>
+                &data,
+            const std::vector<ChargeCorrection> ccs);
+
   //! making Reionizer objects non-copyable
   Reionizer(const Reionizer &other) = delete;
   Reionizer &operator=(Reionizer const &) = delete;
@@ -89,6 +99,15 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Reionizer {
 
 };  // Reionizer class
 
+// caller owns the returned pointer
+inline Reionizer *reionizerFromParams(const CleanupParameters &params) {
+  if (params.acidbaseData.empty()) {
+    return new Reionizer(params.acidbaseFile);
+  } else {
+    return new Reionizer(params.acidbaseData);
+  }
+}
+
 //! The Uncharger class for neutralizing ionized acids and bases.
 /*!
 
@@ -107,7 +126,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   Uncharger();
   Uncharger(bool canonicalOrdering) : Uncharger() {
     df_canonicalOrdering = canonicalOrdering;
-  };
+  }
   Uncharger(const Uncharger &other);
   ~Uncharger();
 

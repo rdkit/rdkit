@@ -23,11 +23,17 @@ namespace RDKit {
 class ChemicalReaction;
 namespace MolEnumerator {
 
+namespace detail {
+extern const std::string idxPropName;
+void preserveOrigIndices(ROMol &mol);
+void removeOrigIndices(ROMol &mol);
+}  // namespace detail
+
 //! abstract base class for the a molecule enumeration operation
 class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
  public:
-  MolEnumeratorOp(){};
-  virtual ~MolEnumeratorOp(){};
+  MolEnumeratorOp() {}
+  virtual ~MolEnumeratorOp() {}
   //! returns a vector of the number of possible variations at variability point
   //! covered by this operation
   virtual std::vector<size_t> getVariationCounts() const = 0;
@@ -49,16 +55,16 @@ class RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorOp {
  */
 class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
  public:
-  PositionVariationOp(){};
+  PositionVariationOp() {}
   PositionVariationOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
     PRECONDITION(mol, "bad molecule");
     initFromMol();
-  };
+  }
   PositionVariationOp(const ROMol &mol) : dp_mol(new ROMol(mol)) {
     initFromMol();
-  };
+  }
   PositionVariationOp(const PositionVariationOp &other)
-      : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints){};
+      : dp_mol(other.dp_mol), d_variationPoints(other.d_variationPoints) {}
   PositionVariationOp &operator=(const PositionVariationOp &other) {
     if (&other == this) {
       return *this;
@@ -66,7 +72,7 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
     dp_mol = other.dp_mol;
     d_variationPoints = other.d_variationPoints;
     return *this;
-  };
+  }
   //! \override
   std::vector<size_t> getVariationCounts() const override;
 
@@ -95,19 +101,20 @@ class RDKIT_MOLENUMERATOR_EXPORT PositionVariationOp : public MolEnumeratorOp {
  */
 class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
  public:
-  LinkNodeOp(){};
+  LinkNodeOp() {}
   LinkNodeOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
     PRECONDITION(mol, "bad molecule");
     initFromMol();
-  };
-  LinkNodeOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); };
+  }
+  LinkNodeOp(const ROMol &mol) : dp_mol(new ROMol(mol)) { initFromMol(); }
   LinkNodeOp(const LinkNodeOp &other)
       : dp_mol(other.dp_mol),
         dp_frame(other.dp_frame),
         d_countAtEachPoint(other.d_countAtEachPoint),
         d_variations(other.d_variations),
         d_pointRanges(other.d_pointRanges),
-        d_isotopeMap(other.d_isotopeMap){};
+        d_isotopeMap(other.d_isotopeMap),
+        d_atomMap(other.d_atomMap) {}
   LinkNodeOp &operator=(const LinkNodeOp &other) {
     if (&other == this) {
       return *this;
@@ -118,8 +125,9 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
     d_variations = other.d_variations;
     d_pointRanges = other.d_pointRanges;
     d_isotopeMap = other.d_isotopeMap;
+    d_atomMap = other.d_atomMap;
     return *this;
-  };
+  }
   //! \override
   std::vector<size_t> getVariationCounts() const override;
 
@@ -142,6 +150,7 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
   std::vector<std::tuple<unsigned, unsigned, unsigned>> d_variations;
   std::vector<std::pair<unsigned, unsigned>> d_pointRanges;
   std::map<unsigned, unsigned> d_isotopeMap;
+  std::map<unsigned, Atom *> d_atomMap;
 
   void initFromMol();
 };
@@ -156,9 +165,23 @@ struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
 };
 
 //! Returns a MolBundle containing the molecules resulting from applying the
-//! operator contained in \c params to \c mol.
+//! operators contained in \c paramsLists to \c mol.
+//! the operators are applied in order
 RDKIT_MOLENUMERATOR_EXPORT MolBundle
-enumerate(const ROMol &mol, const MolEnumeratorParams &params);
+enumerate(const ROMol &mol, const std::vector<MolEnumeratorParams> &paramsList);
+
+//! Returns a MolBundle containing the molecules resulting from applying the
+//! operator contained in \c params to \c mol.
+inline MolBundle enumerate(const ROMol &mol,
+                           const MolEnumeratorParams &params) {
+  std::vector<MolEnumeratorParams> v = {params};
+  return enumerate(mol, v);
+};
+
+//! Returns a MolBundle containing the molecules resulting from applying the
+//! enumerable operators contained in \c mol.
+RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol);
+
 }  // namespace MolEnumerator
 }  // namespace RDKit
 

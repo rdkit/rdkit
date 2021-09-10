@@ -1228,14 +1228,15 @@ void testGithub266() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumBonds() == 4);
     TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
-    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() == "BondOr");
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() ==
+                "SingleOrDoubleBond");
 
     std::string mb = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(mb);
     TEST_ASSERT(m2->getNumBonds() == 4);
     TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription() ==
-                "BondOr");
+                "SingleOrDoubleBond");
 
     // try v3k
     mb = MolToMolBlock(*m, true, -1, true, true);
@@ -1244,7 +1245,7 @@ void testGithub266() {
     TEST_ASSERT(m2->getNumBonds() == 4);
     TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription() ==
-                "BondOr");
+                "SingleOrDoubleBond");
 
     delete m;
     delete m2;
@@ -1285,14 +1286,15 @@ void testGithub266() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumBonds() == 4);
     TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
-    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() == "BondOr");
+    TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() ==
+                "DoubleOrAromaticBond");
 
     std::string mb = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(mb);
     TEST_ASSERT(m2->getNumBonds() == 4);
     TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription() ==
-                "BondOr");
+                "DoubleOrAromaticBond");
 
     // try v3k
     mb = MolToMolBlock(*m, true, -1, true, true);
@@ -1301,7 +1303,7 @@ void testGithub266() {
     TEST_ASSERT(m2->getNumBonds() == 4);
     TEST_ASSERT(m2->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m2->getBondWithIdx(1)->getQuery()->getDescription() ==
-                "BondOr");
+                "DoubleOrAromaticBond");
 
     delete m;
     delete m2;
@@ -1343,7 +1345,6 @@ void testGithub268() {
     TEST_ASSERT(m->getBondWithIdx(1)->hasQuery());
     TEST_ASSERT(m->getBondWithIdx(1)->getQuery()->getDescription() ==
                 "BondAnd");
-
     std::string mb = MolToMolBlock(*m);
     RWMol *m2 = MolBlockToMol(mb);
     TEST_ASSERT(m2->getNumBonds() == 4);
@@ -1467,7 +1468,7 @@ void testGetSDText() {
       std::string csmi2 = MolToSmiles(*mol2, true);
       TEST_ASSERT(csmi1 == csmi2);
       STR_VECT pns = mol->getPropList(false, false);
-      BOOST_FOREACH (const std::string &pn, pns) {
+      for (const auto &pn : pns) {
         TEST_ASSERT(mol2->hasProp(pn));
         TEST_ASSERT(mol->getProp<std::string>(pn) ==
                     mol2->getProp<std::string>(pn));

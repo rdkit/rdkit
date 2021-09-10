@@ -54,8 +54,13 @@ struct feat_wrapper {
         .def("GetPos",
              (RDGeom::Point3D(MolChemicalFeature::*)(int) const) &
                  MolChemicalFeature::getPos,
-             (python::arg("self"), python::arg("confId") = -1),
+             (python::arg("self"), python::arg("confId")),
              "Get the location of the chemical feature")
+        .def("GetPos",
+             (RDGeom::Point3D(MolChemicalFeature::*)() const) &
+                 MolChemicalFeature::getPos,
+             python::arg("self"),
+             "Get the location of the default chemical feature (first position)")
         .def("GetAtomIds", getFeatAtomIds,
              "Get the IDs of the atoms that participate in the feature")
         .def("GetMol", &MolChemicalFeature::getMol,

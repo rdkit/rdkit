@@ -55,9 +55,8 @@ double computeBalabanJ(double *distMat, int nb, int nAts) {
   return nActive / ((mu + 1) * accum);
 }
 
-double computeBalabanJ(const ROMol &mol, bool useBO, bool force,
+double computeBalabanJ(const ROMol &mol, bool, bool force,
                        const std::vector<int> *bondPath, bool cacheIt) {
-  RDUNUSED_PARAM(useBO);
   double res = 0.0;
   if (!force && mol.hasProp(common_properties::BalabanJ)) {
     mol.getProp(common_properties::BalabanJ, res);

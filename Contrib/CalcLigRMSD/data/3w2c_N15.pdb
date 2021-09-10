@@ -1,0 +1,65 @@
+HETATM    1  N   N15 A 401       4.149  12.998  33.333  1.00 44.90           N  
+HETATM    2  CA  N15 A 401       4.977  14.161  33.415  1.00 46.23           C  
+HETATM    3  CAA N15 A 401       9.897  15.441  36.239  1.00 57.65           C  
+HETATM    4  CAB N15 A 401      11.551  15.449  34.421  1.00 56.31           C  
+HETATM    5  CAD N15 A 401      -5.532   5.836  30.671  1.00 30.00           C  
+HETATM    6  CAE N15 A 401      -5.169   4.490  30.897  1.00 30.51           C  
+HETATM    7  CAF N15 A 401       0.760  10.526  32.426  1.00 35.13           C  
+HETATM    8  CAG N15 A 401      -4.585   6.842  30.899  1.00 29.52           C  
+HETATM    9  CAH N15 A 401      -3.857   4.231  31.373  1.00 29.13           C  
+HETATM   10  CAI N15 A 401      -0.057   9.397  32.229  1.00 35.80           C  
+HETATM   11  CAJ N15 A 401       3.751  11.145  34.170  1.00 44.29           C  
+HETATM   12  CAK N15 A 401       2.490   8.972  33.044  1.00 36.35           C  
+HETATM   13  CAL N15 A 401       3.187  12.473  32.549  1.00 44.30           C  
+HETATM   14  CAM N15 A 401       8.487  13.062  34.480  1.00 48.16           C  
+HETATM   15  CAN N15 A 401       9.344  14.265  34.066  1.00 51.39           C  
+HETATM   16  CAW N15 A 401       2.076  10.294  32.827  1.00 38.41           C  
+HETATM   17  CAX N15 A 401       2.953  11.272  33.104  1.00 43.16           C  
+HETATM   18  CAY N15 A 401      -1.309   6.516  31.994  1.00 33.89           C  
+HETATM   19  CAZ N15 A 401      -0.079   6.916  32.360  1.00 35.12           C  
+HETATM   20  C   N15 A 401       6.428  13.629  33.325  1.00 47.33           C  
+HETATM   21  O   N15 A 401       6.907  13.243  32.250  1.00 47.93           O  
+HETATM   22  NAP N15 A 401       4.486  12.239  34.251  1.00 44.60           N  
+HETATM   23  NAQ N15 A 401       0.881   6.050  32.700  1.00 36.09           N  
+HETATM   24  NAR N15 A 401      -2.310   7.298  31.617  1.00 33.12           N  
+HETATM   25  NAS N15 A 401       7.088  13.512  34.474  1.00 47.03           N  
+HETATM   26  NAT N15 A 401       1.830   6.629  32.963  1.00 36.82           N  
+HETATM   27  NAU N15 A 401      -1.734   5.250  31.988  1.00 31.71           N  
+HETATM   28  CBA N15 A 401      -3.356   6.513  31.341  1.00 29.45           C  
+HETATM   29  CBB N15 A 401      -3.001   5.246  31.567  1.00 27.92           C  
+HETATM   30  CBC N15 A 401       1.656   7.950  32.843  1.00 35.69           C  
+HETATM   31  CBD N15 A 401       0.408   8.153  32.437  1.00 34.80           C  
+HETATM   32  CBE N15 A 401      10.447  14.608  35.084  1.00 54.34           C  
+CONECT    1   13   22    2
+CONECT    2    1   20
+CONECT    3   32
+CONECT    4   32
+CONECT    5    8    6
+CONECT    6    5    9
+CONECT    7   10   16
+CONECT    8    5   28
+CONECT    9    6   29
+CONECT   10    7   31
+CONECT   11   17   22
+CONECT   12   30   16
+CONECT   13    1   17
+CONECT   14   25   15
+CONECT   15   14   32
+CONECT   16    7   12   17
+CONECT   17   11   13   16
+CONECT   18   24   27   19
+CONECT   19   18   23   31
+CONECT   20    2   21   25
+CONECT   21   20
+CONECT   22    1   11
+CONECT   23   19   26
+CONECT   24   18   28
+CONECT   25   14   20
+CONECT   26   23   30
+CONECT   27   18   29
+CONECT   28    8   24   29
+CONECT   29   27    9   28
+CONECT   30   12   26   31
+CONECT   31   10   19   30
+CONECT   32    3    4   15
+END

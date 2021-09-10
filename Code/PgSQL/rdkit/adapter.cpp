@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2010-2013, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021 Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -70,6 +71,10 @@
 #endif
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
+
+#ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
+#include <GraphMol/MolInterchange/MolInterchange.h>
+#endif
 
 #include "rdkit.h"
 #include "guc.h"
@@ -165,8 +170,10 @@ extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
         mol = SmilesToMol(data);
       } else {
         mol = SmilesToMol(data, 0, false);
-        MolOps::sanitizeMol(*mol);
-        MolOps::mergeQueryHs(*mol);
+        if (mol != nullptr) {
+          MolOps::sanitizeMol(*mol);
+          MolOps::mergeQueryHs(*mol);
+        }
       }
     } else {
       mol = SmartsToMol(data, 0, false);
@@ -216,7 +223,9 @@ extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
       mol = MolBlockToMol(data);
     } else {
       mol = MolBlockToMol(data, true, false);
-      MolOps::mergeQueryHs(*mol);
+      if (mol != nullptr) {
+        MolOps::mergeQueryHs(*mol);
+      }
     }
   } catch (...) {
     mol = nullptr;
@@ -343,7 +352,11 @@ extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
         StringData = MolToCXSmiles(*mol);
       }
     } else {
-      StringData = MolToSmarts(*mol, false);
+      if (!cxSmiles) {
+        StringData = MolToSmarts(*mol, false);
+      } else {
+        StringData = MolToCXSmarts(*mol);
+      }
     }
   } catch (...) {
     ereport(
@@ -358,14 +371,18 @@ extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
 }
 
 extern "C" char *makeCtabText(CROMol data, int *len,
-                              bool createDepictionIfMissing) {
+                              bool createDepictionIfMissing, bool useV3000) {
   auto *mol = (ROMol *)data;
 
   try {
     if (createDepictionIfMissing && mol->getNumConformers() == 0) {
       RDDepict::compute2DCoords(*mol);
     }
-    StringData = MolToMolBlock(*mol);
+    if (!useV3000) {
+      StringData = MolToMolBlock(*mol);
+    } else {
+      StringData = MolToV3KMolBlock(*mol);
+    }
   } catch (...) {
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
@@ -375,6 +392,49 @@ extern "C" char *makeCtabText(CROMol data, int *len,
 
   *len = StringData.size();
   return (char *)StringData.c_str();
+}
+
+extern "C" const char *makeMolJSON(CROMol data) {
+  std::string json = "MolToJSON not available";
+#ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
+  auto *mol = (ROMol *)data;
+
+  try {
+    json = MolInterchange::MolToJSONData(*mol);
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeMolJSON: problems converting molecule to JSON")));
+    json = "";
+  }
+#endif
+  return strdup(json.c_str());
+}
+
+extern "C" CROMol parseMolJSON(char *data, bool warnOnFail) {
+  RWMol *mol = nullptr;
+#ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
+  try {
+    auto mols = MolInterchange::JSONDataToMols(std::string(data));
+    mol = new RWMol(*mols[0]);
+  } catch (...) {
+    mol = nullptr;
+  }
+  if (mol == nullptr) {
+    if (warnOnFail) {
+      ereport(WARNING,
+              (errcode(ERRCODE_WARNING),
+               errmsg("could not create molecule from JSON '%s'", data)));
+
+    } else {
+      ereport(ERROR,
+              (errcode(ERRCODE_DATA_EXCEPTION),
+               errmsg("could not create molecule from JSON '%s'", data)));
+    }
+  }
+#endif
+
+  return (CROMol)mol;
 }
 
 extern "C" char *makeMolBlob(CROMol data, int *len) {
@@ -456,13 +516,18 @@ extern "C" int molcmp(CROMol i, CROMol a) {
     return res;
   }
 
-  RDKit::MatchVectType matchVect;
-  bool recursionPossible = false;
-  bool doChiralMatch = getDoChiralSSS();
-  bool ss1 = RDKit::SubstructMatch(*im, *am, matchVect, recursionPossible,
-                                   doChiralMatch);
-  bool ss2 = RDKit::SubstructMatch(*am, *im, matchVect, recursionPossible,
-                                   doChiralMatch);
+  bool useChirality = getDoChiralSSS();
+  bool useEnhancedStereo = getDoEnhancedStereoSSS();
+
+  RDKit::SubstructMatchParameters params;
+  params.recursionPossible = false;
+  params.useChirality = useChirality;
+  params.useEnhancedStereo = useEnhancedStereo;
+  params.maxMatches = 1;
+  auto mv1 = RDKit::SubstructMatch(*im, *am, params);
+  auto mv2 = RDKit::SubstructMatch(*am, *im, params);
+  bool ss1 = mv1.size() != 0;
+  bool ss2 = mv2.size() != 0;
   if (ss1 && !ss2) {
     return 1;
   } else if (!ss1 && ss2) {
@@ -470,26 +535,38 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   }
 
   // the above can still fail in some chirality cases
-  std::string smi1 = MolToSmiles(*im, doChiralMatch);
-  std::string smi2 = MolToSmiles(*am, doChiralMatch);
+  std::string smi1;
+  std::string smi2;
+  if (!useEnhancedStereo) {
+    smi1 = MolToSmiles(*im, useChirality);
+    smi2 = MolToSmiles(*am, useChirality);
+  } else {
+    smi1 = MolToCXSmiles(*im);
+    smi2 = MolToCXSmiles(*am);
+  }
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
 extern "C" int MolSubstruct(CROMol i, CROMol a) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
-  RDKit::MatchVectType matchVect;
-
-  return RDKit::SubstructMatch(*im, *am, matchVect, true, getDoChiralSSS());
+  RDKit::SubstructMatchParameters params;
+  params.useChirality = getDoChiralSSS();
+  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  params.maxMatches = 1;
+  auto matchVect = RDKit::SubstructMatch(*im, *am, params);
+  return static_cast<int>(matchVect.size());
 }
 
 extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
-  std::vector<RDKit::MatchVectType> matchVect;
-
-  return static_cast<int>(RDKit::SubstructMatch(*im, *am, matchVect, uniquify,
-                                                true, getDoChiralSSS()));
+  RDKit::SubstructMatchParameters params;
+  params.useChirality = getDoChiralSSS();
+  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  params.uniquify = uniquify;
+  auto matchVect = RDKit::SubstructMatch(*im, *am, params);
+  return static_cast<int>(matchVect.size());
 }
 
 /*******************************************
@@ -502,7 +579,9 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
   }
 MOLDESCR(FractionCSP3, RDKit::Descriptors::calcFractionCSP3, double)
 MOLDESCR(TPSA, RDKit::Descriptors::calcTPSA, double)
+MOLDESCR(LabuteASA, RDKit::Descriptors::calcLabuteASA, double)
 MOLDESCR(AMW, RDKit::Descriptors::calcAMW, double)
+MOLDESCR(ExactMW, RDKit::Descriptors::calcExactMW, double)
 MOLDESCR(HBA, RDKit::Descriptors::calcLipinskiHBA, int)
 MOLDESCR(HBD, RDKit::Descriptors::calcLipinskiHBD, int)
 MOLDESCR(NumHeteroatoms, RDKit::Descriptors::calcNumHeteroatoms, int)
@@ -523,6 +602,9 @@ MOLDESCR(NumAliphaticCarbocycles,
 MOLDESCR(NumSaturatedCarbocycles,
          RDKit::Descriptors::calcNumSaturatedCarbocycles, int)
 MOLDESCR(NumHeterocycles, RDKit::Descriptors::calcNumHeterocycles, int)
+MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
+MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
+MOLDESCR(NumAmideBonds, RDKit::Descriptors::calcNumAmideBonds, int)
 
 MOLDESCR(NumRotatableBonds, RDKit::Descriptors::calcNumRotatableBonds, int)
 MOLDESCR(Chi0v, RDKit::Descriptors::calcChi0v, double)
@@ -538,8 +620,8 @@ MOLDESCR(Chi4n, RDKit::Descriptors::calcChi4n, double)
 MOLDESCR(Kappa1, RDKit::Descriptors::calcKappa1, double)
 MOLDESCR(Kappa2, RDKit::Descriptors::calcKappa2, double)
 MOLDESCR(Kappa3, RDKit::Descriptors::calcKappa3, double)
-MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
-MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
+MOLDESCR(HallKierAlpha, RDKit::Descriptors::calcHallKierAlpha, double)
+MOLDESCR(Phi, RDKit::Descriptors::calcPhi, double)
 
 extern "C" double MolLogP(CROMol i) {
   double logp, mr;
@@ -1757,7 +1839,7 @@ extern "C" int ReactionSubstructFP(CChemicalReaction rxn,
 namespace {
 
 struct MoleculeDescriptors {
-  MoleculeDescriptors()  {}
+  MoleculeDescriptors() {}
   unsigned nAtoms{0};
   unsigned nBonds{0};
   unsigned nRings{0};
@@ -2003,7 +2085,20 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
     if (0 == strlen(s)) {
       continue;
     }
-    molecules.push_back(RDKit::ROMOL_SPTR(RDKit::SmilesToMol(s)));
+    ROMol *molptr = nullptr;
+    try {
+      molptr = RDKit::SmilesToMol(s);
+    } catch (...) {
+      molptr = nullptr;
+    }
+    if (molptr == nullptr) {
+      ereport(
+          ERROR,
+          (errcode(ERRCODE_DATA_EXCEPTION),
+           errmsg("findMCS: could not create molecule from SMILES '%s'", s)));
+      return strdup("");
+    }
+    molecules.push_back(RDKit::ROMOL_SPTR(molptr));
     // elog(WARNING, s);
     s += len;
     s++;  // do s++; while(*s && *s <= ' ');

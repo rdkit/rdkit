@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <algorithm>
+#include <iostream>
+#include <map>
+#include <math.h>
+#include <random>
+
 #include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
@@ -21,12 +27,6 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-
-#include <iostream>
-#include <map>
-#include <algorithm>
-#include <boost/foreach.hpp>
-#include <random>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -658,7 +658,7 @@ void test8() {
   delete m2;
 
   std::string sma;
-  smi = "CC";
+  smi = "C-C";
   m = SmartsToMol(smi);
   MolOps::sanitizeMol(*((RWMol *)m));
   TEST_ASSERT(m);
@@ -2536,12 +2536,13 @@ void testSFIssue1719053() {
   TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
   TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
 
+  // N in rings that aren't 3 rings is not chiral
   delete m;
   smi = "C[N@@]1CC[C@@H](C)CC1";
   m = SmilesToMol(smi);
   TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-  TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  TEST_ASSERT(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
 
   delete m;
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -7714,8 +7715,11 @@ void testRemoveAndTrackIsotopes() {
   std::unique_ptr<ROMol> mNoH(removeHs(*static_cast<ROMol *>(m.get()), ps));
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
-  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getProp<std::string>(
-                  common_properties::_isotopicHs) == "2");
+  std::vector<unsigned int> isoHs;
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getPropIfPresent(
+      common_properties::_isotopicHs, isoHs));
+  TEST_ASSERT(isoHs.size() == 1);
+  TEST_ASSERT(isoHs.front() == 2);
   TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
   TEST_ASSERT(
       !mNoH->getAtomWithIdx(30)->hasProp(common_properties::_isotopicHs));
@@ -7917,6 +7921,7 @@ void testRemoveAndTrackIsotopes() {
     // 2) ...Removing all Hs including isotopes and then putting them back
     mNoH.reset(MolOps::removeHs(*static_cast<ROMol *>(mChiral.get()), ps));
     mH.reset(MolOps::addHs(*mNoH));
+
     MolOps::assignStereochemistry(*mH, true, true);
     match.clear();
     TEST_ASSERT(SubstructMatch(*mH, *mChiral, match));
@@ -7949,6 +7954,70 @@ void testRemoveAndTrackIsotopes() {
               *chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.begin() ==
                   Atom::CHI_TETRAHEDRAL_CCW);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub3854() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 3854: "
+         "AddHs creates H atom with nan coordinates on edge case 2D structure"
+      << std::endl;
+
+  std::string molb = R"CTAB(
+     RDKit          2D
+
+  7  8  0  0  1  0  0  0  0  0999 V2000
+    5.0014    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1764    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3514    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9389    1.1271    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3514    1.8412    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1764    1.8412    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5889    1.1271    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  7  1  1  1
+  2  3  1  0
+  2  7  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  7  6  1  0
+M  END)CTAB";
+  bool sanitize = true;
+  bool removeHs = false;
+  std::unique_ptr<ROMol> m(MolBlockToMol(molb, sanitize, removeHs));
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 7);
+
+  bool explicitOnly = false;
+  bool addCoords = true;
+  std::vector<unsigned> onlyOnAtoms = {1, 6};
+  std::unique_ptr<ROMol> m2(
+      MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms));
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m2->getNumAtoms() == 9);
+
+  auto conf = m2->getConformer();
+  for (auto i = 7; i < 9; ++i) {
+    auto atom_pos = conf.getAtomPos(i);
+    TEST_ASSERT(!isnan(atom_pos.x) && !isnan(atom_pos.y) && !isnan(atom_pos.z));
+  }
+
+  // check that we bisect the correct angle and point outside the rings
+  auto v71 = conf.getAtomPos(7) - conf.getAtomPos(1);
+  auto v21 = conf.getAtomPos(2) - conf.getAtomPos(1);
+  auto v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+  auto v61 = conf.getAtomPos(6) - conf.getAtomPos(1);
+  TEST_ASSERT(fabs(fabs(v71.dotProduct(v01)) - fabs(v71.dotProduct(v21))) <
+              1e-3);
+  TEST_ASSERT(v71.dotProduct(v61) < -1e-4);
+
+  auto v86 = conf.getAtomPos(8) - conf.getAtomPos(6);
+  auto v06 = conf.getAtomPos(0) - conf.getAtomPos(6);
+  auto v56 = conf.getAtomPos(5) - conf.getAtomPos(6);
+  auto v16 = conf.getAtomPos(1) - conf.getAtomPos(6);
+  TEST_ASSERT(fabs(fabs(v86.dotProduct(v56)) - fabs(v86.dotProduct(v06))) <
+              1e-3);
+  TEST_ASSERT(v86.dotProduct(v16) < -1e-4);
 }
 
 #ifdef RDK_USE_URF
@@ -8003,11 +8072,43 @@ void testRingFamilies() {
 void testRingFamilies() {}
 #endif
 
+void testSetTerminalAtomCoords() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing adding "
+                          "coordinates to a terminal atom. "
+                       << std::endl;
+  auto mol = R"CTAB(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END)CTAB"_ctab;
+  auto atom = new Atom(0);
+  auto idx = mol->addAtom(atom);
+  delete atom;
+  mol->addBond(idx, 0);
+  MolOps::setTerminalAtomCoords(static_cast<ROMol &>(*mol), idx, 0);
+  auto &coord = mol->getConformer().getAtomPos(idx);
+  TEST_ASSERT(coord.x > 2.499 && coord.x < 2.501);
+  TEST_ASSERT(coord.y > -0.001 && coord.y < 0.001);
+  TEST_ASSERT(coord.z > -0.001 && coord.z < 0.001);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
   test1();
   test2();
   test3();
@@ -8115,8 +8216,9 @@ int main() {
   testGithub1990();
   testPotentialStereoBonds();
   testRingFamilies();
-#endif
   testRemoveAndTrackIsotopes();
+  testGithub3854();
+  testSetTerminalAtomCoords();
 
   return 0;
 }

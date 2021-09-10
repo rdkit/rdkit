@@ -18,6 +18,7 @@
 #include <GraphMol/FileParsers/MultithreadedSmilesMolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
+#include <GraphMol/Wrap/ContextManagers.h>
 
 #include "MolSupplier.h"
 #include "MultithreadedMolSupplier.h"
@@ -92,6 +93,15 @@ struct multiSmiMolSup_wrap {
               (*)(MultithreadedSmilesMolSupplier *)) &
                  MTMolSupplIter,
              python::return_internal_reference<1>())
+        .def("__enter__",
+             (MultithreadedSmilesMolSupplier *
+              (*)(MultithreadedSmilesMolSupplier *)) &
+                 MolIOEnter,
+             python::return_internal_reference<>())
+        .def("__exit__",
+             (bool (*)(MultithreadedSmilesMolSupplier *, python::object,
+                       python::object, python::object)) &
+                 MolIOExit)
         .def("__next__",
              (ROMol * (*)(MultithreadedSmilesMolSupplier *)) &
                  MolForwardSupplNext,

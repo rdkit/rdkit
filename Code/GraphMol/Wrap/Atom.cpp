@@ -119,6 +119,14 @@ void SetAtomMonomerInfo(Atom *atom, const AtomMonomerInfo *info) {
 AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
   return atom->getMonomerInfo();
 }
+
+void AtomSetPDBResidueInfo(Atom *atom, const AtomMonomerInfo *info) {
+  if (info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+    throw_value_error("MonomerInfo is not a PDB Residue");
+  }
+  atom->setMonomerInfo(info->copy());
+}
+
 AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
   AtomMonomerInfo *res = atom->getMonomerInfo();
   if (!res) {
@@ -411,6 +419,8 @@ struct atom_wrapper {
                  1, python::with_custodian_and_ward_postcall<0, 1>>(),
              "Returns the atom's MonomerInfo object, if there is one.\n\n")
         .def("SetMonomerInfo", SetAtomMonomerInfo,
+             "Sets the atom's MonomerInfo object.\n\n")
+        .def("SetPDBResidueInfo", AtomSetPDBResidueInfo,
              "Sets the atom's MonomerInfo object.\n\n")
         .def("GetAtomMapNum", &Atom::getAtomMapNum,
              "Gets the atoms map number, returns 0 if not set")

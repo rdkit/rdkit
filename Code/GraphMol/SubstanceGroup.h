@@ -35,9 +35,9 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroupException
     : public std::runtime_error {
  public:
   //! construct with an error message
-  SubstanceGroupException(const char *msg) : std::runtime_error(msg){};
+  SubstanceGroupException(const char *msg) : std::runtime_error(msg) {}
   //! construct with an error message
-  SubstanceGroupException(const std::string &msg) : std::runtime_error(msg){};
+  SubstanceGroupException(const std::string &msg) : std::runtime_error(msg) {}
 };
 
 //! The class for representing SubstanceGroups
@@ -101,10 +101,10 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   SubstanceGroup &operator=(SubstanceGroup &&other) = default;
 
   //! Destructor
-  ~SubstanceGroup(){};
+  ~SubstanceGroup() = default;
 
   //! returns whether or not this belongs to a molecule
-  bool hasOwningMol() const { return dp_mol != nullptr; };
+  bool hasOwningMol() const { return dp_mol != nullptr; }
 
   //! Get the molecule that owns this instance
   ROMol &getOwningMol() const {
@@ -112,8 +112,15 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
     return *dp_mol;
   }
 
+  //! returns whether or not this group is valid; invalid groups must be
+  //! ignored.
+  bool getIsValid() const { return d_isValid; }
+
+  //! set whether or not this group is valid; invalid groups must be ignored.
+  void setIsValid(bool isValid) { d_isValid = isValid; }
+
   //! get the index of this sgroup in dp_mol's sgroups vector
-  //! (do not mistake this by the ID!)00
+  //! (do not mistake this by the ID!)
   unsigned int getIndexInMol() const;
 
   /* Atom and Bond methods */
@@ -134,13 +141,23 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   const std::vector<unsigned int> &getParentAtoms() const { return d_patoms; }
   const std::vector<unsigned int> &getBonds() const { return d_bonds; }
 
+  void setAtoms(std::vector<unsigned int> atoms) { d_atoms = std::move(atoms); }
+  void setParentAtoms(std::vector<unsigned int> patoms) {
+    d_patoms = std::move(patoms);
+  }
+  void setBonds(std::vector<unsigned int> bonds) { d_bonds = std::move(bonds); }
+
   const std::vector<Bracket> &getBrackets() const { return d_brackets; }
   const std::vector<CState> &getCStates() const { return d_cstates; }
   const std::vector<AttachPoint> &getAttachPoints() const { return d_saps; }
 
-  void clearBrackets() { d_brackets.clear(); };
-  void clearCStates() { d_cstates.clear(); };
-  void clearAttachPoints() { d_saps.clear(); };
+  std::vector<Bracket> &getBrackets() { return d_brackets; }
+  std::vector<CState> &getCStates() { return d_cstates; }
+  std::vector<AttachPoint> &getAttachPoints() { return d_saps; }
+
+  void clearBrackets() { d_brackets.clear(); }
+  void clearCStates() { d_cstates.clear(); }
+  void clearAttachPoints() { d_saps.clear(); }
 
   //! adjusts our atom IDs to reflect that an atom has been removed from the
   //! parent molecule
@@ -181,6 +198,8 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
 
  private:
   ROMol *dp_mol = nullptr;  // owning molecule
+
+  bool d_isValid = true;
 
   std::vector<unsigned int> d_atoms;
   std::vector<unsigned int> d_patoms;

@@ -21,6 +21,7 @@
 #include FT_BBOX_H
 #include FT_OUTLINE_H
 
+#include <RDGeneral/export.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
@@ -28,11 +29,11 @@ namespace RDKit {
 struct StringRect;
 
 // ****************************************************************************
-class DrawTextFT : public DrawText {
+class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
  public:
   DrawTextFT(double max_fnt_sz, double min_fnt_sz,
              const std::string &font_file);
-  ~DrawTextFT();
+  ~DrawTextFT() override;
 
   void drawChar(char c, const Point2D &cds) override;
 

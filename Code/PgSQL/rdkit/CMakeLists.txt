@@ -18,6 +18,7 @@ if(NOT DEFINED Boost_INCLUDE_DIRS)
 endif(NOT DEFINED Boost_INCLUDE_DIRS)
 include_directories(${Boost_INCLUDE_DIRS})
 message("postgres: ${PostgreSQL_INCLUDE_DIRS}")
+add_definitions(-DRDK_TOOLKIT_VERSION="${RDKit_RELEASENAME}")
 include_directories(${PostgreSQL_INCLUDE_DIRS})
 if(WIN32)
   include_directories(${PostgreSQL_INCLUDE_DIR}/server/port/win32)
@@ -33,7 +34,11 @@ if(RDK_BUILD_INCHI_SUPPORT)
   include_directories(${CMAKE_SOURCE_DIR}/External)
   add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
 endif(RDK_BUILD_INCHI_SUPPORT)
-add_definitions(-DRDKITVER="007400")
+if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
+  add_definitions(-DRDK_BUILD_MOLINTERCHANGE_SUPPORT)
+endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
+
+add_definitions(-DRDKITVER="007600")
 if(NOT DEFINED PostgreSQL_ROOT)
   if(DEFINED ENV{PostgreSQL_ROOT})
     set(PostgreSQL_ROOT "$ENV{PostgreSQL_ROOT}")
@@ -87,6 +92,7 @@ else(APPLE)
 endif(APPLE)
 set(avalonRegress "")
 set(inchiRegress "")
+set(jsonRegress "")
 set(pgRDKitLibSuffix "")
 if(RDK_PGSQL_STATIC AND ((NOT MSVC) OR (MSVC AND RDK_INSTALL_DLLS_MSVC)))
   set(pgRDKitLibSuffix "_static")
@@ -108,6 +114,10 @@ if(RDK_BUILD_INCHI_SUPPORT)
   set(inchiRegress "inchi")
   set(pgRDKitLibList "${pgRDKitLibList}RDInchiLib;${INCHI_LIBRARIES};")
 endif(RDK_BUILD_INCHI_SUPPORT)
+if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
+  set(jsonRegress "json")
+  set(pgRDKitLibList "${pgRDKitLibList}MolInterchange;")
+endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
     "MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
     "FileParsers;SmilesParse;Fingerprints;Subgraphs;Descriptors;"
@@ -183,8 +193,8 @@ endif(WIN32 AND NOT UNIX)
 set(testPgSQLBody "cd \"${PG_CURRENT_BINARY_DIR}\"\n"
     "\"${PGREGRESS_BINARY}\" --inputdir=sql "
     "${PGREGRESS_BINDIR_SWITCH} rdkit-91 "
-    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction "
-    "${avalonRegress} ${inchiRegress}\n")
+    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs"
+    " ${avalonRegress} ${inchiRegress} ${jsonRegress}\n")
 file(STRINGS ${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control
     PG_EXTVERSION LIMIT_COUNT 1 REGEX default_version)
 string(REPLACE " " ";" tokList ${PG_EXTVERSION})
@@ -218,9 +228,15 @@ endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
 
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
+file(GLOB files "update_sql/*.in")
+foreach(file ${files})
+  string(REPLACE ".in" "" output_name ${file})
+  configure_file(${file} ${output_name})
+endforeach()
 set(installPgSQLBody "${installPgSQLBody}"
     "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}update_sql/\"*.sql \"${PG_EXTENSIONDIR}\"\n"
     "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")
 file(WRITE ${testPgSQLName} ${testPgSQLBody})

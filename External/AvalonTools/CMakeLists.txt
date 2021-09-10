@@ -1,4 +1,7 @@
-if(RDK_BUILD_AVALON_SUPPORT)
+if(NOT RDK_BUILD_AVALON_SUPPORT)
+  return()
+endif(NOT RDK_BUILD_AVALON_SUPPORT)
+
 if(NOT DEFINED AVALONTOOLS_DIR)
   set(AVALONTOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/SourceDistribution")
   set(fileToPatch "${CMAKE_CURRENT_SOURCE_DIR}/SourceDistribution/common/reaccsio.c")
@@ -18,7 +21,7 @@ set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
 
 if(needDownload)
   if(NOT DEFINED AVALONTOOLS_URL)
-    set(AVALONTOOLS_URL "http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
+    set(AVALONTOOLS_URL "https://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
   endif()
   if(NOT DEFINED AVALONTOOLS_MD5SUM)
     set(AVALONTOOLS_MD5SUM "092a94f421873f038aa67d4a6cc8cb54")
@@ -39,7 +42,8 @@ if(needDownload)
 endif()
 
 if (MSVC)
-  add_definitions( "/D_CRT_SECURE_NO_WARNINGS /wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715  /nologo" )
+  add_definitions("/D_CRT_SECURE_NO_WARNINGS")
+  add_compile_options(/wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715 /nologo)
 endif(MSVC)
 
 set(avalon_clib_srcs ${AVALON_SRC_PATH}/layout.c
@@ -79,9 +83,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_definitions(-D_GNU_SOURCE=1)
 endif()
 
-     if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses -Wno-dangling-else -Wno-format")
-     endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses -Wno-dangling-else -Wno-format")
+endif()
 
 
 rdkit_library(avalon_clib ${avalon_clib_srcs})
@@ -94,7 +98,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${AVALON_SRC_PATH})
 
 rdkit_library(AvalonLib AvalonTools.cpp SHARED 
-     LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs  )
+     LINK_LIBRARIES avalon_clib SubstructMatch FileParsers SmilesParse GraphMol DataStructs  )
 target_compile_definitions(AvalonLib PRIVATE RDKIT_AVALONLIB_BUILD)
 rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp
@@ -103,5 +107,3 @@ rdkit_test(testAvalonLib1 test1.cpp
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
-
-endif(RDK_BUILD_AVALON_SUPPORT)

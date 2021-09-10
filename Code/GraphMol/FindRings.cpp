@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,8 +29,7 @@ const size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
 
 using namespace RDKit;
 
-std::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
-  RDUNUSED_PARAM(nAtoms);
+std::uint32_t computeRingInvariant(INT_VECT ring, unsigned int) {
   std::sort(ring.begin(), ring.end());
   std::uint32_t res = gboost::hash_range(ring.begin(), ring.end());
   return res;
@@ -209,9 +208,7 @@ struct compRingSize : public std::binary_function<INT_VECT, INT_VECT, bool> {
   }
 };
 
-void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt,
-                      const ROMol &mol) {
-  RDUNUSED_PARAM(nexpt);
+void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
   // sort on size
   std::sort(res.begin(), res.end(), compRingSize());
 
@@ -342,12 +339,12 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
   std::map<int, RINGINVAR_VECT> nodeInvars;
   std::map<int, RINGINVAR_VECT>::const_iterator nici;
   BFSWorkspace bfs_workspace;
-  for (auto& cand: d2nodes) {
+  for (auto &cand : d2nodes) {
     // std::cerr<<"    smallest rings bfs: "<<cand<<std::endl;
     VECT_INT_VECT srings;
     // we have to find all non duplicate possible smallest rings for each node
     bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
-    for (const auto& nring: srings) {
+    for (const auto &nring : srings) {
       std::uint32_t invr =
           RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
       if (invars.find(invr) == invars.end()) {
@@ -372,7 +369,7 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
 
       nodeInvars[cand].push_back(invr);
       // check if this ring is duplicate with something else
-      for (auto& nici: nodeInvars) {
+      for (auto &nici : nodeInvars) {
         if (nici.first != cand) {
           if (std::find(nici.second.begin(), nici.second.end(), invr) !=
               nici.second.end()) {
@@ -414,9 +411,8 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
 }
 
 void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
-                     RINGINVAR_SET &invars, int cand, INT_VECT &atomDegrees,
+                     RINGINVAR_SET &invars, int cand, INT_VECT &,
                      boost::dynamic_bitset<> activeBonds) {
-  RDUNUSED_PARAM(atomDegrees);
   // this is brutal - we have no degree 2 nodes - find the first possible degree
   // 3 node
   int nsmall;
@@ -634,8 +630,6 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
   }
 }
 
-
-
 /*******************************************************************************
  * SUMMARY:
  *  this again is a modified version of the BFS algorithm in Figueras paper to
@@ -757,8 +751,8 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
           }
         }
       }
-    }        // end of loop over neighbors of current atom
-  }          // moving to the next node
+    }  // end of loop over neighbors of current atom
+  }    // moving to the next node
 
   // if we are here we should have found everything around the node
   return rdcast<unsigned int>(rings.size());
@@ -937,12 +931,12 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     }
 
     // the following is the list of atoms that are useful in the next round of
-    // trimming basically atoms that become degree 0 or 1 because of bond removals
-    // initialized with atoms of degrees 0 and 1
+    // trimming basically atoms that become degree 0 or 1 because of bond
+    // removals initialized with atoms of degrees 0 and 1
     INT_SET changed;
     int bndcnt_with_zero_order_bonds = 0;
     unsigned int nbnds = 0;
-    for (auto atom_idx: curFrag) {
+    for (auto atom_idx : curFrag) {
       bndcnt_with_zero_order_bonds += atomDegreesWithZeroOrderBonds[atom_idx];
 
       int deg = atomDegrees[atom_idx];
@@ -1099,9 +1093,11 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
             << "WARNING: could not find number of expected rings. Switching to "
                "an approximate ring finding algorithm."
             << std::endl;
+        mol.getRingInfo()->reset();
         fastFindRings(mol);
         res.clear();
         res = mol.getRingInfo()->atomRings();
+        return rdcast<int>(res.size());
       }
     }
     // if we have more than expected we need to do some cleanup

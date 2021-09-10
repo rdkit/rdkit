@@ -39,7 +39,7 @@ class BitCorrMatGenerator {
    *  of the symmetric matrix
    */
  public:
-  BitCorrMatGenerator() { this->initGenerator(); };
+  BitCorrMatGenerator() { this->initGenerator(); }
 
   ~BitCorrMatGenerator() { delete[] dp_corrMat; }
 
@@ -47,7 +47,7 @@ class BitCorrMatGenerator {
     dp_corrMat = nullptr;
     d_descs.resize(0);
     d_nExamples = 0;
-  };
+  }
 
   /*! \brief Set the list bits that we are interested in correlating
    *
@@ -65,22 +65,22 @@ class BitCorrMatGenerator {
     for (i = 0; i < nelem; i++) {
       dp_corrMat[i] = 0.0;
     }
-  };
+  }
 
   //! \brief get the number of examples we used so far to compute the
-  // correlation matrix
-  int getNumExamples() const { return d_nExamples; };
+  /// correlation matrix
+  int getNumExamples() const { return d_nExamples; }
 
   //! \brief Get the list of bits ID that are used to generate the correlation
-  // matrix
-  RDKit::INT_VECT getCorrBitList() const { return d_descs; };
+  /// matrix
+  RDKit::INT_VECT getCorrBitList() const { return d_descs; }
 
   //! \brief Gets a pointer to the correlation matrix
-  double *getCorrMat() { return dp_corrMat; };
+  double *getCorrMat() { return dp_corrMat; }
 
   //! \brief For each pair of on bits (bi, bj) in fp increase the correlation
-  // count
-  //    for the pair by 1
+  /// count
+  ///   for the pair by 1
   void collectVotes(const BitVect &fp) {
     unsigned int nd = d_descs.size();
     // use a temporary bit vector to first mask the fingerprint
@@ -103,7 +103,7 @@ class BitCorrMatGenerator {
       }
     }
     d_nExamples++;
-  };
+  }
 
  private:
   RDKit::INT_VECT d_descs;

@@ -114,8 +114,7 @@ void finalizeQueryMol(ROMol *mol, bool mergeHs) {
   }
 }
 
-std::string replaceSLNMacroAtoms(std::string inp, int debugParse) {
-  RDUNUSED_PARAM(debugParse);
+std::string replaceSLNMacroAtoms(std::string inp) {
   const std::regex defn("\\{(.+?):(.+?)\\}");
   const char *empty = "";
 
@@ -151,7 +150,7 @@ std::string replaceSLNMacroAtoms(std::string inp, int debugParse) {
 
 RWMol *toMol(std::string inp, bool doQueries, int debugParse) {
   boost::trim_if(inp, boost::is_any_of(" \t\r\n"));
-  inp = replaceSLNMacroAtoms(inp, debugParse);
+  inp = replaceSLNMacroAtoms(inp);
   if (debugParse) {
     std::cerr << "****** PARSING SLN: ->" << inp << "<-" << std::endl;
   }

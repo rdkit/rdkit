@@ -1,5 +1,6 @@
-if(RDK_BUILD_FREESASA_SUPPORT)
-
+if(NOT RDK_BUILD_FREESASA_SUPPORT)
+  return()
+endif(NOT RDK_BUILD_FREESASA_SUPPORT)
 
 if(NOT DEFINED FREESASA_DIR)
   set(FREESASA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa")
@@ -27,17 +28,7 @@ if(needDownload)
   endif()
 endif()
 
-macro(use_c99)
-  if (CMAKE_VERSION VERSION_LESS "3.1")
-    if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-      set (CMAKE_C_FLAGS "--std=gnu99 ${CMAKE_C_FLAGS}")
-    endif ()
-  else ()
-    set (CMAKE_C_STANDARD 99)
-  endif ()
-endmacro(use_c99)
-
-use_c99()
+set(CMAKE_C_STANDARD 99)
 
 set (freesasa_clib_srcs
     ${FREESASA_SRC_DIR}/src/classifier.c
@@ -103,5 +94,3 @@ rdkit_test(testFreeSASALib testFreeSASA.cpp
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()
-
-endif(RDK_BUILD_FREESASA_SUPPORT)

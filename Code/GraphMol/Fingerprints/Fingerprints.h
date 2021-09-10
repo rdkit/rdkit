@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2012 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_FINGERPRINTS_H_
-#define _RD_FINGERPRINTS_H_
+#ifndef RD_FINGERPRINTS_H
+#define RD_FINGERPRINTS_H
 
 #include <vector>
 #include <cstdint>
@@ -18,6 +18,7 @@
 class ExplicitBitVect;
 namespace RDKit {
 class ROMol;
+class MolBundle;
 
 //! \brief Generates a topological (Daylight like) fingerprint for a molecule
 //!        using an alternate (faster) hashing algorithm
@@ -144,9 +145,12 @@ const unsigned int substructLayers = 0x07;
 RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *PatternFingerprintMol(
     const ROMol &mol, unsigned int fpSize = 2048,
     std::vector<unsigned int> *atomCounts = nullptr,
-    ExplicitBitVect *setOnlyBits = nullptr,
-    bool tautomericFingerprint = false);
+    ExplicitBitVect *setOnlyBits = nullptr, bool tautomericFingerprint = false);
 const std::string PatternFingerprintMolVersion = "1.0.0";
+//! \overload
+RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *PatternFingerprintMol(
+    const MolBundle &bundle, unsigned int fpSize = 2048,
+    ExplicitBitVect *setOnlyBits = nullptr, bool tautomericFingerprint = false);
 
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<boost::uint64_t>
     *getUnfoldedRDKFingerprintMol(

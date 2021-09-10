@@ -544,6 +544,7 @@ Available parameters and their default values are:
 -   rdkit.tanimoto\_threshold : threshold value for the Tanimoto similarity operator. Searches done using Tanimoto similarity will only return results with a similarity of at least this value.
 -   rdkit.dice\_threshold : threshold value for the Dice similiarty operator. Searches done using Dice similarity will only return results with a similarity of at least this value.
 -   rdkit.do\_chiral\_sss : toggles whether or not stereochemistry is used in substructure matching. (*available from 2013\_03 release*).
+-   rdkit.do\_enhanced\_stereo\_sss : toggles whether or not enhanced stereo is used in substructure matching. Has no effect if `rdkit.do_chiral_sss` is false. (*available from 2021\_09 release*).
 -   rdkit.sss\_fp\_size : the size (in bits) of the fingerprint used for substructure screening.
 -   rdkit.morgan\_fp\_size : the size (in bits) of morgan fingerprints
 -   rdkit.featmorgan\_fp\_size : the size (in bits) of featmorgan fingerprints
@@ -632,10 +633,15 @@ There are additional operators defined in the cartridge, but these are used for 
 -   qmol\_from\_smiles(smiles) : returns a query molecule for a SMILES string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom.
 -   qmol\_from\_ctab(ctab, bool default false) : returns a query molecule for a CTAB (mol block) string, NULL if the molecule construction fails. Explicit Hs in the SMILES are converted into query features on the attached atom. The optional second argument controls whether or not the molecule's coordinates are saved.
 -   mol\_to\_smiles(mol) : returns the canonical SMILES for a molecule.
+-   mol\_to\_cxsmiles(mol) : returns the CXSMILES for a molecule (*available from 2021\_09 release*).
 -   mol\_to\_smarts(mol) : returns SMARTS string for a molecule.
+-   mol\_to\_cxsmarts(mol) : returns the CXSMARTS for a molecule (*available from 2021\_09 release*).
 -   mol\_to\_pkl(mol) : returns binary string (bytea) for a molecule. (*available from Q3 2012 (2012\_09) release*)
--   mol\_to\_ctab(mol,bool default true) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. (*available from the 2014\_03 release*)
+-   mol\_to\_ctab(mol,bool default true, bool default false) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates. The optional third argument (available since the 2021\_09 release) controls whether or not a V3000 ctab should be generated.
+-   mol\_to\_v3kctab(mol,bool default true) : returns a CTAB (mol block) string for a molecule. The optional second argument controls whether or not 2D coordinates will be generated for molecules that don't have coordinates  (*available from 2021\_09 release*).
 -   mol\_to\_svg(mol,string default '',int default 250, int default 200, string default '') : returns an SVG with a drawing of the molecule. The optional parameters are a string to use as the legend, the width of the image, the height of the image, and a JSON with additional rendering parameters. (*available from the 2016\_09 release*)
+-   mol\_to\_json(string) : returns the commonchem JSON for a molecule. (*available from the 2021\_09 release*)
+-   mol\_from\_json(string) : returns a molecule for a commonchem JSON string, NULL if the molecule construction fails. (*available from the 2021\_09 release*)
 
 
 ##### Substructure operations
@@ -647,8 +653,10 @@ There are additional operators defined in the cartridge, but these are used for 
 ##### Descriptors
 
 -   mol\_amw(mol) : returns the AMW for a molecule.
+-   mol\_exactmw(mol) : returns the exact MW for a molecule (*available from 2021\_09 release*).
 -   mol\_logp(mol) : returns the MolLogP for a molecule.
 -   mol\_tpsa(mol) : returns the topological polar surface area for a molecule (*available from Q1 2011 (2011\_03) release*).
+-   mol\_labuteasa(mol) : returns Labute's approximate surface area (ASA) for a molecule (*available from 2021\_09 release*).
 -   mol\_fractioncsp3(mol) : returns the fraction of carbons that are sp3 hybridized (*available from 2013\_03 release*).
 -   mol\_hba(mol) : returns the number of Lipinski H-bond acceptors (i.e. number of Os and Ns) for a molecule.
 -   mol\_hbd(mol) : returns the number of Lipinski H-bond donors (i.e. number of Os and Ns that have at least one H) for a molecule.
@@ -666,17 +674,20 @@ There are additional operators defined in the cartridge, but these are used for 
 -   mol\_numaromaticcarbocycles(mol) : returns the number of aromatic carbocycles in a molecule (*available from 2013\_03 release*).
 -   mol\_numaliphaticcarbocycles(mol) : returns the number of aliphatic (at least one non-aromatic bond) carbocycles in a molecule (*available from 2013\_03 release*).
 -   mol\_numsaturatedcarbocycles(mol) : returns the number of saturated carbocycles in a molecule (*available from 2013\_03 release*).
+-   mol\_numspiroatoms : returns the number of spiro atoms in a molecule (*available from 2015\_09 release*).
+-   mol\_numbridgeheadatoms : returns the number of bridgehead atoms in a molecule (*available from 2015\_09 release*).
 -   mol\_inchi(mol) : returns an InChI for the molecule. (*available from the 2011\_06 release, requires that the RDKit be built with InChI support*).
 -   mol\_inchikey(mol) : returns an InChI key for the molecule. (*available from the 2011\_06 release, requires that the RDKit be built with InChI support*).
 -   mol\_formula(mol,bool default false, bool default true) : returns a string with the molecular formula. The second argument controls whether isotope information is included in the formula; the third argument controls whether "D" and "T" are used instead of [2H] and [3H]. (*available from the 2014\_03 release*)
+-   mol\_nm\_hash(mol,string default '') : returns a string with a hash for the molecule. The second argument controls the hash type. Legal values are 'AnonymousGraph', 'ElementGraph', 'CanonicalSmiles', 'MurckoScaffold', 'ExtendedMurcko', 'MolFormula', 'AtomBondCounts', 'DegreeVector', 'Mesomer', 'HetAtomTautomer', 'HetAtomProtomer', 'RedoxPair', 'Regioisomer', 'NetCharge', 'SmallWorldIndexBR', 'SmallWorldIndexBRL', 'ArthorSubstructureOrder`. The default is 'AnonymousGraph'.
 
 ##### Connectivity Descriptors
 
 -   mol\_chi0v(mol) - mol\_chi4v(mol) : returns the ChiXv value for a molecule for X=0-4 (*available from 2012\_01 release*).
 -   mol\_chi0n(mol) - mol\_chi4n(mol) : returns the ChiXn value for a molecule for X=0-4 (*available from 2012\_01 release*).
 -   mol\_kappa1(mol) - mol\_kappa3(mol) : returns the kappaX value for a molecule for X=1-3 (*available from 2012\_01 release*).
--   mol\_numspiroatoms : returns the number of spiro atoms in a molecule (*available from 2015\_09 release*).
--   mol\_numbridgeheadatoms : returns the number of bridgehead atoms in a molecule (*available from 2015\_09 release*).
+-   mol\_phi(mol) : returns the Kier Phi value for a molecule (*available from 2021\_09 release*).
+-   mol\_hallkieralpha(mol) : returns the Hall-Kier alpha value for a molecule (*available from 2021\_09 release*).
 
 ##### MCS
 
@@ -686,6 +697,7 @@ There are additional operators defined in the cartridge, but these are used for 
 #### Other
 
 -   rdkit\_version() : returns a string with the cartridge version number.
+-   rdkit\_toolkit\_version() : returns a string with the RDKit version number.
 
 There are additional functions defined in the cartridge, but these are used for internal purposes.
 
@@ -718,7 +730,7 @@ These pickles can then be converted into molecules:
 
 ## License
 
-This document is copyright (C) 2013-2016 by Greg Landrum
+This document is copyright (C) 2013-2021 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 

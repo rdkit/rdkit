@@ -19,7 +19,7 @@
 namespace RDNumeric {
 namespace EigenSolvers {
 //! Compute the \c numEig largest eigenvalues and, optionally,  the
-// corresponding
+/// corresponding
 //! eigenvectors.
 /*!
 

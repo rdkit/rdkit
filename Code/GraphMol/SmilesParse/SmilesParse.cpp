@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -26,7 +26,6 @@
 #include "SmilesParse.h"
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/RDKitBase.h>
@@ -108,12 +107,14 @@ int smiles_parse_helper(const std::string &inp,
   std::list<unsigned int> branchPoints;
   void *scanner;
   int res = 1;  // initialize with fail code
-
+  unsigned numAtomsParsed = 0;
+  unsigned numBondsParsed = 0;
   TEST_ASSERT(!yysmiles_lex_init(&scanner));
   try {
     size_t ltrim = setup_smiles_string(inp, scanner);
     res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         &branchPoints, scanner, start_tok);
+                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
+                         start_tok);
   } catch (...) {
     yysmiles_lex_destroy(scanner);
     throw;
@@ -174,6 +175,11 @@ std::string labelRecursivePatterns(const std::string &sma) {
     } else if (sma[pos] == '(') {
       state.push_back(BRANCH);
     } else if (sma[pos] == ')') {
+      if (state.empty() || state.back() == BASE) {
+        // seriously bogus input. Just return the input
+        // and let the SMARTS parser itself report the error
+        return sma;
+      }
       SmaState currState = state.back();
       state.pop_back();
       if (currState == RECURSE) {
@@ -225,7 +231,6 @@ RWMol *toMol(const std::string &inp,
       if (res->hasAtomBookmark(ci_RIGHTMOST_ATOM)) {
         res->clearAtomBookmark(ci_RIGHTMOST_ATOM);
       }
-      SmilesParseOps::CleanupAfterParsing(res);
       molVect[0] = nullptr;  // NOTE: to avoid leaks on failures, this should
                              // occur last in this if.
     }
@@ -238,7 +243,7 @@ RWMol *toMol(const std::string &inp,
                           << " for input: '" << origInp << "'" << std::endl;
     res = nullptr;
   }
-  BOOST_FOREACH (RDKit::RWMol *molPtr, molVect) {
+  for (auto *molPtr : molVect) {
     if (molPtr) {
       // Clean-up the bond bookmarks when not calling CloseMolRings
       SmilesParseOps::CleanupAfterParseError(molPtr);
@@ -290,9 +295,11 @@ Bond *toBond(const std::string &inp, int func(const std::string &, Bond *&)) {
 }
 
 namespace {
-void preprocessSmiles(const std::string &smiles,
-                      const SmilesParserParams &params, std::string &lsmiles,
-                      std::string &name, std::string &cxPart) {
+// despite the name: works for both SMILES and SMARTS
+template <typename T>
+void preprocessSmiles(const std::string &smiles, const T &params,
+                      std::string &lsmiles, std::string &name,
+                      std::string &cxPart) {
   if (params.parseName && !params.allowCXSMILES) {
     std::vector<std::string> tokens;
     boost::split(tokens, smiles, boost::is_any_of(" \t"),
@@ -318,12 +325,10 @@ void preprocessSmiles(const std::string &smiles,
     bool loopAgain = true;
     while (loopAgain) {
       loopAgain = false;
-      for (std::map<std::string, std::string>::const_iterator replIt =
-               params.replacements->begin();
-           replIt != params.replacements->end(); ++replIt) {
-        if (boost::find_first(smi, replIt->first)) {
+      for (const auto pr : *(params.replacements)) {
+        if (smi.find(pr.first) != std::string::npos) {
           loopAgain = true;
-          boost::replace_all(smi, replIt->first, replIt->second);
+          boost::replace_all(smi, pr.first, pr.second);
         }
       }
     }
@@ -413,8 +418,11 @@ RWMol *SmilesToMol(const std::string &smiles,
     QueryOps::completeMolQueries(res, 0xDEADBEEF);
   }
 
-  if (res && !name.empty()) {
-    res->setProp(common_properties::_Name, name);
+  if (res) {
+    SmilesParseOps::CleanupAfterParsing(res);
+    if (!name.empty()) {
+      res->setProp(common_properties::_Name, name);
+    }
   }
   return res;
 };
@@ -435,41 +443,41 @@ Bond *SmartsToBond(const std::string &smiles) {
   return res;
 };
 
-RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
-                   std::map<std::string, std::string> *replacements) {
+RWMol *SmartsToMol(const std::string &smarts,
+                   const SmartsParserParams &params) {
   // Calling SmartsToMol in a multithreaded context is generally safe *unless*
   // the value of debugParse is different for different threads. The if
   // statement below avoids a TSAN warning in the case where multiple threads
   // all use the same value for debugParse.
-  if (yysmarts_debug != debugParse) {
-    yysmarts_debug = debugParse;
+  if (yysmarts_debug != params.debugParse) {
+    yysmarts_debug = params.debugParse;
   }
-  // boost::trim_if(sma,boost::is_any_of(" \t\r\n"));
-  std::string sma;
-  RWMol *res;
 
-  if (replacements) {
-    sma = smarts;
+  std::string lsmarts, name, cxPart;
+  preprocessSmiles(smarts, params, lsmarts, name, cxPart);
 
-    bool loopAgain = true;
-    while (loopAgain) {
-      loopAgain = false;
-      for (std::map<std::string, std::string>::const_iterator replIt =
-               replacements->begin();
-           replIt != replacements->end(); ++replIt) {
-        if (boost::find_first(sma, replIt->first)) {
-          loopAgain = true;
-          boost::replace_all(sma, replIt->first, replIt->second);
-        }
+  RWMol *res = nullptr;
+  res = toMol(labelRecursivePatterns(lsmarts), smarts_parse, lsmarts);
+
+  if (res && params.allowCXSMILES && !cxPart.empty()) {
+    std::string::const_iterator pos = cxPart.cbegin();
+    try {
+      SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+    } catch (...) {
+      if (params.strictCXSMILES) {
+        delete res;
+        throw;
       }
     }
-    std::string oInput = sma;
-    res = toMol(labelRecursivePatterns(sma), smarts_parse, oInput);
-  } else {
-    res = toMol(labelRecursivePatterns(smarts), smarts_parse, smarts);
+    res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
+    if (params.parseName && pos != cxPart.cend()) {
+      std::string nmpart(pos, cxPart.cend());
+      name = boost::trim_copy(nmpart);
+    }
   }
+
   if (res) {
-    if (mergeHs) {
+    if (params.mergeHs) {
       try {
         MolOps::mergeQueryHs(*res);
       } catch (...) {
@@ -478,6 +486,10 @@ RWMol *SmartsToMol(const std::string &smarts, int debugParse, bool mergeHs,
       }
     }
     MolOps::setBondStereoFromDirections(*res);
+    SmilesParseOps::CleanupAfterParsing(res);
+    if (!name.empty()) {
+      res->setProp(common_properties::_Name, name);
+    }
   }
   return res;
 };

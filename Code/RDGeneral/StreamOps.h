@@ -357,7 +357,7 @@ const unsigned char EndTag = 0xFF;
 
 class CustomPropHandler {
  public:
-  virtual ~CustomPropHandler(){};
+  virtual ~CustomPropHandler() {}
   virtual const char *getPropName() const = 0;
   virtual bool canSerialize(const RDValue &value) const = 0;
   virtual bool read(std::istream &ss, RDValue &value) const = 0;

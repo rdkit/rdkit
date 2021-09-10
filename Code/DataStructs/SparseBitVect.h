@@ -33,11 +33,11 @@ typedef IntSet::const_iterator IntSetConstIter;
  */
 class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
  public:
-  SparseBitVect()  {};
+  SparseBitVect() {}
   //! initialize with a particular size;
   explicit SparseBitVect(unsigned int size) : dp_bits(nullptr), d_size(0) {
     _initForSize(size);
-  };
+  }
 
   //! copy constructor
   SparseBitVect(const SparseBitVect &other) : BitVect(other) {
@@ -53,37 +53,38 @@ class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
   SparseBitVect(const char *data, const unsigned int dataLen);
 
   SparseBitVect &operator=(const SparseBitVect &);
-  ~SparseBitVect() { delete dp_bits; };
+  ~SparseBitVect() override { delete dp_bits; }
 
-  bool operator[](const unsigned int which) const;
+  bool operator[](const unsigned int which) const override;
   SparseBitVect operator|(const SparseBitVect &) const;
-  SparseBitVect operator&(const SparseBitVect &)const;
+  SparseBitVect operator&(const SparseBitVect &) const;
   SparseBitVect operator^(const SparseBitVect &) const;
   SparseBitVect operator~() const;
 
   //! returns a (const) pointer to our raw storage
   const IntSet *getBitSet() const { return dp_bits; }
 
-  unsigned int getNumBits() const { return d_size; };
-  bool setBit(const unsigned int which);
+  unsigned int getNumBits() const override { return d_size; }
+  bool setBit(const unsigned int which) override;
   bool setBit(const IntSetIter which);
-  bool unsetBit(const unsigned int which);
-  bool getBit(const unsigned int which) const;
+  bool unsetBit(const unsigned int which) override;
+  bool getBit(const unsigned int which) const override;
   bool getBit(const IntVectIter which) const;
   bool getBit(const IntSetIter which) const;
 
-  unsigned int getNumOnBits() const {
+  unsigned int getNumOnBits() const override {
     return static_cast<unsigned int>(dp_bits->size());
-  };
-  unsigned int getNumOffBits() const {
+  }
+  unsigned int getNumOffBits() const override {
     return d_size - static_cast<unsigned int>(dp_bits->size());
-  };
+  }
 
-  std::string toString() const;
+  std::string toString() const override;
 
-  void getOnBits(IntVect &v) const;
-  void clearBits() { dp_bits->clear(); };
-  IntSet *dp_bits{nullptr};  //!< our raw data, exposed for the sake of efficiency
+  void getOnBits(IntVect &v) const override;
+  void clearBits() override { dp_bits->clear(); }
+  IntSet *dp_bits{
+      nullptr};  //!< our raw data, exposed for the sake of efficiency
 
   bool operator==(const SparseBitVect &o) const {
     return *dp_bits == *o.dp_bits;
@@ -94,7 +95,7 @@ class RDKIT_DATASTRUCTS_EXPORT SparseBitVect : public BitVect {
 
  private:
   unsigned int d_size{0};
-  void _initForSize(const unsigned int size);
+  void _initForSize(const unsigned int size) override;
 };
 
 #endif

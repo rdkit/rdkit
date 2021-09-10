@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,16 +15,28 @@
 namespace RDKit {
 namespace MolStandardize {
 
+#include "normalizations.in"
+
 TransformCatalogParams::TransformCatalogParams(
     const std::string &transformFile) {
   d_transformations.clear();
-  d_transformations = readTransformations(transformFile);
+  if (transformFile.empty()) {
+    d_transformations = readTransformations(defaults::defaultNormalizations);
+  } else {
+    d_transformations = readTransformations(transformFile);
+  }
 }
 
 TransformCatalogParams::TransformCatalogParams(std::istream &transformStream) {
   d_transformations.clear();
   d_transformations = readTransformations(transformStream);
 }
+
+TransformCatalogParams::TransformCatalogParams(
+    const std::vector<std::pair<std::string, std::string>> &data) {
+  d_transformations.clear();
+  d_transformations = readTransformations(data);
+};
 
 TransformCatalogParams::TransformCatalogParams(
     const TransformCatalogParams &other) {
@@ -63,13 +75,11 @@ std::string TransformCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void TransformCatalogParams::initFromStream(std::istream &ss) {
-  RDUNUSED_PARAM(ss);
+void TransformCatalogParams::initFromStream(std::istream &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 
-void TransformCatalogParams::initFromString(const std::string &text) {
-  RDUNUSED_PARAM(text);
+void TransformCatalogParams::initFromString(const std::string &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 

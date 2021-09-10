@@ -25,9 +25,9 @@ foreach(component ${MyRDKit_FIND_COMPONENTS})
     libRDKit${component}.so
     PATH ${RDKIT_DIR}/lib NO_DEFAULT_PATH)
   message("MyRDKit_LIBRARY_${component} : ${MyRDKit_LIBRARY_${component}}")
-  if(${MyRDKit_LIBRARY_${component}} MATCHES "-NOTFOUND$")
+  if(NOT ${MyRDKit_LIBRARY_${component}})
     message(FATAL_ERROR "Didn't find RDKit ${component} library.")
-  endif(${MyRDKit_LIBRARY_${component}} MATCHES "-NOTFOUND$")
+  endif(NOT ${MyRDKit_LIBRARY_${component}})
   set(RDKIT_LIBRARIES ${RDKIT_LIBRARIES} ${MyRDKit_LIBRARY_${component}})
 endforeach(component)
 

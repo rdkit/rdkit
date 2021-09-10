@@ -1,6 +1,7 @@
 from rdkit import RDConfig
 import os, sys, math
 import unittest
+import numpy as np
 from rdkit import DataStructs
 from rdkit import Chem
 from rdkit.Geometry import rdGeometry as geom
@@ -28,7 +29,7 @@ class TestCase(unittest.TestCase):
 
     conf = mol.GetConformer()
     pt = rdmt.ComputeCentroid(conf)
-    self.failUnless(ptEq(pt, geom.Point3D(4.0, 5.0, 6.0)))
+    self.assertTrue(ptEq(pt, geom.Point3D(4.0, 5.0, 6.0)))
 
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms', 'test_data',
                          '1oir.mol')
@@ -38,7 +39,7 @@ class TestCase(unittest.TestCase):
     trans2 = rdmt.ComputeCanonicalTransform(m.GetConformer())
     for i in range(4):
       for j in range(4):
-        self.failUnless(feq(trans[i, j], trans2[i, j]))
+        self.assertTrue(feq(trans[i, j], trans2[i, j]))
     rdmt.TransformConformer(m.GetConformer(), trans2)
     m2 = Chem.MolFromMolFile(fileN)
     rdmt.CanonicalizeConformer(m2.GetConformer())
@@ -48,9 +49,9 @@ class TestCase(unittest.TestCase):
     for i in range(nats):
       p1 = list(cnf1.GetAtomPosition(i))
       p2 = list(cnf2.GetAtomPosition(i))
-      self.failUnless(feq(p1[0], p2[0]))
-      self.failUnless(feq(p1[1], p2[1]))
-      self.failUnless(feq(p1[2], p2[2]))
+      self.assertTrue(feq(p1[0], p2[0]))
+      self.assertTrue(feq(p1[1], p2[1]))
+      self.assertTrue(feq(p1[2], p2[2]))
 
     m3 = Chem.MolFromMolFile(fileN)
     rdmt.CanonicalizeMol(m3)
@@ -59,9 +60,9 @@ class TestCase(unittest.TestCase):
     for i in range(nats):
       p1 = list(cnf1.GetAtomPosition(i))
       p2 = list(cnf2.GetAtomPosition(i))
-      self.failUnless(feq(p1[0], p2[0]))
-      self.failUnless(feq(p1[1], p2[1]))
-      self.failUnless(feq(p1[2], p2[2]))
+      self.assertTrue(feq(p1[0], p2[0]))
+      self.assertTrue(feq(p1[1], p2[1]))
+      self.assertTrue(feq(p1[2], p2[2]))
 
   def testComputePrincipalAxesAndMoments(self):
     if (not hasattr(rdmt, 'ComputePrincipalAxesAndMoments')):
@@ -174,13 +175,13 @@ M  END
     m = Chem.MolFromMolFile(file, True, False)
     conf = m.GetConformer()
     dist = rdmt.GetBondLength(conf, 0, 19)
-    self.failUnlessAlmostEqual(dist, 1.36, 2)
+    self.assertAlmostEqual(dist, 1.36, 2)
     rdmt.SetBondLength(conf, 0, 19, 2.5)
     dist = rdmt.GetBondLength(conf, 0, 19)
-    self.failUnlessAlmostEqual(dist, 2.5, 1)
+    self.assertAlmostEqual(dist, 2.5, 1)
     rdmt.SetBondLength(conf, 19, 0, 3.0)
     dist = rdmt.GetBondLength(conf, 0, 19)
-    self.failUnlessAlmostEqual(dist, 3.0, 1)
+    self.assertAlmostEqual(dist, 3.0, 1)
 
   def testGetSetAngle(self):
     file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms', 'test_data',
@@ -189,15 +190,15 @@ M  END
     m = Chem.MolFromMolFile(file, True, False)
     conf = m.GetConformer()
     angle = rdmt.GetAngleDeg(conf, 0, 19, 21)
-    self.failUnlessAlmostEqual(angle, 109.7, 1)
+    self.assertAlmostEqual(angle, 109.7, 1)
     rdmt.SetAngleDeg(conf, 0, 19, 21, 125.0)
     angle = rdmt.GetAngleDeg(conf, 0, 19, 21)
-    self.failUnlessAlmostEqual(angle, 125.0, 1)
+    self.assertAlmostEqual(angle, 125.0, 1)
     rdmt.SetAngleRad(conf, 21, 19, 0, math.pi / 2.)
     angle = rdmt.GetAngleRad(conf, 0, 19, 21)
-    self.failUnlessAlmostEqual(angle, math.pi / 2., 1)
+    self.assertAlmostEqual(angle, math.pi / 2., 1)
     angle = rdmt.GetAngleDeg(conf, 0, 19, 21)
-    self.failUnlessAlmostEqual(angle, 90.0, 1)
+    self.assertAlmostEqual(angle, 90.0, 1)
 
   def testGetSetDihedral(self):
     file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms', 'test_data',
@@ -206,18 +207,18 @@ M  END
     m = Chem.MolFromMolFile(file, True, False)
     conf = m.GetConformer()
     dihedral = rdmt.GetDihedralDeg(conf, 0, 19, 21, 24)
-    self.failUnlessAlmostEqual(dihedral, 176.05, 2)
+    self.assertAlmostEqual(dihedral, 176.05, 2)
     rdmt.SetDihedralDeg(conf, 8, 0, 19, 21, 65.0)
     dihedral = rdmt.GetDihedralDeg(conf, 8, 0, 19, 21)
-    self.failUnlessAlmostEqual(dihedral, 65.0, 1)
+    self.assertAlmostEqual(dihedral, 65.0, 1)
     rdmt.SetDihedralDeg(conf, 8, 0, 19, 21, -130.0)
     dihedral = rdmt.GetDihedralDeg(conf, 8, 0, 19, 21)
-    self.failUnlessAlmostEqual(dihedral, -130.0, 1)
+    self.assertAlmostEqual(dihedral, -130.0, 1)
     rdmt.SetDihedralRad(conf, 21, 19, 0, 8, -2. / 3. * math.pi)
     dihedral = rdmt.GetDihedralRad(conf, 8, 0, 19, 21)
-    self.failUnlessAlmostEqual(dihedral, -2. / 3. * math.pi, 1)
+    self.assertAlmostEqual(dihedral, -2. / 3. * math.pi, 1)
     dihedral = rdmt.GetDihedralDeg(conf, 8, 0, 19, 21)
-    self.failUnlessAlmostEqual(dihedral, -120.0, 1)
+    self.assertAlmostEqual(dihedral, -120.0, 1)
 
   def testGetSetDihedralThroughTripleBond(self):
     file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms', 'test_data',
@@ -227,24 +228,69 @@ M  END
     conf = m.GetConformer()
     rdmt.SetDihedralDeg(conf, 6, 1, 2, 9, 0.0)
     dihedral = rdmt.GetDihedralDeg(conf, 6, 1, 2, 9)
-    self.failUnlessAlmostEqual(dihedral, 0.0, 1)
+    self.assertAlmostEqual(dihedral, 0.0, 1)
     dist = rdmt.GetBondLength(conf, 6, 9)
     rdmt.SetDihedralDeg(conf, 6, 1, 2, 9, 120.0)
     dihedral = rdmt.GetDihedralDeg(conf, 6, 1, 2, 9)
-    self.failUnlessAlmostEqual(dihedral, 120.0, 1)
+    self.assertAlmostEqual(dihedral, 120.0, 1)
     dist2 = rdmt.GetBondLength(conf, 6, 7)
-    self.failUnlessAlmostEqual(dist, dist2, 1)
+    self.assertAlmostEqual(dist, dist2, 1)
     rdmt.SetDihedralDeg(conf, 6, 1, 2, 9, 180.0)
     dihedral = rdmt.GetDihedralDeg(conf, 6, 1, 2, 9)
-    self.failUnlessAlmostEqual(dihedral, 180.0, 1)
+    self.assertAlmostEqual(dihedral, 180.0, 1)
     dist3 = rdmt.GetBondLength(conf, 6, 9)
-    self.failIfAlmostEqual(dist, dist3, 1)
+    self.assertNotAlmostEqual(dist, dist3, 1)
     exceptionRaised = False
     try:
       rdmt.SetDihedralDeg(conf, 6, 0, 3, 9, 0.0)
     except ValueError:
       exceptionRaised = True
-    self.failUnless(exceptionRaised)
+    self.assertTrue(exceptionRaised)
+
+  def testEigen3CanonicalTransformAgainstNumpy(self):
+    def canonicalize_conf_rdkit(mol, conf_id=-1):
+      mol = Chem.Mol(mol)
+      conf = mol.GetConformer(conf_id)
+      ctd = rdmt.ComputeCentroid(conf)
+      canon_trans = rdmt.ComputeCanonicalTransform(conf, ctd)
+      rdmt.TransformConformer(conf, canon_trans)
+      return mol
+
+    def canonicalize_conf_numpy(mol, conf_id=-1):
+      mol = Chem.Mol(mol)
+      conf = mol.GetConformer(conf_id)
+      pos = conf.GetPositions()
+      ctd = pos.mean(axis=0)
+      trans_pos = pos - ctd
+      cov_mat = np.cov(trans_pos, bias=1, rowvar=False) * conf.GetNumAtoms()
+      eigval, eigvect = np.linalg.eig(cov_mat)
+      eigval_sorted = sorted(enumerate(eigval), key=lambda x: x[1], reverse=True)
+      eigvect_sorted = [eigvect[:, i] * (1.0 if eigvect[:, i].sum() > 0.0 else -1.0) for i, _ in eigval_sorted]
+      canon_trans = np.array([
+        [*eigvect_sorted[0], 0.],
+        [*eigvect_sorted[1], 0.],
+        [*eigvect_sorted[2], 0.],
+        [0., 0., 0., 1.],
+      ], dtype=np.double)
+      canon_trans[0:3, 3] = np.array([*ctd, 1.]).dot(canon_trans)[:3]
+      rdmt.TransformConformer(conf, canon_trans)
+      return mol
+
+    file = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolTransforms', 'test_data',
+                        'github4302.sdf')
+    built_against_eigen3 = hasattr(rdmt, 'ComputePrincipalAxesAndMomentsFromGyrationMatrix')
+    with Chem.SDMolSupplier(file) as suppl:
+      for mol in suppl:
+        mol_orig = Chem.Mol(mol)
+        rdkit_canon = canonicalize_conf_rdkit(mol)
+        numpy_canon = canonicalize_conf_numpy(mol)
+        for i in range(mol.GetNumAtoms()):
+          orig_coord = mol_orig.GetConformer().GetAtomPosition(i)
+          rdkit_coord = rdkit_canon.GetConformer().GetAtomPosition(i)
+          numpy_coord = numpy_canon.GetConformer().GetAtomPosition(i)
+          self.assertLess(orig_coord.Distance(numpy_coord), 1.e-4)
+          if built_against_eigen3:
+            self.assertLess(orig_coord.Distance(rdkit_coord), 1.e-4)
 
 
 if __name__ == "__main__":

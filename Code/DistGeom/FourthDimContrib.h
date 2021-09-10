@@ -15,7 +15,7 @@ namespace DistGeom {
 class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
     : public ForceFields::ForceFieldContrib {
  public:
-  FourthDimContrib()  {};
+  FourthDimContrib() {}
 
   //! Constructor
   /*!
@@ -30,10 +30,10 @@ class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
     PRECONDITION(owner, "bad force field");
     PRECONDITION(owner->dimension() == 4, "force field has wrong dimension");
     dp_forceField = owner;
-  };
+  }
 
   //! return the contribution of this contrib to the energy of a given state
-  double getEnergy(double *pos) const {
+  double getEnergy(double *pos) const override {
     PRECONDITION(dp_forceField, "no owner");
     PRECONDITION(dp_forceField->dimension() == 4,
                  "force field has wrong dimension");
@@ -43,8 +43,8 @@ class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
   }
 
   //! calculate the contribution of this contrib to the gradient at a given
-  // state
-  void getGrad(double *pos, double *grad) const {
+  /// state
+  void getGrad(double *pos, double *grad) const override {
     PRECONDITION(dp_forceField, "no owner");
     PRECONDITION(dp_forceField->dimension() == 4,
                  "force field has wrong dimension");
@@ -52,9 +52,9 @@ class RDKIT_DISTGEOMETRY_EXPORT FourthDimContrib
     unsigned int pid = d_idx * dp_forceField->dimension() + 3;
     grad[pid] += d_weight * pos[pid];
   }
-  virtual FourthDimContrib *copy() const {
+  FourthDimContrib *copy() const override {
     return new FourthDimContrib(*this);
-  };
+  }
 
  private:
   unsigned int d_idx{0};

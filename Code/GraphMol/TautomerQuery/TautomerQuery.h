@@ -18,7 +18,6 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/ExplicitBitVect.h>
 
-
 namespace RDKit {
 
 class RWMol;
@@ -26,17 +25,12 @@ class RWMol;
 class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
  private:
   // Tautomers of the query
-  const std::vector<ROMOL_SPTR> d_tautomers;
+  std::vector<ROMOL_SPTR> d_tautomers;
   // Template query for substructure search
-  const ROMol *const d_templateMolecule;
+  std::unique_ptr<const ROMol> d_templateMolecule;
   // Tautomeric bonds and atoms
   const std::vector<size_t> d_modifiedAtoms;
   const std::vector<size_t> d_modifiedBonds;
-
-  TautomerQuery(const std::vector<ROMOL_SPTR> &tautomers,
-                const ROMol *const templateMolecule,
-                const std::vector<size_t> &modifiedAtoms,
-                const std::vector<size_t> &modifiedBonds);
 
   // tests if a match to the template matches a specific tautomer
   bool matchTautomer(const ROMol &mol, const ROMol &tautomer,
@@ -44,6 +38,25 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
                      const SubstructMatchParameters &params) const;
 
  public:
+  TautomerQuery(std::vector<ROMOL_SPTR> tautomers,
+                const ROMol *const templateMolecule,
+                std::vector<size_t> modifiedAtoms,
+                std::vector<size_t> modifiedBonds);
+
+  //! Copy constructor performs a deep copy
+  TautomerQuery(const TautomerQuery &other)
+      : d_templateMolecule(other.d_templateMolecule
+                               ? new ROMol(*other.d_templateMolecule)
+                               : nullptr),
+        d_modifiedAtoms(other.d_modifiedAtoms),
+        d_modifiedBonds(other.d_modifiedBonds) {
+    PRECONDITION(other.d_templateMolecule != nullptr, "Null template");
+    for (auto taut : other.d_tautomers) {
+      PRECONDITION(taut.get() != nullptr, "Null tautomer");
+      d_tautomers.push_back(boost::make_shared<ROMol>(*taut));
+    }
+  }
+
   // Factory to build TautomerQuery
   // Caller owns the memory
   static TautomerQuery *fromMol(
@@ -61,8 +74,8 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
                                            SubstructMatchParameters());
 
   // Query fingerprint
-  ExplicitBitVect *patternFingerprintTemplate(unsigned int fpSize = 2048U);
-
+  ExplicitBitVect *patternFingerprintTemplate(
+      unsigned int fpSize = 2048U) const;
   // Static method to Fingerprint a target
   static ExplicitBitVect *patternFingerprintTarget(const ROMol &target,
                                                    unsigned int fpSize = 2048U);
@@ -70,15 +83,13 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
   // accessors
 
   // pointer is owned by TautomerQuery
-  const ROMol & getTemplateMolecule() const { return *d_templateMolecule; }
+  const ROMol &getTemplateMolecule() const { return *d_templateMolecule; }
 
   const std::vector<ROMOL_SPTR> getTautomers() const { return d_tautomers; }
 
   const std::vector<size_t> getModifiedAtoms() const { return d_modifiedAtoms; }
 
   const std::vector<size_t> getModifiedBonds() const { return d_modifiedBonds; }
-
-  ~TautomerQuery();
 
   friend class TautomerQueryMatcher;
 };

@@ -3,7 +3,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -81,7 +80,7 @@ void testMultiThread() {
   std::cerr << "generating reference data" << std::endl;
   std::vector<std::string> inchis;
   std::vector<std::string> keys;
-  BOOST_FOREACH (const ROMol *mol, mols) {
+  for (const auto *mol : mols) {
     ExtraInchiReturnValues tmp;
     std::string inchi = MolToInchi(*mol, tmp);
     std::string key = InchiToInchiKey(inchi);
@@ -777,6 +776,39 @@ void testGithub3365() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub3645() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing github #3645: Seg fault when parsing InChI"
+                       << std::endl;
+
+  {
+    std::string inchi =
+        "InChI=1S/C9H22O3SSi/c1-5-9-13(14,10-6-2,11-7-3)12-8-4/h5-9H2,1-4H3";
+    ExtraInchiReturnValues tmp;
+    bool ok = false;
+    try {
+      std::unique_ptr<ROMol> m{InchiToMol(inchi, tmp)};
+    } catch (const MolSanitizeException &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
+    std::string inchi =
+        "InChI=1S/C8H20O3SSi/c1-5-9-12(13,8-4,10-6-2)11-7-3/h5-8H2,1-4H3";
+    ExtraInchiReturnValues tmp;
+    bool ok = false;
+    try {
+      std::unique_ptr<ROMol> m{InchiToMol(inchi, tmp)};
+    } catch (const MolSanitizeException &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -797,4 +829,5 @@ int main() {
 #endif
   testGithubIssue562();
   testGithub3365();
+  testGithub3645();
 }

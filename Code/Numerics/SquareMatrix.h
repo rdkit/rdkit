@@ -18,20 +18,20 @@ template <typename TYPE>
 class SquareMatrix : public Matrix<TYPE> {
  public:
   //! brief Square matrix of size N
-  SquareMatrix(){};
+  SquareMatrix() {}
 
-  explicit SquareMatrix(unsigned int N) : Matrix<TYPE>(N, N){};
+  explicit SquareMatrix(unsigned int N) : Matrix<TYPE>(N, N) {}
 
-  SquareMatrix(unsigned int N, TYPE val) : Matrix<TYPE>(N, N, val){};
+  SquareMatrix(unsigned int N, TYPE val) : Matrix<TYPE>(N, N, val) {}
 
   SquareMatrix(unsigned int N, typename Matrix<TYPE>::DATA_SPTR data)
-      : Matrix<TYPE>(N, N, data){};
+      : Matrix<TYPE>(N, N, data) {}
 
   // inline unsigned int size() const {
   //  return d_nRows;
-  //};
+  // }
 
-  virtual SquareMatrix<TYPE> &operator*=(TYPE scale) {
+  SquareMatrix<TYPE> &operator*=(TYPE scale) override {
     Matrix<TYPE>::operator*=(scale);
     return *this;
   }

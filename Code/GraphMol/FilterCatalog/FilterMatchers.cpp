@@ -40,7 +40,7 @@ const char *SMARTS_MATCH_NAME_DEFAULT = "Unnamed SmartsMatcher";
 namespace {
 const int debugParse = 0;
 const bool mergeHs = true;
-}
+}  // namespace
 SmartsMatcher::SmartsMatcher(const ROMol &pattern, unsigned int minCount,
                              unsigned int maxCount)
     : FilterMatcherBase(SMARTS_MATCH_NAME_DEFAULT),
@@ -138,8 +138,7 @@ bool FilterHierarchyMatcher::getMatches(const ROMol &mol,
   if (result) {
     std::vector<FilterMatch> children;
 
-    BOOST_FOREACH (boost::shared_ptr<FilterHierarchyMatcher> matcher,
-                   d_children) {
+    for (auto matcher : d_children) {
       matcher->getMatches(mol, children);
     }
 
@@ -152,4 +151,4 @@ bool FilterHierarchyMatcher::getMatches(const ROMol &mol,
 
   return result;
 }
-}
+}  // namespace RDKit

@@ -35,7 +35,9 @@
 
 %{
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/TautomerQuery/TautomerQuery.h>
 %}
+%shared_ptr(RDKit::TautomerQuery)
 %shared_ptr(RDKit::MolHolderBase)
 %shared_ptr(RDKit::MolHolder)
 %shared_ptr(RDKit::CachedMolHolder)
@@ -43,6 +45,7 @@
 %shared_ptr(RDKit::CachedTrustedSmilesMolHolder)
 %shared_ptr(RDKit::FPHolderBase)
 %shared_ptr(RDKit::PatternHolder)
+%shared_ptr(RDKit::TautomerPatternHolder)
 
 %template(UChar_Vect) std::vector<unsigned char>;
 
@@ -68,6 +71,8 @@
   }
 }
 
+ 
+
 
 #ifdef SWIGJAVA
 %typemap(jni) std::string RDKit::SubstructLibrary::Serialize "jbyteArray"
@@ -82,7 +87,18 @@
 }
 #endif
 
+%include <GraphMol/TautomerQuery/TautomerQuery.h>
 %include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+
+%extend RDKit::SubstructLibrary {
+ %template(getMatches) getMatches<ROMol>;
+ %template(getMatches) getMatches<TautomerQuery>;
+ %template(countMatches) countMatches<ROMol>;
+ %template(countMatches) countMatches<TautomerQuery>;
+ %template(hasMatch) hasMatch<ROMol>;
+ %template(hasMatch) hasMatch<TautomerQuery>;
+}
+
 
 %pragma(java) modulecode=%{
    public static SubstructLibrary SubstructLibraryDeserialize(byte[] b) {

@@ -44,7 +44,7 @@ namespace RDKit {
 //!  Randomly sample rgroup indices
 
 //! This is a class for randomly enumerating reagents that ensures all reagents
-//  are sampled.
+/// are sampled.
 /*!
   basic usage:
 
@@ -77,7 +77,7 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy
  public:
   RandomSampleAllBBsStrategy()
       : EnumerationStrategyBase(),
-        
+
         m_rng(),
         m_distributions() {
     for (size_t i = 0; i < m_permutation.size(); ++i) {
@@ -87,24 +87,23 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy
   using EnumerationStrategyBase::initialize;
 
   void initializeStrategy(const ChemicalReaction &,
-                          const EnumerationTypes::BBS &) {
+                          const EnumerationTypes::BBS &) override {
     m_distributions.clear();
     m_permutation.resize(m_permutationSizes.size());
     m_offset = 0;
     m_maxoffset =
         *std::max_element(m_permutationSizes.begin(), m_permutationSizes.end());
     for (size_t i = 0; i < m_permutationSizes.size(); ++i) {
-      m_distributions.emplace_back(
-          0, m_permutationSizes[i] - 1);
+      m_distributions.emplace_back(0, m_permutationSizes[i] - 1);
     }
 
     m_numPermutationsProcessed = 0;
   }
 
-  virtual const char *type() const { return "RandomSampleAllBBsStrategy"; }
+  const char *type() const override { return "RandomSampleAllBBsStrategy"; }
 
   //! The current permutation {r1, r2, ...}
-  virtual const EnumerationTypes::RGROUPS &next() {
+  const EnumerationTypes::RGROUPS &next() override {
     if (m_offset >= m_maxoffset) {
       for (size_t i = 0; i < m_permutation.size(); ++i) {
         m_permutation[i] = m_distributions[i](m_rng);
@@ -121,13 +120,13 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy
     return m_permutation;
   }
 
-  virtual boost::uint64_t getPermutationIdx() const {
+  boost::uint64_t getPermutationIdx() const override {
     return m_numPermutationsProcessed;
   }
 
-  virtual operator bool() const { return true; }
+  operator bool() const override { return true; }
 
-  EnumerationStrategyBase *copy() const {
+  EnumerationStrategyBase *copy() const override {
     return new RandomSampleAllBBsStrategy(*this);
   }
 
@@ -166,8 +165,7 @@ class RDKIT_CHEMREACTIONS_EXPORT RandomSampleAllBBsStrategy
     // reset the uniform distributions
     m_distributions.clear();
     for (size_t i = 0; i < m_permutationSizes.size(); ++i) {
-      m_distributions.emplace_back(
-          0, m_permutationSizes[i] - 1);
+      m_distributions.emplace_back(0, m_permutationSizes[i] - 1);
     }
   }
 

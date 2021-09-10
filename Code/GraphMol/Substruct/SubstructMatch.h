@@ -14,6 +14,10 @@
 // std bits
 #include <vector>
 #include <functional>
+#include <unordered_map>
+#include <cstdint>
+#include "GraphMol/StereoGroup.h"
+#include <string>
 
 namespace RDKit {
 class ROMol;
@@ -48,8 +52,11 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
       extraFinalCheck;  //!< a function to be called at the end to validate a
                         //!< match
 
-  SubstructMatchParameters(){};
+  SubstructMatchParameters() {}
 };
+
+RDKIT_SUBSTRUCTMATCH_EXPORT void updateSubstructMatchParamsFromJSON(
+    SubstructMatchParameters &params, const std::string &json);
 
 //! Find a substructure match for a query in a molecule
 /*!
@@ -200,6 +207,22 @@ inline unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
   params.numThreads = numThreads;
   matchVect = SubstructMatch(resMolSupplier, query, params);
   return matchVect.size();
+};
+
+//! Class used as a final step to confirm whether or not a given atom->atom
+//! mapping is a valid substructure match.
+class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
+ public:
+  MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
+                            const SubstructMatchParameters &ps);
+
+  bool operator()(const std::uint32_t q_c[], const std::uint32_t m_c[]) const;
+
+ private:
+  const ROMol &d_query;
+  const ROMol &d_mol;
+  const SubstructMatchParameters &d_params;
+  std::unordered_map<unsigned int, StereoGroup const *> d_molStereoGroups;
 };
 
 }  // namespace RDKit

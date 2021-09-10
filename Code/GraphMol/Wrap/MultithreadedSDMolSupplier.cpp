@@ -16,6 +16,7 @@
 #include <string>
 // ours
 #include <GraphMol/FileParsers/MultithreadedSDMolSupplier.h>
+#include <GraphMol/Wrap/ContextManagers.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
 
@@ -109,22 +110,31 @@ struct multiSDMolSup_wrap {
              python::arg("sizeOutputQueue") = 5),
             multiSdsDocStr.c_str()))
         .def("__iter__",
-             (MultithreadedSDMolSupplier * (*)(MultithreadedSDMolSupplier*)) &
+             (MultithreadedSDMolSupplier * (*)(MultithreadedSDMolSupplier *)) &
                  MTMolSupplIter,
              python::return_internal_reference<1>())
+        .def("__enter__",
+             (MultithreadedSDMolSupplier * (*)(MultithreadedSDMolSupplier *)) &
+                 MolIOEnter,
+             python::return_internal_reference<>())
+        .def("__exit__", (bool (*)(MultithreadedSDMolSupplier *, python::object,
+                                   python::object, python::object)) &
+                             MolIOExit)
         .def("__next__",
-             (ROMol * (*)(MultithreadedSDMolSupplier*)) & MolForwardSupplNext,
+             (ROMol * (*)(MultithreadedSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file. Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>())
         .def("atEnd", &MultithreadedSDMolSupplier::atEnd,
              "Returns true if we have read all records else false.\n")
-        .def("GetLastRecordId",
-             (unsigned int (*)(MultithreadedSDMolSupplier*)) & MTMolSupplLastId,
-             "Returns the record id for the last extracted item.\n")
-        .def("GetLastItemText",
-             (std::string(*)(MultithreadedSDMolSupplier*)) & MTMolSupplLastItem,
-             "Returns the text for the last extracted item.\n")
+        .def(
+            "GetLastRecordId",
+            (unsigned int (*)(MultithreadedSDMolSupplier *)) & MTMolSupplLastId,
+            "Returns the record id for the last extracted item.\n")
+        .def(
+            "GetLastItemText",
+            (std::string(*)(MultithreadedSDMolSupplier *)) & MTMolSupplLastItem,
+            "Returns the text for the last extracted item.\n")
         .def("GetProcessPropertyLists",
              &MultithreadedSDMolSupplier::getProcessPropertyLists,
              "returns whether or not any property lists that are present will "

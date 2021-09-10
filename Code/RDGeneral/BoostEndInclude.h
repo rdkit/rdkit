@@ -32,7 +32,6 @@
 //  #include <RDGeneral/BoostStartInclude.h>
 //  # include boost stuff
 //  #include <RDGeneral/BoostEndInclude.h>
-
 #include <RDGeneral/export.h>
 #if defined(__clang__)
 /* Clang/LLVM. ---------------------------------------------- */
@@ -62,4 +61,9 @@
 #elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 /* Oracle Solaris Studio. ----------------------------------- */
 
+#endif
+
+#ifdef RDK_ALLOW_BOOST_DEPRECATED_HEADERS
+#undef RDK_ALLOW_BOOST_DEPRECATED_HEADERS
+#undef BOOST_ALLOW_DEPRECATED_HEADERS
 #endif

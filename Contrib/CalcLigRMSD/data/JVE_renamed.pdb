@@ -1,0 +1,38 @@
+HETATM    1  C14 LIG A1392      -3.535   8.248  31.088  1.00 26.07           C  
+HETATM    2  N3  LIG A1392      -4.119   9.607  31.118  1.00 26.91           N  
+HETATM    3  C13 LIG A1392      -3.456  10.558  30.202  1.00 26.19           C  
+HETATM    4  C12 LIG A1392      -1.943  10.648  30.468  1.00 26.33           C  
+HETATM    5  C10 LIG A1392      -2.034   8.300  31.362  1.00 25.00           C  
+HETATM    6  C11 LIG A1392      -1.258   9.423  31.082  1.00 25.38           C  
+HETATM    7  C6  LIG A1392       0.288   9.475  31.371  1.00 24.48           C  
+HETATM    8  O   LIG A1392      -1.336  11.641  30.198  1.00 28.67           O  
+HETATM    9  C4  LIG A1392       0.732  10.635  32.309  1.00 25.61           C  
+HETATM   10  C3  LIG A1392       2.002  11.275  32.168  1.00 26.63           C  
+HETATM   11  C5  LIG A1392      -0.118  11.111  33.361  1.00 26.90           C  
+HETATM   12  C2  LIG A1392       2.418  12.329  33.015  1.00 27.56           C  
+HETATM   13  C   LIG A1392       0.286  12.169  34.217  1.00 26.88           C  
+HETATM   14  C1  LIG A1392       1.553  12.775  34.044  1.00 27.37           C  
+HETATM   15  C9  LIG A1392      -0.096   7.045  32.215  1.00 22.71           C  
+HETATM   16  C7  LIG A1392       0.804   8.150  31.974  1.00 23.08           C  
+HETATM   17  N1  LIG A1392       0.548   6.007  32.730  1.00 20.54           N  
+HETATM   18  N2  LIG A1392      -1.414   7.076  31.948  1.00 24.00           N  
+HETATM   19  C8  LIG A1392       2.016   7.723  32.371  1.00 21.34           C  
+HETATM   20  N   LIG A1392       1.940   6.331  32.879  1.00 19.89           N  
+HETATM   21  F   LIG A1392       2.858  10.887  31.207  1.00 29.36           F  
+CONECT    1    2    5
+CONECT    2    3
+CONECT    3    4
+CONECT    4    6    8
+CONECT    5    6   18
+CONECT    6    7
+CONECT    7    9   16
+CONECT    9   10   11
+CONECT   10   12   21
+CONECT   11   13
+CONECT   12   14
+CONECT   13   14
+CONECT   15   16   17   18
+CONECT   16   19
+CONECT   17   20
+CONECT   19   20
+END

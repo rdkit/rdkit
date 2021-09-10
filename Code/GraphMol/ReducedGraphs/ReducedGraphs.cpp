@@ -44,7 +44,7 @@ class ss_matcher {
  private:
   RDKit::ROMOL_SPTR m_matcher;
 };
-}
+}  // namespace
 
 namespace ReducedGraphs {
 // Definitions for feature points adapted from:
@@ -73,7 +73,8 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Positive
 std::vector<std::string> defaultFeatureSmarts(smartsPatterns,
                                               smartsPatterns + nFeatures);
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 
 void getErGAtomTypes(const ROMol &mol,
                      std::vector<boost::dynamic_bitset<>> &types,
@@ -111,13 +112,13 @@ void getErGAtomTypes(const ROMol &mol,
 }  // end of getAtomTypes;
 
 RDNumeric::DoubleVector *getErGFingerprint(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<> > *atomTypes,
+    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes,
     double fuzzIncrement, unsigned int minPath, unsigned int maxPath) {
   ROMol *rg = generateMolExtendedReducedGraph(mol, atomTypes);
 #ifdef VERBOSE_FINGERPRINTING
   rg->updatePropertyCache(false);
-  std::cerr << " reduced graph smiles: " << MolToSmiles(*rg, false, false, -1,
-                                                        false) << std::endl;
+  std::cerr << " reduced graph smiles: "
+            << MolToSmiles(*rg, false, false, -1, false) << std::endl;
 #endif
   RDNumeric::DoubleVector *res = generateErGFingerprintForReducedGraph(
       *rg, atomTypes, fuzzIncrement, minPath, maxPath);
@@ -126,7 +127,7 @@ RDNumeric::DoubleVector *getErGFingerprint(
 }
 
 RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<> > *atomTypes,
+    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes,
     double fuzzIncrement, unsigned int minPath, unsigned int maxPath) {
   PRECONDITION(maxPath > minPath, "maxPath<=minPath");
   // FIX: this isn't doing the special handling for flip/flop bits
@@ -144,12 +145,12 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
   double *dm = MolOps::getDistanceMat(mol);
 
   // cache the atom type vectors:
-  std::vector<std::list<int> > tvs;
+  std::vector<std::vector<int>> tvs;
   tvs.reserve(mol.getNumAtoms());
   for (ROMol::ConstAtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
        ++atIt) {
-    const std::list<int> &tv =
-        (*atIt)->getProp<std::list<int> >("_ErGAtomTypes");
+    const std::vector<int> &tv =
+        (*atIt)->getProp<std::vector<int>>("_ErGAtomTypes");
     tvs.push_back(tv);
   }
 
@@ -172,8 +173,8 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
       if (dist < rdcast<int>(minPath) || dist > rdcast<int>(maxPath)) {
         continue;
       }
-      BOOST_FOREACH (int ti, tvs[i]) {
-        BOOST_FOREACH (int tj, tvs[j]) {
+      for (auto ti : tvs[i]) {
+        for (auto tj : tvs[j]) {
           int ijMin = std::min(ti, tj);
           int ijMax = std::max(ti, tj);
           int block;
@@ -199,10 +200,10 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
 }
 
 ROMol *generateMolExtendedReducedGraph(
-    const ROMol &mol, std::vector<boost::dynamic_bitset<> > *atomTypes) {
+    const ROMol &mol, std::vector<boost::dynamic_bitset<>> *atomTypes) {
   std::vector<boost::dynamic_bitset<>> *latomTypes = nullptr;
   if (!atomTypes) {
-    latomTypes = new std::vector<boost::dynamic_bitset<> >();
+    latomTypes = new std::vector<boost::dynamic_bitset<>>();
     atomTypes = latomTypes;
     getErGAtomTypes(mol, *atomTypes);
   }
@@ -213,7 +214,7 @@ ROMol *generateMolExtendedReducedGraph(
 
   for (ROMol::AtomIterator atIt = res->beginAtoms(); atIt != res->endAtoms();
        ++atIt) {
-    std::list<int> tv;
+    std::vector<int> tv;
     tv.clear();
     for (unsigned int i = 0; i < atomTypes->size(); ++i) {
       if ((*atomTypes)[i][(*atIt)->getIdx()]) {
@@ -224,11 +225,11 @@ ROMol *generateMolExtendedReducedGraph(
   }
 
   // start by adding dummies at the ring centroids
-  BOOST_FOREACH (const INT_VECT &ring, mol.getRingInfo()->atomRings()) {
+  for (const auto &ring : mol.getRingInfo()->atomRings()) {
     if (ring.size() < 8) {
       int nIdx = res->addAtom(new Atom(0), false, true);
       int nAromatic = 0, nSP2 = 0;
-      BOOST_FOREACH (int idx, ring) {
+      for (auto idx : ring) {
         res->addBond(idx, nIdx, Bond::SINGLE);
         if (mol.getAtomWithIdx(idx)->getIsAromatic()) {
           ++nAromatic;
@@ -236,7 +237,7 @@ ROMol *generateMolExtendedReducedGraph(
           ++nSP2;
         }
       }
-      std::list<int> tv;
+      std::vector<int> tv;
       if (nAromatic >= 2 || nSP2 >= rdcast<int>(ring.size() / 2)) {
         tv.push_back(aromaticFlag);
       } else {
@@ -247,15 +248,17 @@ ROMol *generateMolExtendedReducedGraph(
   }
 
   // now remove any degree-two ring atoms that have no features:
+  res->beginBatchEdit();
   for (int i = mol.getNumAtoms() - 1; i >= 0; --i) {
     if (mol.getRingInfo()->numAtomRings(i) &&
         mol.getAtomWithIdx(i)->getDegree() == 2 &&
         res->getAtomWithIdx(i)
-            ->getProp<std::list<int> >("_ErGAtomTypes")
+            ->getProp<std::vector<int>>("_ErGAtomTypes")
             .empty()) {
       res->removeAtom(i);
     }
   }
+  res->commitBatchEdit();
 
   // FIX: still need to do the "highly fused rings" simplification for things
   // like adamantane

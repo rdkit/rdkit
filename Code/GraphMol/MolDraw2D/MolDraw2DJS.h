@@ -37,7 +37,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DJS : public MolDraw2D {
       : MolDraw2D(width, height, panelWidth, panelHeight), d_context(context) {
     initDrawing();
     initTextDrawer(noFreetype);
-  };
+  }
 
   void drawLine(const Point2D &cds1, const Point2D &cds2) override;
   void drawPolygon(const std::vector<Point2D> &cds) override;

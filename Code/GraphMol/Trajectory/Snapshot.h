@@ -11,6 +11,7 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_SNAPSHOT_H__
 #define __RD_SNAPSHOT_H__
+#include <utility>
 #include <Geometry/point.h>
 #include <boost/shared_array.hpp>
 
@@ -33,7 +34,7 @@ class RDKIT_TRAJECTORY_EXPORT Snapshot {
       \param energy is the energy associated with this set of coordinates
    */
   Snapshot(boost::shared_array<double> pos, double energy = 0.0)
-      : d_trajectory(nullptr), d_energy(energy), d_pos(pos) {}
+      : d_trajectory(nullptr), d_energy(energy), d_pos(std::move(pos)) {}
   /*! \return a const pointer to the parent Trajectory
    */
   const Trajectory *trajectory() const { return d_trajectory; }
@@ -49,7 +50,7 @@ class RDKIT_TRAJECTORY_EXPORT Snapshot {
   RDGeom::Point3D getPoint3D(unsigned int pointNum) const;
   /*! \return the energy for this Snapshot
    */
-  double getEnergy() const { return d_energy; };
+  double getEnergy() const { return d_energy; }
   /*! \brief Sets the energy for this Snapshot
       \param energy the energy value assigned to this Snapshot
    */

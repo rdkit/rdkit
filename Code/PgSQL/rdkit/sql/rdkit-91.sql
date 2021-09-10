@@ -196,6 +196,9 @@ select mol_to_ctab(mol_from_ctab('chiral1.mol
   1  4  1  1
   1  5  1  0
 M  END', true));
+-- mol_to_ctab() - force v3000.
+select mol_to_ctab(mol('CCC'), false, true);
+select mol_to_v3kctab(mol('CCC'), false);
 
 select all_values_lt(torsion_fp('c1ccccc1C'::mol),2);
 select all_values_lt(torsion_fp('c1ccccc1C'::mol),3);
@@ -240,6 +243,50 @@ select 'CC(F)Cl'::mol@='C[C@@H](F)Cl'::mol;
 select 'CC(F)Cl'::mol@='C[C@H](F)Cl'::mol;
 select 'CC(F)Cl'::mol@='CC(F)Cl'::mol;
 set rdkit.do_chiral_sss=false;
+
+-- Enhanced stereo
+set rdkit.do_chiral_sss=false;
+set rdkit.do_enhanced_stereo_sss=false; /* has no effect when do_chiral_sss is false */
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select 'C[C@H](O)[C@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@H](O)[C@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+set rdkit.do_enhanced_stereo_sss=true; /* has no effect when do_chiral_sss is false */
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select 'C[C@H](O)[C@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@H](O)[C@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+set rdkit.do_chiral_sss=true;
+set rdkit.do_enhanced_stereo_sss=false;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select 'C[C@H](O)[C@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@H](O)[C@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+set rdkit.do_enhanced_stereo_sss=true; /* now we expect to see an effect */
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select 'C[C@H](O)[C@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
+select 'C[C@H](O)[C@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+
+set rdkit.do_chiral_sss=false;
+set rdkit.do_enhanced_stereo_sss=false;
+
 
 -- substructure counts
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol);
@@ -348,6 +395,14 @@ select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"a
 -- CXSmiles
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+SELECT mol_to_cxsmarts(mol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 
 -- CXSmiles from mol_out
 SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+
+-- github #3688: bad input to qmol_from_ctab() crashes db
+select qmol_from_ctab('a'::cstring,false);
+-- github #3689: bad input to qmol_from_smiles() crashes db
+select qmol_from_smiles('a'::cstring);
+select qmol_from_smiles('C1C'::cstring);

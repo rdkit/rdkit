@@ -41,9 +41,11 @@ RDKIT_MOLTRANSFORMS_EXPORT void transformAtom(RDKit::Atom *atom,
 
   \param conf     Conformer of interest
   \param ignoreHs If true, ignore hydrogen atoms
+  \param weights    If present, used to weigh the atomic coordinates
 */
 RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Point3D computeCentroid(
-    const RDKit::Conformer &conf, bool ignoreHs = true);
+    const RDKit::Conformer &conf, bool ignoreHs = true,
+    const std::vector<double> *weights = nullptr);
 
 #ifdef RDK_HAS_EIGEN3
 //! Compute principal axes and moments of inertia for a conformer
@@ -60,7 +62,7 @@ RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Point3D computeCentroid(
   \param ignoreHs   If true, ignore hydrogen atoms
   \param force      If true, the calculation will be carried out even if a
   cached value is present
-  \param weights    If present used to weight the atomic coordinates
+  \param weights    If present, used to weigh the atomic coordinates
 
   \returns whether or not the calculation was successful
 */
@@ -82,7 +84,7 @@ RDKIT_MOLTRANSFORMS_EXPORT bool computePrincipalAxesAndMoments(
   \param ignoreHs   If true, ignore hydrogen atoms
   \param force      If true, the calculation will be carried out even if a
   cached value is present
-  \param weights    If present used to weight the atomic coordinates
+  \param weights    If present, used to weigh the atomic coordinates
 
   \returns whether or not the calculation was successful
 */
@@ -93,11 +95,11 @@ computePrincipalAxesAndMomentsFromGyrationMatrix(
     const std::vector<double> *weights = nullptr);
 #endif
 
-//! Compute the transformation require to orient the conformation
+//! Compute the transformation required to orient the conformation
 //! along the principal axes about the center; i.e. center is made to coincide
-// with the
+/// with the
 //! origin, the largest principal axis with the x-axis, the next largest with
-// the y-axis
+/// the y-axis
 //! and the smallest with the z-axis
 /*!
   If center is not specified the centroid of the conformer will be used
@@ -116,6 +118,10 @@ RDKIT_MOLTRANSFORMS_EXPORT RDGeom::Transform3D *computeCanonicalTransform(
 //! Transform the conformation using the specified transformation
 RDKIT_MOLTRANSFORMS_EXPORT void transformConformer(
     RDKit::Conformer &conf, const RDGeom::Transform3D &trans);
+
+//! Transforms coordinates in a molecule's substance groups
+RDKIT_MOLTRANSFORMS_EXPORT void transformMolSubstanceGroups(
+    RDKit::ROMol &mol, const RDGeom::Transform3D &trans);
 
 //! Canonicalize the orientation of a conformer so that its principal axes
 //! around the specified center point coincide with the x, y, z axes

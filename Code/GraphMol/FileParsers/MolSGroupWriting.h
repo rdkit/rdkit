@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2018 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2002-2021 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #pragma once
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/format.hpp>
 #include <GraphMol/SubstanceGroup.h>
 
 namespace RDKit {
@@ -20,21 +21,18 @@ typedef std::unordered_map<int, SubstanceGroup> IDX_TO_SGROUP_MAP;
 /* ------------------ Inlined Formatters ------------------ */
 
 inline std::string FormatV2000IntField(int value) {
-  char output[5];
-  snprintf(output, 5, " %3d", value);
-  return std::string(output);
+  auto fmt = boost::format(" %3d") % value;
+  return fmt.str();
 }
 
 inline std::string FormatV2000NumEntriesField(int value) {
-  char output[4];
-  snprintf(output, 4, " %2d", value);
-  return std::string(output);
+  auto fmt = boost::format(" %2d") % value;
+  return fmt.str();
 }
 
 inline std::string FormatV2000DoubleField(double value) {
-  char output[11];
-  snprintf(output, 11, "%10.4f", value);
-  return std::string(output);
+  auto fmt = boost::format("%10.4f") % value;
+  return fmt.str();
 }
 
 inline std::string FormatV2000StringField(const std::string &value,

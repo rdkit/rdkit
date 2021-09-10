@@ -29,37 +29,39 @@ class SparseIntVect {
  public:
   typedef std::map<IndexType, int> StorageType;
 
-  SparseIntVect() : d_length(0){};
+  SparseIntVect() : d_length(0) {}
 
   //! initialize with a particular length
-  SparseIntVect(IndexType length) : d_length(length){};
+  SparseIntVect(IndexType length) : d_length(length) {}
 
   //! Copy constructor
   SparseIntVect(const SparseIntVect<IndexType> &other) {
     d_length = other.d_length;
+    d_data.clear();
     d_data.insert(other.d_data.begin(), other.d_data.end());
   }
 
   //! constructor from a pickle
   SparseIntVect(const std::string &pkl) {
     initFromText(pkl.c_str(), pkl.size());
-  };
+  }
   //! constructor from a pickle
   SparseIntVect(const char *pkl, const unsigned int len) {
     initFromText(pkl, len);
-  };
+  }
 
   SparseIntVect &operator=(const SparseIntVect<IndexType> &other) {
     if (this == &other) {
       return *this;
     }
     d_length = other.d_length;
+    d_data.clear();
     d_data.insert(other.d_data.begin(), other.d_data.end());
     return *this;
   }
 
   //! destructor (doesn't need to do anything)
-  ~SparseIntVect() {}
+  ~SparseIntVect() = default;
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -82,7 +84,7 @@ class SparseIntVect {
       res = iter->second;
     }
     return res;
-  };
+  }
 
   //! set the value at an index
   void setVal(IndexType idx, int val) {
@@ -94,7 +96,7 @@ class SparseIntVect {
     } else {
       d_data.erase(idx);
     }
-  };
+  }
 #ifdef __clang__
 #pragma clang diagnostic pop
 #elif (defined(__GNUC__) || defined(__GNUG__)) && \
@@ -102,10 +104,10 @@ class SparseIntVect {
 #pragma GCC diagnostic pop
 #endif
   //! support indexing using []
-  int operator[](IndexType idx) const { return getVal(idx); };
+  int operator[](IndexType idx) const { return getVal(idx); }
 
   //! returns the length
-  IndexType getLength() const { return d_length; };
+  IndexType getLength() const { return d_length; }
 
   //! returns the sum of all the elements in the vect
   //! the doAbs argument toggles summing the absolute values of the elements
@@ -119,9 +121,9 @@ class SparseIntVect {
         res += abs(iter->second);
     }
     return res;
-  };
+  }
   //! returns the length
-  unsigned int size() const { return getLength(); };
+  unsigned int size() const { return getLength(); }
 
   //! returns our nonzero elements as a map(IndexType->int)
   const StorageType &getNonzeroElements() const { return d_data; }
@@ -158,7 +160,7 @@ class SparseIntVect {
       }
     }
     return *this;
-  };
+  }
   const SparseIntVect<IndexType> operator&(
       const SparseIntVect<IndexType> &other) const {
     SparseIntVect<IndexType> res(*this);
@@ -196,7 +198,7 @@ class SparseIntVect {
       ++oIter;
     }
     return *this;
-  };
+  }
   const SparseIntVect<IndexType> operator|(
       const SparseIntVect<IndexType> &other) const {
     SparseIntVect<IndexType> res(*this);
@@ -230,7 +232,7 @@ class SparseIntVect {
       ++oIter;
     }
     return *this;
-  };
+  }
   const SparseIntVect<IndexType> operator+(
       const SparseIntVect<IndexType> &other) const {
     SparseIntVect<IndexType> res(*this);
@@ -264,7 +266,7 @@ class SparseIntVect {
       ++oIter;
     }
     return *this;
-  };
+  }
   const SparseIntVect<IndexType> operator-(
       const SparseIntVect<IndexType> &other) const {
     SparseIntVect<IndexType> res(*this);
@@ -277,11 +279,11 @@ class SparseIntVect {
       ++iter;
     }
     return *this;
-  };
+  }
   SparseIntVect<IndexType> &operator*(int v) {
     SparseIntVect<IndexType> res(*this);
     return res *= v;
-  };
+  }
   SparseIntVect<IndexType> &operator/=(int v) {
     typename StorageType::iterator iter = d_data.begin();
     while (iter != d_data.end()) {
@@ -289,11 +291,11 @@ class SparseIntVect {
       ++iter;
     }
     return *this;
-  };
+  }
   SparseIntVect<IndexType> &operator/(int v) {
     SparseIntVect<IndexType> res(*this);
     return res /= v;
-  };
+  }
   SparseIntVect<IndexType> &operator+=(int v) {
     typename StorageType::iterator iter = d_data.begin();
     while (iter != d_data.end()) {
@@ -301,11 +303,11 @@ class SparseIntVect {
       ++iter;
     }
     return *this;
-  };
+  }
   SparseIntVect<IndexType> &operator+(int v) {
     SparseIntVect<IndexType> res(*this);
     return res += v;
-  };
+  }
   SparseIntVect<IndexType> &operator-=(int v) {
     typename StorageType::iterator iter = d_data.begin();
     while (iter != d_data.end()) {
@@ -313,11 +315,11 @@ class SparseIntVect {
       ++iter;
     }
     return *this;
-  };
+  }
   SparseIntVect<IndexType> &operator-(int v) {
     SparseIntVect<IndexType> res(*this);
     return res -= v;
-  };
+  }
 
   bool operator==(const SparseIntVect<IndexType> &v2) const {
     if (d_length != v2.d_length) {
@@ -350,7 +352,7 @@ class SparseIntVect {
       ++iter;
     }
     return ss.str();
-  };
+  }
 
   void fromString(const std::string &txt) {
     initFromText(txt.c_str(), txt.length());
@@ -391,7 +393,7 @@ class SparseIntVect {
     } else {
       throw ValueErrorException("bad version in SparseIntVect pickle");
     }
-  };
+  }
   template <typename T>
   void readVals(std::stringstream &ss) {
     PRECONDITION(sizeof(T) <= sizeof(IndexType), "invalid size");
@@ -433,14 +435,20 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
   // the other vector:
   typename SparseIntVect<IndexType>::StorageType::const_iterator iter1, iter2;
   iter1 = v1.getNonzeroElements().begin();
-  if (iter1 != v1.getNonzeroElements().end()) v1Sum += abs(iter1->second);
+  if (iter1 != v1.getNonzeroElements().end()) {
+    v1Sum += abs(iter1->second);
+  }
   iter2 = v2.getNonzeroElements().begin();
-  if (iter2 != v2.getNonzeroElements().end()) v2Sum += abs(iter2->second);
+  if (iter2 != v2.getNonzeroElements().end()) {
+    v2Sum += abs(iter2->second);
+  }
   while (iter1 != v1.getNonzeroElements().end()) {
     while (iter2 != v2.getNonzeroElements().end() &&
            iter2->first < iter1->first) {
       ++iter2;
-      if (iter2 != v2.getNonzeroElements().end()) v2Sum += abs(iter2->second);
+      if (iter2 != v2.getNonzeroElements().end()) {
+        v2Sum += abs(iter2->second);
+      }
     }
     if (iter2 != v2.getNonzeroElements().end()) {
       if (iter2->first == iter1->first) {
@@ -450,10 +458,14 @@ void calcVectParams(const SparseIntVect<IndexType> &v1,
           andSum += abs(iter1->second);
         }
         ++iter2;
-        if (iter2 != v2.getNonzeroElements().end()) v2Sum += abs(iter2->second);
+        if (iter2 != v2.getNonzeroElements().end()) {
+          v2Sum += abs(iter2->second);
+        }
       }
       ++iter1;
-      if (iter1 != v1.getNonzeroElements().end()) v1Sum += abs(iter1->second);
+      if (iter1 != v1.getNonzeroElements().end()) {
+        v1Sum += abs(iter1->second);
+      }
     } else {
       break;
     }

@@ -236,6 +236,170 @@ class TestCase(unittest.TestCase):
         rdDepictor.GenerateDepictionMatching3DStructure(xp0_lig_2d, xp0_lig, -1, xp0_ref)
 
 
+    def testGenerate2DDepictionRefPatternAtomMap(self):
+        indazoleMolblock = """
+     RDKit          2D
+
+  9 10  0  0  0  0  0  0  0  0999 V2000
+   -6.0878    2.4335    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3867    1.6835    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3867    0.1833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.0878   -0.5666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7887    0.1833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.7887    1.6835    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4897   -0.5664    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1906    1.6833    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1906    0.1835    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  8  9  2  0
+  6  8  1  0
+  7  9  1  0
+  7  5  1  0
+M  END"""
+        indazoleRef = Chem.MolFromMolBlock(indazoleMolblock)
+        cycloheptylPyrazole = Chem.MolFromSmiles("c1cc(C2CCCCCC2)[nH]n1")
+
+        # test using refPattern
+        refPatt = Chem.MolFromSmarts("a1aan[nH]1")
+        rdDepictor.GenerateDepictionMatching2DStructure(cycloheptylPyrazole, indazoleRef, refPatt=refPatt)
+        self.assertEqual(cycloheptylPyrazole.GetNumConformers(), 1)
+        molMatchVect = cycloheptylPyrazole.GetSubstructMatch(refPatt)
+        self.assertEqual(len(molMatchVect), refPatt.GetNumAtoms())
+        refMatchVect = indazoleRef.GetSubstructMatch(refPatt)
+        self.assertEqual(len(refMatchVect), refPatt.GetNumAtoms())
+        atomMap = tuple(zip(refMatchVect, molMatchVect))
+        msd = 0.0
+        for refIdx, molIdx in atomMap:
+            msd += (indazoleRef.GetConformer().GetAtomPosition(refIdx) -
+                    cycloheptylPyrazole.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+        msd /= len(molMatchVect)
+        self.assertAlmostEqual(msd, 0.0)
+        # try with a pattern larger than the reference molecule
+        hugePatt = Chem.MolFromSmarts("CCCCCCCCCCCCCCCCCCCCCCCCCCC")
+        with self.assertRaises(ValueError):
+            rdDepictor.GenerateDepictionMatching2DStructure(
+                cycloheptylPyrazole, indazoleRef, refPatt=hugePatt)
+
+        # try with an out of range confId
+        with self.assertRaises(ValueError):
+            rdDepictor.GenerateDepictionMatching2DStructure(
+                cycloheptylPyrazole, indazoleRef, confId=1, refPatt=refPatt)
+
+        # test using atomMap directly
+        cycloheptylPyrazole.RemoveAllConformers()
+        rdDepictor.GenerateDepictionMatching2DStructure(cycloheptylPyrazole, indazoleRef, atomMap=atomMap)
+        self.assertEqual(cycloheptylPyrazole.GetNumConformers(), 1)
+        msd = 0.0
+        for refIdx, molIdx in atomMap:
+            msd += (indazoleRef.GetConformer().GetAtomPosition(refIdx) -
+                    cycloheptylPyrazole.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+        msd /= len(atomMap)
+        self.assertAlmostEqual(msd, 0.0)
+
+        # try with an atomMap larger than the reference molecule
+        atomMapHuge = list(atomMap) + [(0, 0) for i in range(indazoleRef.GetNumAtoms())]
+        with self.assertRaises(ValueError):
+            rdDepictor.GenerateDepictionMatching2DStructure(
+                cycloheptylPyrazole, indazoleRef, atomMap=atomMapHuge)
+
+        # try with an atomMap with out of range indices
+        atomMapOutOfRange = list(atomMap) + [(100, 100)]
+        with self.assertRaises(ValueError):
+            rdDepictor.GenerateDepictionMatching2DStructure(
+                cycloheptylPyrazole, indazoleRef, atomMap=atomMapOutOfRange)
+
+        # try with an out of range confId
+        with self.assertRaises(ValueError):
+            rdDepictor.GenerateDepictionMatching2DStructure(
+                cycloheptylPyrazole, indazoleRef, atomMap=atomMap, confId=1)
+
+    def testGenerate2DDepictionAllowRGroups(self):
+        templateMolblock = """
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910    1.0942    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+    1.7051    1.0942    0.0000 R2  0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4910   -1.9059    0.0000 R3  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  6  8  1  0
+  3  9  1  0
+  2  7  1  0
+M  RGP  3   7   1   8   2   9   3
+M  END"""
+        templateRef = Chem.MolFromMolBlock(templateMolblock)
+        orthoMeta = Chem.MolFromSmiles("c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1")
+        ortho = Chem.MolFromSmiles("c1ccc(-c2ccccc2-c2ccccc2)cc1")
+        meta = Chem.MolFromSmiles("c1ccc(-c2cccc(-c3ccccc3)c2)cc1")
+        biphenyl = Chem.MolFromSmiles("c1ccccc1-c1ccccc1")
+        phenyl = Chem.MolFromSmiles("c1ccccc1")
+
+        atomMap = rdDepictor.GenerateDepictionMatching2DStructure(orthoMeta, templateRef)
+        self.assertEqual(orthoMeta.GetNumConformers(), 1)
+
+        for mol in (ortho, meta, biphenyl, phenyl):
+            # fails as does not match template
+            with self.assertRaises(ValueError):
+                rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef)
+
+            # succeeds with allowRGroups=true
+            atomMap = rdDepictor.GenerateDepictionMatching2DStructure(mol, templateRef, allowRGroups=True)
+            self.assertEqual(mol.GetNumConformers(), 1)
+            msd = 0.0
+            for refIdx, molIdx in atomMap:
+                msd += (templateRef.GetConformer().GetAtomPosition(refIdx) -
+                        mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+            msd /= len(atomMap)
+            self.assertAlmostEqual(msd, 0.0)
+
+        # test that using a refPattern with R groups and a reference without works
+        pyridineRef = Chem.MolFromMolBlock("""
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.8929    1.0942    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919    0.3442    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1919   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8929   -1.9059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060   -1.1558    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4060    0.3442    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END""")
+        genericRefPatternWithRGroups = Chem.MolFromSmarts("[*:3]a1a([*:1])aa([*:2])aa1")
+        pyridineRefHs = Chem.AddHs(pyridineRef)
+
+        for mol in (ortho, meta, biphenyl, phenyl):
+            atomMap = rdDepictor.GenerateDepictionMatching2DStructure(
+                mol, pyridineRef, refPatt=genericRefPatternWithRGroups, allowRGroups=True)
+            self.assertEqual(mol.GetNumConformers(), 1)
+            msd = 0.0
+            for refIdx, molIdx in atomMap:
+                msd += (pyridineRef.GetConformer().GetAtomPosition(refIdx) -
+                        mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
+            msd /= len(atomMap)
+            self.assertAlmostEqual(msd, 0.0)
+
 if __name__ == '__main__':
     rdDepictor.SetPreferCoordGen(False)
     unittest.main()

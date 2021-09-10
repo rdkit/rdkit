@@ -65,7 +65,7 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
 else (RDK_BUILD_MAEPARSER_SUPPORT)
 
   set(RDK_MAEPARSER_LIBS CACHE STRING "the external libraries" FORCE)
-  
+
 endif(RDK_BUILD_MAEPARSER_SUPPORT)
 
 if(RDK_BUILD_COORDGEN_SUPPORT)
@@ -82,24 +82,15 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "1.4.1")
-        set(MD5 "d9a925c9569bc08e241a01669f43d639")
+        set(RELEASE_NO "2.0.3")
+        set(MD5 "e5541909e4283c67ef4934d2ad271aa3")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-        
-        # FIX: this is a workaround until https://github.com/schrodinger/coordgenlibs/pull/76
-        # is merged and a new coordgen release is done
+
         file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
-        set(fileToPatch "${COORDGEN_DIR}/CoordgenFragmenter.h")
-        configure_file("${fileToPatch}" "${fileToPatch}.orig" COPYONLY)
-        file(READ "${fileToPatch}" buffer)
-        string(REPLACE "class CoordgenFragmenter"
-          "#include \"CoordgenConfig.hpp\"\nclass EXPORT_COORDGEN CoordgenFragmenter" 
-          buffer "${buffer}")
-        file(WRITE "${fileToPatch}" "${buffer}")
     else()
       message("-- Found coordgenlibs source in ${COORDGEN_DIR}")
     endif()

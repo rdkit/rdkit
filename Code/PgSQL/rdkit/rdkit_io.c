@@ -1,6 +1,6 @@
-// $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021, Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 // 
 // Redistribution and use in source and binary forms, with or without
@@ -218,6 +218,7 @@ mol_to_ctab(PG_FUNCTION_ARGS) {
   int     len;
 
   bool createDepictionIfMissing = PG_GETARG_BOOL(1);
+  bool usev3000 = PG_GETARG_BOOL(2);
 
   fcinfo->flinfo->fn_extra = searchMolCache(
                                             fcinfo->flinfo->fn_extra,
@@ -225,7 +226,29 @@ mol_to_ctab(PG_FUNCTION_ARGS) {
                                             PG_GETARG_DATUM(0),
                                             NULL, &mol, NULL);
 
-  str = makeCtabText(mol, &len, createDepictionIfMissing);
+  str = makeCtabText(mol, &len, createDepictionIfMissing, usev3000);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
+PGDLLEXPORT Datum           mol_to_v3kctab(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_v3kctab);
+Datum
+mol_to_v3kctab(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  bool createDepictionIfMissing = PG_GETARG_BOOL(1);
+  bool usev3000 = 1;
+
+  fcinfo->flinfo->fn_extra = searchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+
+  str = makeCtabText(mol, &len, createDepictionIfMissing, usev3000);
 
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
@@ -284,6 +307,24 @@ mol_to_smarts(PG_FUNCTION_ARGS) {
   PG_RETURN_CSTRING( pnstrdup(str, len) );
 }
 
+PGDLLEXPORT Datum           mol_to_cxsmarts(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_cxsmarts);
+Datum
+mol_to_cxsmarts(PG_FUNCTION_ARGS) {
+  CROMol  mol;
+  char    *str;
+  int     len;
+
+  fcinfo->flinfo->fn_extra = searchMolCache(
+                                            fcinfo->flinfo->fn_extra,
+                                            fcinfo->flinfo->fn_mcxt,
+                                            PG_GETARG_DATUM(0),
+                                            NULL, &mol, NULL);
+  str = makeMolText(mol, &len,true,true);
+
+  PG_RETURN_CSTRING( pnstrdup(str, len) );
+}
+
 PGDLLEXPORT Datum           mol_from_pkl(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_from_pkl);
 Datum
@@ -300,6 +341,7 @@ mol_from_pkl(PG_FUNCTION_ARGS) {
 
   PG_RETURN_MOL_P(res);           
 }
+
 
 PGDLLEXPORT Datum           mol_to_pkl(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_to_pkl);
@@ -321,6 +363,48 @@ mol_to_pkl(PG_FUNCTION_ARGS) {
   memcpy(VARDATA(res),str,len);
   PG_RETURN_BYTEA_P( res );
 }
+
+
+PGDLLEXPORT Datum           mol_to_json(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_to_json);
+Datum
+mol_to_json(PG_FUNCTION_ARGS) {
+  CROMol mol;
+  const char *str;
+  char *res;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &mol, NULL);
+  str = makeMolJSON(mol);
+  if (*str == 0) {
+    free((void *)str);
+    PG_RETURN_NULL();
+  } else {
+    res = pnstrdup(str, strlen(str));
+    free((void *)str);
+    PG_RETURN_CSTRING(res);
+  }
+}
+
+PGDLLEXPORT Datum           mol_from_json(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_from_json);
+Datum
+mol_from_json(PG_FUNCTION_ARGS) {
+  char    *data = PG_GETARG_CSTRING(0);
+  CROMol  mol;
+  Mol     *res;
+
+  mol = parseMolJSON(data, true);
+  if (!mol) {
+    PG_RETURN_NULL();
+  }
+  res = deconstructROMol(mol);
+  freeCROMol(mol);
+
+  PG_RETURN_MOL_P(res);           
+}
+
 
 PGDLLEXPORT Datum           qmol_in(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(qmol_in);
@@ -446,6 +530,14 @@ rdkit_version(PG_FUNCTION_ARGS) {
            atoi( pnstrdup(ver + 4, 2) ));
 
   PG_RETURN_TEXT_P(cstring_to_text(buf));
+}
+
+PGDLLEXPORT Datum           rdkit_toolkit_version(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(rdkit_toolkit_version);
+Datum
+rdkit_toolkit_version(PG_FUNCTION_ARGS) {
+  const char    *ver = "" RDK_TOOLKIT_VERSION;
+  PG_RETURN_TEXT_P(cstring_to_text(ver));
 }
 
 

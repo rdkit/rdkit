@@ -15,7 +15,6 @@
 #include <RDGeneral/hash/hash.hpp>
 #include <cstdint>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/foreach.hpp>
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
 
 namespace RDKit {
@@ -32,8 +31,7 @@ void updateElement(ExplicitBitVect &v, T1 elem) {
 }
 
 template <typename T>
-void setAtomPairBit(std::uint32_t i, std::uint32_t j,
-                    std::uint32_t nAtoms,
+void setAtomPairBit(std::uint32_t i, std::uint32_t j, std::uint32_t nAtoms,
                     const std::vector<std::uint32_t> &atomCodes,
                     const double *dm, T *bv, unsigned int minLength,
                     unsigned int maxLength, bool includeChirality) {
@@ -113,7 +111,7 @@ SparseIntVect<std::int32_t> *getAtomPairFingerprint(
                        includeChirality);
       }
     } else {
-      BOOST_FOREACH (std::uint32_t j, *fromAtoms) {
+      for (auto j : *fromAtoms) {
         if (j != i) {
           if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(),
                                        j) != ignoreAtoms->end()) {
@@ -195,7 +193,7 @@ SparseIntVect<std::int32_t> *getHashedAtomPairFingerprint(
         }
       }
     } else {
-      BOOST_FOREACH (std::uint32_t j, *fromAtoms) {
+      for (auto j : *fromAtoms) {
         if (j != i) {
           if (ignoreAtoms && std::find(ignoreAtoms->begin(), ignoreAtoms->end(),
                                        j) != ignoreAtoms->end()) {
@@ -233,8 +231,7 @@ ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
       atomInvariants, includeChirality, use2D, confId);
   auto *res = new ExplicitBitVect(nBits);
   if (nBitsPerEntry != 4) {
-    BOOST_FOREACH (SparseIntVect<boost::int64_t>::StorageType::value_type val,
-                   sres->getNonzeroElements()) {
+    for (auto val : sres->getNonzeroElements()) {
       for (unsigned int i = 0; i < nBitsPerEntry; ++i) {
         if (val.second > static_cast<int>(i)) {
           res->setBit(val.first * nBitsPerEntry + i);
@@ -242,8 +239,7 @@ ExplicitBitVect *getHashedAtomPairFingerprintAsBitVect(
       }
     }
   } else {
-    BOOST_FOREACH (SparseIntVect<boost::int64_t>::StorageType::value_type val,
-                   sres->getNonzeroElements()) {
+    for (auto val : sres->getNonzeroElements()) {
       for (unsigned int i = 0; i < nBitsPerEntry; ++i) {
         if (val.second >= bounds[i]) {
           res->setBit(val.first * nBitsPerEntry + i);
@@ -296,12 +292,14 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
   boost::dynamic_bitset<> *fromAtomsBV = nullptr;
   if (fromAtoms) {
     fromAtomsBV = new boost::dynamic_bitset<>(lmol->getNumAtoms());
-    BOOST_FOREACH (std::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
+    for (auto fAt : *fromAtoms) {
+      fromAtomsBV->set(fAt);
+    }
   }
   boost::dynamic_bitset<> *ignoreAtomsBV = nullptr;
   if (ignoreAtoms) {
     ignoreAtomsBV = new boost::dynamic_bitset<>(mol.getNumAtoms());
-    BOOST_FOREACH (std::uint32_t fAt, *ignoreAtoms) {
+    for (auto fAt : *ignoreAtoms) {
       ignoreAtomsBV->set(fAt);
     }
   }
@@ -322,7 +320,7 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
       }
     }
     if (keepIt && ignoreAtomsBV) {
-      BOOST_FOREACH (int pElem, path) {
+      for (auto pElem : path) {
         if (ignoreAtomsBV->test(pElem)) {
           keepIt = false;
           break;
@@ -393,12 +391,14 @@ void TorsionFpCalc(T *res, const ROMol &mol, unsigned int nBits,
   boost::dynamic_bitset<> *fromAtomsBV = nullptr;
   if (fromAtoms) {
     fromAtomsBV = new boost::dynamic_bitset<>(lmol->getNumAtoms());
-    BOOST_FOREACH (std::uint32_t fAt, *fromAtoms) { fromAtomsBV->set(fAt); }
+    for (auto fAt : *fromAtoms) {
+      fromAtomsBV->set(fAt);
+    }
   }
   boost::dynamic_bitset<> *ignoreAtomsBV = nullptr;
   if (ignoreAtoms) {
     ignoreAtomsBV = new boost::dynamic_bitset<>(lmol->getNumAtoms());
-    BOOST_FOREACH (std::uint32_t fAt, *ignoreAtoms) {
+    for (auto fAt : *ignoreAtoms) {
       ignoreAtomsBV->set(fAt);
     }
   }
@@ -418,7 +418,7 @@ void TorsionFpCalc(T *res, const ROMol &mol, unsigned int nBits,
       }
     }
     if (keepIt && ignoreAtomsBV) {
-      BOOST_FOREACH (int pElem, path) {
+      for (auto pElem : path) {
         if (ignoreAtomsBV->test(pElem)) {
           keepIt = false;
           break;
@@ -472,8 +472,7 @@ ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
   auto *res = new ExplicitBitVect(nBits);
 
   if (nBitsPerEntry != 4) {
-    BOOST_FOREACH (SparseIntVect<boost::int64_t>::StorageType::value_type val,
-                   sres->getNonzeroElements()) {
+    for (auto val : sres->getNonzeroElements()) {
       for (unsigned int i = 0; i < nBitsPerEntry; ++i) {
         if (val.second > static_cast<int>(i)) {
           res->setBit(val.first * nBitsPerEntry + i);
@@ -481,8 +480,7 @@ ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
       }
     }
   } else {
-    BOOST_FOREACH (SparseIntVect<boost::int64_t>::StorageType::value_type val,
-                   sres->getNonzeroElements()) {
+    for (auto val : sres->getNonzeroElements()) {
       for (unsigned int i = 0; i < nBitsPerEntry; ++i) {
         if (val.second >= bounds[i]) {
           res->setBit(val.first * nBitsPerEntry + i);

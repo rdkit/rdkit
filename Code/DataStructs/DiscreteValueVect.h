@@ -54,19 +54,19 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
   //! constructor from a pickle
   DiscreteValueVect(const std::string &pkl) {
     initFromText(pkl.c_str(), static_cast<unsigned int>(pkl.size()));
-  };
+  }
   //! constructor from a pickle
   DiscreteValueVect(const char *pkl, const unsigned int len) {
     initFromText(pkl, len);
-  };
+  }
 
-  ~DiscreteValueVect() {}
+  ~DiscreteValueVect() = default;
 
   //! return the value at an index
   unsigned int getVal(unsigned int i) const;
 
   //! support indexing using []
-  int operator[](unsigned int idx) const { return getVal(idx); };
+  int operator[](unsigned int idx) const { return getVal(idx); }
 
   //! set the value at an index
   /*!
@@ -81,7 +81,7 @@ class RDKIT_DATASTRUCTS_EXPORT DiscreteValueVect {
   //! returns the length
   unsigned int getLength() const;
   //! returns the length
-  unsigned int size() const { return getLength(); };
+  unsigned int size() const { return getLength(); }
 
   //! return a pointer to our raw data storage
   const std::uint32_t *getData() const;

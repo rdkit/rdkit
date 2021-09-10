@@ -281,6 +281,10 @@ static void CreateAminoAcid(RWMol *mol, const char *aa, Atom *&r1, Atom *&r2,
         CreateAABond(mol, atom[0], atom[1], 1);
         CreateAABond(mol, atom[1], atom[2], 2);
         CreateAABond(mol, atom[1], atom[3], 1);
+      } else if (!strcmp(aa, "DSN")) {
+        CreateAABackbone(mol, r1, r2, atom[0], info, -1);
+        atom[1] = CreateAAAtom(mol, " OG ", info);
+        CreateAABond(mol, atom[0], atom[1], 1);
       } else if (!strcmp(aa, "DTH")) {
         CreateAABackbone(mol, r1, r2, atom[0], info, -1);
         atom[1] = CreateAAAtom(mol, " OG1", info);
@@ -310,6 +314,23 @@ static void CreateAminoAcid(RWMol *mol, const char *aa, Atom *&r1, Atom *&r2,
         CreateAABond(mol, atom[6], atom[8], 2);
         CreateAABond(mol, atom[7], atom[9], 2);
         CreateAABond(mol, atom[8], atom[9], 1);
+      } else if (!strcmp(aa, "DTY")) {
+        CreateAABackbone(mol, r1, r2, atom[0], info, -1);
+        atom[1] = CreateAAAtom(mol, " CG ", info);
+        atom[2] = CreateAAAtom(mol, " CD1", info);
+        atom[3] = CreateAAAtom(mol, " CD2", info);
+        atom[4] = CreateAAAtom(mol, " CE1", info);
+        atom[5] = CreateAAAtom(mol, " CE2", info);
+        atom[6] = CreateAAAtom(mol, " CZ ", info);
+        atom[7] = CreateAAAtom(mol, " OH ", info);
+        CreateAABond(mol, atom[0], atom[1], 1);
+        CreateAABond(mol, atom[1], atom[2], 2);
+        CreateAABond(mol, atom[2], atom[4], 1);
+        CreateAABond(mol, atom[4], atom[6], 2);
+        CreateAABond(mol, atom[6], atom[5], 1);
+        CreateAABond(mol, atom[5], atom[3], 2);
+        CreateAABond(mol, atom[3], atom[1], 1);
+        CreateAABond(mol, atom[6], atom[7], 1);
       } else if (!strcmp(aa, "DVA")) {
         info.setIsHeteroAtom(true);
         CreateAABackbone(mol, r1, r2, atom[0], info, -1);

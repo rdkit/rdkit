@@ -20,35 +20,35 @@ namespace Queries {
 template <typename MatchFuncArgType,
           typename DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class EqualityQuery
+class RDKIT_QUERY_EXPORT EqualityQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  EqualityQuery() { this->df_negate = false; };
+  EqualityQuery() { this->df_negate = false; }
 
   //! constructs with our target value
   explicit EqualityQuery(MatchFuncArgType v) {
     this->d_val = v;
     this->df_negate = false;
-  };
+  }
 
   //! constructs with our target value and a tolerance
   EqualityQuery(MatchFuncArgType v, MatchFuncArgType t) {
     this->d_val = v;
     this->d_tol = t;
     this->df_negate = false;
-  };
+  }
 
   //! sets our target value
-  void setVal(MatchFuncArgType what) { this->d_val = what; };
+  void setVal(MatchFuncArgType what) { this->d_val = what; }
   //! returns our target value
-  const MatchFuncArgType getVal() const { return this->d_val; };
+  const MatchFuncArgType getVal() const { return this->d_val; }
 
   //! sets our tolerance
-  void setTol(MatchFuncArgType what) { this->d_tol = what; };
+  void setTol(MatchFuncArgType what) { this->d_tol = what; }
   //! returns out tolerance
-  const MatchFuncArgType getTol() const { return this->d_tol; };
+  const MatchFuncArgType getTol() const { return this->d_tol; }
 
-  virtual bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     if (queryCmp(this->d_val, mfArg, this->d_tol) == 0) {
@@ -64,10 +64,10 @@ class EqualityQuery
         return false;
       }
     }
-  };
+  }
 
-  virtual Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
-      const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new EqualityQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setNegation(this->getNegation());
@@ -77,9 +77,9 @@ class EqualityQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
-  std::string getFullDescription() const {
+  std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription();
     res << " " << this->d_val;

@@ -16,7 +16,7 @@ namespace RDKit {
 class RDKIT_DATASTRUCTS_EXPORT DiscreteDistMat {
  public:
   DiscreteDistMat();
-  ~DiscreteDistMat(){};
+  ~DiscreteDistMat() = default;
   unsigned int getDist(unsigned char v1, unsigned char v2,
                        DiscreteValueVect::DiscreteValueType type);
 

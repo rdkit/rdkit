@@ -33,7 +33,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
     initDrawing();
     initTextDrawer(noFreetype);
-  };
+  }
 
   // initialize to use the internal stringstream
   MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1,
@@ -41,7 +41,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
     initDrawing();
     initTextDrawer(noFreetype);
-  };
+  }
 
   void setColour(const DrawColour &col) override;
 
@@ -61,7 +61,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
                     double vertOffset = 0.05) override;
 
   // this only makes sense if the object was initialized without a stream
-  std::string getDrawingText() const { return d_ss.str(); };
+  std::string getDrawingText() const { return d_ss.str(); }
 
   // adds additional tags to the atoms and bonds in the SVG. This should be
   // invoked *after* the molecule has been drawn
@@ -75,6 +75,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void addMoleculeMetadata(const ROMol &mol, int confId = -1) const;
   void addMoleculeMetadata(const std::vector<ROMol *> &mols,
                            const std::vector<int> confIds = {}) const;
+
+  void drawAnnotation(const AnnotationType &annot) override;
 
  private:
   std::ostream &d_os;
@@ -93,8 +95,16 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
                 const std::vector<std::pair<DrawColour, DrawColour>>
                     *bond_colours = nullptr) override;
   void drawAtomLabel(int atom_num, const DrawColour &draw_colour) override;
+  //! DEPRECATED
   void drawAnnotation(const std::string &note,
-                      const std::shared_ptr<StringRect> &note_rect) override;
+                      const StringRect &note_rect) override {
+    AnnotationType annot;
+    annot.text_ = note;
+    annot.rect_ = note_rect;
+    drawAnnotation(annot);
+  }
+
+  virtual void outputClasses();
 };
 
 }  // namespace RDKit

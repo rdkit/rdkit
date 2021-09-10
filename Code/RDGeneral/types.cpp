@@ -1,5 +1,5 @@
 //
-//  Copyright 2001-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright 2001-2021 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -86,6 +86,7 @@ const std::string _ringStereoAtoms = "_ringStereoAtoms";
 const std::string _ringStereoWarning = "_ringStereoWarning";
 const std::string _ringStereochemCand = "_ringStereochemCand";
 const std::string _smilesAtomOutputOrder = "_smilesAtomOutputOrder";
+const std::string _smilesBondOutputOrder = "_smilesBondOutputOrder";
 const std::string _starred = "_starred";
 const std::string _supplementalSmilesLabel = "_supplementalSmilesLabel";
 const std::string _tpsa = "_tpsa";
@@ -123,6 +124,7 @@ const std::string molAtomSeqId = "molSeqid";
 const std::string molRxnExactChange = "molRxnExachg";
 const std::string molReactStatus = "molReactStatus";
 
+const std::string molNote = "molNote";
 const std::string atomNote = "atomNote";
 const std::string bondNote = "bondNote";
 const std::string _isotopicHs = "_isotopicHs";

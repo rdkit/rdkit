@@ -62,7 +62,7 @@ class SymmMatrix {
     d_data.reset(data);
   }
 
-  ~SymmMatrix() {}
+  ~SymmMatrix() = default;
 
   //! returns the number of rows
   inline unsigned int numRows() const { return d_size; }
@@ -233,7 +233,7 @@ class SymmMatrix {
   }
 
  protected:
-  SymmMatrix() :  d_data(0){};
+  SymmMatrix() : d_data(0) {}
   unsigned int d_size{0};
   unsigned int d_dataSize{0};
   DATA_SPTR d_data;

@@ -41,8 +41,12 @@ void setEnumerationHelper(MolEnumerator::MolEnumeratorParams *self,
                           EnumeratorTypes typ) {
   self->dp_operation = opFromName(typ);
 }
-MolBundle *enumerateHelper(const ROMol &mol,
-                           const MolEnumerator::MolEnumeratorParams &ps) {
+MolBundle *enumerateHelper1(const ROMol &mol) {
+  auto res = MolEnumerator::enumerate(mol);
+  return new MolBundle(res);
+}
+MolBundle *enumerateHelper2(const ROMol &mol,
+                            const MolEnumerator::MolEnumeratorParams &ps) {
   auto res = MolEnumerator::enumerate(mol, ps);
   return new MolBundle(res);
 }
@@ -70,7 +74,11 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
                      "seed for the random enumeration (not yet implemented")
       .def("SetEnumerationOperator", &setEnumerationHelper,
            "set the operator to be used for enumeration");
-  python::def("Enumerate", &enumerateHelper,
+  python::def("Enumerate", &enumerateHelper1, (python::arg("mol")),
+              python::return_value_policy<python::manage_new_object>(),
+              "do an enumeration and return a MolBundle");
+  python::def("Enumerate", &enumerateHelper2,
+              (python::arg("mol"), python::arg("enumParams")),
               python::return_value_policy<python::manage_new_object>(),
               "do an enumeration and return a MolBundle");
 }

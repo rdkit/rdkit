@@ -11,7 +11,6 @@
 
 """
 
-
 import io
 import os.path
 import unittest
@@ -36,7 +35,7 @@ def load_tests(loader, tests, ignore):
 class TestCase(unittest.TestCase):
 
   def testGithub1287(self):
-    smis = ('CCC',)
+    smis = ('CCC', )
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
@@ -65,20 +64,22 @@ class TestCase(unittest.TestCase):
           raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
 
   def testMolFormula(self):
-    for (smiles, expected) in (("[NH4+]", "H4N+"),
-                               ("c1ccccc1", "C6H6"),
-                               ("C1CCCCC1", "C6H12"),
-                               ("c1ccccc1O", "C6H6O"),
-                               ("C1CCCCC1O", "C6H12O"),
-                               ("C1CCCCC1=O", "C6H10O"),
-                               ("N[Na]", "H2NNa"),
-                               ("[C-][C-]", "C2-2"),
-                               ("[H]", "H"),
-                               ("[H-1]", "H-"),
-                               ("[H-1]", "H-"),
-                               ("[CH2]", "CH2"),
-                               ("[He-2]", "He-2"),
-                               ("[U+3]", "U+3"),):
+    for (smiles, expected) in (
+      ("[NH4+]", "H4N+"),
+      ("c1ccccc1", "C6H6"),
+      ("C1CCCCC1", "C6H12"),
+      ("c1ccccc1O", "C6H6O"),
+      ("C1CCCCC1O", "C6H12O"),
+      ("C1CCCCC1=O", "C6H10O"),
+      ("N[Na]", "H2NNa"),
+      ("[C-][C-]", "C2-2"),
+      ("[H]", "H"),
+      ("[H-1]", "H-"),
+      ("[H-1]", "H-"),
+      ("[CH2]", "CH2"),
+      ("[He-2]", "He-2"),
+      ("[U+3]", "U+3"),
+    ):
       mol = Chem.MolFromSmiles(smiles)
       actual = AllChem.CalcMolFormula(mol)
       self.assertEqual(actual, expected)
@@ -105,19 +106,25 @@ class TestCase(unittest.TestCase):
   def testMQN(self):
     m = Chem.MolFromSmiles("CC(C)(C)c1cc(O)c(cc1O)C(C)(C)C")
     if Lipinski.NumRotatableBonds(m) == 2:
-      tgt = [42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24061,
-         17820, 1, 9303, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
-         292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750]
+      tgt = [
+        42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24061,
+        17820, 1, 9303, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
+        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
+      ]
     else:
-      tgt = [42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24061,
-         17820, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
-         292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750]
-      tgt = [42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24059,
+      tgt = [
+        42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24061,
+        17820, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
+        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
+      ]
+      tgt = [
+        42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24059,
         17822, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
-        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750]
+        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
+      ]
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'aromat_regress.txt')
     ms = [x for x in Chem.SmilesMolSupplier(fn, delimiter='\t')]
-    vs = np.zeros((42,), np.int32)
+    vs = np.zeros((42, ), np.int32)
 
     for m in ms:
       vs += rdMolDescriptors.MQNs_(m)
@@ -147,24 +154,30 @@ class TestCase(unittest.TestCase):
     self.assertLess(fpd1, fpd2)
     self.assertLess(fpd2, fpd3)
 
+  @unittest.skipIf(not hasattr(rdMolDescriptors, 'BCUT2D'), "BCUT descriptor not available")
   def testVectorDescriptors(self):
     m = Chem.MolFromSmiles('CCCc1ccccc1')
     results = rdMolDescriptors.BCUT2D(m)
-    names = ["BCUT2D_%s"%s for s in ('MWHI',"MWLOW","CHGHI","CHGLO",
-                                     "LOGPHI","LOGPLOW","MRHI","MRLOW")]
-    for i,n in  enumerate(names):
+    names = [
+      "BCUT2D_%s" % s
+      for s in ('MWHI', "MWLOW", "CHGHI", "CHGLO", "LOGPHI", "LOGPLOW", "MRHI", "MRLOW")
+    ]
+    for i, n in enumerate(names):
       f = getattr(Descriptors, n)
       self.assertEqual(results[i], f(m))
 
     results = rdMolDescriptors.CalcAUTOCORR2D(m)
-    names = ["AUTOCORR2D_%s"%str(i+1) for i in range(192)]
-    for i,n in enumerate(names):
+    names = ["AUTOCORR2D_%s" % str(i + 1) for i in range(192)]
+    for i, n in enumerate(names):
       f = getattr(Descriptors, n)
       self.assertEqual(results[i], f(m))
 
+  @unittest.skipIf(not hasattr(rdMolDescriptors, 'BCUT2D')
+                   or not hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'),
+                   "BCUT or AUTOCORR descriptors not available")
   def testVectorDescriptorsInDescList(self):
     # First try only bcuts should exist
-    descriptors = set([n for n,_ in Descriptors.descList])
+    descriptors = set([n for n, _ in Descriptors.descList])
     names = set([
       "BCUT2D_%s" % i
       for i in ('MWHI', "MWLOW", "CHGHI", "CHGLO", "LOGPHI", "LOGPLOW", "MRHI", "MRLOW")
@@ -172,10 +185,10 @@ class TestCase(unittest.TestCase):
     self.assertEqual(descriptors.intersection(names), names)
 
     Descriptors.setupAUTOCorrDescriptors()
-    descriptors2 = set([n for n,_ in Descriptors.descList])
+    descriptors2 = set([n for n, _ in Descriptors.descList])
     self.assertEqual(descriptors2.intersection(descriptors), descriptors)
 
-    names = set(["AUTOCORR2D_%s"%str(i+1) for i in range(192)])
+    names = set(["AUTOCORR2D_%s" % str(i + 1) for i in range(192)])
     self.assertEqual(descriptors2.intersection(names), names)
 
 

@@ -151,6 +151,27 @@ public class FingerprintsTests extends GraphMolTest {
         compareVectors(fp1Bits, fp2Bits);
     }
 
+    @Test
+    public void testPatternFpsForBundles() {
+		ROMol q1 = RWMol.MolFromSmiles("OCCO");
+		ROMol q2 = RWMol.MolFromSmiles("OCCCO");
+        ExplicitBitVect qfp1 = RDKFuncs.PatternFingerprintMol(q1, 2048);
+        ExplicitBitVect qfp2 = RDKFuncs.PatternFingerprintMol(q2, 2048);
+		MolBundle bndl = new MolBundle();
+		bndl.addMol(q1);
+		bndl.addMol(q2);
+		
+		ExplicitBitVect bndlfp = RDKFuncs.PatternFingerprintMol(bndl,2048);
+        Int_Vect fpBits = bndlfp.getOnBits();
+		assertTrue(fpBits.size()!=0);
+		for(int i=0;i<fpBits.size();i++){
+			int idx = fpBits.get(i);
+			assertTrue(qfp1.getBit(idx));
+			assertTrue(qfp2.getBit(idx));
+		}
+		
+    }
+
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.FingerprintsTests");
 	}

@@ -34,7 +34,7 @@ void DrawTextJS::drawChar(char c, const Point2D &cds) {
   std::string col = DrawColourToSVG(colour());
   context_.set("font", font);
   context_.set("fillStyle", col);
-  context_.call<void>("fillText", txt, std::round(cds.x), std::round(cds.y));
+  context_.call<void>("fillText", txt, cds.x, cds.y);
 }
 
 // ****************************************************************************

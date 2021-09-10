@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,20 +11,22 @@
 #include <string>
 #include <iostream>
 #include "minilib.h"
+#include "common.h"
 
 #include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
@@ -40,132 +42,6 @@ namespace rj = rapidjson;
 
 using namespace RDKit;
 
-std::string process_details(const std::string &details, unsigned int &width,
-                            unsigned int &height, int &offsetx, int &offsety,
-                            std::string &legend, std::vector<int> &atomIds,
-                            std::vector<int> &bondIds) {
-  rj::Document doc;
-  doc.Parse(details.c_str());
-  if (!doc.IsObject()) return "Invalid JSON";
-
-  if (doc.HasMember("atoms")) {
-    if (!doc["atoms"].IsArray()) {
-      return "JSON doesn't contain 'atoms' field, or it is not an array";
-    }
-    for (const auto &molval : doc["atoms"].GetArray()) {
-      if (!molval.IsInt()) return ("Atom IDs should be integers");
-      atomIds.push_back(molval.GetInt());
-    }
-  }
-  if (doc.HasMember("bonds")) {
-    if (!doc["bonds"].IsArray()) {
-      return "JSON contain 'bonds' field, but it is not an array";
-    }
-    for (const auto &molval : doc["bonds"].GetArray()) {
-      if (!molval.IsInt()) return ("Bond IDs should be integers");
-      bondIds.push_back(molval.GetInt());
-    }
-  }
-
-  if (doc.HasMember("width")) {
-    if (!doc["width"].IsUint()) {
-      return "JSON contains 'width' field, but it is not an unsigned int";
-    }
-    width = doc["width"].GetUint();
-  }
-
-  if (doc.HasMember("height")) {
-    if (!doc["height"].IsUint()) {
-      return "JSON contains 'height' field, but it is not an unsigned int";
-    }
-    height = doc["height"].GetUint();
-  }
-
-  if (doc.HasMember("offsetx")) {
-    if (!doc["offsetx"].IsInt()) {
-      return "JSON contains 'offsetx' field, but it is not an int";
-    }
-    offsetx = doc["offsetx"].GetInt();
-  }
-
-  if (doc.HasMember("offsety")) {
-    if (!doc["offsety"].IsInt()) {
-      return "JSON contains 'offsety' field, but it is not an int";
-    }
-    offsety = doc["offsety"].GetInt();
-  }
-
-  if (doc.HasMember("legend")) {
-    if (!doc["legend"].IsString()) {
-      return "JSON contains 'legend' field, but it is not a string";
-    }
-    legend = doc["legend"].GetString();
-  }
-
-  return "";
-}
-
-namespace {
-RWMol *mol_from_input(const std::string &input) {
-  RWMol *res = nullptr;
-  if (input.find("M  END") != std::string::npos) {
-    bool sanitize = false;
-    res = MolBlockToMol(input, sanitize);
-  } else {
-    SmilesParserParams ps;
-    ps.sanitize = false;
-    res = SmilesToMol(input, ps);
-  }
-  if (res) {
-    try {
-      MolOps::sanitizeMol(*res);
-      MolOps::assignStereochemistry(*res, true, true, true);
-    } catch (...) {
-      delete res;
-      res = nullptr;
-    }
-  }
-  return res;
-}
-
-RWMol *qmol_from_input(const std::string &input) {
-  RWMol *res = nullptr;
-  if (input.find("M  END") != std::string::npos) {
-    bool sanitize = false;
-    res = MolBlockToMol(input, sanitize);
-  } else {
-    res = SmartsToMol(input);
-  }
-  return res;
-}
-
-std::string svg_(const ROMol &m, unsigned int w, unsigned int h,
-                 const std::string &details = "") {
-  std::vector<int> atomIds;
-  std::vector<int> bondIds;
-  std::string legend = "";
-  int offsetx = 0, offsety = 0;
-  if (!details.empty()) {
-    auto problems = process_details(details, w, h, offsetx, offsety, legend,
-                                    atomIds, bondIds);
-    if (!problems.empty()) {
-      return problems;
-    }
-  }
-
-  MolDraw2DSVG drawer(w, h);
-  if (!details.empty()) {
-    MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, details);
-  }
-  drawer.setOffset(offsetx, offsety);
-
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds);
-  drawer.finishDrawing();
-
-  return drawer.getDrawingText();
-}
-}  // namespace
-
 std::string JSMol::get_smiles() const {
   if (!d_mol) return "";
   return MolToSmiles(*d_mol);
@@ -176,14 +52,14 @@ std::string JSMol::get_cxsmiles() const {
 }
 std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
   if (!d_mol) return "";
-  return svg_(*d_mol, w, h);
+  return MinimalLib::mol_to_svg(*d_mol, w, h);
 }
 std::string JSMol::get_svg_with_highlights(const std::string &details) const {
   if (!d_mol) return "";
 
-  unsigned int w = d_defaultWidth;
-  unsigned int h = d_defaultHeight;
-  return svg_(*d_mol, w, h, details);
+  unsigned int w = MinimalLib::d_defaultWidth;
+  unsigned int h = MinimalLib::d_defaultHeight;
+  return MinimalLib::mol_to_svg(*d_mol, w, h, details);
 }
 
 std::string JSMol::get_inchi() const {
@@ -199,29 +75,10 @@ std::string JSMol::get_v3Kmolblock() const {
   if (!d_mol) return "";
   return MolToV3KMolBlock(*d_mol);
 }
-
-namespace {
-void get_sss_json(const ROMol *d_mol, const ROMol *q_mol,
-                  const MatchVectType &match, rj::Value &obj,
-                  rj::Document &doc) {
-  rj::Value rjAtoms(rj::kArrayType);
-  for (const auto &pr : match) {
-    rjAtoms.PushBack(pr.second, doc.GetAllocator());
-  }
-  obj.AddMember("atoms", rjAtoms, doc.GetAllocator());
-
-  rj::Value rjBonds(rj::kArrayType);
-  for (const auto qbond : q_mol->bonds()) {
-    unsigned int idx1 = match[qbond->getBeginAtomIdx()].second;
-    unsigned int idx2 = match[qbond->getEndAtomIdx()].second;
-    const auto bond = d_mol->getBondBetweenAtoms(idx1, idx2);
-    if (bond != nullptr) {
-      rjBonds.PushBack(bond->getIdx(), doc.GetAllocator());
-    }
-  }
-  obj.AddMember("bonds", rjBonds, doc.GetAllocator());
+std::string JSMol::get_json() const {
+  if (!d_mol) return "";
+  return MolInterchange::MolToJSONData(*d_mol);
 }
-}  // namespace
 
 std::string JSMol::get_substruct_match(const JSMol &q) const {
   std::string res = "{}";
@@ -231,7 +88,7 @@ std::string JSMol::get_substruct_match(const JSMol &q) const {
   if (SubstructMatch(*d_mol, *(q.d_mol), match)) {
     rj::Document doc;
     doc.SetObject();
-    get_sss_json(d_mol.get(), q.d_mol.get(), match, doc, doc);
+    MinimalLib::get_sss_json(*d_mol, *(q.d_mol), match, doc, doc);
     rj::StringBuffer buffer;
     rj::Writer<rj::StringBuffer> writer(buffer);
     doc.Accept(writer);
@@ -252,7 +109,7 @@ std::string JSMol::get_substruct_matches(const JSMol &q) const {
 
     for (const auto &match : matches) {
       rj::Value rjMatch(rj::kObjectType);
-      get_sss_json(d_mol.get(), q.d_mol.get(), match, rjMatch, doc);
+      MinimalLib::get_sss_json(*d_mol, *(q.d_mol), match, rjMatch, doc);
       doc.PushBack(rjMatch, doc.GetAllocator());
     }
 
@@ -267,28 +124,7 @@ std::string JSMol::get_substruct_matches(const JSMol &q) const {
 
 std::string JSMol::get_descriptors() const {
   if (!d_mol) return "{}";
-  rj::Document doc;
-  doc.SetObject();
-
-  Descriptors::Properties props;
-  std::vector<std::string> dns = props.getPropertyNames();
-  std::vector<double> dvs = props.computeProperties(*d_mol);
-  for (size_t i = 0; i < dns.size(); ++i) {
-    rj::Value v(dvs[i]);
-    const auto srt = rj::StringRef(dns[i].c_str());
-    doc.AddMember(srt, v, doc.GetAllocator());
-  }
-
-  if (std::find(dns.begin(), dns.end(), std::string("amw")) == dns.end()) {
-    rj::Value v(Descriptors::calcAMW(*d_mol));
-    doc.AddMember("amw", v, doc.GetAllocator());
-  }
-
-  rj::StringBuffer buffer;
-  rj::Writer<rj::StringBuffer> writer(buffer);
-  writer.SetMaxDecimalPlaces(5);
-  doc.Accept(writer);
-  return buffer.GetString();
+  return MinimalLib::get_descriptors(*d_mol);
 }
 
 std::string JSMol::get_morgan_fp(unsigned int radius,
@@ -296,6 +132,15 @@ std::string JSMol::get_morgan_fp(unsigned int radius,
   if (!d_mol) return "";
   auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
   std::string res = BitVectToText(*fp);
+  delete fp;
+  return res;
+}
+
+std::string JSMol::get_morgan_fp_as_binary_text(unsigned int radius,
+                                                unsigned int fplen) const {
+  if (!d_mol) return "";
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::string res = BitVectToBinaryText(*fp);
   delete fp;
   return res;
 }
@@ -454,36 +299,124 @@ std::string JSMol::condense_abbreviations_from_defs(
   Abbreviations::condenseMolAbbreviations(*d_mol, abbrevs, maxCoverage);
 }
 
-std::string JSMol::generate_aligned_coords(const JSMol &templateMol,bool useCoordGen){
-  if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers()) return "";
+std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
+                                           bool useCoordGen, bool allowRGroups,
+                                           bool acceptFailure) {
+  std::string res;
+  if (!d_mol || !templateMol.d_mol || !templateMol.d_mol->getNumConformers())
+    return res;
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   bool oprefer = RDDepict::preferCoordGen;
   RDDepict::preferCoordGen = useCoordGen;
-#endif 
+#endif
   RDKit::ROMol *refPattern = nullptr;
-  bool acceptFailure = true;
   int confId = -1;
-  RDDepict::generateDepictionMatching2DStructure(*d_mol, *templateMol.d_mol, confId,
-     refPattern, acceptFailure);
+  RDKit::MatchVectType match = RDDepict::generateDepictionMatching2DStructure(
+      *d_mol, *(templateMol.d_mol), confId, refPattern, acceptFailure, false,
+      allowRGroups);
+  if (!match.empty()) {
+    rj::Document doc;
+    doc.SetObject();
+    MinimalLib::get_sss_json(*d_mol, *templateMol.d_mol, match, doc, doc);
+    rj::StringBuffer buffer;
+    rj::Writer<rj::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    res = buffer.GetString();
+  } else {
+    res = "{}";
+  }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
 #endif
-  return "";
+  return res;
 };
 
+JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
+    : d_sslib(new SubstructLibrary(
+          boost::shared_ptr<CachedTrustedSmilesMolHolder>(
+              new CachedTrustedSmilesMolHolder()),
+          boost::shared_ptr<PatternHolder>(new PatternHolder()))),
+      d_num_bits(num_bits) {
+  d_molHolder = dynamic_cast<CachedTrustedSmilesMolHolder *>(
+      d_sslib->getMolHolder().get());
+  d_fpHolder = dynamic_cast<PatternHolder *>(d_sslib->getFpHolder().get());
+}
+
+int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
+  std::unique_ptr<RWMol> mol(SmilesToMol(smi, 0, false));
+  if (!mol) {
+    return -1;
+  }
+  mol->updatePropertyCache();
+  ExplicitBitVect *bv = PatternFingerprintMol(*mol, d_num_bits);
+  if (!bv) {
+    return -1;
+  }
+  d_fpHolder->addFingerprint(bv);
+  auto ret = d_molHolder->addSmiles(smi);
+  return ret;
+}
+
+inline int JSSubstructLibrary::add_mol_helper(const ROMol &mol) {
+  std::string smi = MolToSmiles(mol);
+  return add_trusted_smiles(smi);
+}
+
+int JSSubstructLibrary::add_mol(const JSMol &m) {
+  return add_mol_helper(*m.d_mol);
+}
+
+int JSSubstructLibrary::add_smiles(const std::string &smi) {
+  std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+  if (!mol) {
+    return -1;
+  }
+  return add_mol_helper(*mol);
+}
+
+JSMol *JSSubstructLibrary::get_mol(unsigned int i) {
+  return new JSMol(new RWMol(*d_sslib->getMol(i)));
+}
+
+std::string JSSubstructLibrary::get_matches(const JSMol &q, bool useChirality,
+                                            int numThreads,
+                                            int maxResults) const {
+  if (!d_sslib->size()) {
+    return "[]";
+  }
+  std::vector<unsigned int> indices = d_sslib->getMatches(
+      *q.d_mol, true, useChirality, false, numThreads, maxResults);
+  rj::Document doc;
+  doc.SetArray();
+  auto &alloc = doc.GetAllocator();
+  for (const auto &i : indices) {
+    doc.PushBack(i, alloc);
+  }
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  std::string res = buffer.GetString();
+  return res;
+}
+
+unsigned int JSSubstructLibrary::count_matches(const JSMol &q,
+                                               bool useChirality,
+                                               int numThreads) const {
+  return d_sslib->countMatches(*q.d_mol, true, useChirality, false, 1);
+}
 
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
 
-JSMol *get_mol(const std::string &input) {
-  RWMol *mol = mol_from_input(input);
+JSMol *get_mol(const std::string &input, const std::string &details_json) {
+  RWMol *mol = MinimalLib::mol_from_input(input, details_json);
   return new JSMol(mol);
 }
 
 JSMol *get_qmol(const std::string &input) {
-  RWMol *mol = qmol_from_input(input);
+  RWMol *mol = MinimalLib::qmol_from_input(input);
   return new JSMol(mol);
 }
 

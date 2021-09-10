@@ -150,8 +150,8 @@ void addAtomToMol(std::vector<RWMol *> &molList, unsigned int idx,
 
 // ------------------------------------------------------------------------------------
 //! closes an indexed ring in a molecule using the bond provided
-// The bond is formed from the atom in the molecule with the
-// corresponding bookmark to the active atom
+/// The bond is formed from the atom in the molecule with the
+/// corresponding bookmark to the active atom
 //
 template <typename BondType>
 void closeRingBond(std::vector<RWMol *> &molList, unsigned int molIdx,
@@ -300,7 +300,7 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
 
 // ------------------------------------------------------------------------------------
 //! adds the atoms and bonds from a fragment to the molecule, sets no bond
-// between them
+/// between them
 int addFragToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
                  unsigned int fragIdx) {
   Bond *newBond = new Bond(Bond::IONIC);

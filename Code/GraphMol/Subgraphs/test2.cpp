@@ -14,7 +14,6 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
-#include <boost/foreach.hpp>
 
 #include <iostream>
 using namespace std;
@@ -36,7 +35,7 @@ void test1() {
     PATH_LIST sgs;
     sgs = findAllSubgraphsOfLengthN(*mol, 3, false, 0);
     TEST_ASSERT(sgs.size() == 3);
-    BOOST_FOREACH (PATH_TYPE tmp, sgs) {
+    for (const auto &tmp : sgs) {
       TEST_ASSERT(tmp[0] == 0);
       TEST_ASSERT(tmp.size() == 3);
       ROMol *frag = Subgraphs::pathToSubmol(*mol, tmp, false);
@@ -186,12 +185,13 @@ void testGithubIssue103() {
 
 void testGithubIssue2647() {
   std::cout << "-----------------------\n Testing github Issue103: "
-               "more stereochemistry and pathToSubmol (path needs to be in sorted order)"
+               "more stereochemistry and pathToSubmol (path needs to be in "
+               "sorted order)"
             << std::endl;
   std::string smiles = "I[C@](F)(Br)O";
   std::unique_ptr<ROMol> mol(SmilesToMol(smiles));
-  std::vector<int> path = { 0, 3, 2, 1 };
-  const bool useQuery=false;
+  std::vector<int> path = {0, 3, 2, 1};
+  const bool useQuery = false;
   std::unique_ptr<ROMol> mol2(Subgraphs::pathToSubmol(*mol, path, useQuery));
   TEST_ASSERT(MolToSmiles(*mol2) == MolToSmiles(*mol));
   std::cout << "Finished" << std::endl;

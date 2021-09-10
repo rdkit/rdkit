@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_ACIDBASE_CATALOG_UTILS_H__
-#define __RD_ACIDBASE_CATALOG_UTILS_H__
+#ifndef RD_ACIDBASE_CATALOG_UTILS_H
+#define RD_ACIDBASE_CATALOG_UTILS_H
 
 #include <GraphMol/RDKitBase.h>
 #include "AcidBaseCatalogParams.h"
@@ -27,6 +27,9 @@ RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
 readPairs(std::string fileName);
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
 readPairs(std::istream &inStream, int nToRead = -1);
+RDKIT_MOLSTANDARDIZE_EXPORT std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
+readPairs(
+    const std::vector<std::tuple<std::string, std::string, std::string>> &data);
 
 }  // namespace MolStandardize
 }  // namespace RDKit

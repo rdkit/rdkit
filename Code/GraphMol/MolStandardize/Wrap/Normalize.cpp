@@ -28,11 +28,6 @@ MolStandardize::Normalizer *normalizerFromDataAndParams(
   return new MolStandardize::Normalizer(sstr, params.maxRestarts);
 }
 
-MolStandardize::Normalizer *normalizerFromParams(
-    const MolStandardize::CleanupParameters &params) {
-  return new MolStandardize::Normalizer(params.normalizations,
-                                        params.maxRestarts);
-}
 }  // namespace
 
 struct normalize_wrapper {
@@ -54,7 +49,7 @@ struct normalize_wrapper {
         (python::arg("paramData"), python::arg("params")),
         "creates a Normalizer from a string containing normalization SMARTS",
         python::return_value_policy<python::manage_new_object>());
-    python::def("NormalizerFromParams", &normalizerFromParams,
+    python::def("NormalizerFromParams", &MolStandardize::normalizerFromParams,
                 (python::arg("params")),
                 "creates a Normalizer from CleanupParameters",
                 python::return_value_policy<python::manage_new_object>());

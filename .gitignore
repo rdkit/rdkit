@@ -4,10 +4,14 @@
 /Code/JavaWrappers/gmwrapper/build/*
 /Code/JavaWrappers/gmwrapper/build-test/*
 /Code/JavaWrappers/csharp_wrapper/swig_csharp
+/Data/Fonts/ComicNeue-*
+/Data/Fonts/OFL.txt
 
 #- Eclipse files
 /.project
 /.pydevproject
+/.cproject
+/.settings/
 
 #- CLion files
 /cmake-build-*
@@ -36,6 +40,7 @@ __pycache__/
 /Code/RDBoost/test.h
 /Code/RDGeneral/RDConfig.h
 /Code/RDGeneral/export.h
+/Code/RDGeneral/test.h
 /Code/RDGeneral/versions.h
 /Code/RDGeneral/versions.cpp
 
@@ -107,3 +112,8 @@ __pycache__/
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store
+
+# JS distribution or temp files
+Code/MinimalLib/dist
+MAIN_RDKIT_README*
+node_modules

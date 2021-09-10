@@ -1,6 +1,5 @@
 //
-//
-//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <boost/format.hpp>
+#include <limits>
 
 using namespace RDKit;
 #if 1
@@ -1398,7 +1398,9 @@ TEST_CASE("Github #3470: Hydrogen is incorrectly identified as an early atom",
   }
   SECTION("confirm with SMILES") {
     RWMol m;
-    m.addAtom(new Atom(1));
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
     m.getAtomWithIdx(0)->setFormalCharge(-1);
     m.updatePropertyCache();
     CHECK(MolToSmiles(m) == "[H-]");
@@ -1422,5 +1424,701 @@ TEST_CASE("Additional oxidation states", "[chemistry]") {
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(1)->getNumRadicalElectrons() == 0);
     }
+  }
+}
+
+TEST_CASE("Github #3805: radicals on [He]", "[chemistry]") {
+  SECTION("Basics") {
+    {
+      auto m = "[He]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+    {
+      auto m = "[Ne]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+  }
+  SECTION("Basics") {
+    {
+      auto m = "[He+]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+    {
+      auto m = "[Ne+]"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
+      CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    }
+  }
+}
+
+TEST_CASE("needsHs function", "[chemistry]") {
+  SECTION("basics") {
+    const auto m = "CC"_smiles;
+    REQUIRE(m);
+    CHECK(MolOps::needsHs(*m));
+
+    // add a single H:
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    m->addAtom(new Atom(1), updateLabel, takeOwnership);
+    m->addBond(0, 2, Bond::BondType::SINGLE);
+    MolOps::sanitizeMol(*m);
+    CHECK(MolOps::needsHs(*m));
+
+    // now add all the Hs:
+    MolOps::addHs(*m);
+    CHECK(!MolOps::needsHs(*m));
+  }
+  SECTION("radical") {
+    const auto m = "[O][O]"_smiles;
+    REQUIRE(m);
+    CHECK(!MolOps::needsHs(*m));
+  }
+  SECTION("none needed") {
+    const auto m = "FF"_smiles;
+    REQUIRE(m);
+    CHECK(!MolOps::needsHs(*m));
+  }
+}
+
+TEST_CASE(
+    "github #3330: incorrect number of radicals electrons calculated for "
+    "metals",
+    "[chemistry][metals]") {
+  SECTION("basics") {
+    std::vector<std::pair<std::string, unsigned int>> data = {
+        {"[Mn+2]", 1}, {"[Mn+1]", 0}, {"[Mn]", 1}, {"[Mn-1]", 0},
+        {"[C]", 4},    {"[C+1]", 3},  {"[C-1]", 3}};
+    for (const auto &pr : data) {
+      std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == pr.second);
+    }
+  }
+}
+
+TEST_CASE("github #3879: bad H coordinates on fused rings", "[addhs]") {
+  SECTION("reported") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 10 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.500000 2.598076 0.000000 0
+M  V30 2 N 0.750000 1.299038 0.000000 0
+M  V30 3 C 1.500000 -0.000000 0.000000 0
+M  V30 4 C 0.750000 -1.299038 0.000000 0
+M  V30 5 C 0.382772 -0.562069 0.000000 0
+M  V30 6 C -0.295379 0.612525 0.000000 0
+M  V30 7 C -0.750000 1.299038 0.000000 0
+M  V30 8 C -1.500000 0.000000 0.000000 0
+M  V30 9 O -0.750000 -1.299038 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 3 CFG=3
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 7 6 CFG=3
+M  V30 7 1 7 8
+M  V30 8 1 8 9
+M  V30 9 1 7 2
+M  V30 10 1 9 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    bool explicitOnly = false;
+    bool addCoords = true;
+    UINT_VECT onlyOnAtoms = {3, 6};
+    MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
+    const auto &conf = m->getConformer();
+    // check that the H atoms bisect the angle correctly
+    {
+      REQUIRE(m->getAtomWithIdx(9)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(9, 3));
+      REQUIRE(m->getBondBetweenAtoms(3, 4));
+      REQUIRE(m->getBondBetweenAtoms(3, 2));
+      REQUIRE(m->getBondBetweenAtoms(3, 8));
+      auto v1 = conf.getAtomPos(9) - conf.getAtomPos(3);
+      auto v2 = conf.getAtomPos(4) - conf.getAtomPos(3);
+      auto v3 = conf.getAtomPos(2) - conf.getAtomPos(3);
+      auto v4 = conf.getAtomPos(8) - conf.getAtomPos(3);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
+    }
+    {
+      REQUIRE(m->getAtomWithIdx(10)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(10, 6));
+      REQUIRE(m->getBondBetweenAtoms(5, 6));
+      REQUIRE(m->getBondBetweenAtoms(6, 1));
+      REQUIRE(m->getBondBetweenAtoms(6, 7));
+      auto v1 = conf.getAtomPos(10) - conf.getAtomPos(6);
+      auto v2 = conf.getAtomPos(5) - conf.getAtomPos(6);
+      auto v3 = conf.getAtomPos(1) - conf.getAtomPos(6);
+      auto v4 = conf.getAtomPos(7) - conf.getAtomPos(6);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
+    }
+  }
+  SECTION("non-chiral version") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 9 10 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.500000 2.598076 0.000000 0
+M  V30 2 N 0.750000 1.299038 0.000000 0
+M  V30 3 C 1.500000 -0.000000 0.000000 0
+M  V30 4 C 0.750000 -1.299038 0.000000 0
+M  V30 5 C 0.382772 -0.562069 0.000000 0
+M  V30 6 C -0.295379 0.612525 0.000000 0
+M  V30 7 C -0.750000 1.299038 0.000000 0
+M  V30 8 C -1.500000 0.000000 0.000000 0
+M  V30 9 O -0.750000 -1.299038 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 4 3
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 7 6
+M  V30 7 1 7 8
+M  V30 8 1 8 9
+M  V30 9 1 7 2
+M  V30 10 1 9 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    bool explicitOnly = false;
+    bool addCoords = true;
+    UINT_VECT onlyOnAtoms = {3, 6};
+    MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
+    const auto &conf = m->getConformer();
+    {
+      REQUIRE(m->getAtomWithIdx(9)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(9, 3));
+      REQUIRE(m->getBondBetweenAtoms(3, 4));
+      REQUIRE(m->getBondBetweenAtoms(3, 2));
+      REQUIRE(m->getBondBetweenAtoms(3, 8));
+      auto v1 = conf.getAtomPos(9) - conf.getAtomPos(3);
+      auto v2 = conf.getAtomPos(4) - conf.getAtomPos(3);
+      auto v3 = conf.getAtomPos(2) - conf.getAtomPos(3);
+      auto v4 = conf.getAtomPos(8) - conf.getAtomPos(3);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
+    }
+    {
+      REQUIRE(m->getAtomWithIdx(10)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(10, 6));
+      REQUIRE(m->getBondBetweenAtoms(5, 6));
+      REQUIRE(m->getBondBetweenAtoms(6, 1));
+      REQUIRE(m->getBondBetweenAtoms(6, 7));
+      auto v1 = conf.getAtomPos(10) - conf.getAtomPos(6);
+      auto v2 = conf.getAtomPos(5) - conf.getAtomPos(6);
+      auto v3 = conf.getAtomPos(1) - conf.getAtomPos(6);
+      auto v4 = conf.getAtomPos(7) - conf.getAtomPos(6);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
+    }
+  }
+  SECTION("a simpler system") {
+    auto m = R"CTAB(
+  Mrv2014 03092106042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.3533 6.6867 0 0
+M  V30 2 C -4.3533 5.1467 0 0 CFG=1
+M  V30 3 O -2.8133 6.6867 0 0
+M  V30 4 C -2.8133 5.1467 0 0 CFG=1
+M  V30 5 C -3.5833 3.813 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 2 4
+M  V30 3 1 3 4
+M  V30 4 1 2 5
+M  V30 5 1 4 5 CFG=1
+M  V30 6 1 2 1 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    bool explicitOnly = false;
+    bool addCoords = true;
+    UINT_VECT onlyOnAtoms = {3, 1};
+    MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
+    const auto &conf = m->getConformer();
+    {
+      REQUIRE(m->getAtomWithIdx(5)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(5, 1));
+      REQUIRE(m->getBondBetweenAtoms(1, 3));
+      REQUIRE(m->getBondBetweenAtoms(1, 0));
+      REQUIRE(m->getBondBetweenAtoms(1, 4));
+      auto v1 = conf.getAtomPos(5) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(3) - conf.getAtomPos(1);
+      auto v3 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v4 = conf.getAtomPos(4) - conf.getAtomPos(1);
+      CHECK(v1.angleTo(v3) < v1.angleTo(v2));
+      CHECK(v1.angleTo(v4) < v1.angleTo(v2));
+      CHECK(fabs(v1.angleTo(v3) - v1.angleTo(v4)) < 1e-4);
+      CHECK(v1.dotProduct(v3) < -1e-4);
+      CHECK(v1.dotProduct(v4) < -1e-4);
+    }
+  }
+  SECTION("#3932: followup from #3879") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 21 22  0  0  0  0  0  0  0  0999 V2000
+   -6.9959    0.0617    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.5212    0.3365    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.0219    1.7509    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.5460   -0.8032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0713   -0.5284    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0961   -1.6681    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6214   -1.3933    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2270   -0.1562    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4640   -1.0046    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6531   -0.0903    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0918   -0.5150    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.1788    0.5186    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.4434   -1.9732    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1510    1.3231    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6092    1.6747    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9538    2.8101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6516    1.2824    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7678    2.7779    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8236    1.5543    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6156   -2.2417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8904   -3.7163    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  2  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  1  0
+  8  7  1  6
+  8  9  1  0
+  9 10  1  0
+ 10 11  1  6
+ 11 12  2  0
+ 11 13  1  0
+ 10 14  1  0
+ 14 15  1  0
+ 14 16  1  0
+ 14 17  1  0
+ 17 18  2  0
+ 17 19  2  0
+  9 20  1  0
+ 20 21  2  0
+ 20  7  1  0
+ 17  8  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+
+    bool explicitOnly = false;
+    bool addCoords = true;
+    UINT_VECT onlyOnAtoms = {7};
+    MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms);
+    const auto &conf = m->getConformer();
+    {
+      REQUIRE(m->getAtomWithIdx(21)->getAtomicNum() == 1);
+      REQUIRE(m->getBondBetweenAtoms(21, 7));
+      REQUIRE(m->getBondBetweenAtoms(7, 8));
+      REQUIRE(m->getBondBetweenAtoms(7, 16));
+      REQUIRE(m->getBondBetweenAtoms(7, 6));
+      auto v1 = conf.getAtomPos(21) - conf.getAtomPos(7);
+      auto v2 = conf.getAtomPos(6) - conf.getAtomPos(7);
+      auto v3 = conf.getAtomPos(16) - conf.getAtomPos(7);
+      auto v4 = conf.getAtomPos(8) - conf.getAtomPos(7);
+      CHECK(v1.angleTo(v2) < v1.angleTo(v4));
+      CHECK(v1.angleTo(v3) < v1.angleTo(v4));
+      CHECK(fabs(v1.angleTo(v2) - v1.angleTo(v3)) < 1e-4);
+    }
+  }
+}
+
+TEST_CASE("batch edits", "[editing]") {
+  SECTION("removeAtom") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->removeAtom(3);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCO");
+  }
+  SECTION("removeAtom + removeBond") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(3);
+    m->removeBond(4, 0);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCC.O");
+  }
+  SECTION("rollback") {
+    auto m = "C1CCCO1"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    m->removeAtom(3);
+    m->rollbackBatchEdit();
+    CHECK(MolToSmiles(*m) == "C1CCOC1");
+  }
+  SECTION("adding atoms while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    m->addAtom(new Atom(7), updateLabel, takeOwnership);
+    m->removeAtom(1);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "C.N.O");
+  }
+  SECTION("removing added atoms while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeAtom(2);
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    m->addAtom(new Atom(7), updateLabel, takeOwnership);
+    m->removeAtom(4);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CC.O");
+  }
+  SECTION("adding bonds while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->removeBond(2, 3);
+    m->addBond(0, 3, Bond::BondType::SINGLE);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCCO");
+  }
+  SECTION("removing added bonds while in a batch") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    m->addBond(0, 3, Bond::BondType::SINGLE);
+    m->removeBond(2, 3);
+    m->removeBond(0, 3);
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCC.O");
+  }
+  SECTION("some details") {
+    auto m = "CCCO"_smiles;
+    REQUIRE(m);
+    m->beginBatchEdit();
+    CHECK_THROWS_AS(m->beginBatchEdit(), ValueErrorException);
+    m->removeAtom(0U);
+    // copying includes the edit status:
+    RWMol m2(*m);
+    CHECK_THROWS_AS(m2.beginBatchEdit(), ValueErrorException);
+
+    // without a commit, the mols haven't changed
+    CHECK(MolToSmiles(*m) == "CCCO");
+    CHECK(MolToSmiles(m2) == "CCCO");
+    m->commitBatchEdit();
+    CHECK(MolToSmiles(*m) == "CCO");
+    m2.commitBatchEdit();
+    CHECK(MolToSmiles(m2) == "CCO");
+  }
+}
+
+TEST_CASE("github #4122: segfaults in commitBatchEdit()", "[editing]][bug]") {
+  SECTION("as reported, no atoms") {
+    RWMol m;
+    m.beginBatchEdit();
+    m.addAtom();
+    m.commitBatchEdit();
+  }
+  SECTION("no bonds") {
+    auto m = "C.C"_smiles;
+    m->beginBatchEdit();
+    m->addBond(0, 1, Bond::BondType::SINGLE);
+    m->commitBatchEdit();
+  }
+  SECTION("after add atom") {
+    auto m = "CC"_smiles;
+    m->beginBatchEdit();
+    m->addAtom(6);
+    m->removeAtom(0u);
+    m->addAtom(6);
+    m->commitBatchEdit();
+  }
+  SECTION("remove a just-added atom") {
+    auto m = "CC"_smiles;
+    m->beginBatchEdit();
+    m->addAtom(6);
+    m->removeAtom(2);
+    m->commitBatchEdit();
+  }
+}
+TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
+  SECTION("original") {
+    auto m = "C(-[N,O])-[#7,#8]"_smarts;
+    REQUIRE(m);
+    CHECK(isAtomListQuery(m->getAtomWithIdx(1)));
+    CHECK(isAtomListQuery(m->getAtomWithIdx(2)));
+
+    std::vector<int> vals;
+    getAtomListQueryVals(m->getAtomWithIdx(2)->getQuery(), vals);
+    CHECK(vals == std::vector<int>{7, 8});
+    vals.clear();
+    getAtomListQueryVals(m->getAtomWithIdx(1)->getQuery(), vals);
+    CHECK(vals == std::vector<int>{7, 8});
+  }
+}
+
+TEST_CASE("bridgehead queries", "[query]") {
+  SECTION("basics") {
+    {
+      auto m = "CC12CCN(CC1)C2"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        if (atom->getIdx() == 1 || atom->getIdx() == 4) {
+          CHECK(test == true);
+        } else {
+          CHECK(test == false);
+        }
+      }
+    }
+    {
+      auto m = "CC12CCC(C)(CC1)CC2"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        if (atom->getIdx() == 1 || atom->getIdx() == 4) {
+          CHECK(test == true);
+        } else {
+          CHECK(test == false);
+        }
+      }
+    }
+    {  // no bridgehead
+      auto m = "C1CCC2CCCCC2C1"_smiles;
+      REQUIRE(m);
+      for (const auto atom : m->atoms()) {
+        auto test = queryIsAtomBridgehead(atom);
+        CHECK(test == false);
+      }
+    }
+  }
+}
+
+TEST_CASE("replaceAtom/Bond should not screw up bookmarks", "[RWMol]") {
+  SECTION("atom basics") {
+    auto m = "CCC"_smiles;
+    REQUIRE(m);
+    m->setAtomBookmark(m->getAtomWithIdx(2), 1);
+    auto origAt2 = m->getAtomWithIdx(2);
+    CHECK(m->getUniqueAtomWithBookmark(1) == origAt2);
+    Atom O(8);
+    m->replaceAtom(2, &O);
+    auto at2 = m->getAtomWithIdx(2);
+    CHECK(at2 != origAt2);
+    CHECK(m->getUniqueAtomWithBookmark(1) == at2);
+  }
+  SECTION("bond basics") {
+    auto m = "CCCC"_smiles;
+    REQUIRE(m);
+    m->setBondBookmark(m->getBondWithIdx(2), 1);
+    auto origB2 = m->getBondWithIdx(2);
+    CHECK(m->getUniqueBondWithBookmark(1) == origB2);
+    Bond single(Bond::BondType::SINGLE);
+    m->replaceBond(2, &single);
+    auto b2 = m->getBondWithIdx(2);
+    CHECK(b2 != origB2);
+    CHECK(m->getUniqueBondWithBookmark(1) == b2);
+  }
+}
+
+TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
+          "[molops]") {
+  SECTION("basics") {
+    auto mol =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&1:1,&2:5,r|"_smiles;
+    REQUIRE(mol);
+    REQUIRE(mol->getStereoGroups().size() == 4);
+    std::vector<unsigned int> aindices(mol->getNumAtoms());
+    std::iota(aindices.begin(), aindices.end(), 0);
+    std::reverse(aindices.begin(), aindices.end());
+    std::unique_ptr<ROMol> nmol(MolOps::renumberAtoms(*mol, aindices));
+    REQUIRE(nmol);
+    CHECK(nmol->getStereoGroups().size() == 4);
+    for (size_t i = 0; i < nmol->getStereoGroups().size(); ++i) {
+      CHECK(nmol->getStereoGroups()[i].getGroupType() ==
+            mol->getStereoGroups()[i].getGroupType());
+    }
+    CHECK(MolToCXSmiles(*nmol) ==
+          "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |o1:1,&1:3,&2:5,&3:7|");
+  }
+}
+
+TEST_CASE("github #4127: SEGV in ROMol::getAtomDegree if atom is not in graph",
+          "[graphmol]") {
+  // also includes tests for some related edge cases found as part of that bug
+  // fix
+  Atom atom(6);
+  RWMol mol1;
+  auto mol2 = "CCC"_smiles;
+  SECTION("getAtomDegree") {
+    CHECK_THROWS_AS(mol1.getAtomDegree(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomDegree(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomDegree(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("getAtomNeighbors") {
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomNeighbors(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("getAtomBonds") {
+    CHECK_THROWS_AS(mol1.getAtomBonds(nullptr), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomBonds(&atom), Invar::Invariant);
+    CHECK_THROWS_AS(mol1.getAtomBonds(mol2->getAtomWithIdx(0)),
+                    Invar::Invariant);
+  }
+  SECTION("addAtom from another molecule") {
+    RWMol mol1cp(mol1);
+    CHECK_THROWS_AS(mol1cp.addAtom(nullptr), Invar::Invariant);
+    bool updateLabel = false;
+    bool takeOwnership = true;
+    CHECK_THROWS_AS(
+        mol1cp.addAtom(mol2->getAtomWithIdx(0), updateLabel, takeOwnership),
+        Invar::Invariant);
+    takeOwnership = false;
+    CHECK(mol1cp.addAtom(mol2->getAtomWithIdx(0), updateLabel, takeOwnership) ==
+          0);
+  }
+  SECTION("addBond from another molecule") {
+    auto mol3 = "C.C.C"_smiles;
+    bool takeOwnership = true;
+    CHECK_THROWS_AS(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership),
+                    Invar::Invariant);
+    takeOwnership = false;
+    CHECK(mol3->addBond(mol2->getBondWithIdx(0), takeOwnership) == 1);
+  }
+}
+
+TEST_CASE(
+    "github #4128: SEGV from unsigned integer overflow in "
+    "Conformer::setAtomPos",
+    "[graphmol]") {
+  Conformer conf;
+  RDGeom::Point3D pt(0, 0, 0);
+  CHECK_THROWS_AS(conf.setAtomPos(std::numeric_limits<unsigned>::max(), pt),
+                  ValueErrorException);
+}
+
+TEST_CASE("KekulizeFragment", "[graphmol]") {
+  SECTION("basics") {
+    auto mol = "CCc1ccccc1"_smiles;
+    REQUIRE(mol);
+    boost::dynamic_bitset<> atomsInPlay(mol->getNumAtoms());
+    for (auto aidx : std::vector<size_t>{0, 1, 2, 3}) {
+      atomsInPlay.set(aidx);
+    }
+    boost::dynamic_bitset<> bondsInPlay(mol->getNumBonds());
+    for (auto bidx : std::vector<size_t>{0, 1, 2}) {
+      bondsInPlay.set(bidx);
+    }
+    MolOps::details::KekulizeFragment(*mol, atomsInPlay, bondsInPlay);
+    CHECK(!mol->getAtomWithIdx(2)->getIsAromatic());
+    CHECK(mol->getAtomWithIdx(4)->getIsAromatic());
+    CHECK(!mol->getBondWithIdx(2)->getIsAromatic());
+    // at the moment that bond still has an aromatic bond order, which isn't
+    // optimal, but that will have to wait until we add a feature to allow
+    // kekulization of conjugated chains.
+    CHECK(mol->getBondWithIdx(2)->getBondType() == Bond::AROMATIC);
+    CHECK(mol->getBondWithIdx(4)->getIsAromatic());
+  }
+}
+
+TEST_CASE(
+    "github #4266: fallback ring finding failing on molecules with multiple "
+    "fragments",
+    "[graphmol]") {
+  SECTION("case1") {
+    auto m = "C123C45C16C21C34C561.c1ccccc1"_smiles;
+    REQUIRE(m);
+    ROMol m2(*m);
+    m2.getRingInfo()->reset();
+    MolOps::fastFindRings(m2);
+    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+  }
+  SECTION("case2") {
+    auto m = "c1ccccc1.C123C45C16C21C34C561"_smiles;
+    REQUIRE(m);
+    ROMol m2(*m);
+    m2.getRingInfo()->reset();
+    MolOps::fastFindRings(m2);
+    CHECK(m->getRingInfo()->numRings() == m2.getRingInfo()->numRings());
+  }
+}
+
+TEST_CASE("QueryBond valence contribs") {
+  {
+    auto m = "CO"_smarts;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(0)) == 0.0);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(1)) == 0.0);
+  }
+  {
+    auto m = "C-O"_smarts;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(0)) == 1.0);
+    CHECK(m->getBondWithIdx(0)->getValenceContrib(m->getAtomWithIdx(1)) == 1.0);
+  }
+}
+
+TEST_CASE(
+    "github #4311: unreasonable calculation of implicit valence for atoms with "
+    "query bonds",
+    "[graphmol]") {
+  SECTION("basics") {
+    auto m = "C-,=O"_smarts;
+    REQUIRE(m);
+    m->updatePropertyCache();
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs() == 0);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 0);
+    CHECK(MolToSmiles(*m) == "CO");
+    CHECK(MolToSmarts(*m) == "C-,=O");
   }
 }

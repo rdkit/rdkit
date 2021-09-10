@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +16,7 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RDKitBase.h>
 #include "rdchem.h"
+#include "ContextManagers.h"
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/python_streambuf.h>
 
@@ -85,6 +85,9 @@ struct sdwriter_wrap {
                                        "output file.\n"
                                        "   If a file-like object is provided, "
                                        "output will be sent there.\n\n"))
+        .def("__enter__", &MolIOEnter<SDWriter>,
+             python::return_internal_reference<>())
+        .def("__exit__", &MolIOExit<SDWriter>)
         .def("SetProps", SetSDWriterProps,
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"
@@ -113,9 +116,7 @@ struct sdwriter_wrap {
              "Sets whether or not molecules are kekulized on writing.\n\n")
         .def("GetKekulize", &SDWriter::getKekulize,
              "Returns whether or not molecules are kekulized on writing.\n\n")
-        .def("GetText",
-             //(std::string(*)(const ROMol &, int, bool, bool, int))
-             getSDTextHelper,
+        .def("GetText", getSDTextHelper,
              (python::arg("mol"), python::arg("confId") = -1,
               python::arg("kekulize") = true,
               python::arg("force_v3000") = false, python::arg("molid") = -1),

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="Author" content="greg Landrum">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <style>
+        h1,
+        h2,
+        h3,
+        h4 {
+            color: #044484;
+        }
+    </style>
+</head>
+
+<script src="./RDKit_minimal.js"></script>
+<script>
+  onRuntimeInitialized: initRDKitModule().then(function (instance) {
+      RDKitModule = instance;
+      console.log('version: ' + RDKitModule.version());
+  });
+</script>
+<body>
+<div class="container-fluid col-md-12">
+<h1>Getting started with RDKit-JS</h1>
+
+<h2>Drawing molecules</h2>
+
+<p>First we'll work with an SVG drawing:
+        <div class="row">
+            <div class="col-sm-6">
+                <textarea id="example-1" cols="40" rows="5" wrap="off">
+var smiles = "CC(=O)Oc1ccccc1C(=O)O";
+var mol = RDKitModule.get_mol(smiles);
+var dest = document.getElementById("example-1-output");
+var svg = mol.get_svg();
+dest.outerHTML = "<div id='drawing'>" + svg + "</div>";
+</textarea>
+                <br /><input value="run" onclick="eval(document.getElementById('example-1').value)" type="button" />
+            </div>
+            <div id="example-1-output" class="col-sm-6">
+            </div>
+        </div>
+</p>
+
+<p>As of v2020.09 of the RDKit we can do the same thing using the HTML5 canvas:
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-2" cols="40" rows="5" wrap="off">
+var smiles = "CC(=O)Oc1ccccc1C(=O)O";
+var mol = RDKitModule.get_mol(smiles);
+var canvas = document.getElementById("canvas-2");
+mol.draw_to_canvas(canvas, -1, -1);
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-2').value)" type="button" />
+    </div>
+    <div id="example-2-output" class="col-sm-6">
+        <canvas id="canvas-2" width="250" height="200" >
+        </canvas>
+    </div>
+</div>
+</p>
+
+<p>We can do substructure searches and highlight the results:
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-3" cols="40" rows="5" wrap="off">
+var smiles = "CC(=O)Oc1ccccc1C(=O)O";
+var mol = RDKitModule.get_mol(smiles);
+var smarts = "Oc1[c,n]cccc1";
+var qmol = RDKitModule.get_qmol(smarts)
+var mdetails = mol.get_substruct_match(qmol)
+var canvas = document.getElementById("canvas-3");
+mol.draw_to_canvas_with_highlights(canvas, mdetails);
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-3').value)" type="button" />
+    </div>
+    <div id="example-3-output" class="col-sm-6">
+        <canvas id="canvas-3" width="250" height="200">
+        </canvas>
+    </div>
+</div>
+</p>
+You can also change drawing options and do highlighting with the SVG renderer,
+but we don't show it here. You just need to replace 
+<pre>
+mol.draw_to_canvas_with_highlights(canvas, mdetails);
+</pre>
+with
+<pre>
+var svg = mol.get_svg_with_highlights(mdetails);
+</pre>
+
+
+<p>The same call can be used to control drawing options or to manually 
+set the atoms/bonds which should be highlighted:
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-4" cols="40" rows="5" wrap="off">
+var smiles = "CC(=O)Oc1ccccc1C(=O)O";
+var mol = RDKitModule.get_mol(smiles);
+var mdetails = {};
+mdetails['atoms']=[0,1,10];
+mdetails['explicitMethyl'] = true;
+mdetails['addAtomIndices'] = true;
+mdetails['legend']='aspirin';
+var canvas = document.getElementById("canvas-4");
+mol.draw_to_canvas_with_highlights(canvas, JSON.stringify(mdetails));
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-4').value)" type="button" />
+    </div>
+    <div id="example-4-output" class="col-sm-6">
+        <canvas id="canvas-4" width="250" height="200">
+        </canvas>
+    </div>
+</div>
+</p>
+
+<p>and of course we can combine the two:
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-5" cols="40" rows="5" wrap="off">
+var smiles = "CC(=O)Oc1ccccc1C(=O)O";
+var mol = RDKitModule.get_mol(smiles);
+var smarts = "O=C";
+var qmol = RDKitModule.get_qmol(smarts)
+var mdetails = JSON.parse(mol.get_substruct_match(qmol));
+mdetails['highlightColour'] = [1,0,1];
+mdetails['legend']='aspirin';
+var canvas = document.getElementById("canvas-5");
+mol.draw_to_canvas_with_highlights(canvas, JSON.stringify(mdetails));
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-5').value)" type="button" />
+    </div>
+    <div id="example-5-output" class="col-sm-6">
+        <canvas id="canvas-5" width="250" height="200">
+        </canvas>
+    </div>
+</div>
+</p>
+
+The currently supported options are:
+<ol>
+    <li><tt>atoms</tt>,<tt>bonds</tt>: lists to specify which atoms/bonds are highlighted</li>
+    <li><tt>width</tt>,<tt>height</tt><tt>offsetx</tt>,<tt>offsety</tt>: used to
+    draw in a subregion of a canvas. Only supported by the HTML5 canvas
+    drawer.</li>
+    <li><tt>legend</tt>: the legend drawn under the molecule</li>
+    <li>These <tt>MolDrawOptions</tt> values: <tt>
+atomLabelDeuteriumTritium,
+dummiesAreAttachments,
+circleAtoms,
+splitBonds,
+continuousHighlight,
+fillHighlights,
+highlightRadius,
+flagCloseContactsDist,
+includeAtomTags,
+clearBackground,
+legendFontSize,
+maxFontSize,
+minFontSize,
+annotationFontScale,
+fontFile,
+multipleBondOffset,
+padding,
+additionalAtomLabelPadding,
+noAtomLabels,
+bondLineWidth,
+scaleBondWidth,
+scaleHighlightBondWidth,
+highlightBondWidthMultiplier,
+prepareMolsBeforeDrawing,
+fixedScale,
+fixedBondLength,
+rotate,
+addAtomIndices,
+addBondIndices,
+isotopeLabels,
+dummyIsotopeLabels,
+addStereoAnnotation,
+atomHighlightsAreCircles,
+centreMoleculesBeforeDrawing,
+explicitMethyl,
+includeMetadata,
+includeRadicals,
+comicMode,
+variableBondWidthMultiplier,
+variableAtomRadius,
+includeChiralFlagLabel,
+simplifiedStereoGroupLabel,
+singleColourWedgeBonds
+    </tt></li>
+</ol>
+
+<p>It's often useful to generate molecule renderings where the coordinates of a core are constrained.
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-6" cols="40" rows="5" wrap="off">
+var smiles = "c1cnc(C)nc1C(=O)O";
+var mol = RDKitModule.get_mol(smiles);
+var template = `
+  Mrv2014 10192005332D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.7917 2.5817 0 0
+M  V30 2 N -7.1253 1.8117 0 0
+M  V30 3 C -7.1253 0.2716 0 0
+M  V30 4 C -5.7917 -0.4984 0 0
+M  V30 5 C -4.458 0.2716 0 0
+M  V30 6 N -4.458 1.8117 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+`;
+var qmol = RDKitModule.get_mol(template);
+mol.generate_aligned_coords(qmol,true);
+var tdetails = mol.get_substruct_match(qmol);
+var canvas = document.getElementById("canvas-6");
+mol.draw_to_canvas_with_highlights(canvas,tdetails);
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-6').value)" type="button" />
+    </div>
+    <div id="example-6-output" class="col-sm-6">
+        <canvas id="canvas-6" width="250" height="200">
+        </canvas>
+    </div>
+</div>
+</p>
+
+<p><tt>get_mol</tt> can be passed a JSON dictionary of boolean options. Currently supported options are:
+<tt>
+sanitize,
+kekulize,
+removeHs,
+mergeQueryHs
+</tt>
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-7" cols="40" rows="5" wrap="off">
+var smiles = "[*:1]ccc[*:2]";
+var mol = RDKitModule.get_mol(smiles, JSON.stringify({ kekulize: false }));
+var canvas = document.getElementById("canvas-7");
+mol.draw_to_canvas(canvas, -1, -1);
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-7').value)" type="button" />
+    </div>
+    <div id="example-7-output" class="col-sm-6">
+        <canvas id="canvas-7" width="250" height="200">
+        </canvas>
+    </div>
+</div>
+</p>
+
+<p>The <tt>SubstructLibrary</tt> functionality is exposed to enable running fast substructure searches
+taking advantage of pre-filtering through pattern fingerprints:
+<div class="row">
+    <div class="col-sm-6">
+        <textarea id="example-8" cols="40" rows="5" wrap="off">
+var sslib = new RDKitModule.SubstructLibrary();
+var mol0 = RDKitModule.get_mol("Cc1cc(F)ccc1");
+var mol1 = RDKitModule.get_mol("Clc1ccccn1");
+sslib.add_trusted_smiles(mol0.get_smiles());
+sslib.add_trusted_smiles(mol1.get_smiles());
+var query = RDKitModule.get_mol(`
+  MJ201100          2D          
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.0491    0.7134    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    0.3009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635   -0.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0491   -0.9366    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346   -0.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    0.3009    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  5  6  2  0  0  0  0
+  1  2  2  0  0  0  0
+  6  1  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+M  END`);
+matches = JSON.parse(sslib.get_matches(query));
+var canvas_query = document.getElementById("canvas-8-query");
+query.draw_to_canvas_with_highlights(canvas_query, JSON.stringify({ legend: 'query' }));
+var canvas_mol0 = document.getElementById("canvas-8-mol0");
+mol0.draw_to_canvas_with_highlights(canvas_mol0, JSON.stringify({ legend: `mol0 matches: ${matches.includes(0)}` }));
+var canvas_mol1 = document.getElementById("canvas-8-mol1");
+mol1.draw_to_canvas_with_highlights(canvas_mol1, JSON.stringify({ legend: `mol1 matches: ${matches.includes(1)}` }));
+</textarea>
+        <br /><input value="run" onclick="eval(document.getElementById('example-8').value)" type="button" />
+    </div>
+    <div id="example-8-output" class="col-sm-6">
+        <canvas id="canvas-8-query" width="150" height="150">
+        </canvas>
+        <canvas id="canvas-8-mol0" width="150" height="150">
+        </canvas>
+        <canvas id="canvas-8-mol1" width="150" height="150">
+        </canvas>
+    </div>
+</div>
+</p>
+
+
+    </div>
+</body>
+
+</html>

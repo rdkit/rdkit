@@ -15,7 +15,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -40,7 +41,7 @@
 
 #include <sstream>
 
-namespace RDKit{
+namespace RDKit {
 class ROMol;
 class Conformer;
 namespace ConformerParser {
@@ -54,8 +55,9 @@ namespace ConformerParser {
 
   Returns: integer vector with confIds
 */
-INT_VECT addConformersFromList(ROMol &mol, const std::vector<std::vector<double> > &coords,
-                           int numConf=-1);
+RDKIT_CONFORMERPARSER_EXPORT INT_VECT addConformersFromList(
+    ROMol &mol, const std::vector<std::vector<double>> &coords,
+    int numConf = -1);
 
 /*!
   Converts an Amber trajectory into a list of doubles
@@ -64,10 +66,11 @@ INT_VECT addConformersFromList(ROMol &mol, const std::vector<std::vector<double>
   \param coords       list with coordinates
 
 */
-void readAmberTrajectory(const std::string &fName, std::vector<std::vector<double> > &coords,
-                         unsigned int numAtoms);
+RDKIT_CONFORMERPARSER_EXPORT void readAmberTrajectory(
+    const std::string &fName, std::vector<std::vector<double>> &coords,
+    unsigned int numAtoms);
 
-} // end namespace ConformerParser
-} // end namespace RDKit
+}  // end namespace ConformerParser
+}  // end namespace RDKit
 
 #endif

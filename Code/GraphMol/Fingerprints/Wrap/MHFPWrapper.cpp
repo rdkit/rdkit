@@ -198,7 +198,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1
       ),
       "Creates a shingling (a list of circular n-grams / substructures) from a SMILES string."
@@ -209,7 +209,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1
       ),
       "Creates a shingling (a list of circular n-grams / substructures) from a RDKit Mol instance."
@@ -220,7 +220,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1
       ),
       "Creates a MHFP vector from a SMILES string."
@@ -231,7 +231,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1
       ),
       "Creates a MHFP vector from an RDKit Mol instance."
@@ -242,7 +242,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1
       ),
       "Creates a MHFP vector from a list of SMILES strings."
@@ -253,7 +253,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1
       ),
       "Creates a MHFP vector from a list of RDKit Mol instances."
@@ -264,7 +264,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1,
         python::arg("length") = 2048
       ),
@@ -276,7 +276,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1,
         python::arg("length") = 2048
       ),
@@ -288,7 +288,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1,
         python::arg("length") = 2048
       ),
@@ -300,7 +300,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
         python::arg("radius") = 3,
         python::arg("rings") = true,
         python::arg("isomeric") = false,
-        python::arg("kekulize") = true,
+        python::arg("kekulize") = false,
         python::arg("min_radius") = 1,
         python::arg("length") = 2048
       ),

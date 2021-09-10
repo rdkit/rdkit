@@ -61,6 +61,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/MolBundle.h>
 #include <sstream>
 %}
 
@@ -189,6 +190,13 @@ void setPreferCoordGen(bool);
     return RDKit::MolToHELM(*($self));
   }
 
+  std::string MolToCMLBlock(int confId=-1, bool kekulize=true) {
+    return RDKit::MolToCMLBlock(*($self), confId, kekulize);
+  }
+  void MolToCMLFile(std::string fName, int confId=-1, bool kekulize=true) {
+    RDKit::MolToCMLFile(*($self), fName, confId, kekulize);
+  }
+
   std::string MolToXYZBlock(int confId=-1) {
     return RDKit::MolToXYZBlock(*($self), confId);
   }
@@ -216,6 +224,27 @@ void setPreferCoordGen(bool);
 
   std::vector< std::vector<std::pair<int, int> > > getSubstructMatches(RDKit::ROMol &query,RDKit::SubstructMatchParameters ps){
     std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self),query,ps);
+    return mvs;
+  };
+
+  bool hasSubstructMatch(RDKit::MolBundle & query,
+                         RDKit::SubstructMatchParameters ps) {
+    ps.maxMatches = 1;
+    std::vector<RDKit::MatchVectType> mv = SubstructMatch(*($self), query, ps);
+    return mv.size() > 0;
+  };
+
+  std::vector<std::pair<int, int>> getSubstructMatch(
+      RDKit::MolBundle & query, RDKit::SubstructMatchParameters ps) {
+    std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self), query, ps);
+    RDKit::MatchVectType mv;
+    if (mvs.size()) mv = mvs[0];
+    return mv;
+  };
+
+  std::vector<std::vector<std::pair<int, int>>> getSubstructMatches(
+      RDKit::MolBundle & query, RDKit::SubstructMatchParameters ps) {
+    std::vector<RDKit::MatchVectType> mvs = SubstructMatch(*($self), query, ps);
     return mvs;
   };
 

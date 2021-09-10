@@ -23,7 +23,7 @@ class MMFFVdW;
 //! the van der Waals term for MMFF
 class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
  public:
-  VdWContrib()  {};
+  VdWContrib() {}
 
   //! Constructor
   /*!
@@ -34,9 +34,9 @@ class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
   */
   VdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
              const MMFFVdWRijstarEps *mmffVdWConstants);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual VdWContrib *copy() const { return new VdWContrib(*this); };
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  VdWContrib *copy() const override { return new VdWContrib(*this); }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1};
@@ -47,7 +47,7 @@ class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
 //! the electrostatic term for MMFF
 class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
  public:
-  EleContrib()  {};
+  EleContrib() {}
 
   //! Constructor
   /*!
@@ -58,10 +58,10 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
   */
   EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
              double chargeTerm, std::uint8_t dielModel, bool is1_4);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
 
-  virtual EleContrib *copy() const { return new EleContrib(*this); };
+  EleContrib *copy() const override { return new EleContrib(*this); }
 
  private:
   int d_at1Idx{-1}, d_at2Idx{-1};
@@ -73,12 +73,12 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
 
 namespace Utils {
 //! calculates and returns the unscaled minimum distance (R*ij) for a MMFF VdW
-// contact
+/// contact
 RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWMinimum(
     const MMFFVdWCollection *mmffVdW, const MMFFVdW *mmffVdWParamsAtom1,
     const MMFFVdW *mmffVdWParamsAtom2);
 //! calculates and returns the unscaled well depth (epsilon) for a MMFF VdW
-// contact
+/// contact
 RDKIT_FORCEFIELD_EXPORT double calcUnscaledVdWWellDepth(
     double R_star_ij, const MMFFVdW *mmffVdWParamsIAtom,
     const MMFFVdW *mmffVdWParamsJAtom);
@@ -93,6 +93,7 @@ RDKIT_FORCEFIELD_EXPORT double calcVdWEnergy(const double dist,
                                              const double R_star_ij,
                                              const double wellDepth);
 //! calculates and returns the electrostatic MMFF energy
+// FIX: idx1 and idx2 are not used
 RDKIT_FORCEFIELD_EXPORT double calcEleEnergy(unsigned int idx1,
                                              unsigned int idx2, double dist,
                                              double chargeTerm,

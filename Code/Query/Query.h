@@ -42,33 +42,32 @@ class Int2Type {
 */
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class Query {
+class RDKIT_QUERY_EXPORT Query {
  public:
-  typedef std::shared_ptr<
-      Query<MatchFuncArgType, DataFuncArgType, needsConversion>>
-      CHILD_TYPE;
-  typedef std::vector<CHILD_TYPE> CHILD_VECT;
-  typedef typename CHILD_VECT::iterator CHILD_VECT_I;
-  typedef typename CHILD_VECT::const_iterator CHILD_VECT_CI;
+  using CHILD_TYPE = std::shared_ptr<
+      Query<MatchFuncArgType, DataFuncArgType, needsConversion>>;
+  using CHILD_VECT = std::vector<CHILD_TYPE>;
+  using CHILD_VECT_I = typename CHILD_VECT::iterator;
+  using CHILD_VECT_CI = typename CHILD_VECT::const_iterator;
+  using MATCH_FUNC_ARG_TYPE = MatchFuncArgType;
+  using DATA_FUNC_ARG_TYPE = DataFuncArgType;
 
-  Query() : d_matchFunc(nullptr), d_dataFunc(nullptr){};
-  virtual ~Query() { this->d_children.clear(); };
+  Query() : d_matchFunc(nullptr), d_dataFunc(nullptr) {}
+  virtual ~Query() { this->d_children.clear(); }
 
   //! sets whether or not we are negated
-  void setNegation(bool what) { this->df_negate = what; };
+  void setNegation(bool what) { this->df_negate = what; }
   //! returns whether or not we are negated
-  bool getNegation() const { return this->df_negate; };
+  bool getNegation() const { return this->df_negate; }
 
   //! sets our text description
-  void setDescription(const std::string &descr) {
-    this->d_description = descr;
-  };
+  void setDescription(const std::string &descr) { this->d_description = descr; }
   //! \overload
   void setDescription(const char *descr) {
     this->d_description = std::string(descr);
-  };
+  }
   //! returns our text description
-  const std::string &getDescription() const { return this->d_description; };
+  const std::string &getDescription() const { return this->d_description; }
   //! returns a fuller text description
   virtual std::string getFullDescription() const {
     if (!getNegation())
@@ -78,29 +77,29 @@ class Query {
   }
 
   //! sets our type label
-  void setTypeLabel(const std::string &typ) { this->d_queryType = typ; };
+  void setTypeLabel(const std::string &typ) { this->d_queryType = typ; }
   //! \overload
-  void setTypeLabel(const char *typ) { this->d_queryType = std::string(typ); };
+  void setTypeLabel(const char *typ) { this->d_queryType = std::string(typ); }
   //! returns our text label.
-  const std::string &getTypeLabel() const { return this->d_queryType; };
+  const std::string &getTypeLabel() const { return this->d_queryType; }
 
   //! sets our match function
   void setMatchFunc(bool (*what)(MatchFuncArgType)) {
     this->d_matchFunc = what;
-  };
+  }
   //! returns our match function:
-  bool (*getMatchFunc() const)(MatchFuncArgType) { return this->d_matchFunc; };
+  bool (*getMatchFunc() const)(MatchFuncArgType) { return this->d_matchFunc; }
   //! sets our data function
   void setDataFunc(MatchFuncArgType (*what)(DataFuncArgType)) {
     this->d_dataFunc = what;
-  };
+  }
   //! returns our data function:
   MatchFuncArgType (*getDataFunc() const)(DataFuncArgType) {
     return this->d_dataFunc;
-  };
+  }
 
   //! adds a child to our list of children
-  void addChild(CHILD_TYPE child) { this->d_children.push_back(child); };
+  void addChild(CHILD_TYPE child) { this->d_children.push_back(child); }
   //! returns an iterator for the beginning of our child vector
   CHILD_VECT_CI beginChildren() const { return this->d_children.begin(); }
   //! returns an iterator for the end of our child vector
@@ -119,7 +118,7 @@ class Query {
       return !tRes;
     else
       return tRes;
-  };
+  }
 
   //! returns a copy of this Query
   /*!
@@ -142,7 +141,7 @@ class Query {
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
  protected:
   MatchFuncArgType d_val = 0;
@@ -176,7 +175,7 @@ class Query {
     return mfArg;
   }
   //! calls our \c dataFunc (which must be set) on \c what and returns the
-  // result
+  /// result
   MatchFuncArgType TypeConvert(DataFuncArgType what,
                                Int2Type<true> /*d*/) const {
     PRECONDITION(this->d_dataFunc, "no data function");

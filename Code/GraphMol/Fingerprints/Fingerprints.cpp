@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,9 +20,8 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/random.hpp>
-#include <cstdint>
 #include <RDGeneral/BoostEndInclude.h>
-#include <climits>
+#include <limits>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/types.h>
 #include <algorithm>
@@ -252,7 +251,7 @@ ExplicitBitVect *RDKFingerprintMol(
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        paths++) {
-    BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
+    for (const auto &path : paths->second) {
 #ifdef REPORT_FP_STATS
       std::vector<int> atomsToUse;
 #endif
@@ -427,7 +426,7 @@ ExplicitBitVect *RDKFingerprintMol(
     for (unsigned int i = 0; i < fpSize; ++i) {
       if ((*res)[i] && (bitSmiles[i].size() > 1)) {
         std::cerr << i << "\t" << bitSmiles[i].size() << std::endl;
-        BOOST_FOREACH (std::string smi, bitSmiles[i]) {
+        for (const auto &smi : bitSmiles[i]) {
           std::cerr << "   " << smi << std::endl;
         }
       }
@@ -499,7 +498,7 @@ ExplicitBitVect *LayeredFingerprintMol(
       allPaths = findAllPathsOfLengthsMtoN(mol, minPath, maxPath, false);
     }
   } else {
-    BOOST_FOREACH (std::uint32_t aidx, *fromAtoms) {
+    for (auto aidx : *fromAtoms) {
       INT_PATH_LIST_MAP tPaths;
       if (branchedPaths) {
         tPaths =
@@ -753,7 +752,7 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        paths++) {
-    BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
+    for (const auto &path : paths->second) {
       // the bond hashes of the path
       std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
           mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,
@@ -806,14 +805,13 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
     }
   }
 
-  unsigned int len = 0;
-  if (bitMap.size()) {
-    len = bitMap.rbegin()->first + 1;
-  }
-  auto *res = new SparseIntVect<boost::uint64_t>(len);
-  std::map<unsigned int, unsigned int>::iterator iter;
-  for (iter = bitMap.begin(); iter != bitMap.end(); ++iter) {
-    res->setVal(iter->first, iter->second);
+  // technically the upper limit here could be std::uint32_t since `bitMap` uses
+  // unsigned ints, but that could change in the future and saying that the
+  // sparse vector is bigger than it actually is doesn't hurt anything
+  auto *res = new SparseIntVect<std::uint64_t>(
+      std::numeric_limits<std::uint64_t>::max());
+  for (const auto &pr : bitMap) {
+    res->setVal(pr.first, pr.second);
   }
 
   return res;

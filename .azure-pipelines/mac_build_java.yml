@@ -20,7 +20,7 @@ steps:
     conda create --name rdkit_build $(compiler) cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
-        cairo eigen swig
+        cairo eigen swig=3
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

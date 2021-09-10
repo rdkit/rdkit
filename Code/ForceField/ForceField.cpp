@@ -17,45 +17,40 @@
 namespace RDKit {
 namespace ForceFieldsHelper {
 void normalizeAngleDeg(double &angleDeg) {
-  double normFactor = 360.0;
-  if (angleDeg < 0.0) {
-    normFactor = -normFactor;
-  }
-  angleDeg = fmod(angleDeg, normFactor);
-  if (fabs(angleDeg) > 180.0) {
-    angleDeg -= normFactor;
+  angleDeg = fmod(angleDeg, 360.0);
+  if (angleDeg < -180.0) {
+    angleDeg += 360.0;
+  } else if (angleDeg > 180.0) {
+    angleDeg -= 360.0;
   }
 }
 
 void computeDihedral(const RDGeom::PointPtrVect &pos, unsigned int idx1,
-    unsigned int idx2, unsigned int idx3, unsigned int idx4,
-    double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
-    RDGeom::Point3D t[2], double d[2]) {
+                     unsigned int idx2, unsigned int idx3, unsigned int idx4,
+                     double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
+                     RDGeom::Point3D t[2], double d[2]) {
   computeDihedral(static_cast<RDGeom::Point3D *>(pos[idx1]),
-    static_cast<RDGeom::Point3D *>(pos[idx2]),
-    static_cast<RDGeom::Point3D *>(pos[idx3]),
-    static_cast<RDGeom::Point3D *>(pos[idx4]), dihedral, cosPhi, r, t, d);
+                  static_cast<RDGeom::Point3D *>(pos[idx2]),
+                  static_cast<RDGeom::Point3D *>(pos[idx3]),
+                  static_cast<RDGeom::Point3D *>(pos[idx4]), dihedral, cosPhi,
+                  r, t, d);
 }
 
-void computeDihedral(const double *pos, unsigned int idx1,
-    unsigned int idx2, unsigned int idx3, unsigned int idx4,
-    double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
-    RDGeom::Point3D t[2], double d[2]) {
-  RDGeom::Point3D p1(pos[3 * idx1], pos[3 * idx1 + 1],
-                     pos[3 * idx1 + 2]);
-  RDGeom::Point3D p2(pos[3 * idx2], pos[3 * idx2 + 1],
-                     pos[3 * idx2 + 2]);
-  RDGeom::Point3D p3(pos[3 * idx3], pos[3 * idx3 + 1],
-                     pos[3 * idx3 + 2]);
-  RDGeom::Point3D p4(pos[3 * idx4], pos[3 * idx4 + 1],
-                     pos[3 * idx4 + 2]);
+void computeDihedral(const double *pos, unsigned int idx1, unsigned int idx2,
+                     unsigned int idx3, unsigned int idx4, double *dihedral,
+                     double *cosPhi, RDGeom::Point3D r[4], RDGeom::Point3D t[2],
+                     double d[2]) {
+  RDGeom::Point3D p1(pos[3 * idx1], pos[3 * idx1 + 1], pos[3 * idx1 + 2]);
+  RDGeom::Point3D p2(pos[3 * idx2], pos[3 * idx2 + 1], pos[3 * idx2 + 2]);
+  RDGeom::Point3D p3(pos[3 * idx3], pos[3 * idx3 + 1], pos[3 * idx3 + 2]);
+  RDGeom::Point3D p4(pos[3 * idx4], pos[3 * idx4 + 1], pos[3 * idx4 + 2]);
   computeDihedral(&p1, &p2, &p3, &p4, dihedral, cosPhi, r, t, d);
 }
 
 void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
-    const RDGeom::Point3D *p3, const RDGeom::Point3D *p4,
-    double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
-    RDGeom::Point3D t[2], double d[2]) {
+                     const RDGeom::Point3D *p3, const RDGeom::Point3D *p4,
+                     double *dihedral, double *cosPhi, RDGeom::Point3D r[4],
+                     RDGeom::Point3D t[2], double d[2]) {
   PRECONDITION(p1, "p1 must not be null");
   PRECONDITION(p2, "p2 must not be null");
   PRECONDITION(p3, "p3 must not be null");
@@ -95,8 +90,8 @@ void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
     *dihedral = -atan2(m.dotProduct(t[1]) / mLength, *cosPhi);
   }
 }
-}
-}
+}  // namespace ForceFieldsHelper
+}  // namespace RDKit
 
 namespace ForceFieldsHelper {
 class calcEnergy {
@@ -152,7 +147,7 @@ class calcGradient {
  private:
   ForceFields::ForceField *mp_ffHolder;
 };
-}
+}  // namespace ForceFieldsHelper
 
 namespace ForceFields {
 ForceField::~ForceField() {
@@ -169,7 +164,7 @@ ForceField::ForceField(const ForceField &other)
       d_numPoints(other.d_numPoints),
       dp_distMat(nullptr) {
   d_contribs.clear();
-  BOOST_FOREACH (const ContribPtr &contrib, other.d_contribs) {
+  for (const auto &contrib : other.d_contribs) {
     ForceFieldContrib *ncontrib = contrib->copy();
     ncontrib->dp_forceField = this;
     d_contribs.push_back(ContribPtr(ncontrib));
@@ -429,4 +424,4 @@ void ForceField::initDistanceMatrix() {
     dp_distMat[i] = -1.0;
   }
 }
-}
+}  // namespace ForceFields

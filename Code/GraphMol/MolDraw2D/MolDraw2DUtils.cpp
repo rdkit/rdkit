@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2016-2019 Greg Landrum
+//  Copyright (C) 2016-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -43,7 +43,7 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 }  // end of anonymous namespace
 
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
-                          bool wedgeBonds, bool forceCoords) {
+                          bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   if (kekulize) {
     try {
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
@@ -74,6 +74,9 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
   if (wedgeBonds) {
     WedgeMolBonds(mol, &mol.getConformer());
   }
+  if (wavyBonds) {
+    addWavyBondsForStereoAny(mol);
+  }
 }
 
 void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
@@ -101,6 +104,20 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
 };
 #define PT_OPT_GET(opt) opts.opt = pt.get(#opt, opts.opt)
 
+void get_rgba(const boost::property_tree::ptree &node, DrawColour &colour) {
+  boost::property_tree::ptree::const_iterator itm = node.begin();
+  colour.r = itm->second.get_value<float>();
+  ++itm;
+  colour.g = itm->second.get_value<float>();
+  ++itm;
+  colour.b = itm->second.get_value<float>();
+  ++itm;
+  if (itm != node.end()) {
+    colour.a = itm->second.get_value<float>();
+    ++itm;
+  }
+}
+
 void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
                        DrawColour &colour) {
   PRECONDITION(pnm && strlen(pnm), "bad property name");
@@ -108,13 +125,23 @@ void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
     return;
   }
 
-  boost::property_tree::ptree::const_iterator itm = pt->get_child(pnm).begin();
-  colour.r = itm->second.get_value<float>();
-  ++itm;
-  colour.g = itm->second.get_value<float>();
-  ++itm;
-  colour.b = itm->second.get_value<float>();
-  ++itm;
+  const auto &node = pt->get_child(pnm);
+  get_rgba(node, colour);
+}
+
+void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
+                               ColourPalette &palette) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt->find(pnm) == pt->not_found()) {
+    return;
+  }
+
+  for (const auto &atomicNumNodeIt : pt->get_child(pnm)) {
+    int atomicNum = boost::lexical_cast<int>(atomicNumNodeIt.first);
+    DrawColour colour;
+    get_rgba(atomicNumNodeIt.second, colour);
+    palette[atomicNum] = colour;
+  }
 }
 
 void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
@@ -129,6 +156,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(atomLabelDeuteriumTritium);
   PT_OPT_GET(dummiesAreAttachments);
   PT_OPT_GET(circleAtoms);
+  PT_OPT_GET(splitBonds);
   PT_OPT_GET(continuousHighlight);
   PT_OPT_GET(fillHighlights);
   PT_OPT_GET(highlightRadius);
@@ -143,6 +171,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
   PT_OPT_GET(additionalAtomLabelPadding);
+  PT_OPT_GET(noAtomLabels);
   PT_OPT_GET(bondLineWidth);
   PT_OPT_GET(scaleBondWidth);
   PT_OPT_GET(scaleHighlightBondWidth);
@@ -153,6 +182,8 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(rotate);
   PT_OPT_GET(addAtomIndices);
   PT_OPT_GET(addBondIndices);
+  PT_OPT_GET(isotopeLabels);
+  PT_OPT_GET(dummyIsotopeLabels);
   PT_OPT_GET(addStereoAnnotation);
   PT_OPT_GET(atomHighlightsAreCircles);
   PT_OPT_GET(centreMoleculesBeforeDrawing);
@@ -160,11 +191,20 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(includeMetadata);
   PT_OPT_GET(includeRadicals);
   PT_OPT_GET(comicMode);
+  PT_OPT_GET(variableBondWidthMultiplier);
+  PT_OPT_GET(variableAtomRadius);
+  PT_OPT_GET(includeChiralFlagLabel);
+  PT_OPT_GET(simplifiedStereoGroupLabel);
+  PT_OPT_GET(singleColourWedgeBonds);
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
   get_colour_option(&pt, "legendColour", opts.legendColour);
   get_colour_option(&pt, "symbolColour", opts.symbolColour);
+  get_colour_option(&pt, "annotationColour", opts.annotationColour);
+  get_colour_option(&pt, "variableAttachmentColour",
+                    opts.variableAttachmentColour);
+  get_colour_palette_option(&pt, "atomColourPalette", opts.atomColourPalette);
   if (pt.find("atomLabels") != pt.not_found()) {
     for (const auto &item : pt.get_child("atomLabels")) {
       opts.atomLabels[boost::lexical_cast<int>(item.first)] =

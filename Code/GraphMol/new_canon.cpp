@@ -13,7 +13,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <cstdint>
-#include <boost/foreach.hpp>
 #include <cstring>
 #include <iostream>
 #include <cassert>
@@ -443,8 +442,7 @@ void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
 }
 
 void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
-                           const int &idx) {
-  RDUNUSED_PARAM(idx);
+                           const int &) {
   atom.totalNumHs = atom.atom->getTotalNumHs();
   atom.isRingStereoAtom =
       (atom.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||

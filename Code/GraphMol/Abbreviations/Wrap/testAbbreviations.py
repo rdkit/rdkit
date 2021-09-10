@@ -123,8 +123,16 @@ M  V30 END SGROUP
 M  V30 END CTAB
 M  END''')
     nm = rdAbbreviations.CondenseAbbreviationSubstanceGroups(m)
-    nm.RemoveAllConformers() # avoid coords in CXSMILES
+    nm.RemoveAllConformers()  # avoid coords in CXSMILES
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C1CC1 |$CF3;;;$|')
+
+  def testGithub3692(self):
+    defaults = rdAbbreviations.GetDefaultAbbreviations()
+    self.assertIsNotNone(defaults[0].mol)
+    lbls = [x.label for x in defaults]
+    self.assertIn('CO2Et', lbls)
+    idx = lbls.index('CO2Et')
+    self.assertEqual(Chem.MolToSmiles(defaults[idx].mol), '*C(=O)OCC')
 
 
 if __name__ == '__main__':  # pragma: nocover

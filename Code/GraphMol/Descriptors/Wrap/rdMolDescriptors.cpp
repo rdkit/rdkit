@@ -12,7 +12,6 @@
 #include <GraphMol/GraphMol.h>
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/foreach.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/Descriptors/MolDescriptors.h>
@@ -132,7 +131,9 @@ python::list calcEEMcharges(RDKit::ROMol &mol, int confId) {
   std::vector<double> res;
   RDKit::Descriptors::EEM(mol, res, confId);
   python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  for (const auto iv : res) {
+    pyres.append(iv);
+  }
   return pyres;
 }
 
@@ -141,7 +142,9 @@ python::list calcWHIMs(const RDKit::ROMol &mol, int confId, double thresh,
   std::vector<double> res;
   RDKit::Descriptors::WHIM(mol, res, confId, thresh, CustomAtomProperty);
   python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  for (const auto iv : res) {
+    pyres.append(iv);
+  }
   return pyres;
 }
 
@@ -150,7 +153,9 @@ python::list calcGETAWAYs(const RDKit::ROMol &mol, int confId, double precision,
   std::vector<double> res;
   RDKit::Descriptors::GETAWAY(mol, res, confId, precision, CustomAtomProperty);
   python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  for (const auto iv : res) {
+    pyres.append(iv);
+  }
   return pyres;
 }
 
@@ -159,7 +164,9 @@ python::list calcRDFs(const RDKit::ROMol &mol, int confId,
   std::vector<double> res;
   RDKit::Descriptors::RDF(mol, res, confId, CustomAtomProperty);
   python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  for (const auto iv : res) {
+    pyres.append(iv);
+  }
   return pyres;
 }
 
@@ -168,7 +175,9 @@ python::list calcMORSEs(const RDKit::ROMol &mol, int confId,
   std::vector<double> res;
   RDKit::Descriptors::MORSE(mol, res, confId, CustomAtomProperty);
   python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  for (const auto iv : res) {
+    pyres.append(iv);
+  }
   return pyres;
 }
 
@@ -177,7 +186,9 @@ python::list calcAUTOCORR3Ds(const RDKit::ROMol &mol, int confId,
   std::vector<double> res;
   RDKit::Descriptors::AUTOCORR3D(mol, res, confId, CustomAtomProperty);
   python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  for (const auto iv : res) {
+    pyres.append(iv);
+  }
   return pyres;
 }
 
@@ -186,7 +197,9 @@ python::list calcAUTOCORR2Ds(const RDKit::ROMol &mol,
   std::vector<double> res;
   RDKit::Descriptors::AUTOCORR2D(mol, res, CustomAtomProperty);
   python::list pyres;
-  BOOST_FOREACH (double iv, res) { pyres.append(iv); }
+  for (const auto iv : res) {
+    pyres.append(iv);
+  }
   return pyres;
 }
 
@@ -340,9 +353,9 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
 }
 
 RDKit::SparseIntVect<std::uint32_t> *MorganFingerprintHelper(
-    const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
-    python::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, bool useCounts, python::object bitInfo,
+    const RDKit::ROMol &mol, unsigned int radius, int nBits,
+    python::object invariants, python::object fromAtoms, bool useChirality,
+    bool useBondTypes, bool useFeatures, bool useCounts, python::object bitInfo,
     bool includeRedundantEnvironments) {
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
@@ -461,7 +474,7 @@ struct std_pair_to_python_converter {
 #endif
 }  // namespace
 RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
-    const RDKit::ROMol &mol, int radius, python::object invariants,
+    const RDKit::ROMol &mol, unsigned int radius, python::object invariants,
     python::object fromAtoms, bool useChirality, bool useBondTypes,
     bool useFeatures, bool useCounts, python::object bitInfo,
     bool includeRedundantEnvironments) {
@@ -470,9 +483,9 @@ RDKit::SparseIntVect<std::uint32_t> *GetMorganFingerprint(
       useFeatures, useCounts, bitInfo, includeRedundantEnvironments);
 }
 RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
-    const RDKit::ROMol &mol, int radius, int nBits, python::object invariants,
-    python::object fromAtoms, bool useChirality, bool useBondTypes,
-    bool useFeatures, python::object bitInfo,
+    const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits,
+    python::object invariants, python::object fromAtoms, bool useChirality,
+    bool useBondTypes, bool useFeatures, python::object bitInfo,
     bool includeRedundantEnvironments) {
   return MorganFingerprintHelper(mol, radius, nBits, invariants, fromAtoms,
                                  useChirality, useBondTypes, useFeatures, true,
@@ -480,7 +493,7 @@ RDKit::SparseIntVect<std::uint32_t> *GetHashedMorganFingerprint(
 }
 
 ExplicitBitVect *GetMorganFingerprintBV(
-    const RDKit::ROMol &mol, int radius, unsigned int nBits,
+    const RDKit::ROMol &mol, unsigned int radius, unsigned int nBits,
     python::object invariants, python::object fromAtoms, bool useChirality,
     bool useBondTypes, bool useFeatures, python::object bitInfo,
     bool includeRedundantEnvironments) {
@@ -512,9 +525,8 @@ ExplicitBitVect *GetMorganFingerprintBV(
   }
   ExplicitBitVect *res;
   res = RDKit::MorganFingerprints::getFingerprintAsBitVect(
-      mol, static_cast<unsigned int>(radius), nBits, invars, froms.get(),
-      useChirality, useBondTypes, false, bitInfoMap,
-      includeRedundantEnvironments);
+      mol, radius, nBits, invars, froms.get(), useChirality, useBondTypes,
+      false, bitInfoMap, includeRedundantEnvironments);
   if (bitInfoMap) {
     bitInfo.attr("clear")();
     for (RDKit::MorganFingerprints::BitInfoMap::const_iterator iter =
@@ -551,14 +563,18 @@ python::list GetConnectivityInvariants(const RDKit::ROMol &mol,
   RDKit::MorganFingerprints::getConnectivityInvariants(mol, invars,
                                                        includeRingMembership);
   python::list res;
-  BOOST_FOREACH (std::uint32_t iv, invars) { res.append(python::long_(iv)); }
+  for (const auto iv : invars) {
+    res.append(python::long_(iv));
+  }
   return res;
 }
 python::list GetFeatureInvariants(const RDKit::ROMol &mol) {
   std::vector<std::uint32_t> invars(mol.getNumAtoms());
   RDKit::MorganFingerprints::getFeatureInvariants(mol, invars);
   python::list res;
-  BOOST_FOREACH (std::uint32_t iv, invars) { res.append(python::long_(iv)); }
+  for (const auto iv : invars) {
+    res.append(python::long_(iv));
+  }
   return res;
 }
 
@@ -572,7 +588,9 @@ python::list GetUSR(const RDKit::ROMol &mol, int confId) {
   std::vector<double> descriptor(12);
   RDKit::Descriptors::USR(mol, descriptor, confId);
   python::list pyDescr;
-  BOOST_FOREACH (double d, descriptor) { pyDescr.append(d); }
+  for (const auto d : descriptor) {
+    pyDescr.append(d);
+  }
   return pyDescr;
 }
 
@@ -594,16 +612,22 @@ python::list GetUSRDistributions(python::object coords, python::object points) {
   if (points != python::object()) {
     // make sure the optional argument actually was a list
     python::list tmpPts = python::extract<python::list>(points);
-    BOOST_FOREACH (RDGeom::Point3D p, pts) { tmpPts.append(p); }
+    for (const auto &p : pts) {
+      tmpPts.append(p);
+    }
     points = tmpPts;
   }
   python::list pyDist;
-  BOOST_FOREACH (std::vector<double> dist, distances) {
+  for (const auto &dist : distances) {
     python::list pytmp;
-    BOOST_FOREACH (double d, dist) { pytmp.append(d); }
+    for (const auto d : dist) {
+      pytmp.append(d);
+    }
     pyDist.append(pytmp);
   }
-  BOOST_FOREACH (const RDGeom::Point3D *pt, c) { delete pt; }
+  for (const auto *pt : c) {
+    delete pt;
+  }
   return pyDist;
 }
 
@@ -631,12 +655,16 @@ python::list GetUSRDistributionsFromPoints(python::object coords,
   std::vector<std::vector<double>> distances(numPts);
   RDKit::Descriptors::calcUSRDistributionsFromPoints(c, p, distances);
   python::list pyDist;
-  BOOST_FOREACH (std::vector<double> dist, distances) {
+  for (const auto &dist : distances) {
     python::list pytmp;
-    BOOST_FOREACH (double d, dist) { pytmp.append(d); }
+    for (const auto d : dist) {
+      pytmp.append(d);
+    }
     pyDist.append(pytmp);
   }
-  BOOST_FOREACH (const RDGeom::Point3D *pt, c) { delete pt; }
+  for (const auto *pt : c) {
+    delete pt;
+  }
   return pyDist;
 }
 
@@ -662,7 +690,9 @@ python::list GetUSRFromDistributions(python::object distances) {
   std::vector<double> descriptor(12);
   RDKit::Descriptors::calcUSRFromDistributions(dist, descriptor);
   python::list pyDescr;
-  BOOST_FOREACH (double d, descriptor) { pyDescr.append(d); }
+  for (const auto d : descriptor) {
+    pyDescr.append(d);
+  }
   return pyDescr;
 }
 
@@ -730,7 +760,9 @@ python::list GetUSRCAT(const RDKit::ROMol &mol, python::object atomSelections,
   std::vector<double> descriptor(sizeDescriptor);
   RDKit::Descriptors::USRCAT(mol, descriptor, atomIds, confId);
   python::list pyDescr;
-  BOOST_FOREACH (double d, descriptor) { pyDescr.append(d); }
+  for (const auto d : descriptor) {
+    pyDescr.append(d);
+  }
   return pyDescr;
 }
 
@@ -750,7 +782,9 @@ python::list CalcSlogPVSA(const RDKit::ROMol &mol, python::object bins,
   res = RDKit::Descriptors::calcSlogP_VSA(mol, lbins, force);
 
   python::list pyres;
-  BOOST_FOREACH (double dv, res) { pyres.append(dv); }
+  for (const auto d : res) {
+    pyres.append(d);
+  }
   return pyres;
 }
 python::list CalcSMRVSA(const RDKit::ROMol &mol, python::object bins,
@@ -769,7 +803,9 @@ python::list CalcSMRVSA(const RDKit::ROMol &mol, python::object bins,
   res = RDKit::Descriptors::calcSMR_VSA(mol, lbins, force);
 
   python::list pyres;
-  BOOST_FOREACH (double dv, res) { pyres.append(dv); }
+  for (const auto d : res) {
+    pyres.append(d);
+  }
   return pyres;
 }
 python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
@@ -788,7 +824,9 @@ python::list CalcPEOEVSA(const RDKit::ROMol &mol, python::object bins,
   res = RDKit::Descriptors::calcPEOE_VSA(mol, lbins, force);
 
   python::list pyres;
-  BOOST_FOREACH (double dv, res) { pyres.append(dv); }
+  for (const auto d : res) {
+    pyres.append(d);
+  }
   return pyres;
 }
 python::list CalcCustomPropVSA(const RDKit::ROMol &mol,
@@ -804,7 +842,9 @@ python::list CalcCustomPropVSA(const RDKit::ROMol &mol,
       RDKit::Descriptors::calcCustomProp_VSA(mol, customPropName, lbins, force);
 
   python::list pyres;
-  BOOST_FOREACH (double dv, res) { pyres.append(dv); }
+  for (const auto d : res) {
+    pyres.append(d);
+  }
   return pyres;
 }
 python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
@@ -812,7 +852,9 @@ python::list CalcMQNs(const RDKit::ROMol &mol, bool force) {
   res = RDKit::Descriptors::calcMQNs(mol, force);
 
   python::list pyres;
-  BOOST_FOREACH (unsigned int iv, res) { pyres.append(iv); }
+  for (const auto d : res) {
+    pyres.append(d);
+  }
   return pyres;
 }
 
@@ -822,7 +864,9 @@ unsigned int numSpiroAtoms(const RDKit::ROMol &mol, python::object pyatoms) {
       mol, pyatoms != python::object() ? &ats : nullptr);
   if (pyatoms != python::object()) {
     python::list pyres = python::extract<python::list>(pyatoms);
-    BOOST_FOREACH (unsigned int iv, ats) { pyres.append(iv); }
+    for (const auto d : ats) {
+      pyres.append(d);
+    }
   }
   return res;
 }
@@ -833,7 +877,9 @@ unsigned int numBridgeheadAtoms(const RDKit::ROMol &mol,
       mol, pyatoms != python::object() ? &ats : nullptr);
   if (pyatoms != python::object()) {
     python::list pyres = python::extract<python::list>(pyatoms);
-    BOOST_FOREACH (unsigned int iv, ats) { pyres.append(iv); }
+    for (const auto d : ats) {
+      pyres.append(d);
+    }
   }
   return res;
 }
@@ -1273,6 +1319,16 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::scope().attr("_CalcNumAliphaticCarbocycles_version") =
       RDKit::Descriptors::NumAliphaticCarbocyclesVersion;
 
+  docString = "returns the number of heavy atoms for a molecule";
+  python::def("CalcNumHeavyAtoms", RDKit::Descriptors::calcNumHeavyAtoms,
+              (python::arg("mol")), docString.c_str());
+  python::scope().attr("_CalcNumHeavyAtoms_version") =
+      RDKit::Descriptors::NumHeavyAtomsVersion;
+  docString = "returns the total number of atoms for a molecule";
+  python::def("CalcNumAtoms", RDKit::Descriptors::calcNumAtoms,
+              (python::arg("mol")), docString.c_str());
+  python::scope().attr("_CalcNumAtoms_version") =
+      RDKit::Descriptors::NumAtomsVersion;
   docString = "returns the number of heteroatoms for a molecule";
   python::def("CalcNumHeteroatoms", RDKit::Descriptors::calcNumHeteroatoms,
               (python::arg("mol")), docString.c_str());
@@ -1391,7 +1447,11 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               (python::arg("mol"), python::arg("force") = false));
   python::scope().attr("_CalcChi4n_version") = RDKit::Descriptors::chi4nVersion;
 
-  docString = "From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
+  docString =
+      "From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991). "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
   python::def(
       "CalcHallKierAlpha", hkAlphaHelper,
       (python::arg("mol"), python::arg("atomContribs") = python::object()));
@@ -1399,24 +1459,40 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       RDKit::Descriptors::hallKierAlphaVersion;
 
   docString =
-      "From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
+      "From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991) "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
   python::def("CalcKappa1", RDKit::Descriptors::calcKappa1,
               (python::arg("mol")));
   python::scope().attr("_CalcKappa1_version") =
       RDKit::Descriptors::kappa1Version;
   docString =
-      "From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991)";
+      "From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991) "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
   python::def("CalcKappa2", RDKit::Descriptors::calcKappa2,
               (python::arg("mol")));
   python::scope().attr("_CalcKappa2_version") =
       RDKit::Descriptors::kappa2Version;
   docString =
       "From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422, "
-      "(1991)";
+      "(1991) "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
   python::def("CalcKappa3", RDKit::Descriptors::calcKappa3,
               (python::arg("mol")));
   python::scope().attr("_CalcKappa3_version") =
       RDKit::Descriptors::kappa3Version;
+  docString =
+      "From Quantitative Structure-Activity Relationships 8, 221–224 (1989). "
+      "NOTE: Because hybridization is used to calculate this, results may "
+      "differ from other implementations which have different conventions for "
+      "assigning hybridization";
+  python::def("CalcPhi", RDKit::Descriptors::calcPhi, (python::arg("mol")));
+  python::scope().attr("_CalcPhi_version") = RDKit::Descriptors::PhiVersion;
 
   docString = "Returns the MACCS keys for a molecule as an ExplicitBitVect";
   python::def("GetMACCSKeysFingerprint",

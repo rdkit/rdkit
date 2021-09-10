@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,8 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -20,6 +18,7 @@
 #include <GraphMol/MolStandardize/Normalize.h>
 #include <GraphMol/MolStandardize/Fragment.h>
 #include <GraphMol/MolStandardize/Charge.h>
+#include <GraphMol/MolStandardize/Tautomer.h>
 
 #include <iostream>
 #include <fstream>
@@ -589,27 +588,259 @@ TEST_CASE("github #2792: carbon in the uncharger", "[uncharger][bug]") {
   }
 }
 
-TEST_CASE("github #2965: molecules properties not retained after cleanup", "[cleanup][bug]") {
+TEST_CASE("github #2965: molecules properties not retained after cleanup",
+          "[cleanup][bug]") {
   SECTION("example 1") {
-	MolStandardize::CleanupParameters params;
-	std::unique_ptr<RWMol> m(SmilesToMol("Cl.c1cnc(OCCCC2CCNCC2)cn1"));
-	REQUIRE(m);
-	m->setProp("testing_prop", "1234");
-	std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
-        REQUIRE(res);
-	auto x = res->getDict(); 
-	CHECK(x.getVal<std::string>("testing_prop") == "1234");
-  }
-} 
-
-TEST_CASE("github #2970: chargeParent() segmentation fault when standardization is skipped i.e. skip_standardize is set to true") {
-    auto m = "COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"_smiles;
-    REQUIRE(m);
     MolStandardize::CleanupParameters params;
+    std::unique_ptr<RWMol> m(SmilesToMol("Cl.c1cnc(OCCCC2CCNCC2)cn1"));
+    REQUIRE(m);
+    m->setProp("testing_prop", "1234");
     std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
+    REQUIRE(res);
+    auto x = res->getDict();
+    CHECK(x.getVal<std::string>("testing_prop") == "1234");
+  }
+}
 
-    std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*res, params, true));
+TEST_CASE(
+    "github #2970: chargeParent() segmentation fault when standardization is "
+    "skipped i.e. skip_standardize is set to true") {
+  auto m = "COC=1C=CC(NC=2N=CN=C3NC=NC23)=CC1"_smiles;
+  REQUIRE(m);
+  MolStandardize::CleanupParameters params;
+  std::unique_ptr<RWMol> res(MolStandardize::cleanup(*m, params));
 
-    REQUIRE(outm);
-    CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
+  std::unique_ptr<ROMol> outm(MolStandardize::chargeParent(*res, params, true));
+
+  REQUIRE(outm);
+  CHECK(MolToSmiles(*outm) == "COc1ccc(Nc2ncnc3[nH]cnc23)cc1");
+}
+
+TEST_CASE("update parameters from JSON") {
+  std::string rdbase = std::getenv("RDBASE");
+
+  // a few tests to make sure the basics work
+  MolStandardize::CleanupParameters params;
+  CHECK(params.maxRestarts == 200);
+  CHECK(params.tautomerReassignStereo == true);
+
+  MolStandardize::updateCleanupParamsFromJSON(params,
+                                              R"JSON({"maxRestarts":12,
+  "tautomerReassignStereo":false,
+  "fragmentFile":"foo.txt"})JSON");
+  CHECK(params.maxRestarts == 12);
+  CHECK(params.tautomerReassignStereo == false);
+  CHECK(params.fragmentFile == "foo.txt");
+}
+
+TEST_CASE("provide normalizer parameters as data") {
+  std::vector<std::pair<std::string, std::string>> tfs{
+      {"Bad amide tautomer1",
+       "[C:1]([OH1;D1:2])=;!@[NH1:3]>>[C:1](=[OH0:2])-[NH2:3]"},
+      {"Bad amide tautomer2",
+       "[C:1]([OH1;D1:2])=;!@[NH0:3]>>[C:1](=[OH0:2])-[NH1:3]"}};
+  SECTION("example1") {
+    MolStandardize::Normalizer nrml(tfs, 20);
+    auto m = "Cl.Cl.OC(=N)NCCCCCCCCCCCCNC(O)=N"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(nrml.normalize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "Cl.Cl.NC(=O)NCCCCCCCCCCCCNC(N)=O");
+  }
+  SECTION("example2") {
+    MolStandardize::Normalizer nrml(tfs, 20);
+    auto m = "OC(=N)NCCCCCCCCCCCCNC(O)=N"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(nrml.normalize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "NC(=O)NCCCCCCCCCCCCNC(N)=O");
+  }
+}
+
+TEST_CASE("provide normalizer parameters as JSON") {
+  SECTION("example1") {
+    std::string json = R"JSON({"normalizationData":[
+      {"name":"silly 1","smarts":"[Cl:1]>>[F:1]"},
+      {"name":"silly 2","smarts":"[Br:1]>>[F:1]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.normalizationData.size() == 2);
+
+    MolStandardize::Normalizer nrml(params.normalizationData, 20);
+    auto m = "ClCCCBr"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(nrml.normalize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "FCCCF");
+  }
+}
+
+TEST_CASE("provide charge parameters as data") {
+  std::vector<std::tuple<std::string, std::string, std::string>> params{
+      {"-CO2H", "C(=O)[OH]", "C(=O)[O-]"}, {"phenol", "c[OH]", "c[O-]"}};
+  SECTION("example1") {
+    MolStandardize::Reionizer reion(params);
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(reion.reionize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "O=C([O-])c1cccc(O)c1");
+  }
+  SECTION("example2") {
+    MolStandardize::Reionizer reion(params);
+    auto m = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(reion.reionize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "O=S([O-])c1ccc(S(=O)(=O)O)cc1");
+  }
+}
+
+TEST_CASE("provide charge parameters as JSON") {
+  SECTION("example1") {
+    std::string json = R"JSON({"acidbaseData":[
+      {"name":"-CO2H","acid":"C(=O)[OH]","base":"C(=O)[O-]"},
+      {"name":"phenol","acid":"c[OH]","base":"c[O-]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.acidbaseData.size() == 2);
+
+    MolStandardize::Reionizer reion(params.acidbaseData);
+    auto m = "c1cc([O-])cc(C(=O)O)c1"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> res(reion.reionize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "O=C([O-])c1cccc(O)c1");
+    m = "C1=C(C=CC(=C1)[S]([O-])=O)[S](O)(=O)=O"_smiles;
+    REQUIRE(m);
+    res.reset(reion.reionize(*m));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "O=S([O-])c1ccc(S(=O)(=O)O)cc1");
+  }
+}
+
+TEST_CASE("provide tautomer parameters as JSON") {
+  SECTION("example1") {
+    std::string json = R"JSON({"tautomerTransformData":[
+      {"name":"1,3 (thio)keto/enol f","smarts":"[CX4!H0]-[C]=[O,S,Se,Te;X1]","bonds":"","charges":""},
+      {"name":"1,3 (thio)keto/enol r","smarts":"[O,S,Se,Te;X2!H0]-[C]=[C]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.tautomerTransformData.size() == 2);
+    MolStandardize::TautomerEnumerator te(params);
+    auto m = "CCC=O"_smiles;
+    REQUIRE(m);
+    auto tauts = te.enumerate(*m);
+    CHECK(tauts.size() == 2);
+    CHECK(MolToSmiles(*tauts[0]) == "CC=CO");
+    CHECK(MolToSmiles(*tauts[1]) == "CCC=O");
+  }
+  SECTION("example 2") {
+    std::string json = R"JSON({"tautomerTransformData":[
+        {"name":"isocyanide f", "smarts":"[C-0!H0]#[N+0]", "bonds":"#", "charges":"-+"},
+        {"name":"isocyanide r", "smarts":"[N+!H0]#[C-]", "bonds":"#", "charges":"-+"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.tautomerTransformData.size() == 2);
+    MolStandardize::TautomerEnumerator te(params);
+    auto m = "C#N"_smiles;
+    REQUIRE(m);
+    auto tauts = te.enumerate(*m);
+    CHECK(tauts.size() == 2);
+    CHECK(MolToSmiles(*tauts[0]) == "C#N");
+    CHECK(MolToSmiles(*tauts[1]) == "[C-]#[NH+]");
+  }
+  SECTION("example3") {
+    std::string json = R"JSON({"tautomerTransformData":[
+      {"name":"1,3 (thio)keto/enol f","smarts":"[CX4!H0]-[C]=[O,S,Se,Te;X1]","bonds":"","charges":""},
+      {"name":"1,3 (thio)keto/enol r","smarts":"[O,S,Se,Te;X2!H0]-[C]=[C]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.tautomerTransformData.size() == 2);
+    auto m = "CCC=O"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<RWMol> nm{MolStandardize::canonicalTautomer(m.get())};
+    CHECK(MolToSmiles(*nm) == "CCC=O");
+  }
+}
+
+TEST_CASE("provide fragment parameters as JSON") {
+  SECTION("example1") {
+    std::string json = R"JSON({"fragmentData":[
+        {"name":"hydrogen", "smarts":"[H]"}, 
+        {"name":"fluorine", "smarts":"[F]"}, 
+        {"name":"chlorine", "smarts":"[Cl]"}
+    ]})JSON";
+    MolStandardize::CleanupParameters params;
+    MolStandardize::updateCleanupParamsFromJSON(params, json);
+    CHECK(params.fragmentData.size() == 3);
+    std::unique_ptr<MolStandardize::FragmentRemover> fm{
+        MolStandardize::fragmentRemoverFromParams(params, true)};
+    auto m = "[F-].[Cl-].[Br-].CC"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{fm->remove(*m)};
+    CHECK(MolToSmiles(*nm) == "CC.[Br-]");
+  }
+}
+
+TEST_CASE("tautomer parent") {
+  SECTION("example1") {
+    auto m = "[O-]c1ccc(C(=O)O)cc1CC=CO"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::tautomerParent(*m)};
+    CHECK(MolToSmiles(*nm) == "O=CCCc1cc(C(=O)[O-])ccc1O");
+  }
+}
+
+TEST_CASE("stereo parent") {
+  SECTION("example1") {
+    auto m = "C[C@](F)(Cl)C/C=C/[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::stereoParent(*m)};
+    CHECK(MolToSmiles(*nm) == "CC(F)(Cl)CC=CC(F)Cl");
+  }
+}
+
+TEST_CASE("isotope parent") {
+  SECTION("example1") {
+    auto m = "[12CH3][13CH3]"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::isotopeParent(*m)};
+    CHECK(MolToSmiles(*nm) == "CC");
+  }
+  SECTION("attached D") {
+    // this behavior - leaving H atoms with no isotope info - is intentional
+    // It may be that we're working with molecules which include Hs and we don't
+    // want to just automatically remove them.
+    auto m = "O[2H]"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::isotopeParent(*m)};
+    CHECK(MolToSmiles(*nm) == "[H]O");
+  }
+}
+
+TEST_CASE("super parent") {
+  SECTION("example1") {
+    auto m = "[O-]c1c([12C@H](F)Cl)c(O[2H])c(C(=O)O)cc1CC=CO.[Na+]"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<ROMol> nm{MolStandardize::superParent(*m)};
+    CHECK(MolToSmiles(*nm) == "O=CCCc1cc(C(=O)O)c(O)c(C(F)Cl)c1O");
+  }
+}
+
+TEST_CASE(
+    "Github #4260: Exception thrown by reionizer when dealing with Mg+2") {
+  SECTION("reported") {
+    auto m = "[Mg].OC(=O)c1ccccc1C"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<RWMol> m2(MolStandardize::reionize(m.get()));
+    REQUIRE(m2);
+    CHECK(m2->getAtomWithIdx(0)->getFormalCharge() == 2);
+    CHECK(m2->getAtomWithIdx(1)->getFormalCharge() == -1);
+  }
 }

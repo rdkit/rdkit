@@ -55,7 +55,6 @@
 #include <Numerics/Matrix.h>
 #include <Numerics/SquareMatrix.h>
 #include <Numerics/SymmMatrix.h>
-#include <boost/foreach.hpp>
 
 #include <Eigen/Dense>
 
@@ -152,5 +151,5 @@ double PBF(const ROMol &mol, int confId) {
   return res;
 }
 
-}  // end of Descriptors namespace
-}  // end of RDKit namespace
+}  // namespace Descriptors
+}  // namespace RDKit

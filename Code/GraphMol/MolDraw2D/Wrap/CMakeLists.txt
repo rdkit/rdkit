@@ -1,4 +1,5 @@
 remove_definitions(-DRDKIT_MOLDRAW2D_BUILD)
+
 rdkit_python_extension(rdMolDraw2D
                        rdMolDraw2D.cpp
                        DEST Chem/Draw

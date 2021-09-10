@@ -23,6 +23,10 @@
 %ignore RDKit::MolEnumerator::LinkNodeOp::copy;
 #endif
 
+%ignore RDKit::MolEnumerator::detail::idxPropName;
+%ignore RDKit::MolEnumerator::detail::preserveOrigIndices;
+%ignore RDKit::MolEnumerator::detail::removeOrigIndices;
+
 %ignore RDKit::MolEnumerator::MolEnumeratorOp;
 %ignore RDKit::MolEnumerator::PositionVariationOp;
 %ignore RDKit::MolEnumerator::LinkNodeOp;

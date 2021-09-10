@@ -53,8 +53,7 @@ typedef enum {
 
 class RDKIT_SLNPARSE_EXPORT AttribType {
  public:
-  AttribType()
-      : first(""), second(""), op("") {};
+  AttribType() : first(""), second(""), op("") {}
   std::string first;
   std::string second;
   std::string op;
@@ -66,26 +65,26 @@ typedef std::vector<std::pair<AttribCombineOp, boost::shared_ptr<AttribType>>>
     AttribListType;
 
 //! parses the attributes provided for an atom and sets
-// the appropriate RD properties/queries.
-// NOTES:
-//    1) Some SLN query values cannot be properly set until the molecule is
-//    fully/
-//       initialized. These are handled by parseFinalAtomAttribs()
+/// the appropriate RD properties/queries.
+/// NOTES:
+///   1) Some SLN query values cannot be properly set until the molecule is
+///   fully/
+///      initialized. These are handled by parseFinalAtomAttribs()
 //
 void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery);
 void parseFinalAtomAttribs(Atom *atom, bool doingQuery);
 
 //! parses the attributes provided for a bond and sets
-// the appropriate RD properties/queries.
-// NOTES:
-//    1) Some SLN query values cannot be properly set until the molecule is
-//    fully/
-//       initialized. These are handled by parseFinalBondAttribs()
+/// the appropriate RD properties/queries.
+/// NOTES:
+///   1) Some SLN query values cannot be properly set until the molecule is
+///   fully/
+///      initialized. These are handled by parseFinalBondAttribs()
 void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery);
 void parseFinalBondAttribs(Bond *bond, bool doingQuery);
 
 //! parses the attributes provided for a ctab and sets
-// the appropriate RD properties/queries.
+/// the appropriate RD properties/queries.
 void parseMolAttribs(ROMol *mol, AttribListType attribs);
 
 void adjustAtomChiralities(RWMol *mol);

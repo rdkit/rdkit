@@ -38,17 +38,12 @@ namespace {
 void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
-                RDKit::Atom* &lastAtom,
-                RDKit::Bond* &lastBond,
-                std::list<unsigned int> *branchPoints,
-		void *scanner,int start_token, const char * msg )
+                RDKit::Atom* &,
+                RDKit::Bond* &,
+                unsigned int &,unsigned int &,
+                std::list<unsigned int> *,
+		void *,int, const char * msg )
 {
-  RDUNUSED_PARAM(input);
-  RDUNUSED_PARAM(lastAtom);
-  RDUNUSED_PARAM(lastBond);
-  RDUNUSED_PARAM(branchPoints);
-  RDUNUSED_PARAM(scanner);
-  RDUNUSED_PARAM(start_token);
   yyErrorCleanup(ms);
   BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing: " << input << std::endl;
 }
@@ -56,13 +51,9 @@ yysmiles_error( const char *input,
 void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
-                std::list<unsigned int> *branchPoints,
-		void *scanner,int start_token, const char * msg )
+                std::list<unsigned int> *,
+		void *,int, const char * msg )
 {
-  RDUNUSED_PARAM(input);
-  RDUNUSED_PARAM(branchPoints);
-  RDUNUSED_PARAM(scanner);
-  RDUNUSED_PARAM(start_token);
   yyErrorCleanup(ms);
   BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing: " << input << std::endl;
 }
@@ -77,6 +68,8 @@ yysmiles_error( const char *input,
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {RDKit::Atom* &lastAtom}
 %parse-param {RDKit::Bond* &lastBond}
+%parse-param {unsigned &numAtomsParsed}
+%parse-param {unsigned &numBondsParsed}
 %parse-param {std::list<unsigned int> *branchPoints}
 %parse-param {void *scanner}
 %parse-param {int& start_token}
@@ -182,6 +175,7 @@ mol: atomd {
   int atomIdx2=mp->addAtom($2,true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
+  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
   //delete $2;
 }
 
@@ -201,6 +195,7 @@ mol: atomd {
     $2->setBeginAtomIdx(atomIdx1);
     $2->setEndAtomIdx(atomIdx2);
   }
+  $2->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond($2,true);
   //delete $3;
 }
@@ -210,6 +205,7 @@ mol: atomd {
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($3,true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
+  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
   //delete $3;
 }
 
@@ -228,6 +224,9 @@ mol: atomd {
 				     Bond::UNSPECIFIED);
   mp->setBondBookmark(newB,$2);
   newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  if(!(mp->getAllBondsWithBookmark($2).size()%2)){
+    newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  }
 
   SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
 
@@ -248,6 +247,9 @@ mol: atomd {
   newB->setBondDir($2->getBondDir());
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
+  if(!(mp->getAllBondsWithBookmark($3).size()%2)){
+    newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  }
 
   SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
 
@@ -263,8 +265,12 @@ mol: atomd {
   Atom *atom=mp->getActiveAtom();
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     Bond::SINGLE);
+  newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
+  if(!(mp->getAllBondsWithBookmark($3).size()%2)){
+    newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  }
 
   SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
 
@@ -281,6 +287,7 @@ mol: atomd {
   int atomIdx2=mp->addAtom($3,true,true);
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
+  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
   //delete $3;
   branchPoints->push_back(atomIdx1);
 }
@@ -300,7 +307,9 @@ mol: atomd {
     $3->setBeginAtomIdx(atomIdx1);
     $3->setEndAtomIdx(atomIdx2);
   }
+  $3->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond($3,true);
+
   //delete $4;
   branchPoints->push_back(atomIdx1);
 }
@@ -309,6 +318,7 @@ mol: atomd {
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($4,true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
+  mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
   //delete $4;
   branchPoints->push_back(atomIdx1);
 }

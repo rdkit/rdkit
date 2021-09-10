@@ -257,52 +257,62 @@ void adjustHs(RWMol &mol) {
 }
 
 void assignRadicals(RWMol &mol) {
-  for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
+  for (auto atom : mol.atoms()) {
     // we only put automatically assign radicals to things that
     // don't have them already and don't have implicit Hs:
-    if (!(*ai)->getNoImplicit() || (*ai)->getNumRadicalElectrons() ||
-        !(*ai)->getAtomicNum()) {
+    if (!atom->getNoImplicit() || atom->getNumRadicalElectrons() ||
+        !atom->getAtomicNum()) {
       continue;
     }
-    double accum = 0.0;
-    RWMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(*ai);
-    while (beg != end) {
-      accum += mol[*beg]->getValenceContrib(*ai);
-      ++beg;
-    }
-    accum += (*ai)->getNumExplicitHs();
-    int totalValence = static_cast<int>(accum + 0.1);
-    int chg = (*ai)->getFormalCharge();
+    const auto &valens =
+        PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+    int chg = atom->getFormalCharge();
     int nOuter =
-        PeriodicTable::getTable()->getNouterElecs((*ai)->getAtomicNum());
-    int baseCount = 8;
-    if ((*ai)->getAtomicNum() == 1) {
-      baseCount = 2;
-    }
+        PeriodicTable::getTable()->getNouterElecs(atom->getAtomicNum());
+    if (valens.size() != 1 || valens[0] != -1) {
+      double accum = 0.0;
+      RWMol::OEDGE_ITER beg, end;
+      boost::tie(beg, end) = mol.getAtomBonds(atom);
+      while (beg != end) {
+        accum += mol[*beg]->getValenceContrib(atom);
+        ++beg;
+      }
+      accum += atom->getNumExplicitHs();
+      int totalValence = static_cast<int>(accum + 0.1);
+      int baseCount = 8;
+      if (atom->getAtomicNum() == 1 || atom->getAtomicNum() == 2) {
+        baseCount = 2;
+      }
 
-    // applies to later (more electronegative) elements:
-    int numRadicals = baseCount - nOuter - totalValence + chg;
-    if (numRadicals < 0) {
-      numRadicals = 0;
-      // can the atom be "hypervalent"?  (was github #447)
-      const INT_VECT &valens =
-          PeriodicTable::getTable()->getValenceList((*ai)->getAtomicNum());
-      if (valens.size() > 1) {
-        BOOST_FOREACH (int val, valens) {
-          if (val - totalValence + chg >= 0) {
-            numRadicals = val - totalValence + chg;
-            break;
+      // applies to later (more electronegative) elements:
+      int numRadicals = baseCount - nOuter - totalValence + chg;
+      if (numRadicals < 0) {
+        numRadicals = 0;
+        // can the atom be "hypervalent"?  (was github #447)
+        const INT_VECT &valens =
+            PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+        if (valens.size() > 1) {
+          for (auto val : valens) {
+            if (val - totalValence + chg >= 0) {
+              numRadicals = val - totalValence + chg;
+              break;
+            }
           }
         }
       }
+      // applies to earlier elements:
+      int numRadicals2 = nOuter - totalValence - chg;
+      if (numRadicals2 >= 0) {
+        numRadicals = std::min(numRadicals, numRadicals2);
+      }
+      atom->setNumRadicalElectrons(numRadicals);
+    } else {
+      //  if this is an atom where we have no preferred valence info at all,
+      //  e.g. for transition metals, then we shouldn't be guessing. This was
+      //  #3330
+      auto nValence = nOuter - chg;
+      atom->setNumRadicalElectrons(nValence % 2);
     }
-    // applies to earlier elements:
-    int numRadicals2 = nOuter - totalValence - chg;
-    if (numRadicals2 >= 0) {
-      numRadicals = std::min(numRadicals, numRadicals2);
-    }
-    (*ai)->setNumRadicalElectrons(numRadicals);
   }
 }
 
@@ -520,7 +530,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
       }
       Bond *nBond = bond->copy();
       RWMol *tmp = res[(*mapping)[nBond->getBeginAtomIdx()]].get();
-      nBond->setOwningMol( tmp );
+      nBond->setOwningMol(tmp);
       nBond->setBeginAtomIdx(ids[nBond->getBeginAtomIdx()]);
       nBond->setEndAtomIdx(ids[nBond->getEndAtomIdx()]);
       nBond->getStereoAtoms().clear();
@@ -593,14 +603,14 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
 
   if (sanitizeFrags) {
     for (auto &re : res) {
-      sanitizeMol( *re );
+      sanitizeMol(*re);
     }
   }
 
   if (ownIt) {
     delete mapping;
   }
-  return std::vector<ROMOL_SPTR>( res.begin(), res.end() );
+  return std::vector<ROMOL_SPTR>(res.begin(), res.end());
 }
 
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {

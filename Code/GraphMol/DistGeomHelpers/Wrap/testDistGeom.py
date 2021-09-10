@@ -215,10 +215,28 @@ class TestCase(unittest.TestCase):
 
         nconfs = []
         expected = [4, 5, 5, 4, 5, 4]
+        expected = [3, 3, 5, 4, 4, 4]
         for smi in smiles:
             mol = Chem.MolFromSmiles(smi)
             cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30, randomSeed=100,
                                                  pruneRmsThresh=1.5)
+            nconfs.append(len(cids))
+
+        d = [abs(x - y) for x, y in zip(expected, nconfs)]
+        # print(nconfs)
+        self.assertTrue(max(d) <= 1)
+
+        # previous settings
+        params = rdDistGeom.ETKDG()
+        params.randomSeed = 100
+        params.maxIterations = 30
+        params.pruneRmsThresh = 1.5
+        params.useSymmetryForPruning = False
+        nconfs = []
+        expected = [4, 5, 5, 4, 5, 4]
+        for smi in smiles:
+            mol = Chem.MolFromSmiles(smi)
+            cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
             nconfs.append(len(cids))
 
         d = [abs(x - y) for x, y in zip(expected, nconfs)]
