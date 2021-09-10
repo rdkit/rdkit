@@ -669,6 +669,13 @@ TEST_CASE("one-component reactions") {
     auto rxn = "CC[N:1]>>[N:1]"_rxnsmarts;
     REQUIRE(rxn);
     rxn->initReactantMatchers();
+    {  // molecule which does not match:
+      auto mol = "CCO"_smiles;
+      REQUIRE(mol);
+      CHECK(!rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CCO");
+    }
     {
       auto mol = "CCN"_smiles;
       REQUIRE(mol);
@@ -710,6 +717,20 @@ TEST_CASE("one-component reactions") {
       CHECK(rxn->runReactant(*mol));
       CHECK(mol->getNumAtoms() == 4);
       CHECK(MolToSmiles(*mol) == "CNCO");
+    }
+    {  // multiple matches, we only modify one (and it's arbitrary which)
+      auto mol = "CCNCNCC"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 5);
+      CHECK(MolToSmiles(*mol) == "CCNCN");
+    }
+    {  // fragments don't pass through:
+      auto mol = "CCN.Cl"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
     }
   }
   SECTION("removing atoms 2") {

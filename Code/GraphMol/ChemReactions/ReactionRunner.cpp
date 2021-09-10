@@ -1537,81 +1537,25 @@ std::vector<MOL_SPTR_VECT> run_Reactants(const ChemicalReaction &rxn,
   return productMols;
 }  // end of ChemicalReaction::runReactants()
 
-// Modifies a single reactant IN PLACE
-bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
-                  unsigned int reactantIdx) {
-  PRECONDITION(static_cast<size_t>(reactantIdx) < rxn.getNumReactantTemplates(),
-               "reactantIdx out of bounds");
-  PRECONDITION(rxn.getNumProductTemplates() <= 1, "only one product supported");
-  const auto reactantTemplate = rxn.getReactants()[reactantIdx];
-  const auto productTemplate = rxn.getProducts()[0];
-  if (!rxn.isInitialized()) {
-    throw ChemicalReactionException(
-        "initMatchers() must be called before runReactants()");
-  }
-
-  std::map<unsigned int, unsigned int>
-      productAtomMap;  // atom mapnum -> product atom index
-  for (const auto atom : productTemplate->atoms()) {
-    if (atom->getAtomMapNum()) {
-      productAtomMap[atom->getAtomMapNum()] = atom->getIdx();
-    }
-  }
-  std::map<unsigned int, unsigned int>
-      reactantProductMap;  // atom mapnum -> reactant atom index, for atoms
-                           // which are also mapped in the product
-  for (const auto atom : reactantTemplate->atoms()) {
-    if (atom->getAtomMapNum()) {
-      if (productAtomMap.find(atom->getAtomMapNum()) != productAtomMap.end()) {
-        reactantProductMap[atom->getAtomMapNum()] = atom->getIdx();
-      }
-    }
-  }
-
-  // we don't support reactions with unmapped or new atoms in the products
-  for (const auto atom : productTemplate->atoms()) {
-    if (!atom->getAtomMapNum() ||
-        reactantProductMap.find(atom->getAtomMapNum()) ==
-            reactantProductMap.end()) {
-      throw ChemicalReactionException(
-          "single component reactions which add atoms in the product "
-          "are not supported");
-    }
-  }
-
-  reactant.clearAllAtomBookmarks();  // we use this as scratch space
-  if (!rxn.getNumProductTemplates()) {
-    return false;
-  }
-  auto reactantMatch = ReactionRunnerUtils::getReactantMatchesToTemplate(
-      reactant, *reactantTemplate, 1);
-  if (reactantMatch.empty()) {
-    return false;
-  }
-  const auto &match = reactantMatch[0];
-  // we now have a match for the reactant, so we can work on it
-  // start by removing atoms which are in the reactants, but not in the product
-  boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
-  // finds atoms in the reactantTemplate which aren't in the productTemplate
-  ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
-      *reactantTemplate, *productTemplate, atomsToRemove, reactantProductMap,
-      match);
-  // identify atoms which should be removed from the molecule
-  ReactionRunnerUtils::traverseToFindAtomsToRemove(reactant, *reactantTemplate,
-                                                   atomsToRemove, match);
-  bool res = false;
-  // update atoms which are modified by the reaction
+namespace {
+bool updateAtomsModifiedByReaction(
+    RWMol &reactant, const ROMOL_SPTR reactantTemplate,
+    const ROMOL_SPTR productTemplate,
+    const std::map<unsigned int, unsigned int> &productAtomMap,
+    const std::map<unsigned int, unsigned int> &reactantProductMap,
+    const MatchVectType &match) {
+  bool molModified = false;
   for (const auto &pr : reactantProductMap) {
     const auto rAtom = reactantTemplate->getAtomWithIdx(pr.second);
     const auto pAtom =
-        productTemplate->getAtomWithIdx(productAtomMap[pr.first]);
+        productTemplate->getAtomWithIdx(productAtomMap.at(pr.first));
     const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
     if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
       atom->setAtomicNum(pAtom->getAtomicNum());
-      res = true;
+      molModified = true;
     }
     if (ReactionRunnerUtils::updatePropsFromImplicitProps(pAtom, atom)) {
-      res = true;
+      molModified = true;
     }
     // check if we need to modify stereo
     int molInversionFlag;
@@ -1627,18 +1571,18 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
           if (atomTag != Atom::ChiralType::CHI_OTHER &&
               atomTag != Atom::ChiralType::CHI_UNSPECIFIED) {
             atom->invertChirality();
-            res = true;
+            molModified = true;
           }
           break;
         case 3:
           // destroy
           atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
-          res = true;
+          molModified = true;
           break;
         case 4:
           // create
           atom->setChiralTag(pAtom->getChiralTag());
-          res = true;
+          molModified = true;
           // check swaps
           {
             std::vector<int> porder;
@@ -1681,13 +1625,20 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
       }
     }
   }
-  // update bonds which are modified by the reaction
-  boost::dynamic_bitset<> modifiedBonds(reactant.getNumAtoms() *
-                                        reactant.getNumAtoms());
+  return molModified;
+}
+
+bool updateBondsModifiedByReaction(
+    RWMol &reactant, const ROMOL_SPTR reactantTemplate,
+    const ROMOL_SPTR productTemplate,
+    const std::map<unsigned int, unsigned int> &productAtomMap,
+    const std::map<unsigned int, unsigned int> &reactantProductMap,
+    const MatchVectType &match) {
+  bool molModified = false;
   for (const auto &pr : reactantProductMap) {
     const auto rAtom = reactantTemplate->getAtomWithIdx(pr.second);
     const auto pAtom =
-        productTemplate->getAtomWithIdx(productAtomMap[pr.first]);
+        productTemplate->getAtomWithIdx(productAtomMap.at(pr.first));
     const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
     for (auto nbri :
          boost::make_iterator_range(productTemplate->getAtomNeighbors(pAtom))) {
@@ -1700,7 +1651,7 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
         ASSERT_INVARIANT(pBond,
                          "missing bond between known neighbors in product");
         const auto rBond = reactantTemplate->getBondBetweenAtoms(
-            rAtom->getIdx(), reactantProductMap[nbr->getAtomMapNum()]);
+            rAtom->getIdx(), reactantProductMap.at(nbr->getAtomMapNum()));
         if (rBond) {
           if (pBond->getBondType() != Bond::BondType::UNSPECIFIED &&
               pBond->getBondType() != rBond->getBondType()) {
@@ -1710,28 +1661,27 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
             ASSERT_INVARIANT(
                 bond, "missing bond between known neighbors in reactant");
             bond->setBondType(pBond->getBondType());
-            res = true;
+            molModified = true;
           }
         } else {
           // there was no corresponding bond in the reactant template, was there
           // one in the reactant?
           const auto bond = reactant.getBondBetweenAtoms(
               match[rAtom->getIdx()].second,
-              match[reactantProductMap[nbr->getAtomMapNum()]].second);
+              match[reactantProductMap.at(nbr->getAtomMapNum())].second);
           if (!bond) {
-            auto begIdx =
-                match
-                    [reactantProductMap[pBond->getBeginAtom()->getAtomMapNum()]]
-                        .second;
-            auto endIdx =
-                match[reactantProductMap[pBond->getEndAtom()->getAtomMapNum()]]
-                    .second;
+            auto begIdx = match[reactantProductMap.at(
+                                    pBond->getBeginAtom()->getAtomMapNum())]
+                              .second;
+            auto endIdx = match[reactantProductMap.at(
+                                    pBond->getEndAtom()->getAtomMapNum())]
+                              .second;
 
             reactant.addBond(begIdx, endIdx, pBond->getBondType());
-            res = true;
+            molModified = true;
           } else if (bond->getBondType() != pBond->getBondType()) {
             bond->setBondType(pBond->getBondType());
-            res = true;
+            molModified = true;
           }
         }
       }
@@ -1744,33 +1694,112 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
       if (nbr->getAtomMapNum() &&
           productAtomMap.find(nbr->getAtomMapNum()) != productAtomMap.end() &&
           !productTemplate->getBondBetweenAtoms(
-              pAtom->getIdx(), productAtomMap[nbr->getAtomMapNum()])) {
+              pAtom->getIdx(), productAtomMap.at(nbr->getAtomMapNum()))) {
         // remove the bond in the reactant
         reactant.removeBond(atom->getIdx(), match[nbr->getIdx()].second);
-        res = true;
+        molModified = true;
       }
     }
 
     if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
       atom->setAtomicNum(pAtom->getAtomicNum());
-      res = true;
+      molModified = true;
     }
     if (ReactionRunnerUtils::updatePropsFromImplicitProps(pAtom, atom)) {
-      res = true;
+      molModified = true;
+    }
+  }
+  return molModified;
+}
+
+}  // namespace
+
+// Modifies a single reactant IN PLACE
+bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
+                  unsigned int reactantIdx) {
+  PRECONDITION(static_cast<size_t>(reactantIdx) < rxn.getNumReactantTemplates(),
+               "reactantIdx out of bounds");
+  PRECONDITION(rxn.getNumProductTemplates() <= 1, "only one product supported");
+  if (!rxn.isInitialized()) {
+    throw ChemicalReactionException(
+        "initMatchers() must be called before runReactants()");
+  }
+
+  const auto reactantTemplate = rxn.getReactants()[reactantIdx];
+  const auto productTemplate = rxn.getProducts()[0];
+
+  std::map<unsigned int, unsigned int>
+      productAtomMap;  // atom mapnum -> product atom index
+  for (const auto atom : productTemplate->atoms()) {
+    if (atom->getAtomMapNum()) {
+      productAtomMap[atom->getAtomMapNum()] = atom->getIdx();
+    }
+  }
+  std::map<unsigned int, unsigned int>
+      reactantProductMap;  // atom mapnum -> reactant atom index, for atoms
+                           // which are also mapped in the product
+  for (const auto atom : reactantTemplate->atoms()) {
+    if (atom->getAtomMapNum()) {
+      if (productAtomMap.find(atom->getAtomMapNum()) != productAtomMap.end()) {
+        reactantProductMap[atom->getAtomMapNum()] = atom->getIdx();
+      }
     }
   }
 
+  // we don't support reactions with unmapped or new atoms in the products
+  for (const auto atom : productTemplate->atoms()) {
+    if (!atom->getAtomMapNum() ||
+        reactantProductMap.find(atom->getAtomMapNum()) ==
+            reactantProductMap.end()) {
+      throw ChemicalReactionException(
+          "single component reactions which add atoms in the product "
+          "are not supported");
+    }
+  }
+
+  auto reactantMatch = ReactionRunnerUtils::getReactantMatchesToTemplate(
+      reactant, *reactantTemplate, 1);
+  if (reactantMatch.empty()) {
+    return false;
+  }
+  const auto &match = reactantMatch[0];
+
+  // we now have a match for the reactant, so we can work on it
+  // start by removing atoms which are in the reactants, but not in the product
+  boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
+  // finds atoms in the reactantTemplate which aren't in the productTemplate
+  ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
+      *reactantTemplate, *productTemplate, atomsToRemove, reactantProductMap,
+      match);
+  // identify atoms which should be removed from the molecule
+  ReactionRunnerUtils::traverseToFindAtomsToRemove(reactant, *reactantTemplate,
+                                                   atomsToRemove, match);
+  bool molModified = false;
+  reactant.beginBatchEdit();
+
+  if (updateAtomsModifiedByReaction(reactant, reactantTemplate, productTemplate,
+                                    productAtomMap, reactantProductMap,
+                                    match)) {
+    molModified = true;
+  }
+
+  if (updateBondsModifiedByReaction(reactant, reactantTemplate, productTemplate,
+                                    productAtomMap, reactantProductMap,
+                                    match)) {
+    molModified = true;
+  }
+
+  // remove atoms which aren't transferred to the products
   if (atomsToRemove.count()) {
-    res = true;
-    reactant.beginBatchEdit();
+    molModified = true;
     for (unsigned int i = 0; i < atomsToRemove.size(); ++i) {
       if (atomsToRemove[i]) {
         reactant.removeAtom(i);
       }
     }
-    reactant.commitBatchEdit();
   }
-  return res;
+  reactant.commitBatchEdit();
+  return molModified;
 }
 
 // Generate the product set based on a SINGLE reactant
