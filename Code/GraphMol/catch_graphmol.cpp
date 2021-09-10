@@ -1888,6 +1888,7 @@ TEST_CASE("github #4122: segfaults in commitBatchEdit()", "[editing]][bug]") {
     m->commitBatchEdit();
   }
 }
+
 TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   SECTION("original") {
     auto m = "C(-[N,O])-[#7,#8]"_smarts;
@@ -1901,6 +1902,20 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
     vals.clear();
     getAtomListQueryVals(m->getAtomWithIdx(1)->getQuery(), vals);
     CHECK(vals == std::vector<int>{7, 8});
+  }
+}
+
+TEST_CASE("github #4496: cannot draw aromatic atom lists from SMARTS", "[query][bug]") {
+  SECTION("original") {
+    auto m = "[c,n]1[c,n][c,n][c,n][c,n][c,n]1"_smarts;
+    REQUIRE(m);
+    std::vector<int> expected({6, 7});
+    for (const auto a : m->atoms()) {
+      CHECK(isAtomListQuery(a));
+      std::vector<int> vals;
+      getAtomListQueryVals(a->getQuery(), vals);
+      CHECK(vals == expected);
+    }
   }
 }
 
