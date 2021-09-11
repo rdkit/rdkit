@@ -2473,6 +2473,53 @@ void testAtomCompareCompleteRingsOnly() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGitHub4498() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "GitHub Issue #4498: FindMCS may leave mols with "
+                          "fake (empty) ring info"
+                       << std::endl;
+  {
+    // Test with rings
+    std::vector<ROMOL_SPTR> mols = {"NC1=CC(N)=C(N)C=C1"_smiles,
+                                    "NC1=CC(N)=C(N)C=C1"_smiles};
+
+    TEST_ASSERT(mols[0]);
+    TEST_ASSERT(mols[1]);
+
+    mols[1]->getRingInfo()->reset();
+    TEST_ASSERT(mols[0]->getRingInfo()->isInitialized() == true);
+    TEST_ASSERT(mols[1]->getRingInfo()->isInitialized() == false);
+
+    MCSResult res = findMCS(mols);
+    TEST_ASSERT(res.NumAtoms == 9);
+
+    TEST_ASSERT(mols[0]->getRingInfo()->isInitialized() == true);
+    TEST_ASSERT(mols[0]->getRingInfo()->numRings() == 1);
+
+    TEST_ASSERT(mols[1]->getRingInfo()->isInitialized() == false);
+  }
+  {
+    // Test without rings
+    std::vector<ROMOL_SPTR> mols = {"NC=CC(N)=C(N)C=C"_smiles,
+                                    "NC=CC(N)=C(N)C=C"_smiles};
+
+    TEST_ASSERT(mols[0]);
+    TEST_ASSERT(mols[1]);
+
+    mols[1]->getRingInfo()->reset();
+    TEST_ASSERT(mols[0]->getRingInfo()->isInitialized() == true);
+    TEST_ASSERT(mols[1]->getRingInfo()->isInitialized() == false);
+
+    MCSResult res = findMCS(mols);
+    TEST_ASSERT(res.NumAtoms == 9);
+
+    TEST_ASSERT(mols[0]->getRingInfo()->isInitialized() == true);
+    TEST_ASSERT(mols[0]->getRingInfo()->numRings() == 0);
+
+    TEST_ASSERT(mols[1]->getRingInfo()->isInitialized() == false);
+  }
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -2556,6 +2603,7 @@ int main(int argc, const char* argv[]) {
   testGitHub3693();
   testGitHub3886();
   testAtomCompareCompleteRingsOnly();
+  testGitHub4498();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
