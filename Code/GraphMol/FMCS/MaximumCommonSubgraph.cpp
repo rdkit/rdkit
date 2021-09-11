@@ -960,11 +960,15 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     Parameters.AtomCompareParameters.RingMatchesRingOnly = true;
   }
 
+  unsigned i = 0;
+  faked_ring_info.resize(src_mols.size());
   for (const auto& src_mol : src_mols) {
     Molecules.push_back(src_mol.get());
     if (!Molecules.back()->getRingInfo()->isInitialized()) {
       Molecules.back()->getRingInfo()->initialize();  // but do not fill out !!!
+      faked_ring_info.set(i);
     }
+    ++i;
   }
 
   // sort source set of molecules by their 'size' and assume the smallest
