@@ -90,13 +90,7 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
  private:
   void clear() {
     Targets.clear();
-    auto pos = faked_ring_info.find_first();
-    while (pos != boost::dynamic_bitset<>::npos) {
-      Molecules[pos]->getRingInfo()->reset();
-      pos = faked_ring_info.find_next(pos);
-    }
     Molecules.clear();
-    faked_ring_info.clear();
     To = nanoClock();
   }
   void init();
@@ -109,8 +103,6 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
 
   bool match(Seed& seed);
   bool matchIncrementalFast(Seed& seed, unsigned itarget);
-
-  boost::dynamic_bitset<> faked_ring_info;
 };
 }  // namespace FMCS
 }  // namespace RDKit
