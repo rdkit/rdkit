@@ -1765,7 +1765,7 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
   const auto &match = reactantMatch[0];
 
   // we now have a match for the reactant, so we can work on it
-  // start by removing atoms which are in the reactants, but not in the product
+  // start by marking atoms which are in the reactants, but not in the product
   boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
   // finds atoms in the reactantTemplate which aren't in the productTemplate
   ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
@@ -1789,7 +1789,7 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
     molModified = true;
   }
 
-  // remove atoms which aren't transferred to the products
+  // remove atoms which aren't transferred to the products (marked above)
   if (atomsToRemove.count()) {
     molModified = true;
     for (unsigned int i = 0; i < atomsToRemove.size(); ++i) {
