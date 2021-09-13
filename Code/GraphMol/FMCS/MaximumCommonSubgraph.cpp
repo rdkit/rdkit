@@ -964,8 +964,7 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   }
 
   unsigned i = 0;
-  boost::dynamic_bitset<> faked_ring_info;
-  faked_ring_info.resize(src_mols.size());
+  boost::dynamic_bitset<> faked_ring_info(src_mols.size());
   for (const auto& src_mol : src_mols) {
     Molecules.push_back(src_mol.get());
     if (!Molecules.back()->getRingInfo()->isInitialized()) {
