@@ -1163,8 +1163,12 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
                        std::string::const_iterator &first) {
   // BOOST_LOG(rdWarningLog) << "parseCXNExtensions: " << extText << std::endl;
-  if (extText.empty() || extText[0] != '|') {
+  if (extText.empty()) {
     return;
+  }
+  if (extText[0] != '|') {
+    throw RDKit::SmilesParseException(
+        "CXSMILES extension does not start with |");
   }
   first = extText.begin();
   bool ok = parser::parse_it(first, extText.end(), mol);

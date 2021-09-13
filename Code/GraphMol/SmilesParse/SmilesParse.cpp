@@ -353,6 +353,40 @@ Bond *SmilesToBond(const std::string &smiles) {
   return res;
 };
 
+namespace {
+template <typename T>
+void handleCXPartAndName(RWMol *res, const T &params, const std::string &cxPart,
+                         std::string &name) {
+  if (!res || cxPart.empty()) {
+    return;
+  }
+  std::string::const_iterator pos = cxPart.cbegin();
+  bool cxfailed = false;
+  if (params.allowCXSMILES) {
+    if (*pos == '|') {
+      try {
+        SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
+      } catch (...) {
+        cxfailed = true;
+        if (params.strictCXSMILES) {
+          delete res;
+          throw;
+        }
+      }
+      res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
+    } else if (params.strictCXSMILES && !params.parseName &&
+               pos != cxPart.cend()) {
+      throw RDKit::SmilesParseException(
+          "CXSMILES extension does not start with | and parseName=false");
+    }
+  }
+  if (!cxfailed && params.parseName && pos != cxPart.end()) {
+    std::string nmpart(pos, cxPart.cend());
+    name = boost::trim_copy(nmpart);
+  }
+}
+}  // namespace
+
 RWMol *SmilesToMol(const std::string &smiles,
                    const SmilesParserParams &params) {
   // Calling SmilesToMol in a multithreaded context is generally safe *unless*
@@ -369,23 +403,7 @@ RWMol *SmilesToMol(const std::string &smiles,
   // boost::trim_if(smi,boost::is_any_of(" \t\r\n"));
   RWMol *res = nullptr;
   res = toMol(lsmiles, smiles_parse, lsmiles);
-
-  if (res && params.allowCXSMILES && !cxPart.empty()) {
-    std::string::const_iterator pos = cxPart.cbegin();
-    try {
-      SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
-    } catch (...) {
-      if (params.strictCXSMILES) {
-        delete res;
-        throw;
-      }
-    }
-    res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
-    if (params.parseName && pos != cxPart.cend()) {
-      std::string nmpart(pos, cxPart.cend());
-      name = boost::trim_copy(nmpart);
-    }
-  }
+  handleCXPartAndName(res, params, cxPart, name);
   if (res && (params.sanitize || params.removeHs)) {
     try {
       if (params.removeHs) {
@@ -458,24 +476,7 @@ RWMol *SmartsToMol(const std::string &smarts,
 
   RWMol *res = nullptr;
   res = toMol(labelRecursivePatterns(lsmarts), smarts_parse, lsmarts);
-
-  if (res && params.allowCXSMILES && !cxPart.empty()) {
-    std::string::const_iterator pos = cxPart.cbegin();
-    try {
-      SmilesParseOps::parseCXExtensions(*res, cxPart, pos);
-    } catch (...) {
-      if (params.strictCXSMILES) {
-        delete res;
-        throw;
-      }
-    }
-    res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
-    if (params.parseName && pos != cxPart.cend()) {
-      std::string nmpart(pos, cxPart.cend());
-      name = boost::trim_copy(nmpart);
-    }
-  }
-
+  handleCXPartAndName(res, params, cxPart, name);
   if (res) {
     if (params.mergeHs) {
       try {
