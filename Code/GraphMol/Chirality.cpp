@@ -1584,8 +1584,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
       dblBond->getStereoAtoms().clear();
 
       // at the moment we are ignoring stereochem on ring bonds with less than
-      // 8
-      // members.
+      // 8 members.
       if (shouldDetectDoubleBondStereo(dblBond)) {
         const Atom *begAtom = dblBond->getBeginAtom();
         const Atom *endAtom = dblBond->getEndAtom();
@@ -1883,7 +1882,19 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
   for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
     if (cleanIt) {
-      if ((*bondIt)->getBondType() == Bond::DOUBLE) {
+      // enforce no stereo on small rings
+      if (((*bondIt)->getBondType() == Bond::DOUBLE ||
+           (*bondIt)->getBondType() == Bond::AROMATIC) && 
+           !shouldDetectDoubleBondStereo(*bondIt)) {
+        if ((*bondIt)->getBondDir() == Bond::EITHERDOUBLE) {
+          (*bondIt)->setBondDir(Bond::NONE);
+        }
+        if ((*bondIt)->getStereo() != Bond::STEREONONE) {
+          (*bondIt)->setStereo(Bond::STEREONONE);
+          (*bondIt)->getStereoAtoms().clear();
+        }
+        continue;
+      } else if ((*bondIt)->getBondType() == Bond::DOUBLE) {
         if ((*bondIt)->getBondDir() == Bond::EITHERDOUBLE) {
           (*bondIt)->setStereo(Bond::STEREOANY);
         } else if ((*bondIt)->getStereo() != Bond::STEREOANY) {
