@@ -17,6 +17,7 @@
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -1959,4 +1960,35 @@ M  END)CTAB";
 
   CHECK(mol->getAtomWithIdx(0)->getChiralTag() !=
         Atom::ChiralType::CHI_UNSPECIFIED);
+}
+TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
+  SECTION("basics") {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/nontetrahedral_3d.sdf";
+    SDMolSupplier suppl(pathName);
+    while (!suppl.atEnd()) {
+      std::unique_ptr<ROMol> m{suppl.next()};
+      REQUIRE(m);
+      MolOps::assignChiralTypesFrom3D(*m);
+      auto ct = m->getProp<std::string>("ChiralType");
+      auto cp = m->getProp<unsigned>("ChiralPermutation");
+      auto atom = m->getAtomWithIdx(0);
+
+      std::cerr << ct << cp << std::endl;
+
+      if (ct == "SP") {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_SQUAREPLANAR);
+      } else if (ct == "TB") {
+        CHECK(atom->getChiralTag() ==
+              Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+      } else if (ct == "TH") {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL);
+      } else if (ct == "OH") {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_OCTAHEDRAL);
+      }
+
+      CHECK(atom->getProp<unsigned>(common_properties::_chiralPermutation) ==
+            cp);
+    }
+  }
 }

@@ -769,6 +769,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 namespace Chirality {
 namespace detail {
 bool bondAffectsAtomChirality(const Bond *bond, const Atom *atom) {
+  // FIX consider how to handle organometallics
   PRECONDITION(bond, "bad bond pointer");
   PRECONDITION(atom, "bad atom pointer");
   if (bond->getBondType() == Bond::BondType::UNSPECIFIED ||
@@ -2256,6 +2257,254 @@ void cleanupChirality(RWMol &mol) {
   }
 }
 
+#define VOLTEST(X, Y, Z) (v[X].dotProduct(v[Y].crossProduct(v[Z])) >= 0.0)
+
+static unsigned int OctahedralPermFrom3D(unsigned char *pair,
+                                         const RDGeom::Point3D *v) {
+  switch (pair[0]) {
+    case 2:  // a-b
+      switch (pair[2]) {
+        case 4:
+          return VOLTEST(0, 2, 4) ? 28 : 27;
+        case 5:
+          return VOLTEST(0, 2, 3) ? 25 : 30;
+        default:  // 0 or 6
+          return VOLTEST(0, 2, 3) ? 26 : 29;
+      }
+      break;
+    case 3:  // a-c
+      switch (pair[1]) {
+        case 4:
+          return VOLTEST(0, 1, 4) ? 22 : 21;
+        case 5:
+          return VOLTEST(0, 1, 3) ? 19 : 24;
+        default:  // 0 or 6
+          return VOLTEST(0, 1, 3) ? 20 : 23;
+      }
+      break;
+    case 4:  // a-d
+      switch (pair[1]) {
+        case 3:
+          return VOLTEST(0, 1, 4) ? 13 : 12;
+        case 5:
+          return VOLTEST(0, 1, 2) ? 6 : 18;
+        default:  // 0 or 6
+          return VOLTEST(0, 1, 2) ? 7 : 17;
+      }
+      break;
+    case 5:  // a-e
+      switch (pair[1]) {
+        case 3:
+          return VOLTEST(0, 1, 3) ? 11 : 9;
+        case 4:
+          return VOLTEST(0, 1, 2) ? 3 : 16;
+        default:  // 0 or 6
+          return VOLTEST(0, 1, 2) ? 5 : 15;
+      }
+      break;
+    default:  // 0 or 6  a-f
+      switch (pair[1]) {
+        case 3:
+          return VOLTEST(0, 1, 3) ? 10 : 8;
+        case 4:
+          return VOLTEST(0, 1, 2) ? 1 : 2;
+        default:  // 5
+          return VOLTEST(0, 1, 2) ? 4 : 14;
+      }
+  }
+  // unreachable
+  return 0;
+}
+
+static bool assignChiralTypeFrom3D(ROMol &mol, const Conformer &conf,
+                                   Atom *atom) {
+  // FIX: add tests for dative and zero order bonds
+
+  // Fail fast check for non-tetrahedral elements
+  if (atom->getAtomicNum() < 15) {
+    return false;
+  }
+
+  RDGeom::Point3D cen = conf.getAtomPos(atom->getIdx());
+  RDGeom::Point3D v[6];
+  unsigned int count = 0;
+
+  ROMol::ADJ_ITER nbrIdx, endNbrs;
+  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
+  while (nbrIdx != endNbrs) {
+    if (count == 6) {
+      return false;
+    }
+    RDGeom::Point3D p = conf.getAtomPos(*nbrIdx);
+    v[count] = cen.directionVector(p);
+    ++count;
+    ++nbrIdx;
+  }
+
+  if (count < 3) {
+    return false;
+  }
+
+  unsigned char pair[6];
+  memset(pair, 0, 6);
+
+  unsigned int pairs = 0;
+  for (unsigned int i = 0; i < count; i++) {
+    for (unsigned int j = i + 1; j < count; j++) {
+      // double angle = v[i].angleTo(v[j]);
+      // if (angle > ((175.0*M_PI)/180.0)) {
+      if (v[i].dotProduct(v[j]) < -0.997) {
+        if (pair[i] || pair[j]) {
+          return false;
+        }
+        pair[i] = j + 1;
+        pair[j] = i + 1;
+        pairs++;
+      }
+    }
+  }
+
+#if 0
+  printf("count=%u pairs=%u [%u,%u,%u,%u,%u,%u]\n", count, pairs,
+         pair[0], pair[1], pair[2], pair[3], pair[4], pair[5]);
+#endif
+
+  Atom::ChiralType tag;
+  unsigned int perm;
+  bool res = false;
+  switch (pairs) {
+    case 0:
+      break;
+    case 1:
+      switch (count) {
+        case 3: /* T-shape */
+          atom->setChiralTag(Atom::ChiralType::CHI_SQUAREPLANAR);
+          res = true;
+          if (pair[0] == 0) {
+            perm = 3;  // Z
+          } else if (pair[0] == 2) {
+            perm = 2;  // 4
+          } else /* pair[0] == 3 */ {
+            perm = 1;  // U
+          }
+          atom->setProp(common_properties::_chiralPermutation, perm);
+          break;
+        case 4:                /* See-saw */
+          if (pair[0] == 2) {  // a b
+            if (v[2].angleTo(v[3]) < 100 * M_PI / 180.0) {
+              tag = Atom::ChiralType::CHI_OCTAHEDRAL;
+              perm = VOLTEST(0, 2, 3) ? 25 : 29;
+            } else {
+              tag = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
+              perm = VOLTEST(0, 2, 3) ? 7 : 8;
+            }
+          } else if (pair[0] == 3) {  // a c
+            if (v[1].angleTo(v[3]) < 100 * M_PI / 180.0) {
+              tag = Atom::ChiralType::CHI_OCTAHEDRAL;
+              perm = VOLTEST(0, 1, 3) ? 19 : 23;
+            } else {
+              tag = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
+              perm = VOLTEST(0, 1, 3) ? 5 : 6;
+            }
+          } else if (pair[0] == 4) {  // a d
+            if (v[1].angleTo(v[2]) < 100 * M_PI / 180.0) {
+              tag = Atom::ChiralType::CHI_OCTAHEDRAL;
+              perm = VOLTEST(0, 1, 2) ? 6 : 17;
+            } else {
+              tag = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
+              perm = VOLTEST(0, 1, 2) ? 3 : 4;
+            }
+          } else if (pair[1] == 3) {  // b c
+            if (v[0].angleTo(v[3]) < 100 * M_PI / 180.0) {
+              tag = Atom::ChiralType::CHI_OCTAHEDRAL;
+              perm = VOLTEST(0, 1, 3) ? 10 : 8;
+            } else {
+              tag = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
+              perm = VOLTEST(1, 0, 3) ? 13 : 14;
+            }
+          } else if (pair[1] == 4) {  // b d
+            if (v[0].angleTo(v[2]) < 100 * M_PI / 180.0) {
+              tag = Atom::ChiralType::CHI_OCTAHEDRAL;
+              perm = VOLTEST(0, 1, 3) ? 1 : 2;
+            } else {
+              tag = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
+              perm = VOLTEST(1, 0, 2) ? 10 : 12;
+            }
+          } else /* pair[2] == 4 */ {  // c d
+            if (v[0].angleTo(v[1]) < 100 * M_PI / 180.0) {
+              tag = Atom::ChiralType::CHI_OCTAHEDRAL;
+              perm = VOLTEST(0, 1, 3) ? 4 : 14;
+            } else {
+              tag = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
+              perm = VOLTEST(3, 0, 1) ? 16 : 19;
+            }
+          }
+          atom->setChiralTag(tag);
+          res = true;
+          atom->setProp(common_properties::_chiralPermutation, perm);
+          break;
+        case 5: /* Trigonal bipyramidal */
+          atom->setChiralTag(Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+          res = true;
+          if (pair[0] == 2) {
+            perm = VOLTEST(0, 2, 3) ? 7 : 8;  // a b
+          } else if (pair[0] == 3) {
+            perm = VOLTEST(0, 1, 3) ? 5 : 6;  // a c
+          } else if (pair[0] == 4) {
+            perm = VOLTEST(0, 1, 2) ? 3 : 4;  // a d
+          } else if (pair[0] == 5) {
+            perm = VOLTEST(0, 1, 2) ? 1 : 2;  // a e
+          } else if (pair[1] == 3) {
+            perm = VOLTEST(1, 0, 3) ? 13 : 14;  // b c
+          } else if (pair[1] == 4) {
+            perm = VOLTEST(1, 0, 2) ? 10 : 12;  // b d
+          } else if (pair[1] == 5) {
+            perm = VOLTEST(1, 0, 2) ? 9 : 11;  // b e
+          } else if (pair[2] == 4) {
+            perm = VOLTEST(2, 0, 1) ? 16 : 19;  // c d
+          } else if (pair[2] == 5) {
+            perm = VOLTEST(2, 0, 1) ? 15 : 20;  // c e
+          } else /* pair[2] == 4 */ {
+            perm = VOLTEST(3, 0, 1) ? 17 : 18;  // d e
+          }
+          atom->setProp(common_properties::_chiralPermutation, perm);
+          break;
+      }
+      break;
+    case 2:
+      if (count == 4) {
+        /* Square planar */
+        atom->setChiralTag(Atom::ChiralType::CHI_SQUAREPLANAR);
+        res = true;
+        if (pair[0] == 2) {
+          perm = 2;  // 4
+        } else if (pair[0] == 3) {
+          perm = 1;  // U
+        } else /* pair[1] == 4 */ {
+          perm = 3;  // Z
+        }
+        atom->setProp(common_properties::_chiralPermutation, perm);
+      } else if (count == 5) {
+        /* Square pyramidal */
+        atom->setChiralTag(Atom::ChiralType::CHI_OCTAHEDRAL);
+        res = true;
+        perm = OctahedralPermFrom3D(pair, v);
+        atom->setProp(common_properties::_chiralPermutation, perm);
+      }
+      break;
+    case 3:
+      if (count == 6) {
+        /* Octahedral */
+        atom->setChiralTag(Atom::ChiralType::CHI_OCTAHEDRAL);
+        res = true;
+        perm = OctahedralPermFrom3D(pair, v);
+        atom->setProp(common_properties::_chiralPermutation, perm);
+      }
+      break;
+  }
+  return res;
+}
+
 void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   const double ZERO_VOLUME_TOL = 0.1;
   if (!mol.getNumConformers()) {
@@ -2284,18 +2533,25 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     // additional reasons to skip the atom:
     auto nzDegree = Chirality::detail::getAtomNonzeroDegree(atom);
     auto tnzDegree = nzDegree + atom->getTotalNumHs();
-    if (nzDegree < 3 || tnzDegree > 4) {
+    if (nzdegree < 3 || tnzdegree > 6) {
       // not enough explicit neighbors or too many total neighbors
       continue;
-    } else {
-      int anum = atom->getAtomicNum();
-      if (anum != 16 && anum != 34 &&  // S or Se are special
-                                       // (just using the InChI list for now)
-          (tnzDegree != 4 ||           // not enough total neighbors
-           atom->getTotalNumHs(true) > 1)) {
-        continue;
-      }
     }
+    if (assignChiralTypeFrom3D(mol, conf, atom)) {
+      continue;
+    }
+    /* Tetrahedral cases */
+    if (totdeg > 4) {
+      continue;
+    }
+    int anum = atom->getAtomicNum();
+    if (anum != 16 && anum != 34 &&      // S or Se are special
+                                         // (just using the InChI list for now)
+        (atom->getTotalDegree() != 4 ||  // not enough total neighbors
+         atom->getTotalNumHs(true) > 1)) {
+      continue;
+    }
+
     const auto &p0 = conf.getAtomPos(atom->getIdx());
     const RDGeom::Point3D *nbrs[3];
     unsigned int nbrIdx = 0;
