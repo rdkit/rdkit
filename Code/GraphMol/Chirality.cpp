@@ -2265,7 +2265,7 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
     case 2:  // a-b
       switch (pair[2]) {
         case 4:
-          return VOLTEST(0, 2, 4) ? 28 : 27;
+          return VOLTEST(0, 3, 4) ? 28 : 27;
         case 5:
           return VOLTEST(0, 2, 3) ? 25 : 30;
         default:  // 0 or 6
@@ -2275,7 +2275,7 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
     case 3:  // a-c
       switch (pair[1]) {
         case 4:
-          return VOLTEST(0, 1, 4) ? 22 : 21;
+          return VOLTEST(0, 3, 4) ? 22 : 21;
         case 5:
           return VOLTEST(0, 1, 3) ? 19 : 24;
         default:  // 0 or 6
@@ -2285,7 +2285,7 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
     case 4:  // a-d
       switch (pair[1]) {
         case 3:
-          return VOLTEST(0, 1, 4) ? 13 : 12;
+          return VOLTEST(0, 2, 4) ? 13 : 12;
         case 5:
           return VOLTEST(0, 1, 2) ? 6 : 18;
         default:  // 0 or 6
@@ -2295,7 +2295,7 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
     case 5:  // a-e
       switch (pair[1]) {
         case 3:
-          return VOLTEST(0, 1, 3) ? 11 : 9;
+          return VOLTEST(0, 2, 3) ? 11 : 9;
         case 4:
           return VOLTEST(0, 1, 2) ? 3 : 16;
         default:  // 0 or 6
@@ -2305,7 +2305,7 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
     default:  // 0 or 6  a-f
       switch (pair[1]) {
         case 3:
-          return VOLTEST(0, 1, 3) ? 10 : 8;
+          return VOLTEST(0, 2, 3) ? 10 : 8;
         case 4:
           return VOLTEST(0, 1, 2) ? 1 : 2;
         default:  // 5
@@ -2353,6 +2353,8 @@ static bool assignChiralTypeFrom3D(ROMol &mol, const Conformer &conf,
     for (unsigned int j = i + 1; j < count; j++) {
       // double angle = v[i].angleTo(v[j]);
       // if (angle > ((175.0*M_PI)/180.0)) {
+      // REVIEW: this tolerance may be too strict to deal with real-world
+      // structures
       if (v[i].dotProduct(v[j]) < -0.997) {
         if (pair[i] || pair[j]) {
           return false;
