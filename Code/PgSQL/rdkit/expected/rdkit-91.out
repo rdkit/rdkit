@@ -56,6 +56,12 @@ SELECT mol_from_smarts('c1ccc[n,c]1');
  *1cccc1
 (1 row)
 
+SELECT qmol_from_smarts('c1ccc[n,c]1');
+ qmol_from_smarts 
+------------------
+ c1ccc[n,c]1
+(1 row)
+
 SELECT is_valid_smarts('c1ccc');
  is_valid_smarts 
 -----------------
@@ -66,6 +72,13 @@ SELECT mol_from_smarts('c1ccc');
 WARNING:  could not create molecule from SMILES 'c1ccc'
  mol_from_smarts 
 -----------------
+ 
+(1 row)
+
+SELECT qmol_from_smarts('c1ccc');
+WARNING:  could not create molecule from SMILES 'c1ccc'
+ qmol_from_smarts 
+------------------
  
 (1 row)
 
@@ -144,31 +157,31 @@ SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
    245
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccccc1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1ccccc1');
  count 
 -------
    901
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1cccnc1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1cccnc1');
  count 
 -------
    245
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccc[n,c]c1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1ccc[n,c]c1');
  count 
 -------
    939
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccccc1') <@ m;
+SELECT count(*) FROM pgmol WHERE qmol_from_smarts('c1ccccc1') <@ m;
  count 
 -------
    901
 (1 row)
 
-SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccc[n,c]c1') <@ m;
+SELECT count(*) FROM pgmol WHERE qmol_from_smarts('c1ccc[n,c]c1') <@ m;
  count 
 -------
    939
@@ -922,6 +935,31 @@ select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 
 set rdkit.do_chiral_sss=false;
 set rdkit.do_enhanced_stereo_sss=false;
+-- forcing chiral queries
+select substruct_chiral('C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+ substruct_chiral 
+------------------
+ t
+(1 row)
+
+select substruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+ substruct_chiral 
+------------------
+ f
+(1 row)
+
+select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+ rsubstruct_chiral 
+-------------------
+ f
+(1 row)
+
+select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+ rsubstruct_chiral 
+-------------------
+ t
+(1 row)
+
 -- substructure counts
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol);
  substruct_count 
@@ -933,6 +971,42 @@ select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol,false);
  substruct_count 
 -----------------
                2
+(1 row)
+
+select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+ substruct_count 
+-----------------
+               1
+(1 row)
+
+select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+ substruct_count 
+-----------------
+               1
+(1 row)
+
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+ substruct_count_chiral 
+------------------------
+                      1
+(1 row)
+
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+ substruct_count_chiral 
+------------------------
+                      0
+(1 row)
+
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,false);
+ substruct_count_chiral 
+------------------------
+                      2
+(1 row)
+
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,false);
+ substruct_count_chiral 
+------------------------
+                      0
 (1 row)
 
 -- special queries
@@ -1208,7 +1282,7 @@ SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5
  [#6]-[#6@H](-[#9])-[#6@H](-[#6])-[#6@@H](-[#6])-[#35] |a:1,o1:4,5|
 (1 row)
 
-SELECT mol_to_cxsmarts(mol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+SELECT mol_to_cxsmarts(qmol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
                          mol_to_cxsmarts                          
 ------------------------------------------------------------------
  C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br |a:1,o1:4,5|
@@ -1242,5 +1316,12 @@ WARNING:  could not create molecule from SMILES 'C1C'
  qmol_from_smiles 
 ------------------
  
+(1 row)
+
+-- casting from mol to qmol
+select mol_from_smiles('C=C')::qmol;
+ mol_from_smiles 
+-----------------
+ [#6]=[#6]
 (1 row)
 

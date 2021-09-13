@@ -547,23 +547,34 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
-extern "C" int MolSubstruct(CROMol i, CROMol a) {
+extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
-  params.useChirality = getDoChiralSSS();
-  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  if (useChirality) {
+    params.useChirality = true;
+    params.useEnhancedStereo = true;
+  } else {
+    params.useChirality = getDoChiralSSS();
+    params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  }
   params.maxMatches = 1;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
 
-extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
+extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify,
+                                 bool useChirality) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
-  params.useChirality = getDoChiralSSS();
-  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  if (useChirality) {
+    params.useChirality = true;
+    params.useEnhancedStereo = true;
+  } else {
+    params.useChirality = getDoChiralSSS();
+    params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  }
   params.uniquify = uniquify;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());

@@ -17,8 +17,10 @@ SELECT mol_from_smiles('cccccc');
 SELECT is_valid_smiles('c1cccn1');
 SELECT is_valid_smarts('c1ccc[n,c]1');
 SELECT mol_from_smarts('c1ccc[n,c]1');
+SELECT qmol_from_smarts('c1ccc[n,c]1');
 SELECT is_valid_smarts('c1ccc');
 SELECT mol_from_smarts('c1ccc');
+SELECT qmol_from_smarts('c1ccc');
 SELECT mol_to_smiles(mol_from_smiles('c1ccccc1'));
 SELECT mol_to_smarts(mol_from_smiles('c1ccccc1'));
 SELECT mol_to_smarts('c1cccc[n,c]1'::qmol);
@@ -40,11 +42,11 @@ SELECT count(*) FROM pgmol WHERE m @> 'c1cccnc1';
 SELECT count(*) FROM pgmol WHERE 'c1ccccc1' <@ m;
 SELECT count(*) FROM pgmol WHERE 'c1cccnc1' <@ m;
 
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccccc1');
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1cccnc1');
-SELECT count(*) FROM pgmol WHERE m @> mol_from_smarts('c1ccc[n,c]c1');
-SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccccc1') <@ m;
-SELECT count(*) FROM pgmol WHERE mol_from_smarts('c1ccc[n,c]c1') <@ m;
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1ccccc1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1cccnc1');
+SELECT count(*) FROM pgmol WHERE m @> qmol_from_smarts('c1ccc[n,c]c1');
+SELECT count(*) FROM pgmol WHERE qmol_from_smarts('c1ccccc1') <@ m;
+SELECT count(*) FROM pgmol WHERE qmol_from_smarts('c1ccc[n,c]c1') <@ m;
 
 
 SELECT id, rdkit_fp(m) AS f, maccs_fp(m) as maccsf INTO pgbfp FROM pgmol;
@@ -287,10 +289,22 @@ select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 set rdkit.do_chiral_sss=false;
 set rdkit.do_enhanced_stereo_sss=false;
 
+-- forcing chiral queries
+select substruct_chiral('C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+select substruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+
 
 -- substructure counts
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol);
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol,false);
+select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,false);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,false);
 
 -- special queries
 select 'c1ccc[nH]1'::mol@>mol_from_smiles('c1cccn1[H]') as match;
@@ -396,7 +410,7 @@ select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"a
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
-SELECT mol_to_cxsmarts(mol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+SELECT mol_to_cxsmarts(qmol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
 
 -- CXSmiles from mol_out
 SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
@@ -406,3 +420,6 @@ select qmol_from_ctab('a'::cstring,false);
 -- github #3689: bad input to qmol_from_smiles() crashes db
 select qmol_from_smiles('a'::cstring);
 select qmol_from_smiles('C1C'::cstring);
+
+-- casting from mol to qmol
+select mol_from_smiles('C=C')::qmol;
