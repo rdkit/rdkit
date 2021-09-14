@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -675,6 +675,37 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   bondsToUse.set();
   details::KekulizeFragment(mol, atomsToUse, bondsToUse, markAtomsBonds,
                             maxBackTracks);
+}
+void KekulizeIfPossible(RWMol &mol, bool markAtomsBonds,
+                        unsigned int maxBackTracks) {
+  boost::dynamic_bitset<> aromaticBonds(mol.getNumBonds());
+  for (const auto &bond : mol.bonds()) {
+    if (bond->getIsAromatic()) {
+      aromaticBonds.set(bond->getIdx());
+    }
+  }
+  boost::dynamic_bitset<> aromaticAtoms(mol.getNumAtoms());
+  for (const auto &atom : mol.atoms()) {
+    if (atom->getIsAromatic()) {
+      aromaticAtoms.set(atom->getIdx());
+    }
+  }
+  try {
+    Kekulize(mol, markAtomsBonds, maxBackTracks);
+  } catch (const MolSanitizeException &) {
+    for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+      if (aromaticBonds[i]) {
+        auto bond = mol.getBondWithIdx(i);
+        bond->setIsAromatic(true);
+        bond->setBondType(Bond::BondType::AROMATIC);
+      }
+    }
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      if (aromaticAtoms[i]) {
+        mol.getAtomWithIdx(i)->setIsAromatic(true);
+      }
+    }
+  }
 }
 }  // namespace MolOps
 }  // namespace RDKit
