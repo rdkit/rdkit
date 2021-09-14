@@ -649,13 +649,15 @@ RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
    algorithm uses a back-tracking procedure to revisit a previous setting of
    double bond if we hit a wall in the kekulization process
 
+   \returns whether or not the kekulization succeeded
+
    <b>Notes:</b>
      - even if \c markAtomsBonds is \c false the \c BondType for all aromatic
        bonds will be changed from \c RDKit::Bond::AROMATIC to \c
        RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
 
 */
-RDKIT_GRAPHMOL_EXPORT void KekulizeIfPossible(RWMol &mol,
+RDKIT_GRAPHMOL_EXPORT bool KekulizeIfPossible(RWMol &mol,
                                               bool markAtomsBonds = true,
                                               unsigned int maxBackTracks = 100);
 

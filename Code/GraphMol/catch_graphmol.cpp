@@ -2143,7 +2143,7 @@ TEST_CASE("KekulizeIfPossible") {
       }
       {
         RWMol m2(*m);
-        MolOps::KekulizeIfPossible(m2);
+        CHECK(!MolOps::KekulizeIfPossible(m2));
         for (unsigned i = 0; i < m2.getNumAtoms(); ++i) {
           CHECK(m2.getAtomWithIdx(i)->getIsAromatic() ==
                 m->getAtomWithIdx(i)->getIsAromatic());
@@ -2169,7 +2169,7 @@ TEST_CASE("KekulizeIfPossible") {
         RWMol m2(*m);
         MolOps::Kekulize(m2);
         RWMol m3(*m);
-        MolOps::KekulizeIfPossible(m3);
+        CHECK(MolOps::KekulizeIfPossible(m3));
         for (unsigned i = 0; i < m2.getNumAtoms(); ++i) {
           CHECK(m2.getAtomWithIdx(i)->getIsAromatic() ==
                 m3.getAtomWithIdx(i)->getIsAromatic());
