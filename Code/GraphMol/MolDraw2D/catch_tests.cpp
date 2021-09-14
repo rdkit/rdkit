@@ -153,7 +153,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testReactionCoords.svg", 1266050580U},
     {"testAnnotationColors.svg", 3669978208U},
     {"testGithub4508_1.svg", 545814111U},
+    {"testGithub4508_1b.svg", 613270459U},
     {"testGithub4508_2.svg", 2202600652U},
+    {"testGithub4508_2b.svg", 145414660U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -3324,14 +3326,31 @@ M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(mol);
 
-    MolDraw2DSVG drawer(300, 250);
-    drawer.drawMolecule(*mol, "data label with DRU");
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub4508_1.svg");
-    outs << text;
-    outs.flush();
-    check_file_hash("testGithub4508_1.svg");
+    {
+      MolDraw2DSVG drawer(300, 250);
+      drawer.drawMolecule(*mol, "data label with DRU");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4508_1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4508_1.svg");
+    }
+
+    // remove the sgroup-atom atom... the SGroup will not be drawn
+    auto &sgs = getSubstanceGroups(*mol);
+    REQUIRE(sgs.size() == 1);
+    sgs[0].setAtoms(std::vector<unsigned int>());
+    {
+      MolDraw2DSVG drawer(300, 250);
+      drawer.drawMolecule(*mol, "no data label drawn");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4508_1b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4508_1b.svg");
+    }
   }
   SECTION("Absolute") {
     auto mol = R"CTAB(
@@ -3369,13 +3388,31 @@ M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(mol);
 
-    MolDraw2DSVG drawer(300, 250);
-    drawer.drawMolecule(*mol, "data label with DAU\n(expect odd placement)");
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub4508_2.svg");
-    outs << text;
-    outs.flush();
-    check_file_hash("testGithub4508_2.svg");
+    {
+      MolDraw2DSVG drawer(300, 250);
+      drawer.drawMolecule(*mol, "data label with DAU\n(expect odd placement)");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4508_2.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4508_2.svg");
+    }
+
+    // remove the sgroup-atom atom... the SGroup will still be drawn
+    auto &sgs = getSubstanceGroups(*mol);
+    REQUIRE(sgs.size() == 1);
+    sgs[0].setAtoms(std::vector<unsigned int>());
+    {
+      MolDraw2DSVG drawer(300, 250);
+      drawer.drawMolecule(*mol,
+                          "DAU, no associated atom\n(expect odd placement)");
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4508_2b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4508_2b.svg");
+    }
   }
 }
