@@ -132,6 +132,13 @@ M  END
     self.assertTrue("FIELDNAME" in dd)
     self.assertEqual(dd["FIELDNAME"], "pH")
 
+    sgs[0].ClearProp("FIELDNAME")
+    self.assertFalse(sgs[0].HasProp("FIELDNAME"))
+
+    # The property doesn't exist anymore, but this should not fail
+    sgs[0].ClearProp("FIELDNAME")
+    self.assertFalse(sgs[0].HasProp("FIELDNAME"))
+
     Chem.ClearMolSubstanceGroups(self.m1)
     self.assertEqual(len(Chem.GetMolSubstanceGroups(self.m1)), 0)
 
@@ -148,7 +155,7 @@ M  END
     self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
 
     self.assertEqual(sorted(sgs[0].GetPropNames()), [
-      'DATAFIELDS', 'FIELDDISP', 'FIELDNAME',  
+      'DATAFIELDS', 'FIELDDISP', 'FIELDNAME',
       'TYPE', 'index'
     ])
     dd = sgs[0].GetPropsAsDict()

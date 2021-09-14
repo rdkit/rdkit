@@ -257,7 +257,9 @@ struct sgroup_wrap {
               python::arg("includeComputed") = true),
              "Returns a dictionary of the properties set on the "
              "SubstanceGroup.\n"
-             " n.b. some properties cannot be converted to python types.\n");
+             " n.b. some properties cannot be converted to python types.\n")
+        .def("ClearProp", (void (RDProps::*)(const std::string &) const) &SubstanceGroup::clearProp,
+             "Removes a particular property (does nothing if not set).\n\n");
 
     python::def("GetMolSubstanceGroups", &getMolSubstanceGroups,
                 "returns a copy of the molecule's SubstanceGroups (if any)",
