@@ -26,6 +26,17 @@ boost::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol,
   }
 }
 
+bool DeprotectInPlaceWrap(ROMol &mol, const python::object &iterable) {
+  RWMol &rwmol = static_cast<RWMol &>(mol);
+  if (iterable != python::object()) {
+    std::vector<Deprotect::DeprotectData> deprotections;
+    pythonObjectToVect<Deprotect::DeprotectData>(iterable, deprotections);
+    return Deprotect::deprotectInPlace(rwmol, deprotections);
+  } else {
+    return Deprotect::deprotectInPlace(rwmol, Deprotect::getDeprotections());
+  }
+}
+
 //! Make a copy so we don't try and change a const vector
 std::vector<Deprotect::DeprotectData> GetDeprotectionsWrap() {
   return Deprotect::getDeprotections();
@@ -84,6 +95,10 @@ struct deprotect_wrap {
         "Deprotect", &RDKit::DeprotectWrap,
         (python::arg("mol"), python::arg("deprotections") = python::object()),
         "Return the deprotected version of the molecule.");
+    python::def(
+        "DeprotectInPlace", &RDKit::DeprotectInPlaceWrap,
+        (python::arg("mol"), python::arg("deprotections") = python::object()),
+        "Deprotects the molecule in place.");
   }
 };
 
