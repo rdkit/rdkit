@@ -68,20 +68,16 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
 EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
                            const RDGeom::INT_POINT2D_MAP &coordMap) {
   // constructor of a case where the user specifies the coordinates for a
-  // portion of the
-  // atoms in the molecule - we will use these coordinates blindly without
-  // testing for any
-  // kind of correctness - user is GOD :)
+  // portion of the atoms in the molecule - we will use these coordinates
+  // blindly without testing for any kind of correctness - user is GOD :)
 
   // we are not going to do much here simply add the atoms we have coordinates
-  // for to this fragment;
-  // as a result this fragment may not be as ready to add new neighbors etc. for
-  // the following reason.
+  // for to this fragment; as a result this fragment may not be as ready to add
+  // new neighbors etc. for the following reason.
   // - the user may have specified coords for only a part of the atoms in a
-  // fused ring systems
+  //   fused ring systems
   // - once we use these coordinates we need to set up the atoms properly so
-  // that new
-  //   neighbors can be added to them
+  //   that new neighbors can be added to them
   PRECONDITION(mol, "");
   dp_mol = mol;
   d_eatoms.clear();
@@ -168,11 +164,9 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   anglePairs.sort(_anglComp);
   std::list<DOUBLE_INT_PAIR>::reverse_iterator apcri;
 
-  // more pain, more pain
-  // we unfortunately cannot right away pick the largest angle - it is possible
-  // that
-  // we pick an angle that is in a fused ring - see if I can explain this with a
-  // diagram
+  // more pain, more pain we unfortunately cannot right away pick the largest
+  // angle - it is possible that we pick an angle that is in a fused ring - see
+  // if I can explain this with a diagram
   //        _     _
   //       / B   C \                                this space
   //      /   \ /   \                               intentionally left blank
@@ -182,13 +176,10 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   //       \_/   \_/
   //
   //  Let's say we are sitting on A with nbrs B, C, D - it is possible that we
-  //  find
-  //  ang(BAD) to be largest, but a new neighbor in this case will be added
-  //  inside the ring
-  //  We want to find ang(BAC) instead - which we will this do by checking that
-  //  both our neighbors
-  //  are not involved in more than one ring. Bridged systems - don't even go
-  //  there
+  //  find ang(BAD) to be largest, but a new neighbor in this case will be added
+  //  inside the ring We want to find ang(BAC) instead - which we will this do
+  //  by checking that both our neighbors are not involved in more than one
+  //  ring. Bridged systems - don't even go there
   DOUBLE_INT_PAIR winner = anglePairs.back();
   for (apcri = anglePairs.rbegin(); apcri != anglePairs.rend(); apcri++) {
     INT_PAIR nbrPair = apcri->second;
@@ -240,14 +231,13 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
 EmbeddedFrag::EmbeddedFrag(const RDKit::Bond *dblBond) {
   // Earlier embedding a cis/trans system meant to assign coordinates to the
   // atoms on the double bond as well as the neighboring atoms connected by the
-  // single bond for which the cis/trans code has been specified.
-  // this causes some ugliness in cases where these neighboring atoms are either
-  // part of a different cis/trans system or a ring system. The function "merge"
-  // used to deal with this ugliness.
-  // Now we will just embed the atoms on the double bonds and mark at these
-  // atoms
-  // the direction in which the incoming single bonds should go.
-  // Makes the merge function easier and address issue 171 simultaneously.
+  // single bond for which the cis/trans code has been specified. this causes
+  // some ugliness in cases where these neighboring atoms are either part of a
+  // different cis/trans system or a ring system. The function "merge" used to
+  // deal with this ugliness. Now we will just embed the atoms on the double
+  // bonds and mark at these atoms the direction in which the incoming single
+  // bonds should go. Makes the merge function easier and address issue 171
+  // simultaneously.
   PRECONDITION(dblBond, "");
   PRECONDITION(dblBond->getBondType() == RDKit::Bond::DOUBLE, "");
   RDKit::Bond::BondStereo stype = dblBond->getStereo();
@@ -326,15 +316,14 @@ void EmbeddedFrag::updateNewNeighs(
                               hIndices.end());
 
   int deg = getDepictDegree(dp_mol->getAtomWithIdx(aid));
-  // order the neighbors by their CIPranks, if the number is between > 0 but less
-  // than 3
+  // order the neighbors by their CIPranks, if the number is between > 0 but
+  // less than 3
   if ((d_eatoms[aid].neighs.size() > 0) &&
       ((deg < 4) || (d_eatoms[aid].neighs.size() < 3))) {
     d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
   } else if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
     // now if we have more more than 2 neighbors change the order so that atoms
-    // with
-    // the highest rank fall on opposite sides of each other
+    // with the highest rank fall on opposite sides of each other
     d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
   }
 
@@ -431,11 +420,9 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings) {
       pinAtoms.push_back(commonAtomIds.front());
     } else {
       // if the common atoms form a chain they are going to be in order - we try
-      // to
-      // do that in findNextRingToEmbed
-      // we will therefore try to use the last and the first atoms in the chain
-      // to
-      // fuse the rings - will hopefully fix issue 177
+      // to do that in findNextRingToEmbed we will therefore try to use the last
+      // and the first atoms in the chain to fuse the rings - will hopefully fix
+      // issue 177
       int aid1 = commonAtomIds.front();
       int aid2 = commonAtomIds.back();
       pinAtoms.push_back(aid1);
@@ -478,9 +465,8 @@ RDGeom::Transform2D EmbeddedFrag::computeOneAtomTrans(
   RDGeom::Point2D bpt = computeBisectPoint(rcr, largestAngle, nbp1, nbp2);
 
   // now that we have the bisect point compute the transform that will take ccr
-  // to coincide with rcr
-  // and the mid point between the neighbors of ccr to fall on the line from rcr
-  // to bpt
+  // to coincide with rcr and the mid point between the neighbors of ccr to fall
+  // on the line from rcr to bpt
   RDGeom::Transform2D trans;
   trans.SetTransform(rcr, bpt, ccr, midPt);
   return trans;
@@ -490,9 +476,8 @@ RDGeom::Transform2D EmbeddedFrag::computeTwoAtomTrans(
     unsigned int aid1, unsigned int aid2,
     const RDGeom::INT_POINT2D_MAP &nringCor) {
   // this is an easier thing to do than computeOneAtomTrans
-  // we know that there are at least two atoms in common between the new ring and
-  // the
-  // rings that have already been embedded.
+  // we know that there are at least two atoms in common between the new ring
+  // and the rings that have already been embedded.
   //
   // we are going to simply use the first two atoms on the commIds list and
   // use those to compute a transforms
@@ -534,8 +519,7 @@ void EmbeddedFrag::reflectIfNecessaryCisTrans(EmbeddedFrag &embFrag,
   RDGeom::Point2D p1norm, rAtmLoc;
   if (ctCase == 1) {
     // embObj is the cis/trans case - find the normal at aid1 - this should tell
-    // us
-    // where the ring single bond in the cis/trans system should have gone
+    // us where the ring single bond in the cis/trans system should have gone
     p1norm = embFrag.d_eatoms[aid1].normal;
     ringAtm = embFrag.d_eatoms[aid1].CisTransNbr;
     if (d_eatoms.find(ringAtm) != d_eatoms.end()) {
@@ -581,8 +565,7 @@ void EmbeddedFrag::reflectIfNecessaryThirdPt(EmbeddedFrag &embFrag,
   double dot2 = normal.dotProduct(oth3);
   if (dot1 * dot2 < 0.0) {
     // the third atom is on either sides of the line between aid1 and aid2 in
-    // the
-    // two fragment - let us reflect to correct it
+    // the two fragment - let us reflect to correct it
     embFrag.Reflect(pt1, pt2);
   }
 }
@@ -712,13 +695,11 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   RDGeom::Point2D origin(0.0, 0.0);
   PRECONDITION(refAtom.angle > 0.0, "");
 
-  // we are adding to either to a ring atom or an atom to which we added at least
-  // one
-  // substituent previously
+  // we are adding to either to a ring atom or an atom to which we added at
+  // least one substituent previously
 
   // determine the angle at which we want to add the new atom based on the
-  // number
-  // of remaining substituents
+  // number of remaining substituents
   int nnbr = refAtom.neighs.size();
   double remAngle = 2 * M_PI - refAtom.angle;
   double currAngle = remAngle / (1 + nnbr);
@@ -747,9 +728,8 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   eatm.nbr1 = toAid;
   eatm.angle = -1.0;
   // now compute the normal at this atom - which gives the direction in which we
-  // want to
-  // add the next atom. We will go in the direction that seem to be least
-  // explored
+  // want to add the next atom. We will go in the direction that seem to be
+  // least explored
   RDGeom::Point2D tpt = currLoc - refLoc;
   RDGeom::Point2D norm, tp1, tp2;
   norm.x = -tpt.y;
@@ -791,8 +771,7 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
     // ok this atom is part of a cis/trans dbl bond
     if (static_cast<unsigned int>(refAtom.CisTransNbr) != aid) {
       // but we are note adding the single bond atom to which the cis/trans
-      // specification was
-      // made, in this case reverse the normal and the ccw
+      // specification was made, in this case reverse the normal and the ccw
       refAtom.ccw = !(refAtom.ccw);
       currLoc *= -1.0;
     }
@@ -806,9 +785,8 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
 
   double angle = computeSubAngle(deg, atm->getHybridization());
 
-  // update the current atom
-  // we already have a nbr1 set on the current atom update the angle etc
-  // d_eatoms[toAid].nbr2 = aid;
+  // update the current atom we already have a nbr1 set on the current atom
+  // update the angle etc d_eatoms[toAid].nbr2 = aid;
   bool flipNorm = false;
   if (d_eatoms[toAid].nbr1 >= 0) {
     d_eatoms[toAid].angle = angle;
@@ -982,13 +960,11 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
       reflectIfNecessaryCisTrans(embObj, ctCase, commAtms[0], commAtms[1]);
     } else if (commAtms.size() == 2) {
       // we have just two atoms in common but we may a simply overcrowed one
-      // side
-      // check for crowding and reflect
+      // side check for crowding and reflect
       reflectIfNecessaryDensity(embObj, commAtms[0], commAtms[1]);
     } else {
       // finally if we have more than two atoms in common - we will use the
-      // third
-      // atom to figure out if we need a reflection12
+      // third atom to figure out if we need a reflection12
       reflectIfNecessaryThirdPt(embObj, commAtms[0], commAtms[1], commAtms[2]);
     }
   }
@@ -1119,8 +1095,7 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms,
     d_attachPts.pop_front();
     d_eatoms[aid].neighs.clear();
     // now that we added new atoms to the this fragments - check if there are
-    // new
-    // fragment we have common atoms with and merge with them
+    // new fragment we have common atoms with and merge with them
     this->mergeFragsWithComm(efrags);  //, mol);
   }
 }
@@ -1186,8 +1161,8 @@ void EmbeddedFrag::canonicalizeOrientation() {
   }
 
   RDGeom::Point2D eig1, eig2;
-  // the eigen vectors are given by (2*xy, (yy - xx) + d) and (2*xy, (yy - xx) -
-  // d)
+  // the eigen vectors are given by
+  //   (2*xy, (yy - xx) + d) and (2*xy, (yy - xx) - d)
   // where d = sqrt((xx - yy)^2 + 4*xy^2)
   double d = (xx - yy) * (xx - yy) + 4 * xy * xy;
   d = sqrt(d);
@@ -1341,8 +1316,7 @@ double EmbeddedFrag::mimicDistMatAndDensityCostFunc(
 // happens here
 // 1. Find the line "l" bisecting the angle BCA
 // 2. Find the atoms in the fragment generated by breaking the bond between C
-// and A
-//    that includes A. Lets call is Fa
+//    and A that includes A. Lets call is Fa
 // 3. Similarly find the fragment Fb that includes B by breaking the bond CB
 // 4. Reflect Fb and Fa through "l"
 void EmbeddedFrag::permuteBonds(unsigned int aid, unsigned int aid1,
@@ -1501,8 +1475,8 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
   ++tempi;
   double colThres2 = COLLISION_THRES * COLLISION_THRES;
   // if we a re dealing with non carbon atoms we will increase the collision
-  // threshold.
-  // This is because only hetero atoms are typically drawn in a depiction.
+  // threshold. This is because only hetero atoms are typically drawn in a
+  // depiction.
   double atomTypeFactor1, atomTypeFactor2;
   for (auto efi = tempi; efi != d_eatoms.end(); ++efi) {
     auto pti = efi->second.loc;
@@ -1755,8 +1729,7 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
   //
   //     1 2
   //    /   \                                                   this space
-  //   /     \                                            intentionally left
-  //   blank
+  //   /     \                                       intentionally left blank
   //  a-------b
   //
   // If 1 and 2 are too close to each other we open up angle(1ab) if 1 is a
