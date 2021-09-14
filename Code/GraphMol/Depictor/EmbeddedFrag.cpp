@@ -433,26 +433,25 @@ RDGeom::Transform2D EmbeddedFrag::computeOneAtomTrans(
   RDGeom::Point2D rcr = d_eatoms[commAid].loc;
 
   // find the coordinate for the same atom in the other system
-  // INT_EATOM_MAP_CI eati = other.d_eatoms.find(commAid);
   const EmbeddedAtom &oeatm = other.GetEmbeddedAtom(commAid);
   RDGeom::Point2D ccr = oeatm.loc;
-  int onb1 = oeatm.nbr1;
-  int onb2 = oeatm.nbr2;
+  auto onb1 = oeatm.nbr1;
+  auto onb2 = oeatm.nbr2;
   CHECK_INVARIANT((onb1 >= 0) && (onb2 >= 0), "");
-  RDGeom::Point2D midPt = other.GetEmbeddedAtom(onb1).loc;
+  auto midPt = other.GetEmbeddedAtom(onb1).loc;
   midPt += other.GetEmbeddedAtom(onb2).loc;
   midPt *= 0.5;
 
   // get the coordinates for the neighboring atoms
-  int nb1 = d_eatoms[commAid].nbr1;
-  int nb2 = d_eatoms[commAid].nbr2;
-  RDGeom::Point2D nbp1 = d_eatoms[nb1].loc;
-  RDGeom::Point2D nbp2 = d_eatoms[nb2].loc;
+  auto nb1 = d_eatoms[commAid].nbr1;
+  auto nb2 = d_eatoms[commAid].nbr2;
+  auto nbp1 = d_eatoms[nb1].loc;
+  auto nbp2 = d_eatoms[nb2].loc;
 
-  double ang = d_eatoms[commAid].angle;
-  double largestAngle = 2 * M_PI - ang;
+  auto ang = d_eatoms[commAid].angle;
+  auto largestAngle = 2 * M_PI - ang;
 
-  RDGeom::Point2D bpt = computeBisectPoint(rcr, largestAngle, nbp1, nbp2);
+  auto bpt = computeBisectPoint(rcr, largestAngle, nbp1, nbp2);
 
   // now that we have the bisect point compute the transform that will take ccr
   // to coincide with rcr and the mid point between the neighbors of ccr to fall
@@ -465,23 +464,21 @@ RDGeom::Transform2D EmbeddedFrag::computeOneAtomTrans(
 RDGeom::Transform2D EmbeddedFrag::computeTwoAtomTrans(
     unsigned int aid1, unsigned int aid2,
     const RDGeom::INT_POINT2D_MAP &nringCor) {
+  CHECK_INVARIANT(d_eatoms.find(aid1) != d_eatoms.end(), "");
+  CHECK_INVARIANT(d_eatoms.find(aid2) != d_eatoms.end(), "");
+
   // this is an easier thing to do than computeOneAtomTrans
   // we know that there are at least two atoms in common between the new ring
   // and the rings that have already been embedded.
   //
   // we are going to simply use the first two atoms on the commIds list and
   // use those to compute a transforms
-  RDGeom::INT_POINT2D_MAP_CI posi;
-  posi = nringCor.find(aid1);
-  RDGeom::Point2D loc1 = posi->second;
-  posi = nringCor.find(aid2);
-  RDGeom::Point2D loc2 = posi->second;
+  const auto &loc1 = nringCor.find(aid1)->second;
+  const auto &loc2 = nringCor.find(aid2)->second;
 
   // get the coordinates for the same atoms in the already embedded ring system
-  CHECK_INVARIANT(d_eatoms.find(aid1) != d_eatoms.end(), "");
-  CHECK_INVARIANT(d_eatoms.find(aid2) != d_eatoms.end(), "");
-  RDGeom::Point2D ref1 = d_eatoms[aid1].loc;
-  RDGeom::Point2D ref2 = d_eatoms[aid2].loc;
+  const auto &ref1 = d_eatoms[aid1].loc;
+  const auto &ref2 = d_eatoms[aid2].loc;
   RDGeom::Transform2D trans;
   trans.SetTransform(ref1, ref2, loc1, loc2);
   return trans;
@@ -489,10 +486,8 @@ RDGeom::Transform2D EmbeddedFrag::computeTwoAtomTrans(
 
 void EmbeddedFrag::Reflect(const RDGeom::Point2D &loc1,
                            const RDGeom::Point2D &loc2) {
-  INT_EATOM_MAP_I ei;
-  RDGeom::Point2D temp;
-  for (ei = d_eatoms.begin(); ei != d_eatoms.end(); ei++) {
-    ei->second.Reflect(loc1, loc2);
+  for (auto &ei : d_eatoms) {
+    ei.second.Reflect(loc1, loc2);
   }
 }
 
@@ -503,15 +498,13 @@ void EmbeddedFrag::reflectIfNecessaryCisTrans(EmbeddedFrag &embFrag,
   // ok this is a cis/trans case - we may have violated the cis/trans
   // specification
   // so lets try to correct it with a reflection
-  double dot;
-  RDGeom::Point2D p1Loc = d_eatoms[aid1].loc;
-  int ringAtm;
-  RDGeom::Point2D p1norm, rAtmLoc;
+  const auto &p1Loc = d_eatoms[aid1].loc;
+  RDGeom::Point2D rAtmLoc, p1norm;
   if (ctCase == 1) {
     // embObj is the cis/trans case - find the normal at aid1 - this should tell
     // us where the ring single bond in the cis/trans system should have gone
     p1norm = embFrag.d_eatoms[aid1].normal;
-    ringAtm = embFrag.d_eatoms[aid1].CisTransNbr;
+    auto ringAtm = embFrag.d_eatoms[aid1].CisTransNbr;
     if (d_eatoms.find(ringAtm) != d_eatoms.end()) {
       rAtmLoc = d_eatoms[ringAtm].loc;
     } else {
@@ -524,11 +517,11 @@ void EmbeddedFrag::reflectIfNecessaryCisTrans(EmbeddedFrag &embFrag,
   } else {
     // this is the cis/trans object
     p1norm = d_eatoms[aid1].normal;
-    ringAtm = d_eatoms[aid1].CisTransNbr;
+    auto ringAtm = d_eatoms[aid1].CisTransNbr;
     rAtmLoc = embFrag.d_eatoms[ringAtm].loc;
   }
   rAtmLoc -= p1Loc;
-  dot = rAtmLoc.dotProduct(p1norm);
+  auto dot = rAtmLoc.dotProduct(p1norm);
   RDGeom::Point2D p2Loc = d_eatoms[aid2].loc;
   if (dot < 0.0) {
     embFrag.Reflect(p1Loc, p2Loc);
@@ -539,20 +532,18 @@ void EmbeddedFrag::reflectIfNecessaryThirdPt(EmbeddedFrag &embFrag,
                                              unsigned int aid1,
                                              unsigned int aid2,
                                              unsigned int aid3) {
-  RDGeom::Point2D oth3 = embFrag.GetEmbeddedAtom(aid3).loc;
-  RDGeom::Point2D pt3 = d_eatoms[aid3].loc;
-  RDGeom::Point2D pt1 = d_eatoms[aid1].loc;
-  RDGeom::Point2D pt2 = d_eatoms[aid2].loc;
+  const auto &pt1 = d_eatoms[aid1].loc;
+  const auto &pt2 = d_eatoms[aid2].loc;
 
-  RDGeom::Point2D normal = pt2;
+  auto normal = pt2;
   normal -= pt1;
   normal.rotate90();
 
-  pt3 -= pt1;
-  oth3 -= pt1;
+  const auto oth3 = embFrag.GetEmbeddedAtom(aid3).loc - pt1;
+  const auto pt3 = d_eatoms[aid3].loc - pt1;
 
-  double dot1 = normal.dotProduct(pt3);
-  double dot2 = normal.dotProduct(oth3);
+  auto dot1 = normal.dotProduct(pt3);
+  auto dot2 = normal.dotProduct(oth3);
   if (dot1 * dot2 < 0.0) {
     // the third atom is on either sides of the line between aid1 and aid2 in
     // the two fragment - let us reflect to correct it
@@ -564,26 +555,23 @@ void EmbeddedFrag::reflectIfNecessaryDensity(EmbeddedFrag &embFrag,
                                              unsigned int aid1,
                                              unsigned int aid2) {
   // ok we will do this the new way by measuring a density function
-  RDGeom::Point2D pin1 = d_eatoms[aid1].loc;
-  RDGeom::Point2D pin2 = d_eatoms[aid2].loc;
+  const auto &pin1 = d_eatoms[aid1].loc;
+  const auto &pin2 = d_eatoms[aid2].loc;
   double densityNormal = 0.0;
   double densityReflect = 0.0;
-  INT_EATOM_MAP_CI oci, tci;
-  int oaid;
-  RDGeom::Point2D loc1, rloc1, loc2, t1, rt1;
-  const INT_EATOM_MAP &oatoms = embFrag.GetEmbeddedAtoms();
-  for (oci = oatoms.begin(); oci != oatoms.end(); oci++) {
-    oaid = oci->first;
+  const auto &oatoms = embFrag.GetEmbeddedAtoms();
+  for (const auto &oci : oatoms) {
+    auto oaid = oci.first;
     if (d_eatoms.find(oaid) == d_eatoms.end()) {
-      loc1 = oci->second.loc;
-      rloc1 = reflectPoint(loc1, pin1, pin2);
-      for (tci = d_eatoms.begin(); tci != d_eatoms.end(); tci++) {
-        t1 = tci->second.loc;
+      auto loc1 = oci.second.loc;
+      auto rloc1 = reflectPoint(loc1, pin1, pin2);
+      for (const auto &tci : d_eatoms) {
+        auto t1 = tci.second.loc;
         t1 -= loc1;
-        double td = t1.length();
-        rt1 = tci->second.loc;
+        auto td = t1.length();
+        auto rt1 = tci.second.loc;
         rt1 -= rloc1;
-        double rtd = rt1.length();
+        auto rtd = rt1.length();
         if (td > 1.0e-3) {
           densityNormal += (1.0 / td);
         } else {
