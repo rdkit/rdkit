@@ -516,41 +516,6 @@ void testGithub4281() {
   TEST_ASSERT(logged.find("FAILED sanitizeMol") == std::string::npos);
 }
 
-void testTransformInPlace() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n transform in place "
-                       << std::endl;
-  std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7;
-
-  Normalizer normalizer;
-
-  std::vector<std::pair<std::string, std::string>> examples = {
-      {"CS(C)=O", "C[S+](C)[O-]"},
-      {"C[S+2]([O-])([O-])O", "CS(=O)(=O)O"},
-      {"CC([O-])=[N+](C)C", "CC(=O)N(C)C"},
-      {"C[n+]1ccccc1[O-]", "Cn1ccccc1=O"},
-      {"CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]",
-       "CC12CCCCC1(Cl)[N+]([O-])=[N+]2[O-]"},
-      {R"(C[N+](C)=C\C=C\[O-])", "CN(C)C=CC=O"},
-      {"C[N+]1=C2C=[N+]([O-])C=CN2CCC1", "C[N+]1=C2C=[N+]([O-])C=CN2CCC1"},
-      {"O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12",
-       "O=c1cc([O-])[n+](C2OC(CO)C(O)C2O)c2sccn12"},
-  };
-  for (const auto &pr : examples) {
-    std::cerr << " example " << pr.first << std::endl;
-    std::unique_ptr<RWMol> mol{SmilesToMol(pr.first)};
-    TEST_ASSERT(mol);
-    auto modified = normalizer.normalizeInPlace(*mol);
-    // TEST_ASSERT( modified == (pr.first != pr.second));
-    auto smi = MolToSmiles(*mol);
-    if (smi != pr.second) {
-      std::cerr << smi << " != " << pr.second << std::endl;
-    }
-    TEST_ASSERT(smi == pr.second);
-  }
-
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
-}
-
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -562,6 +527,5 @@ int main() {
   testGithub3460();
   testEmptyMol();
   testGithub4281();
-  testTransformInPlace();
   return 0;
 }
