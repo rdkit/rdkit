@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -82,12 +82,11 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
   dp_mol = mol;
   d_eatoms.clear();
   d_attachPts.clear();
-  RDGeom::INT_POINT2D_MAP_CI cri;
   unsigned int na = mol->getNumAtoms();
-  for (cri = coordMap.begin(); cri != coordMap.end(); cri++) {
-    unsigned int aid = cri->first;
+  for (const auto &cri : coordMap) {
+    unsigned int aid = cri.first;
     CHECK_INVARIANT(aid < na, "");
-    EmbeddedAtom eatom(aid, cri->second);
+    EmbeddedAtom eatom(aid, cri.second);
     eatom.neighs.clear();
     eatom.df_fixed = true;
     d_eatoms[aid] = eatom;
@@ -97,15 +96,13 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
 
   // now for points that new atoms will be added to later on we need to do some
   // setup
-  // RDKit::INT_DEQUE_CI dai;
-  RDKit::INT_LIST_CI dai;
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  for (dai = d_attachPts.begin(); dai != d_attachPts.end(); dai++) {
+  for (auto dai : d_attachPts) {
+    RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
     boost::tie(nbrIdx, endNbrs) =
-        dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(*dai));
+        dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(dai));
     // find the neighbors that are already embedded for each of these atoms
     RDKit::INT_VECT doneNbrs;
-    const RDKit::INT_VECT &enbrs = d_eatoms[*dai].neighs;
+    const auto &enbrs = d_eatoms[dai].neighs;
     while (nbrIdx != endNbrs) {
       if (std::find(enbrs.begin(), enbrs.end(), static_cast<int>(*nbrIdx)) ==
           enbrs.end()) {
@@ -114,24 +111,24 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
       }
       nbrIdx++;
     }
-    if (doneNbrs.size() == 0) {
-      d_eatoms[*dai].normal = RDGeom::Point2D(1., 0.);
-      d_eatoms[*dai].angle = -1.;
+    if (doneNbrs.empty()) {
+      d_eatoms[dai].normal = RDGeom::Point2D(1., 0.);
+      d_eatoms[dai].angle = -1.;
     } else if (doneNbrs.size() == 1) {
-      int nbid = doneNbrs.front();
-      d_eatoms[*dai].nbr1 = nbid;
-      d_eatoms[*dai].normal =
-          computeNormal(d_eatoms[*dai].loc, d_eatoms[nbid].loc);
+      auto nbid = doneNbrs.front();
+      d_eatoms[dai].nbr1 = nbid;
+      d_eatoms[dai].normal =
+          computeNormal(d_eatoms[dai].loc, d_eatoms[nbid].loc);
     } else if (doneNbrs.size() == 2) {
-      int nb1 = doneNbrs[0];
-      int nb2 = doneNbrs[1];
-      d_eatoms[*dai].nbr1 = nb1;
-      d_eatoms[*dai].nbr2 = nb2;
-      d_eatoms[*dai].angle = computeAngle(d_eatoms[*dai].loc, d_eatoms[nb1].loc,
-                                          d_eatoms[nb2].loc);
+      auto nb1 = doneNbrs[0];
+      auto nb2 = doneNbrs[1];
+      d_eatoms[dai].nbr1 = nb1;
+      d_eatoms[dai].nbr2 = nb2;
+      d_eatoms[dai].angle =
+          computeAngle(d_eatoms[dai].loc, d_eatoms[nb1].loc, d_eatoms[nb2].loc);
     } else if (doneNbrs.size() >= 3) {
       // this is a pain - delegate it to a utility function
-      this->computeNbrsAndAng((*dai), doneNbrs);
+      this->computeNbrsAndAng(dai, doneNbrs);
     }
   }
 }
@@ -150,19 +147,17 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   // we will find all the inter nbr angles, pick the one with the largest angle
   // make those neighbors the nbr1 and nbr2 of aid
   std::list<DOUBLE_INT_PAIR> anglePairs;
-  RDKit::INT_VECT_CI nbi1, nbi2, nbi3;
   double ang;
-  for (nbi1 = doneNbrs.begin(); nbi1 != doneNbrs.end(); nbi1++) {
-    nbi3 = nbi1;
-    for (nbi2 = nbi3++; nbi2 != doneNbrs.end(); nbi2++) {
+  for (auto nbi1 = doneNbrs.begin(); nbi1 != doneNbrs.end(); ++nbi1) {
+    auto nbi3 = nbi1;
+    for (auto nbi2 = nbi3++; nbi2 != doneNbrs.end(); ++nbi2) {
       ang = computeAngle(d_eatoms[aid].loc, d_eatoms[*nbi1].loc,
                          d_eatoms[*nbi2].loc);
-      INT_PAIR nbrPair = std::make_pair((*nbi1), (*nbi2));
+      auto nbrPair = std::make_pair((*nbi1), (*nbi2));
       anglePairs.emplace_back(ang, nbrPair);
     }
   }
   anglePairs.sort(_anglComp);
-  std::list<DOUBLE_INT_PAIR>::reverse_iterator apcri;
 
   // more pain, more pain we unfortunately cannot right away pick the largest
   // angle - it is possible that we pick an angle that is in a fused ring - see
@@ -181,8 +176,8 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   //  by checking that both our neighbors are not involved in more than one
   //  ring. Bridged systems - don't even go there
   DOUBLE_INT_PAIR winner = anglePairs.back();
-  for (apcri = anglePairs.rbegin(); apcri != anglePairs.rend(); apcri++) {
-    INT_PAIR nbrPair = apcri->second;
+  for (auto apcri = anglePairs.rbegin(); apcri != anglePairs.rend(); ++apcri) {
+    const auto &nbrPair = apcri->second;
     if ((dp_mol->getRingInfo()->numAtomRings(nbrPair.first) <= 1) &&
         (dp_mol->getRingInfo()->numAtomRings(nbrPair.second) <= 1)) {
       winner = (*apcri);
@@ -190,15 +185,14 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
     }
   }
 
-  INT_PAIR winPair = winner.second;
-  int wnb1 = winPair.first;
-  int wnb2 = winPair.second;
+  auto winPair = winner.second;
+  auto wnb1 = winPair.first;
+  auto wnb2 = winPair.second;
 
   // now find the smallest angle that contains one of these nbrs
-  std::list<DOUBLE_INT_PAIR>::const_iterator apci;
   int nb2 = -1, nb1 = -1;
-  for (apci = anglePairs.begin(); apci != anglePairs.end(); apci++) {
-    INT_PAIR nbrPair = apci->second;
+  for (const auto &anglePair : anglePairs) {
+    const auto &nbrPair = anglePair.second;
     if (wnb1 == nbrPair.first) {
       nb2 = wnb1;
       nb1 = nbrPair.second;
@@ -240,14 +234,14 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::Bond *dblBond) {
   // simultaneously.
   PRECONDITION(dblBond, "");
   PRECONDITION(dblBond->getBondType() == RDKit::Bond::DOUBLE, "");
-  RDKit::Bond::BondStereo stype = dblBond->getStereo();
+  auto stype = dblBond->getStereo();
   PRECONDITION(stype > RDKit::Bond::STEREOANY, "");
-  const RDKit::INT_VECT &nbrAtms = dblBond->getStereoAtoms();
+  const auto &nbrAtms = dblBond->getStereoAtoms();
   PRECONDITION(nbrAtms.size() == 2, "");
   dp_mol = &(dblBond->getOwningMol());
 
-  int begAtm = dblBond->getBeginAtomIdx();
-  int endAtm = dblBond->getEndAtomIdx();
+  auto begAtm = dblBond->getBeginAtomIdx();
+  auto endAtm = dblBond->getEndAtomIdx();
 
   // the begin atom goes at the origin and the normal goes along -ve y-axis
   // to be rotate clock to add the cis/trans single bond
@@ -282,12 +276,11 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::Bond *dblBond) {
 int EmbeddedFrag::findNumNeigh(const RDGeom::Point2D &pt, double radius) {
   // find the number of atoms in the current embedded system that are within
   // 'radius' of the specified point
-  INT_EATOM_MAP_CI efi;
   int res = 0;
-  for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
-    RDGeom::Point2D rloc = efi->second.loc;
+  for (const auto &efi : d_eatoms) {
+    RDGeom::Point2D rloc = efi.second.loc;
     if ((rloc - pt).length() < radius) {
-      res++;
+      ++res;
     }
   }
   return res;
@@ -297,9 +290,9 @@ void EmbeddedFrag::updateNewNeighs(
     unsigned int aid) {  //, const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");
 
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   d_eatoms[aid].neighs.clear();
   RDKit::INT_VECT hIndices;
+  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) =
       dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid));
   while (nbrIdx != endNbrs) {
@@ -339,10 +332,9 @@ void EmbeddedFrag::setupNewNeighs() {  // const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");
 
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  INT_EATOM_MAP_I eci;
   d_attachPts.clear();
-  for (eci = d_eatoms.begin(); eci != d_eatoms.end(); eci++) {
-    unsigned int aid = eci->first;
+  for (const auto &eci : d_eatoms) {
+    unsigned int aid = eci.first;
     this->updateNewNeighs(aid);
   }
   // arrange the d_attachPts so that they are traversed in the order of CIPRanks
@@ -354,8 +346,8 @@ int EmbeddedFrag::findNeighbor(
   PRECONDITION(dp_mol, "");
 
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  const RDKit::Atom *atm = dp_mol->getAtomWithIdx(aid);
-  boost::tie(nbrIdx, endNbrs) = dp_mol->getAtomNeighbors(atm);
+  boost::tie(nbrIdx, endNbrs) =
+      dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid));
   while (nbrIdx != endNbrs) {
     if (d_eatoms.find(*nbrIdx) != d_eatoms.end()) {
       return (*nbrIdx);
@@ -383,14 +375,13 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings) {
   // embed each of the rings independently and find the largest ring
   std::vector<RDGeom::INT_POINT2D_MAP> coords;
   coords.reserve(fusedRings.size());
-  RDKit::VECT_INT_VECT_CI ri;
   // FIX for issue 197
   // find the ring with the max substituents
   // If there are multiple pick the largest
   int firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
-  for (ri = fusedRings.begin(); ri != fusedRings.end(); ri++) {
-    coords.push_back(embedRing((*ri)));
+  for (const auto &ring : fusedRings) {
+    coords.push_back(embedRing(ring));
   }
 
   this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);
@@ -405,8 +396,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings) {
     int nextId;
     // we will take the ring with maximum number of common atoms with
     // with atoms already done
-    RDKit::INT_VECT commonAtomIds =
-        findNextRingToEmbed(doneRings, fusedRings, nextId);
+    auto commonAtomIds = findNextRingToEmbed(doneRings, fusedRings, nextId);
 
     RDGeom::Transform2D trans;
     EmbeddedFrag embRing;
@@ -423,8 +413,8 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings) {
       // to do that in findNextRingToEmbed we will therefore try to use the last
       // and the first atoms in the chain to fuse the rings - will hopefully fix
       // issue 177
-      int aid1 = commonAtomIds.front();
-      int aid2 = commonAtomIds.back();
+      auto aid1 = commonAtomIds.front();
+      auto aid2 = commonAtomIds.back();
       pinAtoms.push_back(aid1);
       pinAtoms.push_back(aid2);
       trans.assign(this->computeTwoAtomTrans(aid1, aid2, coords[nextId]));

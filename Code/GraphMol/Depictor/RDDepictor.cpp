@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -349,7 +349,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
       // if we do not have any prespecified coordinates - canonicalize
       // the orientation of the fragment so that the longest axes fall
       // along the x-axis etc.
-      for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+      for (auto eri = efrags.begin(); eri != efrags.end(); eri++) {
         eri->canonicalizeOrientation();
       }
     }
