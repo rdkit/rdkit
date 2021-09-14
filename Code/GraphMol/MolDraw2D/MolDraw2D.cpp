@@ -2725,10 +2725,7 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
 
         if (fieldDisp[25] == 'R') {
           if (atomIdx < 0) {
-            BOOST_LOG(rdWarningLog)
-                << "DAT SGroup which isn't associated with an atom has 'R' "
-                   "placement. SGroup will not be rendered."
-                << std::endl;
+            // we will warn about this below
             text = "";
           } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
             origLoc += mol.getConformer().getAtomPos(atomIdx);
