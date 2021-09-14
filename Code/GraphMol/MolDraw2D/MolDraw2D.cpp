@@ -2714,6 +2714,7 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
         atomIdx = sg.getAtoms()[0];
       };
       StringRect rect;
+      bool located = false;
       std::string fieldDisp;
       if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
         double xp = FileParserUtils::stripSpacesAndCast<double>(
@@ -2723,7 +2724,16 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
         Point2D origLoc{xp, yp};
 
         if (fieldDisp[25] == 'R') {
-          origLoc += mol.getConformer().getAtomPos(atomIdx);
+          if (atomIdx < 0) {
+            BOOST_LOG(rdWarningLog)
+                << "DAT SGroup which isn't associated with an atom has 'R' "
+                   "placement. SGroup will not be rendered."
+                << std::endl;
+            text = "";
+          } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
+            origLoc += mol.getConformer().getAtomPos(atomIdx);
+            located = true;
+          }
         } else {
           if (mol.hasProp("_centroidx")) {
             Point2D centroid;
@@ -2731,17 +2741,21 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
             mol.getProp("_centroidy", centroid.y);
             origLoc += centroid;
           }
+          located = true;
         }
         tform.TransformPoint(origLoc);
         rect.trans_ = origLoc;
-      } else if (atomIdx >= 0) {
-        rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
-      } else {
-        BOOST_LOG(rdWarningLog)
-            << "FIELDDISP info not found for DAT SGroup which isn't associated "
-               "with an atom. SGroup will not be rendered."
-            << std::endl;
-        text = "";
+      }
+      if (!located) {
+        if (atomIdx >= 0) {
+          rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
+        } else {
+          BOOST_LOG(rdWarningLog)
+              << "FIELDDISP info not found for DAT SGroup which isn't "
+                 "associated with an atom. SGroup will not be rendered."
+              << std::endl;
+          text = "";
+        }
       }
       if (!text.empty()) {
         AnnotationType annot;
