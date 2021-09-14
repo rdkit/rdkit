@@ -855,10 +855,10 @@ void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
         vals.push_back(static_cast<ATOM_EQUALS_QUERY *>(child.get())->getVal());
       } else if (descr == "AtomType") {
         auto v = static_cast<ATOM_EQUALS_QUERY *>(child.get())->getVal();
-        // aromatic AtomType queries subtract 1000 from the atomic number;
+        // aromatic AtomType queries add 1000 to the atomic number;
         // correct for that:
-        if (v < 0) {
-          v += 1000;
+        if (v >= 1000) {
+          v -= 1000;
         }
         vals.push_back(v);
       }

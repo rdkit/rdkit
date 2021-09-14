@@ -2791,31 +2791,29 @@ void testStereoGroupUpdating() {
 
 class TestAssignChiralTypesFromMolParity {
  public:
-  TestAssignChiralTypesFromMolParity(const ROMol &mol) :
-    d_rwMol(new RWMol(mol)) {
+  TestAssignChiralTypesFromMolParity(const ROMol &mol)
+      : d_rwMol(new RWMol(mol)) {
     assignMolParity();
     fillBondDefVect();
     MolOps::assignChiralTypesFromMolParity(*d_rwMol);
     d_refSmiles = MolToSmiles(*d_rwMol);
     heapPermutation();
   }
+
  private:
   struct BondDef {
-    BondDef(unsigned int bi, unsigned int ei, Bond::BondType t) :
-      beginIdx(bi),
-      endIdx(ei),
-      type(t) {};
+    BondDef(unsigned int bi, unsigned int ei, Bond::BondType t)
+        : beginIdx(bi), endIdx(ei), type(t){};
     unsigned int beginIdx;
     unsigned int endIdx;
     Bond::BondType type;
   };
   void assignMolParity() {
-    static const std::map<Atom::ChiralType, int> parityMap {
-      { Atom::CHI_TETRAHEDRAL_CW, 1 },
-      { Atom::CHI_TETRAHEDRAL_CCW, 2 },
-      { Atom::CHI_UNSPECIFIED, 0 },
-      { Atom::CHI_OTHER, 0 }
-    };
+    static const std::map<Atom::ChiralType, int> parityMap{
+        {Atom::CHI_TETRAHEDRAL_CW, 1},
+        {Atom::CHI_TETRAHEDRAL_CCW, 2},
+        {Atom::CHI_UNSPECIFIED, 0},
+        {Atom::CHI_OTHER, 0}};
     MolOps::assignChiralTypesFrom3D(*d_rwMol);
     for (auto ai = d_rwMol->beginAtoms(); ai != d_rwMol->endAtoms(); ++ai) {
       int parity = parityMap.at((*ai)->getChiralTag());
@@ -2826,7 +2824,8 @@ class TestAssignChiralTypesFromMolParity {
   void fillBondDefVect() {
     for (auto bi = d_rwMol->beginBonds(); bi != d_rwMol->endBonds(); ++bi) {
       d_bondDefVect.emplace_back(BondDef((*bi)->getBeginAtomIdx(),
-        (*bi)->getEndAtomIdx(), (*bi)->getBondType()));
+                                         (*bi)->getEndAtomIdx(),
+                                         (*bi)->getBondType()));
     }
   }
   void stripBonds() {
@@ -2872,8 +2871,7 @@ void testAssignChiralTypesFromMolParity() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------------------------------------------"
       << std::endl;
-  BOOST_LOG(rdInfoLog) << "testAssignChiralTypesFromMolParity"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "testAssignChiralTypesFromMolParity" << std::endl;
   {
     std::string molb = R"CTAB(
      RDKit          3D
@@ -3128,6 +3126,80 @@ M  END)CTAB"_ctab;
     TEST_ASSERT(m->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
 }
+
+void testGithub4494() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "GitHub #4494: Small rings can have STEREOANY/EITHERDOUBLE bonds."
+      << std::endl;
+
+  auto molblock = R"CTAB(
+  MJ201500                      
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -5.9375    1.9076    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6519    1.4951    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.2230    1.4951    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.9375    2.7326    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6519    0.6700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3664    1.9076    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.2230    0.6700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.9375    0.2575    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.5085    0.2575    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  3  0  0  0
+  3  1  1  0  0  0  0
+  1  4  1  0  0  0  0
+  2  5  1  0  0  0  0
+  2  6  1  0  0  0  0
+  7  3  2  3  0  0  0
+  5  8  2  3  0  0  0
+  8  7  1  0  0  0  0
+  7  9  1  0  0  0  0
+M  END)CTAB";
+
+  bool sanitize = false;
+  auto m = std::unique_ptr<RWMol>(MolBlockToMol(molblock, sanitize));
+
+  TEST_ASSERT(m);
+
+  unsigned double_bonds_seen = 0;
+  for (const auto bnd : m->bonds()) {
+    if (bnd->getBondType() == Bond::DOUBLE) {
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREOANY);
+      TEST_ASSERT(bnd->getBondDir() == Bond::EITHERDOUBLE);
+      ++double_bonds_seen;
+    }
+  }
+  TEST_ASSERT(double_bonds_seen == 3);
+
+  MolOps::assignStereochemistry(*m, true, true);
+
+  double_bonds_seen = 0;
+  for (const auto bnd : m->bonds()) {
+    if (bnd->getBondType() == Bond::DOUBLE) {
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREONONE);
+      TEST_ASSERT(bnd->getBondDir() == Bond::NONE);
+      ++double_bonds_seen;
+    }
+  }
+  TEST_ASSERT(double_bonds_seen == 3);
+
+  sanitize = true;
+  m = std::unique_ptr<RWMol>(MolBlockToMol(molblock, sanitize));
+
+  TEST_ASSERT(m);
+
+  double_bonds_seen = 0;
+  for (const auto bnd : m->bonds()) {
+    if (bnd->getBondType() == Bond::AROMATIC) {
+      TEST_ASSERT(bnd->getStereo() == Bond::STEREONONE);
+      TEST_ASSERT(bnd->getBondDir() == Bond::NONE);
+      ++double_bonds_seen;
+    }
+  }
+  TEST_ASSERT(double_bonds_seen == 6);
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -3163,5 +3235,6 @@ int main() {
   testAssignChiralTypesFromMolParity();
   testIncorrectBondDirsOnWedging();
   testGithub3314();
+  testGithub4494();
   return 0;
 }

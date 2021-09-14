@@ -22,3 +22,9 @@ select mol_to_smarts(mol_from_json(mol_to_json('C[O,N]'::qmol)));
  C[O,N]
 (1 row)
 
+select mol_to_smarts(qmol_from_json(mol_to_json('C[O,N]'::qmol)));
+ mol_to_smarts 
+---------------
+ C[O,N]
+(1 row)
+

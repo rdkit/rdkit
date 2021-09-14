@@ -12,6 +12,9 @@
   `rdFingerprintGenerator.GetAtomPairGenerator` has been deprecated and will be
   removed in the next release. Please use the `countSimulation` keyword argument
   instead.
+- The function `mol_from_smarts()` in the PostgreSQL cartridge has been
+  deprecated and will be removed in the next release. Please use the
+  `qmol_from_smarts()` function instead.
 
 
 

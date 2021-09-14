@@ -9,7 +9,10 @@ assignees: ''
 
 -----------------------------------------
 PLEASE DELETE THIS SECTION AFTER YOU HAVE READ IT
-Please consider starting a discussion about the feature you would like to have (using the Discussions tab above or https://github.com/rdkit/rdkit/discussions) before creating an issue for it. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do in the RDKit.
+
+If you have a question about the RDKit please use the Discussions tab above (https://github.com/rdkit/rdkit/discussions) instead of posting it here.
+
+If you have a suggestion for a new RDKit feature or enhancement please consider starting a discussion about it using the Discussions tab above (https://github.com/rdkit/rdkit/discussions) before creating an issue. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do in the RDKit.
 -----------------------------------------
 
 **Is your feature request related to a problem? Please describe.**

@@ -26,6 +26,18 @@ struct sbv_pickle_suite : python::pickle_suite {
   };
 };
 
+python::list SparseToList(const SparseBitVect& sv) {
+   python::list l;
+   if(sv.getNumBits()) {
+     l.append(0);
+     l *= sv.getNumBits();
+     for(int i: *sv.getBitSet()) {
+       l[i] = 1;
+     }
+   }
+   return l;
+}
+
 std::string sbvClassDoc =
     "A class to store sparse bit vectors.\n\
 \n\
@@ -84,6 +96,8 @@ struct SBV_wrapper {
         .def("ToBase64", (std::string(*)(SBV &))ToBase64,
              "Converts the vector to a base64 string (the base64 encoded "
              "version of the results of ToString()).\n")
+        .def("ToList", (python::list (*)(const SBV&))SparseToList,
+             "Return the BitVector as a python list")
         .def(python::self & python::self)
         .def(python::self | python::self)
         .def(python::self ^ python::self)

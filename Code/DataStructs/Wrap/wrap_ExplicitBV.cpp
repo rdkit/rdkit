@@ -25,6 +25,24 @@ struct ebv_pickle_suite : python::pickle_suite {
   };
 };
 
+python::list ExplicitToList(const ExplicitBitVect& sv) {
+  python::list l;
+  if (!sv.dp_bits)
+    return l;
+  
+  auto count = sv.getNumBits();
+  if(count) {
+    l.append(0);
+    l *= count;
+    auto pos = sv.dp_bits->find_first();
+    l[pos] = 1;
+    while((pos = sv.dp_bits->find_next(pos)) != boost::dynamic_bitset<>::npos) {
+      l[pos] = 1;
+    }
+  }
+  return l;
+}
+
 std::string ebvClassDoc =
     "A class to store explicit bit vectors.\n\
 \n\
@@ -84,7 +102,9 @@ struct EBV_wrapper {
         .def("ToBase64", (std::string (*)(EBV &))ToBase64,
              "Converts the vector to a base64 string (the base64 encoded "
              "version of the results of ToString()).\n")
-        .def(python::self & python::self)
+        .def("ToList", (python::list (*)(const EBV&))ExplicitToList,
+             "Return the Bitvector as a python list (faster than list(vect))")
+         .def(python::self & python::self)
         .def(python::self | python::self)
         .def(python::self ^ python::self)
         .def(python::self + python::self)

@@ -57,6 +57,17 @@ python::dict pyGetNonzeroElements(SparseIntVect<IndexType> &vect) {
   return res;
 }
 
+template <typename IndexType>
+python::list pyToList(SparseIntVect<IndexType> &vect) {
+  python::list res;
+  res.append(0);
+  res *= vect.getLength();
+  for(auto iter: vect.getNonzeroElements()) {
+    res[iter.first] = iter.second;
+  }
+  return res;
+}
+
 template <typename T>
 python::list BulkDice(const T &siv1, python::list sivs, bool returnDistance) {
   python::list res;
@@ -167,6 +178,8 @@ struct sparseIntVec_wrapper {
              "update the vector based on the values in the list or tuple")
         .def("GetNonzeroElements", &pyGetNonzeroElements<IndexType>,
              "returns a dictionary of the nonzero elements")
+        .def("ToList", pyToList<IndexType>,
+	   "Return the SparseIntVect as a python list")
         .def_pickle(siv_pickle_suite<IndexType>());
 
     python::def(
