@@ -76,6 +76,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
     reached.
   */
   ROMol *normalize(const ROMol &mol);
+  //! same as \c normalize, but the molecule is modified in place
+  //!  \returns whether or not the molecule was changed
+  bool normalizeInPlace(RWMol &mol);
 
  private:
   const TransformCatalog *d_tcat;
@@ -86,6 +89,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
       const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) const;
   SmilesMolPair applyTransform(const ROMOL_SPTR &mol,
                                ChemicalReaction &rule) const;
+  bool applyTransform(RWMol &mol, ChemicalReaction &rule) const;
 
 };  // Normalizer class
 

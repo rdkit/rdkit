@@ -115,6 +115,34 @@ ROMol *Normalizer::normalize(const ROMol &mol) {
   return outmol;
 }
 
+bool Normalizer::normalizeInPlace(RWMol &mol) {
+  BOOST_LOG(rdInfoLog) << "Running Normalizer\n";
+  PRECONDITION(this->d_tcat, "");
+  const TransformCatalogParams *tparams = this->d_tcat->getCatalogParams();
+
+  PRECONDITION(tparams, "");
+  if (!mol.getNumAtoms()) {
+    return false;
+  }
+  bool modified = false;
+  const std::vector<std::shared_ptr<ChemicalReaction>> &transforms =
+      tparams->getTransformations();
+  MolOps::fastFindRings(
+      mol);  // this doesn't do anything if rings are already there
+  for (unsigned int i = 0; i < MAX_RESTARTS; ++i) {
+    bool changedOnThisCycle = false;
+    // Iterate through Normalization transforms and apply each in order
+    for (auto &transform : transforms) {
+      changedOnThisCycle |= applyTransform(mol, *transform);
+    }
+    modified |= changedOnThisCycle;
+    if (!changedOnThisCycle) {
+      break;
+    }
+  }
+  return modified;
+}
+
 ROMOL_SPTR Normalizer::normalizeFragment(
     const ROMol &mol,
     const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) const {
@@ -153,9 +181,9 @@ SmilesMolPair Normalizer::applyTransform(const ROMOL_SPTR &mol,
   // Repeatedly apply normalization transform to molecule until no changes
   // occur.
   //
-  // It is possible for multiple products to be produced when a rule is applied.
-  // The rule is applied repeatedly to each of the products, until no further
-  // changes occur or after 20 attempts.
+  // It is possible for multiple products to be produced when a rule is
+  // applied. The rule is applied repeatedly to each of the products, until no
+  // further changes occur or after 20 attempts.
   //
   // If there are multiple unique products after the final application, the
   // first product (sorted alphabetically by SMILES) is chosen.
@@ -199,6 +227,35 @@ SmilesMolPair Normalizer::applyTransform(const ROMOL_SPTR &mol,
     }
   }
   return smilesMolPair;
+}
+
+bool Normalizer::applyTransform(RWMol &mol, ChemicalReaction &transform) const {
+  if (!transform.isInitialized()) {
+    transform.initReactantMatchers();
+  }
+  bool modified = false;
+  // REVIEW: what's the source of the 20 in the next line?
+  for (unsigned int i = 0; i < 20; ++i) {
+    bool lmod = transform.runReactant(mol);
+    if (lmod) {
+      unsigned int failed;
+      try {
+        // we'll allow atoms with a valence that's too high to make it
+        // through, but we should fail if we just created something that
+        // can't, for example, be kekulized.
+        unsigned int sanitizeOps = MolOps::SANITIZE_ALL ^
+                                   MolOps::SANITIZE_CLEANUP ^
+                                   MolOps::SANITIZE_PROPERTIES;
+        MolOps::sanitizeMol(mol, failed, sanitizeOps);
+      } catch (MolSanitizeException &) {
+        BOOST_LOG(rdInfoLog) << "FAILED sanitizeMol.\n";
+      }
+      modified = true;
+    } else {
+      break;
+    }
+  }
+  return modified;
 }
 
 }  // namespace MolStandardize
