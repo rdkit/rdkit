@@ -1060,9 +1060,8 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms,
 }
 
 void EmbeddedFrag::Transform(const RDGeom::Transform2D &trans) {
-  INT_EATOM_MAP_I eri;
-  for (eri = d_eatoms.begin(); eri != d_eatoms.end(); eri++) {
-    eri->second.Transform(trans);
+  for (auto &eri : d_eatoms) {
+    eri.second.Transform(trans);
   }
 }
 
