@@ -1522,20 +1522,19 @@ void _recurseDegTwoRingAtoms(unsigned int aid, const RDKit::ROMol *mol,
   }
 }
 
-int _anyNonRingBonds(unsigned int aid, RDKit::INT_LIST path,
-                     const RDKit::ROMol *mol) {
+unsigned int _anyNonRingBonds(unsigned int aid, RDKit::INT_LIST path,
+                              const RDKit::ROMol *mol) {
   PRECONDITION(mol, "");
   // check if there are any non-ring bonds on the path starting at aid
-  const RDKit::Bond *bond;
-  int prev = aid;
-  int nOpen = 0;
-  RDKit::INT_LIST_CI pi;
-  for (pi = path.begin(); pi != path.end(); pi++) {
-    bond = mol->getBondBetweenAtoms(prev, (*pi));
+  auto prev = aid;
+  auto nOpen = 0u;
+  for (auto pi : path) {
+    const auto bond = mol->getBondBetweenAtoms(prev, pi);
+    CHECK_INVARIANT(bond, "no bond found");
     if (!mol->getRingInfo()->numBondRings(bond->getIdx())) {
-      nOpen++;
+      ++nOpen;
     }
-    prev = (*pi);
+    prev = pi;
   }
   return nOpen;
 }
@@ -1543,33 +1542,28 @@ int _anyNonRingBonds(unsigned int aid, RDKit::INT_LIST path,
 void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
   PRECONDITION(dp_mol, "");
   PRECONDITION(bondId < dp_mol->getNumBonds(), "");
-  // std::cerr<<"  flip about: "<<bondId<<" "<<flipEnd<<std::endl;
   // reflect all the atoms on one side of a bond using the bond as the mirror
-  const RDKit::Bond *bond = dp_mol->getBondWithIdx(bondId);
+  const auto bond = dp_mol->getBondWithIdx(bondId);
 
   // we should not be flip things around a ring bond
   CHECK_INVARIANT(!(dp_mol->getRingInfo()->numBondRings(bondId)), "");
 
-  int begAid = bond->getBeginAtomIdx();
-  int endAid = bond->getEndAtomIdx();
+  auto begAid = bond->getBeginAtomIdx();
+  auto endAid = bond->getEndAtomIdx();
 
   if (!flipEnd) {
-    int tmp = begAid;
-    begAid = endAid;
-    endAid = tmp;
+    std::swap(begAid, endAid);
   }
 
-  RDGeom::Point2D begLoc = d_eatoms[begAid].loc;
-  RDGeom::Point2D endLoc = d_eatoms[endAid].loc;
+  const auto &begLoc = d_eatoms[begAid].loc;
+  const auto &endLoc = d_eatoms[endAid].loc;
 
   // arbitrary choice here - find all atoms on one side of the bond
   // endAtom side - we will do this recursively
   RDKit::INT_VECT endSideAids;
-  endSideAids.clear();
   _recurseAtomOneSide(endAid, begAid, dp_mol, endSideAids);
 
   // look for fixed atoms in the fragment:
-  unsigned int nEndAtomsFixed = 0;
   unsigned int nAtomsFixed = 0;
   for (auto &d_eatom : d_eatoms) {
     if (d_eatom.second.df_fixed) {
@@ -1577,6 +1571,7 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
     }
   }
   // if there are fixed atoms, look at the atoms on the "end side"
+  unsigned int nEndAtomsFixed = 0;
   if (nAtomsFixed) {
     for (auto endAtomId : endSideAids) {
       if (d_eatoms[endAtomId].df_fixed) {
@@ -1596,15 +1591,15 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
     // there are fixed atoms on both sides, just return
     return;
   } else {
-    size_t nats = d_eatoms.size();
-    size_t nEndSide = endSideAids.size();
+    auto nats = d_eatoms.size();
+    auto nEndSide = endSideAids.size();
     if ((nats - nEndSide) < nEndSide) {
       endSideFlip = false;
     }
   }
   for (auto &d_eatom : d_eatoms) {
-    RDKit::INT_VECT_CI fii = std::find(endSideAids.begin(), endSideAids.end(),
-                                       static_cast<int>(d_eatom.first));
+    const auto fii = std::find(endSideAids.begin(), endSideAids.end(),
+                               static_cast<int>(d_eatom.first));
     if (endSideFlip ^ (fii == endSideAids.end())) {
       d_eatom.second.Reflect(begLoc, endLoc);
     }
@@ -1613,40 +1608,28 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
 
 unsigned int _findDeg1Neighbor(const RDKit::ROMol *mol, unsigned int aid) {
   PRECONDITION(mol, "");
-  unsigned int deg = getDepictDegree(mol->getAtomWithIdx(aid));
+  auto deg = getDepictDegree(mol->getAtomWithIdx(aid));
   CHECK_INVARIANT(deg == 1, "");
-  unsigned int res = 0;
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
-  res = (*nbrIdx);
-#if 0
-    while (nbrIdx != endNbrs) {
-      if(mol->getAtomWithIdx(*nbrIdx)->getDegree()==1){
-        res = (*nbrIdx);
-        break;
-      }
-      ++nbrIdx;
-    }
-#endif
+  auto res = *mol->getAtomNeighbors(mol->getAtomWithIdx(aid)).first;
   return res;
 }
 
 unsigned int _findClosestNeighbor(const RDKit::ROMol *mol, const double *dmat,
                                   unsigned int aid1, unsigned int aid2) {
   PRECONDITION(mol, "");
+  unsigned int res = 0;
+  double mdist = 1.e8;
+  auto naid = aid1 * (mol->getNumAtoms());
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   boost::tie(nbrIdx, endNbrs) =
       mol->getAtomNeighbors(mol->getAtomWithIdx(aid2));
-  unsigned int res = 0;
-  double d, mdist = 1.e8;
-  unsigned int naid = aid1 * (mol->getNumAtoms());
   while (nbrIdx != endNbrs) {
-    d = dmat[naid + (*nbrIdx)];
+    auto d = dmat[naid + (*nbrIdx)];
     if (d < mdist) {
       mdist = d;
       res = (*nbrIdx);
     }
-    nbrIdx++;
+    ++nbrIdx;
   }
   return res;
 }
@@ -1671,16 +1654,15 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
 
   PRECONDITION(dp_mol, "");
   PRECONDITION(dmat, "");
-  unsigned int deg1 = getDepictDegree(dp_mol->getAtomWithIdx(aid1));
-  unsigned int deg2 = getDepictDegree(dp_mol->getAtomWithIdx(aid2));
-  bool fixed1 = d_eatoms[aid1].df_fixed;
-  bool fixed2 = d_eatoms[aid2].df_fixed;
+  auto deg1 = getDepictDegree(dp_mol->getAtomWithIdx(aid1));
+  auto deg2 = getDepictDegree(dp_mol->getAtomWithIdx(aid2));
+  auto fixed1 = d_eatoms[aid1].df_fixed;
+  auto fixed2 = d_eatoms[aid2].df_fixed;
   if ((deg1 > 1 || fixed1) && (deg2 > 1 || fixed2)) {
     return;
   }
   unsigned int aidA;
   unsigned int aidB;
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   int type = 0;
   if ((deg1 == 1 && !fixed1) && (deg2 == 1 && !fixed2)) {
     aidA = _findDeg1Neighbor(dp_mol, aid1);
@@ -1699,9 +1681,9 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
   // std::cerr << " openAngles: " << aid1 << "-" << aidA << "-" << aidB << "-"
   //           << aid2 << "  type:" << type << std::endl;
 
-  RDGeom::Point2D v2 = d_eatoms[aid1].loc - d_eatoms[aidA].loc;
-  RDGeom::Point2D v1 = d_eatoms[aidB].loc - d_eatoms[aidA].loc;
-  double cross = (v1.x) * (v2.y) - (v1.y) * (v2.x);
+  auto v2 = d_eatoms[aid1].loc - d_eatoms[aidA].loc;
+  auto v1 = d_eatoms[aidB].loc - d_eatoms[aidA].loc;
+  auto cross = (v1.x) * (v2.y) - (v1.y) * (v2.x);
   double angle;
   RDGeom::Transform2D trans1, trans2;
   switch (type) {
@@ -1739,91 +1721,82 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
 }
 
 void EmbeddedFrag::removeCollisionsBondFlip() {
-  // try to remove collisions in a structure by flipping rotatable bonds
-  // along the shortest path between the colliding atoms.
-  unsigned int iter = 0;
-  // we will limit the number of times we are going to do this since
-  // we may fall into spiral where removing a collision may
-  // create a new one
-  std::vector<PAIR_I_I> colls;
-  double *dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
-  colls = this->findCollisions(dmat);
-  unsigned int ncols;
+  // try to remove collisions in a structure by flipping rotatable bonds along
+  // the shortest path between the colliding atoms. we will limit the number of
+  // times we are going to do this since we may fall into spiral where removing
+  // a collision may create a new one
+  auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
+  auto colls = this->findCollisions(dmat);
   // std::cerr<<"removeCollisionsBondFlip(): "<<colls.size()<<std::endl;
   std::map<int, unsigned int> doneBonds;
+  unsigned int iter = 0;
   while (iter < MAX_COLL_ITERS && colls.size()) {
-    ncols = colls.size();
+    auto ncols = colls.size();
     // std::cerr<<"iter: "<<iter<<" "<<ncols<<std::endl;
     if (ncols > 0) {
       // we have a collision
-      PAIR_I_I cAids = colls[0];
-      RDKit::INT_VECT rotBonds =
-          getRotatableBonds(*dp_mol, cAids.first, cAids.second);
-      RDKit::INT_VECT_CI ri;
-      double prevDensity = this->totalDensity();
+      auto cAids = colls[0];
+      auto rotBonds = getRotatableBonds(*dp_mol, cAids.first, cAids.second);
+      auto prevDensity = this->totalDensity();
       // std::cerr<<"   density: "<<prevDensity<<std::endl;
-      for (ri = rotBonds.begin(); ri != rotBonds.end(); ri++) {
-        if ((doneBonds.find(*ri) == doneBonds.end()) ||
-            (doneBonds[*ri] < NUM_BONDS_FLIPS)) {
-          if (doneBonds.find(*ri) == doneBonds.end()) {
-            doneBonds[*ri] = 1;
+      for (auto ri : rotBonds) {
+        if ((doneBonds.find(ri) == doneBonds.end()) ||
+            (doneBonds[ri] < NUM_BONDS_FLIPS)) {
+          if (doneBonds.find(ri) == doneBonds.end()) {
+            doneBonds[ri] = 1;
           } else {
-            doneBonds[*ri] += 1;
+            doneBonds[ri] += 1;
           }
 
-          flipAboutBond((*ri));
+          flipAboutBond(ri);
           colls = this->findCollisions(dmat);
-          double newDensity = this->totalDensity();
+          auto newDensity = this->totalDensity();
           // std::cerr<<"  newcolls: "<<colls.size()<<"
           // "<<newDensity<<std::endl;
           if (colls.size() < ncols) {
-            doneBonds[*ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
+            doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
             break;
           } else if (colls.size() == ncols && newDensity < prevDensity) {
             break;
           } else {
             // we made the wrong move earlier - reject the flip move it back
-            flipAboutBond((*ri));
+            flipAboutBond(ri);
             colls = this->findCollisions(dmat);
             // and try the other end:
-            flipAboutBond((*ri), false);
+            flipAboutBond(ri, false);
             colls = this->findCollisions(dmat);
             newDensity = this->totalDensity();
             // std::cerr<<"  newcolls2: "<<colls.size()<<"
             // "<<newDensity<<std::endl;
             if (colls.size() < ncols) {
-              doneBonds[*ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
+              doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
               break;
             } else if (colls.size() == ncols && newDensity < prevDensity) {
               break;
             } else {
-              flipAboutBond((*ri), false);
+              flipAboutBond(ri, false);
               colls = this->findCollisions(dmat);
             }
           }
         }
       }
     }
-    iter++;
+    ++iter;
   }
 }
 
 void EmbeddedFrag::removeCollisionsOpenAngles() {
-  double *dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
-  std::vector<PAIR_I_I> colls = this->findCollisions(dmat, 0);
+  auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
   // try opening up angles
-  std::vector<PAIR_I_I>::const_iterator cpi;
-  for (cpi = colls.begin(); cpi != colls.end(); cpi++) {
+  for (const auto &cpi : this->findCollisions(dmat, 0)) {
     // find out which of the two offending atoms we want to move
     // we will use the one with the smallest degree
-    int aid1 = cpi->first;
-    int aid2 = cpi->second;
-    this->openAngles(dmat, aid1, aid2);
+    this->openAngles(dmat, cpi.first, cpi.second);
   }
 }
 
 void EmbeddedFrag::removeCollisionsShortenBonds() {
-  double *dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
+  auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
   // if there are still some collision points left - flipping rotatable bonds
   // and opening angles is not doing it - we will try two last things
   //  - if all the bonds between the colliding atoms are rings bonds,
@@ -1833,17 +1806,17 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
   //  - on the other hand if we have non-ring bonds as well in the path
   //    between the colliding atoms we will simply shorten each one of
   //    them by a little bit.
-  std::vector<PAIR_I_I> colls = this->findCollisions(dmat, 0);
-  unsigned int ncols = colls.size();
-  unsigned int iter = 0;
+  auto colls = this->findCollisions(dmat, 0);
+  auto ncols = colls.size();
+  auto iter = 0u;
   while (ncols && iter < MAX_COLL_ITERS) {
-    PAIR_I_I cAids = colls.front();
+    const auto cAids = colls.front();
     // find out which of the two offending atoms we want to move
     // we will use the one with the smallest degree
-    int aid1 = cAids.first;
-    int aid2 = cAids.second;
-    bool fixed1 = d_eatoms[aid1].df_fixed;
-    bool fixed2 = d_eatoms[aid2].df_fixed;
+    auto aid1 = cAids.first;
+    auto aid2 = cAids.second;
+    auto fixed1 = d_eatoms[aid1].df_fixed;
+    auto fixed2 = d_eatoms[aid2].df_fixed;
     if (fixed1 && fixed2) {
       // both atoms are fixed, so there's nothing
       // we can do about this collision.
@@ -1852,8 +1825,8 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
       ++iter;
       continue;
     }
-    int deg1 = dp_mol->getAtomWithIdx(aid1)->getDegree();
-    int deg2 = dp_mol->getAtomWithIdx(aid2)->getDegree();
+    auto deg1 = dp_mol->getAtomWithIdx(aid1)->getDegree();
+    auto deg2 = dp_mol->getAtomWithIdx(aid2)->getDegree();
     if (fixed1 || (deg2 > deg1 && !fixed2)) {
       // reverse the order
       std::swap(deg1, deg2);
@@ -1861,7 +1834,7 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
       std::swap(fixed1, fixed2);
     }
     // now find the path between the two ends
-    RDKit::INT_LIST path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
+    auto path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
     // std::cerr << " collide! " << aid1 << " " << aid2 << " " << path.size()
     //           << std::endl;
     if (!path.size()) {
@@ -1873,12 +1846,12 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
       CHECK_INVARIANT(path.front() == aid1, "bad path head");
       path.pop_front();
 
-      int nOpen = _anyNonRingBonds(aid1, path, dp_mol);
+      auto nOpen = _anyNonRingBonds(aid1, path, dp_mol);
       // std::cerr<<"     nOpen: "<<nOpen<<std::endl;
       if (nOpen > 0) {
         if (deg1 == 1) {
-          RDGeom::Point2D loc = d_eatoms[aid1].loc;
-          int aidA = _findDeg1Neighbor(dp_mol, aid1);
+          auto loc = d_eatoms[aid1].loc;
+          auto aidA = _findDeg1Neighbor(dp_mol, aid1);
           loc -= d_eatoms[aidA].loc;
           loc *= .9;
           // std::cerr << "  >>> " << aid1 << " " << loc.length() << std::endl;
@@ -1888,8 +1861,8 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
           }
         }
         if (deg2 == 1 && !fixed2) {
-          RDGeom::Point2D loc = d_eatoms[aid2].loc;
-          int aidA = _findDeg1Neighbor(dp_mol, aid2);
+          auto loc = d_eatoms[aid2].loc;
+          auto aidA = _findDeg1Neighbor(dp_mol, aid2);
           loc -= d_eatoms[aidA].loc;
           loc *= .9;
           // std::cerr << "  >>> " << aid2 << " " << loc.length() << std::endl;
@@ -1913,23 +1886,21 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
         // - let r1 and r2 be the ring neighbor of the current atom r0
         // - we will find the vector that bisects angle(r1, r0, r2)
         // - we will move r0 along this vector
-        RDKit::INT_VECT_CI rpi;
         RDGeom::INT_POINT2D_MAP moveMap;
-        for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
-          if (d_eatoms[*rpi].df_fixed) {
+        for (auto rpi : rPath) {
+          if (d_eatoms[rpi].df_fixed) {
             continue;
           }
-          RDGeom::Point2D move;
-          move = d_eatoms[nbrMap[*rpi][0]].loc;
-          move += d_eatoms[nbrMap[*rpi][1]].loc;
+          auto move = d_eatoms[nbrMap[rpi][0]].loc;
+          move += d_eatoms[nbrMap[rpi][1]].loc;
           move *= 0.5;
-          move -= d_eatoms[*rpi].loc;
+          move -= d_eatoms[rpi].loc;
           move.normalize();
           move *= COLLISION_THRES;
-          moveMap[*rpi] = move;
+          moveMap[rpi] = move;
         }
-        for (rpi = rPath.begin(); rpi != rPath.end(); rpi++) {
-          d_eatoms[*rpi].loc += moveMap[*rpi];
+        for (auto rpi : rPath) {
+          d_eatoms[rpi].loc += moveMap[rpi];
         }
       }
       colls = this->findCollisions(dmat, 0);
