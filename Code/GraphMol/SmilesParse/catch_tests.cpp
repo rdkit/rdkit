@@ -1530,6 +1530,7 @@ TEST_CASE(
     ps.strictCXSMILES = false;
     {  // CXSMILES + name
       std::unique_ptr<RWMol> m{SmartsToMol("NON |$_AV:bar;;foo$| name", ps)};
+      CHECK(m);
       CHECK(m->hasProp("_Name"));
       CHECK(m->getProp<std::string>("_Name") == "name");
     }
