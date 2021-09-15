@@ -285,12 +285,12 @@ TEST_CASE("Github #4138: empty query produces non-empty results",
     }
     {
       std::vector<MatchVectType> matches;
-      CHECK(SubstructMatch(*mol, *eqry, matches) == false);
+      CHECK(!SubstructMatch(*mol, *eqry, matches));
       CHECK(matches.empty());
     }
     {
       MatchVectType match;
-      CHECK(SubstructMatch(*mol, *eqry, match) == false);
+      CHECK(!SubstructMatch(*mol, *eqry, match));
       CHECK(match.empty());
     }
   }
@@ -301,12 +301,12 @@ TEST_CASE("Github #4138: empty query produces non-empty results",
     }
     {
       std::vector<MatchVectType> matches;
-      CHECK(SubstructMatch(*emol, *qry, matches) == false);
+      CHECK(!SubstructMatch(*emol, *qry, matches));
       CHECK(matches.empty());
     }
     {
       MatchVectType match;
-      CHECK(SubstructMatch(*emol, *qry, match) == false);
+      CHECK(!SubstructMatch(*emol, *qry, match));
       CHECK(match.empty());
     }
   }

@@ -148,8 +148,8 @@ TEST_CASE("TEST_ENOL") {
   CHECK(tautomerSmiles == "O=C1CCCCC1");
 
   MatchVectType matchVect;
-  auto nMatches = SubstructMatch(*target1, *tautomerQuery, matchVect);
-  CHECK(nMatches == 1);
+  auto hasMatch = SubstructMatch(*target1, *tautomerQuery, matchVect);
+  CHECK(hasMatch);
 
   auto templateFingerpint = tautomerQuery->patternFingerprintTemplate();
   REQUIRE(templateFingerpint);

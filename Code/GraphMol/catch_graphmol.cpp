@@ -1927,9 +1927,9 @@ TEST_CASE("bridgehead queries", "[query]") {
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
         if (atom->getIdx() == 1 || atom->getIdx() == 4) {
-          CHECK(test == true);
+          CHECK(test == 1);
         } else {
-          CHECK(test == false);
+          CHECK(test == 0);
         }
       }
     }
@@ -1939,9 +1939,9 @@ TEST_CASE("bridgehead queries", "[query]") {
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
         if (atom->getIdx() == 1 || atom->getIdx() == 4) {
-          CHECK(test == true);
+          CHECK(test == 1);
         } else {
-          CHECK(test == false);
+          CHECK(test == 0);
         }
       }
     }
@@ -1950,7 +1950,7 @@ TEST_CASE("bridgehead queries", "[query]") {
       REQUIRE(m);
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
-        CHECK(test == false);
+        CHECK(test == 0);
       }
     }
   }
