@@ -4,6 +4,11 @@
 ## Backwards incompatible changes
 - `RWMol.replaceAtom()` no longer removes `SubstanceGroups` which reference that atom.
 - The `keepSGroups` argument to `RWMol.replaceBond()` now defaults to true.
+- The SMARTS parser now by default accepts CXSMILES extensions and molecule
+  names. SMARTS which previously failed to parse like `CCC fail` will now return
+  valid molecules.
+- Molecule names in SMILES and SMARTS are now parsed by default. Previously they
+  were ignored.
 
 
 ## Deprecated code (to be removed in a future release):

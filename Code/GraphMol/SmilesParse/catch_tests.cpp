@@ -917,6 +917,7 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
     std::string sma = "CCC |$foo;;bar$|";
     SmartsParserParams ps;
     ps.allowCXSMILES = false;
+    ps.parseName = false;
     const std::unique_ptr<RWMol> mol(SmartsToMol(sma, ps));
     REQUIRE(!mol);
   }
@@ -1425,5 +1426,164 @@ TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
                       SmilesWrite::CXSmilesFields::CX_ALL ^
                           SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES);
     CHECK(cxsmi == "CCOC");
+  }
+}
+
+TEST_CASE(
+    "Github #4503: MolFromSmiles and MolFromSmarts incorrectly accepting input "
+    "with spaces") {
+  SECTION("SMILES defaults") {
+    std::unique_ptr<RWMol> m{SmilesToMol("NON sense extra")};
+    CHECK(m);
+    CHECK(m->hasProp("_Name"));
+    CHECK(m->getProp<std::string>("_Name") == "sense extra");
+
+    CHECK_THROWS_AS(SmilesToMol("NON |sense|"), SmilesParseException);
+  }
+  SECTION("SMARTS defaults") {
+    std::unique_ptr<RWMol> m{SmilesToMol("NON sense extra")};
+    CHECK(m);
+    CHECK(m->hasProp("_Name"));
+    CHECK(m->getProp<std::string>("_Name") == "sense extra");
+
+    CHECK_THROWS_AS(SmartsToMol("NON |sense|"), SmilesParseException);
+  }
+  SECTION("SMILES no names") {
+    SmilesParserParams ps;
+    ps.parseName = false;
+    CHECK_THROWS_AS(SmilesToMol("NON sense", ps), SmilesParseException);
+  }
+  SECTION("SMARTS no names") {
+    SmartsParserParams ps;
+    ps.parseName = false;
+    CHECK_THROWS_AS(SmartsToMol("NON sense", ps), SmilesParseException);
+  }
+  SECTION("SMILES names without parsing CXSMILES") {
+    SmilesParserParams ps;
+    ps.allowCXSMILES = false;
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("NON sense extra", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+      CHECK(m->getProp<std::string>("_Name") == "sense extra");
+    }
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("NON |$N1;O2;N3$| sense extra", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+      CHECK(m->getProp<std::string>("_Name") == "|$N1;O2;N3$| sense extra");
+    }
+  }
+
+  SECTION("SMILES not strict") {
+    SmilesParserParams ps;
+    ps.strictCXSMILES = false;
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("NON sense", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+    }
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("NON |sense|", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+    ps.parseName = false;
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("NON sense", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("NON |sense|", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+  }
+  SECTION("SMARTS not strict") {
+    SmartsParserParams ps;
+    ps.strictCXSMILES = false;
+    {
+      std::unique_ptr<RWMol> m{SmartsToMol("NON sense", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+    }
+    {
+      std::unique_ptr<RWMol> m{SmartsToMol("NON |sense|", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+    ps.parseName = false;
+    {
+      std::unique_ptr<RWMol> m{SmartsToMol("NON sense", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+    {
+      std::unique_ptr<RWMol> m{SmartsToMol("NON |sense|", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+  }
+  SECTION("SMARTS CXExtensions + names") {
+    SmartsParserParams ps;
+    ps.strictCXSMILES = false;
+    {  // CXSMILES + name
+      std::unique_ptr<RWMol> m{SmartsToMol("NON |$_AV:bar;;foo$| name", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+      CHECK(m->getProp<std::string>("_Name") == "name");
+    }
+    {  // CXSMILES fails, so we don't read the name
+      std::unique_ptr<RWMol> m{SmartsToMol("NON |sense| name", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+    ps.parseName = false;
+    {  // CXSMILES, skip the name
+      std::unique_ptr<RWMol> m{SmartsToMol("NON |$_AV:bar;;foo$| name", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+    ps.parseName = true;
+    ps.allowCXSMILES = false;
+    ps.strictCXSMILES = true;
+    {  // CXSMILES + name, but not parsing the CXSMILES, so we read it as the
+       // name
+      std::unique_ptr<RWMol> m{SmartsToMol("NON |$_AV:bar;;foo$| name", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+      CHECK(m->getProp<std::string>("_Name") == "|$_AV:bar;;foo$| name");
+    }
+  }
+  SECTION("SMILES CXExtensions + names") {
+    SmilesParserParams ps;
+    ps.strictCXSMILES = false;
+    {  // CXSMILES + name
+      std::unique_ptr<RWMol> m{SmilesToMol("NON |$_AV:bar;;foo$| name", ps)};
+      CHECK(m->hasProp("_Name"));
+      CHECK(m->getProp<std::string>("_Name") == "name");
+    }
+    {  // CXSMILES fails, so we don't read the name
+      std::unique_ptr<RWMol> m{SmilesToMol("NON |sense| name", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+    ps.parseName = false;
+    {  // CXSMILES, skip the name
+      std::unique_ptr<RWMol> m{SmilesToMol("NON |$_AV:bar;;foo$| name", ps)};
+      CHECK(m);
+      CHECK(!m->hasProp("_Name"));
+    }
+    ps.parseName = true;
+    ps.allowCXSMILES = false;
+    ps.strictCXSMILES = true;
+    {  // CXSMILES + name, but not parsing the CXSMILES, so we read it as the
+       // name
+      std::unique_ptr<RWMol> m{SmilesToMol("NON |$_AV:bar;;foo$| name", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+      CHECK(m->getProp<std::string>("_Name") == "|$_AV:bar;;foo$| name");
+    }
   }
 }
