@@ -283,6 +283,60 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
   >>> Chem.MolToCXSmiles(m)
   'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
 
+Reading molecule names
+----------------------
+
+If the SMILES/SMARTS and the optional CXSMILES extensions are followed by whitespace and another string, the SMILES/SMARTS parsers will interpret this as the molecule name:
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('CO carbon monoxide')
+  >>> m.GetProp('_Name')
+  'carbon monoxide'
+  >>> m2 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide')
+  >>> m2.GetAtomWithIdx(0).GetProp('atomLabel')
+  'C2'
+  >>> m2.GetProp('_Name')
+  'carbon monoxide'
+
+This can be disabled while still parsing the CXSMILES:
+
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.parseName = False
+  >>> m3 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m3.HasProp('_Name')
+  0
+  >>> m3.GetAtomWithIdx(0).GetProp('atomLabel')
+  'C2'
+
+
+Note that if you disable CXSMILES parsing but pass in a string which includes CXSMILES it will be interpreted as (part of) the name:
+
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.allowCXSMILES = False
+  >>> m4 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m4.GetProp('_Name')
+  '|$C2;O1$| carbon monoxide'
+
+
+Finally, if you disable parsing of both CXSMILES and names, then extra text in the SMILES/SMARTS string will result in errors:
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.allowCXSMILES = False
+  >>> ps.parseName = False
+  >>> m5 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m5 is None
+  True
+  >>> m5 = Chem.MolFromSmiles('CO carbon monoxide',ps)
+  >>> m5 is None
+  True
+
+The examples in this sectin all used the SMILES parser, but the SMARTS parser behaves the same way.
 
 SMARTS Support and Extensions
 =============================
