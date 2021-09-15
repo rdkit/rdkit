@@ -1066,26 +1066,17 @@ void EmbeddedFrag::Transform(const RDGeom::Transform2D &trans) {
 }
 
 void EmbeddedFrag::computeBox() {
-  INT_EATOM_MAP_I eri;
   d_px = -1.0e8;
   d_nx = 1.0e8;
   d_py = -1.0e8;
   d_ny = 1.0e8;
 
-  for (eri = d_eatoms.begin(); eri != d_eatoms.end(); eri++) {
-    const RDGeom::Point2D &loc = eri->second.loc;
-    if (loc.x > d_px) {
-      d_px = loc.x;
-    }
-    if (loc.x < d_nx) {
-      d_nx = loc.x;
-    }
-    if (loc.y > d_py) {
-      d_py = loc.y;
-    }
-    if (loc.y < d_ny) {
-      d_ny = loc.y;
-    }
+  for (const auto &eri : d_eatoms) {
+    const auto &loc = eri.second.loc;
+    d_px = std::max(d_px, loc.x);
+    d_nx = std::min(d_nx, loc.x);
+    d_py = std::max(d_py, loc.y);
+    d_ny = std::min(d_ny, loc.y);
   }
   d_nx *= -1.0;
   d_ny *= -1.0;
@@ -1122,20 +1113,19 @@ void EmbeddedFrag::canonicalizeOrientation() {
   // the eigen vectors are given by
   //   (2*xy, (yy - xx) + d) and (2*xy, (yy - xx) - d)
   // where d = sqrt((xx - yy)^2 + 4*xy^2)
-  double d = (xx - yy) * (xx - yy) + 4 * xy * xy;
+  auto d = (xx - yy) * (xx - yy) + 4 * xy * xy;
   d = sqrt(d);
-  RDGeom::Transform2D trans;
   eig1.x = 2 * xy;
   eig1.y = (yy - xx) + d;
   if (eig1.length() <= 1e-4) {
     return;
   }
-  double eVal1 = (xx + yy + d) / 2;
+  auto eVal1 = (xx + yy + d) / 2;
   eig1.normalize();
 
   eig2.x = 2 * xy;
   eig2.y = (yy - xx) - d;
-  double eVal2 = (xx + yy - d) / 2;
+  auto eVal2 = (xx + yy - d) / 2;
 
   if (eig2.length() > 1e-4) {
     eig2.normalize();
@@ -1146,6 +1136,7 @@ void EmbeddedFrag::canonicalizeOrientation() {
     }
   }
   // now rotate eig1 onto the X axis:
+  RDGeom::Transform2D trans;
   trans.setVal(0, 0, eig1.x);
   trans.setVal(1, 0, -eig1.y);
   trans.setVal(0, 1, eig1.y);
@@ -1172,8 +1163,7 @@ void _recurseAtomOneSide(unsigned int endAid, unsigned int begAid,
 }
 
 double _crossVal(const RDGeom::Point2D &v1, const RDGeom::Point2D &v2) {
-  double res = (v1.x) * (v2.y) - (v2.x) * (v1.y);
-  return res;
+  return v1.x * v2.y - v2.x * v1.y;
 }
 
 int _pairDIICompAscending(const PAIR_D_I_I &arg1, const PAIR_D_I_I &arg2) {
@@ -1183,18 +1173,19 @@ int _pairDIICompAscending(const PAIR_D_I_I &arg1, const PAIR_D_I_I &arg2) {
 PAIR_I_I _findClosestPair(unsigned int beg1, unsigned int end1,
                           unsigned int beg2, unsigned int end2,
                           const RDKit::ROMol &mol, const double *dmat) {
-  unsigned int na = mol.getNumAtoms();
-  double d1 = dmat[beg1 * na + beg2];
-  double d2 = dmat[beg1 * na + end2];
-  double d3 = dmat[end1 * na + beg2];
-  double d4 = dmat[end1 * na + end2];
-  LIST_PAIR_DII dAtomsList;
-  dAtomsList.push_back(PAIR_D_I_I(d1, PAIR_I_I(beg1, beg2)));
-  dAtomsList.push_back(PAIR_D_I_I(d2, PAIR_I_I(beg1, end2)));
-  dAtomsList.push_back(PAIR_D_I_I(d3, PAIR_I_I(end1, beg2)));
-  dAtomsList.push_back(PAIR_D_I_I(d4, PAIR_I_I(end1, end2)));
-  dAtomsList.sort(_pairDIICompAscending);
-  return dAtomsList.front().second;
+  auto na = mol.getNumAtoms();
+  auto d1 = dmat[beg1 * na + beg2];
+  auto d2 = dmat[beg1 * na + end2];
+  auto d3 = dmat[end1 * na + beg2];
+  auto d4 = dmat[end1 * na + end2];
+  auto minPr =
+      std::min(PAIR_D_I_I(d1, PAIR_I_I(beg1, beg2)),
+               PAIR_D_I_I(d2, PAIR_I_I(beg1, end2)), _pairDIICompAscending);
+  minPr = std::min(minPr, PAIR_D_I_I(d3, PAIR_I_I(end1, beg2)),
+                   _pairDIICompAscending);
+  minPr = std::min(minPr, PAIR_D_I_I(d4, PAIR_I_I(end1, end2)),
+                   _pairDIICompAscending);
+  return minPr.second;
 }
 
 void EmbeddedFrag::computeDistMat(DOUBLE_SMART_PTR &dmat) {
