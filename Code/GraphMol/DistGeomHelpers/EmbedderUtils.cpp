@@ -45,6 +45,7 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
   PT_OPT_GET(useSmallRingTorsions);
   PT_OPT_GET(useMacrocycleTorsions);
   PT_OPT_GET(useMacrocycle14config);
+  PT_OPT_GET(boundsMatForceScaling);
   PT_OPT_GET(forceTransAmides);
   PT_OPT_GET(useSymmetryForPruning);
   std::map<int, RDGeom::Point3D> *cmap = nullptr;

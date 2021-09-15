@@ -123,6 +123,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool embedFragmentsSeparately{true};
   bool useSmallRingTorsions{false};
   bool useMacrocycleTorsions{false};
+  double boundsMatForceScaling{1.0};
   bool useMacrocycle14config{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
   void (*callback)(unsigned int);
@@ -140,7 +141,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
       unsigned int ETversion = 1,
       const DistGeom::BoundsMatrix *boundsMat = nullptr,
       bool embedFragmentsSeparately = true, bool useSmallRingTorsions = false,
-      bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
+      bool useMacrocycleTorsions = false, double boundsMatForceScaling = 1.0,
+      bool useMacrocycle14config = false,
       std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>>
           CPCI = nullptr,
       void (*callback)(unsigned int) = nullptr)
@@ -167,6 +169,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         embedFragmentsSeparately(embedFragmentsSeparately),
         useSmallRingTorsions(useSmallRingTorsions),
         useMacrocycleTorsions(useMacrocycleTorsions),
+        boundsMatForceScaling(boundsMatForceScaling),
         useMacrocycle14config(useMacrocycle14config),
         CPCI(std::move(CPCI)),
         callback(callback) {}
@@ -188,7 +191,7 @@ inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
 }
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
-/// Geometry
+// Geometry
 inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
   INT_VECT confIds;
   EmbedMultipleConfs(mol, confIds, 1, params);
@@ -203,7 +206,7 @@ inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
 }
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
-/// Geometry
+// Geometry
 /*!
   The following operations are performed (in order) here:
    -# Build a distance bounds matrix based on the topology, including 1-5
@@ -282,14 +285,14 @@ inline int EmbedMolecule(
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
     unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    bool useMacrocycleTorsions = false,  double boundsMatForceScaling = 1.0, bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, -1.0, onlyHeavyAtomsForRMS,
       ETversion, nullptr, true, useSmallRingTorsions, useMacrocycleTorsions,
-      useMacrocycle14config);
+       boundsMatForceScaling, useMacrocycle14config);
   return EmbedMolecule(mol, params);
 };
 
@@ -381,14 +384,14 @@ inline void EmbedMultipleConfs(
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
     unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    bool useMacrocycleTorsions = false, double boundsMatForceScaling = 1.0, bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
       onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config);
+      useMacrocycleTorsions,  boundsMatForceScaling, useMacrocycle14config);
   EmbedMultipleConfs(mol, res, numConfs, params);
 };
 //! \overload
@@ -403,14 +406,14 @@ inline INT_VECT EmbedMultipleConfs(
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
     unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    bool useMacrocycleTorsions = false, double boundsMatForceScaling = 1.0, bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
       onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config);
+      useMacrocycleTorsions, boundsMatForceScaling, useMacrocycle14config);
   INT_VECT res;
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;
