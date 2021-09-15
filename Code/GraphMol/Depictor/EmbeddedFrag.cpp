@@ -279,7 +279,7 @@ int EmbeddedFrag::findNumNeigh(const RDGeom::Point2D &pt, double radius) {
   // 'radius' of the specified point
   int res = 0;
   for (const auto &efi : d_eatoms) {
-    RDGeom::Point2D rloc = efi.second.loc;
+    const auto &rloc = efi.second.loc;
     if ((rloc - pt).length() < radius) {
       ++res;
     }
@@ -335,8 +335,7 @@ void EmbeddedFrag::setupNewNeighs() {  // const RDKit::ROMol *mol) {
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   d_attachPts.clear();
   for (const auto &eci : d_eatoms) {
-    unsigned int aid = eci.first;
-    this->updateNewNeighs(aid);
+    this->updateNewNeighs(eci.first);
   }
   // arrange the d_attachPts so that they are traversed in the order of CIPRanks
   d_attachPts = rankAtomsByRank(*dp_mol, d_attachPts);
