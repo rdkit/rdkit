@@ -1407,7 +1407,7 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
 
   auto tempi = d_eatoms.begin();
   ++tempi;
-  double colThres2 = COLLISION_THRES * COLLISION_THRES;
+  auto colThres2 = COLLISION_THRES * COLLISION_THRES;
   // if we a re dealing with non carbon atoms we will increase the collision
   // threshold. This is because only hetero atoms are typically drawn in a
   // depiction.
@@ -1487,10 +1487,9 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
 }
 
 double EmbeddedFrag::totalDensity() {
-  INT_EATOM_MAP_I efi;
   double res = 0.0;
-  for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
-    res += efi->second.d_density;
+  for (const auto &efi : d_eatoms) {
+    res += efi.second.d_density;
   }
   return res;
 }
@@ -1501,27 +1500,23 @@ void _recurseDegTwoRingAtoms(unsigned int aid, const RDKit::ROMol *mol,
   PRECONDITION(mol, "");
   // find all atoms along a path that have two ring atoms on them
   // aid is where will start looking and then we will recurse
-  RDKit::ROMol::OBOND_ITER_PAIR atomBonds;
-  atomBonds = mol->getAtomBonds(mol->getAtomWithIdx(aid));
-  int bondId;
+  auto atomBonds = mol->getAtomBonds(mol->getAtomWithIdx(aid));
   RDKit::INT_VECT nbrs;
   while (atomBonds.first != atomBonds.second) {
-    const RDKit::Bond *bnd = (*mol)[*atomBonds.first];
-    bondId = bnd->getIdx();
-    if (mol->getRingInfo()->numBondRings(bondId)) {
+    const auto bnd = (*mol)[*atomBonds.first];
+    if (mol->getRingInfo()->numBondRings(bnd->getIdx())) {
       nbrs.push_back(bnd->getOtherAtomIdx(aid));
     }
-    atomBonds.first++;
+    ++atomBonds.first;
   }
   if (nbrs.size() != 2) {
     return;
   } else {
     rPath.push_back(aid);
     nbrMap[aid] = nbrs;
-    RDKit::INT_VECT_CI nbi;
-    for (nbi = nbrs.begin(); nbi != nbrs.end(); nbi++) {
-      if (std::find(rPath.begin(), rPath.end(), (*nbi)) == rPath.end()) {
-        _recurseDegTwoRingAtoms((*nbi), mol, rPath, nbrMap);
+    for (auto nbr : nbrs) {
+      if (std::find(rPath.begin(), rPath.end(), nbr) == rPath.end()) {
+        _recurseDegTwoRingAtoms(nbr, mol, rPath, nbrMap);
       }
     }
   }
