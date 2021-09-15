@@ -24,9 +24,25 @@ TEST_CASE(
   SECTION("basics") {
     auto m = "CCC1(CCC1)CC1CCCCC1"_smiles;
     REQUIRE(m);
+    std::cerr << "------------------------" << std::endl;
     CHECK(RDDepict::compute2DCoords(*m) == 0);
     auto &conf = m->getConformer();
     auto v = conf.getAtomPos(1) - conf.getAtomPos(3);
+    CHECK(v.length() > 0.1);
+    v = conf.getAtomPos(1) - conf.getAtomPos(5);
+    CHECK(v.length() > 0.1);
+    std::cerr << MolToMolBlock(*m) << std::endl;
+    // CHECK(RDDepict::)
+  }
+  SECTION("this one was ok") {
+    auto m = "CCC1(CCC1)C1CCCCC1"_smiles;
+    REQUIRE(m);
+    std::cerr << "------------------------" << std::endl;
+    CHECK(RDDepict::compute2DCoords(*m) == 0);
+    auto &conf = m->getConformer();
+    auto v = conf.getAtomPos(1) - conf.getAtomPos(3);
+    CHECK(v.length() > 0.1);
+    v = conf.getAtomPos(1) - conf.getAtomPos(5);
     CHECK(v.length() > 0.1);
     std::cerr << MolToMolBlock(*m) << std::endl;
     // CHECK(RDDepict::)

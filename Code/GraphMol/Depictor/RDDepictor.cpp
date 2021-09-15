@@ -229,7 +229,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
       // non embedded atoms use them to start a fragment
       auto mrank = static_cast<int>(RDKit::MAX_INT);
       RDKit::INT_LIST_I mnri;
-      for (auto nri = nratms.begin(); nri != nratms.end(); nri++) {
+      for (auto nri = nratms.begin(); nri != nratms.end(); ++nri) {
         auto rank = atomRanks[*nri];
         rank *= mol.getNumAtoms();
         // use the atom index as well so that we at least
@@ -317,6 +317,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, coordMap, efrags);
 
+#if 1
   // perform random sampling here to improve the density
   for (auto &eri : efrags) {
     // either sample the 2D space by randomly flipping rotatable
@@ -346,6 +347,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     }
   }
   DepictorLocal::_shiftCoords(efrags);
+#endif
   // create a conformation on the molecule and copy the coordinates
   auto cid = copyCoordinate(mol, efrags, clearConfs);
 

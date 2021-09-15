@@ -114,6 +114,7 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
     if (doneNbrs.empty()) {
       d_eatoms[dai].normal = RDGeom::Point2D(1., 0.);
       d_eatoms[dai].angle = -1.;
+      // std::cerr << " 116 " << dai << " " << d_eatoms[dai].angle << std::endl;
     } else if (doneNbrs.size() == 1) {
       auto nbid = doneNbrs.front();
       d_eatoms[dai].nbr1 = nbid;
@@ -126,6 +127,8 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
       d_eatoms[dai].nbr2 = nb2;
       d_eatoms[dai].angle =
           computeAngle(d_eatoms[dai].loc, d_eatoms[nb1].loc, d_eatoms[nb2].loc);
+      // std::cerr << " 128 " << dai << " " << d_eatoms[dai].angle << std::endl;
+
     } else if (doneNbrs.size() >= 3) {
       // this is a pain - delegate it to a utility function
       this->computeNbrsAndAng(dai, doneNbrs);
@@ -219,6 +222,7 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   d_eatoms[aid].nbr1 = nb1;
   d_eatoms[aid].nbr2 = nb2;
   d_eatoms[aid].angle = 2 * M_PI - wAng;
+  // std::cerr << " 224 " << aid << " " << d_eatoms[aid].angle << std::endl;
 }
 
 // constructor to embed a cis/trans system
@@ -601,6 +605,7 @@ void EmbeddedFrag::initFromRingCoords(const RDKit::INT_VECT &ring,
     eatm.loc = nringMap.at(ai);
     eatm.aid = ai;
     eatm.angle = largestAngle;
+    // std::cerr << " 607 " << ai << " " << eatm.angle << std::endl;
     eatm.nbr1 = prev;
     if (cnt) {
       d_eatoms[prev].nbr2 = ai;
@@ -628,6 +633,9 @@ void EmbeddedFrag::mergeRing(const EmbeddedFrag &embRing, unsigned int nCommon,
         if (std::find(pinAtoms.begin(), pinAtoms.end(), aid) !=
             pinAtoms.end()) {
           d_eatoms[aid].angle += ori.second.angle;
+          // std::cerr << " 635+ " << aid << " " << d_eatoms[aid].angle
+          //           << std::endl;
+
           if (d_eatoms[aid].nbr1 == ori.second.nbr1) {
             d_eatoms[aid].nbr1 = ori.second.nbr2;
           } else if (d_eatoms[aid].nbr1 == ori.second.nbr2) {
@@ -677,6 +685,8 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   double remAngle = 2 * M_PI - refAtom.angle;
   auto currAngle = remAngle / (1 + nnbr);
   d_eatoms[toAid].angle += currAngle;
+  // std::cerr << " 687+ " << toAid << " " << d_eatoms[toAid].angle <<
+  // std::endl;
 
   const auto &nb1 = d_eatoms[refAtom.nbr1].loc;
   const auto &nb2 = d_eatoms[refAtom.nbr2].loc;
@@ -690,6 +700,23 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   rtrans.SetTransform(refLoc, currAngle);
   RDGeom::Point2D currLoc = nb2;
   rtrans.TransformPoint(currLoc);
+  // std::cerr << "  what: " << aid << " " << toAid << " " << remAngle << " "
+  //           << currAngle << std::endl;
+  if (fabs(remAngle) - M_PI < 1e-3) {
+    RDGeom::Point2D currLoc2 = nb2;
+    rtrans.SetTransform(refLoc, -currAngle);
+    rtrans.TransformPoint(currLoc2);
+    // std::cerr << "  what!! " << aid << " " << toAid << " " << currLoc << ": "
+    //           << findNumNeigh(currLoc, 0.5) << " " << currLoc2 << ": "
+    //           << findNumNeigh(currLoc2, 0.5) << std::endl;
+    if (findNumNeigh(currLoc, 0.5) > findNumNeigh(currLoc2, 0.5)) {
+      currLoc = currLoc2;
+      // std::cerr << "      SWAP" << std::endl;
+      currAngle *= -1;
+    } else {
+      rtrans.SetTransform(refLoc, currAngle);
+    }
+  }
 
   // set the neighbors for the current point
   d_eatoms[toAid].nbr2 = aid;
@@ -699,6 +726,8 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   eatm.loc = currLoc;
   eatm.nbr1 = toAid;
   eatm.angle = -1.0;
+  // std::cerr << " 706 " << aid << " " << eatm.angle << std::endl;
+
   // now compute the normal at this atom - which gives the direction in which we
   // want to add the next atom. We will go in the direction that seem to be
   // least explored
@@ -761,6 +790,9 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   bool flipNorm = false;
   if (d_eatoms[toAid].nbr1 >= 0) {
     d_eatoms[toAid].angle = angle;
+    // std::cerr << " 770 " << toAid << " " << d_eatoms[toAid].angle <<
+    // std::endl;
+
     d_eatoms[toAid].nbr2 = aid;
   } else {
     // ------------------
@@ -810,6 +842,7 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   eatm.nbr1 = toAid;
 
   eatm.angle = -1.0;
+  // std::cerr << " 821 " << aid << " " << eatm.angle << std::endl;
 
   eatm.ccw = (!refAtomCCW) ^ flipNorm;
   d_eatoms[aid] = eatm;
@@ -958,6 +991,9 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
       }
       if (ori.second.angle > 0.0) {
         d_eatoms[aid].angle = ori.second.angle;
+        // std::cerr << " 970 " << aid << " " << d_eatoms[aid].angle <<
+        // std::endl;
+
         d_eatoms[aid].nbr1 = ori.second.nbr1;
         d_eatoms[aid].nbr2 = ori.second.nbr2;
       }

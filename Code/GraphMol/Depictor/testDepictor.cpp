@@ -46,11 +46,13 @@ void _compareCoords(const ROMol *mol1, unsigned int cid1, const ROMol *mol2,
     RDGeom::Point3D pt2 = conf2.getAtomPos(i);
     pt2 -= pt1;
 
+    if ((fabs(pt2.x) >= tol) || (fabs(pt2.y) >= tol)) {
+      std::cerr << MolToMolBlock(*mol1, cid1) << std::endl;
+      std::cerr << MolToMolBlock(*mol2, cid2) << std::endl;
+      break;
+    }
     CHECK_INVARIANT(fabs(pt2.x) < tol, "");
     CHECK_INVARIANT(fabs(pt2.y) < tol, "");
-    // if ((fabs(pt2.x) >= tol) || (fabs(pt2.y) >= tol) ) {
-    //  BOOST_LOG(rdInfoLog)<< pt1 << " " << pt2 << "\n";
-    //}
   }
 }
 
