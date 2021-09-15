@@ -593,24 +593,20 @@ void EmbeddedFrag::reflectIfNecessaryDensity(EmbeddedFrag &embFrag,
 void EmbeddedFrag::initFromRingCoords(const RDKit::INT_VECT &ring,
                                       const RDGeom::INT_POINT2D_MAP &nringMap) {
   double largestAngle = M_PI * (1 - (2.0 / ring.size()));
-  RDKit::INT_VECT_CI ai;
-  int prev = ring.back();
-  int cnt = 0;
+  auto prev = ring.back();
+  unsigned int cnt = 0;
   RDGeom::INT_POINT2D_MAP_CI coord;
-  for (ai = ring.begin(); ai != ring.end(); ai++) {
+  for (auto ai : ring) {
     EmbeddedAtom eatm;
-    // this sucks - the following find is because of the constness of nringMap
-    // nringMap[*ai] will not work
-    coord = nringMap.find(*ai);
-    eatm.loc = coord->second;
-    eatm.aid = (*ai);
+    eatm.loc = nringMap.at(ai);
+    eatm.aid = ai;
     eatm.angle = largestAngle;
     eatm.nbr1 = prev;
-    if (cnt > 0) {
-      d_eatoms[prev].nbr2 = (*ai);
+    if (cnt) {
+      d_eatoms[prev].nbr2 = ai;
     }
-    d_eatoms[(*ai)] = eatm;
-    prev = (*ai);
+    d_eatoms[ai] = eatm;
+    prev = ai;
     cnt++;
   }
   d_eatoms[prev].nbr2 = ring.front();
@@ -618,12 +614,11 @@ void EmbeddedFrag::initFromRingCoords(const RDKit::INT_VECT &ring,
 
 void EmbeddedFrag::mergeRing(const EmbeddedFrag &embRing, unsigned int nCommon,
                              const RDKit::INT_VECT &pinAtoms) {
-  const INT_EATOM_MAP &oatoms = embRing.GetEmbeddedAtoms();
-  INT_EATOM_MAP_CI ori;
-  for (ori = oatoms.begin(); ori != oatoms.end(); ori++) {
-    int aid = ori->first;
+  const auto &oatoms = embRing.GetEmbeddedAtoms();
+  for (const auto &ori : oatoms) {
+    auto aid = ori.first;
     if (d_eatoms.find(aid) == d_eatoms.end()) {
-      d_eatoms[aid] = ori->second;
+      d_eatoms[aid] = ori.second;
     } else {
       // update the neighbor only on atoms that were used to compute the
       // transform to merge the
@@ -632,15 +627,15 @@ void EmbeddedFrag::mergeRing(const EmbeddedFrag &embRing, unsigned int nCommon,
       if (nCommon <= 2) {
         if (std::find(pinAtoms.begin(), pinAtoms.end(), aid) !=
             pinAtoms.end()) {
-          d_eatoms[aid].angle += ori->second.angle;
-          if (d_eatoms[aid].nbr1 == ori->second.nbr1) {
-            d_eatoms[aid].nbr1 = ori->second.nbr2;
-          } else if (d_eatoms[aid].nbr1 == ori->second.nbr2) {
-            d_eatoms[aid].nbr1 = ori->second.nbr1;
-          } else if (d_eatoms[aid].nbr2 == ori->second.nbr1) {
-            d_eatoms[aid].nbr2 = ori->second.nbr2;
-          } else if (d_eatoms[aid].nbr2 == ori->second.nbr2) {
-            d_eatoms[aid].nbr2 = ori->second.nbr1;
+          d_eatoms[aid].angle += ori.second.angle;
+          if (d_eatoms[aid].nbr1 == ori.second.nbr1) {
+            d_eatoms[aid].nbr1 = ori.second.nbr2;
+          } else if (d_eatoms[aid].nbr1 == ori.second.nbr2) {
+            d_eatoms[aid].nbr1 = ori.second.nbr1;
+          } else if (d_eatoms[aid].nbr2 == ori.second.nbr1) {
+            d_eatoms[aid].nbr2 = ori.second.nbr2;
+          } else if (d_eatoms[aid].nbr2 == ori.second.nbr2) {
+            d_eatoms[aid].nbr2 = ori.second.nbr1;
           }
         }
       }
@@ -658,13 +653,13 @@ void EmbeddedFrag::addNonRingAtom(unsigned int aid, unsigned int toAid) {
   if (d_eatoms[toAid].angle > 0.0) {
     addAtomToAtomWithAng(aid, toAid);
   } else {
-    addAtomToAtomWithNoAng(aid, toAid);  //, mol);
+    addAtomToAtomWithNoAng(aid, toAid);
   }
   // remove aid from the neighbor list of toAid
   d_eatoms[toAid].neighs.erase(std::remove(d_eatoms[toAid].neighs.begin(),
                                            d_eatoms[toAid].neighs.end(),
                                            static_cast<int>(aid)));
-  this->updateNewNeighs(aid);  //, mol);
+  this->updateNewNeighs(aid);
 }
 
 void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
@@ -678,14 +673,13 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
 
   // determine the angle at which we want to add the new atom based on the
   // number of remaining substituents
-  int nnbr = refAtom.neighs.size();
+  auto nnbr = refAtom.neighs.size();
   double remAngle = 2 * M_PI - refAtom.angle;
-  double currAngle = remAngle / (1 + nnbr);
+  auto currAngle = remAngle / (1 + nnbr);
   d_eatoms[toAid].angle += currAngle;
 
-  RDGeom::Point2D nb1 = d_eatoms[refAtom.nbr1].loc;
-  RDGeom::Point2D nb2 = d_eatoms[refAtom.nbr2].loc;
-  RDGeom::Point2D rotar;
+  const auto &nb1 = d_eatoms[refAtom.nbr1].loc;
+  const auto &nb2 = d_eatoms[refAtom.nbr2].loc;
   if (d_eatoms[toAid].rotDir == 0) {
     d_eatoms[toAid].rotDir = rotationDir(refLoc, nb1, nb2, remAngle);
   }
@@ -708,16 +702,14 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   // now compute the normal at this atom - which gives the direction in which we
   // want to add the next atom. We will go in the direction that seem to be
   // least explored
-  RDGeom::Point2D tpt = currLoc - refLoc;
-  RDGeom::Point2D norm, tp1, tp2;
-  norm.x = -tpt.y;
-  norm.y = tpt.x;
-  tp1 = currLoc + norm;
-  tp2 = currLoc - norm;
+  auto tpt = currLoc - refLoc;
+  RDGeom::Point2D norm(-tpt.y, tpt.x);
+  auto tp1 = currLoc + norm;
+  auto tp2 = currLoc - norm;
 
-  int nccw = findNumNeigh(
+  auto nccw = findNumNeigh(
       tp1, NEIGH_RADIUS);  // number of neighbors if we go counter-clockwise
-  int ncw = findNumNeigh(
+  auto ncw = findNumNeigh(
       tp2, NEIGH_RADIUS);  // number of neighbors if we go clockwise
 
   norm.normalize();
@@ -736,21 +728,22 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
                                           unsigned int toAid) {
   // const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");
-  EmbeddedAtom refAtom = d_eatoms[toAid];
+  const auto &refAtom = d_eatoms[toAid];
   PRECONDITION(refAtom.angle <= 0.0, "");
-  RDGeom::Point2D refLoc = refAtom.loc;
+  const auto &refLoc = refAtom.loc;
   RDGeom::Point2D origin(0.0, 0.0);
+  auto refAtomCCW = refAtom.ccw;
 
   // -----------------------------------------------------------------------
   // we are adding to a non-ring atom,
   // the direction in which we add the new atom matters here
-  RDGeom::Point2D currLoc = refAtom.normal;
+  auto currLoc = refAtom.normal;
   if (refAtom.CisTransNbr >= 0) {
     // ok this atom is part of a cis/trans dbl bond
     if (static_cast<unsigned int>(refAtom.CisTransNbr) != aid) {
       // but we are note adding the single bond atom to which the cis/trans
       // specification was made, in this case reverse the normal and the ccw
-      refAtom.ccw = !(refAtom.ccw);
+      refAtomCCW = !refAtomCCW;
       currLoc *= -1.0;
     }
   }
@@ -758,10 +751,10 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   CHECK_INVARIANT(currLoc.lengthSq() > 1.0e-8, "");
 
   // find out what angle we want to add bond at
-  const RDKit::Atom *atm = dp_mol->getAtomWithIdx(toAid);
-  int deg = getDepictDegree(atm);
+  const auto atm = dp_mol->getAtomWithIdx(toAid);
+  auto deg = getDepictDegree(atm);
 
-  double angle = computeSubAngle(deg, atm->getHybridization());
+  auto angle = computeSubAngle(deg, atm->getHybridization());
 
   // update the current atom we already have a nbr1 set on the current atom
   // update the angle etc d_eatoms[toAid].nbr2 = aid;
@@ -782,11 +775,9 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
     //
     // RDGeom::Point2D norm;
 
-    RDGeom::Point2D norm = d_eatoms[toAid].normal;
-    double ang = angle;
-
+    auto norm = d_eatoms[toAid].normal;
     RDGeom::Transform2D rtrans;
-    rtrans.SetTransform(origin, ang);
+    rtrans.SetTransform(origin, angle);
     rtrans.TransformPoint(norm);
     d_eatoms[toAid].normal = norm;
     d_eatoms[toAid].nbr1 = aid;
@@ -794,7 +785,7 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   }
 
   angle -= M_PI / 2;
-  if (!refAtom.ccw) {
+  if (!refAtomCCW) {
     // we want to rotate clockwise
     angle *= -1.0;
   }
@@ -806,12 +797,10 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   currLoc += refLoc;
 
   // now compute the normal at this new point for the next addition
-  RDGeom::Point2D tpt = refLoc - currLoc;
-  RDGeom::Point2D norm;
+  auto tpt = refLoc - currLoc;
   // This is the lazy man's rotation by 90 degrees about the origin:
-  norm.x = -tpt.y;
-  norm.y = tpt.x;
-  if ((refAtom.ccw) ^ (flipNorm)) {
+  RDGeom::Point2D norm(-tpt.y, tpt.x);
+  if (refAtomCCW ^ flipNorm) {
     norm *= -1.0;
   }
   norm.normalize();
@@ -822,7 +811,7 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
 
   eatm.angle = -1.0;
 
-  eatm.ccw = (!refAtom.ccw) ^ (flipNorm);
+  eatm.ccw = (!refAtomCCW) ^ flipNorm;
   d_eatoms[aid] = eatm;
 }
 
@@ -851,11 +840,11 @@ void EmbeddedFrag::mergeNoCommon(EmbeddedFrag &embObj, unsigned int toAid,
   // same molecule
   PRECONDITION(dp_mol == embObj.getMol(), "Molecule mismatch");
   RDKit::INT_VECT commAtms;
-  this->addNonRingAtom(nbrAid, toAid);   //, mol);
-  embObj.addNonRingAtom(toAid, nbrAid);  //, mol);
+  this->addNonRingAtom(nbrAid, toAid);
+  embObj.addNonRingAtom(toAid, nbrAid);
   commAtms.push_back(toAid);
   commAtms.push_back(nbrAid);
-  this->mergeWithCommon(embObj, commAtms);  //, mol);
+  this->mergeWithCommon(embObj, commAtms);
 }
 
 void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
@@ -885,7 +874,7 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
     // 2. We are merging with a fused ring system out of which one of the atoms
     //    has already been embedded because the user specified its coordinates
     // First deal with the cis/trans case
-    int commAid = commAtms.front();
+    auto commAid = commAtms.front();
     int otherAtom = -1;
     if (d_eatoms[commAid].CisTransNbr >= 0) {
       ctCase = 2;
@@ -916,13 +905,12 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
     rtrans.assign(this->computeOneAtomTrans(commAtms.front(), embObj));
   } else {
     // if we have more than one we will use a two point transform
-    RDGeom::Point2D ref1, ref2, oth1, oth2;
-    int cid1 = commAtms[0];
-    int cid2 = commAtms[1];
-    ref1 = d_eatoms[cid1].loc;
-    ref2 = d_eatoms[cid2].loc;
-    oth1 = embObj.GetEmbeddedAtom(cid1).loc;
-    oth2 = embObj.GetEmbeddedAtom(cid2).loc;
+    auto cid1 = commAtms[0];
+    auto cid2 = commAtms[1];
+    const auto &ref1 = d_eatoms[cid1].loc;
+    const auto &ref2 = d_eatoms[cid2].loc;
+    const auto &oth1 = embObj.GetEmbeddedAtom(cid1).loc;
+    const auto &oth2 = embObj.GetEmbeddedAtom(cid2).loc;
     // now compute the transform
     rtrans.SetTransform(ref1, ref2, oth1, oth2);
   }
@@ -948,50 +936,47 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
   }
 
   // finally merge the fragment by copying the non common atoms
-  const INT_EATOM_MAP &oatoms = embObj.GetEmbeddedAtoms();
-  INT_EATOM_MAP_CI ori;
+  const auto &oatoms = embObj.GetEmbeddedAtoms();
   // copy the eatoms in embObj to this fragment
-  for (ori = oatoms.begin(); ori != oatoms.end(); ori++) {
-    int aid = ori->first;
+  for (const auto &ori : oatoms) {
+    auto aid = ori.first;
     if (std::find(commAtms.begin(), commAtms.end(), aid) == commAtms.end()) {
-      d_eatoms[aid] = ori->second;
+      d_eatoms[aid] = ori.second;
       // also if any of these atoms have unattached neighbors add them to the
       // queue
-      if (ori->second.neighs.size() > 0) {
+      if (ori.second.neighs.size() > 0) {
         if (std::find(d_attachPts.begin(), d_attachPts.end(), aid) ==
             d_attachPts.end()) {
           d_attachPts.push_back(aid);
         }
       }
     } else {
-      if (ori->second.CisTransNbr >= 0) {
-        d_eatoms[aid].CisTransNbr = ori->second.CisTransNbr;
-        d_eatoms[aid].normal = ori->second.normal;
-        d_eatoms[aid].ccw = ori->second.ccw;
+      if (ori.second.CisTransNbr >= 0) {
+        d_eatoms[aid].CisTransNbr = ori.second.CisTransNbr;
+        d_eatoms[aid].normal = ori.second.normal;
+        d_eatoms[aid].ccw = ori.second.ccw;
       }
-      if (ori->second.angle > 0.0) {
-        d_eatoms[aid].angle = ori->second.angle;
-        d_eatoms[aid].nbr1 = ori->second.nbr1;
-        d_eatoms[aid].nbr2 = ori->second.nbr2;
+      if (ori.second.angle > 0.0) {
+        d_eatoms[aid].angle = ori.second.angle;
+        d_eatoms[aid].nbr1 = ori.second.nbr1;
+        d_eatoms[aid].nbr2 = ori.second.nbr2;
       }
     }
   }
 
   // remember to update the not yet done neighbor of nbrAid
-  RDKit::INT_VECT_CI cai;
-  for (cai = commAtms.begin(); cai != commAtms.end(); cai++) {
-    this->updateNewNeighs((*cai));  //, mol);
+  for (auto cai : commAtms) {
+    this->updateNewNeighs(cai);
   }
 }
 
-void EmbeddedFrag::mergeFragsWithComm(
-    std::list<EmbeddedFrag> &efrags) {  //, const RDKit::ROMol *mol) {
+void EmbeddedFrag::mergeFragsWithComm(std::list<EmbeddedFrag> &efrags) {
   PRECONDITION(dp_mol, "");
   // first merge any fragments what share atoms in common
-  std::list<EmbeddedFrag>::iterator efri, nfri = efrags.end();
+  auto nfri = efrags.end();
   while (1) {
     RDKit::INT_VECT commAtms;
-    for (efri = efrags.begin(); efri != efrags.end(); efri++) {
+    for (auto efri = efrags.begin(); efri != efrags.end(); ++efri) {
       if (!efri->isDone()) {
         commAtms = this->findCommonAtoms(*efri);
         if (commAtms.size() > 0) {
@@ -1000,19 +985,18 @@ void EmbeddedFrag::mergeFragsWithComm(
         }
       }
     }
-    if (commAtms.size() == 0) {
+    if (commAtms.empty()) {
       break;
     }
 
     CHECK_INVARIANT(nfri != efrags.end(), "iterator not initialized");
     this->mergeWithCommon((*nfri), commAtms);  //, mol);
-    RDKit::INT_VECT_CI cai;
-    for (cai = commAtms.begin(); cai != commAtms.end(); cai++) {
-      if ((d_eatoms[*cai].neighs.size() == 0) &&
-          (std::find(d_attachPts.begin(), d_attachPts.end(), (*cai)) !=
+    for (auto cai : commAtms) {
+      if ((d_eatoms[cai].neighs.size() == 0) &&
+          (std::find(d_attachPts.begin(), d_attachPts.end(), cai) !=
            d_attachPts.end())) {
         d_attachPts.erase(
-            std::remove(d_attachPts.begin(), d_attachPts.end(), (*cai)));
+            std::remove(d_attachPts.begin(), d_attachPts.end(), cai));
       }
     }
     efrags.erase(nfri);
@@ -1024,44 +1008,41 @@ void EmbeddedFrag::expandEfrag(RDKit::INT_LIST &nratms,
   PRECONDITION(dp_mol, "");
 
   // first merge any fragments that share atoms in common
-  std::list<EmbeddedFrag>::iterator efri, nfri;
 
   this->mergeFragsWithComm(efrags);  //, dp_mol);
 
   while (d_attachPts.size() > 0) {
-    int aid = d_attachPts.front();
-    RDKit::INT_VECT nbrs = d_eatoms[aid].neighs;
-    CHECK_INVARIANT(nbrs.size() > 0, "");
-    RDKit::INT_VECT_I nbri;
-    RDKit::INT_LIST_I nratmi;
-    for (nbri = nbrs.begin(); nbri != nbrs.end(); nbri++) {
-      nratmi = std::find(nratms.begin(), nratms.end(), (*nbri));
+    auto aid = d_attachPts.front();
+    auto nbrs = d_eatoms[aid].neighs;
+    CHECK_INVARIANT(!nbrs.empty(), "");
+    for (auto nbri : nbrs) {
+      auto nratmi = std::find(nratms.begin(), nratms.end(), nbri);
       if (nratmi != nratms.end()) {
         // the neighbor we have to add is a non ring atoms
-        this->addNonRingAtom((*nbri), aid);  //, mol);
+        this->addNonRingAtom((nbri), aid);  //, mol);
         // remove this atom we just added from the nnratms list
         nratms.erase(nratmi);
       } else {
         // the neighbor atom must be part of a different embedded fragment -
         // merge that fragment with this one
-        nfri = efrags.end();
-        for (efri = efrags.begin(); efri != efrags.end(); efri++) {
+        auto nfri = efrags.end();
+        for (auto efri = efrags.begin(); efri != efrags.end(); ++efri) {
           // don't search fragments that are done
           if (!efri->isDone()) {
-            const INT_EATOM_MAP &eatoms = efri->GetEmbeddedAtoms();
-            if (eatoms.find(*nbri) != eatoms.end()) {
+            const auto &eatoms = efri->GetEmbeddedAtoms();
+            if (eatoms.find(nbri) != eatoms.end()) {
               nfri = efri;
               break;
             }
           }
         }
         if (nfri != efrags.end()) {
-          this->mergeNoCommon((*nfri), aid, (*nbri));  //, mol);
-          if ((d_eatoms[*nbri].neighs.size() == 0) &&
-              (std::find(d_attachPts.begin(), d_attachPts.end(), (*nbri)) !=
+          this->mergeNoCommon((*nfri), aid, nbri);  //, mol);
+          if ((d_eatoms[nbri].neighs.empty()) &&
+              (std::find(d_attachPts.begin(), d_attachPts.end(), nbri) !=
                d_attachPts.end())) {
             d_attachPts.erase(
-                std::remove(d_attachPts.begin(), d_attachPts.end(), (*nbri)));
+                std::remove(d_attachPts.begin(), d_attachPts.end(), nbri));
           }
           // remove this fragment from the list of embedded fragments
           efrags.erase(nfri);
