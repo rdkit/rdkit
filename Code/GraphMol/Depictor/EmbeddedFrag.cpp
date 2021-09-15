@@ -1189,19 +1189,15 @@ PAIR_I_I _findClosestPair(unsigned int beg1, unsigned int end1,
 }
 
 void EmbeddedFrag::computeDistMat(DOUBLE_SMART_PTR &dmat) {
-  unsigned ai, aj;
-  INT_EATOM_MAP_I efi, efj;
-  RDGeom::Point2D pti, ptj;
-
   auto tempi = d_eatoms.begin();
   tempi++;
-  double *dmatPtr = dmat.get();
-  for (efi = tempi; efi != d_eatoms.end(); efi++) {
-    pti = efi->second.loc;
-    ai = efi->first;
-    for (efj = d_eatoms.begin(); efj != efi; efj++) {
-      ptj = efj->second.loc;
-      aj = efj->first;
+  auto dmatPtr = dmat.get();
+  for (auto efi = tempi; efi != d_eatoms.end(); ++efi) {
+    auto pti = efi->second.loc;
+    auto ai = efi->first;
+    for (auto efj = d_eatoms.begin(); efj != efi; ++efj) {
+      auto ptj = efj->second.loc;
+      auto aj = efj->first;
       ptj -= pti;
       if (ai < aj) {
         dmatPtr[(aj * (aj - 1) / 2) + ai] = ptj.length();
@@ -1220,30 +1216,31 @@ double EmbeddedFrag::mimicDistMatAndDensityCostFunc(
   } else {
     ddata = nullptr;
   }
-  unsigned int na = dp_mol->getNumAtoms();
-  unsigned int dsize = na * (na - 1) / 2;
+  auto na = dp_mol->getNumAtoms();
+  if (na < 2) {
+    return 0;
+  }
+  auto dsize = na * (na - 1) / 2;
   auto *ddata2D = new double[dsize];
   DOUBLE_SMART_PTR dmat2D(ddata2D);
   this->computeDistMat(dmat2D);
   double res1 = 0.0;
   double res2 = 0.0;
-  double d, d2, dd;
-
-  for (unsigned int i = 0; i < dsize; ++i) {
-    d = ddata2D[i];
-    d2 = d * d;
+  for (auto i = 0u; i < dsize; ++i) {
+    auto d = ddata2D[i];
+    auto d2 = d * d;
     if (d2 > 1.e-3) {
       res1 += 1.0 / d2;
     } else {
       res1 += 1000.0;
     }
-    if ((ddata) && (ddata[i] >= 0.0)) {
-      dd = d - ddata[i];
+    if (ddata && (ddata[i] >= 0.0)) {
+      auto dd = d - ddata[i];
       res2 += dd * dd;
     }
   }
 
-  double wt = mimicDmatWt;
+  auto wt = mimicDmatWt;
   if (wt > 1.0) {
     wt = 1.0;
   } else if (wt < 0.0) {
@@ -1272,8 +1269,8 @@ void EmbeddedFrag::permuteBonds(unsigned int aid, unsigned int aid1,
                                 unsigned int aid2) {
   PRECONDITION(dp_mol, "");
   // std::cerr<<"permute "<<aid<<" "<<aid1<<" "<<aid2<<std::endl;
-  RDGeom::Point2D rl1 = d_eatoms[aid].loc;
-  RDGeom::Point2D rl2 = d_eatoms[aid1].loc + d_eatoms[aid2].loc;
+  auto rl1 = d_eatoms[aid].loc;
+  auto rl2 = d_eatoms[aid1].loc + d_eatoms[aid2].loc;
   rl2 *= 0.5;
 
   RDKit::INT_VECT fragA, fragB;
@@ -1285,13 +1282,12 @@ void EmbeddedFrag::permuteBonds(unsigned int aid, unsigned int aid1,
   _recurseAtomOneSide(aid2, aid, dp_mol, fragB);
 
   // now just loop through these atoms and reflect them
-  RDKit::INT_VECT_CI fi;
-  for (fi = fragA.begin(); fi != fragA.end(); fi++) {
-    d_eatoms[*fi].Reflect(rl1, rl2);
+  for (auto fi : fragA) {
+    d_eatoms[fi].Reflect(rl1, rl2);
   }
 
-  for (fi = fragB.begin(); fi != fragB.end(); fi++) {
-    d_eatoms[*fi].Reflect(rl1, rl2);
+  for (auto fi : fragB) {
+    d_eatoms[fi].Reflect(rl1, rl2);
   }
 }
 
@@ -1300,37 +1296,27 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
     const DOUBLE_SMART_PTR *dmat, double mimicDmatWt, bool permuteDeg4Nodes) {
   PRECONDITION(dp_mol, "");
 
-  RDKit::rng_type &generator = RDKit::getRandomGenerator();
-  if (seed > 0) {
-    generator.seed(seed);
-  }
-
-  RDKit::INT_VECT rotBonds = getAllRotatableBonds(*dp_mol);
-
-  unsigned int nb =
-      rotBonds.size();  // number of rotatable bonds that can be flipped
+  const auto &rotBonds = getAllRotatableBonds(*dp_mol);
+  auto nb = rotBonds.size();  // number of rotatable bonds that can be flipped
 
   // if we also want to permute deg 4 nodes, find out how many of these are
   // around and can be permuted
-  unsigned int nt, nd4;
-  nd4 = 0;
+  unsigned int nd4 = 0;
   RDKit::INT_VECT deg4nodes;
   RDKit::VECT_INT_VECT deg4NbrBids, deg4NbrAids;
 
   if (permuteDeg4Nodes) {
-    for (RDKit::ROMol::ConstAtomIterator ai = dp_mol->beginAtoms();
-         ai != dp_mol->endAtoms(); ai++) {
-      unsigned int caid = (*ai)->getIdx();
-      if ((getDepictDegree(*ai) == 4) &&
+    for (const auto atom : dp_mol->atoms()) {
+      auto caid = atom->getIdx();
+      if ((getDepictDegree(atom) == 4) &&
           (!(dp_mol->getRingInfo()->numAtomRings(caid)))) {
         RDKit::INT_VECT aids, bids;
         getNbrAtomAndBondIds(caid, dp_mol, aids, bids);
         // make sure all the atoms in aids are in this embeddedfrag and can be
         // perturbed
         bool allin = true;
-        for (RDKit::INT_VECT_CI ivci = aids.begin(); ivci != aids.end();
-             ivci++) {
-          auto nbrIter = d_eatoms.find(*ivci);
+        for (auto aid : aids) {
+          auto nbrIter = d_eatoms.find(aid);
           if (nbrIter == d_eatoms.end() || nbrIter->second.df_fixed) {
             allin = false;
             break;
@@ -1346,69 +1332,68 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
     nd4 = deg4nodes.size();
   }
 
-  nt = nb + nd4;
+  unsigned int nt = nb + nd4;
 
   unsigned int nPerSample = std::min(nt, nBondsPerSample);
 
+  auto &generator = RDKit::getRandomGenerator();
+  if (seed > 0) {
+    generator.seed(seed);
+  }
   RDKit::uniform_int dist(0, nt - 1);
   RDKit::int_source_type intRandomSrc(generator, dist);
 
-  unsigned int si, fi, bi, ai;
   RDGeom::INT_POINT2D_MAP bestCrdMap;
-  double bestDens = this->mimicDistMatAndDensityCostFunc(dmat, mimicDmatWt);
-  INT_EATOM_MAP_I efi;
-  for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
-    bestCrdMap[efi->first] = efi->second.loc;
+  auto bestDens = this->mimicDistMatAndDensityCostFunc(dmat, mimicDmatWt);
+  for (const auto &efi : d_eatoms) {
+    bestCrdMap[efi.first] = efi.second.loc;
   }
-  for (si = 0; si < nSamples; ++si) {
+  for (auto si = 0u; si < nSamples; ++si) {
     // randomly pick nPerSample bonds and flip them
-    for (fi = 0; fi < nPerSample; ++fi) {
+    for (auto fi = 0u; fi < nPerSample; ++fi) {
       unsigned int ri = intRandomSrc();
       // if ri is less than the number of rotatable bonds (nb), we will flip a
       // rot bond
       if (ri < nb) {
-        bi = rotBonds[ri];
-        this->flipAboutBond(bi);
-
+        this->flipAboutBond(rotBonds[ri]);
       } else {  // ri is >= nb we permute the bonds at a deg 4 node
         unsigned int d4i =
             ri - nb;  // so we will permute at the 'di'th degree 4 node
-        ai = deg4nodes[d4i];
+        auto ai = deg4nodes[d4i];
         // collect the locations for the neighbors
         VECT_C_POINT nbrLocs;
-        for (RDKit::INT_VECT_CI aci = deg4NbrAids[d4i].begin();
-             aci != deg4NbrAids[d4i].end(); aci++) {
-          nbrLocs.push_back(&(d_eatoms[*aci].loc));
+        for (auto aci : deg4NbrAids[d4i]) {
+          nbrLocs.push_back(&(d_eatoms[aci].loc));
         }
-        INT_PAIR_VECT bndPairs = findBondsPairsToPermuteDeg4(
-            d_eatoms[ai].loc, deg4NbrBids[d4i], nbrLocs);
+        auto bndPairs = findBondsPairsToPermuteDeg4(d_eatoms[ai].loc,
+                                                    deg4NbrBids[d4i], nbrLocs);
 
-        double rval = RDKit::getRandomVal();
+        auto rval = RDKit::getRandomVal();
         unsigned int fbi = 0;
         if (rval > 0.5) {
           fbi = 1;
         }
-        unsigned int aid1, aid2;
-        aid1 = dp_mol->getBondWithIdx(bndPairs[fbi].first)->getOtherAtomIdx(ai);
-        aid2 =
+        auto aid1 =
+            dp_mol->getBondWithIdx(bndPairs[fbi].first)->getOtherAtomIdx(ai);
+        auto aid2 =
             dp_mol->getBondWithIdx(bndPairs[fbi].second)->getOtherAtomIdx(ai);
         this->permuteBonds(ai, aid1, aid2);
       }
     }
 
     // compute the density of the structure and check if it improved
-    double density = this->mimicDistMatAndDensityCostFunc(dmat, mimicDmatWt);
+    auto density = this->mimicDistMatAndDensityCostFunc(dmat, mimicDmatWt);
     // if (density < bestDens) {
     if (bestDens - density > 1e-4) {
       bestDens = density;
-      for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
-        bestCrdMap[efi->first] = efi->second.loc;
+      for (const auto &efi : d_eatoms) {
+        bestCrdMap[efi.first] = efi.second.loc;
       }
     }
   }
   // now copy the best coordinates to the fragment
-  for (efi = d_eatoms.begin(); efi != d_eatoms.end(); efi++) {
-    efi->second.loc = bestCrdMap[efi->first];
+  for (auto &efi : d_eatoms) {
+    efi.second.loc = bestCrdMap[efi.first];
   }
 }
 
