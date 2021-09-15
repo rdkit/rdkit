@@ -1433,14 +1433,19 @@ TEST_CASE(
     "Github #4503: MolFromSmiles and MolFromSmarts incorrectly accepting input "
     "with spaces") {
   SECTION("SMILES defaults") {
-    std::unique_ptr<RWMol> m{SmilesToMol("NON sense")};
+    std::unique_ptr<RWMol> m{SmilesToMol("NON sense extra")};
     CHECK(m);
     CHECK(m->hasProp("_Name"));
+    CHECK(m->getProp<std::string>("_Name") == "sense extra");
+
     CHECK_THROWS_AS(SmilesToMol("NON |sense|"), SmilesParseException);
   }
   SECTION("SMARTS defaults") {
-    std::unique_ptr<RWMol> m{SmilesToMol("NON sense")};
+    std::unique_ptr<RWMol> m{SmilesToMol("NON sense extra")};
     CHECK(m);
+    CHECK(m->hasProp("_Name"));
+    CHECK(m->getProp<std::string>("_Name") == "sense extra");
+
     CHECK_THROWS_AS(SmartsToMol("NON |sense|"), SmilesParseException);
   }
   SECTION("SMILES no names") {
@@ -1453,6 +1458,23 @@ TEST_CASE(
     ps.parseName = false;
     CHECK_THROWS_AS(SmartsToMol("NON sense", ps), SmilesParseException);
   }
+  SECTION("SMILES names without parsing CXSMILES") {
+    SmilesParserParams ps;
+    ps.allowCXSMILES = false;
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("NON sense extra", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+      CHECK(m->getProp<std::string>("_Name") == "sense extra");
+    }
+    {
+      std::unique_ptr<RWMol> m{SmilesToMol("NON |$N1;O2;N3$| sense extra", ps)};
+      CHECK(m);
+      CHECK(m->hasProp("_Name"));
+      CHECK(m->getProp<std::string>("_Name") == "|$N1;O2;N3$| sense extra");
+    }
+  }
+
   SECTION("SMILES not strict") {
     SmilesParserParams ps;
     ps.strictCXSMILES = false;
@@ -1530,7 +1552,7 @@ TEST_CASE(
       std::unique_ptr<RWMol> m{SmartsToMol("NON |$_AV:bar;;foo$| name", ps)};
       CHECK(m);
       CHECK(m->hasProp("_Name"));
-      CHECK(m->getProp<std::string>("_Name") == "|$_AV:bar;;foo$|");
+      CHECK(m->getProp<std::string>("_Name") == "|$_AV:bar;;foo$| name");
     }
   }
   SECTION("SMILES CXExtensions + names") {
@@ -1560,7 +1582,7 @@ TEST_CASE(
       std::unique_ptr<RWMol> m{SmilesToMol("NON |$_AV:bar;;foo$| name", ps)};
       CHECK(m);
       CHECK(m->hasProp("_Name"));
-      CHECK(m->getProp<std::string>("_Name") == "|$_AV:bar;;foo$|");
+      CHECK(m->getProp<std::string>("_Name") == "|$_AV:bar;;foo$| name");
     }
   }
 }

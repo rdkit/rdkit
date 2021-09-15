@@ -300,13 +300,13 @@ template <typename T>
 void preprocessSmiles(const std::string &smiles, const T &params,
                       std::string &lsmiles, std::string &name,
                       std::string &cxPart) {
+  cxPart = "";
+  name = "";
   if (params.parseName && !params.allowCXSMILES) {
-    std::vector<std::string> tokens;
-    boost::split(tokens, smiles, boost::is_any_of(" \t"),
-                 boost::token_compress_on);
-    lsmiles = tokens[0];
-    if (tokens.size() > 1) {
-      name = tokens[1];
+    size_t sidx = smiles.find_first_of(" \t");
+    if (sidx != std::string::npos && sidx != 0) {
+      lsmiles = smiles.substr(0, sidx);
+      name = boost::trim_copy(smiles.substr(sidx, smiles.size() - sidx));
     }
   } else if (params.allowCXSMILES) {
     size_t sidx = smiles.find_first_of(" \t");
