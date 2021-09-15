@@ -1722,6 +1722,23 @@ AS
     FUNCTION    7   gmol_same (bytea, bytea, internal),
 STORAGE         bytea;
 
+CREATE OPERATOR CLASS gist_qmol_ops
+DEFAULT FOR TYPE qmol USING gist
+AS
+    OPERATOR	3   @> (mol, mol),
+    OPERATOR    4   <@ (mol, mol),
+    OPERATOR    3   @> (mol, qmol),
+    OPERATOR    4   <@ (qmol, mol),
+    OPERATOR    6   @= (mol, mol),
+    FUNCTION    1   gmol_consistent (bytea, internal, int4),
+    FUNCTION    2   gmol_union (bytea, internal),
+    FUNCTION    3   gmol_compress (internal),
+    FUNCTION    4   gmol_decompress (internal),
+    FUNCTION    5   gmol_penalty (internal, internal, internal),
+    FUNCTION    6   gmol_picksplit (internal, internal),
+    FUNCTION    7   gmol_same (bytea, bytea, internal),
+STORAGE         bytea;
+
 CREATE OPERATOR CLASS gist_bfp_ops
 DEFAULT FOR TYPE bfp USING gist
 AS
