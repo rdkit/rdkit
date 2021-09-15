@@ -423,14 +423,14 @@ unsigned int compute2DCoordsMimicDistMat(
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat
   std::list<EmbeddedFrag>::iterator eri;
-  for (auto eri : efrags) {
+  for (auto &eri : efrags) {
     eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed,
                                          dmat, weightDistMat, permuteDeg4Nodes);
   }
   if (canonOrient && efrags.size()) {
     // canonicalize the orientation of the fragment so that the
     // longest axes fall along the x-axis etc.
-    for (auto eri : efrags) {
+    for (auto &eri : efrags) {
       eri.canonicalizeOrientation();
     }
   }
