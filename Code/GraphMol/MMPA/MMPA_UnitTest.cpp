@@ -597,46 +597,33 @@ void test3() {
 
   {  // test2:
     const char* smi = "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717";
+    // clang-format off
     const char* fs[] = {
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=[n+]1c([*:2])c([*"
-        ":1])n([O-])c2ccccc21,C[*:1].O=C(NCCO)[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c(C(=O)NCC[*:1]"
-        ")[n+](=O)c2ccccc2n1[O-].O[*:1]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,OCC[*:1].Cc1c(C(="
-        "O)N[*:1])[n+](=O)c2ccccc2n1[O-]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,C[*:1].O=C(NCCO)"
-        "c1c([*:1])n([O-])c2ccccc2[n+]1=O",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C([*:1])[*:2],Cc1c("
-        "C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(N[*:2])c1c([*:"
-        "1])n([O-])c2ccccc2[n+]1=O,C[*:1].OCC[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(N[*:2])[*:1],"
-        "Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OCC[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C(C[*:2])[*:1],"
-        "Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c(C(=O)NC[*:1])"
-        "[n+](=O)c2ccccc2n1[O-].OC[*:1]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,O=C(NCCO)[*:1]."
-        "Cc1c([*:1])[n+](=O)c2ccccc2n1[O-]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C([*:1])[*:2],Cc1c("
-        "C(=O)NC[*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NCC[*:2])c1c([*"
-        ":1])n([O-])c2ccccc2[n+]1=O,C[*:1].O[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])c1c([*:"
-        "1])n([O-])c2ccccc2[n+]1=O,C[*:1].OC[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NCC[*:2])[*:1],"
-        "Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
-        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])[*:1],"
-        "Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]"};
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=[n+]1c([*:2])c([*:1])n([O-])c2ccccc21,C[*:1].O=C(NCCO)[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c(C(=O)NCC[*:1])[n+](=O)c2ccccc2n1[O-].O[*:1]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,OCC[*:1].Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,C[*:1].O=C(NCCO)c1c([*:1])n([O-])c2ccccc2[n+]1=O",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C([*:1])[*:2],Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(N[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].OCC[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(N[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OCC[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C(C[*:2])[*:1],Cc1c(C(=O)N[*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,Cc1c(C(=O)NC[*:1])[n+](=O)c2ccccc2n1[O-].OC[*:1]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,O=C(NCCO)[*:1].Cc1c([*:1])[n+](=O)c2ccccc2n1[O-]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,C([*:1])[*:2],Cc1c(C(=O)NC[*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NCC[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].O[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])c1c([*:1])n([O-])c2ccccc2[n+]1=O,C[*:1].OC[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NCC[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].O[*:2]",
+        "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=C(NC[*:2])[*:1],Cc1c([*:1])[n+](=O)c2ccccc2n1[O-].OC[*:2]"};
+    // clang-format on
     doTest(smi, fs, sizeof(fs) / sizeof(fs[0]));
   }
 
   {  // Case1 SIMPLE: (PASSED)
     const char* smi = "CC(N1CC1)C(=O) Case1-SIMPLE";
+    // clang-format off
     const char* fs[] = {
         // from Greg's message
-        "CC(N1CC1)C(=O),Case1-SIMPLE,C([*:1])([*:2])[*:3],C1CN1[*:2].C[*:1].O="
-        "C[*:3]",
+        "CC(N1CC1)C(=O),Case1-SIMPLE,C([*:1])([*:2])[*:3],C1CN1[*:2].C[*:1].O=C[*:3]",
         // from the results:
         "CC(N1CC1)C(=O),Case1-SIMPLE,,C[*:1].O=CC(N1CC1)[*:1]",
         "CC(N1CC1)C(=O),Case1-SIMPLE,O=CC([*:1])[*:2],C1CN1[*:2].C[*:1]",
@@ -645,6 +632,7 @@ void test3() {
         "CC(N1CC1)C(=O),Case1-SIMPLE,CC([*:1])[*:2],C1CN1[*:1].O=C[*:2]",
         "CC(N1CC1)C(=O),Case1-SIMPLE,,CC(N1CC1)[*:1].O=C[*:1]",
     };
+    // clang-format on
     doTest(smi, fs, sizeof(fs) / sizeof(fs[0]));
   }
 

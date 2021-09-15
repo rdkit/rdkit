@@ -1882,9 +1882,9 @@ void testMostSubstitutedCoreMatch() {
 
   const auto &coreRef = *core;
   for (auto &molResPair :
-       {std::make_pair(orthoMeta.get(), 0), std::make_pair(ortho.get(), 1),
-        std::make_pair(meta.get(), 1), std::make_pair(biphenyl.get(), 2),
-        std::make_pair(phenyl.get(), 3)}) {
+       {std::make_pair(orthoMeta.get(), 0u), std::make_pair(ortho.get(), 1u),
+        std::make_pair(meta.get(), 1u), std::make_pair(biphenyl.get(), 2u),
+        std::make_pair(phenyl.get(), 3u)}) {
     auto &mol = *molResPair.first;
     const auto res = molResPair.second;
     MolOps::addHs(mol);
