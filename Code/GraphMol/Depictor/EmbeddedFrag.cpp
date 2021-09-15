@@ -114,7 +114,6 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
     if (doneNbrs.empty()) {
       d_eatoms[dai].normal = RDGeom::Point2D(1., 0.);
       d_eatoms[dai].angle = -1.;
-      // std::cerr << " 116 " << dai << " " << d_eatoms[dai].angle << std::endl;
     } else if (doneNbrs.size() == 1) {
       auto nbid = doneNbrs.front();
       d_eatoms[dai].nbr1 = nbid;
@@ -127,7 +126,6 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
       d_eatoms[dai].nbr2 = nb2;
       d_eatoms[dai].angle =
           computeAngle(d_eatoms[dai].loc, d_eatoms[nb1].loc, d_eatoms[nb2].loc);
-      // std::cerr << " 128 " << dai << " " << d_eatoms[dai].angle << std::endl;
 
     } else if (doneNbrs.size() >= 3) {
       // this is a pain - delegate it to a utility function
@@ -222,7 +220,6 @@ void EmbeddedFrag::computeNbrsAndAng(unsigned int aid,
   d_eatoms[aid].nbr1 = nb1;
   d_eatoms[aid].nbr2 = nb2;
   d_eatoms[aid].angle = 2 * M_PI - wAng;
-  // std::cerr << " 224 " << aid << " " << d_eatoms[aid].angle << std::endl;
 }
 
 // constructor to embed a cis/trans system
@@ -605,7 +602,6 @@ void EmbeddedFrag::initFromRingCoords(const RDKit::INT_VECT &ring,
     eatm.loc = nringMap.at(ai);
     eatm.aid = ai;
     eatm.angle = largestAngle;
-    // std::cerr << " 607 " << ai << " " << eatm.angle << std::endl;
     eatm.nbr1 = prev;
     if (cnt) {
       d_eatoms[prev].nbr2 = ai;
@@ -633,9 +629,6 @@ void EmbeddedFrag::mergeRing(const EmbeddedFrag &embRing, unsigned int nCommon,
         if (std::find(pinAtoms.begin(), pinAtoms.end(), aid) !=
             pinAtoms.end()) {
           d_eatoms[aid].angle += ori.second.angle;
-          // std::cerr << " 635+ " << aid << " " << d_eatoms[aid].angle
-          //           << std::endl;
-
           if (d_eatoms[aid].nbr1 == ori.second.nbr1) {
             d_eatoms[aid].nbr1 = ori.second.nbr2;
           } else if (d_eatoms[aid].nbr1 == ori.second.nbr2) {
@@ -685,8 +678,6 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   double remAngle = 2 * M_PI - refAtom.angle;
   auto currAngle = remAngle / (1 + nnbr);
   d_eatoms[toAid].angle += currAngle;
-  // std::cerr << " 687+ " << toAid << " " << d_eatoms[toAid].angle <<
-  // std::endl;
 
   const auto &nb1 = d_eatoms[refAtom.nbr1].loc;
   const auto &nb2 = d_eatoms[refAtom.nbr2].loc;
@@ -700,18 +691,12 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   rtrans.SetTransform(refLoc, currAngle);
   RDGeom::Point2D currLoc = nb2;
   rtrans.TransformPoint(currLoc);
-  // std::cerr << "  what: " << aid << " " << toAid << " " << remAngle << " "
-  //           << currAngle << std::endl;
   if (fabs(remAngle) - M_PI < 1e-3) {
     RDGeom::Point2D currLoc2 = nb2;
     rtrans.SetTransform(refLoc, -currAngle);
     rtrans.TransformPoint(currLoc2);
-    // std::cerr << "  what!! " << aid << " " << toAid << " " << currLoc << ": "
-    //           << findNumNeigh(currLoc, 0.5) << " " << currLoc2 << ": "
-    //           << findNumNeigh(currLoc2, 0.5) << std::endl;
     if (findNumNeigh(currLoc, 0.5) > findNumNeigh(currLoc2, 0.5)) {
       currLoc = currLoc2;
-      // std::cerr << "      SWAP" << std::endl;
       currAngle *= -1;
     } else {
       rtrans.SetTransform(refLoc, currAngle);
@@ -726,7 +711,6 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   eatm.loc = currLoc;
   eatm.nbr1 = toAid;
   eatm.angle = -1.0;
-  // std::cerr << " 706 " << aid << " " << eatm.angle << std::endl;
 
   // now compute the normal at this atom - which gives the direction in which we
   // want to add the next atom. We will go in the direction that seem to be
@@ -790,8 +774,6 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   bool flipNorm = false;
   if (d_eatoms[toAid].nbr1 >= 0) {
     d_eatoms[toAid].angle = angle;
-    // std::cerr << " 770 " << toAid << " " << d_eatoms[toAid].angle <<
-    // std::endl;
 
     d_eatoms[toAid].nbr2 = aid;
   } else {
@@ -842,7 +824,6 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   eatm.nbr1 = toAid;
 
   eatm.angle = -1.0;
-  // std::cerr << " 821 " << aid << " " << eatm.angle << std::endl;
 
   eatm.ccw = (!refAtomCCW) ^ flipNorm;
   d_eatoms[aid] = eatm;
@@ -991,8 +972,6 @@ void EmbeddedFrag::mergeWithCommon(EmbeddedFrag &embObj,
       }
       if (ori.second.angle > 0.0) {
         d_eatoms[aid].angle = ori.second.angle;
-        // std::cerr << " 970 " << aid << " " << d_eatoms[aid].angle <<
-        // std::endl;
 
         d_eatoms[aid].nbr1 = ori.second.nbr1;
         d_eatoms[aid].nbr2 = ori.second.nbr2;
@@ -1304,7 +1283,6 @@ double EmbeddedFrag::mimicDistMatAndDensityCostFunc(
 void EmbeddedFrag::permuteBonds(unsigned int aid, unsigned int aid1,
                                 unsigned int aid2) {
   PRECONDITION(dp_mol, "");
-  // std::cerr<<"permute "<<aid<<" "<<aid1<<" "<<aid2<<std::endl;
   auto rl1 = d_eatoms[aid].loc;
   auto rl2 = d_eatoms[aid1].loc + d_eatoms[aid2].loc;
   rl2 *= 0.5;
@@ -1470,8 +1448,6 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
         efj->second.d_density += 1000.0;
       }
       d2 /= (atomTypeFactor1 * atomTypeFactor2);
-      // std::cerr<<" "<<efi->first<<"-"<<efj->first<<": "<<d2<<"
-      // "<<colThres2<<std::endl;
       if (d2 < colThres2) {
         PAIR_I_I cAids(efi->first, efj->first);
         res.push_back(cAids);
@@ -1615,8 +1591,6 @@ void EmbeddedFrag::flipAboutBond(unsigned int bondId, bool flipEnd) {
       }
     }
   }
-  // std::cerr << "  FLIP: " << nAtomsFixed << " " << nEndAtomsFixed <<
-  // std::endl;
   // now we have the molecule split into two groups of atoms
   // atom on the side of endAid and the rest.
   // we will flip the side that is smaller, assuming that there
@@ -1714,9 +1688,6 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
     type = 3;
   }
 
-  // std::cerr << " openAngles: " << aid1 << "-" << aidA << "-" << aidB << "-"
-  //           << aid2 << "  type:" << type << std::endl;
-
   auto v2 = d_eatoms[aid1].loc - d_eatoms[aidA].loc;
   auto v1 = d_eatoms[aidB].loc - d_eatoms[aidA].loc;
   auto cross = (v1.x) * (v2.y) - (v1.y) * (v2.x);
@@ -1752,8 +1723,6 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
     default:
       break;
   }
-  // std::cerr<<"             post len: "<<(d_eatoms[aid1].loc -
-  // d_eatoms[aid2].loc).length()<<std::endl;
 }
 
 void EmbeddedFrag::removeCollisionsBondFlip() {
@@ -1763,18 +1732,15 @@ void EmbeddedFrag::removeCollisionsBondFlip() {
   // a collision may create a new one
   auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
   auto colls = this->findCollisions(dmat);
-  // std::cerr<<"removeCollisionsBondFlip(): "<<colls.size()<<std::endl;
   std::map<int, unsigned int> doneBonds;
   unsigned int iter = 0;
   while (iter < MAX_COLL_ITERS && colls.size()) {
     auto ncols = colls.size();
-    // std::cerr<<"iter: "<<iter<<" "<<ncols<<std::endl;
     if (ncols > 0) {
       // we have a collision
       auto cAids = colls[0];
       auto rotBonds = getRotatableBonds(*dp_mol, cAids.first, cAids.second);
       auto prevDensity = this->totalDensity();
-      // std::cerr<<"   density: "<<prevDensity<<std::endl;
       for (auto ri : rotBonds) {
         if ((doneBonds.find(ri) == doneBonds.end()) ||
             (doneBonds[ri] < NUM_BONDS_FLIPS)) {
@@ -1787,8 +1753,6 @@ void EmbeddedFrag::removeCollisionsBondFlip() {
           flipAboutBond(ri);
           colls = this->findCollisions(dmat);
           auto newDensity = this->totalDensity();
-          // std::cerr<<"  newcolls: "<<colls.size()<<"
-          // "<<newDensity<<std::endl;
           if (colls.size() < ncols) {
             doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
             break;
@@ -1802,8 +1766,6 @@ void EmbeddedFrag::removeCollisionsBondFlip() {
             flipAboutBond(ri, false);
             colls = this->findCollisions(dmat);
             newDensity = this->totalDensity();
-            // std::cerr<<"  newcolls2: "<<colls.size()<<"
-            // "<<newDensity<<std::endl;
             if (colls.size() < ncols) {
               doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
               break;
@@ -1871,8 +1833,6 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
     }
     // now find the path between the two ends
     auto path = RDKit::MolOps::getShortestPath(*dp_mol, aid1, aid2);
-    // std::cerr << " collide! " << aid1 << " " << aid2 << " " << path.size()
-    //           << std::endl;
     if (!path.size()) {
       // there's no path between the ends, so there's nothing
       // we can really do about this collision.
@@ -1883,14 +1843,12 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
       path.pop_front();
 
       auto nOpen = _anyNonRingBonds(aid1, path, dp_mol);
-      // std::cerr<<"     nOpen: "<<nOpen<<std::endl;
       if (nOpen > 0) {
         if (deg1 == 1) {
           auto loc = d_eatoms[aid1].loc;
           auto aidA = _findDeg1Neighbor(dp_mol, aid1);
           loc -= d_eatoms[aidA].loc;
           loc *= .9;
-          // std::cerr << "  >>> " << aid1 << " " << loc.length() << std::endl;
           if (loc.length() > .75) {
             loc += d_eatoms[aidA].loc;
             d_eatoms[aid1].loc = loc;
@@ -1901,7 +1859,6 @@ void EmbeddedFrag::removeCollisionsShortenBonds() {
           auto aidA = _findDeg1Neighbor(dp_mol, aid2);
           loc -= d_eatoms[aidA].loc;
           loc *= .9;
-          // std::cerr << "  >>> " << aid2 << " " << loc.length() << std::endl;
           if (loc.length() > .75) {
             loc += d_eatoms[aidA].loc;
             d_eatoms[aid2].loc = loc;
