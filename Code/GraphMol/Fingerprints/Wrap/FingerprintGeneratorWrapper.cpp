@@ -309,7 +309,7 @@ python::object getBitPathsHelper(const AdditionalOutput &ao) {
     }
     res[pr.first] = python::tuple(local);
   }
-  return res;
+  return std::move(res);
 }
 python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
   if (!ao.bitInfoMap) {
@@ -324,7 +324,7 @@ python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
     }
     res[pr.first] = python::tuple(local);
   }
-  return res;
+  return std::move(res);
 }
 
 BOOST_PYTHON_MODULE(rdFingerprintGenerator) {

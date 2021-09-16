@@ -23,7 +23,7 @@ using namespace RDKit;
 TEST_CASE("querying with a molbundle") {
   std::vector<std::string> libSmiles = {"CCCC", "CCOC", "CCNC"};
   SubstructLibrary ssslib;
-  for (const auto smi : libSmiles) {
+  for (const auto &smi : libSmiles) {
     std::unique_ptr<RWMol> mol(SmilesToMol(smi));
     REQUIRE(mol);
     ssslib.addMol(*mol);
@@ -32,7 +32,7 @@ TEST_CASE("querying with a molbundle") {
   SECTION("basics") {
     std::vector<std::string> qSmiles = {"CCC", "COC", "CNC"};
     MolBundle bundle;
-    for (const auto smi : qSmiles) {
+    for (const auto &smi : qSmiles) {
       boost::shared_ptr<ROMol> mol(SmilesToMol(smi));
       REQUIRE(mol);
       bundle.addMol(mol);
@@ -49,7 +49,7 @@ TEST_CASE("querying with a molbundle") {
   SECTION("some bundle members don't match") {
     std::vector<std::string> qSmiles = {"CCC", "CSC", "CNC"};
     MolBundle bundle;
-    for (const auto smi : qSmiles) {
+    for (const auto &smi : qSmiles) {
       boost::shared_ptr<ROMol> mol(SmilesToMol(smi));
       REQUIRE(mol);
       bundle.addMol(mol);
@@ -66,7 +66,7 @@ TEST_CASE("querying with a molbundle") {
   SECTION("no dupes please") {
     std::vector<std::string> qSmiles = {"CCC", "CNC", "CC"};
     MolBundle bundle;
-    for (const auto smi : qSmiles) {
+    for (const auto &smi : qSmiles) {
       boost::shared_ptr<ROMol> mol(SmilesToMol(smi));
       REQUIRE(mol);
       bundle.addMol(mol);
@@ -86,7 +86,7 @@ TEST_CASE("using modified query parameters") {
   std::vector<std::string> libSmiles = {"C[C@H](F)Cl", "C[C@@H](F)Cl",
                                         "C[CH](F)Cl"};
   SubstructLibrary ssslib;
-  for (const auto smi : libSmiles) {
+  for (const auto &smi : libSmiles) {
     std::unique_ptr<RWMol> mol(SmilesToMol(smi));
     REQUIRE(mol);
     ssslib.addMol(*mol);
@@ -123,7 +123,7 @@ TEST_CASE("searchOrder") {
 
   SubstructLibrary ssslib(mholder, fpholder);
 
-  for (const auto smi : libSmiles) {
+  for (const auto &smi : libSmiles) {
     std::unique_ptr<RWMol> mol(SmilesToMol(smi));
     REQUIRE(mol);
     ssslib.addMol(*mol);
@@ -220,7 +220,7 @@ TEST_CASE("searchOrderFunctionDemo") {
 
   SubstructLibrary ssslib(mholder, fpholder);
 
-  for (const auto smi : libSmiles) {
+  for (const auto &smi : libSmiles) {
     std::unique_ptr<RWMol> mol(SmilesToMol(smi));
     REQUIRE(mol);
     ssslib.addMol(*mol);
