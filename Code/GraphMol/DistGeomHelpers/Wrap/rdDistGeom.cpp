@@ -30,8 +30,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
                   bool ignoreSmoothingFailures, bool enforceChirality,
                   bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
                   bool printExpTorsionAngles, bool useSmallRingTorsions,
-                  bool useMacrocycleTorsions, unsigned int ETversion,
-		  double boundsMatForceScaling) {
+                  bool useMacrocycleTorsions, unsigned int ETversion) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -54,7 +53,7 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
       randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
       enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
       basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
-      true, useSmallRingTorsions, useMacrocycleTorsions, boundsMatForceScaling);
+      true, useSmallRingTorsions, useMacrocycleTorsions);
 
   int res;
   {
@@ -80,7 +79,7 @@ INT_VECT EmbedMultipleConfs(
     double forceTol, bool ignoreSmoothingFailures, bool enforceChirality,
     int numThreads, bool useExpTorsionAnglePrefs, bool useBasicKnowledge,
     bool printExpTorsionAngles, bool useSmallRingTorsions,
-    bool useMacrocycleTorsions, unsigned int ETversion, double boundsMatForceScaling) {
+    bool useMacrocycleTorsions, unsigned int ETversion) {
   std::map<int, RDGeom::Point3D> pMap;
   python::list ks = coordMap.keys();
   unsigned int nKeys = python::extract<unsigned int>(ks.attr("__len__")());
@@ -100,7 +99,7 @@ INT_VECT EmbedMultipleConfs(
       randNegEig, numZeroFail, pMapPtr, forceTol, ignoreSmoothingFailures,
       enforceChirality, useExpTorsionAnglePrefs, useBasicKnowledge, verbose,
       basinThresh, pruneRmsThresh, onlyHeavyAtomsForRMS, ETversion, nullptr,
-      true, useSmallRingTorsions, useMacrocycleTorsions, boundsMatForceScaling);
+      true, useSmallRingTorsions, useMacrocycleTorsions);
 
   INT_VECT res;
   {
@@ -280,8 +279,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("printExpTorsionAngles") = false,
        python::arg("useSmallRingTorsions") = false,
        python::arg("useMacrocycleTorsions") = false,
-       python::arg("ETversion") = 1,
-       python::arg("boundsMatForceScaling") = 1.0),
+       python::arg("ETversion") = 1),
       docString.c_str());
 
   docString =
@@ -350,8 +348,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("printExpTorsionAngles") = false,
        python::arg("useSmallRingTorsions") = false,
        python::arg("useMacrocycleTorsions") = false,
-       python::arg("ETversion") = 1,
-       python::arg("boundsMatForceScaling") = 1.0),
+       python::arg("ETversion") = 1),
       docString.c_str());
 
   python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(
