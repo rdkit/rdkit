@@ -863,6 +863,7 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
       etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
     }
   }
+  etkdgDetails.boundsMatForceScaling = params.boundsMatForceScaling;
 }
 
 bool setupInitialBoundsMatrix(
