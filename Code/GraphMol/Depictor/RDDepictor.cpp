@@ -55,7 +55,7 @@ void embedFusedSystems(const RDKit::ROMol &mol,
     RDKit::VECT_INT_VECT frings;
     frings.reserve(fused.size());
     for (auto rid : fused) {
-      frings.push_back(arings[rid]);
+      frings.push_back(arings.at(rid));
     }
     EmbeddedFrag efrag(&mol, frings);
     efrag.setupNewNeighs();
@@ -230,7 +230,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
       auto mrank = static_cast<int>(RDKit::MAX_INT);
       RDKit::INT_LIST_I mnri;
       for (auto nri = nratms.begin(); nri != nratms.end(); ++nri) {
-        auto rank = atomRanks[*nri];
+        auto rank = atomRanks.at(*nri);
         rank *= mol.getNumAtoms();
         // use the atom index as well so that we at least
         // get reproducible depictions in cases where things
