@@ -20,6 +20,16 @@
 
 using namespace RDKit;
 using namespace RDKit::Deprotect;
+TEST_CASE("Deprotection basics", "[deprotect]") {
+  const auto dps = getDeprotections();
+  DeprotectData cp = dps[0];
+  CHECK(cp == dps[0]);
+  CHECK(dps[0] == cp);
+  CHECK(
+      !(dps[1] ==
+        dps[0]));  // DeprotectData only implements operator== as a const method
+}
+
 TEST_CASE("Standard deprotections", "[deprotect]") {
   SECTION("simple deprotections") {
     auto m = "N(C(=O)OC(C)(C)C)Cc1ccccc1NC(=O)OC(C)(C)C"_smiles;
@@ -31,7 +41,7 @@ TEST_CASE("Standard deprotections", "[deprotect]") {
     CHECK(res->getProp<std::vector<std::string>>("DEPROTECTIONS") == expected);
   }
   SECTION("test deprotection examples") {
-    for(auto &data : getDeprotections()) {
+    for (auto &data : getDeprotections()) {
       std::vector<DeprotectData> vect = {data};
       std::vector<std::string> examples;
       boost::split(examples, data.example, boost::is_any_of(">"));
