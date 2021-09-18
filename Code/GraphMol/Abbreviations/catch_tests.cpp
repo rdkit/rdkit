@@ -528,3 +528,11 @@ M  END
     CHECK(MolToCXSmiles(*m) == "C*C |$;PEG2;$|");
   }
 }
+
+TEST_CASE("comparison") {
+  auto abbrevs = Abbreviations::Utils::getDefaultAbbreviations();
+  Abbreviations::AbbreviationDefinition cp = abbrevs[0];
+  CHECK(cp == abbrevs[0]);
+  CHECK(cp != abbrevs[1]);
+  CHECK(abbrevs[1] == abbrevs[1]);
+}
