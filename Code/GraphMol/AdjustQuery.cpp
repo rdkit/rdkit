@@ -359,7 +359,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
             !ringInfo->numAtomRings(i)) &&
           !((params.makeAtomsGenericFlags & ADJUST_IGNORERINGS) &&
             ringInfo->numAtomRings(i)) &&
-          !((params.adjustDegreeFlags & ADJUST_IGNOREMAPPED) &&
+          !((params.makeAtomsGenericFlags & ADJUST_IGNOREMAPPED) &&
             isMapped(mol.getAtomWithIdx(i)))) {
         auto *qa = new QueryAtom();
         qa->setQuery(makeAtomNullQuery());

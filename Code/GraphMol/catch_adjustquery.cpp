@@ -705,3 +705,16 @@ TEST_CASE(
   }
 }
 
+TEST_CASE("makeAtomsGeneric") {
+  SECTION("ignore mapped atoms") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.makeAtomsGeneric = true;
+    ps.makeAtomsGenericFlags =
+        MolOps::AdjustQueryWhichFlags::ADJUST_IGNOREMAPPED;
+    auto m = "C[CH3:1]"_smiles;
+    REQUIRE(m);
+    MolOps::adjustQueryProperties(*m, &ps);
+    CHECK(MolToSmarts(*m) == "*-[#6H3:1]");
+  }
+}
