@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -12,6 +12,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/MolPickler.h>
 #include "FileParsers.h"
 #include "SequenceParsers.h"
 #include "SequenceWriters.h"
@@ -3743,6 +3744,26 @@ void testPDBFile() {
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x, 17.047));
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y, 14.099));
     TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 3.625));
+
+    std::string pkl;
+    MolPickler::pickleMol(*m, pkl);
+    RWMol m2(pkl);
+    for (const auto atom : m->atoms()) {
+      const auto atom2 = m2.getAtomWithIdx(atom->getIdx());
+      auto info1 = static_cast<AtomPDBResidueInfo *>(atom->getMonomerInfo());
+      auto info2 = static_cast<AtomPDBResidueInfo *>(atom2->getMonomerInfo());
+      // this is awkward because operator== isn't defined for AtomPDBResidueInfo
+      // yet
+      TEST_ASSERT(info1->getName() == info2->getName());
+      TEST_ASSERT(info1->getChainId() == info2->getChainId());
+      TEST_ASSERT(info1->getInsertionCode() == info2->getInsertionCode());
+      TEST_ASSERT(info1->getTempFactor() == info2->getTempFactor());
+      TEST_ASSERT(info1->getMonomerType() == info2->getMonomerType());
+      TEST_ASSERT(info1->getResidueName() == info2->getResidueName());
+      TEST_ASSERT(info1->getResidueNumber() == info2->getResidueNumber());
+      TEST_ASSERT(info1->getSerialNumber() == info2->getSerialNumber());
+      TEST_ASSERT(info1->getOccupancy() == info2->getOccupancy());
+    }
 
     std::string mb = MolToPDBBlock(*m);
     delete m;
