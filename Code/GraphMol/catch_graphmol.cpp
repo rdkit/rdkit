@@ -2149,6 +2149,16 @@ TEST_CASE("atom copy ctor") {
   }
 }
 
+TEST_CASE("bond copy ctor") {
+  auto m = "COC"_smiles;
+  REQUIRE(m);
+  for (const auto bond : m->bonds()) {
+    Bond cp(*bond);
+    CHECK(cp.getBondType() == bond->getBondType());
+    CHECK(!cp.hasOwningMol());
+  }
+}
+
 TEST_CASE("valence edge") {
   {  // this is, of course, absurd:
     auto m = "[H-2]"_smiles;
@@ -2174,6 +2184,15 @@ TEST_CASE("SetQuery on normal atoms") {
   auto qry = makeAtomAliphaticQuery();
   CHECK_THROWS_AS(m->getAtomWithIdx(0)->setQuery(qry), std::runtime_error);
   CHECK_THROWS_AS(m->getAtomWithIdx(0)->expandQuery(qry), std::runtime_error);
+  delete qry;
+}
+
+TEST_CASE("SetQuery on normal bonds") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  auto qry = makeBondOrderEqualsQuery(Bond::BondType::SINGLE);
+  CHECK_THROWS_AS(m->getBondWithIdx(0)->setQuery(qry), std::runtime_error);
+  CHECK_THROWS_AS(m->getBondWithIdx(0)->expandQuery(qry), std::runtime_error);
   delete qry;
 }
 
@@ -2209,4 +2228,60 @@ TEST_CASE("additional atom props") {
     setSupplementalSmilesLabel(atom, "");
     CHECK(!atom->hasProp(common_properties::_supplementalSmilesLabel));
   }
+}
+
+TEST_CASE("getBondTypeAsDouble()") {
+  SECTION("plain") {
+    std::vector<std::pair<Bond::BondType, double>> vals{
+        {Bond::BondType::IONIC, 0},
+        {Bond::BondType::ZERO, 0},
+        {Bond::BondType::SINGLE, 1},
+        {Bond::BondType::DOUBLE, 2},
+        {Bond::BondType::TRIPLE, 3},
+        {Bond::BondType::QUADRUPLE, 4},
+        {Bond::BondType::QUINTUPLE, 5},
+        {Bond::BondType::HEXTUPLE, 6},
+        {Bond::BondType::ONEANDAHALF, 1.5},
+        {Bond::BondType::TWOANDAHALF, 2.5},
+        {Bond::BondType::THREEANDAHALF, 3.5},
+        {Bond::BondType::FOURANDAHALF, 4.5},
+        {Bond::BondType::FIVEANDAHALF, 5.5},
+        {Bond::BondType::AROMATIC, 1.5},
+        {Bond::BondType::DATIVEONE, 1.0},
+        {Bond::BondType::DATIVE, 1.0},
+        {Bond::BondType::HYDROGEN, 0}
+
+    };
+    for (const auto &pr : vals) {
+      Bond bnd(pr.first);
+      CHECK(bnd.getBondType() == pr.first);
+      CHECK(bnd.getBondTypeAsDouble() == pr.second);
+    }
+  }
+  SECTION("twice") {
+    std::vector<std::pair<Bond::BondType, std::uint8_t>> vals{
+        {Bond::BondType::IONIC, 0},         {Bond::BondType::ZERO, 0},
+        {Bond::BondType::SINGLE, 2},        {Bond::BondType::DOUBLE, 4},
+        {Bond::BondType::TRIPLE, 6},        {Bond::BondType::QUADRUPLE, 8},
+        {Bond::BondType::QUINTUPLE, 10},    {Bond::BondType::HEXTUPLE, 12},
+        {Bond::BondType::ONEANDAHALF, 3},   {Bond::BondType::TWOANDAHALF, 5},
+        {Bond::BondType::THREEANDAHALF, 7}, {Bond::BondType::FOURANDAHALF, 9},
+        {Bond::BondType::FIVEANDAHALF, 11}, {Bond::BondType::AROMATIC, 3},
+        {Bond::BondType::DATIVEONE, 2},     {Bond::BondType::DATIVE, 2},
+        {Bond::BondType::HYDROGEN, 0}
+
+    };
+    for (const auto &pr : vals) {
+      Bond bnd(pr.first);
+      CHECK(bnd.getBondType() == pr.first);
+      CHECK(getTwiceBondType(bnd) == pr.second);
+    }
+  }
+}
+
+TEST_CASE("getValenceContrib()") {
+  const auto m = "CO->[Fe]"_smiles;
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(0)) == 0);
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(1)) == 0);
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 1);
 }
