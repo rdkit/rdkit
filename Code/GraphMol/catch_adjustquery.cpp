@@ -342,24 +342,24 @@ TEST_CASE("adjustQueryParameters from JSON") {
   }
   SECTION("adjustRingCountFlags") {
     MolOps::AdjustQueryParameters ps;
-    CHECK(ps.adjustRingCountFlags != MolOps::ADJUST_IGNORENONE);
-    std::string json = R"JSON({"adjustRingCountFlags":"IGNORENONE"})JSON";
+    CHECK(ps.adjustRingCountFlags != MolOps::ADJUST_IGNORERINGS);
+    std::string json = R"JSON({"adjustRingCountFlags":"IGNORERINGS"})JSON";
     MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-    CHECK(ps.adjustRingCountFlags == MolOps::ADJUST_IGNORENONE);
+    CHECK(ps.adjustRingCountFlags == MolOps::ADJUST_IGNORERINGS);
   }
   SECTION("makeAtomsGenericFlags") {
     MolOps::AdjustQueryParameters ps;
-    CHECK(ps.makeAtomsGenericFlags != MolOps::ADJUST_IGNOREDUMMIES);
-    std::string json = R"JSON({"makeAtomsGenericFlags":"IGNOREDUMMIES"})JSON";
+    CHECK(ps.makeAtomsGenericFlags != MolOps::ADJUST_IGNOREALL);
+    std::string json = R"JSON({"makeAtomsGenericFlags":"IGNOREALL"})JSON";
     MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-    CHECK(ps.makeAtomsGenericFlags == MolOps::ADJUST_IGNOREDUMMIES);
+    CHECK(ps.makeAtomsGenericFlags == MolOps::ADJUST_IGNOREALL);
   }
   SECTION("adjustRingChainFlags") {
     MolOps::AdjustQueryParameters ps;
-    CHECK(ps.adjustRingChainFlags != MolOps::ADJUST_IGNOREDUMMIES);
-    std::string json = R"JSON({"adjustRingChainFlags":"IGNOREDUMMIES"})JSON";
+    CHECK(ps.adjustRingChainFlags != MolOps::ADJUST_IGNORENONDUMMIES);
+    std::string json = R"JSON({"adjustRingChainFlags":"IGNORENONDUMMIES"})JSON";
     MolOps::parseAdjustQueryParametersFromJSON(ps, json);
-    CHECK(ps.adjustRingChainFlags == MolOps::ADJUST_IGNOREDUMMIES);
+    CHECK(ps.adjustRingChainFlags == MolOps::ADJUST_IGNORENONDUMMIES);
   }
   SECTION("bogus contents") {
     MolOps::AdjustQueryParameters ps;
@@ -744,5 +744,44 @@ TEST_CASE("makeAtomsGeneric") {
     REQUIRE(m);
     MolOps::adjustQueryProperties(*m, &ps);
     CHECK(MolToSmarts(*m) == "*-[#6H3:1]");
+  }
+}
+
+TEST_CASE("other edges") {
+  SECTION("adjustHeavyDegree") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.adjustHeavyDegree = true;
+    ps.adjustHeavyDegreeFlags = MolOps::ADJUST_IGNOREMAPPED;
+    auto m = "C[CH3:1]"_smiles;
+    MolOps::adjustQueryProperties(*m, &ps);
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(describeQuery(m->getAtomWithIdx(0)).find("AtomHeavyAtomDegree") !=
+          std::string::npos);
+    CHECK(!m->getAtomWithIdx(1)->hasQuery());
+  }
+  SECTION("adjustRingCount") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.adjustRingCount = true;
+    ps.adjustRingCountFlags = MolOps::ADJUST_IGNOREMAPPED;
+    auto m = "C[CH3:1]"_smiles;
+    MolOps::adjustQueryProperties(*m, &ps);
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(describeQuery(m->getAtomWithIdx(0)).find("AtomInNRings") !=
+          std::string::npos);
+    CHECK(!m->getAtomWithIdx(1)->hasQuery());
+  }
+  SECTION("adjustRingCount") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.adjustRingChain = true;
+    ps.adjustRingChainFlags = MolOps::ADJUST_IGNOREMAPPED;
+    auto m = "C[CH3:1]"_smiles;
+    MolOps::adjustQueryProperties(*m, &ps);
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(describeQuery(m->getAtomWithIdx(0)).find("AtomInRing") !=
+          std::string::npos);
+    CHECK(!m->getAtomWithIdx(1)->hasQuery());
   }
 }
