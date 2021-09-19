@@ -1707,3 +1707,15 @@ TEST_CASE(
     CHECK(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
 }
+
+TEST_CASE("StereoInfo comparisons") {
+  Chirality::StereoInfo si1;
+  si1.centeredOn = 3;
+  si1.type == Chirality::StereoType::Atom_Tetrahedral;
+  Chirality::StereoInfo si2;
+  si2.centeredOn = 3;
+  si2.type == Chirality::StereoType::Atom_Tetrahedral;
+  CHECK(si1 == si2);
+  si2.descriptor = Chirality::StereoDescriptor::Tet_CCW;
+  CHECK(si1 != si2);
+}
