@@ -1905,7 +1905,8 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   }
 }
 
-TEST_CASE("github #4496: cannot draw aromatic atom lists from SMARTS", "[query][bug]") {
+TEST_CASE("github #4496: cannot draw aromatic atom lists from SMARTS",
+          "[query][bug]") {
   SECTION("original") {
     auto m = "[c,n]1[c,n][c,n][c,n][c,n][c,n]1"_smarts;
     REQUIRE(m);
@@ -2135,5 +2136,77 @@ TEST_CASE(
     CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 0);
     CHECK(MolToSmiles(*m) == "CO");
     CHECK(MolToSmarts(*m) == "C-,=O");
+  }
+}
+
+TEST_CASE("atom copy ctor") {
+  auto m = "CO"_smiles;
+  REQUIRE(m);
+  for (const auto atom : m->atoms()) {
+    Atom cp(*atom);
+    CHECK(cp.getAtomicNum() == atom->getAtomicNum());
+    CHECK(!cp.hasOwningMol());
+  }
+}
+
+TEST_CASE("valence edge") {
+  {  // this is, of course, absurd:
+    auto m = "[H-2]"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setNoImplicit(false);
+    m->updatePropertyCache(false);
+    CHECK(m->getAtomWithIdx(0)->getFormalCharge() == -2);
+    CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+  }
+  {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("CFC", ps)};
+    REQUIRE(m);
+    CHECK_THROWS_AS(m->getAtomWithIdx(1)->calcImplicitValence(true),
+                    AtomValenceException);
+  }
+}
+
+TEST_CASE("SetQuery on normal atoms") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  auto qry = makeAtomAliphaticQuery();
+  CHECK_THROWS_AS(m->getAtomWithIdx(0)->setQuery(qry), std::runtime_error);
+  CHECK_THROWS_AS(m->getAtomWithIdx(0)->expandQuery(qry), std::runtime_error);
+  delete qry;
+}
+
+TEST_CASE("additional atom props") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  auto atom = m->getAtomWithIdx(0);
+  {
+    CHECK(!atom->hasProp(common_properties::_MolFileRLabel));
+    setAtomRLabel(atom, 1);
+    CHECK(atom->hasProp(common_properties::_MolFileRLabel));
+    setAtomRLabel(atom, 0);
+    CHECK(!atom->hasProp(common_properties::_MolFileRLabel));
+  }
+  {
+    CHECK(!atom->hasProp(common_properties::molFileAlias));
+    setAtomAlias(atom, "foo");
+    CHECK(atom->hasProp(common_properties::molFileAlias));
+    setAtomAlias(atom, "");
+    CHECK(!atom->hasProp(common_properties::molFileAlias));
+  }
+  {
+    CHECK(!atom->hasProp(common_properties::molFileValue));
+    setAtomValue(atom, "foo");
+    CHECK(atom->hasProp(common_properties::molFileValue));
+    setAtomValue(atom, "");
+    CHECK(!atom->hasProp(common_properties::molFileValue));
+  }
+  {
+    CHECK(!atom->hasProp(common_properties::_supplementalSmilesLabel));
+    setSupplementalSmilesLabel(atom, "foo");
+    CHECK(atom->hasProp(common_properties::_supplementalSmilesLabel));
+    setSupplementalSmilesLabel(atom, "");
+    CHECK(!atom->hasProp(common_properties::_supplementalSmilesLabel));
   }
 }
