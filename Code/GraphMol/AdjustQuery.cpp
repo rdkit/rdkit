@@ -322,7 +322,7 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
   }
   which = boost::to_upper_copy<std::string>(pt.get("adjustRingChainFlags", ""));
   if (!which.empty()) {
-    p.adjustRingCountFlags = parseWhichString(which);
+    p.adjustRingChainFlags = parseWhichString(which);
   }
 }  // namespace MolOps
 

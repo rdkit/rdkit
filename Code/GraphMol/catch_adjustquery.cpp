@@ -333,6 +333,13 @@ TEST_CASE("adjustQueryParameters from JSON") {
     MolOps::parseAdjustQueryParametersFromJSON(ps, json);
     CHECK(ps.useStereoCareForBonds == false);
   }
+  SECTION("adjustRingChainFlags") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.adjustRingChainFlags != MolOps::ADJUST_IGNOREDUMMIES);
+    std::string json = R"JSON({"adjustRingChainFlags":"IGNOREDUMMIES"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustRingChainFlags == MolOps::ADJUST_IGNOREDUMMIES);
+  }
   SECTION("bogus contents") {
     MolOps::AdjustQueryParameters ps;
     CHECK(ps.adjustDegree == true);
