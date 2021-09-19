@@ -333,6 +333,27 @@ TEST_CASE("adjustQueryParameters from JSON") {
     MolOps::parseAdjustQueryParametersFromJSON(ps, json);
     CHECK(ps.useStereoCareForBonds == false);
   }
+  SECTION("adjustHeavyDegreeFlags") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.adjustHeavyDegreeFlags != MolOps::ADJUST_IGNORENONE);
+    std::string json = R"JSON({"adjustHeavyDegreeFlags":"IGNORENONE"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustHeavyDegreeFlags == MolOps::ADJUST_IGNORENONE);
+  }
+  SECTION("adjustRingCountFlags") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.adjustRingCountFlags != MolOps::ADJUST_IGNORENONE);
+    std::string json = R"JSON({"adjustRingCountFlags":"IGNORENONE"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustRingCountFlags == MolOps::ADJUST_IGNORENONE);
+  }
+  SECTION("makeAtomsGenericFlags") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.makeAtomsGenericFlags != MolOps::ADJUST_IGNOREDUMMIES);
+    std::string json = R"JSON({"makeAtomsGenericFlags":"IGNOREDUMMIES"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.makeAtomsGenericFlags == MolOps::ADJUST_IGNOREDUMMIES);
+  }
   SECTION("adjustRingChainFlags") {
     MolOps::AdjustQueryParameters ps;
     CHECK(ps.adjustRingChainFlags != MolOps::ADJUST_IGNOREDUMMIES);
