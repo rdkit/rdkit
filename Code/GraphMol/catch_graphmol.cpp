@@ -2281,7 +2281,63 @@ TEST_CASE("getBondTypeAsDouble()") {
 
 TEST_CASE("getValenceContrib()") {
   const auto m = "CO->[Fe]"_smiles;
+  REQUIRE(m);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(0)) == 0);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(1)) == 0);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 1);
+}
+
+TEST_CASE("conformer details") {
+  const auto m = "CC"_smiles;
+  REQUIRE(m);
+  Conformer *conf = new Conformer(m->getNumAtoms());
+  CHECK(!conf->hasOwningMol());
+  m->addConformer(conf);
+  CHECK(conf->hasOwningMol());
+  auto cid = conf->getId();
+  *conf = *conf;
+  CHECK(conf->hasOwningMol());
+  CHECK(conf->getId() == cid);
+}
+
+namespace RDKit {
+namespace Canon {
+namespace details {
+bool atomHasFourthValence(const Atom *atom);
+bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q);
+}  // namespace details
+void switchBondDir(Bond *bond);
+}  // namespace Canon
+}  // namespace RDKit
+TEST_CASE("canon details") {
+  SECTION("h queries") {
+    std::vector<std::pair<std::string, bool>> examples{
+        {"C[CHD3](F)Cl", true},  {"C[CD3H](F)Cl", true},
+        {"C[CH3D](F)Cl", false}, {"C[CDH3](F)Cl", false},
+        {"C[CDR4H](F)Cl", true},
+    };
+    for (const auto &pr : examples) {
+      std::unique_ptr<RWMol> m{SmartsToMol(pr.first)};
+      REQUIRE(m);
+      CHECK(RDKit::Canon::details::hasSingleHQuery(
+                m->getAtomWithIdx(1)->getQuery()) == pr.second);
+      CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)) ==
+            pr.second);
+      // artificial, but causes atomHasFourthValence to always return true
+      m->getAtomWithIdx(1)->setNumExplicitHs(1);
+      CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)));
+    }
+  }
+}
+
+TEST_CASE("switchBondDir") {
+  auto m = "C/C=C/C"_smiles;
+  REQUIRE(m);
+  auto bond = m->getBondWithIdx(0);
+  CHECK(bond->getBondDir() == Bond::BondDir::ENDUPRIGHT);
+  Canon::switchBondDir(bond);
+  CHECK(bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT);
+  bond->setBondDir(Bond::BondDir::UNKNOWN);
+  Canon::switchBondDir(bond);
+  CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
