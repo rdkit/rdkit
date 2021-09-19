@@ -25,9 +25,7 @@ TEST_CASE("Deprotection basics", "[deprotect]") {
   DeprotectData cp = dps[0];
   CHECK(cp == dps[0]);
   CHECK(dps[0] == cp);
-  CHECK(
-      !(dps[1] ==
-        dps[0]));  // DeprotectData only implements operator== as a const method
+  CHECK(dps[1] != dps[0]);
 }
 
 TEST_CASE("Standard deprotections", "[deprotect]") {
