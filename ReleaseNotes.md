@@ -20,6 +20,9 @@
 - The function `mol_from_smarts()` in the PostgreSQL cartridge has been
   deprecated and will be removed in the next release. Please use the
   `qmol_from_smarts()` function instead.
+- The `computeBalabanJ()` functions from the `MolOps` namespace have been
+  deprecated and will be removed in the next release. These have not been
+  exposed to Python, so this will not affect any Python code.
 
 
 
