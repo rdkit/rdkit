@@ -2300,6 +2300,7 @@ TEST_CASE("conformer details") {
   CHECK(conf->getId() == cid);
 }
 
+#if !defined(_MSC_VER) || !defined(RDKIT_DYN_LINK)
 namespace RDKit {
 namespace Canon {
 namespace details {
@@ -2341,3 +2342,4 @@ TEST_CASE("switchBondDir") {
   Canon::switchBondDir(bond);
   CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
+#endif
