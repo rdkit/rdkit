@@ -2137,3 +2137,35 @@ TEST_CASE(
     CHECK(MolToSmarts(*m) == "C-,=O");
   }
 }
+
+TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
+  std::vector<std::pair<std::string, std::string>> tests = {
+      {"O=n1ccccc1", "O=N1=CC=CC=C1"},
+      {"O=p1ccccc1", "O=P1=CC=CC=C1"},
+      {"O=[as]1ccccc1", "O=[As]1=CC=CC=C1"}};
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  SECTION("kekulization") {
+    for (const auto &pr : tests) {
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      MolOps::Kekulize(*m);
+      CHECK(MolToSmiles(*m) == pr.second);
+    }
+  }
+  SECTION("sanitization") {
+    for (const auto &pr : tests) {
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      unsigned int failed;
+      unsigned int flags = MolOps::SanitizeFlags::SANITIZE_ALL ^
+                           MolOps::SanitizeFlags::SANITIZE_CLEANUP ^
+                           MolOps::SanitizeFlags::SANITIZE_PROPERTIES;
+      MolOps::sanitizeMol(*m, failed, flags);
+      CHECK(!failed);
+      CHECK(MolToSmiles(*m) == pr.second);
+    }
+  }
+}
