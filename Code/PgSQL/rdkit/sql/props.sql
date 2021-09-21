@@ -61,6 +61,7 @@ SELECT substring(mol_to_svg('CCO'::mol)::text,1,120) svg;
 SELECT substring(mol_to_svg('CCO'::mol,'legend')::text,1,120) svg;
 SELECT mol_to_svg('CCO'::mol,'legend',250,200,
   '{"atomLabels":{"1":"foo"},"legendColour":[0.5,0.5,0.5]}')::text like '%fill=''#7F7F7F''%' svg;
+SELECT substring(mol_to_svg('CCO'::qmol)::text,1,120) svg;
 
 -- GitHub Issue 2174 - mol_to_svg() should not change input mol.
 /**

@@ -211,7 +211,19 @@ RETURNS mol
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION mol_adjust_query_properties(qmol,cstring default '')
+RETURNS qmol
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION mol_to_svg(mol, cstring default '', integer default 250, integer default 200, cstring default '')
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_svg(qmol, cstring default '', integer default 250, integer default 200, cstring default '')
 RETURNS cstring
 @RDKIT_PARALLEL_SAFE@
 AS 'MODULE_PATHNAME'
