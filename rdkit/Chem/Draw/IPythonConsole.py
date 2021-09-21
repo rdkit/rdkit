@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2011-2017 Greg Landrum
+#  Copyright (C) 2011-2021 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -133,6 +133,25 @@ def _toReactionSVG(rxn):
   rc = copy.deepcopy(rxn)
   return Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]), useSVG=True,
                               highlightByReactant=highlightByReactant, drawOptions=drawOptions)
+
+
+def _toMolBundlePNG(bundle):
+  if _MolsToGridImageSaved is not None:
+    fn = _MolsToGridImageSaved
+  else:
+    fn = Draw.MolsToGridImage
+
+  return fn(bundle, subImgSize=molSize, drawOptions=drawOptions, useSVG=False, returnPNG=True)
+
+
+def _toMolBundleSVG(bundle):
+  if not ipython_useSVG:
+    return None
+  if _MolsToGridImageSaved is not None:
+    fn = _MolsToGridImageSaved
+  else:
+    fn = Draw.MolsToGridImage
+  return fn(bundle, subImgSize=molSize, drawOptions=drawOptions, useSVG=True)
 
 
 def _GetSubstructMatch(mol, query, *args, **kwargs):
@@ -299,6 +318,9 @@ def EnableSubstructMatchRendering():
   rdchem.Mol.GetSubstructMatches = _GetSubstructMatches
 
 
+_methodsToDelete = []
+
+
 def InstallIPythonRenderer():
   global _MolsToGridImageSaved, _DrawRDKitBitSaved, _DrawRDKitBitsSaved, _DrawMorganBitSaved, _DrawMorganBitsSaved
   global _rendererInstalled
@@ -306,12 +328,21 @@ def InstallIPythonRenderer():
     return
   rdchem.Mol._repr_png_ = _toPNG
   rdchem.Mol._repr_svg_ = _toSVG
-  if _canUse3D:
-    rdchem.Mol._repr_html_ = _toJSON
+  _methodsToDelete.append((rdchem.Mol, '_repr_png_'))
+  _methodsToDelete.append((rdchem.Mol, '_repr_svg_'))
   rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
   rdChemReactions.ChemicalReaction._repr_svg_ = _toReactionSVG
+  _methodsToDelete.append((rdChemReactions.ChemicalReaction, '_repr_png_'))
+  _methodsToDelete.append((rdChemReactions.ChemicalReaction, '_repr_svg_'))
+
+  rdchem.MolBundle._repr_png_ = _toMolBundlePNG
+  rdchem.MolBundle._repr_svg_ = _toMolBundleSVG
+  _methodsToDelete.append((rdchem.MolBundle, '_repr_png_'))
+  _methodsToDelete.append((rdchem.MolBundle, '_repr_svg_'))
+
   EnableSubstructMatchRendering()
   Image.Image._repr_png_ = display_pil_image
+  _methodsToDelete.append((Image.Image, '_repr_png_'))
   _MolsToGridImageSaved = Draw.MolsToGridImage
   Draw.MolsToGridImage = ShowMols
   _DrawRDKitBitSaved = Draw.DrawRDKitBit
@@ -341,16 +372,15 @@ def DisableSubstructMatchRendering():
 
 def UninstallIPythonRenderer():
   global _MolsToGridImageSaved, _DrawRDKitBitSaved, _DrawMorganBitSaved, _DrawMorganBitsSaved
-  global _rendererInstalled
+  global _rendererInstalled, _methodsToDelete
   if not _rendererInstalled:
     return
-  del rdchem.Mol._repr_svg_
-  del rdchem.Mol._repr_png_
-  if _canUse3D:
-    del rdchem.Mol._repr_html_
-  del rdChemReactions.ChemicalReaction._repr_png_
+
+  for cls, attr in _methodsToDelete:
+    delattr(cls, attr)
+
+  _methodsToDelete = []
   DisableSubstructMatchRendering()
-  del Image.Image._repr_png_
   if _MolsToGridImageSaved is not None:
     Draw.MolsToGridImage = _MolsToGridImageSaved
   if _DrawRDKitBitSaved is not None:
