@@ -13,6 +13,7 @@ import warnings
 import uuid
 import json
 import os
+import base64
 import copy
 from io import BytesIO, StringIO
 from rdkit.Chem.Draw import rdMolDraw2D
@@ -38,6 +39,7 @@ highlightSubstructs = True
 kekulizeStructures = True
 highlightByReactant = False
 ipython_useSVG = False
+ipython_showProperties = True
 ipython_3d = False
 molSize_3d = (400, 400)
 drawing_type_3d = 'stick'  # default drawing type for 3d structures
@@ -97,6 +99,32 @@ def _toJSON(mol):
   if hasattr(res, 'data'):
     return res.data
   return ""
+
+
+def _toHTML(mol):
+  if _canUse3D and ipython_3d and mol.GetNumConformers():
+    return _toJSON(mol)
+  props = mol.GetPropsAsDict()
+  if not ipython_showProperties or not props:
+    return _toSVG(mol)
+  if mol.HasProp('_Name'):
+    nm = mol.GetProp('_Name')
+  else:
+    nm = ''
+  res = []
+  if not ipython_useSVG:
+    png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
+    png = base64.b64encode(png)
+    res.append(f'<tr><td colspan=2><image src="data:image/png;base64,{png.decode()}"></td></tr>')
+  else:
+    svg = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures, drawOptions=drawOptions)
+    res.append(f'<tr><td colspan=2>{svg}</td></tr>')
+
+  for pn, pv in props.items():
+    res.append(
+      f'<tr><th style="text-align:right">{pn}</th><td style="text-align:left">{pv}</td></tr>')
+  res = "\n".join(res)
+  return f'<table>{res}</table>'
 
 
 def _toPNG(mol):
@@ -330,6 +358,9 @@ def InstallIPythonRenderer():
   rdchem.Mol._repr_svg_ = _toSVG
   _methodsToDelete.append((rdchem.Mol, '_repr_png_'))
   _methodsToDelete.append((rdchem.Mol, '_repr_svg_'))
+  rdchem.Mol._repr_html_ = _toHTML
+  _methodsToDelete.append((rdchem.Mol, '_repr_html_'))
+
   rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
   rdChemReactions.ChemicalReaction._repr_svg_ = _toReactionSVG
   _methodsToDelete.append((rdChemReactions.ChemicalReaction, '_repr_png_'))
