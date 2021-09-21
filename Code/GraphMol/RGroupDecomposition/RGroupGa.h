@@ -22,6 +22,7 @@
 #include "../../../External/GA/ga/LinkedPopLinearSel.h"
 #include "../../../External/GA/ga/IntegerStringChromosomePolicy.h"
 #include "RGroupFingerprintScore.h"
+#include "RGroupScore.h"
 
 namespace RDKit {
 
@@ -87,13 +88,11 @@ class RGroupDecompositionChromosome : public IntegerStringChromosome {
 };
 
 struct GaResult {
-  double score;
-  vector<vector<size_t>> permutations;
+  RGroupScorer rGroupScorer;
 
   GaResult(const double score, const vector<vector<size_t>>& permutations)
-      : score(score), permutations(permutations) {}
-  GaResult(const GaResult& other)
-      : score(other.score), permutations(other.permutations) {}
+      : rGroupScorer(RGroupScorer(permutations, score)) {}
+  GaResult(const GaResult& other) : rGroupScorer(other.rGroupScorer) {}
 
   GaResult() {}
 
@@ -103,7 +102,7 @@ struct GaResult {
 
 class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
  public:
-  RGroupGa(const RGroupDecompData& rGroupData,
+  RGroupGa(RGroupDecompData& rGroupData,
            const chrono::steady_clock::time_point* const t0 = nullptr);
 
   IntegerStringChromosomePolicy& getChromosomePolicy() {
@@ -120,7 +119,7 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
 
   shared_ptr<RGroupDecompositionChromosome> createChromosome();
 
-  const RGroupDecompData& getRGroupData() const { return rGroupData; }
+  RGroupDecompData& getRGroupData() const { return rGroupData; }
 
   const vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>>
   getOperations() const;
@@ -130,7 +129,7 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
  private:
   RGroupGa(const RGroupGa& other) = delete;
   RGroupGa& operator=(const RGroupGa& other) = delete;
-  const RGroupDecompData& rGroupData;
+  RGroupDecompData& rGroupData;
   IntegerStringChromosomePolicy chromosomePolicy;
   int numberOperations;
   int numberOperationsWithoutImprovement;

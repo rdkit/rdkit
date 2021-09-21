@@ -85,8 +85,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // get the sidechains if possible
   //  Add hs for better symmetrization
   RWMol mol(inmol);
-  bool explicitOnly = false;
-  bool addCoords = true;
+  const bool explicitOnly = false;
+  const bool addCoords = true;
   MolOps::addHs(mol, explicitOnly, addCoords);
 
   int core_idx = 0;
@@ -369,28 +369,32 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     return -2;
   }
 
+  const bool prune = true;
+  if (prune) {
+    data->permutationProduct = 1;
+  }
   if (data->params.matchingStrategy != GA) {
-    size_t N = 1;
-    for (auto &matche : data->matches) {
-      size_t sz = matche.size();
+    size_t N = data->permutationProduct;
+    for (auto matche = data->matches.begin() + data->previousMatchSize;
+         matche != data->matches.end(); ++matche) {
+      size_t sz = matche->size();
       N *= sz;
     }
     // oops, exponential is a pain
     if (N * potentialMatches.size() > 100000) {
-      data->permutation = std::vector<size_t>(data->matches.size(), 0);
-      data->process(true);
+      data->permutationProduct = N;
+      data->process(prune);
     }
   }
 
   data->matches.push_back(potentialMatches);
-  data->permutation = std::vector<size_t>(data->matches.size(), 0);
 
   if (data->matches.size()) {
     if (data->params.matchingStrategy & Greedy ||
         (data->params.matchingStrategy & GreedyChunks &&
          data->matches.size() > 1 &&
          data->matches.size() % data->params.chunkSize == 0)) {
-      data->process(true);
+      data->process(prune);
     }
   }
   return data->matches.size() - 1;

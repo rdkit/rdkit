@@ -65,7 +65,7 @@ double RGroupDecompositionChromosome::recalculateScore() {
 void RGroupDecompositionChromosome::decode() {
   auto values = getString();
   permutation.clear();
-  auto& matches = rGroupGa.getRGroupData().matches;
+  const auto& matches = rGroupGa.getRGroupData().matches;
   auto pos = 0;
   for (const auto& m : matches) {
     if (m.size() == 1) {
@@ -88,12 +88,11 @@ GaResult& GaResult::operator=(const GaResult& other) {
   if (&other == this) {
     return *this;
   }
-  score = other.score;
-  permutations = other.permutations;
+  rGroupScorer = other.rGroupScorer;
   return *this;
 }
 
-RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
+RGroupGa::RGroupGa(RGroupDecompData& rGroupData,
                    const chrono::steady_clock::time_point* const t0)
     : rGroupData(rGroupData),
       chromosomePolicy(getRng(), rGroupData.matches.size()),
@@ -295,7 +294,7 @@ GaResult RGroupGa::run(int runNumber) {
                  });
   BOOST_LOG(rdInfoLog) << "Run " << runNumber << " Execution "
                        << timeInfo(startTime) << std::endl;
-  GaResult result{best->getFitness(), permutations};
+  GaResult result(best->getFitness(), permutations);
   return result;
 }
 
