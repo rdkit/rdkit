@@ -114,6 +114,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("is_valid", &JSMol::is_valid)
       .function("get_smiles", &JSMol::get_smiles)
       .function("get_cxsmiles", &JSMol::get_cxsmiles)
+      .function("get_smarts", &JSMol::get_smarts)
       .function("get_molblock", &JSMol::get_molblock)
       .function("get_v3Kmolblock", &JSMol::get_v3Kmolblock)
       .function("get_inchi", &JSMol::get_inchi)
