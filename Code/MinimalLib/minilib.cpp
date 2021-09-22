@@ -55,6 +55,10 @@ std::string JSMol::get_smarts() const {
   if (!d_mol) return "";
   return MolToSmarts(*d_mol);
 }
+std::string JSMol::get_cxsmarts() const {
+  if (!d_mol) return "";
+  return MolToCXSmarts(*d_mol);
+}
 std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
   if (!d_mol) return "";
   return MinimalLib::mol_to_svg(*d_mol, w, h);
