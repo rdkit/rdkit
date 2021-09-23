@@ -170,6 +170,7 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
       : d_defaultRepeatCount(other.d_defaultRepeatCount),
         dp_mol(other.dp_mol),
         dp_frame(other.dp_frame),
+        d_repeats(other.d_repeats),
         d_countAtEachPoint(other.d_countAtEachPoint),
         d_variations(other.d_variations),
         d_pointRanges(other.d_pointRanges),
@@ -181,6 +182,7 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
     }
     dp_mol = other.dp_mol;
     dp_frame = other.dp_frame;
+    d_repeats = other.d_repeats;
     d_countAtEachPoint = other.d_countAtEachPoint;
     d_variations = other.d_variations;
     d_pointRanges = other.d_pointRanges;
@@ -210,7 +212,10 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
  private:
   std::shared_ptr<ROMol> dp_mol{nullptr};
   std::shared_ptr<RWMol> dp_frame{nullptr};
+  std::vector<std::shared_ptr<RWMol>> d_repeats;
+  std::vector<RWMol> dp_repeatUnits{};
   std::vector<size_t> d_countAtEachPoint{};
+  std::vector<unsigned> d_sruOrder{};
   std::vector<std::tuple<unsigned, unsigned, unsigned>> d_variations;
   std::vector<std::pair<unsigned, unsigned>> d_pointRanges;
   std::map<unsigned, unsigned> d_isotopeMap;
