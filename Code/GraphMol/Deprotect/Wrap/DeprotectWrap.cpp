@@ -34,7 +34,9 @@ boost::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol) {
 }
 
 //! Make a copy so we don't try and change a const vector
-std::vector<Deprotect::DeprotectData> GetDeprotectionsWrap() { return Deprotect::getDeprotections(); }
+std::vector<Deprotect::DeprotectData> GetDeprotectionsWrap() {
+  return Deprotect::getDeprotections();
+}
 }  // namespace RDKit
 
 struct deprotect_wrap {
@@ -64,9 +66,8 @@ struct deprotect_wrap {
         "\n"
         "\n";
 
-    python::class_<std::vector<RDKit::Deprotect::DeprotectData>>("DeprotectDataVect")
-        .def(
-	     python::vector_indexing_suite<std::vector<RDKit::Deprotect::DeprotectData>>());
+    RegisterVectorConverter<RDKit::Deprotect::DeprotectData>(
+        "DeprotectDataVect");
 
     python::class_<RDKit::Deprotect::DeprotectData>(
         "DeprotectData", deprotect_doc_string,
@@ -75,8 +76,10 @@ struct deprotect_wrap {
         .def_readonly("deprotection_class",
                       &RDKit::Deprotect::DeprotectData::deprotection_class)
         .def_readonly("full_name", &RDKit::Deprotect::DeprotectData::full_name)
-        .def_readonly("abbreviation", &RDKit::Deprotect::DeprotectData::abbreviation)
-        .def_readonly("reaction_smarts", &RDKit::Deprotect::DeprotectData::reaction_smarts)
+        .def_readonly("abbreviation",
+                      &RDKit::Deprotect::DeprotectData::abbreviation)
+        .def_readonly("reaction_smarts",
+                      &RDKit::Deprotect::DeprotectData::reaction_smarts)
         .def_readonly("example", &RDKit::Deprotect::DeprotectData::example)
         .def("isValid", &RDKit::Deprotect::DeprotectData::isValid,
              "Returns True if the DeprotectData has a valid reaction");

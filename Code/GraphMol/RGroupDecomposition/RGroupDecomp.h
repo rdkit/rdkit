@@ -114,7 +114,11 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   // Number of runs
   int gaNumberRuns = 1;
   // Sequential or parallel runs?
+#ifdef RDK_THREADSAFE_SSS
   bool gaParallelRuns = true;
+#else
+  bool gaParallelRuns = false;
+#endif
   // Controls the way substructure matching with the core is done
   SubstructMatchParameters substructmatchParams;
 
@@ -168,12 +172,12 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
   ~RGroupDecomposition();
 
   //! Returns the index of the added molecule in the RGroupDecomposition
-  //   or a negative error code
-  // :param mol: Molecule to add to the decomposition
-  // :result: index of the molecle or
-  //              -1 if none of the core matches
-  //              -2 if the matched molecule has no sidechains, i.e. is the
-  //                 same as the scaffold
+  ///  or a negative error code
+  /// :param mol: Molecule to add to the decomposition
+  /// :result: index of the molecle or
+  ///             -1 if none of the core matches
+  ///             -2 if the matched molecule has no sidechains, i.e. is the
+  ///                same as the scaffold
   int add(const ROMol &mol);
   RGroupDecompositionProcessResult processAndScore();
   bool process();

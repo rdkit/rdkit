@@ -63,7 +63,7 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
           auto nbrIdx = nbr->getIdx();
           // if this neighbor isn't in the match:
           if (!std::any_of(amatch.match.begin(), amatch.match.end(),
-                           [&](const std::pair<int, int>& tpr) {
+                           [nbrIdx](const std::pair<int, int>& tpr) {
                              return tpr.second == rdcast<int>(nbrIdx);
                            })) {
             mol.addBond(nbrIdx, connectIdx, Bond::BondType::SINGLE);

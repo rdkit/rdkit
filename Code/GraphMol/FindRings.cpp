@@ -29,8 +29,7 @@ const size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
 
 using namespace RDKit;
 
-std::uint32_t computeRingInvariant(INT_VECT ring, unsigned int nAtoms) {
-  RDUNUSED_PARAM(nAtoms);
+std::uint32_t computeRingInvariant(INT_VECT ring, unsigned int) {
   std::sort(ring.begin(), ring.end());
   std::uint32_t res = gboost::hash_range(ring.begin(), ring.end());
   return res;
@@ -209,9 +208,7 @@ struct compRingSize : public std::binary_function<INT_VECT, INT_VECT, bool> {
   }
 };
 
-void removeExtraRings(VECT_INT_VECT &res, unsigned int nexpt,
-                      const ROMol &mol) {
-  RDUNUSED_PARAM(nexpt);
+void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
   // sort on size
   std::sort(res.begin(), res.end(), compRingSize());
 
@@ -319,7 +316,6 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
                       boost::dynamic_bitset<> &ringAtoms) {
   // place to record any duplicate rings discovered from the current d2 nodes
   RINGINVAR_INT_VECT_MAP dupD2Cands;
-  INT_VECT_CI d2i;
   INT_SET changed;
 
   INT_INT_VECT_MAP dupMap;
@@ -414,9 +410,8 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
 }
 
 void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
-                     RINGINVAR_SET &invars, int cand, INT_VECT &atomDegrees,
+                     RINGINVAR_SET &invars, int cand, INT_VECT &,
                      boost::dynamic_bitset<> activeBonds) {
-  RDUNUSED_PARAM(atomDegrees);
   // this is brutal - we have no degree 2 nodes - find the first possible degree
   // 3 node
   int nsmall;

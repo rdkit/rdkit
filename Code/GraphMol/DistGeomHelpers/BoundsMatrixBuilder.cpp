@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -242,9 +242,8 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 }
 
-void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                      bool useTopolScaling, double *dmat) {
-  RDUNUSED_PARAM(useTopolScaling);
+void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
+                      double *dmat) {
   unsigned int npt = mmat->numRows();
   PRECONDITION(npt == mol.getNumAtoms(), "Wrong size metric matrix");
   unsigned int i, j;
@@ -610,6 +609,7 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
   path14.bid3 = bid3;
   Bond::BondStereo stype = _getAtomStereo(bnd2, aid1, aid4);
   bool preferCis = false;
+  bool preferTrans = false;
 
   // we add a check for the ring size here because there's no reason to assume
   // cis bonds in bigger rings.
@@ -634,9 +634,12 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     }
   } else if (stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
     preferCis = true;
+  } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
+    preferTrans = true;
   }
-  // std::cerr << "  torsion: " << aid1 << " " << aid4 << ": " << preferCis
-  //           << std::endl;
+  // std::cerr << "  torsion: " << aid1 << " " << aid4 << ": " << preferCis << "
+  // "
+  //           << preferTrans << std::endl;
   if (preferCis) {
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
@@ -645,6 +648,15 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                        bid3] = 1;
     accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb +
                        bid1] = 1;
+  } else if (preferTrans) {
+    dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
+    du = dl + 2 * GEN_DIST_TOL;
+    path14.type = Path14Configuration::TRANS;
+    accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
+                         bid2 * nb + bid3] = 1;
+    accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
+                         bid2 * nb + bid1] = 1;
+
   } else {
     // basically we will assume 0 to 180 allowed
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
@@ -810,9 +822,8 @@ bool _checkNhChChNh(const Atom *atm1, const Atom *atm2, const Atom *atm3,
 //    1   3
 //     \ / \                                         T.S.I.Left Blank
 //      2   5  <- 2 is an oxygen/nitrogen
-bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
+bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *,
                         const Atom *atm2, const Atom *atm3, const Atom *atm4) {
-  unsigned int a1Num = atm1->getAtomicNum();
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
@@ -844,12 +855,11 @@ bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
 //    1   3
 //     \ / \                                         T.S.I.Left Blank
 //      2   4  <- 2 is an oxygen/nitrogen
-bool _checkMacrocycleAllInSameRingAmideEster14(
-    const ROMol &mol, const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
-    const Atom *atm2, const Atom *atm3, const Atom *atm4) {
-  RDUNUSED_PARAM(bnd1);
-  RDUNUSED_PARAM(bnd3);
-
+bool _checkMacrocycleAllInSameRingAmideEster14(const ROMol &mol, const Bond *,
+                                               const Bond *, const Atom *atm1,
+                                               const Atom *atm2,
+                                               const Atom *atm3,
+                                               const Atom *atm4) {
   //   This is a re-write of `_checkAmideEster14` with more explicit logic on
   //   the checks It is interesting that we find with this function we get
   //   better macrocycle sampling than `_checkAmideEster14`
@@ -915,9 +925,8 @@ bool _isCarbonyl(const ROMol &mol, const Atom *at) {
 }
 
 bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
-                        const Atom *atm1, const Atom *atm2, const Atom *atm3,
-                        const Atom *atm4) {
-  RDUNUSED_PARAM(atm4);
+                        const Atom *, const Atom *atm2, const Atom *atm3,
+                        const Atom *) {
   unsigned int a2Num = atm2->getAtomicNum();
   if ((a2Num == 8) || ((a2Num == 7) && (atm2->getTotalNumHs(true) == 1))) {
     if ((bnd1->getBondType() == Bond::SINGLE)) {
@@ -932,9 +941,8 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
 
 void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                        const Bond *bnd3, ComputedData &accumData,
-                       DistGeom::BoundsMatPtr mmat, double *dmat,
+                       DistGeom::BoundsMatPtr mmat, double *,
                        bool forceTransAmides) {
-  RDUNUSED_PARAM(dmat);
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
   PRECONDITION(bnd3, "");
@@ -1337,10 +1345,9 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
                                          const Bond *bnd2, const Bond *bnd3,
                                          ComputedData &accumData,
                                          DistGeom::BoundsMatPtr mmat,
-                                         double *dmat) {
+                                         double *) {
   // This is adapted from `_setChain14Bounds`, with changes on how trans amide
   // is handled
-  RDUNUSED_PARAM(dmat);
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
   PRECONDITION(bnd3, "");

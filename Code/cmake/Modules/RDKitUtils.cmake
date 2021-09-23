@@ -33,7 +33,7 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
-  if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+  if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS))
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     if(RDK_INSTALL_DEV_COMPONENT)
@@ -55,13 +55,24 @@ macro(rdkit_library)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
       foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
-        if(${linkLib} MATCHES "^(Boost)|(Thread)|(boost)|^(optimized)|^(debug)|(libz)")
-          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
-        else()
-          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
+        if(TARGET "${linkLib}")
+          get_target_property(linkLib_IMPORTED "${linkLib}" IMPORTED)
+          if (linkLib_IMPORTED)
+            # linkLib is an imported target: use it as-is
+            target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+            continue()
+          endif()
+        elseif(EXISTS "${linkLib}")
+          # linkLib is a file, so keep it as-is
+          target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+          continue()
         endif()
+
+        # We haven't seen linkLib yet. This probably means it is a target
+        # we will be creating at some point (if not, then we are missing a find_package).
+        # Add the "_static" suffix to link against its static variant
+        target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}_static")
       endforeach()
-      target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
       target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
       if(RDK_INSTALL_DEV_COMPONENT)
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
@@ -274,7 +285,7 @@ function(createExportTestHeaders)
   " * templates), but make sure it is visible for *nix\n"
   " */\n"
   "// RDKIT_QUERY_EXPORT definitions\n"
-  "#if defined(RDKIT_DYN_LINK) && defined(WIN32) && defined(_MSC_VER) && defined(BOOST_HAS_DECLSPEC)\n"
+  "#if defined(RDKIT_DYN_LINK) && defined(WIN32) && defined(BOOST_HAS_DECLSPEC)\n"
   "#define RDKIT_QUERY_EXPORT\n"
   "#else\n"
   "#define RDKIT_QUERY_EXPORT RDKIT_GRAPHMOL_EXPORT\n"

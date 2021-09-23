@@ -52,8 +52,7 @@ void writeAtom(const ROMol &mol, unsigned int atomId,
 }
 
 void writeBond(const ROMol &mol, unsigned int bondId,
-               ROMol::ConstConformerIterator confIt, std::ostringstream &dest) {
-  RDUNUSED_PARAM(confIt);
+               std::ostringstream &dest) {
   const Bond *bond = mol.getBondWithIdx(bondId);
   dest << bondId + 1;
   std::string bondLabel;
@@ -132,7 +131,7 @@ std::string MolToTPLText(const ROMol &mol, const std::string &partialChargeProp,
 
   // write the bonds:
   for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
-    TPLWriter::writeBond(mol, i, confIt, res);
+    TPLWriter::writeBond(mol, i, res);
   }
 
   // write the additional conformations:

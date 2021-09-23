@@ -56,6 +56,10 @@
 
 #include "../Substruct/SubstructMatch.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace RDKit;
 
 unsigned long long T0;
@@ -492,6 +496,7 @@ void testTarget_no_10188_49064() {
   BOOST_LOG(rdInfoLog) << "Testing FMCS testTarget_no_10188_49064" << std::endl;
   std::cout << "\ntestTarget_no_10188_49064()\n";
   std::vector<ROMOL_SPTR> mols;
+  // clang-format off
   const char* smi[] = {
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3cccc(O)c3)nc21",
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(F)cc3)nc21",
@@ -502,8 +507,7 @@ void testTarget_no_10188_49064() {
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(O)cc3)nc21",
       "CC(=O)Nc1ccc(Nc2ncc3cc(-c4c(Cl)cccc4Cl)c(=O)n(C)c3n2)cc1",
       "Cn1c2nc(Nc3ccc(N)cc3)ncc2cc(-c2c(Cl)cccc2Cl)c1=O",
-      "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(NC(=O)CCNC(=O)OC(C)(C)C)cc3)"
-      "nc21",
+      "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(NC(=O)CCNC(=O)OC(C)(C)C)cc3)nc21",
       "Cc1ccc(Nc2ncc3cc(-c4c(Cl)cccc4Cl)c(=O)n(C)c3n2)cc1",
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3cccc(CO)c3)nc21",
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(NCC(O)CO)cc3)nc21",
@@ -514,6 +518,7 @@ void testTarget_no_10188_49064() {
       "Cn1c(=O)c(-c2c(Cl)cccc2Cl)cc2cnc(Nc3ccc(I)cc3)nc21",
       "CN1CCN(C(=O)c2ccc(Nc3ncc4cc(-c5c(Cl)cccc5Cl)c(=O)n(C)c4n3)cc2)CC1",
   };
+  // clang-format on
   for (auto& i : smi) {
     mols.emplace_back(SmilesToMol(getSmilesOnly(i)));
   }
@@ -2469,6 +2474,53 @@ void testAtomCompareCompleteRingsOnly() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGitHub4498() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "GitHub Issue #4498: FindMCS may leave mols with "
+                          "fake (empty) ring info"
+                       << std::endl;
+  {
+    // Test with rings
+    std::vector<ROMOL_SPTR> mols = {"NC1=CC(N)=C(N)C=C1"_smiles,
+                                    "NC1=CC(N)=C(N)C=C1"_smiles};
+
+    TEST_ASSERT(mols[0]);
+    TEST_ASSERT(mols[1]);
+
+    mols[1]->getRingInfo()->reset();
+    TEST_ASSERT(mols[0]->getRingInfo()->isInitialized() == true);
+    TEST_ASSERT(mols[1]->getRingInfo()->isInitialized() == false);
+
+    MCSResult res = findMCS(mols);
+    TEST_ASSERT(res.NumAtoms == 9);
+
+    TEST_ASSERT(mols[0]->getRingInfo()->isInitialized() == true);
+    TEST_ASSERT(mols[0]->getRingInfo()->numRings() == 1);
+
+    TEST_ASSERT(mols[1]->getRingInfo()->isInitialized() == false);
+  }
+  {
+    // Test without rings
+    std::vector<ROMOL_SPTR> mols = {"NC=CC(N)=C(N)C=C"_smiles,
+                                    "NC=CC(N)=C(N)C=C"_smiles};
+
+    TEST_ASSERT(mols[0]);
+    TEST_ASSERT(mols[1]);
+
+    mols[1]->getRingInfo()->reset();
+    TEST_ASSERT(mols[0]->getRingInfo()->isInitialized() == true);
+    TEST_ASSERT(mols[1]->getRingInfo()->isInitialized() == false);
+
+    MCSResult res = findMCS(mols);
+    TEST_ASSERT(res.NumAtoms == 9);
+
+    TEST_ASSERT(mols[0]->getRingInfo()->isInitialized() == true);
+    TEST_ASSERT(mols[0]->getRingInfo()->numRings() == 0);
+
+    TEST_ASSERT(mols[1]->getRingInfo()->isInitialized() == false);
+  }
+}
+
 //====================================================================================================
 //====================================================================================================
 
@@ -2552,6 +2604,7 @@ int main(int argc, const char* argv[]) {
   testGitHub3693();
   testGitHub3886();
   testAtomCompareCompleteRingsOnly();
+  testGitHub4498();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;

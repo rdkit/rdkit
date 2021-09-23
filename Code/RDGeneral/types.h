@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright 2001-2021 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -64,6 +64,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string extraRings;  // vec<vec<int> >
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _smilesAtomOutputOrder;  // vec<int> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _smilesBondOutputOrder;  // vec<int> computed
 RDKIT_RDGENERAL_EXPORT extern const std::string _StereochemDone;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _NeedsQueryScan;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string _fragSMARTS;      // std::string

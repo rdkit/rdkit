@@ -21,10 +21,9 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 namespace RDKit {
 namespace {
 
-MolStandardize::TautomerTransform* getTautomer(const std::string& name,
-                                               const std::string& smarts,
-                                               const std::string& bond_str,
-                                               const std::string& charge_str) {
+std::unique_ptr<MolStandardize::TautomerTransform> getTautomer(
+    const std::string& name, const std::string& smarts,
+    const std::string& bond_str, const std::string& charge_str) {
   std::vector<Bond::BondType> bond_types =
       MolStandardize::stringToBondType(bond_str);
   std::vector<int> charges = MolStandardize::stringToCharge(charge_str);
@@ -34,10 +33,12 @@ MolStandardize::TautomerTransform* getTautomer(const std::string& name,
     throw ValueErrorException("cannot parse tautomer SMARTS: " + smarts);
   }
   tautomer->setProp(common_properties::_Name, name);
-  return new MolStandardize::TautomerTransform(tautomer, bond_types, charges);
+  return std::make_unique<MolStandardize::TautomerTransform>(
+      tautomer, bond_types, charges);
 }
 
-MolStandardize::TautomerTransform* getTautomer(const std::string& tmpStr) {
+std::unique_ptr<MolStandardize::TautomerTransform> getTautomer(
+    const std::string& tmpStr) {
   if (tmpStr.length() == 0 || tmpStr.substr(0, 2) == "//") {
     // empty or comment line
     return nullptr;
@@ -157,10 +158,9 @@ std::vector<TautomerTransform> readTautomers(std::istream& inStream,
     inStream.getline(inLine, MAX_LINE_LEN, '\n');
     tmpstr = inLine;
     // parse the tautomer on this line (if there is one)
-    TautomerTransform* transform = getTautomer(tmpstr);
+    auto transform = getTautomer(tmpstr);
     if (transform) {
       tautomers.emplace_back(*transform);
-      delete transform;
       nRead++;
     }
   }

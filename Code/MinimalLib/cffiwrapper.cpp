@@ -101,35 +101,43 @@ RWMol mol_from_pkl(const char *pkl, size_t pkl_sz) {
 #define PT_OPT_GET(opt) opt = pt.get(#opt, opt);
 
 namespace {
-template <class T>
-std::string smiles_helper(const char *pkl, size_t pkl_sz,
-                          const char *details_json, T func) {
-  if (!pkl || !pkl_sz) {
-    return "";
-  }
-  auto mol = mol_from_pkl(pkl, pkl_sz);
-  bool doIsomericSmiles = true;
-  bool doKekule = false;
-  int rootedAtAtom = -1;
-  bool canonical = true;
-  bool allBondsExplicit = false;
-  bool allHsExplicit = false;
-  bool doRandom = false;
+SmilesWriteParams getParamsFromJSON(const char *details_json) {
+  SmilesWriteParams params;
   if (details_json && strlen(details_json)) {
     boost::property_tree::ptree pt;
     std::istringstream ss;
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(doIsomericSmiles);
-    PT_OPT_GET(doKekule);
-    PT_OPT_GET(rootedAtAtom);
-    PT_OPT_GET(canonical);
-    PT_OPT_GET(allBondsExplicit);
-    PT_OPT_GET(allHsExplicit);
-    PT_OPT_GET(doRandom);
+    params.doIsomericSmiles =
+        pt.get("doIsomericSmiles", params.doIsomericSmiles);
+    params.doKekule = pt.get("doKekule", params.doKekule);
+    params.rootedAtAtom = pt.get("rootedAtAtom", params.rootedAtAtom);
+    params.canonical = pt.get("canonical", params.canonical);
+    params.allBondsExplicit =
+        pt.get("allBondsExplicit", params.allBondsExplicit);
+    params.allHsExplicit = pt.get("allHsExplicit", params.allHsExplicit);
+    params.doRandom = pt.get("doRandom", params.doRandom);
   }
-  auto data = func(mol, doIsomericSmiles, doKekule, rootedAtAtom, canonical,
-                   allBondsExplicit, allHsExplicit, doRandom);
+  return params;
+}
+std::string smiles_helper(const char *pkl, size_t pkl_sz,
+                          const char *details_json) {
+  if (!pkl || !pkl_sz) {
+    return "";
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  auto params = getParamsFromJSON(details_json);
+  auto data = MolToSmiles(mol, params);
+  return data;
+}
+std::string cxsmiles_helper(const char *pkl, size_t pkl_sz,
+                            const char *details_json) {
+  if (!pkl || !pkl_sz) {
+    return "";
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  auto params = getParamsFromJSON(details_json);
+  auto data = MolToCXSmiles(mol, params);
   return data;
 }
 
@@ -156,12 +164,10 @@ std::string molblock_helper(const char *pkl, size_t pkl_sz,
 }  // namespace
 extern "C" char *get_smiles(const char *pkl, size_t pkl_sz,
                             const char *details_json) {
-  auto data = smiles_helper(pkl, pkl_sz, details_json, MolToSmiles);
+  auto data = smiles_helper(pkl, pkl_sz, details_json);
   return str_to_c(data);
 }
-extern "C" char *get_smarts(const char *pkl, size_t pkl_sz,
-                            const char *details_json) {
-  RDUNUSED_PARAM(details_json);
+extern "C" char *get_smarts(const char *pkl, size_t pkl_sz, const char *) {
   if (!pkl || !pkl_sz) {
     return nullptr;
   }
@@ -171,7 +177,7 @@ extern "C" char *get_smarts(const char *pkl, size_t pkl_sz,
 }
 extern "C" char *get_cxsmiles(const char *pkl, size_t pkl_sz,
                               const char *details_json) {
-  auto data = smiles_helper(pkl, pkl_sz, details_json, MolToCXSmiles);
+  auto data = cxsmiles_helper(pkl, pkl_sz, details_json);
   return str_to_c(data);
 }
 extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
@@ -184,9 +190,7 @@ extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
   auto data = molblock_helper(pkl, pkl_sz, details_json, true);
   return str_to_c(data);
 }
-extern "C" char *get_json(const char *pkl, size_t pkl_sz,
-                          const char *details_json) {
-  RDUNUSED_PARAM(details_json);
+extern "C" char *get_json(const char *pkl, size_t pkl_sz, const char *) {
   if (!pkl || !pkl_sz) {
     return nullptr;
   }

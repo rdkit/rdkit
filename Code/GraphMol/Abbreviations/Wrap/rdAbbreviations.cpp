@@ -9,7 +9,6 @@
 //
 
 #include <RDBoost/python.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
 
@@ -84,7 +83,8 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
       (python::arg("mol"), python::arg("abbrevs"),
        python::arg("maxCoverage") = 0.4, python::arg("sanitize") = true),
       python::return_value_policy<python::manage_new_object>(),
-      "Finds and replaces abbreviations in a molecule. The result is not sanitized.");
+      "Finds and replaces abbreviations in a molecule. The result is not "
+      "sanitized.");
   python::def("LabelMolAbbreviations", &labelMolAbbreviationsHelper,
               (python::arg("mol"), python::arg("abbrevs"),
                python::arg("maxCoverage") = 0.4),

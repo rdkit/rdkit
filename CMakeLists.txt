@@ -95,7 +95,7 @@ if(RDK_SWIG_STATIC AND RDK_BUILD_SWIG_WRAPPERS)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
 
-if(NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)))
+if((NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))) AND NOT (WIN32 AND RDK_INSTALL_STATIC_LIBS))
   add_definitions(-DRDKIT_DYN_LINK)
 endif()
 
@@ -198,7 +198,10 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
 endif()
 
 if(RDK_USE_URF)
-  ADD_DEFINITIONS("-DRDK_USE_URF")
+  add_definitions(-DRDK_USE_URF)
+  if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR ((NOT MSVC) AND WIN32 AND RDK_INSTALL_STATIC_LIBS))
+    add_definitions(-DRDL_WIN_STATIC)
+  endif()
   include_directories(${RDKit_ExternalDir}/RingFamilies/RingDecomposerLib/src/RingDecomposerLib)
 endif()
 
@@ -234,6 +237,9 @@ endif(MSVC)
 if(MSVC)
   # FIX: do we still need this?
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_NO_LIB")
+  if(RDK_INSTALL_DLLS_MSVC)
+    target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_DYN_LINK")
+  endif(RDK_INSTALL_DLLS_MSVC)
 endif(MSVC)
 
 if(RDK_BUILD_INCHI_SUPPORT)
@@ -398,8 +404,11 @@ if(RDK_BUILD_THREADSAFE_SSS)
   endif()
   target_link_libraries(rdkit_base INTERFACE Threads::Threads)
 else()
+  # otherwise boost flyweight links against pthreads and causes the
+  # RDK_BUILD_THREADSAFE_SSS=OFF build to fail
+  target_compile_definitions(rdkit_base INTERFACE "-DBOOST_DISABLE_THREADS")
   if(RDK_TEST_MULTITHREADED)
-    message("RDK_TEST_MULTITHREADED does not make sense without RD_BUILD_THREADSAFE_SSS, disabling it.")
+    message("RDK_TEST_MULTITHREADED does not make sense without RDK_BUILD_THREADSAFE_SSS, disabling it.")
     set(RDK_TEST_MULTITHREADED OFF)
   endif()
 endif()

@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +17,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -26,6 +27,7 @@
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
@@ -48,6 +50,14 @@ std::string JSMol::get_smiles() const {
 std::string JSMol::get_cxsmiles() const {
   if (!d_mol) return "";
   return MolToCXSmiles(*d_mol);
+}
+std::string JSMol::get_smarts() const {
+  if (!d_mol) return "";
+  return MolToSmarts(*d_mol);
+}
+std::string JSMol::get_cxsmarts() const {
+  if (!d_mol) return "";
+  return MolToCXSmarts(*d_mol);
 }
 std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
   if (!d_mol) return "";
@@ -73,6 +83,10 @@ std::string JSMol::get_molblock() const {
 std::string JSMol::get_v3Kmolblock() const {
   if (!d_mol) return "";
   return MolToV3KMolBlock(*d_mol);
+}
+std::string JSMol::get_json() const {
+  if (!d_mol) return "";
+  return MolInterchange::MolToJSONData(*d_mol);
 }
 
 std::string JSMol::get_substruct_match(const JSMol &q) const {

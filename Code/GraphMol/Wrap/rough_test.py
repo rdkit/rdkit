@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2021  Greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2003-2021  Greg Landrum and other RDKit contributors
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -4629,6 +4629,7 @@ $$$$
     self.assertTrue(m is not None)
     ps = Chem.SmilesParserParams()
     ps.allowCXSMILES = False
+    ps.parseName = False
     m = Chem.MolFromSmiles(smi, ps)
     self.assertTrue(m is None)
     ps.allowCXSMILES = True
@@ -6627,6 +6628,42 @@ CAS<~>
       m2, addWhenImpossible=Chem.StereoBondThresholds.DBL_BOND_SPECIFIED_STEREO)
     self.assertEqual(m2.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREONONE)
     self.assertEqual(m2.GetBondWithIdx(2).GetBondDir(), Chem.BondDir.UNKNOWN)
+
+  def testSmartsParseParams(self):
+    smi = "CCC |$foo;;bar$| ourname"
+    m = Chem.MolFromSmarts(smi)
+    self.assertTrue(m is not None)
+    ps = Chem.SmartsParserParams()
+    ps.allowCXSMILES = False
+    ps.parseName = False
+    m = Chem.MolFromSmarts(smi, ps)
+    self.assertTrue(m is None)
+    ps.allowCXSMILES = True
+    ps.parseName = True
+    m = Chem.MolFromSmarts(smi, ps)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetAtomWithIdx(0).HasProp('atomLabel'))
+    self.assertEqual(m.GetAtomWithIdx(0).GetProp('atomLabel'), "foo")
+    self.assertTrue(m.HasProp('_Name'))
+    self.assertEqual(m.GetProp('_Name'), "ourname")
+    self.assertEqual(m.GetProp("_CXSMILES_Data"), "|$foo;;bar$|")
+
+  def testSmilesWriteParams(self):
+    m = Chem.MolFromSmiles('C[C@H](F)Cl')
+    ps = Chem.SmilesWriteParams()
+    ps.rootedAtAtom = 1
+    self.assertEqual(Chem.MolToSmiles(m, ps), "[C@@H](C)(F)Cl")
+    self.assertEqual(Chem.MolToCXSmiles(m, ps), "[C@@H](C)(F)Cl")
+
+  def testCXSmilesOptions(self):
+    # just checking that the fields parameter gets used.
+    # we've tested the individual values on the C++ side
+    m = Chem.MolFromSmiles("OC1CCC(F)C1 |LN:1:1.3.2.6|")
+    ps = Chem.SmilesWriteParams()
+    ps.rootedAtAtom = 1
+    self.assertEqual(
+      Chem.MolToCXSmiles(m, ps, (Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_LINKNODES)),
+      "C1(O)CCC(F)C1")
 
 
 if __name__ == '__main__':

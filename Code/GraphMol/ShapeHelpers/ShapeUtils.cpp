@@ -1,6 +1,5 @@
-// $Id$
 //
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -150,7 +149,7 @@ double tanimotoDistance(const ROMol &mol1, const ROMol &mol2, int confId1,
                         bool ignoreHs) {
   const Conformer &conf1 = mol1.getConformer(confId1);
   const Conformer &conf2 = mol2.getConformer(confId2);
-  return tanimotoDistance(conf1, conf2, gridSpacing = 0.5, bitsPerPoint,
+  return tanimotoDistance(conf1, conf2, gridSpacing, bitsPerPoint,
                           vdwScale, stepSize, maxLayers, ignoreHs);
 }
 

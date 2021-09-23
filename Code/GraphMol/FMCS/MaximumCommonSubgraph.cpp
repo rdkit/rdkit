@@ -470,18 +470,21 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
             if (!QueryMoleculeSingleMatchedAtom) {
               QueryMoleculeSingleMatchedAtom = queryMolAtom;
             } else {
-              QueryMoleculeSingleMatchedAtom = (std::max)(
-                  queryMolAtom, QueryMoleculeSingleMatchedAtom,
-                  [](const Atom* a, const Atom* b) {
-                    if (a->getDegree() != b->getDegree()) {
-                      return (a->getDegree() < b->getDegree());
-                    } else if (a->getFormalCharge() != b->getFormalCharge()) {
-                      return (a->getFormalCharge() < b->getFormalCharge());
-                    } else if (a->getAtomicNum() != b->getAtomicNum()) {
-                      return (a->getAtomicNum() < b->getAtomicNum());
-                    }
-                    return (a->getIdx() < b->getIdx());
-                  });
+              QueryMoleculeSingleMatchedAtom =
+                  (std::max)(queryMolAtom, QueryMoleculeSingleMatchedAtom,
+                             [](const Atom* a, const Atom* b) {
+                               if (a->getDegree() != b->getDegree()) {
+                                 return (a->getDegree() < b->getDegree());
+                               } else if (a->getFormalCharge() !=
+                                          b->getFormalCharge()) {
+                                 return (a->getFormalCharge() <
+                                         b->getFormalCharge());
+                               } else if (a->getAtomicNum() !=
+                                          b->getAtomicNum()) {
+                                 return (a->getAtomicNum() < b->getAtomicNum());
+                               }
+                               return (a->getIdx() < b->getIdx());
+                             });
             }
           }
           break;
@@ -960,11 +963,15 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     Parameters.AtomCompareParameters.RingMatchesRingOnly = true;
   }
 
+  unsigned i = 0;
+  boost::dynamic_bitset<> faked_ring_info(src_mols.size());
   for (const auto& src_mol : src_mols) {
     Molecules.push_back(src_mol.get());
     if (!Molecules.back()->getRingInfo()->isInitialized()) {
       Molecules.back()->getRingInfo()->initialize();  // but do not fill out !!!
+      faked_ring_info.set(i);
     }
+    ++i;
   }
 
   // sort source set of molecules by their 'size' and assume the smallest
@@ -1130,6 +1137,12 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   }
 #endif
 
+  auto pos = faked_ring_info.find_first();
+  while (pos != boost::dynamic_bitset<>::npos) {
+    src_mols[pos]->getRingInfo()->reset();
+    pos = faked_ring_info.find_next(pos);
+  }
+
   clear();
   return res;
 }
@@ -1141,8 +1154,6 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
 #ifdef FAST_SUBSTRUCT_CACHE
   SubstructureCache::HashKey cacheKey;
   SubstructureCache::TIndexEntry* cacheEntry = nullptr;
-  bool cacheEntryIsValid = false;
-  RDUNUSED_PARAM(cacheEntryIsValid);  // unused var
 #endif
 
   bool foundInCache = false;
@@ -1170,7 +1181,6 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
 #endif
       cacheEntry =
           HashCache.find(seed, QueryAtomLabels, QueryBondLabels, cacheKey);
-      cacheEntryIsValid = true;
       if (cacheEntry) {  // possibly found. check for hash collision
 #ifdef VERBOSE_STATISTICS_ON
         ++VerboseStatistics.HashKeyFoundInCache;

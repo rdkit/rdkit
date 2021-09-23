@@ -114,7 +114,7 @@ std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(
         data) {
   std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> pairs;
   for (const auto& tpl : data) {
-    auto mol_pair(
+    std::shared_ptr<std::pair<ROMol*, ROMol*>> mol_pair(
         getPair(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl)));
     pairs.emplace_back(ROMOL_SPTR(mol_pair->first),
                        ROMOL_SPTR(mol_pair->second));

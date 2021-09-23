@@ -75,8 +75,7 @@ static inline unsigned long long computeMorganCodeHash(const ROMol& mol) {
 
 static inline void convertMatchingToBondVect(
     std::vector<BondVector_t>& matching_bonds,
-    const std::vector<MatchVectType>& matching_atoms, const ROMol& mol) {
-  RDUNUSED_PARAM(mol);
+    const std::vector<MatchVectType>& matching_atoms) {
   for (const auto& matching_atom : matching_atoms) {
     matching_bonds.emplace_back();
     BondVector_t& mb = matching_bonds.back();  // current match
@@ -504,7 +503,7 @@ bool fragmentMol(const ROMol& mol,
 #endif
 
   std::vector<BondVector_t> matching_bonds;  // List of matched query's bonds
-  convertMatchingToBondVect(matching_bonds, matching_atoms, mol);
+  convertMatchingToBondVect(matching_bonds, matching_atoms);
   if (matching_bonds.size() > maxCutBonds) {
     return false;
   }

@@ -11,7 +11,6 @@
 #include <RDBoost/Wrap.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeature.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeatureFactory.h>
-#include <boost/python/register_ptr_to_python.hpp>
 #include <fstream>
 #include <sstream>
 #include <iostream>

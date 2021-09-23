@@ -128,6 +128,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   void (*callback)(unsigned int);
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
+  double boundsMatForceScaling{1.0};
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
@@ -188,7 +189,7 @@ inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
 }
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
-// Geometry
+/// Geometry
 inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
   INT_VECT confIds;
   EmbedMultipleConfs(mol, confIds, 1, params);
@@ -203,7 +204,7 @@ inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
 }
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
-// Geometry
+/// Geometry
 /*!
   The following operations are performed (in order) here:
    -# Build a distance bounds matrix based on the topology, including 1-5
@@ -282,7 +283,7 @@ inline int EmbedMolecule(
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
     unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    bool useMacrocycleTorsions = false,  bool useMacrocycle14config = false) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
@@ -388,7 +389,7 @@ inline void EmbedMultipleConfs(
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
       onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config);
+      useMacrocycleTorsions,  useMacrocycle14config);
   EmbedMultipleConfs(mol, res, numConfs, params);
 };
 //! \overload

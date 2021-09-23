@@ -3,19 +3,19 @@ project (GraphMolCSharp)
 include_directories( ${RDKit_ExternalDir} )
 
 # find the mcs executables on non-windows systems:
-if(NOT WIN32)
+if(NOT MSVC)
   find_program(GMCS_EXE mcs)
   if (NOT GMCS_EXE)
 	MESSAGE ("mcs (executable) is not found. Please add it to PATH and rerun cmake.")
 	MESSAGE(FATAL_ERROR "Cannot find required executable mcs")
   endif (NOT GMCS_EXE)
-endif(NOT WIN32)
+endif(NOT MSVC)
 
 
 SET_SOURCE_FILES_PROPERTIES(GraphMolCSharp.i PROPERTIES CPLUSPLUS ON )
 
 # Setup a few variables for environment-specific things
-if(WIN32)
+if(MSVC)
   ADD_COMPILE_OPTIONS(/W3 /wd4716 /bigobj)
   SET(PATH_SEP ";")
   SET(COPY_CMD xcopy ${COPY_SOURCE} ${COPY_DEST} /Y /I)
@@ -33,9 +33,9 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap")
 else()
   if (WIN32)
-    SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap" "-DSWIGWORDSIZE64" "-DSWIGWIN")
+    SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap")
   else()
-      SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap" "-DSWIGWORDSIZE64")
+    SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap" "-DSWIGWORDSIZE64")
   endif()
 endif()
 SET(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_SOURCE_DIR}/swig_csharp )
@@ -76,7 +76,7 @@ INSTALL(TARGETS RDKFuncs
         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR} )
 
 
-if(NOT WIN32)
+if(NOT MSVC)
    # code adapted from the wrapper code for
    # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
    ADD_CUSTOM_COMMAND(
@@ -93,4 +93,4 @@ if(NOT WIN32)
      DEPENDS RDKFuncs ${CMAKE_CURRENT_SOURCE_DIR}/RDKit2DotNet.dll
      COMMENT "building mono dll"
    )
-endif(NOT WIN32)
+endif(NOT MSVC)

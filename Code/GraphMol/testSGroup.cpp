@@ -1,6 +1,6 @@
 //
 //
-//  Copyright (C) 2018-2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -494,7 +494,7 @@ void testModifyMol() {
     TEST_ASSERT(sgroups.size() == 3);
   }
   {
-    // replacing an atom will drop SubstanceGroups that include that atom
+    // replacing an atom does not drop SubstanceGroups that include that atom
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -503,10 +503,10 @@ void testModifyMol() {
     auto new_atom = Atom();
     mol_copy.replaceAtom(1, &new_atom);
 
-    TEST_ASSERT(sgroups.size() == 1);
+    TEST_ASSERT(sgroups.size() == 3);
   }
   {
-    // replacing a bond will drop SubstanceGroups that include that bond
+    // replacing a bond does not drop SubstanceGroups that include that bond
     mol_copy = mol;
 
     const auto &sgroups = getSubstanceGroups(mol_copy);
@@ -515,7 +515,7 @@ void testModifyMol() {
     auto new_bond = Bond(Bond::SINGLE);
     mol_copy.replaceBond(1, &new_bond);
 
-    TEST_ASSERT(sgroups.size() == 1);
+    TEST_ASSERT(sgroups.size() == 3);
   }
   {
     // removing an atom will drop SubstanceGroups that include that atom

@@ -509,17 +509,13 @@ double Atom::getMass() const {
   }
 }
 
-void Atom::setQuery(Atom::QUERYATOM_QUERY *what) {
-  RDUNUSED_PARAM(what);
+void Atom::setQuery(Atom::QUERYATOM_QUERY *) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0, "plain atoms have no Query");
 }
 Atom::QUERYATOM_QUERY *Atom::getQuery() const { return nullptr; };
-void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,
-                       Queries::CompositeQueryType how, bool maintainOrder) {
-  RDUNUSED_PARAM(what);
-  RDUNUSED_PARAM(how);
-  RDUNUSED_PARAM(maintainOrder);
+void Atom::expandQuery(Atom::QUERYATOM_QUERY *, Queries::CompositeQueryType,
+                       bool) {
   PRECONDITION(0, "plain atoms have no Query");
 }
 

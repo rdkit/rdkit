@@ -31,8 +31,7 @@ namespace RDKit {
 void tossit() { throw IndexErrorException(1); }
 }  // namespace RDKit
 
-void rdExceptionTranslator(RDKit::ConformerException const &x) {
-  RDUNUSED_PARAM(x);
+void rdExceptionTranslator(RDKit::ConformerException const &) {
   PyErr_SetString(PyExc_ValueError, "Bad Conformer Id");
 }
 

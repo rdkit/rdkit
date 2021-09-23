@@ -232,7 +232,7 @@ getHashedTopologicalTorsionFingerprint(
     const std::vector<std::uint32_t> *atomInvariants = nullptr,
     bool includeChirality = false);
 //! returns a hashed topological-torsion fingerprint for a molecule as a bit
-// vector
+/// vector
 /*!
   \param mol:         the molecule to be fingerprinted
   \param nBits:       number of bits to include in the fingerprint

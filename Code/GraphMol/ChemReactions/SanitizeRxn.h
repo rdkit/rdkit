@@ -121,7 +121,7 @@ typedef enum {
 } SanitizeRxnFlags;
 
 //! \brief carries out a collection of tasks for cleaning up a reaction and
-// ensuring
+/// ensuring
 //! that it makes "chemical sense" in the context of RDKit reacitons
 /*!
    This functions calls the following in sequence

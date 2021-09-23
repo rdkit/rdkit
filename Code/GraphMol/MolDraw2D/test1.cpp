@@ -164,7 +164,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3391_3.svg", 2634130947U},
     {"testGithub3391_4.svg", 3347048145U},
     {"testGithub4156_1.svg", 3587507438U},
-    {"testGithub4156_2.svg", 617944934U}};
+    {"testGithub4156_2.svg", 617944934U},
+    {"testGithub4496_1.svg", 3884377499U}};
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test1_1.svg", 2810365302U},
@@ -280,7 +281,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3391_1.svg", 3043856820U},
     {"testGithub3391_2.svg", 899401090U},
     {"testGithub3391_3.svg", 1321562570U},
-    {"testGithub3391_4.svg", 4052907129U}};
+    {"testGithub3391_4.svg", 4052907129U},
+    {"testGithub4496_1.svg", 2353591199U}};
 #endif
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4201,6 +4203,25 @@ void test23JSONAtomColourPalette() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub4496() {
+  std::cerr << " ----------------- Test draw aromatic OR queries" << std::endl;
+  auto m = "[c,n]1[c,n][c,n][c,n][c,n][c,n]1"_smarts;
+  MolDraw2DSVG drawer(200, 200);
+  MolDrawOptions options;
+  options.prepareMolsBeforeDrawing = false;
+  drawer.drawOptions() = options;
+  MolDraw2DUtils::prepareMolForDrawing(*m, false);
+  drawer.drawMolecule(*m);
+  drawer.finishDrawing();
+  std::ofstream outs("testGithub4496_1.svg");
+  std::string text = drawer.getDrawingText();
+  outs << text;
+  outs.flush();
+  outs.close();
+  check_file_hash("testGithub4496_1.svg");
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -4256,5 +4277,6 @@ int main() {
   testGithub3391();
   testGithub4156();
   test23JSONAtomColourPalette();
+  testGithub4496();
 #endif
 }

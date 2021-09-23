@@ -72,7 +72,7 @@
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/tuple/tuple.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#ifdef RDK_TEST_MULTITHREADED
+#ifdef RDK_THREADSAFE_SSS
 #include <mutex>
 #endif
 
@@ -1252,7 +1252,7 @@ void cleanUp(RWMol& mol) {
 }  // end cleanUp
 }  // namespace
 
-#ifdef RDK_TEST_MULTITHREADED
+#ifdef RDK_THREADSAFE_SSS
 std::mutex inchiMutex;
 #endif
 
@@ -1271,7 +1271,7 @@ RWMol* InchiToMol(const std::string& inchi, ExtraInchiReturnValues& rv,
   {
     // output structure
     inchi_OutputStruct inchiOutput;
-#ifdef RDK_TEST_MULTITHREADED
+#ifdef RDK_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     // DLL call
@@ -2077,7 +2077,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   // call DLL
   std::string inchi;
   {
-#ifdef RDK_TEST_MULTITHREADED
+#ifdef RDK_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     int retcode = GetINCHI(&input, &output);
@@ -2120,7 +2120,7 @@ std::string MolBlockToInchi(const std::string& molBlock,
   // call DLL
   std::string inchi;
   {
-#ifdef RDK_TEST_MULTITHREADED
+#ifdef RDK_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     char* _options = nullptr;
@@ -2159,7 +2159,7 @@ std::string InchiToInchiKey(const std::string& inchi) {
   char xtra1[65], xtra2[65];
   int ret = 0;
   {
-#ifdef RDK_TEST_MULTITHREADED
+#ifdef RDK_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(inchiMutex);
 #endif
     ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);

@@ -73,13 +73,11 @@ std::string AcidBaseCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void AcidBaseCatalogParams::initFromStream(std::istream &ss) {
-  RDUNUSED_PARAM(ss);
+void AcidBaseCatalogParams::initFromStream(std::istream &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 
-void AcidBaseCatalogParams::initFromString(const std::string &text) {
-  RDUNUSED_PARAM(text);
+void AcidBaseCatalogParams::initFromString(const std::string &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 

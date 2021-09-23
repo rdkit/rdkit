@@ -194,7 +194,9 @@ def ShowMols(mols, maxMols=50, **kwargs):
     for prop in ('legends', 'highlightAtoms', 'highlightBonds'):
       if prop in kwargs:
         kwargs[prop] = kwargs[prop][:maxMols]
-  res = fn(mols, drawOptions=drawOptions, **kwargs)
+  if not "drawOptions" in kwargs:
+    kwargs["drawOptions"] = drawOptions
+  res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
   else:

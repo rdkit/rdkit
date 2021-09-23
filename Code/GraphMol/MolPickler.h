@@ -74,7 +74,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
-  // otherwise
+  /// otherwise
   //! you will break old pickles.
   typedef enum {
     VERSION = 0,
@@ -253,7 +253,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
                         unsigned int propertyFlags);
 
   //! extract atomic data from a pickle and add the resulting Atom to the
-  // molecule
+  /// molecule
   template <typename T>
   static Atom *_addAtomFromPickle(std::istream &ss, ROMol *mol,
                                   RDGeom::Point3D &pos, int version,
@@ -265,7 +265,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
                                   bool directMap = false);
 
   //! extract ring info from a pickle and add the resulting RingInfo to the
-  // molecule
+  /// molecule
   template <typename T>
   static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
                                      bool directMap = false);

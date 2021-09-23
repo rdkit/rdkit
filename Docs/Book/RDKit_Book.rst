@@ -22,6 +22,15 @@ An aromatic bond must be between aromatic atoms, but a bond between aromatic ato
 
 For example the fusing bonds here are not considered to be aromatic by the RDKit:
 
+.. testsetup::
+  
+  # clean up in case these tests are running in a python process that has already
+  # imported the IPythonConsole code
+  from rdkit.Chem.Draw import IPythonConsole
+  IPythonConsole.UninstallIPythonRenderer()
+  from rdkit.Chem import rdDepictor
+  rdDepictor.SetPreferCoordGen(False)
+
 .. image:: images/picture_9.png
 
 .. doctest::
@@ -224,10 +233,10 @@ Specifying atoms by atomic number
 The ``[#6]`` construct from SMARTS is supported in SMILES.
 
 
-CXSMILES extensions
--------------------
+CXSMILES/CXSMARTS extensions
+----------------------------
 
-The RDKit supports parsing and writing a subset of the extended SMILES functionality introduced by ChemAxon [#cxsmiles]_.
+The RDKit supports parsing and writing a subset of the extended SMILES/SMARTS functionality introduced by ChemAxon [#cxsmiles]_.
 
 The features which are parsed include:
 
@@ -244,9 +253,13 @@ The features which are parsed include:
 - ring bond count specifications ``rb``
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
+- SGroup Data ``SgD``
+- polymer SGroups ``Sg``
+- SGroup Hierarchy ``SgH``
 
-The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
-(note the specialized writer function) include:
+The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` and
+:py:func:`rdkit.Chem.rdmolfiles.MolToCXSmarts` 
+(note the specialized writer functions) include:
 
 - atomic coordinates
 - atomic values
@@ -254,6 +267,10 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic properties
 - radicals
 - enhanced stereo
+- linknodes 
+- SGroup Data
+- polymer SGroups
+- SGroup Hierarchy
 
 .. doctest::
 
@@ -266,6 +283,60 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
   >>> Chem.MolToCXSmiles(m)
   'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
 
+Reading molecule names
+----------------------
+
+If the SMILES/SMARTS and the optional CXSMILES extensions are followed by whitespace and another string, the SMILES/SMARTS parsers will interpret this as the molecule name:
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('CO carbon monoxide')
+  >>> m.GetProp('_Name')
+  'carbon monoxide'
+  >>> m2 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide')
+  >>> m2.GetAtomWithIdx(0).GetProp('atomLabel')
+  'C2'
+  >>> m2.GetProp('_Name')
+  'carbon monoxide'
+
+This can be disabled while still parsing the CXSMILES:
+
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.parseName = False
+  >>> m3 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m3.HasProp('_Name')
+  0
+  >>> m3.GetAtomWithIdx(0).GetProp('atomLabel')
+  'C2'
+
+
+Note that if you disable CXSMILES parsing but pass in a string which includes CXSMILES it will be interpreted as (part of) the name:
+
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.allowCXSMILES = False
+  >>> m4 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m4.GetProp('_Name')
+  '|$C2;O1$| carbon monoxide'
+
+
+Finally, if you disable parsing of both CXSMILES and names, then extra text in the SMILES/SMARTS string will result in errors:
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.allowCXSMILES = False
+  >>> ps.parseName = False
+  >>> m5 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m5 is None
+  True
+  >>> m5 = Chem.MolFromSmiles('CO carbon monoxide',ps)
+  >>> m5 is None
+  True
+
+The examples in this sectin all used the SMILES parser, but the SMARTS parser behaves the same way.
 
 SMARTS Support and Extensions
 =============================
@@ -1195,6 +1266,8 @@ ROMol  (Mol in Python)
 | _Name                  |   Read from/written to the name line of CTABs.    |
 +------------------------+---------------------------------------------------+
 | _smilesAtomOutputOrder |   The order in which atoms were written to SMILES |
++------------------------+---------------------------------------------------+
+| _smilesBondOutputOrder |   The order in which bonds were written to SMILES |
 +------------------------+---------------------------------------------------+
 
 Atom

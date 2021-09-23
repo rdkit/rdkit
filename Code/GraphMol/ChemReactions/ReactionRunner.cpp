@@ -108,7 +108,7 @@ class StereoBondEndCap {
     const auto nbrIdxItr = mol.getAtomNeighbors(atom);
     const unsigned otherIdx = otherDblBndAtom->getIdx();
 
-    auto isNonAnchor = [&otherIdx, &stereoAtomIdx](const unsigned &nbrIdx) {
+    auto isNonAnchor = [otherIdx, stereoAtomIdx](const unsigned &nbrIdx) {
       return nbrIdx != otherIdx && nbrIdx != stereoAtomIdx;
     };
 
@@ -466,7 +466,7 @@ unsigned reactProdMapAnchorIdx(Atom *atom, const RDKit::UINT_VECT &pMatches) {
   const auto &pMol = atom->getOwningMol();
   const unsigned atomIdx = atom->getIdx();
 
-  auto areAtomsBonded = [&pMol, &atomIdx](const unsigned &pAnchor) {
+  auto areAtomsBonded = [&pMol, atomIdx](const unsigned &pAnchor) {
     return pMol.getBondBetweenAtoms(atomIdx, pAnchor) != nullptr;
   };
 
@@ -607,7 +607,16 @@ void translateProductStereoBondDirections(Bond *pBond, const Bond *start,
 
   pBond->setStereoAtoms(pStartAnchorIdx, pEndAnchorIdx);
 
-  if (start->getBondDir() == end->getBondDir()) {
+  bool sameDir = start->getBondDir() == end->getBondDir();
+
+  if (start->getBeginAtom() == pBond->getBeginAtom()) {
+    sameDir = !sameDir;
+  }
+  if (end->getBeginAtom() != pBond->getEndAtom()) {
+    sameDir = !sameDir;
+  }
+
+  if (sameDir) {
     pBond->setStereo(Bond::BondStereo::STEREOTRANS);
   } else {
     pBond->setStereo(Bond::BondStereo::STEREOCIS);

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -739,6 +739,36 @@ int BondGetDirCode(const Bond::BondDir dir) {
   return res;
 }
 
+namespace {
+bool checkNeighbors(const Bond *bond, const Atom *atom) {
+  PRECONDITION(bond, "no bond");
+  PRECONDITION(atom, "no atom");
+  std::vector<int> nbrRanks;
+  for (auto bondIt :
+       boost::make_iterator_range(bond->getOwningMol().getAtomBonds(atom))) {
+    const auto nbrBond = bond->getOwningMol()[bondIt];
+    if (nbrBond->getBondType() == Bond::SINGLE) {
+      if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
+          nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
+        return false;
+      } else {
+        const auto otherAtom = nbrBond->getOtherAtom(atom);
+        int rank;
+        if (otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
+          if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
+              nbrRanks.end()) {
+            return false;
+          } else {
+            nbrRanks.push_back(rank);
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+}  // namespace
+
 void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
                               const Conformer *conf, int &dirCode,
                               bool &reverse) {
@@ -795,32 +825,8 @@ void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
             // FIX: this is the fix for github #2649, but we will need to change
             // it once we start handling allenes properly
 
-            bool nbrHasDir = false;
-
-            ROMol::OEDGE_ITER beg, end;
-            boost::tie(beg, end) =
-                bond->getOwningMol().getAtomBonds(bond->getBeginAtom());
-            while (beg != end && !nbrHasDir) {
-              const Bond *nbrBond = bond->getOwningMol()[*beg];
-              if (nbrBond->getBondType() == Bond::SINGLE &&
-                  (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                   nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
-                nbrHasDir = true;
-              }
-              ++beg;
-            }
-            boost::tie(beg, end) =
-                bond->getOwningMol().getAtomBonds(bond->getEndAtom());
-            while (beg != end && !nbrHasDir) {
-              const Bond *nbrBond = bond->getOwningMol()[*beg];
-              if (nbrBond->getBondType() == Bond::SINGLE &&
-                  (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-                   nbrBond->getBondDir() == Bond::ENDDOWNRIGHT)) {
-                nbrHasDir = true;
-              }
-              ++beg;
-            }
-            if (!nbrHasDir) {
+            if (checkNeighbors(bond, bond->getBeginAtom()) &&
+                checkNeighbors(bond, bond->getEndAtom())) {
               dirCode = 3;
             }
           }
@@ -1327,7 +1333,6 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
 
 std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
                           bool kekulize, bool forceV3000) {
-  RDUNUSED_PARAM(includeStereo);
   RDKit::Utils::LocaleSwitcher switcher;
   RWMol trwmol(mol);
   // NOTE: kekulize the molecule before writing it out

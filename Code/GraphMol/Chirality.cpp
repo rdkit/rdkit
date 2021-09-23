@@ -379,13 +379,12 @@ Bond::BondDir getOppositeBondDir(Bond::BondDir dir) {
 }
 
 void setBondDirRelativeToAtom(Bond *bond, Atom *atom, Bond::BondDir dir,
-                              bool reverse, boost::dynamic_bitset<> &needsDir) {
+                              bool reverse, boost::dynamic_bitset<> &) {
   PRECONDITION(bond, "bad bond");
   PRECONDITION(atom, "bad atom");
   PRECONDITION(dir == Bond::ENDUPRIGHT || dir == Bond::ENDDOWNRIGHT, "bad dir");
   PRECONDITION(atom == bond->getBeginAtom() || atom == bond->getEndAtom(),
                "atom doesn't belong to bond");
-  RDUNUSED_PARAM(needsDir);
 
   if (bond->getBeginAtom() != atom) {
     reverse = !reverse;
@@ -1585,8 +1584,7 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
       dblBond->getStereoAtoms().clear();
 
       // at the moment we are ignoring stereochem on ring bonds with less than
-      // 8
-      // members.
+      // 8 members.
       if (shouldDetectDoubleBondStereo(dblBond)) {
         const Atom *begAtom = dblBond->getBeginAtom();
         const Atom *endAtom = dblBond->getEndAtom();
@@ -1884,7 +1882,19 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
   for (ROMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
        ++bondIt) {
     if (cleanIt) {
-      if ((*bondIt)->getBondType() == Bond::DOUBLE) {
+      // enforce no stereo on small rings
+      if (((*bondIt)->getBondType() == Bond::DOUBLE ||
+           (*bondIt)->getBondType() == Bond::AROMATIC) && 
+           !shouldDetectDoubleBondStereo(*bondIt)) {
+        if ((*bondIt)->getBondDir() == Bond::EITHERDOUBLE) {
+          (*bondIt)->setBondDir(Bond::NONE);
+        }
+        if ((*bondIt)->getStereo() != Bond::STEREONONE) {
+          (*bondIt)->setStereo(Bond::STEREONONE);
+          (*bondIt)->getStereoAtoms().clear();
+        }
+        continue;
+      } else if ((*bondIt)->getBondType() == Bond::DOUBLE) {
         if ((*bondIt)->getBondDir() == Bond::EITHERDOUBLE) {
           (*bondIt)->setStereo(Bond::STEREOANY);
         } else if ((*bondIt)->getStereo() != Bond::STEREOANY) {
@@ -2334,9 +2344,9 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
     INT_LIST nbrBondIdxList;
     std::transform(
         nbrBonds.first, nbrBonds.second, std::back_inserter(nbrBondIdxList),
-        [mol](const ROMol::edge_descriptor &e) { return mol[e]->getIdx(); });
+        [&mol](const ROMol::edge_descriptor &e) { return mol[e]->getIdx(); });
     unsigned int atomIdx = atom->getIdx();
-    nbrBondIdxList.sort([mol, atomIdx](const int ai, const int bi) {
+    nbrBondIdxList.sort([&mol, atomIdx](const int ai, const int bi) {
       return (mol.getBondWithIdx(ai)->getOtherAtomIdx(atomIdx) <
               mol.getBondWithIdx(bi)->getOtherAtomIdx(atomIdx));
     });

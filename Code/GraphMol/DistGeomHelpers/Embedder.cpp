@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -483,8 +483,7 @@ bool firstMinimization(RDGeom::PointPtrVect *positions,
 
 bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
                              const detail::EmbedArgs &eargs,
-                             const EmbedParameters &embedParams) {
-  RDUNUSED_PARAM(embedParams);
+                             const EmbedParameters &) {
   // for each of the atoms in the "tetrahedralCarbons" list, make sure
   // that there is a minimum volume around them and that they are inside
   // that volume. (this is part of github #971)
@@ -509,8 +508,7 @@ bool checkTetrahedralCenters(const RDGeom::PointPtrVect *positions,
 }
 bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
                         const detail::EmbedArgs &eargs,
-                        const EmbedParameters &embedParams) {
-  RDUNUSED_PARAM(embedParams);
+                        const EmbedParameters &) {
   // check the chiral volume:
   for (const auto &chiralSet : *eargs.chiralCenters) {
     double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
@@ -644,8 +642,7 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
 bool finalChiralChecks(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
-                       const EmbedParameters &embedParams) {
-  RDUNUSED_PARAM(embedParams);
+                       const EmbedParameters &) {
   // "distance matrix" chirality test
   std::set<int> atoms;
   for (const auto &chiralSet : *eargs.chiralCenters) {
@@ -796,13 +793,10 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // if we have less than 4 heavy atoms as neighbors,
         // we need to include the chiral center into the mix
         // we should at least have 3 though
-        bool includeSelf = false;
-        RDUNUSED_PARAM(includeSelf);
         CHECK_INVARIANT(nbrs.size() >= 3, "Cannot be a chiral center");
 
         if (nbrs.size() < 4) {
           nbrs.insert(nbrs.end(), atom->getIdx());
-          includeSelf = true;
         }
 
         // now create a chiral set and set the upper and lower bound on the
@@ -839,9 +833,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
 }  // end of _findChiralSets
 
 void adjustBoundsMatFromCoordMap(
-    DistGeom::BoundsMatPtr mmat, unsigned int nAtoms,
+    DistGeom::BoundsMatPtr mmat, unsigned int,
     const std::map<int, RDGeom::Point3D> *coordMap) {
-  RDUNUSED_PARAM(nAtoms);
   for (auto iIt = coordMap->begin(); iIt != coordMap->end(); ++iIt) {
     unsigned int iIdx = iIt->first;
     const RDGeom::Point3D &iPoint = iIt->second;
@@ -870,6 +863,7 @@ void initETKDG(ROMol *mol, const EmbedParameters &params,
       etkdgDetails.atomNums[i] = mol->getAtomWithIdx(i)->getAtomicNum();
     }
   }
+  etkdgDetails.boundsMatForceScaling = params.boundsMatForceScaling;
 }
 
 bool setupInitialBoundsMatrix(
@@ -927,9 +921,7 @@ bool setupInitialBoundsMatrix(
 }  // namespace EmbeddingOps
 
 void _fillAtomPositions(RDGeom::Point3DConstPtrVect &pts, const Conformer &conf,
-                        const ROMol &mol,
-                        const std::vector<unsigned int> &match) {
-  RDUNUSED_PARAM(mol);
+                        const ROMol &, const std::vector<unsigned int> &match) {
   PRECONDITION(pts.size() == match.size(), "bad pts size");
   for (unsigned int i = 0; i < match.size(); i++) {
     pts[i] = &conf.getAtomPos(match[i]);

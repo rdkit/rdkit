@@ -108,7 +108,22 @@ Datum mol_substruct(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(i, a));
+  PG_RETURN_BOOL(MolSubstruct(i, a, false));
+}
+
+PGDLLEXPORT Datum mol_substruct_chiral(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_substruct_chiral);
+Datum mol_substruct_chiral(PG_FUNCTION_ARGS) {
+  CROMol i, a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(MolSubstruct(i, a, true));
 }
 
 PGDLLEXPORT Datum mol_rsubstruct(PG_FUNCTION_ARGS);
@@ -123,7 +138,21 @@ Datum mol_rsubstruct(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(a, i));
+  PG_RETURN_BOOL(MolSubstruct(a, i, false));
+}
+PGDLLEXPORT Datum mol_rsubstruct_chiral(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_rsubstruct_chiral);
+Datum mol_rsubstruct_chiral(PG_FUNCTION_ARGS) {
+  CROMol i, a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(MolSubstruct(a, i, true));
 }
 
 PGDLLEXPORT Datum mol_substruct_count(PG_FUNCTION_ARGS);
@@ -139,7 +168,22 @@ Datum mol_substruct_count(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_INT32(MolSubstructCount(i, a, uniquify));
+  PG_RETURN_INT32(MolSubstructCount(i, a, uniquify, false));
+}
+PGDLLEXPORT Datum mol_substruct_count_chiral(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_substruct_count_chiral);
+Datum mol_substruct_count_chiral(PG_FUNCTION_ARGS) {
+  CROMol i, a;
+  bool uniquify = PG_GETARG_BOOL(2);
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_INT32(MolSubstructCount(i, a, uniquify, true));
 }
 
 #define MOLDESCR(name, func, ret)                                         \
@@ -154,8 +198,10 @@ Datum mol_substruct_count(PG_FUNCTION_ARGS) {
   }
 
 MOLDESCR(amw, MolAMW, FLOAT4)
+MOLDESCR(exactmw, MolExactMW, FLOAT4)
 MOLDESCR(logp, MolLogP, FLOAT4)
 MOLDESCR(tpsa, MolTPSA, FLOAT4)
+MOLDESCR(labuteasa, MolLabuteASA, FLOAT4)
 MOLDESCR(hba, MolHBA, INT32)
 MOLDESCR(hbd, MolHBD, INT32)
 MOLDESCR(numatoms, MolNumAtoms, INT32)
@@ -173,6 +219,7 @@ MOLDESCR(numaromaticcarbocycles, MolNumAromaticCarbocycles, INT32)
 MOLDESCR(numaliphaticcarbocycles, MolNumAliphaticCarbocycles, INT32)
 MOLDESCR(numsaturatedcarbocycles, MolNumSaturatedCarbocycles, INT32)
 MOLDESCR(numheterocycles, MolNumHeterocycles, INT32)
+MOLDESCR(numamidebonds, MolNumAmideBonds, INT32)
 
 MOLDESCR(fractioncsp3, MolFractionCSP3, FLOAT4)
 MOLDESCR(chi0n, MolChi0n, FLOAT4)
@@ -188,6 +235,7 @@ MOLDESCR(chi4v, MolChi4v, FLOAT4)
 MOLDESCR(kappa1, MolKappa1, FLOAT4)
 MOLDESCR(kappa2, MolKappa2, FLOAT4)
 MOLDESCR(kappa3, MolKappa3, FLOAT4)
+MOLDESCR(hallkieralpha, MolHallKierAlpha, FLOAT4)
 MOLDESCR(phi, MolPhi, FLOAT4)
 
 MOLDESCR(numspiroatoms, MolNumSpiroAtoms, INT32)
