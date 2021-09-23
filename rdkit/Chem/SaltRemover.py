@@ -142,7 +142,7 @@ class SaltRemover(object):
             else:
                 raise ValueError('Unsupported format for supplier.')
 
-    def StripMol(self, mol, dontRemoveEverything=False):
+    def StripMol(self, mol, dontRemoveEverything=False, sanitize=True):
         """
 
         >>> remover = SaltRemover(defnData="[Cl,Br]")
@@ -208,7 +208,7 @@ class SaltRemover(object):
         2
 
         """
-        strippedMol = self._StripMol(mol, dontRemoveEverything)
+        strippedMol = self._StripMol(mol, dontRemoveEverything, sanitize)
         return strippedMol.mol
 
     def StripMolWithDeleted(self, mol, dontRemoveEverything=False):
@@ -253,7 +253,7 @@ class SaltRemover(object):
         """
         return self._StripMol(mol, dontRemoveEverything)
 
-    def _StripMol(self, mol, dontRemoveEverything=False):
+    def _StripMol(self, mol, dontRemoveEverything=False, sanitize=True):
 
         def _applyPattern(m, salt, notEverything):
             nAts = m.GetNumAtoms()
@@ -287,7 +287,7 @@ class SaltRemover(object):
                 deleted.append(salt)
                 if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
                     break
-        if modified and mol.GetNumAtoms() > 0:
+        if sanitize and modified and mol.GetNumAtoms() > 0:
             Chem.SanitizeMol(mol)
         return StrippedMol(mol, deleted)
 
