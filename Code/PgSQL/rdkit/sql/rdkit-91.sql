@@ -405,6 +405,9 @@ select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adju
 select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol);
 select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegree":false}');
 select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegree":false,"adjustHeavyDegree":true}');
+select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::mol));
+select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::qmol));
+
 
 -- CXSmiles
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));

@@ -327,6 +327,14 @@ SELECT mol_to_svg('CCO'::mol,'legend',250,200,
  t
 (1 row)
 
+SELECT substring(mol_to_svg('CCO'::qmol)::text,1,120) svg;
+                     svg                     
+---------------------------------------------
+ <?xml version='1.0' encoding='iso-8859-1'?>+
+ <svg version='1.1' baseProfile='full'      +
+               xmlns='http://www.w3.org
+(1 row)
+
 -- GitHub Issue 2174 - mol_to_svg() should not change input mol.
 /**
   Check that mol_to_svg() does not change the_mol.
