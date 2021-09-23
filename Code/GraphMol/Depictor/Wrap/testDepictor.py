@@ -54,6 +54,8 @@ def compareCoords(m, molFile):
         pos = ci.GetAtomPosition(i)
         opos = co.GetAtomPosition(i)
         if not ptEq(pos, opos):
+            print(Chem.MolToMolBlock(m))
+            print(Chem.MolToMolBlock(mo))
             return 0
     return 1
 

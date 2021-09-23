@@ -1560,15 +1560,11 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii, int confId, int width,
     int height) {
-  // prepareMolForDrawing needs a RWMol but don't copy the original mol
-  // if we don't need to
-  unique_ptr<RWMol> rwmol;
+  unique_ptr<RWMol> rwmol{new RWMol(mol)};
   if (drawOptions().prepareMolsBeforeDrawing || !mol.getNumConformers()) {
-    rwmol.reset(new RWMol(mol));
     MolDraw2DUtils::prepareMolForDrawing(*rwmol);
   }
   if (drawOptions().centreMoleculesBeforeDrawing) {
-    if (!rwmol) rwmol.reset(new RWMol(mol));
     if (rwmol->getNumConformers()) {
       centerMolForDrawing(*rwmol, confId);
     }
@@ -1591,7 +1587,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
         // all specified chiral centers are accounted for by this StereoGroup.
         if (sgs[0].getGroupType() == StereoGroupType::STEREO_OR ||
             sgs[0].getGroupType() == StereoGroupType::STEREO_AND) {
-          if (!rwmol) rwmol.reset(new RWMol(mol));
           std::vector<StereoGroup> empty;
           rwmol->setStereoGroups(std::move(empty));
           std::string label =
@@ -1609,20 +1604,19 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
       }
     }
   }
-  ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
-  if (!draw_mol.getNumConformers()) {
+  if (!rwmol->getNumConformers()) {
     // clearly, the molecule is in a sorry state.
     return rwmol;
   }
 
   if (drawOptions().addStereoAnnotation) {
-    MolDraw2D_detail::addStereoAnnotation(draw_mol);
+    MolDraw2D_detail::addStereoAnnotation(*rwmol);
   }
   if (drawOptions().addAtomIndices) {
-    MolDraw2D_detail::addAtomIndices(draw_mol);
+    MolDraw2D_detail::addAtomIndices(*rwmol);
   }
   if (drawOptions().addBondIndices) {
-    MolDraw2D_detail::addBondIndices(draw_mol);
+    MolDraw2D_detail::addBondIndices(*rwmol);
   }
   if (!activeMolIdx_) {
     if (drawOptions().clearBackground) {
@@ -1630,25 +1624,25 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     }
   }
   bool updateBBox = !activeMolIdx_;
-  extractAtomCoords(draw_mol, confId, updateBBox);
-  extractAtomSymbols(draw_mol);
-  extractAtomNotes(draw_mol);
-  extractBondNotes(draw_mol);
-  extractRadicals(draw_mol);
+  extractAtomCoords(*rwmol, confId, updateBBox);
+  extractAtomSymbols(*rwmol);
+  extractAtomNotes(*rwmol);
+  extractBondNotes(*rwmol);
+  extractRadicals(*rwmol);
   if (activeMolIdx_ >= 0 &&
       post_shapes_.size() > static_cast<size_t>(activeMolIdx_) &&
       pre_shapes_.size() > static_cast<size_t>(activeMolIdx_)) {
     post_shapes_[activeMolIdx_].clear();
     pre_shapes_[activeMolIdx_].clear();
   }
-  extractSGroupData(draw_mol);
-  extractVariableBonds(draw_mol);
-  extractBrackets(draw_mol);
-  extractMolNotes(draw_mol);
-  extractLinkNodes(draw_mol);
+  extractSGroupData(*rwmol);
+  extractVariableBonds(*rwmol);
+  extractBrackets(*rwmol);
+  extractMolNotes(*rwmol);
+  extractLinkNodes(*rwmol);
 
   if (!activeMolIdx_ && needs_scale_) {
-    calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii,
+    calculateScale(width, height, *rwmol, highlight_atoms, highlight_radii,
                    confId);
     needs_scale_ = false;
   }
@@ -2714,6 +2708,7 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
         atomIdx = sg.getAtoms()[0];
       };
       StringRect rect;
+      bool located = false;
       std::string fieldDisp;
       if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
         double xp = FileParserUtils::stripSpacesAndCast<double>(
@@ -2723,7 +2718,13 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
         Point2D origLoc{xp, yp};
 
         if (fieldDisp[25] == 'R') {
-          origLoc += mol.getConformer().getAtomPos(atomIdx);
+          if (atomIdx < 0) {
+            // we will warn about this below
+            text = "";
+          } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
+            origLoc += mol.getConformer().getAtomPos(atomIdx);
+            located = true;
+          }
         } else {
           if (mol.hasProp("_centroidx")) {
             Point2D centroid;
@@ -2731,17 +2732,21 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
             mol.getProp("_centroidy", centroid.y);
             origLoc += centroid;
           }
+          located = true;
         }
         tform.TransformPoint(origLoc);
         rect.trans_ = origLoc;
-      } else if (atomIdx >= 0) {
-        rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
-      } else {
-        BOOST_LOG(rdWarningLog)
-            << "FIELDDISP info not found for DAT SGroup which isn't associated "
-               "with an atom. SGroup will not be rendered."
-            << std::endl;
-        text = "";
+      }
+      if (!located) {
+        if (atomIdx >= 0) {
+          rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
+        } else {
+          BOOST_LOG(rdWarningLog)
+              << "FIELDDISP info not found for DAT SGroup which isn't "
+                 "associated with an atom. SGroup will not be rendered."
+              << std::endl;
+          text = "";
+        }
       }
       if (!text.empty()) {
         AnnotationType annot;

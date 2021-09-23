@@ -1595,7 +1595,7 @@ TEST_CASE("Github #4215: Ring stereo being discarded in spiro systems") {
       auto stereoInfo =
           Chirality::findPotentialStereo(m2, cleanIt, flagPossible);
       CHECK(stereoInfo.size() == 3);
-      for (const auto si : stereoInfo) {
+      for (const auto &si : stereoInfo) {
         CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
         CHECK(si.specified == Chirality::StereoSpecified::Unspecified);
         CHECK(si.descriptor == Chirality::StereoDescriptor::None);
@@ -1625,7 +1625,7 @@ TEST_CASE("Github #4215: Ring stereo being discarded in spiro systems") {
       auto stereoInfo =
           Chirality::findPotentialStereo(m2, cleanIt, flagPossible);
       CHECK(stereoInfo.size() == 3);
-      for (const auto si : stereoInfo) {
+      for (const auto &si : stereoInfo) {
         CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
         CHECK(si.specified == Chirality::StereoSpecified::Specified);
         CHECK(si.descriptor != Chirality::StereoDescriptor::None);
@@ -1638,7 +1638,7 @@ TEST_CASE("Github #4215: Ring stereo being discarded in spiro systems") {
       auto stereoInfo =
           Chirality::findPotentialStereo(m2, cleanIt, flagPossible);
       CHECK(stereoInfo.size() == 3);
-      for (const auto si : stereoInfo) {
+      for (const auto &si : stereoInfo) {
         CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
         CHECK(si.specified == Chirality::StereoSpecified::Specified);
         CHECK(si.descriptor != Chirality::StereoDescriptor::None);
@@ -1656,7 +1656,7 @@ TEST_CASE("Github #4215: Ring stereo being discarded in spiro systems") {
       auto stereoInfo =
           Chirality::findPotentialStereo(m2, cleanIt, flagPossible);
       CHECK(stereoInfo.size() == 4);
-      for (const auto si : stereoInfo) {
+      for (const auto &si : stereoInfo) {
         CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
         CHECK(si.specified == Chirality::StereoSpecified::Unspecified);
         CHECK(si.descriptor == Chirality::StereoDescriptor::None);
@@ -1678,7 +1678,7 @@ TEST_CASE("Github #4215: Ring stereo being discarded in spiro systems") {
       auto stereoInfo =
           Chirality::findPotentialStereo(m2, cleanIt, flagPossible);
       CHECK(stereoInfo.size() == 4);
-      for (const auto si : stereoInfo) {
+      for (const auto &si : stereoInfo) {
         CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
         CHECK(si.specified == Chirality::StereoSpecified::Specified);
         CHECK(si.descriptor != Chirality::StereoDescriptor::None);
@@ -1698,7 +1698,7 @@ TEST_CASE(
     bool cleanIt = true;
     bool flagPossible = false;
     auto stereoInfo = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
-    for (const auto si : stereoInfo) {
+    for (const auto &si : stereoInfo) {
       CHECK(si.type == Chirality::StereoType::Atom_Tetrahedral);
       CHECK(si.specified == Chirality::StereoSpecified::Specified);
       CHECK(si.descriptor != Chirality::StereoDescriptor::None);

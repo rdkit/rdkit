@@ -347,7 +347,7 @@ int molbundleGetMatches(const MolBundle &query, MolHolderBase &mols,
                         std::vector<unsigned int> *idxs) {
   int res = 0;
   boost::dynamic_bitset<> found(mols.size());
-  for (const auto qmol : query.getMols()) {
+  for (const auto &qmol : query.getMols()) {
     maxResults -= res;
     res += internalGetMatches(*qmol, mols, fps, startIdx, endIdx, params,
                               numThreads, maxResults, found, searchOrder, idxs);

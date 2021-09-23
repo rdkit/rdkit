@@ -26,6 +26,7 @@ struct CrystalFFDetails {
   std::vector<std::pair<int, int>> bonds;
   std::vector<std::vector<int>> angles;
   std::vector<int> atomNums;
+  double boundsMatForceScaling;
 };
 
 //! Get the experimental torsional angles in a molecule

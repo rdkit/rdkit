@@ -316,7 +316,6 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
                       boost::dynamic_bitset<> &ringAtoms) {
   // place to record any duplicate rings discovered from the current d2 nodes
   RINGINVAR_INT_VECT_MAP dupD2Cands;
-  INT_VECT_CI d2i;
   INT_SET changed;
 
   INT_INT_VECT_MAP dupMap;

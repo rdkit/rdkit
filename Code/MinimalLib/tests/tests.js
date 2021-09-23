@@ -426,6 +426,69 @@ function test_get_mol_no_kekulize() {
 }
 
 
+function test_get_smarts() {
+    var mol = RDKitModule.get_mol(`
+  MJ201100                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0491    1.5839    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0491   -0.0661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3798    1.5839    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    0.3798   -0.0661    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  1  0  0  2  0
+  5  8  1  0  0  2  0
+M  RGP  2   7   1   8   2
+M  END
+`);
+    assert(mol.is_valid());
+    smarts = mol.get_smarts();
+    assert(smarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@*");
+}
+
+
+function test_get_cxsmarts() {
+    var mol = RDKitModule.get_mol(`
+  MJ201100                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0491    1.5839    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0491   -0.0661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3798    1.5839    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    0.3798   -0.0661    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  1  0  0  2  0
+  5  8  1  0  0  2  0
+M  RGP  2   7   1   8   2
+M  END
+`);
+    assert(mol.is_valid());
+    cxsmarts = mol.get_cxsmarts();
+    assert(cxsmarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@* |" +
+        "(-1.0491,1.5839,;-1.7635,1.1714,;-1.7635,0.3463,;-1.0491,-0.0661,;" +
+        "-0.3346,0.3463,;-0.3346,1.1714,;0.3798,1.5839,;0.3798,-0.0661,)," +
+        "atomProp:6.dummyLabel.R1:7.dummyLabel.R2|");
+}
+
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -456,6 +519,8 @@ initRDKitModule().then(function(instance) {
     test_generate_aligned_coords_allow_rgroups();
     test_accept_failure();
     test_get_mol_no_kekulize();
+    test_get_smarts();
+    test_get_cxsmarts();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

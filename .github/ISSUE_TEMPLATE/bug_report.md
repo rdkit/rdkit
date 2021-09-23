@@ -8,10 +8,13 @@ assignees: ''
 ---
 
 -----------------------------------------
-PLEASE DELETE THIS SECTION AFTER YOU HAVE READ IT
+
 If you have a question about the RDKit or aren't sure if what you're seeing is the right behavior please use the Discussions tab above (https://github.com/rdkit/rdkit/discussions) instead of posting it here.
 
 Please help us help you: We normally need the information below in order to answer questions or understand bug reports. If you do not provide the information requested we may not be able to help you and will probably close the issue.
+
+PLEASE DELETE THIS SECTION AFTER YOU HAVE READ IT
+
 -----------------------------------------
 
 **Describe the bug**

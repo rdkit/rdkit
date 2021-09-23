@@ -4629,6 +4629,7 @@ $$$$
     self.assertTrue(m is not None)
     ps = Chem.SmilesParserParams()
     ps.allowCXSMILES = False
+    ps.parseName = False
     m = Chem.MolFromSmiles(smi, ps)
     self.assertTrue(m is None)
     ps.allowCXSMILES = True
@@ -6634,6 +6635,7 @@ CAS<~>
     self.assertTrue(m is not None)
     ps = Chem.SmartsParserParams()
     ps.allowCXSMILES = False
+    ps.parseName = False
     m = Chem.MolFromSmarts(smi, ps)
     self.assertTrue(m is None)
     ps.allowCXSMILES = True

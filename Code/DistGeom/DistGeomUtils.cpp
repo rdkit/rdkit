@@ -348,7 +348,7 @@ ForceFields::ForceField *construct3DForceField(
   }
 
   // minimum distance for all other atom pairs
-  fdist = 10.0;
+  fdist = etkdgDetails.boundsMatForceScaling * 10.0;
   for (unsigned int i = 1; i < N; ++i) {
     for (unsigned int j = 0; j < i; ++j) {
       if (!atomPairs[j * N + i]) {

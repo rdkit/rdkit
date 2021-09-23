@@ -1905,7 +1905,8 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   }
 }
 
-TEST_CASE("github #4496: cannot draw aromatic atom lists from SMARTS", "[query][bug]") {
+TEST_CASE("github #4496: cannot draw aromatic atom lists from SMARTS",
+          "[query][bug]") {
   SECTION("original") {
     auto m = "[c,n]1[c,n][c,n][c,n][c,n][c,n]1"_smarts;
     REQUIRE(m);
@@ -1927,9 +1928,9 @@ TEST_CASE("bridgehead queries", "[query]") {
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
         if (atom->getIdx() == 1 || atom->getIdx() == 4) {
-          CHECK(test == true);
+          CHECK(test == 1);
         } else {
-          CHECK(test == false);
+          CHECK(test == 0);
         }
       }
     }
@@ -1939,9 +1940,9 @@ TEST_CASE("bridgehead queries", "[query]") {
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
         if (atom->getIdx() == 1 || atom->getIdx() == 4) {
-          CHECK(test == true);
+          CHECK(test == 1);
         } else {
-          CHECK(test == false);
+          CHECK(test == 0);
         }
       }
     }
@@ -1950,7 +1951,7 @@ TEST_CASE("bridgehead queries", "[query]") {
       REQUIRE(m);
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
-        CHECK(test == false);
+        CHECK(test == 0);
       }
     }
   }
@@ -2138,11 +2139,42 @@ TEST_CASE(
   }
 }
 
+TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
+  std::vector<std::pair<std::string, std::string>> tests = {
+      {"O=n1ccccc1", "O=N1=CC=CC=C1"},
+      {"O=p1ccccc1", "O=P1=CC=CC=C1"},
+      {"O=[as]1ccccc1", "O=[As]1=CC=CC=C1"}};
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  SECTION("kekulization") {
+    for (const auto &pr : tests) {
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      MolOps::Kekulize(*m);
+      CHECK(MolToSmiles(*m) == pr.second);
+    }
+  }
+  SECTION("sanitization") {
+    for (const auto &pr : tests) {
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      unsigned int failed;
+      unsigned int flags = MolOps::SanitizeFlags::SANITIZE_ALL ^
+                           MolOps::SanitizeFlags::SANITIZE_CLEANUP ^
+                           MolOps::SanitizeFlags::SANITIZE_PROPERTIES;
+      MolOps::sanitizeMol(*m, failed, flags);
+      CHECK(!failed);
+      CHECK(MolToSmiles(*m) == pr.second);
+    }
+  }
+}
+
 TEST_CASE("KekulizeIfPossible") {
   SECTION("basics: molecules with failures") {
     std::vector<std::string> smis = {
         "c1cccn1",
-        "O=n1ccccc1",
         "c1ccccc1-c1cccn1",
     };
     for (const auto &smi : smis) {

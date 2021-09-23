@@ -170,6 +170,18 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
         ++vi;
       }
 
+      // Kekulize aromatic N-oxides, such as O=n1ccccc1
+      // These only reach here if SANITIZE_CLEANUP is disabled.
+      if (tbo == 5 && sbo == 4 && dv == 3 && totalDegree == 3 &&
+          nRadicals == 0 && chrg == 0 && at->getTotalNumHs() == 0) {
+        switch (at->getAtomicNum()) {
+          case 7:   // N
+          case 15:  // P
+          case 33:  // As
+            dv = 5;
+            break;
+        }
+      }
       // std::cerr << "  kek: " << at->getIdx() << " tbo:" << tbo << " sbo:" <<
       // sbo
       //           << "  dv : " << dv << " totalDegree : " << totalDegree
