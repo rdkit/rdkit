@@ -82,6 +82,29 @@ class TestCase(unittest.TestCase):
     self.assertNotIn('_hiddenprop', html)
     self.assertNotIn('computedprop', html)
 
+    for i in range(10):
+      m.SetIntProp(f'prop-{i}',i)
+    IPythonConsole.ipython_showProperties = True
+    IPythonConsole.ipython_maxProperties = 5
+    html = m._repr_html_()
+    self.assertIn('publicprop', html)
+    self.assertIn('prop-1', html)
+    self.assertNotIn('prop-8', html)
+
+    IPythonConsole.ipython_maxProperties = -1
+    html = m._repr_html_()
+    self.assertIn('publicprop', html)
+    self.assertIn('prop-1', html)
+    self.assertIn('prop-8', html)
+
+    IPythonConsole.ipython_maxProperties = 10
+    html = m._repr_html_()
+    self.assertIn('publicprop', html)
+    self.assertIn('prop-1', html)
+    self.assertNotIn('prop-8', html)
+
+
+
 
 if __name__ == '__main__':
   unittest.main()

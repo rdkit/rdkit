@@ -40,6 +40,7 @@ kekulizeStructures = True
 highlightByReactant = False
 ipython_useSVG = False
 ipython_showProperties = True
+ipython_maxProperties = 10
 ipython_3d = False
 molSize_3d = (400, 400)
 drawing_type_3d = 'stick'  # default drawing type for 3d structures
@@ -115,12 +116,15 @@ def _toHTML(mol):
   if not ipython_useSVG:
     png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
     png = base64.b64encode(png)
-    res.append(f'<tr><td colspan=2><image src="data:image/png;base64,{png.decode()}"></td></tr>')
+    res.append(f'<tr><td colspan=2 style="text-align:center"><image src="data:image/png;base64,{png.decode()}"></td></tr>')
   else:
     svg = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures, drawOptions=drawOptions)
-    res.append(f'<tr><td colspan=2>{svg}</td></tr>')
+    res.append(f'<tr><td colspan=2 style="text-align:center">{svg}</td></tr>')
 
-  for pn, pv in props.items():
+  for i,(pn, pv) in enumerate(props.items()):
+    if ipython_maxProperties>=0 and i>= ipython_maxProperties:
+      res.append('<tr><td colspan=2 style="text-align:center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>')
+      break
     res.append(
       f'<tr><th style="text-align:right">{pn}</th><td style="text-align:left">{pv}</td></tr>')
   res = "\n".join(res)
