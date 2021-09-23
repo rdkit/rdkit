@@ -948,6 +948,88 @@ M  END
     }
   }
 
+  SECTION("non-overlapping multi-HT enumeration reversed example") {
+    // same as the previous example, but the head/tail definition of the second
+    // SRU is swapped. This shouldn't change the results
+    auto mol1 = R"CTAB(
+  Mrv2108 09232105582D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 12.719 -9.1518 0 0
+M  V30 2 O 14.0458 -9.9326 0 0
+M  V30 3 C 15.3857 -9.1735 0 0 MASS=13
+M  V30 4 * 11.379 -9.9108 0 0
+M  V30 5 N 16.713 -9.9545 0 0
+M  V30 6 C 18.053 -9.1955 0 0
+M  V30 7 * 19.3803 -9.9764 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
+M  V30 4 1 3 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(2 2 1) XBONDS=(2 2 3) BRKXYZ=(9 12.044 -10.2974 0 -
+M  V30 12.044 -8.7593 0 0 0 0) BRKXYZ=(9 14.7161 -8.7854 0 14.7161 -10.3235 0 -
+M  V30 0 0 0) CONNECT=HT LABEL=n
+M  V30 2 SRU 0 ATOMS=(2 6 5) XBONDS=(2 6 4) BRKXYZ=(9 19.0681 -8.7207 0 -
+M  V30 18.131 -10.3134 0 0 0 0) BRKXYZ=(9 15.6979 -10.4293 0 16.6351 -8.8365 -
+M  V30 0 0 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 2);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[1] == op.d_defaultRepeatCount);
+
+    {
+      std::vector<size_t> elems{0, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*[13CH2]*");
+    }
+    {
+      std::vector<size_t> elems{1, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CO[13CH2]*");
+    }
+    {
+      std::vector<size_t> elems{0, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CN[13CH2]*");
+    }
+    {
+      std::vector<size_t> elems{1, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CN[13CH2]OC*");
+    }
+    {
+      std::vector<size_t> elems{3, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CN[13CH2]OCOCOC*");
+    }
+    {
+      std::vector<size_t> elems{1, 3};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CNCNCN[13CH2]OC*");
+    }
+    {
+      std::vector<size_t> elems{2, 2};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CNCN[13CH2]OCOC*");
+    }
+  }
+
   SECTION("nested HT enumeration is not supported") {
     auto mol1 = R"CTAB(
   ACCLDraw05132106342D
@@ -985,5 +1067,53 @@ M  END)CTAB"_ctab;
     REQUIRE(mol1);
     MolEnumerator::RepeatUnitOp op;
     CHECK_THROWS_AS(op.initFromMol(*mol1), ValueErrorException);
+  }
+
+  SECTION("single atom SRU enumeration") {
+    auto mol1 = R"CTAB(
+  Mrv2108 09232115452D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * 9.3333 -3.9167 0 0
+M  V30 2 C 10.667 -3.1467 0 0
+M  V30 3 * 12.0007 -3.9167 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(1 2) XBONDS=(2 1 2) BRKXYZ=(9 11.6782 -2.6635 0 10.7542 -
+M  V30 -4.2639 0 0 0 0) BRKXYZ=(9 10.5799 -4.2639 0 9.6559 -2.6635 0 0 0 0) -
+M  V30 CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+
+    {
+      std::vector<size_t> elems{0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "**");
+    }
+    {
+      std::vector<size_t> elems{1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*C*");
+    }
+    {
+      std::vector<size_t> elems{3};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CCC*");
+    }
   }
 }
