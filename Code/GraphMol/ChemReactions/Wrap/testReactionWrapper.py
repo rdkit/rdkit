@@ -1035,13 +1035,6 @@ M  END
     self.assertFalse(rxn.RunReactantInPlace(reactant))
     self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
 
-    rxn = rdChemReactions.ReactionFromSmarts('[Cl:5].[C:1][N:2][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
-    self.assertIsNotNone(rxn)
-    reactant = Chem.MolFromSmiles('O=C(C)NCC')
-    self.assertTrue(rxn.RunReactantInPlace(reactant, reactantTemplateIndex=1))
-    Chem.SanitizeMol(reactant)
-    self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
-
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)

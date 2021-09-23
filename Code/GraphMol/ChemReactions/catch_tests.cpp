@@ -956,4 +956,22 @@ TEST_CASE("one-component reactions") {
       CHECK(MolToSmiles(*mol) == "CC[C@](F)(Cl)I");
     }
   }
+  SECTION("check reactant/product count") {
+    {
+      auto rxn = "[N:1].[O:2]>>[N:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "N"_smiles;
+      REQUIRE(mol);
+      CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+    {
+      auto rxn = "[N:1]>>[N:1].[O:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "N"_smiles;
+      REQUIRE(mol);
+      CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+  }
 }

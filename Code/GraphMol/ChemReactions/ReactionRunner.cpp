@@ -1715,16 +1715,15 @@ bool updateBondsModifiedByReaction(
 }  // namespace
 
 // Modifies a single reactant IN PLACE
-bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
-                  unsigned int reactantIdx) {
-  PRECONDITION(static_cast<size_t>(reactantIdx) < rxn.getNumReactantTemplates(),
-               "reactantIdx out of bounds");
-  PRECONDITION(rxn.getNumProductTemplates() <= 1, "only one product supported");
+bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant) {
+  PRECONDITION(rxn.getNumReactantTemplates() == 1,
+               "only one reactant supported");
+  PRECONDITION(rxn.getNumProductTemplates() == 1, "only one product supported");
   if (!rxn.isInitialized()) {
     throw ChemicalReactionException(
         "initMatchers() must be called before runReactants()");
   }
-
+  const unsigned int reactantIdx = 0;
   const auto reactantTemplate = rxn.getReactants()[reactantIdx];
   const auto productTemplate = rxn.getProducts()[0];
 

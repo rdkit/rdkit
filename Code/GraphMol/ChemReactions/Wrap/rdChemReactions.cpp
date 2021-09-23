@@ -150,8 +150,7 @@ PyObject *RunReactant(ChemicalReaction *self, T reactant,
   return res;
 }
 
-bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant,
-                        unsigned int reactionIdx) {
+bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant) {
   auto react = static_cast<RWMol *>(reactant);
   bool res = false;
   {
@@ -159,7 +158,7 @@ bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant,
     if (!self->isInitialized()) {
       self->initReactantMatchers();
     }
-    res = self->runReactant(*react, reactionIdx);
+    res = self->runReactant(*react);
   }
   return res;
 }
@@ -563,10 +562,10 @@ Sample Usage:
                RDKit::RunReactant,
            "apply the reaction to a single reactant")
       .def("RunReactantInPlace", RDKit::RunReactantInPlace,
-           (python::arg("self"), python::arg("reactant"),
-            python::arg("reactantTemplateIndex") = 0),
+           (python::arg("self"), python::arg("reactant")),
            "apply the reaction to a single reactant in place. The reactant "
-           "itself is modified.")
+           "itself is modified. This can only be used for single reactant - "
+           "single product reactions.")
       .def("Initialize", &RDKit::ChemicalReaction::initReactantMatchers,
            (python::arg("self"), python::arg("silent") = false),
            "initializes the reaction so that it can be used")

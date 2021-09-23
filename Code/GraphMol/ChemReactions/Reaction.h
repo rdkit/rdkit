@@ -230,16 +230,16 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   std::vector<MOL_SPTR_VECT> runReactant(
       ROMOL_SPTR reactant, unsigned int reactantTemplateIdx) const;
 
-  //! Runs a single reactant against a single reactant template in place (the
-  //! reactant is modified)
+  //! Runs a single reactant in place (the reactant is modified)
   /*!
-     \param reactant The single reactant to use
+    This is only useable with reactions which have a single reactant and product
+    and where no atoms are added in the product.
 
-     \param reactantTemplateIdx the reactant template to target in the reaction
+     \param reactant The single reactant to use
 
      \return whether or not the reactant was actually modified
   */
-  bool runReactant(RWMol &reactant, unsigned int reactantTemplateIdx = 0) const;
+  bool runReactant(RWMol &reactant) const;
 
   const MOL_SPTR_VECT &getReactants() const {
     return this->m_reactantTemplates;
