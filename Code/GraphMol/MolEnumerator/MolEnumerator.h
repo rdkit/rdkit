@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020-2021 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -155,8 +155,16 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
   void initFromMol();
 };
 
-//! Molecule enumeration operation corresponding to SRUs and the like
+//! Molecule enumeration operation corresponding to SRUs
 /*!
+  This should be considered a work-in-progress and to be somewhat fragile.
+
+  Known limitations:
+  - Overlapping SRUs, i.e. where one monomer is contained within another, are
+  not supported
+  - SRUs with more than two attachment points, e.g. ladder polymers, are not
+  supported
+
  */
 class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
  public:
@@ -249,7 +257,8 @@ inline MolBundle enumerate(const ROMol &mol,
 
 //! Returns a MolBundle containing the molecules resulting from applying the
 //! enumerable operators contained in \c mol.
-RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol);
+RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol,
+                                               size_t maxPerOperation = 0);
 
 }  // namespace MolEnumerator
 }  // namespace RDKit
