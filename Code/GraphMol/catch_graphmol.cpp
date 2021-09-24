@@ -2300,6 +2300,7 @@ TEST_CASE("conformer details") {
   CHECK(conf->getId() == cid);
 }
 
+#if !defined(_MSC_VER) || !defined(RDKIT_DYN_LINK)
 namespace RDKit {
 namespace Canon {
 namespace details {
@@ -2341,6 +2342,7 @@ TEST_CASE("switchBondDir") {
   Canon::switchBondDir(bond);
   CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
+
 TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
   std::vector<std::pair<std::string, std::string>> tests = {
       {"O=n1ccccc1", "O=N1=CC=CC=C1"},
