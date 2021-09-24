@@ -2330,7 +2330,6 @@ TEST_CASE("canon details") {
     }
   }
 }
-
 TEST_CASE("switchBondDir") {
   auto m = "C/C=C/C"_smiles;
   REQUIRE(m);
@@ -2342,6 +2341,7 @@ TEST_CASE("switchBondDir") {
   Canon::switchBondDir(bond);
   CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
+#endif
 
 TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
   std::vector<std::pair<std::string, std::string>> tests = {
