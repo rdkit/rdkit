@@ -156,6 +156,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4508_1b.svg", 613270459U},
     {"testGithub4508_2.svg", 2202600652U},
     {"testGithub4508_2b.svg", 145414660U},
+    {"testGithub4538.svg", 2784641879U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -3414,5 +3415,25 @@ M  END)CTAB"_ctab;
       outs.flush();
       check_file_hash("testGithub4508_2b.svg");
     }
+  }
+}
+
+TEST_CASE("Github #4538 drawMolecules crash") {
+  auto m = "CCc1ccccc1"_smiles;
+  REQUIRE(m);
+  RDDepict::compute2DCoords(*m);
+  ROMol m1(*m);
+  ROMol m2(*m);
+  std::vector<ROMol *> mols{&m1, &m2};
+  SECTION("basics") {
+    MolDraw2DSVG drawer(500, 200, 250, 200);
+    drawer.drawOptions().prepareMolsBeforeDrawing = false;
+    drawer.drawMolecules(mols);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4538.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testGithub4538.svg");
   }
 }
