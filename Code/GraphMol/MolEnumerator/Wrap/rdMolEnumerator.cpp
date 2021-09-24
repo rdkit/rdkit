@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020-2021 Greg Landrum and T5 Informatics GmbH
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,7 +15,7 @@ namespace python = boost::python;
 using namespace RDKit;
 namespace {
 
-enum class EnumeratorTypes { LinkNode, PositionVariation };
+enum class EnumeratorTypes { LinkNode, PositionVariation, RepeatUnit };
 
 std::shared_ptr<MolEnumerator::MolEnumeratorOp> opFromName(
     EnumeratorTypes typ) {
@@ -26,6 +26,9 @@ std::shared_ptr<MolEnumerator::MolEnumeratorOp> opFromName(
       break;
     case EnumeratorTypes::PositionVariation:
       res.reset(new MolEnumerator::PositionVariationOp());
+      break;
+    case EnumeratorTypes::RepeatUnit:
+      res.reset(new MolEnumerator::RepeatUnitOp());
       break;
     default:
       throw ValueErrorException("unrecognized operator type");
@@ -53,10 +56,11 @@ MolBundle *enumerateHelper2(const ROMol &mol,
 }  // namespace
 BOOST_PYTHON_MODULE(rdMolEnumerator) {
   python::scope().attr("__doc__") =
-      "Module containing classes and functions for enumerating query molecules";
+      "Module containing classes and functions for enumerating molecules";
   python::enum_<EnumeratorTypes>("EnumeratorType")
       .value("LinkNode", EnumeratorTypes::LinkNode)
-      .value("PositionVariation", EnumeratorTypes::PositionVariation);
+      .value("PositionVariation", EnumeratorTypes::PositionVariation)
+      .value("RepeatUnit", EnumeratorTypes::RepeatUnit);
 
   python::class_<MolEnumerator::MolEnumeratorParams>(
       "MolEnumeratorParams", "Molecular enumerator parameters",
@@ -66,7 +70,7 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
                      "sanitize molecules after enumeration")
       .def_readwrite("maxToEnumerate",
                      &MolEnumerator::MolEnumeratorParams::maxToEnumerate,
-                     "maximum number of molecules to enuemrate")
+                     "maximum number of molecules to enumerate")
       .def_readwrite("doRandom", &MolEnumerator::MolEnumeratorParams::doRandom,
                      "do random enumeration (not yet implemented")
       .def_readwrite("randomSeed",
