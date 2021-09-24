@@ -160,7 +160,7 @@ bool deprotectInPlace(RWMol &mol,
         // error and contine;
         continue;
       }
-      bool changes = deprotect.rxn->runReactant(mol, 0);
+      bool changes = deprotect.rxn->runReactant(mol);
       if (changes) {
         try {
           RDLog::BlockLogs blocker;
