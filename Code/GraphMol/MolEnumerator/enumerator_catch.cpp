@@ -1116,6 +1116,81 @@ M  END
       CHECK(MolToSmiles(*newmol) == "*CCC*");
     }
   }
+}
+
+TEST_CASE("SRUs directly bound to each other") {
+  SECTION("basics") {
+    auto mol1 = R"CTAB(
+  Mrv2108 09242104182D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * -0.75 -3.2917 0 0
+M  V30 2 C 0.5837 -2.5217 0 0
+M  V30 3 O 1.9174 -3.2917 0 0
+M  V30 4 C 3.251 -2.5217 0 0
+M  V30 5 N 4.5847 -3.2917 0 0
+M  V30 6 * 5.9184 -2.5217 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(2 2 3) XBONDS=(2 1 3) BRKXYZ=(9 2.0045 -2.1744 0 2.9285 -
+M  V30 -3.7748 0 0 0 0) BRKXYZ=(9 0.4965 -3.6389 0 -0.4275 -2.0385 0 0 0 0) -
+M  V30 CONNECT=HT LABEL=n
+M  V30 2 SRU 0 ATOMS=(2 4 5) XBONDS=(2 3 5) BRKXYZ=(9 4.6719 -2.1744 0 5.5959 -
+M  V30 -3.7748 0 0 0 0) BRKXYZ=(9 3.1639 -3.6389 0 2.2399 -2.0385 0 0 0 0) -
+M  V30 CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 2);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[1] == op.d_defaultRepeatCount);
+
+    {
+      std::vector<size_t> elems{0, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      // FIX: this result is ugly and is fixable by adding
+      // some extra bookkeeping. Somehow doesn't seem
+      // super important at the moment though.
+      CHECK(MolToSmiles(*newmol) == "*.*");
+    }
+    {
+      std::vector<size_t> elems{1, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CO*");
+    }
+    {
+      std::vector<size_t> elems{0, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CN*");
+    }
+    {
+      std::vector<size_t> elems{1, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*COCN*");
+    }
+    {
+      std::vector<size_t> elems{2, 2};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*COCOCNCN*");
+    }
+  }
+}
+
 TEST_CASE("RepeatUnit with enumerate()", "[MolEnumerator]") {
   SECTION("basic HT enumeration") {
     auto mol1 = R"CTAB(

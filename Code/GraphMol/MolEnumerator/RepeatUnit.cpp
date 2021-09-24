@@ -31,6 +31,37 @@ const std::string tailmarker = "_tailatom";
 const std::string tailmarker_frame = "_tailatom_frame";
 const std::string headheadmarker = "_headhead";
 
+namespace {
+void tagAtoms(std::shared_ptr<ROMol> mol, const Bond *bond,
+              const boost::dynamic_bitset<> &sgatoms, unsigned int index,
+              const std::string &marker, const std::string &framemarker,
+              const std::string &connect) {
+  if (sgatoms[bond->getBeginAtomIdx()]) {
+    bond->getBeginAtom()->setProp(marker, index);
+    if (connect == "HH") {
+      bond->getBeginAtom()->setProp(headheadmarker, 1);
+    }
+    auto frameAtom = mol->getAtomWithIdx(bond->getEndAtomIdx());
+    std::vector<unsigned int> vs;
+    frameAtom->getPropIfPresent(framemarker, vs);
+    vs.push_back(index);
+    frameAtom->setProp(framemarker, vs);
+  } else if (sgatoms[bond->getEndAtomIdx()]) {
+    bond->getEndAtom()->setProp(marker, index);
+    if (connect == "HH") {
+      bond->getEndAtom()->setProp(headheadmarker, 1);
+    }
+    auto frameAtom = mol->getAtomWithIdx(bond->getBeginAtomIdx());
+    std::vector<unsigned int> vs;
+    frameAtom->getPropIfPresent(framemarker, vs);
+    vs.push_back(index);
+    frameAtom->setProp(framemarker, vs);
+  } else {
+    throw ValueErrorException("neither atom in an SRU bond is in the polymer");
+  }
+}
+}  // namespace
+
 void RepeatUnitOp::initFromMol(const ROMol &mol) {
   dp_mol.reset(new ROMol(mol));
   initFromMol();
@@ -44,9 +75,11 @@ void RepeatUnitOp::initFromMol() {
 
   d_repeats.clear();
   d_countAtEachPoint.clear();
-  dp_frame.reset(new RWMol(*dp_mol));
-  dp_frame->beginBatchEdit();
-  boost::dynamic_bitset<> atomsSeen(dp_mol->getNumAtoms());
+
+  // start by figuring out which atoms are in sgroups which will be enumerated
+  boost::dynamic_bitset<> atomsInSRUs(dp_mol->getNumAtoms());
+  std::vector<boost::dynamic_bitset<>> atomsPerSRU;
+  std::vector<const SubstanceGroup *> enumerated_SGroups;
   for (auto &sg : getSubstanceGroups(*dp_mol)) {
     std::string typ;
     if (!sg.getPropIfPresent("TYPE", typ) || typ != "SRU") {
@@ -68,76 +101,48 @@ void RepeatUnitOp::initFromMol() {
           << "can only handle SRUs with two bonds" << std::endl;
       continue;
     }
-    std::shared_ptr<RWMol> repeat(new RWMol(*dp_mol));
 
     // tag the atoms in the repeat unit:
     boost::dynamic_bitset<> sgatoms(dp_mol->getNumAtoms());
     for (auto aidx : sg.getAtoms()) {
-      if (atomsSeen[aidx]) {
+      if (atomsInSRUs[aidx]) {
         throw ValueErrorException("cannot enumerate overlapping SRU groups");
       }
-      dp_mol->getAtomWithIdx(aidx)->setProp(polymarker, 1);
+      sgatoms.set(aidx);
+      atomsInSRUs.set(aidx);
+    }
+    atomsPerSRU.push_back(sgatoms);
+
+    // tag the head and tail atoms
+    tagAtoms(dp_mol, dp_mol->getBondWithIdx(sg.getBonds()[0]), sgatoms,
+             sg.getProp<unsigned>("index"), headmarker, tailmarker_frame,
+             connect);
+    tagAtoms(dp_mol, dp_mol->getBondWithIdx(sg.getBonds()[1]), sgatoms,
+             sg.getProp<unsigned>("index"), tailmarker, headmarker_frame,
+             connect);
+
+    enumerated_SGroups.push_back(&sg);
+  }
+
+  // copy the molecule over as the frame. We'll remove atoms in SRUs from this
+  // below
+  dp_frame.reset(new RWMol(*dp_mol));
+  dp_frame->beginBatchEdit();
+
+  for (const auto *sgp : enumerated_SGroups) {
+    const auto &sg = *sgp;
+    unsigned int sgidx;
+    sg.getPropIfPresent("index", sgidx);
+    std::shared_ptr<RWMol> repeat(new RWMol(*dp_mol));
+
+    // remove the atoms in the repeat unit from the frame:
+    boost::dynamic_bitset<> sgatoms(dp_mol->getNumAtoms());
+    for (auto aidx : sg.getAtoms()) {
       sgatoms.set(aidx);
       // remove it from the frame
       dp_frame->removeAtom(aidx);
     }
-    atomsSeen |= sgatoms;
 
-    // tag the head and tail atoms
-    const auto headBond = repeat->getBondWithIdx(sg.getBonds()[0]);
-    if (sgatoms[headBond->getBeginAtomIdx()]) {
-      headBond->getBeginAtom()->setProp(headmarker,
-                                        sg.getProp<unsigned>("index"));
-      if (connect == "HH") {
-        headBond->getBeginAtom()->setProp(headheadmarker, 1);
-      }
-      auto frameAtom = dp_frame->getAtomWithIdx(headBond->getEndAtomIdx());
-      std::vector<unsigned int> vs;
-      frameAtom->getPropIfPresent(tailmarker_frame, vs);
-      vs.push_back(sg.getProp<unsigned>("index"));
-      frameAtom->setProp(tailmarker_frame, vs);
-    } else if (sgatoms[headBond->getEndAtomIdx()]) {
-      headBond->getEndAtom()->setProp(headmarker,
-                                      sg.getProp<unsigned>("index"));
-      if (connect == "HH") {
-        headBond->getEndAtom()->setProp(headheadmarker, 1);
-      }
-      auto frameAtom = dp_frame->getAtomWithIdx(headBond->getBeginAtomIdx());
-      std::vector<unsigned int> vs;
-      frameAtom->getPropIfPresent(tailmarker_frame, vs);
-      vs.push_back(sg.getProp<unsigned>("index"));
-      frameAtom->setProp(tailmarker_frame, vs);
-    } else {
-      throw ValueErrorException(
-          "neither atom in an SRU bond is in the polymer");
-    }
-    const auto tailBond = repeat->getBondWithIdx(sg.getBonds()[1]);
-    if (sgatoms[tailBond->getBeginAtomIdx()]) {
-      tailBond->getBeginAtom()->setProp(tailmarker,
-                                        sg.getProp<unsigned>("index"));
-      if (connect == "HH") {
-        tailBond->getBeginAtom()->setProp(headheadmarker, 1);
-      }
-      auto frameAtom = dp_frame->getAtomWithIdx(tailBond->getEndAtomIdx());
-      std::vector<unsigned int> vs;
-      frameAtom->getPropIfPresent(headmarker_frame, vs);
-      vs.push_back(sg.getProp<unsigned>("index"));
-      frameAtom->setProp(headmarker_frame, vs);
-    } else if (sgatoms[tailBond->getEndAtomIdx()]) {
-      tailBond->getEndAtom()->setProp(tailmarker,
-                                      sg.getProp<unsigned>("index"));
-      if (connect == "HH") {
-        tailBond->getEndAtom()->setProp(headheadmarker, 1);
-      }
-      auto frameAtom = dp_frame->getAtomWithIdx(tailBond->getBeginAtomIdx());
-      std::vector<unsigned int> vs;
-      frameAtom->getPropIfPresent(headmarker_frame, vs);
-      vs.push_back(sg.getProp<unsigned>("index"));
-      frameAtom->setProp(headmarker_frame, vs);
-    } else {
-      throw ValueErrorException(
-          "neither atom in an SRU bond is in the polymer");
-    }
     repeat->beginBatchEdit();
     for (auto aidx = 0u; aidx < repeat->getNumAtoms(); ++aidx) {
       if (!sgatoms[aidx]) {
@@ -220,6 +225,17 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
               at2->setProp(headmarker, at2->getProp<unsigned>(tailmarker));
               at2->clearProp(tailmarker);
             }
+            if (at2->hasProp(headmarker_frame)) {
+              at2->setProp(
+                  tailmarker_frame,
+                  at2->getProp<std::vector<unsigned int>>(headmarker_frame));
+              at2->clearProp(headmarker_frame);
+            } else if (at2->hasProp(tailmarker_frame)) {
+              at2->setProp(
+                  headmarker_frame,
+                  at2->getProp<std::vector<unsigned int>>(tailmarker_frame));
+              at2->clearProp(tailmarker_frame);
+            }
           }
         }
       }
@@ -301,6 +317,19 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
           sruAtom->clearProp(tailmarker);
           headMap.erase(val);
         }
+      }
+      std::vector<unsigned int> vals;
+      if (sruAtom->getPropIfPresent(headmarker_frame, vals)) {
+        for (const auto val : vals) {
+          headMap[val] = sruAtom;
+        }
+        sruAtom->clearProp(headmarker_frame);
+      }
+      if (sruAtom->getPropIfPresent(tailmarker_frame, vals)) {
+        for (const auto val : vals) {
+          tailMap[val] = sruAtom;
+        }
+        sruAtom->clearProp(tailmarker_frame);
       }
     }
 
