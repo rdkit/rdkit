@@ -10,6 +10,9 @@
 - Molecule names in SMILES and SMARTS are now parsed by default. Previously they
   were ignored.
 
+## Code removed in this release:
+- The minimizeOnly opetion for coordgen has been removed.
+
 
 ## Deprecated code (to be removed in a future release):
 - The `useCountSimulation` keyword argument for
