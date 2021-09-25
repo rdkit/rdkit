@@ -47,25 +47,25 @@ void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
   //  Also, OELib returns the same results
   //
 
-  std::vector<boost::dynamic_bitset<>> seen;
+  std::list<boost::dynamic_bitset<>> seen;
   std::vector<MatchVectType> res;
-  for (size_t i = 0; i < matches.size(); i++) {
-    auto match = matches[i];
+  res.reserve(matches.size());
+  for (auto &&match : matches) {
     boost::dynamic_bitset<> val(nAtoms);
     for (const auto &ci : match) {
       val.set(ci.second);
     }
-    if (std::find(seen.begin(), seen.end(), val) == seen.end()) {
-      // it's something new
-      res.push_back(match);
-      seen.push_back(val);
+    auto pos = std::lower_bound(seen.begin(), seen.end(), val);
+    if (*pos != val) {
+      res.push_back(std::move(match));
+      seen.insert(pos, val);
     } else if (matchingTautomers) {
-      int position = res.size();
+      auto position = res.size();
       matchingTautomers->erase(matchingTautomers->begin() + position);
     }
   }
 
-  matches = res;
+  matches = std::move(res);
 }
 
 }  // namespace
