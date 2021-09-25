@@ -140,6 +140,7 @@ MolBundle enumerate(const ROMol &mol, size_t maxPerOperation) {
     linkParams.maxToEnumerate = maxPerOperation;
   }
   paramsList.push_back(linkParams);
+
   return enumerate(mol, paramsList);
 }
 

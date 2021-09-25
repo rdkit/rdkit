@@ -44,8 +44,8 @@ void setEnumerationHelper(MolEnumerator::MolEnumeratorParams *self,
                           EnumeratorTypes typ) {
   self->dp_operation = opFromName(typ);
 }
-MolBundle *enumerateHelper1(const ROMol &mol) {
-  auto res = MolEnumerator::enumerate(mol);
+MolBundle *enumerateHelper1(const ROMol &mol, unsigned int maxPerOperation) {
+  auto res = MolEnumerator::enumerate(mol, maxPerOperation);
   return new MolBundle(res);
 }
 MolBundle *enumerateHelper2(const ROMol &mol,
@@ -78,11 +78,27 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
                      "seed for the random enumeration (not yet implemented")
       .def("SetEnumerationOperator", &setEnumerationHelper,
            "set the operator to be used for enumeration");
-  python::def("Enumerate", &enumerateHelper1, (python::arg("mol")),
+  python::def("Enumerate", &enumerateHelper1,
+              (python::arg("mol"), python::arg("maxPerOperation") = 0),
               python::return_value_policy<python::manage_new_object>(),
-              "do an enumeration and return a MolBundle");
-  python::def("Enumerate", &enumerateHelper2,
-              (python::arg("mol"), python::arg("enumParams")),
-              python::return_value_policy<python::manage_new_object>(),
-              "do an enumeration and return a MolBundle");
+              R"DOC(do an enumeration and return a MolBundle.
+  If maxPerOperation is >0 that will be used as the maximum number of molecules which 
+    can be returned by any given operation.
+Limitations:
+  - the current implementation does not support molecules which include both
+    SRUs and LINKNODEs
+  - Overlapping SRUs, i.e. where one monomer is contained within another, are
+    not supported
+  - SRUs with more than two attachment points, e.g. ladder polymers, are not
+    supported)DOC");
+  python::def(
+      "Enumerate", &enumerateHelper2,
+      (python::arg("mol"), python::arg("enumParams")),
+      python::return_value_policy<python::manage_new_object>(),
+      R"DOC(do an enumeration for the supplied parameter type and return a MolBundle
+Limitations:
+  - Overlapping SRUs, i.e. where one monomer is contained within another, are
+    not supported
+  - SRUs with more than two attachment points, e.g. ladder polymers, are not
+    supported)DOC");
 }

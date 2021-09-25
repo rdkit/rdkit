@@ -244,8 +244,26 @@ struct RDKIT_MOLENUMERATOR_EXPORT MolEnumeratorParams {
 //! Returns a MolBundle containing the molecules resulting from applying the
 //! operators contained in \c paramsLists to \c mol.
 //! the operators are applied in order
+/*!
+NOTE: the current implementation does not support molecules which include
+both LINKNODE and SRU features.
+
+*/
 RDKIT_MOLENUMERATOR_EXPORT MolBundle
 enumerate(const ROMol &mol, const std::vector<MolEnumeratorParams> &paramsList);
+
+//! Returns a MolBundle containing the molecules resulting from applying the
+//! enumerable operators contained in \c mol.
+/*!
+\param maxPerOperation: the maximum number of molecules which an individual
+operation is allowed to generate
+
+NOTE: the current implementation does not support molecules which include
+both LINKNODE and SRU features.
+
+*/
+RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol,
+                                               size_t maxPerOperation = 0);
 
 //! Returns a MolBundle containing the molecules resulting from applying the
 //! operator contained in \c params to \c mol.
@@ -254,12 +272,6 @@ inline MolBundle enumerate(const ROMol &mol,
   std::vector<MolEnumeratorParams> v = {params};
   return enumerate(mol, v);
 };
-
-//! Returns a MolBundle containing the molecules resulting from applying the
-//! enumerable operators contained in \c mol.
-RDKIT_MOLENUMERATOR_EXPORT MolBundle enumerate(const ROMol &mol,
-                                               size_t maxPerOperation = 0);
-
 }  // namespace MolEnumerator
 }  // namespace RDKit
 

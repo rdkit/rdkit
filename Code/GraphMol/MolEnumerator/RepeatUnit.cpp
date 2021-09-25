@@ -124,6 +124,12 @@ void RepeatUnitOp::initFromMol() {
     enumerated_SGroups.push_back(&sg);
   }
 
+  if (!enumerated_SGroups.empty() &&
+      dp_mol->hasProp(common_properties::molFileLinkNodes)) {
+    throw ValueErrorException(
+        "cannot enumerate molecules which include both SRUs and LINKNODEs");
+  }
+
   // copy the molecule over as the frame. We'll remove atoms in SRUs from this
   // below
   dp_frame.reset(new RWMol(*dp_mol));
