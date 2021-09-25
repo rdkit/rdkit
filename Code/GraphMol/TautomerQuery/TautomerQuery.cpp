@@ -9,8 +9,8 @@
 //  of the RDKit source tree.
 
 #include "TautomerQuery.h"
-#include <boost/smart_ptr.hpp>
 #include <functional>
+#include <set>
 #include <utility>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
@@ -20,7 +20,6 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-
 // #define VERBOSE
 
 #ifdef VERBOSE
@@ -47,7 +46,7 @@ void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
   //  Also, OELib returns the same results
   //
 
-  std::list<boost::dynamic_bitset<>> seen;
+  std::set<boost::dynamic_bitset<>> seen;
   std::vector<MatchVectType> res;
   res.reserve(matches.size());
   for (auto &&match : matches) {
@@ -55,16 +54,15 @@ void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
     for (const auto &ci : match) {
       val.set(ci.second);
     }
-    auto pos = std::lower_bound(seen.begin(), seen.end(), val);
-    if (*pos != val) {
+    if (seen.find(val) == seen.end()) {
       res.push_back(std::move(match));
-      seen.insert(pos, val);
+      seen.insert(val);
     } else if (matchingTautomers) {
       auto position = res.size();
       matchingTautomers->erase(matchingTautomers->begin() + position);
     }
   }
-
+  res.shrink_to_fit();
   matches = std::move(res);
 }
 

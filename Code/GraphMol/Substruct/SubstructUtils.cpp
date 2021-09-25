@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "SubstructUtils.h"
+#include <set>
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
@@ -182,7 +183,7 @@ void removeDuplicates(std::vector<MatchVectType> &matches,
   //  that the 4 paths are equivalent in the semantics of the query.
   //  Also, OELib returns the same results
   //
-  std::list<boost::dynamic_bitset<>> seen;
+  std::set<boost::dynamic_bitset<>> seen;
   std::vector<MatchVectType> res;
   res.reserve(matches.size());
   for (auto &&match : matches) {
@@ -190,12 +191,12 @@ void removeDuplicates(std::vector<MatchVectType> &matches,
     for (const auto &ci : match) {
       val.set(ci.second);
     }
-    auto pos = std::lower_bound(seen.begin(), seen.end(), val);
-    if (*pos != val) {
+    if (seen.find(val) == seen.end()) {
       res.push_back(std::move(match));
-      seen.insert(pos, val);
+      seen.insert(val);
     }
   }
+  res.shrink_to_fit();
   matches = std::move(res);
 }
 
