@@ -18,7 +18,7 @@
 
 namespace RDKit {
 namespace Canon {
-namespace {
+namespace details {
 bool isUnsaturated(const Atom *atom, const ROMol &mol) {
   for (const auto &bndItr :
        boost::make_iterator_range(mol.getAtomBonds(atom))) {
@@ -38,14 +38,14 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
   std::string descr = q->getDescription();
   if (descr == "AtomAnd") {
     for (auto cIt = q->beginChildren(); cIt != q->endChildren(); ++cIt) {
-      std::string descr = (*cIt)->getDescription();
-      if (descr == "AtomHCount") {
+      auto cDescr = (*cIt)->getDescription();
+      if (cDescr == "AtomHCount") {
         if (!(*cIt)->getNegation() &&
             ((ATOM_EQUALS_QUERY *)(*cIt).get())->getVal() == 1) {
           return true;
         }
         return false;
-      } else if (descr == "AtomAnd") {
+      } else if (cDescr == "AtomAnd") {
         res = hasSingleHQuery((*cIt).get());
         if (res) {
           return true;
@@ -68,7 +68,7 @@ bool atomHasFourthValence(const Atom *atom) {
   }
   return false;
 }
-}  // end of anonymous namespace
+}  // namespace details
 
 bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
                                  const RDKit::Atom *atom, bool isAtomFirst,
@@ -76,8 +76,8 @@ bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
   PRECONDITION(atom, "bad atom");
   return atom->getDegree() == 3 &&
          ((isAtomFirst && atom->getNumExplicitHs() == 1) ||
-          (!atomHasFourthValence(atom) && numClosures == 1 &&
-           !isUnsaturated(atom, mol)));
+          (!details::atomHasFourthValence(atom) && numClosures == 1 &&
+           !details::isUnsaturated(atom, mol)));
 }
 
 struct _possibleCompare

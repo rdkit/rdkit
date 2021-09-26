@@ -9,8 +9,8 @@
 //  of the RDKit source tree.
 
 #include "TautomerQuery.h"
-#include <boost/smart_ptr.hpp>
 #include <functional>
+#include <set>
 #include <utility>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
@@ -20,7 +20,6 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-
 // #define VERBOSE
 
 #ifdef VERBOSE
@@ -47,25 +46,24 @@ void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
   //  Also, OELib returns the same results
   //
 
-  std::vector<boost::dynamic_bitset<>> seen;
+  std::set<boost::dynamic_bitset<>> seen;
   std::vector<MatchVectType> res;
-  for (size_t i = 0; i < matches.size(); i++) {
-    auto match = matches[i];
+  res.reserve(matches.size());
+  for (auto &&match : matches) {
     boost::dynamic_bitset<> val(nAtoms);
     for (const auto &ci : match) {
       val.set(ci.second);
     }
-    if (std::find(seen.begin(), seen.end(), val) == seen.end()) {
-      // it's something new
-      res.push_back(match);
-      seen.push_back(val);
+    if (seen.find(val) == seen.end()) {
+      res.push_back(std::move(match));
+      seen.insert(val);
     } else if (matchingTautomers) {
-      int position = res.size();
+      auto position = res.size();
       matchingTautomers->erase(matchingTautomers->begin() + position);
     }
   }
-
-  matches = res;
+  res.shrink_to_fit();
+  matches = std::move(res);
 }
 
 }  // namespace

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2008-2020 Greg Landrum
+//  Copyright (C) 2008-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -92,6 +92,7 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
            centeredOn == other.centeredOn && descriptor == other.descriptor &&
            controllingAtoms == other.controllingAtoms;
   }
+  bool operator!=(const StereoInfo &other) const { return !(*this == other); }
 };
 
 //! identifies potential stereoatoms and stereobonds in a molecule

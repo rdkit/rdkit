@@ -23,7 +23,7 @@
 namespace boost {
 namespace detail {
 typedef std::uint32_t node_id;
-const node_id NULL_NODE = 0xFFFF;
+const node_id NULL_NODE = 0xFFFFFFFF;
 struct NodeInfo {
   node_id id;
   node_id in;

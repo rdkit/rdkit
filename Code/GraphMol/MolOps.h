@@ -137,7 +137,7 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
     RDKIT_GRAPHMOL_EXPORT void findSpanningTree(const ROMol &mol,std::vector<int> &mst);
 #endif
 
-//! calculates Balaban's J index for the molecule
+//! DEPRECATED calculates Balaban's J index for the molecule
 /*!
   \param mol      the molecule of interest
   \param useBO    toggles inclusion of the bond order in the calculation
@@ -153,7 +153,7 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
 RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(
     const ROMol &mol, bool useBO = true, bool force = false,
     const std::vector<int> *bondPath = nullptr, bool cacheIt = true);
-//! \overload
+//!  DEPRECATED \overload
 RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(double *distMat, int nb, int nAts);
 
 //! \name Dealing with hydrogens
