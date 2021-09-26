@@ -1270,3 +1270,44 @@ M  END
     CHECK_THROWS_AS(MolEnumerator::enumerate(*mol1), ValueErrorException);
   }
 }
+
+TEST_CASE("ladder") {
+  SECTION("basics") {
+    auto mol1 = R"CTAB(
+  Mrv2108 09262105082D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 11.375 -0.2516 0 0
+M  V30 2 * 10.0413 -1.0216 0 0
+M  V30 3 * 10.0413 -2.5617 0 0
+M  V30 4 C 11.375 -3.3317 0 0
+M  V30 5 C 12.7087 -2.5617 0 0
+M  V30 6 N 12.7087 -1.0216 0 0
+M  V30 7 * 14.0423 -0.2516 0 0
+M  V30 8 * 14.0423 -3.3317 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 3 4
+M  V30 3 1 4 5
+M  V30 4 1 5 6
+M  V30 5 1 1 6
+M  V30 6 1 5 8
+M  V30 7 1 7 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(4 1 4 5 6) XBONDS=(4 1 2 6 7) BRKXYZ=(9 13.2958 0.0956 -
+M  V30 0 13.2958 -3.679 0 0 0 0) -
+M  V30 BRKXYZ=(9 10.8638 -3.8148 0 10.8638 0.2315 0 0 0 0) -
+M  V30 CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    CHECK_THROWS_AS(MolEnumerator::enumerate(*mol1), ValueErrorException);
+  }
+}

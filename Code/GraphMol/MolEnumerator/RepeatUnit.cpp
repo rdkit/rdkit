@@ -97,9 +97,7 @@ void RepeatUnitOp::initFromMol() {
     }
     // FIX: need to come back and fix this for ladder polymers
     if (sg.getBonds().size() != 2) {
-      BOOST_LOG(rdWarningLog)
-          << "can only handle SRUs with two bonds" << std::endl;
-      continue;
+      throw ValueErrorException("can only handle SRUs with two bonds");
     }
 
     // tag the atoms in the repeat unit:
