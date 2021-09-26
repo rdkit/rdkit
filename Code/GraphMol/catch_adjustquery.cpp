@@ -1,6 +1,5 @@
 //
-//
-//  Copyright (C) 2020 Greg Landrum and T5 Informatics GmbH
+//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -334,6 +333,34 @@ TEST_CASE("adjustQueryParameters from JSON") {
     MolOps::parseAdjustQueryParametersFromJSON(ps, json);
     CHECK(ps.useStereoCareForBonds == false);
   }
+  SECTION("adjustHeavyDegreeFlags") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.adjustHeavyDegreeFlags != MolOps::ADJUST_IGNORENONE);
+    std::string json = R"JSON({"adjustHeavyDegreeFlags":"IGNORENONE"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustHeavyDegreeFlags == MolOps::ADJUST_IGNORENONE);
+  }
+  SECTION("adjustRingCountFlags") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.adjustRingCountFlags != MolOps::ADJUST_IGNORERINGS);
+    std::string json = R"JSON({"adjustRingCountFlags":"IGNORERINGS"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustRingCountFlags == MolOps::ADJUST_IGNORERINGS);
+  }
+  SECTION("makeAtomsGenericFlags") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.makeAtomsGenericFlags != MolOps::ADJUST_IGNOREALL);
+    std::string json = R"JSON({"makeAtomsGenericFlags":"IGNOREALL"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.makeAtomsGenericFlags == MolOps::ADJUST_IGNOREALL);
+  }
+  SECTION("adjustRingChainFlags") {
+    MolOps::AdjustQueryParameters ps;
+    CHECK(ps.adjustRingChainFlags != MolOps::ADJUST_IGNORENONDUMMIES);
+    std::string json = R"JSON({"adjustRingChainFlags":"IGNORENONDUMMIES"})JSON";
+    MolOps::parseAdjustQueryParametersFromJSON(ps, json);
+    CHECK(ps.adjustRingChainFlags == MolOps::ADJUST_IGNORENONDUMMIES);
+  }
   SECTION("bogus contents") {
     MolOps::AdjustQueryParameters ps;
     CHECK(ps.adjustDegree == true);
@@ -349,17 +376,18 @@ TEST_CASE("adjustQueryParameters from JSON") {
     CHECK(ps.adjustDegree == true);
 
     json = R"JSON({"adjustDegreeFlags":"IGNORENONE|bogus"})JSON";
-    // clang-format off
-    CHECK_THROWS_AS(MolOps::parseAdjustQueryParametersFromJSON(ps, json),ValueErrorException);
+    CHECK_THROWS_AS(MolOps::parseAdjustQueryParametersFromJSON(ps, json),
+                    ValueErrorException);
   }
 }
 
-
 TEST_CASE("MDL five-rings") {
-  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+  MolOps::AdjustQueryParameters ps =
+      MolOps::AdjustQueryParameters::noAdjustments();
   ps.setMDLFiveRingAromaticity = true;
   SECTION("query details") {
-    using extuple=std::tuple<std::string,std::string,std::string>;
+    using extuple = std::tuple<std::string, std::string, std::string>;
+    // clang-format off
     std::vector<extuple> examples = {
     // no queries, no change
     extuple{"adjustqueryprops_MDLfivering_1.mol","[#7H]1:[#6]:[#6]:[#6]:[#6]:1",""},
@@ -371,8 +399,9 @@ TEST_CASE("MDL five-rings") {
     // aromatic then it won't match azulene in a normal RDKit molecule, which is certainly not the intent of this.
     extuple{"adjustqueryprops_MDLfivering_4.mol","[#6]12:[#6]:[#6]:[#6]:[#6]-1:[#6]:[#6]:[#6]:[#6]:[#6]:2",""},
     };
-    for( auto tpl : examples){
-      if(std::get<2>(tpl).empty()){
+    // clang-format on
+    for (auto tpl : examples) {
+      if (std::get<2>(tpl).empty()) {
         std::get<2>(tpl) = std::get<1>(tpl);
       }
       auto fname = std::get<0>(tpl);
@@ -380,18 +409,77 @@ TEST_CASE("MDL five-rings") {
       pathName += "/Code/GraphMol/test_data/";
       std::unique_ptr<RWMol> qry(MolFileToMol(pathName + fname));
       REQUIRE(qry);
-      CHECK(std::get<1>(tpl)==MolToSmarts(*qry));
-      MolOps::adjustQueryProperties(*qry,&ps);
-      CHECK(std::get<2>(tpl)==MolToSmarts(*qry));
-    } 
+      {
+        RWMol cp(*qry);
+        CHECK(std::get<1>(tpl) == MolToSmarts(cp));
+        MolOps::adjustQueryProperties(cp, &ps);
+        CHECK(std::get<2>(tpl) == MolToSmarts(cp));
+      }
+      {  // make sure ring-finding happens
+        RWMol cp(*qry);
+        cp.getRingInfo()->reset();
+        CHECK(std::get<1>(tpl) == MolToSmarts(cp));
+        MolOps::adjustQueryProperties(cp, &ps);
+        CHECK(std::get<2>(tpl) == MolToSmarts(cp));
+      }
+    }
+  }
+  SECTION("edge cases") {
+    SmilesParserParams smiles_ps;
+    smiles_ps.sanitize = false;
+    {
+      std::unique_ptr<RWMol> qry{SmilesToMol("*1:c:c:c:c:1", smiles_ps)};
+      REQUIRE(qry);
+      QueryAtom *qat = new QueryAtom(0);
+      qat->setQuery(makeAAtomQuery());
+      qat->setIsAromatic(true);
+      qry->replaceAtom(0, qat);
+      MolOps::adjustQueryProperties(*qry, &ps);
+      CHECK(MolToSmarts(*qry) == "[!#1]1-,:[#6]=,:[#6]-,:[#6]=,:[#6]-,:1");
+    }
+    {  // ring not fully aromatic
+      std::unique_ptr<RWMol> qry{SmilesToMol("*1:c:C-c:c:1", smiles_ps)};
+      REQUIRE(qry);
+      QueryAtom *qat = new QueryAtom(0);
+      qat->setQuery(makeAAtomQuery());
+      qat->setIsAromatic(true);
+      qry->replaceAtom(0, qat);
+      MolOps::adjustQueryProperties(*qry, &ps);
+      CHECK(MolToSmarts(*qry) == "[!#1]1:[#6]:[#6]-[#6]:[#6]:1");
+    }
+    {  // ring has additional dummy
+      std::unique_ptr<RWMol> qry{SmilesToMol("*1:c:*:c:c:1", smiles_ps)};
+      REQUIRE(qry);
+      QueryAtom *qat = new QueryAtom(0);
+      qat->setQuery(makeAAtomQuery());
+      qat->setIsAromatic(true);
+      qry->replaceAtom(0, qat);
+      MolOps::adjustQueryProperties(*qry, &ps);
+      CHECK(MolToSmarts(*qry) == "[!#1]1:[#6]:[#0]:[#6]:[#6]:1");
+    }
+    {  // query bond in ring
+      std::unique_ptr<RWMol> qry{SmilesToMol("*1:c:c:c:c:1", smiles_ps)};
+      REQUIRE(qry);
+      QueryAtom *qat = new QueryAtom(0);
+      qat->setQuery(makeAAtomQuery());
+      qat->setIsAromatic(true);
+      qry->replaceAtom(0, qat);
+      QueryBond *qbnd = new QueryBond();
+      qbnd->setBondType(Bond::BondType::SINGLE);
+      qbnd->setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
+      qry->replaceBond(0, qbnd);
+      MolOps::adjustQueryProperties(*qry, &ps);
+      CHECK(MolToSmarts(*qry) == "[!#1]1-[#6]:[#6]:[#6]:[#6]:1");
+    }
   }
 }
 
-
 TEST_CASE("conjugated five-rings") {
-  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+  MolOps::AdjustQueryParameters ps =
+      MolOps::AdjustQueryParameters::noAdjustments();
   ps.adjustConjugatedFiveRings = true;
   SECTION("matching") {
+    // clang-format off
     std::vector<matchCase> examples = {
     // 1,3 cyclopentadiene
     matchCase{"C1=CCC=C1","adjustqueryprops_fivering_1.mol",true,true},
@@ -429,24 +517,25 @@ TEST_CASE("conjugated five-rings") {
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_5.mol",false,false},
     matchCase{"C1=COC=C1","adjustqueryprops_fivering_6.mol",false,false},
     };
-    for( const auto &tpl : examples){
+    // clang-format on
+    for (const auto &tpl : examples) {
       auto fname = std::get<1>(tpl);
       std::string pathName = getenv("RDBASE");
       pathName += "/Code/GraphMol/test_data/";
       std::unique_ptr<RWMol> qry(MolFileToMol(pathName + fname));
       REQUIRE(qry);
-      if(std::get<2>(tpl)){
-        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,fname));
+      if (std::get<2>(tpl)) {
+        CHECK_THAT(std::get<0>(tpl), IsSubstructOf(*qry, fname));
       } else {
-        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,fname));
+        CHECK_THAT(std::get<0>(tpl), !IsSubstructOf(*qry, fname));
       }
-      MolOps::adjustQueryProperties(*qry,&ps);
-      if(std::get<3>(tpl)){
-        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,fname));
+      MolOps::adjustQueryProperties(*qry, &ps);
+      if (std::get<3>(tpl)) {
+        CHECK_THAT(std::get<0>(tpl), IsSubstructOf(*qry, fname));
       } else {
-        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,fname));
+        CHECK_THAT(std::get<0>(tpl), !IsSubstructOf(*qry, fname));
       }
-    } 
+    }
   }
   SECTION("query details") {
     auto fname = "adjustqueryprops_fivering_2.mol";
@@ -455,49 +544,81 @@ TEST_CASE("conjugated five-rings") {
     std::unique_ptr<RWMol> qry(MolFileToMol(pathName + fname));
     REQUIRE(qry);
     auto smarts = MolToSmarts(*qry);
-    CHECK(smarts=="[!#1]1:[#6]:[#6]:[#6]:[#6]:1");
-    MolOps::adjustQueryProperties(*qry,&ps);
+    CHECK(smarts == "[!#1]1:[#6]:[#6]:[#6]:[#6]:1");
+    MolOps::adjustQueryProperties(*qry, &ps);
     smarts = MolToSmarts(*qry);
-    CHECK(smarts=="[!#1]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
+    CHECK(smarts == "[!#1]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
   }
   SECTION("some edge cases") {
-    {    
-      auto qry="C1=COCC1"_smiles;
+    {
+      auto qry = "C1=COCC1"_smiles;
       auto smarts = MolToSmarts(*qry);
       CHECK(smarts == "[#6]1=[#6]-[#8]-[#6]-[#6]-1");
-      MolOps::adjustQueryProperties(*qry,&ps);
+      MolOps::adjustQueryProperties(*qry, &ps);
       CHECK(MolToSmarts(*qry) == smarts);
-    }  
-    {    
-      auto qry="C1=CCC=C1"_smiles;
+    }
+    {
+      auto qry = "C1=CCC=C1"_smiles;
       auto smarts = MolToSmarts(*qry);
       CHECK(smarts == "[#6]1=[#6]-[#6]-[#6]=[#6]-1");
-      MolOps::adjustQueryProperties(*qry,&ps);
-      CHECK(MolToSmarts(*qry) == "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
-    }  
-    { 
-      // conjugation (not bond order)   
-      auto qry="C1=COOO1"_smiles;
+      MolOps::adjustQueryProperties(*qry, &ps);
+      CHECK(MolToSmarts(*qry) ==
+            "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
+    }
+    {
+      // conjugation (not bond order)
+      auto qry = "C1=COOO1"_smiles;
       auto smarts = MolToSmarts(*qry);
       CHECK(smarts == "[#6]1=[#6]-[#8]-[#8]-[#8]-1");
-      MolOps::adjustQueryProperties(*qry,&ps);
-      CHECK(MolToSmarts(*qry) == "[#6]1-,=,:[#6]-,=,:[#8]-,=,:[#8]-,=,:[#8]-,=,:1");
-    }  
-    { 
-      // conjugation (not bond order)   
-      auto qry="O=C1C(=O)C(=O)C(=O)C1=O"_smiles;
+      MolOps::adjustQueryProperties(*qry, &ps);
+      CHECK(MolToSmarts(*qry) ==
+            "[#6]1-,=,:[#6]-,=,:[#8]-,=,:[#8]-,=,:[#8]-,=,:1");
+    }
+    {
+      // conjugation (not bond order)
+      auto qry = "O=C1C(=O)C(=O)C(=O)C1=O"_smiles;
       auto smarts = MolToSmarts(*qry);
-      CHECK(smarts == "[#8]=[#6]1-[#6](=[#8])-[#6](=[#8])-[#6](=[#8])-[#6]-1=[#8]");
-      MolOps::adjustQueryProperties(*qry,&ps);
-      CHECK(MolToSmarts(*qry) == "[#8]=[#6]1-,=,:[#6](=[#8])-,=,:[#6](=[#8])-,=,:[#6](=[#8])-,=,:[#6]-,=,:1=[#8]");
-    }  
+      CHECK(smarts ==
+            "[#8]=[#6]1-[#6](=[#8])-[#6](=[#8])-[#6](=[#8])-[#6]-1=[#8]");
+      MolOps::adjustQueryProperties(*qry, &ps);
+      CHECK(MolToSmarts(*qry) ==
+            "[#8]=[#6]1-,=,:[#6](=[#8])-,=,:[#6](=[#8])-,=,:[#6](=[#8])-,=,:[#"
+            "6]-,=,:1=[#8]");
+    }
+  }
+  SECTION("edge cases: ring finding") {
+    // test that ring finding happens:
+    SmilesParserParams smiles_ps;
+    smiles_ps.sanitize = false;
+    std::unique_ptr<RWMol> qry{SmilesToMol("O1C=CC=C1", smiles_ps)};
+    REQUIRE(qry);
+    qry->updatePropertyCache();
+    MolOps::setConjugation(*qry);
+    qry->getRingInfo()->reset();
+    CHECK(!qry->getRingInfo()->isInitialized());
+    MolOps::adjustQueryProperties(*qry, &ps);
+    CHECK(qry->getRingInfo()->isInitialized());
+    CHECK(MolToSmarts(*qry) ==
+          "[#8]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
+  }
+  SECTION("edge cases: ignore larger rings") {
+    SmilesParserParams smiles_ps;
+    smiles_ps.sanitize = false;
+    std::unique_ptr<RWMol> qry{SmilesToMol("N1=CC=CC=C1", smiles_ps)};
+    REQUIRE(qry);
+    qry->updatePropertyCache();
+    MolOps::setConjugation(*qry);
+    MolOps::adjustQueryProperties(*qry, &ps);
+    CHECK(MolToSmarts(*qry) == "[#7]1=[#6]-[#6]=[#6]-[#6]=[#6]-1");
   }
 }
 
 TEST_CASE("single bonds to degree-one neighbors") {
-  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+  MolOps::AdjustQueryParameters ps =
+      MolOps::AdjustQueryParameters::noAdjustments();
   ps.adjustSingleBondsToDegreeOneNeighbors = true;
   SECTION("matching") {
+    // clang-format off
     std::vector<matchCase> examples = {
       matchCase{"C2CCCc1c2nncc1","Cc1cnncc1",true,true},
       matchCase{"C2CCCc1c2nncc1","CCc1cnncc1",true,true},
@@ -510,31 +631,46 @@ TEST_CASE("single bonds to degree-one neighbors") {
       matchCase{"C2CCCc1[nH]ccc12","CCc1[nH]ccc1",true,true},
       matchCase{"c2cccc1[nH]ccc12","Cc1[nH]ccc1",false,true},
       matchCase{"c2cccc1[nH]ccc12","CCc1[nH]ccc1",false,false},
-
     };
-    for( const auto &tpl : examples){
+    // clang-format on
+    for (const auto &tpl : examples) {
       auto smi = std::get<1>(tpl);
       std::unique_ptr<RWMol> qry(SmilesToMol(smi));
       REQUIRE(qry);
-      if(std::get<2>(tpl)){
-        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,smi));
+      if (std::get<2>(tpl)) {
+        CHECK_THAT(std::get<0>(tpl), IsSubstructOf(*qry, smi));
       } else {
-        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,smi));
+        CHECK_THAT(std::get<0>(tpl), !IsSubstructOf(*qry, smi));
       }
-      MolOps::adjustQueryProperties(*qry,&ps);
-      if(std::get<3>(tpl)){
-        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,smi));
-      } else {
-        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,smi));
+      {
+        RWMol cp(*qry);
+        MolOps::adjustQueryProperties(cp, &ps);
+        if (std::get<3>(tpl)) {
+          CHECK_THAT(std::get<0>(tpl), IsSubstructOf(cp, smi));
+        } else {
+          CHECK_THAT(std::get<0>(tpl), !IsSubstructOf(cp, smi));
+        }
       }
-    } 
+      {  // make sure ring-finding happens
+        RWMol cp(*qry);
+        cp.getRingInfo()->reset();
+        MolOps::adjustQueryProperties(cp, &ps);
+        if (std::get<3>(tpl)) {
+          CHECK_THAT(std::get<0>(tpl), IsSubstructOf(cp, smi));
+        } else {
+          CHECK_THAT(std::get<0>(tpl), !IsSubstructOf(cp, smi));
+        }
+      }
+    }
   }
 }
 
 TEST_CASE("single bonds to aromatic neighbors") {
-  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+  MolOps::AdjustQueryParameters ps =
+      MolOps::AdjustQueryParameters::noAdjustments();
   ps.adjustSingleBondsBetweenAromaticAtoms = true;
   SECTION("matching") {
+    // clang-format off
     std::vector<matchCase> examples = {
       matchCase{"c1ncccc1-c1cnncc1","c1ncccc1-c1cnncc1",true,true},
       matchCase{"C1=CC2=C(C=CC3=C2C=NN=C3)N=C1","c1ncccc1-c1cnncc1",false,true},
@@ -545,51 +681,107 @@ TEST_CASE("single bonds to aromatic neighbors") {
       matchCase{"C1CC2=C(C=CC=N2)C2=C1C=NN=C2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",true,true},
       matchCase{"C1CC2=C3C(C=CC4=NN=CC1=C34)=CC=N2","C1CC2=C(C=CC=N2)C2=C1C=NN=C2",false,true}, // was github #3325
     };
-    for( const auto &tpl : examples){
+    // clang-format on
+    for (const auto &tpl : examples) {
       auto smi = std::get<1>(tpl);
       std::unique_ptr<RWMol> qry(SmilesToMol(smi));
       REQUIRE(qry);
-      if(std::get<2>(tpl)){
-        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,smi));
+      if (std::get<2>(tpl)) {
+        CHECK_THAT(std::get<0>(tpl), IsSubstructOf(*qry, smi));
       } else {
-        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,smi));
+        CHECK_THAT(std::get<0>(tpl), !IsSubstructOf(*qry, smi));
       }
-      MolOps::adjustQueryProperties(*qry,&ps);
-      if(std::get<3>(tpl)){
-        CHECK_THAT(std::get<0>(tpl),IsSubstructOf(*qry,smi));
+      MolOps::adjustQueryProperties(*qry, &ps);
+      if (std::get<3>(tpl)) {
+        CHECK_THAT(std::get<0>(tpl), IsSubstructOf(*qry, smi));
       } else {
-        CHECK_THAT(std::get<0>(tpl),!IsSubstructOf(*qry,smi));
+        CHECK_THAT(std::get<0>(tpl), !IsSubstructOf(*qry, smi));
       }
-    } 
+    }
   }
 }
 
-TEST_CASE("github #3388: Information about charges and isotopes lost when calling AdjustQueryProperties") {
-  MolOps::AdjustQueryParameters ps = MolOps::AdjustQueryParameters::noAdjustments();
+TEST_CASE(
+    "github #3388: Information about charges and isotopes lost when calling "
+    "AdjustQueryProperties") {
+  MolOps::AdjustQueryParameters ps =
+      MolOps::AdjustQueryParameters::noAdjustments();
   ps.adjustDegree = true;
   ps.adjustDegreeFlags = MolOps::AdjustQueryWhichFlags::ADJUST_IGNORENONE;
   SECTION("basics") {
     auto mol = "[13CH3]C[O-]"_smiles;
     REQUIRE(mol);
-    MolOps::adjustQueryProperties(*mol,&ps);
+    MolOps::adjustQueryProperties(*mol, &ps);
     auto sma = MolToSmarts(*mol);
-    CHECK(sma=="[#6&13*&D1]-[#6&D2]-[#8&-&D1]");
+    CHECK(sma == "[#6&13*&D1]-[#6&D2]-[#8&-&D1]");
   }
   SECTION("root cause") {
     auto mol = "[13CH2-]C[O-]"_smiles;
     REQUIRE(mol);
     QueryAtom atm(*mol->getAtomWithIdx(0));
     auto sma = SmartsWrite::GetAtomSmarts(&atm);
-    CHECK(sma=="[#6&13*&-]");
+    CHECK(sma == "[#6&13*&-]");
   }
   SECTION("root cause2") {
-    // since we don't have a way to query for number of radical electrons in SMARTS,
-    // we need to check that a different way:
+    // since we don't have a way to query for number of radical electrons in
+    // SMARTS, we need to check that a different way:
     auto mol = "[CH2]C[O-]"_smiles;
     REQUIRE(mol);
     QueryAtom atm(*mol->getAtomWithIdx(0));
     auto descr = describeQuery(&atm);
-    CHECK(descr.find("AtomNumRadicalElectrons 1 = val")!=std::string::npos);
+    CHECK(descr.find("AtomNumRadicalElectrons 1 = val") != std::string::npos);
   }
 }
 
+TEST_CASE("makeAtomsGeneric") {
+  SECTION("ignore mapped atoms") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.makeAtomsGeneric = true;
+    ps.makeAtomsGenericFlags =
+        MolOps::AdjustQueryWhichFlags::ADJUST_IGNOREMAPPED;
+    auto m = "C[CH3:1]"_smiles;
+    REQUIRE(m);
+    MolOps::adjustQueryProperties(*m, &ps);
+    CHECK(MolToSmarts(*m) == "*-[#6H3:1]");
+  }
+}
+
+TEST_CASE("other edges") {
+  SECTION("adjustHeavyDegree") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.adjustHeavyDegree = true;
+    ps.adjustHeavyDegreeFlags = MolOps::ADJUST_IGNOREMAPPED;
+    auto m = "C[CH3:1]"_smiles;
+    MolOps::adjustQueryProperties(*m, &ps);
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(describeQuery(m->getAtomWithIdx(0)).find("AtomHeavyAtomDegree") !=
+          std::string::npos);
+    CHECK(!m->getAtomWithIdx(1)->hasQuery());
+  }
+  SECTION("adjustRingCount") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.adjustRingCount = true;
+    ps.adjustRingCountFlags = MolOps::ADJUST_IGNOREMAPPED;
+    auto m = "C[CH3:1]"_smiles;
+    MolOps::adjustQueryProperties(*m, &ps);
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(describeQuery(m->getAtomWithIdx(0)).find("AtomInNRings") !=
+          std::string::npos);
+    CHECK(!m->getAtomWithIdx(1)->hasQuery());
+  }
+  SECTION("adjustRingCount") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.adjustRingChain = true;
+    ps.adjustRingChainFlags = MolOps::ADJUST_IGNOREMAPPED;
+    auto m = "C[CH3:1]"_smiles;
+    MolOps::adjustQueryProperties(*m, &ps);
+    CHECK(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(describeQuery(m->getAtomWithIdx(0)).find("AtomInRing") !=
+          std::string::npos);
+    CHECK(!m->getAtomWithIdx(1)->hasQuery());
+  }
+}

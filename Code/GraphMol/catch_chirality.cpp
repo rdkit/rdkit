@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
 
@@ -1705,5 +1706,34 @@ TEST_CASE(
     }
     CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(4)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE("StereoInfo comparisons") {
+  Chirality::StereoInfo si1;
+  si1.centeredOn = 3;
+  si1.type == Chirality::StereoType::Atom_Tetrahedral;
+  Chirality::StereoInfo si2;
+  si2.centeredOn = 3;
+  si2.type == Chirality::StereoType::Atom_Tetrahedral;
+  CHECK(si1 == si2);
+  si2.descriptor = Chirality::StereoDescriptor::Tet_CCW;
+  CHECK(si1 != si2);
+}
+
+TEST_CASE("StereoGroup Testing") {
+  SECTION("basics") {
+    auto mol = "C[C@H](O)[C@@H](C)[C@H](F)Cl |o1:1,3,&2:5,r|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getStereoGroups().size() == 2);
+    StereoGroup cp(mol->getStereoGroups()[0]);
+    CHECK(cp == mol->getStereoGroups()[0]);
+    CHECK(cp != mol->getStereoGroups()[1]);
+
+    std::vector<Atom *> toRemove{mol->getAtomWithIdx(1)};
+    std::vector<StereoGroup> &sgs =
+        const_cast<std::vector<StereoGroup> &>(mol->getStereoGroups());
+    removeGroupsWithAtoms(toRemove, sgs);
+    CHECK(mol->getStereoGroups().size() == 1);
   }
 }

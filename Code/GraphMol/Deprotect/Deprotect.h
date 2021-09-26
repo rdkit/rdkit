@@ -56,6 +56,9 @@ struct RDKIT_DEPROTECT_EXPORT DeprotectData {
             reaction_smarts == other.reaction_smarts &&
             isValid() == other.isValid());
   }
+  bool operator!=(const DeprotectData &other) const {
+    return !(*this == other);
+  }
 
   //! Returns true if the deprotection is valid
   bool isValid() const {

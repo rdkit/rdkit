@@ -399,12 +399,7 @@ void test3() {
 }
 
 void test4() {
-  string smi;
-  Mol *m;
-  INT_VECT iv;
-  VECT_INT_VECT sssr;
-  smi = "CC";
-  m = SmilesToMol(smi);
+  auto m = "C=C"_smiles;
   TEST_ASSERT(m);
   double *adjMat = MolOps::getAdjacencyMatrix(*m);
   TEST_ASSERT(adjMat);
@@ -418,7 +413,13 @@ void test4() {
   TEST_ASSERT(adjMat[1] == 1);
   TEST_ASSERT(adjMat[2] == 1);
   TEST_ASSERT(adjMat[3] == 0);
-  delete m;
+  bool useBO = true;
+  adjMat = MolOps::getAdjacencyMatrix(*m, useBO);
+  TEST_ASSERT(adjMat);
+  TEST_ASSERT(adjMat[0] == 0);
+  TEST_ASSERT(adjMat[1] == 2.0);
+  TEST_ASSERT(adjMat[2] == 2.0);
+  TEST_ASSERT(adjMat[3] == 0);
 }
 
 void test5() {
@@ -790,14 +791,14 @@ void test9() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing Distance Matrix Operations"
       << std::endl;
-  ROMol *m;
-  std::string smi = "CC=C";
-  m = SmilesToMol(smi);
+  auto m = "CC=O"_smiles;
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 3);
 
+  bool useBO = false;
+  bool useAtomWts = false;
   double *dMat;
-  dMat = MolOps::getDistanceMat(*m, false, false);
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
   TEST_ASSERT(dMat[0] == 0.0);
   TEST_ASSERT(dMat[1] == 1.0);
@@ -809,7 +810,7 @@ void test9() {
   TEST_ASSERT(dMat[7] == 1.0);
   TEST_ASSERT(dMat[8] == 0.0);
 
-  dMat = MolOps::getDistanceMat(*m, false, false);
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
   TEST_ASSERT(dMat[0] == 0.0);
   TEST_ASSERT(dMat[1] == 1.0);
@@ -822,7 +823,8 @@ void test9() {
   TEST_ASSERT(dMat[8] == 0.0);
 
   // test Issue328:
-  dMat = MolOps::getDistanceMat(*m, true, false);
+  useBO = true;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
   TEST_ASSERT(dMat[0] == 0.0);
   TEST_ASSERT(dMat[1] == 1.0);
@@ -834,7 +836,8 @@ void test9() {
   TEST_ASSERT(dMat[7] == 0.5);
   TEST_ASSERT(dMat[8] == 0.0);
 
-  dMat = MolOps::getDistanceMat(*m, false, false);
+  useBO = false;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
   TEST_ASSERT(dMat[0] == 0.0);
   TEST_ASSERT(dMat[1] == 1.0);
@@ -846,7 +849,76 @@ void test9() {
   TEST_ASSERT(dMat[7] == 1.0);
   TEST_ASSERT(dMat[8] == 0.0);
 
-  delete m;
+  useBO = false;
+  useAtomWts = true;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
+  TEST_ASSERT(dMat);
+  for (auto i = 0; i < m->getNumAtoms(); ++i) {
+    for (auto j = 0; j < m->getNumAtoms(); ++j) {
+      std::cerr << dMat[i * m->getNumAtoms() + j] << " ";
+    }
+    std::cerr << std::endl;
+  }
+  TEST_ASSERT(dMat[0] == 1.0);
+  TEST_ASSERT(dMat[1] == 1.0);
+  TEST_ASSERT(dMat[2] == 2.0);
+  TEST_ASSERT(dMat[3] == 1.0);
+  TEST_ASSERT(dMat[4] == 1.0);
+  TEST_ASSERT(dMat[5] == 1.0);
+  TEST_ASSERT(dMat[6] == 2.0);
+  TEST_ASSERT(dMat[7] == 1.0);
+  TEST_ASSERT(dMat[8] == 6. / 8.);
+
+  useBO = true;
+  useAtomWts = true;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
+  TEST_ASSERT(dMat);
+  TEST_ASSERT(dMat[0] == 1.0);
+  TEST_ASSERT(dMat[1] == 1.0);
+  TEST_ASSERT(dMat[2] == 1.5);
+  TEST_ASSERT(dMat[3] == 1.0);
+  TEST_ASSERT(dMat[4] == 1.0);
+  TEST_ASSERT(dMat[5] == 0.5);
+  TEST_ASSERT(dMat[6] == 1.5);
+  TEST_ASSERT(dMat[7] == 0.5);
+  TEST_ASSERT(dMat[8] == 6. / 8.);
+
+  useBO = false;
+  useAtomWts = false;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
+  TEST_ASSERT(dMat);
+  TEST_ASSERT(dMat[0] == 0.0);
+  TEST_ASSERT(dMat[1] == 1.0);
+  TEST_ASSERT(dMat[2] == 2.0);
+  TEST_ASSERT(dMat[3] == 1.0);
+  TEST_ASSERT(dMat[4] == 0.0);
+  TEST_ASSERT(dMat[5] == 1.0);
+  TEST_ASSERT(dMat[6] == 2.0);
+  TEST_ASSERT(dMat[7] == 1.0);
+  TEST_ASSERT(dMat[8] == 0.0);
+
+  // limit participating atoms and bonds
+  std::vector<int> activeAtoms = {1, 2};
+  std::vector<const Bond *> activeBonds = {m->getBondWithIdx(1)};
+  useBO = false;
+  useAtomWts = false;
+  std::unique_ptr<double[]> dMat2{
+      MolOps::getDistanceMat(*m, activeAtoms, activeBonds, useBO, useAtomWts)};
+  TEST_ASSERT(dMat2);
+  TEST_ASSERT(dMat2[0] == 0.0);
+  TEST_ASSERT(dMat2[1] == 1.0);
+  TEST_ASSERT(dMat2[2] == 1.0);
+  TEST_ASSERT(dMat2[3] == 0.0);
+
+  useBO = true;
+  useAtomWts = true;
+  dMat2.reset(
+      MolOps::getDistanceMat(*m, activeAtoms, activeBonds, useBO, useAtomWts));
+  TEST_ASSERT(dMat2);
+  TEST_ASSERT(dMat2[0] == 1.0);
+  TEST_ASSERT(dMat2[1] == 0.5);
+  TEST_ASSERT(dMat2[2] == 0.5);
+  TEST_ASSERT(dMat2[3] == 6.0 / 8.0);
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -8105,6 +8177,53 @@ M  END)CTAB"_ctab;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGet3DDistanceMatrix() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n testing get3DDistanceMat(). " << std::endl;
+  auto mol = R"CTAB(bogus example
+     RDKit          3D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.1000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2000    0.0000    0.1000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5000    0.0000    0.1000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+M  END)CTAB"_ctab;
+  TEST_ASSERT(mol);
+
+  double *dm = MolOps::get3DDistanceMat(*mol);
+  TEST_ASSERT(dm);
+  TEST_ASSERT(dm[0] == 0.0);
+  TEST_ASSERT(dm[1] == 1.2);
+  TEST_ASSERT(dm[2] == 2.5);
+  TEST_ASSERT(dm[3] == 1.2);
+  TEST_ASSERT(dm[4] == 0.0);
+  TEST_ASSERT(dm[5] == 1.3);
+  TEST_ASSERT(dm[6] == 2.5);
+  TEST_ASSERT(dm[7] == 1.3);
+  TEST_ASSERT(dm[8] == 0.0);
+  // this will use a cached version:
+  double *dm2 = MolOps::get3DDistanceMat(*mol);
+  TEST_ASSERT(dm == dm2)
+
+  int confId = -1;
+  bool useAtomWts = true;
+  dm = MolOps::get3DDistanceMat(*mol, confId, useAtomWts);
+  TEST_ASSERT(dm);
+  TEST_ASSERT(dm[0] == 1.0);
+  TEST_ASSERT(dm[1] == 1.2);
+  TEST_ASSERT(dm[2] == 2.5);
+  TEST_ASSERT(dm[3] == 1.2);
+  TEST_ASSERT(dm[4] == 1.0);
+  TEST_ASSERT(dm[5] == 1.3);
+  TEST_ASSERT(dm[6] == 2.5);
+  TEST_ASSERT(dm[7] == 1.3);
+  TEST_ASSERT(dm[8] == 6.0 / 8.0);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8219,6 +8338,7 @@ int main() {
   testRemoveAndTrackIsotopes();
   testGithub3854();
   testSetTerminalAtomCoords();
+  testGet3DDistanceMatrix();
 
   return 0;
 }
