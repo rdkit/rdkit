@@ -123,11 +123,12 @@ struct RGroupDecompData {
   }
 
   void prune() {  // prune all but the current "best" permutation of matches
+    PRECONDITION(permutation.size() <= matches.size(), "permutation.size() should be <= matches.size()");
     size_t offset = matches.size() - permutation.size();
     for (size_t mol_idx = 0; mol_idx < permutation.size(); ++mol_idx) {
       std::vector<RGroupMatch> keepVector;
       size_t mi = mol_idx + offset;
-      keepVector.push_back(matches.at(mi).at(permutation[mol_idx]));
+      keepVector.push_back(matches[mi].at(permutation[mol_idx]));
       matches[mi] = keepVector;
     }
 

@@ -24,6 +24,7 @@ double RGroupScorer::matchScore(
     const std::vector<size_t> &permutation,
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels) {
+  PRECONDITION(permutation.size() <= matches.size(), "permutation.size() should be <= matches.size()");
   double score = 0.;
   const std::string EMPTY_RGROUP = "";
   size_t offset = matches.size() - permutation.size();
@@ -37,7 +38,7 @@ double RGroupScorer::matchScore(
   BOOST_LOG(rdDebugLog) << "Scoring" << std::endl;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
     BOOST_LOG(rdDebugLog) << "Molecule " << m << " "
-                          << matches[m + offset][permutation[m]].toString()
+                          << matches[m + offset].at(permutation[m]).toString()
                           << std::endl;
   }
 #endif
@@ -46,7 +47,7 @@ double RGroupScorer::matchScore(
   restoreInitialState();
   std::map<int, int> num_rgroups;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-    for (auto l : matches.at(m + offset).at(permutation[m]).rgroups) {
+    for (auto l : matches[m + offset].at(permutation[m]).rgroups) {
       d_current.N = std::max(d_current.N, ++num_rgroups[l.first]);
     }
   }

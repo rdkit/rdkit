@@ -294,7 +294,7 @@ GaResult RGroupGa::run(int runNumber) {
                  });
   BOOST_LOG(rdInfoLog) << "Run " << runNumber << " Execution "
                        << timeInfo(startTime) << std::endl;
-  GaResult result(best->getFitness(), permutations);
+  GaResult result{best->getFitness(), permutations};
   return result;
 }
 

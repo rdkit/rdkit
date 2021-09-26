@@ -135,7 +135,7 @@ double fingerprintVarianceScore(
   std::cerr << "Fingerprint Scoring permutation "
             << " num matches: " << matches.size() << std::endl;
 #endif
-
+  CHECK_INVARIANT(permutation.size() <= matches.size(), "");
   FingerprintVarianceScoreData fingerprintVarianceScoreData2;
   if (!fingerprintVarianceScoreData) {
     fingerprintVarianceScoreData = &fingerprintVarianceScoreData2;

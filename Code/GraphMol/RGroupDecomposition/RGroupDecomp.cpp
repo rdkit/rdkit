@@ -370,6 +370,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   }
 
   const bool prune = true;
+  // in case the value ends up being changed in a future version of the code:
   if (prune) {
     data->permutationProduct = 1;
   }
