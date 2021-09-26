@@ -1368,7 +1368,7 @@ M  V30 7 1 7 6
 M  V30 END BOND
 M  V30 BEGIN SGROUP
 M  V30 1 SRU 0 ATOMS=(4 1 4 5 6) XBONDS=(4 1 2 6 7) XBCORR=(4 1 7 2 6) -
-M  V30 0 BRKXYZ=(9 13.2958 0.0956 13.2958 -3.679 0 0 0 0) -
+M  V30 BRKXYZ=(9 13.2958 0.0956 0 13.2958 -3.679 0 0 0 0) -
 M  V30 BRKXYZ=(9 10.8638 -3.8148 0 10.8638 0.2315 0 0 0 0) -
 M  V30 CONNECT=HT LABEL=n
 M  V30 END SGROUP
@@ -1454,6 +1454,168 @@ M  END
       auto smiles = MolToSmiles(*molp);
       CHECK(std::find(expected.begin(), expected.end(), smiles) !=
             expected.end());
+    }
+  }
+}
+
+TEST_CASE("starting from CXSMILES") {
+  SECTION("basic HT enumeration") {
+    auto mol1 = "*-CO-* |$star_e;;;star_e$,Sg:n:2,1::ht|"_smiles;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+
+    {
+      std::vector<size_t> elems{0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "**");
+    }
+    {
+      std::vector<size_t> elems{1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CO*");
+    }
+    {
+      std::vector<size_t> elems{3};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*COCOCO*");
+    }
+  }
+  SECTION("basic HH enumeration") {
+    auto mol1 = "*-CO-* |$star_e;;;star_e$,Sg:n:2,1::hh|"_smiles;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+
+    {
+      std::vector<size_t> elems{3};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*COOCCO*");
+    }
+  }
+
+  SECTION("non-overlapping multi-HT enumeration reversed example") {
+    auto mol1 =
+        "*-CN[13CH2]OC-* |$star_e;;;;;;star_e$,Sg:n:4,5::ht,Sg:n:1,2::ht|"_smiles;
+    REQUIRE(mol1);
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 2);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    CHECK(vcnts[1] == op.d_defaultRepeatCount);
+
+    {
+      std::vector<size_t> elems{0, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*[13CH2]*");
+    }
+    {
+      std::vector<size_t> elems{1, 0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CO[13CH2]*");
+    }
+    {
+      std::vector<size_t> elems{0, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CN[13CH2]*");
+    }
+    {
+      std::vector<size_t> elems{1, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CN[13CH2]OC*");
+    }
+    {
+      std::vector<size_t> elems{3, 1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CN[13CH2]OCOCOC*");
+    }
+    {
+      std::vector<size_t> elems{1, 3};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CNCNCN[13CH2]OC*");
+    }
+    {
+      std::vector<size_t> elems{2, 2};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      CHECK(MolToSmiles(*newmol) == "*CNCN[13CH2]OCOC*");
+    }
+  }
+  SECTION("ladder basics, no XBCORR") {
+    auto mol1 =
+        "*-CC(-*)N(-*)C-* |$star_e;;;star_e;;star_e;;star_e$,Sg:n:6,1,2,4::ht:4,2:0,6|"_smiles;
+    REQUIRE(mol1);
+
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    {
+      std::vector<size_t> elems{0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      REQUIRE(newmol);
+      CHECK(MolToSmiles(*newmol) == "**.**");
+    }
+    {
+      std::vector<size_t> elems{1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      REQUIRE(newmol);
+      CHECK(MolToSmiles(*newmol) == "*CC(*)N(*)C*");
+    }
+    {
+      std::vector<size_t> elems{2};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      REQUIRE(newmol);
+      CHECK(MolToSmiles(*newmol) == "*CC1CN(*)C(*)CN1C*");
+    }
+    {
+      std::vector<size_t> elems{3};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      REQUIRE(newmol);
+      CHECK(MolToSmiles(*newmol) == "*CC1CN2CC(*)N(*)CC2CN1C*");
+    }
+  }
+
+  SECTION("ladder basics, with XBCORR") {
+    auto mol1 =
+        "*-CC(-*)N(-*)C-* |$star_e;;;star_e;;star_e;;star_e$,Sg:n:6,1,2,4::ht:6,0:4,2|"_smiles;
+    REQUIRE(mol1);
+
+    MolEnumerator::RepeatUnitOp op;
+    op.initFromMol(*mol1);
+    auto vcnts = op.getVariationCounts();
+    REQUIRE(vcnts.size() == 1);
+    CHECK(vcnts[0] == op.d_defaultRepeatCount);
+    {
+      std::vector<size_t> elems{0};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      REQUIRE(newmol);
+      CHECK(MolToSmiles(*newmol) == "**.**");
+    }
+    {
+      std::vector<size_t> elems{1};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      REQUIRE(newmol);
+      CHECK(MolToSmiles(*newmol) == "*CC(*)N(*)C*");
+    }
+    {
+      std::vector<size_t> elems{2};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      REQUIRE(newmol);
+      CHECK(MolToSmiles(*newmol) == "*CC1CC(*)N(*)CN1C*");
+    }
+    {
+      std::vector<size_t> elems{3};
+      std::unique_ptr<ROMol> newmol(op(elems));
+      REQUIRE(newmol);
+      CHECK(MolToSmiles(*newmol) == "*CC1CC2CC(*)N(*)CN2CN1C*");
     }
   }
 }
