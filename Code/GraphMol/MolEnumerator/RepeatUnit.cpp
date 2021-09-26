@@ -111,6 +111,7 @@ void RepeatUnitOp::initFromMol() {
     // tag the head and tail atoms
     const auto &bnds = sg.getBonds();
     if (bnds.size() == 2) {
+      // simple case with only two bonds: here we just have head and tail
       tagAtoms(dp_mol, dp_mol->getBondWithIdx(bnds[0]), sgatoms,
                sg.getProp<unsigned>("index"), headmarker, tailmarker_frame,
                connect);
@@ -118,9 +119,19 @@ void RepeatUnitOp::initFromMol() {
                sg.getProp<unsigned>("index"), tailmarker, headmarker_frame,
                connect);
     } else if (bnds.size() == 4) {
-      // We may have XBCORR to indicate which bonds correspond to which:
+      // four bonds are what we see for a ladder polymer, here we need two
+      // different heads and two different tails. We mark the second set with a
+      // large offset so that they don't get confused, but otherwise the rest of
+      // the code handles this automatically.
+
+      // NOTE: theoretically we could support larger numbers of head/tail pairs,
+      // but I don't believe these show up in reality
+
+      // We may have XBCORR to indicate which bonds correspond to which
       std::vector<unsigned int> xbcorr;
       sg.getPropIfPresent("XBCORR", xbcorr);
+      // if it's not there, or if it wasn't the right size, just use
+      // the bonds:
       if (xbcorr.size() != 4) {
         xbcorr = {bnds[0], bnds[2], bnds[1], bnds[3]};
       }
@@ -155,10 +166,10 @@ void RepeatUnitOp::initFromMol() {
   dp_frame.reset(new RWMol(*dp_mol));
   dp_frame->beginBatchEdit();
 
+  // now set up the repeat units for each of the SRUs
   for (const auto *sgp : enumerated_SGroups) {
     const auto &sg = *sgp;
-    unsigned int sgidx;
-    sg.getPropIfPresent("index", sgidx);
+    auto sgidx = sg.getProp<unsigned int>("index");
     std::shared_ptr<RWMol> repeat(new RWMol(*dp_mol));
 
     // remove the atoms in the repeat unit from the frame:
@@ -216,7 +227,7 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
       for (auto val : vals) {
         if (headMap.find(val) != headMap.end()) {
           throw ValueErrorException(
-              "SRU group present with more than one head atom");
+              "SRU group present with multiple head atoms with the same index");
         }
         headMap[val] = atom;
       }
@@ -225,7 +236,7 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
       for (auto val : vals) {
         if (tailMap.find(val) != tailMap.end()) {
           throw ValueErrorException(
-              "SRU group present with more than one tail atom");
+              "SRU group present with multiple tail atoms with the same index");
         }
         tailMap[val] = atom;
       }
@@ -269,12 +280,10 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
       // if we aren't adding the first repeat unit, then we need to connect
       // things
       if (iter) {
-        // std::cerr << "ITER " << iter << std::endl;
         for (auto aidx1 = 0u; aidx1 < origAtomCount; ++aidx1) {
           auto at1 = filling.getAtomWithIdx(aidx1);
           unsigned tailIdx;
           if (at1->getPropIfPresent(tailmarker, tailIdx)) {
-            // std::cerr << "   tail: " << aidx1 << " " << tailIdx << std::endl;
             bool connected = false;
             for (auto aidx2 = origAtomCount; aidx2 < filling.getNumAtoms();
                  ++aidx2) {
@@ -282,8 +291,6 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
               unsigned int headIdx;
               if (at2->getPropIfPresent(headmarker, headIdx) &&
                   tailIdx == headIdx) {
-                // std::cerr << "   head: " << aidx2 << " " << headIdx
-                //           << std::endl;
                 connected = true;
                 at2->clearProp(headmarker);
                 // remove any atom connected to the head which isn't in the
