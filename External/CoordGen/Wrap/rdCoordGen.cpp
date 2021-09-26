@@ -69,9 +69,6 @@ struct coordgen_wrapper {
         .def_readwrite("templateFileDir",
                        &CoordGen::CoordGenParams::templateFileDir,
                        "directory containing the templates.mae file")
-        .def_readwrite("minimizeOnly", &CoordGen::CoordGenParams::minimizeOnly,
-                       "uses coordgen's force field to cleanup the 2D "
-                       "coordinates of the active conformation")
         .def_readonly("sketcherBestPrecision",
                       &CoordGen::CoordGenParams::sketcherBestPrecision,
                       "highest quality (and slowest) precision setting")

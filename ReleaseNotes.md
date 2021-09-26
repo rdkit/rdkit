@@ -10,6 +10,9 @@
 - Molecule names in SMILES and SMARTS are now parsed by default. Previously they
   were ignored.
 
+## Code removed in this release:
+- The minimizeOnly option for coordgen has been removed.
+
 
 ## Deprecated code (to be removed in a future release):
 - The `useCountSimulation` keyword argument for
@@ -20,6 +23,9 @@
 - The function `mol_from_smarts()` in the PostgreSQL cartridge has been
   deprecated and will be removed in the next release. Please use the
   `qmol_from_smarts()` function instead.
+- The `computeBalabanJ()` functions from the `MolOps` namespace have been
+  deprecated and will be removed in the next release. These have not been
+  exposed to Python, so this will not affect any Python code.
 
 
 

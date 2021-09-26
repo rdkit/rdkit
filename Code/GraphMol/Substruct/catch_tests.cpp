@@ -311,3 +311,28 @@ TEST_CASE("Github #4138: empty query produces non-empty results",
     }
   }
 }
+
+TEST_CASE("Github #4558: GetSubstructMatches() loops at 43690 iterations",
+          "[substruct][bug]") {
+  // We need LOTS of water molecules here.
+  auto num_mols = 22000;
+  std::stringstream smi;
+  for (int i = 1; i < num_mols; ++i) {
+    smi << "[H]O[H].";
+  }
+  smi << "[H]O[H]";  // last one (notice we started at 1)
+
+  int debug = 0;
+  bool sanitize = false;  // don't sanitize, it takes too long.
+  std::unique_ptr<ROMol> mol(SmilesToMol(smi.str(), debug, sanitize));
+  REQUIRE(mol);
+
+  auto qry = "[H]O[H]"_smarts;
+
+  SubstructMatchParameters ps;
+  ps.uniquify = false;           // don't uniquify, it takes too long.
+  ps.maxMatches = 3 * num_mols;  // exceed the numer of matches we expect
+
+  auto matches = SubstructMatch(*mol, *qry, ps);
+  CHECK(matches.size() == num_mols * 2);
+}

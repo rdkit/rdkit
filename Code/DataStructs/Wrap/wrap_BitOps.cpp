@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2020 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,13 +13,6 @@
 #include <DataStructs/BitOps.h>
 
 namespace python = boost::python;
-
-SBV *ff1(const SBV &bv1, int factor = 2) {
-  return FoldFingerprint(bv1, factor);
-}
-EBV *ff2(const EBV &ev1, int factor = 2) {
-  return FoldFingerprint(ev1, factor);
-}
 
 namespace {
 template <typename T>

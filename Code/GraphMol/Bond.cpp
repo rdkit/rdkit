@@ -183,6 +183,9 @@ double Bond::getBondTypeAsDouble() const {
 }
 
 double Bond::getValenceContrib(const Atom *atom) const {
+  if (atom != getBeginAtom() && atom != getEndAtom()) {
+    return 0.0;
+  }
   double res;
   if ((getBondType() == DATIVE || getBondType() == DATIVEONE) &&
       atom->getIdx() != getEndAtomIdx()) {
