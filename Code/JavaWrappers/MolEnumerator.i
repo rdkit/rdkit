@@ -1,6 +1,6 @@
 /*
  *
- *  Copyright (c) 2020, Greg Landrum and T5 Informatics GmbH
+ *  Copyright (c) 2020-2021, Greg Landrum and T5 Informatics GmbH
  *  All rights reserved.
  *
  *  This file is part of the RDKit.
@@ -14,15 +14,6 @@
 %}
 
 
-#if 0
-%ignore RDKit::MolEnumerator::MolEnumeratorOp::operator();
-%ignore RDKit::MolEnumerator::MolEnumeratorOp::copy;
-%ignore RDKit::MolEnumerator::PositionVariationOp::operator();
-%ignore RDKit::MolEnumerator::PositionVariationOp::copy;
-%ignore RDKit::MolEnumerator::LinkNodeOp::operator();
-%ignore RDKit::MolEnumerator::LinkNodeOp::copy;
-#endif
-
 %ignore RDKit::MolEnumerator::detail::idxPropName;
 %ignore RDKit::MolEnumerator::detail::preserveOrigIndices;
 %ignore RDKit::MolEnumerator::detail::removeOrigIndices;
@@ -30,6 +21,7 @@
 %ignore RDKit::MolEnumerator::MolEnumeratorOp;
 %ignore RDKit::MolEnumerator::PositionVariationOp;
 %ignore RDKit::MolEnumerator::LinkNodeOp;
+%ignore RDKit::MolEnumerator::RepeatUnitOp;
 
 %inline %{
 
@@ -41,6 +33,11 @@ RDKit::MolEnumerator::MolEnumeratorParams getLinkNodeParams(){
 RDKit::MolEnumerator::MolEnumeratorParams getPositionVariationParams(){
     RDKit::MolEnumerator::MolEnumeratorParams res;
     res.dp_operation.reset(new RDKit::MolEnumerator::PositionVariationOp());
+    return res;
+}
+RDKit::MolEnumerator::MolEnumeratorParams getRepeatUnitParams(){
+    RDKit::MolEnumerator::MolEnumeratorParams res;
+    res.dp_operation.reset(new RDKit::MolEnumerator::RepeatUnitOp());
     return res;
 }
 
