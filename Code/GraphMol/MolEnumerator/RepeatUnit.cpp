@@ -30,6 +30,7 @@ const std::string headmarker_frame = "_headatom_frame";
 const std::string tailmarker = "_tailatom";
 const std::string tailmarker_frame = "_tailatom_frame";
 const std::string headheadmarker = "_headhead";
+const unsigned ladderoffset = 100000;
 
 namespace {
 void tagAtoms(std::shared_ptr<ROMol> mol, const Bond *bond,
@@ -95,10 +96,6 @@ void RepeatUnitOp::initFromMol() {
         continue;
       }
     }
-    // FIX: need to come back and fix this for ladder polymers
-    if (sg.getBonds().size() != 2) {
-      throw ValueErrorException("can only handle SRUs with two bonds");
-    }
 
     // tag the atoms in the repeat unit:
     boost::dynamic_bitset<> sgatoms(dp_mol->getNumAtoms());
@@ -112,12 +109,37 @@ void RepeatUnitOp::initFromMol() {
     atomsPerSRU.push_back(sgatoms);
 
     // tag the head and tail atoms
-    tagAtoms(dp_mol, dp_mol->getBondWithIdx(sg.getBonds()[0]), sgatoms,
-             sg.getProp<unsigned>("index"), headmarker, tailmarker_frame,
-             connect);
-    tagAtoms(dp_mol, dp_mol->getBondWithIdx(sg.getBonds()[1]), sgatoms,
-             sg.getProp<unsigned>("index"), tailmarker, headmarker_frame,
-             connect);
+    const auto &bnds = sg.getBonds();
+    if (bnds.size() == 2) {
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(bnds[0]), sgatoms,
+               sg.getProp<unsigned>("index"), headmarker, tailmarker_frame,
+               connect);
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(bnds[1]), sgatoms,
+               sg.getProp<unsigned>("index"), tailmarker, headmarker_frame,
+               connect);
+    } else if (bnds.size() == 4) {
+      // We may have XBCORR to indicate which bonds correspond to which:
+      std::vector<unsigned int> xbcorr;
+      sg.getPropIfPresent("XBCORR", xbcorr);
+      if (xbcorr.size() != 4) {
+        xbcorr = {bnds[0], bnds[2], bnds[1], bnds[3]};
+      }
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[0]), sgatoms,
+               sg.getProp<unsigned>("index"), headmarker, tailmarker_frame,
+               connect);
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[2]), sgatoms,
+               sg.getProp<unsigned>("index") + ladderoffset, headmarker,
+               tailmarker_frame, connect);
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[1]), sgatoms,
+               sg.getProp<unsigned>("index"), tailmarker, headmarker_frame,
+               connect);
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[3]), sgatoms,
+               sg.getProp<unsigned>("index") + ladderoffset, tailmarker,
+               headmarker_frame, connect);
+
+    } else {
+      throw ValueErrorException("can only handle SRUs with two or four bonds");
+    }
 
     enumerated_SGroups.push_back(&sg);
   }

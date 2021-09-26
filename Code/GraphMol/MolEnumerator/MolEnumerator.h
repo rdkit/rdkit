@@ -162,8 +162,6 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
   Known limitations:
   - Overlapping SRUs, i.e. where one monomer is contained within another, are
   not supported
-  - SRUs with more than two attachment points, e.g. ladder polymers, are not
-  supported
 
  */
 class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {

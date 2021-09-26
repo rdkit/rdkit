@@ -88,9 +88,7 @@ Limitations:
   - the current implementation does not support molecules which include both
     SRUs and LINKNODEs
   - Overlapping SRUs, i.e. where one monomer is contained within another, are
-    not supported
-  - SRUs with more than two attachment points, e.g. ladder polymers, are not
-    supported)DOC");
+    not supported)DOC");
   python::def(
       "Enumerate", &enumerateHelper2,
       (python::arg("mol"), python::arg("enumParams")),
@@ -98,7 +96,5 @@ Limitations:
       R"DOC(do an enumeration for the supplied parameter type and return a MolBundle
 Limitations:
   - Overlapping SRUs, i.e. where one monomer is contained within another, are
-    not supported
-  - SRUs with more than two attachment points, e.g. ladder polymers, are not
-    supported)DOC");
+    not supported)DOC");
 }
