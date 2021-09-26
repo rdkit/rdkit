@@ -14,7 +14,9 @@
 #include <GraphMol/new_canon.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MonomerInfo.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -2372,5 +2374,28 @@ TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
       CHECK(!failed);
       CHECK(MolToSmiles(*m) == pr.second);
     }
+  }
+}
+
+TEST_CASE("Github #4535: operator<< for AtomPDBResidue", "[PDB]") {
+  SECTION("basics") {
+    bool sanitize = true;
+    int flavor = 0;
+    std::unique_ptr<RWMol> mol(SequenceToMol("KY", sanitize, flavor));
+    REQUIRE(mol);
+    REQUIRE(mol->getAtomWithIdx(0)->getMonomerInfo());
+    auto res = static_cast<AtomPDBResidueInfo *>(
+        mol->getAtomWithIdx(0)->getMonomerInfo());
+    REQUIRE(res);
+    std::stringstream oss;
+    oss << *res << std::endl;
+    res = static_cast<AtomPDBResidueInfo *>(
+        mol->getAtomWithIdx(mol->getNumAtoms() - 1)->getMonomerInfo());
+    REQUIRE(res);
+    oss << *res << std::endl;
+    auto tgt = R"FOO( N  (1): LYS-1
+ OXT(22): TYR-2
+)FOO";
+    CHECK(oss.str() == tgt);
   }
 }
