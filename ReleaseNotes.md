@@ -11,7 +11,7 @@
   were ignored.
 
 ## Code removed in this release:
-- The minimizeOnly opetion for coordgen has been removed.
+- The minimizeOnly option for coordgen has been removed.
 
 
 ## Deprecated code (to be removed in a future release):
