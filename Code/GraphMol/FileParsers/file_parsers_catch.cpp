@@ -4213,3 +4213,44 @@ M  END
     CHECK(getSubstanceGroups(*m).empty());
   }
 }
+
+TEST_CASE("Github #4561: failure to parse CTAB with LINKNODE and SGROUP") {
+  SECTION("BASICS") {
+    auto mol1 = R"CTAB(
+  Mrv2108 09252106182D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 12.719 -9.1518 0 0
+M  V30 2 O 14.0458 -9.9326 0 0
+M  V30 3 * 15.3857 -9.1735 0 0
+M  V30 4 * 11.379 -9.9108 0 0
+M  V30 5 C 12.7317 -7.6118 0 0
+M  V30 6 C 12.2558 -6.1472 0 0
+M  V30 7 C 13.7622 -6.4674 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 5 1 7 6
+M  V30 6 1 6 5
+M  V30 7 1 5 7
+M  V30 END BOND
+M  V30 LINKNODE 1 2 2 7 5 7 6
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(5 2 1 5 7 6) XBONDS=(2 2 3) BRKXYZ=(9 12.044 -10.2974 0 -
+M  V30 12.044 -8.7593 0 0 0 0) BRKXYZ=(9 14.7161 -8.7854 0 14.7161 -10.3235 0 -
+M  V30 0 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol1);
+    CHECK(getSubstanceGroups(*mol1).size() == 1);
+    CHECK(mol1->hasProp(common_properties::molFileLinkNodes));
+  }
+}
