@@ -92,7 +92,7 @@ GaResult& GaResult::operator=(const GaResult& other) {
   return *this;
 }
 
-RGroupGa::RGroupGa(RGroupDecompData& rGroupData,
+RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
                    const chrono::steady_clock::time_point* const t0)
     : rGroupData(rGroupData),
       chromosomePolicy(getRng(), rGroupData.matches.size()),

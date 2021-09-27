@@ -27,8 +27,15 @@ struct RGroupDecompData {
   std::map<int, RCore> cores;
   std::map<std::string, int> newCores;  // new "cores" found along the way
   int newCoreLabel = EMPTY_CORE_LABEL;
+  // this caches the running product of permutations
+  // across calls to process()
   size_t permutationProduct = 1;
+  // this caches the size of the previous matches vector
+  // such that the size of the current chunk can be inferred
   size_t previousMatchSize = 0;
+  // the default for Greedy/GreedyChunks is keeping only the best
+  // permutation after each call to process()
+  bool prunePermutations = true;
   RGroupDecompositionParameters params;
 
   std::vector<std::vector<RGroupMatch>> matches;
@@ -41,7 +48,7 @@ struct RGroupDecompData {
   std::vector<int> processedRlabels;
 
   std::map<int, int> finalRlabelMapping;
-  RGroupScorer rGroupScorer;
+  mutable RGroupScorer rGroupScorer;
 
   RGroupDecompData(const RWMol &inputCore,
                    RGroupDecompositionParameters inputParams)
@@ -503,9 +510,9 @@ struct RGroupDecompData {
         "Error in final RMapping size");
   }
 
-  double score(
-      const std::vector<size_t> &permutation,
-      FingerprintVarianceScoreData *fingerprintVarianceScoreData = nullptr) {
+  double score(const std::vector<size_t> &permutation,
+               FingerprintVarianceScoreData *fingerprintVarianceScoreData =
+                   nullptr) const {
     RGroupScore scoreMethod = static_cast<RGroupScore>(params.scoreMethod);
     switch (scoreMethod) {
       case Match:

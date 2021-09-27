@@ -369,9 +369,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     return -2;
   }
 
-  const bool prune = true;
   // in case the value ends up being changed in a future version of the code:
-  if (prune) {
+  if (data->prunePermutations) {
     data->permutationProduct = 1;
   }
   if (data->params.matchingStrategy != GA) {
@@ -384,7 +383,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     // oops, exponential is a pain
     if (N * potentialMatches.size() > 100000) {
       data->permutationProduct = N;
-      data->process(prune);
+      data->process(data->prunePermutations);
     }
   }
 
@@ -395,7 +394,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         (data->params.matchingStrategy & GreedyChunks &&
          data->matches.size() > 1 &&
          data->matches.size() % data->params.chunkSize == 0)) {
-      data->process(prune);
+      data->process(data->prunePermutations);
     }
   }
   return data->matches.size() - 1;
@@ -405,9 +404,8 @@ bool RGroupDecomposition::process() { return processAndScore().success; }
 
 RGroupDecompositionProcessResult RGroupDecomposition::processAndScore() {
   try {
-    const bool prune = true;
     const bool finalize = true;
-    return data->process(prune, finalize);
+    return data->process(data->prunePermutations, finalize);
   } catch (...) {
     return RGroupDecompositionProcessResult(false, -1);
   }

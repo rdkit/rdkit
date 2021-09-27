@@ -102,7 +102,7 @@ struct GaResult {
 
 class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
  public:
-  RGroupGa(RGroupDecompData& rGroupData,
+  RGroupGa(const RGroupDecompData& rGroupData,
            const chrono::steady_clock::time_point* const t0 = nullptr);
 
   IntegerStringChromosomePolicy& getChromosomePolicy() {
@@ -119,7 +119,7 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
 
   shared_ptr<RGroupDecompositionChromosome> createChromosome();
 
-  RGroupDecompData& getRGroupData() const { return rGroupData; }
+  const RGroupDecompData& getRGroupData() const { return rGroupData; }
 
   const vector<shared_ptr<GaOperation<RGroupDecompositionChromosome>>>
   getOperations() const;
@@ -129,7 +129,8 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupGa : public GaBase {
  private:
   RGroupGa(const RGroupGa& other) = delete;
   RGroupGa& operator=(const RGroupGa& other) = delete;
-  RGroupDecompData& rGroupData;
+  const RGroupDecompData& rGroupData;
+
   IntegerStringChromosomePolicy chromosomePolicy;
   int numberOperations;
   int numberOperationsWithoutImprovement;
