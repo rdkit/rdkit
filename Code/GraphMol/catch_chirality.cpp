@@ -1712,10 +1712,11 @@ TEST_CASE(
 TEST_CASE("StereoInfo comparisons") {
   Chirality::StereoInfo si1;
   si1.centeredOn = 3;
-  si1.type == Chirality::StereoType::Atom_Tetrahedral;
+  CHECK(si1.type == Chirality::StereoType::Unspecified);
+  si1.type = Chirality::StereoType::Atom_Tetrahedral;
   Chirality::StereoInfo si2;
   si2.centeredOn = 3;
-  si2.type == Chirality::StereoType::Atom_Tetrahedral;
+  si2.type = Chirality::StereoType::Atom_Tetrahedral;
   CHECK(si1 == si2);
   si2.descriptor = Chirality::StereoDescriptor::Tet_CCW;
   CHECK(si1 != si2);
