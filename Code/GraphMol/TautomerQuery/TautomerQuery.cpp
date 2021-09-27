@@ -54,9 +54,10 @@ void removeTautomerDuplicates(std::vector<MatchVectType> &matches,
     for (const auto &ci : match) {
       val.set(ci.second);
     }
-    if (seen.find(val) == seen.end()) {
+    auto pos = seen.lower_bound(val);
+    if (pos == seen.end() || *pos != val) {
       res.push_back(std::move(match));
-      seen.insert(val);
+      seen.insert(pos, std::move(val));
     } else if (matchingTautomers) {
       auto position = res.size();
       matchingTautomers->erase(matchingTautomers->begin() + position);
