@@ -46,7 +46,7 @@
 #include <DataStructs/BitOps.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
-
+#include "Keyholder.h"
 namespace RDKit {
 
 RDKIT_SUBSTRUCTLIBRARY_EXPORT bool SubstructLibraryCanSerialize();
@@ -328,7 +328,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT TautomerPatternHolder
 };
 
 //! Substructure Search a library of molecules
-/*!  This class allows for multithreaded substructure searches os
+/*!  This class allows for multithreaded substructure searches of
      large datasets.
 
      The implementations can use fingerprints to speed up searches
@@ -404,10 +404,26 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT TautomerPatternHolder
      delete bitVector;
      \endcode
 
+     Finally, using the KeyFromPropHolder will store user ids or keys.
+     By default, it uses RDKit's default _Name prop, but can be changed
+     to any property.
+
+     \code
+     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \ 
+         boost::make_shared<CachedTrustedSmilesMolHolder>();  
+     boost::shared_ptr<KeyFromPropHolder> keyHolder = \ 
+         boost::make_shared<KeyFromPropHolder>();  
+     SubstructLibrary lib(molHolder, keyHolder);
+     ...
+     auto keys = lib.GetKeys(lib.GetMatch(query));
+     \endcode
+
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   boost::shared_ptr<MolHolderBase> molholder;
   boost::shared_ptr<FPHolderBase> fpholder;
+  boost::shared_ptr<KeyHolderBase> keyholder;
+  
   MolHolderBase *mols;  // used for a small optimization
   FPHolderBase *fps{nullptr};
   bool is_tautomerquery = false;
@@ -415,11 +431,12 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
 
  public:
   SubstructLibrary()
-      : molholder(new MolHolder), fpholder(), mols(molholder.get()) {}
+      : molholder(new MolHolder), fpholder(), keyholder(), mols(molholder.get()) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
       : molholder(std::move(molecules)),
         fpholder(),
+        keyholder(),
         mols(molholder.get()),
         fps(nullptr) {}
 
@@ -427,8 +444,36 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                    boost::shared_ptr<FPHolderBase> fingerprints)
       : molholder(std::move(molecules)),
         fpholder(std::move(fingerprints)),
+        keyholder(),
         mols(molholder.get()),
         fps(fpholder.get()) {
+    if (fpholder.get() &&
+        dynamic_cast<TautomerPatternHolder *>(fpholder.get()) != nullptr) {
+      is_tautomerquery = true;
+    }
+  }
+
+  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
+		   boost::shared_ptr<KeyHolderBase> keys)
+    : molholder(std::move(molecules)),
+      fpholder(),
+      keyholder(std::move(keys)),
+      mols(molholder.get()),
+      fps(nullptr) {
+    if (fpholder.get() &&
+        dynamic_cast<TautomerPatternHolder *>(fpholder.get()) != nullptr) {
+      is_tautomerquery = true;
+    }
+  }
+
+  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
+		   boost::shared_ptr<FPHolderBase> fingerprints,
+		   boost::shared_ptr<KeyHolderBase> keys)
+    : molholder(std::move(molecules)),
+      fpholder(std::move(fingerprints)),
+      keyholder(std::move(keys)),
+      mols(molholder.get()),
+      fps(fpholder.get()) {
     if (fpholder.get() &&
         dynamic_cast<TautomerPatternHolder *>(fpholder.get()) != nullptr) {
       is_tautomerquery = true;
@@ -462,6 +507,14 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     return fpholder;
   }
 
+  //! Get the underlying molecule holder implementation
+  boost::shared_ptr<KeyHolderBase> &getKeyHolder() { return keyholder; }
+
+  //! Get the underlying molecule holder implementation
+  const boost::shared_ptr<KeyHolderBase> &getKeyHolder() const {
+    return keyholder;
+  }
+  
   const MolHolderBase &getMolecules() const {
     PRECONDITION(mols, "Molecule holder NULL in SubstructLibrary");
     return *mols;
@@ -753,6 +806,17 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   const std::vector<unsigned int> &getSearchOrder() const {
     return searchOrder;
   }
+  const std::string &getKey(unsigned int idx) const {
+    // expects implementation to throw IndexError if out of range
+    PRECONDITION(keyholder.get() != nullptr, "SubstructLibrary Has no keys");
+    return keyholder->getKey(idx);
+  }
+  std::vector<std::string> getKeys(const std::vector<unsigned int> &indices) const {
+    // expects implementation to throw IndexError if out of range
+    PRECONDITION(keyholder.get() != nullptr, "SubstructLibrary Has no keys");
+    return keyholder->getKeys(indices);
+  }
+  
   std::vector<unsigned int> &getSearchOrder() { return searchOrder; }
   //! access required for serialization
   void resetHolders() {

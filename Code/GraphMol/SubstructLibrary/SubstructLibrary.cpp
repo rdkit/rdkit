@@ -95,13 +95,20 @@ struct Bits {
 };
 
 unsigned int SubstructLibrary::addMol(const ROMol &m) {
-  unsigned int size = mols->addMol(m);
+  unsigned int idx = mols->addMol(m);
   if (fps) {
-    unsigned int fpsize = fps->addMol(m);
-    CHECK_INVARIANT(size == fpsize,
+    unsigned int fpidx = fps->addMol(m);
+    CHECK_INVARIANT(idx == fpidx,
                     "#mols different than #fingerprints in SubstructLibrary");
   }
-  return size;
+  if(keyholder.get() != nullptr) {
+    unsigned int keyidx = keyholder->addMol(m);
+    CHECK_INVARIANT(idx == keyidx,
+                    "#mols different than #keys in SubstructLibrary");
+    
+  }
+				  
+  return idx;
 }
 
 namespace {
