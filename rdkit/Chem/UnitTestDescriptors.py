@@ -191,6 +191,14 @@ class TestCase(unittest.TestCase):
     names = set(["AUTOCORR2D_%s" % str(i + 1) for i in range(192)])
     self.assertEqual(descriptors2.intersection(names), names)
 
+  def test_issue_4567(self):
+    """
+      Github issue #4567:
+      Requesting "density" fingerprint Hydrogen molecule fails with exception
+      """
+    mol = AllChem.MolFromSmiles('[HH]')
+    self.assertEqual(Descriptors.FpDensityMorgan1(mol), 0)
+
 
 if __name__ == '__main__':
   unittest.main()
