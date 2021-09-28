@@ -399,7 +399,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             coreAtom->getDegree() == 1,
             "Multiple core atoms match a mol atom, but one of the core "
             "atoms has degree > 1 ");
-        auto coreNeighborIdx = core[*core.getAtomNeighbors(coreAtom).first]->getIdx();
+        auto coreNeighborIdx =
+            core[*core.getAtomNeighbors(coreAtom).first]->getIdx();
         auto molNeighborIdx =
             std::find_if(matchV.cbegin(), matchV.cend(),
                          [coreNeighborIdx](std::pair<int, int> p) {
@@ -409,7 +410,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         if (molNeighborIdx > -1) {
           auto connectingBond =
               mol.getBondBetweenAtoms(mappingInfo.molIndex, molNeighborIdx);
-          CHECK_INVARIANT(connectingBond,"expected bond in molecule not found");
+          CHECK_INVARIANT(connectingBond,
+                          "expected bond in molecule not found");
           multipleOwnedBonds.set(connectingBond->getIdx());
         }
       }
@@ -675,10 +677,7 @@ ROMol *MurckoDecompose(const ROMol &mol) {
       bool removeIt = true;
 
       // check if the atom has a neighboring keeper:
-      ROMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = res->getAtomNeighbors(atom);
-      while (nbrIdx != endNbrs) {
-        Atom *nbr = (*res)[*nbrIdx];
+      for (auto nbr : res->atomNeighbors(atom)) {
         if (keepAtoms[nbr->getIdx()]) {
           if (res->getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
                   ->getBondType() == Bond::DOUBLE) {
@@ -698,7 +697,6 @@ ROMol *MurckoDecompose(const ROMol &mol) {
             nbr->setChiralTag(Atom::CHI_UNSPECIFIED);
           }
         }
-        ++nbrIdx;
       }
 
       if (removeIt) {
