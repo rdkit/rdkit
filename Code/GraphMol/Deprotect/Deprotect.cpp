@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2020 Brian P Kelley, Joann Prescott-Roy
+//  Copyright (C) 2020-2021 Brian P Kelley, Joann Prescott-Roy and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -42,20 +43,15 @@ const std::vector<DeprotectData> &getDeprotections() {
       {"alcohol", "CC(C)([Si](C)(C)[O;H0:1])C>>[O;H1:1]", "TBDMS",
        "tert-butyldimethylsilyl", "CC(C)(C)[Si](C)(C)OC>>OC"},
       {"alcohol", "COc1ccc(C([O;H0:1])(c2ccccc2)c2ccccc2)cc1>>[O;H1:1]", "MMT",
-       "methoxytrityl",
-       "COc1ccc(C(ON)(c2ccccc2)c2ccccc2)cc1>>NO"},
+       "methoxytrityl", "COc1ccc(C(ON)(c2ccccc2)c2ccccc2)cc1>>NO"},
       {"alcohol", "O1C([O;H0:1])[C;H2][C;H2][C;H2][C;H2]1>>[O;H1:1]", "THP",
-       "tetrahydropyranyl",
-       "COC1CCCCO1>>CO"},
+       "tetrahydropyranyl", "COC1CCCCO1>>CO"},
       {"alcohol", "[C;H3][O;X2&R0][C;H2&R0][O;H0:1]>>[O;H1:1]", "MOM",
-       "methoxymethyl_ether",
-       "COCOC>>CO"},
+       "methoxymethyl_ether", "COCOC>>CO"},
       {"alcohol", "[C;R0][O;R0][C;R0][C;R0][O;R0][C;R0][O;X2:1]>>[O;H1:1]",
-       "MEM", "beta-Methoxyethoxymethyl_ether",
-       "C(C)(C)OCOCCOC>>C(C)(C)O"},
+       "MEM", "beta-Methoxyethoxymethyl_ether", "C(C)(C)OCOCCOC>>C(C)(C)O"},
       {"alcohol", "[O;!$(*C(=O)):1]c1[c;H1][c;H1][c;H1][c;H1][c;H1]1>>[O;H1:1]",
-       "Bn", "benzyl",
-       "NOc1ccccc1>>ON"},
+       "Bn", "benzyl", "NOc1ccccc1>>ON"},
       {"alcohol", "[O;H0&X2:1][Si]([C;H3])([C;H3])([C;H3])>>[O;H1:1]", "TMS",
        "trimethylsilyl", "NO[Si](C)(C)C>>NO"},
       {"alcohol", "[O;H0:1]C(=O)c1[c;H1][c;H1][c;H1][c;H1][c;H1]1>>[O;H1:1]",
@@ -89,25 +85,24 @@ const std::vector<DeprotectData> &getDeprotections() {
        "N(C(=O)OC(C)(C)C)Cc1ccccc1NC(=O)OC(C)(C)C>>NCc1ccccc1N"},
       {"amine", "[N;H0,H1:1]C(=O)C(F)(F)F>>[N:1]", "TFA", "trifluoroacetyl",
        "ONC(=O)C(F)(F)F>>NO"},
-      {"amine",
-       "[NX3;H0,H1:1]C(=O)c1[c;H1][c;H1][c;H1][c;H1][c;H1]1>>[N:1]",
+      {"amine", "[NX3;H0,H1:1]C(=O)c1[c;H1][c;H1][c;H1][c;H1][c;H1]1>>[N:1]",
        "Bz", "benzoyl", "ONC(=O)c1ccccc1>>NO"},
-      {"amine", "[NX3;H0,H1:1][#6](=O)-[#8]-[#6]-[#6]-1-c2ccccc2-c2ccccc-12>>[N:1]",
+      {"amine",
+       "[NX3;H0,H1:1][#6](=O)-[#8]-[#6]-[#6]-1-c2ccccc2-c2ccccc-12>>[N:1]",
        "Fmoc", "9-fluorenylmethyloxycarbonyl",
        "CN(C)C(=O)OCC1C2=CC=CC=C2C2=C1C=CC=C2>>CNC"},
       {"amine",
        "[NX3;H0,H1;!$(NC=O):1][C;H2]c1[c;H1][c;H1][c;H1][c;H1][c;H1]1>>[N:1]",
-       "Bn", "benzylamine",
-       "CN(C)Cc1ccccc1>>CNC"},
-      {"amine", "[NX3;H0,H1:1][C;R0](=O)[C;H3]>>[N:1]", "Ac",
-       "acetamide",
+       "Bn", "benzylamine", "CN(C)Cc1ccccc1>>CNC"},
+      {"amine", "[NX3;H0,H1:1][C;R0](=O)[C;H3]>>[N:1]", "Ac", "acetamide",
        "N(C)(C)C(=O)C>>CNC"},
       {"amine",
-       "[NX3;H0,H1:1][C;R0](=O)[O;R0][C;R0]c1[c;H1][c;H1][c;H1][c;H1][c;H1]1>>[N:1]",
-       "Cbz", "carbobenzyloxy",
-       "N(C)(C)C(=O)OCc1ccccc1>>CNC"},
+       "[NX3;H0,H1:1][C;R0](=O)[O;R0][C;R0]c1[c;H1][c;H1][c;H1][c;H1][c;H1]1>>["
+       "N:1]",
+       "Cbz", "carbobenzyloxy", "N(C)(C)C(=O)OCc1ccccc1>>CNC"},
       {"carbonyl",
-       "[#6,#1:1][C:2]([#6,#1:3])([#8:4][#6])([#8][#6])>>[*:1][C:2]([*:3])[#8:4]",
+       "[#6,#1:1][C:2]([#6,#1:3])([#8:4][#6])([#8][#6])>>[*:1][C:2]([*:3])[#8:"
+       "4]",
        "Acetyl/Ketal", "Acetal/Ketal",
        "O=C(OC)C1CCC(OC2)(OC2)CC1>>COC(=O)C1CCC(O)CC1"},
   };
@@ -150,7 +145,45 @@ std::unique_ptr<ROMol> deprotect(
   m->setProp("DEPROTECTIONS", deprotections_used);
   m->setProp<int>("DEPROTECTION_COUNT", deprotections_used.size());
   return std::unique_ptr<ROMol>(new ROMol(*m.get()));
+}
+
+bool deprotectInPlace(RWMol &mol,
+                      const std::vector<DeprotectData> &deprotections) {
+  std::vector<std::string> deprotections_used;
+
+  bool modified = false;
+  bool something_happened = true;
+  while (something_happened) {
+    something_happened = false;
+    for (auto &deprotect : deprotections) {
+      if (!deprotect.isValid()) {
+        // error and contine;
+        continue;
+      }
+      bool changes = deprotect.rxn->runReactant(mol);
+      if (changes) {
+        try {
+          RDLog::BlockLogs blocker;
+          MolOps::sanitizeMol(mol);
+        } catch (MolSanitizeException &) {
+          continue;
+        }
+        modified = true;
+        deprotections_used.push_back(deprotect.abbreviation);
+        if (deprotections_used.size() >= MAX_DEPROTECTIONS) {
+          BOOST_LOG(rdErrorLog)
+              << "Too many deprotections, halting..." << std::endl;
+        } else {
+          something_happened = true;
+        }
+      }
+    }
+  }
+
+  mol.setProp("DEPROTECTIONS", deprotections_used);
+  mol.setProp<int>("DEPROTECTION_COUNT", deprotections_used.size());
+  return modified;
 };
 
 }  // namespace Deprotect
-} // namespace RDKit
+}  // namespace RDKit

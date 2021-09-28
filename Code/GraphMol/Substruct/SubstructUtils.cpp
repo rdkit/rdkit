@@ -191,9 +191,10 @@ void removeDuplicates(std::vector<MatchVectType> &matches,
     for (const auto &ci : match) {
       val.set(ci.second);
     }
-    if (seen.find(val) == seen.end()) {
+    auto pos = seen.lower_bound(val);
+    if (pos == seen.end() || *pos != val) {
       res.push_back(std::move(match));
-      seen.insert(val);
+      seen.insert(pos, std::move(val));
     }
   }
   res.shrink_to_fit();
