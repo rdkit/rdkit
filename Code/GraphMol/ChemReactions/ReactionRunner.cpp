@@ -1096,7 +1096,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
         // there's a reactant bond that hasn't yet been accounted for:
         int unmatchedBond = -1;
 
-        for (const auto &rBond : reactant.atomBonds(&reactantAtom)) {
+        for (const auto rBond : reactant.atomBonds(&reactantAtom)) {
           if (std::find(pOrder.begin(), pOrder.end(), rBond->getIdx()) ==
               pOrder.end()) {
             unmatchedBond = rBond->getIdx();
