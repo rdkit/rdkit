@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013 Greg Landrum
+//  Copyright (C) 2013-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,8 +13,8 @@
 
 */
 #include <RDGeneral/export.h>
-#ifndef _RD_MONOMERINFO_H
-#define _RD_MONOMERINFO_H
+#ifndef RD_MONOMERINFO_H
+#define RD_MONOMERINFO_H
 
 #include <string>
 #include <utility>

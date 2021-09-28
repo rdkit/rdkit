@@ -7,7 +7,7 @@ rdkit_library(GraphMol
               MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
-              new_canon.cpp SubstanceGroup.cpp FindStereo.cpp
+              new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral  )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
