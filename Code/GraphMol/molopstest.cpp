@@ -7839,7 +7839,8 @@ void testRemoveAndTrackIsotopes() {
   // shuffle atoms before adding Hs; result should not change
   std::vector<unsigned int> randomOrder(mNoH->getNumAtoms());
   std::iota(randomOrder.begin(), randomOrder.end(), 0U);
-  std::random_shuffle(randomOrder.begin(), randomOrder.end());
+  std::shuffle(randomOrder.begin(), randomOrder.end(),
+               std::default_random_engine());
   std::unique_ptr<ROMol> mNoHRen(MolOps::renumberAtoms(*mNoH, randomOrder));
   mH.reset(MolOps::addHs(*mNoHRen));
   mH_isotopicHsPerHeavy.reset(new IsotopicHsCount(*mH));
