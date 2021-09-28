@@ -70,13 +70,6 @@
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Atom_Vect) std::vector<RDKit::Atom*>;
 %template(StereoGroup_Vect) std::vector<RDKit::StereoGroup>;
-// %template(CXXAtomIter_V) RDKit::CXXAtomIterator<RDKit::MolGraph,RDKit::Atom *,MolGraph::vertex_iterator>;
-// %template(CXXAtomIter_Vconst) RDKit::CXXAtomIterator<const RDKit::MolGraph,RDKit::Atom const*,MolGraph::vertex_iterator>;
-// %template(CXXAtomIter_A) RDKit::CXXAtomIterator<RDKit::MolGraph,RDKit::Atom *,MolGraph::adjacency_iterator>;
-// %template(CXXAtomIter_Aconst) RDKit::CXXAtomIterator<const RDKit::MolGraph,RDKit::Atom const*,MolGraph::adjacency_iterator>;
-// %template(CXXBondIter_E) RDKit::CXXBondIterator<RDKit::MolGraph,RDKit::Bond *,MolGraph::out_edge_iterator>;
-// %template(CXXBondIter_Econst) RDKit::CXXBondIterator<const RDKit::MolGraph,RDKit::Bond *const,MolGraph::out_edge_iterator>;
-
 
 // These prevent duplicate definitions in Java code
 %ignore RDKit::ROMol::hasProp(std::string const) const ;
