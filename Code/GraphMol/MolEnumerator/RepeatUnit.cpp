@@ -108,16 +108,16 @@ void RepeatUnitOp::initFromMol() {
     }
     atomsPerSRU.push_back(sgatoms);
 
+    auto sgIdx = sg.getProp<unsigned>("index");
+
     // tag the head and tail atoms
     const auto &bnds = sg.getBonds();
     if (bnds.size() == 2) {
       // simple case with only two bonds: here we just have head and tail
-      tagAtoms(dp_mol, dp_mol->getBondWithIdx(bnds[0]), sgatoms,
-               sg.getProp<unsigned>("index"), headmarker, tailmarker_frame,
-               connect);
-      tagAtoms(dp_mol, dp_mol->getBondWithIdx(bnds[1]), sgatoms,
-               sg.getProp<unsigned>("index"), tailmarker, headmarker_frame,
-               connect);
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(bnds[0]), sgatoms, sgIdx,
+               headmarker, tailmarker_frame, connect);
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(bnds[1]), sgatoms, sgIdx,
+               tailmarker, headmarker_frame, connect);
     } else if (bnds.size() == 4) {
       // four bonds are what we see for a ladder polymer, here we need two
       // different heads and two different tails. We mark the second set with a
@@ -135,19 +135,14 @@ void RepeatUnitOp::initFromMol() {
       if (xbcorr.size() != 4) {
         xbcorr = {bnds[0], bnds[2], bnds[1], bnds[3]};
       }
-      tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[0]), sgatoms,
-               sg.getProp<unsigned>("index"), headmarker, tailmarker_frame,
-               connect);
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[0]), sgatoms, sgIdx,
+               headmarker, tailmarker_frame, connect);
       tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[2]), sgatoms,
-               sg.getProp<unsigned>("index") + ladderoffset, headmarker,
-               tailmarker_frame, connect);
-      tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[1]), sgatoms,
-               sg.getProp<unsigned>("index"), tailmarker, headmarker_frame,
-               connect);
+               sgIdx + ladderoffset, headmarker, tailmarker_frame, connect);
+      tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[1]), sgatoms, sgIdx,
+               tailmarker, headmarker_frame, connect);
       tagAtoms(dp_mol, dp_mol->getBondWithIdx(xbcorr[3]), sgatoms,
-               sg.getProp<unsigned>("index") + ladderoffset, tailmarker,
-               headmarker_frame, connect);
-
+               sgIdx + ladderoffset, tailmarker, headmarker_frame, connect);
     } else {
       throw ValueErrorException("can only handle SRUs with two or four bonds");
     }
@@ -169,7 +164,6 @@ void RepeatUnitOp::initFromMol() {
   // now set up the repeat units for each of the SRUs
   for (const auto *sgp : enumerated_SGroups) {
     const auto &sg = *sgp;
-    auto sgidx = sg.getProp<unsigned int>("index");
     std::shared_ptr<RWMol> repeat(new RWMol(*dp_mol));
 
     // remove the atoms in the repeat unit from the frame:
@@ -200,28 +194,120 @@ std::vector<size_t> RepeatUnitOp::getVariationCounts() const {
   return d_countAtEachPoint;
 }
 
-std::unique_ptr<ROMol> RepeatUnitOp::operator()(
-    const std::vector<size_t> &which) const {
-  PRECONDITION(dp_mol, "no molecule");
-  PRECONDITION(dp_frame, "not initialized");
-  if (which.size() != d_countAtEachPoint.size()) {
-    throw ValueErrorException("bad element choice in enumeration");
-  }
-  // quick error checking before we do any work:
-  for (size_t i = 0; i < which.size(); ++i) {
-    if (which[i] >= d_countAtEachPoint[i]) {
-      throw ValueErrorException("bad element value in enumeration");
+namespace {
+void flipHeadHeadGroups(unsigned int origAtomCount, RWMol &mol) {
+  for (auto aidx = origAtomCount; aidx < mol.getNumAtoms(); ++aidx) {
+    auto atom = mol.getAtomWithIdx(aidx);
+    if (atom->hasProp(headheadmarker)) {
+      if (atom->hasProp(headmarker)) {
+        atom->setProp(tailmarker, atom->getProp<unsigned>(headmarker));
+        atom->clearProp(headmarker);
+      } else if (atom->hasProp(tailmarker)) {
+        atom->setProp(headmarker, atom->getProp<unsigned>(tailmarker));
+        atom->clearProp(tailmarker);
+      }
+      if (atom->hasProp(headmarker_frame)) {
+        atom->setProp(
+            tailmarker_frame,
+            atom->getProp<std::vector<unsigned int>>(headmarker_frame));
+        atom->clearProp(headmarker_frame);
+      } else if (atom->hasProp(tailmarker_frame)) {
+        atom->setProp(
+            headmarker_frame,
+            atom->getProp<std::vector<unsigned int>>(tailmarker_frame));
+        atom->clearProp(tailmarker_frame);
+      }
     }
   }
+}
 
-  std::unique_ptr<RWMol> res{new RWMol()};
-  res->insertMol(*dp_frame);
+void connectRepeatAtomsAndRemoveExtras(unsigned int origAtomCount, RWMol &mol) {
+  mol.beginBatchEdit();
+  for (auto aidx1 = 0u; aidx1 < origAtomCount; ++aidx1) {
+    auto at1 = mol.getAtomWithIdx(aidx1);
+    unsigned tailIdx;
+    if (at1->getPropIfPresent(tailmarker, tailIdx)) {
+      bool connected = false;
+      for (auto aidx2 = origAtomCount; aidx2 < mol.getNumAtoms(); ++aidx2) {
+        auto at2 = mol.getAtomWithIdx(aidx2);
+        unsigned int headIdx;
+        if (at2->getPropIfPresent(headmarker, headIdx) && tailIdx == headIdx) {
+          connected = true;
+          at2->clearProp(headmarker);
+          // remove any atom connected to the head which isn't in the
+          // repeat unit
+          for (const auto &nbri :
+               boost::make_iterator_range(mol.getAtomNeighbors(at2))) {
+            auto nbr = mol[nbri];
+            if (!nbr->hasProp(polymarker)) {
+              mol.removeAtom(nbr);
+            }
+          }
+          // FIX: not dealing with multiple bonds from the repeat unit
+          mol.addBond(at1, at2, Bond::BondType::SINGLE);
+          break;
+        }
+      }
+      if (connected) {
+        at1->clearProp(tailmarker);
+        // remove any atom connected to the tail which isn't in the
+        // repeat unit
+        for (const auto &nbri :
+             boost::make_iterator_range(mol.getAtomNeighbors(at1))) {
+          auto nbr = mol[nbri];
+          if (!nbr->hasProp(polymarker)) {
+            mol.removeAtom(nbr);
+          }
+        }
+      } else {
+        throw ValueErrorException("no head found for tail");
+      }
+    }
+  }
+  mol.commitBatchEdit();
+}
 
-  // ---------------------
-  // we will use these maps of atoms in the frame with head/tail markers later
-  std::map<unsigned, Atom *> headMap;
-  std::map<unsigned, Atom *> tailMap;
-  for (auto atom : res->atoms()) {
+void connectRepeatToFrame(unsigned int nOrigAtoms, RWMol &mol,
+                          std::map<unsigned, Atom *> &headMap,
+                          std::map<unsigned, Atom *> &tailMap) {
+  for (auto aidx = nOrigAtoms; aidx < mol.getNumAtoms(); ++aidx) {
+    auto sruAtom = mol.getAtomWithIdx(aidx);
+    unsigned int val;
+    if (sruAtom->getPropIfPresent(headmarker, val)) {
+      if (tailMap.find(val) != tailMap.end()) {
+        // there's an atom in the frame to connect to:
+        mol.addBond(sruAtom, tailMap[val], Bond::BondType::SINGLE);
+        sruAtom->clearProp(headmarker);
+        tailMap.erase(val);
+      }
+    }
+    if (sruAtom->getPropIfPresent(tailmarker, val)) {
+      if (headMap.find(val) != headMap.end()) {
+        // there's an atom in the frame to connect to:
+        mol.addBond(sruAtom, headMap[val], Bond::BondType::SINGLE);
+        sruAtom->clearProp(tailmarker);
+        headMap.erase(val);
+      }
+    }
+    std::vector<unsigned int> vals;
+    if (sruAtom->getPropIfPresent(headmarker_frame, vals)) {
+      for (const auto val : vals) {
+        headMap[val] = sruAtom;
+      }
+      sruAtom->clearProp(headmarker_frame);
+    }
+    if (sruAtom->getPropIfPresent(tailmarker_frame, vals)) {
+      for (const auto val : vals) {
+        tailMap[val] = sruAtom;
+      }
+      sruAtom->clearProp(tailmarker_frame);
+    }
+  }
+}
+
+void constructHeadAndTailMaps(RWMol &mol, std::map<unsigned, Atom *> &headMap,
+                              std::map<unsigned, Atom *> &tailMap) {
+  for (auto atom : mol.atoms()) {
     std::vector<unsigned int> vals;
     if (atom->getPropIfPresent(headmarker_frame, vals)) {
       for (auto val : vals) {
@@ -242,6 +328,31 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
       }
     }
   }
+}
+}  // namespace
+
+std::unique_ptr<ROMol> RepeatUnitOp::operator()(
+    const std::vector<size_t> &which) const {
+  PRECONDITION(dp_mol, "no molecule");
+  PRECONDITION(dp_frame, "not initialized");
+  if (which.size() != d_countAtEachPoint.size()) {
+    throw ValueErrorException("bad element choice in enumeration");
+  }
+  // quick error checking before we do any work:
+  for (size_t i = 0; i < which.size(); ++i) {
+    if (which[i] >= d_countAtEachPoint[i]) {
+      throw ValueErrorException("bad element value in enumeration");
+    }
+  }
+
+  std::unique_ptr<RWMol> res{new RWMol()};
+  res->insertMol(*dp_frame);
+
+  // ---------------------
+  // we will use these maps from head/tail markerss to atoms in the frame later
+  std::map<unsigned, Atom *> headMap;
+  std::map<unsigned, Atom *> tailMap;
+  constructHeadAndTailMaps(*res, headMap, tailMap);
 
   for (size_t i = 0; i < which.size(); ++i) {
     RWMol filling;
@@ -251,80 +362,13 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
 
       if (iter % 2) {
         // check for any HH groups on odd iterations and invert them
-        for (auto aidx2 = origAtomCount; aidx2 < filling.getNumAtoms();
-             ++aidx2) {
-          auto at2 = filling.getAtomWithIdx(aidx2);
-          if (at2->hasProp(headheadmarker)) {
-            if (at2->hasProp(headmarker)) {
-              at2->setProp(tailmarker, at2->getProp<unsigned>(headmarker));
-              at2->clearProp(headmarker);
-            } else if (at2->hasProp(tailmarker)) {
-              at2->setProp(headmarker, at2->getProp<unsigned>(tailmarker));
-              at2->clearProp(tailmarker);
-            }
-            if (at2->hasProp(headmarker_frame)) {
-              at2->setProp(
-                  tailmarker_frame,
-                  at2->getProp<std::vector<unsigned int>>(headmarker_frame));
-              at2->clearProp(headmarker_frame);
-            } else if (at2->hasProp(tailmarker_frame)) {
-              at2->setProp(
-                  headmarker_frame,
-                  at2->getProp<std::vector<unsigned int>>(tailmarker_frame));
-              at2->clearProp(tailmarker_frame);
-            }
-          }
-        }
+        flipHeadHeadGroups(origAtomCount, filling);
       }
-      filling.beginBatchEdit();
       // if we aren't adding the first repeat unit, then we need to connect
       // things
       if (iter) {
-        for (auto aidx1 = 0u; aidx1 < origAtomCount; ++aidx1) {
-          auto at1 = filling.getAtomWithIdx(aidx1);
-          unsigned tailIdx;
-          if (at1->getPropIfPresent(tailmarker, tailIdx)) {
-            bool connected = false;
-            for (auto aidx2 = origAtomCount; aidx2 < filling.getNumAtoms();
-                 ++aidx2) {
-              auto at2 = filling.getAtomWithIdx(aidx2);
-              unsigned int headIdx;
-              if (at2->getPropIfPresent(headmarker, headIdx) &&
-                  tailIdx == headIdx) {
-                connected = true;
-                at2->clearProp(headmarker);
-                // remove any atom connected to the head which isn't in the
-                // repeat unit
-                for (const auto &nbri : boost::make_iterator_range(
-                         filling.getAtomNeighbors(at2))) {
-                  auto nbr = filling[nbri];
-                  if (!nbr->hasProp(polymarker)) {
-                    filling.removeAtom(nbr);
-                  }
-                }
-                // FIX: not dealing with multiple bonds from the repeat unit
-                filling.addBond(at1, at2, Bond::BondType::SINGLE);
-                break;
-              }
-            }
-            if (connected) {
-              at1->clearProp(tailmarker);
-              // remove any atom connected to the tail which isn't in the
-              // repeat unit
-              for (const auto &nbri :
-                   boost::make_iterator_range(filling.getAtomNeighbors(at1))) {
-                auto nbr = filling[nbri];
-                if (!nbr->hasProp(polymarker)) {
-                  filling.removeAtom(nbr);
-                }
-              }
-            } else {
-              throw ValueErrorException("no head found for tail");
-            }
-          }
-        }
+        connectRepeatAtomsAndRemoveExtras(origAtomCount, filling);
       }
-      filling.commitBatchEdit();
     }  // end of loop over iteration
 
     // ok, add the fragment generated by enumerating that SRU to the result:
@@ -332,41 +376,10 @@ std::unique_ptr<ROMol> RepeatUnitOp::operator()(
     res->insertMol(filling);
 
     // and connect it to the frame:
-    for (auto aidx = nOrigAtoms; aidx < res->getNumAtoms(); ++aidx) {
-      auto sruAtom = res->getAtomWithIdx(aidx);
-      unsigned int val;
-      if (sruAtom->getPropIfPresent(headmarker, val)) {
-        if (tailMap.find(val) != tailMap.end()) {
-          // there's an atom in the frame to connect to:
-          res->addBond(sruAtom, tailMap[val], Bond::BondType::SINGLE);
-          sruAtom->clearProp(headmarker);
-          tailMap.erase(val);
-        }
-      }
-      if (sruAtom->getPropIfPresent(tailmarker, val)) {
-        if (headMap.find(val) != headMap.end()) {
-          // there's an atom in the frame to connect to:
-          res->addBond(sruAtom, headMap[val], Bond::BondType::SINGLE);
-          sruAtom->clearProp(tailmarker);
-          headMap.erase(val);
-        }
-      }
-      std::vector<unsigned int> vals;
-      if (sruAtom->getPropIfPresent(headmarker_frame, vals)) {
-        for (const auto val : vals) {
-          headMap[val] = sruAtom;
-        }
-        sruAtom->clearProp(headmarker_frame);
-      }
-      if (sruAtom->getPropIfPresent(tailmarker_frame, vals)) {
-        for (const auto val : vals) {
-          tailMap[val] = sruAtom;
-        }
-        sruAtom->clearProp(tailmarker_frame);
-      }
-    }
+    connectRepeatToFrame(nOrigAtoms, *res, headMap, tailMap);
 
   }  // end of loop over SRU
+
   // connect any remaining dangling heads and tails
   for (auto &tpl : headMap) {
     auto iter = tailMap.find(tpl.first);
