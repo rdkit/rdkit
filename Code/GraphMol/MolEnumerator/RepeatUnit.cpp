@@ -37,6 +37,8 @@ void tagAtoms(std::shared_ptr<ROMol> mol, const Bond *bond,
               const boost::dynamic_bitset<> &sgatoms, unsigned int index,
               const std::string &marker, const std::string &framemarker,
               const std::string &connect) {
+  PRECONDITION(mol, "bad molecule");
+  PRECONDITION(bond, "bad bond");
   if (sgatoms[bond->getBeginAtomIdx()]) {
     bond->getBeginAtom()->setProp(marker, index);
     if (connect == "HH") {
