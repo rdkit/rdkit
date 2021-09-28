@@ -2377,6 +2377,67 @@ TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
   }
 }
 
+TEST_CASE("KekulizeIfPossible") {
+  SECTION("basics: molecules with failures") {
+    std::vector<std::string> smis = {
+        "c1cccn1",
+        "c1ccccc1-c1cccn1",
+    };
+    for (const auto &smi : smis) {
+      SmilesParserParams ps;
+      ps.sanitize = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      // confirm that we normally fail:
+      {
+        RWMol m2(*m);
+        CHECK_THROWS_AS(MolOps::Kekulize(m2), MolSanitizeException);
+      }
+      {
+        RWMol m2(*m);
+        CHECK(!MolOps::KekulizeIfPossible(m2));
+        for (unsigned i = 0; i < m2.getNumAtoms(); ++i) {
+          CHECK(m2.getAtomWithIdx(i)->getIsAromatic() ==
+                m->getAtomWithIdx(i)->getIsAromatic());
+        }
+        for (unsigned i = 0; i < m2.getNumBonds(); ++i) {
+          CHECK(m2.getBondWithIdx(i)->getIsAromatic() ==
+                m->getBondWithIdx(i)->getIsAromatic());
+          CHECK(m2.getBondWithIdx(i)->getBondType() ==
+                m->getBondWithIdx(i)->getBondType());
+        }
+      }
+    }
+  }
+  SECTION("basics: molecules without failures") {
+    std::vector<std::string> smis = {"c1ccc[nH]1", "c1ccccc1"};
+    for (const auto &smi : smis) {
+      SmilesParserParams ps;
+      ps.sanitize = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      {
+        RWMol m2(*m);
+        MolOps::Kekulize(m2);
+        RWMol m3(*m);
+        CHECK(MolOps::KekulizeIfPossible(m3));
+        for (unsigned i = 0; i < m2.getNumAtoms(); ++i) {
+          CHECK(m2.getAtomWithIdx(i)->getIsAromatic() ==
+                m3.getAtomWithIdx(i)->getIsAromatic());
+        }
+        for (unsigned i = 0; i < m2.getNumBonds(); ++i) {
+          CHECK(m2.getBondWithIdx(i)->getIsAromatic() ==
+                m3.getBondWithIdx(i)->getIsAromatic());
+          CHECK(m2.getBondWithIdx(i)->getBondType() ==
+                m3.getBondWithIdx(i)->getBondType());
+        }
+      }
+    }
+  }
+}
+
 TEST_CASE("Github #4535: operator<< for AtomPDBResidue", "[PDB]") {
   SECTION("basics") {
     bool sanitize = true;

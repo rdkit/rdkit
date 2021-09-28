@@ -416,6 +416,10 @@ void kekulizeMol(ROMol &mol, bool clearAromaticFlags = false) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::Kekulize(wmol, clearAromaticFlags);
 }
+void kekulizeMolIfPossible(ROMol &mol, bool clearAromaticFlags = false) {
+  auto &wmol = static_cast<RWMol &>(mol);
+  MolOps::KekulizeIfPossible(wmol, clearAromaticFlags);
+}
 
 void cleanupMol(ROMol &mol) {
   auto &rwmol = static_cast<RWMol &>(mol);
@@ -1451,7 +1455,7 @@ to the terminal dummy atoms.\n\
 \n\
     - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the \n\
       molecule will be marked non-aromatic following the kekulization.\n\
-      Default value is 0.\n\
+      Default value is False.\n\
 \n\
   NOTES:\n\
 \n\
@@ -1461,6 +1465,25 @@ to the terminal dummy atoms.\n\
                 (python::arg("mol"), python::arg("clearAromaticFlags") = false),
                 docString.c_str());
 
+    // ------------------------------------------------------------------------
+    docString =
+        "Kekulizes the molecule if possible. Otherwise the molecule is not modified\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the \n\
+      molecule will be marked non-aromatic if the kekulization succeds.\n\
+      Default value is False.\n\
+\n\
+  NOTES:\n\
+\n\
+    - The molecule is modified in place.\n\
+\n";
+    python::def("KekulizeIfPossible", kekulizeMolIfPossible,
+                (python::arg("mol"), python::arg("clearAromaticFlags") = false),
+                docString.c_str());
     // ------------------------------------------------------------------------
     docString =
         "cleans up certain common bad functionalities in the molecule\n\

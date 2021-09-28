@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2020 Brian P Kelley, Joann Prescott-Roy
+//  Copyright (C) 2020-2021 Brian P Kelley, Joann Prescott-Roy and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -83,6 +84,21 @@ RDKIT_DEPROTECT_EXPORT const std::vector<DeprotectData> &getDeprotections();
 */
 RDKIT_DEPROTECT_EXPORT std::unique_ptr<ROMol> deprotect(
     const ROMol &mol,
+    const std::vector<DeprotectData> &deprotections = getDeprotections());
+//! Deprotect a molecule in place
+/*!
+     The molecule is annotated with the deprotections used (property
+   DEPROTECTIONS) and the number of deprotections applied (property
+   DEPROTECTIION_COUNT)
+
+     \param mol the molecule to deprotect
+     \param deprotections - a vector of deprotections to use, defaults to the
+   built in deprotections.
+
+     \return whether or not the molecule was changed
+*/
+RDKIT_DEPROTECT_EXPORT bool deprotectInPlace(
+    RWMol &mol,
     const std::vector<DeprotectData> &deprotections = getDeprotections());
 }  // namespace Deprotect
 }  // namespace RDKit

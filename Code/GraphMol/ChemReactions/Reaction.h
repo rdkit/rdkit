@@ -1,5 +1,7 @@
 //
-//  Copyright (c) 2007-2018, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -227,6 +229,17 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   */
   std::vector<MOL_SPTR_VECT> runReactant(
       ROMOL_SPTR reactant, unsigned int reactantTemplateIdx) const;
+
+  //! Runs a single reactant in place (the reactant is modified)
+  /*!
+    This is only useable with reactions which have a single reactant and product
+    and where no atoms are added in the product.
+
+     \param reactant The single reactant to use
+
+     \return whether or not the reactant was actually modified
+  */
+  bool runReactant(RWMol &reactant) const;
 
   const MOL_SPTR_VECT &getReactants() const {
     return this->m_reactantTemplates;

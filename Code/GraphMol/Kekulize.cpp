@@ -688,5 +688,39 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   details::KekulizeFragment(mol, atomsToUse, bondsToUse, markAtomsBonds,
                             maxBackTracks);
 }
+bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds,
+                        unsigned int maxBackTracks) {
+  boost::dynamic_bitset<> aromaticBonds(mol.getNumBonds());
+  for (const auto &bond : mol.bonds()) {
+    if (bond->getIsAromatic()) {
+      aromaticBonds.set(bond->getIdx());
+    }
+  }
+  boost::dynamic_bitset<> aromaticAtoms(mol.getNumAtoms());
+  for (const auto &atom : mol.atoms()) {
+    if (atom->getIsAromatic()) {
+      aromaticAtoms.set(atom->getIdx());
+    }
+  }
+  bool res = true;
+  try {
+    Kekulize(mol, markAtomsBonds, maxBackTracks);
+  } catch (const MolSanitizeException &) {
+    res = false;
+    for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+      if (aromaticBonds[i]) {
+        auto bond = mol.getBondWithIdx(i);
+        bond->setIsAromatic(true);
+        bond->setBondType(Bond::BondType::AROMATIC);
+      }
+    }
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      if (aromaticAtoms[i]) {
+        mol.getAtomWithIdx(i)->setIsAromatic(true);
+      }
+    }
+  }
+  return res;
+}
 }  // namespace MolOps
 }  // namespace RDKit
