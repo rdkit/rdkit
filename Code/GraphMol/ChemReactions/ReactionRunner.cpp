@@ -308,20 +308,21 @@ bool updatePropsFromImplicitProps(Atom *templateAtom, Atom *atom) {
     atom->setFormalCharge(val);
     res = true;
   }
-  if (templateAtom->getPropIfPresent(common_properties::_QueryHCount, val)) {
-    if (!atom->getNoImplicit() || atom->getNumExplicitHs() != val) {
-      atom->setNumExplicitHs(val);
+  unsigned int uval;
+  if (templateAtom->getPropIfPresent(common_properties::_QueryHCount, uval)) {
+    if (!atom->getNoImplicit() || atom->getNumExplicitHs() != uval) {
+      atom->setNumExplicitHs(uval);
       atom->setNoImplicit(true);  // this was github #1544
       res = true;
     }
   }
-  if (templateAtom->getPropIfPresent(common_properties::_QueryMass, val)) {
+  if (templateAtom->getPropIfPresent(common_properties::_QueryMass, uval)) {
     // FIX: technically should do something with this
     // atom->setMass(val);
   }
-  if (templateAtom->getPropIfPresent(common_properties::_QueryIsotope, val) &&
-      val != atom->getIsotope()) {
-    atom->setIsotope(val);
+  if (templateAtom->getPropIfPresent(common_properties::_QueryIsotope, uval) &&
+      uval != atom->getIsotope()) {
+    atom->setIsotope(uval);
     res = true;
   }
   return res;
@@ -1437,7 +1438,7 @@ generateOneProductSet(const ChemicalReaction &rxn,
   return res;
 }
 void identifyAtomsInReactantTemplateNotProductTemplate(
-    const ROMol &reactant, const ROMol &product, boost::dynamic_bitset<> &atoms,
+    const ROMol &reactant, boost::dynamic_bitset<> &atoms,
     std::map<unsigned int, unsigned int> &reactantProductMap,
     const MatchVectType &reactantMatch) {
   for (const auto atom : reactant.atoms()) {
@@ -1768,8 +1769,7 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant) {
   boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
   // finds atoms in the reactantTemplate which aren't in the productTemplate
   ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
-      *reactantTemplate, *productTemplate, atomsToRemove, reactantProductMap,
-      match);
+      *reactantTemplate, atomsToRemove, reactantProductMap, match);
   // identify atoms which should be removed from the molecule
   ReactionRunnerUtils::traverseToFindAtomsToRemove(reactant, *reactantTemplate,
                                                    atomsToRemove, match);
