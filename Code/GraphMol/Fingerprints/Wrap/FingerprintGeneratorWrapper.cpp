@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,9 @@
 #include <iostream>
 #include <string>
 #include <boost/python.hpp>
+#include <RDBoost/boost_numpy.h>
+#include <numpy/npy_common.h>
+#include <RDBoost/import_array.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/Wrap/AtomPairWrapper.cpp>
@@ -20,6 +23,7 @@
 #include <cstdint>
 
 namespace python = boost::python;
+namespace np = boost::python::numpy;
 
 namespace RDKit {
 namespace FingerprintWrapper {
@@ -196,6 +200,57 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
 }
 
 template <typename OutputType>
+python::object getNumPyFingerprint(
+    const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
+    python::object py_fromAtoms, python::object py_ignoreAtoms,
+    const int confId, python::object py_atomInvs, python::object py_bondInvs,
+    python::object py_additionalOutput) {
+  std::unique_ptr<ExplicitBitVect> ebv{
+      getFingerprint(fpGen, mol, py_fromAtoms, py_ignoreAtoms, confId,
+                     py_atomInvs, py_bondInvs, py_additionalOutput)};
+
+  npy_intp size[1] = {ebv->size()};
+  PyObject *arr = PyArray_ZEROS(1, size, NPY_UINT8, 0);
+  PyObject *one = PyInt_FromLong(1);
+  for (auto i = 0u; i < ebv->size(); ++i) {
+    if ((*ebv)[i]) {
+      PyArray_SETITEM(
+          (PyArrayObject *)arr,
+          static_cast<char *>(PyArray_GETPTR1((PyArrayObject *)arr, i)), one);
+    }
+  }
+  Py_DECREF(one);
+  python::handle<> res(arr);
+  return python::object(res);
+}
+
+template <typename OutputType>
+python::object getNumPyCountFingerprint(
+    const FingerprintGenerator<OutputType> *fpGen, const ROMol &mol,
+    python::object py_fromAtoms, python::object py_ignoreAtoms,
+    const int confId, python::object py_atomInvs, python::object py_bondInvs,
+    python::object py_additionalOutput) {
+  std::unique_ptr<SparseIntVect<uint32_t>> fp{
+      getCountFingerprint(fpGen, mol, py_fromAtoms, py_ignoreAtoms, confId,
+                          py_atomInvs, py_bondInvs, py_additionalOutput)};
+
+  npy_intp size[1] = {fp->size()};
+  PyObject *arr = PyArray_ZEROS(1, size, NPY_UINT32, 0);
+  for (auto i = 0u; i < fp->size(); ++i) {
+    auto v = (*fp)[i];
+    if (v) {
+      PyObject *val = PyInt_FromLong(v);
+      PyArray_SETITEM(
+          (PyArrayObject *)arr,
+          static_cast<char *>(PyArray_GETPTR1((PyArrayObject *)arr, i)), val);
+      Py_DECREF(val);
+    }
+  }
+  python::handle<> res(arr);
+  return python::object(res);
+}
+
+template <typename OutputType>
 std::string getInfoString(const FingerprintGenerator<OutputType> *fpGen) {
   return std::string(fpGen->infoString());
 }
@@ -328,6 +383,7 @@ python::object getBitInfoMapHelper(const AdditionalOutput &ao) {
 }
 
 BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
+  rdkit_import_array();
   python::class_<AtomInvariantsGenerator, boost::noncopyable>(
       "AtomInvariantsGenerator", python::no_init);
 
@@ -419,6 +475,30 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "extra information about the bits\n\n"
            "  RETURNS: a SparseIntVect containing fingerprint\n\n",
            python::return_value_policy<python::manage_new_object>())
+      .def("GetCountFingerprintAsNumPy",
+           getNumPyCountFingerprint<std::uint32_t>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a count fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a numpy array containing the fingerprint\n\n")
       .def("GetFingerprint", getFingerprint<std::uint32_t>,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
@@ -443,6 +523,29 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "extra information about the bits\n\n"
            "  RETURNS: a ExplicitBitVect containing fingerprint\n\n",
            python::return_value_policy<python::manage_new_object>())
+      .def("GetFingerprintAsNumPy", getNumPyFingerprint<std::uint32_t>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a numpy array containing the fingerprint\n\n")
       .def("GetInfoString", getInfoString<std::uint32_t>,
            "Returns a string containing information about the fingerprint "
            "generator\n\n"
@@ -523,6 +626,30 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "extra information about the bits\n\n"
            "  RETURNS: a SparseIntVect containing fingerprint\n\n",
            python::return_value_policy<python::manage_new_object>())
+      .def("GetCountFingerprintAsNumPy",
+           getNumPyCountFingerprint<std::uint64_t>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a count fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a numpy array containing the fingerprint\n\n")
       .def("GetFingerprint", getFingerprint<std::uint64_t>,
            (python::arg("mol"), python::arg("fromAtoms") = python::list(),
             python::arg("ignoreAtoms") = python::list(),
@@ -547,6 +674,29 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
            "extra information about the bits\n\n"
            "  RETURNS: a ExplicitBitVect containing fingerprint\n\n",
            python::return_value_policy<python::manage_new_object>())
+      .def("GetFingerprintAsNumPy", getNumPyFingerprint<std::uint64_t>,
+           (python::arg("mol"), python::arg("fromAtoms") = python::list(),
+            python::arg("ignoreAtoms") = python::list(),
+            python::arg("confId") = -1,
+            python::arg("customAtomInvariants") = python::list(),
+            python::arg("customBondInvariants") = python::list(),
+            python::arg("additionalOutput") = python::object()),
+           "Generates a fingerprint\n\n"
+           "  ARGUMENTS:\n"
+           "    - mol: molecule to be fingerprinted\n"
+           "    - fromAtoms: indices of atoms to use while generating the "
+           "fingerprint\n"
+           "    - ignoreAtoms: indices of atoms to exclude while generating "
+           "the fingerprint\n"
+           "    - confId: 3D confirmation to use, only used by AtomPair "
+           "fingerprint\n"
+           "    - customAtomInvariants: custom atom invariants to be used, "
+           "overrides invariants from the invariant generator\n"
+           "    - customBondInvariants: custom bond invariants to be used, "
+           "overrides invariants from the invariant generator\n\n"
+           "    - additionalOutput: AdditionalOutput instance used to return "
+           "extra information about the bits\n\n"
+           "  RETURNS: a numpy array containing fingerprint\n\n")
       .def("GetInfoString", getInfoString<std::uint64_t>,
            "Returns a string containing information about the fingerprint "
            "generator\n\n"
