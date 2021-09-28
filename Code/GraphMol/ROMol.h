@@ -103,17 +103,17 @@ RDKIT_GRAPHMOL_EXPORT extern const int ci_ATOM_HOLDER;
 
 //! \name C++11 Iterators
 
-template <class Graph, class Vertex>
+template <class Graph, class Vertex, class Iterator>
 struct CXXAtomIterator {
   Graph *graph;
-  typename Graph::vertex_iterator vstart, vend;
+  Iterator vstart, vend;
 
   struct CXXAtomIter {
     Graph *graph;
-    typename Graph::vertex_iterator pos;
+    Iterator pos;
     Atom *current;
 
-    CXXAtomIter(Graph *graph, typename Graph::vertex_iterator pos)
+    CXXAtomIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
     Vertex &operator*() {
@@ -132,21 +132,23 @@ struct CXXAtomIterator {
     vstart = vs.first;
     vend = vs.second;
   }
+  CXXAtomIterator(Graph *graph, Iterator start, Iterator end)
+      : graph(graph), vstart(start), vend(end){};
   CXXAtomIter begin() { return {graph, vstart}; }
   CXXAtomIter end() { return {graph, vend}; }
 };
 
-template <class Graph, class Edge>
+template <class Graph, class Edge, class Iterator>
 struct CXXBondIterator {
   Graph *graph;
-  typename Graph::edge_iterator vstart, vend;
+  Iterator vstart, vend;
 
   struct CXXBondIter {
     Graph *graph;
-    typename Graph::edge_iterator pos;
+    Iterator pos;
     Bond *current;
 
-    CXXBondIter(Graph *graph, typename Graph::edge_iterator pos)
+    CXXBondIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
     Edge &operator*() {
@@ -165,6 +167,8 @@ struct CXXBondIterator {
     vstart = vs.first;
     vend = vs.second;
   }
+  CXXBondIterator(Graph *graph, Iterator start, Iterator end)
+      : graph(graph), vstart(start), vend(end){};
   CXXBondIter begin() { return {graph, vstart}; }
   CXXBondIter end() { return {graph, vend}; }
 };
@@ -247,10 +251,37 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     \endcode
    */
 
-  CXXAtomIterator<MolGraph, Atom *> atoms() { return {&d_graph}; }
-
-  CXXAtomIterator<const MolGraph, Atom *const> atoms() const {
+  CXXAtomIterator<MolGraph, Atom *, MolGraph::vertex_iterator> atoms() {
     return {&d_graph};
+  }
+
+  CXXAtomIterator<const MolGraph, Atom *const, MolGraph::vertex_iterator>
+  atoms() const {
+    return {&d_graph};
+  }
+
+  CXXAtomIterator<const MolGraph, Atom *const, MolGraph::adjacency_iterator>
+  atomNeighbors(Atom const *at) const {
+    auto pr = getAtomNeighbors(at);
+    return {&d_graph, pr.first, pr.second};
+  }
+
+  CXXAtomIterator<MolGraph, Atom *, MolGraph::adjacency_iterator> atomNeighbors(
+      Atom const *at) {
+    auto pr = getAtomNeighbors(at);
+    return {&d_graph, pr.first, pr.second};
+  }
+
+  CXXBondIterator<const MolGraph, Bond *const, MolGraph::out_edge_iterator>
+  atomBonds(Atom const *at) const {
+    auto pr = getAtomBonds(at);
+    return {&d_graph, pr.first, pr.second};
+  }
+
+  CXXBondIterator<MolGraph, Bond *, MolGraph::out_edge_iterator> atomBonds(
+      Atom const *at) {
+    auto pr = getAtomBonds(at);
+    return {&d_graph, pr.first, pr.second};
   }
 
   /*!
@@ -262,9 +293,12 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   \endcode
  */
 
-  CXXBondIterator<MolGraph, Bond *> bonds() { return {&d_graph}; }
+  CXXBondIterator<MolGraph, Bond *, MolGraph::edge_iterator> bonds() {
+    return {&d_graph};
+  }
 
-  CXXBondIterator<const MolGraph, Bond *const> bonds() const {
+  CXXBondIterator<const MolGraph, Bond *const, MolGraph::edge_iterator> bonds()
+      const {
     return {&d_graph};
   }
 

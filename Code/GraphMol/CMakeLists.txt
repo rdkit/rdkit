@@ -163,3 +163,5 @@ rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp catch_main.cpp
 rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp catch_main.cpp
            LINK_LIBRARIES FileParsers SmilesParse GraphMol )
 
+rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp catch_main.cpp
+           LINK_LIBRARIES SubstructMatch SmilesParse GraphMol )
