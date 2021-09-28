@@ -14,7 +14,8 @@ using namespace RDKit;
 
 //! allows AtomPDBResidueInfo objects to be dumped to streams
 std::ostream &operator<<(std::ostream &target, const AtomPDBResidueInfo &apri) {
-  target << apri.getName() << "(" << apri.getSerialNumber()
-         << "): " << apri.getResidueName() << "-" << apri.getResidueNumber();
+  target << apri.getSerialNumber() << " " << apri.getName() << " "
+         << apri.getResidueName() << " " << apri.getChainId() << " "
+         << apri.getResidueNumber();
   return target;
 }

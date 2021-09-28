@@ -2454,8 +2454,8 @@ TEST_CASE("Github #4535: operator<< for AtomPDBResidue", "[PDB]") {
         mol->getAtomWithIdx(mol->getNumAtoms() - 1)->getMonomerInfo());
     REQUIRE(res);
     oss << *res << std::endl;
-    auto tgt = R"FOO( N  (1): LYS-1
- OXT(22): TYR-2
+    auto tgt = R"FOO(1  N   LYS A 1
+22  OXT TYR A 2
 )FOO";
     CHECK(oss.str() == tgt);
   }
