@@ -1096,10 +1096,7 @@ void checkAndCorrectChiralityOfMatchingAtomsInProduct(
         // there's a reactant bond that hasn't yet been accounted for:
         int unmatchedBond = -1;
 
-        for (const auto &nbri : boost::make_iterator_range(
-                 reactant.getAtomNeighbors(&reactantAtom))) {
-          const Bond *rBond =
-              reactant.getBondBetweenAtoms(reactantAtom.getIdx(), nbri);
+        for (const auto &rBond : reactant.atomBonds(&reactantAtom)) {
           if (std::find(pOrder.begin(), pOrder.end(), rBond->getIdx()) ==
               pOrder.end()) {
             unmatchedBond = rBond->getIdx();
@@ -1474,9 +1471,7 @@ void traverseToFindAtomsToRemove(const ROMol &reactant, const ROMol &templ,
       auto atom = toConsider.back();
       toConsider.pop_back();
       toRemove.reset(atom->getIdx());
-      for (auto nbri :
-           boost::make_iterator_range(reactant.getAtomNeighbors(atom))) {
-        const auto &nbr = reactant[nbri];
+      for (const auto nbr : reactant.atomNeighbors(atom)) {
         if (toRemove[nbr->getIdx()]) {
           toConsider.push_front(nbr);
         }
@@ -1587,9 +1582,7 @@ bool updateAtomsModifiedByReaction(
           // check swaps
           {
             std::vector<int> porder;
-            for (const auto &nbri : boost::make_iterator_range(
-                     productTemplate->getAtomNeighbors(pAtom))) {
-              const auto &nbrAtom = (*productTemplate)[nbri];
+            for (const auto nbrAtom : productTemplate->atomNeighbors(pAtom)) {
               if (nbrAtom->getAtomMapNum()) {
                 porder.push_back(nbrAtom->getAtomMapNum());
               }
@@ -1597,13 +1590,12 @@ bool updateAtomsModifiedByReaction(
             // get the ordered vect of atom map numbers for the neighbors
             // of atom
             std::vector<int> aorder;
-            for (const auto &nbri :
+            for (auto aidx :
                  boost::make_iterator_range(reactant.getAtomNeighbors(atom))) {
-              const auto &nbrAtom = reactant[nbri];
-              auto aidx = nbrAtom->getIdx();
               auto miter = std::find_if(
-                  match.begin(), match.end(),
-                  [aidx](const auto &pr) { return pr.second == aidx; });
+                  match.begin(), match.end(), [aidx](const auto &pr) {
+                    return static_cast<unsigned int>(pr.second) == aidx;
+                  });
               if (miter != match.end()) {
                 auto rNbr = reactantTemplate->getAtomWithIdx(miter->first);
                 if (rNbr->getAtomMapNum()) {
@@ -1641,9 +1633,7 @@ bool updateBondsModifiedByReaction(
     const auto pAtom =
         productTemplate->getAtomWithIdx(productAtomMap.at(pr.first));
     const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
-    for (auto nbri :
-         boost::make_iterator_range(productTemplate->getAtomNeighbors(pAtom))) {
-      const auto nbr = (*productTemplate)[nbri];
+    for (const auto nbr : productTemplate->atomNeighbors(pAtom)) {
       if (nbr->getAtomMapNum() &&
           reactantProductMap.find(nbr->getAtomMapNum()) !=
               reactantProductMap.end()) {
@@ -1689,9 +1679,7 @@ bool updateBondsModifiedByReaction(
     }
     // now look for bonds which were in the reactant template but are not in the
     // product template
-    for (auto nbri : boost::make_iterator_range(
-             reactantTemplate->getAtomNeighbors(rAtom))) {
-      const auto nbr = (*reactantTemplate)[nbri];
+    for (const auto nbr : reactantTemplate->atomNeighbors(rAtom)) {
       if (nbr->getAtomMapNum() &&
           productAtomMap.find(nbr->getAtomMapNum()) != productAtomMap.end() &&
           !productTemplate->getBondBetweenAtoms(
@@ -1908,28 +1896,23 @@ ROMol *reduceProductToSideChains(const ROMOL_SPTR &product,
     if (scaffold_atom->hasProp(common_properties::reactionMapNum) ||
         !scaffold_atom->hasProp(common_properties::reactantAtomIdx)) {
       // are we attached to a reactant atom?
-      ROMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(scaffold_atom);
       std::vector<RGroup> bonds_to_product;
-
-      while (nbrIdx != endNbrs) {
-        Atom *nbr = mol->getAtomWithIdx(*nbrIdx);
+      for (const auto nbr : mol->atomNeighbors(scaffold_atom)) {
         if (!nbr->hasProp(common_properties::reactionMapNum) &&
             nbr->hasProp(common_properties::reactantAtomIdx)) {
           if (nbr->hasProp(WAS_DUMMY)) {
             bonds_to_product.emplace_back(
                 nbr,
-                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
+                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), nbr->getIdx())
                     ->getBondType(),
                 nbr->getProp<int>(common_properties::reactionMapNum));
           } else {
             bonds_to_product.emplace_back(
-                nbr, mol->getBondBetweenAtoms(scaffold_atom->getIdx(), *nbrIdx)
-                         ->getBondType());
+                nbr,
+                mol->getBondBetweenAtoms(scaffold_atom->getIdx(), nbr->getIdx())
+                    ->getBondType());
           }
         }
-
-        ++nbrIdx;
       }
 
       // Search the atom bookmark to see if we can find the original
