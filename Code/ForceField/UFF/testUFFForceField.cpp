@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C)  2004-2008 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -936,8 +935,7 @@ void testUFFParams() {
   std::cerr << "-------------------------------------" << std::endl;
   std::cerr << " Test UFF Parameter objects" << std::endl;
 
-  ForceFields::UFF::ParamCollection *params =
-      ForceFields::UFF::ParamCollection::getParams();
+  auto params = ForceFields::UFF::ParamCollection::getParams();
   TEST_ASSERT(params);
 
   const ForceFields::UFF::AtomicParams *ptr;
@@ -975,8 +973,7 @@ void testUFF8() {
   ps.push_back(&p5);
   ps.push_back(&p6);
 
-  ForceFields::UFF::ParamCollection *params =
-      ForceFields::UFF::ParamCollection::getParams();
+  auto params = ForceFields::UFF::ParamCollection::getParams();
   const ForceFields::UFF::AtomicParams *param1, *param2;
 
   // C_2 (sp2 carbon):
@@ -1116,8 +1113,7 @@ void testUFFTorsionConflict() {
   ps.push_back(&p6);
   ps.push_back(&p7);
 
-  ForceFields::UFF::ParamCollection *params =
-      ForceFields::UFF::ParamCollection::getParams();
+  auto params = ForceFields::UFF::ParamCollection::getParams();
   const ForceFields::UFF::AtomicParams *param1, *param2, *param3;
 
   // C_2 (sp2 carbon):

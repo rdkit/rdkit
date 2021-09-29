@@ -9,6 +9,9 @@
   valid molecules.
 - Molecule names in SMILES and SMARTS are now parsed by default. Previously they
   were ignored.
+- The `getParams()` function for retrieving UFF parameters now returns a const
+  pointer instead of a standard pointer. This shouldn't affect the functionality
+  of any code since the only method of the class is also const.
 
 ## Code removed in this release:
 - The minimizeOnly option for coordgen has been removed.

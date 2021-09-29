@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1387,8 +1387,7 @@ void testGitHubIssue613() {
     TEST_ASSERT(foundAll);
     TEST_ASSERT(types.size() == mol->getNumAtoms());
 
-    ForceFields::UFF::ParamCollection *params =
-        ForceFields::UFF::ParamCollection::getParams();
+    auto params = ForceFields::UFF::ParamCollection::getParams();
     const ForceFields::UFF::AtomicParams *ap = (*params)("Eu6+3");
     TEST_ASSERT(ap);
     TEST_ASSERT(ap->r1 == types[0]->r1);
