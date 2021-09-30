@@ -46,6 +46,8 @@
 %shared_ptr(RDKit::FPHolderBase)
 %shared_ptr(RDKit::PatternHolder)
 %shared_ptr(RDKit::TautomerPatternHolder)
+%shared_ptr(RDKit::KeyHolderBase)
+%shared_ptr(RDKit::KeyFromPropHolder)
 
 %template(UChar_Vect) std::vector<unsigned char>;
 
