@@ -46,7 +46,7 @@
 #include <DataStructs/BitOps.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
-#include "Keyholder.h"
+
 namespace RDKit {
 
 RDKIT_SUBSTRUCTLIBRARY_EXPORT bool SubstructLibraryCanSerialize();
