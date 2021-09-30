@@ -162,8 +162,9 @@ void testRingMatching3Score() {
   std::vector<std::vector<RGroupMatch>> allMatches2 = {
       matches2Mol1, matches2Mol2, matches2Mol3};
 
-  auto test1 = matchScore(permutation, allMatches1, labels);
-  auto test2 = matchScore(permutation, allMatches2, labels);
+  RGroupScorer scorer;
+  auto test1 = scorer.matchScore(permutation, allMatches1, labels);
+  auto test2 = scorer.matchScore(permutation, allMatches2, labels);
 
   // expect test1 to have better score than test2 since all halogens are on R1
 
@@ -256,8 +257,9 @@ void testGeminalRGroups() {
       matches2Mol1, matches2Mol2, matches2Mol3};
   std::vector<size_t> permutation2{0, 0, 0};
 
-  auto test1 = matchScore(permutation, allMatches1, labels);
-  auto test2 = matchScore(permutation, allMatches2, labels);
+  RGroupScorer scorer;
+  auto test1 = scorer.matchScore(permutation, allMatches1, labels);
+  auto test2 = scorer.matchScore(permutation, allMatches2, labels);
 
   TEST_ASSERT(test1 > test2);
 

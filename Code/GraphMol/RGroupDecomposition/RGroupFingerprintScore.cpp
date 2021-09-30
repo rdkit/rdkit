@@ -73,10 +73,10 @@ void FingerprintVarianceScoreData::modifyVarianceData(
     const std::vector<std::vector<RGroupMatch>> &matches,
     const std::set<int> &labels, bool add) {
   // For each label (group)
+  const auto &match = matches.at(matchNumber).at(permutationNumber);
   for (int l : labels) {
-    auto match = matches[matchNumber][permutationNumber].rgroups;
-    auto rg = match.find(l);
-    if (rg != match.end()) {
+    auto rg = match.rgroups.find(l);
+    if (rg != match.rgroups.end()) {
       auto rgroupData = rg->second;
       std::shared_ptr<VarianceDataForLabel> variableDataForLabel;
       auto df = labelsToVarianceData.find(l);
@@ -93,8 +93,7 @@ void FingerprintVarianceScoreData::modifyVarianceData(
       }
     }
   }
-  auto rgroupsMissing =
-      matches[matchNumber][permutationNumber].numberMissingUserRGroups;
+  auto rgroupsMissing = match.numberMissingUserRGroups;
   if (add) {
     numberOfMissingUserRGroups += rgroupsMissing;
     numberOfMolecules++;
@@ -136,7 +135,7 @@ double fingerprintVarianceScore(
   std::cerr << "Fingerprint Scoring permutation "
             << " num matches: " << matches.size() << std::endl;
 #endif
-
+  CHECK_INVARIANT(permutation.size() <= matches.size(), "");
   FingerprintVarianceScoreData fingerprintVarianceScoreData2;
   if (!fingerprintVarianceScoreData) {
     fingerprintVarianceScoreData = &fingerprintVarianceScoreData2;
@@ -160,8 +159,9 @@ double fingerprintVarianceScore(
     }
 
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-      auto rg = matches[m][permutation[m]].rgroups.find(l);
-      if (rg != matches[m][permutation[m]].rgroups.end()) {
+      const auto &match = matches[m].at(permutation[m]);
+      auto rg = match.rgroups.find(l);
+      if (rg != match.rgroups.end()) {
         auto rgroupData = rg->second;
         variableDataForLabel->addRgroupData(rgroupData.get());
       }
@@ -170,7 +170,8 @@ double fingerprintVarianceScore(
 
   size_t numberMissingRGroups = 0;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-    numberMissingRGroups += matches[m][permutation[m]].numberMissingUserRGroups;
+    numberMissingRGroups +=
+        matches[m].at(permutation[m]).numberMissingUserRGroups;
   }
   fingerprintVarianceScoreData->numberOfMissingUserRGroups +=
       numberMissingRGroups;
