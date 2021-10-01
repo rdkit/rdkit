@@ -576,7 +576,9 @@ struct substructlibrary_wrapper {
              "  NOTE: molecule indices start at 0\n",
 	     python::return_value_policy<python::copy_const_reference>())
 
-        .def("GetKeys", &SubstructLibrary::getKeys,
+      .def("GetKeys", (std::vector<std::string>
+		       (SubstructLibrary::*)(const std::vector<unsigned int>&) const)
+	   &SubstructLibrary::getKeys,
              "Returns the keys for the given indices as return by GetMatches \n\n"
              "  ARGUMENTS:\n"
              "    - indices: The indices of the keys\n\n")
