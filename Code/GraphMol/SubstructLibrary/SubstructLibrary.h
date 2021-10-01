@@ -343,7 +343,7 @@ public:
 
   // !get the key at the requested index
   // implementations should throw IndexError on out of range
-  virtual const std::string & getKey(unsigned int) = 0;
+  virtual const std::string & getKey(unsigned int) const = 0;
 
   // !get keys from a bunch of indices
   virtual std::vector<std::string> getKeys(const std::vector<unsigned int> &indices) const = 0;
@@ -383,7 +383,7 @@ public:
     return keys.size() - 1u;
   }
 
-  const std::string & getKey(unsigned int idx) override {
+  const std::string & getKey(unsigned int idx) const override {
     if (idx >= keys.size()) throw IndexErrorException(idx);
     return keys[idx];
   }
@@ -605,6 +605,22 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     if (!fps)
       throw ValueErrorException("Substruct Library does not have fingerprints");
     return *fps;
+  }
+
+  //! Get the underlying key holder implementation.
+  /*! Throws a value error if no keyholder have been set */
+  KeyHolderBase &getKeys() {
+    if(!keyholder.get())
+      throw ValueErrorException("Substruct Library does not have fingerprints");
+    return *keyholder.get();
+  }
+
+  //! Get the underlying key holder implementation.
+  /*! Throws a value error if no keyholder have been set */
+  const KeyHolderBase &getKeys() const {
+    if(!keyholder.get())
+      throw ValueErrorException("Substruct Library does not have fingerprints");
+    return *keyholder.get();
   }
 
   //! Add a molecule to the library
@@ -876,18 +892,25 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     }
     searchOrder = order;
   }
+
   const std::vector<unsigned int> &getSearchOrder() const {
     return searchOrder;
   }
+
+  //! Convenience function to get the key defined at the given index
+  /*!   this is the same as library.getKeys().getKey(index)
+     Throws a value error if no keyholder have been set */
   const std::string &getKey(unsigned int idx) const {
     // expects implementation to throw IndexError if out of range
-    PRECONDITION(keyholder.get() != nullptr, "SubstructLibrary Has no keys");
-    return keyholder->getKey(idx);
+    return getKeys().getKey(idx);
   }
+
+  //! Convenience function to get the key defined at the given indices
+  /*!   this is the same as library.getKeys().getKeys(indices)
+      Throws a value error if no keyholder have been set */
   std::vector<std::string> getKeys(const std::vector<unsigned int> &indices) const {
-    // expects implementation to throw IndexError if out of range
     PRECONDITION(keyholder.get() != nullptr, "SubstructLibrary Has no keys");
-    return keyholder->getKeys(indices);
+    return getKeys().getKeys(indices);
   }
   
   std::vector<unsigned int> &getSearchOrder() { return searchOrder; }
