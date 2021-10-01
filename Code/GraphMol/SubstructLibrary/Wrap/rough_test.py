@@ -101,8 +101,8 @@ class TestCase(unittest.TestCase):
 
             if keyholderCls:
               for idx in res:
-                self.assertEqual(str(idx), slib.GetKey(idx))
-              self.assertEqual([str(idx) for idx in res], list(slib.GetKeys(res)))
+                self.assertEqual(str(idx), slib.GetKeyHolder().GetKey(idx))
+              self.assertEqual([str(idx) for idx in res], list(slib.GetKeyHolder().GetKeys(res)))
 
             t2 = time.time()
             self.assertTrue(len(res) == 100)
@@ -565,7 +565,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(list(ssl.GetMatches(qm,maxResults=2)),[3,2])
       if keyholder:
         self.assertEqual(keyholder.GetPropName(), "_Name")
-        self.assertEqual(list(ssl.GetKeys(ssl.GetMatches(qm,maxResults=2))),['3','2'])
+        self.assertEqual(list(ssl.GetKeyHolder().GetKeys(ssl.GetMatches(qm,maxResults=2))),['3','2'])
 
 
   def testSearchOrder2(self):
@@ -604,7 +604,7 @@ class TestCase(unittest.TestCase):
 
       library.AddMol(m)
       indices = library.GetMatches(m)
-      self.assertEqual(['Z11234'], list(library.GetKeys(indices)))
+      self.assertEqual(['Z11234'], list(library.GetKeyHolder().GetKeys(indices)))
 
 
 if __name__ == '__main__':

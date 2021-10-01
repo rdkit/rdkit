@@ -348,8 +348,8 @@ public class SubstructLibraryTests extends GraphMolTest {
             assertEquals(1, matches.size());
 	    assertEquals(matches.get(0), matches.get(0));
 
-	    Str_Vect ids = lib.getKeys(matches);
-	    Str_Vect ids2 = lib2.getKeys(matches2);
+	    Str_Vect ids = lib.getKeys().getKeys(matches);
+	    Str_Vect ids2 = lib2.getKeys().getKeys(matches2);
 	    assertEquals(ids.get(0), "foo");
 	    assertEquals(ids2.get(0), "foo");
         }

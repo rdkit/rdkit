@@ -49,6 +49,7 @@
 
 #include <algorithm>
 #include <string>
+#include <boost/lexical_cast.hpp>
 
 namespace RDKit {
 
@@ -371,9 +372,10 @@ public:
     if (m.getPropIfPresent(propname, key)) {
       keys.push_back(std::move(key));
     } else {
-      // is this a warning?  Should we push back the numeric index?
-      std::cerr << "Molecule at index " << keys.size() << " doesn't have propname " << propname << std::endl;
-      keys.emplace_back("");
+      // XXX is this a warning? it could be verbose.  Should we push back the string repr of the
+      //  numeric index?
+      const static std::string prefix("LIBIDX-");
+      keys.emplace_back(prefix + boost::lexical_cast<std::string>(keys.size()));
     }
     return keys.size() - 1u;
   };
@@ -488,7 +490,10 @@ public:
          boost::make_shared<KeyFromPropHolder>();  
      SubstructLibrary lib(molHolder, keyHolder);
      ...
-     auto keys = lib.GetKeys(lib.GetMatch(query));
+
+     You can get the keys in multiple through the use of the keyholder
+     auto key = lib.getKeys().getKey(idx);
+     auto keys = lib.getKeys().getKeys(lib.GetMatch(query));
      \endcode
 
 */
@@ -897,22 +902,6 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     return searchOrder;
   }
 
-  //! Convenience function to get the key defined at the given index
-  /*!   this is the same as library.getKeys().getKey(index)
-     Throws a value error if no keyholder have been set */
-  const std::string &getKey(unsigned int idx) const {
-    // expects implementation to throw IndexError if out of range
-    return getKeys().getKey(idx);
-  }
-
-  //! Convenience function to get the key defined at the given indices
-  /*!   this is the same as library.getKeys().getKeys(indices)
-      Throws a value error if no keyholder have been set */
-  std::vector<std::string> getKeys(const std::vector<unsigned int> &indices) const {
-    PRECONDITION(keyholder.get() != nullptr, "SubstructLibrary Has no keys");
-    return getKeys().getKeys(indices);
-  }
-  
   std::vector<unsigned int> &getSearchOrder() { return searchOrder; }
   //! access required for serialization
   void resetHolders() {

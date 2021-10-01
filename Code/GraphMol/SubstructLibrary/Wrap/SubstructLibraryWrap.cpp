@@ -206,7 +206,7 @@ const char *SubstructLibraryDoc =
     ">>> m.SetProp('_Name', 'Z11234')\n"
     ">>> idx = library.AddMol(m)\n"
     ">>> indices = library.GetMatches(m)\n"
-    ">>> list(library.GetKeys(indices))\n"
+    ">>> list(library.GetKeyHolder().GetKeys(indices))\n"
     "['Z11234']\n"
     "";
 
@@ -521,7 +521,11 @@ struct substructlibrary_wrapper {
              "Add a key to the key holder, must be manually synced")
         .def("GetKey", &KeyHolderBase::getKey,
              python::return_value_policy<python::copy_const_reference>(),
-             "Return the bit vector at the specified index");
+             "Return the key at the specified index")
+        .def("GetKeys", &KeyHolderBase::getKeys,
+             "Returns the keys for the given indices as return by GetMatches \n\n"
+             "  ARGUMENTS:\n"
+             "    - indices: The indices of the keys\n\n");
 
     python::class_<KeyFromPropHolder, boost::shared_ptr<KeyFromPropHolder>,
       python::bases<KeyHolderBase>>("KeyFromPropHolder", KeyHolderDoc, python::init<>())
@@ -568,20 +572,6 @@ struct substructlibrary_wrapper {
              "  ARGUMENTS:\n"
              "    - idx: which molecule to return\n\n"
              "  NOTE: molecule indices start at 0\n")
-
-        .def("GetKey", &SubstructLibrary::getKey,
-             "Returns the molecule's key (if present) \n\n"
-             "  ARGUMENTS:\n"
-             "    - idx: which key to return\n\n"
-             "  NOTE: molecule indices start at 0\n",
-	     python::return_value_policy<python::copy_const_reference>())
-
-      .def("GetKeys", (std::vector<std::string>
-		       (SubstructLibrary::*)(const std::vector<unsigned int>&) const)
-	   &SubstructLibrary::getKeys,
-             "Returns the keys for the given indices as return by GetMatches \n\n"
-             "  ARGUMENTS:\n"
-             "    - indices: The indices of the keys\n\n")
 
         .def("SetSearchOrder", setSearchOrderHelper,
              "Sets the search order for the library\n\n"
