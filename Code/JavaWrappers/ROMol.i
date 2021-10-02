@@ -1,7 +1,7 @@
 /*
-* $Id$
 *
-*  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+*  Copyright (c) 2010-2021, Novartis Institutes for BioMedical Research Inc.
+*   and other RDKit contributors
 *  All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,8 @@
 *       with the distribution.
 *     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 *       nor the names of its contributors may be used to endorse or promote
-*       products derived from this software without specific prior written permission.
+*       products derived from this software without specific prior written
+        permission.
 *
 * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -78,6 +79,15 @@
 %ignore RDKit::ROMol::getBondBetweenAtoms(unsigned int,unsigned int) const ;
 %ignore RDKit::ROMol::getAtomNeighbors(Atom const *at) const;
 %ignore RDKit::ROMol::getAtomBonds(Atom const *at) const;
+%ignore RDKit::ROMol::atomNeighbors(Atom const *at) const;
+%ignore RDKit::ROMol::atomBonds(Atom const *at) const;
+%ignore RDKit::ROMol::atomNeighbors(Atom const *at);
+%ignore RDKit::ROMol::atomBonds(Atom const *at);
+%ignore RDKit::ROMol::atoms();
+%ignore RDKit::ROMol::atoms() const;
+%ignore RDKit::ROMol::bonds();
+%ignore RDKit::ROMol::bonds() const;
+
 %ignore RDKit::ROMol::getVertices() ;
 %ignore RDKit::ROMol::getVertices() const ;
 %ignore RDKit::ROMol::getEdges() ;

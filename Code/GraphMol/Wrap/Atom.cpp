@@ -62,25 +62,16 @@ void AtomClearProp(const Atom *atom, const char *key) {
 
 python::tuple AtomGetNeighbors(Atom *atom) {
   python::list res;
-  const ROMol *parent = &atom->getOwningMol();
-  ROMol::ADJ_ITER begin, end;
-  boost::tie(begin, end) = parent->getAtomNeighbors(atom);
-  while (begin != end) {
-    res.append(python::ptr(parent->getAtomWithIdx(*begin)));
-    begin++;
+  for (auto nbr : atom->getOwningMol().atomNeighbors(atom)) {
+    res.append(python::ptr(nbr));
   }
   return python::tuple(res);
 }
 
 python::tuple AtomGetBonds(Atom *atom) {
   python::list res;
-  const ROMol *parent = &atom->getOwningMol();
-  ROMol::OEDGE_ITER begin, end;
-  boost::tie(begin, end) = parent->getAtomBonds(atom);
-  while (begin != end) {
-    const Bond *tmpB = (*parent)[*begin];
-    res.append(python::ptr(tmpB));
-    begin++;
+  for (auto bond : atom->getOwningMol().atomBonds(atom)) {
+    res.append(python::ptr(bond));
   }
   return python::tuple(res);
 }

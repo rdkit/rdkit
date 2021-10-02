@@ -166,15 +166,10 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
                "valence not defined for atoms not associated with molecules")
   int res = getNumExplicitHs() + getNumImplicitHs();
   if (includeNeighbors) {
-    ROMol::ADJ_ITER begin, end;
-    const ROMol *parent = &getOwningMol();
-    boost::tie(begin, end) = parent->getAtomNeighbors(this);
-    while (begin != end) {
-      const Atom *at = parent->getAtomWithIdx(*begin);
-      if (at->getAtomicNum() == 1) {
-        res++;
+    for (auto nbr : getOwningMol().atomNeighbors(this)) {
+      if (nbr->getAtomicNum() == 1) {
+        ++res;
       }
-      ++begin;
     }
   }
   return res;

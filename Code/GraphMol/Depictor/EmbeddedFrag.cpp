@@ -97,19 +97,16 @@ EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
   // now for points that new atoms will be added to later on we need to do some
   // setup
   for (auto dai : d_attachPts) {
-    RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) =
-        dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(dai));
     // find the neighbors that are already embedded for each of these atoms
     RDKit::INT_VECT doneNbrs;
     const auto &enbrs = d_eatoms[dai].neighs;
-    while (nbrIdx != endNbrs) {
-      if (std::find(enbrs.begin(), enbrs.end(), static_cast<int>(*nbrIdx)) ==
+    for (auto nbridx : boost::make_iterator_range(
+             dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(dai)))) {
+      if (std::find(enbrs.begin(), enbrs.end(), static_cast<int>(nbridx)) ==
           enbrs.end()) {
         // we found a neighbor that is part of this embedded system
-        doneNbrs.push_back(*nbrIdx);
+        doneNbrs.push_back(nbridx);
       }
-      nbrIdx++;
     }
     if (doneNbrs.empty()) {
       d_eatoms[dai].normal = RDGeom::Point2D(1., 0.);
@@ -293,18 +290,15 @@ void EmbeddedFrag::updateNewNeighs(
 
   d_eatoms[aid].neighs.clear();
   RDKit::INT_VECT hIndices;
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) =
-      dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid));
-  while (nbrIdx != endNbrs) {
-    if (d_eatoms.find(*nbrIdx) == d_eatoms.end()) {
-      if ((*dp_mol)[*nbrIdx]->getAtomicNum() != 1) {
-        d_eatoms[aid].neighs.push_back(*nbrIdx);
+  for (auto nbrIdx : boost::make_iterator_range(
+           dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid)))) {
+    if (d_eatoms.find(nbrIdx) == d_eatoms.end()) {
+      if (dp_mol->getAtomWithIdx(nbrIdx)->getAtomicNum() != 1) {
+        d_eatoms[aid].neighs.push_back(nbrIdx);
       } else {
-        hIndices.push_back(*nbrIdx);
+        hIndices.push_back(nbrIdx);
       }
     }
-    ++nbrIdx;
   }
   d_eatoms[aid].neighs.insert(d_eatoms[aid].neighs.end(), hIndices.begin(),
                               hIndices.end());
@@ -345,14 +339,11 @@ int EmbeddedFrag::findNeighbor(
     unsigned int aid) {  //, const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");
 
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) =
-      dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid));
-  while (nbrIdx != endNbrs) {
-    if (d_eatoms.find(*nbrIdx) != d_eatoms.end()) {
-      return (*nbrIdx);
+  for (auto nbrIdx : boost::make_iterator_range(
+           dp_mol->getAtomNeighbors(dp_mol->getAtomWithIdx(aid)))) {
+    if (d_eatoms.find(nbrIdx) != d_eatoms.end()) {
+      return nbrIdx;
     }
-    nbrIdx++;
   }
   return -1;
 }
@@ -1161,17 +1152,14 @@ void EmbeddedFrag::canonicalizeOrientation() {
 void _recurseAtomOneSide(unsigned int endAid, unsigned int begAid,
                          const RDKit::ROMol *mol, RDKit::INT_VECT &flipAids) {
   PRECONDITION(mol, "");
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   flipAids.push_back(endAid);
-  boost::tie(nbrIdx, endNbrs) =
-      mol->getAtomNeighbors(mol->getAtomWithIdx(endAid));
-  while (nbrIdx != endNbrs) {
-    if (((*nbrIdx) != begAid) &&
+  for (auto nbrIdx : boost::make_iterator_range(
+           mol->getAtomNeighbors(mol->getAtomWithIdx(endAid)))) {
+    if (nbrIdx != begAid &&
         (std::find(flipAids.begin(), flipAids.end(),
-                   static_cast<int>(*nbrIdx)) == flipAids.end())) {
-      _recurseAtomOneSide(*nbrIdx, begAid, mol, flipAids);
+                   static_cast<int>(nbrIdx)) == flipAids.end())) {
+      _recurseAtomOneSide(nbrIdx, begAid, mol, flipAids);
     }
-    nbrIdx++;
   }
   return;
 }
@@ -1378,8 +1366,8 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
         for (auto aci : deg4NbrAids[d4i]) {
           nbrLocs.push_back(&(d_eatoms.at(aci).loc));
         }
-        auto bndPairs = findBondsPairsToPermuteDeg4(d_eatoms.at(ai).loc,
-                                                    deg4NbrBids.at(d4i), nbrLocs);
+        auto bndPairs = findBondsPairsToPermuteDeg4(
+            d_eatoms.at(ai).loc, deg4NbrBids.at(d4i), nbrLocs);
 
         auto rval = RDKit::getRandomVal();
         unsigned int fbi = 0;
@@ -1388,8 +1376,8 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
         }
         auto aid1 =
             dp_mol->getBondWithIdx(bndPairs.at(fbi).first)->getOtherAtomIdx(ai);
-        auto aid2 =
-            dp_mol->getBondWithIdx(bndPairs.at(fbi).second)->getOtherAtomIdx(ai);
+        auto aid2 = dp_mol->getBondWithIdx(bndPairs.at(fbi).second)
+                        ->getOtherAtomIdx(ai);
         this->permuteBonds(ai, aid1, aid2);
       }
     }
@@ -1629,16 +1617,13 @@ unsigned int _findClosestNeighbor(const RDKit::ROMol *mol, const double *dmat,
   unsigned int res = 0;
   double mdist = 1.e8;
   auto naid = aid1 * (mol->getNumAtoms());
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) =
-      mol->getAtomNeighbors(mol->getAtomWithIdx(aid2));
-  while (nbrIdx != endNbrs) {
-    auto d = dmat[naid + (*nbrIdx)];
+  for (auto nbrIdx : boost::make_iterator_range(
+           mol->getAtomNeighbors(mol->getAtomWithIdx(aid2)))) {
+    auto d = dmat[naid + nbrIdx];
     if (d < mdist) {
       mdist = d;
-      res = (*nbrIdx);
+      res = nbrIdx;
     }
-    ++nbrIdx;
   }
   return res;
 }

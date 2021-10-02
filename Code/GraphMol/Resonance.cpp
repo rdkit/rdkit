@@ -1580,7 +1580,7 @@ void ResonanceMolSupplier::buildCEMap(CEMap &ceMap, unsigned int conjGrpIdx) {
       boost::tie(nbrIdx, endNbrs) =
           d_mol->getAtomNeighbors(ae[BEGIN_POS]->atom());
       for (; nbrIdx != endNbrs; ++nbrIdx) {
-        unsigned int aiNbr = (*d_mol)[*nbrIdx]->getIdx();
+        unsigned int aiNbr = *nbrIdx;
         // if this neighbor is not part of the conjugated group,
         // ignore it
         if (ce->parent()->getAtomConjGrpIdx(aiNbr) !=
