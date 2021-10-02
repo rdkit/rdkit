@@ -105,6 +105,10 @@ const char *TautomerPatternHolderDoc =
     "2048) used for filtering of molecules.\n"
     "These fingerprints are designed to be used with TautomerQueries.";
 
+const char *KeyHolderDoc = 
+    "Holds keys to return external references to the molecules in the molholder.\n"
+    "By default use the _Name property but can be overridden to be any property";
+
 const char *SubstructLibraryDoc =
     "SubstructLibrary: This provides a simple API for substructure searching "
     "large datasets\n"
@@ -192,6 +196,18 @@ const char *SubstructLibraryDoc =
     ">>> indices = library.GetMatches(core)\n"
     ">>> len(indices)\n"
     "11\n"
+    "\n"
+    "Finally, the KeyFromPropHolder can be used to use external keys such as\n"
+    "compound names.  By default the holder uses the '_Name' property but can\n"
+    "be changed to any property.\n"
+    ">>> library = "
+    "rdSubstructLibrary.SubstructLibrary(rdSubstructLibrary.MolHolder(), rdSubstructLibrary.KeyFromPropHolder())\n"
+    ">>> m = Chem.MolFromSmiles('CCC')\n"
+    ">>> m.SetProp('_Name', 'Z11234')\n"
+    ">>> idx = library.AddMol(m)\n"
+    ">>> indices = library.GetMatches(m)\n"
+    ">>> list(library.GetKeyHolder().GetKeys(indices))\n"
+    "['Z11234']\n"
     "";
 
 python::object SubstructLibrary_Serialize(const SubstructLibrary &cat) {
@@ -234,6 +250,11 @@ boost::shared_ptr<MolHolderBase> GetMolHolder(SubstructLibrary &sslib) {
 boost::shared_ptr<FPHolderBase> GetFpHolder(SubstructLibrary &sslib) {
   // need to convert from a ref to a real shared_ptr
   return sslib.getFpHolder();
+}
+
+boost::shared_ptr<KeyHolderBase> GetKeyHolder(SubstructLibrary &sslib) {
+  // need to convert from a ref to a real shared_ptr
+  return sslib.getKeyHolder();
 }
 
 python::tuple getSearchOrderHelper(const SubstructLibrary &sslib) {
@@ -489,6 +510,31 @@ struct substructlibrary_wrapper {
         "PatternHolder", PatternHolderDoc, python::init<>())
         .def(python::init<unsigned int>());
 
+    python::class_<KeyHolderBase, boost::shared_ptr<KeyHolderBase>,
+                   boost::noncopyable>("KeyHolderBase", "", python::no_init)
+        .def("__len__", &KeyHolderBase::size)
+
+        .def("AddMol", &KeyHolderBase::addMol,
+             "Adds a molecule to the fingerprint database, returns the index "
+             "of the new pattern")
+        .def("AddKey", &KeyHolderBase::addKey,
+             "Add a key to the key holder, must be manually synced")
+        .def("GetKey", &KeyHolderBase::getKey,
+             python::return_value_policy<python::copy_const_reference>(),
+             "Return the key at the specified index")
+        .def("GetKeys", &KeyHolderBase::getKeys,
+             "Returns the keys for the given indices as return by GetMatches \n\n"
+             "  ARGUMENTS:\n"
+             "    - indices: The indices of the keys\n\n");
+
+    python::class_<KeyFromPropHolder, boost::shared_ptr<KeyFromPropHolder>,
+      python::bases<KeyHolderBase>>("KeyFromPropHolder", KeyHolderDoc, python::init<>())
+      .def(python::init<const std::string &>())
+      .def("GetPropName", (const std::string & (KeyFromPropHolder::*)() const) &
+	   KeyFromPropHolder::getPropName,
+             python::return_value_policy<python::copy_const_reference>(),
+	   "Return the key for the given molecule index");
+
     python::class_<TautomerPatternHolder,
                    boost::shared_ptr<TautomerPatternHolder>,
                    python::bases<FPHolderBase>>(
@@ -501,11 +547,17 @@ struct substructlibrary_wrapper {
         .def(python::init<boost::shared_ptr<MolHolderBase>>())
         .def(python::init<boost::shared_ptr<MolHolderBase>,
                           boost::shared_ptr<FPHolderBase>>())
+        .def(python::init<boost::shared_ptr<MolHolderBase>,
+                          boost::shared_ptr<KeyHolderBase>>())
+        .def(python::init<boost::shared_ptr<MolHolderBase>,
+	                  boost::shared_ptr<FPHolderBase>,
+	                  boost::shared_ptr<KeyHolderBase>>())
         .def(python::init<std::string>())
 
         .def("GetMolHolder", &GetMolHolder)
         .def("GetFpHolder", &GetFpHolder)
-
+        .def("GetKeyHolder", &GetKeyHolder)
+        
         .def("AddMol", &SubstructLibrary::addMol, (python::arg("mol")),
              "Adds a molecule to the substruct library")
 
