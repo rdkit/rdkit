@@ -46,9 +46,9 @@ struct RDKIT_DEPROTECT_EXPORT DeprotectData {
   std::shared_ptr<ChemicalReaction>
       rxn;  // so much easier than unique_ptr, sigh...
 
-  DeprotectData(std::string ction_class, const std::string &reaction_smarts,
-                std::string abbrevition, std::string full_name,
-                std::string example = "");
+  DeprotectData(std::string deprotection_class,
+                const std::string &reaction_smarts, std::string abbreviation,
+                std::string full_name, std::string example = "");
 
   bool operator==(const DeprotectData &other) const {
     return (deprotection_class == other.deprotection_class &&
