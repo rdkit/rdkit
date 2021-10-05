@@ -40,7 +40,8 @@ struct normalize_wrapper {
 
     python::class_<MolStandardize::Normalizer, boost::noncopyable>(
         "Normalizer", python::init<>())
-        .def(python::init<std::string, unsigned int>())
+        .def(python::init<std::string, unsigned int>(
+            python::args("normalizeFilename", "maxRestarts")))
         .def("normalize", &normalizeHelper,
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>());
