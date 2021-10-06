@@ -928,10 +928,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 
   docString = "SVG molecule drawer";
   python::class_<RDKit::MolDraw2DSVG, python::bases<RDKit::MolDraw2D>,
-                 boost::noncopyable>("MolDraw2DSVG", docString.c_str(),
-                                     python::init<int, int>())
-      .def(python::init<int, int, int, int>())
-      .def(python::init<int, int, int, int, bool>())
+                 boost::noncopyable>(
+      "MolDraw2DSVG", docString.c_str(),
+      python::init<int, int, int, int, bool>(
+          (python::arg("width"), python::arg("height"),
+           python::arg("panelWidth") = -1, python::arg("panelHeight") = -1,
+           python::arg("noFreetype") = false)))
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
@@ -949,9 +951,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   docString = "Cairo molecule drawer";
   python::class_<RDKit::MolDraw2DCairo, python::bases<RDKit::MolDraw2D>,
-                 boost::noncopyable>("MolDraw2DCairo", docString.c_str(),
-                                     python::init<int, int>())
-      .def(python::init<int, int, int, int>())
+                 boost::noncopyable>(
+      "MolDraw2DCairo", docString.c_str(),
+      python::init<int, int, int, int, bool>(
+          (python::arg("width"), python::arg("height"),
+           python::arg("panelWidth") = -1, python::arg("panelHeight") = -1,
+           python::arg("noFreetype") = false)))
       .def("FinishDrawing", &RDKit::MolDraw2DCairo::finishDrawing,
            "add the last bits to finish the drawing")
       .def("GetDrawingText", &RDKit::getCairoDrawingText,

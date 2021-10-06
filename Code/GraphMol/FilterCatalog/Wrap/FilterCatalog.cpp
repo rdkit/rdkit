@@ -336,24 +336,19 @@ struct filtercat_wrapper {
                    python::bases<FilterMatcherBase>>(
         "SmartsMatcher", SmartsMatcherDoc, python::init<const std::string &>())
         .def(python::init<const ROMol &>("Construct from a molecule"))
-        .def(python::init<const std::string &, const ROMol &>(
-            "Construct from a name and a molecule"))
-        .def(python::init<const std::string &, const ROMol &, unsigned int>(
-            "Construct from a name, molecule and minimum count"))
         .def(python::init<const std::string &, const ROMol &, unsigned int,
                           unsigned int>(
-            "Construct from a name, molecule, minimum and maximum count"))
-
-        .def(python::init<const std::string &, const std::string &>(
-            "Construct from a name and smarts pattern (minimum count defaults "
-            "to 1"))
-        .def(python::init<const std::string &, const std::string &,
-                          unsigned int>(
-            "Construct from a name,smarts pattern and minimum count"))
+            (python::arg("name"), python::arg("mol"),
+             python::arg("minCount") = 1, python::arg("maxCount") = UINT_MAX),
+            "Construct from a name, molecule, "
+            "minimum and maximum count"))
 
         .def(python::init<const std::string &, const std::string &,
                           unsigned int, unsigned int>(
-            "Construct from a name,smarts pattern, minimum and maximum count"))
+            (python::arg("name"), python::arg("smarts"),
+             python::arg("minCount") = 1, python::arg("maxCount") = UINT_MAX),
+            "Construct from a name,smarts pattern, minimum and "
+            "maximum count"))
 
         .def("IsValid", &SmartsMatcher::isValid,
              "Returns True if the SmartsMatcher is valid")

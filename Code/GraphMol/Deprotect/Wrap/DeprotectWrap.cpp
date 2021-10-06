@@ -76,7 +76,9 @@ struct deprotect_wrap {
     python::class_<RDKit::Deprotect::DeprotectData>(
         "DeprotectData", deprotect_doc_string,
         python::init<std::string, std::string, std::string, std::string>(
-            constructor_doc))
+            constructor_doc,
+            python::args("deprotection_class", "reaction_smarts",
+                         "abbreviation", "full_name")))
         .def_readonly("deprotection_class",
                       &RDKit::Deprotect::DeprotectData::deprotection_class)
         .def_readonly("full_name", &RDKit::Deprotect::DeprotectData::full_name)
