@@ -1587,3 +1587,104 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("Github #4582: double bonds and ring closures") {
+  auto mol = R"CTAB(CHEMBL409450
+     RDKit          2D
+
+ 22 25  0  0  0  0  0  0  0  0999 V2000
+   -1.1669    1.3591    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6820    0.6916    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9516    1.1041    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9516    0.2791    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5647    1.6562    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3931    2.4631    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6085    2.7181    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9954    2.1661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1669    0.0242    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9120   -0.7604    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3969   -1.4279    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9120   -2.0953    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1274   -1.8404    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1274   -1.0154    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5871   -2.2529    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3016   -1.8404    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3016   -1.0154    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5871   -0.6029    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2219   -1.4279    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1430    0.6916    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5555    1.4061    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0160   -2.2529    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  2  0
+  1  8  1  0
+  9  2  1  0
+  2 20  2  0
+  3  4  1  0
+  3  5  1  0
+  9  4  1  0
+  5  6  2  0
+  6  7  1  0
+  8  7  2  0
+  9 10  2  0
+ 10 11  1  0
+ 10 14  1  0
+ 11 12  1  0
+ 11 19  2  0
+ 13 12  1  0
+ 13 14  2  0
+ 13 15  1  0
+ 14 18  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 22 16  1  0
+ 17 18  2  0
+ 20 21  1  0
+M  END)CTAB"_ctab;
+  REQUIRE(mol);
+  auto dbond = mol->getBondBetweenAtoms(1, 19);
+  REQUIRE(dbond);
+  CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
+  CHECK((dbond->getStereo() == Bond::BondStereo::STEREOE ||
+         dbond->getStereo() == Bond::BondStereo::STEREOTRANS));
+  CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+  SECTION("original") {
+    auto smiles = MolToSmiles(*mol);
+    CHECK(smiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
+  }
+
+  SECTION("specific random output") {
+    auto csmiles = MolToSmiles(*mol);
+    CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
+    SmilesWriteParams ps;
+    ps.doRandom = true;
+    getRandomGenerator(51)();
+    auto rsmiles = MolToSmiles(*mol, ps);
+    std::unique_ptr<RWMol> mol2(SmilesToMol(rsmiles));
+    REQUIRE(mol2);
+    auto smiles = MolToSmiles(*mol2);
+    if (smiles != csmiles) {
+      std::cerr << ">>> "
+                << " " << rsmiles << std::endl;
+    }
+    CHECK(smiles == csmiles);
+  }
+
+  SECTION("bulk random output order") {
+    auto csmiles = MolToSmiles(*mol);
+    CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
+    SmilesWriteParams ps;
+    ps.doRandom = true;
+    for (auto i = 0u; i < 100; ++i) {
+      getRandomGenerator(i + 1)();
+      auto rsmiles = MolToSmiles(*mol, ps);
+      std::unique_ptr<RWMol> mol2(SmilesToMol(rsmiles));
+      REQUIRE(mol2);
+      auto smiles = MolToSmiles(*mol2);
+      if (smiles != csmiles) {
+        std::cerr << ">>> " << i << " " << rsmiles << std::endl;
+      }
+      CHECK(smiles == csmiles);
+    }
+  }
+}

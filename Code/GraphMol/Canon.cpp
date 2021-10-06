@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -366,15 +366,15 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
 
     auto isFlipped = false;
 
-    if (atom1->getDegree() == 3 &&
+    if (atom1->getDegree() == 3 &&  // atom1ControllingBond == firstFromAtom1 &&
         std::find(stereoAtoms.begin(), stereoAtoms.end(),
                   static_cast<int>(atom1ControllingBond->getOtherAtomIdx(
                       atom1->getIdx()))) == stereoAtoms.end()) {
       isFlipped = true;
       atom2Dir = flipBondDir(atom2Dir);
     }
-    // std::cerr<<" 0 set bond 2: "<<firstFromAtom2->getIdx()<<"
-    // "<<atom2Dir<<std::endl;
+    // std::cerr << " 0 set bond 2: " << firstFromAtom2->getIdx() << " "
+    //           << atom2Dir << std::endl;
     if (atom2->getDegree() == 3 &&
         std::find(stereoAtoms.begin(), stereoAtoms.end(),
                   static_cast<int>(firstFromAtom2->getOtherAtomIdx(
@@ -384,13 +384,14 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     }
 
     if (!isFlipped && (isClosingRingBond(dblBond) ||
-                       (isClosingRingBond(secondFromAtom1) &&
+                       (secondFromAtom1 != atom1ControllingBond &&
+                        isClosingRingBond(secondFromAtom1) &&
                         !secondFromAtom1->getIsAromatic() &&
                         secondFromAtom1->getBondDir() != Bond::NONE))) {
       atom2Dir = flipBondDir(atom2Dir);
     }
-    // std::cerr<<" 1 set bond 2: "<<firstFromAtom2->getIdx()<<"
-    // "<<atom2Dir<<std::endl;
+    // std::cerr << " 1 set bond 2: " << firstFromAtom2->getIdx() << " "
+    //           << atom2Dir << std::endl;
     firstFromAtom2->setBondDir(atom2Dir);
 
     bondDirCounts[firstFromAtom2->getIdx()] += 1;
