@@ -136,6 +136,17 @@ void switchBondDir(Bond *bond) {
   }
 }
 
+namespace {
+bool isClosingRingBond(Bond *bond) {
+  if (bond == nullptr) {
+    return false;
+  }
+  auto beginIdx = bond->getBeginAtomIdx();
+  auto endIdx = bond->getEndAtomIdx();
+  return beginIdx > endIdx && beginIdx - endIdx > 1 &&
+         bond->hasProp(common_properties::_TraversalRingClosureBond);
+}
+}  // namespace
 // FIX: this may only be of interest from the SmilesWriter, should we
 // move it there?
 //
@@ -354,16 +365,6 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     // stereochemistry, we need to flip the setting on the other bond:
     const INT_VECT &stereoAtoms = dblBond->getStereoAtoms();
 
-    auto isClosingRingBond = [](Bond *bond) {
-      if (bond == nullptr) {
-        return false;
-      }
-      auto beginIdx = bond->getBeginAtomIdx();
-      auto endIdx = bond->getEndAtomIdx();
-      return beginIdx > endIdx && beginIdx - endIdx > 1 &&
-             bond->hasProp(common_properties::_TraversalRingClosureBond);
-    };
-
     auto isFlipped = false;
 
     if (atom1->getDegree() == 3 &&  // atom1ControllingBond == firstFromAtom1 &&
@@ -553,8 +554,7 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
         otherAtom3Bond->getBondDir() == Bond::NONE) {
       // std::cerr<<"set!"<<std::endl;
       auto dir = firstFromAtom2->getBondDir();
-      if (otherAtom3Bond->hasProp(
-              common_properties::_TraversalRingClosureBond)) {
+      if (isClosingRingBond(otherAtom3Bond)) {
         dir = flipBondDir(dir);
       }
       otherAtom3Bond->setBondDir(dir);
