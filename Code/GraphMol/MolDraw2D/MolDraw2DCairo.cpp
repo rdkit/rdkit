@@ -226,7 +226,7 @@ void addMoleculeMetadata(
   bool includeStereo = true;
   if (mol.getNumConformers()) {
     bool kekulize = false;
-    auto molb = MolToMolBlock(mol, includeStereo, confId, kekulize);
+    auto molb = MolToV3KMolBlock(mol, includeStereo, confId, kekulize);
     metadata.push_back(
         std::make_pair(augmentTagName(PNGData::molTag + suffix), molb));
   }
