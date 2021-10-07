@@ -4352,13 +4352,15 @@ void testGithub3967() {
     auto mol = "C=c1s/c2n(c1=O)CCCCCCC\\N=2"_smiles;
     TEST_ASSERT(mol);
     auto smi = MolToSmiles(*mol);
+    std::cerr << smi << std::endl;
     TEST_ASSERT(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
   }
   {
-    auto mol = "C1=C\\C/C=C2C3=C/C/C=C\\C=C/C\\3C\\2\\C=C/1"_smiles;
+    auto mol = R"SMI(C1=C\C/C=C2C3=C/C/C=C\C=C/C\3C\2\C=C/1)SMI"_smiles;
     TEST_ASSERT(mol);
     auto smi = MolToSmiles(*mol);
-    TEST_ASSERT(smi == "C1=C\\C/C=C2C3=C/C/C=C\\C=C/C\\3C\\2\\C=C/1");
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == R"SMI(C1=C\C/C=C2C3=C\C/C=C\C=C/C/3C\2\C=C/1)SMI");
   }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }

@@ -383,13 +383,10 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
       atom2Dir = flipBondDir(atom2Dir);
     }
 
-    if (!isFlipped && (isClosingRingBond(dblBond) ||
-                       (secondFromAtom1 != atom1ControllingBond &&
-                        isClosingRingBond(secondFromAtom1) &&
-                        !secondFromAtom1->getIsAromatic() &&
-                        secondFromAtom1->getBondDir() != Bond::NONE))) {
+    if (!isFlipped && isClosingRingBond(dblBond)) {
       atom2Dir = flipBondDir(atom2Dir);
     }
+
     // std::cerr << " 1 set bond 2: " << firstFromAtom2->getIdx() << " "
     //           << atom2Dir << std::endl;
     firstFromAtom2->setBondDir(atom2Dir);
@@ -555,7 +552,12 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
     if (dblBondPresent && otherAtom3Bond &&
         otherAtom3Bond->getBondDir() == Bond::NONE) {
       // std::cerr<<"set!"<<std::endl;
-      otherAtom3Bond->setBondDir(firstFromAtom2->getBondDir());
+      auto dir = firstFromAtom2->getBondDir();
+      if (otherAtom3Bond->hasProp(
+              common_properties::_TraversalRingClosureBond)) {
+        dir = flipBondDir(dir);
+      }
+      otherAtom3Bond->setBondDir(dir);
       bondDirCounts[otherAtom3Bond->getIdx()] += 1;
       atomDirCounts[atom3->getIdx()] += 1;
     }
