@@ -806,8 +806,8 @@ bool _atomListQueryHelper(const T query) {
     return true;
   }
   if (query->getDescription() == "AtomOr") {
-    for (const auto child : boost::make_iterator_range(query->beginChildren(),
-                                                       query->endChildren())) {
+    for (const auto &child : boost::make_iterator_range(query->beginChildren(),
+                                                        query->endChildren())) {
       if (!_atomListQueryHelper(child)) {
         return false;
       }
