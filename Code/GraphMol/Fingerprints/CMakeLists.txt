@@ -1,6 +1,3 @@
-# boost::random is used in MHFP.cpp to favor the portability across
-# compiler and STL implementations
-find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS random REQUIRED)
 
 rdkit_library(Fingerprints
               Fingerprints.cpp PatternFingerprints.cpp MorganFingerprints.cpp
