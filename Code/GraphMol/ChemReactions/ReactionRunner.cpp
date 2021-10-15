@@ -1457,10 +1457,10 @@ void traverseToFindAtomsToRemove(const ROMol &reactant, const ROMol &templ,
   // toRemove marks both atoms that need to be removed and those we can traverse
   // to
   boost::dynamic_bitset<> toRemove = ~atoms;
-  for (const auto tpl : reactantMatch) {
+  for (const auto &tpl : reactantMatch) {
     toRemove.reset(tpl.second);
   }
-  for (const auto tpl : reactantMatch) {
+  for (const auto &tpl : reactantMatch) {
     std::deque<const Atom *> toConsider;
     if (templ.getAtomWithIdx(tpl.first)->getAtomMapNum() &&
         !atoms[tpl.second]) {

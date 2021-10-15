@@ -325,7 +325,7 @@ void preprocessSmiles(const std::string &smiles, const T &params,
     bool loopAgain = true;
     while (loopAgain) {
       loopAgain = false;
-      for (const auto pr : *(params.replacements)) {
+      for (const auto &pr : *(params.replacements)) {
         if (smi.find(pr.first) != std::string::npos) {
           loopAgain = true;
           boost::replace_all(smi, pr.first, pr.second);
