@@ -442,5 +442,11 @@ class TestCase(unittest.TestCase):
     self.assertEqual(set(smiles), {"C/C=C/C", "C/C=C\\C"})
 
 
+  def testTryEmbeddingManyChirals(self):
+    smiles = "C1" + "C(Cl)(Br)" * 40 + "C1"  
+    mol = Chem.MolFromSmiles(smiles)
+    opts = AllChem.StereoEnumerationOptions(tryEmbedding=True, maxIsomers=2)
+    self.assertEqual(len(list(AllChem.EnumerateStereoisomers(mol, options=opts))), 2)
+
 if __name__ == '__main__':
   unittest.main()
