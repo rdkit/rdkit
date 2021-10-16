@@ -339,7 +339,8 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
     if options.tryEmbedding:
       ntm = Chem.AddHs(isomer)
-      cid = EmbedMolecule(ntm, randomSeed=bitflag)
+      # mask bitflag to fit within C++ int.
+      cid = EmbedMolecule(ntm, randomSeed=(bitflag & 0x7fffffff))
       if cid >= 0:
         conf = Chem.Conformer(isomer.GetNumAtoms())
         for aid in range(isomer.GetNumAtoms()):
