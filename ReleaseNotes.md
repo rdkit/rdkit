@@ -1,4 +1,4 @@
-# Release_2021.09.1b1
+# Release_2021.09.1
 (Changes relative to Release_2021.03.1)
 
 ## Backwards incompatible changes
@@ -14,7 +14,12 @@
   of any code since the only method of the class is also const.
 
 ## Highlights
- - t.b.d.
+ - Single reactant/single product reactions can now be applied in-place. This
+   really helps with the performance of these kinds of transformations.
+ - The CFFI wrapper around MinimalLib greatly expands the number of possible
+   places the RDKit can be used from.
+ - A number of general enhancements and quality-of-life improvements were made
+   to the PostgreSQL cartridge.
 
 ## Acknowledgements
 Jason Biggs, Kit Choi, David Cosgrove, Eloy Félix, Harrison Green, Gareth Jones,
@@ -23,8 +28,15 @@ Labouille, Rasmus Lundsgaard, Hadrien Mary, Michel Moreau, Dan Nealschneider,
 Axel Pahl, Maximilian Peters, Alessio Ragno, Ricardo Rodriguez-Schmidt, Riccardo
 Sabatini, Roger Sayle, Vincent F. Scalfani, Dan Skatov, David Slochower, Peter
 St. John, Mihaly Szabo, Ichiru Take, Paolo Tosco, Ivan Tubert-Brohman, Kazuya
-Ujihara, Alain Vaucher, Riccardo Vianello Rachel Walker, Shuzhe Wang, Maciej
+Ujihara, Alain Vaucher, Riccardo Vianello, Rachel Walker, Shuzhe Wang, Maciej
 Wójcikowski, bzoracler, jungb-basf, charly828, yoer77,
+
+## Code removed in this release:
+- The minimizeOnly option for coordgen has been removed.
+
+## Contrib updates:
+ - Contribute FreeWilson analysis
+ (github pull #4026 from bp-kelley)
 
 ## Bug Fixes:
   - cannot pass drawOptions to MolsToGridImage when using notebook
@@ -191,6 +203,10 @@ Wójcikowski, bzoracler, jungb-basf, charly828, yoer77,
  (github issue #4567 from ricrogz)
   - Incorrect double bond stereo in output SMILES around ring closures
  (github issue #4582 from greglandrum)
+  - migrate the MHFP implementation to use boost::random
+ (github pull #4603 from rvianello)
+  - Fix EnumerateStereoisomers with tryEmbedding
+ (github pull #4615 from kazuyaujihara)
 
 ## New Features and Enhancements:
   - Support Chemical Markup Language, CML, for writing
@@ -333,9 +349,12 @@ Wójcikowski, bzoracler, jungb-basf, charly828, yoer77,
  (github pull #4584 from ptosco)
   - use V3K mol blocks in PNG metadata
  (github pull #4588 from greglandrum)
-
-## Code removed in this release:
-- The minimizeOnly option for coordgen has been removed.
+  - Prevent some loop variables from creating unnecessary copies
+ (github pull #4610 from rvianello)
+  - Rename the molLinkNode property to _molLinkNode
+ (github pull #4614 from greglandrum)
+  - Fix clang warning `-Wabsolute-value`
+ (github pull #4616 from e-kwsm)
 
 ## Deprecated code (to be removed in a future release):
 - The `useCountSimulation` keyword argument for
