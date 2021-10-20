@@ -17,15 +17,15 @@ namespace CIPLabeler {
 namespace {
 int ord(Descriptor lab) {
   switch (lab) {
-  case Descriptor::E:
-    return 1;
-  case Descriptor::Z:
-    return 2;
-  default:
-    return 0;
+    case Descriptor::E:
+      return 1;
+    case Descriptor::Z:
+      return 2;
+    default:
+      return 0;
   }
 }
-}
+}  // namespace
 
 Rule3::Rule3() = default;
 
@@ -34,5 +34,5 @@ int Rule3::compare(const Edge *a, const Edge *b) const {
                               ord(b->getEnd()->getAux()));
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

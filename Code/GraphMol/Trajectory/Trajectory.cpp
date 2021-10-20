@@ -224,4 +224,4 @@ unsigned int readGromosTrajectory(const std::string &fName, Trajectory &traj) {
   }
   return nSnapshots;
 }
-}
+}  // namespace RDKit

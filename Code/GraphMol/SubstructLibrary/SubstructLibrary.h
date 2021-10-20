@@ -332,22 +332,23 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT TautomerPatternHolder
 };
 
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyHolderBase {
-public:
+ public:
   virtual ~KeyHolderBase() {}
 
   //! Add a key to the database getting it from the molecule
   virtual unsigned int addMol(const ROMol &m) = 0;
-  
+
   //! Add a key to the database, this needs to be in the same order
   //!  as the molecule, no validation is done
   virtual unsigned int addKey(const std::string &) = 0;
 
   // !get the key at the requested index
   // implementations should throw IndexError on out of range
-  virtual const std::string & getKey(unsigned int) const = 0;
+  virtual const std::string &getKey(unsigned int) const = 0;
 
   // !get keys from a bunch of indices
-  virtual std::vector<std::string> getKeys(const std::vector<unsigned int> &indices) const = 0;
+  virtual std::vector<std::string> getKeys(
+      const std::vector<unsigned int> &indices) const = 0;
   //! Get the current keeyholder size
   virtual unsigned int size() const = 0;
 };
@@ -356,23 +357,24 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
   std::string propname;
   std::vector<std::string> keys;
   const std::string empty_string = {};
-  
-public:
-  KeyFromPropHolder(const std::string &propname = "_Name") : propname(propname) {
-  }
 
-  std::string &getPropName() { return propname; }  
-  const std::string &getPropName() const { return propname; }  
+ public:
+  KeyFromPropHolder(const std::string &propname = "_Name")
+      : propname(propname) {}
 
-  std::vector<std::string> &getKeys() { return keys; }  
-  const std::vector<std::string> &getKeys() const { return keys; }  
+  std::string &getPropName() { return propname; }
+  const std::string &getPropName() const { return propname; }
+
+  std::vector<std::string> &getKeys() { return keys; }
+  const std::vector<std::string> &getKeys() const { return keys; }
 
   unsigned int addMol(const ROMol &m) override {
     std::string key;
     if (m.getPropIfPresent(propname, key)) {
       keys.push_back(std::move(key));
     } else {
-      // XXX is this a warning? it could be verbose.  Should we push back the string repr of the
+      // XXX is this a warning? it could be verbose.  Should we push back the
+      // string repr of the
       //  numeric index?
       const static std::string prefix("LIBIDX-");
       keys.emplace_back(prefix + boost::lexical_cast<std::string>(keys.size()));
@@ -385,21 +387,19 @@ public:
     return keys.size() - 1u;
   }
 
-  const std::string & getKey(unsigned int idx) const override {
+  const std::string &getKey(unsigned int idx) const override {
     if (idx >= keys.size()) throw IndexErrorException(idx);
     return keys[idx];
   }
-  
-  std::vector<std::string> getKeys(const std::vector<unsigned int> &indices) const override{
+
+  std::vector<std::string> getKeys(
+      const std::vector<unsigned int> &indices) const override {
     std::vector<std::string> res;
     std::transform(indices.begin(), indices.end(), std::back_inserter(res),
-		   [=](unsigned idx){return keys.at(idx);});
+                   [=](unsigned idx) { return keys.at(idx); });
     return res;
   }
-  unsigned int size() const override {
-    return keys.size();
-  }
-  
+  unsigned int size() const override { return keys.size(); }
 };
 
 //! Substructure Search a library of molecules
@@ -484,10 +484,10 @@ public:
      to any property.
 
      \code
-     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \ 
-         boost::make_shared<CachedTrustedSmilesMolHolder>();  
-     boost::shared_ptr<KeyFromPropHolder> keyHolder = \ 
-         boost::make_shared<KeyFromPropHolder>();  
+     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+         boost::make_shared<CachedTrustedSmilesMolHolder>();
+     boost::shared_ptr<KeyFromPropHolder> keyHolder = \
+         boost::make_shared<KeyFromPropHolder>();
      SubstructLibrary lib(molHolder, keyHolder);
      ...
 
@@ -501,7 +501,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   boost::shared_ptr<MolHolderBase> molholder;
   boost::shared_ptr<FPHolderBase> fpholder;
   boost::shared_ptr<KeyHolderBase> keyholder;
-  
+
   MolHolderBase *mols;  // used for a small optimization
   FPHolderBase *fps{nullptr};
   bool is_tautomerquery = false;
@@ -509,7 +509,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
 
  public:
   SubstructLibrary()
-      : molholder(new MolHolder), fpholder(), keyholder(), mols(molholder.get()) {}
+      : molholder(new MolHolder),
+        fpholder(),
+        keyholder(),
+        mols(molholder.get()) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
       : molholder(std::move(molecules)),
@@ -532,12 +535,12 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   }
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
-		   boost::shared_ptr<KeyHolderBase> keys)
-    : molholder(std::move(molecules)),
-      fpholder(),
-      keyholder(std::move(keys)),
-      mols(molholder.get()),
-      fps(nullptr) {
+                   boost::shared_ptr<KeyHolderBase> keys)
+      : molholder(std::move(molecules)),
+        fpholder(),
+        keyholder(std::move(keys)),
+        mols(molholder.get()),
+        fps(nullptr) {
     if (fpholder.get() &&
         dynamic_cast<TautomerPatternHolder *>(fpholder.get()) != nullptr) {
       is_tautomerquery = true;
@@ -545,13 +548,13 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   }
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
-		   boost::shared_ptr<FPHolderBase> fingerprints,
-		   boost::shared_ptr<KeyHolderBase> keys)
-    : molholder(std::move(molecules)),
-      fpholder(std::move(fingerprints)),
-      keyholder(std::move(keys)),
-      mols(molholder.get()),
-      fps(fpholder.get()) {
+                   boost::shared_ptr<FPHolderBase> fingerprints,
+                   boost::shared_ptr<KeyHolderBase> keys)
+      : molholder(std::move(molecules)),
+        fpholder(std::move(fingerprints)),
+        keyholder(std::move(keys)),
+        mols(molholder.get()),
+        fps(fpholder.get()) {
     if (fpholder.get() &&
         dynamic_cast<TautomerPatternHolder *>(fpholder.get()) != nullptr) {
       is_tautomerquery = true;
@@ -592,7 +595,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   const boost::shared_ptr<KeyHolderBase> &getKeyHolder() const {
     return keyholder;
   }
-  
+
   const MolHolderBase &getMolecules() const {
     PRECONDITION(mols, "Molecule holder NULL in SubstructLibrary");
     return *mols;
@@ -615,7 +618,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   //! Get the underlying key holder implementation.
   /*! Throws a value error if no keyholder have been set */
   KeyHolderBase &getKeys() {
-    if(!keyholder.get())
+    if (!keyholder.get())
       throw ValueErrorException("Substruct Library does not have fingerprints");
     return *keyholder.get();
   }
@@ -623,7 +626,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   //! Get the underlying key holder implementation.
   /*! Throws a value error if no keyholder have been set */
   const KeyHolderBase &getKeys() const {
-    if(!keyholder.get())
+    if (!keyholder.get())
       throw ValueErrorException("Substruct Library does not have fingerprints");
     return *keyholder.get();
   }

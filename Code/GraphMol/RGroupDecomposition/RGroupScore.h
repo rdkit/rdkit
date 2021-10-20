@@ -121,7 +121,8 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupScorer {
       // heavyCounts is a vector which has the same size of labels
       // for each label we add an increment if a molecule
       // bears an R-group at that label
-      PRECONDITION(permutation.size() <= matches.size(), "permutation.size() should be <= matches.size()");
+      PRECONDITION(permutation.size() <= matches.size(),
+                   "permutation.size() should be <= matches.size()");
       size_t offset = matches.size() - permutation.size();
       // numMatchedUserRGroups counts the total number of user labelled r
       // groups filled in this permutation.  We want to maximize this number

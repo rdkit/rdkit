@@ -172,8 +172,8 @@ void test2() {
 }
 
 void testCanRetrieveProp() {
-  BOOST_LOG(rdInfoLog)
-      << "testing retrieving _ErGAtomTypes from property" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing retrieving _ErGAtomTypes from property"
+                       << std::endl;
   auto m = "OCCc1ccccc1"_smiles;
   std::vector<std::vector<int>> expected{{0, 1}, {}, {}, {}, {5}};
   std::vector<std::vector<int>> res;

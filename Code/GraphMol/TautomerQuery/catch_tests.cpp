@@ -19,7 +19,8 @@
 using namespace RDKit;
 
 TEST_CASE("TEMPLATE_ERROR") {
-  // for this guy the template needs to account for bonds modified when tautomers are sanitized
+  // for this guy the template needs to account for bonds modified when
+  // tautomers are sanitized
   auto mol = "Cc1nc2ccccc2[nH]1"_smiles;
   REQUIRE(mol);
   auto target = "CN1C2=C(C(=O)Nc3ccccc3)C(=O)CCN2c2ccccc21"_smiles;
@@ -225,7 +226,7 @@ TEST_CASE("TEST_FINGERPRINT") {
     auto queryBond = new QueryBond();
     queryBond->setQuery(makeBondOrderEqualsQuery(Bond::BondType::SINGLE));
     queryBond->expandQuery(makeBondOrderEqualsQuery(Bond::BondType::AROMATIC),
-                   Queries::COMPOSITE_OR);
+                           Queries::COMPOSITE_OR);
     molWithoutTautomerBonds.replaceBond(modifiedBondIdx, queryBond, true);
     delete queryBond;
   }
@@ -312,15 +313,18 @@ TEST_CASE("TEST_NOT_TAUTOMER") {
 TEST_CASE("github #3821 TAUTOMERQUERY_COPY_CONSTRUCTOR") {
   auto mol = "c1ccccc1"_smiles;
   auto tautomerQuery =
-    std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
-  auto tautomerQueryCopyConstructed = std::unique_ptr<TautomerQuery>(new TautomerQuery(*tautomerQuery));
-  CHECK(&(tautomerQuery->getTemplateMolecule()) != &tautomerQueryCopyConstructed->getTemplateMolecule());
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto tautomerQueryCopyConstructed =
+      std::unique_ptr<TautomerQuery>(new TautomerQuery(*tautomerQuery));
+  CHECK(&(tautomerQuery->getTemplateMolecule()) !=
+        &tautomerQueryCopyConstructed->getTemplateMolecule());
 }
 
 TEST_CASE("github #3821 check TAUTOMERQUERY_OPERATOR= does a deep copy") {
   auto mol = "c1ccccc1"_smiles;
   auto tautomerQuery =
-    std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+      std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
   auto tautomerQueryAssigned = *tautomerQuery;
-  CHECK(&(tautomerQuery->getTemplateMolecule()) != &tautomerQueryAssigned.getTemplateMolecule());
+  CHECK(&(tautomerQuery->getTemplateMolecule()) !=
+        &tautomerQueryAssigned.getTemplateMolecule());
 }

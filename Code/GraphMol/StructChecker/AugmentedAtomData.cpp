@@ -1085,9 +1085,9 @@ static const AugmentedAtom_t DefaultAcidicAtoms[] = {
     {"I", "I", 0, RT_NONE, TP_NONE}};
 
 struct AugmentedAtomTransforms_t {
-  const char * from;
-  const char * to;
-  const char * label;
+  const char *from;
+  const char *to;
+  const char *label;
 };
 
 static const AugmentedAtomTransforms_t DefaultAugmentedAtomTransforms[] = {
@@ -1241,4 +1241,4 @@ static const AugmentedAtomTransforms_t DefaultAugmentedAtomTransforms[] = {
 };
 
 }  // namespace StructureCheck
-}  // RDKit
+}  // namespace RDKit

@@ -27,12 +27,12 @@ int Rule6::compare(const Edge *a, const Edge *b) const {
   const auto &aAtom = a->getEnd()->getAtom();
   const auto &bAtom = b->getEnd()->getAtom();
   if (ref == aAtom && ref != bAtom) {
-    return +1; // a is ref (has priority)
+    return +1;  // a is ref (has priority)
   } else if (ref != aAtom && ref == bAtom) {
-    return -1; // b is ref (has priority)
+    return -1;  // b is ref (has priority)
   }
   return 0;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

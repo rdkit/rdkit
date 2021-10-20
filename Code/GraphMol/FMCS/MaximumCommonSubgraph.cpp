@@ -470,21 +470,18 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
             if (!QueryMoleculeSingleMatchedAtom) {
               QueryMoleculeSingleMatchedAtom = queryMolAtom;
             } else {
-              QueryMoleculeSingleMatchedAtom =
-                  (std::max)(queryMolAtom, QueryMoleculeSingleMatchedAtom,
-                             [](const Atom* a, const Atom* b) {
-                               if (a->getDegree() != b->getDegree()) {
-                                 return (a->getDegree() < b->getDegree());
-                               } else if (a->getFormalCharge() !=
-                                          b->getFormalCharge()) {
-                                 return (a->getFormalCharge() <
-                                         b->getFormalCharge());
-                               } else if (a->getAtomicNum() !=
-                                          b->getAtomicNum()) {
-                                 return (a->getAtomicNum() < b->getAtomicNum());
-                               }
-                               return (a->getIdx() < b->getIdx());
-                             });
+              QueryMoleculeSingleMatchedAtom = (std::max)(
+                  queryMolAtom, QueryMoleculeSingleMatchedAtom,
+                  [](const Atom* a, const Atom* b) {
+                    if (a->getDegree() != b->getDegree()) {
+                      return (a->getDegree() < b->getDegree());
+                    } else if (a->getFormalCharge() != b->getFormalCharge()) {
+                      return (a->getFormalCharge() < b->getFormalCharge());
+                    } else if (a->getAtomicNum() != b->getAtomicNum()) {
+                      return (a->getAtomicNum() < b->getAtomicNum());
+                    }
+                    return (a->getIdx() < b->getIdx());
+                  });
             }
           }
           break;

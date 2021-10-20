@@ -30,7 +30,7 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
   if (mol.getNumAtoms() == 0) {
     return SIZE_CHECK_FAILED;
   }
-  
+
   if (!mol.getRingInfo()->isInitialized()) mol.getRingInfo()->initialize();
 
   /* it uses SDL text
@@ -46,10 +46,12 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
               ;//new_data_list = ConvertSTEXTToData(mol, new_data_list);
   */
   if (!Options.AugmentedAtomPairs.empty()) {
-    if (TransformAugmentedAtoms(mol, Options.AugmentedAtomPairs, Options.Verbose)) {
+    if (TransformAugmentedAtoms(mol, Options.AugmentedAtomPairs,
+                                Options.Verbose)) {
       flags |= TRANSFORMED;
-      if (Options.Verbose)
-          BOOST_LOG(rdInfoLog) << MolToSmiles(mol) << "\n";
+      if (Options.Verbose) {
+        BOOST_LOG(rdInfoLog) << MolToSmiles(mol) << "\n";
+      }
     }
   }
 
@@ -57,8 +59,9 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
   if (0 != (FixDubious3DMolecule(mol) & CONVERTED_TO_2D)) {
     stereo_result = 1;
     flags |= DUBIOUS_STEREO_REMOVED;
-    if (Options.Verbose)
+    if (Options.Verbose) {
       BOOST_LOG(rdInfoLog) << MolToSmiles(mol) << "\n";
+    }
   }
 
   if (Options.RemoveMinorFragments) {
@@ -66,8 +69,8 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
     if (StripSmallFragments(mol, Options.Verbose)) {
       flags |= FRAGMENTS_FOUND;
       if (Options.Verbose)
-        BOOST_LOG(rdInfoLog) << "Striped SmallFragments"
-          << MolToSmiles(mol) << "\n";
+        BOOST_LOG(rdInfoLog)
+            << "Striped SmallFragments" << MolToSmiles(mol) << "\n";
     }
     AddMWMF(mol, false);  // Add mol mass data field "MW_POST"
   }
@@ -83,8 +86,9 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
       if (!sct.applyTautomer(i)) break;
       flags |= TAUTOMER_TRANSFORMED;
       if (Options.Verbose)
-        BOOST_LOG(rdInfoLog) << "molecule: has been tautomerized with rule "
-                             << i << ":\n" << MolToSmiles(mol) << "\n";
+        BOOST_LOG(rdInfoLog)
+            << "molecule: has been tautomerized with rule " << i << ":\n"
+            << MolToSmiles(mol) << "\n";
       //                sprintf(msg_buffer,"%10s: has been tautomerized with
       //                rule '%s'", mp->name, from_tautomer[i]->name);
       //                AddMsgToList(msg_buffer);
@@ -120,11 +124,12 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
     if (ch.rechargeMolecule(ndeprot, nrefine)) {
       flags |= RECHARGED;
       if (Options.Verbose)
-        BOOST_LOG(rdInfoLog) << "Recharged Molecule:" << MolToSmiles(mol) << "\n";
+        BOOST_LOG(rdInfoLog)
+            << "Recharged Molecule:" << MolToSmiles(mol) << "\n";
     }
   }
   //
-  const double clashLimit = Options.CollisionLimitPercent/100.0;
+  const double clashLimit = Options.CollisionLimitPercent / 100.0;
   if (Options.CheckCollisions && AtomClash(mol, clashLimit)) {
     flags |= ATOM_CLASH;
     if (Options.Verbose)

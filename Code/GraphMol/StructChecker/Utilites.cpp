@@ -32,8 +32,7 @@ void SetupNeighbourhood(const ROMol &mol,
   }
 }
 
-bool getMolAtomPoints(const ROMol &mol,
-                      std::vector<RDGeom::Point3D> &atomPoint,
+bool getMolAtomPoints(const ROMol &mol, std::vector<RDGeom::Point3D> &atomPoint,
                       bool twod) {
   bool non_zero_z = false;
   atomPoint.resize(mol.getNumAtoms());

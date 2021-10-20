@@ -37,7 +37,8 @@ std::string MolToXYZBlock(const ROMol& mol, int confId) {
   for (unsigned int i = 0; i < nAtoms; i++) {
     const auto& symbol = mol.getAtomWithIdx(i)->getSymbol();
     const auto& pos = conf.getAtomPos(i);
-    ss << boost::format{"%-3s %11.6f %11.6f %11.6f\n"} % symbol % pos.x % pos.y % pos.z;
+    ss << boost::format{"%-3s %11.6f %11.6f %11.6f\n"} % symbol % pos.x %
+              pos.y % pos.z;
   }
   return ss.str();
 }

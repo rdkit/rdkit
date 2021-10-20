@@ -1883,7 +1883,7 @@ void testProperties() {
     std::vector<double> props = sink.computeProperties(*mol);
 
     std::vector<double> res;
-    for (const auto& prop : all_names) {
+    for (const auto &prop : all_names) {
       std::vector<std::string> props;
       props.push_back(prop);
       Properties property(props);

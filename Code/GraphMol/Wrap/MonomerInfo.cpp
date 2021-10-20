@@ -25,9 +25,9 @@ struct monomerinfo_wrapper {
         "The class to store monomer information attached to Atoms\n";
     python::class_<AtomMonomerInfo>("AtomMonomerInfo", classDoc.c_str(),
                                     python::init<>())
-        .def(python::init<AtomMonomerInfo::AtomMonomerType,
-                          const std::string &>(
-            (python::arg("type"), python::arg("name") = "")))
+        .def(
+            python::init<AtomMonomerInfo::AtomMonomerType, const std::string &>(
+                (python::arg("type"), python::arg("name") = "")))
         .def("GetName", &AtomMonomerInfo::getName,
              python::return_value_policy<python::copy_const_reference>())
         .def("GetMonomerType", &AtomMonomerInfo::getMonomerType)
@@ -40,7 +40,7 @@ struct monomerinfo_wrapper {
         .value("OTHER", AtomMonomerInfo::OTHER);
 
     classDoc = "The class to store PDB residue information attached to Atoms\n";
-    python::class_<AtomPDBResidueInfo, python::bases<AtomMonomerInfo> >(
+    python::class_<AtomPDBResidueInfo, python::bases<AtomMonomerInfo>>(
         "AtomPDBResidueInfo", classDoc.c_str(), python::init<>())
         .def(python::init<std::string, int, std::string, std::string, int,
                           std::string, std::string, double, double, bool,
@@ -86,6 +86,6 @@ struct monomerinfo_wrapper {
         ;
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_monomerinfo() { RDKit::monomerinfo_wrapper::wrap(); }

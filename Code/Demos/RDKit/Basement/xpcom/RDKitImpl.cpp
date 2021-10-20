@@ -10,9 +10,11 @@
 /* Implementation file */
 NS_IMPL_ISUPPORTS1(RDKitImpl, IRDKit)
 
-RDKitImpl::RDKitImpl() { /* member initializers and constructor code */ }
+RDKitImpl::RDKitImpl() { /* member initializers and constructor code */
+}
 
-RDKitImpl::~RDKitImpl() { /* destructor code */ }
+RDKitImpl::~RDKitImpl() { /* destructor code */
+}
 
 /* unsigned long strlen (in string arg); */
 NS_IMETHODIMP RDKitImpl::Strlen(const char *arg, PRUint32 *_retval) {

@@ -50,16 +50,15 @@ enum CXSmilesFields : uint32_t {
   CX_ENHANCEDSTEREO = 1 << 6,
   CX_SGROUPS = 1 << 7,
   CX_POLYMER = 1 << 8,
-  // NB: std::int32_t is intentional as a non-scoped enum is implicitly cast to int
-  // so numbers larger than std::numeric_limits<std::int32_t>::max() will be
+  // NB: std::int32_t is intentional as a non-scoped enum is implicitly cast to
+  // int so numbers larger than std::numeric_limits<std::int32_t>::max() will be
   // negative
   CX_ALL = std::numeric_limits<std::int32_t>::max()
 };
 
 //! \brief returns the cxsmiles data for a molecule
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
-    const ROMol &mol,
-    std::uint32_t flags = CXSmilesFields::CX_ALL);
+    const ROMol &mol, std::uint32_t flags = CXSmilesFields::CX_ALL);
 
 //! \brief returns true if the atom number is in the SMILES organic subset
 RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);

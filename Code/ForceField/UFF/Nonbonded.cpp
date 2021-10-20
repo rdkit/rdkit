@@ -27,7 +27,7 @@ double calcNonbondedDepth(const AtomicParams *at1Params,
   return sqrt(at1Params->D1 * at2Params->D1);
 }
 
-}  // end of namespace utils
+}  // namespace Utils
 
 vdWContrib::vdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
                        const AtomicParams *at1Params,
@@ -101,5 +101,5 @@ void vdWContrib::getGrad(double *pos, double *grad) const {
     grad[3 * d_at2Idx + i] -= dGrad;
   }
 }
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields

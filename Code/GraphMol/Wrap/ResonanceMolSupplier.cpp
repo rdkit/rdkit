@@ -210,9 +210,7 @@ struct resmolsup_wrap {
             "__iter__",
             (ResonanceMolSupplier * (*)(ResonanceMolSupplier *)) & MolSupplIter,
             python::return_internal_reference<1>())
-        .def("__next__",
-             (ROMol * (*)(ResonanceMolSupplier *)) &
-                 MolSupplNext,
+        .def("__next__", (ROMol * (*)(ResonanceMolSupplier *)) & MolSupplNext,
              "Returns the next resonance structure in the supplier. Raises "
              "_StopIteration_ on end.\n",
              python::return_value_policy<python::manage_new_object>())

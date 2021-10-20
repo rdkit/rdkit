@@ -171,7 +171,7 @@ const unsigned int NUM_BRENK =
     static_cast<unsigned int>(sizeof(BRENK) / sizeof(FilterData_t));
 
 const FilterProperty_t BRENK_PROPS[] = {
-    {"FilterSet", "Brenk"}, 
+    {"FilterSet", "Brenk"},
     {"Reference",
      "Brenk R et al. Lessons Learnt from Assembling Screening Libraries for "
      "Drug Discovery for Neglected Diseases. ChemMedChem 3 (2008) 435-444. "
@@ -633,7 +633,7 @@ const unsigned int NUM_NIH =
     static_cast<unsigned int>(sizeof(NIH) / sizeof(FilterData_t));
 
 const FilterProperty_t NIH_PROPS[] = {
-    {"FilterSet", "NIH"},   
+    {"FilterSet", "NIH"},
     {"Scope", "annotate compounds with problematic functional groups"},
     {"Reference",
      "Doveston R, et al. A Unified Lead-oriented Synthesis of over Fifty "
@@ -656,12 +656,11 @@ const unsigned int NUM_NIH_PROPS =
 //
 #include "pains_a.in"
 
-
 const unsigned int NUM_PAINS_A =
     static_cast<unsigned int>(sizeof(PAINS_A) / sizeof(FilterData_t));
 
 const FilterProperty_t PAINS_A_PROPS[] = {
-    {"FilterSet", "PAINS_A"},   
+    {"FilterSet", "PAINS_A"},
     {"Reference",
      "Baell JB, Holloway GA. New Substructure Filters for Removal of Pan Assay "
      "Interference Compounds (PAINS) from Screening Libraries and for Their "
@@ -686,12 +685,11 @@ const unsigned int NUM_PAINS_A_PROPS =
 //
 #include "pains_b.in"
 
-
 const unsigned int NUM_PAINS_B =
     static_cast<unsigned int>(sizeof(PAINS_B) / sizeof(FilterData_t));
 
 const FilterProperty_t PAINS_B_PROPS[] = {
-    {"FilterSet", "PAINS_B"}, 
+    {"FilterSet", "PAINS_B"},
     {"Reference",
      "Baell JB, Holloway GA. New Substructure Filters for Removal of Pan Assay "
      "Interference Compounds (PAINS) from Screening Libraries and for Their "
@@ -712,12 +710,11 @@ const unsigned int NUM_PAINS_B_PROPS =
 //
 #include "pains_c.in"
 
-  
 const unsigned int NUM_PAINS_C =
     static_cast<unsigned int>(sizeof(PAINS_C) / sizeof(FilterData_t));
 
 const FilterProperty_t PAINS_C_PROPS[] = {
-    {"FilterSet", "PAINS_C"},   
+    {"FilterSet", "PAINS_C"},
     {"Reference",
      "Baell JB, Holloway GA. New Substructure Filters for Removal of Pan Assay "
      "Interference Compounds (PAINS) from Screening Libraries and for Their "
@@ -788,7 +785,7 @@ const unsigned int NUM_ZINC =
     static_cast<unsigned int>(sizeof(ZINC) / sizeof(FilterData_t));
 
 const FilterProperty_t ZINC_PROPS[] = {
-    {"FilterSet", "ZINC"}, 
+    {"FilterSet", "ZINC"},
     {"Reference", "http://blaster.docking.org/filtering/"},
     {"Scope", "drug-likeness and unwanted functional group filters"}};
 const unsigned int NUM_ZINC_PROPS =
@@ -872,4 +869,4 @@ const FilterProperty_t* GetFilterProperties(
       return nullptr;
   }
 }
-}
+}  // namespace RDKit

@@ -101,13 +101,12 @@ unsigned int SubstructLibrary::addMol(const ROMol &m) {
     CHECK_INVARIANT(idx == fpidx,
                     "#mols different than #fingerprints in SubstructLibrary");
   }
-  if(keyholder.get() != nullptr) {
+  if (keyholder.get() != nullptr) {
     unsigned int keyidx = keyholder->addMol(m);
     CHECK_INVARIANT(idx == keyidx,
                     "#mols different than #keys in SubstructLibrary");
-    
   }
-				  
+
   return idx;
 }
 

@@ -157,9 +157,9 @@ BOOST_PYTHON_MODULE(rdBase) {
 
   python_streambuf_wrapper::wrap();
   python_ostream_wrapper::wrap();
-  
-  python::class_<RDLog::BlockLogs,boost::noncopyable>(
-	       "BlockLogs",
-	       "Temporarily block logs from outputting while this instance is in scope.");
-			    
+
+  python::class_<RDLog::BlockLogs, boost::noncopyable>(
+      "BlockLogs",
+      "Temporarily block logs from outputting while this instance is in "
+      "scope.");
 }

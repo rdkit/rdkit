@@ -16,8 +16,7 @@
 // RDKIT_JAVAWRAPPERS_EXPORT does not get defined in RDGeneral/export.h,
 // and we only use it here for non-windows builds, so just define it based
 // on RDKIT_RDGENERAL_EXPORT
-#if defined(RDKIT_DYN_LINK) && defined(WIN32) && \
-    defined(BOOST_HAS_DECLSPEC)
+#if defined(RDKIT_DYN_LINK) && defined(WIN32) && defined(BOOST_HAS_DECLSPEC)
 #define RDKIT_JAVAWRAPPERS_EXPORT
 #else
 #define RDKIT_JAVAWRAPPERS_EXPORT RDKIT_RDGENERAL_EXPORT

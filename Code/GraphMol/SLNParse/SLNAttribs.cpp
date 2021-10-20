@@ -168,8 +168,8 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
       }
     } else if (attribName == "r") {
       if (attribVal != "") {
-        BOOST_LOG(rdWarningLog) << "Query value '" << attribVal
-                                << "' ignored for r query\n";
+        BOOST_LOG(rdWarningLog)
+            << "Query value '" << attribVal << "' ignored for r query\n";
       }
       if (!doingQuery) {
         BOOST_LOG(rdWarningLog) << "Query property '" << attribName
@@ -435,8 +435,8 @@ void parseBondAttribs(Bond *bond, AttribListType attribs, bool doingQuery) {
       }
     } else if (attribName == "r") {
       if (attribVal != "") {
-        BOOST_LOG(rdWarningLog) << "Query value '" << attribVal
-                                << "' ignored for r query\n";
+        BOOST_LOG(rdWarningLog)
+            << "Query value '" << attribVal << "' ignored for r query\n";
       }
       if (!doingQuery) {
         BOOST_LOG(rdWarningLog) << "Query property '" << attribName
@@ -495,7 +495,7 @@ void adjustAtomChiralities(RWMol *mol) {
       } else if (attribVal[0] == 'i') {
         (*atomIt)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
       }
-      std::list<std::pair<int, int> > neighbors;
+      std::list<std::pair<int, int>> neighbors;
       RWMol::ADJ_ITER nbrIdx, endNbrs;
       boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(*atomIt);
       while (nbrIdx != endNbrs) {
@@ -510,7 +510,7 @@ void adjustAtomChiralities(RWMol *mol) {
       neighbors.sort();
       // figure out the bond ordering:
       std::list<int> bondOrdering;
-      for (std::list<std::pair<int, int> >::const_iterator nbrIt =
+      for (std::list<std::pair<int, int>>::const_iterator nbrIt =
                neighbors.begin();
            nbrIt != neighbors.end(); ++nbrIt) {
         bondOrdering.push_back(nbrIt->second);
@@ -531,5 +531,5 @@ void adjustAtomChiralities(RWMol *mol) {
     }
   }
 }
-}  // end of SLNParse namespace
-}  // end of RDKit namespace
+}  // namespace SLNParse
+}  // namespace RDKit

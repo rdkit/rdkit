@@ -2803,7 +2803,7 @@ class TestAssignChiralTypesFromMolParity {
  private:
   struct BondDef {
     BondDef(unsigned int bi, unsigned int ei, Bond::BondType t)
-        : beginIdx(bi), endIdx(ei), type(t){};
+        : beginIdx(bi), endIdx(ei), type(t) {}
     unsigned int beginIdx;
     unsigned int endIdx;
     Bond::BondType type;

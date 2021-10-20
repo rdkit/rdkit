@@ -198,7 +198,9 @@ void testGaBatch() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  bool isParallelGaEnabled = (sstrm.str().find("This RDKit build does not enable GA parallel runs") == std::string::npos);
+  bool isParallelGaEnabled =
+      (sstrm.str().find("This RDKit build does not enable GA parallel runs") ==
+       std::string::npos);
 #ifdef RDK_TEST_MULTITHREADED
   TEST_ASSERT(isParallelGaEnabled);
 #else

@@ -89,7 +89,8 @@ calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO) {
 InversionContrib::InversionContrib(ForceField *owner, unsigned int idx1,
                                    unsigned int idx2, unsigned int idx3,
                                    unsigned int idx4, int at2AtomicNum,
-                                   bool isCBoundToO, double oobForceScalingFactor) {
+                                   bool isCBoundToO,
+                                   double oobForceScalingFactor) {
   PRECONDITION(owner, "bad owner");
   URANGE_CHECK(idx1, owner->positions().size());
   URANGE_CHECK(idx2, owner->positions().size());
@@ -105,7 +106,8 @@ InversionContrib::InversionContrib(ForceField *owner, unsigned int idx1,
   boost::tuple<double, double, double, double> invCoeffForceCon =
       Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
                                                        isCBoundToO);
-  d_forceConstant = oobForceScalingFactor * boost::tuples::get<0>(invCoeffForceCon);
+  d_forceConstant =
+      oobForceScalingFactor * boost::tuples::get<0>(invCoeffForceCon);
   d_C0 = boost::tuples::get<1>(invCoeffForceCon);
   d_C1 = boost::tuples::get<2>(invCoeffForceCon);
   d_C2 = boost::tuples::get<3>(invCoeffForceCon);
@@ -200,5 +202,5 @@ void InversionContrib::getGrad(double *pos, double *grad) const {
     g4[i] += dE_dW * tg4[i];
   }
 }
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields

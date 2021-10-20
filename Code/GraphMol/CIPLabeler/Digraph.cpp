@@ -32,11 +32,10 @@ const int MAX_NODE_COUNT = 100000;
  * Used for debugging only, 0=Infinite
  */
 const int MAX_NODE_DIST = 0;
-} // namespace
+}  // namespace
 
 Node &Digraph::addNode(std::vector<char> &&visit, Atom *atom,
                        boost::rational<int> &&frac, int dist, int flags) {
-
   d_nodes.emplace_back(this, std::move(visit), atom, std::move(frac), dist,
                        flags);
   return d_nodes.back();
@@ -76,7 +75,6 @@ std::vector<Node *> Digraph::getNodes(Atom *atom) const {
   auto queue = std::list<Node *>({getCurrentRoot()});
 
   for (const auto &node : queue) {
-
     if (atom == node->getAtom()) {
       result.push_back(node);
     }
@@ -108,11 +106,9 @@ void Digraph::setRule6Ref(Atom *ref) { dp_rule6Ref = ref; }
  * @param newroot the new root
  */
 void Digraph::changeRoot(Node *newroot) {
-
   std::vector<Edge *> toflip;
   auto queue = std::list<Node *>({newroot});
   for (const auto &node : queue) {
-
     for (const auto &e : node->getEdges()) {
       if (e->isEnd(node)) {
         toflip.push_back(e);
@@ -167,14 +163,14 @@ void Digraph::expand(Node *beg) {
           }
         }
       }
-    } else if (bond == prev) { // bond order expansion (backwards)
+    } else if (bond == prev) {  // bond order expansion (backwards)
       if (dp_origin->getAtom() != nbr) {
         for (int i = 0; i < virtual_nodes; ++i) {
           auto end = beg->newBondDuplicateChild(nbrIdx, nbr);
           addEdge(beg, bond, end);
         }
       }
-    } else { // ring closures
+    } else {  // ring closures
       auto end = beg->newRingDuplicateChild(nbrIdx, nbr);
       addEdge(beg, bond, end);
 
@@ -199,5 +195,5 @@ void Digraph::expand(Node *beg) {
   }
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

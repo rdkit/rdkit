@@ -262,4 +262,4 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
                                      hChrg[aix], true);
   }
 }
-}
+}  // namespace RDKit

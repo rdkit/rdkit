@@ -107,7 +107,7 @@ double chiSquare(python::object resArr) {
   Py_DECREF(copy);
   return res;
 }
-}
+}  // namespace RDInfoTheory
 
 void wrap_ranker();
 void wrap_corrmatgen();

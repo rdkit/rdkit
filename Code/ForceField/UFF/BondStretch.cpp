@@ -99,5 +99,5 @@ void BondStretchContrib::getGrad(double *pos, double *grad) const {
     grad[3 * d_end2Idx + i] -= dGrad;
   }
 }
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields

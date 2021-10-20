@@ -135,4 +135,4 @@ void TorsionAngleContribM6::getGrad(double *pos, double *grad) const {
   Utils::calcTorsionGrad(r, t, d, g, sinTerm, cosPhi);
 }
 }  // namespace CrystalFF
-}  // namespace RDKit
+}  // namespace ForceFields

@@ -191,11 +191,11 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
       [](double sum,
          std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
-        // perhaps here the variance should be weighted by occupancy- so that
-        // sparsely populated rgroups are penalized
+    // perhaps here the variance should be weighted by occupancy- so that
+    // sparsely populated rgroups are penalized
 
-        // e.g variance *= ((double) numberOfMolecules) /
-        // ((double)pair.second->numberFingerprints);
+    // e.g variance *= ((double) numberOfMolecules) /
+    // ((double)pair.second->numberFingerprints);
 #ifdef DEBUG
         std::cerr << variance << ',';
 #endif

@@ -105,9 +105,11 @@ const char *TautomerPatternHolderDoc =
     "2048) used for filtering of molecules.\n"
     "These fingerprints are designed to be used with TautomerQueries.";
 
-const char *KeyHolderDoc = 
-    "Holds keys to return external references to the molecules in the molholder.\n"
-    "By default use the _Name property but can be overridden to be any property";
+const char *KeyHolderDoc =
+    "Holds keys to return external references to the molecules in the "
+    "molholder.\n"
+    "By default use the _Name property but can be overridden to be any "
+    "property";
 
 const char *SubstructLibraryDoc =
     "SubstructLibrary: This provides a simple API for substructure searching "
@@ -201,7 +203,8 @@ const char *SubstructLibraryDoc =
     "compound names.  By default the holder uses the '_Name' property but can\n"
     "be changed to any property.\n"
     ">>> library = "
-    "rdSubstructLibrary.SubstructLibrary(rdSubstructLibrary.MolHolder(), rdSubstructLibrary.KeyFromPropHolder())\n"
+    "rdSubstructLibrary.SubstructLibrary(rdSubstructLibrary.MolHolder(), "
+    "rdSubstructLibrary.KeyFromPropHolder())\n"
     ">>> m = Chem.MolFromSmiles('CCC')\n"
     ">>> m.SetProp('_Name', 'Z11234')\n"
     ">>> idx = library.AddMol(m)\n"
@@ -523,17 +526,20 @@ struct substructlibrary_wrapper {
              python::return_value_policy<python::copy_const_reference>(),
              "Return the key at the specified index")
         .def("GetKeys", &KeyHolderBase::getKeys,
-             "Returns the keys for the given indices as return by GetMatches \n\n"
+             "Returns the keys for the given indices as return by GetMatches "
+             "\n\n"
              "  ARGUMENTS:\n"
              "    - indices: The indices of the keys\n\n");
 
     python::class_<KeyFromPropHolder, boost::shared_ptr<KeyFromPropHolder>,
-      python::bases<KeyHolderBase>>("KeyFromPropHolder", KeyHolderDoc, python::init<>())
-      .def(python::init<const std::string &>())
-      .def("GetPropName", (const std::string & (KeyFromPropHolder::*)() const) &
-	   KeyFromPropHolder::getPropName,
+                   python::bases<KeyHolderBase>>("KeyFromPropHolder",
+                                                 KeyHolderDoc, python::init<>())
+        .def(python::init<const std::string &>())
+        .def("GetPropName",
+             (const std::string &(KeyFromPropHolder::*)() const) &
+                 KeyFromPropHolder::getPropName,
              python::return_value_policy<python::copy_const_reference>(),
-	   "Return the key for the given molecule index");
+             "Return the key for the given molecule index");
 
     python::class_<TautomerPatternHolder,
                    boost::shared_ptr<TautomerPatternHolder>,
@@ -550,14 +556,14 @@ struct substructlibrary_wrapper {
         .def(python::init<boost::shared_ptr<MolHolderBase>,
                           boost::shared_ptr<KeyHolderBase>>())
         .def(python::init<boost::shared_ptr<MolHolderBase>,
-	                  boost::shared_ptr<FPHolderBase>,
-	                  boost::shared_ptr<KeyHolderBase>>())
+                          boost::shared_ptr<FPHolderBase>,
+                          boost::shared_ptr<KeyHolderBase>>())
         .def(python::init<std::string>())
 
         .def("GetMolHolder", &GetMolHolder)
         .def("GetFpHolder", &GetFpHolder)
         .def("GetKeyHolder", &GetKeyHolder)
-        
+
         .def("AddMol", &SubstructLibrary::addMol, (python::arg("mol")),
              "Adds a molecule to the substruct library")
 

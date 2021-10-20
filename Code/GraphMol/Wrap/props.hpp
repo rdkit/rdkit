@@ -95,7 +95,6 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
   return dict;
 }
 
-  
 template <class RDOb, class T>
 T GetProp(RDOb *ob, const char *key) {
   T res;
@@ -105,7 +104,7 @@ T GetProp(RDOb *ob, const char *key) {
       throw python::error_already_set();
     }
     return res;
-  } catch (const std::exception&e ) {
+  } catch (const std::exception &e) {
     throw ValueErrorException(std::string("key `") + key +
                               "` exists but does not result in " +
                               GetTypeName<T>() + " reason: " + e.what());
