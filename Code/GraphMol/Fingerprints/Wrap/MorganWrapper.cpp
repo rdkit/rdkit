@@ -83,7 +83,7 @@ void exportMorgan() {
        python::arg("countBounds") = python::object(),
        python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object(),
-       python::arg("bondInvariantsGenerator") = python::object(),
+       python::arg("bondInvariantsGenerator") = python::object()),
       "Get a morgan fingerprint generator\n\n"
       "  ARGUMENTS:\n"
       "    - radius:  the number of iterations to grow the fingerprint\n"

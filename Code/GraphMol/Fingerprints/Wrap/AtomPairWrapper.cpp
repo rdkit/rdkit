@@ -55,7 +55,7 @@ void exportAtompair() {
        python::arg("countSimulation") = true,
        python::arg("countBounds") = python::object(),
        python::arg("fpSize") = 2048,
-       python::arg("atomInvariantsGenerator") = python::object(),
+       python::arg("atomInvariantsGenerator") = python::object()),
       "Get an atom pair fingerprint generator\n\n"
       "  ARGUMENTS:\n"
       "    - minDistance: minimum distance between atoms to be considered in a "
