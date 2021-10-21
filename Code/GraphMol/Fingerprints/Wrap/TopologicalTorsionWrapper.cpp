@@ -60,7 +60,7 @@ void exportTopologicalTorsion() {
       "atom invariants generator and the fingerprint arguments\n"
       "    - torsionAtomCount: the number of atoms to include in the "
       "\"torsions\"\n"
-      "    - useCountSimulation:  if set, use count simulation while  "
+      "    - countSimulation:  if set, use count simulation while  "
       "generating the fingerprint\n"
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "
