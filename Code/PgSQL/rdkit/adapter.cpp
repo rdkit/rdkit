@@ -2082,20 +2082,18 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
 
   char *str = smiles;
   char *s = str;
-  int len, nmols = 0;
+  char *s_end = str + strlen(str);
+  int len = 0;
   std::vector<RDKit::ROMOL_SPTR> molecules;
   while (*s && *s <= ' ') {
     s++;
   }
-  while (*s > ' ') {
+  while (s < s_end && *s > ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;
     }
     s[len] = '\0';
-    if (0 == strlen(s)) {
-      continue;
-    }
     ROMol *molptr = nullptr;
     try {
       molptr = RDKit::SmilesToMol(s);
