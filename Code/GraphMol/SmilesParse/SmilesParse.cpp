@@ -376,6 +376,7 @@ void handleCXPartAndName(RWMol *res, const T &params, const std::string &cxPart,
       res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
     } else if (params.strictCXSMILES && !params.parseName &&
                pos != cxPart.cend()) {
+      delete res;
       throw RDKit::SmilesParseException(
           "CXSMILES extension does not start with | and parseName=false");
     }
