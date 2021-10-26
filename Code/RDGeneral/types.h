@@ -190,6 +190,9 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string
 
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _QueryAtomGenericLabel;  // string
+
 // Reaction Information (Reactions.cpp)
 RDKIT_RDGENERAL_EXPORT extern const std::string _QueryFormalCharge;  //  int
 RDKIT_RDGENERAL_EXPORT extern const std::string _QueryHCount;        // int

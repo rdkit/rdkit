@@ -39,6 +39,8 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
                                            //!< match each other
   bool useQueryQueryMatches = false;  //!< Consider query-query matches, not
                                       //!< just simple matches
+  bool useGenericMatchers = false;    //!< Looks for generic atoms in the query
+                                      //!< and uses them as part of the matching
   bool recursionPossible = true;      //!< Allow recursive queries
   bool uniquify = true;            //!< uniquify (by atom index) match results
   unsigned int maxMatches = 1000;  //!< maximum number of matches to return
