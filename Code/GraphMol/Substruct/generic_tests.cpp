@@ -1,0 +1,182 @@
+//
+//  Copyright (C) 2021 Greg Landrum
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+// Tests of handling generics in substructure searching
+//
+
+#include "catch.hpp"
+
+#include <tuple>
+#include <utility>
+
+#include <GraphMol/RDKitBase.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/Generics.h>
+
+using namespace RDKit;
+
+class _IsSubstructOf : public Catch::MatcherBase<const ROMol &> {
+  ROMol const *m_mol;
+  SubstructMatchParameters m_ps;
+  unsigned m_count;
+
+ public:
+  _IsSubstructOf(const ROMol &m, unsigned count, SubstructMatchParameters ps)
+      : m_mol(&m), m_ps(std::move(ps)), m_count(count) {}
+
+  bool match(const ROMol &query) const override {
+    return SubstructMatch(*m_mol, query, m_ps).size() == m_count;
+  }
+
+  std::string describe() const override {
+    std::ostringstream ss;
+    ss << "does not have expected number of matches to "
+       << MolToCXSmiles(*m_mol);
+    return ss.str();
+  }
+};
+
+static _IsSubstructOf IsSubstructOf(const ROMol &m, unsigned count,
+                                    const SubstructMatchParameters &ps) {
+  return _IsSubstructOf(m, count, ps);
+}
+
+TEST_CASE("edge cases", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C* |$;Foo_p$|"_smarts;
+    REQUIRE(query);
+    query->getAtomWithIdx(2)->setProp(common_properties::_QueryAtomGenericLabel,
+                                      "Foo");
+    std::vector<std::pair<std::string, unsigned>> tests = {
+        {"O=CCC", 1}, {"O=CC=C", 1}, {"O=C", 0}};
+    SubstructMatchParameters ps;
+    ps.useGenericMatchers = true;
+    for (const auto &pr : tests) {
+      SmilesParserParams smilesParms;
+      smilesParms.removeHs = false;
+      std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+      REQUIRE(mol);
+      CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+    }
+  }
+}
+
+TEST_CASE("alkyl", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C* |$;Alkyl_p$|"_smarts;
+    REQUIRE(query);
+    query->getAtomWithIdx(2)->setProp(common_properties::_QueryAtomGenericLabel,
+                                      "Alkyl");
+    std::vector<std::pair<std::string, unsigned>> tests = {
+        {"O=CCC", 1},  {"O=CC=C", 0},        {"O=CCC=C", 0},
+        {"O=CCO", 0},  {"O=CC", 1},          {"O=CC[H]", 1},
+        {"O=C[H]", 0}, {"O=CC.CC(C=O)C", 2}, {"O=CCC1CC1", 0}};
+    SubstructMatchParameters ps;
+    ps.useGenericMatchers = true;
+    for (const auto &pr : tests) {
+      SmilesParserParams smilesParms;
+      smilesParms.removeHs = false;
+      std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+      REQUIRE(mol);
+      CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+    }
+  }
+}
+TEST_CASE("alkenyl", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C* |$;Alkenyl_p$|"_smarts;
+    REQUIRE(query);
+    query->getAtomWithIdx(2)->setProp(common_properties::_QueryAtomGenericLabel,
+                                      "Alkenyl");
+    std::vector<std::pair<std::string, unsigned>> tests = {
+        {"O=CCC", 0},  {"O=CC=C", 1},    {"O=CCC=C", 1},    {"O=CCC#C", 0},
+        {"O=CC=N", 0}, {"O=CC=C[H]", 1}, {"O=CCC1CC=C1", 0}};
+    SubstructMatchParameters ps;
+    ps.useGenericMatchers = true;
+    for (const auto &pr : tests) {
+      SmilesParserParams smilesParms;
+      smilesParms.removeHs = false;
+      std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+      REQUIRE(mol);
+      CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+    }
+  }
+}
+TEST_CASE("alkynyl", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C* |$;Alkynyl_p$|"_smarts;
+    REQUIRE(query);
+    query->getAtomWithIdx(2)->setProp(common_properties::_QueryAtomGenericLabel,
+                                      "Alkynyl");
+    std::vector<std::pair<std::string, unsigned>> tests = {
+        {"O=CCC", 0},  {"O=CC#C", 1},    {"O=CCC#C", 1},    {"O=CCC=C", 0},
+        {"O=CC#N", 0}, {"O=CC#C[H]", 1}, {"O=CCC1CC#C1", 0}};
+    SubstructMatchParameters ps;
+    ps.useGenericMatchers = true;
+    for (const auto &pr : tests) {
+      SmilesParserParams smilesParms;
+      smilesParms.removeHs = false;
+      std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+      REQUIRE(mol);
+      CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+    }
+  }
+}
+
+TEST_CASE("cycloalkyl", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C* |$;Cycloalkyl_p$|"_smarts;
+    REQUIRE(query);
+    query->getAtomWithIdx(2)->setProp(common_properties::_QueryAtomGenericLabel,
+                                      "Cycloalkyl");
+    std::vector<std::pair<std::string, unsigned>> tests = {
+        {"O=CCC", 0},           {"O=CC1CC1", 1},
+        {"O=CC1C(O)C1", 1},     {"O=CCC1CC1", 0},
+        {"O=CC1C=C1", 0},       {"O=CC1OC1", 0},
+        {"O=CC1CC(=O)C1", 1},   {"O=CC1CC2CCC1CC2", 1},
+        {"O=CC1CC2CCC1NC2", 0}, {"O=CC1CCCC2CC=CCC12", 0}};
+    SubstructMatchParameters ps;
+    ps.useGenericMatchers = true;
+    for (const auto &pr : tests) {
+      SmilesParserParams smilesParms;
+      smilesParms.removeHs = false;
+      std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+      REQUIRE(mol);
+      std::cerr << pr.first << std::endl;
+      CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+    }
+  }
+}
+TEST_CASE("cycloalkenyl", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C* |$;Cycloalkenyl_p$|"_smarts;
+    REQUIRE(query);
+    query->getAtomWithIdx(2)->setProp(common_properties::_QueryAtomGenericLabel,
+                                      "Cycloalkenyl");
+    std::vector<std::pair<std::string, unsigned>> tests = {
+        {"O=CCC", 0},
+        {"O=Cc1ccccc1", 1},
+        {"O=CC1CC=CCC1", 1},
+        {"O=CC1CC2CCC1CC2", 0},
+        {"O=CC1CC2CCC1C=C2", 0},  // <- one of the SSSR rings doesn't match
+        {"O=CC1CC2C=CC1NC2", 0},
+        {"O=CC1CCCC2=C1CCCC2", 1}};
+    SubstructMatchParameters ps;
+    ps.useGenericMatchers = true;
+    for (const auto &pr : tests) {
+      SmilesParserParams smilesParms;
+      smilesParms.removeHs = false;
+      std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+      REQUIRE(mol);
+      CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+    }
+  }
+}
