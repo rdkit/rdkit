@@ -119,6 +119,39 @@ bool AlkynylAtomMatcher(const ROMol &mol, const Atom &atom,
   return UnsatAlkXAtomMatcher(mol, atom, ignore, Bond::BondType::TRIPLE);
 }
 
+namespace {
+bool checkAtomRing(const ROMol &mol, const Atom &atom,
+                   const boost::dynamic_bitset<> &ignore,
+                   const std::vector<int> &ring,
+                   std::function<bool(const Atom &)> matcher,
+                   std::function<bool(const Atom &)> atLeastOne) {
+  bool atLeast = atLeastOne == nullptr;
+  for (auto aidx : ring) {
+    if (aidx != static_cast<int>(atom.getIdx()) &&
+        (ignore[aidx] || (matcher && !matcher(*mol.getAtomWithIdx(aidx))))) {
+      return false;
+    }
+    if (!atLeast && atLeastOne(*mol.getAtomWithIdx(aidx))) {
+      atLeast = true;
+    }
+  }
+  return atLeast;
+}
+bool checkBondRing(const ROMol &mol, const std::vector<int> &bring,
+                   std::function<bool(const Bond &)> matcher,
+                   std::function<bool(const Bond &)> atLeastOne) {
+  bool atLeast = atLeastOne == nullptr;
+  for (auto bidx : bring) {
+    if (matcher && !matcher(*mol.getBondWithIdx(bidx))) {
+      return false;
+    }
+    if (!atLeast && atLeastOne(*mol.getBondWithIdx(bidx))) {
+      atLeast = true;
+    }
+  }
+  return atLeast;
+}
+
 bool FusedRingMatch(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore,
     std::function<bool(const Atom &)> atomMatcher = nullptr,
@@ -143,34 +176,15 @@ bool FusedRingMatch(
   for (auto i = 0u; i < mol.getRingInfo()->numRings(); ++i) {
     const auto &ring = mol.getRingInfo()->atomRings()[i];
     if (std::find(ring.begin(), ring.end(), atom.getIdx()) != ring.end()) {
-      bool atomAtLeast = atLeastOneAtom == nullptr;
-      for (auto aidx : ring) {
-        if (aidx != static_cast<int>(atom.getIdx()) &&
-            (ignore[aidx] ||
-             (atomMatcher && !atomMatcher(*mol.getAtomWithIdx(aidx))))) {
-          return false;
-        }
-        if (!atomAtLeast && atLeastOneAtom(*mol.getAtomWithIdx(aidx))) {
-          atomAtLeast = true;
-        }
+      if (!checkAtomRing(mol, atom, ignore, ring, atomMatcher,
+                         atLeastOneAtom)) {
+        return false;
       }
-      if (!atomAtLeast) {
+      if (!checkBondRing(mol, mol.getRingInfo()->bondRings()[i], bondMatcher,
+                         atLeastOneBond)) {
         return false;
       }
 
-      bool bondAtLeast = atLeastOneBond == nullptr;
-      for (auto bidx : mol.getRingInfo()->bondRings()[i]) {
-        const auto bond = mol.getBondWithIdx(bidx);
-        if (bondMatcher && !bondMatcher(*bond)) {
-          return false;
-        }
-        if (!bondAtLeast && atLeastOneBond(*bond)) {
-          bondAtLeast = true;
-        }
-      }
-      if (!bondAtLeast) {
-        return false;
-      }
       ringAtoms.insert(ring.begin(), ring.end());
       break;
     }
@@ -191,32 +205,12 @@ bool FusedRingMatch(
       // we don't overlap by at least two atoms
       continue;
     }
-    // check the atoms
-    bool atomAtLeast = atLeastOneAtom == nullptr;
-    for (auto aidx : ring) {
-      if ((aidx != static_cast<int>(atom.getIdx()) && ignore[aidx]) ||
-          (atomMatcher && !atomMatcher(*mol.getAtomWithIdx(aidx)))) {
-        return false;
-      }
-      if (!atomAtLeast && atLeastOneAtom(*mol.getAtomWithIdx(aidx))) {
-        atomAtLeast = true;
-      }
-    }
-    if (!atomAtLeast) {
+    if (!checkAtomRing(mol, atom, ignore, ring, atomMatcher, atLeastOneAtom)) {
       return false;
     }
-    // check the bonds:
-    bool bondAtLeast = atLeastOneBond == nullptr;
-    for (auto bidx : mol.getRingInfo()->bondRings()[i]) {
-      const auto bond = mol.getBondWithIdx(bidx);
-      if (bondMatcher && !bondMatcher(*bond)) {
-        return false;
-      }
-      if (!bondAtLeast && atLeastOneBond(*bond)) {
-        bondAtLeast = true;
-      }
-    }
-    if (!bondAtLeast) {
+
+    if (!checkBondRing(mol, mol.getRingInfo()->bondRings()[i], bondMatcher,
+                       atLeastOneBond)) {
       return false;
     }
     ringAtoms.insert(diff.begin(), dit);
@@ -224,6 +218,7 @@ bool FusedRingMatch(
 
   return true;
 }
+}  // namespace
 
 bool CycloalkylAtomMatcher(const ROMol &mol, const Atom &atom,
                            boost::dynamic_bitset<> ignore) {
@@ -247,48 +242,6 @@ bool CycloalkenylAtomMatcher(const ROMol &mol, const Atom &atom,
   };
   return FusedRingMatch(mol, atom, ignore, atomMatcher, nullptr, nullptr,
                         atLeastOneBond);
-  // if (!atomMatcher(atom)) {
-  //   return false;
-  // }
-  // if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
-  //   MolOps::findSSSR(mol);
-  // }
-  // if (!mol.getRingInfo()->numAtomRings(atom.getIdx())) {
-  //   return false;
-  // }
-  // bool seenDoubleOrAromaticBond = false;
-  // for (const auto &ring : mol.getRingInfo()->atomRings()) {
-  //   if (std::find(ring.begin(), ring.end(), atom.getIdx()) != ring.end()) {
-  //     for (auto aidx : ring) {
-  //       if (aidx != static_cast<int>(atom.getIdx()) &&
-  //           (ignore[aidx] || !atomMatcher(*mol.getAtomWithIdx(aidx)))) {
-  //         return false;
-  //       }
-  //     }
-  //     if (!seenDoubleOrAromaticBond) {
-  //       for (unsigned int i = 1; i < ring.size(); ++i) {
-  //         auto bnd = mol.getBondBetweenAtoms(ring[i - 1], ring[i]);
-  //         ASSERT_INVARIANT(bnd, "expected bond not found");
-  //         if (bnd->getIsAromatic() ||
-  //             bnd->getBondType() == Bond::BondType::DOUBLE ||
-  //             bnd->getBondType() == Bond::BondType::AROMATIC) {
-  //           seenDoubleOrAromaticBond = true;
-  //           break;
-  //         }
-  //       }
-  //       if (!seenDoubleOrAromaticBond) {
-  //         auto bnd = mol.getBondBetweenAtoms(ring[ring.size() - 1], ring[0]);
-  //         ASSERT_INVARIANT(bnd, "expected bond not found");
-  //         if (bnd->getIsAromatic() ||
-  //             bnd->getBondType() == Bond::BondType::DOUBLE ||
-  //             bnd->getBondType() == Bond::BondType::AROMATIC) {
-  //           seenDoubleOrAromaticBond = true;
-  //         }
-  //       }
-  //     }
-  //   }
-  // }
-  // return seenDoubleOrAromaticBond;
 }
 
 }  // namespace Generics

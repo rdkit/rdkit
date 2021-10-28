@@ -150,7 +150,6 @@ TEST_CASE("cycloalkyl", "[substructure][generics]") {
       smilesParms.removeHs = false;
       std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
       REQUIRE(mol);
-      std::cerr << pr.first << std::endl;
       CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
     }
   }
@@ -168,7 +167,9 @@ TEST_CASE("cycloalkenyl", "[substructure][generics]") {
         {"O=CC1CC2CCC1CC2", 0},
         {"O=CC1CC2CCC1C=C2", 0},  // <- one of the SSSR rings doesn't match
         {"O=CC1CC2C=CC1NC2", 0},
-        {"O=CC1CCCC2=C1CCCC2", 1}};
+        {"O=CC1CCCC2=C1CCCC2", 1},
+        {"O=CC1CC=CC2C1C=CC1CCC=CC21", 1},
+        {"O=CC1CC=CC2C1C=CC1CNC=CC21", 0}};
     SubstructMatchParameters ps;
     ps.useGenericMatchers = true;
     for (const auto &pr : tests) {
