@@ -71,8 +71,8 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool AlkynylAtomMatcher(
 //! Matches cycloalkyl side chains
 /*!
 
-  Note: this is a Reaxys query type and is directly equivalent to alkyl, except
-  the immediate atom needs to be in a ring.
+  Note: this is Reaxys query type CAL and is directly equivalent to alkyl,
+  except the immediate atom needs to be in a ring.
 
 
   Conditions:
@@ -85,13 +85,13 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool AlkynylAtomMatcher(
 
 
 */
-RDKIT_SUBSTRUCTMATCH_EXPORT bool CycloalkylAtomMatcher(
+RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbocycloalkylAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 //! Matches cycloalkenyl side chains
 /*!
 
-  Note: this is a Reaxys query type and matches carbocycles which have at least
-  one double or aromatic bond.
+  Note: this is Reaxys query type CEL and matches carbocycles which have at
+  least one double or aromatic bond.
 
   Conditions:
     - atom is in at least one ring composed entirely of carbon and with at least
@@ -102,7 +102,22 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool CycloalkylAtomMatcher(
 
 
 */
-RDKIT_SUBSTRUCTMATCH_EXPORT bool CycloalkenylAtomMatcher(
+RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbocycloalkenylAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+
+//! Matches aryl side chains
+/*!
+
+  Note: this is Reaxys query type ARY and matches carbocycles which are aromatic
+
+  Conditions:
+    - atom is in at least one aromatic ring composed entirely of carbon
+    - atom is not in any rings not compatible with the above conditions
+    - additional fused rings in the system must obey the same rules
+
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool CarboarylAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
 const static std::map<
@@ -112,8 +127,12 @@ const static std::map<
         {"Alkyl", AlkylAtomMatcher},
         {"Alkenyl", AlkenylAtomMatcher},
         {"Alkynyl", AlkynylAtomMatcher},
-        {"Cycloalkyl", CycloalkylAtomMatcher},
-        {"Cycloalkenyl", CycloalkenylAtomMatcher},
+        {"Carbocycloalkyl", CarbocycloalkylAtomMatcher},
+        {"CAL", CarbocycloalkylAtomMatcher},
+        {"Carbocycloalkenyl", CarbocycloalkenylAtomMatcher},
+        {"CEL", CarbocycloalkenylAtomMatcher},
+        {"Carboaryl", CarboarylAtomMatcher},
+        {"ARY", CarboarylAtomMatcher},
 };
 }  // namespace Generics
 //! returns false if any of the molecule's generic atoms are not satisfied in

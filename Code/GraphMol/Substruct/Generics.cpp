@@ -220,8 +220,8 @@ bool FusedRingMatch(
 }
 }  // namespace
 
-bool CycloalkylAtomMatcher(const ROMol &mol, const Atom &atom,
-                           boost::dynamic_bitset<> ignore) {
+bool CarbocycloalkylAtomMatcher(const ROMol &mol, const Atom &atom,
+                                boost::dynamic_bitset<> ignore) {
   auto atomMatcher = [](const Atom &at) -> bool {
     return !at.getIsAromatic() && at.getAtomicNum() == 6;
   };
@@ -231,8 +231,8 @@ bool CycloalkylAtomMatcher(const ROMol &mol, const Atom &atom,
   return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher);
 }
 
-bool CycloalkenylAtomMatcher(const ROMol &mol, const Atom &atom,
-                             boost::dynamic_bitset<> ignore) {
+bool CarbocycloalkenylAtomMatcher(const ROMol &mol, const Atom &atom,
+                                  boost::dynamic_bitset<> ignore) {
   auto atomMatcher = [](const Atom &at) -> bool {
     return at.getAtomicNum() == 6;
   };
@@ -242,6 +242,17 @@ bool CycloalkenylAtomMatcher(const ROMol &mol, const Atom &atom,
   };
   return FusedRingMatch(mol, atom, ignore, atomMatcher, nullptr, nullptr,
                         atLeastOneBond);
+}
+
+bool CarboarylAtomMatcher(const ROMol &mol, const Atom &atom,
+                          boost::dynamic_bitset<> ignore) {
+  auto atomMatcher = [](const Atom &at) -> bool {
+    return at.getIsAromatic() && at.getAtomicNum() == 6;
+  };
+  auto bondMatcher = [](const Bond &bnd) -> bool {
+    return bnd.getIsAromatic() || bnd.getBondType() == Bond::BondType::AROMATIC;
+  };
+  return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher);
 }
 
 }  // namespace Generics
