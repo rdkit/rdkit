@@ -155,7 +155,20 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool AcyclicAtomMatcher(
     - no atom in the sidechain is in a ring
 
 */
-RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbacyclicAtomMatcher(
+RDKIT_SUBSTRUCTMATCH_EXPORT bool CarboacyclicAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+//! Matches acyclic side chains with at least one heteroatom
+/*!
+
+  Note: this is Reaxys query type AHC and matches sidechains with no cycles and
+  at least one heteroatom
+
+  Conditions:
+    - at least one non-carbon, non-hydrogen atom is in the sidechain
+    - no atom in the sidechain is in a ring
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool HeteroacyclicAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 const static std::map<
     std::string,
@@ -177,8 +190,10 @@ const static std::map<
         {"CYC", CyclicAtomMatcher},
         {"Acyclic", AcyclicAtomMatcher},
         {"ACY", AcyclicAtomMatcher},
-        {"Carbacyclic", CarbacyclicAtomMatcher},
-        {"ABC", CarbacyclicAtomMatcher},
+        {"Carboacyclic", CarboacyclicAtomMatcher},
+        {"ABC", CarboacyclicAtomMatcher},
+        {"Heteroacyclic", HeteroacyclicAtomMatcher},
+        {"AHC", HeteroacyclicAtomMatcher},
 };
 }  // namespace Generics
 //! returns false if any of the molecule's generic atoms are not satisfied in

@@ -94,8 +94,8 @@ bool AcyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                        nullptr);
 }
 
-bool CarbacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
-                            boost::dynamic_bitset<> ignore) {
+bool CarboacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
+                             boost::dynamic_bitset<> ignore) {
   if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
     MolOps::fastFindRings(mol);
   }
@@ -104,6 +104,21 @@ bool CarbacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
            at.getOwningMol().getRingInfo()->numAtomRings(at.getIdx()) == 0;
   };
   return AllAtomsMatch(mol, atom, ignore, atomMatcher, nullptr, nullptr,
+                       nullptr);
+}
+
+bool HeteroacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
+                              boost::dynamic_bitset<> ignore) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+  }
+  auto atomMatcher = [](const Atom &at) -> bool {
+    return at.getOwningMol().getRingInfo()->numAtomRings(at.getIdx()) == 0;
+  };
+  auto atLeastOne = [](const Atom &at) -> bool {
+    return at.getAtomicNum() != 6 && at.getAtomicNum() != 1;
+  };
+  return AllAtomsMatch(mol, atom, ignore, atomMatcher, nullptr, atLeastOne,
                        nullptr);
 }
 
