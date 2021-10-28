@@ -82,6 +82,18 @@ bool AlkylAtomMatcher(const ROMol &mol, const Atom &atom,
                        atLeastMatcher, nullptr);
 }
 
+bool AcyclicAtomMatcher(const ROMol &mol, const Atom &atom,
+                        boost::dynamic_bitset<> ignore) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+  }
+  auto atomMatcher = [](const Atom &at) -> bool {
+    return at.getOwningMol().getRingInfo()->numAtomRings(at.getIdx()) == 0;
+  };
+  return AllAtomsMatch(mol, atom, ignore, atomMatcher, nullptr, nullptr,
+                       nullptr);
+}
+
 namespace {
 bool UnsatAlkXAtomMatcher(const ROMol &mol, const Atom &atom,
                           boost::dynamic_bitset<> ignore,
@@ -253,6 +265,17 @@ bool CarboarylAtomMatcher(const ROMol &mol, const Atom &atom,
     return bnd.getIsAromatic() || bnd.getBondType() == Bond::BondType::AROMATIC;
   };
   return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher);
+}
+
+bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,
+                       boost::dynamic_bitset<> ignore) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+  }
+  auto atomMatcher = [](const Atom &at) -> bool {
+    return at.getOwningMol().getRingInfo()->numAtomRings(at.getIdx()) > 0;
+  };
+  return FusedRingMatch(mol, atom, ignore, atomMatcher, nullptr);
 }
 
 }  // namespace Generics

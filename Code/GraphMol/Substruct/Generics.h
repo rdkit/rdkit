@@ -120,19 +120,50 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbocycloalkenylAtomMatcher(
 RDKIT_SUBSTRUCTMATCH_EXPORT bool CarboarylAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
+//! Matches cyclic side chains
+/*!
+
+  Note: this is Reaxys query type CYC and matches cycles
+
+  Conditions:
+    - atom is in at least one ring
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool CyclicAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+
+//! Matches acyclic side chains
+/*!
+
+  Note: this is Reaxys query type ACY and matches sidechains with no cycles
+
+  Conditions:
+    - no atom in the sidechain is in a ring
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool AcyclicAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+
 const static std::map<
     std::string,
     std::function<bool(const ROMol &, const Atom &, boost::dynamic_bitset<>)>>
     genericMatchers = {
         {"Alkyl", AlkylAtomMatcher},
+        {"ALK", AlkylAtomMatcher},
         {"Alkenyl", AlkenylAtomMatcher},
+        {"AEL", AlkenylAtomMatcher},
         {"Alkynyl", AlkynylAtomMatcher},
+        {"AYL", AlkynylAtomMatcher},
         {"Carbocycloalkyl", CarbocycloalkylAtomMatcher},
         {"CAL", CarbocycloalkylAtomMatcher},
         {"Carbocycloalkenyl", CarbocycloalkenylAtomMatcher},
         {"CEL", CarbocycloalkenylAtomMatcher},
         {"Carboaryl", CarboarylAtomMatcher},
         {"ARY", CarboarylAtomMatcher},
+        {"Cyclic", CyclicAtomMatcher},
+        {"CYC", CyclicAtomMatcher},
+        {"Acyclic", AcyclicAtomMatcher},
+        {"ACY", AcyclicAtomMatcher},
 };
 }  // namespace Generics
 //! returns false if any of the molecule's generic atoms are not satisfied in
