@@ -144,6 +144,19 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool CyclicAtomMatcher(
 RDKIT_SUBSTRUCTMATCH_EXPORT bool AcyclicAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
+//! Matches all-carbon acyclic side chains
+/*!
+
+  Note: this is Reaxys query type ABC and matches all-carbon sidechains with no
+  cycles
+
+  Conditions:
+    - all atoms in the sidechain are carbon
+    - no atom in the sidechain is in a ring
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbacyclicAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 const static std::map<
     std::string,
     std::function<bool(const ROMol &, const Atom &, boost::dynamic_bitset<>)>>
@@ -164,6 +177,8 @@ const static std::map<
         {"CYC", CyclicAtomMatcher},
         {"Acyclic", AcyclicAtomMatcher},
         {"ACY", AcyclicAtomMatcher},
+        {"Carbacyclic", CarbacyclicAtomMatcher},
+        {"ABC", CarbacyclicAtomMatcher},
 };
 }  // namespace Generics
 //! returns false if any of the molecule's generic atoms are not satisfied in

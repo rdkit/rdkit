@@ -277,3 +277,31 @@ TEST_CASE("acyclic", "[substructure][generics]") {
     }
   }
 }
+
+TEST_CASE("carbacyclic", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C*"_smarts;
+    REQUIRE(query);
+    std::vector<std::string> labels = {"Carbacyclic", "ABC"};
+    for (auto label : labels) {
+      query->getAtomWithIdx(2)->setProp(
+          common_properties::_QueryAtomGenericLabel, label);
+      std::vector<std::pair<std::string, unsigned>> tests = {
+          {"O=CC1CC1", 0},
+          {"O=CCCCC1CCC1", 0},
+          {"O=CCCCC", 1},
+          {"O=CCCCO", 0},
+
+      };
+      SubstructMatchParameters ps;
+      ps.useGenericMatchers = true;
+      for (const auto &pr : tests) {
+        SmilesParserParams smilesParms;
+        smilesParms.removeHs = false;
+        std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+        REQUIRE(mol);
+        CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+      }
+    }
+  }
+}
