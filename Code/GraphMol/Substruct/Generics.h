@@ -68,6 +68,20 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool AlkenylAtomMatcher(
 RDKIT_SUBSTRUCTMATCH_EXPORT bool AlkynylAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
+//! Matches carbocyclic side chains
+/*!
+
+  Note: this is Reaxys query type CBC and matches carbocycles
+
+  Conditions:
+    - atom is in at least one ring composed entirely of carbon
+    - atom is not in any rings not compatible with the above conditions
+    - additional fused rings in the system must obey the same rules
+
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbocyclicAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 //! Matches cycloalkyl side chains
 /*!
 
@@ -157,6 +171,20 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool AcyclicAtomMatcher(
 */
 RDKIT_SUBSTRUCTMATCH_EXPORT bool CarboacyclicAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+//! Matches all-carbon acyclic side chains
+/*!
+
+  Note: this is Reaxys query type ABC and matches all-carbon sidechains with no
+  cycles
+
+  Conditions:
+    - all atoms in the sidechain are carbon
+    - no atom in the sidechain is in a ring
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool CarboacyclicAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+
 //! Matches acyclic side chains with at least one heteroatom
 /*!
 
@@ -170,6 +198,21 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool CarboacyclicAtomMatcher(
 */
 RDKIT_SUBSTRUCTMATCH_EXPORT bool HeteroacyclicAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+//! Matches acyclic alkoxy side chains
+/*!
+
+  Note: this is Reaxys query type AOX and matches alkoxy sidechains
+
+  Conditions:
+    - first atom is an O
+    - all other atoms are C
+    - all single bonds
+    - no atom in the sidechain is in a ring
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool AlkoxyacyclicAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+
 const static std::map<
     std::string,
     std::function<bool(const ROMol &, const Atom &, boost::dynamic_bitset<>)>>
@@ -180,6 +223,8 @@ const static std::map<
         {"AEL", AlkenylAtomMatcher},
         {"Alkynyl", AlkynylAtomMatcher},
         {"AYL", AlkynylAtomMatcher},
+        {"Carbocyclic", CarbocyclicAtomMatcher},
+        {"CBC", CarbocyclicAtomMatcher},
         {"Carbocycloalkyl", CarbocycloalkylAtomMatcher},
         {"CAL", CarbocycloalkylAtomMatcher},
         {"Carbocycloalkenyl", CarbocycloalkenylAtomMatcher},
@@ -194,6 +239,8 @@ const static std::map<
         {"ABC", CarboacyclicAtomMatcher},
         {"Heteroacyclic", HeteroacyclicAtomMatcher},
         {"AHC", HeteroacyclicAtomMatcher},
+        {"Alkoxy", AlkoxyacyclicAtomMatcher},
+        {"AOX", AlkoxyacyclicAtomMatcher},
 };
 }  // namespace Generics
 //! returns false if any of the molecule's generic atoms are not satisfied in

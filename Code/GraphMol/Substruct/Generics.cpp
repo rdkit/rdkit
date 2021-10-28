@@ -122,6 +122,39 @@ bool HeteroacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                        nullptr);
 }
 
+bool AlkoxyacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
+                              boost::dynamic_bitset<> ignore) {
+  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(mol);
+  }
+  if (atom.getDegree() != 2 || atom.getAtomicNum() != 8) {
+    return false;
+  }
+  const Atom *nnbr = nullptr;
+  for (const auto *nbr : mol.atomNeighbors(&atom)) {
+    if (!ignore[nbr->getIdx()]) {
+      nnbr = nbr;
+      break;
+    }
+  }
+  if (nnbr == nullptr) {
+    return false;
+  }
+  auto atomMatcher = [](const Atom &at) -> bool {
+    return !at.getIsAromatic() &&
+           (at.getAtomicNum() == 6 || at.getAtomicNum() == 1);
+  };
+  auto atLeastMatcher = [](const Atom &at) -> bool {
+    return at.getAtomicNum() == 6;
+  };
+  auto bondMatcher = [](const Bond &bnd) -> bool {
+    return bnd.getBondType() == Bond::BondType::SINGLE &&
+           !bnd.getIsAromatic() && !queryIsBondInRing(&bnd);
+  };
+  return AllAtomsMatch(mol, *nnbr, ignore, atomMatcher, bondMatcher,
+                       atLeastMatcher, nullptr);
+}
+
 namespace {
 bool UnsatAlkXAtomMatcher(const ROMol &mol, const Atom &atom,
                           boost::dynamic_bitset<> ignore,
@@ -293,6 +326,14 @@ bool CarboarylAtomMatcher(const ROMol &mol, const Atom &atom,
     return bnd.getIsAromatic() || bnd.getBondType() == Bond::BondType::AROMATIC;
   };
   return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher);
+}
+
+bool CarbocyclicAtomMatcher(const ROMol &mol, const Atom &atom,
+                            boost::dynamic_bitset<> ignore) {
+  auto atomMatcher = [](const Atom &at) -> bool {
+    return at.getAtomicNum() == 6;
+  };
+  return FusedRingMatch(mol, atom, ignore, atomMatcher, nullptr);
 }
 
 bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,
