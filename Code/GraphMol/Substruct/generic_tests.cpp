@@ -380,3 +380,55 @@ TEST_CASE("heteroacyclic", "[substructure][generics]") {
     }
   }
 }
+
+TEST_CASE("heterocyclic", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C*"_smarts;
+    REQUIRE(query);
+    std::vector<std::string> labels = {"Heterocyclic", "CHC"};
+    for (auto label : labels) {
+      query->getAtomWithIdx(2)->setProp(
+          common_properties::_QueryAtomGenericLabel, label);
+      std::vector<std::pair<std::string, unsigned>> tests = {
+          {"O=CC1OC1", 1},        {"O=CC1CC1", 0},    {"O=CCC1COC1", 0},
+          {"O=CC1CCC2C1CNC2", 1}, {"O=Cc1ccccc1", 0}, {"O=Cc1cccnc1", 1},
+
+      };
+      SubstructMatchParameters ps;
+      ps.useGenericMatchers = true;
+      for (const auto &pr : tests) {
+        SmilesParserParams smilesParms;
+        smilesParms.removeHs = false;
+        std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+        REQUIRE(mol);
+        CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+      }
+    }
+  }
+}
+
+TEST_CASE("heteroaryl", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C*"_smarts;
+    REQUIRE(query);
+    std::vector<std::string> labels = {"Heteroaryl", "HAR"};
+    for (auto label : labels) {
+      query->getAtomWithIdx(2)->setProp(
+          common_properties::_QueryAtomGenericLabel, label);
+      std::vector<std::pair<std::string, unsigned>> tests = {
+          {"O=CC1OC1", 0},          {"O=CCC1COC1", 0},  {"O=CC1CCC2C1CNC2", 0},
+          {"O=Cc1cccc2c1ccnc2", 0}, {"O=Cc1ccccc1", 0}, {"O=Cc1cccnc1", 1},
+
+      };
+      SubstructMatchParameters ps;
+      ps.useGenericMatchers = true;
+      for (const auto &pr : tests) {
+        SmilesParserParams smilesParms;
+        smilesParms.removeHs = false;
+        std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+        REQUIRE(mol);
+        CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+      }
+    }
+  }
+}

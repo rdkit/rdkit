@@ -229,8 +229,9 @@ bool FusedRingMatch(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore,
     std::function<bool(const Atom &)> atomMatcher = nullptr,
     std::function<bool(const Bond &)> bondMatcher = nullptr,
-    std::function<bool(const Atom &)> atLeastOneAtom = nullptr,
-    std::function<bool(const Bond &)> atLeastOneBond = nullptr) {
+    std::function<bool(const Atom &)> atLeastOneAtomPerRing = nullptr,
+    std::function<bool(const Bond &)> atLeastOneBondPerRing = nullptr,
+    std::function<bool(const Atom &)> atLeastOneAtom = nullptr) {
   PRECONDITION(&atom.getOwningMol() == &mol, "atom not owned by molecule");
   if (atomMatcher && !atomMatcher(atom)) {
     return false;
@@ -250,11 +251,11 @@ bool FusedRingMatch(
     const auto &ring = mol.getRingInfo()->atomRings()[i];
     if (std::find(ring.begin(), ring.end(), atom.getIdx()) != ring.end()) {
       if (!checkAtomRing(mol, atom, ignore, ring, atomMatcher,
-                         atLeastOneAtom)) {
+                         atLeastOneAtomPerRing)) {
         return false;
       }
       if (!checkBondRing(mol, mol.getRingInfo()->bondRings()[i], bondMatcher,
-                         atLeastOneBond)) {
+                         atLeastOneBondPerRing)) {
         return false;
       }
 
@@ -278,15 +279,23 @@ bool FusedRingMatch(
       // we don't overlap by at least two atoms
       continue;
     }
-    if (!checkAtomRing(mol, atom, ignore, ring, atomMatcher, atLeastOneAtom)) {
+    if (!checkAtomRing(mol, atom, ignore, ring, atomMatcher,
+                       atLeastOneAtomPerRing)) {
       return false;
     }
 
     if (!checkBondRing(mol, mol.getRingInfo()->bondRings()[i], bondMatcher,
-                       atLeastOneBond)) {
+                       atLeastOneBondPerRing)) {
       return false;
     }
     ringAtoms.insert(diff.begin(), dit);
+  }
+
+  if (atLeastOneAtom) {
+    return std::find_if(ringAtoms.begin(), ringAtoms.end(),
+                        [&mol, atLeastOneAtom](auto idx) -> bool {
+                          return atLeastOneAtom(*mol.getAtomWithIdx(idx));
+                        }) != ringAtoms.end();
   }
 
   return true;
@@ -333,7 +342,29 @@ bool CarbocyclicAtomMatcher(const ROMol &mol, const Atom &atom,
   auto atomMatcher = [](const Atom &at) -> bool {
     return at.getAtomicNum() == 6;
   };
-  return FusedRingMatch(mol, atom, ignore, atomMatcher, nullptr);
+  return FusedRingMatch(mol, atom, ignore, atomMatcher);
+}
+
+bool HeterocyclicAtomMatcher(const ROMol &mol, const Atom &atom,
+                             boost::dynamic_bitset<> ignore) {
+  auto atLeastOne = [](const Atom &at) -> bool {
+    return at.getAtomicNum() != 6 && at.getAtomicNum() != 1;
+  };
+  return FusedRingMatch(mol, atom, ignore, nullptr, nullptr, nullptr, nullptr,
+                        atLeastOne);
+}
+
+bool HeteroarylAtomMatcher(const ROMol &mol, const Atom &atom,
+                           boost::dynamic_bitset<> ignore) {
+  auto atomMatcher = [](const Atom &at) -> bool { return at.getIsAromatic(); };
+  auto bondMatcher = [](const Bond &bnd) -> bool {
+    return bnd.getIsAromatic() || bnd.getBondType() == Bond::BondType::AROMATIC;
+  };
+  auto atLeastOne = [](const Atom &at) -> bool {
+    return at.getAtomicNum() != 6 && at.getAtomicNum() != 1;
+  };
+  return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher, nullptr,
+                        nullptr, atLeastOne);
 }
 
 bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,

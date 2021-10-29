@@ -119,6 +119,19 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbocycloalkylAtomMatcher(
 RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbocycloalkenylAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
+//! Matches heterocyclic side chains
+/*!
+
+  Note: this is Reaxys query type CHC and matches heterocycles
+
+  Conditions:
+    - atom is in at least one fused ring with a heteroatom
+
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool HeterocyclicAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+
 //! Matches aryl side chains
 /*!
 
@@ -132,6 +145,19 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool CarbocycloalkenylAtomMatcher(
 
 */
 RDKIT_SUBSTRUCTMATCH_EXPORT bool CarboarylAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+
+//! Matches heteroaryl side chains
+/*!
+
+  Note: this is Reaxys query type HAR and matches aromatic heterocycles
+
+  Conditions:
+    - atom is in at least one fused aromatic sytem with a heteroatom
+
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool HeteroarylAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
 //! Matches cyclic side chains
@@ -241,6 +267,10 @@ const static std::map<
         {"AHC", HeteroacyclicAtomMatcher},
         {"Alkoxy", AlkoxyacyclicAtomMatcher},
         {"AOX", AlkoxyacyclicAtomMatcher},
+        {"Heterocyclic", HeterocyclicAtomMatcher},
+        {"CHC", HeterocyclicAtomMatcher},
+        {"Heteroaryl", HeteroarylAtomMatcher},
+        {"HAR", HeteroarylAtomMatcher},
 };
 }  // namespace Generics
 //! returns false if any of the molecule's generic atoms are not satisfied in
