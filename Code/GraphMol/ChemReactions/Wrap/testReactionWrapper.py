@@ -43,8 +43,6 @@ from rdkit import Geometry
 from rdkit import RDConfig
 from rdkit.Chem.SimpleEnum import Enumerator
 
-import signal
-
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
 
