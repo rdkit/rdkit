@@ -18,12 +18,15 @@ class ROMol;
 namespace SubstructSearch {
 
 namespace Generics {
+
+using AtomMatcherFunc = std::function<bool(const Atom &)>;
+using BondMatcherFunc = std::function<bool(const Bond &)>;
+
 bool AllAtomsMatch(const ROMol &mol, const Atom &atom,
-                   boost::dynamic_bitset<> ignore,
-                   std::function<bool(const Atom &)> matcher,
-                   std::function<bool(const Bond &)> bondMatcher,
-                   std::function<bool(const Atom &)> atLeastOneAtom,
-                   std::function<bool(const Bond &)> atLeastOneBond) {
+                   boost::dynamic_bitset<> ignore, AtomMatcherFunc matcher,
+                   BondMatcherFunc bondMatcher = nullptr,
+                   AtomMatcherFunc atLeastOneAtom = nullptr,
+                   BondMatcherFunc atLeastOneBond = nullptr) {
   PRECONDITION(&atom.getOwningMol() == &mol, "atom not owned by molecule");
   if (matcher && !matcher(atom)) {
     return false;
@@ -79,7 +82,7 @@ bool AlkylAtomMatcher(const ROMol &mol, const Atom &atom,
            !bnd.getIsAromatic() && !queryIsBondInRing(&bnd);
   };
   return AllAtomsMatch(mol, atom, ignore, atomMatcher, bondMatcher,
-                       atLeastMatcher, nullptr);
+                       atLeastMatcher);
 }
 
 bool AcyclicAtomMatcher(const ROMol &mol, const Atom &atom,
@@ -90,8 +93,7 @@ bool AcyclicAtomMatcher(const ROMol &mol, const Atom &atom,
   auto atomMatcher = [](const Atom &at) -> bool {
     return at.getOwningMol().getRingInfo()->numAtomRings(at.getIdx()) == 0;
   };
-  return AllAtomsMatch(mol, atom, ignore, atomMatcher, nullptr, nullptr,
-                       nullptr);
+  return AllAtomsMatch(mol, atom, ignore, atomMatcher);
 }
 
 bool CarboacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
@@ -103,8 +105,7 @@ bool CarboacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
     return at.getAtomicNum() == 6 &&
            at.getOwningMol().getRingInfo()->numAtomRings(at.getIdx()) == 0;
   };
-  return AllAtomsMatch(mol, atom, ignore, atomMatcher, nullptr, nullptr,
-                       nullptr);
+  return AllAtomsMatch(mol, atom, ignore, atomMatcher);
 }
 
 bool HeteroacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
@@ -118,8 +119,9 @@ bool HeteroacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
   auto atLeastOne = [](const Atom &at) -> bool {
     return at.getAtomicNum() != 6 && at.getAtomicNum() != 1;
   };
-  return AllAtomsMatch(mol, atom, ignore, atomMatcher, nullptr, atLeastOne,
-                       nullptr);
+  BondMatcherFunc bondMatcher = nullptr;
+
+  return AllAtomsMatch(mol, atom, ignore, atomMatcher, bondMatcher, atLeastOne);
 }
 
 bool AlkoxyacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
@@ -152,7 +154,7 @@ bool AlkoxyacyclicAtomMatcher(const ROMol &mol, const Atom &atom,
            !bnd.getIsAromatic() && !queryIsBondInRing(&bnd);
   };
   return AllAtomsMatch(mol, *nnbr, ignore, atomMatcher, bondMatcher,
-                       atLeastMatcher, nullptr);
+                       atLeastMatcher);
 }
 
 namespace {
@@ -177,7 +179,8 @@ bool UnsatAlkXAtomMatcher(const ROMol &mol, const Atom &atom,
   auto atLeastMatcher = [extraBondType](const Bond &bnd) -> bool {
     return bnd.getBondType() == extraBondType;
   };
-  return AllAtomsMatch(mol, atom, ignore, atomMatcher, bondMatcher, nullptr,
+  AtomMatcherFunc atomAtLeast = nullptr;
+  return AllAtomsMatch(mol, atom, ignore, atomMatcher, bondMatcher, atomAtLeast,
                        atLeastMatcher);
 }
 }  // namespace
@@ -195,9 +198,8 @@ bool AlkynylAtomMatcher(const ROMol &mol, const Atom &atom,
 namespace {
 bool checkAtomRing(const ROMol &mol, const Atom &atom,
                    const boost::dynamic_bitset<> &ignore,
-                   const std::vector<int> &ring,
-                   std::function<bool(const Atom &)> matcher,
-                   std::function<bool(const Atom &)> atLeastOne) {
+                   const std::vector<int> &ring, AtomMatcherFunc matcher,
+                   AtomMatcherFunc atLeastOne) {
   bool atLeast = atLeastOne == nullptr;
   for (auto aidx : ring) {
     if (aidx != static_cast<int>(atom.getIdx()) &&
@@ -211,8 +213,7 @@ bool checkAtomRing(const ROMol &mol, const Atom &atom,
   return atLeast;
 }
 bool checkBondRing(const ROMol &mol, const std::vector<int> &bring,
-                   std::function<bool(const Bond &)> matcher,
-                   std::function<bool(const Bond &)> atLeastOne) {
+                   BondMatcherFunc matcher, BondMatcherFunc atLeastOne) {
   bool atLeast = atLeastOne == nullptr;
   for (auto bidx : bring) {
     if (matcher && !matcher(*mol.getBondWithIdx(bidx))) {
@@ -225,13 +226,13 @@ bool checkBondRing(const ROMol &mol, const std::vector<int> &bring,
   return atLeast;
 }
 
-bool FusedRingMatch(
-    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore,
-    std::function<bool(const Atom &)> atomMatcher = nullptr,
-    std::function<bool(const Bond &)> bondMatcher = nullptr,
-    std::function<bool(const Atom &)> atLeastOneAtomPerRing = nullptr,
-    std::function<bool(const Bond &)> atLeastOneBondPerRing = nullptr,
-    std::function<bool(const Atom &)> atLeastOneAtom = nullptr) {
+bool FusedRingMatch(const ROMol &mol, const Atom &atom,
+                    boost::dynamic_bitset<> ignore,
+                    AtomMatcherFunc atomMatcher = nullptr,
+                    BondMatcherFunc bondMatcher = nullptr,
+                    AtomMatcherFunc atLeastOneAtomPerRing = nullptr,
+                    BondMatcherFunc atLeastOneBondPerRing = nullptr,
+                    AtomMatcherFunc atLeastOneAtom = nullptr) {
   PRECONDITION(&atom.getOwningMol() == &mol, "atom not owned by molecule");
   if (atomMatcher && !atomMatcher(atom)) {
     return false;
@@ -322,7 +323,9 @@ bool CarbocycloalkenylAtomMatcher(const ROMol &mol, const Atom &atom,
     return bnd.getIsAromatic() || bnd.getBondType() == Bond::BondType::DOUBLE ||
            bnd.getBondType() == Bond::BondType::AROMATIC;
   };
-  return FusedRingMatch(mol, atom, ignore, atomMatcher, nullptr, nullptr,
+  AtomMatcherFunc atLeastOne = nullptr;
+  BondMatcherFunc bondMatcher = nullptr;
+  return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher, atLeastOne,
                         atLeastOneBond);
 }
 
@@ -358,8 +361,12 @@ bool HeterocyclicAtomMatcher(const ROMol &mol, const Atom &atom,
   auto atLeastOne = [](const Atom &at) -> bool {
     return at.getAtomicNum() != 6 && at.getAtomicNum() != 1;
   };
-  return FusedRingMatch(mol, atom, ignore, nullptr, nullptr, nullptr, nullptr,
-                        atLeastOne);
+  AtomMatcherFunc atomMatcher = nullptr;
+  AtomMatcherFunc oneAtomPerRing = nullptr;
+  BondMatcherFunc bondMatcher = nullptr;
+  BondMatcherFunc oneBondPerRing = nullptr;
+  return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher,
+                        oneAtomPerRing, oneBondPerRing, atLeastOne);
 }
 
 bool HeteroarylAtomMatcher(const ROMol &mol, const Atom &atom,
@@ -371,8 +378,10 @@ bool HeteroarylAtomMatcher(const ROMol &mol, const Atom &atom,
   auto atLeastOne = [](const Atom &at) -> bool {
     return at.getAtomicNum() != 6 && at.getAtomicNum() != 1;
   };
-  return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher, nullptr,
-                        nullptr, atLeastOne);
+  AtomMatcherFunc oneAtomPerRing = nullptr;
+  BondMatcherFunc oneBondPerRing = nullptr;
+  return FusedRingMatch(mol, atom, ignore, atomMatcher, bondMatcher,
+                        oneAtomPerRing, oneBondPerRing, atLeastOne);
 }
 
 bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,
@@ -380,7 +389,7 @@ bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,
   auto atomMatcher = [](const Atom &at) -> bool {
     return at.getOwningMol().getRingInfo()->numAtomRings(at.getIdx()) > 0;
   };
-  return FusedRingMatch(mol, atom, ignore, atomMatcher, nullptr);
+  return FusedRingMatch(mol, atom, ignore, atomMatcher);
 }
 
 }  // namespace Generics
