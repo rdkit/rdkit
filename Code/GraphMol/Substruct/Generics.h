@@ -239,6 +239,19 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool HeteroacyclicAtomMatcher(
 RDKIT_SUBSTRUCTMATCH_EXPORT bool AlkoxyacyclicAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
+//! Matches rings without carbon
+/*!
+
+  Note: this is Reaxys query type CXX and matches rings which contain no carbon
+
+  Conditions:
+    - a ring is present
+    - none of the atoms in the fused ring system are carbon
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT bool NoCarbonRingAtomMatcher(
+    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
+
 const static std::map<
     std::string,
     std::function<bool(const ROMol &, const Atom &, boost::dynamic_bitset<>)>>
@@ -271,6 +284,8 @@ const static std::map<
         {"CHC", HeterocyclicAtomMatcher},
         {"Heteroaryl", HeteroarylAtomMatcher},
         {"HAR", HeteroarylAtomMatcher},
+        {"NoCarbonRing", NoCarbonRingAtomMatcher},
+        {"CXX", NoCarbonRingAtomMatcher},
 };
 }  // namespace Generics
 //! returns false if any of the molecule's generic atoms are not satisfied in

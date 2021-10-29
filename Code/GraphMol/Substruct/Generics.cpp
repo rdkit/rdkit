@@ -345,6 +345,14 @@ bool CarbocyclicAtomMatcher(const ROMol &mol, const Atom &atom,
   return FusedRingMatch(mol, atom, ignore, atomMatcher);
 }
 
+bool NoCarbonRingAtomMatcher(const ROMol &mol, const Atom &atom,
+                             boost::dynamic_bitset<> ignore) {
+  auto atomMatcher = [](const Atom &at) -> bool {
+    return at.getAtomicNum() != 6;
+  };
+  return FusedRingMatch(mol, atom, ignore, atomMatcher);
+}
+
 bool HeterocyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                              boost::dynamic_bitset<> ignore) {
   auto atLeastOne = [](const Atom &at) -> bool {
@@ -369,9 +377,6 @@ bool HeteroarylAtomMatcher(const ROMol &mol, const Atom &atom,
 
 bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,
                        boost::dynamic_bitset<> ignore) {
-  if (!mol.getRingInfo() || !mol.getRingInfo()->isInitialized()) {
-    MolOps::fastFindRings(mol);
-  }
   auto atomMatcher = [](const Atom &at) -> bool {
     return at.getOwningMol().getRingInfo()->numAtomRings(at.getIdx()) > 0;
   };

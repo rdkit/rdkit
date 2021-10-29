@@ -417,7 +417,34 @@ TEST_CASE("heteroaryl", "[substructure][generics]") {
           common_properties::_QueryAtomGenericLabel, label);
       std::vector<std::pair<std::string, unsigned>> tests = {
           {"O=CC1OC1", 0},          {"O=CCC1COC1", 0},  {"O=CC1CCC2C1CNC2", 0},
-          {"O=Cc1cccc2c1ccnc2", 0}, {"O=Cc1ccccc1", 0}, {"O=Cc1cccnc1", 1},
+          {"O=Cc1cccc2c1ccnc2", 1}, {"O=Cc1ccccc1", 0}, {"O=Cc1cccnc1", 1},
+
+      };
+      SubstructMatchParameters ps;
+      ps.useGenericMatchers = true;
+      for (const auto &pr : tests) {
+        SmilesParserParams smilesParms;
+        smilesParms.removeHs = false;
+        std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+        REQUIRE(mol);
+        CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+      }
+    }
+  }
+}
+
+TEST_CASE("no carbon ring", "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C*"_smarts;
+    REQUIRE(query);
+    std::vector<std::string> labels = {"NoCarbonRing", "CXX"};
+    for (auto label : labels) {
+      query->getAtomWithIdx(2)->setProp(
+          common_properties::_QueryAtomGenericLabel, label);
+      std::vector<std::pair<std::string, unsigned>> tests = {
+          {"O=CN1NC1", 0},       {"O=CN1NN1", 1},       {"O=CCN1NNN1", 0},
+          {"O=CN1NNNN2N1N2", 1}, {"O=CN1NNNN2N1C2", 0}, {"O=CNNN", 0},
+          {"O=C1NNN1", 0},
 
       };
       SubstructMatchParameters ps;
