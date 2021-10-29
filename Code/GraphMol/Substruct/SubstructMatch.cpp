@@ -441,48 +441,63 @@ std::vector<MatchVectType> SubstructMatch(
   }
   std::vector<RecursiveStructureQuery *> locked;
   locked.reserve(query.getNumAtoms());
-  if (params.recursionPossible) {
-    detail::SUBQUERY_MAP subqueryMap;
-    ROMol::ConstAtomIterator atIt;
-    for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
-      if ((*atIt)->getQuery()) {
-        // std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
-        detail::MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap,
-                                locked);
+
+  try {
+    if (params.recursionPossible) {
+      detail::SUBQUERY_MAP subqueryMap;
+      ROMol::ConstAtomIterator atIt;
+      for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
+	if ((*atIt)->getQuery()) {
+	  // std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
+	  detail::MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap,
+				  locked);
+	}
       }
     }
-  }
 
-  detail::AtomLabelFunctor atomLabeler(query, mol, params);
-  detail::BondLabelFunctor bondLabeler(query, mol, params);
-  MolMatchFinalCheckFunctor matchChecker(query, mol, params);
+    detail::AtomLabelFunctor atomLabeler(query, mol, params);
+    detail::BondLabelFunctor bondLabeler(query, mol, params);
+    MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
-  std::list<detail::ssPairType> pms;
+    std::list<detail::ssPairType> pms;
 #if 0
     bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
                                   atomLabeler,bondLabeler,pms);
 #else
-  bool found =
+    bool found =
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
                      bondLabeler, matchChecker, pms, params.maxMatches);
 #endif
-  if (found) {
-    unsigned int nQueryAtoms = query.getNumAtoms();
-    matches.reserve(pms.size());
-    for (std::list<detail::ssPairType>::const_iterator iter1 = pms.begin();
-         iter1 != pms.end(); ++iter1) {
-      MatchVectType matchVect;
-      matchVect.resize(nQueryAtoms);
-      for (const auto &iter2 : *iter1) {
-        matchVect[iter2.first] = std::pair<int, int>(iter2.first, iter2.second);
+    if (found) {
+      unsigned int nQueryAtoms = query.getNumAtoms();
+      matches.reserve(pms.size());
+      for (std::list<detail::ssPairType>::const_iterator iter1 = pms.begin();
+	   iter1 != pms.end(); ++iter1) {
+	MatchVectType matchVect;
+	matchVect.resize(nQueryAtoms);
+	for (const auto &iter2 : *iter1) {
+	  matchVect[iter2.first] = std::pair<int, int>(iter2.first, iter2.second);
+	}
+	matches.push_back(matchVect);
       }
-      matches.push_back(matchVect);
+      if (params.uniquify) {
+	removeDuplicates(matches, mol.getNumAtoms());
+      }
     }
-    if (params.uniquify) {
-      removeDuplicates(matches, mol.getNumAtoms());
+  } catch (...) {
+    // In case of internal exception, this can happen for various reasons
+    //  no rings, implicitValenceError etc we need to release all locks
+    if (params.recursionPossible) {
+      for (auto v : locked) {
+	v->clear();
+#ifdef RDK_THREADSAFE_SSS
+	v->d_mutex.unlock();
+#endif
+      }
     }
+    throw;
   }
-
+  
   if (params.recursionPossible) {
     for (auto v : locked) {
       v->clear();

@@ -43,6 +43,7 @@ from rdkit import Geometry
 from rdkit import RDConfig
 from rdkit.Chem.SimpleEnum import Enumerator
 
+import signal
 
 def feq(v1, v2, tol2=1e-4):
   return abs(v1 - v2) <= tol2
@@ -1035,6 +1036,46 @@ M  END
     self.assertFalse(rxn.RunReactantInPlace(reactant))
     self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
 
+  def testGithub4651(self):
+    mol_sulfonylchloride = Chem.MolFromSmiles("Nc1c(CCCSNCC)cc(cc1)S(=O)(=O)Cl")
+    mol_amine = Chem.MolFromSmiles("Nc2cc(C)on2")
+    mol_sulfonamide = Chem.MolFromSmiles("CCNSCCCc1cc(S(=O)(=O)Nc2cc(C)on2)ccc1N")
+
+    smirks_fwd = (
+        "[S;$(S(=O)(=O)[C,c,N]):1](=O)(=O)(-[Cl])"
+         "."
+         "[N;$([N&H2&D1,N&H1&D2])"
+         # N aliphatic and not aromatic bond to carbon
+         "&$(N(-&!@[#6]))"
+         "&!$(N-C=[O,N,S]):2]"
+         ">>"
+         "[S:1](=O)(=O)-[N+0:2]"
+    )
+
+    smirks_reverse = ">>".join(smirks_fwd.split(">>")[::-1])
+
+    reaction_fwd = rdChemReactions.ReactionFromSmarts(smirks_fwd)
+    reaction_reverse = rdChemReactions.ReactionFromSmarts(smirks_reverse)
+
+
+    product = reaction_fwd.RunReactants((mol_sulfonylchloride, mol_amine))[0][0]
+    print("reaction_fwd", Chem.MolToSmiles(product))
+
+    reagent_sulfonylchloride, reagent_amine = reaction_reverse.RunReactants((mol_sulfonamide,))[0]
+
+    # trigger bug
+    print("trigger bug and mess up reaction_fwd object")
+    try:
+        product = reaction_fwd.RunReactants((reagent_sulfonylchloride, reagent_amine))[0]
+    except RuntimeError as e:
+        print(e)
+
+    print("call messed up reaction_fwd, this will inf loop")
+    # this used to deadlock
+    try:
+      product = reaction_fwd.RunReactants((mol_sulfonylchloride, mol_amine))
+    except RuntimeError as e:
+      pass # this is ok
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)
