@@ -60,9 +60,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     }
   }
 
-  Dict(Dict &&other) noexcept : _data(std::move(other._data)) {
-    other._data.clear();
-  }
+  Dict(Dict &&other) noexcept : _data(std::move(other._data)) {}
   Dict &operator=(Dict &&other) noexcept {
     if (this == &other) {
       return *this;
