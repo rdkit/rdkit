@@ -2462,20 +2462,30 @@ TEST_CASE("Github #4535: operator<< for AtomPDBResidue", "[PDB]") {
 }
 
 TEST_CASE("moves") {
-  SECTION("molecule move") {
-    auto m1 = "CCC"_smiles;
-    m1->setProp("foo", 1);
-    ROMol m2 = std::move(*m1);
-    CHECK(m2.getNumAtoms() == 3);
-    CHECK(m2.getNumBonds() == 2);
+  auto m1 = "C[C@H](O)[C@H](C)F |o2:1,&1:3,r,SgD:5:atom_data:foo::::|"_smiles;
+  REQUIRE(m1);
+  m1->setProp("foo", 1u);
+  auto check_dest = [](auto *m1, auto &m2) {
+    CHECK(m2.getNumAtoms() == 6);
+    CHECK(m2.getNumBonds() == 5);
     for (const auto atom : m2.atoms()) {
       CHECK(&atom->getOwningMol() == &m2);
-      CHECK(&atom->getOwningMol() != m1.get());
+      CHECK(&atom->getOwningMol() != m1);
     }
     for (const auto bond : m2.bonds()) {
       CHECK(&bond->getOwningMol() == &m2);
-      CHECK(&bond->getOwningMol() != m1.get());
+      CHECK(&bond->getOwningMol() != m1);
     }
+    CHECK(m2.getStereoGroups().size() == 3);
+    CHECK(m2.getStereoGroups()[0].getAtoms().size() == 1);
+    CHECK(m2.getStereoGroups()[0].getAtoms()[0]->getIdx() == 1);
+    CHECK(m2.getStereoGroups()[1].getAtoms().size() == 1);
+    CHECK(m2.getStereoGroups()[1].getAtoms()[0]->getIdx() == 2);
+
+    const auto &sgs = getSubstanceGroups(m2);
+    CHECK(sgs.size() == 1);
+    CHECK(sgs[0].getAtoms().size() == 1);
+    CHECK(sgs[0].getAtoms()[0] == 5);
 
     // check the state of m1:
     CHECK(m1->getNumAtoms() == 0);
@@ -2489,28 +2499,18 @@ TEST_CASE("moves") {
     // make sure we can still do something with m1:
     *m1 = m2;
     CHECK(!m1->getDict().getData().empty());
-    CHECK(m1->getNumAtoms() == 3);
-    CHECK(m1->getNumBonds() == 2);
+    CHECK(m1->getNumAtoms() == 6);
+    CHECK(m1->getNumBonds() == 5);
     CHECK(m1->getRingInfo() != nullptr);
     CHECK(m1->getRingInfo()->isInitialized());
+  };
+  SECTION("molecule move") {
+    ROMol m2 = std::move(*m1);
+    check_dest(m1.get(), m2);
   }
   SECTION("molecule move-assign") {
-    auto m1 = "CCC"_smiles;
-    m1->setProp("foo", 1u);
     ROMol m2;
     m2 = std::move(*m1);
-    CHECK(m1->getDict().getData().empty());
-    CHECK(m2.getNumAtoms() == 3);
-    CHECK(m2.getNumBonds() == 2);
-    for (const auto atom : m2.atoms()) {
-      CHECK(&atom->getOwningMol() == &m2);
-      CHECK(&atom->getOwningMol() != m1.get());
-    }
-    for (const auto bond : m2.bonds()) {
-      CHECK(&bond->getOwningMol() == &m2);
-      CHECK(&bond->getOwningMol() != m1.get());
-    }
-    CHECK(m2.hasProp("foo"));
-    CHECK(m2.getProp<unsigned>("foo") == 1u);
+    check_dest(m1.get(), m2);
   }
 }
