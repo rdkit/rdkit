@@ -293,6 +293,18 @@ const static std::map<
 RDKIT_SUBSTRUCTMATCH_EXPORT bool GenericAtomMatcher(
     const ROMol &mol, const ROMol &query,
     const std::vector<unsigned int> &match);
+//! sets the apropriate generic query tags based on atom labels and/or SGroups
+/*
+
+- Generic query tags found in the atom labels/SGroups will be overwrite existing
+generic query tags (if there are any present).
+- If the both atom labels and SGroups are being used and an atom has generic
+query tags in both, the one from the SGroup will be used.
+- Generic query tags not found in Generics::genericMatchers will be ignored
+
+*/
+RDKIT_SUBSTRUCTMATCH_EXPORT void SetGenericQueriesFromProperties(
+    ROMol &mol, bool useAtomLabels = true, bool useSGroups = true);
 }  // namespace SubstructSearch
 }  // namespace RDKit
 

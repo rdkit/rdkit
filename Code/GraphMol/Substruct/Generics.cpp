@@ -418,6 +418,34 @@ bool GenericAtomMatcher(const ROMol &mol, const ROMol &query,
   }
   return true;
 }
-}  // namespace SubstructSearch
+void SetGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
+                                     bool useSGroups) {
+  if (useAtomLabels) {
+    for (const auto atom : mol.atoms()) {
+      std::string label;
+      if (atom->getPropIfPresent(common_properties::atomLabel, label) &&
+          Generics::genericMatchers.find(label) !=
+              Generics::genericMatchers.end()) {
+        atom->setProp(common_properties::_QueryAtomGenericLabel, label);
+      }
+    }
+  }
+  if (useSGroups) {
+    for (const auto sgroup : getSubstanceGroups(mol)) {
+      if (sgroup.getProp<std::string>("TYPE") == "SUP") {
+        std::string label;
+        if (sgroup.getPropIfPresent("LABEL", label) &&
+            Generics::genericMatchers.find(label) !=
+                Generics::genericMatchers.end()) {
+          for (auto aidx : sgroup.getAtoms()) {
+            mol.getAtomWithIdx(aidx)->setProp(
+                common_properties::_QueryAtomGenericLabel, label);
+          }
+        }
+      }
+    }
+  }
+}
 
+}  // namespace SubstructSearch
 }  // namespace RDKit
