@@ -352,7 +352,11 @@ extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
         StringData = MolToCXSmiles(*mol);
       }
     } else {
-      StringData = MolToSmarts(*mol, false);
+      if (!cxSmiles) {
+        StringData = MolToSmarts(*mol, false);
+      } else {
+        StringData = MolToCXSmarts(*mol);
+      }
     }
   } catch (...) {
     ereport(
@@ -367,14 +371,18 @@ extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
 }
 
 extern "C" char *makeCtabText(CROMol data, int *len,
-                              bool createDepictionIfMissing) {
+                              bool createDepictionIfMissing, bool useV3000) {
   auto *mol = (ROMol *)data;
 
   try {
     if (createDepictionIfMissing && mol->getNumConformers() == 0) {
       RDDepict::compute2DCoords(*mol);
     }
-    StringData = MolToMolBlock(*mol);
+    if (!useV3000) {
+      StringData = MolToMolBlock(*mol);
+    } else {
+      StringData = MolToV3KMolBlock(*mol);
+    }
   } catch (...) {
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
@@ -539,23 +547,34 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
-extern "C" int MolSubstruct(CROMol i, CROMol a) {
+extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
-  params.useChirality = getDoChiralSSS();
-  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  if (useChirality) {
+    params.useChirality = true;
+    params.useEnhancedStereo = true;
+  } else {
+    params.useChirality = getDoChiralSSS();
+    params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  }
   params.maxMatches = 1;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
 
-extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
+extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify,
+                                 bool useChirality) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
-  params.useChirality = getDoChiralSSS();
-  params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  if (useChirality) {
+    params.useChirality = true;
+    params.useEnhancedStereo = true;
+  } else {
+    params.useChirality = getDoChiralSSS();
+    params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  }
   params.uniquify = uniquify;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
@@ -571,7 +590,9 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify) {
   }
 MOLDESCR(FractionCSP3, RDKit::Descriptors::calcFractionCSP3, double)
 MOLDESCR(TPSA, RDKit::Descriptors::calcTPSA, double)
+MOLDESCR(LabuteASA, RDKit::Descriptors::calcLabuteASA, double)
 MOLDESCR(AMW, RDKit::Descriptors::calcAMW, double)
+MOLDESCR(ExactMW, RDKit::Descriptors::calcExactMW, double)
 MOLDESCR(HBA, RDKit::Descriptors::calcLipinskiHBA, int)
 MOLDESCR(HBD, RDKit::Descriptors::calcLipinskiHBD, int)
 MOLDESCR(NumHeteroatoms, RDKit::Descriptors::calcNumHeteroatoms, int)
@@ -592,6 +613,9 @@ MOLDESCR(NumAliphaticCarbocycles,
 MOLDESCR(NumSaturatedCarbocycles,
          RDKit::Descriptors::calcNumSaturatedCarbocycles, int)
 MOLDESCR(NumHeterocycles, RDKit::Descriptors::calcNumHeterocycles, int)
+MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
+MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
+MOLDESCR(NumAmideBonds, RDKit::Descriptors::calcNumAmideBonds, int)
 
 MOLDESCR(NumRotatableBonds, RDKit::Descriptors::calcNumRotatableBonds, int)
 MOLDESCR(Chi0v, RDKit::Descriptors::calcChi0v, double)
@@ -607,9 +631,8 @@ MOLDESCR(Chi4n, RDKit::Descriptors::calcChi4n, double)
 MOLDESCR(Kappa1, RDKit::Descriptors::calcKappa1, double)
 MOLDESCR(Kappa2, RDKit::Descriptors::calcKappa2, double)
 MOLDESCR(Kappa3, RDKit::Descriptors::calcKappa3, double)
+MOLDESCR(HallKierAlpha, RDKit::Descriptors::calcHallKierAlpha, double)
 MOLDESCR(Phi, RDKit::Descriptors::calcPhi, double)
-MOLDESCR(NumSpiroAtoms, RDKit::Descriptors::calcNumSpiroAtoms, int)
-MOLDESCR(NumBridgeheadAtoms, RDKit::Descriptors::calcNumBridgeheadAtoms, int)
 
 extern "C" double MolLogP(CROMol i) {
   double logp, mr;
@@ -1046,8 +1069,8 @@ extern "C" double calcSparseDiceSml(CSfp a, CSfp b) {
   return res;
 }
 
-extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
-                                          const char *b, unsigned int szb) {
+extern "C" double calcSparseStringDiceSml(const char *a, unsigned int,
+                                          const char *b, unsigned int) {
   const auto *t1 = (const unsigned char *)a;
   const auto *t2 = (const unsigned char *)b;
 
@@ -1159,7 +1182,7 @@ extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
   return res;
 }
 
-extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int sza,
+extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int,
                                           int tgt) {
   const auto *t1 = (const unsigned char *)a;
 
@@ -1199,7 +1222,7 @@ extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int sza,
   }
   return true;
 }
-extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int sza,
+extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int,
                                           int tgt) {
   const auto *t1 = (const unsigned char *)a;
 
@@ -1952,7 +1975,6 @@ extern "C" CSfp makeReactionDifferenceSFP(CChemicalReaction data, int size,
     if (fpType > 3 || fpType < 1) {
       elog(ERROR, "makeReactionDifferenceSFP: Unknown Fingerprint type");
     }
-    auto fp = static_cast<RDKit::FingerprintType>(fpType);
     RDKit::ReactionFingerprintParams params;
     params.fpType = static_cast<FingerprintType>(fpType);
     params.fpSize = size;
@@ -1974,7 +1996,6 @@ extern "C" CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType) {
     if (fpType > 5 || fpType < 1) {
       elog(ERROR, "makeReactionBFP: Unknown Fingerprint type");
     }
-    auto fp = static_cast<RDKit::FingerprintType>(fpType);
     RDKit::ReactionFingerprintParams params;
     params.fpType = static_cast<FingerprintType>(fpType);
     params.fpSize = size;
@@ -2059,20 +2080,18 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
 
   char *str = smiles;
   char *s = str;
-  int len, nmols = 0;
+  char *s_end = str + strlen(str);
+  int len = 0;
   std::vector<RDKit::ROMOL_SPTR> molecules;
   while (*s && *s <= ' ') {
     s++;
   }
-  while (*s > ' ') {
+  while (s < s_end && *s > ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;
     }
     s[len] = '\0';
-    if (0 == strlen(s)) {
-      continue;
-    }
     ROMol *molptr = nullptr;
     try {
       molptr = RDKit::SmilesToMol(s);

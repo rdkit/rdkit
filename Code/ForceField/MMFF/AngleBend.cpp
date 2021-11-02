@@ -161,5 +161,5 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
 
   Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
 }
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields

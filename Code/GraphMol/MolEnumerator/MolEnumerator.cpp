@@ -106,22 +106,41 @@ MolBundle enumerate(const ROMol &mol,
   return *accum;
 }
 
-MolBundle enumerate(const ROMol &mol) {
+MolBundle enumerate(const ROMol &mol, size_t maxPerOperation) {
   std::vector<MolEnumeratorParams> paramsList;
 
   // position variation first
   MolEnumerator::MolEnumeratorParams posVariationParams;
+  auto pvOp = new MolEnumerator::PositionVariationOp();
   posVariationParams.dp_operation =
-      std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
-          new MolEnumerator::PositionVariationOp());
+      std::shared_ptr<MolEnumerator::MolEnumeratorOp>(pvOp);
+  if (maxPerOperation > 0) {
+    posVariationParams.maxToEnumerate = maxPerOperation;
+  }
   paramsList.push_back(posVariationParams);
+
+  // now repeat units
+  MolEnumerator::MolEnumeratorParams repeatUnitParams;
+  auto sruOp = new MolEnumerator::RepeatUnitOp();
+  repeatUnitParams.dp_operation =
+      std::shared_ptr<MolEnumerator::MolEnumeratorOp>(sruOp);
+  if (maxPerOperation > 0) {
+    sruOp->d_defaultRepeatCount = maxPerOperation;
+    repeatUnitParams.maxToEnumerate = maxPerOperation;
+  }
+  paramsList.push_back(repeatUnitParams);
 
   // linknodes last because we can only enumerate mols with a single
   // fragment
   MolEnumerator::MolEnumeratorParams linkParams;
-  linkParams.dp_operation = std::shared_ptr<MolEnumerator::MolEnumeratorOp>(
-      new MolEnumerator::LinkNodeOp());
+  auto lpOp = new MolEnumerator::LinkNodeOp();
+  linkParams.dp_operation =
+      std::shared_ptr<MolEnumerator::MolEnumeratorOp>(lpOp);
+  if (maxPerOperation > 0) {
+    linkParams.maxToEnumerate = maxPerOperation;
+  }
   paramsList.push_back(linkParams);
+
   return enumerate(mol, paramsList);
 }
 

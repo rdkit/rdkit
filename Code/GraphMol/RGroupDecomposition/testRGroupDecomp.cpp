@@ -198,7 +198,9 @@ void testGaBatch() {
 
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
-  bool isParallelGaEnabled = (sstrm.str().find("This RDKit build does not enable GA parallel runs") == std::string::npos);
+  bool isParallelGaEnabled =
+      (sstrm.str().find("This RDKit build does not enable GA parallel runs") ==
+       std::string::npos);
 #ifdef RDK_TEST_MULTITHREADED
   TEST_ASSERT(isParallelGaEnabled);
 #else
@@ -1280,11 +1282,11 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
   {
     std::cerr << "iterative" << std::endl;
     RGroupDecompositionParameters ps = RGroupDecompositionParameters();
-    ps.timeout = 1.0;
+    ps.timeout = 0.1;
     RGroupDecomposition decomp(*core, ps);
     bool ok = false;
+    int ndone = -1;
     try {
-      size_t ndone = 0;
       for (auto m : ms) {
         decomp.add(*m);
         ++ndone;
@@ -1293,6 +1295,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
       ok = true;
     }
     TEST_ASSERT(ok);
+    TEST_ASSERT(ndone >= 0);
   }
   {
     RGroupDecompositionParameters ps = RGroupDecompositionParameters();

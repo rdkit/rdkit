@@ -1,4 +1,6 @@
-//  Copyright (c) 2017-2019, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,13 +37,19 @@
 #include <RDGeneral/export.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/MolBundle.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
+
+#include <algorithm>
+#include <string>
+#include <boost/lexical_cast.hpp>
 
 namespace RDKit {
 
@@ -323,8 +331,79 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT TautomerPatternHolder
   }
 };
 
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyHolderBase {
+ public:
+  virtual ~KeyHolderBase() {}
+
+  //! Add a key to the database getting it from the molecule
+  virtual unsigned int addMol(const ROMol &m) = 0;
+
+  //! Add a key to the database, this needs to be in the same order
+  //!  as the molecule, no validation is done
+  virtual unsigned int addKey(const std::string &) = 0;
+
+  // !get the key at the requested index
+  // implementations should throw IndexError on out of range
+  virtual const std::string &getKey(unsigned int) const = 0;
+
+  // !get keys from a bunch of indices
+  virtual std::vector<std::string> getKeys(
+      const std::vector<unsigned int> &indices) const = 0;
+  //! Get the current keeyholder size
+  virtual unsigned int size() const = 0;
+};
+
+class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
+  std::string propname;
+  std::vector<std::string> keys;
+  const std::string empty_string = {};
+
+ public:
+  KeyFromPropHolder(const std::string &propname = "_Name")
+      : propname(propname) {}
+
+  std::string &getPropName() { return propname; }
+  const std::string &getPropName() const { return propname; }
+
+  std::vector<std::string> &getKeys() { return keys; }
+  const std::vector<std::string> &getKeys() const { return keys; }
+
+  unsigned int addMol(const ROMol &m) override {
+    std::string key;
+    if (m.getPropIfPresent(propname, key)) {
+      keys.push_back(std::move(key));
+    } else {
+      // XXX is this a warning? it could be verbose.  Should we push back the
+      // string repr of the
+      //  numeric index?
+      const static std::string prefix("LIBIDX-");
+      keys.emplace_back(prefix + boost::lexical_cast<std::string>(keys.size()));
+    }
+    return keys.size() - 1u;
+  };
+
+  unsigned int addKey(const std::string &key) override {
+    keys.push_back(key);
+    return keys.size() - 1u;
+  }
+
+  const std::string &getKey(unsigned int idx) const override {
+    if (idx >= keys.size()) throw IndexErrorException(idx);
+    return keys[idx];
+  }
+
+  std::vector<std::string> getKeys(
+      const std::vector<unsigned int> &indices) const override {
+    std::vector<std::string> res;
+    std::transform(indices.begin(), indices.end(), std::back_inserter(res),
+                   [=](unsigned idx) { return keys.at(idx); });
+    return res;
+  }
+  unsigned int size() const override { return keys.size(); }
+};
+
 //! Substructure Search a library of molecules
-/*!  This class allows for multithreaded substructure searches os
+/*!  This class allows for multithreaded substructure searches of
      large datasets.
 
      The implementations can use fingerprints to speed up searches
@@ -400,21 +479,45 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT TautomerPatternHolder
      delete bitVector;
      \endcode
 
+     Finally, using the KeyFromPropHolder will store user ids or keys.
+     By default, it uses RDKit's default _Name prop, but can be changed
+     to any property.
+
+     \code
+     boost::shared_ptr<CachedTrustedSmilesMolHolder> molHolder = \
+         boost::make_shared<CachedTrustedSmilesMolHolder>();
+     boost::shared_ptr<KeyFromPropHolder> keyHolder = \
+         boost::make_shared<KeyFromPropHolder>();
+     SubstructLibrary lib(molHolder, keyHolder);
+     ...
+
+     You can get the keys in multiple through the use of the keyholder
+     auto key = lib.getKeys().getKey(idx);
+     auto keys = lib.getKeys().getKeys(lib.GetMatch(query));
+     \endcode
+
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   boost::shared_ptr<MolHolderBase> molholder;
   boost::shared_ptr<FPHolderBase> fpholder;
+  boost::shared_ptr<KeyHolderBase> keyholder;
+
   MolHolderBase *mols;  // used for a small optimization
   FPHolderBase *fps{nullptr};
   bool is_tautomerquery = false;
+  std::vector<unsigned int> searchOrder;
 
  public:
   SubstructLibrary()
-      : molholder(new MolHolder), fpholder(), mols(molholder.get()) {}
+      : molholder(new MolHolder),
+        fpholder(),
+        keyholder(),
+        mols(molholder.get()) {}
 
   SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules)
       : molholder(std::move(molecules)),
         fpholder(),
+        keyholder(),
         mols(molholder.get()),
         fps(nullptr) {}
 
@@ -422,6 +525,34 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                    boost::shared_ptr<FPHolderBase> fingerprints)
       : molholder(std::move(molecules)),
         fpholder(std::move(fingerprints)),
+        keyholder(),
+        mols(molholder.get()),
+        fps(fpholder.get()) {
+    if (fpholder.get() &&
+        dynamic_cast<TautomerPatternHolder *>(fpholder.get()) != nullptr) {
+      is_tautomerquery = true;
+    }
+  }
+
+  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
+                   boost::shared_ptr<KeyHolderBase> keys)
+      : molholder(std::move(molecules)),
+        fpholder(),
+        keyholder(std::move(keys)),
+        mols(molholder.get()),
+        fps(nullptr) {
+    if (fpholder.get() &&
+        dynamic_cast<TautomerPatternHolder *>(fpholder.get()) != nullptr) {
+      is_tautomerquery = true;
+    }
+  }
+
+  SubstructLibrary(boost::shared_ptr<MolHolderBase> molecules,
+                   boost::shared_ptr<FPHolderBase> fingerprints,
+                   boost::shared_ptr<KeyHolderBase> keys)
+      : molholder(std::move(molecules)),
+        fpholder(std::move(fingerprints)),
+        keyholder(std::move(keys)),
         mols(molholder.get()),
         fps(fpholder.get()) {
     if (fpholder.get() &&
@@ -457,6 +588,14 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     return fpholder;
   }
 
+  //! Get the underlying molecule holder implementation
+  boost::shared_ptr<KeyHolderBase> &getKeyHolder() { return keyholder; }
+
+  //! Get the underlying molecule holder implementation
+  const boost::shared_ptr<KeyHolderBase> &getKeyHolder() const {
+    return keyholder;
+  }
+
   const MolHolderBase &getMolecules() const {
     PRECONDITION(mols, "Molecule holder NULL in SubstructLibrary");
     return *mols;
@@ -474,6 +613,22 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     if (!fps)
       throw ValueErrorException("Substruct Library does not have fingerprints");
     return *fps;
+  }
+
+  //! Get the underlying key holder implementation.
+  /*! Throws a value error if no keyholder have been set */
+  KeyHolderBase &getKeys() {
+    if (!keyholder.get())
+      throw ValueErrorException("Substruct Library does not have fingerprints");
+    return *keyholder.get();
+  }
+
+  //! Get the underlying key holder implementation.
+  /*! Throws a value error if no keyholder have been set */
+  const KeyHolderBase &getKeys() const {
+    if (!keyholder.get())
+      throw ValueErrorException("Substruct Library does not have fingerprints");
+    return *keyholder.get();
   }
 
   //! Add a molecule to the library
@@ -505,14 +660,20 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                                        bool useQueryQueryMatches = false,
                                        int numThreads = -1,
                                        int maxResults = -1) const {
-    return getMatches(query, 0, size(), recursionPossible, useChirality,
-                      useQueryQueryMatches, numThreads, maxResults);
+    SubstructMatchParameters params;
+    params.recursionPossible = recursionPossible;
+    params.useChirality = useChirality;
+    params.useQueryQueryMatches = useQueryQueryMatches;
+    return getMatches(query, 0, size(), params, numThreads, maxResults);
   }
-  std::vector<unsigned int> getMatches(
-      const ROMol &query, unsigned int startIdx, unsigned int endIdx,
-      bool recursionPossible = true, bool useChirality = true,
-      bool useQueryQueryMatches = false, int numThreads = -1,
-      int maxResults = -1) const;
+  //! overload
+  template <class Query>
+  std::vector<unsigned int> getMatches(const Query &query,
+                                       const SubstructMatchParameters &params,
+                                       int numThreads = -1,
+                                       int maxResults = -1) const {
+    return getMatches(query, 0, size(), params, numThreads, maxResults);
+  }
   //! Get the matching indices for the query between the given indices
   /*!
     \param query       Query to match against molecules
@@ -528,12 +689,41 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     \param numThreads  If -1 use all available processors [default -1]
     \param maxResults  Maximum results to return, -1 means return all
                        [default -1]
-*/
+  */
+  template <class Query>
   std::vector<unsigned int> getMatches(
-      const TautomerQuery &query, unsigned int startIdx, unsigned int endIdx,
+      const Query &query, unsigned int startIdx, unsigned int endIdx,
       bool recursionPossible = true, bool useChirality = true,
       bool useQueryQueryMatches = false, int numThreads = -1,
-      int maxResults = -1) const;
+      int maxResults = -1) const {
+    SubstructMatchParameters params;
+    params.recursionPossible = recursionPossible;
+    params.useChirality = useChirality;
+    params.useQueryQueryMatches = useQueryQueryMatches;
+    return getMatches(query, startIdx, endIdx, params, numThreads, maxResults);
+  };
+  //! overload
+  std::vector<unsigned int> getMatches(const ROMol &query,
+                                       unsigned int startIdx,
+                                       unsigned int endIdx,
+                                       const SubstructMatchParameters &params,
+                                       int numThreads = -1,
+                                       int maxResults = -1) const;
+  //! overload
+  std::vector<unsigned int> getMatches(const MolBundle &query,
+                                       unsigned int startIdx,
+                                       unsigned int endIdx,
+                                       const SubstructMatchParameters &params,
+                                       int numThreads = -1,
+                                       int maxResults = -1) const;
+  //! overload
+  std::vector<unsigned int> getMatches(const TautomerQuery &query,
+                                       unsigned int startIdx,
+                                       unsigned int endIdx,
+                                       const SubstructMatchParameters &params,
+                                       int numThreads = -1,
+                                       int maxResults = -1) const;
+
   //! Return the number of matches for the query
   /*!
     \param query       Molecule or Tautomer Query to match against molecules
@@ -551,9 +741,20 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                             bool useChirality = true,
                             bool useQueryQueryMatches = false,
                             int numThreads = -1) const {
-    return countMatches(query, 0, size(), recursionPossible, useChirality,
-                        useQueryQueryMatches, numThreads);
+    SubstructMatchParameters params;
+    params.recursionPossible = recursionPossible;
+    params.useChirality = useChirality;
+    params.useQueryQueryMatches = useQueryQueryMatches;
+    return countMatches(query, 0, size(), params, numThreads);
   }
+  //! overload
+  template <class Query>
+  unsigned int countMatches(const Query &query,
+                            const SubstructMatchParameters &params,
+                            int numThreads = -1) const {
+    return countMatches(query, 0, size(), params, numThreads);
+  }
+
   //! Return the number of matches for the query
 
   //! Return the number of matches for the query between the given indices
@@ -570,30 +771,35 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
                                  [default false]
     \param numThreads  If -1 use all available processors [default -1]
   */
+  template <class Query>
+  unsigned int countMatches(const Query &query, unsigned int startIdx,
+                            unsigned int endIdx, bool recursionPossible = true,
+                            bool useChirality = true,
+                            bool useQueryQueryMatches = false,
+                            int numThreads = -1) const {
+    SubstructMatchParameters params;
+    params.recursionPossible = recursionPossible;
+    params.useChirality = useChirality;
+    params.useQueryQueryMatches = useQueryQueryMatches;
+    return countMatches(query, startIdx, endIdx, params, numThreads);
+  };
+
+  //! overload
   unsigned int countMatches(const ROMol &query, unsigned int startIdx,
-                            unsigned int endIdx, bool recursionPossible = true,
-                            bool useChirality = true,
-                            bool useQueryQueryMatches = false,
+                            unsigned int endIdx,
+                            const SubstructMatchParameters &params,
                             int numThreads = -1) const;
-  //! Return the number of matches for the query between the given indices
-  /*!
-    \param query       TautomerQuery to match against molecules
-    \param startIdx    Start index of the search
-    \param endIdx      Ending idx (non-inclusive) of the search.
-    \param recursionPossible  flags whether or not recursive matches are allowed
-                              [default true]
-    \param useChirality  use atomic CIP codes as part of the comparison
-                         [default true]
-    \param useQueryQueryMatches  if set, the contents of atom and bond queries
-                                 will be used as part of the matching
-                                 [default false]
-    \param numThreads  If -1 use all available processors [default -1]
-  */
+  //! overload
   unsigned int countMatches(const TautomerQuery &query, unsigned int startIdx,
-                            unsigned int endIdx, bool recursionPossible = true,
-                            bool useChirality = true,
-                            bool useQueryQueryMatches = false,
+                            unsigned int endIdx,
+                            const SubstructMatchParameters &params,
                             int numThreads = -1) const;
+  //! overload
+  unsigned int countMatches(const MolBundle &query, unsigned int startIdx,
+                            unsigned int endIdx,
+                            const SubstructMatchParameters &params,
+                            int numThreads = -1) const;
+
   //! Returns true if any match exists for the query
   /*!
     \param query       Molecule or Tautomer Query to match against molecules
@@ -610,8 +816,17 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   bool hasMatch(const Query &query, bool recursionPossible = true,
                 bool useChirality = true, bool useQueryQueryMatches = false,
                 int numThreads = -1) const {
-    return hasMatch(query, 0, size(), recursionPossible, useChirality,
-                    useQueryQueryMatches, numThreads);
+    SubstructMatchParameters params;
+    params.recursionPossible = recursionPossible;
+    params.useChirality = useChirality;
+    params.useQueryQueryMatches = useQueryQueryMatches;
+    return hasMatch(query, 0, size(), params, numThreads);
+  }
+  //! overload
+  template <class Query>
+  bool hasMatch(const Query &query, const SubstructMatchParameters &params,
+                int numThreads = -1) const {
+    return hasMatch(query, 0, size(), params, numThreads);
   }
   //! Returns true if any match exists for the query between the specified
   //! indices
@@ -619,36 +834,34 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     \param query       Query to match against molecules
     \param startIdx    Start index of the search
     \param endIdx      Ending idx (inclusive) of the search.
-    \param recursionPossible  flags whether or not recursive matches are allowed
-                              [default true]
-    \param useChirality  use atomic CIP codes as part of the comparison
-                         [default true]
-    \param useQueryQueryMatches  if set, the contents of atom and bond queries
-                                 will be used as part of the matching
-                                 [default false]
-    \param numThreads  If -1 use all available processors [default -1]
-  */
-  bool hasMatch(const ROMol &query, unsigned int startIdx, unsigned int endIdx,
-                bool recursionPossible = true, bool useChirality = true,
-                bool useQueryQueryMatches = false, int numThreads = -1) const;
-  //! Returns true if any match exists for the query between the specified
-  //! indices
-  /*!
-    \param query       TautomerQuery to match against molecules
-    \param startIdx    Start index of the search
-    \param endIdx      Ending idx (inclusive) of the search.
     \param recursionPossible  flags whether or not recursive matches are
-                              allowed [default true]
-    \param useChirality  use atomic CIP codes as part of the comparison
-                         [default true]
-    \param useQueryQueryMatches  if set, the contents of atom and bond queries
-                                 will be used as part of the matching
+    allowed [default true] \param useChirality  use atomic CIP codes as part
+    of the comparison [default true] \param useQueryQueryMatches  if set, the
+    contents of atom and bond queries will be used as part of the matching
                                  [default false]
     \param numThreads  If -1 use all available processors [default -1]
   */
+  template <class Query>
+  bool hasMatch(const Query &query, unsigned int startIdx, unsigned int endIdx,
+                bool recursionPossible = true, bool useChirality = true,
+                bool useQueryQueryMatches = false, int numThreads = -1) const {
+    SubstructMatchParameters params;
+    params.recursionPossible = recursionPossible;
+    params.useChirality = useChirality;
+    params.useQueryQueryMatches = useQueryQueryMatches;
+    return hasMatch(query, startIdx, endIdx, params, numThreads);
+  };
+  //! overload
+  bool hasMatch(const ROMol &query, unsigned int startIdx, unsigned int endIdx,
+                const SubstructMatchParameters &params,
+                int numThreads = -1) const;
+  //! overload
   bool hasMatch(const TautomerQuery &query, unsigned int startIdx,
-                unsigned int endIdx, bool recursionPossible = true,
-                bool useChirality = true, bool useQueryQueryMatches = false,
+                unsigned int endIdx, const SubstructMatchParameters &params,
+                int numThreads = -1) const;
+  //! overload
+  bool hasMatch(const MolBundle &query, unsigned int startIdx,
+                unsigned int endIdx, const SubstructMatchParameters &params,
                 int numThreads = -1) const;
   //! Returns the molecule at the given index
   /*!
@@ -678,6 +891,21 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
     return rdcast<unsigned int>(molholder->size());
   }
 
+  //! does error checking
+  void setSearchOrder(const std::vector<unsigned int> &order) {
+    for (const auto idx : order) {
+      if (idx >= mols->size()) {
+        throw IndexErrorException(idx);
+      }
+    }
+    searchOrder = order;
+  }
+
+  const std::vector<unsigned int> &getSearchOrder() const {
+    return searchOrder;
+  }
+
+  std::vector<unsigned int> &getSearchOrder() { return searchOrder; }
   //! access required for serialization
   void resetHolders() {
     is_tautomerquery = false;

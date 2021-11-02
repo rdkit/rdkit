@@ -85,7 +85,8 @@ void testCoresLabelledProperly() {
   }
 }
 
-std::pair<int, RData> makeRData(int attachment, std::vector<int> attachments, const std::string &smiles) {
+std::pair<int, RData> makeRData(int attachment, std::vector<int> attachments,
+                                const std::string &smiles) {
   auto rData = boost::make_shared<RGroupData>();
   auto mol = SmilesToMol(smiles);
   auto frags = MolOps::getMolFrags(*mol);
@@ -99,14 +100,15 @@ std::pair<int, RData> makeRData(int attachment, std::vector<int> attachments, co
 
 std::pair<int, RData> makeRData(int attachment, const std::string &smiles) {
   std::vector<int> attachments{attachment};
-  return makeRData(attachment, attachments, smiles) ;
+  return makeRData(attachment, attachments, smiles);
 }
 
 void testRingMatching3Score() {
-
   BOOST_LOG(rdInfoLog)
-    << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test scoring function for RingMatching3- see GitHub ##3924" << std::endl;
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test scoring function for RingMatching3- see GitHub ##3924"
+      << std::endl;
 
   R_DECOMP decomp1Mol1 = {
       makeRData(-4, "*[H]"),
@@ -162,12 +164,13 @@ void testRingMatching3Score() {
   std::vector<std::vector<RGroupMatch>> allMatches2 = {
       matches2Mol1, matches2Mol2, matches2Mol3};
 
-  auto test1 = matchScore(permutation, allMatches1, labels);
-  auto test2 = matchScore(permutation, allMatches2, labels);
+  RGroupScorer scorer;
+  auto test1 = scorer.matchScore(permutation, allMatches1, labels);
+  auto test2 = scorer.matchScore(permutation, allMatches2, labels);
 
   // expect test1 to have better score than test2 since all halogens are on R1
 
-  TEST_ASSERT(test1 > test2); 
+  TEST_ASSERT(test1 > test2);
 
   auto testFp1 = fingerprintVarianceScore(permutation, allMatches1, labels);
   auto testFp2 = fingerprintVarianceScore(permutation, allMatches2, labels);
@@ -177,10 +180,12 @@ void testRingMatching3Score() {
 
 void testGeminalRGroups() {
   BOOST_LOG(rdInfoLog)
-    << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test scoring function for Geminal R-Groups- see GitHub #3924" << std::endl;
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test scoring function for Geminal R-Groups- see GitHub #3924"
+      << std::endl;
 
-  std::vector<int> attachments {5, 6};
+  std::vector<int> attachments{5, 6};
   R_DECOMP decomp1Mol1 = {
       makeRData(-6, "*[H]"),
       makeRData(-5, "*[H]"),
@@ -256,8 +261,9 @@ void testGeminalRGroups() {
       matches2Mol1, matches2Mol2, matches2Mol3};
   std::vector<size_t> permutation2{0, 0, 0};
 
-  auto test1 = matchScore(permutation, allMatches1, labels);
-  auto test2 = matchScore(permutation, allMatches2, labels);
+  RGroupScorer scorer;
+  auto test1 = scorer.matchScore(permutation, allMatches1, labels);
+  auto test2 = scorer.matchScore(permutation, allMatches2, labels);
 
   TEST_ASSERT(test1 > test2);
 
@@ -297,7 +303,6 @@ void testGithub3746() {
   // criteria for exhaustive search instead of GA
   TEST_ASSERT(numberPermutations < ga.getPopsize() * 100);
 }
-
 
 int main() {
   RDLog::InitLogs();

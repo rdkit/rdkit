@@ -37,7 +37,6 @@ struct CoordGenParams {
       sketcherCoarsePrecision;     // controls sketch precision
   bool dbg_useConstrained = true;  // debugging
   bool dbg_useFixed = false;       // debugging
-  bool minimizeOnly = false;       // don't actually generate full coords
   bool treatNonterminalBondsToMetalAsZeroOrder =
       false;  // set non-terminal bonds to metal atoms to be zero-order bonds
 };
@@ -67,11 +66,6 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     }
   }
 
-  if (params->minimizeOnly && !mol.getNumConformers()) {
-    throw ValueErrorException(
-        "minimizeOnly set but molecule has no conformers");
-  }
-
   double scaleFactor = params->coordgenScaling;
 
   sketcherMinimizer minimizer(params->minimizerPrecision);
@@ -87,8 +81,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   }
   bool hasTemplateMatch = false;
   MatchVectType mv;
-  if (!params->minimizeOnly && params->templateMol &&
-      params->templateMol->getNumConformers() == 1) {
+  if (params->templateMol && params->templateMol->getNumConformers() == 1) {
     if (SubstructMatch(mol, *(params->templateMol), mv)) {
       hasTemplateMatch = true;
     }
@@ -97,11 +90,6 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   // if we're doing coordinate minimization it makes our life easier to
   // start by translating to the origin
   RDGeom::Point3D centroid{0.0, 0.0, 0.0};
-  if (params->minimizeOnly) {
-    auto conf = mol.getConformer();
-    centroid = MolTransforms::computeCentroid(conf);
-  }
-
   std::vector<sketcherMinimizerAtom*> ats(mol.getNumAtoms());
   for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
     auto oatom = *atit;
@@ -109,15 +97,8 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     atom->molecule = min_mol;  // seems like this should be in addNewAtom()
     atom->atomicNumber = oatom->getAtomicNum();
     atom->charge = oatom->getFormalCharge();
-    if (params->minimizeOnly) {
-      auto coords = mol.getConformer().getAtomPos(oatom->getIdx());
-      coords -= centroid;
-      atom->coordinates = sketcherMinimizerPointF(coords.x * scaleFactor,
-                                                  coords.y * scaleFactor);
-      atom->fixed = false;
-      atom->constrained = false;
-    } else if (hasTemplateMatch || params->coordMap.find(oatom->getIdx()) !=
-                                       params->coordMap.end()) {
+    if (hasTemplateMatch ||
+        params->coordMap.find(oatom->getIdx()) != params->coordMap.end()) {
       atom->constrained = params->dbg_useConstrained;
       atom->fixed = params->dbg_useFixed;
       if (hasTemplateMatch) {
@@ -140,14 +121,6 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     ats[oatom->getIdx()] = atom;
   }
 
-  // coordgen has its own ideas about what bond lengths should be
-  // if we are doing minimizeOnly we want to do a rigid scaling after the
-  // minimization in order to try and get as close to where we started as
-  // possible
-  double singleBondLenAccum = 0.0;
-  double bondLenAccum = 0.0;
-  unsigned nSingle = 0;
-
   std::vector<sketcherMinimizerBond*> bnds(mol.getNumBonds());
   for (auto bndit = mol.beginBonds(); bndit != mol.endBonds(); ++bndit) {
     auto obnd = *bndit;
@@ -157,13 +130,6 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     switch (obnd->getBondType()) {
       case Bond::SINGLE:
         bnd->bondOrder = 1;
-        if (params->minimizeOnly) {
-          ++nSingle;
-          singleBondLenAccum +=
-              (mol.getConformer().getAtomPos(obnd->getBeginAtomIdx()) -
-               mol.getConformer().getAtomPos(obnd->getEndAtomIdx()))
-                  .length();
-        }
         break;
       case Bond::DOUBLE:
         bnd->bondOrder = 2;
@@ -178,21 +144,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
         BOOST_LOG(rdWarningLog) << "unrecognized bond type";
     }
     bnds[obnd->getIdx()] = bnd;
-    if (params->minimizeOnly) {
-      bondLenAccum += (mol.getConformer().getAtomPos(obnd->getBeginAtomIdx()) -
-                       mol.getConformer().getAtomPos(obnd->getEndAtomIdx()))
-                          .length();
-    }
   }
-  double avgBondLen = 1.0;
-  if (params->minimizeOnly) {
-    if (nSingle) {
-      avgBondLen = singleBondLenAccum / nSingle;
-    } else if (mol.getNumBonds()) {
-      avgBondLen = bondLenAccum / mol.getNumBonds();
-    }
-  }
-
   // setup double bond stereo
   min_mol->assignBondsAndNeighbors(ats, bnds);
   for (auto bndit = mol.beginBonds(); bndit != mol.endBonds(); ++bndit) {
@@ -215,34 +167,18 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   }
 
   minimizer.initialize(min_mol);
-  if (!params->minimizeOnly) {
-    minimizer.runGenerateCoordinates();
-  } else {
-    CoordgenFragmenter::splitIntoFragments(min_mol);
-    minimizer.m_minimizer.minimizeMolecule(min_mol);
-
-    // Hook the fragments into the minimizer so that they
-    // get cleaned up when the minimizer is terminated
-    minimizer._fragments = min_mol->getFragments();
-  }
+  minimizer.runGenerateCoordinates();
   auto conf = new Conformer(mol.getNumAtoms());
   for (size_t i = 0; i < mol.getNumAtoms(); ++i) {
     auto coords = RDGeom::Point3D(ats[i]->coordinates.x() / scaleFactor,
                                   ats[i]->coordinates.y() / scaleFactor, 0.0);
-    if (params->minimizeOnly) {
-      // readjust the average bond length from 1 (coordgen's target)
-      // to whatever we started with
-      coords *= avgBondLen;
-      coords += centroid;
-    }
     conf->setAtomPos(i, coords);
     // std::cerr << atom->coordinates << std::endl;
   }
   conf->set3D(false);
   mol.clearConformers();
   auto res = mol.addConformer(conf, true);
-  if (!params->minimizeOnly && params->coordMap.empty() &&
-      !params->templateMol) {
+  if (params->coordMap.empty() && !params->templateMol) {
     // center the coordinates
     RDGeom::Transform3D tf;
     auto centroid = MolTransforms::computeCentroid(*conf);

@@ -39,5 +39,5 @@ int Rule1b::compare(const Edge *a, const Edge *b) const {
   }
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

@@ -242,9 +242,8 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   }
 }
 
-void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
-                      bool useTopolScaling, double *dmat) {
-  RDUNUSED_PARAM(useTopolScaling);
+void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
+                      double *dmat) {
   unsigned int npt = mmat->numRows();
   PRECONDITION(npt == mol.getNumAtoms(), "Wrong size metric matrix");
   unsigned int i, j;
@@ -823,9 +822,8 @@ bool _checkNhChChNh(const Atom *atm1, const Atom *atm2, const Atom *atm3,
 //    1   3
 //     \ / \                                         T.S.I.Left Blank
 //      2   5  <- 2 is an oxygen/nitrogen
-bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
+bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *,
                         const Atom *atm2, const Atom *atm3, const Atom *atm4) {
-  RDUNUSED_PARAM(atm1);
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
@@ -857,12 +855,11 @@ bool _checkAmideEster14(const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
 //    1   3
 //     \ / \                                         T.S.I.Left Blank
 //      2   4  <- 2 is an oxygen/nitrogen
-bool _checkMacrocycleAllInSameRingAmideEster14(
-    const ROMol &mol, const Bond *bnd1, const Bond *bnd3, const Atom *atm1,
-    const Atom *atm2, const Atom *atm3, const Atom *atm4) {
-  RDUNUSED_PARAM(bnd1);
-  RDUNUSED_PARAM(bnd3);
-
+bool _checkMacrocycleAllInSameRingAmideEster14(const ROMol &mol, const Bond *,
+                                               const Bond *, const Atom *atm1,
+                                               const Atom *atm2,
+                                               const Atom *atm3,
+                                               const Atom *atm4) {
   //   This is a re-write of `_checkAmideEster14` with more explicit logic on
   //   the checks It is interesting that we find with this function we get
   //   better macrocycle sampling than `_checkAmideEster14`
@@ -871,14 +868,13 @@ bool _checkMacrocycleAllInSameRingAmideEster14(
 
   if (a3Num != 6) return false;
 
-  ROMol::ADJ_ITER nbrIdx, endNbrs;
   if (a2Num == 7 || a2Num == 8) {
     if (mol.getAtomDegree(atm2) == 3 && mol.getAtomDegree(atm3) == 3) {
-      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm2);
-      while (nbrIdx != endNbrs) {
-        if (*nbrIdx != atm1->getIdx() && *nbrIdx != atm3->getIdx()) {
-          const auto &res = mol.getAtomWithIdx(*nbrIdx);
-          const auto &resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), *nbrIdx);
+      for (auto nbrIdx :
+           boost::make_iterator_range(mol.getAtomNeighbors(atm2))) {
+        if (nbrIdx != atm1->getIdx() && nbrIdx != atm3->getIdx()) {
+          const auto &res = mol.getAtomWithIdx(nbrIdx);
+          const auto &resbnd = mol.getBondBetweenAtoms(atm2->getIdx(), nbrIdx);
           if ((res->getAtomicNum() != 6 &&
                res->getAtomicNum() != 1) ||  // check is (methylated)amide
               resbnd->getBondType() != Bond::SINGLE) {
@@ -886,21 +882,19 @@ bool _checkMacrocycleAllInSameRingAmideEster14(
           }
           break;
         }
-        ++nbrIdx;
       }
 
-      boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atm3);
-      while (nbrIdx != endNbrs) {
-        if (*nbrIdx != atm2->getIdx() && *nbrIdx != atm4->getIdx()) {
-          const auto &res = mol.getAtomWithIdx(*nbrIdx);
-          const auto &resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), *nbrIdx);
+      for (auto nbrIdx :
+           boost::make_iterator_range(mol.getAtomNeighbors(atm3))) {
+        if (nbrIdx != atm2->getIdx() && nbrIdx != atm4->getIdx()) {
+          const auto &res = mol.getAtomWithIdx(nbrIdx);
+          const auto &resbnd = mol.getBondBetweenAtoms(atm3->getIdx(), nbrIdx);
           if (res->getAtomicNum() != 8 ||  // check for the carbonyl oxygen
               resbnd->getBondType() != Bond::DOUBLE) {
             return false;
           }
           break;
         }
-        ++nbrIdx;
       }
 
       return true;
@@ -912,26 +906,21 @@ bool _checkMacrocycleAllInSameRingAmideEster14(
 bool _isCarbonyl(const ROMol &mol, const Atom *at) {
   PRECONDITION(at, "bad atom");
   if (at->getAtomicNum() == 6 && at->getDegree() > 2) {
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
-    while (nbrIdx != endNbrs) {
-      unsigned int atNum = mol.getAtomWithIdx(*nbrIdx)->getAtomicNum();
+    for (const auto nbr : mol.atomNeighbors(at)) {
+      unsigned int atNum = nbr->getAtomicNum();
       if ((atNum == 8 || atNum == 7) &&
-          mol.getBondBetweenAtoms(at->getIdx(), *nbrIdx)->getBondType() ==
+          mol.getBondBetweenAtoms(at->getIdx(), nbr->getIdx())->getBondType() ==
               Bond::DOUBLE) {
         return true;
       }
-      ++nbrIdx;
     }
   }
   return false;
 }
 
 bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
-                        const Atom *atm1, const Atom *atm2, const Atom *atm3,
-                        const Atom *atm4) {
-  RDUNUSED_PARAM(atm1);
-  RDUNUSED_PARAM(atm4);
+                        const Atom *, const Atom *atm2, const Atom *atm3,
+                        const Atom *) {
   unsigned int a2Num = atm2->getAtomicNum();
   if ((a2Num == 8) || ((a2Num == 7) && (atm2->getTotalNumHs(true) == 1))) {
     if ((bnd1->getBondType() == Bond::SINGLE)) {
@@ -946,9 +935,8 @@ bool _checkAmideEster15(const ROMol &mol, const Bond *bnd1, const Bond *bnd3,
 
 void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
                        const Bond *bnd3, ComputedData &accumData,
-                       DistGeom::BoundsMatPtr mmat, double *dmat,
+                       DistGeom::BoundsMatPtr mmat, double *,
                        bool forceTransAmides) {
-  RDUNUSED_PARAM(dmat);
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
   PRECONDITION(bnd3, "");
@@ -1351,10 +1339,9 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
                                          const Bond *bnd2, const Bond *bnd3,
                                          ComputedData &accumData,
                                          DistGeom::BoundsMatPtr mmat,
-                                         double *dmat) {
+                                         double *) {
   // This is adapted from `_setChain14Bounds`, with changes on how trans amide
   // is handled
-  RDUNUSED_PARAM(dmat);
   PRECONDITION(bnd1, "");
   PRECONDITION(bnd2, "");
   PRECONDITION(bnd3, "");

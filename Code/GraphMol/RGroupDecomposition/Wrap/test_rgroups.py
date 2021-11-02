@@ -391,11 +391,14 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
 
     core = Chem.MolFromSmarts('O=C(NS(=O)(=O)c1ccccc1)c1ccccc1Oc1ccccc1')
     ps = RGroupDecompositionParameters()
-    ps.timeout = 1.0
+    ps.timeout = 0.1
+    res = None
     with self.assertRaises(RuntimeError):
       rg = RGroupDecomposition(core, ps)
       for m in mols:
-        rg.Add(m)
+        res = rg.Add(m)
+    self.assertIsNotNone(res)
+    self.assertGreater(res, 0)
 
     with self.assertRaises(RuntimeError):
       columns2, unmatched = RGroupDecompose([core], mols, asRows=False, options=ps)

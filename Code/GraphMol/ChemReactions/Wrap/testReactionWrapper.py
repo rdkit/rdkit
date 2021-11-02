@@ -1,10 +1,11 @@
 #
-#  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+#  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc. and
+#  other RDKit contributors
+#
 #  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# modification, are permitted provided that the following conditions are met:
 #
 #     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
@@ -16,16 +17,15 @@
 #       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
@@ -1014,7 +1014,7 @@ M  END
     mol = Chem.MolFromSmiles("c1(=O)nc([Cl])cc([F])[nH]1")
     rxn = rdChemReactions.ReactionFromRxnBlock(rxnblock)
     self.assertIsNotNone(rxn)
-    prods = rxn.RunReactants((mol,))
+    prods = rxn.RunReactants((mol, ))
     # if the explicit hydrogen is not removed and the reactant template
     # is not sanitized, the reactant template is not aromatic and our
     # aromatic reactant won't match
@@ -1022,8 +1022,18 @@ M  END
 
     rxn = rdChemReactions.ReactionFromRxnBlock(rxnblock, removeHs=True, sanitize=True)
     self.assertIsNotNone(rxn)
-    prods = rxn.RunReactants((mol,))
+    prods = rxn.RunReactants((mol, ))
     self.assertEqual(len(prods), 2)
+
+  def testReactionInPlace(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1][N:2][C:3]=[O:4]>>[C:1][O:2][C:3]=[O:4]')
+    self.assertIsNotNone(rxn)
+    reactant = Chem.MolFromSmiles('O=C(C)NCC')
+    self.assertTrue(rxn.RunReactantInPlace(reactant))
+    Chem.SanitizeMol(reactant)
+    self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
+    self.assertFalse(rxn.RunReactantInPlace(reactant))
+    self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
 
 
 if __name__ == '__main__':

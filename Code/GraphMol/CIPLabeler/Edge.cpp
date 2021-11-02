@@ -49,5 +49,5 @@ void Edge::setAux(Descriptor aux) { d_aux = std::move(aux); }
 
 void Edge::flip() { std::swap(dp_beg, dp_end); }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

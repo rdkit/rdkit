@@ -575,6 +575,7 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
                      python::object pyHighlightAtoms, bool kekulize,
                      unsigned int lineWidthMult, bool includeAtomCircles,
                      int confId) {
+  // FIX: we really should be using kekulize here
   RDUNUSED_PARAM(kekulize);
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
@@ -582,6 +583,7 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
   MolDraw2DSVG drawer(width, height, outs);
   drawer.setLineWidth(drawer.lineWidth() * lineWidthMult);
   drawer.drawOptions().circleAtoms = includeAtomCircles;
+  drawer.drawOptions().prepareMolsBeforeDrawing = false;
   drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
   drawer.finishDrawing();
   return outs.str();
@@ -595,8 +597,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 
   rdkit_import_array();
 
-  python::class_<std::map<int, std::string>>("IntStringMap")
-      .def(python::map_indexing_suite<std::map<int, std::string>, true>());
+  if (!is_python_converter_registered<std::map<int, std::string>>()) {
+    python::class_<std::map<int, std::string>>("IntStringMap")
+        .def(python::map_indexing_suite<std::map<int, std::string>, true>());
+  }
 
   std::string docString = "Drawing options";
   python::class_<RDKit::MolDrawOptions, boost::noncopyable>("MolDrawOptions",
@@ -924,10 +928,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 
   docString = "SVG molecule drawer";
   python::class_<RDKit::MolDraw2DSVG, python::bases<RDKit::MolDraw2D>,
-                 boost::noncopyable>("MolDraw2DSVG", docString.c_str(),
-                                     python::init<int, int>())
-      .def(python::init<int, int, int, int>())
-      .def(python::init<int, int, int, int, bool>())
+                 boost::noncopyable>(
+      "MolDraw2DSVG", docString.c_str(),
+      python::init<int, int, int, int, bool>(
+          (python::arg("width"), python::arg("height"),
+           python::arg("panelWidth") = -1, python::arg("panelHeight") = -1,
+           python::arg("noFreetype") = false)))
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
@@ -945,9 +951,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   docString = "Cairo molecule drawer";
   python::class_<RDKit::MolDraw2DCairo, python::bases<RDKit::MolDraw2D>,
-                 boost::noncopyable>("MolDraw2DCairo", docString.c_str(),
-                                     python::init<int, int>())
-      .def(python::init<int, int, int, int>())
+                 boost::noncopyable>(
+      "MolDraw2DCairo", docString.c_str(),
+      python::init<int, int, int, int, bool>(
+          (python::arg("width"), python::arg("height"),
+           python::arg("panelWidth") = -1, python::arg("panelHeight") = -1,
+           python::arg("noFreetype") = false)))
       .def("FinishDrawing", &RDKit::MolDraw2DCairo::finishDrawing,
            "add the last bits to finish the drawing")
       .def("GetDrawingText", &RDKit::getCairoDrawingText,

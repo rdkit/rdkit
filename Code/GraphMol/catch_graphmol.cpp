@@ -14,7 +14,9 @@
 #include <GraphMol/new_canon.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/MonomerInfo.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -1888,6 +1890,7 @@ TEST_CASE("github #4122: segfaults in commitBatchEdit()", "[editing]][bug]") {
     m->commitBatchEdit();
   }
 }
+
 TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   SECTION("original") {
     auto m = "C(-[N,O])-[#7,#8]"_smarts;
@@ -1904,6 +1907,21 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   }
 }
 
+TEST_CASE("github #4496: cannot draw aromatic atom lists from SMARTS",
+          "[query][bug]") {
+  SECTION("original") {
+    auto m = "[c,n]1[c,n][c,n][c,n][c,n][c,n]1"_smarts;
+    REQUIRE(m);
+    std::vector<int> expected({6, 7});
+    for (const auto a : m->atoms()) {
+      CHECK(isAtomListQuery(a));
+      std::vector<int> vals;
+      getAtomListQueryVals(a->getQuery(), vals);
+      CHECK(vals == expected);
+    }
+  }
+}
+
 TEST_CASE("bridgehead queries", "[query]") {
   SECTION("basics") {
     {
@@ -1912,9 +1930,9 @@ TEST_CASE("bridgehead queries", "[query]") {
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
         if (atom->getIdx() == 1 || atom->getIdx() == 4) {
-          CHECK(test == true);
+          CHECK(test == 1);
         } else {
-          CHECK(test == false);
+          CHECK(test == 0);
         }
       }
     }
@@ -1924,9 +1942,9 @@ TEST_CASE("bridgehead queries", "[query]") {
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
         if (atom->getIdx() == 1 || atom->getIdx() == 4) {
-          CHECK(test == true);
+          CHECK(test == 1);
         } else {
-          CHECK(test == false);
+          CHECK(test == 0);
         }
       }
     }
@@ -1935,7 +1953,7 @@ TEST_CASE("bridgehead queries", "[query]") {
       REQUIRE(m);
       for (const auto atom : m->atoms()) {
         auto test = queryIsAtomBridgehead(atom);
-        CHECK(test == false);
+        CHECK(test == 0);
       }
     }
   }
@@ -2120,6 +2138,326 @@ TEST_CASE(
     CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == 0);
     CHECK(MolToSmiles(*m) == "CO");
     CHECK(MolToSmarts(*m) == "C-,=O");
+  }
+}
+
+TEST_CASE("atom copy ctor") {
+  auto m = "CO"_smiles;
+  REQUIRE(m);
+  for (const auto atom : m->atoms()) {
+    Atom cp(*atom);
+    CHECK(cp.getAtomicNum() == atom->getAtomicNum());
+    CHECK(!cp.hasOwningMol());
+  }
+}
+
+TEST_CASE("bond copy ctor") {
+  auto m = "COC"_smiles;
+  REQUIRE(m);
+  for (const auto bond : m->bonds()) {
+    Bond cp(*bond);
+    CHECK(cp.getBondType() == bond->getBondType());
+    CHECK(!cp.hasOwningMol());
+  }
+}
+
+TEST_CASE("valence edge") {
+  {  // this is, of course, absurd:
+    auto m = "[H-2]"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(0)->setNoImplicit(false);
+    m->updatePropertyCache(false);
+    CHECK(m->getAtomWithIdx(0)->getFormalCharge() == -2);
+    CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+  }
+  {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("CFC", ps)};
+    REQUIRE(m);
+    CHECK_THROWS_AS(m->getAtomWithIdx(1)->calcImplicitValence(true),
+                    AtomValenceException);
+  }
+}
+
+TEST_CASE("SetQuery on normal atoms") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  auto qry = makeAtomAliphaticQuery();
+  CHECK_THROWS_AS(m->getAtomWithIdx(0)->setQuery(qry), std::runtime_error);
+  CHECK_THROWS_AS(m->getAtomWithIdx(0)->expandQuery(qry), std::runtime_error);
+  delete qry;
+}
+
+TEST_CASE("SetQuery on normal bonds") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  auto qry = makeBondOrderEqualsQuery(Bond::BondType::SINGLE);
+  CHECK_THROWS_AS(m->getBondWithIdx(0)->setQuery(qry), std::runtime_error);
+  CHECK_THROWS_AS(m->getBondWithIdx(0)->expandQuery(qry), std::runtime_error);
+  delete qry;
+}
+
+TEST_CASE("additional atom props") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  auto atom = m->getAtomWithIdx(0);
+  {
+    CHECK(!atom->hasProp(common_properties::_MolFileRLabel));
+    setAtomRLabel(atom, 1);
+    CHECK(atom->hasProp(common_properties::_MolFileRLabel));
+    setAtomRLabel(atom, 0);
+    CHECK(!atom->hasProp(common_properties::_MolFileRLabel));
+  }
+  {
+    CHECK(!atom->hasProp(common_properties::molFileAlias));
+    setAtomAlias(atom, "foo");
+    CHECK(atom->hasProp(common_properties::molFileAlias));
+    setAtomAlias(atom, "");
+    CHECK(!atom->hasProp(common_properties::molFileAlias));
+  }
+  {
+    CHECK(!atom->hasProp(common_properties::molFileValue));
+    setAtomValue(atom, "foo");
+    CHECK(atom->hasProp(common_properties::molFileValue));
+    setAtomValue(atom, "");
+    CHECK(!atom->hasProp(common_properties::molFileValue));
+  }
+  {
+    CHECK(!atom->hasProp(common_properties::_supplementalSmilesLabel));
+    setSupplementalSmilesLabel(atom, "foo");
+    CHECK(atom->hasProp(common_properties::_supplementalSmilesLabel));
+    setSupplementalSmilesLabel(atom, "");
+    CHECK(!atom->hasProp(common_properties::_supplementalSmilesLabel));
+  }
+}
+
+TEST_CASE("getBondTypeAsDouble()") {
+  SECTION("plain") {
+    std::vector<std::pair<Bond::BondType, double>> vals{
+        {Bond::BondType::IONIC, 0},
+        {Bond::BondType::ZERO, 0},
+        {Bond::BondType::SINGLE, 1},
+        {Bond::BondType::DOUBLE, 2},
+        {Bond::BondType::TRIPLE, 3},
+        {Bond::BondType::QUADRUPLE, 4},
+        {Bond::BondType::QUINTUPLE, 5},
+        {Bond::BondType::HEXTUPLE, 6},
+        {Bond::BondType::ONEANDAHALF, 1.5},
+        {Bond::BondType::TWOANDAHALF, 2.5},
+        {Bond::BondType::THREEANDAHALF, 3.5},
+        {Bond::BondType::FOURANDAHALF, 4.5},
+        {Bond::BondType::FIVEANDAHALF, 5.5},
+        {Bond::BondType::AROMATIC, 1.5},
+        {Bond::BondType::DATIVEONE, 1.0},
+        {Bond::BondType::DATIVE, 1.0},
+        {Bond::BondType::HYDROGEN, 0}
+
+    };
+    for (const auto &pr : vals) {
+      Bond bnd(pr.first);
+      CHECK(bnd.getBondType() == pr.first);
+      CHECK(bnd.getBondTypeAsDouble() == pr.second);
+    }
+  }
+  SECTION("twice") {
+    std::vector<std::pair<Bond::BondType, std::uint8_t>> vals{
+        {Bond::BondType::IONIC, 0},         {Bond::BondType::ZERO, 0},
+        {Bond::BondType::SINGLE, 2},        {Bond::BondType::DOUBLE, 4},
+        {Bond::BondType::TRIPLE, 6},        {Bond::BondType::QUADRUPLE, 8},
+        {Bond::BondType::QUINTUPLE, 10},    {Bond::BondType::HEXTUPLE, 12},
+        {Bond::BondType::ONEANDAHALF, 3},   {Bond::BondType::TWOANDAHALF, 5},
+        {Bond::BondType::THREEANDAHALF, 7}, {Bond::BondType::FOURANDAHALF, 9},
+        {Bond::BondType::FIVEANDAHALF, 11}, {Bond::BondType::AROMATIC, 3},
+        {Bond::BondType::DATIVEONE, 2},     {Bond::BondType::DATIVE, 2},
+        {Bond::BondType::HYDROGEN, 0}
+
+    };
+    for (const auto &pr : vals) {
+      Bond bnd(pr.first);
+      CHECK(bnd.getBondType() == pr.first);
+      CHECK(getTwiceBondType(bnd) == pr.second);
+    }
+  }
+}
+
+TEST_CASE("getValenceContrib()") {
+  const auto m = "CO->[Fe]"_smiles;
+  REQUIRE(m);
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(0)) == 0);
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(1)) == 0);
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 1);
+}
+
+TEST_CASE("conformer details") {
+  const auto m = "CC"_smiles;
+  REQUIRE(m);
+  Conformer *conf = new Conformer(m->getNumAtoms());
+  CHECK(!conf->hasOwningMol());
+  m->addConformer(conf);
+  CHECK(conf->hasOwningMol());
+  auto cid = conf->getId();
+  *conf = *conf;
+  CHECK(conf->hasOwningMol());
+  CHECK(conf->getId() == cid);
+}
+
+#if !defined(_MSC_VER) || !defined(RDKIT_DYN_LINK)
+namespace RDKit {
+namespace Canon {
+namespace details {
+bool atomHasFourthValence(const Atom *atom);
+bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q);
+}  // namespace details
+void switchBondDir(Bond *bond);
+}  // namespace Canon
+}  // namespace RDKit
+TEST_CASE("canon details") {
+  SECTION("h queries") {
+    std::vector<std::pair<std::string, bool>> examples{
+        {"C[CHD3](F)Cl", true},  {"C[CD3H](F)Cl", true},
+        {"C[CH3D](F)Cl", false}, {"C[CDH3](F)Cl", false},
+        {"C[CDR4H](F)Cl", true},
+    };
+    for (const auto &pr : examples) {
+      std::unique_ptr<RWMol> m{SmartsToMol(pr.first)};
+      REQUIRE(m);
+      CHECK(RDKit::Canon::details::hasSingleHQuery(
+                m->getAtomWithIdx(1)->getQuery()) == pr.second);
+      CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)) ==
+            pr.second);
+      // artificial, but causes atomHasFourthValence to always return true
+      m->getAtomWithIdx(1)->setNumExplicitHs(1);
+      CHECK(RDKit::Canon::details::atomHasFourthValence(m->getAtomWithIdx(1)));
+    }
+  }
+}
+TEST_CASE("switchBondDir") {
+  auto m = "C/C=C/C"_smiles;
+  REQUIRE(m);
+  auto bond = m->getBondWithIdx(0);
+  CHECK(bond->getBondDir() == Bond::BondDir::ENDUPRIGHT);
+  Canon::switchBondDir(bond);
+  CHECK(bond->getBondDir() == Bond::BondDir::ENDDOWNRIGHT);
+  bond->setBondDir(Bond::BondDir::UNKNOWN);
+  Canon::switchBondDir(bond);
+  CHECK(bond->getBondDir() == Bond::BondDir::UNKNOWN);
+}
+#endif
+
+TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
+  std::vector<std::pair<std::string, std::string>> tests = {
+      {"O=n1ccccc1", "O=N1=CC=CC=C1"},
+      {"O=p1ccccc1", "O=P1=CC=CC=C1"},
+      {"O=[as]1ccccc1", "O=[As]1=CC=CC=C1"}};
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  SECTION("kekulization") {
+    for (const auto &pr : tests) {
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      MolOps::Kekulize(*m);
+      CHECK(MolToSmiles(*m) == pr.second);
+    }
+  }
+  SECTION("sanitization") {
+    for (const auto &pr : tests) {
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      unsigned int failed;
+      unsigned int flags = MolOps::SanitizeFlags::SANITIZE_ALL ^
+                           MolOps::SanitizeFlags::SANITIZE_CLEANUP ^
+                           MolOps::SanitizeFlags::SANITIZE_PROPERTIES;
+      MolOps::sanitizeMol(*m, failed, flags);
+      CHECK(!failed);
+      CHECK(MolToSmiles(*m) == pr.second);
+    }
+  }
+}
+
+TEST_CASE("KekulizeIfPossible") {
+  SECTION("basics: molecules with failures") {
+    std::vector<std::string> smis = {
+        "c1cccn1",
+        "c1ccccc1-c1cccn1",
+    };
+    for (const auto &smi : smis) {
+      SmilesParserParams ps;
+      ps.sanitize = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      // confirm that we normally fail:
+      {
+        RWMol m2(*m);
+        CHECK_THROWS_AS(MolOps::Kekulize(m2), MolSanitizeException);
+      }
+      {
+        RWMol m2(*m);
+        CHECK(!MolOps::KekulizeIfPossible(m2));
+        for (unsigned i = 0; i < m2.getNumAtoms(); ++i) {
+          CHECK(m2.getAtomWithIdx(i)->getIsAromatic() ==
+                m->getAtomWithIdx(i)->getIsAromatic());
+        }
+        for (unsigned i = 0; i < m2.getNumBonds(); ++i) {
+          CHECK(m2.getBondWithIdx(i)->getIsAromatic() ==
+                m->getBondWithIdx(i)->getIsAromatic());
+          CHECK(m2.getBondWithIdx(i)->getBondType() ==
+                m->getBondWithIdx(i)->getBondType());
+        }
+      }
+    }
+  }
+  SECTION("basics: molecules without failures") {
+    std::vector<std::string> smis = {"c1ccc[nH]1", "c1ccccc1"};
+    for (const auto &smi : smis) {
+      SmilesParserParams ps;
+      ps.sanitize = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      {
+        RWMol m2(*m);
+        MolOps::Kekulize(m2);
+        RWMol m3(*m);
+        CHECK(MolOps::KekulizeIfPossible(m3));
+        for (unsigned i = 0; i < m2.getNumAtoms(); ++i) {
+          CHECK(m2.getAtomWithIdx(i)->getIsAromatic() ==
+                m3.getAtomWithIdx(i)->getIsAromatic());
+        }
+        for (unsigned i = 0; i < m2.getNumBonds(); ++i) {
+          CHECK(m2.getBondWithIdx(i)->getIsAromatic() ==
+                m3.getBondWithIdx(i)->getIsAromatic());
+          CHECK(m2.getBondWithIdx(i)->getBondType() ==
+                m3.getBondWithIdx(i)->getBondType());
+        }
+      }
+    }
+  }
+}
+
+TEST_CASE("Github #4535: operator<< for AtomPDBResidue", "[PDB]") {
+  SECTION("basics") {
+    bool sanitize = true;
+    int flavor = 0;
+    std::unique_ptr<RWMol> mol(SequenceToMol("KY", sanitize, flavor));
+    REQUIRE(mol);
+    REQUIRE(mol->getAtomWithIdx(0)->getMonomerInfo());
+    auto res = static_cast<AtomPDBResidueInfo *>(
+        mol->getAtomWithIdx(0)->getMonomerInfo());
+    REQUIRE(res);
+    std::stringstream oss;
+    oss << *res << std::endl;
+    res = static_cast<AtomPDBResidueInfo *>(
+        mol->getAtomWithIdx(mol->getNumAtoms() - 1)->getMonomerInfo());
+    REQUIRE(res);
+    oss << *res << std::endl;
+    auto tgt = R"FOO(1  N   LYS A 1
+22  OXT TYR A 2
+)FOO";
+    CHECK(oss.str() == tgt);
   }
 }
 

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,20 +20,28 @@
 #include <boost/tokenizer.hpp>
 #include <Geometry/point.h>
 
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/flyweight.hpp>
+#include <boost/flyweight/key_value.hpp>
+#include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace ForceFields {
 namespace UFF {
 
-class std::unique_ptr<ParamCollection> ParamCollection::ds_instance = nullptr;
-
 extern const std::string defaultParamData;
 
-ParamCollection *ParamCollection::getParams(const std::string &paramData) {
-  if (ds_instance == nullptr || !paramData.empty()) {
-    ds_instance.reset(new ParamCollection(paramData));
-  }
-  return ds_instance.get();
+typedef boost::flyweight<
+    boost::flyweights::key_value<std::string, ParamCollection>,
+    boost::flyweights::no_tracking>
+    param_flyweight;
+
+const ParamCollection *ParamCollection::getParams(
+    const std::string &paramData) {
+  const ParamCollection *res = &(param_flyweight(paramData).get());
+  return res;
 }
 
 ParamCollection::ParamCollection(std::string paramData) {
@@ -83,6 +90,8 @@ ParamCollection::ParamCollection(std::string paramData) {
     inLine = RDKit::getLine(inStream);
   }
 }
+
+// clang-format off
 const std::string defaultParamData =
     "#Atom	r1	theta0	x1	D1	zeta	Z1	Vi	Uj	"
     "Xi	Hard	Radius\n"
@@ -340,5 +349,7 @@ const std::string defaultParamData =
     "3.475	3.175	1.9\n"
     "Lw6+3	1.698	90	3.236	0.011	12	3.9	0	0	"
     "3.5	3.2	1.9\n";
+// clang-format on
+
 }  // end of namespace UFF
 }  // end of namespace ForceFields

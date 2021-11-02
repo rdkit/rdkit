@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "SubstructUtils.h"
+#include <set>
 #include <RDGeneral/utils.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
@@ -169,7 +170,8 @@ bool bondCompat(const Bond *b1, const Bond *b2,
   return res;
 }
 
-void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms) {
+void removeDuplicates(std::vector<MatchVectType> &matches,
+                      unsigned int nAtoms) {
   //
   //  This works by tracking the indices of the atoms in each match vector.
   //  This can lead to unexpected behavior when looking at rings and queries
@@ -181,21 +183,22 @@ void removeDuplicates(std::vector<MatchVectType> &v, unsigned int nAtoms) {
   //  that the 4 paths are equivalent in the semantics of the query.
   //  Also, OELib returns the same results
   //
-  std::vector<boost::dynamic_bitset<>> seen;
+  std::set<boost::dynamic_bitset<>> seen;
   std::vector<MatchVectType> res;
-  for (std::vector<MatchVectType>::const_iterator i = v.begin(); i != v.end();
-       ++i) {
+  res.reserve(matches.size());
+  for (auto &&match : matches) {
     boost::dynamic_bitset<> val(nAtoms);
-    for (const auto &ci : *i) {
+    for (const auto &ci : match) {
       val.set(ci.second);
     }
-    if (std::find(seen.begin(), seen.end(), val) == seen.end()) {
-      // it's something new
-      res.push_back(*i);
-      seen.push_back(val);
+    auto pos = seen.lower_bound(val);
+    if (pos == seen.end() || *pos != val) {
+      res.push_back(std::move(match));
+      seen.insert(pos, std::move(val));
     }
   }
-  v = res;
+  res.shrink_to_fit();
+  matches = std::move(res);
 }
 
 const MatchVectType &getMostSubstitutedCoreMatch(

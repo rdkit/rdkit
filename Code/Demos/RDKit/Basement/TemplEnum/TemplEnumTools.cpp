@@ -419,4 +419,4 @@ RWMOL_SPTR_VECT enumFromFiles(const char *templateName,
   return library;
 }
 
-}  // end of TemplateEnum namespace
+}  // namespace TemplateEnum

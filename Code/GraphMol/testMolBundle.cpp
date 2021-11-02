@@ -27,18 +27,32 @@ void testBaseFunctionality() {
                        << "    testBaseFunctionality" << std::endl;
   ROMOL_SPTR mol(SmilesToMol("CC[C@H](C)F"));
 
-  MolBundle bundle;
-  TEST_ASSERT(bundle.size() == 0);
-  TEST_ASSERT(bundle.addMol(mol) == 1);
-  TEST_ASSERT(bundle.size() == 1);
-  TEST_ASSERT(bundle.addMol(ROMOL_SPTR(SmilesToMol("CC[C@@H](C)F"))) == 2);
-  TEST_ASSERT(bundle.size() == 2);
+  {
+    MolBundle bundle;
+    TEST_ASSERT(bundle.size() == 0);
+    TEST_ASSERT(bundle.addMol(mol) == 1);
+    TEST_ASSERT(bundle.size() == 1);
+    TEST_ASSERT(bundle.addMol(ROMOL_SPTR(SmilesToMol("CC[C@@H](C)F"))) == 2);
+    TEST_ASSERT(bundle.size() == 2);
 
-  MolBundle bundle2(bundle);
-  TEST_ASSERT(bundle2.size() == 2);
+    MolBundle bundle2(bundle);
+    TEST_ASSERT(bundle2.size() == 2);
 
-  TEST_ASSERT(bundle.getMol(0)->getNumAtoms() == 5);
-  TEST_ASSERT(bundle[0]->getNumAtoms() == 5);
+    TEST_ASSERT(bundle.getMol(0)->getNumAtoms() == 5);
+    TEST_ASSERT(bundle[0]->getNumAtoms() == 5);
+  }
+
+  {
+    FixedMolSizeMolBundle bundle;
+    TEST_ASSERT(bundle.size() == 0);
+    TEST_ASSERT(bundle.addMol(mol) == 1);
+    TEST_ASSERT(bundle.size() == 1);
+    TEST_ASSERT(bundle.addMol(ROMOL_SPTR(SmilesToMol("CC[C@@H](C)F"))) == 2);
+    TEST_ASSERT(bundle.size() == 2);
+
+    FixedMolSizeMolBundle bundle2(bundle);
+    TEST_ASSERT(bundle2.size() == 2);
+  }
 
   BOOST_LOG(rdInfoLog) << "  Done." << std::endl;
 }

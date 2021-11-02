@@ -251,5 +251,5 @@ double AngleBendContrib::getThetaDeriv(double cosTheta, double sinTheta) const {
   }
   return dE_dTheta;
 }
-}
-}
+}  // namespace UFF
+}  // namespace ForceFields

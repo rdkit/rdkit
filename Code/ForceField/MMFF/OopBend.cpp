@@ -153,5 +153,5 @@ void OopBendContrib::getGrad(double *pos, double *grad) const {
     g4[i] += dE_dChi * tg4[i];
   }
 }
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields

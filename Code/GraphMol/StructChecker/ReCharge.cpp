@@ -15,8 +15,8 @@ namespace RDKit {
 namespace StructureCheck {
 
 /*
-* Returns the total charge of all atoms in molecule.
-*/
+ * Returns the total charge of all atoms in molecule.
+ */
 int TotalCharge(const ROMol &mol) {
   int charge = 0;
   for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
@@ -27,10 +27,10 @@ int TotalCharge(const ROMol &mol) {
 }
 
 /*
-* Checks if all defined stereocenters in *mp are unambiguously
-* numbered by numbering, i.e. all four ligands get different
-* numbers. It returns TRUE if this is the case and FALSE otherwise.
-*/
+ * Checks if all defined stereocenters in *mp are unambiguously
+ * numbered by numbering, i.e. all four ligands get different
+ * numbers. It returns TRUE if this is the case and FALSE otherwise.
+ */
 bool AllCentersRefined(const ROMol &mol, std::vector<unsigned> &numbering) {
   std::vector<Neighbourhood> neighbour_array;
   int parity;
@@ -76,13 +76,13 @@ bool AllCentersRefined(const ROMol &mol, std::vector<unsigned> &numbering) {
 }
 
 /*
-* Removes hydrogens from *mp until desired_charge is reached. The
-* positions for hydrogen removal are selected by "acidity" combined
-* with a refinement algorithm. It returns TRUE if molecule could be
-* neutralized and FALSE if any problem were encountered.
-* *ndeprot and *nrefine are set to the number of deprotonations
-* and refinement cycles performed.
-*/
+ * Removes hydrogens from *mp until desired_charge is reached. The
+ * positions for hydrogen removal are selected by "acidity" combined
+ * with a refinement algorithm. It returns TRUE if molecule could be
+ * neutralized and FALSE if any problem were encountered.
+ * *ndeprot and *nrefine are set to the number of deprotonations
+ * and refinement cycles performed.
+ */
 bool ChargeFix::rechargeMolecule(unsigned &ndeprot, unsigned &nrefine) {
   bool changed = false;
   int nacid = 0;
@@ -152,10 +152,10 @@ void ChargeFix::resetValues() {
 }
 
 /*
-* Estimates the pKa value of acidic atoms in molecule *mp and sets
-* the 'value' fields to this value.
-* It returns TRUE if all went well and FALSE otherwise.
-*/
+ * Estimates the pKa value of acidic atoms in molecule *mp and sets
+ * the 'value' fields to this value.
+ * It returns TRUE if all went well and FALSE otherwise.
+ */
 bool ChargeFix::setpKaValues() {
   const ROMol &mol = Mol;
   bool result = true;
@@ -389,11 +389,11 @@ bool ChargeFix::setpKaValues() {
 }
 
 /*
-* Marks those atoms which have the smallest pKa value of all acidic
-* (i.e. already marked) atoms. All other marks are removed.
-* *pKa_value is set to the minimum pKa, and *gap is set to the
-* pKa difference to the next acidic set of atoms.
-*/
+ * Marks those atoms which have the smallest pKa value of all acidic
+ * (i.e. already marked) atoms. All other marks are removed.
+ * *pKa_value is set to the minimum pKa, and *gap is set to the
+ * pKa difference to the next acidic set of atoms.
+ */
 int ChargeFix::markMostAcidicAtoms(double &pKa_value, double &gap) {
   double min_pKa = 1000.0;
   double next_pKa = 1000.0;
@@ -422,8 +422,8 @@ int ChargeFix::markMostAcidicAtoms(double &pKa_value, double &gap) {
 }
 
 /*
-* Decrements the charges of all marked atoms.
-*/
+ * Decrements the charges of all marked atoms.
+ */
 void ChargeFix::decrementMarkedCharges() {
   for (unsigned i = 0; i < Mol.getNumAtoms(); i++)
     if (0 != AtomColor[i])
@@ -440,10 +440,10 @@ struct atom_rank_t {
 };
 
 /*
-* Refines the class of acidic atoms to a smaller one based on
-* the electronegativity of the neighbouring atoms.
-* It returns the size of this class.
-*/
+ * Refines the class of acidic atoms to a smaller one based on
+ * the electronegativity of the neighbouring atoms.
+ * It returns the size of this class.
+ */
 int ChargeFix::refineAcidicAtoms(std::vector<unsigned> &numbering) {
   int result = 0;
   bool changed, do_cis_trans;

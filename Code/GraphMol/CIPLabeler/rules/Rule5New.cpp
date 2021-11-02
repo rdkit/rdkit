@@ -76,7 +76,6 @@ void Rule5New::fillPairs(const Node *beg, PairList &plist) const {
   auto queue = std::list<const Node *>({beg});
 
   for (const auto &node : queue) {
-
     plist.add(node->getAux());
     auto edges = node->getEdges();
     sorter.prioritize(node, edges);
@@ -105,5 +104,5 @@ Sort Rule5New::getRefSorter(const SequenceRule *replacement_rule) const {
   return {new_rules};
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

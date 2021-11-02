@@ -121,8 +121,9 @@ struct fragcat_wrapper {
         .def(python::init<const std::string &>())
         .def("GetNumEntries", &FragCatalog::getNumEntries)
         .def("GetFPLength", &FragCatalog::getFPLength)
-        .def("GetCatalogParams", (FragCatParams * (FragCatalog::*)()) &
-                                     FragCatalog::getCatalogParams,
+        .def("GetCatalogParams",
+             (FragCatParams * (FragCatalog::*)()) &
+                 FragCatalog::getCatalogParams,
              python::return_value_policy<python::reference_existing_object>())
         .def("Serialize", &FragCatalog::Serialize)
 
@@ -146,6 +147,6 @@ struct fragcat_wrapper {
   };
 };
 
-}  // end of namespace
+}  // namespace RDKit
 
 void wrap_fragcat() { RDKit::fragcat_wrapper::wrap(); }

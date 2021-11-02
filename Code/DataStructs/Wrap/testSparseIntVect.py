@@ -10,7 +10,7 @@ import unittest
 import pickle
 from rdkit import RDConfig
 from rdkit import DataStructs as ds
-
+import random
 
 def feq(v1, v2, tol=1e-4):
   return abs(v1 - v2) < tol
@@ -212,6 +212,19 @@ class TestCase(unittest.TestCase):
     for i in range(len(bulkDs)):
       self.assertTrue(feq(bulkDs[i], taniDs[i]))
 
+  def test7ToList(self):
+    l = [0]*2048
+    nbits = 2048
+    bv = ds.IntSparseIntVect(nbits)
+    for j in range(nbits):
+      x = random.randrange(0, nbits)
+      l[x] = x
+      bv[x] = x
+
+    l2 = list(bv)
+    l3 = bv.ToList()
+    self.assertEqual(l, l2)
+    self.assertEqual(l, l3)
 
 if __name__ == '__main__':
   unittest.main()

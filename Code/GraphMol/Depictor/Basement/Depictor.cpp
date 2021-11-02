@@ -45,4 +45,4 @@ int Add2DCoordsToMol(ROMol &mol, bool useDLL) {
 #endif
   return res;
 }
-}
+}  // namespace RDKit

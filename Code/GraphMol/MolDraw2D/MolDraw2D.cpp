@@ -1560,15 +1560,11 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii, int confId, int width,
     int height) {
-  // prepareMolForDrawing needs a RWMol but don't copy the original mol
-  // if we don't need to
-  unique_ptr<RWMol> rwmol;
+  unique_ptr<RWMol> rwmol{new RWMol(mol)};
   if (drawOptions().prepareMolsBeforeDrawing || !mol.getNumConformers()) {
-    rwmol.reset(new RWMol(mol));
     MolDraw2DUtils::prepareMolForDrawing(*rwmol);
   }
   if (drawOptions().centreMoleculesBeforeDrawing) {
-    if (!rwmol) rwmol.reset(new RWMol(mol));
     if (rwmol->getNumConformers()) {
       centerMolForDrawing(*rwmol, confId);
     }
@@ -1591,7 +1587,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
         // all specified chiral centers are accounted for by this StereoGroup.
         if (sgs[0].getGroupType() == StereoGroupType::STEREO_OR ||
             sgs[0].getGroupType() == StereoGroupType::STEREO_AND) {
-          if (!rwmol) rwmol.reset(new RWMol(mol));
           std::vector<StereoGroup> empty;
           rwmol->setStereoGroups(std::move(empty));
           std::string label =
@@ -1609,20 +1604,19 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
       }
     }
   }
-  ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
-  if (!draw_mol.getNumConformers()) {
+  if (!rwmol->getNumConformers()) {
     // clearly, the molecule is in a sorry state.
     return rwmol;
   }
 
   if (drawOptions().addStereoAnnotation) {
-    MolDraw2D_detail::addStereoAnnotation(draw_mol);
+    MolDraw2D_detail::addStereoAnnotation(*rwmol);
   }
   if (drawOptions().addAtomIndices) {
-    MolDraw2D_detail::addAtomIndices(draw_mol);
+    MolDraw2D_detail::addAtomIndices(*rwmol);
   }
   if (drawOptions().addBondIndices) {
-    MolDraw2D_detail::addBondIndices(draw_mol);
+    MolDraw2D_detail::addBondIndices(*rwmol);
   }
   if (!activeMolIdx_) {
     if (drawOptions().clearBackground) {
@@ -1630,25 +1624,25 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     }
   }
   bool updateBBox = !activeMolIdx_;
-  extractAtomCoords(draw_mol, confId, updateBBox);
-  extractAtomSymbols(draw_mol);
-  extractAtomNotes(draw_mol);
-  extractBondNotes(draw_mol);
-  extractRadicals(draw_mol);
+  extractAtomCoords(*rwmol, confId, updateBBox);
+  extractAtomSymbols(*rwmol);
+  extractAtomNotes(*rwmol);
+  extractBondNotes(*rwmol);
+  extractRadicals(*rwmol);
   if (activeMolIdx_ >= 0 &&
       post_shapes_.size() > static_cast<size_t>(activeMolIdx_) &&
       pre_shapes_.size() > static_cast<size_t>(activeMolIdx_)) {
     post_shapes_[activeMolIdx_].clear();
     pre_shapes_[activeMolIdx_].clear();
   }
-  extractSGroupData(draw_mol);
-  extractVariableBonds(draw_mol);
-  extractBrackets(draw_mol);
-  extractMolNotes(draw_mol);
-  extractLinkNodes(draw_mol);
+  extractSGroupData(*rwmol);
+  extractVariableBonds(*rwmol);
+  extractBrackets(*rwmol);
+  extractMolNotes(*rwmol);
+  extractLinkNodes(*rwmol);
 
   if (!activeMolIdx_ && needs_scale_) {
-    calculateScale(width, height, draw_mol, highlight_atoms, highlight_radii,
+    calculateScale(width, height, *rwmol, highlight_atoms, highlight_radii,
                    confId);
     needs_scale_ = false;
   }
@@ -1952,9 +1946,8 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol,
+StringRect MolDraw2D::calcAnnotationPosition(const ROMol &,
                                              const std::string &note) {
-  RDUNUSED_PARAM(mol);
   StringRect note_rect;
   if (note.empty()) {
     note_rect.width_ = -1.0;  // so we know it's not valid.
@@ -2715,6 +2708,7 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
         atomIdx = sg.getAtoms()[0];
       };
       StringRect rect;
+      bool located = false;
       std::string fieldDisp;
       if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
         double xp = FileParserUtils::stripSpacesAndCast<double>(
@@ -2724,7 +2718,13 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
         Point2D origLoc{xp, yp};
 
         if (fieldDisp[25] == 'R') {
-          origLoc += mol.getConformer().getAtomPos(atomIdx);
+          if (atomIdx < 0) {
+            // we will warn about this below
+            text = "";
+          } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
+            origLoc += mol.getConformer().getAtomPos(atomIdx);
+            located = true;
+          }
         } else {
           if (mol.hasProp("_centroidx")) {
             Point2D centroid;
@@ -2732,17 +2732,21 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
             mol.getProp("_centroidy", centroid.y);
             origLoc += centroid;
           }
+          located = true;
         }
         tform.TransformPoint(origLoc);
         rect.trans_ = origLoc;
-      } else if (atomIdx >= 0) {
-        rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
-      } else {
-        BOOST_LOG(rdWarningLog)
-            << "FIELDDISP info not found for DAT SGroup which isn't associated "
-               "with an atom. SGroup will not be rendered."
-            << std::endl;
-        text = "";
+      }
+      if (!located) {
+        if (atomIdx >= 0) {
+          rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
+        } else {
+          BOOST_LOG(rdWarningLog)
+              << "FIELDDISP info not found for DAT SGroup which isn't "
+                 "associated with an atom. SGroup will not be rendered."
+              << std::endl;
+          text = "";
+        }
       }
       if (!text.empty()) {
         AnnotationType annot;
@@ -3040,7 +3044,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
       swap(col1, col2);
       inverted = true;
     }
-    if(d2d.drawOptions().singleColourWedgeBonds) {
+    if (d2d.drawOptions().singleColourWedgeBonds) {
       col1 = d2d.drawOptions().symbolColour;
       col2 = d2d.drawOptions().symbolColour;
     }
@@ -3245,11 +3249,8 @@ void drawQueryBond1(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
 
 void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
                    const Point2D &at1_cds, const Point2D &at2_cds,
-                   const std::vector<Point2D> &at_cds, const DrawColour &col1,
-                   const DrawColour &col2, double double_bond_offset) {
-  RDUNUSED_PARAM(col1);
-  RDUNUSED_PARAM(col2);
-
+                   const std::vector<Point2D> &at_cds,
+                   double double_bond_offset) {
   PRECONDITION(bond.hasQuery(), "no query");
   const auto qry = bond.getQuery();
   if (!d2d.drawOptions().splitBonds) {
@@ -3393,17 +3394,13 @@ void drawQueryBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
 
 // ****************************************************************************
 void MolDraw2D::drawBond(
-    const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
-    const vector<int> *highlight_atoms,
-    const map<int, DrawColour> *highlight_atom_map,
+    const ROMol &, const Bond *bond, int at1_idx, int at2_idx,
+    const vector<int> *, const map<int, DrawColour> *,
     const vector<int> *highlight_bonds,
     const map<int, DrawColour> *highlight_bond_map,
     const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours) {
   PRECONDITION(bond, "no bond");
   PRECONDITION(activeMolIdx_ >= 0, "bad mol idx");
-  RDUNUSED_PARAM(highlight_atoms);
-  RDUNUSED_PARAM(highlight_atom_map);
-  RDUNUSED_PARAM(mol);
 
   if (static_cast<unsigned int>(at1_idx) != bond->getBeginAtomIdx()) {
     std::swap(at1_idx, at2_idx);
@@ -3460,7 +3457,7 @@ void MolDraw2D::drawBond(
     if (bond->getQuery()->getNegation() || descr != "BondOrder") {
       isComplex = true;
       drawQueryBond(*this, *bond, highlight_bond, at1_cds, at2_cds,
-                    at_cds_[activeMolIdx_], col1, col2, double_bond_offset);
+                    at_cds_[activeMolIdx_], double_bond_offset);
     }
   }
 
@@ -4414,9 +4411,7 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2) {
 
 void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                              const DrawColour &col1, const DrawColour &col2,
-                             unsigned int nSegments, double vertOffset) {
-  RDUNUSED_PARAM(nSegments);
-  RDUNUSED_PARAM(vertOffset);
+                             unsigned int, double) {
   drawLine(cds1, cds2, col1, col2);
 }
 

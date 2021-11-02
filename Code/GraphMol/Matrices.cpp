@@ -161,7 +161,7 @@ void FloydWarshall(int dim, T *adjMat, int *pathMat,
   delete[] lastD;
   delete[] lastP;
 }
-}  // end of local utility namespace
+}  // namespace
 
 namespace MolOps {
 double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
@@ -177,6 +177,9 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
   // make sure we don't use the nonBO cache for the BO matrix and vice versa:
   if (useBO) {
     propName += "BO";
+  }
+  if (useAtomWts) {
+    propName += "AtomWts";
   }
   if (!force && mol.hasProp(propName)) {
     mol.getProp(propName, sptr);
@@ -196,7 +199,7 @@ double *getDistanceMat(const ROMol &mol, bool useBO, bool useAtomWts,
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
-    const Bond* bond = mol[*firstB];
+    const Bond *bond = mol[*firstB];
     i = bond->getBeginAtomIdx();
     j = bond->getEndAtomIdx();
     double contrib;
@@ -294,6 +297,9 @@ double *getAdjacencyMatrix(const ROMol &mol, bool useBO, int emptyVal,
     propName = "";
   }
   propName += "AdjacencyMatrix";
+  if (useBO) {
+    propName += "BO";
+  }
   if (!force && mol.hasProp(propName)) {
     mol.getProp(propName, sptr);
     return sptr.get();
@@ -395,6 +401,9 @@ double *get3DDistanceMat(const ROMol &mol, int confId, bool useAtomWts,
   }
   if (propName != "") {
     propName += "3DDistanceMatrix_Conf" + std::to_string(conf.getId());
+    if (useAtomWts) {
+      propName += "_AtomWeights";
+    }
     if (!force && mol.hasProp(propName)) {
       mol.getProp(propName, sptr);
       return sptr.get();

@@ -22,6 +22,6 @@ struct fragFPgen_wrapper {
              python::return_value_policy<python::manage_new_object>());
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_fragFPgen() { RDKit::fragFPgen_wrapper::wrap(); }

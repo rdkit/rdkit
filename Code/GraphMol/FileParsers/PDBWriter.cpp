@@ -128,7 +128,8 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
   }
 
   if (info) {
-    ss << boost::format("%6.2f%6.2f") % info->getOccupancy() % info->getTempFactor();
+    ss << boost::format("%6.2f%6.2f") % info->getOccupancy() %
+              info->getTempFactor();
     ss << "          ";
   } else {
     ss << "  1.00  0.00          ";

@@ -21,7 +21,7 @@ void ComputeGasteigerCharges(const ROMol &mol, int nIter,
                              bool throwOnParamFailure) {
   computeGasteigerCharges(&mol, nIter, throwOnParamFailure);
 }
-}
+}  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdPartialCharges) {
   python::scope().attr("__doc__") =

@@ -57,13 +57,11 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
       if (amatch.abbrev.mol &&
           mol.getAtomWithIdx(pr.second)->getDegree() >
               amatch.abbrev.mol->getAtomWithIdx(pr.first)->getDegree()) {
-        for (const auto& nbri : boost::make_iterator_range(
+        for (auto nbrIdx : boost::make_iterator_range(
                  mol.getAtomNeighbors(mol.getAtomWithIdx(pr.second)))) {
-          const auto& nbr = mol[nbri];
-          auto nbrIdx = nbr->getIdx();
           // if this neighbor isn't in the match:
           if (!std::any_of(amatch.match.begin(), amatch.match.end(),
-                           [&](const std::pair<int, int>& tpr) {
+                           [nbrIdx](const std::pair<int, int>& tpr) {
                              return tpr.second == rdcast<int>(nbrIdx);
                            })) {
             mol.addBond(nbrIdx, connectIdx, Bond::BondType::SINGLE);

@@ -1984,8 +1984,7 @@ MMFFHerschbachLaurieCollection::MMFFHerschbachLaurieCollection(
 #ifdef RDKIT_MMFF_PARAMS_USE_STD_MAP
       unsigned int jRow = boost::lexical_cast<unsigned int>(*token);
 #else
-      d_jRow.push_back(
-          (std::uint8_t)boost::lexical_cast<unsigned int>(*token));
+      d_jRow.push_back((std::uint8_t)boost::lexical_cast<unsigned int>(*token));
 #endif
       ++token;
       mmffHerschbachLaurieObj.a_ij = boost::lexical_cast<double>(*token);

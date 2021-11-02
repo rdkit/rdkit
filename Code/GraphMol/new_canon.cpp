@@ -309,11 +309,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
 namespace {
 bool hasRingNbr(const ROMol &mol, const Atom *at) {
   PRECONDITION(at, "bad pointer");
-  ROMol::ADJ_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomNeighbors(at);
-  while (beg != end) {
-    const Atom *nbr = mol[*beg];
-    ++beg;
+  for (const auto nbr : mol.atomNeighbors(at)) {
     if ((nbr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
          nbr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) &&
         nbr->hasProp(common_properties::_ringStereoAtoms)) {
@@ -326,16 +322,11 @@ bool hasRingNbr(const ROMol &mol, const Atom *at) {
 void getNbrs(const ROMol &mol, const Atom *at, int *ids) {
   PRECONDITION(at, "bad pointer");
   PRECONDITION(ids, "bad pointer");
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(at);
+  ROMol::ADJ_ITER beg, end;
+  boost::tie(beg, end) = mol.getAtomNeighbors(at);
   unsigned int idx = 0;
-
   while (beg != end) {
-    const Bond *bond = (mol)[*beg];
-    ++beg;
-    unsigned int nbrIdx = bond->getOtherAtomIdx(at->getIdx());
-    ids[idx] = nbrIdx;
-    ++idx;
+    ids[idx++] = static_cast<int>(*beg++);
   }
 }
 
@@ -442,8 +433,7 @@ void basicInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
 }
 
 void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
-                           const int &idx) {
-  RDUNUSED_PARAM(idx);
+                           const int &) {
   atom.totalNumHs = atom.atom->getTotalNumHs();
   atom.isRingStereoAtom =
       (atom.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||

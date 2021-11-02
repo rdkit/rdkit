@@ -44,27 +44,27 @@ Tetrahedral::Tetrahedral(const CIPMol &mol, Atom *focus)
 
 void Tetrahedral::setPrimaryLabel(Descriptor desc) {
   switch (desc) {
-  case Descriptor::R:
-  case Descriptor::S:
-  case Descriptor::r:
-  case Descriptor::s:
-    getFocus()->setProp(common_properties::_CIPCode, to_string(desc));
-    return;
-  case Descriptor::seqTrans:
-  case Descriptor::seqCis:
-  case Descriptor::E:
-  case Descriptor::Z:
-  case Descriptor::M:
-  case Descriptor::P:
-  case Descriptor::m:
-  case Descriptor::p:
-  case Descriptor::SP_4:
-  case Descriptor::TBPY_5:
-  case Descriptor::OC_6:
-    throw std::runtime_error(
-        "Received a Descriptor that is not supported for atoms");
-  default:
-    throw std::runtime_error("Received an invalid Atom Descriptor");
+    case Descriptor::R:
+    case Descriptor::S:
+    case Descriptor::r:
+    case Descriptor::s:
+      getFocus()->setProp(common_properties::_CIPCode, to_string(desc));
+      return;
+    case Descriptor::seqTrans:
+    case Descriptor::seqCis:
+    case Descriptor::E:
+    case Descriptor::Z:
+    case Descriptor::M:
+    case Descriptor::P:
+    case Descriptor::m:
+    case Descriptor::p:
+    case Descriptor::SP_4:
+    case Descriptor::TBPY_5:
+    case Descriptor::OC_6:
+      throw std::runtime_error(
+          "Received a Descriptor that is not supported for atoms");
+    default:
+      throw std::runtime_error("Received an invalid Atom Descriptor");
   }
 }
 
@@ -177,5 +177,5 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
   return Descriptor::UNKNOWN;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

@@ -13,11 +13,14 @@
 #include <iostream>
 #include <limits>
 #include <numeric>
-#include <random>
 #include <stdexcept>
 #include <cstdint>
 #include <cmath>
 #include <set>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/MolOps.h>
@@ -36,11 +39,13 @@ MHFPEncoder::MHFPEncoder(unsigned int n_permutations, unsigned int seed)
       seed_(seed),
       perms_a_(n_permutations, 0),
       perms_b_(n_permutations, 0) {
-  std::mt19937 rand;
+  boost::mt19937 rand;
   rand.seed(seed_);
 
-  std::uniform_int_distribution<std::mt19937::result_type> dist_a(1, max_hash_);
-  std::uniform_int_distribution<std::mt19937::result_type> dist_b(0, max_hash_);
+  boost::random::uniform_int_distribution<boost::mt19937::result_type> dist_a(
+      1, max_hash_);
+  boost::random::uniform_int_distribution<boost::mt19937::result_type> dist_b(
+      0, max_hash_);
 
   for (unsigned int i = 0; i < n_permutations_; i++) {
     uint32_t a = dist_a(rand);

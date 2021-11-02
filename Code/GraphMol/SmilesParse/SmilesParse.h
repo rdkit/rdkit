@@ -27,8 +27,8 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool allowCXSMILES = true; /**< recognize and parse CXSMILES*/
   bool strictCXSMILES =
       true; /**< throw an exception if the CXSMILES parsing fails */
-  bool parseName = false; /**< parse (and set) the molecule name as well */
-  bool removeHs = true;   /**< remove Hs after constructing the molecule */
+  bool parseName = true; /**< parse (and set) the molecule name as well */
+  bool removeHs = true;  /**< remove Hs after constructing the molecule */
   bool useLegacyStereo =
       true; /**< use the legacy stereochemistry perception code */
 };
@@ -88,7 +88,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
   bool allowCXSMILES = true; /**< recognize and parse CXSMILES extensions */
   bool strictCXSMILES =
       true; /**< throw an exception if the CXSMILES parsing fails */
-  bool parseName = false; /**< parse (and set) the molecule name as well */
+  bool parseName = true; /**< parse (and set) the molecule name as well */
   bool mergeHs =
       true; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
 };

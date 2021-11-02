@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,11 +20,9 @@ namespace RDKit {
 // Local utility namespace
 namespace {
 
-void backTrack(RWMol &mol, INT_INT_DEQ_MAP &options, int lastOpt,
-               INT_VECT &done, INT_DEQUE &aqueue,
-               boost::dynamic_bitset<> &dBndCands,
+void backTrack(RWMol &mol, INT_INT_DEQ_MAP &, int lastOpt, INT_VECT &done,
+               INT_DEQUE &aqueue, boost::dynamic_bitset<> &dBndCands,
                boost::dynamic_bitset<> &dBndAdds) {
-  RDUNUSED_PARAM(options);
   // so we made a wrong turn at the lastOpt
   // remove on done list that comes after the lastOpt including itself
 
@@ -172,6 +170,18 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
         ++vi;
       }
 
+      // Kekulize aromatic N-oxides, such as O=n1ccccc1
+      // These only reach here if SANITIZE_CLEANUP is disabled.
+      if (tbo == 5 && sbo == 4 && dv == 3 && totalDegree == 3 &&
+          nRadicals == 0 && chrg == 0 && at->getTotalNumHs() == 0) {
+        switch (at->getAtomicNum()) {
+          case 7:   // N
+          case 15:  // P
+          case 33:  // As
+            dv = 5;
+            break;
+        }
+      }
       // std::cerr << "  kek: " << at->getIdx() << " tbo:" << tbo << " sbo:" <<
       // sbo
       //           << "  dv : " << dv << " totalDegree : " << totalDegree
@@ -677,6 +687,40 @@ void Kekulize(RWMol &mol, bool markAtomsBonds, unsigned int maxBackTracks) {
   bondsToUse.set();
   details::KekulizeFragment(mol, atomsToUse, bondsToUse, markAtomsBonds,
                             maxBackTracks);
+}
+bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds,
+                        unsigned int maxBackTracks) {
+  boost::dynamic_bitset<> aromaticBonds(mol.getNumBonds());
+  for (const auto &bond : mol.bonds()) {
+    if (bond->getIsAromatic()) {
+      aromaticBonds.set(bond->getIdx());
+    }
+  }
+  boost::dynamic_bitset<> aromaticAtoms(mol.getNumAtoms());
+  for (const auto &atom : mol.atoms()) {
+    if (atom->getIsAromatic()) {
+      aromaticAtoms.set(atom->getIdx());
+    }
+  }
+  bool res = true;
+  try {
+    Kekulize(mol, markAtomsBonds, maxBackTracks);
+  } catch (const MolSanitizeException &) {
+    res = false;
+    for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+      if (aromaticBonds[i]) {
+        auto bond = mol.getBondWithIdx(i);
+        bond->setIsAromatic(true);
+        bond->setBondType(Bond::BondType::AROMATIC);
+      }
+    }
+    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+      if (aromaticAtoms[i]) {
+        mol.getAtomWithIdx(i)->setIsAromatic(true);
+      }
+    }
+  }
+  return res;
 }
 }  // namespace MolOps
 }  // namespace RDKit

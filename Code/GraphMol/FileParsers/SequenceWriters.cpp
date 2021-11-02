@@ -166,10 +166,9 @@ static char getOneLetterAACode(const AtomPDBResidueInfo *info) {
   return 'X';
 }
 
-
 static char getOneLetterNACode(const AtomPDBResidueInfo *info) {
   const char *ptr = info->getResidueName().c_str();
-  if (ptr[0]==' ' && (ptr[1]==' ' || ptr[1]=='D')) {
+  if (ptr[0] == ' ' && (ptr[1] == ' ' || ptr[1] == 'D')) {
     switch (ptr[2]) {
       case 'A':
       case 'C':
@@ -181,7 +180,6 @@ static char getOneLetterNACode(const AtomPDBResidueInfo *info) {
   }
   return 'X';
 }
-
 
 std::string MolToSequence(const ROMol &mol) {
   std::string result;
@@ -512,25 +510,34 @@ static const char *getHELMNAMonomer(const AtomPDBResidueInfo *info) {
   if (ptr[0] == ' ') {
     if (ptr[1] == ' ') {
       switch (ptr[2]) {
-        case 'A':  return "R(A)";
-        case 'C':  return "R(C)";
-        case 'G':  return "R(G)";
-        case 'T':  return "R(T)";
-        case 'U':  return "R(U)";
+        case 'A':
+          return "R(A)";
+        case 'C':
+          return "R(C)";
+        case 'G':
+          return "R(G)";
+        case 'T':
+          return "R(T)";
+        case 'U':
+          return "R(U)";
       }
     } else if (ptr[1] == 'D') {
       switch (ptr[2]) {
-        case 'A':  return "[dR](A)";
-        case 'C':  return "[dR](C)";
-        case 'G':  return "[dR](G)";
-        case 'T':  return "[dR](T)";
-        case 'U':  return "[dR](U)";
+        case 'A':
+          return "[dR](A)";
+        case 'C':
+          return "[dR](C)";
+        case 'G':
+          return "[dR](G)";
+        case 'T':
+          return "[dR](T)";
+        case 'U':
+          return "[dR](U)";
       }
     }
   }
   return (const char *)nullptr;
 }
-
 
 // Pstate finite state machine
 // 0 start of string	P -> 1     B -> 2	T -> fail
@@ -637,16 +644,16 @@ std::string MolToHELM(const ROMol &mol) {
       } else {
         switch (Pstate) {
           case 1:
-#if 0     // Do the same as state 4 for Biovia friendly HELM
+#if 0  // Do the same as state 4 for Biovia friendly HELM
           Pstate = 3;
           break;
 #endif
-        case 4:
-          result += '.';
-          Pstate = 2;
-          break;
-        default:
-          return "";
+          case 4:
+            result += '.';
+            Pstate = 2;
+            break;
+          default:
+            return "";
         }
       }
       result += mono;

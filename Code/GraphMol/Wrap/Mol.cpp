@@ -9,7 +9,6 @@
 //
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 
 #include "rdchem.h"
@@ -352,11 +351,12 @@ struct mol_wrapper {
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
         python::init<>("Constructor, takes no arguments"))
-        .def(python::init<const std::string &>())
-        .def(python::init<const std::string &, unsigned int>())
-        .def(python::init<const ROMol &>())
-        .def(python::init<const ROMol &, bool>())
-        .def(python::init<const ROMol &, bool, int>())
+        .def(python::init<const std::string &>(python::args("pklString")))
+        .def(python::init<const std::string &, unsigned int>(
+            (python::args("pklString", "propertyFlags"))))
+        .def(python::init<const ROMol &, bool, int>(
+            (python::arg("mol"), python::arg("quickCopy") = false,
+             python::arg("confId") = -1)))
         .def("__copy__", &generic__copy__<ROMol>)
         .def("__deepcopy__", &generic__deepcopy__<ROMol>)
         .def(
@@ -835,10 +835,12 @@ struct mol_wrapper {
         "RWMol", rwmolClassDoc.c_str(),
         python::init<const ROMol &>("Construct from a Mol"))
         .def(python::init<>())
-        .def(python::init<const std::string &>())
-        .def(python::init<const std::string &, unsigned int>())
-        .def(python::init<const ROMol &, bool>())
-        .def(python::init<const ROMol &, bool, int>())
+        .def(python::init<const std::string &>(python::args("pklString")))
+        .def(python::init<const std::string &, unsigned int>(
+            (python::args("pklString", "propertyFlags"))))
+        .def(python::init<const ROMol &, bool, int>(
+            (python::arg("mol"), python::arg("quickCopy") = false,
+             python::arg("confId") = -1)))
         .def("__copy__", &generic__copy__<ReadWriteMol>)
         .def("__deepcopy__", &generic__deepcopy__<ReadWriteMol>)
         .def("__enter__", &ReadWriteMol::enter,
@@ -868,7 +870,7 @@ struct mol_wrapper {
         .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
              (python::arg("index"), python::arg("newBond"),
               python::arg("preserveProps") = false,
-              python::arg("keepSGroups") = false),
+              python::arg("keepSGroups") = true),
              "replaces the specified bond with the provided one.\n"
              "If preserveProps is True preserve keep the existing props unless "
              "explicit set on the new bond. If keepSGroups is False, all"

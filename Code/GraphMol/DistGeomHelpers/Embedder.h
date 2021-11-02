@@ -128,6 +128,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   void (*callback)(unsigned int);
   bool forceTransAmides{true};
   bool useSymmetryForPruning{true};
+  double boundsMatForceScaling{1.0};
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,

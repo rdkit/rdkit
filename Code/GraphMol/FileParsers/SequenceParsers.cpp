@@ -790,8 +790,7 @@ static RWMol *AASequenceToMol(const char *seq, bool lowerD) {
 }
 
 static void CreateNucleicAcid(RWMol *mol, const char *na, Atom *&r1, Atom *&r2,
-                              AtomPDBResidueInfo &info, bool PCap5)
-{
+                              AtomPDBResidueInfo &info, bool PCap5) {
   Atom *atom[32];
 
   r1 = (Atom *)nullptr;
@@ -841,7 +840,7 @@ static void CreateNucleicAcid(RWMol *mol, const char *na, Atom *&r1, Atom *&r2,
   CreateAABond(mol, atom[8], atom[10], 1);
   atom[6]->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
   atom[8]->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-  if (na[1]==' ') {
+  if (na[1] == ' ') {
     atom[11] = CreateAAAtom(mol, " O2'", info);
     atom[12] = CreateAAAtom(mol, " C1'", info);
     CreateAABond(mol, atom[10], atom[11], 1);
@@ -973,7 +972,6 @@ static void CreateNucleicAcid(RWMol *mol, const char *na, Atom *&r1, Atom *&r2,
   }
 }
 
-
 static void CreatePCap3(RWMol *mol, Atom *prev, AtomPDBResidueInfo &info) {
   Atom *atom[4];
 
@@ -992,9 +990,8 @@ static void CreatePCap3(RWMol *mol, Atom *prev, AtomPDBResidueInfo &info) {
   CreateAABond(mol, atom[0], atom[3], 1);
 }
 
-
-static RWMol *NASequenceToMol(const char *seq, bool Dna,
-                              bool PCap5, bool PCap3) {
+static RWMol *NASequenceToMol(const char *seq, bool Dna, bool PCap5,
+                              bool PCap3) {
   char chain[2];
   chain[0] = 'A';
   chain[1] = '\0';
@@ -1076,7 +1073,6 @@ static RWMol *NASequenceToMol(const char *seq, bool Dna,
   return mol;
 }
 
-
 RWMol *SequenceToMol(const char *seq, bool sanitize, int flavor) {
   if (!seq) {
     return (RWMol *)nullptr;
@@ -1085,20 +1081,40 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, int flavor) {
 
   switch (flavor) {
     /* Protein */
-    case 0:  mol = AASequenceToMol(seq,false);  break;
-    case 1:  mol = AASequenceToMol(seq,true);   break;
+    case 0:
+      mol = AASequenceToMol(seq, false);
+      break;
+    case 1:
+      mol = AASequenceToMol(seq, true);
+      break;
 
     /* RNA */
-    case 2:  mol = NASequenceToMol(seq,false,false,false);  break;
-    case 3:  mol = NASequenceToMol(seq,false,true,false);   break;
-    case 4:  mol = NASequenceToMol(seq,false,false,true);   break;
-    case 5:  mol = NASequenceToMol(seq,false,true,true);    break;
+    case 2:
+      mol = NASequenceToMol(seq, false, false, false);
+      break;
+    case 3:
+      mol = NASequenceToMol(seq, false, true, false);
+      break;
+    case 4:
+      mol = NASequenceToMol(seq, false, false, true);
+      break;
+    case 5:
+      mol = NASequenceToMol(seq, false, true, true);
+      break;
 
     /* DNA */
-    case 6:  mol = NASequenceToMol(seq,true,false,false);  break;
-    case 7:  mol = NASequenceToMol(seq,true,true,false);   break;
-    case 8:  mol = NASequenceToMol(seq,true,false,true);   break;
-    case 9:  mol = NASequenceToMol(seq,true,true,true);    break;
+    case 6:
+      mol = NASequenceToMol(seq, true, false, false);
+      break;
+    case 7:
+      mol = NASequenceToMol(seq, true, true, false);
+      break;
+    case 8:
+      mol = NASequenceToMol(seq, true, false, true);
+      break;
+    case 9:
+      mol = NASequenceToMol(seq, true, true, true);
+      break;
 
     default:
       return (RWMol *)nullptr;
@@ -1108,7 +1124,6 @@ RWMol *SequenceToMol(const char *seq, bool sanitize, int flavor) {
   }
   return mol;
 }
-
 
 RWMol *SequenceToMol(const std::string &seq, bool sanitize, int flavor) {
   return SequenceToMol(seq.c_str(), sanitize, flavor);
@@ -1159,7 +1174,7 @@ struct HELMMonomer {
   Atom *r3{nullptr};
   Atom *oxt{nullptr};
 
-  HELMMonomer()  {}
+  HELMMonomer() {}
   HELMMonomer(Atom *x, Atom *y, Atom *z) : r1(x), r2(y), r3(z), oxt(nullptr) {}
 };
 
@@ -1563,7 +1578,7 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
   info.setInsertionCode(" ");
   info.setChainId(chain);
 
-  if (*ptr=='P') {
+  if (*ptr == 'P') {
     PCap5 = true;
     ptr++;
     if (*ptr == '.') {
@@ -1573,57 +1588,57 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
 
   for (;;) {
     const char *name = nullptr;
-    if (*ptr == 'R' && ptr[1]=='(') {
-      if (ptr[2]=='A') {
-        if (ptr[3]==')') {
+    if (*ptr == 'R' && ptr[1] == '(') {
+      if (ptr[2] == 'A') {
+        if (ptr[3] == ')') {
           name = "  A";
           ptr += 4;
         }
-      } else if (ptr[2]=='C') {
-        if (ptr[3]==')') {
+      } else if (ptr[2] == 'C') {
+        if (ptr[3] == ')') {
           name = "  C";
           ptr += 4;
         }
-      } else if (ptr[2]=='G') {
-        if (ptr[3]==')') {
+      } else if (ptr[2] == 'G') {
+        if (ptr[3] == ')') {
           name = "  G";
           ptr += 4;
         }
-      } else if (ptr[2]=='T') {
-        if (ptr[3]==')') {
+      } else if (ptr[2] == 'T') {
+        if (ptr[3] == ')') {
           name = "  T";
           ptr += 4;
         }
-      } else if (ptr[2]=='U') {
-        if (ptr[3]==')') {
+      } else if (ptr[2] == 'U') {
+        if (ptr[3] == ')') {
           name = "  U";
           ptr += 4;
         }
       }
-    } else if (*ptr=='[' && ptr[1]=='d' && ptr[2]=='R' &&
-               ptr[3]==']' && ptr[4]=='(') {
-      if (ptr[5]=='A') {
-        if (ptr[6]==')') {
+    } else if (*ptr == '[' && ptr[1] == 'd' && ptr[2] == 'R' && ptr[3] == ']' &&
+               ptr[4] == '(') {
+      if (ptr[5] == 'A') {
+        if (ptr[6] == ')') {
           name = " DA";
           ptr += 7;
         }
-      } else if (ptr[5]=='C') {
-        if (ptr[6]==')') {
+      } else if (ptr[5] == 'C') {
+        if (ptr[6] == ')') {
           name = " DC";
           ptr += 7;
         }
-      } else if (ptr[5]=='G') {
-        if (ptr[6]==')') {
+      } else if (ptr[5] == 'G') {
+        if (ptr[6] == ')') {
           name = " DG";
           ptr += 7;
         }
-      } else if (ptr[5]=='T') {
-        if (ptr[6]==')') {
+      } else if (ptr[5] == 'T') {
+        if (ptr[6] == ')') {
           name = " DT";
           ptr += 7;
         }
-      } else if (ptr[5]=='U') {
-        if (ptr[6]==')') {
+      } else if (ptr[5] == 'U') {
+        if (ptr[6] == ')') {
           name = " DU";
           ptr += 7;
         }
@@ -1633,7 +1648,7 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
       return (const char *)nullptr;
     }
 
-    CreateNucleicAcid(mol,name,r1,r2,info,PCap5);
+    CreateNucleicAcid(mol, name, r1, r2, info, PCap5);
     if (prev && r1) {
       CreateAABond(mol, prev, r1, 1);
     }
@@ -1650,7 +1665,7 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
     }
     ptr++;
     if (*ptr == '}') {
-      CreatePCap3(mol,prev,info);
+      CreatePCap3(mol, prev, info);
       return ptr;
     }
     PCap5 = true;
@@ -1660,9 +1675,8 @@ static const char *ParseHELMNucleic(RWMol *mol, const char *ptr,
   }
 }
 
-
 static bool ParseHELM(RWMol *mol, const char *ptr) {
-  std::map<std::string, std::vector<HELMMonomer> > seqs;
+  std::map<std::string, std::vector<HELMMonomer>> seqs;
   const char *orig;
   char chain[2];
   chain[0] = 'A';
@@ -1687,8 +1701,8 @@ static bool ParseHELM(RWMol *mol, const char *ptr) {
         return false;
       }
       ptr++;
-    } else if (ptr[0]=='R' && ptr[1]=='N' && ptr[2]=='A' &&
-               ptr[3]>='1' && ptr[3]<='9') {
+    } else if (ptr[0] == 'R' && ptr[1] == 'N' && ptr[2] == 'A' &&
+               ptr[3] >= '1' && ptr[3] <= '9') {
       ptr += 4;
       while (*ptr >= '0' && *ptr <= '9') {
         ptr++;

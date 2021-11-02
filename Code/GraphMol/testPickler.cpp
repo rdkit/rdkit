@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1725,6 +1725,36 @@ void testPropertyOptions() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testAdditionalQueryPickling() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing property reading options" << std::endl;
+  auto m1 = "CCCC"_smarts;
+  m1->getAtomWithIdx(0)->expandQuery(
+      makeAtomNumQuery(8), Queries::CompositeQueryType::COMPOSITE_AND);
+  m1->getAtomWithIdx(1)->expandQuery(
+      makeAtomNumQuery<ATOM_GREATER_QUERY>(8, "greater_AtomAtomicNum"),
+      Queries::CompositeQueryType::COMPOSITE_XOR);
+  m1->getAtomWithIdx(2)->expandQuery(
+      makeAtomNumQuery<ATOM_LESS_QUERY>(8, "less_AtomAtomicNum"),
+      Queries::CompositeQueryType::COMPOSITE_OR);
+  ATOM_SET_QUERY *sq = new ATOM_SET_QUERY();
+  sq->setDataFunc(queryAtomNum);
+  sq->insert(6);
+  sq->insert(8);
+  sq->setDescription("AtomAtomicNum");
+  m1->getAtomWithIdx(3)->expandQuery(sq,
+                                     Queries::CompositeQueryType::COMPOSITE_OR);
+
+  std::string pkl;
+  MolPickler::pickleMol(*m1, pkl);
+  RWMol m2(pkl);
+  for (auto i = 0u; i < m2.getNumAtoms(); ++i) {
+    TEST_ASSERT(describeQuery(m1->getAtomWithIdx(i)) ==
+                describeQuery(m2.getAtomWithIdx(i)));
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1768,4 +1798,5 @@ int main(int argc, char *argv[]) {
   testHistoricalConfs();
   testConformerOptions();
   testPropertyOptions();
+  testAdditionalQueryPickling();
 }

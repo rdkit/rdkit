@@ -166,15 +166,10 @@ unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
                "valence not defined for atoms not associated with molecules")
   int res = getNumExplicitHs() + getNumImplicitHs();
   if (includeNeighbors) {
-    ROMol::ADJ_ITER begin, end;
-    const ROMol *parent = &getOwningMol();
-    boost::tie(begin, end) = parent->getAtomNeighbors(this);
-    while (begin != end) {
-      const Atom *at = parent->getAtomWithIdx(*begin);
-      if (at->getAtomicNum() == 1) {
-        res++;
+    for (auto nbr : getOwningMol().atomNeighbors(this)) {
+      if (nbr->getAtomicNum() == 1) {
+        ++res;
       }
-      ++begin;
     }
   }
   return res;
@@ -509,17 +504,13 @@ double Atom::getMass() const {
   }
 }
 
-void Atom::setQuery(Atom::QUERYATOM_QUERY *what) {
-  RDUNUSED_PARAM(what);
+void Atom::setQuery(Atom::QUERYATOM_QUERY *) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0, "plain atoms have no Query");
 }
 Atom::QUERYATOM_QUERY *Atom::getQuery() const { return nullptr; };
-void Atom::expandQuery(Atom::QUERYATOM_QUERY *what,
-                       Queries::CompositeQueryType how, bool maintainOrder) {
-  RDUNUSED_PARAM(what);
-  RDUNUSED_PARAM(how);
-  RDUNUSED_PARAM(maintainOrder);
+void Atom::expandQuery(Atom::QUERYATOM_QUERY *, Queries::CompositeQueryType,
+                       bool) {
   PRECONDITION(0, "plain atoms have no Query");
 }
 

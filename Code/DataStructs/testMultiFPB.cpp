@@ -70,8 +70,7 @@ void test2MultiFPBReaderTanimoto() {
     TEST_ASSERT(mfps.length() == 2);
 
     {
-      boost::shared_array<std::uint8_t> bytes =
-          mfps.getReader(0)->getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes);
@@ -84,8 +83,7 @@ void test2MultiFPBReaderTanimoto() {
       TEST_ASSERT(nbrs[1].get<2>() == 1);
     }
     {  // with a threshold
-      boost::shared_array<std::uint8_t> bytes =
-          mfps.getReader(0)->getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes, 0.30);
@@ -101,8 +99,7 @@ void test2MultiFPBReaderTanimoto() {
       TEST_ASSERT(nbrs[2].get<2>() == 0);
     }
     {  // with a threshold
-      boost::shared_array<std::uint8_t> bytes =
-          mfps.getReader(0)->getBytes(95);
+      boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(95);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes, 0.30);
@@ -138,8 +135,7 @@ void test3MultiFPBReaderTversky() {
     TEST_ASSERT(mfps.length() == 2);
 
     {
-      boost::shared_array<std::uint8_t> bytes =
-          mfps.getReader(0)->getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 1.);
@@ -152,8 +148,7 @@ void test3MultiFPBReaderTversky() {
       TEST_ASSERT(nbrs[1].get<2>() == 1);
     }
     {  // with a threshold
-      boost::shared_array<std::uint8_t> bytes =
-          mfps.getReader(0)->getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 1., 0.30);
@@ -169,8 +164,7 @@ void test3MultiFPBReaderTversky() {
       TEST_ASSERT(nbrs[2].get<2>() == 0);
     }
     {  // with a threshold, asymmetric
-      boost::shared_array<std::uint8_t> bytes =
-          mfps.getReader(0)->getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 0.5, 0.30);
@@ -205,10 +199,9 @@ void test4MultiFPBReaderContains() {
     mfps.init();
     TEST_ASSERT(mfps.length() == 2);
     {
-      boost::shared_array<std::uint8_t> bytes =
-          mfps.getReader(0)->getBytes(0);
+      boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
       TEST_ASSERT(bytes);
-      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+      std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(bytes);
       TEST_ASSERT(nbrs.size() == 2);
       TEST_ASSERT(nbrs[0].first == 0);
@@ -217,10 +210,9 @@ void test4MultiFPBReaderContains() {
       TEST_ASSERT(nbrs[1].second == 1);
     }
     {
-      boost::shared_array<std::uint8_t> bytes =
-          mfps.getReader(0)->getBytes(1);
+      boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(1);
       TEST_ASSERT(bytes);
-      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+      std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(bytes);
       TEST_ASSERT(nbrs.size() == 8);
       TEST_ASSERT(nbrs[0].first == 1);
@@ -376,7 +368,7 @@ void test6MultiFPBReaderContainsThreaded() {
     UpdateBitVectFromFPSText(qbv, fps);
 
     {
-      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+      std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv);
       TEST_ASSERT(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
@@ -404,7 +396,7 @@ void test6MultiFPBReaderContainsThreaded() {
     }
 #ifdef RDK_TEST_MULTITHREADED
     {
-      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+      std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv, 4);
       TEST_ASSERT(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
@@ -431,7 +423,7 @@ void test6MultiFPBReaderContainsThreaded() {
       TEST_ASSERT(nbrs[8].second == 0);
     }
     {  // request more threads than we have readers, this shouldn't be a problem
-      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+      std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv, 8);
       TEST_ASSERT(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
@@ -481,7 +473,7 @@ void test6MultiFPBReaderContainsThreaded() {
     UpdateBitVectFromFPSText(qbv, fps);
 #ifndef RDK_TEST_MULTITHREADED
     {
-      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+      std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv);
       TEST_ASSERT(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
@@ -509,7 +501,7 @@ void test6MultiFPBReaderContainsThreaded() {
     }
 #else
     {
-      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+      std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv, 4);
       TEST_ASSERT(nbrs.size() == 9);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
@@ -558,7 +550,7 @@ void test7MultiFPBReaderEdges() {
     ExplicitBitVect qbv(1024);
     UpdateBitVectFromFPSText(qbv, fps);
     {
-      std::vector<std::pair<unsigned int, unsigned int> > nbrs =
+      std::vector<std::pair<unsigned int, unsigned int>> nbrs =
           mfps.getContainingNeighbors(qbv);
       TEST_ASSERT(nbrs.size() == 0);
     }

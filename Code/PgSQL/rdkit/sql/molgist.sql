@@ -62,4 +62,37 @@ set rdkit.do_chiral_sss=false;
 select count(*) from chemblmol c2 join chemblmol using (m);
 
 
+-- build index on qmols
+CREATE TABLE pgqmol (id int, m qmol);
+\copy pgqmol from 'data/qmol_data'
+CREATE INDEX molidx ON pgqmol USING gist (m);
 
+SET rdkit.tanimoto_threshold = 0.8;
+SET rdkit.dice_threshold = 0.8;
+
+
+SET enable_indexscan=off;
+SET enable_bitmapscan=off;
+SET enable_seqscan=on;
+
+SELECT count(*) FROM pgqmol WHERE m <@ 'c1ccccc1';
+SELECT count(*) FROM pgqmol WHERE m <@ 'c1cccnc1';
+SELECT count(*) FROM pgqmol WHERE 'c1ccccc1' @> m;
+SELECT count(*) FROM pgqmol WHERE 'c1cccnc1' @> m;
+SELECT count(*) FROM pgqmol WHERE m<@ 'c1ccccc1C(=O)N';
+
+SET enable_indexscan=on;
+SET enable_bitmapscan=on;
+SET enable_seqscan=off;
+
+SELECT count(*) FROM pgqmol WHERE m <@ 'c1ccccc1';
+SELECT count(*) FROM pgqmol WHERE m <@ 'c1cccnc1';
+SELECT count(*) FROM pgqmol WHERE 'c1ccccc1' @> m;
+SELECT count(*) FROM pgqmol WHERE 'c1cccnc1' @> m;
+SELECT count(*) FROM pgqmol WHERE m<@ 'c1ccccc1C(=O)N';
+
+SET enable_indexscan=on;
+SET enable_bitmapscan=on;
+SET enable_seqscan=on;
+
+DROP INDEX molidx;

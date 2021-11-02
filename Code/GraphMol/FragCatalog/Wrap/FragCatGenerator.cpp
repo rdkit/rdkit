@@ -21,6 +21,6 @@ struct fragcatgen_wrapper {
         .def("AddFragsFromMol", &FragCatGenerator::addFragsFromMol);
   };
 };  // end of struct
-}  // end of namespace
+}  // namespace RDKit
 
 void wrap_fragcatgen() { RDKit::fragcatgen_wrapper::wrap(); }
