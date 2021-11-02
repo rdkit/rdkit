@@ -2466,7 +2466,6 @@ TEST_CASE("moves") {
     auto m1 = "CCC"_smiles;
     m1->setProp("foo", 1);
     ROMol m2 = std::move(*m1);
-    CHECK(m1->getDict().getData().empty());
     CHECK(m2.getNumAtoms() == 3);
     CHECK(m2.getNumBonds() == 2);
     for (const auto atom : m2.atoms()) {
@@ -2477,6 +2476,23 @@ TEST_CASE("moves") {
       CHECK(&bond->getOwningMol() == &m2);
       CHECK(&bond->getOwningMol() != m1.get());
     }
+
+    // check the state of m1:
+    CHECK(m1->getNumAtoms() == 0);
+    CHECK(m1->getNumBonds() == 0);
+    CHECK(m1->getPropList().empty());
+    CHECK(m1->getDict().getData().empty());
+    CHECK(m1->getStereoGroups().empty());
+    CHECK(getSubstanceGroups(*m1).empty());
+    CHECK(m1->getRingInfo() == nullptr);
+
+    // make sure we can still do something with m1:
+    *m1 = m2;
+    CHECK(!m1->getDict().getData().empty());
+    CHECK(m1->getNumAtoms() == 3);
+    CHECK(m1->getNumBonds() == 2);
+    CHECK(m1->getRingInfo() != nullptr);
+    CHECK(m1->getRingInfo()->isInitialized());
   }
   SECTION("molecule move-assign") {
     auto m1 = "CCC"_smiles;

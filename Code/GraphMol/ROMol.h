@@ -342,6 +342,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     }
     o.d_graph.clear();
     o.dp_ringInfo = nullptr;
+    o.numBonds = 0;
   }
   ROMol &operator=(ROMol &&o) noexcept {
     if (this == &o) {
@@ -367,6 +368,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     }
     o.d_graph.clear();
     o.dp_ringInfo = nullptr;
+    o.numBonds = 0;
     return *this;
   }
 
