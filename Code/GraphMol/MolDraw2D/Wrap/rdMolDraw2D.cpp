@@ -456,6 +456,20 @@ void setAtomPalette(RDKit::MolDrawOptions &self, python::object cmap) {
   updateAtomPalette(self, cmap);
 }
 
+void setMonochromeMode_helper1(RDKit::MolDrawOptions &options, python::tuple fg,
+                               python::tuple bg) {
+  auto fgc = pyTupleToDrawColour(fg);
+  auto bgc = pyTupleToDrawColour(bg);
+  RDKit::setMonochromeMode(options, fgc, bgc);
+}
+
+void setMonochromeMode_helper2(RDKit::MolDraw2D &d2d, python::tuple fg,
+                               python::tuple bg) {
+  auto fgc = pyTupleToDrawColour(fg);
+  auto bgc = pyTupleToDrawColour(bg);
+  RDKit::setMonochromeMode(d2d, fgc, bgc);
+}
+
 void contourAndDrawGaussiansHelper(
     RDKit::MolDraw2D &drawer, python::object pylocs, python::object pyheights,
     python::object pywidths, unsigned int nContours, python::object pylevels,
@@ -638,6 +652,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
 
       .def("useDefaultAtomPalette", &RDKit::useDefaultAtomPalette,
            "use the default colour palette for atoms and bonds")
+      .def("useBWAtomPalette", &RDKit::useBWAtomPalette,
+           "use a black and white palette for atoms and bonds")
       .def("useAvalonAtomPalette", &RDKit::useAvalonAtomPalette,
            "use the Avalon renderer palette for atoms and bonds")
       .def("useCDKAtomPalette", &RDKit::useCDKAtomPalette,
@@ -1115,4 +1131,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
   python::def("SetDarkMode",
               (void (*)(RDKit::MolDraw2D &)) & RDKit::setDarkMode,
               "set dark mode for a MolDraw2D object");
+  python::def("SetMonochromeMode", RDKit::setMonochromeMode_helper1,
+              (python::arg("options"), python::arg("fgColour"),
+               python::arg("bgColour")),
+              "set monochrome mode for a MolDrawOptions object");
+  python::def(
+      "SetMonochromeMode", RDKit::setMonochromeMode_helper2,
+      (python::arg("drawer"), python::arg("fgColour"), python::arg("bgColour")),
+      "set monochrome mode for a MolDraw2D object");
 }
