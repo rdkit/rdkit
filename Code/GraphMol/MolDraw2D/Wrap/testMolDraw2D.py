@@ -681,6 +681,15 @@ M  END''')
     nDeuteriumTritium = len(deuteriumTritiumRegex.findall(textDeuteriumTritium))
     self.assertEqual(nDeuteriumTritium, 2)
 
+  def testDarkMode(self):
+    m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|")
+
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    rdMolDraw2D.SetDarkMode(d2d);
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertIn("<rect style='opacity:1.0;fill:#000000;stroke:none'",text)
 
 if __name__ == "__main__":
   unittest.main()
