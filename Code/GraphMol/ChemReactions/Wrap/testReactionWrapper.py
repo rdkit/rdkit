@@ -1057,23 +1057,17 @@ M  END
 
 
     product = reaction_fwd.RunReactants((mol_sulfonylchloride, mol_amine))[0][0]
-    print("reaction_fwd", Chem.MolToSmiles(product))
 
     reagent_sulfonylchloride, reagent_amine = reaction_reverse.RunReactants((mol_sulfonamide,))[0]
 
     # trigger bug
-    print("trigger bug and mess up reaction_fwd object")
-    try:
-        product = reaction_fwd.RunReactants((reagent_sulfonylchloride, reagent_amine))[0]
-    except RuntimeError as e:
-        print(e)
+    with self.assertRaises(RuntimeError):
+      reaction_fwd.RunReactants((reagent_sulfonylchloride, reagent_amine))
 
-    print("call messed up reaction_fwd, this will inf loop")
-    # this used to deadlock
-    try:
-      product = reaction_fwd.RunReactants((mol_sulfonylchloride, mol_amine))
-    except RuntimeError as e:
-      pass # this is ok
+    # The second call used to deadlock
+    with self.assertRaises(RuntimeError):
+      reaction_fwd.RunReactants((reagent_sulfonylchloride, reagent_amine))
+
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)
