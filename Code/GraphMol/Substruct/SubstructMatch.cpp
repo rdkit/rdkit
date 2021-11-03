@@ -430,7 +430,7 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
 
 struct RecursiveLocker {
   std::vector<RecursiveStructureQuery *> locked;
-  RecursiveLocker(const ROMol &query, const bool recursionPossible) : locked() {
+  RecursiveLocker(const ROMol &query, const bool recursionPossible) {
     if (recursionPossible) {
       locked.reserve(query.getNumAtoms());
     }
