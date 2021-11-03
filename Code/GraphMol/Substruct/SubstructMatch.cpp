@@ -430,9 +430,8 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
 
 struct RecursiveLocker {
   std::vector<RecursiveStructureQuery *> locked;
-  RecursiveLocker(const ROMol &query, const bool recursionPossible) :
-    locked() {
-    if(recursionPossible) {
+  RecursiveLocker(const ROMol &query, const bool recursionPossible) : locked() {
+    if (recursionPossible) {
       locked.reserve(query.getNumAtoms());
     }
   }
@@ -441,7 +440,7 @@ struct RecursiveLocker {
     for (auto v : locked) {
       v->clear();
 #ifdef RDK_THREADSAFE_SSS
-      v->d_mutex.unlock();  
+      v->d_mutex.unlock();
 #endif
     }
   }
@@ -466,35 +465,35 @@ std::vector<MatchVectType> SubstructMatch(
     ROMol::ConstAtomIterator atIt;
     for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
       if ((*atIt)->getQuery()) {
-	// std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
-	detail::MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap,
-				locker.locked);
+        // std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
+        detail::MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap,
+                                locker.locked);
       }
     }
   }
-  
+
   detail::AtomLabelFunctor atomLabeler(query, mol, params);
   detail::BondLabelFunctor bondLabeler(query, mol, params);
   MolMatchFinalCheckFunctor matchChecker(query, mol, params);
-  
+
   std::list<detail::ssPairType> pms;
 #if 0
   bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
 				atomLabeler,bondLabeler,pms);
 #else
   bool found =
-    boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
-		   bondLabeler, matchChecker, pms, params.maxMatches);
+      boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
+                     bondLabeler, matchChecker, pms, params.maxMatches);
 #endif
   if (found) {
     unsigned int nQueryAtoms = query.getNumAtoms();
     matches.reserve(pms.size());
     for (std::list<detail::ssPairType>::const_iterator iter1 = pms.begin();
-	 iter1 != pms.end(); ++iter1) {
+         iter1 != pms.end(); ++iter1) {
       MatchVectType matchVect;
       matchVect.resize(nQueryAtoms);
       for (const auto &iter2 : *iter1) {
-	matchVect[iter2.first] = std::pair<int, int>(iter2.first, iter2.second);
+        matchVect[iter2.first] = std::pair<int, int>(iter2.first, iter2.second);
       }
       matches.push_back(matchVect);
     }
