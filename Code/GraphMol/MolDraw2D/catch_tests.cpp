@@ -160,8 +160,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDarkMode.1.svg", 2696431144U},
     {"testMonochrome.1.svg", 491478930U},
     {"testMonochrome.2.svg", 1722291679U},
-    {"testAvalon.1.svg", 3576514243U},
-    {"testCDK.1.svg", 2509805825U},
+    {"testAvalon.1.svg", 332535300U},
+    {"testCDK.1.svg", 3928121594U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -3498,7 +3498,7 @@ TEST_CASE("other palettes") {
   SECTION("Avalon") {
     MolDraw2DSVG drawer(350, 300);
     assignAvalonPalette(drawer.drawOptions().atomColourPalette);
-    drawer.drawMolecule(*m, "monochrome");
+    drawer.drawMolecule(*m, "Avalon");
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     std::ofstream outs("testAvalon.1.svg");
@@ -3509,7 +3509,7 @@ TEST_CASE("other palettes") {
   SECTION("CDK") {
     MolDraw2DSVG drawer(350, 300);
     assignCDKPalette(drawer.drawOptions().atomColourPalette);
-    drawer.drawMolecule(*m, "monochrome");
+    drawer.drawMolecule(*m, "CDK");
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
     std::ofstream outs("testCDK.1.svg");
