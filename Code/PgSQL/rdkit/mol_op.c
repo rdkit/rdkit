@@ -441,11 +441,11 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
   }
   if (PG_ARGISNULL(0) && !PG_ARGISNULL(1)) {  // first call
     /// elog(WARNING, "fmcs_mol2s_transition() called first time");
-    CROMol mol = PG_GETARG_DATUM(1);
+    CROMol mol;
     int len, ts_size;
     char *smiles;
-    elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
-         fcinfo->flinfo->fn_mcxt);
+    // elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
+    //      fcinfo->flinfo->fn_mcxt);
     fcinfo->flinfo->fn_extra =
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
@@ -469,10 +469,10 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
     // elog(WARNING, VARDATA(t0));
 
     // mol_to_smiles():
-    CROMol mol = PG_GETARG_DATUM(1);
+    CROMol mol;
     int len;
-    elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
-         fcinfo->flinfo->fn_mcxt);
+    // elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
+    //      fcinfo->flinfo->fn_mcxt);
     fcinfo->flinfo->fn_extra =
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
@@ -537,18 +537,18 @@ Datum fmcs_mol_transition(PG_FUNCTION_ARGS) {
   if (PG_ARGISNULL(0) && !PG_ARGISNULL(1)) {  // first call
     // elog(WARNING, "fmcs_mol_transition() called first time");
     void *lst = NULL;
-    CROMol mol = PG_GETARG_DATUM(1);
+    Mol *mol = PG_GETARG_MOL_P(1);
     lst = addMol2list(NULL, mol);
     // char t[256];
     // sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst,
     // fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
     // elog(WARNING, t);
     // fcinfo->flinfo->fn_extra = lst;
-    PG_RETURN_INT32((int32)lst);
+    PG_RETURN_POINTER(lst);
   } else if (!PG_ARGISNULL(0) &&
              !PG_ARGISNULL(1)) {  // Called in aggregate context...
     // elog(WARNING, "fmcs_mol_transition(): next iteration in the same run");
-    CROMol mol = PG_GETARG_DATUM(1);
+    Mol *mol = PG_GETARG_MOL_P(1);
     void *lst = addMol2list(PG_GETARG_POINTER(0), mol);
     // char t[256];
     // sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst,
