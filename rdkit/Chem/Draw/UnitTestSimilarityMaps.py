@@ -41,22 +41,11 @@ from rdkit.RDLogger import logger
 import platform
 try:
   import matplotlib
-  if platform.system() == "Linux":
-    if not os.environ.get("DISPLAY", None):
-      # Force matplotlib to not use any Xwindows backend.
-      print("Forcing use of Agg renderer", file=sys.stderr)
-      matplotlib.use('Agg')
 except ImportError:
   matplotlib = None
 
 from rdkit.Chem import Draw
 from rdkit.Chem.Draw import SimilarityMaps as sm
-try:
-  from rdkit.Chem.Draw.mplCanvas import Canvas
-except RuntimeError:
-  Canvas = None
-except ImportError:
-  Canvas = None
 
 logger = logger()
 
@@ -67,7 +56,7 @@ class TestCase(unittest.TestCase):
     self.mol1 = Chem.MolFromSmiles('c1ccccc1')
     self.mol2 = Chem.MolFromSmiles('c1ccncc1')
 
-  @unittest.skipUnless(Canvas, 'Matplotlib required')
+  @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMap(self):
     # Morgan2 BV
     refWeights = [0.5, 0.5, 0.5, -0.5, 0.5, 0.5]
@@ -130,7 +119,7 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertAlmostEqual(w, r, 4)
 
-  @unittest.skipUnless(Canvas, 'Matplotlib required')
+  @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMapKWArgs(self):
     # Morgan2 BV
     m1 = Chem.MolFromSmiles('CC[C@](F)(Cl)c1ccccc1')
@@ -206,12 +195,4 @@ class TestCase(unittest.TestCase):
 
 
 if __name__ == '__main__':
-  try:
-    import matplotlib
-    from rdkit.Chem.Draw.mplCanvas import Canvas
-  except ImportError:
-    pass
-  except RuntimeError:  # happens with GTK can't initialize
-    pass
-  else:
-    unittest.main()
+  unittest.main()
