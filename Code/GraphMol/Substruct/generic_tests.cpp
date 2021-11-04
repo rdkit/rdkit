@@ -474,6 +474,16 @@ TEST_CASE("Setting generic queries", "[substructure][generics]") {
     CHECK(!atm->hasProp(common_properties::atomLabel));
     // make sure we didn't remove the other atom label
     CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+    {
+      auto smi = MolToCXSmiles(*m, SmilesWriteParams(),
+                               SmilesWrite::CXSmilesFields::CX_ATOM_LABELS);
+      CHECK(smi == "*OC |$ARY_p;foo_p;$|");
+      std::unique_ptr<ROMol> m2{SmilesToMol(smi)};
+      REQUIRE(m2);
+      SubstructSearch::SetGenericQueriesFromProperties(*m2);
+      CHECK(m2->getAtomWithIdx(0)->hasProp(
+          common_properties::_QueryAtomGenericLabel));
+    }
   }
   SECTION("CTAB") {
     auto m = R"CTAB(
@@ -522,5 +532,23 @@ M  END
     CHECK(atm->getProp<std::string>(
               common_properties::_QueryAtomGenericLabel) == "AOX");
     CHECK(getSubstanceGroups(*m).size() == 2);
+    {
+      auto smi = MolToCXSmiles(*m, SmilesWriteParams(),
+                               SmilesWrite::CXSmilesFields::CX_ATOM_LABELS);
+      CHECK(smi == "Cc1ncccn1 |$AOX_p;;;;;;$|");
+      std::unique_ptr<ROMol> m2{SmilesToMol(smi)};
+      REQUIRE(m2);
+      SubstructSearch::SetGenericQueriesFromProperties(*m2);
+      CHECK(m2->getAtomWithIdx(0)->hasProp(
+          common_properties::_QueryAtomGenericLabel));
+    }
+
+    {
+      RWMol m2(*m);
+      SubstructSearch::ConvertGenericQueriesToSubstanceGroups(m2);
+      CHECK(getSubstanceGroups(m2).size() == getSubstanceGroups(*m).size() + 1);
+      CHECK(!m2.getAtomWithIdx(0)->hasProp(
+          common_properties::_QueryAtomGenericLabel));
+    }
   }
 }

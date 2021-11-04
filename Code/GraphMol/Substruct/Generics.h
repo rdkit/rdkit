@@ -307,6 +307,8 @@ query tags in both, the one from the SGroup will be used.
 */
 RDKIT_SUBSTRUCTMATCH_EXPORT void SetGenericQueriesFromProperties(
     ROMol &mol, bool useAtomLabels = true, bool useSGroups = true);
+RDKIT_SUBSTRUCTMATCH_EXPORT void ConvertGenericQueriesToSubstanceGroups(
+    ROMol &mol);
 }  // namespace SubstructSearch
 }  // namespace RDKit
 

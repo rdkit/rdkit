@@ -418,6 +418,21 @@ bool GenericAtomMatcher(const ROMol &mol, const ROMol &query,
   }
   return true;
 }
+
+void ConvertGenericQueriesToSubstanceGroups(ROMol &mol) {
+  for (const auto atom : mol.atoms()) {
+    std::string label;
+    if (atom->getPropIfPresent(common_properties::_QueryAtomGenericLabel,
+                               label)) {
+      SubstanceGroup sg(&mol, "SUP");
+      sg.setProp("LABEL", label);
+      sg.addAtomWithIdx(atom->getIdx());
+      addSubstanceGroup(mol, sg);
+      atom->clearProp(common_properties::_QueryAtomGenericLabel);
+    }
+  }
+}
+
 void SetGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
                                      bool useSGroups) {
   if (useAtomLabels) {

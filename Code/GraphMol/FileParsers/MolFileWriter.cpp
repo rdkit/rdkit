@@ -1058,6 +1058,8 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
   }
 }
 
+void copyAdditionalPropertiesToSGroups(RWMol &mol) {}
+
 const std::string GetV3000MolFileBondLine(const Bond *bond,
                                           const INT_MAP_INT &wedgeBonds,
                                           const Conformer *conf) {
@@ -1359,12 +1361,13 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
       MolOps::assignStereochemistry(trwmol);
     }
 #endif
-  const RWMol &tmol = const_cast<RWMol &>(trwmol);
+  // const RWMol &tmol = const_cast<RWMol &>(trwmol);
+  copyAdditionalPropertiesToSGroups(trwmol);
 
   try {
-    return outputMolToMolBlock(tmol, confId, forceV3000);
+    return outputMolToMolBlock(trwmol, confId, forceV3000);
   } catch (RequiresV3000Exception &) {
-    return outputMolToMolBlock(tmol, confId, true);
+    return outputMolToMolBlock(trwmol, confId, true);
   }
 }
 
