@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "Generics.h"
+#include "GenericGroups.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <algorithm>
@@ -15,9 +15,9 @@
 namespace RDKit {
 class ROMol;
 
-namespace SubstructSearch {
+namespace GenericGroups {
 
-namespace Generics {
+namespace Matchers {
 
 using AtomMatcherFunc = std::function<bool(const Atom &)>;
 using BondMatcherFunc = std::function<bool(const Bond &)>;
@@ -392,7 +392,7 @@ bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,
   return FusedRingMatch(mol, atom, ignore, atomMatcher);
 }
 
-}  // namespace Generics
+}  // namespace Matchers
 
 bool GenericAtomMatcher(const ROMol &mol, const ROMol &query,
                         const std::vector<unsigned int> &match) {
@@ -408,8 +408,8 @@ bool GenericAtomMatcher(const ROMol &mol, const ROMol &query,
     std::string genericLabel;
     if (atom->getPropIfPresent(common_properties::_QueryAtomGenericLabel,
                                genericLabel)) {
-      auto found = Generics::genericMatchers.find(genericLabel);
-      if (found != Generics::genericMatchers.end() &&
+      auto found = genericMatchers.find(genericLabel);
+      if (found != genericMatchers.end() &&
           !found->second(mol, *mol.getAtomWithIdx(match[atom->getIdx()]),
                          ignore)) {
         return false;
@@ -444,8 +444,7 @@ void SetGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
         if (label.size() > 4 && label.compare(label.size() - 2, 2, "_p") == 0) {
           label = label.substr(0, label.size() - 2);
         }
-        if (Generics::genericMatchers.find(label) !=
-            Generics::genericMatchers.end()) {
+        if (genericMatchers.find(label) != genericMatchers.end()) {
           atom->setProp(common_properties::_QueryAtomGenericLabel, label);
           atom->clearProp(common_properties::atomLabel);
         }
@@ -460,8 +459,7 @@ void SetGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
       if (sgroup.getProp<std::string>("TYPE") == "SUP") {
         std::string label;
         if (sgroup.getPropIfPresent("LABEL", label) &&
-            Generics::genericMatchers.find(label) !=
-                Generics::genericMatchers.end()) {
+            genericMatchers.find(label) != genericMatchers.end()) {
           for (auto aidx : sgroup.getAtoms()) {
             mol.getAtomWithIdx(aidx)->setProp(
                 common_properties::_QueryAtomGenericLabel, label);
@@ -476,6 +474,5 @@ void SetGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
     }
   }
 }
-
-}  // namespace SubstructSearch
+}  // namespace GenericGroups
 }  // namespace RDKit
