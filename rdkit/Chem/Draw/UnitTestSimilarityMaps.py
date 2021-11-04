@@ -35,7 +35,7 @@
 
 import sys
 import unittest
-import os
+import sys
 from rdkit import Chem
 from rdkit.RDLogger import logger
 import platform
@@ -56,6 +56,7 @@ class TestCase(unittest.TestCase):
     self.mol1 = Chem.MolFromSmiles('c1ccccc1')
     self.mol2 = Chem.MolFromSmiles('c1ccncc1')
 
+  @unittest.skipIf(sys.platform=='win32', 'test skipped on Windows')
   @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMap(self):
     # Morgan2 BV
@@ -119,6 +120,7 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertAlmostEqual(w, r, 4)
 
+  @unittest.skipIf(sys.platform=='win32', 'test skipped on Windows')
   @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMapKWArgs(self):
     # Morgan2 BV
@@ -156,6 +158,7 @@ class TestCase(unittest.TestCase):
     # chiral center drops:
     self.assertTrue(weights[2] > weights2[2])
 
+  @unittest.skipIf(sys.platform=='win32', 'test skipped on Windows')
   def testSimilarityMapsMolDraw2D(self):
     # nothing really sensible to test here, just make sure things run
     mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
