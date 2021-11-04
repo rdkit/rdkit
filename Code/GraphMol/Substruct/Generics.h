@@ -298,8 +298,9 @@ RDKIT_SUBSTRUCTMATCH_EXPORT bool GenericAtomMatcher(
 
 - Generic query tags found in the atom labels/SGroups will be overwrite existing
 generic query tags (if there are any present).
+- only SUP SGroups are considered
 - Any atom labels or SGroups which are converted will be removed
-- If the both atom labels and SGroups are being used and an atom has generic
+- If both atom labels and SGroups are being used and an atom has generic
 query tags in both, the one from the SGroup will be used.
 - Generic query tags not found in Generics::genericMatchers will be ignored
 
