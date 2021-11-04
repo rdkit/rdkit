@@ -20,6 +20,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Substruct/Generics.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 using namespace RDKit;
 
@@ -457,5 +458,69 @@ TEST_CASE("no carbon ring", "[substructure][generics]") {
         CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
       }
     }
+  }
+}
+
+TEST_CASE("Setting generic queries", "[substructure][generics]") {
+  SECTION("cxsmiles") {
+    auto m = "CO* |$;foo_p;ARY_p$|"_smiles;
+    REQUIRE(m);
+    auto atm = m->getAtomWithIdx(2);
+    CHECK(atm->hasProp(common_properties::atomLabel));
+    SubstructSearch::SetGenericQueriesFromProperties(*m);
+    CHECK(atm->hasProp(common_properties::_QueryAtomGenericLabel));
+    CHECK(atm->getProp<std::string>(
+              common_properties::_QueryAtomGenericLabel) == "ARY");
+    CHECK(!atm->hasProp(common_properties::atomLabel));
+    // make sure we didn't remove the other atom label
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::atomLabel));
+  }
+  SECTION("CTAB") {
+    auto m = R"CTAB(
+  Mrv2108 11042108512D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 3 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.0001 0.77 0 0
+M  V30 2 N -1.3336 0.0001 0 0
+M  V30 3 C -1.3336 -1.54 0 0
+M  V30 4 C -0.0001 -2.31 0 0
+M  V30 5 C 1.3336 -1.54 0 0
+M  V30 6 N 1.3336 0.0001 0 0
+M  V30 7 C -0.0001 2.31 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 3 4
+M  V30 2 1 4 5
+M  V30 3 2 1 2
+M  V30 4 1 2 3
+M  V30 5 1 1 6
+M  V30 6 2 5 6
+M  V30 7 1 1 7
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 -
+M  V30 ATOMS=(1 7) -
+M  V30 LABEL="AOX"
+M  V30 2 DAT 0 ATOMS=(1 6) FIELDNAME=data -
+M  V30 FIELDDISP="    1.3336    0.0001    DAU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=value
+M  V30 3 SUP 0 -
+M  V30 ATOMS=(1 5) -
+M  V30 LABEL="carbon"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto atm = m->getAtomWithIdx(6);
+    CHECK(getSubstanceGroups(*m).size() == 3);
+    SubstructSearch::SetGenericQueriesFromProperties(*m);
+    CHECK(atm->hasProp(common_properties::_QueryAtomGenericLabel));
+    CHECK(atm->getProp<std::string>(
+              common_properties::_QueryAtomGenericLabel) == "AOX");
+    CHECK(getSubstanceGroups(*m).size() == 2);
   }
 }

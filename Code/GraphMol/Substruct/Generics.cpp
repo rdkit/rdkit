@@ -423,15 +423,25 @@ void SetGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
   if (useAtomLabels) {
     for (const auto atom : mol.atoms()) {
       std::string label;
-      if (atom->getPropIfPresent(common_properties::atomLabel, label) &&
-          Generics::genericMatchers.find(label) !=
-              Generics::genericMatchers.end()) {
-        atom->setProp(common_properties::_QueryAtomGenericLabel, label);
+      if (atom->getPropIfPresent(common_properties::atomLabel, label)) {
+        // pseudoatom labels from CXSMILES end with "_p"... strip that if
+        // present
+        if (label.size() > 4 && label.compare(label.size() - 2, 2, "_p") == 0) {
+          label = label.substr(0, label.size() - 2);
+        }
+        if (Generics::genericMatchers.find(label) !=
+            Generics::genericMatchers.end()) {
+          atom->setProp(common_properties::_QueryAtomGenericLabel, label);
+          atom->clearProp(common_properties::atomLabel);
+        }
       }
     }
   }
   if (useSGroups) {
-    for (const auto sgroup : getSubstanceGroups(mol)) {
+    auto &sgs = getSubstanceGroups(mol);
+    auto iter = sgs.begin();
+    while (iter != sgs.end()) {
+      const auto &sgroup = *iter;
       if (sgroup.getProp<std::string>("TYPE") == "SUP") {
         std::string label;
         if (sgroup.getPropIfPresent("LABEL", label) &&
@@ -441,7 +451,12 @@ void SetGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
             mol.getAtomWithIdx(aidx)->setProp(
                 common_properties::_QueryAtomGenericLabel, label);
           }
+          iter = sgs.erase(iter);
+        } else {
+          ++iter;
         }
+      } else {
+        ++iter;
       }
     }
   }
