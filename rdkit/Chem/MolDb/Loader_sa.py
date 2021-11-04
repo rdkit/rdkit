@@ -18,7 +18,7 @@ import os
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Table, Column, MetaData
-from sqlalchemy import Integer, Text, String, ForeignKey, Binary, DateTime, Float
+from sqlalchemy import Integer, Text, String, ForeignKey, LargeBinary, DateTime, Float
 from sqlalchemy.orm import relation, mapper, sessionmaker, backref
 from sqlalchemy import create_engine
 
@@ -28,7 +28,7 @@ decBase = declarative_base()
 class Compound(decBase):
   __tablename__ = 'molecules'
   guid = Column(Integer, primary_key=True)
-  molpkl = Column(Binary)
+  molpkl = Column(LargeBinary)
 
 
 def RegisterSchema(dbUrl, echo=False):
@@ -47,6 +47,7 @@ def _ConnectToSchema(dbUrl, echo=False):
   decBase.metadata.create_all(engine)
   maker = sessionmaker(bind=engine)
   return maker
+
 
 #set up the logger:
 
@@ -123,8 +124,8 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
     if os.path.exists(dbName):
       raise IOError('could not delete old database %s' % dbName)
   sIter = iter(suppl)
-  setattr(Compound, nameCol.lower(), Column(nameCol.lower(), String, default=defaultVal,
-                                            unique=uniqNames))
+  setattr(Compound, nameCol.lower(),
+          Column(nameCol.lower(), String, default=defaultVal, unique=uniqNames))
   if not skipSmiles:
     Compound.smiles = Column(Text, unique=True)
   if not skipProps:
