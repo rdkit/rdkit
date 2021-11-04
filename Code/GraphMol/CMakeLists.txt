@@ -4,7 +4,7 @@ rdkit_library(GraphMol
               MolOps.cpp FindRings.cpp ROMol.cpp RWMol.cpp PeriodicTable.cpp
               atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
               AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
-              MolDiscriminators.cpp ConjugHybrid.cpp AddHs.cpp
+              ConjugHybrid.cpp AddHs.cpp
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp

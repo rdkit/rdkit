@@ -1,3 +1,19 @@
+# Release_2022.03.1pre
+(Changes relative to Release_2021.09.1)
+
+## Backwards incompatible changes
+
+## Code removed in this release:
+- The `useCountSimulation` keyword argument for
+  `rdFingerprintGenerator.GetMorganGenerator` and
+  `rdFingerprintGenerator.GetAtomPairGenerator` has been removed. Please use the
+  `countSimulation` keyword argument instead.
+- The function `mol_from_smarts()` in the PostgreSQL cartridge has been removed.
+  Please use the `qmol_from_smarts()` function instead.
+- The `computeBalabanJ()` functions from the `MolOps` namespace were removed.
+  These were not exposed to Python, so this will not affect any Python code.
+
+
 # Release_2021.09.1
 (Changes relative to Release_2021.03.1)
 
