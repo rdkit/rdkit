@@ -484,6 +484,10 @@ TEST_CASE("Setting generic queries", "[substructure][generics]") {
       CHECK(m2->getAtomWithIdx(0)->hasProp(
           common_properties::_QueryAtomGenericLabel));
     }
+    {
+      auto ctab = MolToV3KMolBlock(*m);
+      CHECK(ctab.find("ARY") != std::string::npos);
+    }
   }
   SECTION("CTAB") {
     auto m = R"CTAB(
@@ -549,6 +553,10 @@ M  END
       CHECK(getSubstanceGroups(m2).size() == getSubstanceGroups(*m).size() + 1);
       CHECK(!m2.getAtomWithIdx(0)->hasProp(
           common_properties::_QueryAtomGenericLabel));
+    }
+    {
+      auto ctab = MolToV3KMolBlock(*m);
+      CHECK(ctab.find("AOX") != std::string::npos);
     }
   }
 }

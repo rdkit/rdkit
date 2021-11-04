@@ -32,6 +32,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -1058,7 +1059,9 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
   }
 }
 
-void copyAdditionalPropertiesToSGroups(RWMol &mol) {}
+void moveAdditionalPropertiesToSGroups(RWMol &mol) {
+  GenericGroups::ConvertGenericQueriesToSubstanceGroups(mol);
+}
 
 const std::string GetV3000MolFileBondLine(const Bond *bond,
                                           const INT_MAP_INT &wedgeBonds,
@@ -1361,8 +1364,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
       MolOps::assignStereochemistry(trwmol);
     }
 #endif
-  // const RWMol &tmol = const_cast<RWMol &>(trwmol);
-  copyAdditionalPropertiesToSGroups(trwmol);
+  moveAdditionalPropertiesToSGroups(trwmol);
 
   try {
     return outputMolToMolBlock(trwmol, confId, forceV3000);
