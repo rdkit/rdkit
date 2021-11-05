@@ -56,7 +56,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"contourMol_4.svg", 2032744517U},
     {"testDativeBonds_1.svg", 1288509407U},
     {"testDativeBonds_2.svg", 2473279167U},
-    {"testDativeBonds_3.svg", 3551403428U},
+    {"testDativeBonds_3.svg", 2271021973U},
     {"testDativeBonds_2a.svg", 338608338U},
     {"testDativeBonds_2b.svg", 1192512328U},
     {"testDativeBonds_2c.svg", 1065957903U},
@@ -575,8 +575,8 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_3.svg");
 
-    CHECK(text.find("<path class='bond-2 atom-3 atom-4' d='M 53.3,140.7"
-                    " L 81.0,149.7' style='fill:none;"
+    CHECK(text.find("<path class='bond-2 atom-3 atom-4' d='M 43.0,149.7"
+                    " L 76.8,160.7' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
   }
   SECTION("dative series") {

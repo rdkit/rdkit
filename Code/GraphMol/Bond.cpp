@@ -10,6 +10,7 @@
 #include "Bond.h"
 #include "Atom.h"
 #include "ROMol.h"
+#include <GraphMol/PeriodicTable.h>
 #include <RDGeneral/Invariant.h>
 
 namespace RDKit {
@@ -169,10 +170,10 @@ double Bond::getBondTypeAsDouble() const {
       break;
     case DATIVEONE:
       res = 1.0;
-      break;  // FIX: this should probably be different
+      break;
     case DATIVE:
-      res = 1.0;
-      break;  // FIX: again probably wrong
+      res = 2.0;
+      break;
     case HYDROGEN:
       res = 0.0;
       break;
@@ -188,7 +189,7 @@ double Bond::getValenceContrib(const Atom *atom) const {
   }
   double res;
   if ((getBondType() == DATIVE || getBondType() == DATIVEONE) &&
-      atom->getIdx() != getEndAtomIdx()) {
+    (atom->getIdx() != getEndAtomIdx() || PeriodicTable::getTable()->getIsMetal(atom->getAtomicNum()))) {
     res = 0.0;
   } else {
     res = getBondTypeAsDouble();
@@ -301,7 +302,7 @@ uint8_t getTwiceBondType(const Bond &b) {
       return 2;
       break;  // FIX: this should probably be different
     case Bond::DATIVE:
-      return 2;
+      return 4;
       break;  // FIX: again probably wrong
     case Bond::HYDROGEN:
       return 0;

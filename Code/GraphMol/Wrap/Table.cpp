@@ -55,6 +55,8 @@ std::string periodicTableClassDoc =
 \n\
     - GetMassForIsotope\n\
 \n\
+    - GetIsMetal\n\
+\n\
   When it makes sense, these can be queried using either an atomic number (integer)\n\
   or an atomic symbol (string)\n\
 \n";
@@ -126,7 +128,10 @@ struct table_wrapper {
                  PeriodicTable::getMassForIsotope)
         .def("GetMassForIsotope",
              (double (PeriodicTable::*)(const std::string &, UINT) const) &
-                 PeriodicTable::getMassForIsotope);
+                 PeriodicTable::getMassForIsotope)
+        .def("GetIsMetal",
+             (bool (PeriodicTable::*)(UINT) const) &
+                 PeriodicTable::getIsMetal);
 
     python::def(
         "GetPeriodicTable", GetTable,

@@ -1491,7 +1491,7 @@ TEST_CASE("needsHs function", "[chemistry]") {
 }
 
 TEST_CASE(
-    "github #3330: incorrect number of radicals electrons calculated for "
+    "github #3330: incorrect number of radical electrons calculated for "
     "metals",
     "[chemistry][metals]") {
   SECTION("basics") {
@@ -1503,6 +1503,168 @@ TEST_CASE(
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == pr.second);
     }
+  }
+}
+
+TEST_CASE(
+    "Incorrect implicit valence/number of radical electrons for dative bond recipient",
+    "[chemistry]") {
+  SECTION("mdlV3000") {
+    auto pyNOxide = R"CTAB(pyNOxide
+  ChemDraw11042116522D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.071706 0.412500 0.000000 0
+M  V30 2 C -1.071706 -0.412500 0.000000 0
+M  V30 3 C -0.357235 -0.825000 0.000000 0
+M  V30 4 C 0.357235 -0.412500 0.000000 0
+M  V30 5 N 0.357235 0.412500 0.000000 0
+M  V30 6 C -0.357235 0.825000 0.000000 0
+M  V30 7 O 1.071706 0.825000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 9 5 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(pyNOxide);
+    auto o = pyNOxide->getAtomWithIdx(pyNOxide->getNumAtoms() - 1);
+    CHECK(o->getNumImplicitHs() == 0);
+    CHECK(o->getNumRadicalElectrons() == 0);
+  }
+  SECTION("autoImplicitHs") {
+    auto pyNOxide = "O<-n1ccccc1"_smiles;
+    REQUIRE(pyNOxide);
+    auto o = pyNOxide->getAtomWithIdx(0);
+    CHECK(o->getNumImplicitHs() == 0);
+    CHECK(o->getNumRadicalElectrons() == 0);
+    auto tmaNOxide = "O<-N(C)(C)C"_smiles;
+    REQUIRE(tmaNOxide);
+    o = tmaNOxide->getAtomWithIdx(0);
+    CHECK(o->getNumImplicitHs() == 0);
+    CHECK(o->getNumRadicalElectrons() == 0);
+  }
+  SECTION("zeroExplicitHs") {
+    auto pyNOxide = "[O]<-n1ccccc1"_smiles;
+    REQUIRE(pyNOxide);
+    auto o = pyNOxide->getAtomWithIdx(0);
+    CHECK(o->getNumImplicitHs() == 0);
+    CHECK(o->getNumRadicalElectrons() == 0);
+    auto tmaNOxide = "[O]<-N(C)(C)C"_smiles;
+    REQUIRE(tmaNOxide);
+    o = tmaNOxide->getAtomWithIdx(0);
+    CHECK(o->getNumImplicitHs() == 0);
+    CHECK(o->getNumRadicalElectrons() == 0);
+  }
+}
+
+TEST_CASE("Bad valence on metals in coordination complexes", "[chemistry][metals]") {
+  SECTION("[68Ga+3]-DOTA") {
+    auto ga3_dota = R"CTAB(DOTA_Gallium_III
+  ChemDraw11042110472D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 29 34 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.412907 1.539471 0.000000 0
+M  V30 2 C 0.412093 1.539471 0.000000 0
+M  V30 3 C -1.539878 -0.412500 0.000000 0
+M  V30 4 C -1.539878 0.412500 0.000000 0
+M  V30 5 N -0.825407 0.825000 0.000000 0
+M  V30 6 C 1.539064 0.412500 0.000000 0
+M  V30 7 C 1.539064 -0.412500 0.000000 0
+M  V30 8 C 0.412093 -1.539471 0.000000 0
+M  V30 9 C -0.412907 -1.539471 0.000000 0
+M  V30 10 C -1.408770 1.408363 0.000000 0
+M  V30 11 C -1.195244 2.205252 0.000000 0
+M  V30 12 O -0.398355 2.418778 0.000000 0 CHG=-1
+M  V30 13 O -1.778607 2.788615 0.000000 0
+M  V30 14 N -0.825407 -0.825000 0.000000 0
+M  V30 15 C -1.408272 -1.408861 0.000000 0
+M  V30 16 C -2.205343 -1.196015 0.000000 0
+M  V30 17 O -2.419548 -0.399308 0.000000 0 CHG=-1
+M  V30 18 O -2.788208 -1.779875 0.000000 0
+M  V30 19 N 0.824593 -0.825000 0.000000 0
+M  V30 20 C 1.407956 -1.408363 0.000000 0
+M  V30 21 C 1.194431 -2.205252 0.000000 0
+M  V30 22 O 0.397542 -2.418778 0.000000 0 CHG=-1
+M  V30 23 O 1.777794 -2.788615 0.000000 0
+M  V30 24 N 0.824593 0.825000 0.000000 0
+M  V30 25 C 1.407956 1.408363 0.000000 0
+M  V30 26 C 2.204845 1.194838 0.000000 0
+M  V30 27 O 2.418371 0.397949 0.000000 0
+M  V30 28 R 2.788208 1.778200 0.000000 0
+M  V30 29 Ga -0.028436 0.000000 0.000000 0 CHG=3 MASS=68
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 5 1
+M  V30 2 1 1 2
+M  V30 3 1 2 24
+M  V30 4 1 14 3
+M  V30 5 1 3 4
+M  V30 6 1 4 5
+M  V30 7 1 24 6
+M  V30 8 1 6 7
+M  V30 9 1 7 19
+M  V30 10 1 8 19
+M  V30 11 1 9 8
+M  V30 12 1 14 9
+M  V30 13 1 5 10
+M  V30 14 1 10 11
+M  V30 15 1 11 12
+M  V30 16 2 11 13
+M  V30 17 1 14 15
+M  V30 18 1 15 16
+M  V30 19 1 16 17
+M  V30 20 2 16 18
+M  V30 21 1 19 20
+M  V30 22 1 20 21
+M  V30 23 1 21 22
+M  V30 24 2 21 23
+M  V30 25 1 24 25
+M  V30 26 1 25 26
+M  V30 27 2 26 27
+M  V30 28 1 26 28
+M  V30 29 9 5 29
+M  V30 30 9 24 29
+M  V30 31 9 14 29
+M  V30 32 9 12 29
+M  V30 33 9 22 29
+M  V30 34 9 19 29
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(ga3_dota);
+    CHECK(MolOps::getFormalCharge(*ga3_dota) == 0);
+    auto ga3 = ga3_dota->getAtomWithIdx(ga3_dota->getNumAtoms() - 1);
+    CHECK(ga3->getDegree() == 6);
+    CHECK(ga3->getTotalValence() == 0);
+    CHECK(ga3->getFormalCharge() == 3);
+    auto ga3_alone = "[68Ga+3]"_smiles;
+    REQUIRE(ga3_alone);
+    ga3 = ga3_alone->getAtomWithIdx(0);
+    CHECK(ga3->getDegree() == 0);
+    CHECK(ga3->getTotalValence() == 0);
+    CHECK(ga3->getFormalCharge() == 3);
+  }
+  SECTION("[BeF4]2-") {
+    auto bf4 = "[Be](F)(F)(<-[F-])<-[F-]"_smiles;
+    REQUIRE(bf4);
+    CHECK(MolOps::getFormalCharge(*bf4) == -2);
+    auto b = bf4->getAtomWithIdx(0);
+    CHECK(b->getDegree() == 4);
+    CHECK(b->getTotalValence() == 2);
+    CHECK(b->getFormalCharge() == 0);
   }
 }
 
@@ -2250,7 +2412,7 @@ TEST_CASE("getBondTypeAsDouble()") {
         {Bond::BondType::FIVEANDAHALF, 5.5},
         {Bond::BondType::AROMATIC, 1.5},
         {Bond::BondType::DATIVEONE, 1.0},
-        {Bond::BondType::DATIVE, 1.0},
+        {Bond::BondType::DATIVE, 2.0},
         {Bond::BondType::HYDROGEN, 0}
 
     };
@@ -2269,7 +2431,7 @@ TEST_CASE("getBondTypeAsDouble()") {
         {Bond::BondType::ONEANDAHALF, 3},   {Bond::BondType::TWOANDAHALF, 5},
         {Bond::BondType::THREEANDAHALF, 7}, {Bond::BondType::FOURANDAHALF, 9},
         {Bond::BondType::FIVEANDAHALF, 11}, {Bond::BondType::AROMATIC, 3},
-        {Bond::BondType::DATIVEONE, 2},     {Bond::BondType::DATIVE, 2},
+        {Bond::BondType::DATIVEONE, 2},     {Bond::BondType::DATIVE, 4},
         {Bond::BondType::HYDROGEN, 0}
 
     };
@@ -2286,7 +2448,7 @@ TEST_CASE("getValenceContrib()") {
   REQUIRE(m);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(0)) == 0);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(1)) == 0);
-  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 1);
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 0);
 }
 
 TEST_CASE("conformer details") {
