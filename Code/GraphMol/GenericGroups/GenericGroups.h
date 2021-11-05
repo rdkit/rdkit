@@ -13,6 +13,7 @@
 
 #include <vector>
 #include <functional>
+#include <map>
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
