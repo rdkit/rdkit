@@ -323,6 +323,11 @@ struct mol_wrapper {
             "aromaticMatchesConjugated",
             &RDKit::SubstructMatchParameters::aromaticMatchesConjugated,
             "aromatic and conjugated bonds match each other")
+        .def_readwrite(
+            "useGenericMatchers",
+            &RDKit::SubstructMatchParameters::useGenericMatchers,
+            "use generic groups (=homology groups) as a post-filtering step "
+            "(if any are present in the molecule)")
         .def_readwrite("useQueryQueryMatches",
                        &RDKit::SubstructMatchParameters::useQueryQueryMatches,
                        "Consider query-query matches, not just simple matches")
