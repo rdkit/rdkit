@@ -289,7 +289,7 @@ const static std::map<
 };
 //! returns false if any of the molecule's generic atoms are not satisfied in
 /// the current match
-RDKIT_GENERICGROUPS_EXPORT bool GenericAtomMatcher(
+RDKIT_GENERICGROUPS_EXPORT bool genericAtomMatcher(
     const ROMol &mol, const ROMol &query,
     const std::vector<unsigned int> &match);
 //! sets the apropriate generic query tags based on atom labels and/or SGroups
@@ -304,9 +304,9 @@ query tags in both, the one from the SGroup will be used.
 - Generic query tags not found in GenericGroups::genericMatchers will be ignored
 
 */
-RDKIT_GENERICGROUPS_EXPORT void SetGenericQueriesFromProperties(
+RDKIT_GENERICGROUPS_EXPORT void setGenericQueriesFromProperties(
     ROMol &mol, bool useAtomLabels = true, bool useSGroups = true);
-RDKIT_GENERICGROUPS_EXPORT void ConvertGenericQueriesToSubstanceGroups(
+RDKIT_GENERICGROUPS_EXPORT void convertGenericQueriesToSubstanceGroups(
     ROMol &mol);
 }  // namespace GenericGroups
 }  // namespace RDKit

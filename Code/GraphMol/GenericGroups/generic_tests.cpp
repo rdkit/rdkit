@@ -467,7 +467,7 @@ TEST_CASE("Setting generic queries", "[substructure][generics]") {
     REQUIRE(m);
     auto atm = m->getAtomWithIdx(2);
     CHECK(atm->hasProp(common_properties::atomLabel));
-    GenericGroups::SetGenericQueriesFromProperties(*m);
+    GenericGroups::setGenericQueriesFromProperties(*m);
     CHECK(atm->hasProp(common_properties::_QueryAtomGenericLabel));
     CHECK(atm->getProp<std::string>(
               common_properties::_QueryAtomGenericLabel) == "ARY");
@@ -480,7 +480,7 @@ TEST_CASE("Setting generic queries", "[substructure][generics]") {
       CHECK(smi == "*OC |$ARY_p;foo_p;$|");
       std::unique_ptr<ROMol> m2{SmilesToMol(smi)};
       REQUIRE(m2);
-      GenericGroups::SetGenericQueriesFromProperties(*m2);
+      GenericGroups::setGenericQueriesFromProperties(*m2);
       CHECK(m2->getAtomWithIdx(0)->hasProp(
           common_properties::_QueryAtomGenericLabel));
     }
@@ -531,7 +531,7 @@ M  END
     REQUIRE(m);
     auto atm = m->getAtomWithIdx(6);
     CHECK(getSubstanceGroups(*m).size() == 3);
-    GenericGroups::SetGenericQueriesFromProperties(*m);
+    GenericGroups::setGenericQueriesFromProperties(*m);
     CHECK(atm->hasProp(common_properties::_QueryAtomGenericLabel));
     CHECK(atm->getProp<std::string>(
               common_properties::_QueryAtomGenericLabel) == "AOX");
@@ -542,14 +542,14 @@ M  END
       CHECK(smi == "Cc1ncccn1 |$AOX_p;;;;;;$|");
       std::unique_ptr<ROMol> m2{SmilesToMol(smi)};
       REQUIRE(m2);
-      GenericGroups::SetGenericQueriesFromProperties(*m2);
+      GenericGroups::setGenericQueriesFromProperties(*m2);
       CHECK(m2->getAtomWithIdx(0)->hasProp(
           common_properties::_QueryAtomGenericLabel));
     }
 
     {
       RWMol m2(*m);
-      GenericGroups::ConvertGenericQueriesToSubstanceGroups(m2);
+      GenericGroups::convertGenericQueriesToSubstanceGroups(m2);
       CHECK(getSubstanceGroups(m2).size() == getSubstanceGroups(*m).size() + 1);
       CHECK(!m2.getAtomWithIdx(0)->hasProp(
           common_properties::_QueryAtomGenericLabel));

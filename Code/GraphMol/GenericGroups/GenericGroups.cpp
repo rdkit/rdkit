@@ -397,7 +397,7 @@ bool CyclicAtomMatcher(const ROMol &mol, const Atom &atom,
 
 }  // namespace Matchers
 
-bool GenericAtomMatcher(const ROMol &mol, const ROMol &query,
+bool genericAtomMatcher(const ROMol &mol, const ROMol &query,
                         const std::vector<unsigned int> &match) {
   boost::dynamic_bitset<> ignore(mol.getNumAtoms());
   for (const auto idx : match) {
@@ -422,7 +422,7 @@ bool GenericAtomMatcher(const ROMol &mol, const ROMol &query,
   return true;
 }
 
-void ConvertGenericQueriesToSubstanceGroups(ROMol &mol) {
+void convertGenericQueriesToSubstanceGroups(ROMol &mol) {
   for (const auto atom : mol.atoms()) {
     std::string label;
     if (atom->getPropIfPresent(common_properties::_QueryAtomGenericLabel,
@@ -436,7 +436,7 @@ void ConvertGenericQueriesToSubstanceGroups(ROMol &mol) {
   }
 }
 
-void SetGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
+void setGenericQueriesFromProperties(ROMol &mol, bool useAtomLabels,
                                      bool useSGroups) {
   if (useAtomLabels) {
     for (const auto atom : mol.atoms()) {

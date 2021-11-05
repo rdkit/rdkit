@@ -205,7 +205,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       aids[i] = m_c[i];
     }
     if (d_params.useGenericMatchers &&
-        !GenericGroups::GenericAtomMatcher(d_mol, d_query, aids)) {
+        !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
       return false;
     }
     if (d_params.extraFinalCheck && !d_params.extraFinalCheck(d_mol, aids)) {

@@ -1060,7 +1060,7 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
 }
 
 void moveAdditionalPropertiesToSGroups(RWMol &mol) {
-  GenericGroups::ConvertGenericQueriesToSubstanceGroups(mol);
+  GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
 }
 
 const std::string GetV3000MolFileBondLine(const Bond *bond,
