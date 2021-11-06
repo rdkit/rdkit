@@ -310,12 +310,9 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
 
   bool getIsMetal(UINT anum) const {
     PRECONDITION(anum < byanum.size(), "Atomic number not found");
-    return (anum > 2 && anum < 5) ||
-      (anum > 10 && anum < 14) ||
-      (anum > 18 && anum < 33) ||
-      (anum > 36 && anum < 51) ||
-      (anum > 54 && anum < 85) ||
-      (anum > 86);
+    return (anum > 2 && anum < 5) || (anum > 10 && anum < 14) ||
+           (anum > 18 && anum < 33) || (anum > 36 && anum < 51) ||
+           (anum > 54 && anum < 85) || (anum > 86);
   }
 
  private:

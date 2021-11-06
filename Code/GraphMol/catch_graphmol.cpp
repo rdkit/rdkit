@@ -1507,7 +1507,8 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "Incorrect implicit valence/number of radical electrons for dative bond recipient",
+    "Incorrect implicit valence/number of radical electrons for dative bond "
+    "recipient",
     "[chemistry]") {
   SECTION("mdlV3000") {
     auto pyNOxide = R"CTAB(pyNOxide
@@ -1567,7 +1568,8 @@ M  END)CTAB"_ctab;
   }
 }
 
-TEST_CASE("Bad valence on metals in coordination complexes", "[chemistry][metals]") {
+TEST_CASE("Bad valence on metals in coordination complexes",
+          "[chemistry][metals]") {
   SECTION("[68Ga+3]-DOTA") {
     auto ga3_dota = R"CTAB(DOTA_Gallium_III
   ChemDraw11042110472D

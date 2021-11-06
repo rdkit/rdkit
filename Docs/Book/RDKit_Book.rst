@@ -204,14 +204,14 @@ Here's an example of a bipy-copper complex:
 
 Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect
 the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy,
-while the Cu has a valence of 4:
+while the Cu has a valence of 2, as only the two ionic bonds contribute to the valence:
 
 .. doctest::
 
   >>> bipycu.GetAtomWithIdx(4).GetTotalValence()
   3
   >>> bipycu.GetAtomWithIdx(12).GetTotalValence()
-  4
+  2 
 
 Ring closures
 -------------

@@ -94,7 +94,7 @@ struct table_wrapper {
                  PeriodicTable::getValenceList,
              python::return_value_policy<python::copy_const_reference>())
         .def("GetValenceList",
-             (const INT_VECT &(PeriodicTable::*)(const std::string &) const) &
+             (const INT_VECT &(PeriodicTable::*)(const std::string &)const) &
                  PeriodicTable::getValenceList,
              python::return_value_policy<python::copy_const_reference>())
         .def("GetNOuterElecs", (int (PeriodicTable::*)(UINT) const) &
@@ -130,8 +130,7 @@ struct table_wrapper {
              (double (PeriodicTable::*)(const std::string &, UINT) const) &
                  PeriodicTable::getMassForIsotope)
         .def("GetIsMetal",
-             (bool (PeriodicTable::*)(UINT) const) &
-                 PeriodicTable::getIsMetal);
+             (bool (PeriodicTable::*)(UINT) const) & PeriodicTable::getIsMetal);
 
     python::def(
         "GetPeriodicTable", GetTable,
