@@ -1670,6 +1670,25 @@ M  END)CTAB"_ctab;
   }
 }
 
+TEST_CASE("Dative bonds should not exceed available lone electrons",
+          "[chemistry]") {
+  SECTION("trimethylamine N,N,N-trioxide") {
+    std::unique_ptr<RWMol> tmaTrioxide(
+        SmilesToMol("N(C)(C)(C)(->O)(->O)->O", 0, false));
+    REQUIRE(tmaTrioxide);
+    REQUIRE_THROWS_AS(MolOps::sanitizeMol(*tmaTrioxide), AtomValenceException);
+  }
+  SECTION("dimethylsulfone") {
+    std::unique_ptr<RWMol> dimethylSulfone(SmilesToMol("S(C)(C)(->O)->O"));
+    REQUIRE(dimethylSulfone);
+    std::unique_ptr<RWMol> dimethylSulfurTrioxide(
+        SmilesToMol("S(C)(C)(->O)(->O)->O", 0, false));
+    REQUIRE(dimethylSulfurTrioxide);
+    REQUIRE_THROWS_AS(MolOps::sanitizeMol(*dimethylSulfurTrioxide),
+                      AtomValenceException);
+  }
+}
+
 TEST_CASE("github #3879: bad H coordinates on fused rings", "[addhs]") {
   SECTION("reported") {
     auto m = R"CTAB(

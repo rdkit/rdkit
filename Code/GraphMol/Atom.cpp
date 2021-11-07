@@ -204,14 +204,18 @@ unsigned int Atom::getTotalValence() const {
 int Atom::calcExplicitValence(bool strict) {
   PRECONDITION(dp_mol,
                "valence not defined for atoms not associated with molecules");
-  unsigned int res;
+  int res;
   // FIX: contributions of bonds to valence are being done at best
   // approximately
-  double accum = 0;
+  double accum = 0.;
+  double requiredLoneElectrons = 0.;
   for (const auto &nbri :
        boost::make_iterator_range(getOwningMol().getAtomBonds(this))) {
     const auto bnd = getOwningMol()[nbri];
     accum += bnd->getValenceContrib(this);
+    if (bnd->getBondType() >= Bond::DATIVEONE && bnd->getBeginAtom() == this) {
+      requiredLoneElectrons += bnd->getBondTypeAsDouble();
+    }
   }
   accum += getNumExplicitHs();
 
@@ -274,13 +278,15 @@ int Atom::calcExplicitValence(bool strict) {
   res = static_cast<int>(std::round(accum));
 
   if (strict) {
-    int effectiveValence;
-    if (PeriodicTable::getTable()->getNouterElecs(d_atomicNum) >= 4) {
-      effectiveValence = res - getFormalCharge();
+    int effectiveValence = res;
+    int nOuterElecs = PeriodicTable::getTable()->getNouterElecs(d_atomicNum);
+    int nLoneElectrons = std::max(0, nOuterElecs - res - getFormalCharge());
+    if (nOuterElecs >= 4) {
+      effectiveValence -= getFormalCharge();
     } else {
       // for boron and co, we move to the right in the PT, so adding
       // extra valences means adding negative charge
-      effectiveValence = res + getFormalCharge();
+      effectiveValence += getFormalCharge();
     }
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
@@ -293,6 +299,20 @@ int Atom::calcExplicitValence(bool strict) {
       errout << "Explicit valence for atom # " << getIdx() << " "
              << PeriodicTable::getTable()->getElementSymbol(d_atomicNum) << ", "
              << effectiveValence << ", is greater than permitted";
+      std::string msg = errout.str();
+      BOOST_LOG(rdErrorLog) << msg << std::endl;
+      throw AtomValenceException(msg, getIdx());
+    }
+    if (nLoneElectrons < requiredLoneElectrons) {
+      // the number of electrons involved in dative bonds exceeds
+      // the number of available lone electrons
+      std::ostringstream errout;
+      errout << "The number of electrons involved in dative bonds for atom # "
+             << getIdx() << " "
+             << PeriodicTable::getTable()->getElementSymbol(d_atomicNum) << ", "
+             << requiredLoneElectrons
+             << ", is greater than the number of available lone electrons, "
+             << nLoneElectrons;
       std::string msg = errout.str();
       BOOST_LOG(rdErrorLog) << msg << std::endl;
       throw AtomValenceException(msg, getIdx());
