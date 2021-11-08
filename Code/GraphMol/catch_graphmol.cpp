@@ -1542,7 +1542,7 @@ M  END)CTAB"_ctab;
     CHECK(o->getNumImplicitHs() == 0);
     CHECK(o->getNumRadicalElectrons() == 0);
   }
-  SECTION("autoImplicitHs") {
+  SECTION("autoImplicitHs O") {
     auto pyNOxide = "O<-n1ccccc1"_smiles;
     REQUIRE(pyNOxide);
     auto o = pyNOxide->getAtomWithIdx(0);
@@ -1554,7 +1554,7 @@ M  END)CTAB"_ctab;
     CHECK(o->getNumImplicitHs() == 0);
     CHECK(o->getNumRadicalElectrons() == 0);
   }
-  SECTION("zeroExplicitHs") {
+  SECTION("zeroExplicitHs O") {
     auto pyNOxide = "[O]<-n1ccccc1"_smiles;
     REQUIRE(pyNOxide);
     auto o = pyNOxide->getAtomWithIdx(0);
@@ -1565,6 +1565,22 @@ M  END)CTAB"_ctab;
     o = tmaNOxide->getAtomWithIdx(0);
     CHECK(o->getNumImplicitHs() == 0);
     CHECK(o->getNumRadicalElectrons() == 0);
+  }
+  SECTION("autoImplicitHs B") {
+    auto bn = "B<-N"_smiles;
+    REQUIRE(bn);
+    auto b = bn->getAtomWithIdx(0);
+    CHECK(b->getNumImplicitHs() == 3);
+    CHECK(b->getNumExplicitHs() == 0);
+    CHECK(b->getNumRadicalElectrons() == 0);
+  }
+  SECTION("zeroExplicitHs B") {
+    auto bn = "[BH3]<-[NH3]"_smiles;
+    REQUIRE(bn);
+    auto b = bn->getAtomWithIdx(0);
+    CHECK(b->getNumImplicitHs() == 0);
+    CHECK(b->getNumExplicitHs() == 3);
+    CHECK(b->getNumRadicalElectrons() == 0);
   }
 }
 

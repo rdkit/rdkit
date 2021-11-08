@@ -190,6 +190,7 @@ double Bond::getValenceContrib(const Atom *atom) const {
   double res;
   if ((getBondType() == DATIVE || getBondType() == DATIVEONE) &&
       (atom->getIdx() != getEndAtomIdx() ||
+       isEarlyAtom(atom->getAtomicNum()) ||
        PeriodicTable::getTable()->getIsMetal(atom->getAtomicNum()))) {
     res = 0.0;
   } else {
