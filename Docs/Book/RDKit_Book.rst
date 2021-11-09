@@ -1341,7 +1341,7 @@ What has been tested
   - The chemical reactions code
   - The Open3DAlign code
   - The MolDraw2D drawing code
-  - The InChI code, with InChI IUPAC v1.05
+  - The InChI code, with InChI IUPAC v1.06
 
 Known Problems
 --------------

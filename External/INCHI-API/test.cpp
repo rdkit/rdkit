@@ -110,29 +110,26 @@ void testMultiThread() {
 }
 
 void testMultiThread2() {
-  const char* smiles_init[] = {
-    "C#Cc1ccc2c(c1)C(C(=O)Nc1nncn1C1CC1)CCO2",
-    "C=C(C(=O)C1CCOc2ccc(Cl)cc21)c1cncn1C1CC1",
-    "C=CC(=O)N(C(=O)[C@@H]1CCOc2ccc(Cl)cc21)c1nncn1C1CC1",
-    "C=CC(=O)N[C@@]1(C(=O)Nc2nncn2C2CC2)CCOc2ccc(Cl)cc21",
-    "CC#CC(=O)N(C(=O)[C@@H]1CCOc2ccc(Cl)cc21)c1nncn1C1CC1",
-    "CC(C(=O)Nc1nncn1C1CC1)c1cccc(Cl)c1",
-    "CC(C)c1scnc1NC(=O)C1CCOc2ccc(Cl)cc21",
-    "CC(C)n1c(NC(=O)C2CCOc3ccccc32)nc2ccccc21",
+  const char *smiles_init[] = {
+      "C#Cc1ccc2c(c1)C(C(=O)Nc1nncn1C1CC1)CCO2",
+      "C=C(C(=O)C1CCOc2ccc(Cl)cc21)c1cncn1C1CC1",
+      "C=CC(=O)N(C(=O)[C@@H]1CCOc2ccc(Cl)cc21)c1nncn1C1CC1",
+      "C=CC(=O)N[C@@]1(C(=O)Nc2nncn2C2CC2)CCOc2ccc(Cl)cc21",
+      "CC#CC(=O)N(C(=O)[C@@H]1CCOc2ccc(Cl)cc21)c1nncn1C1CC1",
+      "CC(C(=O)Nc1nncn1C1CC1)c1cccc(Cl)c1",
+      "CC(C)c1scnc1NC(=O)C1CCOc2ccc(Cl)cc21",
+      "CC(C)n1c(NC(=O)C2CCOc3ccccc32)nc2ccccc21",
   };
-  const char* inchikeys_init[] = {
-    "FSPOGANMWXTKGJ-UHFFFAOYSA-N",
-    "CIBQANUIVWKYMR-UHFFFAOYSA-N",
-    "GBPCXKPRLGZQQB-CYBMUJFWSA-N",
-    "IOOIGOWFYCNXKX-SFHVURJKSA-N",
-    "XSYMIYIQKSFGOG-CQSZACIVSA-N",
-    "BLJFTMZJZUGEGJ-UHFFFAOYSA-N",
-    "CEVCYTUHJSCLCQ-UHFFFAOYSA-N",
-    "FHPRHOONYCYTIX-UHFFFAOYSA-N",
+  const char *inchikeys_init[] = {
+      "FSPOGANMWXTKGJ-UHFFFAOYSA-N", "CIBQANUIVWKYMR-UHFFFAOYSA-N",
+      "GBPCXKPRLGZQQB-CYBMUJFWSA-N", "IOOIGOWFYCNXKX-SFHVURJKSA-N",
+      "XSYMIYIQKSFGOG-CQSZACIVSA-N", "BLJFTMZJZUGEGJ-UHFFFAOYSA-N",
+      "CEVCYTUHJSCLCQ-UHFFFAOYSA-N", "FHPRHOONYCYTIX-UHFFFAOYSA-N",
   };
 
-  auto lambda = [](const std::string& smiles, const std::string& expected_inchikey) {
-    ROMol* mol = SmilesToMol(smiles);
+  auto lambda = [](const std::string &smiles,
+                   const std::string &expected_inchikey) {
+    ROMol *mol = SmilesToMol(smiles);
 
     std::string key = MolToInchiKey(*mol);
     TEST_ASSERT(key == expected_inchikey);
@@ -141,21 +138,14 @@ void testMultiThread2() {
   };
 
   const std::vector<std::string> smiles(smiles_init, std::end(smiles_init));
-  const std::vector<std::string> inchikeys(inchikeys_init, std::end(inchikeys_init));
-
-  // If we delete this initial call, then this test always fails under asan, and
-  // fails about 50% of the time otherwise on an 8-core x84_64 debian linux machine.
-  // This appears due to some static variables that remain in v1.05, contrary to what
-  // the release notes say - https://gist.github.com/jinpan/2a6d98ff268ff7f51566a6468e16092c#file-inchi_base-src-strutil-c-L551-L558
-  // With this statement in here, then the test appears to always pass (N=2000).
-  lambda(smiles[0], inchikeys[0]);
+  const std::vector<std::string> inchikeys(inchikeys_init,
+                                           std::end(inchikeys_init));
 
   std::vector<std::future<void>> futures;
   for (size_t i = 0; i < smiles.size(); ++i) {
-    futures.emplace_back(std::async(
-      std::launch::async, lambda,
-      std::ref(smiles[i]), std::ref(inchikeys[i])
-    ));
+    futures.emplace_back(std::async(std::launch::async, lambda,
+                                    std::ref(smiles[i]),
+                                    std::ref(inchikeys[i])));
   }
   for (auto &fut : futures) {
     fut.get();
