@@ -28,7 +28,7 @@ using namespace RDKit;
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
 void runblock(const std::vector<ROMol *> &mols, unsigned int count,
-              unsigned int idx, std::vector<std::string> &inchis,
+              unsigned int idx, const std::vector<std::string> &inchis,
               const std::vector<std::string> &keys) {
   for (unsigned int j = 0; j < 200; j++) {
     for (unsigned int i = 0; i < mols.size(); ++i) {
@@ -43,12 +43,18 @@ void runblock(const std::vector<ROMol *> &mols, unsigned int count,
       TEST_ASSERT(key == keys[i]);
       std::string key2 = MolToInchiKey(*mol);
       TEST_ASSERT(key2 == keys[i]);
+
       ROMol *mol2 = InchiToMol(inchi, tmp);
       TEST_ASSERT(mol2);
       ExtraInchiReturnValues tmp2;
       std::string inchi2 = MolToInchi(*mol2, tmp2);
       TEST_ASSERT(inchi == inchi2);
       delete mol2;
+
+      std::string mol_block = MolToMolBlock(*mol);
+      ExtraInchiReturnValues tmp3;
+      std::string inchi3 = MolBlockToInchi(mol_block, tmp3);
+      TEST_ASSERT(inchi == inchi3);
     }
   }
 };
@@ -66,17 +72,12 @@ void testMultiThread() {
   std::cerr << "reading molecules" << std::endl;
   std::vector<ROMol *> mols;
   while (!suppl.atEnd() && mols.size() < 100) {
-    ROMol *mol = nullptr;
-    try {
-      mol = suppl.next();
-    } catch (...) {
-      continue;
-    }
-    if (!mol) {
-      continue;
-    }
+    ROMol *mol = suppl.next();
+    TEST_ASSERT(mol != nullptr);
     mols.push_back(mol);
   }
+  TEST_ASSERT(mols.size() == 100);
+
   std::cerr << "generating reference data" << std::endl;
   std::vector<std::string> inchis;
   std::vector<std::string> keys;
@@ -107,8 +108,54 @@ void testMultiThread() {
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
+
+void testMultiThread2() {
+  const char *smiles_init[] = {
+      "C#Cc1ccc2c(c1)C(C(=O)Nc1nncn1C1CC1)CCO2",
+      "C=C(C(=O)C1CCOc2ccc(Cl)cc21)c1cncn1C1CC1",
+      "C=CC(=O)N(C(=O)[C@@H]1CCOc2ccc(Cl)cc21)c1nncn1C1CC1",
+      "C=CC(=O)N[C@@]1(C(=O)Nc2nncn2C2CC2)CCOc2ccc(Cl)cc21",
+      "CC#CC(=O)N(C(=O)[C@@H]1CCOc2ccc(Cl)cc21)c1nncn1C1CC1",
+      "CC(C(=O)Nc1nncn1C1CC1)c1cccc(Cl)c1",
+      "CC(C)c1scnc1NC(=O)C1CCOc2ccc(Cl)cc21",
+      "CC(C)n1c(NC(=O)C2CCOc3ccccc32)nc2ccccc21",
+  };
+  const char *inchikeys_init[] = {
+      "FSPOGANMWXTKGJ-UHFFFAOYSA-N", "CIBQANUIVWKYMR-UHFFFAOYSA-N",
+      "GBPCXKPRLGZQQB-CYBMUJFWSA-N", "IOOIGOWFYCNXKX-SFHVURJKSA-N",
+      "XSYMIYIQKSFGOG-CQSZACIVSA-N", "BLJFTMZJZUGEGJ-UHFFFAOYSA-N",
+      "CEVCYTUHJSCLCQ-UHFFFAOYSA-N", "FHPRHOONYCYTIX-UHFFFAOYSA-N",
+  };
+
+  auto lambda = [](const std::string &smiles,
+                   const std::string &expected_inchikey) {
+    ROMol *mol = SmilesToMol(smiles);
+
+    std::string key = MolToInchiKey(*mol);
+    TEST_ASSERT(key == expected_inchikey);
+
+    delete mol;
+  };
+
+  const std::vector<std::string> smiles(smiles_init, std::end(smiles_init));
+  const std::vector<std::string> inchikeys(inchikeys_init,
+                                           std::end(inchikeys_init));
+
+  std::vector<std::future<void>> futures;
+  for (size_t i = 0; i < smiles.size(); ++i) {
+    futures.emplace_back(std::async(std::launch::async, lambda,
+                                    std::ref(smiles[i]),
+                                    std::ref(inchikeys[i])));
+  }
+  for (auto &fut : futures) {
+    fut.get();
+  }
+}
 #else
 void testMultiThread() {
+  {}
+}
+void testMultiThread2() {
   {}
 }
 #endif
@@ -822,6 +869,7 @@ int main() {
   testGithubIssue68();
   testGithubIssue296();
   testMultiThread();
+  testMultiThread2();
   testGithubIssue437();
   testGithubIssue614();
   testGithubIssue1572();
