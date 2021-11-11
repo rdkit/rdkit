@@ -681,6 +681,39 @@ M  END''')
     nDeuteriumTritium = len(deuteriumTritiumRegex.findall(textDeuteriumTritium))
     self.assertEqual(nDeuteriumTritium, 2)
 
+  def testNewDrawingModes(self):
+    m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|")
+
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    rdMolDraw2D.SetDarkMode(d2d)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertIn("<rect style='opacity:1.0;fill:#000000;stroke:none'",text)
+
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    rdMolDraw2D.SetMonochromeMode(d2d,(1,1,1),(.5,.5,.5))
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertIn("<rect style='opacity:1.0;fill:#7F7F7F;stroke:none'",text)
+    self.assertIn("stroke:#FFFFFF;stroke-width:2",text)
+
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    d2d.drawOptions().useAvalonAtomPalette()
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertIn("<rect style='opacity:1.0;fill:#FFFFFF;stroke:none'",text)
+    self.assertIn("stroke:#007E00;stroke-width:2",text)
+
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    d2d.drawOptions().useCDKAtomPalette()
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    text = d2d.GetDrawingText()
+    self.assertIn("<rect style='opacity:1.0;fill:#FFFFFF;stroke:none'",text)
+    self.assertIn("stroke:#2F50F7;stroke-width:2",text)
 
 if __name__ == "__main__":
   unittest.main()
