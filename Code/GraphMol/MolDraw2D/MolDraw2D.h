@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014-2020 David Cosgrove and Greg Landrum
+//  Copyright (C) 2014-2021 David Cosgrove and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -177,6 +177,7 @@ struct AnnotationType {
 typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<double> DashPattern;
 
+//! use the RDKit's default palette r
 inline void assignDefaultPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
@@ -184,6 +185,58 @@ inline void assignDefaultPalette(ColourPalette &palette) {
   palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
   palette[7] = DrawColour(0.0, 0.0, 1.0);
   palette[8] = DrawColour(1.0, 0.0, 0.0);
+  palette[9] = DrawColour(0.2, 0.8, 0.8);
+  palette[15] = DrawColour(1.0, 0.5, 0.0);
+  palette[16] = DrawColour(0.8, 0.8, 0.0);
+  palette[17] = DrawColour(0.0, 0.802, 0.0);
+  palette[35] = DrawColour(0.5, 0.3, 0.1);
+  palette[53] = DrawColour(0.63, 0.12, 0.94);
+};
+
+//! use the color palette from the Avalon renderer
+inline void assignAvalonPalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0, 0, 0);
+  palette[0] = DrawColour(0.1, 0.1, 0.1);
+  palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
+  palette[7] = DrawColour(0.0, 0.0, 1.0);
+  palette[8] = DrawColour(1.0, 0.0, 0.0);
+  palette[9] = DrawColour(0.0, 0.498, 0.0);
+  palette[15] = DrawColour(0.498, 0.0, 0.498);
+  palette[16] = DrawColour(0.498, 0.247, 0.0);
+  palette[17] = DrawColour(0.0, 0.498, 0.0);
+  palette[35] = DrawColour(0.0, 0.498, 0.0);
+  palette[53] = DrawColour(0.247, 0.0, 0.498);
+};
+
+//! use (part of) the CDK color palette
+/*!
+  data source:
+  https://github.com/cdk/cdk/blob/master/display/render/src/main/java/org/openscience/cdk/renderer/color/CDK2DAtomColors.java
+*/
+inline void assignCDKPalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0, 0, 0);
+  palette[0] = DrawColour(0.1, 0.1, 0.1);
+  palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
+  palette[7] = DrawColour(0.188, 0.314, 0.972);
+  palette[8] = DrawColour(1.0, 0.051, 0.051);
+  palette[9] = DrawColour(0.565, 0.878, 0.314);
+  palette[15] = DrawColour(1.0, 0.5, 0.0);
+  palette[16] = DrawColour(0.776, 0.776, 0.173);
+  palette[17] = DrawColour(0.122, 0.498, 0.122);
+  palette[35] = DrawColour(0.651, 0.161, 0.161);
+  palette[53] = DrawColour(0.580, 0.0, 0.580);
+  palette[5] = DrawColour(1.000, 0.710, 0.710);
+};
+
+inline void assignDarkModePalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0.8, 0.8, 0.8);
+  palette[0] = DrawColour(0.9, 0.9, 0.9);
+  palette[1] = palette[6] = DrawColour(0.9, 0.9, 0.9);
+  palette[7] = DrawColour(0.2, 0.2, 1.0);
+  palette[8] = DrawColour(1.0, 0.2, 0.2);
   palette[9] = DrawColour(0.2, 0.8, 0.8);
   palette[15] = DrawColour(1.0, 0.5, 0.0);
   palette[16] = DrawColour(0.8, 0.8, 0.0);
@@ -925,7 +978,29 @@ RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
                                                    const Point2D &lf,
                                                    const StringRect &lab_rect,
                                                    double padding = 0.0);
-
+inline void setDarkMode(MolDrawOptions &opts) {
+  assignDarkModePalette(opts.atomColourPalette);
+  opts.backgroundColour = DrawColour{0, 0, 0, 1};
+  opts.annotationColour = DrawColour{0.9, 0.9, 0.9, 1};
+  opts.legendColour = DrawColour{0.9, 0.9, 0.9, 1};
+  opts.symbolColour = DrawColour{0.9, 0.9, 0.9, 1};
+  opts.variableAttachmentColour = DrawColour{0.3, 0.3, 0.3, 1};
+}
+inline void setDarkMode(MolDraw2D &d2d) { setDarkMode(d2d.drawOptions()); }
+inline void setMonochromeMode(MolDrawOptions &opts, const DrawColour &fgColour,
+                              const DrawColour &bgColour) {
+  opts.atomColourPalette.clear();
+  opts.atomColourPalette[-1] = fgColour;
+  opts.backgroundColour = bgColour;
+  opts.annotationColour = fgColour;
+  opts.legendColour = fgColour;
+  opts.symbolColour = fgColour;
+  opts.variableAttachmentColour = fgColour;
+}
+inline void setMonochromeMode(MolDraw2D &opts, const DrawColour &fgColour,
+                              const DrawColour &bgColour) {
+  setMonochromeMode(opts.drawOptions(), fgColour, bgColour);
+}
 }  // namespace RDKit
 
 #endif  // RDKITMOLDRAW2D_H

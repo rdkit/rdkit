@@ -50,12 +50,6 @@ SELECT is_valid_smarts('c1ccc[n,c]1');
  t
 (1 row)
 
-SELECT mol_from_smarts('c1ccc[n,c]1');
- mol_from_smarts 
------------------
- *1cccc1
-(1 row)
-
 SELECT qmol_from_smarts('c1ccc[n,c]1');
  qmol_from_smarts 
 ------------------
@@ -66,13 +60,6 @@ SELECT is_valid_smarts('c1ccc');
  is_valid_smarts 
 -----------------
  f
-(1 row)
-
-SELECT mol_from_smarts('c1ccc');
-WARNING:  could not create molecule from SMILES 'c1ccc'
- mol_from_smarts 
------------------
- 
 (1 row)
 
 SELECT qmol_from_smarts('c1ccc');

@@ -44,7 +44,7 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
-    g = rdFingerprintGenerator.GetAtomPairGenerator(useCountSimulation=False)
+    g = rdFingerprintGenerator.GetAtomPairGenerator(countSimulation=False)
     fp = g.GetSparseFingerprint(m)
     nzc = fp.GetNumOnBits()
     self.assertEqual(nzc, 2)

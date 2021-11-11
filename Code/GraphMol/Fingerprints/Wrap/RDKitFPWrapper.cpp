@@ -68,7 +68,7 @@ void exportRDKit() {
       "linear paths\n"
       "    - useBondOrder: toggles inclusion of bond orders in the path "
       "hashes\n"
-      "    - useCountSimulation:  if set, use count simulation while  "
+      "    - countSimulation:  if set, use count simulation while  "
       "generating the fingerprint\n"
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "

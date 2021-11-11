@@ -1983,8 +1983,6 @@ Start by creating two molecules:
 The SimilarityMaps module supports three kind of fingerprints:
 atom pairs, topological torsions and Morgan fingerprints.
 
-.. doctest::
-
   >>> from rdkit.Chem import Draw
   >>> from rdkit.Chem.Draw import SimilarityMaps
   >>> fp = SimilarityMaps.GetAPFingerprint(mol, fpType='normal')
@@ -1999,8 +1997,6 @@ specification of the fingerprint function and optionally the similarity metric.
 The default for the latter is the Dice similarity. Using all the default arguments
 of the Morgan fingerprint function, the similarity map can be generated like this:
 
-.. doctest::
-
   >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
 
 Producing this image:
@@ -2009,8 +2005,6 @@ Producing this image:
 
 For a different type of Morgan (e.g. count) and radius = 1 instead of 2, as well as a different
 similarity metric (e.g. Tanimoto), the call becomes:
-
-.. doctest::
 
   >>> from rdkit import DataStructs
   >>> fig, maxweight = SimilarityMaps.GetSimilarityMapForFingerprint(refmol, mol, lambda m,idx: SimilarityMaps.GetMorganFingerprint(m, atomId=idx, radius=1, fpType='count'), metric=DataStructs.TanimotoSimilarity)
@@ -2023,14 +2017,10 @@ The convenience function GetSimilarityMapForFingerprint involves the normalisati
 of the atomic weights such that the maximum absolute weight is 1. Therefore, the
 function outputs the maximum weight that was found when creating the map.
 
-.. doctest::
-
   >>> print(maxweight)
   0.05747...
 
 If one does not want the normalisation step, the map can be created like:
-
-.. doctest::
 
   >>> weights = SimilarityMaps.GetAtomicWeightsForFingerprint(refmol, mol, SimilarityMaps.GetMorganFingerprint)
   >>> print(["%.2f " % w for w in weights])

@@ -157,6 +157,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4508_2.svg", 2202600652U},
     {"testGithub4508_2b.svg", 145414660U},
     {"testGithub4538.svg", 2784641879U},
+    {"testDarkMode.1.svg", 2696431144U},
+    {"testMonochrome.1.svg", 491478930U},
+    {"testMonochrome.2.svg", 1722291679U},
+    {"testAvalon.1.svg", 332535300U},
+    {"testCDK.1.svg", 3928121594U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -3435,5 +3440,81 @@ TEST_CASE("Github #4538 drawMolecules crash") {
     outs << text;
     outs.flush();
     check_file_hash("testGithub4538.svg");
+  }
+}
+
+TEST_CASE("dark mode mol drawing") {
+  SECTION("Basics") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setDarkMode(drawer);
+    drawer.drawMolecule(*m, "dark mode!");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testDarkMode.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testDarkMode.1.svg");
+  }
+}
+TEST_CASE("monochrome mol drawing") {
+  SECTION("Basics") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setMonochromeMode(drawer, DrawColour{0.1, 0.1, 0.6},
+                      DrawColour{0.75, 0.75, 0.75});
+    drawer.drawMolecule(*m, "monochrome");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMonochrome.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testMonochrome.1.svg");
+  }
+  SECTION("Basics inverted") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setMonochromeMode(drawer, DrawColour{0.75, 0.75, 0.75},
+                      DrawColour{0.1, 0.1, 0.6});
+    drawer.drawMolecule(*m, "monochrome");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMonochrome.2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testMonochrome.2.svg");
+  }
+}
+TEST_CASE("other palettes") {
+  auto m =
+      "CS(=O)(=O)COC(=N)c1c(I)c(Cl)c(Br)nc1[NH2+]CP(=O) |SgD:7:note:some extra text:=:::|"_smiles;
+  REQUIRE(m);
+  SECTION("Avalon") {
+    MolDraw2DSVG drawer(350, 300);
+    assignAvalonPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawMolecule(*m, "Avalon");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAvalon.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testAvalon.1.svg");
+  }
+  SECTION("CDK") {
+    MolDraw2DSVG drawer(350, 300);
+    assignCDKPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawMolecule(*m, "CDK");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testCDK.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testCDK.1.svg");
   }
 }
