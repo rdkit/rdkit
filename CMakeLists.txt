@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.8)
 
 project (RDKit)
 
@@ -62,7 +62,7 @@ option(RDK_BUILD_MINIMAL_LIB "build the minimal RDKit wrapper (for the JS bindin
 option(RDK_BUILD_CFFI_LIB "build the CFFI wrapper (for use in other programming languges)" OFF)
 option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
 
-set(RDK_BOOST_VERSION "1.58.0")
+set(RDK_BOOST_VERSION "1.70.0")
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
@@ -246,6 +246,8 @@ if(RDK_BUILD_INCHI_SUPPORT)
   find_package(Inchi)
 endif(RDK_BUILD_INCHI_SUPPORT)
 
+set(RDK_BOOST_LIBS "")
+
 if(RDK_BUILD_PYTHON_WRAPPERS)
   add_library(rdkit_py_base INTERFACE)
 
@@ -297,7 +299,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endforeach()
   # Finally just try "python" and hope it is a compatible version
   if(NOT Boost_FOUND)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS python REQUIRED)
+    find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG COMPONENTS python)
     set(Boost_Python_Lib "python")
   endif()
 
@@ -372,7 +374,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif()
 
 else(RDK_BUILD_PYTHON_WRAPPERS)
-  find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
+  find_package(Boost ${RDK_BOOST_VERSION} CONFIG REQUIRED)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 # Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
@@ -412,18 +414,71 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
+  if(NOT RDK_BUILD_IOSTREAMS)
+    set(RDK_BUILD_IOSTREAMS ON)
+    message("Enabling RDK_BUILD_IOSTREAMS because RDK_USE_BOOST_SERIALIZATION is set")
+  endif()
+endif()
+if(RDK_BUILD_MAEPARSER_SUPPORT)
+  if(NOT RDK_BUILD_IOSTREAMS)
+    set(RDK_BUILD_IOSTREAMS ON)
+    message("Enabling RDK_BUILD_IOSTREAMS because RDK_BUILD_MAEPARSER_SUPPORT is set")
+  endif()
+endif()
+if(RDK_BUILD_COMPRESSED_SUPPLIERS)
+  if(NOT RDK_BUILD_IOSTREAMS)
+    set(RDK_BUILD_IOSTREAMS ON)
+    message("Enabling RDK_BUILD_IOSTREAMS because RDK_BUILD_COMPRESSED_SUPPLIERS is set")
+  endif()
+endif()
+
+if(RDK_USE_BOOST_SERIALIZATION)
     set(T_LIBS ${Boost_LIBRARIES})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams)
-    if (Boost_SERIALIZATION_LIBRARY)
-      set(Boost_LIBRARIES ${T_LIBS} ${Boost_LIBRARIES})
-    else()
-      set(Boost_LIBRARIES ${T_LIBS})
-    endif()
+    find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG COMPONENTS serialization)
+    set(RDK_BOOST_LIBS ${RDK_BOOST_LIBS} Boost::serialization)
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
       target_compile_definitions(rdkit_base INTERFACE -DBOOST_SERIALIZATION_DYN_LINK)
     endif()
 endif()
+
+
+if(RDK_USE_BOOST_IOSTREAMS)
+  if(WIN32)
+    find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG COMPONENTS system iostreams)
+    if (NOT Boost_USE_STATIC_LIBS)
+      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
+    endif()
+    find_package(ZLIB)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
+    if(Boost_zlib_FOUND)
+      set(zlib_lib Boost::zlib)
+    else()
+      set(zlib_lib ${ZLIB_LIBRARIES})
+    endif()
+  else()
+    find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG COMPONENTS system iostreams)
+    if (NOT Boost_USE_STATIC_LIBS)
+      add_definitions("-DBOOST_IOSTREAMS_DYN_LINK")
+    endif()
+    find_package(ZLIB)
+    include_directories(${ZLIB_INCLUDE_DIRS})
+    set(zlib_lib ${ZLIB_LIBRARIES})
+  endif()
+
+ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
+set(RDK_BOOST_LIBS ${RDK_BOOST_LIBS} Boost::system Boost::iostreams)
+
+endif(RDK_USE_BOOST_IOSTREAMS)
+
+if(RDK_USE_BOOST_REGEX)
+  add_definitions(-DRDKIT_USE_BOOST_REGEX)
+  find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG COMPONENTS regex)
+  set(RDK_BOOST_LIBS ${RDK_BOOST_LIBS} Boost::regex)
+endif()
+
+
 
 
 # set the boost include directories and linkage:
@@ -432,7 +487,7 @@ target_include_directories(rdkit_base INTERFACE
                            $<INSTALL_INTERFACE:${RDKit_HdrDir}>
                            ${Boost_INCLUDE_DIR}
                            )
-target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
+target_link_libraries(rdkit_base INTERFACE ${RDK_BOOST_LIBS} ${zlib_lib})
 
 
 if(RDK_BUILD_PGSQL)
