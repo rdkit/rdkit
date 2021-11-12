@@ -289,8 +289,11 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # Boost 1.67+ uses a version suffix like "python36" or "python27"
   list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
 
-  # Try each potential boost-python name until one works
+  # for python we have to use shared libraries:
+  set(tmp_holder ${Boost_USE_STATIC_LIBS})
+  set(Boost_USE_STATIC_LIBS "OFF")
   foreach(Boost_Python_LibN ${Boost_Python_Names})
+  # Try each potential boost-python name until one works
     find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "${Boost_Python_LibN}" QUIET)
     if(Boost_FOUND)
       set(Boost_Python_Lib ${Boost_Python_LibN})
@@ -302,8 +305,9 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG COMPONENTS python)
     set(Boost_Python_Lib "python")
   endif()
-
   target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib})
+  target_compile_definitions(rdkit_py_base INTERFACE -DBOOST_PYTHON_DYN_LINK)
+  set(Boost_USE_STATIC_LIBS ${tmp_holder})
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
