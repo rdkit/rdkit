@@ -1,3 +1,8 @@
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.21.3")
+   cmake_policy(SET CMP0078 NEW)
+   cmake_policy(SET CMP0086 NEW)
+endif()
+
 find_package(SWIG 3.0 EXACT REQUIRED)
 include(${SWIG_USE_FILE})
 
