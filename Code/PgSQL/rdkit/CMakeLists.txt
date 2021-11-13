@@ -179,7 +179,8 @@ if(WIN32 AND NOT UNIX)
   set(testPgSQLCommand "")
   set(testPgSQLName "${testPgSQLName}.bat")
   set(installPgSQLName "${installPgSQLName}.bat")
-  set(installCopyCommand "copy /Y")
+  set(installPgSQLCopyCommand "copy /Y")
+  set(installPgSQLSeparator "\\")
   set(installPgSQLBody "")
   set(PG_RDKIT_LIB_SRC "${EXTENSION}.dll")
   set(PG_RDKIT_LIB_DEST "${EXTENSION}.dll")
@@ -190,7 +191,8 @@ else(WIN32 AND NOT UNIX)
   set(testPgSQLCommand "sh")
   set(testPgSQLName "${testPgSQLName}.sh")
   set(installPgSQLName "${installPgSQLName}.sh")
-  set(installCopyCommand "cp")
+  set(installPgSQLCopyCommand "cp")
+  set(installPgSQLSeparator "/")
   set(installPgSQLBody "set -x\n")
   set(PG_RDKIT_LIB_SRC "${EXTENSION_PREFIX}${EXTENSION}.so")
   set(PG_RDKIT_LIB_DEST "${EXTENSION}.so")
@@ -239,10 +241,10 @@ foreach(file ${files})
   configure_file(${file} ${output_name})
 endforeach()
 set(installPgSQLBody "${installPgSQLBody}"
-    "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installCopyCommand} \"${PG_CURRENT_SOURCE_DIR}update_sql/\"*.sql \"${PG_EXTENSIONDIR}\"\n"
-    "${installCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
+    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}update_sql${installPgSQLSeparator}*.sql\" \"${PG_EXTENSIONDIR}\"\n"
+    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")
 file(WRITE ${testPgSQLName} ${testPgSQLBody})
 file(WRITE ${installPgSQLName} ${installPgSQLBody})
