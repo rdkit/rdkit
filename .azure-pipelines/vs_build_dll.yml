@@ -3,10 +3,10 @@ steps:
   displayName: Setup build environment
 - script: |
     conda config --set always_yes yes --set changeps1 no
+    conda install -y -c conda-forge mamba
     conda info -a
-    conda create --name rdkit_build $(compiler) cmake ^
+    mamba create --name rdkit_build -c conda-forge $(compiler) cmake ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
-        py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
   displayName: Install dependencies
 - script: |
