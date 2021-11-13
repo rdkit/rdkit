@@ -18,7 +18,7 @@
 namespace RDKit {
 
 // ****************************************************************************
-class DrawTextFTSVG : public DrawTextFT {
+class RDKIT_MOLDRAW2D_EXPORT DrawTextFTSVG : public DrawTextFT {
  public:
   DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                 const std::string &font_file, std::ostream &oss,
