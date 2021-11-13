@@ -4,7 +4,8 @@ steps:
 - script: |
     conda config --set always_yes yes --set changeps1 no
     conda info -a
-    conda create --name rdkit_build -c conda-forge $(compiler) cmake ^
+    conda create --name rdkit_build -c conda-forge python=$(python_vers) ^
+        $(compiler) cmake ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
   displayName: Install dependencies
