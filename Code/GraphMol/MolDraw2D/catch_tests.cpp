@@ -3544,7 +3544,7 @@ M  SDD   1 -2345.1234-2345.1234    DR    ALL  1       0
 M  SED   1 Hello World
 M  END
 )CTAB"_ctab;
-  // SSD record has format
+  // SDD record has format
   // M  SDD sss xxxxx.xxxxyyyyy.yyyy eeefgh i jjjkkk ll m noo
   MolDraw2DSVG drawer(350, 300, -1, -1, 1);
   drawer.drawMolecule(*mol);
