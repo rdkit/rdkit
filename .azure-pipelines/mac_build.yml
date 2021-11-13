@@ -58,6 +58,7 @@ steps:
     -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform) \
     -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
     -DBoost_VERBOSE=1 -DBoost_DEBUG=1 \
+    -DBoost_USE_STATIC_LIBS=OFF \
     -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
