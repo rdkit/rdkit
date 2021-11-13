@@ -2712,9 +2712,9 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
       std::string fieldDisp;
       if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
         double xp = FileParserUtils::stripSpacesAndCast<double>(
-            fieldDisp.substr(3, 10));
+            fieldDisp.substr(0, 10));
         double yp = FileParserUtils::stripSpacesAndCast<double>(
-            fieldDisp.substr(13, 10));
+            fieldDisp.substr(10, 10));
         Point2D origLoc{xp, yp};
 
         if (fieldDisp[25] == 'R') {
