@@ -22,7 +22,7 @@ jobs:
     vmImage: macos-10.14
   variables:
     compiler: clangxx_osx-64
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: sysctl -n hw.ncpu
     python_name: python37
     target_platform: 10.9
@@ -34,7 +34,7 @@ jobs:
     vmImage: vs2017-win2016
   variables:
     compiler: vs2017_win-64
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python37
   steps:
@@ -45,7 +45,7 @@ jobs:
     vmImage: vs2017-win2016
   variables:
     compiler: vs2017_win-64
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python37
   steps:
@@ -56,7 +56,7 @@ jobs:
     vmImage: ubuntu-20.04
   variables:
     compiler: gxx_linux-64=9.3.0
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: nproc
     python_name: python37
   steps:
@@ -67,7 +67,7 @@ jobs:
     vmImage: macos-10.14
   variables:
     compiler: clangxx_osx-64
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: sysctl -n hw.ncpu
     python_name: python37
     target_platform: 10.9
@@ -78,7 +78,7 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    boost_version: 1.69.0
+    boost_version: 1.71.0
     number_of_cores: nproc
   steps:
   - template: .azure-pipelines/linux_build_cartridge.yml
