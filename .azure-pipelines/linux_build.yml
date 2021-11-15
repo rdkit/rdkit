@@ -10,7 +10,8 @@ steps:
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         numpy pillow eigen pandas \
-        cairo nbval qt
+        cairo nbval qt \
+        sphinx=3.1.2 recommonmark jupyter
     conda activate rdkit_build
   displayName: Setup build environment
 - bash: |
