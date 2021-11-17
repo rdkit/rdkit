@@ -99,6 +99,25 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
   std::cerr << "Dummy replaced core smarts  " << MolToSmarts(*coreReplacedAtoms)
             << std::endl;
 #endif
+  
+  if (mol.getNumConformers() > 0) {
+    // if the input structure has coordinates copy them to the core
+    if (!coreReplacedAtoms->getNumConformers()) {
+      coreReplacedAtoms->addConformer(
+          new Conformer(coreReplacedAtoms->getNumAtoms()));
+    }
+    auto & replacedConformer = coreReplacedAtoms->getConformer();
+    auto & molConformer = mol.getConformer();
+
+    for (const auto &p : match) {
+      auto molPoint = molConformer.getAtomPos(p.second);
+      replacedConformer.setAtomPos(p.first, molPoint);
+    }
+  } else {
+    // otherwise, delete all core coordinates from the replaced core
+    coreReplacedAtoms->clearConformers();
+  }
+  
   return coreReplacedAtoms;
 }
 
@@ -159,6 +178,26 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
       finalCore->replaceBond(bondIdx, &newBond, true);
     }
   }
+  
+  // update core coordinates to input structures
+  if (coreReplacedAtoms.getNumConformers() && finalCore->getNumConformers()) {
+    auto & replacedConformer = coreReplacedAtoms.getConformer();
+    auto & finalConformer = finalCore->getConformer();
+
+    size_t atomIdx = 0;
+    for (; atomIdx < coreReplacedAtoms.getNumAtoms();
+         ++atomIdx) {
+      auto molPoint = replacedConformer.getAtomPos(atomIdx);
+      finalConformer.setAtomPos(atomIdx, molPoint);
+    }
+    // Dummy atom coordinates are not in input structure, so calculate them here
+    for (; atomIdx < finalCore->getNumAtoms(); atomIdx++) {
+      const auto atom = finalCore->getAtomWithIdx(atomIdx);
+      const int neighborIdx = *finalCore->getAtomNeighbors(atom).first;
+      MolOps::setTerminalAtomCoords(*finalCore, atomIdx, neighborIdx);
+    }
+    
+  } 
 
   finalCore->updatePropertyCache(false);
   return finalCore;
