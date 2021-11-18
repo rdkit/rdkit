@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015-2019 Greg Landrum
+//  Copyright (C) 2015-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -108,9 +108,6 @@ void MolDraw2DSVG::initDrawing() {
   d_os << boost::format{"width='%1%px' height='%2%px' viewBox='0 0 %1% %2%'>\n"}
       % width() % height();
   d_os << "<!-- END OF HEADER -->\n";
-
-  // d_os<<"<g transform='translate("<<width()*.05<<","<<height()*.05<<")
-  // scale(.85,.85)'>";
 }
 
 // ****************************************************************************

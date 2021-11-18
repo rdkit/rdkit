@@ -156,7 +156,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4508_1b.svg", 613270459U},
     {"testGithub4508_2.svg", 2202600652U},
     {"testGithub4508_2b.svg", 145414660U},
-    {"testGithub4538.svg", 2784641879U},
+    {"testGithub4538.svg", 1282272756U},
     {"testDarkMode.1.svg", 2696431144U},
     {"testMonochrome.1.svg", 491478930U},
     {"testMonochrome.2.svg", 1722291679U},

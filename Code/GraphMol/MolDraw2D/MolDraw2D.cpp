@@ -426,7 +426,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   setupTextDrawer();
 
   unique_ptr<RWMol> rwmol =
-      setupMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
+      initMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
   if (!draw_mol.getNumConformers()) {
     // clearly, the molecule is in a sorry state.
@@ -539,7 +539,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
   }
   pushDrawDetails();
   unique_ptr<RWMol> rwmol =
-      setupMoleculeDraw(mol, &highlight_atoms, &highlight_radii, confId);
+      initMoleculeDraw(mol, &highlight_atoms, &highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
   if (!draw_mol.getNumConformers()) {
     // clearly, the molecule is in a sorry state.
@@ -1571,6 +1571,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   }
   if (drawOptions().simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
+    // FIX: pull this out into a function
     auto sgs = mol.getStereoGroups();
     if (sgs.size() == 1) {
       boost::dynamic_bitset<> chiralAts(mol.getNumAtoms());
@@ -1617,11 +1618,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   }
   if (drawOptions().addBondIndices) {
     MolDraw2D_detail::addBondIndices(*rwmol);
-  }
-  if (!activeMolIdx_) {
-    if (drawOptions().clearBackground) {
-      clearDrawing();
-    }
   }
   bool updateBBox = !activeMolIdx_;
   extractAtomCoords(*rwmol, confId, updateBBox);
@@ -1676,13 +1672,24 @@ void MolDraw2D::popDrawDetails() {
 }
 
 // ****************************************************************************
-unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(
+unique_ptr<RWMol> MolDraw2D::initMoleculeDraw(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii, int confId) {
   unique_ptr<RWMol> rwmol =
       setupDrawMolecule(mol, highlight_atoms, highlight_radii, confId,
                         panelWidth(), drawHeight());
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
+
+  // by this point the scale is calculated
+  if (needs_init_) {
+    initDrawing();
+    needs_init_ = false;
+  }
+  if (!activeMolIdx_) {
+    if (drawOptions().clearBackground) {
+      clearDrawing();
+    }
+  }
 
   if (drawOptions().includeAtomTags) {
     tagAtoms(draw_mol);

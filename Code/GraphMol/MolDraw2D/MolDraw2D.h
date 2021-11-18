@@ -767,6 +767,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   Point2D bbox_[2];
   std::vector<std::vector<MolDrawShape>> pre_shapes_;
   std::vector<std::vector<MolDrawShape>> post_shapes_;
+  bool needs_init_ = true;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -785,8 +786,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void pushDrawDetails();
   void popDrawDetails();
 
-  // do the initial setup bits for drawing a molecule.
-  std::unique_ptr<RWMol> setupMoleculeDraw(
+  // do the initial setup and drawing bits for drawing a molecule.
+  std::unique_ptr<RWMol> initMoleculeDraw(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::map<int, double> *highlight_radii, int confId = -1);
   void setupTextDrawer();

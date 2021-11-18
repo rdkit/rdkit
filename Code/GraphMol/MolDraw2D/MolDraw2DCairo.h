@@ -32,7 +32,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
                  int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), dp_cr(cr) {
     cairo_reference(dp_cr);
-    initDrawing();
     initTextDrawer(noFreetype);
   }
   MolDraw2DCairo(int width, int height, int panelWidth = -1,
@@ -42,7 +41,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
         cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
     dp_cr = cairo_create(surf);
     cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
-    initDrawing();
     initTextDrawer(noFreetype);
   }
   ~MolDraw2DCairo() {

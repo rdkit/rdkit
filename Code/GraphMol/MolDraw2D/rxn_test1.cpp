@@ -63,7 +63,7 @@ static const bool DELETE_WITH_GOOD_HASH = true;
     {"rxn_test2_2_4.svg", 3008925605U},
     {"rxn_test3_1.svg", 409355256U},
     {"rxn_test4_1.svg", 1446031830U},
-    {"rxn_test4_2.svg", 3254692708U}
+    {"rxn_test4_2.svg", 265508036U}
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
