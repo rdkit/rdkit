@@ -113,7 +113,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testQueryBonds-1a.svg", 4136415723U},
     {"testQueryBonds-1b.svg", 582100110U},
     {"testQueryBonds-1c.svg", 4137769878U},
-    {"testQueryBonds-2.svg", 1035280354U},
+    {"testQueryBonds-2.svg", 2448362416U},
     {"testLinkNodes-2-0.svg", 1164466138U},
     {"testLinkNodes-2-30.svg", 2039328115U},
     {"testLinkNodes-2-60.svg", 1845847033U},
