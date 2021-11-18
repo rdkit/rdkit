@@ -197,19 +197,6 @@ RDKIT_GENERICGROUPS_EXPORT bool AcyclicAtomMatcher(
 */
 RDKIT_GENERICGROUPS_EXPORT bool CarboacyclicAtomMatcher(
     const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
-//! Matches all-carbon acyclic side chains
-/*!
-
-  Note: this is Reaxys query type ABC and matches all-carbon sidechains with no
-  cycles
-
-  Conditions:
-    - all atoms in the sidechain are carbon
-    - no atom in the sidechain is in a ring
-
-*/
-RDKIT_GENERICGROUPS_EXPORT bool CarboacyclicAtomMatcher(
-    const ROMol &mol, const Atom &atom, boost::dynamic_bitset<> ignore);
 
 //! Matches acyclic side chains with at least one heteroatom
 /*!
