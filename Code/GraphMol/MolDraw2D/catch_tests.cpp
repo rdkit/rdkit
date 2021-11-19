@@ -3360,7 +3360,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("Absolute") {
     auto mol = R"CTAB(
-  Mrv2114 09132120172D          
+  Mrv2114 09132120172D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3516,5 +3516,45 @@ TEST_CASE("other palettes") {
     outs << text;
     outs.flush();
     check_file_hash("testCDK.1.svg");
+  }
+}
+
+TEST_CASE("SDD record parsing") {
+  auto mol = R"CTAB(
+  Mrv2008 11122110292D
+
+  6  6  0  0  0  0            999 V2000
+    9.3527    2.5661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6382    2.1536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6382    1.3286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3527    0.9161    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0671    1.3286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0671    2.1536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  2  0  0  0  0
+M  STY  1   1 DAT
+M  SLB  1   1   1
+M  SAL   1  1   1
+M  SDT   1 NAME
+M  SDD   1 -2345.1234-2345.1234    DR    ALL  1       0
+M  SED   1 Hello World
+M  END
+)CTAB"_ctab;
+  // SDD record has format
+  // M  SDD sss xxxxx.xxxxyyyyy.yyyy eeefgh i jjjkkk ll m noo
+  MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+  drawer.drawMolecule(*mol);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::string name("Hello World");
+  for (auto &c : name) {
+    std::stringstream ss;
+    ss << " >" << c << "</text>";
+    auto pos = text.find(ss.str());
+    CHECK(pos != std::string::npos);
   }
 }
