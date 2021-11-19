@@ -29,9 +29,20 @@
 
 namespace RDKit {
 void MolDraw2DCairo::initDrawing() {
-  PRECONDITION(dp_cr, "no draw context");
+  if (dp_cr) {
+    if (cairo_get_reference_count(dp_cr) > 0) {
+      cairo_destroy(dp_cr);
+    }
+    dp_cr = nullptr;
+  }
+  cairo_surface_t *surf =
+      cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width(), height());
+  dp_cr = cairo_create(surf);
+  cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
-  //  drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.0);
+  if (!text_drawer_) {
+    initTextDrawer(df_noFreetype);
+  }
 }
 
 void MolDraw2DCairo::initTextDrawer(bool noFreetype) {

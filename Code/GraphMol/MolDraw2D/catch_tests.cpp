@@ -3682,6 +3682,20 @@ M  END
     outs.flush();
     check_file_hash("testFlexiCanvas.2.svg");
   }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("square PNG") {
+    MolDraw2DCairo drawer(-1, -1, -1, -1, 1);
+    drawer.drawOptions().baseFontSize = 0.8;
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.2.png");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.2.png");
+  }
+#endif
   SECTION("reaction") {
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
         "[N:1]-[C:2]-[C:3](=[O:4])-[O:5].[N:6]-[C:7]-[C:8](=[O:9])-[O:10]>>[N:"
