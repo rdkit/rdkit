@@ -3558,3 +3558,142 @@ M  END
     CHECK(pos != std::string::npos);
   }
 }
+
+#if 0
+TEST_CASE("changing baseFontSize") {
+  auto mol1 =
+      "CC(C)C[C@H](NC(=O)[C@H](CCCCN)NC(=O)[C@H](CS)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)[C@H](CC(C)C)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CS)NC(=O)[C@H](CCCCN)NC(=O)[C@H](C)NC(=O)[C@@H](NC(=O)[C@H](CS)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)[C@H](C)N)[C@@H](C)O)C(=O)O"_smiles;
+  REQUIRE(mol1);
+  MolDraw2DUtils::prepareMolForDrawing(*mol1);
+  auto mol2 = "C[C@H](N)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](C)C(=O)NCC(=O)O"_smiles;
+  REQUIRE(mol2);
+  MolDraw2DUtils::prepareMolForDrawing(*mol2);
+  SECTION("basics-large") {
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBaseFontSize.1a.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testBaseFontSize.1a.svg");
+  }
+  SECTION("basics-small") {
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBaseFontSize.1b.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testBaseFontSize.1b.svg");
+  }
+  SECTION("increase size - large") {
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.setBaseFontSize(1.2);
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBaseFontSize.2a.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testBaseFontSize.2a.svg");
+  }
+  SECTION("increase size - smalle") {
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.setBaseFontSize(1.2);
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testBaseFontSize.2b.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testBaseFontSize.2b.svg");
+  }
+}
+#endif
+TEST_CASE("flexicanvas") {
+  auto mol1 = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
+
+  REQUIRE(mol1);
+  MolDraw2DUtils::prepareMolForDrawing(*mol1);
+
+  auto mol2 = R"CTAB(
+  Mrv2108 11192104292D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.2 -1.4 0 0
+M  V30 2 O -5.2 -2.8 0 0
+M  V30 3 C -3.7 -1.4 0 0
+M  V30 4 C -3.7 -2.8 0 0 CFG=1
+M  V30 5 N -2.5994 -3.9839 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 2 4
+M  V30 4 1 3 4
+M  V30 5 1 4 5 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(mol2);
+  MolDraw2DUtils::prepareMolForDrawing(*mol2);
+
+  SECTION("fixed canvas") {
+    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.1a.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.1a.svg");
+  }
+  SECTION("flexicanvas1") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1, 1);
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.1b.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.1b.svg");
+  }
+  SECTION("square") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1, 1);
+    drawer.drawOptions().baseFontSize = 0.8;
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.2.svg");
+  }
+  SECTION("reaction") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+        "[N:1]-[C:2]-[C:3](=[O:4])-[O:5].[N:6]-[C:7]-[C:8](=[O:9])-[O:10]>>[N:"
+        "1]1-[C:2]-[C:3](=[O:4])-[N:6]-[C:7]-[C:8]-1=[O:9].[O:5]=[O:10]"));
+    MolDraw2DSVG drawer(-1, -1, -1, -1, 1);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.3.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.3.svg");
+  }
+}

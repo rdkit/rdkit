@@ -362,8 +362,11 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
               // labels
   bool singleColourWedgeBonds =
       false;  // if true wedged and dashed bonds are drawn
-              // using symbolColour rather than inheriting
-              // their colour from the atoms
+  // using symbolColour rather than inheriting
+  // their colour from the atoms
+  double scalingFactor = 20.0;  // scaling factor used for pixels->angstroms
+                                // when auto scaling is being used
+  double baseFontSize = -1.0;   // FIX: explain this
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -618,6 +621,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! font size in drawing coordinate units. That's probably pixels.
   virtual double fontSize() const;
   virtual void setFontSize(double new_size);
+  void setBaseFontSize(double new_size);
 
   //! sets the current draw color
   virtual void setColour(const DrawColour &col) { curr_colour_ = col; }

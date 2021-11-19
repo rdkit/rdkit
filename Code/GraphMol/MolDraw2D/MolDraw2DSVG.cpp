@@ -135,6 +135,9 @@ void MolDraw2DSVG::initTextDrawer(bool noFreetype) {
         new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
 #endif
   }
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
+  }
 }
 
 // ****************************************************************************

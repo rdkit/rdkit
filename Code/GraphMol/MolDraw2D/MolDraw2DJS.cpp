@@ -53,6 +53,9 @@ void MolDraw2DJS::initTextDrawer(bool noFreetype) {
     text_drawer_.reset(new DrawTextJS(max_fnt_sz, min_fnt_sz, d_context));
 #endif
   }
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
+  }
 }
 
 // ****************************************************************************

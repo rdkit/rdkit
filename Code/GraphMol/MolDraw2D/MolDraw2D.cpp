@@ -1128,6 +1128,11 @@ void MolDraw2D::setFontSize(double new_size) {
 }
 
 // ****************************************************************************
+void MolDraw2D::setBaseFontSize(double new_size) {
+  text_drawer_->setBaseFontSize(new_size);
+}
+
+// ****************************************************************************
 void MolDraw2D::setScale(int width, int height, const Point2D &minv,
                          const Point2D &maxv, const ROMol *mol) {
   PRECONDITION(width > 0, "bad width");
@@ -1189,8 +1194,8 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
                                const std::vector<int> *highlight_atoms,
                                const std::map<int, double> *highlight_radii,
                                int confId) {
-  PRECONDITION(width > 0, "bad width");
-  PRECONDITION(height > 0, "bad height");
+  // PRECONDITION(width > 0, "bad width");
+  // PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
   // cout << "calculateScale  width = " << width << "  height = " << height
@@ -1239,6 +1244,25 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     y_max += 1.0;
   }
 
+  bool setWidth = false;
+  if (width < 0) {
+    width = drawOptions().scalingFactor * x_range_;
+    width_ = width;
+    panel_width_ = width;
+    setWidth = true;
+  }
+  bool setHeight = false;
+  if (height < 0) {
+    height = drawOptions().scalingFactor * y_range_;
+    height_ = height;
+    panel_height_ = height;
+    setHeight = true;
+  }
+
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
+  }
+
   scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
   // we may need to adjust the scale if there are atom symbols that go off
   // the edges, and we probably need to do it iteratively because
@@ -1268,6 +1292,17 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
   y_range_ *= 1 + 2 * drawOptions().padding;
 
   if (x_range_ > 1e-4 || y_range_ > 1e-4) {
+    if (setWidth) {
+      width = drawOptions().scalingFactor * x_range_;
+      width_ = width;
+      panel_width_ = width;
+    }
+    if (setHeight) {
+      height = drawOptions().scalingFactor * y_range_;
+      height_ = height;
+      panel_height_ = height;
+    }
+
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     double fix_scale = scale_;
     // after all that, use the fixed scale unless it's too big, in which case

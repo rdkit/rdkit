@@ -55,6 +55,9 @@ void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
     text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
 #endif
   }
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
+  }
 }
 
 // ****************************************************************************
