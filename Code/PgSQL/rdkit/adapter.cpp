@@ -39,6 +39,11 @@
 #define fstat microsoft_native_fstat
 #define stat microsoft_native_stat
 #include <sys/stat.h>
+#ifdef __MINGW32__
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
+#endif
+#endif
 #endif
 
 #include <GraphMol/RDKitBase.h>
