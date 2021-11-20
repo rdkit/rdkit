@@ -56,7 +56,7 @@ void RCore::findIndicesWithRLabel() {
 
 // Return a copy of core where dummy atoms are replaced by
 // the respective matching atom in mol, while other atoms have
-// their aromatic flag and formal charge copied from from
+// their aromatic flag and formal charge copied from 
 // the respective matching atom in mol
 ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match) const {
@@ -106,7 +106,7 @@ void RCore::replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const {
   auto atomicNumber = other.getAtomicNum();
   auto targetAtom = &atom;
   bool wasDummy = (atom.getAtomicNum() == 0);
-  if (wasDummy) {
+  if (wasDummy || atom.hasQuery()) {
     if (atom.hasQuery()) {
       Atom newAtom(atomicNumber);
       auto atomIdx = atom.getIdx();
