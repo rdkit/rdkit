@@ -66,7 +66,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
                     INT_VECT &done) {
   // ok this function does more than mark atoms that are candidates for
   // double bonds during kekulization
-  // - check that an non aromatic atom does not have any aromatic bonds
+  // - check that a non-aromatic atom does not have any aromatic bonds
   // - marks all aromatic bonds to single bonds
   // - marks atoms that can take a double bond
 
@@ -117,8 +117,15 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
     unsigned nToIgnore = 0;
     RWMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(at);
+    bool atHasNonArNonDummyNbr = false;
     while (beg != end) {
       Bond *bond = mol[*beg];
+      auto otherAt = bond->getOtherAtom(at);
+      if (otherAt->getAtomicNum() && !otherAt->getIsAromatic() &&
+          std::find(allAtms.begin(), allAtms.end(), otherAt->getIdx()) !=
+              allAtms.end()) {
+        atHasNonArNonDummyNbr = true;
+      }
       if (bond->getIsAromatic() && (bond->getBondType() == Bond::SINGLE ||
                                     bond->getBondType() == Bond::DOUBLE ||
                                     bond->getBondType() == Bond::AROMATIC)) {
@@ -137,7 +144,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       ++beg;
     }
 
-    if (!at->getAtomicNum()) {
+    if (!at->getAtomicNum() && !atHasNonArNonDummyNbr) {
       // dummies always start as candidates to have a double bond:
       dBndCands[allAtm] = 1;
       // but they don't have to have one, so mark them as questionable:
@@ -252,7 +259,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         }
       }
     }
-    CHECK_INVARIANT(curr >= 0, "staring point not found");
+    CHECK_INVARIANT(curr >= 0, "starting point not found");
     done.push_back(curr);
 
     // loop over the neighbors if we can add double bonds or
@@ -311,7 +318,7 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
     }
     // now add a double bond from current to one of the neighbors if we can
     if (cCand) {
-      if (opts.size() > 0) {
+      if (!opts.empty()) {
         ncnd = opts.front();
         opts.pop_front();
         Bond *bnd = mol.getBondBetweenAtoms(curr, ncnd);
@@ -353,9 +360,9 @@ bool kekulizeWorker(RWMol &mol, const INT_VECT &allAtms,
         }
 
       }  // end of adding a double bond
-      else {
-        // we have an atom that should be getting a double bond
-        // but none of the neighbors can take one. Most likely
+      else if (mol.getAtomWithIdx(curr)->getAtomicNum()) {
+        // we have a non-dummy atom that should be getting a double
+        // bond but none of the neighbors can take one. Most likely
         // because of a wrong choice earlier so back track
         if ((lastOpt >= 0) && (numBT < maxBackTracks)) {
           // std::cerr << "PRE BACKTRACK" << std::endl;
@@ -455,7 +462,6 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   // get all the atoms in the ring system
   INT_VECT allAtms;
   Union(arings, allAtms);
-
   // get all the atoms that are candidates to receive a double bond
   // also mark atoms in the fused system that are not aromatic to begin with
   // as done. Mark all the bonds that are part of the aromatic system
@@ -555,7 +561,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   //       - getBondType return aromatic
   // - all aromatic atoms return true for "getIsAromatic"
 
-  // first find the all the simple rings in the molecule that are not
+  // first find all the simple rings in the molecule that are not
   // completely composed of dummy atoms
   VECT_INT_VECT allrings;
   if (mol.getRingInfo()->isInitialized()) {

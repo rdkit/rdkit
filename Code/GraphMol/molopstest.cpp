@@ -3405,6 +3405,39 @@ void testSFNetIssue2196817() {
     delete m;
   }
 
+  {
+    for (auto smi : {"c12ccccc1**CC2", "c12ccccc1**CC2"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (size_t i = 0; i < 6; ++i) {
+        size_t j = i < 5 ? i + 1 : 0;
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::AROMATIC);
+      }
+      for (size_t i = 5; i < 10; ++i) {
+        size_t j = i < 9 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::SINGLE);
+      }
+      MolOps::Kekulize(*m);
+      for (size_t i = 0; i < 6; ++i) {
+        size_t j = i < 5 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(
+            m->getBondBetweenAtoms(i, j)->getBondType() == Bond::SINGLE ||
+            m->getBondBetweenAtoms(i, j)->getBondType() == Bond::DOUBLE);
+      }
+      for (size_t i = 5; i < 10; ++i) {
+        size_t j = i < 9 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::SINGLE);
+      }
+    }
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
