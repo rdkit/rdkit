@@ -6,14 +6,13 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build $(python) cmake \
+    conda create --name rdkit_build -c conda-forge $(python) cmake \
         boost-cpp=$(boost_version) \
-        py-boost=$(boost_version) \
+        boost=$(boost_version) \
         numpy pillow eigen pandas \
-        qt
+        cairo nbval qt \
+        sphinx=3.1.2 recommonmark jupyter
     conda activate rdkit_build
-    conda install -c conda-forge nbval
-    conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -25,7 +24,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=ON \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -41,8 +39,6 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_CFFI_LIB=ON \
-    -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_NO_BOOST_CMAKE=TRUE \
     -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
     -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \

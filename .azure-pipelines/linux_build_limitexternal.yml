@@ -6,13 +6,12 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build $(python) cmake \
+    conda create --name rdkit_build -c conda-forge $(python) cmake \
         boost-cpp=$(boost_version) \
-        py-boost=$(boost_version) \
+        boost=$(boost_version) \
         numpy pillow eigen pandas \
         qt
     conda activate rdkit_build
-    conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -40,8 +39,6 @@ steps:
     -DRDK_SWIG_STATIC=OFF \
     -DRDK_BUILD_THREADSAFE_SSS=OFF \
     -DRDK_TEST_MULTITHREADED=OFF \
-    -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_NO_BOOST_CMAKE=TRUE \
     -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
     -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \

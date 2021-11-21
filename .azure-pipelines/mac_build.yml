@@ -17,9 +17,9 @@ steps:
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda create --name rdkit_build $(compiler) cmake \
+    conda create --name rdkit_build -c conda-forge python=$(python_vers) \
+        $(compiler) cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
-        py-boost=$(boost_version) libboost=$(boost_version) \
         qt \
         numpy matplotlib cairo pillow eigen pandas  \
         sphinx=3.1.2 recommonmark jupyter
@@ -57,6 +57,8 @@ steps:
     -DCMAKE_OSX_SYSROOT=${SDKROOT} \
     -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform) \
     -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
+    -DBoost_VERBOSE=1 -DBoost_DEBUG=1 \
+    -DBoost_USE_STATIC_LIBS=OFF \
     -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"

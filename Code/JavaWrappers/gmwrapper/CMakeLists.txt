@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 
 project (jGraphMolJava Java)
 
@@ -107,17 +107,8 @@ LIST(REMOVE_ITEM SWIG_SRC_FILES "${CMAKE_CURRENT_SOURCE_DIR}/../Inchi.i")
 endif()
 
 SET(SWIG_MODULE_GraphMolWrap_EXTRA_DEPS ${SWIG_SRC_FILES} )
-
 SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
-
-# it doesnt seem like the threading libs should need to be here, but
-# as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
-# link error if they aren't there.
-SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
-      ${Boost_SERIALIZATION_LIBRARY} ${RDKit_THREAD_LIBS})
-
-MESSAGE("serial: ${Boost_SERIALIZATION_LIBRARY}")
-MESSAGE("THREAD: ${RDKit_THREAD_LIBS}")
+SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs})
 
 # code adapted from the wrapper code for
 # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup

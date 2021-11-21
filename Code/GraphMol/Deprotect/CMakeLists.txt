@@ -4,7 +4,7 @@ rdkit_library(Deprotect
               Deprotect.cpp
               LINK_LIBRARIES ChemReactions 
 	      FilterCatalog Descriptors Fingerprints DataStructs Depictor
-              FileParsers SubstructMatch ChemTransforms GraphMol ${RDKit_SERIALIZATION_LIBS})
+              FileParsers SubstructMatch ChemTransforms GraphMol)
 
 
 rdkit_headers(Deprotect.h

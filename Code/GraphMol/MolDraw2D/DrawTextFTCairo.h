@@ -19,7 +19,7 @@ namespace RDKit {
 
 // ****************************************************************************
 
-class DrawTextFTCairo : public DrawTextFT {
+class RDKIT_MOLDRAW2D_EXPORT DrawTextFTCairo : public DrawTextFT {
  public:
   DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
                   const std::string &font_file, cairo_t *dp_cr);

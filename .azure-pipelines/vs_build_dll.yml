@@ -4,9 +4,9 @@ steps:
 - script: |
     conda config --set always_yes yes --set changeps1 no
     conda info -a
-    conda create --name rdkit_build $(compiler) cmake ^
+    conda create --name rdkit_build -c conda-forge python=$(python_vers) ^
+        $(compiler) cmake pkg-config ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
-        py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
   displayName: Install dependencies
 - script: |
@@ -20,7 +20,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF ^
     -DRDK_INSTALL_DLLS_MSVC=ON ^
     -DRDK_BUILD_CPP_TESTS=ON ^
-    -DRDK_USE_BOOST_REGEX=ON ^
     -DRDK_BUILD_COORDGEN_SUPPORT=ON ^
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON ^
     -DRDK_OPTIMIZE_POPCNT=ON ^
@@ -34,6 +33,7 @@ steps:
     -DRDK_SWIG_STATIC=OFF ^
     -DRDK_TEST_MULTITHREADED=ON ^
     -DRDK_BOOST_PYTHON3_NAME=$(python_name) ^
+    -DBoost_USE_STATIC_LIBS=OFF ^
     -DCMAKE_INCLUDE_PATH=%CONDA_PREFIX%/Library/include ^
     -DCMAKE_LIBRARY_PATH="%CONDA_PREFIX%/Library/lib
   displayName: Configure build (Run CMake)

@@ -26,6 +26,14 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+#ifdef _MSC_VER
+#define NOMINMAX
+#endif
+#include <cairo.h>
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+#endif
+
 #include <algorithm>
 #include <cstdio>
 #include <iosfwd>
@@ -502,8 +510,6 @@ void test1() {
 }
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-#include <cairo.h>
-#include "MolDraw2DCairo.h"
 void test2() {
   std::cout << " ----------------- Test 2" << std::endl;
   {

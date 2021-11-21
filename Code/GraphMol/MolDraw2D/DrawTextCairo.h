@@ -20,7 +20,7 @@
 namespace RDKit {
 
 // ****************************************************************************
-class DrawTextCairo : public DrawText {
+class RDKIT_MOLDRAW2D_EXPORT DrawTextCairo : public DrawText {
  public:
   DrawTextCairo(double max_fnt_sz, double min_fnt_sz, cairo_t *dp_cr);
 
