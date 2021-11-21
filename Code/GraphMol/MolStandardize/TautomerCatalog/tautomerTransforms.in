@@ -23,10 +23,10 @@ const std::vector<
                         std::string(""), std::string("")),
         std::make_tuple(
             std::string("1,5 (thio)keto/enol f"),
-            std::string("[CX4,NX3;!H0]-[C]=[C][CH0]=[O,S,Se,Te;X1]"),
+            std::string("[CX4z0,NX3;!H0]-[C]=[C][Cz1H0]=[O,S,Se,Te;X1]"),
             std::string(""), std::string("")),
         std::make_tuple(std::string("1,5 (thio)keto/enol r"),
-                        std::string("[O,S,Se,Te;X2!H0]-[CH0]=[C]-[C]=[C,N]"),
+                        std::string("[O,S,Se,Te;X2!H0]-[Cz1H0]=[C]-[C]=[Cz0,N]"),
                         std::string(""), std::string("")),
         std::make_tuple(std::string("aliphatic imine f"),
                         std::string("[CX4!H0]-[C]=[NX2]"), std::string(""),
