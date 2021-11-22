@@ -1568,15 +1568,9 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   // scale, then to actually do the drawing.  It's essential that
   // all the drawing scaling is set to initial values for this.
   double curr_scale = scale_;
-  scale_ = 1;
+  scale_ = 1.0;
   double curr_font_scale = text_drawer_->fontScale();
-  double minfs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1.0);
-  double maxfs = text_drawer_->maxFontSize();
-  text_drawer_->setMaxFontSize(-1.0);
-  text_drawer_->setFontScale(1.0);
-  text_drawer_->setMinFontSize(minfs);
-  text_drawer_->setMaxFontSize(maxfs);
+  text_drawer_->setFontScale(1.0, true);
   double curr_x_trans = x_trans_;
   double curr_y_trans = y_trans_;
   int curr_x_offset = x_offset_;
@@ -1671,11 +1665,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
 
   // set everything to as it was before.
   scale_ = curr_scale;
-  text_drawer_->setMinFontSize(-1.0);
-  text_drawer_->setMaxFontSize(-1.0);
-  text_drawer_->setFontScale(curr_font_scale);
-  text_drawer_->setMinFontSize(minfs);
-  text_drawer_->setMaxFontSize(maxfs);
+  text_drawer_->setFontScale(curr_font_scale, true);
   x_trans_ = curr_x_trans;
   y_trans_ = curr_y_trans;
   x_offset_ = curr_x_offset;
@@ -1878,23 +1868,21 @@ void MolDraw2D::drawLegend(const string &legend) {
     if (!next_piece.empty()) {
       legend_bits.push_back(next_piece);
     }
-    double ominfs = text_drawer_->minFontSize();
-    text_drawer_->setMinFontSize(-1);
 
     double o_font_scale = text_drawer_->fontScale();
     double fsize = text_drawer_->fontSize();
     double new_font_scale = o_font_scale * drawOptions().legendFontSize / fsize;
-    text_drawer_->setFontScale(new_font_scale);
+    text_drawer_->setFontScale(new_font_scale, true);
     double total_width, total_height;
     calc_legend_height(legend_bits, total_width, total_height);
     if (total_height > olh) {
       new_font_scale *= double(olh) / total_height;
-      text_drawer_->setFontScale(new_font_scale);
+      text_drawer_->setFontScale(new_font_scale, true);
       calc_legend_height(legend_bits, total_width, total_height);
     }
     if (total_width > panelWidth()) {
       new_font_scale *= double(panelWidth()) / total_width;
-      text_drawer_->setFontScale(new_font_scale);
+      text_drawer_->setFontScale(new_font_scale, true);
       calc_legend_height(legend_bits, total_width, total_height);
     }
 
@@ -1908,8 +1896,7 @@ void MolDraw2D::drawLegend(const string &legend) {
                                       y_max, true);
       loc.y += y_max - y_min;
     }
-    text_drawer_->setMinFontSize(ominfs);
-    text_drawer_->setFontScale(o_font_scale);
+    text_drawer_->setFontScale(o_font_scale, true);
   }
 
   legend_height_ = olh;
@@ -2005,18 +1992,10 @@ void MolDraw2D::calcAnnotationPosition(const ROMol &,
   // don't make sense, as we're effectively operating on atom coords rather
   // than draw.
   double full_font_scale = text_drawer_->fontScale();
-  double min_fs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1);
-  double max_fs = text_drawer_->maxFontSize();
-  text_drawer_->setMaxFontSize(-1);
-  // text_drawer_->setFontScale(drawOptions().annotationFontScale *
-  //                           full_font_scale);
-  text_drawer_->setFontScale(1);
+  text_drawer_->setFontScale(1, true);
   text_drawer_->getStringRects(annot.text_, OrientType::N, rects, draw_modes,
                                draw_chars);
-  text_drawer_->setFontScale(full_font_scale);
-  text_drawer_->setMinFontSize(min_fs);
-  text_drawer_->setMaxFontSize(max_fs);
+  text_drawer_->setFontScale(full_font_scale, true);
   // accumulate the widths of the rectangles so that we have the overall width
   for (const auto &rect : rects) {
     annot.rect_.width_ += rect->width_;
@@ -2072,16 +2051,10 @@ void MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond,
   // don't make sense, as we're effectively operating on atom coords rather
   // than draw.
   double full_font_scale = text_drawer_->fontScale();
-  double min_fs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1);
-  double max_fs = text_drawer_->maxFontSize();
-  text_drawer_->setMaxFontSize(-1);
-  text_drawer_->setFontScale(drawOptions().annotationFontScale);
+  text_drawer_->setFontScale(drawOptions().annotationFontScale, true);
   text_drawer_->getStringRects(annot.text_, OrientType::N, rects, draw_modes,
                                draw_chars);
-  text_drawer_->setFontScale(full_font_scale);
-  text_drawer_->setMinFontSize(min_fs);
-  text_drawer_->setMaxFontSize(max_fs);
+  text_drawer_->setFontScale(full_font_scale, true);
 
   Point2D const &at1_cds = at_cds_[activeMolIdx_][bond->getBeginAtomIdx()];
   Point2D const &at2_cds = at_cds_[activeMolIdx_][bond->getEndAtomIdx()];
@@ -2142,16 +2115,10 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
   // don't make sense, as we're effectively operating on atom coords rather
   // than draw.
   double full_font_scale = text_drawer_->fontScale();
-  double min_fs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1);
-  double max_fs = text_drawer_->maxFontSize();
-  text_drawer_->setMaxFontSize(-1);
-  text_drawer_->setFontScale(drawOptions().annotationFontScale);
+  text_drawer_->setFontScale(drawOptions().annotationFontScale, true);
   text_drawer_->getStringRects(annot.text_, OrientType::C, rects, draw_modes,
                                draw_chars, false, annot.align_);
-  text_drawer_->setFontScale(full_font_scale);
-  text_drawer_->setMinFontSize(min_fs);
-  text_drawer_->setMaxFontSize(max_fs);
+  text_drawer_->setFontScale(full_font_scale, true);
 
   double rad_step = 0.25;
   StringRect least_worst_rect = StringRect();
@@ -3538,17 +3505,14 @@ void MolDraw2D::drawAnnotation(const AnnotationType &annot) {
   // than the letters, even if that makes it tiny.  The annotation positions
   // have been calculated on the assumption that this is the case, and if
   // minFontSize is applied, they may well clash with the atom symbols.
-  double omfs = text_drawer_->minFontSize();
   if (annot.scaleText_) {
-    text_drawer_->setMinFontSize(-1);
     text_drawer_->setFontScale(drawOptions().annotationFontScale *
-                               full_font_scale);
+                               full_font_scale, true);
   }
   Point2D draw_cds = getDrawCoords(annot.rect_.trans_);
   text_drawer_->drawString(annot.text_, draw_cds, annot.align_);
   if (annot.scaleText_) {
-    text_drawer_->setMinFontSize(omfs);
-    text_drawer_->setFontScale(full_font_scale);
+    text_drawer_->setFontScale(full_font_scale, true);
   }
 }
 
@@ -4391,13 +4355,7 @@ void MolDraw2D::tabulaRasa() {
   scale_ = 1.0;
 
   // ignore the min and max font sizes when setting font size to 1.0
-  double minfs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1.0);
-  double maxfs = text_drawer_->maxFontSize();
-  text_drawer_->setMaxFontSize(-1.0);
-  text_drawer_->setFontScale(1.0);
-  text_drawer_->setMinFontSize(minfs);
-  text_drawer_->setMaxFontSize(maxfs);
+  text_drawer_->setFontScale(1.0, true);
   x_trans_ = y_trans_ = 0.0;
   x_offset_ = y_offset_ = 0;
   d_metadata.clear();

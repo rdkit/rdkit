@@ -64,8 +64,12 @@ void DrawText::setMinFontSize(double new_min) { min_font_size_ = new_min; }
 double DrawText::fontScale() const { return font_scale_; }
 
 // ****************************************************************************
-void DrawText::setFontScale(double new_scale) {
+void DrawText::setFontScale(double new_scale, bool ignore_extremes) {
   font_scale_ = new_scale;
+  if (ignore_extremes) {
+    return;
+  }
+
   double nfs = fontSize();
   if (max_font_size_ > 0 &&
       nfs * (baseFontSize() / FONT_SIZE) > max_font_size_) {
