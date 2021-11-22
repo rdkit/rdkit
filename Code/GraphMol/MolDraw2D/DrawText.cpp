@@ -135,13 +135,15 @@ void DrawText::adjustLineForString(const std::string &label, OrientType orient,
 
 // ****************************************************************************
 void DrawText::drawStringRects(const std::string &label, OrientType orient,
-                               const Point2D &cds, MolDraw2D &mol_draw) const {
+                               TextAlignType talign, const Point2D &cds,
+                               MolDraw2D &mol_draw) const {
   std::vector<std::shared_ptr<StringRect>> rects;
   std::vector<TextDrawType> draw_modes;
   std::vector<char> draw_chars;
 
   size_t i = 0;
-  getStringRects(label, orient, rects, draw_modes, draw_chars);
+  getStringRects(label, orient, rects, draw_modes, draw_chars,
+                 false, talign);
   for (auto r : rects) {
     r->trans_.x += cds.x;
     r->trans_.y += cds.y;
@@ -505,13 +507,15 @@ void DrawText::getStringRects(const std::string &text, OrientType orient,
                               std::vector<std::shared_ptr<StringRect>> &rects,
                               std::vector<TextDrawType> &draw_modes,
                               std::vector<char> &draw_chars,
-                              bool dontSplit) const {
+                              bool dontSplit, TextAlignType textAlign) const {
   std::vector<std::string> text_bits;
   if (!dontSplit) {
     text_bits = atomLabelToPieces(text, orient);
   } else {
     text_bits.push_back(text);
   }
+
+  TextAlignType ta = orient == OrientType::C ? textAlign : TextAlignType::MIDDLE;
 
   if (orient == OrientType::W) {
     // stick the pieces together again backwards and draw as one so there
@@ -537,7 +541,7 @@ void DrawText::getStringRects(const std::string &text, OrientType orient,
       std::vector<TextDrawType> t_draw_modes;
       std::vector<char> t_draw_chars;
       getStringRects(text_bits[i], t_rects, t_draw_modes, t_draw_chars);
-      alignString(TextAlignType::MIDDLE, t_draw_modes, t_rects);
+      alignString(ta, t_draw_modes, t_rects);
       double max_height = -std::numeric_limits<double>::max();
       for (auto r : t_rects) {
         max_height = std::max(r->height_, max_height);

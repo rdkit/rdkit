@@ -157,6 +157,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4508_2.svg", 2202600652U},
     {"testGithub4508_2b.svg", 145414660U},
     {"testGithub4538.svg", 2784641879U},
+    {"testGithub4519_1.svg", 2347253269U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -3355,7 +3356,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("Absolute") {
     auto mol = R"CTAB(
-  Mrv2114 09132120172D          
+  Mrv2114 09132120172D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3436,4 +3437,145 @@ TEST_CASE("Github #4538 drawMolecules crash") {
     outs.flush();
     check_file_hash("testGithub4538.svg");
   }
+}
+
+TEST_CASE("Github #4519 bad placement of datafield labels") {
+  auto mol1 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 C 1.299038 0.750000 0.000000 0
+M  V30 3 C 2.598076 -0.000000 0.000000 0
+M  V30 4 C 1.299038 2.250000 0.000000 0
+M  V30 5 C 2.598076 3.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 2 4
+M  V30 4 2 4 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(5 2 4 5 3 1) FIELDNAME="Lambda Max" FIELDINFO=nm -
+M  V30 FIELDDATA="2222"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol1);
+
+  auto mol2 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 3.000000 0.000000 0.000000 0
+M  V30 2 C 1.500000 0.000000 0.000000 0
+M  V30 3 C 0.750000 -1.299038 0.000000 0
+M  V30 4 C -0.750000 -1.299038 0.000000 0
+M  V30 5 C -1.500000 0.000000 0.000000 0
+M  V30 6 C -0.750000 1.299038 0.000000 0
+M  V30 7 O -1.500000 2.598076 0.000000 0
+M  V30 8 C 0.750000 1.299038 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 2 6 8
+M  V30 8 1 8 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME=UV FIELDINFO=nm -
+M  V30 FIELDDISP="    0.0000    0.0000    DR    ALL  0       0" -
+M  V30 FIELDDATA="340"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol2);
+
+  auto mol3 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.750000 -1.299038 0.000000 0
+M  V30 2 C 0.000000 0.000000 0.000000 0
+M  V30 3 C 1.500000 0.000000 0.000000 0
+M  V30 4 C 2.250000 1.299038 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 3) FIELDNAME=Stereo -
+M  V30 FIELDDATA="Cis"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol3);
+
+  std::vector<std::string> legends = {"datafield label bad placement1",
+                                      "datafield label bad placement2",
+                                      "datafield label bad placement3"};
+//  std::vector<std::string> legends = {"datafield label bad placement2"};
+  {
+    MolDraw2DSVG drawer(300, 250);
+    drawer.drawMolecule(*mol1, legends[0]);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4519_1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testGithub4519_1.svg");
+  }
+  {
+    MolDraw2DSVG drawer(300, 250);
+    drawer.drawMolecule(*mol2, legends[1]);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4519_2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testGithub4519_2.svg");
+  }
+  {
+    MolDraw2DSVG drawer(300, 250);
+    drawer.drawMolecule(*mol3, legends[2]);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4519_3.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testGithub4519_3.svg");
+  }
+
+  {
+    std::vector<ROMol *> mols;
+    mols.push_back(mol2.get());
+    mols.push_back(mol3.get());
+    mols.push_back(mol1.get());
+    MolDraw2DSVG drawer(900, 250, 300, 250);
+    drawer.drawMolecules(mols, &legends);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("testGithub4519_4.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash("testGithub4519_4.svg");
+  }
+
 }
