@@ -126,7 +126,7 @@ std::hash_result_t hash_file(const std::string &filename) {
 }
 
 void check_file_hash(const std::string &filename,
-                     std::hash_result_t exp_hash=0U) {
+                     std::hash_result_t exp_hash = 0U) {
 //    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;

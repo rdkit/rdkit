@@ -66,6 +66,6 @@ struct freefeat_wrapper {
         .def_pickle(chemfeat_pickle_suite());
   };
 };
-}
+}  // namespace ChemicalFeatures
 
 void wrap_freefeat() { ChemicalFeatures::freefeat_wrapper::wrap(); }

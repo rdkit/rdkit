@@ -364,16 +364,11 @@ void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
   unsigned int na = mol->getNumAtoms();
   URANGE_CHECK(aid, na);
 
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
-
-  unsigned int ai, bi;
-  while (nbrIdx != endNbrs) {
-    ai = (*nbrIdx);
-    bi = mol->getBondBetweenAtoms(aid, ai)->getIdx();
+  for (auto ai : boost::make_iterator_range(
+           mol->getAtomNeighbors(mol->getAtomWithIdx(aid)))) {
+    auto bi = mol->getBondBetweenAtoms(aid, ai)->getIdx();
     aids.push_back(ai);
     bids.push_back(bi);
-    nbrIdx++;
   }
 }
 

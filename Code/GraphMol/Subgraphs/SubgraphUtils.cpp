@@ -39,7 +39,7 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
   if (useQuery) {
     // have to do this in two different blocks because of issues with variable
     // scopes.
-    for(auto bondidx : sorted_path) {
+    for (auto bondidx : sorted_path) {
       auto *bond = new QueryBond(*(mol.getBondWithIdx(bondidx)));
 
       int begIdx = bond->getBeginAtomIdx();
@@ -64,7 +64,7 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
       subMol->addBond(bond, true);
     }
   } else {
-    for(auto bondidx : sorted_path) {
+    for (auto bondidx : sorted_path) {
       Bond *bond = mol.getBondWithIdx(bondidx)->copy();
 
       int begIdx = bond->getBeginAtomIdx();
@@ -127,8 +127,8 @@ PATH_TYPE bondListFromAtomList(const ROMol &mol, const PATH_TYPE &atomIds) {
   return bids;
 }
 
-using std::uint32_t;
 using std::int32_t;
+using std::uint32_t;
 DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
                                     bool useBO,
                                     std::vector<std::uint32_t> *extraInvars) {
@@ -189,10 +189,10 @@ DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
   // if the iteration count can be even smaller (and if it
   // makes a difference in runtime)
   unsigned int nCycles = path.size() / 2 + 1;
-  gboost::hash<std::vector<uint32_t> > vectHasher;
+  gboost::hash<std::vector<uint32_t>> vectHasher;
   for (unsigned int cycle = 0; cycle < nCycles; ++cycle) {
     // let each atom feel it's neighbors:
-    std::vector<std::vector<uint32_t> > locInvars(nAtoms);
+    std::vector<std::vector<uint32_t>> locInvars(nAtoms);
     for (int pathIter : path) {
       const Bond *bond = mol.getBondWithIdx(pathIter);
       uint32_t v1 = invars[atomsUsed[bond->getBeginAtomIdx()]];

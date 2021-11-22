@@ -137,25 +137,6 @@ getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
     RDKIT_GRAPHMOL_EXPORT void findSpanningTree(const ROMol &mol,std::vector<int> &mst);
 #endif
 
-//! calculates Balaban's J index for the molecule
-/*!
-  \param mol      the molecule of interest
-  \param useBO    toggles inclusion of the bond order in the calculation
-                  (when false, we're not really calculating the J value)
-  \param force    forces the calculation (instead of using cached results)
-  \param bondPath when included, only paths using bonds whose indices occur
-                  in this vector will be included in the calculation
-  \param cacheIt  If this is true, the calculated value will be cached
-                  as a property on the molecule
-  \return the J index
-
-*/
-RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(
-    const ROMol &mol, bool useBO = true, bool force = false,
-    const std::vector<int> *bondPath = nullptr, bool cacheIt = true);
-//! \overload
-RDKIT_GRAPHMOL_EXPORT double computeBalabanJ(double *distMat, int nb, int nAts);
-
 //! \name Dealing with hydrogens
 //{@
 
@@ -618,25 +599,48 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 /*!
 
    \param mol             the molecule of interest
-   \param markAtomsBonds  if this is set to true, \c isAromatic boolean
-   settings on both the Bonds and Atoms are turned to false following the
-   Kekulization, otherwise they are left alone in their original state. \param
-   maxBackTracks   the maximum number of attempts at back-tracking. The
-   algorithm
-                          uses a back-tracking procedure to revisit a previous
-   setting of
-                          double bond if we hit a wall in the kekulization
-   process
+
+   \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
+   on both the Bonds and Atoms are turned to false following the Kekulization,
+   otherwise they are left alone in their original state.
+
+   \param maxBackTracks   the maximum number of attempts at back-tracking. The
+   algorithm uses a back-tracking procedure to revisit a previous setting of
+   double bond if we hit a wall in the kekulization process
 
    <b>Notes:</b>
      - even if \c markAtomsBonds is \c false the \c BondType for all aromatic
        bonds will be changed from \c RDKit::Bond::AROMATIC to \c
-   RDKit::Bond::SINGLE
-       or RDKit::Bond::DOUBLE during Kekulization.
+       RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
 
 */
 RDKIT_GRAPHMOL_EXPORT void Kekulize(RWMol &mol, bool markAtomsBonds = true,
                                     unsigned int maxBackTracks = 100);
+//! Kekulizes the molecule if possible. If the kekulization fails the molecule
+//! will not be modified
+/*!
+
+   \param mol             the molecule of interest
+
+   \param markAtomsBonds  if this is set to true, \c isAromatic boolean settings
+   on both the Bonds and Atoms are turned to false following the Kekulization,
+   otherwise they are left alone in their original state.
+
+   \param maxBackTracks   the maximum number of attempts at back-tracking. The
+   algorithm uses a back-tracking procedure to revisit a previous setting of
+   double bond if we hit a wall in the kekulization process
+
+   \returns whether or not the kekulization succeeded
+
+   <b>Notes:</b>
+     - even if \c markAtomsBonds is \c false the \c BondType for all aromatic
+       bonds will be changed from \c RDKit::Bond::AROMATIC to \c
+       RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
+
+*/
+RDKIT_GRAPHMOL_EXPORT bool KekulizeIfPossible(RWMol &mol,
+                                              bool markAtomsBonds = true,
+                                              unsigned int maxBackTracks = 100);
 
 //! flags the molecule's conjugated bonds
 RDKIT_GRAPHMOL_EXPORT void setConjugation(ROMol &mol);

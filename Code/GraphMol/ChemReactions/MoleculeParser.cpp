@@ -64,7 +64,7 @@ int getRXNRoleOfMolecule(const RDKit::ROMol &mol) {
   }
   return -1;
 }
-}
+}  // namespace
 
 namespace RDKit {
 
@@ -100,4 +100,4 @@ ChemicalReaction *RxnMolToChemicalReaction(const ROMol &mol) {
   }
   return rxn;
 }
-}
+}  // namespace RDKit

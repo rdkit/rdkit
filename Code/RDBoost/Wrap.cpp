@@ -36,15 +36,15 @@ void throw_key_error(const std::string key) {
   python::throw_error_already_set();
 }
 
-void translate_index_error(IndexErrorException const& e) {
+void translate_index_error(IndexErrorException const &e) {
   throw_index_error(e.index());
 }
 
-void translate_value_error(ValueErrorException const& e) {
+void translate_value_error(ValueErrorException const &e) {
   throw_value_error(e.what());
 }
 
-void translate_key_error(KeyErrorException const& e) {
+void translate_key_error(KeyErrorException const &e) {
   throw_key_error(e.key());
 }
 
@@ -55,15 +55,16 @@ void throw_runtime_error(const std::string err) {
   python::throw_error_already_set();
 }
 
-void translate_invariant_error(Invar::Invariant const& e) {
+void translate_invariant_error(Invar::Invariant const &e) {
   throw_runtime_error(e.toUserString());
 }
 
-boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
-                                                   boost::dynamic_bitset<>::size_type maxV) {
+boost::dynamic_bitset<> pythonObjectToDynBitset(
+    const python::object &obj, boost::dynamic_bitset<>::size_type maxV) {
   boost::dynamic_bitset<> res(maxV);
   if (obj) {
-    python::stl_input_iterator<boost::dynamic_bitset<>::size_type> beg(obj), end;
+    python::stl_input_iterator<boost::dynamic_bitset<>::size_type> beg(obj),
+        end;
     while (beg != end) {
       auto v = *beg;
       if (v >= maxV) {
@@ -79,7 +80,7 @@ boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
 std::vector<std::pair<int, int>> *translateAtomMap(
     const python::object &atomMap) {
   PySequenceHolder<python::object> pyAtomMap(atomMap);
-  std::vector<std::pair<int, int>>* res;
+  std::vector<std::pair<int, int>> *res;
   res = nullptr;
   unsigned int i;
   unsigned int n = pyAtomMap.size();
@@ -103,7 +104,7 @@ std::vector<std::vector<std::pair<int, int>>> translateAtomMapSeq(
   std::vector<std::vector<std::pair<int, int>>> aMapVec;
   PySequenceHolder<python::object> pyAtomMapSeq(atomMapSeq);
   for (size_t i = 0; i < pyAtomMapSeq.size(); ++i) {
-    std::vector<std::pair<int, int>>* res = translateAtomMap(pyAtomMapSeq[i]);
+    std::vector<std::pair<int, int>> *res = translateAtomMap(pyAtomMapSeq[i]);
     aMapVec.push_back(*res);
     delete res;
   }

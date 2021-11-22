@@ -24,8 +24,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     bool useBondTypes, bool onlyNonzeroInvariants,
     bool,  // includeRingMembership
     python::object &py_countBounds, std::uint32_t fpSize,
-    python::object &py_atomInvGen, python::object &py_bondInvGen,
-    python::object &useCountSimulation) {
+    python::object &py_atomInvGen, python::object &py_bondInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
@@ -43,11 +42,6 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
   if (py_countBounds) {
     auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
     countBounds = *tmp;
-  }
-
-  // just there to handle a bad API inconsistency in v2021.03 and earlier
-  if (useCountSimulation != python::object()) {
-    countSimulation = python::extract<bool>(useCountSimulation)();
   }
 
   return MorganFingerprint::getMorganGenerator<OutputType>(
@@ -89,8 +83,7 @@ void exportMorgan() {
        python::arg("countBounds") = python::object(),
        python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object(),
-       python::arg("bondInvariantsGenerator") = python::object(),
-       python::arg("useCountSimulation") = python::object()),
+       python::arg("bondInvariantsGenerator") = python::object()),
       "Get a morgan fingerprint generator\n\n"
       "  ARGUMENTS:\n"
       "    - radius:  the number of iterations to grow the fingerprint\n"

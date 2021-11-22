@@ -346,9 +346,8 @@ void testFileMCSB(const char* test, unsigned timeout = 30,
         } else {
           fprintf(f, "# %u REFCMP: res  %s %s %u %u %s.\n", n + 1, "FAILED",
                   /*referenceResults[n].NumAtoms > res.NumAtoms ||*/
-                          referenceResults[n].NumBonds > res.NumBonds
-                      ? "MISSING"
-                      : "GREATER",
+                  referenceResults[n].NumBonds > res.NumBonds ? "MISSING"
+                                                              : "GREATER",
                   referenceResults[n].NumAtoms, referenceResults[n].NumBonds,
                   referenceResults[n].SmartsString.c_str());
         }
@@ -1683,7 +1682,7 @@ int main(int argc, const char* argv[]) {
   */
 
 #ifdef xxWIN32  // brief test set for testing and issue investigation
-#ifdef _DEBUG  // check memory leaks
+#ifdef _DEBUG   // check memory leaks
   _CrtMemState _ms;
   _CrtMemCheckpoint(&_ms);
 #endif

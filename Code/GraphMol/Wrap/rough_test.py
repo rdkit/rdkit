@@ -6665,6 +6665,16 @@ CAS<~>
       Chem.MolToCXSmiles(m, ps, (Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_LINKNODES)),
       "C1(O)CCC(F)C1")
 
+  def testKekulizeIfPossible(self):
+    m = Chem.MolFromSmiles('c1cccn1', sanitize=False)
+    m.UpdatePropertyCache(strict=False)
+    Chem.KekulizeIfPossible(m)
+    for atom in m.GetAtoms():
+      self.assertTrue(atom.GetIsAromatic())
+    for bond in m.GetBonds():
+      self.assertTrue(bond.GetIsAromatic())
+      self.assertEqual(bond.GetBondType(), Chem.BondType.AROMATIC)
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

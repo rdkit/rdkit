@@ -115,4 +115,4 @@ void ChiralViolationContrib::getGrad(double *pos, double *grad) const {
        pos[d_idx3 * dim + 1] * (pos[d_idx1 * dim] - pos[d_idx2 * dim]));
   // std::cerr<<"Chiral Violation grad: "<<preFactor<<std::endl;
 }
-}
+}  // namespace DistGeom

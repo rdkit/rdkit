@@ -325,7 +325,7 @@ void preprocessSmiles(const std::string &smiles, const T &params,
     bool loopAgain = true;
     while (loopAgain) {
       loopAgain = false;
-      for (const auto pr : *(params.replacements)) {
+      for (const auto &pr : *(params.replacements)) {
         if (smi.find(pr.first) != std::string::npos) {
           loopAgain = true;
           boost::replace_all(smi, pr.first, pr.second);
@@ -376,6 +376,7 @@ void handleCXPartAndName(RWMol *res, const T &params, const std::string &cxPart,
       res->setProp("_CXSMILES_Data", std::string(cxPart.cbegin(), pos));
     } else if (params.strictCXSMILES && !params.parseName &&
                pos != cxPart.cend()) {
+      delete res;
       throw RDKit::SmilesParseException(
           "CXSMILES extension does not start with | and parseName=false");
     }

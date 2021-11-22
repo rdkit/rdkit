@@ -27,5 +27,5 @@ int Rule1a::compare(const Edge *a, const Edge *b) const {
   return three_way_comparison(afrac, bfrac);
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

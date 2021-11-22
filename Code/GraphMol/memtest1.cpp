@@ -80,7 +80,8 @@ void testMol() {
 
 void testMols() {
   std::string smis[] = {
-      "CN1CCC[C@H]1c2cccnc2", "CC1(C)[C@@H](N2[C@@H](CC2=O)S1(=O)=O)C(=O)O",
+      "CN1CCC[C@H]1c2cccnc2",
+      "CC1(C)[C@@H](N2[C@@H](CC2=O)S1(=O)=O)C(=O)O",
       "C[C@]1(Cn2ccnn2)[C@@H](N3[C@@H](CC3=O)S1(=O)=O)C(=O)O",
       "CCN(CC)C(=O)[C@@H]1CN(C)[C@H]2Cc3c[nH]c4cccc(C2=C1)c34",
       "CCCN(CCC)[C@H]1CCc2c(O)cccc2C1",
@@ -89,7 +90,8 @@ void testMols() {
       "1OC(=O)C67CCC(C)(C(=O)O6)C7(C)C",
       "CCC(C)(C)C(=O)C(=O)N1CCC[C@H]1C(=O)OCCCc2cccnc2",
       "CN1N=C(S/C/1=N/C(=O)C)S(=O)(=O)N",
-      "COc1ccc(cc1)[C@@H]2Sc3ccccc3N(CCN(C)C)C(=O)[C@@H]2OC(=O)C", "EOS"};
+      "COc1ccc(cc1)[C@@H]2Sc3ccccc3N(CCN(C)C)C(=O)[C@@H]2OC(=O)C",
+      "EOS"};
   for (int i = 0; smis[i] != "EOS"; ++i) {
     SmilesToMol(smis[i], 0, false);
   }

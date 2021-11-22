@@ -11,6 +11,7 @@
 // #define DEBUG
 
 #include "RGroupScore.h"
+#include "RDGeneral/Invariant.h"
 #include <vector>
 #include <map>
 #include <algorithm>
@@ -18,53 +19,54 @@ namespace RDKit {
 
 // stupid total score
 // This has to handle all permutations and doesn't do anything terribly smart
-//  For r-groups with large symmetries, this can take way too long.
-double matchScore(const std::vector<size_t> &permutation,
-                  const std::vector<std::vector<RGroupMatch>> &matches,
-                  const std::set<int> &labels) {
+// For r-groups with large symmetries, this can take way too long.
+double RGroupScorer::matchScore(
+    const std::vector<size_t> &permutation,
+    const std::vector<std::vector<RGroupMatch>> &matches,
+    const std::set<int> &labels) {
+  PRECONDITION(permutation.size() <= matches.size(),
+               "permutation.size() should be <= matches.size()");
   double score = 0.;
   const std::string EMPTY_RGROUP = "";
+  size_t offset = matches.size() - permutation.size();
 #ifdef DEBUG
   std::cerr << "---------------------------------------------------"
             << std::endl;
   std::cerr << "Scoring permutation "
             << " num matches: " << matches.size() << std::endl;
 
-
   BOOST_LOG(rdDebugLog) << "Scoring" << std::endl;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-    BOOST_LOG(rdDebugLog)
-      << "Molecule " << m << " " << matches[m][permutation[m]].toString()
-      << std::endl;
+    BOOST_LOG(rdDebugLog) << "Molecule " << m << " "
+                          << matches[m + offset].at(permutation[m]).toString()
+                          << std::endl;
   }
 #endif
 
   // What is the largest rgroup count at any label
-  int N = 0;
+  restoreInitialState();
   std::map<int, int> num_rgroups;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-    for (auto l : matches[m][permutation[m]].rgroups) {
-       N = std::max(N, ++num_rgroups[l.first]);
+    for (auto l : matches[m + offset].at(permutation[m]).rgroups) {
+      d_current.N = std::max(d_current.N, ++num_rgroups[l.first]);
     }
   }
   // for each label (r-group)
-  for(auto l : labels ) {
+  for (auto l : labels) {
 #ifdef DEBUG
     std::cerr << "Label: " << l << std::endl;
 #endif
-    std::vector<std::map<std::string, unsigned int>> matchSetVect;
-    std::map<std::set<int>, size_t> linkerMatchSet;
-
-    int num_rgroups_for_label = 0;
+    auto &labelData = d_current.labelDataMap[l];
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
 
-      auto rg = matches[m][permutation[m]].rgroups.find(l);
-      if (rg == matches[m][permutation[m]].rgroups.end()) {
+      const auto &match = matches[m + offset][permutation[m]];
+      auto rg = match.rgroups.find(l);
+      if (rg == match.rgroups.end()) {
         continue;
       }
-      num_rgroups_for_label++;
+      ++labelData.numRGroups;
       if (rg->second->is_linker) {
-        ++linkerMatchSet[rg->second->attachments];
+        ++labelData.linkerMatchSet[rg->second->attachments];
 #ifdef DEBUG
         std::cerr << "  combined: " << MolToSmiles(*rg->second->combinedMol)
                   << std::endl;
@@ -74,33 +76,35 @@ double matchScore(const std::vector<size_t> &permutation,
 #endif
       }
 #ifdef DEBUG
-        std::cerr << l << " rgroup count" << num_rgroups_for_label << " num atoms" << rg->second->combinedMol->getNumAtoms(false)
+      std::cerr << l << " rgroup count" << labelData.numRGroups << " num atoms"
+                << rg->second->combinedMol->getNumAtoms(false)
                 // looks like code has been edited round this define
                 // << " score: " << count
                 << std::endl;
 #endif
       size_t i = 0;
       for (const auto &smiles : rg->second->smilesVect) {
-        if (i == matchSetVect.size()) {
-          matchSetVect.resize(i + 1);
+        if (i == labelData.matchSetVect.size()) {
+          labelData.matchSetVect.resize(i + 1);
         }
-        unsigned int &count = matchSetVect[i][smiles];
+        unsigned int &count = labelData.matchSetVect[i][smiles];
         ++count;
 #ifdef DEBUG
-          std::cerr << i << " smiles:" << smiles << " " << count << std::endl;
+        std::cerr << i << " smiles:" << smiles << " " << count << std::endl;
         std::cerr << " Linker Score: "
-                  << linkerMatchSet[rg->second->attachments] << std::endl;
+                  << labelData.linkerMatchSet[rg->second->attachments]
+                  << std::endl;
 #endif
         ++i;
       }
     }
-    
+
     double tempScore = 0.;
-    for (auto &matchSet : matchSetVect) {
+    for (auto &matchSet : labelData.matchSetVect) {
       // get the counts for each rgroup found and sort in reverse order
       // If we don't have as many rgroups as the largest set add a empty ones
-      if( N - num_rgroups_for_label > 0) {
-          matchSet[EMPTY_RGROUP] = N - num_rgroups_for_label;
+      if (d_current.N - labelData.numRGroups > 0) {
+        matchSet[EMPTY_RGROUP] = d_current.N - labelData.numRGroups;
       }
       std::vector<unsigned int> equivalentRGroupCount;
 
@@ -124,9 +128,9 @@ double matchScore(const std::vector<size_t> &permutation,
 #endif
       }
       // make sure to rescale groups like [*:1].[*:1]C otherwise this will be
-        // double counted
-        // WE SHOULD PROBABLY REJECT THESE OUTRIGHT
-      tempScore /= matchSetVect.size();
+      // double counted
+      // WE SHOULD PROBABLY REJECT THESE OUTRIGHT
+      tempScore /= static_cast<double>(labelData.matchSetVect.size());
     }
 
     // overweight linkers with the same attachments points....
@@ -134,7 +138,7 @@ double matchScore(const std::vector<size_t> &permutation,
     //  the size of the set is the number of labels that are being used
     //  ** this heuristic really should be taken care of above **
     unsigned int maxLinkerMatches = 0;
-    for (const auto &it : linkerMatchSet) {
+    for (const auto &it : labelData.linkerMatchSet) {
       if (it.first.size() > 1 || it.second > 1) {
         if (it.first.size() > maxLinkerMatches) {
           maxLinkerMatches = std::max(it.first.size(), it.second);
@@ -160,7 +164,7 @@ double matchScore(const std::vector<size_t> &permutation,
               << std::endl;
     std::cerr << "Score = " << score << std::endl;
 #endif
-  } // end for each label
+  }  // end for each label
 
 #ifdef DEBUG
   BOOST_LOG(rdDebugLog) << score << std::endl;
@@ -168,5 +172,135 @@ double matchScore(const std::vector<size_t> &permutation,
 
   return score;
 }
+
+RGroupScorer::RGroupScorer(const std::vector<std::vector<size_t>> &permutations,
+                           double score) {
+  d_bestScore = score;
+  for (const auto &permutation : permutations) {
+    pushTieToStore(permutation);
+  }
+  if (!d_store.empty()) {
+    d_saved = d_store.front();
+  }
+}
+
+void RGroupScorer::setBestPermutation(const std::vector<size_t> &permutation,
+                                      double score) {
+  d_bestScore = score;
+  d_current.permutation = permutation;
+  d_saved = d_current;
+}
+
+void RGroupScorer::startProcessing() {
+  d_initial = d_saved;
+  d_bestScore = -std::numeric_limits<double>::max();
+  clearTieStore();
+}
+
+void RGroupScorer::breakTies(
+    const std::vector<std::vector<RGroupMatch>> &matches,
+    const std::set<int> &labels,
+    const std::unique_ptr<CartesianProduct> &iterator,
+    const std::chrono::steady_clock::time_point &t0, double timeout) {
+  size_t maxPermValue = 0;
+  d_current = d_saved;
+  d_current.numAddedRGroups = labels.size();
+  std::vector<int> largestHeavyCounts;
+  largestHeavyCounts.reserve(labels.size());
+  std::vector<int> orderedLabels;
+  orderedLabels.reserve(labels.size());
+  std::copy_if(labels.begin(), labels.end(), std::back_inserter(orderedLabels),
+               [](const int &i) { return !(i < 0); });
+  std::copy_if(labels.begin(), labels.end(), std::back_inserter(orderedLabels),
+               [](const int &i) { return (i < 0); });
+  // We only care about the sign of the ordered labels,
+  // not about their value, so we convert the ordered map
+  // into a vector for comparing with the tied permutations
+  // If there is a change in sign, then it means a new
+  // label was added compared to the cached version,
+  // so we need to add a new counter initialized to 0
+  auto it = d_current.heavyCountPerLabel.begin();
+  for (auto label : orderedLabels) {
+    int count = 0;
+    if (it != d_current.heavyCountPerLabel.end()) {
+      if (!((it->first > 0) ^ (label > 0))) {
+        count = it->second;
+      }
+      ++it;
+    }
+    largestHeavyCounts.push_back(count);
+  }
+  std::vector<int> initialHeavyCounts(largestHeavyCounts);
+  while (!d_store.empty()) {
+    auto &state = d_store.front();
+    std::vector<int> heavyCounts(initialHeavyCounts);
+    state.computeTieBreakingCriteria(matches, orderedLabels, heavyCounts);
+#ifdef DEBUG
+    std::cerr << "tiedPermutation ";
+    for (const auto &t : state.permutation) {
+      std::cerr << t << ",";
+    }
+    std::cerr << " orderedLabels ";
+    for (const auto &l : orderedLabels) {
+      std::cerr << l << ",";
+    }
+    std::cerr << " heavyCounts ";
+    for (auto hc : heavyCounts) {
+      std::cerr << hc << ",";
+    }
+    std::cerr << " largestHeavyCounts ";
+    for (auto hc : largestHeavyCounts) {
+      std::cerr << hc << ",";
+    }
+    std::cerr << " state.numMatchedUserRGroups " << state.numMatchedUserRGroups
+              << " d_current.numMatchedUserRGroups "
+              << d_current.numMatchedUserRGroups << ", state.numAddedRGroups "
+              << state.numAddedRGroups << ", d_current.numAddedRGroups "
+              << d_current.numAddedRGroups << std::endl;
+#endif
+    size_t permValue =
+        iterator ? iterator->value(state.permutation) : maxPermValue;
+    if (state.numMatchedUserRGroups > d_current.numMatchedUserRGroups) {
+      d_current = state;
+      largestHeavyCounts = heavyCounts;
+      maxPermValue = permValue;
+    } else if (state.numMatchedUserRGroups == d_current.numMatchedUserRGroups) {
+      if (state.numAddedRGroups < d_current.numAddedRGroups) {
+        d_current = state;
+        largestHeavyCounts = heavyCounts;
+        maxPermValue = permValue;
+      } else if (state.numAddedRGroups == d_current.numAddedRGroups) {
+        if (heavyCounts > largestHeavyCounts) {
+          d_current = state;
+          largestHeavyCounts = heavyCounts;
+          maxPermValue = permValue;
+        } else if (heavyCounts == largestHeavyCounts) {
+          if (permValue > maxPermValue) {
+            d_current = state;
+            largestHeavyCounts = heavyCounts;
+            maxPermValue = permValue;
+          }
+        }
+      }
+    }
+    checkForTimeout(t0, timeout);
+    d_store.pop_front();
+  }
+  // convert back the heavy count vector into an ordered map
+  // to store it in the saved cache
+  d_current.heavyCountPerLabel.clear();
+  auto count = largestHeavyCounts.begin();
+  for (auto label : orderedLabels) {
+    d_current.heavyCountPerLabel[label] = *count++;
+  }
+  d_saved = d_current;
+}
+
+void RGroupScorer::pushTieToStore(const std::vector<size_t> &permutation) {
+  d_current.permutation = permutation;
+  d_store.push_back(d_current);
+}
+
+void RGroupScorer::clearTieStore() { d_store.clear(); }
 
 }  // namespace RDKit

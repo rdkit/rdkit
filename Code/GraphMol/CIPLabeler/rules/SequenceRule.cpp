@@ -165,5 +165,5 @@ bool SequenceRule::areUpEdges(Node *aNode, Node *bNode, Edge *aEdge,
   return false;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

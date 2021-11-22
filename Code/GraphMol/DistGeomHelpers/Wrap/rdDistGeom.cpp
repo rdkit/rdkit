@@ -428,7 +428,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite(
           "boundsMatForceScaling",
           &RDKit::DGeomHelpers::EmbedParameters::boundsMatForceScaling,
-          "scale the weights of the atom pair distance restraints relative to the other types of restraints")
+          "scale the weights of the atom pair distance restraints relative to "
+          "the other types of restraints")
       .def_readwrite(
           "useSymmetryForPruning",
           &RDKit::DGeomHelpers::EmbedParameters::useSymmetryForPruning,

@@ -23,8 +23,7 @@ template <typename OutputType>
 FingerprintGenerator<OutputType> *getAtomPairGenerator(
     unsigned int minDistance, unsigned int maxDistance, bool includeChirality,
     bool use2D, bool countSimulation, python::object &py_countBounds,
-    std::uint32_t fpSize, python::object &py_atomInvGen,
-    python::object &useCountSimulation) {
+    std::uint32_t fpSize, python::object &py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
   python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
@@ -36,10 +35,6 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
   if (py_countBounds) {
     auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
     countBounds = *tmp;
-  }
-  // just there to handle a bad API inconsistency in v2021.03 and earlier
-  if (useCountSimulation != python::object()) {
-    countSimulation = python::extract<bool>(useCountSimulation)();
   }
 
   return AtomPair::getAtomPairGenerator<OutputType>(
@@ -60,8 +55,7 @@ void exportAtompair() {
        python::arg("countSimulation") = true,
        python::arg("countBounds") = python::object(),
        python::arg("fpSize") = 2048,
-       python::arg("atomInvariantsGenerator") = python::object(),
-       python::arg("useCountSimulation") = python::object()),
+       python::arg("atomInvariantsGenerator") = python::object()),
       "Get an atom pair fingerprint generator\n\n"
       "  ARGUMENTS:\n"
       "    - minDistance: minimum distance between atoms to be considered in a "

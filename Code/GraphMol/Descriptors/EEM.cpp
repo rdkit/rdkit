@@ -122,7 +122,7 @@ unsigned int getAtomtype(const ROMol &mol, const RDKit::Atom *atom) {
 }
 
 std::unique_ptr<double[]> getEEMMatrix(double *dist3D, unsigned int n,
-                                       const EEM_arrays& EEMatoms) {
+                                       const EEM_arrays &EEMatoms) {
   PRECONDITION(dist3D != nullptr, "bad dist3D argument")
   int sizeArray = (n + 1) * (n + 1);
   auto *EEM =
@@ -201,7 +201,7 @@ EEM_arrays::~EEM_arrays() {
 
 /* Calculate charges for a particular kappa_data structure */
 void calculate_charges(ROMol mol, double *dist3D, unsigned int numAtoms,
-                       const EEM_arrays& EEMatoms, std::vector<double> &res) {
+                       const EEM_arrays &EEMatoms, std::vector<double> &res) {
   std::unique_ptr<double[]> A = getEEMMatrix(dist3D, numAtoms, EEMatoms);
   std::unique_ptr<double[]> b = getBVector(mol, numAtoms, EEMatoms);
 

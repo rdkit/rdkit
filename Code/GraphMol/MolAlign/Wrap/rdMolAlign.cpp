@@ -178,8 +178,8 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
   double rmsd;
   {
     NOGIL gil;
-    rmsd =
-        MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec, maxMatches, wtsVec);
+    rmsd = MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec,
+                             maxMatches, wtsVec);
   }
   return rmsd;
 }
@@ -687,7 +687,8 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       "CalcRMS", RDKit::CalcRMS,
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
-       python::arg("maxMatches") = 1000000, python::arg("weights") = python::list()),
+       python::arg("maxMatches") = 1000000,
+       python::arg("weights") = python::list()),
       docString.c_str());
 
   docString =

@@ -83,5 +83,5 @@ Descriptor Configuration::label(Node *node, Digraph &digraph,
   return Descriptor::UNKNOWN;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

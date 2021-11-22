@@ -1587,3 +1587,263 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("Github #4582: double bonds and ring closures") {
+  auto mol = R"CTAB(CHEMBL409450
+     RDKit          2D
+
+ 22 25  0  0  0  0  0  0  0  0999 V2000
+   -1.1669    1.3591    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6820    0.6916    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9516    1.1041    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9516    0.2791    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5647    1.6562    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3931    2.4631    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6085    2.7181    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9954    2.1661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1669    0.0242    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9120   -0.7604    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3969   -1.4279    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9120   -2.0953    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1274   -1.8404    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1274   -1.0154    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5871   -2.2529    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3016   -1.8404    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3016   -1.0154    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5871   -0.6029    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2219   -1.4279    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1430    0.6916    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5555    1.4061    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0160   -2.2529    0.0000 Br  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  2  0
+  1  8  1  0
+  9  2  1  0
+  2 20  2  0
+  3  4  1  0
+  3  5  1  0
+  9  4  1  0
+  5  6  2  0
+  6  7  1  0
+  8  7  2  0
+  9 10  2  0
+ 10 11  1  0
+ 10 14  1  0
+ 11 12  1  0
+ 11 19  2  0
+ 13 12  1  0
+ 13 14  2  0
+ 13 15  1  0
+ 14 18  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 22 16  1  0
+ 17 18  2  0
+ 20 21  1  0
+M  END)CTAB"_ctab;
+  REQUIRE(mol);
+  auto dbond = mol->getBondBetweenAtoms(1, 19);
+  REQUIRE(dbond);
+  CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
+  CHECK((dbond->getStereo() == Bond::BondStereo::STEREOE ||
+         dbond->getStereo() == Bond::BondStereo::STEREOTRANS));
+  CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+  auto csmiles = MolToSmiles(*mol);
+  CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
+
+#if 0
+  // FIX: this test fails. The SMILES generated for this random permutation
+  // has the stereo for one of the double bonds wrong.
+  SECTION("specific random output") {
+    SmilesWriteParams ps;
+    ps.doRandom = true;
+    getRandomGenerator(51)();
+    auto rsmiles = MolToSmiles(*mol, ps);
+    std::unique_ptr<RWMol> mol2(SmilesToMol(rsmiles));
+    REQUIRE(mol2);
+    auto smiles = MolToSmiles(*mol2);
+    if (smiles != csmiles) {
+      std::cerr << smiles << std::endl;
+    }
+    CHECK(smiles == csmiles);
+  }
+#endif
+
+  SECTION("bulk random output order") {
+    auto csmiles = MolToSmiles(*mol);
+    CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
+    SmilesWriteParams ps;
+    ps.doRandom = true;
+    for (auto i = 0u; i < 100; ++i) {
+      if (i == 50) {
+        // we know this one fails (it's explicitly tested above)
+        continue;
+      }
+      getRandomGenerator(i + 1)();
+      auto rsmiles = MolToSmiles(*mol, ps);
+      std::unique_ptr<RWMol> mol2(SmilesToMol(rsmiles));
+      REQUIRE(mol2);
+      auto smiles = MolToSmiles(*mol2);
+      if (smiles != csmiles) {
+        std::cerr << ">>> " << i << " " << rsmiles << std::endl;
+      }
+      CHECK(smiles == csmiles);
+    }
+  }
+}
+
+TEST_CASE("Github #4582 continued: double bonds and ring closures") {
+  SECTION("basics") {
+    auto mol = R"CTAB(
+  Mrv2108 10072106112D          
+
+ 11 11  0  0  0  0            999 V2000
+    1.2097   -1.0517    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3651   -1.1116    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0571    0.9536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2670   -0.5667    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7001    0.4032    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3269    0.2561    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2180    0.8882    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7601   -0.4305    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5763   -1.7848    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1262   -2.4676    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4920   -3.1990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  8  1  1  0  0  0  0
+  1  2  2  0  0  0  0
+  5  3  1  0  0  0  0
+  7  3  1  0  0  0  0
+  4  2  1  0  0  0  0
+  5  8  1  0  0  0  0
+  6  7  1  0  0  0  0
+  1  9  1  0  0  0  0
+  9 10  2  0  0  0  0
+ 10 11  1  0  0  0  0
+  6  4  1  0  0  0  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+    auto csmiles = MolToSmiles(*mol);
+    std::cerr << csmiles << std::endl;
+    CHECK(csmiles == "C/N=C/C1=C/CCCCCC1");
+  }
+  SECTION("github #3967 part 1") {
+    // duplicating a test from elsewhere
+    auto mol = "C=c1s/c2n(c1=O)CCCCCCC\\N=2"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToSmiles(*mol);
+    CHECK(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
+  }
+  SECTION("github #3967 part 2") {
+    // duplicating a test from elsewhere
+    auto mol = R"SMI(C1=CC/C=C2C3=C/CC=CC=CC\3C\2C=C1)SMI"_smiles;
+    REQUIRE(mol);
+    auto smi = MolToSmiles(*mol);
+    CHECK(smi == R"SMI(C1=CC/C=C2C3=C\CC=CC=CC/3C\2C=C1)SMI");
+  }
+  SECTION("CHEMBL3623347") {
+    auto mol = R"CTAB(CHEMBL3623347
+     RDKit          2D
+
+ 44 47  0  0  0  0  0  0  0  0999 V2000
+   -2.0000    1.0700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1400   -0.4700    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6400   -0.8300    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4400    0.4800    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4200    1.6600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2200   -1.9300    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6700   -2.0400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9400    1.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4900   -1.0400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1200    0.7400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5400    0.1400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5400    1.3300    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6000    0.4700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4000    1.6300    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4000    2.9600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8800    2.6000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6604    2.1462    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6965    1.6501    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2764    1.7277    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9496    2.6967    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4143   -0.1105    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6960    2.8278    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2128   -2.2139    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2997   -3.4050    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7586   -4.5137    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1099   -3.2485    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7200   -1.1200    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2300   -0.7900    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.1740   -2.2308    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8927   -3.2754    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0667   -4.5284    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.7380   -5.8707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9120   -7.1238    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5833   -8.4661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7573   -9.7192    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4287  -11.0615    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9267  -11.1538    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.4623  -12.2277    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5892  -10.1533    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6027  -12.3146    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2740  -13.6569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4719  -13.7282    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6136  -14.6588    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5388   -1.7411    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  6
+  3  2  1  0
+  3  4  1  0
+  4  5  1  0
+  5  1  1  0
+ 28  6  1  0
+  6  7  2  0
+ 10  8  1  0
+  8 14  1  0
+ 13  9  1  0
+  9  7  1  0
+ 10 28  1  0
+ 27 11  1  0
+ 11 12  1  0
+ 12 10  1  0
+ 13 14  1  0
+ 14 15  1  0
+ 15 16  1  0
+ 16  1  1  0
+  1 13  1  0
+ 12 17  1  1
+ 12 18  1  0
+ 10 19  1  1
+ 14 20  1  1
+ 13 21  1  6
+  5 22  1  6
+  3 23  1  1
+ 23 24  2  0
+ 24 25  1  0
+ 24 26  1  0
+ 27 28  1  0
+ 27 29  2  0
+  6 30  1  0
+ 30 31  2  0
+ 31 32  1  0
+ 32 33  1  0
+ 33 34  1  0
+ 34 35  1  0
+ 35 36  1  0
+ 36 37  1  0
+ 37 38  2  0
+ 37 39  1  0
+ 36 40  1  1
+ 40 41  1  0
+ 41 42  1  0
+ 41 43  2  0
+ 28 44  1  1
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+    auto csmiles = MolToSmiles(*mol);
+    std::cerr << csmiles << std::endl;
+    CHECK(
+        csmiles ==
+        "CC(=O)N[C@@H](CCCC/N=C/C1=C/"
+        "C[C@H]2[C@@]3(CC[C@]2(C)C[C@H]2[C@@H]1C(=O)C[C@@]2(C)O)O[C@@H](C=C(C)"
+        "C)C[C@@H]3C)C(=O)O");
+  }
+}

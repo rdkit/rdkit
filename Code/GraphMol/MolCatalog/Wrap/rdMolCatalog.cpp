@@ -122,7 +122,7 @@ struct MolCatalogEntry_wrapper {
         ;
   };
 };
-}
+}  // namespace
 
 BOOST_PYTHON_MODULE(rdMolCatalog) {
   MolCatalog_wrapper::wrap();

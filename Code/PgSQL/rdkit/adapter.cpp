@@ -30,6 +30,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+
+// PostgreSQL 14 on Windows uses a hack to redefine the stat struct
+// The hack assumes that sys/stat.h will be imported for the first
+// time by win32_port.h, which is not necessarily the case
+// So we need to set the stage for the hack or it will fail
+#ifdef _WIN32
+#define fstat microsoft_native_fstat
+#define stat microsoft_native_stat
+#include <sys/stat.h>
+#ifdef __MINGW32__
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
+#endif
+#endif
+#endif
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
@@ -74,6 +90,12 @@
 
 #ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
 #include <GraphMol/MolInterchange/MolInterchange.h>
+#endif
+
+// see above comment on the PostgreSQL hack
+#ifdef _WIN32
+#undef fstat
+#undef stat
 #endif
 
 #include "rdkit.h"
@@ -1069,8 +1091,8 @@ extern "C" double calcSparseDiceSml(CSfp a, CSfp b) {
   return res;
 }
 
-extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
-                                          const char *b, unsigned int szb) {
+extern "C" double calcSparseStringDiceSml(const char *a, unsigned int,
+                                          const char *b, unsigned int) {
   const auto *t1 = (const unsigned char *)a;
   const auto *t2 = (const unsigned char *)b;
 
@@ -1182,7 +1204,7 @@ extern "C" double calcSparseStringDiceSml(const char *a, unsigned int sza,
   return res;
 }
 
-extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int sza,
+extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int,
                                           int tgt) {
   const auto *t1 = (const unsigned char *)a;
 
@@ -1222,7 +1244,7 @@ extern "C" bool calcSparseStringAllValsGT(const char *a, unsigned int sza,
   }
   return true;
 }
-extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int sza,
+extern "C" bool calcSparseStringAllValsLT(const char *a, unsigned int,
                                           int tgt) {
   const auto *t1 = (const unsigned char *)a;
 
@@ -1975,7 +1997,6 @@ extern "C" CSfp makeReactionDifferenceSFP(CChemicalReaction data, int size,
     if (fpType > 3 || fpType < 1) {
       elog(ERROR, "makeReactionDifferenceSFP: Unknown Fingerprint type");
     }
-    auto fp = static_cast<RDKit::FingerprintType>(fpType);
     RDKit::ReactionFingerprintParams params;
     params.fpType = static_cast<FingerprintType>(fpType);
     params.fpSize = size;
@@ -1997,7 +2018,6 @@ extern "C" CBfp makeReactionBFP(CChemicalReaction data, int size, int fpType) {
     if (fpType > 5 || fpType < 1) {
       elog(ERROR, "makeReactionBFP: Unknown Fingerprint type");
     }
-    auto fp = static_cast<RDKit::FingerprintType>(fpType);
     RDKit::ReactionFingerprintParams params;
     params.fpType = static_cast<FingerprintType>(fpType);
     params.fpSize = size;
@@ -2082,20 +2102,18 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
 
   char *str = smiles;
   char *s = str;
-  int len, nmols = 0;
+  char *s_end = str + strlen(str);
+  int len = 0;
   std::vector<RDKit::ROMOL_SPTR> molecules;
   while (*s && *s <= ' ') {
     s++;
   }
-  while (*s > ' ') {
+  while (s < s_end && *s > ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;
     }
     s[len] = '\0';
-    if (0 == strlen(s)) {
-      continue;
-    }
     ROMol *molptr = nullptr;
     try {
       molptr = RDKit::SmilesToMol(s);

@@ -89,13 +89,13 @@ struct conformer_wrapper {
         .def("GetPositions", GetPos, "Get positions of all the atoms\n")
         .def("SetAtomPosition", SetAtomPos,
              "Set the position of the specified atom\n")
-        .def("SetAtomPosition", (void (Conformer::*)(unsigned int, const RDGeom::Point3D&)) &
-                               Conformer::setAtomPos,
+        .def("SetAtomPosition",
+             (void (Conformer::*)(unsigned int, const RDGeom::Point3D &)) &
+                 Conformer::setAtomPos,
              "Set the position of the specified atom\n")
 
         .def("Set3D", &Conformer::set3D, "Set the 3D flag of the conformer\n")
-        .def("Is3D", &Conformer::is3D,
-             "returns the 3D flag of the conformer\n")
+        .def("Is3D", &Conformer::is3D, "returns the 3D flag of the conformer\n")
 
         // properties
         .def("SetProp", MolSetProp<Conformer, std::string>,
@@ -230,6 +230,6 @@ struct conformer_wrapper {
              "  RETURNS: a dictionary\n");
   };
 };
-}
+}  // namespace RDKit
 
 void wrap_conformer() { RDKit::conformer_wrapper::wrap(); }

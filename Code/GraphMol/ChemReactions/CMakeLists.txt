@@ -53,7 +53,7 @@ ChemReactions )
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
 ChemReactions  )
 
-rdkit_catch_test(rxnTestCatch catch_tests.cpp LINK_LIBRARIES ChemReactions )
+rdkit_catch_test(rxnTestCatch ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES ChemReactions )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

@@ -113,7 +113,7 @@ size_t countMatches(const ROMol &bb, const ROMol &query, int maxMatches) {
                  useQueryQueryMatches, maxMatches + 1);
   return matches.size();
 }
-}
+}  // namespace
 BBS removeNonmatchingReagents(const ChemicalReaction &rxn, BBS bbs,
                               const EnumerationParams &params) {
   PRECONDITION(bbs.size() <= rxn.getNumReactantTemplates(),
@@ -276,4 +276,4 @@ bool EnumerateLibraryCanSerialize() {
   return false;
 #endif
 }
-}
+}  // namespace RDKit

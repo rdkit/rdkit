@@ -105,7 +105,6 @@ ROMol *constructMolFromString(const std::string &txt,
 ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text, std::map<std::string, std::string> *replacements,
     bool useSmiles) {
-
   std::vector<std::size_t> pos;
 
   for (std::size_t i = 0; i < text.length(); ++i) {
@@ -194,4 +193,4 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
 
   return rxn;
 }
-}
+}  // namespace RDKit

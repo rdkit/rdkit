@@ -757,9 +757,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
   const Atom *bestCipRankedAtom = nullptr;
   const auto &mol = atom->getOwningMol();
 
-  for (const auto &index :
-       boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
-    const auto neighbor = mol[index];
+  for (const auto neighbor : mol.atomNeighbors(atom)) {
     if (neighbor == skipAtom) {
       continue;
     }
@@ -1884,8 +1882,8 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
     if (cleanIt) {
       // enforce no stereo on small rings
       if (((*bondIt)->getBondType() == Bond::DOUBLE ||
-           (*bondIt)->getBondType() == Bond::AROMATIC) && 
-           !shouldDetectDoubleBondStereo(*bondIt)) {
+           (*bondIt)->getBondType() == Bond::AROMATIC) &&
+          !shouldDetectDoubleBondStereo(*bondIt)) {
         if ((*bondIt)->getBondDir() == Bond::EITHERDOUBLE) {
           (*bondIt)->setBondDir(Bond::NONE);
         }

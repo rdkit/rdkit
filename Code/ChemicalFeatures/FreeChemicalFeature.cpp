@@ -82,4 +82,4 @@ void FreeChemicalFeature::initFromString(const std::string &pickle) {
   streamRead(ss, d_position.y);
   streamRead(ss, d_position.z);
 };
-}
+}  // namespace ChemicalFeatures

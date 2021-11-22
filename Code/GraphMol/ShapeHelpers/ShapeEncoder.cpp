@@ -49,5 +49,5 @@ void EncodeShape(const Conformer &conf, RDGeom::UniformGrid3D &grid,
     grid.setSphereOccupancy(loc, vdwScale * rad, stepSize, maxLayers);
   }
 }
-}
-}
+}  // namespace MolShapes
+}  // namespace RDKit

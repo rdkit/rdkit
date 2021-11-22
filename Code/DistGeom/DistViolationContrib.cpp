@@ -94,4 +94,4 @@ void DistViolationContrib::getGrad(double *pos, double *grad) const {
     grad[dim * this->d_end2Idx + i] -= dGrad;
   }
 }
-}
+}  // namespace DistGeom

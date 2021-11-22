@@ -43,8 +43,8 @@ unsigned int checkMolStructureHelper(const StructChecker &checker, ROMol &m) {
   RWMol &fixer = static_cast<RWMol &>(m);
   return checker.checkMolStructure(fixer);
 }
-}
-}
+}  // namespace StructureCheck
+}  // namespace RDKit
 
 struct struct_wrapper {
   static void wrap() {

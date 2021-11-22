@@ -1,0 +1,1 @@
+DROP FUNCTION mol_from_smarts(cstring);

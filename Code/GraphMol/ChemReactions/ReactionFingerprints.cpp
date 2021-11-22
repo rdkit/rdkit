@@ -97,7 +97,7 @@ ExplicitBitVect *generateFingerprintAsBitVect(RDKit::ROMol &mol,
       break;
     case RDKit::TopologicalTorsion:
       res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(
-          mol);
+          mol, fpSize);
       break;
     case RDKit::MorganFP: {
       if (!mol.getRingInfo()->isInitialized()) {

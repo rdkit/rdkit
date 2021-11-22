@@ -1962,8 +1962,8 @@ void testDeuteriumTritium() {
       if (!ok) {
         continue;
       }
-        // there are no characters to look for, but each atom should
-        // be made of 2 glyphs, the superscript 2 and the H.
+      // there are no characters to look for, but each atom should
+      // be made of 2 glyphs, the superscript 2 and the H.
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       if ((line.find("atom-") != std::string::npos)) {
         if ((line.find("bond-") == std::string::npos)) {

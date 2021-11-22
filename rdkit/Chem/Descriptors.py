@@ -201,7 +201,10 @@ def _FingerprintDensity(mol, func, *args, **kwargs):
     val = fp.GetNumOnBits()
   else:
     val = len(fp.GetNonzeroElements())
-  return float(val) / mol.GetNumHeavyAtoms()
+  num_heavy_atoms = mol.GetNumHeavyAtoms()
+  if num_heavy_atoms == 0:
+    return 0
+  return float(val) / num_heavy_atoms
 
 
 def FpDensityMorgan1(x):

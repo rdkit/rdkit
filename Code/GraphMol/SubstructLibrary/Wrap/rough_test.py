@@ -73,86 +73,109 @@ class TestCase(unittest.TestCase):
     pass
 
   def test0SubstructLibrary(self):
-    for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
-      for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
-                     rdSubstructLibrary.CachedSmilesMolHolder()]:
-        if fpholderCls: fpholder = fpholderCls()
-        else: fpholder = None
-        slib_ = rdSubstructLibrary.SubstructLibrary(holder, fpholder)
-        for i in range(100):
-          m = Chem.MolFromSmiles("c1ccccc1")
-          self.assertEqual(slib_.AddMol(m), i)
+    for keyholderCls in [None, rdSubstructLibrary.KeyFromPropHolder]:
+      for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
+        for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
+                       rdSubstructLibrary.CachedSmilesMolHolder()]:
+          if fpholderCls: fpholder = fpholderCls()
+          else: fpholder = None
+          if keyholderCls: 
+            keyholder = keyholderCls()
+            self.assertEqual(keyholder.GetPropName(), "_Name")
+          else: keyholder = None
+          slib_ = rdSubstructLibrary.SubstructLibrary(holder, fpholder, keyholder)
+          for i in range(100):
+            m = Chem.MolFromSmiles("c1ccccc1")
+            m.SetProp("_Name", str(i))
+            self.assertEqual(slib_.AddMol(m), i)
 
-        libs = [slib_]
-        if rdSubstructLibrary.SubstructLibraryCanSerialize():
-          serialized1 = pickle.loads(pickle.dumps(slib_))
-          serialized2 = rdSubstructLibrary.SubstructLibrary(slib_.Serialize())
-          libs.append(serialized1)
-          libs.append(serialized2)
+          libs = [slib_]
+          if rdSubstructLibrary.SubstructLibraryCanSerialize():
+            serialized1 = pickle.loads(pickle.dumps(slib_))
+            serialized2 = rdSubstructLibrary.SubstructLibrary(slib_.Serialize())
+            libs.append(serialized1)
+            libs.append(serialized2)
 
-        for slib in libs:
-          res = slib.GetMatches(m)
-          t2 = time.time()
-          self.assertTrue(len(res) == 100)
+          for slib in libs:
+            res = slib.GetMatches(m)
 
-          res = slib.GetMatches(m)
+            if keyholderCls:
+              for idx in res:
+                self.assertEqual(str(idx), slib.GetKeyHolder().GetKey(idx))
+              self.assertEqual([str(idx) for idx in res], list(slib.GetKeyHolder().GetKeys(res)))
 
-          self.assertEqual(len(res), 100)
-          self.assertTrue(set(res) == set(list(range(100))))
+            t2 = time.time()
+            self.assertTrue(len(res) == 100)
 
-          res = slib.GetMatches(m, maxResults=100);
-          self.assertEqual(len(res), 100)
-          self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=100)), 100)
+            res = slib.GetMatches(m)
 
-          self.assertTrue(slib.HasMatch(m))
-          self.assertEqual(slib.CountMatches(m), 100)
+            self.assertEqual(len(res), 100)
+            self.assertTrue(set(res) == set(list(range(100))))
+
+            res = slib.GetMatches(m, maxResults=100);
+            self.assertEqual(len(res), 100)
+            self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=100)), 100)
+
+            self.assertTrue(slib.HasMatch(m))
+            self.assertEqual(slib.CountMatches(m), 100)
 
   def test1SubstructLibrary(self):
-    for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
-      for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
-                     rdSubstructLibrary.CachedSmilesMolHolder()]:
-        if fpholderCls: fpholder = fpholderCls()
-        else: fpholder = None
+    for keyholderCls in [None, rdSubstructLibrary.KeyFromPropHolder]:
+      for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
+        for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
+                       rdSubstructLibrary.CachedSmilesMolHolder()]:
+          if fpholderCls: fpholder = fpholderCls()
+          else: fpholder = None
+          if keyholderCls: 
+            keyholder = keyholderCls()
+            self.assertEqual(keyholder.GetPropName(), "_Name")
+          else: keyholder = None
 
-        slib_ = rdSubstructLibrary.SubstructLibrary(holder, fpholder)
-        mols = []
-        for i in range(100):
-          m = Chem.MolFromSmiles("c1ccccc1")
-          self.assertEqual(slib_.AddMol(m), i*2)
-          mols.append(m)
-          m2 = Chem.MolFromSmiles("CCCC")
-          self.assertEqual(slib_.AddMol(m2), i*2+1)
-          mols.append(m2)
+          slib_ = rdSubstructLibrary.SubstructLibrary(holder, fpholder, keyholder)
+          mols = []
+          for i in range(100):
+            m = Chem.MolFromSmiles("c1ccccc1")
+            m.SetProp("_Name", str(i*2))
+            self.assertEqual(slib_.AddMol(m), i*2)
+            mols.append(m)
+            m2 = Chem.MolFromSmiles("CCCC")
+            m2.SetProp("_Name", str(i*2+1))
+            self.assertEqual(slib_.AddMol(m2), i*2+1)
+            mols.append(m2)
 
-        libs = [slib_]
-        if rdSubstructLibrary.SubstructLibraryCanSerialize():
-          serialized1 = pickle.loads(pickle.dumps(slib_))
-          serialized2 = rdSubstructLibrary.SubstructLibrary(slib_.Serialize())
-          libs.append(serialized1)
-          libs.append(serialized2)
+          libs = [slib_]
+          if rdSubstructLibrary.SubstructLibraryCanSerialize():
+            serialized1 = pickle.loads(pickle.dumps(slib_))
+            serialized2 = rdSubstructLibrary.SubstructLibrary(slib_.Serialize())
+            libs.append(serialized1)
+            libs.append(serialized2)
 
-        for slib in libs:
-          res = slib.GetMatches(m)
-          self.assertEqual(len(res), 100)
-          self.assertEqual(set(res), set(list(range(0,200,2))))
+          for slib in libs:
+            res = slib.GetMatches(m)
+            self.assertEqual(len(res), 100)
+            self.assertEqual(set(res), set(list(range(0,200,2))))
+            if keyholderCls:
+              self.assertEqual([str(idx) for idx in res], [str(idx) for idx in range(0,200,2)])
 
-          res = slib.GetMatches(m2)
-          self.assertEqual(len(res), 100)
-          self.assertTrue(set(res) == set(list(range(1,200,2))))
+            res = slib.GetMatches(m2)
+            self.assertEqual(len(res), 100)
+            self.assertTrue(set(res) == set(list(range(1,200,2))))
+            if keyholderCls:
+              self.assertEqual([str(idx) for idx in res], [str(idx) for idx in range(1,200,2)])
 
-          res = slib.GetMatches(m)
-          self.assertEqual(len(res), 100)
+            res = slib.GetMatches(m)
+            self.assertEqual(len(res), 100)
 
-          res = slib.GetMatches(m, maxResults=100);
-          self.assertEqual(len(res), 100)
+            res = slib.GetMatches(m, maxResults=100);
+            self.assertEqual(len(res), 100)
 
-          self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=50*2)), 50)
-          self.assertEqual(len(slib.GetMatches(m2, startIdx=1, endIdx=50*2+1)), 50)
+            self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=50*2)), 50)
+            self.assertEqual(len(slib.GetMatches(m2, startIdx=1, endIdx=50*2+1)), 50)
 
-          self.assertTrue(slib.HasMatch(m))
-          self.assertTrue(slib.HasMatch(m2))
-          self.assertEqual(slib.CountMatches(m), 100)
-          self.assertEqual(slib.CountMatches(m2), 100)
+            self.assertTrue(slib.HasMatch(m))
+            self.assertTrue(slib.HasMatch(m2))
+            self.assertEqual(slib.CountMatches(m), 100)
+            self.assertEqual(slib.CountMatches(m2), 100)
 
   def testOptions(self):
     mols = makeStereoExamples() * 10
@@ -528,13 +551,21 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(sorted(ssl.GetMatches(bndl,params))), [0])
 
   def testSearchOrder(self):
-    ssl = rdSubstructLibrary.SubstructLibrary()
-    for smi in ("CCCOC", "CCCCOCC", "CCOC", "COC", "CCCCCOC"):
-      ssl.AddMol(Chem.MolFromSmiles(smi))
-    ssl.SetSearchOrder((3,2,0,1,4))
-    self.assertEqual(ssl.GetSearchOrder(),(3,2,0,1,4))
-    qm = Chem.MolFromSmiles('COC')
-    self.assertEqual(list(ssl.GetMatches(qm,maxResults=2)),[3,2])
+    for keyholder in [None, rdSubstructLibrary.KeyFromPropHolder()]:
+      ssl = rdSubstructLibrary.SubstructLibrary(rdSubstructLibrary.MolHolder(), keyholder)
+      for idx, smi in enumerate(("CCCOC", "CCCCOCC", "CCOC", "COC", "CCCCCOC")):
+        m = Chem.MolFromSmiles(smi)
+        m.SetProp("_Name", str(idx))
+        ssl.AddMol(m)
+
+      ssl.SetSearchOrder((3,2,0,1,4))
+      self.assertEqual(ssl.GetSearchOrder(),(3,2,0,1,4))
+      qm = Chem.MolFromSmiles('COC')
+      self.assertEqual(list(ssl.GetMatches(qm,maxResults=2)),[3,2])
+      self.assertEqual(list(ssl.GetMatches(qm,maxResults=2)),[3,2])
+      if keyholder:
+        self.assertEqual(keyholder.GetPropName(), "_Name")
+        self.assertEqual(list(ssl.GetKeyHolder().GetKeys(ssl.GetMatches(qm,maxResults=2))),['3','2'])
 
 
   def testSearchOrder2(self):
@@ -552,6 +583,28 @@ class TestCase(unittest.TestCase):
     qm = Chem.MolFromSmiles('COC')
     self.assertEqual(list(ssl.GetMatches(qm)),[3, 2, 0, 1, 4])
 
+  def testPropHolder(self):
+    for propname in [None, 'foo']:
+      if propname is None:
+        keyholder = rdSubstructLibrary.KeyFromPropHolder()
+      else:
+        keyholder = rdSubstructLibrary.KeyFromPropHolder(propname)
+
+      library = rdSubstructLibrary.SubstructLibrary(rdSubstructLibrary.MolHolder(), keyholder)
+      m = Chem.MolFromSmiles('CCC')
+      if propname is None:
+        self.assertEqual(keyholder.GetPropName(), "_Name")
+      else:
+        self.assertEqual(keyholder.GetPropName(), propname)
+
+      if propname:
+        m.SetProp(propname, 'Z11234')
+      else:
+        m.SetProp("_Name", 'Z11234')
+
+      library.AddMol(m)
+      indices = library.GetMatches(m)
+      self.assertEqual(['Z11234'], list(library.GetKeyHolder().GetKeys(indices)))
 
 
 if __name__ == '__main__':

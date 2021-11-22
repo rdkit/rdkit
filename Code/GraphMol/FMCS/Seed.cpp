@@ -35,7 +35,7 @@ unsigned Seed::addAtom(const Atom* atom) {
 unsigned Seed::addBond(const Bond* bond) {
   unsigned b = bond->getIdx();
   if (ExcludedBonds[b]) {
-    throw - 1;  // never, check the implementation
+    throw -1;  // never, check the implementation
   }
   ExcludedBonds[b] = true;
   MoleculeFragment.BondsIdx.push_back(b);
@@ -74,7 +74,7 @@ void Seed::fillNewBonds(const ROMol& qmol) {
           }
         }
         NewBonds.emplace_back(srcAtomIdx, bond->getIdx(), ai, end_atom_idx,
-                    NotSet == end_atom_idx ? end_atom : nullptr);
+                              NotSet == end_atom_idx ? end_atom : nullptr);
       }
     }
   }

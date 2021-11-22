@@ -44,7 +44,7 @@ RDKit::VECT_INT_VECT HierarchicalClusterPicker::cluster(
               ib,               // one more clustering history matrix
               crit  // I believe this is a vector the difference in heights of
                     // two clusters
-              );
+  );
 
   // we have the clusters now merge then until the number of clusters is same
   // as the number of picks we need
@@ -139,4 +139,4 @@ RDKit::INT_VECT HierarchicalClusterPicker::pick(const double *distMat,
   }
   return picks;
 }
-}
+}  // namespace RDPickers

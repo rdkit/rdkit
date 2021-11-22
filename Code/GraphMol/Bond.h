@@ -344,7 +344,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
 
 //! returns twice the \c bondType
 //! (e.g. SINGLE->2, AROMATIC->3, etc.)
-uint8_t getTwiceBondType(const RDKit::Bond &b);
+RDKIT_GRAPHMOL_EXPORT extern uint8_t getTwiceBondType(const RDKit::Bond &b);
 
 };  // namespace RDKit
 

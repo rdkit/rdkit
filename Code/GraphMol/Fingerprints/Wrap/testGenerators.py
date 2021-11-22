@@ -1,5 +1,6 @@
-from rdkit import Chem
+from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
+import numpy as np
 import unittest
 
 
@@ -43,7 +44,7 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
-    g = rdFingerprintGenerator.GetAtomPairGenerator(useCountSimulation=False)
+    g = rdFingerprintGenerator.GetAtomPairGenerator(countSimulation=False)
     fp = g.GetSparseFingerprint(m)
     nzc = fp.GetNumOnBits()
     self.assertEqual(nzc, 2)
@@ -262,6 +263,25 @@ class TestCase(unittest.TestCase):
     fp2 = rdFingerprintGenerator.GetAtomPairGenerator(fpSize=2048, countSimulation=True,
                                                       countBounds=(1, 8, 16, 32)).GetFingerprint(m)
     self.assertNotEqual(fp1.GetNumOnBits(), fp2.GetNumOnBits())
+
+  def testNumpyFingerprints(self):
+    m = Chem.MolFromSmiles('COc1ccc(CCNC(=O)c2ccccc2C(=O)NCCc2ccc(OC)cc2)cc1')
+    for fn in (rdFingerprintGenerator.GetRDKitFPGenerator,
+               rdFingerprintGenerator.GetMorganGenerator,
+               rdFingerprintGenerator.GetAtomPairGenerator,
+               rdFingerprintGenerator.GetTopologicalTorsionGenerator):
+      gen = fn(fpSize=2048)
+      bv = gen.GetFingerprint(m)
+      oarr = np.zeros((bv.GetNumBits(), ), 'u1')
+      DataStructs.ConvertToNumpyArray(bv, oarr)
+      arr = gen.GetFingerprintAsNumPy(m)
+      np.testing.assert_array_equal(oarr, arr)
+
+      fp = gen.GetCountFingerprint(m)
+      oarr = np.zeros((fp.GetLength(), ), 'u4')
+      DataStructs.ConvertToNumpyArray(fp, oarr)
+      arr = gen.GetCountFingerprintAsNumPy(m)
+      np.testing.assert_array_equal(oarr, arr)
 
 
 if __name__ == '__main__':

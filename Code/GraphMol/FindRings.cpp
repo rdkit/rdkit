@@ -1239,10 +1239,7 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
   atomColors[atom->getIdx()] = 1;
   traversalOrder.push_back(atom);
 
-  ROMol::ADJ_ITER nbrIter, endNbrs;
-  boost::tie(nbrIter, endNbrs) = mol.getAtomNeighbors(atom);
-  while (nbrIter != endNbrs) {
-    const Atom *nbr = mol[*nbrIter];
+  for (const auto nbr : mol.atomNeighbors(atom)) {
     unsigned int nbrIdx = nbr->getIdx();
     // std::cerr<<"   "<<atom->getIdx()<<"       consider: "<<nbrIdx<<"
     // "<<atomColors[nbrIdx]<<std::endl;
@@ -1270,7 +1267,6 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
         // std::cerr<<std::endl;
       }
     }
-    ++nbrIter;
   }
   atomColors[atom->getIdx()] = 2;
   traversalOrder.pop_back();

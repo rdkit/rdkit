@@ -226,6 +226,29 @@ inline std::string addChemicalReactionToPNGFile(const ChemicalReaction &rxn,
 }
 //@}
 
+inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmarts(const char *text,
+                                                               size_t len) {
+  std::string sma(text, len);
+  ChemicalReaction *ptr = nullptr;
+  try {
+    ptr = RxnSmartsToChemicalReaction(sma);
+  } catch (...) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<ChemicalReaction>(ptr);
+}
+inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmiles(const char *text,
+                                                               size_t len) {
+  std::string sma(text, len);
+  ChemicalReaction *ptr = nullptr;
+  try {
+    ptr = RxnSmartsToChemicalReaction(sma, nullptr, true);
+  } catch (...) {
+    ptr = nullptr;
+  }
+  return std::unique_ptr<ChemicalReaction>(ptr);
+}
+
 };  // namespace RDKit
 
 #endif

@@ -107,6 +107,6 @@ struct HierarchCP_wrap {
         .export_values();
   };
 };
-}
+}  // namespace RDPickers
 
 void wrap_HierarchCP() { RDPickers::HierarchCP_wrap::wrap(); }

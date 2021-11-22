@@ -112,7 +112,8 @@ class LocaleSwitcherImpl {
 #ifdef RDK_THREADSAFE_SSS
       ::setlocale(LC_ALL, old_locale.c_str());
 #else
-      std::setlocale(LC_ALL, old_locale.c_str());  // back to last (global?) locale
+      // back to last (global?) locale
+      std::setlocale(LC_ALL, old_locale.c_str());
 #endif  // RDK_THREADSAFE_SSS
       recurseLocale(ResetLocale);
     }
@@ -151,12 +152,12 @@ class LocaleSwitcherImpl {
 
 #endif  // _WIN32
 };
-}
+}  // namespace detail
 
 // allows an RAII-like approach to ensuring the locale is temporarily "C"
 // instead of whatever we started in.
 
 LocaleSwitcher::LocaleSwitcher() : impl(new detail::LocaleSwitcherImpl) {}
 LocaleSwitcher::~LocaleSwitcher() { delete impl; }
-}
-}
+}  // namespace Utils
+}  // namespace RDKit

@@ -22,7 +22,6 @@ using RDKit::CIPLabeler::assignCIPLabels;
 void assignCIPLabelsWrapHelper(RDKit::ROMol &mol,
                                const python::object &atomsToLabel,
                                const python::object &bondsToLabel) {
-
   auto atoms = pythonObjectToDynBitset(atomsToLabel, mol.getNumAtoms());
   auto bonds = pythonObjectToDynBitset(bondsToLabel, mol.getNumBonds());
 
@@ -49,9 +48,9 @@ BOOST_PYTHON_MODULE(rdCIPLabeler) {
   std::string docString =
       "New implementation of Stereo assignment using a true CIP ranking";
 
-  python::def("AssignCIPLabels", assignCIPLabelsWrapHelper,
-              (python::arg("mol"),
-               python::arg("atomsToLabel") = python::object(),
-               python::arg("bondsToLabel") = python::object()),
-              docString.c_str());
+  python::def(
+      "AssignCIPLabels", assignCIPLabelsWrapHelper,
+      (python::arg("mol"), python::arg("atomsToLabel") = python::object(),
+       python::arg("bondsToLabel") = python::object()),
+      docString.c_str());
 }

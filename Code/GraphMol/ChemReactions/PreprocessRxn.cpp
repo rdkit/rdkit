@@ -83,4 +83,4 @@ bool preprocessReaction(
 
   return false;
 }
-}
+}  // namespace RDKit

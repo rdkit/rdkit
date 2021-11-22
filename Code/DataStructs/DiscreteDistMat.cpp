@@ -87,4 +87,4 @@ unsigned int DiscreteDistMat::getDist(
 
 static DiscreteDistMat discreteDMat;
 DiscreteDistMat *getDiscreteDistMat() { return &discreteDMat; }
-}
+}  // namespace RDKit

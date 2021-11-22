@@ -83,8 +83,8 @@ void FragCatalogEntry::setDescription(const FragCatParams *params) {
     fGroup = params->getFuncGroup(*fGroupIdx);
     fGroup->getProp(common_properties::_Name, temp);
     label += "<" + temp + ">";
-    dp_mol->getAtomWithIdx(atIdx)
-        ->setProp(common_properties::_supplementalSmilesLabel, label);
+    dp_mol->getAtomWithIdx(atIdx)->setProp(
+        common_properties::_supplementalSmilesLabel, label);
   }
   std::string smi = MolToSmiles(*dp_mol);
   // std::cerr << "----" << smi << "----" << std::endl;
@@ -269,4 +269,4 @@ void FragCatalogEntry::initFromString(const std::string &text) {
   // now start reading out values:
   initFromStream(ss);
 }
-}
+}  // namespace RDKit

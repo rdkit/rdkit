@@ -205,7 +205,8 @@ void test3() {
 void test4() {
 #ifdef SUPPORT_COMPRESSED_IO
   BOOST_LOG(rdInfoLog) << "testing writing pickles to a single compressed file "
-                          "then reading them back" << std::endl;
+                          "then reading them back"
+                       << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/mols.rdz";
 
@@ -307,7 +308,8 @@ void test4() {
 void test5() {
 #ifdef SUPPORT_COMPRESSED_IO
   BOOST_LOG(rdInfoLog) << "testing writing compressed pickles to a single file "
-                          "then reading them back" << std::endl;
+                          "then reading them back"
+                       << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fname2 = rdbase + "/Code/Demos/RDKit/BinaryIO/test_data/tmp.rdz";
 

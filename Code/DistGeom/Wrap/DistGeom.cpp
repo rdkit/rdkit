@@ -171,7 +171,7 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
 
   return PyArray_Return(res);
 }
-}
+}  // namespace RDKit
 
 BOOST_PYTHON_MODULE(DistGeom) {
   python::scope().attr("__doc__") =

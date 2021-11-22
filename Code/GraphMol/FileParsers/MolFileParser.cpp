@@ -2731,7 +2731,7 @@ void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
         << "multiple FIELDDATA values for SMARTSQ. Taking the first."
         << std::endl;
   }
-  const std::string& sma = dataFields[0];
+  const std::string &sma = dataFields[0];
   if (sma.empty()) {
     BOOST_LOG(rdWarningLog)
         << "Skipping empty SMARTS value for SMARTSQ." << std::endl;
@@ -2975,6 +2975,23 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   }
 
   tempStr = getV3000Line(inStream, line);
+  // do link nodes:
+  boost::to_upper(tempStr);
+  while (tempStr.length() > 8 && tempStr.substr(0, 8) == "LINKNODE") {
+    boost::to_upper(tempStr);
+    // if the line has nothing on it we just ignore it
+    if (tempStr.size() > 9) {
+      std::string existing = "";
+      if (mol->getPropIfPresent(common_properties::molFileLinkNodes,
+                                existing)) {
+        existing += "|";
+      }
+      existing += tempStr.substr(9);  // skip the "LINKNODE "
+      mol->setProp(common_properties::molFileLinkNodes, existing);
+    }
+    tempStr = getV3000Line(inStream, line);
+  }
+
   if (nSgroups) {
     boost::to_upper(tempStr);
     if (tempStr.length() < 12 || tempStr.substr(0, 12) != "BEGIN SGROUP") {
@@ -3000,6 +3017,20 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
       } else {
         tempStr = getV3000Line(inStream, line);
       }
+    }
+  }
+
+  while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
+    if (tempStr.length() > 15 && tempStr.substr(6, 10) == "COLLECTION") {
+      tempStr = parseEnhancedStereo(inStream, line, mol);
+    } else {
+      // skip blocks we don't know how to read
+      BOOST_LOG(rdWarningLog) << "skipping block at line " << line << ": '"
+                              << tempStr << "'" << std::endl;
+      while (tempStr.length() < 3 || tempStr.substr(0, 3) != "END") {
+        tempStr = getV3000Line(inStream, line);
+      }
+      tempStr = getV3000Line(inStream, line);
     }
   }
 
@@ -3031,37 +3062,6 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
         BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
       }
     } else {
-      tempStr = getV3000Line(inStream, line);
-    }
-  }
-
-  // do link nodes:
-  boost::to_upper(tempStr);
-  while (tempStr.length() > 8 && tempStr.substr(0, 8) == "LINKNODE") {
-    boost::to_upper(tempStr);
-    // if the line has nothing on it we just ignore it
-    if (tempStr.size() > 9) {
-      std::string existing = "";
-      if (mol->getPropIfPresent(common_properties::molFileLinkNodes,
-                                existing)) {
-        existing += "|";
-      }
-      existing += tempStr.substr(9);  // skip the "LINKNODE "
-      mol->setProp(common_properties::molFileLinkNodes, existing);
-    }
-    tempStr = getV3000Line(inStream, line);
-  }
-
-  while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
-    if (tempStr.length() > 15 && tempStr.substr(6, 10) == "COLLECTION") {
-      tempStr = parseEnhancedStereo(inStream, line, mol);
-    } else {
-      // skip blocks we don't know how to read
-      BOOST_LOG(rdWarningLog) << "skipping block at line " << line << ": '"
-                              << tempStr << "'" << std::endl;
-      while (tempStr.length() < 3 || tempStr.substr(0, 3) != "END") {
-        tempStr = getV3000Line(inStream, line);
-      }
       tempStr = getV3000Line(inStream, line);
     }
   }

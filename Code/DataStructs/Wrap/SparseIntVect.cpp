@@ -62,7 +62,7 @@ python::list pyToList(SparseIntVect<IndexType> &vect) {
   python::list res;
   res.append(0);
   res *= vect.getLength();
-  for(auto iter: vect.getNonzeroElements()) {
+  for (auto iter : vect.getNonzeroElements()) {
     res[iter.first] = iter.second;
   }
   return res;
@@ -179,7 +179,7 @@ struct sparseIntVec_wrapper {
         .def("GetNonzeroElements", &pyGetNonzeroElements<IndexType>,
              "returns a dictionary of the nonzero elements")
         .def("ToList", pyToList<IndexType>,
-	   "Return the SparseIntVect as a python list")
+             "Return the SparseIntVect as a python list")
         .def_pickle(siv_pickle_suite<IndexType>());
 
     python::def(

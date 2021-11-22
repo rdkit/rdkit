@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -393,7 +392,7 @@ std::string getAtomLabel(const Atom *atom) {
 std::pair<AtomicParamVect, bool> getAtomTypes(const ROMol &mol,
                                               const std::string &) {
   bool foundAll = true;
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
 
   AtomicParamVect paramVect;
   paramVect.resize(mol.getNumAtoms());
@@ -420,7 +419,7 @@ std::pair<AtomicParamVect, bool> getAtomTypes(const ROMol &mol,
 
 bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
                              unsigned int idx2, UFFBond &uffBondStretchParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[2] = {idx1, idx2};
   AtomicParamVect paramVect(2);
   unsigned int i;
@@ -445,7 +444,7 @@ bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
 bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
                            unsigned int idx2, unsigned int idx3,
                            UFFAngle &uffAngleBendParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[3] = {idx1, idx2, idx3};
   AtomicParamVect paramVect(3);
   unsigned int i;
@@ -477,7 +476,7 @@ bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
 bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
                          unsigned int idx3, unsigned int idx4,
                          UFFTor &uffTorsionParams) {
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[4] = {idx1, idx2, idx3, idx4};
   AtomicParamVect paramVect(2);
   unsigned int i;
@@ -599,7 +598,7 @@ bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
 bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
                      UFFVdW &uffVdWParams) {
   bool res = true;
-  ParamCollection *params = ParamCollection::getParams();
+  auto params = ParamCollection::getParams();
   unsigned int idx[2] = {idx1, idx2};
   AtomicParamVect paramVect(2);
   unsigned int i;

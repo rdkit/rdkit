@@ -157,10 +157,16 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4508_2.svg", 2202600652U},
     {"testGithub4508_2b.svg", 145414660U},
     {"testGithub4538.svg", 2784641879U},
+    {"testDarkMode.1.svg", 2696431144U},
+    {"testMonochrome.1.svg", 491478930U},
+    {"testMonochrome.2.svg", 1722291679U},
+    {"testAvalon.1.svg", 332535300U},
+    {"testCDK.1.svg", 3928121594U},
     {"testGithub4519_1.svg", 1325760949U},
     {"testGithub4519_2.svg", 4128451715U},
     {"testGithub4519_3.svg", 3143183171U},
-    {"testGithub4519_4.svg", 3225199271U},};
+    {"testGithub4519_4.svg", 3225199271U},
+};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -173,8 +179,8 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub3226_1.png", 459584719U},
     {"testGithub3226_2.png", 1885164782U},
     {"testGithub3226_3.png", 175334341U},
-    {"testPNGMetadata_1.png", 1040156718U},
-    {"testPNGMetadata_2.png", 452499970U},
+    {"testPNGMetadata_1.png", 2531227778U},
+    {"testPNGMetadata_2.png", 3365275633U},
     {"testHandDrawn-1.png", 1656781517U},
     {"testHandDrawn-2.png", 1191090506U},
     {"testHandDrawn-3.png", 2579778653U},
@@ -3440,6 +3446,123 @@ TEST_CASE("Github #4538 drawMolecules crash") {
     check_file_hash("testGithub4538.svg");
   }
 }
+
+TEST_CASE("dark mode mol drawing") {
+  SECTION("Basics") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setDarkMode(drawer);
+    drawer.drawMolecule(*m, "dark mode!");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testDarkMode.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testDarkMode.1.svg");
+  }
+}
+TEST_CASE("monochrome mol drawing") {
+  SECTION("Basics") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setMonochromeMode(drawer, DrawColour{0.1, 0.1, 0.6},
+                      DrawColour{0.75, 0.75, 0.75});
+    drawer.drawMolecule(*m, "monochrome");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMonochrome.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testMonochrome.1.svg");
+  }
+  SECTION("Basics inverted") {
+    auto m =
+        "CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+] |SgD:7:note:some extra text:=:::|"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(350, 300);
+    setMonochromeMode(drawer, DrawColour{0.75, 0.75, 0.75},
+                      DrawColour{0.1, 0.1, 0.6});
+    drawer.drawMolecule(*m, "monochrome");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMonochrome.2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testMonochrome.2.svg");
+  }
+}
+TEST_CASE("other palettes") {
+  auto m =
+      "CS(=O)(=O)COC(=N)c1c(I)c(Cl)c(Br)nc1[NH2+]CP(=O) |SgD:7:note:some extra text:=:::|"_smiles;
+  REQUIRE(m);
+  SECTION("Avalon") {
+    MolDraw2DSVG drawer(350, 300);
+    assignAvalonPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawMolecule(*m, "Avalon");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAvalon.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testAvalon.1.svg");
+  }
+  SECTION("CDK") {
+    MolDraw2DSVG drawer(350, 300);
+    assignCDKPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawMolecule(*m, "CDK");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testCDK.1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testCDK.1.svg");
+  }
+}
+
+TEST_CASE("SDD record parsing") {
+  auto mol = R"CTAB(
+  Mrv2008 11122110292D
+
+  6  6  0  0  0  0            999 V2000
+    9.3527    2.5661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6382    2.1536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.6382    1.3286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3527    0.9161    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0671    1.3286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0671    2.1536    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  2  0  0  0  0
+M  STY  1   1 DAT
+M  SLB  1   1   1
+M  SAL   1  1   1
+M  SDT   1 NAME
+M  SDD   1 -2345.1234-2345.1234    DR    ALL  1       0
+M  SED   1 Hello World
+M  END
+)CTAB"_ctab;
+  // SDD record has format
+  // M  SDD sss xxxxx.xxxxyyyyy.yyyy eeefgh i jjjkkk ll m noo
+  MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+  drawer.drawMolecule(*mol);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::string name("Hello World");
+  for (auto &c : name) {
+    std::stringstream ss;
+    ss << " >" << c << "</text>";
+    auto pos = text.find(ss.str());
+    CHECK(pos != std::string::npos);
+  }
+}
+
 
 TEST_CASE("Github #4519 bad placement of datafield labels") {
   auto mol1 = R"CTAB(
