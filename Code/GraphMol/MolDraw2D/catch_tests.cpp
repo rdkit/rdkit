@@ -3565,9 +3565,9 @@ M  END)CTAB"_ctab;
 
   {
     std::vector<ROMol *> mols;
+    mols.push_back(mol1.get());
     mols.push_back(mol2.get());
     mols.push_back(mol3.get());
-    mols.push_back(mol1.get());
     MolDraw2DSVG drawer(900, 250, 300, 250);
     drawer.drawMolecules(mols, &legends);
     drawer.finishDrawing();
