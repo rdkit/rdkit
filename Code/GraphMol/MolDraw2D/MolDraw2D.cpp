@@ -1561,6 +1561,33 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii, int confId, int width,
     int height) {
+
+  // some of the code in here, such as extractSGroupData requires
+  // that everything be working in original coords.  drawMolecules()
+  // passes through setupDrawMolecule twice, once to set the global
+  // scale, then to actually do the drawing.  It's essential that
+  // all the drawing scaling is set to initial values for this.
+  double curr_scale = scale_;
+  scale_ = 1;
+  double curr_font_scale = text_drawer_->fontScale();
+  double minfs = text_drawer_->minFontSize();
+  text_drawer_->setMinFontSize(-1.0);
+  double maxfs = text_drawer_->maxFontSize();
+  text_drawer_->setMaxFontSize(-1.0);
+  text_drawer_->setFontScale(1.0);
+  text_drawer_->setMinFontSize(minfs);
+  text_drawer_->setMaxFontSize(maxfs);
+  double curr_x_trans = x_trans_;
+  double curr_y_trans = y_trans_;
+  int curr_x_offset = x_offset_;
+  int curr_y_offset = y_offset_;
+  double curr_x_min = x_min_;
+  double curr_y_min = y_min_;
+
+  x_trans_ = y_trans_ = 0.0;
+  x_offset_ = y_offset_ = 0;
+  x_min_ = y_min_ = 0.0;
+
   unique_ptr<RWMol> rwmol{new RWMol(mol)};
   if (drawOptions().prepareMolsBeforeDrawing || !mol.getNumConformers()) {
     MolDraw2DUtils::prepareMolForDrawing(*rwmol);
@@ -1642,6 +1669,20 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractMolNotes(*rwmol);
   extractLinkNodes(*rwmol);
 
+  // set everything to as it was before.
+  scale_ = curr_scale;
+  text_drawer_->setMinFontSize(-1.0);
+  text_drawer_->setMaxFontSize(-1.0);
+  text_drawer_->setFontScale(curr_font_scale);
+  text_drawer_->setMinFontSize(minfs);
+  text_drawer_->setMaxFontSize(maxfs);
+  x_trans_ = curr_x_trans;
+  y_trans_ = curr_y_trans;
+  x_offset_ = curr_x_offset;
+  y_offset_ = curr_y_offset;
+  x_min_ = curr_x_min;
+  y_min_ = curr_y_min;
+
   if (!activeMolIdx_ && needs_scale_) {
     calculateScale(width, height, *rwmol, highlight_atoms, highlight_radii,
                    confId);
@@ -1680,6 +1721,7 @@ void MolDraw2D::popDrawDetails() {
 unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii, int confId) {
+
   unique_ptr<RWMol> rwmol =
       setupDrawMolecule(mol, highlight_atoms, highlight_radii, confId,
                         panelWidth(), drawHeight());
@@ -2132,6 +2174,9 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
       tr.trans_ = getAtomCoords(make_pair(annot.rect_.trans_.x, annot.rect_.trans_.y));
       tr.width_ *= scale();
       tr.height_ *= scale();
+      // NB: we only ever use tr.trans_ for the position of the string,
+      // and tr.clash_score_ to return the type of clash.  It would be clearer
+      // to pass in a const Point2D instead, and return the clash score.
       if (!doesAtomNoteClash(tr, rects, mol, atom->getIdx())) {
         return;
       } else {
@@ -2663,6 +2708,7 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
   PRECONDITION(activeMolIdx_ >= 0, "no mol id");
   PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
                "no space");
+
   if (!supportsAnnotations()) {
     return;
   }
@@ -4343,7 +4389,15 @@ void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
 // ****************************************************************************
 void MolDraw2D::tabulaRasa() {
   scale_ = 1.0;
+
+  // ignore the min and max font sizes when setting font size to 1.0
+  double minfs = text_drawer_->minFontSize();
+  text_drawer_->setMinFontSize(-1.0);
+  double maxfs = text_drawer_->maxFontSize();
+  text_drawer_->setMaxFontSize(-1.0);
   text_drawer_->setFontScale(1.0);
+  text_drawer_->setMinFontSize(minfs);
+  text_drawer_->setMaxFontSize(maxfs);
   x_trans_ = y_trans_ = 0.0;
   x_offset_ = y_offset_ = 0;
   d_metadata.clear();

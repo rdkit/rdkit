@@ -67,11 +67,11 @@ double DrawText::fontScale() const { return font_scale_; }
 void DrawText::setFontScale(double new_scale) {
   font_scale_ = new_scale;
   double nfs = fontSize();
-  if (max_font_size_ != -1 &&
+  if (max_font_size_ > 0 &&
       nfs * (baseFontSize() / FONT_SIZE) > max_font_size_) {
     font_scale_ = max_font_size_ / baseFontSize();
   }
-  if (min_font_size_ != -1 &&
+  if (min_font_size_ > 0 &&
       nfs * (baseFontSize() / FONT_SIZE) < min_font_size_) {
     font_scale_ = min_font_size_ / baseFontSize();
   }

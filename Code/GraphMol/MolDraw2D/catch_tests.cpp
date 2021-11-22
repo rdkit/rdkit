@@ -159,7 +159,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4538.svg", 2784641879U},
     {"testGithub4519_1.svg", 1325760949U},
     {"testGithub4519_2.svg", 4128451715U},
-    {"testGithub4519_3.svg", 3143183171U},};
+    {"testGithub4519_3.svg", 3143183171U},
+    {"testGithub4519_4.svg", 3225199271U},};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -3530,8 +3531,7 @@ M  END)CTAB"_ctab;
 
   std::vector<std::string> legends = {"datafield label bad placement1",
                                       "datafield label bad placement2",
-                                      "datafield label bad placement3"};
-//  std::vector<std::string> legends = {"datafield label bad placement2"};
+                                      "datafield label bad placement3"};//  std::vector<std::string> legends = {"datafield label bad placement2"};
   {
     MolDraw2DSVG drawer(300, 250);
     drawer.drawMolecule(*mol1, legends[0]);
