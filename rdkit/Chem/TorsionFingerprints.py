@@ -132,10 +132,15 @@ def _getIndexforTorsion(neighbors, inv):
     # sort by atom inv and simply use the first neighbor
     neighbors = sorted(neighbors, key=lambda x: inv[x.GetIdx()])
     return [neighbors[0]]
-  at = _doMatchExcept1(inv, neighbors)  # two neighbors the same, one different
-  if at is None:
-    raise ValueError("Atom neighbors are either all the same or all different")
-  return [at]
+  elif len(neighbors) == 3:
+    at = _doMatchExcept1(inv, neighbors)  # two neighbors the same, one different
+    if at is None:
+      raise ValueError("Atom neighbors are either all the same or all different")
+    return [at]
+  else:  # weird case
+    # sort by atom inv and simply use the first neighbor
+    neighbors = sorted(neighbors, key=lambda x: inv[x.GetIdx()])
+    return [neighbors[0]]
 
 
 def _getBondsForTorsions(mol, ignoreColinearBonds):
@@ -428,8 +433,8 @@ def CalculateTorsionWeights(mol, aid1=-1, aid2=-1, ignoreColinearBonds=True):
   # get shortest paths and calculate weights
   weights = []
   for bid1, bid2, nb1, nb2 in bonds:
-    if ((bid1, bid2) == (aid1, aid2) or
-        (bid2, bid1) == (aid1, aid2)):  # if it's the most central bond itself
+    if ((bid1, bid2) == (aid1, aid2)
+        or (bid2, bid1) == (aid1, aid2)):  # if it's the most central bond itself
       d = 0
     else:
       # get shortest distance between the 4 atoms and add 1 to get bond distance
@@ -641,8 +646,9 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColin
   tl, tlr = CalculateTorsionLists(mol, maxDev=maxDev, symmRadius=symmRadius,
                                   ignoreColinearBonds=ignoreColinearBonds)
   numconf = mol.GetNumConformers()
-  torsions = [CalculateTorsionAngles(mol, tl, tlr, confId=conf.GetId())
-              for conf in mol.GetConformers()]
+  torsions = [
+    CalculateTorsionAngles(mol, tl, tlr, confId=conf.GetId()) for conf in mol.GetConformers()
+  ]
   tfdmat = []
   if useWeights:
     weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)
