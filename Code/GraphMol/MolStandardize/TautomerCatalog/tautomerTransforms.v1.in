@@ -1,0 +1,145 @@
+//
+//  Copyright (C) 2021 Greg Landrum
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
+// ------------------------
+// Distributed with v2021.09 and previous versions
+namespace defaults {
+// Derived from the transforms in Sitzmann et al.
+// https://doi.org/10.1007/s10822-010-9346-4
+//	Name	SMARTS	Bonds	Charges
+const std::vector<
+    std::tuple<std::string, std::string, std::string, std::string>>
+    defaultTautomerTransformsv1{
+        std::make_tuple(std::string("1,3 (thio)keto/enol f"),
+                        std::string("[CX4!H0]-[C]=[O,S,Se,Te;X1]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(std::string("1,3 (thio)keto/enol r"),
+                        std::string("[O,S,Se,Te;X2!H0]-[C]=[C]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(
+            std::string("1,5 (thio)keto/enol f"),
+            std::string("[CX4,NX3;!H0]-[C]=[C][CH0]=[O,S,Se,Te;X1]"),
+            std::string(""), std::string("")),
+        std::make_tuple(std::string("1,5 (thio)keto/enol r"),
+                        std::string("[O,S,Se,Te;X2!H0]-[CH0]=[C]-[C]=[C,N]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(std::string("aliphatic imine f"),
+                        std::string("[CX4!H0]-[C]=[NX2]"), std::string(""),
+                        std::string("")),
+        std::make_tuple(std::string("aliphatic imine r"),
+                        std::string("[NX3!H0]-[C]=[CX3]"), std::string(""),
+                        std::string("")),
+        std::make_tuple(std::string("special imine f"),
+                        std::string("[N!H0]-[C]=[CX3R0]"), std::string(""),
+                        std::string("")),
+        std::make_tuple(std::string("special imine r"),
+                        std::string("[CX4!H0]-[c]=[n]"), std::string(""),
+                        std::string("")),
+        std::make_tuple(std::string("1,3 aromatic heteroatom H shift f"),
+                        std::string("[#7+0!H0]-[#6R1]=[O,#7X2+0]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(std::string("1,3 aromatic heteroatom H shift "),
+                        std::string("[O,#7+0;!H0]-[#6R1]=[#7+0X2]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(
+            std::string("1,3 heteroatom H shift"),
+            std::string(
+                "[#7+0,S,O,Se,Te;!H0]-[#7X2,#6,#15]=[#7+0,#16,#8,Se,Te]"),
+            std::string(""), std::string("")),
+        std::make_tuple(
+            std::string("1,5 aromatic heteroatom H shift"),
+            std::string(
+                "[#7+0,#16,#8;!H0]-[#6,#7]=[#6]-[#6,#7]=[#7+0,#16,#8;H0]"),
+            std::string(""), std::string("")),
+        std::make_tuple(std::string("1,5 aromatic heteroatom H shift "),
+                        std::string("[#7+0,#16,#8,Se,Te;!H0]-[#6,nX2]=[#6,nX2]-"
+                                    "[#6,#7X2]=[#7X2+0,S,O,Se,Te]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(std::string("1,5 aromatic heteroatom H shift r"),
+                        std::string("[#7+0,S,O,Se,Te;!H0]-[#6,#7X2]=[#6,nX2]-[#"
+                                    "6,nX2]=[#7+0,#16,#8,Se,Te]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(
+            std::string("1,7 aromatic heteroatom H shift f"),
+            std::string("[#7+0,#8,#16,Se,Te;!H0]-[#6,#7X2]=[#6,#"
+                        "7X2]-[#6,#7X2]=[#6]-[#6,#7X2]=[#7X2+0,S,O,Se,Te,CX3]"),
+            std::string(""), std::string("")),
+        std::make_tuple(
+            std::string("1,7 aromatic heteroatom H shift r"),
+            std::string("[#7+0,S,O,Se,Te,CX4;!H0]-[#6,#7X2]=[#6]-[#"
+                        "6,#7X2]=[#6,#7X2]-[#6,#7X2]=[NX2,S,O,Se,Te]"),
+            std::string(""), std::string("")),
+        std::make_tuple(
+            std::string("1,9 aromatic heteroatom H shift f"),
+            std::string("[#7+0,O;!H0]-[#6,#7X2]=[#6,#7X2]-[#6,#7X2]"
+                        "=[#6,#7X2]-[#6,#7X2]=[#6,#7X2]-[#6,#7X2]=[#7+0,O]"),
+            std::string(""), std::string("")),
+        std::make_tuple(std::string("1,11 aromatic heteroatom H shift f"),
+                        std::string("[#7+0,O;!H0]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#"
+                                    "6,nX2]-[#6,nX2]=[#6,nX2]-[#6,nX2]=[#6,nX2]"
+                                    "-[#6,nX2]=[#7X2+0,O]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(
+            std::string("furanone f"),
+            std::string("[O,S,N;!H0]-[#6r5]=[#6X3r5;$([#6]([#6r5])=[#6r5])]"),
+            std::string(""), std::string("")),
+        std::make_tuple(
+            std::string("furanone r"),
+            std::string("[#6r5!H0;$([#6]([#6r5])[#6r5])]-[#6r5]=[O,S,N]"),
+            std::string(""), std::string("")),
+        std::make_tuple(std::string("keten/ynol f"),
+                        std::string("[C!H0]=[C]=[O,S,Se,Te;X1]"),
+                        std::string("#-"), std::string("")),
+        std::make_tuple(std::string("keten/ynol r"),
+                        std::string("[O,S,Se,Te;!H0X2]-[C]#[C]"),
+                        std::string("=="), std::string("")),
+        std::make_tuple(std::string("ionic nitro/aci-nitro f"),
+                        std::string("[C!H0]-[N+;$([N][O-])]=[O]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(std::string("ionic nitro/aci-nitro r"),
+                        std::string("[O!H0]-[N+;$([N][O-])]=[C]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(std::string("oxim/nitroso f"),
+                        std::string("[O!H0]-[N]=[C]"), std::string(""),
+                        std::string("")),
+        std::make_tuple(std::string("oxim/nitroso r"),
+                        std::string("[C!H0]-[N]=[O]"), std::string(""),
+                        std::string("")),
+        std::make_tuple(std::string("oxim/nitroso via phenol f"),
+                        std::string("[O!H0]-[N]=[C]-[C]=[C]-[C]=[OH0]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(std::string("oxim/nitroso via phenol r"),
+                        std::string("[O!H0]-[c]=[c]-[c]=[c]-[N]=[OH0]"),
+                        std::string(""), std::string("")),
+        std::make_tuple(std::string("cyano/iso-cyanic acid f"),
+                        std::string("[O!H0]-[C]#[N]"), std::string("=="),
+                        std::string("")),
+        std::make_tuple(std::string("cyano/iso-cyanic acid r"),
+                        std::string("[N!H0]=[C]=[O]"), std::string("#-"),
+                        std::string("")),
+        std::make_tuple(std::string("formamidinesulfinic acid f"),
+                        std::string("[O,N;!H0]-[C]=[S,Se,Te;v6]=[O]"),
+                        std::string("=--"), std::string("")),
+        std::make_tuple(std::string("formamidinesulfinic acid r"),
+                        std::string("[O!H0]-[S,Se,Te;v4]-[C]=[O,N]"),
+                        std::string("==-"), std::string("")),
+        std::make_tuple(std::string("isocyanide f"),
+                        std::string("[C-0!H0]#[N+0]"), std::string("#"),
+                        std::string("-+")),
+        std::make_tuple(std::string("isocyanide r"),
+                        std::string("[N+!H0]#[C-]"), std::string("#"),
+                        std::string("-+")),
+        std::make_tuple(std::string("phosphonic acid f"),
+                        std::string("[OH]-[PH0]"), std::string("="),
+                        std::string("")),
+        std::make_tuple(std::string("phosphonic acid r"),
+                        std::string("[PH]=[O]"), std::string("-"),
+                        std::string(""))};
+}  // namespace defaults

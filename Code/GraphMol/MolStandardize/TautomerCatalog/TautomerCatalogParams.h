@@ -24,6 +24,13 @@ class ROMol;
 namespace MolStandardize {
 class TautomerTransform;
 
+using TautomerTransformDefs =
+    std::vector<std::tuple<std::string, std::string, std::string, std::string>>;
+
+namespace defaults {
+extern const TautomerTransformDefs defaultTautomerTransforms;
+extern const TautomerTransformDefs defaultTautomerTransformsv1;
+}  // namespace defaults
 class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogParams
     : public RDCatalog::CatalogParams {
  public:
@@ -33,9 +40,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogParams
   }
 
   TautomerCatalogParams(const std::string &tautomerFile);
-  TautomerCatalogParams(
-      const std::vector<std::tuple<std::string, std::string, std::string,
-                                   std::string>> &data);
+  TautomerCatalogParams(const TautomerTransformDefs &data);
   // copy constructor
   TautomerCatalogParams(const TautomerCatalogParams &other);
 

@@ -384,6 +384,13 @@ void testEnumeratorParams() {
                 TautomerEnumeratorStatus::MaxTransformsReached);
     TEST_ASSERT(res68.size() == 252);
   }
+  {  // test v1 of the tautomerization parameters
+    std::unique_ptr<TautomerEnumerator> te(getV1TautomerEnumerator());
+    TautomerEnumeratorResult res68 = te->enumerate(*m68);
+    TEST_ASSERT(res68.status() ==
+                TautomerEnumeratorStatus::MaxTransformsReached);
+    TEST_ASSERT(res68.size() == 292);
+  }
   {
     CleanupParameters params;
     params.maxTautomers = 50;

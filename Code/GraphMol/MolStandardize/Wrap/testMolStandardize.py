@@ -369,6 +369,12 @@ chlorine	[Cl]
     self.assertEqual(len(res68.tautomers), len(res68))
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
 
+    enumerator = rdMolStandardize.GetV1TautomerEnumerator()
+    res68 = enumerator.Enumerate(m68)
+    self.assertEqual(len(res68), 292)
+    self.assertEqual(len(res68.tautomers), len(res68))
+    self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
+
     params = rdMolStandardize.CleanupParameters()
     params.maxTautomers = 50
     enumerator = rdMolStandardize.TautomerEnumerator(params)
