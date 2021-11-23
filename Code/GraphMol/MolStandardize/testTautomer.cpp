@@ -380,9 +380,9 @@ void testEnumeratorParams() {
   {
     TautomerEnumerator te;
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
-    TEST_ASSERT(res68.size() == 292);
     TEST_ASSERT(res68.status() ==
                 TautomerEnumeratorStatus::MaxTransformsReached);
+    TEST_ASSERT(res68.size() == 252);
   }
   {
     CleanupParameters params;
@@ -595,12 +595,13 @@ void testEnumeratorCallback() {
     TautomerEnumerator te(params);
     te.setCallback(new MyTautomerEnumeratorCallback(10000.0));
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
+    std::cerr << res68.size() << std::endl;
     // either the enumeration completed
     // or it ran very slowly and was canceled due to timeout
     bool hasReachedTimeout =
-        (res68.size() < 375 &&
+        (res68.size() < 295 &&
          res68.status() == TautomerEnumeratorStatus::Canceled);
-    bool hasCompleted = (res68.size() == 375 &&
+    bool hasCompleted = (res68.size() == 295 &&
                          res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (10 s)"
@@ -1240,7 +1241,7 @@ void testTautomerEnumeratorResult_const_iterator() {
   TautomerEnumerator te;
   auto res = te.enumerate(*mol);
   TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
-  TEST_ASSERT(res.size() == 12);
+  TEST_ASSERT(res.size() == 6);
   auto it = res.begin();
   auto it2 = res.begin();
   // Test semantic requirements of bidirectional_iterator
@@ -1339,6 +1340,7 @@ void testGithub3430() {
                    [](const ROMOL_SPTR &m) {
                      return TautomerScoringFunctions::scoreTautomer(*m);
                    });
+
     std::sort(scores.begin(), scores.end(), std::greater<int>());
     TEST_ASSERT(scores[1] < scores[0]);
   }
