@@ -238,35 +238,41 @@ cleanupRDKitCache(MemoryContext context)
    * Note, one context could contains several caches
    */
   while (h) {
-    if (h->ctx == context) {
-      if (h->cache->ctx != context || h->cache->magickNumber != MAGICKNUMBER) {
-	elog(WARNING, "Something wrong in cleanupRDKitCache");
-      }
-      else {
-	int i;
-	
-	for (i=0;i<h->cache->nentries;i++) {
-	  cleanupData(h->cache->entries[i]);
-	}
-	h->cache->nentries = 0;
-      }
 
-      /* remove current holder from list */
-      if (p==NULL) {
-	holder = h->next;
-	free(h);
-	h = holder;
-      }
-      else {
-	p->next = h->next;
-	free(h);
-	h = p->next;
-      }
+    if (h->ctx != context) {
+      /* holder is not related to the input context,
+       * move forward and continue
+       */
+      p = h;
+      h = h->next;
       continue;
     }
-    
-    p = h;
-    h = h->next;
+
+    /* cleanup the cached data */
+    if (h->cache->ctx != context || h->cache->magickNumber != MAGICKNUMBER) {
+      elog(WARNING, "Something wrong in cleanupRDKitCache");
+    }
+    else {
+      int i;
+
+      for (i=0;i<h->cache->nentries;i++) {
+        cleanupData(h->cache->entries[i]);
+      }
+      h->cache->nentries = 0;
+    }
+
+    /* remove current holder from list */
+    if (p==NULL) {
+      Assert( h == holder );
+      holder = h->next;
+      free(h);
+      h = holder;
+    }
+    else {
+      p->next = h->next;
+      free(h);
+      h = p->next;
+    }
   }
 }
 
