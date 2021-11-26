@@ -612,6 +612,15 @@ void testEnumeratorCallback() {
     TEST_ASSERT(hasReachedTimeout || hasCompleted);
     TEST_ASSERT(hasReachedTimeout ^ hasCompleted);
   }
+  {
+    // GitHub #4736
+    TautomerEnumerator te(params);
+    te.setCallback(new MyTautomerEnumeratorCallback(50.0));
+    TautomerEnumeratorResult res68 = te.enumerate(*m68);
+    TautomerEnumerator teCopy(te);
+    TautomerEnumeratorResult res68Copy = teCopy.enumerate(*m68);
+    TEST_ASSERT(res68.status() == res68Copy.status());
+  }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
