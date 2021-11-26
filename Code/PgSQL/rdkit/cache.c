@@ -386,30 +386,30 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
   case MolKind:
     if (detoasted) {
       if (entry->detoasted.mol.value == NULL) {
-	Mol *detoastedMol;
-	
-	detoastedMol = DatumGetMolP(entry->toastedValue);
-	entry->detoasted.mol.value
-	  = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedMol));
-	memcpy(entry->detoasted.mol.value, detoastedMol, VARSIZE(detoastedMol));
+        Mol *detoastedMol;
+
+        detoastedMol = DatumGetMolP(entry->toastedValue);
+        entry->detoasted.mol.value
+          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedMol));
+        memcpy(entry->detoasted.mol.value, detoastedMol, VARSIZE(detoastedMol));
       }
       *detoasted = entry->detoasted.mol.value;
     }
 
     if (internal) {
       if (entry->detoasted.mol.mol == NULL) {
-	fetchData(ac, entry, &_tmp, NULL, NULL);
-	entry->detoasted.mol.mol = constructROMol(entry->detoasted.mol.value);
+        fetchData(ac, entry, &_tmp, NULL, NULL);
+        entry->detoasted.mol.mol = constructROMol(entry->detoasted.mol.value);
       }
       *internal = entry->detoasted.mol.mol;
     }
 
     if (sign) {
       if (entry->detoasted.mol.sign == NULL) {
-	fetchData(ac, entry, NULL, &_tmp, NULL);
-	old = MemoryContextSwitchTo( ac->ctx );
-	entry->detoasted.mol.sign = makeMolSignature(entry->detoasted.mol.mol);
-	MemoryContextSwitchTo(old);
+        fetchData(ac, entry, NULL, &_tmp, NULL);
+        old = MemoryContextSwitchTo( ac->ctx );
+        entry->detoasted.mol.sign = makeMolSignature(entry->detoasted.mol.mol);
+        MemoryContextSwitchTo(old);
       }
       *sign = entry->detoasted.mol.sign;
     }
@@ -417,32 +417,32 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
   case BfpKind:
     if (detoasted) {
       if (entry->detoasted.bfp.value == NULL) {
-	Bfp *detoastedFP;
-	
-	detoastedFP = DatumGetBfpP(entry->toastedValue);
-	entry->detoasted.bfp.value
-	  = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
-	memcpy(entry->detoasted.bfp.value, detoastedFP, VARSIZE(detoastedFP));
+        Bfp *detoastedFP;
+
+        detoastedFP = DatumGetBfpP(entry->toastedValue);
+        entry->detoasted.bfp.value
+          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
+        memcpy(entry->detoasted.bfp.value, detoastedFP, VARSIZE(detoastedFP));
       }
       *detoasted = entry->detoasted.bfp.value;
     }
 
     if (internal) {
       if (entry->detoasted.bfp.fp == NULL) {
-	fetchData(ac, entry, &_tmp, NULL, NULL);
-	entry->detoasted.bfp.fp
-	  = constructCBfp(entry->detoasted.bfp.value);
+        fetchData(ac, entry, &_tmp, NULL, NULL);
+        entry->detoasted.bfp.fp
+          = constructCBfp(entry->detoasted.bfp.value);
       }
       *internal = entry->detoasted.bfp.fp;
     }
 
     if (sign) {
       if (entry->detoasted.bfp.sign == NULL) {
-	fetchData(ac, entry, NULL, &_tmp, NULL);
-	old = MemoryContextSwitchTo( ac->ctx );
-	entry->detoasted.bfp.sign
-	  = makeBfpSignature(entry->detoasted.bfp.fp);
-	MemoryContextSwitchTo(old);
+        fetchData(ac, entry, NULL, &_tmp, NULL);
+        old = MemoryContextSwitchTo( ac->ctx );
+        entry->detoasted.bfp.sign
+          = makeBfpSignature(entry->detoasted.bfp.fp);
+        MemoryContextSwitchTo(old);
       }
       *sign = entry->detoasted.bfp.sign;
     }
@@ -450,32 +450,32 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
   case SfpKind:
     if (detoasted) { 
       if (entry->detoasted.sfp.value == NULL) {
-	Sfp *detoastedFP;
-	
-	detoastedFP = DatumGetSfpP(entry->toastedValue);
-	entry->detoasted.sfp.value
-	  = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
-	memcpy(entry->detoasted.sfp.value, detoastedFP, VARSIZE(detoastedFP));
+        Sfp *detoastedFP;
+
+        detoastedFP = DatumGetSfpP(entry->toastedValue);
+        entry->detoasted.sfp.value
+          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
+        memcpy(entry->detoasted.sfp.value, detoastedFP, VARSIZE(detoastedFP));
       }
       *detoasted = entry->detoasted.sfp.value;
     }
 
     if (internal) {
       if (entry->detoasted.sfp.fp == NULL) {
-	fetchData(ac, entry, &_tmp, NULL, NULL);
-	entry->detoasted.sfp.fp
-	  = constructCSfp(entry->detoasted.sfp.value);
+        fetchData(ac, entry, &_tmp, NULL, NULL);
+        entry->detoasted.sfp.fp
+          = constructCSfp(entry->detoasted.sfp.value);
       }
       *internal = entry->detoasted.sfp.fp;
     }
 
     if (sign) {
       if (entry->detoasted.sfp.sign == NULL) {
-	fetchData(ac, entry, NULL, &_tmp, NULL);
-	old = MemoryContextSwitchTo( ac->ctx );
-	entry->detoasted.sfp.sign
-	  = makeSfpSignature(entry->detoasted.sfp.fp, NUMBITS);
-	MemoryContextSwitchTo(old);
+        fetchData(ac, entry, NULL, &_tmp, NULL);
+        old = MemoryContextSwitchTo( ac->ctx );
+        entry->detoasted.sfp.sign
+          = makeSfpSignature(entry->detoasted.sfp.fp, NUMBITS);
+        MemoryContextSwitchTo(old);
       }
       *sign = entry->detoasted.sfp.sign;
     }
@@ -483,33 +483,33 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
   case ReactionKind:
     if (detoasted) {
       if (entry->detoasted.reaction.value == NULL) {
-	Reaction *detoastedRxn;
-	
-	detoastedRxn = DatumGetReactionP(entry->toastedValue);
-	entry->detoasted.reaction.value
-	  = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedRxn));
-	memcpy(entry->detoasted.reaction.value, detoastedRxn,
-	       VARSIZE(detoastedRxn));
+        Reaction *detoastedRxn;
+
+        detoastedRxn = DatumGetReactionP(entry->toastedValue);
+        entry->detoasted.reaction.value
+          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedRxn));
+        memcpy(entry->detoasted.reaction.value, detoastedRxn,
+                VARSIZE(detoastedRxn));
       }
       *detoasted = entry->detoasted.reaction.value;
     }
     
     if (internal) {
       if (entry->detoasted.reaction.rxn == NULL) {
-	fetchData(ac, entry, &_tmp, NULL, NULL);
-	entry->detoasted.reaction.rxn
-	  = constructChemReact(entry->detoasted.reaction.value);
+        fetchData(ac, entry, &_tmp, NULL, NULL);
+        entry->detoasted.reaction.rxn
+          = constructChemReact(entry->detoasted.reaction.value);
       }
       *internal = entry->detoasted.reaction.rxn;
     }
     
     if (sign) {
       if (entry->detoasted.reaction.sign == NULL) {
-	fetchData(ac, entry, NULL, &_tmp, NULL);
-	old = MemoryContextSwitchTo( ac->ctx );
-	entry->detoasted.reaction.sign
-	  = makeReactionSign(entry->detoasted.reaction.rxn);
-	MemoryContextSwitchTo(old);
+        fetchData(ac, entry, NULL, &_tmp, NULL);
+        old = MemoryContextSwitchTo( ac->ctx );
+        entry->detoasted.reaction.sign
+          = makeReactionSign(entry->detoasted.reaction.rxn);
+        MemoryContextSwitchTo(old);
       }
       *sign = entry->detoasted.reaction.sign;
     }
