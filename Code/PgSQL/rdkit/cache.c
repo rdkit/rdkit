@@ -90,16 +90,17 @@ typedef struct ValueCache {
   ValueCacheEntry *tail;
   ValueCacheEntry *entries[NENTRIES];
 
-  void (*resetOrig) (MemoryContext context);
-  void (*deleteOrig) (MemoryContext context);
+  void (*resetOrig) (MemoryContext context); /* unused */
+  void (*deleteOrig) (MemoryContext context); /* unused */
 } ValueCache;
 
 /*********** Managing LRU **********/
+/* move the most recently used value to the head */
 static void 
 moveFirst(ValueCache *ac, ValueCacheEntry *entry)
 {
   /*
-   * delete entry form a list
+   * unlink the entry from the list
    */
   Assert( entry != ac->head );
   
@@ -119,7 +120,7 @@ moveFirst(ValueCache *ac, ValueCacheEntry *entry)
   }
 
   /*
-   * Install into head 
+   * reinstall into head 
    */
 
   Assert( ac->head != NULL );
@@ -133,6 +134,12 @@ moveFirst(ValueCache *ac, ValueCacheEntry *entry)
 
 #define DATUMSIZE(d)    VARSIZE_ANY(DatumGetPointer(d)) 
 
+/* 
+ * define a comparison operator for the cached values.
+ * generally applied to the toasted data, to verify the
+ * equality of two values and to keep the cached entries
+ * sorted (see cmpEntries below).
+ */
 static int
 cmpDatum(Datum a, Datum b)
 {
@@ -145,6 +152,11 @@ cmpDatum(Datum a, Datum b)
   return (la > lb) ? 1 : -1;
 }
 
+/*
+ * free the memory allocated by a cache entry to hold the
+ * toasted, detoasted and expanded values (called when the
+ * cache is destroyed or the entry is reused)
+ */
 static void
 cleanupData(ValueCacheEntry *entry)
 {
@@ -198,10 +210,18 @@ cleanupData(ValueCacheEntry *entry)
   default:
     elog(ERROR, "Unknown kind: %d", entry->kind);
   }
-  
+
+  /* this function is called both when the memory context
+   * is reset or destroyed, and all the cached entries are
+   * discarded, but also when the least recently used value
+   * in the cache is replaced, to make space for a new one.
+   * to support this latter case, the prev/next pointers in
+   * the entry are not zeroed by the call to memset here below.
+   */
   memset(entry, 0, offsetof(ValueCacheEntry, prev));
 }
 
+/* assign a cache entry with the input toasted value and data kind */
 static void
 makeEntry(ValueCache *ac, ValueCacheEntry *entry, Datum value, EntryKind kind)
 {
@@ -536,6 +556,9 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
     return cache;
   }
 
+  /*
+   * If the cache is empty, insert (and then return) the new value 
+   */
   if (ac->head == NULL) {
     ac->entries[0]
       = ac->head
@@ -547,6 +570,9 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
     return cache;
   }
 
+  /*
+   * Do a binary search across the cached entries 
+   */
   do {
     ValueCacheEntry **StopLow = ac->entries;
     ValueCacheEntry **StopHigh = ac->entries + ac->nentries;
@@ -559,10 +585,14 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
       cmp = cmpDatum(entry->toastedValue, a); 
       
       if (cmp == 0) {
-	moveFirst(ac, entry);
-	Assert( ac->head->kind == kind );
-	fetchData(ac, ac->head, detoasted, internal, sign);
-	return cache;
+        /*
+         * If the value is found, move it to the head position
+         * and return it
+         */
+        moveFirst(ac, entry);
+        Assert( ac->head->kind == kind );
+        fetchData(ac, ac->head, detoasted, internal, sign);
+        return cache;
       }
       else if (cmp < 0) {
         StopLow = StopMiddle + 1;
@@ -578,6 +608,9 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
    */
 
   if (ac->nentries < NENTRIES) {
+    /*
+     * If the cache is not full, insert the new value in the head position
+     */
     entry
       = ac->entries[ac->nentries]
       = MemoryContextAllocZero(ctx, sizeof(ValueCacheEntry));
@@ -594,12 +627,21 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
     fetchData(ac, ac->head, detoasted, internal, sign);
   } 
   else {
+    /*
+     * If the cache is full, discard the least recently used value (in tail
+     * position) and reuse the entry to place the new value in the head
+     */
     cleanupData(ac->tail);
     moveFirst(ac, ac->tail);
     makeEntry(ac, ac->head, a, kind);
     fetchData(ac, ac->head, detoasted, internal, sign);
   }
 
+  /*
+   * sort the entries in the array after values are added or removed.
+   * this allows applying a binary search if the value is not found in
+   * the head position.
+   */
   qsort(ac->entries, ac->nentries, sizeof(ValueCacheEntry*), cmpEntry);   
   return cache;
 }
