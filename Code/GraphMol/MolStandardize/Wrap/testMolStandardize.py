@@ -567,6 +567,15 @@ chlorine	[Cl]
     with self.assertRaises(AttributeError):
       enumerator.SetCallback(MyBrokenCallback2())
 
+    # GitHub #4736
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    enumerator.SetCallback(MyTautomerEnumeratorCallback(self, 50.0))
+    enumerator_copy = rdMolStandardize.TautomerEnumerator(enumerator)
+    res68 = enumerator.Enumerate(m68)
+    res68_copy = enumerator_copy.Enumerate(m68)
+    self.assertTrue(res68.status == res68_copy.status)
+
+
   def test17PickCanonicalCIPChangeOnChiralCenter(self):
 
     def get_canonical_taut(res):

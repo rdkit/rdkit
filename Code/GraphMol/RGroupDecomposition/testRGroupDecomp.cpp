@@ -2458,9 +2458,57 @@ C[*:2]
   }
 }
 
+void testCoreWithAlsRecords() {
+  auto core = R"CTAB(
+  Mrv2008 11112113312D
+
+  6  6  6  0  0  0            999 V2000
+  -13.7277    2.6107    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.4421    2.1982    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.4421    1.3732    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.7277    0.9607    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.0132    1.3732    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.0132    2.1982    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  2  0  0  0  0
+  1 F    2   6   7
+  2 F    2   6   7
+  3 F    2   6   7
+  4 F    2   6   7
+  5 F    2   6   7
+  6 F    2   6   7
+M  ALS   1  2 F C   N   
+M  ALS   2  2 F C   N   
+M  ALS   3  2 F C   N   
+M  ALS   4  2 F C   N   
+M  ALS   5  2 F C   N   
+M  ALS   6  2 F C   N   
+M  END
+)CTAB"_ctab;
+  TEST_ASSERT(core);
+
+  auto structure = "ClC1=CN=C(C=C1)N1CCCC1"_smiles;
+  RGroupDecomposition decomp(*core);
+  TEST_ASSERT(decomp.add(*structure) == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  auto core_out = rows[0]["Core"];
+  auto core_mol_block = MolToMolBlock(*rows[0]["Core"]);
+  auto pos = core_mol_block.find("ALS");
+  TEST_ASSERT(pos == std::string::npos);
+  std::string expected(
+      "Core:c1cc([*:2])ncc1[*:1] R1:Cl[*:1] R2:C1CCN([*:2])C1");
+  RGroupRows::const_iterator it = rows.begin();
+  CHECK_RGROUP(it, expected);
+}
+
 void testAlignOutputCoreToMolecule() {
   BOOST_LOG(rdInfoLog)
-    << "********************************************************\n";
+      << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Test that output core is aligned to input molecule"
                        << std::endl;
   struct Helper {
@@ -2476,7 +2524,7 @@ void testAlignOutputCoreToMolecule() {
   };
 
   auto core = R"CTAB(
-  Mrv2008 11162112382D          
+  Mrv2008 11162112382D
 
  15 16  0  0  0  0            999 V2000
   -13.4365    2.6419    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2514,7 +2562,7 @@ M  END
       )CTAB"_ctab;
   auto mol = R"CTAB(
   -OEChem-03051316302D
-
+  
  19 21  0     0  0  0  0  0  0999 V2000
    -1.7593    5.0073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
    -2.6211    4.4999    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2557,7 +2605,6 @@ M  END
  17 18  1  0  0  0  0
  18 19  2  0  0  0  0
 M  END
-
 )CTAB"_ctab;
 
   RGroupRows rows;
@@ -2627,6 +2674,7 @@ int main() {
   testNoTempLabels();
   testNoSideChains();
   testDoNotAddUnnecessaryRLabels();
+  testCoreWithAlsRecords();
   testAlignOutputCoreToMolecule();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";

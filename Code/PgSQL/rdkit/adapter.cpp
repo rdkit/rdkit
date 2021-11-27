@@ -30,6 +30,22 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+
+// PostgreSQL 14 on Windows uses a hack to redefine the stat struct
+// The hack assumes that sys/stat.h will be imported for the first
+// time by win32_port.h, which is not necessarily the case
+// So we need to set the stage for the hack or it will fail
+#ifdef _WIN32
+#define fstat microsoft_native_fstat
+#define stat microsoft_native_stat
+#include <sys/stat.h>
+#ifdef __MINGW32__
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
+#endif
+#endif
+#endif
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
@@ -74,6 +90,12 @@
 
 #ifdef RDK_BUILD_MOLINTERCHANGE_SUPPORT
 #include <GraphMol/MolInterchange/MolInterchange.h>
+#endif
+
+// see above comment on the PostgreSQL hack
+#ifdef _WIN32
+#undef fstat
+#undef stat
 #endif
 
 #include "rdkit.h"
