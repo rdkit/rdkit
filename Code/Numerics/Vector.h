@@ -299,9 +299,13 @@ typedef Vector<double> DoubleVector;
 template <typename T>
 double TanimotoSimilarity(const Vector<T> &v1, const Vector<T> &v2) {
   double numer = v1.dotProduct(v2);
-  if (numer == 0.0) return 0.0;
+  if (numer == 0.0) {
+    return 0.0;
+  }
   double denom = v1.normL2Sq() + v2.normL2Sq() - numer;
-  if (denom == 0.0) return 0.0;
+  if (denom == 0.0) {
+    return 0.0;
+  }
   return numer / denom;
 }
 }  // end of namespace RDNumeric

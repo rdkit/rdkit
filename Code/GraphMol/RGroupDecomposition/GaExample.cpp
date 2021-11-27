@@ -110,8 +110,12 @@ int main(int argc, char* argv[]) {
     int batch = vm["batch"].as<int>();
     while (getline(fh, line)) {
       count++;
-      if (count < start) continue;
-      if (count > start + batch) break;
+      if (count < start) {
+        continue;
+      }
+      if (count > start + batch) {
+        break;
+      }
       int pos = line.find_last_of("\t");
       auto smiles = line.substr(pos + 1);
       shared_ptr<ROMol> mol(SmilesToMol(smiles));

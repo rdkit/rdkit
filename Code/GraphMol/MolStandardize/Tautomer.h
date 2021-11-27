@@ -212,7 +212,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
         d_removeIsotopicHs(other.d_removeIsotopicHs),
         d_reassignStereo(other.d_reassignStereo) {}
   TautomerEnumerator &operator=(const TautomerEnumerator &other) {
-    if (this == &other) return *this;
+    if (this == &other) {
+      return *this;
+    }
     dp_catalog = other.dp_catalog;
     d_callback = other.d_callback;
     d_maxTautomers = other.d_maxTautomers;

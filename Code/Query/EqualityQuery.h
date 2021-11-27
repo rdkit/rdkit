@@ -83,10 +83,11 @@ class RDKIT_QUERY_EXPORT EqualityQuery
     std::ostringstream res;
     res << this->getDescription();
     res << " " << this->d_val;
-    if (this->getNegation())
+    if (this->getNegation()) {
       res << " != ";
-    else
+    } else {
       res << " = ";
+    }
     res << "val";
     return res.str();
   }

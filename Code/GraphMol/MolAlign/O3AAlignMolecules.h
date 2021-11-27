@@ -206,7 +206,9 @@ class RDKIT_MOLALIGN_EXPORT SDM {
   }
   // assignment operator
   SDM &operator=(const SDM &other) {
-    if (this == &other) return *this;
+    if (this == &other) {
+      return *this;
+    }
     d_prbConf = other.d_prbConf;
     d_refConf = other.d_refConf;
     d_o3aConstraintVect = other.d_o3aConstraintVect;

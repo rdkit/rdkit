@@ -126,8 +126,12 @@ class RDKIT_INFOTHEORY_EXPORT InfoBitRanker {
   }
 
   ~InfoBitRanker() {
-    if (dp_topBits) delete[] dp_topBits;
-    if (dp_maskBits) delete dp_maskBits;
+    if (dp_topBits) {
+      delete[] dp_topBits;
+    }
+    if (dp_maskBits) {
+      delete dp_maskBits;
+    }
   }
 
   /*! \brief Accumulate the votes for all the bits turned on in a bit vector

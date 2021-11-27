@@ -190,7 +190,9 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   double signedAngleTo(const Point3D &other) const {
     double res = this->angleTo(other);
     // check the sign of the z component of the cross product:
-    if ((this->x * other.y - this->y * other.x) < -1e-6) res = 2.0 * M_PI - res;
+    if ((this->x * other.y - this->y * other.x) < -1e-6) {
+      res = 2.0 * M_PI - res;
+    }
     return res;
   }
 
@@ -377,16 +379,19 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
     t2.normalize();
     double dotProd = t1.dotProduct(t2);
     // watch for roundoff error:
-    if (dotProd < -1.0)
+    if (dotProd < -1.0) {
       dotProd = -1.0;
-    else if (dotProd > 1.0)
+    } else if (dotProd > 1.0) {
       dotProd = 1.0;
+    }
     return acos(dotProd);
   }
 
   double signedAngleTo(const Point2D &other) const {
     double res = this->angleTo(other);
-    if ((this->x * other.y - this->y * other.x) < -1e-6) res = 2.0 * M_PI - res;
+    if ((this->x * other.y - this->y * other.x) < -1e-6) {
+      res = 2.0 * M_PI - res;
+    }
     return res;
   }
 
@@ -453,7 +458,9 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
   unsigned int dimension() const override { return dp_storage.get()->size(); }
 
   PointND &operator=(const PointND &other) {
-    if (this == &other) return *this;
+    if (this == &other) {
+      return *this;
+    }
 
     RDNumeric::Vector<double> *nvec =
         new RDNumeric::Vector<double>(*other.getStorage());
@@ -501,10 +508,11 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
     if ((n1 > 1.e-8) && (n2 > 1.e-8)) {
       dp /= (n1 * n2);
     }
-    if (dp < -1.0)
+    if (dp < -1.0) {
       dp = -1.0;
-    else if (dp > 1.0)
+    } else if (dp > 1.0) {
       dp = 1.0;
+    }
     return acos(dp);
   }
 

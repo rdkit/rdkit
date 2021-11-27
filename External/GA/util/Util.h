@@ -65,21 +65,26 @@ namespace GarethUtil {
     template<typename T>
     T convertString(const string &str, bool *const ok =
     nullptr, size_t start = 0, size_t noChars = 0) {
-        if (ok != nullptr)
-            *ok = false;
+      if (ok != nullptr) {
+        *ok = false;
+      }
         T rtn;
-        if (str.empty())
-            return rtn;
-        if (start >= str.length())
-            return rtn;
-        if (noChars == 0)
-            noChars = str.length() - start;
+        if (str.empty()) {
+          return rtn;
+        }
+        if (start >= str.length()) {
+          return rtn;
+        }
+        if (noChars == 0) {
+          noChars = str.length() - start;
+        }
         string field = str.substr(start, noChars);
         stringstream ss(field);
         ss >> rtn;
         if (!ss.fail()) {
-            if (ok != nullptr)
-                *ok = true;
+          if (ok != nullptr) {
+            *ok = true;
+          }
         }
         return rtn;
     }
@@ -99,8 +104,9 @@ namespace GarethUtil {
                   ostream_iterator<typename T::value_type>(ss, seperator.c_str()));
         // erase trailing separator
         string rtn = ss.str();
-        if (!rtn.empty())
-            rtn.erase(rtn.length() - seperator.length(), seperator.length());
+        if (!rtn.empty()) {
+          rtn.erase(rtn.length() - seperator.length(), seperator.length());
+        }
         return rtn;
     }
 
@@ -124,8 +130,9 @@ namespace GarethUtil {
                       V *const value = nullptr) {
         auto iter = map.find(key);
         if (iter != map.end()) {
-            if (value != nullptr)
-                *value = iter->second;
+          if (value != nullptr) {
+            *value = iter->second;
+          }
             return true;
         }
         return false;

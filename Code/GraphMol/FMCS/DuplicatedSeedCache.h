@@ -47,18 +47,30 @@ class DuplicatedSeedCache {
     }
 
     bool operator<(const TKey& right) const {
-      if (AtomIdx.size() < right.AtomIdx.size()) return true;
-      if (AtomIdx.size() > right.AtomIdx.size()) return false;
+      if (AtomIdx.size() < right.AtomIdx.size()) {
+        return true;
+      }
+      if (AtomIdx.size() > right.AtomIdx.size()) {
+        return false;
+      }
 
-      if (BondIdx.size() < right.BondIdx.size()) return true;
-      if (BondIdx.size() > right.BondIdx.size()) return false;
+      if (BondIdx.size() < right.BondIdx.size()) {
+        return true;
+      }
+      if (BondIdx.size() > right.BondIdx.size()) {
+        return false;
+      }
 
       // everything is equal -> perform straight comparison
       int diff;
       diff = memcmp(&AtomIdx[0], &right.AtomIdx[0],
                     AtomIdx.size() * sizeof(unsigned));
-      if (diff < 0) return true;
-      if (diff > 0) return false;
+      if (diff < 0) {
+        return true;
+      }
+      if (diff > 0) {
+        return false;
+      }
       return memcmp(&BondIdx[0], &right.BondIdx[0],
                     BondIdx.size() * sizeof(unsigned)) < 0;
     }
@@ -76,16 +88,21 @@ class DuplicatedSeedCache {
 
   bool find(const TKey& key, TValue& value) const {
     value = false;
-    if (key.getNumAtoms() > MaxAtoms)
+    if (key.getNumAtoms() > MaxAtoms) {
       return false;  // fast check if key greater then max key in the cache
+    }
 
     std::map<TKey, TValue>::const_iterator entryit = Index.find(key);
-    if (Index.end() != entryit) value = entryit->second;
+    if (Index.end() != entryit) {
+      value = entryit->second;
+    }
     return Index.end() != entryit;
   }
 
   void add(const TKey& key, TValue found = true) {
-    if (key.getNumAtoms() > MaxAtoms) MaxAtoms = key.getNumAtoms();
+    if (key.getNumAtoms() > MaxAtoms) {
+      MaxAtoms = key.getNumAtoms();
+    }
 
     Index.insert(std::pair<TKey, bool>(key, found));
   }

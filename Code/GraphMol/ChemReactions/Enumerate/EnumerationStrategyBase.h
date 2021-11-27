@@ -75,7 +75,9 @@ template <class T>
 EnumerationTypes::RGROUPS getSizesFromBBs(
     const std::vector<std::vector<T>> &bbs) {
   EnumerationTypes::RGROUPS sizes;
-  for (size_t i = 0; i < bbs.size(); ++i) sizes.push_back(bbs[i].size());
+  for (size_t i = 0; i < bbs.size(); ++i) {
+    sizes.push_back(bbs[i].size());
+  }
   return sizes;
 }
 
@@ -188,7 +190,9 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
   //! Skip the specified number of permutations (useful for
   //!  resetting state to a known position)
   bool skip(boost::uint64_t skipCount) {
-    for (boost::uint64_t i = 0; i < skipCount; ++i) next();
+    for (boost::uint64_t i = 0; i < skipCount; ++i) {
+      next();
+    }
     return true;
   }
 

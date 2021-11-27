@@ -975,7 +975,9 @@ const std::string GetV3000MolFileAtomLine(
     }
     if (atom->getPropIfPresent(common_properties::molInversionFlag, iprop) &&
         iprop) {
-      if (iprop == 1 || iprop == 2) ss << " INVRET=" << iprop;
+      if (iprop == 1 || iprop == 2) {
+        ss << " INVRET=" << iprop;
+      }
     }
     if (atom->getPropIfPresent(common_properties::molStereoCare, iprop) &&
         iprop) {

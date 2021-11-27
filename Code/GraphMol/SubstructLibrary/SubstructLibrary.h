@@ -93,7 +93,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT MolHolder : public MolHolderBase {
   }
 
   boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
-    if (idx >= mols.size()) throw IndexErrorException(idx);
+    if (idx >= mols.size()) {
+      throw IndexErrorException(idx);
+    }
     return mols[idx];
   }
 
@@ -133,7 +135,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
   }
 
   boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
-    if (idx >= mols.size()) throw IndexErrorException(idx);
+    if (idx >= mols.size()) {
+      throw IndexErrorException(idx);
+    }
     boost::shared_ptr<ROMol> mol(new ROMol);
     MolPickler::molFromPickle(mols[idx], mol.get());
     return mol;
@@ -177,7 +181,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
   }
 
   boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
-    if (idx >= mols.size()) throw IndexErrorException(idx);
+    if (idx >= mols.size()) {
+      throw IndexErrorException(idx);
+    }
 
     boost::shared_ptr<ROMol> mol(SmilesToMol(mols[idx]));
     return mol;
@@ -226,7 +232,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
   }
 
   boost::shared_ptr<ROMol> getMol(unsigned int idx) const override {
-    if (idx >= mols.size()) throw IndexErrorException(idx);
+    if (idx >= mols.size()) {
+      throw IndexErrorException(idx);
+    }
 
     RWMol *m = SmilesToMol(mols[idx], 0, false);
     if (m) {
@@ -249,7 +257,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
 
  public:
   virtual ~FPHolderBase() {
-    for (size_t i = 0; i < fps.size(); ++i) delete fps[i];
+    for (size_t i = 0; i < fps.size(); ++i) {
+      delete fps[i];
+    }
   }
 
   virtual unsigned int size() const { return rdcast<unsigned int>(fps.size()); }
@@ -277,7 +287,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
 
   //! Return false if a substructure search can never match the molecule
   bool passesFilter(unsigned int idx, const ExplicitBitVect &query) const {
-    if (idx >= fps.size()) throw IndexErrorException(idx);
+    if (idx >= fps.size()) {
+      throw IndexErrorException(idx);
+    }
 
     return AllProbeBitsMatch(query, *fps[idx]);
   }
@@ -285,7 +297,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT FPHolderBase {
   //! Get the bit vector at the specified index (throws IndexError if out of
   //! range)
   const ExplicitBitVect &getFingerprint(unsigned int idx) const {
-    if (idx >= fps.size()) throw IndexErrorException(idx);
+    if (idx >= fps.size()) {
+      throw IndexErrorException(idx);
+    }
     return *fps[idx];
   }
 
@@ -388,7 +402,9 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
   }
 
   const std::string &getKey(unsigned int idx) const override {
-    if (idx >= keys.size()) throw IndexErrorException(idx);
+    if (idx >= keys.size()) {
+      throw IndexErrorException(idx);
+    }
     return keys[idx];
   }
 
@@ -604,30 +620,34 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
   //! Get the underlying fingerprint implementation.
   /*! Throws a value error if no fingerprints have been set */
   FPHolderBase &getFingerprints() {
-    if (!fps)
+    if (!fps) {
       throw ValueErrorException("Substruct Library does not have fingerprints");
+    }
     return *fps;
   }
 
   const FPHolderBase &getFingerprints() const {
-    if (!fps)
+    if (!fps) {
       throw ValueErrorException("Substruct Library does not have fingerprints");
+    }
     return *fps;
   }
 
   //! Get the underlying key holder implementation.
   /*! Throws a value error if no keyholder have been set */
   KeyHolderBase &getKeys() {
-    if (!keyholder.get())
+    if (!keyholder.get()) {
       throw ValueErrorException("Substruct Library does not have fingerprints");
+    }
     return *keyholder.get();
   }
 
   //! Get the underlying key holder implementation.
   /*! Throws a value error if no keyholder have been set */
   const KeyHolderBase &getKeys() const {
-    if (!keyholder.get())
+    if (!keyholder.get()) {
       throw ValueErrorException("Substruct Library does not have fingerprints");
+    }
     return *keyholder.get();
   }
 

@@ -29,7 +29,7 @@ Priority Sort::prioritize(const Node *node, std::vector<Edge *> &edges,
   bool unique = true;
   int numPseudoAsym = 0;
 
-  for (auto i = 0u; i < edges.size(); ++i)
+  for (auto i = 0u; i < edges.size(); ++i) {
     for (auto j = i; j > 0; --j) {
       int cmp = compareSubstituents(node, edges[j - 1], edges[j], deep);
 
@@ -46,6 +46,7 @@ Priority Sort::prioritize(const Node *node, std::vector<Edge *> &edges,
         break;
       }
     }
+  }
 
   return {unique, numPseudoAsym == 1};
 }

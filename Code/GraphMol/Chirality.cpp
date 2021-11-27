@@ -408,7 +408,9 @@ bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2) {
   double lsq = v1.lengthSq() * v2.lengthSq();
 
   // treat zero length vectors as linear
-  if (lsq < 1.0e-6) return true;
+  if (lsq < 1.0e-6) {
+    return true;
+  }
 
   double dotProd = v1.dotProduct(v2);
 

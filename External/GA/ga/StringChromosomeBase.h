@@ -123,7 +123,9 @@ void StringChromosomeBase<T, ChromosomePolicy>::copyGene(
  */
 template <typename T, typename ChromosomePolicy>
 void StringChromosomeBase<T, ChromosomePolicy>::mutate(double pMutate) {
-  if (pMutate < 0.0) pMutate = 1.0 / (length);
+  if (pMutate < 0.0) {
+    pMutate = 1.0 / (length);
+  }
   bool mutated = false;
 
   T *ptr = string.get();
@@ -154,16 +156,18 @@ void StringChromosomeBase<T, ChromosomePolicy>::twoPointCrossover(
   // choose cross point sites
   int site1 = rng.randomInt(0, length);
   int site2 = rng.randomInt(0, length - 1);
-  if (site2 >= site1)
+  if (site2 >= site1) {
     site2++;
-  else {
+  } else {
     int n = site1;
     site1 = site2;
     site2 = n;
   }
 
   bool switchFlag = false;
-  if (chromosomePolicy.isAllowSwitch()) switchFlag = rng.randomBoolean();
+  if (chromosomePolicy.isAllowSwitch()) {
+    switchFlag = rng.randomBoolean();
+  }
 
   T *c1 = switchFlag ? child2.string.get() : child1.string.get();
   T *c2 = switchFlag ? child1.string.get() : child2.string.get();
@@ -204,7 +208,9 @@ void StringChromosomeBase<T, ChromosomePolicy>::onePointCrossover(
   // choose cross point site
   int site = rng.randomInt(0, length - 1);
   bool switchFlag = false;
-  if (chromosomePolicy.isAllowSwitch()) switchFlag = rng.randomBoolean();
+  if (chromosomePolicy.isAllowSwitch()) {
+    switchFlag = rng.randomBoolean();
+  }
 
   T *c1 = switchFlag ? child2.string.get() : child1.string.get();
   T *c2 = switchFlag ? child1.string.get() : child2.string.get();
@@ -233,7 +239,9 @@ template <typename T, typename ChromosomePolicy>
 std::string StringChromosomeBase<T, ChromosomePolicy>::geneInfo() const {
   std::stringstream ss;
   for (int i = 0; i < length; i++) {
-    if (i > 0) ss << ' ';
+    if (i > 0) {
+      ss << ' ';
+    }
     ss << string[i];
   }
   return ss.str();

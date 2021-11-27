@@ -72,9 +72,13 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
       temp1 = std::max(d[i * ny + j], d[i * ny + j + 1]);
       temp2 = std::max(d[(i + 1) * ny + j], d[(i + 1) * ny + j + 1]);
       dmax = std::max(temp1, temp2);
-      if (dmax < z[0] || dmin > z[nc - 1]) continue;
+      if (dmax < z[0] || dmin > z[nc - 1]) {
+        continue;
+      }
       for (k = 0; k < nc; k++) {
-        if (z[k] < dmin || z[k] > dmax) continue;
+        if (z[k] < dmin || z[k] > dmax) {
+          continue;
+        }
         for (m = 4; m >= 0; m--) {
           if (m > 0) {
             h[m] = d[(i + im[m - 1]) * ny + j + jm[m - 1]] - z[k];
@@ -85,12 +89,13 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
             xh[0] = 0.50 * (x[i] + x[i + 1]);
             yh[0] = 0.50 * (y[j] + y[j + 1]);
           }
-          if (h[m] > 0.0)
+          if (h[m] > 0.0) {
             sh[m] = 1;
-          else if (h[m] < 0.0)
+          } else if (h[m] < 0.0) {
             sh[m] = -1;
-          else
+          } else {
             sh[m] = 0;
+          }
         }
 
         /*
@@ -120,12 +125,14 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
         for (m = 1; m <= 4; m++) {
           m1 = m;
           m2 = 0;
-          if (m != 4)
+          if (m != 4) {
             m3 = m + 1;
-          else
+          } else {
             m3 = 1;
-          if ((case_value = castab[sh[m1] + 1][sh[m2] + 1][sh[m3] + 1]) == 0)
+          }
+          if ((case_value = castab[sh[m1] + 1][sh[m2] + 1][sh[m3] + 1]) == 0) {
             continue;
+          }
           switch (case_value) {
             case 1: /* Line between vertices 1 and 2 */
               x1 = xh[m1];

@@ -124,7 +124,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
   }
   Bond &operator=(Bond &&o) noexcept {
-    if (this == &o) return *this;
+    if (this == &o) {
+      return *this;
+    }
     RDProps::operator=(std::move(o));
     df_isAromatic = o.df_isAromatic;
     df_isConjugated = o.df_isConjugated;
@@ -346,7 +348,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   }
   //! \overload
   INT_VECT &getStereoAtoms() {
-    if (!dp_stereoAtoms) dp_stereoAtoms = new INT_VECT();
+    if (!dp_stereoAtoms) {
+      dp_stereoAtoms = new INT_VECT();
+    }
     return *dp_stereoAtoms;
   }
 

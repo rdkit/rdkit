@@ -105,7 +105,9 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
   numPermutations = 1L;
   auto pos = 0;
   for (auto m : matches) {
-    if (m.size() == 1) continue;
+    if (m.size() == 1) {
+      continue;
+    }
     chromosomePolicy.setMax(pos, m.size());
     unsigned long count = numPermutations * m.size();
     numPermutations = count / m.size() == numPermutations
@@ -118,7 +120,9 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
 
   // TODO refine these settings
   auto popsize = 100 + chromLength / 10;
-  if (popsize > 200) popsize = 200;
+  if (popsize > 200) {
+    popsize = 200;
+  }
   const auto& params = rGroupData.params;
   if (params.gaPopulationSize > 0) {
     popsize = params.gaPopulationSize;
@@ -167,7 +171,9 @@ void RGroupGa::rGroupMutateOperation(
   child->decode();
 
   auto& fingerprintVarianceScoreData = child->getFingerprintVarianceScoreData();
-  if (fingerprintVarianceScoreData.labelsToVarianceData.size() == 0) return;
+  if (fingerprintVarianceScoreData.labelsToVarianceData.size() == 0) {
+    return;
+  }
 #ifdef DEBUG
   std::cerr << "RGroup mutate start" << std::endl;
 #endif

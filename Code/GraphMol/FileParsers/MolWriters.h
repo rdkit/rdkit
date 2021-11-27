@@ -81,7 +81,9 @@ class RDKIT_FILEPARSERS_EXPORT SmilesWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+        if (dp_ostream->good()) {
+          dp_ostream->setstate(std::ios::badbit);
+        }
       } catch (const std::runtime_error &) {
       }
     }
@@ -159,7 +161,9 @@ class RDKIT_FILEPARSERS_EXPORT SDWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+        if (dp_ostream->good()) {
+          dp_ostream->setstate(std::ios::badbit);
+        }
       } catch (const std::runtime_error &) {
       }
     }
@@ -230,7 +234,9 @@ class RDKIT_FILEPARSERS_EXPORT TDTWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+        if (dp_ostream->good()) {
+          dp_ostream->setstate(std::ios::badbit);
+        }
       } catch (const std::runtime_error &) {
       }
     }
@@ -298,7 +304,9 @@ class RDKIT_FILEPARSERS_EXPORT PDBWriter : public MolWriter {
       dp_ostream->flush();
     } catch (...) {
       try {
-        if (dp_ostream->good()) dp_ostream->setstate(std::ios::badbit);
+        if (dp_ostream->good()) {
+          dp_ostream->setstate(std::ios::badbit);
+        }
       } catch (const std::runtime_error &) {
       }
     }

@@ -140,7 +140,9 @@ class list_indexing_suite
     extract<long> i(i_);
     if (i.check()) {
       long index = i();
-      if (index < 0) index += DerivedPolicies::size(container);
+      if (index < 0) {
+        index += DerivedPolicies::size(container);
+      }
       if (index >= long(container.size()) || index < 0) {
         PyErr_SetString(PyExc_IndexError, "Index out of range");
         throw_error_already_set();

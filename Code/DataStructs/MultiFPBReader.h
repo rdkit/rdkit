@@ -121,7 +121,9 @@ class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
   unsigned int addReader(FPBReader *rdr) {
     PRECONDITION(rdr, "no reader provided");
     d_readers.push_back(rdr);
-    if (df_init) rdr->init();
+    if (df_init) {
+      rdr->init();
+    }
     return d_readers.size();
   }
 

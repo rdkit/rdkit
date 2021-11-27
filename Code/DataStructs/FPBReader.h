@@ -93,7 +93,9 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
         df_lazyRead(lazyRead) {}
   ~FPBReader() {
     destroy();
-    if (df_owner) delete dp_istrm;
+    if (df_owner) {
+      delete dp_istrm;
+    }
     dp_istrm = nullptr;
     df_init = false;
   }
@@ -115,7 +117,9 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
   Cleans up whatever memory was allocated during init()
   */
   void cleanup() {
-    if (!df_init) return;
+    if (!df_init) {
+      return;
+    }
     destroy();
     df_init = false;
   }

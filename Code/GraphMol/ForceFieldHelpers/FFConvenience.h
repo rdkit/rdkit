@@ -30,7 +30,9 @@ void OptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
   ff.positions().resize(mol->getNumAtoms());
   for (ROMol::ConformerIterator cit = mol->beginConformers();
        cit != mol->endConformers(); ++cit, ++i) {
-    if (i % numThreads != threadIdx) continue;
+    if (i % numThreads != threadIdx) {
+      continue;
+    }
     for (unsigned int aidx = 0; aidx < mol->getNumAtoms(); ++aidx) {
       ff.positions()[aidx] = &(*cit)->getAtomPos(aidx);
     }
@@ -50,7 +52,9 @@ void OptimizeMoleculeConfsMT(ROMol &mol, const ForceFields::ForceField &ff,
                                 &res, ti, numThreads, maxIters));
   }
   for (auto &thread : tg) {
-    if (thread.joinable()) thread.join();
+    if (thread.joinable()) {
+      thread.join();
+    }
   }
 }
 #endif

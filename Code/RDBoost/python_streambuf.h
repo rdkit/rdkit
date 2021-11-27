@@ -215,16 +215,18 @@ class streambuf : public std::basic_streambuf<char> {
     switch (mode) {
       case 's':  /// yeah, is redundant, but it is somehow natural to do "s"
       case 't':
-        if (!df_isTextMode)
+        if (!df_isTextMode) {
           throw ValueErrorException(
               "Need a text mode file object like StringIO or a file opened "
               "with mode 't'");
+        }
         break;
       case 'b':
-        if (df_isTextMode)
+        if (df_isTextMode) {
           throw ValueErrorException(
               "Need a binary mode file object like BytesIO or a file opened "
               "with mode 'b'");
+        }
         break;
       default:
         throw std::invalid_argument("bad mode character");
@@ -233,7 +235,9 @@ class streambuf : public std::basic_streambuf<char> {
 
   /// Mundane destructor freeing the allocated resources
   ~streambuf() override {
-    if (write_buffer) delete[] write_buffer;
+    if (write_buffer) {
+      delete[] write_buffer;
+    }
   }
 
   /// C.f. C++ standard section 27.5.2.4.3
@@ -243,7 +247,9 @@ class streambuf : public std::basic_streambuf<char> {
   std::streamsize showmanyc() override {
     int_type const failure = traits_type::eof();
     int_type status = underflow();
-    if (status == failure) return -1;
+    if (status == failure) {
+      return -1;
+    }
     return egptr() - gptr();
   }
 
@@ -268,7 +274,9 @@ class streambuf : public std::basic_streambuf<char> {
     pos_of_read_buffer_end_in_py_file += n_read;
     setg(read_buffer_data, read_buffer_data, read_buffer_data + n_read);
     // ^^^27.5.2.3.1 (4)
-    if (n_read == 0) return failure;
+    if (n_read == 0) {
+      return failure;
+    }
     return traits_type::to_int_type(read_buffer_data[0]);
   }
 
@@ -335,10 +343,16 @@ class streambuf : public std::basic_streambuf<char> {
     if (farthest_pptr && farthest_pptr > pbase()) {
       off_type delta = pptr() - farthest_pptr;
       int_type status = overflow();
-      if (traits_type::eq_int_type(status, traits_type::eof())) result = -1;
-      if (py_seek != bp::object()) py_seek(delta, 1);
+      if (traits_type::eq_int_type(status, traits_type::eof())) {
+        result = -1;
+      }
+      if (py_seek != bp::object()) {
+        py_seek(delta, 1);
+      }
     } else if (gptr() && gptr() < egptr()) {
-      if (py_seek != bp::object()) py_seek(gptr() - egptr(), 1);
+      if (py_seek != bp::object()) {
+        py_seek(gptr() - egptr(), 1);
+      }
     }
     return result;
   }
@@ -393,16 +407,21 @@ class streambuf : public std::basic_streambuf<char> {
         seekoff_without_calling_python(off, way, which);
     if (!result) {
       // we need to call Python
-      if (which == std::ios_base::out) overflow();
+      if (which == std::ios_base::out) {
+        overflow();
+      }
       if (way == std::ios_base::cur) {
-        if (which == std::ios_base::in)
+        if (which == std::ios_base::in) {
           off -= egptr() - gptr();
-        else if (which == std::ios_base::out)
+        } else if (which == std::ios_base::out) {
           off += pptr() - pbase();
+        }
       }
       py_seek(off, whence);
       result = off_type(bp::extract<off_type>(py_tell()));
-      if (which == std::ios_base::in) underflow();
+      if (which == std::ios_base::in) {
+        underflow();
+      }
     }
     return *result;
   }
@@ -475,13 +494,16 @@ class streambuf : public std::basic_streambuf<char> {
     }
 
     // if the sought position is not in the buffer, give up
-    if (buf_sought < buf_begin || buf_sought >= upper_bound) return failure;
+    if (buf_sought < buf_begin || buf_sought >= upper_bound) {
+      return failure;
+    }
 
     // we are in wonderland
-    if (which == std::ios_base::in)
+    if (which == std::ios_base::in) {
       gbump(buf_sought - buf_cur);
-    else if (which == std::ios_base::out)
+    } else if (which == std::ios_base::out) {
       pbump(buf_sought - buf_cur);
+    }
     return pos_of_buffer_end_in_py_file + (buf_sought - buf_end);
   }
 
@@ -509,7 +531,9 @@ class streambuf : public std::basic_streambuf<char> {
     }
 
     ~ostream() override {
-      if (this->good()) this->flush();
+      if (this->good()) {
+        this->flush();
+      }
     }
   };
 };

@@ -38,7 +38,9 @@ class RDKIT_QUERY_EXPORT XOrQuery
         }
       }
     }
-    if (this->getNegation()) res = !res;
+    if (this->getNegation()) {
+      res = !res;
+    }
     return res;
   }
 

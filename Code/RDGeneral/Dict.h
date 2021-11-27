@@ -70,7 +70,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     if (!preserveExisting) {
       *this = other;
     } else {
-      if (other._hasNonPodData) _hasNonPodData = true;
+      if (other._hasNonPodData) {
+        _hasNonPodData = true;
+      }
       for (size_t i = 0; i < other._data.size(); ++i) {
         const Pair &pair = other._data[i];
         Pair *target = nullptr;
@@ -144,7 +146,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   //!        key.
   bool hasVal(const std::string &what) const {
     for (const auto &data : _data) {
-      if (data.key == what) return true;
+      if (data.key == what) {
+        return true;
+      }
     }
     return false;
   }
