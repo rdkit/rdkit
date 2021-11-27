@@ -484,6 +484,10 @@ struct tautomer_wrapper {
         .def_readonly(
             "tautomerScoreVersion",
             MolStandardize::TautomerScoringFunctions::tautomerScoringVersion);
+    python::def("GetV1TautomerEnumerator",
+                MolStandardize::getV1TautomerEnumerator,
+                "return a TautomerEnumerator using v1 of the enumeration rules",
+                python::return_value_policy<python::manage_new_object>());
   }
 };
 

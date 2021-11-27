@@ -16,6 +16,7 @@ namespace RDKit {
 namespace MolStandardize {
 
 #include "tautomerTransforms.in"
+#include "tautomerTransforms.v1.in"
 
 TautomerCatalogParams::TautomerCatalogParams(const std::string &tautomerFile) {
   d_transforms.clear();
@@ -26,8 +27,7 @@ TautomerCatalogParams::TautomerCatalogParams(const std::string &tautomerFile) {
   }
 }
 TautomerCatalogParams::TautomerCatalogParams(
-    const std::vector<
-        std::tuple<std::string, std::string, std::string, std::string>> &data) {
+    const TautomerTransformDefs &data) {
   d_transforms.clear();
   d_transforms = readTautomers(data);
 }
