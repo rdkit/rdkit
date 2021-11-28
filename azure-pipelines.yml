@@ -16,15 +16,15 @@ jobs:
     python_name: python38
   steps:
   - template: .azure-pipelines/linux_build.yml
-- job: macOS_10_13_x64
+- job: macOS_x64
   timeoutInMinutes: 90
   pool:
-    vmImage: macos-10.14
+    vmImage: macos-latest
   variables:
     compiler: clangxx_osx-64
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: sysctl -n hw.ncpu
-    python_name: python37
+    python_name: python38
     target_platform: 10.9
   steps:
   - template: .azure-pipelines/mac_build.yml
@@ -61,15 +61,15 @@ jobs:
     python_name: python37
   steps:
   - template: .azure-pipelines/linux_build_java.yml
-- job: macOS_10_13_x64_java
+- job: macOS_x64_java
   timeoutInMinutes: 90
   pool:
-    vmImage: macos-10.14
+    vmImage: macos-latest
   variables:
     compiler: clangxx_osx-64
-    boost_version: 1.67.0
+    boost_version: 1.71.0
     number_of_cores: sysctl -n hw.ncpu
-    python_name: python37
+    python_name: python38
     target_platform: 10.9
   steps:
   - template: .azure-pipelines/mac_build_java.yml
