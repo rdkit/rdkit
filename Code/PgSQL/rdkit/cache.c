@@ -301,7 +301,7 @@ createCache(void *cache, struct MemoryContextData * ctx)
 
   if (cache != NULL) {
     ac = (ValueCache*)cache;
-    if (ac->ctx != ctx) {
+    if (ac->magickNumber != MAGICKNUMBER || ac->ctx != ctx) {
       elog(ERROR, "We can't use our approach with cache :(");
     }
   }
@@ -530,7 +530,7 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
     ac->entries[0]
       = ac->head
       = ac->tail
-      = MemoryContextAllocZero(ctx, sizeof(ValueCacheEntry));
+      = MemoryContextAllocZero(ac->ctx, sizeof(ValueCacheEntry));
     ac->nentries = 1;
     makeEntry(ac, ac->head, a, kind);
     fetchData(ac, ac->head, detoasted, internal, sign);
@@ -580,7 +580,7 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
      */
     entry
       = ac->entries[ac->nentries]
-      = MemoryContextAllocZero(ctx, sizeof(ValueCacheEntry));
+      = MemoryContextAllocZero(ac->ctx, sizeof(ValueCacheEntry));
 
     /* install first */
     entry->next = ac->head;
