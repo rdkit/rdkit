@@ -169,8 +169,7 @@ std::vector<TautomerTransform> readTautomers(std::istream& inStream,
 }
 
 std::vector<TautomerTransform> readTautomers(
-    const std::vector<
-        std::tuple<std::string, std::string, std::string, std::string>>& data) {
+    const TautomerTransformDefs& data) {
   std::vector<TautomerTransform> tautomers;
   for (const auto& tpl : data) {
     auto transform = getTautomer(std::get<0>(tpl), std::get<1>(tpl),

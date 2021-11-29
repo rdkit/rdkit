@@ -2488,7 +2488,6 @@ M  ALS   4  2 F C   N
 M  ALS   5  2 F C   N   
 M  ALS   6  2 F C   N   
 M  END
-
 )CTAB"_ctab;
   TEST_ASSERT(core);
 
@@ -2501,9 +2500,131 @@ M  END
   auto core_mol_block = MolToMolBlock(*rows[0]["Core"]);
   auto pos = core_mol_block.find("ALS");
   TEST_ASSERT(pos == std::string::npos);
-  std::string expected("Core:c1cc([*:2])ncc1[*:1] R1:Cl[*:1] R2:C1CCN([*:2])C1");
+  std::string expected(
+      "Core:c1cc([*:2])ncc1[*:1] R1:Cl[*:1] R2:C1CCN([*:2])C1");
   RGroupRows::const_iterator it = rows.begin();
   CHECK_RGROUP(it, expected);
+}
+
+void testAlignOutputCoreToMolecule() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that output core is aligned to input molecule"
+                       << std::endl;
+  struct Helper {
+    static RDGeom::Point3D findPointForAtomNumber(const ROMol &mol,
+                                                  int atomNumber) {
+      for (const auto atom : mol.atoms()) {
+        if (atom->getAtomicNum() == atomNumber) {
+          return mol.getConformer().getAtomPos(atom->getIdx());
+        }
+      }
+      throw std::runtime_error("Can't find atom in molecule");
+    }
+  };
+
+  auto core = R"CTAB(
+  Mrv2008 11162112382D
+
+ 15 16  0  0  0  0            999 V2000
+  -13.4365    2.6419    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.0116    1.9347    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.1867    1.9491    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -11.7867    2.6706    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.2116    3.3778    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.0365    3.3634    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.9618    2.6850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.5619    3.4066    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.7370    3.4210    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.5369    1.9779    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.3121    4.1282    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.3370    2.6994    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.5121    2.6850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.0873    3.3922    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.4872    4.1138    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  3  4  2  0  0  0  0
+  5  6  2  0  0  0  0
+  4  5  1  0  0  0  0
+  2  3  1  0  0  0  0
+  1  6  1  0  0  0  0
+  4  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  7 10  2  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 14  2  0  0  0  0
+ 14 15  1  0  0  0  0
+ 11 15  2  0  0  0  0
+ 11  9  1  0  0  0  0
+  9 12  2  0  0  0  0
+M  END
+      )CTAB"_ctab;
+  auto mol = R"CTAB(
+  -OEChem-03051316302D
+  
+ 19 21  0     0  0  0  0  0  0999 V2000
+   -1.7593    5.0073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6211    4.4999    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6183    3.4999    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7450    3.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8744    3.5045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8860    4.5096    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7423    2.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6070    1.4999    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8750    1.5045    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8723    0.5045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0013   -1.0057    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8697   -1.5068    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7364   -1.0079    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7377   -0.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6056    0.5056    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4735   -0.0022    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4735   -1.0079    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6056   -1.5057    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  6  2  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  4  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+  7  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 15  2  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 14  2  0  0  0  0
+ 14 19  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 16 17  2  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  2  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+  RGroupRows rows;
+  RGroupDecomposition decomp(*core);
+  TEST_ASSERT(decomp.add(*mol) == 0);
+  decomp.process();
+  rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  auto coreOut = rows[0]["Core"];
+
+  for (int atomNumber = 7; atomNumber <= 8; atomNumber++) {
+    const auto &coreInPoint = Helper::findPointForAtomNumber(*core, atomNumber);
+    const auto &molInPoint = Helper::findPointForAtomNumber(*mol, atomNumber);
+    const auto &coreOutPoint =
+        Helper::findPointForAtomNumber(*coreOut, atomNumber);
+    TEST_ASSERT(fabs(coreInPoint.x - molInPoint.x) > 0.25);
+    TEST_ASSERT(fabs(coreOutPoint.x - molInPoint.x) < 1e-10);
+    TEST_ASSERT(fabs(coreInPoint.y - molInPoint.y) > 0.25);
+    TEST_ASSERT(fabs(coreOutPoint.y - molInPoint.y) < 1e-10);
+  }
 }
 
 int main() {
@@ -2554,6 +2675,7 @@ int main() {
   testNoSideChains();
   testDoNotAddUnnecessaryRLabels();
   testCoreWithAlsRecords();
+  testAlignOutputCoreToMolecule();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
