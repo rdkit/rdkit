@@ -89,9 +89,6 @@ typedef struct ValueCache {
   ValueCacheEntry *head;
   ValueCacheEntry *tail;
   ValueCacheEntry *entries[NENTRIES];
-
-  void (*resetOrig) (MemoryContext context); /* unused */
-  void (*deleteOrig) (MemoryContext context); /* unused */
 } ValueCache;
 
 /*********** Managing LRU **********/
@@ -154,7 +151,7 @@ cmpDatum(Datum a, Datum b)
 
 /*
  * free the memory allocated by a cache entry to hold the
- * toasted, detoasted and expanded values (called when the
+ * toasted, detoasted and indexed values (called when the
  * cache is destroyed or the entry is reused)
  */
 static void
@@ -249,9 +246,10 @@ typedef struct CacheHolder {
 static CacheHolder *holder = NULL;
 
 static void
-cleanupRDKitCache(MemoryContext context)
+cleanupRDKitCache(void * ptr)
 {
   CacheHolder *h = holder, *p = NULL;
+  CacheHolder *target_holder = (CacheHolder *)ptr;
 
   /*
    * Find holder and clean non-postgres values.
@@ -259,17 +257,14 @@ cleanupRDKitCache(MemoryContext context)
    */
   while (h) {
 
-    if (h->ctx != context) {
-      /* holder is not related to the input context,
-       * move forward and continue
-       */
+    if (h != target_holder) {
       p = h;
       h = h->next;
       continue;
     }
 
     /* cleanup the cached data */
-    if (h->cache->ctx != context || h->cache->magickNumber != MAGICKNUMBER) {
+    if (h->cache->magickNumber != MAGICKNUMBER) {
       elog(WARNING, "Something wrong in cleanupRDKitCache");
     }
     else {
@@ -285,32 +280,13 @@ cleanupRDKitCache(MemoryContext context)
     if (p==NULL) {
       Assert( h == holder );
       holder = h->next;
-      free(h);
       h = holder;
     }
     else {
       p->next = h->next;
-      free(h);
       h = p->next;
     }
   }
-}
-
-MemoryContextMethods *methodsOrig = NULL;
-MemoryContextMethods methodsCache;
-
-static void
-resetCacheContext(MemoryContext context)
-{
-  cleanupRDKitCache(context);
-  methodsOrig->reset(context);
-}
-
-static void
-deleteCacheContext(MemoryContext context)
-{
-  cleanupRDKitCache(context);
-  methodsOrig->delete_context(context);
 }
 
 static ValueCache*
@@ -318,6 +294,7 @@ createCache(void *cache, struct MemoryContextData * ctx)
 {
   ValueCache *ac;
   CacheHolder *newholder;
+  MemoryContextCallback *ctxcb;
 
   if (cache != NULL) {
     ac = (ValueCache*)cache;
@@ -327,26 +304,12 @@ createCache(void *cache, struct MemoryContextData * ctx)
   }
 
   /*
-   * We need to add cleanup data to delete and reset of out memory context,
-   * for that we install new handlers, but we need to store old ones.
-   * HACK!: we believe that there is only single memory context type 
-   * in postgres 
-   */
-
-  /* define new methods */
-  if (!methodsOrig) {
-    methodsOrig = ctx->methods;
-    methodsCache = *methodsOrig;
-    methodsCache.reset = resetCacheContext;
-    methodsCache.delete_context = deleteCacheContext;
-  }
-
-  /*
    * Try to connect to existing cache!
    */
   newholder = holder;
-  while(newholder) {
+  while (newholder) {
     if (newholder->ctx == ctx) {
+      /* Note: this reassigns the passed cache argument */
       cache = (void*)newholder->cache;
       break;
     }
@@ -358,29 +321,30 @@ createCache(void *cache, struct MemoryContextData * ctx)
      * did not found a cache in current context, make new one
      */
     cache = MemoryContextAllocZero(ctx, sizeof(ValueCache));
+
+    /* init cache */
     ac = (ValueCache*) cache;
     ac->magickNumber = MAGICKNUMBER;
     ac->ctx = ctx;
     
-    newholder = malloc(sizeof(*newholder));
-    if (!newholder) {
-      elog(ERROR, "Could not allocate %ld bytes", sizeof(*newholder)); 
-    }
-    
+    newholder = MemoryContextAllocZero(ctx, sizeof(CacheHolder));
+
     /* init holder */
     newholder->ctx = ctx;
     newholder->cache = ac;
-    
-    if (!(ctx->methods == methodsOrig ||
-	  ctx->methods == &methodsCache /* already used for another cache */)) {
-        elog(ERROR, "We can't use our approache with cache :((");
-    }
-    
-    ctx->methods = &methodsCache;
 
     /* store holder */
     newholder->next = holder;
     holder = newholder;
+
+    /*
+     * register a context callback to cleanup this cache and
+     * unlink the holder
+     */
+    ctxcb = MemoryContextAlloc(ctx, sizeof(MemoryContextCallback));
+    ctxcb->func = cleanupRDKitCache;
+    ctxcb->arg = newholder;
+    MemoryContextRegisterResetCallback(ctx, ctxcb);
   }
 
   return (ValueCache*)cache;
@@ -548,7 +512,7 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
   ValueCacheEntry *entry;
 
   /*
-   * Fast check of recent used value 
+   * Fast check of most recently used value 
    */
   if (ac->head && cmpDatum(ac->head->toastedValue, a) == 0) {
     Assert( ac->head->kind == kind );
@@ -628,7 +592,7 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
   } 
   else {
     /*
-     * If the cache is full, discard the least recently used value (in tail
+     * If the cache is full, clear the least recently used value (in tail
      * position) and reuse the entry to place the new value in the head
      */
     cleanupData(ac->tail);
