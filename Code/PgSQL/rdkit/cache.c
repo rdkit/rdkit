@@ -249,36 +249,33 @@ static void
 cleanupRDKitCache(void * ptr)
 {
   CacheHolder *h = holder, *p = NULL;
-  CacheHolder *target_holder = (CacheHolder *)ptr;
+  CacheHolder *waste = (CacheHolder *)ptr;
+  bool removed = false;
 
-  /*
-   * Find holder and clean non-postgres values.
-   * Note, one context could contains several caches
-   */
+  /* cleanup the cached data */
+  if (waste->cache->magickNumber != MAGICKNUMBER) {
+    elog(WARNING, "Something wrong in cleanupRDKitCache");
+  }
+  else {
+    int i;
+
+    for (i = 0; i < waste->cache->nentries; i++) {
+      cleanupData(waste->cache->entries[i]);
+    }
+    waste->cache->nentries = 0;
+  }
+
+  /* Find holder and remove from the list */
   while (h) {
-
-    if (h != target_holder) {
+    if (h != waste) {
       p = h;
       h = h->next;
       continue;
     }
 
-    /* cleanup the cached data */
-    if (h->cache->magickNumber != MAGICKNUMBER) {
-      elog(WARNING, "Something wrong in cleanupRDKitCache");
-    }
-    else {
-      int i;
-
-      for (i=0;i<h->cache->nentries;i++) {
-        cleanupData(h->cache->entries[i]);
-      }
-      h->cache->nentries = 0;
-    }
-
     /* remove current holder from list */
-    if (p==NULL) {
-      Assert( h == holder );
+    if (p == NULL) {
+      Assert(h == holder);
       holder = h->next;
       h = holder;
     }
@@ -288,7 +285,12 @@ cleanupRDKitCache(void * ptr)
     }
 
     /* the target context was cleared, exit */
+    removed = true;
     break;
+  }
+
+  if (!removed) {
+    elog(WARNING, "Deallocated cache holder not found in list");
   }
 }
 
