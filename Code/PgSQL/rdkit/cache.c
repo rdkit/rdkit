@@ -286,6 +286,9 @@ cleanupRDKitCache(void * ptr)
       p->next = h->next;
       h = p->next;
     }
+
+    /* the target context was cleared, exit */
+    break;
   }
 }
 
