@@ -4150,7 +4150,7 @@ void testGithub4156() {
     outs.close();
     check_file_hash("testGithub4156_1.svg");
     // this is the start of the radical spot.
-    regex qry("<path d='M 58.[0-9]*,79.[0-9]* L 58.[0-9]*,79.[0-9]*");
+    regex qry("<path d='M 22.[0-9]*,75.[0-9]* L 22.[0-9]*,75.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
   {
@@ -4167,7 +4167,7 @@ void testGithub4156() {
     outs.close();
     check_file_hash("testGithub4156_2.svg");
     // this is the start of the radical spot.
-    regex qry("<path d='M 308.[0-9]*,79.[0-9]* L 308.[0-9]*,79.[0-9]*");
+    regex qry("<path d='M 272.[0-9]*,75.[0-9]* L 272.[0-9]*,75.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
 #endif
