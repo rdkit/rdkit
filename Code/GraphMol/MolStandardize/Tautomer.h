@@ -204,7 +204,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   TautomerEnumerator(const CleanupParameters &params = CleanupParameters());
   TautomerEnumerator(const TautomerEnumerator &other)
       : dp_catalog(other.dp_catalog),
-        d_callback(other.d_callback.get()),
+        d_callback(other.d_callback),
         d_maxTautomers(other.d_maxTautomers),
         d_maxTransforms(other.d_maxTransforms),
         d_removeSp3Stereo(other.d_removeSp3Stereo),
@@ -214,7 +214,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   TautomerEnumerator &operator=(const TautomerEnumerator &other) {
     if (this == &other) return *this;
     dp_catalog = other.dp_catalog;
-    d_callback.reset(other.d_callback.get());
+    d_callback = other.d_callback;
     d_maxTautomers = other.d_maxTautomers;
     d_maxTransforms = other.d_maxTransforms;
     d_removeSp3Stereo = other.d_removeSp3Stereo;
@@ -323,9 +323,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
 
   //! Deprecated, please use the form returning a \c TautomerEnumeratorResult
   //! instead
-  [[deprecated(
-      "please use the form returning a TautomerEnumeratorResult "
-      "instead")]] std::vector<ROMOL_SPTR>
+  [
+      [deprecated("please use the form returning a TautomerEnumeratorResult "
+                  "instead")]] std::vector<ROMOL_SPTR>
   enumerate(const ROMol &mol, boost::dynamic_bitset<> *modifiedAtoms,
             boost::dynamic_bitset<> *modifiedBonds = nullptr) const;
 
@@ -399,7 +399,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   bool setTautomerStereoAndIsoHs(const ROMol &mol, ROMol &taut,
                                  const TautomerEnumeratorResult &res) const;
   std::shared_ptr<TautomerCatalog> dp_catalog;
-  std::unique_ptr<TautomerEnumeratorCallback> d_callback;
+  std::shared_ptr<TautomerEnumeratorCallback> d_callback;
   unsigned int d_maxTautomers;
   unsigned int d_maxTransforms;
   bool d_removeSp3Stereo;
@@ -412,6 +412,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
 inline TautomerEnumerator *tautomerEnumeratorFromParams(
     const CleanupParameters &params) {
   return new TautomerEnumerator(params);
+}
+// caller owns the pointer
+inline TautomerEnumerator *getV1TautomerEnumerator() {
+  TautomerCatalogParams tparms(
+      MolStandardize::defaults::defaultTautomerTransformsv1);
+  return new TautomerEnumerator(new TautomerCatalog(&tparms));
 }
 
 }  // namespace MolStandardize
