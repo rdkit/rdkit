@@ -467,6 +467,11 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
                     << ", kek: " << MolToSmiles(*kekulized_product, true, true)
                     << std::endl;
 #endif
+          // BOOST_LOG(rdInfoLog)
+          //     << "Tautomer transform "
+          //     <<
+          //     transform.Mol->getProp<std::string>(common_properties::_Name)
+          //     << " produced tautomer " << tsmiles << std::endl;
           res.d_tautomers[tsmiles] = Tautomer(
               std::move(product), std::move(kekulized_product),
               res.d_modifiedAtoms.count(), res.d_modifiedBonds.count());

@@ -122,10 +122,6 @@ TautomerQuery::TautomerQuery(std::vector<ROMOL_SPTR> tautomers,
 
 TautomerQuery *TautomerQuery::fromMol(
     const ROMol &query, const std::string &tautomerTransformFile) {
-  auto tautomerFile = !tautomerTransformFile.empty()
-                          ? tautomerTransformFile
-                          : std::string(getenv("RDBASE")) +
-                                "/Data/MolStandardize/tautomerTransforms.in";
   auto tautomerParams = std::unique_ptr<MolStandardize::TautomerCatalogParams>(
       new MolStandardize::TautomerCatalogParams(tautomerTransformFile));
   MolStandardize::TautomerEnumerator tautomerEnumerator(

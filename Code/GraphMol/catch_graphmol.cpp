@@ -2302,7 +2302,7 @@ TEST_CASE("conformer details") {
   CHECK(conf->getId() == cid);
 }
 
-#if !defined(_MSC_VER) || !defined(RDKIT_DYN_LINK)
+#if !defined(_WIN32) || !defined(RDKIT_DYN_LINK)
 namespace RDKit {
 namespace Canon {
 namespace details {
