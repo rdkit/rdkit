@@ -61,9 +61,9 @@ void backTrack(RWMol &mol, INT_INT_DEQ_MAP &, int lastOpt, INT_VECT &done,
   done = tdone;
 }
 
-void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
-                    boost::dynamic_bitset<> &dBndCands, INT_VECT &questions,
-                    INT_VECT &done) {
+void markDbondCands(RWMol &mol, const VECT_INT_VECT &arings,
+                    const INT_VECT &allAtms, boost::dynamic_bitset<> &dBndCands,
+                    INT_VECT &questions, INT_VECT &done) {
   // ok this function does more than mark atoms that are candidates for
   // double bonds during kekulization
   // - check that a non-aromatic atom does not have any aromatic bonds
@@ -71,9 +71,9 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
   // - marks atoms that can take a double bond
 
   bool hasAromaticOrDummyAtom = false;
-  for (int allAtm : allAtms) {
-    if (mol.getAtomWithIdx(allAtm)->getIsAromatic() ||
-        !mol.getAtomWithIdx(allAtm)->getAtomicNum()) {
+  for (int ai : allAtms) {
+    const auto at = mol.getAtomWithIdx(ai);
+    if (at->getIsAromatic() || !at->getAtomicNum()) {
       hasAromaticOrDummyAtom = true;
       break;
     }
@@ -84,10 +84,24 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
   if (!hasAromaticOrDummyAtom) {
     return;
   }
-
+  // mark rings which are certainly aliphatic
+  boost::dynamic_bitset<> isRingAliphatic(mol.getRingInfo()->numRings());
+  unsigned int ri = 0;
+  for (const auto &aring : arings) {
+    for (auto ai : aring) {
+      const auto at = mol.getAtomWithIdx(ai);
+      if (!at->getIsAromatic() && at->getAtomicNum()) {
+        isRingAliphatic.set(ri);
+        break;
+      }
+    }
+    ++ri;
+  }
   std::vector<Bond *> makeSingle;
 
+  boost::dynamic_bitset<> inAllAtms(mol.getNumAtoms());
   for (int allAtm : allAtms) {
+    inAllAtms.set(allAtm);
     Atom *at = mol.getAtomWithIdx(allAtm);
 
     if (!at->getIsAromatic() && at->getAtomicNum()) {
@@ -117,14 +131,13 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
     unsigned nToIgnore = 0;
     RWMol::OEDGE_ITER beg, end;
     boost::tie(beg, end) = mol.getAtomBonds(at);
-    bool atHasNonArNonDummyNbr = false;
+    unsigned int nonArNonDummyNbr = 0;
     while (beg != end) {
       Bond *bond = mol[*beg];
       auto otherAt = bond->getOtherAtom(at);
       if (otherAt->getAtomicNum() && !otherAt->getIsAromatic() &&
-          std::find(allAtms.begin(), allAtms.end(), otherAt->getIdx()) !=
-              allAtms.end()) {
-        atHasNonArNonDummyNbr = true;
+          inAllAtms.test(otherAt->getIdx())) {
+        ++nonArNonDummyNbr;
       }
       if (bond->getIsAromatic() && (bond->getBondType() == Bond::SINGLE ||
                                     bond->getBondType() == Bond::DOUBLE ||
@@ -144,7 +157,11 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       ++beg;
     }
 
-    if (!at->getAtomicNum() && !atHasNonArNonDummyNbr) {
+    auto numAtomRings = mol.getRingInfo()->numAtomRings(at->getIdx());
+    if (!at->getAtomicNum() && nonArNonDummyNbr < numAtomRings &&
+        (numAtomRings > 1 ||
+         !isRingAliphatic.test(
+             mol.getRingInfo()->atomMembers(at->getIdx()).front()))) {
       // dummies always start as candidates to have a double bond:
       dBndCands[allAtm] = 1;
       // but they don't have to have one, so mark them as questionable:
@@ -473,7 +490,7 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   boost::dynamic_bitset<> dBndCands(nats);
   boost::dynamic_bitset<> dBndAdds(nbnds);
 
-  markDbondCands(mol, allAtms, dBndCands, questions, done);
+  markDbondCands(mol, arings, allAtms, dBndCands, questions, done);
 #if 0
       std::cerr << "candidates: ";
       for(int i=0;i<nats;++i) std::cerr << dBndCands[i];
@@ -563,14 +580,15 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
 
   // first find all the simple rings in the molecule that are not
   // completely composed of dummy atoms
-  VECT_INT_VECT allrings;
-  if (mol.getRingInfo()->isInitialized()) {
-    allrings = mol.getRingInfo()->atomRings();
-  } else {
-    MolOps::findSSSR(mol, allrings);
+  VECT_INT_VECT allringsSSSR;
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::findSSSR(mol, allringsSSSR);
   }
+  const VECT_INT_VECT &allrings =
+      allringsSSSR.empty() ? mol.getRingInfo()->atomRings() : allringsSSSR;
   VECT_INT_VECT arings;
   arings.reserve(allrings.size());
+  unsigned int ri;
   for (auto &ring : allrings) {
     bool ringOk = false;
     for (auto ai : ring) {
