@@ -1566,7 +1566,9 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   // that everything be working in original coords.  drawMolecules()
   // passes through setupDrawMolecule twice, once to set the global
   // scale, then to actually do the drawing.  It's essential that
-  // all the drawing scaling is set to initial values for this.
+  // all the drawing scaling is set to initial values for this, so
+  // save the current values before resetting them.  This is relevant
+  // principally for when drawMolecules sets the global scale.
   double curr_scale = scale_;
   scale_ = 1.0;
   double curr_font_scale = text_drawer_->fontScale();
@@ -2134,10 +2136,6 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
       double ang = start_ang + i * 30.0 * M_PI / 180.0;
       annot.rect_.trans_.x = at_cds.x + cos(ang) * note_rad;
       annot.rect_.trans_.y = at_cds.y + sin(ang) * note_rad;
-      // NB: we only ever use tr.trans_ for the position of the string,
-      // and tr.clash_score_ to return the type of clash.  It would be clearer
-      // to pass in a const Point2D instead, and return the clash score.
-      // doesAtomNoteClash expects the position to be in draw coords
       Point2D note_pos = getAtomCoords(make_pair(annot.rect_.trans_.x, annot.rect_.trans_.y));
       int clash_score = doesAtomNoteClash(note_pos, rects, mol, atom->getIdx());
       if (!clash_score) {
