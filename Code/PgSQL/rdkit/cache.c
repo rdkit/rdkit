@@ -151,8 +151,9 @@ cmpDatum(Datum a, Datum b)
 
 /*
  * free the memory allocated by a cache entry to hold the
- * toasted, detoasted and indexed values (called when the
- * cache is destroyed or the entry is reused)
+ * toasted, detoasted and signature values (called when the
+ * cache is destroyed or if the entry is reused for a new
+ * value)
  */
 static void
 cleanupData(ValueCacheEntry *entry)
@@ -228,6 +229,7 @@ makeEntry(ValueCache *ac, ValueCacheEntry *entry, Datum value, EntryKind kind)
 	 DATUMSIZE(value));
 }
 
+/* a comparison operator to sort the entries in ValueCache */
 static int
 cmpEntry(const void *a, const void *b)
 {
@@ -245,35 +247,40 @@ typedef struct CacheHolder {
 
 static CacheHolder *holder = NULL;
 
+/*
+ * A memory context callback. This function is registered to be
+ * automatically called on a CacheHolder when the associated
+ * memory context is reset or destroyed.
+ */
 static void
 cleanupRDKitCache(void * ptr)
 {
   CacheHolder *h = holder, *p = NULL;
-  CacheHolder *waste = (CacheHolder *)ptr;
+  CacheHolder *holder_arg = (CacheHolder *)ptr;
   bool removed = false;
 
   /* cleanup the cached data */
-  if (waste->cache->magickNumber != MAGICKNUMBER) {
+  if (holder_arg->cache->magickNumber != MAGICKNUMBER) {
     elog(WARNING, "Something wrong in cleanupRDKitCache");
   }
   else {
     int i;
 
-    for (i = 0; i < waste->cache->nentries; i++) {
-      cleanupData(waste->cache->entries[i]);
+    for (i = 0; i < holder_arg->cache->nentries; i++) {
+      cleanupData(holder_arg->cache->entries[i]);
     }
-    waste->cache->nentries = 0;
+    holder_arg->cache->nentries = 0;
   }
 
-  /* Find holder and remove from the list */
+  /* Find the holder and remove it from the list */
   while (h) {
-    if (h != waste) {
+    if (h != holder_arg) {
       p = h;
       h = h->next;
       continue;
     }
 
-    /* remove current holder from list */
+    /* h == holder_arg, remove from the list */
     if (p == NULL) {
       Assert(h == holder);
       holder = h->next;
@@ -284,7 +291,7 @@ cleanupRDKitCache(void * ptr)
       h = p->next;
     }
 
-    /* the target context was cleared, exit */
+    /* done, exit */
     removed = true;
     break;
   }
