@@ -31,7 +31,7 @@ class DrawTextFTCairo : public DrawTextFT {
   int CubicToFunctionImpl(const FT_Vector *controlOne,
                           const FT_Vector *controlTwo,
                           const FT_Vector *to) override;
-  void setCairoContext(cairo_t *cr) { dp_cr_ = cr; };
+  void setCairoContext(cairo_t *cr);
 
  protected:
   // adds x_trans_ and y_trans_ to coords returns x advance distance

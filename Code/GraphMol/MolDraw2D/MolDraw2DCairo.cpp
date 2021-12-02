@@ -42,6 +42,17 @@ void MolDraw2DCairo::initDrawing() {
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
   if (!text_drawer_) {
     initTextDrawer(df_noFreetype);
+  } else {
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    if (df_noFreetype) {
+      dynamic_cast<DrawTextCairo *>(text_drawer_.get())->setCairoContext(dp_cr);
+    } else {
+      dynamic_cast<DrawTextFTCairo *>(text_drawer_.get())
+          ->setCairoContext(dp_cr);
+    }
+#else
+    dynamic_cast<DrawTextCairo *>(text_drawer_.get())->setCairoContext(dp_cr);
+#endif
   }
 }
 

@@ -3828,17 +3828,29 @@ M  END
     check_file_hash("testFlexiCanvas.2.svg");
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-  SECTION("square PNG") {
-    MolDraw2DCairo drawer(-1, -1, -1, -1, 1);
+  SECTION("square PNG no freetype") {
+    MolDraw2DCairo drawer(-1, -1, -1, -1, true);
     drawer.drawOptions().baseFontSize = 0.8;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
     std::cerr << drawer.fontSize() << std::endl;
     auto text = drawer.getDrawingText();
-    std::ofstream outs("testFlexiCanvas.2.png");
+    std::ofstream outs("testFlexiCanvas.2a.png");
     outs << text;
     outs.flush();
-    check_file_hash("testFlexiCanvas.2.png");
+    check_file_hash("testFlexiCanvas.2a.png");
+  }
+  SECTION("square PNG with freetype") {
+    MolDraw2DCairo drawer(-1, -1, -1, -1, false);
+    drawer.drawOptions().baseFontSize = 0.8;
+    drawer.drawMolecule(*mol2);
+    drawer.finishDrawing();
+    std::cerr << drawer.fontSize() << std::endl;
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.2b.png");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.2b.png");
   }
 #endif
   SECTION("reaction") {
