@@ -2411,8 +2411,9 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
         annot.text_ = note;
         calcAnnotationPosition(mol, atom, annot);
         if (annot.rect_.width_ < 0.0) {
-          cerr << "Couldn't find good place for note " << note << " for atom "
-               << atom->getIdx() << endl;
+          BOOST_LOG(rdWarningLog) << "Couldn't find good place for note "
+                                  << note << " for atom " << atom->getIdx()
+                                  << endl;
         } else {
           annotations_[activeMolIdx_].push_back(annot);
         }
@@ -2446,7 +2447,8 @@ void MolDraw2D::extractMolNotes(const ROMol &mol) {
     annot.scaleText_ = false;
     calcAnnotationPosition(mol, annot);
     if (annot.rect_.width_ < 0.0) {
-      cerr << "Couldn't find good place for molecule note " << note << endl;
+      BOOST_LOG(rdWarningLog) << "Couldn't find good place for molecule note "
+                              << note << endl;
     } else {
       annotations_[activeMolIdx_].push_back(annot);
     }
@@ -2467,8 +2469,9 @@ void MolDraw2D::extractBondNotes(const ROMol &mol) {
         annot.text_ = note;
         calcAnnotationPosition(mol, bond, annot);
         if (annot.rect_.width_ < 0.0) {
-          cerr << "Couldn't find good place for note " << note << " for bond "
-               << bond->getIdx() << endl;
+          BOOST_LOG(rdWarningLog) << "Couldn't find good place for note "
+                                  << note << " for bond " << bond->getIdx()
+                                  << endl;
         } else {
           annotations_[activeMolIdx_].push_back(annot);
         }
