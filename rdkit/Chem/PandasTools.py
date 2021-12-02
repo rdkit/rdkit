@@ -158,20 +158,17 @@ except Exception as e:
   traceback.print_exc()
   pd = None
 
-if pd:
-  try:
-    from pandas.io.formats import format as fmt
-  except:
-    try:
-      from pandas.formats import format as fmt
-    except ImportError:
-      from pandas.core import format as fmt  # older versions
-else:
-  fmt = 'Pandas not available'
-
 highlightSubstructures = True
 molRepresentation = 'png'  # supports also SVG
 molSize = (200, 200)
+
+
+def getAdjustmentAttr():
+  # Github #3701 was a problem with a private function being renamed (made public) in
+  # pandas v1.2. Rather than relying on version numbers we just use getattr:
+  return ((hasattr(pd.io.formats.format, '_get_adjustment') and '_get_adjustment') or
+    (hasattr(pd.io.formats.format, 'get_adjustment') and 'get_adjustment') or
+    None)
 
 
 def _patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
@@ -195,23 +192,17 @@ def patchPandasrepr(self, **kwargs):
   global defHTMLFormatter_write_cell
   global defPandasGetAdjustment
 
-  import pandas.io.formats.html  # necessary for loading HTMLFormatter
-  defHTMLFormatter_write_cell = pandas.io.formats.html.HTMLFormatter._write_cell
-  pandas.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-  # Github #3701 was a problem with a private function being renamed (made public) in
-  # pandas v1.2. Rather than relying on version numbers we just use getattr:
-  if hasattr(pandas.io.formats.format, '_get_adjustment'):
-    attr = '_get_adjustment'
-  else:
-    # if this one doesn't work at some point in the future it's another bug
-    # and we'll add another patch for it. <sigh>
-    attr = 'get_adjustment'
+  defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+  pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
 
-  defPandasGetAdjustment = getattr(pandas.io.formats.format, attr)
-  setattr(pandas.io.formats.format, attr, _patched_get_adjustment)
+  get_adjustment_attr = getAdjustmentAttr()
+  if get_adjustment_attr:
+    defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
+    setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
   res = defPandasRepr(self, **kwargs)
-  setattr(pandas.io.formats.format, attr, defPandasGetAdjustment)
-  pandas.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+  if get_adjustment_attr:
+    setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
+  pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
   return res
 
 
@@ -238,11 +229,12 @@ def patchPandasHTMLrepr(self, **kwargs):
   except:
     # this happens up until at least pandas v0.22
     return patch_v1()
-  else:
-    if not hasattr(pd.io.formats.html, 'HTMLFormatter') or \
-      not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or \
-      not hasattr(pd.io.formats.format, '_get_adjustment'):
-      return patch_v1()
+  get_adjustment_attr = getAdjustmentAttr()
+
+  if (not hasattr(pd.io.formats.html, 'HTMLFormatter') or
+    not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or
+    not get_adjustment_attr):
+    return patch_v1()
 
   # The "clean" patch:
   # 1. Temporarily set escape=False in HTMLFormatter._write_cell
@@ -256,18 +248,18 @@ def patchPandasHTMLrepr(self, **kwargs):
   #    be truncated.
 
   # store original _get_adjustment method
-  defPandasGetAdjustment = pd.io.formats.format._get_adjustment
+  defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
 
   try:
     # patch methods and call original to_html function
-    pd.io.formats.format._get_adjustment = _patched_get_adjustment
+    setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
     pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
     return defPandasRendering(self, **kwargs)
   except:
     pass
   finally:
     # restore original methods
-    pd.io.formats.format._get_adjustment = defPandasGetAdjustment
+    setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
     pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
 
   # If this point is reached, an error occurred in the previous try block.

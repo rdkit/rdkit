@@ -365,6 +365,12 @@ chlorine	[Cl]
 
     enumerator = rdMolStandardize.TautomerEnumerator()
     res68 = enumerator.Enumerate(m68)
+    self.assertEqual(len(res68), 252)
+    self.assertEqual(len(res68.tautomers), len(res68))
+    self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
+
+    enumerator = rdMolStandardize.GetV1TautomerEnumerator()
+    res68 = enumerator.Enumerate(m68)
     self.assertEqual(len(res68), 292)
     self.assertEqual(len(res68.tautomers), len(res68))
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
@@ -550,9 +556,9 @@ chlorine	[Cl]
     res68 = enumerator.Enumerate(m68)
     # either the enumeration completed
     # or it ran very slowly and was canceled due to timeout
-    hasReachedTimeout = (len(res68.tautomers) < 375
+    hasReachedTimeout = (len(res68.tautomers) < 295
                          and res68.status == rdMolStandardize.TautomerEnumeratorStatus.Canceled)
-    hasCompleted = (len(res68.tautomers) == 375
+    hasCompleted = (len(res68.tautomers) == 295
                     and res68.status == rdMolStandardize.TautomerEnumeratorStatus.Completed)
     if hasReachedTimeout:
       print("Enumeration was canceled due to timeout (10 s)", file=sys.stderr)
@@ -566,6 +572,15 @@ chlorine	[Cl]
       enumerator.SetCallback(MyBrokenCallback())
     with self.assertRaises(AttributeError):
       enumerator.SetCallback(MyBrokenCallback2())
+
+    # GitHub #4736
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    enumerator.SetCallback(MyTautomerEnumeratorCallback(self, 50.0))
+    enumerator_copy = rdMolStandardize.TautomerEnumerator(enumerator)
+    res68 = enumerator.Enumerate(m68)
+    res68_copy = enumerator_copy.Enumerate(m68)
+    self.assertTrue(res68.status == res68_copy.status)
+
 
   def test17PickCanonicalCIPChangeOnChiralCenter(self):
 

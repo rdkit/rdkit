@@ -29,6 +29,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
@@ -2658,7 +2659,15 @@ A note on the flags controlling which atoms/bonds are modified:
         "DetectChemistryProblems", detectChemistryProblemsHelper,
         (python::arg("mol"), python::arg("sanitizeOps") = MolOps::SANITIZE_ALL),
         docString.c_str());
-  };
+    python::def("SetGenericQueriesFromProperties",
+                GenericGroups::setGenericQueriesFromProperties,
+                (python::arg("mol"), python::arg("useAtomLabels") = true,
+                 python::arg("useSGroups") = true),
+                "documentation");
+    python::def("ConvertGenericQueriesToSubstanceGroups",
+                GenericGroups::convertGenericQueriesToSubstanceGroups,
+                python::arg("mol"), "documentation");
+  }
 };
 }  // namespace RDKit
 
