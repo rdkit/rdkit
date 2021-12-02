@@ -55,7 +55,7 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   double minFontSize() const;
   void setMinFontSize(double new_max);
   double fontScale() const;
-  void setFontScale(double new_scale);
+  void setFontScale(double new_scale, bool ignoreExtremes=false);
 
   // these are only relevant for the FreeType DrawText classes.
   virtual std::string getFontFile() const { return ""; }
@@ -76,11 +76,17 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   void getStringExtremes(const std::string &label, OrientType orient,
                          double &x_min, double &y_min, double &x_max,
                          double &y_max, bool dontSplit = false) const;
+  // get the rectangles that go round each character of the string.  If
+  // dontSplit is false, it assumes it's an atom label and splits it
+  // in a sensible way for that.  If the OrientType is C, it applies
+  // textAlign, otherwise the text is aligned set appropriately for the
+  // OrientType.
   void getStringRects(const std::string &text, OrientType orient,
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
                       std::vector<char> &draw_chars,
-                      bool dontSplit = false) const;
+                      bool dontSplit = false,
+                      TextAlignType textAlign = TextAlignType::MIDDLE) const;
 
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
@@ -105,7 +111,8 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   // puts a colourful rectangle around each character in the string.
   // For debugging, mostly.
   void drawStringRects(const std::string &label, OrientType orient,
-                       const Point2D &cds, MolDraw2D &mol_draw) const;
+                       TextAlignType talign, const Point2D &cds,
+                       MolDraw2D &mol_draw) const;
 
   // cds in draw coords
   // does the label at cds intersect the given StringRect.

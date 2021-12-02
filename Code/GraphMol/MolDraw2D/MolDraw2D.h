@@ -820,17 +820,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                         const std::map<int, double> *highlight_radii,
                         Point2D &centre, double &xradius,
                         double &yradius) const;
-  // StringRect will have a width of -1.0 if there's a problem.
-  StringRect calcAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                    const std::string &note);
-  StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond,
-                                    const std::string &note);
-  StringRect calcAnnotationPosition(const ROMol &mol, const std::string &note);
+  // annot.rect_ will have a width of -1.0 if there's a problem.
+  void calcAnnotationPosition(const ROMol &mol, const Atom *atom,
+                              AnnotationType &annot) const;
+  void calcAnnotationPosition(const ROMol &mol, const Bond *bond,
+                              AnnotationType &annot) const;
+  void calcAnnotationPosition(const ROMol &mol, AnnotationType &annot) const;
   // find where to put the given annotation around an atom.  Starting
   // search at angle start_ang, in degrees.
   void calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                  double start_ang, StringRect &rect,
-                                  const std::string &note);
+                                  double start_ang,
+                                  AnnotationType &annot) const;
 
   // draw 1 or more coloured line along bonds
   void drawHighlightedBonds(
@@ -869,27 +869,24 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // Returns angle in radians.
   double getNoteStartAngle(const ROMol &mol, const Atom *atom) const;
   // see if the note will clash with anything else drawn on the molecule.
-  // note_vec should have unit length.  note_rad is the radius along
-  // note_vec that the note will be drawn.
-  bool doesAtomNoteClash(StringRect &note_rect,
-                         const std::vector<std::shared_ptr<StringRect>> &rects,
-                         const ROMol &mol, unsigned int atom_idx);
-  bool doesBondNoteClash(StringRect &note_rect,
-                         const std::vector<std::shared_ptr<StringRect>> &rects,
-                         const ROMol &mol, const Bond *bond);
-  // does the note_vec form an unacceptably acute angle with one of the
-  // bonds from atom to its neighbours.
+  // Returns 0 if no clash, 1-3 if there is a clash, denoting what clashed.
+  int doesAtomNoteClash(const Point2D &note_pos,
+                        const std::vector<std::shared_ptr<StringRect>> &rects,
+                        const ROMol &mol, unsigned int atom_idx) const;
+  int doesBondNoteClash(const Point2D &note_pos,
+                        const std::vector<std::shared_ptr<StringRect>> &rects,
+                        const ROMol &mol, const Bond *bond) const;
   bool doesNoteClashNbourBonds(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects, const ROMol &mol,
       const Atom *atom) const;
   // does the note intersect with atsym, and if not, any other atom symbol.
   bool doesNoteClashAtomLabels(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects, const ROMol &mol,
       unsigned int atom_idx) const;
   bool doesNoteClashOtherNotes(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects) const;
 
   // take the coords for atnum, with neighbour nbr_cds, and move cds out to
