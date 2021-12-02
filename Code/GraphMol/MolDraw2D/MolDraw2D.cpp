@@ -1254,6 +1254,9 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
   }
   bool setHeight = false;
   if (height < 0) {
+    // we need to adjust the range for the legend
+    // if it's not present then legend_height_ will be zero and this will be a
+    // no-op
     y_range_ += legend_height_ / drawOptions().scalingFactor;
     height = drawOptions().scalingFactor * y_range_;
     height_ = height;
