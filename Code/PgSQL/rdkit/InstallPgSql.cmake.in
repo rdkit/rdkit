@@ -1,0 +1,30 @@
+if(@MSVC@)
+  set(cmd cmd /C "@installPgSQLNameBS@")
+else()
+  set(cmd bash "@installPgSQLName@")
+endif()
+execute_process(COMMAND ${cmd} OUTPUT_VARIABLE err ERROR_VARIABLE err RESULT_VARIABLE res)
+if(res)
+  message("\n"
+    "=====================================================================\n"
+    "PostgreSQL cartridge installation failed:\n"
+    "=====================================================================\n"
+    "${err}\n"
+    "=====================================================================\n"
+    "This might be due to insufficient privileges.\n"
+    "Check @installPgSQLName@\n"
+    "for correctness of installation paths. If everything is OK, gain \n"
+    "administrator privileges, stop the PostgreSQL service, run\n"
+    "@installPgSQLName@\n"
+    "to install the PostgreSQL RDKit cartridge, then start again\n"
+    "the PostgreSQL service.\n"
+    "=====================================================================\n")
+else()
+  message("\n"
+    "=====================================================================\n"
+    "PostgreSQL cartridge installation succeeded.\n"
+    "=====================================================================\n"
+    "Restart the PostgreSQL service before using the PostgreSQL\n"
+    "RDKit cartridge.\n"
+    "=====================================================================\n")
+endif()
