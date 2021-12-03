@@ -43,7 +43,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = true;
+static const bool DELETE_WITH_GOOD_HASH = false;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
@@ -166,6 +166,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4519_2.svg", 4128451715U},
     {"testGithub4519_3.svg", 3143183171U},
     {"testGithub4519_4.svg", 2778955700U},
+    {"testBaseFontSize.1a.svg", 3320817003U},
+    {"testBaseFontSize.1b.svg", 3012116483U},
+    {"testBaseFontSize.2a.svg", 1414782530U},
+    {"testBaseFontSize.2b.svg", 3343901828U},
     {"testFlexiCanvas.1a.svg", 2389719135U},
     {"testFlexiCanvas.1b.svg", 3402652480U},
     {"testFlexiCanvas.2.svg", 2700120816U},
@@ -3714,7 +3718,7 @@ M  END)CTAB"_ctab;
   }
 }
 
-#if 0
+#if 1
 TEST_CASE("changing baseFontSize") {
   auto mol1 =
       "CC(C)C[C@H](NC(=O)[C@H](CCCCN)NC(=O)[C@H](CS)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)[C@H](CC(C)C)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CS)NC(=O)[C@H](CCCCN)NC(=O)[C@H](C)NC(=O)[C@@H](NC(=O)[C@H](CS)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)[C@H](C)N)[C@@H](C)O)C(=O)O"_smiles;
@@ -3727,42 +3731,44 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    std::cerr << drawer.fontSize() << std::endl;
+    CHECK(drawer.fontSize() == Approx(6.0).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1a.svg");
     outs << text;
     outs.flush();
     check_file_hash("testBaseFontSize.1a.svg");
   }
-  SECTION("basics-small") {
+  SECTION("increase size - large") {
+    // here we change the base font size, but it doesn't matter since the
+    // structure is big enough we end up stuck with the minimum font size.
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
-    drawer.drawMolecule(*mol2);
+    drawer.setBaseFontSize(0.9);
+    drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    std::cerr << drawer.fontSize() << std::endl;
+    CHECK(drawer.fontSize() == Approx(6.0).margin(.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1b.svg");
     outs << text;
     outs.flush();
     check_file_hash("testBaseFontSize.1b.svg");
   }
-  SECTION("increase size - large") {
+  SECTION("basics-small") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
-    drawer.setBaseFontSize(1.2);
-    drawer.drawMolecule(*mol1);
+    drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    std::cerr << drawer.fontSize() << std::endl;
+    CHECK(drawer.fontSize() == Approx(16).margin(0.3));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2a.svg");
     outs << text;
     outs.flush();
     check_file_hash("testBaseFontSize.2a.svg");
   }
-  SECTION("increase size - smalle") {
+  SECTION("increase size - smaller") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
-    drawer.setBaseFontSize(1.2);
+    drawer.setBaseFontSize(0.9);
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    std::cerr << drawer.fontSize() << std::endl;
+    CHECK(drawer.fontSize() == Approx(22).margin(0.3));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;
@@ -3822,6 +3828,18 @@ M  END
     outs << text;
     outs.flush();
     check_file_hash("testFlexiCanvas.1b.svg");
+  }
+  SECTION("flexicanvas2") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1, 1);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().baseFontSize = 0.6;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.1c.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.1c.svg");
   }
   SECTION("square") {
     MolDraw2DSVG drawer(-1, -1, -1, -1, 1);
