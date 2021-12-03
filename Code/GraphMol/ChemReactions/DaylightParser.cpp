@@ -1,6 +1,6 @@
-// $Id$
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -93,9 +93,20 @@ ROMol *constructMolFromString(const std::string &txt,
                               bool useSmiles) {
   ROMol *mol;
   if (!useSmiles) {
-    mol = SmartsToMol(txt, 0, false, replacements);
+    SmartsParserParams ps;
+    ps.replacements = replacements;
+    ps.allowCXSMILES = false;
+    ps.parseName = false;
+    ps.mergeHs = false;
+    mol = SmartsToMol(txt, ps);
   } else {
-    mol = SmilesToMol(txt, 0, false, replacements);
+    SmilesParserParams ps;
+    ps.replacements = replacements;
+    ps.allowCXSMILES = false;
+    ps.parseName = false;
+    ps.sanitize = false;
+    ps.removeHs = false;
+    mol = SmilesToMol(txt, ps);
   }
   return mol;
 }
@@ -140,6 +151,23 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
       DaylightParserUtils::splitSmartsIntoComponents(reactText);
   std::vector<std::string> productSmarts =
       DaylightParserUtils::splitSmartsIntoComponents(productText);
+
+  // if the input includes CX extensions, they will show up here after the
+  // last product. We can't currently deal with those, so issue a warning and
+  // strip out anything following the last productSmarts
+  // This was Github #4759
+  if (!productSmarts.empty()) {
+    auto &lastSmarts = productSmarts.back();
+    boost::trim(lastSmarts);
+    std::vector<std::string> tokens;
+    boost::split(tokens, lastSmarts, boost::is_any_of(" \t"));
+    if (tokens.size() > 1) {
+      auto fromWhat = useSmiles ? "SMILES" : "SMARTS";
+      BOOST_LOG(rdWarningLog)
+          << "stripping extra text from input " << fromWhat << std::endl;
+      lastSmarts = tokens[0];
+    }
+  }
 
   auto *rxn = new ChemicalReaction();
 
