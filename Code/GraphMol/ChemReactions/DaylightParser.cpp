@@ -161,6 +161,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     std::vector<std::string> tokens;
     boost::split(tokens, lastSmarts, boost::is_any_of(" \t"));
     if (tokens.size() > 1) {
+      BOOST_LOG(rdWarningLog)
+          << "stripping extra text from input data" << std::endl;
       lastSmarts = tokens[0];
     }
   }
