@@ -158,6 +158,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   // This was Github #4759
   if (!productSmarts.empty()) {
     auto &lastSmarts = productSmarts.back();
+    boost::trim(lastSmarts);
     std::vector<std::string> tokens;
     boost::split(tokens, lastSmarts, boost::is_any_of(" \t"));
     if (tokens.size() > 1) {
