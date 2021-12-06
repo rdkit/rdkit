@@ -1196,8 +1196,6 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
                                const std::vector<int> *highlight_atoms,
                                const std::map<int, double> *highlight_radii,
                                int confId) {
-  // PRECONDITION(width > 0, "bad width");
-  // PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
   // cout << "calculateScale  width = " << width << "  height = " << height

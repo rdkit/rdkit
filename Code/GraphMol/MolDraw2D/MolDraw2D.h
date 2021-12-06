@@ -366,7 +366,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   // their colour from the atoms
   double scalingFactor = 20.0;  // scaling factor used for pixels->angstroms
                                 // when auto scaling is being used
-  double baseFontSize = -1.0;   // FIX: explain this
+  double baseFontSize =
+      -1.0;  // when > 0 this is used to set the baseFontSize used for text
+             // drawing. As a reference point: the default value for
+             // DrawText::baseFontSize  is 0.6
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
