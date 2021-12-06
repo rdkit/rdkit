@@ -89,17 +89,15 @@ typedef struct ValueCache {
   ValueCacheEntry *head;
   ValueCacheEntry *tail;
   ValueCacheEntry *entries[NENTRIES];
-
-  void (*resetOrig) (MemoryContext context);
-  void (*deleteOrig) (MemoryContext context);
 } ValueCache;
 
 /*********** Managing LRU **********/
+/* move the most recently used value to the head */
 static void 
 moveFirst(ValueCache *ac, ValueCacheEntry *entry)
 {
   /*
-   * delete entry form a list
+   * unlink the entry from the list
    */
   Assert( entry != ac->head );
   
@@ -119,7 +117,7 @@ moveFirst(ValueCache *ac, ValueCacheEntry *entry)
   }
 
   /*
-   * Install into head 
+   * reinstall into head 
    */
 
   Assert( ac->head != NULL );
@@ -133,6 +131,12 @@ moveFirst(ValueCache *ac, ValueCacheEntry *entry)
 
 #define DATUMSIZE(d)    VARSIZE_ANY(DatumGetPointer(d)) 
 
+/* 
+ * define a comparison operator for the cached values.
+ * generally applied to the toasted data, to verify the
+ * equality of two values and to keep the cached entries
+ * sorted (see cmpEntries below).
+ */
 static int
 cmpDatum(Datum a, Datum b)
 {
@@ -145,6 +149,12 @@ cmpDatum(Datum a, Datum b)
   return (la > lb) ? 1 : -1;
 }
 
+/*
+ * free the memory allocated by a cache entry to hold the
+ * toasted, detoasted and signature values (called when the
+ * cache is destroyed or if the entry is reused for a new
+ * value)
+ */
 static void
 cleanupData(ValueCacheEntry *entry)
 {
@@ -198,10 +208,18 @@ cleanupData(ValueCacheEntry *entry)
   default:
     elog(ERROR, "Unknown kind: %d", entry->kind);
   }
-  
+
+  /* this function is called both when the memory context
+   * is reset or destroyed, and all the cached entries are
+   * discarded, but also when the least recently used value
+   * in the cache is replaced, to make space for a new one.
+   * to support this latter case, the prev/next pointers in
+   * the entry are not zeroed by the call to memset here below.
+   */
   memset(entry, 0, offsetof(ValueCacheEntry, prev));
 }
 
+/* assign a cache entry with the input toasted value and data kind */
 static void
 makeEntry(ValueCache *ac, ValueCacheEntry *entry, Datum value, EntryKind kind)
 {
@@ -211,6 +229,7 @@ makeEntry(ValueCache *ac, ValueCacheEntry *entry, Datum value, EntryKind kind)
 	 DATUMSIZE(value));
 }
 
+/* a comparison operator to sort the entries in ValueCache */
 static int
 cmpEntry(const void *a, const void *b)
 {
@@ -228,63 +247,58 @@ typedef struct CacheHolder {
 
 static CacheHolder *holder = NULL;
 
+/*
+ * A memory context callback. This function is registered to be
+ * automatically called on a CacheHolder when the associated
+ * memory context is reset or destroyed.
+ */
 static void
-cleanupRDKitCache(MemoryContext context)
+cleanupRDKitCache(void * ptr)
 {
   CacheHolder *h = holder, *p = NULL;
+  CacheHolder *holder_arg = (CacheHolder *)ptr;
+  bool removed = false;
 
-  /*
-   * Find holder and clean non-postgres values.
-   * Note, one context could contains several caches
-   */
+  /* cleanup the cached data */
+  if (holder_arg->cache->magickNumber != MAGICKNUMBER) {
+    elog(WARNING, "Something wrong in cleanupRDKitCache");
+  }
+  else {
+    int i;
+
+    for (i = 0; i < holder_arg->cache->nentries; i++) {
+      cleanupData(holder_arg->cache->entries[i]);
+    }
+    holder_arg->cache->nentries = 0;
+  }
+
+  /* Find the holder and remove it from the list */
   while (h) {
-    if (h->ctx == context) {
-      if (h->cache->ctx != context || h->cache->magickNumber != MAGICKNUMBER) {
-	elog(WARNING, "Something wrong in cleanupRDKitCache");
-      }
-      else {
-	int i;
-	
-	for (i=0;i<h->cache->nentries;i++) {
-	  cleanupData(h->cache->entries[i]);
-	}
-	h->cache->nentries = 0;
-      }
-
-      /* remove current holder from list */
-      if (p==NULL) {
-	holder = h->next;
-	free(h);
-	h = holder;
-      }
-      else {
-	p->next = h->next;
-	free(h);
-	h = p->next;
-      }
+    if (h != holder_arg) {
+      p = h;
+      h = h->next;
       continue;
     }
-    
-    p = h;
-    h = h->next;
+
+    /* h == holder_arg, remove from the list */
+    if (p == NULL) {
+      Assert(h == holder);
+      holder = h->next;
+      h = holder;
+    }
+    else {
+      p->next = h->next;
+      h = p->next;
+    }
+
+    /* done, exit */
+    removed = true;
+    break;
   }
-}
 
-MemoryContextMethods *methodsOrig = NULL;
-MemoryContextMethods methodsCache;
-
-static void
-resetCacheContext(MemoryContext context)
-{
-  cleanupRDKitCache(context);
-  methodsOrig->reset(context);
-}
-
-static void
-deleteCacheContext(MemoryContext context)
-{
-  cleanupRDKitCache(context);
-  methodsOrig->delete_context(context);
+  if (!removed) {
+    elog(WARNING, "Deallocated cache holder not found in list");
+  }
 }
 
 static ValueCache*
@@ -292,35 +306,22 @@ createCache(void *cache, struct MemoryContextData * ctx)
 {
   ValueCache *ac;
   CacheHolder *newholder;
+  MemoryContextCallback *ctxcb;
 
   if (cache != NULL) {
     ac = (ValueCache*)cache;
-    if (ac->ctx != ctx) {
+    if (ac->magickNumber != MAGICKNUMBER || ac->ctx != ctx) {
       elog(ERROR, "We can't use our approach with cache :(");
     }
-  }
-
-  /*
-   * We need to add cleanup data to delete and reset of out memory context,
-   * for that we install new handlers, but we need to store old ones.
-   * HACK!: we believe that there is only single memory context type 
-   * in postgres 
-   */
-
-  /* define new methods */
-  if (!methodsOrig) {
-    methodsOrig = ctx->methods;
-    methodsCache = *methodsOrig;
-    methodsCache.reset = resetCacheContext;
-    methodsCache.delete_context = deleteCacheContext;
   }
 
   /*
    * Try to connect to existing cache!
    */
   newholder = holder;
-  while(newholder) {
+  while (newholder) {
     if (newholder->ctx == ctx) {
+      /* Note: this reassigns the passed cache argument */
       cache = (void*)newholder->cache;
       break;
     }
@@ -332,29 +333,30 @@ createCache(void *cache, struct MemoryContextData * ctx)
      * did not found a cache in current context, make new one
      */
     cache = MemoryContextAllocZero(ctx, sizeof(ValueCache));
+
+    /* init cache */
     ac = (ValueCache*) cache;
     ac->magickNumber = MAGICKNUMBER;
     ac->ctx = ctx;
     
-    newholder = malloc(sizeof(*newholder));
-    if (!newholder) {
-      elog(ERROR, "Could not allocate %ld bytes", sizeof(*newholder)); 
-    }
-    
+    newholder = MemoryContextAllocZero(ctx, sizeof(CacheHolder));
+
     /* init holder */
     newholder->ctx = ctx;
     newholder->cache = ac;
-    
-    if (!(ctx->methods == methodsOrig ||
-	  ctx->methods == &methodsCache /* already used for another cache */)) {
-        elog(ERROR, "We can't use our approache with cache :((");
-    }
-    
-    ctx->methods = &methodsCache;
 
     /* store holder */
     newholder->next = holder;
     holder = newholder;
+
+    /*
+     * register a context callback to cleanup this cache and
+     * unlink the holder
+     */
+    ctxcb = MemoryContextAlloc(ctx, sizeof(MemoryContextCallback));
+    ctxcb->func = cleanupRDKitCache;
+    ctxcb->arg = newholder;
+    MemoryContextRegisterResetCallback(ctx, ctxcb);
   }
 
   return (ValueCache*)cache;
@@ -380,30 +382,30 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
   case MolKind:
     if (detoasted) {
       if (entry->detoasted.mol.value == NULL) {
-	Mol *detoastedMol;
-	
-	detoastedMol = DatumGetMolP(entry->toastedValue);
-	entry->detoasted.mol.value
-	  = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedMol));
-	memcpy(entry->detoasted.mol.value, detoastedMol, VARSIZE(detoastedMol));
+        Mol *detoastedMol;
+
+        detoastedMol = DatumGetMolP(entry->toastedValue);
+        entry->detoasted.mol.value
+          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedMol));
+        memcpy(entry->detoasted.mol.value, detoastedMol, VARSIZE(detoastedMol));
       }
       *detoasted = entry->detoasted.mol.value;
     }
 
     if (internal) {
       if (entry->detoasted.mol.mol == NULL) {
-	fetchData(ac, entry, &_tmp, NULL, NULL);
-	entry->detoasted.mol.mol = constructROMol(entry->detoasted.mol.value);
+        fetchData(ac, entry, &_tmp, NULL, NULL);
+        entry->detoasted.mol.mol = constructROMol(entry->detoasted.mol.value);
       }
       *internal = entry->detoasted.mol.mol;
     }
 
     if (sign) {
       if (entry->detoasted.mol.sign == NULL) {
-	fetchData(ac, entry, NULL, &_tmp, NULL);
-	old = MemoryContextSwitchTo( ac->ctx );
-	entry->detoasted.mol.sign = makeMolSignature(entry->detoasted.mol.mol);
-	MemoryContextSwitchTo(old);
+        fetchData(ac, entry, NULL, &_tmp, NULL);
+        old = MemoryContextSwitchTo( ac->ctx );
+        entry->detoasted.mol.sign = makeMolSignature(entry->detoasted.mol.mol);
+        MemoryContextSwitchTo(old);
       }
       *sign = entry->detoasted.mol.sign;
     }
@@ -411,32 +413,32 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
   case BfpKind:
     if (detoasted) {
       if (entry->detoasted.bfp.value == NULL) {
-	Bfp *detoastedFP;
-	
-	detoastedFP = DatumGetBfpP(entry->toastedValue);
-	entry->detoasted.bfp.value
-	  = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
-	memcpy(entry->detoasted.bfp.value, detoastedFP, VARSIZE(detoastedFP));
+        Bfp *detoastedFP;
+
+        detoastedFP = DatumGetBfpP(entry->toastedValue);
+        entry->detoasted.bfp.value
+          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
+        memcpy(entry->detoasted.bfp.value, detoastedFP, VARSIZE(detoastedFP));
       }
       *detoasted = entry->detoasted.bfp.value;
     }
 
     if (internal) {
       if (entry->detoasted.bfp.fp == NULL) {
-	fetchData(ac, entry, &_tmp, NULL, NULL);
-	entry->detoasted.bfp.fp
-	  = constructCBfp(entry->detoasted.bfp.value);
+        fetchData(ac, entry, &_tmp, NULL, NULL);
+        entry->detoasted.bfp.fp
+          = constructCBfp(entry->detoasted.bfp.value);
       }
       *internal = entry->detoasted.bfp.fp;
     }
 
     if (sign) {
       if (entry->detoasted.bfp.sign == NULL) {
-	fetchData(ac, entry, NULL, &_tmp, NULL);
-	old = MemoryContextSwitchTo( ac->ctx );
-	entry->detoasted.bfp.sign
-	  = makeBfpSignature(entry->detoasted.bfp.fp);
-	MemoryContextSwitchTo(old);
+        fetchData(ac, entry, NULL, &_tmp, NULL);
+        old = MemoryContextSwitchTo( ac->ctx );
+        entry->detoasted.bfp.sign
+          = makeBfpSignature(entry->detoasted.bfp.fp);
+        MemoryContextSwitchTo(old);
       }
       *sign = entry->detoasted.bfp.sign;
     }
@@ -444,32 +446,32 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
   case SfpKind:
     if (detoasted) { 
       if (entry->detoasted.sfp.value == NULL) {
-	Sfp *detoastedFP;
-	
-	detoastedFP = DatumGetSfpP(entry->toastedValue);
-	entry->detoasted.sfp.value
-	  = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
-	memcpy(entry->detoasted.sfp.value, detoastedFP, VARSIZE(detoastedFP));
+        Sfp *detoastedFP;
+
+        detoastedFP = DatumGetSfpP(entry->toastedValue);
+        entry->detoasted.sfp.value
+          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedFP));
+        memcpy(entry->detoasted.sfp.value, detoastedFP, VARSIZE(detoastedFP));
       }
       *detoasted = entry->detoasted.sfp.value;
     }
 
     if (internal) {
       if (entry->detoasted.sfp.fp == NULL) {
-	fetchData(ac, entry, &_tmp, NULL, NULL);
-	entry->detoasted.sfp.fp
-	  = constructCSfp(entry->detoasted.sfp.value);
+        fetchData(ac, entry, &_tmp, NULL, NULL);
+        entry->detoasted.sfp.fp
+          = constructCSfp(entry->detoasted.sfp.value);
       }
       *internal = entry->detoasted.sfp.fp;
     }
 
     if (sign) {
       if (entry->detoasted.sfp.sign == NULL) {
-	fetchData(ac, entry, NULL, &_tmp, NULL);
-	old = MemoryContextSwitchTo( ac->ctx );
-	entry->detoasted.sfp.sign
-	  = makeSfpSignature(entry->detoasted.sfp.fp, NUMBITS);
-	MemoryContextSwitchTo(old);
+        fetchData(ac, entry, NULL, &_tmp, NULL);
+        old = MemoryContextSwitchTo( ac->ctx );
+        entry->detoasted.sfp.sign
+          = makeSfpSignature(entry->detoasted.sfp.fp, NUMBITS);
+        MemoryContextSwitchTo(old);
       }
       *sign = entry->detoasted.sfp.sign;
     }
@@ -477,33 +479,33 @@ fetchData(ValueCache *ac, ValueCacheEntry *entry,
   case ReactionKind:
     if (detoasted) {
       if (entry->detoasted.reaction.value == NULL) {
-	Reaction *detoastedRxn;
-	
-	detoastedRxn = DatumGetReactionP(entry->toastedValue);
-	entry->detoasted.reaction.value
-	  = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedRxn));
-	memcpy(entry->detoasted.reaction.value, detoastedRxn,
-	       VARSIZE(detoastedRxn));
+        Reaction *detoastedRxn;
+
+        detoastedRxn = DatumGetReactionP(entry->toastedValue);
+        entry->detoasted.reaction.value
+          = MemoryContextAlloc( ac->ctx, VARSIZE(detoastedRxn));
+        memcpy(entry->detoasted.reaction.value, detoastedRxn,
+                VARSIZE(detoastedRxn));
       }
       *detoasted = entry->detoasted.reaction.value;
     }
     
     if (internal) {
       if (entry->detoasted.reaction.rxn == NULL) {
-	fetchData(ac, entry, &_tmp, NULL, NULL);
-	entry->detoasted.reaction.rxn
-	  = constructChemReact(entry->detoasted.reaction.value);
+        fetchData(ac, entry, &_tmp, NULL, NULL);
+        entry->detoasted.reaction.rxn
+          = constructChemReact(entry->detoasted.reaction.value);
       }
       *internal = entry->detoasted.reaction.rxn;
     }
     
     if (sign) {
       if (entry->detoasted.reaction.sign == NULL) {
-	fetchData(ac, entry, NULL, &_tmp, NULL);
-	old = MemoryContextSwitchTo( ac->ctx );
-	entry->detoasted.reaction.sign
-	  = makeReactionSign(entry->detoasted.reaction.rxn);
-	MemoryContextSwitchTo(old);
+        fetchData(ac, entry, NULL, &_tmp, NULL);
+        old = MemoryContextSwitchTo( ac->ctx );
+        entry->detoasted.reaction.sign
+          = makeReactionSign(entry->detoasted.reaction.rxn);
+        MemoryContextSwitchTo(old);
       }
       *sign = entry->detoasted.reaction.sign;
     }
@@ -522,7 +524,7 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
   ValueCacheEntry *entry;
 
   /*
-   * Fast check of recent used value 
+   * Fast check of most recently used value 
    */
   if (ac->head && cmpDatum(ac->head->toastedValue, a) == 0) {
     Assert( ac->head->kind == kind );
@@ -530,17 +532,23 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
     return cache;
   }
 
+  /*
+   * If the cache is empty, insert (and then return) the new value 
+   */
   if (ac->head == NULL) {
     ac->entries[0]
       = ac->head
       = ac->tail
-      = MemoryContextAllocZero(ctx, sizeof(ValueCacheEntry));
+      = MemoryContextAllocZero(ac->ctx, sizeof(ValueCacheEntry));
     ac->nentries = 1;
     makeEntry(ac, ac->head, a, kind);
     fetchData(ac, ac->head, detoasted, internal, sign);
     return cache;
   }
 
+  /*
+   * Do a binary search across the cached entries 
+   */
   do {
     ValueCacheEntry **StopLow = ac->entries;
     ValueCacheEntry **StopHigh = ac->entries + ac->nentries;
@@ -553,10 +561,14 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
       cmp = cmpDatum(entry->toastedValue, a); 
       
       if (cmp == 0) {
-	moveFirst(ac, entry);
-	Assert( ac->head->kind == kind );
-	fetchData(ac, ac->head, detoasted, internal, sign);
-	return cache;
+        /*
+         * If the value is found, move it to the head position
+         * and return it
+         */
+        moveFirst(ac, entry);
+        Assert( ac->head->kind == kind );
+        fetchData(ac, ac->head, detoasted, internal, sign);
+        return cache;
       }
       else if (cmp < 0) {
         StopLow = StopMiddle + 1;
@@ -572,9 +584,12 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
    */
 
   if (ac->nentries < NENTRIES) {
+    /*
+     * If the cache is not full, insert the new value in the head position
+     */
     entry
       = ac->entries[ac->nentries]
-      = MemoryContextAllocZero(ctx, sizeof(ValueCacheEntry));
+      = MemoryContextAllocZero(ac->ctx, sizeof(ValueCacheEntry));
 
     /* install first */
     entry->next = ac->head;
@@ -588,12 +603,21 @@ SearchValueCache(void *cache, struct MemoryContextData * ctx,
     fetchData(ac, ac->head, detoasted, internal, sign);
   } 
   else {
+    /*
+     * If the cache is full, clear the least recently used value (in tail
+     * position) and reuse the entry to place the new value in the head
+     */
     cleanupData(ac->tail);
     moveFirst(ac, ac->tail);
     makeEntry(ac, ac->head, a, kind);
     fetchData(ac, ac->head, detoasted, internal, sign);
   }
 
+  /*
+   * sort the entries in the array after values are added or removed.
+   * this allows applying a binary search if the value is not found in
+   * the head position.
+   */
   qsort(ac->entries, ac->nentries, sizeof(ValueCacheEntry*), cmpEntry);   
   return cache;
 }
