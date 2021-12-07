@@ -3742,7 +3742,7 @@ TEST_CASE("changing baseFontSize") {
     // here we change the base font size, but it doesn't matter since the
     // structure is big enough we end up stuck with the minimum font size.
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
-    drawer.setBaseFontSize(0.9);
+    drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
     CHECK(drawer.fontSize() == Approx(6.0).margin(.1));
@@ -3756,7 +3756,7 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(16).margin(0.3));
+    CHECK(drawer.fontSize() == Approx(14.2).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2a.svg");
     outs << text;
@@ -3765,10 +3765,10 @@ TEST_CASE("changing baseFontSize") {
   }
   SECTION("increase size - smaller") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
-    drawer.setBaseFontSize(0.9);
+    drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(22).margin(0.3));
+    CHECK(drawer.fontSize() == Approx(20.5).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;

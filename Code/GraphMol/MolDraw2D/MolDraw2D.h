@@ -626,7 +626,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! font size in drawing coordinate units. That's probably pixels.
   virtual double fontSize() const;
   virtual void setFontSize(double new_size);
-  void setBaseFontSize(double new_size);
 
   //! sets the current draw color
   virtual void setColour(const DrawColour &col) { curr_colour_ = col; }

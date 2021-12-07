@@ -70,14 +70,12 @@ void DrawText::setFontScale(double new_scale, bool ignoreExtremes) {
     return;
   }
 
-  double nfs = fontSize();
-  if (max_font_size_ > 0 &&
-      nfs * (baseFontSize() / FONT_SIZE) > max_font_size_) {
-    font_scale_ = max_font_size_ / baseFontSize();
+  // fontSize == font_scale_ * base_font_size_
+  if (max_font_size_ > 0 && font_scale_ * base_font_size_ > max_font_size_) {
+    font_scale_ = max_font_size_ / base_font_size_;
   }
-  if (min_font_size_ > 0 &&
-      nfs * (baseFontSize() / FONT_SIZE) < min_font_size_) {
-    font_scale_ = min_font_size_ / baseFontSize();
+  if (min_font_size_ > 0 && font_scale_ * base_font_size_ < min_font_size_) {
+    font_scale_ = min_font_size_ / base_font_size_;
   }
 }
 
@@ -146,8 +144,7 @@ void DrawText::drawStringRects(const std::string &label, OrientType orient,
   std::vector<char> draw_chars;
 
   size_t i = 0;
-  getStringRects(label, orient, rects, draw_modes, draw_chars,
-                 false, talign);
+  getStringRects(label, orient, rects, draw_modes, draw_chars, false, talign);
   for (auto r : rects) {
     r->trans_.x += cds.x;
     r->trans_.y += cds.y;
@@ -510,8 +507,8 @@ bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
 void DrawText::getStringRects(const std::string &text, OrientType orient,
                               std::vector<std::shared_ptr<StringRect>> &rects,
                               std::vector<TextDrawType> &draw_modes,
-                              std::vector<char> &draw_chars,
-                              bool dontSplit, TextAlignType textAlign) const {
+                              std::vector<char> &draw_chars, bool dontSplit,
+                              TextAlignType textAlign) const {
   std::vector<std::string> text_bits;
   if (!dontSplit) {
     text_bits = atomLabelToPieces(text, orient);
@@ -519,7 +516,8 @@ void DrawText::getStringRects(const std::string &text, OrientType orient,
     text_bits.push_back(text);
   }
 
-  TextAlignType ta = orient == OrientType::C ? textAlign : TextAlignType::MIDDLE;
+  TextAlignType ta =
+      orient == OrientType::C ? textAlign : TextAlignType::MIDDLE;
 
   if (orient == OrientType::W) {
     // stick the pieces together again backwards and draw as one so there

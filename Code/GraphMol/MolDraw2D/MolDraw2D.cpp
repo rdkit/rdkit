@@ -1130,11 +1130,6 @@ void MolDraw2D::setFontSize(double new_size) {
 }
 
 // ****************************************************************************
-void MolDraw2D::setBaseFontSize(double new_size) {
-  text_drawer_->setBaseFontSize(new_size);
-}
-
-// ****************************************************************************
 void MolDraw2D::setScale(int width, int height, const Point2D &minv,
                          const Point2D &maxv, const ROMol *mol) {
   PRECONDITION(width > 0, "bad width");
