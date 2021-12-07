@@ -43,7 +43,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = false;
+static const bool DELETE_WITH_GOOD_HASH = true;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
@@ -166,14 +166,15 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4519_2.svg", 4128451715U},
     {"testGithub4519_3.svg", 3143183171U},
     {"testGithub4519_4.svg", 2778955700U},
-    {"testBaseFontSize.1a.svg", 3320817003U},
-    {"testBaseFontSize.1b.svg", 3012116483U},
-    {"testBaseFontSize.2a.svg", 1414782530U},
-    {"testBaseFontSize.2b.svg", 3343901828U},
-    {"testFlexiCanvas.1a.svg", 2389719135U},
-    {"testFlexiCanvas.1b.svg", 3402652480U},
+    {"testBaseFontSize.1a.svg", 1981407403U},
+    {"testBaseFontSize.1b.svg", 1316334956U},
+    {"testBaseFontSize.2a.svg", 1038148368U},
+    {"testBaseFontSize.2b.svg", 2876316953U},
+    {"testFlexiCanvas.1a.svg", 3773242966U},
+    {"testFlexiCanvas.1b.svg", 942673U},
+    {"testFlexiCanvas.1c.svg", 2585164715U},
     {"testFlexiCanvas.2.svg", 2700120816U},
-    {"testFlexiCanvas.3.svg", 1555388465U},
+    {"testFlexiCanvas.3.svg", 2004717217U},
     {"testFlexiCanvas.4a.svg", 1976270997U},
     {"testFlexiCanvas.4b.svg", 1353149014U},
     {"testFlexiCanvas.4c.svg", 684218292U},
@@ -3720,6 +3721,7 @@ M  END)CTAB"_ctab;
 
 #if 1
 TEST_CASE("changing baseFontSize") {
+  RDDepict::preferCoordGen = false;
   auto mol1 =
       "CC(C)C[C@H](NC(=O)[C@H](CCCCN)NC(=O)[C@H](CS)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)[C@H](CC(C)C)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CS)NC(=O)[C@H](CCCCN)NC(=O)[C@H](C)NC(=O)[C@@H](NC(=O)[C@H](CS)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)CNC(=O)[C@H](C)NC(=O)[C@H](CCCCN)NC(=O)[C@H](C)N)[C@@H](C)O)C(=O)O"_smiles;
   REQUIRE(mol1);

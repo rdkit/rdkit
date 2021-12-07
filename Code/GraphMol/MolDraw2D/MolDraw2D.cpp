@@ -1264,6 +1264,7 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
   }
 
   scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+
   // we may need to adjust the scale if there are atom symbols that go off
   // the edges, and we probably need to do it iteratively because
   // get_string_size uses the current value of scale_.
@@ -1342,8 +1343,6 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     text_drawer_->setBaseFontSize(text_drawer_->baseFontSize() * 0.75);
   }
   text_drawer_->setFontScale(scale_);
-  // cout << "leaving calculateScale" << endl;
-  // cout << "final scale : " << scale_ << endl;
 }
 
 // ****************************************************************************
