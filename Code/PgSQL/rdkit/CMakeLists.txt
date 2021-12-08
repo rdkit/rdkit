@@ -261,12 +261,13 @@ configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
 file(GLOB files "update_sql/*.in")
 foreach(file ${files})
   string(REPLACE ".in" "" output_name ${file})
+  string(REPLACE "${PG_CURRENT_SOURCE_DIR}" "${PG_CURRENT_BINARY_DIR}" output_name ${output_name})
   configure_file(${file} ${output_name})
 endforeach()
 set(installPgSQLBody "${installPgSQLBody}"
     "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
     "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}update_sql${installPgSQLSeparator}${SH_QUOTE}*.sql${BAT_QUOTE} \"${PG_EXTENSIONDIR}\"\n"
+    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}update_sql${installPgSQLSeparator}${SH_QUOTE}*.sql${BAT_QUOTE} \"${PG_EXTENSIONDIR}\"\n"
     "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")
 file(WRITE ${testPgSQLName} ${testPgSQLBody})
