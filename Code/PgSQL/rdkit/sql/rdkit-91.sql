@@ -377,6 +377,7 @@ select 'c1cccn1C'::mol@>qmol_from_ctab('query
   3  4  1  0  0  0  0
   1  6  1  0  0  0  0
 M  END') as match;
+-- github #4787:
 select mol_to_smarts(qmol_from_ctab('query
   Mrv0541 04021509592D
 
@@ -410,6 +411,20 @@ select mol_to_smarts(qmol_from_ctab('query
   1  5  4  0  0  0  0
   3  4  4  0  0  0  0
   1  6  1  0  0  0  0
+M  END'));
+select mol_to_smarts(qmol_from_ctab('Boronate acid/ester(aryl)
+  SciTegic12012112112D
+
+  5  4  0  0  0  0            999 V2000
+    1.7243   -2.7324    0.0000 A   0  0
+    2.7559   -2.1456    0.0000 C   0  0
+    3.7808   -2.7324    0.0000 B   0  0
+    4.8057   -2.1456    0.0000 O   0  0
+    3.7808   -3.9190    0.0000 O   0  0
+  1  2  4  0  0  1  0
+  2  3  1  0
+  3  4  1  0
+  3  5  1  0
 M  END'));
 
 -- mol_adjust_query_properties
