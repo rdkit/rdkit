@@ -244,8 +244,10 @@ extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
     if (!asQuery) {
       mol = MolBlockToMol(data);
     } else {
-      mol = MolBlockToMol(data, true, false);
+      mol = MolBlockToMol(data, false, false);
       if (mol != nullptr) {
+        mol->updatePropertyCache(false);
+        MolOps::setAromaticity(*mol);
         MolOps::mergeQueryHs(*mol);
       }
     }
@@ -2108,7 +2110,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
   while (*s && *s <= ' ') {
     s++;
   }
-  while (s < s_end && *s > ' ') {
+  while (s<s_end && * s> ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;
