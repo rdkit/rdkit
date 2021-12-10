@@ -362,12 +362,12 @@ struct RDKIT_GRAPHMOL_EXPORT AdjustQueryParameters {
                 software as documented in the Chemical Representation Guide */
 
   bool adjustSingleBondsToDegreeOneNeighbors =
-      false; /**<  sets single bonds between aromatic atoms and degree one
-                neighbors to SINGLE|AROMATIC */
+      false; /**<  sets single bonds between aromatic or conjugated atoms and
+                degree one neighbors to SINGLE|AROMATIC */
 
   bool adjustSingleBondsBetweenAromaticAtoms =
-      false; /**<  sets non-ring single bonds between two aromatic atoms to
-                SINGLE|AROMATIC */
+      false; /**<  sets non-ring single bonds between two aromatic or conjugated
+                atoms to SINGLE|AROMATIC */
   //! \brief returns an AdjustQueryParameters object with all adjustments
   //! disabled
   static AdjustQueryParameters noAdjustments() {
