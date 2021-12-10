@@ -426,6 +426,8 @@ select mol_to_smarts(qmol_from_ctab('Boronate acid/ester(aryl)
   3  4  1  0
   3  5  1  0
 M  END'));
+select mol_to_smarts(qmol_from_smiles('c:c'));
+select mol_to_smarts(qmol_from_smiles('C1=CC=CC=C1'));
 
 -- mol_adjust_query_properties
 select 'C1CC1OC'::mol @> 'C1CC1O*'::mol;

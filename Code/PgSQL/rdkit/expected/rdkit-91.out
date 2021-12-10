@@ -1173,6 +1173,18 @@ M  END'));
  [!#1]:&@[#6]-[#5](-[#8])-[#8]
 (1 row)
 
+select mol_to_smarts(qmol_from_smiles('c:c'));
+ mol_to_smarts 
+---------------
+ [#6]:[#6]
+(1 row)
+
+select mol_to_smarts(qmol_from_smiles('C1=CC=CC=C1'));
+          mol_to_smarts           
+----------------------------------
+ [#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1
+(1 row)
+
 -- mol_adjust_query_properties
 select 'C1CC1OC'::mol @> 'C1CC1O*'::mol;
  ?column? 

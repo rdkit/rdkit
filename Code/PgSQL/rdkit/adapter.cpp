@@ -193,7 +193,8 @@ extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
       } else {
         mol = SmilesToMol(data, 0, false);
         if (mol != nullptr) {
-          MolOps::sanitizeMol(*mol);
+          mol->updatePropertyCache(false);
+          MolOps::setAromaticity(*mol);
           MolOps::mergeQueryHs(*mol);
         }
       }
