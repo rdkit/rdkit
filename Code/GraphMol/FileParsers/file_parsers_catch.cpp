@@ -4254,3 +4254,62 @@ M  END
     CHECK(mol1->hasProp(common_properties::molFileLinkNodes));
   }
 }
+
+TEST_CASE(
+    "Github #4785: MDL query with aromatic bond sets aromatic flag on atoms "
+    "even though they are not in an aromatic ring") {
+  SECTION("benzene") {
+    auto mol = R"CTAB(
+  Mrv2108 12102110572D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 128.125 -103.585 0 0
+M  V30 2 C 126.7913 -104.355 0 0
+M  V30 3 C 126.7913 -105.895 0 0
+M  V30 4 C 128.125 -106.665 0 0
+M  V30 5 C 129.4587 -105.895 0 0
+M  V30 6 C 129.4587 -104.355 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 6
+M  V30 6 4 1 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+  SECTION("non-kekulizeable") {
+    auto mol = R"CTAB(
+  Mrv2108 12102110572D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 128.125 -103.585 0 0
+M  V30 2 C 126.7913 -104.355 0 0
+M  V30 3 C 126.7913 -105.895 0 0
+M  V30 4 C 128.125 -106.665 0 0
+M  V30 5 C 129.4587 -105.895 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(!mol);
+  }
+}

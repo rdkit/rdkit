@@ -2634,10 +2634,10 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     bond->setBeginAtomIdx(mol->getAtomWithBookmark(a1Idx)->getIdx());
     bond->setEndAtomIdx(mol->getAtomWithBookmark(a2Idx)->getIdx());
     mol->addBond(bond, true);
-    if (bond->getIsAromatic()) {
-      mol->getAtomWithIdx(bond->getBeginAtomIdx())->setIsAromatic(true);
-      mol->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
-    }
+    // if (bond->getIsAromatic()) {
+    //   mol->getAtomWithIdx(bond->getBeginAtomIdx())->setIsAromatic(true);
+    //   mol->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
+    // }
     mol->setBondBookmark(bond, bondIdx);
 
     // set the stereoCare property on the bond if it's not set already and both
