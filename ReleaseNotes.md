@@ -1,3 +1,45 @@
+# Release_2021.09.3
+(Changes relative to Release_2021.09.2)
+
+## Acknowledgements
+Jacob Gora, Gareth Jones, Brian Kelley, Ricardo Rodriguez-Schmidt, Paolo Tosco,
+Kazuya Ujihara, Riccardo Vianello
+
+## Bug Fixes:
+  - handle sqlalchemy deprecation
+ (github #4625 from greglandrum)
+  - fix parsing beyond the end of the input string in findMCSsmiles
+ (github #4636 from rvianello)
+  - Mem leak fixes
+ (github #4637 from ricrogz)
+  - Subsequent call to rdChemReactions.ChemicalReaction.RunReactants will block indefinitely.
+ (github #4651 from goraj)
+  - Fix docstring of ConstrainedEmbed
+ (github #4666 from kazuyaujihara)
+  - [Operational] get windows CI builds working again
+ (github #4672 from greglandrum)
+  - Molfile SDD records not properly displayed
+ (github #4690 from jones-gareth)
+  - RGD:  fix for cores with MOL  block atom lists
+ (github #4695 from jones-gareth)
+  - RGD align output core to input structure
+ (github #4709 from jones-gareth)
+  - TorsionFingerprints raises error with S(Cl)F4 group
+ (github #4720 from kazuyaujihara)
+  - TautomerEnumerator will crash if copied with a callback set
+ (github #4736 from ptosco)
+  - Update mac CI builds
+ (github #4738 from greglandrum)
+  - Minor PandasTools cleanup
+ (github #4744 from ptosco)
+  - Reaction parser fails when CX extensions are present
+ (github #4759 from greglandrum)
+  - Fixes crashing bug with finalSubstructChecks
+ (github #4782 from greglandrum)
+  - [Cartridge]: qmol_from_ctab and qmol_from_smiles are sanitizing molecules
+ (github #4787 from greglandrum)
+
+
 # Release_2021.09.2
 (Changes relative to Release_2021.09.1)
 
