@@ -2111,7 +2111,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
   while (*s && *s <= ' ') {
     s++;
   }
-  while (s<s_end && * s> ' ') {
+  while (s < s_end && *s > ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;
