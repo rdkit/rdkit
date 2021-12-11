@@ -193,7 +193,8 @@ extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
       } else {
         mol = SmilesToMol(data, 0, false);
         if (mol != nullptr) {
-          MolOps::sanitizeMol(*mol);
+          mol->updatePropertyCache(false);
+          MolOps::setAromaticity(*mol);
           MolOps::mergeQueryHs(*mol);
         }
       }
@@ -244,8 +245,10 @@ extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
     if (!asQuery) {
       mol = MolBlockToMol(data);
     } else {
-      mol = MolBlockToMol(data, true, false);
+      mol = MolBlockToMol(data, false, false);
       if (mol != nullptr) {
+        mol->updatePropertyCache(false);
+        MolOps::setAromaticity(*mol);
         MolOps::mergeQueryHs(*mol);
       }
     }

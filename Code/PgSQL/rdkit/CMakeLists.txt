@@ -160,7 +160,6 @@ if(MSVC)
   set(PGREGRESS_BINARY "${PG_BINDIR}/pg_regress")
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PGREGRESS_BINARY ${PGREGRESS_BINARY})
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_EXTENSIONDIR ${PG_EXTENSIONDIR})
-  string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PGREGRESS_BINARY ${PGREGRESS_BINARY})
 else()
   run_pg_config (--pgxs PG_MAKEFILE)
   get_filename_component(PG_MAKEFILESDIR ${PG_MAKEFILE} PATH)
@@ -210,6 +209,7 @@ if(MSVC)
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_CURRENT_SOURCE_DIR ${PG_CURRENT_SOURCE_DIR})
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_CURRENT_BINARY_DIR ${PG_CURRENT_BINARY_DIR})
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_PKGLIBDIR ${PG_PKGLIBDIR})
+  string(REGEX REPLACE "/" ${REGEX_SEPARATOR}${REGEX_SEPARATOR} installPgSQLNameBS ${installPgSQLName})
 else()
   set(testPgSQLCommand "sh")
   set(testPgSQLName "${testPgSQLName}.sh")
@@ -261,12 +261,13 @@ configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
 file(GLOB files "update_sql/*.in")
 foreach(file ${files})
   string(REPLACE ".in" "" output_name ${file})
+  string(REPLACE "${PG_CURRENT_SOURCE_DIR}" "${PG_CURRENT_BINARY_DIR}" output_name ${output_name})
   configure_file(${file} ${output_name})
 endforeach()
 set(installPgSQLBody "${installPgSQLBody}"
     "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
     "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}update_sql${installPgSQLSeparator}${SH_QUOTE}*.sql${BAT_QUOTE} \"${PG_EXTENSIONDIR}\"\n"
+    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}update_sql${installPgSQLSeparator}${SH_QUOTE}*.sql${BAT_QUOTE} \"${PG_EXTENSIONDIR}\"\n"
     "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
     "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")
 file(WRITE ${testPgSQLName} ${testPgSQLBody})
@@ -276,14 +277,8 @@ foreach(testDir sql data expected)
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
       "${PG_CURRENT_SOURCE_DIR}${testDir}" "${PG_CURRENT_BINARY_DIR}${testDir}")
 endforeach()
-message("\n"
-    "=====================================================================\n"
-    "After building, check\n"
-    "${installPgSQLName}\n"
-    "for correctness of installation paths. If everything is OK, gain \n"
-    "administrator privileges, stop the PostgreSQL service, run\n"
-    "${installPgSQLName}\n"
-    "to install the PostgreSQL RDKit cartridge, then start again\n"
-    "the PostgreSQL service\n"
-    "=====================================================================\n")
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/InstallPgSql.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/InstallPgSql.cmake" @ONLY)
+install(SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/InstallPgSql.cmake" COMPONENT pgsql)
 add_test(testPgSQL ${testPgSQLCommand} ${testPgSQLName})

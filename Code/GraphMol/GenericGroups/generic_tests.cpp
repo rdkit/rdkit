@@ -560,3 +560,52 @@ M  END
     }
   }
 }
+
+namespace {
+bool no_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
+  RDUNUSED_PARAM(mol);
+  RDUNUSED_PARAM(ids);
+  return false;
+}
+bool always_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
+  RDUNUSED_PARAM(mol);
+  RDUNUSED_PARAM(ids);
+  return true;
+}
+}  // namespace
+
+TEST_CASE("generics are compatible with extraFinalChecks",
+          "[substructure][generics]") {
+  SECTION("basics") {
+    auto query = "O=C*"_smarts;
+    REQUIRE(query);
+    std::vector<std::string> labels = {"Heteroaryl", "HAR"};
+    for (auto label : labels) {
+      query->getAtomWithIdx(2)->setProp(
+          common_properties::_QueryAtomGenericLabel, label);
+      std::vector<std::pair<std::string, unsigned>> tests = {
+          {"O=CC1OC1", 0},          {"O=CCC1COC1", 0},  {"O=CC1CCC2C1CNC2", 0},
+          {"O=Cc1cccc2c1ccnc2", 1}, {"O=Cc1ccccc1", 0}, {"O=Cc1cccnc1", 1},
+
+      };
+      SubstructMatchParameters ps;
+      ps.useGenericMatchers = true;
+      ps.extraFinalCheck = always_match;
+      for (const auto &pr : tests) {
+        SmilesParserParams smilesParms;
+        smilesParms.removeHs = false;
+        std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+        REQUIRE(mol);
+        CHECK_THAT(*query, IsSubstructOf(*mol, pr.second, ps));
+      }
+      ps.extraFinalCheck = no_match;
+      for (const auto &pr : tests) {
+        SmilesParserParams smilesParms;
+        smilesParms.removeHs = false;
+        std::unique_ptr<ROMol> mol{SmilesToMol(pr.first, smilesParms)};
+        REQUIRE(mol);
+        CHECK_THAT(*query, IsSubstructOf(*mol, 0, ps));
+      }
+    }
+  }
+}
