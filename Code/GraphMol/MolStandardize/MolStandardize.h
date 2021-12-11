@@ -70,6 +70,12 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   bool tautomerReassignStereo{
       true};  //! Whether enumerate() should call assignStereochemistry
               //! on all generated tautomers (defaults to true)
+  bool largestFragmentChooserUseAtomCount{
+      true};  //! Whether LargestFragmentChooser should use atom
+              //! count as criterion (defaults to true)
+  bool largestFragmentChooserHeavyOnly{
+      false};  //! Whether LargestFragmentChooser should only count
+               //! heavy atoms (defaults to false)
   std::vector<std::pair<std::string, std::string>> normalizationData;
   std::vector<std::pair<std::string, std::string>> fragmentData;
   std::vector<std::tuple<std::string, std::string, std::string>> acidbaseData;
