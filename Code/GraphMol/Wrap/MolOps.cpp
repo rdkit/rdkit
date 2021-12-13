@@ -2634,13 +2634,13 @@ A note on the flags controlling which atoms/bonds are modified:
         .def_readwrite("adjustSingleBondsToDegreeOneNeighbors",
                        &MolOps::AdjustQueryParameters::
                            adjustSingleBondsToDegreeOneNeighbors,
-                       "set single bonds bewteen aromatic atoms and degree-one "
-                       "neighbors to SINGLE|AROMATIC")
+                       "set single bonds bewteen aromatic or conjugated atoms "
+                       "and degree-one neighbors to SINGLE|AROMATIC")
         .def_readwrite("adjustSingleBondsBetweenAromaticAtoms",
                        &MolOps::AdjustQueryParameters::
                            adjustSingleBondsBetweenAromaticAtoms,
-                       "sets non-ring single bonds between two aromatic atoms "
-                       "to SINGLE|AROMATIC")
+                       "sets non-ring single bonds between two aromatic or "
+                       "conjugated atoms to SINGLE|AROMATIC")
         .def("NoAdjustments", &MolOps::AdjustQueryParameters::noAdjustments,
              "Returns an AdjustQueryParameters object with all parameters set "
              "to false")
