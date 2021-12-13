@@ -35,6 +35,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DJS : public MolDraw2D {
               int panelWidth = -1, int panelHeight = -1,
               bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_context(context) {
+    PRECONDITION(width > 0, "bad width");
+    PRECONDITION(height > 0, "bad height");
     initTextDrawer(noFreetype);
   }
 

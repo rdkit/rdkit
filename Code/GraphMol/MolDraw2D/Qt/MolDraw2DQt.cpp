@@ -28,6 +28,8 @@ namespace RDKit {
 MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter *qp, int panelWidth,
                          int panelHeight, bool noFreetype)
     : MolDraw2D(width, height, panelWidth, panelHeight), d_qp(qp) {
+  PRECONDITION(width > 0, "bad width");
+  PRECONDITION(height > 0, "bad height");
   initDrawing();
   initTextDrawer(noFreetype);
 }

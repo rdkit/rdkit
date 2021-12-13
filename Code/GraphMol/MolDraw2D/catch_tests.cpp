@@ -3666,11 +3666,9 @@ M  V30 END CTAB
 M  END)CTAB"_ctab;
   REQUIRE(mol3);
 
-  std::vector<std::string> legends = {
-      "datafield label bad placement1", "datafield label bad placement2",
-      "datafield label bad placement3"};  //  std::vector<std::string> legends =
-                                          //  {"datafield label bad
-                                          //  placement2"};
+  std::vector<std::string> legends = {"datafield label bad placement1",
+                                      "datafield label bad placement2",
+                                      "datafield label bad placement3"};
   {
     MolDraw2DSVG drawer(300, 250);
     drawer.drawMolecule(*mol1, legends[0]);
@@ -3719,7 +3717,6 @@ M  END)CTAB"_ctab;
   }
 }
 
-#if 1
 TEST_CASE("changing baseFontSize") {
   RDDepict::preferCoordGen = false;
   auto mol1 =
@@ -3778,8 +3775,8 @@ TEST_CASE("changing baseFontSize") {
     check_file_hash("testBaseFontSize.2b.svg");
   }
 }
-#endif
-TEST_CASE("flexicanvas") {
+
+TEST_CASE("flexicanvas: set canvas size automatically") {
   auto mol1 = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
 
   REQUIRE(mol1);
