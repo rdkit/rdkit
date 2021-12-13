@@ -182,7 +182,10 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
         # it's a matplotlib colormap:
         clrs = [tuple(x) for x in colorMap([0, 0.5, 1])]
       else:
-        clrs = [colorMap[0], colorMap[1], colorMap[2]]
+        # assume it's a matplotlib colormap scheme:
+        customCmap = cm.get_cmap(colorMap, 2)
+        clrs = [customCmap(0), (1, 1, 1), customCmap(1)]
+
       ps.setColourMap(clrs)
 
     Draw.ContourAndDrawGaussians(draw2d, locs, weights, sigmas, nContours=contourLines, params=ps)
