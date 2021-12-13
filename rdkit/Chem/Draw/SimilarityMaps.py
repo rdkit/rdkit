@@ -183,8 +183,8 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
         clrs = [tuple(x) for x in colorMap([0, 0.5, 1])]
       else:
         # assume it's a matplotlib colormap ID:
-        customCmap = cm.get_cmap(colorMap, 2)
-        clrs = [customCmap(0), (1, 1, 1), customCmap(1)]
+        customCmap = cm.get_cmap(colorMap, 3)
+        clrs = [customCmap(0), customCmap(1), customCmap(2)]
 
       ps.setColourMap(clrs)
 
