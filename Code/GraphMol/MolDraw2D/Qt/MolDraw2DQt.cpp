@@ -28,6 +28,8 @@ namespace RDKit {
 MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter *qp, int panelWidth,
                          int panelHeight, bool noFreetype)
     : MolDraw2D(width, height, panelWidth, panelHeight), d_qp(qp) {
+  PRECONDITION(width > 0, "bad width");
+  PRECONDITION(height > 0, "bad height");
   initDrawing();
   initTextDrawer(noFreetype);
 }
@@ -55,6 +57,9 @@ void MolDraw2DQt::initTextDrawer(bool noFreetype) {
 #else
     text_drawer_.reset(new DrawTextQt(max_fnt_sz, min_fnt_sz, d_qp));
 #endif
+  }
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
   }
 }
 

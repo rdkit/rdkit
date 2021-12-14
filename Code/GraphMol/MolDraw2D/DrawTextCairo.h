@@ -29,6 +29,7 @@ class DrawTextCairo : public DrawText {
                      double &label_height) const override;
 #endif
   void drawChar(char c, const Point2D &cds) override;
+  void setCairoContext(cairo_t *cr);
 
  private:
   cairo_t *dp_cr_;

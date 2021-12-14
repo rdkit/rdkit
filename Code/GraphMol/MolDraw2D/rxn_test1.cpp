@@ -63,26 +63,18 @@ static const bool DELETE_WITH_GOOD_HASH = true;
     {"rxn_test2_2_4.svg", 3008925605U},
     {"rxn_test3_1.svg", 409355256U},
     {"rxn_test4_1.svg", 1446031830U},
-    {"rxn_test4_2.svg", 3254692708U}
+    {"rxn_test4_2.svg", 265508036U}
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 3455349472U},
-    {"rxn_test1_2.svg", 1549953602U},
-    {"rxn_test1_3.svg", 3887971655U},
-    {"rxn_test1_4.svg", 4154131138U},
-    {"rxn_test1_5.svg", 817859479U},
-    {"rxn_test1_6.svg", 3148235567U},
-    {"rxn_test1_7.svg", 1494204470U},
-    {"rxn_test2_1.svg", 3794156425U},
-    {"rxn_test2_2_1.svg", 905466032U},
-    {"rxn_test2_2_2.svg", 937555927U},
-    {"rxn_test2_2_3.svg", 571938327U},
-    {"rxn_test2_2_4.svg", 2056889618U},
-    {"rxn_test3_1.svg", 2623086145U},
-    {"rxn_test4_1.svg", 3737522161U},
-    {"rxn_test4_2.svg", 873707471U}
-};
+    {"rxn_test1_1.svg", 3455349472U},  {"rxn_test1_2.svg", 1549953602U},
+    {"rxn_test1_3.svg", 3887971655U},  {"rxn_test1_4.svg", 4154131138U},
+    {"rxn_test1_5.svg", 817859479U},   {"rxn_test1_6.svg", 3148235567U},
+    {"rxn_test1_7.svg", 1494204470U},  {"rxn_test2_1.svg", 3794156425U},
+    {"rxn_test2_2_1.svg", 905466032U}, {"rxn_test2_2_2.svg", 937555927U},
+    {"rxn_test2_2_3.svg", 571938327U}, {"rxn_test2_2_4.svg", 2056889618U},
+    {"rxn_test3_1.svg", 2623086145U},  {"rxn_test4_1.svg", 3737522161U},
+    {"rxn_test4_2.svg", 157742424U}};
 #endif
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
