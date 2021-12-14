@@ -14,6 +14,7 @@
 //
 
 #include <GraphMol/QueryOps.h>
+#include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
@@ -23,14 +24,9 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
-#include <Numerics/SquareMatrix.h>
-#include <Numerics/Matrix.h>
 
-#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/MolEnumerator/LinkNode.h>
-
-#include <Geometry/Transform3D.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -39,7 +35,6 @@
 #include <memory>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/tuple/tuple_comparison.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/format.hpp>
 
@@ -158,26 +153,6 @@ Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
 }
 
 // ****************************************************************************
-bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &at_cds) {
-  if (atom.getDegree() == 2) {
-    Point2D bond_vecs[2];
-    Bond::BondType bts[2];
-    Point2D const &at1_cds = at_cds[atom.getIdx()];
-    ROMol const &mol = atom.getOwningMol();
-    int i = 0;
-    for (const auto &nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
-      Point2D bond_vec = at1_cds.directionVector(at_cds[nbr]);
-      bond_vec.normalize();
-      bond_vecs[i] = bond_vec;
-      bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
-      ++i;
-    }
-    return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
-  }
-  return false;
-}
-
-// ****************************************************************************
 // cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
 // perpendicular pointing into the inside of the bond
 Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
@@ -284,15 +259,6 @@ void getBondHighlightsForAtoms(const ROMol &mol,
       }
     }
   }
-}
-void centerMolForDrawing(RWMol &mol, int confId) {
-  auto &conf = mol.getConformer(confId);
-  RDGeom::Transform3D tf;
-  auto centroid = MolTransforms::computeCentroid(conf);
-  centroid *= -1;
-  tf.SetTranslation(centroid);
-  MolTransforms::transformConformer(conf, tf);
-  MolTransforms::transformMolSubstanceGroups(mol, tf);
 }
 }  // namespace
 
@@ -421,6 +387,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
+
   int origWidth = lineWidth();
   pushDrawDetails();
   setupTextDrawer();
@@ -506,17 +473,26 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
-  if (!legend.empty()) {
-    legend_height_ = int(0.05 * double(panelHeight()));
-    if (legend_height_ < 20) {
-      legend_height_ = 20;
-    }
-  } else {
-    legend_height_ = 0;
-  }
-  drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
-               highlight_bond_map, highlight_radii, confId);
-  drawLegend(legend);
+  DrawMol *draw_mol = new DrawMol(mol, legend, panelWidth(), panelHeight(),
+                                  drawOptions(), highlight_atoms,
+                                  highlight_bonds, highlight_atom_map,
+                                  highlight_bond_map, nullptr, highlight_radii,
+                                  confId);
+  draw_mols_.push_back(std::unique_ptr<DrawMol>(draw_mol));
+  startDrawing();
+  drawAllMolecules();
+
+//  if (!legend.empty()) {
+//    legend_height_ = int(0.05 * double(panelHeight()));
+//    if (legend_height_ < 20) {
+//      legend_height_ = 20;
+//    }
+//  } else {
+//    legend_height_ = 0;
+//  }
+//  drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
+//               highlight_bond_map, highlight_radii, confId);
+//  drawLegend(legend);
 }
 
 // ****************************************************************************
@@ -1084,6 +1060,7 @@ void MolDraw2D::highlightCloseContacts() {
 // transform a set of coords in the molecule's coordinate system
 // to drawing system coordinates
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
+  return mol_cds;
   double x = scale_ * (mol_cds.x - x_min_ + x_trans_);
   double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
   // y is now the distance from the top of the image, we need to
@@ -1736,6 +1713,24 @@ void MolDraw2D::popDrawDetails() {
   atomic_nums_.pop_back();
   radicals_.pop_back();
   at_cds_.pop_back();
+}
+
+// ****************************************************************************
+void MolDraw2D::startDrawing() {
+  if (needs_init_) {
+    initDrawing();
+    needs_init_ = false;
+  }
+  if (drawOptions().clearBackground) {
+    clearDrawing();
+  }
+}
+
+// ****************************************************************************
+void MolDraw2D::drawAllMolecules() {
+  for (auto &mol: draw_mols_) {
+    mol->draw(*this);
+  }
 }
 
 // ****************************************************************************
@@ -3994,27 +3989,6 @@ pair<string, OrientType> MolDraw2D::getAtomSymbolAndOrientation(
   string symbol = getAtomSymbol(atom, orient);
 
   return std::make_pair(symbol, orient);
-}
-
-std::string getAtomListText(const Atom &atom) {
-  PRECONDITION(atom.hasQuery(), "no query");
-  PRECONDITION(atom.getQuery()->getDescription() == "AtomOr", "bad query type");
-
-  std::string res = "";
-  if (atom.getQuery()->getNegation()) {
-    res += "!";
-  }
-  res += "[";
-  std::vector<int> vals;
-  getAtomListQueryVals(atom.getQuery(), vals);
-  for (unsigned int i = 0; i < vals.size(); ++i) {
-    if (i != 0) {
-      res += ",";
-    }
-    res += PeriodicTable::getTable()->getElementSymbol(vals[i]);
-  }
-
-  return res + "]";
 }
 
 // ****************************************************************************

@@ -1508,11 +1508,12 @@ void testGithub774() {
 void test9MolLegends() {
   std::cout << " ----------------- Test 9 (molecule legends)" << std::endl;
   {
-    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
+//    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
+    auto m = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
-    MolDraw2DSVG drawer(300, 300);
+    MolDraw2DSVG drawer(600, 600);
     drawer.drawMolecule(*m, "mol legend");
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
@@ -1521,7 +1522,6 @@ void test9MolLegends() {
     // There's a bizarre thing whereby this file comes up as identical on my
     // MBP and Ubuntu 20.04 systems, but the hash codes are different.
     check_file_hash("test9_1.svg");
-    // TEST_ASSERT(txt.find("<svg")!=std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
@@ -4228,8 +4228,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  test9MolLegends();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();
