@@ -197,7 +197,7 @@ void test_largest_fragment() {
   }
   {
     CleanupParameters lfParams;
-    lfParams.largestFragmentChooserHeavyOnly = true;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
     LargestFragmentChooser lfrag_params(lfParams);
     std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
     std::shared_ptr<ROMol> lfrag6(lfrag_params.choose(*m11));
@@ -224,7 +224,7 @@ void test_largest_fragment() {
   }
   {
     CleanupParameters lfParams;
-    lfParams.largestFragmentChooserHeavyOnly = true;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
     LargestFragmentChooser lfrag_params(lfParams);
     std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
     std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
@@ -240,7 +240,7 @@ void test_largest_fragment() {
   }
   {
     CleanupParameters lfParams;
-    lfParams.largestFragmentChooserHeavyOnly = true;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
     lfParams.preferOrganic = true;
     LargestFragmentChooser lfrag_params(lfParams);
     std::shared_ptr<ROMol> m12(SmilesToMol(smi12));

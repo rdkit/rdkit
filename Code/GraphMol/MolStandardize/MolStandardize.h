@@ -72,8 +72,8 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
               //! on all generated tautomers (defaults to true)
   bool largestFragmentChooserUseAtomCount{
       true};  //! Whether LargestFragmentChooser should use atom
-              //! count as criterion (defaults to true)
-  bool largestFragmentChooserHeavyOnly{
+              //! count as main criterion before MW (defaults to true)
+  bool largestFragmentChooserCountHeavyAtomsOnly{
       false};  //! Whether LargestFragmentChooser should only count
                //! heavy atoms (defaults to false)
   std::vector<std::pair<std::string, std::string>> normalizationData;

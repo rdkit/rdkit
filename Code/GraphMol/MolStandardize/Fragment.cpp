@@ -167,7 +167,7 @@ LargestFragmentChooser::LargestFragmentChooser(
   BOOST_LOG(rdInfoLog) << "Initializing LargestFragmentChooser\n";
   preferOrganic = other.preferOrganic;
   useAtomCount = other.useAtomCount;
-  heavyOnly = other.heavyOnly;
+  countHeavyAtomsOnly = other.countHeavyAtomsOnly;
 }
 
 ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
@@ -199,7 +199,7 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
     if (this->useAtomCount) {
       for (const auto at : frag->atoms()) {
         ++numatoms;
-        if (!this->heavyOnly) {
+        if (!this->countHeavyAtomsOnly) {
           numatoms += at->getTotalNumHs();
         }
       }

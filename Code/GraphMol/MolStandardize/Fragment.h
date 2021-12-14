@@ -78,7 +78,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
   LargestFragmentChooser(const CleanupParameters &params)
       : preferOrganic(params.preferOrganic),
         useAtomCount(params.largestFragmentChooserUseAtomCount),
-        heavyOnly(params.largestFragmentChooserHeavyOnly) {}
+        countHeavyAtomsOnly(params.largestFragmentChooserCountHeavyAtomsOnly) {}
   LargestFragmentChooser(const LargestFragmentChooser &other);
   ~LargestFragmentChooser() = default;
 
@@ -97,7 +97,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
  private:
   bool preferOrganic;
   bool useAtomCount{true};
-  bool heavyOnly{false};
+  bool countHeavyAtomsOnly{false};
 };  // class LargestFragmentChooser
 }  // namespace MolStandardize
 }  // namespace RDKit

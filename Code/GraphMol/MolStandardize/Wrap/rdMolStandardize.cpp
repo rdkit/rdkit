@@ -181,10 +181,10 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
                      &RDKit::MolStandardize::CleanupParameters::
                          largestFragmentChooserUseAtomCount,
                      "Whether LargestFragmentChooser should use atom "
-                     "count as criterion (defaults to True)")
-      .def_readwrite("largestFragmentChooserHeavyOnly",
+                     "count as main criterion before MW (defaults to True)")
+      .def_readwrite("largestFragmentChooserCountHeavyAtomsOnly",
                      &RDKit::MolStandardize::CleanupParameters::
-                         largestFragmentChooserHeavyOnly,
+                         largestFragmentChooserCountHeavyAtomsOnly,
                      "whether LargestFragmentChooser should only count "
                      "heavy atoms (defaults to False)");
 

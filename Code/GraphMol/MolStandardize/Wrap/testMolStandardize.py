@@ -144,7 +144,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(lfrag3), "CNC[C@H](O)[C@@H](O)[C@H](O)[C@H](O)CO")
 
     lfParams = rdMolStandardize.CleanupParameters()
-    lfParams.largestFragmentChooserHeavyOnly = True
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = True
     lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
     mol3 = Chem.MolFromSmiles(smi3)
     lfrag3 = lfrag_params.choose(mol3)
@@ -166,7 +166,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(lfrag4), "CC")
 
     lfParams = rdMolStandardize.CleanupParameters()
-    lfParams.largestFragmentChooserHeavyOnly = True
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = True
     lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
     mol4 = Chem.MolFromSmiles(smi4)
     lfrag4 = lfrag_params.choose(mol4)
@@ -180,7 +180,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(lfrag4), "O=[Pb]=O")
 
     lfParams = rdMolStandardize.CleanupParameters()
-    lfParams.largestFragmentChooserHeavyOnly = True
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = True
     lfParams.preferOrganic = True
     lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
     mol4 = Chem.MolFromSmiles(smi4)
