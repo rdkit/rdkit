@@ -362,8 +362,14 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
               // labels
   bool singleColourWedgeBonds =
       false;  // if true wedged and dashed bonds are drawn
-              // using symbolColour rather than inheriting
-              // their colour from the atoms
+  // using symbolColour rather than inheriting
+  // their colour from the atoms
+  double scalingFactor = 20.0;  // scaling factor used for pixels->angstroms
+                                // when auto scaling is being used
+  double baseFontSize =
+      -1.0;  // when > 0 this is used to set the baseFontSize used for text
+             // drawing. As a reference point: the default value for
+             // DrawText::baseFontSize  is 0.6
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -392,7 +398,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! constructor for a particular size
   /*!
     \param width       : width (in pixels) of the rendering
+    set this to -1 to have the canvas size set automatically
     \param height      : height (in pixels) of the rendering
+    set this to -1 to have the canvas size set automatically
     \param panelWidth  : (optional) width (in pixels) of a single panel
     \param panelHeight : (optional) height (in pixels) of a single panel
 
@@ -767,6 +775,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   Point2D bbox_[2];
   std::vector<std::vector<MolDrawShape>> pre_shapes_;
   std::vector<std::vector<MolDrawShape>> post_shapes_;
+  bool needs_init_ = true;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -785,8 +794,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void pushDrawDetails();
   void popDrawDetails();
 
-  // do the initial setup bits for drawing a molecule.
-  std::unique_ptr<RWMol> setupMoleculeDraw(
+  // do the initial setup and drawing bits for drawing a molecule.
+  std::unique_ptr<RWMol> initMoleculeDraw(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::map<int, double> *highlight_radii, int confId = -1);
   void setupTextDrawer();

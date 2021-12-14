@@ -37,7 +37,8 @@ std::ostream &operator<<(std::ostream &oss, const OrientType &o);
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawText {
  public:
-  static constexpr double FONT_SIZE = 0.6;  // seems to be a good number
+  static constexpr double DEFAULT_FONT_SCALE =
+      0.6;  // seems to be a good number
 
   DrawText(double max_fnt_sz, double min_fnt_sz);
   virtual ~DrawText() {}
@@ -55,7 +56,7 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   double minFontSize() const;
   void setMinFontSize(double new_max);
   double fontScale() const;
-  void setFontScale(double new_scale, bool ignoreExtremes=false);
+  void setFontScale(double new_scale, bool ignoreExtremes = false);
 
   // these are only relevant for the FreeType DrawText classes.
   virtual std::string getFontFile() const { return ""; }
@@ -84,8 +85,7 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   void getStringRects(const std::string &text, OrientType orient,
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
-                      std::vector<char> &draw_chars,
-                      bool dontSplit = false,
+                      std::vector<char> &draw_chars, bool dontSplit = false,
                       TextAlignType textAlign = TextAlignType::MIDDLE) const;
 
   //! drawString centres the string on cds.
@@ -157,7 +157,7 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   double font_scale_;
   double max_font_size_;
   double min_font_size_;
-  double base_font_size_ = FONT_SIZE;
+  double base_font_size_ = DEFAULT_FONT_SCALE;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,
