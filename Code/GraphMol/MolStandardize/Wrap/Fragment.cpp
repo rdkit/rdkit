@@ -61,7 +61,9 @@ struct fragment_wrapper {
 
     python::class_<MolStandardize::LargestFragmentChooser, boost::noncopyable>(
         "LargestFragmentChooser",
-        python::init<bool>((python::arg("preferOrganic") = false)))
+        python::init<bool>(python::arg("preferOrganic") = false))
+        .def(python::init<const MolStandardize::CleanupParameters &>(
+            python::arg("params")))
         .def("choose", &chooseHelper, (python::arg("self"), python::arg("mol")),
              "", python::return_value_policy<python::manage_new_object>());
   }
