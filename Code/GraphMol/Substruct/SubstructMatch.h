@@ -166,7 +166,7 @@ unsigned int SubstructMatch(T1 &mol, const T2 &query,
   params.maxMatches = maxMatches;
   params.numThreads = numThreads;
   matchVect = SubstructMatch(mol, query, params);
-  return matchVect.size();
+  return static_cast<unsigned int>(matchVect.size());
 };
 
 // ----------------------------------------------
@@ -208,7 +208,7 @@ inline unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
   params.maxMatches = maxMatches;
   params.numThreads = numThreads;
   matchVect = SubstructMatch(resMolSupplier, query, params);
-  return matchVect.size();
+  return static_cast<unsigned int>(matchVect.size());
 };
 
 //! Class used as a final step to confirm whether or not a given atom->atom
