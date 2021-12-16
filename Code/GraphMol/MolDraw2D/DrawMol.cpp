@@ -21,6 +21,7 @@
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
+#include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
@@ -29,7 +30,7 @@ namespace RDKit {
 // ****************************************************************************
 DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
                  int width, int height,
-                 MolDrawOptions &drawOptions,
+                 MolDrawOptions &drawOptions, DrawText &textDrawer,
                  const std::vector<int> *highlight_atoms,
                  const std::vector<int> *highlight_bonds,
                  const std::map<int, DrawColour> *highlight_atom_map,
@@ -38,6 +39,7 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
                  const std::map<int, double> *highlight_radii,
                  int confId)
     : drawOptions_(drawOptions),
+      textDrawer_(textDrawer),
       highlightAtoms_(highlight_atoms),
       highlightBonds_(highlight_bonds),
       highlightAtomMap_(highlight_atom_map),
@@ -57,6 +59,7 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
   std::cout << "Width = " << width_ << "  height = " << height_ << std::endl;
   initDrawMolecule(mol, confId);
   extractAll(confId);
+  addLegend(legend);
 
   calculateScale();
   changeToDrawCoords();
@@ -89,22 +92,28 @@ void DrawMol::extractAll(int confId) {
 // ****************************************************************************
 void DrawMol::extractBonds() {
 
-  double double_bond_offset = drawOptions_.multipleBondOffset;
+  double doubleBondOffset = drawOptions_.multipleBondOffset;
   // mol files from, for example, Marvin use a bond length of 1 for just about
   // everything. When this is the case, the default multipleBondOffset is just
   // too much, so scale it back.
   calcMeanBondLengthSquare();
   if (meanBondLengthSquare_ < 1.4) {
-    double_bond_offset *= 0.6;
+    doubleBondOffset *= 0.6;
   }
 
   for (auto bond : drawMol_->bonds()) {
-    int beg_at = bond->getBeginAtomIdx();
-    int end_at = bond->getEndAtomIdx();
-    std::pair<DrawColour, DrawColour> cols = getBondColours(bond);
-    int olw = drawOptions_.bondLineWidth;
-    newBondLine(atCds_[beg_at], atCds_[end_at], cols.first, cols.second);
-    drawOptions_.bondLineWidth = olw;
+    bool isComplex = false;
+    if (bond->hasQuery()) {
+      std::string descr = bond->getQuery()->getDescription();
+      if (bond->getQuery()->getNegation() || descr != "BondOrder") {
+        isComplex = true;
+        makeQueryBond(bond, doubleBondOffset);
+      }
+    }
+
+    if (!isComplex) {
+      makeStandardBond(bond, doubleBondOffset);
+    }
   }
 
 }
@@ -142,6 +151,8 @@ void DrawMol::extractAtomCoords(int confId) {
     atCds_.emplace_back(pt);
     // std::cout << "coords for " << this_idx << " : " << pt << std::endl;
   }
+  std::cout << "2->3 dist = " << (atCds_[2] - atCds_[3]).length() << std::endl;
+  std::cout << "4->5 dist = " << (atCds_[4] - atCds_[5]).length() << std::endl;
 }
 
 // ****************************************************************************
@@ -161,6 +172,8 @@ void DrawMol::extractAtomSymbols() {
 void DrawMol::calculateScale() {
   findExtremes();
 
+  // if either width_ or height_ is < 0 we are going to make a picture of
+  // as yet unknown size, with fixed scale.
   bool setWidth = false;
   if (width_ < 0) {
     // FIX: technically we need to take the legend width into account too!
@@ -168,11 +181,13 @@ void DrawMol::calculateScale() {
     setWidth = true;
   }
   bool setHeight = false;
+  double thisYRange = yRange_;
   if (height_ < 0) {
     // we need to adjust the range for the legend
     // if it's not present then legend_height_ will be zero and this will be a
     // no-op
-    height_ = drawOptions_.scalingFactor * yRange_;
+    thisYRange += legendHeight_ / drawOptions_.scalingFactor;
+    height_ = drawOptions_.scalingFactor * thisYRange;
     setHeight = true;
   }
 
@@ -189,10 +204,11 @@ void DrawMol::calculateScale() {
       width_ = drawOptions_.scalingFactor * xRange_;
     }
     if (setHeight) {
-      height_ = drawOptions_.scalingFactor * yRange_;
+      height_ = drawOptions_.scalingFactor * thisYRange;
     }
 
-    scale_ = std::min(double(width_) / xRange_, double(height_) / yRange_);
+    scale_ = std::min(double(width_) / xRange_,
+                      double(height_ - legendHeight_) / yRange_);
     double fix_scale = scale_;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
@@ -246,8 +262,9 @@ void DrawMol::changeToDrawCoords() {
   Point2D trans(-xMin_, -yMin_);
   Point2D scale(scale_, -scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
+  int drawHeight = height_ - legendHeight_;
   Point2D toCentre((width_ - scaledRanges.x) / 2.0,
-                   height_ - (height_ - scaledRanges.y) / 2);
+                   drawHeight - (drawHeight - scaledRanges.y) / 2);
   for(auto &bond: bonds_) {
     bond->move(trans);
     bond->scale(scale);
@@ -260,6 +277,17 @@ void DrawMol::draw(MolDraw2D &drawer) const {
   for(auto &bond: bonds_) {
     bond->draw(drawer);
   }
+  for(auto &annot: annotations_) {
+    drawAnnotation(annot);
+  }
+  for(auto &leg: legends_) {
+    drawAnnotation(leg);
+  }
+}
+
+// ****************************************************************************
+void DrawMol::drawAnnotation(const AnnotationType &annot) const {
+  textDrawer_.drawString(annot.text_, annot.rect_.trans_, annot.align_);
 }
 
 // ****************************************************************************
@@ -527,22 +555,397 @@ void DrawMol::calcMeanBondLengthSquare() {
 }
 
 // ****************************************************************************
+void DrawMol::addLegend(const std::string &legend) {
+  if (legend.empty()) {
+    return;
+  }
+  legendHeight_ = int(0.05 * double(height_));
+
+  auto calc_legend_height = [&](const std::vector<std::string> &legend_bits,
+                                double &total_width, double &total_height) {
+    total_width = total_height = 0;
+    for (auto bit : legend_bits) {
+      double x_min, y_min, x_max, y_max;
+      textDrawer_.getStringExtremes(bit, OrientType::N, x_min, y_min, x_max,
+                                    y_max, true);
+      total_height += y_max - y_min;
+      total_width = std::max(total_width, x_max - x_min);
+    }
+  };
+
+  std::vector<std::string> legend_bits;
+  // split any strings on newlines
+  std::string next_piece;
+  for (auto c : legend) {
+    if (c == '\n') {
+      if (!next_piece.empty()) {
+        legend_bits.push_back(next_piece);
+      }
+      next_piece = "";
+    } else {
+      next_piece += c;
+    }
+  }
+  if (!next_piece.empty()) {
+    legend_bits.push_back(next_piece);
+  }
+
+  // work out a font scale that allows the pieces to fit
+  double o_font_scale = textDrawer_.fontScale();
+  double fsize = textDrawer_.fontSize();
+  double new_font_scale = o_font_scale * drawOptions_.legendFontSize / fsize;
+  textDrawer_.setFontScale(new_font_scale, true);
+  double total_width, total_height;
+  calc_legend_height(legend_bits, total_width, total_height);
+  if (total_height > legendHeight_) {
+    new_font_scale *= double(legendHeight_) / total_height;
+    textDrawer_.setFontScale(new_font_scale, true);
+    calc_legend_height(legend_bits, total_width, total_height);
+  }
+  if (total_width > width_) {
+    new_font_scale *= double(width_) / total_width;
+    textDrawer_.setFontScale(new_font_scale, true);
+    calc_legend_height(legend_bits, total_width, total_height);
+  }
+  Point2D loc(width_ / 2, height_ - total_height);
+  for (auto bit : legend_bits) {
+    AnnotationType annot;
+    annot.text_ = bit;
+    annot.orient_ = OrientType::N;
+    annot.col_ = drawOptions_.legendColour;
+    annot.fontScale_ = new_font_scale;
+    annot.rect_.trans_ = loc;
+    double x_min, y_min, x_max, y_max;
+    textDrawer_.getStringExtremes(bit, OrientType::N, x_min, y_min, x_max,
+                                  y_max, true);
+    annot.rect_.width_ = x_max - x_min;
+    annot.rect_.height_ = y_max - y_min;
+    loc.y += annot.rect_.height_;
+    legends_.emplace_back(annot);
+  }
+}
+
+// ****************************************************************************
+void DrawMol::makeStandardBond(Bond *bond, double doubleBondOffset) {
+  int beg_at = bond->getBeginAtomIdx();
+  int end_at = bond->getEndAtomIdx();
+  std::pair<DrawColour, DrawColour> cols = getBondColours(bond);
+  int olw = drawOptions_.bondLineWidth;
+
+  auto bt = bond->getBondType();
+  if (bt == Bond::DOUBLE || bt == Bond::AROMATIC) {
+    makeDoubleBondLines(bond, doubleBondOffset, cols);
+  } else if (bt == Bond::SINGLE && (bond->getBondDir() == Bond::BEGINWEDGE ||
+                                    bond->getBondDir() == Bond::BEGINDASH)) {
+    makeWedgedBond(bond, cols);
+  } else if (bt == Bond::SINGLE && bond->getBondDir() == Bond::UNKNOWN) {
+    makeWavyBond(bond, cols);
+  } else if (bt == Bond::DATIVE || bt == Bond::DATIVEL || bt == Bond::DATIVER) {
+    makeDativeBond(bond, cols);
+  } else if (bt == Bond::ZERO) {
+    makeZeroBond(bond, cols, shortDashes);
+  } else if (bt == Bond::HYDROGEN) {
+    makeZeroBond(bond, cols, dots);
+  } else {
+    // in all other cases, we will definitely want to draw a line between
+    // the two atoms
+    newBondLine(atCds_[beg_at], atCds_[end_at], cols.first, cols.second,
+                beg_at, end_at, bond->getIdx(), noDash);
+    if (Bond::TRIPLE == bt) {
+      makeTripleBondLines(bond, doubleBondOffset, cols);
+    }
+  }
+
+  drawOptions_.bondLineWidth = olw;
+}
+
+// ****************************************************************************
+void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
+  PRECONDITION(bond->hasQuery(), "no query");
+  const auto qry = bond->getQuery();
+
+  auto beg_at = bond->getBeginAtom();
+  auto end_at = bond->getEndAtom();
+  const Point2D &at1_cds = atCds_[beg_at->getIdx()];
+  const Point2D &at2_cds = atCds_[end_at->getIdx()];
+  auto midp = (at2_cds + at1_cds) / 2.;
+  auto tdash = shortDashes;
+  DrawColour queryColour{0.5, 0.5, 0.5};
+  int at1Idx, at2Idx;
+
+  bool drawGenericQuery = false;
+  if (qry->getDescription() == "SingleOrDoubleBond") {
+    at1Idx = beg_at->getIdx();
+    at2Idx = drawOptions_.splitBonds ? -1 : end_at->getIdx();
+    newBondLine(at1_cds, midp, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), noDash);
+    Point2D l1s, l1f, l2s, l2f;
+    calcDoubleBondLines(*drawMol_, doubleBondOffset, *bond, atCds_, l1s, l1f,
+                        l2s, l2f);
+    at1Idx = drawOptions_.splitBonds ? end_at->getIdx() : beg_at->getIdx();
+    at2Idx = drawOptions_.splitBonds ? -1 : end_at->getIdx();
+    midp = (l1s + l1f) / 2.0;
+    newBondLine(midp, l1f, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), noDash);
+    midp = (l2s + l2f) / 2.0;
+    newBondLine(midp, l2f, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), noDash);
+  } else if (qry->getDescription() == "SingleOrAromaticBond") {
+    at1Idx = beg_at->getIdx();
+    at2Idx = drawOptions_.splitBonds ? -1 : end_at->getIdx();
+    newBondLine(at1_cds, midp, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), noDash);
+      Point2D l1s, l1f, l2s, l2f;
+      calcDoubleBondLines(*drawMol_, doubleBondOffset, *bond, atCds_,
+                          l1s, l1f, l2s, l2f);
+      at1Idx = drawOptions_.splitBonds ? end_at->getIdx() : beg_at->getIdx();
+      at2Idx = drawOptions_.splitBonds ? -1 : end_at->getIdx();
+      midp = (l1s + l1f) / 2.0;
+      newBondLine(midp, l1f, queryColour, queryColour, at1Idx, at2Idx,
+                  bond->getIdx(), noDash);
+      midp = (l2s + l2f) / 2.0;
+      newBondLine(midp, l2f, queryColour, queryColour, at1Idx, at2Idx,
+                  bond->getIdx(), tdash);
+  } else if (qry->getDescription() == "DoubleOrAromaticBond") {
+    at1Idx = beg_at->getIdx();
+    at2Idx = drawOptions_.splitBonds ? -1 : end_at->getIdx();
+    Point2D l1s, l1f, l2s, l2f;
+    calcDoubleBondLines(*drawMol_, doubleBondOffset, *bond, atCds_, l1s, l1f,
+                        l2s, l2f);
+    midp = (l1s + l1f) / 2.0;
+    newBondLine(l1s, midp, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), noDash);
+    newBondLine(midp, l1f, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), noDash);
+    at1Idx = drawOptions_.splitBonds ? end_at->getIdx() : beg_at->getIdx();
+    at2Idx = drawOptions_.splitBonds ? -1 : end_at->getIdx();
+    midp = (l2s + l2f) / 2.0;
+    newBondLine(l2s, midp, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), noDash);
+    newBondLine(midp, l2f, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), tdash);
+  } else if (qry->getDescription() == "BondNull") {
+    at1Idx = beg_at->getIdx();
+    at2Idx = end_at->getIdx();
+    newBondLine(at1_cds, at2_cds, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), tdash);
+  } else if (qry->getDescription() == "BondAnd" &&
+             qry->endChildren() - qry->beginChildren() == 2) {
+    auto q1 = *(qry->beginChildren());
+    auto q2 = *(qry->beginChildren() + 1);
+
+    if (q2->getDescription() == "BondOrder") {
+      std::swap(q1, q2);
+    }
+    if (q1->getDescription() == "BondOrder" &&
+        q2->getDescription() == "BondInRing") {
+      size_t currNumBonds = bonds_.size();
+      makeStandardBond(bond, doubleBondOffset);
+      for(size_t i = currNumBonds; i < bonds_.size(); ++i) {
+        bonds_[i]->lineColour_ = queryColour;
+      }
+
+      Point2D segment = at2_cds - at1_cds;
+      if (!q2->getNegation()) {
+        segment /= segment.length() * 6;
+        Point2D r1 = Point2D(0.5 * segment.x - 0.866 * segment.y,
+                             0.866 * segment.x + 0.5 * segment.y);
+        Point2D r2 =
+            Point2D(0.5 * r1.x - 0.866 * r1.y, 0.866 * r1.x + 0.5 * r1.y);
+        std::vector<Point2D> pts{midp + segment, midp + r1, midp + r2,
+                                 midp - segment, midp - r1, midp - r2,
+                                 midp + segment};
+        DrawShapePolyline *pl = new DrawShapePolyline(
+            pts, 1, false, queryColour, false, beg_at->getIdx(),
+            end_at->getIdx(), bond->getIdx(), noDash);
+        bonds_.emplace_back(std::unique_ptr<DrawShape>(pl));
+      } else {
+        segment /= segment.length() * 10;
+        auto l = segment.length();
+        Point2D p1 = midp + segment + Point2D(l, l);
+        Point2D p2 = midp + segment - Point2D(l, l);
+        std::vector<Point2D> pts{p1, p2};
+        DrawShapeEllipse *ell = new DrawShapeEllipse(pts, 1, false, queryColour,
+                                                     false);
+        bonds_.emplace_back(std::unique_ptr<DrawShape>(ell));
+        p1 = midp - segment + Point2D(l, l);
+        p2 = midp - segment - Point2D(l, l);
+        pts = std::vector<Point2D>{p1, p2};
+        ell = new DrawShapeEllipse(pts, 1, false, queryColour, false);
+        bonds_.emplace_back(std::unique_ptr<DrawShape>(ell));
+      }
+    } else {
+      drawGenericQuery = true;
+    }
+  } else {
+    drawGenericQuery = true;
+  }
+  if (drawGenericQuery) {
+    newBondLine(at1_cds, at2_cds, queryColour, queryColour, at1Idx, at2Idx,
+                bond->getIdx(), dots);
+    bonds_.back()->lineWidth_ = 1;
+    bonds_.back()->scaleLineWidth_ = false;
+  }
+}
+
+// ****************************************************************************
+void DrawMol::makeDoubleBondLines(
+    Bond *bond, double doubleBondOffset,
+    const std::pair<DrawColour, DrawColour> &cols) {
+  Point2D l1s, l1f, l2s, l2f;
+  calcDoubleBondLines(*drawMol_, doubleBondOffset, *bond, atCds_,
+                      l1s, l1f, l2s, l2f);
+  bool orig_slw = drawOptions_.scaleBondWidth;
+  //  if (highlight_bond) {
+  //    d2d.drawOptions().scaleBondWidth =
+  //        d2d.drawOptions().scaleHighlightBondWidth;
+  //  }
+  int at1Idx = bond->getBeginAtomIdx();
+  int at2Idx = bond->getEndAtomIdx();
+  int bondIdx = bond->getIdx();
+  newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+              noDash);
+  if (bond->getBondType() == Bond::AROMATIC) {
+    newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                dashes);
+  } else {
+    newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                noDash);
+  }
+  drawOptions_.scaleBondWidth = orig_slw;
+}
+
+// ****************************************************************************
+void DrawMol::makeTripleBondLines(
+    Bond *bond, double doubleBondOffset,
+    const std::pair<DrawColour, DrawColour> &cols) {
+  Point2D l1s, l1f, l2s, l2f;
+  int at1Idx = bond->getBeginAtomIdx();
+  int at2Idx = bond->getEndAtomIdx();
+  int bondIdx = bond->getIdx();
+  calcTripleBondLines(doubleBondOffset, *bond, atCds_, l1s, l1f, l2s, l2f);
+  bool orig_slw = drawOptions_.scaleBondWidth;
+  newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+              noDash);
+  newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+              noDash);
+  drawOptions_.scaleBondWidth = orig_slw;
+}
+
+// ****************************************************************************
+void DrawMol::makeWedgedBond(Bond *bond,
+                             const std::pair<DrawColour, DrawColour> &cols) {
+  // swap the direction if at1 has does not have stereochem set
+  // or if at2 does have stereochem set and the bond starts there
+  auto at1 = bond->getBeginAtom();
+  auto at2 = bond->getEndAtom();
+  auto col1 = cols.first;
+  auto col2 = cols.second;
+  auto inverted = false;
+  if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+       at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
+      (at1->getIdx() != bond->getBeginAtomIdx() &&
+       (at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+        at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))) {
+    // std::cerr << "  swap" << std::endl;
+    std::swap(at1, at2);
+    std::swap(col1, col2);
+    inverted = true;
+  }
+  if (drawOptions_.singleColourWedgeBonds) {
+    col1 = drawOptions_.symbolColour;
+    col2 = drawOptions_.symbolColour;
+  }
+  const Point2D &at1_cds = atCds_[at1->getIdx()];
+  const Point2D &at2_cds = atCds_[at2->getIdx()];
+
+  Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+  Point2D disp = perp * 0.15;
+  Point2D end1 = at2_cds + disp;
+  Point2D end2 = at2_cds - disp;
+  std::vector<Point2D> pts{at1_cds, end1, end2};
+
+  // deliberately not scaling highlighted bond width
+  DrawShape *s;
+  if (Bond::BEGINWEDGE == bond->getBondDir()) {
+    s = new DrawShapeSolidWedge(pts, col1, col2, inverted,
+                                drawOptions_.splitBonds, at1->getIdx(),
+                                at2->getIdx(), bond->getIdx());
+  } else {
+    s = new DrawShapeDashedWedge(pts, col1, col2, inverted, at1->getIdx(),
+                                 at2->getIdx(), bond->getIdx());
+  }
+  bonds_.emplace_back(std::unique_ptr<DrawShape>(s));
+}
+
+// ****************************************************************************
+void DrawMol::makeWavyBond(Bond *bond,
+                           const std::pair<DrawColour, DrawColour> &cols) {
+  auto at1 = bond->getBeginAtom();
+  auto at2 = bond->getEndAtom();
+  const Point2D &at1_cds = atCds_[at1->getIdx()];
+  const Point2D &at2_cds = atCds_[at2->getIdx()];
+  std::vector<Point2D> pts{at1_cds, at2_cds};
+  DrawShapeWavyLine *s = new DrawShapeWavyLine(pts, drawOptions_.bondLineWidth,
+                                               false, cols.first, cols.second);
+  bonds_.emplace_back(std::unique_ptr<DrawShape>(s));
+}
+
+// ****************************************************************************
+void DrawMol::makeDativeBond(Bond *bond,
+                             const std::pair<DrawColour, DrawColour> &cols) {
+  auto at1 = bond->getBeginAtom();
+  auto at2 = bond->getEndAtom();
+  const Point2D &at1_cds = atCds_[at1->getIdx()];
+  const Point2D &at2_cds = atCds_[at2->getIdx()];
+
+  Point2D mid = (at1_cds + at2_cds) * 0.5;
+  newBondLine(at1_cds, mid, cols.first, cols.first, at1->getIdx(),
+              at2->getIdx(), bond->getIdx(), noDash);
+  std::vector<Point2D> pts{mid, at2_cds};
+  DrawShapeArrow *a = new DrawShapeArrow(pts, drawOptions_.bondLineWidth,
+                                         false, cols.second, true,
+                                         0.2, M_PI / 6);
+  bonds_.emplace_back(std::unique_ptr<DrawShape>(a));
+}
+
+// ****************************************************************************
+void DrawMol::makeZeroBond(Bond *bond,
+                           const std::pair<DrawColour, DrawColour> &cols,
+                           const DashPattern &dashPattern) {
+  auto at1 = bond->getBeginAtom();
+  auto at2 = bond->getEndAtom();
+  const Point2D &at1_cds = atCds_[at1->getIdx()];
+  const Point2D &at2_cds = atCds_[at2->getIdx()];
+  newBondLine(at1_cds, at2_cds, cols.first, cols.second, at1->getIdx(),
+              at2->getIdx(), bond->getIdx(), dashPattern);
+}
+
+// ****************************************************************************
 void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
-                          const DrawColour &col1, const DrawColour &col2) {
-  if (col1 == col2) {
+                          const DrawColour &col1, const DrawColour &col2,
+                          int atom1Idx, int atom2Idx, int bondIdx,
+                          const DashPattern &dashPattern) {
+  if (col1 == col2 && !drawOptions_.splitBonds) {
     std::vector<Point2D> pts{pt1, pt2};
     DrawShapePolyline *b =
-        new DrawShapePolyline(pts, drawOptions_.bondLineWidth, false, col1);
+        new DrawShapePolyline(pts, drawOptions_.bondLineWidth, false, col1,
+                              false, atom1Idx, atom2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b));
   } else {
     Point2D mid = (pt1 + pt2) / 2.0;
     std::vector<Point2D> pts1{pt1, mid};
+    int at1Idx = atom1Idx;
+    int at2Idx = drawOptions_.splitBonds ? -1 : atom2Idx;
     DrawShapePolyline *b1 =
-        new DrawShapePolyline(pts1, drawOptions_.bondLineWidth, false, col1);
+        new DrawShapePolyline(pts1, drawOptions_.bondLineWidth, false, col1,
+                              false, at1Idx, at2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b1));
+    at1Idx = drawOptions_.splitBonds ? atom2Idx : atom1Idx;
     std::vector<Point2D> pts2{mid, pt2};
     DrawShapePolyline *b2 =
-        new DrawShapePolyline(pts2, drawOptions_.bondLineWidth, false, col2);
+        new DrawShapePolyline(pts2, drawOptions_.bondLineWidth, false, col2,
+                              false, at1Idx, at2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b2));
   }
 }
@@ -722,6 +1125,213 @@ int getHighlightBondWidth(
   }
   int tgt_lw = drawOptions.bondLineWidth * bwm;
   return tgt_lw;
+}
+
+// ****************************************************************************
+void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,
+                         const std::vector<Point2D> &at_cds, Point2D &l1s,
+                         Point2D &l1f, Point2D &l2s, Point2D &l2f) {
+  // the percent shorter that the extra bonds in a double bond are
+  const double multipleBondTruncation = 0.15;
+  Atom *at1 = bond.getBeginAtom();
+  Atom *at2 = bond.getEndAtom();
+  const Point2D &at1_cds = at_cds[at1->getIdx()];
+  const Point2D &at2_cds = at_cds[at2->getIdx()];
+
+  Point2D perp;
+  if (1 == at1->getDegree() || 1 == at2->getDegree() ||
+      isLinearAtom(*at1, at_cds) || isLinearAtom(*at2, at_cds)) {
+    perp = calcPerpendicular(at1_cds, at2_cds) * offset;
+    l1s = at1_cds + perp;
+    l1f = at2_cds + perp;
+    l2s = at1_cds - perp;
+    l2f = at2_cds - perp;
+  } else if ((Bond::EITHERDOUBLE == bond.getBondDir()) ||
+             (Bond::STEREOANY == bond.getStereo())) {
+    // crossed bond
+    perp = calcPerpendicular(at1_cds, at2_cds) * offset;
+    l1s = at1_cds + perp;
+    l1f = at2_cds - perp;
+    l2s = at1_cds - perp;
+    l2f = at2_cds + perp;
+  } else {
+    l1s = at1_cds;
+    l1f = at2_cds;
+    offset *= 2.0;
+    if (mol.getRingInfo()->numBondRings(bond.getIdx())) {
+      // in a ring, we need to draw the bond inside the ring
+      perp = bondInsideRing(mol, bond, at1_cds, at2_cds, at_cds);
+    } else {
+      perp = bondInsideDoubleBond(mol, bond, at_cds);
+    }
+    Point2D bv = at1_cds - at2_cds;
+    l2s = at1_cds - bv * multipleBondTruncation + perp * offset;
+    l2f = at2_cds + bv * multipleBondTruncation + perp * offset;
+  }
+}
+
+// ****************************************************************************
+void calcTripleBondLines(double offset, const Bond &bond,
+                         const std::vector<Point2D> &at_cds,
+                         Point2D &l1s, Point2D &l1f, Point2D &l2s,
+                         Point2D &l2f) {
+  // the percent shorter that the extra bonds in a double bond are
+  const double multipleBondTruncation = 0.15;
+
+  Atom *at1 = bond.getBeginAtom();
+  Atom *at2 = bond.getEndAtom();
+  const Point2D &at1_cds = at_cds[at1->getIdx()];
+  const Point2D &at2_cds = at_cds[at2->getIdx()];
+
+  // 2 lines, a bit shorter and offset on the perpendicular
+  double dbo = 2.0 * offset;
+  Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+  double end1_trunc = 1 == at1->getDegree() ? 0.0 : multipleBondTruncation;
+  double end2_trunc = 1 == at2->getDegree() ? 0.0 : multipleBondTruncation;
+  Point2D bv = at1_cds - at2_cds;
+  l1s = at1_cds - (bv * end1_trunc) + perp * dbo;
+  l1f = at2_cds + (bv * end2_trunc) + perp * dbo;
+  l2s = at1_cds - (bv * end1_trunc) - perp * dbo;
+  l2f = at2_cds + (bv * end2_trunc) - perp * dbo;
+}
+
+// ****************************************************************************
+// calculate normalised perpendicular to vector between two coords
+Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
+  double bv[2] = {cds1.x - cds2.x, cds1.y - cds2.y};
+  double perp[2] = {-bv[1], bv[0]};
+  double perp_len = sqrt(perp[0] * perp[0] + perp[1] * perp[1]);
+  perp[0] /= perp_len;
+  perp[1] /= perp_len;
+
+  return Point2D(perp[0], perp[1]);
+}
+
+// ****************************************************************************
+// calculate normalised perpendicular to vector between two coords, such that
+// it's inside the angle made between (1 and 2) and (2 and 3).
+Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
+                               const Point2D &cds3) {
+  Point2D perp = calcPerpendicular(cds1, cds2);
+  double v1[2] = {cds1.x - cds2.x, cds1.y - cds2.y};
+  double v2[2] = {cds2.x - cds3.x, cds2.y - cds3.y};
+  double obv[2] = {v1[0] - v2[0], v1[1] - v2[1]};
+
+  // if dot product of centre_dir and perp < 0.0, they're pointing in opposite
+  // directions, so reverse perp
+  if (obv[0] * perp.x + obv[1] * perp.y < 0.0) {
+    perp.x *= -1.0;
+    perp.y *= -1.0;
+  }
+
+  return perp;
+}
+
+// ****************************************************************************
+// cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
+// into the ring
+Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
+                       const Point2D &cds2,
+                       const std::vector<Point2D> &at_cds) {
+  std::vector<size_t> bond_in_rings;
+  auto bond_rings = mol.getRingInfo()->bondRings();
+  for (size_t i = 0; i < bond_rings.size(); ++i) {
+    if (find(bond_rings[i].begin(), bond_rings[i].end(), bond.getIdx()) !=
+        bond_rings[i].end()) {
+      bond_in_rings.push_back(i);
+    }
+  }
+
+  // find another bond in the ring connected to bond, use the
+  // other end of it as the 3rd atom.
+  auto calc_perp = [&](const Bond *bond, const INT_VECT &ring) -> Point2D * {
+    Atom *bgn_atom = bond->getBeginAtom();
+    for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bgn_atom))) {
+      const Bond *bond2 = mol[nbri2];
+      if (bond2 == bond) {
+        continue;
+      }
+      if (find(ring.begin(), ring.end(), bond2->getIdx()) != ring.end()) {
+        int atom3 = bond2->getOtherAtomIdx(bond->getBeginAtomIdx());
+        Point2D *ret = new Point2D;
+        *ret = calcInnerPerpendicular(cds1, cds2, at_cds[atom3]);
+        return ret;
+      }
+    }
+    return nullptr;
+  };
+
+  if (bond_in_rings.size() > 1) {
+    // bond is in more than 1 ring.  Choose one that is the same aromaticity
+    // as the bond, so that if bond is aromatic, the double bond is inside
+    // the aromatic ring.  This is important for morphine, for example,
+    // where there are fused aromatic and aliphatic rings.
+    // morphine: CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5
+    for (size_t i = 0; i < bond_in_rings.size(); ++i) {
+      auto ring = bond_rings[bond_in_rings[i]];
+      bool ring_ok = true;
+      for (auto bond_idx : ring) {
+        const Bond *bond2 = mol.getBondWithIdx(bond_idx);
+        if (bond.getIsAromatic() != bond2->getIsAromatic()) {
+          ring_ok = false;
+          break;
+        }
+      }
+      if (!ring_ok) {
+        continue;
+      }
+      Point2D *ret = calc_perp(&bond, ring);
+      if (ret) {
+        Point2D real_ret(*ret);
+        delete ret;
+        return real_ret;
+      }
+    }
+  }
+
+  // either bond is in 1 ring, or we couldn't decide above, so just use the
+  // first one
+  auto ring = bond_rings[bond_in_rings.front()];
+  Point2D *ret = calc_perp(&bond, ring);
+  if (ret) {
+    Point2D real_ret(*ret);
+    delete ret;
+    return real_ret;
+  }
+
+  // failsafe that it will hopefully never see.
+  return calcPerpendicular(cds1, cds2);
+}
+
+// ****************************************************************************
+// cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
+// perpendicular pointing into the inside of the bond
+Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
+                             const std::vector<Point2D> &at_cds) {
+  // a chain double bond, where it looks nicer IMO if the 2nd line is inside
+  // the angle of outgoing bond. Unless it's an allene, where nothing
+  // looks great.
+  const Atom *at1 = bond.getBeginAtom();
+  const Atom *at2 = bond.getEndAtom();
+  const Atom *bond_atom, *end_atom;
+  if (at1->getDegree() > 1) {
+    bond_atom = at1;
+    end_atom = at2;
+  } else {
+    bond_atom = at2;
+    end_atom = at1;
+  }
+  int at3 = -1;  // to stop the compiler whinging.
+  for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bond_atom))) {
+    const Bond *bond2 = mol[nbri2];
+    if (&bond != bond2) {
+      at3 = bond2->getOtherAtomIdx(bond_atom->getIdx());
+      break;
+    }
+  }
+
+  return calcInnerPerpendicular(at_cds[end_atom->getIdx()],
+                                at_cds[bond_atom->getIdx()], at_cds[at3]);
 }
 
 } // namespace RDKit

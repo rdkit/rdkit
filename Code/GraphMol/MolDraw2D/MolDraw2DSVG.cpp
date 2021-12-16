@@ -493,9 +493,16 @@ void MolDraw2DSVG::outputClasses() {
   if (!d_activeClass.empty()) {
     d_os << d_activeClass;
   }
+  if (hasActiveBndIdx()) {
+    d_os << "bond-" << getActiveBndIdx();
+  }
+
   if (!hasActiveAtmIdx()) {
     d_os << "' ";
     return;
+  }
+  if (hasActiveBndIdx()) {
+    d_os << " ";
   }
   d_os << (!d_activeClass.empty() ? " " : "");
   const auto aidx1 = getActiveAtmIdx1();

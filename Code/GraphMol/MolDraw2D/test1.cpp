@@ -1509,11 +1509,12 @@ void test9MolLegends() {
   std::cout << " ----------------- Test 9 (molecule legends)" << std::endl;
   {
 //    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
-    auto m = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
+    auto m = "N#CCN(CC)[C@@H](Cl)Cn1nc2c3ccccc3sc3c([C@@H](F)NS(C)(=O)=O)ccc1c32"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDraw2DSVG drawer(600, 600);
+    drawer.drawOptions().splitBonds = false;
     drawer.drawMolecule(*m, "mol legend");
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();

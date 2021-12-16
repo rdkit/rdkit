@@ -376,9 +376,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual bool supportsAnnotations() { return true; }
   virtual void drawAnnotation(const AnnotationType &annotation);
 
-  bool hasActiveAtmIdx() { return activeAtmIdx1_ >= 0; }
-  int getActiveAtmIdx1() { return activeAtmIdx1_; }
-  int getActiveAtmIdx2() { return activeAtmIdx2_; }
+  bool hasActiveAtmIdx() const { return activeAtmIdx1_ >= 0; }
+  int getActiveAtmIdx1() const { return activeAtmIdx1_; }
+  int getActiveAtmIdx2() const { return activeAtmIdx2_; }
   void setActiveAtmIdx(int at_idx1 = -1, int at_idx2 = -1) {
     at_idx1 = (at_idx1 < 0 ? -1 : at_idx1);
     at_idx2 = (at_idx2 < 0 ? -1 : at_idx2);
@@ -387,6 +387,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     }
     activeAtmIdx1_ = at_idx1;
     activeAtmIdx2_ = at_idx2;
+  }
+  bool hasActiveBndIdx() const { return activeBndIdx_ >= 0; }
+  int getActiveBndIdx() const { return activeBndIdx_; }
+  void setActiveBndIdx(int bnd_idx = -1) {
+    activeBndIdx_ = (bnd_idx < 0 ? -1 : bnd_idx);
   }
 
  protected:
@@ -403,6 +408,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   int activeMolIdx_;
   int activeAtmIdx1_;
   int activeAtmIdx2_;
+  int activeBndIdx_;
   std::vector<std::unique_ptr<DrawMol>> draw_mols_;
 
   DrawColour curr_colour_;

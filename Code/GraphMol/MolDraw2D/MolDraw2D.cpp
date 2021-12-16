@@ -45,145 +45,6 @@ namespace RDKit {
 
 namespace {
 // ****************************************************************************
-// calculate normalised perpendicular to vector between two coords
-Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
-  double bv[2] = {cds1.x - cds2.x, cds1.y - cds2.y};
-  double perp[2] = {-bv[1], bv[0]};
-  double perp_len = sqrt(perp[0] * perp[0] + perp[1] * perp[1]);
-  perp[0] /= perp_len;
-  perp[1] /= perp_len;
-
-  return Point2D(perp[0], perp[1]);
-}
-
-// ****************************************************************************
-// calculate normalised perpendicular to vector between two coords, such that
-// it's inside the angle made between (1 and 2) and (2 and 3).
-Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
-                               const Point2D &cds3) {
-  Point2D perp = calcPerpendicular(cds1, cds2);
-  double v1[2] = {cds1.x - cds2.x, cds1.y - cds2.y};
-  double v2[2] = {cds2.x - cds3.x, cds2.y - cds3.y};
-  double obv[2] = {v1[0] - v2[0], v1[1] - v2[1]};
-
-  // if dot product of centre_dir and perp < 0.0, they're pointing in opposite
-  // directions, so reverse perp
-  if (obv[0] * perp.x + obv[1] * perp.y < 0.0) {
-    perp.x *= -1.0;
-    perp.y *= -1.0;
-  }
-
-  return perp;
-}
-
-// ****************************************************************************
-// cds1 and cds2 are 2 atoms in a ring.  Returns the perpendicular pointing
-// into the ring
-Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
-                       const Point2D &cds2,
-                       const std::vector<Point2D> &at_cds) {
-  vector<size_t> bond_in_rings;
-  auto bond_rings = mol.getRingInfo()->bondRings();
-  for (size_t i = 0; i < bond_rings.size(); ++i) {
-    if (find(bond_rings[i].begin(), bond_rings[i].end(), bond.getIdx()) !=
-        bond_rings[i].end()) {
-      bond_in_rings.push_back(i);
-    }
-  }
-
-  // find another bond in the ring connected to bond, use the
-  // other end of it as the 3rd atom.
-  auto calc_perp = [&](const Bond *bond, const INT_VECT &ring) -> Point2D * {
-    Atom *bgn_atom = bond->getBeginAtom();
-    for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bgn_atom))) {
-      const Bond *bond2 = mol[nbri2];
-      if (bond2 == bond) {
-        continue;
-      }
-      if (find(ring.begin(), ring.end(), bond2->getIdx()) != ring.end()) {
-        int atom3 = bond2->getOtherAtomIdx(bond->getBeginAtomIdx());
-        Point2D *ret = new Point2D;
-        *ret = calcInnerPerpendicular(cds1, cds2, at_cds[atom3]);
-        return ret;
-      }
-    }
-    return nullptr;
-  };
-
-  if (bond_in_rings.size() > 1) {
-    // bond is in more than 1 ring.  Choose one that is the same aromaticity
-    // as the bond, so that if bond is aromatic, the double bond is inside
-    // the aromatic ring.  This is important for morphine, for example,
-    // where there are fused aromatic and aliphatic rings.
-    // morphine: CN1CC[C@]23c4c5ccc(O)c4O[C@H]2[C@@H](O)C=C[C@H]3[C@H]1C5
-    for (size_t i = 0; i < bond_in_rings.size(); ++i) {
-      auto ring = bond_rings[bond_in_rings[i]];
-      bool ring_ok = true;
-      for (auto bond_idx : ring) {
-        const Bond *bond2 = mol.getBondWithIdx(bond_idx);
-        if (bond.getIsAromatic() != bond2->getIsAromatic()) {
-          ring_ok = false;
-          break;
-        }
-      }
-      if (!ring_ok) {
-        continue;
-      }
-      Point2D *ret = calc_perp(&bond, ring);
-      if (ret) {
-        Point2D real_ret(*ret);
-        delete ret;
-        return real_ret;
-      }
-    }
-  }
-
-  // either bond is in 1 ring, or we couldn't decide above, so just use the
-  // first one
-  auto ring = bond_rings[bond_in_rings.front()];
-  Point2D *ret = calc_perp(&bond, ring);
-  if (ret) {
-    Point2D real_ret(*ret);
-    delete ret;
-    return real_ret;
-  }
-
-  // failsafe that it will hopefully never see.
-  return calcPerpendicular(cds1, cds2);
-}
-
-// ****************************************************************************
-// cds1 and cds2 are 2 atoms in a chain double bond.  Returns the
-// perpendicular pointing into the inside of the bond
-Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
-                             const std::vector<Point2D> &at_cds) {
-  // a chain double bond, where it looks nicer IMO if the 2nd line is inside
-  // the angle of outgoing bond. Unless it's an allene, where nothing
-  // looks great.
-  const Atom *at1 = bond.getBeginAtom();
-  const Atom *at2 = bond.getEndAtom();
-  const Atom *bond_atom, *end_atom;
-  if (at1->getDegree() > 1) {
-    bond_atom = at1;
-    end_atom = at2;
-  } else {
-    bond_atom = at2;
-    end_atom = at1;
-  }
-  int at3 = -1;  // to stop the compiler whinging.
-  for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bond_atom))) {
-    const Bond *bond2 = mol[nbri2];
-    if (&bond != bond2) {
-      at3 = bond2->getOtherAtomIdx(bond_atom->getIdx());
-      break;
-    }
-  }
-
-  return calcInnerPerpendicular(at_cds[end_atom->getIdx()],
-                                at_cds[bond_atom->getIdx()], at_cds[at3]);
-}
-
-// ****************************************************************************
 void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,
                          const Point2D &at1_cds, const Point2D &at2_cds,
                          const std::vector<Point2D> &at_cds, Point2D &l1s,
@@ -473,11 +334,10 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
-  DrawMol *draw_mol = new DrawMol(mol, legend, panelWidth(), panelHeight(),
-                                  drawOptions(), highlight_atoms,
-                                  highlight_bonds, highlight_atom_map,
-                                  highlight_bond_map, nullptr, highlight_radii,
-                                  confId);
+  DrawMol *draw_mol = new DrawMol(
+      mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
+      highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
+      nullptr, highlight_radii, confId);
   draw_mols_.push_back(std::unique_ptr<DrawMol>(draw_mol));
   startDrawing();
   drawAllMolecules();

@@ -152,6 +152,8 @@ struct AnnotationType {
   OrientType orient_ = OrientType::C;
   TextAlignType align_ = TextAlignType::MIDDLE;
   bool scaleText_ = true;
+  DrawColour col_ = DrawColour(0, 0, 0);
+  double fontScale_ = 1.0;
 };
 
 typedef std::map<int, DrawColour> ColourPalette;

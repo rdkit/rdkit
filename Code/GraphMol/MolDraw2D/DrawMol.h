@@ -28,6 +28,7 @@ namespace RDKit {
 
 class ROMol;
 class RWMol;
+class DrawText;
 
 class DrawMol {
   friend class MolDraw2D;
@@ -59,7 +60,7 @@ class DrawMol {
   */
   DrawMol(const ROMol &mol, const std::string &legend,
           int width, int height,
-          MolDrawOptions &drawOptions,
+          MolDrawOptions &drawOptions, DrawText &textDrawer,
           const std::vector<int> *highlightAtoms,
           const std::vector<int> *highlightBonds,
           const std::map<int, DrawColour> *highlightAtomMap = nullptr,
@@ -88,6 +89,7 @@ class DrawMol {
   void findExtremes();
   void changeToDrawCoords();
   void draw(MolDraw2D &drawer) const;
+  void drawAnnotation(const AnnotationType &annot) const;
 
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
@@ -95,13 +97,31 @@ class DrawMol {
   std::string getAtomSymbol(const Atom &atom, OrientType orientation) const;
   OrientType getAtomOrientation(const Atom &atom) const;
 
+  void addLegend(const std::string &legend);
+
   void calcMeanBondLengthSquare();
+  void makeStandardBond(Bond *bond, double doubleBondOffset);
+  void makeQueryBond(Bond *bond, double doubleBondOffset);
+  void makeDoubleBondLines(Bond *bond, double doubleBondOffset,
+                           const std::pair<DrawColour, DrawColour> &cols);
+  void makeTripleBondLines(Bond *bond, double doubleBondOffset,
+                           const std::pair<DrawColour, DrawColour> &cols);
+  void makeWedgedBond(Bond *bond,
+                      const std::pair<DrawColour, DrawColour> &cols);
+  void makeWavyBond(Bond *bond,
+                    const std::pair<DrawColour, DrawColour> &cols);
+  void makeDativeBond(Bond *bond,
+                      const std::pair<DrawColour, DrawColour> &cols);
+  void makeZeroBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols,
+                    const DashPattern &dashPattern);
   void newBondLine(const Point2D &pt1, const Point2D &pt2,
-                   const DrawColour &col1, const DrawColour &col2);
+                   const DrawColour &col1, const DrawColour &col2,
+                   int atom1Idx, int atom2Idx, int bondIdx,
+                   const DashPattern &dashPattern);
   std::pair<DrawColour, DrawColour> getBondColours(Bond *bond);
 
-
   MolDrawOptions &drawOptions_;
+  DrawText &textDrawer_;
   const std::vector<int> *highlightAtoms_;
   const std::vector<int> *highlightBonds_;
   const std::map<int, DrawColour> *highlightAtomMap_;
@@ -115,12 +135,14 @@ class DrawMol {
   std::vector<int> atomicNums_;
   std::vector<std::pair<std::string, OrientType>> atomSyms_;
   std::vector<AnnotationType> annotations_;
+  std::vector<AnnotationType> legends_;
   std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>> radicals_;
 
   int width_, height_;
   double scale_;
   double xMin_, yMin_, xMax_, yMax_, xRange_, yRange_;
   double meanBondLengthSquare_ = 0.0;
+  int legendHeight_ = 0;
 
 };
 
@@ -137,6 +159,22 @@ DrawColour getColourByAtomicNum(int atomicNum,
 int getHighlightBondWidth(
     MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers);
+
+void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,
+                         const std::vector<Point2D> &at_cds, Point2D &l1s,
+                         Point2D &l1f, Point2D &l2s, Point2D &l2f);
+void calcTripleBondLines(double offset, const Bond &bond,
+                         const std::vector<Point2D> &at_cds,
+                         Point2D &l1s, Point2D &l1f, Point2D &l2s,
+                         Point2D &l2f);
+Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
+Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
+                               const Point2D &cds3);
+Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
+                       const Point2D &cds2,
+                       const std::vector<Point2D> &at_cds);
+Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
+                             const std::vector<Point2D> &at_cds);
 } // namespace RDKit
 
 #endif  // RDKIT_DRAWMOL_H
