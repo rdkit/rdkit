@@ -1792,8 +1792,6 @@ void ParseMolBlockBonds(std::istream *inStream, unsigned int &line,
     // atoms
     if (bond->getBondType() == Bond::AROMATIC) {
       bond->setIsAromatic(true);
-      mol->getAtomWithIdx(bond->getBeginAtomIdx())->setIsAromatic(true);
-      mol->getAtomWithIdx(bond->getEndAtomIdx())->setIsAromatic(true);
     }
     // if the bond might have chirality info associated with it, set a flag:
     if (bond->getBondDir() != Bond::NONE &&

@@ -622,7 +622,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       }
     }
     for (auto atom : mol.atoms()) {
-      if (atomsToUse[atom->getIdx()] && isAromaticAtom(*atom)) {
+      if (atomsToUse[atom->getIdx()] && atom->getIsAromatic()) {
         // if we're doing the full molecule and there are aromatic atoms not in
         // a ring, throw an exception
         if (atomsToUse.all() && bondsToUse.all() &&

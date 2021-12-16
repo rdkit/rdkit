@@ -4314,4 +4314,47 @@ M  END
 )CTAB"_ctab;
     REQUIRE(!mol);
   }
+  SECTION("as reported1") {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -0.3538    0.6163    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0668    0.2012    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  1  0
+M  MRV SMA   1 [#6;a;a]
+M  MRV SMA   2 [#6;a;a]
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+  SECTION("as reported2") {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -0.3538    0.6163    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0668    0.2012    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+  SECTION("as reported3") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 A -0.353800 0.616300 0.000000 0
+M  V30 2 A -1.066800 0.201200 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2 TOPO=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+  }
 }
