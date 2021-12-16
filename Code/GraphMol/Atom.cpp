@@ -23,8 +23,7 @@
 
 namespace RDKit {
 
-namespace {
-bool isAtomAromatic(Atom &atom) {
+bool isAromaticAtom(const Atom &atom) {
   if (atom.getIsAromatic()) {
     return true;
   }
@@ -38,7 +37,6 @@ bool isAtomAromatic(Atom &atom) {
   }
   return false;
 }
-}  // namespace
 
 // Determine whether or not a molecule is to the left of Carbon
 bool isEarlyAtom(int atomicNum) {
@@ -242,7 +240,7 @@ int Atom::calcExplicitValence(bool strict) {
   if (d_atomicNum == 6 && chr > 0) {
     chr = -chr;
   }
-  if (accum > (dv + chr) && isAtomAromatic(*this)) {
+  if (accum > (dv + chr) && isAromaticAtom(*this)) {
     // this needs some explanation : if the atom is aromatic and
     // accum > (dv + chr) we assume that no hydrogen can be added
     // to this atom.  We set x = (v + chr) such that x is the
@@ -444,7 +442,7 @@ int Atom::calcImplicitValence(bool strict) {
   }
 
   // if we have an aromatic case treat it differently
-  if (isAtomAromatic(*this)) {
+  if (isAromaticAtom(*this)) {
     if (explicitPlusRadV <= (static_cast<int>(dv) + chg)) {
       res = dv + chg - explicitPlusRadV;
     } else {

@@ -367,7 +367,8 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
   }
   SECTION("AtomKekulizeException") {
     std::vector<std::pair<std::string, unsigned int>> smiles = {
-        {"CCcc", 2}, {"C1:c:CC1", 0}};
+        {"CCcc", 2},
+    };
     for (auto pr : smiles) {
       CHECK_THROWS_AS(SmilesToMol(pr.first), AtomKekulizeException);
       try {
@@ -381,7 +382,9 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
   }
   SECTION("KekulizeException") {
     std::vector<std::pair<std::string, std::vector<unsigned int>>> smiles = {
-        {"c1cccc1", {0, 1, 2, 3, 4}}, {"Cc1cc1", {1, 2, 3}}};
+        {"c1cccc1", {0, 1, 2, 3, 4}},
+        {"Cc1cc1", {1, 2, 3}},
+        {"C1:c:CC1", {0, 1, 2}}};
     for (auto pr : smiles) {
       CHECK_THROWS_AS(SmilesToMol(pr.first), KekulizeException);
       try {

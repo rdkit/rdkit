@@ -4285,6 +4285,8 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(mol->getBondWithIdx(0)->getIsAromatic());
   }
   SECTION("non-kekulizeable") {
     auto mol = R"CTAB(
