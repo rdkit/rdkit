@@ -2463,3 +2463,32 @@ TEST_CASE("Github #4535: operator<< for AtomPDBResidue", "[PDB]") {
     CHECK(oss.str() == tgt);
   }
 }
+
+TEST_CASE("isAromaticAtom") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C:C:C", ps));
+    REQUIRE(mol);
+    CHECK(!mol->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(mol->getBondWithIdx(0)->getIsAromatic());
+    CHECK(isAromaticAtom(*mol->getAtomWithIdx(0)));
+  }
+}
+
+TEST_CASE(
+    "Github #4785: aromatic bonds no longer set aromatic flags on atoms") {
+  SECTION("basics1") {
+    auto m = "C1:C:C:C:1"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "C1=CC=C1");
+  }
+  SECTION("basics2") {
+    auto m = "C1:C:C:C:C:C:1"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "c1ccccc1");
+  }
+  SECTION("can still get kekulization errors") {
+    CHECK_THROWS_AS(SmilesToMol("C1:C:C:C:C:1"), KekulizeException);
+  }
+}
