@@ -433,7 +433,10 @@ RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
                                                const RDKit::Atom &at);
 
 namespace RDKit {
-//! returns whether or not the atom is to the left of C
+//! returns true if the atom is to the left of C
 RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
+//! returns true if the atom is aromatic or has an aromatic bond
+RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
+
 }  // namespace RDKit
 #endif
