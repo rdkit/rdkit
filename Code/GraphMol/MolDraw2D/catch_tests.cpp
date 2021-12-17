@@ -156,7 +156,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4508_1b.svg", 613270459U},
     {"testGithub4508_2.svg", 2202600652U},
     {"testGithub4508_2b.svg", 145414660U},
-    {"testGithub4538.svg", 2784641879U},
+    {"testGithub4538.svg", 1282272756U},
+    {"testGithub4764.sz1.svg", 1410356032U},
+    {"testGithub4764.sz2.svg", 2935799920U},
+    {"testGithub4764.sz3.svg", 2544100175U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -178,7 +181,11 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testHandDrawn-4.png", 2660533685U},
     {"testHandDrawn-5.png", 2787812269U},
     {"testGithub4323_1.png", 2174252789U},
-    {"testGithub4323_3.png", 1026038713U}};
+    {"testGithub4323_3.png", 1026038713U},
+    {"testGithub4764.sz1.png", 998569406U},
+    {"testGithub4764.sz2.png", 630175977U},
+    {"testGithub4764.sz3.png", 3924927459U},
+};
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
@@ -3475,5 +3482,67 @@ M  END
     ss << " >" << c << "</text>";
     auto pos = text.find(ss.str());
     CHECK(pos != std::string::npos);
+  }
+}
+
+TEST_CASE("Github #4764") {
+  SECTION("basics") {
+    auto mol = "c1ccccc1-C1CCCCC1"_smiles;
+    REQUIRE(mol);
+    std::vector<int> highlights{6, 7, 8, 9, 10, 11};
+    {
+      MolDraw2DSVG drawer(200, 150);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4764.sz1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4764.sz1.svg");
+    }
+    {
+      MolDraw2DSVG drawer(400, 350);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4764.sz2.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4764.sz2.svg");
+    }
+    {
+      MolDraw2DSVG drawer(800, 700);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4764.sz3.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4764.sz3.svg");
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(200, 150);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub4764.sz1.png");
+      check_file_hash("testGithub4764.sz1.png");
+    }
+    {
+      MolDraw2DCairo drawer(400, 350);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub4764.sz2.png");
+      check_file_hash("testGithub4764.sz2.png");
+    }
+    {
+      MolDraw2DCairo drawer(800, 700);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub4764.sz3.png");
+      check_file_hash("testGithub4764.sz3.png");
+    }
+#endif
+    // check_file_hash("testGithub4538.svg");
   }
 }
