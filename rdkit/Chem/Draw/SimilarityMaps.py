@@ -53,6 +53,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import rdDepictor
 from rdkit.Chem import rdMolDescriptors as rdMD
 
+def _Clean
 
 def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity):
   """
@@ -72,19 +73,18 @@ def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
     delattr(probeMol, '_fpInfo')
   if hasattr(refMol, '_fpInfo'):
     delattr(refMol, '_fpInfo')
+
   refFP = fpFunction(refMol, -1)
-  probeFP = fpFunction(probeMol, -1)
-  baseSimilarity = metric(refFP, probeFP)
+  baseSimilarity = metric(refFP, fpFunction(probeMol, -1))
+
   # loop over atoms
-  weights = []
-  for atomId in range(probeMol.GetNumAtoms()):
-    newFP = fpFunction(probeMol, atomId)
-    newSimilarity = metric(refFP, newFP)
-    weights.append(baseSimilarity - newSimilarity)
+  weights = [baseSimilarity - metric(refFP, fpFunction(probeMol, atomId)) for atomId in range(probeMol.GetNumAtoms())]
+
   if hasattr(probeMol, '_fpInfo'):
     delattr(probeMol, '_fpInfo')
   if hasattr(refMol, '_fpInfo'):
     delattr(refMol, '_fpInfo')
+    
   return weights
 
 
