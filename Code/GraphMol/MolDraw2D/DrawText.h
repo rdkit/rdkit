@@ -37,8 +37,7 @@ std::ostream &operator<<(std::ostream &oss, const OrientType &o);
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawText {
  public:
-  static constexpr double DEFAULT_FONT_SCALE =
-      0.6;  // seems to be a good number
+  static constexpr double FONT_SIZE = 0.6;  // seems to be a good number
 
   DrawText(double max_fnt_sz, double min_fnt_sz);
   virtual ~DrawText() {}
@@ -157,7 +156,7 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   double font_scale_;
   double max_font_size_;
   double min_font_size_;
-  double base_font_size_ = DEFAULT_FONT_SCALE;
+  double base_font_size_ = FONT_SIZE;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,

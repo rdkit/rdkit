@@ -69,14 +69,26 @@ void DrawText::setFontScale(double new_scale, bool ignoreExtremes) {
   if (ignoreExtremes) {
     return;
   }
+  font_scale_ = new_scale;
+  double nfs = fontSize();
+  if (max_font_size_ != -1 &&
+      nfs * (baseFontSize() / FONT_SIZE) > max_font_size_) {
+    font_scale_ = max_font_size_ / baseFontSize();
+    std::cout << "max font size used" << std::endl;
+  }
+  if (min_font_size_ != -1 &&
+      nfs * (baseFontSize() / FONT_SIZE) < min_font_size_) {
+    font_scale_ = min_font_size_ / baseFontSize();
+    std::cout << "min font size used" << std::endl;
+  }
 
-  // fontSize == font_scale_ * base_font_size_
-  if (max_font_size_ > 0 && font_scale_ * base_font_size_ > max_font_size_) {
-    font_scale_ = max_font_size_ / base_font_size_;
-  }
-  if (min_font_size_ > 0 && font_scale_ * base_font_size_ < min_font_size_) {
-    font_scale_ = min_font_size_ / base_font_size_;
-  }
+//  // fontSize == font_scale_ * base_font_size_
+//  if (max_font_size_ > 0 && font_scale_ * base_font_size_ > max_font_size_) {
+//    font_scale_ = max_font_size_ / base_font_size_;
+//  }
+//  if (min_font_size_ > 0 && font_scale_ * base_font_size_ < min_font_size_) {
+//    font_scale_ = min_font_size_ / base_font_size_;
+//  }
 }
 
 // ****************************************************************************
@@ -509,6 +521,7 @@ void DrawText::getStringRects(const std::string &text, OrientType orient,
                               std::vector<TextDrawType> &draw_modes,
                               std::vector<char> &draw_chars, bool dontSplit,
                               TextAlignType textAlign) const {
+  PRECONDITION(text.size() > 0, "empty string");
   std::vector<std::string> text_bits;
   if (!dontSplit) {
     text_bits = atomLabelToPieces(text, orient);

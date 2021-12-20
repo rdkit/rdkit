@@ -28,6 +28,7 @@ namespace RDKit {
 
 class ROMol;
 class RWMol;
+class AtomLabel;
 class DrawText;
 
 class DrawMol {
@@ -114,6 +115,8 @@ class DrawMol {
                       const std::pair<DrawColour, DrawColour> &cols);
   void makeZeroBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols,
                     const DashPattern &dashPattern);
+  void adjustBondEndsForLabels(int begAtIdx, int endAtIdx, Point2D &begCds,
+                               Point2D &endCds);
   void newBondLine(const Point2D &pt1, const Point2D &pt2,
                    const DrawColour &col1, const DrawColour &col2,
                    int atom1Idx, int atom2Idx, int bondIdx,
@@ -134,6 +137,7 @@ class DrawMol {
   std::vector<std::unique_ptr<DrawShape>> bonds_;
   std::vector<int> atomicNums_;
   std::vector<std::pair<std::string, OrientType>> atomSyms_;
+  std::vector<std::unique_ptr<AtomLabel>> atomLabels_;
   std::vector<AnnotationType> annotations_;
   std::vector<AnnotationType> legends_;
   std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>> radicals_;
@@ -175,6 +179,11 @@ Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
                        const std::vector<Point2D> &at_cds);
 Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
                              const std::vector<Point2D> &at_cds);
+// return a point that is end1 moved so as not to clash with any of the
+// rects of a label.  end1 to end2 and the coords of 2 ends of a bond.
+Point2D adjustBondEndForString(
+    const Point2D &end1, const Point2D &end2,
+    const std::vector<std::shared_ptr<StringRect>> &rects);
 } // namespace RDKit
 
 #endif  // RDKIT_DRAWMOL_H

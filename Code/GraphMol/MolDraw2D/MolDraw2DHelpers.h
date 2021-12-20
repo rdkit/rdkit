@@ -14,6 +14,8 @@
 #ifndef RDKIT_MOLDRAW2DHELPERS_H
 #define RDKIT_MOLDRAW2DHELPERS_H
 
+#include <Geometry/point.h>
+
 using RDGeom::Point2D;
 
 namespace RDKit {

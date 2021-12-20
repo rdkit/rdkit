@@ -1510,6 +1510,7 @@ void test9MolLegends() {
   {
 //    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
     auto m = "N#CCN(CC)[C@@H](Cl)Cn1nc2c3ccccc3sc3c([C@@H](F)NS(C)(=O)=O)ccc1c32"_smiles;
+//    auto m = "CCCCOCCCC"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
