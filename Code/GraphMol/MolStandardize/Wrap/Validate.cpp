@@ -33,11 +33,12 @@ MolStandardize::MolVSValidation *getMolVSValidation(
     python::object validations) {
   std::vector<boost::shared_ptr<MolStandardize::MolVSValidations>> vs;
 
-  std::unique_ptr<
-      std::vector<boost::shared_ptr<MolStandardize::MolVSValidations>>>
-      pvect = pythonObjectToVect<
-          boost::shared_ptr<MolStandardize::MolVSValidations>>(validations);
-
+  auto pvect =
+      pythonObjectToVect<boost::shared_ptr<MolStandardize::MolVSValidations>>(
+          validations);
+  if (!pvect) {
+    throw_value_error("bad value for validations");
+  }
   for (auto v : *pvect) {
     vs.push_back(v->copy());
   }
@@ -57,8 +58,10 @@ python::list molVSvalidateHelper(MolStandardize::MolVSValidation &self,
 
 MolStandardize::AllowedAtomsValidation *getAllowedAtomsValidation(
     python::object atoms) {
-  std::unique_ptr<std::vector<Atom *>> p_atomList =
-      pythonObjectToVect<Atom *>(atoms);
+  auto p_atomList = pythonObjectToVect<Atom *>(atoms);
+  if (!p_atomList) {
+    throw_value_error("bad value for allowed atoms");
+  }
   std::vector<std::shared_ptr<Atom>> satoms;
   for (auto ap : *p_atomList) {
     satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
@@ -81,8 +84,10 @@ python::list allowedAtomsValidate(MolStandardize::AllowedAtomsValidation &self,
 
 MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
     python::object atoms) {
-  std::unique_ptr<std::vector<Atom *>> p_atomList =
-      pythonObjectToVect<Atom *>(atoms);
+  auto p_atomList = pythonObjectToVect<Atom *>(atoms);
+  if (!p_atomList) {
+    throw_value_error("bad value for disallowed atoms");
+  }
   std::vector<std::shared_ptr<Atom>> satoms;
   for (auto ap : *p_atomList) {
     satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
