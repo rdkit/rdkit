@@ -5212,6 +5212,39 @@ M  END
 
     self.assertTrue(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
 
+  def testGetQueryType(self):
+    query_a = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_A.mol')
+    m = next(Chem.SDMolSupplier(query_a))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
+
+    query_a_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_A.v3k.mol')
+    m = next(Chem.SDMolSupplier(query_a_v3k))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
+
+    query_q = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_Q.mol')
+    m = next(Chem.SDMolSupplier(query_q))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
+
+    query_q_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_Q.v3k.mol')
+    m = next(Chem.SDMolSupplier(query_q_v3k))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
+
+    m = Chem.MolFromSmiles("*CC")
+    params = Chem.rdmolops.AdjustQueryParameters.NoAdjustments()
+    params.makeDummiesQueries = True
+    m = Chem.rdmolops.AdjustQueryProperties(m, params)
+    self.assertTrue(m.GetAtomWithIdx(0).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(0).GetQueryType() == "")
+
+
   def testBondSetQuery(self):
     pat = Chem.MolFromSmarts('[#6]=[#6]')
     mol = Chem.MolFromSmiles("c1ccccc1")

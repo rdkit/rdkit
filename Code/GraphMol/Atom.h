@@ -260,6 +260,9 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   virtual bool hasQuery() const { return false; }
 
   //! NOT CALLABLE
+  virtual std::string getQueryType() const {return "";}
+
+  //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);
 
   //! NOT CALLABLE
