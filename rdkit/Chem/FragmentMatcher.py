@@ -44,6 +44,9 @@ now the matcher will not hit anything that has a benzene ring.
 
 
 """
+import doctest
+import sys
+
 from rdkit import Chem
 
 
@@ -71,11 +74,8 @@ class FragmentMatcher(object):
     t = mol.HasSubstructMatch(self._onPatt)
     if not t:
       return 0
-    else:
-      for patt in self._offPatts:
-        if mol.HasSubstructMatch(patt):
-          return 0
-    return 1
+    return int(not any(mol.HasSubstructMatch(patt) for patt in self._offPatts))
+
 
   def GetMatch(self, mol):
     if self._onPatt is None:
@@ -98,11 +98,9 @@ class FragmentMatcher(object):
   #  doctest boilerplate
   #
 def _test():
-  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
-  import sys
   failed, tried = _test()
   sys.exit(failed)

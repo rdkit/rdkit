@@ -13,7 +13,7 @@
 """
 from rdkit import RDConfig
 import unittest
-import os.path
+import os
 from rdkit import Chem
 
 
@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
     " testing smarts match "
     p = Chem.MolFromSmarts('CC(=O)C')
     matches = self.m.GetSubstructMatches(p)
-    assert len(matches) == 2, 'bad UMapList: %s' % (str(res))
+    assert len(matches) == 2, 'bad UMapList: %s' % (str(res)) # This message should not be raised
     for match in matches:
       assert len(match) == 4, 'bad match: %s' % (str(match))
 

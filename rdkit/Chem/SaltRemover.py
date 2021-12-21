@@ -30,6 +30,9 @@
 #
 # Created by Greg Landrum, Dec 2006
 #
+
+import sys
+import doctest
 import os
 import re
 from collections import namedtuple
@@ -316,8 +319,6 @@ class SaltRemover(object):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

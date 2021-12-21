@@ -143,11 +143,7 @@ try:
   else:
     # saves the default pandas rendering to allow restoration
     defPandasRendering = pd.core.frame.DataFrame.to_html
-    if pandasVersion > (0, 25, 0):
-      # this was github #2673
-      defPandasRepr = pd.core.frame.DataFrame._repr_html_
-    else:
-      defPandasRepr = None
+    defPandasRepr = pd.core.frame.DataFrame._repr_html_ if pandasVersion > (0, 25, 0) else None # this was github #2673
 except ImportError:
   import traceback
   traceback.print_exc()
@@ -295,10 +291,7 @@ class RenderMoleculeAdjustment:
     self.inner_adjustment = inner_adjustment
 
   def len(self, text):
-    if is_molecule_image(text):
-      return 0
-    else:
-      return self.inner_adjustment.len(text)
+    return 0 if is_molecule_image(text) else self.inner_adjustment.len(text)
 
   def justify(self, texts, max_len, mode='right'):
     return self.inner_adjustment.justify(texts, max_len, mode)
@@ -317,7 +310,6 @@ try:
 
   # Calculate the Avalon fingerprint
 
-
   def _fingerprinter(x, y):
     return pyAvalonTools.GetAvalonFP(x, isQuery=y, bitFlags=pyAvalonTools.avalonSSSBits)
 except ImportError:
@@ -334,19 +326,18 @@ def _molge(x, y):
     """
   if x is None or y is None:
     return False
+  
   if hasattr(x, '_substructfp'):
     if not hasattr(y, '_substructfp'):
       y._substructfp = _fingerprinter(y, True)
     if not DataStructs.AllProbeBitsMatch(y._substructfp, x._substructfp):
       return False
+    
   match = x.GetSubstructMatch(y)
   x.__sssAtoms = []
-  if match:
-    if highlightSubstructures:
-      x.__sssAtoms = list(match)
-    return True
-  else:
-    return False
+  if match and highlightSubstructures:
+    x.__sssAtoms = list(match)  
+  return bool(match)
 
 
 def PrintAsBase64PNGString(x, renderer=None):
@@ -397,14 +388,9 @@ def RenderImagesInAllDataFrames(images=True):
     to change the rendering only for a single dataframe use the "ChangeMoleculeRendering" method
     instead.
     '''
-  if images:
-    pd.core.frame.DataFrame.to_html = patchPandasHTMLrepr
-    if defPandasRepr is not None:
-      pd.core.frame.DataFrame._repr_html_ = patchPandasrepr
-  else:
-    pd.core.frame.DataFrame.to_html = defPandasRendering
-    if defPandasRepr is not None:
-      pd.core.frame.DataFrame._repr_html_ = defPandasRepr
+  pd.core.frame.DataFrame.to_html = patchPandasHTMLrepr if images else defPandasRendering
+  if defPandasRepr is not None:
+     pd.core.frame.DataFrame._repr_html_ = patchPandasrepr if images else defPandasRepr
 
 
 def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol='ROMol', includeFingerprints=False):
@@ -413,11 +399,9 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol='ROMol', includeF
     If desired, a fingerprint can be computed and stored with the molecule objects to accelerate
     substructure matching
     '''
-  if not includeFingerprints:
-    frame[molCol] = frame[smilesCol].map(Chem.MolFromSmiles)
-  else:
-    frame[molCol] = frame[smilesCol].map(
-      lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
+  func = Chem.MolFromSmiles if not includeFingerprints \
+    else lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles))
+  frame[molCol] = frame[smilesCol].map(func)
   RenderImagesInAllDataFrames(images=True)
 
 
@@ -431,10 +415,7 @@ def ChangeMoleculeRendering(frame=None, renderer='PNG'):
     returns a new dataframe instance that uses the default pandas rendering (thus not drawing
     images for molecules) instead of the monkey-patched one.
     '''
-  if renderer == 'String':
-    Chem.Mol.__str__ = PrintDefaultMolRep
-  else:
-    Chem.Mol.__str__ = PrintAsBase64PNGString
+  Chem.Mol.__str__ = PrintDefaultMolRep if renderer == 'String' else PrintAsBase64PNGString
   if frame is not None:
     frame.to_html = types.MethodType(patchPandasHTMLrepr, frame)
     if defPandasRepr is not None:
@@ -473,12 +454,14 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
         mol.ClearProp(prop)
     if mol.HasProp('_Name'):
       row[idName] = mol.GetProp('_Name')
+    
     if smilesName is not None:
       try:
         row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
       except:
         log.warning('No valid smiles could be generated for molecule %s', i)
         row[smilesName] = None
+    
     if molColName is not None and not includeFingerprints:
       row[molColName] = mol
     elif molColName is not None:
@@ -509,10 +492,8 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
       close = out.close
 
   writer = SDWriter(out)
-  if properties is None:
-    properties = []
-  else:
-    properties = list(properties)
+  properties = list(properties) if properties is not None else []
+  
   if allNumeric:
     properties.extend([
       dt for dt in df.dtypes.keys()
@@ -524,6 +505,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   if idName in properties:
     properties.remove(idName)
   writer.SetProps(properties)
+  
   for row in df.iterrows():
     # make a local copy I can modify
     mol = Chem.Mol(row[1][molColName])
@@ -643,10 +625,8 @@ def FrameToGridImage(frame, column='ROMol', legendsCol=None, **kwargs):
     Draw grid image of mols in pandas DataFrame.
     '''
   if legendsCol:
-    if legendsCol == frame.index.name:
-      kwargs['legends'] = [str(c) for c in frame.index]
-    else:
-      kwargs['legends'] = [str(c) for c in frame[legendsCol]]
+    tempVar = frame.index if legendsCol == frame.index.name else frame[legendsCol]
+    kwargs['legends'] = [str(c) for c in tempVar]
   return Draw.MolsToGridImage(list(frame[column]), **kwargs)
 
 
@@ -657,12 +637,10 @@ def AddMurckoToFrame(frame, molCol='ROMol', MurckoCol='Murcko_SMILES', Generic=F
     Generic set to true results in SMILES of generic framework.
     '''
   if Generic:
-
     def func(x):
       return Chem.MolToSmiles(
         MurckoScaffold.MakeScaffoldGeneric(MurckoScaffold.GetScaffoldForMol(x[molCol])))
   else:
-
     def func(x):
       return Chem.MolToSmiles(MurckoScaffold.GetScaffoldForMol(x[molCol]))
 

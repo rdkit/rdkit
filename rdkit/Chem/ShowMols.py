@@ -8,6 +8,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+
+import AllChem
+import sys
 from rdkit import RDConfig
 
 # change this to use another viewer:
@@ -19,13 +22,7 @@ else:
   raise ValueError('invalid RD_MOLVIEWER specified')
 
 if __name__ == '__main__':
-  import AllChem
-  import sys
-  if len(sys.argv) < 2:
-    smi = 'c1cccc2c1cccc2CC(=O)N'
-  else:
-    smi = sys.argv[1]
-
+  smi = 'c1cccc2c1cccc2CC(=O)N' if len(sys.argv) < 2 else sys.argv[1]
   m = Chem.MolFromSmiles(smi)
   m = Chem.AddHs(m)
   AllChem.EmbedMolecule(m)

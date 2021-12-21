@@ -31,8 +31,7 @@
 #  Created by Greg Landrum October 2006
 #
 
-
-import os.path
+import os
 import unittest
 
 from rdkit import Chem

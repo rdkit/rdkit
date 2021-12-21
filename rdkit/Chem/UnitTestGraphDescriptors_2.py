@@ -12,8 +12,8 @@
 
 """
 
-
-import os.path
+import os
+import sys
 import unittest
 
 from rdkit import Chem
@@ -512,7 +512,6 @@ class TestCase_python(unittest.TestCase):
 
 if __name__ == '__main__':
   import argparse
-  import sys
   parser = argparse.ArgumentParser()
   parser.add_argument('-l', default=False, action='store_true', dest='doLong')
   args = parser.parse_args()

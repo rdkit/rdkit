@@ -12,7 +12,7 @@
 
 """
 from rdkit import Chem
-import os, tempfile, sys
+import os, tempfile
 
 # Python3 compatibility
 try:
@@ -113,15 +113,9 @@ class MolViewer(object):
     " returns the selected atoms "
     if not whichSelection:
       sels = self.server.getNames('selections')
-      if sels:
-        whichSelection = sels[-1]
-      else:
-        whichSelection = None
-    if whichSelection:
-      items = self.server.index(whichSelection)
-    else:
-      items = []
-    return items
+      whichSelection = sels[-1] if sels else None
+    
+    return self.server.index(whichSelection) if whichSelection else []
 
   def SelectAtoms(self, itemId, atomIndices, selName='selection'):
     " selects a set of atoms "
@@ -235,7 +229,7 @@ class MolViewer(object):
     fd.close()
     self.server.do('png %s' % fd.name)
     time.sleep(0.2)  # <- wait a short period so that PyMol can finish
-    for i in range(10):
+    for _ in range(10):
       try:
         img = Image.open(fd.name)
         break

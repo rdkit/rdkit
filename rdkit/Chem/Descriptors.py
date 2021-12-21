@@ -19,8 +19,7 @@ from rdkit.Chem.QED import qed
 
 
 def _isCallable(thing):
-  return isinstance(thing, abc.Callable) or \
-              hasattr(thing, '__call__')
+  return isinstance(thing, abc.Callable) or hasattr(thing, '__call__')
 
 
 _descList = []
@@ -45,8 +44,7 @@ def _setupDescriptors(namespace):
     tmp = dir(mod)
     for name in tmp:
       if name[0] != '_':
-        thing = getattr(mod, name)
-        if _isCallable(thing):
+        if _isCallable(getattr(mod, name)):
           others.append(name)
 
   for mod in mods:
@@ -149,9 +147,12 @@ NumRadicalElectrons.version = "1.1.0"
 
 
 def _ChargeDescriptors(mol, force=False):
+  """ Returns the charge descriptions of the molecule in a specific range: 2-value tuple
+  
+  """
   if not force and hasattr(mol, '_chargeDescriptors'):
     return mol._chargeDescriptors
-  chgs = rdPartialCharges.ComputeGasteigerCharges(mol)
+  rdPartialCharges.ComputeGasteigerCharges(mol)
   minChg = 500.
   maxChg = -500.
   for at in mol.GetAtoms():
@@ -164,16 +165,14 @@ def _ChargeDescriptors(mol, force=False):
 
 
 def MaxPartialCharge(mol, force=False):
-  _, res = _ChargeDescriptors(mol, force)
-  return res
+  return _ChargeDescriptors(mol, force)[1]
 
 
 MaxPartialCharge.version = "1.0.0"
 
 
 def MinPartialCharge(mol, force=False):
-  res, _ = _ChargeDescriptors(mol, force)
-  return res
+  return _ChargeDescriptors(mol, force)[0]
 
 
 MinPartialCharge.version = "1.0.0"
@@ -197,10 +196,7 @@ MinAbsPartialCharge.version = "1.0.0"
 
 def _FingerprintDensity(mol, func, *args, **kwargs):
   fp = func(*((mol, ) + args), **kwargs)
-  if hasattr(fp, 'GetNumOnBits'):
-    val = fp.GetNumOnBits()
-  else:
-    val = len(fp.GetNonzeroElements())
+  val = fp.GetNumOnBits() if hasattr(fp, 'GetNumOnBits') else len(fp.GetNonzeroElements())
   num_heavy_atoms = mol.GetNumHeavyAtoms()
   if num_heavy_atoms == 0:
     return 0

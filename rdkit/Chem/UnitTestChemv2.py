@@ -11,9 +11,8 @@
 """basic unit testing code for the rdkit Boost wrapper
 
 """
-import unittest, os
+import unittest
 import pickle
-from rdkit import RDConfig
 from rdkit import Chem
 from rdkit.Chem import AllChem
 

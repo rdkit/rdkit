@@ -56,6 +56,8 @@ are very small and are not compromising the usefulness of using Qed in your dail
 """
 from collections import namedtuple
 import math
+import sys
+import doctest
 
 from rdkit import Chem
 from rdkit.Chem import MolSurf, Crippen
@@ -322,8 +324,6 @@ def default(mol):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

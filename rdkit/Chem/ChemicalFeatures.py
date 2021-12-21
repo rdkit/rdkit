@@ -12,11 +12,8 @@ from rdkit.Chem.rdMolChemicalFeatures import *
 
 
 def MCFF_GetFeaturesForMol(self, mol, includeOnly="", confId=-1):
-  res = []
   count = self.GetNumMolFeatures(mol, includeOnly=includeOnly)
-  for i in range(count):
-    res.append(self.GetMolFeature(mol, i, includeOnly=includeOnly, confId=confId))
-  return tuple(res)
+  return tuple([self.GetMolFeature(mol, i, includeOnly=includeOnly, confId=confId) for i in range(count)])
 
 
 MolChemicalFeatureFactory.GetFeaturesForMol = MCFF_GetFeaturesForMol

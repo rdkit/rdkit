@@ -13,14 +13,14 @@
 
 
 """
+import numpy
+import math
 
 from rdkit import Chem
 from rdkit.Chem import Graphs
-from rdkit.Chem import rdchem
 from rdkit.Chem import rdMolDescriptors
-import numpy
-import math
 from rdkit.ML.InfoTheory import entropy
+from collections import Counter
 
 ptable = Chem.GetPeriodicTable()
 
@@ -33,29 +33,21 @@ def _VertexDegrees(mat, onlyOnes=0):
   this is just a row sum of the matrix... simple, neh?
 
   """
-  if not onlyOnes:
-    res = sum(mat)
-  else:
-    res = sum(numpy.equal(mat, 1))
-  return res
+  return sum(mat) if not onlyOnes else sum(numpy.equal(mat, 1))
 
 
 def _NumAdjacencies(mol, dMat):
   """  *Internal Use Only*
 
   """
-  res = mol.GetNumBonds()
-  return res
+  return mol.GetNumBonds()
 
 
 def _GetCountDict(arr):
   """  *Internal Use Only*
 
   """
-  res = {}
-  for v in arr:
-    res[v] = res.get(v, 0) + 1
-  return res
+  return dict(Counter(arr))
 
 # WARNING: this data should probably go somewhere else...
 hallKierAlphas = {'Br': [None, None, 0.48],
@@ -122,10 +114,7 @@ def Ipc(mol, avg=0, dMat=None, forceDMat=0):
 
   adjMat = numpy.equal(dMat, 1)
   cPoly = abs(Graphs.CharacteristicPolynomial(mol, adjMat))
-  if avg:
-    return entropy.InfoEntropy(cPoly)
-  else:
-    return sum(cPoly) * entropy.InfoEntropy(cPoly)
+  return entropy.InfoEntropy(cPoly) if avg else sum(cPoly) * entropy.InfoEntropy(cPoly)
 
 
 Ipc.version = "1.0.0"
@@ -141,11 +130,7 @@ def _pyKappa1(mol):
   A = mol.GetNumHeavyAtoms()
   alpha = HallKierAlpha(mol)
   denom = P1 + alpha
-  if denom:
-    kappa = (A + alpha) * (A + alpha - 1)**2 / denom**2
-  else:
-    kappa = 0.0
-  return kappa
+  return ((A + alpha) * (A + alpha - 1) ** 2 / denom ** 2) if denom else 0.0
 # Kappa1.version="1.0.0"
 
 
@@ -159,11 +144,7 @@ def _pyKappa2(mol):
   A = mol.GetNumHeavyAtoms()
   alpha = HallKierAlpha(mol)
   denom = (P2 + alpha)**2
-  if denom:
-    kappa = (A + alpha - 1) * (A + alpha - 2)**2 / denom
-  else:
-    kappa = 0
-  return kappa
+  return ((A + alpha - 1) * (A + alpha - 2)**2 / denom) if denom else 0.0 
 # Kappa2.version="1.0.0"
 
 
@@ -178,13 +159,8 @@ def _pyKappa3(mol):
   alpha = HallKierAlpha(mol)
   denom = (P3 + alpha)**2
   if denom:
-    if A % 2 == 1:
-      kappa = (A + alpha - 1) * (A + alpha - 3)**2 / denom
-    else:
-      kappa = (A + alpha - 2) * (A + alpha - 3)**2 / denom
-  else:
-    kappa = 0
-  return kappa
+    return (A + alpha - 1 - int(bool(A % 2 == 0))) * (A + alpha - 3)**2 / denom
+  return 0.0
 # Kappa3.version="1.0.0"
 
 HallKierAlpha = lambda x: rdMolDescriptors.CalcHallKierAlpha(x)
@@ -201,10 +177,7 @@ def Chi0(mol):
   """ From equations (1),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
   """
-  deltas = [x.GetDegree() for x in mol.GetAtoms()]
-  while 0 in deltas:
-    deltas.remove(0)
-  deltas = numpy.array(deltas, 'd')
+  deltas = numpy.array([x.GetDegree() for x in mol.GetAtoms() if x.GetDegree() != 0], 'd')
   res = sum(numpy.sqrt(1. / deltas))
   return res
 
@@ -216,9 +189,8 @@ def Chi1(mol):
   """ From equations (1),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
   """
-  c1s = [x.GetBeginAtom().GetDegree() * x.GetEndAtom().GetDegree() for x in mol.GetBonds()]
-  while 0 in c1s:
-    c1s.remove(0)
+  c1s = [x.GetBeginAtom().GetDegree() * x.GetEndAtom().GetDegree() for x in mol.GetBonds() \
+    if x.GetBeginAtom().GetDegree() != 0 and x.GetEndAtom().GetDegree() != 0]
   c1s = numpy.array(c1s, 'd')
   res = sum(numpy.sqrt(1. / c1s))
   return res
@@ -255,16 +227,15 @@ def _hkDeltas(mol, skipHs=1):
   mol._hkDeltas = res
   return res
 
-
 def _pyChi0v(mol):
   """  From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
   """
   deltas = _hkDeltas(mol)
-  while 0 in deltas:
-    deltas.remove(0)
+  deltas_ = [x for x in deltas if x != 0.0 or x != 0 or x != -0.0]
+  del deltas
   mol._hkDeltas = None
-  res = sum(numpy.sqrt(1. / numpy.array(deltas)))
+  res = sum(numpy.sqrt(1. / numpy.array(deltas_)))
   return res
 
 
@@ -330,9 +301,11 @@ def _pyChi0n(mol):
   This makes a big difference after we get out of the first row.
 
   """
-  deltas = [_nVal(x) for x in mol.GetAtoms()]
-  while deltas.count(0):
-    deltas.remove(0)
+  deltas = []
+  for x in mol.GetAtoms():
+    value = _nVal(x)
+    if value != 0:
+      deltas.append(value)
   deltas = numpy.array(deltas, 'd')
   res = sum(numpy.sqrt(1. / deltas))
   return res
@@ -342,12 +315,15 @@ def _pyChi1n(mol):
   """  Similar to Hall Kier Chi1v, but uses nVal instead of valence
 
   """
-  delts = numpy.array([_nVal(x) for x in mol.GetAtoms()], 'd')
+  deltas = []
+  for x in mol.GetAtoms():
+    value = _nVal(x)
+    if value != 0:
+      deltas.append(value)
   res = 0.0
   for bond in mol.GetBonds():
-    v = delts[bond.GetBeginAtomIdx()] * delts[bond.GetEndAtomIdx()]
-    if v != 0.0:
-      res += numpy.sqrt(1. / v)
+    v = deltas[bond.GetBeginAtomIdx()] * deltas[bond.GetEndAtomIdx()]
+    res += numpy.sqrt(1. / v)
   return res
 
 
@@ -487,12 +463,7 @@ def BalabanJ(mol, dMat=None, forceDMat=0):
       if adjMat[i, j] == 1:
         sum_ += 1. / numpy.sqrt(si * s[j])
 
-  if mu + 1 != 0:
-    J = float(q) / float(mu + 1) * sum_
-  else:
-    J = 0
-
-  return J
+  return float(q) / float(mu + 1) * sum_ if mu != -1 else 0.0
 
 
 BalabanJ.version = "1.0.0"
@@ -534,17 +505,10 @@ def _LookUpBondOrder(atom1Id, atom2Id, bondDic):
   """
      Used by BertzCT
   """
-  if atom1Id < atom2Id:
-    theKey = (atom1Id, atom2Id)
-  else:
-    theKey = (atom2Id, atom1Id)
+  theKey = (atom1Id, atom2Id) if atom1Id < atom2Id else (atom2Id, atom1Id)
   tmp = bondDic[theKey]
-  if tmp == Chem.BondType.AROMATIC:
-    tmp = 1.5
-  else:
-    tmp = float(tmp)
   # tmp = int(tmp)
-  return tmp
+  return 1.5 if tmp == Chem.BondType.AROMATIC else float(tmp)
 
 
 def _CalculateEntropies(connectionDict, atomTypeDict, numAtoms):
@@ -569,8 +533,7 @@ def _CreateBondDictEtc(mol, numAtoms):
   nList = [None] * numAtoms
   vdList = [0] * numAtoms
   for aBond in mol.GetBonds():
-    atom1 = aBond.GetBeginAtomIdx()
-    atom2 = aBond.GetEndAtomIdx()
+    atom1, atom2 = aBond.GetBeginAtomIdx(), aBond.GetEndAtomIdx()
     if atom1 > atom2:
       atom2, atom1 = atom1, atom2
     if not aBond.GetIsAromatic():
@@ -578,6 +541,7 @@ def _CreateBondDictEtc(mol, numAtoms):
     else:
       # mark Kekulized systems as aromatic
       bondDict[(atom1, atom2)] = Chem.BondType.AROMATIC
+    
     if nList[atom1] is None:
       nList[atom1] = [atom2]
     elif atom2 not in nList[atom1]:
@@ -591,7 +555,7 @@ def _CreateBondDictEtc(mol, numAtoms):
     try:
       element.sort()
       vdList[i] = len(element)
-    except Exception:
+    except Exception: # this cannot be raised
       vdList[i] = 0
   return bondDict, nList, vdList
 
@@ -668,7 +632,7 @@ def BertzCT(mol, cutoff=100, dMat=None, forceDMat=1):
       NiClass = symmetryClasses[neighbor_iIdx]
       bond_i_order = _LookUpBondOrder(atomIdx, neighbor_iIdx, bondDict)
       # print('\t',atomIdx,i,hingeAtomClass,NiClass,bond_i_order)
-      if (bond_i_order > 1) and (neighbor_iIdx > atomIdx):
+      if bond_i_order > 1 and neighbor_iIdx > atomIdx:
         numConnections = bond_i_order * (bond_i_order - 1) / 2
         connectionKey = (min(hingeAtomClass, NiClass), max(hingeAtomClass, NiClass))
         connectionDict[connectionKey] = connectionDict.get(connectionKey, 0) + numConnections

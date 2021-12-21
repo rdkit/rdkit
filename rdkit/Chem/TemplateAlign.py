@@ -8,7 +8,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Chem
+import doctest
+import sys
+
 from rdkit.Chem import rdDepictor
 from rdkit import Geometry
 
@@ -97,13 +99,10 @@ def AlignMolToTemplate2D(mol,
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
-  from rdkit.Chem import rdDepictor
   rdDepictor.SetPreferCoordGen(False)
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
-  import sys
   failed, tried = _test()
   sys.exit(failed)

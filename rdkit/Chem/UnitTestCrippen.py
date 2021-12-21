@@ -12,7 +12,7 @@
 
 """
 
-import unittest, sys, os
+import unittest, os
 import io
 
 import numpy
@@ -70,7 +70,7 @@ class TestCase(unittest.TestCase):
         mr = self.mrs[i]
         tmp = Crippen.MolMR(mol)
         self.assertTrue(feq(mr, tmp), 'bad MR for %s: %4.4f != %4.4f' % (smi, mr, tmp))
-      else:
+      else: # This logic could not be executed by any means. Should delete
         clog = Crippen.MolLogP(mol)
         mr = Crippen.MolMR(mol)
         print('%s,%.4f,%.4f' % (smi, clog, mr), file=outF)
@@ -102,7 +102,7 @@ class TestCase(unittest.TestCase):
         mol = Chem.MolFromSmiles(smi)
         if mol:
           mol = Chem.AddHs(mol, 1)
-          smi2 = Chem.MolToSmiles(mol)
+          # smi2 = Chem.MolToSmiles(mol)
           contribs = Crippen._GetAtomContribs(mol)
           pickle.dump((smi, contribs), outF)
         else:

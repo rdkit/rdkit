@@ -113,10 +113,8 @@ def BuildCatalog(suppl, maxPts=-1, groupFileName=None, minPath=2, maxPath=6, rep
     if maxPts > 0:
         nPts = maxPts
     else:
-        if hasattr(suppl, '__len__'):
-            nPts = len(suppl)
-        else:
-            nPts = -1
+        nPts = len(suppl) if hasattr(suppl, '__len__') else -1
+        
     for i, mol in enumerate(suppl):
         if i == nPts:
             break
@@ -221,20 +219,15 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
 
     """
     nBits = catalog.GetFPLength()
-    if maxPts > 0:
-        nPts = maxPts
-    else:
-        nPts = len(bitLists)
+    nPts = maxPts if maxPts > 0 else len(bitLists)
+        
     resTbl = numpy.zeros((nBits, 2, nActs), numpy.int)
     if not actName and not acts:
         actName = suppl[0].GetPropNames()[-1]
     suppl.reset()
     for i in range(1, nPts + 1):
         mol = next(suppl)
-        if not acts:
-            act = int(mol.GetProp(actName))
-        else:
-            act = acts[i - 1]
+        act = int(mol.GetProp(actName)) if not acts else acts[i - 1]
         if i and not i % reportFreq:
             message('Done %d of %d\n' % (i, nPts))
         ids = set()
@@ -264,10 +257,7 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
     if not actName and not acts:
         actName = suppl[0].GetPropNames()[-1]
 
-    if hasattr(suppl, '__len__'):
-        nMols = len(suppl)
-    else:
-        nMols = -1
+    nMols = len(suppl) if hasattr(suppl, '__len__') else -1
     fpgen = FragmentCatalog.FragFPGenerator()
     # ranker = InfoTheory.InfoBitRanker(nBits,nActs,InfoTheory.InfoType.ENTROPY)
     if biasList:
@@ -291,7 +281,7 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
             if nMols > 0:
                 message('Done %d of %d.\n' % (i, nMols))
             else:
-                message('Done %d.\n' % (i))
+                message('Done %d.\n' % i)
         fp = fpgen.GetFPForMol(mol, catalog)
         ranker.AccumulateVotes(fp, act)
         i += 1
@@ -314,15 +304,13 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
     if not actName and not acts:
         actName = suppl[0].GetPropNames()[-1]
 
-    if hasattr(suppl, '__len__'):
-        nMols = len(suppl)
-    else:
-        nMols = -1
+    nMols = len(suppl) if hasattr(suppl, '__len__') else -1
     if biasList:
         ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.BIASENTROPY)
         ranker.SetBiasList(biasList)
     else:
         ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.ENTROPY)
+        
     for i, mol in enumerate(suppl):
         if not acts:
             try:
@@ -367,7 +355,7 @@ def ProcessGainsData(inF, delim=',', idCol=0, gainCol=1):
 
     """
     res = []
-    _ = inF.readline()
+    inF.readline()
     for line in inF:
         splitL = line.strip().split(delim)
         res.append((splitL[idCol], float(splitL[gainCol])))
@@ -412,6 +400,7 @@ def SupplierFromDetails(details):
             nameName = m.GetPropNames()[details.nameCol]
             details.nameCol = nameName
             suppl.reset()
+            
     if isinstance(details.actCol, int):
         suppl.reset()
         m = next(suppl)

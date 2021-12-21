@@ -85,10 +85,7 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
     Ri = rads[idx1]
     Rj = rads[idx2]
 
-    if not bond.GetIsAromatic():
-      bij = Ri + Rj - bondScaleFacts[bond.GetBondType()]
-    else:
-      bij = Ri + Rj - bondScaleFacts[0]
+    bij = Ri + Rj - bondScaleFacts[0] if bond.GetIsAromatic() else Ri + Rj - bondScaleFacts[bond.GetBondType()]
     dij = min(max(abs(Ri - Rj), bij), Ri + Rj)
     Vi[idx1] += Rj * Rj - (Ri - dij) ** 2 / dij
     Vi[idx2] += Ri * Ri - (Rj - dij) ** 2 / dij
@@ -345,27 +342,22 @@ def _pyTPSAContribs(mol, verbose=False):
 
       bonds = atom.GetBonds()
       numNeighbors = atom.GetDegree()
-      nSing = 0
-      nDoub = 0
-      nTrip = 0
-      nArom = 0
+      nBondTypeCount = {Chem.BondType.SINGLE: 0, Chem.BondType.DOUBLE: 0, Chem.BondType.TRIPLE: 0, 
+                        'AROMATIC': 0}
       for bond in bonds:
         otherAt = bond.GetOtherAtom(atom)
         if otherAt.GetAtomicNum() != 1:
           if bond.GetIsAromatic():
-            nArom += 1
+            nBondTypeCount['AROMATIC'] += 1
           else:
-            order = bond.GetBondType()
-            if order == Chem.BondType.SINGLE:
-              nSing += 1
-            elif order == Chem.BondType.DOUBLE:
-              nDoub += 1
-            elif order == Chem.BondType.TRIPLE:
-              nTrip += 1
+            nBondTypeCount[bond.GetBondType()] += 1
         else:
           numNeighbors -= 1
           nHs += 1
       tmp = -1
+      nArom, nSing, nDoub, nTrip = nBondTypeCount['AROMATIC'], nBondTypeCount[Chem.BondType.SINGLE], \
+        nBondTypeCount[Chem.BondType.DOUBLE], nBondTypeCount[Chem.BondType.TRIPLE]
+        
       if atNum == 7:
         if numNeighbors == 1:
           if nHs == 0 and nTrip == 1 and chg == 0:
@@ -402,10 +394,7 @@ def _pyTPSAContribs(mol, verbose=False):
             tmp = 14.14
         elif numNeighbors == 3:
           if nHs == 0 and nSing == 3 and chg == 0:
-            if not in3Ring:
-              tmp = 3.24
-            else:
-              tmp = 3.01
+            tmp = 3.24 if not in3Ring else 3.01
           elif nHs == 0 and nSing == 1 and nDoub == 2 and chg == 0:
             tmp = 11.68
           elif nHs == 0 and nSing == 2 and nDoub == 1 and chg == 1:
@@ -439,10 +428,7 @@ def _pyTPSAContribs(mol, verbose=False):
             tmp = 23.06
         elif numNeighbors == 2:
           if nHs == 0 and nSing == 2 and chg == 0:
-            if not in3Ring:
-              tmp = 9.23
-            else:
-              tmp = 12.53
+            tmp = 9.23 if not in3Ring else 12.53
           elif nHs == 0 and nArom == 2 and chg == 0:
             tmp = 13.14
 
@@ -471,10 +457,7 @@ def _pyTPSA(mol, verbose=False):
    Implementation based on the Daylight contrib program tpsa.c
   """
   contribs = _pyTPSAContribs(mol, verbose=verbose)
-  res = 0.0
-  for contrib in contribs:
-    res += contrib
-  return res
+  return sum(contribs)
 
 
 _pyTPSA.version = "1.0.1"

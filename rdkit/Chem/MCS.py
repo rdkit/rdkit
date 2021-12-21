@@ -1,6 +1,9 @@
 # This work was funded by Roche and generously donated to the free
 # and open source cheminformatics community.
 import warnings
+import doctest
+import sys
+
 warnings.simplefilter('default', DeprecationWarning)
 warnings.warn("The rdkit.Chem.MCS module is deprecated; please use rdkit.Chem.rdFMCS instead.",
               DeprecationWarning,stacklevel=2)
@@ -376,12 +379,10 @@ def FindMCS(mols,
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
   return doctest.testmod(sys.modules["__main__"],
                          optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
 
 
 if __name__ == '__main__':
-  import sys
   failed, tried = _test()
   sys.exit(failed)

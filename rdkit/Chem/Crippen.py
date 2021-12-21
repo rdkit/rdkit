@@ -40,30 +40,32 @@ def _ReadPatts(fileName):
   with open(fileName, 'r') as f:
     lines = f.readlines()
   for line in lines:
-    if line[0] != '#':
-      splitLine = line.split('\t')
-      if len(splitLine) >= 4 and splitLine[0] != '':
-        sma = splitLine[1]
-        if sma != 'SMARTS':
-          sma.replace('"', '')
-          p = Chem.MolFromSmarts(sma)
-          if p:
-            if len(splitLine[0]) > 1 and splitLine[0][1] not in 'S0123456789':
-              cha = splitLine[0][:2]
-            else:
-              cha = splitLine[0][0]
-            logP = float(splitLine[2])
-            if splitLine[3] != '':
-              mr = float(splitLine[3])
-            else:
-              mr = 0.0
-            if cha not in order:
-              order.append(cha)
-            l = patts.get(cha, [])
-            l.append((sma, p, logP, mr))
-            patts[cha] = l
+    if line[0] == '#':
+      continue
+    
+    splitLine = line.split('\t')
+    if len(splitLine) >= 4 and splitLine[0] != '':
+      sma = splitLine[1]
+      if sma == 'SMARTS':
+        print('Problems parsing smarts: %s' % (sma))
+        continue
+      
+      sma.replace('"', '')
+      p = Chem.MolFromSmarts(sma)
+      if p:
+        if len(splitLine[0]) > 1 and splitLine[0][1] not in 'S0123456789':
+          cha = splitLine[0][:2]
         else:
-          print('Problems parsing smarts: %s' % (sma))
+          cha = splitLine[0][0]
+          
+        logP = float(splitLine[2])
+        mr = float(splitLine[3]) if splitLine[3] != '' else 0.0
+        if cha not in order:
+          order.append(cha)
+        l = patts.get(cha, [])
+        l.append((sma, p, logP, mr))
+        patts[cha] = l
+
   return order, patts
 
 
@@ -81,6 +83,7 @@ def _pyGetAtomContribs(mol, patts=None, order=None, verbose=0, force=0):
   **Note:** Changes here affect the version numbers of MolLogP and MolMR
     as well as the VSA descriptors in Chem.MolSurf
 
+  Return a list of two-value tuple containing the logP and MR values.
   """
   if not force and hasattr(mol, '_crippenContribs'):
     return mol._crippenContribs

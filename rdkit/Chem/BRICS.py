@@ -474,55 +474,50 @@ def BRICSDecompose(mol, allNodes=None, minFragmentSize=1, onlyUseReactions=None,
                 if not silent:
                     print('--------')
                     print(smartsGps[gpIdx][rxnIdx])
+                
                 ps = reaction.RunReactants((mol, ))
-                if ps:
-                    if not silent:
-                        print(nSmi, '->', len(ps), 'products')
-                    for prodSeq in ps:
-                        seqOk = True
-                        # we want to disqualify small fragments, so sort the product sequence by size
-                        tSeq = [(prod.GetNumAtoms(onlyExplicit=True), idx)
-                                for idx, prod in enumerate(prodSeq)]
-                        tSeq.sort()
-                        for nats, idx in tSeq:
-                            prod = prodSeq[idx]
-                            try:
-                                Chem.SanitizeMol(prod)
-                            except Exception:
-                                continue
-                            pSmi = Chem.MolToSmiles(prod, 1)
-                            if minFragmentSize > 0:
-                                nDummies = pSmi.count('*')
-                                if nats - nDummies < minFragmentSize:
-                                    seqOk = False
-                                    break
-                            prod.pSmi = pSmi
-                        ts = [(x, prodSeq[y]) for x, y in tSeq]
-                        prodSeq = ts
-                        if seqOk:
-                            matched = True
-                            for nats, prod in prodSeq:
-                                pSmi = prod.pSmi
-                                # print('\t',nats,pSmi)
-                                if pSmi not in allNodes:
-                                    if not singlePass:
-                                        activePool[pSmi] = prod
-                                    allNodes.add(pSmi)
-                                    foundMols[pSmi] = prod
+                if not ps:
+                    continue
+                
+                if not silent:
+                    print(nSmi, '->', len(ps), 'products')
+                for prodSeq in ps:
+                    seqOk = True
+                    # we want to disqualify small fragments, so sort the product sequence by size
+                    tSeq = [(prod.GetNumAtoms(onlyExplicit=True), idx) for idx, prod in enumerate(prodSeq)]
+                    tSeq.sort()
+                    for nats, idx in tSeq:
+                        prod = prodSeq[idx]
+                        try:
+                            Chem.SanitizeMol(prod)
+                        except Exception:
+                            continue
+                        pSmi = Chem.MolToSmiles(prod, 1)
+                        if minFragmentSize > 0:
+                            nDummies = pSmi.count('*')
+                            if nats - nDummies < minFragmentSize:
+                                seqOk = False
+                                break
+                        prod.pSmi = pSmi
+                    tempV = [(x, prodSeq[y]) for x, y in tSeq]
+                    prodSeq = tempV
+                    if seqOk:
+                        matched = True
+                        for nats, prod in prodSeq:
+                            pSmi = prod.pSmi
+                            # print('\t',nats,pSmi)
+                            if pSmi not in allNodes:
+                                if not singlePass:
+                                    activePool[pSmi] = prod
+                                allNodes.add(pSmi)
+                                foundMols[pSmi] = prod
             if singlePass or keepNonLeafNodes or not matched:
                 newPool[nSmi] = mol
         activePool = newPool
-    if not (singlePass or keepNonLeafNodes):
-        if not returnMols:
-            res = set(activePool.keys())
-        else:
-            res = activePool.values()
-    else:
-        if not returnMols:
-            res = allNodes
-        else:
-            res = foundMols.values()
-    return res
+        
+    if not singlePass and not keepNonLeafNodes:
+        return activePool.values() if returnMols else set(activePool.keys())
+    return foundMols.values() if returnMols else allNodes
 
 
 dummyPattern = Chem.MolFromSmiles('[*]')
@@ -541,6 +536,7 @@ def BRICSBuild(fragments, onlyCompleteMols=True, seeds=None, uniquify=True, scra
         random.shuffle(tempReactions, random=random.random)
     else:
         tempReactions = reverseReactions
+        
     for seed in seeds:
         seedIsR1 = False
         seedIsR2 = False
@@ -550,28 +546,34 @@ def BRICSBuild(fragments, onlyCompleteMols=True, seeds=None, uniquify=True, scra
                 seedIsR1 = True
             if seed.HasSubstructMatch(rxn._matchers[1]):
                 seedIsR2 = True
+            # Both reactants are not in the seed. Continue rather than looping
+            if not seedIsR1 and not seedIsR2: 
+                continue
+            
             for fragment in fragments:
                 ps = None
-                if fragment.HasSubstructMatch(rxn._matchers[0]):
-                    if seedIsR2:
+                if seedIsR2:
+                    if fragment.HasSubstructMatch(rxn._matchers[0]):
                         ps = rxn.RunReactants((fragment, seed))
-                if fragment.HasSubstructMatch(rxn._matchers[1]):
-                    if seedIsR1:
+                if seedIsR1: 
+                    if fragment.HasSubstructMatch(rxn._matchers[1]):
                         ps = rxn.RunReactants((seed, fragment))
+                        
                 if ps:
                     for p in ps:
                         if uniquify:
                             pSmi = Chem.MolToSmiles(p[0], True)
                             if pSmi in seen:
                                 continue
-                            else:
-                                seen.add(pSmi)
+                            seen.add(pSmi)
+                            
                         if p[0].HasSubstructMatch(dummyPattern):
                             nextSteps.append(p[0])
                             if not onlyCompleteMols:
                                 yield p[0]
                         else:
                             yield p[0]
+        
         if nextSteps and maxDepth > 0:
             for p in BRICSBuild(fragments, onlyCompleteMols=onlyCompleteMols, seeds=nextSteps,
                                 uniquify=uniquify, maxDepth=maxDepth - 1,
@@ -580,8 +582,7 @@ def BRICSBuild(fragments, onlyCompleteMols=True, seeds=None, uniquify=True, scra
                     pSmi = Chem.MolToSmiles(p, True)
                     if pSmi in seen:
                         continue
-                    else:
-                        seen.add(pSmi)
+                    seen.add(pSmi)
                 yield p
 
     # ------- ------- ------- ------- ------- ------- ------- -------

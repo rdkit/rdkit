@@ -30,7 +30,8 @@ Rev history:
 May 2011 (gl): Update some definitions based on feedback from Andrew Dalke
 
 """
-
+import doctest
+import sys
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
 from rdkit import DataStructs
@@ -224,14 +225,14 @@ def _InitKeys(keyList, keyDict):
 
   """
   assert len(keyList) == len(keyDict.keys()), 'length mismatch'
-  for key in keyDict.keys():
-    patt, count = keyDict[key]
-    if patt != '?':
-      sma = Chem.MolFromSmarts(patt)
+  for key, (pattern, count) in keyDict.items(): # value = (pattern, count)
+    if pattern != '?':
+      sma = Chem.MolFromSmarts(pattern)
       if not sma:
-        print('SMARTS parser error for key #%d: %s' % (key, patt))
+        print('SMARTS parser error for key #%d: %s' % (key, pattern))
       else:
         keyList[key - 1] = sma, count
+  return None
 
 
 def _pyGenMACCSKeys(mol, **kwargs):
@@ -271,23 +272,21 @@ def _pyGenMACCSKeys(mol, **kwargs):
         matches = mol.GetSubstructMatches(patt)
         if len(matches) > count:
           res[i + 1] = 1
-    elif (i + 1) == 125:
+          
+    elif i + 1 == 125:
       # special case: num aromatic rings > 1
       ri = mol.GetRingInfo()
       nArom = 0
       res[125] = 0
       for ring in ri.BondRings():
-        isArom = True
-        for bondIdx in ring:
-          if not mol.GetBondWithIdx(bondIdx).GetIsAromatic():
-            isArom = False
-            break
+        isArom = not any(not mol.GetBondWithIdx(bondIdx).GetIsAromatic() for bondIdx in ring)  
         if isArom:
           nArom += 1
           if nArom > 1:
             res[125] = 1
             break
-    elif (i + 1) == 166:
+          
+    elif i + 1 == 166:
       res[166] = 0
       # special case: num frags > 1
       if len(Chem.GetMolFrags(mol)) > 1:
@@ -305,11 +304,9 @@ FingerprintMol = rdMolDescriptors.GetMACCSKeysFingerprint
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
-  import sys
   failed, tried = _test()
   sys.exit(failed)

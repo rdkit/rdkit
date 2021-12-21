@@ -13,7 +13,7 @@
 """
 from rdkit import Chem
 from win32com.client import Dispatch
-import tempfile, os
+import tempfile
 
 _nextDisplayId = 1
 
@@ -32,10 +32,8 @@ class Displayable(object):
     self.children = []
 
   def Select(self, atoms=[], state=True, recurse=False):
-    if state:
-      selText = 'true'
-    else:
-      selText = 'false'
+    selText = 'true' if state else 'false'
+    
     if not atoms or atoms == '*':
       atomStr = '; atom "*"'
     else:
@@ -322,8 +320,8 @@ class MolViewer(object):
       self.SetDisplayUpdate(False)
       p.Show()
       self.doc.DoCommand('UnSelectAll')
-      tmp = self.doc.DoCommand('SetProperty object RD_Visual=%d;object id="*":select=on' % o.id)
-      tmp = self.doc.DoCommand('SelectByRadius inside %f atom' % distance)
+      self.doc.DoCommand('SetProperty object RD_Visual=%d;object id="*":select=on' % o.id)
+      self.doc.DoCommand('SelectByRadius inside %f atom' % distance)
       # that selects all atoms in the radius, now we need to make sure 
       #  only atoms in _inObj_ are selected:
       for obj in self.displayables.values():
@@ -342,7 +340,7 @@ class MolViewer(object):
         # and select each atom in those residues:
         parents = ','.join(['parent="%s"' % x for x in residues.keys()])
         cmd = 'SetProperty atom %s: select=on' % parents
-        tmp = self.doc.DoCommand(cmd)
+        self.doc.DoCommand(cmd)
       if showSurface:
         # create the surface:
         self.doc.DoCommand('Surface')

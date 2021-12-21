@@ -11,14 +11,12 @@
 
 """
 
-import io
-import os.path
+import os
 import unittest
 import doctest
 
 import numpy as np
 from rdkit import Chem
-from rdkit import RDConfig
 from rdkit.Chem import AllChem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import Lipinski
