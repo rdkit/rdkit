@@ -121,8 +121,11 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     dMat = Chem.GetDistanceMatrix(mol, useBO)
 
   # generate the permutations, if required
-  if perms is None:
-    perms = [Utils.GetIndexCombinations(nFeats, count) for count in range(minCount, maxCount + 1)]
+  if perms is None: 
+    # List Concatenation
+    perms = []
+    for count in range(minCount, maxCount + 1):
+      perms.extend(Utils.GetIndexCombinations(nFeats, count))
 
   # generate the matches:
   featMatches = sigFactory.GetMolFeats(mol)

@@ -46,10 +46,7 @@ class FeatMapParser(object):
     self._lineNum = 0
 
   def SetData(self, data):
-    if isinstance(data, str):
-      self.data = data.split('\n')
-    else:
-      self.data = data
+    self.data = data.split('\n') if isinstance(data, str) else data
     self._lineNum = 0
 
   def _NextLine(self):

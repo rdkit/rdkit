@@ -174,7 +174,7 @@ class FeatMap(object):
       if len(featsToFeatMapIdx) != nToScore:
         raise ValueError('if provided, len(featsToFeatMapIdx) should equal len(featsToScore)')
       for i in range(nToScore):
-        featsToFeatMapIdx[i] = [-1] if self.scoreMode == FeatMapScoreMode.All else []
+        featsToFeatMapIdx[i] = [-1] if self.scoreMode != FeatMapScoreMode.All else []
     else:
       featsToFeatMapIdx = [None] * nToScore
 
