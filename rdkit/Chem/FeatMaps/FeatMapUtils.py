@@ -71,32 +71,37 @@ def GetFeatFeatDistMatrix(fm, mergeMetric, mergeTol, dirMergeMode, compatFunc):
 
   """
   MergeMetric.valid(mergeMetric)
-
-  dists = [[1e8] * fm.GetNumFeatures() for _ in range(fm.GetNumFeatures())]
+  numFeatures = fm.GetNumFeatures()
+  dists = [[1e8] * numFeatures for _ in range(numFeatures)]
   if mergeMetric == MergeMetric.NoMerge:
     return dists
-  elif mergeMetric == MergeMetric.Distance:
-    mergeTol2 = mergeTol * mergeTol
-    for i in range(fm.GetNumFeatures()):
-      ptI = fm.GetFeature(i)
-      for j in range(i + 1, fm.GetNumFeatures()):
-        ptJ = fm.GetFeature(j)
-        if compatFunc(ptI, ptJ):
+  
+  # Setup distance matrix, depending on mergeMetric. 
+  # Just in case we expand the MergeMetric enum later.
+  if mergeMetric not in (MergeMetric.Distance, MergeMetric.Overlap):
+    # This error should never happen or being raised as it had been validated once at the beginning.
+    raise ValueError('unrecognized mergeMetric for further computation')
+
+  benchmarkDict = { MergeMetric.Distance: mergeTol * mergeTol, MergeMetric.Overlap: mergeTol}
+  benchmark = benchmarkDict[mergeMetric] # No error should be raised here.
+  def assignMatrix(matrix, i, j, value, constraint):
+    if value < constraint:
+      matrix[i][j] = value
+      matrix[j][i] = value
+
+  getFeature = fm.GetFeature
+  for i in range(numFeatures):
+    ptI = getFeature(i)
+    for j in range(i + 1, numFeatures):
+      ptJ = getFeature(j)
+      if compatFunc(ptI, ptJ):
+        if mergeMetric == MergeMetric.Distance:
           dist2 = ptI.GetDist2(ptJ)
-          if dist2 < mergeTol2:
-            dists[i][j] = dist2
-            dists[j][i] = dist2
-  elif mergeMetric == MergeMetric.Overlap:
-    for i in range(fm.GetNumFeatures()):
-      ptI = fm.GetFeature(i)
-      for j in range(i + 1, fm.GetNumFeatures()):
-        ptJ = fm.GetFeature(j)
-        if compatFunc(ptI, ptJ):
-          score = fm.GetFeatFeatScore(ptI, ptJ, typeMatch=False)
-          score *= -1 * ptJ.weight
-          if score < mergeTol:
-            dists[i][j] = score
-            dists[j][i] = score
+          assignMatrix(matrix=dists, i=i, j=j, value=dist2, constraint=benchmark)
+        elif mergeMetric == MergeMetric.Overlap:
+          score = fm.GetFeatFeatScore(ptI, ptJ, typeMatch=False) * (-1 * ptJ.weight)
+          assignMatrix(matrix=dists, i=i, j=j, value=score, constraint=benchmark)
+
   return dists
 
 
@@ -128,8 +133,7 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
     return res
   dists = GetFeatFeatDistMatrix(fm, mergeMetric, mergeTol, dirMergeMode, compatFunc)
   distOrders = [None] * len(dists)
-  for i in range(len(dists)):
-    distV = dists[i]
+  for i, distV in enumerate(dists):
     distOrders[i] = []
     for j, dist in enumerate(distV):
       if dist < mergeTol:
@@ -166,7 +170,7 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
       else:
         # it may be that there are several points at about the same distance,
         # check for that now
-        if (feq(distOrders[nbr][0][0], dist)):
+        if feq(distOrders[nbr][0][0], dist):
           for distJ, nbrJ in distOrders[nbr][1:]:
             if feq(dist, distJ):
               if nbrJ == fi:
@@ -178,6 +182,7 @@ def MergeFeatPoints(fm, mergeMetric=MergeMetric.NoMerge, mergeTol=1.5,
       # print '    bottom:',mergeThem
       if mergeThem:
         break
+    
     if mergeThem:
       res = True
       featI = fm.GetFeature(fi)

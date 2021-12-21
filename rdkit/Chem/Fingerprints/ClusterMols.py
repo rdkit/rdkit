@@ -49,10 +49,7 @@ def GetDistanceMatrix(data, metric, isSimilarity=1):
         fp1 = DataStructs.FoldFingerprint(fp1, fp1.GetNumBits() / fp2.GetNumBits())
       elif fp2.GetNumBits() > fp1.GetNumBits():
         fp2 = DataStructs.FoldFingerprint(fp2, fp2.GetNumBits() / fp1.GetNumBits())
-      sim = metric(fp1, fp2)
-      if isSimilarity:
-        sim = 1. - sim
-      res[nSoFar] = sim
+      res[nSoFar] = metric(fp1, fp2) if not isSimilarity else 1. - metric(fp1, fp2)
       nSoFar += 1
   return res
 
@@ -68,13 +65,11 @@ def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
     # we've got activities... use them:
     acts = [int(x[2]) for x in data]
 
-  if not haveLabels:
-    labels = ['Mol: %s' % str(x[0]) for x in data]
-  else:
-    labels = [x[0] for x in data]
+  labels = ['Mol: %s' % str(x[0]) for x in data] if not haveLabels else [x[0] for x in data]
   clustTree._ptLabels = labels
   if acts:
     clustTree._ptValues = acts
+  
   for pt in clustTree.GetPoints():
     idx = pt.GetIndex() - 1
     pt.SetName(labels[idx])
@@ -83,10 +78,10 @@ def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
         pt.SetData(int(acts[idx]))
       except Exception:
         pass
+  
   if not returnDistances:
     return clustTree
-  else:
-    return clustTree, dMat
+  return clustTree, dMat
 
 
 def ClusterFromDetails(details):

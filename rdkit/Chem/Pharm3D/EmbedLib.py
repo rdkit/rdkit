@@ -29,6 +29,12 @@ _times = {}
 logger = logging.logger()
 defaultFeatLength = 2.0
 
+def get_time():
+  try:
+    return time.perf_counter()
+  except (AttributeError, NameError):
+    return time.time()
+
 
 def GetAtomHeavyNeighbors(atom):
   """ returns a list of the heavy-atom neighbors of the
@@ -52,11 +58,7 @@ def GetAtomHeavyNeighbors(atom):
   2
 
   """
-  res = []
-  for nbr in atom.GetNeighbors():
-    if nbr.GetAtomicNum() != 1:
-      res.append(nbr)
-  return res
+  return [nbr for nbr in atom.GetNeighbors() if nbr.GetAtomicNum() != 1]
 
 
 def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatLength):
@@ -112,10 +114,7 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
   nPts = len(match)
   for i in range(nPts):
     idx0 = match[i]
-    if i < nPts - 1:
-      idx1 = match[i + 1]
-    else:
-      idx1 = match[0]
+    idx1 = match[i + 1] if i < nPts - 1 else match[0]
     if idx1 < idx0:
       idx0, idx1 = idx1, idx0
     minVal = min(minVal, bounds[idx1, idx0])
@@ -128,10 +127,7 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
   maxVal *= scaleFact
 
   replaceIdx = bounds.shape[0]
-  if not useDirs:
-    bm = numpy.zeros((bounds.shape[0] + 1, bounds.shape[1] + 1), numpy.float)
-  else:
-    bm = numpy.zeros((bounds.shape[0] + 2, bounds.shape[1] + 2), numpy.float)
+  bm = numpy.zeros((bounds.shape[0] + 1 + int(useDirs), bounds.shape[1] + 1 + int(useDirs)), numpy.float)
   bm[0:bounds.shape[0], 0:bounds.shape[1]] = bounds
   bm[:replaceIdx, replaceIdx] = 1000.
 
@@ -317,10 +313,7 @@ def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False, dirLength=
     mi = replaceMap.get(i, matchI[0])
     for j in range(i + 1, len(atomMatch)):
       mj = replaceMap.get(j, atomMatch[j][0])
-      if mi < mj:
-        idx0, idx1 = mi, mj
-      else:
-        idx0, idx1 = mj, mi
+      idx0, idx1 = (mi, mj) if mi < mj else (mj, mi)
       bm[idx0, idx1] = pcophore.getUpperBound(i, j)
       bm[idx1, idx0] = pcophore.getLowerBound(i, j)
 
@@ -419,7 +412,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
   for i in range(count):
     tmpM = bm[:, :]
     m2 = Chem.Mol(mol)
-    t1 = time.time()
+    t1 = get_time()
     try:
       if randomSeed <= 0:
         seed = i * 10 + 1
@@ -431,7 +424,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
         logger.info('Embed failed')
       nFailed += 1
     else:
-      t2 = time.time()
+      t2 = get_time()
       _times['embed'] = _times.get('embed', 0) + t2 - t1
       keepIt = True
       for idx, stereo in mol._chiralCenters:
@@ -485,8 +478,6 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
      1) the energy of the initial conformation
      2) the energy post-embedding
    NOTE that these energies include the energies of the constraints
-
-
 
     >>> from rdkit import Geometry
     >>> from rdkit.Chem.Pharm3D import Pharmacophore
@@ -654,26 +645,26 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   d23s = []
   d34s = []
   for m in ms:
-    t1 = time.time()
+    t1 = get_time()
     try:
       e1, e2 = OptimizeMol(m, bm, atomMatch)
     except ValueError:
       pass
     else:
-      t2 = time.time()
+      t2 = get_time()
       _times['opt1'] = _times.get('opt1', 0) + t2 - t1
 
       e1s.append(e1)
       e2s.append(e2)
 
       d12s.append(e1 - e2)
-      t1 = time.time()
+      t1 = get_time()
       try:
         e3, e4 = OptimizeMol(m, bm)
       except ValueError:
         pass
       else:
-        t2 = time.time()
+        t2 = get_time()
         _times['opt2'] = _times.get('opt2', 0) + t2 - t1
         e3s.append(e3)
         e4s.append(e4)
@@ -786,8 +777,7 @@ def _getFeatDict(mol, featFactory, features):
   for feat in features:
     family = feat.GetFamily()
     if family not in molFeats:
-      matches = featFactory.GetFeaturesForMol(mol, includeOnly=family)
-      molFeats[family] = matches
+      molFeats[family] = featFactory.GetFeaturesForMol(mol, includeOnly=family) # matches
   return molFeats
 
 
@@ -1008,16 +998,18 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   False
 
   """
-  for k in range(len(atomMatch)):
+  atomMatchSize = len(atomMatch)
+  for k in range(atomMatchSize):
     if len(atomMatch[k]) == 1:
-      for l in range(k + 1, len(atomMatch)):
+      for l in range(k + 1, atomMatchSize):
         if len(atomMatch[l]) == 1:
           idx0 = atomMatch[k][0]
           idx1 = atomMatch[l][0]
           if idx1 < idx0:
             idx0, idx1 = idx1, idx0
-          if (bounds[idx1, idx0] >= pcophore.getUpperBound(k, l) or
-              bounds[idx0, idx1] <= pcophore.getLowerBound(k, l)):
+          
+          if bounds[idx1, idx0] >= pcophore.getUpperBound(k, l) or \
+            bounds[idx0, idx1] <= pcophore.getLowerBound(k, l):
             if verbose:
               print('\t  (%d,%d) [%d,%d] fail' % (idx1, idx0, k, l))
               print('\t    %f,%f - %f,%f' % (bounds[idx1, idx0], pcophore.getUpperBound(k, l),
@@ -1258,7 +1250,6 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     True
 
 
-
   """
   conf = mol.GetConformer(confId)
   Chem.AssignStereochemistry(mol)
@@ -1267,11 +1258,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     return 0.0
 
   nbrs = center.GetNeighbors()
-  nbrRanks = []
-  for nbr in nbrs:
-    rank = int(nbr.GetProp('_CIPRank'))
-    pos = conf.GetAtomPosition(nbr.GetIdx())
-    nbrRanks.append((rank, pos))
+  nbrRanks = [(int(nbr.GetProp('_CIPRank')), conf.GetAtomPosition(nbr.GetIdx())) for nbr in nbrs] # (rank, pos)
 
   # if we only have three neighbors (i.e. the determining H isn't present)
   # then use the central atom as the fourth point:

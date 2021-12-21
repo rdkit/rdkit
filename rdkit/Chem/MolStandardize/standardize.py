@@ -145,10 +145,7 @@ class Standardizer(object):
         :returns: The stereo parent molecule.
         :rtype: :rdkit:`Mol <Chem.rdchem.Mol-class.html>`
         """
-        if not skip_standardize:
-            mol = self.standardize(mol)
-        else:
-            mol = copy.deepcopy(mol)
+        mol = self.standardize(mol) if not skip_standardize else copy.deepcopy(mol)
         Chem.RemoveStereochemistry(mol)
         return mol
 
@@ -163,10 +160,7 @@ class Standardizer(object):
         :returns: The isotope parent molecule.
         :rtype: :rdkit:`Mol <Chem.rdchem.Mol-class.html>`
         """
-        if not skip_standardize:
-            mol = self.standardize(mol)
-        else:
-            mol = copy.deepcopy(mol)
+        mol = self.standardize(mol) if not skip_standardize else copy.deepcopy(mol)
         # Replace isotopes with common weight
         for atom in mol.GetAtoms():
             atom.SetIsotope(0)

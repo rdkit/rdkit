@@ -22,12 +22,10 @@ def Convert(suppl, outFile, keyCol=None, stopAfter=-1, includeChirality=False, s
   if keyCol and keyCol in propNames:
     propNames.remove(keyCol)
 
-  outL = []
-  if keyCol:
-    outL.append(keyCol)
-  outL.append('SMILES')
+  outL = [keyCol, 'SMILES'] if keyCol else ['SMILES']
   outL.extend(propNames)
   w.writerow(outL)
+
   for nDone, mol in enumerate(suppl, 1):
     if not mol:
       continue
@@ -35,17 +33,12 @@ def Convert(suppl, outFile, keyCol=None, stopAfter=-1, includeChirality=False, s
       smi = Chem.MolToSmiles(mol, isomericSmiles=includeChirality)
     else:
       smi = mol.GetProp(smilesFrom)
-      tMol = Chem.MolFromSmiles(smi)
-      smi = Chem.MolToSmiles(tMol, isomericSmiles=includeChirality)
-    outL = []
-    if keyCol:
-      outL.append(str(mol.GetProp(keyCol)))
-    outL.append(smi)
+      smi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), isomericSmiles=includeChirality)
+    
+    outL = [str(mol.GetProp(keyCol)), smi] if keyCol else [smi]
     for prop in propNames:
-      if mol.HasProp(prop):
-        outL.append(str(mol.GetProp(prop)))
-      else:
-        outL.append('')
+      outL.append(str(mol.GetProp(prop)) if mol.HasProp(prop) else '')
+
     w.writerow(outL)
     if nDone == stopAfter:
       break

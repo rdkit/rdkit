@@ -31,8 +31,7 @@ class MolSupplier(object):
     res = self.NextMol()
     if res is not None:
       return res
-    else:
-      raise StopIteration
+    raise StopIteration
 
   def NextMol(self):
     """   Must be implemented in child class

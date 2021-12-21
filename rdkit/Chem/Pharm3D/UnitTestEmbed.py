@@ -76,10 +76,7 @@ class TestCase(unittest.TestCase):
     matched, matches = EmbedLib.MatchPharmacophoreToMol(mol, featFactory, pcophore)
     if matched:
       r = EmbedLib.MatchPharmacophore(matches, boundsMat, pcophore, useDownsampling=downSample)
-      if r[0]:
-        return 0
-      else:
-        return 1
+      return int(not bool(r[0])) # r[0] always a boolean but represented by integer ?
     else:
       return 0
 

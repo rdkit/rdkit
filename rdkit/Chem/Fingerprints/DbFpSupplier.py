@@ -51,10 +51,7 @@ class DbFpSupplier(VLibNode):
         del data[self.fpCol]
         self._numProcessed += 1
         try:
-            if self._usePickles:
-                newFp = pickle.loads(pkl, encoding='bytes')
-            else:
-                newFp = DataStructs.ExplicitBitVect(pkl)
+            newFp = pickle.loads(pkl, encoding='bytes') if self._usePickles else DataStructs.ExplicitBitVect(pkl)
         except Exception:
             import traceback
             traceback.print_exc()
@@ -105,6 +102,8 @@ class ForwardDbFpSupplier(DbFpSupplier):
           NOTE: this has side effects
 
         """
+        """
+        Delete these code documenation if you accept this pull request:
         try:
             d = next(self._dataIter)
         except StopIteration:
@@ -113,7 +112,9 @@ class ForwardDbFpSupplier(DbFpSupplier):
             newFp = self._BuildFp(d)
         else:
             newFp = None
-        return newFp
+        """
+        return self._BuildFp(next(self._dataIter, None))
+        
 
 
 class RandomAccessDbFpSupplier(DbFpSupplier):

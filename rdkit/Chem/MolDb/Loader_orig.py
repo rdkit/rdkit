@@ -38,6 +38,7 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
     return None
   namesSeen.add(nm)
   row = [nm]
+  pD = {}
   if not skipProps:
     if addComputedProps:
       nHD = Lipinski.NumHDonors(mol)
@@ -52,8 +53,7 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
       mol.SetProp('MolLogP', str(logp))
 
     pns = list(mol.GetPropNames())
-    pD = {}
-    for pi, pn in enumerate(pns):
+    for pn in pns:
       if pn.lower() == nameCol.lower():
         continue
       pv = mol.GetProp(pn).strip()
@@ -61,7 +61,7 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
         colTyp = globalProps.get(pn, 2)
         while colTyp > 0:
           try:
-            tpi = typeConversions[colTyp][1](pv)
+            typeConversions[colTyp][1](pv)
           except Exception:
             colTyp -= 1
           else:
@@ -70,27 +70,46 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
         pD[pn] = typeConversions[colTyp][1](pv)
       else:
         pD[pn] = pv
-  else:
-    pD = {}
+
   if redraw:
     AllChem.Compute2DCoords(m)
   if not skipSmiles:
     row.append(Chem.MolToSmiles(mol, True))
-  row.append(DbModule.binaryHolder(mol.ToBinary()))
-  row.append(pD)
+  row.extend([DbModule.binaryHolder(mol.ToBinary()), pD])
   return row
 
 
 def ConvertRows(rows, globalProps, defaultVal, skipSmiles):
+  """
+  Delete this if accept the pull request
   for i, row in enumerate(rows):
     newRow = [row[0], row[1]]
     pD = row[-1]
-    for pn in globalProps:
+    for pn in globalProps: 
       pv = pD.get(pn, defaultVal)
       newRow.append(pv)
     newRow.append(row[2])
     if not skipSmiles:
       newRow.append(row[3])
+    rows[i] = newRow
+  """
+  #  globalProps is a python dictionary
+  PropsSize: int = len(globalProps)
+  for i, row in enumerate(rows):
+    newRow = [0] * (PropsSize + 3 + int(not skipSmiles))
+    newRow[0], newRow[1] = row[0], row[1]
+    
+    counter = 0
+    pD = row[-1]
+    for pn in globalProps: # pn is the key
+      newRow[2 + counter] = pD.get(pn, defaultVal)
+      counter += 1
+
+    if not skipSmiles:
+      newRow[-2], newRow[-1] = row[2], row[3]
+    else:
+      newRow[-1] = row[2]
+
     rows[i] = newRow
 
 
@@ -98,10 +117,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
            errorsTo=None, keepHs=False, defaultVal='N/A', skipProps=False, regName='molecules',
            skipSmiles=False, maxRowsCached=-1, uniqNames=False, addComputedProps=False,
            lazySupplier=False, startAnew=True):
-  if not lazySupplier:
-    nMols = len(suppl)
-  else:
-    nMols = -1
+  nMols = len(suppl) if not lazySupplier else -1
   if not silent:
     logger.info("Generating molecular database in file %s" % dbName)
     if not lazySupplier:
@@ -145,10 +161,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
     pns.append(pn.lower())
 
   if not skipSmiles:
-    if 'smiles' not in pns:
-      typs.append('smiles varchar')
-    else:
-      typs.append('cansmiles varchar')
+    typs.append('smiles varchar' if 'smiles' not in pns else 'cansmiles varchar')
   typs.append('molpkl %s' % (DbModule.binaryTypeName))
   conn = DbConnect(dbName)
   curs = conn.GetCursor()
@@ -190,7 +203,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
         else:
           logger.warning('full error file support not complete')
       continue
-    tmpProps = {}
+
     row = ProcessMol(m, typeConversions, globalProps, nDone, nameProp=nameProp, nameCol=nameCol,
                      redraw=redraw, keepHs=keepHs, skipProps=skipProps,
                      addComputedProps=addComputedProps, skipSmiles=skipSmiles, uniqNames=uniqNames,

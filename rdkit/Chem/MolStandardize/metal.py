@@ -53,7 +53,8 @@ class MetalDisconnector(object):
         """
         log.debug('Running MetalDisconnector')
         # Remove bonds that match SMARTS
-        for smarts in [self._metal_nof, self._metal_non]:
+        metals = (self._metal_nof, self._metal_non)
+        for smarts in metals:
             pairs = mol.GetSubstructMatches(smarts)
             rwmol = Chem.RWMol(mol)
             orders = []

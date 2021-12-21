@@ -137,20 +137,42 @@ class Normalizer(object):
         :return: The normalized fragment.
         :rtype: :rdkit:`Mol <Chem.rdchem.Mol-class.html>`
         """
+
         log.debug('Running Normalizer')
+
+        """
+        OLD CODE: Delete it if accpet the pull request. 
+        Reason: Iterate from first to bottom then from bottom to top ?
+        
+        ...
         # Normalize each fragment separately to get around quirky RunReactants behaviour
         fragments = []
         for fragment in Chem.GetMolFrags(mol, asMols=True):
             fragments.append(self._normalize_fragment(fragment))
+        
         # Join normalized fragments into a single molecule again
         outmol = fragments.pop()
         for fragment in fragments:
             outmol = Chem.CombineMols(outmol, fragment)
+        ...
+
+        """
+        # Update: Aggregated normalized fragments into a single molecule according to the previous code.
+        # Step 1: Normalize each fragment separately to get around quirky RunReactants behaviour
+        # Step 2: Join normalized fragments into a single molecule again (previous intention: bottom-up)
+        NORMALIZE_FRAGMENT = self._normalize_fragment
+
+        MolFrags = Chem.GetMolFrags(mol, asMols=True)
+        outmol = NORMALIZE_FRAGMENT(MolFrags[-1])
+        for i in range(len(MolFrags) - 2, -1, -1):
+            outmol = Chem.CombineMols(outmol, NORMALIZE_FRAGMENT(MolFrags[i])) # from bottom to top
         Chem.SanitizeMol(outmol)
+
+        del MolFrags # Free memory
         return outmol
 
     def _normalize_fragment(self, mol):
-        for n in range(self.max_restarts):
+        for _ in range(self.max_restarts):
             # Iterate through Normalization transforms and apply each in order
             for normalization in self.normalizations:
                 product = self._apply_transform(mol, normalization.transform)

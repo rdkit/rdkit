@@ -20,18 +20,17 @@ def GetPrincipleQuantumNumber(atNum):
   """ Get principal quantum number for atom number """
   if atNum <= 2:
     return 1
-  elif atNum <= 10:
+  if atNum <= 10:
     return 2
-  elif atNum <= 18:
+  if atNum <= 18:
     return 3
-  elif atNum <= 36:
+  if atNum <= 36:
     return 4
-  elif atNum <= 54:
+  if atNum <= 54:
     return 5
-  elif atNum <= 86:
+  if atNum <= 86:
     return 6
-  else:
-    return 7
+  return 7
 
 
 def EStateIndices(mol, force=True):

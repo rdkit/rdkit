@@ -33,7 +33,6 @@
 # Original author: Thomas Muellerk muelleth
 import logging
 import re
-import unittest
 from rdkit import Chem
 
 from rdkit.Chem import inchi
@@ -48,11 +47,11 @@ def _is_achiral_by_symmetry(INCHI):
 
   try:
     list_chiral = Chem.FindMolChiralCenters(mol, True, True)
+    # is there any real chiral centre?
+    return len(list_chiral) == 0
   except Exception:
     return False
 
-#   is there any real chiral centre?
-  return len(list_chiral) == 0
 
 console = logging.StreamHandler()
 UPD_APP = logging.getLogger('inchiinfo.application')  # application runtime information

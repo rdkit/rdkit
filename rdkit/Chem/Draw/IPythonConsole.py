@@ -75,15 +75,13 @@ def drawMol3D(m, view=None, confId=-1, drawAs=None, bgColor=None, size=None):
   if view is None:
     view = py3Dmol.view(width=size[0], height=size[1])
   view.removeAllModels()
+  
   try:
-    iter(m)
-  except TypeError:
-    addMolToView(m, view, confId, drawAs)
-  else:
-    ms = m
+    ms = iter(m)
     for m in ms:
       addMolToView(m, view, confId, drawAs)
-
+  except TypeError:
+    addMolToView(m, view, confId, drawAs)
   view.setBackgroundColor(bgColor)
   view.zoomTo()
   return view.show()
@@ -108,10 +106,8 @@ def _toHTML(mol):
   props = mol.GetPropsAsDict()
   if not ipython_showProperties or not props:
     return _toSVG(mol)
-  if mol.HasProp('_Name'):
-    nm = mol.GetProp('_Name')
-  else:
-    nm = ''
+  
+  nm = mol.GetProp('_Name') if mol.HasProp('_Name') else ''
   res = []
   if not ipython_useSVG:
     png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
@@ -122,7 +118,7 @@ def _toHTML(mol):
     res.append(f'<tr><td colspan=2 style="text-align:center">{svg}</td></tr>')
 
   for i,(pn, pv) in enumerate(props.items()):
-    if ipython_maxProperties>=0 and i>= ipython_maxProperties:
+    if ipython_maxProperties >= 0 and i >= ipython_maxProperties:
       res.append('<tr><td colspan=2 style="text-align:center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>')
       break
     res.append(
@@ -132,10 +128,7 @@ def _toHTML(mol):
 
 
 def _toPNG(mol):
-  if hasattr(mol, '__sssAtoms'):
-    highlightAtoms = mol.__sssAtoms
-  else:
-    highlightAtoms = []
+  highlightAtoms = mol.__sssAtoms if hasattr(mol, '__sssAtoms') else []
   kekulize = kekulizeStructures
   return Draw._moltoimg(mol, molSize, highlightAtoms, "", returnPNG=True, kekulize=kekulize,
                         drawOptions=drawOptions)
@@ -168,30 +161,20 @@ def _toReactionSVG(rxn):
 
 
 def _toMolBundlePNG(bundle):
-  if _MolsToGridImageSaved is not None:
-    fn = _MolsToGridImageSaved
-  else:
-    fn = Draw.MolsToGridImage
-
+  fn = _MolsToGridImageSaved if _MolsToGridImageSaved is not None else Draw.MolsToGridImage
   return fn(bundle, subImgSize=molSize, drawOptions=drawOptions, useSVG=False, returnPNG=True)
 
 
 def _toMolBundleSVG(bundle):
   if not ipython_useSVG:
     return None
-  if _MolsToGridImageSaved is not None:
-    fn = _MolsToGridImageSaved
-  else:
-    fn = Draw.MolsToGridImage
+  fn = _MolsToGridImageSaved if _MolsToGridImageSaved is not None else Draw.MolsToGridImage
   return fn(bundle, subImgSize=molSize, drawOptions=drawOptions, useSVG=True)
 
 
 def _GetSubstructMatch(mol, query, *args, **kwargs):
   res = mol.__GetSubstructMatch(query, *args, **kwargs)
-  if highlightSubstructs:
-    mol.__sssAtoms = list(res)
-  else:
-    mol.__sssAtoms = []
+  mol.__sssAtoms = list(res) if highlightSubstructs else []
   return res
 
 
@@ -233,10 +216,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
     kwargs['useSVG'] = ipython_useSVG
   if 'returnPNG' not in kwargs:
     kwargs['returnPNG'] = True
-  if _MolsToGridImageSaved is not None:
-    fn = _MolsToGridImageSaved
-  else:
-    fn = Draw.MolsToGridImage
+  fn = _MolsToGridImageSaved if _MolsToGridImageSaved is not None else Draw.MolsToGridImage
   if len(mols) > maxMols:
     warnings.warn(
       "Truncating the list of molecules to be displayed to %d. Change the maxMols value to display more."
@@ -247,14 +227,13 @@ def ShowMols(mols, maxMols=50, **kwargs):
         kwargs[prop] = kwargs[prop][:maxMols]
   if not "drawOptions" in kwargs:
     kwargs["drawOptions"] = drawOptions
+  
   res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
-  else:
-    if kwargs['returnPNG']:
-      return display.Image(data=res, format='png')
-    else:
-      return res
+  if kwargs['returnPNG']:
+    return display.Image(data=res, format='png')
+  return res
 
 
 ShowMols.__doc__ = Draw.MolsToGridImage.__doc__
@@ -263,23 +242,23 @@ ShowMols.__doc__ = Draw.MolsToGridImage.__doc__
 def _DrawBit(fn, *args, **kwargs):
   if 'useSVG' not in kwargs:
     kwargs['useSVG'] = ipython_useSVG
+  
   res = fn(*args, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
-  else:
-    sio = BytesIO(res)
-    return Image.open(sio)
+  sio = BytesIO(res)
+  return Image.open(sio)
 
 
 def _DrawBits(fn, *args, **kwargs):
   if 'useSVG' not in kwargs:
     kwargs['useSVG'] = ipython_useSVG
+
   res = fn(*args, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
-  else:
-    sio = BytesIO(res)
-    return Image.open(sio)
+  sio = BytesIO(res)
+  return Image.open(sio)
 
 
 _DrawMorganBitSaved = None
@@ -287,10 +266,7 @@ _DrawMorganBitSaved = None
 
 def DrawMorganBit(mol, bitId, bitInfo, drawOptions=drawOptions, **kwargs):
   global _DrawMorganBitSaved
-  if _DrawMorganBitSaved is not None:
-    fn = _DrawMorganBitSaved
-  else:
-    fn = Draw.DrawMorganBit
+  fn = _DrawMorganBitSaved if _DrawMorganBitSaved is not None else Draw.DrawMorganBit
   return _DrawBit(fn, mol, bitId, bitInfo, drawOptions=drawOptions, **kwargs)
 
 
@@ -301,10 +277,7 @@ _DrawMorganBitsSaved = None
 
 def DrawMorganBits(*args, drawOptions=drawOptions, **kwargs):
   global _DrawMorganBitsSaved
-  if _DrawMorganBitsSaved is not None:
-    fn = _DrawMorganBitsSaved
-  else:
-    fn = Draw.DrawMorganBits
+  fn = _DrawMorganBitsSaved if _DrawMorganBitsSaved is not None else Draw.DrawMorganBits
   return _DrawBit(fn, *args, drawOptions=drawOptions, **kwargs)
 
 
@@ -315,10 +288,7 @@ _DrawRDKitBitSaved = None
 
 def DrawRDKitBit(mol, bitId, bitInfo, drawOptions=drawOptions, **kwargs):
   global _DrawRDKitBitSaved
-  if _DrawRDKitBitSaved is not None:
-    fn = _DrawRDKitBitSaved
-  else:
-    fn = Draw.DrawRDKitBit
+  fn = _DrawRDKitBitSaved if _DrawRDKitBitSaved is not None else Draw.DrawRDKitBit
   return _DrawBit(fn, mol, bitId, bitInfo, drawOptions=drawOptions, **kwargs)
 
 
@@ -329,10 +299,7 @@ _DrawRDKitBitsSaved = None
 
 def DrawRDKitBits(*args, drawOptions=drawOptions, **kwargs):
   global _DrawRDKitBitsSaved
-  if _DrawRDKitBitsSaved is not None:
-    fn = _DrawRDKitBitsSaved
-  else:
-    fn = Draw.DrawRDKitBits
+  fn = _DrawRDKitBitsSaved if _DrawRDKitBitsSaved is not None else Draw.DrawRDKitBits
   return _DrawBit(fn, *args, drawOptions=drawOptions, **kwargs)
 
 

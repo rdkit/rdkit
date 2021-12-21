@@ -173,17 +173,13 @@ def ScreenFingerprints(details, data, mol=None, probeFp=None):
   if not probeFp:
     return []
 
-  res = []
-  if not details.doThreshold and details.topN > 0:
-    topN = TopNContainer(details.topN)
-  else:
-    topN = []
+  topN = TopNContainer(details.topN) if not details.doThreshold and details.topN > 0 else []
   res = []
   count = 0
   for pt in data:
     fp1 = probeFp
     if not details.noPickle:
-      if type(pt) in (types.TupleType, types.ListType):
+      if isinstance(pt, types.TupleType, types.ListType):
         ID, fp = pt
       else:
         fp = pt
@@ -194,8 +190,7 @@ def ScreenFingerprints(details, data, mol=None, probeFp=None):
       score = details.metric(fp1, str(pkl))
     if topN:
       topN.Insert(score, ID)
-    elif not details.doThreshold or \
-             (details.doThreshold and score >= details.screenThresh):
+    elif not details.doThreshold or (details.doThreshold and score >= details.screenThresh):
       res.append((ID, score))
     count += 1
     if hasattr(details, 'stopAfter') and count >= details.stopAfter:

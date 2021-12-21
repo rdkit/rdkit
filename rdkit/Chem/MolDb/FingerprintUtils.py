@@ -31,10 +31,7 @@ class LayeredOptions:
 
     @staticmethod
     def GetFingerprint(mol, query=True):
-        if query:
-            flags = LayeredOptions.searchLayerFlags
-        else:
-            flags = LayeredOptions.loadLayerFlags
+        flags = LayeredOptions.searchLayerFlags if query else LayeredOptions.loadLayerFlags
         return Chem.LayeredFingerprint(mol, layerFlags=flags, minPath=LayeredOptions.minPath,
                                        maxPath=LayeredOptions.maxPath, fpSize=LayeredOptions.fpSize)
 
@@ -86,8 +83,7 @@ def BuildTorsionsFP(mol):
 
 
 def BuildRDKitFP(mol):
-    fp = Chem.RDKFingerprint(mol, nBitsPerHash=1)
-    return fp
+    return Chem.RDKFingerprint(mol, nBitsPerHash=1)
 
 
 def BuildPharm2DFP(mol):
@@ -95,9 +91,9 @@ def BuildPharm2DFP(mol):
     from rdkit.Chem.Pharm2D import Generate
     try:
         fp = Generate.Gen2DFingerprint(mol, sigFactory)
-    except IndexError:
+    except IndexError as e:
         print('FAIL:', Chem.MolToSmiles(mol, True))
-        raise
+        raise e
     return fp
 
 
@@ -111,10 +107,8 @@ def BuildMorganFP(mol):
 def BuildAvalonFP(mol, smiles=None):
     from rdkit.Avalon import pyAvalonTools
     if smiles is None:
-        fp = pyAvalonTools.GetAvalonFP(mol)
-    else:
-        fp = pyAvalonTools.GetAvalonFP(smiles, True)
-    return fp
+        return pyAvalonTools.GetAvalonFP(mol)
+    return pyAvalonTools.GetAvalonFP(smiles, True)
 
 
 def DepickleFP(pkl, similarityMethod):

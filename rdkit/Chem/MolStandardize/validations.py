@@ -75,10 +75,7 @@ class SmartsValidation(Validation):
             self.log.log(self.level, self.message, {'smarts': self.smarts})
 
     def run(self, mol):
-        if self.entire_fragment:
-            self._check_matches_fragment(mol)
-        else:
-            self._check_matches(mol)
+        return self._check_matches_fragment(mol) if self.entire_fragment else self._check_matches(mol)
 
 
 class IsNoneValidation(Validation):

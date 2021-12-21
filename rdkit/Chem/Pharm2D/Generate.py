@@ -122,9 +122,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
 
   # generate the permutations, if required
   if perms is None:
-    perms = []
-    for count in range(minCount, maxCount + 1):
-      perms += Utils.GetIndexCombinations(nFeats, count)
+    perms = [Utils.GetIndexCombinations(nFeats, count) for count in range(minCount, maxCount + 1)]
 
   # generate the matches:
   featMatches = sigFactory.GetMolFeats(mol)
@@ -135,12 +133,9 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
   for perm in perms:
     # the permutation is a combination of feature indices
     #   defining the feature set for a proto-pharmacophore
-    featClasses = [0]
+    featClasses = [0] * len(perm)
     for i in range(1, len(perm)):
-      if perm[i] == perm[i - 1]:
-        featClasses.append(featClasses[-1])
-      else:
-        featClasses.append(featClasses[-1] + 1)
+      featClasses[i] = featClasses[i - 1] + int(perm[i] != perm[i - 1])
 
     # Get a set of matches at each index of
     #  the proto-pharmacophore.
@@ -152,8 +147,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     # Get all unique combinations of those possible matches:
     matchesToMap = Utils.GetUniqueCombinations(matchPerms, featClasses)
     for i, entry in enumerate(matchesToMap):
-      entry = [x[1] for x in entry]
-      matchesToMap[i] = entry
+      matchesToMap[i] = [x[1] for x in entry]
     if _verbose:
       print('    mtM:', matchesToMap)
 

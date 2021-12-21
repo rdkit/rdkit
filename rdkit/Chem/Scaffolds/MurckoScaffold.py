@@ -75,6 +75,7 @@ def GetScaffoldForMol(mol):
     res.UpdatePropertyCache()
     Chem.GetSymmSSSR(res)
   else:
+    # This code cannot be reached
     res = _pyGetScaffoldForMol(mol)
   return res
 

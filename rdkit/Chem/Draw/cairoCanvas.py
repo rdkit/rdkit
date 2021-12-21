@@ -237,10 +237,7 @@ class Canvas(CanvasBase):
       self.ctx.stroke()
 
   def _addCanvasText1(self, text, pos, font, color=(0, 0, 0), **kwargs):
-    if font.weight == 'bold':
-      weight = cairo.FONT_WEIGHT_BOLD
-    else:
-      weight = cairo.FONT_WEIGHT_NORMAL
+    weight = cairo.FONT_WEIGHT_BOLD if font.weight == 'bold' else cairo.FONT_WEIGHT_NORMAL
     self.ctx.select_font_face(font.face, cairo.FONT_SLANT_NORMAL, weight)
     text = scriptPattern.sub('', text)
     self.ctx.set_font_size(font.size)
@@ -252,7 +249,7 @@ class Canvas(CanvasBase):
     self.ctx.move_to(*dPos)
     self.ctx.show_text(text)
 
-    if 0:
+    if 0: # debug purpose
       self.ctx.move_to(dPos[0], dPos[1])
       self.ctx.line_to(dPos[0] + bw, dPos[1])
       self.ctx.line_to(dPos[0] + bw, dPos[1] - bh)
@@ -264,10 +261,7 @@ class Canvas(CanvasBase):
     return (bw, bh, offset)
 
   def _addCanvasText2(self, text, pos, font, color=(0, 0, 0), **kwargs):
-    if font.weight == 'bold':
-      weight = cairo.FONT_WEIGHT_BOLD
-    else:
-      weight = cairo.FONT_WEIGHT_NORMAL
+    weight = cairo.FONT_WEIGHT_BOLD if font.weight == 'bold' else cairo.FONT_WEIGHT_NORMAL
     self.ctx.select_font_face(font.face, cairo.FONT_SLANT_NORMAL, weight)
     orientation = kwargs.get('orientation', 'E')
 
@@ -327,7 +321,7 @@ class Canvas(CanvasBase):
       pad[1] *= 0.5
     bw, bh = w + pad[0], h + pad[1]
     offset = w * pos[2]
-    if 0:
+    if 0: # debug purpose
       if orientation == 'W':
         dPos = pos[0] - w + offset, pos[1] - h / 2.
       elif orientation == 'E':
@@ -362,10 +356,8 @@ class Canvas(CanvasBase):
 
   def addCanvasText(self, text, pos, font, color=(0, 0, 0), **kwargs):
     if have_pango:
-      textSize = self._addCanvasText2(text, pos, font, color, **kwargs)
-    else:
-      textSize = self._addCanvasText1(text, pos, font, color, **kwargs)
-    return textSize
+      return self._addCanvasText2(text, pos, font, color, **kwargs)
+    return self._addCanvasText1(text, pos, font, color, **kwargs)
 
   def addCanvasPolygon(self, ps, color=(0, 0, 0), fill=True, stroke=False, **kwargs):
     if not fill and not stroke:

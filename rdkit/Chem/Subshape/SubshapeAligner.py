@@ -26,17 +26,14 @@ class SubshapeAlignment(object):
 
 def _getAllTriangles(pts, orderedTraversal=False):
   for i in range(len(pts)):
-    if orderedTraversal:
-      jStart = i + 1
-    else:
-      jStart = 0
+    jStart = i + 1 if orderedTraversal else 0
     for j in range(jStart, len(pts)):
       if j == i:
         continue
-      if orderedTraversal:
-        kStart = j + 1
-      else:
-        kStart = 0
+      """
+      Unused Code: Open it if needed
+      kStart = j + 1 if orderedTraversal else 0
+      """
       for k in range(j + 1, len(pts)):
         if k == i or k == j:
           continue
@@ -78,8 +75,7 @@ def ClusterAlignments(mol, alignments, builder, neighborTol=0.1,
       mol.RemoveConformer(tempConfId + 1)
     mol.RemoveConformer(tempConfId)
   clusts = Butina.ClusterData(dists, len(alignments), neighborTol, isDistData=True)
-  res = [alignments[x[0]] for x in clusts]
-  return res
+  return [alignments[x[0]] for x in clusts]
 
 
 def TransformMol(mol, tform, confId=-1, newConfId=100):
@@ -282,32 +278,39 @@ class SubshapeAligner(object):
   def GetSubshapeAlignments(self, targetMol, target, queryMol, query, builder, tgtConf=-1,
                             queryConf=-1, pruneStats=None):
     import time
+
+    def get_time():
+      try:
+        return time.perf_counter()
+      except (AttributeError, NameError):
+        return time.time()
+
     if pruneStats is None:
       pruneStats = {}
+
     logger.info("Generating triangle matches")
-    t1 = time.time()
+    t1 = get_time()
     res = [x for x in self.GetTriangleMatches(target, query)]
-    t2 = time.time()
-    logger.info("Got %d possible alignments in %.1f seconds" % (len(res), t2 - t1))
-    pruneStats['gtm_time'] = t2 - t1
+    pruneStats['gtm_time'] = get_time() - t1
+    logger.info("Got %d possible alignments in %.1f seconds" % (len(res), pruneStats['gtm_time']))
+
     if builder.featFactory:
       logger.info("Doing feature pruning")
-      t1 = time.time()
+      t1 = get_time()
       self.PruneMatchesUsingFeatures(target, query, res, pruneStats=pruneStats)
-      t2 = time.time()
-      pruneStats['feats_time'] = t2 - t1
-      logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), t2 - t1))
+      pruneStats['feats_time'] = get_time() - t1
+      logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), pruneStats['feats_time']))
     logger.info("Doing direction pruning")
-    t1 = time.time()
+
+    t1 = get_time()
     self.PruneMatchesUsingDirection(target, query, res, pruneStats=pruneStats)
-    t2 = time.time()
-    pruneStats['direction_time'] = t2 - t1
-    logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), t2 - t1))
-    t1 = time.time()
+    pruneStats['direction_time'] = get_time() - t1
+    logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), pruneStats['direction_time']))
+
+    t1 = get_time()
     self.PruneMatchesUsingShape(targetMol, target, queryMol, query, builder, res, tgtConf=tgtConf,
                                 queryConf=queryConf, pruneStats=pruneStats)
-    t2 = time.time()
-    pruneStats['shape_time'] = t2 - t1
+    pruneStats['shape_time'] = get_time() - t1
     return res
 
   def __call__(self, targetMol, target, queryMol, query, builder, tgtConf=-1, queryConf=-1,

@@ -102,10 +102,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
            errorsTo=None, keepHs=False, defaultVal='N/A', skipProps=False, regName='molecules',
            skipSmiles=False, maxRowsCached=-1, uniqNames=False, addComputedProps=False,
            lazySupplier=False, numForPropScan=10, startAnew=True):
-  if not lazySupplier:
-    nMols = len(suppl)
-  else:
-    nMols = -1
+  nMols = len(suppl) if not lazySupplier else -1
   if not silent:
     logger.info("Generating molecular database in file %s" % dbName)
     if not lazySupplier:
@@ -114,7 +111,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
   globalProps = {}
   if startAnew:
     if os.path.exists(dbName):
-      for i in range(5):
+      for _ in range(5):
         try:
           os.unlink(dbName)
           break

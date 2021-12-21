@@ -362,7 +362,6 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
     raise ValueError("Unknown Morgan fingerprint type")
   
   isBitVect = fpType == 'bv'
-  
   if not hasattr(mol, '_fpInfo'):
     info = {}
     # get the fingerprint & construct the bitmap template
@@ -402,7 +401,7 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
     raise ValueError("atom index greater than number of atoms")
   if len(mol._fpInfo) != 2:
     raise ValueError("_fpInfo not set")
-  if fpType == 'bv':
+  if isBitVect:
     molFp = mol._fpInfo[0] ^ mol._fpInfo[1][atomId]  # xor
   else:  # count
     molFp = copy.deepcopy(mol._fpInfo[0])
@@ -428,6 +427,7 @@ def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPat
     """
   if fpType not in ['bv', '']:
     raise ValueError("Unknown RDKit fingerprint type")
+
   fpType = 'bv'
   if not hasattr(mol, '_fpInfo'):
     info = []  # list with bits for each atom
@@ -444,6 +444,7 @@ def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPat
     raise ValueError("atom index greater than number of atoms")
   if len(mol._fpInfo) != 2:
     raise ValueError("_fpInfo not set")
+
   molFp = copy.deepcopy(mol._fpInfo[0])
   molFp.UnSetBitsFromList(mol._fpInfo[1][atomId])
   return molFp

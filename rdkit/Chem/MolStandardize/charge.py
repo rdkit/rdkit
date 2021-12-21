@@ -245,16 +245,24 @@ class Reionizer(object):
         return mol
 
     def _strongest_protonated(self, mol):
+        """
+        OLD CODE: Remove this if accept the pull request
         for position, pair in enumerate(self.acid_base_pairs):
             for occurrence in mol.GetSubstructMatches(pair.acid):
-                return position, occurrence
+                return position, occurrence # This cannot be reached
         return None, None
+        """
+        return 0, mol.GetSubstructMatches(self.acid_base_pairs[0].acid)
 
     def _weakest_ionized(self, mol):
+        """
+        OLD CODE: Remove this if accept the pull request
         for position, pair in enumerate(reversed(self.acid_base_pairs)):
             for occurrence in mol.GetSubstructMatches(pair.base):
                 return len(self.acid_base_pairs) - position - 1, occurrence
-        return None, None
+        return None, None # This cannot be reached
+        """
+        return len(self.acid_base_pairs) - 1, mol.GetSubstructMatches(self.acid_base_pairs[-1].base)
 
 
 class Uncharger(object):
@@ -293,6 +301,7 @@ class Uncharger(object):
         """
         log.debug('Running Uncharger')
         mol = copy.deepcopy(mol)
+        
         # Get atom ids for matches
         p = [x[0] for x in mol.GetSubstructMatches(self._pos_h)]
         q = [x[0] for x in mol.GetSubstructMatches(self._pos_quat)]
@@ -314,13 +323,16 @@ class Uncharger(object):
                     log.info('Removed negative charge')
         else:
             #
-            for atom in [mol.GetAtomWithIdx(x) for x in n]:
+            negativeAtomIdxs = [mol.GetAtomWithIdx(x) for x in n]
+            for atom in negativeAtomIdxs:
                 while atom.GetFormalCharge() < 0:
                     atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
                     atom.SetFormalCharge(atom.GetFormalCharge() + 1)
                     log.info('Removed negative charge')
+        
         # Neutralize positive charges
-        for atom in [mol.GetAtomWithIdx(x) for x in p]:
+        positiveAtomIdxs = [mol.GetAtomWithIdx(x) for x in p]
+        for atom in positiveAtomIdxs:
             # Remove hydrogen and reduce formal change until neutral or no more hydrogens
             while atom.GetFormalCharge() > 0 and atom.GetNumExplicitHs() > 0:
                 atom.SetNumExplicitHs(atom.GetNumExplicitHs() - 1)

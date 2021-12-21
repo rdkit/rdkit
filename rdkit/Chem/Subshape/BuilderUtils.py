@@ -182,10 +182,8 @@ def FindFarthestGridPoint(shape, loc, winRad, maxGridVal):
     if dst > dMax:
       dMax = dst
       res = posI
-
-  count, centroid = Geometry.ComputeGridCentroid(shapeGrid, res, winRad)
-  res = centroid
-  return res
+      
+  return Geometry.ComputeGridCentroid(shapeGrid, res, winRad)[1]
 
 
 def ExpandTerminalPts(shape, pts, winRad, maxGridVal=3.0, targetNumPts=5):

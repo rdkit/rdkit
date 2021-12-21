@@ -206,6 +206,10 @@ def EnumerateReaction(
   if len(bbLists) != nReacts:
     raise ValueError('%d reactants in reaction, %d bb lists supplied' % (nReacts, len(bbLists)))
 
+  ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
+  if not uniqueProductsOnly:
+    return ps
+  
   def _uniqueOnly(lst):
     seen = []
     for entry in lst:
@@ -214,12 +218,8 @@ def EnumerateReaction(
         if smi not in seen:
           seen.append(smi)
           yield entry
-
-  ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
-  if not uniqueProductsOnly:
-    return ps
-  else:
-    return _uniqueOnly(ps)
+  
+  return _uniqueOnly(ps)
 
 
 # ------------------------------------

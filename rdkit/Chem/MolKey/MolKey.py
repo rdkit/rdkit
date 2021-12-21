@@ -130,21 +130,16 @@ def _ctab_has_atoms(ctab_lines):
     at the required position or if they cannot be converted
     to a positive integer
     '''
+  str_a_count = ctab_lines[3][0:3]
   try:
-    str_a_count = ctab_lines[3][0:3]
     a_count = int(str_a_count)
     if a_count < 0:
       raise BadMoleculeException('Atom count negative')
-    if a_count > 0:
-      rval = True
-    else:
-      rval = False
+    return a_count > 0 # rval
   except IndexError:
     raise BadMoleculeException('Invalid molfile format')
   except ValueError:
     raise BadMoleculeException('Expected integer')
-
-  return rval
 
 
 def _ctab_remove_chiral_flag(ctab_lines):
@@ -153,23 +148,19 @@ def _ctab_remove_chiral_flag(ctab_lines):
     Throw BadMoleculeException if there are no characters
     at the required position or if they where not 0 or 1
     '''
+  str_a_count = ctab_lines[3][12:15]
   try:
-    str_a_count = ctab_lines[3][12:15]
     a_count = int(str_a_count)
-    if a_count == 0:
-      rval = False
-    elif a_count == 1:
-      rval = True
+    if a_count not in (0, 1):
+      raise BadMoleculeException('Expected chiral flag 0 or 1')
+    if a_count == 1:
       orig_line = ctab_lines[3]
       ctab_lines[3] = orig_line[:CHIRAL_POS] + '  0' + orig_line[CHIRAL_POS + 3:]
-    else:
-      raise BadMoleculeException('Expected chiral flag 0 or 1')
+    return a_count == 1 # rval
   except IndexError:
     raise BadMoleculeException('Invalid molfile format')
   except ValueError:
     raise BadMoleculeException('Expected integer, got {0}'.format(str_a_count))
-
-  return rval
 
 
 __initCalled = False
@@ -207,28 +198,27 @@ def CheckCTAB(ctab, isSmiles=True):
   mol_str = ctab
   if not mol_str:
     raise BadMoleculeException('Unexpected blank or NULL molecule')
-  else:
-    mol_str = _fix_line_ends(mol_str)
-    mol_str = _fix_chemdraw_header(mol_str)
+  
+  mol_str = _fix_line_ends(mol_str)
+  mol_str = _fix_chemdraw_header(mol_str)
 
-    if isSmiles:  # branch for NULL_MOL checks
-      if mol_str and NULL_SMILES_RE.match(mol_str):
-        rval = T_NULL_MOL
-      else:
-        rval = pyAvalonTools.CheckMoleculeString(mol_str, isSmiles)
-    else:
-      # decompose the ctab into lines
-      # the line terminator may be \n or \r\n, or even r'\n'
-      ctab_lines = mol_str.split('\n')
-      if len(ctab_lines) <= 3:
-        raise BadMoleculeException('Not enough lines in CTAB')
-      _ctab_remove_chiral_flag(ctab_lines)
-      if not _ctab_has_atoms(ctab_lines):
-        rval = T_NULL_MOL
-      else:  # reassemble the ctab lines into one string.
-        mol_str = '\n'.join(ctab_lines)
-        rval = pyAvalonTools.CheckMoleculeString(mol_str, isSmiles)
-  return rval
+  if isSmiles:  # branch for NULL_MOL checks
+    if mol_str and NULL_SMILES_RE.match(mol_str):
+      return T_NULL_MOL
+    return pyAvalonTools.CheckMoleculeString(mol_str, isSmiles) # rval
+  
+  # decompose the ctab into lines
+  # the line terminator may be \n or \r\n, or even r'\n'
+  ctab_lines = mol_str.split('\n')
+  if len(ctab_lines) <= 3:
+    raise BadMoleculeException('Not enough lines in CTAB')
+  _ctab_remove_chiral_flag(ctab_lines)
+  
+  if not _ctab_has_atoms(ctab_lines):
+    return T_NULL_MOL
+  # reassemble the ctab lines into one string.
+  mol_str = '\n'.join(ctab_lines)
+  return pyAvalonTools.CheckMoleculeString(mol_str, isSmiles)
 
 
 InchiResult = namedtuple('InchiResult', ['error', 'inchi', 'fixed_ctab'])
@@ -288,19 +278,19 @@ def _get_identification_string(err, ctab, inchi, stereo_category=None, extra_ste
   pieces = []
   if inchi:
     pieces.append(inchi)
+  pieces = [inchi] if inchi else []
+
   if not stereo_category:
     raise MolIdentifierException('Stereo category may not be left undefined')
-  else:
-    pieces.append('ST=' + stereo_category)
+  
+  pieces.append('ST=' + stereo_category)
   if extra_stereo:
     pieces.append('XTR=' + extra_stereo)
-  key_string = '/'.join(pieces)
-  return key_string
+  return '/'.join(pieces) # key_string
 
 
 def _get_null_mol_identification_string(extra_stereo):
-  key_string = str(uuid.uuid1())
-  return key_string
+  return str(uuid.uuid1())
 
 
 def _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
@@ -314,13 +304,11 @@ def _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
   else:
     pass
   if stereo_category:  # add xtra info if available
-    key_string = 'ST={0}'.format(stereo_category)
-    pieces.append(key_string)
+    pieces.append('ST={0}'.format(stereo_category))
   if extra_stereo:  # add xtra info if available
-    key_string = 'XTR={0}'.format(extra_stereo)
-    pieces.append(key_string)
-  key_string = '/'.join(pieces)
-  return key_string
+    pieces.append('XTR={0}'.format(extra_stereo))
+
+  return '/'.join(pieces) # key_string
 
 
 def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
@@ -331,8 +319,7 @@ def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
   if key_string:
     return "{0}|{1}".format(
       MOL_KEY_VERSION, base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode())
-  else:
-    return None
+  return None
 
 
 def _get_chiral_identification_string(n_def, n_udf):
@@ -432,8 +419,7 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
       logger.warn('stereo code {0} not recognized. Using default value for ctab.'.format(code_fld))
 
   if not (err & BAD_SET):
-    (n_stereo, n_undef_stereo, is_meso,
-     dummy) = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
+    n_stereo, n_undef_stereo, is_meso, dummy = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
     if stereo_category is None or stereo_category == 'DEFAULT':  # compute if not set
       stereo_category = _get_chiral_identification_string(n_stereo - n_undef_stereo, n_undef_stereo)
   else:

@@ -122,7 +122,6 @@ class FeatMap(object):
     """ feat1 is one of our feats
         feat2 is any Feature
 
-
     """
     if typeMatch and feat1.GetFamily() != feat2.GetFamily():
       return 0.0
@@ -135,10 +134,7 @@ class FeatMap(object):
       score = math.exp(-d2 / params.width)
     elif params.featProfile == FeatMapParams.FeatProfile.Triangle:
       d = math.sqrt(d2)
-      if d < params.width:
-        score = 1. - d / params.width
-      else:
-        score = 0.0
+      score = 1. - d / params.width if d < params.width else 0.0
     elif params.featProfile == FeatMapParams.FeatProfile.Box:
       score = 1.0
     weight = feat1.weight
@@ -154,40 +150,33 @@ class FeatMap(object):
 
     return score
 
-  def ScoreFeats(self, featsToScore, mapScoreVect=[], featsScoreVect=[], featsToFeatMapIdx=[]):
+  def ScoreFeats(self, featsToScore, mapScoreVect=None, featsScoreVect=None, featsToFeatMapIdx=None):
     nFeats = len(self._feats)
-    if mapScoreVect and len(mapScoreVect) != nFeats:
-      raise ValueError('if provided, len(mapScoreVect) should equal numFeats')
-    nToScore = len(featsToScore)
-    if featsScoreVect and len(featsScoreVect) != nToScore:
-      raise ValueError('if provided, len(featsScoreVect) should equal len(featsToScore)')
-    if featsToFeatMapIdx and len(featsToFeatMapIdx) != nToScore:
-      raise ValueError('if provided, len(featsToFeatMapIdx) should equal len(featsToScore)')
-
-    if mapScoreVect:
+    if mapScoreVect is not None:
+      if len(mapScoreVect) != nFeats:
+        raise ValueError('if provided, len(mapScoreVect) should equal numFeats')
       for i in range(nFeats):
         mapScoreVect[i] = 0.0
     else:
-      mapScoreVect = [0.0] * nFeats
+        mapScoreVect = [0.0] * nFeats
 
-    if self.scoreMode == FeatMapScoreMode.Closest:
-      defScore = 1000.0
-    else:
-      defScore = 0.0
-    if featsScoreVect:
+    nToScore = len(featsToScore)
+    defScore = 1000.0 if self.scoreMode == FeatMapScoreMode.Closest else 0.0
+    if featsScoreVect is not None:
+      if len(featsScoreVect) != nToScore:
+        raise ValueError('if provided, len(featsScoreVect) should equal len(featsToScore)')
       for i in range(nToScore):
         featsScoreVect[i] = defScore
     else:
       featsScoreVect = [defScore] * nToScore
 
-    if not featsToFeatMapIdx:
+    if featsToFeatMapIdx is not None:
+      if len(featsToFeatMapIdx) != nToScore:
+        raise ValueError('if provided, len(featsToFeatMapIdx) should equal len(featsToScore)')
+      for i in range(nToScore):
+        featsToFeatMapIdx[i] = [-1] if self.scoreMode == FeatMapScoreMode.All else []
+    else:
       featsToFeatMapIdx = [None] * nToScore
-
-    for i in range(nToScore):
-      if self.scoreMode != FeatMapScoreMode.All:
-        featsToFeatMapIdx[i] = [-1]
-      else:
-        featsToFeatMapIdx[i] = []
 
     for oIdx, oFeat in enumerate(featsToScore):
       for sIdx, sFeat in self._loopOverMatchingFeats(oFeat):

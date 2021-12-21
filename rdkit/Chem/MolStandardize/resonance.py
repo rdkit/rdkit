@@ -66,11 +66,9 @@ class ResonanceEnumerator(object):
             flags = flags | Chem.UNCONSTRAINED_ANIONS
         if self.unconstrained_cations:
             flags = flags | Chem.UNCONSTRAINED_CATIONS
-        results = []
-        for result in Chem.ResonanceMolSupplier(mol, flags=flags, maxStructs=self.max_structures):
-            # This seems necessary? ResonanceMolSupplier only does a partial sanitization
-            Chem.SanitizeMol(result)
-            results.append(result)
+
+        # This seems necessary? ResonanceMolSupplier only does a partial sanitization
+        results = [Chem.SanitizeMol(result) for result in Chem.ResonanceMolSupplier(mol, flags=flags, maxStructs=self.max_structures)]
         return results
 
         # Potentially interesting: getNumConjGrps(), getBondConjGrpIdx() and getAtomConjGrpIdx()

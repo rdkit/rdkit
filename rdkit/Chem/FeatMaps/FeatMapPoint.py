@@ -94,10 +94,7 @@ class FeatMapPoint(ChemicalFeatures.FreeChemicalFeature):
     if not self.featDirs or not other.featDirs:
       return 1.0
 
-    if not useBest:
-      accum = 0.0
-    else:
-      accum = -100000.0
+    accum = 0.0 if not useBest else -100000.0
     for sDir in self.featDirs:
       for oDir in other.featDirs:
         d = sDir.DotProduct(oDir)
