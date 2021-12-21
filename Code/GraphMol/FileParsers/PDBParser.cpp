@@ -25,6 +25,11 @@
 
 #include <GraphMol/MonomerInfo.h>
 
+#define HAS_GEMMI
+#ifdef HAS_GEMMI
+#include <gemmi/cif.hpp>
+#endif
+
 // PDBWriter support multiple "flavors" of PDB output
 // flavor & 1 : Ignore atoms in alternate conformations and dummy atoms
 // flavor & 2 : Read each MODEL into a separate molecule.
@@ -728,4 +733,219 @@ RWMol *PDBFileToMol(const std::string &fileName, bool sanitize, bool removeHs,
   return PDBDataStreamToMol(static_cast<std::istream *>(&ifs), sanitize,
                             removeHs, flavor, proximityBonding);
 }
+
+#ifdef HAS_GEMMI
+namespace {
+void parseMMCifFile(RWMol *&mol,
+                    const std::string &fname, bool sanitize, bool removeHs,
+                    unsigned int flavor, bool proximityBonding) {
+  PRECONDITION(fname.length(), "no filename");
+  gemmi::cif::Document doc =  gemmi::cif::read_file(fname);
+
+  gemmi::cif::Block &b = doc.sole_block();
+
+  mol = new RWMol();
+
+  gemmi::cif::Table t = b.find("_atom_site.",
+                               {"group_PDB", "type_symbol",
+                                "?label_atom_id",
+                                "?label_alt_id", "?label_seq_id",
+                                "?label_comp_id", "?label_asym_id",
+                                "?pdbx_PDB_ins_code",
+                                "?occupancy",
+                                "?B_iso_or_equiv",
+                                "?pdbx_format_charge",
+                                "?Cartn_x", "?Cartn_y", "?Cartn_z"});
+// column numbers for various variables to avoid finger trouble
+#define GROUP_PDB 0
+#define TYPE_SYMBOL 1
+#define ATOMNAME 2
+#define ALT_ID 3
+#define RESNUM 4
+#define RESNAME 5
+#define CHAINID 6
+#define INSCODE 7
+#define OCCUPANCY 8
+#define TEMPFACTOR 9
+#define FORMAL_CHARGE 10
+#define CARTNX 11
+#define CARTNY 12
+#define CARTNZ 13
+  for (auto row : t) {
+    // skip alternate locations
+    if ((flavor & 1) == 0 && t.has_column(ALT_ID) && row[ALT_ID] != ".") {
+      continue;
+    }
+    Atom *a = nullptr;
+    a = PDBAtomFromSymbol(row[TYPE_SYMBOL].c_str());
+
+    mol->addAtom(a, true, true);
+
+    if (t.has_column(FORMAL_CHARGE)) {
+      int charge = 0;
+      try {
+        charge = FileParserUtils::toInt(row[FORMAL_CHARGE]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with formal charge for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+      if (charge != 0) {
+        a->setFormalCharge(charge);
+      }
+    }
+
+    std::string tmp;
+
+    tmp = t.has_column(ATOMNAME) ? row[ATOMNAME] : "UNL";
+
+    AtomPDBResidueInfo* info = new AtomPDBResidueInfo(tmp);
+    a->setMonomerInfo(info);
+    if (row[GROUP_PDB][0] == 'H') {  // HETATM
+      info->setIsHeteroAtom(true);
+    }
+
+    int resno = 1;
+    if (t.has_column(RESNUM)) {
+      try {
+        resno = FileParserUtils::toInt(row[RESNUM]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with residue number for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+    }
+    info->setResidueNumber(resno);
+
+    tmp = t.has_column(RESNAME) ? row[RESNAME] : "UNL";
+    info->setResidueName(tmp);
+
+    tmp = t.has_column(ALT_ID) ? row[ALT_ID] : " ";
+    if (tmp == ".") { // "." used as non value instead of " "
+      tmp = " ";
+    }
+    info->setAltLoc(tmp);
+
+    tmp = t.has_column(CHAINID) ? row[CHAINID] : " ";
+    if (tmp == ".") {
+      tmp = " ";
+    }
+    info->setChainId(tmp);
+
+    tmp = t.has_column(INSCODE) ? row[INSCODE] : " ";
+    if (tmp == ".") {
+      tmp = " ";
+    }
+    info->setInsertionCode(tmp);
+
+    double occup = 1.0;
+    if (t.has_column(OCCUPANCY)) {
+      try {
+        occup = FileParserUtils::toDouble(row[OCCUPANCY]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with occupancy for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+    }
+    info->setOccupancy(occup);
+
+    double bfactor = 0.0;
+    if (t.has_column(TEMPFACTOR)) {
+      try {
+        bfactor = FileParserUtils::toDouble(row[TEMPFACTOR]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with temperature factor for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+    }
+    info->setTempFactor(bfactor);
+
+    // check all position columns were present
+    if (!t.has_column(CARTNX) || !t.has_column(CARTNY) || !t.has_column(CARTNZ)) {
+      continue;
+    }
+    RDGeom::Point3D pos;
+    try {
+      pos.x = FileParserUtils::toDouble(row[CARTNX]);
+      pos.y = FileParserUtils::toDouble(row[CARTNY]);
+      pos.z = FileParserUtils::toDouble(row[CARTNZ]);
+    } catch (boost::bad_lexical_cast &) {
+      std::ostringstream errout;
+      errout << "Problem with coordinates for PDB atom #" << a->getIdx();
+      throw FileParseException(errout.str());
+    }
+    Conformer *conf;
+    if (!mol->getNumConformers()) {
+      conf = new RDKit::Conformer(mol->getNumAtoms());
+      conf->set3D(pos.z != 0.0);  // worth checking for z coord?
+      mol->addConformer(conf, false);
+    } else {
+      conf = &mol->getConformer();
+      if (pos.z != 0.0) {
+        conf->set3D(true);
+      }
+    }
+    conf->setAtomPos(a->getIdx(), pos);
+  }
+#undef GROUP_PDB
+#undef TYPE_SYMBOL
+#undef ATOMNAME
+#undef ALT_ID
+#undef RESNUM
+#undef RESNAME
+#undef CHAINID
+#undef INSCODE
+#undef OCCUPANCY
+#undef TEMPFACTOR
+#undef FORMAL_CHARGE
+#undef CARTNX
+#undef CARTNY
+#undef CARTNZ
+
+  // todo: sanity checking here before cleanup
+
+  if (proximityBonding) {
+    ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
+  }
+  // flavor & 8 doesn't encode double bonds
+  if (proximityBonding || flavor & 8) {
+    StandardPDBResidueBondOrders(mol);
+  }
+
+  BasicPDBCleanup(*mol);
+
+  if (sanitize) {
+    if (removeHs) {
+      MolOps::removeHs(*mol, false, false);
+    } else {
+      MolOps::sanitizeMol(*mol);
+    }
+  } else {
+    // we need some properties for the chiral setup
+    mol->updatePropertyCache(false);
+  }
+
+  /* Set tetrahedral chirality from 3D co-ordinates */
+  MolOps::assignChiralTypesFrom3D(*mol);
+  StandardPDBResidueChirality(mol);
+}
+}  // namespace
+
+RWMol *MMCifFileToMol(const std::string &fname, bool sanitize, bool removeHs,
+                      unsigned int flavor, bool proximityBonding) {
+  RWMol *mol = nullptr;
+  try {
+    parseMMCifFile(mol, fname, sanitize, removeHs, flavor, proximityBonding);
+  } catch (...) {
+    delete mol;
+    throw;
+  }
+
+  return mol;
+}
+
+#endif
+
 }  // namespace RDKit

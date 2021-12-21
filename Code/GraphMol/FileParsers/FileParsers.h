@@ -308,6 +308,12 @@ RDKIT_FILEPARSERS_EXPORT RWMol *PDBFileToMol(const std::string &fname,
                                              unsigned int flavor = 0,
                                              bool proximityBonding = true);
 
+RDKIT_FILEPARSERS_EXPORT RWMol *MMCifFileToMol(const std::string &fname,
+                                               bool sanitize = true,
+                                               bool removeHs = true,
+                                               unsigned int flavor = 0,
+                                               bool proximityBonding = true);
+
 // \brief generates an PDB block for a molecule
 /*!
  *   \param mol           - the molecule in question

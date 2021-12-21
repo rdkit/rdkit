@@ -4001,6 +4001,54 @@ void testPDBFile() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testMMCifFile() {
+  BOOST_LOG(rdInfoLog) << "testing reading mmcif files" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/test_data/";
+
+  {
+    std::string fname;
+
+    fname = rdbase + "1crn.cif";
+
+    ROMol *m = MMCifFileToMol(fname);
+
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 327);
+    TEST_ASSERT(m->getNumBonds() == 337);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
+    TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
+                AtomMonomerInfo::PDBRESIDUE);
+
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(0)->getMonomerInfo())
+                    ->getResidueNumber() == 1);
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(9)->getMonomerInfo())
+                    ->getResidueNumber() == 2);
+
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(0)->getMonomerInfo())
+                    ->getName() == "N");
+    TEST_ASSERT(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(0)->getMonomerInfo())
+                    ->getResidueName() == "THR");
+    TEST_ASSERT(feq(static_cast<AtomPDBResidueInfo *>(
+                        m->getAtomWithIdx(0)->getMonomerInfo())
+                        ->getTempFactor(),
+                    13.79));
+    TEST_ASSERT(m->getNumConformers() == 1);
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).x, 17.047));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).y, 14.099));
+    TEST_ASSERT(feq(m->getConformer().getAtomPos(0).z, 3.625));
+
+    delete m;
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 void testSequences() {
   BOOST_LOG(rdInfoLog) << "testing reading sequences" << std::endl;
   {
@@ -5377,6 +5425,7 @@ void RunTests() {
   testGithub1023();
   testGithub1049();
   testPDBFile();
+  testMMCifFile();
   testSequences();
 
   // testSequenceReaders();
