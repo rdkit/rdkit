@@ -15,11 +15,7 @@ from rdkit.Chem import rdDepictor
 from rdkit import Geometry
 
 
-def AlignMolToTemplate2D(mol,
-                         template,
-                         match=None,
-                         clearConfs=False,
-                         templateConfId=-1, ):
+def AlignMolToTemplate2D(mol, template, match=None, clearConfs=False, templateConfId=-1, ):
   """
    Arguments:
 
@@ -32,7 +28,7 @@ def AlignMolToTemplate2D(mol,
      - clearConfs: toggles removing any existing conformers on mol
 
     Returns the confId of the conformer containing the depiction
-
+    >>> from rdkit import Chem
     >>> patt = Chem.MolFromSmiles('C1CC1')
     >>> rdDepictor.Compute2DCoords(patt)
     0
@@ -44,8 +40,8 @@ def AlignMolToTemplate2D(mol,
 
     We start out with the molecules not aligned:
 
-    >>> vs = [abs(pc.GetAtomPosition(i).x-mc.GetAtomPosition(i+1).x) for i in range(pc.GetNumAtoms())]
-    >>> [x<1e-4 for x in vs]
+    >>> vs = [abs(pc.GetAtomPosition(i).x - mc.GetAtomPosition(i+1).x) for i in range(pc.GetNumAtoms())]
+    >>> [x < 1e-4 for x in vs]
     [False, False, False]
 
     But then we can replace the conformer of mol:
@@ -57,7 +53,7 @@ def AlignMolToTemplate2D(mol,
     >>> pc = patt.GetConformer(0)
     >>> mc = mol.GetConformer(0)
     >>> vs = [abs(pc.GetAtomPosition(i).x-mc.GetAtomPosition(i+1).x) for i in range(pc.GetNumAtoms())]
-    >>> [x<1e-4 for x in vs]
+    >>> [x < 1e-4 for x in vs]
     [True, True, True]
 
     If we like, we can specify the atom map explicitly in order to align to the second
@@ -71,13 +67,11 @@ def AlignMolToTemplate2D(mol,
     >>> pc = patt.GetConformer(0)
     >>> mc = mol.GetConformer(0)
     >>> vs = [abs(pc.GetAtomPosition(i).x-mc.GetAtomPosition(i+1).x) for i in range(pc.GetNumAtoms())]
-    >>> [x<1e-4 for x in vs]
+    >>> [x < 1e-4 for x in vs]
     [False, False, False]
     >>> vs = [abs(pc.GetAtomPosition(i).x-mc.GetAtomPosition(i+5).x) for i in range(pc.GetNumAtoms())]
-    >>> [x<1e-4 for x in vs]
+    >>> [x < 1e-4 for x in vs]
     [True, True, True]
-
-
 
   """
   if not match:

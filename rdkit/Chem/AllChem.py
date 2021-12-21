@@ -14,7 +14,6 @@
 from collections import namedtuple
 
 import numpy
-
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
 from rdkit.Chem.rdChemReactions import *
@@ -31,7 +30,9 @@ from rdkit.Chem.rdqueries import *
 from rdkit.Chem.rdMolEnumerator import *
 from rdkit.Geometry import rdGeometry
 from rdkit.RDLogger import logger
-from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
+from rdkit.ForceField.rdForceField import *
+# import but not being used as a module (shortcut)
+from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers, StereoEnumerationOptions 
 
 try:
   from rdkit.Chem.rdSLNParse import *
@@ -324,7 +325,6 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
         idxJ = match[j]
         d = coordMap[idxI].Distance(coordMap[idxJ])
         ff.AddDistanceConstraint(idxI, idxJ, d, d, 100.)
-    
   else:
     # rotate the embedded conformation onto the core:
     rms = AlignMol(mol, core, atomMap=algMap)
@@ -338,7 +338,9 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
   # Minimize the force field at most 4 times and realign/rotate the embedded conformation onto the core
   # If useTethers, we allow larger tolerance, otherwise just default
   def minimizeForceField(ForceField, allowTethers: bool) -> bool:
-    return ForceField.Minimize(forceTol=1e-3, energyTol=1e-4) if allowTethers else ForceField.Minimize()
+    if allowTethers:
+      return ForceField.Minimize(forceTol=1e-3, energyTol=1e-4) 
+    return ForceField.Minimize()
   
   ff.Initialize()
   n = 4

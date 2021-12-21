@@ -7,16 +7,20 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from collections import abc  # this won't work in python2, but we don't support that any more
 
+import sys
+import doctest
+
+from collections import abc  # this won't work in python2, but we don't support that any more
+  
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
-from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex,
-                                      MinAbsEStateIndex)
-from rdkit.Chem.QED import qed
 
+# These import used for shortcut which is relatively inefficient
+from rdkit.Chem.QED import qed
+from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex, MinAbsEStateIndex
 
 def _isCallable(thing):
   return isinstance(thing, abc.Callable) or hasattr(thing, '__call__')
@@ -269,8 +273,6 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
