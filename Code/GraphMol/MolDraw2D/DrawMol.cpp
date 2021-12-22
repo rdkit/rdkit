@@ -167,7 +167,7 @@ void DrawMol::extractAtomCoords(int confId) {
   atCds_.clear();
   for (auto this_at : drawMol_->atoms()) {
     int this_idx = this_at->getIdx();
-    Point2D pt(locs[this_idx].x, locs[this_idx].y);
+    Point2D pt(locs[this_idx].x, -locs[this_idx].y);
     if (rot != 0.0) {
       trans.TransformPoint(pt);
     }
@@ -296,11 +296,11 @@ void DrawMol::changeToDrawCoords() {
             << yRange_ * scale_ << std::endl;
   std::cout << "scales : " << scale_ << " and " << fontScale_ << std::endl;
   Point2D trans(-xMin_, -yMin_);
-  Point2D scale(scale_, -scale_);
+  Point2D scale(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
   int drawHeight = height_ - legendHeight_;
   Point2D toCentre((width_ - scaledRanges.x) / 2.0,
-                   drawHeight - (drawHeight - scaledRanges.y) / 2);
+                   (drawHeight - scaledRanges.y) / 2.0);
   for (auto &bond : bonds_) {
     bond->move(trans);
     bond->scale(scale);
@@ -547,6 +547,8 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
   // the NH in an indole is vertical as RDKit lays it out normally (72ish
   // degrees) but the 2 amino groups of c1ccccc1C1CCC(N)(N)CC1 are E and W
   // when they are drawn at the bottom of the molecule.
+  // NB - this assumes that the atom coords have already been inverted
+  // in Y to put them in the draw frame where N is down and S is up.
   static const double VERT_SLOPE = tan(70.0 * M_PI / 180.0);
 
   auto &mol = atom.getOwningMol();
@@ -574,9 +576,9 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
       }
     } else {
       if (nbr_sum.y > 0.0) {
-        orient = OrientType::N;
-      } else {
         orient = OrientType::S;
+      } else {
+        orient = OrientType::N;
       }
     }
     // atoms of single degree should always be either W or E, never N or S.  If
@@ -605,10 +607,10 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
           Point2D bond_vec = at2_cds - at1_cds;
           double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
           if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
-            orient = OrientType::N;
+            orient = OrientType::S;
             break;
           } else if (ang < -80.0 && ang > -100.0 && orient == OrientType::N) {
-            orient = OrientType::S;
+            orient = OrientType::N;
             break;
           }
         }
@@ -1055,21 +1057,13 @@ void DrawMol::adjustBondEndsForLabels(int begAtIdx, int endAtIdx,
   begCds = atCds_[begAtIdx];
   endCds = atCds_[endAtIdx];
   if (atomLabels_[begAtIdx]) {
-    std::cout << std::endl << "adjust line starting "
-              << atomLabels_[begAtIdx]->label_ << " "
-              << begAtIdx << " to " << endAtIdx << std::endl;
     adjustBondEndForString(atCds_[begAtIdx], atCds_[endAtIdx], padding,
                            atomLabels_[begAtIdx]->rects_, begCds);
   }
   if (atomLabels_[endAtIdx]) {
-    std::cout << std::endl << "adjust line ending "
-              << atomLabels_[endAtIdx]->label_ << " "
-              << endAtIdx << " to " << begAtIdx << std::endl;
     adjustBondEndForString(atCds_[endAtIdx], atCds_[begAtIdx], padding,
                            atomLabels_[endAtIdx]->rects_, endCds);
   }
-  std::cout << "bond coords : " << atCds_[begAtIdx] << " to " << atCds_[endAtIdx] << std::endl;
-  std::cout << " end coords : " << begCds << " to " << endCds << std::endl;
 }
 
 // ****************************************************************************
@@ -1490,37 +1484,14 @@ void adjustBondEndForString(
     const Point2D &end1, const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects,
     Point2D &moveEnd) {
-  std::cout << end1 << " to " << end2 << std::endl;
   Point2D labelPos = moveEnd;
-//  padding *= 2;
-  int i = -1;
   for (auto r : rects) {
-    ++i;
-    if (i > 10) {
-      continue;
-    }
     Point2D origTrans = r->trans_;
     r->trans_ += labelPos;
-    r->trans_.y += r->rect_corr_;
-    std::cout << i << std::endl;
-    std::cout << std::endl << "orig trans : " << origTrans << std::endl
-              << "trans = " << r->trans_ << std::endl
-              << "offset = " << r->offset_ << std::endl
-              << "g_centre = " << r->g_centre_ << std::endl
-              << "y_shift = " << r->y_shift_ << std::endl
-              << "dims = " << r->width_ << " x " << r->height_ << std::endl
-              << "rect_corr = " << r->rect_corr_ << std::endl
-              << "padding = " << padding << std::endl;
 
     Point2D tl, tr, bl, br;
     r->calcCorners(tl, tr, br, bl, padding);
 
-    std::cout << "Corners" << std::endl
-              << "(" << tl.x << "," << tl.y << ") " << std::endl
-              << "(" << tr.x << "," << tr.y << ") " << std::endl
-              << "(" << br.x << "," << br.y << ") " << std::endl
-              << "(" << bl.x << "," << bl.y << ") " << std::endl
-              << "(" << tl.x << "," << tl.y << ") " << std::endl;
     // if it's a wide label, such as C:7, the bond can intersect
     // more than 1 side of the rectangle, so check them all.
 //    doLinesIntersect(retPt, end2, tl, tr, &retPt);
@@ -1529,23 +1500,15 @@ void adjustBondEndForString(
 //    doLinesIntersect(retPt, end2, bl, tl, &retPt);
     std::unique_ptr<Point2D> ip(new Point2D);
     if (doLinesIntersect(moveEnd, end2, tl, tr, ip.get())) {
-      std::cout << "tl, tr intersect" << std::endl;
-//      std::cout << tl << " to " << tr << " and " << retPt << " to " << end2 << std::endl;
       moveEnd = *ip;
     }
     if (doLinesIntersect(moveEnd, end2, tr, br, ip.get())) {
-      std::cout << "tr, br intersect" << std::endl;
-//      std::cout << tr << " to " << br << " and " << retPt << " to " << end2 << std::endl;
       moveEnd = *ip;
     }
     if (doLinesIntersect(moveEnd, end2, br, bl, ip.get())) {
-      std::cout << "br, bl intersect" << std::endl;
-//      std::cout << br << " to " << bl << " and " << retPt << " to " << end2 << std::endl;
       moveEnd = *ip;
     }
     if (doLinesIntersect(moveEnd, end2, bl, tl, ip.get())) {
-      std::cout << "bl, tl intersect" << std::endl;
-//      std::cout << bl << " to " << tl << " and " << retPt << " to " << end2 << std::endl;
       moveEnd = *ip;
     }
     r->trans_ = origTrans;

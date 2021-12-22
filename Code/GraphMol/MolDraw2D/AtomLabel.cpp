@@ -46,12 +46,6 @@ void AtomLabel::drawRects(MolDraw2D &molDrawer) const {
   for (auto &rect : rects_) {
     Point2D origTrans = rect->trans_;
     rect->trans_ += cds_;
-//    std::cout << std::endl << "trans = " << rect->trans_ << std::endl
-//              << "offset = " << rect->offset_ << std::endl
-//              << "g_centre = " << rect->g_centre_ << std::endl
-//              << "y_shift = " << rect->y_shift_ << std::endl
-//              << "dims = " << rect->width_ << " x " << rect->height_ << std::endl
-//              << "rect_corr = " << rect->rect_corr_ << std::endl;
     Point2D tl, tr, br, bl;
     rect->calcCorners(tl, tr, br, bl, 0.0);
     molDrawer.setColour(DrawColour(1.0, 0.0, 0.0));
@@ -72,15 +66,15 @@ void AtomLabel::scale(const Point2D &scaleFactor) {
   cds_.y *= scaleFactor.y;
   for (auto &rect : rects_) {
     rect->trans_.x *= scaleFactor.x;
-    rect->trans_.y *= -scaleFactor.y;
+    rect->trans_.y *= scaleFactor.y;
     rect->offset_.x *= scaleFactor.x;
-    rect->offset_.y *= -scaleFactor.y;
+    rect->offset_.y *= scaleFactor.y;
     rect->g_centre_.x *= scaleFactor.x;
-    rect->g_centre_.y *= -scaleFactor.y;
-    rect->y_shift_ *= -scaleFactor.y;
+    rect->g_centre_.y *= scaleFactor.y;
+    rect->y_shift_ *= scaleFactor.y;
     rect->width_ *= scaleFactor.x;
-    rect->height_ *= -scaleFactor.y;
-    rect->rect_corr_ *= -scaleFactor.y;
+    rect->height_ *= scaleFactor.y;
+    rect->rect_corr_ *= scaleFactor.y;
   }
 }
 

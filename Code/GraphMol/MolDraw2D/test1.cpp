@@ -1509,8 +1509,8 @@ void test9MolLegends() {
   std::cout << " ----------------- Test 9 (molecule legends)" << std::endl;
   {
 //    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
-    auto m = "CCCC[CH-]CC"_smiles;
-//    auto m = "N#CCN(CC)[C@@H](Cl)Cn1nc2c3ccccc3sc3c([C@@H](F)NS(C)(=O)=O)ccc1c32"_smiles;
+//    auto m = "CCCC[CH-]CC"_smiles;
+    auto m = "N#CCN(CC)[C@@H](Cl)Cn1nc2c3ccccc3sc3c([C@@H](F)NS(C)(=O)=O)ccc1c32"_smiles;
 //    auto m = "CCOCC"_smiles;
 //    auto m = "C[N+](C)(C)C"_smiles;
 //    auto m = "C[NH2+]C"_smiles;

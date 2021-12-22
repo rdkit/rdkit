@@ -544,11 +544,11 @@ void DrawText::getStringRects(const std::string &text, OrientType orient,
     alignString(TextAlignType::START, draw_modes, rects);
   } else {
     double running_y = 0;
-    for (size_t i = 0; i < text_bits.size(); ++i) {
+    for (auto tb : text_bits) {
       std::vector<std::shared_ptr<StringRect>> t_rects;
       std::vector<TextDrawType> t_draw_modes;
       std::vector<char> t_draw_chars;
-      getStringRects(text_bits[i], t_rects, t_draw_modes, t_draw_chars);
+      getStringRects(tb, t_rects, t_draw_modes, t_draw_chars);
       alignString(ta, t_draw_modes, t_rects);
       double max_height = -std::numeric_limits<double>::max();
       for (auto r : t_rects) {
@@ -576,7 +576,6 @@ void DrawText::drawChars(const Point2D &a_cds,
                          const std::vector<char> &draw_chars) {
   double full_scale = fontScale();
   for (size_t i = 0; i < rects.size(); ++i) {
-    std::cout << "Drawing " << i << " : " << draw_chars[i] << std::endl;
     Point2D draw_cds;
     draw_cds.x = a_cds.x + rects[i]->trans_.x - rects[i]->offset_.x;
     draw_cds.y = a_cds.y - rects[i]->trans_.y +
@@ -592,7 +591,7 @@ void DrawText::drawChars(const Point2D &a_cds,
 // ****************************************************************************
 std::vector<std::string> atomLabelToPieces(const std::string &label,
                                            OrientType orient) {
-  // cout << "splitting " << label << " : " << orient << endl;
+  // std::cout << "splitting " << label << " : " << orient << std::endl;
   std::vector<std::string> label_pieces;
   if (label.empty()) {
     return label_pieces;
