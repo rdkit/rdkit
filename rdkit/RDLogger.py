@@ -9,7 +9,7 @@
 #  of the RDKit source tree.
 #
 
-from rdkit.rdBase import EnableLog, DisableLog, AttachFileToLog, LogMessage
+from rdkit.rdBase import EnableLog, DisableLog, LogMessage, AttachFileToLog # Debugging
 import sys, traceback
 
 _levels = ['rdApp.debug', 'rdApp.info', 'rdApp.warning', 'rdApp.error']
@@ -23,7 +23,7 @@ CRITICAL = 4
 class logger(object):
 
   def logIt(self, dest, msg, *args, **kwargs):
-    if (args):
+    if args
       msg = msg % args
     LogMessage(dest, msg + '\n')
     if kwargs.get('exc_info', False):

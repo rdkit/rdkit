@@ -9,6 +9,8 @@
 #  of the RDKit source tree.
 #
 
+import sys
+import doctest
 
 def ConstructEnsembleBV(bv, bitsToKeep):
   """
@@ -43,8 +45,6 @@ def ConstructEnsembleBV(bv, bitsToKeep):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

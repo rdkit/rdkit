@@ -21,13 +21,10 @@ class BitEnsemble(object):
   """
 
   def __init__(self, bits=None):
-    if bits is not None:
-      self._bits = list(bits)
-    else:
-      self._bits = []
+    self._bits = list(bits) if bits is not None else []
 
   def SetBits(self, bits):
-    self._bits = list(bits)
+    self._bits = list(bits) if bits is not None else []
 
   def AddBit(self, bit):
     self._bits.append(bit)
@@ -40,20 +37,18 @@ class BitEnsemble(object):
 
   def ScoreWithOnBits(self, other):
     """ other must support GetOnBits() """
+    thisBits = self.GetBits()
     obl = other.GetOnBits()
-    cnt = 0
-    for bit in self.GetBits():
-      if bit in obl:
-        cnt += 1
-    return cnt
+    return len([None for bit in thisBits if bit in obl])
 
   def ScoreWithIndex(self, other):
     """ other must support __getitem__() """
+    thisBits = self.GetBits()
     cnt = 0
-    for bit in self.GetBits():
+    for bit in thisBits:
       if other[bit]:
         cnt += 1
-    return cnt
+    return len([None for bit in thisBits if other[bit]])
 
 
 if __name__ == '__main__':

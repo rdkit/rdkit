@@ -51,10 +51,7 @@ def RunTest(exeName, args, extras):
       return TEST_FAILED
   if 'dir' in extras:
     os.chdir(startDir)
-  if retVal != expectedReturn:
-    return TEST_FAILED
-  else:
-    return TEST_PASSED
+  return TEST_FAILED if retVal != expectedReturn else TEST_PASSED
 
 
 def RunScript(script, doLongTests, verbose):

@@ -64,7 +64,7 @@ class TestCase(unittest.TestCase):
     cmd = 'select * from ten_elements'
     resultSet = RandomAccessDbResultSet(self.curs, self.conn, cmd)
     assert len(resultSet) == 10
-    for i in range(len(resultSet)):
+    for i in range(len(resultSet)): # Test whether it can be runnable
       _ = resultSet[i]
 
   def test3(self):

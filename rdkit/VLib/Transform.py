@@ -3,6 +3,10 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
+import doctest
+import sys
+
+
 from rdkit.VLib.Node import VLibNode
 
 
@@ -75,8 +79,6 @@ TransformNode.__next__ = TransformNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

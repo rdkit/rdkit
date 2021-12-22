@@ -12,11 +12,16 @@
  see Chem/index.html in the doc tree for documentation
 
 """
+import doctest
+import sys
+
+# Shortcut Import
 from rdkit import rdBase
 from rdkit import RDConfig
 
 from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
+
 from rdkit.Chem import rdchem
 _HasSubstructMatchStr = rdchem._HasSubstructMatchStr
 from rdkit.Chem.rdchem import *
@@ -147,9 +152,10 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
         elif si.type == StereoType.Bond_Double:
           bondsToLabel.append(si.centeredOn)
       AssignCIPLabels(mol, atomsToLabel=atomsToLabel, bondsToLabel=bondsToLabel)
+    
     for si in itms:
-      if si.type == StereoType.Atom_Tetrahedral and (includeUnassigned
-                                                     or si.specified == StereoSpecified.Specified):
+      if si.type == StereoType.Atom_Tetrahedral and \
+        (includeUnassigned or si.specified == StereoSpecified.Specified):
         idx = si.centeredOn
         atm = mol.GetAtomWithIdx(idx)
         if includeCIP and atm.HasProp("_CIPCode"):
@@ -169,7 +175,6 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 

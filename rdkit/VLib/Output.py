@@ -3,6 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
+import doctest
+import sys
+
 from rdkit.VLib.Node import VLibNode
 
 
@@ -49,10 +52,7 @@ class OutputNode(VLibNode):
         if len(args) == 1:
             args = args[0]
         if self._dest:
-            if self._func is not None:
-                outp = self._func(args)
-            else:
-                outp = str(args)
+            outp = self._func(args) if self._func is not None else str(args)
             self._dest.write(outp)
         return args
 
@@ -65,8 +65,6 @@ OutputNode.__next__ = OutputNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import doctest
-    import sys
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

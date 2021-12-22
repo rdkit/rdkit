@@ -4,7 +4,7 @@
 #     All Rights Reserved
 #
 import sys
-
+import doctest
 
 class VLibNode(object):
     """ base class for all virtual library nodes,
@@ -192,7 +192,6 @@ VLibNode.__next__ = VLibNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import doctest
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

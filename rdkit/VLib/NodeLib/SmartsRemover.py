@@ -3,6 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
+import sys
+import doctest
+
 from rdkit import Chem
 from rdkit.VLib.Transform import TransformNode
 
@@ -16,6 +19,7 @@ class SmartsRemover(TransformNode):
 
 
   Sample Usage:
+    >>> from rdkit import Chem
     >>> smis = ['C1CCC1.C=O','C1CCC1C=O','CCC=O.C=O','NCC=O.C=O.CN']
     >>> mols = [Chem.MolFromSmiles(x) for x in smis]
     >>> from rdkit.VLib.Supply import SupplyNode
@@ -82,14 +86,15 @@ class SmartsRemover(TransformNode):
   def _initPatterns(self, patterns):
     nPatts = len(patterns)
     targets = [None] * nPatts
-    for i in range(nPatts):
-      p = patterns[i]
-      if type(p) in (str, bytes):
-        m = Chem.MolFromSmarts(p)
-        if not m:
-          raise ValueError('bad smarts: %s' % (p))
-        p = m
-      targets[i] = p
+    
+    for i, pattern in enumerate(patterns):
+      if isinstance(pattern, (str, bytes)):
+        mol = Chem.MolFromSmarts(pattern)
+        if not mol:
+          raise ValueError('bad smarts: %s' % (pattern))
+        pattern = mol
+      targets[i] = pattern
+
     self._patterns = tuple(targets)
 
   def transform(self, cmpd):
@@ -147,8 +152,6 @@ __test__ = {'bigger': biggerTest}
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

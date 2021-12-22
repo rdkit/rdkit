@@ -39,9 +39,9 @@ visOpts = VisOpts()
 
 def GetMinCanvasSize(adjList, levelList):
   maxAcross = -1
-  for k in levelList.keys():
-    nHere = len(levelList[k])
-    maxAcross = max(maxAcross, nHere)
+  for k, v in levelList.items():
+    maxAcross = max(maxAcross, len(v))
+
   nLevs = len(levelList.keys())
   minSize = (maxAcross * (visOpts.minCircRad * 2 + visOpts.horizOffset),
              visOpts.topMargin + nLevs * visOpts.vertOffset)

@@ -3,6 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
+import sys
+import doctest
+
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
 
@@ -65,19 +68,21 @@ class SmartsFilter(FilterNode):
       raise ValueError('if counts is specified, it must match patterns in length')
     if not len(counts):
       counts = [1] * nPatts
+      
     targets = [None] * nPatts
-    for i in range(nPatts):
-      p = patterns[i]
-      c = counts[i]
-      if type(p) in (str, bytes):
-        m = Chem.MolFromSmarts(p)
-        if not m:
+    for i, pattern, count in enumerate(zip(patterns, counts)):
+      if isinstance(pattern, (str, bytes)):
+        mol = Chem.MolFromSmarts(pattern)
+        if not mol:
           raise ValueError('bad smarts: %s' % (p))
-        p = m
-      targets[i] = p, c
+        pattern = mol
+      targets[i] = (pattern, count)
     self._patterns = tuple(targets)
+      
 
   def filter(self, cmpd):
+    """
+    OLD CODE: Delete it if accept the pull request
     res = False
     for patt, count in self._patterns:
       ms = cmpd.GetSubstructMatches(patt)
@@ -87,6 +92,10 @@ class SmartsFilter(FilterNode):
         res = True
         break
     return res
+    
+    """     
+    return any(len(cmpd.GetSubstructMatches(patt)) >= count for patt, count in self._patterns)  
+ 
 
 
 # ------------------------------------
@@ -94,8 +103,6 @@ class SmartsFilter(FilterNode):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

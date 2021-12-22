@@ -14,9 +14,9 @@
 
 """
 
-
+import os
 import sys
-
+from rdkit import RDConfig   
 from rdkit.Dbase import DbInfo
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
@@ -133,11 +133,7 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
                 else:
                     seen.add(entry[removeDups])
     else:
-        if randomAccess:
-            klass = RandomAccessDbResultSet
-        else:
-            klass = DbResultSet
-
+        klass = RandomAccessDbResultSet if randomAccess else DbResultSet
         data = klass(c, cn, cmd, removeDups=removeDups, transform=transform, extras=extras)
 
     return data
@@ -188,8 +184,7 @@ def DatabaseToText(dBase, table, fields='*', join='', where='', user='sysdba', p
             colsToTake.append(i)
             headers.append(item[0])
 
-    lines = []
-    lines.append(delim.join(headers))
+    lines = [delim.join(headers)]
 
     # grab the data
     results = c.fetchall()
@@ -218,9 +213,10 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
             d = data[row][col]
             if d is None:
                 continue
+            
             locType = type(d)
-            if locType != float and locType != int:
-                locType = str
+            if not isinstance(d, (float, int)):
+                locType = str   
                 try:
                     d = str(d)
                 except UnicodeError as msg:
@@ -229,6 +225,7 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
                     raise UnicodeError(msg)
             else:
                 typeHere[1] = max(typeHere[1], len(str(d)))
+            
             if isinstance(d, str):
                 if nullMarker is None or d != nullMarker:
                     l = max(len(d), typeHere[1])
@@ -458,8 +455,6 @@ if __name__ == '__main__':  # pragma: nocover
     sio.write('1.1,4,5\n')
     sio.write('4,foo,6\n')
     sio.seek(0)
-    from rdkit import RDConfig
-    import os
     dirLoc = os.path.join(RDConfig.RDCodeDir, 'Dbase', 'TEST.GDB')
 
     TextFileToDatabase(dirLoc, 'fromtext', sio)

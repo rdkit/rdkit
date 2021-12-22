@@ -6,7 +6,7 @@
 
 from rdkit import RDConfig
 from rdkit import Chem
-import os.path
+import os
 
 from rdkit.VLib.NodeLib import *
 from rdkit.VLib import Supply, Filter

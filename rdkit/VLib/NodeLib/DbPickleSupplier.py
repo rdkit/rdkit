@@ -3,10 +3,13 @@
 #  Copyright (C) 2004 Rational Discovery LLC
 #     All Rights Reserved
 #
+import doctest
+import sys
 
 from rdkit import RDConfig
-import sys, os.path
 from rdkit.VLib.Supply import SupplyNode
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.VLib.NodeLib.DbMolSupply import DbMolSupplyNode
 import pickle
 
 if RDConfig.usePgSQL:
@@ -80,10 +83,7 @@ if RDConfig.usePgSQL:
         val = str(t[self._pickleCol])
         self._first = 0
       if self._depickle:
-        if not self._klass:
-          fp = pickle.loads(val)
-        else:
-          fp = self._klass(val)
+        fp = pickle.loads(val) if not self._klass else self._klass(val)
         fields = list(t)
         del fields[self._pickleCol]
         fp._fieldsFromDb = fields
@@ -110,7 +110,7 @@ if RDConfig.usePgSQL:
       self.rowCount = self.res.ntuples + 1
       self.idx = 0
       if self.res.nfields < 2:
-        raise ValueError('bad query result' % str(res))
+        raise ValueError('bad query result' % str(res)) # This code should not be raised
 
       return self
 
@@ -135,7 +135,7 @@ if RDConfig.usePgSQL:
         self.rowCount = self.res.ntuples + 1
         self.idx = 0
         if self.res.nfields < 2:
-          raise ValueError('bad query result' % str(res))
+          raise ValueError('bad query result' % str(res)) # This code should not be raised
 
       if idx < 0:
         idx = self.rowCount + idx
@@ -189,7 +189,6 @@ class DbPickleSupplyNode(SupplyNode):
 
 
 def GetNode(dbName, tableName):
-  from rdkit.Dbase.DbConnection import DbConnect
   conn = DbConnect(dbName, tableName)
   return DbMolSupplyNode(conn.GetData())
 
@@ -199,11 +198,9 @@ def GetNode(dbName, tableName):
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
-  import sys
   failed, tried = _test()
   sys.exit(failed)

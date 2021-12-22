@@ -35,24 +35,28 @@ class TestCase(unittest.TestCase):
   def testGithub1287(self):
     smis = ('CCC', )
     print(Descriptors._descList) # debugging
+    print('Descriptors Size: ', len(Descriptors._descList))
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
-      for nm, fn in Descriptors._descList:
+      for i, (nm, fn) in enumerate(Descriptors._descList):
         try:
           fn(m)
         except Exception:
           import traceback
           traceback.print_exc()
+          print("Error in descriptor %d: %s \n" % (i, nm))
+          print("Error Function:", i, (nm, fn))
           raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
 
   def testBadAtomHandling(self):
     smis = ('CC[Pu]', 'CC[*]')
     print(Descriptors._descList) # debugging
+    print('Descriptors Size: ', len(Descriptors._descList))
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
-      for nm, fn in Descriptors._descList:
+      for i, (nm, fn) in enumerate(Descriptors._descList):
         try:
           fn(m)
         except RuntimeError:
@@ -61,6 +65,8 @@ class TestCase(unittest.TestCase):
         except Exception:
           import traceback
           traceback.print_exc()
+          print("Error in descriptor %d: %s \n" % (i, nm))
+          print("Error Function:", i, (nm, fn))
           raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
 
   def testMolFormula(self):

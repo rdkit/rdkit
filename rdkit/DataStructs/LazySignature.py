@@ -3,7 +3,8 @@
 #  Copyright (C) 2005 Rational Discovery LLC
 #   All Rights Reserved
 #
-
+import sys
+import doctest
 
 class LazySig:
 
@@ -55,7 +56,7 @@ class LazySig:
     """
     if which < 0:
       # handle negative indices
-      which = self.size + which
+      which += self.size
 
     if which <= 0 or which >= self.size:
       raise IndexError('bad index')
@@ -73,8 +74,6 @@ class LazySig:
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

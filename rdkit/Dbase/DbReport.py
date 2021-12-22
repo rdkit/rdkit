@@ -42,13 +42,12 @@ else:
     dbRes = self.GetData(*args, **kwargs)
     rawD = [dbRes.GetColumnNames()]
     colTypes = dbRes.GetColumnTypes()
-    binCols = []
-    for i in range(len(colTypes)):
-      if colTypes[i] in DbInfo.sqlBinTypes or colTypes[i] == 'binary':
-        binCols.append(i)
-    nRows = 0
-    for entry in dbRes:
-      nRows += 1
+    
+    binCols = [i for i, col in enumerate(colTypes) if col in DbInfo.sqlBinTypes or col == 'binary']
+    
+    # nRows = 0 --- Remove
+    for entry in dbRes: 
+      # nRows += 1
       for col in binCols:
         entry = list(entry)
         entry[col] = 'N/A'
@@ -116,11 +115,7 @@ else:
           img.drawHeight = aspect * self.width
         except Exception:
           ok = 0
-      if ok:
-        res[self.smiCol] = img
-      else:
-        # FIX: maybe include smiles here in a Paragraph?
-        res[self.smiCol] = 'Failed'
+      res[self.smiCol] = img if ok else 'Failed' # FIX: maybe include smiles here in a Paragraph?
       return res
 
   class ReportLabImageTransformer(object):
@@ -190,11 +185,7 @@ else:
           img.drawHeight = aspect * self.width
         except Exception:
           ok = 0
-      if ok:
-        res[self.smiCol] = img
-      else:
-        # FIX: maybe include smiles here in a Paragraph?
-        res[self.smiCol] = 'Failed'
+      res[self.smiCol] = img if ok else 'Failed' # FIX: maybe include smiles here in a Paragraph?
       return res
 
   def QuickReport(conn, fileName, *args, **kwargs):
@@ -216,7 +207,7 @@ else:
         tform = CDXImageTransformer(smiCol)
       elif 1:
         tform = ReportLabImageTransformer(smiCol)
-      else:
+      else: # This code cannot be reached
         tform = CactvsImageTransformer(smiCol)
 
     else:

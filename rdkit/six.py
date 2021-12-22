@@ -150,20 +150,13 @@ class MovedAttribute(_LazyDescr):
     def __init__(self, name, old_mod, new_mod, old_attr=None, new_attr=None):
         super(MovedAttribute, self).__init__(name)
         if PY3:
-            if new_mod is None:
-                new_mod = name
-            self.mod = new_mod
+            self.mod = new_mod if new_mod is not None else name
             if new_attr is None:
-                if old_attr is None:
-                    new_attr = name
-                else:
-                    new_attr = old_attr
+                new_attr = name if old_attr is None else old_attr
             self.attr = new_attr
         else:
             self.mod = old_mod
-            if old_attr is None:
-                old_attr = name
-            self.attr = old_attr
+            self.attr = old_attr if old_attr is not None else name
 
     def _resolve(self):
         module = _import_module(self.mod)

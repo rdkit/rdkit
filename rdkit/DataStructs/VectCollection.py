@@ -11,6 +11,8 @@
 
 import copy
 import struct
+import sys
+import doctest
 from rdkit import DataStructs
 
 
@@ -165,7 +167,7 @@ class VectCollection(object):
         self.__needReset = False
 
     def NumChildren(self):
-        return len(self.__vects.keys())
+        return len(self.__vects)
 
     def GetChildren(self):
         return tuple(self.__vects.items())
@@ -190,18 +192,18 @@ class VectCollection(object):
         return self.__orVect.GetOnBits()
 
     def DetachVectsNotMatchingBit(self, bit):
-        items = list(self.__vects.items())
-        for k, v in items:
+        for k, v in self.__vects.items():
             if not v.GetBit(bit):
-                del (self.__vects[k])
-                self.__needReset = True
+                del self.__vects[k]
+                if not self.__needReset:
+                    self.__needReset = True
 
     def DetachVectsMatchingBit(self, bit):
-        items = list(self.__vects.items())
-        for k, v in items:
+        for k, v in self.__vects.items():
             if v.GetBit(bit):
-                del (self.__vects[k])
-                self.__needReset = True
+                del self.__vects[k]
+                if not self.__needReset:
+                    self.__needReset = True
 
     def Uniquify(self, verbose=False):
         obls = {}
@@ -272,8 +274,6 @@ class VectCollection(object):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

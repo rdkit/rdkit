@@ -3,6 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
+import doctest
+import sys
+
 from rdkit import Chem
 from rdkit.VLib.Supply import SupplyNode
 
@@ -65,8 +68,6 @@ SmilesSupplyNode.__next__ = SmilesSupplyNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import doctest
-    import sys
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

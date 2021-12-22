@@ -22,8 +22,8 @@ import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
 from rdkit.Chem.QED import qed
 from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex, MinAbsEStateIndex
 
-def _isCallable(thing):
-  return isinstance(thing, abc.Callable) or hasattr(thing, '__call__')
+def _isCallable(something):
+  return isinstance(something, abc.Callable) or hasattr(something, '__call__')
 
 
 _descList = []

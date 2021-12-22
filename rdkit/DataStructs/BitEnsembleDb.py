@@ -21,14 +21,12 @@ def _InitScoreTable(self, dbConn, tableName, idInfo='', actInfo=''):
     activity columns of the table (when desired)
 
   """
-  if idInfo:
-    cols = [idInfo]
-  else:
-    cols = []
+  cols = [idInfo] if idInfo else []
   for bit in self.GetBits():
     cols.append('Bit_%d smallint' % (bit))
   if actInfo:
     cols.append(actInfo)
+    
   dbConn.AddTable(tableName, ','.join(cols))
   self._dbTableName = tableName
 
@@ -43,12 +41,12 @@ def _ScoreToDb(self, sig, dbConn, tableName=None, id=None, act=None):
       tableName = self._dbTableName
     except AttributeError:
       raise ValueError('table name not set in BitEnsemble pre call to ScoreToDb()')
-  if id is not None:
-    cols = [id]
-  else:
-    cols = []
+  
+  thisBit = self.GetBits()
+  cols = [id] if id is not None else []
+
   score = 0
-  for bit in self.GetBits():
+  for bit in thisBit:
     b = sig[bit]
     cols.append(b)
     score += b

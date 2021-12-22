@@ -6,7 +6,9 @@
 
 
 import bisect
-
+import sys
+import doctest
+  
 from rdkit import DataStructs
 from rdkit.DataStructs.TopNContainer import TopNContainer
 
@@ -128,10 +130,8 @@ class TopNOverallPicker(GenericPicker):
         score = DataStructs.FingerprintSimilarity(origFp, probeFp, self.simMetric)
         bestScore = max(score, bestScore)
       picks.Insert(bestScore, fp)
-    self._picks = []
-    for score, pt in picks:
-      self._picks.append((pt, score))
-    self._picks.reverse()
+    
+    self._picks = [(picks[i][1], picks[i][0]) for i in range(len(picks) - 1, -1, -1)]
 
 
 class SpreadPicker(GenericPicker):
@@ -278,8 +278,6 @@ class SpreadPicker(GenericPicker):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

@@ -12,7 +12,8 @@
 
 """
 
-import os, sys
+import os
+import sys
 if 'RDBASE' in os.environ:
   RDBaseDir = os.environ['RDBASE']
   RDCodeDir = os.path.join(RDBaseDir, 'rdkit')

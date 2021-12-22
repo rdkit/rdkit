@@ -11,6 +11,12 @@
 """ Various storage (molecular and otherwise) functionality
 
 """
+import sys
+import tempfile
+import shutil
+import os
+import doctest
+
 from rdkit import RDConfig
 from rdkit.Dbase import DbModule
 
@@ -150,11 +156,8 @@ def GetNextId(conn, table, idColName='Id'):
   vals = conn.GetData(table=table, fields=idColName)
   maxVal = 0
   for val in vals:
-    val = RDIdToInt(val[0], validate=0)
-    if val > maxVal:
-      maxVal = val
-  maxVal += 1
-  return maxVal
+    maxVal = max(maxVal, RDIdToInt(val[0], validate=0))
+  return maxVal + 1
 
 
 def GetNextRDId(conn, table, idColName='Id', leadText=''):
@@ -226,7 +229,7 @@ def RegisterItems(conn, table, values, columnName, rows, startId='', idColName='
     origOrder[v] = i
 
   curs = conn.GetCursor()
-  qs = ','.join(DbModule.placeHolder * nVals)
+  # qs = ','.join(DbModule.placeHolder * nVals) # Unusable code
   curs.execute("create temporary table regitemstemp (%(columnName)s)" % locals())
   curs.executemany("insert into regitemstemp values (?)", [(x, ) for x in values])
   query = ('select %(columnName)s,%(idColName)s from %(table)s ' +
@@ -257,7 +260,7 @@ def RegisterItems(conn, table, values, columnName, rows, startId='', idColName='
         rowsToInsert.append(row)
   if rowsToInsert:
     nCols = len(rowsToInsert[0])
-    qs = ','.join(DbModule.placeHolder * nCols)
+    # qs = ','.join(DbModule.placeHolder * nCols)  # Unusable code
     curs.executemany('insert into %(table)s values (%(qs)s)' % locals(), rowsToInsert)
     conn.Commit()
   return len(values) - len(dbData), ids
@@ -284,16 +287,10 @@ __test__ = {"roundtrip": _roundtripTests}
 
 
 def _test():  # pragma: nocover
-  import doctest
-  import sys
   return doctest.testmod(sys.modules["__main__"], verbose=True)
 
 
 if __name__ == '__main__':  # pragma: nocover
-  import sys
-  import tempfile
-  import shutil
-  import os
   if RDConfig.useSqlLite:
     tmpf, tempName = tempfile.mkstemp(suffix='sqlt')
     tempDbName = tempName

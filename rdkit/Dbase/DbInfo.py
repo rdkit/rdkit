@@ -10,6 +10,7 @@
 #
 
 import sys
+import os
 
 from rdkit import RDConfig
 from rdkit.Dbase import DbModule
@@ -43,13 +44,10 @@ def GetDbNames(user='sysdba', password='masterkey', dirName='.', dBase='::templa
                 return []
         c = cn.cursor()
         c.execute(DbModule.getDbSql)
-        if RDConfig.usePgSQL:
-            names = ['::' + str(x[0]) for x in c.fetchall()]
-        else:
-            names = ['::' + str(x[0]) for x in c.fetchall()]
+        # Fix here
+        names = ['::' + str(x[0]) for x in c.fetchall()]
         names.remove(dBase)
     elif DbModule.fileWildcard:
-        import os.path
         import glob
         names = glob.glob(os.path.join(dirName, DbModule.fileWildcard))
     else:
@@ -84,10 +82,7 @@ def GetTableNames(dBase, user='sysdba', password='masterkey', includeViews=0, cn
             return []
 
     c = cn.cursor()
-    if not includeViews:
-        comm = DbModule.getTablesSql
-    else:
-        comm = DbModule.getTablesAndViewsSql
+    comm = DbModule.getTablesSql if not includeViews else DbModule.getTablesAndViewsSql
     c.execute(comm)
     names = [str(x[0]).upper() for x in c.fetchall()]
     if RDConfig.usePgSQL and 'PG_LOGDIR_LS' in names:
@@ -123,11 +118,11 @@ def GetColumnInfoFromCursor(cursor):
             typ = type(v)
             if isinstance(v, str):
                 typeStr = 'string'
-            elif typ == int:
+            elif isinstance(v, int):
                 typeStr = 'integer'
-            elif typ == float:
+            elif isinstance(v, float):
                 typeStr = 'float'
-            elif typ in (memoryview, bytes):
+            elif isinstance(v, (memoryview, bytes)):
                 typeStr = 'binary'
             else:
                 sys.stderr.write('odd type in col %s: %s\n' % (cName, typ))

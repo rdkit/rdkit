@@ -3,6 +3,9 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
+import sys
+import doctest
+
 from rdkit import Chem
 from rdkit.VLib.Filter import FilterNode
 
@@ -51,8 +54,7 @@ class DupeFilter(FilterNode):
     if smi not in self._smisSeen:
       self._smisSeen.add(smi)
       return 1
-    else:
-      return 0
+    return 0
 
 
 # ------------------------------------
@@ -60,8 +62,6 @@ class DupeFilter(FilterNode):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

@@ -3,18 +3,20 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys, os.path
-from rdkit import RDConfig
-from rdkit.VLib.Supply import SupplyNode
-from rdkit import Chem
-from rdkit.Chem.Suppliers import DbMolSupplier
+import doctest
+import sys
 
+from rdkit import RDConfig # Maintain for backwards compatibility
+from rdkit.VLib.Supply import SupplyNode
+from rdkit.Chem.Suppliers import DbMolSupplier
+from rdkit.Dbase.DbConnection import DbConnect
 
 class DbMolSupplyNode(SupplyNode):
   """ Supplies molecules from a db result set:
 
   Sample Usage:
     >>> from rdkit.Dbase.DbConnection import DbConnect
+    >>> import os
     >>> dbName = os.path.join(RDConfig.RDCodeDir,'Chem','Fingerprints',\
                              'test_data','data.gdb')
     >>> conn = DbConnect(dbName,'simple_mols')
@@ -53,7 +55,6 @@ class DbMolSupplyNode(SupplyNode):
 
 
 def GetNode(dbName, tableName):
-  from rdkit.Dbase.DbConnection import DbConnect
   conn = DbConnect(dbName, tableName)
   return DbMolSupplyNode(conn.GetData())
 
@@ -63,11 +64,9 @@ def GetNode(dbName, tableName):
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
-  import sys
   failed, tried = _test()
   sys.exit(failed)

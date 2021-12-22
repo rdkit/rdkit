@@ -906,7 +906,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
 
   """
   nPts = bm.shape[0]
-  k = numpy.zeros(nPts, numpy.int0)
+  k = numpy.zeros(nPts, dtype=numpy.int0)
   for idx in indices:
     k[idx] = 1
   for i in indices:
@@ -915,7 +915,7 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
       if not k[j] and row[j] < maxThresh:
         k[j] = 1
   keep = numpy.nonzero(k)[0]
-  bm2 = numpy.zeros((len(keep), len(keep)), numpy.float)
+  bm2 = numpy.zeros((len(keep), len(keep)), dtype='float')
   for i, idx in enumerate(keep):
     row = bm[idx]
     bm2[i] = numpy.take(row, keep)
@@ -942,7 +942,7 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   >>> pcophore.setLowerBound(1,2, 2.1)
   >>> pcophore.setUpperBound(1,2, 3.9)
 
-  >>> bounds = numpy.array([[0,2,3],[1,0,4],[2,3,0]],numpy.float)
+  >>> bounds = numpy.array([[0,2,3],[1,0,4],[2,3,0]], dtype='float')
   >>> CoarseScreenPharmacophore(((0,),(1,)),bounds,pcophore)
   True
 
@@ -986,7 +986,7 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   >>> pcophore.setUpperBound(1,3, 1.9)
   >>> pcophore.setLowerBound(2,3, 1.1)
   >>> pcophore.setUpperBound(2,3, 1.9)
-  >>> bounds = numpy.array([[0,3,3,3],[2,0,2,2],[2,1,0,2],[2,1,1,0]],numpy.float)
+  >>> bounds = numpy.array([[0,3,3,3],[2,0,2,2],[2,1,0,2],[2,1,1,0]], dtype='float')
 
   >>> CoarseScreenPharmacophore(((0,),(1,),(2,),(3,)),bounds,pcophore)
   True

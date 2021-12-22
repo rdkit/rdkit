@@ -153,9 +153,7 @@ class TestCase(unittest.TestCase):
     d = conn.GetData(randomAccess=0)
     self.assertRaises(TypeError, lambda: len(d))
 
-    rs = []
-    for thing in d:
-      rs.append(thing)
+    rs = [thing for thing in d]
     assert len(rs) == 10
     assert tuple(rs[0]) == (0, 11)
     assert tuple(rs[2]) == (4, 31)
@@ -185,9 +183,7 @@ class TestCase(unittest.TestCase):
     conn = DbConnect(self.dbName, 'ten_elements')
     d = conn.GetData(randomAccess=0, transform=fn)
     self.assertRaises(TypeError, lambda: len(d))
-    rs = []
-    for thing in d:
-      rs.append(thing)
+    rs = [thing for thing in d]
     assert len(rs) == 10
     assert tuple(rs[0]) == (0, 22)
     assert tuple(rs[2]) == (4, 62)
