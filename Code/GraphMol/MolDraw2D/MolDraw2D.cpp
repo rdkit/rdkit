@@ -335,6 +335,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
+  setupTextDrawer();
   DrawMol *draw_mol = new DrawMol(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
@@ -343,7 +344,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
   startDrawing();
   drawAllMolecules();
 
-//  if (!legend.empty()) {
+  //  if (!legend.empty()) {
 //    legend_height_ = int(0.05 * double(panelHeight()));
 //    if (legend_height_ < 20) {
 //      legend_height_ = 20;
@@ -1646,8 +1647,13 @@ unique_ptr<RWMol> MolDraw2D::initMoleculeDraw(
 
 // ****************************************************************************
 void MolDraw2D::setupTextDrawer() {
+  PRECONDITION(drawOptions().maxFontSize >= drawOptions().minFontSize,
+               "max font size smaller than min");
   text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
   text_drawer_->setMinFontSize(drawOptions().minFontSize);
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
+  }
   try {
     text_drawer_->setFontFile(drawOptions().fontFile);
   } catch (std::runtime_error &e) {

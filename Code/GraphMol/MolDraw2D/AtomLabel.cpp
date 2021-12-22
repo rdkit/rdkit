@@ -30,14 +30,6 @@ AtomLabel::AtomLabel(const std::string &label, int atIdx, OrientType orient,
   }
   textDrawer_.getStringRects(label_, orient_, rects_, draw_modes_,
                              draw_chars_, false, TextAlignType::MIDDLE);
-  std::cout << label_ << " at " << cds_;
-  for (auto &rect : rects_) {
-    std::cout << " : " << rect->trans_ << " size " << rect->width_
-              << " by " << rect->height_;    Point2D tl, tr, br, bl;
-    rect->calcCorners(tl, tr, br, bl, 0.0);
-    std::cout << "  rect width : " << tr.x - tl.x << " or " << br.x - bl.x << std::endl;
-  }
-  std::cout << std::endl;
 }
 
 // ****************************************************************************
@@ -46,18 +38,22 @@ void AtomLabel::draw(MolDraw2D &molDrawer) const {
   molDrawer.setActiveAtmIdx(atIdx_);
   textDrawer_.drawString(label_, cds_, orient_);
   molDrawer.setActiveAtmIdx();
-//  drawRects(molDrawer);
+  drawRects(molDrawer);
 }
 
 // ****************************************************************************
 void AtomLabel::drawRects(MolDraw2D &molDrawer) const {
   for (auto &rect : rects_) {
+    Point2D origTrans = rect->trans_;
+    rect->trans_ += cds_;
+//    std::cout << std::endl << "trans = " << rect->trans_ << std::endl
+//              << "offset = " << rect->offset_ << std::endl
+//              << "g_centre = " << rect->g_centre_ << std::endl
+//              << "y_shift = " << rect->y_shift_ << std::endl
+//              << "dims = " << rect->width_ << " x " << rect->height_ << std::endl
+//              << "rect_corr = " << rect->rect_corr_ << std::endl;
     Point2D tl, tr, br, bl;
     rect->calcCorners(tl, tr, br, bl, 0.0);
-    tl += cds_;
-    tr += cds_;
-    br += cds_;
-    bl += cds_;
     molDrawer.setColour(DrawColour(1.0, 0.0, 0.0));
     molDrawer.drawLine(tl, tr);
     molDrawer.setColour(DrawColour(0.0, 1.0, 0.0));
@@ -66,28 +62,25 @@ void AtomLabel::drawRects(MolDraw2D &molDrawer) const {
     molDrawer.drawLine(br, bl);
     molDrawer.setColour(DrawColour(0.0, 0.95, 0.95));
     molDrawer.drawLine(bl, tl);
+    rect->trans_ = origTrans;
   }
 }
 
 // ****************************************************************************
-void AtomLabel::scale(const Point2D &scale_factor) {
-  cds_.x *= scale_factor.x;
-  cds_.y *= scale_factor.y;
-
+void AtomLabel::scale(const Point2D &scaleFactor) {
+  cds_.x *= scaleFactor.x;
+  cds_.y *= scaleFactor.y;
   for (auto &rect : rects_) {
-    rect->trans_.x *= scale_factor.x;
-    rect->trans_.y *= scale_factor.y;
-    rect->offset_.x *= scale_factor.x;
-    rect->offset_.y *= scale_factor.y;
-    rect->g_centre_.x *= scale_factor.x;
-    rect->g_centre_.y *= scale_factor.y;
-    rect->y_shift_ *= scale_factor.y;
-    // width and height of the character use the font scale not the global
-    // drawing scale, which is what scale_factor is.  fontScale() needs to
-    // be set before this scale() is called.
-    rect->width_ *= textDrawer_.fontScale();
-    rect->height_ *= textDrawer_.fontScale();
-    rect->rect_corr_ *= scale_factor.y;
+    rect->trans_.x *= scaleFactor.x;
+    rect->trans_.y *= -scaleFactor.y;
+    rect->offset_.x *= scaleFactor.x;
+    rect->offset_.y *= -scaleFactor.y;
+    rect->g_centre_.x *= scaleFactor.x;
+    rect->g_centre_.y *= -scaleFactor.y;
+    rect->y_shift_ *= -scaleFactor.y;
+    rect->width_ *= scaleFactor.x;
+    rect->height_ *= -scaleFactor.y;
+    rect->rect_corr_ *= -scaleFactor.y;
   }
 }
 

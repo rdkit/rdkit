@@ -91,6 +91,8 @@ class DrawMol {
   void changeToDrawCoords();
   void draw(MolDraw2D &drawer) const;
   void drawAnnotation(const AnnotationType &annot) const;
+  void drawLegend() const;
+  void resetEverything();
 
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
@@ -98,7 +100,7 @@ class DrawMol {
   std::string getAtomSymbol(const Atom &atom, OrientType orientation) const;
   OrientType getAtomOrientation(const Atom &atom) const;
 
-  void addLegend(const std::string &legend);
+  void extractLegend();
 
   void calcMeanBondLengthSquare();
   void makeStandardBond(Bond *bond, double doubleBondOffset);
@@ -131,6 +133,7 @@ class DrawMol {
   const std::map<int, DrawColour> *highlightBondMap_;
   const std::vector<std::pair<DrawColour, DrawColour>> *bondColours_;
   const std::map<int, double> *highlightRadii_;
+  std::string legend_;
 
   std::unique_ptr<RWMol> drawMol_;
   std::vector<Point2D> atCds_;
@@ -143,7 +146,9 @@ class DrawMol {
   std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>> radicals_;
 
   int width_, height_;
-  double scale_;
+  // to allow for min and max font sizes, the font scale needs to be
+  // independent of the main scale.
+  double scale_, fontScale_;
   double xMin_, yMin_, xMax_, yMax_, xRange_, yRange_;
   double meanBondLengthSquare_ = 0.0;
   int legendHeight_ = 0;
@@ -181,9 +186,10 @@ Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
                              const std::vector<Point2D> &at_cds);
 // return a point that is end1 moved so as not to clash with any of the
 // rects of a label.  end1 to end2 and the coords of 2 ends of a bond.
-Point2D adjustBondEndForString(
-    const Point2D &end1, const Point2D &end2,
-    const std::vector<std::shared_ptr<StringRect>> &rects);
+void adjustBondEndForString(
+    const Point2D &end1, const Point2D &end2, double padding,
+    const std::vector<std::shared_ptr<StringRect>> &rects,
+    Point2D &moveEnd);
 } // namespace RDKit
 
 #endif  // RDKIT_DRAWMOL_H

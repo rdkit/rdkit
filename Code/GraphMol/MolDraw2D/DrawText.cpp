@@ -64,31 +64,24 @@ void DrawText::setMinFontSize(double new_min) { min_font_size_ = new_min; }
 double DrawText::fontScale() const { return font_scale_; }
 
 // ****************************************************************************
-void DrawText::setFontScale(double new_scale, bool ignoreExtremes) {
+bool DrawText::setFontScale(double new_scale, bool ignoreExtremes) {
   font_scale_ = new_scale;
   if (ignoreExtremes) {
-    return;
+    return true;
   }
   font_scale_ = new_scale;
   double nfs = fontSize();
-  if (max_font_size_ != -1 &&
+  if (max_font_size_ > 0.0 &&
       nfs * (baseFontSize() / FONT_SIZE) > max_font_size_) {
     font_scale_ = max_font_size_ / baseFontSize();
-    std::cout << "max font size used" << std::endl;
+    return false;
   }
-  if (min_font_size_ != -1 &&
+  if (min_font_size_ > 0.0 &&
       nfs * (baseFontSize() / FONT_SIZE) < min_font_size_) {
     font_scale_ = min_font_size_ / baseFontSize();
-    std::cout << "min font size used" << std::endl;
+    return false;
   }
-
-//  // fontSize == font_scale_ * base_font_size_
-//  if (max_font_size_ > 0 && font_scale_ * base_font_size_ > max_font_size_) {
-//    font_scale_ = max_font_size_ / base_font_size_;
-//  }
-//  if (min_font_size_ > 0 && font_scale_ * base_font_size_ < min_font_size_) {
-//    font_scale_ = min_font_size_ / base_font_size_;
-//  }
+  return true;
 }
 
 // ****************************************************************************
@@ -583,17 +576,16 @@ void DrawText::drawChars(const Point2D &a_cds,
                          const std::vector<char> &draw_chars) {
   double full_scale = fontScale();
   for (size_t i = 0; i < rects.size(); ++i) {
+    std::cout << "Drawing " << i << " : " << draw_chars[i] << std::endl;
     Point2D draw_cds;
     draw_cds.x = a_cds.x + rects[i]->trans_.x - rects[i]->offset_.x;
     draw_cds.y = a_cds.y - rects[i]->trans_.y +
                  rects[i]->offset_.y;  // opposite sign convention
     draw_cds.y -= rects[i]->rect_corr_ + rects[i]->y_shift_;
-    double mfs = minFontSize();
-    setMinFontSize(-1);
-    setFontScale(full_scale * selectScaleFactor(draw_chars[i], draw_modes[i]));
+    setFontScale(full_scale * selectScaleFactor(draw_chars[i], draw_modes[i]),
+                 true);
     drawChar(draw_chars[i], draw_cds);
-    setMinFontSize(mfs);
-    setFontScale(full_scale);
+    setFontScale(full_scale, true);
   }
 }
 

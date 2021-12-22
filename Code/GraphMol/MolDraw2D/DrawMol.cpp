@@ -47,24 +47,41 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
       highlightBondMap_(highlight_bond_map),
       bondColours_(bond_colours),
       highlightRadii_(highlight_radii),
+      legend_(legend),
       width_(width),
       height_(height),
       scale_(1.0),
+      fontScale_(1.0),
       xMin_(std::numeric_limits<double>::max() / 2.0),
       yMin_(std::numeric_limits<double>::max() / 2.0),
       xMax_(-std::numeric_limits<double>::max() / 2.0),
       yMax_(-std::numeric_limits<double>::max() / 2.0),
       xRange_(std::numeric_limits<double>::max()),
       yRange_(std::numeric_limits<double>::max()) {
+  textDrawer_.setFontScale(fontScale_, true);
   std::cout << "Top of DrawMol c'tor" << std::endl;
   std::cout << "Width = " << width_ << "  height = " << height_ << std::endl;
+  std::cout << "initial font scale : " << textDrawer_.fontScale() << std::endl;
   initDrawMolecule(mol, confId);
   extractAll(confId);
-  addLegend(legend);
-
-  textDrawer.setFontScale(textDrawer.baseFontSize());
-  std::cout << "fontScale : " << textDrawer.fontScale() << " : " << textDrawer.baseFontSize() << std::endl;
   calculateScale();
+
+  std::cout << "CCCCCCCCCCCCC" << std::endl;
+  if (!textDrawer_.setFontScale(fontScale_, false)) {
+    double nfs = textDrawer_.fontScale();
+    std::cout << "font scale hit extreme.  We got " << nfs << " would have been "
+              << fontScale_ << std::endl;
+    textDrawer_.setFontScale(nfs / fontScale_, true);
+    resetEverything();
+    fontScale_ = textDrawer_.fontScale();
+    extractAll(confId);
+    calculateScale();
+    textDrawer_.setFontScale(fontScale_);
+  } else {
+    std::cout << "fontScale was fine" << std::endl;
+  }
+  std::cout << "XX font scale : " << textDrawer_.fontScale()
+            << " : " << fontScale_ << std::endl;
   changeToDrawCoords();
 }
 
@@ -90,11 +107,14 @@ void DrawMol::extractAll(int confId) {
   extractAtomCoords(confId);
   extractAtomSymbols();
   extractBonds();
+
+  extractLegend();
 }
 
 // ****************************************************************************
 void DrawMol::extractBonds() {
 
+  std::cout << "extractBonds" << std::endl;
   double doubleBondOffset = drawOptions_.multipleBondOffset;
   // mol files from, for example, Marvin use a bond length of 1 for just about
   // everything. When this is the case, the default multipleBondOffset is just
@@ -154,8 +174,6 @@ void DrawMol::extractAtomCoords(int confId) {
     atCds_.emplace_back(pt);
     // std::cout << "coords for " << this_idx << " : " << pt << std::endl;
   }
-  std::cout << "2->3 dist = " << (atCds_[2] - atCds_[3]).length() << std::endl;
-  std::cout << "4->5 dist = " << (atCds_[4] - atCds_[5]).length() << std::endl;
 }
 
 // ****************************************************************************
@@ -214,6 +232,7 @@ void DrawMol::calculateScale() {
   yRange_ *= 1 + 2 * drawOptions_.padding;
   yMax_ = yMin_ + yRange_;
 
+  double newScale = 1.0;
   if (xRange_ > 1e-4 || yRange_ > 1e-4) {
     if (setWidth) {
       width_ = drawOptions_.scalingFactor * xRange_;
@@ -222,9 +241,9 @@ void DrawMol::calculateScale() {
       height_ = drawOptions_.scalingFactor * thisYRange;
     }
 
-    scale_ = std::min(double(width_) / xRange_,
+    newScale = std::min(double(width_) / xRange_,
                       double(height_ - legendHeight_) / yRange_);
-    double fix_scale = scale_;
+    double fix_scale = newScale;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
     // fixedScale takes precedence if both it and fixedBondLength are given.
@@ -234,17 +253,16 @@ void DrawMol::calculateScale() {
     if (drawOptions_.fixedScale > 0.0) {
       fix_scale = double(width_) * drawOptions_.fixedScale;
     }
-    if (scale_ > fix_scale) {
-      scale_ = fix_scale;
+    if (newScale > fix_scale) {
+      newScale = fix_scale;
     }
-  } else {
-    scale_ = 1.0;
   }
-  textDrawer_.setFontScale(scale_, false);
-  std::cout << "Final Scale : " << scale_ << std::endl;
+  double scale_mult = newScale / scale_;
+  scale_ *= scale_mult;
+  fontScale_ *= scale_mult;
+  std::cout << "Final Scale : " << scale_ << " and fontScale_ : " << fontScale_ << std::endl;
   std::cout << "Padded mins : " << xMin_ << ", " << yMin_ << " with ranges : "
             << xRange_ << ", " << yRange_ << std::endl;
-  std::cout << "font scale : " << textDrawer_.fontScale() << std::endl;
 }
 
 // ****************************************************************************
@@ -276,6 +294,7 @@ void DrawMol::changeToDrawCoords() {
   std::cout << "scaled mins and ranges : " << xMin_ * scale_ << ", "
             << yMin_ * scale_ << " :: " << xRange_ * scale_ << ", "
             << yRange_ * scale_ << std::endl;
+  std::cout << "scales : " << scale_ << " and " << fontScale_ << std::endl;
   Point2D trans(-xMin_, -yMin_);
   Point2D scale(scale_, -scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
@@ -301,7 +320,6 @@ void DrawMol::draw(MolDraw2D &drawer) const {
   for (auto &bond : bonds_) {
     bond->draw(drawer);
   }
-  textDrawer_.setFontScale(scale_);
   for (auto &label : atomLabels_) {
     if (label) {
       label->draw(drawer);
@@ -310,15 +328,7 @@ void DrawMol::draw(MolDraw2D &drawer) const {
   for (auto &annot : annotations_) {
     drawAnnotation(annot);
   }
-  textDrawer_.setColour(drawOptions_.legendColour);
-  double o_font_scale = textDrawer_.fontScale();
-  double fsize = textDrawer_.fontSize();
-  double new_font_scale = o_font_scale * drawOptions_.legendFontSize / fsize;
-  textDrawer_.setFontScale(new_font_scale, true);
-  for (auto &leg : legends_) {
-    drawAnnotation(leg);
-  }
-  textDrawer_.setFontScale(o_font_scale, true);
+  drawLegend();
 }
 
 // ****************************************************************************
@@ -336,6 +346,41 @@ void DrawMol::drawAnnotation(const AnnotationType &annot) const {
   if (annot.scaleText_) {
     textDrawer_.setFontScale(full_font_scale, true);
   }
+}
+
+// ****************************************************************************
+void DrawMol::drawLegend() const {
+  textDrawer_.setColour(drawOptions_.legendColour);
+  double o_font_scale = textDrawer_.fontScale();
+  double fsize = textDrawer_.fontSize();
+  double new_font_scale = o_font_scale * drawOptions_.legendFontSize / fsize;
+  textDrawer_.setFontScale(new_font_scale, true);
+  for (auto &leg : legends_) {
+    drawAnnotation(leg);
+  }
+  textDrawer_.setFontScale(o_font_scale, true);
+}
+
+// ****************************************************************************
+void DrawMol::resetEverything() {
+  scale_ = 1.0;
+  fontScale_ = 1.0;
+  xMin_ = std::numeric_limits<double>::max() / 2.0;
+  yMin_ = std::numeric_limits<double>::max() / 2.0;
+  xMax_ = -std::numeric_limits<double>::max() / 2.0;
+  yMax_ = -std::numeric_limits<double>::max() / 2.0;
+  xRange_ = std::numeric_limits<double>::max();
+  yRange_ = std::numeric_limits<double>::max();
+  meanBondLengthSquare_ = 0.0;
+  legendHeight_ = 1.0;
+  atCds_.clear();
+  bonds_.clear();
+  atomicNums_.clear();
+  atomSyms_.clear();
+  atomLabels_.clear();
+  annotations_.clear();
+  legends_.clear();
+  radicals_.clear();
 }
 
 // ****************************************************************************
@@ -603,8 +648,8 @@ void DrawMol::calcMeanBondLengthSquare() {
 }
 
 // ****************************************************************************
-void DrawMol::addLegend(const std::string &legend) {
-  if (legend.empty()) {
+void DrawMol::extractLegend() {
+  if (legend_.empty()) {
     return;
   }
   legendHeight_ = int(0.05 * double(height_));
@@ -624,7 +669,7 @@ void DrawMol::addLegend(const std::string &legend) {
   std::vector<std::string> legend_bits;
   // split any strings on newlines
   std::string next_piece;
-  for (auto c : legend) {
+  for (auto c : legend_) {
     if (c == '\n') {
       if (!next_piece.empty()) {
         legend_bits.push_back(next_piece);
@@ -678,7 +723,6 @@ void DrawMol::addLegend(const std::string &legend) {
 void DrawMol::makeStandardBond(Bond *bond, double doubleBondOffset) {
   int begAt = bond->getBeginAtomIdx();
   int endAt = bond->getEndAtomIdx();
-  std::cout << "makeStandardBond " << begAt << " to " << endAt << std::endl;
   std::pair<DrawColour, DrawColour> cols = getBondColours(bond);
   int olw = drawOptions_.bondLineWidth;
 
@@ -1006,18 +1050,26 @@ void DrawMol::makeZeroBond(Bond *bond,
 // ****************************************************************************
 void DrawMol::adjustBondEndsForLabels(int begAtIdx, int endAtIdx,
                                       Point2D &begCds, Point2D &endCds) {
+
+  double padding = 0.025 * meanBondLengthSquare_;
+  begCds = atCds_[begAtIdx];
+  endCds = atCds_[endAtIdx];
   if (atomLabels_[begAtIdx]) {
-    begCds = adjustBondEndForString(atCds_[begAtIdx], atCds_[endAtIdx],
-                                    atomLabels_[begAtIdx]->rects_);
-  } else {
-    begCds = atCds_[begAtIdx];
+    std::cout << std::endl << "adjust line starting "
+              << atomLabels_[begAtIdx]->label_ << " "
+              << begAtIdx << " to " << endAtIdx << std::endl;
+    adjustBondEndForString(atCds_[begAtIdx], atCds_[endAtIdx], padding,
+                           atomLabels_[begAtIdx]->rects_, begCds);
   }
   if (atomLabels_[endAtIdx]) {
-    endCds = adjustBondEndForString(atCds_[endAtIdx], atCds_[begAtIdx],
-                                    atomLabels_[endAtIdx]->rects_);
-  } else {
-    endCds = atCds_[endAtIdx];
+    std::cout << std::endl << "adjust line ending "
+              << atomLabels_[endAtIdx]->label_ << " "
+              << endAtIdx << " to " << begAtIdx << std::endl;
+    adjustBondEndForString(atCds_[endAtIdx], atCds_[begAtIdx], padding,
+                           atomLabels_[endAtIdx]->rects_, endCds);
   }
+  std::cout << "bond coords : " << atCds_[begAtIdx] << " to " << atCds_[endAtIdx] << std::endl;
+  std::cout << " end coords : " << begCds << " to " << endCds << std::endl;
 }
 
 // ****************************************************************************
@@ -1434,29 +1486,70 @@ Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
 }
 
 // ****************************************************************************
-Point2D adjustBondEndForString(
-    const Point2D &end1, const Point2D &end2,
-    const std::vector<std::shared_ptr<StringRect>> &rects) {
-  Point2D retPt = end1;
-  Point2D labPos = end1;
-
+void adjustBondEndForString(
+    const Point2D &end1, const Point2D &end2, double padding,
+    const std::vector<std::shared_ptr<StringRect>> &rects,
+    Point2D &moveEnd) {
+  std::cout << end1 << " to " << end2 << std::endl;
+  Point2D labelPos = moveEnd;
+//  padding *= 2;
+  int i = -1;
   for (auto r : rects) {
-    auto origTrans = r->trans_;
-    r->trans_ += labPos;
+    ++i;
+    if (i > 10) {
+      continue;
+    }
+    Point2D origTrans = r->trans_;
+    r->trans_ += labelPos;
+    r->trans_.y += r->rect_corr_;
+    std::cout << i << std::endl;
+    std::cout << std::endl << "orig trans : " << origTrans << std::endl
+              << "trans = " << r->trans_ << std::endl
+              << "offset = " << r->offset_ << std::endl
+              << "g_centre = " << r->g_centre_ << std::endl
+              << "y_shift = " << r->y_shift_ << std::endl
+              << "dims = " << r->width_ << " x " << r->height_ << std::endl
+              << "rect_corr = " << r->rect_corr_ << std::endl
+              << "padding = " << padding << std::endl;
 
     Point2D tl, tr, bl, br;
-    r->calcCorners(tl, tr, br, bl, 0.2 * r->width_);
+    r->calcCorners(tl, tr, br, bl, padding);
 
+    std::cout << "Corners" << std::endl
+              << "(" << tl.x << "," << tl.y << ") " << std::endl
+              << "(" << tr.x << "," << tr.y << ") " << std::endl
+              << "(" << br.x << "," << br.y << ") " << std::endl
+              << "(" << bl.x << "," << bl.y << ") " << std::endl
+              << "(" << tl.x << "," << tl.y << ") " << std::endl;
     // if it's a wide label, such as C:7, the bond can intersect
     // more than 1 side of the rectangle, so check them all.
-    doLinesIntersect(retPt, end2, tl, tr, &retPt);
-    doLinesIntersect(retPt, end2, tr, br, &retPt);
-    doLinesIntersect(retPt, end2, br, bl, &retPt);
-    doLinesIntersect(retPt, end2, bl, tl, &retPt);
+//    doLinesIntersect(retPt, end2, tl, tr, &retPt);
+//    doLinesIntersect(retPt, end2, tr, br, &retPt);
+//    doLinesIntersect(retPt, end2, br, bl, &retPt);
+//    doLinesIntersect(retPt, end2, bl, tl, &retPt);
+    std::unique_ptr<Point2D> ip(new Point2D);
+    if (doLinesIntersect(moveEnd, end2, tl, tr, ip.get())) {
+      std::cout << "tl, tr intersect" << std::endl;
+//      std::cout << tl << " to " << tr << " and " << retPt << " to " << end2 << std::endl;
+      moveEnd = *ip;
+    }
+    if (doLinesIntersect(moveEnd, end2, tr, br, ip.get())) {
+      std::cout << "tr, br intersect" << std::endl;
+//      std::cout << tr << " to " << br << " and " << retPt << " to " << end2 << std::endl;
+      moveEnd = *ip;
+    }
+    if (doLinesIntersect(moveEnd, end2, br, bl, ip.get())) {
+      std::cout << "br, bl intersect" << std::endl;
+//      std::cout << br << " to " << bl << " and " << retPt << " to " << end2 << std::endl;
+      moveEnd = *ip;
+    }
+    if (doLinesIntersect(moveEnd, end2, bl, tl, ip.get())) {
+      std::cout << "bl, tl intersect" << std::endl;
+//      std::cout << bl << " to " << tl << " and " << retPt << " to " << end2 << std::endl;
+      moveEnd = *ip;
+    }
     r->trans_ = origTrans;
   }
-
-  return retPt;
 }
 
 } // namespace RDKit

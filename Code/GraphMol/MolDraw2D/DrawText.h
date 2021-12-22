@@ -55,7 +55,8 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   double minFontSize() const;
   void setMinFontSize(double new_max);
   double fontScale() const;
-  void setFontScale(double new_scale, bool ignoreExtremes = false);
+  // returns false if min or max font size is hit, true otherwise
+  bool setFontScale(double new_scale, bool ignoreExtremes = false);
 
   // these are only relevant for the FreeType DrawText classes.
   virtual std::string getFontFile() const { return ""; }

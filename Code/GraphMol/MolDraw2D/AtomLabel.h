@@ -58,7 +58,7 @@ class AtomLabel {
   std::vector<TextDrawType> draw_modes_;
   std::vector<char> draw_chars_;
 
-  virtual void scale(const Point2D &scale_factor);
+  virtual void scale(const Point2D &scaleFactor);
   virtual void move(const Point2D &trans);
   void draw(MolDraw2D &molDrawer) const;
   // this is for debugging almost always.
