@@ -267,9 +267,13 @@ void DrawMol::calculateScale() {
 
 // ****************************************************************************
 void DrawMol::findExtremes() {
-  std::cout << "Number of bonds : " << bonds_.size() << std::endl;
   for (auto &bond : bonds_) {
     bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  }
+  for (auto &atLab : atomLabels_) {
+    if (atLab) {
+      atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
   }
 
   // calculate the x and y spans
@@ -1052,7 +1056,6 @@ void DrawMol::makeZeroBond(Bond *bond,
 // ****************************************************************************
 void DrawMol::adjustBondEndsForLabels(int begAtIdx, int endAtIdx,
                                       Point2D &begCds, Point2D &endCds) {
-
   double padding = 0.025 * meanBondLengthSquare_;
   begCds = atCds_[begAtIdx];
   endCds = atCds_[endAtIdx];

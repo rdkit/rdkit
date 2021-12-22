@@ -79,7 +79,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
  private:
   std::ostream &d_os;
   std::stringstream d_ss;
-  std::string d_activeClass;
 
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;

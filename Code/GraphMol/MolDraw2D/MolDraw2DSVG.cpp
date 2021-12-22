@@ -216,13 +216,14 @@ void MolDraw2DSVG::drawBond(
 
 // ****************************************************************************
 void MolDraw2DSVG::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
-  std::string o_class = d_activeClass;
-  if (!d_activeClass.empty()) {
-    d_activeClass += " ";
+  std::string o_class = getActiveClass();
+  std::string actClass = o_class;
+  if (!actClass.empty()) {
+    actClass += " ";
   }
-  d_activeClass += boost::str(boost::format("atom-%d") % atom_num);
+  actClass += boost::str(boost::format("atom-%d") % atom_num);
   MolDraw2D::drawAtomLabel(atom_num, draw_colour);
-  d_activeClass = o_class;
+  setActiveClass(o_class);
 }
 
 // ****************************************************************************

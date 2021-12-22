@@ -393,9 +393,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void setActiveBndIdx(int bnd_idx = -1) {
     activeBndIdx_ = (bnd_idx < 0 ? -1 : bnd_idx);
   }
+  void setActiveClass(std::string actClass = std::string("")) {
+    d_activeClass = actClass;
+  }
+  std::string getActiveClass() const { return d_activeClass; }
 
  protected:
   std::unique_ptr<DrawText> text_drawer_;
+  std::string d_activeClass;
 
  private:
   bool needs_scale_;
