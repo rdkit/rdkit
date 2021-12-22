@@ -68,15 +68,15 @@ class Cluster(object):
 
             *my wrists are tired*
 
-        """
+        """        
         if children is None:
             children = []
         if position is None:
             position = []
         self.metric = metric
-        self.children = children
+        self.children = children if children is not None else []
         self._UpdateLength()
-        self.pos = position
+        self.pos = position if position is not None else []
         self.index = index
         self.name = name
         self._points = None
@@ -102,30 +102,26 @@ class Cluster(object):
         return self.pos
 
     def GetPointsPositions(self):
-        if self._pointsPositions is not None:
-            return self._pointsPositions
-        else:
+        if self._pointsPositions is None:
             self._GenPoints()
-            return self._pointsPositions
+        return self._pointsPositions
 
     def GetPoints(self):
-        if self._points is not None:
-            return self._points
-        else:
+        if self._points is None:
             self._GenPoints()
-            return self._points
+        return self._points
 
     def FindSubtree(self, index):
         """ finds and returns the subtree with a particular index
         """
         res = None
         if index == self.index:
-            res = self
-        else:
-            for child in self.children:
-                res = child.FindSubtree(index)
-                if res:
-                    break
+            return self
+        
+        for child in self.children:
+            res = child.FindSubtree(index)
+            if res:
+                return res
         return res
 
     def _GenPoints(self):
@@ -138,14 +134,14 @@ class Cluster(object):
             self._points = [self]
             self._pointsPositions = [self.GetPosition()]
             return self._points
-        else:
-            res = []
-            children = self.GetChildren()
-            children.sort(key=lambda x: len(x), reverse=True)
-            for child in children:
-                res += child.GetPoints()
-            self._points = res
-            self._pointsPositions = [x.GetPosition() for x in res]
+        
+        res = []
+        children = self.GetChildren()
+        children.sort(key=lambda x: len(x), reverse=True)
+        for child in children:
+            res += child.GetPoints()
+        self._points = res
+        self._pointsPositions = [x.GetPosition() for x in res]
 
     def AddChild(self, child):
         """Adds a child to our list
@@ -196,10 +192,8 @@ class Cluster(object):
         self.name = name
 
     def GetName(self):
-        if self.name is None:
-            return 'Cluster(%d)' % (self.GetIndex())
-        else:
-            return self.name
+        return self.name if self.name is not None else 'Cluster(%d)' % (self.GetIndex())
+
 
     def Print(self, level=0, showData=0, offset='\t'):
         if not showData or self.GetData() is None:

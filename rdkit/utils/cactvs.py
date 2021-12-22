@@ -15,13 +15,11 @@ def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0
     cmd = os.path.join('/usr', 'local', 'bin', 'csts')
   baseCmd = cmd
   assert len(smiles) == len(fileNames)
-  width = size[0]
-  height = size[1]
+  width, height = size[0], size[1]
   args = ""
   nDone = 0
   while nDone < len(smiles):
-    smi = smiles[nDone]
-    name = fileNames[nDone]
+    smi, name = smiles[nDone], fileNames[nDone]
     if not dblSize:
       args += "ens get [ens create {%(smi)s}] E_GIF {} {width %(width)d height %(height)d bgcolor white filename %(name)s format gif frame %(frame)d};" % locals(
       )
@@ -29,6 +27,7 @@ def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0
       args += "ens get [ens create {%(smi)s}] E_GIF {} {width %(width)d height %(height)d bgcolor white filename %(name)s format gif symbolfontsize 24 frame %(frame)d linewidth 2.8 linespacing 4.0};" % locals(
       )
     nDone += 1
+  
   if args:
     with tempfile.NamedTemporaryFile('w+', suffix='.cmd', delete=False) as tmp:
       tmp.write(args + '\n')
@@ -56,8 +55,5 @@ def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0
 def SmilesToImage(smiles, **kwargs):
   with tempfile.NamedTemporaryFile(suffix='.gif') as tmp:
     ok = SmilesToGif(smiles, tmp.name, **kwargs)
-    if ok:
-      img = Image.open(tmp.name)
-    else:
-      img = None
+    img = Image.open(tmp.name) if ok else None
   return img

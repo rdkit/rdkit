@@ -146,6 +146,7 @@ class Composite(object):
   def QuantizeActivity(self, example, activityQuant=None, actCol=-1):
     if activityQuant is None:
       activityQuant = self.activityQuant
+    
     if activityQuant:
       example = example[:]
       act = example[actCol]
@@ -221,8 +222,8 @@ class Composite(object):
         lastErr = self.errList[i]
         countHere = self.countList[i]
       else:
-        countHere = countHere + self.countList[i]
-      i = i + 1
+        countHere += self.countList[i]
+      i += 1
 
     return histo
 
@@ -251,12 +252,8 @@ class Composite(object):
 
     votes = [-1] * len(self)
     for i in onlyModels:
-      if self.quantizationRequirements[i]:
-        votes[i] = int(
-          round(self.modelList[i].ClassifyExample(quantExample, appendExamples=appendExample)))
-      else:
-        votes[i] = int(
-          round(self.modelList[i].ClassifyExample(example, appendExamples=appendExample)))
+      tempV = quantExample if self.quantizationRequirements[i] else example
+      votes[i] = int(round(self.modelList[i].ClassifyExample(tempV, appendExamples=appendExample)))
 
     return votes
 
@@ -295,6 +292,7 @@ class Composite(object):
       example = self._RemapInput(example)
     if self.GetActivityQuantBounds():
       example = self.QuantizeActivity(example)
+      
     if self.quantBounds is not None and 1 in self.quantizationRequirements:
       quantExample = self.QuantizeExample(example, self.quantBounds)
     else:
@@ -308,15 +306,12 @@ class Composite(object):
     votes = [0] * self.nPossibleVals[-1]
     for i in onlyModels:
       res = self.modelVotes[i]
-      votes[res] = votes[res] + self.countList[i]
+      votes[res] += self.countList[i]
 
     totVotes = sum(votes)
     res = numpy.argmax(votes)
     conf = float(votes[res]) / float(totVotes)
-    if conf > threshold:
-      return res, conf
-    else:
-      return -1, conf
+    return res if conf > threshold else -1, conf
 
   def GetVoteDetails(self):
     """ returns the votes from the last classification
@@ -347,14 +342,9 @@ class Composite(object):
 
     if order is None:
       return inputVect
-    remappedInput = [None] * len(order)
-
-    for i in range(len(order) - 1):
-      remappedInput[i] = inputVect[order[i]]
-    if order[-1] == -1:
-      remappedInput[-1] = 0
-    else:
-      remappedInput[-1] = inputVect[order[-1]]
+    
+    remappedInput = [inputVect[order[i]] for i in range(len(order))]
+    remappedInput[-1] = 0 if order[-1] == -1 else inputVect[order[-1]]
     return remappedInput
 
   def GetInputOrder(self):
@@ -462,7 +452,7 @@ class Composite(object):
     for i in range(nTries):
       trainSet = None
 
-      if (hasattr(self, '_modelFilterFrac')) and (self._modelFilterFrac != 0):
+      if hasattr(self, '_modelFilterFrac') and self._modelFilterFrac != 0:
         trainIdx, _ = DataUtils.FilterData(trainExamples, self._modelFilterVal,
                                            self._modelFilterFrac, -1, indicesOnly=1)
         trainSet = [trainExamples[x] for x in trainIdx]
@@ -476,8 +466,7 @@ class Composite(object):
         model, frac2 = pruner(model, model.GetTrainingExamples(), model.GetTestExamples(),
                               minimizeTestErrorOnly=0)
         frac = frac2
-      if (hasattr(self, '_modelFilterFrac') and self._modelFilterFrac != 0 and
-          hasattr(model, '_trainIndices')):
+      if hasattr(self, '_modelFilterFrac') and self._modelFilterFrac != 0 and hasattr(model, '_trainIndices'):
         # correct the model's training indices:
         trainIndices = [trainIdx[x] for x in model._trainIndices]
         model._trainIndices = trainIndices
@@ -485,6 +474,7 @@ class Composite(object):
       self.AddModel(model, frac, needsQuantization)
       if not silent and (nTries < 10 or i % (nTries / 10) == 0):
         print('Cycle: % 4d' % (i))
+        
       if progressCallback is not None:
         progressCallback(i)
 
@@ -568,10 +558,7 @@ class Composite(object):
 
 
     """
-    if sortOnError:
-      order = numpy.argsort(self.errList)
-    else:
-      order = numpy.argsort(self.countList)
+    order = numpy.argsort(self.errList if sortOnError else self.countList)
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...

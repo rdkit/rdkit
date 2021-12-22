@@ -6,12 +6,10 @@
 
 """
 
-
 import copy
 import math
 
 import numpy
-
 
 numericTypes = (int, float)
 
@@ -173,12 +171,10 @@ class MLDataSet(object):
         """ Returns the result fields from each example
 
         """
-        if self.GetNResults() > 1:
-            v = self.GetNResults()
-            res = [x[-v:] for x in self.data]
-        else:
-            res = [x[-1] for x in self.data]
-        return res
+        v = self.GetNResults()
+        if v > 1:
+            return [x[-v:] for x in self.data]
+        return [x[-1] for x in self.data]
 
     def GetVarNames(self):
         return self.varNames
@@ -265,12 +261,10 @@ class MLQuantDataSet(MLDataSet):
         """ Returns the result fields from each example
 
         """
-        if self.GetNResults() > 1:
-            v = self.GetNResults()
-            res = [x[-v:] for x in self.data]
-        else:
-            res = [x[-1] for x in self.data]
-        return res
+        v = self.GetNResults()
+        if v > 1:
+            return [x[-v:] for x in self.data]
+        return [x[-1] for x in self.data]
 
     def __init__(self, data, nVars=None, nPts=None, nPossibleVals=None, qBounds=None, varNames=None,
                  ptNames=None, nResults=1):

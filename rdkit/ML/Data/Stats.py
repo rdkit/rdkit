@@ -44,7 +44,7 @@ def FormCovarianceMatrix(mat):
 
   """
   nPts = mat.shape[0]
-  sumVect = sum(mat)
+  sumVect = sum(mat) # np.sum is better
   sumVect /= float(nPts)
   for row in mat:
     row -= sumVect
@@ -222,8 +222,6 @@ def GetConfidenceInterval(sd, n, level=95):
   idx = 0
   while idx < len(tTable) and tTable[idx][0] < dofs:
     idx += 1
-  if idx < len(tTable):
-    t = tTable[idx][col]
-  else:
-    t = tTable[-1][col]
+  
+  t = tTable[idx if idx < len(tTable) else -1][col]  
   return t * sem

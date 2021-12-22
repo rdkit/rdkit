@@ -17,7 +17,7 @@ def EuclideanDist(pi, pj):
   return numpy.sqrt(dv * dv)
 
 
-def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist, reordering=False):
+def ClusterData(data, nPts, distThresh: float, isDistData=False, distFunc=EuclideanDist, reordering=False):
   """  clusters the data points passed in and returns the list of clusters
 
     **Arguments**
@@ -59,9 +59,7 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
   """
   if isDistData and len(data) > (nPts * (nPts - 1) / 2):
     logger.warning("Distance matrix is too long")
-  nbrLists = [None] * nPts
-  for i in range(nPts):
-    nbrLists[i] = []
+  nbrLists = [[] for _ in range(nPts)]
 
   dmIdx = 0
   for i in range(nPts):
@@ -71,9 +69,11 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
       else:
         dij = data[dmIdx]
         dmIdx += 1
+        
       if dij <= distThresh:
         nbrLists[i].append(j)
         nbrLists[j].append(i)
+        
   # sort by the number of neighbors:
   tLists = [(len(y), x) for x, y in enumerate(nbrLists)]
   tLists.sort(reverse=True)
@@ -92,6 +92,7 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
     # update the number of neighbors:
     # remove all members of the new cluster from the list of
     # neighbors and reorder the tLists
+    
     if reordering:
       # get the list of affected molecules, i.e. all molecules
       # which have at least one of the members of the new cluster
@@ -107,7 +108,9 @@ def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist
         # update the number of neighbors
         nbrLists[y1] = set(nbrLists[y1]).difference(tRes)
         tLists[x] = (len(nbrLists[y1]), y1)
+        
       # now reorder the list
       tLists.sort(reverse=True)
     res.append(tuple(tRes))
+    
   return tuple(res)

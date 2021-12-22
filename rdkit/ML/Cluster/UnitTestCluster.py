@@ -97,12 +97,8 @@ class TestCase(unittest.TestCase):
         sz = 5
         dataP = numpy.random.random((nPts, sz))
         newClust = Murtagh.ClusterData(dataP, nPts, Murtagh.UPGMA)[0]
-        ds = []
-        for i in range(nPts):
-            for j in range(i):
-                d = dataP[i] - dataP[j]
-                ds.append(sum(d * d))
-        ds = numpy.array(ds)
+
+        ds = numpy.array([sum((dataP[i] - dataP[j]) ** 2) for i in range(nPts) for j in range(i)], dtype='float')
         newClust2 = Murtagh.ClusterData(ds, nPts, Murtagh.UPGMA, isDistData=1)[0]
 
         assert len(newClust) == len(newClust2), 'length mismatch2'

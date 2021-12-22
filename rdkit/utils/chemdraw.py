@@ -17,9 +17,8 @@ import tempfile, os, time
 try:
   import pythoncom
   from win32com.client import gencache, Dispatch, constants
-  import win32com.client.gencache
-  cdxModule = win32com.client.gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}", 0, 7,
-                                                    0)
+
+  cdxModule = gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}", 0, 7, 0)
 except Exception:
   cdxModule = None
   _cdxVersion = 0
@@ -39,13 +38,18 @@ selectItem = None
 cleanItem = None
 centerItem = None
 
+def _GetTime() -> float:
+  try:
+    return time.perf_counter()
+  except (AttributeError, ImportError, Exception) as e:
+    return time.time()
 
 def StartChemDraw(visible=True, openDoc=False, showDoc=False):
   """ launches chemdraw """
   global cdApp, theDoc, theObjs, selectItem, cleanItem, centerItem
   if cdApp is not None:
     # if called more than once, do a restart
-    holder = None
+    holder = None # Should be noticed as unusable variables and not available
     selectItem = None
     cleanItem = None
     centerItem = None
@@ -61,10 +65,7 @@ def StartChemDraw(visible=True, openDoc=False, showDoc=False):
     theDoc = None
   selectItem = cdApp.MenuBars(1).Menus(2).MenuItems(8)
   cleanItem = cdApp.MenuBars(1).Menus(5).MenuItems(6)
-  if _cdxVersion == 6:
-    centerItem = cdApp.MenuBars(1).Menus(4).MenuItems(1)
-  else:
-    centerItem = cdApp.MenuBars(1).Menus(4).MenuItems(7)
+  centerItem = cdApp.MenuBars(1).Menus(4).MenuItems(1 if _cdxVersion == 6 else 7)
   if visible:
     cdApp.Visible = 1
     if theDoc and showDoc:
@@ -164,16 +165,16 @@ def CDXGrab(outFormat='chemical/x-mdl-molfile'):
   """
   global cdApp, theDoc
   if cdApp is None:
-    res = ""
-  else:
-    cdApp.Visible = 1
-    if not cdApp.ActiveDocument:
-      ReactivateChemDraw()
-    try:
-      res = cdApp.ActiveDocument.Objects.GetData(outFormat)
-    except Exception:
-      res = ""
-  return res
+    return ""
+  
+  cdApp.Visible = 1
+  if not cdApp.ActiveDocument:
+    ReactivateChemDraw()
+  try:
+    return cdApp.ActiveDocument.Objects.GetData(outFormat)
+  except Exception:
+    pass
+  return ''
 
 
 def CloseChemdraw():
@@ -310,10 +311,7 @@ def Add3DCoordsToMol(data, format, props={}):
   global c3dApp
   if c3dApp is None:
     StartChem3D()
-  if format != 'chemical/mdl-molfile':
-    molData = CDXClean(data, format, 'chemical/mdl-molfile')
-  else:
-    molData = data
+  molData = CDXClean(data, format, 'chemical/mdl-molfile') if format != 'chemical/mdl-molfile' else data
   with tempfile.NamedTemporaryFile(suffix='.mol', delete=False) as molF:
     molF.write(molData)
   doc = c3dApp.Documents.Open(molF.name)
@@ -381,7 +379,7 @@ def OptimizeSDFile(inFileName, outFileName, problemFileName='problems.sdf', rest
   nextLine = inFile.readline()
   skip = 0
   nDone = 0
-  t1 = time.time()
+  t1 = _GetTime()
   while nextLine != '':
     if nextLine.find('M  END') != -1:
       lines.append(nextLine)
@@ -397,10 +395,10 @@ def OptimizeSDFile(inFileName, outFileName, problemFileName='problems.sdf', rest
         skip = 0
         lines = [newMolBlock]
     elif nextLine.find('$$$$') != -1:
-      t2 = time.time()
       nDone += 1
-      print('finished molecule %d in %f seconds' % (nDone, time.time() - t1))
-      t1 = time.time()
+      print('finished molecule %d in %f seconds' % (nDone, _GetTime() - t1))
+      
+      t1 =  _GetTime()
       if nDone % restartEvery == 0:
         CloseChem3D()
         StartChem3D()

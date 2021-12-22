@@ -6,6 +6,8 @@
 
 """
 
+import sys
+import doctest
 
 def CompactListRepr(lst):
   """
@@ -40,6 +42,7 @@ def CompactListRepr(lst):
     else:
       count += 1
     i += 1
+    
   if count != 0:
     label = '[%s]' % repr(last)
     if count > 1:
@@ -54,8 +57,6 @@ def CompactListRepr(lst):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

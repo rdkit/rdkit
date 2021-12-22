@@ -14,7 +14,6 @@ import struct
 import sys
 import doctest
 from rdkit import DataStructs
-from collections import defaultdict
 
 
 class VectCollection(object):
@@ -205,7 +204,6 @@ class VectCollection(object):
         copied = list(self.__vects.items())
         for k, v in copied:
             self._DetachVectsByBit(dictKey=k, dictValue=v, bit=bit, condition=False)
-            
 
     def DetachVectsMatchingBit(self, bit):
         copied = list(self.__vects.items())
@@ -256,7 +254,7 @@ class VectCollection(object):
         """        
         reverseVects = {}
         for k, v in self.__vects.items():
-            v_new = list(v.GetOnBits())
+            v_new = tuple(list(v.GetOnBits())) # Fixed for hashable object
             if v_new not in reverseVects:
                 reverseVects[v_new] = k
         
@@ -268,7 +266,6 @@ class VectCollection(object):
             self.__vects = newVects
         return None
         
-
     #
     # set up our support for pickling:
     #

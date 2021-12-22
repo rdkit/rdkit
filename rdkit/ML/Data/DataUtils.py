@@ -120,7 +120,6 @@ def ReadVars(inFile):
         qBounds.append(splitLine[1][:-2])
         inLine = inFile.readline()
     for i in range(len(qBounds)):
-
         if qBounds[i] != '':
             l = qBounds[i].split(',')
             qBounds[i] = []
@@ -227,8 +226,7 @@ def BuildQuantDataSet(fileName):
     with open(fileName, 'r') as inFile:
         varNames, qBounds = ReadVars(inFile)
         ptNames, examples = ReadQuantExamples(inFile)
-    data = MLData.MLQuantDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
-    return data
+    return MLData.MLQuantDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
 
 
 def BuildDataSet(fileName):
@@ -246,8 +244,7 @@ def BuildDataSet(fileName):
     with open(fileName, 'r') as inFile:
         varNames, qBounds = ReadVars(inFile)
         ptNames, examples = ReadGeneralExamples(inFile)
-    data = MLData.MLDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
-    return data
+    return MLData.MLDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
 
 
 def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
@@ -294,7 +291,8 @@ def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
 
     nPts = len(data)
     for i in range(nPts):
-        for col in cols[:]:
+        copied = cols.copy()
+        for col in copied:
             d = data[i][order[col]]
             if type(d) in numericTypes:
                 if int(d) == d:
@@ -343,11 +341,12 @@ def TakeEnsemble(vect, ensembleIds, isDataVect=False):
 
     """
     if isDataVect:
-        ensembleIds = [x + 1 for x in ensembleIds]
-        vect = [vect[0]] + [vect[x] for x in ensembleIds] + [vect[-1]]
-    else:
-        vect = [vect[x] for x in ensembleIds]
-    return vect
+        arr = [0] * (len(ensembleIds) + 2)
+        for i, x in enumerate(ensembleIds):
+            arr[i + 1] = vect[x + 1]
+        arr[0], arr[-1] = vect[0], vect[-1]
+        return arr
+    return [vect[x] for x in ensembleIds]
 
 
 def DBToData(dbName, tableName, user='sysdba', password='masterkey', dupCol=-1, what='*', where='',
@@ -421,10 +420,7 @@ def TextToData(reader, ignoreCols=[], onlyCols=None):
 
     varNames = next(reader)
     if not onlyCols:
-        keepCols = []
-        for i, name in enumerate(varNames):
-            if name not in ignoreCols:
-                keepCols.append(i)
+        keepCols = [i for i, name in enumerate(varNames) if name not in ignoreCols]
     else:
         keepCols = [-1] * len(onlyCols)
         for i, name in enumerate(varNames):
@@ -657,7 +653,8 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
         if runDetails:
             runDetails.randomized = 1
         nPossible = dataSet.GetNPossibleVals()[-1]
-        acts = [random.randint(0, nPossible) for _ in len(examples)]
+        acts = [random.randint(0, nPossible) for _ in len(examples)] # This code must not be reached
+    
     for i in range(nPts):
         tmp = dataSet[i]
         tmp[-1] = acts[i]

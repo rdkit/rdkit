@@ -3,8 +3,9 @@
 #    All Rights Reserved
 #
 
-
 import random
+import sys
+import doctest
 
 from rdkit import RDRandom
 
@@ -298,8 +299,6 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
-  import doctest
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

@@ -23,11 +23,9 @@ Other compatibility notes:
 
 """
 
-
 import numpy
 
 from rdkit.ML.Composite import Composite
-
 
 class BayesComposite(Composite.Composite):
   """a composite model using Bayesian statistics in the Decision Proxy
@@ -66,15 +64,14 @@ class BayesComposite(Composite.Composite):
         example = self._RemapInput(example)
       if self.GetActivityQuantBounds():
         example = self.QuantizeActivity(example)
+      
       if self.quantBounds is not None and 1 in self.quantizationRequirements:
         quantExample = self.QuantizeExample(example, self.quantBounds)
       else:
         quantExample = []
 
       trueRes = int(example[-1])
-
       votes = self.CollectVotes(example, quantExample)
-
       for i in range(nModels):
         self.condProbs[i][votes[i], trueRes] += 1
 
@@ -116,6 +113,7 @@ class BayesComposite(Composite.Composite):
       example = self._RemapInput(example)
     if self.GetActivityQuantBounds():
       example = self.QuantizeActivity(example)
+    
     if self.quantBounds is not None and 1 in self.quantizationRequirements:
       quantExample = self.QuantizeExample(example, self.quantBounds)
     else:
@@ -134,10 +132,8 @@ class BayesComposite(Composite.Composite):
     conf = votes[res] / len(self)
     if verbose:
       print(votes, conf, example[-1])
-    if conf > threshold:
-      return res, conf
-    else:
-      return -1, conf
+    
+    return res if conf > threshold else -1, conf  
 
   def __init__(self):
     Composite.Composite.__init__(self)
@@ -153,7 +149,7 @@ def CompositeToBayesComposite(obj):
 
   """
   if obj.__class__ == BayesComposite:
-    return
+    return None
   elif obj.__class__ == Composite.Composite:
     obj.__class__ = BayesComposite
     obj.resultProbs = None
@@ -165,7 +161,7 @@ def BayesCompositeToComposite(obj):
 
   """
   if obj.__class__ == Composite.Composite:
-    return
+    return None
   elif obj.__class__ == BayesComposite:
     obj.__class__ = Composite.Composite
     obj.resultProbs = None

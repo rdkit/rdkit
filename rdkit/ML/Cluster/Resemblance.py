@@ -104,16 +104,29 @@ def FindMinValInList(mat, nObjs, minIdx=None):
   assert len(mat) == nObjs * (nObjs - 1) / 2, 'bad matrix length in FindMinValInList'
   if minIdx is None:
     minIdx = numpy.argmin(mat)
-
+  
+  """
+  OLD CODE: Delete this if accept the pull request
+  
   nSoFar = 0
   col = 0
   while nSoFar <= minIdx:
-    col = col + 1
+    col += 1
     nSoFar += col
 
   row = minIdx - nSoFar + col
   return row, col, mat[minIdx]
-
+  
+  """
+  nSoFar = (minIdx + 0) * (minIdx + 1) / 2  # Always integer
+  if not isinstance(nSoFar, int):
+    if int(nSoFar) == nSoFar:
+      nSoFar = int(nSoFar)
+    else:
+      raise ValueError('nSoFar is not an integer, which is a result of non-integer of minIdx')
+  
+  return 2 * minIdx - nSoFar, minIdx, mat[minIdx] # row, col, value
+  
 
 def ShowMetricMat(metricMat, nObjs):
   """ displays a metric matrix

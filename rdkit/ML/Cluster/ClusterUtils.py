@@ -29,14 +29,15 @@ def GetNodeList(cluster):
   """
   if len(cluster) == 1:
     return [cluster]
-  else:
-    children = cluster.GetChildren()
-    children.sort(key=lambda x: len(x), reverse=True)
-    res = []
-    for child in children:
-      res += GetNodeList(child)
-    res += [cluster]
-    return res
+  
+  children = cluster.GetChildren()
+  children.sort(key=lambda x: len(x), reverse=True)
+  res = []
+  for child in children:
+    res += GetNodeList(child)
+  res += [cluster]
+  return res
+
 
 
 def GetNodesDownToCentroids(cluster, above=1):
@@ -51,15 +52,15 @@ def GetNodesDownToCentroids(cluster, above=1):
     cluster._aboveCentroid = above
   if len(cluster) == 1:
     return [cluster]
-  else:
-    res = []
-    children = cluster.GetChildren()
-    children.sort(key=lambda x: len(x), reverse=True)
-    #     children.sort(lambda x, y: cmp(len(y), len(x)))
-    for child in children:
-      res = res + GetNodesDownToCentroids(child, above)
-    res = res + [cluster]
-    return res
+  
+  res = []
+  children = cluster.GetChildren()
+  children.sort(key=lambda x: len(x), reverse=True)
+  #     children.sort(lambda x, y: cmp(len(y), len(x)))
+  for child in children:
+    res = res + GetNodesDownToCentroids(child, above)
+  res = res + [cluster]
+  return res
 
 
 def FindClusterCentroidFromDists(cluster, dists):
@@ -87,24 +88,19 @@ def FindClusterCentroidFromDists(cluster, dists):
     # loop over others and add'em up
     for other in pts:
       if other != pt:
-        if other > pt:
-          row, col = pt, other
-        else:
-          row, col = other, pt
+        row, col = (pt, other) if other > pt else (other, pt)
         dAccum += dists[col * (col - 1) / 2 + row]
         if dAccum >= best:
           # minor efficiency hack
           break
+        
     if dAccum < best:
       best = dAccum
       bestIdx = pt
-  for i in range(len(pts)):
-    pt = pts[i]
+      
+  for i, pt in enumerate(pts):
     if pt != bestIdx:
-      if pt > bestIdx:
-        row, col = bestIdx, pt
-      else:
-        row, col = pt, bestIdx
+      row, col = (bestIdx, pt) if pt > bestIdx else (pt, bestIdx)
       children[i]._distToCenter = dists[col * (col - 1) / 2 + row]
     else:
       children[i]._distToCenter = 0.0
@@ -123,6 +119,7 @@ def _BreadthFirstSplit(cluster, n):
     raise ValueError('Cannot split cluster of length %d into %d pieces' % (len(cluster), n))
   if len(cluster) == n:
     return cluster.GetPoints()
+  
   clusters = [cluster]
   nxtIdx = 0
   for _ in range(n - 1):
@@ -146,6 +143,7 @@ def _HeightFirstSplit(cluster, n):
     raise ValueError('Cannot split cluster of length %d into %d pieces' % (len(cluster), n))
   if len(cluster) == n:
     return cluster.GetPoints()
+  
   clusters = [cluster]
   for _ in range(n - 1):
     nxtIdx = 0
@@ -178,7 +176,5 @@ def SplitIntoNClusters(cluster, n, breadthFirst=True):
       - a list of sub clusters
 
   """
-  if breadthFirst:
-    return _BreadthFirstSplit(cluster, n)
-  else:
-    return _HeightFirstSplit(cluster, n)
+  return _BreadthFirstSplit(cluster, n) if breadthFirst else _HeightFirstSplit(cluster, n)
+  

@@ -61,10 +61,8 @@ def _ToClusters(data, nPts, ia, ib, crit, isDistData=0):
       a cluster tree, which is returned in a single-entry list
 
     """
-    cs = [None] * nPts
-    for i in range(nPts):
-        cs[i] = Clusters.Cluster(metric=0.0, data=i, index=(i + 1))
-
+    cs = [Clusters.Cluster(metric=0.0, data=i, index=(i + 1)) for i in range(nPts)]
+    
     nClus = len(ia) - 1
     for i in range(nClus):
         idx1 = ia[i] - 1
@@ -108,6 +106,5 @@ def ClusterData(data, nPts, method, isDistData=0):
         ia, ib, crit = MurtaghCluster(data, nPts, sz, method)
     else:
         ia, ib, crit = MurtaghDistCluster(data, nPts, method)
-    c = _ToClusters(data, nPts, ia, ib, crit, isDistData=isDistData)
-
-    return c
+    
+    return _ToClusters(data, nPts, ia, ib, crit, isDistData=isDistData)

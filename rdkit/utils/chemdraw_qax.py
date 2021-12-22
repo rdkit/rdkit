@@ -5,10 +5,11 @@
 #
 from qt import *
 import sys
+import container
 if sys.platform == 'win32':
   from rdkit.qtGui.qtActiveX import MakeActiveXClass
   import win32com.client.gencache
-  import win32clipboard
+  import win32clipboard # Unusable in this module ?
   try:
     cdxModule = win32com.client.gencache.EnsureModule("{AF2D2DBA-75E4-4123-BC0B-A57BD5C5C5D2}", 0,
                                                       7, 0)
@@ -68,7 +69,6 @@ class ChemdrawPanel(QWidget):
 
 # demo code
 if __name__ == '__main__':
-  import sys, container
   a = QApplication(sys.argv)
   widg = QMainWindow()
   panel = ChemdrawPanel(widg)
