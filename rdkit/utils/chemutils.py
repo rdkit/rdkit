@@ -77,7 +77,7 @@ def GetAtomicData(atomDict, descriptorsDesired, dBase=_atomDbName, table='atomic
 def SplitComposition(compStr):
     """ Takes a simple chemical composition and turns into a list of element,# pairs.
 
-        i.e. 'Fe3Al' -> [('Fe',3),('Al',1)]
+        i.e. 'Fe3Al' -> [('Fe', 3),('Al', 1)]
 
         **Arguments**
 
@@ -97,7 +97,7 @@ def SplitComposition(compStr):
     theExpr = re.compile(target)
 
     matches = theExpr.findall(compStr)
-    return [(match[0], float(match[1])) if len(match[1] > 0) else (match[0], 1) for match in matches]
+    return [(match[0], float(match[1])) if len(match[1]) > 0 else (match[0], 1) for match in matches]
 
 
 def ConfigToNumElectrons(config, ignoreFullD=0, ignoreFullF=0):
