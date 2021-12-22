@@ -14,6 +14,7 @@ import struct
 import sys
 import doctest
 from rdkit import DataStructs
+from collections import defaultdict
 
 
 class VectCollection(object):
@@ -190,31 +191,50 @@ class VectCollection(object):
         if self.__needReset:
             self.Reset()
         return self.__orVect.GetOnBits()
-
+    
+    def _DetachVectsByBit(self, dictKey, dictValue, bit, condition: bool):
+        result = dictValue.GetBit(bit)
+        if (not result and not condition) or (result and condition): # Same condition as request
+            self.__vects.pop(dictKey, None)
+            if not self.__needReset:
+                self.__needReset = True
+            return True
+        return False
+    
     def DetachVectsNotMatchingBit(self, bit):
-        copied = list(self.__vects.items)
+        copied = list(self.__vects.items())
         for k, v in copied:
-            if not v.GetBit(bit):
-                self.__vects.pop(k, None)
-                if not self.__needReset:
-                    self.__needReset = True
+            self._DetachVectsByBit(dictKey=k, dictValue=v, bit=bit, condition=False)
+            
 
     def DetachVectsMatchingBit(self, bit):
-        copied = list(self.__vects.items)
+        copied = list(self.__vects.items())
         for k, v in copied:
-            if v.GetBit(bit):
-                self.__vects.pop(k, None)
-                if not self.__needReset:
-                    self.__needReset = True
+            self._DetachVectsByBit(dictKey=k, dictValue=v, bit=bit, condition=True)
 
+    def DetachVectsNotMatchingBits(self, bits):
+        copied = list(self.__vects.items())
+        for k, v in copied:
+            for bit in bits:
+                if self._DetachVectsByBit(dictKey=k, dictValue=v, bit=bit, condition=False):
+                    break
+
+    def DetachVectsMatchingBits(self, bits):
+        copied = list(self.__vects.items())
+        for k, v in copied:
+            for bit in bits:
+                if self._DetachVectsByBit(dictKey=k, dictValue=v, bit=bit, condition=True):
+                    break
+    
     def Uniquify(self, verbose=False):
-        obls = {}
-        for k, v in self.__vects.items():
-            obls[k] = list(v.GetOnBits())
+        # Uniquify the VectCollection by values --> All values must be unique
+        """
+        OLD CODE (but updated once): Delete it if accept the pull request
+        obls = {k: list(v.GetOnBits()) for k, v in self.__vects.items()}
 
         keys = list(self.__vects.keys())
-        nKeys = len(keys)
-        keep = list(self.__vects.keys())
+        nKeys, keep = len(keys), keys.copy()       
+        
         for i in range(nKeys):
             k1 = keys[i]
             if k1 in keep:
@@ -227,13 +247,27 @@ class VectCollection(object):
                         if obl1 == obl2:
                             keep.remove(k2)
 
-        self.__needsReset = True
-        tmp = {}
-        for k in keep:
-            tmp[k] = self.__vects[k]
+        self.__needReset = True
+        newVects = {k: self.__vects[k] for k in keep}
         if verbose:
-            print('uniquify:', len(self.__vects), '->', len(tmp))
-        self.__vects = tmp
+            print('uniquify:', len(self.__vects), '->', len(newVects))
+        self.__vects = newVects
+        
+        """        
+        reverseVects = {}
+        for k, v in self.__vects.items():
+            v_new = list(v.GetOnBits())
+            if v_new not in reverseVects:
+                reverseVects[v_new] = k
+        
+        if len(reverseVects) != self.__vects:
+            self.__needReset = True
+            newVects = {k: self.__vects[k] for _, k in reverseVects.items()}
+            if verbose:
+                print('uniquify:', len(self.__vects), '->', len(newVects))
+            self.__vects = newVects
+        return None
+        
 
     #
     # set up our support for pickling:

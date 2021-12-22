@@ -74,7 +74,7 @@ class SmartsFilter(FilterNode):
       if isinstance(pattern, (str, bytes)):
         mol = Chem.MolFromSmarts(pattern)
         if not mol:
-          raise ValueError('bad smarts: %s' % (p))
+          raise ValueError('bad smarts:', pattern)
         pattern = mol
       targets[i] = (pattern, count)
     self._patterns = tuple(targets)
