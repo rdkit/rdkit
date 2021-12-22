@@ -62,7 +62,7 @@ class SigFactory(object):
         nPts, combo, scaffold = self.GetBitInfo(bitIdx)
         fams = self.GetFeatFamilies()
         labels = [fams[x] for x in combo]
-        dMat = numpy.zeros((nPts, nPts), numpy.int)
+        dMat = numpy.zeros((nPts, nPts), dtype='int')
         dVect = Utils.nPointDistDict[nPts]
         for idx in range(len(dVect)):
             i, j = dVect[idx]

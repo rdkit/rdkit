@@ -41,7 +41,7 @@ def VSA_EState_(mol, bins=None, force=1):
   propContribs = EStateIndices_(mol, force=force)
   volContribs = VSAContribs_(mol)
 
-  ans = numpy.zeros(len(bins) + 1, numpy.float)
+  ans = numpy.zeros(len(bins) + 1, dtype='float')
   for i, prop in enumerate(propContribs):
     if prop is not None:
       nbin = bisect.bisect_right(bins, volContribs[i + 1])
@@ -72,7 +72,7 @@ def EState_VSA_(mol, bins=None, force=1):
   propContribs = EStateIndices_(mol, force=force)
   volContribs = VSAContribs_(mol)
 
-  ans = numpy.zeros(len(bins) + 1, numpy.float)
+  ans = numpy.zeros(len(bins) + 1, dtype='float')
   for i, prop in enumerate(propContribs):
     if prop is not None:
       nbin = bisect.bisect_right(bins, prop)

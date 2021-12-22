@@ -34,12 +34,13 @@ class TestCase(unittest.TestCase):
 
   def testGithub1287(self):
     smis = ('CCC', )
+    print(Descriptors._descList) # debugging
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
       for nm, fn in Descriptors._descList:
         try:
-          _ = fn(m)
+          fn(m)
         except Exception:
           import traceback
           traceback.print_exc()
@@ -47,12 +48,13 @@ class TestCase(unittest.TestCase):
 
   def testBadAtomHandling(self):
     smis = ('CC[Pu]', 'CC[*]')
+    print(Descriptors._descList) # debugging
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
       for nm, fn in Descriptors._descList:
         try:
-          v = fn(m)
+          fn(m)
         except RuntimeError:
           # 3D descriptors fail since the mol has no conformers
           pass

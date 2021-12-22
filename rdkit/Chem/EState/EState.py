@@ -44,7 +44,7 @@ def EStateIndices(mol, force=True):
 
   tbl = Chem.GetPeriodicTable()
   nAtoms = mol.GetNumAtoms()
-  Is = numpy.zeros(nAtoms, numpy.float)
+  Is = numpy.zeros(nAtoms, dtype='float')
   for i in range(nAtoms):
     at = mol.GetAtomWithIdx(i)
     atNum = at.GetAtomicNum()
@@ -54,9 +54,9 @@ def EStateIndices(mol, force=True):
       dv = tbl.GetNOuterElecs(atNum) - h
       N = GetPrincipleQuantumNumber(atNum)
       Is[i] = (4. / (N * N) * dv + 1) / d
-  dists = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0)
-  dists += 1
-  accum = numpy.zeros(nAtoms, numpy.float)
+  dists = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0) + 1
+  
+  accum = numpy.zeros(nAtoms, dtype='float')
   for i in range(nAtoms):
     for j in range(i + 1, nAtoms):
       p = dists[i, j]

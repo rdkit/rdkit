@@ -21,8 +21,8 @@ class Pharmacophore:
   def __init__(self, feats, initMats=True):
     self._initializeFeats(feats)
     nf = len(feats)
-    self._boundsMat = numpy.zeros((nf, nf), numpy.float)
-    self._boundsMat2D = numpy.zeros((nf, nf), numpy.int)
+    self._boundsMat = numpy.zeros((nf, nf), dtype='float')
+    self._boundsMat2D = numpy.zeros((nf, nf), dtype='int')
     if initMats:
       self._initializeMatrices()
 

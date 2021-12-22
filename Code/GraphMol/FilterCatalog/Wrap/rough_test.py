@@ -37,7 +37,6 @@ it is intended to be shallow but broad.
 
 import doctest, unittest, os
 import pickle
-from rdkit import RDConfig
 from rdkit.RDLogger import logger
 logger = logger()
 from rdkit import Chem
@@ -45,7 +44,6 @@ from rdkit.Chem import rdfiltercatalog
 from rdkit.Chem import FilterCatalog, rdMolDescriptors
 from rdkit.Chem.FilterCatalog import FilterCatalogParams
 from rdkit.Chem.FilterCatalog import FilterMatchOps
-from rdkit import DataStructs
 
 
 def load_tests(loader, tests, ignore):
@@ -67,10 +65,7 @@ class TestCase(unittest.TestCase):
     matcher.SetMinCount(1)
 
     entry = FilterCatalog.FilterCatalogEntry("Bar", matcher)
-    if FilterCatalog.FilterCatalogCanSerialize():
-      pickle = entry.Serialize()
-    else:
-      pickle = None
+    pickle = entry.Serialize() if FilterCatalog.FilterCatalogCanSerialize() else None
 
     self.assertTrue(entry.GetDescription() == "Bar")
     self.assertTrue(matcher.GetMinCount() == 1)
@@ -87,7 +82,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(str(matcher), "Unnamed SmartsMatcher")
     self.assertTrue(matcher.GetMinCount() == 1)
     self.assertTrue(matcher.HasMatch(mol))
-    matches = matcher.GetMatches(mol)
+    matcher.GetMatches(mol)
 
     matcher = FilterCatalog.ExclusionList()
     matcher.SetExclusionPatterns([matcher])
@@ -105,7 +100,7 @@ class TestCase(unittest.TestCase):
     matcher = FilterCatalog.SmartsMatcher("Five aromatic carbons", pat)
     self.assertTrue(matcher.GetMinCount() == 1)
     self.assertTrue(matcher.HasMatch(mol))
-    matches = matcher.GetMatches(mol)
+    matcher.GetMatches(mol)
 
     matcher2 = FilterCatalog.ExclusionList()
     matcher2.SetExclusionPatterns([matcher])
@@ -168,7 +163,7 @@ class TestCase(unittest.TestCase):
             elif key == "Scope":
               self.assertEquals(entry.GetProp(key), "PAINS filters (family A)")
             elif key == "FilterSet":
-              self.assertEquals(entry.GetProp(key), "PAINS_A")
+              self.assertEqual(entry.GetProp(key), "PAINS_A")
 
           self.assertEqual(entry.GetDescription(), "hzone_phenol_A(479)")
           result = catalog.GetMatches(mol)
@@ -355,7 +350,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(entry.GetDescription() == "MW Violation")
 
     mol = Chem.MolFromSmiles("c1ccccc1")
-    catalogEntry = fc.GetFirstMatch(mol)
+    fc.GetFirstMatch(mol)
 
   def testFilterHierarchyMatcher(self):
     # test
