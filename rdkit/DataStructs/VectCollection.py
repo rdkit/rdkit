@@ -192,16 +192,18 @@ class VectCollection(object):
         return self.__orVect.GetOnBits()
 
     def DetachVectsNotMatchingBit(self, bit):
-        for k, v in self.__vects.items():
+        copied = list(self.__vects.items)
+        for k, v in copied:
             if not v.GetBit(bit):
-                del self.__vects[k]
+                self.__vects.pop(k, None)
                 if not self.__needReset:
                     self.__needReset = True
 
     def DetachVectsMatchingBit(self, bit):
-        for k, v in self.__vects.items():
+        copied = list(self.__vects.items)
+        for k, v in copied:
             if v.GetBit(bit):
-                del self.__vects[k]
+                self.__vects.pop(k, None)
                 if not self.__needReset:
                     self.__needReset = True
 

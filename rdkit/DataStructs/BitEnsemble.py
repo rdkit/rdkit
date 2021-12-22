@@ -37,17 +37,13 @@ class BitEnsemble(object):
 
   def ScoreWithOnBits(self, other):
     """ other must support GetOnBits() """
-    thisBits = self.GetBits()
     obl = other.GetOnBits()
+    thisBits = self.GetBits()
     return len([None for bit in thisBits if bit in obl])
 
   def ScoreWithIndex(self, other):
     """ other must support __getitem__() """
     thisBits = self.GetBits()
-    cnt = 0
-    for bit in thisBits:
-      if other[bit]:
-        cnt += 1
     return len([None for bit in thisBits if other[bit]])
 
 

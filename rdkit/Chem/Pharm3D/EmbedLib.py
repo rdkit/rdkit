@@ -127,7 +127,7 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
   maxVal *= scaleFact
 
   replaceIdx = bounds.shape[0]
-  bm = numpy.zeros((bounds.shape[0] + 1 + int(useDirs), bounds.shape[1] + 1 + int(useDirs)), numpy.float)
+  bm = numpy.zeros((bounds.shape[0] + 1 + int(useDirs), bounds.shape[1] + 1 + int(useDirs)), dtype='float')
   bm[0:bounds.shape[0], 0:bounds.shape[1]] = bounds
   bm[:replaceIdx, replaceIdx] = 1000.
 
@@ -229,7 +229,7 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
   """
   oDim = bm.shape[0]
   dim = oDim + len(excludedVolumes)
-  res = numpy.zeros((dim, dim), numpy.float)
+  res = numpy.zeros((dim, dim), dtype='float')
   res[:oDim, :oDim] = bm
   for i, vol in enumerate(excludedVolumes):
     bmIdx = oDim + i

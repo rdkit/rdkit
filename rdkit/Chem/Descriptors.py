@@ -12,6 +12,7 @@ import sys
 import doctest
 
 from collections import abc  # this won't work in python2, but we don't support that any more
+from typing import Callable
   
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
@@ -23,9 +24,23 @@ from rdkit.Chem.QED import qed
 from rdkit.Chem.EState.EState import MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex, MinAbsEStateIndex
 
 def _isCallable(something):
-  return isinstance(something, abc.Callable) or hasattr(something, '__call__')
+  return isinstance(something, (abc.Callable, Callable)) or hasattr(something, '__call__')
 
-
+def _belongToRDKit(something):
+  try:
+    if 'rdkit' in something.__module__:
+      return True
+  except Exception:
+    pass
+  
+  try:
+    if 'rdkit' in something.__class__.__module__:
+      return True
+  except Exception:
+    pass
+  
+  return False
+  
 _descList = []
 
 
@@ -40,7 +55,7 @@ def _setupDescriptors(namespace):
   otherMods = [Chem]
 
   for nm, thing in tuple(namespace.items()):
-    if nm[0] != '_' and _isCallable(thing):
+    if nm[0] != '_' and _isCallable(thing) and _belongToRDKit(thing):
       _descList.append((nm, thing))
 
   others = []
@@ -48,7 +63,8 @@ def _setupDescriptors(namespace):
     tmp = dir(mod)
     for name in tmp:
       if name[0] != '_':
-        if _isCallable(getattr(mod, name)):
+        thing = getattr(mod, name)
+        if _isCallable(thing) and _belongToRDKit(thing):
           others.append(name)
 
   for mod in mods:
@@ -62,7 +78,7 @@ def _setupDescriptors(namespace):
         if name == 'print_function':
           continue
         thing = getattr(mod, name)
-        if _isCallable(thing):
+        if _isCallable(thing) and _belongToRDKit(thing):
           namespace[name] = thing
           _descList.append((name, thing))
   descList = _descList

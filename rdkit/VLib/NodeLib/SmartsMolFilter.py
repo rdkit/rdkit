@@ -70,7 +70,7 @@ class SmartsFilter(FilterNode):
       counts = [1] * nPatts
       
     targets = [None] * nPatts
-    for i, pattern, count in enumerate(zip(patterns, counts)):
+    for i, (pattern, count) in enumerate(zip(patterns, counts)):
       if isinstance(pattern, (str, bytes)):
         mol = Chem.MolFromSmarts(pattern)
         if not mol:
