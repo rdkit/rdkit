@@ -150,7 +150,7 @@ M  END
 >  <atom.iprop.NumHeavyNeighbors>  (1) 
 2 2 2
 
->  <atom.prop.AtomLabel>  (1) 
+>  <atom.prop.AtomSymbol>  (1)
 C1 N2 C3
 
 >  <atom.bprop.IsCarbon>  (1) 
@@ -170,16 +170,16 @@ $$$$
     suppl.setProcessPropertyLists(false);
     std::unique_ptr<RDKit::ROMol> m(suppl[0]);
     REQUIRE(m);
-    CHECK(m->hasProp("atom.prop.AtomLabel"));
-    CHECK(!m->getAtomWithIdx(0)->hasProp("AtomLabel"));
+    CHECK(m->hasProp("atom.prop.AtomSymbol"));
+    CHECK(!m->getAtomWithIdx(0)->hasProp("AtomSymbol"));
   }
   SECTION("with processing") {
     RDKit::SDMolSupplier suppl;
     suppl.setData(sdf);
     std::unique_ptr<RDKit::ROMol> m(suppl[0]);
     REQUIRE(m);
-    CHECK(m->hasProp("atom.prop.AtomLabel"));
-    CHECK(m->getAtomWithIdx(0)->hasProp("AtomLabel"));
+    CHECK(m->hasProp("atom.prop.AtomSymbol"));
+    CHECK(m->getAtomWithIdx(0)->hasProp("AtomSymbol"));
   }
 }
 

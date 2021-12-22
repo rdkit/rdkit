@@ -14,7 +14,7 @@
 //
 
 #include <GraphMol/QueryOps.h>
-#include <GraphMol/MolDraw2D/AtomLabel.h>
+#include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>

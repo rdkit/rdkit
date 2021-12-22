@@ -28,7 +28,7 @@ namespace RDKit {
 
 class ROMol;
 class RWMol;
-class AtomLabel;
+class AtomSymbol;
 class DrawText;
 
 class DrawMol {
@@ -140,7 +140,7 @@ class DrawMol {
   std::vector<std::unique_ptr<DrawShape>> bonds_;
   std::vector<int> atomicNums_;
   std::vector<std::pair<std::string, OrientType>> atomSyms_;
-  std::vector<std::unique_ptr<AtomLabel>> atomLabels_;
+  std::vector<std::unique_ptr<AtomSymbol>> atomLabels_;
   std::vector<AnnotationType> annotations_;
   std::vector<AnnotationType> legends_;
   std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>> radicals_;

@@ -15,8 +15,8 @@
 // It holds the information needed to draw an atom symbol, including
 // all the extra bits like isotope labels.
 
-#ifndef RDKIT_ATOMLABEL_H
-#define RDKIT_ATOMLABEL_H
+#ifndef RDKIT_ATOMSYMBOL_H
+#define RDKIT_ATOMSYMBOL_H
 
 #include <string>
 
@@ -27,7 +27,7 @@ namespace RDKit {
 
 class MolDraw2D;
 
-class AtomLabel {
+class AtomSymbol {
   friend class DrawMol;
 
   // everything's private because we don't want anyone using it.
@@ -39,13 +39,13 @@ class AtomLabel {
    * @param textDrawer : instance of DrawText to get the character sizes
    * etc.
    */
-  AtomLabel(const std::string &label, int atIdx, OrientType orient,
+  AtomSymbol(const std::string &label, int atIdx, OrientType orient,
             const Point2D &cds, const DrawColour &colour,
             DrawText &textDrawer);
 
-  AtomLabel(const AtomLabel &) = delete;
-  AtomLabel(const AtomLabel &&) = delete;
-  AtomLabel &operator=(const AtomLabel &) = delete;
+  AtomSymbol(const AtomSymbol &) = delete;
+  AtomSymbol(const AtomSymbol &&) = delete;
+  AtomSymbol &operator=(const AtomSymbol &) = delete;
 
   std::string label_;
   int atIdx_;
@@ -69,4 +69,4 @@ class AtomLabel {
 
 } // namespace RDKit
 
-#endif  // RDKIT_ATOMLABEL_H
+#endif  // RDKIT_ATOMSYMBOL_H

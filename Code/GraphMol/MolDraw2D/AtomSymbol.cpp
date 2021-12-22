@@ -13,13 +13,13 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <GraphMol/MolDraw2D/AtomLabel.h>
+#include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
 
 // ****************************************************************************
-AtomLabel::AtomLabel(const std::string &label, int atIdx, OrientType orient,
+AtomSymbol::AtomSymbol(const std::string &label, int atIdx, OrientType orient,
                      const Point2D &cds, const DrawColour &colour,
                      DrawText &textDrawer)
     : label_(label),
@@ -36,7 +36,7 @@ AtomLabel::AtomLabel(const std::string &label, int atIdx, OrientType orient,
 }
 
 // ****************************************************************************
-void AtomLabel::findExtremes(double &xmin, double &xmax, double &ymin,
+void AtomSymbol::findExtremes(double &xmin, double &xmax, double &ymin,
                              double &ymax) const {
   Point2D bl, br, tl, tr, origTrans;
   for (auto rect : rects_) {
@@ -60,7 +60,7 @@ void AtomLabel::findExtremes(double &xmin, double &xmax, double &ymin,
 }
 
 // ****************************************************************************
-void AtomLabel::scale(const Point2D &scaleFactor) {
+void AtomSymbol::scale(const Point2D &scaleFactor) {
   cds_.x *= scaleFactor.x;
   cds_.y *= scaleFactor.y;
   for (auto &rect : rects_) {
@@ -78,12 +78,12 @@ void AtomLabel::scale(const Point2D &scaleFactor) {
 }
 
 // ****************************************************************************
-void AtomLabel::move(const Point2D &trans) {
+void AtomSymbol::move(const Point2D &trans) {
   cds_ += trans;
 }
 
 // ****************************************************************************
-void AtomLabel::draw(MolDraw2D &molDrawer) const {
+void AtomSymbol::draw(MolDraw2D &molDrawer) const {
   std::string o_class = molDrawer.getActiveClass();
   std::string actClass = o_class;
   if (!actClass.empty()) {
@@ -98,7 +98,7 @@ void AtomLabel::draw(MolDraw2D &molDrawer) const {
 }
 
 // ****************************************************************************
-void AtomLabel::drawRects(MolDraw2D &molDrawer) const {
+void AtomSymbol::drawRects(MolDraw2D &molDrawer) const {
   Point2D tl, tr, br, bl, origTrans;
   for (auto &rect : rects_) {
     origTrans = rect->trans_;

@@ -1492,7 +1492,7 @@ Here's a sample block from an SDF that demonstrates all of the features, they ar
   >  <atom.iprop.NumHeavyNeighbors>  (1)
   2 2 2
 
-  >  <atom.prop.AtomLabel>  (1)
+  >  <atom.prop.AtomSymbol>  (1)
   C1 N2 C3
 
   >  <atom.bprop.IsCarbon>  (1)

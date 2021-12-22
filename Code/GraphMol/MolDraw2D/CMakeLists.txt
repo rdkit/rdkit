@@ -28,7 +28,7 @@ rdkit_headers(MolDraw2D.h
   MolDraw2DJS.h
   MolDraw2DUtils.h
   MolDraw2DHelpers.h
-  AtomLabel.h
+  AtomSymbol.h
   DrawMol.h
   DrawShape.h
   DrawText.h
@@ -38,7 +38,7 @@ rdkit_headers(MolDraw2D.h
 )
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
-  MolDraw2DDetails.cpp MolDraw2DUtils.cpp AtomLabel.cpp
+  MolDraw2DDetails.cpp MolDraw2DUtils.cpp AtomSymbol.cpp
   DrawMol.cpp DrawShape.cpp DrawText.cpp DrawTextSVG.cpp
   MolDraw2DJS.cpp DrawTextJS.cpp
   LINK_LIBRARIES

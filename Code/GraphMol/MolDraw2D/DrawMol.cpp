@@ -19,7 +19,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
-#include <GraphMol/MolDraw2D/AtomLabel.h>
+#include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
@@ -192,11 +192,11 @@ void DrawMol::extractAtomSymbols() {
     if (!atSym.first.empty()) {
       DrawColour atCol = getColour(at1->getIdx(), drawOptions_, atomicNums_,
                                    highlightAtoms_, highlightAtomMap_);
-      AtomLabel *al = new AtomLabel(atSym.first, at1->getIdx(), atSym.second,
+      AtomSymbol *al = new AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
                                     atCds_[at1->getIdx()], atCol, textDrawer_);
-      atomLabels_.emplace_back(std::unique_ptr<AtomLabel>(al));
+      atomLabels_.emplace_back(std::unique_ptr<AtomSymbol>(al));
     } else {
-      atomLabels_.emplace_back(std::unique_ptr<AtomLabel>());
+      atomLabels_.emplace_back(std::unique_ptr<AtomSymbol>());
     }
   }
 }
