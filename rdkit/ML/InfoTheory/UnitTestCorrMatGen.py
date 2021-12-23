@@ -18,8 +18,7 @@ def getValLTM(i, j, mat):
     elif j > i:
         id_ = j * (j - 1) // 2 + i
         return mat[id_]
-    else:
-        return 0.0
+    return 0.0
 
 
 class TestCase(unittest.TestCase):
@@ -113,10 +112,7 @@ class TestCase(unittest.TestCase):
         rvc = bcl.MapToClusterScores(tfp)
         self.assertEqual(len(rvc), self.nbits // 2)
         for i in range(self.nbits // 2):
-            if i < self.nbits // 4:
-                self.assertEqual(rvc[i], 2)
-            else:
-                self.assertEqual(rvc[i], 0)
+            self.assertEqual(rvc[i], 2 if i < self.nbits // 4 else 0)
 
         nfp = bcl.MapToClusterFP(tfp)
         self.assertEqual(len(nfp), self.nbits // 2)

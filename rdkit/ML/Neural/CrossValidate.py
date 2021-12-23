@@ -89,12 +89,11 @@ def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, 
 
   """
   nTot = len(examples)
-  if not kwargs.get('replacementSelection', 0):
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=1,
-                                                       replacement=0)
-  else:
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=0,
-                                                       replacement=1)
+
+  condition = not bool(kwargs.get('replacementSelection', 0))
+  testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, 
+                                                     legacy=int(condition), replacement=int(not condition))
+  
   trainExamples = [examples[x] for x in trainIndices]
   testExamples = [examples[x] for x in testIndices]
 
@@ -116,10 +115,9 @@ def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, 
   nTest = len(testExamples)
   if not silent:
     print('Testing with %d examples' % nTest)
-  if not calcTotalError:
-    xValError, _ = CrossValidate(net, testExamples, tolerance)
-  else:
-    xValError, _ = CrossValidate(net, examples, tolerance)
+    
+  xValError = CrossValidate(net, testExamples if not calcTotalError else examples, tolerance)[0]
+  
   if not silent:
     print('Validation error was %%%4.2f' % (100 * xValError))
   net._trainIndices = trainIndices

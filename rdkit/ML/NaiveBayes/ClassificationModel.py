@@ -14,7 +14,7 @@ from rdkit.ML.Data import Quantize
 def _getBinId(val, qBounds):
     bid = 0
     for bnd in qBounds:
-        if (val > bnd):
+        if val > bnd:
             bid += 1
     return bid
 
@@ -83,9 +83,8 @@ class NaiveBayesClassifier:
                         nV = max(nV, self._qBounds[j] + 1)
                     self._condProbs[i][j] = [0.0] * nV
             else:
-                self._condProbs[i] = {}
-                for idx in self._attrs:
-                    self._condProbs[i][idx] = [0.0] * 2
+                self._condProbs[i] = {idx: [0.0] * 2 for idx in self._attrs}
+
 
     def GetName(self):
         return self._name
@@ -127,33 +126,27 @@ class NaiveBayesClassifier:
         # make a list of results and values
         allVals = numpy.zeros((neg, natr), 'd')
         res = []  # list of y values
-        i = 0
-        for eg in self._trainingExamples:
+        for i, eg in enumerate(self._trainingExamples):
             res.append(eg[-1])
             j = 0
             for ai in self._attrs:
-                val = eg[ai]
-                allVals[i, j] = val
+                allVals[i, j] = eg[ai]
                 j += 1
-            i += 1
 
         # now loop over each of the columns and compute the bounds
         # the number of bounds is determined by the maximum info gain
-        i = 0
-        for ai in self._attrs:
+        for i, ai in enumerate(self._attrs):
             nbnds = self._qBounds[ai]
             if nbnds > 0:
                 mbnds = []
                 mgain = -1.0
 
                 for j in range(1, nbnds + 1):
-                    bnds, igain = Quantize.FindVarMultQuantBounds(
-                        allVals[:, i], j, res, self._nClasses)
-                    if (igain > mgain):
+                    bnds, igain = Quantize.FindVarMultQuantBounds(allVals[:, i], j, res, self._nClasses)
+                    if igain > mgain:
                         mbnds = bnds
                         mgain = igain
                 self._QBoundVals[ai] = mbnds
-            i += 1
 
     def trainModel(self):
         """ We will assume at this point that the training examples have been set
@@ -190,10 +183,7 @@ class NaiveBayesClassifier:
                     tmp[ai][bid] += 1.0
             else:
                 for ai in self._attrs:
-                    if eg[1].GetBit(ai):
-                        tmp[ai][1] += 1.0
-                    else:
-                        tmp[ai][0] += 1.0
+                    tmp[ai][int(bool(eg[1].GetBit(ai)))] += 1.0
 
         # for key in self._condProbs:
         for cls in range(self._nClasses):
@@ -238,11 +228,8 @@ class NaiveBayesClassifier:
                         tmp[ai][bid] /= (ncls[cls] + self._mEstimateVal)
 
     def ClassifyExamples(self, examples, appendExamples=0):
-        preds = []
-        for eg in examples:
-            pred = self.ClassifyExample(eg, appendExamples)
-            preds.append(int(pred))
-        return preds
+
+        return [int(self.ClassifyExample(eg, appendExamples)) for eg in examples]
 
     def GetClassificationDetails(self):
         """ returns the probability of the last prediction """
@@ -264,16 +251,13 @@ class NaiveBayesClassifier:
                     if self._qBounds[ai] > 0:
                         bid = _getBinId(bid, self._QBoundVals[ai])
                 else:
-                    if example[1].GetBit(ai):
-                        bid = 1
-                    else:
-                        bid = 0
+                    bid = int(bool(example[1].GetBit(ai)))
                 clsProb[key] *= tmp[ai][bid]
 
         mkey = -1
         self.mprob = -1.0
         for key, prob in clsProb.items():
-            if (prob > self.mprob):
+            if prob > self.mprob:
                 mkey = key
                 self.mprob = prob
 

@@ -8,8 +8,6 @@ cross validation == evaluating the accuracy of a tree.
 
 
 """
-
-
 import numpy
 
 from rdkit.ML.Data import SplitData
@@ -18,7 +16,7 @@ from rdkit.ML.DecTree import randomtest
 
 
 def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVals, treeBuilder,
-                      nQuantBounds=[], **kwargs):
+                      nQuantBounds=None, **kwargs):
   """ loops through all possible tree roots and chooses the one which produces the best tree
 
   **Arguments**
@@ -53,30 +51,34 @@ def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVal
        why it's even being passed in
 
   """
+  if nQuantBounds is None:
+    nQuantBounds = []
+        
   attrs = attrs[:]
   if nQuantBounds:
-    for i in range(len(nQuantBounds)):
-      if nQuantBounds[i] == -1 and i in attrs:
-        attrs.remove(i)
+    attrSet = set(attrs)
+    masks = [bool(nQuantBounds[i] == -1 and i in attrSet) for i in range(len(nQuantBounds))]
+    attrs = [attr for i, attr in enumerate(attrs) if not masks[i]]
+    del attrSet, masks
+        
   nAttrs = len(attrs)
   trees = [None] * nAttrs
   errs = [0] * nAttrs
   errs[0] = 1e6
 
+  nQuantBoundsCondition: bool = not bool(nQuantBounds)
   for i in range(1, nAttrs):
     argD = {'initialVar': attrs[i]}
     argD.update(kwargs)
-    if nQuantBounds is None or nQuantBounds == []:
+    if nQuantBoundsCondition:
       trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, **argD)
     else:
       trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, nQuantBounds, **argD)
-    if trees[i]:
-      errs[i], _ = CrossValidate(trees[i], examples, appendExamples=0)
-    else:
-      errs[i] = 1e6
-  best = numpy.argmin(errs)
+    
+    errs[i] = CrossValidate(trees[i], testExamples, appendExamples=0)[0] if trees[i] else 1e6
+
   # FIX: this used to say 'trees[i]', could that possibly have been right?
-  return trees[best]
+  return trees[numpy.argmin(errs)] # best
 
 
 def CrossValidate(tree, testExamples, appendExamples=0):
@@ -117,7 +119,7 @@ def CrossValidate(tree, testExamples, appendExamples=0):
 
 def CrossValidationDriver(examples, attrs, nPossibleVals, holdOutFrac=.3, silent=0,
                           calcTotalError=0, treeBuilder=ID3.ID3Boot, lessGreedy=0, startAt=None,
-                          nQuantBounds=[], maxDepth=-1, **kwargs):
+                          nQuantBounds=None, maxDepth=-1, **kwargs):
   """ Driver function for building trees and doing cross validation
 
     **Arguments**
@@ -159,13 +161,14 @@ def CrossValidationDriver(examples, attrs, nPossibleVals, holdOutFrac=.3, silent
          2) the cross-validation error of the tree
 
   """
+  if nQuantBounds is None:
+    nQuantBounds = []
+    
   nTot = len(examples)
-  if not kwargs.get('replacementSelection', 0):
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=1,
-                                                       replacement=0)
-  else:
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=0,
-                                                       replacement=1)
+  condition = not bool(kwargs.get('replacementSelection', 0))
+  testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, 
+                                                     legacy=int(condition), replacement=int(not condition))
+    
   trainExamples = [examples[x] for x in trainIndices]
   testExamples = [examples[x] for x in testIndices]
 
@@ -187,17 +190,17 @@ def CrossValidationDriver(examples, attrs, nPossibleVals, holdOutFrac=.3, silent
   nTest = len(testExamples)
   if not silent:
     print('Testing with %d examples' % nTest)
-  if not calcTotalError:
-    xValError, badExamples = CrossValidate(tree, testExamples, appendExamples=1)
-  else:
-    xValError, badExamples = CrossValidate(tree, examples, appendExamples=0)
+  
+  cv = CrossValidate(tree, testExamples if not calcTotalError else examples, 
+                     appendExamples=int(not calcTotalError))
   if not silent:
-    print('Validation error was %%%4.2f' % (100 * xValError))
-  tree.SetBadExamples(badExamples)
+    print('Validation error was %%%4.2f' % (100 * cv[0]))
+    
+  tree.SetBadExamples(cv[1]) # badExamples
   tree.SetTrainingExamples(trainExamples)
   tree.SetTestExamples(testExamples)
   tree._trainIndices = trainIndices
-  return tree, xValError
+  return tree, cv[0] # xValError
 
 
 def TestRun():

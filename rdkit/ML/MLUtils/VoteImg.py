@@ -58,7 +58,7 @@ pp      - the expanded list of vote details consists of:
       values.append(val)
       trueValues.append(predict)
       if val != predict:
-        misCount = misCount + 1
+        misCount += 1
       res.append(composite.GetVoteDetails() + [0, val, pt[-1]])
   return res, values, trueValues, misCount
 
@@ -95,10 +95,8 @@ def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=
   """
   nData = len(data)
   data = numpy.array(data, numpy.integer)
-  if sortTrueVals and trueValues != []:
-    order = numpy.argsort(trueValues)
-  else:
-    order = numpy.argsort(values)
+  order = numpy.argsort(trueValues if (sortTrueVals and trueValues != []) else values)
+
   data = [data[x] for x in order]
   maxVal = max(numpy.ravel(data))
   data = data * 255 / maxVal
@@ -112,6 +110,7 @@ def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=
       canvas.line([(nModels - 3, 0), (nModels - 3, nData)], fill=(128, 0, 128))
     else:
       canvas.line([(nModels - 2, 0), (nModels - 2, nData)], fill=(128, 0, 128))
+  
   img = img.resize((nModels * xScale, nData * yScale))
   return img
 
@@ -148,8 +147,7 @@ def VoteAndBuildImage(composite, data, badOnly=0, sortTrueVals=0, xScale=10, ySc
 
   res, values, trueValues, misCount = CollectVotes(composite, data, badOnly)
   print('%d examples were misclassified' % misCount)
-  img = BuildVoteImage(nModels, res, values, trueValues, sortTrueVals, xScale, yScale, addLine)
-  return img
+  return BuildVoteImage(nModels, res, values, trueValues, sortTrueVals, xScale, yScale, addLine)
 
 
 def Usage():
@@ -211,7 +209,7 @@ if __name__ == '__main__':
   fName = extra[1]
   if dbName == '':
     data = DataUtils.BuildQuantDataSet(fName)
-  else:
+  else: # This code cannot be reached
     data = DataUtils.DBToQuantData(dbName, fName)  # Function no longer defined
 
   dataSet = data.GetNamedData()

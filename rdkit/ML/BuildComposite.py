@@ -259,10 +259,8 @@ def testall(composite, examples, badExamples=[]):
   """
   wrong = []
   for example in examples:
-    if composite.GetActivityQuantBounds():
-      answer = composite.QuantizeActivity(example)[-1]
-    else:
-      answer = example[-1]
+    answer = composite.QuantizeActivity(example)[-1] if composite.GetActivityQuantBounds() else example[-1]
+
     res, conf = composite.ClassifyExample(example)
     if res != answer:
       wrong.append((res, conf))
@@ -467,11 +465,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     pickle.dump(testExamples, pickleDataFile)
     pickleDataFile.close()
 
-  if details.bayesModel:
-    composite = BayesComposite.BayesComposite()
-  else:
-    composite = Composite.Composite()
-
+  composite = BayesComposite.BayesComposite() if details.bayesModel else Composite.Composite()
   composite._randomSeed = seed
   composite._splitFrac = details.splitFrac
   composite._shuffleActivities = details.shuffleActivities
@@ -495,6 +489,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   else:
     composite.SetDescriptorNames(data.GetVarNames())
   composite.SetActivityQuantBounds(details.activityBounds)
+  
   if details.nModels == 1:
     details.internalHoldoutFrac = 0.0
   if details.useTrees:
@@ -529,18 +524,11 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     nPossibleVals = data.GetNPossibleVals()
     if details.activityBounds:
       nPossibleVals[-1] = len(details.activityBounds) + 1
-    if hasattr(details, 'sigTreeBiasList'):
-      biasList = details.sigTreeBiasList
-    else:
-      biasList = None
-    if hasattr(details, 'useCMIM'):
-      useCMIM = details.useCMIM
-    else:
-      useCMIM = 0
-    if hasattr(details, 'allowCollections'):
-      allowCollections = details.allowCollections
-    else:
-      allowCollections = False
+    
+    biasList = details.sigTreeBiasList if hasattr(details, 'sigTreeBiasList') else None
+    useCMIM = details.useCMIM if hasattr(details, 'useCMIM') else 0
+    allowCollections = details.allowCollections if hasattr(details, 'allowCollections') else False
+    
     composite.Grow(
       trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver,
       nTries=details.nModels, needsQuantization=0, treeBuilder=builder, maxDepth=details.limitDepth,
@@ -555,9 +543,9 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
 
     driver = CrossValidate.CrossValidationDriver
     dfunc = ''
-    if (details.knnDistFunc == "Euclidean"):
+    if details.knnDistFunc == "Euclidean":
       dfunc = DistFunctions.EuclideanDist
-    elif (details.knnDistFunc == "Tanimoto"):
+    elif details.knnDistFunc == "Tanimoto":
       dfunc = DistFunctions.TanimotoDist
     else:
       assert 0, "Bad KNN distance metric value"
@@ -576,10 +564,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
                      replacementSelection=details.replacementSelection,
                      mEstimateVal=details.mEstimateVal, silent=not _verbose)
     else:
-      if hasattr(details, 'useCMIM'):
-        useCMIM = details.useCMIM
-      else:
-        useCMIM = 0
+      useCMIM = details.useCMIM if hasattr(details, 'useCMIM') else 0
 
       composite.Grow(trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver,
                      nTries=details.nModels, needsQuantization=0, nQuantBounds=details.qBounds,
@@ -732,10 +717,7 @@ def RunIt(details, progressCallback=None, saveIt=1, setDescNames=0):
   if details.outName == '':
     details.outName = fName + '.pkl'
   if not details.dbName:
-    if details.qBounds != []:
-      data = DataUtils.TextFileToData(fName)
-    else:
-      data = DataUtils.BuildQuantDataSet(fName)
+    data = DataUtils.TextFileToData(fName) if details.qBounds != [] else DataUtils.BuildQuantDataSet(fName)
   elif details.useSigTrees or details.useSigBayes:
     details.tableName = fName
     data = details.GetDataSet(pickleCol=0, pickleClass=DataStructs.ExplicitBitVect)
@@ -749,9 +731,8 @@ def RunIt(details, progressCallback=None, saveIt=1, setDescNames=0):
                                    user=details.dbUser,
                                    password=details.dbPassword)
 
-  composite = RunOnData(details, data, progressCallback=progressCallback, saveIt=saveIt,
-                        setDescNames=setDescNames)
-  return composite
+  return RunOnData(details, data, progressCallback=progressCallback, saveIt=saveIt, 
+                   setDescNames=setDescNames) # Composite
 
 
 def ShowVersion(includeArgs=0):

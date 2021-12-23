@@ -47,20 +47,20 @@ class QuantTreeNode(DecTree.DecTreeNode):
       self.examples.append(example)
     if self.terminalNode:
       return self.label
-    else:
-      val = example[self.label]
-      if not hasattr(self, 'nBounds'):
-        self.nBounds = len(self.qBounds)
-      if self.nBounds:
-        for i, bound in enumerate(self.qBounds):
-          if val < bound:
-            val = i
-            break
-        else:
-          val = i + 1
+    val = example[self.label]
+    if not hasattr(self, 'nBounds'):
+      self.nBounds = len(self.qBounds)
+    if self.nBounds:
+      for i, bound in enumerate(self.qBounds):
+        if val < bound:
+          val = i
+          break
       else:
-        val = int(val)
-      return self.children[val].ClassifyExample(example, appendExamples=appendExamples)
+        val = i + 1
+    else:
+      val = int(val)
+      
+    return self.children[val].ClassifyExample(example, appendExamples=appendExamples)
 
   def SetQuantBounds(self, qBounds):
     self.qBounds = qBounds[:]

@@ -44,11 +44,9 @@ Here's the general flow of things:
 
 """
 
-
-
 # The wildcard import is required to make functions available for the eval statement
-from math import *
 
+import math
 from rdkit import RDConfig
 
 __DEBUG = False
@@ -89,8 +87,7 @@ def HAS(strArg, composList, atomDict):
       if what in where:
         return 1
     return 0
-  else:
-    return -666
+  return -666
 
 
 def SUM(strArg, composList, atomDict):
@@ -113,8 +110,7 @@ def SUM(strArg, composList, atomDict):
   """
   accum = 0.0
   for atom, num in composList:
-    tStr = strArg.replace('DEADBEEF', atom)
-    accum = accum + eval(tStr) * num
+    accum += eval(strArg.replace('DEADBEEF', atom)) * num
   return accum
 
 
@@ -139,9 +135,8 @@ def MEAN(strArg, composList, atomDict):
   accum = 0.0
   nSoFar = 0
   for atom, num in composList:
-    tStr = strArg.replace('DEADBEEF', atom)
-    accum = accum + eval(tStr) * num
-    nSoFar = nSoFar + num
+    accum += eval(strArg.replace('DEADBEEF', atom)) * num
+    nSoFar += num
   return accum / nSoFar
 
 
@@ -170,9 +165,8 @@ def DEV(strArg, composList, atomDict):
   accum = 0.0
   nSoFar = 0.0
   for atom, num in composList:
-    tStr = strArg.replace('DEADBEEF', atom)
-    accum = accum + abs(eval(tStr) - avg) * num
-    nSoFar = nSoFar + num
+    accum += abs(eval(strArg.replace('DEADBEEF', atom)) - avg) * num
+    nSoFar += num
   return accum / nSoFar
 
 
@@ -194,11 +188,7 @@ def MIN(strArg, composList, atomDict):
       a float
 
   """
-  accum = []
-  for atom, _ in composList:
-    tStr = strArg.replace('DEADBEEF', atom)
-    accum.append(eval(tStr))
-  return min(accum)
+  return min([eval(strArg.replace('DEADBEEF', atom)) for atom, _ in composList])
 
 
 def MAX(strArg, composList, atomDict):
@@ -219,11 +209,7 @@ def MAX(strArg, composList, atomDict):
       a float
 
   """
-  accum = []
-  for atom, _ in composList:
-    tStr = strArg.replace('DEADBEEF', atom)
-    accum.append(eval(tStr))
-  return max(accum)
+  return max([eval(strArg.replace('DEADBEEF', atom)) for atom, _ in composList])
 
 # ------------------
 #  string replacement routines
@@ -271,7 +257,7 @@ def _SubMethodArgs(cExpr, knownMethods):
     while p != -1 and p < len(res):
       p = res.find(method, p)
       if p != -1:
-        p = p + len(method) + 1
+        p += len(method) + 1
         start = p
         parenCount = 1
         while parenCount and p < len(res):
@@ -279,7 +265,7 @@ def _SubMethodArgs(cExpr, knownMethods):
             parenCount = parenCount - 1
           elif res[p] == '(':
             parenCount = parenCount + 1
-          p = p + 1
+          p += 1
         if p <= len(res):
           res = res[0:start] + "'%s',compos,atomDict" % (res[start:p - 1]) + res[p - 1:]
   return res
@@ -328,9 +314,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
 
   """
   try:
-    atomVarNames = argVect[0]
-    compositionVarNames = argVect[1]
-    formula = argVect[2]
+    atomVarNames, compositionVarNames, formula = argVect[0], argVect[1], argVect[2]
     formula = _SubForCompoundDescriptors(formula, compositionVarNames, 'propDict')
     formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
     evalTarget = _SubMethodArgs(formula, knownMethods)
@@ -339,7 +323,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
       import traceback
       print('Sub Failure!')
       traceback.print_exc()
-      print(evalTarget)
+      print(evalTarget) # Error can be raised here
       print(propDict)
       raise RuntimeError('Failure 1')
     else:
@@ -417,14 +401,12 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
     evalTarget = _SubMethodArgs(formula, knownMethods)
   except Exception:
     return res
+  
   for i in range(len(composVect)):
-    propDict = propDictList[i]
-    compos = composVect[i]
     try:
-      v = eval(evalTarget)
+      res[i] = eval(evalTarget)
     except Exception:
-      v = -666
-    res[i] = v
+      res[i] = -666
   return res
 
 

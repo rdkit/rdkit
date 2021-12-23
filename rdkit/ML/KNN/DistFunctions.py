@@ -51,14 +51,13 @@ def TanimotoDist(ex1, ex2, attrs):
   inter = 0.0
   unin = 0.0
   for i in attrs:
-    if (ex1[i] or ex2[i]):
+    if ex1[i] or ex2[i]:
       unin += 1
-      if (ex1[i] and ex2[i]):
+      if ex1[i] and ex2[i]:
         inter += 1
-  if (unin != 0.0):
-    return (1 - inter / unin)
-  else:
-    return 1.0
+  
+  return (1 - inter / unin) if unin != 0.0 else 1.0
+
 
 
 # ------------------------------------

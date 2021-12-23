@@ -6,8 +6,6 @@
 """
 
 """
-
-
 import copy
 import random
 
@@ -145,6 +143,8 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       ranker.SetBiasList(biasList)
     if CMIM is not None and useCMIM > 0 and not ensemble:
       ensemble = CMIM.SelectFeatures(examples, useCMIM, bvCol=1)
+    
+    availBits = None
     if random:
       if ensemble:
         if len(ensemble) > random:
@@ -154,8 +154,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
           availBits = list(range(len(ensemble)))
       else:
         availBits = _GenerateRandomEnsemble(random, nBits)
-    else:
-      availBits = None
+    
     if availBits:
       ranker.SetMaskBits(availBits)
     # print('  2:'*depth,availBits)
@@ -178,6 +177,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       traceback.print_exc()
       print('get top n failed')
       gain = -1.0
+      
     if gain <= 0.0:
       v = numpy.argmax(counts)
       tree.SetLabel(v)
@@ -185,6 +185,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       tree.SetTerminal(1)
       return tree
     best = int(bitInfo[0])
+    
     # print('  '*depth,'\tbest:',bitInfo)
     if verbose:
       print('  ' * depth, '\tbest:', bitInfo)
@@ -211,6 +212,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       else:
         offExamples.append(example)
     # print('    '*depth,len(offExamples),len(onExamples))
+    
     for ex in (offExamples, onExamples):
       if len(ex) == 0:
         v = numpy.argmax(counts)
@@ -228,5 +230,4 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
 
 def SigTreeBuilder(examples, attrs, nPossibleVals, initialVar=None, ensemble=None,
                    randomDescriptors=0, **kwargs):
-  nRes = nPossibleVals[-1]
-  return BuildSigTree(examples, nRes, random=randomDescriptors, **kwargs)
+  return BuildSigTree(examples, nPossibleVals[-1], random=randomDescriptors, **kwargs)

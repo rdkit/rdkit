@@ -46,56 +46,57 @@ def ProcessIt(composites, nToConsider=3, verbose=0):
   composite = composites[0]
   nComposites = len(composites)
   ns = composite.GetDescriptorNames()
-  # nDesc = len(ns)-2
-  if len(ns) > 2:
-    globalRes = {}
-
-    nDone = 1
-    descNames = {}
-    for composite in composites:
-      if verbose > 0:
-        print('#------------------------------------')
-        print('Doing: ', nDone)
-      nModels = len(composite)
-      nDone += 1
-      res = {}
-      for i in range(len(composite)):
-        model = composite.GetModel(i)
-        if isinstance(model, Tree.TreeNode):
-          levels = TreeUtils.CollectLabelLevels(model, {}, 0, nToConsider)
-          TreeUtils.CollectDescriptorNames(model, descNames, 0, nToConsider)
-          for descId in levels.keys():
-            v = res.get(descId, numpy.zeros(nToConsider, dtype='float'))
-            v[levels[descId]] += 1. / nModels
-            res[descId] = v
-      for k in res:
-        v = globalRes.get(k, numpy.zeros(nToConsider, dtype='float'))
-        v += res[k] / nComposites
-        globalRes[k] = v
-      if verbose > 0:
-        for k in res.keys():
-          name = descNames[k]
-          strRes = ', '.join(['%4.2f' % x for x in res[k]])
-          print('%s,%s,%5.4f' % (name, strRes, sum(res[k])))
-
-        print()
-
-    if verbose >= 0:
-      print('# Average Descriptor Positions')
-    retVal = []
-    for k in globalRes:
-      name = descNames[k]
-      if verbose >= 0:
-        strRes = ', '.join(['%4.2f' % x for x in globalRes[k]])
-        print('%s,%s,%5.4f' % (name, strRes, sum(globalRes[k])))
-      tmp = [name]
-      tmp.extend(globalRes[k])
-      tmp.append(sum(globalRes[k]))
-      retVal.append(tmp)
-    if verbose >= 0:
+  # nDesc = len(ns) - 2
+  if len(ns) <= 2:
+    return []
+  
+  globalRes = {}
+  nDone = 1
+  descNames = {}
+  for composite in composites:
+    if verbose > 0:
+      print('#------------------------------------')
+      print('Doing: ', nDone)
+    nModels = len(composite)
+    nDone += 1
+    res = {}
+    for i in range(len(composite)):
+      model = composite.GetModel(i)
+      if isinstance(model, Tree.TreeNode):
+        levels = TreeUtils.CollectLabelLevels(model, {}, 0, nToConsider)
+        TreeUtils.CollectDescriptorNames(model, descNames, 0, nToConsider)
+        for descId in levels.keys():
+          v = res.get(descId, numpy.zeros(nToConsider, dtype='float'))
+          v[levels[descId]] += 1. / nModels
+          res[descId] = v
+    for k in res:
+      v = globalRes.get(k, numpy.zeros(nToConsider, dtype='float')) 
+      v += res[k] / nComposites
+      globalRes[k] = v
+      
+    if verbose > 0:
+      for k in res.keys():
+        name = descNames[k]
+        strRes = ', '.join(['%4.2f' % x for x in res[k]])
+        print('%s,%s,%5.4f' % (name, strRes, sum(res[k])))
       print()
-  else:
-    retVal = []
+
+  if verbose >= 0:
+    print('# Average Descriptor Positions')
+   
+  retVal = []
+  for k in globalRes:
+    name = descNames[k]
+    if verbose >= 0:
+      strRes = ', '.join(['%4.2f' % x for x in globalRes[k]])
+      print('%s,%s,%5.4f' % (name, strRes, sum(globalRes[k])))
+    tmp = [name]
+    tmp.extend(globalRes[k])
+    tmp.append(sum(globalRes[k]))
+    retVal.append(tmp)
+  
+  if verbose >= 0:
+    print()
   return retVal
 
 
@@ -113,6 +114,7 @@ def ErrorStats(conn, where, enrich=1):
   if not nPts:
     sys.stderr.write('no runs found\n')
     return None
+  
   overall = numpy.zeros(nPts, dtype='float')
   overallEnrich = numpy.zeros(nPts, dtype='float')
   oCorConf = 0.0
@@ -123,6 +125,7 @@ def ErrorStats(conn, where, enrich=1):
   hInCorConf = 0.0
   overallMatrix = None
   holdoutMatrix = None
+  
   for i in range(nPts):
     if data[i][0] is not None:
       overall[i] = data[i][0]
@@ -133,6 +136,7 @@ def ErrorStats(conn, where, enrich=1):
       haveHoldout = 1
     else:
       haveHoldout = 0
+      
     tmpOverall = 1. * eval(data[i][2])
     if enrich >= 0:
       overallEnrich[i] = ScreenComposite.CalcEnrichment(tmpOverall, tgt=enrich)
@@ -140,6 +144,7 @@ def ErrorStats(conn, where, enrich=1):
       tmpHoldout = 1. * eval(data[i][3])
       if enrich >= 0:
         holdoutEnrich[i] = ScreenComposite.CalcEnrichment(tmpHoldout, tgt=enrich)
+    
     if overallMatrix is None:
       if data[i][2] is not None:
         overallMatrix = tmpOverall
@@ -149,6 +154,7 @@ def ErrorStats(conn, where, enrich=1):
       overallMatrix += tmpOverall
       if haveHoldout:
         holdoutMatrix += tmpHoldout
+    
     if haveHoldout:
       hCorConf += data[i][6]
       hInCorConf += data[i][7]

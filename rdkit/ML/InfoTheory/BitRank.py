@@ -50,9 +50,10 @@ def FormCounts(bitVects, actVals, whichBit, nPossibleActs, nPossibleBitVals=2):
   """
   if len(bitVects) != len(actVals):
     raise ValueError('var and activity lists should be the same length')
-  res = numpy.zeros((nPossibleBitVals, nPossibleActs), numpy.integer)
-  for i in range(len(bitVects)):
-    res[bitVects[i][whichBit], actVals[i]] += 1
+  
+  res = numpy.zeros((nPossibleBitVals, nPossibleActs), dtype='int')
+  for i, bitVect in enumerate(bitVects):
+    res[bitVect[whichBit], actVals[i]] += 1
   return res
 
 
@@ -78,7 +79,7 @@ def CalcInfoGains(bitVects, actVals, nPossibleActs, nPossibleBitVals=2):
   if len(bitVects) != len(actVals):
     raise ValueError('var and activity lists should be the same length')
   nBits = len(bitVects[0])
-  res = numpy.zeros(nBits, numpy.float)
+  res = numpy.zeros(nBits, dtype='float')
 
   for bit in range(nBits):
     counts = FormCounts(bitVects, actVals, bit, nPossibleActs, nPossibleBitVals=nPossibleBitVals)
@@ -112,7 +113,7 @@ def RankBits(bitVects, actVals, nPossibleBitVals=2, metricFunc=CalcInfoGains):
   """
   nPossibleActs = max(actVals) + 1
   metrics = metricFunc(bitVects, actVals, nPossibleActs, nPossibleBitVals=nPossibleBitVals)
-  bitOrder = list(numpy.argsort(metrics))
+  bitOrder = numpy.argsort(metrics).tolist()
   bitOrder.reverse()
   return bitOrder, metrics
 
@@ -140,8 +141,8 @@ def AnalyzeSparseVects(bitVects, actVals):
     raise ValueError('var and activity lists should be the same length')
   nBits = bitVects[0].GetSize()
 
-  actives = numpy.zeros(nBits, numpy.integer)
-  inactives = numpy.zeros(nBits, numpy.integer)
+  actives = numpy.zeros(nBits, dtype='int')
+  inactives = numpy.zeros(nBits, dtype='int')
   nActives, nInactives = 0, 0
   for i in range(nPts):
     sig, act = bitVects[i], actVals[i]
@@ -154,7 +155,8 @@ def AnalyzeSparseVects(bitVects, actVals):
       for bit in onBitList:
         inactives[bit] += 1
       nInactives += 1
-  resTbl = numpy.zeros((2, 2), numpy.integer)
+      
+  resTbl = numpy.zeros((2, 2), dtype='int')
   res = []
   gains = []
   for bit in range(nBits):
@@ -196,6 +198,6 @@ def SparseRankBits(bitVects, actVals, metricFunc=AnalyzeSparseVects):
 
   """
   info, metrics = metricFunc(bitVects, actVals)
-  bitOrder = list(numpy.argsort(metrics))
+  bitOrder = numpy.argsort(metrics).tolist()
   bitOrder.reverse()
   return bitOrder, info

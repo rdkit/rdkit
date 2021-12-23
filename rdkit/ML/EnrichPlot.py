@@ -154,13 +154,11 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
             tmp._trainIndices = tis
 
     res = []
-    if mdl.GetQuantBounds():
-        needsQuant = 1
-    else:
-        needsQuant = 0
+    needsQuant = int(mdl.GetQuantBounds())
 
     if not indices:
         indices = list(range(len(data)))
+    
     nTrueActives = 0
     for i in indices:
         if errorEstimate:

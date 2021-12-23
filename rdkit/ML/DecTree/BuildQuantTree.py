@@ -6,9 +6,10 @@
 """
 
 """
-
 import numpy
 import random
+
+from numpy.core.records import array
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
 from rdkit.ML.Data import Quantize
@@ -54,6 +55,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
         else:
             gainHere = -1e6
             qBounds = []
+            
         if gainHere > bestGain:
             bestGain = gainHere
             bestBounds = qBounds
@@ -62,6 +64,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
             if len(qBounds) < len(bestBounds):
                 best = var
                 bestBounds = qBounds
+                
     if best == -1:
         print('best unaltered')
         print('\tattrs:', attrs)
@@ -70,9 +73,9 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
         for example in (examples[x] for x in exIndices):
             print('\t\t', example)
 
-    if 0:
+    if 0: # This code is for debugging, cannot be reached in the current code
         print('BEST:', len(exIndices), best, bestGain, bestBounds)
-        if (len(exIndices) < 10):
+        if len(exIndices) < 10:
             print(len(exIndices), len(resCodes), len(examples))
             exs = [examples[x] for x in exIndices]
             vals = [x[best] for x in exs]
@@ -218,11 +221,17 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
        split.
 
     """
+    # OLD CODE: O(N^3) in here -> O(3 * N)
     attrs = list(attrs)
+    masks = [False] * len(attrs)
+    attrsSet = set(attrs)
     for i in range(len(nBoundsPerVar)):
-        if nBoundsPerVar[i] == -1 and i in attrs:
-            attrs.remove(i)
-
+        if nBoundsPerVar[i] == -1:
+            if i in attrsSet:
+                masks[i] = True
+    attrs = [attr for i, attr in enumerate(attrs) if not masks[i]]
+    del attrsSet
+    
     tree = QuantTree.QuantTreeNode(None, 'node')
     nPossibleRes = nPossibleVals[-1]
     tree._nResultCodes = nPossibleRes
@@ -253,19 +262,17 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
     tree.SetLabel(best)
     tree.SetTerminal(0)
     tree.SetQuantBounds(qBounds)
-    nextAttrs = list(attrs)
+    nextAttrs = attrs.copy() # It has been converted to list once. Make a copy to avoid changing the original list.
     if not kwargs.get('recycleVars', 0):
         nextAttrs.remove(best)
 
     indices = list(range(len(examples)))
     if len(qBounds) > 0:
         for bound in qBounds:
-            nextExamples = []
-            for index in list(indices):
-                ex = examples[index]
-                if ex[best] < bound:
-                    nextExamples.append(ex)
-                    indices.remove(index)
+            masks = [bool(examples[idx][best] < bound) for idx in indices]
+            nextExamples = [examples[index] for index, mask in enumerate(masks) if mask]
+            indices = [indices[index] for index, mask in enumerate(masks) if mask]
+            del masks
 
             if len(nextExamples):
                 tree.AddChildNode(
@@ -274,10 +281,10 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
             else:
                 v = numpy.argmax(counts)
                 tree.AddChild('%d??' % (v), label=v, data=0.0, isTerminal=1)
+        
         # add the last points remaining
-        nextExamples = []
-        for index in indices:
-            nextExamples.append(examples[index])
+        nextExamples = [examples[index] for index in indices]    
+        
         if len(nextExamples) != 0:
             tree.AddChildNode(
               BuildQuantTree(nextExamples, best, nextAttrs, nPossibleVals, nBoundsPerVar, depth=1,
@@ -285,12 +292,10 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
         else:
             v = numpy.argmax(counts)
             tree.AddChild('%d??' % (v), label=v, data=0.0, isTerminal=1)
+    
     else:
         for val in range(nPossibleVals[best]):
-            nextExamples = []
-            for example in examples:
-                if example[best] == val:
-                    nextExamples.append(example)
+            nextExamples = [example for example in examples if example[best] == val]                  
             if len(nextExamples) != 0:
                 tree.AddChildNode(
                   BuildQuantTree(nextExamples, best, nextAttrs, nPossibleVals, nBoundsPerVar, depth=1,

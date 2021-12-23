@@ -82,11 +82,9 @@ def _RIEHelper(scores, col, alpha):
       numActives += 1
       sum_exp += math.exp(-(alpha * (i + 1)) / numMol)
 
+  RIE = 0.0
   if numActives > 0:  # check that there are actives
     RIE = sum_exp / (numActives * denom)
-  else:
-    RIE = 0.0
-
   return RIE, numActives
 
 
@@ -96,8 +94,7 @@ def CalcRIE(scores, col, alpha):
     Protocols for Bridging the Peptide to Nonpeptide Gap in Topological Similarity Searches.
     J. Chem. Inf. Comp. Sci. 41, 1395-1406 (2001).
     """
-  RIE, _ = _RIEHelper(scores, col, alpha)
-  return RIE
+  return _RIEHelper(scores, col, alpha)[0]
 
 
 def CalcBEDROC(scores, col, alpha):
@@ -145,6 +142,7 @@ def CalcEnrichment(scores, col, fractions):
     raise ValueError('score list is empty')
   if len(fractions) == 0:
     raise ValueError('fraction list is empty')
+  
   for i in fractions:
     if i > 1 or i < 0:
       raise ValueError('fractions must be between [0,1]')
@@ -156,7 +154,7 @@ def CalcEnrichment(scores, col, fractions):
 
   # loop over score list
   for i in range(numMol):
-    if i > (numPerFrac[0] - 1) and i > 0:
+    if i > (numPerFrac[0] - 1) and i != 0: # Avoid first index
       enrich.append(1.0 * numActives * numMol / i)
       numPerFrac.pop(0)
     active = scores[i][col]
@@ -164,10 +162,8 @@ def CalcEnrichment(scores, col, fractions):
       numActives += 1
 
   if numActives > 0:  # check that there are actives
-    enrich = [e / numActives for e in enrich]
-  else:
-    enrich = [0.0] * len(fractions)
-  return enrich
+    return [e / numActives for e in enrich]
+  return [0.0] * len(fractions)
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.

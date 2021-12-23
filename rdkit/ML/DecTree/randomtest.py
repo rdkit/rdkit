@@ -1,5 +1,4 @@
 import random
-
 import numpy
 
 from rdkit.ML.DecTree import ID3
@@ -22,7 +21,7 @@ def GenRandomExamples(nVars=10, randScale=0.3, bitProb=0.5, nExamples=500, seed=
   nPossibleVals = [2] * (nExamples + 1)
   attrs = list(range(nVars))
 
-  return (examples, attrs, nPossibleVals)
+  return examples, attrs, nPossibleVals
 
 
 if __name__ == '__main__':  # pragma: nocover

@@ -158,17 +158,17 @@ class Network:
       else:
         example = example[:-self.numOutputNodes]
     assert len(example) == self.numInputNodes
+    
     totNumNodes = sum(self.nodeCounts)
-    results = numpy.zeros(totNumNodes, numpy.float64)
+    results = numpy.zeros(totNumNodes, dtype=numpy.float64)
     for i in range(self.numInputNodes):
       results[i] = example[i]
+      
     for i in range(self.numInputNodes, totNumNodes):
       self.nodeList[i].Eval(results)
-    self.lastResults = results[:]
-    if self.numOutputNodes == 1:
-      return results[-1]
-    else:
-      return results
+      
+    self.lastResults = results.copy()
+    return results[-1] if self.numOutputNodes == 1 else results
 
   def GetLastOutputs(self):
     """ returns the complete list of output layer values from the last time this node

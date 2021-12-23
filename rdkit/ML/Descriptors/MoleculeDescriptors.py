@@ -116,11 +116,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
     """ returns a tuple of the functions used to generate this calculator's descriptors
 
     """
-    res = []
-    for nm in self.simpleList:
-      fn = getattr(DescriptorsMod, nm, lambda x: 777)
-      res.append(fn)
-    return tuple(res)
+    return tuple([getattr(DescriptorsMod, nm, lambda x: 777) for nm in self.simpleList])
 
   def GetDescriptorVersions(self):
     """ returns a tuple of the versions of the descriptor calculators

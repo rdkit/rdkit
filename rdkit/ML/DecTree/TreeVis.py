@@ -44,9 +44,9 @@ def CalcTreeNodeSizes(node):
     nBelow = 0
     for child in children:
       CalcTreeNodeSizes(child)
-      nHere = nHere + child.totNChildren
-      if child.nLevelsBelow > nBelow:
-        nBelow = child.nLevelsBelow
+      nHere += child.totNChildren
+      nBelow = max(nBelow, child.nLevelsBelow)
+      
   else:
     nBelow = 0
     nHere = 1
@@ -75,19 +75,14 @@ def _ExampleCounter(node, min, max):
 
 def _ApplyNodeScales(node, min, max):
   if node.GetTerminal():
-    if max != min:
-      loc = float(node.nExamples - min) / (max - min)
-    else:
-      loc = .5
-    node._scaleLoc = loc
+    node._scaleLoc = 0.5 if max == min else (float(node.nExamples - min) / (max - min))
   else:
     for child in node.GetChildren():
       _ApplyNodeScales(child, min, max)
 
 
 def SetNodeScales(node):
-  min, max = 1e8, -1e8
-  min, max = _ExampleCounter(node, min, max)
+  min, max = _ExampleCounter(node, min=1e8, max=-1e8)
   node._scales = min, max
   _ApplyNodeScales(node, min, max)
 
@@ -105,8 +100,7 @@ def DrawTreeNode(node, loc, canvas, nRes=2, scaleLeaves=False, showPurity=False)
   if not scaleLeaves or not node.GetTerminal():
     rad = visOpts.circRad
   else:
-    scaleLoc = getattr(node, "_scaleLoc", 0.5)
-
+    # scaleLoc = getattr(node, "_scaleLoc", 0.5): Unused variable
     rad = visOpts.minCircRad + node._scaleLoc * (visOpts.maxCircRad - visOpts.minCircRad)
 
   x1 = loc[0] - rad
@@ -120,9 +114,10 @@ def DrawTreeNode(node, loc, canvas, nRes=2, scaleLeaves=False, showPurity=False)
     if nEx:
       tgtVal = int(node.GetLabel())
       purity = 0.0
+      exampleSize: int = len(examples)
       for ex in examples:
         if int(ex[-1]) == tgtVal:
-          purity += 1. / len(examples)
+          purity += 1. / exampleSize
     else:
       purity = 1.0
 
@@ -181,8 +176,7 @@ def CalcTreeWidth(tree):
     tree.totNChildren
   except AttributeError:
     CalcTreeNodeSizes(tree)
-  totWidth = tree.totNChildren * (visOpts.circRad + visOpts.horizOffset)
-  return totWidth
+  return tree.totNChildren * (visOpts.circRad + visOpts.horizOffset) # total width of tree
 
 
 def DrawTree(tree, canvas, nRes=2, scaleLeaves=False, allowShrink=True, showPurity=False):
@@ -215,9 +209,9 @@ def _simpleTest(canv):
   from .Tree import TreeNode as Node
   root = Node(None, 'r', label='r')
   c1 = root.AddChild('l1_1', label='l1_1')
-  c2 = root.AddChild('l1_2', isTerminal=1, label=1)
-  c3 = c1.AddChild('l2_1', isTerminal=1, label=0)
-  c4 = c1.AddChild('l2_2', isTerminal=1, label=1)
+  root.AddChild('l1_2', isTerminal=1, label=1)
+  c1.AddChild('l2_1', isTerminal=1, label=0)
+  c1.AddChild('l2_2', isTerminal=1, label=1)
 
   DrawTreeNode(root, (150, visOpts.vertOffset), canv)
 

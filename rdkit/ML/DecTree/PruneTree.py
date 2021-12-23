@@ -28,12 +28,9 @@ def MaxCount(examples):
 
     """
     resList = [x[-1] for x in examples]
-    maxVal = max(resList)
-    counts = [None] * (maxVal + 1)
-    for i in range(maxVal + 1):
-        counts[i] = sum([x == i for x in resList])
-
-    return numpy.argmax(counts)
+    maxVal = max(resList)   
+    counts = [len([None for x in resList if x == i]) for i in range(maxVal + 1)] # O(N^2) instead of O(2*N^2)
+    return numpy.argmax(counts) # Counts can be done in-place if memory is a concern
 
 
 def _GetLocalError(node):
@@ -42,7 +39,7 @@ def _GetLocalError(node):
         pred = node.ClassifyExample(example, appendExamples=0)
         if pred != example[-1]:
             nWrong += 1
-            # if _verbose: print('------------------>MISS:',example,pred)
+            # if _verbose: print('------------------> MISS:',example,pred)
     return nWrong
 
 

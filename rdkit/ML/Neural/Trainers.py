@@ -68,6 +68,7 @@ class BackProp(Trainer):
       # classify the example
       net.ClassifyExample(trainVect)
       resVect = net.GetLastOutputs()
+      
     outputs = numpy.take(resVect, outputNodeList)
     errVect = targetVect - outputs
 
@@ -105,10 +106,7 @@ class BackProp(Trainer):
         #  to update the weights (whew!)
     nHidden = net.GetNumHidden()
     for layer in range(0, nHidden + 1):
-      if layer == nHidden:
-        idxList = net.GetOutputNodeList()
-      else:
-        idxList = net.GetHiddenLayerNodeList(layer)
+      idxList = net.GetOutputNodeList() if layer == nHidden else net.GetHiddenLayerNodeList(layer)
       for idx in idxList:
         node = net.GetNode(idx)
         dW = self.speed * delta[idx] * numpy.take(resVect, node.GetInputs())
@@ -153,7 +151,7 @@ class BackProp(Trainer):
     converged = 0
     cycle = 0
 
-    while (not converged) and (cycle < maxIts):
+    while (not converged) and cycle < maxIts:
       maxErr = 0
       newErr = 0
       # print('bp: ',cycle)
@@ -162,20 +160,17 @@ class BackProp(Trainer):
         newErr += localErr
         if localErr > maxErr:
           maxErr = localErr
-      if useAvgErr == 1:
-        newErr = newErr / nExamples
-      else:
-        newErr = maxErr
+      
+      newErr = (newErr / nExamples) if useAvgErr else newErr
       # print('\t',newErr,errTol)
 
       if newErr <= errTol:
         converged = 1
 
-#      if cycle % 10 == 0 and not silent:
+      # if cycle % 10 == 0 and not silent:
       if not silent:
         print('epoch %d, error: % 6.4f' % (cycle, newErr))
-
-      cycle = cycle + 1
+      cycle += 1
     if not silent:
       if converged:
         print('Converged after %d epochs.' % cycle)

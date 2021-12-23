@@ -39,7 +39,7 @@ class Forest(object):
     i = 1
     lastErr = self.errList[0]
     countHere = self.countList[0]
-    eps = 0.001
+    eps = 1e-3
     while i < nExamples:
       if self.errList[i] - lastErr > eps:
         histo.append((lastErr, countHere))
@@ -47,7 +47,7 @@ class Forest(object):
         countHere = self.countList[i]
       else:
         countHere = countHere + self.countList[i]
-      i = i + 1
+      i += 1
 
     return histo
 
@@ -60,10 +60,7 @@ class Forest(object):
 
     """
     nTrees = len(self.treeList)
-    votes = [0] * nTrees
-    for i in range(nTrees):
-      votes[i] = self.treeList[i].ClassifyExample(example)
-    return votes
+    return [self.treeList[i].ClassifyExample(example) for i in range(nTrees)]
 
   def ClassifyExample(self, example):
     """ classifies the given example using the entire forest
@@ -78,10 +75,9 @@ class Forest(object):
            measure being the percent of trees which voted for the winning result.
     """
     self.treeVotes = self.CollectVotes(example)
-    votes = [0] * len(self._nPossible)
+    votes = [0.0] * len(self._nPossible)
     for i in range(len(self.treeList)):
-      res = self.treeVotes[i]
-      votes[res] = votes[res] + self.countList[i]
+      votes[self.treeVotes[i]] += self.countList[i]
 
     totVotes = sum(votes)
     res = numpy.argmax(votes)
@@ -127,6 +123,7 @@ class Forest(object):
         print('prune: ', frac, frac2)
         frac = frac2
       self.AddTree(tree, frac)
+      
       if i % (nTries / 10) == 0:
         print('Cycle: % 4d' % (i))
 
@@ -181,10 +178,7 @@ class Forest(object):
         sortOnError: toggles sorting on the trees' errors rather than their counts
 
     """
-    if sortOnError:
-      order = numpy.argsort(self.errList)
-    else:
-      order = numpy.argsort(self.countList)
+    order = numpy.argsort(self.errList if sortOnError else self.countList)
 
     # these elaborate contortions are required because, at the time this
     #  code was written, Numeric arrays didn't unpickle so well...

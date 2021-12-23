@@ -43,10 +43,7 @@ def CrossValidate(NBmodel, testExamples, appendExamples=0):
 
   for i in range(nTest):
     testEg = testExamples[i]
-    trueRes = testEg[-1]
-    res = preds[i]
-
-    if (trueRes != res):
+    if testEg[-1] != preds[i]:
       badExamples.append(testEg)
       nBad += 1
   return float(nBad) / nTest, badExamples
@@ -56,12 +53,9 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, nQuantBounds, mEstim
                           holdOutFrac=0.3, modelBuilder=makeNBClassificationModel, silent=0,
                           calcTotalError=0, **kwargs):
   nTot = len(examples)
-  if not kwargs.get('replacementSelection', 0):
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=1,
-                                                       replacement=0)
-  else:
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=0,
-                                                       replacement=1)
+  condition = not bool(kwargs.get('replacementSelection', 0))
+  testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, 
+                                                     legacy=int(condition), replacement=int(not condition))
 
   trainExamples = [examples[x] for x in trainIndices]
   testExamples = [examples[x] for x in testIndices]
@@ -69,10 +63,8 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, nQuantBounds, mEstim
   NBmodel = modelBuilder(trainExamples, attrs, nPossibleValues, nQuantBounds, mEstimateVal,
                          **kwargs)
 
-  if not calcTotalError:
-    xValError, _ = CrossValidate(NBmodel, testExamples, appendExamples=1)
-  else:
-    xValError, _ = CrossValidate(NBmodel, examples, appendExamples=0)
+  xValError = CrossValidate(NBmodel, testExamples if not calcTotalError else examples, 
+                            appendExamples=int(not calcTotalError))[0]
 
   if not silent:
     print('Validation error was %%%4.2f' % (100 * xValError))

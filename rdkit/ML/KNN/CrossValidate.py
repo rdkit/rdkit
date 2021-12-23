@@ -7,7 +7,6 @@ and evaluation of individual models
 
 """
 
-
 from rdkit.ML.Data import SplitData
 from rdkit.ML.KNN import DistFunctions
 from rdkit.ML.KNN.KNNClassificationModel import KNNClassificationModel
@@ -49,10 +48,11 @@ def CrossValidate(knnMod, testExamples, appendExamples=0):
       testEx = testExamples[i]
       trueRes = testEx[-1]
       res = knnMod.ClassifyExample(testEx, appendExamples)
-      if (trueRes != res):
+      if trueRes != res:
         badExamples.append(testEx)
         nBad += 1
     return float(nBad) / nTest, badExamples
+  
   elif isinstance(knnMod, KNNRegressionModel):
     devSum = 0.0
     for i in range(nTest):
@@ -61,6 +61,7 @@ def CrossValidate(knnMod, testExamples, appendExamples=0):
       res = knnMod.PredictExample(testEx, appendExamples)
       devSum += abs(trueRes - res)
     return devSum / nTest, None
+  
   raise ValueError("Unrecognized Model Type")
 
 
@@ -89,12 +90,10 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, numNeigh,
       """
 
   nTot = len(examples)
-  if not kwargs.get('replacementSelection', 0):
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=1,
-                                                       replacement=0)
-  else:
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=0,
-                                                       replacement=1)
+  condition = not bool(kwargs.get('replacementSelection', 0))
+  testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, 
+                                                     legacy=int(condition), replacement=int(not condition))
+
   trainExamples = [examples[x] for x in trainIndices]
   testExamples = [examples[x] for x in testIndices]
 
@@ -104,15 +103,11 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, numNeigh,
     print("Training with %d examples" % (nTrain))
 
   knnMod = modelBuilder(numNeigh, attrs, distFunc)
-
   knnMod.SetTrainingExamples(trainExamples)
   knnMod.SetTestExamples(testExamples)
 
-  if not calcTotalError:
-    xValError, _ = CrossValidate(knnMod, testExamples, appendExamples=1)
-  else:
-    xValError, _ = CrossValidate(knnMod, examples, appendExamples=0)
-
+  xValError = CrossValidate(knnMod, testExamples if not calcTotalError else examples, 
+                            appendExamples=int(not calcTotalError))[0]
   if not silent:
     print('Validation error was %%%4.2f' % (100 * xValError))
 

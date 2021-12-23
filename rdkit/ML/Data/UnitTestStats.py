@@ -110,8 +110,9 @@ class TestCase(unittest.TestCase):
     avg = sum(self.d) / len(self.d)
     self.d -= avg
 
-    for i in range(len(pts)):
-      for j in range(len(pts)):
+    n_pts: int = len(pts)
+    for i in range(n_pts):
+      for j in range(n_pts):
         vi = self.d[i]
         vi /= numpy.sqrt(numpy.dot(vi, vi))
         vj = self.d[j]

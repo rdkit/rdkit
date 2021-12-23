@@ -8,7 +8,6 @@
 
 """
 import math
-
 import numpy
 
 
@@ -83,15 +82,14 @@ def PyInfoGain(varMat):
   overallRes = numpy.sum(varMat, 0)  # indexed by result, S in Mitchell's notation
 
   term2 = 0
-  for i in range(len(variableRes)):
-    term2 = term2 + variableRes[i] * InfoEntropy(varMat[i])
+  for i, val in enumerate(variableRes):
+    term2 += val * InfoEntropy(varMat[i])
   tSum = sum(overallRes)
+  
   if tSum != 0.0:
-    term2 = 1. / tSum * term2
-    gain = InfoEntropy(overallRes) - term2
-  else:
-    gain = 0
-  return gain
+    term2 *= 1. / tSum
+    return InfoEntropy(overallRes) - term2
+  return 0
 
 # if we have the C versions, use them, otherwise use the python stuff
 if hascEntropy:
