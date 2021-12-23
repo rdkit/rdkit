@@ -69,10 +69,6 @@ class Cluster(object):
             *my wrists are tired*
 
         """        
-        if children is None:
-            children = []
-        if position is None:
-            position = []
         self.metric = metric
         self.children = children if children is not None else []
         self._UpdateLength()
@@ -121,7 +117,7 @@ class Cluster(object):
         for child in self.children:
             res = child.FindSubtree(index)
             if res:
-                return res
+                break
         return res
 
     def _GenPoints(self):

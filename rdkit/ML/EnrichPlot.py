@@ -149,12 +149,12 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
         if hasattr(tmp, '_trainIndices') and not isinstance(tmp._trainIndices, dict):
             tis = {}
             if hasattr(tmp, '_trainIndices'):
-                for v in tmp._trainIndices:
-                    tis[v] = 1
+                tis = {v: 1 for v in tmp._trainIndices}
+
             tmp._trainIndices = tis
 
     res = []
-    needsQuant = int(mdl.GetQuantBounds())
+    needsQuant = int(bool(mdl.GetQuantBounds()))
 
     if not indices:
         indices = list(range(len(data)))

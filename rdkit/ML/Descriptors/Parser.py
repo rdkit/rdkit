@@ -82,9 +82,7 @@ def HAS(strArg, composList, atomDict):
   if len(splitArgs) > 1:
     for atom, _ in composList:
       tStr = splitArgs[0].replace('DEADBEEF', atom)
-      where = eval(tStr)
-      what = eval(splitArgs[1])
-      if what in where:
+      if eval(splitArgs[1]) in eval(tStr):
         return 1
     return 0
   return -666

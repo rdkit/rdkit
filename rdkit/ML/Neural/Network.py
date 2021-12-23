@@ -167,7 +167,7 @@ class Network:
     for i in range(self.numInputNodes, totNumNodes):
       self.nodeList[i].Eval(results)
       
-    self.lastResults = results.copy()
+    self.lastResults = results[:]
     return results[-1] if self.numOutputNodes == 1 else results
 
   def GetLastOutputs(self):

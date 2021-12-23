@@ -219,9 +219,7 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
   for j in range(len(composite)):
     tmp = composite.GetModel(j)
     if hasattr(tmp, '_trainIndices') and not isinstance(tmp._trainIndices, dict):
-
-      tmp._trainIndices = {v: 1 for v in tmp._trainIndices} \
-        if hasattr(tmp, '_trainIndices') else {}
+      tmp._trainIndices = {v: 1 for v in tmp._trainIndices} if hasattr(tmp, '_trainIndices') else {}
 
   nPts = len(indices)
   res = [None] * nPts
@@ -704,9 +702,9 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     else:
       data = details.GetDataSet()
   
-  details.partialVote = int(details.threshold > 0.0)
+  details.partialVote = int(bool(details.threshold > 0.0))
 
-  if type(models) not in [list, tuple]:
+  if not isinstance(models, (list, tuple)):
     models = (models, )
 
   nModels = len(models)

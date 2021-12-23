@@ -57,12 +57,12 @@ class KNNClassificationModel(KNNModel.KNNModel):
 
     # first find the k-closest examples in the traning set
     knnLst = self.GetNeighbors(example)
-    if neighborList is not None:
-      neighborList.extend(knnLst)
       
     # find out how many of the neighbors belong to each of the classes
     clsCnt = Counter([knn[1][-1] for knn in knnLst])
-
+    if neighborList is not None:
+      neighborList.extend(knnLst)
+      
     # now return the class with the maximum count
     mkey = -1
     mcnt = -1

@@ -36,18 +36,16 @@ class Forest(object):
     """
     nExamples = len(self.treeList)
     histo = []
-    i = 1
     lastErr = self.errList[0]
     countHere = self.countList[0]
     eps = 1e-3
-    while i < nExamples:
+    
+    for i in range(1, nExamples):
       if self.errList[i] - lastErr > eps:
         histo.append((lastErr, countHere))
         lastErr = self.errList[i]
-        countHere = self.countList[i]
-      else:
-        countHere = countHere + self.countList[i]
-      i += 1
+        countHere = 0
+      countHere += self.countList[i]
 
     return histo
 
@@ -75,7 +73,7 @@ class Forest(object):
            measure being the percent of trees which voted for the winning result.
     """
     self.treeVotes = self.CollectVotes(example)
-    votes = [0.0] * len(self._nPossible)
+    votes = [0] * len(self._nPossible)
     for i in range(len(self.treeList)):
       votes[self.treeVotes[i]] += self.countList[i]
 

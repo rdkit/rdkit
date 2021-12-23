@@ -58,8 +58,8 @@ def GetNodesDownToCentroids(cluster, above=1):
   children.sort(key=lambda x: len(x), reverse=True)
   #     children.sort(lambda x, y: cmp(len(y), len(x)))
   for child in children:
-    res = res + GetNodesDownToCentroids(child, above)
-  res = res + [cluster]
+    res += GetNodesDownToCentroids(child, above)
+  res += [cluster]
   return res
 
 

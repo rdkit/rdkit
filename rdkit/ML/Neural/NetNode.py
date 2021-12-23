@@ -109,8 +109,8 @@ class NetNode:
     if self.weights is not None:
       assert len(self.weights) == len(inputNodes), \
              'lengths of weights and nodes do not match'
-    self.inputNodes = inputNodes.copy()
-
+    self.inputNodes = inputNodes[:]
+    
   def GetInputs(self):
     """ returns the input list
 
