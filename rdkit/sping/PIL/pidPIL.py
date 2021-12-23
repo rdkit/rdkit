@@ -92,11 +92,7 @@ def _pilFontPath(face, size, bold=0):
 
 def _matchingFontPath(font):
     # returns a font path which matches info in our font metrics
-    if font.face:
-        face = font.face
-    else:
-        face = 'times'
-
+    face = font.face if font.face else 'times'
     size = _closestSize(font.size)
     if isinstance(face, str):
         path = _pilFontPath(face, size, font.bold)
@@ -109,17 +105,14 @@ def _matchingFontPath(font):
             path = path.split(os.sep)[-1]
             if path in _widthmaps.keys():
                 return path
+    
     # not found?  Try it with courier, which should always be there
     path = _pilFontPath('courier', size, font.bold)
     return path.split(os.sep)[-1]
 
 
 def _pilFont(font):
-    if font.face:
-        face = font.face
-    else:
-        face = 'times'
-
+    face = font.face if font.face else 'times'
     size = _closestSize(font.size)
     if isinstance(face, str):
         try:
@@ -175,11 +168,9 @@ class PILCanvas(Canvas):
             raise ValueError('fileobj not implemented for piddlePIL')
         # below here, file is guaranteed to be a string
         if format == None:
-            if '.' not in file:
-                filename = file + '.png'  # default to producing jpg
-            else:
-                filename = file
-                # format = file[-3:] # os.path.splitext(..)
+            # default to producing jpg
+            filename = file + '.png' if '.' not in file else file
+            # format = file[-3:] # os.path.splitext(..)
         else:
             filename = file + '.' + format
 

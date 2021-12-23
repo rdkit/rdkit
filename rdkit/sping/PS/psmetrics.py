@@ -227,9 +227,6 @@ def stringwidth(text, font, encoding):
   w = 0
   for char in text:
     chr_idx = ord(char)
-    if chr_idx < len(widths):
-      chr_width = widths[chr_idx]
-    else:
-      chr_width = max(widths)
+    chr_width = widths[chr_idx] if chr_idx < len(widths) else max(widths)
     w = w + chr_width
   return w

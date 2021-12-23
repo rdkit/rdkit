@@ -40,8 +40,7 @@ def _ColorToQt(color):
   """
   if color == pid.transparent:
     return None
-  else:
-    return QtGui.QColor(int(color.red * 255), int(color.green * 255), int(color.blue * 255))
+  return QtGui.QColor(int(color.red * 255), int(color.green * 255), int(color.blue * 255))
 
 
 #class QCanvasRotText(QCanvasText):
@@ -124,10 +123,7 @@ class QtCanvas(pid.Canvas):
       color = self.defaultLineColor
     qColor = _ColorToQt(color)
 
-    if width:
-      w = width
-    else:
-      w = self.defaultLineWidth
+    w = width if width else self.defaultLineWidth
     self._pen.setColor(qColor)
     self._pen.setWidth(w)
     if dash is not None:
@@ -181,10 +177,8 @@ class QtCanvas(pid.Canvas):
     self._pen.setWidth(edgeWidth)
     self._pen.setJoinStyle(QtCore.Qt.RoundJoin)
 
-    if dash is not None:
-      self._pen.setStyle(QtCore.Qt.DashLine)
-    else:
-      self._pen.setStyle(QtCore.Qt.SolidLine)
+    self._pen.setStyle(QtCore.Qt.DashLine if dash is not None else QtCore.Qt.SolidLine)
+      
     if not qColor:
       self._pen.setStyle(QtCore.Qt.NoPen)
     poly = self._scene.addPolygon(poly, self._pen, self._brush)

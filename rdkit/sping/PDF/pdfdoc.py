@@ -17,9 +17,7 @@ piddlePDF calls pdfgen and offers a high-level interface.
 import os
 import sys
 import time
-import tempfile
 from types import *
-from math import sin, cos, pi, ceil
 
 try:
   import zlib
@@ -30,7 +28,7 @@ from .pdfgeom import bezierArc
 
 from . import pdfutils
 from .pdfutils import LINEEND  # this constant needed in both
-from . import pdfmetrics
+
 ##############################################################
 #
 #            Constants and declarations
@@ -67,11 +65,7 @@ class PDFDocument:
     #mapping of Postscriptfont names to internal ones;
     #needs to be dynamically built once we start adding
     #fonts in.
-    self.fontMapping = {}
-    for i in range(len(StandardEnglishFonts)):
-      psname = StandardEnglishFonts[i]
-      pdfname = '/F%d' % (i + 1)
-      self.fontMapping[psname] = pdfname
+    self.fontMapping = {StandardEnglishFonts[i]: '/F%d' % (i + 1) for i in range(len(StandardEnglishFonts))}
 
     self.pages = []
     self.pagepositions = []

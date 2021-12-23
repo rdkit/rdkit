@@ -16,9 +16,7 @@ self.pdf which offers numerous lower-level drawing routines.
 
 # standard python library modules
 from . import pdfmetrics
-import glob
 import os
-import types
 from math import sin, cos, pi, ceil
 
 # app specific

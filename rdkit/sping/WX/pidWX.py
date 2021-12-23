@@ -107,7 +107,7 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
 
     self.SetFieldsCount(3)
 
-    self.sizeChanged = false
+    self.sizeChanged = False
     self.text = ""
     self.old_text = ""
 
@@ -115,7 +115,7 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
 
     qID = NewId()
     cID = NewId()
-    sID = NewId()
+    NewId() # ??? Unused variable
     bID = NewId()
 
     # under linux this field value is wrong at this point in constructor so use OnSize event as well
@@ -165,16 +165,16 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
 
   def OnClick(self, x, y):
     self.text = repr(x) + "," + repr(y)
-    self.click.SetValue(true)
+    self.click.SetValue(True)
     self.redraw()
 
   def OnLeaveWindow(self):
-    self.click.SetValue(false)
+    self.click.SetValue(False)
     self.text = ""
     self.redraw()
 
   def OnClickUp(self, x, y):
-    self.click.SetValue(false)
+    self.click.SetValue(False)
 
   def OnSize(self, evt):
     self.Reposition()
@@ -182,7 +182,7 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
     # Set a flag so the idle time handler will also do the repositioning.
     # It is done this way to get around a buglet where GetFieldRect is not
     # accurate during the EVT_SIZE resulting from a frame maximize.
-    self.sizeChanged = true
+    self.sizeChanged = True
 
   def OnIdle(self, evt):
     if self.sizeChanged:
@@ -209,7 +209,7 @@ class _WXCanvasDefaultStatusBar(wxStatusBar):
     self.click.SetPosition(wxPoint(field.x + field.width / 2 - 20, field.y))
     self.click.SetSize(wxSize(100, field.height))
 
-    self.sizeChanged = false
+    self.sizeChanged = False
 
 ############################################################################
 
@@ -224,7 +224,7 @@ class WXCanvas(PiddleWxDc):
        shown"""
 
     window = wxFrame(NULL, -1, "WXCanvas", wxPyDefaultPosition, wxSize(size[0], size[1]))
-    window.Show(true)
+    window.Show(True)
 
     self.window = window
 
@@ -264,7 +264,7 @@ class WXCanvas(PiddleWxDc):
       self.sb = status_bar
 
     if show_status == 0:
-      self.sb.Show(false)
+      self.sb.Show(False)
 
     self.sb.redraw()
 
@@ -319,24 +319,24 @@ class WXCanvas(PiddleWxDc):
   #  PIDDLE event handlers, not these
 
   def _OnClick(self, event):
-    if self.interactive == false:
+    if not self.interactive:
       return None
     if event.GetY() <= self.size[1]:
       self.onClick(self, event.GetX(), event.GetY())
 
   def _OnClickUp(self, event):
-    if self.interactive == false:
+    if not self.interactive:
       return None
     self.onClickUp(self, event.GetX(), event.GetY())
 
   def _OnOver(self, event):
-    if self.interactive == false:
+    if not self.interactive:
       return None
     if event.GetY() <= self.size[1]:
       self.onOver(self, event.GetX(), event.GetY())
 
   def _OnLeaveWindow(self, event):
-    if self.interactive == false:
+    if not self.interactive:
       return None
     self.onLeaveWindow(self)
 

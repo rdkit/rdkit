@@ -85,10 +85,7 @@ class RLCanvas(Canvas):
     """Attempts to return proper font name."""
     #maps a piddle font to a postscript one.
     #step 1 - no face ends up serif, others are lowercased
-    if not font.face:
-      face = 'serif'
-    else:
-      face = font.face.lower()
+    face = 'serif' if not font.face else font.face.lower()
     while face in pidPDF.font_face_map:
       face = pidPDF.font_face_map[face]
     #step 2, - resolve bold/italic to get the right PS font name
@@ -154,16 +151,9 @@ class RLCanvas(Canvas):
       edgeColor = self.defaultLineColor
 
     edgeColor = colorToRL(edgeColor)
-    if not fillColor or fillColor == transparent:
-      fillColor = None
-    else:
-      fillColor = colorToRL(fillColor)
+    fillColor = None if (not fillColor or fillColor == transparent) else colorToRL(fillColor)
 
-    if edgeWidth:
-      w = edgeWidth
-    else:
-      w = self.defaultLineWidth
-
+    w = edgeWidth if edgeWidth else self.defaultLineWidth
     points = []
     for x, y in pointlist:
       points.append(x)

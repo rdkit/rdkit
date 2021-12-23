@@ -62,8 +62,7 @@ def _ColorToSVG(color):
   """
   if color == transparent:
     return 'none'
-  else:
-    return 'rgb(%d,%d,%d)' % (int(color.red * 255), int(color.green * 255), int(color.blue * 255))
+  return 'rgb(%d,%d,%d)' % (int(color.red * 255), int(color.green * 255), int(color.blue * 255))
 
 
 def _PointListToSVG(points, dupFirst=0):
@@ -158,35 +157,17 @@ class SVGCanvas(Canvas):
     if font.face is None:
       font.__dict__['face'] = 'sansserif'  # quick hack -cwl
     if isinstance(font.face, str):
-      if len(font.face.split()) > 1:
-        familyStr = '\'%s\'' % font.face
-      else:
-        familyStr = font.face
+      familyStr = '\'%s\'' % font.face if len(font.face.split()) > 1 else font.face
     else:
       face = font.face[0]
-      if len(face.split()) > 1:
-        familyStr = '\'%s\'' % (face)
-      else:
-        familyStr = face
+      familyStr = '\'%s\'' % (face) if len(face.split()) > 1 else face
       for i in range(1, len(font.face)):
         face = font.face[i]
-        if len(face.split()) > 1:
-          familyStr = ', \'%s\'' % (face)
-        else:
-          familyStr = familyStr + ', %s' % face
-    if font.italic:
-      styleStr = 'font-style="italic"'
-    else:
-      styleStr = ''
-    if font.bold:
-      weightStr = 'font-weight="bold"'
-    else:
-      weightStr = ''
-    if font.size:
-      sizeStr = 'font-size="%.2f"' % font.size
-    else:
-      sizeStr = ''
-
+        familyStr = ', \'%s\'' % (face) if len(face.split()) > 1 else familyStr + ', %s' % face
+    
+    styleStr = 'font-style="italic"' if font.italic else ''
+    weightStr = 'font-weight="bold"' if font.bolde else ''
+    sizeStr = 'font-size="%.2f"' % font.size if font.size else ''
     fontStr = 'font-family="%s" %s %s %s' % (familyStr, styleStr, weightStr, sizeStr)
     return fontStr
 
@@ -195,22 +176,12 @@ class SVGCanvas(Canvas):
 
     """
     if abs(extent) > 360:
-      if extent < 0:
-        extent = -abs(extent) % 360
-      else:
-        extent = extent % 360
+      extent = -abs(extent) % 360 if extent < 0 else extent % 360
 
     # deal with figuring out the various arc flags
     #  required by SVG.
-    if extent > 180:  # this one is easy
-      arcFlag = 1
-    else:
-      arcFlag = 0
-
-    if extent >= 0:
-      sweepFlag = 0
-    else:
-      sweepFlag = 1
+    arcFlag = int(bool(extent > 180))  # this one is easy
+    sweepFlag = int(not bool(extent >= 0))
 
     # convert angles to radians (grn)
     theta1 = pi * theta1 / 180.
@@ -321,10 +292,7 @@ class SVGCanvas(Canvas):
         filling = 1
 
     # do the fill
-    if filling:
-      fillStr = 'fill="%s"' % _ColorToSVG(fillColor)
-    else:
-      fillStr = 'fill="none"'
+    fillStr = 'fill="%s"' % _ColorToSVG(fillColor) if filling else 'fill="none"'
 
     # set color for edge...
     if not edgeColor:
@@ -404,10 +372,7 @@ class SVGCanvas(Canvas):
       filling = 1
 
     # do the fill
-    if filling:
-      fillStr = 'fill="%s"' % _ColorToSVG(fillColor)
-    else:
-      fillStr = 'fill="none"'
+    fillStr = 'fill="%s"' % _ColorToSVG(fillColor) if filling else 'fill="none"'
     arcStr = self._FormArcStr(x1, y1, x2, y2, theta1, extent)
 
     if not filling:
@@ -465,10 +430,7 @@ class SVGCanvas(Canvas):
         filling = 1
 
     # do the fill
-    if filling:
-      fillStr = 'fill="%s"' % _ColorToSVG(fillColor)
-    else:
-      fillStr = 'fill="none"'
+    fillStr = 'fill="%s"' % _ColorToSVG(fillColor) if filling else 'fill="none"'
 
     # set color for edge...
     if not edgeColor:
@@ -503,10 +465,7 @@ class SVGCanvas(Canvas):
       color = self.defaultLineColor
     if font is None:
       font = self.defaultFont
-    if font:
-      fontStr = self._FormFontStr(font)
-    else:
-      fontStr = ''
+    fontStr = self._FormFontStr(font) if font else ''
 
     svgColor = _ColorToSVG(color)
 
@@ -578,10 +537,7 @@ class SVGCanvas(Canvas):
       op = item[0]
       args = list(item[1:])
 
-      if pathStr == '':
-        pathStr = pathStr + 'M'
-      else:
-        pathStr = pathStr + 'L'
+      pathStr = pathStr + 'M' if pathStr == '' else pathStr + 'L'
       if op == figureLine:
         pathStr = pathStr + '%.2f %.2f L%.2f %.2f' % (tuple(args))
       elif op == figureCurve:

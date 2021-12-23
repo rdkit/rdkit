@@ -273,22 +273,22 @@ def tkTest(testfunc):
     tkcanvas = sping.TK.TKCanvas(size=(400, 400), name='sping-testTK', master=frame)
     bframe = Tkinter.Frame(root)
 
-    minimalB = Tkinter.Button(
+    Tkinter.Button(
       bframe, text='minimal test',
       command=lambda c=tkcanvas: (c.clear(), drawMinimal(c), c.flush())).pack(side=Tkinter.LEFT)
-    basicB = Tkinter.Button(
+    Tkinter.Button(
       bframe, text='basic test',
       command=lambda c=tkcanvas: (c.clear(), drawBasics(c), c.flush())).pack(side=Tkinter.LEFT)
-    spectB = Tkinter.Button(
+    Tkinter.Button(
       bframe, text='spectrum test',
       command=lambda c=tkcanvas: (c.clear(), drawSpectrum(c), c.flush())).pack(side=Tkinter.LEFT)
-    stringsB = Tkinter.Button(
+    Tkinter.Button(
       bframe, text='strings test',
       command=lambda c=tkcanvas: (c.clear(), drawStrings(c), c.flush())).pack(side=Tkinter.LEFT)
-    rotstrB = Tkinter.Button(
+    Tkinter.Button(
       bframe, text='rotated strings test',
       command=lambda c=tkcanvas: (c.clear(), drawRotstring(c), c.flush())).pack(side=Tkinter.LEFT)
-    advancedB = Tkinter.Button(
+    Tkinter.Button(
       bframe, text='advanced test',
       command=lambda c=tkcanvas: (c.clear(), drawAdvanced(c), c.flush())).pack(side=Tkinter.LEFT)
     bframe.pack(side=Tkinter.TOP)
@@ -403,14 +403,9 @@ def mainLoop():
                 tstr = chr(65 + i) + '. ' + tests[i].__name__
             except Exception:
                 tstr = ''
-            if i == backend:
-                bflag = '==>'
-            else:
-                bflag = ''
-            if i == test:
-                tflag = '==>'
-            else:
-                tflag = ''
+                
+            bflag = '==>' if i == backend else ''
+            tflag = '==>' if i == test else ''
             print("%10s %-20s %10s %-20s" % (bflag, bstr, tflag, tstr))
             i = i + 1
         print()
@@ -433,10 +428,7 @@ def mainLoop():
                     docstr = __import__('sping.' + backends[backend], globals(), locals(),
                                         backends[backend]).__doc__
                     #docstr = __import__('sping.'+backends[backend]).__doc__
-                    if docstr:
-                        print(docstr)
-                    else:
-                        print("<no doc string>")
+                    print(docstr if docstr else "<no doc string>")
                 else:
                     backend = None
             if testinp:
@@ -450,7 +442,7 @@ def mainLoop():
         print
 
         # now, if we have a valid backend and test, run it
-        if backend != None and test != None:
+        if backend is not None and test is not None:
             runtest(backends[backend], tests[test])
 
 

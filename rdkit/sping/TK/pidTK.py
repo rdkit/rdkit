@@ -135,10 +135,7 @@ class FontManager:
       # check if the user specified a generic face type
       # like serif or monospaced. check is case-insensitive.
       f = font.face.lower()
-      if f in self.__alt_faces:
-        family = self.__alt_faces[f]
-      else:
-        family = font.face
+      family = self.__alt_faces[f] if f in self.__alt_faces else font.face
 
     size = font.size or 12
 
@@ -252,11 +249,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
   def _getTkColor(self, color, defaultColor):
     if color is None:
       color = defaultColor
-    if color is rdkit.sping.pid.transparent:
-      color = self.__TRANSPARENT
-    else:
-      color = self._colorToTkColor(color)
-    return color
+    return self.__TRANSPARENT if color is rdkit.sping.pid.transparent else self._colorToTkColor(color)
 
   def drawLine(self, x1, y1, x2, y2, color=None, width=None):
     color = self._getTkColor(color, self.defaultLineColor)

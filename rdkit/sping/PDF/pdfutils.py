@@ -76,12 +76,8 @@ def cachedImageExists(filename):
         # see if it is newer
         original_date = os.stat(filename)[8]
         cached_date = os.stat(cachedname)[8]
-        if original_date > cached_date:
-            return 0
-        else:
-            return 1
-    else:
-        return 0
+        return int(original_date <= cached_date)
+    return 0
 
 
 ##############################################################
@@ -145,10 +141,7 @@ def _AsciiHexTest(text='What is the average velocity of a sparrow?'):
     print('Encoded:', encoded)
     decoded = _AsciiHexDecode(encoded)
     print('Decoded:', decoded)
-    if decoded == text:
-        print('Passed')
-    else:
-        print('Failed!')
+    print('Passed' if decoded == text else 'Failed!')
 
 
 def _AsciiBase85Encode(input):
@@ -299,7 +292,7 @@ def _wrap(input, columns=60):
     pos = columns * i
     while pos < length:
         output.append(input[pos:pos + columns])
-        i = i + 1
+        i += 1
         pos = columns * i
 
     return LINEEND.join(output)
@@ -312,7 +305,4 @@ def _AsciiBase85Test(text='What is the average velocity of a sparrow?'):
     print('Encoded:', encoded)
     decoded = _AsciiBase85Decode(encoded)
     print('Decoded:', decoded)
-    if decoded == text:
-        print('Passed')
-    else:
-        print('Failed!')
+    print('Passed' if decoded == text else 'Failed!')

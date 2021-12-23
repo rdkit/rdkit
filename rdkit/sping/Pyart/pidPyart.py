@@ -96,8 +96,8 @@ class PyartCanvas(Canvas):
 
     if isinstance(file, StringType):
       self._pycan.save(file)
-    else:
-      raise NotImplementedError
+      return None
+    raise NotImplementedError # This should not be raised
 
   def _findExternalFontName(self, font):  #copied from piddlePDF by cwl- hack away!
     """Attempts to return proper font name.

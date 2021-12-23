@@ -52,6 +52,7 @@ import formatter
 import string
 from types import *
 import piddle
+import pdb # this may not be used ?
 
 TRACE = 0
 
@@ -388,18 +389,17 @@ def demo(html=DEMO_HTML):
             sel = int(sel.strip())
         except Exception:
             sel = -1
-        if (sel == 0):
+        if sel == 0:
             break
-        elif (sel == 1):
+        elif sel == 1:
             demoPDF(html)
-        elif (sel == 2):
+        elif sel == 2:
             demoPIL(html)
-        elif (sel == 3):
+        elif sel == 3:
             demoTK(html)
-        elif (sel == 4):
+        elif sel == 4:
             demoWX(html)
 
 
 if __name__ == '__main__':
-    import pdb
     demo()

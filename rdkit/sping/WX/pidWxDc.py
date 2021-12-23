@@ -45,8 +45,7 @@ class PiddleWxDc(sping_pid.Canvas):
 
     if default is not None:
       return self._getWXcolor(default)
-    else:
-      return None  # End of the line
+    return None  # End of the line
 
   def _getWXbrush(self, color, default_color=None):
     '''Converts PIDDLE colors to a wx brush'''
@@ -59,8 +58,7 @@ class PiddleWxDc(sping_pid.Canvas):
     if wxcolor is None:
       if default_color is not None:
         return self._getWXbrush(default_color)
-      else:
-        raise WxCanvasError("Cannot create brush.")
+      raise WxCanvasError("Cannot create brush.")
 
     return wxBrush(wxcolor)
 
@@ -78,8 +76,7 @@ class PiddleWxDc(sping_pid.Canvas):
     if wxcolor is None:
       if default_color is not None:
         return self._getWXpen(width, default_color)
-      else:
-        raise WxCanvasError("Cannot create pen.")
+      raise WxCanvasError("Cannot create pen.")
 
     return wxPen(wxcolor, width)
 
@@ -119,7 +116,7 @@ class PiddleWxDc(sping_pid.Canvas):
     return (wx_font)
 
   def isInteractive(self):
-    return (0)
+    return 0
 
   def canUpdate(self):
     return 1
@@ -132,7 +129,7 @@ class PiddleWxDc(sping_pid.Canvas):
   def stringWidth(self, s, font=None):
     '''Return the logical width of the string if it were drawn \
         in the current font (defaults to self.font).'''
-    wx_font = self._setWXfont(font)
+    self._setWXfont(font)
     return self.dc.GetTextExtent(s)[0]
 
   def fontHeight(self, font=None):
@@ -141,7 +138,7 @@ class PiddleWxDc(sping_pid.Canvas):
 
   def fontAscent(self, font=None):
     '''Find the ascent (height above base) of the given font.'''
-    wx_font = self._setWXfont(font)
+    self._setWXfont(font)
     return self.dc.GetCharHeight() - self.fontDescent(font)
 
   def fontDescent(self, font=None):

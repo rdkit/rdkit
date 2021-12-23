@@ -190,10 +190,7 @@ class QtCanvas(pid.Canvas):
     self._pen.setWidth(edgeWidth)
     self._pen.setJoinStyle(Qt.RoundJoin)
 
-    if dash is not None:
-      self._pen.setStyle(Qt.DashLine)
-    else:
-      self._pen.setStyle(Qt.SolidLine)
+    self._pen.setStyle(Qt.DashLine if dash is not None else Qt.SolidLine)
 
     poly = QCanvasPolygon(self._canvas)
     poly.setPen(self._pen)
@@ -244,10 +241,7 @@ class QtCanvas(pid.Canvas):
     if font is not None:
       self._adjustFont(font)
 
-    if angle != 0:
-      txt = QCanvasRotText(s, self._canvas, angle=angle)
-    else:
-      txt = QCanvasText(s, self._canvas)
+    txt = QCanvasRotText(s, self._canvas, angle=angle) if angle != 0 else QCanvasText(s, self._canvas)
 
     txt.setTextFlags(Qt.AlignLeft | Qt.AlignVCenter)
     if self._font:

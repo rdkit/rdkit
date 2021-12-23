@@ -52,9 +52,6 @@ Progress Reports:
 ##
 
 import os
-import sys
-import time
-import tempfile
 from io import StringIO
 from types import *
 from math import sin, cos, tan, pi, ceil

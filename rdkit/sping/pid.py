@@ -156,8 +156,7 @@ class Font:
            self.bold == other.bold and self.italic == other.italic \
            and self.underline == other.underline:
             return 0
-        else:
-            return 1
+        return 1
 
     def __repr__(self):
         return "Font(%d,%d,%d,%d,%s)" % (self.size, self.bold, self.italic,
@@ -403,8 +402,8 @@ class Canvas:
         lines = s.split('\n')
         for line in lines:
             self.drawString(line, x, y, font, color, angle)
-            x = x + dx
-            y = y + dy
+            x += dx
+            y += dy
 
     # ------------- drawing methods --------------
 
