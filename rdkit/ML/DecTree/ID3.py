@@ -138,12 +138,11 @@ def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
     tree.SetTerminal(1)
   else:
     # find the variable which gives us the largest information gain
-
     gains = [entropy.InfoGain(x) for x in varTable]
     best = attrs[numpy.argmax(gains)]
 
     # remove that variable from the lists of possible variables
-    nextAttrs = attrs.copy()
+    nextAttrs = attrs[:]
     if not kwargs.get('recycleVars', 0):
       nextAttrs.remove(best)
 
@@ -196,7 +195,7 @@ def ID3Boot(examples, attrs, nPossibleVals, initialVar=None, depth=0, maxDepth=-
   tree.SetData(totEntropy)
   tree.SetLabel(best)
   tree.SetTerminal(0)
-  nextAttrs = attrs.copy()
+  nextAttrs = attrs[:]
   if not kwargs.get('recycleVars', 0):
     nextAttrs.remove(best)
 

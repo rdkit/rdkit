@@ -165,7 +165,7 @@ def CrossValidationDriver(examples, attrs, nPossibleVals, holdOutFrac=.3, silent
     nQuantBounds = []
     
   nTot = len(examples)
-  condition = not bool(kwargs.get('replacementSelection', 0))
+  condition = bool(not kwargs.get('replacementSelection', 0))
   testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, 
                                                      legacy=int(condition), replacement=int(not condition))
     

@@ -53,7 +53,7 @@ def CrossValidationDriver(examples, attrs, nPossibleValues, nQuantBounds, mEstim
                           holdOutFrac=0.3, modelBuilder=makeNBClassificationModel, silent=0,
                           calcTotalError=0, **kwargs):
   nTot = len(examples)
-  condition = not bool(kwargs.get('replacementSelection', 0))
+  condition = bool(not kwargs.get('replacementSelection', 0))
   testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, 
                                                      legacy=int(condition), replacement=int(not condition))
 
