@@ -151,7 +151,7 @@ class BackProp(Trainer):
     converged = 0
     cycle = 0
 
-    while (not converged) and cycle < maxIts:
+    while cycle < maxIts and not converged:
       maxErr = 0
       newErr = 0
       # print('bp: ',cycle)
@@ -163,7 +163,6 @@ class BackProp(Trainer):
       
       newErr = (newErr / nExamples) if useAvgErr else newErr
       # print('\t',newErr,errTol)
-
       if newErr <= errTol:
         converged = 1
 
@@ -171,6 +170,7 @@ class BackProp(Trainer):
       if not silent:
         print('epoch %d, error: % 6.4f' % (cycle, newErr))
       cycle += 1
+      
     if not silent:
       if converged:
         print('Converged after %d epochs.' % cycle)

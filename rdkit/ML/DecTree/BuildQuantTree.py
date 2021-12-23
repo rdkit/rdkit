@@ -8,8 +8,8 @@
 """
 import numpy
 import random
+from collections import defaultdict
 
-from numpy.core.records import array
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
 from rdkit.ML.Data import Quantize
@@ -221,16 +221,22 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
        split.
 
     """
-    # OLD CODE: O(N^3) in here -> O(3 * N)
+    # OLD CODE: O(N^3) in here -> O(N^2 + N)
     attrs = list(attrs)
-    masks = [False] * len(attrs)
-    attrsSet = set(attrs)
+    masks = [False] * len(attrs)    
+    attrsDict = defaultdict(lambda : [0, []])
+    for key, value in enumerate(attrs): # key is attrs_value while key is attrs_index
+        attrsDict[value][1].append(key)
+        
     for i in range(len(nBoundsPerVar)):
         if nBoundsPerVar[i] == -1:
-            if i in attrsSet:
-                masks[i] = True
+            if i in attrsDict:
+                location = attrsDict[i][0]
+                masks[attrsDict[i][1][location]] = True
+                attrsDict[i][0] += 1
+                
     attrs = [attr for i, attr in enumerate(attrs) if not masks[i]]
-    del attrsSet
+    del attrsDict
     
     tree = QuantTree.QuantTreeNode(None, 'node')
     nPossibleRes = nPossibleVals[-1]
@@ -262,13 +268,14 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
     tree.SetLabel(best)
     tree.SetTerminal(0)
     tree.SetQuantBounds(qBounds)
-    nextAttrs = attrs.copy() # It has been converted to list once. Make a copy to avoid changing the original list.
+    nextAttrs = attrs.copy() # It has been converted to list once, copy faster
     if not kwargs.get('recycleVars', 0):
         nextAttrs.remove(best)
 
-    indices = list(range(len(examples)))
+    indices = list(range(len(examples))) # A list from 0 to len(examples)
     if len(qBounds) > 0:
         for bound in qBounds:
+            # Optimize here once: Recheck here if failed
             masks = [bool(examples[idx][best] < bound) for idx in indices]
             nextExamples = [examples[index] for index, mask in enumerate(masks) if mask]
             indices = [indices[index] for index, mask in enumerate(masks) if mask]

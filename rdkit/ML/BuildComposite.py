@@ -260,7 +260,6 @@ def testall(composite, examples, badExamples=[]):
   wrong = []
   for example in examples:
     answer = composite.QuantizeActivity(example)[-1] if composite.GetActivityQuantBounds() else example[-1]
-
     res, conf = composite.ClassifyExample(example)
     if res != answer:
       wrong.append((res, conf))
@@ -492,6 +491,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   
   if details.nModels == 1:
     details.internalHoldoutFrac = 0.0
+    
   if details.useTrees:
     from rdkit.ML.DecTree import CrossValidate, PruneTree
     if details.qBounds != []:

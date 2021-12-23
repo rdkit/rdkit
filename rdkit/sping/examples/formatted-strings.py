@@ -28,7 +28,7 @@ canvas = PDFCanvas(size=(350, 200), name="formatted-strings.pdf")
 y = 20
 for line in lines:
   sping.stringformat.drawString(canvas, line, 10, y)
-  y = y + 20
+  y += 20
 
 canvas.flush()
 canvas.save()
@@ -39,7 +39,7 @@ canvas = PSCanvas(size=(350, 200), name="formatted-strings.ps")
 y = 20
 for line in lines:
   sping.stringformat.drawString(canvas, line, 10, y)
-  y = y + 20
+  y += 20
 
 canvas.flush()
 canvas.save()

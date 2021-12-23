@@ -44,15 +44,8 @@ class TestCase(unittest.TestCase):
         self.details.randomSeed = refCompos._randomSeed
         self.details.splitFrac = refCompos._splitFrac
 
-        if self.details.splitFrac:
-            self.details.splitRun = 1
-        else:
-            self.details.splitRun = 0
-
-        if not copyBounds:
-            self.details.qBounds = [0] * len(cols)
-        else:
-            self.details.qBounds = refCompos.GetQuantBounds()[0]
+        self.details.splitRun = int(bool(self.details.splitFrac))
+        self.details.qBounds = [0] * len(cols) if not copyBounds else refCompos.GetQuantBounds()[0]
 
     def compare(self, compos, refCompos):
         self.assertEqual(len(compos), len(refCompos))

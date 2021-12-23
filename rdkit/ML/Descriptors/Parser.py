@@ -45,8 +45,8 @@ Here's the general flow of things:
 """
 
 # The wildcard import is required to make functions available for the eval statement
-
-import math
+# from math import *
+# import math
 from rdkit import RDConfig
 
 __DEBUG = False
