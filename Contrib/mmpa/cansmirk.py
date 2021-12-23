@@ -36,8 +36,7 @@ from rdkit import Chem
 from indexing import cansmirk
 
 if __name__ == '__main__':
-
-  if (len(sys.argv) >= 2):
+  if len(sys.argv) >= 2:
     print(
       "Program that canonicalises an input SMIRKS so its in same format as MMP identification program.\n")
     print("USAGE: ./cansmirks.py <file_of_smirks\n")
@@ -51,10 +50,7 @@ if __name__ == '__main__':
     line_fields = re.split('\s|,', line)
     smirks = line_fields[0]
 
-    if (len(line_fields) == 1):
-      id = ""
-    else:
-      id = line_fields[1]
+    id = "" if len(line_fields) == 1 else line_fields[1]
 
     lhs, rhs = smirks.split(">>")
 
@@ -64,7 +60,7 @@ if __name__ == '__main__':
       continue
 
     r = Chem.MolFromSmiles(rhs)
-    if (r == None):
+    if r is None:
       sys.stderr.write("Can't generate mol for: %s\n" % (rhs))
       continue
 
@@ -72,15 +68,14 @@ if __name__ == '__main__':
     crhs = Chem.MolToSmiles(r, isomericSmiles=True)
 
     #just need to take care of [*H:1]
-    if (clhs == '[*H:1]'):
+    if clhs == '[*H:1]':
       clhs = '[*:1][H]'
 
-    if (crhs == '[*H:1]'):
+    if crhs == '[*H:1]':
       crhs = '[*:1][H]'
 
     #print clhs
     #print crhs
 
     csmirk, context = cansmirk(clhs, crhs, "")
-
     print("%s %s" % (csmirk, id))

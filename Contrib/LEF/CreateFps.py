@@ -33,7 +33,7 @@
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.Chem.AtomPairs import Pairs, Torsions
+from rdkit.Chem.AtomPairs import Torsions
 import sys, pickle
 
 # maxPathLength is the maximum path length in atoms
@@ -113,7 +113,7 @@ if __name__ == '__main__':
         seen.append(fp)
         smis.append(smi)
         data.append((nm, smi))
-  else:
+  else: # Code unreached
     smis = []
     for nm, smi, fp in fps:
       if smi not in smis:

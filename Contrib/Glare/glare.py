@@ -164,10 +164,7 @@ class Library:
             
     def isValid(self):
         """If we have an empty set for any rgroup, return False"""
-        for rg in self.rgroups:
-            if len(rg.sidechains) == 0:
-                return False
-        return True
+        return not any(len(rg.sidechains) == 0 for rg in self.rgroups)
     
     def randomize(self):
         """randomize the order of the sidechains"""
@@ -205,7 +202,7 @@ class Library:
         opt_sizes.append((libIdx, last_size))
         # back to the original library order
         opt_sizes.sort()
-        res = [size for libIdx, size in opt_sizes]
+        res = [size for _, size in opt_sizes]
         return res
 
     def chunk(self, num_partitions):
@@ -225,8 +222,7 @@ class Library:
             enumeration_indices.append( combinations )
         
         library_sets = []
-        for subset_index, combinations in enumerate(enumeration_indices):
-            libs = []
+        for _, combinations in enumerate(enumeration_indices):
             partitioned_rgroups = []
             for lib_index, libpart_index in enumerate(combinations):
                 lib = self.rgroups[lib_index]
@@ -244,7 +240,7 @@ class Library:
         sum = 0.0
         for rg in self.rgroups:
             sum += rg.effectiveness()
-        return sum/len(self.rgroups)
+        return sum / len(self.rgroups)
             
     def evaluate(self, props):
         """props -> num_good_enumerations, total_enumerations
@@ -301,10 +297,7 @@ class Glare:
         self.maxIterations = maxIterations
         self.rgroupScale = rgroupScale
         
-        if initialFraction is not None:
-            self.initialFraction = initialFraction/100.
-        else:
-            self.initialFraction = initialFraction
+        self.initialFraction = initialFraction / 100. if initialFraction is not None else initialFraction
         self.numPartitions = numPartitions
         
     def optimize(self, library, props):
@@ -371,7 +364,7 @@ class Glare:
                 # the second time, gradually eliminate reagents slowing
                 #  down as the number of iterations increases
                 #  see equation (5) in reference
-                if abs(Gt-G0) < 1e-4:
+                if abs(Gt - G0) < 1e-4:
                     Ki = 1.0
                 else:
                     Ki = (1.0 - K0) * (Gi - G0) / (Gt - G0) + K0;
@@ -425,16 +418,13 @@ class Glare:
 ######################################################################            
 # testing codes
 def makeFakeProps():
-    mw = random.randint(10,500)
-    alogp = random.randint(-10,10)
-    tpsa = random.randint(0,180)
+    mw = random.randint(10, 500)
+    alogp = random.randint(-10, 10)
+    tpsa = random.randint(0, 180)
     return [mw, alogp, tpsa]
 
 def makeFakeSidechains(lib, num):
-    res = []
-    for i in range(num):
-        res.append(Sidechain(lib + "_" + str(i), makeFakeProps()))
-    return res
+    return [Sidechain(lib + "_" + str(i), makeFakeProps()) for i in range(num)]
 
 def testGlare():
     a = RGroups(makeFakeSidechains("aldehydes", 1000))

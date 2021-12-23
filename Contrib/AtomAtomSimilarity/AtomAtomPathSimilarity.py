@@ -10,10 +10,10 @@ import unittest
 from scipy.optimize import linear_sum_assignment
 
 from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import rdmolops
-from rdkit import DataStructs
-from rdkit.Chem.Fingerprints import FingerprintMols
+# from rdkit.Chem import AllChem
+# from rdkit.Chem import rdmolops
+# from rdkit import DataStructs
+# from rdkit.Chem.Fingerprints import FingerprintMols
 
 _BK_ = {
   Chem.rdchem.BondType.SINGLE: 1,
@@ -51,8 +51,7 @@ def FindAllPathsOfLengthMToN_Gobbi(mol, minlength, maxlength, rootedAtAtom=-1, u
           uniquepathlist.append(path)
           seen.add(path)
     return uniquepathlist
-  else:
-    return paths
+  return paths
 
 
 def _FindAllPathsOfLengthMToN_Gobbi(atom, path, minlength, maxlength, visited, paths):
@@ -79,9 +78,8 @@ def _FindAllPathsOfLengthMToN_Gobbi(atom, path, minlength, maxlength, visited, p
 
 def getpathintegers(m1, uptolength=7):
   '''returns a list of integers describing the paths for molecule m1.  This uses numpy 16 bit unsigned integers to reproduce the data in the Gobbi paper.  The returned list is sorted'''
-  bondtypelookup = {}
-  for b in m1.GetBonds():
-    bondtypelookup[b.GetIdx()] = _BK_[b.GetBondType()], b.GetBeginAtom(), b.GetEndAtom()
+  bondtypelookup = {b.GetIdx(): _BK_[b.GetBondType()], b.GetBeginAtom(), b.GetEndAtom() for b in m1.GetBonds()}
+
   pathintegers = {}
   for a in m1.GetAtoms():
     idx = a.GetIdx()
@@ -93,17 +91,16 @@ def getpathintegers(m1, uptolength=7):
       strpath = []
       currentidx = idx
       res = []
-      for ip, p in enumerate(path):
+      for _, p in enumerate(path):
         bk, a1, a2 = bondtypelookup[p]
         strpath.append(_BONDSYMBOL_[bk])
-        if a1.GetIdx() == currentidx:
-          a = a2
-        else:
-          a = a1
+        a = a2 if a1.GetIdx() == currentidx else a1
         ak = a.GetAtomicNum()
         if a.GetIsAromatic():
           ak += 108
-#trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
+          
+        # trying to get the same behaviour as the Gobbi test code - it looks like a circular 
+        # path includes the bond, but not the closure atom - this fix works
         if a.GetIdx() == idx:
           ak = None
         if ak is not None:
@@ -114,13 +111,15 @@ def getpathintegers(m1, uptolength=7):
             strpath.append(astr)
         res.append((bk, ak))
         currentidx = a.GetIdx()
+        
       pathuniqueint = numpy.ushort(0)  # work with 16 bit unsigned integers and ignore overflow...
-      for ires, (bi, ai) in enumerate(res):
+      for bi, ai in res:
         #use 16 bit unsigned integer arithmetic to reproduce the Gobbi ints
         #					pathuniqueint = ((pathuniqueint+bi)*_nAT_+ai)*_nBT_
         val1 = pathuniqueint + numpy.ushort(bi)
         val2 = val1 * numpy.ushort(_nAT_)
-        #trying to get the same behaviour as the Gobbi test code - it looks like a circular path includes the bond, but not the closure atom - this fix works
+        # trying to get the same behaviour as the Gobbi test code - it looks like a circular path 
+        # includes the bond, but not the closure atom - this fix works
         if ai is not None:
           val3 = val2 + numpy.ushort(ai)
           val4 = val3 * numpy.ushort(_nBT_)
@@ -128,7 +127,7 @@ def getpathintegers(m1, uptolength=7):
           val4 = val2
         pathuniqueint = val4
       pathintegers[idx].append(pathuniqueint)
-#sorted lists allow for a quicker comparison algorithm
+  # sorted lists allow for a quicker comparison algorithm
   for p in pathintegers.values():
     p.sort()
   return pathintegers
@@ -139,7 +138,7 @@ def getcommon(l1, ll1, l2, ll2):
   ncommon = 0
   ix1 = 0
   ix2 = 0
-  while (ix1 < ll1) and (ix2 < ll2):
+  while ix1 < ll1 and ix2 < ll2:
     a1 = l1[ix1]
     a2 = l2[ix2]
     #a1 is < or > more often that ==
@@ -175,7 +174,7 @@ def getmappings(simmatrixarray):
   seena = set()
   seenb = set()
   mappings = []
-  for sim, a, b in dsu:
+  for _, a, b in dsu:
     if a not in seena and b not in seenb:
       seena.add(a)
       seenb.add(b)
@@ -337,7 +336,7 @@ CN(C)CCCNC1=CC=NC2=CC(Cl)=CC=C12
   start = time.time()
   for a, api in zip(mols, pathints):
     for b, bpi in zip(mols, pathints):
-      sim = AtomAtomPathSimilarity(a, b, m1pathintegers=api, m2pathintegers=bpi)
+      AtomAtomPathSimilarity(a, b, m1pathintegers=api, m2pathintegers=bpi)
   print('time to compute %dx%d matrix: %.2fs' % (na, nb, time.time() - start))
 
 

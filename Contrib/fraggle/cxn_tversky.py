@@ -112,6 +112,5 @@ for line in sys.stdin:
     sc.setQueryFingerprint(q[0])
 
     tversky = sc.getSimilarity(intfp)
-
-    if (tversky >= 0.9):
+    if tversky >= 0.9:
       print("%s,%s,%s,%s,%s,%s" % (qsub, qsmi, qid, dbsmi, dbid, tversky))

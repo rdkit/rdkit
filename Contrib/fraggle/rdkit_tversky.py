@@ -47,13 +47,13 @@ parser.add_option(
   help="Cutoff for Tversy similarity. Only Tversky results with similarity greater than the cutoff will be output. DEFAULT = 0.8")
 
 #parse the command line options
-(options, args) = parser.parse_args()
+options, args = parser.parse_args()
 
-if (options.f_file is None):
+if options.f_file is None:
   print("Please specify the file containing the Fraggle fragmentations")
   sys.exit(1)
 
-if ((options.cutoff < 0) or (options.cutoff > 1)):
+if options.cutoff < 0 or options.cutoff > 1:
   print("Please specify a Tversky cut-off between 0-1")
   sys.exit(1)
 
@@ -65,7 +65,6 @@ q_split_input = open(options.f_file, "r")
 
 for line in q_split_input:
   info = line.rstrip().split(",")
-
   qmol = Chem.MolFromSmiles(info[2])
   #print info[2]
   if qmol is None:
@@ -98,6 +97,6 @@ for line in sys.stdin:
 
   #query_frag_smiles,query_smiles,query_id,retrieved_smi,retrieved_id,tversky_sim
   for i in range(fragments):
-    if (res[i] >= options.cutoff):
+    if res[i] >= options.cutoff:
       print("%s,%s,%s,%s,%s,%s" %
             (query_info[i][2], query_info[i][0], query_info[i][1], smi, id, res[i]))

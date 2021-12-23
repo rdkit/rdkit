@@ -35,7 +35,6 @@ from CreateFps import GetMolFingerprint
 from rdkit.ML.KNN.KNNRegressionModel import KNNRegressionModel
 from rdkit.RDLogger import logger
 logger = logger()
-import sys
 
 # nameField is the name of the property (from the SD file) that has molecule
 # names...If the molecules have names in the first row of the file, use "_Name"
@@ -54,7 +53,7 @@ from optparse import OptionParser, Option, OptionValueError
 def check_floatlist(option, opt, value):
   try:
     v = eval(value)
-    if type(v) not in (types.ListType, types.TupleType):
+    if not isinstance(v, (list, tuple)):
       raise ValueError
     v = [float(x) for x in v]
   except ValueError:

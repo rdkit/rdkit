@@ -32,7 +32,7 @@
 
 from rdkit import Chem
 from rdkit.Chem import BRICS
-import sys, pickle, re
+import sys, re
 
 inF = file(sys.argv[1], 'r')
 inLs = inF.readlines()
@@ -60,14 +60,8 @@ for line in inLs[1:]:
   splitL = line.strip().split(delim)
   mol = Chem.MolFromSmiles(splitL[1])
   for fg in patts:
-    if mol.HasSubstructMatch(fg):
-      splitL.append('True')
-    else:
-      splitL.append('False')
+    splitL.append('True' if mol.HasSubstructMatch(fg) else 'False')
 
   bricsRes = BRICS.BRICSDecompose(mol)
-  if len(bricsRes) > 1:
-    splitL.append('True')
-  else:
-    splitL.append('False')
+  splitL.append('True' if len(bricsRes) > 1 else 'False')
   print(delim.join(splitL))

@@ -22,9 +22,9 @@ from rdkit.Chem import rdMolDescriptors
 import pickle
 
 import math
-from collections import defaultdict
-
 import os.path as op
+import sys
+import time
 
 _fscores = None
 
@@ -36,10 +36,7 @@ def readFragmentScores(name='fpscores'):
     if name == "fpscores":
         name = op.join(op.dirname(__file__), name)
     data = pickle.load(gzip.open('%s.pkl.gz' % name))
-    outDict = {}
-    for i in data:
-        for j in range(1, len(i)):
-            outDict[i[j]] = float(i[0])
+    outDict = {i[j]: float(i[0]) for i in data for j in range(1, len(i))}
     _fscores = outDict
 
 
@@ -126,9 +123,6 @@ def processMols(mols):
 
 
 if __name__ == '__main__':
-    import sys
-    import time
-
     t1 = time.time()
     readFragmentScores("fpscores")
     t2 = time.time()

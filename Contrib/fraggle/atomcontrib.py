@@ -33,7 +33,7 @@
 import sys
 from optparse import OptionParser
 from rdkit import Chem
-from rdkit import DataStructs
+# from rdkit import DataStructs
 from collections import defaultdict
 
 #input format
@@ -60,7 +60,7 @@ if __name__ == '__main__':
   #parse the command line options
   (options, args) = parser.parse_args()
 
-  if ((options.cutoff >= 0) and (options.cutoff <= 1)):
+  if 0 <= options.cutoff <= 1:
     fraggle_cutoff = options.cutoff
   else:
     print("Fraggle cutoff must be in range 0-1")
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     frag_sim.setdefault(qID, defaultdict(float))
     day_sim.setdefault(qID, {})
 
-    if (qID not in query_size):
+    if qID not in query_size:
       qMol = Chem.MolFromSmiles(qSmi)
       if (qMol == None):
         sys.stderr.write("Can't generate mol for: %s\n" % (qSmi))
@@ -100,17 +100,16 @@ if __name__ == '__main__':
       query_size[qID] = qMol.GetNumAtoms()
 
     iMol = Chem.MolFromSmiles(inSmi)
-
-    if (iMol == None):
+    if iMol is None:
       sys.stderr.write("Can't generate mol for: %s\n" % (inSmi))
       continue
 
     #discard based on atom size
-    if (iMol.GetNumAtoms() < query_size[qID] - 3):
+    if iMol.GetNumAtoms() < query_size[qID] - 3:
       #sys.stderr.write("Too small: %s\n" % (inSmi) )
       continue
 
-    if (iMol.GetNumAtoms() > query_size[qID] + 4):
+    if iMol.GetNumAtoms() > query_size[qID] + 4:
       #sys.stderr.write("Too large: %s\n" % (inSmi) )
       continue
 
@@ -127,6 +126,6 @@ if __name__ == '__main__':
   #Format: SMILES,ID,QuerySMI,QueryID,Fraggle_Similarity,Daylight_Similarity
   for qID in frag_sim:
     for id_ in frag_sim[qID]:
-      if (frag_sim[qID][id_] >= fraggle_cutoff):
+      if frag_sim[qID][id_] >= fraggle_cutoff:
         print("%s,%s,%s,%s,%s,%s" %
               (id_to_smi[id_], id_, id_to_smi[qID], qID, frag_sim[qID][id_], day_sim[qID][id_]))

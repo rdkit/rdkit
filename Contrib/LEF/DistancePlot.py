@@ -93,9 +93,6 @@ if __name__ == '__main__':
     nmj, smij, propj, fpj = data[j]
     dAct = propi - propj
     dist = 1. - DataStructs.DiceSimilarity(fpi, fpj)
-    if dist != 0:
-      disparity = dAct / dist
-    else:
-      disparity = 1000
+    disparity = dAct / dist if dist != 0 else 1000
     print >> outF, '%s|%s|%s_%s|%s|%s|%s.%s|%f|%f|%f|%f|%f' % (
       nmi, nmj, nmi, nmj, smii, smij, smii, smij, propi, propj, dAct, dist, disparity)

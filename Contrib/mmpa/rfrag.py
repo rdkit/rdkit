@@ -100,7 +100,7 @@ def delete_bonds(smi, id, mol, bonds, out):
   fragments = fragmented_smi_noIsotopes.split(".")
 
   #check if its a valid triple cut
-  if (isotope == 3):
+  if isotope == 3:
     valid = False
     for f in fragments:
       matchObj = re.search('\*.*\*.*\*', f)
@@ -109,7 +109,7 @@ def delete_bonds(smi, id, mol, bonds, out):
         break
 
   if valid:
-    if (isotope == 1):
+    if isotope == 1:
       fragmented_smi_noIsotopes = re.sub('\[\*\]', '[*:1]', fragmented_smi_noIsotopes)
 
       fragments = fragmented_smi_noIsotopes.split(".")
@@ -121,10 +121,10 @@ def delete_bonds(smi, id, mol, bonds, out):
       #need to cansmi again as smiles can be different
       output = '%s,%s,,%s.%s' % (smi, id, Chem.MolToSmiles(s1, isomericSmiles=True),
                                  Chem.MolToSmiles(s2, isomericSmiles=True))
-      if ((output in out) == False):
+      if not (output in out):
         out.add(output)
 
-    elif (isotope >= 2):
+    elif isotope >= 2:
       #add the isotope labels
       for key in isotope_track:
         #to add isotope labels
@@ -159,14 +159,14 @@ def delete_bonds(smi, id, mol, bonds, out):
           isotope_track[matchObj.group(1)] = str(s + 1)
 
       #change the labels if required
-      if (isotope_track['1'] != '1'):
+      if isotope_track['1'] != '1':
         core = re.sub('\[\*\:1\]', '[*:XX' + isotope_track['1'] + 'XX]', core)
         side_chains = re.sub('\[\*\:1\]', '[*:XX' + isotope_track['1'] + 'XX]', side_chains)
-      if (isotope_track['2'] != '2'):
+      if isotope_track['2'] != '2':
         core = re.sub('\[\*\:2\]', '[*:XX' + isotope_track['2'] + 'XX]', core)
         side_chains = re.sub('\[\*\:2\]', '[*:XX' + isotope_track['2'] + 'XX]', side_chains)
 
-      if (isotope == 3):
+      if isotope == 3:
         if (isotope_track['3'] != '3'):
           core = re.sub('\[\*\:3\]', '[*:XX' + isotope_track['3'] + 'XX]', core)
           side_chains = re.sub('\[\*\:3\]', '[*:XX' + isotope_track['3'] + 'XX]', side_chains)
@@ -176,7 +176,7 @@ def delete_bonds(smi, id, mol, bonds, out):
       side_chains = re.sub('XX', '', side_chains)
 
       output = '%s,%s,%s,%s' % (smi, id, core, side_chains)
-      if ((output in out) == False):
+      if not (output in out):
         out.add(output)
 
 
@@ -187,7 +187,7 @@ def fragment_mol(smi, cid):
   #to use outlines to remove them
   outlines = set()
 
-  if (mol == None):
+  if mol is None:
     sys.stderr.write("Can't generate mol for: %s\n" % (smi))
   else:
     frags = rdMMPA.FragmentMol(mol, pattern="[#6+0;!$(*=,#[!#6])]!@!=!#[*]", resultsAsMols=False)

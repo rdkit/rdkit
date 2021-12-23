@@ -71,9 +71,8 @@ def scoreMol(mol, fscore):
 
 def processMols(fscore, suppl):
   print("calculating ...", file=sys.stderr)
-  count = {}
   n = 0
-  for i, m in enumerate(suppl):
+  for m in suppl:
     if m is None:
       continue
 

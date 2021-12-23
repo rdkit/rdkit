@@ -32,7 +32,7 @@
 
 
 from rdkit import Chem
-from rdkit.Chem import AllChem
+# from rdkit.Chem import AllChem
 from collections import defaultdict
 import copy
 
@@ -43,23 +43,23 @@ def transferAgentsToReactants(rxn):
         rxn.AddReactantTemplate(agent)
 
 def removeAgentsAndTransferToReactants(rxn):
-    tmp=[]
+    tmp = []
     rxn.RemoveAgentTemplates(tmp)
     for a in tmp:
         rxn.AddReactantTemplate(a)
 
 def getNumPositiveCounts(fp):
-    count=0
-    for k,v in fp.GetNonzeroElements().items():
+    count = 0
+    for _, v in fp.GetNonzeroElements().items():
         if v > 0:
-            count+=v
+            count += v
     return count
 
 def getNumNegativeCounts(fp):
     count=0
-    for k,v in fp.GetNonzeroElements().items():
+    for _, v in fp.GetNonzeroElements().items():
         if v < 0:
-            count+=abs(v)
+            count += abs(v)
     return count
 
 def getNumPositiveBitCountsOfRadius0(fp,bitinfo):
@@ -68,7 +68,7 @@ def getNumPositiveBitCountsOfRadius0(fp,bitinfo):
     for k in bitinfo:
         if bitinfo[k][0][1] == 0:
             v = fp[k]
-            if v>0:
+            if v > 0:
                 count += 1
                 bitsUnmappedAtoms.append((k,v))
     return count,bitsUnmappedAtoms

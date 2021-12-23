@@ -30,14 +30,11 @@
 #
 # Created by Nadine Schneider, July 2016
 
-
-
-
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem import rdqueries
 
-from collections import defaultdict, Counter
+from collections import Counter
 import itertools
 import numpy as np
 
@@ -86,17 +83,15 @@ class MoleculeDetails(object):
             return False
         if a.GetIsAromatic():
             return True
-        for b in a.GetBonds():
-            if b.GetBondTypeAsDouble() > 1.5:
-                return False
-        return True
+        # return a.GetHybridization() == Chem.HybridizationType.SP3:
+        return not any(b.GetBondTypeAsDouble() > 1.5 for b in a.GetBonds())
 
     def _calcReactivityAtom(self, a):
         # exclude sp3 carbons or uncharged single heavy atoms such as water molecules
         if self._isSp3OrAromaticCarbon(a) or (len(a.GetNeighbors())==0 and a.GetFormalCharge()==0):
             return 0
         # all other atoms have at least a reactivity of one
-        reactivity=1
+        reactivity = 1
         b = a.GetBonds()
         # if it is a heteroatom or has an H (we already know it's not SP3 or aromatic) increase the reactivity 
         if self._isHeteroAtom(a) or a.GetTotalNumHs() > 0:
@@ -124,10 +119,10 @@ class MoleculeDetails(object):
             if self._isHeteroAtom(ni):
                 reactivity += 1
                 # bonds between nitrogens and oxygen or between oxygen and oxygen or between nitrogen and nitrogen are more reactive
-                if a.GetAtomicNum() in (7,8) and ni.GetAtomicNum() in (7,8):
+                if a.GetAtomicNum() in (7, 8) and ni.GetAtomicNum() in (7, 8):
                     reactivity += 2
                 # if the neighbor is a Mg, Si, P, Pd, or Sn atom increase the reactivity 
-                elif ni.GetAtomicNum() in (12,14,15,46,50):
+                elif ni.GetAtomicNum() in (12, 14, 15, 46, 50):
                     reactivity += 1
         return reactivity 
 
@@ -166,8 +161,8 @@ def _calcScore(reactantFP,productFP,bitInfoProd=None,output=False):
     if output > 2:
         print("num UnmappedRBits: ",numUnmappedRBits)
 
-    numUnmappedPAtoms=-1
-    bitsUnmappedPAtoms=-1
+    numUnmappedPAtoms = -1
+    bitsUnmappedPAtoms = -1
     if bitInfoProd is not None:
         numUnmappedPAtoms,bitsUnmappedPAtoms = utils.getNumPositiveBitCountsOfRadius0(dFP,bitInfoProd)
         if output > 2:
@@ -197,12 +192,12 @@ def _getBestCombination(rfps,pfps,output=False):
     if output:
         print("--- _getBestCombination ---")
 
-    tests=[]
-    numReactants=len(rfps)
+    tests = []
+    numReactants = len(rfps)
     # generate first all reactant combinations
     for i in range(1,numReactants+1):
         for x in itertools.combinations(range(numReactants),i):
-            temp=[]
+            temp = []
             for j in x:
                 # don't include frequent reagents
                 if not rfps[j][1]:
@@ -303,7 +298,7 @@ def _findMissingReactiveReactants(rfps, pfps, currentReactants, unmappedPAtoms, 
     # if there are unmapped product bits find possible reactants for those
     else:
         finalReactants = []
-        numReactants=len(rfps)
+        numReactants = len(rfps)
         # investigate all possible solutions of the scoring before
         for reacts,umPA in zip(currentReactants,unmappedPAtoms):
             # if there are unmapped product atoms find possible reactants for those
@@ -315,7 +310,7 @@ def _findMissingReactiveReactants(rfps, pfps, currentReactants, unmappedPAtoms, 
                                             reverse=True)
                 missingPAtoms = []
                 # get the missing atoms and counts
-                for bit,c in umPA[-1]:
+                for bit, c in umPA[-1]:
                     for pbi in range(len(pfps)):
                         if bit in pfps[pbi].bitInfoScaffoldFP:
                             a = pfps[pbi].bitInfoScaffoldFP[bit][0]
@@ -410,7 +405,7 @@ def identifyReactants(reaction,output=False):
 # reassign the reaction roles of a reaction
 def reassignRXNRoles(rxn):
     utils.transferAgentsToReactants(rxn)
-    reacts, rAgents, pAgents = identifyReactants(rxn)
+    reacts, _, _ = identifyReactants(rxn)
     if len(reacts) < 1:
         return None
     new_rxn = AllChem.ChemicalReaction()

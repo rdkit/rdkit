@@ -143,9 +143,7 @@ from sklearn.metrics import r2_score
 from collections import defaultdict, namedtuple
 from tqdm import tqdm
 import itertools
-import math
 import sys
-from typing import List
 import logging
 import csv
 import re
@@ -286,6 +284,7 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
     for mol, score in tqdm(zip(mols, scores)):
         if decomposer.Add(mol) >= 0:
             matched_scores.append(score)
+            
     decomposer.Process()
     logger.info(f"Matched {len(matched_scores)} out of {len(mols)}")
     if not(matched_scores):

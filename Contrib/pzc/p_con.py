@@ -79,8 +79,7 @@ x formatted as string, either '%4d' or '%4.1f'
   xint = int(round(x))
   if np.max(np.abs(xint - x)) < 1e-14:
     return xint, '%4d' % xint
-  else:
-    return x, '%4.1f' % x
+  return x, '%4.1f' % x
 
 
 class KappaResults(dict):
@@ -232,12 +231,13 @@ SAS Manual
       else:
         raise ValueError('wt option is not known')
     else:
-      rows, cols = table.shape
-      if (table.shape != weights.shape):
+      if table.shape != weights.shape:
         raise ValueError('weights are not square')
+      
     #this is formula from Wikipedia
     kappa = 1 - (weights * table).sum() / nobs / (weights * prob_exp).sum()
     #TODO: add var_kappa for weighted version
+    
     if return_results:
       var_kappa = np.nan
       var_kappa0 = np.nan
@@ -265,8 +265,7 @@ SAS Manual
     res = KappaResults(kind=kind, kappa=kappa, kappa_max=kappa_max, weights=weights,
                        var_kappa=var_kappa, var_kappa0=var_kappa0)
     return res
-  else:
-    return kappa
+  return kappa
 
 
 def to_table(data, bins=None):
@@ -326,7 +325,6 @@ def to_table(data, bins=None):
     data_ = data
 
   tt = np.histogramdd(data_, (bins_, ) * n_cols)
-
   return tt[0], bins_
 
 
@@ -1063,11 +1061,7 @@ table th[class*="col-"] {
 <img src="barplot.png"><br>"""
 
         best, worst = findBestWorst(data)
-        html = []
-        html.append(html_head)
-        html.append(html_topPlot_start % (act, inact))
-        html.append(html_topPlot_bottom)
-        html.append(html_tableStart % tuple(data[0]))
+        html = [html_head, html_topPlot_start % (act, inact), html_topPlot_bottom, html_tableStart % tuple(data[0])]
         i = 0
         for l in data[1:len(data)]:
           l_replaced = []

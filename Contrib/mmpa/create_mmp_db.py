@@ -131,10 +131,10 @@ db_name = "mmp.db"
 pre = "mmp"
 
 #print options
-if (options.maxsize != None):
+if options.maxsize is not None:
   max_size = options.maxsize
 
-if (options.prefix != None):
+if options.prefix is not None:
   pre = options.prefix
   db_name = "%s.db" % (pre)
 
@@ -187,18 +187,18 @@ for line in sys.stdin:
   cursor.execute("select cmpd_size from cmpd_smisp where cmpd_id = ?", (id, ))
   heavy_calculated = cursor.fetchone()
   #add heavy atom count if needed
-  if (heavy_calculated[0] is None):
+  if heavy_calculated[0] is None:
     cmpd_heavy_atoms = heavy_atom_count(smi)
     cursor.execute("update cmpd_smisp set cmpd_size = ? where cmpd_id = ? ", (cmpd_heavy_atoms, id))
   else:
     cmpd_heavy_atoms = heavy_calculated[0]
 
   #deal with cmpds that have not been core_smied
-  if (len(core) == 0) and (len(context) == 0):
+  if len(core) == 0 and len(context) == 0:
     continue
 
   #deal with single cuts
-  if (len(core) == 0):
+  if len(core) == 0:
     side_chains = context.split('.')
 
     context = side_chains[0]
@@ -206,7 +206,7 @@ for line in sys.stdin:
     context_size = heavy_atom_count(context) - context.count("*")
 
     #limit what goes in db based on max_size
-    if (cmpd_heavy_atoms - context_size <= max_size):
+    if cmpd_heavy_atoms - context_size <= max_size:
       #put in db
       add_to_db(id, core, context, context_size)
 
@@ -215,14 +215,14 @@ for line in sys.stdin:
     context_size = heavy_atom_count(context) - context.count("*")
 
     #limit what goes in db based on max_size
-    if (cmpd_heavy_atoms - context_size <= max_size):
+    if cmpd_heavy_atoms - context_size <= max_size:
       #put in db
       add_to_db(id, core, context, context_size)
 
   #double or triple cut
   else:
     context_size = heavy_atom_count(context) - context.count("*")
-    if (cmpd_heavy_atoms - context_size <= max_size):
+    if cmpd_heavy_atoms - context_size <= max_size:
       #put in db
       add_to_db(id, core, context, context_size)
 
@@ -243,7 +243,7 @@ cursor.execute("DROP INDEX IF EXISTS smiles_idx")
 cursor.execute("CREATE INDEX smiles_idx ON cmpd_smisp (smiles)")
 
 #add smarts searching capability if required
-if (options.sma):
+if options.sma:
   #first dump out the distinct core_smi_ni from core_table
   #and write to a file
   temp_core_ni_file = 'temp_core_ni_file_%s' % (os.getpid())

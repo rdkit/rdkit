@@ -19,7 +19,7 @@
 #
 
 
-import os, sys
+import sys
 from Chem import AllChem as Chem
 
 
@@ -96,9 +96,9 @@ def GetFrame(mol, mode='Scaff'):
   #print 'Linkers:',Linkers
   #print 'RingAtoms:',RingAtoms
   #em.AddBond(3,4,Chem.BondType.SINGLE)
+  
   if mode == 'RedScaff':
     Framework = list(set(Framework))
-    todel = []
     NonRingAtoms.sort(reverse=True)
     em = Chem.EditableMol(mol)
     BondsToAdd = [sorted([i[0], i[-1]]) for i in Linkers]
@@ -108,8 +108,6 @@ def GetFrame(mol, mode='Scaff'):
         em.AddBond(i[0], i[1], Chem.BondType.SINGLE)
         mem.append(i)
     for i in NonRingAtoms:
-      todel.append(i)
-    for i in todel:
       em.RemoveAtom(i)
     m = em.GetMol()
     #===================================#
@@ -130,7 +128,7 @@ def GetFrame(mol, mode='Scaff'):
     todel = []
     NonRingAtoms.sort(reverse=True)
     for i in NonRingAtoms:
-      if i != None:
+      if i is not None:
         if i not in Framework:
           todel.append(i)
     em = Chem.EditableMol(mol)

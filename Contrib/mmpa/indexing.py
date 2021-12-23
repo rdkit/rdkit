@@ -37,41 +37,33 @@ from optparse import OptionParser
 
 
 def heavy_atom_count(smi):
-
   m = Chem.MolFromSmiles(smi)
   return m.GetNumAtoms()
 
 
 def add_to_index(smi, attachments, cmpd_heavy):
-
   result = False
   core_size = heavy_atom_count(smi) - attachments
 
-  if (use_ratio):
+  if use_ratio:
     core_ratio = float(core_size) / float(cmpd_heavy)
-    if (core_ratio <= ratio):
+    if core_ratio <= ratio:
       result = True
   else:
-    if (core_size <= max_size):
+    if core_size <= max_size:
       result = True
-
+      
   return result
 
 
 def get_symmetry_class(smi):
-  symmetry = []
-
   m = Chem.MolFromSmiles(smi)
   symmetry_classes = Chem.CanonicalRankAtoms(m, breakTies=False)
 
   #get the symmetry class of the attachments points
   #Note: 1st star is the zero index,
-  #2nd star is first index, etc
-  for atom, symmetry_class in zip(m.GetAtoms(), symmetry_classes):
-    if (atom.GetMass() == 0):
-      symmetry.append(symmetry_class)
-
-  return symmetry
+  #2nd star is first index, etc      
+  return [symmetry_class for atom, symmetry_class in zip(m.GetAtoms(), symmetry_classes) if atom.GetMass() == 0]
 
 
 def cansmirk(lhs, rhs, context):
@@ -91,16 +83,16 @@ def cansmirk(lhs, rhs, context):
   #if the star count of lhs/context/rhs is 1, single cut
   stars = lhs.count("*")
 
-  if (stars > 1):
+  if stars > 1:
     #get the symmetry class of stars of lhs and rhs
     lhs_sym = get_symmetry_class(lhs)
     rhs_sym = get_symmetry_class(rhs)
 
   #deal with double cuts
-  if (stars == 2):
+  if stars == 2:
     #simple cases
     #unsymmetric lhs and unsymmetric rhs
-    if ((lhs_sym[0] != lhs_sym[1]) and (rhs_sym[0] != rhs_sym[1])):
+    if lhs_sym[0] != lhs_sym[1] and rhs_sym[0] != rhs_sym[1]:
       #get 1st and 2nd labels and store the new label for it in isotope_track
       #structure: isotope_track[old_label]=new_label (as strings)
       isotope_track = build_track_dictionary(lhs, stars)
@@ -111,7 +103,7 @@ def cansmirk(lhs, rhs, context):
       context = switch_labels(isotope_track, stars, context)
 
     #symmetric lhs and symmetric rhs
-    elif ((lhs_sym[0] == lhs_sym[1]) and (rhs_sym[0] == rhs_sym[1])):
+    elif lhs_sym[0] == lhs_sym[1] and rhs_sym[0] == rhs_sym[1]:
       #the points are all equivalent so change labels on lhs and rhs based on position
       #labels on context don't need to change
       lhs = switch_labels_on_position(lhs)
@@ -119,7 +111,7 @@ def cansmirk(lhs, rhs, context):
 
     #more difficult cases..
     #symmetric lhs and unsymmetric rhs
-    elif ((lhs_sym[0] == lhs_sym[1]) and (rhs_sym[0] != rhs_sym[1])):
+    elif lhs_sym[0] == lhs_sym[1] and rhs_sym[0] != rhs_sym[1]:
       #switch labels lhs based on position
       lhs = switch_labels_on_position(lhs)
       #change labels on rhs based on position but need to record
@@ -129,7 +121,7 @@ def cansmirk(lhs, rhs, context):
       context = switch_labels(isotope_track, stars, context)
 
     #unsymmetric lhs and symmetric rhs
-    elif ((lhs_sym[0] != lhs_sym[1]) and (rhs_sym[0] == rhs_sym[1])):
+    elif lhs_sym[0] != lhs_sym[1] and rhs_sym[0] == rhs_sym[1]:
       #change labels on lhs based on position but need to record
       #the changes as need to apply them to the context
       isotope_track = build_track_dictionary(lhs, stars)
@@ -140,7 +132,7 @@ def cansmirk(lhs, rhs, context):
 
     #deal with triple cut
     #unwieldy code but most readable I can make it
-  elif (stars == 3):
+  elif stars == 3:
     #simple cases
     #completely symmetric lhs and completely symmetric rhs
     if (((lhs_sym[0] == lhs_sym[1]) and (lhs_sym[1] == lhs_sym[2]) and
@@ -204,24 +196,24 @@ def cansmirk(lhs, rhs, context):
 
       #tweak positions on rhs based on symmetry
       #rhs 1,2 equivalent
-      if (rhs_sym[0] == rhs_sym[1]):
+      if rhs_sym[0] == rhs_sym[1]:
         #tweak rhs position 1 and 2 as they are symmetric
         rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 1, 2)
 
       #rhs 2,3 equivalent
-      elif (rhs_sym[1] == rhs_sym[2]):
+      elif rhs_sym[1] == rhs_sym[2]:
         #tweak rhs position 1 and 2 as they are symmetric
         rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 2, 3)
 
       #rhs 1,3 equivalent - try for larger set in future
-      elif (rhs_sym[0] == rhs_sym[2]):
+      elif rhs_sym[0] == rhs_sym[2]:
         #tweak rhs position 1 and 2 as they are symmetric
         rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 1, 3)
 
       #now we are left with things with partial symmetry on lhs and not completely symmetric or unsymmetric on rhs
     else:
       #lhs 1,2,3 equivalent and any sort of partial symmetry on rhs
-      if ((lhs_sym[0] == lhs_sym[1]) and (lhs_sym[1] == lhs_sym[2]) and (lhs_sym[0] == lhs_sym[2])):
+      if lhs_sym[0] == lhs_sym[1] and lhs_sym[1] == lhs_sym[2] and lhs_sym[0] == lhs_sym[2]:
 
         #alter lhs in usual way
         lhs = switch_labels_on_position(lhs)
@@ -248,17 +240,17 @@ def cansmirk(lhs, rhs, context):
         #tweak positions on rhs based on symmetry
 
         #lhs 1,2 equivalent
-        if (lhs_sym[0] == lhs_sym[1]):
+        if lhs_sym[0] == lhs_sym[1]:
           #tweak rhs position 1 and 2 as they are symmetric on lhs
           rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 1, 2)
 
         #lhs 2,3 equivalent
-        elif (lhs_sym[1] == lhs_sym[2]):
+        elif lhs_sym[1] == lhs_sym[2]:
           #tweak rhs position 1 and 2 as they are symmetric on lhs
           rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 2, 3)
 
         #lhs 1,3 equivalent - try for larger set in future
-        elif (lhs_sym[0] == lhs_sym[2]):
+        elif lhs_sym[0] == lhs_sym[2]:
           #tweak rhs position 1 and 2 as they are symmetric on lhs
           rhs = switch_specific_labels_on_symmetry(rhs, rhs_sym, 1, 3)
 
@@ -279,7 +271,7 @@ def switch_specific_labels_on_symmetry(smi, symmetry_class, a, b):
     matchObj = re.search(r'\[\*\:([123])\].*\[\*\:([123])\].*\[\*\:([123])\]', smi)
     if matchObj:
       #if the higher label comes first, fix
-      if (int(matchObj.group(a)) > int(matchObj.group(b))):
+      if int(matchObj.group(a)) > int(matchObj.group(b)):
         #if(int(matchObj.group(1)) > int(matchObj.group(2))):
         smi = re.sub(r'\[\*\:' + matchObj.group(a) + '\]', '[*:XX' + matchObj.group(b) + 'XX]', smi)
         smi = re.sub(r'\[\*\:' + matchObj.group(b) + '\]', '[*:XX' + matchObj.group(a) + 'XX]', smi)
@@ -289,52 +281,47 @@ def switch_specific_labels_on_symmetry(smi, symmetry_class, a, b):
 
 
 def switch_labels_on_position(smi):
-
   #move the labels in order of position
   smi = re.sub(r'\[\*\:[123]\]', '[*:XX1XX]', smi, 1)
   smi = re.sub(r'\[\*\:[123]\]', '[*:XX2XX]', smi, 1)
   smi = re.sub(r'\[\*\:[123]\]', '[*:XX3XX]', smi, 1)
   smi = re.sub('XX', '', smi)
-
   return smi
 
 
 def switch_labels(track, stars, smi):
 
   #switch labels based on the input dictionary track
-  if (stars > 1):
+  if stars > 1:
     #for k in track:
     #        print "old: %s, new: %s" % (k,track[k])
 
-    if (track['1'] != '1'):
+    if track['1'] != '1':
       smi = re.sub(r'\[\*\:1\]', '[*:XX' + track['1'] + 'XX]', smi)
 
-    if (track['2'] != '2'):
+    if track['2'] != '2':
       smi = re.sub(r'\[\*\:2\]', '[*:XX' + track['2'] + 'XX]', smi)
 
-    if (stars == 3):
-      if (track['3'] != '3'):
+    if stars == 3:
+      if track['3'] != '3':
         smi = re.sub(r'\[\*\:3\]', '[*:XX' + track['3'] + 'XX]', smi)
-
     #now remove the XX
     smi = re.sub('XX', '', smi)
-
   return smi
 
 
 def build_track_dictionary(smi, stars):
 
   isotope_track = {}
-
   #find 1st label, record it in isotope_track as key, with value being the
   #new label based on its position (1st star is 1, 2nd star 2 etc.)
-  if (stars == 2):
+  if stars == 2:
     matchObj = re.search(r'\[\*\:([123])\].*\[\*\:([123])\]', smi)
     if matchObj:
       isotope_track[matchObj.group(1)] = '1'
       isotope_track[matchObj.group(2)] = '2'
 
-  elif (stars == 3):
+  elif stars == 3:
     matchObj = re.search(r'\[\*\:([123])\].*\[\*\:([123])\].*\[\*\:([123])\]', smi)
     if matchObj:
       isotope_track[matchObj.group(1)] = '1'
@@ -362,17 +349,16 @@ def index_hydrogen_change():
     attachments = key.count('*')
     #print attachments
 
-    if (attachments == 1):
-
+    if attachments == 1:
       smi = key
-
+      
       #simple method
       smi = re.sub(r'\[\*\:1\]', '[H]', smi)
 
       #now cansmi it
       temp = Chem.MolFromSmiles(smi)
 
-      if (temp == None):
+      if temp is None:
         sys.stderr.write('Error with key: %s, Added H: %s\n' % (key, smi))
       else:
         c_smi = Chem.MolToSmiles(temp, isomericSmiles=True)
@@ -416,14 +402,14 @@ if __name__ == '__main__':
                       size of cmpd (in terms of heavy atoms). DEFAULT=0.3. Note: If this option is used with the maxsize option, the maxsize option will be used.')
 
   #parse the command line options
-  (options, args) = parser.parse_args()
+  options, args = parser.parse_args()
 
   #print options
-  if (options.maxsize != None):
+  if options.maxsize is not None:
     max_size = options.maxsize
-  elif (options.ratio != None):
+  elif options.ratio is not None:
     ratio = options.ratio
-    if (ratio >= 1):
+    if ratio >= 1:
       print("Ratio specified: %s. Ratio needs to be less than 1.")
       sys.exit(1)
     use_ratio = True
@@ -441,22 +427,22 @@ if __name__ == '__main__':
     #if using the ratio option, check if heavy atom
     #of mol already calculated. If not, calculate and store
     cmpd_heavy = None
-    if (use_ratio):
-      if ((id in id_to_heavy) == False):
+    if use_ratio:
+      if not (id in id_to_heavy):
         id_to_heavy[id] = heavy_atom_count(smi)
 
       cmpd_heavy = id_to_heavy[id]
 
     #deal with cmpds that have not been fragmented
-    if (len(core) == 0) and (len(context) == 0):
+    if len(core) == 0 and len(context) == 0:
       continue
 
     #deal with single cuts
-    if (len(core) == 0):
+    if len(core) == 0:
       side_chains = context.split('.')
 
       #minus 1 for the attachment pt
-      if (add_to_index(side_chains[1], 1, cmpd_heavy) == True):
+      if add_to_index(side_chains[1], 1, cmpd_heavy):
         context = side_chains[0]
         core = side_chains[1]
 
@@ -467,7 +453,7 @@ if __name__ == '__main__':
         index.setdefault(context, []).append(value)
 
       #minus 1 for the attachment pt
-      if (add_to_index(side_chains[0], 1, cmpd_heavy) == True):
+      if add_to_index(side_chains[0], 1, cmpd_heavy):
         context = side_chains[1]
         core = side_chains[0]
 
@@ -482,7 +468,7 @@ if __name__ == '__main__':
 
       attachments = core.count('*')
 
-      if (add_to_index(core, attachments, cmpd_heavy) == True):
+      if add_to_index(core, attachments, cmpd_heavy):
         value = "%s;t%s" % (id, core)
 
         #add the array if no key exists
@@ -500,31 +486,31 @@ if __name__ == '__main__':
     total = len(index[key])
 
     #check if have more than one value
-    if (total == 1):
+    if total == 1:
       continue
 
     for xa in range(total):
 
       for xb in range(xa, total):
 
-        if (xa != xb):
+        if xa != xb:
           #now generate the pairs
 
           id_a, core_a = index[key][xa].split(";t")
           id_b, core_b = index[key][xb].split(";t")
 
           #make sure pairs are not same molecule
-          if (id_a != id_b):
+          if id_a != id_b:
 
             #make sure LHS and RHS of SMIRKS are not the same
-            if (core_a != core_b):
+            if core_a != core_b:
 
               smirks, context = cansmirk(core_a, core_b, key)
               print("%s,%s,%s,%s,%s,%s" %
                     (id_to_smi[id_a], id_to_smi[id_b], id_a, id_b, smirks, context))
 
               #deal with symmetry switch
-              if (options.sym == True):
+              if options.sym:
                 smirks, context = cansmirk(core_b, core_a, key)
                 print("%s,%s,%s,%s,%s,%s" %
                       (id_to_smi[id_b], id_to_smi[id_a], id_b, id_a, smirks, context))

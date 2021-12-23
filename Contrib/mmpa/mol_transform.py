@@ -94,15 +94,8 @@ if __name__ == '__main__':
     #need to convert the smiles to smart to get rid of any potential issues
     lhs, rhs = transform.split(">>")
 
-    if (lhs == "[*:1][H]"):
-      lhs = "[*;!H0:1]"
-    else:
-      lhs = smiles_to_smarts(lhs)
-
-    if (rhs == "[*:1][H]"):
-      rhs = "[*:1]"
-    else:
-      rhs = smiles_to_smarts(rhs)
+    lhs = "[*;!H0:1]" if lhs == "[*:1][H]" else smiles_to_smarts(lhs)
+    rhs = "[*:1]" if rhs == "[*:1][H]" else smiles_to_smarts(rhs)
 
     rdkit_transform = "%s>>%s" % (lhs, rhs)
     rxn = AllChem.ReactionFromSmarts(rdkit_transform)

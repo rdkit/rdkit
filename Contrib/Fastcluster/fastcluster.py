@@ -16,8 +16,6 @@ Please see more details in README.
 
 import argparse
 import subprocess
-import pickle
-import os
 from rdkit import Chem
 from rdkit.Chem import AllChem
 

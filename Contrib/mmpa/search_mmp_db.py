@@ -91,10 +91,10 @@ def print_smallest_change_mmp(db_results, cmpd_id, query_size):
 
   uniq_list = {}
   for r in db_results:
-    if (r[0] != cmpd_id):
+    if r[0] != cmpd_id:
       #print r
       #for each unique compound keep the largest one in common
-      if (r[0] not in uniq_list):
+      if r[0] not in uniq_list:
         uniq_list[r[0]] = r
       elif (r[3] > uniq_list[r[0]][3]):
         uniq_list[r[0]] = r
@@ -102,11 +102,11 @@ def print_smallest_change_mmp(db_results, cmpd_id, query_size):
   for key, value in uniq_list.items():
     size_of_change = query_size - value[3]
     #print "q_size: %s, Size od change: %s, Ratio: %s" % (query_size,size_of_change,float(size_of_change)/query_size)
-    if (use_ratio):
-      if (float(size_of_change) / query_size <= ratio):
+    if use_ratio:
+      if float(size_of_change) / query_size <= ratio:
         cursor.execute("SELECT smiles FROM cmpd_smisp WHERE cmpd_id = ?", (key, ))
         rsmi = cursor.fetchone()[0]
-        print("%s,%s,%s,%s,%s,%s" % (smi, rsmi, id, value[0], value[1], value[2]))
+        print("%s,%s,%s,%s,%s,%s" % (smi, rsmi, id, value[0], value[1], value[2])) # Should not be reached
     elif (size_of_change <= max_size):
       cursor.execute("SELECT smiles FROM cmpd_smisp WHERE cmpd_id = ?", (key, ))
       rsmi = cursor.fetchone()[0]
@@ -140,10 +140,10 @@ def run_subs_query(subs):
 
   for r in results:
     #make sure it is not the same core on both sides
-    if (r[2] != r[5]):
+    if r[2] != r[5]:
       #cansmirk
       smirks, context = cansmirk(str(r[2]), str(r[5]), str(r[6]))
-      if (have_id):
+      if have_id:
         print("%s,%s,%s,%s,%s,%s,%s,%s" % (subs, id, r[0], r[3], r[1], r[4], smirks, context))
       else:
         print("%s,%s,%s,%s,%s,%s,%s" % (subs, r[0], r[3], r[1], r[4], smirks, context))
@@ -256,7 +256,7 @@ def run_trans_smarts_query(transform):
 
   for r in results:
     smirks, context = cansmirk(str(r[2]), str(r[5]), str(r[6]))
-    if (have_id):
+    if have_id:
       print("%s,%s,%s,%s,%s,%s,%s,%s" % (transform, id, r[0], r[3], r[1], r[4], smirks, context))
     else:
       print("%s,%s,%s,%s,%s,%s,%s" % (transform, r[0], r[3], r[1], r[4], smirks, context))
@@ -294,19 +294,17 @@ def run_trans_query(transform):
   for r in results:
     smirks, context = cansmirk(str(r[2]), str(r[5]), str(r[6]))
     #make sure connectivity is correct
-    if (smirks == transform):
-      if (have_id):
+    if smirks == transform:
+      if have_id:
         print("%s,%s,%s,%s,%s,%s,%s" % (id, r[0], r[3], r[1], r[4], smirks, context))
       else:
         print("%s,%s,%s,%s,%s,%s" % (r[0], r[3], r[1], r[4], smirks, context))
 
 
 def remove_numbers(in_string):
-
   out_string = re.sub(r'\[\*\:1\]', '[*]', in_string)
   out_string = re.sub(r'\[\*\:2\]', '[*]', out_string)
   out_string = re.sub(r'\[\*\:3\]', '[*]', out_string)
-
   return out_string
 
 
@@ -367,18 +365,18 @@ search_type = "mmp"
 db_name = "mmp.db"
 pre = "mmp"
 
-if (options.maxsize != None):
+if options.maxsize is not None:
   max_size = options.maxsize
-elif (options.ratio != None):
+elif options.ratio is not None:
   ratio = options.ratio
-  if (ratio >= 1):
+  if ratio >= 1:
     print("Ratio specified: %s. Ratio needs to be less than 1.")
     sys.exit(1)
   use_ratio = True
 
-if (options.type != None):
-  if ((options.type == "mmp") or (options.type == "subs") or (options.type == "trans") or
-      (options.type == "subs_smarts") or (options.type == "trans_smarts")):
+if options.type is not None:
+  if (options.type == "mmp") or (options.type == "subs") or (options.type == "trans") or \
+    (options.type == "subs_smarts") or (options.type == "trans_smarts"):
     search_type = options.type
   else:
     print(
@@ -389,7 +387,7 @@ else:
     "Please specify search type. Please choose from: mmp, subs, trans, subs_smarts, trans_smarts")
   sys.exit(1)
 
-if (options.prefix != None):
+if options.prefix is not None:
   pre = options.prefix
   db_name = "%s.db" % (pre)
 
@@ -420,13 +418,13 @@ for line in sys.stdin:
 
   search_string = line_fields[0]
 
-  if (search_type == "mmp"):
+  if search_type == "mmp":
     #check smiles is in the database
     cursor.execute("SELECT cmpd_id,cmpd_size FROM cmpd_smisp WHERE smiles = ?", (search_string, ))
     d_res = cursor.fetchone()
 
     #cmpd in the db
-    if (d_res):
+    if d_res:
       id_in_db, query_size = d_res
       run_mmp_query(id_in_db, query_size)
     else:
@@ -434,15 +432,15 @@ for line in sys.stdin:
       cmpd_not_in_db_mmp_query(search_string, id)
 
   #if doing a subs query
-  elif (search_type == "subs"):
+  elif search_type == "subs":
     run_subs_query(search_string)
 
-  elif (search_type == "trans"):
+  elif search_type == "trans":
     run_trans_query(search_string)
 
   #smarts queries
-  elif (search_type == "subs_smarts"):
+  elif search_type == "subs_smarts":
     run_subs_smarts_query(search_string)
 
-  elif (search_type == "trans_smarts"):
+  elif search_type == "trans_smarts":
     run_trans_smarts_query(search_string)

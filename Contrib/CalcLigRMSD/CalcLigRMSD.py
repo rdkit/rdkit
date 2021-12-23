@@ -40,18 +40,23 @@ def CalcLigRMSD(lig1, lig2, rename_lig2 = True, output_filename="tmp.pdb"):
     # Exclude hydrogen atoms from the RMSD calculation
     lig1 = Chem.RemoveHs(lig1)
     lig2 = Chem.RemoveHs(lig2)
+    
     # Extract coordinates
     coordinates_lig2 = lig2.GetConformer().GetPositions()
     coordinates_lig1 = lig1.GetConformer().GetPositions()
+    
     # Calculate the RMSD between the MCS of lig1 and lig2 (useful if e.g. the crystal structures has missing atoms)
-    res=rdFMCS.FindMCS([lig1,lig2])
+    res = rdFMCS.FindMCS([lig1,lig2])
     ref_mol = Chem.MolFromSmarts(res.smartsString)
+    
     # Match the ligands to the MCS 
     # For lig2, the molecular symmetry is considered:
     # If 2 atoms are symmetric (3 and 4), two indeces combinations are printed out 
     # ((0,1,2,3,4), (0,1,2,4,3)) and stored in mas2_list
+    
     mas1 = list(lig1.GetSubstructMatch(ref_mol)) # match lig1 to MCS
-    mas2_list = lig2.GetSubstructMatches(ref_mol, uniquify =False)
+    mas2_list = lig2.GetSubstructMatches(ref_mol, uniquify=False)
+    
     # Reorder the coordinates of the ligands and calculate the RMSD between all possible symmetrical atom matches
     coordinates_lig1 = coordinates_lig1[mas1]
     list_rmsd = []
@@ -59,8 +64,10 @@ def CalcLigRMSD(lig1, lig2, rename_lig2 = True, output_filename="tmp.pdb"):
         coordinates_lig2_tmp = coordinates_lig2[list(match1)]
         diff = coordinates_lig2_tmp - coordinates_lig1
         list_rmsd.append(np.sqrt((diff * diff).sum() / len(coordinates_lig2_tmp))) # rmsd
+        
     # Return the minimum RMSD
     lig_rmsd = min(list_rmsd)
+    
     # Write out a PDB file with matched atom names
     if rename_lig2:
         mas2 = mas2_list[np.argmin(list_rmsd)]

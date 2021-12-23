@@ -35,7 +35,7 @@ from rdkit.Chem.Fraggle import FraggleSim
 
 if __name__ == '__main__':
   import sys, re
-  if (len(sys.argv) >= 2):
+  if len(sys.argv) >= 2:
     print(
       "Program to run the first part of Fraggle. Program splits the molecule\nready for the search\n")
     print("USAGE: ./fraggle.py <file_of_smiles")
@@ -50,7 +50,6 @@ if __name__ == '__main__':
     #print smi,id_
 
     mol = Chem.MolFromSmiles(smi)
-
     if mol is None:
       sys.stderr.write("Can't generate mol for: %s\n" % (smi))
       continue
@@ -60,5 +59,4 @@ if __name__ == '__main__':
     for x in out_fragments:
       #cansmi
       temp = Chem.MolFromSmiles(x)
-
       print("%s,%s,%s" % (smi, id_, Chem.MolToSmiles(temp)))
