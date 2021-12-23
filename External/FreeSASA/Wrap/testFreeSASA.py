@@ -31,7 +31,7 @@
 
 
 import unittest
-import os,sys, copy
+import os
 
 from rdkit.Chem import rdFreeSASA
 from rdkit import Chem

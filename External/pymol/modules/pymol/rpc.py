@@ -14,6 +14,7 @@
   RD Version: $Rev$            
 """
 
+from numpy.lib.arraysetops import isin
 import SimpleXMLRPCServer
 import threading, sys, time, types, os, tempfile
 from pymol import cmd, cgo
@@ -31,10 +32,7 @@ def rpcCmd(cmdText):
  
   """
   res = cmd.do(cmdText)
-  if res is not None:
-    return res
-  else:
-    return ''
+  return res if res is not None else ''
 
 
 def rpcQuit():
@@ -69,10 +67,7 @@ def rpcGet(prop, obj):
  
   """
   res = cmd.get(prop, obj)
-  if res is not None:
-    return res
-  else:
-    return ''
+  return res if res is not None else ''
 
 
 def rpcPing():
@@ -120,14 +115,14 @@ def rpcResetCGO(id):
  
   """
   global cgoDict
+  res = 0
   if id == "*":
     cgoDict = {}
     res = 1
   elif id in cgoDict:
     del (cgoDict[id])
     res = 1
-  else:
-    res = 0
+    
   return res
 
 
@@ -147,14 +142,9 @@ def rpcSphere(pos, rad, color, id='cgo', extend=1, transparent=0, transparency=0
   """
   r, g, b = color
   x, y, z = pos
-  if extend:
-    obj = cgoDict.get(id, [])
-  else:
-    obj = []
-  if not transparent:
-    o = []
-  else:
-    o = [cgo.ALPHA, 1 - transparency]
+  obj = cgoDict.get(id, []) if extend else []
+  o = [cgo.ALPHA, 1 - transparency] if transparent else []
+
   o.extend([cgo.COLOR, r, g, b, cgo.SPHERE, x, y, z, rad])
   obj.extend(o)
   cgoDict[id] = obj
@@ -172,10 +162,7 @@ def rpcRenderCGO(cgoV, id='cgo', extend=1):
         before adding the new sphere.  Otherwise the sphere is appended
         to the ojbect
   """
-  if extend:
-    obj = cgoDict.get(id, [])
-  else:
-    obj = []
+  obj = cgoDict.get(id, []) if extend else []
   obj.extend(cgoV)
   cmd.load_cgo(obj, id, 1)
   return 1
@@ -191,17 +178,11 @@ def rpcSpheres(sphereD, id='cgo', extend=1):
         before adding the new sphere.  Otherwise the sphere is appended
         to the ojbect
   """
-  if extend:
-    obj = cgoDict.get(id, [])
-  else:
-    obj = []
+  obj = cgoDict.get(id, []) if extend else []
   for pos, rad, color, transparent, transparency in sphereD:
     r, g, b = color
     x, y, z = pos
-    if not transparent:
-      o = []
-    else:
-      o = [cgo.ALPHA, 1 - transparency]
+    o = [cgo.ALPHA, 1 - transparency] if transparent else []
     o.extend([cgo.COLOR, r, g, b, cgo.SPHERE, x, y, z, rad])
     obj.extend(o)
   cgoDict[id] = obj
@@ -240,14 +221,8 @@ is white
   r2, g2, b2 = color2
   x1, y1, z1 = end1
   x2, y2, z2 = end2
-  if extend:
-    obj = cgoDict.get(id, [])
-  else:
-    obj = []
-  if not transparent:
-    o = []
-  else:
-    o = [cgo.ALPHA, 1 - transparency]
+  obj = cgoDict.get(id, []) if extend else []
+  o = [cgo.ALPHA, 1 - transparency] if transparent else []
   o.extend([cgo.CYLINDER,
             x1,
             y1,
@@ -270,7 +245,7 @@ is white
 
 def rpcShow(objs):
   """ shows (enables) an object (or objects)"""
-  if type(objs) not in (types.ListType, types.TupleType):
+  if not isinstance(objs, (list, tuple)):
     objs = (objs, )
 
   for objName in objs:
@@ -314,10 +289,7 @@ def rpcDeleteObject(objName):
 def rpcDeleteAll():
   """ deletes all objects """
   res = cmd.delete('all')
-  if res is not None:
-    return res
-  else:
-    return ''
+  return res if res is not None else ''
 
 
 def colorObj(objName, colorScheme):
@@ -328,6 +300,7 @@ def colorObj(objName, colorScheme):
         for the object (should be either 'std' or one of the
         color schemes defined in pymol.utils)
   """
+  res = 0
   if colorScheme:
     if colorScheme == 'std':
       # this is an adaptation of the cbag scheme from util.py, but
@@ -342,8 +315,6 @@ def colorObj(objName, colorScheme):
       fn = getattr(utils, colorScheme)
       fn(objName, quiet=1)
     res = 1
-  else:
-    res = 0
   return res
 
 
@@ -366,10 +337,7 @@ def rpcLoadPDB(data, objName, colorScheme='', replace=1):
     cmd.delete(objName)
   res = cmd.read_pdbstr(data, objName)
   colorObj(objName, colorScheme)
-  if res is not None:
-    return res
-  else:
-    return ''
+  return res if res is not None else ''
 
 
 def rpcLoadMolBlock(data, objName, colorScheme='', replace=1):
@@ -385,15 +353,12 @@ def rpcLoadMolBlock(data, objName, colorScheme='', replace=1):
         exists, delete it before adding this one
  
   """
-  from pymol import util
+  from pymol import util # Unused import warning
   if replace:
     cmd.delete(objName)
   res = cmd.read_molstr(data, objName)
   colorObj(objName, colorScheme)
-  if res is not None:
-    return res
-  else:
-    return ''
+  return res if res is not None else ''
 
 
 def rpcLoadFile(fileName, objName='', format='', colorScheme='', replace=1):
@@ -436,10 +401,7 @@ def rpcLoadSurface(fileName, objName, format='', surfaceLevel=1.0):
   gridName = 'grid-%s' % objName
   res = cmd.load(fileName, gridName, format='')
   cmd.isosurface(objName, gridName, level=surfaceLevel)
-  if res is not None:
-    return res
-  else:
-    return ''
+  return res if res is not None else ''
 
 
 def rpcLoadSurfaceData(data, objName='surface', format='', surfaceLevel=1.0):
@@ -459,10 +421,7 @@ def rpcLoadSurfaceData(data, objName='surface', format='', surfaceLevel=1.0):
     tmp.write(data)
   res = rpcLoadSurface(tmp.name, objName, format='', surfaceLevel=surfaceLevel)
   os.unlink(tmp.name)
-  if res is not None:
-    return res
-  else:
-    return ''
+  return res if res is not None else ''
 
 
 def rpcSave(filename, objName='all', state=0, format=''):
@@ -476,10 +435,7 @@ def rpcSave(filename, objName='all', state=0, format=''):
  
   """
   res = cmd.save(filename, objName, state, format)
-  if res is not None:
-    return res
-  else:
-    return ''
+  return res if res is not None else ''
 
 
 def rpcRotate(vect, objName='', state=-1):
