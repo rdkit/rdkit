@@ -192,6 +192,7 @@ def patchPandasrepr(self, **kwargs):
   global defHTMLFormatter_write_cell
   global defPandasGetAdjustment
 
+  import pandas.io.formats.html
   defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
   pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
 
