@@ -221,7 +221,13 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
        split.
 
     """
-    # OLD CODE: O(N^3) in here -> O(N^2 + N)
+    """
+    OLD CODE: Delete this if accept the pull request
+    attrs = list(attrs)
+    for i in range(len(nBoundsPerVar)):
+        if nBoundsPerVar[i] == -1 and i in attrs:
+            attrs.remove(i)
+    """
     attrs = list(attrs)
     masks = [False] * len(attrs)    
     attrsDict = defaultdict(lambda : [0, []])
@@ -234,9 +240,8 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
                 location = attrsDict[i][0]
                 masks[attrsDict[i][1][location]] = True
                 attrsDict[i][0] += 1
-                
     attrs = [attr for i, attr in enumerate(attrs) if not masks[i]]
-    del attrsDict
+    del attrsDict, masks
     
     tree = QuantTree.QuantTreeNode(None, 'node')
     nPossibleRes = nPossibleVals[-1]
@@ -276,10 +281,12 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
     if len(qBounds) > 0:
         for bound in qBounds:
             # Optimize here once: Recheck here if failed
-            masks = [bool(examples[idx][best] < bound) for idx in indices]
-            nextExamples = [examples[index] for index, mask in enumerate(masks) if mask]
-            indices = [indices[index] for index, mask in enumerate(masks) if mask]
-            del masks
+            nextExamples = []
+            for index in list(indices):
+                ex = examples[index]
+                if ex[best] < bound:
+                    nextExamples.append(ex)
+                    indices.remove(index)
 
             if len(nextExamples):
                 tree.AddChildNode(

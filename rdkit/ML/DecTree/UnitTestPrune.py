@@ -10,7 +10,7 @@ from rdkit.TestRunner import redirect_stdout
 from io import StringIO
 
 
-def feq(a, b, tol=1e-4):
+def feq(a, b, tol = 1e-4):
     return abs(a - b) <= tol
 
 

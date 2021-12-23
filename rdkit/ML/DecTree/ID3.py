@@ -142,7 +142,7 @@ def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
     best = attrs[numpy.argmax(gains)]
 
     # remove that variable from the lists of possible variables
-    nextAttrs = attrs[:]
+    nextAttrs = list(attrs)
     if not kwargs.get('recycleVars', 0):
       nextAttrs.remove(best)
 
@@ -195,7 +195,7 @@ def ID3Boot(examples, attrs, nPossibleVals, initialVar=None, depth=0, maxDepth=-
   tree.SetData(totEntropy)
   tree.SetLabel(best)
   tree.SetTerminal(0)
-  nextAttrs = attrs[:]
+  nextAttrs = list(attrs)
   if not kwargs.get('recycleVars', 0):
     nextAttrs.remove(best)
 
