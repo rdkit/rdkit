@@ -141,13 +141,18 @@ try:
           file=sys.stderr)
     pd = None
   else:
-    # saves the default pandas rendering to allow restoration
-    defPandasRendering = pd.core.frame.DataFrame.to_html
-    if pandasVersion > (0, 25, 0):
-      # this was github #2673
-      defPandasRepr = pd.core.frame.DataFrame._repr_html_
-    else:
-      defPandasRepr = None
+    if not hasattr(pd, "_rdkitpatched"):
+      # saves the default pandas rendering to allow restoration
+      pd.core.frame.DataFrame._orig_to_html = pd.core.frame.DataFrame.to_html
+      if pandasVersion > (0, 25, 0):
+        # this was github #2673
+        pd.core.frame.DataFrame._orig_repr_html_ = pd.core.frame.DataFrame._repr_html_
+      else:
+        pd.core.frame.DataFrame._orig_repr_html_ = None
+      pd._rdkitpatched = True
+
+    defPandasRendering = pd.core.frame.DataFrame._orig_to_html
+    defPandasRepr = pd.core.frame.DataFrame._orig_repr_html_
 except ImportError:
   import traceback
   traceback.print_exc()
@@ -166,9 +171,8 @@ molSize = (200, 200)
 def getAdjustmentAttr():
   # Github #3701 was a problem with a private function being renamed (made public) in
   # pandas v1.2. Rather than relying on version numbers we just use getattr:
-  return ((hasattr(pd.io.formats.format, '_get_adjustment') and '_get_adjustment') or
-    (hasattr(pd.io.formats.format, 'get_adjustment') and 'get_adjustment') or
-    None)
+  return ((hasattr(pd.io.formats.format, '_get_adjustment') and '_get_adjustment')
+          or (hasattr(pd.io.formats.format, 'get_adjustment') and 'get_adjustment') or None)
 
 
 def _patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
@@ -193,15 +197,19 @@ def patchPandasrepr(self, **kwargs):
   global defPandasGetAdjustment
 
   import pandas.io.formats.html
-  defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
-  pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-
+  if not hasattr(pandas.io.formats.html.HTMLFormatter, "_rdkitpatched"):
+    defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+    pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
+    pandas.io.formats.html.HTMLFormatter._rdkitpatched = True
+    needsPatching = True
+  else:
+    needsPatching = False
   get_adjustment_attr = getAdjustmentAttr()
-  if get_adjustment_attr:
+  if needsPatching and get_adjustment_attr:
     defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
     setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
   res = defPandasRepr(self, **kwargs)
-  if get_adjustment_attr:
+  if needsPatching and get_adjustment_attr:
     setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
   pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
   return res
@@ -232,9 +240,8 @@ def patchPandasHTMLrepr(self, **kwargs):
     return patch_v1()
   get_adjustment_attr = getAdjustmentAttr()
 
-  if (not hasattr(pd.io.formats.html, 'HTMLFormatter') or
-    not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or
-    not get_adjustment_attr):
+  if (not hasattr(pd.io.formats.html, 'HTMLFormatter')
+      or not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or not get_adjustment_attr):
     return patch_v1()
 
   # The "clean" patch:
