@@ -5,7 +5,6 @@
 
 """
 
-
 import unittest
 
 from rdkit.ML.Descriptors import Parser

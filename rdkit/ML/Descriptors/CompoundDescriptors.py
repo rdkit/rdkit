@@ -6,7 +6,6 @@
 
 """
 
-
 from rdkit import RDConfig
 from rdkit.ML.Descriptors import Parser, Descriptors
 from rdkit.utils import chemutils
@@ -341,8 +340,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     if composList is None:
       composList = chemutils.SplitComposition(compos)
       
-    return [Parser.CalcSingleCompoundDescriptor(composList, cl[1:], self.atomDict, propDict) 
-           for cl in self.compoundList]
+    return [Parser.CalcSingleCompoundDescriptor(composList, cl[1:], self.atomDict, propDict) for cl in self.compoundList]
 
   def CalcDescriptorsForComposition(self, composVect, propDict):
     """ calculates all descriptors for a given composition
@@ -394,7 +392,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     
     for entry in self.compoundList:
       res.append(entry[0])
-    self.descriptorNames = res # Remove redundant copy
+    self.descriptorNames = res[:] # Remove redundant copy. Is this a problem if not remove copy?
     return tuple(res)
 
 

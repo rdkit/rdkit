@@ -327,6 +327,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
       print(propDict)
       raise RuntimeError('Failure 1')
     else:
+      print("I am here. CalcSingle1")
       return -666
 
   try:
@@ -350,6 +351,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
       traceback.print_exc()
       raise RuntimeError('Failure 2')
     else:
+      print("I am here. CalcSingle2")
       v = -666
   return v
 
@@ -398,12 +400,14 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
     formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
     evalTarget = _SubMethodArgs(formula, knownMethods)
   except Exception:
+    print("I am here. CalcMult1")
     return res
   
   for i in range(len(composVect)):
     try:
       v = eval(evalTarget)
     except Exception:
+      print("I am here. CalcMult2")
       v = -666
     res[i] = v
   return res
