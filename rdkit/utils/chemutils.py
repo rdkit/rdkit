@@ -97,7 +97,7 @@ def SplitComposition(compStr):
     theExpr = re.compile(target)
 
     matches = theExpr.findall(compStr)
-    return [(match[0], float(match[1])) if len(match[1]) > 0 else (match[0], 1) for match in matches]
+    return [(match[0], int(match[1])) if len(match[1]) > 0 else (match[0], 1) for match in matches]
 
 
 def ConfigToNumElectrons(config, ignoreFullD=0, ignoreFullF=0):

@@ -45,6 +45,7 @@ Here's the general flow of things:
 """
 
 # The wildcard import is required to make functions available for the eval statement
+# import math
 from math import * # This import is super-important as it is used to convert unstandard string into method ?
 from rdkit import RDConfig
 
@@ -331,6 +332,7 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
       return -666
 
   try:
+    print(evalTarget)
     v = eval(evalTarget)
   except Exception:
     if __DEBUG:
@@ -405,6 +407,7 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
   
   for i in range(len(composVect)):
     try:
+      print(evalTarget)
       v = eval(evalTarget)
     except Exception:
       print("I am here. CalcMult2")
