@@ -237,8 +237,7 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
       
     # print('IDX:',idx,'use:',use  )
     pred, conf = composite.ClassifyExample(example, appendExample=appendExamples, onlyModels=use)
-    answer = composite.QuantizeActivity(example)[-1] \
-        if composite.GetActivityQuantBounds() else example[-1]
+    answer = composite.QuantizeActivity(example)[-1] if composite.GetActivityQuantBounds() else example[-1]
     res[i] = answer, pred, conf
     if callback:
       callback(i)

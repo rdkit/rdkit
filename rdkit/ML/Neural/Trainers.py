@@ -158,10 +158,9 @@ class BackProp(Trainer):
       for example in examples:
         localErr = self.StepUpdate(example, net)
         newErr += localErr
-        if localErr > maxErr:
-          maxErr = localErr
+        maxErr = max(maxErr, localErr)
       
-      newErr = (newErr / nExamples) if useAvgErr == 1 else newErr # if useAvgErr else is the error ???
+      newErr = (newErr / nExamples) if useAvgErr == 1 else maxErr 
       # print('\t',newErr,errTol)
       if newErr <= errTol:
         converged = 1

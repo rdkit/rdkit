@@ -45,8 +45,7 @@ Here's the general flow of things:
 """
 
 # The wildcard import is required to make functions available for the eval statement
-# from math import *
-# import math
+from math import * # This import is super-important as it is used to convert unstandard string into method ?
 from rdkit import RDConfig
 
 __DEBUG = False
@@ -109,7 +108,8 @@ def SUM(strArg, composList, atomDict):
   """
   accum = 0.0
   for atom, num in composList:
-    accum += eval(strArg.replace('DEADBEEF', atom)) * num
+    tStr = strArg.replace('DEADBEEF', atom)
+    accum += eval(tStr) * num
   return accum
 
 
@@ -134,7 +134,8 @@ def MEAN(strArg, composList, atomDict):
   accum = 0.0
   nSoFar = 0
   for atom, num in composList:
-    accum += eval(strArg.replace('DEADBEEF', atom)) * num
+    tStr = strArg.replace('DEADBEEF', atom)
+    accum += eval(tStr) * num
     nSoFar += num
   return accum / nSoFar
 

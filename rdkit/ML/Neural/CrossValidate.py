@@ -114,8 +114,9 @@ def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, 
   nTest = len(testExamples)
   if not silent:
     print('Testing with %d examples' % nTest)
-    
-  xValError = CrossValidate(net, testExamples if not calcTotalError else examples, tolerance)[0]
+  
+  testingExamples = testExamples if not calcTotalError else examples
+  xValError = CrossValidate(net, testingExamples, tolerance)[0]
   
   if not silent:
     print('Validation error was %%%4.2f' % (100 * xValError))
