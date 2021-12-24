@@ -288,7 +288,8 @@ class TreeNode:
         if other.label is not None:
           if self.label < other.label:
             return True
-        return False
+        else:
+          return False
       elif other.label is not None:
         return True
       

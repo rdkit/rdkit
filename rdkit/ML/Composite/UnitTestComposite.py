@@ -152,7 +152,7 @@ class TestCase(unittest.TestCase):
     assert conf == 1.0
     pred, conf = compos.ClassifyExample(data[1])
     assert pred == 1
-    assert conf == 2. / 3.
+    assert conf == 2. / 3., 'conf = %f' % conf
     pred, conf = compos.ClassifyExample(data[2])
     assert pred == 0
     assert conf == 2. / 3.

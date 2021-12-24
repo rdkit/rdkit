@@ -346,8 +346,7 @@ class Composite(object):
       return inputVect
     
     remappedInput = [inputVect[order[i]] for i in range(len(order) - 1)]
-    remappedInput.append(None)
-    remappedInput[-1] = 0 if order[-1] == -1 else inputVect[order[-1]]
+    remappedInput.append(0 if order[-1] == -1 else inputVect[order[-1]])
     return remappedInput
 
   def GetInputOrder(self):

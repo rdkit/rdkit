@@ -88,7 +88,7 @@ def PyInfoGain(varMat):
   
   if tSum != 0.0:
     term2 *= 1. / tSum
-    return InfoEntropy(overallRes) - term2
+    return InfoEntropy(overallRes) - term2  # gain
   return 0
 
 # if we have the C versions, use them, otherwise use the python stuff

@@ -21,6 +21,7 @@ import numpy
 
 from . import ClusterUtils
 
+
 class VisOpts(object):
   """ stores visualization options for cluster viewing
 
@@ -56,6 +57,15 @@ def _scaleMetric(val, power=2, min=1e-4):
     return 0.0
   return numpy.log(nval / min)
 
+def _isPositiveLogScale(logScale):
+  return logScale > 0
+
+def _selectMetric(cluster, logScale: float):
+  # Reduce the code length by using a single metric
+  if _isPositiveLogScale(logScale):
+    return _scaleMetric(cluster.GetMetric(), logScale) 
+  return float(cluster.GetMetric())
+
 
 class ClusterRenderer(object):
 
@@ -76,9 +86,8 @@ class ClusterRenderer(object):
     self.nPts = len(self.pts)
     self.xSpace = float(self.size[0] - 2 * VisOpts.xOffset) / float(self.nPts - 1)
     ySize = self.size[1]
-    for i in range(self.nPts):
-      pt = self.pts[i]
-      v = _scaleMetric(pt.GetMetric(), self.logScale) if self.logScale > 0 else float(pt.GetMetric())
+    for i, pt in enumerate(self.pts):
+      v = _selectMetric(pt, logScale=self.logScale)
       pt._drawPos = (VisOpts.xOffset + i * self.xSpace,
                      ySize - (v * self.ySpace + VisOpts.yOffset) + terminalOffset)
 
@@ -98,7 +107,7 @@ class ClusterRenderer(object):
     # and reverse it (to run from bottom up)
     toDo.reverse()
     for node in toDo:
-      v = _scaleMetric(node.GetMetric(), self.logScale) if self.logScale > 0 else float(node.GetMetric())
+      v = _selectMetric(node, logScale=self.logScale)
 
       # average our children's x positions
       childLocs = [x._drawPos[0] for x in node.GetChildren()]
@@ -148,7 +157,7 @@ class ClusterRenderer(object):
                              lineWidth)
 
   def DrawTree(self, cluster, minHeight=2.0):
-    v = _scaleMetric(cluster.GetMetric(), self.logScale) if self.logScale > 0 else float(cluster.GetMetric())
+    v = _selectMetric(cluster, logScale=self.logScale)
     if v <= 0:
       v = minHeight
     self.ySpace = float(self.size[1] - 2 * VisOpts.yOffset) / v
@@ -158,16 +167,6 @@ class ClusterRenderer(object):
     if not self.stopAtCentroids:
       self._DrawToLimit(cluster)
     raise NotImplementedError('stopAtCentroids drawing not yet implemented') # This code cannot be reached
-
-
-def _isPositiveLogScale(logScale):
-  return logScale > 0
-
-def _selectMetric(cluster, logScale: float):
-  # Reduce the code length by using a single metric
-  if _isPositiveLogScale(logScale):
-    return _scaleMetric(cluster.GetMetric(), logScale) 
-  return float(cluster.GetMetric())
 
 
 def DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showIndices=0, showNodes=1,

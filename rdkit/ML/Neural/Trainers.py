@@ -161,7 +161,7 @@ class BackProp(Trainer):
         if localErr > maxErr:
           maxErr = localErr
       
-      newErr = (newErr / nExamples) if useAvgErr else newErr
+      newErr = (newErr / nExamples) if useAvgErr == 1 else newErr # if useAvgErr else is the error ???
       # print('\t',newErr,errTol)
       if newErr <= errTol:
         converged = 1

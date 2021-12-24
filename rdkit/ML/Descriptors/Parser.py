@@ -85,7 +85,8 @@ def HAS(strArg, composList, atomDict):
       if eval(splitArgs[1]) in eval(tStr):
         return 1
     return 0
-  return -666
+  else:
+    return -666
 
 
 def SUM(strArg, composList, atomDict):
@@ -255,15 +256,15 @@ def _SubMethodArgs(cExpr, knownMethods):
     while p != -1 and p < len(res):
       p = res.find(method, p)
       if p != -1:
-        p += len(method) + 1
+        p = p + len(method) + 1
         start = p
         parenCount = 1
         while parenCount and p < len(res):
           if res[p] == ')':
-            parenCount = parenCount - 1
+            parenCount += -1
           elif res[p] == '(':
-            parenCount = parenCount + 1
-          p += 1
+            parenCount += 1
+          p = p + 1
         if p <= len(res):
           res = res[0:start] + "'%s',compos,atomDict" % (res[start:p - 1]) + res[p - 1:]
   return res
@@ -391,9 +392,7 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
   """
   res = [-666] * len(composVect)
   try:
-    atomVarNames = argVect[0]
-    compositionVarNames = argVect[1]
-    formula = argVect[2]
+    atomVarNames, compositionVarNames, formula = argVect[0], argVect[1], argVect[2]
     formula = _SubForCompoundDescriptors(formula, compositionVarNames, 'propDict')
     formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
     evalTarget = _SubMethodArgs(formula, knownMethods)
@@ -402,9 +401,10 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
   
   for i in range(len(composVect)):
     try:
-      res[i] = eval(evalTarget)
+      v = eval(evalTarget)
     except Exception:
-      res[i] = -666
+      v = -666
+    res[i] = v
   return res
 
 

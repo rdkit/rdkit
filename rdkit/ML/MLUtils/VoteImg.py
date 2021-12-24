@@ -7,9 +7,13 @@ voting on a data set
   Uses *Numeric* and *PIL*
 
 """
-
-from PIL import Image, ImageDraw
+import sys
+import getopt
+import pickle
 import numpy
+
+from rdkit.ML.Data import DataUtils
+from PIL import Image, ImageDraw
 
 
 def CollectVotes(composite, data, badOnly):
@@ -63,7 +67,7 @@ pp      - the expanded list of vote details consists of:
   return res, values, trueValues, misCount
 
 
-def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=10, yScale=2,
+def BuildVoteImage(nModels, data, values, trueValues=None, sortTrueVals=0, xScale=10, yScale=2,
                    addLine=1):
   """ constructs the actual image
 
@@ -93,6 +97,9 @@ def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=
       a PIL image
 
   """
+  if trueValues is None:
+    trueValues = []
+  
   nData = len(data)
   data = numpy.array(data, numpy.integer)
   order = numpy.argsort(trueValues if (sortTrueVals and trueValues != []) else values)
@@ -110,7 +117,6 @@ def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=
       canvas.line([(nModels - 3, 0), (nModels - 3, nData)], fill=(128, 0, 128))
     else:
       canvas.line([(nModels - 2, 0), (nModels - 2, nData)], fill=(128, 0, 128))
-  
   img = img.resize((nModels * xScale, nData * yScale))
   return img
 
@@ -172,11 +178,6 @@ def Usage():
 
 
 if __name__ == '__main__':
-  import sys
-  import getopt
-  import pickle
-  from rdkit.ML.Data import DataUtils
-
   args, extra = getopt.getopt(sys.argv[1:], 'o:bthx:y:d:')
   if len(extra) < 2:
     Usage()
