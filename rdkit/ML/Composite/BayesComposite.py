@@ -132,8 +132,10 @@ class BayesComposite(Composite.Composite):
     conf = votes[res] / len(self)
     if verbose:
       print(votes, conf, example[-1])
-    
-    return res if conf > threshold else -1, conf  
+
+    if conf > threshold:
+      return res, conf
+    return -1, conf  
 
   def __init__(self):
     Composite.Composite.__init__(self)

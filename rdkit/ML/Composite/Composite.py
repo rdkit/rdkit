@@ -72,7 +72,7 @@ class Composite(object):
     self._mapOrder = None
     self.activityQuant = []
 
-  def SetModelFilterData(self, modelFilterFrac=0.0, modelFilterVal=0.0):
+  def SetModelFilterData(self, modelFilterFrac: float = 0.0, modelFilterVal: float = 0.0):
     self._modelFilterFrac = modelFilterFrac
     self._modelFilterVal = modelFilterVal
 
@@ -311,7 +311,9 @@ class Composite(object):
     totVotes = sum(votes)
     res = numpy.argmax(votes)
     conf = float(votes[res]) / float(totVotes)
-    return res if conf > threshold else -1, conf
+    if conf > threshold:
+      return res, conf
+    return -1, conf
 
   def GetVoteDetails(self):
     """ returns the votes from the last classification
@@ -343,7 +345,7 @@ class Composite(object):
     if order is None:
       return inputVect
     
-    remappedInput = [inputVect[order[i]] for i in range(len(order))]
+    remappedInput = [inputVect[order[i]] for i in range(len(order) - 1)]
     remappedInput.append(None)
     remappedInput[-1] = 0 if order[-1] == -1 else inputVect[order[-1]]
     return remappedInput

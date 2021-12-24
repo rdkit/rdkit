@@ -113,11 +113,11 @@ class Cluster(object):
         res = None
         if index == self.index:
             return self
-        
-        for child in self.children:
-            res = child.FindSubtree(index)
-            if res:
-                break
+        else:
+            for child in self.children:
+                res = child.FindSubtree(index)
+                if res:
+                    break
         return res
 
     def _GenPoints(self):
@@ -138,6 +138,7 @@ class Cluster(object):
             res += child.GetPoints()
         self._points = res
         self._pointsPositions = [x.GetPosition() for x in res]
+        
 
     def AddChild(self, child):
         """Adds a child to our list

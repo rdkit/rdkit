@@ -10,9 +10,11 @@ cross validation == evaluating the accuracy of a tree.
 """
 import numpy
 
+from collections import defaultdict
 from rdkit.ML.Data import SplitData
 from rdkit.ML.DecTree import ID3
 from rdkit.ML.DecTree import randomtest
+
 
 
 def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVals, treeBuilder,
@@ -56,21 +58,31 @@ def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVal
         
   attrs = attrs[:]
   if nQuantBounds:
-    attrSet = set(attrs)
-    masks = [bool(nQuantBounds[i] == -1 and i in attrSet) for i in range(len(nQuantBounds))]
+    # Optimize here to decrease computational effort
+    masks = [False] * len(attrs)
+    attrsDict = defaultdict(lambda : [0, []])
+    for key, value in enumerate(attrs): # key is attrs_value while key is attrs_index
+        attrsDict[value][1].append(key)
+    
+    for i in range(len(nQuantBounds)):
+      if nQuantBounds[i] == -1:
+        if i in attrsDict:
+          location = attrsDict[i][0]
+          masks[attrsDict[i][1][location]] = True
+          attrsDict[i][0] += 1
+
     attrs = [attr for i, attr in enumerate(attrs) if not masks[i]]
-    del attrSet, masks
+    del attrsDict, masks
         
   nAttrs = len(attrs)
   trees = [None] * nAttrs
   errs = [0] * nAttrs
   errs[0] = 1e6
 
-  nQuantBoundsCondition: bool = not bool(nQuantBounds)
   for i in range(1, nAttrs):
     argD = {'initialVar': attrs[i]}
     argD.update(kwargs)
-    if nQuantBoundsCondition:
+    if nQuantBounds == []:
       trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, **argD)
     else:
       trees[i] = treeBuilder(trainExamples, attrs, nPossibleVals, nQuantBounds, **argD)

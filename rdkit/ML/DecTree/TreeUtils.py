@@ -7,9 +7,6 @@
 """
 
 
-from numpy.lib.nanfunctions import _nanmedian_small
-
-
 def CollectLabelLevels(tree, levels, level=0, maxDepth=1e8):
   if level >= maxDepth:
     return levels

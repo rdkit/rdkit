@@ -769,25 +769,21 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
       message('******  WARNING: Random model being screened with non-random data.')
       message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
 
-    trainIdx, testIdx = PrepareDataFromDetails(model, details, data)
+    _, testIdx = PrepareDataFromDetails(model, details, data)
 
     nPossible = model.GetQuantBounds()[1]
+    cb = None
     if callback:
       cb = lambda x, y=callback, z=i * data.GetNPts(): y(x + z)
-    else:
-      cb = None
-    if not hasattr(details, 'errorEstimate') or not details.errorEstimate:
-      errorEstimate = 0
-    else:
-      errorEstimate = 1
+    errorEstimate = int(not bool(not hasattr(details, 'errorEstimate') or not details.errorEstimate))
     g, b, s, aG, aB, aS, vT = ShowVoteResults(
       testIdx, data, model, nPossible[-1], details.threshold, verbose=0, callback=cb,
       appendExamples=appendExamples, goodVotes=goodVotes, badVotes=badVotes, noVotes=noVotes,
       errorEstimate=errorEstimate)
     if voteTab is None:
       voteTab = numpy.zeros(vT.shape, dtype='float')
-    if hasattr(details, 'errorAnalysis') and details.errorAnalysis:
       
+    if hasattr(details, 'errorAnalysis') and details.errorAnalysis:
       for a, _, _, idx in badVotes:
         label = testIdx[idx]
         if hasattr(details, 'enrichTgt') and details.enrichTgt >= 0:

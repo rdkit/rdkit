@@ -51,7 +51,7 @@ def BalanceComposite(model, set1, set2, weight, targetSize, names1=None, names2=
     if name is not None:
       model.SetInputOrder(name)
       
-    for i, pt in enumerate(s):
+    for _, pt in enumerate(s):
       model.ClassifyExample(pt)
       ans = model.QuantizeActivity(pt)[-1] if actQuantBounds else pt[-1]
       votes = model.GetVoteDetails()

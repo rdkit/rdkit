@@ -128,10 +128,8 @@ class NaiveBayesClassifier:
         res = []  # list of y values
         for i, eg in enumerate(self._trainingExamples):
             res.append(eg[-1])
-            j = 0
-            for ai in self._attrs:
+            for j, ai in enumerate(self._attrs):
                 allVals[i, j] = eg[ai]
-                j += 1
 
         # now loop over each of the columns and compute the bounds
         # the number of bounds is determined by the maximum info gain
@@ -228,7 +226,6 @@ class NaiveBayesClassifier:
                         tmp[ai][bid] /= (ncls[cls] + self._mEstimateVal)
 
     def ClassifyExamples(self, examples, appendExamples=0):
-
         return [int(self.ClassifyExample(eg, appendExamples)) for eg in examples]
 
     def GetClassificationDetails(self):
