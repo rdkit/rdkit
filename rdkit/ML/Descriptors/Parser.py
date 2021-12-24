@@ -41,13 +41,41 @@ Here's the general flow of things:
   anytime we don't know the answer for a descriptor, rather than
   throwing a (completely incomprehensible) exception, we just return
   -666.  So bad descriptor values should stand out like sore thumbs.
+  
+"""
+
+"""
+**NOTE:**
+
+  Ichiru Take, Updated on December 24th, 2021. This note is to inform you several optimzation errors that 
+  may cause trouble in the future.
+  
+  WARNING No.1: From Ichiru Take:
+  - In this Parser.py module or any module that is using `__builtin__.eval()`, it is suggested that `eval()` 
+  should not be used along with `list comprehension` and/or `dict comprehension`. I am not sure why but this 
+  is a must for the program's execution.
+  Reference: https://realpython.com/python-eval-function/#minimizing-the-security-issues-of-eval
+  Reference: https://stackoverflow.com/questions/45194934/eval-fails-in-list-comprehension
+  Reference: https://docs.python.org/3/library/functions.html#eval
+  
+  WARNING No.2: From Ichiru Take:
+  - In the following line, you would see unused import code such as `import math` or `from math import *` 
+  which is inefficient and breaking the PEP rule. However, according to original author's intention, 
+  this is to avoid errors caused by user that push a string expression that is not the function name 
+  declared here such as `SUM`, `MIN`, `MEAN`, etc.
+  
+  WARNING No.3: From Ichiru Take:
+  - Similar to No.2, there are some unused variables which should be deleted normally. However, the variable(s), 
+  either its name or its value, is extremely important as it would be used in the built-in function `eval()`.
+  
+  So I am sorry to tell you this but it should be careful to do further `optimization` tricks.
 
 """
 
 # The wildcard import is required to make functions available for the eval statement
-# import math
-from math import * # This import is super-important as it is used to convert unstandard string into method ?
-from rdkit import RDConfig
+import math
+from math import * 
+from rdkit import RDConfig # This may not be needed but import for sure
 
 __DEBUG = False
 
@@ -82,11 +110,11 @@ def HAS(strArg, composList, atomDict):
   if len(splitArgs) > 1:
     for atom, _ in composList:
       tStr = splitArgs[0].replace('DEADBEEF', atom)
-      if eval(splitArgs[1]) in eval(tStr):
+      what, where = eval(splitArgs[1]), eval(tStr)
+      if what in where:
         return 1
     return 0
-  else:
-    return -666
+  return -666
 
 
 def SUM(strArg, composList, atomDict):
@@ -189,7 +217,10 @@ def MIN(strArg, composList, atomDict):
       a float
 
   """
-  return min([eval(strArg.replace('DEADBEEF', atom)) for atom, _ in composList])
+  accum = []
+  for atom, _ in composList:
+    accum.append(eval(strArg.replace('DEADBEEF', atom)))
+  return min(accum)
 
 
 def MAX(strArg, composList, atomDict):
@@ -210,7 +241,10 @@ def MAX(strArg, composList, atomDict):
       a float
 
   """
-  return max([eval(strArg.replace('DEADBEEF', atom)) for atom, _ in composList])
+  accum = []
+  for atom, _ in composList:
+    accum.append(eval(strArg.replace('DEADBEEF', atom)))
+  return max(accum)
 
 # ------------------
 #  string replacement routines
@@ -328,11 +362,9 @@ def CalcSingleCompoundDescriptor(compos, argVect, atomDict, propDict):
       print(propDict)
       raise RuntimeError('Failure 1')
     else:
-      print("I am here. CalcSingle1")
       return -666
 
   try:
-    print(evalTarget)
     v = eval(evalTarget)
   except Exception:
     if __DEBUG:
@@ -402,15 +434,12 @@ def CalcMultipleCompoundsDescriptor(composVect, argVect, atomDict, propDictList)
     formula = _SubForAtomicVars(formula, atomVarNames, 'atomDict')
     evalTarget = _SubMethodArgs(formula, knownMethods)
   except Exception:
-    print("I am here. CalcMult1")
     return res
   
-  for i in range(len(composVect)):
+  for i, (propDict, compos) in enumerate(zip(propDictList, composVect)): # Don't fix this loop
     try:
-      print(evalTarget)
       v = eval(evalTarget)
     except Exception:
-      print("I am here. CalcMult2")
       v = -666
     res[i] = v
   return res

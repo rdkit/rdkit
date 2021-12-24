@@ -34,7 +34,6 @@ class TestCase(unittest.TestCase):
   def testMultipleCalcs(self):
     " testing calculation of multiple descriptors "
     for i in range(len(self.cExprs)):
-      print(i)
       cExpr = self.cExprs[i]
       argVect = self.piece1 + [cExpr]
       res = Parser.CalcMultipleCompoundsDescriptor([self.compos, self.compos], argVect, self.aDict,
