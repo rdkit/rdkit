@@ -9,8 +9,6 @@ cross validation == evaluating the accuracy of a tree.
 
 """
 import numpy
-
-from collections import defaultdict
 from rdkit.ML.Data import SplitData
 from rdkit.ML.DecTree import ID3
 from rdkit.ML.DecTree import randomtest
@@ -58,21 +56,12 @@ def ChooseOptimalRoot(examples, trainExamples, testExamples, attrs, nPossibleVal
         
   attrs = attrs[:]
   if nQuantBounds:
-    # Optimize here to decrease computational effort
-    masks = [False] * len(attrs)
-    attrsDict = defaultdict(lambda : [0, []])
-    for key, value in enumerate(attrs): # key is attrs_value while key is attrs_index
-        attrsDict[value][1].append(key)
-    
     for i in range(len(nQuantBounds)):
       if nQuantBounds[i] == -1:
-        if i in attrsDict:
-          location = attrsDict[i][0]
-          masks[attrsDict[i][1][location]] = True
-          attrsDict[i][0] += 1
-
-    attrs = [attr for i, attr in enumerate(attrs) if not masks[i]]
-    del attrsDict, masks
+        try:
+          attrs.remove(i)
+        except ValueError:
+          pass
         
   nAttrs = len(attrs)
   trees = [None] * nAttrs

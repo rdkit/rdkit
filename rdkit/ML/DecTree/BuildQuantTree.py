@@ -8,7 +8,6 @@
 """
 import numpy
 import random
-from collections import defaultdict
 
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
@@ -221,27 +220,13 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
        split.
 
     """
-    """
-    OLD CODE: Delete this if accept the pull request
     attrs = list(attrs)
-    for i in range(len(nBoundsPerVar)):
-        if nBoundsPerVar[i] == -1 and i in attrs:
-            attrs.remove(i)
-    """
-    attrs = list(attrs)
-    masks = [False] * len(attrs)    
-    attrsDict = defaultdict(lambda : [0, []])
-    for key, value in enumerate(attrs): # key is attrs_value while key is attrs_index
-        attrsDict[value][1].append(key)
-        
     for i in range(len(nBoundsPerVar)):
         if nBoundsPerVar[i] == -1:
-            if i in attrsDict:
-                location = attrsDict[i][0]
-                masks[attrsDict[i][1][location]] = True
-                attrsDict[i][0] += 1
-    attrs = [attr for i, attr in enumerate(attrs) if not masks[i]]
-    del attrsDict, masks
+            try:
+                attrs.remove(i) # Replace if i in attrs: attrs.remove(i)
+            except ValueError:
+                pass
     
     tree = QuantTree.QuantTreeNode(None, 'node')
     nPossibleRes = nPossibleVals[-1]
