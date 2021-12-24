@@ -201,15 +201,12 @@ def patchPandasrepr(self, **kwargs):
     defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
     pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
     pandas.io.formats.html.HTMLFormatter._rdkitpatched = True
-    needsPatching = True
-  else:
-    needsPatching = False
   get_adjustment_attr = getAdjustmentAttr()
-  if needsPatching and get_adjustment_attr:
+  if get_adjustment_attr:
     defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
     setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
   res = defPandasRepr(self, **kwargs)
-  if needsPatching and get_adjustment_attr:
+  if get_adjustment_attr:
     setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
   pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
   return res
