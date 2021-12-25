@@ -254,7 +254,7 @@ std::string molFragmentToSmarts(const ROMol &mol, python::object atomsToUse,
   auto atomIndices =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!atomIndices) {
-    throw_value_error("invalid value for atom indices");
+    throw_value_error("atomsToUse argument must be non-empty");
   }
   auto bondIndices =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
@@ -268,7 +268,7 @@ std::string molFragmentToCXSmarts(const ROMol &mol, python::object atomsToUse,
   auto atomIndices =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!atomIndices) {
-    throw_value_error("invalid value for atom indices");
+    throw_value_error("atomsToUse argument must be non-empty");
   }
   auto bondIndices =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));

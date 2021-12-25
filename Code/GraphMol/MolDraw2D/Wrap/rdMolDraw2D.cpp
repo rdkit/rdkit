@@ -477,17 +477,17 @@ void contourAndDrawGaussiansHelper(
   std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
       pythonObjectToVect<RDGeom::Point2D>(pylocs);
   if (!locs) {
-    throw_value_error("invalid value for locs");
+    throw_value_error("locs argument must be non-empty");
   }
   std::unique_ptr<std::vector<double>> heights =
       pythonObjectToVect<double>(pyheights);
   if (!heights) {
-    throw_value_error("invalid value for heights");
+    throw_value_error("heights argument must be non-empty");
   }
   std::unique_ptr<std::vector<double>> widths =
       pythonObjectToVect<double>(pywidths);
   if (!widths) {
-    throw_value_error("invalid value for widths");
+    throw_value_error("widths argument must be non-empty");
   }
   std::unique_ptr<std::vector<double>> levels;
   if (pylevels) {
@@ -521,12 +521,12 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
   std::unique_ptr<std::vector<double>> xcoords =
       pythonObjectToVect<double>(pyxcoords);
   if (!xcoords) {
-    throw_value_error("invalid value for xcoords");
+    throw_value_error("xcoords argument must be non-empty");
   }
   std::unique_ptr<std::vector<double>> ycoords =
       pythonObjectToVect<double>(pyycoords);
   if (!ycoords) {
-    throw_value_error("invalid value for ycoords");
+    throw_value_error("ycoords argument must be non-empty");
   }
   std::unique_ptr<std::vector<double>> levels;
   if (pylevels) {
@@ -575,7 +575,7 @@ void drawPolygonHelper(RDKit::MolDraw2D &self, python::object py_cds) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> cds =
       pythonObjectToVect<RDGeom::Point2D>(py_cds);
   if (!cds) {
-    throw_value_error("invalid value for cds");
+    throw_value_error("cds argument must be non-empty");
   }
 
   self.drawPolygon(*cds);

@@ -83,7 +83,7 @@ python::tuple fragmentMolHelper3(const RDKit::ROMol& mol, python::object ob,
   std::unique_ptr<std::vector<unsigned int>> v =
       pythonObjectToVect<unsigned int>(ob);
   if (!v) {
-    throw_value_error("invalid value for bondsToCut");
+    throw_value_error("bondsToCut must be non-empty");
   }
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, *v, minCuts, maxCuts);
   python::list pyres;

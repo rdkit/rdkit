@@ -37,7 +37,7 @@ MolStandardize::MolVSValidation *getMolVSValidation(
       pythonObjectToVect<boost::shared_ptr<MolStandardize::MolVSValidations>>(
           validations);
   if (!pvect) {
-    throw_value_error("bad value for validations");
+    throw_value_error("validations argument must be non-empty");
   }
   for (auto v : *pvect) {
     vs.push_back(v->copy());
@@ -60,7 +60,7 @@ MolStandardize::AllowedAtomsValidation *getAllowedAtomsValidation(
     python::object atoms) {
   auto p_atomList = pythonObjectToVect<Atom *>(atoms);
   if (!p_atomList) {
-    throw_value_error("bad value for allowed atoms");
+    throw_value_error("allowedAtoms argument must be non-empty");
   }
   std::vector<std::shared_ptr<Atom>> satoms;
   for (auto ap : *p_atomList) {
@@ -86,7 +86,7 @@ MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
     python::object atoms) {
   auto p_atomList = pythonObjectToVect<Atom *>(atoms);
   if (!p_atomList) {
-    throw_value_error("bad value for disallowed atoms");
+    throw_value_error("disallowedAtoms must be non-empty");
   }
   std::vector<std::shared_ptr<Atom>> satoms;
   for (auto ap : *p_atomList) {

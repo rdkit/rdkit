@@ -178,7 +178,7 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
   }
   auto newOrder = pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
   if (!newOrder) {
-    throw_value_error("invalid value for new order");
+    throw_value_error("newOrder argument must be non-empty");
   }
   ROMol *res = MolOps::renumberAtoms(mol, *newOrder);
   return res;
