@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2019 Greg Landrum
+//  Copyright (c) 2019-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,8 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 ///
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -373,5 +371,21 @@ TEST_CASE("molzip", "[]") {
       caught = true;
     }
     CHECK(caught == true);
+  }
+}
+
+TEST_CASE(
+    "Github4825: ReplaceCore should set stereo on ring bonds when it breaks "
+    "rings") {
+  SECTION("basics") {
+    auto m = "C1C=CCC2=C1C=CC=N2"_smiles;
+    REQUIRE(m);
+    auto core = "c1ncccc1"_smiles;
+    REQUIRE(core);
+    std::unique_ptr<ROMol> res{replaceCore(*m, *core)};
+    REQUIRE(res);
+    auto mb = MolToV3KMolBlock(*res);
+    std::cerr << mb << std::endl;
+    CHECK(mb.find("CFG=2") == std::string::npos);
   }
 }

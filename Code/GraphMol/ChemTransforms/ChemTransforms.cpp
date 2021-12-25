@@ -598,11 +598,17 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   std::vector<Atom *> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
+  bool removedRingAtom = false;
   newMol->beginBatchEdit();
   for (const auto at : newMol->atoms()) {
     if (std::find(keepList.begin(), keepList.end(), at) == keepList.end()) {
       newMol->removeAtom(at);
       removedAtoms.set(at->getIdx());
+      if (!removedRingAtom && mol.getRingInfo() &&
+          mol.getRingInfo()->isInitialized() &&
+          mol.getRingInfo()->numAtomRings(at->getIdx())) {
+        removedRingAtom = true;
+      }
     }
   }
   newMol->commitBatchEdit();
