@@ -21,7 +21,4 @@ def GetChirality(m):
 
   """
 
-  if GetEnantiomer(m) == None:
-      return False
-  else:
-      return True
+  return GetEnantiomer(m) is not None
