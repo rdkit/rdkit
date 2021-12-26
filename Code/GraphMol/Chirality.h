@@ -25,6 +25,7 @@ class ROMol;
 
 namespace Chirality {
 
+//! double bond stereo will be ignored/removed for rings smaller than this:
 constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
 
 /// @cond
