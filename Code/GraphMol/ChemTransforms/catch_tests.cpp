@@ -397,4 +397,14 @@ TEST_CASE(
     auto mb = MolToV3KMolBlock(*res);
     CHECK(mb.find("CFG=2") == std::string::npos);
   }
+  SECTION("don't do larger rings") {
+    auto m = "C1C=CCCCC2=C1C=CC=N2"_smiles;
+    REQUIRE(m);
+    auto core = "c1ncccc1"_smiles;
+    REQUIRE(core);
+    std::unique_ptr<ROMol> res{replaceCore(*m, *core)};
+    REQUIRE(res);
+    auto mb = MolToV3KMolBlock(*res);
+    CHECK(mb.find("CFG=2") != std::string::npos);
+  }
 }

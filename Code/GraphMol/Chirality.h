@@ -24,6 +24,9 @@ class Bond;
 class ROMol;
 
 namespace Chirality {
+
+constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
+
 /// @cond
 /*!
   \param mol the molecule to be altered

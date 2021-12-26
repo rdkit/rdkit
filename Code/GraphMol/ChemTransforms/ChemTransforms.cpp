@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2020 Greg Landrum
+//  Copyright (C) 2006-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -394,6 +395,8 @@ void setSubMolBrokenRingStereo(RWMol &mol,
         if ((bond->getIsAromatic() ||
              bond->getBondType() == Bond::BondType::DOUBLE) &&
             bond->getStereo() == Bond::BondStereo::STEREONONE &&
+            mol.getRingInfo()->minBondRingSize(bond->getIdx()) <
+                Chirality::minRingSizeForDoubleBondStereo &&
             !removedAtoms[bond->getBeginAtomIdx()] &&
             !removedAtoms[bond->getEndAtomIdx()]) {
           // find the two neighboring bonds which are in the ring or to the
