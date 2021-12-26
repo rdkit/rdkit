@@ -385,7 +385,16 @@ TEST_CASE(
     std::unique_ptr<ROMol> res{replaceCore(*m, *core)};
     REQUIRE(res);
     auto mb = MolToV3KMolBlock(*res);
-    std::cerr << mb << std::endl;
+    CHECK(mb.find("CFG=2") == std::string::npos);
+  }
+  SECTION("adjacent") {
+    auto m = "C1CC2=C(C=C1)C=CC=N2"_smiles;
+    REQUIRE(m);
+    auto core = "c1ncccc1"_smiles;
+    REQUIRE(core);
+    std::unique_ptr<ROMol> res{replaceCore(*m, *core)};
+    REQUIRE(res);
+    auto mb = MolToV3KMolBlock(*res);
     CHECK(mb.find("CFG=2") == std::string::npos);
   }
 }

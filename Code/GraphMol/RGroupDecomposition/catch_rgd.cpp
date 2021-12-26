@@ -599,7 +599,6 @@ TEST_CASE("github4809: ring double bonds written as crossed bonds after RGD") {
       CHECK(rows.size() == n);
       auto r1 = rows[0]["R1"];
       auto mb = MolToV3KMolBlock(*r1);
-      std::cerr << mb << std::endl;
       CHECK(mb.find("CFG=2") == std::string::npos);
     }
   }
