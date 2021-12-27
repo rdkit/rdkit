@@ -23,7 +23,7 @@ ScaffoldNetwork::ScaffoldNetwork *createNetworkHelper(
     const ScaffoldNetwork::ScaffoldNetworkParams &params) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
   ScaffoldNetwork::ScaffoldNetwork *res = new ScaffoldNetwork::ScaffoldNetwork;
-  {
+  if (mols) {
     NOGIL gil;
 
     updateScaffoldNetwork(*mols, *res, params);
@@ -34,7 +34,7 @@ void updateNetworkHelper(python::object pmols,
                          ScaffoldNetwork::ScaffoldNetwork &net,
                          const ScaffoldNetwork::ScaffoldNetworkParams &params) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
-  {
+  if (mols) {
     NOGIL gil;
     updateScaffoldNetwork(*mols, net, params);
   }

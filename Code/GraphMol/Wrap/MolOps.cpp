@@ -45,8 +45,7 @@ python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyDummyLabels,
                                         python::object pyBondTypes,
                                         bool returnCutsPerAtom) {
-  std::unique_ptr<std::vector<unsigned int>> bondIndices =
-      pythonObjectToVect(pyBondIndices, mol.getNumBonds());
+  auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get()) {
     throw_value_error("empty bond indices");
   }
@@ -120,8 +119,7 @@ ROMol *fragmentOnBondsHelper(const ROMol &mol, python::object pyBondIndices,
                              bool addDummies, python::object pyDummyLabels,
                              python::object pyBondTypes,
                              python::list pyCutsPerAtom) {
-  std::unique_ptr<std::vector<unsigned int>> bondIndices =
-      pythonObjectToVect(pyBondIndices, mol.getNumBonds());
+  auto bondIndices = pythonObjectToVect(pyBondIndices, mol.getNumBonds());
   if (!bondIndices.get()) {
     throw_value_error("empty bond indices");
   }
@@ -178,8 +176,10 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
       mol.getNumAtoms()) {
     throw_value_error("atomCounts shorter than the number of atoms");
   }
-  std::unique_ptr<std::vector<unsigned int>> newOrder =
-      pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
+  auto newOrder = pythonObjectToVect(pyNewOrder, mol.getNumAtoms());
+  if (!newOrder) {
+    throw_value_error("newOrder argument must be non-empty");
+  }
   ROMol *res = MolOps::renumberAtoms(mol, *newOrder);
   return res;
 }

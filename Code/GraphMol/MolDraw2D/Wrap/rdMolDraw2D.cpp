@@ -476,10 +476,19 @@ void contourAndDrawGaussiansHelper(
     const MolDraw2DUtils::ContourParams &params, python::object mol) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> locs =
       pythonObjectToVect<RDGeom::Point2D>(pylocs);
+  if (!locs) {
+    throw_value_error("locs argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> heights =
       pythonObjectToVect<double>(pyheights);
+  if (!heights) {
+    throw_value_error("heights argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> widths =
       pythonObjectToVect<double>(pywidths);
+  if (!widths) {
+    throw_value_error("widths argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> levels;
   if (pylevels) {
     levels = pythonObjectToVect<double>(pylevels);
@@ -511,8 +520,14 @@ void contourAndDrawGridHelper(RDKit::MolDraw2D &drawer, python::object &data,
 
   std::unique_ptr<std::vector<double>> xcoords =
       pythonObjectToVect<double>(pyxcoords);
+  if (!xcoords) {
+    throw_value_error("xcoords argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> ycoords =
       pythonObjectToVect<double>(pyycoords);
+  if (!ycoords) {
+    throw_value_error("ycoords argument must be non-empty");
+  }
   std::unique_ptr<std::vector<double>> levels;
   if (pylevels) {
     levels = pythonObjectToVect<double>(pylevels);
@@ -559,6 +574,9 @@ void setContourColour(RDKit::MolDraw2DUtils::ContourParams &params,
 void drawPolygonHelper(RDKit::MolDraw2D &self, python::object py_cds) {
   std::unique_ptr<std::vector<RDGeom::Point2D>> cds =
       pythonObjectToVect<RDGeom::Point2D>(py_cds);
+  if (!cds) {
+    throw_value_error("cds argument must be non-empty");
+  }
 
   self.drawPolygon(*cds);
 }
@@ -869,7 +887,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("FillPolys", &RDKit::MolDraw2D::fillPolys,
            "returns whether or not polygons are being filled")
       .def("DrawLine",
-           (void(RDKit::MolDraw2D::*)(const Point2D &, const Point2D &)) &
+           (void (RDKit::MolDraw2D::*)(const Point2D &, const Point2D &)) &
                RDKit::MolDraw2D::drawLine,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2")),
            "draws a line with the current drawing style. The coordinates "
@@ -913,15 +931,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "draw a line indicating the presence of an attachment point "
            "(normally a squiggle line perpendicular to a bond)")
       .def("DrawString",
-           (void(RDKit::MolDraw2D::*)(const std::string &,
-                                      const RDGeom::Point2D &)) &
+           (void (RDKit::MolDraw2D::*)(const std::string &,
+                                       const RDGeom::Point2D &)) &
                RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")
       .def("DrawString",
-           (void(RDKit::MolDraw2D::*)(const std::string &,
-                                      const RDGeom::Point2D &,
-                                      RDKit::TextAlignType)) &
+           (void (RDKit::MolDraw2D::*)(const std::string &,
+                                       const RDGeom::Point2D &,
+                                       RDKit::TextAlignType)) &
                RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("align")),
@@ -961,7 +979,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
-           (void(RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
                RDKit::MolDraw2DSVG::addMoleculeMetadata,
            (python::arg("mol"), python::arg("confId") = -1),
            "add RDKit-specific information to the bottom of the drawing")
