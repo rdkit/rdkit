@@ -25,8 +25,10 @@ ROMol *condenseMolAbbreviationsHelper(const ROMol *mol,
   RWMol *res = new RWMol(*mol);
   auto abbrevs =
       pythonObjectToVect<Abbreviations::AbbreviationDefinition>(pyabbrevs);
-  Abbreviations::condenseMolAbbreviations(*res, *abbrevs, maxCoverage,
-                                          sanitize);
+  if (abbrevs) {
+    Abbreviations::condenseMolAbbreviations(*res, *abbrevs, maxCoverage,
+                                            sanitize);
+  }
   return rdcast<ROMol *>(res);
 }
 
@@ -41,7 +43,9 @@ ROMol *labelMolAbbreviationsHelper(const ROMol *mol, python::object pyabbrevs,
   RWMol *res = new RWMol(*mol);
   auto abbrevs =
       pythonObjectToVect<Abbreviations::AbbreviationDefinition>(pyabbrevs);
-  Abbreviations::labelMolAbbreviations(*res, *abbrevs, maxCoverage);
+  if (abbrevs) {
+    Abbreviations::labelMolAbbreviations(*res, *abbrevs, maxCoverage);
+  }
   return rdcast<ROMol *>(res);
 }
 }  // namespace
