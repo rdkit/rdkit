@@ -13,7 +13,11 @@
 
 from collections import namedtuple
 
-import numpy
+import numpy 
+from rdkit import DataStructs # Unused import
+from rdkit import ForceField # Unused import
+from rdkit import RDConfig # Unused import
+from rdkit import rdBase # Unused import
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
 from rdkit.Chem.rdChemReactions import *
