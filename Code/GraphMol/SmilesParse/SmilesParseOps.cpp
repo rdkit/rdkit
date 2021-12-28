@@ -146,8 +146,7 @@ void AddFragToMol(RWMol *mol, RWMol *frag, Bond::BondType bondOrder,
       // SMARTS semantics: unspecified bonds can be single or aromatic
       if (bondOrder == Bond::UNSPECIFIED) {
         auto *newB = new QueryBond(Bond::SINGLE);
-        newB->expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
-                          Queries::COMPOSITE_OR, true);
+        newB->setQuery(makeSingleOrAromaticBondQuery());
         newB->setOwningMol(mol);
         newB->setBeginAtomIdx(atomIdx1);
         newB->setEndAtomIdx(atomIdx2);

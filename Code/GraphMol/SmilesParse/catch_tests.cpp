@@ -948,8 +948,8 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
     auto mol = "[#6][C@]([#8])(F)Cl |&1:1|"_smarts;
     REQUIRE(mol);
     REQUIRE(mol->getNumAtoms() == 5);
-    CHECK(MolToSmarts(*mol) == "[#6][C@](-,:[#8])(-,:F)Cl");
-    CHECK(MolToCXSmarts(*mol) == "[#6][C@](-,:[#8])(-,:F)Cl |&1:1|");
+    CHECK(MolToSmarts(*mol) == "[#6][C@]([#8])(F)Cl");
+    CHECK(MolToCXSmarts(*mol) == "[#6][C@]([#8])(F)Cl |&1:1|");
 
     {
       auto smol = "C[C@](O)(F)Cl |&1:1|"_smiles;
@@ -974,19 +974,17 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
       auto mol = "C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br"_smarts;
       REQUIRE(mol);
       CHECK(mol->getAtomWithIdx(2)->getQuery()->getDescription() == "AtomOr");
-      CHECK(MolToSmarts(*mol) ==
-            "C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br");
+      CHECK(MolToSmarts(*mol) == "C[C@&H1]([F,Cl,Br])[C@&H1](C)[C@@&H1](C)Br");
       CHECK(MolToCXSmarts(*mol) ==
-            "C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br");
+            "C[C@&H1]([F,Cl,Br])[C@&H1](C)[C@@&H1](C)Br");
     }
     {  // make sure that doesn't break anything
       auto mol = "C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|"_smarts;
       REQUIRE(mol);
       CHECK(mol->getAtomWithIdx(2)->getQuery()->getDescription() == "AtomOr");
-      CHECK(MolToSmarts(*mol) ==
-            "C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br");
+      CHECK(MolToSmarts(*mol) == "C[C@&H1]([F,Cl,Br])[C@&H1](C)[C@@&H1](C)Br");
       CHECK(MolToCXSmarts(*mol) ==
-            "C[C@&H1](-,:[F,Cl,Br])[C@&H1](-,:C)[C@@&H1](-,:C)Br |a:1,o1:4,5|");
+            "C[C@&H1]([F,Cl,Br])[C@&H1](C)[C@@&H1](C)Br |a:1,o1:4,5|");
     }
   }
 }
@@ -1846,4 +1844,14 @@ M  END)CTAB"_ctab;
         "C[C@H]2[C@@]3(CC[C@]2(C)C[C@H]2[C@@H]1C(=O)C[C@@]2(C)O)O[C@@H](C=C(C)"
         "C)C[C@@H]3C)C(=O)O");
   }
+}
+
+TEST_CASE(
+    "unspecified bonds at beginning of branch in SMARTS not properly tagged") {
+  auto m = "C(C)C"_smarts;
+  REQUIRE(m);
+  CHECK(m->getBondWithIdx(0)->getQuery()->getDescription() ==
+        "SingleOrAromaticBond");
+  CHECK(m->getBondWithIdx(1)->getQuery()->getDescription() ==
+        "SingleOrAromaticBond");
 }
