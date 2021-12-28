@@ -26,6 +26,8 @@
 
 namespace RDKit {
 
+class Atom;
+class Bond;
 class ROMol;
 class RWMol;
 class AtomSymbol;
@@ -35,8 +37,7 @@ class DrawMol {
   friend class MolDraw2D;
 
   // everything's private because we don't want anyone using it.
- private :
-
+ protected:
   // Make the object, scaled to a given pixel size.
   /*!
     \param mol             : the molecule to draw
@@ -59,25 +60,29 @@ class DrawMol {
     \param confId          : (optional) conformer ID to be used for atomic
     coordinates
   */
-  DrawMol(const ROMol &mol, const std::string &legend,
-          int width, int height,
+  DrawMol(const ROMol &mol, const std::string &legend, int width, int height,
           MolDrawOptions &drawOptions, DrawText &textDrawer,
-          const std::vector<int> *highlightAtoms,
-          const std::vector<int> *highlightBonds,
+          const std::vector<int> *highlightAtoms = nullptr,
+          const std::vector<int> *highlightBonds = nullptr,
           const std::map<int, DrawColour> *highlightAtomMap = nullptr,
           const std::map<int, DrawColour> *highlightBondMap = nullptr,
-          const std::vector<std::pair<DrawColour, DrawColour>> *bondColours = nullptr,
+          const std::vector<std::pair<DrawColour, DrawColour>> *bondColours =
+              nullptr,
           const std::map<int, double> *highlight_radii = nullptr,
           int confId = -1);
   DrawMol(const DrawMol &) = delete;
   DrawMol(const DrawMol &&) = delete;
   DrawMol &operator=(const DrawMol &) = delete;
 
-  void initDrawMolecule(const ROMol &mol, int confId);
-  void extractAll(int confId);
-  void extractAtomCoords(int confId);
+  // this must be called before a drawing can be done.
+  void createDrawObjects();
+  void initDrawMolecule(const ROMol &mol);
+  virtual void extractAll();
+  void extractAtomCoords();
   void extractAtomSymbols();
   void extractBonds();
+  void extractHighlights();
+  void extractRegions();
   void extractMolNotes();
   void extractAtomNotes();
   void extractBondNotes();
@@ -111,8 +116,7 @@ class DrawMol {
                            const std::pair<DrawColour, DrawColour> &cols);
   void makeWedgedBond(Bond *bond,
                       const std::pair<DrawColour, DrawColour> &cols);
-  void makeWavyBond(Bond *bond,
-                    const std::pair<DrawColour, DrawColour> &cols);
+  void makeWavyBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols);
   void makeDativeBond(Bond *bond,
                       const std::pair<DrawColour, DrawColour> &cols);
   void makeZeroBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols,
@@ -120,10 +124,13 @@ class DrawMol {
   void adjustBondEndsForLabels(int begAtIdx, int endAtIdx, Point2D &begCds,
                                Point2D &endCds);
   void newBondLine(const Point2D &pt1, const Point2D &pt2,
-                   const DrawColour &col1, const DrawColour &col2,
-                   int atom1Idx, int atom2Idx, int bondIdx,
-                   const DashPattern &dashPattern);
+                   const DrawColour &col1, const DrawColour &col2, int atom1Idx,
+                   int atom2Idx, int bondIdx, const DashPattern &dashPattern);
   std::pair<DrawColour, DrawColour> getBondColours(Bond *bond);
+  void makeContinuousHighlights();
+  void makeAtomCircleHighlights();
+  void makeAtomEllipseHighlights(int lineWidth);
+  void makeBondHighlightLines(int lineWidth);
 
   MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -136,11 +143,13 @@ class DrawMol {
   std::string legend_;
 
   std::unique_ptr<RWMol> drawMol_;
+  int confId_;
   std::vector<Point2D> atCds_;
   std::vector<std::unique_ptr<DrawShape>> bonds_;
   std::vector<int> atomicNums_;
   std::vector<std::pair<std::string, OrientType>> atomSyms_;
   std::vector<std::unique_ptr<AtomSymbol>> atomLabels_;
+  std::vector<std::unique_ptr<DrawShape>> highlights_;
   std::vector<AnnotationType> annotations_;
   std::vector<AnnotationType> legends_;
   std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>> radicals_;
@@ -152,7 +161,7 @@ class DrawMol {
   double xMin_, yMin_, xMax_, yMax_, xRange_, yRange_;
   double meanBondLengthSquare_ = 0.0;
   int legendHeight_ = 0;
-
+  bool drawingInitialised_ = false;
 };
 
 void centerMolForDrawing(RWMol &mol, int confId = 1);
@@ -173,23 +182,21 @@ void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,
                          const std::vector<Point2D> &at_cds, Point2D &l1s,
                          Point2D &l1f, Point2D &l2s, Point2D &l2f);
 void calcTripleBondLines(double offset, const Bond &bond,
-                         const std::vector<Point2D> &at_cds,
-                         Point2D &l1s, Point2D &l1f, Point2D &l2s,
-                         Point2D &l2f);
+                         const std::vector<Point2D> &at_cds, Point2D &l1s,
+                         Point2D &l1f, Point2D &l2s, Point2D &l2f);
 Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
                                const Point2D &cds3);
 Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
-                       const Point2D &cds2,
-                       const std::vector<Point2D> &at_cds);
+                       const Point2D &cds2, const std::vector<Point2D> &at_cds);
 Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
                              const std::vector<Point2D> &at_cds);
 // return a point that is end1 moved so as not to clash with any of the
 // rects of a label.  end1 to end2 and the coords of 2 ends of a bond.
 void adjustBondEndForString(
     const Point2D &end1, const Point2D &end2, double padding,
-    const std::vector<std::shared_ptr<StringRect>> &rects,
-    Point2D &moveEnd);
+    const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd);
+
 } // namespace RDKit
 
 #endif  // RDKIT_DRAWMOL_H

@@ -30,6 +30,7 @@ rdkit_headers(MolDraw2D.h
   MolDraw2DHelpers.h
   AtomSymbol.h
   DrawMol.h
+  DrawMolMCH.h
   DrawShape.h
   DrawText.h
   DrawTextSVG.h
@@ -39,7 +40,7 @@ rdkit_headers(MolDraw2D.h
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
   MolDraw2DDetails.cpp MolDraw2DUtils.cpp AtomSymbol.cpp
-  DrawMol.cpp DrawShape.cpp DrawText.cpp DrawTextSVG.cpp
+  DrawMol.cpp DrawMolMCH.cpp DrawShape.cpp DrawText.cpp DrawTextSVG.cpp
   MolDraw2DJS.cpp DrawTextJS.cpp
   LINK_LIBRARIES
   ChemReactions Depictor MolTransforms 

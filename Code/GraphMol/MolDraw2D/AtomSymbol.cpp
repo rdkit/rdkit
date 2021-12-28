@@ -19,19 +19,19 @@
 namespace RDKit {
 
 // ****************************************************************************
-AtomSymbol::AtomSymbol(const std::string &label, int atIdx, OrientType orient,
+AtomSymbol::AtomSymbol(const std::string &symbol, int atIdx, OrientType orient,
                      const Point2D &cds, const DrawColour &colour,
                      DrawText &textDrawer)
-    : label_(label),
+    : symbol_(symbol),
       atIdx_(atIdx),
       orient_(orient),
       cds_(cds),
       colour_(colour),
       textDrawer_(textDrawer) {
-  if (label.empty()) {
+  if (symbol_.empty()) {
     return;
   }
-  textDrawer_.getStringRects(label_, orient_, rects_, draw_modes_,
+  textDrawer_.getStringRects(symbol_, orient_, rects_, draw_modes_,
                              draw_chars_, false, TextAlignType::MIDDLE);
 }
 
@@ -92,7 +92,7 @@ void AtomSymbol::draw(MolDraw2D &molDrawer) const {
   actClass += boost::str(boost::format("atom-%d") % atIdx_);
   molDrawer.setActiveClass(actClass);
   textDrawer_.setColour(colour_);
-  textDrawer_.drawString(label_, cds_, orient_);
+  textDrawer_.drawString(symbol_, cds_, orient_);
   molDrawer.setActiveClass(o_class);
 //  drawRects(molDrawer);
 }

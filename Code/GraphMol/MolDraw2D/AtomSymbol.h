@@ -29,17 +29,18 @@ class MolDraw2D;
 
 class AtomSymbol {
   friend class DrawMol;
+  friend class DrawMolMCH;
 
   // everything's private because we don't want anyone using it.
  private :
   /*!
    *
-   * @param label      : the full label
+   * @param symbol     : the full symbol
    * @param orient     : text orientation (up, down, left, right)
    * @param textDrawer : instance of DrawText to get the character sizes
    * etc.
    */
-  AtomSymbol(const std::string &label, int atIdx, OrientType orient,
+  AtomSymbol(const std::string &symbol, int atIdx, OrientType orient,
             const Point2D &cds, const DrawColour &colour,
             DrawText &textDrawer);
 
@@ -47,7 +48,7 @@ class AtomSymbol {
   AtomSymbol(const AtomSymbol &&) = delete;
   AtomSymbol &operator=(const AtomSymbol &) = delete;
 
-  std::string label_;
+  std::string symbol_;
   int atIdx_;
   OrientType orient_;
   Point2D cds_;

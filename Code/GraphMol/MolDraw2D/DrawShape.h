@@ -31,6 +31,7 @@ const DashPattern shortDashes{2.0, 2.0};
 class DrawShape {
   friend class MolDraw2D;
   friend class DrawMol;
+  friend class DrawMolMCH;
 
  public:
   virtual ~DrawShape() = default;
@@ -43,8 +44,8 @@ class DrawShape {
 
   void draw(MolDraw2D &drawer);
   virtual void myDraw(MolDraw2D &drawer) const = 0;
-  virtual void findExtremes(double &xmin, double &xmax,
-                            double &ymin, double &ymax) const;
+  virtual void findExtremes(double &xmin, double &xmax, double &ymin,
+                            double &ymax) const;
   virtual void scale(const Point2D &scale_factor);
   virtual void move(const Point2D &trans);
 
@@ -77,6 +78,7 @@ class DrawShapeArrow: protected DrawShape {
 class DrawShapeEllipse: protected DrawShape {
   friend class MolDraw2D;
   friend class DrawMol;
+  friend class DrawMolMCH;
 
  public:
   ~DrawShapeEllipse() = default;
@@ -87,12 +89,14 @@ class DrawShapeEllipse: protected DrawShape {
                    DrawColour lineColour = DrawColour(0, 0, 0),
                    bool fill = false);
   void myDraw(MolDraw2D &drawer) const;
-
+  void findExtremes(double &xmin, double &xmax, double &ymin,
+                    double &ymax) const;
 };
 
 class DrawShapePolyline: protected DrawShape {
   friend class MolDraw2D;
   friend class DrawMol;
+  friend class DrawMolMCH;
 
  public:
   ~DrawShapePolyline() = default;
@@ -169,6 +173,33 @@ class DrawShapeWavyLine: protected DrawShape {
   void myDraw(MolDraw2D &drawer) const;
 
   DrawColour col2_;
+};
+
+class DrawShapeArc: protected DrawShape {
+  friend class MolDraw2D;
+  friend class DrawMol;
+  friend class DrawMolMCH;
+
+ public:
+  ~DrawShapeArc() = default;
+
+ protected:
+  // draw the arc of an ellipse between ang1 and ang2.  Note that 0 is
+  // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
+  // ang2 must be > ang1 - it won't draw backwards. Angles in degrees.
+  // points should be size 2 - the first entry is the centre, the second
+  // gives the x and y radii of the ellipse.
+  DrawShapeArc(const std::vector<Point2D> points,
+               double ang1, double ang2, int lineWidth = 2,
+               bool scaleLineWidth = false,
+               const DrawColour &col1 = DrawColour(0, 0, 0), bool fill = false);
+
+  void myDraw(MolDraw2D &drawer) const;
+  void findExtremes(double &xmin, double &xmax, double &ymin,
+                    double &ymax) const;
+  void move(const Point2D &trans);
+
+  double ang1_, ang2_;
 };
 
 std::vector<Point2D> calcScaledWedgePoints(const Point2D &point,

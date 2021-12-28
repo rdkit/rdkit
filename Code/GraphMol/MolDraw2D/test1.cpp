@@ -374,6 +374,7 @@ void check_file_hash(const std::string &filename,
 }
 
 void test1() {
+#if 0
   std::cout << " ----------------- Test 1" << std::endl;
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
@@ -420,6 +421,7 @@ void test1() {
     check_file_hash("test1_2.svg");
     delete m;
   }
+#endif
   {
     std::string smiles = "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
     ROMol *m = SmilesToMol(smiles);
@@ -439,6 +441,7 @@ void test1() {
     check_file_hash("test1_3.svg");
     delete m;
   }
+#if 0
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
@@ -497,7 +500,7 @@ void test1() {
     check_file_hash("test1_6.svg");
     delete m;
   }
-
+#endif
   std::cout << " Done" << std::endl;
 }
 
@@ -842,7 +845,6 @@ void test3() {
     }
     delete m;
   }
-
   std::cout << " Done" << std::endl;
 }
 
@@ -3449,6 +3451,7 @@ void testGithub2931() {
       MolDraw2DSVG drawer(500, 500);
       drawer.drawOptions().fillHighlights = false;
       drawer.drawOptions().continuousHighlight = true;
+      drawer.drawOptions().addAtomIndices = true;
       drawer.drawMoleculeWithHighlights(*m, "Test 1", ha_map, hb_map, h_rads,
                                         h_lw_mult);
       drawer.finishDrawing();
@@ -3461,7 +3464,7 @@ void testGithub2931() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
-      TEST_ASSERT(text.find("<ellipse cx='242.2' cy='367.5'"
+      TEST_ASSERT(text.find("<ellipse cx='242.2' cy='368.0'"
                             " rx='10.4' ry='10.7' "
                             " style='fill:none;stroke:#00FF00;") !=
                   std::string::npos);
@@ -4237,7 +4240,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test9MolLegends();
+  testGithub2931();
 
 #if 0
   test1();

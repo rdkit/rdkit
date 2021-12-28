@@ -17,6 +17,8 @@
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
+#include <GraphMol/MolDraw2D/DrawMol.h>
+#include <GraphMol/MolDraw2D/DrawMolMCH.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
@@ -340,7 +342,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
       nullptr, highlight_radii, confId);
-  draw_mols_.push_back(std::unique_ptr<DrawMol>(draw_mol));
+  draw_mol->createDrawObjects();
+  draw_mols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
   startDrawing();
   drawAllMolecules();
 
@@ -364,6 +367,18 @@ void MolDraw2D::drawMoleculeWithHighlights(
     const map<int, vector<DrawColour>> &highlight_bond_map,
     const map<int, double> &highlight_radii,
     const map<int, int> &highlight_linewidth_multipliers, int confId) {
+#if 1
+  setupTextDrawer();
+  DrawMol *draw_mol = new DrawMolMCH(
+      mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
+      highlight_atom_map, highlight_bond_map,
+      highlight_radii, highlight_linewidth_multipliers, confId);
+  draw_mol->createDrawObjects();
+  draw_mols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
+  startDrawing();
+  drawAllMolecules();
+  return;
+#else
   int origWidth = lineWidth();
   vector<int> highlight_atoms;
   for (auto ha : highlight_atom_map) {
@@ -449,6 +464,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
 
   drawLegend(legend);
   popDrawDetails();
+#endif
 }
 
 // ****************************************************************************
@@ -922,15 +938,17 @@ void MolDraw2D::highlightCloseContacts() {
 // transform a set of coords in the molecule's coordinate system
 // to drawing system coordinates
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
+  // send it straight back - the DrawMol takes care of it all.
   return mol_cds;
-  double x = scale_ * (mol_cds.x - x_min_ + x_trans_);
-  double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
+
+//  double x = scale_ * (mol_cds.x - x_min_ + x_trans_);
+//  double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
   // y is now the distance from the top of the image, we need to
   // invert that:
-  x += x_offset_;
-  y -= y_offset_;
-  y = panelHeight() - legend_height_ - y;
-  return Point2D(x, y);
+//  x += x_offset_;
+//  y -= y_offset_;
+//  y = panelHeight() - legend_height_ - y;
+//  return Point2D(x, y);
 }
 
 // ****************************************************************************

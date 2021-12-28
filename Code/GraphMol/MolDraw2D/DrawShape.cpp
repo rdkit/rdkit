@@ -30,11 +30,15 @@ DrawShape::DrawShape(const std::vector<Point2D> &points, int lineWidth,
 
 // ****************************************************************************
 void DrawShape::draw(MolDraw2D &drawer) {
-  const auto ocolour = drawer.colour();
-  const auto olw = drawer.lineWidth();
-  const auto ofill = drawer.fillPolys();
-
   // the various myDraw functions may over-ride these.
+  const auto ocolour = drawer.colour();
+  drawer.setColour(lineColour_);
+  const auto olw = drawer.lineWidth();
+  drawer.setLineWidth(lineWidth_);
+  const auto ofill = drawer.fillPolys();
+  drawer.setFillPolys(fill_);
+  const auto lineScale = drawer.drawOptions().scaleBondWidth;
+  drawer.drawOptions().scaleBondWidth = scaleLineWidth_;
   drawer.setActiveAtmIdx(atom1_, atom2_);
   drawer.setActiveBndIdx(bond_);
 
@@ -45,6 +49,7 @@ void DrawShape::draw(MolDraw2D &drawer) {
   drawer.setColour(ocolour);
   drawer.setLineWidth(olw);
   drawer.setFillPolys(ofill);
+  drawer.drawOptions().scaleBondWidth = lineScale;
 }
 
 // ****************************************************************************
@@ -86,7 +91,6 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
 
 // ****************************************************************************
 void DrawShapeArrow::myDraw(MolDraw2D &drawer) const {
-  drawer.setLineWidth(lineWidth_);
   if (drawer.drawOptions().splitBonds) {
     drawer.setActiveAtmIdx(atom1_);
   }
@@ -114,17 +118,26 @@ DrawShapeEllipse::DrawShapeEllipse(const std::vector<Point2D> &points,
 
 // ****************************************************************************
 void DrawShapeEllipse::myDraw(MolDraw2D &drawer) const {
-  drawer.setColour(lineColour_);
-  auto lw = lineWidth_;
-  if (scaleLineWidth_) {
-    lw *= drawer.scale() * 0.02;
-    if (lw < 0.0) {
-      lw = 0.0;
-    }
+  if (fill_) {
+    drawer.setLineWidth(1);
+    drawer.drawOptions().scaleBondWidth = false;
   }
-  drawer.setLineWidth(lw);
-  drawer.setFillPolys(fill_);
   drawer.drawEllipse(points_[0], points_[1]);
+}
+
+// ****************************************************************************
+void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
+                                    double &ymax) const {
+  double wb2 = (points_[1].x - points_[0].x) / 2;
+  double hb2 = (points_[1].y - points_[0].y) / 2;
+  double cx = points_[0].x + wb2;
+  double cy = points_[0].y + hb2;
+  wb2 = wb2 > 0 ? wb2 : -1 * wb2;
+  hb2 = hb2 > 0 ? hb2 : -1 * hb2;
+  xmin = std::min(cx - wb2, xmin);
+  xmax = std::max(cx + wb2, xmax);
+  ymin = std::min(cy - hb2, ymin);
+  ymax = std::max(cy + hb2, ymax);
 }
 
 // ****************************************************************************
@@ -141,29 +154,16 @@ DrawShapePolyline::DrawShapePolyline(const std::vector<Point2D> &points,
 
 // ****************************************************************************
 void DrawShapePolyline::myDraw(MolDraw2D &drawer) const {
-  auto lw = lineWidth_;
-  if (scaleLineWidth_) {
-    lw *= drawer.scale() * 0.02;
-    if (lw < 0.0) {
-      lw = 0.0;
-    }
-  }
-  drawer.setLineWidth(lw);
+  drawer.setLineWidth(lineWidth_);
   if (points_.size() > 2 && fill_) {
     drawer.setFillPolys(true);
   } else {
     drawer.setFillPolys(false);
   }
-  drawer.setColour(lineColour_);
+
   if (points_.size() > 2) {
     drawer.drawPolygon(points_);
   } else {
-    //      std::cout << "Draw line from " << points_[0] << " to " <<
-    //      points_[1]
-    //                << " in colour " << lineColour_.r << ", " <<
-    //                lineColour_.g
-    //                << ", " << lineColour_.b << "  width = " << lw <<
-    //                std::endl;
     auto od = drawer.dash();
     auto dp = dashPattern_;
     if (dp == shortDashes) {
@@ -228,7 +228,6 @@ void DrawShapeSolidWedge::buildTriangles() {
 // ****************************************************************************
 void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
   drawer.setFillPolys(true);
-  drawer.setColour(lineColour_);
   int at1Idx = inverted_ ? atom2_ : atom1_;
   int at2Idx = inverted_ ? atom1_ : atom2_;
   if (drawer.drawOptions().splitBonds) {
@@ -399,6 +398,35 @@ std::vector<Point2D> calcScaledWedgePoints(const Point2D &point,
   lastLine *= 6;
   std::vector<Point2D> new_pts{point, mid + lastLine, mid - lastLine};
   return new_pts;
+}
+
+// ****************************************************************************
+DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
+                           double ang2, int lineWidth, bool scaleLineWidth,
+                           const DrawColour &col1, bool fill)
+    : DrawShape(points, lineWidth, scaleLineWidth, col1, fill),
+      ang1_(ang1),
+      ang2_(ang2) {
+  PRECONDITION(points_.size() == 2, "arc wrong points");
+  PRECONDITION(ang1_ < ang2_, "arc wrong way");
+}
+
+// ****************************************************************************
+void DrawShapeArc::myDraw(MolDraw2D &drawer) const {
+  drawer.drawArc(points_[0], points_[1].x, points_[1].y, ang1_, ang2_);
+}
+
+// ****************************************************************************
+void DrawShapeArc::findExtremes(double &xmin, double &xmax, double &ymin, double &ymax) const {
+  xmin = std::min(xmin, points_[0].x - points_[1].x);
+  xmax = std::max(xmax, points_[0].x + points_[1].x);
+  ymin = std::min(ymin, points_[0].y - points_[1].y);
+  ymax = std::max(ymax, points_[0].y + points_[1].y);
+}
+
+// ****************************************************************************
+void DrawShapeArc::move(const Point2D &trans) {
+  points_[0] += trans;
 }
 
 } // namespace RDKit
