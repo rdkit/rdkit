@@ -4405,7 +4405,7 @@ void MolDraw2D::drawArc(const Point2D &centre, double xradius, double yradius,
   // going to be small.
   int num_steps = 1 + int((ang2 - ang1) / 5.0);
   double ang_incr = double((ang2 - ang1) / num_steps) * M_PI / 180.0;
-  double start_ang_rads = ang2 * M_PI / 180.0;
+  double start_ang_rads = ang1 * M_PI / 180.0;
   for (int i = 0; i <= num_steps; ++i) {
     double ang = start_ang_rads + double(i) * ang_incr;
     double x = centre.x + xradius * cos(ang);
