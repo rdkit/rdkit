@@ -627,6 +627,25 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
   return outs.str();
 }
 
+void drawStringHelper(MolDraw2D &self, std::string text, const Point2D &loc,
+                      int align) {
+  TextAlignType talign = TextAlignType::MIDDLE;
+  switch (align) {
+    case 0:
+      talign = TextAlignType::MIDDLE;
+      break;
+    case 1:
+      talign = TextAlignType::START;
+      break;
+    case 2:
+      talign = TextAlignType::END;
+      break;
+    default:
+      throw_value_error("align must be 0, 1, or 2");
+  }
+  self.drawString(text, loc, talign);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -936,11 +955,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos")),
            "add text to the canvas")
-      .def("DrawString",
-           (void (RDKit::MolDraw2D::*)(const std::string &,
-                                       const RDGeom::Point2D &,
-                                       RDKit::TextAlignType)) &
-               RDKit::MolDraw2D::drawString,
+      .def("DrawString", RDKit::drawStringHelper,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("align")),
            "add aligned text to the canvas")
