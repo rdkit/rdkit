@@ -967,7 +967,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("DrawString", RDKit::drawStringHelper,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("align")),
-           "add aligned text to the canvas")
+           "add aligned text to the canvas. The align argument can be 0 "
+           "(=MIDDLE), 1 (=START), or 2 (=END)")
       .def("GetDrawCoords",
            (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
                 const) &
