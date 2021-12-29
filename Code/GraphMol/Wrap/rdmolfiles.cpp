@@ -203,6 +203,21 @@ ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
+ROMol *MolFromMmcifFile(const char *filename, bool sanitize, bool removeHs,
+                        unsigned int flavor, bool proximityBonding) {
+  RWMol *newM = nullptr;
+  try {
+    newM = mmcifFileToMol(filename, sanitize, removeHs, flavor, proximityBonding);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<ROMol *>(newM);
+}
+
 ROMol *MolFromPDBBlock(python::object molBlock, bool sanitize, bool removeHs,
                        unsigned int flavor, bool proximityBonding) {
   std::istringstream inStream(pyObjectToString(molBlock));
@@ -1557,6 +1572,34 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     a Mol object, None on failure.\n\
 \n";
   python::def("MolFromPDBFile", RDKit::MolFromPDBFile,
+              (python::arg("molFileName"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true, python::arg("flavor") = 0,
+               python::arg("proximityBonding") = true),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString = "Construct a molecule from an mmcif file.\n\n\
+  ARGUMENTS:\n\
+\n\
+  - fileName: name of the file to read\n\
+\n\
+  - sanitize: (optional) toggles sanitization of the molecule.\n\
+    Defaults to true.\n\
+\n\
+  - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+    This only make sense when sanitization is done.\n\
+    Defaults to true.\n\
+\n\
+  - flavor: (optional) \n\
+\n\
+  - proximityBonding: (optional) toggles automatic proximity bonding\n\
+\n\
+RETURNS:\n\
+\n\
+  a Mol object, None on failure.\n\
+\n";
+
+  python::def("MolFromMmCifFile", RDKit::MolFromMmcifFile,
               (python::arg("molFileName"), python::arg("sanitize") = true,
                python::arg("removeHs") = true, python::arg("flavor") = 0,
                python::arg("proximityBonding") = true),
