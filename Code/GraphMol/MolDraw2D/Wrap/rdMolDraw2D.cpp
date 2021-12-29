@@ -937,6 +937,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "draws a rectangle with the current drawing style in the rectangle "
            "defined by the two points. The coordinates "
            "are in the molecule frame")
+      .def("DrawArc",
+           (void (RDKit::MolDraw2D::*)(const Point2D &, double, double,
+                                       double)) &
+               RDKit::MolDraw2D::drawArc,
+           (python::arg("self"), python::arg("center"), python::arg("radius"),
+            python::arg("angle1"), python::arg("angle2")),
+           "draws an arc with the current drawing style. "
+           "The coordinates are in the molecule frame, the angles are in "
+           "degrees, angle2 should be > angle1.")
       .def("DrawAttachmentLine", &RDKit::drawAttachmentLineHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("color"), python::arg("len") = 1.0,
