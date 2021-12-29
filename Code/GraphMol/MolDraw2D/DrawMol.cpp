@@ -115,6 +115,7 @@ void DrawMol::extractAll() {
   extractBonds();
   extractRegions();
   extractHighlights();
+  extractMolNotes();
 
   extractLegend();
 }
@@ -253,6 +254,35 @@ void DrawMol::extractRegions() {
 }
 
 // ****************************************************************************
+void DrawMol::extractMolNotes() {
+  std::string note;
+  // the molNote property takes priority
+  if (!drawMol_->getPropIfPresent(common_properties::molNote, note)) {
+    unsigned int chiralFlag;
+    if (drawOptions_.includeChiralFlagLabel &&
+        drawMol_->getPropIfPresent(common_properties::_MolFileChiralFlag,
+                             chiralFlag) &&
+        chiralFlag) {
+      note = "ABS";
+    }
+  }
+
+  if (!note.empty()) {
+    AnnotationType annot;
+    annot.text_ = note;
+    annot.align_ = TextAlignType::START;
+    annot.scaleText_ = false;
+    calcAnnotationPosition(atCds_, textDrawer_, annot);
+    if (annot.rect_.width_ < 0.0) {
+      BOOST_LOG(rdWarningLog)
+          << "Couldn't find good place for molecule note " << note << std::endl;
+    } else {
+      annotations_.push_back(annot);
+    }
+  }
+}
+
+// ****************************************************************************
 void DrawMol::calculateScale() {
   findExtremes();
 
@@ -329,6 +359,8 @@ void DrawMol::findExtremes() {
   for (auto &hl : highlights_) {
     hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
+  findAnnotationExtremes(annotations_, xMin_, xMax_, yMin_, yMax_);
+
   // calculate the x and y spans
   xRange_ = xMax_ - xMin_;
   yRange_ = yMax_ - yMin_;
@@ -375,6 +407,14 @@ void DrawMol::changeToDrawCoords() {
     hl->scale(scale);
     hl->move(toCentre);
   }
+  for (auto &annot : annotations_) {
+    annot.rect_.trans_ += trans;
+    annot.rect_.trans_.x *= scale.x;
+    annot.rect_.trans_.y *= scale.y;
+    annot.rect_.trans_ += toCentre;
+    annot.rect_.width_ *= scale.x;
+    annot.rect_.height_ *= scale.y;
+  }
 }
 
 // ****************************************************************************
@@ -394,11 +434,23 @@ void DrawMol::draw(MolDraw2D &drawer) const {
       label->draw(drawer);
     }
   }
+  drawAllAnnotations(drawer);
+  drawLegend(drawer);
+  drawer.setScale(scale_);
+}
+
+// ****************************************************************************
+void DrawMol::drawAllAnnotations(MolDraw2D &drawer) const {
+  std::string currActClass = drawer.getActiveClass();
+  if (currActClass.empty()) {
+    drawer.setActiveClass("note");
+  } else {
+    drawer.setActiveClass(currActClass + " note");
+  }
   for (auto &annot : annotations_) {
     drawAnnotation(annot);
   }
-  drawLegend();
-  drawer.setScale(scale_);
+  drawer.setActiveClass(currActClass);
 }
 
 // ****************************************************************************
@@ -412,6 +464,7 @@ void DrawMol::drawAnnotation(const AnnotationType &annot) const {
     textDrawer_.setFontScale(
         drawOptions_.annotationFontScale * full_font_scale, true);
   }
+  textDrawer_.setColour(annot.col_);
   textDrawer_.drawString(annot.text_, annot.rect_.trans_, annot.align_);
   if (annot.scaleText_) {
     textDrawer_.setFontScale(full_font_scale, true);
@@ -419,15 +472,22 @@ void DrawMol::drawAnnotation(const AnnotationType &annot) const {
 }
 
 // ****************************************************************************
-void DrawMol::drawLegend() const {
+void DrawMol::drawLegend(MolDraw2D &drawer) const {
   textDrawer_.setColour(drawOptions_.legendColour);
   double o_font_scale = textDrawer_.fontScale();
   double fsize = textDrawer_.fontSize();
   double new_font_scale = o_font_scale * drawOptions_.legendFontSize / fsize;
   textDrawer_.setFontScale(new_font_scale, true);
+  std::string currActClass = drawer.getActiveClass();
+  if (currActClass.empty()) {
+    drawer.setActiveClass("legend");
+  } else {
+    drawer.setActiveClass(currActClass + " legend");
+  }
   for (auto &leg : legends_) {
     drawAnnotation(leg);
   }
+  drawer.setActiveClass(currActClass);
   textDrawer_.setFontScale(o_font_scale, true);
 }
 
@@ -1710,4 +1770,80 @@ void adjustBondEndForString(
   }
 }
 
+// ****************************************************************************
+void calcAnnotationPosition(const std::vector<Point2D> atCds,
+                            DrawText &textDrawer, AnnotationType &annot) {
+  if (annot.text_.empty()) {
+    annot.rect_.width_ = -1.0;  // so we know it's not valid.
+    return;
+  }
+
+  std::vector<std::shared_ptr<StringRect>> rects;
+  std::vector<TextDrawType> draw_modes;
+  std::vector<char> draw_chars;
+
+  // at this point, the scale() should still be 1, so min and max font sizes
+  // don't make sense, as we're effectively operating on atom coords rather
+  // than draw.
+  double full_font_scale = textDrawer.fontScale();
+  textDrawer.setFontScale(1, true);
+  textDrawer.getStringRects(annot.text_, OrientType::N, rects, draw_modes,
+                               draw_chars);
+  textDrawer.setFontScale(full_font_scale, true);
+  // accumulate the widths of the rectangles so that we have the overall width
+  for (const auto &rect : rects) {
+    annot.rect_.width_ += rect->width_;
+  }
+
+  Point2D centroid{0., 0.};
+  double minY = std::numeric_limits<double>::max();
+  double maxX = -std::numeric_limits<double>::max();
+  for (const auto &pt : atCds) {
+    centroid += pt;
+    maxX = std::max(pt.x, maxX);
+    minY = std::min(pt.y, minY);
+  }
+  centroid /= atCds.size();
+
+  // because we've inverted the Y coord, we need to use -minY, not +maxY.
+  Point2D vect{maxX, -minY};
+  vect.x -= centroid.x;
+  vect.y += centroid.y;
+  auto loc = centroid + vect * 0.9;
+  loc = centroid;
+  loc.x += vect.x * 0.9;
+  loc.y -= vect.y * 0.9;
+  annot.rect_.trans_ = loc;
+  std::cout << "mol note pos : " << annot.rect_.trans_ << "   and dims "
+            << annot.rect_.width_ << " by " << annot.rect_.height_ << std::endl;
+}
+
+// ****************************************************************************
+void findAnnotationExtremes(const std::vector<AnnotationType> &annots,
+                            double &xmin, double &xmax, double &ymin,
+                            double &ymax) {
+  for (auto const &pr : annots) {
+    const auto &note_rect = pr.rect_;
+    double this_xmax = note_rect.trans_.x;
+    double this_xmin = note_rect.trans_.x;
+    double this_ymax = note_rect.trans_.y;
+    double this_ymin = note_rect.trans_.y;
+    if (pr.align_ == TextAlignType::START) {
+      this_xmax += note_rect.width_;
+    } else if (pr.align_ == TextAlignType::END) {
+      this_xmin -= note_rect.width_;
+    } else {
+      this_xmax += note_rect.width_ / 2.0;
+      this_xmin -= note_rect.width_ / 2.0;
+    }
+    this_ymax += note_rect.height_ / 2.0;
+    this_ymin -= note_rect.height_ / 2.0;
+
+    xmax = std::max(xmax, this_xmax);
+    xmin = std::min(xmin, this_xmin);
+    ymax = std::max(ymax, this_ymax);
+    ymin = std::min(ymin, this_ymin);
+  }
+
+}
 } // namespace RDKit

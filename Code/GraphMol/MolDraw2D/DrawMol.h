@@ -95,8 +95,9 @@ class DrawMol {
   void findExtremes();
   void changeToDrawCoords();
   void draw(MolDraw2D &drawer) const;
+  void drawAllAnnotations(MolDraw2D &drawer) const;
   void drawAnnotation(const AnnotationType &annot) const;
-  void drawLegend() const;
+  void drawLegend(MolDraw2D &drawer) const;
   void resetEverything();
 
   // adds LaTeX-like annotation for super- and sub-script.
@@ -196,7 +197,11 @@ Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
 void adjustBondEndForString(
     const Point2D &end1, const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd);
-
-} // namespace RDKit
+void calcAnnotationPosition(const std::vector<Point2D> atCds,
+                            DrawText &textDrawer, AnnotationType &annot);
+void findAnnotationExtremes(const std::vector<AnnotationType> &annots,
+                            double &xmin, double &xmax, double &ymin,
+                            double &ymax);
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWMOL_H
