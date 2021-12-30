@@ -79,6 +79,11 @@ void DrawShape::move(const Point2D &trans) {
 }
 
 // ****************************************************************************
+bool DrawShape::doesNoteClash(const AnnotationType &annot, double padding) const {
+  return false;
+}
+
+// ****************************************************************************
 DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
                                int lineWidth, bool scaleLineWidth,
                                DrawColour lineColour, bool fill,
@@ -109,10 +114,34 @@ void DrawShapeArrow::myDraw(MolDraw2D &drawer) const {
 }
 
 // ****************************************************************************
+bool DrawShapeArrow::doesNoteClash(const AnnotationType &annot,
+                                   double padding) const {
+  padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
+  if (MolDraw2D_detail::doesLineIntersect(annot.rect_, points_[0], points_[1],
+                                          padding)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersect(annot.rect_, points_[1], points_[2],
+                                          padding)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersect(annot.rect_, points_[1], points_[3],
+                                          padding)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersect(annot.rect_, points_[2], points_[3],
+                                          padding)) {
+    return true;
+  }
+  return false;
+}
+
+// ****************************************************************************
 DrawShapeEllipse::DrawShapeEllipse(const std::vector<Point2D> &points,
                                    int lineWidth, bool scaleLineWidth,
-                                   DrawColour lineColour, bool fill)
-    : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill) {
+                                   DrawColour lineColour, bool fill,
+                                   int atom1)
+    : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill, atom1) {
   PRECONDITION(points_.size() == 2, "ellipse wrong points");
 }
 
@@ -141,7 +170,84 @@ void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
 }
 
 // ****************************************************************************
-DrawShapePolyline::DrawShapePolyline(const std::vector<Point2D> &points,
+bool DrawShapeEllipse::doesNoteClash(const AnnotationType &annot,
+                                     double padding) const {
+  padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
+  Point2D tl, tr, br, bl;
+  annot.rect_.calcCorners(tl, tr, br, bl, padding);
+  double w = points_[1].x - points_[0].x;
+  double h = points_[1].y - points_[0].y;
+  double cx = points_[0].x + w / 2;
+  double cy = points_[0].y + h / 2;
+  w = w > 0 ? w : -1 * w;
+  h = h > 0 ? h : -1 * h;
+  Point2D centre{cx, cy};
+  if (MolDraw2D_detail::doesLineIntersectEllipse(centre, w / 2.0, h / 2.0,
+                                                 padding, tl, tr)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersectEllipse(centre, w / 2.0, h / 2.0,
+                                                 padding, tr, br)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersectEllipse(centre, w / 2.0, h / 2.0,
+                                                 padding, br, bl)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersectEllipse(centre, w / 2.0, h / 2.0,
+                                                 padding, bl, tl)) {
+    return true;
+  }
+  return false;
+}
+
+// ****************************************************************************
+DrawShapeSimpleLine::DrawShapeSimpleLine(const std::vector<Point2D> &points,
+                                         int lineWidth, bool scaleLineWidth,
+                                         DrawColour lineColour,
+                                         int atom1, int atom2, int bond,
+                                         DashPattern dashPattern)
+    : DrawShape(points, lineWidth, scaleLineWidth, lineColour, false, atom1,
+                atom2, bond),
+      dashPattern_(dashPattern) {
+  PRECONDITION(points_.size() == 2, "simple line wrong number of points");
+}
+
+// ****************************************************************************
+void DrawShapeSimpleLine::myDraw(MolDraw2D &drawer) const {
+  auto od = drawer.dash();
+  auto dp = dashPattern_;
+  if (dp == shortDashes) {
+    // these are roughly equivalent to the original checks on scale,
+    // which we don't have any more.
+    double sq_len = (points_[0] - points_[1]).lengthSq();
+    if (sq_len < 55.0) {
+      dp[0] /= 4;
+      dp[1] /= 3;
+    } else if(sq_len < 900.0) {
+      dp[0] /= 2;
+      dp[1] /= 1.5;
+    }
+  }
+  drawer.setDash(dp);
+  drawer.setActiveAtmIdx(atom1_, atom2_);
+  drawer.setActiveBndIdx(bond_);
+  drawer.drawLine(points_[0], points_[1], lineColour_, lineColour_);
+  drawer.setActiveAtmIdx();
+  drawer.setActiveBndIdx();
+  drawer.setDash(od);
+}
+
+// ****************************************************************************
+bool DrawShapeSimpleLine::doesNoteClash(const AnnotationType &annot,
+                                        double padding) const {
+  padding = scaleLineWidth_ ? padding * lineWidth_ : 0;
+  return MolDraw2D_detail::doesLineIntersect(annot.rect_, points_[0],
+                                             points_[1], padding);
+}
+
+// ****************************************************************************
+DrawShapePolyLine::DrawShapePolyLine(const std::vector<Point2D> &points,
                                      int lineWidth, bool scaleLineWidth,
                                      DrawColour lineColour, bool fill,
                                      int atom1, int atom2,
@@ -149,43 +255,12 @@ DrawShapePolyline::DrawShapePolyline(const std::vector<Point2D> &points,
     : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill,
                 atom1, atom2, bond),
       dashPattern_(dashPattern) {
-  PRECONDITION(points_.size() > 1, "polyline not enough points");
+  PRECONDITION(points_.size() > 2, "polyline not enough points");
 }
 
 // ****************************************************************************
-void DrawShapePolyline::myDraw(MolDraw2D &drawer) const {
-  drawer.setLineWidth(lineWidth_);
-  if (points_.size() > 2 && fill_) {
-    drawer.setFillPolys(true);
-  } else {
-    drawer.setFillPolys(false);
-  }
-
-  if (points_.size() > 2) {
-    drawer.drawPolygon(points_);
-  } else {
-    auto od = drawer.dash();
-    auto dp = dashPattern_;
-    if (dp == shortDashes) {
-      // these are roughly equivalent to the original checks on scale,
-      // which we don't have any more.
-      double sq_len = (points_[0] - points_[1]).lengthSq();
-      if (sq_len < 55.0) {
-        dp[0] /= 4;
-        dp[1] /= 3;
-      } else if(sq_len < 900.0) {
-        dp[0] /= 2;
-        dp[1] /= 1.5;
-      }
-    }
-    drawer.setDash(dp);
-    drawer.setActiveAtmIdx(atom1_, atom2_);
-    drawer.setActiveBndIdx(bond_);
-    drawer.drawLine(points_[0], points_[1], lineColour_, lineColour_);
-    drawer.setActiveAtmIdx();
-    drawer.setActiveBndIdx();
-    drawer.setDash(od);
-  }
+void DrawShapePolyLine::myDraw(MolDraw2D &drawer) const {
+  drawer.drawPolygon(points_);
 }
 
 // ****************************************************************************
@@ -403,17 +478,22 @@ std::vector<Point2D> calcScaledWedgePoints(const Point2D &point,
 // ****************************************************************************
 DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
                            double ang2, int lineWidth, bool scaleLineWidth,
-                           const DrawColour &col1, bool fill)
-    : DrawShape(points, lineWidth, scaleLineWidth, col1, fill),
+                           const DrawColour &col1, bool fill, int atom1)
+    : DrawShape(points, lineWidth, scaleLineWidth, col1, fill, atom1),
       ang1_(ang1),
       ang2_(ang2) {
   PRECONDITION(points_.size() == 2, "arc wrong points");
-  PRECONDITION(ang1_ < ang2_, "arc wrong way");
+  PRECONDITION(ang1_ >= 0.0 && ang1_ <= 360.0, "ang1_ not 0-360")
+  PRECONDITION(ang2_ >= 0.0 && ang2_ <= 360.0, "ang2_ not 0-360")
+  std::cout << "ARC between " << ang1_ << " and " << ang2_ << std::endl;
 }
 
 // ****************************************************************************
 void DrawShapeArc::myDraw(MolDraw2D &drawer) const {
-  drawer.drawArc(points_[0], points_[1].x, points_[1].y, ang1_, ang2_);
+  std::cout << "DrawShapeArc draw: " << atom1_ << " : "
+            << " ang1 = " << ang1_ << " ang2 = " << ang2_ << std::endl;
+  double start_ang = ang1_ > ang2_ ? ang1_ - 360.0 : ang1_;
+  drawer.drawArc(points_[0], points_[1].x, points_[1].y, start_ang, ang2_);
 }
 
 // ****************************************************************************
@@ -427,6 +507,37 @@ void DrawShapeArc::findExtremes(double &xmin, double &xmax, double &ymin, double
 // ****************************************************************************
 void DrawShapeArc::move(const Point2D &trans) {
   points_[0] += trans;
+}
+
+// ****************************************************************************
+bool DrawShapeArc::doesNoteClash(const AnnotationType &annot,
+                                 double padding) const {
+  padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
+  Point2D tl, tr, br, bl;
+  annot.rect_.calcCorners(tl, tr, br, bl, padding);
+  std::cout << "DrawShapeArc : " << atom1_ << " : " << annot.text_
+            << " ang1 = " << ang1_ << " ang2 = " << ang2_ << std::endl;
+  if (MolDraw2D_detail::doesLineIntersectArc(points_[0], points_[1].x,
+                                             points_[1].y, ang1_, ang2_,
+                                             padding, tl, tr)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersectArc(points_[0], points_[1].x,
+                                             points_[1].y, ang1_, ang2_,
+                                             padding, tr, br)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersectArc(points_[0], points_[1].x,
+                                             points_[1].y, ang1_, ang2_,
+                                             padding, br, bl)) {
+    return true;
+  }
+  if (MolDraw2D_detail::doesLineIntersectArc(points_[0], points_[1].x,
+                                             points_[1].y, ang1_, ang2_,
+                                             padding, bl, tl)) {
+    return true;
+  }
+  return false;
 }
 
 } // namespace RDKit

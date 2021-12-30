@@ -23,6 +23,7 @@
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
@@ -106,6 +107,15 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
       !mol.hasProp(common_properties::molNote)) {
     prepareStereoGroups(*drawMol_);
   }
+  if (drawOptions_.addStereoAnnotation) {
+    MolDraw2D_detail::addStereoAnnotation(*drawMol_);
+  }
+  if (drawOptions_.addAtomIndices) {
+    MolDraw2D_detail::addAtomIndices(*drawMol_);
+  }
+  if (drawOptions_.addBondIndices) {
+    MolDraw2D_detail::addBondIndices(*drawMol_);
+  }
 }
 
 // ****************************************************************************
@@ -116,7 +126,7 @@ void DrawMol::extractAll() {
   extractRegions();
   extractHighlights();
   extractMolNotes();
-
+  extractAtomNotes();
   extractLegend();
 }
 
@@ -246,7 +256,7 @@ void DrawMol::extractRegions() {
         pts[2] = maxv;
         pts[3] = Point2D(maxv.x, minv.y);
         DrawColour col(0.8, 0.8, 0.8);
-        DrawShape *pl = new DrawShapePolyline(pts, 1, false, col, true);
+        DrawShape *pl = new DrawShapePolyLine(pts, 1, false, col, true);
         highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
       }
     }
@@ -272,12 +282,35 @@ void DrawMol::extractMolNotes() {
     annot.text_ = note;
     annot.align_ = TextAlignType::START;
     annot.scaleText_ = false;
-    calcAnnotationPosition(atCds_, textDrawer_, annot);
+    calcMolNotePosition(atCds_, textDrawer_, annot);
     if (annot.rect_.width_ < 0.0) {
       BOOST_LOG(rdWarningLog)
           << "Couldn't find good place for molecule note " << note << std::endl;
     } else {
       annotations_.push_back(annot);
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractAtomNotes() {
+  std::cout << "extractAtomNotes" << std::endl;
+  for (auto atom : drawMol_->atoms()) {
+    std::string note;
+    if (atom->getPropIfPresent(common_properties::atomNote, note)) {
+      if (!note.empty()) {
+        std::cout << "atom " << atom->getIdx() << " : " << note << std::endl;
+        AnnotationType annot;
+        annot.text_ = note;
+        calcAnnotationPosition(atom, annot);
+        if (annot.rect_.width_ < 0.0) {
+          BOOST_LOG(rdWarningLog)
+              << "Couldn't find good place for note " << note << " for atom "
+              << atom->getIdx() << std::endl;
+        } else {
+          annotations_.push_back(annot);
+        }
+      }
     }
   }
 }
@@ -988,7 +1021,7 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
         std::vector<Point2D> pts{midp + segment, midp + r1, midp + r2,
                                  midp - segment, midp - r1, midp - r2,
                                  midp + segment};
-        DrawShapePolyline *pl = new DrawShapePolyline(
+        DrawShapePolyLine *pl = new DrawShapePolyLine(
             pts, 1, false, queryColour, false, begAt->getIdx(), endAt->getIdx(),
             bond->getIdx(), noDash);
         bonds_.emplace_back(std::unique_ptr<DrawShape>(pl));
@@ -1207,24 +1240,24 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
                           int bondIdx, const DashPattern &dashPattern) {
   if (col1 == col2 && !drawOptions_.splitBonds) {
     std::vector<Point2D> pts{pt1, pt2};
-    DrawShapePolyline *b =
-        new DrawShapePolyline(pts, drawOptions_.bondLineWidth, false, col1,
-                              false, atom1Idx, atom2Idx, bondIdx, dashPattern);
+    DrawShape *b =
+        new DrawShapeSimpleLine(pts, drawOptions_.bondLineWidth, false, col1,
+                                atom1Idx, atom2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b));
   } else {
     Point2D mid = (pt1 + pt2) / 2.0;
     std::vector<Point2D> pts1{pt1, mid};
     int at1Idx = atom1Idx;
     int at2Idx = drawOptions_.splitBonds ? -1 : atom2Idx;
-    DrawShapePolyline *b1 =
-        new DrawShapePolyline(pts1, drawOptions_.bondLineWidth, false, col1,
-                              false, at1Idx, at2Idx, bondIdx, dashPattern);
+    DrawShape *b1 =
+        new DrawShapeSimpleLine(pts1, drawOptions_.bondLineWidth, false, col1,
+                                at1Idx, at2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b1));
     at1Idx = drawOptions_.splitBonds ? atom2Idx : atom1Idx;
     std::vector<Point2D> pts2{mid, pt2};
-    DrawShapePolyline *b2 =
-        new DrawShapePolyline(pts2, drawOptions_.bondLineWidth, false, col2,
-                              false, at1Idx, at2Idx, bondIdx, dashPattern);
+    DrawShape *b2 =
+        new DrawShapeSimpleLine(pts2, drawOptions_.bondLineWidth, false, col2,
+                                at1Idx, at2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b2));
   }
 }
@@ -1265,6 +1298,26 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
 }
 
 // ****************************************************************************
+void DrawMol::makeContinuousHighlights() {
+  int tgt_lw = getHighlightBondWidth(drawOptions_, -1, nullptr);
+  if (tgt_lw < 2) {
+    tgt_lw = 2;
+  }
+  if (!drawOptions_.continuousHighlight) {
+    tgt_lw /= 4;
+  }
+
+  if (highlightBonds_) {
+    makeBondHighlightLines(tgt_lw);
+  }
+  std::cout << "number of highlights after bonds: " << highlights_.size() << std::endl;
+  if (highlightAtoms_) {
+    makeAtomEllipseHighlights(tgt_lw);
+  }
+  std::cout << "number of highlights after bonds + atoms : " << highlights_.size() << std::endl;
+}
+
+// ****************************************************************************
 void DrawMol::makeAtomCircleHighlights() {
   PRECONDITION(highlightAtoms_ != nullptr, "no highlight atoms");
   DrawColour col;
@@ -1288,7 +1341,7 @@ void DrawMol::makeAtomCircleHighlights() {
       Point2D p1 = atCds_[thisIdx] - offset;
       Point2D p2 = atCds_[thisIdx] + offset;
       std::vector<Point2D> pts{p1, p2};
-      DrawShape *ell = new DrawShapeEllipse(pts, 2, false, col, true);
+      DrawShape *ell = new DrawShapeEllipse(pts, 2, false, col, true, thisIdx);
       highlights_.emplace_back(std::unique_ptr<DrawShape>(ell));
     }
   }
@@ -1333,7 +1386,8 @@ void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
       Point2D p1 = centre - offset;
       Point2D p2 = centre + offset;
       std::vector<Point2D> pts{p1, p2};
-      DrawShape *ell = new DrawShapeEllipse(pts, lineWidth, true, col, true);
+      DrawShape *ell = new DrawShapeEllipse(pts, lineWidth, true, col, true,
+                                            thisIdx);
       highlights_.emplace_back(std::unique_ptr<DrawShape>(ell));
     }
   }
@@ -1361,8 +1415,8 @@ void DrawMol::makeBondHighlightLines(int lineWidth) {
           std::vector<Point2D> pts{atCds_[thisIdx], atCds_[nbrIdx]};
           std::cout << "bond highlight for " << thisIdx << " to " << nbrIdx
                     << " width = " << lineWidth << std::endl;
-          DrawShape *hb = new DrawShapePolyline(
-              pts, lineWidth, drawOptions_.scaleHighlightBondWidth, col, false,
+          DrawShape *hb = new DrawShapeSimpleLine(
+              pts, lineWidth, drawOptions_.scaleHighlightBondWidth, col,
               thisIdx, nbrIdx, bond->getIdx(), noDash);
           highlights_.emplace_back(std::unique_ptr<DrawShape>(hb));
         }
@@ -1372,23 +1426,160 @@ void DrawMol::makeBondHighlightLines(int lineWidth) {
 }
 
 // ****************************************************************************
-void DrawMol::makeContinuousHighlights() {
-  int tgt_lw = getHighlightBondWidth(drawOptions_, -1, nullptr);
-  if (tgt_lw < 2) {
-    tgt_lw = 2;
-  }
-  if (!drawOptions_.continuousHighlight) {
-    tgt_lw /= 4;
+void DrawMol::calcAnnotationPosition(const Atom *atom,
+                                     AnnotationType &annot) const {
+  PRECONDITION(atom, "no atom");
+  if (annot.text_.empty()) {
+    annot.rect_.width_ = -1.0;  // so we know it's not valid.
+    return;
   }
 
-  if (highlightBonds_) {
-    makeBondHighlightLines(tgt_lw);
+  std::cout << "calc annot pos for " << annot.text_ << std::endl;
+  Point2D const &at_cds = atCds_[atom->getIdx()];
+  annot.rect_.trans_.x = at_cds.x;
+  annot.rect_.trans_.y = at_cds.y;
+  calcAnnotationDims(annot);
+  double start_ang = getNoteStartAngle(atom);
+  calcAtomAnnotationPosition(atom, start_ang, annot);
+}
+
+// ****************************************************************************
+double DrawMol::getNoteStartAngle(const Atom *atom) const {
+  if (atom->getDegree() == 0) {
+    return M_PI / 2.0;
   }
-  std::cout << "number of highlights after bonds: " << highlights_.size() << std::endl;
-  if (highlightAtoms_) {
-    makeAtomEllipseHighlights(tgt_lw);
+  Point2D at_cds = atCds_[atom->getIdx()];
+  std::vector<Point2D> bond_vecs;
+  for (const auto &nbr : make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
+    Point2D bond_vec = at_cds.directionVector(atCds_[nbr]);
+    bond_vec.normalize();
+    bond_vecs.emplace_back(bond_vec);
   }
-  std::cout << "number of highlights after bonds + atoms : " << highlights_.size() << std::endl;
+
+  Point2D ret_vec;
+  if (bond_vecs.size() == 1) {
+    if (!atomLabels_[atom->getIdx()]) {
+      // go with perpendicular to bond.  This is mostly to avoid getting
+      // a zero at the end of a bond to carbon, which looks like a black
+      // oxygen atom in the default font in SVG and PNG.
+      ret_vec.x = bond_vecs[0].y;
+      ret_vec.y = -bond_vecs[0].x;
+    } else {
+      // go opposite end
+      ret_vec = -bond_vecs[0];
+    }
+  } else if (bond_vecs.size() == 2) {
+    ret_vec = bond_vecs[0] + bond_vecs[1];
+    if (ret_vec.lengthSq() > 1.0e-6) {
+      if (!atom->getNumImplicitHs() || atom->getAtomicNum() == 6) {
+        // prefer outside the angle, unless there are Hs that will be in
+        // the way, probably.
+        ret_vec *= -1.0;
+      }
+    } else {
+      // it must be a -# or == or some such.  Take perpendicular to
+      // one of them
+      ret_vec.x = -bond_vecs.front().y;
+      ret_vec.y = bond_vecs.front().x;
+      ret_vec.normalize();
+    }
+  } else {
+    // just take 2 that are probably adjacent
+    double discrim = 4.0 * M_PI / bond_vecs.size();
+    for (size_t i = 0; i < bond_vecs.size() - 1; ++i) {
+      for (size_t j = i + 1; j < bond_vecs.size(); ++j) {
+        double ang = acos(bond_vecs[i].dotProduct(bond_vecs[j]));
+        if (ang < discrim) {
+          ret_vec = bond_vecs[i] + bond_vecs[j];
+          ret_vec.normalize();
+          discrim = -1.0;
+          break;
+        }
+      }
+    }
+    if (discrim > 0.0) {
+      ret_vec = bond_vecs[0] + bond_vecs[1];
+      ret_vec *= -1.0;
+    }
+  }
+
+  // start angle is the angle between ret_vec and the x axis
+  return atan2(ret_vec.y, ret_vec.x);
+}
+
+// ****************************************************************************
+void DrawMol::calcAtomAnnotationPosition(const Atom *atom,
+                                         double start_ang,
+                                         AnnotationType &annot) const {
+  Point2D const &at_cds = atCds_[atom->getIdx()];
+
+  double rad_step = 0.25;
+  StringRect least_worst_rect = StringRect();
+  least_worst_rect.clash_score_ = 100;
+  for (int j = 1; j < 4; ++j) {
+    double note_rad = j * rad_step;
+    // experience suggests if there's an atom symbol, the close in
+    // radius won't work.
+    if (j == 1 && atomLabels_[atom->getIdx()]) {
+      continue;
+    }
+    // scan at 30 degree intervals around the atom looking for somewhere
+    // clear for the annotation.
+    for (int i = 0; i < 12; ++i) {
+      double ang = start_ang + i * 30.0 * M_PI / 180.0;
+      annot.rect_.trans_.x = at_cds.x + cos(ang) * note_rad;
+      annot.rect_.trans_.y = at_cds.y + sin(ang) * note_rad;
+      int clash_score = doesNoteClash(annot);
+      std::cout << "annot " << annot.text_ << " j = " << j << " i = " << i
+                << " clash score = " << clash_score << std::endl;
+      if (!clash_score) {
+        return;
+      } else {
+        if (clash_score < least_worst_rect.clash_score_) {
+          least_worst_rect = annot.rect_;
+        }
+      }
+    }
+  }
+  std::cout << "XXXXZ " << annot.text_ << " gone with least worst rect"
+            << std::endl << std::endl;
+  annot.rect_ = least_worst_rect;
+}
+
+// ****************************************************************************
+void DrawMol::calcAnnotationDims(AnnotationType &annot) const {
+  std::vector<std::shared_ptr<StringRect>> rects;
+  std::vector<TextDrawType> draw_modes;
+  std::vector<char> draw_chars;
+
+  double full_font_scale = textDrawer_.fontScale();
+  textDrawer_.setFontScale(drawOptions_.annotationFontScale, true);
+  textDrawer_.getStringRects(annot.text_, OrientType::C, rects, draw_modes,
+                             draw_chars, false, annot.align_);
+  textDrawer_.setFontScale(full_font_scale, true);
+  annot.rect_.width_ = 0;
+  annot.rect_.height_ = 0;
+  for (auto &rect : rects) {
+    annot.rect_.width_ += rect->width_;
+    annot.rect_.height_ = std::max(rect->height_, annot.rect_.height_);
+  }
+}
+
+// ****************************************************************************
+int DrawMol::doesNoteClash(const AnnotationType &annot) const {
+
+  double padding = scale_ * 0.02;
+  for (auto &bond : bonds_) {
+    if (bond->doesNoteClash(annot, padding)) {
+      return 1;
+    }
+  }
+  for (auto &hl : highlights_) {
+    if (hl->doesNoteClash(annot, padding)) {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 // ****************************************************************************
@@ -1749,21 +1940,17 @@ void adjustBondEndForString(
 
     // if it's a wide label, such as C:7, the bond can intersect
     // more than 1 side of the rectangle, so check them all.
-//    doLinesIntersect(retPt, end2, tl, tr, &retPt);
-//    doLinesIntersect(retPt, end2, tr, br, &retPt);
-//    doLinesIntersect(retPt, end2, br, bl, &retPt);
-//    doLinesIntersect(retPt, end2, bl, tl, &retPt);
     std::unique_ptr<Point2D> ip(new Point2D);
-    if (doLinesIntersect(moveEnd, end2, tl, tr, ip.get())) {
+    if (MolDraw2D_detail::doLinesIntersect(moveEnd, end2, tl, tr, ip.get())) {
       moveEnd = *ip;
     }
-    if (doLinesIntersect(moveEnd, end2, tr, br, ip.get())) {
+    if (MolDraw2D_detail::doLinesIntersect(moveEnd, end2, tr, br, ip.get())) {
       moveEnd = *ip;
     }
-    if (doLinesIntersect(moveEnd, end2, br, bl, ip.get())) {
+    if (MolDraw2D_detail::doLinesIntersect(moveEnd, end2, br, bl, ip.get())) {
       moveEnd = *ip;
     }
-    if (doLinesIntersect(moveEnd, end2, bl, tl, ip.get())) {
+    if (MolDraw2D_detail::doLinesIntersect(moveEnd, end2, bl, tl, ip.get())) {
       moveEnd = *ip;
     }
     r->trans_ = origTrans;
@@ -1771,8 +1958,8 @@ void adjustBondEndForString(
 }
 
 // ****************************************************************************
-void calcAnnotationPosition(const std::vector<Point2D> atCds,
-                            DrawText &textDrawer, AnnotationType &annot) {
+void calcMolNotePosition(const std::vector<Point2D> atCds, DrawText &textDrawer,
+                         AnnotationType &annot) {
   if (annot.text_.empty()) {
     annot.rect_.width_ = -1.0;  // so we know it's not valid.
     return;

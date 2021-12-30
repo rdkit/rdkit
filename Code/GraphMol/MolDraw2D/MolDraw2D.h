@@ -635,13 +635,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                       double coordScale);
 };
 
-// return true if the line l1s->l1f intersects line l2s->l2f.  If ip is not
-// nullptr, the intersection point is stored in it.
-RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
-                                             const Point2D &l1f,
-                                             const Point2D &l2s,
-                                             const Point2D &l2f,
-                                             Point2D *ip = nullptr);
 // return true if line ls->lf intersects (or is fully inside) the
 // rectangle of the string.
 RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,

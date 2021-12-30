@@ -20,6 +20,7 @@
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawMolMCH.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
@@ -4313,36 +4314,6 @@ void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
 }
 
 // ****************************************************************************
-bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
-                      const Point2D &l2s, const Point2D &l2f, Point2D *ip) {
-  // using spell from answer 2 of
-  // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
-  double s1_x = l1f.x - l1s.x;
-  double s1_y = l1f.y - l1s.y;
-  double s2_x = l2f.x - l2s.x;
-  double s2_y = l2f.y - l2s.y;
-
-  double d = (-s2_x * s1_y + s1_x * s2_y);
-  if (d == 0.0) {
-    // parallel lines.
-    return false;
-  }
-  double s, t;
-  s = (-s1_y * (l1s.x - l2s.x) + s1_x * (l1s.y - l2s.y)) / d;
-  t = (s2_x * (l1s.y - l2s.y) - s2_y * (l1s.x - l2s.x)) / d;
-
-  if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
-    if (ip) {
-      ip->x = l1s.x + t * s1_x;
-      ip->y = l1s.y + t * s1_y;
-    }
-    return true;
-  }
-
-  return false;
-}
-
-// ****************************************************************************
 bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
                             const StringRect &lab_rect, double padding) {
   Point2D tl, tr, br, bl;
@@ -4354,8 +4325,10 @@ bool doesLineIntersectLabel(const Point2D &ls, const Point2D &lf,
       ls.y <= tl.y && ls.y >= br.y && lf.y <= tl.y && lf.y >= br.y) {
     return true;
   }
-  if (doLinesIntersect(ls, lf, tl, tr) || doLinesIntersect(ls, lf, tr, br) ||
-      doLinesIntersect(ls, lf, br, bl) || doLinesIntersect(ls, lf, bl, tl)) {
+  if (MolDraw2D_detail::doLinesIntersect(ls, lf, tl, tr, nullptr) ||
+      MolDraw2D_detail::doLinesIntersect(ls, lf, tr, br, nullptr) ||
+      MolDraw2D_detail::doLinesIntersect(ls, lf, br, bl, nullptr) ||
+      MolDraw2D_detail::doLinesIntersect(ls, lf, bl, tl, nullptr)) {
     return true;
   }
   return false;

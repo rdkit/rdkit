@@ -9,6 +9,7 @@
 //
 
 #include <GraphMol/MolDraw2D/DrawText.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
 namespace RDKit {
 
@@ -125,16 +126,16 @@ void DrawText::adjustLineForString(const std::string &label, OrientType orient,
 
     // if it's a wide label, such as C:7, the bond can intersect
     // more than 1 side of the rectangle, so check them all.
-    if (doLinesIntersect(end2, end1, tl, tr, ip.get())) {
+    if (MolDraw2D_detail::doLinesIntersect(end2, end1, tl, tr, ip.get())) {
       end2 = *ip;
     }
-    if (doLinesIntersect(end2, end1, tr, br, ip.get())) {
+    if (MolDraw2D_detail::doLinesIntersect(end2, end1, tr, br, ip.get())) {
       end2 = *ip;
     }
-    if (doLinesIntersect(end2, end1, br, bl, ip.get())) {
+    if (MolDraw2D_detail::doLinesIntersect(end2, end1, br, bl, ip.get())) {
       end2 = *ip;
     }
-    if (doLinesIntersect(end2, end1, bl, tl, ip.get())) {
+    if (MolDraw2D_detail::doLinesIntersect(end2, end1, bl, tl, ip.get())) {
       end2 = *ip;
     }
   }
@@ -225,16 +226,16 @@ bool DrawText::doesLineIntersect(
 
     Point2D tl, tr, bl, br;
     nr.calcCorners(tl, tr, br, bl, padding);
-    if (doLinesIntersect(end2, end1, tl, tr, nullptr)) {
+    if (MolDraw2D_detail::doLinesIntersect(end2, end1, tl, tr, nullptr)) {
       return true;
     }
-    if (doLinesIntersect(end2, end1, tr, br, nullptr)) {
+    if (MolDraw2D_detail::doLinesIntersect(end2, end1, tr, br, nullptr)) {
       return true;
     }
-    if (doLinesIntersect(end2, end1, br, bl, nullptr)) {
+    if (MolDraw2D_detail::doLinesIntersect(end2, end1, br, bl, nullptr)) {
       return true;
     }
-    if (doLinesIntersect(end2, end1, bl, tl, nullptr)) {
+    if (MolDraw2D_detail::doLinesIntersect(end2, end1, bl, tl, nullptr)) {
       return true;
     }
   }

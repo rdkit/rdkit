@@ -36,7 +36,7 @@ class DrawMolMCH : protected DrawMol {
   DrawMolMCH &operator=(const DrawMol &) = delete;
 
  protected:
-  void extractAll() override;
+  void extractHighlights() override;
   void extractMCHighlights();
   void makeBondHighlights();
   void makeAtomHighlights();

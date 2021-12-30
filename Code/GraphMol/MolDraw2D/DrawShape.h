@@ -48,6 +48,7 @@ class DrawShape {
                             double &ymax) const;
   virtual void scale(const Point2D &scale_factor);
   virtual void move(const Point2D &trans);
+  virtual bool doesNoteClash(const AnnotationType &annot, double padding) const;
 
   std::vector<Point2D> points_;
   int lineWidth_;
@@ -70,6 +71,7 @@ class DrawShapeArrow: protected DrawShape {
                  DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
                  double frac = 0.2, double angle = M_PI / 6);
   void myDraw(MolDraw2D &drawer) const;
+  bool doesNoteClash(const AnnotationType &annot, double padding) const;
 
   double frac_;
   double angle_;
@@ -84,25 +86,47 @@ class DrawShapeEllipse: protected DrawShape {
   ~DrawShapeEllipse() = default;
 
  protected:
+  // points are the 2 foci of the ellipse
   DrawShapeEllipse(const std::vector<Point2D> &points, int lineWidth = 2,
                    bool scaleLineWidth = false,
                    DrawColour lineColour = DrawColour(0, 0, 0),
-                   bool fill = false);
+                   bool fill = false, int atom1 = -1);
   void myDraw(MolDraw2D &drawer) const;
   void findExtremes(double &xmin, double &xmax, double &ymin,
                     double &ymax) const;
+  bool doesNoteClash(const AnnotationType &annot, double padding) const;
 };
 
-class DrawShapePolyline: protected DrawShape {
+class DrawShapeSimpleLine : protected DrawShape {
   friend class MolDraw2D;
   friend class DrawMol;
   friend class DrawMolMCH;
 
  public:
-  ~DrawShapePolyline() = default;
+  ~DrawShapeSimpleLine() = default;
 
  protected:
-  DrawShapePolyline(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShapeSimpleLine(const std::vector<Point2D> &points, int lineWidth = 2,
+                      bool scaleLineWidth = false,
+                      DrawColour lineColour = DrawColour(0, 0, 0),
+                      int atom1 = -1, int atom2 = -1,
+                      int bond = -1, DashPattern dashPattern = noDash);
+  void myDraw(MolDraw2D &drawer) const;
+  bool doesNoteClash(const AnnotationType &annot, double padding) const;
+
+  DashPattern dashPattern_;
+};
+
+class DrawShapePolyLine : protected DrawShape {
+  friend class MolDraw2D;
+  friend class DrawMol;
+  friend class DrawMolMCH;
+
+ public:
+  ~DrawShapePolyLine() = default;
+
+ protected:
+  DrawShapePolyLine(const std::vector<Point2D> &points, int lineWidth = 2,
                     bool scaleLineWidth = false,
                     DrawColour lineColour = DrawColour(0, 0, 0),
                     bool fill = false, int atom1 = -1, int atom2 = -1,
@@ -186,18 +210,21 @@ class DrawShapeArc: protected DrawShape {
  protected:
   // draw the arc of an ellipse between ang1 and ang2.  Note that 0 is
   // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
-  // ang2 must be > ang1 - it won't draw backwards. Angles in degrees.
-  // points should be size 2 - the first entry is the centre, the second
+  // ang2 must be > ang1 - it won't draw backwards. Angles in degrees,
+  // between 0 and 360.0.
+  // Points should be size 2 - the first entry is the centre, the second
   // gives the x and y radii of the ellipse.
   DrawShapeArc(const std::vector<Point2D> points,
                double ang1, double ang2, int lineWidth = 2,
                bool scaleLineWidth = false,
-               const DrawColour &col1 = DrawColour(0, 0, 0), bool fill = false);
+               const DrawColour &col1 = DrawColour(0, 0, 0), bool fill = false,
+               int atom1 = -1);
 
   void myDraw(MolDraw2D &drawer) const;
   void findExtremes(double &xmin, double &xmax, double &ymin,
                     double &ymax) const;
   void move(const Point2D &trans);
+  bool doesNoteClash(const AnnotationType &annot, double padding) const;
 
   double ang1_, ang2_;
 };

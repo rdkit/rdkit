@@ -32,8 +32,8 @@ DrawMolMCH::DrawMolMCH(
 }
 
 // ****************************************************************************
-void DrawMolMCH::extractAll() {
-  DrawMol::extractAll();
+void DrawMolMCH::extractHighlights() {
+  DrawMol::extractHighlights();
   extractMCHighlights();
 }
 
@@ -68,9 +68,9 @@ void DrawMolMCH::makeBondHighlights() {
       adjustLineEndForHighlight(at1_idx, p2, p1);
       adjustLineEndForHighlight(at2_idx, p1, p2);
       std::vector<Point2D> pts{p1, p2};
-      DrawShape *pl = new DrawShapePolyline(
-          pts, lineWidth, drawOptions_.scaleBondWidth, col, false, at1_idx,
-          at2_idx, bond->getIdx(), noDash);
+      DrawShape *pl = new DrawShapeSimpleLine(
+          pts, lineWidth, drawOptions_.scaleBondWidth, col, at1_idx, at2_idx,
+          bond->getIdx(), noDash);
       highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
     };
 
@@ -87,7 +87,7 @@ void DrawMolMCH::makeBondHighlights() {
         line_pts.emplace_back(at2_cds + perp * rad);
         line_pts.emplace_back(at2_cds - perp * rad);
         line_pts.emplace_back(at1_cds - perp * rad);
-        DrawShape *pl = new DrawShapePolyline(
+        DrawShape *pl = new DrawShapePolyLine(
             line_pts, lineWidth, drawOptions_.scaleBondWidth, col, true,
             at1_idx, at2_idx, bond->getIdx(), noDash);
         highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
@@ -108,7 +108,7 @@ void DrawMolMCH::makeBondHighlights() {
           line_pts.emplace_back(p1 + perp * col_rad);
           line_pts.emplace_back(p2 + perp * col_rad);
           line_pts.emplace_back(p2);
-          DrawShape *pl = new DrawShapePolyline(
+          DrawShape *pl = new DrawShapePolyLine(
               line_pts, lineWidth, drawOptions_.scaleBondWidth, hb.second[i],
               true, at1_idx, at2_idx, bond->getIdx(), noDash);
           highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
@@ -155,18 +155,24 @@ void DrawMolMCH::makeAtomHighlights() {
       Point2D p2 = centre + offset;
       std::vector<Point2D> pts{p1, p2};
       DrawShape *ell = new DrawShapeEllipse(
-          pts, lineWidth, true, ha.second.front(), drawOptions_.fillHighlights);
+          pts, lineWidth, true, ha.second.front(), drawOptions_.fillHighlights,
+          ha.first);
       highlights_.emplace_back(std::unique_ptr<DrawShape>(ell));
     } else {
       double arc_size = 360.0 / double(ha.second.size());
-      double arc_start = -90.0;
+      std::cout << "making arcs for atom " << ha.first << " of size " << arc_size << std::endl;
+      double arc_start = 270.0;
       for (size_t i = 0; i < ha.second.size(); ++i){
+        double arc_stop = arc_start + arc_size;
+        arc_stop = arc_stop >= 360.0 ? arc_stop - 360.0 : arc_stop;
+        std::cout << "   " << i << " : " << arc_start << " : " << arc_stop << std::endl;
         std::vector<Point2D> pts{centre, Point2D(xradius, yradius)};
-        DrawShape *arc = new DrawShapeArc(pts, arc_start, arc_start + arc_size,
-                                          lineWidth, true, ha.second[i],
-                                          drawOptions_.fillHighlights);
+        DrawShape *arc = new DrawShapeArc(
+            pts, arc_start, arc_stop, lineWidth, true, ha.second[i],
+            drawOptions_.fillHighlights, ha.first);
         highlights_.emplace_back(std::unique_ptr<DrawShape>(arc));
         arc_start += arc_size;
+        arc_start = arc_start >= 360.0 ? arc_start - 360.0 : arc_start;
       }
     }
 

@@ -77,11 +77,11 @@ class DrawMol {
   // this must be called before a drawing can be done.
   void createDrawObjects();
   void initDrawMolecule(const ROMol &mol);
-  virtual void extractAll();
+  void extractAll();
   void extractAtomCoords();
   void extractAtomSymbols();
   void extractBonds();
-  void extractHighlights();
+  virtual void extractHighlights();
   void extractRegions();
   void extractMolNotes();
   void extractAtomNotes();
@@ -132,6 +132,16 @@ class DrawMol {
   void makeAtomCircleHighlights();
   void makeAtomEllipseHighlights(int lineWidth);
   void makeBondHighlightLines(int lineWidth);
+  void calcAnnotationPosition(const Atom *atom, AnnotationType &annot) const;
+  double getNoteStartAngle(const Atom *atom) const;
+  void calcAtomAnnotationPosition(const Atom *atom, double start_ang,
+                                  AnnotationType &annot) const;
+  // this assumes that the annotation is one line, which is certainly
+  // true currently.
+  void calcAnnotationDims(AnnotationType &annot) const;
+  // see if the note will clash with anything else drawn on the molecule.
+  // Returns 0 if no clash, 1-3 if there is a clash, denoting what clashed.
+  int doesNoteClash(const AnnotationType &annot) const;
 
   MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -197,8 +207,8 @@ Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
 void adjustBondEndForString(
     const Point2D &end1, const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd);
-void calcAnnotationPosition(const std::vector<Point2D> atCds,
-                            DrawText &textDrawer, AnnotationType &annot);
+void calcMolNotePosition(const std::vector<Point2D> atCds, DrawText &textDrawer,
+                         AnnotationType &annot);
 void findAnnotationExtremes(const std::vector<AnnotationType> &annots,
                             double &xmin, double &xmax, double &ymin,
                             double &ymax);
