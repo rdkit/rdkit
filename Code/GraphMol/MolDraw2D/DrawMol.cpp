@@ -127,6 +127,7 @@ void DrawMol::extractAll() {
   extractHighlights();
   extractMolNotes();
   extractAtomNotes();
+  extractBondNotes();
   extractLegend();
 }
 
@@ -307,6 +308,28 @@ void DrawMol::extractAtomNotes() {
           BOOST_LOG(rdWarningLog)
               << "Couldn't find good place for note " << note << " for atom "
               << atom->getIdx() << std::endl;
+        } else {
+          annotations_.push_back(annot);
+        }
+      }
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractBondNotes() {
+  std::cout << "extractBondNotes" << std::endl;
+  for (auto bond : drawMol_->bonds()) {
+    std::string note;
+    if (bond->getPropIfPresent(common_properties::bondNote, note)) {
+      if (!note.empty()) {
+        AnnotationType annot;
+        annot.text_ = note;
+        calcAnnotationPosition(bond, annot);
+        if (annot.rect_.width_ < 0.0) {
+          BOOST_LOG(rdWarningLog)
+              << "Couldn't find good place for note " << note << " for bond "
+              << bond->getIdx() << std::endl;
         } else {
           annotations_.push_back(annot);
         }
@@ -1444,6 +1467,50 @@ void DrawMol::calcAnnotationPosition(const Atom *atom,
 }
 
 // ****************************************************************************
+void DrawMol::calcAnnotationPosition(const Bond *bond,
+                                     AnnotationType &annot) const {
+  PRECONDITION(bond, "no bond");
+  if (annot.text_.empty()) {
+    annot.rect_.width_ = -1.0;  // so we know it's not valid.
+  }
+  Point2D const &at1_cds = atCds_[bond->getBeginAtomIdx()];
+  Point2D const &at2_cds = atCds_[bond->getEndAtomIdx()];
+  Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+  Point2D bond_vec = at1_cds.directionVector(at2_cds);
+  double bond_len = (at1_cds - at2_cds).length();
+  std::vector<double> mid_offsets{0.5, 0.33, 0.66, 0.25, 0.75};
+  double offset_step = drawOptions_.multipleBondOffset;
+  StringRect least_worst_rect = StringRect();
+  least_worst_rect.clash_score_ = 100;
+  for (auto mo : mid_offsets) {
+    Point2D mid = at1_cds + bond_vec * bond_len * mo;
+    for (int j = 1; j < 6; ++j) {
+      if (j == 1 && bond->getBondType() > 1) {
+        continue;  // multiple bonds will need a bigger offset.
+      }
+      double offset = j * offset_step;
+      annot.rect_.trans_ = mid + perp * offset;
+      calcAnnotationDims(annot);
+      int clash_score = doesNoteClash(annot);
+      if (!clash_score) {
+        return;
+      }
+      if (clash_score < least_worst_rect.clash_score_) {
+        least_worst_rect = annot.rect_;
+      }
+      annot.rect_.trans_ = mid - perp * offset;
+      clash_score = doesNoteClash(annot);
+      if (!clash_score) {
+        return;
+      }
+      if (clash_score < least_worst_rect.clash_score_) {
+        least_worst_rect = annot.rect_;
+      }
+    }
+  }
+}
+
+// ****************************************************************************
 double DrawMol::getNoteStartAngle(const Atom *atom) const {
   if (atom->getDegree() == 0) {
     return M_PI / 2.0;
@@ -1570,13 +1637,23 @@ int DrawMol::doesNoteClash(const AnnotationType &annot) const {
 
   double padding = scale_ * 0.02;
   for (auto &bond : bonds_) {
-    if (bond->doesNoteClash(annot, padding)) {
+    if (bond->doesRectClash(annot.rect_, padding)) {
       return 1;
     }
   }
+  for (auto &al : atomLabels_) {
+    if (al && al->doesRectClash(annot.rect_, padding)) {
+      return 2;
+    }
+  }
+  for (auto &a : annotations_) {
+    if (a.rect_.doesItIntersect(annot.rect_, padding)) {
+      return 3;
+    }
+  }
   for (auto &hl : highlights_) {
-    if (hl->doesNoteClash(annot, padding)) {
-      return 1;
+    if (hl->doesRectClash(annot.rect_, padding)) {
+      return 4;
     }
   }
   return 0;

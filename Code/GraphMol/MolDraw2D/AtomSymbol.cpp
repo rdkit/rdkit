@@ -98,6 +98,18 @@ void AtomSymbol::draw(MolDraw2D &molDrawer) const {
 }
 
 // ****************************************************************************
+bool AtomSymbol::doesRectClash(const StringRect &rect, double padding) const {
+  for (auto &alrect : rects_) {
+    StringRect r{*alrect};
+    r.trans_ += cds_;
+    if (r.doesItIntersect(rect, padding)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// ****************************************************************************
 void AtomSymbol::drawRects(MolDraw2D &molDrawer) const {
   Point2D tl, tr, br, bl, origTrans;
   for (auto &rect : rects_) {

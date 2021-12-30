@@ -306,16 +306,32 @@ bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
                        const Point2D &end2, double padding) {
   Point2D tl, tr, bl, br;
   rect.calcCorners(tl, tr, br, bl, padding);
-  if (MolDraw2D_detail::doLinesIntersect(end2, end1, tl, tr, nullptr)) {
+  if (doLinesIntersect(end2, end1, tl, tr, nullptr)) {
     return true;
   }
-  if (MolDraw2D_detail::doLinesIntersect(end2, end1, tr, br, nullptr)) {
+  if (doLinesIntersect(end2, end1, tr, br, nullptr)) {
     return true;
   }
-  if (MolDraw2D_detail::doLinesIntersect(end2, end1, br, bl, nullptr)) {
+  if (doLinesIntersect(end2, end1, br, bl, nullptr)) {
     return true;
   }
-  if (MolDraw2D_detail::doLinesIntersect(end2, end1, bl, tl, nullptr)) {
+  if (doLinesIntersect(end2, end1, bl, tl, nullptr)) {
+    return true;
+  }
+  return false;
+}
+
+// ****************************************************************************
+bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
+                           const Point2D &pt2, const Point2D &pt3,
+                           double padding) {
+  if (doesLineIntersect(rect, pt1, pt2, padding)) {
+    return true;
+  }
+  if (doesLineIntersect(rect, pt2, pt3, padding)) {
+    return true;
+  }
+  if (doesLineIntersect(rect, pt3, pt1, padding)) {
     return true;
   }
   return false;

@@ -3452,6 +3452,7 @@ void testGithub2931() {
       drawer.drawOptions().fillHighlights = false;
       drawer.drawOptions().continuousHighlight = true;
       drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addBondIndices = true;
       drawer.drawMoleculeWithHighlights(*m, "Test 1", ha_map, hb_map, h_rads,
                                         h_lw_mult);
       drawer.finishDrawing();
@@ -4240,7 +4241,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  testGithub2931();
+  test20Annotate();
 
 #if 0
   test1();

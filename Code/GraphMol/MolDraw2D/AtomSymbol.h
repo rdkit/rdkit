@@ -64,6 +64,8 @@ class AtomSymbol {
   virtual void scale(const Point2D &scaleFactor);
   virtual void move(const Point2D &trans);
   void draw(MolDraw2D &molDrawer) const;
+  bool doesRectClash(const StringRect &rect, double padding) const;
+
   // this is for debugging almost always.
   void drawRects(MolDraw2D &molDrawer) const;
 };

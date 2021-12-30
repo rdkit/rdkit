@@ -111,16 +111,16 @@ struct StringRect {
     br = Point2D(c.x + wb2, c.y + hb2);
     bl = Point2D(c.x - wb2, c.y + hb2);
   }
-  bool doesItIntersect(const StringRect &other) const {
+  bool doesItIntersect(const StringRect &other, double padding = 0.0) const {
     Point2D ttl, ttr, tbr, tbl;
-    calcCorners(ttl, ttr, tbr, tbl, 0.0);
+    calcCorners(ttl, ttr, tbr, tbl, padding);
     // is +ve y up or down?
     if (ttl.y < tbl.y) {
       std::swap(ttl, tbl);
       std::swap(ttr, tbr);
     }
     Point2D otl, otr, obr, obl;
-    other.calcCorners(otl, otr, obr, obl, 0.0);
+    other.calcCorners(otl, otr, obr, obl, padding);
     if (otl.y < obl.y) {
       std::swap(otl, obl);
       std::swap(otr, obr);

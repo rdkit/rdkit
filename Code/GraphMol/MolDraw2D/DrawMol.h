@@ -133,6 +133,7 @@ class DrawMol {
   void makeAtomEllipseHighlights(int lineWidth);
   void makeBondHighlightLines(int lineWidth);
   void calcAnnotationPosition(const Atom *atom, AnnotationType &annot) const;
+  void calcAnnotationPosition(const Bond *bond, AnnotationType &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
   void calcAtomAnnotationPosition(const Atom *atom, double start_ang,
                                   AnnotationType &annot) const;

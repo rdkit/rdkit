@@ -25,7 +25,7 @@ namespace RDKit {
 class MolDraw2D;
 const DashPattern noDash;
 const DashPattern dots{2.0, 6.0};
-const DashPattern dashes{6,0, 6.0};
+const DashPattern dashes{6, 0, 6.0};
 const DashPattern shortDashes{2.0, 2.0};
 
 class DrawShape {
@@ -48,7 +48,7 @@ class DrawShape {
                             double &ymax) const;
   virtual void scale(const Point2D &scale_factor);
   virtual void move(const Point2D &trans);
-  virtual bool doesNoteClash(const AnnotationType &annot, double padding) const;
+  virtual bool doesRectClash(const StringRect &rect, double padding) const;
 
   std::vector<Point2D> points_;
   int lineWidth_;
@@ -58,7 +58,7 @@ class DrawShape {
   int atom1_, atom2_, bond_;
 };
 
-class DrawShapeArrow: protected DrawShape {
+class DrawShapeArrow : protected DrawShape {
   friend class MolDraw2D;
   friend class DrawMol;
 
@@ -70,14 +70,14 @@ class DrawShapeArrow: protected DrawShape {
                  bool scaleLineWidth = false,
                  DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
                  double frac = 0.2, double angle = M_PI / 6);
-  void myDraw(MolDraw2D &drawer) const;
-  bool doesNoteClash(const AnnotationType &annot, double padding) const;
+  void myDraw(MolDraw2D &drawer) const override;
+  bool doesRectClash(const StringRect &rect, double padding) const override;
 
   double frac_;
   double angle_;
 };
 
-class DrawShapeEllipse: protected DrawShape {
+class DrawShapeEllipse : protected DrawShape {
   friend class MolDraw2D;
   friend class DrawMol;
   friend class DrawMolMCH;
@@ -91,10 +91,10 @@ class DrawShapeEllipse: protected DrawShape {
                    bool scaleLineWidth = false,
                    DrawColour lineColour = DrawColour(0, 0, 0),
                    bool fill = false, int atom1 = -1);
-  void myDraw(MolDraw2D &drawer) const;
+  void myDraw(MolDraw2D &drawer) const override;
   void findExtremes(double &xmin, double &xmax, double &ymin,
-                    double &ymax) const;
-  bool doesNoteClash(const AnnotationType &annot, double padding) const;
+                    double &ymax) const override;
+  bool doesRectClash(const StringRect &rect, double padding) const override;
 };
 
 class DrawShapeSimpleLine : protected DrawShape {
@@ -109,10 +109,10 @@ class DrawShapeSimpleLine : protected DrawShape {
   DrawShapeSimpleLine(const std::vector<Point2D> &points, int lineWidth = 2,
                       bool scaleLineWidth = false,
                       DrawColour lineColour = DrawColour(0, 0, 0),
-                      int atom1 = -1, int atom2 = -1,
-                      int bond = -1, DashPattern dashPattern = noDash);
-  void myDraw(MolDraw2D &drawer) const;
-  bool doesNoteClash(const AnnotationType &annot, double padding) const;
+                      int atom1 = -1, int atom2 = -1, int bond = -1,
+                      DashPattern dashPattern = noDash);
+  void myDraw(MolDraw2D &drawer) const override;
+  bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DashPattern dashPattern_;
 };
@@ -131,7 +131,8 @@ class DrawShapePolyLine : protected DrawShape {
                     DrawColour lineColour = DrawColour(0, 0, 0),
                     bool fill = false, int atom1 = -1, int atom2 = -1,
                     int bond = -1, DashPattern dashPattern = noDash);
-  void myDraw(MolDraw2D &drawer) const;
+  void myDraw(MolDraw2D &drawer) const override;
+  bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DashPattern dashPattern_;
 };
@@ -148,8 +149,9 @@ class DrawShapeSolidWedge : protected DrawShape {
                       const DrawColour &col2, bool inverted, bool splitBonds,
                       int atom1 = -1, int atom2 = -1, int bond = -1);
   void buildTriangles();
-  void myDraw(MolDraw2D &drawer) const;
-  void scale(const Point2D &scale_factor);
+  void myDraw(MolDraw2D &drawer) const override;
+  void scale(const Point2D &scale_factor) override;
+  bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;
   bool inverted_;
@@ -169,9 +171,10 @@ class DrawShapeDashedWedge : protected DrawShape {
                        bool inverted, int atom1 = -1, int atom2 = -1,
                        int bond = -1);
   void buildLines();
-  void myDraw(MolDraw2D &drawer) const;
-  void scale(const Point2D &scale_factor);
-  void move(const Point2D &trans);
+  void myDraw(MolDraw2D &drawer) const override;
+  void scale(const Point2D &scale_factor) override;
+  void move(const Point2D &trans) override;
+  bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;
   bool inverted_;
@@ -181,7 +184,7 @@ class DrawShapeDashedWedge : protected DrawShape {
   Point2D at1Cds_;
 };
 
-class DrawShapeWavyLine: protected DrawShape {
+class DrawShapeWavyLine : protected DrawShape {
   friend class MolDraw2D;
   friend class DrawMol;
 
@@ -193,13 +196,16 @@ class DrawShapeWavyLine: protected DrawShape {
                     bool scaleLineWidth = false,
                     const DrawColour &col1 = DrawColour(0, 0, 0),
                     const DrawColour &col2 = DrawColour(0, 0, 0),
-                    int atom1 = -1, int atom2 = -1, int bond = -1);
-  void myDraw(MolDraw2D &drawer) const;
+                    double offset = 0.05, int atom1 = -1, int atom2 = -1,
+                    int bond = -1);
+  void myDraw(MolDraw2D &drawer) const override;
+  bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;
+  double offset_;
 };
 
-class DrawShapeArc: protected DrawShape {
+class DrawShapeArc : protected DrawShape {
   friend class MolDraw2D;
   friend class DrawMol;
   friend class DrawMolMCH;
@@ -214,25 +220,23 @@ class DrawShapeArc: protected DrawShape {
   // between 0 and 360.0.
   // Points should be size 2 - the first entry is the centre, the second
   // gives the x and y radii of the ellipse.
-  DrawShapeArc(const std::vector<Point2D> points,
-               double ang1, double ang2, int lineWidth = 2,
-               bool scaleLineWidth = false,
+  DrawShapeArc(const std::vector<Point2D> points, double ang1, double ang2,
+               int lineWidth = 2, bool scaleLineWidth = false,
                const DrawColour &col1 = DrawColour(0, 0, 0), bool fill = false,
                int atom1 = -1);
 
-  void myDraw(MolDraw2D &drawer) const;
+  void myDraw(MolDraw2D &drawer) const override;
   void findExtremes(double &xmin, double &xmax, double &ymin,
-                    double &ymax) const;
-  void move(const Point2D &trans);
-  bool doesNoteClash(const AnnotationType &annot, double padding) const;
+                    double &ymax) const override;
+  void move(const Point2D &trans) override;
+  bool doesRectClash(const StringRect &rect, double padding) const override;
 
   double ang1_, ang2_;
 };
 
 std::vector<Point2D> calcScaledWedgePoints(const Point2D &point,
                                            const Point2D &end1,
-                                           const Point2D &end2,
-                                           double widthsq);
-} // namespace RDKit
+                                           const Point2D &end2, double widthsq);
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWSHAPE_H

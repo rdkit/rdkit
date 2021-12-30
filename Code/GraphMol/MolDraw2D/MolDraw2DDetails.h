@@ -108,6 +108,9 @@ inline std::string formatDouble(double val) {
 }
 bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
                        const Point2D &end2, double padding);
+bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
+                           const Point2D &pt2, const Point2D &pt3,
+                           double padding);
 bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
                               double yradius, double padding,
                               const Point2D &end1, const Point2D &end2);
