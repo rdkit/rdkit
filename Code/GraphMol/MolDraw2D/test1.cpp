@@ -4241,7 +4241,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test20Annotate();
+  test6();
 
 #if 0
   test1();

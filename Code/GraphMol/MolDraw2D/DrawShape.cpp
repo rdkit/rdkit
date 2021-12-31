@@ -242,8 +242,6 @@ void DrawShapeSimpleLine::myDraw(MolDraw2D &drawer) const {
 bool DrawShapeSimpleLine::doesRectClash(const StringRect &rect,
                                         double padding) const {
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
-  std::cout << "DrawShapeSimpleLine::doesRectClash padding = "
-            << padding << " : " << scaleLineWidth_ << " : " << lineWidth_ << std::endl;
   return MolDraw2D_detail::doesLineIntersect(rect, points_[0],
                                              points_[1], padding);
 }

@@ -128,6 +128,7 @@ void DrawMol::extractAll() {
   extractMolNotes();
   extractAtomNotes();
   extractBondNotes();
+  extractRadicals();
   extractLegend();
 }
 
@@ -339,6 +340,18 @@ void DrawMol::extractBondNotes() {
 }
 
 // ****************************************************************************
+void DrawMol::extractRadicals() {
+  for (auto atom : drawMol_->atoms()) {
+    if (!atom->getNumRadicalElectrons()) {
+      continue;
+    }
+    StringRect rad_rect;
+    OrientType orient = calcRadicalRect(atom, rad_rect);
+    radicals_.emplace_back(std::make_pair(rad_rect, orient));
+  }
+}
+
+// ****************************************************************************
 void DrawMol::calculateScale() {
   findExtremes();
 
@@ -416,6 +429,7 @@ void DrawMol::findExtremes() {
     hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
   findAnnotationExtremes(annotations_, xMin_, xMax_, yMin_, yMax_);
+  findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
 
   // calculate the x and y spans
   xRange_ = xMax_ - xMin_;
@@ -471,6 +485,12 @@ void DrawMol::changeToDrawCoords() {
     annot.rect_.width_ *= scale.x;
     annot.rect_.height_ *= scale.y;
   }
+  for (auto &rad : radicals_) {
+    rad.first.trans_ += trans;
+    rad.first.trans_.x *= scale.x;
+    rad.first.trans_.y *= scale.y;
+    rad.first.trans_ += toCentre;
+  }
 }
 
 // ****************************************************************************
@@ -491,6 +511,7 @@ void DrawMol::draw(MolDraw2D &drawer) const {
     }
   }
   drawAllAnnotations(drawer);
+  drawRadicals(drawer);
   drawLegend(drawer);
   drawer.setScale(scale_);
 }
@@ -545,6 +566,95 @@ void DrawMol::drawLegend(MolDraw2D &drawer) const {
   }
   drawer.setActiveClass(currActClass);
   textDrawer_.setFontScale(o_font_scale, true);
+}
+
+// ****************************************************************************
+void DrawMol::drawRadicals(MolDraw2D &drawer) const {
+  // take account of differing font scale and main scale if we've hit
+  // max or min font size.
+  double f_scale = textDrawer_.fontScale();
+  double spot_rad = 0.2 * drawOptions_.multipleBondOffset * f_scale;
+  drawer.setColour(DrawColour(0.0, 0.0, 0.0));
+  auto draw_spot = [&](const Point2D &cds) {
+    bool ofp = drawer.fillPolys();
+    drawer.setFillPolys(true);
+    int olw = drawer.lineWidth();
+    drawer.setLineWidth(0);
+    drawer.drawArc(cds, spot_rad, 0, 360);
+    drawer.setLineWidth(olw);
+    drawer.setFillPolys(ofp);
+  };
+  // cds in draw coords
+
+  auto draw_spots = [&](const Point2D &cds, int num_spots, double width,
+                        int dir = 0) {
+    Point2D ncds = cds;
+    switch (num_spots) {
+      case 3:
+        draw_spot(ncds);
+        if (dir) {
+          ncds.y = cds.y - 0.5 * width + spot_rad;
+        } else {
+          ncds.x = cds.x - 0.5 * width + spot_rad;
+        }
+        draw_spot(ncds);
+        if (dir) {
+          ncds.y = cds.y + 0.5 * width - spot_rad;
+        } else {
+          ncds.x = cds.x + 0.5 * width - spot_rad;
+        }
+        draw_spot(ncds);
+        /* fallthrough */
+      case 1:
+        draw_spot(cds);
+        break;
+      case 4:
+        if (dir) {
+          ncds.y = cds.y + 6.0 * spot_rad;
+        } else {
+          ncds.x = cds.x + 6.0 * spot_rad;
+        }
+        draw_spot(ncds);
+        if (dir) {
+          ncds.y = cds.y - 6.0 * spot_rad;
+        } else {
+          ncds.x = cds.x - 6.0 * spot_rad;
+        }
+        draw_spot(ncds);
+        /* fallthrough */
+      case 2:
+        if (dir) {
+          ncds.y = cds.y + 2.0 * spot_rad;
+        } else {
+          ncds.x = cds.x + 2.0 * spot_rad;
+        }
+        draw_spot(ncds);
+        if (dir) {
+          ncds.y = cds.y - 2.0 * spot_rad;
+        } else {
+          ncds.x = cds.x - 2.0 * spot_rad;
+        }
+        draw_spot(ncds);
+        break;
+    }
+  };
+
+  size_t rad_num = 0;
+  for (auto atom : drawMol_->atoms()) {
+    int num_rade = atom->getNumRadicalElectrons();
+    if (!num_rade) {
+      continue;
+    }
+    auto rad_rect = radicals_[rad_num].first;
+    OrientType draw_or = radicals_[rad_num].second;
+    if (draw_or == OrientType::N || draw_or == OrientType::S ||
+        draw_or == OrientType::C) {
+      draw_spots(rad_rect.trans_, num_rade, rad_rect.width_, 0);
+    } else {
+      draw_spots(rad_rect.trans_, num_rade, rad_rect.height_, 1);
+    }
+    ++rad_num;
+  }
 }
 
 // ****************************************************************************
@@ -1634,29 +1744,121 @@ void DrawMol::calcAnnotationDims(AnnotationType &annot) const {
 
 // ****************************************************************************
 int DrawMol::doesNoteClash(const AnnotationType &annot) const {
-
   double padding = scale_ * 0.02;
+  return doesRectClash(annot.rect_, padding);
+}
+
+// ****************************************************************************
+int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
   for (auto &bond : bonds_) {
-    if (bond->doesRectClash(annot.rect_, padding)) {
+    if (bond->doesRectClash(rect, padding)) {
       return 1;
     }
   }
   for (auto &al : atomLabels_) {
-    if (al && al->doesRectClash(annot.rect_, padding)) {
+    if (al && al->doesRectClash(rect, padding)) {
       return 2;
     }
   }
   for (auto &a : annotations_) {
-    if (a.rect_.doesItIntersect(annot.rect_, padding)) {
+    if (a.rect_.doesItIntersect(rect, padding)) {
       return 3;
     }
   }
   for (auto &hl : highlights_) {
-    if (hl->doesRectClash(annot.rect_, padding)) {
+    if (hl->doesRectClash(rect, padding)) {
       return 4;
     }
   }
   return 0;
+}
+
+// ****************************************************************************
+OrientType DrawMol::calcRadicalRect(const Atom *atom, StringRect &rad_rect) const {
+  int num_rade = atom->getNumRadicalElectrons();
+  double spot_rad = 0.2 * drawOptions_.multipleBondOffset;
+  Point2D const &at_cds = atCds_[atom->getIdx()];
+  OrientType orient = atomSyms_[atom->getIdx()].second;
+  double rad_size = (4 * num_rade - 2) * spot_rad;
+  double x_min, y_min, x_max, y_max;
+  if (atomLabels_[atom->getIdx()]) {
+    x_min = y_min = std::numeric_limits<double>::max();
+    x_max = y_max = -x_min;
+    atomLabels_[atom->getIdx()]->findExtremes(x_min, x_max, y_min, y_max);
+  } else {
+    x_min = at_cds.x - 3 * spot_rad * textDrawer_.fontScale();
+    x_max = at_cds.x + 3 * spot_rad * textDrawer_.fontScale();
+    y_min = at_cds.y - 3 * spot_rad * textDrawer_.fontScale();
+    y_max = at_cds.y + 3 * spot_rad * textDrawer_.fontScale();
+  }
+
+  auto try_all = [&](OrientType ornt) -> bool {
+    if (!doesRectClash(rad_rect, 0.0)) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  auto try_north = [&]() -> bool {
+    rad_rect.width_ = rad_size * textDrawer_.fontScale();
+    rad_rect.height_ = spot_rad * 3.0 * textDrawer_.fontScale();
+    rad_rect.trans_.x = at_cds.x;
+    rad_rect.trans_.y = y_max + 0.5 * rad_rect.height_;
+    return try_all(OrientType::N);
+  };
+  auto try_south = [&]() -> bool {
+    rad_rect.width_ = rad_size * textDrawer_.fontScale();
+    rad_rect.height_ = spot_rad * 3.0 * textDrawer_.fontScale();
+    rad_rect.trans_.x = at_cds.x;
+    rad_rect.trans_.y = y_min - 0.5 * rad_rect.height_;
+    return try_all(OrientType::S);
+  };
+  auto try_east = [&]() -> bool {
+    rad_rect.trans_.x = x_max + 3.0 * spot_rad * textDrawer_.fontScale();
+    rad_rect.trans_.y = at_cds.y;
+    rad_rect.width_ = spot_rad * 1.5 * textDrawer_.fontScale();
+    rad_rect.height_ = rad_size * textDrawer_.fontScale();
+    return try_all(OrientType::E);
+  };
+  auto try_west = [&]() -> bool {
+    rad_rect.trans_.x = x_min - 3.0 * spot_rad * textDrawer_.fontScale();
+    rad_rect.trans_.y = at_cds.y;
+    rad_rect.width_ = spot_rad * 1.5 * textDrawer_.fontScale();
+    rad_rect.height_ = rad_size * textDrawer_.fontScale();
+    return try_all(OrientType::W);
+  };
+
+  auto try_rads = [&](OrientType ornt) -> bool {
+    switch (ornt) {
+      case OrientType::N:
+      case OrientType::C:
+        return try_north();
+      case OrientType::E:
+        return try_east();
+      case OrientType::S:
+        return try_south();
+      case OrientType::W:
+        return try_west();
+    }
+    return false;
+  };
+  if (try_rads(orient)) {
+    return orient;
+  }
+  OrientType all_ors[4] = {OrientType::N, OrientType::E, OrientType::S,
+                           OrientType::W};
+  for (int io = 0; io < 4; ++io) {
+    if (orient != all_ors[io]) {
+      if (try_rads(all_ors[io])) {
+        return all_ors[io];
+      }
+    }
+  }
+  // stick them N irrespective of a clash whilst muttering "sod it"
+  // under our breath.
+  try_north();
+  return OrientType::N;
 }
 
 // ****************************************************************************
@@ -2087,27 +2289,41 @@ void findAnnotationExtremes(const std::vector<AnnotationType> &annots,
                             double &xmin, double &xmax, double &ymin,
                             double &ymax) {
   for (auto const &pr : annots) {
-    const auto &note_rect = pr.rect_;
-    double this_xmax = note_rect.trans_.x;
-    double this_xmin = note_rect.trans_.x;
-    double this_ymax = note_rect.trans_.y;
-    double this_ymin = note_rect.trans_.y;
-    if (pr.align_ == TextAlignType::START) {
-      this_xmax += note_rect.width_;
-    } else if (pr.align_ == TextAlignType::END) {
-      this_xmin -= note_rect.width_;
-    } else {
-      this_xmax += note_rect.width_ / 2.0;
-      this_xmin -= note_rect.width_ / 2.0;
-    }
-    this_ymax += note_rect.height_ / 2.0;
-    this_ymin -= note_rect.height_ / 2.0;
-
-    xmax = std::max(xmax, this_xmax);
-    xmin = std::min(xmin, this_xmin);
-    ymax = std::max(ymax, this_ymax);
-    ymin = std::min(ymin, this_ymin);
+    findRectExtremes(pr.rect_, pr.align_, xmin, xmax, ymin, ymax);
   }
-
 }
+
+// ****************************************************************************
+void findRadicalExtremes(
+    const std::vector<std::pair<StringRect, OrientType>> &radicals,
+    double &xmin, double &xmax, double &ymin, double &ymax) {
+  for (auto const &rad : radicals) {
+    findRectExtremes(rad.first, TextAlignType::MIDDLE, xmin, xmax, ymin, ymax);
+  }
+}
+
+// ****************************************************************************
+void findRectExtremes(const StringRect &rect, const TextAlignType &align,
+                      double &xmin, double &xmax, double &ymin, double &ymax){
+  double this_xmax = rect.trans_.x;
+  double this_xmin = rect.trans_.x;
+  double this_ymax = rect.trans_.y;
+  double this_ymin = rect.trans_.y;
+  if (align == TextAlignType::START) {
+    this_xmax += rect.width_;
+  } else if (align == TextAlignType::END) {
+    this_xmin -= rect.width_;
+  } else {
+    this_xmax += rect.width_ / 2.0;
+    this_xmin -= rect.width_ / 2.0;
+  }
+  this_ymax += rect.height_ / 2.0;
+  this_ymin -= rect.height_ / 2.0;
+
+  xmax = std::max(xmax, this_xmax);
+  xmin = std::min(xmin, this_xmin);
+  ymax = std::max(ymax, this_ymax);
+  ymin = std::min(ymin, this_ymin);
+}
+
 } // namespace RDKit

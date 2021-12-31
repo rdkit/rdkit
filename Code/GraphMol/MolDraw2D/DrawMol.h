@@ -98,6 +98,7 @@ class DrawMol {
   void drawAllAnnotations(MolDraw2D &drawer) const;
   void drawAnnotation(const AnnotationType &annot) const;
   void drawLegend(MolDraw2D &drawer) const;
+  void drawRadicals(MolDraw2D &drawer) const;
   void resetEverything();
 
   // adds LaTeX-like annotation for super- and sub-script.
@@ -141,8 +142,10 @@ class DrawMol {
   // true currently.
   void calcAnnotationDims(AnnotationType &annot) const;
   // see if the note will clash with anything else drawn on the molecule.
-  // Returns 0 if no clash, 1-3 if there is a clash, denoting what clashed.
+  // Returns 0 if no clash, 1-4 if there is a clash, denoting what clashed.
   int doesNoteClash(const AnnotationType &annot) const;
+  int doesRectClash(const StringRect &rect, double padding) const;
+  OrientType calcRadicalRect(const Atom *atom, StringRect &rad_rect) const;
 
   MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -164,7 +167,7 @@ class DrawMol {
   std::vector<std::unique_ptr<DrawShape>> highlights_;
   std::vector<AnnotationType> annotations_;
   std::vector<AnnotationType> legends_;
-  std::vector<std::pair<std::shared_ptr<StringRect>, OrientType>> radicals_;
+  std::vector<std::pair<StringRect, OrientType>> radicals_;
 
   int width_, height_;
   // to allow for min and max font sizes, the font scale needs to be
@@ -213,6 +216,11 @@ void calcMolNotePosition(const std::vector<Point2D> atCds, DrawText &textDrawer,
 void findAnnotationExtremes(const std::vector<AnnotationType> &annots,
                             double &xmin, double &xmax, double &ymin,
                             double &ymax);
+void findRadicalExtremes(
+    const std::vector<std::pair<StringRect, OrientType>> &radicals,
+    double &xmin, double &xmax, double &ymin, double &ymax);
+void findRectExtremes(const StringRect &rect, const TextAlignType &align,
+                      double &xmin, double &xmax, double &ymin, double &ymax);
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWMOL_H
