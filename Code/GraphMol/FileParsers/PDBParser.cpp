@@ -732,10 +732,10 @@ RWMol *PDBFileToMol(const std::string &fileName, bool sanitize, bool removeHs,
 
 namespace {
 
-constexpr size_t GROUP_PDB=0, TYPE_SYMBOL=1, ATOMNAME=2, ALT_ID=3, RESNUM=4, \
- RESNAME=5, CHAINID=6, INSCODE=7, OCCUPANCY=8, TEMPFACTOR=9, CHARGE=10, \
- CARTNX=11, CARTNY=12, CARTNZ=13, AUTH_RESNUM=14;
-constexpr size_t N_ATTRS=15;
+constexpr size_t GROUP_PDB=0, ATOMID=1, TYPE_SYMBOL=2, ATOMNAME=3, ALT_ID=4, \
+ RESNUM=5, RESNAME=6, CHAINID=7, INSCODE=8, OCCUPANCY=9, TEMPFACTOR=10, \
+ CHARGE=11,CARTNX=12, CARTNY=13, CARTNZ=14, AUTH_RESNUM=15;
+constexpr size_t N_ATTRS=16;
 
 void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2column,
                      RWMol *&mol, unsigned int flavor) {
@@ -792,7 +792,17 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
 
     tmp = name2column[ATOMNAME] >= 0 ? tokens[name2column[ATOMNAME]] : "UNL";
 
-    AtomPDBResidueInfo* info = new AtomPDBResidueInfo(tmp);
+    int serialno = 0;
+    if (name2column[ATOMID] >= 0) {
+      // these are usually but not always integers, use 0 if non integer
+      try {
+        serialno = FileParserUtils::toInt(tokens[name2column[ATOMID]]);
+      } catch (boost::bad_lexical_cast &) {
+        serialno = 0;
+      }
+    }
+
+    AtomPDBResidueInfo* info = new AtomPDBResidueInfo(tmp, serialno);
     a->setMonomerInfo(info);
     if (tokens[name2column[GROUP_PDB]][0] == 'H') {  // HETATM
       info->setIsHeteroAtom(true);
@@ -940,6 +950,8 @@ void parseMMCifFile(RWMol *&mol,
 
       if (line == "group_PDB") {
         name2column[GROUP_PDB] = i;
+      } else if (line == "id") {
+        name2column[ATOMID] = i;
       } else if (line == "type_symbol") {
         name2column[TYPE_SYMBOL] = i;
       } else if (line == "label_atom_id") {

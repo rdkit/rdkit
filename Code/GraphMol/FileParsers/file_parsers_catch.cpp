@@ -4412,39 +4412,40 @@ TEST_CASE("MMCIF PARSING") {
     REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(0)->getMonomerInfo())
-                    ->getSerialNumber() == 1);
+                m->getAtomWithIdx(0)->getMonomerInfo())
+                ->getSerialNumber() == 1);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(0)->getMonomerInfo())
-                    ->getResidueNumber() == 1);
+                m->getAtomWithIdx(0)->getMonomerInfo())
+                ->getResidueNumber() == 1);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(0)->getMonomerInfo())
-                    ->getIsHeteroAtom() == 0);
+                m->getAtomWithIdx(0)->getMonomerInfo())
+                ->getIsHeteroAtom() == 0);
+    // different to PDB file as there is no TER record
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(2292)->getMonomerInfo())
-                    ->getSerialNumber() == 2294);
+                m->getAtomWithIdx(2292)->getMonomerInfo())
+                ->getSerialNumber() == 2293);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(2292)->getMonomerInfo())
-                    ->getResidueNumber() == 299);
+                m->getAtomWithIdx(2292)->getMonomerInfo())
+                ->getResidueNumber() == 299);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(2292)->getMonomerInfo())
-                    ->getIsHeteroAtom() == 1);
+                m->getAtomWithIdx(2292)->getMonomerInfo())
+                ->getIsHeteroAtom() == 1);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(2292)->getMonomerInfo())
-                    ->getChainId() == "A");
-    
+                m->getAtomWithIdx(2292)->getMonomerInfo())
+                ->getChainId() == "B");  // different from PDB
+
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(1)->getMonomerInfo())
-                    ->getName() == " CA ");
+                m->getAtomWithIdx(1)->getMonomerInfo())
+                ->getName() == "CA");
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(1)->getMonomerInfo())
-                    ->getResidueName() == "MET");
+                m->getAtomWithIdx(1)->getMonomerInfo())
+                ->getResidueName() == "MET");
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(2292)->getMonomerInfo())
-                    ->getName() == " N1 ");
+                m->getAtomWithIdx(2292)->getMonomerInfo())
+                ->getName() == "N1");
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(2292)->getMonomerInfo())
-                    ->getResidueName() == "LIA");
+                m->getAtomWithIdx(2292)->getMonomerInfo())
+                ->getResidueName() == "LIA");
 
   }
 }
