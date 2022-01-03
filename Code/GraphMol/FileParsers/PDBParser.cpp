@@ -734,9 +734,10 @@ namespace {
 
 constexpr size_t GROUP_PDB=0, TYPE_SYMBOL=1, ATOMNAME=2, ALT_ID=3, RESNUM=4, \
  RESNAME=5, CHAINID=6, INSCODE=7, OCCUPANCY=8, TEMPFACTOR=9, CHARGE=10, \
- CARTNX=11, CARTNY=12, CARTNZ=13;
+ CARTNX=11, CARTNY=12, CARTNZ=13, AUTH_RESNUM=14;
+constexpr size_t N_ATTRS=15;
 
-void parseMmcifAtoms(std::istream &ifs, const std::array<int, 14> &name2column,
+void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2column,
                      RWMol *&mol, unsigned int flavor) {
   std::vector<std::string> tokens;
   std::string line;
@@ -798,7 +799,15 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, 14> &name2column,
     }
 
     int resno = 1;
-    if (name2column[RESNUM] >= 0) {
+    if (name2column[AUTH_RESNUM] >= 0) {
+      try {
+        resno = FileParserUtils::toInt(tokens[name2column[AUTH_RESNUM]]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with residue number for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+    } else if (name2column[RESNUM] >= 0) {
       try {
         resno = FileParserUtils::toInt(tokens[name2column[RESNUM]]);
       } catch (boost::bad_lexical_cast &) {
@@ -898,7 +907,7 @@ void parseMMCifFile(RWMol *&mol,
 
   // we need to read up to 14 columns, which can be in arbitrary order
   // this keeps track of which column is where, with -1 being column not present
-  std::array<int, 14> name2column;
+  std::array<int, N_ATTRS> name2column;
   name2column.fill(-1);
 
   std::ifstream ifs(fname.c_str(), std::ios_base::binary);
@@ -939,6 +948,8 @@ void parseMMCifFile(RWMol *&mol,
         name2column[ALT_ID] = i;
       } else if (line == "label_seq_id") {
         name2column[RESNUM] = i;
+      } else if (line == "auth_seq_id") {
+        name2column[AUTH_RESNUM] = i;
       } else if (line == "label_comp_id") {
         name2column[RESNAME] = i;
       } else if (line == "label_asym_id") {
