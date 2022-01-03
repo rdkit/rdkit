@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <Geometry/point.h>
+#include <GraphMol/MolDraw2D/DrawAnnotation.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 
@@ -96,8 +97,6 @@ class DrawMol {
   void changeToDrawCoords();
   void draw(MolDraw2D &drawer) const;
   void drawAllAnnotations(MolDraw2D &drawer) const;
-  void drawAnnotation(const AnnotationType &annot) const;
-  void drawLegend(MolDraw2D &drawer) const;
   void drawRadicals(MolDraw2D &drawer) const;
   void resetEverything();
 
@@ -107,6 +106,9 @@ class DrawMol {
   std::string getAtomSymbol(const Atom &atom, OrientType orientation) const;
   OrientType getAtomOrientation(const Atom &atom) const;
 
+  // extractLegend is different from all the other extract... functions
+  // in that it needs to be called once the final scale has been found
+  // by calculateScale.
   void extractLegend();
 
   void calcMeanBondLengthSquare();
@@ -133,17 +135,14 @@ class DrawMol {
   void makeAtomCircleHighlights();
   void makeAtomEllipseHighlights(int lineWidth);
   void makeBondHighlightLines(int lineWidth);
-  void calcAnnotationPosition(const Atom *atom, AnnotationType &annot) const;
-  void calcAnnotationPosition(const Bond *bond, AnnotationType &annot) const;
+  void calcAnnotationPosition(const Atom *atom, DrawAnnotation &annot) const;
+  void calcAnnotationPosition(const Bond *bond, DrawAnnotation &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
-  void calcAtomAnnotationPosition(const Atom *atom, double start_ang,
-                                  AnnotationType &annot) const;
-  // this assumes that the annotation is one line, which is certainly
-  // true currently.
-  void calcAnnotationDims(AnnotationType &annot) const;
+  void calcMolNotePosition(const std::vector<Point2D> atCds,
+                           DrawAnnotation &annot) const;
   // see if the note will clash with anything else drawn on the molecule.
   // Returns 0 if no clash, 1-4 if there is a clash, denoting what clashed.
-  int doesNoteClash(const AnnotationType &annot) const;
+  int doesNoteClash(const DrawAnnotation &annot) const;
   int doesRectClash(const StringRect &rect, double padding) const;
   OrientType calcRadicalRect(const Atom *atom, StringRect &rad_rect) const;
 
@@ -165,8 +164,8 @@ class DrawMol {
   std::vector<std::pair<std::string, OrientType>> atomSyms_;
   std::vector<std::unique_ptr<AtomSymbol>> atomLabels_;
   std::vector<std::unique_ptr<DrawShape>> highlights_;
-  std::vector<AnnotationType> annotations_;
-  std::vector<AnnotationType> legends_;
+  std::vector<std::unique_ptr<DrawAnnotation>> annotations_;
+  std::vector<std::unique_ptr<DrawAnnotation>> legends_;
   std::vector<std::pair<StringRect, OrientType>> radicals_;
 
   int width_, height_;
@@ -211,11 +210,6 @@ Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
 void adjustBondEndForString(
     const Point2D &end1, const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd);
-void calcMolNotePosition(const std::vector<Point2D> atCds, DrawText &textDrawer,
-                         AnnotationType &annot);
-void findAnnotationExtremes(const std::vector<AnnotationType> &annots,
-                            double &xmin, double &xmax, double &ymin,
-                            double &ymax);
 void findRadicalExtremes(
     const std::vector<std::pair<StringRect, OrientType>> &radicals,
     double &xmin, double &xmax, double &ymin, double &ymax);

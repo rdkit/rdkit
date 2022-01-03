@@ -1521,6 +1521,10 @@ void test9MolLegends() {
     WedgeMolBonds(*m, &(m->getConformer()));
     MolDraw2DSVG drawer(600, 600);
     drawer.drawOptions().splitBonds = false;
+    drawer.drawOptions().legendFontSize = 24;
+    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
 //    drawer.drawOptions().baseFontSize = 1.0;
 //    drawer.drawOptions().maxFontSize = 75;
 //    drawer.drawOptions().minFontSize = 55;
@@ -4241,7 +4245,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test6();
+  test9MolLegends();
 
 #if 0
   test1();

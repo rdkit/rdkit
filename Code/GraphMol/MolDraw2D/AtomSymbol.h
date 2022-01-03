@@ -31,6 +31,9 @@ class AtomSymbol {
   friend class DrawMol;
   friend class DrawMolMCH;
 
+ public:
+  ~AtomSymbol() = default;
+
   // everything's private because we don't want anyone using it.
  private :
   /*!
@@ -59,6 +62,7 @@ class AtomSymbol {
   std::vector<TextDrawType> draw_modes_;
   std::vector<char> draw_chars_;
 
+  // expects xmin etc to be initialised to something sensible.
   virtual void findExtremes(double &xmin, double &xmax,
                             double &ymin, double &ymax) const;
   virtual void scale(const Point2D &scaleFactor);

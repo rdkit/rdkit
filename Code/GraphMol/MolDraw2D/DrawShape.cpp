@@ -492,20 +492,16 @@ bool DrawShapeDashedWedge::doesRectClash(const StringRect &rect,
   size_t last_point = points_.size() - 1;
   if (MolDraw2D_detail::doesLineIntersect(rect, at1Cds_,
                                           points_[last_point], padding)) {
-    std::cout << "clash" << std::endl;
     return true;
   }
   if (MolDraw2D_detail::doesLineIntersect(rect, points_[last_point],
                                           points_[last_point - 1], padding)) {
-    std::cout << "clash" << std::endl;
     return true;
   }
   if (MolDraw2D_detail::doesLineIntersect(rect, points_[last_point - 1],
                                           at1Cds_, padding)) {
-    std::cout << "clash" << std::endl;
     return true;
   }
-  std::cout << " NO clash" << std::endl;
   return false;
 }
 

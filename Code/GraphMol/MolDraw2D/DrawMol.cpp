@@ -88,6 +88,10 @@ void DrawMol::createDrawObjects() {
   }
   std::cout << "XX font scale : " << textDrawer_.fontScale()
             << " : " << fontScale_ << std::endl;
+
+  // the legend needs the final scale to get the fonts the correct size.
+  extractLegend();
+
   changeToDrawCoords();
   drawingInitialised_ = true;
 }
@@ -129,7 +133,6 @@ void DrawMol::extractAll() {
   extractAtomNotes();
   extractBondNotes();
   extractRadicals();
-  extractLegend();
 }
 
 // ****************************************************************************
@@ -280,38 +283,27 @@ void DrawMol::extractMolNotes() {
   }
 
   if (!note.empty()) {
-    AnnotationType annot;
-    annot.text_ = note;
-    annot.align_ = TextAlignType::START;
-    annot.scaleText_ = false;
-    calcMolNotePosition(atCds_, textDrawer_, annot);
-    if (annot.rect_.width_ < 0.0) {
-      BOOST_LOG(rdWarningLog)
-          << "Couldn't find good place for molecule note " << note << std::endl;
-    } else {
-      annotations_.push_back(annot);
-    }
+    DrawAnnotation *annot = new DrawAnnotation(
+        note, TextAlignType::START, "note", drawOptions_.annotationFontScale,
+        Point2D(0.0, 0.0), drawOptions_.annotationColour, textDrawer_);
+    calcMolNotePosition(atCds_, *annot);
+    annotations_.emplace_back(annot);
   }
 }
 
 // ****************************************************************************
 void DrawMol::extractAtomNotes() {
-  std::cout << "extractAtomNotes" << std::endl;
+  std::cout << "extractAtomNotes :: " << textDrawer_.fontScale() << std::endl;
   for (auto atom : drawMol_->atoms()) {
     std::string note;
     if (atom->getPropIfPresent(common_properties::atomNote, note)) {
       if (!note.empty()) {
-        std::cout << "atom " << atom->getIdx() << " : " << note << std::endl;
-        AnnotationType annot;
-        annot.text_ = note;
-        calcAnnotationPosition(atom, annot);
-        if (annot.rect_.width_ < 0.0) {
-          BOOST_LOG(rdWarningLog)
-              << "Couldn't find good place for note " << note << " for atom "
-              << atom->getIdx() << std::endl;
-        } else {
-          annotations_.push_back(annot);
-        }
+        DrawAnnotation *annot = new DrawAnnotation(
+            note, TextAlignType::MIDDLE, "note",
+            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+            drawOptions_.annotationColour, textDrawer_);
+        calcAnnotationPosition(atom, *annot);
+        annotations_.emplace_back(annot);
       }
     }
   }
@@ -324,16 +316,12 @@ void DrawMol::extractBondNotes() {
     std::string note;
     if (bond->getPropIfPresent(common_properties::bondNote, note)) {
       if (!note.empty()) {
-        AnnotationType annot;
-        annot.text_ = note;
-        calcAnnotationPosition(bond, annot);
-        if (annot.rect_.width_ < 0.0) {
-          BOOST_LOG(rdWarningLog)
-              << "Couldn't find good place for note " << note << " for bond "
-              << bond->getIdx() << std::endl;
-        } else {
-          annotations_.push_back(annot);
-        }
+        DrawAnnotation *annot = new DrawAnnotation(
+            note, TextAlignType::MIDDLE, "note",
+            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+            drawOptions_.annotationColour, textDrawer_);
+        calcAnnotationPosition(bond, *annot);
+        annotations_.emplace_back(annot);
       }
     }
   }
@@ -428,7 +416,9 @@ void DrawMol::findExtremes() {
   for (auto &hl : highlights_) {
     hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
-  findAnnotationExtremes(annotations_, xMin_, xMax_, yMin_, yMax_);
+  for (auto const &a : annotations_) {
+    a->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  }
   findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
 
   // calculate the x and y spans
@@ -478,12 +468,9 @@ void DrawMol::changeToDrawCoords() {
     hl->move(toCentre);
   }
   for (auto &annot : annotations_) {
-    annot.rect_.trans_ += trans;
-    annot.rect_.trans_.x *= scale.x;
-    annot.rect_.trans_.y *= scale.y;
-    annot.rect_.trans_ += toCentre;
-    annot.rect_.width_ *= scale.x;
-    annot.rect_.height_ *= scale.y;
+    annot->move(trans);
+    annot->scale(scale);
+    annot->move(toCentre);
   }
   for (auto &rad : radicals_) {
     rad.first.trans_ += trans;
@@ -510,9 +497,13 @@ void DrawMol::draw(MolDraw2D &drawer) const {
       label->draw(drawer);
     }
   }
-  drawAllAnnotations(drawer);
+  for (auto &annot : annotations_) {
+    annot->draw(drawer);
+  }
   drawRadicals(drawer);
-  drawLegend(drawer);
+  for (auto &leg : legends_) {
+    leg->draw(drawer);
+  }
   drawer.setScale(scale_);
 }
 
@@ -525,47 +516,9 @@ void DrawMol::drawAllAnnotations(MolDraw2D &drawer) const {
     drawer.setActiveClass(currActClass + " note");
   }
   for (auto &annot : annotations_) {
-    drawAnnotation(annot);
+    annot->draw(drawer);
   }
   drawer.setActiveClass(currActClass);
-}
-
-// ****************************************************************************
-void DrawMol::drawAnnotation(const AnnotationType &annot) const {
-  double full_font_scale = textDrawer_.fontScale();
-  // turn off minFontSize for the annotation, as we do want it to be smaller
-  // than the letters, even if that makes it tiny.  The annotation positions
-  // have been calculated on the assumption that this is the case, and if
-  // minFontSize is applied, they may well clash with the atom symbols.
-  if (annot.scaleText_) {
-    textDrawer_.setFontScale(
-        drawOptions_.annotationFontScale * full_font_scale, true);
-  }
-  textDrawer_.setColour(annot.col_);
-  textDrawer_.drawString(annot.text_, annot.rect_.trans_, annot.align_);
-  if (annot.scaleText_) {
-    textDrawer_.setFontScale(full_font_scale, true);
-  }
-}
-
-// ****************************************************************************
-void DrawMol::drawLegend(MolDraw2D &drawer) const {
-  textDrawer_.setColour(drawOptions_.legendColour);
-  double o_font_scale = textDrawer_.fontScale();
-  double fsize = textDrawer_.fontSize();
-  double new_font_scale = o_font_scale * drawOptions_.legendFontSize / fsize;
-  textDrawer_.setFontScale(new_font_scale, true);
-  std::string currActClass = drawer.getActiveClass();
-  if (currActClass.empty()) {
-    drawer.setActiveClass("legend");
-  } else {
-    drawer.setActiveClass(currActClass + " legend");
-  }
-  for (auto &leg : legends_) {
-    drawAnnotation(leg);
-  }
-  drawer.setActiveClass(currActClass);
-  textDrawer_.setFontScale(o_font_scale, true);
 }
 
 // ****************************************************************************
@@ -947,6 +900,10 @@ void DrawMol::calcMeanBondLengthSquare() {
 }
 
 // ****************************************************************************
+// This must be called after calculateScale() because it needs the final
+// font size to work out the legend font size which is given in
+// drawOptions().legendFontSize in pixels, and then scaled down to fit
+// the width_ and legendHeight_ if necessary.
 void DrawMol::extractLegend() {
   if (legend_.empty()) {
     return;
@@ -954,14 +911,18 @@ void DrawMol::extractLegend() {
   legendHeight_ = int(0.05 * double(height_));
 
   auto calc_legend_height = [&](const std::vector<std::string> &legend_bits,
+                                double relFontScale,
                                 double &total_width, double &total_height) {
     total_width = total_height = 0;
-    for (auto bit : legend_bits) {
+    for (auto &bit : legend_bits) {
       double xMin, yMin, xMax, yMax;
-      textDrawer_.getStringExtremes(bit, OrientType::N, xMin, yMin, xMax,
-                                    yMax, true);
+      DrawAnnotation *da = new DrawAnnotation(
+          bit, TextAlignType::MIDDLE, "legend", relFontScale, Point2D(0.0, 0.0),
+          drawOptions_.legendColour, textDrawer_);
+      da->findExtremes(xMin, xMax, yMin, yMax);
       total_height += yMax - yMin;
       total_width = std::max(total_width, xMax - xMin);
+      delete da;
     }
   };
 
@@ -983,38 +944,37 @@ void DrawMol::extractLegend() {
   }
 
   // work out a font scale that allows the pieces to fit
-  double o_font_scale = textDrawer_.fontScale();
   double fsize = textDrawer_.fontSize();
-  double new_font_scale = o_font_scale * drawOptions_.legendFontSize / fsize;
-  textDrawer_.setFontScale(new_font_scale, true);
+  double relFontScale = drawOptions_.legendFontSize / fsize;
   double total_width, total_height;
-  calc_legend_height(legend_bits, total_width, total_height);
+  std::cout << "fontSize : " << fsize << "  and leg font size = " << drawOptions_.legendFontSize << std::endl;
+  std::cout << "orig relFontScale = " << relFontScale << std::endl;
+
+  calc_legend_height(legend_bits, relFontScale, total_width, total_height);
+  std::cout << "total width = " << total_width << " and height = " << total_height << std::endl;
+  std::cout << "panel width = "  << width_ << "  and legendHeight = " << legendHeight_ << std::endl;
   if (total_height > legendHeight_) {
-    new_font_scale *= double(legendHeight_) / total_height;
-    textDrawer_.setFontScale(new_font_scale, true);
-    calc_legend_height(legend_bits, total_width, total_height);
+    relFontScale *= double(legendHeight_) / total_height;
+    calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   }
+  std::cout << "inter 1 relFontScale = " << relFontScale << std::endl;
   if (total_width > width_) {
-    new_font_scale *= double(width_) / total_width;
-    textDrawer_.setFontScale(new_font_scale, true);
-    calc_legend_height(legend_bits, total_width, total_height);
+    relFontScale *= double(width_) / total_width;
+    calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   }
+  std::cout << "final relFontScale = " << relFontScale << std::endl;
   Point2D loc(width_ / 2, height_ - total_height);
   for (auto bit : legend_bits) {
-    AnnotationType annot;
-    annot.text_ = bit;
-    annot.orient_ = OrientType::N;
-    annot.col_ = drawOptions_.legendColour;
-    annot.fontScale_ = new_font_scale;
-    annot.scaleText_ = false;
-    annot.rect_.trans_ = loc;
+    DrawAnnotation *da =
+        new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                           loc, drawOptions_.legendColour, textDrawer_);
     double xMin, yMin, xMax, yMax;
-    textDrawer_.getStringExtremes(bit, OrientType::N, xMin, yMin, xMax,
-                                  yMax, true);
-    annot.rect_.width_ = xMax - xMin;
-    annot.rect_.height_ = yMax - yMin;
-    loc.y += annot.rect_.height_;
-    legends_.emplace_back(annot);
+    xMin = yMin = std::numeric_limits<double>::max();
+    xMax = yMax = -xMin;
+    da->findExtremes(xMin, xMax, yMin, yMax);
+
+    loc.y += yMax - yMin;
+    legends_.emplace_back(da);
   }
 }
 
@@ -1560,29 +1520,46 @@ void DrawMol::makeBondHighlightLines(int lineWidth) {
 
 // ****************************************************************************
 void DrawMol::calcAnnotationPosition(const Atom *atom,
-                                     AnnotationType &annot) const {
+                                     DrawAnnotation &annot) const {
   PRECONDITION(atom, "no atom");
-  if (annot.text_.empty()) {
-    annot.rect_.width_ = -1.0;  // so we know it's not valid.
-    return;
-  }
-
-  std::cout << "calc annot pos for " << annot.text_ << std::endl;
   Point2D const &at_cds = atCds_[atom->getIdx()];
-  annot.rect_.trans_.x = at_cds.x;
-  annot.rect_.trans_.y = at_cds.y;
-  calcAnnotationDims(annot);
   double start_ang = getNoteStartAngle(atom);
-  calcAtomAnnotationPosition(atom, start_ang, annot);
+  Point2D const &atCds = atCds_[atom->getIdx()];
+
+  double radStep = 0.25;
+  Point2D leastWorstPos = atCds;
+  int leastWorstScore = 100;
+  for (int j = 1; j < 4; ++j) {
+    double note_rad = j * radStep;
+    // experience suggests if there's an atom symbol, the close in
+    // radius won't work.
+    if (j == 1 && atomLabels_[atom->getIdx()]) {
+      continue;
+    }
+    // scan at 30 degree intervals around the atom looking for somewhere
+    // clear for the annotation.
+    for (int i = 0; i < 12; ++i) {
+      double ang = start_ang + i * 30.0 * M_PI / 180.0;
+      annot.pos_.x = atCds.x + cos(ang) * note_rad;
+      annot.pos_.y = atCds.y + sin(ang) * note_rad;
+      int clashScore = doesNoteClash(annot);
+      if (!clashScore) {
+        return;
+      } else {
+        if (clashScore < leastWorstScore) {
+          leastWorstScore = clashScore;
+          leastWorstPos = annot.pos_;
+        }
+      }
+    }
+  }
+  annot.pos_ = leastWorstPos;
 }
 
 // ****************************************************************************
 void DrawMol::calcAnnotationPosition(const Bond *bond,
-                                     AnnotationType &annot) const {
+                                     DrawAnnotation &annot) const {
   PRECONDITION(bond, "no bond");
-  if (annot.text_.empty()) {
-    annot.rect_.width_ = -1.0;  // so we know it's not valid.
-  }
   Point2D const &at1_cds = atCds_[bond->getBeginAtomIdx()];
   Point2D const &at2_cds = atCds_[bond->getEndAtomIdx()];
   Point2D perp = calcPerpendicular(at1_cds, at2_cds);
@@ -1590,8 +1567,8 @@ void DrawMol::calcAnnotationPosition(const Bond *bond,
   double bond_len = (at1_cds - at2_cds).length();
   std::vector<double> mid_offsets{0.5, 0.33, 0.66, 0.25, 0.75};
   double offset_step = drawOptions_.multipleBondOffset;
-  StringRect least_worst_rect = StringRect();
-  least_worst_rect.clash_score_ = 100;
+  Point2D leastWorstPos = (at1_cds + at2_cds) / 2.0;
+  int leastWorstScore = 100;
   for (auto mo : mid_offsets) {
     Point2D mid = at1_cds + bond_vec * bond_len * mo;
     for (int j = 1; j < 6; ++j) {
@@ -1599,25 +1576,27 @@ void DrawMol::calcAnnotationPosition(const Bond *bond,
         continue;  // multiple bonds will need a bigger offset.
       }
       double offset = j * offset_step;
-      annot.rect_.trans_ = mid + perp * offset;
-      calcAnnotationDims(annot);
-      int clash_score = doesNoteClash(annot);
-      if (!clash_score) {
+      annot.pos_ = mid + perp * offset;
+      int clashScore = doesNoteClash(annot);
+      if (!clashScore) {
         return;
       }
-      if (clash_score < least_worst_rect.clash_score_) {
-        least_worst_rect = annot.rect_;
+      if (clashScore < leastWorstScore) {
+        leastWorstPos = annot.pos_;
+        leastWorstScore = clashScore;
       }
-      annot.rect_.trans_ = mid - perp * offset;
-      clash_score = doesNoteClash(annot);
-      if (!clash_score) {
+      annot.pos_ = mid - perp * offset;
+      clashScore = doesNoteClash(annot);
+      if (!clashScore) {
         return;
       }
-      if (clash_score < least_worst_rect.clash_score_) {
-        least_worst_rect = annot.rect_;
+      if (clashScore < leastWorstScore) {
+        leastWorstPos = annot.pos_;
+        leastWorstScore = clashScore;
       }
     }
   }
+  annot.pos_ = leastWorstPos;
 }
 
 // ****************************************************************************
@@ -1685,67 +1664,47 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
 }
 
 // ****************************************************************************
-void DrawMol::calcAtomAnnotationPosition(const Atom *atom,
-                                         double start_ang,
-                                         AnnotationType &annot) const {
-  Point2D const &at_cds = atCds_[atom->getIdx()];
-
-  double rad_step = 0.25;
-  StringRect least_worst_rect = StringRect();
-  least_worst_rect.clash_score_ = 100;
-  for (int j = 1; j < 4; ++j) {
-    double note_rad = j * rad_step;
-    // experience suggests if there's an atom symbol, the close in
-    // radius won't work.
-    if (j == 1 && atomLabels_[atom->getIdx()]) {
-      continue;
-    }
-    // scan at 30 degree intervals around the atom looking for somewhere
-    // clear for the annotation.
-    for (int i = 0; i < 12; ++i) {
-      double ang = start_ang + i * 30.0 * M_PI / 180.0;
-      annot.rect_.trans_.x = at_cds.x + cos(ang) * note_rad;
-      annot.rect_.trans_.y = at_cds.y + sin(ang) * note_rad;
-      int clash_score = doesNoteClash(annot);
-      std::cout << "annot " << annot.text_ << " j = " << j << " i = " << i
-                << " clash score = " << clash_score << std::endl;
-      if (!clash_score) {
-        return;
-      } else {
-        if (clash_score < least_worst_rect.clash_score_) {
-          least_worst_rect = annot.rect_;
-        }
-      }
-    }
+void DrawMol::calcMolNotePosition(const std::vector<Point2D> atCds,
+                                  DrawAnnotation &annot) const {
+  Point2D centroid{0., 0.};
+  double minY = std::numeric_limits<double>::max();
+  double maxX = -std::numeric_limits<double>::max();
+  for (const auto &pt : atCds) {
+    centroid += pt;
+    maxX = std::max(pt.x, maxX);
+    minY = std::min(pt.y, minY);
   }
-  std::cout << "XXXXZ " << annot.text_ << " gone with least worst rect"
-            << std::endl << std::endl;
-  annot.rect_ = least_worst_rect;
+  centroid /= atCds.size();
+  // because we've inverted the Y coord, we need to use -minY, not +maxY.
+  Point2D vect{maxX, -minY};
+  vect.x -= centroid.x;
+  vect.y += centroid.y;
+  auto loc = centroid + vect * 0.9;
+  loc = centroid;
+  loc.x += vect.x * 0.9;
+  loc.y -= vect.y * 0.9;
+  annot.pos_ = loc;
 }
 
 // ****************************************************************************
-void DrawMol::calcAnnotationDims(AnnotationType &annot) const {
-  std::vector<std::shared_ptr<StringRect>> rects;
-  std::vector<TextDrawType> draw_modes;
-  std::vector<char> draw_chars;
-
-  double full_font_scale = textDrawer_.fontScale();
-  textDrawer_.setFontScale(drawOptions_.annotationFontScale, true);
-  textDrawer_.getStringRects(annot.text_, OrientType::C, rects, draw_modes,
-                             draw_chars, false, annot.align_);
-  textDrawer_.setFontScale(full_font_scale, true);
-  annot.rect_.width_ = 0;
-  annot.rect_.height_ = 0;
-  for (auto &rect : rects) {
-    annot.rect_.width_ += rect->width_;
-    annot.rect_.height_ = std::max(rect->height_, annot.rect_.height_);
+int DrawMol::doesNoteClash(const DrawAnnotation &annot) const {
+  // note that this will return a clash if annot is in annotations_.
+  // It's intended only to be used when finding where to put the
+  // annotation, so annot should only  be added to annotations_ once
+  // its position has been determined.
+  for (auto &rect : annot.rects_) {
+    Point2D otrans = rect->trans_;
+    rect->trans_ += annot.pos_;
+    // if padding is less than this, the letters can fit between the 2 lines
+    // of a double bond, which can lead to sub-optimal placements.
+    double padding = scale_ * 0.04;
+    int clashScore = doesRectClash(*rect, padding);
+    rect->trans_ = otrans;
+    if (clashScore) {
+      return clashScore;
+    }
   }
-}
-
-// ****************************************************************************
-int DrawMol::doesNoteClash(const AnnotationType &annot) const {
-  double padding = scale_ * 0.02;
-  return doesRectClash(annot.rect_, padding);
+  return 0;
 }
 
 // ****************************************************************************
@@ -1761,7 +1720,7 @@ int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
     }
   }
   for (auto &a : annotations_) {
-    if (a.rect_.doesItIntersect(rect, padding)) {
+    if (a->doesRectClash(rect, padding)) {
       return 3;
     }
   }
@@ -2233,63 +2192,6 @@ void adjustBondEndForString(
       moveEnd = *ip;
     }
     r->trans_ = origTrans;
-  }
-}
-
-// ****************************************************************************
-void calcMolNotePosition(const std::vector<Point2D> atCds, DrawText &textDrawer,
-                         AnnotationType &annot) {
-  if (annot.text_.empty()) {
-    annot.rect_.width_ = -1.0;  // so we know it's not valid.
-    return;
-  }
-
-  std::vector<std::shared_ptr<StringRect>> rects;
-  std::vector<TextDrawType> draw_modes;
-  std::vector<char> draw_chars;
-
-  // at this point, the scale() should still be 1, so min and max font sizes
-  // don't make sense, as we're effectively operating on atom coords rather
-  // than draw.
-  double full_font_scale = textDrawer.fontScale();
-  textDrawer.setFontScale(1, true);
-  textDrawer.getStringRects(annot.text_, OrientType::N, rects, draw_modes,
-                               draw_chars);
-  textDrawer.setFontScale(full_font_scale, true);
-  // accumulate the widths of the rectangles so that we have the overall width
-  for (const auto &rect : rects) {
-    annot.rect_.width_ += rect->width_;
-  }
-
-  Point2D centroid{0., 0.};
-  double minY = std::numeric_limits<double>::max();
-  double maxX = -std::numeric_limits<double>::max();
-  for (const auto &pt : atCds) {
-    centroid += pt;
-    maxX = std::max(pt.x, maxX);
-    minY = std::min(pt.y, minY);
-  }
-  centroid /= atCds.size();
-
-  // because we've inverted the Y coord, we need to use -minY, not +maxY.
-  Point2D vect{maxX, -minY};
-  vect.x -= centroid.x;
-  vect.y += centroid.y;
-  auto loc = centroid + vect * 0.9;
-  loc = centroid;
-  loc.x += vect.x * 0.9;
-  loc.y -= vect.y * 0.9;
-  annot.rect_.trans_ = loc;
-  std::cout << "mol note pos : " << annot.rect_.trans_ << "   and dims "
-            << annot.rect_.width_ << " by " << annot.rect_.height_ << std::endl;
-}
-
-// ****************************************************************************
-void findAnnotationExtremes(const std::vector<AnnotationType> &annots,
-                            double &xmin, double &xmax, double &ymin,
-                            double &ymax) {
-  for (auto const &pr : annots) {
-    findRectExtremes(pr.rect_, pr.align_, xmin, xmax, ymin, ymax);
   }
 }
 
