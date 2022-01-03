@@ -4016,7 +4016,7 @@ void testMMCifFile() {
 
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 327);
-    //TEST_ASSERT(m->getNumBonds() == 337);
+    TEST_ASSERT(m->getNumBonds() == 337);
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo());
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
