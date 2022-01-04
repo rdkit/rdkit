@@ -4447,5 +4447,28 @@ TEST_CASE("MMCIF PARSING") {
                 m->getAtomWithIdx(2292)->getMonomerInfo())
                 ->getResidueName() == "LIA");
 
+    delete m;
+  }
+  
+  SECTION("4BNA") {
+    std::string fName;
+    fName = rdbase + "4bna.cif";
+    ROMol *m = mmcifFileToMol(fName);
+    REQUIRE(m);
+    REQUIRE(m->getNumHeavyAtoms() == 602);
+    REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo());
+    REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
+                AtomMonomerInfo::PDBRESIDUE);
+    REQUIRE(static_cast<AtomPDBResidueInfo *>(
+                m->getAtomWithIdx(0)->getMonomerInfo())
+                ->getSerialNumber() == 1);
+    REQUIRE(static_cast<AtomPDBResidueInfo *>(
+                m->getAtomWithIdx(1)->getMonomerInfo())
+                    ->getResidueName() == "DC");
+    REQUIRE(static_cast<AtomPDBResidueInfo *>(
+                    m->getAtomWithIdx(57)->getMonomerInfo())
+                    ->getResidueName() == "DG");
+    std::string mb = MolToPDBBlock(*m);
+    delete m;
   }
 }

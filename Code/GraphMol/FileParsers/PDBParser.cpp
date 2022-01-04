@@ -751,6 +751,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     mol->addConformer(conf, false);
   }
 
+  size_t atomnum = 0;
   while (ifs.peek() != '#') {
     std::getline(ifs, line);
     boost::split(tokens, line, boost::is_any_of(" "),
@@ -762,16 +763,20 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     }
 
     Atom *a = nullptr;
-    a = PDBAtomFromSymbol(tokens[name2column[TYPE_SYMBOL]].c_str());
-    if (!a) {
-      a = PDBAtomFromSymbol(tokens[name2column[ATOMNAME]].c_str());
+
+    std::string tmp = tokens[name2column[TYPE_SYMBOL]];
+    // BR -> Br etc
+    for (unsigned int i=1; i<tmp.length(); ++i) {
+      tmp[i] = tolower(tmp[i]);
     }
+    a = PDBAtomFromSymbol(tmp.c_str());
+
     if (!a) {
-      abort();  // TODO: error message etc here
+      std::ostringstream errout;
+      errout << "Cannot determine element for PDB atom #" << atomnum;
+      throw FileParseException(errout.str());
     }
     mol->addAtom(a, true, true);
-
-    std::string tmp;
 
     if (name2column[CHARGE] >= 0) {
       tmp = tokens[name2column[CHARGE]];
@@ -802,7 +807,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
       }
     }
 
-    AtomPDBResidueInfo* info = new AtomPDBResidueInfo(tmp, serialno);
+    auto info = new AtomPDBResidueInfo(tmp, serialno);
     a->setMonomerInfo(info);
     if (tokens[name2column[GROUP_PDB]][0] == 'H') {  // HETATM
       info->setIsHeteroAtom(true);
@@ -906,6 +911,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
 
       conf->setAtomPos(a->getIdx(), pos);
     }
+    atomnum++;
   }
 }
 
