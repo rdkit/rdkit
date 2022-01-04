@@ -131,16 +131,11 @@ struct PyLogStream : std::ostream, std::streambuf {
     }
 
     if (c == '\n') {
-      PyObject *message = PyUnicode_FromString(buffer.c_str());
-      if (message != nullptr) {
 #ifdef RDK_THREADSAFE_SSS
-        PyGILStateHolder h;
+      PyGILStateHolder h;
 #endif
-        PyObject *result = PyObject_CallOneArg(logfn, message);
-        Py_XDECREF(result);
-        Py_DECREF(message);
-      }
-
+      PyObject *result = PyObject_CallFunction(logfn, "s", buffer.c_str());
+      Py_XDECREF(result);
       buffer.clear();
     }
     else {
