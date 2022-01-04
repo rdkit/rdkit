@@ -895,32 +895,20 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     if (conf) {
       RDGeom::Point3D pos = {0.0, 0.0, 0.0};
 
-      if (name2column[CARTNX] != NOT_PRESENT) {
-        try {
+      try {
+        if (name2column[CARTNX] != NOT_PRESENT) {
           pos.x = FileParserUtils::toDouble(tokens[name2column[CARTNX]]);
-        } catch (boost::bad_lexical_cast &) {
-          std::ostringstream errout;
-          errout << "Problem with coordinates for PDB atom #" << a->getIdx();
-          throw FileParseException(errout.str());
         }
-      }
-      if (name2column[CARTNY] != NOT_PRESENT) {
-        try {
+        if (name2column[CARTNY] != NOT_PRESENT) {
           pos.y = FileParserUtils::toDouble(tokens[name2column[CARTNY]]);
-        } catch (boost::bad_lexical_cast &) {
-          std::ostringstream errout;
-          errout << "Problem with coordinates for PDB atom #" << a->getIdx();
-          throw FileParseException(errout.str());
         }
-      }
-      if (name2column[CARTNZ] != NOT_PRESENT) {
-        try {
+        if (name2column[CARTNZ] != NOT_PRESENT) {
           pos.z = FileParserUtils::toDouble(tokens[name2column[CARTNZ]]);
-        } catch (boost::bad_lexical_cast &) {
-          std::ostringstream errout;
-          errout << "Problem with coordinates for PDB atom #" << a->getIdx();
-          throw FileParseException(errout.str());
         }
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with coordinates for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
       }
 
       conf->setAtomPos(a->getIdx(), pos);
