@@ -199,6 +199,7 @@ class DrawShapeWavyLine : protected DrawShape {
                     double offset = 0.05, int atom1 = -1, int atom2 = -1,
                     int bond = -1);
   void myDraw(MolDraw2D &drawer) const override;
+  void scale(const Point2D &scaleFactor) override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;

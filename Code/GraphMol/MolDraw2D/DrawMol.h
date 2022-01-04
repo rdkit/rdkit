@@ -84,6 +84,7 @@ class DrawMol {
   void extractBonds();
   virtual void extractHighlights();
   void extractRegions();
+  void extractAttachments();
   void extractMolNotes();
   void extractAtomNotes();
   void extractBondNotes();

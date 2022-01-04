@@ -518,7 +518,15 @@ DrawShapeWavyLine::DrawShapeWavyLine(const std::vector<Point2D> points,
 // ****************************************************************************
 void DrawShapeWavyLine::myDraw(MolDraw2D &drawer) const {
   // nSegments is 16 by default in MolDraw2D.
-  drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, 16, offset_);
+  // use a negative offset because of inverted y coords to make it look the
+  // same as it used to.
+  drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, 16, -offset_);
+}
+
+// ****************************************************************************
+void DrawShapeWavyLine::scale(const Point2D &scaleFactor) {
+  DrawShape::scale(scaleFactor);
+  offset_ *= scaleFactor.x;
 }
 
 // ****************************************************************************

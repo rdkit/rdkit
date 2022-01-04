@@ -4241,7 +4241,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-
+  
 #if 1
   test1();
   test2();

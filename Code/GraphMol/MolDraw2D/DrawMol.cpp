@@ -133,6 +133,7 @@ void DrawMol::extractAll() {
   extractBonds();
   extractRegions();
   extractHighlights();
+  extractAttachments();
   extractMolNotes();
   extractAtomNotes();
   extractBondNotes();
@@ -272,6 +273,35 @@ void DrawMol::extractRegions() {
         DrawColour col(0.8, 0.8, 0.8);
         DrawShape *pl = new DrawShapePolyLine(pts, 1, false, col, true);
         highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
+      }
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractAttachments() {
+  if (drawOptions_.dummiesAreAttachments) {
+    for (auto at1 : drawMol_->atoms()) {
+      if (at1->hasProp(common_properties::atomLabel) ||
+          drawOptions_.atomLabels.find(at1->getIdx()) !=
+              drawOptions_.atomLabels.end()) {
+        // skip dummies that explicitly have a label provided
+        continue;
+      }
+      if (at1->getAtomicNum() == 0 && at1->getDegree() == 1) {
+        Point2D &at1_cds = atCds_[at1->getIdx()];
+        const auto &iter_pair = drawMol_->getAtomNeighbors(at1);
+        const Atom *at2 = (*drawMol_)[*iter_pair.first];
+        Point2D &at2_cds = atCds_[at2->getIdx()];
+        Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+        Point2D p1 = Point2D(at1_cds.x - perp.x * 0.5, at1_cds.y - perp.y * 0.5);
+        Point2D p2 = Point2D(at1_cds.x + perp.x * 0.5, at1_cds.y + perp.y * 0.5);
+        DrawColour col(.5, .5, .5);
+        std::vector<Point2D> points{p1, p2};
+        DrawShapeWavyLine *wl =
+            new DrawShapeWavyLine(points, drawOptions_.bondLineWidth, false,
+                                  col, col, 0.05, at2->getIdx());
+        bonds_.emplace_back(std::unique_ptr<DrawShape>(wl));
       }
     }
   }
