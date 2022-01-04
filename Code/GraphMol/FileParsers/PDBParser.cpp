@@ -736,6 +736,11 @@ constexpr size_t GROUP_PDB=0, ATOMID=1, TYPE_SYMBOL=2, ATOMNAME=3, ALT_ID=4, \
  RESNUM=5, RESNAME=6, CHAINID=7, INSCODE=8, OCCUPANCY=9, TEMPFACTOR=10, \
  CHARGE=11,CARTNX=12, CARTNY=13, CARTNZ=14, AUTH_RESNUM=15;
 constexpr size_t N_ATTRS=16;
+constexpr int NOT_PRESENT = -1;
+
+bool is_quotation(char c) {
+  return c == '"';
+}
 
 void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2column,
                      RWMol *&mol, unsigned int flavor) {
@@ -745,7 +750,9 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
   mol = new RWMol();
 
   Conformer *conf = nullptr;
-  if (name2column[CARTNX] >= 0 || name2column[CARTNY] >= 0 || name2column[CARTNZ] >= 0) {
+  if (name2column[CARTNX] != NOT_PRESENT ||
+      name2column[CARTNY] != NOT_PRESENT ||
+      name2column[CARTNZ] != NOT_PRESENT) {
     conf = new Conformer();
     conf->set3D(true);
     mol->addConformer(conf, false);
@@ -757,7 +764,8 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     boost::split(tokens, line, boost::is_any_of(" "),
                  boost::token_compress_on);
 
-    if ((flavor & 1) == 0 && name2column[ALT_ID] >= 0) {  // skip altloc?
+    // skip altloc?
+    if ((flavor & 1) == 0 && name2column[ALT_ID] != NOT_PRESENT) {
       if (tokens[name2column[ALT_ID]][0] != '.')
       continue;
     }
@@ -778,7 +786,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     }
     mol->addAtom(a, true, true);
 
-    if (name2column[CHARGE] >= 0) {
+    if (name2column[CHARGE] != NOT_PRESENT) {
       tmp = tokens[name2column[CHARGE]];
       int charge = 0;
       if (tmp[0] != '?') {
@@ -795,10 +803,18 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
       }
     }
 
-    tmp = name2column[ATOMNAME] >= 0 ? tokens[name2column[ATOMNAME]] : "UNL";
+    if (name2column[ATOMNAME != NOT_PRESENT]) {
+      tmp = name2column[ATOMNAME];
+      // "O5'" -> O5'
+      boost::algorithm::trim_if(tmp, is_quotation);
+    } else {
+      tmp = "UNL";
+    }
+
+    tmp = name2column[ATOMNAME] != NOT_PRESENT ? tokens[name2column[ATOMNAME]] : "UNL";
 
     int serialno = 0;
-    if (name2column[ATOMID] >= 0) {
+    if (name2column[ATOMID] != NOT_PRESENT) {
       // these are usually but not always integers, use 0 if non integer
       try {
         serialno = FileParserUtils::toInt(tokens[name2column[ATOMID]]);
@@ -814,7 +830,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     }
 
     int resno = 1;
-    if (name2column[AUTH_RESNUM] >= 0) {
+    if (name2column[AUTH_RESNUM] != NOT_PRESENT) {
       try {
         resno = FileParserUtils::toInt(tokens[name2column[AUTH_RESNUM]]);
       } catch (boost::bad_lexical_cast &) {
@@ -822,7 +838,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
         errout << "Problem with residue number for PDB atom #" << a->getIdx();
         throw FileParseException(errout.str());
       }
-    } else if (name2column[RESNUM] >= 0) {
+    } else if (name2column[RESNUM] != NOT_PRESENT) {
       try {
         resno = FileParserUtils::toInt(tokens[name2column[RESNUM]]);
       } catch (boost::bad_lexical_cast &) {
@@ -833,29 +849,29 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     }
     info->setResidueNumber(resno);
 
-    tmp = name2column[RESNAME] >= 0 ? tokens[name2column[RESNAME]] : "UNL";
+    tmp = name2column[RESNAME] != NOT_PRESENT ? tokens[name2column[RESNAME]] : "UNL";
     info->setResidueName(tmp);
 
-    tmp = name2column[ALT_ID] >= 0 ? tokens[name2column[ALT_ID]] : " ";
+    tmp = name2column[ALT_ID] != NOT_PRESENT ? tokens[name2column[ALT_ID]] : " ";
     if (tmp == ".") { // "." used as non value instead of " "
       tmp = " ";
     }
     info->setAltLoc(tmp);
 
-    tmp = name2column[CHAINID] >= 0 ? tokens[name2column[CHAINID]] : " ";
+    tmp = name2column[CHAINID] != NOT_PRESENT ? tokens[name2column[CHAINID]] : " ";
     if (tmp == ".") {
       tmp = " ";
     }
     info->setChainId(tmp);
 
-    tmp = name2column[INSCODE] >= 0 ? tokens[name2column[INSCODE]] : " ";
+    tmp = name2column[INSCODE] != NOT_PRESENT ? tokens[name2column[INSCODE]] : " ";
     if (tmp == ".") {
       tmp = " ";
     }
     info->setInsertionCode(tmp);
 
     double occup = 1.0;
-    if (name2column[OCCUPANCY] >= 0) {
+    if (name2column[OCCUPANCY] != NOT_PRESENT) {
       try {
         occup = FileParserUtils::toDouble(tokens[name2column[OCCUPANCY]]);
       } catch (boost::bad_lexical_cast &) {
@@ -867,7 +883,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     info->setOccupancy(occup);
 
     double bfactor = 0.0;
-    if (name2column[TEMPFACTOR] >= 0) {
+    if (name2column[TEMPFACTOR] != NOT_PRESENT) {
       try {
         bfactor = FileParserUtils::toDouble(tokens[name2column[TEMPFACTOR]]);
       } catch (boost::bad_lexical_cast &) {
@@ -881,7 +897,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     if (conf) {
       RDGeom::Point3D pos = {0.0, 0.0, 0.0};
 
-      if (name2column[CARTNX] >= 0) {
+      if (name2column[CARTNX] != NOT_PRESENT) {
         try {
           pos.x = FileParserUtils::toDouble(tokens[name2column[CARTNX]]);
         } catch (boost::bad_lexical_cast &) {
@@ -890,7 +906,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
           throw FileParseException(errout.str());
         }
       }
-      if (name2column[CARTNY] >= 0) {
+      if (name2column[CARTNY] != NOT_PRESENT) {
         try {
           pos.y = FileParserUtils::toDouble(tokens[name2column[CARTNY]]);
         } catch (boost::bad_lexical_cast &) {
@@ -899,7 +915,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
           throw FileParseException(errout.str());
         }
       }
-      if (name2column[CARTNZ] >= 0) {
+      if (name2column[CARTNZ] != NOT_PRESENT) {
         try {
           pos.z = FileParserUtils::toDouble(tokens[name2column[CARTNZ]]);
         } catch (boost::bad_lexical_cast &) {
@@ -924,7 +940,7 @@ void parseMMCifFile(RWMol *&mol,
   // we need to read up to 14 columns, which can be in arbitrary order
   // this keeps track of which column is where, with -1 being column not present
   std::array<int, N_ATTRS> name2column;
-  name2column.fill(-1);
+  name2column.fill(NOT_PRESENT);
 
   std::ifstream ifs(fname.c_str(), std::ios_base::binary);
   if (!ifs || ifs.bad()) {
@@ -952,7 +968,7 @@ void parseMMCifFile(RWMol *&mol,
     int i = 0;
     while (true) {  // sort out which columns we have and where they are
       line.erase(0, 11);  // remove "_atom_site." prefix
-      boost::algorithm::trim_right(line);
+      boost::algorithm::trim_right(line);  // sometimes trailing whitespace
 
       if (line == "group_PDB") {
         name2column[GROUP_PDB] = i;

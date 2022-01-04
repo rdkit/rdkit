@@ -4364,18 +4364,18 @@ TEST_CASE("MMCIF PARSING") {
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   std::string fname;
-  
+
   SECTION("1CRN") {
     fname = rdbase + "1crn.cif";
-    
+
     ROMol *m = mmcifFileToMol(fname);
-    
+
     REQUIRE(m);
     REQUIRE(m->getNumAtoms() == 327);
     REQUIRE(m->getNumBonds() == 337);
     REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo());
     REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
-                AtomMonomerInfo::PDBRESIDUE);
+            AtomMonomerInfo::PDBRESIDUE);
 
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
                 m->getAtomWithIdx(0)->getMonomerInfo())
@@ -4401,7 +4401,7 @@ TEST_CASE("MMCIF PARSING") {
 
     delete m;
   }
-  
+
   SECTION("2FVD") {
     fname = rdbase + "2fvd.cif";
     ROMol *m = mmcifFileToMol(fname);
@@ -4410,7 +4410,7 @@ TEST_CASE("MMCIF PARSING") {
     REQUIRE(m->getNumBonds() == 2383);
     REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo());
     REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
-                AtomMonomerInfo::PDBRESIDUE);
+            AtomMonomerInfo::PDBRESIDUE);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
                 m->getAtomWithIdx(0)->getMonomerInfo())
                 ->getSerialNumber() == 1);
@@ -4449,7 +4449,7 @@ TEST_CASE("MMCIF PARSING") {
 
     delete m;
   }
-  
+
   SECTION("4BNA") {
     std::string fName;
     fName = rdbase + "4bna.cif";
@@ -4458,17 +4458,50 @@ TEST_CASE("MMCIF PARSING") {
     REQUIRE(m->getNumHeavyAtoms() == 602);
     REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo());
     REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
-                AtomMonomerInfo::PDBRESIDUE);
+            AtomMonomerInfo::PDBRESIDUE);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
                 m->getAtomWithIdx(0)->getMonomerInfo())
                 ->getSerialNumber() == 1);
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
                 m->getAtomWithIdx(1)->getMonomerInfo())
-                    ->getResidueName() == "DC");
+                ->getResidueName() == "DC");
     REQUIRE(static_cast<AtomPDBResidueInfo *>(
-                    m->getAtomWithIdx(57)->getMonomerInfo())
-                    ->getResidueName() == "DG");
+                m->getAtomWithIdx(57)->getMonomerInfo())
+                ->getResidueName() == "DG");
     std::string mb = MolToPDBBlock(*m);
+    delete m;
+  }
+
+  SECTION("4TNA") {
+    std::string fName;
+    fName = rdbase + "4tna.cif";
+    ROMol *m = mmcifFileToMol(fName);
+    REQUIRE(m);
+    REQUIRE(m->getNumHeavyAtoms() == 1656);
+    REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo());
+    REQUIRE(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
+            AtomMonomerInfo::PDBRESIDUE);
+    REQUIRE(
+        static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(0)->getMonomerInfo())
+            ->getSerialNumber() == 1);
+    REQUIRE(
+        static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(1)->getMonomerInfo())
+            ->getResidueName() == "G");
+    REQUIRE(
+        static_cast<AtomPDBResidueInfo *>(m->getAtomWithIdx(90)->getMonomerInfo())
+            ->getResidueName() == "A");
+    REQUIRE(static_cast<AtomPDBResidueInfo *>(
+                m->getAtomWithIdx(197)->getMonomerInfo())
+                ->getResidueName() == "2MG");
+    REQUIRE(static_cast<AtomPDBResidueInfo *>(
+                m->getAtomWithIdx(197)->getMonomerInfo())
+                ->getIsHeteroAtom());
+    REQUIRE(m->getBondBetweenAtoms(104, 103)->getBondType() ==
+            Bond::AROMATIC);
+    REQUIRE(m->getBondBetweenAtoms(60, 61)->getBondType() == Bond::DOUBLE);
+    REQUIRE(m->getBondBetweenAtoms(38, 37)->getBondType() == Bond::DOUBLE);
+    REQUIRE(m->getBondBetweenAtoms(148, 149)->getBondType() == Bond::DOUBLE);
+  
     delete m;
   }
 }
