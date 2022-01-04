@@ -24,9 +24,14 @@ class ExcludedVolume(object):
 
     if not len(featInfo):
       raise ValueError('featInfo argument must non-empty')
-
-    if len(featInfo[0]) != 3:
+    
+    try:
+      a, b, c = featInfo[0]
+    except (TypeError, ValueError):
       # Test on first argument only to see if it's a sequence of sequences
+      raise ValueError('The featInfo argument must be a sequence of sequences of length 3')
+    
+    if len(featInfo[0]) != 3:
       raise ValueError('The featInfo argument must be a sequence of sequences of length 3')
     
     self.featInfo = featInfo[:]
