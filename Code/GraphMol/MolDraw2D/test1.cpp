@@ -374,7 +374,6 @@ void check_file_hash(const std::string &filename,
 }
 
 void test1() {
-#if 0
   std::cout << " ----------------- Test 1" << std::endl;
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
@@ -421,7 +420,6 @@ void test1() {
     check_file_hash("test1_2.svg");
     delete m;
   }
-#endif
   {
     std::string smiles = "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-]";
     ROMol *m = SmilesToMol(smiles);
@@ -441,7 +439,6 @@ void test1() {
     check_file_hash("test1_3.svg");
     delete m;
   }
-#if 0
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     ROMol *m = SmilesToMol(smiles);
@@ -500,7 +497,6 @@ void test1() {
     check_file_hash("test1_6.svg");
     delete m;
   }
-#endif
   std::cout << " Done" << std::endl;
 }
 
@@ -4245,9 +4241,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test9MolLegends();
 
-#if 0
+#if 1
   test1();
   test2();
   test4();

@@ -92,6 +92,11 @@ class DrawMol {
   void extractVariableBonds();
   void extractBrackets();
   void extractLinkNodes();
+  // extractCloseContacts is to show where 2 atoms are drawn too close together
+  // and so needs the final drawing coords.  It is therefore called at the end
+  // of changeToDrawCoords() and any necessary DrawShapePolyLines added to
+  // postShapes_ in drawCoords.
+  void extractCloseContacts();
   void calculateScale();
   void findExtremes();
   void changeToDrawCoords();
@@ -144,6 +149,10 @@ class DrawMol {
   int doesNoteClash(const DrawAnnotation &annot) const;
   int doesRectClash(const StringRect &rect, double padding) const;
   OrientType calcRadicalRect(const Atom *atom, StringRect &rad_rect) const;
+  void getDrawTransformers(Point2D &trans, Point2D &scale,
+                           Point2D &toCentre) const;
+  Point2D getDrawCoords(const Point2D &atCds, Point2D &trans,
+                        Point2D &scaleFactor, Point2D &toCentre) const;
 
   MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;

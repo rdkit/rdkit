@@ -675,6 +675,52 @@ void DrawMol::extractLinkNodes() {
 }
 
 // ****************************************************************************
+void DrawMol::extractCloseContacts() {
+  if (drawOptions_.flagCloseContactsDist < 0) {
+    return;
+  }
+  int tol =
+      drawOptions_.flagCloseContactsDist * drawOptions_.flagCloseContactsDist;
+  boost::dynamic_bitset<> flagged(atCds_.size());
+  Point2D trans, scale, toCentre;
+  getDrawTransformers(trans, scale, toCentre);
+  for (unsigned int i = 0; i < atCds_.size(); ++i) {
+    if (flagged[i]) {
+      continue;
+    }
+    Point2D ci = getDrawCoords(atCds_[i], trans, scale, toCentre);
+    for (unsigned int j = i + 1; j < atCds_.size(); ++j) {
+      if (flagged[j]) {
+        continue;
+      }
+      Point2D cj = getDrawCoords(atCds_[j], trans, scale, toCentre);
+      double d = (cj - ci).lengthSq();
+      if (d <= tol) {
+        flagged.set(i);
+        flagged.set(j);
+        break;
+      }
+    }
+    if (flagged[i]) {
+      Point2D p1 = ci;
+      Point2D p2 = p1;
+      Point2D offset(0.1 * scale_, 0.1 * scale_);
+      p1 -= offset;
+      p2 += offset;
+      std::vector<Point2D> points(5);
+      points[0] = points[4] = p1;
+      points[1] = Point2D{p1.x, p2.y};
+      points[2] = Point2D{p2};
+      points[3] = Point2D{p2.x, p1.y};
+      DrawShapePolyLine *pl =
+          new DrawShapePolyLine(points, drawOptions_.bondLineWidth, false,
+                                DrawColour(1.0, 0.0, 0.0), false, i);
+      postShapes_.emplace_back(std::unique_ptr<DrawShape>(pl));
+    };
+  }
+}
+
+// ****************************************************************************
 void DrawMol::calculateScale() {
   findExtremes();
 
@@ -783,16 +829,9 @@ void DrawMol::findExtremes() {
 
 // ****************************************************************************
 void DrawMol::changeToDrawCoords() {
-  std::cout << "scaled mins and ranges : " << xMin_ * scale_ << ", "
-            << yMin_ * scale_ << " :: " << xRange_ * scale_ << ", "
-            << yRange_ * scale_ << std::endl;
-  std::cout << "scales : " << scale_ << " and " << fontScale_ << std::endl;
-  Point2D trans(-xMin_, -yMin_);
-  Point2D scale(scale_, scale_);
-  Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
-  int drawHeight = height_ - legendHeight_;
-  Point2D toCentre((width_ - scaledRanges.x) / 2.0,
-                   (drawHeight - scaledRanges.y) / 2.0);
+  Point2D trans, scale, toCentre;
+  getDrawTransformers(trans, scale, toCentre);
+
   for (auto &ps : preShapes_) {
     ps->move(trans);
     ps->scale(scale);
@@ -821,16 +860,14 @@ void DrawMol::changeToDrawCoords() {
     annot->move(toCentre);
   }
   for (auto &rad : radicals_) {
-    rad.first.trans_ += trans;
-    rad.first.trans_.x *= scale.x;
-    rad.first.trans_.y *= scale.y;
-    rad.first.trans_ += toCentre;
+    rad.first.trans_ = getDrawCoords(rad.first.trans_, trans, scale, toCentre);
   }
   for (auto &ps : postShapes_) {
     ps->move(trans);
     ps->scale(scale);
     ps->move(toCentre);
   }
+  extractCloseContacts();
 }
 
 // ****************************************************************************
@@ -2167,6 +2204,32 @@ OrientType DrawMol::calcRadicalRect(const Atom *atom, StringRect &rad_rect) cons
   // under our breath.
   try_north();
   return OrientType::N;
+}
+
+// ****************************************************************************
+void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale, Point2D &toCentre) const {
+  std::cout << "scaled mins and ranges : " << xMin_ * scale_ << ", "
+            << yMin_ * scale_ << " :: " << xRange_ * scale_ << ", "
+            << yRange_ * scale_ << std::endl;
+  std::cout << "scales : " << scale_ << " and " << fontScale_ << std::endl;
+  trans = Point2D(-xMin_, -yMin_);
+  scale = Point2D(scale_, scale_);
+  Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
+  int drawHeight = height_ - legendHeight_;
+  toCentre = Point2D((width_ - scaledRanges.x) / 2.0,
+                   (drawHeight - scaledRanges.y) / 2.0);
+  std::cout << "transformers : " << trans << " : " << scale << " : " << toCentre << std::endl;
+}
+
+// ****************************************************************************
+Point2D DrawMol::getDrawCoords(const Point2D &atCds, Point2D &trans,
+                               Point2D &scaleFactor, Point2D &toCentre) const {
+  Point2D drawCoords{atCds};
+  drawCoords += trans;
+  drawCoords.x *= scaleFactor.x;
+  drawCoords.y *= scaleFactor.y;
+  drawCoords += toCentre;
+  return drawCoords;
 }
 
 // ****************************************************************************
