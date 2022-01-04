@@ -113,7 +113,8 @@ void test_largest_fragment() {
   BOOST_LOG(rdDebugLog) << "-----------------------\n test largest fragment"
                         << std::endl;
 
-  std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10;
+  std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10,
+      smi11, smi12;
   LargestFragmentChooser lfragchooser;
   LargestFragmentChooser lfrag_preferOrg(true);
   MolStandardize::CleanupParameters params =
@@ -181,9 +182,82 @@ void test_largest_fragment() {
   std::shared_ptr<RWMol> res10(MolStandardize::fragmentParent(*m10, params));
   TEST_ASSERT(MolToSmiles(*res10) == "O=C([O-])[O-]");
 
+  // Different fragment chosen depending on whether atom count is limited to
+  // heavy or not.
+  smi11 =
+      "CNC[C@@H]([C@H]([C@@H]([C@@H](CO)O)O)O)O.c1cc2c(cc1C(=O)O)oc(n2)c3cc(cc("
+      "c3)Cl)Cl";
+  {
+    CleanupParameters lfParams;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
+    std::shared_ptr<ROMol> lfrag6(lfrag_params.choose(*m11));
+    TEST_ASSERT(MolToSmiles(*lfrag6) ==
+                "CNC[C@H](O)[C@@H](O)[C@H](O)[C@H](O)CO");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
+    std::shared_ptr<ROMol> lfrag6(lfrag_params.choose(*m11));
+    TEST_ASSERT(MolToSmiles(*lfrag6) ==
+                "O=C(O)c1ccc2nc(-c3cc(Cl)cc(Cl)c3)oc2c1");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserUseAtomCount = false;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
+    std::shared_ptr<ROMol> lfrag6(lfrag_params.choose(*m11));
+    TEST_ASSERT(MolToSmiles(*lfrag6) ==
+                "O=C(O)c1ccc2nc(-c3cc(Cl)cc(Cl)c3)oc2c1");
+  }
+
+  smi12 = "CC.O=[Pb]=O";
+  {
+    CleanupParameters lfParams;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "CC");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "O=[Pb]=O");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserUseAtomCount = false;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "O=[Pb]=O");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
+    lfParams.preferOrganic = true;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "CC");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserUseAtomCount = false;
+    lfParams.preferOrganic = true;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "CC");
+  }
+
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
-  // params->preferOrganic = true;
-  //
 }
 
 void testWhiteSpaceInSmarts() {

@@ -79,7 +79,7 @@ class TestCase(unittest.TestCase):
                        rdSubstructLibrary.CachedSmilesMolHolder()]:
           if fpholderCls: fpholder = fpholderCls()
           else: fpholder = None
-          if keyholderCls: 
+          if keyholderCls:
             keyholder = keyholderCls()
             self.assertEqual(keyholder.GetPropName(), "_Name")
           else: keyholder = None
@@ -126,7 +126,7 @@ class TestCase(unittest.TestCase):
                        rdSubstructLibrary.CachedSmilesMolHolder()]:
           if fpholderCls: fpholder = fpholderCls()
           else: fpholder = None
-          if keyholderCls: 
+          if keyholderCls:
             keyholder = keyholderCls()
             self.assertEqual(keyholder.GetPropName(), "_Name")
           else: keyholder = None
@@ -567,18 +567,28 @@ class TestCase(unittest.TestCase):
         self.assertEqual(keyholder.GetPropName(), "_Name")
         self.assertEqual(list(ssl.GetKeyHolder().GetKeys(ssl.GetMatches(qm,maxResults=2))),['3','2'])
 
+      # make sure we can clear the search order:
+      ssl.SetSearchOrder(None)
+      self.assertEqual(ssl.GetSearchOrder(),())
+
+      ssl.SetSearchOrder((3, 2, 0, 1, 4))
+      self.assertEqual(ssl.GetSearchOrder(), (3, 2, 0, 1, 4))
+
+      ssl.SetSearchOrder([])
+      self.assertEqual(ssl.GetSearchOrder(),())
+
 
   def testSearchOrder2(self):
     ssl = rdSubstructLibrary.SubstructLibrary()
     for smi in ("CCCOC", "CCCCOCC", "CCOC", "COC", "CCCCCOC"):
       ssl.AddMol(Chem.MolFromSmiles(smi))
-    
+
     def setSearchSmallestFirst(sslib):
       searchOrder = list(range(len(sslib)))
       holder = sslib.GetMolHolder()
       searchOrder.sort(key=lambda x,holder=holder:holder.GetMol(x).GetNumAtoms())
       sslib.SetSearchOrder(searchOrder)
-    
+
     setSearchSmallestFirst(ssl)
     qm = Chem.MolFromSmiles('COC')
     self.assertEqual(list(ssl.GetMatches(qm)),[3, 2, 0, 1, 4])

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2006-2020 Greg Landrum
+//  Copyright (C) 2006-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -355,6 +356,70 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &coreQuery,
                      requireDummyMatch);
 }
 
+namespace {
+const std::string replaceCoreDummyBond = "_replaceCoreDummyBond";
+
+int findNbrBond(RWMol &mol, Bond *bond, Atom *bondAtom, const INT_VECT &bring,
+                const boost::dynamic_bitset<> &removedAtoms) {
+  int res = -1;
+  for (const auto nbrBond : mol.atomBonds(bondAtom)) {
+    if (nbrBond != bond &&
+        (nbrBond->hasProp(replaceCoreDummyBond) ||
+         (!removedAtoms[nbrBond->getOtherAtomIdx(bondAtom->getIdx())] &&
+          std::find(bring.begin(), bring.end(), nbrBond->getIdx()) !=
+              bring.end()))) {
+      res = nbrBond->getOtherAtomIdx(bondAtom->getIdx());
+      break;
+    }
+  }
+  return res;
+}
+
+void setSubMolBrokenRingStereo(RWMol &mol,
+                               const boost::dynamic_bitset<> &removedAtoms) {
+  PRECONDITION(mol.getRingInfo() && mol.getRingInfo()->isInitialized(),
+               "bad ringinfo");
+
+  for (const auto &bring : mol.getRingInfo()->bondRings()) {
+    // check whether or not this bond ring is affected by the removal
+    if (std::find_if(bring.begin(), bring.end(),
+                     [&mol, &removedAtoms](auto idx) {
+                       const auto bond = mol.getBondWithIdx(idx);
+                       return removedAtoms[bond->getBeginAtomIdx()] ||
+                              removedAtoms[bond->getEndAtomIdx()];
+                     }) != bring.end()) {
+      for (auto bidx : bring) {
+        const auto bond = mol.getBondWithIdx(bidx);
+        // is this a bond we can reasonably set cis/trans for and where neither
+        // atom is being removed?
+        if ((bond->getIsAromatic() ||
+             bond->getBondType() == Bond::BondType::DOUBLE) &&
+            bond->getStereo() == Bond::BondStereo::STEREONONE &&
+            mol.getRingInfo()->minBondRingSize(bond->getIdx()) <
+                Chirality::minRingSizeForDoubleBondStereo &&
+            !removedAtoms[bond->getBeginAtomIdx()] &&
+            !removedAtoms[bond->getEndAtomIdx()]) {
+          // find the two neighboring bonds which are in the ring or to the
+          // newly added dummy atoms. Make sure they aren't affected by the atom
+          // removal
+          int beginAtomNbrIdx =
+              findNbrBond(mol, bond, bond->getBeginAtom(), bring, removedAtoms);
+          if (beginAtomNbrIdx >= 0) {
+            int endAtomNbrIdx =
+                findNbrBond(mol, bond, bond->getEndAtom(), bring, removedAtoms);
+            if (endAtomNbrIdx >= 0) {
+              // we can set stereo on the bond
+              bond->setStereoAtoms(beginAtomNbrIdx, endAtomNbrIdx);
+              bond->setStereo(Bond::BondStereo::STEREOCIS);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+}  // namespace
+
 ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                    const MatchVectType &matchV, bool replaceDummies,
                    bool labelByIndex, bool requireDummyMatch) {
@@ -567,6 +632,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       }
       // add the bonds now, after we've finished the loop over neighbors:
       for (auto &newBond : newBonds) {
+        newBond->setProp(replaceCoreDummyBond, 1);
         newMol->addBond(newBond, true);
         auto beginAtom = newBond->getBeginAtom();
         auto endAtom = newBond->getEndAtom();
@@ -598,11 +664,23 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   std::vector<Atom *> delList;
   boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
+  bool removedRingAtom = false;
   newMol->beginBatchEdit();
   for (const auto at : newMol->atoms()) {
     if (std::find(keepList.begin(), keepList.end(), at) == keepList.end()) {
       newMol->removeAtom(at);
       removedAtoms.set(at->getIdx());
+      if (!removedRingAtom && mol.getRingInfo() &&
+          mol.getRingInfo()->isInitialized() &&
+          mol.getRingInfo()->numAtomRings(at->getIdx())) {
+        removedRingAtom = true;
+      }
+    }
+  }
+  if (removedRingAtom) {
+    setSubMolBrokenRingStereo(*newMol, removedAtoms);
+    for (auto bond : newMol->bonds()) {
+      bond->clearProp(replaceCoreDummyBond);
     }
   }
   newMol->commitBatchEdit();

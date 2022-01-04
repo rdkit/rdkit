@@ -35,6 +35,9 @@ python::tuple JSONToMols(const std::string &jsonBlock,
 
 std::string MolsToJSON(const python::object &mols) {
   auto pymols = pythonObjectToVect<const RDKit::ROMol *>(mols);
+  if (!pymols) {
+    return "";
+  }
   return RDKit::MolInterchange::MolsToJSONData(*pymols);
 }
 }  // namespace

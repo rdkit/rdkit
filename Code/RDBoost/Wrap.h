@@ -112,6 +112,7 @@ void RegisterListConverter(bool noproxy = false) {
   }
 }
 
+//! NOTE: this returns a nullptr if obj is None or empty
 template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
                                                    T maxV) {
@@ -131,6 +132,7 @@ std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
   }
   return res;
 }
+//! NOTE: this returns a nullptr if obj is None or empty
 template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
   std::unique_ptr<std::vector<T>> res;
@@ -140,11 +142,14 @@ std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
   }
   return res;
 }
+//! NOTE: \c res will be cleared if obj is None or empty
 template <typename T>
 void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
   if (obj) {
     res.assign(python::stl_input_iterator<T>(obj),
                python::stl_input_iterator<T>());
+  } else {
+    res.clear();
   }
 }
 

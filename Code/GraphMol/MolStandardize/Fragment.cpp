@@ -165,7 +165,9 @@ bool isOrganic(const ROMol &frag) {
 LargestFragmentChooser::LargestFragmentChooser(
     const LargestFragmentChooser &other) {
   BOOST_LOG(rdInfoLog) << "Initializing LargestFragmentChooser\n";
-  PREFER_ORGANIC = other.PREFER_ORGANIC;
+  preferOrganic = other.preferOrganic;
+  useAtomCount = other.useAtomCount;
+  countHeavyAtomsOnly = other.countHeavyAtomsOnly;
 }
 
 ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
@@ -181,7 +183,7 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
     std::string smiles = MolToSmiles(*frag);
     BOOST_LOG(rdInfoLog) << "Fragment: " << smiles << "\n";
     bool organic = isOrganic(*frag);
-    if (this->PREFER_ORGANIC) {
+    if (this->preferOrganic) {
       // Skip this fragment if not organic and we already have an organic
       // fragment as the largest so far
       if (l.Fragment != nullptr && l.Organic && !organic) {
@@ -194,24 +196,31 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
       }
     }
     unsigned int numatoms = 0;
-    for (const auto at : frag->atoms()) {
-      numatoms += 1 + at->getTotalNumHs();
-    }
-    // Skip this fragment if fewer atoms than the largest
-    if (l.Fragment != nullptr && (numatoms < l.NumAtoms)) {
-      continue;
+    if (this->useAtomCount) {
+      for (const auto at : frag->atoms()) {
+        ++numatoms;
+        if (!this->countHeavyAtomsOnly) {
+          numatoms += at->getTotalNumHs();
+        }
+      }
+      // Skip this fragment if fewer atoms than the largest
+      if (l.Fragment != nullptr && (numatoms < l.NumAtoms)) {
+        continue;
+      }
     }
 
     // Skip this fragment if equal number of atoms but weight is lower
     double weight = Descriptors::calcExactMW(*frag);
-    if (l.Fragment != nullptr && (numatoms == l.NumAtoms) &&
+    if (l.Fragment != nullptr &&
+        (!this->useAtomCount || numatoms == l.NumAtoms) &&
         (weight < l.Weight)) {
       continue;
     }
 
     // Skip this fragment if equal number of atoms and equal weight but smiles
     // comes last alphabetically
-    if (l.Fragment != nullptr && (numatoms == l.NumAtoms) &&
+    if (l.Fragment != nullptr &&
+        (!this->useAtomCount || numatoms == l.NumAtoms) &&
         (weight == l.Weight) && (smiles > l.Smiles)) {
       continue;
     }

@@ -72,8 +72,8 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
 
   bool hasAromaticOrDummyAtom = false;
   for (int allAtm : allAtms) {
-    if (mol.getAtomWithIdx(allAtm)->getIsAromatic() ||
-        !mol.getAtomWithIdx(allAtm)->getAtomicNum()) {
+    if (!mol.getAtomWithIdx(allAtm)->getAtomicNum() ||
+        isAromaticAtom(*mol.getAtomWithIdx(allAtm))) {
       hasAromaticOrDummyAtom = true;
       break;
     }
@@ -90,23 +90,8 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
   for (int allAtm : allAtms) {
     Atom *at = mol.getAtomWithIdx(allAtm);
 
-    if (!at->getIsAromatic() && at->getAtomicNum()) {
+    if (at->getAtomicNum() && !isAromaticAtom(*at)) {
       done.push_back(allAtm);
-      // make sure all the bonds on this atom are also non aromatic
-      // i.e. can't have aromatic bond onto a non-aromatic atom
-      RWMol::OEDGE_ITER beg, end;
-      boost::tie(beg, end) = mol.getAtomBonds(at);
-      while (beg != end) {
-        // ok we can't have an aromatic atom
-        if (mol[*beg]->getIsAromatic()) {
-          std::ostringstream errout;
-          errout << "Aromatic bonds on non aromatic atom " << at->getIdx();
-          std::string msg = errout.str();
-          BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw AtomKekulizeException(msg, at->getIdx());
-        }
-        ++beg;
-      }
       continue;
     }
 
@@ -535,7 +520,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     }
     atom->calcImplicitValence(false);
     valences[atom->getIdx()] = atom->getTotalValence();
-    if (atom->getIsAromatic()) {
+    if (isAromaticAtom(*atom)) {
       foundAromatic = true;
     }
     if (!atom->getAtomicNum()) {
@@ -697,8 +682,8 @@ bool KekulizeIfPossible(RWMol &mol, bool markAtomsBonds,
     }
   }
   boost::dynamic_bitset<> aromaticAtoms(mol.getNumAtoms());
-  for (const auto &atom : mol.atoms()) {
-    if (atom->getIsAromatic()) {
+  for (const auto atom : mol.atoms()) {
+    if (isAromaticAtom(*atom)) {
       aromaticAtoms.set(atom->getIdx());
     }
   }

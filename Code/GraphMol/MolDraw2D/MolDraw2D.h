@@ -47,7 +47,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! constructor for a particular size
   /*!
     \param width       : width (in pixels) of the rendering
+    set this to -1 to have the canvas size set automatically
     \param height      : height (in pixels) of the rendering
+    set this to -1 to have the canvas size set automatically
     \param panelWidth  : (optional) width (in pixels) of a single panel
     \param panelHeight : (optional) height (in pixels) of a single panel
 

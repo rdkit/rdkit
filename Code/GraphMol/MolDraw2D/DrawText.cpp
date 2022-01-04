@@ -73,12 +73,12 @@ bool DrawText::setFontScale(double new_scale, bool ignoreExtremes) {
   font_scale_ = new_scale;
   double nfs = fontSize();
   if (max_font_size_ > 0.0 &&
-      nfs * (baseFontSize() / FONT_SIZE) > max_font_size_) {
+      nfs * (baseFontSize() / DEFAULT_FONT_SCALE) > max_font_size_) {
     font_scale_ = max_font_size_ / baseFontSize();
     return false;
   }
   if (min_font_size_ > 0.0 &&
-      nfs * (baseFontSize() / FONT_SIZE) < min_font_size_) {
+      nfs * (baseFontSize() / DEFAULT_FONT_SCALE) < min_font_size_) {
     font_scale_ = min_font_size_ / baseFontSize();
     return false;
   }

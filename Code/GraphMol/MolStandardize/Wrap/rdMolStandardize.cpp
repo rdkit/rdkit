@@ -176,7 +176,17 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
           "tautomerReassignStereo",
           &RDKit::MolStandardize::CleanupParameters::tautomerReassignStereo,
           "call AssignStereochemistry on all generated tautomers "
-          "(defaults to True)");
+          "(defaults to True)")
+      .def_readwrite("largestFragmentChooserUseAtomCount",
+                     &RDKit::MolStandardize::CleanupParameters::
+                         largestFragmentChooserUseAtomCount,
+                     "Whether LargestFragmentChooser should use atom "
+                     "count as main criterion before MW (defaults to True)")
+      .def_readwrite("largestFragmentChooserCountHeavyAtomsOnly",
+                     &RDKit::MolStandardize::CleanupParameters::
+                         largestFragmentChooserCountHeavyAtomsOnly,
+                     "whether LargestFragmentChooser should only count "
+                     "heavy atoms (defaults to False)");
 
   python::def("UpdateParamsFromJSON",
               &RDKit::MolStandardize::updateCleanupParamsFromJSON,

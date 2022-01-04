@@ -28,6 +28,8 @@ namespace RDKit {
 MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter *qp, int panelWidth,
                          int panelHeight, bool noFreetype)
     : MolDraw2D(width, height, panelWidth, panelHeight), d_qp(qp) {
+  PRECONDITION(width > 0, "bad width");
+  PRECONDITION(height > 0, "bad height");
   initDrawing();
   initTextDrawer(noFreetype);
 }
@@ -90,7 +92,7 @@ void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2) {
   } else {
     pen.setStyle(Qt::SolidLine);
   }
-  pen.setWidth(lineWidth());
+  pen.setWidth(getDrawLineWidth());
   d_qp->setPen(pen);
   d_qp->drawLine(QPointF(c1.x, c1.y), QPointF(c2.x, c2.y));
 }

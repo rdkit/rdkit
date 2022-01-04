@@ -367,7 +367,8 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
   }
   SECTION("AtomKekulizeException") {
     std::vector<std::pair<std::string, unsigned int>> smiles = {
-        {"CCcc", 2}, {"C1:c:CC1", 0}};
+        {"CCcc", 2},
+    };
     for (auto pr : smiles) {
       CHECK_THROWS_AS(SmilesToMol(pr.first), AtomKekulizeException);
       try {
@@ -381,7 +382,9 @@ TEST_CASE("Specialized exceptions for sanitization errors", "[molops]") {
   }
   SECTION("KekulizeException") {
     std::vector<std::pair<std::string, std::vector<unsigned int>>> smiles = {
-        {"c1cccc1", {0, 1, 2, 3, 4}}, {"Cc1cc1", {1, 2, 3}}};
+        {"c1cccc1", {0, 1, 2, 3, 4}},
+        {"Cc1cc1", {1, 2, 3}},
+        {"C1:c:CC1", {0, 1, 2}}};
     for (auto pr : smiles) {
       CHECK_THROWS_AS(SmilesToMol(pr.first), KekulizeException);
       try {
@@ -2458,5 +2461,34 @@ TEST_CASE("Github #4535: operator<< for AtomPDBResidue", "[PDB]") {
 22  OXT TYR A 2
 )FOO";
     CHECK(oss.str() == tgt);
+  }
+}
+
+TEST_CASE("isAromaticAtom") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("C:C:C", ps));
+    REQUIRE(mol);
+    CHECK(!mol->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(mol->getBondWithIdx(0)->getIsAromatic());
+    CHECK(isAromaticAtom(*mol->getAtomWithIdx(0)));
+  }
+}
+
+TEST_CASE(
+    "Github #4785: aromatic bonds no longer set aromatic flags on atoms") {
+  SECTION("basics1") {
+    auto m = "C1:C:C:C:1"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "C1=CC=C1");
+  }
+  SECTION("basics2") {
+    auto m = "C1:C:C:C:C:C:1"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "c1ccccc1");
+  }
+  SECTION("can still get kekulization errors") {
+    CHECK_THROWS_AS(SmilesToMol("C1:C:C:C:C:1"), KekulizeException);
   }
 }

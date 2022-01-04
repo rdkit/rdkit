@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014-2021 David Cosgrove and Greg Landrum
+//  Copyright (C) 2014-2022 David Cosgrove and Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

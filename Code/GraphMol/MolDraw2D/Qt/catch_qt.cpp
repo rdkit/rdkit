@@ -48,6 +48,35 @@ TEST_CASE("basic generate PNGs", "[drawing][Qt]") {
   }
 }
 
+TEST_CASE("Github #4764") {
+  SECTION("basics") {
+    auto mol = "c1ccccc1-C1CCCCC1"_smiles;
+    REQUIRE(mol);
+    std::vector<int> highlights{6, 7, 8, 9, 10, 11};
+    {
+      QImage qimg(200, 150, QImage::Format_RGB32);
+      QPainter qpt(&qimg);
+      MolDraw2DQt drawer(qimg.width(), qimg.height(), &qpt);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      qimg.save("testGithub4764.qt.sz1.png");
+    }
+    {
+      QImage qimg(400, 350, QImage::Format_RGB32);
+      QPainter qpt(&qimg);
+      MolDraw2DQt drawer(qimg.width(), qimg.height(), &qpt);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      qimg.save("testGithub4764.qt.sz2.png");
+    }
+    {
+      QImage qimg(800, 700, QImage::Format_RGB32);
+      QPainter qpt(&qimg);
+      MolDraw2DQt drawer(qimg.width(), qimg.height(), &qpt);
+      drawer.drawMolecule(*mol, "highlight", &highlights);
+      qimg.save("testGithub4764.qt.sz3.png");
+    }
+  }
+}
+
 int main(int argc, char* argv[]) {
   QGuiApplication app(argc, argv);
 
