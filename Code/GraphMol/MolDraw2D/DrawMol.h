@@ -70,7 +70,7 @@ class DrawMol {
           const std::vector<std::pair<DrawColour, DrawColour>> *bondColours =
               nullptr,
           const std::map<int, double> *highlight_radii = nullptr,
-          int confId = -1);
+          bool includeAnnotations = true, int confId = -1);
   DrawMol(const DrawMol &) = delete;
   DrawMol(const DrawMol &&) = delete;
   DrawMol &operator=(const DrawMol &) = delete;
@@ -96,7 +96,6 @@ class DrawMol {
   void findExtremes();
   void changeToDrawCoords();
   void draw(MolDraw2D &drawer) const;
-  void drawAllAnnotations(MolDraw2D &drawer) const;
   void drawRadicals(MolDraw2D &drawer) const;
   void resetEverything();
 
@@ -154,12 +153,15 @@ class DrawMol {
   const std::map<int, DrawColour> *highlightBondMap_;
   const std::vector<std::pair<DrawColour, DrawColour>> *bondColours_;
   const std::map<int, double> *highlightRadii_;
+  bool includeAnnotations_;
   std::string legend_;
 
   std::unique_ptr<RWMol> drawMol_;
   int confId_;
   std::vector<Point2D> atCds_;
   std::vector<std::unique_ptr<DrawShape>> bonds_;
+  std::vector<std::unique_ptr<DrawShape>> preShapes_;
+  std::vector<std::unique_ptr<DrawShape>> postShapes_;
   std::vector<int> atomicNums_;
   std::vector<std::pair<std::string, OrientType>> atomSyms_;
   std::vector<std::unique_ptr<AtomSymbol>> atomLabels_;

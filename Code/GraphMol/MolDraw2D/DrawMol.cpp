@@ -19,6 +19,8 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
+#include <GraphMol/FileParsers/FileParserUtils.h>
+#include <GraphMol/FileParsers/MolSGroupParsing.h>
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
@@ -39,7 +41,7 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
                  const std::map<int, DrawColour> *highlight_bond_map,
                  const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours,
                  const std::map<int, double> *highlight_radii,
-                 int confId)
+                 bool includeAnnotations, int confId)
     : legend_(legend),
       drawOptions_(drawOptions),
       textDrawer_(textDrawer),
@@ -49,6 +51,7 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
       highlightBondMap_(highlight_bond_map),
       bondColours_(bond_colours),
       highlightRadii_(highlight_radii),
+      includeAnnotations_(includeAnnotations),
       confId_(confId),
       width_(width),
       height_(height),
@@ -133,6 +136,9 @@ void DrawMol::extractAll() {
   extractAtomNotes();
   extractBondNotes();
   extractRadicals();
+  extractSGroupData();
+  extractVariableBonds();
+  extractBrackets();
 }
 
 // ****************************************************************************
@@ -340,6 +346,274 @@ void DrawMol::extractRadicals() {
 }
 
 // ****************************************************************************
+void DrawMol::extractSGroupData() {
+  if (!includeAnnotations_) {
+    return;
+  }
+  auto &sgs = getSubstanceGroups(*drawMol_);
+  if (sgs.empty()) {
+    return;
+  }
+
+  // details of this transformation are in extractAtomCoords
+  double rot = -drawOptions_.rotate * M_PI / 180.0;
+  RDGeom::Transform2D tform;
+  tform.SetTransform(Point2D(0.0, 0.0), rot);
+
+  for (const auto &sg : sgs) {
+    std::string typ;
+    if (sg.getPropIfPresent("TYPE", typ) && typ == "DAT") {
+      std::string text;
+      // it seems like we should be rendering FIELDNAME, but
+      // Marvin Sketch, Biovia Draw, and ChemDraw don't do it
+      // if (sg.getPropIfPresent("FIELDNAME", text)) {
+      //   text += "=";
+      // };
+      if (sg.hasProp("DATAFIELDS")) {
+        STR_VECT dfs = sg.getProp<STR_VECT>("DATAFIELDS");
+        for (const auto &df : dfs) {
+          text += df + "|";
+        }
+        text.pop_back();
+      }
+      if (text.empty()) {
+        continue;
+      }
+      int atomIdx = -1;
+      if (!sg.getAtoms().empty()) {
+        atomIdx = sg.getAtoms()[0];
+      };
+      bool located = false;
+      std::string fieldDisp;
+      Point2D origLoc(0.0, 0.0);
+      if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
+        double xp = FileParserUtils::stripSpacesAndCast<double>(
+            fieldDisp.substr(0, 10));
+        double yp = FileParserUtils::stripSpacesAndCast<double>(
+            fieldDisp.substr(10, 10));
+        Point2D origLoc = Point2D{xp, yp};
+
+        if (fieldDisp[25] == 'R') {
+          if (atomIdx < 0) {
+            // we will warn about this below
+            text = "";
+          } else if (fabs(xp) > 1e-3 || fabs(yp) > 1e-3) {
+            origLoc += drawMol_->getConformer().getAtomPos(atomIdx);
+            located = true;
+          }
+        } else {
+          if (drawMol_->hasProp("_centroidx")) {
+            Point2D centroid;
+            drawMol_->getProp("_centroidx", centroid.x);
+            drawMol_->getProp("_centroidy", centroid.y);
+            origLoc += centroid;
+          }
+          located = true;
+        }
+        tform.TransformPoint(origLoc);
+      }
+
+      if (!text.empty()) {
+        // looks like everybody renders these left justified
+        DrawAnnotation *annot = new DrawAnnotation(
+            text, TextAlignType::START, "note", drawOptions_.annotationFontScale,
+            Point2D(0.0, 0.0), drawOptions_.annotationColour, textDrawer_);
+        if (!located) {
+          if (atomIdx >= 0 && !text.empty()) {
+            calcAnnotationPosition(drawMol_->getAtomWithIdx(atomIdx), *annot);
+          }
+        } else {
+          annot->pos_ = origLoc;
+        }
+        annotations_.emplace_back(annot);
+      } else {
+        BOOST_LOG(rdWarningLog)
+            << "FIELDDISP info not found for DAT SGroup which isn't "
+               "associated with an atom. SGroup will not be rendered."
+            << std::endl;
+      }
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractVariableBonds() {
+  boost::dynamic_bitset<> atomsInvolved(drawMol_->getNumAtoms());
+  for (const auto bond : drawMol_->bonds()) {
+    std::string endpts;
+    std::string attach;
+    if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts) &&
+        bond->getPropIfPresent(common_properties::_MolFileBondAttach, attach)) {
+      // FIX: maybe distinguish between "ANY" and "ALL" values of attach here?
+      std::vector<unsigned int> oats =
+          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+      atomsInvolved.reset();
+      // decrement the indices and do error checking:
+      for (auto &oat : oats) {
+        if (oat == 0 || oat > drawMol_->getNumAtoms()) {
+          throw ValueErrorException("Bad variation point index");
+        }
+        --oat;
+        atomsInvolved.set(oat);
+        auto center = atCds_[oat];
+        Point2D offset{drawOptions_.variableAtomRadius,
+                       drawOptions_.variableAtomRadius};
+        std::vector<Point2D> points{center + offset, center - offset};
+        DrawShapeEllipse *ell = new DrawShapeEllipse(
+            points, 1, true, drawOptions_.variableAttachmentColour, true, oat);
+        preShapes_.emplace_back(std::unique_ptr<DrawShape>(ell));
+      }
+
+      for (const auto bond : drawMol_->bonds()) {
+        if (atomsInvolved[bond->getBeginAtomIdx()] &&
+            atomsInvolved[bond->getEndAtomIdx()]) {
+          std::vector<Point2D> points{atCds_[bond->getBeginAtomIdx()],
+                                      atCds_[bond->getEndAtomIdx()]};
+          DrawShapeSimpleLine *sl = new DrawShapeSimpleLine(
+              points, drawOptions_.variableBondWidthMultiplier, true,
+              drawOptions_.variableAttachmentColour, bond->getBeginAtomIdx(),
+              bond->getEndAtomIdx(), bond->getIdx());
+          preShapes_.emplace_back(std::unique_ptr<DrawShape>(sl));
+        }
+      }
+      // correct the symbol of the end atom (remove the *):
+      if (!bond->getBeginAtom()->getAtomicNum()) {
+        atomSyms_[bond->getBeginAtomIdx()] =
+            std::make_pair("", OrientType::C);
+        atomLabels_[bond->getBeginAtomIdx()].reset();
+      }
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractBrackets() {
+  auto &sgs = getSubstanceGroups(*drawMol_);
+  if (sgs.empty()) {
+    return;
+  }
+  // details of this transformation are in extractAtomCoords
+  double rot = -drawOptions_.rotate * M_PI / 180.0;
+  RDGeom::Transform2D trans;
+  trans.SetTransform(Point2D(0.0, 0.0), rot);
+  for (auto &sg : sgs) {
+    if (sg.getBrackets().empty()) {
+      continue;
+    }
+    // figure out the location of the reference point we'll use to figure out
+    // which direction the bracket points
+    // Thanks to John Mayfield for the thoughts on the best way to do this:
+    //   http://efficientbits.blogspot.com/2015/11/bringing-molfile-sgroups-to-cdk.html
+    Point2D refPt{0., 0.};
+
+    if (!sg.getAtoms().empty()) {
+      // use the average position of the atoms in the sgroup
+      for (auto aidx : sg.getAtoms()) {
+        refPt += atCds_[aidx];
+      }
+      refPt /= sg.getAtoms().size();
+    }
+
+    std::vector<std::pair<Point2D, Point2D>> sgBondSegments;
+    int numBrackets = 0;
+    for (auto bndIdx : sg.getBonds()) {
+      ++numBrackets;
+      const auto bnd = drawMol_->getBondWithIdx(bndIdx);
+      if (std::find(sg.getAtoms().begin(), sg.getAtoms().end(),
+                    bnd->getBeginAtomIdx()) != sg.getAtoms().end()) {
+        sgBondSegments.push_back(
+            std::make_pair(atCds_[bnd->getBeginAtomIdx()],
+                           atCds_[bnd->getEndAtomIdx()]));
+
+      } else if (std::find(sg.getAtoms().begin(), sg.getAtoms().end(),
+                           bnd->getEndAtomIdx()) != sg.getAtoms().end()) {
+        sgBondSegments.push_back(
+            std::make_pair(atCds_[bnd->getEndAtomIdx()],
+                           atCds_[bnd->getBeginAtomIdx()]));
+      }
+    }
+    for (const auto &brk : sg.getBrackets()) {
+      // the atom coords have been inverted in y, so the bracket coords
+      // must be, too.
+      Point2D p1{brk[0].x, -brk[0].y};
+      Point2D p2{brk[1].x, -brk[1].y};
+      trans.TransformPoint(p1);
+      trans.TransformPoint(p2);
+      auto points =
+          MolDraw2D_detail::getBracketPoints(p1, p2, refPt, sgBondSegments);
+      DrawShapePolyLine *pl =
+          new DrawShapePolyLine(points, drawOptions_.bondLineWidth, false,
+                                DrawColour(0.0, 1.0, 1.0), false);
+      postShapes_.emplace_back(std::unique_ptr<DrawShape>(pl));
+    }
+    if (includeAnnotations_) {
+      // Find the bottom-most or right-most bracket.  First work out if the
+      // bracket is largely horizontal or largely vertical.
+      const auto &brkShp = *postShapes_.back();
+      Point2D longline = brkShp.points_[1] - brkShp.points_[2];
+      longline.normalize();
+      static const double cos45 = 1.0 / sqrt(2.0);
+      bool horizontal = fabs(longline.x) > cos45 ? true : false;
+      size_t labelBrk = postShapes_.size() - 1;
+      for (size_t i = 1; i < numBrackets; ++i) {
+        const auto &brkShp = *postShapes_[postShapes_.size()-i-1];
+        if (horizontal) {
+          if (brkShp.points_[2].y > postShapes_[labelBrk]->points_[2].y) {
+            labelBrk = postShapes_.size()-i-1;
+          }
+        } else {
+          if (brkShp.points_[2].x > postShapes_[labelBrk]->points_[2].x) {
+            labelBrk = postShapes_.size()-i-1;
+          }
+        }
+      }
+      std::string connect;
+      if (sg.getPropIfPresent("CONNECT", connect)) {
+        // annotations go on the last bracket of an sgroup
+        const auto &brkShp = *postShapes_[labelBrk];
+        // CONNECT goes at the top, but that's now the bottom due to the y
+        // inversion
+        auto botPt = brkShp.points_[2];
+        auto brkPt = brkShp.points_[3];
+        if ((!horizontal && brkShp.points_[1].y < botPt.y) ||
+            (horizontal && brkShp.points_[1].x > botPt.x)) {
+          botPt = brkShp.points_[1];
+          brkPt = brkShp.points_[0];
+        }
+        DrawAnnotation *da = new DrawAnnotation(
+            connect, TextAlignType::MIDDLE, "connect",
+            drawOptions_.annotationFontScale, botPt + (botPt - brkPt),
+            DrawColour(0.0, 1.0, 0.0), textDrawer_);
+        // if we're to the right of the bracket, we need to left justify,
+        // otherwise things seem to work as is
+        if (brkPt.x < botPt.x) {
+          da->align_ = TextAlignType::START;
+        }
+        annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
+      }
+      std::string label;
+      if (sg.getPropIfPresent("LABEL", label)) {
+        // annotations go on the last bracket of an sgroup
+        const auto &brkShp = *postShapes_[labelBrk];
+        // LABEL goes at the bottom which is now the top
+        auto topPt = brkShp.points_[1];
+        auto brkPt = brkShp.points_[0];
+        if ((!horizontal && brkShp.points_[2].y > topPt.y) ||
+            (horizontal && brkShp.points_[2].x < topPt.x)) {
+          topPt = brkShp.points_[2];
+          brkPt = brkShp.points_[3];
+        }
+        DrawAnnotation *da = new DrawAnnotation(
+            label, TextAlignType::MIDDLE, "connect",
+            drawOptions_.annotationFontScale, topPt + (topPt - brkPt),
+            DrawColour(1.0, 0.0, 0.0), textDrawer_);
+        annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
+      }
+    }
+  }
+}
+
+// ****************************************************************************
 void DrawMol::calculateScale() {
   findExtremes();
 
@@ -405,6 +679,9 @@ void DrawMol::calculateScale() {
 
 // ****************************************************************************
 void DrawMol::findExtremes() {
+  for (auto &ps : preShapes_) {
+    ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  }
   for (auto &bond : bonds_) {
     bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
@@ -416,10 +693,15 @@ void DrawMol::findExtremes() {
   for (auto &hl : highlights_) {
     hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
-  for (auto const &a : annotations_) {
-    a->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  if (includeAnnotations_) {
+    for (auto const &a : annotations_) {
+      a->findExtremes(xMin_, xMax_, yMin_, yMax_);
+    }
   }
   findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
+  for (auto &ps : postShapes_) {
+    ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
+  }
 
   // calculate the x and y spans
   xRange_ = xMax_ - xMin_;
@@ -450,6 +732,11 @@ void DrawMol::changeToDrawCoords() {
   int drawHeight = height_ - legendHeight_;
   Point2D toCentre((width_ - scaledRanges.x) / 2.0,
                    (drawHeight - scaledRanges.y) / 2.0);
+  for (auto &ps : preShapes_) {
+    ps->move(trans);
+    ps->scale(scale);
+    ps->move(toCentre);
+  }
   for (auto &bond : bonds_) {
     bond->move(trans);
     bond->scale(scale);
@@ -478,6 +765,11 @@ void DrawMol::changeToDrawCoords() {
     rad.first.trans_.y *= scale.y;
     rad.first.trans_ += toCentre;
   }
+  for (auto &ps : postShapes_) {
+    ps->move(trans);
+    ps->scale(scale);
+    ps->move(toCentre);
+  }
 }
 
 // ****************************************************************************
@@ -486,6 +778,9 @@ void DrawMol::draw(MolDraw2D &drawer) const {
                "you must call createDrawingObjects before calling draw")
   auto keepScale = drawer.scale();
   drawer.setScale(scale_);
+  for(auto &ps : preShapes_) {
+    ps->draw(drawer);
+  }
   for (auto &hl : highlights_) {
     hl->draw(drawer);
   }
@@ -497,28 +792,19 @@ void DrawMol::draw(MolDraw2D &drawer) const {
       label->draw(drawer);
     }
   }
-  for (auto &annot : annotations_) {
-    annot->draw(drawer);
+  if (includeAnnotations_) {
+    for (auto &annot : annotations_) {
+      annot->draw(drawer);
+    }
   }
   drawRadicals(drawer);
+  for(auto &ps : postShapes_) {
+    ps->draw(drawer);
+  }
   for (auto &leg : legends_) {
     leg->draw(drawer);
   }
   drawer.setScale(scale_);
-}
-
-// ****************************************************************************
-void DrawMol::drawAllAnnotations(MolDraw2D &drawer) const {
-  std::string currActClass = drawer.getActiveClass();
-  if (currActClass.empty()) {
-    drawer.setActiveClass("note");
-  } else {
-    drawer.setActiveClass(currActClass + " note");
-  }
-  for (auto &annot : annotations_) {
-    annot->draw(drawer);
-  }
-  drawer.setActiveClass(currActClass);
 }
 
 // ****************************************************************************
@@ -624,6 +910,8 @@ void DrawMol::resetEverything() {
   legendHeight_ = 1.0;
   atCds_.clear();
   bonds_.clear();
+  preShapes_.clear();
+  postShapes_.clear();
   atomicNums_.clear();
   atomSyms_.clear();
   atomLabels_.clear();

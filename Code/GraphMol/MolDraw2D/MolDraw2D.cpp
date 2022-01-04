@@ -342,7 +342,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
   DrawMol *draw_mol = new DrawMol(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
-      nullptr, highlight_radii, confId);
+      nullptr, highlight_radii, supportsAnnotations(), confId);
   draw_mol->createDrawObjects();
   draw_mols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
   startDrawing();
