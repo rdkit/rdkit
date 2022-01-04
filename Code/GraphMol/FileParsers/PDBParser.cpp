@@ -770,14 +770,12 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
       continue;
     }
 
-    Atom *a = nullptr;
-
     std::string tmp = tokens[name2column[TYPE_SYMBOL]];
     // BR -> Br etc
     for (unsigned int i=1; i<tmp.length(); ++i) {
       tmp[i] = tolower(tmp[i]);
     }
-    a = PDBAtomFromSymbol(tmp.c_str());
+    auto a = PDBAtomFromSymbol(tmp.c_str());
 
     if (!a) {
       std::ostringstream errout;
@@ -1011,7 +1009,10 @@ void parseMMCifFile(RWMol *&mol,
     }
 
     // slurp all rows from atom_site section
-    parseMmcifAtoms(ifs, name2column, mol, flavor);
+    {
+      Utils::LocaleSwitcher ls;
+      parseMmcifAtoms(ifs, name2column, mol, flavor);
+    }
   }
   if (!mol) {
     return;
