@@ -107,7 +107,6 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
    >>> print(', '.join(['%.3f'%x for x in bm[:,-1]]))
    1.166, 1.166, 1.166, 0.000
 
-
   """
   maxVal = -1000.0
   minVal = 1e8
@@ -128,7 +127,7 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
 
   replaceIdx = bounds.shape[0]
   bm = numpy.zeros((bounds.shape[0] + 1 + int(useDirs), bounds.shape[1] + 1 + int(useDirs)), dtype='float')
-  bm[0:bounds.shape[0], 0:bounds.shape[1]] = bounds
+  bm[:bounds.shape[0], :bounds.shape[1]] = bounds
   bm[:replaceIdx, replaceIdx] = 1000.
 
   if useDirs:
@@ -174,9 +173,9 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1, excludedVolumes
   nAts = mol.GetNumAtoms()
   weights = []
   if atomMatch:
-    for i in range(len(atomMatch)):
-      for j in range(i + 1, len(atomMatch)):
-        weights.append((i, j, weight))
+    atomMatchSize: int = len(atomMatch)
+    weights = [(i, j, weight) for i in range(atomMatchSize) for j in range(i + 1, atomMatchSize)]
+        
   if excludedVolumes:
     for vol in excludedVolumes:
       idx = vol.index
@@ -252,7 +251,7 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
     # set values to other excluded volumes:
     for j in range(bmIdx + 1, dim):
       res[bmIdx, j:dim] = 0
-      res[j:dim, bmIdx] = 1000
+      res[j:dim, bmIdx] = 1000.0
 
   if smoothIt:
     DG.DoTriangleSmoothing(res)
@@ -306,8 +305,7 @@ def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False, dirLength=
   replaceMap = {}
   for i, matchI in enumerate(atomMatch):
     if len(matchI) > 1:
-      bm, replaceIdx = ReplaceGroup(matchI, bm, useDirs=useDirs)
-      replaceMap[i] = replaceIdx
+      bm, replaceMap[i] = ReplaceGroup(matchI, bm, useDirs=useDirs)
 
   for i, matchI in enumerate(atomMatch):
     mi = replaceMap.get(i, matchI[0])
@@ -384,15 +382,13 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
   if smoothFirst:
     DG.DoTriangleSmoothing(bounds)
 
-  bm = bounds.copy()
   # print '------------'
   # print 'initial'
   # for row in bm:
   #  print ' ',' '.join(['% 4.2f'%x for x in row])
   # print '------------'
 
-  bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=useDirs, mol=mol)
-
+  bm = UpdatePharmacophoreBounds(bounds.copy(), atomMatch, pcophore, useDirs=useDirs, mol=mol)
   if excludedVolumes:
     bm = AddExcludedVolumes(bm, excludedVolumes, smoothIt=False)
 
@@ -410,15 +406,11 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
   nFailed = 0
   res = []
   for i in range(count):
-    tmpM = bm[:, :]
     m2 = Chem.Mol(mol)
     t1 = _GetTime_()
     try:
-      if randomSeed <= 0:
-        seed = i * 10 + 1
-      else:
-        seed = i * 10 + randomSeed
-      EmbedMol(m2, tmpM, atomMatch, randomSeed=seed, excludedVolumes=excludedVolumes)
+      seed = (i * 10 + randomSeed) if randomSeed > 0 else (i * 10 + 1)
+      EmbedMol(m2, bm.copy(), atomMatch, randomSeed=seed, excludedVolumes=excludedVolumes)
     except ValueError:
       if not silent:
         logger.info('Embed failed')
@@ -460,7 +452,7 @@ def isNaN(v):
   """
   if v != v and sys.platform == 'win32':
     return True
-  elif v == 0 and v == 1 and sys.platform != 'win32':
+  elif v == 0 and v == 1 and sys.platform != 'win32': # Unable to reach
     return True
   return False
 
@@ -492,14 +484,14 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     >>> pcophore.setLowerBound(0,1, 2.5)
     >>> pcophore.setUpperBound(0,1, 2.8)
     >>> atomMatch = ((0,),(3,))
-    >>> bm,embeds,nFail = EmbedPharmacophore(m,atomMatch,pcophore,randomSeed=23,silent=1)
+    >>> bm, embeds, nFail = EmbedPharmacophore(m,atomMatch,pcophore,randomSeed=23,silent=1)
     >>> len(embeds)
     10
     >>> testM = embeds[0]
 
     Do the optimization:
 
-    >>> e1,e2 = OptimizeMol(testM,bm,atomMatches=atomMatch)
+    >>> e1, e2 = OptimizeMol(testM,bm,atomMatches=atomMatch)
 
     Optimizing should have lowered the energy:
 
@@ -543,18 +535,15 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     return -1.0, -1.0
 
   weights = []
-  if (atomMatches):
-    for k in range(len(atomMatches)):
-      for i in atomMatches[k]:
-        for l in range(k + 1, len(atomMatches)):
-          for j in atomMatches[l]:
-            weights.append((i, j))
+  if atomMatches:
+    weights = [(i, j) for k in range(len(atomMatches)) for i in atomMatches[k] 
+               for l in range(k + 1, len(atomMatches)) for j in atomMatches[l]]
+
   for i, j in weights:
     if j < i:
       i, j = j, i
-    minV = bm[j, i]
-    maxV = bm[i, j]
-    ff.AddDistanceConstraint(i, j, minV, maxV, forceConstant)
+    ff.AddDistanceConstraint(i, j, bm[j, i], bm[i, j], forceConstant) # i, j, minV, maxV, forceConstant
+    
   if excludedVolumes:
     nAts = mol.GetNumAtoms()
     conf = mol.GetConformer()
@@ -563,13 +552,17 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
       assert exVol.pos is not None
       logger.debug('ff.AddExtraPoint(%.4f,%.4f,%.4f)' % (exVol.pos[0], exVol.pos[1], exVol.pos[2]))
       ff.AddExtraPoint(exVol.pos[0], exVol.pos[1], exVol.pos[2], True)
+      
       indices = []
       for localIndices, _, _ in exVol.featInfo:
-        indices += list(localIndices)
+        indices.extend(list(localIndices))
+      indicesSet = set(indices)
+      del indices
+      
       for i in range(nAts):
         v = numpy.array(conf.GetAtomPosition(i)) - numpy.array(exVol.pos)
         d = numpy.sqrt(numpy.dot(v, v))
-        if i not in indices:
+        if i not in indicesSet:
           if d < 5.0:
             logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%d,%.0f)' %
                          (i, idx, exVol.exclusionDist, 1000, forceConstant))
@@ -580,26 +573,27 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
                        (i, idx, bm[exVol.index, i], bm[i, exVol.index], forceConstant))
           ff.AddDistanceConstraint(i, idx, bm[exVol.index, i], bm[i, exVol.index], forceConstant)
       idx += 1
+  
   ff.Initialize()
   e1 = ff.CalcEnergy()
   if isNaN(e1):
     raise ValueError('bogus energy')
-
   if verbose:
     print(Chem.MolToMolBlock(mol))
     for i, _ in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
       print('   % 7.4f   % 7.4f   % 7.4f As  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos),
             file=sys.stderr)
+      
   needsMore = ff.Minimize()
   nPasses = 0
   while needsMore and nPasses < maxPasses:
     needsMore = ff.Minimize()
     nPasses += 1
+  
   e2 = ff.CalcEnergy()
   if isNaN(e2):
     raise ValueError('bogus energy')
-
   if verbose:
     print('--------')
     print(Chem.MolToMolBlock(mol))
@@ -637,13 +631,8 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   atomMatch = [list(x.GetAtomIds()) for x in match]
   bm, ms, nFailed = EmbedPharmacophore(mol, atomMatch, pcophore, count=count, silent=silent,
                                        **kwargs)
-  e1s = []
-  e2s = []
-  e3s = []
-  e4s = []
-  d12s = []
-  d23s = []
-  d34s = []
+  e1s, e2s, e3s, e4s = [], [], [], []
+  d12s, d23s, d34s = [], [], []
   for m in ms:
     t1 = _GetTime_()
     try:
@@ -658,6 +647,7 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
       e2s.append(e2)
 
       d12s.append(e1 - e2)
+      
       t1 = _GetTime_()
       try:
         e3, e4 = OptimizeMol(m, bm)
@@ -674,24 +664,20 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   try:
     e1, e1d = Stats.MeanAndDev(e1s)
   except Exception:
-    e1 = -1.0
-    e1d = -1.0
+    e1, e1d = -1.0 -1.0
   try:
     e2, e2d = Stats.MeanAndDev(e2s)
   except Exception:
-    e2 = -1.0
-    e2d = -1.0
+    e2, e2d = -1.0, -1.0
   try:
     e3, e3d = Stats.MeanAndDev(e3s)
   except Exception:
-    e3 = -1.0
-    e3d = -1.0
+    e3, e3d = -1.0, -1.0
 
   try:
     e4, e4d = Stats.MeanAndDev(e4s)
   except Exception:
-    e4 = -1.0
-    e4d = -1.0
+    e4, e4d = -1.0, -1.0
   if not silent:
     print('%s(%d): %.2f(%.2f) -> %.2f(%.2f) : %.2f(%.2f) -> %.2f(%.2f)' %
           (name, nFailed, e1, e1d, e2, e2d, e3, e3d, e4, e4d))
@@ -863,14 +849,13 @@ def CombiEnum(sequence):
 
 
 def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
-  """ removes rows from a bounds matrix that are
-  that are greater than a threshold value away from a set of
-  other points
+  """ Removes rows from a bounds matrix that are that are greater 
+  than a threshold value away from a set of other points
 
-  returns the modfied bounds matrix
+  Returns the modfied bounds matrix
 
-  The goal of this function is to remove rows from the bounds matrix
-  that correspond to atoms that are likely to be quite far from
+  The goal of this function is to remove rows and cols from the bounds matrix 
+  that correspond to atoms (atomic index) that are likely to be quite far from
   the pharmacophore we're interested in. Because the bounds smoothing
   we eventually have to do is N^3, this can be a big win
 
@@ -905,6 +890,8 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    True
 
   """
+  """
+  OLD CODE: Deleted because it was too slow (If accept this pull request, delete this for me/IchiruTake)
   nPts = bm.shape[0]
   k = numpy.zeros(nPts, dtype=numpy.int0)
   for idx in indices:
@@ -920,6 +907,24 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
     row = bm[idx]
     bm2[i] = numpy.take(row, keep)
   return bm2
+  
+  """
+  nPts = bm.shape[0]
+  if len(indices) == 0:
+      return numpy.zeros(shape=tuple([0] * len(bm.shape)), dtype=bm.dtype)
+  elif len(indices) * 5 <= bm.shape[0] or bm.shape[0] <= 32:
+    indicesSet = list(indices) if not isinstance(indices, list) else indices
+  else:
+    indicesSet = list(set(indices))
+  k = numpy.zeros(nPts, dtype=numpy.uint8)
+  k[indicesSet] = 1
+  for idx in indicesSet:
+    k[numpy.nonzero(bm[idx, idx + 1:] < maxThresh)[0] + (idx + 1)] = 1
+  
+  keep = numpy.nonzero(k)[0]
+  if keep.shape[0] == nPts:
+    return bm.copy()
+  return bm[numpy.ix_(keep, keep)]
 
 
 def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
@@ -1034,9 +1039,9 @@ def Check2DBounds(atomMatch, mol, pcophore):
     >>> pcophore= Pharmacophore.Pharmacophore(activeFeats)
     >>> pcophore.setUpperBound2D(0,1,3)
     >>> m = Chem.MolFromSmiles('FCC(N)CN')
-    >>> Check2DBounds(((0,),(3,)),m,pcophore)
+    >>> Check2DBounds(((0,),(3,)), m, pcophore)
     True
-    >>> Check2DBounds(((0,),(5,)),m,pcophore)
+    >>> Check2DBounds(((0,),(5,)), m, pcophore)
     False
 
   """
@@ -1122,8 +1127,7 @@ def MatchPharmacophore(matches, bounds, pcophore, useDownsampling=False, use2DLi
 
   """
   for match, atomMatch in ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=use2DLimits):
-    bm = bounds.copy()
-    bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=useDirs, mol=mol)
+    bm = UpdatePharmacophoreBounds(bounds.copy(), atomMatch, pcophore, useDirs=useDirs, mol=mol)
 
     if excludedVolumes:
       localEvs = []
@@ -1169,12 +1173,12 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
       if verbose:
         print('  ..CoarseScreen: Pass')
 
-      bm = bounds.copy()
       if verbose:
         print('pre update:')
         for row in bm:
           print(' ', ' '.join(['% 4.2f' % x for x in row]))
-      bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore)
+          
+      bm = UpdatePharmacophoreBounds(bounds.copy(), atomMatch, pcophore)
       if verbose:
         print('pre downsample:')
         for row in bm:
@@ -1239,14 +1243,14 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'R'
-    >>> ComputeChiralVolume(mol,1)<0
+    >>> ComputeChiralVolume(mol,1) < 0
     True
 
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s-3.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'S'
-    >>> ComputeChiralVolume(mol,1)>0
+    >>> ComputeChiralVolume(mol,1) > 0
     True
 
 

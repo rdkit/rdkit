@@ -116,9 +116,9 @@ def ExplainPairScore(score,includeChirality=False):
   score = score >> codeSize
   code2 = score & codeMask
 
-  res = (Utils.ExplainAtomCode(code1,includeChirality=includeChirality),
+  res = (Utils.ExplainAtomCode(code1, includeChirality=includeChirality),
          dist,
-         Utils.ExplainAtomCode(code2,includeChirality=includeChirality))
+         Utils.ExplainAtomCode(code2, includeChirality=includeChirality))
   return res
 
 

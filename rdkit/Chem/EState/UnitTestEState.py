@@ -14,7 +14,6 @@ validation values are from the paper (JCICS _31_ 76-81 (1991))
 
 """
 
-
 import unittest
 
 from io import StringIO

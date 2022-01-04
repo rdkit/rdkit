@@ -20,8 +20,7 @@ faceMap = {'sans': os.path.join(RDConfig.RDCodeDir, 'Chem', 'Draw', 'FreeSans.tt
 
 
 def convertColor(color):
-  color = (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
-  return color
+  return int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)
 
 
 class Canvas(CanvasBase):

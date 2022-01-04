@@ -21,7 +21,6 @@ Sample Usage:
 
 """
 
-
 import getopt
 import sys
 

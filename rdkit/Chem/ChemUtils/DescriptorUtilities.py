@@ -22,9 +22,11 @@ def setDescriptorVersion(version='1.0.0'):
     return func
   return wrapper
 
+
 class VectorDescriptorNamespace(dict):
     def __init__(self, **kwargs):
         self.update(kwargs)
+
 
 class VectorDescriptorWrapper:
     """Wrap a function that returns a vector and make it seem like there

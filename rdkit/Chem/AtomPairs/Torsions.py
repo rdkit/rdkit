@@ -60,20 +60,15 @@ def pyScorePath(mol, path, size, atomCodes=None):
   """
   codes = [None] * size
   for i in range(size):
-    if i == 0 or i == (size - 1):
-      sub = 1
-    else:
-      sub = 2
+    sub = 1 if i in (0, size - 1) else 2
     if not atomCodes:
       codes[i] = Utils.GetAtomCode(mol.GetAtomWithIdx(path[i]), sub)
     else:
-      base = atomCodes[path[i]]
-      codes[i] = base - sub
+      codes[i] = atomCodes[path[i]] - sub
 
   # "canonicalize" the code vector:
-  beg = 0
-  end = len(codes) - 1
-  while (beg < end):
+  beg, end = 0, len(codes) - 1
+  while beg < end:
     if codes[beg] > codes[end]:
       codes.reverse()
       break
@@ -140,10 +135,7 @@ def ExplainPathScore(score, size=4):
   codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
   res = [None] * size
   for i in range(size):
-    if i == 0 or i == (size - 1):
-      sub = 1
-    else:
-      sub = 2
+    sub = 1 if i in (0, size - 1) else 2
     code = score & codeMask
     score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
     symb, nBranch, nPi = Utils.ExplainAtomCode(code)

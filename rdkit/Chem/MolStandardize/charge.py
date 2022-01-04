@@ -11,7 +11,6 @@ which attempts to neutralize ionized acids and bases on a molecule.
 :license: MIT, see LICENSE file for more details.
 """
 
-
 import copy
 import logging
 

@@ -136,9 +136,7 @@ def TypeAtoms(mol):
         res[idx] = [name]
       elif name not in res[idx]:
         res[idx].append(name)
+  
   for i, v in enumerate(res):
-    if v is not None:
-      res[i] = tuple(v)
-    else:
-      res[i] = ()
+    res[i] = tuple(v) if v is not None else tuple()
   return res

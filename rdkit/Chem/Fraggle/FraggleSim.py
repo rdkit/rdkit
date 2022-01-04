@@ -133,8 +133,9 @@ def select_fragments(fragments, ftype, hac):
       # needs to be greater 3 heavy atoms and greater than 40% of parent mol
       if isValidRingCut(fMol):
         result_hcount = fMol.GetNumAtoms()
-        if (result_hcount > 3) and (result_hcount > 0.4 * hac):
-          result = f
+        if result_hcount > 3:
+          if result_hcount > 0.4 * hac:
+            result = f
     return result
 
   if ftype == FTYPE_CYCLIC_ACYCLIC:
@@ -162,11 +163,10 @@ def select_fragments(fragments, ftype, hac):
 
     # appropriate fragmentation must have 2 components and needs to be greater than 60% of
     # parent mol
-    if len(result) == 2 and result_hcount > 0.6 * hac:
-      result = '.'.join(result)
-    else:
-      result = None
-    return result
+    if len(result) == 2:
+      if result_hcount > 0.6 * hac:
+        return '.'.join(result)
+    return None
 
   # This should never happen
   raise NotImplementedError('Invalid fragmentation type {0}'.format(ftype))

@@ -21,9 +21,8 @@ import math
 
 
 def cross(v1, v2):
-  res = numpy.array([v1[1] * v2[2] - v1[2] * v2[1], -v1[0] * v2[2] + v1[2] * v2[0],
-                     v1[0] * v2[1] - v1[1] * v2[0]], numpy.double)
-  return res
+  return numpy.array([v1[1] * v2[2] - v1[2] * v2[1], -v1[0] * v2[2] + v1[2] * v2[0],
+                     v1[0] * v2[1] - v1[1] * v2[0]], numpy.float64)
 
 
 def findNeighbors(atomId, adjMat):
@@ -99,11 +98,9 @@ def ArbAxisRotation(theta, ax, pt):
     tmp = numpy.dot(mat, pt)
     res = Geometry.Point3D(tmp[0], tmp[1], tmp[2])
   elif isinstance(pt, list) or isinstance(pt, tuple):
-    pts = pt
     res = []
-    for pt in pts:
-      pt = numpy.array((pt.x, pt.y, pt.z))
-      tmp = numpy.dot(mat, pt)
+    for p in pt:
+      tmp = numpy.dot(mat, numpy.array((p.x, p.y, p.z)))
       res.append(Geometry.Point3D(tmp[0], tmp[1], tmp[2]))
   else:
     res = None

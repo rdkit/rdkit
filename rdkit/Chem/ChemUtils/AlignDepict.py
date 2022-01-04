@@ -4,9 +4,6 @@
 #
 
 
-import argparse
-import sys
-
 from rdkit import Chem
 from rdkit import Geometry
 from rdkit.Chem import rdDepictor
@@ -34,7 +31,6 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
     coreMatch = list(range(core.GetNumAtoms(onlyExplicit=True)))
   
   match = mol.GetSubstructMatch(corePattern if corePattern else core) # One line if/else
-
   if not match:
     if not acceptFailure:
       raise ValueError('Substructure match with core not found.')
@@ -52,6 +48,8 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
 
 def initParser():
   """ Initialize the parser """
+  import sys
+  import argparse
   parser = argparse.ArgumentParser(description='Create aligned depiction')
   parser.add_argument('--pattern', '-p', metavar='SMARTS', default=None, dest='patt')
   parser.add_argument('--smiles', default=False, action='store_true', dest='useSmiles',

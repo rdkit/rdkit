@@ -228,7 +228,7 @@ class FeatMap(object):
     # replace placeholders:
     if self.scoreMode != FeatMapScoreMode.All:
       for elem in featsToFeatMapIdx:
-        if elem == [-1]:
+        if elem == [-1]: # Can be changed to elem[0] == -1
           elem.pop()
     return totScore
 

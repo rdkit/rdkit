@@ -50,13 +50,11 @@ def GetShapeShapeDistance(s1, s2, distMetric):
   if distMetric == SubshapeDistanceMetric.PROTRUDE:
     # print(s1.grid.GetOccupancyVect().GetTotalVal(),s2.grid.GetOccupancyVect().GetTotalVal())
     if s1.grid.GetOccupancyVect().GetTotalVal() < s2.grid.GetOccupancyVect().GetTotalVal():
-      d = Geometry.ProtrudeDistance(s1.grid, s2.grid)
+      return Geometry.ProtrudeDistance(s1.grid, s2.grid)
       # print(d)
-    else:
-      d = Geometry.ProtrudeDistance(s2.grid, s1.grid)
-  else:
-    d = Geometry.TanimotoDistance(s1.grid, s2.grid)
-  return d
+    return Geometry.ProtrudeDistance(s2.grid, s1.grid)
+  
+  return Geometry.TanimotoDistance(s1.grid, s2.grid)
 
 
 def ClusterAlignments(mol, alignments, builder, neighborTol=0.1,
@@ -70,9 +68,9 @@ def ClusterAlignments(mol, alignments, builder, neighborTol=0.1,
     for j in range(i):
       TransformMol(mol, alignments[j].transform, newConfId=tempConfId + 1)
       shapeJ = builder.GenerateSubshapeShape(mol, tempConfId + 1, addSkeleton=False)
-      d = GetShapeShapeDistance(shapeI, shapeJ, distMetric)
-      dists.append(d)
+      dists.append(GetShapeShapeDistance(shapeI, shapeJ, distMetric))
       mol.RemoveConformer(tempConfId + 1)
+      
     mol.RemoveConformer(tempConfId)
   clusts = Butina.ClusterData(dists, len(alignments), neighborTol, isDistData=True)
   return [alignments[x[0]] for x in clusts]
@@ -115,19 +113,20 @@ class SubshapeAligner(object):
     tgtLs = {}
     for i in range(len(tgtPts)):
       for j in range(i + 1, len(tgtPts)):
-        l2 = (tgtPts[i].location - tgtPts[j].location).LengthSq()
-        tgtLs[(i, j)] = l2
+        tgtLs[(i, j)] = (tgtPts[i].location - tgtPts[j].location).LengthSq() # l2
+        
     queryLs = {}
     for i in range(len(queryPts)):
       for j in range(i + 1, len(queryPts)):
-        l2 = (queryPts[i].location - queryPts[j].location).LengthSq()
-        queryLs[(i, j)] = l2
+        queryLs[(i, j)] = (queryPts[i].location - queryPts[j].location).LengthSq() # l2
+        
     compatEdges = {}
     tol2 = self.edgeTol * self.edgeTol
     for tk, tv in tgtLs.items():
       for qk, qv in queryLs.items():
         if abs(tv - qv) < tol2:
           compatEdges[(tk, qk)] = 1
+          
     seqNo = 0
     for tgtTri in _getAllTriangles(tgtPts, orderedTraversal=True):
       tgtLocs = [tgtPts[x].location for x in tgtTri]
@@ -316,11 +315,12 @@ class SubshapeAligner(object):
   def __call__(self, targetMol, target, queryMol, query, builder, tgtConf=-1, queryConf=-1,
                pruneStats=None):
     for alignment in self.GetTriangleMatches(target, query):
-      if (not self._checkMatchFeatures(target.skelPts, query.skelPts, alignment) and
-          builder.featFactory):
-        if pruneStats is not None:
-          pruneStats['features'] = pruneStats.get('features', 0) + 1
-        continue
+      if builder.featFactory:
+        if not self._checkMatchFeatures(target.skelPts, query.skelPts, alignment):
+          if pruneStats is not None:
+            pruneStats['features'] = pruneStats.get('features', 0) + 1
+          continue
+      
       if not self._checkMatchDirections(target.skelPts, query.skelPts, alignment):
         if pruneStats is not None:
           pruneStats['direction'] = pruneStats.get('direction', 0) + 1

@@ -42,8 +42,7 @@ def _readPattyDefs(fname=os.path.join(RDConfig.RDDataDir, 'SmartsLib', 'patty_ru
       mol = Chem.MolFromSmarts(tpl[0])
       if mol is None:
         continue
-      nm = tpl[1]
-      matchers.append((mol, nm))
+      matchers.append((mol, tpl[1])) # (mol, nm)
   return matchers
 
 
@@ -99,7 +98,7 @@ def GetBTFingerprint(mol, fpfn=GetTopologicalTorsionFingerprint):
     >>> fp = GetBTFingerprint(mol)
     >>> fp.GetTotalVal()
     2
-    >>> nze=fp.GetNonzeroElements()
+    >>> nze = fp.GetNonzeroElements()
     >>> sorted([(k,v) for k,v in nze.items()])
     [(538446850..., 1), (538446852..., 1)]
 

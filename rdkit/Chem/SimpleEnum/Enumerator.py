@@ -200,7 +200,7 @@ def EnumerateReaction(
 
 
   """
-  nWarn, nError, nReacts, nProds, reactantLabels = PreprocessReaction(reaction)
+  _, nError, nReacts, _, _ = PreprocessReaction(reaction)
   if nError:
     raise ValueError('bad reaction')
   if len(bbLists) != nReacts:

@@ -42,13 +42,14 @@ def GetDistanceMatrix(data, metric, isSimilarity=1):
   res = numpy.zeros((nPts * (nPts - 1) // 2), numpy.float)
   nSoFar = 0
   for col in range(1, nPts):
+    fp1 = data[col][1]
     for row in range(col):
-      fp1 = data[col][1]
       fp2 = data[row][1]
-      if fp1.GetNumBits() > fp2.GetNumBits():
-        fp1 = DataStructs.FoldFingerprint(fp1, fp1.GetNumBits() / fp2.GetNumBits())
-      elif fp2.GetNumBits() > fp1.GetNumBits():
-        fp2 = DataStructs.FoldFingerprint(fp2, fp2.GetNumBits() / fp1.GetNumBits())
+      nBits1, nBits2 = fp1.GetNumBits(), fp2.GetNumBits()
+      if nBits1 > nBits2:
+        fp1 = DataStructs.FoldFingerprint(fp1, nBits1 / nBits2)
+      elif nBits2 > nBits1:
+        fp2 = DataStructs.FoldFingerprint(fp2, nBits2 / nBits1)
       res[nSoFar] = metric(fp1, fp2) if not isSimilarity else 1. - metric(fp1, fp2)
       nSoFar += 1
   return res
