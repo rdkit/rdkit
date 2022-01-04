@@ -191,12 +191,9 @@ smartsGps = copy.deepcopy(reactionDefs)
 for gp in smartsGps:
     for j, defn in enumerate(gp):
         g1, g2, bnd = defn
-        r1 = environs['L' + g1]
-        r2 = environs['L' + g2]
-        g1 = re.sub('[a-z,A-Z]', '', g1)
-        g2 = re.sub('[a-z,A-Z]', '', g2)
-        sma = '[$(%s):1]%s;!@[$(%s):2]>>[%s*]-[*:1].[%s*]-[*:2]' % (r1, bnd, r2, g1, g2)
-        gp[j] = sma
+        r1, r2 = environs['L' + g1], environs['L' + g2]
+        g1, g2 = re.sub('[a-z,A-Z]', '', g1), re.sub('[a-z,A-Z]', '', g2)
+        gp[j] = '[$(%s):1]%s;!@[$(%s):2]>>[%s*]-[*:1].[%s*]-[*:2]' % (r1, bnd, r2, g1, g2)
 
 for gp in smartsGps:
     for defn in gp:
@@ -207,9 +204,7 @@ for gp in smartsGps:
             print(defn)
             raise
 
-environMatchers = {}
-for env, sma in environs.items():
-    environMatchers[env] = Chem.MolFromSmarts(sma)
+environMatchers = {env: Chem.MolFromSmarts(sma) for env, sma in environs.items()}
 
 bondMatchers = []
 for i, compats in enumerate(reactionDefs):
@@ -290,25 +285,24 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
     if randomizeOrder:
         random.shuffle(indices, random=random.random)
 
-    envMatches = {}
-    for env, patt in environMatchers.items():
-        envMatches[env] = mol.HasSubstructMatch(patt)
+    envMatches = {env: mol.HasSubstructMatch(patt) for env, patt in environMatchers.items()}
+
     for gpIdx in indices:
         if randomizeOrder:
-            compats = bondMatchers[gpIdx][:]
+            compats = bondMatchers[gpIdx].copy()
             random.shuffle(compats, random=random.random)
         else:
             compats = bondMatchers[gpIdx]
-        for i1, i2, bType, patt in compats:
+        for i1, i2, _, patt in compats:
             if not envMatches['L' + i1] or not envMatches['L' + i2]:
                 continue
             matches = mol.GetSubstructMatches(patt)
-            i1 = letter.sub('', i1)
-            i2 = letter.sub('', i2)
+            i1, i2 = letter.sub('', i1), letter.sub('', i2)
             for match in matches:
-                if match not in bondsDone and (match[1], match[0]) not in bondsDone:
-                    bondsDone.add(match)
-                    yield (((match[0], match[1]), (i1, i2)))
+                if match not in bondsDone:
+                    if (match[1], match[0]) not in bondsDone:
+                        bondsDone.add(match)
+                        yield (((match[0], match[1]), (i1, i2)))
 
 
 def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
@@ -351,6 +345,7 @@ def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
         if sanitize:
             Chem.SanitizeMol(res)
         return res
+    
     eMol = Chem.EditableMol(mol)
     nAts = mol.GetNumAtoms()
 
@@ -538,8 +533,7 @@ def BRICSBuild(fragments, onlyCompleteMols=True, seeds=None, uniquify=True, scra
         tempReactions = reverseReactions
         
     for seed in seeds:
-        seedIsR1 = False
-        seedIsR2 = False
+        seedIsR1, seedIsR2 = False, False
         nextSteps = []
         for rxn in tempReactions:
             if seed.HasSubstructMatch(rxn._matchers[0]):

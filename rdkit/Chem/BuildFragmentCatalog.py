@@ -63,7 +63,6 @@
 
 """
 
-
 import os
 import sys
 
@@ -169,15 +168,12 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
     suppl.reset()
     i = 1
     for mol in suppl:
-        if i and not i % reportFreq:
+        if not i % reportFreq: # Redundant as `if i` is always true in `if i and not i % reportFreq`
             message('Done %d.\n' % (i))
         if mol:
-            if not acts:
-                act = int(mol.GetProp(actName))
-            else:
-                act = acts[i - 1]
-            fp = fpgen.GetFPForMol(mol, catalog)
-            obls.append([x for x in fp.GetOnBits()])
+            act = int(mol.GetProp(actName)) if not acts else acts[i - 1]
+            fp_OnBits = fpgen.GetFPForMol(mol, catalog).GetOnBits()
+            obls.append([x for x in fp_OnBits])
             for j in range(nBits):
                 resTbl[j, 0, act] += 1
             for id_ in obls[i - 1]:
@@ -277,7 +273,7 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
                 raise KeyError(actName)
         else:
             act = acts[i]
-        if i and not i % reportFreq:
+        if i != 0 and not i % reportFreq:
             if nMols > 0:
                 message('Done %d of %d.\n' % (i, nMols))
             else:
@@ -321,13 +317,12 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
                 raise KeyError(actName)
         else:
             act = acts[i]
-        if i and not i % reportFreq:
+        if i != 0 and not i % reportFreq:
             if nMols > 0:
                 message('Done %d of %d.\n' % (i, nMols))
             else:
                 message('Done %d.\n' % (i))
-        fp = fps[i]
-        ranker.AccumulateVotes(fp, act)
+        ranker.AccumulateVotes(fps[i], act)
     gains = ranker.GetTopN(topN)
     return gains
 

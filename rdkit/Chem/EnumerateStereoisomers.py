@@ -298,7 +298,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     yield tm
     return
 
-  if (options.maxIsomers == 0 or 2**nCenters <= options.maxIsomers):
+  if options.maxIsomers == 0 or 2**nCenters <= options.maxIsomers:
     bitsource = _RangeBitsGenerator(nCenters)
   else:
     if options.rand is None:

@@ -77,7 +77,7 @@ def _pyHallKierAlpha(m):
     alphaV = hallKierAlphas.get(symb, None)
     if alphaV is not None:
       hyb = atom.GetHybridization() - 2
-      if (hyb < len(alphaV)):
+      if hyb < len(alphaV):
         alpha = alphaV[hyb]
         if alpha is None:
           alpha = alphaV[-1]

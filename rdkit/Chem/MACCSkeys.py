@@ -264,16 +264,16 @@ def _pyGenMACCSKeys(mol, **kwargs):
   ctor = kwargs.get('ctor', DataStructs.SparseBitVect)
 
   res = ctor(len(maccsKeys) + 1)
-  for i, (patt, count) in enumerate(maccsKeys):
+  for i, (patt, count) in enumerate(maccsKeys, start=1):
     if patt is not None:
       if count == 0:
-        res[i + 1] = mol.HasSubstructMatch(patt)
+        res[i] = mol.HasSubstructMatch(patt)
       else:
         matches = mol.GetSubstructMatches(patt)
         if len(matches) > count:
-          res[i + 1] = 1
+          res[i] = 1
           
-    elif i + 1 == 125:
+    elif i == 125:
       # special case: num aromatic rings > 1
       ri = mol.GetRingInfo()
       nArom = 0
@@ -286,11 +286,8 @@ def _pyGenMACCSKeys(mol, **kwargs):
             res[125] = 1
             break
           
-    elif i + 1 == 166:
-      res[166] = 0
-      # special case: num frags > 1
-      if len(Chem.GetMolFrags(mol)) > 1:
-        res[166] = 1
+    elif i == 166:
+      res[166] = int(len(Chem.GetMolFrags(mol)) > 1) # special case: num frags > 1
 
   return res
 

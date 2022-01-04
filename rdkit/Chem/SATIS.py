@@ -11,7 +11,6 @@
 
 """
 
-
 import itertools
 
 from rdkit import Chem
@@ -64,7 +63,6 @@ def SATISTypes(mol, neighborsToInclude=4):
   codes = [None] * nAtoms
   for i, atom in enumerate(atoms):
     code = [99] * (neighborsToInclude + 1)
-
     # Atom
     code[0] = min(atom.GetAtomicNum(), 99)
 

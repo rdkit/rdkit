@@ -7,7 +7,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import sys
+
 from rdkit import Chem
 
 import warnings

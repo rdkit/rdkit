@@ -209,8 +209,8 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False)
 
     >>> from rdkit import Chem
     >>> from rdkit.Chem import AllChem
-    >>> s1=[Chem.MolFromSmiles(x) for x in ('NC','NCC')]
-    >>> s2=[Chem.MolFromSmiles(x) for x in ('OC=O','OC(=O)C')]
+    >>> s1 = [Chem.MolFromSmiles(x) for x in ('NC','NCC')]
+    >>> s2 = [Chem.MolFromSmiles(x) for x in ('OC=O','OC(=O)C')]
     >>> rxn = AllChem.ReactionFromSmarts('[O:2]=[C:1][OH].[N:3]>>[O:2]=[C:1][N:3]')
     >>> r = AllChem.EnumerateLibraryFromReaction(rxn,[s2,s1])
     >>> [Chem.MolToSmiles(x[0]) for x in list(r)]
