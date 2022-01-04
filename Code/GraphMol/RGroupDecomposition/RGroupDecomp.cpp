@@ -89,6 +89,12 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   const bool addCoords = true;
   MolOps::addHs(mol, explicitOnly, addCoords);
 
+  // mark any wildcards in inout molecule:
+  for (auto &atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      atom->setIsotope(1000U);
+    }
+  }
   int core_idx = 0;
   const RCore *rcore = nullptr;
   std::vector<MatchVectType> tmatches;
@@ -275,17 +281,22 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             unsigned int index =
                 at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
-            int rlabel;
-            auto coreAtom = rcore->core->getAtomWithIdx(index);
-            coreAtomAnyMatched.insert(index);
-            if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
-              std::vector<int> rlabelsOnSideChain;
-              at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
-              rlabelsOnSideChain.push_back(rlabel);
-              at->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChain);
+            if (index < 1000U) {
+              int rlabel;
+              auto coreAtom = rcore->core->getAtomWithIdx(index);
+              coreAtomAnyMatched.insert(index);
+              if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
+                std::vector<int> rlabelsOnSideChain;
+                at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
+                rlabelsOnSideChain.push_back(rlabel);
+                at->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChain);
 
-              data->labels.insert(rlabel);  // keep track of all labels used
-              attachments.push_back(rlabel);
+                data->labels.insert(rlabel);  // keep track of all labels used
+                attachments.push_back(rlabel);
+              }
+            }
+            else {
+              at->setIsotope(0);
             }
           }
         }
