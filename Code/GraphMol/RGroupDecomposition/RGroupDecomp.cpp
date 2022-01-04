@@ -89,7 +89,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   const bool addCoords = true;
   MolOps::addHs(mol, explicitOnly, addCoords);
 
-  // mark any wildcards in inout molecule:
+  // mark any wildcards in input molecule:
   for (auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
       atom->setIsotope(1000U);
@@ -296,6 +296,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               }
             }
             else {
+              // restore input wildcard
               at->setIsotope(0);
             }
           }
