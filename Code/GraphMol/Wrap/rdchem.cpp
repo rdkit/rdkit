@@ -49,10 +49,11 @@ void wrap_molbundle();
 void wrap_sgroup();
 void wrap_chirality();
 
-struct PySysErrWrite : std::ostream, std::streambuf {
+// std::ostream wrapper around Python's stderr stream
+struct PyErrStream : std::ostream, std::streambuf {
   std::string prefix;
 
-  PySysErrWrite(std::string prefix)
+  PyErrStream(std::string prefix)
       : std::ostream(this), prefix(std::move(prefix)) {}
 
   int overflow(int c) override {
@@ -68,7 +69,7 @@ struct PySysErrWrite : std::ostream, std::streambuf {
       // Python IO is not thread safe, so grab the GIL
       {
         PyGILStateHolder h;
-        PySys_WriteStderr("%s", (prefix + buffer).c_str());
+        PySys_WriteStderr("%s%s", prefix.c_str(), buffer.c_str());
       }
       buffer.clear();
     }
@@ -78,16 +79,88 @@ struct PySysErrWrite : std::ostream, std::streambuf {
   void write(char c) {
     buffer += c;
     if (c == '\n') {
-      PySys_WriteStderr("%s", (prefix + buffer).c_str());
+      PySys_WriteStderr("%s%s", prefix.c_str(), buffer.c_str());
       buffer.clear();
     }
   }
 #endif
 };
 
-void RDLogError(const std::string &msg) {
+// std::ostream wrapper around Python's logging module
+struct PyLogStream : std::ostream, std::streambuf {
+  PyObject *logfn = nullptr;
+#ifdef RDK_THREADSAFE_SSS
+  static thread_local std::string buffer;
+#else
+  std::string buffer = "";
+#endif
+
+  PyLogStream(std::string level): std::ostream(this) {
+    PyObject *module = PyImport_ImportModule("logging");
+    PyObject *logger = nullptr;
+
+    if (module != nullptr) {
+      logger = PyObject_CallMethod(module, "getLogger", "s", "rdkit");
+      Py_DECREF(module);
+    }
+
+    if (logger != nullptr) {
+      logfn = PyObject_GetAttrString(logger, level.c_str());
+      Py_DECREF(logger);
+    }
+
+    if (PyErr_Occurred()) {
+      PyErr_Print();
+    }
+  }
+
+  ~PyLogStream() {
+    if (!_Py_IsFinalizing()) {
+      Py_XDECREF(logfn);
+    }
+  }
+
+  int overflow(int c) override {
+    write(c);
+    return 0;
+  }
+
+  void write(char c) {
+    if (logfn == nullptr) {
+      return;
+    }
+
+    if (c == '\n') {
+      PyObject *message = PyUnicode_FromString(buffer.c_str());
+      if (message != nullptr) {
+#ifdef RDK_THREADSAFE_SSS
+        PyGILStateHolder h;
+#endif
+        PyObject *result = PyObject_CallOneArg(logfn, message);
+        Py_XDECREF(result);
+        Py_DECREF(message);
+      }
+
+      buffer.clear();
+    }
+    else {
+      buffer += c;
+    }
+  }
+};
+
+#ifdef RDK_THREADSAFE_SSS
+thread_local std::string PyLogStream::buffer;
+#endif
+
+void RDLogDebug(const std::string &msg) {
   NOGIL gil;
-  BOOST_LOG(rdErrorLog) << msg.c_str() << std::endl;
+  BOOST_LOG(rdDebugLog) << msg.c_str() << std::endl;
+}
+
+void RDLogInfo(const std::string &msg) {
+  NOGIL gil;
+  BOOST_LOG(rdInfoLog) << msg.c_str() << std::endl;
 }
 
 void RDLogWarning(const std::string &msg) {
@@ -95,11 +168,16 @@ void RDLogWarning(const std::string &msg) {
   BOOST_LOG(rdWarningLog) << msg.c_str() << std::endl;
 }
 
+void RDLogError(const std::string &msg) {
+  NOGIL gil;
+  BOOST_LOG(rdErrorLog) << msg.c_str() << std::endl;
+}
+
 void WrapLogs() {
-  static PySysErrWrite debug("RDKit DEBUG: ");
-  static PySysErrWrite error("RDKit ERROR: ");
-  static PySysErrWrite info("RDKit INFO: ");
-  static PySysErrWrite warning("RDKit WARNING: ");
+  static PyErrStream debug("RDKit DEBUG: ");
+  static PyErrStream error("RDKit ERROR: ");
+  static PyErrStream info("RDKit INFO: ");
+  static PyErrStream warning("RDKit WARNING: ");
   if (!rdDebugLog || !rdInfoLog || !rdErrorLog || !rdWarningLog) {
     RDLog::InitLogs();
   }
@@ -115,6 +193,30 @@ void WrapLogs() {
   if (rdWarningLog != nullptr) {
     rdWarningLog->SetTee(warning);
   }
+}
+
+void LogToPythonLogger() {
+  static PyLogStream debug("debug");
+  static PyLogStream info("info");
+  static PyLogStream warning("warning");
+  static PyLogStream error("error");
+
+  rdDebugLog   = std::make_shared<boost::logging::rdLogger>(&debug);
+  rdInfoLog    = std::make_shared<boost::logging::rdLogger>(&info);
+  rdWarningLog = std::make_shared<boost::logging::rdLogger>(&warning);
+  rdErrorLog   = std::make_shared<boost::logging::rdLogger>(&error);
+}
+
+void LogToPythonStderr() {
+  static PyErrStream debug("");
+  static PyErrStream info("");
+  static PyErrStream warning("");
+  static PyErrStream error("");
+
+  rdDebugLog   = std::make_shared<boost::logging::rdLogger>(&debug);
+  rdInfoLog    = std::make_shared<boost::logging::rdLogger>(&info);
+  rdWarningLog = std::make_shared<boost::logging::rdLogger>(&warning);
+  rdErrorLog   = std::make_shared<boost::logging::rdLogger>(&error);
 }
 
 python::tuple getAtomIndicesHelper(const KekulizeException &self) {
@@ -236,13 +338,23 @@ BOOST_PYTHON_MODULE(rdchem) {
         sanitExceptionTranslator(exc, kekulizeExceptionType);
       });
 
+  python::def("LogToCppStreams", RDLog::InitLogs,
+              "Initialize RDKit logs with C++ streams");
+  python::def("LogToPythonLogger", LogToPythonLogger,
+              "Initialize RDKit logs with Python's logging module");
+  python::def("LogToPythonStderr", LogToPythonStderr,
+              "Initialize RDKit logs with Python's stderr stream");
   python::def("WrapLogs", WrapLogs,
-              "Wrap the internal RDKit streams so they go to python's "
-              "SysStdErr");
+              "Tee RDKit logs to Python's stderr stream");
+
+  python::def("LogDebugMsg", RDLogDebug,
+              "Log a message to the RDKit debug logs");
+  python::def("LogInfoMsg", RDLogInfo,
+              "Log a message to the RDKit info logs");
   python::def("LogWarningMsg", RDLogWarning,
-              "Log a warning message to the RDKit warning logs");
+              "Log a message to the RDKit warning logs");
   python::def("LogErrorMsg", RDLogError,
-              "Log a warning message to the RDKit error logs");
+              "Log a message to the RDKit error logs");
 
   //*********************************************
   //
