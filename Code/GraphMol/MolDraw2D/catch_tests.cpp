@@ -1424,6 +1424,7 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     REQUIRE(m);
+#if 0
     {
       MolDraw2DSVG drawer(350, 300);
       drawer.drawMolecule(*m);
@@ -1479,6 +1480,7 @@ M  END
       outs.close();
       check_file_hash("testBrackets-1e.svg");
     }
+#endif
   }
   SECTION("three brackets") {
     auto m = R"CTAB(three brackets

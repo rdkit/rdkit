@@ -345,10 +345,9 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
 void DrawShapeSolidWedge::scale(const Point2D &scale_factor) {
   DrawShape::scale(scale_factor);
 
-  // don't let it get too wide.  A width of 12 pixels is similar to the
+  // don't let it get too wide.  A width of 8 pixels is similar to the
   // original 0.15 scaled by 40.
-  Point2D point, end1, end2;
-  point = points_[0];
+  Point2D end1, end2;
   if (points_.size() == 3) {
     end1 = points_[1];
     end2 = points_[2];
@@ -357,12 +356,10 @@ void DrawShapeSolidWedge::scale(const Point2D &scale_factor) {
     end2 = points_[4];
   }
   double widthsq = (end1 - end2).lengthSq();
-  std::cout << "squared width = " << widthsq << std::endl;
-  if (widthsq > 144.0) {
+  if (widthsq > 64.0) {
     points_ = calcScaledWedgePoints(points_[0], end1, end2, widthsq);
     buildTriangles();
   }
-
 }
 
 // ****************************************************************************
@@ -540,7 +537,7 @@ std::vector<Point2D> calcScaledWedgePoints(const Point2D &point,
   Point2D lastLine = end1 - end2;
   Point2D mid = (end1 + end2) / 2.0;
   lastLine /= sqrt(widthsq);
-  lastLine *= 6;
+  lastLine *= 4;
   std::vector<Point2D> new_pts{point, mid + lastLine, mid - lastLine};
   return new_pts;
 }

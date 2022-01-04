@@ -27,6 +27,7 @@
 #include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
 namespace RDKit {
@@ -139,6 +140,7 @@ void DrawMol::extractAll() {
   extractSGroupData();
   extractVariableBonds();
   extractBrackets();
+  extractLinkNodes();
 }
 
 // ****************************************************************************
@@ -149,8 +151,9 @@ void DrawMol::extractAtomCoords() {
       drawMol_->getConformer(confId_).getPositions();
 
   // the transformation rotates anti-clockwise, as is conventional, but
-  // probably not what our user expects.
-  double rot = -drawOptions_.rotate * M_PI / 180.0;
+  // probably not what our user expects.  But because we invert the y
+  // coord, it needs to be applied in a positive direction.
+  double rot = drawOptions_.rotate * M_PI / 180.0;
   // assuming that if drawOptions_.rotate is set to 0.0, rot will be
   // exactly 0.0 without worrying about floating point number dust.  Does
   // anyone know if this is true?  It's not the end of the world if not,
@@ -356,7 +359,7 @@ void DrawMol::extractSGroupData() {
   }
 
   // details of this transformation are in extractAtomCoords
-  double rot = -drawOptions_.rotate * M_PI / 180.0;
+  double rot = drawOptions_.rotate * M_PI / 180.0;
   RDGeom::Transform2D tform;
   tform.SetTransform(Point2D(0.0, 0.0), rot);
 
@@ -543,7 +546,7 @@ void DrawMol::extractBrackets() {
           MolDraw2D_detail::getBracketPoints(p1, p2, refPt, sgBondSegments);
       DrawShapePolyLine *pl =
           new DrawShapePolyLine(points, drawOptions_.bondLineWidth, false,
-                                DrawColour(0.0, 1.0, 1.0), false);
+                                DrawColour(0.0, 0.0, 0.0), false);
       postShapes_.emplace_back(std::unique_ptr<DrawShape>(pl));
     }
     if (includeAnnotations_) {
@@ -583,7 +586,7 @@ void DrawMol::extractBrackets() {
         DrawAnnotation *da = new DrawAnnotation(
             connect, TextAlignType::MIDDLE, "connect",
             drawOptions_.annotationFontScale, botPt + (botPt - brkPt),
-            DrawColour(0.0, 1.0, 0.0), textDrawer_);
+            DrawColour(0.0, 0.0, 0.0), textDrawer_);
         // if we're to the right of the bracket, we need to left justify,
         // otherwise things seem to work as is
         if (brkPt.x < botPt.x) {
@@ -606,9 +609,67 @@ void DrawMol::extractBrackets() {
         DrawAnnotation *da = new DrawAnnotation(
             label, TextAlignType::MIDDLE, "connect",
             drawOptions_.annotationFontScale, topPt + (topPt - brkPt),
-            DrawColour(1.0, 0.0, 0.0), textDrawer_);
+            DrawColour(0.0, 0.0, 0.0), textDrawer_);
         annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
       }
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractLinkNodes() {
+  if (!drawMol_->hasProp(common_properties::molFileLinkNodes)) {
+    return;
+  }
+
+  bool strict = false;
+  auto linkNodes = MolEnumerator::utils::getMolLinkNodes(*drawMol_, strict);
+  for (const auto &node : linkNodes) {
+    const double crossingFrac = 0.333;
+    const double lengthFrac = 0.333;
+    Point2D labelPt{-1000, -1000};
+    Point2D labelPerp{0, 0};
+    for (const auto &bAts : node.bondAtoms) {
+      // unlike brackets, we know how these point
+      Point2D startLoc = atCds_[bAts.first];
+      Point2D endLoc = atCds_[bAts.second];
+      auto vect = endLoc - startLoc;
+      auto offset = vect * crossingFrac;
+      auto crossingPt = startLoc + offset;
+      Point2D perp{vect.y, -vect.x};
+      perp *= lengthFrac;
+      Point2D p1 = crossingPt + perp / 2.;
+      Point2D p2 = crossingPt - perp / 2.;
+
+      std::vector<std::pair<Point2D, Point2D>> bondSegments;  // not needed here
+      std::vector<Point2D> points{
+          MolDraw2D_detail::getBracketPoints(p1, p2, startLoc, bondSegments)};
+      DrawShapePolyLine *pl =
+          new DrawShapePolyLine(points, drawOptions_.bondLineWidth, false,
+                                DrawColour(0.0, 0.0, 0.0), false);
+      postShapes_.emplace_back(std::unique_ptr<DrawShape>(pl));
+
+      if (p1.x > labelPt.x) {
+        labelPt = p1;
+        labelPerp = crossingPt - startLoc;
+      }
+      if (p2.x > labelPt.x) {
+        labelPt = p2;
+        labelPerp = crossingPt - startLoc;
+      }
+    }
+
+    // the label
+    if (includeAnnotations_) {
+      std::string label =
+          (boost::format("(%d-%d)") % node.minRep % node.maxRep).str();
+      Point2D perp = labelPerp;
+      perp /= perp.length() * 5;
+      DrawAnnotation *da = new DrawAnnotation(
+          label, TextAlignType::START, "linknode",
+          drawOptions_.annotationFontScale, labelPt + perp,
+          DrawColour(0.0, 0.0, 0.0), textDrawer_);
+      annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
     }
   }
 }
@@ -1522,7 +1583,6 @@ void DrawMol::makeWedgedBond(Bond *bond,
     col1 = drawOptions_.symbolColour;
     col2 = drawOptions_.symbolColour;
   }
-  Point2D end1, end2;
   // If either of the atoms has a label, make the padding a bit bigger
   // so the end of the wedge doesn't run up to the atom symbol.
   // Obviously, if we ever change how the padding round the label is
@@ -1530,6 +1590,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
   if (atomLabels_[at1->getIdx()] || atomLabels_[at2->getIdx()]) {
     meanBondLengthSquare_ *= 2.0;
   }
+  Point2D end1, end2;
   adjustBondEndsForLabels(at1->getIdx(), at2->getIdx(), end1, end2);
   if (atomLabels_[at1->getIdx()] || atomLabels_[at2->getIdx()]) {
     meanBondLengthSquare_ /= 2.0;
