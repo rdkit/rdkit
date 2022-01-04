@@ -181,6 +181,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4764.sz1.svg", 1410356032U},
     {"testGithub4764.sz2.svg", 2935799920U},
     {"testGithub4764.sz3.svg", 2544100175U},
+    {"testDrawArc1.svg", 827049291U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4014,5 +4015,51 @@ TEST_CASE("Github #4764") {
     }
 #endif
     // check_file_hash("testGithub4538.svg");
+  }
+}
+
+TEST_CASE("drawArc starting from wrong angle") {
+  SECTION("basics") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  9  9  0  0  0  0  0  0  0  0999 V2000
+   -1.2135   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000   -1.5844    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2135   -0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    0.7238    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    0.7238    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6317    1.9374    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6401   -1.1663    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6401   -1.1663    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6317    1.9374    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  5  1  2  0
+  1  7  1  0
+  3  8  1  0
+  4  9  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+    {
+      MolDraw2DSVG drawer(400, 350);
+      drawer.drawOptions().noAtomLabels = true;
+      drawer.drawMolecule(*mol, "drawArc");
+      drawer.setFillPolys(false);
+      drawer.setColour({1, 0, 0});
+      drawer.drawArc(mol->getConformer().getAtomPos(3), 0.3, -72, 54);
+      drawer.drawArc(mol->getConformer().getAtomPos(0), 0.3, -162, -36);
+      drawer.drawArc(mol->getConformer().getAtomPos(4), 0.3, 126, 252);
+      drawer.drawArc(mol->getConformer().getAtomPos(2), 0.3, -18, 108);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testDrawArc1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testDrawArc1.svg");
+    }
   }
 }
