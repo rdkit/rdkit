@@ -279,7 +279,7 @@ class SubshapeAligner(object):
                             queryConf=-1, pruneStats=None):
     import time
 
-    def get_time():
+    def _GetTime_():
       try:
         return time.perf_counter()
       except (AttributeError, NameError):
@@ -289,28 +289,28 @@ class SubshapeAligner(object):
       pruneStats = {}
 
     logger.info("Generating triangle matches")
-    t1 = get_time()
+    t1 = _GetTime_()
     res = [x for x in self.GetTriangleMatches(target, query)]
-    pruneStats['gtm_time'] = get_time() - t1
+    pruneStats['gtm_time'] = _GetTime_() - t1
     logger.info("Got %d possible alignments in %.1f seconds" % (len(res), pruneStats['gtm_time']))
 
     if builder.featFactory:
       logger.info("Doing feature pruning")
-      t1 = get_time()
+      t1 = _GetTime_()
       self.PruneMatchesUsingFeatures(target, query, res, pruneStats=pruneStats)
-      pruneStats['feats_time'] = get_time() - t1
+      pruneStats['feats_time'] = _GetTime_() - t1
       logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), pruneStats['feats_time']))
     logger.info("Doing direction pruning")
 
-    t1 = get_time()
+    t1 = _GetTime_()
     self.PruneMatchesUsingDirection(target, query, res, pruneStats=pruneStats)
-    pruneStats['direction_time'] = get_time() - t1
+    pruneStats['direction_time'] = _GetTime_() - t1
     logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), pruneStats['direction_time']))
 
-    t1 = get_time()
+    t1 = _GetTime_()
     self.PruneMatchesUsingShape(targetMol, target, queryMol, query, builder, res, tgtConf=tgtConf,
                                 queryConf=queryConf, pruneStats=pruneStats)
-    pruneStats['shape_time'] = get_time() - t1
+    pruneStats['shape_time'] = _GetTime_() - t1
     return res
 
   def __call__(self, targetMol, target, queryMol, query, builder, tgtConf=-1, queryConf=-1,

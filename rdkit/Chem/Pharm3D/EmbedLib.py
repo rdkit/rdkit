@@ -29,7 +29,7 @@ _times = {}
 logger = logging.logger()
 defaultFeatLength = 2.0
 
-def get_time():
+def _GetTime_() -> float:
   try:
     return time.perf_counter()
   except (AttributeError, NameError):
@@ -412,7 +412,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
   for i in range(count):
     tmpM = bm[:, :]
     m2 = Chem.Mol(mol)
-    t1 = get_time()
+    t1 = _GetTime_()
     try:
       if randomSeed <= 0:
         seed = i * 10 + 1
@@ -424,7 +424,7 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
         logger.info('Embed failed')
       nFailed += 1
     else:
-      t2 = get_time()
+      t2 = _GetTime_()
       _times['embed'] = _times.get('embed', 0) + t2 - t1
       keepIt = True
       for idx, stereo in mol._chiralCenters:
@@ -645,26 +645,26 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   d23s = []
   d34s = []
   for m in ms:
-    t1 = get_time()
+    t1 = _GetTime_()
     try:
       e1, e2 = OptimizeMol(m, bm, atomMatch)
     except ValueError:
       pass
     else:
-      t2 = get_time()
+      t2 = _GetTime_()
       _times['opt1'] = _times.get('opt1', 0) + t2 - t1
 
       e1s.append(e1)
       e2s.append(e2)
 
       d12s.append(e1 - e2)
-      t1 = get_time()
+      t1 = _GetTime_()
       try:
         e3, e4 = OptimizeMol(m, bm)
       except ValueError:
         pass
       else:
-        t2 = get_time()
+        t2 = _GetTime_()
         _times['opt2'] = _times.get('opt2', 0) + t2 - t1
         e3s.append(e3)
         e4s.append(e4)

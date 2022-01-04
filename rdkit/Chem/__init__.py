@@ -18,7 +18,6 @@ import sys
 # Shortcut Import
 from rdkit import rdBase
 from rdkit import RDConfig
-
 from rdkit import DataStructs
 from rdkit.Geometry import rdGeometry
 
@@ -132,16 +131,15 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
     [(2, 'Tet_CCW'), (4, 'Tet_CCW'), (6, 'Tet_CCW')]
 
   """
+  centers = [] # List[Tuple[int, str]]
   if useLegacyImplementation:
     AssignStereochemistry(mol, force=force, flagPossibleStereoCenters=includeUnassigned)
-    centers = []
     for atom in mol.GetAtoms():
       if atom.HasProp('_CIPCode'):
         centers.append((atom.GetIdx(), atom.GetProp('_CIPCode')))
       elif includeUnassigned and atom.HasProp('_ChiralityPossible'):
         centers.append((atom.GetIdx(), '?'))
   else:
-    centers = []
     itms = FindPotentialStereo(mol)
     if includeCIP:
       atomsToLabel = []
@@ -154,19 +152,20 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
       AssignCIPLabels(mol, atomsToLabel=atomsToLabel, bondsToLabel=bondsToLabel)
     
     for si in itms:
-      if si.type == StereoType.Atom_Tetrahedral and \
-        (includeUnassigned or si.specified == StereoSpecified.Specified):
-        idx = si.centeredOn
-        atm = mol.GetAtomWithIdx(idx)
-        if includeCIP and atm.HasProp("_CIPCode"):
-          code = atm.GetProp("_CIPCode")
-        else:
-          if si.specified:
-            code = str(si.descriptor)
+      if si.type == StereoType.Atom_Tetrahedral:
+        if includeUnassigned or si.specified == StereoSpecified.Specified:
+          idx = si.centeredOn
+          atm = mol.GetAtomWithIdx(idx)
+          if includeCIP and atm.HasProp("_CIPCode"):
+            code = atm.GetProp("_CIPCode")
           else:
-            code = '?'
-            atm.SetIntProp('_ChiralityPossible',1)
-        centers.append((idx, code))
+            if si.specified:
+              code = str(si.descriptor)
+            else:
+              code = '?'
+              atm.SetIntProp('_ChiralityPossible', 1)
+          centers.append((idx, code))
+
   return centers
 
 
