@@ -141,9 +141,19 @@ try:
           file=sys.stderr)
     pd = None
   else:
-    # saves the default pandas rendering to allow restoration
-    defPandasRendering = pd.core.frame.DataFrame.to_html
-    defPandasRepr = pd.core.frame.DataFrame._repr_html_ if pandasVersion > (0, 25, 0) else None # this was github #2673
+    if not hasattr(pd, "_rdkitpatched"):
+      # saves the default pandas rendering to allow restoration
+      pd.core.frame.DataFrame._orig_to_html = pd.core.frame.DataFrame.to_html
+      if pandasVersion > (0, 25, 0):
+        # this was github #2673
+        pd.core.frame.DataFrame._orig_repr_html_ = pd.core.frame.DataFrame._repr_html_
+      else:
+        pd.core.frame.DataFrame._orig_repr_html_ = None
+      pd._rdkitpatched = True
+
+    defPandasRendering = pd.core.frame.DataFrame._orig_to_html
+    defPandasRepr = pd.core.frame.DataFrame._orig_repr_html_
+
 except ImportError:
   import traceback
   traceback.print_exc()
