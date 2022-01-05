@@ -74,6 +74,7 @@ void DrawMol::createDrawObjects() {
   calculateScale();
 
   if (!textDrawer_.setFontScale(fontScale_, false)) {
+    std::cout << "re-doing everything because of scale." << std::endl;
     double nfs = textDrawer_.fontScale();
     textDrawer_.setFontScale(nfs / fontScale_, true);
     resetEverything();
@@ -81,12 +82,30 @@ void DrawMol::createDrawObjects() {
     extractAll();
     calculateScale();
     textDrawer_.setFontScale(fontScale_);
+    fontScale_ = textDrawer_.fontScale();
   }
 
   // the legend needs the final scale to get the fonts the correct size.
   extractLegend();
-
   changeToDrawCoords();
+  // these need the draw coords.
+  extractCloseContacts();
+  // if the fontScale isn't the same as the drawing scale, then we've hit
+  // a max or min for the font size, in which case the radical spots will
+  // be in the wrong place.  We might want to think about re-calculating the
+  // scale at this point, but it's probably ok for now.
+  if (scale_ != textDrawer_.fontScale()) {
+    radicals_.clear();
+    extractRadicals();
+  }
+
+  // now we've got everything laid out nicely, we need to turn it all
+  // back to the original coordinate frame, except atomLabels_.  This
+  // is because the legacy MolDraw2D primitives like drawLine, drawArc
+  // etc. call getDrawCoords() to decide what to draw.  It would be
+  // a breaking change at this point to fix that.  atomLabels_ are
+  // drawn by textDrawer_ and that has always worked in draw coords.
+  changeToAtomCoords();
   drawingInitialised_ = true;
 }
 
@@ -173,8 +192,6 @@ void DrawMol::extractAtomCoords() {
 
 // ****************************************************************************
 void DrawMol::extractAtomSymbols() {
-  PRECONDITION(atCds_.size() > 0, "no coords");
-
   atomicNums_.clear();
   for (auto at1 : drawMol_->atoms()) {
     std::pair<std::string, OrientType> atSym = getAtomSymbolAndOrientation(*at1);
@@ -226,7 +243,6 @@ void DrawMol::extractBonds() {
 
 // ****************************************************************************
 void DrawMol::extractHighlights() {
-  std::cout << "DrawMol::extractHighlights" << std::endl;
   if (drawOptions_.continuousHighlight) {
     makeContinuousHighlights();
   } else {
@@ -362,7 +378,7 @@ void DrawMol::extractRadicals() {
     }
     StringRect rad_rect;
     OrientType orient = calcRadicalRect(atom, rad_rect);
-    radicals_.emplace_back(std::make_pair(rad_rect, orient));
+    radicals_.emplace_back(std::make_tuple(rad_rect, orient, atom->getIdx()));
   }
 }
 
@@ -825,6 +841,10 @@ void DrawMol::findExtremes() {
     ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
 
+  if (atCds_.empty()) {
+    xMin_ = yMin_ = -1.0;
+    xMax_ = yMax_ = 1.0;
+  }
   // calculate the x and y spans
   xRange_ = xMax_ - xMin_;
   yRange_ = yMax_ - yMin_;
@@ -844,49 +864,36 @@ void DrawMol::findExtremes() {
 void DrawMol::changeToDrawCoords() {
   Point2D trans, scale, toCentre;
   getDrawTransformers(trans, scale, toCentre);
-
-  for (auto &ps : preShapes_) {
-    ps->move(trans);
-    ps->scale(scale);
-    ps->move(toCentre);
-  }
-  for (auto &bond : bonds_) {
-    bond->move(trans);
-    bond->scale(scale);
-    bond->move(toCentre);
-  }
+  transformAllButAtomLabels(trans, scale, toCentre);
+  Point2D fontScale{fontScale_, fontScale_};
   for (auto &label : atomLabels_) {
     if (label) {
       label->move(trans);
-      label->scale(scale);
+      label->scale(scale, fontScale);
       label->move(toCentre);
     }
   }
-  for (auto &hl : highlights_) {
-    hl->move(trans);
-    hl->scale(scale);
-    hl->move(toCentre);
-  }
-  for (auto &annot : annotations_) {
-    annot->move(trans);
-    annot->scale(scale);
-    annot->move(toCentre);
-  }
-  for (auto &rad : radicals_) {
-    rad.first.trans_ = getDrawCoords(rad.first.trans_, trans, scale, toCentre);
-  }
-  for (auto &ps : postShapes_) {
-    ps->move(trans);
-    ps->scale(scale);
-    ps->move(toCentre);
-  }
-  extractCloseContacts();
+}
+
+// ****************************************************************************
+void DrawMol::changeToAtomCoords() {
+  Point2D trans, scale, toCentre;
+  getDrawTransformers(trans, scale, toCentre);
+  std::swap(trans, toCentre);
+  trans = -trans;
+  scale.x = 1.0 / scale.x;
+  scale.y = 1.0 / scale.y;
+  toCentre = -toCentre;
+  transformAllButAtomLabels(trans, scale, toCentre);
 }
 
 // ****************************************************************************
 void DrawMol::draw(MolDraw2D &drawer) const {
   PRECONDITION(drawingInitialised_,
                "you must call createDrawingObjects before calling draw")
+  if (atCds_.empty()) {
+    return;
+  }
   auto keepScale = drawer.scale();
   drawer.setScale(scale_);
   for(auto &ps : preShapes_) {
@@ -941,7 +948,6 @@ void DrawMol::drawRadicals(MolDraw2D &drawer) const {
     Point2D ncds = cds;
     switch (num_spots) {
       case 3:
-        draw_spot(ncds);
         if (dir) {
           ncds.y = cds.y - 0.5 * width + spot_rad;
         } else {
@@ -995,14 +1001,17 @@ void DrawMol::drawRadicals(MolDraw2D &drawer) const {
     if (!num_rade) {
       continue;
     }
-    auto rad_rect = radicals_[rad_num].first;
-    OrientType draw_or = radicals_[rad_num].second;
+    auto rad_rect = get<0>(radicals_[rad_num]);
+    OrientType draw_or = get<1>(radicals_[rad_num]);
+    int atIdx = get<2>(radicals_[rad_num]);
+    drawer.setActiveAtmIdx(atIdx);
     if (draw_or == OrientType::N || draw_or == OrientType::S ||
         draw_or == OrientType::C) {
       draw_spots(rad_rect.trans_, num_rade, rad_rect.width_, 0);
     } else {
       draw_spots(rad_rect.trans_, num_rade, rad_rect.height_, 1);
     }
+    drawer.setActiveAtmIdx();
     ++rad_num;
   }
 }
@@ -2128,7 +2137,12 @@ int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
 OrientType DrawMol::calcRadicalRect(const Atom *atom, StringRect &rad_rect) const {
   int num_rade = atom->getNumRadicalElectrons();
   double spot_rad = 0.2 * drawOptions_.multipleBondOffset;
-  Point2D const &at_cds = atCds_[atom->getIdx()];
+  Point2D atCds{atCds_[atom->getIdx()]};
+  if (scale_ != 1.0) {
+    Point2D trans, scale, toCentre;
+    getDrawTransformers(trans, scale, toCentre);
+    atCds = getDrawCoords(atCds, trans, scale, toCentre);
+  }
   OrientType orient = atomSyms_[atom->getIdx()].second;
   double rad_size = (4 * num_rade - 2) * spot_rad;
   double x_min, y_min, x_max, y_max;
@@ -2137,10 +2151,10 @@ OrientType DrawMol::calcRadicalRect(const Atom *atom, StringRect &rad_rect) cons
     x_max = y_max = -x_min;
     atomLabels_[atom->getIdx()]->findExtremes(x_min, x_max, y_min, y_max);
   } else {
-    x_min = at_cds.x - 3 * spot_rad * textDrawer_.fontScale();
-    x_max = at_cds.x + 3 * spot_rad * textDrawer_.fontScale();
-    y_min = at_cds.y - 3 * spot_rad * textDrawer_.fontScale();
-    y_max = at_cds.y + 3 * spot_rad * textDrawer_.fontScale();
+    x_min = atCds.x - 3 * spot_rad * textDrawer_.fontScale();
+    x_max = atCds.x + 3 * spot_rad * textDrawer_.fontScale();
+    y_min = atCds.y - 3 * spot_rad * textDrawer_.fontScale();
+    y_max = atCds.y + 3 * spot_rad * textDrawer_.fontScale();
   }
 
   auto try_all = [&](OrientType ornt) -> bool {
@@ -2154,27 +2168,27 @@ OrientType DrawMol::calcRadicalRect(const Atom *atom, StringRect &rad_rect) cons
   auto try_north = [&]() -> bool {
     rad_rect.width_ = rad_size * textDrawer_.fontScale();
     rad_rect.height_ = spot_rad * 3.0 * textDrawer_.fontScale();
-    rad_rect.trans_.x = at_cds.x;
+    rad_rect.trans_.x = atCds.x;
     rad_rect.trans_.y = y_max + 0.5 * rad_rect.height_;
     return try_all(OrientType::N);
   };
   auto try_south = [&]() -> bool {
     rad_rect.width_ = rad_size * textDrawer_.fontScale();
     rad_rect.height_ = spot_rad * 3.0 * textDrawer_.fontScale();
-    rad_rect.trans_.x = at_cds.x;
+    rad_rect.trans_.x = atCds.x;
     rad_rect.trans_.y = y_min - 0.5 * rad_rect.height_;
     return try_all(OrientType::S);
   };
   auto try_east = [&]() -> bool {
     rad_rect.trans_.x = x_max + 3.0 * spot_rad * textDrawer_.fontScale();
-    rad_rect.trans_.y = at_cds.y;
+    rad_rect.trans_.y = atCds.y;
     rad_rect.width_ = spot_rad * 1.5 * textDrawer_.fontScale();
     rad_rect.height_ = rad_size * textDrawer_.fontScale();
     return try_all(OrientType::E);
   };
   auto try_west = [&]() -> bool {
     rad_rect.trans_.x = x_min - 3.0 * spot_rad * textDrawer_.fontScale();
-    rad_rect.trans_.y = at_cds.y;
+    rad_rect.trans_.y = atCds.y;
     rad_rect.width_ = spot_rad * 1.5 * textDrawer_.fontScale();
     rad_rect.height_ = rad_size * textDrawer_.fontScale();
     return try_all(OrientType::W);
@@ -2224,14 +2238,39 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
 }
 
 // ****************************************************************************
-Point2D DrawMol::getDrawCoords(const Point2D &atCds, Point2D &trans,
-                               Point2D &scaleFactor, Point2D &toCentre) const {
+Point2D DrawMol::getDrawCoords(const Point2D &atCds, const Point2D &trans,
+                               const Point2D &scaleFactor,
+                               const Point2D &toCentre) const {
   Point2D drawCoords{atCds};
   drawCoords += trans;
   drawCoords.x *= scaleFactor.x;
   drawCoords.y *= scaleFactor.y;
   drawCoords += toCentre;
   return drawCoords;
+}
+
+// ****************************************************************************
+Point2D DrawMol::getDrawCoords(const Point2D &atCds) const {
+  Point2D drawCoords{atCds};
+  Point2D trans, scale, toCentre;
+  getDrawTransformers(trans, scale, toCentre);
+  drawCoords += trans;
+  drawCoords.x *= scale.x;
+  drawCoords.y *= scale.y;
+  drawCoords += toCentre;
+  return drawCoords;
+}
+
+// ****************************************************************************
+Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
+  Point2D trans, scale, toCentre;
+  getDrawTransformers(trans, scale, toCentre);
+  Point2D atCds{screenCds};
+  atCds -= toCentre;
+  atCds.x /= scale.x;
+  atCds.y /= scale.y;
+  atCds -= trans;
+  return atCds;
 }
 
 // ****************************************************************************
@@ -2246,6 +2285,14 @@ void DrawMol::setScale(double newScale) {
   fontScale_ = textDrawer_.fontScale();
   extractLegend();
   changeToDrawCoords();
+  // if the fontScale isn't the same as the drawing scale, then we've hit
+  // a max or min for the font size, in which case the radical spots will
+  // be in the wrong place.  We might want to think about re-calculating the
+  // scale at this point, but it's probably ok for now.
+  if (scale_ != textDrawer_.fontScale()) {
+    radicals_.clear();
+    extractRadicals();
+  }
   drawingInitialised_ = true;
 }
 
@@ -2260,6 +2307,39 @@ void DrawMol::tagAtomsWithCoords() {
   auto tag = boost::str(boost::format("_atomdrawpos_%d") % confId_);
   for (unsigned int j = 0; j < drawMol_->getNumAtoms(); ++j) {
     drawMol_->getAtomWithIdx(j)->setProp(tag, atCds_[j], true);
+  }
+}
+
+// ****************************************************************************
+void DrawMol::transformAllButAtomLabels(const Point2D &trans, Point2D &scale,
+                                        const Point2D &toCentre) {
+  for (auto &ps : preShapes_) {
+    ps->move(trans);
+    ps->scale(scale);
+    ps->move(toCentre);
+  }
+  for (auto &bond : bonds_) {
+    bond->move(trans);
+    bond->scale(scale);
+    bond->move(toCentre);
+  }
+  for (auto &hl : highlights_) {
+    hl->move(trans);
+    hl->scale(scale);
+    hl->move(toCentre);
+  }
+  for (auto &annot : annotations_) {
+    annot->move(trans);
+    annot->scale(scale);
+    annot->move(toCentre);
+  }
+  for (auto &rad : radicals_) {
+    get<0>(rad).trans_ = getDrawCoords(get<0>(rad).trans_, trans, scale, toCentre);
+  }
+  for (auto &ps : postShapes_) {
+    ps->move(trans);
+    ps->scale(scale);
+    ps->move(toCentre);
   }
 }
 
@@ -2640,10 +2720,10 @@ void adjustBondEndForString(
 
 // ****************************************************************************
 void findRadicalExtremes(
-    const std::vector<std::pair<StringRect, OrientType>> &radicals,
+    const std::vector<std::tuple<StringRect, OrientType, int>> &radicals,
     double &xmin, double &xmax, double &ymin, double &ymax) {
   for (auto const &rad : radicals) {
-    findRectExtremes(rad.first, TextAlignType::MIDDLE, xmin, xmax, ymin, ymax);
+    findRectExtremes(get<0>(rad), TextAlignType::MIDDLE, xmin, xmax, ymin, ymax);
   }
 }
 

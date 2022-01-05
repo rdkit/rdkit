@@ -101,6 +101,7 @@ class DrawMol {
   void calculateScale();
   void findExtremes();
   void changeToDrawCoords();
+  void changeToAtomCoords();
   void draw(MolDraw2D &drawer) const;
   void drawRadicals(MolDraw2D &drawer) const;
   void resetEverything();
@@ -152,8 +153,14 @@ class DrawMol {
   OrientType calcRadicalRect(const Atom *atom, StringRect &rad_rect) const;
   void getDrawTransformers(Point2D &trans, Point2D &scale,
                            Point2D &toCentre) const;
-  Point2D getDrawCoords(const Point2D &atCds, Point2D &trans,
-                        Point2D &scaleFactor, Point2D &toCentre) const;
+  // given some coords in molecule space (angstrom, probably) return the
+  // screen coords
+  Point2D getDrawCoords(const Point2D &atCds, const Point2D &trans,
+                        const Point2D &scaleFactor,
+                        const Point2D &toCentre) const;
+  Point2D getDrawCoords(const Point2D &atCds) const;
+  // and the other way.
+  Point2D getAtomCoords(const Point2D &screenCds) const;
   double getScale() const { return scale_; }
   void setScale(double newScale);
   // for drawing into a grid, for example.  Must be set before
@@ -162,6 +169,10 @@ class DrawMol {
   // so we can add metadata later.  Most likely used after changeToDrawCoords
   // has been called.
   void tagAtomsWithCoords();
+  // apply the transformations to everything except the atomLabels_.
+  // trans and toCentre are added, scale is multiplied.
+  void transformAllButAtomLabels(const Point2D &trans, Point2D &scale,
+                                 const Point2D &toCentre);
 
   MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -186,7 +197,7 @@ class DrawMol {
   std::vector<std::unique_ptr<DrawShape>> highlights_;
   std::vector<std::unique_ptr<DrawAnnotation>> annotations_;
   std::vector<std::unique_ptr<DrawAnnotation>> legends_;
-  std::vector<std::pair<StringRect, OrientType>> radicals_;
+  std::vector<std::tuple<StringRect, OrientType, int>> radicals_;
 
   int width_, height_;
   // to allow for min and max font sizes, the font scale needs to be
@@ -233,7 +244,7 @@ void adjustBondEndForString(
     const Point2D &end1, const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd);
 void findRadicalExtremes(
-    const std::vector<std::pair<StringRect, OrientType>> &radicals,
+    const std::vector<std::tuple<StringRect, OrientType, int>> &radicals,
     double &xmin, double &xmax, double &ymin, double &ymax);
 void findRectExtremes(const StringRect &rect, const TextAlignType &align,
                       double &xmin, double &xmax, double &ymin, double &ymax);

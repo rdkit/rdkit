@@ -1090,11 +1090,35 @@ void test6() {
     outs.close();
     // start of bond-0
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 273.6,147.5") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 270.1,147.1") !=
         std::string::npos);
     // start of first radical spot
-    TEST_ASSERT(txt.find("<path d='M 286.5,143.5 L 286.5,143.4") !=
-                std::string::npos);
+    TEST_ASSERT(
+        txt.find("<path class='atom-0' d='M 284.1,151.1 L 284.1,151.3") !=
+        std::string::npos);
+    check_file_hash(nameBase + ".svg");
+  }
+  {
+    auto m = "N[C]"_smiles;
+    std::string nameBase = "test6_3";
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    std::ofstream outs(nameBase + ".svg");
+    outs << txt;
+    outs.close();
+    // start of bond-0
+    TEST_ASSERT(
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 169.0,123.1") !=
+        std::string::npos);
+    // start of first radical spot
+    TEST_ASSERT(
+        txt.find("<path class='atom-1' d='M 28.1,190.6 L 28.1,190.8") !=
+        std::string::npos);
     check_file_hash(nameBase + ".svg");
   }
 
@@ -1296,7 +1320,7 @@ void testGithub781() {
   std::cout << " ----------------- Test Github #781: Rendering single-atom "
                "molecules"
             << std::endl;
-
+#if 0
   {
     auto m = "C"_smiles;
     TEST_ASSERT(m);
@@ -1314,10 +1338,10 @@ void testGithub781() {
     check_file_hash("testGithub781_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // the start of the C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 139.1 150.1") !=
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 50.3 118.8") !=
                 std::string::npos)
     // the start of the H
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 164.3 136.0") !=
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 75.5 104.6") !=
                 std::string::npos)
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1342,10 +1366,10 @@ void testGithub781() {
     check_file_hash("testGithub781_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of the H
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 98.9 136.0") !=
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 180.0 105.4") !=
                 std::string::npos);
     // start of the O
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 137.0 150.1") !=
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 203.5 132.7") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find("<tspan>OH</tspan>") == std::string::npos);
@@ -1366,10 +1390,10 @@ void testGithub781() {
     check_file_hash("testGithub781_3.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 289.1 300.1") !=
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 219.4 296.3") !=
                 std::string::npos);
     // the first radical marker
-    TEST_ASSERT(txt.find("<path d='M 317.4,288.0 L 317.4,287.8") !=
+    TEST_ASSERT(txt.find("path d='M 249.2,308.2 L 249.2,308.3") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1394,10 +1418,10 @@ void testGithub781() {
     check_file_hash("testGithub781_4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 27.4 198.0") !=
+    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 43.7 190.0") !=
                 std::string::npos);
     // start of l
-    TEST_ASSERT(txt.find("<path  class='atom-3' d='M 36.4 74.8") !=
+    TEST_ASSERT(txt.find("<path  class='atom-3' d='M 52.8 73.9") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1405,6 +1429,7 @@ void testGithub781() {
     TEST_ASSERT(txt.find(">l</text>") != std::string::npos);
 #endif
   }
+#endif
   {  // empty molecule
     auto *m = new ROMol();
     TEST_ASSERT(m);
@@ -1429,7 +1454,8 @@ void testGithub781() {
 }
 
 void testGithub774() {
-  std::cout << " ----------------- Test Github774" << std::endl;
+  std::cout << " ----------------- Test Github774: upside-down drawings"
+            << std::endl;
   {
     std::string smiles =
         "Cc1c(C(=O)NCC[NH3+])[n+](=O)c2cc(CC[C@](F)(Cl)Br)ccc2n1[O-]";
@@ -1460,7 +1486,9 @@ void testGithub774() {
       Point2D ocoords(1.0, 2.0);
       Point2D dcoords =
           drawer.getAtomCoords(std::make_pair(ocoords.x, ocoords.y));
+      std::cout << dcoords << std::endl;
       Point2D acoords = drawer.getDrawCoords(dcoords);
+      std::cout << acoords << std::endl;
       TEST_ASSERT(feq(acoords.x, 1.0));
       TEST_ASSERT(feq(acoords.y, 2.0));
     }
@@ -4162,7 +4190,7 @@ void testGithub4156() {
     outs.close();
     check_file_hash("testGithub4156_1.svg");
     // this is the start of the radical spot.
-    regex qry("<path d='M 22.[0-9]*,75.[0-9]* L 22.[0-9]*,75.[0-9]*");
+    regex qry("<path d='M 21.[0-9]*,75.[0-9]* L 21.[0-9]*,75.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
   {
@@ -4179,7 +4207,7 @@ void testGithub4156() {
     outs.close();
     check_file_hash("testGithub4156_2.svg");
     // this is the start of the radical spot.
-    regex qry("<path d='M 272.[0-9]*,75.[0-9]* L 272.[0-9]*,75.[0-9]*");
+    regex qry("<path d='M 271.[0-9]*,75.[0-9]* L 271.[0-9]*,75.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
 #endif
@@ -4240,7 +4268,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test12DrawMols();
+  test1();
 
 #if 0
   test1();

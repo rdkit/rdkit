@@ -272,7 +272,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
       nullptr, highlight_radii, supportsAnnotations(), confId);
   draw_mol->createDrawObjects();
-  draw_mols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
+  drawMols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
   startDrawing();
   drawAllMolecules();
 }
@@ -290,7 +290,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
       highlight_atom_map, highlight_bond_map,
       highlight_radii, highlight_linewidth_multipliers, confId);
   draw_mol->createDrawObjects();
-  draw_mols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
+  drawMols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
   startDrawing();
   drawAllMolecules();
   return;
@@ -704,11 +704,10 @@ void MolDraw2D::drawMolecules(
     drawMol->setOffsets(col * panelWidth(), row * panelHeight());
     drawMol->createDrawObjects();
     minScale = std::min(minScale, drawMol->getScale());
-    draw_mols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
+    drawMols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
   }
 
-  std::cout << "Min scale : " << minScale << std::endl;
-  for (auto &drawMol : draw_mols_) {
+  for (auto &drawMol : drawMols_) {
     drawMol->setScale(minScale);
     drawMol->tagAtomsWithCoords();
   }
@@ -763,38 +762,34 @@ void MolDraw2D::highlightCloseContacts() {
 // transform a set of coords in the molecule's coordinate system
 // to drawing system coordinates.
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
-  // send it straight back - the DrawMol takes care of it all.
-  return mol_cds;
-
-//  double x = scale_ * (mol_cds.x - x_min_ + x_trans_);
-//  double y = scale_ * (mol_cds.y - y_min_ + y_trans_);
-  // y is now the distance from the top of the image, we need to
-  // invert that:
-//  x += x_offset_;
-//  y -= y_offset_;
-//  y = panelHeight() - legend_height_ - y;
-//  return Point2D(x, y);
+  PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
+               "bad active mol index");
+  return drawMols_[activeMolIdx_]->getDrawCoords(mol_cds);
 }
 
 // ****************************************************************************
 Point2D MolDraw2D::getDrawCoords(int at_num) const {
-  PRECONDITION(activeMolIdx_ >= 0, "bad mol idx");
-  return getDrawCoords(at_cds_[activeMolIdx_][at_num]);
+  PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
+               "bad active mol index");
+  PRECONDITION(!drawMols_.empty(), "no draw mols");
+  PRECONDITION(at_num < drawMols_[activeMolIdx_]->atCds_.size(), "bad atom number");
+  return getDrawCoords(drawMols_[activeMolIdx_]->atCds_[at_num]);
 }
 
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
+  PRECONDITION(!drawMols_.empty(), "no draw mols");
+  // TODO: use activeMolIdx_ for this, for when there's more than 1 draw mol.
   return getAtomCoords(
       make_pair(double(screen_cds.first), double(screen_cds.second)));
 }
 
+// ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
-  double screen_x = screen_cds.first - x_offset_;
-  double screen_y = screen_cds.second - y_offset_;
-  auto x = double(screen_x / scale_ + x_min_ - x_trans_);
-  auto y = double(y_min_ - y_trans_ -
-                  (screen_y - panelHeight() + legend_height_) / scale_);
-  return Point2D(x, y);
+  PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
+               "bad active mol index");
+  return drawMols_[activeMolIdx_]->getAtomCoords(
+      Point2D(screen_cds.first, screen_cds.second));
 }
 
 // ****************************************************************************
@@ -1433,8 +1428,9 @@ void MolDraw2D::startDrawing() {
 
 // ****************************************************************************
 void MolDraw2D::drawAllMolecules() {
-  for (size_t i = 0; i < draw_mols_.size(); ++i) {
-    draw_mols_[i]->draw(*this);
+  for (size_t i = 0; i < drawMols_.size(); ++i) {
+    activeMolIdx_ = i;
+    drawMols_[i]->draw(*this);
   }
 }
 

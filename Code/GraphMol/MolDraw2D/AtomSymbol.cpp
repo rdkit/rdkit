@@ -60,20 +60,21 @@ void AtomSymbol::findExtremes(double &xmin, double &xmax, double &ymin,
 }
 
 // ****************************************************************************
-void AtomSymbol::scale(const Point2D &scaleFactor) {
+void AtomSymbol::scale(const Point2D &scaleFactor,
+                       const Point2D &fontScaleFactor) {
   cds_.x *= scaleFactor.x;
   cds_.y *= scaleFactor.y;
   for (auto &rect : rects_) {
-    rect->trans_.x *= scaleFactor.x;
-    rect->trans_.y *= scaleFactor.y;
-    rect->offset_.x *= scaleFactor.x;
-    rect->offset_.y *= scaleFactor.y;
-    rect->g_centre_.x *= scaleFactor.x;
-    rect->g_centre_.y *= scaleFactor.y;
-    rect->y_shift_ *= scaleFactor.y;
-    rect->width_ *= scaleFactor.x;
-    rect->height_ *= scaleFactor.y;
-    rect->rect_corr_ *= scaleFactor.y;
+    rect->trans_.x *= fontScaleFactor.x;
+    rect->trans_.y *= fontScaleFactor.y;
+    rect->offset_.x *= fontScaleFactor.x;
+    rect->offset_.y *= fontScaleFactor.y;
+    rect->g_centre_.x *= fontScaleFactor.x;
+    rect->g_centre_.y *= fontScaleFactor.y;
+    rect->y_shift_ *= fontScaleFactor.y;
+    rect->width_ *= fontScaleFactor.x;
+    rect->height_ *= fontScaleFactor.y;
+    rect->rect_corr_ *= fontScaleFactor.y;
   }
 }
 

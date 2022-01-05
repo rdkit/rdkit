@@ -458,22 +458,27 @@ void DrawShapeDashedWedge::scale(const Point2D &scale_factor) {
   at1Cds_.x *= scale_factor.x;
   at1Cds_.y *= scale_factor.y;
 
-  // don't let it get too wide.  A width of 12 pixels is similar to the
-  // original 0.15 scaled by 40.
-  Point2D point, end1, end2;
-  size_t lastPoint = points_.size() - 1;
-  point = at1Cds_;
-  end1 = points_[lastPoint];
-  end2 = points_[lastPoint -1];
-  double widthsq = (end1 - end2).lengthSq();
+  // if scaling down in size, we don't want to change the wodth or the number of
+  // dashes, so use the lines as they are.  This is because this has almost
+  // certainly been called by DrawMol::changeToAtomCoords after everything
+  // has been laid out as we want it.
+  if (scale_factor.x > 1.0 && scale_factor.y > 1.0) {
+    // don't let it get too wide.  A width of 12 pixels is similar to the
+    // original 0.15 scaled by 40.
+    Point2D point, end1, end2;
+    size_t lastPoint = points_.size() - 1;
+    point = at1Cds_;
+    end1 = points_[lastPoint];
+    end2 = points_[lastPoint -1];
+    double widthsq = (end1 - end2).lengthSq();
 
-  if (widthsq > 144.0) {
-    points_ = calcScaledWedgePoints(point, end1, end2, widthsq);
-  } else {
-    points_ = std::vector<Point2D>{point, end1, end2};
+    if (widthsq > 144.0) {
+      points_ = calcScaledWedgePoints(point, end1, end2, widthsq);
+    } else {
+      points_ = std::vector<Point2D>{point, end1, end2};
+    }
+    buildLines();
   }
-  // always rebuild the lines so we retain a sensible number of dashes.
-  buildLines();
 }
 
 // ****************************************************************************

@@ -417,7 +417,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   int activeAtmIdx1_;
   int activeAtmIdx2_;
   int activeBndIdx_;
-  std::vector<std::unique_ptr<DrawMol>> draw_mols_;
+  std::vector<std::unique_ptr<DrawMol>> drawMols_;
 
   DrawColour curr_colour_;
   DashPattern curr_dash_;
