@@ -71,12 +71,34 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
        atom->getOwningMol().hasProp(common_properties::_doIsoSmiles))) {
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         !atom->hasProp(common_properties::_brokenChirality)) {
+      std::string permutation;
       switch (atom->getChiralTag()) {
         case Atom::CHI_TETRAHEDRAL_CW:
           atString = "@@";
           break;
         case Atom::CHI_TETRAHEDRAL_CCW:
           atString = "@";
+          break;
+        case Atom::CHI_SQUAREPLANAR:
+          atString = "@SP";
+          if (atom->getPropIfPresent(common_properties::_chiralPermutation,
+                                     permutation)) {
+            atString += permutation;
+          }
+          break;
+        case Atom::CHI_TRIGONALBIPYRAMIDAL:
+          atString = "@TB";
+          if (atom->getPropIfPresent(common_properties::_chiralPermutation,
+                                     permutation)) {
+            atString += permutation;
+          }
+          break;
+        case Atom::CHI_OCTAHEDRAL:
+          atString = "@OH";
+          if (atom->getPropIfPresent(common_properties::_chiralPermutation,
+                                     permutation)) {
+            atString += permutation;
+          }
           break;
         default:
           break;

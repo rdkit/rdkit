@@ -60,6 +60,11 @@ TEST_CASE("bulk parse test") {
 }
 
 TEST_CASE("TH and @ are equivalent") {
+  SECTION("@TH") {
+    auto m = "F[C@THH](C)O"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "C[C@H](O)F");
+  }
   SECTION("@TH1") {
     auto m = "F[C@TH1H](C)O"_smiles;
     REQUIRE(m);
@@ -69,5 +74,34 @@ TEST_CASE("TH and @ are equivalent") {
     auto m = "F[C@TH2H](C)O"_smiles;
     REQUIRE(m);
     CHECK(MolToSmiles(*m) == "C[C@@H](O)F");
+  }
+}
+
+TEST_CASE("non-canonical non-tetrahedral output") {
+  SECTION("no reordering") {
+    // clang-format off
+    std::vector<std::string> data = {
+        "C[Pt@SP1](F)(O)Cl",
+        "C[Pt@SP2](F)(O)Cl",
+        "C[Pt@TB1](F)(O)(N)Cl",
+        "C[Pt@TB2](F)(O)(N)Cl",
+        "C[Pt@OH1](F)(O)(N)(Br)Cl",
+        "C[Pt@OH2](F)(O)(N)(Br)Cl",
+    };
+    // clang-format on
+    for (const auto &smi : data) {
+      SmilesParserParams parseps;
+      // we need to skip stereo assignment
+      parseps.sanitize = false;
+      parseps.removeHs = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, parseps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      SmilesWriteParams writeps;
+      writeps.canonical = false;
+      // be sure to skip stereo assignment
+      m->setProp(common_properties::_StereochemDone, true);
+      CHECK(MolToSmiles(*m, writeps) == smi);
+    }
   }
 }
