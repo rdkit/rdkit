@@ -127,8 +127,8 @@ class TopNOverallPicker(GenericPicker):
       origFp = fp
       bestScore = -1.0
       for probeFp in self.probes:
-        score = DataStructs.FingerprintSimilarity(origFp, probeFp, self.simMetric)
-        bestScore = max(score, bestScore)
+        bestScore = max(DataStructs.FingerprintSimilarity(origFp, probeFp, self.simMetric), 
+                        bestScore)
       picks.Insert(bestScore, fp)
     
     self._picks = [(picks[i][1], picks[i][0]) for i in range(len(picks) - 1, -1, -1)]
@@ -251,6 +251,7 @@ class SpreadPicker(GenericPicker):
         fps.append(origFp._fieldsFromDb[0])
       else:
         fps.append(origFp)
+        
       j += 1
       if not silent and not j % 1000:
         print('scored %d fps' % j)
@@ -260,8 +261,7 @@ class SpreadPicker(GenericPicker):
     self._picks = []
     taken = [0] * len(fps)
     while nPicked < self.numToPick:
-      rowIdx = nPicked % len(scores)
-      row = scores[rowIdx]
+      row = scores[nPicked % len(scores)]
       score, idx = row.pop()
       # make sure we haven't taken this one already (from another row):
       while taken[idx] and len(row):

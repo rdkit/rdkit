@@ -39,7 +39,7 @@ visOpts = VisOpts()
 
 def GetMinCanvasSize(adjList, levelList):
   maxAcross = -1
-  for k, v in levelList.items():
+  for _, v in levelList.items():
     maxAcross = max(maxAcross, len(v))
 
   nLevs = len(levelList.keys())
@@ -83,11 +83,10 @@ def DrawHierarchy(adjList, levelList, canvas, entryColors=None, bitIds=None, min
     canvas.defaultFont = visOpts.labelFont
     if nHere:
       # figure the size of each node at this level:
-      spacePerNode = float(dims[0]) / nHere
-      spacePerNode -= visOpts.horizOffset
-      nodeRad = max(spacePerNode / 2, visOpts.minCircRad)
-      nodeRad = min(nodeRad, visOpts.maxCircRad)
+      spacePerNode = float(dims[0]) / nHere - visOpts.horizOffset
+      nodeRad = min(max(spacePerNode / 2, visOpts.minCircRad), visOpts.maxCircRad)
       spacePerNode = nodeRad * 2 + visOpts.horizOffset
+      
       # start in the middle of the canvas:
       pos[0] = dims[0] / 2.
       # maybe we need to offset a little:
@@ -115,10 +114,9 @@ def DrawHierarchy(adjList, levelList, canvas, entryColors=None, bitIds=None, min
     x2, y2 = pos[0] + nodeRad, pos[1] + nodeRad
     drawColor = entryColors.get(ID, visOpts.circColor)
     canvas.drawEllipse(x1, y1, x2, y2, visOpts.outlineColor, 0, drawColor)
-    label = str(ID)
-    # txtLoc = ( pos[0]-canvas.stringWidth(label)/2,
-    #           pos[1]+canvas.fontHeight()/4 )
-    txtLoc = (pos[0] + canvas.fontHeight() / 4, pos[1] + canvas.stringWidth(label) / 2)
-    canvas.drawString(label, txtLoc[0], txtLoc[1], angle=90)
+
+    # txtLoc = (pos[0] - canvas.stringWidth(label) / 2, pos[1] + canvas.fontHeight() / 4)
+    txtLoc = (pos[0] + canvas.fontHeight() / 4, pos[1] + canvas.stringWidth(str(ID)) / 2)
+    canvas.drawString(str(ID), txtLoc[0], txtLoc[1], angle=90)
 
   return drawLocs

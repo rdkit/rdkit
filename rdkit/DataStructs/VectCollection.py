@@ -155,10 +155,10 @@ class VectCollection(object):
 
     def Reset(self):
         if not self.__needReset:
-            return
+            return None
         self.__orVect = None
         if not self.__vects:
-            return
+            return None
         ks = list(iter(self.__vects))
         self.__orVect = copy.copy(self.__vects[ks[0]])
         self.__numBits = self.__orVect.GetNumBits()

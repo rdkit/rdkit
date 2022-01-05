@@ -24,8 +24,8 @@ class FilterNode(VLibNode):
     Usage Example:
 
       >>> from rdkit.VLib.Supply import SupplyNode
-      >>> def func(a,b):
-      ...   return a+b < 5
+      >>> def func(a, b):
+      ...   return a + b < 5
       >>> filt = FilterNode(func=func)
       >>> suppl1 = SupplyNode(contents=[1,2,3,3])
       >>> suppl2 = SupplyNode(contents=[1,2,3,1])
@@ -43,8 +43,8 @@ class FilterNode(VLibNode):
       Negation is also possible:
 
       >>> filt = FilterNode(func=func,negate=1)
-      >>> suppl1 = SupplyNode(contents=[1,2,3,3])
-      >>> suppl2 = SupplyNode(contents=[1,2,3,1])
+      >>> suppl1 = SupplyNode(contents=[1, 2, 3, 3])
+      >>> suppl2 = SupplyNode(contents=[1, 2, 3, 1])
       >>> filt.AddParent(suppl1)
       >>> filt.AddParent(suppl2)
       >>> v = [x for x in filt]

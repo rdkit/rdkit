@@ -12,7 +12,7 @@ import gzip
 import rdkit
 from rdkit import Chem
 from rdkit import DataStructs
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem # Shortcut import
 from rdkit.RDLogger import logger
 import argparse
 

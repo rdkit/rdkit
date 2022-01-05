@@ -5,7 +5,7 @@
 #
 from qt import *
 import sys
-import container
+
 if sys.platform == 'win32':
   from rdkit.qtGui.qtActiveX import MakeActiveXClass
   import win32com.client.gencache

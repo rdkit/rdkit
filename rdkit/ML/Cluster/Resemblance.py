@@ -12,7 +12,7 @@
 
     Here's how the matrices are stored:
 
-     '[(0,1),(0,2),(1,2),(0,3),(1,3),(2,3)...]  (row,col), col>row'
+     '[(0,1),(0,2),(1,2),(0,3),(1,3),(2,3)...]  (row, col), col > row'
 
      or, alternatively the matrix can be drawn, with indices as:
 
@@ -45,7 +45,7 @@ def EuclideanDistance(inData):
 
   """
   nObjs = len(inData)
-  res = numpy.zeros((nObjs * (nObjs - 1) / 2), numpy.float)
+  res = numpy.zeros((nObjs * (nObjs - 1) / 2), dtype=numpy.float)
   nSoFar = 0
   for col in range(1, nObjs):
     for row in range(col):

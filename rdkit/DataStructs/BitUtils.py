@@ -33,7 +33,6 @@ def ConstructEnsembleBV(bv, bitsToKeep):
   """
   finalSize = len(bitsToKeep)
   res = bv.__class__(finalSize)
-
   for i, bit in enumerate(bitsToKeep):
     if bv.GetBit(bit):
       res.SetBit(i)

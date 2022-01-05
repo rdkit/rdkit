@@ -62,10 +62,10 @@ class LazySig:
       raise IndexError('bad index')
 
     if which in self._cache:
-      v = self._cache[which]
-    else:
-      v = self.computeFunc(which)
-      self._cache[which] = v
+      return self._cache[which]
+    
+    v = self.computeFunc(which)
+    self._cache[which] = v
     return v
 
 
