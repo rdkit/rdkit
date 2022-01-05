@@ -2405,7 +2405,6 @@ void test12DrawMols() {
     outs.close();
     check_file_hash("test12_1.svg");
   }
-
   {  // github #1325: multiple molecules in one pane
     MolDraw2DSVG drawer(300, 300, 300, 300);
     drawer.drawMolecules(mols);
@@ -4241,8 +4240,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  
-#if 1
+  test12DrawMols();
+
+#if 0
   test1();
   test2();
   test4();

@@ -1028,6 +1028,7 @@ void DrawMol::drawRadicals(MolDraw2D &drawer) const {
 void DrawMol::resetEverything() {
   scale_ = 1.0;
   fontScale_ = 1.0;
+  textDrawer_.setFontScale(1.0, true);
   xMin_ = std::numeric_limits<double>::max() / 2.0;
   yMin_ = std::numeric_limits<double>::max() / 2.0;
   xMax_ = -std::numeric_limits<double>::max() / 2.0;
@@ -1363,23 +1364,17 @@ void DrawMol::extractLegend() {
   double fsize = textDrawer_.fontSize();
   double relFontScale = drawOptions_.legendFontSize / fsize;
   double total_width, total_height;
-  std::cout << "fontSize : " << fsize << "  and leg font size = " << drawOptions_.legendFontSize << std::endl;
-  std::cout << "orig relFontScale = " << relFontScale << std::endl;
 
   calc_legend_height(legend_bits, relFontScale, total_width, total_height);
-  std::cout << "total width = " << total_width << " and height = " << total_height << std::endl;
-  std::cout << "panel width = "  << width_ << "  and legendHeight = " << legendHeight_ << std::endl;
   if (total_height > legendHeight_) {
     relFontScale *= double(legendHeight_) / total_height;
     calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   }
-  std::cout << "inter 1 relFontScale = " << relFontScale << std::endl;
   if (total_width > width_) {
     relFontScale *= double(width_) / total_width;
     calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   }
-  std::cout << "final relFontScale = " << relFontScale << std::endl;
-  Point2D loc(width_ / 2, height_ - total_height);
+  Point2D loc(width_ / 2 + xOffset_, height_ - total_height + yOffset_);
   for (auto bit : legend_bits) {
     DrawAnnotation *da =
         new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend", relFontScale,
@@ -2237,7 +2232,8 @@ OrientType DrawMol::calcRadicalRect(const Atom *atom, StringRect &rad_rect) cons
 }
 
 // ****************************************************************************
-void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale, Point2D &toCentre) const {
+void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
+                                  Point2D &toCentre) const {
   std::cout << "scaled mins and ranges : " << xMin_ * scale_ << ", "
             << yMin_ * scale_ << " :: " << xRange_ * scale_ << ", "
             << yRange_ * scale_ << std::endl;
@@ -2246,9 +2242,10 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale, Point2D &toCen
   scale = Point2D(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
   int drawHeight = height_ - legendHeight_;
-  toCentre = Point2D((width_ - scaledRanges.x) / 2.0,
-                   (drawHeight - scaledRanges.y) / 2.0);
-  std::cout << "transformers : " << trans << " : " << scale << " : " << toCentre << std::endl;
+  toCentre = Point2D((width_ - scaledRanges.x) / 2.0 + xOffset_,
+                     (drawHeight - scaledRanges.y) / 2.0 + yOffset_);
+  std::cout << "transformers : " << trans << " : " << scale << " : " << toCentre
+            << std::endl;
 }
 
 // ****************************************************************************
@@ -2260,6 +2257,35 @@ Point2D DrawMol::getDrawCoords(const Point2D &atCds, Point2D &trans,
   drawCoords.y *= scaleFactor.y;
   drawCoords += toCentre;
   return drawCoords;
+}
+
+// ****************************************************************************
+void DrawMol::setScale(double newScale) {
+  resetEverything();
+
+  extractAll();
+  findExtremes();
+
+  scale_ = newScale;
+  textDrawer_.setFontScale(newScale);
+  fontScale_ = textDrawer_.fontScale();
+  extractLegend();
+  changeToDrawCoords();
+  drawingInitialised_ = true;
+}
+
+// ****************************************************************************
+void DrawMol::setOffsets(double xOffset, double yOffset) {
+  xOffset_ = xOffset;
+  yOffset_ = yOffset;
+}
+
+// ****************************************************************************
+void DrawMol::tagAtomsWithCoords() {
+  auto tag = boost::str(boost::format("_atomdrawpos_%d") % confId_);
+  for (unsigned int j = 0; j < drawMol_->getNumAtoms(); ++j) {
+    drawMol_->getAtomWithIdx(j)->setProp(tag, atCds_[j], true);
+  }
 }
 
 // ****************************************************************************

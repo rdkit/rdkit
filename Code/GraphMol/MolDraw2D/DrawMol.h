@@ -154,6 +154,14 @@ class DrawMol {
                            Point2D &toCentre) const;
   Point2D getDrawCoords(const Point2D &atCds, Point2D &trans,
                         Point2D &scaleFactor, Point2D &toCentre) const;
+  double getScale() const { return scale_; }
+  void setScale(double newScale);
+  // for drawing into a grid, for example.  Must be set before
+  // changeToDrawCoords is called for it to have effect.
+  void setOffsets(double xOffset, double yOffset);
+  // so we can add metadata later.  Most likely used after changeToDrawCoords
+  // has been called.
+  void tagAtomsWithCoords();
 
   MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -185,6 +193,8 @@ class DrawMol {
   // independent of the main scale.
   double scale_, fontScale_;
   double xMin_, yMin_, xMax_, yMax_, xRange_, yRange_;
+  // offsets are for drawing molecules in grids, for example.
+  double xOffset_ = 0.0, yOffset_ = 0.0;
   double meanBondLengthSquare_ = 0.0;
   int legendHeight_ = 0;
   bool drawingInitialised_ = false;

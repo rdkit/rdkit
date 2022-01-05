@@ -245,6 +245,8 @@ void MolDraw2D::doContinuousHighlighting(
 }
 
 // ****************************************************************************
+// keeping this one to preserve the public API, although it is no longer
+// very useful.
 void MolDraw2D::drawMolecule(const ROMol &mol,
                              const vector<int> *highlight_atoms,
                              const vector<int> *highlight_bonds,
@@ -252,82 +254,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
                              const map<int, DrawColour> *highlight_bond_map,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
-
-  int origWidth = lineWidth();
-  pushDrawDetails();
-  setupTextDrawer();
-
-  unique_ptr<RWMol> rwmol =
-      initMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
-  ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
-  if (!draw_mol.getNumConformers()) {
-    // clearly, the molecule is in a sorry state.
-    return;
-  }
-
-  if (!pre_shapes_[activeMolIdx_].empty()) {
-    MolDraw2D_detail::drawShapes(*this, pre_shapes_[activeMolIdx_]);
-  }
-
-  if (drawOptions().continuousHighlight) {
-    // if we're doing continuous highlighting, start by drawing the highlights
-    doContinuousHighlighting(draw_mol, highlight_atoms, highlight_bonds,
-                             highlight_atom_map, highlight_bond_map,
-                             highlight_radii);
-    // at this point we shouldn't be doing any more highlighting, so blow out
-    // those variables.  This alters the behaviour of drawBonds below.
-    highlight_bonds = nullptr;
-    highlight_atoms = nullptr;
-  } else if (drawOptions().circleAtoms && highlight_atoms) {
-    setFillPolys(drawOptions().fillHighlights);
-    for (auto this_at : draw_mol.atoms()) {
-      int this_idx = this_at->getIdx();
-      if (std::find(highlight_atoms->begin(), highlight_atoms->end(),
-                    this_idx) != highlight_atoms->end()) {
-        if (highlight_atom_map &&
-            highlight_atom_map->find(this_idx) != highlight_atom_map->end()) {
-          setColour(highlight_atom_map->find(this_idx)->second);
-        } else {
-          setColour(drawOptions().highlightColour);
-        }
-        Point2D p1 = at_cds_[activeMolIdx_][this_idx];
-        Point2D p2 = at_cds_[activeMolIdx_][this_idx];
-        double radius = drawOptions().highlightRadius;
-        if (highlight_radii &&
-            highlight_radii->find(this_idx) != highlight_radii->end()) {
-          radius = highlight_radii->find(this_idx)->second;
-        }
-        Point2D offset(radius, radius);
-        p1 -= offset;
-        p2 += offset;
-        drawEllipse(p1, p2);
-      }
-    }
-    setFillPolys(true);
-  }
-
-  drawBonds(draw_mol, highlight_atoms, highlight_atom_map, highlight_bonds,
-            highlight_bond_map);
-
-  vector<DrawColour> atom_colours;
-  for (auto this_at : draw_mol.atoms()) {
-    atom_colours.emplace_back(
-        getColour(this_at->getIdx(), highlight_atoms, highlight_atom_map));
-  }
-
-  finishMoleculeDraw(draw_mol, atom_colours);
-  // popDrawDetails();
-  setLineWidth(origWidth);
-
-  if (drawOptions().includeMetadata) {
-    this->updateMetadata(draw_mol, confId);
-  }
-  // {
-  //   Point2D p1(x_min_, y_min_), p2(x_min_ + x_range_, y_min_ + y_range_);
-  //   setColour(DrawColour(0, 0, 0));
-  //   setFillPolys(false);
-  //   drawRect(p1, p2);
-  // }
+  drawMolecule(mol, "", highlight_atoms, highlight_bonds, highlight_atom_map,
+               highlight_bond_map, highlight_radii, confId);
 }
 
 // ****************************************************************************
@@ -347,18 +275,6 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
   draw_mols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
   startDrawing();
   drawAllMolecules();
-
-  //  if (!legend.empty()) {
-//    legend_height_ = int(0.05 * double(panelHeight()));
-//    if (legend_height_ < 20) {
-//      legend_height_ = 20;
-//    }
-//  } else {
-//    legend_height_ = 0;
-//  }
-//  drawMolecule(mol, highlight_atoms, highlight_bonds, highlight_atom_map,
-//               highlight_bond_map, highlight_radii, confId);
-//  drawLegend(legend);
 }
 
 // ****************************************************************************
@@ -368,7 +284,6 @@ void MolDraw2D::drawMoleculeWithHighlights(
     const map<int, vector<DrawColour>> &highlight_bond_map,
     const map<int, double> &highlight_radii,
     const map<int, int> &highlight_linewidth_multipliers, int confId) {
-#if 1
   setupTextDrawer();
   DrawMol *draw_mol = new DrawMolMCH(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
@@ -379,93 +294,6 @@ void MolDraw2D::drawMoleculeWithHighlights(
   startDrawing();
   drawAllMolecules();
   return;
-#else
-  int origWidth = lineWidth();
-  vector<int> highlight_atoms;
-  for (auto ha : highlight_atom_map) {
-    highlight_atoms.emplace_back(ha.first);
-  }
-
-  if (!legend.empty()) {
-    legend_height_ = int(0.05 * double(panelHeight()));
-  } else {
-    legend_height_ = 0;
-  }
-  pushDrawDetails();
-  unique_ptr<RWMol> rwmol =
-      initMoleculeDraw(mol, &highlight_atoms, &highlight_radii, confId);
-  ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
-  if (!draw_mol.getNumConformers()) {
-    // clearly, the molecule is in a sorry state.
-    return;
-  }
-
-  if (!pre_shapes_[activeMolIdx_].empty()) {
-    MolDraw2D_detail::drawShapes(*this, pre_shapes_[activeMolIdx_]);
-  }
-
-  bool orig_fp = fillPolys();
-  setFillPolys(drawOptions().fillHighlights);
-
-  // draw the highlighted bonds first, so the atoms hide the ragged
-  // ends.  This only works with filled highlighting, obs.  If not, we need
-  // the highlight radii to work out the intersection of the bond highlight
-  // with the atom highlight.
-  drawHighlightedBonds(draw_mol, highlight_bond_map,
-                       highlight_linewidth_multipliers, &highlight_radii);
-
-  for (auto ha : highlight_atom_map) {
-    // cout << "highlighting atom " << ha.first << " with " << ha.second.size()
-    //      << " colours" << endl;
-    drawHighlightedAtom(ha.first, ha.second, &highlight_radii);
-  }
-  setFillPolys(orig_fp);
-
-  // draw plain bonds on top of highlights.  Use black if either highlight
-  // colour is the same as the colour it would have been.
-  vector<pair<DrawColour, DrawColour>> bond_colours;
-  for (auto bond : draw_mol.bonds()) {
-    int beg_at = bond->getBeginAtomIdx();
-    DrawColour col1 = getColour(beg_at);
-    int end_at = bond->getEndAtomIdx();
-    DrawColour col2 = getColour(end_at);
-    auto hb = highlight_bond_map.find(bond->getIdx());
-    if (hb != highlight_bond_map.end()) {
-      const vector<DrawColour> &cols = hb->second;
-      if (find(cols.begin(), cols.end(), col1) == cols.end() ||
-          find(cols.begin(), cols.end(), col2) == cols.end()) {
-        col1 = DrawColour(0.0, 0.0, 0.0);
-        col2 = col1;
-      }
-    }
-    bond_colours.emplace_back(make_pair(col1, col2));
-  }
-  drawBonds(draw_mol, nullptr, nullptr, nullptr, nullptr, &bond_colours);
-
-  vector<DrawColour> atom_colours;
-  for (auto this_at : draw_mol.atoms()) {
-    // Get colours together for the atom labels.
-    // Passing nullptr means that we'll get a colour based on atomic number
-    // only.
-    atom_colours.emplace_back(getColour(this_at->getIdx(), nullptr, nullptr));
-    // if the chosen colour is a highlight colour for this atom, choose black
-    // instead so it is still visible.
-    auto ha = highlight_atom_map.find(this_at->getIdx());
-    if (ha != highlight_atom_map.end()) {
-      if (find(ha->second.begin(), ha->second.end(), atom_colours.back()) !=
-          ha->second.end()) {
-        atom_colours.back() = DrawColour(0.0, 0.0, 0.0);
-      }
-    }
-  }
-
-  // this puts on atom labels and such
-  finishMoleculeDraw(draw_mol, atom_colours);
-  setLineWidth(origWidth);
-
-  drawLegend(legend);
-  popDrawDetails();
-#endif
 }
 
 // ****************************************************************************
@@ -834,25 +662,35 @@ void MolDraw2D::drawMolecules(
   PRECONDITION(panel_height_ != 0, "panel height cannot be zero");
   PRECONDITION(width_ > 0 && height_ > 0,
                "drawMolecules() needs a fixed canvas size");
-  if (!mols.size()) {
+  if (mols.empty()) {
     return;
   }
 
   setupTextDrawer();
-  vector<unique_ptr<RWMol>> tmols;
-  calculateScale(panelWidth(), drawHeight(), mols, highlight_atoms,
-                 highlight_radii, confIds, tmols);
-  // so drawMolecule doesn't recalculate the scale each time, and
-  // undo all the good work.
-  needs_scale_ = false;
-
+  double minScale = std::numeric_limits<double>::max();
   int nCols = width() / panelWidth();
   int nRows = height() / panelHeight();
-  for (unsigned int i = 0; i < mols.size(); ++i) {
+
+  for (size_t i = 0; i < mols.size(); ++i) {
     if (!mols[i]) {
       continue;
     }
-
+    std::string legend = legends ? (*legends)[i] : "";
+    const std::vector<int> *ha =
+        highlight_atoms ? &(*highlight_atoms)[i] : nullptr;
+    const std::vector<int> *hb =
+        highlight_bonds ? &(*highlight_atoms)[i] : nullptr;
+    const std::map<int, DrawColour> *ham =
+        highlight_atom_maps ? &(*highlight_atom_maps)[i] : nullptr;
+    const std::map<int, DrawColour> *hbm =
+        highlight_bond_maps ? &(*highlight_bond_maps)[i] : nullptr;
+    int confId = confIds ? (*confIds)[i] : -1;
+    const std::map<int, double> *hr =
+        highlight_radii ? &(*highlight_radii)[i] : nullptr;
+    DrawMol *drawMol =
+        new DrawMol(*mols[i], legend, panelWidth(), panelHeight(),
+                    drawOptions(), *text_drawer_, ha, hb, ham, hbm, nullptr, hr,
+                    supportsAnnotations(), confId);
     int row = 0;
     // note that this also works when no panel size is specified since
     // the panel dimensions defaults to -1
@@ -863,34 +701,20 @@ void MolDraw2D::drawMolecules(
     if (nCols > 1) {
       col = i % nCols;
     }
-    setOffset(col * panelWidth(), row * panelHeight());
-
-    ROMol *draw_mol = tmols[i] ? tmols[i].get() : mols[i];
-    unique_ptr<vector<int>> lhighlight_bonds;
-    if (highlight_bonds) {
-      lhighlight_bonds.reset(new std::vector<int>((*highlight_bonds)[i]));
-    } else if (drawOptions().continuousHighlight && highlight_atoms) {
-      lhighlight_bonds.reset(new vector<int>());
-      getBondHighlightsForAtoms(*draw_mol, (*highlight_atoms)[i],
-                                *lhighlight_bonds);
-    };
-
-    drawMolecule(*draw_mol, legends ? (*legends)[i] : "",
-                 highlight_atoms ? &(*highlight_atoms)[i] : nullptr,
-                 lhighlight_bonds.get(),
-                 highlight_atom_maps ? &(*highlight_atom_maps)[i] : nullptr,
-                 highlight_bond_maps ? &(*highlight_bond_maps)[i] : nullptr,
-                 highlight_radii ? &(*highlight_radii)[i] : nullptr,
-                 confIds ? (*confIds)[i] : -1);
-    // save the drawn positions of the atoms on the molecule. This is the only
-    // way that we can later add metadata
-    auto tag = boost::str(boost::format("_atomdrawpos_%d") %
-                          (confIds ? (*confIds)[i] : -1));
-    for (unsigned int j = 0; j < mols[i]->getNumAtoms(); ++j) {
-      auto pt = getDrawCoords(j);
-      mols[i]->getAtomWithIdx(j)->setProp(tag, pt, true);
-    }
+    drawMol->setOffsets(col * panelWidth(), row * panelHeight());
+    drawMol->createDrawObjects();
+    minScale = std::min(minScale, drawMol->getScale());
+    draw_mols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
   }
+
+  std::cout << "Min scale : " << minScale << std::endl;
+  for (auto &drawMol : draw_mols_) {
+    drawMol->setScale(minScale);
+    drawMol->tagAtomsWithCoords();
+  }
+
+  startDrawing();
+  drawAllMolecules();
 }
 
 // ****************************************************************************
@@ -937,7 +761,7 @@ void MolDraw2D::highlightCloseContacts() {
 
 // ****************************************************************************
 // transform a set of coords in the molecule's coordinate system
-// to drawing system coordinates
+// to drawing system coordinates.
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
   // send it straight back - the DrawMol takes care of it all.
   return mol_cds;
@@ -1609,8 +1433,8 @@ void MolDraw2D::startDrawing() {
 
 // ****************************************************************************
 void MolDraw2D::drawAllMolecules() {
-  for (auto &mol: draw_mols_) {
-    mol->draw(*this);
+  for (size_t i = 0; i < draw_mols_.size(); ++i) {
+    draw_mols_[i]->draw(*this);
   }
 }
 
