@@ -153,7 +153,6 @@ try:
 
     defPandasRendering = pd.core.frame.DataFrame._orig_to_html
     defPandasRepr = pd.core.frame.DataFrame._orig_repr_html_
-
 except ImportError:
   import traceback
   traceback.print_exc()
