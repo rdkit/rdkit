@@ -65,9 +65,6 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
       xRange_(std::numeric_limits<double>::max()),
       yRange_(std::numeric_limits<double>::max()) {
   textDrawer_.setFontScale(fontScale_, true);
-  std::cout << "Top of DrawMol c'tor" << std::endl;
-  std::cout << "Width = " << width_ << "  height = " << height_ << std::endl;
-  std::cout << "initial font scale : " << textDrawer_.fontScale() << std::endl;
   initDrawMolecule(mol);
 }
 
@@ -76,22 +73,15 @@ void DrawMol::createDrawObjects() {
   extractAll();
   calculateScale();
 
-  std::cout << "CCCCCCCCCCCCC" << std::endl;
   if (!textDrawer_.setFontScale(fontScale_, false)) {
     double nfs = textDrawer_.fontScale();
-    std::cout << "font scale hit extreme.  We got " << nfs << " would have been "
-              << fontScale_ << std::endl;
     textDrawer_.setFontScale(nfs / fontScale_, true);
     resetEverything();
     fontScale_ = textDrawer_.fontScale();
     extractAll();
     calculateScale();
     textDrawer_.setFontScale(fontScale_);
-  } else {
-    std::cout << "fontScale was fine" << std::endl;
   }
-  std::cout << "XX font scale : " << textDrawer_.fontScale()
-            << " : " << fontScale_ << std::endl;
 
   // the legend needs the final scale to get the fonts the correct size.
   extractLegend();
@@ -332,7 +322,6 @@ void DrawMol::extractMolNotes() {
 
 // ****************************************************************************
 void DrawMol::extractAtomNotes() {
-  std::cout << "extractAtomNotes :: " << textDrawer_.fontScale() << std::endl;
   for (auto atom : drawMol_->atoms()) {
     std::string note;
     if (atom->getPropIfPresent(common_properties::atomNote, note)) {
@@ -350,7 +339,6 @@ void DrawMol::extractAtomNotes() {
 
 // ****************************************************************************
 void DrawMol::extractBondNotes() {
-  std::cout << "extractBondNotes" << std::endl;
   for (auto bond : drawMol_->bonds()) {
     std::string note;
     if (bond->getPropIfPresent(common_properties::bondNote, note)) {
@@ -809,9 +797,6 @@ void DrawMol::calculateScale() {
   double scale_mult = newScale / scale_;
   scale_ *= scale_mult;
   fontScale_ *= scale_mult;
-  std::cout << "Final Scale : " << scale_ << " and fontScale_ : " << fontScale_ << std::endl;
-  std::cout << "Padded mins : " << xMin_ << ", " << yMin_ << " with ranges : "
-            << xRange_ << ", " << yRange_ << std::endl;
 }
 
 // ****************************************************************************
@@ -853,8 +838,6 @@ void DrawMol::findExtremes() {
     yMin_ -= 1.0;
     yMax_ += 1.0;
   }
-  std::cout << "Final mins : " << xMin_ << ", " << yMin_ << " with ranges : "
-            << xRange_ << ", " << yRange_ << std::endl;
 }
 
 // ****************************************************************************
@@ -1814,11 +1797,9 @@ void DrawMol::makeContinuousHighlights() {
   if (highlightBonds_) {
     makeBondHighlightLines(tgt_lw);
   }
-  std::cout << "number of highlights after bonds: " << highlights_.size() << std::endl;
   if (highlightAtoms_) {
     makeAtomEllipseHighlights(tgt_lw);
   }
-  std::cout << "number of highlights after bonds + atoms : " << highlights_.size() << std::endl;
 }
 
 // ****************************************************************************
@@ -2234,18 +2215,12 @@ OrientType DrawMol::calcRadicalRect(const Atom *atom, StringRect &rad_rect) cons
 // ****************************************************************************
 void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
                                   Point2D &toCentre) const {
-  std::cout << "scaled mins and ranges : " << xMin_ * scale_ << ", "
-            << yMin_ * scale_ << " :: " << xRange_ * scale_ << ", "
-            << yRange_ * scale_ << std::endl;
-  std::cout << "scales : " << scale_ << " and " << fontScale_ << std::endl;
   trans = Point2D(-xMin_, -yMin_);
   scale = Point2D(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
   int drawHeight = height_ - legendHeight_;
   toCentre = Point2D((width_ - scaledRanges.x) / 2.0 + xOffset_,
                      (drawHeight - scaledRanges.y) / 2.0 + yOffset_);
-  std::cout << "transformers : " << trans << " : " << scale << " : " << toCentre
-            << std::endl;
 }
 
 // ****************************************************************************
