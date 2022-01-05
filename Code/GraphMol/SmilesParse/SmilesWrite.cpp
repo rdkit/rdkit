@@ -247,6 +247,9 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
     case Bond::TRIPLE:
       res = "#";
       break;
+    case Bond::QUADRUPLE:
+      res = "$";
+      break;
     case Bond::AROMATIC:
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {

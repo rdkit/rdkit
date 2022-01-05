@@ -111,6 +111,7 @@ void testPass() {
     "Ts']['Og']",  // a biovia pathology
     "[#6]",        // feature borrowed from SMARTS
     "[12#6]",
+    "C$C",  // quadruple bonds
     "EOS"
   };
   while (smis[i] != "EOS") {
