@@ -651,9 +651,17 @@ Brief description of the ``findPotentialStereo()`` algorithm
    7. If steps 5 and 6 modfied any atoms or bonds, loop back to step 4. 
    8. Add any potential stereogenic atom which does not have to identically 
       ranked neighbors to the results 
-   9. Add any potential stereogenic atom which does not have to identically
+   9. Add any potential stereogenic atom which does not have two identically
       ranked atoms attached to either end [#eitherend]_ to the results
    10. Return the results
+
+Support for non-tetrahedral atomic stereochemistry
+==================================================
+
+Starting with the 2022.03 release, the RDKit has partial, but evolving, support for non-tetrahedral stereochemistry. 
+The status of this work is being tracked in this github issue: https://github.com/rdkit/rdkit/issues/4851
+
+
 
 
 
