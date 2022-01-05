@@ -15,6 +15,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -77,6 +78,18 @@ TEST_CASE("TH and @ are equivalent") {
   }
 }
 
+std::unique_ptr<RWMol> fromsmiles_skipstereo(const std::string &smi) {
+  SmilesParserParams parseps;
+  // we need to skip stereo assignment
+  parseps.sanitize = false;
+  parseps.removeHs = false;
+  std::unique_ptr<RWMol> m{SmilesToMol(smi, parseps)};
+  if (m) {
+    m->updatePropertyCache(true);
+  }
+  return m;
+}
+
 TEST_CASE("non-canonical non-tetrahedral output") {
   SECTION("no reordering") {
     // clang-format off
@@ -94,14 +107,98 @@ TEST_CASE("non-canonical non-tetrahedral output") {
       // we need to skip stereo assignment
       parseps.sanitize = false;
       parseps.removeHs = false;
-      std::unique_ptr<RWMol> m{SmilesToMol(smi, parseps)};
+      auto m = fromsmiles_skipstereo(smi);
       REQUIRE(m);
-      m->updatePropertyCache(false);
       SmilesWriteParams writeps;
       writeps.canonical = false;
       // be sure to skip stereo assignment
       m->setProp(common_properties::_StereochemDone, true);
       CHECK(MolToSmiles(*m, writeps) == smi);
+    }
+  }
+}
+
+TEST_CASE("SP getChiralAcrossBond et al.") {
+  SECTION("basics") {
+    {
+      auto m = fromsmiles_skipstereo("C[Pt@SP1](F)(O)Cl");
+      REQUIRE(m);
+      std::vector<std::pair<unsigned int, unsigned int>> bpairs = {{0, 2},
+                                                                   {1, 3}};
+      for (auto pr : bpairs) {
+        CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                             m->getBondWithIdx(pr.first))
+                  ->getIdx() == pr.second);
+        CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                             m->getBondWithIdx(pr.second))
+                  ->getIdx() == pr.first);
+      }
+
+      // we just need to check the other forms for one of the sets of pairs
+      // since we know it's the same code underneath
+      std::vector<std::pair<unsigned int, unsigned int>> apairs = {{0, 3},
+                                                                   {2, 4}};
+      for (auto pr : apairs) {
+        CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                             m->getAtomWithIdx(pr.first))
+                  ->getIdx() == pr.second);
+        CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                             m->getAtomWithIdx(pr.second))
+                  ->getIdx() == pr.first);
+      }
+      std::vector<std::pair<unsigned int, unsigned int>> abpairs = {
+          {0, 2}, {2, 3}, {3, 0}, {4, 1}};
+      for (auto pr : abpairs) {
+        CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                             m->getAtomWithIdx(pr.first))
+                  ->getIdx() == pr.second);
+        CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                             m->getBondWithIdx(pr.second))
+                  ->getIdx() == pr.first);
+      }
+    }
+    {
+      auto m = fromsmiles_skipstereo("C[Pt@SP2](F)(O)Cl");
+      REQUIRE(m);
+      std::vector<std::pair<unsigned int, unsigned int>> pairs = {{0, 1},
+                                                                  {2, 3}};
+      for (auto pr : pairs) {
+        CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                             m->getBondWithIdx(pr.first))
+                  ->getIdx() == pr.second);
+        CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                             m->getBondWithIdx(pr.second))
+                  ->getIdx() == pr.first);
+      }
+    }
+    {
+      auto m = fromsmiles_skipstereo("C[Pt@SP3](F)(O)Cl");
+      REQUIRE(m);
+      std::vector<std::pair<unsigned int, unsigned int>> pairs = {{0, 3},
+                                                                  {1, 2}};
+      for (auto pr : pairs) {
+        CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                             m->getBondWithIdx(pr.first))
+                  ->getIdx() == pr.second);
+        CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                             m->getBondWithIdx(pr.second))
+                  ->getIdx() == pr.first);
+      }
+    }
+  }
+
+  SECTION("3 real ligands") {
+    {
+      auto m = fromsmiles_skipstereo("C[Pt@SP1](F)O");
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                           m->getBondWithIdx(0))
+                ->getIdx() == 2);
+      CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                           m->getBondWithIdx(2))
+                ->getIdx() == 0);
+      CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                           m->getBondWithIdx(1)) == nullptr);
     }
   }
 }

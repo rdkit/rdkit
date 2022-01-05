@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2008-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2008-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -131,6 +131,19 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getAtomNonzeroDegree(const Atom *atom);
 /// @endcond
 
 RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
+
+//! \name Non-tetrahedral stereochemistry
+//@{
+RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
+                                                const Bond *qry);
+RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
+                                                const Atom *qry);
+RDKIT_GRAPHMOL_EXPORT Atom *getChiralAcrossAtom(const Atom *center,
+                                                const Bond *qry);
+RDKIT_GRAPHMOL_EXPORT Atom *getChiralAcrossAtom(const Atom *center,
+                                                const Atom *qry);
+
+//@}
 
 }  // namespace Chirality
 }  // namespace RDKit
