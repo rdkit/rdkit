@@ -889,6 +889,16 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    >>> bm.shape == (3, 3)
    True
 
+   However, the datatype should not be changed or uprank into np.float64 as default behaviour
+   >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]], dtype=numpy.float32)
+   >>> bm = DownsampleBoundsMatrix(boundsMat,(0, 1), 3.5)
+   >>> bm.dtype == numpy.float64
+   False
+   >>> bm.dtype == numpy.float32 or numpy.issubdtype(bm.dtype, numpy.float32)
+   True
+   >>> bm.dtype == boundsMat.dtype or numpy.issubdtype(bm.dtype, boundsMat.dtype)
+   True
+
   """
   """
   OLD CODE: Deleted because it was too slow (If accept this pull request, delete this for me/IchiruTake)
@@ -912,7 +922,8 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
   nPts = bm.shape[0]
   if len(indices) == 0:
       return numpy.zeros(shape=tuple([0] * len(bm.shape)), dtype=bm.dtype)
-  elif len(indices) * 5 <= bm.shape[0] or bm.shape[0] <= 32:
+  elif len(indices) * 5 <= bm.shape[0] or bm.shape[0] <= 32: 
+    # Optimization for small matrices or small number of indices (Sparse) 
     indicesSet = list(indices) if not isinstance(indices, list) else indices
   else:
     indicesSet = list(set(indices))
@@ -940,30 +951,30 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   ...                                        Geometry.Point3D(5.12, 0.908, 0.0)),
   ...   ]
   >>> pcophore=Pharmacophore.Pharmacophore(feats)
-  >>> pcophore.setLowerBound(0,1, 1.1)
-  >>> pcophore.setUpperBound(0,1, 1.9)
-  >>> pcophore.setLowerBound(0,2, 2.1)
-  >>> pcophore.setUpperBound(0,2, 2.9)
-  >>> pcophore.setLowerBound(1,2, 2.1)
-  >>> pcophore.setUpperBound(1,2, 3.9)
+  >>> pcophore.setLowerBound(0, 1, 1.1)
+  >>> pcophore.setUpperBound(0, 1, 1.9)
+  >>> pcophore.setLowerBound(0, 2, 2.1)
+  >>> pcophore.setUpperBound(0, 2, 2.9)
+  >>> pcophore.setLowerBound(1, 2, 2.1)
+  >>> pcophore.setUpperBound(1, 2, 3.9)
 
-  >>> bounds = numpy.array([[0,2,3],[1,0,4],[2,3,0]], dtype='float')
-  >>> CoarseScreenPharmacophore(((0,),(1,)),bounds,pcophore)
+  >>> bounds = numpy.array([[0, 2, 3],[1, 0, 4],[2, 3, 0]], dtype='float')
+  >>> CoarseScreenPharmacophore(((0, ),(1, )),bounds,pcophore)
   True
 
-  >>> CoarseScreenPharmacophore(((0,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((0, ),(2, )),bounds,pcophore)
   False
 
-  >>> CoarseScreenPharmacophore(((1,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((1, ),(2, )),bounds,pcophore)
   False
 
-  >>> CoarseScreenPharmacophore(((0,),(1,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((0, ),(1, ),(2, )),bounds,pcophore)
   True
 
-  >>> CoarseScreenPharmacophore(((1,),(0,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((1, ),(0, ),(2, )),bounds,pcophore)
   False
 
-  >>> CoarseScreenPharmacophore(((2,),(1,),(0,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((2, ),(1, ),(0, )),bounds,pcophore)
   False
 
   # we ignore the point locations here and just use their definitions:
@@ -1008,10 +1019,10 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
     if len(atomMatch[k]) == 1:
       for l in range(k + 1, atomMatchSize):
         if len(atomMatch[l]) == 1:
-          idx0 = atomMatch[k][0]
-          idx1 = atomMatch[l][0]
-          if idx1 < idx0:
-            idx0, idx1 = idx1, idx0
+          if atomMatch[l][0] < atomMatch[k][0]:
+            idx0, idx1 = atomMatch[l][0], atomMatch[k][0]
+          else:
+            idx0, idx1 = atomMatch[k][0], atomMatch[l][0]
           
           if bounds[idx1, idx0] >= pcophore.getUpperBound(k, l) or \
             bounds[idx0, idx1] <= pcophore.getLowerBound(k, l):
