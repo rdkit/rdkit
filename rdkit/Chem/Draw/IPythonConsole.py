@@ -47,10 +47,6 @@ drawing_type_3d = 'stick'  # default drawing type for 3d structures
 bgcolor_3d = '0xeeeeee'
 drawOptions = rdMolDraw2D.MolDrawOptions()
 
-# expose RDLogs to Python StdErr so they are shown
-#  in the IPythonConsole not the server logs.
-Chem.WrapLogs()
-
 
 def addMolToView(mol, view, confId=-1, drawAs=None):
   if mol.GetNumAtoms() >= 999 or drawAs == 'cartoon':

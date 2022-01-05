@@ -299,6 +299,13 @@ python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   }
   return dict;
 }
+
+std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>>
+RunFilterCatalogWrapper(const FilterCatalog &fc, const std::vector<std::string> &smiles, int numThreads) {
+  NOGIL nogil;
+  return RunFilterCatalog(fc, smiles, numThreads);
+}
+
 struct filtercat_wrapper {
   static void wrap() {
     python::class_<std::pair<int, int>>("IntPair")
@@ -517,7 +524,7 @@ struct filtercat_wrapper {
                 "Returns True if the FilterCatalog is serializable "
                 "(requires boost serialization");
 
-    python::def("RunFilterCatalog", RunFilterCatalog,
+    python::def("RunFilterCatalog", RunFilterCatalogWrapper,
                 (python::arg("filterCatalog"), python::arg("smiles"),
                  python::arg("numThreads") = 1),
                 "Run the filter catalog on the input list of smiles "

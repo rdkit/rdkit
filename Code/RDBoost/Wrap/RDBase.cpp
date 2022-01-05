@@ -29,9 +29,155 @@ namespace logging = boost::logging;
 
 std::string _version() { return "$Id$"; }
 
-void EnableLog(std::string spec) { logging::enable_logs(spec); }
-void DisableLog(std::string spec) { logging::disable_logs(spec); }
-std::string LogStatus() { return logging::log_status(); }
+
+// std::ostream wrapper around Python's stderr stream
+struct PyErrStream : std::ostream, std::streambuf {
+#ifdef RDK_THREADSAFE_SSS
+  static thread_local std::string buffer;
+#else
+  std::string buffer = "";
+#endif
+
+  PyErrStream(): std::ostream(this) {
+    // All done!
+  }
+
+  int overflow(int c) override {
+    write(c);
+    return 0;
+  }
+
+  void write(char c) {
+    if (c == '\n') {
+#ifdef RDK_THREADSAFE_SSS
+      PyGILStateHolder h;
+#endif
+      PySys_WriteStderr("%s\n", buffer.c_str());
+      buffer.clear();
+    }
+    else {
+      buffer += c;
+    }
+  }
+};
+
+// std::ostream wrapper around Python's logging module
+struct PyLogStream : std::ostream, std::streambuf {
+  PyObject *logfn = nullptr;
+#ifdef RDK_THREADSAFE_SSS
+  static thread_local std::string buffer;
+#else
+  std::string buffer = "";
+#endif
+
+  PyLogStream(std::string level): std::ostream(this) {
+    PyObject *module = PyImport_ImportModule("logging");
+    PyObject *logger = nullptr;
+
+    if (module != nullptr) {
+      logger = PyObject_CallMethod(module, "getLogger", "s", "rdkit");
+      Py_DECREF(module);
+    }
+
+    if (logger != nullptr) {
+      logfn = PyObject_GetAttrString(logger, level.c_str());
+      Py_DECREF(logger);
+    }
+
+    if (PyErr_Occurred()) {
+      PyErr_Print();
+    }
+  }
+
+  ~PyLogStream() {
+    if (!_Py_IsFinalizing()) {
+      Py_XDECREF(logfn);
+    }
+  }
+
+  int overflow(int c) override {
+    write(c);
+    return 0;
+  }
+
+  void write(char c) {
+    if (logfn == nullptr) {
+      return;
+    }
+
+    if (c == '\n') {
+#ifdef RDK_THREADSAFE_SSS
+      PyGILStateHolder h;
+#endif
+      PyObject *result = PyObject_CallFunction(logfn, "s", buffer.c_str());
+      Py_XDECREF(result);
+      buffer.clear();
+    }
+    else {
+      buffer += c;
+    }
+  }
+};
+
+#ifdef RDK_THREADSAFE_SSS
+thread_local std::string PyErrStream::buffer;
+thread_local std::string PyLogStream::buffer;
+#endif
+
+
+void LogToPythonLogger() {
+  static PyLogStream debug("debug");
+  static PyLogStream info("info");
+  static PyLogStream warning("warning");
+  static PyLogStream error("error");
+
+  rdDebugLog   = std::make_shared<logging::rdLogger>(&debug);
+  rdInfoLog    = std::make_shared<logging::rdLogger>(&info);
+  rdWarningLog = std::make_shared<logging::rdLogger>(&warning);
+  rdErrorLog   = std::make_shared<logging::rdLogger>(&error);
+}
+
+void LogToPythonStderr() {
+  static PyErrStream debug;
+  static PyErrStream info;
+  static PyErrStream warning;
+  static PyErrStream error;
+
+  rdDebugLog   = std::make_shared<logging::rdLogger>(&debug);
+  rdInfoLog    = std::make_shared<logging::rdLogger>(&info);
+  rdWarningLog = std::make_shared<logging::rdLogger>(&warning);
+  rdErrorLog   = std::make_shared<logging::rdLogger>(&error);
+}
+
+void WrapLogs() {
+  static PyErrStream debug; //("RDKit DEBUG: ");
+  static PyErrStream error; //("RDKit ERROR: ");
+  static PyErrStream warning; //("RDKit WARNING: ");
+  static PyErrStream info; //("RDKit INFO: ");
+
+  if (!rdDebugLog || !rdInfoLog || !rdErrorLog || !rdWarningLog) {
+    RDLog::InitLogs();
+  }
+
+  rdDebugLog->SetTee(debug);
+  rdInfoLog->SetTee(info);
+  rdWarningLog->SetTee(warning);
+  rdErrorLog->SetTee(error);
+}
+
+
+void EnableLog(std::string spec) {
+  logging::enable_logs(spec);
+}
+
+void DisableLog(std::string spec) {
+  logging::disable_logs(spec);
+}
+
+std::string LogStatus() {
+  return logging::log_status();
+}
+
 void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
   (void)spec;
   (void)filename;
@@ -48,32 +194,40 @@ void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
 #endif
 #endif
 }
-void LogMessage(std::string spec, std::string msg) {
-#if 0
-  logging::logger theLog(spec);
-  if(theLog.is_enabled(logging::level::default_)){
-    *(theLog.stream().stream()) << msg;
-  }
-#else
-  //  FIX: get this more general
-  std::shared_ptr<boost::logging::rdLogger> dest = nullptr;
-  if (spec == "rdApp.error") {
-    dest = rdErrorLog;
-  } else if (spec == "rdApp.warning") {
-    dest = rdWarningLog;
-  } else if (spec == "rdApp.info") {
-    dest = rdInfoLog;
-  } else if (spec == "rdApp.debug") {
-    dest = rdDebugLog;
-  } else {
-    dest = nullptr;
-  }
 
-  if (dest) {
-    BOOST_LOG(dest) << msg;
-  }
-#endif
+
+void LogDebugMsg(const std::string &msg) {
+  NOGIL nogil;
+  BOOST_LOG(rdDebugLog) << msg << std::endl;
 }
+
+void LogInfoMsg(const std::string &msg) {
+  NOGIL nogil;
+  BOOST_LOG(rdInfoLog) << msg << std::endl;
+}
+
+void LogWarningMsg(const std::string &msg) {
+  NOGIL nogil;
+  BOOST_LOG(rdWarningLog) << msg << std::endl;
+}
+
+void LogErrorMsg(const std::string &msg) {
+  NOGIL nogil;
+  BOOST_LOG(rdErrorLog) << msg << std::endl;
+}
+
+void LogMessage(std::string spec, std::string msg) {
+  if (spec == "rdApp.error") {
+    LogErrorMsg(msg);
+  } else if (spec == "rdApp.warning") {
+    LogWarningMsg(msg);
+  } else if (spec == "rdApp.info") {
+    LogInfoMsg(msg);
+  } else if (spec == "rdApp.debug") {
+    LogDebugMsg(msg);
+  }
+}
+
 
 namespace {
 struct python_streambuf_wrapper {
@@ -102,6 +256,7 @@ struct python_ostream_wrapper {
 
 void seedRNG(unsigned int seed) { std::srand(seed); }
 }  // namespace
+
 
 BOOST_PYTHON_MODULE(rdBase) {
   python::scope().attr("__doc__") =
@@ -139,15 +294,34 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::scope().attr("boostVersion") = RDKit::boostVersion;
   python::scope().attr("rdkitBuild") = RDKit::rdkitBuild;
 
+  python::def("LogToCppStreams", RDLog::InitLogs,
+              "Initialize RDKit logs with C++ streams");
+  python::def("LogToPythonLogger", LogToPythonLogger,
+              "Initialize RDKit logs with Python's logging module");
+  python::def("LogToPythonStderr", LogToPythonStderr,
+              "Initialize RDKit logs with Python's stderr stream");
+  python::def("WrapLogs", WrapLogs,
+              "Tee the RDKit logs to Python's stderr stream");
+
   python::def("EnableLog", EnableLog);
   python::def("DisableLog", DisableLog);
   python::def("LogStatus", LogStatus);
+
+  python::def("LogDebugMsg", LogDebugMsg,
+              "Log a message to the RDKit debug logs");
+  python::def("LogInfoMsg", LogInfoMsg,
+              "Log a message to the RDKit info logs");
+  python::def("LogWarningMsg", LogWarningMsg,
+              "Log a message to the RDKit warning logs");
+  python::def("LogErrorMsg", LogErrorMsg,
+              "Log a message to the RDKit error logs");
+  python::def("LogMessage", LogMessage,
+              "Log a message to any rdApp.* log");
 
   python::def("AttachFileToLog", AttachFileToLog,
               "Causes the log to write to a file",
               (python::arg("spec"), python::arg("filename"),
                python::arg("delay") = 100));
-  python::def("LogMessage", LogMessage);
 
   python::def("SeedRandomNumberGenerator", seedRNG,
               "Provides a seed to the standard C random number generator\n"
