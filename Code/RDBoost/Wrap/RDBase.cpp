@@ -197,22 +197,22 @@ void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
 
 
 void LogDebugMsg(const std::string &msg) {
-  NOGIL nogil;
+  // NOGIL nogil;
   BOOST_LOG(rdDebugLog) << msg << std::endl;
 }
 
 void LogInfoMsg(const std::string &msg) {
-  NOGIL nogil;
+  // NOGIL nogil;
   BOOST_LOG(rdInfoLog) << msg << std::endl;
 }
 
 void LogWarningMsg(const std::string &msg) {
-  NOGIL nogil;
+  // NOGIL nogil;
   BOOST_LOG(rdWarningLog) << msg << std::endl;
 }
 
 void LogErrorMsg(const std::string &msg) {
-  NOGIL nogil;
+  // NOGIL nogil;
   BOOST_LOG(rdErrorLog) << msg << std::endl;
 }
 
