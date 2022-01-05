@@ -58,3 +58,16 @@ TEST_CASE("bulk parse test") {
     inorganicSanitize(*mol);
   }
 }
+
+TEST_CASE("TH and @ are equivalent") {
+  SECTION("@TH1") {
+    auto m = "F[C@TH1H](C)O"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "C[C@H](O)F");
+  }
+  SECTION("@TH2") {
+    auto m = "F[C@TH2H](C)O"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "C[C@@H](O)F");
+  }
+}

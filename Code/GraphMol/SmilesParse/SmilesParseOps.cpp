@@ -387,6 +387,16 @@ void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
           throw SmilesParseException(error);
         }
       }
+      // directly convert @TH1 -> @ and @TH2 -> @@
+      if (atom->getChiralTag() == RDKit::Atom::ChiralType::CHI_TETRAHEDRAL) {
+        if (permutation == 0 || permutation == 1) {
+          atom->setChiralTag(RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+          atom->clearProp(common_properties::_chiralPermutation);
+        } else if (permutation == 2) {
+          atom->setChiralTag(RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          atom->clearProp(common_properties::_chiralPermutation);
+        }
+      }
     }
   }
 }
