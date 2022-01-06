@@ -99,7 +99,7 @@ def GetBTFingerprint(mol, fpfn=GetTopologicalTorsionFingerprint):
     >>> fp.GetTotalVal()
     2
     >>> nze = fp.GetNonzeroElements()
-    >>> sorted([(k,v) for k,v in nze.items()])
+    >>> sorted([(k,v) for k, v in nze.items()])
     [(538446850..., 1), (538446852..., 1)]
 
     """
