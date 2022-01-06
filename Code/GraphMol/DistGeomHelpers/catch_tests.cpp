@@ -336,4 +336,24 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
       CHECK(bm->getLowerBound(2, 4) - bm->getLowerBound(2, 3) > 0.5);
     }
   }
+#if 0
+  SECTION("Embedding") {
+    {
+      auto m = "Cl[Pt@SP1](<-N)(<-N)[Cl]"_smiles;
+      REQUIRE(m);
+      m->setProp("_Name", "cis platin");
+      MolOps::addHs(*m);
+      CHECK(DGeomHelpers::EmbedMolecule(*m) == 0);
+      std::cerr << MolToV3KMolBlock(*m) << std::endl;
+    }
+    {
+      auto m = "Cl[Pt@SP3](<-N)(<-N)[Cl]"_smiles;
+      REQUIRE(m);
+      m->setProp("_Name", "trans platin");
+      MolOps::addHs(*m);
+      CHECK(DGeomHelpers::EmbedMolecule(*m) == 0);
+      std::cerr << MolToV3KMolBlock(*m) << std::endl;
+    }
+  }
 }
+#endif
