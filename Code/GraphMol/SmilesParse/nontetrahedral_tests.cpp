@@ -226,3 +226,17 @@ TEST_CASE("getChiralAcross edges") {
                                          m->getAtomWithIdx(5)) == nullptr);
   }
 }
+
+TEST_CASE("hasNonTetrahedralStereo") {
+  std::vector<std::pair<std::string, bool>> data = {
+      {"C[Pt@SP1](F)(O)CC", true},    {"C[Pt](F)(O)CC", false},
+      {"C[Pt@](F)(O)CC", false},      {"C[Pt@TH1](F)(O)CC", false},
+      {"C[Pt@TB1](N)(F)(O)CC", true}, {"C[Pt@OH1](N)(N)(F)(O)CC", true},
+  };
+  for (const auto &pr : data) {
+    auto m = fromsmiles_skipstereo(pr.first);
+    REQUIRE(m);
+    CHECK(Chirality::hasNonTetrahedralStereo(m->getAtomWithIdx(1)) ==
+          pr.second);
+  }
+}

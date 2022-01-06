@@ -87,7 +87,7 @@ Bond *getChiralAcrossBond(const Atom *cen, const Bond *qry) {
   PRECONDITION(qry, "bad query pointer");
   PRECONDITION(cen->hasOwningMol() && qry->hasOwningMol(), "no owning mol");
   PRECONDITION(&cen->getOwningMol() == &qry->getOwningMol(),
-               "cen and query must come from the same molecule");
+               "center and query must come from the same molecule");
 
   Atom::ChiralType tag = cen->getChiralTag();
   unsigned int ref_max = 0;
@@ -191,5 +191,51 @@ Atom *getChiralAcrossAtom(const Atom *cen, const Atom *qry) {
   bnd = getChiralAcrossBond(cen, bnd);
   return bnd ? bnd->getOtherAtom(cen) : nullptr;
 }
+
+double getIdealAngleBetweenLigands(const Atom *cen, const Atom *lig1,
+                                   const Atom *lig2) {
+  PRECONDITION(cen, "bad center pointer");
+  PRECONDITION(lig1 && lig2, "bad ligand pointer");
+  PRECONDITION(
+      cen->hasOwningMol() && lig1->hasOwningMol() && lig2->hasOwningMol(),
+      "no owning mol");
+  PRECONDITION(&cen->getOwningMol() == &lig1->getOwningMol() &&
+                   &cen->getOwningMol() == &lig2->getOwningMol(),
+               "center and ligands must come from the same molecule");
+  auto tag = cen->getChiralTag();
+  switch (tag) {
+    case Atom::ChiralType::CHI_SQUAREPLANAR:
+    case Atom::ChiralType::CHI_OCTAHEDRAL:
+      return getChiralAcrossAtom(cen, lig1) == lig2 ? 180 : 90;
+      break;
+    case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+      if (getChiralAcrossAtom(cen, lig1) == lig2) {
+        // both are axial
+        return 180;
+      } else if (getChiralAcrossAtom(cen, lig1) ||
+                 getChiralAcrossAtom(cen, lig2)) {
+        // one is axial, the other equatorial
+        return 90;
+      } else {
+        // both axial
+        return 120;
+      }
+      break;
+    default:
+      return 0;
+  }
+}
+
+bool hasNonTetrahedralStereo(const Atom *cen) {
+  PRECONDITION(cen, "bad center pointer");
+  if (!cen->hasOwningMol()) {
+    return false;
+  }
+  auto tag = cen->getChiralTag();
+  return tag == Atom::ChiralType::CHI_SQUAREPLANAR ||
+         tag == Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL ||
+         tag == Atom::ChiralType::CHI_OCTAHEDRAL;
+}
+
 }  // namespace Chirality
 }  // namespace RDKit

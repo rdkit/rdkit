@@ -134,6 +134,7 @@ RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
 
 //! \name Non-tetrahedral stereochemistry
 //@{
+RDKIT_GRAPHMOL_EXPORT bool hasNonTetrahedralStereo(const Atom *center);
 RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
                                                 const Bond *qry);
 RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
@@ -142,6 +143,10 @@ RDKIT_GRAPHMOL_EXPORT Atom *getChiralAcrossAtom(const Atom *center,
                                                 const Bond *qry);
 RDKIT_GRAPHMOL_EXPORT Atom *getChiralAcrossAtom(const Atom *center,
                                                 const Atom *qry);
+
+RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
+                                                         const Atom *lig1,
+                                                         const Atom *lig2);
 
 //@}
 
