@@ -168,6 +168,9 @@ Bond *getChiralAcrossBond(const Atom *cen, const Atom *qry) {
   PRECONDITION(cen->hasOwningMol(), "no owning mol");
   auto bnd =
       cen->getOwningMol().getBondBetweenAtoms(cen->getIdx(), qry->getIdx());
+  if (!bnd) {
+    return nullptr;
+  }
   return getChiralAcrossBond(cen, bnd);
 }
 
@@ -182,6 +185,9 @@ Atom *getChiralAcrossAtom(const Atom *cen, const Atom *qry) {
   PRECONDITION(cen->hasOwningMol(), "no owning mol");
   auto bnd =
       cen->getOwningMol().getBondBetweenAtoms(cen->getIdx(), qry->getIdx());
+  if (!bnd) {
+    return nullptr;
+  }
   bnd = getChiralAcrossBond(cen, bnd);
   if (bnd) {
     return bnd->getOtherAtom(cen);

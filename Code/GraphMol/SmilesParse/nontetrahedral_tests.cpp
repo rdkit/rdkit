@@ -186,7 +186,6 @@ TEST_CASE("SP getChiralAcrossBond et al.") {
       }
     }
   }
-
   SECTION("3 real ligands") {
     {
       auto m = fromsmiles_skipstereo("C[Pt@SP1](F)O");
@@ -200,5 +199,30 @@ TEST_CASE("SP getChiralAcrossBond et al.") {
       CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
                                            m->getBondWithIdx(1)) == nullptr);
     }
+  }
+}
+TEST_CASE("getChiralAcross edges") {
+  SECTION("central atom isn't chiral") {
+    auto m = fromsmiles_skipstereo("C[Pt](F)(O)CC");
+    REQUIRE(m);
+    CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                         m->getBondWithIdx(1)) == nullptr);
+  }
+  SECTION("others") {
+    auto m = fromsmiles_skipstereo("C[Pt@SP1](F)(O)CC");
+    REQUIRE(m);
+    // not the central atom:
+    CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(0),
+                                         m->getBondWithIdx(1)) == nullptr);
+    // not a bond to central atom
+    CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                         m->getBondWithIdx(4)) == nullptr);
+    CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                         m->getBondWithIdx(4)) == nullptr);
+    // atom not connected to central atom
+    CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
+                                         m->getAtomWithIdx(5)) == nullptr);
+    CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                         m->getAtomWithIdx(5)) == nullptr);
   }
 }
