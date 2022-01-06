@@ -738,8 +738,17 @@ constexpr size_t GROUP_PDB=0, ATOMID=1, TYPE_SYMBOL=2, ATOMNAME=3, ALT_ID=4, \
 constexpr size_t N_ATTRS=16;
 constexpr int NOT_PRESENT = -1;
 
-bool is_quotation(char c) {
+static inline bool is_quotation(char c) {
   return c == '"';
+}
+
+// mmcif uses either '.' or '?' for blank values, change to ' ' to match PDB
+static inline void coerce_blank_values(std::string &value) {
+  if (value == ".") {
+    value = " ";
+  } else if (value == "?") {
+    value = " ";
+  }
 }
 
 void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2column,
@@ -851,21 +860,15 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     info->setResidueName(tmp);
 
     tmp = name2column[ALT_ID] != NOT_PRESENT ? tokens[name2column[ALT_ID]] : " ";
-    if (tmp == ".") { // "." used as non value instead of " "
-      tmp = " ";
-    }
+    coerce_blank_values(tmp);
     info->setAltLoc(tmp);
 
     tmp = name2column[CHAINID] != NOT_PRESENT ? tokens[name2column[CHAINID]] : " ";
-    if (tmp == ".") {
-      tmp = " ";
-    }
+    coerce_blank_values(tmp);
     info->setChainId(tmp);
 
     tmp = name2column[INSCODE] != NOT_PRESENT ? tokens[name2column[INSCODE]] : " ";
-    if (tmp == ".") {
-      tmp = " ";
-    }
+    coerce_blank_values(tmp);
     info->setInsertionCode(tmp);
 
     double occup = 1.0;
