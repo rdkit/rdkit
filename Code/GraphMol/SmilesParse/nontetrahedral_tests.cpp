@@ -78,18 +78,6 @@ TEST_CASE("TH and @ are equivalent") {
   }
 }
 
-std::unique_ptr<RWMol> fromsmiles_skipstereo(const std::string &smi) {
-  SmilesParserParams parseps;
-  // we need to skip stereo assignment
-  parseps.sanitize = false;
-  parseps.removeHs = false;
-  std::unique_ptr<RWMol> m{SmilesToMol(smi, parseps)};
-  if (m) {
-    m->updatePropertyCache(true);
-  }
-  return m;
-}
-
 TEST_CASE("non-canonical non-tetrahedral output") {
   SECTION("no reordering") {
     // clang-format off
@@ -103,11 +91,7 @@ TEST_CASE("non-canonical non-tetrahedral output") {
     };
     // clang-format on
     for (const auto &smi : data) {
-      SmilesParserParams parseps;
-      // we need to skip stereo assignment
-      parseps.sanitize = false;
-      parseps.removeHs = false;
-      auto m = fromsmiles_skipstereo(smi);
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
       REQUIRE(m);
       SmilesWriteParams writeps;
       writeps.canonical = false;
@@ -121,7 +105,7 @@ TEST_CASE("non-canonical non-tetrahedral output") {
 TEST_CASE("SP getChiralAcrossBond et al.") {
   SECTION("basics") {
     {
-      auto m = fromsmiles_skipstereo("C[Pt@SP1](F)(O)Cl");
+      auto m = "C[Pt@SP1](F)(O)Cl"_smiles;
       REQUIRE(m);
       std::vector<std::pair<unsigned int, unsigned int>> bpairs = {{0, 2},
                                                                    {1, 3}};
@@ -158,7 +142,7 @@ TEST_CASE("SP getChiralAcrossBond et al.") {
       }
     }
     {
-      auto m = fromsmiles_skipstereo("C[Pt@SP2](F)(O)Cl");
+      auto m = "C[Pt@SP2](F)(O)Cl"_smiles;
       REQUIRE(m);
       std::vector<std::pair<unsigned int, unsigned int>> pairs = {{0, 1},
                                                                   {2, 3}};
@@ -172,7 +156,7 @@ TEST_CASE("SP getChiralAcrossBond et al.") {
       }
     }
     {
-      auto m = fromsmiles_skipstereo("C[Pt@SP3](F)(O)Cl");
+      auto m = "C[Pt@SP3](F)(O)Cl"_smiles;
       REQUIRE(m);
       std::vector<std::pair<unsigned int, unsigned int>> pairs = {{0, 3},
                                                                   {1, 2}};
@@ -188,7 +172,7 @@ TEST_CASE("SP getChiralAcrossBond et al.") {
   }
   SECTION("3 real ligands") {
     {
-      auto m = fromsmiles_skipstereo("C[Pt@SP1](F)O");
+      auto m = "C[Pt@SP1](F)O"_smiles;
       REQUIRE(m);
       CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
                                            m->getBondWithIdx(0))
@@ -203,13 +187,13 @@ TEST_CASE("SP getChiralAcrossBond et al.") {
 }
 TEST_CASE("getChiralAcross edges") {
   SECTION("central atom isn't chiral") {
-    auto m = fromsmiles_skipstereo("C[Pt](F)(O)CC");
+    auto m = "C[Pt](F)(O)CC"_smiles;
     REQUIRE(m);
     CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
                                          m->getBondWithIdx(1)) == nullptr);
   }
   SECTION("others") {
-    auto m = fromsmiles_skipstereo("C[Pt@SP1](F)(O)CC");
+    auto m = "C[Pt@SP1](F)(O)CC"_smiles;
     REQUIRE(m);
     // not the central atom:
     CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(0),
@@ -234,7 +218,7 @@ TEST_CASE("hasNonTetrahedralStereo") {
       {"C[Pt@TB1](N)(F)(O)CC", true}, {"C[Pt@OH1](N)(N)(F)(O)CC", true},
   };
   for (const auto &pr : data) {
-    auto m = fromsmiles_skipstereo(pr.first);
+    std::unique_ptr<RWMol> m{SmilesToMol(pr.first)};
     REQUIRE(m);
     CHECK(Chirality::hasNonTetrahedralStereo(m->getAtomWithIdx(1)) ==
           pr.second);
