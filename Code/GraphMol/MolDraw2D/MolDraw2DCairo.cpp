@@ -93,10 +93,11 @@ void MolDraw2DCairo::setColour(const DrawColour &col) {
 }
 
 // ****************************************************************************
-void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
+void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2,
+                              bool rawCoords) {
   PRECONDITION(dp_cr, "no draw context");
-  Point2D c1 = getDrawCoords(cds1);
-  Point2D c2 = getDrawCoords(cds2);
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
 
   double width = getDrawLineWidth();
   std::string dashString = "";
@@ -118,9 +119,11 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
   cairo_stroke(dp_cr);
 }
 
+// ****************************************************************************
 void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                   const DrawColour &col1, const DrawColour &,
-                                  unsigned int nSegments, double vertOffset) {
+                                  unsigned int nSegments, double vertOffset,
+                                  bool rawCoords) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(nSegments > 1, "too few segments");
 
@@ -134,7 +137,7 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   perp *= vertOffset;
   delta /= nSegments;
 
-  Point2D c1 = getDrawCoords(cds1);
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
 
   double width = getDrawLineWidth();
   cairo_set_line_width(dp_cr, width);
@@ -143,11 +146,11 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   cairo_move_to(dp_cr, c1.x, c1.y);
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = cds1 + delta * i;
-    Point2D segpt = getDrawCoords(startpt + delta);
-    Point2D cpt1 =
-        getDrawCoords(startpt + delta / 3. + perp * (i % 2 ? -1 : 1));
-    Point2D cpt2 =
-        getDrawCoords(startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1));
+    Point2D segpt = rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
+    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
+    cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
+    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    cpt2 = rawCoords ? cpt2 : getDrawCoords(cpt2);
     // if (i == nSegments / 2 && col2 != col1) setColour(col2);
     cairo_curve_to(dp_cr, cpt1.x, cpt1.y, cpt2.x, cpt2.y, segpt.x, segpt.y);
   }
@@ -155,7 +158,8 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 }
 
 // ****************************************************************************
-void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
+void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds,
+                                 bool rawCoords) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
@@ -170,10 +174,10 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   cairo_set_line_width(dp_cr, width);
 
   if (!cds.empty()) {
-    Point2D lc = getDrawCoords(cds.front());
+    Point2D lc = rawCoords ? cds.front() : getDrawCoords(cds.front());
     cairo_move_to(dp_cr, lc.x, lc.y);
     for (unsigned int i = 1; i < cds.size(); ++i) {
-      Point2D lci = getDrawCoords(cds[i]);
+      Point2D lci = rawCoords ? cds[i] : getDrawCoords(cds[i]);
       cairo_line_to(dp_cr, lci.x, lci.y);
     }
   }

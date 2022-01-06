@@ -48,15 +48,18 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   // but we'll start here
   void finishDrawing();
 
-  void drawLine(const Point2D &cds1, const Point2D &cds2) override;
-  void drawPolygon(const std::vector<Point2D> &cds) override;
-  void drawEllipse(const Point2D &cds1, const Point2D &cds2) override;
+  void drawLine(const Point2D &cds1, const Point2D &cds2,
+                bool rawCoords = false) override;
+  void drawPolygon(const std::vector<Point2D> &cds,
+                   bool rawCoords = false) override;
+  void drawEllipse(const Point2D &cds1, const Point2D &cds2,
+                   bool rawCoords = false) override;
   void clearDrawing() override;
 
   void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                     const DrawColour &col1, const DrawColour &col2,
-                    unsigned int nSegments = 16,
-                    double vertOffset = 0.05) override;
+                    unsigned int nSegments = 16, double vertOffset = 0.05,
+                    bool rawCoords = false) override;
 
   // this only makes sense if the object was initialized without a stream
   std::string getDrawingText() const { return d_ss.str(); }

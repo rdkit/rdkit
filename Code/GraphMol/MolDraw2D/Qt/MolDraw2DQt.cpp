@@ -79,9 +79,10 @@ void MolDraw2DQt::setColour(const DrawColour &col) {
 }
 
 // ****************************************************************************
-void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2) {
-  Point2D c1 = getDrawCoords(cds1);
-  Point2D c2 = getDrawCoords(cds2);
+void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2,
+                           bool rawCoords) {
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
 
   const DashPattern &dashes = dash();
   QPen pen = d_qp->pen();
@@ -107,7 +108,8 @@ void MolDraw2DQt::drawChar(char c, const Point2D &cds) {
 }
 
 // ****************************************************************************
-void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds) {
+void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds,
+                              bool rawCoords) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
   d_qp->save();
   QBrush brush = d_qp->brush();
@@ -119,7 +121,7 @@ void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds) {
 
   QPointF *points = new QPointF[cds.size()];
   for (unsigned int i = 0; i < cds.size(); ++i) {
-    Point2D lc = getDrawCoords(cds[i]);
+    Point2D lc = rawCoords : cds[i] ? getDrawCoords(cds[i]);
     points[i] = QPointF(lc.x, lc.y);
   }
   d_qp->drawConvexPolygon(points, cds.size());

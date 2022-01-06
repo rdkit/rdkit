@@ -70,13 +70,73 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
-  /// in atom coords.
-  virtual void drawLine(const Point2D &cds1, const Point2D &cds2) = 0;
+  //! in atom coords.  If rawCoords is passed as true,
+  //! the coordinates are used as is, if not they are assumed to be in
+  //! the molecule coordinate frame and converted with getDrawCoords
+  //! into canvas coords.
+  virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
+                        bool rawCoords = false) = 0;
   //! draw a polygon.  Note that if fillPolys() returns false, it
   //! doesn't close the path.  If you want it to in that case, you
-  //! do it explicitly yourself.
-  virtual void drawPolygon(const std::vector<Point2D> &cds) = 0;
+  //! do it explicitly yourself.  If rawCoords is passed as true,
+  //! the coordinates are used as is, if not they are assumed to be in
+  //! the molecule coordinate frame and converted with getDrawCoords
+  //! into canvas coords.
+  virtual void drawPolygon(const std::vector<Point2D> &cds,
+                           bool rawCoords = false) = 0;
   //@}
+
+  //! A Whole bunch of drawing primitives.  They may be over-ridden
+  //! by different renderers, or they may be implemented in terms of
+  //! drawLine and drawPolygon above.  If rawCoords is passed as true,
+  // the coordinates are used as is, if not they are assumed to be in
+  // the molecule coordinate frame and converted with getDrawCoords
+  // into canvas coords.
+  //! draw a line where the ends are different colours
+  virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
+                        const DrawColour &col1, const DrawColour &col2,
+                        bool rawCoords = false);
+  //! draw a triangle
+  virtual void drawTriangle(const Point2D &cds1, const Point2D &cds2,
+                            const Point2D &cds3,
+                            bool rawCoords = false);
+  //! draw an ellipse
+  virtual void drawEllipse(const Point2D &cds1, const Point2D &cds2,
+                           bool rawCoords = false);
+  // draw the arc of a circle between ang1 and ang2.  Note that 0 is
+  // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
+  // ang2 must be > ang1 - it won't draw backwards.  This is not enforced.
+  // Angles in degrees.
+  virtual void drawArc(const Point2D &centre, double radius, double ang1,
+                       double ang2,
+                       bool rawCoords = false);
+  // and a general ellipse form
+  virtual void drawArc(const Point2D &centre, double xradius, double yradius,
+                       double ang1, double ang2,
+                       bool rawCoords = false);
+  //! draw a rectangle
+  virtual void drawRect(const Point2D &cds1, const Point2D &cds2,
+                        bool rawCoords = false);
+  //! draw a line indicating the presence of an attachment point (normally a
+  //! squiggle line perpendicular to a bond)
+  virtual void drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
+                                  const DrawColour &col, double len = 1.0,
+                                  unsigned int nSegments = 16,
+                                  bool rawCoords = false);
+  //! draw a wavy line like that used to indicate unknown stereochemistry
+  virtual void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                            const DrawColour &col1, const DrawColour &col2,
+                            unsigned int nSegments = 16,
+                            double vertOffset = 0.05,
+                            bool rawCoords = false);
+  //! drawString centres the string on cds.
+  virtual void drawString(const std::string &str, const Point2D &cds,
+                          bool rawCoords = false);
+  // unless the specific drawer over-rides this overload, it will just call
+  // the first one.  SVG for one needs the alignment flag.
+  virtual void drawString(const std::string &str, const Point2D &cds,
+                          TextAlignType align,
+                          bool rawCoords = false);
 
   //! draw a single molecule
   /*!
@@ -257,7 +317,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void centrePicture(int width, int height);
 
   //! explicitly sets the scaling factors for the drawing
-  void setScale(double newScale) { scale_ = newScale; }
+  void setScale(double newScale);
   void setScale(int width, int height, const Point2D &minv, const Point2D &maxv,
                 const ROMol *mol = nullptr);
   //! sets the drawing offset (in drawing coords)
@@ -309,41 +369,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                          const Point2D &cds, double &x_min, double &y_min,
                          double &x_max, double &y_max) const;
 
-  //! drawString centres the string on cds.
-  virtual void drawString(const std::string &str, const Point2D &cds);
-  // unless the specific drawer over-rides this overload, it will just call
-  // the first one.  SVG for one needs the alignment flag.
-  virtual void drawString(const std::string &str, const Point2D &cds,
-                          TextAlignType align);
-  //! draw a triangle
-  virtual void drawTriangle(const Point2D &cds1, const Point2D &cds2,
-                            const Point2D &cds3);
-  //! draw an ellipse
-  virtual void drawEllipse(const Point2D &cds1, const Point2D &cds2);
-  // draw the arc of a circle between ang1 and ang2.  Note that 0 is
-  // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
-  // ang2 must be > ang1 - it won't draw backwards.  This is not enforced.
-  // Angles in degrees.
-  virtual void drawArc(const Point2D &centre, double radius, double ang1,
-                       double ang2);
-  // and a general ellipse form
-  virtual void drawArc(const Point2D &centre, double xradius, double yradius,
-                       double ang1, double ang2);
-  //! draw a rectangle
-  virtual void drawRect(const Point2D &cds1, const Point2D &cds2);
-  //! draw a line indicating the presence of an attachment point (normally a
-  //! squiggle line perpendicular to a bond)
-  virtual void drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
-                                  const DrawColour &col, double len = 1.0,
-                                  unsigned int nSegments = 16);
-  //! draw a wavy line like that used to indicate unknown stereochemistry
-  virtual void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
-                            const DrawColour &col1, const DrawColour &col2,
-                            unsigned int nSegments = 16,
-                            double vertOffset = 0.05);
-  //! draw a line where the ends are different colours
-  virtual void drawLine(const Point2D &cds1, const Point2D &cds2,
-                        const DrawColour &col1, const DrawColour &col2);
   //! adds additional information about the atoms to the output. Does not make
   //! sense for all renderers.
   virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); }
@@ -408,6 +433,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  private:
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_, legend_height_;
+  // if the user calls setScale() to explicitly force a scale on the
+  // DrawMols, this is set to true.
+  bool forceScale_ = false;
   double scale_;
   double x_min_, y_min_, x_range_, y_range_;
   double x_trans_, y_trans_;

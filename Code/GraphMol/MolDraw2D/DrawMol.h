@@ -77,6 +77,8 @@ class DrawMol {
 
   // this must be called before a drawing can be done.
   void createDrawObjects();
+  // common bits used by createDrawObjects and setScale.
+  void finishCreateDrawObjects();
   void initDrawMolecule(const ROMol &mol);
   void extractAll();
   void extractAtomCoords();
@@ -101,7 +103,6 @@ class DrawMol {
   void calculateScale();
   void findExtremes();
   void changeToDrawCoords();
-  void changeToAtomCoords();
   void draw(MolDraw2D &drawer) const;
   void drawRadicals(MolDraw2D &drawer) const;
   void resetEverything();
@@ -112,6 +113,8 @@ class DrawMol {
   std::string getAtomSymbol(const Atom &atom, OrientType orientation) const;
   OrientType getAtomOrientation(const Atom &atom) const;
 
+  // if there's a legend, partition the height_ to accommodate it
+  void partitionForLegend();
   // extractLegend is different from all the other extract... functions
   // in that it needs to be called once the final scale has been found
   // by calculateScale.
@@ -169,8 +172,8 @@ class DrawMol {
   // so we can add metadata later.  Most likely used after changeToDrawCoords
   // has been called.
   void tagAtomsWithCoords();
-  // apply the transformations to everything except the atomLabels_.
-  // trans and toCentre are added, scale is multiplied.
+  // apply the transformations to everything except the atomLabels_ and
+  // annotations_. trans and toCentre are added, scale is multiplied.
   void transformAllButAtomLabels(const Point2D &trans, Point2D &scale,
                                  const Point2D &toCentre);
 
@@ -207,7 +210,8 @@ class DrawMol {
   // offsets are for drawing molecules in grids, for example.
   double xOffset_ = 0.0, yOffset_ = 0.0;
   double meanBondLengthSquare_ = 0.0;
-  int legendHeight_ = 0;
+  // if there's a legend, we reserve a bit for it.
+  int drawHeight_, legendHeight_;
   bool drawingInitialised_ = false;
 };
 

@@ -45,7 +45,7 @@ class DrawAnnotation {
   void draw(MolDraw2D &molDrawer) const;
   // this is for debugging almost always.
   void drawRects(MolDraw2D &molDrawer) const;
-  void scale(const Point2D &scaleFactor);
+  void scale(const Point2D &scaleFactor, const Point2D &fontScaleFactor);
   void move(const Point2D &trans);
   bool doesRectClash(const StringRect &rect, double padding) const;
 

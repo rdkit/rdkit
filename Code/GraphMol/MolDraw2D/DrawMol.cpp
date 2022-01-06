@@ -70,11 +70,11 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
 
 // ****************************************************************************
 void DrawMol::createDrawObjects() {
+  partitionForLegend();
   extractAll();
   calculateScale();
 
   if (!textDrawer_.setFontScale(fontScale_, false)) {
-    std::cout << "re-doing everything because of scale." << std::endl;
     double nfs = textDrawer_.fontScale();
     textDrawer_.setFontScale(nfs / fontScale_, true);
     resetEverything();
@@ -84,7 +84,11 @@ void DrawMol::createDrawObjects() {
     textDrawer_.setFontScale(fontScale_);
     fontScale_ = textDrawer_.fontScale();
   }
+  finishCreateDrawObjects();
+}
 
+// ****************************************************************************
+void DrawMol::finishCreateDrawObjects() {
   // the legend needs the final scale to get the fonts the correct size.
   extractLegend();
   changeToDrawCoords();
@@ -98,14 +102,6 @@ void DrawMol::createDrawObjects() {
     radicals_.clear();
     extractRadicals();
   }
-
-  // now we've got everything laid out nicely, we need to turn it all
-  // back to the original coordinate frame, except atomLabels_.  This
-  // is because the legacy MolDraw2D primitives like drawLine, drawArc
-  // etc. call getDrawCoords() to decide what to draw.  It would be
-  // a breaking change at this point to fix that.  atomLabels_ are
-  // drawn by textDrawer_ and that has always worked in draw coords.
-  changeToAtomCoords();
   drawingInitialised_ = true;
 }
 
@@ -758,7 +754,7 @@ void DrawMol::extractCloseContacts() {
 void DrawMol::calculateScale() {
   findExtremes();
 
-  // if either width_ or height_ is < 0 we are going to make a picture of
+  // if either width_ or drawHeight_ is < 0 we are going to make a picture of
   // as yet unknown size, with fixed scale.
   bool setWidth = false;
   if (width_ < 0) {
@@ -768,12 +764,12 @@ void DrawMol::calculateScale() {
   }
   bool setHeight = false;
   double thisYRange = yRange_;
-  if (height_ < 0) {
+  if (drawHeight_ < 0) {
     // we need to adjust the range for the legend
-    // if it's not present then legend_height_ will be zero and this will be a
+    // if it's not present then legendHeight_ will be zero and this will be a
     // no-op
     thisYRange += legendHeight_ / drawOptions_.scalingFactor;
-    height_ = drawOptions_.scalingFactor * thisYRange;
+    drawHeight_ = drawOptions_.scalingFactor * thisYRange;
     setHeight = true;
   }
 
@@ -791,11 +787,11 @@ void DrawMol::calculateScale() {
       width_ = drawOptions_.scalingFactor * xRange_;
     }
     if (setHeight) {
-      height_ = drawOptions_.scalingFactor * thisYRange;
+      drawHeight_ = drawOptions_.scalingFactor * thisYRange;
     }
 
     newScale = std::min(double(width_) / xRange_,
-                      double(height_ - legendHeight_) / yRange_);
+                      double(drawHeight_) / yRange_);
     double fix_scale = newScale;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
@@ -866,6 +862,11 @@ void DrawMol::changeToDrawCoords() {
   getDrawTransformers(trans, scale, toCentre);
   transformAllButAtomLabels(trans, scale, toCentre);
   Point2D fontScale{fontScale_, fontScale_};
+  for (auto &annot : annotations_) {
+    annot->move(trans);
+    annot->scale(scale, fontScale);
+    annot->move(toCentre);
+  }
   for (auto &label : atomLabels_) {
     if (label) {
       label->move(trans);
@@ -873,18 +874,6 @@ void DrawMol::changeToDrawCoords() {
       label->move(toCentre);
     }
   }
-}
-
-// ****************************************************************************
-void DrawMol::changeToAtomCoords() {
-  Point2D trans, scale, toCentre;
-  getDrawTransformers(trans, scale, toCentre);
-  std::swap(trans, toCentre);
-  trans = -trans;
-  scale.x = 1.0 / scale.x;
-  scale.y = 1.0 / scale.y;
-  toCentre = -toCentre;
-  transformAllButAtomLabels(trans, scale, toCentre);
 }
 
 // ****************************************************************************
@@ -937,12 +926,12 @@ void DrawMol::drawRadicals(MolDraw2D &drawer) const {
     drawer.setFillPolys(true);
     int olw = drawer.lineWidth();
     drawer.setLineWidth(0);
-    drawer.drawArc(cds, spot_rad, 0, 360);
+    drawer.drawArc(cds, spot_rad, 0, 360, true);
     drawer.setLineWidth(olw);
     drawer.setFillPolys(ofp);
   };
-  // cds in draw coords
 
+  // cds in draw coords
   auto draw_spots = [&](const Point2D &cds, int num_spots, double width,
                         int dir = 0) {
     Point2D ncds = cds;
@@ -1028,7 +1017,7 @@ void DrawMol::resetEverything() {
   xRange_ = std::numeric_limits<double>::max();
   yRange_ = std::numeric_limits<double>::max();
   meanBondLengthSquare_ = 0.0;
-  legendHeight_ = 1.0;
+  legendHeight_ = 0;
   atCds_.clear();
   bonds_.clear();
   preShapes_.clear();
@@ -1309,6 +1298,24 @@ void DrawMol::calcMeanBondLengthSquare() {
 }
 
 // ****************************************************************************
+void DrawMol::partitionForLegend() {
+  if (legend_.empty()) {
+    drawHeight_ = height_;
+    legendHeight_ = 0;
+  } else {
+    if (height_ > 0) {
+      drawHeight_ = int(0.95 * float(height_));
+      legendHeight_ = height_ - drawHeight_;
+    } else {
+      drawHeight_ = height_;
+      legendHeight_ = 15;
+    }
+  }
+  std::cout << "height_ : " << height_ << " drawHeight_ = " << drawHeight_
+            << "  legendHeight_ = " << legendHeight_ << std::endl;
+}
+
+// ****************************************************************************
 // This must be called after calculateScale() because it needs the final
 // font size to work out the legend font size which is given in
 // drawOptions().legendFontSize in pixels, and then scaled down to fit
@@ -1317,7 +1324,6 @@ void DrawMol::extractLegend() {
   if (legend_.empty()) {
     return;
   }
-  legendHeight_ = int(0.05 * double(height_));
 
   auto calc_legend_height = [&](const std::vector<std::string> &legend_bits,
                                 double relFontScale,
@@ -1375,6 +1381,7 @@ void DrawMol::extractLegend() {
     xMin = yMin = std::numeric_limits<double>::max();
     xMax = yMax = -xMin;
     da->findExtremes(xMin, xMax, yMin, yMax);
+//    da->pos_.y += yMax - yMin;
 
     loc.y += yMax - yMin;
     legends_.emplace_back(da);
@@ -1717,6 +1724,9 @@ void DrawMol::makeZeroBond(Bond *bond,
 void DrawMol::adjustBondEndsForLabels(int begAtIdx, int endAtIdx,
                                       Point2D &begCds, Point2D &endCds) {
   double padding = 0.025 * meanBondLengthSquare_;
+  if (drawOptions_.additionalAtomLabelPadding > 0.0) {
+    padding += drawOptions_.additionalAtomLabelPadding;
+  }
   begCds = atCds_[begAtIdx];
   endCds = atCds_[endAtIdx];
   if (atomLabels_[begAtIdx]) {
@@ -2232,9 +2242,8 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
   trans = Point2D(-xMin_, -yMin_);
   scale = Point2D(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
-  int drawHeight = height_ - legendHeight_;
   toCentre = Point2D((width_ - scaledRanges.x) / 2.0 + xOffset_,
-                     (drawHeight - scaledRanges.y) / 2.0 + yOffset_);
+                     (drawHeight_ - scaledRanges.y) / 2.0 + yOffset_);
 }
 
 // ****************************************************************************
@@ -2283,17 +2292,7 @@ void DrawMol::setScale(double newScale) {
   scale_ = newScale;
   textDrawer_.setFontScale(newScale);
   fontScale_ = textDrawer_.fontScale();
-  extractLegend();
-  changeToDrawCoords();
-  // if the fontScale isn't the same as the drawing scale, then we've hit
-  // a max or min for the font size, in which case the radical spots will
-  // be in the wrong place.  We might want to think about re-calculating the
-  // scale at this point, but it's probably ok for now.
-  if (scale_ != textDrawer_.fontScale()) {
-    radicals_.clear();
-    extractRadicals();
-  }
-  drawingInitialised_ = true;
+  finishCreateDrawObjects();
 }
 
 // ****************************************************************************
@@ -2328,13 +2327,11 @@ void DrawMol::transformAllButAtomLabels(const Point2D &trans, Point2D &scale,
     hl->scale(scale);
     hl->move(toCentre);
   }
-  for (auto &annot : annotations_) {
-    annot->move(trans);
-    annot->scale(scale);
-    annot->move(toCentre);
-  }
   for (auto &rad : radicals_) {
-    get<0>(rad).trans_ = getDrawCoords(get<0>(rad).trans_, trans, scale, toCentre);
+    get<0>(rad).trans_ =
+        getDrawCoords(get<0>(rad).trans_, trans, scale, toCentre);
+    get<0>(rad).width_ *= scale.x;
+    get<0>(rad).height_ *= scale.y;
   }
   for (auto &ps : postShapes_) {
     ps->move(trans);

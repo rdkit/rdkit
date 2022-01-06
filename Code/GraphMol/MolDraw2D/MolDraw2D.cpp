@@ -147,7 +147,8 @@ MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
       fill_polys_(true),
       activeMolIdx_(-1),
       activeAtmIdx1_(-1),
-      activeAtmIdx2_(-1) {}
+      activeAtmIdx2_(-1),
+      activeBndIdx_(-1) {}
 
 // ****************************************************************************
 MolDraw2D::~MolDraw2D() {}
@@ -267,14 +268,19 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
   setupTextDrawer();
-  DrawMol *draw_mol = new DrawMol(
+  DrawMol *drawMol = new DrawMol(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
       nullptr, highlight_radii, supportsAnnotations(), confId);
-  draw_mol->createDrawObjects();
-  drawMols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
+  drawMol->setOffsets(x_offset_, y_offset_);
+  drawMol->createDrawObjects();
+  drawMols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
+  ++activeMolIdx_;
   startDrawing();
-  drawAllMolecules();
+  if (forceScale_) {
+    drawMol->setScale(scale_);
+  }
+  drawMol->draw(*this);
 }
 
 // ****************************************************************************
@@ -807,60 +813,53 @@ void MolDraw2D::setFontSize(double new_size) {
 }
 
 // ****************************************************************************
+void MolDraw2D::setScale(double newScale) {
+  scale_ = newScale;
+}
+
+// ****************************************************************************
 void MolDraw2D::setScale(int width, int height, const Point2D &minv,
                          const Point2D &maxv, const ROMol *mol) {
   PRECONDITION(width > 0, "bad width");
   PRECONDITION(height > 0, "bad height");
 
-  double x_max, y_max;
+  double x_min, x_max, x_range, y_min, y_max, y_range;
   if (mol) {
-    pushDrawDetails();
-    unique_ptr<RWMol> tmol =
-        setupDrawMolecule(*mol, nullptr, nullptr, -1, width, height);
-    calculateScale(height, width, *tmol);
-    popDrawDetails();
-    x_min_ = min(minv.x, x_min_);
-    y_min_ = min(minv.y, y_min_);
-    x_max = max(maxv.x, x_range_ + x_min_);
-    y_max = max(maxv.y, y_range_ + y_min_);
+    setupTextDrawer();
+    DrawMol *drawMol = new DrawMol(*mol, "", panelWidth(), panelHeight(),
+                                   drawOptions(), *text_drawer_);
+    drawMol->createDrawObjects();
+    x_min = min(minv.x, drawMol->xMin_);
+    y_min = min(minv.y, drawMol->yMin_);
+    x_max = max(maxv.x, drawMol->xMax_);
+    y_max = max(maxv.y, drawMol->yMax_);
   } else {
-    x_min_ = minv.x;
-    y_min_ = minv.y;
+    x_min = minv.x;
+    y_min = minv.y;
     x_max = maxv.x;
     y_max = maxv.y;
   }
 
-  x_range_ = x_max - x_min_;
-  y_range_ = y_max - y_min_;
+  x_range = x_max - x_min;
+  y_range = y_max - y_min;
 
-  needs_scale_ = false;
-
-  if (x_range_ < 1.0e-4) {
-    x_range_ = 1.0;
-    x_min_ = -0.5;
+  if (x_range < 1.0e-4) {
+    x_range = 1.0;
+    x_min = -0.5;
   }
-  if (y_range_ < 1.0e-4) {
-    y_range_ = 1.0;
-    y_min_ = -0.5;
+  if (y_range < 1.0e-4) {
+    y_range = 1.0;
+    y_min = -0.5;
   }
 
   // put a buffer round the drawing and calculate a final scale
-  x_min_ -= drawOptions().padding * x_range_;
-  x_range_ *= 1 + 2 * drawOptions().padding;
-  y_min_ -= drawOptions().padding * y_range_;
-  y_range_ *= 1 + 2 * drawOptions().padding;
+  x_min -= drawOptions().padding * x_range;
+  x_range *= 1 + 2 * drawOptions().padding;
+  y_min -= drawOptions().padding * y_range;
+  y_range *= 1 + 2 * drawOptions().padding;
 
-  scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
-  text_drawer_->setFontScale(scale_);
-  double y_mid = y_min_ + 0.5 * y_range_;
-  double x_mid = x_min_ + 0.5 * x_range_;
-  x_trans_ = y_trans_ = 0.0;  // getDrawCoords uses [xy_]trans_
-  Point2D mid = getDrawCoords(Point2D(x_mid, y_mid));
-  // that used the offset, we need to remove that:
-  mid.x -= x_offset_;
-  mid.y += y_offset_;
-  x_trans_ = (width / 2 - mid.x) / scale_;
-  y_trans_ = (mid.y - height / 2) / scale_;
+  scale_ = std::min(double(width) / x_range, double(height) / y_range);
+  forceScale_ = true;
 }
 
 // ****************************************************************************
@@ -1109,18 +1108,17 @@ void MolDraw2D::centrePicture(int width, int height) {
   y_trans_ = (mid.y - height / 2) / scale_;
 };
 
-namespace {}  // namespace
-
 // ****************************************************************************
 void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
-                         const DrawColour &col1, const DrawColour &col2) {
+                         const DrawColour &col1, const DrawColour &col2,
+                         bool rawCoords) {
   if (drawOptions().comicMode) {
     setFillPolys(false);
     if (col1 == col2) {
       setColour(col1);
       auto pts =
           MolDraw2D_detail::handdrawnLine(cds1, cds2, scale_, true, true);
-      drawPolygon(pts);
+      drawPolygon(pts, rawCoords);
     } else {
       Point2D mid = (cds1 + cds2) * 0.5;
       setColour(col1);
@@ -1130,20 +1128,129 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
       setColour(col2);
       auto pts2 =
           MolDraw2D_detail::handdrawnLine(mid, cds2, scale_, false, true);
-      drawPolygon(pts2);
+      drawPolygon(pts2, rawCoords);
     }
   } else {
     if (col1 == col2) {
       setColour(col1);
-      drawLine(cds1, cds2);
+      drawLine(cds1, cds2, rawCoords);
     } else {
       Point2D mid = (cds1 + cds2) * 0.5;
       setColour(col1);
-      drawLine(cds1, mid);
+      drawLine(cds1, mid, rawCoords);
       setColour(col2);
-      drawLine(mid, cds2);
+      drawLine(mid, cds2, rawCoords);
     }
   }
+}
+
+// ****************************************************************************
+void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
+                             const Point2D &cds3, bool rawCoords) {
+  std::vector<Point2D> pts;
+  if (!drawOptions().comicMode) {
+    pts = {cds1, cds2, cds3};
+  } else {
+    auto lpts = MolDraw2D_detail::handdrawnLine(cds1, cds2, scale_);
+    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
+    lpts = MolDraw2D_detail::handdrawnLine(cds2, cds3, scale_);
+    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
+    lpts = MolDraw2D_detail::handdrawnLine(cds3, cds1, scale_);
+    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
+  }
+  drawPolygon(pts, rawCoords);
+};
+
+// ****************************************************************************
+void MolDraw2D::drawEllipse(const Point2D &cds1, const Point2D &cds2,
+                            bool rawCoords) {
+  std::vector<Point2D> pts;
+  MolDraw2D_detail::arcPoints(cds1, cds2, pts, 0, 360);
+  drawPolygon(pts, rawCoords);
+}
+
+// ****************************************************************************
+void MolDraw2D::drawArc(const Point2D &centre, double radius, double ang1,
+                        double ang2, bool rawCoords) {
+  drawArc(centre, radius, radius, ang1, ang2, rawCoords);
+}
+
+// ****************************************************************************
+void MolDraw2D::drawArc(const Point2D &centre, double xradius, double yradius,
+                        double ang1, double ang2, bool rawCoords) {
+  std::vector<Point2D> pts;
+  // 5 degree increments should be plenty, as the circles are probably
+  // going to be small.
+  int num_steps = 1 + int((ang2 - ang1) / 5.0);
+  double ang_incr = double((ang2 - ang1) / num_steps) * M_PI / 180.0;
+  double start_ang_rads = ang1 * M_PI / 180.0;
+  for (int i = 0; i <= num_steps; ++i) {
+    double ang = start_ang_rads + double(i) * ang_incr;
+    double x = centre.x + xradius * cos(ang);
+    double y = centre.y + yradius * sin(ang);
+    pts.emplace_back(Point2D(x, y));
+  }
+
+  if (fillPolys()) {
+    // otherwise it draws an arc back to the pts.front() rather than filling
+    // in the sector.
+    pts.emplace_back(centre);
+  }
+  drawPolygon(pts, rawCoords);
+}
+
+// ****************************************************************************
+void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2,
+                         bool rawCoords) {
+  std::vector<Point2D> pts(4);
+  pts[0] = cds1;
+  pts[1] = Point2D(cds1.x, cds2.y);
+  pts[2] = cds2;
+  pts[3] = Point2D(cds2.x, cds1.y);
+  // if fillPolys() is false, it doesn't close the polygon because of
+  // its use for drawing filled or open ellipse segments.
+  if (!fillPolys()) {
+    pts.emplace_back(cds1);
+  }
+  drawPolygon(pts, rawCoords);
+}
+
+// ****************************************************************************
+//  we draw the line at cds2, perpendicular to the line cds1-cds2
+void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
+                                   const DrawColour &col, double len,
+                                   unsigned int nSegments, bool rawCoords) {
+  Point2D perp = calcPerpendicular(cds1, cds2);
+  Point2D p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
+  Point2D p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
+  drawWavyLine(p1, p2, col, col, nSegments, rawCoords);
+}
+
+// ****************************************************************************
+void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                             const DrawColour &col1, const DrawColour &col2,
+                             unsigned int, double, bool rawCoords) {
+  drawLine(cds1, cds2, col1, col2, rawCoords);
+}
+
+// ****************************************************************************
+// draws the string centred on cds
+void MolDraw2D::drawString(const string &str, const Point2D &cds,
+                           bool rawCoords) {
+  Point2D draw_cds = rawCoords ? cds : getDrawCoords(cds);
+  text_drawer_->drawString(str, draw_cds, OrientType::N);
+  //  int olw = lineWidth();
+  //  setLineWidth(0);
+  //  text_drawer_->drawStringRects(str, OrientType::N, TextAlignType::MIDDLE,
+  //                                draw_cds, *this, rawCoords);
+  //  setLineWidth(olw);
+}
+
+// ****************************************************************************
+void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
+                           TextAlignType talign, bool rawCoords) {
+  Point2D draw_cds = rawCoords ? cds : getDrawCoords(cds);
+  text_drawer_->drawString(str, draw_cds, talign);
 }
 
 // ****************************************************************************
@@ -1200,25 +1307,6 @@ void MolDraw2D::getStringExtremes(const string &label, OrientType orient,
   if (y_min > y_max) {
     swap(y_min, y_max);
   }
-}
-
-// ****************************************************************************
-// draws the string centred on cds
-void MolDraw2D::drawString(const string &str, const Point2D &cds) {
-  Point2D draw_cds = getDrawCoords(cds);
-  text_drawer_->drawString(str, draw_cds, OrientType::N);
-  //  int olw = lineWidth();
-  //  setLineWidth(0);
-  //  text_drawer_->drawStringRects(str, OrientType::N, TextAlignType::MIDDLE,
-  //                                draw_cds, *this);
-  //  setLineWidth(olw);
-}
-
-// ****************************************************************************
-void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
-                           TextAlignType talign) {
-  Point2D draw_cds = getDrawCoords(cds);
-  text_drawer_->drawString(str, draw_cds, talign);
 }
 
 // ****************************************************************************
@@ -1421,7 +1509,7 @@ void MolDraw2D::startDrawing() {
     initDrawing();
     needs_init_ = false;
   }
-  if (drawOptions().clearBackground) {
+  if (!activeMolIdx_ && drawOptions().clearBackground) {
     clearDrawing();
   }
 }
@@ -1430,6 +1518,9 @@ void MolDraw2D::startDrawing() {
 void MolDraw2D::drawAllMolecules() {
   for (size_t i = 0; i < drawMols_.size(); ++i) {
     activeMolIdx_ = i;
+    if (forceScale_) {
+      drawMols_[i]->setScale(scale_);
+    }
     drawMols_[i]->draw(*this);
   }
 }
@@ -4008,23 +4099,6 @@ void MolDraw2D::adjustScaleForAnnotation(const vector<AnnotationType> &notes) {
 }
 
 // ****************************************************************************
-void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
-                             const Point2D &cds3) {
-  std::vector<Point2D> pts;
-  if (!drawOptions().comicMode) {
-    pts = {cds1, cds2, cds3};
-  } else {
-    auto lpts = MolDraw2D_detail::handdrawnLine(cds1, cds2, scale_);
-    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
-    lpts = MolDraw2D_detail::handdrawnLine(cds2, cds3, scale_);
-    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
-    lpts = MolDraw2D_detail::handdrawnLine(cds3, cds1, scale_);
-    std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
-  }
-  drawPolygon(pts);
-};
-
-// ****************************************************************************
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
                           bool asPolygon, double frac, double angle) {
   Point2D delta = arrowBegin - arrowEnd;
@@ -4062,75 +4136,6 @@ void MolDraw2D::tabulaRasa() {
   d_metadata.clear();
   d_numMetadataEntries = 0;
   setActiveAtmIdx();
-}
-
-// ****************************************************************************
-void MolDraw2D::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
-  std::vector<Point2D> pts;
-  MolDraw2D_detail::arcPoints(cds1, cds2, pts, 0, 360);
-  drawPolygon(pts);
-}
-
-// ****************************************************************************
-void MolDraw2D::drawArc(const Point2D &centre, double radius, double ang1,
-                        double ang2) {
-  drawArc(centre, radius, radius, ang1, ang2);
-}
-
-// ****************************************************************************
-void MolDraw2D::drawArc(const Point2D &centre, double xradius, double yradius,
-                        double ang1, double ang2) {
-  std::vector<Point2D> pts;
-  // 5 degree increments should be plenty, as the circles are probably
-  // going to be small.
-  int num_steps = 1 + int((ang2 - ang1) / 5.0);
-  double ang_incr = double((ang2 - ang1) / num_steps) * M_PI / 180.0;
-  double start_ang_rads = ang1 * M_PI / 180.0;
-  for (int i = 0; i <= num_steps; ++i) {
-    double ang = start_ang_rads + double(i) * ang_incr;
-    double x = centre.x + xradius * cos(ang);
-    double y = centre.y + yradius * sin(ang);
-    pts.emplace_back(Point2D(x, y));
-  }
-
-  if (fillPolys()) {
-    // otherwise it draws an arc back to the pts.front() rather than filling
-    // in the sector.
-    pts.emplace_back(centre);
-  }
-  drawPolygon(pts);
-}
-
-// ****************************************************************************
-void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2) {
-  std::vector<Point2D> pts(4);
-  pts[0] = cds1;
-  pts[1] = Point2D(cds1.x, cds2.y);
-  pts[2] = cds2;
-  pts[3] = Point2D(cds2.x, cds1.y);
-  // if fillPolys() is false, it doesn't close the polygon because of
-  // its use for drawing filled or open ellipse segments.
-  if (!fillPolys()) {
-    pts.emplace_back(cds1);
-  }
-  drawPolygon(pts);
-}
-
-void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
-                             const DrawColour &col1, const DrawColour &col2,
-                             unsigned int, double) {
-  drawLine(cds1, cds2, col1, col2);
-}
-
-// ****************************************************************************
-//  we draw the line at cds2, perpendicular to the line cds1-cds2
-void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
-                                   const DrawColour &col, double len,
-                                   unsigned int nSegments) {
-  Point2D perp = calcPerpendicular(cds1, cds2);
-  Point2D p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
-  Point2D p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
-  drawWavyLine(p1, p2, col, col, nSegments);
 }
 
 // ****************************************************************************

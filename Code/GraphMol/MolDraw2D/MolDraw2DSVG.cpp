@@ -154,7 +154,8 @@ void MolDraw2DSVG::setColour(const DrawColour &col) {
 // ****************************************************************************
 void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                 const DrawColour &col1, const DrawColour &,
-                                unsigned int nSegments, double vertOffset) {
+                                unsigned int nSegments, double vertOffset,
+                                bool rawCoords) {
   PRECONDITION(nSegments > 1, "too few segments");
   if (nSegments % 2) {
     ++nSegments;  // we're going to assume an even number of segments
@@ -167,7 +168,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   perp *= vertOffset;
   delta /= nSegments;
 
-  Point2D c1 = getDrawCoords(cds1);
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
@@ -176,11 +177,11 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   d_os << "d='M" << c1.x << "," << c1.y;
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = cds1 + delta * i;
-    Point2D segpt = getDrawCoords(startpt + delta);
-    Point2D cpt1 =
-        getDrawCoords(startpt + delta / 3. + perp * (i % 2 ? -1 : 1));
-    Point2D cpt2 =
-        getDrawCoords(startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1));
+    Point2D segpt = rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
+    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
+    cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
+    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    cpt2 = rawCoords ? cpt2 : getDrawCoords(cpt2);
     d_os << " C" << cpt1.x << "," << cpt1.y << " " << cpt2.x << "," << cpt2.y
          << " " << segpt.x << "," << segpt.y;
   }
@@ -237,9 +238,10 @@ void MolDraw2DSVG::drawAnnotation(const AnnotationType &annot) {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
-  Point2D c1 = getDrawCoords(cds1);
-  Point2D c2 = getDrawCoords(cds2);
+void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2,
+                            bool rawCoords) {
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
   std::string dashString = "";
@@ -266,7 +268,8 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2) {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
+void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds,
+                               bool rawCoords) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
   std::string col = DrawColourToSVG(colour());
@@ -275,11 +278,11 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
   d_os << "<path ";
   outputClasses();
   d_os << "d='M";
-  Point2D c0 = getDrawCoords(cds[0]);
+  Point2D c0 = rawCoords ? cds[0] : getDrawCoords(cds[0]);
   d_os << " " << MolDraw2D_detail::formatDouble(c0.x) << ","
        << MolDraw2D_detail::formatDouble(c0.y);
   for (unsigned int i = 1; i < cds.size(); ++i) {
-    Point2D ci = getDrawCoords(cds[i]);
+    Point2D ci = rawCoords ? cds[i] : getDrawCoords(cds[i]);
     d_os << " L " << MolDraw2D_detail::formatDouble(ci.x) << ","
          << MolDraw2D_detail::formatDouble(ci.y);
   }
@@ -299,9 +302,10 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds) {
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2) {
-  Point2D c1 = getDrawCoords(cds1);
-  Point2D c2 = getDrawCoords(cds2);
+void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2,
+                               bool rawCoords) {
+  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
   double w = c2.x - c1.x;
   double h = c2.y - c1.y;
   double cx = c1.x + w / 2;

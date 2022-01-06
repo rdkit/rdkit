@@ -80,43 +80,47 @@ void DrawAnnotation::draw(MolDraw2D &molDrawer) const {
     textDrawer_.drawString(text_, pos_, align_);
     textDrawer_.setFontScale(ofs, true);
     molDrawer.setActiveClass(o_class);
-//    drawRects(molDrawer);
+    drawRects(molDrawer);
 }
 
 // ****************************************************************************
 void DrawAnnotation::drawRects(MolDraw2D &molDrawer) const {
+  std::cout << "drawRects" << std::endl;
   Point2D tl, tr, br, bl, origTrans;
   for (auto &rect : rects_) {
+    std::cout << "   " << pos_ << " : " << rect->trans_ << " : " << tl << " to " << br << std::endl;
     origTrans = rect->trans_;
     rect->trans_ += pos_;
     rect->calcCorners(tl, tr, br, bl, 0.0);
+    std::cout << "   " << rect->trans_ << " : " << tl << " to " << br << std::endl;
     molDrawer.setColour(DrawColour(1.0, 0.0, 0.0));
-    molDrawer.drawLine(tl, tr);
+    molDrawer.drawLine(tl, tr, true);
     molDrawer.setColour(DrawColour(0.0, 1.0, 0.0));
-    molDrawer.drawLine(tr, br);
+    molDrawer.drawLine(tr, br, true);
     molDrawer.setColour(DrawColour(0.0, 0.0, 1.0));
-    molDrawer.drawLine(br, bl);
+    molDrawer.drawLine(br, bl, true);
     molDrawer.setColour(DrawColour(0.0, 0.95, 0.95));
-    molDrawer.drawLine(bl, tl);
+    molDrawer.drawLine(bl, tl, true);
     rect->trans_ = origTrans;
   }
 }
 
 // ****************************************************************************
-void DrawAnnotation::scale(const Point2D &scaleFactor) {
+void DrawAnnotation::scale(const Point2D &scaleFactor,
+                           const Point2D &fontScaleFactor) {
   pos_.x *= scaleFactor.x;
   pos_.y *= scaleFactor.y;
   for (auto &rect : rects_) {
-    rect->trans_.x *= scaleFactor.x;
-    rect->trans_.y *= scaleFactor.y;
-    rect->offset_.x *= scaleFactor.x;
-    rect->offset_.y *= scaleFactor.y;
-    rect->g_centre_.x *= scaleFactor.x;
-    rect->g_centre_.y *= scaleFactor.y;
-    rect->y_shift_ *= scaleFactor.y;
-    rect->width_ *= scaleFactor.x;
-    rect->height_ *= scaleFactor.y;
-    rect->rect_corr_ *= scaleFactor.y;
+    rect->trans_.x *= fontScaleFactor.x;
+    rect->trans_.y *= fontScaleFactor.y;
+    rect->offset_.x *= fontScaleFactor.x;
+    rect->offset_.y *= fontScaleFactor.y;
+    rect->g_centre_.x *= fontScaleFactor.x;
+    rect->g_centre_.y *= fontScaleFactor.y;
+    rect->y_shift_ *= fontScaleFactor.y;
+    rect->width_ *= fontScaleFactor.x;
+    rect->height_ *= fontScaleFactor.y;
+    rect->rect_corr_ *= fontScaleFactor.y;
   }
 }
 

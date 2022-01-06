@@ -99,17 +99,17 @@ void DrawShapeArrow::myDraw(MolDraw2D &drawer) const {
   if (drawer.drawOptions().splitBonds) {
     drawer.setActiveAtmIdx(atom1_);
   }
-  drawer.drawLine(points_[0], points_[1], lineColour_, lineColour_);
+  drawer.drawLine(points_[0], points_[1], lineColour_, lineColour_, true);
   if (drawer.drawOptions().splitBonds) {
     drawer.setActiveAtmIdx(atom2_);
   }
   if (!fill_) {
-    drawer.drawLine(points_[1], points_[2], lineColour_, lineColour_);
-    drawer.drawLine(points_[1], points_[3], lineColour_, lineColour_);
+    drawer.drawLine(points_[1], points_[2], lineColour_, lineColour_, true);
+    drawer.drawLine(points_[1], points_[3], lineColour_, lineColour_, true);
   } else {
     drawer.setFillPolys(true);
     std::vector<Point2D> head(points_.begin() + 1, points_.end());
-    drawer.drawPolygon(head);
+    drawer.drawPolygon(head, true);
   }
 }
 
@@ -151,7 +151,7 @@ void DrawShapeEllipse::myDraw(MolDraw2D &drawer) const {
     drawer.setLineWidth(1);
     drawer.drawOptions().scaleBondWidth = false;
   }
-  drawer.drawEllipse(points_[0], points_[1]);
+  drawer.drawEllipse(points_[0], points_[1], true);
 }
 
 // ****************************************************************************
@@ -232,7 +232,7 @@ void DrawShapeSimpleLine::myDraw(MolDraw2D &drawer) const {
   drawer.setDash(dp);
   drawer.setActiveAtmIdx(atom1_, atom2_);
   drawer.setActiveBndIdx(bond_);
-  drawer.drawLine(points_[0], points_[1], lineColour_, lineColour_);
+  drawer.drawLine(points_[0], points_[1], lineColour_, lineColour_, true);
   drawer.setActiveAtmIdx();
   drawer.setActiveBndIdx();
   drawer.setDash(od);
@@ -260,7 +260,7 @@ DrawShapePolyLine::DrawShapePolyLine(const std::vector<Point2D> &points,
 
 // ****************************************************************************
 void DrawShapePolyLine::myDraw(MolDraw2D &drawer) const {
-  drawer.drawPolygon(points_);
+  drawer.drawPolygon(points_, true);
 }
 
 // ****************************************************************************
@@ -330,14 +330,14 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
     drawer.setActiveAtmIdx(at1Idx, at2Idx);
   }
   drawer.setActiveBndIdx(bond_);
-  drawer.drawTriangle(points_[0], points_[1], points_[2]);
+  drawer.drawTriangle(points_[0], points_[1], points_[2], true);
   if (points_.size() > 3) {
     if (drawer.drawOptions().splitBonds) {
       drawer.setActiveAtmIdx(at2Idx);
     }
     drawer.setColour(col2_);
-    drawer.drawTriangle(points_[3], points_[4], points_[5]);
-    drawer.drawTriangle(points_[6], points_[7], points_[8]);
+    drawer.drawTriangle(points_[3], points_[4], points_[5], true);
+    drawer.drawTriangle(points_[6], points_[7], points_[8], true);
   }
 }
 
@@ -448,7 +448,7 @@ void DrawShapeDashedWedge::myDraw(MolDraw2D &drawer) const {
       }
     }
     drawer.drawLine(points_[i], points_[i + 1], lineColours_[j],
-                    lineColours_[j]);
+                    lineColours_[j], true);
   }
 }
 
@@ -525,7 +525,8 @@ void DrawShapeWavyLine::myDraw(MolDraw2D &drawer) const {
   // nSegments is 16 by default in MolDraw2D.
   // use a negative offset because of inverted y coords to make it look the
   // same as it used to.
-  drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, 16, -offset_);
+  drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, 16, -offset_,
+                      true);
 }
 
 // ****************************************************************************
@@ -570,7 +571,8 @@ DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
 // ****************************************************************************
 void DrawShapeArc::myDraw(MolDraw2D &drawer) const {
   double start_ang = ang1_ > ang2_ ? ang1_ - 360.0 : ang1_;
-  drawer.drawArc(points_[0], points_[1].x, points_[1].y, start_ang, ang2_);
+  drawer.drawArc(points_[0], points_[1].x, points_[1].y, start_ang, ang2_,
+                 true);
 }
 
 // ****************************************************************************

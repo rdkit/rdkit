@@ -1090,11 +1090,11 @@ void test6() {
     outs.close();
     // start of bond-0
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 270.1,147.1") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 270.1,147.6") !=
         std::string::npos);
     // start of first radical spot
     TEST_ASSERT(
-        txt.find("<path class='atom-0' d='M 284.1,151.1 L 284.1,151.3") !=
+        txt.find("<path class='atom-0' d='M 284.1,151.6 L 284.1,151.8") !=
         std::string::npos);
     check_file_hash(nameBase + ".svg");
   }
@@ -1113,11 +1113,11 @@ void test6() {
     outs.close();
     // start of bond-0
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 169.0,123.1") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 169.0,123.6") !=
         std::string::npos);
     // start of first radical spot
     TEST_ASSERT(
-        txt.find("<path class='atom-1' d='M 28.1,190.6 L 28.1,190.8") !=
+        txt.find("<path class='atom-1' d='M 28.1,191.1 L 28.1,191.3") !=
         std::string::npos);
     check_file_hash(nameBase + ".svg");
   }
@@ -1320,7 +1320,6 @@ void testGithub781() {
   std::cout << " ----------------- Test Github #781: Rendering single-atom "
                "molecules"
             << std::endl;
-#if 0
   {
     auto m = "C"_smiles;
     TEST_ASSERT(m);
@@ -1393,8 +1392,9 @@ void testGithub781() {
     TEST_ASSERT(txt.find("<path  class='atom-0' d='M 219.4 296.3") !=
                 std::string::npos);
     // the first radical marker
-    TEST_ASSERT(txt.find("path d='M 249.2,308.2 L 249.2,308.3") !=
-                std::string::npos);
+    TEST_ASSERT(
+        txt.find("<path class='atom-0' d='M 249.2,308.2 L 249.2,308.3") !=
+        std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
     // the first radical marker
@@ -1429,7 +1429,6 @@ void testGithub781() {
     TEST_ASSERT(txt.find(">l</text>") != std::string::npos);
 #endif
   }
-#endif
   {  // empty molecule
     auto *m = new ROMol();
     TEST_ASSERT(m);
@@ -1534,24 +1533,11 @@ void testGithub774() {
 void test9MolLegends() {
   std::cout << " ----------------- Test 9 (molecule legends)" << std::endl;
   {
-//    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
-//    auto m = "CCCC[CH-]CC"_smiles;
-    auto m = "N#CCN(CC)[C@@H](Cl)Cn1nc2c3ccccc3sc3c([C@@H](F)NS(C)(=O)=O)ccc1c32"_smiles;
-//    auto m = "CCOCC"_smiles;
-//    auto m = "C[N+](C)(C)C"_smiles;
-//    auto m = "C[NH2+]C"_smiles;
+    auto m = "CC[13CH2][CH2:7][CH-]C[15NH2+]C"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
-    MolDraw2DSVG drawer(600, 600);
-    drawer.drawOptions().splitBonds = false;
-    drawer.drawOptions().legendFontSize = 24;
-    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawOptions().addBondIndices = true;
-//    drawer.drawOptions().baseFontSize = 1.0;
-//    drawer.drawOptions().maxFontSize = 75;
-//    drawer.drawOptions().minFontSize = 55;
+    MolDraw2DSVG drawer(300, 300);
     drawer.drawMolecule(*m, "mol legend");
     drawer.finishDrawing();
     std::string txt = drawer.getDrawingText();
@@ -1887,9 +1873,10 @@ M  END";
     outs.close();
     check_file_hash("test983_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 126.9,116.0"
-                          " L 184.0,90.8 L 177.2,79.1 Z'"
-                          " style='fill:#000000;") != std::string::npos);
+    TEST_ASSERT(
+        text.find("<path class='bond-1 atom-2 atom-4' d='M 125.8,115.0 L "
+                  "175.5,81.7 L 179.5,88.6 Z' style='fill:#000000;") !=
+        std::string::npos);
 #else
     TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 126.5,111.6"
                           " L 182.7,86.9 L 176.0,75.3 Z'"
@@ -1948,9 +1935,9 @@ M  END";
     outs.close();
     check_file_hash("test983_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 103.7,117.6"
-                          " L 76.9,93.5 L 72.3,99.8 Z'"
-                          " style='fill:#000000;") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 103.7,117.6 "
+                          "L 72.3,99.9 L 76.9,93.4 Z' style='fill:#000000;") !=
+                std::string::npos);
 #else
     TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 105.1,114.8"
                           " L 78.5,90.9 L 74.0,97.2 Z'"
@@ -2327,9 +2314,7 @@ void test11DrawMolGrid() {
   std::cout << " ----------------- Testing drawing a grid of molecules"
             << std::endl;
 
-  std::string smiles =
-      "COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3Cl)c1";  // made up
-  RWMol *m1 = SmilesToMol(smiles);
+  auto m1 = "COc1cccc(NC(=O)[C@H](Cl)Sc2nc(ns2)c3ccccc3Cl)c1"_smiles;
   TEST_ASSERT(m1);
   MolDraw2DUtils::prepareMolForDrawing(*m1);
   RDGeom::Point3D c1 = MolTransforms::computeCentroid(m1->getConformer());
@@ -2337,8 +2322,7 @@ void test11DrawMolGrid() {
     RDGeom::Point3D &p = m1->getConformer().getAtomPos(i);
     p -= c1;
   }
-  smiles = "NC(=O)[C@H](Cl)Sc1ncns1";  // made up
-  RWMol *m2 = SmilesToMol(smiles);
+  auto m2 = "NC(=O)[C@H](Cl)Sc1ncns1"_smiles;
   TEST_ASSERT(m2);
   MolDraw2DUtils::prepareMolForDrawing(*m2);
   RDGeom::Point3D c2 = MolTransforms::computeCentroid(m2->getConformer());
@@ -2346,8 +2330,7 @@ void test11DrawMolGrid() {
     RDGeom::Point3D &p = m2->getConformer().getAtomPos(i);
     p -= c2;
   }
-  smiles = "BrCNC(=O)[C@H](Cl)Sc1ncns1";  // made up
-  RWMol *m3 = SmilesToMol(smiles);
+  auto m3 = "BrCNC(=O)[C@H](Cl)Sc1ncns1"_smiles;
   TEST_ASSERT(m3);
   MolDraw2DUtils::prepareMolForDrawing(*m3);
   RDGeom::Point3D c3 = MolTransforms::computeCentroid(m3->getConformer());
@@ -2373,12 +2356,19 @@ void test11DrawMolGrid() {
     outs.close();
     check_file_hash("test11_1.svg");
   }
-  {  // drawing "out of order"
+  {
+    // drawing "out of order" - really this time, calling DrawMolecule
+    // in a different order.  Previously, they were put in the grid
+    // with different offsets but still in the order m1, m2, m1, m2
+    // which hid a bug where calculateScale was only called for the first
+    // molecule.  This didn't show because m1 gets a smaller scale than
+    // m2.  It was a real mess if calculateScale was called for m2 first.
+    // With the new DrawMol code, each molecule gets its own scale.
     MolDraw2DSVG drawer(500, 400, 250, 200);
-    drawer.setOffset(250, 0);
-    drawer.drawMolecule(*m1, "m1");
     drawer.setOffset(0, 0);
     drawer.drawMolecule(*m2, "m2");
+    drawer.setOffset(250, 0);
+    drawer.drawMolecule(*m1, "m1");
     drawer.setOffset(0, 200);
     drawer.drawMolecule(*m1, "m3");
     drawer.setOffset(250, 200);
@@ -2391,9 +2381,6 @@ void test11DrawMolGrid() {
     outs.close();
     check_file_hash("test11_2.svg");
   }
-  delete m1;
-  delete m2;
-  delete m3;
   std::cerr << " Done" << std::endl;
 }
 
@@ -2488,6 +2475,8 @@ void test13JSONConfig() {
         "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
         "\"bondLineWidth\": 5}";
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
+    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
+    drawer.drawOptions().addAtomIndices = true;
     drawer.drawMolecule(*m, "foo");
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -4268,9 +4257,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test1();
 
-#if 0
+#if 1
   test1();
   test2();
   test4();

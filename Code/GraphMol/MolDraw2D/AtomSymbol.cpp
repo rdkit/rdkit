@@ -95,7 +95,7 @@ void AtomSymbol::draw(MolDraw2D &molDrawer) const {
   textDrawer_.setColour(colour_);
   textDrawer_.drawString(symbol_, cds_, orient_);
   molDrawer.setActiveClass(o_class);
-//  drawRects(molDrawer);
+  drawRects(molDrawer);
 }
 
 // ****************************************************************************
@@ -118,13 +118,13 @@ void AtomSymbol::drawRects(MolDraw2D &molDrawer) const {
     rect->trans_ += cds_;
     rect->calcCorners(tl, tr, br, bl, 0.0);
     molDrawer.setColour(DrawColour(1.0, 0.0, 0.0));
-    molDrawer.drawLine(tl, tr);
+    molDrawer.drawLine(tl, tr, true);
     molDrawer.setColour(DrawColour(0.0, 1.0, 0.0));
-    molDrawer.drawLine(tr, br);
+    molDrawer.drawLine(tr, br, true);
     molDrawer.setColour(DrawColour(0.0, 0.0, 1.0));
-    molDrawer.drawLine(br, bl);
+    molDrawer.drawLine(br, bl, true);
     molDrawer.setColour(DrawColour(0.0, 0.95, 0.95));
-    molDrawer.drawLine(bl, tl);
+    molDrawer.drawLine(bl, tl, true);
     rect->trans_ = origTrans;
   }
 }
