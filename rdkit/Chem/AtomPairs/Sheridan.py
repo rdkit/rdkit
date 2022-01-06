@@ -79,14 +79,13 @@ def GetBPFingerprint(mol, fpfn=GetAtomPairFingerprint):
     >>> fp = GetBPFingerprint(Chem.MolFromSmiles('OCC(=O)O'))
     >>> fp.GetTotalVal()
     10
-    >>> nze=fp.GetNonzeroElements()
-    >>> sorted([(k,v) for k,v in nze.items()])
+    >>> nze = fp.GetNonzeroElements()
+    >>> sorted([(k, v) for k, v in nze.items()])
     [(32834, 1), (49219, 2), (98370, 2), (98401, 1), (114753, 2), (114786, 1), (114881, 1)]
 
     """
   typs = [typMap[x] for x in AssignPattyTypes(mol)]
-  fp = fpfn(mol, atomInvariants=typs)
-  return fp
+  return fpfn(mol, atomInvariants=typs)
 
 
 def GetBTFingerprint(mol, fpfn=GetTopologicalTorsionFingerprint):
@@ -99,7 +98,7 @@ def GetBTFingerprint(mol, fpfn=GetTopologicalTorsionFingerprint):
     >>> fp.GetTotalVal()
     2
     >>> nze = fp.GetNonzeroElements()
-    >>> sorted([(k,v) for k, v in nze.items()])
+    >>> sorted([(k, v) for k, v in nze.items()])
     [(538446850..., 1), (538446852..., 1)]
 
     """
