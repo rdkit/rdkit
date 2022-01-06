@@ -93,6 +93,11 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   for (auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
       atom->setIsotope(1000U);
+      // clean any existing R group numbers
+      atom->setAtomMapNum(0);
+      if (atom->hasProp(common_properties::_MolFileRLabel)) {
+        atom->clearProp(common_properties::_MolFileRLabel);
+      }
     }
   }
   int core_idx = 0;
