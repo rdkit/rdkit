@@ -1974,8 +1974,6 @@ TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
       auto cp = m->getProp<unsigned>("ChiralPermutation");
       auto atom = m->getAtomWithIdx(0);
 
-      std::cerr << ct << cp << std::endl;
-
       if (ct == "SP") {
         CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_SQUAREPLANAR);
       } else if (ct == "TB") {
@@ -1990,5 +1988,38 @@ TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
       CHECK(atom->getProp<unsigned>(common_properties::_chiralPermutation) ==
             cp);
     }
+  }
+}
+
+TEST_CASE("assignStereochemistry shouldn't remove nontetrahedral stereo",
+          "[nontetrahedral]") {
+  SECTION("basics") {
+    SmilesParserParams parseps;
+    parseps.sanitize = false;
+    parseps.removeHs = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("F[Pt@TB1](O)(Br)(N)Cl", parseps)};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+    bool cleanIt = true;
+    bool force = true;
+    MolOps::assignStereochemistry(*m, cleanIt, force);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+  }
+  SECTION("standard SMILES parsing") {
+    std::unique_ptr<RWMol> m{SmilesToMol("F[Pt@TB1](O)(Br)(N)Cl")};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+  }
+  SECTION("SMILES parsing w/o sanitization") {
+    SmilesParserParams parseps;
+    // we need to skip stereo assignment
+    parseps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("F[Pt@TB1](O)(Br)(N)Cl", parseps)};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
   }
 }

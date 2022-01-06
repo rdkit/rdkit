@@ -1969,6 +1969,7 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
 
     for (auto atom : mol.atoms()) {
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+          !Chirality::hasNonTetrahedralStereo(atom) &&
           !atom->hasProp(common_properties::_CIPCode) &&
           (!possibleSpecialCases[atom->getIdx()] ||
            !atom->hasProp(common_properties::_ringStereoAtoms))) {
