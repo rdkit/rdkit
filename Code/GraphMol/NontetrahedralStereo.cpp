@@ -189,11 +189,7 @@ Atom *getChiralAcrossAtom(const Atom *cen, const Atom *qry) {
     return nullptr;
   }
   bnd = getChiralAcrossBond(cen, bnd);
-  if (bnd) {
-    return bnd->getOtherAtom(cen);
-  } else {
-    return nullptr;
-  }
+  return bnd ? bnd->getOtherAtom(cen) : nullptr;
 }
 }  // namespace Chirality
 }  // namespace RDKit
