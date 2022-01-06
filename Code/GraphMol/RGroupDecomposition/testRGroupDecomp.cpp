@@ -2697,7 +2697,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testWildcardInInput();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -2740,6 +2739,7 @@ int main() {
   testDoNotAddUnnecessaryRLabels();
   testCoreWithAlsRecords();
   testAlignOutputCoreToMolecule();
+  testWildcardInInput();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
