@@ -80,19 +80,18 @@ void DrawAnnotation::draw(MolDraw2D &molDrawer) const {
     textDrawer_.drawString(text_, pos_, align_);
     textDrawer_.setFontScale(ofs, true);
     molDrawer.setActiveClass(o_class);
-    drawRects(molDrawer);
+//    drawRects(molDrawer);
 }
 
 // ****************************************************************************
 void DrawAnnotation::drawRects(MolDraw2D &molDrawer) const {
-  std::cout << "drawRects" << std::endl;
+  auto olw = molDrawer.lineWidth();
+  molDrawer.setLineWidth(1);
   Point2D tl, tr, br, bl, origTrans;
   for (auto &rect : rects_) {
-    std::cout << "   " << pos_ << " : " << rect->trans_ << " : " << tl << " to " << br << std::endl;
     origTrans = rect->trans_;
     rect->trans_ += pos_;
     rect->calcCorners(tl, tr, br, bl, 0.0);
-    std::cout << "   " << rect->trans_ << " : " << tl << " to " << br << std::endl;
     molDrawer.setColour(DrawColour(1.0, 0.0, 0.0));
     molDrawer.drawLine(tl, tr, true);
     molDrawer.setColour(DrawColour(0.0, 1.0, 0.0));
@@ -103,6 +102,7 @@ void DrawAnnotation::drawRects(MolDraw2D &molDrawer) const {
     molDrawer.drawLine(bl, tl, true);
     rect->trans_ = origTrans;
   }
+  molDrawer.setLineWidth(olw);
 }
 
 // ****************************************************************************

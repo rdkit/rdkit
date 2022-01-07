@@ -277,10 +277,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
   drawMols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
   ++activeMolIdx_;
   startDrawing();
-  if (forceScale_) {
-    drawMol->setScale(scale_);
-  }
-  drawMol->draw(*this);
+  drawTheMolecule(*drawMol);
 }
 
 // ****************************************************************************
@@ -291,14 +288,15 @@ void MolDraw2D::drawMoleculeWithHighlights(
     const map<int, double> &highlight_radii,
     const map<int, int> &highlight_linewidth_multipliers, int confId) {
   setupTextDrawer();
-  DrawMol *draw_mol = new DrawMolMCH(
+  DrawMol *drawMol = new DrawMolMCH(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atom_map, highlight_bond_map,
       highlight_radii, highlight_linewidth_multipliers, confId);
-  draw_mol->createDrawObjects();
-  drawMols_.emplace_back(std::unique_ptr<DrawMol>(draw_mol));
+  drawMol->createDrawObjects();
+  drawMols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
+  ++activeMolIdx_;
   startDrawing();
-  drawAllMolecules();
+  drawTheMolecule((*drawMol));
   return;
 }
 
@@ -719,7 +717,11 @@ void MolDraw2D::drawMolecules(
   }
 
   startDrawing();
-  drawAllMolecules();
+  activeMolIdx_ = -1;
+  for (size_t i = 0; i < drawMols_.size(); ++i) {
+    ++activeMolIdx_;
+    drawTheMolecule((*drawMols_[i]));
+  }
 }
 
 // ****************************************************************************
@@ -1515,14 +1517,12 @@ void MolDraw2D::startDrawing() {
 }
 
 // ****************************************************************************
-void MolDraw2D::drawAllMolecules() {
-  for (size_t i = 0; i < drawMols_.size(); ++i) {
-    activeMolIdx_ = i;
-    if (forceScale_) {
-      drawMols_[i]->setScale(scale_);
-    }
-    drawMols_[i]->draw(*this);
+void MolDraw2D::drawTheMolecule(DrawMol &drawMol) {
+  if (forceScale_) {
+    drawMol.setScale(scale_);
   }
+  drawMol.draw(*this);
+
 }
 
 // ****************************************************************************

@@ -486,7 +486,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // Do the drawing, the new way
   void startDrawing();
-  void drawAllMolecules();
+  void drawTheMolecule(DrawMol &drawMol);
 
   // do the initial setup bits for drawing a molecule.
   std::unique_ptr<RWMol> initMoleculeDraw(

@@ -1017,7 +1017,6 @@ void DrawMol::resetEverything() {
   xRange_ = std::numeric_limits<double>::max();
   yRange_ = std::numeric_limits<double>::max();
   meanBondLengthSquare_ = 0.0;
-  legendHeight_ = 0;
   atCds_.clear();
   bonds_.clear();
   preShapes_.clear();
@@ -1311,8 +1310,6 @@ void DrawMol::partitionForLegend() {
       legendHeight_ = 15;
     }
   }
-  std::cout << "height_ : " << height_ << " drawHeight_ = " << drawHeight_
-            << "  legendHeight_ = " << legendHeight_ << std::endl;
 }
 
 // ****************************************************************************
@@ -1331,6 +1328,8 @@ void DrawMol::extractLegend() {
     total_width = total_height = 0;
     for (auto &bit : legend_bits) {
       double xMin, yMin, xMax, yMax;
+      xMin = yMin = std::numeric_limits<double>::max();
+      xMax = yMax = -xMin;
       DrawAnnotation *da = new DrawAnnotation(
           bit, TextAlignType::MIDDLE, "legend", relFontScale, Point2D(0.0, 0.0),
           drawOptions_.legendColour, textDrawer_);
@@ -1381,7 +1380,6 @@ void DrawMol::extractLegend() {
     xMin = yMin = std::numeric_limits<double>::max();
     xMax = yMax = -xMin;
     da->findExtremes(xMin, xMax, yMin, yMax);
-//    da->pos_.y += yMax - yMin;
 
     loc.y += yMax - yMin;
     legends_.emplace_back(da);

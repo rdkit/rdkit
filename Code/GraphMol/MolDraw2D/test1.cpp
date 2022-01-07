@@ -1337,10 +1337,10 @@ void testGithub781() {
     check_file_hash("testGithub781_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // the start of the C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 50.3 118.8") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 50.3 119.3") !=
                 std::string::npos)
     // the start of the H
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 75.5 104.6") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 75.5 105.1") !=
                 std::string::npos)
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1365,10 +1365,10 @@ void testGithub781() {
     check_file_hash("testGithub781_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of the H
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 180.0 105.4") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 180.0 105.9") !=
                 std::string::npos);
     // start of the O
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 203.5 132.7") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 203.5 133.2") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find("<tspan>OH</tspan>") == std::string::npos);
@@ -1389,11 +1389,11 @@ void testGithub781() {
     check_file_hash("testGithub781_3.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 219.4 296.3") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 219.4 296.8") !=
                 std::string::npos);
     // the first radical marker
     TEST_ASSERT(
-        txt.find("<path class='atom-0' d='M 249.2,308.2 L 249.2,308.3") !=
+        txt.find("<path class='atom-0' d='M 249.2,308.7 L 249.2,308.8") !=
         std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1418,10 +1418,10 @@ void testGithub781() {
     check_file_hash("testGithub781_4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of C
-    TEST_ASSERT(txt.find("<path  class='atom-0' d='M 43.7 190.0") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 43.7 190.5") !=
                 std::string::npos);
     // start of l
-    TEST_ASSERT(txt.find("<path  class='atom-3' d='M 52.8 73.9") !=
+    TEST_ASSERT(txt.find("<path class='atom-3' d='M 52.8 74.4") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1874,8 +1874,8 @@ M  END";
     check_file_hash("test983_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     TEST_ASSERT(
-        text.find("<path class='bond-1 atom-2 atom-4' d='M 125.8,115.0 L "
-                  "175.5,81.7 L 179.5,88.6 Z' style='fill:#000000;") !=
+        text.find("<path class='bond-1 atom-2 atom-4' d='M 126.0,115.5 L "
+                  "175.9,82.1 L 179.9,89.0 Z' style='fill:#000000;") !=
         std::string::npos);
 #else
     TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 126.5,111.6"
@@ -2476,7 +2476,6 @@ void test13JSONConfig() {
         "\"bondLineWidth\": 5}";
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
     drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
-    drawer.drawOptions().addAtomIndices = true;
     drawer.drawMolecule(*m, "foo");
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -2487,8 +2486,8 @@ void test13JSONConfig() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.4,8.2"
-                          " L 162.9,83.6'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.1,8.6"
+                          " L 165.0,88.2'") != std::string::npos);
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
                 std::string::npos);
@@ -2688,7 +2687,6 @@ M  END";
     TEST_ASSERT(text.find("d='M 0,200 0,200") == std::string::npos);
     delete m;
   }
-
   {
     std::string smiles = "C=C(O)C(O)";  // made up
     RWMol *m1 = SmilesToMol(smiles);
@@ -4257,8 +4255,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  testGithub1271();
 
-#if 1
+#if 0
   test1();
   test2();
   test4();

@@ -29,10 +29,10 @@ double DrawTextFTSVG::extractOutline() {
 
   oss_ << "<path ";
   if (!d_active_class_.empty()) {
-    oss_ << " class='" << d_active_class_ << "'"
+    oss_ << "class='" << d_active_class_ << "'"
          << " d='";
   } else {
-    oss_ << " d='";
+    oss_ << "d='";
   }
 
   double adv = DrawTextFT::extractOutline();

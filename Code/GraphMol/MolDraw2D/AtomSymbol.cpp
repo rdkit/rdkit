@@ -95,7 +95,7 @@ void AtomSymbol::draw(MolDraw2D &molDrawer) const {
   textDrawer_.setColour(colour_);
   textDrawer_.drawString(symbol_, cds_, orient_);
   molDrawer.setActiveClass(o_class);
-  drawRects(molDrawer);
+//  drawRects(molDrawer);
 }
 
 // ****************************************************************************
