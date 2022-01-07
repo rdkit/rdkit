@@ -30,4 +30,5 @@ logger.addHandler(log_handler)
 logger.setLevel(logging.DEBUG)
 logger.propagate = False
 
-rdBase.LogToPythonLogger()
+# Uncomment this to use Python logging by default:
+# rdBase.LogToPythonLogger()

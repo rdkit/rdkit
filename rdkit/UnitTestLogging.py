@@ -146,9 +146,9 @@ def expect_error(message):
 
 # Helpers for the threaded tests:
 nthreads = 5
-if sys.platform=='win32':
-    # there's a buffer size problem with these tests 
-    # (not the underlying code) on Windows. Work around 
+if sys.platform == 'win32':
+    # there's a buffer size problem with these tests
+    # (not the underlying code) on Windows. Work around
     # that by running less repeats on windows.
     nlogs = 10
 else:
@@ -238,7 +238,7 @@ class TestLogToCppStreams(unittest.TestCase):
     def testAsynchronous1(self):
         global nlogs
         nlogsOrig = nlogs
-        if sys.platform=='win32':
+        if sys.platform == 'win32':
             # see the comment with the definition of nlogs
             nlogs //= nthreads
         with CaptureOutput() as captured:
@@ -254,7 +254,7 @@ class TestLogToCppStreams(unittest.TestCase):
     def testAsynchronous2(self):
         global nlogs
         nlogsOrig = nlogs
-        if sys.platform=='win32':
+        if sys.platform == 'win32':
             # see the comment with the definition of nlogs
             nlogs //= nthreads
         with CaptureOutput() as captured:
