@@ -82,6 +82,7 @@ RGroupDecomposition::RGroupDecomposition(
 RGroupDecomposition::~RGroupDecomposition() { delete data; }
 
 int RGroupDecomposition::add(const ROMol &inmol) {
+  constexpr const char *inputDummy = "INPUT_DUMMY";
   // get the sidechains if possible
   //  Add hs for better symmetrization
   RWMol mol(inmol);
@@ -287,7 +288,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             unsigned int index =
                 at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
-            if (! at->hasProp("INPUT_DUMMY")) {
+            if (!at->hasProp(inputDummy)) {
               int rlabel;
               auto coreAtom = rcore->core->getAtomWithIdx(index);
               coreAtomAnyMatched.insert(index);
@@ -300,10 +301,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
                 data->labels.insert(rlabel);  // keep track of all labels used
                 attachments.push_back(rlabel);
               }
-            }
-            else {
+            } else {
               // restore input wildcard
-              at->clearProp("INPUT_DUMMY");
+              at->clearProp(inputDummy);
             }
           }
         }
