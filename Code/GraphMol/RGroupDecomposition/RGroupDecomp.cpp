@@ -93,7 +93,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // mark any wildcards in input molecule:
   for (auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
-      atom->setProp("INPUT_DUMMY", true);
+      atom->setProp(inputDummy, true);
       // clean any existing R group numbers
       atom->setIsotope(0);
       atom->setAtomMapNum(0);
