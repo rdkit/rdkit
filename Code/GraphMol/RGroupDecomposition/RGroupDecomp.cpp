@@ -92,8 +92,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // mark any wildcards in input molecule:
   for (auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
-      atom->setIsotope(1000U);
+      atom->setProp("INPUT_DUMMY", true);
       // clean any existing R group numbers
+      atom->setIsotope(0);
       atom->setAtomMapNum(0);
       if (atom->hasProp(common_properties::_MolFileRLabel)) {
         atom->clearProp(common_properties::_MolFileRLabel);
@@ -286,7 +287,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             unsigned int index =
                 at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
-            if (index < 1000U) {
+            if (! at->hasProp("INPUT_DUMMY")) {
               int rlabel;
               auto coreAtom = rcore->core->getAtomWithIdx(index);
               coreAtomAnyMatched.insert(index);
@@ -302,7 +303,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             }
             else {
               // restore input wildcard
-              at->setIsotope(0);
+              at->clearProp("INPUT_DUMMY");
             }
           }
         }
