@@ -662,6 +662,78 @@ Starting with the 2022.03 release, the RDKit has partial, but evolving, support 
 The status of this work is being tracked in this github issue: https://github.com/rdkit/rdkit/issues/4851
 
 
+This discussion of the SMILES notation here is drawn heavily from the OpenSMILES documentation: http://opensmiles.org/opensmiles.html
+Many thanks to the team which put that document together.
+
+
+SMILES notation
+---------------
+
+The representation has a tag for what the stereo is, e.g. ``@SP``, and a permutation number.
+
+Square planar
+^^^^^^^^^^^^^
+
+
+.. |nts_sp1| image:: images/nontetstereo_sp1.png
+   :align: middle
+.. |nts_sp2| image:: images/nontetstereo_sp2.png
+   :align: middle
+.. |nts_sp3| image:: images/nontetstereo_sp3.png
+   :align: middle
+
++-----------+-----------+-----------+
+|   @SP1    |   @SP2    |   @SP3    |
++===========+===========+===========+
+| |nts_sp1| | |nts_sp2| | |nts_sp3| |
++-----------+-----------+-----------+
+
+
+Trigonal bipyramidal
+^^^^^^^^^^^^^^^^^^^^
+
+.. |nts_tb1| image:: images/nontetstereo_tb1.png
+   :align: middle
+
+|nts_tb1|
+
+======= === === === === ===
+ Label   A   B   C   D   E
+======= === === === === ===
+@TB1     0   4   1   2   3
+@TB2     0   4   1   3   2  
+
+@TB3     0   3   1   2   4
+@TB4     0   3   1   4   2
+
+@TB5     0   2   1   3   4
+@TB6     0   2   1   4   3
+
+@TB7     0   1   2   3   4
+@TB8     0   1   2   4   3
+
+@TB9     1   4   0   2   3
+@TB11    1   4   0   3   2
+
+@TB10    1   3   0   2   4
+@TB12    1   3   0   4   2
+
+@TB13    1   2   0   3   4
+@TB14    1   2   0   4   3
+
+@TB15    2   4   0   1   3
+@TB20    2   4   0   3   1
+
+@TB16    2   3   0   1   4
+@TB19    2   3   0   4   1
+
+@TB17    3   4   0   1   2
+@TB18    3   4   0   2   1
+
+======= === === === === ===
+
+
+
 
 
 
