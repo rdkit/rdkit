@@ -17,6 +17,7 @@ import io
 import logging
 import os
 import sys
+import tempfile
 import threading
 import time
 import unittest
@@ -29,17 +30,23 @@ class CaptureStream:
     """Helper class that captures output to a file descriptor"""
     def __init__(self, fd):
         self.fd  = fd
-        self.old = os.dup(fd)
-        self.pr, self.pw = os.pipe()
-        os.dup2(self.pw, self.fd)
+        self.old = os.dup(self.fd)
+        self.tmp = tempfile.TemporaryFile()
+        os.dup2(self.tmp.fileno(), self.fd)
+        # self.pr, self.pw = os.pipe()
+        # os.dup2(self.pw, self.fd)
 
     def release(self):
-        os.dup2(self.old, self.fd)
-        os.close(self.pw)
+        # os.close(self.pw)
 
-        result = os.read(self.pr, 1024 * 1024)
+        self.tmp.seek(0)
+        result = self.tmp.read()
+        #os.read(self.pr, 1024 * 1024)
+
+        os.dup2(self.old, self.fd)
         os.close(self.old)
-        os.close(self.pr)
+        self.tmp.close()
+        # os.close(self.pr)
 
         return result.decode('utf-8')
 
@@ -116,9 +123,9 @@ class CaptureOutput:
 # Helpers for the non-threaded tests:
 def timestamp(message):
     ts = time.time()
-    if ts % 1 > 0.995:
+    if ts % 1 > 0.95:
         # Avoid failures when seconds roll over:
-        time.sleep(0.006)
+        time.sleep(0.06)
         ts = time.time()
 
     dt = datetime.datetime.fromtimestamp(ts)
@@ -150,7 +157,7 @@ if sys.platform == 'win32':
     # there's a buffer size problem with these tests
     # (not the underlying code) on Windows. Work around
     # that by running less repeats on windows.
-    nlogs = 10
+    nlogs = 50
 else:
     nlogs = 50
 
@@ -238,9 +245,9 @@ class TestLogToCppStreams(unittest.TestCase):
     def testAsynchronous1(self):
         global nlogs
         nlogsOrig = nlogs
-        if sys.platform == 'win32':
-            # see the comment with the definition of nlogs
-            nlogs //= nthreads
+        # if sys.platform == 'win32':
+        #     # see the comment with the definition of nlogs
+        #     nlogs //= nthreads
         with CaptureOutput() as captured:
             RunOneThreadPerLevel(nthreads)
         cout = captured['std::cout']
@@ -254,9 +261,9 @@ class TestLogToCppStreams(unittest.TestCase):
     def testAsynchronous2(self):
         global nlogs
         nlogsOrig = nlogs
-        if sys.platform == 'win32':
-            # see the comment with the definition of nlogs
-            nlogs //= nthreads
+        # if sys.platform == 'win32':
+        #     # see the comment with the definition of nlogs
+        #     nlogs //= nthreads
         with CaptureOutput() as captured:
             RunManyThreadsPerLevel(nthreads)
         cout = captured['std::cout']
