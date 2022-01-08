@@ -37,6 +37,7 @@ rdkit_headers(FilterCatalogEntry.h
               FilterMatcherBase.h
               FilterMatchers.h
               FunctionalGroupHierarchy.h
+	      ThreadedFilterCatalogRunner.h
               DEST GraphMol/FilterCatalog)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

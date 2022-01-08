@@ -32,6 +32,7 @@
 #include <RDBoost/Wrap.h>
 
 #include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
+#include <GraphMol/FilterCatalog/ThreadedFilterCatalogRunner.h>
 #include <GraphMol/FilterCatalog/FilterCatalog.h>
 #include <GraphMol/FilterCatalog/FilterMatcherBase.h>
 #include <GraphMol/FilterCatalog/FilterMatchers.h>
@@ -299,6 +300,13 @@ python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   }
   return dict;
 }
+
+std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>>
+RunFilterCatalogWrapper(const FilterCatalog &fc, const std::vector<std::string> &smiles, int numThreads) {
+  NOGIL nogil; // Release the GIL here but pass the thread initializer to grab the GIL per thread
+  return ThreadedRunFilterCatalog<PyGILStateHolder>(fc, smiles, numThreads);
+}
+
 struct filtercat_wrapper {
   static void wrap() {
     python::class_<std::pair<int, int>>("IntPair")
@@ -517,7 +525,7 @@ struct filtercat_wrapper {
                 "Returns True if the FilterCatalog is serializable "
                 "(requires boost serialization");
 
-    python::def("RunFilterCatalog", RunFilterCatalog,
+    python::def("RunFilterCatalog", RunFilterCatalogWrapper,
                 (python::arg("filterCatalog"), python::arg("smiles"),
                  python::arg("numThreads") = 1),
                 "Run the filter catalog on the input list of smiles "
