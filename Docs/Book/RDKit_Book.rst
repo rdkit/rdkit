@@ -692,45 +692,57 @@ Square planar
 Trigonal bipyramidal
 ^^^^^^^^^^^^^^^^^^^^
 
+
+Here's a specific example (from the OpenSMILES docs):
+
+.. |nts_tb2| image:: images/nontetstereo_tb2.png
+   :align: middle
+
+|nts_tb2|
+
+Here are the ligand labels and the ligand numbering for ``@TB1``:
+
 .. |nts_tb1| image:: images/nontetstereo_tb1.png
    :align: middle
 
 |nts_tb1|
 
-======= === === === === ===
- Label   A   B   C   D   E
-======= === === === === ===
-@TB1     0   4   1   2   3
-@TB2     0   4   1   3   2  
+And then the ligand numberings for the possible permutations for the sample molecule:
 
-@TB3     0   3   1   2   4
-@TB4     0   3   1   4   2
+======= === === === === === ========
+ Label   A   B   C   D   E   SMILES
+======= === === === === === ========
+@TB1     0   4   1   2   3   ``S[As@TB1](F)(Cl)(Br)N``
+@TB2     0   4   1   3   2   ``S[As@TB2](F)(Br)(Cl)N``
 
-@TB5     0   2   1   3   4
-@TB6     0   2   1   4   3
+@TB3     0   3   1   2   4   ``S[As@TB3](F)(Cl)(N)Br``
+@TB4     0   3   1   4   2   ``S[As@TB4](F)(Br)(N)Cl``
 
-@TB7     0   1   2   3   4
-@TB8     0   1   2   4   3
+@TB5     0   2   1   3   4   ``S[As@TB5](F)(N)(Cl)Br``
+@TB6     0   2   1   4   3   ``S[As@TB6](F)(N)(Br)Cl``
 
-@TB9     1   4   0   2   3
-@TB11    1   4   0   3   2
+@TB7     0   1   2   3   4   ``S[As@TB7](N)(F)(Cl)Br``
+@TB8     0   1   2   4   3   ``S[As@TB8](N)(F)(Br)Cl``
 
-@TB10    1   3   0   2   4
-@TB12    1   3   0   4   2
+@TB9     1   4   0   2   3   ``F[As@TB9](S)(Cl)(Br)N``
+@TB11    1   4   0   3   2   ``F[As@TB11](S)(Br)(Cl)N``
 
-@TB13    1   2   0   3   4
-@TB14    1   2   0   4   3
+@TB10    1   3   0   2   4   ``F[As@TB10](S)(Cl)(N)Br``
+@TB12    1   3   0   4   2   ``F[As@TB12](S)(Br)(N)Cl``
 
-@TB15    2   4   0   1   3
-@TB20    2   4   0   3   1
+@TB13    1   2   0   3   4   ``F[As@TB13](S)(N)(Cl)Br``
+@TB14    1   2   0   4   3   ``F[As@TB14](S)(N)(Br)Cl``
 
-@TB16    2   3   0   1   4
-@TB19    2   3   0   4   1
+@TB15    2   4   0   1   3   ``F[As@TB15](Cl)(S)(Br)N``
+@TB20    2   4   0   3   1   ``F[As@TB20](Br)(S)(Cl)N``
 
-@TB17    3   4   0   1   2
-@TB18    3   4   0   2   1
+@TB16    2   3   0   1   4   ``F[As@TB16](Cl)(S)(N)Br``
+@TB19    2   3   0   4   1   ``F[As@TB19](Br)(S)(N)Cl``
 
-======= === === === === ===
+@TB17    3   4   0   1   2   ``F[As@TB17](Cl)(Br)(S)N``
+@TB18    3   4   0   2   1   ``F[As@TB18](Br)(Cl)(S)N``
+
+======= === === === === === ========
 
 
 
