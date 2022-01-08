@@ -662,8 +662,10 @@ Starting with the 2022.03 release, the RDKit has partial, but evolving, support 
 The status of this work is being tracked in this github issue: https://github.com/rdkit/rdkit/issues/4851
 
 
-This discussion of the SMILES notation here is drawn heavily from the OpenSMILES documentation: http://opensmiles.org/opensmiles.html
-Many thanks to the team which put that document together.
+This discussion of the SMILES notation here is drawn heavily from the OpenSMILES
+documentation: http://opensmiles.org/opensmiles.html Many thanks to the team
+which put that document together and to John Mayfield for his excellent CDK
+Depict tool, which I used double check my work on this.
 
 
 SMILES notation
@@ -707,7 +709,7 @@ Here are the ligand labels and the ligand numbering for ``@TB1``:
 
 |nts_tb1|
 
-And then the ligand numberings for the possible permutations for the sample molecule:
+And then the ligand numberings for the 20 possible permutations for the sample molecule:
 
 ======= === === === === === ========
  Label   A   B   C   D   E   SMILES
@@ -745,8 +747,75 @@ And then the ligand numberings for the possible permutations for the sample mole
 ======= === === === === === ========
 
 
+Octahedral
+^^^^^^^^^^
+
+Here's a specific example (an invented molecule):
+
+.. |nts_oh2| image:: images/nontetstereo_oh2.png
+   :align: middle
+
+|nts_oh2|
+
+Here are the ligand labels and the ligand numbering for ``@OH1``:
+
+.. |nts_oh1| image:: images/nontetstereo_oh1.png
+   :align: middle
+
+|nts_oh1|
 
 
+And then the square planar shape and ligand numberings for the 30 possible permutations for the sample molecule:
+
+======= ==== === === === === === === ========
+ Label   SP   A   B   C   D   E   F   SMILES
+======= ==== === === === === === === ========
+@OH1     U    0   5   1   2   3   4   ``O[Co@OH1](Cl)(C)(N)(F)P``
+@OH2     U    0   5   1   4   3   2   ``O[Co@OH2](Cl)(F)(N)(C)P``
+
+@OH3     U    0   4   1   2   3   5   ``O[Co@OH3](Cl)(C)(N)(P)F``
+@OH16    U    0   4   1   5   3   2   ``O[Co@OH16](Cl)(F)(N)(P)C``
+
+@OH6     U    0   3   1   2   4   5   ``O[Co@OH6](Cl)(C)(P)(N)F``
+@OH18    U    0   3   1   5   4   2   ``O[Co@OH18](Cl)(F)(P)(N)C``
+
+@OH19    U    0   2   1   3   4   5   ``O[Co@OH19](Cl)(P)(C)(N)F``
+@OH24    U    0   2   1   5   4   3   ``O[Co@OH24](Cl)(P)(F)(N)C``
+
+@OH25    U    0   1   2   3   4   5   ``O[Co@OH25](P)(Cl)(C)(N)F``
+@OH30    U    0   1   2   5   4   3   ``O[Co@OH30](P)(Cl)(F)(N)C``
+
+@OH4     Z    0   5   1   2   4   3   ``O[Co@OH4](Cl)(C)(F)(N)P``
+@OH14    Z    0   5   1   3   4   2   ``O[Co@OH14](Cl)(F)(C)(N)P``
+
+@OH5     Z    0   4   1   2   5   3   ``O[Co@OH5](Cl)(C)(F)(P)N``
+@OH15    Z    0   4   1   3   5   2   ``O[Co@OH15](Cl)(F)(C)(P)N``
+
+@OH7     Z    0   3   1   2   5   4   ``O[Co@OH7](Cl)(C)(P)(F)N``
+@OH17    Z    0   3   1   4   5   2   ``O[Co@OH17](Cl)(F)(P)(C)N``
+
+@OH20    Z    0   2   1   3   5   4   ``O[Co@OH20](Cl)(P)(C)(F)N``
+@OH23    Z    0   2   1   4   5   3   ``O[Co@OH23](Cl)(P)(F)(C)N``
+
+@OH26    Z    0   1   2   3   5   4   ``O[Co@OH26](P)(Cl)(C)(F)N``
+@OH29    Z    0   1   2   4   5   3   ``O[Co@OH29](P)(Cl)(F)(C)N``
+
+@OH10    4    0   5   1   4   2   3   ``O[Co@OH10](Cl)(N)(F)(C)P``
+@OH8     4    0   5   1   3   2   4   ``O[Co@OH8](Cl)(N)(C)(F)P``
+
+@OH11    4    0   4   1   5   2   3   ``O[Co@OH11](Cl)(N)(F)(P)C``
+@OH9     4    0   4   1   3   2   5   ``O[Co@OH9](Cl)(N)(C)(P)F``
+
+@OH13    4    0   3   1   4   2   4   ``O[Co@OH13](Cl)(N)(P)(F)C``
+@OH12    4    0   3   1   4   2   5   ``O[Co@OH12](Cl)(N)(P)(C)F``
+
+@OH22    4    0   2   1   5   3   4   ``O[Co@OH22](Cl)(P)(N)(F)C``
+@OH21    4    0   2   1   4   3   5   ``O[Co@OH21](Cl)(P)(N)(C)F``
+
+@OH28    4    0   1   2   5   3   4   ``O[Co@OH28](P)(Cl)(N)(F)C``
+@OH27    4    0   1   2   4   3   5   ``O[Co@OH27](P)(Cl)(N)(C)F``
+
+======= ==== === === === === === === ========
 
 
 Chemical Reaction Handling
