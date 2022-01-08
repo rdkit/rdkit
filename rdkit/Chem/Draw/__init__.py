@@ -504,7 +504,8 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
   d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
-
+  # we already prepared the molecule:
+  d2d.drawOptions().prepareMolsBeforeDrawing = False
   bondHighlights = kwargs.get('highlightBonds', None)
   if bondHighlights is not None:
     d2d.DrawMolecule(mc, legend=legend or "", highlightAtoms=highlights or [],

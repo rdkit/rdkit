@@ -1,7 +1,7 @@
 
 rdkit_library(SubstructMatch 
-              SubstructMatch.cpp SubstructUtils.cpp
-              LINK_LIBRARIES GraphMol RDGeneral)
+              SubstructMatch.cpp SubstructUtils.cpp 
+              LINK_LIBRARIES GenericGroups GraphMol RDGeneral)
 target_compile_definitions(SubstructMatch PRIVATE RDKIT_SUBSTRUCTMATCH_BUILD)
 
 rdkit_headers(SubstructMatch.h

@@ -39,6 +39,8 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
                                            //!< match each other
   bool useQueryQueryMatches = false;  //!< Consider query-query matches, not
                                       //!< just simple matches
+  bool useGenericMatchers = false;    //!< Looks for generic atoms in the query
+                                      //!< and uses them as part of the matching
   bool recursionPossible = true;      //!< Allow recursive queries
   bool uniquify = true;            //!< uniquify (by atom index) match results
   unsigned int maxMatches = 1000;  //!< maximum number of matches to return
@@ -164,7 +166,7 @@ unsigned int SubstructMatch(T1 &mol, const T2 &query,
   params.maxMatches = maxMatches;
   params.numThreads = numThreads;
   matchVect = SubstructMatch(mol, query, params);
-  return matchVect.size();
+  return static_cast<unsigned int>(matchVect.size());
 };
 
 // ----------------------------------------------
@@ -206,7 +208,7 @@ inline unsigned int SubstructMatch(ResonanceMolSupplier &resMolSupplier,
   params.maxMatches = maxMatches;
   params.numThreads = numThreads;
   matchVect = SubstructMatch(resMolSupplier, query, params);
-  return matchVect.size();
+  return static_cast<unsigned int>(matchVect.size());
 };
 
 //! Class used as a final step to confirm whether or not a given atom->atom

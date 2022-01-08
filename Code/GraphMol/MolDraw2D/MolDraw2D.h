@@ -362,8 +362,14 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
               // labels
   bool singleColourWedgeBonds =
       false;  // if true wedged and dashed bonds are drawn
-              // using symbolColour rather than inheriting
-              // their colour from the atoms
+  // using symbolColour rather than inheriting
+  // their colour from the atoms
+  double scalingFactor = 20.0;  // scaling factor used for pixels->angstroms
+                                // when auto scaling is being used
+  double baseFontSize =
+      -1.0;  // when > 0 this is used to set the baseFontSize used for text
+             // drawing. As a reference point: the default value for
+             // DrawText::baseFontSize  is 0.6
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -392,7 +398,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! constructor for a particular size
   /*!
     \param width       : width (in pixels) of the rendering
+    set this to -1 to have the canvas size set automatically
     \param height      : height (in pixels) of the rendering
+    set this to -1 to have the canvas size set automatically
     \param panelWidth  : (optional) width (in pixels) of a single panel
     \param panelHeight : (optional) height (in pixels) of a single panel
 
@@ -767,6 +775,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   Point2D bbox_[2];
   std::vector<std::vector<MolDrawShape>> pre_shapes_;
   std::vector<std::vector<MolDrawShape>> post_shapes_;
+  bool needs_init_ = true;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -785,8 +794,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void pushDrawDetails();
   void popDrawDetails();
 
-  // do the initial setup bits for drawing a molecule.
-  std::unique_ptr<RWMol> setupMoleculeDraw(
+  // do the initial setup and drawing bits for drawing a molecule.
+  std::unique_ptr<RWMol> initMoleculeDraw(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::map<int, double> *highlight_radii, int confId = -1);
   void setupTextDrawer();
@@ -820,17 +829,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                         const std::map<int, double> *highlight_radii,
                         Point2D &centre, double &xradius,
                         double &yradius) const;
-  // StringRect will have a width of -1.0 if there's a problem.
-  StringRect calcAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                    const std::string &note);
-  StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond,
-                                    const std::string &note);
-  StringRect calcAnnotationPosition(const ROMol &mol, const std::string &note);
+  // annot.rect_ will have a width of -1.0 if there's a problem.
+  void calcAnnotationPosition(const ROMol &mol, const Atom *atom,
+                              AnnotationType &annot) const;
+  void calcAnnotationPosition(const ROMol &mol, const Bond *bond,
+                              AnnotationType &annot) const;
+  void calcAnnotationPosition(const ROMol &mol, AnnotationType &annot) const;
   // find where to put the given annotation around an atom.  Starting
   // search at angle start_ang, in degrees.
   void calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                  double start_ang, StringRect &rect,
-                                  const std::string &note);
+                                  double start_ang,
+                                  AnnotationType &annot) const;
 
   // draw 1 or more coloured line along bonds
   void drawHighlightedBonds(
@@ -869,27 +878,24 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // Returns angle in radians.
   double getNoteStartAngle(const ROMol &mol, const Atom *atom) const;
   // see if the note will clash with anything else drawn on the molecule.
-  // note_vec should have unit length.  note_rad is the radius along
-  // note_vec that the note will be drawn.
-  bool doesAtomNoteClash(StringRect &note_rect,
-                         const std::vector<std::shared_ptr<StringRect>> &rects,
-                         const ROMol &mol, unsigned int atom_idx);
-  bool doesBondNoteClash(StringRect &note_rect,
-                         const std::vector<std::shared_ptr<StringRect>> &rects,
-                         const ROMol &mol, const Bond *bond);
-  // does the note_vec form an unacceptably acute angle with one of the
-  // bonds from atom to its neighbours.
+  // Returns 0 if no clash, 1-3 if there is a clash, denoting what clashed.
+  int doesAtomNoteClash(const Point2D &note_pos,
+                        const std::vector<std::shared_ptr<StringRect>> &rects,
+                        const ROMol &mol, unsigned int atom_idx) const;
+  int doesBondNoteClash(const Point2D &note_pos,
+                        const std::vector<std::shared_ptr<StringRect>> &rects,
+                        const ROMol &mol, const Bond *bond) const;
   bool doesNoteClashNbourBonds(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects, const ROMol &mol,
       const Atom *atom) const;
   // does the note intersect with atsym, and if not, any other atom symbol.
   bool doesNoteClashAtomLabels(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects, const ROMol &mol,
       unsigned int atom_idx) const;
   bool doesNoteClashOtherNotes(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects) const;
 
   // take the coords for atnum, with neighbour nbr_cds, and move cds out to

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,10 +14,11 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Resonance.h>
 #include <GraphMol/MolBundle.h>
-#include "GraphMol/Chirality.h"
+#include <GraphMol/Chirality.h>
 
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
+#include <GraphMol/GenericGroups/GenericGroups.h>
 #include <boost/smart_ptr.hpp>
 #include <map>
 
@@ -197,13 +198,17 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
 
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
                                            const std::uint32_t m_c[]) const {
-  if (d_params.extraFinalCheck) {
+  if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
     // EFF: we can no-doubt do better than this
     std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
       aids[i] = m_c[i];
     }
-    if (!d_params.extraFinalCheck(d_mol, aids)) {
+    if (d_params.useGenericMatchers &&
+        !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
+      return false;
+    }
+    if (d_params.extraFinalCheck && !d_params.extraFinalCheck(d_mol, aids)) {
       return false;
     }
   }

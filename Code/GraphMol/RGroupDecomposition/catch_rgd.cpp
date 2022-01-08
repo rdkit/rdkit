@@ -585,3 +585,21 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
     }
   }
 }
+
+TEST_CASE("github4809: ring double bonds written as crossed bonds after RGD") {
+  std::vector<std::string> smis = {"C1C=CCC2=C1C=CC=N2"};
+  auto mols = smisToMols(smis);
+  std::vector<std::string> csmis = {"c1ccnc([*:1])c1[*:2]"};
+  auto cores = smisToMols(csmis);
+  SECTION("basics") {
+    RGroupRows rows;
+    {
+      auto n = RGroupDecompose(cores, mols, rows);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      auto r1 = rows[0]["R1"];
+      auto mb = MolToV3KMolBlock(*r1);
+      CHECK(mb.find("CFG=2") == std::string::npos);
+    }
+  }
+}

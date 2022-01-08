@@ -6114,10 +6114,18 @@ M  END
 
     ps.setExtraFinalCheck(accept_none)
     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 0)
+    self.assertEqual(len(m.GetSubstructMatch(p, ps)), 0)
+    self.assertFalse(m.HasSubstructMatch(p, ps))
+
     ps.setExtraFinalCheck(accept_all)
     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 2)
+    self.assertEqual(len(m.GetSubstructMatch(p, ps)), 3)
+    self.assertTrue(m.HasSubstructMatch(p, ps))
+
     ps.setExtraFinalCheck(accept_large)
     self.assertEqual(len(m.GetSubstructMatches(p, ps)), 1)
+    self.assertEqual(len(m.GetSubstructMatch(p, ps)), 3)
+    self.assertTrue(m.HasSubstructMatch(p, ps))
 
   def testMostSubstitutedCoreMatch(self):
     core = Chem.MolFromSmarts("[*:1]c1cc([*:2])ccc1[*:3]")

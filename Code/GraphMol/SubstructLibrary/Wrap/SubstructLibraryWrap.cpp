@@ -185,14 +185,15 @@ const char *SubstructLibraryDoc =
     ">>> import csv\n"
     ">>> molholder = rdSubstructLibrary.CachedSmilesMolHolder()\n"
     ">>> pattern_holder = rdSubstructLibrary.PatternHolder()\n"
-    ">>> for i, row in "
-    "enumerate(csv.reader(open(os.path.join(RDConfig.RDDataDir, \n"
-    "...                               'NCI', 'first_200.tpsa.csv')))):\n"
-    "...   if i:\n"
-    "...     idx = molholder.AddSmiles(row[0])\n"
-    "...     idx2 = pattern_holder.AddFingerprint(\n"
-    "...         pattern_holder.MakeFingerprint(Chem.MolFromSmiles(row[0])))\n"
-    "...     assert idx==idx2\n"
+    ">>> with open(os.path.join(RDConfig.RDDataDir, 'NCI', "
+    "'first_200.tpsa.csv')) as inf:\n"
+    "...   for i, row in enumerate(csv.reader(inf)):\n"
+    "...     if i:\n"
+    "...       idx = molholder.AddSmiles(row[0])\n"
+    "...       idx2 = pattern_holder.AddFingerprint(\n"
+    "...           "
+    "pattern_holder.MakeFingerprint(Chem.MolFromSmiles(row[0])))\n"
+    "...       assert idx==idx2\n"
     ">>> library = "
     "rdSubstructLibrary.SubstructLibrary(molholder,pattern_holder)\n"
     ">>> indices = library.GetMatches(core)\n"
@@ -270,7 +271,11 @@ python::tuple getSearchOrderHelper(const SubstructLibrary &sslib) {
 void setSearchOrderHelper(SubstructLibrary &sslib, const python::object &seq) {
   std::unique_ptr<std::vector<unsigned int>> sorder =
       pythonObjectToVect<unsigned int>(seq);
-  sslib.setSearchOrder(*sorder);
+  if (sorder) {
+    sslib.setSearchOrder(*sorder);
+  } else {
+    sslib.getSearchOrder().clear();
+  }
 }
 
 #define LARGE_DEF(_tname_)                                                     \
