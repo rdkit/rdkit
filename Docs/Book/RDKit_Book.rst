@@ -689,6 +689,23 @@ Square planar
 +===========+===========+===========+
 | |nts_sp1| | |nts_sp2| | |nts_sp3| |
 +-----------+-----------+-----------+
+|     U     |     4     |     Z     |
++-----------+-----------+-----------+
+
+
+.. |nts_sp4| image:: images/nontetstereo_sp4.png
+   :align: middle
+
+|nts_sp4|
+
+
+======= === === === === ========
+ Label   A   B   C   D   SMILES
+======= === === === === ========
+@SP1     0   1   2   3  ``C[Pt@SP1](F)(Cl)[H]``
+@SP2     0   2   1   3  ``C[Pt@SP2](Cl)(F)[H]``
+@SP3     0   1   3   2  ``C[Pt@SP3](F)([H])Cl``
+======= === === === === ========
 
 
 Trigonal bipyramidal
@@ -814,8 +831,13 @@ And then the square planar shape and ligand numberings for the 30 possible permu
 
 @OH28    4    0   1   2   5   3   4   ``O[Co@OH28](P)(Cl)(N)(F)C``
 @OH27    4    0   1   2   4   3   5   ``O[Co@OH27](P)(Cl)(N)(C)F``
-
 ======= ==== === === === === === === ========
+
+
+Treatment of implicit Hs
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+INSERT TEXT HERE
 
 
 Chemical Reaction Handling
