@@ -33,20 +33,14 @@ class CaptureStream:
         self.old = os.dup(self.fd)
         self.tmp = tempfile.TemporaryFile()
         os.dup2(self.tmp.fileno(), self.fd)
-        # self.pr, self.pw = os.pipe()
-        # os.dup2(self.pw, self.fd)
 
     def release(self):
-        # os.close(self.pw)
-
         self.tmp.seek(0)
         result = self.tmp.read()
-        #os.read(self.pr, 1024 * 1024)
 
         os.dup2(self.old, self.fd)
         os.close(self.old)
         self.tmp.close()
-        # os.close(self.pr)
 
         return result.decode('utf-8')
 
@@ -153,13 +147,7 @@ def expect_error(message):
 
 # Helpers for the threaded tests:
 nthreads = 5
-if sys.platform == 'win32':
-    # there's a buffer size problem with these tests
-    # (not the underlying code) on Windows. Work around
-    # that by running less repeats on windows.
-    nlogs = 50
-else:
-    nlogs = 50
+nlogs = 50
 
 def go(func, *args):
     thread = threading.Thread(target=func, args=args)
@@ -243,11 +231,6 @@ class TestLogToCppStreams(unittest.TestCase):
         self.assertEqual(cerr.count('Error'),   nlogs)
 
     def testAsynchronous1(self):
-        global nlogs
-        nlogsOrig = nlogs
-        # if sys.platform == 'win32':
-        #     # see the comment with the definition of nlogs
-        #     nlogs //= nthreads
         with CaptureOutput() as captured:
             RunOneThreadPerLevel(nthreads)
         cout = captured['std::cout']
@@ -256,14 +239,8 @@ class TestLogToCppStreams(unittest.TestCase):
         self.assertEqual(cout.count('Info'),    nthreads * nlogs)
         self.assertEqual(cerr.count('Warning'), nthreads * nlogs)
         self.assertEqual(cerr.count('Error'),   nthreads * nlogs)
-        nlogs = nlogsOrig
 
     def testAsynchronous2(self):
-        global nlogs
-        nlogsOrig = nlogs
-        # if sys.platform == 'win32':
-        #     # see the comment with the definition of nlogs
-        #     nlogs //= nthreads
         with CaptureOutput() as captured:
             RunManyThreadsPerLevel(nthreads)
         cout = captured['std::cout']
@@ -272,7 +249,6 @@ class TestLogToCppStreams(unittest.TestCase):
         self.assertEqual(cout.count('Info'),    nthreads * nlogs)
         self.assertEqual(cerr.count('Warning'), nthreads * nlogs)
         self.assertEqual(cerr.count('Error'),   nthreads * nlogs)
-        nlogs = nlogsOrig
 
 
 class TestLogToPythonLogger(unittest.TestCase):
@@ -319,6 +295,8 @@ class TestLogToPythonLogger(unittest.TestCase):
     def testAsynchronous2(self):
         with CaptureOutput() as captured:
             RunManyThreadsPerLevel(nthreads)
+        if captured['DEBUG'].count('Debug') != nthreads * nlogs:
+            print(captured['DEBUG'])
         self.assertEqual(captured['DEBUG'  ].count('Debug'),   nthreads * nlogs)
         self.assertEqual(captured['INFO'   ].count('Info'),    nthreads * nlogs)
         self.assertEqual(captured['WARNING'].count('Warning'), nthreads * nlogs)
