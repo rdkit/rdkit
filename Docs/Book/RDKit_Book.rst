@@ -658,8 +658,9 @@ Brief description of the ``findPotentialStereo()`` algorithm
 Support for non-tetrahedral atomic stereochemistry
 ==================================================
 
-Starting with the 2022.03 release, the RDKit has partial, but evolving, support for non-tetrahedral stereochemistry. 
-The status of this work is being tracked in this github issue: https://github.com/rdkit/rdkit/issues/4851
+Starting with the 2022.03 release, the RDKit has partial, but evolving, support
+for non-tetrahedral stereochemistry. The status of this work is being tracked in
+this github issue: https://github.com/rdkit/rdkit/issues/4851
 
 
 This discussion of the SMILES notation here is drawn heavily from the OpenSMILES
@@ -699,6 +700,8 @@ Square planar
 |nts_sp4|
 
 
+Here are the ligand numberings for the 3 possible permutations of the sample molecule:
+
 ======= === === === === ========
  Label   A   B   C   D   SMILES
 ======= === === === === ========
@@ -726,7 +729,7 @@ Here are the ligand labels and the ligand numbering for ``@TB1``:
 
 |nts_tb1|
 
-And then the ligand numberings for the 20 possible permutations for the sample molecule:
+And then the ligand numberings for the 20 possible permutations of the sample molecule:
 
 ======= === === === === === ========
  Label   A   B   C   D   E   SMILES
@@ -782,7 +785,7 @@ Here are the ligand labels and the ligand numbering for ``@OH1``:
 |nts_oh1|
 
 
-And then the square planar shape and ligand numberings for the 30 possible permutations for the sample molecule:
+And then the square planar shape and ligand numberings for the 30 possible permutations of the sample molecule:
 
 ======= ==== === === === === === === ========
  Label   SP   A   B   C   D   E   F   SMILES
@@ -834,10 +837,55 @@ And then the square planar shape and ligand numberings for the 30 possible permu
 ======= ==== === === === === === === ========
 
 
+Duplicate ligands
+^^^^^^^^^^^^^^^^^
+
+One of the major differences between non-tetrahedral stereochemistry and the
+tetrahedral variant is that it's possible to have non-tetrahedral stereo with
+central atoms which have duplicate ligands.
+
+The classic example of this is cis-platin - ``Cl[Pt@SP1](Cl)(<-[NH3])<-[NH3]`` - vs trans-platin  - ``Cl[Pt@SP2](Cl)(<-[NH3])<-[NH3]`` - 
+
+.. |nts_ex1| image:: images/nontetstereo_ex1.png
+   :align: middle
+.. |nts_ex2| image:: images/nontetstereo_ex2.png
+   :align: middle
+
+
+=================================== ====================================
+ |nts_ex1|                           |nts_ex2| 
+=================================== ====================================
+``Cl[Pt@SP1](Cl)(<-[NH3])<-[NH3]``   ``Cl[Pt@SP2](Cl)(<-[NH3])<-[NH3]``
+=================================== ====================================
+
+
+
+
+
+
+
 Treatment of implicit Hs
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-INSERT TEXT HERE
+Implicit Hs are treated the same as in tetrahedral stereo: as if they are the
+first neighbors after the central atom. So the two smiles ``C[Pt@SP1H](Cl)F``
+and ``C[Pt@SP1]([H])(Cl)F`` corresponds to the same structure.
+
+This also works with multiple implicit Hs: ``C[Pt@SP1H2]Cl`` and ``C[Pt@SP1]([H])([H])Cl`` are equivalent.
+
+
+Missing ligands
+^^^^^^^^^^^^^^^
+
+Coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
+For example, this invented complex can be presented with the SMILES ``O[Mn@OH1](Cl)(C)(N)F``.
+
+.. |nts_missing1| image:: images/nontetstereo_missing1.png
+   :align: middle
+
+|nts_missing1|
+
+Compare this to the SMILES for the related complex shown above in the discussion of ``@OH`` stereo.
 
 
 Chemical Reaction Handling
