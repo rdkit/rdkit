@@ -161,6 +161,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4764.sz2.svg", 2935799920U},
     {"testGithub4764.sz3.svg", 2544100175U},
     {"testDrawArc1.svg", 827049291U},
+    {"testMetalWedges.svg", 4275464711U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -3591,5 +3592,42 @@ M  END)CTAB"_ctab;
       outs.flush();
       check_file_hash("testDrawArc1.svg");
     }
+  }
+}
+
+TEST_CASE("wedged bonds to metals drawn in the wrong direction") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2108 01092205442D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 F 10.6667 -0.75 0 0
+M  V30 2 Pt 10.6667 -2.29 0 0 CFG=1
+M  V30 3 Cl 12.2067 -2.29 0 0
+M  V30 4 C 10.6667 -3.83 0 0
+M  V30 5 O 9.1267 -2.29 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5 CFG=3
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    m->getBondWithIdx(2)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    m->getBondWithIdx(3)->setBondDir(Bond::BondDir::BEGINDASH);
+    MolDraw2DSVG drawer(250, 200);
+    assignBWPalette(drawer.drawOptions().atomColourPalette);
+    drawer.drawMolecule(*m, "check wedges");
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testMetalWedges.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testMetalWedges.svg");
   }
 }
