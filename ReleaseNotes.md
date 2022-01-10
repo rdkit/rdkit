@@ -1,3 +1,43 @@
+# Release_2021.09.4
+(Changes relative to Release_2021.09.3)
+
+## Acknowledgements
+Kevin Burk, Gareth Jones, Toshiki Kataoka, Brian Kelley, Ricardo
+Rodriguez-Schmidt, Paolo Tosco, Rachel Walker
+
+## Bug Fixes:
+  - Highlight bond width is different for different PNG image sizes
+ (github #4764 from rachelnwalker)
+  - AdjustQueryProperties() is inconsistent when adjustConjugatedFiveRings is set
+ (github #4789 from greglandrum)
+  - `Draw.MolToFile` to SVG raises "Can't kekulize" error
+ (github #4792 from toslunar)
+  - Ring double bonds written as crossed bonds after RGD
+ (github #4809 from greglandrum)
+  - Fix a number of crashing bugs in the python wrappers
+ (github #4810 from greglandrum)
+  - correctly tag unspecified branch-begin bonds in SMARTS
+ (github #4811 from greglandrum)
+  - AttributeError in PandasTools
+ (github #4821 from greglandrum)
+  - reloading PandasTools leads to infinite recursion
+ (github #4823 from greglandrum)
+  - ReplaceCore should set stereo on ring bonds when it breaks rings
+ (github #4825 from greglandrum)
+  - MolDraw2D::drawArc() starts at wrong angle
+ (github #4836 from greglandrum)
+  - MolDraw2D::drawArc() not exposed to Python
+ (github #4837 from greglandrum)
+  - align argument to MolDraw2D::DrawString() cannot be used from Python
+ (github #4838 from greglandrum)
+  - Fix RunFilterCatalog() thread counts.
+ (github #4856 from xavierholt)
+  - RGD: dummy atom in input structure is mishandled
+ (github #4863 from jones-gareth)
+  - Fix bug with wedges being drawn backwards
+ (github #4868 from greglandrum)
+
+
 # Release_2021.09.3
 (Changes relative to Release_2021.09.2)
 
