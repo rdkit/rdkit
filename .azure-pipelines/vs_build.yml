@@ -4,7 +4,7 @@ steps:
 - script: |
     conda config --set always_yes yes --set changeps1 no
     conda info -a
-    conda create --name rdkit_build  cmake ^
+    conda create --name rdkit_build  -c conda-forge cmake ^
         boost-cpp=$(boost_version) boost=$(boost_version) ^
         py-boost=$(boost_version) libboost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas  ^
