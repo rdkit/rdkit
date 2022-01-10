@@ -28,23 +28,21 @@ jobs:
     target_platform: 10.9
   steps:
   - template: .azure-pipelines/mac_build.yml
-- job: Windows_VS2017_x64
+- job: Windows_VS2022_x64
   timeoutInMinutes: 90
   pool:
     vmImage: windows-latest
   variables:
-    compiler: windows-latest
     boost_version: 1.67.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python37
   steps:
   - template: .azure-pipelines/vs_build.yml
-- job: Windows_VS2017_x64_dll
+- job: Windows_VS2022_x64_dll
   timeoutInMinutes: 90
   pool:
     vmImage: windows-latest
   variables:
-    compiler: vs2017_win-64
     boost_version: 1.67.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python37
