@@ -355,5 +355,5 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
       std::cerr << MolToV3KMolBlock(*m) << std::endl;
     }
   }
-}
 #endif
+}
