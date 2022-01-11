@@ -2552,8 +2552,8 @@ void test13JSONConfig() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.1,8.6"
-                          " L 165.0,88.2'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.4,8.2 L "
+                          "162.9,83.6'") != std::string::npos);
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
                 std::string::npos);
@@ -3345,9 +3345,9 @@ M  END)molb";
     outs.close();
     check_file_hash("testGithub2063_1.svg");
     TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M "
-                          "65.9,105.9 L 134.1,84.1'") != std::string::npos);
+                          "65.9,100.9 L 134.1,79.1'") != std::string::npos);
     TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M "
-                          "69.7,112.5 L 9.1,77.5'") != std::string::npos);
+                          "69.7,107.5 L 9.1,72.5'") != std::string::npos);
   }
   {
     std::string molb = R"molb(crossed bond
@@ -3377,9 +3377,9 @@ M  END)molb";
     outs.close();
     check_file_hash("testGithub2063_2.svg");
     TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M "
-                          "65.9,105.9 L 134.1,84.1'") != std::string::npos);
+                          "65.9,100.9 L 134.1,79.1'") != std::string::npos);
     TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M "
-                          "69.7,112.5 L 9.1,77.5'") != std::string::npos);
+                          "69.7,107.5 L 9.1,72.5'") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
@@ -3544,7 +3544,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.2' cy='368.0' rx='10.4' ry='10.7' "
+          text.find("<ellipse cx='242.6' cy='348.6' rx='9.9' ry='10.1' "
                     "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #else
@@ -3574,7 +3574,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.2' cy='367.5' rx='10.5' ry='10.5' "
+          text.find("<ellipse cx='242.6' cy='348.2' rx='9.9' ry='9.9' "
                     "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #else
@@ -3606,7 +3606,7 @@ void testGithub3112() {
     check_file_hash("testGithub3112_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // this is the b
-    TEST_ASSERT(text.find("<path class='legend' d='M 107.0 189.3") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='legend' d='M 126.9 183.1") != std::string::npos);
 #else
     TEST_ASSERT(text.find("<text x='121.0' y='195.2'"
                           " style='font-size:15px;font-style:normal;"
@@ -3629,7 +3629,7 @@ void testGithub3112() {
     check_file_hash("testGithub3112_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // this is the b on the 2nd line.
-    TEST_ASSERT(text.find("<path class='legend' d='M 119.5 189.6") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='legend' d='M 117.4 189.2") != std::string::npos);
 #else
     TEST_ASSERT(text.find("<text x='110.1' y='196.2'"
                           " style='font-size:12px;font-style:normal;"
@@ -3679,7 +3679,7 @@ void testGithub3112() {
     check_file_hash("testGithub3112_4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The first letter, N
-    TEST_ASSERT(text.find("<path class='legend' d='M 91.6 188.4") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='legend' d='M 58.3 176.7") != std::string::npos);
 #else
     TEST_ASSERT(text.find("<text x='50.2' y='186.2'"
                           " style='font-size:12px;font-style:normal;"

@@ -793,6 +793,12 @@ void DrawMol::calculateScale() {
     }
     if (setHeight) {
       drawHeight_ = drawOptions_.scalingFactor * thisYRange;
+      if (legend_.empty()) {
+        height_ = drawHeight_;
+      } else {
+        height_ = drawHeight_ / (1.0 - drawOptions_.legendFraction);
+        legendHeight_ = height_ - drawHeight_;
+      }
     }
 
     newScale = std::min(double(width_) / xRange_,
@@ -910,12 +916,13 @@ void DrawMol::draw(MolDraw2D &drawer) const {
   }
   drawRadicals(drawer);
   for(auto &ps : postShapes_) {
+    std::cout << "postShape : " << ps->points_.front() << std::endl;
     ps->draw(drawer);
   }
   for (auto &leg : legends_) {
     leg->draw(drawer);
   }
-  drawer.setScale(scale_);
+  drawer.setScale(keepScale);
 }
 
 // ****************************************************************************
@@ -1307,8 +1314,8 @@ void DrawMol::partitionForLegend() {
     legendHeight_ = 0;
   } else {
     if (height_ > 0) {
-      drawHeight_ = int(0.95 * float(height_));
-      legendHeight_ = height_ - drawHeight_;
+      legendHeight_ = int(drawOptions_.legendFraction * float(height_));
+      drawHeight_ = height_ - legendHeight_;
     } else {
       drawHeight_ = height_;
       legendHeight_ = 15;

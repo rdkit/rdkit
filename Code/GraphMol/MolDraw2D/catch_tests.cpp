@@ -3819,7 +3819,7 @@ M  END
   MolDraw2DUtils::prepareMolForDrawing(*mol2);
 
   SECTION("fixed canvas") {
-    MolDraw2DSVG drawer(350, 300, -1, -1, 1);
+    MolDraw2DSVG drawer(308, 223, -1, -1, 1);
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -4101,5 +4101,53 @@ M  END)CTAB"_ctab;
     outs << text;
     outs.flush();
     check_file_hash("testMetalWedges.svg");
+  }
+}
+
+TEST_CASE("vary proporition of panel for legend", "[drawing]") {
+  SECTION("basics") {
+    auto m1 = "C1N[C@@H]2OCC12"_smiles;
+    REQUIRE(m1);
+
+    {
+      // default legend
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "default legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testVariableLegend_1.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<text x='34.5' y='195.2' class='legend' "
+                      "style='font-size:16px;") != std::string::npos);
+    }
+    {
+      // 1/4 of panel
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().legendFraction = 0.25;
+      drawer.drawOptions().legendFontSize = 32;
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "massive legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testVariableLegend_2.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<text x='1.6' y='190.4' class='legend' "
+                      "style='font-size:31px;") != std::string::npos);
+    }
+    {
+      // tiny
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().legendFraction = 0.05;
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "small legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testVariableLegend_3.svg");
+      outs << text;
+      outs.flush();
+      CHECK(text.find("<text x='69.3' y='196.2' class='legend' "
+                      "style='font-size:12px;") != std::string::npos);
+    }
+
   }
 }
