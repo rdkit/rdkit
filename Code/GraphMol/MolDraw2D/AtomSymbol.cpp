@@ -31,8 +31,8 @@ AtomSymbol::AtomSymbol(const std::string &symbol, int atIdx, OrientType orient,
   if (symbol_.empty()) {
     return;
   }
-  textDrawer_.getStringRects(symbol_, orient_, rects_, draw_modes_,
-                             draw_chars_, false, TextAlignType::MIDDLE);
+  textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_,
+                             drawChars_, false, TextAlignType::MIDDLE);
 }
 
 // ****************************************************************************
@@ -60,22 +60,17 @@ void AtomSymbol::findExtremes(double &xmin, double &xmax, double &ymin,
 }
 
 // ****************************************************************************
-void AtomSymbol::scale(const Point2D &scaleFactor,
-                       const Point2D &fontScaleFactor) {
+void AtomSymbol::scale(const Point2D &scaleFactor) {
   cds_.x *= scaleFactor.x;
   cds_.y *= scaleFactor.y;
-  for (auto &rect : rects_) {
-    rect->trans_.x *= fontScaleFactor.x;
-    rect->trans_.y *= fontScaleFactor.y;
-    rect->offset_.x *= fontScaleFactor.x;
-    rect->offset_.y *= fontScaleFactor.y;
-    rect->g_centre_.x *= fontScaleFactor.x;
-    rect->g_centre_.y *= fontScaleFactor.y;
-    rect->y_shift_ *= fontScaleFactor.y;
-    rect->width_ *= fontScaleFactor.x;
-    rect->height_ *= fontScaleFactor.y;
-    rect->rect_corr_ *= fontScaleFactor.y;
-  }
+
+  // rebuild the rectangles, because the fontScale may be different,
+  // and the widths etc might not scale by the same amount.
+  rects_.clear();
+  drawModes_.clear();
+  drawChars_.clear();
+  textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_,
+                             drawChars_, false, TextAlignType::MIDDLE);
 }
 
 // ****************************************************************************

@@ -112,19 +112,6 @@ void calcTripleBondLines(double offset, const Bond &bond,
   l2f = at2_cds + (bv * end2_trunc) - perp * dbo;
 }
 
-void getBondHighlightsForAtoms(const ROMol &mol,
-                               const vector<int> &highlight_atoms,
-                               vector<int> &highlight_bonds) {
-  highlight_bonds.clear();
-  for (auto ai = highlight_atoms.begin(); ai != highlight_atoms.end(); ++ai) {
-    for (auto aj = ai + 1; aj != highlight_atoms.end(); ++aj) {
-      const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
-      if (bnd) {
-        highlight_bonds.push_back(bnd->getIdx());
-      }
-    }
-  }
-}
 }  // namespace
 
 // ****************************************************************************
@@ -268,16 +255,15 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
   setupTextDrawer();
-  DrawMol *drawMol = new DrawMol(
+  drawMols_.emplace_back(new DrawMol(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
-      nullptr, highlight_radii, supportsAnnotations(), confId);
-  drawMol->setOffsets(x_offset_, y_offset_);
-  drawMol->createDrawObjects();
-  drawMols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
+      nullptr, highlight_radii, supportsAnnotations(), confId));
+  drawMols_.back()->setOffsets(x_offset_, y_offset_);
+  drawMols_.back()->createDrawObjects();
   ++activeMolIdx_;
   startDrawing();
-  drawTheMolecule(*drawMol);
+  drawTheMolecule(*drawMols_.back());
 }
 
 // ****************************************************************************
@@ -288,15 +274,14 @@ void MolDraw2D::drawMoleculeWithHighlights(
     const map<int, double> &highlight_radii,
     const map<int, int> &highlight_linewidth_multipliers, int confId) {
   setupTextDrawer();
-  DrawMol *drawMol = new DrawMolMCH(
+  drawMols_.emplace_back(std::unique_ptr<DrawMol>(new DrawMolMCH(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atom_map, highlight_bond_map,
-      highlight_radii, highlight_linewidth_multipliers, confId);
-  drawMol->createDrawObjects();
-  drawMols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
+      highlight_radii, highlight_linewidth_multipliers, confId)));
+  drawMols_.back()->createDrawObjects();
   ++activeMolIdx_;
   startDrawing();
-  drawTheMolecule((*drawMol));
+  drawTheMolecule((*drawMols_.back()));
   return;
 }
 
@@ -671,19 +656,19 @@ void MolDraw2D::drawMolecules(
   }
 
   setupTextDrawer();
-  double minScale = std::numeric_limits<double>::max();
+  int minScaleMol = 0;
+  int minFontScaleMol = 0;
   int nCols = width() / panelWidth();
   int nRows = height() / panelHeight();
 
   for (size_t i = 0; i < mols.size(); ++i) {
+    std::cout << "MOL : " << i << std::endl;
     if (!mols[i]) {
       continue;
     }
     std::string legend = legends ? (*legends)[i] : "";
     const std::vector<int> *ha =
         highlight_atoms ? &(*highlight_atoms)[i] : nullptr;
-    const std::vector<int> *hb =
-        highlight_bonds ? &(*highlight_atoms)[i] : nullptr;
     const std::map<int, DrawColour> *ham =
         highlight_atom_maps ? &(*highlight_atom_maps)[i] : nullptr;
     const std::map<int, DrawColour> *hbm =
@@ -691,10 +676,19 @@ void MolDraw2D::drawMolecules(
     int confId = confIds ? (*confIds)[i] : -1;
     const std::map<int, double> *hr =
         highlight_radii ? &(*highlight_radii)[i] : nullptr;
-    DrawMol *drawMol =
+    unique_ptr<vector<int>> lhighlight_bonds;
+    if (highlight_bonds) {
+      lhighlight_bonds.reset(new std::vector<int>((*highlight_bonds)[i]));
+    } else if (drawOptions().continuousHighlight && highlight_atoms) {
+      lhighlight_bonds.reset(new vector<int>());
+      getBondHighlightsForAtoms(*mols[i], (*highlight_atoms)[i],
+                                *lhighlight_bonds);
+    };
+
+    drawMols_.emplace_back(
         new DrawMol(*mols[i], legend, panelWidth(), panelHeight(),
-                    drawOptions(), *text_drawer_, ha, hb, ham, hbm, nullptr, hr,
-                    supportsAnnotations(), confId);
+                    drawOptions(), *text_drawer_, ha, lhighlight_bonds.get(),
+                    ham, hbm, nullptr, hr, supportsAnnotations(), confId));
     int row = 0;
     // note that this also works when no panel size is specified since
     // the panel dimensions defaults to -1
@@ -705,22 +699,39 @@ void MolDraw2D::drawMolecules(
     if (nCols > 1) {
       col = i % nCols;
     }
-    drawMol->setOffsets(col * panelWidth(), row * panelHeight());
-    drawMol->createDrawObjects();
-    minScale = std::min(minScale, drawMol->getScale());
-    drawMols_.emplace_back(std::unique_ptr<DrawMol>(drawMol));
+    drawMols_.back()->setOffsets(col * panelWidth(), row * panelHeight());
+    drawMols_.back()->createDrawObjects();
+    if (drawMols_.back()->getScale() < drawMols_[minScaleMol]->getScale()) {
+      minScaleMol = i;
+    }
+    if (drawMols_.back()->getFontScale() < drawMols_[minScaleMol]->getFontScale()) {
+      minFontScaleMol = i;
+    }
   }
 
+  int mol_num = 0;
   for (auto &drawMol : drawMols_) {
-    drawMol->setScale(minScale);
+//    if (mol_num) {
+//      continue;
+//    }
+    std::cout << "setting scale for next mol : " << mol_num << std::endl;
+    drawMol->setScale(drawMols_[minScaleMol]->getScale(),
+                      drawMols_[minFontScaleMol]->getFontScale());
+    std::cout << "set it" << std::endl;
     drawMol->tagAtomsWithCoords();
+    ++mol_num;
   }
 
-  startDrawing();
-  activeMolIdx_ = -1;
-  for (size_t i = 0; i < drawMols_.size(); ++i) {
-    ++activeMolIdx_;
-    drawTheMolecule((*drawMols_[i]));
+  if (!drawMols_.empty()) {
+    activeMolIdx_ = 0;
+    startDrawing();
+    for (size_t i = 0; i < drawMols_.size(); ++i) {
+      std::cout << "drawing " << i << std::endl;
+      activeMolIdx_ = i;
+      drawTheMolecule((*drawMols_[i]));
+    }
+  } else {
+    activeMolIdx_ = -1;
   }
 }
 
@@ -826,15 +837,18 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   PRECONDITION(height > 0, "bad height");
 
   double x_min, x_max, x_range, y_min, y_max, y_range;
+  bool setFontScale = false;
   if (mol) {
     setupTextDrawer();
-    DrawMol *drawMol = new DrawMol(*mol, "", panelWidth(), panelHeight(),
-                                   drawOptions(), *text_drawer_);
+    std::unique_ptr<DrawMol> drawMol(new DrawMol(
+        *mol, "", panelWidth(), panelHeight(), drawOptions(), *text_drawer_));
     drawMol->createDrawObjects();
     x_min = min(minv.x, drawMol->xMin_);
     y_min = min(minv.y, drawMol->yMin_);
     x_max = max(maxv.x, drawMol->xMax_);
     y_max = max(maxv.y, drawMol->yMax_);
+    fontScale_ = drawMol->getFontScale();
+    setFontScale = true;
   } else {
     x_min = minv.x;
     y_min = minv.y;
@@ -861,6 +875,11 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   y_range *= 1 + 2 * drawOptions().padding;
 
   scale_ = std::min(double(width) / x_range, double(height) / y_range);
+  // Absent any other information, we'll have to go with fontScale_ the
+  // same as scale_.
+  if (!setFontScale) {
+    fontScale_ = scale_;
+  }
   forceScale_ = true;
 }
 
@@ -1519,7 +1538,7 @@ void MolDraw2D::startDrawing() {
 // ****************************************************************************
 void MolDraw2D::drawTheMolecule(DrawMol &drawMol) {
   if (forceScale_) {
-    drawMol.setScale(scale_);
+    drawMol.setScale(scale_, fontScale_);
   }
   drawMol.draw(*this);
 
@@ -1577,8 +1596,6 @@ unique_ptr<RWMol> MolDraw2D::initMoleculeDraw(
 
 // ****************************************************************************
 void MolDraw2D::setupTextDrawer() {
-  PRECONDITION(drawOptions().maxFontSize >= drawOptions().minFontSize,
-               "max font size smaller than min");
   text_drawer_->setMaxFontSize(drawOptions().maxFontSize);
   text_drawer_->setMinFontSize(drawOptions().minFontSize);
   if (drawOptions().baseFontSize > 0.0) {
@@ -3339,6 +3356,24 @@ void MolDraw2D::drawAnnotation(const AnnotationType &annot) {
   if (annot.scaleText_) {
     text_drawer_->setFontScale(full_font_scale, true);
   }
+}
+
+// ****************************************************************************
+void MolDraw2D::setActiveMolIdx(int newIdx) {
+    PRECONDITION(newIdx >= -1 && newIdx < drawMols_.size(),
+                 "bad new activeMolIdx_");
+    activeMolIdx_ = newIdx;
+}
+
+// ****************************************************************************
+void MolDraw2D::setActiveAtmIdx(int at_idx1, int at_idx2) {
+  at_idx1 = (at_idx1 < 0 ? -1 : at_idx1);
+  at_idx2 = (at_idx2 < 0 ? -1 : at_idx2);
+  if (at_idx2 >= 0 && at_idx1 < 0) {
+    std::swap(at_idx1, at_idx2);
+  }
+  activeAtmIdx1_ = at_idx1;
+  activeAtmIdx2_ = at_idx2;
 }
 
 // ****************************************************************************

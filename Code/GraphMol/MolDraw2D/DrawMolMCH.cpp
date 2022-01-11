@@ -28,7 +28,6 @@ DrawMolMCH::DrawMolMCH(
       mcHighlightAtomMap_(highlight_atom_map),
       mcHighlightBondMap_(highlight_bond_map),
   highlightLinewidthMultipliers_(highlight_linewidth_multipliers) {
-  std::cout << "Top of DrawMolMCH c'tor" << std::endl;
 }
 
 // ****************************************************************************
@@ -39,11 +38,8 @@ void DrawMolMCH::extractHighlights() {
 
 // ****************************************************************************
 void DrawMolMCH::extractMCHighlights() {
-  std::cout << "DrawMolMCH::extractHighlights" << std::endl;
   makeBondHighlights();
-  std::cout << "after bonds : " << highlights_.size() << std::endl;
   makeAtomHighlights();
-  std::cout << "after bonds and atoms : " << highlights_.size() << std::endl;
 }
 
 // ****************************************************************************
@@ -97,7 +93,6 @@ void DrawMolMCH::makeBondHighlights() {
       }
     } else {
       double col_rad = 2.0 * rad / hb.second.size();
-      std::cout << "rad = " << rad << "   col_rad = " << col_rad << std::endl;
       if (drawOptions_.fillHighlights) {
         Point2D p1 = at1_cds - perp * rad;
         Point2D p2 = at2_cds - perp * rad;
@@ -116,7 +111,6 @@ void DrawMolMCH::makeBondHighlights() {
           p2 += perp * col_rad;
         }
       } else {
-        std::cout << "not fill highlights" << std::endl;
         std::vector<DrawColour> cols{hb.second};
         if (cols.size() % 2) {
           draw_adjusted_line(at1_cds, at2_cds, cols[0]);
@@ -124,8 +118,6 @@ void DrawMolMCH::makeBondHighlights() {
         }
         int step = 0;
         for (size_t i = 0; i < cols.size(); ++i) {
-          std::cout << "drawing colour " << i << " : " << cols[i].r
-                    << ", " << cols[i].g << ", " << cols[i].b << std::endl;
           // draw even numbers from the bottom, odd from the top
           Point2D offset = perp * (rad - step * col_rad);
           if (!(i % 2)) {
@@ -160,12 +152,10 @@ void DrawMolMCH::makeAtomHighlights() {
       highlights_.emplace_back(std::unique_ptr<DrawShape>(ell));
     } else {
       double arc_size = 360.0 / double(ha.second.size());
-      std::cout << "making arcs for atom " << ha.first << " of size " << arc_size << std::endl;
       double arc_start = 270.0;
       for (size_t i = 0; i < ha.second.size(); ++i){
         double arc_stop = arc_start + arc_size;
         arc_stop = arc_stop >= 360.0 ? arc_stop - 360.0 : arc_stop;
-        std::cout << "   " << i << " : " << arc_start << " : " << arc_stop << std::endl;
         std::vector<Point2D> pts{centre, Point2D(xradius, yradius)};
         DrawShape *arc = new DrawShapeArc(
             pts, arc_start, arc_stop, lineWidth, true, ha.second[i],
@@ -188,9 +178,6 @@ void DrawMolMCH::adjustLineEndForHighlight(int at_idx, Point2D p1,
   double xradius, yradius;
   Point2D centre;
   calcSymbolEllipse(at_idx, centre, xradius, yradius);
-  // cout << "ellipse is : " << centre.x << ", " << centre.y << " rads " <<
-  // xradius << " and " << yradius << endl; cout << "p1 = " << p1.x << ", " <<
-  // p1.y << endl << "p2 = " << p2.x << ", " << p2.y << endl;
   if (xradius < 1.0e-6 || yradius < 1.0e-6) {
     return;
   }
@@ -219,14 +206,12 @@ void DrawMolMCH::adjustLineEndForHighlight(int at_idx, Point2D p1,
   } else if (fabs(disc) < 1.0e-6) {
     // 1 solution
     double t = -B / (2.0 * A);
-    // cout << "t = " << t << endl;
     p2 = t_to_point(t);
   } else {
     // 2 solutions - take the one nearest p1.
     double disc_rt = sqrt(disc);
     double t1 = (-B + disc_rt) / (2.0 * A);
     double t2 = (-B - disc_rt) / (2.0 * A);
-    // cout << "t1 = " << t1 << "  t2 = " << t2 << endl;
     double t;
     // prefer the t between 0 and 1, as that must be between the original
     // points.  If both are, prefer the lower, as that will be nearest p1,
@@ -244,10 +229,8 @@ void DrawMolMCH::adjustLineEndForHighlight(int at_idx, Point2D p1,
       // so don't do anything.
       return;
     }
-    // cout << "using t = " << t << endl;
     p2 = t_to_point(t);
   }
-  // cout << "p2 = " << p2.x << ", " << p2.y << endl;
 }
 
 // ****************************************************************************
@@ -256,9 +239,8 @@ void DrawMolMCH::calcSymbolEllipse(unsigned int atomIdx, Point2D &centre,
   centre = atCds_[atomIdx];
   xradius = drawOptions_.highlightRadius;
   yradius = xradius;
-  if (highlightRadii_ &&
-      highlightRadii_->find(atomIdx) != highlightRadii_->end()) {
-    xradius = highlightRadii_->find(atomIdx)->second;
+  if (highlightRadii_.find(atomIdx) != highlightRadii_.end()) {
+    xradius = highlightRadii_.find(atomIdx)->second;
     yradius = xradius;
   }
 

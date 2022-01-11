@@ -404,18 +404,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual bool supportsAnnotations() { return true; }
   virtual void drawAnnotation(const AnnotationType &annotation);
 
+  void setActiveMolIdx(int newIdx);
   bool hasActiveAtmIdx() const { return activeAtmIdx1_ >= 0; }
   int getActiveAtmIdx1() const { return activeAtmIdx1_; }
   int getActiveAtmIdx2() const { return activeAtmIdx2_; }
-  void setActiveAtmIdx(int at_idx1 = -1, int at_idx2 = -1) {
-    at_idx1 = (at_idx1 < 0 ? -1 : at_idx1);
-    at_idx2 = (at_idx2 < 0 ? -1 : at_idx2);
-    if (at_idx2 >= 0 && at_idx1 < 0) {
-      std::swap(at_idx1, at_idx2);
-    }
-    activeAtmIdx1_ = at_idx1;
-    activeAtmIdx2_ = at_idx2;
-  }
+  void setActiveAtmIdx(int at_idx1 = -1, int at_idx2 = -1);
   bool hasActiveBndIdx() const { return activeBndIdx_ >= 0; }
   int getActiveBndIdx() const { return activeBndIdx_; }
   void setActiveBndIdx(int bnd_idx = -1) {
@@ -436,7 +429,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // if the user calls setScale() to explicitly force a scale on the
   // DrawMols, this is set to true.
   bool forceScale_ = false;
-  double scale_;
+  double scale_, fontScale_;
   double x_min_, y_min_, x_range_, y_range_;
   double x_trans_, y_trans_;
   int x_offset_, y_offset_;  // translation in screen coordinates

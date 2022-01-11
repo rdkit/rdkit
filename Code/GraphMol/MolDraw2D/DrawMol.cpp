@@ -46,12 +46,6 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
     : legend_(legend),
       drawOptions_(drawOptions),
       textDrawer_(textDrawer),
-      highlightAtoms_(highlight_atoms),
-      highlightBonds_(highlight_bonds),
-      highlightAtomMap_(highlight_atom_map),
-      highlightBondMap_(highlight_bond_map),
-      bondColours_(bond_colours),
-      highlightRadii_(highlight_radii),
       includeAnnotations_(includeAnnotations),
       confId_(confId),
       width_(width),
@@ -64,6 +58,24 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
       yMax_(-std::numeric_limits<double>::max() / 2.0),
       xRange_(std::numeric_limits<double>::max()),
       yRange_(std::numeric_limits<double>::max()) {
+  if (highlight_atoms) {
+    highlightAtoms_ = *highlight_atoms;
+  }
+  if (highlight_bonds) {
+    highlightBonds_ = *highlight_bonds;
+  }
+  if (highlight_atom_map) {
+    highlightAtomMap_ = *highlight_atom_map;
+  }
+  if (highlight_bond_map) {
+    highlightBondMap_ = *highlight_bond_map;
+  }
+  if (bond_colours) {
+    bondColours_ = *bond_colours;
+  }
+  if (highlight_radii) {
+    highlightRadii_ = *highlight_radii;
+  }
   textDrawer_.setFontScale(fontScale_, true);
   initDrawMolecule(mol);
 }
@@ -75,9 +87,9 @@ void DrawMol::createDrawObjects() {
   calculateScale();
 
   if (!textDrawer_.setFontScale(fontScale_, false)) {
-    double nfs = textDrawer_.fontScale();
-    textDrawer_.setFontScale(nfs / fontScale_, true);
+    double nfs = textDrawer_.fontScale() / fontScale_;
     resetEverything();
+    textDrawer_.setFontScale(nfs, true);
     fontScale_ = textDrawer_.fontScale();
     extractAll();
     calculateScale();
@@ -199,7 +211,7 @@ void DrawMol::extractAtomSymbols() {
     }
     if (!atSym.first.empty()) {
       DrawColour atCol = getColour(at1->getIdx(), drawOptions_, atomicNums_,
-                                   highlightAtoms_, highlightAtomMap_);
+                                   &highlightAtoms_, &highlightAtomMap_);
       AtomSymbol *al = new AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
                                     atCds_[at1->getIdx()], atCol, textDrawer_);
       atomLabels_.emplace_back(std::unique_ptr<AtomSymbol>(al));
@@ -242,7 +254,7 @@ void DrawMol::extractHighlights() {
   if (drawOptions_.continuousHighlight) {
     makeContinuousHighlights();
   } else {
-    if (drawOptions_.circleAtoms && highlightAtoms_) {
+    if (drawOptions_.circleAtoms && !highlightAtoms_.empty()) {
       makeAtomCircleHighlights();
     }
   }
@@ -813,6 +825,9 @@ void DrawMol::calculateScale() {
 
 // ****************************************************************************
 void DrawMol::findExtremes() {
+  std::cout << "top of findExtremes  : " << xMin_ << " to  " << xMax_
+            << " and " << yMin_ << " to " << yMax_ << std::endl;
+
   for (auto &ps : preShapes_) {
     ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
@@ -824,6 +839,9 @@ void DrawMol::findExtremes() {
       atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
+  std::cout << "after labels, extremes  : " << xMin_ << " to  " << xMax_
+      << " and " << yMin_ << " to " << yMax_ << std::endl;
+
   for (auto &hl : highlights_) {
     hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
@@ -854,23 +872,27 @@ void DrawMol::findExtremes() {
     yMin_ -= 1.0;
     yMax_ += 1.0;
   }
+  std::cout << "leaving of findExtremes  : " << xMin_ << " to  " << xMax_
+            << " and " << yMin_ << " to " << yMax_ << std::endl;
 }
 
 // ****************************************************************************
 void DrawMol::changeToDrawCoords() {
   Point2D trans, scale, toCentre;
   getDrawTransformers(trans, scale, toCentre);
+  std::cout << "transformers in changeToDrawCoords : " << trans << " : "
+            << scale << " : " << toCentre << "  offsets : " << xOffset_ << ", "
+            << yOffset_ << std::endl;
   transformAllButAtomLabels(trans, scale, toCentre);
-  Point2D fontScale{fontScale_, fontScale_};
   for (auto &annot : annotations_) {
     annot->move(trans);
-    annot->scale(scale, fontScale);
+    annot->scale(scale);
     annot->move(toCentre);
   }
   for (auto &label : atomLabels_) {
     if (label) {
       label->move(trans);
-      label->scale(scale, fontScale);
+      label->scale(scale);
       label->move(toCentre);
     }
   }
@@ -1292,7 +1314,11 @@ void DrawMol::calcMeanBondLengthSquare() {
               .lengthSq();
       ++nBonds;
     }
-    meanBondLengthSquare_ /= nBonds;
+    if (nBonds) {
+      meanBondLengthSquare_ /= nBonds;
+    } else {
+      meanBondLengthSquare_ = 0.0;
+    }
   }
 }
 
@@ -1742,11 +1768,20 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
                           const DrawColour &col1, const DrawColour &col2,
                           int atom1Idx, int atom2Idx,
                           int bondIdx, const DashPattern &dashPattern) {
+  bool scaleWidth = drawOptions_.scaleBondWidth;
+  int lineWidth = drawOptions_.bondLineWidth;
+  if (!drawOptions_.continuousHighlight &&
+      std::find(highlightBonds_.begin(), highlightBonds_.end(), bondIdx) !=
+          highlightBonds_.end()) {
+    scaleWidth = drawOptions_.scaleHighlightBondWidth;
+    lineWidth = getHighlightBondWidth(drawOptions_, bondIdx, nullptr) / 4;
+  }
+
   if (col1 == col2 && !drawOptions_.splitBonds) {
     std::vector<Point2D> pts{pt1, pt2};
     DrawShape *b =
-        new DrawShapeSimpleLine(pts, drawOptions_.bondLineWidth, false, col1,
-                                atom1Idx, atom2Idx, bondIdx, dashPattern);
+        new DrawShapeSimpleLine(pts, lineWidth, scaleWidth,
+                                col1, atom1Idx, atom2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b));
   } else {
     Point2D mid = (pt1 + pt2) / 2.0;
@@ -1754,14 +1789,14 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
     int at1Idx = atom1Idx;
     int at2Idx = drawOptions_.splitBonds ? -1 : atom2Idx;
     DrawShape *b1 =
-        new DrawShapeSimpleLine(pts1, drawOptions_.bondLineWidth, false, col1,
-                                at1Idx, at2Idx, bondIdx, dashPattern);
+        new DrawShapeSimpleLine(pts1, lineWidth, scaleWidth,
+                                col1, at1Idx, at2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b1));
     at1Idx = drawOptions_.splitBonds ? atom2Idx : atom1Idx;
     std::vector<Point2D> pts2{mid, pt2};
     DrawShape *b2 =
-        new DrawShapeSimpleLine(pts2, drawOptions_.bondLineWidth, false, col2,
-                                at1Idx, at2Idx, bondIdx, dashPattern);
+        new DrawShapeSimpleLine(pts2, lineWidth, scaleWidth,
+                                col2, at1Idx, at2Idx, bondIdx, dashPattern);
     bonds_.emplace_back(std::unique_ptr<DrawShape>(b2));
   }
 }
@@ -1771,27 +1806,25 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
   DrawColour col1, col2;
 
   bool highlight_bond = false;
-  if (highlightBonds_ &&
-      std::find(highlightBonds_->begin(), highlightBonds_->end(),
-                bond->getIdx()) != highlightBonds_->end()) {
+  if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
+                bond->getIdx()) != highlightBonds_.end()) {
     highlight_bond = true;
   }
 
-  if (bondColours_) {
-    col1 = (*bondColours_)[bond->getIdx()].first;
-    col2 = (*bondColours_)[bond->getIdx()].second;
+  if (!bondColours_.empty()) {
+    col1 = bondColours_[bond->getIdx()].first;
+    col2 = bondColours_[bond->getIdx()].second;
   } else {
     if (!highlight_bond || drawOptions_.continuousHighlight) {
       int at1_idx = bond->getBeginAtomIdx();
-      col1 = getColour(at1_idx, drawOptions_, atomicNums_, highlightAtoms_,
-                       highlightAtomMap_);
+      col1 = getColour(at1_idx, drawOptions_, atomicNums_, &highlightAtoms_,
+                       &highlightAtomMap_);
       int at2_idx = bond->getEndAtomIdx();
-      col2 = getColour(at2_idx, drawOptions_, atomicNums_, highlightAtoms_,
-                       highlightAtomMap_);
+      col2 = getColour(at2_idx, drawOptions_, atomicNums_, &highlightAtoms_,
+                       &highlightAtomMap_);
     } else {
-      if (highlightBondMap_ && highlightBondMap_->find(bond->getIdx()) !=
-                                    highlightBondMap_->end()) {
-        col1 = col2 = highlightBondMap_->find(bond->getIdx())->second;
+      if (highlightBondMap_.find(bond->getIdx()) != highlightBondMap_.end()) {
+        col1 = col2 = highlightBondMap_.find(bond->getIdx())->second;
       } else {
         col1 = col2 = drawOptions_.highlightColour;
       }
@@ -1811,33 +1844,29 @@ void DrawMol::makeContinuousHighlights() {
     tgt_lw /= 4;
   }
 
-  if (highlightBonds_) {
+  if (!highlightBonds_.empty()) {
     makeBondHighlightLines(tgt_lw);
   }
-  if (highlightAtoms_) {
+  if (!highlightAtoms_.empty()) {
     makeAtomEllipseHighlights(tgt_lw);
   }
 }
 
 // ****************************************************************************
 void DrawMol::makeAtomCircleHighlights() {
-  PRECONDITION(highlightAtoms_ != nullptr, "no highlight atoms");
   DrawColour col;
   for (auto at : drawMol_->atoms()) {
     unsigned int thisIdx = at->getIdx();
-    if (std::find(highlightAtoms_->begin(), highlightAtoms_->end(), thisIdx) !=
-        highlightAtoms_->end()) {
-      std::cout << "highlights for " << thisIdx << std::endl;
-      if (highlightAtomMap_ &&
-          highlightAtomMap_->find(thisIdx) != highlightAtomMap_->end()) {
-        col = highlightAtomMap_->find(thisIdx)->second;
+    if (std::find(highlightAtoms_.begin(), highlightAtoms_.end(), thisIdx) !=
+        highlightAtoms_.end()) {
+      if (highlightAtomMap_.find(thisIdx) != highlightAtomMap_.end()) {
+        col = highlightAtomMap_.find(thisIdx)->second;
       } else {
         col = drawOptions_.highlightColour;
       }
       double radius = drawOptions_.highlightRadius;
-      if (highlightRadii_ &&
-          highlightRadii_->find(thisIdx) != highlightRadii_->end()) {
-        radius = highlightRadii_->find(thisIdx)->second;
+      if (highlightRadii_.find(thisIdx) != highlightRadii_.end()) {
+        radius = highlightRadii_.find(thisIdx)->second;
       }
       Point2D offset(radius, radius);
       Point2D p1 = atCds_[thisIdx] - offset;
@@ -1851,24 +1880,22 @@ void DrawMol::makeAtomCircleHighlights() {
 
 // ****************************************************************************
 void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
-  PRECONDITION(highlightAtoms_ != nullptr, "no highlight atoms");
   if (!drawOptions_.fillHighlights) {
     // we need a narrower circle
     lineWidth /= 2;
   }
   for (auto atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
-    if (std::find(highlightAtoms_->begin(), highlightAtoms_->end(),
-                  thisIdx) != highlightAtoms_->end()) {
+    if (std::find(highlightAtoms_.begin(), highlightAtoms_.end(),
+                  thisIdx) != highlightAtoms_.end()) {
       DrawColour col = drawOptions_.highlightColour;
-      if (highlightAtomMap_ &&
-          highlightAtomMap_->find(thisIdx) != highlightAtomMap_->end()) {
-        col = highlightAtomMap_->find(thisIdx)->second;
+      if (highlightAtomMap_.find(thisIdx) != highlightAtomMap_.end()) {
+        col = highlightAtomMap_.find(thisIdx)->second;
       }
       Point2D centre = atCds_[thisIdx];
       double xradius, yradius;
-      if (highlightRadii_ && highlightRadii_->find(thisIdx) != highlightRadii_->end()) {
-        xradius = highlightRadii_->find(thisIdx)->second;
+      if (highlightRadii_.find(thisIdx) != highlightRadii_.end()) {
+        xradius = highlightRadii_.find(thisIdx)->second;
       } else {
         xradius = drawOptions_.highlightRadius;
       }
@@ -1898,8 +1925,6 @@ void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
 
 // ****************************************************************************
 void DrawMol::makeBondHighlightLines(int lineWidth) {
-  PRECONDITION(highlightBonds_ != nullptr, "no highlight bonds");
-
   for (auto atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
     for (const auto &nbri : make_iterator_range(drawMol_->getAtomBonds(atom))) {
@@ -1907,16 +1932,14 @@ void DrawMol::makeBondHighlightLines(int lineWidth) {
       int nbrIdx = bond->getOtherAtomIdx(thisIdx);
       if (nbrIdx < static_cast<unsigned int>(atCds_.size()) &&
           nbrIdx > thisIdx) {
-        if (std::find(highlightBonds_->begin(), highlightBonds_->end(),
-                      bond->getIdx()) != highlightBonds_->end()) {
+        if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
+                      bond->getIdx()) != highlightBonds_.end()) {
           DrawColour col = drawOptions_.highlightColour;
-          if (highlightBondMap_ && highlightBondMap_->find(bond->getIdx()) !=
-                                       highlightBondMap_->end()) {
-            col = highlightBondMap_->find(bond->getIdx())->second;
+          if (highlightBondMap_.find(bond->getIdx()) !=
+              highlightBondMap_.end()) {
+            col = highlightBondMap_.find(bond->getIdx())->second;
           }
           std::vector<Point2D> pts{atCds_[thisIdx], atCds_[nbrIdx]};
-          std::cout << "bond highlight for " << thisIdx << " to " << nbrIdx
-                    << " width = " << lineWidth << std::endl;
           DrawShape *hb = new DrawShapeSimpleLine(
               pts, lineWidth, drawOptions_.scaleHighlightBondWidth, col,
               thisIdx, nbrIdx, bond->getIdx(), noDash);
@@ -2023,6 +2046,7 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
 
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
+    std::cout << "bond_vec : " << bond_vecs[0] << std::endl;
     if (!atomLabels_[atom->getIdx()]) {
       // go with perpendicular to bond.  This is mostly to avoid getting
       // a zero at the end of a bond to carbon, which looks like a black
@@ -2033,6 +2057,7 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
       // go opposite end
       ret_vec = -bond_vecs[0];
     }
+    std::cout << atom->getIdx() << " : " << atan2(ret_vec.y, ret_vec.x) * 180 / M_PI << std::endl;
   } else if (bond_vecs.size() == 2) {
     ret_vec = bond_vecs[0] + bond_vecs[1];
     if (ret_vec.lengthSq() > 1.0e-6) {
@@ -2240,6 +2265,7 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
   trans = Point2D(-xMin_, -yMin_);
   scale = Point2D(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
+  std::cout << "scaleRanges : " << scaledRanges << std::endl;
   toCentre = Point2D((width_ - scaledRanges.x) / 2.0 + xOffset_,
                      (drawHeight_ - scaledRanges.y) / 2.0 + yOffset_);
 }
@@ -2281,14 +2307,22 @@ Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
 }
 
 // ****************************************************************************
-void DrawMol::setScale(double newScale) {
+void DrawMol::setScale(double newScale, double newFontScale) {
+  std::cout << "top of setScale " << std::endl;
+  std::cout << "scale_ = " << scale_ << " : fontScale = "
+            << textDrawer_.fontScale() << std::endl;
+  std::cout << "new values : " << newScale << " and " << newFontScale;
+  double relFontScale = newFontScale / newScale;
+  std::cout << "relative fontScale : " << relFontScale << std::endl;
+
   resetEverything();
+  textDrawer_.setFontScale(relFontScale , true);
 
   extractAll();
   findExtremes();
 
+  textDrawer_.setFontScale(newFontScale , true);
   scale_ = newScale;
-  textDrawer_.setFontScale(newScale);
   fontScale_ = textDrawer_.fontScale();
   finishCreateDrawObjects();
 }
@@ -2325,11 +2359,12 @@ void DrawMol::transformAllButAtomLabels(const Point2D &trans, Point2D &scale,
     hl->scale(scale);
     hl->move(toCentre);
   }
+  Point2D fontScale{textDrawer_.fontScale(), textDrawer_.fontScale()};
   for (auto &rad : radicals_) {
     get<0>(rad).trans_ =
-        getDrawCoords(get<0>(rad).trans_, trans, scale, toCentre);
-    get<0>(rad).width_ *= scale.x;
-    get<0>(rad).height_ *= scale.y;
+        getDrawCoords(get<0>(rad).trans_, trans, fontScale, toCentre);
+    get<0>(rad).width_ *= fontScale.x;
+    get<0>(rad).height_ *= fontScale.y;
   }
   for (auto &ps : postShapes_) {
     ps->move(trans);
@@ -2744,6 +2779,22 @@ void findRectExtremes(const StringRect &rect, const TextAlignType &align,
   xmin = std::min(xmin, this_xmin);
   ymax = std::max(ymax, this_ymax);
   ymin = std::min(ymin, this_ymin);
+}
+
+// ****************************************************************************
+void getBondHighlightsForAtoms(const ROMol &mol,
+                               const std::vector<int> &highlight_atoms,
+                               std::vector<int> &highlight_bonds) {
+  highlight_bonds.clear();
+  for (auto ai = highlight_atoms.begin(); ai != highlight_atoms.end(); ++ai) {
+    for (auto aj = ai + 1; aj != highlight_atoms.end(); ++aj) {
+      const Bond *bnd = mol.getBondBetweenAtoms(*ai, *aj);
+      if (bnd) {
+        highlight_bonds.push_back(bnd->getIdx());
+      }
+    }
+  }
+
 }
 
 } // namespace RDKit

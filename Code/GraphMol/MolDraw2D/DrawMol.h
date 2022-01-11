@@ -165,7 +165,11 @@ class DrawMol {
   // and the other way.
   Point2D getAtomCoords(const Point2D &screenCds) const;
   double getScale() const { return scale_; }
-  void setScale(double newScale);
+  double getFontScale() const { return textDrawer_.fontScale();}
+  // more often than not, newScale and newFontScale will be the same,
+  // but not if minFontScale of maxFontScale have become involved.
+  // The newFontScale will be used without checking the min and max.
+  void setScale(double newScale, double newFontScale);
   // for drawing into a grid, for example.  Must be set before
   // changeToDrawCoords is called for it to have effect.
   void setOffsets(double xOffset, double yOffset);
@@ -179,12 +183,12 @@ class DrawMol {
 
   MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
-  const std::vector<int> *highlightAtoms_;
-  const std::vector<int> *highlightBonds_;
-  const std::map<int, DrawColour> *highlightAtomMap_;
-  const std::map<int, DrawColour> *highlightBondMap_;
-  const std::vector<std::pair<DrawColour, DrawColour>> *bondColours_;
-  const std::map<int, double> *highlightRadii_;
+  std::vector<int> highlightAtoms_;
+  std::vector<int> highlightBonds_;
+  std::map<int, DrawColour> highlightAtomMap_;
+  std::map<int, DrawColour> highlightBondMap_;
+  std::vector<std::pair<DrawColour, DrawColour>> bondColours_;
+  std::map<int, double> highlightRadii_;
   bool includeAnnotations_;
   std::string legend_;
 
@@ -252,6 +256,9 @@ void findRadicalExtremes(
     double &xmin, double &xmax, double &ymin, double &ymax);
 void findRectExtremes(const StringRect &rect, const TextAlignType &align,
                       double &xmin, double &xmax, double &ymin, double &ymax);
+void getBondHighlightsForAtoms(const ROMol &mol,
+                               const std::vector<int> &highlight_atoms,
+                               std::vector<int> &highlight_bonds);
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWMOL_H

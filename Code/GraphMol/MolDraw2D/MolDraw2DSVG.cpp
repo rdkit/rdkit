@@ -400,17 +400,20 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
   d_os << "</rdkit:mol></metadata>" << std::endl;
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::addMoleculeMetadata(const std::vector<ROMol *> &mols,
-                                       const std::vector<int> confIds) const {
+                                       const std::vector<int> confIds) {
   for (unsigned int i = 0; i < mols.size(); ++i) {
     int confId = -1;
     if (confIds.size() == mols.size()) {
       confId = confIds[i];
     }
+    setActiveMolIdx(i);
     addMoleculeMetadata(*(mols[i]), confId);
   }
 };
 
+// ****************************************************************************
 void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
                             const std::map<std::string, std::string> &events) {
   PRECONDITION(d_os, "no output stream");
@@ -490,6 +493,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
   }
 }
 
+// ****************************************************************************
 void MolDraw2DSVG::outputClasses() {
   if (d_activeClass.empty() && !hasActiveAtmIdx()) return;
 

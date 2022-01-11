@@ -59,16 +59,15 @@ class AtomSymbol {
   DrawText &textDrawer_;
 
   std::vector<std::shared_ptr<StringRect>> rects_;
-  std::vector<TextDrawType> draw_modes_;
-  std::vector<char> draw_chars_;
+  std::vector<TextDrawType> drawModes_;
+  std::vector<char> drawChars_;
 
   // expects xmin etc to be initialised to something sensible.
   virtual void findExtremes(double &xmin, double &xmax,
                             double &ymin, double &ymax) const;
   // scaleFactor moves the cds_, but the fontScaleFactor changes rects_, because
   // we might be scaling the font differently from the drawing as a whole.
-  virtual void scale(const Point2D &scaleFactor,
-                     const Point2D &fontScaleFactor);
+  virtual void scale(const Point2D &scaleFactor);
   virtual void move(const Point2D &trans);
   void draw(MolDraw2D &molDrawer) const;
   bool doesRectClash(const StringRect &rect, double padding) const;

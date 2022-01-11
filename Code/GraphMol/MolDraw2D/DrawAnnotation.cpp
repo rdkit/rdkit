@@ -28,6 +28,8 @@ DrawAnnotation::DrawAnnotation(const std::string &note,
       textDrawer_(textDrawer),
       pos_(pos),
       colour_(colour) {
+  // We don't need these for notes, which are always on 1 line and plain
+  // text.
   std::vector<TextDrawType> drawModes;
   std::vector<char> drawChars;
   double ofs = textDrawer_.fontScale();
@@ -106,22 +108,16 @@ void DrawAnnotation::drawRects(MolDraw2D &molDrawer) const {
 }
 
 // ****************************************************************************
-void DrawAnnotation::scale(const Point2D &scaleFactor,
-                           const Point2D &fontScaleFactor) {
+void DrawAnnotation::scale(const Point2D &scaleFactor) {
   pos_.x *= scaleFactor.x;
   pos_.y *= scaleFactor.y;
-  for (auto &rect : rects_) {
-    rect->trans_.x *= fontScaleFactor.x;
-    rect->trans_.y *= fontScaleFactor.y;
-    rect->offset_.x *= fontScaleFactor.x;
-    rect->offset_.y *= fontScaleFactor.y;
-    rect->g_centre_.x *= fontScaleFactor.x;
-    rect->g_centre_.y *= fontScaleFactor.y;
-    rect->y_shift_ *= fontScaleFactor.y;
-    rect->width_ *= fontScaleFactor.x;
-    rect->height_ *= fontScaleFactor.y;
-    rect->rect_corr_ *= fontScaleFactor.y;
-  }
+  // rebuild the rectangles, because the fontScale may be different,
+  // and the widths etc might not scale by the same amount.
+  rects_.clear();
+  std::vector<TextDrawType> drawModes;
+  std::vector<char> drawChars;
+  textDrawer_.getStringRects(text_, OrientType::C, rects_, drawModes,
+                             drawChars, false, TextAlignType::MIDDLE);
 }
 
 // ****************************************************************************
