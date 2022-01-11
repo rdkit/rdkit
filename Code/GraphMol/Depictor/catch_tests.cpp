@@ -96,3 +96,63 @@ TEST_CASE("trigonal bipyramidal", "[nontetrahedral]") {
     CHECK(v2.length() > v4.length());
   }
 }
+
+TEST_CASE("octahedral", "[nontetrahedral]") {
+  SECTION("OH1") {
+    auto m = "O[Co@OH1](Cl)(C)(N)(F)P"_smiles;
+    REQUIRE(m);
+    CHECK(RDDepict::compute2DCoords(*m) == 0);
+    std::cerr << MolToV3KMolBlock(*m) << std::endl;
+    auto &conf = m->getConformer();
+    auto v1 = conf.getAtomPos(3) - conf.getAtomPos(5);  // ax - ax
+    auto v2 = conf.getAtomPos(3) - conf.getAtomPos(4);  // ax - eq
+    auto v3 = conf.getAtomPos(3) - conf.getAtomPos(0);  // ax - eq
+    auto v4 = conf.getAtomPos(0) - conf.getAtomPos(4);  // eq - eq nbr
+    auto v5 = conf.getAtomPos(0) - conf.getAtomPos(6);  // eq - eq cross
+    auto v6 = conf.getAtomPos(0) - conf.getAtomPos(2);  // eq - eq longnbr
+
+    CHECK(v1.length() > v2.length());
+    CHECK(v1.length() > v3.length());
+    CHECK(v1.length() > v4.length());
+    CHECK(v1.length() > v6.length());
+    CHECK(v5.length() > v4.length());
+    CHECK(v5.length() > v6.length());
+  }
+  SECTION("OH3") {
+    auto m = "O[Co@OH3](Cl)(C)(N)(P)F"_smiles;
+    REQUIRE(m);
+    CHECK(RDDepict::compute2DCoords(*m) == 0);
+    std::cerr << MolToV3KMolBlock(*m) << std::endl;
+    auto &conf = m->getConformer();
+    auto v1 = conf.getAtomPos(3) - conf.getAtomPos(6);  // ax - ax
+    auto v2 = conf.getAtomPos(3) - conf.getAtomPos(4);  // ax - eq
+    auto v3 = conf.getAtomPos(3) - conf.getAtomPos(0);  // ax - eq
+    auto v4 = conf.getAtomPos(0) - conf.getAtomPos(4);  // eq - eq nbr
+    auto v5 = conf.getAtomPos(0) - conf.getAtomPos(5);  // eq - eq cross
+    auto v6 = conf.getAtomPos(0) - conf.getAtomPos(2);  // eq - eq longnbr
+
+    CHECK(v1.length() > v2.length());
+    CHECK(v1.length() > v3.length());
+    CHECK(v1.length() > v4.length());
+    CHECK(v1.length() > v6.length());
+    CHECK(v5.length() > v4.length());
+    CHECK(v5.length() > v6.length());
+  }
+  SECTION("OH1 missing one ligand") {
+    auto m = "O[Co@OH1](Cl)(C)(N)F"_smiles;
+    REQUIRE(m);
+    CHECK(RDDepict::compute2DCoords(*m) == 0);
+    std::cerr << MolToV3KMolBlock(*m) << std::endl;
+    auto &conf = m->getConformer();
+    auto v1 = conf.getAtomPos(3) - conf.getAtomPos(5);  // ax - ax
+    auto v2 = conf.getAtomPos(3) - conf.getAtomPos(4);  // ax - eq
+    auto v3 = conf.getAtomPos(3) - conf.getAtomPos(0);  // ax - eq
+    auto v4 = conf.getAtomPos(0) - conf.getAtomPos(4);  // eq - eq nbr
+    auto v6 = conf.getAtomPos(0) - conf.getAtomPos(2);  // eq - eq longnbr
+
+    CHECK(v1.length() > v2.length());
+    CHECK(v1.length() > v3.length());
+    CHECK(v1.length() > v4.length());
+    CHECK(v1.length() > v6.length());
+  }
+}

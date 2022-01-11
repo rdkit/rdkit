@@ -151,7 +151,91 @@ void embedTBP(const RDKit::ROMol &mol, const RDKit::Atom *atom,
     }
   }
   efrags.emplace_back(&mol, coordMap);
-}  // namespace DepictorLocal
+}
+
+void embedOctahedral(const RDKit::ROMol &mol, const RDKit::Atom *atom,
+                     std::list<EmbeddedFrag> &efrags,
+                     const std::vector<int> &atomRanks) {
+  static const RDGeom::Point2D idealPoints[] = {
+      RDGeom::Point2D(0, BOND_LEN),                         // axial
+      RDGeom::Point2D(0, -BOND_LEN),                        // axial
+      RDGeom::Point2D(SQRT3_2 * BOND_LEN, BOND_LEN / 2),    // equatorial
+      RDGeom::Point2D(SQRT3_2 * BOND_LEN, -BOND_LEN / 2),   // equatorial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN, -BOND_LEN / 2),  // equatorial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN, BOND_LEN / 2),   // equatorial
+  };
+  PRECONDITION(atom, "bad atom");
+  if (atom->getChiralTag() != RDKit::Atom::ChiralType::CHI_OCTAHEDRAL) {
+    return;
+  }
+  RDGeom::INT_POINT2D_MAP coordMap;
+  coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
+  std::vector<const RDKit::Atom *> nbrs;
+  for (auto nbr : mol.atomNeighbors(atom)) {
+    nbrs.push_back(nbr);
+  }
+  std::sort(nbrs.begin(), nbrs.end(),
+            [&atomRanks](const auto e1, const auto e2) {
+              return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
+            });
+  const RDKit::Atom *axial1 = nullptr;
+  const RDKit::Atom *axial2 = nullptr;
+  for (auto i = 0u; i < nbrs.size(); ++i) {
+    bool all90 = true;
+    for (auto j = i + 1; j < nbrs.size(); ++j) {
+      if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs[i],
+                                                             nbrs[j]) -
+               180) < 0.1) {
+        axial1 = nbrs[i];
+        axial2 = nbrs[j];
+        all90 = false;
+        break;
+      } else if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(
+                          atom, nbrs[i], nbrs[j]) -
+                      90) > 0.1) {
+        all90 = false;
+      }
+    }
+    if (all90) {
+      axial1 = nbrs[i];
+    }
+    if (axial1) {
+      break;
+    }
+  }
+  if (axial1) {
+    coordMap[axial1->getIdx()] = idealPoints[0];
+  }
+  if (axial2) {
+    coordMap[axial2->getIdx()] = idealPoints[1];
+  }
+  const RDKit::Atom *refEqAtom1 = nullptr;
+  const RDKit::Atom *refEqAtom2 = nullptr;
+  for (const auto nbr : nbrs) {
+    if (nbr != axial1 && nbr != axial2) {
+      if (!refEqAtom1) {
+        refEqAtom1 = nbr;
+        coordMap[nbr->getIdx()] = idealPoints[2];
+        refEqAtom2 = RDKit::Chirality::getChiralAcrossAtom(atom, nbr);
+        if (refEqAtom2) {
+          coordMap[refEqAtom2->getIdx()] = idealPoints[4];
+        }
+      } else {
+        if (nbr == refEqAtom2 || nbr == refEqAtom1) {
+          continue;
+        }
+        coordMap[nbr->getIdx()] = idealPoints[3];
+        const auto acrossAtom2 =
+            RDKit::Chirality::getChiralAcrossAtom(atom, nbr);
+        if (acrossAtom2) {
+          coordMap[acrossAtom2->getIdx()] = idealPoints[5];
+        }
+        break;
+      }
+    }
+  }
+  efrags.emplace_back(&mol, coordMap);
+}
 
 void embedNontetrahedralStereo(const RDKit::ROMol &mol,
                                std::list<EmbeddedFrag> &efrags,
@@ -185,6 +269,9 @@ void embedNontetrahedralStereo(const RDKit::ROMol &mol,
         break;
       case RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
         embedTBP(mol, atm, efrags, atomRanks);
+        break;
+      case RDKit::Atom::ChiralType::CHI_OCTAHEDRAL:
+        embedOctahedral(mol, atm, efrags, atomRanks);
         break;
       default:
         break;
