@@ -233,6 +233,12 @@ Specifying atoms by atomic number
 The ``[#6]`` construct from SMARTS is supported in SMILES.
 
 
+Quadruple bonds
+---------------
+
+The token ``$`` can be used to represent quadruple bonds in SMILES and SMARTS.
+
+
 CXSMILES/CXSMARTS extensions
 ----------------------------
 

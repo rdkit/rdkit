@@ -715,5 +715,16 @@ M  END''')
     self.assertIn("<rect style='opacity:1.0;fill:#FFFFFF;stroke:none'",text)
     self.assertIn("stroke:#2F50F7;stroke-width:2",text)
 
+  def testGithub4838(self):
+    m = Chem.MolFromSmiles("CCCC")
+    d2d = Draw.MolDraw2DSVG(300, 300)
+    d2d.DrawMolecule(m)
+    d2d.DrawString("foo1", Geometry.Point2D(1, 0))
+    d2d.DrawString("foo0", Geometry.Point2D(1, 1), 0)
+    d2d.DrawString("foo2", Geometry.Point2D(1, 2), 1)
+    d2d.DrawString("foo3", Geometry.Point2D(1, 3), 2)
+    with self.assertRaises(ValueError):
+      d2d.DrawString("fail", Geometry.Point2D(1, 4), 3)
+
 if __name__ == "__main__":
   unittest.main()

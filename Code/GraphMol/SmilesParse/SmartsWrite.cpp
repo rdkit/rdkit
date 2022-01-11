@@ -345,6 +345,9 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
     case Bond::TRIPLE:
       res = "#";
       break;
+    case Bond::QUADRUPLE:
+      res = "$";
+      break;
     case Bond::AROMATIC:
       res = ":";
       break;

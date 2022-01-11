@@ -28,9 +28,14 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform2D.h>
+#include <Numerics/SquareMatrix.h>
+#include <Numerics/Matrix.h>
 
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/MolEnumerator/LinkNode.h>
+
+#include <Geometry/Transform3D.h>
 
 #include <algorithm>
 #include <cstdlib>
@@ -39,6 +44,7 @@
 #include <memory>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/tuple/tuple_comparison.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/format.hpp>
 
@@ -2868,21 +2874,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
     d2d.drawOptions().scaleBondWidth = orig_slw;
   } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond.getBondDir() ||
                                     Bond::BEGINDASH == bond.getBondDir())) {
-    // swap the direction if at1 has does not have stereochem set
-    // or if at2 does have stereochem set and the bond starts there
-    auto at1 = bond.getBeginAtom();
-    auto at2 = bond.getEndAtom();
     auto inverted = false;
-    if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-         at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
-        (at1->getIdx() != bond.getBeginAtomIdx() &&
-         (at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-          at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))) {
-      // std::cerr << "  swap" << std::endl;
-      swap(at1_cds, at2_cds);
-      swap(col1, col2);
-      inverted = true;
-    }
     if (d2d.drawOptions().singleColourWedgeBonds) {
       col1 = d2d.drawOptions().symbolColour;
       col2 = d2d.drawOptions().symbolColour;
@@ -3265,7 +3257,6 @@ void MolDraw2D::drawBond(
                 bond->getIdx()) != highlight_bonds->end()) {
     highlight_bond = true;
   }
-
   DrawColour col1, col2;
   int orig_lw = lineWidth();
   if (bond_colours) {

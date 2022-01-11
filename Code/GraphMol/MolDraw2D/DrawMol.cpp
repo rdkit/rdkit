@@ -1631,17 +1631,6 @@ void DrawMol::makeWedgedBond(Bond *bond,
   auto at2 = bond->getEndAtom();
   auto col1 = cols.first;
   auto col2 = cols.second;
-  auto inverted = false;
-  if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-       at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
-      (at1->getIdx() != bond->getBeginAtomIdx() &&
-       (at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-        at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))) {
-    // std::cerr << "  swap" << std::endl;
-    std::swap(at1, at2);
-    std::swap(col1, col2);
-    inverted = true;
-  }
   if (drawOptions_.singleColourWedgeBonds) {
     col1 = drawOptions_.symbolColour;
     col2 = drawOptions_.symbolColour;
@@ -1670,12 +1659,11 @@ void DrawMol::makeWedgedBond(Bond *bond,
   // deliberately not scaling highlighted bond width
   DrawShape *s;
   if (Bond::BEGINWEDGE == bond->getBondDir()) {
-    s = new DrawShapeSolidWedge(pts, col1, col2, inverted,
-                                drawOptions_.splitBonds, at1->getIdx(),
-                                at2->getIdx(), bond->getIdx());
+    s = new DrawShapeSolidWedge(pts, col1, col2, drawOptions_.splitBonds,
+                                at1->getIdx(), at2->getIdx(), bond->getIdx());
   } else {
-    s = new DrawShapeDashedWedge(pts, col1, col2, inverted, at1->getIdx(),
-                                 at2->getIdx(), bond->getIdx());
+    s = new DrawShapeDashedWedge(pts, col1, col2, at1->getIdx(), at2->getIdx(),
+                                 bond->getIdx());
   }
   bonds_.emplace_back(std::unique_ptr<DrawShape>(s));
 }

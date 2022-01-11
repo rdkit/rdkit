@@ -285,12 +285,11 @@ bool DrawShapePolyLine::doesRectClash(const StringRect &rect,
 // ****************************************************************************
 DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> points,
                                          const DrawColour &col1,
-                                         const DrawColour &col2, bool inverted,
+                                         const DrawColour &col2,
                                          bool splitBonds, int atom1, int atom2,
                                          int bond)
     : DrawShape(points, 1, false, col1, false, atom1, atom2, bond),
       col2_(col2),
-      inverted_(inverted),
       splitBonds_(splitBonds) {
   PRECONDITION(points_.size() == 3, "solid wedge wrong points");
   buildTriangles();
@@ -322,18 +321,16 @@ void DrawShapeSolidWedge::buildTriangles() {
 // ****************************************************************************
 void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
   drawer.setFillPolys(true);
-  int at1Idx = inverted_ ? atom2_ : atom1_;
-  int at2Idx = inverted_ ? atom1_ : atom2_;
   if (drawer.drawOptions().splitBonds) {
-    drawer.setActiveAtmIdx(at1Idx);
+    drawer.setActiveAtmIdx(atom1_);
   } else {
-    drawer.setActiveAtmIdx(at1Idx, at2Idx);
+    drawer.setActiveAtmIdx(atom1_, atom2_);
   }
   drawer.setActiveBndIdx(bond_);
   drawer.drawTriangle(points_[0], points_[1], points_[2], true);
   if (points_.size() > 3) {
     if (drawer.drawOptions().splitBonds) {
-      drawer.setActiveAtmIdx(at2Idx);
+      drawer.setActiveAtmIdx(atom2_);
     }
     drawer.setColour(col2_);
     drawer.drawTriangle(points_[3], points_[4], points_[5], true);
@@ -387,11 +384,9 @@ bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
 DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
                                            const DrawColour &col1,
                                            const DrawColour &col2,
-                                           bool inverted, int atom1, int atom2,
-                                           int bond)
+                                           int atom1, int atom2, int bond)
     : DrawShape(points, 1, false, col1, false, atom1, atom2, bond),
-      col2_(col2),
-      inverted_(inverted) {
+      col2_(col2) {
   PRECONDITION(points_.size() == 3, "dashed wedge wrong points");
   at1Cds_ = points[0];
   buildLines();
@@ -435,16 +430,14 @@ void DrawShapeDashedWedge::buildLines() {
 // ****************************************************************************
 void DrawShapeDashedWedge::myDraw(MolDraw2D &drawer) const {
   drawer.setFillPolys(false);
-  int at1Idx = inverted_ ? atom2_ : atom1_;
-  int at2Idx = inverted_ ? atom1_ : atom2_;
-  drawer.setActiveAtmIdx(at1Idx, at2Idx);
+  drawer.setActiveAtmIdx(atom1_, atom2_);
   drawer.setActiveBndIdx(bond_);
   for(size_t i=0, j=0; i < points_.size(); i+= 2, ++j) {
     if (drawer.drawOptions().splitBonds) {
       if (i < points_.size() / 2) {
-        drawer.setActiveAtmIdx(at1Idx);
+        drawer.setActiveAtmIdx(atom1_);
       } else {
-        drawer.setActiveAtmIdx(at2Idx);
+        drawer.setActiveAtmIdx(atom2_);
       }
     }
     drawer.drawLine(points_[i], points_[i + 1], lineColours_[j],

@@ -146,15 +146,14 @@ class DrawShapeSolidWedge : protected DrawShape {
 
  protected:
   DrawShapeSolidWedge(const std::vector<Point2D> points, const DrawColour &col1,
-                      const DrawColour &col2, bool inverted, bool splitBonds,
-                      int atom1 = -1, int atom2 = -1, int bond = -1);
+                      const DrawColour &col2, bool splitBonds, int atom1 = -1,
+                      int atom2 = -1, int bond = -1);
   void buildTriangles();
   void myDraw(MolDraw2D &drawer) const override;
   void scale(const Point2D &scale_factor) override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;
-  bool inverted_;
   bool splitBonds_;
 };
 
@@ -168,8 +167,7 @@ class DrawShapeDashedWedge : protected DrawShape {
  protected:
   DrawShapeDashedWedge(const std::vector<Point2D> points,
                        const DrawColour &col1, const DrawColour &col2,
-                       bool inverted, int atom1 = -1, int atom2 = -1,
-                       int bond = -1);
+                       int atom1 = -1, int atom2 = -1, int bond = -1);
   void buildLines();
   void myDraw(MolDraw2D &drawer) const override;
   void scale(const Point2D &scale_factor) override;
@@ -177,7 +175,6 @@ class DrawShapeDashedWedge : protected DrawShape {
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;
-  bool inverted_;
   std::vector<DrawColour> lineColours_;
   // for when we re-create the lines when it gets too wide, this is
   // the initial points[0] from the c'tor.

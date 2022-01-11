@@ -323,6 +323,8 @@ s		    {	yylval->atom = new Atom( 16 );
 \:	{ yylval->bond = new Bond(Bond::AROMATIC);
 	  yylval->bond->setIsAromatic(true);
 	  return BOND_TOKEN; }
+\$	{ yylval->bond = new Bond(Bond::QUADRUPLE);
+	  return BOND_TOKEN; }
 \-\>	{ yylval->bond = new Bond(Bond::DATIVER);
 	  return BOND_TOKEN; }
 \<\-	{ yylval->bond = new Bond(Bond::DATIVEL);
