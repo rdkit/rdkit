@@ -18,6 +18,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
+#include <GraphMol/Chirality.h>
 #include <cmath>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Rings.h>
@@ -37,6 +38,90 @@ namespace RDDepict {
 bool preferCoordGen = false;
 
 namespace DepictorLocal {
+
+constexpr auto ISQRT2 = 0.707107;
+
+void embedSquarePlanar(const RDKit::ROMol &mol, const RDKit::Atom *atom,
+                       std::list<EmbeddedFrag> &efrags,
+                       const std::vector<int> &atomRanks) {
+  static const RDGeom::Point2D idealPoints[] = {
+      RDGeom::Point2D(ISQRT2 * BOND_LEN, ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(ISQRT2 * BOND_LEN, -ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(-ISQRT2 * BOND_LEN, -ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(-ISQRT2 * BOND_LEN, ISQRT2 * BOND_LEN),
+  };
+  PRECONDITION(atom, "bad atom");
+  if (atom->getChiralTag() != RDKit::Atom::ChiralType::CHI_SQUAREPLANAR) {
+    return;
+  }
+  RDGeom::INT_POINT2D_MAP coordMap;
+  coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
+  std::vector<const RDKit::Atom *> nbrs;
+  for (auto nbr : mol.atomNeighbors(atom)) {
+    nbrs.push_back(nbr);
+  }
+  std::sort(nbrs.begin(), nbrs.end(),
+            [&atomRanks](const auto e1, const auto e2) {
+              return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
+            });
+  coordMap[nbrs[0]->getIdx()] = idealPoints[0];
+  bool q2Full = false;
+  for (const auto nbr : nbrs) {
+    if (nbr == nbrs.front()) {
+      continue;
+    }
+    auto angle =
+        RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs.front(), nbr);
+    if (fabs(angle - 180) < 0.1) {
+      coordMap[nbr->getIdx()] = idealPoints[2];
+    } else {
+      if (!q2Full) {
+        coordMap[nbr->getIdx()] = idealPoints[1];
+        q2Full = true;
+      } else {
+        coordMap[nbr->getIdx()] = idealPoints[3];
+      }
+    }
+  }
+  efrags.emplace_back(&mol, coordMap);
+}
+
+void embedNontetrahedralStereo(const RDKit::ROMol &mol,
+                               std::list<EmbeddedFrag> &efrags,
+                               const std::vector<int> &atomRanks) {
+  boost::dynamic_bitset<> consider(mol.getNumAtoms());
+  for (const auto atm : mol.atoms()) {
+    if (RDKit::Chirality::hasNonTetrahedralStereo(atm)) {
+      consider[atm->getIdx()] = 1;
+    }
+  }
+  if (consider.empty()) {
+    return;
+  }
+  // for the moment we will skip anything which is already embedded:
+  for (const auto &efrag : efrags) {
+    const auto &oatoms = efrag.GetEmbeddedAtoms();
+    for (const auto &oatom : oatoms) {
+      consider[oatom.first] = 0;
+    }
+  }
+  if (consider.empty()) {
+    return;
+  }
+  for (const auto atm : mol.atoms()) {
+    if (!consider[atm->getIdx()]) {
+      continue;
+    }
+    switch (atm->getChiralTag()) {
+      case RDKit::Atom::ChiralType::CHI_SQUAREPLANAR:
+        embedSquarePlanar(mol, atm, efrags, atomRanks);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 // arings: indices of atoms in rings
 void embedFusedSystems(const RDKit::ROMol &mol,
                        const RDKit::VECT_INT_VECT &arings,
@@ -184,7 +269,7 @@ double copySign(double to, double from, double tol) {
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
                           std::list<EmbeddedFrag> &efrags) {
-  RDKit::INT_VECT atomRanks;
+  std::vector<int> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     atomRanks[i] = getAtomDepictRank(mol.getAtomWithIdx(i));
@@ -213,6 +298,10 @@ void computeInitialCoords(RDKit::ROMol &mol,
     // first deal with the fused rings
     DepictorLocal::embedFusedSystems(mol, arings, efrags);
   }
+
+  // do non-tetrahedral stereo
+  DepictorLocal::embedNontetrahedralStereo(mol, efrags, atomRanks);
+
   // deal with any cis/trans systems
   DepictorLocal::embedCisTransSystems(mol, efrags);
   // now get the atoms that are not yet embedded in either a cis/trans system
