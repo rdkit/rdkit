@@ -2046,3 +2046,83 @@ TEST_CASE("remove hs and non-tetrahedral stereo") {
     CHECK(molcp.getNumAtoms() == 5);
   }
 }
+
+TEST_CASE("getIdealAngle") {
+  SECTION("TB1") {
+    auto m = "S[As@TB1](F)(Cl)(Br)N"_smiles;
+    REQUIRE(m);
+    CHECK(Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                      m->getAtomWithIdx(0)));
+    CHECK(Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                      m->getAtomWithIdx(5)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                       m->getAtomWithIdx(2)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                       m->getAtomWithIdx(3)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                       m->getAtomWithIdx(4)));
+
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(4)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(2), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(120, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(5)),
+        Catch::Matchers::WithinAbs(180, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(5), m->getAtomWithIdx(2)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(5), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(5), m->getAtomWithIdx(4)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+  }
+  SECTION("TB1 missing 1") {
+    auto m = "S[As@TB1](F)(Cl)Br"_smiles;
+    REQUIRE(m);
+
+    CHECK(Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                      m->getAtomWithIdx(0)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                       m->getAtomWithIdx(2)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                       m->getAtomWithIdx(3)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
+                                                       m->getAtomWithIdx(4)));
+
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(4)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(2), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(120, 0.001));
+  }
+}

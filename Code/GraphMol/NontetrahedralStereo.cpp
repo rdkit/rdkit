@@ -82,6 +82,60 @@ constexpr unsigned char octahedral_across[31][6] = {
     {1, 0, 4, 5, 2, 3}   // OH30
 };
 
+bool isTrigonalBipyramidalAxialLigand(const Atom *cen, const Bond *qry) {
+  PRECONDITION(cen, "bad center pointer");
+  PRECONDITION(qry, "bad query pointer");
+  PRECONDITION(cen->hasOwningMol() && qry->hasOwningMol(), "no owning mol");
+  PRECONDITION(&cen->getOwningMol() == &qry->getOwningMol(),
+               "center and query must come from the same molecule");
+  if (cen->getChiralTag() != Atom::CHI_TRIGONALBIPYRAMIDAL) {
+    return false;
+  }
+  auto ref_max = 5;
+  unsigned int perm = 0;
+  cen->getPropIfPresent(common_properties::_chiralPermutation, perm);
+  if (!perm) {
+    return false;
+  }
+
+  auto &mol = cen->getOwningMol();
+  int found = -1;
+  int count = 0;
+  for (auto bnd : mol.atomBonds(cen)) {
+    if (count == ref_max) {
+      return false;
+    }
+    if (bnd == qry) {
+      found = count;
+      break;
+    }
+    ++count;
+  }
+
+  if (found >= 0) {
+    if (perm <= 20) {
+      found = trigonalbipyramidal_across[perm][found];
+    } else {
+      found = 5;
+    }
+    return found < ref_max;
+  } else {
+    return false;
+  }
+}
+
+bool isTrigonalBipyramidalAxialLigand(const Atom *cen, const Atom *qry) {
+  PRECONDITION(cen, "bad center pointer");
+  PRECONDITION(qry, "bad query pointer");
+  PRECONDITION(cen->hasOwningMol(), "no owning mol");
+  auto bnd =
+      cen->getOwningMol().getBondBetweenAtoms(cen->getIdx(), qry->getIdx());
+  if (!bnd) {
+    return false;
+  }
+  return isTrigonalBipyramidalAxialLigand(cen, bnd);
+}
+
 Bond *getChiralAcrossBond(const Atom *cen, const Bond *qry) {
   PRECONDITION(cen, "bad center pointer");
   PRECONDITION(qry, "bad query pointer");
@@ -212,8 +266,8 @@ double getIdealAngleBetweenLigands(const Atom *cen, const Atom *lig1,
       if (getChiralAcrossAtom(cen, lig1) == lig2) {
         // both are axial
         return 180;
-      } else if (getChiralAcrossAtom(cen, lig1) ||
-                 getChiralAcrossAtom(cen, lig2)) {
+      } else if (isTrigonalBipyramidalAxialLigand(cen, lig1) ||
+                 isTrigonalBipyramidalAxialLigand(cen, lig2)) {
         // one is axial, the other equatorial
         return 90;
       } else {

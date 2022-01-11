@@ -117,18 +117,20 @@ void embedTBP(const RDKit::ROMol &mol, const RDKit::Atom *atom,
   const RDKit::Atom *axial2 = nullptr;
   for (auto i = 0u; i < nbrs.size(); ++i) {
     bool all90 = true;
-    for (auto j = i + 1; j < nbrs.size(); ++j) {
-      if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs[i],
-                                                             nbrs[j]) -
-               180) < 0.1) {
+    for (auto j = 0u; j < nbrs.size(); ++j) {
+      if (j == i) {
+        continue;
+      }
+      auto angl =
+          RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs[i], nbrs[j]);
+      if (fabs(angl - 180) < 0.1) {
         axial1 = nbrs[i];
         axial2 = nbrs[j];
         all90 = false;
         break;
-      } else if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(
-                          atom, nbrs[i], nbrs[j]) -
-                      90) > 0.1) {
+      } else if (fabs(angl - 90) > 0.1) {
         all90 = false;
+        break;
       }
     }
     if (all90) {
@@ -250,19 +252,19 @@ void embedNontetrahedralStereo(const RDKit::ROMol &mol,
     return;
   }
   // for the moment we will skip anything which is already embedded:
-  for (const auto &efrag : efrags) {
-    const auto &oatoms = efrag.GetEmbeddedAtoms();
-    for (const auto &oatom : oatoms) {
-      consider[oatom.first] = 0;
-    }
-  }
-  if (consider.empty()) {
-    return;
-  }
+  // for (const auto &efrag : efrags) {
+  //   const auto &oatoms = efrag.GetEmbeddedAtoms();
+  //   for (const auto &oatom : oatoms) {
+  //     consider[oatom.first] = 0;
+  //   }
+  // }
+  // if (consider.empty()) {
+  //   return;
+  // }
   for (const auto atm : mol.atoms()) {
-    if (!consider[atm->getIdx()]) {
-      continue;
-    }
+    // if (!consider[atm->getIdx()]) {
+    //   continue;
+    // }
     switch (atm->getChiralTag()) {
       case RDKit::Atom::ChiralType::CHI_SQUAREPLANAR:
         embedSquarePlanar(mol, atm, efrags, atomRanks);
