@@ -2023,3 +2023,26 @@ TEST_CASE("assignStereochemistry shouldn't remove nontetrahedral stereo",
           Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
   }
 }
+
+TEST_CASE("remove hs and non-tetrahedral stereo") {
+  SmilesParserParams parseps;
+  parseps.sanitize = false;
+  parseps.removeHs = false;
+  std::unique_ptr<RWMol> m{SmilesToMol("F[Pt@TB1]([H])(Br)(N)Cl", parseps)};
+  REQUIRE(m);
+  CHECK(m->getNumAtoms(6));
+  {
+    // the default is to not remove Hs to non-tetrahedral stereocenters
+    RWMol molcp(*m);
+    MolOps::removeHs(molcp);
+    CHECK(molcp.getNumAtoms() == 6);
+  }
+  {
+    // but we can enable it
+    RWMol molcp(*m);
+    MolOps::RemoveHsParameters ps;
+    ps.removeNontetrahedralNeighbors = true;
+    MolOps::removeHs(molcp, ps);
+    CHECK(molcp.getNumAtoms() == 5);
+  }
+}

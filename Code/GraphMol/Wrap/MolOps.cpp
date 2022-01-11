@@ -1209,6 +1209,11 @@ struct molops_wrapper {
                        &MolOps::RemoveHsParameters::removeHydrides,
                        "hydrogens with formal charge -1")
         .def_readwrite(
+            "removeNontetrahedralNeighbors",
+            &MolOps::RemoveHsParameters::removeNontetrahedralNeighbors,
+            "hydrogens with neighbors that have non-tetrahedral "
+            "stereochemistry")
+        .def_readwrite(
             "showWarnings", &MolOps::RemoveHsParameters::showWarnings,
             "display warning messages for some classes of removed Hs")
         .def_readwrite("updateExplicitCount",
