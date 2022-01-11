@@ -63,3 +63,36 @@ TEST_CASE("square planar", "[nontetrahedral]") {
     CHECK(v1.length() > v2.length());
   }
 }
+
+TEST_CASE("trigonal bipyramidal", "[nontetrahedral]") {
+  SECTION("TB1") {
+    auto m = "S[As@TB1](F)(Cl)(Br)N"_smiles;
+    REQUIRE(m);
+    CHECK(RDDepict::compute2DCoords(*m) == 0);
+    auto &conf = m->getConformer();
+    auto v1 = conf.getAtomPos(0) - conf.getAtomPos(5);  // ax - ax
+    auto v2 = conf.getAtomPos(0) - conf.getAtomPos(4);  // ax - eq
+    auto v3 = conf.getAtomPos(2) - conf.getAtomPos(4);  // eq - eq long
+    auto v4 = conf.getAtomPos(2) - conf.getAtomPos(3);  // eq - eq short
+    CHECK(v1.length() > v2.length());
+    CHECK(v1.length() > v3.length());
+    CHECK(v3.length() > v2.length());
+    CHECK(v3.length() > v4.length());
+    CHECK(v2.length() > v4.length());
+  }
+  SECTION("TB3") {
+    auto m = "S[As@TB3](F)(Cl)(N)Br"_smiles;
+    REQUIRE(m);
+    CHECK(RDDepict::compute2DCoords(*m) == 0);
+    auto &conf = m->getConformer();
+    auto v1 = conf.getAtomPos(0) - conf.getAtomPos(4);  // ax - ax
+    auto v2 = conf.getAtomPos(0) - conf.getAtomPos(5);  // ax - eq
+    auto v3 = conf.getAtomPos(2) - conf.getAtomPos(5);  // eq - eq long
+    auto v4 = conf.getAtomPos(2) - conf.getAtomPos(3);  // eq - eq short
+    CHECK(v1.length() > v2.length());
+    CHECK(v1.length() > v3.length());
+    CHECK(v3.length() > v2.length());
+    CHECK(v3.length() > v4.length());
+    CHECK(v2.length() > v4.length());
+  }
+}
