@@ -662,7 +662,6 @@ void MolDraw2D::drawMolecules(
   int nRows = height() / panelHeight();
 
   for (size_t i = 0; i < mols.size(); ++i) {
-    std::cout << "MOL : " << i << std::endl;
     if (!mols[i]) {
       continue;
     }
@@ -709,24 +708,16 @@ void MolDraw2D::drawMolecules(
     }
   }
 
-  int mol_num = 0;
   for (auto &drawMol : drawMols_) {
-//    if (mol_num) {
-//      continue;
-//    }
-    std::cout << "setting scale for next mol : " << mol_num << std::endl;
     drawMol->setScale(drawMols_[minScaleMol]->getScale(),
                       drawMols_[minFontScaleMol]->getFontScale());
-    std::cout << "set it" << std::endl;
     drawMol->tagAtomsWithCoords();
-    ++mol_num;
   }
 
   if (!drawMols_.empty()) {
     activeMolIdx_ = 0;
     startDrawing();
     for (size_t i = 0; i < drawMols_.size(); ++i) {
-      std::cout << "drawing " << i << std::endl;
       activeMolIdx_ = i;
       drawTheMolecule((*drawMols_[i]));
     }

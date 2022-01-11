@@ -1125,11 +1125,11 @@ void test6() {
     outs.close();
     // start of bond-0
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 272.6,148.0") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 270.1,148.0") !=
         std::string::npos);
     // start of first radical spot
     TEST_ASSERT(
-        txt.find("<path class='atom-0' d='M 286.6,152.0 L 286.6,152.1") !=
+        txt.find("<path class='atom-0' d='M 284.1,152.0 L 284.1,152.2") !=
         std::string::npos);
     check_file_hash(nameBase + ".svg");
   }
@@ -1148,11 +1148,11 @@ void test6() {
     outs.close();
     // start of bond-0
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 202.7,109.1") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 192.7,116.8") !=
         std::string::npos);
     // start of first radical spot
     TEST_ASSERT(
-        txt.find("<path class='atom-1' d='M 20.3,200.6 L 20.3,200.8") !=
+        txt.find("<path class='atom-1' d='M 43.1,189.4 L 43.1,189.6") !=
         std::string::npos);
     check_file_hash(nameBase + ".svg");
   }
@@ -1359,39 +1359,6 @@ void testGithub781() {
     auto m = "C"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
-    MolDraw2DSVG drawer(200, 200);
-    drawer.drawOptions().maxFontSize = 14;
-    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    std::string txt = drawer.getDrawingText();
-    TEST_ASSERT(txt.find("<svg") != std::string::npos);
-    // write the file so we can update the coords below more easily
-    // if the font changes, for example.
-    std::ofstream outs("testGithub781_6.svg");
-    outs << txt;
-    outs.close();
-    check_file_hash("testGithub781_6.svg");
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
-    // the start of the C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 37.0 79.5") !=
-                std::string::npos)
-    // the start of the H
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 45.8 74.5") !=
-                std::string::npos)
-#else
-    TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
-    TEST_ASSERT(txt.find(">H</text>") != std::string::npos);
-    TEST_ASSERT(txt.find(">4</text>") != std::string::npos);
-    TEST_ASSERT(txt.find("font-size:40px") != std::string::npos);
-    TEST_ASSERT(txt.find("font-size:26px") != std::string::npos);
-#endif
-  }
-#if 0
-  {
-    auto m = "C"_smiles;
-    TEST_ASSERT(m);
-    RDDepict::compute2DCoords(*m);
     MolDraw2DSVG drawer(300, 300);
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
@@ -1405,10 +1372,10 @@ void testGithub781() {
     check_file_hash("testGithub781_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // the start of the C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 50.3 119.3") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 118.7 143.0") !=
                 std::string::npos)
     // the start of the H
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 75.5 105.1") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 144.0 128.9") !=
                 std::string::npos)
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1433,10 +1400,10 @@ void testGithub781() {
     check_file_hash("testGithub781_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of the H
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 180.0 105.9") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 118.0 128.9") !=
                 std::string::npos);
     // start of the O
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 203.5 133.2") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 141.5 156.2") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find("<tspan>OH</tspan>") == std::string::npos);
@@ -1457,11 +1424,11 @@ void testGithub781() {
     check_file_hash("testGithub781_3.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 219.4 296.8") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 285.3 299.9") !=
                 std::string::npos);
     // the first radical marker
     TEST_ASSERT(
-        txt.find("<path class='atom-0' d='M 249.2,308.7 L 249.2,308.8") !=
+        txt.find("<path class='atom-0' d='M 315.2,311.8 L 315.2,312.0") !=
         std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1486,10 +1453,10 @@ void testGithub781() {
     check_file_hash("testGithub781_4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 31.3 196.2") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 36.8 193.9") !=
                 std::string::npos);
     // start of l
-    TEST_ASSERT(txt.find("<path class='atom-3' d='M 45.4 80.4") !=
+    TEST_ASSERT(txt.find("<path class='atom-3' d='M 45.9 77.8") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1517,7 +1484,39 @@ void testGithub781() {
 #endif
     delete m;
   }
+  {
+    // Make sure it also centres correctly with a maxFontSize, which it
+    // didn't always do.
+    auto m = "C"_smiles;
+    TEST_ASSERT(m);
+    RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(200, 200);
+    drawer.drawOptions().maxFontSize = 14;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string txt = drawer.getDrawingText();
+    TEST_ASSERT(txt.find("<svg") != std::string::npos);
+    // write the file so we can update the coords below more easily
+    // if the font changes, for example.
+    std::ofstream outs("testGithub781_6.svg");
+    outs << txt;
+    outs.close();
+    check_file_hash("testGithub781_6.svg");
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    // the start of the C
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 89.0 97.6") !=
+                std::string::npos)
+    // the start of the H
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 97.9 92.6") !=
+                std::string::npos)
+#else
+    TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
+    TEST_ASSERT(txt.find(">H</text>") != std::string::npos);
+    TEST_ASSERT(txt.find(">4</text>") != std::string::npos);
+    TEST_ASSERT(txt.find("font-size:40px") != std::string::npos);
+    TEST_ASSERT(txt.find("font-size:26px") != std::string::npos);
 #endif
+  }
   std::cerr << " Done" << std::endl;
 }
 
@@ -1942,8 +1941,8 @@ M  END";
     outs.close();
     check_file_hash("test983_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-0 atom-1 atom-0' d='M 73.7,85.3 L "
-                          "23.0,119.2 L 19.0,112.3 Z' style='fill:#000000;") !=
+    TEST_ASSERT(text.find("<path class='bond-0 atom-1 atom-0' d='M 74.0,85.5 L "
+                          "24.1,119.0 L 20.1,112.0 Z' style='fill:#000000;") !=
                 std::string::npos);
 #else
     TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 126.5,111.6"
@@ -2543,7 +2542,6 @@ void test13JSONConfig() {
         "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
         "\"bondLineWidth\": 5}";
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
-    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
     drawer.drawMolecule(*m, "foo");
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -3141,7 +3139,7 @@ M  END
       outs.close();
       check_file_hash(nameBase + "4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path class='atom-8' d='M 164.3 92.9") !=
+      TEST_ASSERT(text.find("<path class='atom-8' d='M 166.6 92.6") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
@@ -4154,7 +4152,6 @@ void testGithub3391() {
   {
     MolDraw2DSVG drawer(400, 200, 200, 200);
     drawer.drawOptions().maxFontSize = 14;
-    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
     std::vector<ROMol *> mols;
     mols.push_back(m.get());
     mols.push_back(m.get());
@@ -4170,7 +4167,6 @@ void testGithub3391() {
   {
     MolDraw2DSVG drawer(400, 200, 200, 200);
     drawer.drawOptions().maxFontSize = 14;
-    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
     std::vector<ROMol *> mols;
     mols.push_back(m.get());
     mols.push_back(m2.get());
@@ -4186,7 +4182,6 @@ void testGithub3391() {
   {
     MolDraw2DSVG drawer(400, 200, 200, 200);
     drawer.drawOptions().maxFontSize = 14;
-    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
     std::vector<ROMol *> mols;
     mols.push_back(m2.get());
     mols.push_back(m.get());
@@ -4203,7 +4198,6 @@ void testGithub3391() {
     MolDraw2DSVG drawer(600, 200, 200, 200);
     drawer.drawOptions().maxFontSize = 14;
     drawer.drawOptions().minFontSize = 8;
-    drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
     std::vector<ROMol *> mols;
     auto m1 = "CO"_smiles;
     auto m2 = "CCCCCCCCCCO"_smiles;
@@ -4244,7 +4238,7 @@ void testGithub4156() {
     outs.close();
     check_file_hash("testGithub4156_1.svg");
     // this is the start of the radical spot.
-    regex qry("<path d='M 21.[0-9]*,75.[0-9]* L 21.[0-9]*,75.[0-9]*");
+    regex qry("<path class='atom-1' d='M 21.[0-9]*,75.[0-9]* L 21.[0-9]*,75.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
   {
@@ -4261,7 +4255,7 @@ void testGithub4156() {
     outs.close();
     check_file_hash("testGithub4156_2.svg");
     // this is the start of the radical spot.
-    regex qry("<path d='M 271.[0-9]*,75.[0-9]* L 271.[0-9]*,75.[0-9]*");
+    regex qry("<path class='atom-1' d='M 271.[0-9]*,75.[0-9]* L 271.[0-9]*,75.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
 #endif
@@ -4322,9 +4316,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  testGithub781();
-  testGithub3391();
-#if 0
+
+#if 1
   test1();
   test2();
   test4();

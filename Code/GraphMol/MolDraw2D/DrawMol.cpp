@@ -87,16 +87,10 @@ void DrawMol::createDrawObjects() {
   calculateScale();
 
   if (!textDrawer_.setFontScale(fontScale_, false)) {
-    double nfs = textDrawer_.fontScale() / fontScale_;
-    resetEverything();
-    textDrawer_.setFontScale(nfs, true);
-    fontScale_ = textDrawer_.fontScale();
-    extractAll();
-    calculateScale();
-    textDrawer_.setFontScale(fontScale_);
-    fontScale_ = textDrawer_.fontScale();
+    setScale(scale_, textDrawer_.fontScale());
+  } else {
+    finishCreateDrawObjects();
   }
-  finishCreateDrawObjects();
 }
 
 // ****************************************************************************
@@ -194,7 +188,6 @@ void DrawMol::extractAtomCoords() {
       trans.TransformPoint(pt);
     }
     atCds_.emplace_back(pt);
-    // std::cout << "coords for " << thisIdx << " : " << pt << std::endl;
   }
 }
 
@@ -825,9 +818,6 @@ void DrawMol::calculateScale() {
 
 // ****************************************************************************
 void DrawMol::findExtremes() {
-  std::cout << "top of findExtremes  : " << xMin_ << " to  " << xMax_
-            << " and " << yMin_ << " to " << yMax_ << std::endl;
-
   for (auto &ps : preShapes_) {
     ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
@@ -839,9 +829,6 @@ void DrawMol::findExtremes() {
       atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
-  std::cout << "after labels, extremes  : " << xMin_ << " to  " << xMax_
-      << " and " << yMin_ << " to " << yMax_ << std::endl;
-
   for (auto &hl : highlights_) {
     hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
@@ -872,17 +859,12 @@ void DrawMol::findExtremes() {
     yMin_ -= 1.0;
     yMax_ += 1.0;
   }
-  std::cout << "leaving of findExtremes  : " << xMin_ << " to  " << xMax_
-            << " and " << yMin_ << " to " << yMax_ << std::endl;
 }
 
 // ****************************************************************************
 void DrawMol::changeToDrawCoords() {
   Point2D trans, scale, toCentre;
   getDrawTransformers(trans, scale, toCentre);
-  std::cout << "transformers in changeToDrawCoords : " << trans << " : "
-            << scale << " : " << toCentre << "  offsets : " << xOffset_ << ", "
-            << yOffset_ << std::endl;
   transformAllButAtomLabels(trans, scale, toCentre);
   for (auto &annot : annotations_) {
     annot->move(trans);
@@ -1204,14 +1186,11 @@ std::string DrawMol::getAtomSymbol(const RDKit::Atom &atom,
   if (literal_symbol && !symbol.empty()) {
     symbol = "<lit>" + symbol + "</lit>";
   }
-  // cout << "Atom symbol " << atom.getIdx() << " : " << symbol << endl;
   return symbol;
-}  // namespace RDKit
+}
 
 // ****************************************************************************
 OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
-  // cout << "Atomic " << atom.getAtomicNum() << " degree : "
-  //      << atom.getDegree() << " : " << atom.getTotalNumHs() << endl;
   // anything with a slope of more than 70 degrees is vertical. This way,
   // the NH in an indole is vertical as RDKit lays it out normally (72ish
   // degrees) but the 2 amino groups of c1ccccc1C1CCC(N)(N)CC1 are E and W
@@ -1223,7 +1202,6 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
   auto &mol = atom.getOwningMol();
   const Point2D &at1_cds = atCds_[atom.getIdx()];
   Point2D nbr_sum(0.0, 0.0);
-  // cout << "Nbours for atom : " << at1->getIdx() << endl;
   for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
     const Bond *bond = mol[nbri];
     const Point2D &at2_cds =
@@ -2046,7 +2024,6 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
 
   Point2D ret_vec;
   if (bond_vecs.size() == 1) {
-    std::cout << "bond_vec : " << bond_vecs[0] << std::endl;
     if (!atomLabels_[atom->getIdx()]) {
       // go with perpendicular to bond.  This is mostly to avoid getting
       // a zero at the end of a bond to carbon, which looks like a black
@@ -2057,7 +2034,6 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
       // go opposite end
       ret_vec = -bond_vecs[0];
     }
-    std::cout << atom->getIdx() << " : " << atan2(ret_vec.y, ret_vec.x) * 180 / M_PI << std::endl;
   } else if (bond_vecs.size() == 2) {
     ret_vec = bond_vecs[0] + bond_vecs[1];
     if (ret_vec.lengthSq() > 1.0e-6) {
@@ -2265,7 +2241,6 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
   trans = Point2D(-xMin_, -yMin_);
   scale = Point2D(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
-  std::cout << "scaleRanges : " << scaledRanges << std::endl;
   toCentre = Point2D((width_ - scaledRanges.x) / 2.0 + xOffset_,
                      (drawHeight_ - scaledRanges.y) / 2.0 + yOffset_);
 }
@@ -2308,14 +2283,8 @@ Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
 
 // ****************************************************************************
 void DrawMol::setScale(double newScale, double newFontScale) {
-  std::cout << "top of setScale " << std::endl;
-  std::cout << "scale_ = " << scale_ << " : fontScale = "
-            << textDrawer_.fontScale() << std::endl;
-  std::cout << "new values : " << newScale << " and " << newFontScale;
-  double relFontScale = newFontScale / newScale;
-  std::cout << "relative fontScale : " << relFontScale << std::endl;
-
   resetEverything();
+  double relFontScale = newFontScale / newScale;
   textDrawer_.setFontScale(relFontScale , true);
 
   extractAll();
