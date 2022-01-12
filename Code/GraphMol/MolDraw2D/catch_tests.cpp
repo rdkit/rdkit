@@ -3787,6 +3787,7 @@ TEST_CASE("changing baseFontSize") {
 }
 
 TEST_CASE("flexicanvas: set canvas size automatically") {
+  // note that these examples use Freetype if it's available.
   auto mol1 = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
 
   REQUIRE(mol1);
@@ -3817,7 +3818,7 @@ M  END
 )CTAB"_ctab;
   REQUIRE(mol2);
   MolDraw2DUtils::prepareMolForDrawing(*mol2);
-
+#if 0
   SECTION("fixed canvas") {
     MolDraw2DSVG drawer(308, 223, -1, -1, 1);
     drawer.drawMolecule(*mol1);
@@ -3898,6 +3899,7 @@ M  END
     outs.flush();
     check_file_hash("testFlexiCanvas.3.svg");
   }
+#endif
   SECTION("data labels") {
     auto mol1 = R"CTAB(
      RDKit          2D
@@ -3927,6 +3929,7 @@ M  END)CTAB"_ctab;
     REQUIRE(mol1);
     {
       MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
       drawer.drawMolecule(*mol1);
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
@@ -3938,6 +3941,7 @@ M  END)CTAB"_ctab;
     {  // this one is slightly wonky because we don't get the width of the
        // legend exactly right
       MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
       drawer.drawMolecule(*mol1, "legendary");
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
@@ -3948,6 +3952,7 @@ M  END)CTAB"_ctab;
     }
     {
       MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
       drawer.drawMolecule(*mol1, "doubly\nlegendary");
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
@@ -3955,6 +3960,19 @@ M  END)CTAB"_ctab;
       outs << text;
       outs.flush();
       check_file_hash("testFlexiCanvas.4c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().legendFraction = 0.25;
+      drawer.drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.9);
+      drawer.drawOptions().legendFontSize = 32;
+      drawer.drawMolecule(*mol1, "Hugely\nLegendary");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.4d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.4d.svg");
     }
   }
 }

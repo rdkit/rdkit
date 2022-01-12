@@ -147,30 +147,6 @@ MolDraw2D::MolDraw2D(int width, int height, int panelWidth, int panelHeight)
 MolDraw2D::~MolDraw2D() {}
 
 // ****************************************************************************
-void MolDraw2D::drawMolecule(const ROMol &mol,
-                             const vector<int> *highlight_atoms,
-                             const map<int, DrawColour> *highlight_atom_map,
-                             const std::map<int, double> *highlight_radii,
-                             int confId) {
-  drawMolecule(mol, "", highlight_atoms, highlight_atom_map, highlight_radii,
-               confId);
-}
-
-// ****************************************************************************
-void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
-                             const vector<int> *highlight_atoms,
-                             const map<int, DrawColour> *highlight_atom_map,
-                             const std::map<int, double> *highlight_radii,
-                             int confId) {
-  vector<int> highlight_bonds;
-  if (highlight_atoms) {
-    getBondHighlightsForAtoms(mol, *highlight_atoms, highlight_bonds);
-  }
-  drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
-               highlight_atom_map, nullptr, highlight_radii, confId);
-}
-
-// ****************************************************************************
 void MolDraw2D::doContinuousHighlighting(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const vector<int> *highlight_bonds,
@@ -239,20 +215,6 @@ void MolDraw2D::doContinuousHighlighting(
 }
 
 // ****************************************************************************
-// keeping this one to preserve the public API, although it is no longer
-// very useful.
-void MolDraw2D::drawMolecule(const ROMol &mol,
-                             const vector<int> *highlight_atoms,
-                             const vector<int> *highlight_bonds,
-                             const map<int, DrawColour> *highlight_atom_map,
-                             const map<int, DrawColour> *highlight_bond_map,
-                             const std::map<int, double> *highlight_radii,
-                             int confId) {
-  drawMolecule(mol, "", highlight_atoms, highlight_bonds, highlight_atom_map,
-               highlight_bond_map, highlight_radii, confId);
-}
-
-// ****************************************************************************
 void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const vector<int> *highlight_atoms,
                              const vector<int> *highlight_bonds,
@@ -267,9 +229,48 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
       nullptr, highlight_radii, supportsAnnotations(), confId));
   drawMols_.back()->setOffsets(x_offset_, y_offset_);
   drawMols_.back()->createDrawObjects();
+  fixVariableDimensions(*drawMols_.back());
   ++activeMolIdx_;
   startDrawing();
   drawTheMolecule(*drawMols_.back());
+}
+
+// ****************************************************************************
+void MolDraw2D::drawMolecule(const ROMol &mol,
+                             const vector<int> *highlight_atoms,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
+  drawMolecule(mol, "", highlight_atoms, highlight_atom_map, highlight_radii,
+               confId);
+}
+
+// ****************************************************************************
+void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
+                             const vector<int> *highlight_atoms,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
+  vector<int> highlight_bonds;
+  if (highlight_atoms) {
+    getBondHighlightsForAtoms(mol, *highlight_atoms, highlight_bonds);
+  }
+  drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
+               highlight_atom_map, nullptr, highlight_radii, confId);
+}
+
+// ****************************************************************************
+// keeping this one to preserve the public API, although it is no longer
+// very useful.
+void MolDraw2D::drawMolecule(const ROMol &mol,
+                             const vector<int> *highlight_atoms,
+                             const vector<int> *highlight_bonds,
+                             const map<int, DrawColour> *highlight_atom_map,
+                             const map<int, DrawColour> *highlight_bond_map,
+                             const std::map<int, double> *highlight_radii,
+                             int confId) {
+  drawMolecule(mol, "", highlight_atoms, highlight_bonds, highlight_atom_map,
+               highlight_bond_map, highlight_radii, confId);
 }
 
 // ****************************************************************************
@@ -285,6 +286,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
       highlight_atom_map, highlight_bond_map,
       highlight_radii, highlight_linewidth_multipliers, confId)));
   drawMols_.back()->createDrawObjects();
+  fixVariableDimensions(*drawMols_.back());
   ++activeMolIdx_;
   startDrawing();
   drawTheMolecule((*drawMols_.back()));
@@ -480,6 +482,16 @@ void MolDraw2D::drawReaction(
     const ChemicalReaction &rxn, bool highlightByReactant,
     const std::vector<DrawColour> *highlightColorsReactants,
     const std::vector<int> *confIds) {
+  double spacing = 1.0;
+  Point2D arrowBegin, arrowEnd;
+
+  std::vector<std::unique_ptr<DrawMol>> reagents;
+  std::vector<std::unique_ptr<DrawMol>> products;
+  std::vector<std::unique_ptr<DrawMol>> agents;
+
+  getReactionDrawMols(rxn, reagents, products, agents);
+
+#if 0
   ChemicalReaction nrxn(rxn);
   double spacing = 1.0;
   Point2D arrowBegin, arrowEnd;
@@ -628,6 +640,7 @@ void MolDraw2D::drawReaction(
   setColour(odc);
   text_drawer_->setFontScale(o_font_scale);
   drawOptions() = origDrawOptions;
+#endif
 }
 
 // ****************************************************************************
@@ -1325,6 +1338,30 @@ void MolDraw2D::getStringExtremes(const string &label, OrientType orient,
   if (y_min > y_max) {
     swap(y_min, y_max);
   }
+}
+
+// ****************************************************************************
+void MolDraw2D::fixVariableDimensions(const DrawMol &drawMol) {
+  if (panel_width_ == -1) {
+    width_ = panel_width_ = drawMol.width_;
+  }
+  if (panel_height_ == -1) {
+    height_ = panel_height_ = drawMol.height_;
+  }
+}
+
+// ****************************************************************************
+void MolDraw2D::getReactionDrawMols(
+    const ChemicalReaction &rxn,
+    std::vector<std::unique_ptr<DrawMol>> &reagents,
+    std::vector<std::unique_ptr<DrawMol>> &products,
+    std::vector<std::unique_ptr<DrawMol>> &agents) {
+  ChemicalReaction nrxn(rxn);
+
+  int num_bits = nrxn.getNumReactantTemplates() +
+                 nrxn.getNumProductTemplates() + nrxn.getNumAgentTemplates();
+  int num_pluses = nrxn.getNumReactantTemplates() +
+                   nrxn.getNumProductTemplates() - 2;
 }
 
 // ****************************************************************************

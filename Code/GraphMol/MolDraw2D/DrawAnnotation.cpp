@@ -28,15 +28,7 @@ DrawAnnotation::DrawAnnotation(const std::string &note,
       textDrawer_(textDrawer),
       pos_(pos),
       colour_(colour) {
-  // We don't need these for notes, which are always on 1 line and plain
-  // text.
-  std::vector<TextDrawType> drawModes;
-  std::vector<char> drawChars;
-  double ofs = textDrawer_.fontScale();
-  textDrawer_.setFontScale(relFontScale_ * textDrawer_.fontScale(), true);
-  textDrawer_.getStringRects(text_, OrientType::C, rects_, drawModes, drawChars,
-                             true, align_);
-  textDrawer_.setFontScale(ofs, true);
+  extractRects();
 }
 
 // ****************************************************************************
@@ -67,6 +59,29 @@ void DrawAnnotation::findExtremes(double &xmin, double &xmax, double &ymin,
 }
 
 // ****************************************************************************
+void DrawAnnotation::getDimensions(double &width, double &height) const {
+  double xMin, yMin, xMax, yMax;
+  xMin = yMin = std::numeric_limits<double>::max();
+  xMax = yMax = -xMin;
+  findExtremes(xMin, xMax, yMin, yMax);
+  width = xMax - xMin;
+  height = yMax - yMin;
+}
+
+// ****************************************************************************
+void DrawAnnotation::extractRects() {
+  // We don't need these for notes, which are always on 1 line and plain
+  // text.
+  std::vector<TextDrawType> drawModes;
+  std::vector<char> drawChars;
+  double ofs = textDrawer_.fontScale();
+  textDrawer_.setFontScale(relFontScale_ * textDrawer_.fontScale(), true);
+  textDrawer_.getStringRects(text_, OrientType::C, rects_, drawModes, drawChars,
+                             true, align_);
+  textDrawer_.setFontScale(ofs, true);
+}
+
+// ****************************************************************************
 void DrawAnnotation::draw(MolDraw2D &molDrawer) const {
 
   std::string o_class = molDrawer.getActiveClass();
@@ -79,10 +94,18 @@ void DrawAnnotation::draw(MolDraw2D &molDrawer) const {
     textDrawer_.setColour(colour_);
     double ofs = textDrawer_.fontScale();
     textDrawer_.setFontScale(relFontScale_ * ofs, true);
+    std::cout << "fonts : " << ofs << " : " << relFontScale_ << " : "
+              << textDrawer_.fontScale() << "  font size : " << textDrawer_.fontSize()
+              << "  and legendFontSize : " << molDrawer.drawOptions().legendFontSize << std::endl;
+    double xmin, xmax, ymin, ymax;
+    xmin = ymin = 10000000000;
+    xmax = ymax = -ymin;
+    findExtremes(xmin, xmax, ymin, ymax);
+    std::cout << "extremes : " << xmin << " to " << xmax << "  width = " << xmax - xmin << std::endl;
     textDrawer_.drawString(text_, pos_, align_);
     textDrawer_.setFontScale(ofs, true);
     molDrawer.setActiveClass(o_class);
-//    drawRects(molDrawer);
+    drawRects(molDrawer);
 }
 
 // ****************************************************************************
@@ -109,15 +132,13 @@ void DrawAnnotation::drawRects(MolDraw2D &molDrawer) const {
 
 // ****************************************************************************
 void DrawAnnotation::scale(const Point2D &scaleFactor) {
+  std::cout << "scaling font by : " << scaleFactor << "  relfontscale = " << relFontScale_ << std::endl;
   pos_.x *= scaleFactor.x;
   pos_.y *= scaleFactor.y;
   // rebuild the rectangles, because the fontScale may be different,
   // and the widths etc might not scale by the same amount.
   rects_.clear();
-  std::vector<TextDrawType> drawModes;
-  std::vector<char> drawChars;
-  textDrawer_.getStringRects(text_, OrientType::C, rects_, drawModes,
-                             drawChars, false, TextAlignType::MIDDLE);
+  extractRects();
 }
 
 // ****************************************************************************

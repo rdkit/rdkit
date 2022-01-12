@@ -132,6 +132,7 @@ void DrawTextFT::getStringRects(const std::string &text,
                                 std::vector<std::shared_ptr<StringRect>> &rects,
                                 std::vector<TextDrawType> &draw_modes,
                                 std::vector<char> &draw_chars) const {
+  std::cout << "getStringRects" << std::endl;
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double running_x = 0.0, max_y = 0.0;
   for (size_t i = 0; i < text.length(); ++i) {
@@ -160,7 +161,10 @@ void DrawTextFT::getStringRects(const std::string &text,
     Point2D g_centre(offset.x, p_y_max - height / 2.0);
     rects.push_back(std::shared_ptr<StringRect>(
         new StringRect(offset, g_centre, width, height)));
-    rects.back()->trans_.x = running_x;
+    if (i) {
+      rects[i]->trans_.x = rects[i - 1]->trans_.x + rects[i - 1]->width_ / 2 +
+                           rects[i]->width_ / 2;
+    }
     draw_modes.push_back(draw_mode);
     running_x += this_x_max ? p_x_max : p_advance;
     max_y = std::max(max_y, p_y_max);

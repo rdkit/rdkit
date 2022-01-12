@@ -424,6 +424,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::string d_activeClass;
 
  private:
+
+  // if the width or height of the DrawMol was -1, the new dimensions need to be
+  // transferred to MolDraw2D.
+  void fixVariableDimensions(const DrawMol &drawMol);
+
+  // split the reaction up into the reagents, products and agents, each as
+  // a separate entity with its own scale.
+  void getReactionDrawMols(const ChemicalReaction &rxn,
+                           std::vector<std::unique_ptr<DrawMol>> &reagents,
+                           std::vector<std::unique_ptr<DrawMol>> &products,
+                           std::vector<std::unique_ptr<DrawMol>> &agents);
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_, legend_height_;
   // if the user calls setScale() to explicitly force a scale on the

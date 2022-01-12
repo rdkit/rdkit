@@ -104,12 +104,16 @@ struct StringRect {
                    double padding) const {
     double wb2 = padding + width_ / 2.0;
     double hb2 = padding + height_ / 2.0;
-    Point2D c = trans_ + g_centre_ - offset_;
-    c.y -= y_shift_;
+    Point2D c;
+    calcCentre(c);
     tl = Point2D(c.x - wb2, c.y - hb2);
     tr = Point2D(c.x + wb2, c.y - hb2);
     br = Point2D(c.x + wb2, c.y + hb2);
     bl = Point2D(c.x - wb2, c.y + hb2);
+  }
+  void calcCentre(Point2D &c) const {
+    c = trans_ + g_centre_ - offset_;
+    c.y -= y_shift_;
   }
   bool doesItIntersect(const StringRect &other, double padding = 0.0) const {
     Point2D ttl, ttr, tbr, tbl;
@@ -260,6 +264,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       1, 1, 1, 1};          // color to be used while clearing the background
   int legendFontSize = 16;  // font size (in pixels) to be used for the legend
                                      // (if present)
+  double legendFraction =
+      0.1;  // fraction of the draw panel to be used for the legend if present
   int maxFontSize = 40;  // maximum size in pixels for font in drawn molecule.
                                      // -1 means no max.
   int minFontSize = 6;   // likewise for -1.

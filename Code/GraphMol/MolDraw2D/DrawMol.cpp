@@ -108,6 +108,19 @@ void DrawMol::finishCreateDrawObjects() {
     radicals_.clear();
     extractRadicals();
   }
+  {
+    std::vector<Point2D> pts{Point2D(width_ / 2.0, 0),
+                             Point2D(width_ / 2.0, height_)};
+    DrawShape *ml = new DrawShapeSimpleLine(pts, 1);
+    postShapes_.emplace_back(std::unique_ptr<DrawShape>(ml));
+  }
+  {
+    std::vector<Point2D> pts{Point2D(0, drawHeight_),
+                             Point2D(width_, drawHeight_)};
+    DrawShape *ml = new DrawShapeSimpleLine(pts, 1);
+    postShapes_.emplace_back(std::unique_ptr<DrawShape>(ml));
+  }
+
   drawingInitialised_ = true;
 }
 
@@ -916,7 +929,6 @@ void DrawMol::draw(MolDraw2D &drawer) const {
   }
   drawRadicals(drawer);
   for(auto &ps : postShapes_) {
-    std::cout << "postShape : " << ps->points_.front() << std::endl;
     ps->draw(drawer);
   }
   for (auto &leg : legends_) {
@@ -1338,16 +1350,16 @@ void DrawMol::extractLegend() {
                                 double &total_width, double &total_height) {
     total_width = total_height = 0;
     for (auto &bit : legend_bits) {
-      double xMin, yMin, xMax, yMax;
-      xMin = yMin = std::numeric_limits<double>::max();
-      xMax = yMax = -xMin;
+      double height, width;
       DrawAnnotation *da = new DrawAnnotation(
           bit, TextAlignType::MIDDLE, "legend", relFontScale, Point2D(0.0, 0.0),
           drawOptions_.legendColour, textDrawer_);
-      da->findExtremes(xMin, xMax, yMin, yMax);
-      total_height += yMax - yMin;
-      total_width = std::max(total_width, xMax - xMin);
+      da->getDimensions(width, height);
+      total_height += height;
+      total_width = std::max(total_width, width);
       delete da;
+      std::cout << "bit : " << bit << " width = " << width << "  height = "
+      << total_height << " : total_width = " << total_width << std::endl;
     }
   };
 
@@ -1371,29 +1383,57 @@ void DrawMol::extractLegend() {
   // work out a font scale that allows the pieces to fit
   double fsize = textDrawer_.fontSize();
   double relFontScale = drawOptions_.legendFontSize / fsize;
+  std::cout << "fsize = " << fsize << "   first relFontScale = " << relFontScale
+            << " giving legend font size of " << fsize * relFontScale << std::endl;
   double total_width, total_height;
 
   calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   if (total_height > legendHeight_) {
+    std::cout << "too high : " << total_height << " vs " << legendHeight_ << std::endl;
     relFontScale *= double(legendHeight_) / total_height;
     calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   }
   if (total_width > width_) {
+    std::cout << "too wide : " << total_width << " vs " << width_ << std::endl;
     relFontScale *= double(width_) / total_width;
     calc_legend_height(legend_bits, relFontScale, total_width, total_height);
+    std::cout << "now wide : " << total_width << " vs " << width_
+              << "  due to " << relFontScale << std::endl;
   }
-  Point2D loc(width_ / 2 + xOffset_, height_ - total_height + yOffset_);
+  std::cout << "fsize = " << fsize << "   final relFontScale = " << relFontScale
+            << " giving final legend font size of " << fsize * relFontScale << std::endl;
+  Point2D loc(width_ / 2 + xOffset_, height_ + yOffset_);
   for (auto bit : legend_bits) {
-    DrawAnnotation *da =
-        new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend", relFontScale,
-                           loc, drawOptions_.legendColour, textDrawer_);
-    double xMin, yMin, xMax, yMax;
-    xMin = yMin = std::numeric_limits<double>::max();
-    xMax = yMax = -xMin;
-    da->findExtremes(xMin, xMax, yMin, yMax);
-
-    loc.y += yMax - yMin;
+    DrawAnnotation *da = new DrawAnnotation(
+        bit, TextAlignType::MIDDLE, "legend", relFontScale, loc,
+        drawOptions_.legendColour, textDrawer_);
     legends_.emplace_back(da);
+    double xmin, xmax, ymin, ymax;
+    xmin = ymin = std::numeric_limits<double>::max();
+    xmax = ymax = -xmin;
+    da->findExtremes(xmin, xmax, ymin, ymax);
+    std::cout << "da pos : " << da->pos_ << "  ymin = " << ymin << "  ymax = "
+              << ymax << "  below = " << da->pos_.y - ymax << " vs "
+              << - (ymax - ymin) / 2.0 << std::endl;
+  }
+  double xmin, xmax, ymin, ymax;
+  xmin = ymin = std::numeric_limits<double>::max();
+  xmax = ymax = -xmin;
+  legends_.back()->findExtremes(xmin, xmax, ymin, ymax);
+  double lastBelow = legends_.back()->pos_.y - ymax;
+  double lastAbove = legends_.back()->pos_.y - ymin;
+  std::cout << "lastBelow = " << lastBelow << "   and above : " << lastAbove << std::endl;
+  legends_.back()->pos_.y += lastBelow;
+  for (int i = legends_.size() - 2; i >= 0; --i) {
+    xmin = ymin = std::numeric_limits<double>::max();
+    xmax = ymax = -xmin;
+    legends_[i]->findExtremes(xmin, xmax, ymin, ymax);
+    double thisBelow = legends_[i]->pos_.y - ymax;
+    double thisAbove = legends_[i]->pos_.y - ymin;
+    std::cout << legends_[i]->text_ << " : " << legends_[i]->pos_ << " : " << thisBelow << " : " << thisAbove
+              << std::endl;
+    legends_[i]->pos_.y = legends_[i + 1]->pos_.y + thisBelow - lastAbove;
+    lastAbove = thisAbove;
   }
 }
 

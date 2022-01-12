@@ -42,6 +42,8 @@ class DrawAnnotation {
   // expects xmin etc to be initialised to something sensible.
   void findExtremes(double &xmin, double &xmax,
                     double &ymin, double &ymax, double padding=0.0) const;
+  void getDimensions(double &width, double &height) const;
+  void extractRects();
   void draw(MolDraw2D &molDrawer) const;
   // this is for debugging almost always.
   void drawRects(MolDraw2D &molDrawer) const;
