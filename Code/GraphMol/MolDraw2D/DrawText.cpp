@@ -89,32 +89,11 @@ bool DrawText::setFontScale(double new_scale, bool ignoreExtremes) {
 // ****************************************************************************
 void DrawText::drawString(const std::string &str, const Point2D &cds,
                           TextAlignType talign) {
-  std::cout << std::endl << "drawString : " << str << " at " << cds << " with " << talign << std::endl;
   std::vector<std::shared_ptr<StringRect>> rects;
   std::vector<TextDrawType> draw_modes;
   std::vector<char> draw_chars;
   getStringRects(str, rects, draw_modes, draw_chars);
-  double xmin = 100000000, xmax = -100000000;
-  for (auto r : rects) {
-    Point2D tl, tr, br, bl;
-    r->calcCorners(tl, tr, br, bl, 0.0);
-    std::cout << "starter trans : " << r->trans_ << "   tl.x : " << tl.x << "  tr.x = " << tr.x
-              << "   offsets : " << r->offset_ << std::endl;
-    xmin = std::min(tl.x, xmin);
-    xmax = std::max(tr.x, xmax);
-  }
-  std::cout << "unaligned width : " << xmax - xmin << std::endl;
   alignString(talign, draw_modes, rects);
-  xmin = 1000000000, xmax = -10000000000;
-  for (auto r : rects) {
-    Point2D tl, tr, br, bl;
-    r->calcCorners(tl, tr, br, bl, 0.0);
-    std::cout << "aligned trans : " << r->trans_ << "   tl.x : " << tl.x << "  tr.x = " << tr.x
-              << "  offsets : " << r->offset_ << std::endl;
-    xmin = std::min(tl.x, xmin);
-    xmax = std::max(tr.x, xmax);
-  }
-  std::cout << "aligned width : " << xmax - xmin << std::endl;
   drawChars(cds, rects, draw_modes, draw_chars);
 }
 
@@ -350,7 +329,6 @@ void DrawText::getStringExtremes(const std::string &label, OrientType orient,
 void DrawText::alignString(
     TextAlignType talign, const std::vector<TextDrawType> &draw_modes,
     std::vector<std::shared_ptr<StringRect>> &rects) const {
-  std::cout << "ALIGNSTRING : " << talign << std::endl;
   // std::string comes in with rects aligned with first char centred on (0,0).
   // Adjust relative to that so that the relative alignment point is at (0,0).
   if (talign == TextAlignType::MIDDLE) {
@@ -360,8 +338,7 @@ void DrawText::alignString(
       talign = TextAlignType::START;
     }
   }
-
-  Point2D align_trans, align_offset;
+  Point2D align_trans;
   if (talign == TextAlignType::START || talign == TextAlignType::END) {
     size_t align_char = 0;
     for (size_t i = 0; i < rects.size(); ++i) {
@@ -372,15 +349,7 @@ void DrawText::alignString(
         }
       }
     }
-    align_trans = rects[align_char]->trans_;
-    if (talign == TextAlignType::START) {
-      align_trans = rects[align_char]->trans_;
-      align_trans.x += rects[align_char]->width_ / 2.0;
-    } else {
-      align_trans = -rects[align_char]->trans_;
-      align_trans.x -= rects[align_char]->width_ / 2.0;
-    }
-    align_offset = rects[align_char]->offset_;
+    align_trans.x = rects[0]->trans_.x - rects[align_char]->trans_.x;
   } else {
     // centre on the middle of the Normal text.  The super- or subscripts
     // should be at the ends.
@@ -388,7 +357,6 @@ void DrawText::alignString(
     double x_max = -x_min;
     double y_min = std::numeric_limits<double>::max();
     double y_max = -y_min;
-    align_offset.x = align_offset.y = 0.0;
     int num_norm = 0;
     size_t align_char = -1;
     for (size_t i = 0; i < rects.size(); ++i) {
@@ -408,36 +376,25 @@ void DrawText::alignString(
         x_max = std::max(tr.x, x_max);
         y_max = std::max(bl.y, y_max);
         y_max = std::max(tr.y, y_max);
-        align_offset += rects[i]->offset_;
         ++num_norm;
       }
     }
     align_char = align_char == -1 ? 0 : align_char;
-    std::cout << "align xmin = " << x_min << " and max : " << x_max << "  so width = " << x_max - x_min << std::endl;
     align_trans.x = -(x_max - x_min - rects[align_char]->width_) / 2.0;
     align_trans.y = 0.0;
-    align_offset /= num_norm;
-    std::cout << "align char : " << align_char << std::endl;
-    align_offset = rects[align_char]->offset_;
-    std::cout << "align trans : " << align_trans << "   align offset : " << align_offset << std::endl;
-//    align_trans = Point2D(rects.front()->width_ / 2, 0);
   }
 
   for (auto r : rects) {
     r->trans_ += align_trans;
   }
-  Point2D tl, tr, br, bl;
-  rects.front()->calcCorners(tl, tr, br, bl, 0.0);
-  std::cout << "far left : " << tl.x;
-  rects.back()->calcCorners(tl, tr, br, bl, 0.0);
-  std::cout << "   far right : " << tr.x << std::endl;
 }
 
 // ****************************************************************************
 void DrawText::adjustStringRectsForSuperSubScript(
     const std::vector<TextDrawType> &draw_modes,
     std::vector<std::shared_ptr<StringRect>> &rects) const {
-  double last_char = -1;
+  int last_char = -1;
+
   for (size_t i = 0; i < draw_modes.size(); ++i) {
     switch (draw_modes[i]) {
       case TextDrawType::TextDrawSuperscript:
@@ -454,43 +411,28 @@ void DrawText::adjustStringRectsForSuperSubScript(
         // adjust up by last height / 2.
         rects[i]->rect_corr_ = rects[last_char]->height_;
         rects[i]->trans_.y -= rects[i]->rect_corr_ / 2.0;
-        // if the last char was a subscript, remove the advance
-        if (i && draw_modes[i - 1] == TextDrawType::TextDrawSubscript) {
-          double move_by = rects[i]->trans_.x - rects[i - 1]->trans_.x;
-          if (move_by > 0.0) {
-            for (size_t j = 0; j < i; ++j) {
-              rects[j]->trans_.x += move_by;
-            }
-          } else {
-            for (size_t j = i; j < draw_modes.size(); ++j) {
-              rects[j]->trans_.x += move_by;
-            }
-          }
-          rects[i]->trans_.x = rects[i - 1]->trans_.x;
-        }
         break;
       case TextDrawType::TextDrawSubscript:
         // adjust y down by last height / 2
         rects[i]->rect_corr_ = -rects[last_char]->height_;
         rects[i]->trans_.y -= rects[i]->rect_corr_ / 2.0;
-        // if the last char was a superscript, remove the advance
-        if (i && draw_modes[i - 1] == TextDrawType::TextDrawSuperscript) {
-          double move_by = rects[i]->trans_.x - rects[i - 1]->trans_.x;
-          if (move_by > 0.0) {
-            for (size_t j = 0; j < i; ++j) {
-              rects[j]->trans_.x += move_by;
-            }
-          } else {
-            for (size_t j = i; j < draw_modes.size(); ++j) {
-              rects[j]->trans_.x += move_by;
-            }
-          }
-          rects[i]->trans_.x = rects[i - 1]->trans_.x;
-        }
         break;
       case TextDrawType::TextDrawNormal:
         last_char = i;
         break;
+    }
+  }
+
+  // contiguous sub- and super-scripts go at the same x.
+  for (auto i = 1; i < rects.size(); ++i) {
+    if ((draw_modes[i] == TextDrawType::TextDrawSubscript &&
+         draw_modes[i - 1] == TextDrawType::TextDrawSuperscript) ||
+        (draw_modes[i - 1] == TextDrawType::TextDrawSubscript &&
+         draw_modes[i] == TextDrawType::TextDrawSuperscript)) {
+      double moveBack = rects[i]->trans_.x - rects[i - 1]->trans_.x;
+      for (auto j = i; j < rects.size(); ++j) {
+        rects[j]->trans_.x -= moveBack;
+      }
     }
   }
 }

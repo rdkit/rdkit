@@ -376,8 +376,7 @@ void check_file_hash(const std::string &filename,
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
   {
-    std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
-    ROMol *m = SmilesToMol(smiles);
+    auto m = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]"_smiles;
     TEST_ASSERT(m);
     RDDepict::compute2DCoords(*m);
     WedgeMolBonds(*m, &(m->getConformer()));
@@ -388,7 +387,6 @@ void test1() {
     outs.flush();
     outs.close();
     check_file_hash("test1_1.svg");
-    delete m;
   }
   {
     // make sure this works with the stringstream too:
@@ -1148,11 +1146,11 @@ void test6() {
     outs.close();
     // start of bond-0
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 192.7,116.8") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 187.9,118.2") !=
         std::string::npos);
     // start of first radical spot
     TEST_ASSERT(
-        txt.find("<path class='atom-1' d='M 43.1,189.4 L 43.1,189.6") !=
+        txt.find("<path class='atom-1' d='M 43.1,188.0 L 43.1,188.2") !=
         std::string::npos);
     check_file_hash(nameBase + ".svg");
   }
@@ -1372,10 +1370,10 @@ void testGithub781() {
     check_file_hash("testGithub781_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // the start of the C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 118.7 143.0") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 116.4 143.0") !=
                 std::string::npos)
     // the start of the H
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 144.0 128.9") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 145.0 128.9") !=
                 std::string::npos)
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1400,10 +1398,10 @@ void testGithub781() {
     check_file_hash("testGithub781_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of the H
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 118.0 128.9") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 116.2 128.9") !=
                 std::string::npos);
     // start of the O
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 141.5 156.2") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 141.3 156.2") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find("<tspan>OH</tspan>") == std::string::npos);
@@ -1453,10 +1451,10 @@ void testGithub781() {
     check_file_hash("testGithub781_4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // start of C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 36.8 193.9") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 40.7 192.9") !=
                 std::string::npos);
     // start of l
-    TEST_ASSERT(txt.find("<path class='atom-3' d='M 45.9 77.8") !=
+    TEST_ASSERT(txt.find("<path class='atom-3' d='M 49.7 78.7") !=
                 std::string::npos);
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -1504,10 +1502,10 @@ void testGithub781() {
     check_file_hash("testGithub781_6.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // the start of the C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 89.0 97.6") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 88.2 97.6") !=
                 std::string::npos)
     // the start of the H
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 97.9 92.6") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 98.3 92.6") !=
                 std::string::npos)
 #else
     TEST_ASSERT(txt.find(">C</text>") != std::string::npos);
@@ -2002,8 +2000,8 @@ M  END";
     outs.close();
     check_file_hash("test983_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 103.7,117.6 "
-                          "L 72.3,99.9 L 76.9,93.4 Z' style='fill:#000000;") !=
+    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 102.6,117.3 "
+                          "L 71.5,99.9 L 76.2,93.4 Z' style='fill:#000000;") !=
                 std::string::npos);
 #else
     TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 105.1,114.8"
@@ -2552,8 +2550,8 @@ void test13JSONConfig() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.4,8.2 L "
-                          "162.9,83.6'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 120.3,8.2 L "
+                          "163.8,83.6'") != std::string::npos);
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
                 std::string::npos);
@@ -2995,7 +2993,7 @@ void test16MoleculeMetadata() {
       outs.flush();
       outs.close();
       check_file_hash("test16_1.svg");
-      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"55.") !=
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"54.") !=
                   std::string::npos);
       TEST_ASSERT(text.find("idx=\"2\" begin-atom-idx=\"2\" end-atom-idx=\"3\" "
                             "bond-smiles=\"-\"") != std::string::npos);
@@ -3016,10 +3014,10 @@ void test16MoleculeMetadata() {
       outs.close();
       check_file_hash("test16_2.svg");
 
-      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"55.") !=
+      TEST_ASSERT(text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"54.") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"255.") !=
+          text.find("idx=\"2\" atom-smiles=\"[NH]\" drawing-x=\"254.") !=
           std::string::npos);
 
       for (auto ptr : ms) {
@@ -3139,7 +3137,7 @@ M  END
       outs.close();
       check_file_hash(nameBase + "4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path class='atom-8' d='M 166.6 92.6") !=
+      TEST_ASSERT(text.find("<path class='atom-8' d='M 166.9 92.6") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:12px") != std::string::npos);
@@ -3170,7 +3168,7 @@ void test18FixedScales() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the l is a poor surrogate for checking
       // the font size, but all we have.
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 283.2 137.0") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 258.9 150.8") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:33px") != std::string::npos);
@@ -3190,7 +3188,7 @@ void test18FixedScales() {
       check_file_hash(nameBase + "2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
       // where it starts drawing the l.
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 185.0 146.6") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 178.9 150.2") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("font-size:9px") != std::string::npos);
@@ -3283,7 +3281,7 @@ void test19RotateDrawing() {
       outs.close();
       check_file_hash(nameBase + "1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 283.2 137.0") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 258.9 150.8") !=
                   std::string::npos);
 #else
       TEST_ASSERT(text.find("<text x='256.8' y='166.9' class='atom-0'") !=
@@ -3606,7 +3604,7 @@ void testGithub3112() {
     check_file_hash("testGithub3112_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // this is the b
-    TEST_ASSERT(text.find("<path class='legend' d='M 126.9 183.1") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='legend' d='M 130.9 189.1") != std::string::npos);
 #else
     TEST_ASSERT(text.find("<text x='121.0' y='195.2'"
                           " style='font-size:15px;font-style:normal;"
@@ -3629,7 +3627,7 @@ void testGithub3112() {
     check_file_hash("testGithub3112_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // this is the b on the 2nd line.
-    TEST_ASSERT(text.find("<path class='legend' d='M 117.4 189.2") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='legend' d='M 119.5 193.7") != std::string::npos);
 #else
     TEST_ASSERT(text.find("<text x='110.1' y='196.2'"
                           " style='font-size:12px;font-style:normal;"
@@ -3654,7 +3652,7 @@ void testGithub3112() {
     check_file_hash("testGithub3112_3.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The first letter, N.
-    TEST_ASSERT(text.find("<path class='legend' d='M -1.4 187.2") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='legend' d='M 0.9 192.6") != std::string::npos);
 #else
     TEST_ASSERT(text.find("<text x='-2.5' y='196.8'"
                           " style='font-size:10px;font-style:normal;"
@@ -3679,7 +3677,7 @@ void testGithub3112() {
     check_file_hash("testGithub3112_4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // The first letter, N
-    TEST_ASSERT(text.find("<path class='legend' d='M 58.3 176.7") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='legend' d='M 45.1 180.5") != std::string::npos);
 #else
     TEST_ASSERT(text.find("<text x='50.2' y='186.2'"
                           " style='font-size:12px;font-style:normal;"
@@ -3733,7 +3731,7 @@ void test20Annotate() {
     check_file_hash("test20_1.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // first note (atom 0)
-    TEST_ASSERT(text.find("<path class='note' d='M 51.8 121.6") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 49.6 120.9") !=
                 std::string::npos);
 #else
     // first one of atom note 11
@@ -3770,7 +3768,7 @@ void test20Annotate() {
     check_file_hash("test20_2.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // last note
-    TEST_ASSERT(text.find("<path class='note' d='M 277.4 228.3") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 274.7 236.3") !=
                 std::string::npos);
 #else
     // this is the (E)
@@ -3810,7 +3808,7 @@ void test20Annotate() {
     check_file_hash("test20_3.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // first note
-    TEST_ASSERT(text.find("<path class='note' d='M 162.3 179.3") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 152.8 177.3") !=
                 std::string::npos);
 #else
     // f of foolish
@@ -3846,7 +3844,7 @@ void test20Annotate() {
     check_file_hash("test20_4.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     // first note (atom 0)
-    TEST_ASSERT(text.find("<path class='note' d='M 20.7 48.6") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 19.8 48.4") !=
                 std::string::npos);
 #else
     // first one of atom note 11

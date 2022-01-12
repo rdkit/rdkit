@@ -132,9 +132,9 @@ void DrawTextFT::getStringRects(const std::string &text,
                                 std::vector<std::shared_ptr<StringRect>> &rects,
                                 std::vector<TextDrawType> &draw_modes,
                                 std::vector<char> &draw_chars) const {
-  std::cout << "getStringRects" << std::endl;
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
-  double running_x = 0.0, max_y = 0.0;
+  double max_y = 0.0;
+  std::vector<double> extras;
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
@@ -152,6 +152,7 @@ void DrawTextFT::getStringRects(const std::string &text,
     double p_y_max = oscale * fontCoordToDrawCoord(this_y_max);
     double p_advance = oscale * fontCoordToDrawCoord(advance);
     double width = p_x_max - p_x_min;
+    extras.push_back(p_advance - width);
     if (!this_x_max) {
       // it was a space, probably.
       width = p_advance;
@@ -161,17 +162,16 @@ void DrawTextFT::getStringRects(const std::string &text,
     Point2D g_centre(offset.x, p_y_max - height / 2.0);
     rects.push_back(std::shared_ptr<StringRect>(
         new StringRect(offset, g_centre, width, height)));
-    if (i) {
-      rects[i]->trans_.x = rects[i - 1]->trans_.x + rects[i - 1]->width_ / 2 +
-                           rects[i]->width_ / 2;
-    }
     draw_modes.push_back(draw_mode);
-    running_x += this_x_max ? p_x_max : p_advance;
     max_y = std::max(max_y, p_y_max);
   }
-  for (auto r : rects) {
-    r->g_centre_.y = max_y - r->g_centre_.y;
-    r->offset_.y = max_y / 2.0;
+  for (auto i = 0; i < rects.size(); ++i) {
+    rects[i]->g_centre_.y = max_y - rects[i]->g_centre_.y;
+    rects[i]->offset_.y = max_y / 2.0;
+    if (i) {
+      rects[i]->trans_.x = rects[i - 1]->trans_.x + rects[i - 1]->width_ / 2 +
+                           rects[i]->width_ / 2 + extras[i];
+    }
   }
 
   adjustStringRectsForSuperSubScript(draw_modes, rects);

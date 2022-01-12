@@ -94,18 +94,10 @@ void DrawAnnotation::draw(MolDraw2D &molDrawer) const {
     textDrawer_.setColour(colour_);
     double ofs = textDrawer_.fontScale();
     textDrawer_.setFontScale(relFontScale_ * ofs, true);
-    std::cout << "fonts : " << ofs << " : " << relFontScale_ << " : "
-              << textDrawer_.fontScale() << "  font size : " << textDrawer_.fontSize()
-              << "  and legendFontSize : " << molDrawer.drawOptions().legendFontSize << std::endl;
-    double xmin, xmax, ymin, ymax;
-    xmin = ymin = 10000000000;
-    xmax = ymax = -ymin;
-    findExtremes(xmin, xmax, ymin, ymax);
-    std::cout << "extremes : " << xmin << " to " << xmax << "  width = " << xmax - xmin << std::endl;
     textDrawer_.drawString(text_, pos_, align_);
     textDrawer_.setFontScale(ofs, true);
     molDrawer.setActiveClass(o_class);
-    drawRects(molDrawer);
+//    drawRects(molDrawer);
 }
 
 // ****************************************************************************
@@ -132,7 +124,6 @@ void DrawAnnotation::drawRects(MolDraw2D &molDrawer) const {
 
 // ****************************************************************************
 void DrawAnnotation::scale(const Point2D &scaleFactor) {
-  std::cout << "scaling font by : " << scaleFactor << "  relfontscale = " << relFontScale_ << std::endl;
   pos_.x *= scaleFactor.x;
   pos_.y *= scaleFactor.y;
   // rebuild the rectangles, because the fontScale may be different,
