@@ -33,7 +33,8 @@ void SetUnspecifiedBondTypes(RDKit::RWMol *mol);
 void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
 void CleanupAfterParsing(RDKit::RWMol *mol);
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
-                       std::string::const_iterator &pos);
+                       std::string::const_iterator &pos,
+                       unsigned int startAtomIdx = 0);
 //! removes formal charge, isotope, etc. Primarily useful for QueryAtoms
 void ClearAtomChemicalProps(RDKit::Atom *atom);
 };  // namespace SmilesParseOps

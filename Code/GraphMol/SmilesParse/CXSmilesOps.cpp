@@ -310,7 +310,8 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
 }  // end of anonymous namespace
 
 template <typename Iterator>
-bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                       unsigned int startAtomIdx) {
   if (first >= last || *first != ':') {
     return false;
   }
@@ -335,7 +336,8 @@ bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                      unsigned int startAtomIdx) {
   if (first >= last) {
     return false;
   }
@@ -372,7 +374,8 @@ bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                       unsigned int startAtomIdx) {
   if (first >= last || *first != '$') {
     return false;
   }
@@ -397,7 +400,8 @@ bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                  unsigned int startAtomIdx) {
   if (first >= last || *first != '(') {
     return false;
   }
@@ -438,7 +442,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 
 template <typename Iterator>
 bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
-                            Bond::BondType typ) {
+                            Bond::BondType typ, unsigned int startAtomIdx) {
   if (first >= last || (*first != 'C' && *first != 'H')) {
     return false;
   }
@@ -483,7 +487,8 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
 }
 
 template <typename Iterator>
-bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                        unsigned int startAtomIdx) {
   if (first + 1 >= last || *first != 'u') {
     return false;
   }
@@ -510,7 +515,8 @@ bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_ring_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_ring_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                      unsigned int startAtomIdx) {
   if (first >= last || *first != 'r' || first + 1 >= last ||
       *(first + 1) != 'b' || first + 2 >= last || *(first + 2) != ':') {
     return false;
@@ -571,7 +577,8 @@ bool parse_ring_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                     unsigned int startAtomIdx) {
   // these look like: |LN:1:1.3.2.6,4:1.4.3.6|
   // that's two records:
   //   1:1.3.2.6: 1-3 repeats, atom 1-2, 1-6
@@ -643,7 +650,8 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                       unsigned int startAtomIdx) {
   // these look like: |SgD:2,1:FIELD:info::::|
   // example from CXSMILES docs:
   //    SgD:3,2,1,0:name:data:like:unit:t:(1.,1.)
@@ -712,7 +720,8 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                            unsigned int startAtomIdx) {
   // these look like: |SgH:1:0|
   // from CXSMILES docs:
   //    SgH:parentSgroupIndex1:childSgroupIndex1.childSgroupIndex2,parentSgroupIndex2:childSgroupIndex1
@@ -758,7 +767,8 @@ bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                          unsigned int startAtomIdx) {
   // these look like:
   //    |Sg:n:6,1,2,4::hh&#44;f:6,0,:4,2,|
   // example from CXSMILES docs:
@@ -847,7 +857,7 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 
 template <typename Iterator>
 bool parse_variable_attachments(Iterator &first, Iterator last,
-                                RDKit::RWMol &mol) {
+                                RDKit::RWMol &mol, unsigned int startAtomIdx) {
   // these look like: CO*.C1=CC=NC=C1 |m:2:3.5.4|
   // that corresponds to replacing the bond to atom 2 with bonds to atom 3, 5,
   // or 4
@@ -905,7 +915,8 @@ bool parse_variable_attachments(Iterator &first, Iterator last,
   return true;
 }
 template <typename Iterator>
-bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                        unsigned int startAtomIdx) {
   if (first >= last || *first != 's' || first + 1 >= last ||
       *(first + 1) != ':') {
     return false;
@@ -946,7 +957,8 @@ bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 
 template <typename Iterator>
 bool processRadicalSection(Iterator &first, Iterator last, RDKit::RWMol &mol,
-                           unsigned int numRadicalElectrons) {
+                           unsigned int numRadicalElectrons,
+                           unsigned int startAtomIdx) {
   if (first >= last) {
     return false;
   }
@@ -977,7 +989,8 @@ bool processRadicalSection(Iterator &first, Iterator last, RDKit::RWMol &mol,
 }
 
 template <typename Iterator>
-bool parse_radicals(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_radicals(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                    unsigned int startAtomIdx) {
   if (first >= last || *first != '^') {
     return false;
   }
@@ -991,21 +1004,21 @@ bool parse_radicals(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     }
     switch (*first) {
       case '1':
-        if (!processRadicalSection(first, last, mol, 1)) {
+        if (!processRadicalSection(first, last, mol, 1, startAtomIdx)) {
           return false;
         }
         break;
       case '2':
       case '3':
       case '4':
-        if (!processRadicalSection(first, last, mol, 2)) {
+        if (!processRadicalSection(first, last, mol, 2, startAtomIdx)) {
           return false;
         }
         break;
       case '5':
       case '6':
       case '7':
-        if (!processRadicalSection(first, last, mol, 3)) {
+        if (!processRadicalSection(first, last, mol, 3, startAtomIdx)) {
           return false;
         }
         break;
@@ -1018,7 +1031,8 @@ bool parse_radicals(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                           unsigned int startAtomIdx) {
   StereoGroupType group_type = StereoGroupType::STEREO_ABSOLUTE;
   if (*first == 'a') {
     group_type = StereoGroupType::STEREO_ABSOLUTE;
@@ -1068,7 +1082,8 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }
 
 template <typename Iterator>
-bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
+bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
+              unsigned int startAtomIdx) {
   if (first >= last || *first != '|') {
     return false;
   }
@@ -1076,75 +1091,77 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   while (first < last && *first != '|') {
     typename Iterator::difference_type length = std::distance(first, last);
     if (*first == '(') {
-      if (!parse_coords(first, last, mol)) {
+      if (!parse_coords(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == '$') {
       if (length > 4 && *(first + 1) == '_' && *(first + 2) == 'A' &&
           *(first + 3) == 'V' && *(first + 4) == ':') {
         first += 4;
-        if (!parse_atom_values(first, last, mol)) {
+        if (!parse_atom_values(first, last, mol, startAtomIdx)) {
           return false;
         }
       } else {
-        if (!parse_atom_labels(first, last, mol)) {
+        if (!parse_atom_labels(first, last, mol, startAtomIdx)) {
           return false;
         }
       }
     } else if (length > 9 && std::string(first, first + 9) == "atomProp:") {
       first += 9;
-      if (!parse_atom_props(first, last, mol)) {
+      if (!parse_atom_props(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'C') {
-      if (!parse_coordinate_bonds(first, last, mol, Bond::DATIVE)) {
+      if (!parse_coordinate_bonds(first, last, mol, Bond::DATIVE,
+                                  startAtomIdx)) {
         return false;
       }
     } else if (*first == 'H') {
-      if (!parse_coordinate_bonds(first, last, mol, Bond::HYDROGEN)) {
+      if (!parse_coordinate_bonds(first, last, mol, Bond::HYDROGEN,
+                                  startAtomIdx)) {
         return false;
       }
     } else if (*first == '^') {
-      if (!parse_radicals(first, last, mol)) {
+      if (!parse_radicals(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'a' || *first == 'o' ||
                (*first == '&' && first + 1 < last && first[1] != '#')) {
-      if (!parse_enhanced_stereo(first, last, mol)) {
+      if (!parse_enhanced_stereo(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'r' && first + 1 < last && first[1] == 'b') {
-      if (!parse_ring_bonds(first, last, mol)) {
+      if (!parse_ring_bonds(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'L' && first + 1 < last && first[1] == 'N') {
-      if (!parse_linknodes(first, last, mol)) {
+      if (!parse_linknodes(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'S' && first + 2 < last && first[1] == 'g' &&
                first[2] == 'D') {
-      if (!parse_data_sgroup(first, last, mol)) {
+      if (!parse_data_sgroup(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'S' && first + 2 < last && first[1] == 'g' &&
                first[2] == 'H') {
-      if (!parse_sgroup_hierarchy(first, last, mol)) {
+      if (!parse_sgroup_hierarchy(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'S' && first + 1 < last && first[1] == 'g') {
-      if (!parse_polymer_sgroup(first, last, mol)) {
+      if (!parse_polymer_sgroup(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'u') {
-      if (!parse_unsaturation(first, last, mol)) {
+      if (!parse_unsaturation(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 's') {
-      if (!parse_substitution(first, last, mol)) {
+      if (!parse_substitution(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else if (*first == 'm') {
-      if (!parse_variable_attachments(first, last, mol)) {
+      if (!parse_variable_attachments(first, last, mol, startAtomIdx)) {
         return false;
       }
     } else {
@@ -1161,7 +1178,8 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 }  // namespace parser
 
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
-                       std::string::const_iterator &first) {
+                       std::string::const_iterator &first,
+                       unsigned int startAtomIdx) {
   // BOOST_LOG(rdWarningLog) << "parseCXNExtensions: " << extText << std::endl;
   if (extText.empty()) {
     return;
@@ -1171,7 +1189,7 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
         "CXSMILES extension does not start with |");
   }
   first = extText.begin();
-  bool ok = parser::parse_it(first, extText.end(), mol);
+  bool ok = parser::parse_it(first, extText.end(), mol, startAtomIdx);
   if (!ok) {
     throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
   }
