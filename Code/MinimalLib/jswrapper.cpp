@@ -20,12 +20,12 @@ using namespace RDKit;
 
 namespace RDKit {
 namespace MinimalLib {
-extern std::string process_details(const std::string &details,
-                                   unsigned int &width, unsigned int &height,
-                                   int &offsetx, int &offsety,
-                                   std::string &legend,
-                                   std::vector<int> &atomIds,
-                                   std::vector<int> &bondIds);
+extern std::string process_details(
+    const std::string &details, unsigned int &width, unsigned int &height,
+    int &offsetx, int &offsety, std::string &legend, std::vector<int> &atomIds,
+    std::vector<int> &bondIds, std::map<int, DrawColour> &highlight_atom_map,
+    std::map<int, DrawColour> &highlight_bond_map,
+    std::map<int, double> &highlight_radii);
 }
 }  // namespace RDKit
 
@@ -61,6 +61,9 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
 
   std::vector<int> atomIds;
   std::vector<int> bondIds;
+  std::map<int, DrawColour> ham;
+  std::map<int, DrawColour> hbm;
+  std::map<int, double> highlight_radii;
 
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
 
@@ -69,8 +72,9 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   int offsetx = 0;
   int offsety = 0;
   std::string legend = "";
-  auto problems = MinimalLib::process_details(details, w, h, offsetx, offsety,
-                                              legend, atomIds, bondIds);
+  auto problems =
+      MinimalLib::process_details(details, w, h, offsetx, offsety, legend,
+                                  atomIds, bondIds, ham, hbm, highlight_radii);
   if (!problems.empty()) {
     return problems;
   }
@@ -82,7 +86,8 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   d2d->setOffset(offsetx, offsety);
 
   MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *self.d_mol, legend, &atomIds,
-                                         &bondIds);
+                                         &bondIds, &ham, &hbm,
+                                         &highlight_radii);
   delete d2d;
   return "";
 }

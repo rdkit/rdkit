@@ -181,10 +181,33 @@ RWMol *qmol_from_input(const std::string &input, const char *details_json) {
   return qmol_from_input(input, json);
 }
 
+DrawColour process_json_color(const rj::Value &value) {
+  if (!value.IsArray()) throw("Color should be array");
+  if (value.Size() != 3 && 4 != value.Size()) {
+    throw("Color should have 3 or 4 elements");
+  }
+  auto rgba = value.GetArray();
+  auto alpha = 1.0;
+  if (!rgba[0].IsNumber()) throw("Red value should be number");
+  if (!rgba[1].IsNumber()) throw("Green value should be number");
+  if (!rgba[2].IsNumber()) throw("Blue value should be number");
+
+  if (value.Size() == 4) {
+    if (!rgba[3].IsNumber()) throw("Alpha value should be number");
+    alpha = rgba[3].GetDouble();
+  }
+
+  return DrawColour(rgba[0].GetDouble(), rgba[1].GetDouble(),
+                    rgba[2].GetDouble(), alpha);
+}
+
 std::string process_details(const std::string &details, unsigned int &width,
                             unsigned int &height, int &offsetx, int &offsety,
                             std::string &legend, std::vector<int> &atomIds,
-                            std::vector<int> &bondIds) {
+                            std::vector<int> &bondIds,
+                            std::map<int, DrawColour> &highlight_atom_map,
+                            std::map<int, DrawColour> &highlight_bond_map,
+                            std::map<int, double> &highlight_radii) {
   rj::Document doc;
   doc.Parse(details.c_str());
   if (!doc.IsObject()) return "Invalid JSON";
@@ -205,6 +228,66 @@ std::string process_details(const std::string &details, unsigned int &width,
     for (const auto &molval : doc["bonds"].GetArray()) {
       if (!molval.IsInt()) return ("Bond IDs should be integers");
       bondIds.push_back(molval.GetInt());
+    }
+  }
+
+  if (doc.HasMember("highlightAtomMap")) {
+    if (!doc["highlightAtomMap"].IsObject()) {
+      return "JSON contain 'highlightAtomMap' field, but it is not an object";
+    }
+    for (const auto &atomval : doc["highlightAtomMap"].GetObject()) {
+      int key;
+      try {
+        key = boost::lexical_cast<int>(atomval.name.GetString());
+      } catch (boost::bad_lexical_cast &) {
+        return ("Atom IDs should be integers");
+      }
+
+      try {
+        highlight_atom_map[key] = process_json_color(atomval.value);
+      } catch (const char *msg) {
+        return msg;
+      }
+    }
+  }
+
+  if (doc.HasMember("highlightBondMap")) {
+    if (!doc["highlightBondMap"].IsObject()) {
+      return "JSON contain 'highlightBondMap' field, but it is not an object";
+    }
+    for (const auto &bondval : doc["highlightBondMap"].GetObject()) {
+      int key;
+      try {
+        key = boost::lexical_cast<int>(bondval.name.GetString());
+      } catch (boost::bad_lexical_cast &) {
+        return ("Bond IDs should be integers");
+      }
+
+      try {
+        highlight_bond_map[key] = process_json_color(bondval.value);
+      } catch (const char *msg) {
+        return msg;
+      }
+    }
+  }
+
+  if (doc.HasMember("highlightRadii")) {
+    if (!doc["highlightRadii"].IsObject()) {
+      return "JSON contain 'highlightRadii' field, but it is not an object";
+    }
+
+    for (const auto &atomval : doc["highlightRadii"].GetObject()) {
+      int key;
+      try {
+        key = boost::lexical_cast<int>(atomval.name.GetString());
+      } catch (boost::bad_lexical_cast &) {
+        return ("Atom IDs should be integers");
+      }
+
+      if (!atomval.value.IsNumber()) {
+        return ("Highlight radii should be number ");
+      }
+      highlight_radii[key] = atomval.value.GetDouble();
     }
   }
 
@@ -276,11 +359,15 @@ std::string mol_to_svg(const ROMol &m, unsigned int w, unsigned int h,
                        const std::string &details = "") {
   std::vector<int> atomIds;
   std::vector<int> bondIds;
+  std::map<int, DrawColour> ham;
+  std::map<int, DrawColour> hbm;
+  std::map<int, double> highlight_radii;
   std::string legend = "";
   int offsetx = 0, offsety = 0;
   if (!details.empty()) {
-    auto problems = process_details(details, w, h, offsetx, offsety, legend,
-                                    atomIds, bondIds);
+    auto problems =
+        process_details(details, w, h, offsetx, offsety, legend, atomIds,
+                        bondIds, ham, hbm, highlight_radii);
     if (!problems.empty()) {
       return problems;
     }
@@ -292,7 +379,8 @@ std::string mol_to_svg(const ROMol &m, unsigned int w, unsigned int h,
   }
   drawer.setOffset(offsetx, offsety);
 
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds);
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds,
+                                         &ham, &hbm, &highlight_radii);
   drawer.finishDrawing();
 
   return drawer.getDrawingText();
