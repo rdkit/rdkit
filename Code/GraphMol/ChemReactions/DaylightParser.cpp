@@ -114,10 +114,11 @@ ROMol *constructMolFromString(const std::string &txt,
 }  // end of namespace DaylightParserUtils
 
 ChemicalReaction *RxnSmartsToChemicalReaction(
-    const std::string &text, std::map<std::string, std::string> *replacements,
-    bool useSmiles) {
+    const std::string &origText,
+    std::map<std::string, std::string> *replacements, bool useSmiles,
+    bool allowCXSMILES) {
+  auto text = origText;
   std::vector<std::size_t> pos;
-
   for (std::size_t i = 0; i < text.length(); ++i) {
     if (text[i] == '>' && (i == 0 || text[i - 1] != '-')) {
       pos.push_back(i);
@@ -129,27 +130,25 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
         "a reaction requires at least two > characters");
   }
 
-  std::size_t pos1 = pos[0];
-  std::size_t pos2 = pos[1];
+  auto pos1 = pos[0];
+  auto pos2 = pos[1];
 
   if (pos.size() > 2) {
     throw ChemicalReactionParserException("multi-step reactions not supported");
   }
 
-  std::string reactText = text.substr(0, pos1);
+  auto reactText = text.substr(0, pos1);
   std::string agentText;
   if (pos2 != pos1 + 1) {
     agentText = text.substr(pos1 + 1, (pos2 - pos1) - 1);
   }
-  std::string productText = text.substr(pos2 + 1);
+  auto productText = text.substr(pos2 + 1);
 
   // recognize changes within the same molecules, e.g., intra molecular bond
-  // formation
-  // therefore we need to correctly interpret parenthesis and dots in the
-  // reaction smarts
-  std::vector<std::string> reactSmarts =
-      DaylightParserUtils::splitSmartsIntoComponents(reactText);
-  std::vector<std::string> productSmarts =
+  // formation therefore we need to correctly interpret parenthesis and dots in
+  // the reaction smarts
+  auto reactSmarts = DaylightParserUtils::splitSmartsIntoComponents(reactText);
+  auto productSmarts =
       DaylightParserUtils::splitSmartsIntoComponents(productText);
 
   // if the input includes CX extensions, they will show up here after the
@@ -172,9 +171,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   auto *rxn = new ChemicalReaction();
 
   for (const auto &txt : reactSmarts) {
-    ROMol *mol;
-    mol = DaylightParserUtils::constructMolFromString(txt, replacements,
-                                                      useSmiles);
+    auto mol = DaylightParserUtils::constructMolFromString(txt, replacements,
+                                                           useSmiles);
     if (!mol) {
       std::string errMsg = "Problems constructing reactant from SMARTS: ";
       errMsg += txt;
@@ -185,9 +183,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   }
 
   for (const auto &txt : productSmarts) {
-    ROMol *mol;
-    mol = DaylightParserUtils::constructMolFromString(txt, replacements,
-                                                      useSmiles);
+    auto mol = DaylightParserUtils::constructMolFromString(txt, replacements,
+                                                           useSmiles);
     if (!mol) {
       std::string errMsg = "Problems constructing product from SMARTS: ";
       errMsg += txt;
@@ -198,10 +195,9 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   }
   updateProductsStereochem(rxn);
 
-  ROMol *agentMol;
   // allow a reaction template to have no agent specified
   if (agentText.size() != 0) {
-    agentMol = DaylightParserUtils::constructMolFromString(
+    auto agentMol = DaylightParserUtils::constructMolFromString(
         agentText, replacements, useSmiles);
     if (!agentMol) {
       std::string errMsg = "Problems constructing agent from SMARTS: ";
