@@ -309,6 +309,9 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
 
 }  // end of anonymous namespace
 
+#define VALID_ATIDX(_atidx_) \
+  ((_atidx_) >= startAtomIdx && (_atidx_) < startAtomIdx + mol.getNumAtoms())
+
 template <typename Iterator>
 bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol,
                        unsigned int startAtomIdx) {
@@ -319,7 +322,7 @@ bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol,
   unsigned int atIdx = 0;
   while (first != last && *first != '$') {
     std::string tkn = read_text_to(first, last, ";$");
-    if (tkn != "") {
+    if (tkn != "" && VALID_ATIDX(atIdx)) {
       mol.getAtomWithIdx(atIdx)->setProp(RDKit::common_properties::molFileValue,
                                          tkn);
     }
@@ -349,14 +352,14 @@ bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
       ++first;
       std::string pname = read_text_to(first, last, ".");
-      if (pname != "") {
+      if (!pname.empty()) {
         if (first == last || *first != '.') {
           return false;
         }
         ++first;
         std::string pval = read_text_to(first, last, ":|,");
-        if (pval != "") {
-          mol.getAtomWithIdx(atIdx)->setProp(pname, pval);
+        if (VALID_ATIDX(atIdx) && !pval.empty()) {
+          mol.getAtomWithIdx(atIdx - startAtomIdx)->setProp(pname, pval);
         }
       }
     }
@@ -383,9 +386,9 @@ bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol,
   unsigned int atIdx = 0;
   while (first != last && *first != '$') {
     std::string tkn = read_text_to(first, last, ";$");
-    if (tkn != "") {
-      mol.getAtomWithIdx(atIdx)->setProp(RDKit::common_properties::atomLabel,
-                                         tkn);
+    if (!tkn.empty() && VALID_ATIDX(atIdx)) {
+      mol.getAtomWithIdx(atIdx - startAtomIdx)
+          ->setProp(RDKit::common_properties::atomLabel, tkn);
     }
     ++atIdx;
     if (first != last && *first != '$') {
@@ -413,21 +416,23 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
   while (first != last && *first != ')') {
     RDGeom::Point3D pt;
     std::string tkn = read_text_to(first, last, ";)");
-    if (tkn != "") {
-      std::vector<std::string> tokens;
-      boost::split(tokens, tkn, boost::is_any_of(std::string(",")));
-      if (tokens.size() >= 1 && tokens[0].size()) {
-        pt.x = boost::lexical_cast<double>(tokens[0]);
+    if (VALID_ATIDX(atIdx)) {
+      if (!tkn.empty()) {
+        std::vector<std::string> tokens;
+        boost::split(tokens, tkn, boost::is_any_of(std::string(",")));
+        if (tokens.size() >= 1 && tokens[0].size()) {
+          pt.x = boost::lexical_cast<double>(tokens[0]);
+        }
+        if (tokens.size() >= 2 && tokens[1].size()) {
+          pt.y = boost::lexical_cast<double>(tokens[1]);
+        }
+        if (tokens.size() >= 3 && tokens[2].size()) {
+          pt.z = boost::lexical_cast<double>(tokens[2]);
+        }
       }
-      if (tokens.size() >= 2 && tokens[1].size()) {
-        pt.y = boost::lexical_cast<double>(tokens[1]);
-      }
-      if (tokens.size() >= 3 && tokens[2].size()) {
-        pt.z = boost::lexical_cast<double>(tokens[2]);
-      }
-    }
 
-    conf->setAtomPos(atIdx, pt);
+      conf->setAtomPos(atIdx - startAtomIdx, pt);
+    }
     ++atIdx;
     if (first != last && *first != ')') {
       ++first;
@@ -502,11 +507,13 @@ bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol,
     if (!read_int(first, last, idx)) {
       return false;
     }
-    auto atom = mol.getAtomWithIdx(idx);
-    if (!atom->hasQuery()) {
-      atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+    if (VALID_ATIDX(idx)) {
+      auto atom = mol.getAtomWithIdx(idx - startAtomIdx);
+      if (!atom->hasQuery()) {
+        atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+      }
+      atom->expandQuery(makeAtomUnsaturatedQuery(), Queries::COMPOSITE_AND);
     }
-    atom->expandQuery(makeAtomUnsaturatedQuery(), Queries::COMPOSITE_AND);
     if (first < last && *first == ',') {
       ++first;
     }
@@ -537,7 +544,9 @@ bool parse_ring_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     if (*first == '*') {
       ++first;
       n2 = 0xDEADBEEF;
-      mol.setProp(common_properties::_NeedsQueryScan, 1);
+      if (VALID_ATIDX(n1)) {
+        mol.setProp(common_properties::_NeedsQueryScan, 1);
+      }
     } else {
       if (!read_int(first, last, n2)) {
         return false;
@@ -556,18 +565,21 @@ bool parse_ring_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
           return false;
       }
     }
-    auto atom = mol.getAtomWithIdx(n1);
-    if (!atom->hasQuery()) {
-      atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
-    }
-    if (!gt) {
-      atom->expandQuery(makeAtomRingBondCountQuery(n2), Queries::COMPOSITE_AND);
-    } else {
-      auto q = static_cast<ATOM_EQUALS_QUERY *>(new ATOM_LESSEQUAL_QUERY);
-      q->setVal(n2);
-      q->setDescription("AtomRingBondCount");
-      q->setDataFunc(queryAtomRingBondCount);
-      atom->expandQuery(q, Queries::COMPOSITE_AND);
+    if (VALID_ATIDX(n1)) {
+      auto atom = mol.getAtomWithIdx(n1 - startAtomIdx);
+      if (!atom->hasQuery()) {
+        atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+      }
+      if (!gt) {
+        atom->expandQuery(makeAtomRingBondCountQuery(n2),
+                          Queries::COMPOSITE_AND);
+      } else {
+        auto q = static_cast<ATOM_EQUALS_QUERY *>(new ATOM_LESSEQUAL_QUERY);
+        q->setVal(n2);
+        q->setDescription("AtomRingBondCount");
+        q->setDataFunc(queryAtomRingBondCount);
+        atom->expandQuery(q, Queries::COMPOSITE_AND);
+      }
     }
     if (first < last && *first == ',') {
       ++first;
@@ -626,26 +638,32 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol,
       if (!read_int(first, last, idx2)) {
         return false;
       }
-    } else if (mol.getAtomWithIdx(atidx)->getDegree() == 2) {
-      auto nbrs = mol.getAtomNeighbors(mol.getAtomWithIdx(atidx));
+    } else if (VALID_ATIDX(atidx) &&
+               mol.getAtomWithIdx(atidx - startAtomIdx)->getDegree() == 2) {
+      auto nbrs =
+          mol.getAtomNeighbors(mol.getAtomWithIdx(atidx - startAtomIdx));
       idx1 = *nbrs.first;
       nbrs.first++;
       idx2 = *nbrs.first;
-    } else {
+    } else if (VALID_ATIDX(atidx)) {
       return false;
     }
     if (first < last && *first == ',') {
       ++first;
     }
-
-    if (!accum.empty()) {
-      accum += "|";
+    if (VALID_ATIDX(atidx)) {
+      if (!accum.empty()) {
+        accum += "|";
+      }
+      accum += (boost::format("%d %d 2 %d %d %d %d") % startReps % endReps %
+                (atidx - startAtomIdx + 1) % (idx1 + 1) %
+                (atidx - startAtomIdx + 1) % (idx2 + 1))
+                   .str();
     }
-    accum += (boost::format("%d %d 2 %d %d %d %d") % startReps % endReps %
-              (atidx + 1) % (idx1 + 1) % (atidx + 1) % (idx2 + 1))
-                 .str();
   }
-  mol.setProp(common_properties::molFileLinkNodes, accum);
+  if (!accum.empty()) {
+    mol.setProp(common_properties::molFileLinkNodes, accum);
+  }
   return true;
 }
 
@@ -669,38 +687,44 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
     return false;
   }
   SubstanceGroup sgroup(&mol, std::string("DAT"));
+  bool keepSGroup = false;
   for (auto idx : atoms) {
-    sgroup.addAtomWithIdx(idx);
+    if (VALID_ATIDX(idx)) {
+      keepSGroup = true;
+      sgroup.addAtomWithIdx(idx - startAtomIdx);
+    }
   }
   ++first;
   std::string name = read_text_to(first, last, ":");
   ++first;
-  if (!name.empty()) {
+  if (keepSGroup && !name.empty()) {
     sgroup.setProp("FIELDNAME", name);
   }
   // FIX:
-  sgroup.setProp("FIELDDISP", "    0.0000    0.0000    DR    ALL  0       0");
+  if (keepSGroup) {
+    sgroup.setProp("FIELDDISP", "    0.0000    0.0000    DR    ALL  0       0");
+  }
 
   std::string data = read_text_to(first, last, ":");
   ++first;
-  if (!data.empty()) {
+  if (!data.empty() && keepSGroup) {
     std::vector<std::string> dataFields = {data};
     sgroup.setProp("DATAFIELDS", dataFields);
   }
 
   std::string oper = read_text_to(first, last, ":");
   ++first;
-  if (!oper.empty()) {
+  if (!oper.empty() && keepSGroup) {
     sgroup.setProp("QUERYOP", oper);
   }
   std::string unit = read_text_to(first, last, ":");
   ++first;
-  if (!unit.empty()) {
+  if (!unit.empty() && keepSGroup) {
     sgroup.setProp("FIELDINFO", unit);
   }
   std::string tag = read_text_to(first, last, ":");
   ++first;
-  if (!tag.empty()) {
+  if (!tag.empty() && keepSGroup) {
     // not actually part of what ends up in the output, but
     // it is part of CXSMARTS
     sgroup.setProp("FIELDTAG", tag);
@@ -709,19 +733,23 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
     // FIX
     std::string coords = read_text_to(first, last, ")");
     ++first;
-    sgroup.setProp("COORDS", coords);
+    if (keepSGroup) {
+      sgroup.setProp("COORDS", coords);
+    }
   }
   // the label processing can destroy sgroup info, so do that now
   // (the function will immediately return if already called)
-  processCXSmilesLabels(mol);
-  sgroup.setProp<unsigned int>("index", getSubstanceGroups(mol).size() + 1);
-  addSubstanceGroup(mol, sgroup);
+  if (keepSGroup) {
+    processCXSmilesLabels(mol);
+    sgroup.setProp<unsigned int>("index", getSubstanceGroups(mol).size() + 1);
+    addSubstanceGroup(mol, sgroup);
+  }
   return true;
 }
 
 template <typename Iterator>
 bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol,
-                            unsigned int startAtomIdx) {
+                            unsigned int) {
   // these look like: |SgH:1:0|
   // from CXSMILES docs:
   //    SgH:parentSgroupIndex1:childSgroupIndex1.childSgroupIndex2,parentSgroupIndex2:childSgroupIndex1
@@ -792,6 +820,7 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   if (sgroupTypemap.find(typ) == sgroupTypemap.end()) {
     return false;
   }
+  bool keepSGroup = false;
   SubstanceGroup sgroup(&mol, sgroupTypemap[typ]);
   if (typ == "alt") {
     sgroup.setProp("SUBTYPE", std::string("ALT"));
@@ -807,20 +836,23 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   //++first;
   for (auto idx : atoms) {
-    sgroup.addAtomWithIdx(idx);
+    if (VALID_ATIDX(idx)) {
+      sgroup.addAtomWithIdx(idx - startAtomIdx);
+      keepSGroup = true;
+    }
   }
   std::vector<unsigned int> headCrossing;
   std::vector<unsigned int> tailCrossing;
   if (first != last && *first == ':') {
     ++first;
     std::string subscript = read_text_to(first, last, ":|");
-    if (!subscript.empty()) {
+    if (keepSGroup && !subscript.empty()) {
       sgroup.setProp("LABEL", subscript);
     }
     if (first != last && *first == ':') {
       ++first;
       std::string superscript = read_text_to(first, last, ":|,");
-      if (!superscript.empty()) {
+      if (keepSGroup && !superscript.empty()) {
         sgroup.setProp("CONNECT", superscript);
       }
 
@@ -829,7 +861,7 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
         if (!read_int_list(first, last, headCrossing)) {
           return false;
         }
-        if (!headCrossing.empty()) {
+        if (keepSGroup && !headCrossing.empty()) {
           sgroup.setProp(_headCrossings, headCrossing, true);
         }
         if (first != last && *first == ':') {
@@ -838,20 +870,22 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
             return false;
           }
         }
-        if (!tailCrossing.empty()) {
+        if (keepSGroup && !tailCrossing.empty()) {
           sgroup.setProp("_tailCrossings", tailCrossing, true);
         }
       }
     }
   }
-  // the label processing can destroy sgroup info, so do that now
-  // (the function will immediately return if already called)
-  processCXSmilesLabels(mol);
+  if (keepSGroup) {  // the label processing can destroy sgroup info, so do that
+                     // now
+    // (the function will immediately return if already called)
+    processCXSmilesLabels(mol);
 
-  finalizePolymerSGroup(mol, sgroup);
-  sgroup.setProp<unsigned int>("index", getSubstanceGroups(mol).size() + 1);
+    finalizePolymerSGroup(mol, sgroup);
+    sgroup.setProp<unsigned int>("index", getSubstanceGroups(mol).size() + 1);
 
-  addSubstanceGroup(mol, sgroup);
+    addSubstanceGroup(mol, sgroup);
+  }
   return true;
 }
 
@@ -873,7 +907,8 @@ bool parse_variable_attachments(Iterator &first, Iterator last,
     if (!read_int(first, last, at1idx)) {
       return false;
     }
-    if (mol.getAtomWithIdx(at1idx)->getDegree() != 1) {
+
+    if (VALID_ATIDX(at1idx) && mol.getAtomWithIdx(at1idx)->getDegree() != 1) {
       BOOST_LOG(rdWarningLog)
           << "position variation bond to atom with more than one bond"
           << std::endl;
@@ -891,25 +926,30 @@ bool parse_variable_attachments(Iterator &first, Iterator last,
       if (!read_int(first, last, aidx)) {
         return false;
       }
-      others.push_back((boost::format("%d") % (aidx + 1)).str());
+      if (VALID_ATIDX(aidx)) {
+        others.push_back(
+            (boost::format("%d") % (aidx - startAtomIdx + 1)).str());
+      }
       if (first < last && *first == '.') {
         ++first;
       }
     }
-    std::string endPts = (boost::format("(%d") % others.size()).str();
-    for (auto idx : others) {
-      endPts += " " + idx;
-    }
-    endPts += ")";
+    if (VALID_ATIDX(at1idx)) {
+      std::string endPts = (boost::format("(%d") % others.size()).str();
+      for (auto idx : others) {
+        endPts += " " + idx;
+      }
+      endPts += ")";
 
-    for (auto nbri : boost::make_iterator_range(
-             mol.getAtomBonds(mol.getAtomWithIdx(at1idx)))) {
-      auto bnd = mol[nbri];
-      bnd->setProp(common_properties::_MolFileBondEndPts, endPts);
-      bnd->setProp(common_properties::_MolFileBondAttach, std::string("ANY"));
-    }
-    if (first < last && *first == ',') {
-      ++first;
+      for (auto nbri : boost::make_iterator_range(
+               mol.getAtomBonds(mol.getAtomWithIdx(at1idx - startAtomIdx)))) {
+        auto bnd = mol[nbri];
+        bnd->setProp(common_properties::_MolFileBondEndPts, endPts);
+        bnd->setProp(common_properties::_MolFileBondAttach, std::string("ANY"));
+      }
+      if (first < last && *first == ',') {
+        ++first;
+      }
     }
   }
   return true;
@@ -936,18 +976,22 @@ bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol,
     if (*first == '*') {
       ++first;
       n2 = 0xDEADBEEF;
-      mol.setProp(common_properties::_NeedsQueryScan, 1);
+      if (VALID_ATIDX(n1)) {
+        mol.setProp(common_properties::_NeedsQueryScan, 1);
+      }
     } else {
       if (!read_int(first, last, n2)) {
         return false;
       }
     }
-    auto atom = mol.getAtomWithIdx(n1);
-    if (!atom->hasQuery()) {
-      atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+    if (VALID_ATIDX(n1)) {
+      auto atom = mol.getAtomWithIdx(n1 - startAtomIdx);
+      if (!atom->hasQuery()) {
+        atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+      }
+      atom->expandQuery(makeAtomNonHydrogenDegreeQuery(n2),
+                        Queries::COMPOSITE_AND);
     }
-    atom->expandQuery(makeAtomNonHydrogenDegreeQuery(n2),
-                      Queries::COMPOSITE_AND);
     if (first < last && *first == ',') {
       ++first;
     }
@@ -971,7 +1015,10 @@ bool processRadicalSection(Iterator &first, Iterator last, RDKit::RWMol &mol,
   if (!read_int(first, last, atIdx)) {
     return false;
   }
-  mol.getAtomWithIdx(atIdx)->setNumRadicalElectrons(numRadicalElectrons);
+  if (VALID_ATIDX(atIdx)) {
+    mol.getAtomWithIdx(atIdx - startAtomIdx)
+        ->setNumRadicalElectrons(numRadicalElectrons);
+  }
   while (first < last && *first == ',') {
     ++first;
     if (first < last && (*first < '0' || *first > '9')) {
@@ -980,7 +1027,10 @@ bool processRadicalSection(Iterator &first, Iterator last, RDKit::RWMol &mol,
     if (!read_int(first, last, atIdx)) {
       return false;
     }
-    mol.getAtomWithIdx(atIdx)->setNumRadicalElectrons(numRadicalElectrons);
+    if (VALID_ATIDX(atIdx)) {
+      mol.getAtomWithIdx(atIdx - startAtomIdx)
+          ->setNumRadicalElectrons(numRadicalElectrons);
+    }
   }
   if (first >= last) {
     return false;
@@ -1058,13 +1108,15 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
   while (first != last && *first >= '0' && *first <= '9') {
     unsigned int aidx;
     if (read_int(first, last, aidx)) {
-      Atom *atom = mol.getAtomWithIdx(aidx);
-      if (!atom) {
-        BOOST_LOG(rdWarningLog)
-            << "Atom " << aidx << " not found!" << std::endl;
-        return false;
+      if (VALID_ATIDX(aidx)) {
+        Atom *atom = mol.getAtomWithIdx(aidx - startAtomIdx);
+        if (!atom) {
+          BOOST_LOG(rdWarningLog)
+              << "Atom " << aidx << " not found!" << std::endl;
+          return false;
+        }
+        atoms.push_back(atom);
       }
-      atoms.push_back(atom);
     } else {
       return false;
     }
@@ -1073,10 +1125,11 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
       ++first;
     }
   }
-
-  std::vector<StereoGroup> mol_stereo_groups(mol.getStereoGroups());
-  mol_stereo_groups.emplace_back(group_type, std::move(atoms));
-  mol.setStereoGroups(std::move(mol_stereo_groups));
+  if (!atoms.empty()) {
+    std::vector<StereoGroup> mol_stereo_groups(mol.getStereoGroups());
+    mol_stereo_groups.emplace_back(group_type, std::move(atoms));
+    mol.setStereoGroups(std::move(mol_stereo_groups));
+  }
 
   return true;
 }

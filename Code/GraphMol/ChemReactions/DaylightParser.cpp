@@ -266,6 +266,16 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     }
   }
 
+  if (allowCXSMILES && !cxPart.empty()) {
+    unsigned int startAtomIdx = 0;
+    for (auto &reactant : boost::make_iterator_range(
+             rxn->beginReactantTemplates(), rxn->endReactantTemplates())) {
+      SmilesParseOps::parseCXExtensions(*static_cast<RWMol *>(reactant.get()),
+                                        cxPart, startAtomIdx);
+      startAtomIdx += reactant->getNumAtoms();
+    }
+  }
+
   // "SMARTS"-based reactions have implicit properties
   rxn->setImplicitPropertiesFlag(true);
 
