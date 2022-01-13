@@ -1004,3 +1004,48 @@ TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
     CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
   }
 }
+
+TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
+  SECTION("basics") {
+    // clang-format off
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;$|"));
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    std::string alabel;
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+  }
+  SECTION("basics with agents") {
+    // clang-format off
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"));
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    std::string alabel;
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+  }
+  SECTION("missing products") {
+    // clang-format off
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>> |$;;;_AP1;;;_AP1$|"));
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    std::string alabel;
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+  }
+}
