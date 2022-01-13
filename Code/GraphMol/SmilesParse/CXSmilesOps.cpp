@@ -447,7 +447,8 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
 
 template <typename Iterator>
 bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
-                            Bond::BondType typ, unsigned int startAtomIdx) {
+                            Bond::BondType typ, unsigned int startAtomIdx,
+                            unsigned int startBondIdx) {
   if (first >= last || (*first != 'C' && *first != 'H')) {
     return false;
   }
@@ -460,26 +461,29 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     unsigned int aidx;
     unsigned int bidx;
     if (read_int_pair(first, last, aidx, bidx)) {
-      Bond *bnd = nullptr;
-      for (auto bond : mol.bonds()) {
-        unsigned int smilesIdx;
-        if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
-            smilesIdx == bidx) {
-          bnd = bond;
-          break;
+      if (VALID_ATIDX(aidx) && bidx >= startBondIdx &&
+          bidx < startBondIdx + mol.getNumBonds()) {
+        Bond *bnd = nullptr;
+        for (auto bond : mol.bonds()) {
+          unsigned int smilesIdx;
+          if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
+              smilesIdx + startBondIdx == bidx) {
+            bnd = bond;
+            break;
+          }
         }
-      }
-      if (!bnd ||
-          (bnd->getBeginAtomIdx() != aidx && bnd->getEndAtomIdx() != aidx)) {
-        BOOST_LOG(rdWarningLog) << "BOND NOT FOUND! " << bidx
-                                << " involving atom " << aidx << std::endl;
-        return false;
-      }
-      bnd->setBondType(typ);
-      if (bnd->getBeginAtomIdx() != aidx) {
-        unsigned int tmp = bnd->getBeginAtomIdx();
-        bnd->setBeginAtomIdx(aidx);
-        bnd->setEndAtomIdx(tmp);
+        if (!bnd || (bnd->getBeginAtomIdx() != aidx - startAtomIdx &&
+                     bnd->getEndAtomIdx() != aidx - startAtomIdx)) {
+          BOOST_LOG(rdWarningLog) << "BOND NOT FOUND! " << bidx
+                                  << " involving atom " << aidx << std::endl;
+          return false;
+        }
+        bnd->setBondType(typ);
+        if (bnd->getBeginAtomIdx() != aidx - startAtomIdx) {
+          unsigned int tmp = bnd->getBeginAtomIdx();
+          bnd->setBeginAtomIdx(aidx - startAtomIdx);
+          bnd->setEndAtomIdx(tmp);
+        }
       }
     } else {
       return false;
@@ -748,8 +752,7 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
 }
 
 template <typename Iterator>
-bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol,
-                            unsigned int) {
+bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   // these look like: |SgH:1:0|
   // from CXSMILES docs:
   //    SgH:parentSgroupIndex1:childSgroupIndex1.childSgroupIndex2,parentSgroupIndex2:childSgroupIndex1
@@ -1136,7 +1139,7 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
 
 template <typename Iterator>
 bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
-              unsigned int startAtomIdx) {
+              unsigned int startAtomIdx, unsigned int startBondIdx) {
   if (first >= last || *first != '|') {
     return false;
   }
@@ -1165,13 +1168,13 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
         return false;
       }
     } else if (*first == 'C') {
-      if (!parse_coordinate_bonds(first, last, mol, Bond::DATIVE,
-                                  startAtomIdx)) {
+      if (!parse_coordinate_bonds(first, last, mol, Bond::DATIVE, startAtomIdx,
+                                  startBondIdx)) {
         return false;
       }
     } else if (*first == 'H') {
       if (!parse_coordinate_bonds(first, last, mol, Bond::HYDROGEN,
-                                  startAtomIdx)) {
+                                  startAtomIdx, startBondIdx)) {
         return false;
       }
     } else if (*first == '^') {
@@ -1198,7 +1201,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
     } else if (*first == 'S' && first + 2 < last && first[1] == 'g' &&
                first[2] == 'H') {
-      if (!parse_sgroup_hierarchy(first, last, mol, startAtomIdx)) {
+      if (!parse_sgroup_hierarchy(first, last, mol)) {
         return false;
       }
     } else if (*first == 'S' && first + 1 < last && first[1] == 'g') {
@@ -1232,7 +1235,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
 
 void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
                        std::string::const_iterator &first,
-                       unsigned int startAtomIdx) {
+                       unsigned int startAtomIdx, unsigned int startBondIdx) {
   // BOOST_LOG(rdWarningLog) << "parseCXNExtensions: " << extText << std::endl;
   if (extText.empty()) {
     return;
@@ -1242,7 +1245,8 @@ void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
         "CXSMILES extension does not start with |");
   }
   first = extText.begin();
-  bool ok = parser::parse_it(first, extText.end(), mol, startAtomIdx);
+  bool ok =
+      parser::parse_it(first, extText.end(), mol, startAtomIdx, startBondIdx);
   if (!ok) {
     throw RDKit::SmilesParseException("failure parsing CXSMILES extensions");
   }

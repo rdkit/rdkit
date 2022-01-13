@@ -268,11 +268,27 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
 
   if (allowCXSMILES && !cxPart.empty()) {
     unsigned int startAtomIdx = 0;
-    for (auto &reactant : boost::make_iterator_range(
-             rxn->beginReactantTemplates(), rxn->endReactantTemplates())) {
-      SmilesParseOps::parseCXExtensions(*static_cast<RWMol *>(reactant.get()),
-                                        cxPart, startAtomIdx);
-      startAtomIdx += reactant->getNumAtoms();
+    unsigned int startBondIdx = 0;
+    for (auto &mol : boost::make_iterator_range(rxn->beginReactantTemplates(),
+                                                rxn->endReactantTemplates())) {
+      SmilesParseOps::parseCXExtensions(*static_cast<RWMol *>(mol.get()),
+                                        cxPart, startAtomIdx, startBondIdx);
+      startAtomIdx += mol->getNumAtoms();
+      startBondIdx += mol->getNumBonds();
+    }
+    for (auto &mol : boost::make_iterator_range(rxn->beginAgentTemplates(),
+                                                rxn->endAgentTemplates())) {
+      SmilesParseOps::parseCXExtensions(*static_cast<RWMol *>(mol.get()),
+                                        cxPart, startAtomIdx, startBondIdx);
+      startAtomIdx += mol->getNumAtoms();
+      startBondIdx += mol->getNumBonds();
+    }
+    for (auto &mol : boost::make_iterator_range(rxn->beginProductTemplates(),
+                                                rxn->endProductTemplates())) {
+      SmilesParseOps::parseCXExtensions(*static_cast<RWMol *>(mol.get()),
+                                        cxPart, startAtomIdx, startBondIdx);
+      startAtomIdx += mol->getNumAtoms();
+      startBondIdx += mol->getNumBonds();
     }
   }
 

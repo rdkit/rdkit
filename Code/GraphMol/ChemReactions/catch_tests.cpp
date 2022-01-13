@@ -1062,4 +1062,31 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
   }
+  SECTION("coordinate bonds and sgroups") {
+    // when initially writing this, coordinate bonds were not properly parsed
+    // from SMARTS, so we use SMILES
+    bool useSmiles = true;
+    // clang-format off
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[Fe:8][OH:5][CH2:6][*:7]>>[Fe:8][OH:5][CH2:6][CH2:1][CH:2]([CH3:3])[*:4] "
+    "|$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|",nullptr,useSmiles));
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getProducts().size() == 1);
+    std::string alabel;
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(rxn->getReactants()[1]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(getSubstanceGroups(*rxn->getReactants()[0]).empty());
+    CHECK(getSubstanceGroups(*rxn->getReactants()[1]).size() == 1);
+
+    const auto p0 = rxn->getProducts()[0];
+    CHECK(p0->getAtomWithIdx(6)->getPropIfPresent(common_properties::atomLabel,
+                                                  alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(getSubstanceGroups(*p0).size() == 1);
+  }
 }

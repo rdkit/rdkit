@@ -38,11 +38,13 @@ RDKIT_SMILESPARSE_EXPORT void AdjustAtomChiralityFlags(RDKit::RWMol *mol);
 RDKIT_SMILESPARSE_EXPORT void CleanupAfterParsing(RDKit::RWMol *mol);
 RDKIT_SMILESPARSE_EXPORT void parseCXExtensions(
     RDKit::RWMol &mol, const std::string &extText,
-    std::string::const_iterator &pos, unsigned int startAtomIdx = 0);
+    std::string::const_iterator &pos, unsigned int startAtomIdx = 0,
+    unsigned int startBondIdx = 0);
 inline void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
-                              unsigned int startAtomIdx) {
+                              unsigned int startAtomIdx,
+                              unsigned int startBondIdx) {
   auto iter = extText.begin();
-  parseCXExtensions(mol, extText, iter, startAtomIdx);
+  parseCXExtensions(mol, extText, iter, startAtomIdx, startBondIdx);
 };
 //! removes formal charge, isotope, etc. Primarily useful for QueryAtoms
 RDKIT_SMILESPARSE_EXPORT void ClearAtomChemicalProps(RDKit::Atom *atom);
