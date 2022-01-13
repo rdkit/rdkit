@@ -34,6 +34,8 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesParseOps.h>
+#include <boost/range/iterator_range.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <vector>
@@ -113,21 +115,73 @@ ROMol *constructMolFromString(const std::string &txt,
 
 }  // end of namespace DaylightParserUtils
 
+namespace {
+void removeSpacesAround(std::string &text, size_t pos) {
+  auto nextp = pos + 1;
+  while (nextp < text.size() && (text[nextp] == ' ' || text[nextp] == '\t')) {
+    text.erase(nextp, 1);
+  }
+  if (pos > 0) {
+    nextp = pos - 1;
+    while (text[nextp] == ' ' || text[nextp] == '\t') {
+      text.erase(nextp, 1);
+      if (nextp > 0) {
+        --nextp;
+      } else {
+        break;
+      }
+    }
+  }
+}
+}  // namespace
 ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &origText,
     std::map<std::string, std::string> *replacements, bool useSmiles,
     bool allowCXSMILES) {
-  auto text = origText;
+  std::string text = origText;
+  std::string cxPart;
+  if (allowCXSMILES) {
+    auto sidx = origText.find_first_of("|");
+    if (sidx != std::string::npos && sidx != 0) {
+      text = origText.substr(0, sidx);
+      cxPart = boost::trim_copy(origText.substr(sidx, origText.size() - sidx));
+    }
+  }
+  // remove any spaces at the beginning, end, or before the '>'s
+  text = boost::trim_copy(text);
   std::vector<std::size_t> pos;
   for (std::size_t i = 0; i < text.length(); ++i) {
     if (text[i] == '>' && (i == 0 || text[i - 1] != '-')) {
       pos.push_back(i);
     }
   }
-
   if (pos.size() < 2) {
     throw ChemicalReactionParserException(
         "a reaction requires at least two > characters");
+  }
+
+  // remove spaces around ">" symbols
+  for (auto piter = pos.rbegin(); piter != pos.rend(); ++piter) {
+    removeSpacesAround(text, *piter);
+  }
+
+  // remove spaces around "." symbols
+  pos.clear();
+  for (std::size_t i = 0; i < text.length(); ++i) {
+    if (text[i] == '.') {
+      pos.push_back(i);
+    }
+  }
+  for (auto piter = pos.rbegin(); piter != pos.rend(); ++piter) {
+    removeSpacesAround(text, *piter);
+  }
+
+  // re-find the '>' characters so that we can
+  pos.clear();
+  for (std::size_t i = 0; i < text.length(); ++i) {
+    if (text[i] == '>' && (i == 0 || text[i - 1] != '-')) {
+      pos.push_back(i);
+    }
   }
 
   auto pos1 = pos[0];
@@ -155,18 +209,18 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   // last product. We can't currently deal with those, so issue a warning and
   // strip out anything following the last productSmarts
   // This was Github #4759
-  if (!productSmarts.empty()) {
-    auto &lastSmarts = productSmarts.back();
-    boost::trim(lastSmarts);
-    std::vector<std::string> tokens;
-    boost::split(tokens, lastSmarts, boost::is_any_of(" \t"));
-    if (tokens.size() > 1) {
-      auto fromWhat = useSmiles ? "SMILES" : "SMARTS";
-      BOOST_LOG(rdWarningLog)
-          << "stripping extra text from input " << fromWhat << std::endl;
-      lastSmarts = tokens[0];
-    }
-  }
+  // if (!productSmarts.empty()) {
+  //   auto &lastSmarts = productSmarts.back();
+  //   boost::trim(lastSmarts);
+  //   std::vector<std::string> tokens;
+  //   boost::split(tokens, lastSmarts, boost::is_any_of(" \t"));
+  //   if (tokens.size() > 1) {
+  //     auto fromWhat = useSmiles ? "SMILES" : "SMARTS";
+  //     BOOST_LOG(rdWarningLog)
+  //         << "stripping extra text from input " << fromWhat << std::endl;
+  //     lastSmarts = tokens[0];
+  //   }
+  // }
 
   auto *rxn = new ChemicalReaction();
 
