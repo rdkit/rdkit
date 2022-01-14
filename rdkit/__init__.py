@@ -20,6 +20,7 @@ try:
   if kernel_name == 'ZMQInteractiveShell':
     logger.info("Enabling RDKit %s jupyter extensions" % __version__)
     from rdkit.Chem.Draw import IPythonConsole
+    rdBase.LogToPythonStderr()
 except:
   pass
 
