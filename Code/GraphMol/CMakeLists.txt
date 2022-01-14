@@ -13,6 +13,9 @@ rdkit_library(GraphMol
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if(RDK_USE_URF)
   target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
+  if(NOT MSVC AND RDK_INSTALL_STATIC_LIBS)
+    target_link_libraries(GraphMol_static PUBLIC ${RDK_URF_LIBS}_static)
+  endif()
 endif()
 
 rdkit_headers(Atom.h
