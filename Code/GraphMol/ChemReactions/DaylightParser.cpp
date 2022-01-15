@@ -176,7 +176,14 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     removeSpacesAround(text, *piter);
   }
 
-  // re-find the '>' characters so that we can
+  // we shouldn't have whitespace left in the reaction string, so go ahead and
+  // split and strip:
+  auto sidx = text.find_first_of(" \t");
+  if (sidx != std::string::npos && sidx != 0) {
+    text = text.substr(0, sidx);
+  }
+
+  // re-find the '>' characters so that we can split on them
   pos.clear();
   for (std::size_t i = 0; i < text.length(); ++i) {
     if (text[i] == '>' && (i == 0 || text[i - 1] != '-')) {
@@ -184,12 +191,18 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     }
   }
 
-  auto pos1 = pos[0];
-  auto pos2 = pos[1];
-
+  // there's always the chance that one or more of the "<" was in the name
+  // part, so verify that we have exactly two:
+  if (pos.size() < 2) {
+    throw ChemicalReactionParserException(
+        "a reaction requires at least two > characters");
+  }
   if (pos.size() > 2) {
     throw ChemicalReactionParserException("multi-step reactions not supported");
   }
+
+  auto pos1 = pos[0];
+  auto pos2 = pos[1];
 
   auto reactText = text.substr(0, pos1);
   std::string agentText;
@@ -199,8 +212,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   auto productText = text.substr(pos2 + 1);
 
   // recognize changes within the same molecules, e.g., intra molecular bond
-  // formation therefore we need to correctly interpret parenthesis and dots in
-  // the reaction smarts
+  // formation therefore we need to correctly interpret parenthesis and dots
+  // in the reaction smarts
   auto reactSmarts = DaylightParserUtils::splitSmartsIntoComponents(reactText);
   auto productSmarts =
       DaylightParserUtils::splitSmartsIntoComponents(productText);

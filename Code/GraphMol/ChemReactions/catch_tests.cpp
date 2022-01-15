@@ -995,9 +995,7 @@ TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
     CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
   }
   SECTION("Ensure we still handle spaces before/after the >>") {
-    std::string sma2 = " [C:1]Br.[C:2]O >> [C:2][C:1] |$Aryl;;;;;Aryl$|";
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(sma2));
-    REQUIRE(rxn);
+    auto rxn = " [C:1]Br.[C:2]O >> [C:2][C:1] |$Aryl;;;;;Aryl$|"_rxnsmarts;
     // make sure we have a product and that it didn't end up with a name:
     CHECK(rxn->getProducts().size() == 1);
     CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
@@ -1005,10 +1003,22 @@ TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
   }
   SECTION("advanced space removal") {
     // clang-format off
-    std::string sma2 =
-        " [C:1]Br  . [C:2]O    >  CCO  > [C:2][C:1] .   [Cl]    |$Aryl;;;;;Aryl$|";
+    auto rxn =
+        " [C:1]Br  . [C:2]O    >  CCO  > [C:2][C:1] .   [Cl]    |$Aryl;;;;;Aryl$|"_rxnsmarts;
     // clang-format n
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(sma2));
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getAgents().size() ==1);
+    // make sure we have a product and that it didn't end up with a name:
+    CHECK(rxn->getProducts().size() == 2);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+  SECTION("not a cxsmiles") {
+    // clang-format off
+    auto rxn =
+        "[C:1]Br.[C:2]O>CCO>[C:2][C:1].[Cl]  reaction_name"_rxnsmarts;
+    // clang-format n
     REQUIRE(rxn);
     CHECK(rxn->getReactants().size() == 2);
     CHECK(rxn->getAgents().size() ==1);
@@ -1022,7 +1032,7 @@ TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
 TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
   SECTION("basics") {
     // clang-format off
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;$|"));
+    auto rxn = "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;$|"_rxnsmarts;
     // clang-format on
     REQUIRE(rxn);
     CHECK(rxn->getReactants().size() == 2);
@@ -1036,7 +1046,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
   }
   SECTION("basics with agents") {
     // clang-format off
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"));
+    auto rxn = "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"_rxnsmarts;
     // clang-format on
     REQUIRE(rxn);
     CHECK(rxn->getReactants().size() == 2);
@@ -1050,7 +1060,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
   }
   SECTION("missing products") {
     // clang-format off
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>> |$;;;_AP1;;;_AP1$|"));
+    auto rxn="[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>> |$;;;_AP1;;;_AP1$|"_rxnsmarts;
     // clang-format on
     REQUIRE(rxn);
     CHECK(rxn->getReactants().size() == 2);
@@ -1065,10 +1075,9 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
   SECTION("coordinate bonds and sgroups") {
     // when initially writing this, coordinate bonds were not properly parsed
     // from SMARTS, so we use SMILES
-    bool useSmiles = true;
     // clang-format off
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[Fe:8][OH:5][CH2:6][*:7]>>[Fe:8][OH:5][CH2:6][CH2:1][CH:2]([CH3:3])[*:4] "
-    "|$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|",nullptr,useSmiles));
+    auto rxn = "[CH3:1][CH:2]([CH3:3])[*:4].[Fe:8][OH:5][CH2:6][*:7]>>[Fe:8][OH:5][CH2:6][CH2:1][CH:2]([CH3:3])[*:4] "
+    "|$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|"_rxnsmiles;
     // clang-format on
     REQUIRE(rxn);
     CHECK(rxn->getReactants().size() == 2);
@@ -1088,5 +1097,9 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
                                                   alabel));
     CHECK(alabel == "_AP1");
     CHECK(getSubstanceGroups(*p0).size() == 1);
+  }
+  SECTION("sgroup hierarchy") {  // clang-format off
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>> |$;;;_AP1;;;_AP1$|"));
+                                 // clang-format on
   }
 }
