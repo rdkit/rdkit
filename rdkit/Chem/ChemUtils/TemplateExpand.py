@@ -235,7 +235,7 @@ def ConstructSidechains(suppl, sma=None, replace=True, useAll=False):
         if matches:
           tmp = [0] * len(matches)
           for i, match in enumerate(matches):
-            smi = Chem.MolToSmiles(mol, True, rootedAtAtom=match[0])
+            smi = Chem.MolToSmiles(mol, rootedAtAtom=match[0])
             entry = Chem.MolFromSmiles(smi)
             for propN in mol.GetPropNames():
               entry.SetProp(propN, mol.GetProp(propN))
