@@ -754,6 +754,20 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   return true;
 }
 
+namespace {
+std::vector<RDKit::SubstanceGroup>::iterator find_matching_sgroup(
+    std::vector<RDKit::SubstanceGroup> &sgs, unsigned int targetId) {
+  return std::find_if(sgs.begin(), sgs.end(), [targetId](const auto &sg) {
+    unsigned int pval;
+    if (sg.getPropIfPresent(cxsmilesindex, pval)) {
+      if (pval == targetId) {
+        return true;
+      }
+    }
+    return false;
+  });
+}
+}  // namespace
 template <typename Iterator>
 bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   // these look like: |SgH:1:0|
@@ -770,17 +784,9 @@ bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     if (!read_int(first, last, parentId)) {
       return false;
     }
-    auto hasId = [parentId](const auto &sg) {
-      unsigned int pval;
-      if (sg.getPropIfPresent(cxsmilesindex, pval)) {
-        if (pval == parentId) {
-          return true;
-        }
-      }
-      return false;
-    };
+
     bool validParent = true;
-    auto psg = std::find_if(sgs.begin(), sgs.end(), hasId);
+    auto psg = find_matching_sgroup(sgs, parentId);
     if (psg == sgs.end()) {
       validParent = false;
     } else {
@@ -798,8 +804,10 @@ bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
             throw SmilesParseException(
                 "child id references non-existent SGroup");
           }
-          auto csg = std::find_if(sgs.begin(), sgs.end(), hasId);
+          auto csg = find_matching_sgroup(sgs, childId);
           if (csg != sgs.end()) {
+            unsigned int cid;
+            csg->getProp("index", cid);
             csg->setProp("PARENT", parentId);
           }
         }

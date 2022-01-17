@@ -438,7 +438,9 @@ RWMol *SmilesToMol(const std::string &smiles,
   }
 
   if (res) {
-    SmilesParseOps::CleanupAfterParsing(res);
+    if (!params.skipCleanup) {
+      SmilesParseOps::CleanupAfterParsing(res);
+    }
     if (!name.empty()) {
       res->setProp(common_properties::_Name, name);
     }
@@ -488,7 +490,9 @@ RWMol *SmartsToMol(const std::string &smarts,
       }
     }
     MolOps::setBondStereoFromDirections(*res);
-    SmilesParseOps::CleanupAfterParsing(res);
+    if (!params.skipCleanup) {
+      SmilesParseOps::CleanupAfterParsing(res);
+    }
     if (!name.empty()) {
       res->setProp(common_properties::_Name, name);
     }

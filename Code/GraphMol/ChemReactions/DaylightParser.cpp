@@ -100,6 +100,7 @@ ROMol *constructMolFromString(const std::string &txt,
     ps.allowCXSMILES = false;
     ps.parseName = false;
     ps.mergeHs = false;
+    ps.skipCleanup = true;
     mol = SmartsToMol(txt, ps);
   } else {
     SmilesParserParams ps;
@@ -108,6 +109,7 @@ ROMol *constructMolFromString(const std::string &txt,
     ps.parseName = false;
     ps.sanitize = false;
     ps.removeHs = false;
+    ps.skipCleanup = true;
     mol = SmilesToMol(txt, ps);
   }
   return mol;
@@ -303,6 +305,20 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
       startAtomIdx += mol->getNumAtoms();
       startBondIdx += mol->getNumBonds();
     }
+  }
+
+  // final cleanups:
+  for (auto &mol : boost::make_iterator_range(rxn->beginReactantTemplates(),
+                                              rxn->endReactantTemplates())) {
+    SmilesParseOps::CleanupAfterParsing(static_cast<RWMol *>(mol.get()));
+  }
+  for (auto &mol : boost::make_iterator_range(rxn->beginAgentTemplates(),
+                                              rxn->endAgentTemplates())) {
+    SmilesParseOps::CleanupAfterParsing(static_cast<RWMol *>(mol.get()));
+  }
+  for (auto &mol : boost::make_iterator_range(rxn->beginProductTemplates(),
+                                              rxn->endProductTemplates())) {
+    SmilesParseOps::CleanupAfterParsing(static_cast<RWMol *>(mol.get()));
   }
 
   // "SMARTS"-based reactions have implicit properties
