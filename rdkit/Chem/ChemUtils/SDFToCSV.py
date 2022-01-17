@@ -22,7 +22,10 @@ def Convert(suppl, outFile, keyCol=None, stopAfter=-1, includeChirality=False, s
   if keyCol and keyCol in propNames:
     propNames.remove(keyCol)
 
-  outL = [keyCol, 'SMILES'] if keyCol else ['SMILES']
+  outL = []
+  if keyCol:
+    outL.append(keyCol)
+  outL.append('SMILES')
   outL.extend(propNames)
   w.writerow(outL)
 
@@ -35,9 +38,15 @@ def Convert(suppl, outFile, keyCol=None, stopAfter=-1, includeChirality=False, s
       smi = mol.GetProp(smilesFrom)
       smi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), isomericSmiles=includeChirality)
     
-    outL = [str(mol.GetProp(keyCol)), smi] if keyCol else [smi]
+    outL = []
+    if keyCol:
+      outL.append(str(mol.GetProp(keyCol)))
+    outL.append(smi)
     for prop in propNames:
-      outL.append(str(mol.GetProp(prop)) if mol.HasProp(prop) else '')
+      if mol.HasProp(prop):
+        outL.append(str(mol.GetProp(prop)))
+      else:
+        outL.append('')
 
     w.writerow(outL)
     if nDone == stopAfter:

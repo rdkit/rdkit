@@ -90,7 +90,7 @@ def _exploder(mol, depth, sidechains, core, chainIndices, autoNames=True, templa
   if resetCounter:
     nDumped = 0
   ourChains = sidechains[depth]
-  patt = Chem.MolFromSmiles('[%d*]' % (depth + 1))
+  patt = Chem.MolFromSmiles(f'[{depth + 1}*]')
   for i, (chainIdx, chain) in enumerate(ourChains):
     tchain = chainIndices[:]
     tchain.append((i, chainIdx))
@@ -130,7 +130,10 @@ def _exploder(mol, depth, sidechains, core, chainIndices, autoNames=True, templa
           tName = templateName
           for bbI, bb in enumerate(tchain):
             bbMol = sidechains[bbI][bb[0]][1]
-            bbNm = bbMol.GetProp('_Name') if bbMol.HasProp('_Name') else str(bb[1])
+            if bbMol.HasProp('_Name'):
+              bbNm = bbMol.GetProp('_Name')
+            else:
+              bbNm = str(bb[1])
             tName += '_' + bbNm
 
         r.SetProp("_Name", tName)
@@ -138,7 +141,10 @@ def _exploder(mol, depth, sidechains, core, chainIndices, autoNames=True, templa
         r.SetProp('reagent_indices', '_'.join([str(x[1]) for x in tchain]))
         for bbI, bb in enumerate(tchain):
           bbMol = sidechains[bbI][bb[0]][1]
-          bbNm = bbMol.GetProp('_Name') if bbMol.HasProp('_Name') else str(bb[1])
+          if bbMol.HasProp('_Name'):
+            bbNm = bbMol.GetProp('_Name')
+          else:
+            bbNm = str(bb[1])
           r.SetProp('building_block_%d' % (bbI + 1), bbNm)
           r.SetIntProp('_idx_building_block_%d' % (bbI + 1), bb[1])
           for propN in bbMol.GetPropNames():
@@ -170,7 +176,7 @@ def MoveDummyNeighborsToBeginning(mol, useAll=False):
   matches = mol.GetSubstructMatches(dummyPatt)
   res = []
   for match in matches:
-    smi = Chem.MolToSmiles(mol, True, rootedAtAtom=match[0])
+    smi = Chem.MolToSmiles(mol, rootedAtAtom=match[0])
     entry = Chem.MolFromSmiles(smi)
     # entry now has [*] as atom 0 and the neighbor
     # as atom 1. Cleave the [*]:

@@ -73,7 +73,10 @@ def TestSupplier(suppl, stopAfter=-1, reportInterval=100, reportTo=sys.stderr, n
 
 if __name__ == '__main__':
   suppl = Chem.SDMolSupplier(sys.argv[1], False)
-  nameProp = sys.argv[2] if len(sys.argv) > 2 else '_Name'
+  if len(sys.argv) > 2:
+    nameProp = sys.argv[2]
+  else:
+    nameProp = '_Name'
 
   nDone, nFailed = TestSupplier(suppl, nameProp=nameProp)
   print('%d failures in %d mols' % (nFailed, nDone))

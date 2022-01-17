@@ -2,7 +2,8 @@
 #  Copyright (C) 2006 Greg Landrum
 #  This file is part of RDKit and covered by $RDBASE/license.txt
 #
-
+import sys
+import argparse
 
 from rdkit import Chem
 from rdkit import Geometry
@@ -30,7 +31,11 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
   else:
     coreMatch = list(range(core.GetNumAtoms(onlyExplicit=True)))
   
-  match = mol.GetSubstructMatch(corePattern if corePattern else core) # One line if/else
+  if corePattern:
+    match = mol.GetSubstructMatch(corePattern)
+  else:
+    match = mol.GetSubstructMatch(core)
+  
   if not match:
     if not acceptFailure:
       raise ValueError('Substructure match with core not found.')
@@ -41,15 +46,12 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
     coordMap = {}
     for i, idx in enumerate(match):
       pt3 = conf.GetAtomPosition(coreMatch[i])
-      pt2 = Geometry.Point2D(pt3.x, pt3.y)
-      coordMap[idx] = pt2
+      coordMap[idx] = Geometry.Point2D(pt3.x, pt3.y)
   rdDepictor.Compute2DCoords(mol, clearConfs=True, coordMap=coordMap, canonOrient=False)
 
 
 def initParser():
   """ Initialize the parser """
-  import sys
-  import argparse
   parser = argparse.ArgumentParser(description='Create aligned depiction')
   parser.add_argument('--pattern', '-p', metavar='SMARTS', default=None, dest='patt')
   parser.add_argument('--smiles', default=False, action='store_true', dest='useSmiles',
