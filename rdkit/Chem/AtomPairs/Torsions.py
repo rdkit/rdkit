@@ -140,7 +140,10 @@ def ExplainPathScore(score, size=4):
   codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
   res = [None] * size
   for i in range(size):
-    sub = 1 if i in (0, size - 1) else 2
+    if i in (0, size - 1):
+      sub = 1
+    else:
+      sub = 2
     code = score & codeMask
     score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
     symb, nBranch, nPi = Utils.ExplainAtomCode(code)
@@ -150,9 +153,9 @@ def ExplainPathScore(score, size=4):
 
 def GetTopologicalTorsionFingerprintAsIds(mol, targetSize=4):
   nonZeroElements = GetTopologicalTorsionFingerprint(mol, targetSize).GetNonzeroElements()
-  resDict = sorted(nonZeroElements.items())
+  frequencies = sorted(nonZeroElements.items())
   res = []
-  for k, v in resDict:
+  for k, v in frequencies:
     res.extend([k] * v)
   return res
 
