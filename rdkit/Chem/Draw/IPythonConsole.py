@@ -7,21 +7,16 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from IPython.display import SVG
-import numpy
-import warnings
-import uuid
-import json
-import os
 import base64
 import copy
-from io import BytesIO, StringIO
-from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit.Chem import Draw
-from rdkit.Chem import rdchem, rdChemReactions
-from rdkit import Chem
-import sys
+import warnings
+from io import BytesIO
+
 import IPython
+from IPython.display import SVG
+from rdkit import Chem
+from rdkit.Chem import Draw, rdchem, rdChemReactions
+from rdkit.Chem.Draw import rdMolDraw2D
 
 if IPython.release.version < '0.11':
   raise ImportError('this module requires at least v0.11 of IPython')
@@ -75,15 +70,13 @@ def drawMol3D(m, view=None, confId=-1, drawAs=None, bgColor=None, size=None):
   if view is None:
     view = py3Dmol.view(width=size[0], height=size[1])
   view.removeAllModels()
+  
   try:
-    iter(m)
-  except TypeError:
-    addMolToView(m, view, confId, drawAs)
-  else:
-    ms = m
+    ms = iter(m)
     for m in ms:
       addMolToView(m, view, confId, drawAs)
-
+  except TypeError:
+    addMolToView(m, view, confId, drawAs)
   view.setBackgroundColor(bgColor)
   view.zoomTo()
   return view.show()
@@ -112,6 +105,7 @@ def _toHTML(mol):
     nm = mol.GetProp('_Name')
   else:
     nm = ''
+    
   res = []
   if not ipython_useSVG:
     png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
@@ -122,7 +116,7 @@ def _toHTML(mol):
     res.append(f'<tr><td colspan=2 style="text-align:center">{svg}</td></tr>')
 
   for i,(pn, pv) in enumerate(props.items()):
-    if ipython_maxProperties>=0 and i>= ipython_maxProperties:
+    if ipython_maxProperties >= 0 and i >= ipython_maxProperties:
       res.append('<tr><td colspan=2 style="text-align:center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>')
       break
     res.append(
@@ -172,7 +166,6 @@ def _toMolBundlePNG(bundle):
     fn = _MolsToGridImageSaved
   else:
     fn = Draw.MolsToGridImage
-
   return fn(bundle, subImgSize=molSize, drawOptions=drawOptions, useSVG=False, returnPNG=True)
 
 
@@ -237,6 +230,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
     fn = _MolsToGridImageSaved
   else:
     fn = Draw.MolsToGridImage
+    
   if len(mols) > maxMols:
     warnings.warn(
       "Truncating the list of molecules to be displayed to %d. Change the maxMols value to display more."
@@ -247,14 +241,13 @@ def ShowMols(mols, maxMols=50, **kwargs):
         kwargs[prop] = kwargs[prop][:maxMols]
   if not "drawOptions" in kwargs:
     kwargs["drawOptions"] = drawOptions
+  
   res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
-  else:
-    if kwargs['returnPNG']:
-      return display.Image(data=res, format='png')
-    else:
-      return res
+  if kwargs['returnPNG']:
+    return display.Image(data=res, format='png')
+  return res
 
 
 ShowMols.__doc__ = Draw.MolsToGridImage.__doc__
@@ -263,23 +256,23 @@ ShowMols.__doc__ = Draw.MolsToGridImage.__doc__
 def _DrawBit(fn, *args, **kwargs):
   if 'useSVG' not in kwargs:
     kwargs['useSVG'] = ipython_useSVG
+  
   res = fn(*args, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
-  else:
-    sio = BytesIO(res)
-    return Image.open(sio)
+  sio = BytesIO(res)
+  return Image.open(sio)
 
 
 def _DrawBits(fn, *args, **kwargs):
   if 'useSVG' not in kwargs:
     kwargs['useSVG'] = ipython_useSVG
+
   res = fn(*args, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
-  else:
-    sio = BytesIO(res)
-    return Image.open(sio)
+  sio = BytesIO(res)
+  return Image.open(sio)
 
 
 _DrawMorganBitSaved = None

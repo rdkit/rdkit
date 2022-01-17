@@ -53,6 +53,10 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import rdDepictor
 from rdkit.Chem import rdMolDescriptors as rdMD
 
+def _CleanFpInfoAttr_(mol):
+  if hasattr(mol, '_fpInfo'):
+    delattr(mol, '_fpInfo')
+
 
 def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStructs.DiceSimilarity):
   """
@@ -68,23 +72,18 @@ def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
     Note:
       If fpFunction needs additional parameters, use a lambda construct
     """
-  if hasattr(probeMol, '_fpInfo'):
-    delattr(probeMol, '_fpInfo')
-  if hasattr(refMol, '_fpInfo'):
-    delattr(refMol, '_fpInfo')
+  _CleanFpInfoAttr_(probeMol)
+  _CleanFpInfoAttr_(refMol)
+
   refFP = fpFunction(refMol, -1)
-  probeFP = fpFunction(probeMol, -1)
-  baseSimilarity = metric(refFP, probeFP)
+  baseSimilarity = metric(refFP, fpFunction(probeMol, -1))
+
   # loop over atoms
-  weights = []
-  for atomId in range(probeMol.GetNumAtoms()):
-    newFP = fpFunction(probeMol, atomId)
-    newSimilarity = metric(refFP, newFP)
-    weights.append(baseSimilarity - newSimilarity)
-  if hasattr(probeMol, '_fpInfo'):
-    delattr(probeMol, '_fpInfo')
-  if hasattr(refMol, '_fpInfo'):
-    delattr(refMol, '_fpInfo')
+  weights = [baseSimilarity - metric(refFP, fpFunction(probeMol, atomId)) for atomId in range(probeMol.GetNumAtoms())]
+
+  _CleanFpInfoAttr_(probeMol)
+  _CleanFpInfoAttr_(refMol)
+    
   return weights
 
 
@@ -98,18 +97,14 @@ def GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction):
       fpFunction -- the fingerprint function
       predictionFunction -- the prediction function of the ML model
     """
-  if hasattr(probeMol, '_fpInfo'):
-    delattr(probeMol, '_fpInfo')
-  probeFP = fpFunction(probeMol, -1)
-  baseProba = predictionFunction(probeFP)
+
+  _CleanFpInfoAttr_(probeMol)
+  baseProba = predictionFunction(fpFunction(probeMol, -1))
+
   # loop over atoms
-  weights = []
-  for atomId in range(probeMol.GetNumAtoms()):
-    newFP = fpFunction(probeMol, atomId)
-    newProba = predictionFunction(newFP)
-    weights.append(baseProba - newProba)
-  if hasattr(probeMol, '_fpInfo'):
-    delattr(probeMol, '_fpInfo')
+  weights = [baseProba - predictionFunction(fpFunction(probeMol, atomId)) for atomId in range(probeMol.GetNumAtoms())]
+  
+  _CleanFpInfoAttr_(probeMol)
   return weights
 
 
@@ -121,12 +116,12 @@ def GetStandardizedWeights(weights):
     Parameters:
       weights -- the list with the atomic weights
     """
-  tmp = [math.fabs(w) for w in weights]
-  currentMax = max(tmp)
-  if currentMax > 0:
-    return [w / currentMax for w in weights], currentMax
-  else:
-    return weights, currentMax
+
+  maxAbsWeight = max([math.fabs(w) for w in weights])
+  
+  if maxAbsWeight > 0:
+    return [w / maxAbsWeight for w in weights], maxAbsWeight
+  return weights, maxAbsWeight
 
 
 def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250, 250), sigma=None,
@@ -152,6 +147,7 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
     """
   if mol.GetNumAtoms() < 2:
     raise ValueError("too few atoms")
+
   if draw2d is not None:
     mol = rdMolDraw2D.PrepareMolForDrawing(mol, addChiralHs=False)
     if not mol.GetNumConformers():
@@ -167,6 +163,7 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
         sigma = 0.3 * (mol.GetConformer().GetAtomPosition(0) -
                        mol.GetConformer().GetAtomPosition(1)).Length()
       sigma = round(sigma, 2)
+    
     sigmas = [sigma] * mol.GetNumAtoms()
     locs = []
     for i in range(mol.GetNumAtoms()):
@@ -177,6 +174,7 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
     ps.fillGrid = True
     ps.gridResolution = 0.1
     ps.extraGridPadding = 0.5
+    
     if colorMap is not None:
       if cm is not None and isinstance(colorMap, type(cm.Blues)):
         # it's a matplotlib colormap:
@@ -203,11 +201,13 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
           math.sqrt(sum([(mol._atomPs[0][i] - mol._atomPs[1][i])**2 for i in range(2)]))
     sigma = round(sigma, 2)
   x, y, z = Draw.calcAtomGaussians(mol, sigma, weights=weights, step=step)
+  
   # scaling
   if scale <= 0.0:
     maxScale = max(math.fabs(numpy.min(z)), math.fabs(numpy.max(z)))
   else:
     maxScale = scale
+  
   # coloring
   if colorMap is None:
     if cm is None:
@@ -228,6 +228,7 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
       elif contourset.levels[j] < 0:
         c.set_dashes([(0, (3.0, 3.0))])
   fig.axes[0].set_axis_off()
+  
   return fig
 
 
@@ -244,6 +245,7 @@ def GetSimilarityMapForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
       metric -- the similarity metric.
       kwargs -- additional arguments for drawing
     """
+
   weights = GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric)
   weights, maxWeight = GetStandardizedWeights(weights)
   fig = GetSimilarityMapFromWeights(probeMol, weights, **kwargs)
@@ -261,6 +263,7 @@ def GetSimilarityMapForModel(probeMol, fpFunction, predictionFunction, **kwargs)
       predictionFunction -- the prediction function of the ML model
       kwargs -- additional arguments for drawing
     """
+
   weights = GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction)
   weights, maxWeight = GetStandardizedWeights(weights)
   fig = GetSimilarityMapFromWeights(probeMol, weights, **kwargs)
@@ -357,24 +360,26 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
     """
   if fpType not in ['bv', 'count']:
     raise ValueError("Unknown Morgan fingerprint type")
+  
+  isBitVect = fpType == 'bv'
   if not hasattr(mol, '_fpInfo'):
     info = {}
-    # get the fingerprint
-    if fpType == 'bv':
+    # get the fingerprint & construct the bitmap template
+    if isBitVect:
       molFp = rdMD.GetMorganFingerprintAsBitVect(mol, radius, nBits=nBits, useFeatures=useFeatures,
                                                  bitInfo=info, **kwargs)
+      bitmap = [DataStructs.ExplicitBitVect(nBits) for _ in range(mol.GetNumAtoms())]
+
     else:
       molFp = rdMD.GetMorganFingerprint(mol, radius, useFeatures=useFeatures, bitInfo=info,
                                         **kwargs)
-    # construct the bit map
-    if fpType == 'bv':
-      bitmap = [DataStructs.ExplicitBitVect(nBits) for _ in range(mol.GetNumAtoms())]
-    else:
       bitmap = [[] for _ in range(mol.GetNumAtoms())]
+
+    # construct the bit map
     for bit, es in info.items():
       for at1, rad in es:
         if rad == 0:  # for radius 0
-          if fpType == 'bv':
+          if isBitVect:
             bitmap[at1][bit] = 1
           else:
             bitmap[at1].append(bit)
@@ -383,7 +388,7 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
           amap = {}
           Chem.PathToSubmol(mol, env, atomMap=amap)
           for at2 in amap.keys():
-            if fpType == 'bv':
+            if isBitVect:
               bitmap[at2][bit] = 1
             else:
               bitmap[at2].append(bit)
@@ -391,20 +396,19 @@ def GetMorganFingerprint(mol, atomId=-1, radius=2, fpType='bv', nBits=2048, useF
 
   if atomId < 0:
     return mol._fpInfo[0]
-  else:  # remove the bits of atomId
-    if atomId >= mol.GetNumAtoms():
-      raise ValueError("atom index greater than number of atoms")
-    if len(mol._fpInfo) != 2:
-      raise ValueError("_fpInfo not set")
-    if fpType == 'bv':
-      molFp = mol._fpInfo[0] ^ mol._fpInfo[1][atomId]  # xor
-    else:  # count
-      molFp = copy.deepcopy(mol._fpInfo[0])
-      # delete the bits with atomId
-      for bit in mol._fpInfo[1][atomId]:
-        molFp[bit] -= 1
-    return molFp
-
+  # remove the bits of atomId
+  if atomId >= mol.GetNumAtoms():
+    raise ValueError("atom index greater than number of atoms")
+  if len(mol._fpInfo) != 2:
+    raise ValueError("_fpInfo not set")
+  if isBitVect:
+    molFp = mol._fpInfo[0] ^ mol._fpInfo[1][atomId]  # xor
+  else:  # count
+    molFp = copy.deepcopy(mol._fpInfo[0])
+    # delete the bits with atomId
+    for bit in mol._fpInfo[1][atomId]:
+      molFp[bit] -= 1
+  return molFp
 
 # usage:   lambda m,i: GetRDKFingerprint(m, i, fpType, nBits, minPath, maxPath, nBitsPerHash)
 def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPath=5, nBitsPerHash=2,
@@ -423,6 +427,7 @@ def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPat
     """
   if fpType not in ['bv', '']:
     raise ValueError("Unknown RDKit fingerprint type")
+
   fpType = 'bv'
   if not hasattr(mol, '_fpInfo'):
     info = []  # list with bits for each atom
@@ -433,11 +438,13 @@ def GetRDKFingerprint(mol, atomId=-1, fpType='bv', nBits=2048, minPath=1, maxPat
 
   if atomId < 0:
     return mol._fpInfo[0]
-  else:  # remove the bits of atomId
-    if atomId >= mol.GetNumAtoms():
-      raise ValueError("atom index greater than number of atoms")
-    if len(mol._fpInfo) != 2:
-      raise ValueError("_fpInfo not set")
-    molFp = copy.deepcopy(mol._fpInfo[0])
-    molFp.UnSetBitsFromList(mol._fpInfo[1][atomId])
-    return molFp
+
+  # remove the bits of atomId
+  if atomId >= mol.GetNumAtoms():
+    raise ValueError("atom index greater than number of atoms")
+  if len(mol._fpInfo) != 2:
+    raise ValueError("_fpInfo not set")
+
+  molFp = copy.deepcopy(mol._fpInfo[0])
+  molFp.UnSetBitsFromList(mol._fpInfo[1][atomId])
+  return molFp
