@@ -24,6 +24,8 @@
 namespace SmilesParseOps {
 using namespace RDKit;
 
+const std::string cxsmilesindex = "_cxsmilesindex";
+
 std::map<std::string, std::string> sgroupTypemap = {
     {"n", "SRU"},   {"mon", "MON"}, {"mer", "MER"}, {"co", "COP"},
     {"xl", "CRO"},  {"mod", "MOD"}, {"mix", "MIX"}, {"f", "FOR"},
@@ -673,7 +675,7 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol,
 
 template <typename Iterator>
 bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
-                       unsigned int startAtomIdx) {
+                       unsigned int startAtomIdx, unsigned int nSGroups) {
   // these look like: |SgD:2,1:FIELD:info::::|
   // example from CXSMILES docs:
   //    SgD:3,2,1,0:name:data:like:unit:t:(1.,1.)
@@ -691,6 +693,7 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
     return false;
   }
   SubstanceGroup sgroup(&mol, std::string("DAT"));
+  sgroup.setProp(cxsmilesindex, nSGroups);
   bool keepSGroup = false;
   for (auto idx : atoms) {
     if (VALID_ATIDX(idx)) {
@@ -767,22 +770,39 @@ bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     if (!read_int(first, last, parentId)) {
       return false;
     }
-    if (parentId >= sgs.size()) {
-      throw SmilesParseException("parent id references non-existent SGroup");
+    auto hasId = [parentId](const auto &sg) {
+      unsigned int pval;
+      if (sg.getPropIfPresent(cxsmilesindex, pval)) {
+        if (pval == parentId) {
+          return true;
+        }
+      }
+      return false;
+    };
+    bool validParent = true;
+    auto psg = std::find_if(sgs.begin(), sgs.end(), hasId);
+    if (psg == sgs.end()) {
+      validParent = false;
+    } else {
+      psg->getPropIfPresent("index", parentId);
     }
-    sgs[parentId].getPropIfPresent("index", parentId);
-
     if (first != last && *first == ':') {
       ++first;
       std::vector<unsigned int> children;
       if (!read_int_list(first, last, children, '.')) {
         return false;
       }
-      for (auto childId : children) {
-        if (childId >= sgs.size()) {
-          throw SmilesParseException("child id references non-existent SGroup");
+      if (validParent) {
+        for (auto childId : children) {
+          if (childId >= sgs.size()) {
+            throw SmilesParseException(
+                "child id references non-existent SGroup");
+          }
+          auto csg = std::find_if(sgs.begin(), sgs.end(), hasId);
+          if (csg != sgs.end()) {
+            csg->setProp("PARENT", parentId);
+          }
         }
-        sgs[childId].setProp("PARENT", parentId);
       }
       if (first != last && *first == ',') {
         ++first;
@@ -799,7 +819,7 @@ bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
 
 template <typename Iterator>
 bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
-                          unsigned int startAtomIdx) {
+                          unsigned int startAtomIdx, unsigned int nSGroups) {
   // these look like:
   //    |Sg:n:6,1,2,4::hh&#44;f:6,0,:4,2,|
   // example from CXSMILES docs:
@@ -825,6 +845,7 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   bool keepSGroup = false;
   SubstanceGroup sgroup(&mol, sgroupTypemap[typ]);
+  sgroup.setProp(cxsmilesindex, nSGroups);
   if (typ == "alt") {
     sgroup.setProp("SUBTYPE", std::string("ALT"));
   } else if (typ == "ran") {
@@ -865,6 +886,14 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
           return false;
         }
         if (keepSGroup && !headCrossing.empty()) {
+          for (auto &cidx : headCrossing) {
+            if (VALID_ATIDX(cidx)) {
+              cidx -= startAtomIdx;
+            } else {
+              keepSGroup = false;
+              break;
+            }
+          }
           sgroup.setProp(_headCrossings, headCrossing, true);
         }
         if (first != last && *first == ':') {
@@ -874,6 +903,14 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
           }
         }
         if (keepSGroup && !tailCrossing.empty()) {
+          for (auto &cidx : tailCrossing) {
+            if (VALID_ATIDX(cidx)) {
+              cidx -= startAtomIdx;
+            } else {
+              keepSGroup = false;
+              break;
+            }
+          }
           sgroup.setProp("_tailCrossings", tailCrossing, true);
         }
       }
@@ -1144,6 +1181,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
     return false;
   }
   ++first;
+  unsigned int nSGroups = 0;
   while (first < last && *first != '|') {
     typename Iterator::difference_type length = std::distance(first, last);
     if (*first == '(') {
@@ -1196,7 +1234,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
     } else if (*first == 'S' && first + 2 < last && first[1] == 'g' &&
                first[2] == 'D') {
-      if (!parse_data_sgroup(first, last, mol, startAtomIdx)) {
+      if (!parse_data_sgroup(first, last, mol, startAtomIdx, nSGroups++)) {
         return false;
       }
     } else if (*first == 'S' && first + 2 < last && first[1] == 'g' &&
@@ -1205,7 +1243,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
         return false;
       }
     } else if (*first == 'S' && first + 1 < last && first[1] == 'g') {
-      if (!parse_polymer_sgroup(first, last, mol, startAtomIdx)) {
+      if (!parse_polymer_sgroup(first, last, mol, startAtomIdx, nSGroups++)) {
         return false;
       }
     } else if (*first == 'u') {

@@ -1098,8 +1098,13 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(alabel == "_AP1");
     CHECK(getSubstanceGroups(*p0).size() == 1);
   }
-  SECTION("sgroup hierarchy") {  // clang-format off
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction("[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>> |$;;;_AP1;;;_AP1$|"));
-                                 // clang-format on
+  SECTION("sgroup hierarchy") {
+    // clang-format off
+    auto rxn = "[CH3:6][O:5][CH:3](-*)[O:2]-*>>[CH3:6][NH:5][CH:3](-*)[O:2]-* "
+    "|$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,SgD:7,6:foo:baz::::,Sg:n:4,2,1,0::ht,Sg:n:10,8,7,6::ht,SgH:2:0,3:1|"_rxnsmiles;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(getSubstanceGroups(*rxn->getReactants()[0]).size() == 2);
+    CHECK(getSubstanceGroups(*rxn->getProducts()[0]).size() == 2);
   }
 }
