@@ -27,7 +27,7 @@ from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem.rdMolDescriptors import GetAtomPairFingerprint, GetTopologicalTorsionFingerprint
 
 numPathBits = rdMolDescriptors.AtomPairsParameters.numPathBits
-_maxPathLen = (1 << numPathBits) - 1
+_maxPathLen = (1 << numPathBits) - 1  # Unused variable 
 numFpBits = numPathBits + 2 * rdMolDescriptors.AtomPairsParameters.codeSize
 fpLen = 1 << numFpBits
 
@@ -42,7 +42,7 @@ def _readPattyDefs(fname=os.path.join(RDConfig.RDDataDir, 'SmartsLib', 'patty_ru
       mol = Chem.MolFromSmarts(tpl[0])
       if mol is None:
         continue
-      matchers.append((mol, tpl[1])) # (mol, nm)
+      matchers.append((mol, tpl[1]))
   return matchers
 
 

@@ -35,17 +35,17 @@ def pyScorePath(mol, path, size, atomCodes=None):
 
   >>> from rdkit import Chem
   >>> m = Chem.MolFromSmiles('CCCCC')
-  >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0),1)
-  >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1),2)
-  >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2),2)
-  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(3),1)
-  >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize*2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize*3))
+  >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0), 1)
+  >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1), 2)
+  >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2), 2)
+  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(3), 1)
+  >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize * 2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize * 3))
   >>> pyScorePath(m, (0, 1, 2, 3), 4) == t
   1
 
   The scores are path direction independent:
 
-  >>> pyScorePath(m,(3,2,1,0),4)==t
+  >>> pyScorePath(m, (3, 2, 1, 0), 4) == t
   1
 
   >>> m = Chem.MolFromSmiles('C=CC(=O)O')
@@ -53,21 +53,25 @@ def pyScorePath(mol, path, size, atomCodes=None):
   >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1),2)
   >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2),2)
   >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(4),1)
-  >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize*2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize*3))
+  >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize * 2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize * 3))
   >>> pyScorePath(m, (0, 1, 2, 4), 4) == t
   1
 
   """
   codes = [None] * size
   for i in range(size):
-    sub = 1 if i in (0, size - 1) else 2
+    if i in (0, size - 1):
+      sub = 1
+    else:
+      sub = 2
     if not atomCodes:
       codes[i] = Utils.GetAtomCode(mol.GetAtomWithIdx(path[i]), sub)
     else:
       codes[i] = atomCodes[path[i]] - sub
 
   # "canonicalize" the code vector:
-  beg, end = 0, len(codes) - 1
+  beg = 0
+  end = len(codes) - 1
   while beg < end:
     if codes[beg] == codes[end]:
       beg += 1
@@ -76,9 +80,11 @@ def pyScorePath(mol, path, size, atomCodes=None):
       if codes[beg] > codes[end]:
         codes.reverse()
       break
+  
   accum = 0
-  for i in range(size):
-    accum |= codes[i] << (rdMolDescriptors.AtomPairsParameters.codeSize * i)
+  codeSize = rdMolDescriptors.AtomPairsParameters.codeSize
+  for i, code in enumerate(codes):
+    accum |= code << (codeSize * i)
   return accum
 
 
@@ -143,14 +149,6 @@ def ExplainPathScore(score, size=4):
 
 
 def GetTopologicalTorsionFingerprintAsIds(mol, targetSize=4):
-  """
-  Old code: (Clean if merged)
-  iv = GetTopologicalTorsionFingerprint(mol, targetSize)
-  res = []
-  for k, v in iv.GetNonzeroElements().items():
-    res.extend([k] * v)
-  res.sort()
-  """
   nonZeroElements = GetTopologicalTorsionFingerprint(mol, targetSize).GetNonzeroElements()
   resDict = sorted(nonZeroElements.items())
   res = []

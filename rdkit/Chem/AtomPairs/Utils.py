@@ -153,7 +153,7 @@ def NumPiElectrons(atom):
         # unsaturations (valence - degree):
         res = atom.GetExplicitValence() - atom.GetNumExplicitHs()
         if res < atom.GetDegree():
-            raise ValueError("The explicit valence exceeds atom degree")
+            raise ValueError("explicit valence exceeds atom degree")
         res -= atom.GetDegree()
     return res
 
