@@ -114,7 +114,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void drawArc(const Point2D &centre, double xradius, double yradius,
                        double ang1, double ang2,
                        bool rawCoords = false);
-  //! draw a rectangle
+  //! draw a rectangle given two opposite corners
   virtual void drawRect(const Point2D &cds1, const Point2D &cds2,
                         bool rawCoords = false);
   //! draw a line indicating the presence of an attachment point (normally a
@@ -129,6 +129,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                             unsigned int nSegments = 16,
                             double vertOffset = 0.05,
                             bool rawCoords = false);
+  //! Draw an arrow with either lines or a filled head (when asPolygon is true)
+  virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
+                         bool asPolygon = false, double frac = 0.05,
+                         double angle = M_PI / 6, bool rawCoords = false);
+  // draw a plus sign with lines at the given position.
+  virtual void drawPlus(const Point2D &cds, int plusWidth,
+                        const DrawColour &col, bool rawCoords = false);
+
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
                           bool rawCoords = false);
@@ -393,15 +401,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return atom_syms_[activeMolIdx_];
   }
-  //! Draw an arrow with either lines or a filled head (when asPolygon is true)
-  virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
-                         bool asPolygon = false, double frac = 0.05,
-                         double angle = M_PI / 6);
 
   // reset to default values all the things the c'tor sets
   void tabulaRasa();
 
-  virtual bool supportsAnnotations() { return true; }
+  virtual bool supportsAnnotations() const { return true; }
   virtual void drawAnnotation(const AnnotationType &annotation);
 
   void setActiveMolIdx(int newIdx);
@@ -434,7 +438,20 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void getReactionDrawMols(const ChemicalReaction &rxn,
                            std::vector<std::unique_ptr<DrawMol>> &reagents,
                            std::vector<std::unique_ptr<DrawMol>> &products,
-                           std::vector<std::unique_ptr<DrawMol>> &agents);
+                           std::vector<std::unique_ptr<DrawMol>> &agents,
+                           const std::vector<int> *confIds, int &plusWidth);
+  void makeReactionDrawMol(RWMol &mol, int confId, int molHeight,
+                           std::vector<std::unique_ptr<DrawMol>> &mols) const;
+  void calcReactionOffsets(std::vector<std::unique_ptr<DrawMol>> &reagents,
+                           std::vector<std::unique_ptr<DrawMol>> &products,
+                           std::vector<std::unique_ptr<DrawMol>> &agents,
+                           int &plusWidth, std::vector<Point2D> &offsets,
+                           Point2D &arrowBeg, Point2D &arrowEnd) const;
+  // returns the final offset. plusWidth of 0 means no pluses to be drawn.
+  int drawReactionPart(std::vector<std::unique_ptr<DrawMol>> &reactBit,
+                       int plusWidth, int initOffset,
+                       const std::vector<Point2D> &offsets);
+
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_, legend_height_;
   // if the user calls setScale() to explicitly force a scale on the

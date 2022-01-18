@@ -66,9 +66,9 @@ void DrawText::setMinFontSize(double new_min) { min_font_size_ = new_min; }
 double DrawText::fontScale() const { return font_scale_; }
 
 // ****************************************************************************
-bool DrawText::setFontScale(double new_scale, bool ignoreExtremes) {
+bool DrawText::setFontScale(double new_scale, bool ignoreLimits) {
   font_scale_ = new_scale;
-  if (ignoreExtremes) {
+  if (ignoreLimits) {
     return true;
   }
   font_scale_ = new_scale;

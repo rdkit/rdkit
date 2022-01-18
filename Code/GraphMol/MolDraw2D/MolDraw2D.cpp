@@ -483,13 +483,27 @@ void MolDraw2D::drawReaction(
     const std::vector<DrawColour> *highlightColorsReactants,
     const std::vector<int> *confIds) {
   double spacing = 1.0;
-  Point2D arrowBegin, arrowEnd;
 
   std::vector<std::unique_ptr<DrawMol>> reagents;
   std::vector<std::unique_ptr<DrawMol>> products;
   std::vector<std::unique_ptr<DrawMol>> agents;
 
-  getReactionDrawMols(rxn, reagents, products, agents);
+  // I think a larger minimum font size than the default works better for this
+  int mfs = drawOptions().minFontSize > 12 ? drawOptions().minFontSize : 12;
+  text_drawer_->setMinFontSize(mfs);
+  int plusWidth;
+  getReactionDrawMols(rxn, reagents, products, agents, confIds, plusWidth);
+  std::vector<Point2D> offsets;
+  Point2D arrowBeg, arrowEnd;
+  calcReactionOffsets(reagents, products, agents, plusWidth, offsets,
+                      arrowBeg, arrowEnd);
+  activeMolIdx_ = -1;
+  startDrawing();
+  int xOffset = 0;
+  xOffset = drawReactionPart(reagents, plusWidth, xOffset, offsets);
+  drawArrow(arrowBeg, arrowEnd, false, 0.05, M_PI / 6, true);
+  xOffset = drawReactionPart(agents, 0, xOffset, offsets);
+  xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
 
 #if 0
   ChemicalReaction nrxn(rxn);
@@ -1265,6 +1279,51 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 }
 
 // ****************************************************************************
+void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
+                          bool asPolygon, double frac, double angle,
+                          bool rawCoords) {
+  Point2D delta = arrowBegin - arrowEnd;
+  double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
+
+  Point2D p1 = arrowEnd;
+  p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
+  p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
+
+  Point2D p2 = arrowEnd;
+  p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
+  p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
+
+  drawLine(arrowBegin, arrowEnd, drawOptions().symbolColour,
+           drawOptions().symbolColour, rawCoords);
+  if (!asPolygon) {
+    drawLine(arrowEnd, p1, drawOptions().symbolColour,
+             drawOptions().symbolColour, rawCoords);
+    drawLine(arrowEnd, p2, drawOptions().symbolColour,
+             drawOptions().symbolColour, rawCoords);
+  } else {
+    std::vector<Point2D> pts = {p1, arrowEnd, p2};
+    bool fps = fillPolys();
+    DrawColour dc = colour();
+    setFillPolys(true);
+    setColour(drawOptions().symbolColour);
+    drawPolygon(pts, rawCoords);
+    setFillPolys(fps);
+    setColour(dc);
+  }
+}
+
+// ****************************************************************************
+void MolDraw2D::drawPlus(const Point2D &plusPos, int plusWidth,
+                         const DrawColour &col, bool rawCoords) {
+  Point2D end1(plusPos.x, plusPos.y - plusWidth);
+  Point2D end2(plusPos.x, plusPos.y + plusWidth);
+  drawLine(end1, end2, col, col, rawCoords);
+  end1 = Point2D(plusPos.x - plusWidth, plusPos.y);
+  end2 = Point2D(plusPos.x + plusWidth, plusPos.y);
+  drawLine(end1, end2, col, col, rawCoords);
+}
+
+// ****************************************************************************
 // draws the string centred on cds
 void MolDraw2D::drawString(const string &str, const Point2D &cds,
                            bool rawCoords) {
@@ -1355,13 +1414,215 @@ void MolDraw2D::getReactionDrawMols(
     const ChemicalReaction &rxn,
     std::vector<std::unique_ptr<DrawMol>> &reagents,
     std::vector<std::unique_ptr<DrawMol>> &products,
-    std::vector<std::unique_ptr<DrawMol>> &agents) {
+    std::vector<std::unique_ptr<DrawMol>> &agents,
+    const std::vector<int> *confIds, int &plusWidth) {
   ChemicalReaction nrxn(rxn);
 
-  int num_bits = nrxn.getNumReactantTemplates() +
-                 nrxn.getNumProductTemplates() + nrxn.getNumAgentTemplates();
-  int num_pluses = nrxn.getNumReactantTemplates() +
-                   nrxn.getNumProductTemplates() - 2;
+  const double agentFrac = 0.4;
+  double minScale = std::numeric_limits<double>::max(), minFontScale;
+  auto makeBits = [&](std::vector<RDKit::ROMOL_SPTR> const &bits,
+                      std::vector<std::unique_ptr<DrawMol>> &dms,
+                      int heightToUse) {
+    for (auto midx = 0; midx < bits.size(); ++midx) {
+      int cid = -1;
+      if (confIds) {
+        cid = (*confIds)[midx];
+      }
+      makeReactionDrawMol(*(RWMol *)bits[midx].get(), cid, heightToUse, dms);
+      if (dms.back()->getScale() < minScale) {
+        minScale = dms.back()->getScale();
+        minFontScale = dms.back()->getFontScale();
+      }
+    }
+  };
+  // reactants & products
+  makeBits(rxn.getReactants(), reagents, height());
+  makeBits(rxn.getProducts(), products, height());
+  for (auto &reagent : reagents) {
+    reagent->setScale(minScale, minFontScale);
+    reagent->shrinkToFit(false);
+  }
+  for (auto &product : products) {
+    product->setScale(minScale, minFontScale);
+    product->shrinkToFit(false);
+  }
+  // set the spacing for the plus signs to be 0.5 Angstrom.
+  plusWidth = 0.5 * minScale;
+
+  // agents
+  int agentHeight = int(agentFrac * height_);
+  minScale = std::numeric_limits<double>::max();
+  makeBits(rxn.getAgents(), agents, agentHeight);
+  for (auto &agent : agents) {
+    agent->setScale(minScale, minFontScale);
+    agent->shrinkToFit(false);
+  }
+
+}
+
+// ****************************************************************************
+void MolDraw2D::makeReactionDrawMol(
+    RWMol &mol, int confId, int molHeight,
+    std::vector<std::unique_ptr<DrawMol>> &mols) const {
+  if (drawOptions().prepareMolsBeforeDrawing) {
+    mol.updatePropertyCache(false);
+    try {
+      RDLog::BlockLogs blocker;
+      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
+    } catch (const MolSanitizeException &) {
+      // don't need to do anything
+    }
+    MolOps::setHybridization(mol);
+  }
+  if (!mol.getNumConformers()) {
+    const bool canonOrient = true;
+    RDDepict::compute2DCoords(mol, nullptr, canonOrient);
+  } else {
+    // we need to center the molecule
+    centerMolForDrawing(mol, confId);
+  }
+  // when preparing a reaction component to be drawn we should neither kekulize
+  // (we did that above if required) nor add chiralHs
+  const bool kekulize = false;
+  const bool addChiralHs = false;
+  MolDraw2DUtils::prepareMolForDrawing(mol, kekulize, addChiralHs);
+  // the height is fixed, but the width is allowed to be as large as the
+  // height and molecule dimensions dictate.
+  mols.emplace_back(new DrawMol(mol, "", -1, molHeight, drawOptions(),
+                                *text_drawer_, nullptr, nullptr, nullptr,
+                                nullptr, nullptr, nullptr,
+                                supportsAnnotations(), confId));
+  mols.back()->createDrawObjects();
+}
+
+// ****************************************************************************
+int MolDraw2D::drawReactionPart(std::vector<std::unique_ptr<DrawMol>> &reactBit,
+                                int plusWidth, int initOffset,
+                                const std::vector<Point2D> &offsets) {
+  if (reactBit.empty()) {
+    return initOffset;
+  }
+
+  Point2D plusPos(0.0, height() / 2);
+  for (auto i = 0; i < reactBit.size(); ++i) {
+    ++activeMolIdx_;
+    reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
+    reactBit[i]->draw(*this);
+#if 0
+    setColour(DrawColour(0, 1.0, 1.0));
+    drawLine(Point2D(offsets[initOffset].x + reactBit[i]->width_, 0),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_, height_),
+             true);
+    drawLine(Point2D(offsets[initOffset].x, 0),
+             Point2D(offsets[initOffset].x, height_), true);
+    setColour(DrawColour(1.0, 0, 1.0));
+    drawLine(Point2D(offsets[initOffset].x, offsets[initOffset].y),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_,
+                     offsets[initOffset].y),
+             true);
+    drawLine(Point2D(offsets[initOffset].x,
+                     offsets[initOffset].y + reactBit[i]->height_),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_,
+                     offsets[initOffset].y + reactBit[i]->height_),
+             true);
+#endif
+    if (plusWidth && i < reactBit.size() - 1) {
+      plusPos.x = (offsets[initOffset].x + reactBit[i]->width_ +
+                   offsets[initOffset + 1].x) /
+                  2;
+      int plusStroke = plusWidth > 30 ? 10 : plusWidth / 3;
+      drawPlus(plusPos, plusStroke, drawOptions().symbolColour, true);
+    }
+    ++initOffset;
+  }
+  return initOffset;
+}
+
+// ****************************************************************************
+void MolDraw2D::calcReactionOffsets(
+    std::vector<std::unique_ptr<DrawMol>> &reagents,
+    std::vector<std::unique_ptr<DrawMol>> &products,
+    std::vector<std::unique_ptr<DrawMol>> &agents, int &plusWidth,
+    std::vector<Point2D> &offsets,
+    Point2D &arrowBeg, Point2D &arrowEnd) const {
+  // calculate the total width of the drawing - it may need re-scaling if
+  // it's too wide for the panel.
+  auto reactionWidth = [&](int gapWidth) -> int {
+    int totWidth = width() * drawOptions().padding;
+    for (auto &dm : reagents) {
+      totWidth += dm->width_ + gapWidth;
+    }
+    if (agents.empty()) {
+      totWidth += 4 * gapWidth;
+    } else {
+      // the agent doesn't start at front of arrow
+      totWidth += gapWidth;
+      for (auto &dm : agents) {
+        totWidth += dm->width_ + gapWidth;
+      }
+    }
+    totWidth += 2 * gapWidth;  // either side of arrow
+    if (!products.empty()) {
+      for (auto &dm : products) {
+        totWidth += dm->width_;
+      }
+      // we don't want a plus after the last product
+      totWidth += gapWidth * (products.size() - 1);
+    }
+    return totWidth;
+  };
+  int totWidth = reactionWidth(plusWidth);
+  double stretch = double(width_) / totWidth;
+  // If stretch < 1, we need to shrink the DrawMols to fit.  This isn't
+  // necessary if we're just stretching them along the panel as they already
+  // fit for height.
+  auto scaleDrawMols = [&](std::vector<std::unique_ptr<DrawMol>> &dms) {
+    for (auto &dm: dms) {
+      dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(),
+                   false);
+      dm->shrinkToFit();
+    }
+  };
+  if (stretch < 1.0) {
+    scaleDrawMols(reagents);
+    scaleDrawMols(agents);
+    scaleDrawMols(products);
+  }
+  // now work out a new plusWidth, based on the new widths of DrawMols,
+  // if that has changed.
+  int numGaps = reagents.size();
+  numGaps += agents.empty() ? 6 : 2 + agents.size();
+  numGaps = products.empty() ? numGaps : numGaps + products.size() - 1;
+  totWidth = reactionWidth(0);
+  plusWidth = (width() - totWidth) / numGaps;
+  int xOffset = 0.5 * width() * drawOptions().padding;
+  for (auto i = 0; i < reagents.size(); ++i) {
+    offsets.emplace_back(
+        Point2D(xOffset, (height() - reagents[i]->height_) / 2));
+    xOffset += reagents[i]->width_ + plusWidth;
+  }
+  if (reagents.empty()) {
+    xOffset += plusWidth;
+  }
+  arrowBeg.y = height() / 2;
+  arrowBeg.x = xOffset;
+  if (agents.empty()) {
+    arrowEnd = Point2D(arrowBeg.x + 4 * plusWidth, height() / 2);
+  } else {
+    xOffset += plusWidth;
+    for (auto i = 0; i < agents.size(); ++i) {
+      offsets.emplace_back(
+          Point2D(xOffset, 0.475 * height() - agents[i]->height_));
+      xOffset += agents[i]->width_ + plusWidth;
+    }
+    arrowEnd = Point2D(xOffset, height() /2);
+  }
+  xOffset = arrowEnd.x + plusWidth;
+  for (auto i = 0; i < products.size(); ++i) {
+    offsets.emplace_back(
+        Point2D(xOffset, (height() - products[i]->height_) / 2));
+    xOffset += products[i]->width_ + plusWidth;
+  }
 }
 
 // ****************************************************************************
@@ -4150,33 +4411,6 @@ void MolDraw2D::adjustScaleForAnnotation(const vector<AnnotationType> &notes) {
   }
   x_range_ = max(x_max - x_min_, x_range_);
   y_range_ = max(y_max - y_min_, y_range_);
-}
-
-// ****************************************************************************
-void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
-                          bool asPolygon, double frac, double angle) {
-  Point2D delta = arrowBegin - arrowEnd;
-  double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
-
-  Point2D p1 = arrowEnd;
-  p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
-  p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
-
-  Point2D p2 = arrowEnd;
-  p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
-  p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
-
-  drawLine(arrowBegin, arrowEnd);
-  if (!asPolygon) {
-    drawLine(arrowEnd, p1);
-    drawLine(arrowEnd, p2);
-  } else {
-    std::vector<Point2D> pts = {p1, arrowEnd, p2};
-    bool fps = fillPolys();
-    setFillPolys(true);
-    drawPolygon(pts);
-    setFillPolys(fps);
-  }
 }
 
 // ****************************************************************************

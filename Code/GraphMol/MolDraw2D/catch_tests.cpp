@@ -3789,7 +3789,6 @@ TEST_CASE("changing baseFontSize") {
 TEST_CASE("flexicanvas: set canvas size automatically") {
   // note that these examples use Freetype if it's available.
   auto mol1 = "CCN(CC)CCn1nc2c3ccccc3sc3c(CNS(C)(=O)=O)ccc1c32"_smiles;
-
   REQUIRE(mol1);
   MolDraw2DUtils::prepareMolForDrawing(*mol1);
 
@@ -3885,6 +3884,44 @@ M  END
     check_file_hash("testFlexiCanvas.2b.png");
   }
 #endif
+  SECTION("semiflexicanvas1") {
+    MolDraw2DSVG drawer(308, -1, -1, -1, false);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().baseFontSize = 0.6;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testSemiFlexiCanvas.1a.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testSemiFlexiCanvas.1a.svg");
+  }
+  SECTION("semiflexicanvas2") {
+    MolDraw2DSVG drawer(-1, 223, -1, -1, false);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().baseFontSize = 0.6;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testSemiFlexiCanvas.1b.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testSemiFlexiCanvas.1b.svg");
+  }
+  SECTION("semiflexicanvas3") {
+    auto mol3 = "ON"_smiles;
+    REQUIRE(mol3);
+    MolDraw2DSVG drawer(-1, 150, -1, -1, false);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().baseFontSize = 0.6;
+    drawer.drawMolecule(*mol3);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testSemiFlexiCanvas.1c.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testSemiFlexiCanvas.1c.svg");
+  }
   SECTION("reaction") {
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
         "[N:1]-[C:2]-[C:3](=[O:4])-[O:5].[N:6]-[C:7]-[C:8](=[O:9])-[O:10]>>[N:"

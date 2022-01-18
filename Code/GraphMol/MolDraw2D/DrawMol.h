@@ -62,7 +62,7 @@ class DrawMol {
     coordinates
   */
   DrawMol(const ROMol &mol, const std::string &legend, int width, int height,
-          MolDrawOptions &drawOptions, DrawText &textDrawer,
+          const MolDrawOptions &drawOptions, DrawText &textDrawer,
           const std::vector<int> *highlightAtoms = nullptr,
           const std::vector<int> *highlightBonds = nullptr,
           const std::map<int, DrawColour> *highlightAtomMap = nullptr,
@@ -106,6 +106,10 @@ class DrawMol {
   void draw(MolDraw2D &drawer) const;
   void drawRadicals(MolDraw2D &drawer) const;
   void resetEverything();
+  // reduce width_ and height_ to just accomodate the Xrange_ and YRange_
+  // at the current scale.  Recentres everything.  So the DrawMol takes up
+  // no more screen real estate than it needs.
+  void shrinkToFit(bool withPadding = true);
 
   // adds LaTeX-like annotation for super- and sub-script.
   std::pair<std::string, OrientType> getAtomSymbolAndOrientation(
@@ -169,19 +173,20 @@ class DrawMol {
   // more often than not, newScale and newFontScale will be the same,
   // but not if minFontScale of maxFontScale have become involved.
   // The newFontScale will be used without checking the min and max.
-  void setScale(double newScale, double newFontScale);
+  void setScale(double newScale, double newFontScale,
+                bool ignoreFontLimits = true);
   // for drawing into a grid, for example.  Must be set before
   // changeToDrawCoords is called for it to have effect.
   void setOffsets(double xOffset, double yOffset);
   // so we can add metadata later.  Most likely used after changeToDrawCoords
   // has been called.
   void tagAtomsWithCoords();
-  // apply the transformations to everything except the atomLabels_ and
-  // annotations_. trans and toCentre are added, scale is multiplied.
-  void transformAllButAtomLabels(const Point2D &trans, Point2D &scale,
-                                 const Point2D &toCentre);
+  // apply the transformations to everything. trans and toCentre are added,
+  // scale is multiplied.
+  void transformAll(const Point2D *trans = nullptr, Point2D *scale = nullptr,
+                    const Point2D *toCentre = nullptr);
 
-  MolDrawOptions &drawOptions_;
+  const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
   std::vector<int> highlightAtoms_;
   std::vector<int> highlightBonds_;
@@ -230,7 +235,7 @@ DrawColour getColour(int atom_idx, const MolDrawOptions &drawOptions,
 DrawColour getColourByAtomicNum(int atomicNum,
                                 const MolDrawOptions &drawOptions);
 int getHighlightBondWidth(
-    MolDrawOptions &drawOptions, int bond_idx,
+    const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers);
 
 void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,

@@ -35,7 +35,7 @@ namespace RDKit {
 // ****************************************************************************
 DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
                  int width, int height,
-                 MolDrawOptions &drawOptions, DrawText &textDrawer,
+                 const MolDrawOptions &drawOptions, DrawText &textDrawer,
                  const std::vector<int> *highlight_atoms,
                  const std::vector<int> *highlight_bonds,
                  const std::map<int, DrawColour> *highlight_atom_map,
@@ -82,6 +82,7 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
 
 // ****************************************************************************
 void DrawMol::createDrawObjects() {
+  textDrawer_.setFontScale(fontScale_, true);
   partitionForLegend();
   extractAll();
   calculateScale();
@@ -760,50 +761,50 @@ void DrawMol::extractCloseContacts() {
 void DrawMol::calculateScale() {
   findExtremes();
 
-  // if either width_ or drawHeight_ is < 0 we are going to make a picture of
-  // as yet unknown size, with fixed scale.
-  bool setWidth = false;
-  if (width_ < 0) {
-    // FIX: technically we need to take the legend width into account too!
+  // if width < 0, we'll take the scale off the yRange_, and likewise with height
+  // and xRange_.  If both are negative, use drawOptions_scalingFactor.
+  float newScale = 1.0;
+  if (width_ < 0 && height_ < 0) {
     width_ = drawOptions_.scalingFactor * xRange_;
-    setWidth = true;
+    drawHeight_ = drawOptions_.scalingFactor * yRange_;
+  } else if(width_ < 0 && yRange_ > 1.0e-4) {
+    newScale = double(height_) / yRange_;
+    // if the molecule is very wide and short (e.g. HO-NH2) don't let the
+    // bonds get too long.
+    double mbl = sqrt(meanBondLengthSquare_) * newScale;
+    if (mbl > drawHeight_ / 2) {
+      newScale *= (drawHeight_ / 2) / mbl;
+    }
+    width_ = newScale * xRange_;
+  } else if (height_ < 0 && xRange_ > 1.0e-4) {
+    newScale = double(width_) / xRange_;
+    double mbl = sqrt(meanBondLengthSquare_) * newScale;
+    if (mbl > width_ / 2) {
+      newScale *= (width_ / 2) / mbl;
+    }
+    drawHeight_ = newScale * yRange_;
   }
-  bool setHeight = false;
-  double thisYRange = yRange_;
-  if (drawHeight_ < 0) {
-    // we need to adjust the range for the legend
-    // if it's not present then legendHeight_ will be zero and this will be a
-    // no-op
-    thisYRange += legendHeight_ / drawOptions_.scalingFactor;
-    drawHeight_ = drawOptions_.scalingFactor * thisYRange;
-    setHeight = true;
+  if (height_ < 0) {
+    if (legend_.empty()) {
+      height_ = drawHeight_;
+      legendHeight_ = 0;
+    } else {
+      height_ = drawHeight_ / (1.0 - drawOptions_.legendFraction);
+      drawHeight_ = height_ - legendHeight_;
+    }
   }
 
   // put a 5% buffer round the drawing and calculate a final scale
-  xMin_ -= drawOptions_.padding * xRange_;
-  xRange_ *= 1 + 2 * drawOptions_.padding;
-  xMax_ = xMin_ + xRange_;
-  yMin_ -= drawOptions_.padding * yRange_;
-  yRange_ *= 1 + 2 * drawOptions_.padding;
-  yMax_ = yMin_ + yRange_;
+  double xMin = xMin_ - drawOptions_.padding * xRange_;
+  double xMax = xMax_ + drawOptions_.padding * xRange_;
+  double xRange = xMax - xMin;
+  double yMin = yMin_ - drawOptions_.padding * yRange_;
+  double yMax = yMax_ + drawOptions_.padding * yRange_;
+  double yRange = yMax - yMin;
 
-  double newScale = 1.0;
-  if (xRange_ > 1e-4 || yRange_ > 1e-4) {
-    if (setWidth) {
-      width_ = drawOptions_.scalingFactor * xRange_;
-    }
-    if (setHeight) {
-      drawHeight_ = drawOptions_.scalingFactor * thisYRange;
-      if (legend_.empty()) {
-        height_ = drawHeight_;
-      } else {
-        height_ = drawHeight_ / (1.0 - drawOptions_.legendFraction);
-        legendHeight_ = height_ - drawHeight_;
-      }
-    }
-
-    newScale = std::min(double(width_) / xRange_,
-                      double(drawHeight_) / yRange_);
+  if (xRange > 1e-4 || yRange > 1e-4) {
+    newScale = std::min(double(width_) / xRange,
+                      double(drawHeight_) / yRange);
     double fix_scale = newScale;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
@@ -872,19 +873,7 @@ void DrawMol::findExtremes() {
 void DrawMol::changeToDrawCoords() {
   Point2D trans, scale, toCentre;
   getDrawTransformers(trans, scale, toCentre);
-  transformAllButAtomLabels(trans, scale, toCentre);
-  for (auto &annot : annotations_) {
-    annot->move(trans);
-    annot->scale(scale);
-    annot->move(toCentre);
-  }
-  for (auto &label : atomLabels_) {
-    if (label) {
-      label->move(trans);
-      label->scale(scale);
-      label->move(toCentre);
-    }
-  }
+  transformAll(&trans, &scale, &toCentre);
 }
 
 // ****************************************************************************
@@ -896,6 +885,8 @@ void DrawMol::draw(MolDraw2D &drawer) const {
   }
   auto keepScale = drawer.scale();
   drawer.setScale(scale_);
+  auto keepFontScale = textDrawer_.fontScale();
+  textDrawer_.setFontScale(fontScale_, true);
   for(auto &ps : preShapes_) {
     ps->draw(drawer);
   }
@@ -923,6 +914,7 @@ void DrawMol::draw(MolDraw2D &drawer) const {
     leg->draw(drawer);
   }
   drawer.setScale(keepScale);
+  textDrawer_.setFontScale(keepFontScale, true);
 }
 
 // ****************************************************************************
@@ -1039,6 +1031,25 @@ void DrawMol::resetEverything() {
   annotations_.clear();
   legends_.clear();
   radicals_.clear();
+}
+
+// ****************************************************************************
+void DrawMol::shrinkToFit(bool withPadding) {
+  double padding = withPadding ? drawOptions_.padding : 0;
+  int newWidth = std::ceil((2 * padding + 1) * xRange_ * scale_);
+  int newHeight = std::ceil((2 * padding + 1) * yRange_ * scale_);
+  Point2D corr((newWidth - width_) / 2, (newHeight - height_) / 2);
+  transformAll(&corr, nullptr, nullptr);
+  width_ = newWidth;
+  height_ = newHeight;
+  if (!legend_.empty()) {
+    partitionForLegend();
+    legends_.clear();
+    extractLegend();
+  } else {
+    legendHeight_ = 0;
+    drawHeight_ = height_;
+  }
 }
 
 // ****************************************************************************
@@ -1594,11 +1605,6 @@ void DrawMol::makeDoubleBondLines(Bond *bond, double doubleBondOffset,
   atCds_[at2Idx] = end2;
   calcDoubleBondLines(*drawMol_, doubleBondOffset, *bond, atCds_, l1s, l1f, l2s,
                       l2f);
-  bool orig_slw = drawOptions_.scaleBondWidth;
-  //  if (highlight_bond) {
-  //    d2d.drawOptions().scaleBondWidth =
-  //        d2d.drawOptions().scaleHighlightBondWidth;
-  //  }
   int bondIdx = bond->getIdx();
   newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx,
               bondIdx, noDash);
@@ -1609,7 +1615,6 @@ void DrawMol::makeDoubleBondLines(Bond *bond, double doubleBondOffset,
     newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx,
                 bondIdx, noDash);
   }
-  drawOptions_.scaleBondWidth = orig_slw;
   atCds_[at1Idx] = sat1;
   atCds_[at2Idx] = sat2;
 }
@@ -1630,12 +1635,10 @@ void DrawMol::makeTripleBondLines(
   atCds_[at2Idx] = end2;
   int bondIdx = bond->getIdx();
   calcTripleBondLines(doubleBondOffset, *bond, atCds_, l1s, l1f, l2s, l2f);
-  bool orig_slw = drawOptions_.scaleBondWidth;
   newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx,
               bondIdx, noDash);
   newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx,
               bondIdx, noDash);
-  drawOptions_.scaleBondWidth = orig_slw;
   atCds_[at1Idx] = sat1;
   atCds_[at2Idx] = sat2;
 }
@@ -2288,15 +2291,16 @@ Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
 }
 
 // ****************************************************************************
-void DrawMol::setScale(double newScale, double newFontScale) {
+void DrawMol::setScale(double newScale, double newFontScale,
+                       bool ignoreFontLimits) {
   resetEverything();
   double relFontScale = newFontScale / newScale;
-  textDrawer_.setFontScale(relFontScale , true);
+  textDrawer_.setFontScale(relFontScale, true);
 
   extractAll();
   findExtremes();
 
-  textDrawer_.setFontScale(newFontScale , true);
+  textDrawer_.setFontScale(newFontScale, ignoreFontLimits);
   scale_ = newScale;
   fontScale_ = textDrawer_.fontScale();
   finishCreateDrawObjects();
@@ -2304,8 +2308,16 @@ void DrawMol::setScale(double newScale, double newFontScale) {
 
 // ****************************************************************************
 void DrawMol::setOffsets(double xOffset, double yOffset) {
+  // Remove the existing offsets.  Presumably this will accumulate small
+  // errors if it's done a lot.
+  if (fabs(xOffset_) > 1e-4 || fabs(yOffset_) > 1e-4) {
+    Point2D trans{-xOffset_, -yOffset_};
+    transformAll(&trans, nullptr, nullptr);
+  }
   xOffset_ = xOffset;
   yOffset_ = yOffset;
+  Point2D trans{xOffset_, yOffset_};
+  transformAll(&trans, nullptr, nullptr);
 }
 
 // ****************************************************************************
@@ -2317,34 +2329,84 @@ void DrawMol::tagAtomsWithCoords() {
 }
 
 // ****************************************************************************
-void DrawMol::transformAllButAtomLabels(const Point2D &trans, Point2D &scale,
-                                        const Point2D &toCentre) {
+void DrawMol::transformAll(const Point2D *trans, Point2D *scale,
+                           const Point2D *toCentre) {
   for (auto &ps : preShapes_) {
-    ps->move(trans);
-    ps->scale(scale);
-    ps->move(toCentre);
+    if (trans) {
+      ps->move(*trans);
+    }
+    if (scale) {
+      ps->scale(*scale);
+    }
+    if (toCentre) {
+      ps->move(*toCentre);
+    }
   }
   for (auto &bond : bonds_) {
-    bond->move(trans);
-    bond->scale(scale);
-    bond->move(toCentre);
+    if (trans) {
+      bond->move(*trans);
+    }
+    if (scale) {
+      bond->scale(*scale);
+    }
+    if (toCentre) {
+      bond->move(*toCentre);
+    }
   }
   for (auto &hl : highlights_) {
-    hl->move(trans);
-    hl->scale(scale);
-    hl->move(toCentre);
+    if (trans) {
+      hl->move(*trans);
+    }
+    if (scale) {
+      hl->scale(*scale);
+    }
+    if (toCentre) {
+      hl->move(*toCentre);
+    }
+  }
+  for (auto &annot : annotations_) {
+    if (trans) {
+      annot->move(*trans);
+    }
+    if (scale) {
+      annot->scale(*scale);
+    }
+    if (toCentre) {
+      annot->move(*toCentre);
+    }
+  }
+  for (auto &label : atomLabels_) {
+    if (label) {
+      if (trans) {
+        label->move(*trans);
+      }
+      if (scale) {
+        label->scale(*scale);
+      }
+      if (toCentre) {
+        label->move(*toCentre);
+      }
+    }
   }
   Point2D fontScale{textDrawer_.fontScale(), textDrawer_.fontScale()};
+  Point2D tmpTrans = trans ? *trans : Point2D{0.0, 0.0};
+  Point2D tmpToCentre = toCentre ? *toCentre : Point2D{0.0, 0.0};
   for (auto &rad : radicals_) {
     get<0>(rad).trans_ =
-        getDrawCoords(get<0>(rad).trans_, trans, fontScale, toCentre);
+        getDrawCoords(get<0>(rad).trans_, tmpTrans, fontScale, tmpToCentre);
     get<0>(rad).width_ *= fontScale.x;
     get<0>(rad).height_ *= fontScale.y;
   }
   for (auto &ps : postShapes_) {
-    ps->move(trans);
-    ps->scale(scale);
-    ps->move(toCentre);
+    if (trans) {
+      ps->move(*trans);
+    }
+    if (scale) {
+      ps->scale(*scale);
+    }
+    if (toCentre) {
+      ps->move(*toCentre);
+    }
   }
 }
 
@@ -2461,7 +2523,7 @@ DrawColour getColourByAtomicNum(int atomic_num,
 
 // ****************************************************************************
 int getHighlightBondWidth(
-    MolDrawOptions &drawOptions, int bond_idx,
+    const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers) {
   int bwm = drawOptions.highlightBondWidthMultiplier;
   // if we're not doing filled highlights, the lines need to be narrower
