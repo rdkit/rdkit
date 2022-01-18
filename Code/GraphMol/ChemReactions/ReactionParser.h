@@ -84,7 +84,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
    SMARTS parserfor the individual components
 
    \param allowCXSMILES     if set, any CXSMILES extensions present will be
-   parsed
+   parsed, otherwise it will be ignored
  */
 RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text,

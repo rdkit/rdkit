@@ -311,6 +311,8 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
 
 }  // end of anonymous namespace
 
+// we use this pattern a lot and it's a long function call, but a very short
+// #define
 #define VALID_ATIDX(_atidx_) \
   ((_atidx_) >= startAtomIdx && (_atidx_) < startAtomIdx + mol.getNumAtoms())
 

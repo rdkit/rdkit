@@ -163,8 +163,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   }
 
   // remove spaces around ">" symbols
-  for (auto piter = pos.rbegin(); piter != pos.rend(); ++piter) {
-    removeSpacesAround(text, *piter);
+  for (auto p : boost::make_iterator_range(pos.rbegin(), pos.rend())) {
+    removeSpacesAround(text, p);
   }
 
   // remove spaces around "." symbols
@@ -174,8 +174,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
       pos.push_back(i);
     }
   }
-  for (auto piter = pos.rbegin(); piter != pos.rend(); ++piter) {
-    removeSpacesAround(text, *piter);
+  for (auto p : boost::make_iterator_range(pos.rbegin(), pos.rend())) {
+    removeSpacesAround(text, p);
   }
 
   // we shouldn't have whitespace left in the reaction string, so go ahead and
@@ -219,23 +219,6 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   auto reactSmarts = DaylightParserUtils::splitSmartsIntoComponents(reactText);
   auto productSmarts =
       DaylightParserUtils::splitSmartsIntoComponents(productText);
-
-  // if the input includes CX extensions, they will show up here after the
-  // last product. We can't currently deal with those, so issue a warning and
-  // strip out anything following the last productSmarts
-  // This was Github #4759
-  // if (!productSmarts.empty()) {
-  //   auto &lastSmarts = productSmarts.back();
-  //   boost::trim(lastSmarts);
-  //   std::vector<std::string> tokens;
-  //   boost::split(tokens, lastSmarts, boost::is_any_of(" \t"));
-  //   if (tokens.size() > 1) {
-  //     auto fromWhat = useSmiles ? "SMILES" : "SMARTS";
-  //     BOOST_LOG(rdWarningLog)
-  //         << "stripping extra text from input " << fromWhat << std::endl;
-  //     lastSmarts = tokens[0];
-  //   }
-  // }
 
   auto *rxn = new ChemicalReaction();
 

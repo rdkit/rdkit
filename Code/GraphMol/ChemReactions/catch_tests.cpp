@@ -985,14 +985,37 @@ TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
     CHECK(rxn->getProducts().size() == 1);
     CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
     CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+    CHECK(rxn->getProducts()[0]->getAtomWithIdx(1)->hasProp(
+        common_properties::atomLabel));
+    CHECK(rxn->getProducts()[0]->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::atomLabel) == "Aryl");
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(0)->hasProp(
+        common_properties::atomLabel));
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "Aryl");
   }
   SECTION("SMILES") {
+    bool useSmiles = true;
     std::unique_ptr<ChemicalReaction> rxn(
-        RxnSmartsToChemicalReaction(sma, nullptr, true));
+        RxnSmartsToChemicalReaction(sma, nullptr, useSmiles));
     REQUIRE(rxn);
     CHECK(rxn->getProducts().size() == 1);
     CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
     CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+  SECTION("disabling CXSMILES") {
+    bool useSmiles = false;
+    bool allowCXSMILES = false;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(sma, nullptr, useSmiles, allowCXSMILES));
+    REQUIRE(rxn);
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+    CHECK(!rxn->getProducts()[0]->getAtomWithIdx(1)->hasProp(
+        common_properties::atomLabel));
+    CHECK(!rxn->getReactants()[0]->getAtomWithIdx(0)->hasProp(
+        common_properties::atomLabel));
   }
   SECTION("Ensure we still handle spaces before/after the >>") {
     auto rxn = " [C:1]Br.[C:2]O >> [C:2][C:1] |$Aryl;;;;;Aryl$|"_rxnsmarts;
