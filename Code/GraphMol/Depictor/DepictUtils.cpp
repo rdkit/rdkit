@@ -49,7 +49,7 @@ RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
 
   RDGeom::INT_POINT2D_MAP res;
 
-  for (unsigned int i = 0; i < na; i++) {
+  for (unsigned int i = 0; i < na; ++i) {
     auto x = al * cos(i * ang);
     auto y = al * sin(i * ang);
     RDGeom::Point2D loc(x, y);
@@ -169,7 +169,7 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
     subs = 0;
     for (auto rii : fusedRing) {
       if (mol.getAtomWithIdx(rii)->getDegree() > 2) {
-        subs++;
+        ++subs;
       }
     }
     if (subs < minsubs) {
@@ -247,7 +247,7 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
       nextId = currRingId;
       res = commonAtoms;
     }
-    currRingId++;
+    ++currRingId;
   }
   // here is an additional constrain we will put on the common atoms it is quite
   // likely that the common atoms form a chain (it is possible we can construct
