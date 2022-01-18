@@ -105,17 +105,13 @@ class ForwardDbFpSupplier(DbFpSupplier):
           NOTE: this has side effects
 
         """
-        try:
-            d = next(self._dataIter)
-        except StopIteration:
-            d = None
+        d = next(self._dataIter, None)
+        # return self._BuildFp(next(self._dataIter, None))
         if d is not None:
-            newFp = self._BuildFp(d)
-        else:
-            newFp = None
-        return newFp
-
-
+            return self._BuildFp(d)
+        return None 
+        
+        
 class RandomAccessDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting random access:
 

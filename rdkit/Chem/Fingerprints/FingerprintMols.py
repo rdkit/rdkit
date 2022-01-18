@@ -21,16 +21,13 @@ Sample Usage:
 
 """
 
-
-
 import getopt
+import pickle
 import sys
 
-from rdkit import Chem
-from rdkit import DataStructs
+from rdkit import Chem, DataStructs
 from rdkit.Chem import MACCSkeys
 from rdkit.ML.Cluster import Murtagh
-import pickle
 
 
 def error(msg):
@@ -67,12 +64,11 @@ def FingerprintMol(mol, fingerprinter=Chem.RDKFingerprint, **fpArgs):
 
   if fingerprinter != Chem.RDKFingerprint:
     fp = fingerprinter(mol, **fpArgs)
-    fp = FoldFingerprintToTargetDensity(fp, **fpArgs)
-  else:
-    fp = fingerprinter(mol, fpArgs['minPath'], fpArgs['maxPath'], fpArgs['fpSize'],
+    return FoldFingerprintToTargetDensity(fp, **fpArgs)
+
+  return fingerprinter(mol, fpArgs['minPath'], fpArgs['maxPath'], fpArgs['fpSize'],
                        fpArgs['bitsPerHash'], fpArgs['useHs'], fpArgs['tgtDensity'],
                        fpArgs['minSize'])
-  return fp
 
 
 def FingerprintsFromSmiles(dataSource, idCol, smiCol, fingerprinter=Chem.RDKFingerprint,
@@ -92,7 +88,7 @@ def FingerprintsFromSmiles(dataSource, idCol, smiCol, fingerprinter=Chem.RDKFing
       res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
-        message('Done %d molecules\n' % (nDone))
+        message('Done %d molecules\n' % nDone)
       if maxMols > 0 and nDone >= maxMols:
         break
     else:
@@ -115,7 +111,7 @@ def FingerprintsFromMols(mols, fingerprinter=Chem.RDKFingerprint, reportFreq=10,
       res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
-        message('Done %d molecules\n' % (nDone))
+        message('Done %d molecules\n' % nDone)
       if maxMols > 0 and nDone >= maxMols:
         break
     else:
@@ -140,7 +136,7 @@ def FingerprintsFromPickles(dataSource, idCol, pklCol, fingerprinter=Chem.RDKFin
       res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
-        message('Done %d molecules\n' % (nDone))
+        message('Done %d molecules\n' % nDone)
       if maxMols > 0 and nDone >= maxMols:
         break
     else:
@@ -151,8 +147,8 @@ def FingerprintsFromPickles(dataSource, idCol, pklCol, fingerprinter=Chem.RDKFin
 def FingerprintsFromDetails(details, reportFreq=10):
   data = None
   if details.dbName and details.tableName:
-    from rdkit.Dbase.DbConnection import DbConnect
     from rdkit.Dbase import DbInfo
+    from rdkit.Dbase.DbConnection import DbConnect
     from rdkit.ML.Data import DataUtils
     try:
       conn = DbConnect(details.dbName, details.tableName)
@@ -184,7 +180,6 @@ def FingerprintsFromDetails(details, reportFreq=10):
     smiCol = 1
   elif details.inFileName and details.useSD:
     conn = None
-    dataset = None
     if not details.idName:
       details.idName = 'ID'
     dataSet = []
@@ -204,7 +199,7 @@ def FingerprintsFromDetails(details, reportFreq=10):
           dataSet.append(m)
           if reportFreq > 0 and not len(dataSet) % reportFreq:
             message('Read %d molecules\n' % (len(dataSet)))
-            if details.maxMols > 0 and len(dataSet) >= details.maxMols:
+            if 0 < details.maxMols <= len(dataSet):
               break
 
     for i, mol in enumerate(dataSet):
@@ -234,8 +229,8 @@ def FingerprintsFromDetails(details, reportFreq=10):
       outF.close()
     dbName = details.outDbName or details.dbName
     if details.outTableName and dbName:
+      from rdkit.Dbase import DbModule, DbUtils
       from rdkit.Dbase.DbConnection import DbConnect
-      from rdkit.Dbase import DbUtils, DbModule
       conn = DbConnect(dbName)
       #
       #  We don't have a db open already, so we'll need to figure out
@@ -326,25 +321,19 @@ class FingerprinterDetails(object):
     self.actName = ''
 
   def GetMetricName(self):
-    if self.metric == DataStructs.TanimotoSimilarity:
-      return 'Tanimoto'
-    elif self.metric == DataStructs.DiceSimilarity:
-      return 'Dice'
-    elif self.metric == DataStructs.CosineSimilarity:
-      return 'Cosine'
-    elif self.metric:
-      return self.metric
-    else:
+    metricDict = {DataStructs.DiceSimilarity: 'Dice', DataStructs.TanimotoSimilarity: 'Tanimoto', 
+                  DataStructs.CosineSimilarity: 'Cosine', } # DataStructs.TverskySimilarity: 'Tversky'
+    try:
+      return metricDict[self.metric]
+    except KeyError:
+      if self.metric:
+        return self.metric
       return 'Unknown'
 
   def SetMetricFromName(self, name):
-    name = name.upper()
-    if name == "TANIMOTO":
-      self.metric = DataStructs.TanimotoSimilarity
-    elif name == "DICE":
-      self.metric = DataStructs.DiceSimilarity
-    elif name == "COSINE":
-      self.metric = DataStructs.CosineSimilarity
+    metricDict = {'DICE': DataStructs.DiceSimilarity, 'TANIMOTO': DataStructs.TanimotoSimilarity, 
+                  'COSINE': DataStructs.CosineSimilarity, } # 'TVERSKY': DataStructs.TverskySimilarity, 
+    self.metric = metricDict[name.upper()]
 
 
 def Usage():
