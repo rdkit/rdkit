@@ -169,13 +169,22 @@ def ShowMolFeats(mol, factory, viewer, radius=0.5, confId=-1, showOnly=True, nam
     dirLabel = featLabel + "-dirs"
     viewer.server.resetCGO(dirLabel)
 
-  for i, feat in enumerate(molFeats):
+  FeatVectsDictMethod = \
+    {('Aromatic', None): FeatDirUtils.GetAromaticFeatVects, 
+     ('Donor', 1): FeatDirUtils.GetDonor1FeatVects,
+     ('Donor', 2): FeatDirUtils.GetDonor2FeatVects,
+     ('Donor', 3): FeatDirUtils.GetDonor3FeatVects,
+     ('Acceptor', 1): FeatDirUtils.GetDonor1FeatVects,
+     ('Acceptor', 2): FeatDirUtils.GetDonor2FeatVects,
+     ('Acceptor', 3): FeatDirUtils.GetDonor3FeatVects,
+     } # TODO: add more feat types if needed. Error should not be thrown if a type is not found due to the lack of method.
+
+  for feat in molFeats:
     family = feat.GetFamily()
     if family in excludeTypes:
       continue
     pos = feat.GetPos(confId)
     color = colors.get(family, (.5, .5, .5))
-    nm = '%s(%d)' % (family, i + 1)
 
     if transparency:
       _globalSphereCGO.extend([ALPHA, 1 - transparency])
@@ -194,33 +203,24 @@ def ShowMolFeats(mol, factory, viewer, radius=0.5, confId=-1, showOnly=True, nam
     if useFeatDirs:
       ps = []
       if family == 'Aromatic':
-        ps, fType = FeatDirUtils.GetAromaticFeatVects(
+        ps, fType = FeatVectsDictMethod[(family, None)](
           mol.GetConformer(confId), feat.GetAtomIds(), pos, scale=1.0)
+      
       elif family == 'Donor':
         aids = feat.GetAtomIds()
         if len(aids) == 1:
           featAtom = mol.GetAtomWithIdx(aids[0])
           hvyNbrs = [x for x in featAtom.GetNeighbors() if x.GetAtomicNum() != 1]
-          if len(hvyNbrs) == 1:
-            ps, fType = FeatDirUtils.GetDonor1FeatVects(mol.GetConformer(confId), aids, scale=1.0)
-          elif len(hvyNbrs) == 2:
-            ps, fType = FeatDirUtils.GetDonor2FeatVects(mol.GetConformer(confId), aids, scale=1.0)
-          elif len(hvyNbrs) == 3:
-            ps, fType = FeatDirUtils.GetDonor3FeatVects(mol.GetConformer(confId), aids, scale=1.0)
+          ps, fType = FeatVectsDictMethod[(family, len(hvyNbrs))](
+            mol.GetConformer(confId), aids, scale=1.0)
+
       elif family == 'Acceptor':
         aids = feat.GetAtomIds()
         if len(aids) == 1:
           featAtom = mol.GetAtomWithIdx(aids[0])
           hvyNbrs = [x for x in featAtom.GetNeighbors() if x.GetAtomicNum() != 1]
-          if len(hvyNbrs) == 1:
-            ps, fType = FeatDirUtils.GetAcceptor1FeatVects(
-              mol.GetConformer(confId), aids, scale=1.0)
-          elif len(hvyNbrs) == 2:
-            ps, fType = FeatDirUtils.GetAcceptor2FeatVects(
-              mol.GetConformer(confId), aids, scale=1.0)
-          elif len(hvyNbrs) == 3:
-            ps, fType = FeatDirUtils.GetAcceptor3FeatVects(
-              mol.GetConformer(confId), aids, scale=1.0)
+          ps, fType = FeatVectsDictMethod[(family, len(hvyNbrs))](
+            mol.GetConformer(confId), aids, scale=1.0)
 
       for tail, head in ps:
         ShowArrow(viewer, tail, head, radius, color, dirLabel, transparency=transparency,
@@ -343,6 +343,7 @@ if __name__ == '__main__':
       i += 1
       if not i % 100:
         logger.info("Done %d poses" % i)
+    
     if ms:
       v.server.renderCGO(_globalSphereCGO, featLabel, 1)
       if options.useDirs:
