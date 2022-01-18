@@ -70,7 +70,8 @@ class DrawMol {
           const std::vector<std::pair<DrawColour, DrawColour>> *bondColours =
               nullptr,
           const std::map<int, double> *highlight_radii = nullptr,
-          bool includeAnnotations = true, int confId = -1);
+          bool includeAnnotations = true, int confId = -1,
+          bool isReactionMol = false);
   DrawMol(const DrawMol &) = delete;
   DrawMol(const DrawMol &&) = delete;
   DrawMol &operator=(const DrawMol &) = delete;
@@ -195,6 +196,7 @@ class DrawMol {
   std::vector<std::pair<DrawColour, DrawColour>> bondColours_;
   std::map<int, double> highlightRadii_;
   bool includeAnnotations_;
+  bool isReactionMol_;
   std::string legend_;
 
   std::unique_ptr<RWMol> drawMol_;

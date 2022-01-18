@@ -1426,15 +1426,9 @@ void MolDraw2D::getReactionDrawMols(
   std::map<int, DrawColour> atomColours;
   findReactionHighlights(rxn, highlightByReactant, highlightColorsReactants,
                          atomColours);
-  for(auto &d : atomColours) {
-    std::cout << d.first << " : " << d.second.r << ", " << d.second.g << ", "
-              << d.second.b << std::endl;
-  }
   // reactants & products
-  std::cout << "REAGENTS" << std::endl;
   makeReactionComponents(rxn.getReactants(), confIds, height(), atomColours,
                          reagents, minScale, minFontScale);
-  std::cout << "PRODUCTS" << std::endl;
   makeReactionComponents(rxn.getProducts(), confIds, height(), atomColours,
                          products, minScale, minFontScale);
   for (auto &reagent : reagents) {
@@ -1451,7 +1445,6 @@ void MolDraw2D::getReactionDrawMols(
   // agents
   int agentHeight = int(agentFrac * height_);
   minScale = std::numeric_limits<double>::max();
-  std::cout << "AGENTS" << std::endl;
   makeReactionComponents(rxn.getAgents(), confIds, agentHeight, atomColours,
                          agents, minScale, minFontScale);
   for (auto &agent : agents) {
@@ -1540,7 +1533,7 @@ void MolDraw2D::makeReactionDrawMol(
   mols.emplace_back(new DrawMol(mol, "", -1, molHeight, drawOptions(),
                                 *text_drawer_, &highlightAtoms, &highlightBonds,
                                 &highlightAtomMap, &highlightBondMap, nullptr,
-                                nullptr, supportsAnnotations(), confId));
+                                nullptr, supportsAnnotations(), confId, true));
   mols.back()->createDrawObjects();
 }
 

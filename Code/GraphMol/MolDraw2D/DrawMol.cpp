@@ -42,11 +42,12 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
                  const std::map<int, DrawColour> *highlight_bond_map,
                  const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours,
                  const std::map<int, double> *highlight_radii,
-                 bool includeAnnotations, int confId)
+                 bool includeAnnotations, int confId, bool isReactionMol)
     : legend_(legend),
       drawOptions_(drawOptions),
       textDrawer_(textDrawer),
       includeAnnotations_(includeAnnotations),
+      isReactionMol_(isReactionMol),
       confId_(confId),
       width_(width),
       height_(height),
@@ -115,7 +116,8 @@ void DrawMol::finishCreateDrawObjects() {
 // ****************************************************************************
 void DrawMol::initDrawMolecule(const ROMol &mol) {
   drawMol_.reset(new RWMol(mol));
-  if (drawOptions_.prepareMolsBeforeDrawing || !mol.getNumConformers()) {
+  if (!isReactionMol_ &&
+      (drawOptions_.prepareMolsBeforeDrawing || !mol.getNumConformers())) {
     MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
   }
   if (drawOptions_.centreMoleculesBeforeDrawing) {
