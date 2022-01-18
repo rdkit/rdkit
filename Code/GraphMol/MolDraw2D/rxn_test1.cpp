@@ -185,7 +185,6 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-#endif
   {
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
@@ -198,7 +197,6 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-#if 1
   {
     std::string smiles =
         ">>[N:1]1[C:"
@@ -233,7 +231,7 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-
+#endif
   {
     std::string smiles =
         "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=["
@@ -246,7 +244,7 @@ void test1() {
     drawit(rxn, nameBase, true);
     delete rxn;
   }
-
+#if 1
   {
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
@@ -379,8 +377,7 @@ void test4() {
 
 int main() {
   RDLog::InitLogs();
-  test1();
-#if 0
+#if 1
   test1();
   test2();
   test3();

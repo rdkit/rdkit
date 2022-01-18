@@ -435,12 +435,25 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // split the reaction up into the reagents, products and agents, each as
   // a separate entity with its own scale.
-  void getReactionDrawMols(const ChemicalReaction &rxn,
-                           std::vector<std::unique_ptr<DrawMol>> &reagents,
-                           std::vector<std::unique_ptr<DrawMol>> &products,
-                           std::vector<std::unique_ptr<DrawMol>> &agents,
-                           const std::vector<int> *confIds, int &plusWidth);
+  void getReactionDrawMols(
+      const ChemicalReaction &rxn, bool highlightByReactant,
+      const std::vector<DrawColour> *highlightColorsReactants,
+      const std::vector<int> *confIds,
+      std::vector<std::unique_ptr<DrawMol>> &reagents,
+      std::vector<std::unique_ptr<DrawMol>> &products,
+      std::vector<std::unique_ptr<DrawMol>> &agents, int &plusWidth);
+  // take the given components from the reaction (bits will be either
+  // reagents, products or agents) and return the corresponding DrawMols.
+  void makeReactionComponents(std::vector<RDKit::ROMOL_SPTR> const &bits,
+                              const std::vector<int> *confIds, int heightToUse,
+                              std::map<int, DrawColour> &atomColours,
+                              std::vector<std::unique_ptr<DrawMol>> &dms,
+                              double &minScale, double &minFontScale) const;
   void makeReactionDrawMol(RWMol &mol, int confId, int molHeight,
+                           const std::vector<int> &highlightAtoms,
+                           const std::vector<int> &highlightBonds,
+                           const std::map<int, DrawColour> &highlightAtomMap,
+                           const std::map<int, DrawColour> &highlightBondMap,
                            std::vector<std::unique_ptr<DrawMol>> &mols) const;
   void calcReactionOffsets(std::vector<std::unique_ptr<DrawMol>> &reagents,
                            std::vector<std::unique_ptr<DrawMol>> &products,
@@ -451,6 +464,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   int drawReactionPart(std::vector<std::unique_ptr<DrawMol>> &reactBit,
                        int plusWidth, int initOffset,
                        const std::vector<Point2D> &offsets);
+  // returns a map of colours indexed by the atomMapNum. Each reagent gives
+  // a different colour.
+  void findReactionHighlights(
+      const ChemicalReaction &rxn, bool highlightByReactant,
+      const std::vector<DrawColour> *highlightColorsReactants,
+      std::map<int, DrawColour> &atomColours) const;
 
   bool needs_scale_;
   int width_, height_, panel_width_, panel_height_, legend_height_;

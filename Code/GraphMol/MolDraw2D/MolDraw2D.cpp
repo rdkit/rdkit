@@ -492,7 +492,8 @@ void MolDraw2D::drawReaction(
   int mfs = drawOptions().minFontSize > 12 ? drawOptions().minFontSize : 12;
   text_drawer_->setMinFontSize(mfs);
   int plusWidth;
-  getReactionDrawMols(rxn, reagents, products, agents, confIds, plusWidth);
+  getReactionDrawMols(rxn, highlightByReactant, highlightColorsReactants,
+                      confIds, reagents, products, agents, plusWidth);
   std::vector<Point2D> offsets;
   Point2D arrowBeg, arrowEnd;
   calcReactionOffsets(reagents, products, agents, plusWidth, offsets,
@@ -1411,33 +1412,31 @@ void MolDraw2D::fixVariableDimensions(const DrawMol &drawMol) {
 
 // ****************************************************************************
 void MolDraw2D::getReactionDrawMols(
-    const ChemicalReaction &rxn,
+    const ChemicalReaction &rxn, bool highlightByReactant,
+    const std::vector<DrawColour> *highlightColorsReactants,
+    const std::vector<int> *confIds,
     std::vector<std::unique_ptr<DrawMol>> &reagents,
     std::vector<std::unique_ptr<DrawMol>> &products,
-    std::vector<std::unique_ptr<DrawMol>> &agents,
-    const std::vector<int> *confIds, int &plusWidth) {
+    std::vector<std::unique_ptr<DrawMol>> &agents, int &plusWidth) {
   ChemicalReaction nrxn(rxn);
 
   const double agentFrac = 0.4;
   double minScale = std::numeric_limits<double>::max(), minFontScale;
-  auto makeBits = [&](std::vector<RDKit::ROMOL_SPTR> const &bits,
-                      std::vector<std::unique_ptr<DrawMol>> &dms,
-                      int heightToUse) {
-    for (auto midx = 0; midx < bits.size(); ++midx) {
-      int cid = -1;
-      if (confIds) {
-        cid = (*confIds)[midx];
-      }
-      makeReactionDrawMol(*(RWMol *)bits[midx].get(), cid, heightToUse, dms);
-      if (dms.back()->getScale() < minScale) {
-        minScale = dms.back()->getScale();
-        minFontScale = dms.back()->getFontScale();
-      }
-    }
-  };
+
+  std::map<int, DrawColour> atomColours;
+  findReactionHighlights(rxn, highlightByReactant, highlightColorsReactants,
+                         atomColours);
+  for(auto &d : atomColours) {
+    std::cout << d.first << " : " << d.second.r << ", " << d.second.g << ", "
+              << d.second.b << std::endl;
+  }
   // reactants & products
-  makeBits(rxn.getReactants(), reagents, height());
-  makeBits(rxn.getProducts(), products, height());
+  std::cout << "REAGENTS" << std::endl;
+  makeReactionComponents(rxn.getReactants(), confIds, height(), atomColours,
+                         reagents, minScale, minFontScale);
+  std::cout << "PRODUCTS" << std::endl;
+  makeReactionComponents(rxn.getProducts(), confIds, height(), atomColours,
+                         products, minScale, minFontScale);
   for (auto &reagent : reagents) {
     reagent->setScale(minScale, minFontScale);
     reagent->shrinkToFit(false);
@@ -1452,17 +1451,67 @@ void MolDraw2D::getReactionDrawMols(
   // agents
   int agentHeight = int(agentFrac * height_);
   minScale = std::numeric_limits<double>::max();
-  makeBits(rxn.getAgents(), agents, agentHeight);
+  std::cout << "AGENTS" << std::endl;
+  makeReactionComponents(rxn.getAgents(), confIds, agentHeight, atomColours,
+                         agents, minScale, minFontScale);
   for (auto &agent : agents) {
     agent->setScale(minScale, minFontScale);
     agent->shrinkToFit(false);
   }
+}
 
+// ****************************************************************************
+void MolDraw2D::makeReactionComponents(
+    const std::vector<RDKit::ROMOL_SPTR> &bits, const std::vector<int> *confIds,
+    int heightToUse, std::map<int, DrawColour> &atomColours,
+    std::vector<std::unique_ptr<DrawMol>> &dms, double &minScale, double &minFontScale) const {
+  for (auto midx = 0; midx < bits.size(); ++midx) {
+
+    std::vector<int> highlightAtoms, highlightBonds;
+    std::map<int, DrawColour> highlightAtomMap, highlightBondMap;
+    int cid = -1;
+    if (confIds) {
+      cid = (*confIds)[midx];
+    }
+    auto fragMol = bits[midx].get();
+    for (auto atom : fragMol->atoms()) {
+      auto ai = atomColours.find(atom->getAtomMapNum());
+      for (auto bond : fragMol->bonds()) {
+        auto beg = bond->getBeginAtom();
+        auto begi = atomColours.find(beg->getAtomMapNum());
+        if (begi != atomColours.end()) {
+          auto end = bond->getEndAtom();
+          auto endi = atomColours.find(end->getAtomMapNum());
+          if (endi != atomColours.end() && begi->second == endi->second) {
+            highlightBonds.push_back(bond->getIdx());
+            highlightBondMap.insert(
+                std::make_pair(bond->getIdx(), begi->second));
+          }
+        }
+      }
+      if (ai != atomColours.end()) {
+        highlightAtoms.push_back(atom->getIdx());
+        highlightAtomMap.insert(std::make_pair(atom->getIdx(), ai->second));
+        atom->setAtomMapNum(0);
+      }
+    }
+    makeReactionDrawMol(*(RWMol *)bits[midx].get(), cid, heightToUse,
+                        highlightAtoms, highlightBonds, highlightAtomMap,
+                        highlightBondMap, dms);
+    if (dms.back()->getScale() < minScale) {
+      minScale = dms.back()->getScale();
+      minFontScale = dms.back()->getFontScale();
+    }
+  }
 }
 
 // ****************************************************************************
 void MolDraw2D::makeReactionDrawMol(
     RWMol &mol, int confId, int molHeight,
+    const std::vector<int> &highlightAtoms,
+    const std::vector<int> &highlightBonds,
+    const std::map<int, DrawColour> &highlightAtomMap,
+    const std::map<int, DrawColour> &highlightBondMap,
     std::vector<std::unique_ptr<DrawMol>> &mols) const {
   if (drawOptions().prepareMolsBeforeDrawing) {
     mol.updatePropertyCache(false);
@@ -1489,53 +1538,10 @@ void MolDraw2D::makeReactionDrawMol(
   // the height is fixed, but the width is allowed to be as large as the
   // height and molecule dimensions dictate.
   mols.emplace_back(new DrawMol(mol, "", -1, molHeight, drawOptions(),
-                                *text_drawer_, nullptr, nullptr, nullptr,
-                                nullptr, nullptr, nullptr,
-                                supportsAnnotations(), confId));
+                                *text_drawer_, &highlightAtoms, &highlightBonds,
+                                &highlightAtomMap, &highlightBondMap, nullptr,
+                                nullptr, supportsAnnotations(), confId));
   mols.back()->createDrawObjects();
-}
-
-// ****************************************************************************
-int MolDraw2D::drawReactionPart(std::vector<std::unique_ptr<DrawMol>> &reactBit,
-                                int plusWidth, int initOffset,
-                                const std::vector<Point2D> &offsets) {
-  if (reactBit.empty()) {
-    return initOffset;
-  }
-
-  Point2D plusPos(0.0, height() / 2);
-  for (auto i = 0; i < reactBit.size(); ++i) {
-    ++activeMolIdx_;
-    reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
-    reactBit[i]->draw(*this);
-#if 0
-    setColour(DrawColour(0, 1.0, 1.0));
-    drawLine(Point2D(offsets[initOffset].x + reactBit[i]->width_, 0),
-             Point2D(offsets[initOffset].x + reactBit[i]->width_, height_),
-             true);
-    drawLine(Point2D(offsets[initOffset].x, 0),
-             Point2D(offsets[initOffset].x, height_), true);
-    setColour(DrawColour(1.0, 0, 1.0));
-    drawLine(Point2D(offsets[initOffset].x, offsets[initOffset].y),
-             Point2D(offsets[initOffset].x + reactBit[i]->width_,
-                     offsets[initOffset].y),
-             true);
-    drawLine(Point2D(offsets[initOffset].x,
-                     offsets[initOffset].y + reactBit[i]->height_),
-             Point2D(offsets[initOffset].x + reactBit[i]->width_,
-                     offsets[initOffset].y + reactBit[i]->height_),
-             true);
-#endif
-    if (plusWidth && i < reactBit.size() - 1) {
-      plusPos.x = (offsets[initOffset].x + reactBit[i]->width_ +
-                   offsets[initOffset + 1].x) /
-                  2;
-      int plusStroke = plusWidth > 30 ? 10 : plusWidth / 3;
-      drawPlus(plusPos, plusStroke, drawOptions().symbolColour, true);
-    }
-    ++initOffset;
-  }
-  return initOffset;
 }
 
 // ****************************************************************************
@@ -1623,6 +1629,156 @@ void MolDraw2D::calcReactionOffsets(
         Point2D(xOffset, (height() - products[i]->height_) / 2));
     xOffset += products[i]->width_ + plusWidth;
   }
+}
+
+// ****************************************************************************
+int MolDraw2D::drawReactionPart(std::vector<std::unique_ptr<DrawMol>> &reactBit,
+                                int plusWidth, int initOffset,
+                                const std::vector<Point2D> &offsets) {
+  if (reactBit.empty()) {
+    return initOffset;
+  }
+
+  Point2D plusPos(0.0, height() / 2);
+  for (auto i = 0; i < reactBit.size(); ++i) {
+    ++activeMolIdx_;
+    reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
+    reactBit[i]->draw(*this);
+#if 0
+    setColour(DrawColour(0, 1.0, 1.0));
+    drawLine(Point2D(offsets[initOffset].x + reactBit[i]->width_, 0),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_, height_),
+             true);
+    drawLine(Point2D(offsets[initOffset].x, 0),
+             Point2D(offsets[initOffset].x, height_), true);
+    setColour(DrawColour(1.0, 0, 1.0));
+    drawLine(Point2D(offsets[initOffset].x, offsets[initOffset].y),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_,
+                     offsets[initOffset].y),
+             true);
+    drawLine(Point2D(offsets[initOffset].x,
+                     offsets[initOffset].y + reactBit[i]->height_),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_,
+                     offsets[initOffset].y + reactBit[i]->height_),
+             true);
+#endif
+    if (plusWidth && i < reactBit.size() - 1) {
+      plusPos.x = (offsets[initOffset].x + reactBit[i]->width_ +
+                   offsets[initOffset + 1].x) /
+                  2;
+      int plusStroke = plusWidth > 30 ? 10 : plusWidth / 3;
+      drawPlus(plusPos, plusStroke, drawOptions().symbolColour, true);
+    }
+    ++initOffset;
+  }
+  return initOffset;
+}
+
+// ****************************************************************************
+void MolDraw2D::findReactionHighlights(
+    const ChemicalReaction &rxn, bool highlightByReactant,
+    const std::vector<DrawColour> *highlightColorsReactants,
+    std::map<int, DrawColour> &atomColours) const {
+  std::unique_ptr<ROMol> tmol(ChemicalReactionToRxnMol(rxn));
+  if (highlightByReactant) {
+    const std::vector<DrawColour> *colors =
+        &drawOptions().highlightColourPalette;
+    if (highlightColorsReactants) {
+      colors = highlightColorsReactants;
+    }
+    for (auto midx = 0; midx < rxn.getReactants().size(); ++midx) {
+      auto fragMol = rxn.getReactants()[midx].get();
+      for (auto &atom : fragMol->atoms()) {
+        int atomRole = -1;
+        if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 1 &&
+            atom->getAtomMapNum()) {
+          atomColours.insert(std::make_pair(atom->getAtomMapNum(),
+                                            (*colors)[midx % colors->size()]));
+        }
+      }
+    }
+  }
+#if 0
+  std::unique_ptr<std::vector<int>>atom_highlights;
+  std::unique_ptr<std::map<int, DrawColour>> atom_highlight_colors;
+  std::unique_ptr<std::vector<int>> bond_highlights;
+  std::unique_ptr<std::map<int, DrawColour>> bond_highlight_colors;
+  std::map<int, int> atommap_fragmap;
+  if (highlightByReactant) {
+    const std::vector<DrawColour> *colors =
+        &drawOptions().highlightColourPalette;
+    if (highlightColorsReactants) {
+      colors = highlightColorsReactants;
+    }
+    std::vector<int> atomfragmap;
+    MolOps::getMolFrags(*tmol, atomfragmap);
+    atom_highlights.reset(new std::vector<int>());
+    atom_highlight_colors.reset(new std::map<int, DrawColour>());
+    bond_highlights.reset(new std::vector<int>());
+    bond_highlight_colors.reset(new std::map<int, DrawColour>());
+    std::map<int, int> atommap_fragmap;
+    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
+      int atomRole = -1;
+      Atom *atom = tmol->getAtomWithIdx(aidx);
+      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 1 &&
+          atom->getAtomMapNum()) {
+        atommap_fragmap[atom->getAtomMapNum()] = atomfragmap[aidx];
+        atom_highlights->push_back(aidx);
+        (*atom_highlight_colors)[aidx] =
+            (*colors)[atomfragmap[aidx] % colors->size()];
+
+        atom->setAtomMapNum(0);
+        // add highlighted bonds to lower-numbered
+        // (and thus already covered) neighbors
+        for (const auto &nbri :
+             make_iterator_range(tmol->getAtomNeighbors(atom))) {
+          const Atom *nbr = (*tmol)[nbri];
+          if (nbr->getIdx() < aidx &&
+              atomfragmap[nbr->getIdx()] == atomfragmap[aidx]) {
+            int bondIdx =
+                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
+            bond_highlights->push_back(bondIdx);
+            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
+          }
+        }
+      }
+    }
+    for(auto i : *atom_highlights) {
+      std::cout << i << " : " << atomfragmap[i] << " : "
+                << (*atom_highlight_colors)[i].r << ", "
+                << (*atom_highlight_colors)[i].g << ", "
+                << (*atom_highlight_colors)[i].b << std::endl;
+    }
+
+    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
+      int atomRole = -1;
+      Atom *atom = tmol->getAtomWithIdx(aidx);
+      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 2 &&
+          atom->getAtomMapNum() &&
+          atommap_fragmap.find(atom->getAtomMapNum()) !=
+              atommap_fragmap.end()) {
+        atom_highlights->push_back(aidx);
+        (*atom_highlight_colors)[aidx] =
+            (*colors)[atommap_fragmap[atom->getAtomMapNum()] % colors->size()];
+
+        atom->setAtomMapNum(0);
+        // add highlighted bonds to lower-numbered
+        // (and thus already covered) neighbors
+        for (const auto &nbri :
+             make_iterator_range(tmol->getAtomNeighbors(atom))) {
+          const Atom *nbr = (*tmol)[nbri];
+          if (nbr->getIdx() < aidx && (*atom_highlight_colors)[nbr->getIdx()] ==
+                                          (*atom_highlight_colors)[aidx]) {
+            int bondIdx =
+                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
+            bond_highlights->push_back(bondIdx);
+            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
+          }
+        }
+      }
+    }
+  }
+#endif
 }
 
 // ****************************************************************************
