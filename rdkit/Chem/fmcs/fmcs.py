@@ -249,8 +249,7 @@ import re
 import weakref
 from heapq import heappush, heappop, heapify
 from itertools import chain, combinations
-import collections
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, namedtuple
 import time
 
 ### A place to set global options
@@ -773,10 +772,9 @@ def find_upper_fragment_size_limits(rdmol, atoms):
 # An Atom has a list of "bond_indices", which are offsets into the bonds.
 # A Bond has a 2-element list of "atom_indices", which are offsets into the atoms.
 
-EnumerationMolecule = collections.namedtuple("Molecule", "rdmol atoms bonds directed_edges")
-Atom = collections.namedtuple("Atom", "real_atom atom_smarts bond_indices is_in_ring")
-Bond = collections.namedtuple("Bond",
-                              "real_bond bond_smarts canonical_bondtype atom_indices is_in_ring")
+EnumerationMolecule = namedtuple("Molecule", "rdmol atoms bonds directed_edges")
+Atom = namedtuple("Atom", "real_atom atom_smarts bond_indices is_in_ring")
+Bond = namedtuple("Bond", "real_bond bond_smarts canonical_bondtype atom_indices is_in_ring")
 
 # A Bond is linked to by two 'DirectedEdge's; one for each direction.
 # The DirectedEdge.bond_index references the actual RDKit bond instance.
@@ -784,10 +782,10 @@ Bond = collections.namedtuple("Bond",
 # This is used in a 'directed_edges' dictionary so that
 #     [edge.end_atom_index for edge in directed_edges[atom_index]]
 # is the list of all atom indices connected to 'atom_index'
-DirectedEdge = collections.namedtuple("DirectedEdge", "bond_index end_atom_index")
+DirectedEdge = namedtuple("DirectedEdge", "bond_index end_atom_index")
 
 # A Subgraph is a list of atom and bond indices in an EnumerationMolecule
-Subgraph = collections.namedtuple("Subgraph", "atom_indices bond_indices")
+Subgraph = namedtuple("Subgraph", "atom_indices bond_indices")
 
 
 def get_typed_fragment(typed_mol, atom_indices):
@@ -860,7 +858,7 @@ def fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
       atom_smarts = '[' + atom_smarts_type + ']'
       atoms.append(Atom(atom, atom_smarts, bond_indices, orig_atom.IsInRing()))
 
-    directed_edges = collections.defaultdict(list)
+    directed_edges = defaultdict(list)
     bonds = []
     for bond_index, (bond, orig_bond, bond_smarts, canonical_bondtype) in enumerate(
         zip(rdmol.GetBonds(), typed_fragment.orig_bonds, typed_fragment.bond_smarts_types,
@@ -957,7 +955,7 @@ class CangenNode(object):
 
 # The outgoing edge information is used to generate the SMARTS output
 # The index numbers are offsets in the subgraph, not in the original molecule
-OutgoingEdge = collections.namedtuple(
+OutgoingEdge = namedtuple(
   "OutgoingEdge", "from_atom_index bond_index bond_smarts other_node_idx other_node")
 
 
