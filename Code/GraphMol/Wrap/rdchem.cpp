@@ -15,11 +15,6 @@
 #include <GraphMol/SanitException.h>
 #include <RDBoost/import_array.h>
 
-#ifdef RDK_THREADSAFE_SSS
-// Thread local storage for output buffer for RDKit Logging
-#include <thread>
-#endif
-
 #include <sstream>
 #include <utility>
 

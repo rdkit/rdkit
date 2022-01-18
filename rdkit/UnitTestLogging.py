@@ -295,8 +295,6 @@ class TestLogToPythonLogger(unittest.TestCase):
     def testAsynchronous2(self):
         with CaptureOutput() as captured:
             RunManyThreadsPerLevel(nthreads)
-        if captured['DEBUG'].count('Debug') != nthreads * nlogs:
-            print(captured['DEBUG'])
         self.assertEqual(captured['DEBUG'  ].count('Debug'),   nthreads * nlogs)
         self.assertEqual(captured['INFO'   ].count('Info'),    nthreads * nlogs)
         self.assertEqual(captured['WARNING'].count('Warning'), nthreads * nlogs)

@@ -32,11 +32,7 @@ std::string _version() { return "$Id$"; }
 
 // std::ostream wrapper around Python's stderr stream
 struct PyErrStream : std::ostream, std::streambuf {
-#ifdef RDK_THREADSAFE_SSS
   static thread_local std::string buffer;
-#else
-  std::string buffer = "";
-#endif
 
   PyErrStream(): std::ostream(this) {
     // All done!
@@ -49,9 +45,7 @@ struct PyErrStream : std::ostream, std::streambuf {
 
   void write(char c) {
     if (c == '\n') {
-#ifdef RDK_THREADSAFE_SSS
       PyGILStateHolder h;
-#endif
       PySys_WriteStderr("%s\n", buffer.c_str());
       buffer.clear();
     }
@@ -63,12 +57,8 @@ struct PyErrStream : std::ostream, std::streambuf {
 
 // std::ostream wrapper around Python's logging module
 struct PyLogStream : std::ostream, std::streambuf {
-  PyObject *logfn = nullptr;
-#ifdef RDK_THREADSAFE_SSS
   static thread_local std::string buffer;
-#else
-  std::string buffer = "";
-#endif
+  PyObject *logfn = nullptr;
 
   PyLogStream(std::string level): std::ostream(this) {
     PyObject *module = PyImport_ImportModule("logging");
@@ -106,9 +96,7 @@ struct PyLogStream : std::ostream, std::streambuf {
     }
 
     if (c == '\n') {
-#ifdef RDK_THREADSAFE_SSS
       PyGILStateHolder h;
-#endif
       PyObject *result = PyObject_CallFunction(logfn, "s", buffer.c_str());
       Py_XDECREF(result);
       buffer.clear();
@@ -119,10 +107,9 @@ struct PyLogStream : std::ostream, std::streambuf {
   }
 };
 
-#ifdef RDK_THREADSAFE_SSS
+// per-thread buffers for the Python loggers
 thread_local std::string PyErrStream::buffer;
 thread_local std::string PyLogStream::buffer;
-#endif
 
 
 void LogToPythonLogger() {
