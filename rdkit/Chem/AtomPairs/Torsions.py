@@ -49,18 +49,18 @@ def pyScorePath(mol, path, size, atomCodes=None):
   1
 
   >>> m = Chem.MolFromSmiles('C=CC(=O)O')
-  >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0),1)
-  >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1),2)
-  >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2),2)
-  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(4),1)
+  >>> c1 = Utils.GetAtomCode(m.GetAtomWithIdx(0), 1)
+  >>> c2 = Utils.GetAtomCode(m.GetAtomWithIdx(1), 2)
+  >>> c3 = Utils.GetAtomCode(m.GetAtomWithIdx(2), 2)
+  >>> c4 = Utils.GetAtomCode(m.GetAtomWithIdx(4), 1)
   >>> t = c1 | (c2 << rdMolDescriptors.AtomPairsParameters.codeSize) | (c3 << (rdMolDescriptors.AtomPairsParameters.codeSize * 2)) | (c4 << (rdMolDescriptors.AtomPairsParameters.codeSize * 3))
   >>> pyScorePath(m, (0, 1, 2, 4), 4) == t
   1
 
-  """
+  """ 
   codes = [None] * size
   for i in range(size):
-    if i in (0, size - 1):
+    if i == 0 or i == size - 1:
       sub = 1
     else:
       sub = 2
@@ -99,7 +99,7 @@ def ExplainPathScore(score, size=4):
 
   Again, it's order independent:
 
-  >>> score=pyScorePath(m, (2, 1, 0), 3)
+  >>> score = pyScorePath(m, (2, 1, 0), 3)
   >>> ExplainPathScore(score, 3)
   (('C', 1, 0), ('C', 2, 1), ('C', 1, 1))
 
@@ -137,15 +137,16 @@ def ExplainPathScore(score, size=4):
   (('O', 1, 0), ('O', 2, 0), ('O', 2, 0), ('O', 1, 0))
 
   """
-  codeMask = (1 << rdMolDescriptors.AtomPairsParameters.codeSize) - 1
+  codeSize: int = rdMolDescriptors.AtomPairsParameters.codeSize
+  codeMask = (1 << codeSize) - 1
   res = [None] * size
   for i in range(size):
-    if i in (0, size - 1):
+    if i == 0 or i == size - 1:
       sub = 1
     else:
       sub = 2
     code = score & codeMask
-    score = score >> rdMolDescriptors.AtomPairsParameters.codeSize
+    score = score >> codeSize
     symb, nBranch, nPi = Utils.ExplainAtomCode(code)
     res[i] = (symb, nBranch + sub, nPi)
   return tuple(res)
