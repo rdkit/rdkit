@@ -4504,4 +4504,34 @@ TEST_CASE("MMCIF PARSING") {
   
     delete m;
   }
+
+  SECTION("1DOY") {
+    std::string fname;
+    fname = rdbase + "1doy.cif";
+
+    ROMol *m = mmcifFileToMol(fname);
+
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 3);
+
+    auto c = m->getConformer(0);
+    auto p = c.getAtomPos(0);
+    REQUIRE(p.x == 15.15);
+    REQUIRE(p.y == -7.438);
+    REQUIRE(p.z == -7.235);
+
+    c = m->getConformer(1);
+    p = c.getAtomPos(0);
+    REQUIRE(p.x == 5.499);
+    REQUIRE(p.y == -6.831);
+    REQUIRE(p.z == -8.405);
+
+    c = m->getConformer(2);
+    p = c.getAtomPos(0);
+    REQUIRE(p.x == 12.843);
+    REQUIRE(p.y == -9.022);
+    REQUIRE(p.z == -7.588);
+
+    delete m;
+  }
 }

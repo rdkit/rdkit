@@ -796,7 +796,7 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
         atomnum = 0;
 
         if ((flavor & 2) == 0) {
-          conf = new Conformer();
+          conf = new Conformer(mol->getNumAtoms());
           conf->set3D(true);
           conf->setId(mol->getNumConformers());
           mol->addConformer(conf, false);
