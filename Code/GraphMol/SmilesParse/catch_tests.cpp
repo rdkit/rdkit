@@ -1854,3 +1854,32 @@ TEST_CASE(
   CHECK(m->getBondWithIdx(1)->getQuery()->getDescription() ==
         "SingleOrAromaticBond");
 }
+
+TEST_CASE("Github #4878: cannot parse coordinate bonds from CXSMARTS",
+          "[cxsmiles]") {
+  SECTION("basics") {
+    auto m = "[Fe]OC |C:1.0|"_smarts;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getBondType() == Bond::BondType::DATIVE);
+  }
+  SECTION("branches") {
+    {
+      auto m = "[Fe](O)OC |C:2.1|"_smarts;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getBondType() == Bond::BondType::DATIVE);
+    }
+    {
+      auto m = "[Fe](OC)O |C:1.0|"_smarts;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(0)->getBondType() == Bond::BondType::DATIVE);
+    }
+  }
+  SECTION("rings") {
+    {
+      auto m = "O1CC[Fe]1 |C:0.3|"_smarts;
+      REQUIRE(m);
+      CHECK(m->getBondBetweenAtoms(0, 3)->getBondType() ==
+            Bond::BondType::DATIVE);
+    }
+  }
+}

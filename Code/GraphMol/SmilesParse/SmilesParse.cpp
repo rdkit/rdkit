@@ -64,8 +64,10 @@ int smarts_parse_helper(const std::string &inp,
   TEST_ASSERT(!yysmarts_lex_init(&scanner));
   try {
     size_t ltrim = setup_smarts_string(inp, scanner);
-    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, bond, scanner,
-                         start_tok);
+    unsigned numAtomsParsed = 0;
+    unsigned numBondsParsed = 0;
+    res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, bond,
+                         numAtomsParsed, numBondsParsed, scanner, start_tok);
   } catch (...) {
     yysmarts_lex_destroy(scanner);
     throw;
