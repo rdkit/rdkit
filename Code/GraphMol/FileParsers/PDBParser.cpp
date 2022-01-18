@@ -734,8 +734,8 @@ namespace {
 
 constexpr size_t GROUP_PDB=0, ATOMID=1, TYPE_SYMBOL=2, ATOMNAME=3, ALT_ID=4, \
  RESNUM=5, RESNAME=6, CHAINID=7, INSCODE=8, OCCUPANCY=9, TEMPFACTOR=10, \
- CHARGE=11,CARTNX=12, CARTNY=13, CARTNZ=14, AUTH_RESNUM=15;
-constexpr size_t N_ATTRS=16;
+ CHARGE=11,CARTNX=12, CARTNY=13, CARTNZ=14, AUTH_RESNUM=15, MODELNUM=16;
+constexpr size_t N_ATTRS=17;
 constexpr int NOT_PRESENT = -1;
 
 static inline bool is_quotation(char c) {
@@ -768,6 +768,8 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
   }
 
   size_t atomnum = 0;
+  int modelnum = 1;
+  bool multi_conformer = false;
   while (ifs.peek() != '#') {
     std::getline(ifs, line);
     boost::split(tokens, line, boost::is_any_of(" "),
@@ -776,6 +778,61 @@ void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2col
     // skip altloc?
     if ((flavor & 1) == 0 && name2column[ALT_ID] != NOT_PRESENT) {
       if (tokens[name2column[ALT_ID]][0] != '.')
+      continue;
+    }
+    // is this a different conformer?
+    if (name2column[MODELNUM] != NOT_PRESENT) {
+      int this_model;
+      try {
+        this_model = FileParserUtils::toInt(tokens[name2column[MODELNUM]]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot determine model number for atom #" << atomnum;
+        throw FileParseException(errout.str());
+      }
+      if (modelnum != this_model) {
+        multi_conformer = true;
+        modelnum = this_model;
+        atomnum = 0;
+
+        if ((flavor & 2) == 0) {
+          conf = new Conformer();
+          conf->set3D(true);
+          conf->setId(mol->getNumConformers());
+          mol->addConformer(conf, false);
+        }
+      }
+    }
+    if (multi_conformer && !conf) {
+      // if we reach second model and don't have conformers, we're done
+      break;
+    } else if (multi_conformer && (flavor & 2) != 0) {
+      break;
+    }
+
+    if (multi_conformer) {  // if 2nd or further model, just read coords
+      if (conf) {
+        RDGeom::Point3D pos = {0.0, 0.0, 0.0};
+
+        try {
+          if (name2column[CARTNX] != NOT_PRESENT) {
+            pos.x = FileParserUtils::toDouble(tokens[name2column[CARTNX]]);
+          }
+          if (name2column[CARTNY] != NOT_PRESENT) {
+            pos.y = FileParserUtils::toDouble(tokens[name2column[CARTNY]]);
+          }
+          if (name2column[CARTNZ] != NOT_PRESENT) {
+            pos.z = FileParserUtils::toDouble(tokens[name2column[CARTNZ]]);
+          }
+        } catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Problem with coordinates for PDB atom #" << atomnum;
+          throw FileParseException(errout.str());
+        }
+
+        conf->setAtomPos(atomnum, pos);
+      }
+      atomnum++;
       continue;
     }
 
@@ -991,6 +1048,8 @@ void parseMMCifFile(RWMol *&mol,
         name2column[CARTNY] = i;
       } else if (line == "Cartn_z") {
         name2column[CARTNZ] = i;
+      } else if (line == "pdbx_PDB_model_num") {
+        name2column[MODELNUM] = i;
       }
       if (ifs.peek() != '_') {
         break;
