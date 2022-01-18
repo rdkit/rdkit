@@ -1107,4 +1107,51 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(getSubstanceGroups(*rxn->getReactants()[0]).size() == 2);
     CHECK(getSubstanceGroups(*rxn->getProducts()[0]).size() == 2);
   }
+  SECTION("link nodes") {
+    // clang-format off
+    auto rxn = "CO.OC1CCC(F)C1>>COC1CC(O)CC1F |LN:3:1.3.4.8,13:2.5.12.15|"_rxnsmarts;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(
+        !rxn->getReactants()[0]->hasProp(common_properties::molFileLinkNodes));
+    std::string lns;
+    CHECK(rxn->getReactants()[1]->getPropIfPresent(
+        common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "1 3 2 2 3 2 7");
+    CHECK(rxn->getProducts()[0]->getPropIfPresent(
+        common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "2 5 2 5 4 5 7");
+  }
+#if 1
+  // note that these only work with the current parser if the
+  // variable-attachment point part is grouped with the molecule it's attached
+  // to. This probably isn't the end of the world
+  SECTION("variable attachment points") {
+    // clang-format off
+    auto rxn = "CN.(CO*.CC1=CN=CC=C1)>>(CNC1=C(C)C=CC=N1.CO*) |m:4:11.9.10,23:17.19.18|"_rxnsmarts;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getProducts().size() == 1);
+    auto bnd = rxn->getReactants()[1]->getBondBetweenAtoms(1, 2);
+    REQUIRE(bnd);
+    CHECK(bnd->hasProp(common_properties::_MolFileBondAttach));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+          "ANY");
+    CHECK(bnd->hasProp(common_properties::_MolFileBondEndPts));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+          "(3 10 8 9)");
+
+    bnd = rxn->getProducts()[0]->getBondBetweenAtoms(10, 11);
+    REQUIRE(bnd);
+    CHECK(bnd->hasProp(common_properties::_MolFileBondAttach));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+          "ANY");
+    CHECK(bnd->hasProp(common_properties::_MolFileBondEndPts));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+          "(3 6 8 7)");
+  }
+#endif
 }

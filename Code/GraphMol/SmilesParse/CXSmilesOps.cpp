@@ -600,7 +600,7 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol,
   // these look like: |LN:1:1.3.2.6,4:1.4.3.6|
   // that's two records:
   //   1:1.3.2.6: 1-3 repeats, atom 1-2, 1-6
-  //   4:1.4.3.6: 1-4 repeats, atom 4-4, 4-6
+  //   4:1.4.3.6: 1-4 repeats, atom 4-3, 4-6
   // which maps to the property value "1 3 2 2 3 2 7|1 4 2 5 4 5 7"
   // If the linking atom only has two neighbors then the outer atom
   // specification (the last two digits) can be left out. So for a molecule
@@ -662,8 +662,8 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol,
         accum += "|";
       }
       accum += (boost::format("%d %d 2 %d %d %d %d") % startReps % endReps %
-                (atidx - startAtomIdx + 1) % (idx1 + 1) %
-                (atidx - startAtomIdx + 1) % (idx2 + 1))
+                (atidx - startAtomIdx + 1) % (idx1 - startAtomIdx + 1) %
+                (atidx - startAtomIdx + 1) % (idx2 - startAtomIdx + 1))
                    .str();
     }
   }
@@ -925,8 +925,8 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
     }
   }
   if (keepSGroup) {  // the label processing can destroy sgroup info, so do that
-                     // now
-    // (the function will immediately return if already called)
+                     // now (the function will immediately return if already
+                     // called)
     processCXSmilesLabels(mol);
 
     finalizePolymerSGroup(mol, sgroup);
@@ -956,7 +956,8 @@ bool parse_variable_attachments(Iterator &first, Iterator last,
       return false;
     }
 
-    if (VALID_ATIDX(at1idx) && mol.getAtomWithIdx(at1idx)->getDegree() != 1) {
+    if (VALID_ATIDX(at1idx) &&
+        mol.getAtomWithIdx(at1idx - startAtomIdx)->getDegree() != 1) {
       BOOST_LOG(rdWarningLog)
           << "position variation bond to atom with more than one bond"
           << std::endl;
@@ -995,9 +996,9 @@ bool parse_variable_attachments(Iterator &first, Iterator last,
         bnd->setProp(common_properties::_MolFileBondEndPts, endPts);
         bnd->setProp(common_properties::_MolFileBondAttach, std::string("ANY"));
       }
-      if (first < last && *first == ',') {
-        ++first;
-      }
+    }
+    if (first < last && *first == ',') {
+      ++first;
     }
   }
   return true;
