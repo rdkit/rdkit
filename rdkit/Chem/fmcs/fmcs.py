@@ -683,12 +683,6 @@ def get_counts(it):
 # Merge two count dictionaries, returning the smallest count for any
 # entry which is in both.
 def intersect_counts(counts1, counts2):
-  if not isinstance(counts1, Counter) and not isinstance(counts2, Counter):
-    return dict(Counter(counts1) & Counter(counts2))
-  if isinstance(counts1, Counter) and not isinstance(counts2, Counter):
-    return dict(counts1 & Counter(counts2))
-  if not isinstance(counts1, Counter) and isinstance(counts2, Counter):
-    return dict(Counter(counts1) & counts2)
   return dict(counts1 & counts2)
 
 
