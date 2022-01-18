@@ -248,9 +248,9 @@ import itertools
 import re
 import weakref
 from heapq import heappush, heappop, heapify
-from itertools import chain, combinations, product
+from itertools import chain, combinations
 import collections
-from collections import defaultdict
+from collections import defaultdict, Counter
 import time
 
 ### A place to set global options
@@ -674,24 +674,23 @@ def _check_atom_classes(molno, num_atoms, atom_classes):
 # prune. But so far I don't have a test set which drives the need for
 # that.
 
+# UPDATED by Ichiru Take: Use collections.Counter to count the bond types, which is much faster.
+# See here: https://stackoverflow.com/questions/44012479/intersection-of-two-counters
 
 # Return a dictionary mapping iterator item to occurrence count
 def get_counts(it):
-  d = defaultdict(int)
-  for item in it:
-    d[item] += 1
-  return dict(d)
-
+  return dict(Counter(it))
 
 # Merge two count dictionaries, returning the smallest count for any
 # entry which is in both.
 def intersect_counts(counts1, counts2):
-  d = {}
-  for k, v1 in counts1.iteritems():
-    if k in counts2:
-      v = min(v1, counts2[k])
-      d[k] = v
-  return d
+  if not isinstance(counts1, Counter) and not isinstance(counts2, Counter):
+    return dict(Counter(counts1) & Counter(counts2))
+  if isinstance(counts1, Counter) and not isinstance(counts2, Counter):
+    return dict(counts1 & Counter(counts2))
+  if not isinstance(counts1, Counter) and isinstance(counts2, Counter):
+    return dict(Counter(counts1) & counts2)
+  return dict(counts1 & counts2)
 
 
 # Figure out which canonical bonds SMARTS occur in every molecule
@@ -743,20 +742,19 @@ def remove_unknown_bondtypes(typed_mol, supported_canonical_bondtypes):
 
 
 def find_upper_fragment_size_limits(rdmol, atoms):
-  max_num_atoms = max_twice_num_bonds = 0
+  max_num_atoms, max_twice_num_bonds = 0, 0
   for atom_indices in Chem.GetMolFrags(rdmol):
-    num_atoms = len(atom_indices)
-    if num_atoms > max_num_atoms:
-      max_num_atoms = num_atoms
+    max_num_atoms = max(max_num_atoms, len(atom_indices))
 
     # Every bond is connected to two atoms, so this is the
     # simplest way to count the number of bonds in the fragment.
     twice_num_bonds = 0
     for atom_index in atom_indices:
       # XXX Why is there no 'atom.GetNumBonds()'?
-      twice_num_bonds += sum(1 for bond in atoms[atom_index].GetBonds())
-    if twice_num_bonds > max_twice_num_bonds:
-      max_twice_num_bonds = twice_num_bonds
+      # Ichiru Take: len(atoms[atom_index].GetBonds()) would be more efficient but I don't know the input type.
+      twice_num_bonds += sum(1 for bond in atoms[atom_index].GetBonds()) 
+
+    max_twice_num_bonds = max(max_twice_num_bonds, twice_num_bonds)
 
   return max_num_atoms, max_twice_num_bonds // 2
 
@@ -827,6 +825,9 @@ def get_typed_fragment(typed_mol, atom_indices):
       orig_bonds.append(orig_bond)
     elif count == 1:
       raise AssertionError("connected/disconnected atoms?")
+    elif count == 0:
+      # This means that the bond is not in the fragment or the source code above is the error.
+      raise AssertionError("Error Source Code?")
   return TypedFragment(emol.GetMol(),
                        [typed_mol.orig_atoms[atom_index] for atom_index in atom_indices],
                        orig_bonds, atom_smarts_types, bond_smarts_types, new_canonical_bondtypes)
@@ -1106,7 +1107,7 @@ def canon(cangen_nodes):
     # See if any of the duplicates have been resolved.
     new_duplicates = []
     unchanged = True  # This is buggy? Need to check the entire state XXX
-    for (start, end) in duplicates:
+    for start, end in duplicates:
       # Special case when there's only two elements to store.
       # This optimization sped up cangen by about 8% because I
       # don't go through the sort machinery
@@ -1171,8 +1172,7 @@ def canon(cangen_nodes):
 def get_closure_label(bond_smarts, closure):
   if closure < 10:
     return bond_smarts + str(closure)
-  else:
-    return bond_smarts + "%%%02d" % closure
+  return bond_smarts + "%%%02d" % closure
 
 # Precompute the initial closure heap. *Overall* performance went from 0.73 to 0.64 seconds!
 _available_closures = list(range(1, 101))
