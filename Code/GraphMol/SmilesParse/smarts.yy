@@ -1,8 +1,7 @@
 %{
 
-  // $Id$
   //
-  //  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+  //  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
   //
   //   @@ All Rights Reserved  @@
   //
@@ -36,15 +35,11 @@ namespace {
 void
 yysmarts_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
-                RDKit::Atom* &lastAtom,
-                RDKit::Bond* &lastBond,
-		void *scanner,int start_token, const char * msg )
+                RDKit::Atom* &,
+                RDKit::Bond* &,
+                unsigned int &,unsigned int &,
+		void *,int , const char *msg  )
 {
-  RDUNUSED_PARAM(input);
-  RDUNUSED_PARAM(lastAtom);
-  RDUNUSED_PARAM(lastBond);
-  RDUNUSED_PARAM(scanner);
-  RDUNUSED_PARAM(start_token);
   yyErrorCleanup(ms);
   BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
 }
@@ -57,6 +52,8 @@ yysmarts_error( const char *input,
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {RDKit::Atom* &lastAtom}
 %parse-param {RDKit::Bond* &lastBond}
+%parse-param {unsigned &numAtomsParsed}
+%parse-param {unsigned &numBondsParsed}
 %parse-param {void *scanner}
 %parse-param {int& start_token}
 
@@ -188,6 +185,7 @@ mol: atomd {
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
+  newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond(newB);
   delete newB;
   //delete $2;
@@ -209,6 +207,7 @@ mol: atomd {
     $2->setBeginAtomIdx(atomIdx1);
     $2->setEndAtomIdx(atomIdx2);
   }
+  $2->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond($2);
   delete $2;
 }
@@ -236,6 +235,9 @@ mol: atomd {
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,$2);
+  if(!(mp->getAllBondsWithBookmark($2).size()%2)){
+    newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  }
   mp->setAtomBookmark(atom,$2);
 
   SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
@@ -256,6 +258,7 @@ mol: atomd {
   mp->setBondBookmark($2,$3);
   $2->setOwningMol(mp);
   $2->setBeginAtomIdx(atom->getIdx());
+  $2->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->setAtomBookmark(atom,$3);
 
   SmilesParseOps::CheckRingClosureBranchStatus(atom,mp);
@@ -271,9 +274,15 @@ mol: atomd {
 
 | mol branch {
   RWMol *m1_p = (*molList)[$$],*m2_p=(*molList)[$2];
+  unsigned int origNumAts = m1_p->getNumAtoms();
+  Atom *active = m1_p->getActiveAtom();
   // FIX: handle generic bonds here
   SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE);
   delete m2_p;
+  Bond *bond = m1_p->getBondBetweenAtoms(active->getIdx(),origNumAts);
+  if(bond){
+    bond->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  }
   int sz = molList->size();
   if ( sz==$2+1) {
     molList->resize( sz-1 );
@@ -728,7 +737,7 @@ nonzero_number:  NONZERO_DIGIT_TOKEN
 | nonzero_number digit { 
     if($1 >= std::numeric_limits<std::int32_t>::max()/10 || 
      $1*10 >= std::numeric_limits<std::int32_t>::max()-$2 ){
-     yysmarts_error(input,molList,lastAtom,lastBond,scanner,start_token,"number too large");
+     yysmarts_error(input,molList,lastAtom,lastBond,numAtomsParsed,numBondsParsed,scanner,start_token,"number too large");
      YYABORT;
   }
   $$ = $1*10 + $2; }
