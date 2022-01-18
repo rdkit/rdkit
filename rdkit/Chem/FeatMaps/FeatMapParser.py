@@ -146,9 +146,7 @@ class FeatMapParser(object):
     splitL = txt.split(',')
     if len(splitL) != 3:
       raise ValueError('Bad location string')
-    vs = [float(x) for x in splitL]
-    pt = Geometry.Point3D(vs[0], vs[1], vs[2])
-    return pt
+    return Geometry.Point3D(float(splitL[0]), float(splitL[1]), float(splitL[2]))
 
   def ParseFeatPointBlock(self):
     featLineSplitter = re.compile(r'([a-zA-Z]+) *= *')
@@ -164,27 +162,22 @@ class FeatMapParser(object):
       i = 0
       while i < len(vals):
         name = vals[i].lower()
+        if name not in ('family', 'weight', 'pos', 'dir'):
+          raise FeatMapParseError(f'FeatPoint option {name} not recognized on line {self._lineNum}')       
+        
+        i += 1
         if name == 'family':
-          i += 1
           val = vals[i].strip()
           p.SetFamily(val)
         elif name == 'weight':
-          i += 1
-          val = float(vals[i])
-          p.weight = val
+          p.weight = float(vals[i])
         elif name == 'pos':
-          i += 1
-          val = vals[i]
-          pos = self._parsePoint(val)
+          pos = self._parsePoint(vals[i])
           p.SetPos(pos)
         elif name == 'dir':
-          i += 1
-          val = vals[i]
-          pos = self._parsePoint(val)
+          pos = self._parsePoint(vals[i])
           p.featDirs.append(pos)
-        else:
-          raise FeatMapParseError('FeatPoint option %s not recognized on line %d' %
-                                  (name, self._lineNum))
+          
         i += 1
       feats.append(p)
       l = self._NextLine()
