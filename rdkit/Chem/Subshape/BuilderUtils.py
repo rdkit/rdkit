@@ -55,7 +55,7 @@ def ComputeShapeGridCentroid(pt, shapeGrid, winRad):
 
 def FindTerminalPtsFromShape(shape, winRad, fraction, maxGridVal=3):
   pts = Geometry.FindGridTerminalPoints(shape.grid, winRad, fraction)
-  return [SubshapeObjects.SkeletonPoint(location=x) for x in pts] # termPts
+  return [SubshapeObjects.SkeletonPoint(location=x) for x in pts]
 
 
 def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
