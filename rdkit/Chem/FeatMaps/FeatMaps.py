@@ -161,13 +161,14 @@ class FeatMap(object):
       for i in range(nFeats):
         mapScoreVect[i] = 0.0
     else:
-        mapScoreVect = [0.0] * nFeats
+      mapScoreVect = [0.0] * nFeats
 
     nToScore = len(featsToScore)
     if self.scoreMode == FeatMapScoreMode.Closest:
       defScore = 1000.0
     else: 
       defScore = 0.0
+      
     if featsScoreVect is not None:
       if len(featsScoreVect) != nToScore:
         raise ValueError('if provided, len(featsScoreVect) should equal len(featsToScore)')
@@ -179,17 +180,15 @@ class FeatMap(object):
     if featsToFeatMapIdx is not None: # Initialize a 2D-empty array
       if len(featsToFeatMapIdx) != nToScore:
         raise ValueError('if provided, len(featsToFeatMapIdx) should equal len(featsToScore)')
-      if self.scoreMode != FeatMapScoreMode.All:
-        for i in range(nToScore):
-          featsToFeatMapIdx[i] = [-1]
-      else:
-        for i in range(nToScore):
-          featsToFeatMapIdx[i] = []
     else:
-      if self.scoreMode != FeatMapScoreMode.All:
-        featsToFeatMapIdx = [[-1] for _ in range(nToScore)]
-      else:
-        featsToFeatMapIdx = [[] for _ in range(nToScore)]
+      featsToFeatMapIdx = [None] * nToScore
+    
+    if self.scoreMode != FeatMapScoreMode.All:
+      for i in range(nToScore):
+        featsToFeatMapIdx[i] = [-1]
+    else:
+      for i in range(nToScore):
+        featsToFeatMapIdx[i] = []
     
     for oIdx, oFeat in enumerate(featsToScore):
       for sIdx, sFeat in self._loopOverMatchingFeats(oFeat):

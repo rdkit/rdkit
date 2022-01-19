@@ -160,25 +160,19 @@ class FeatMapParser(object):
       p = FeatMapPoint.FeatMapPoint()
 
       i = 0
-      while i < len(vals):
+      for i in range(0, len(vals), 2):
         name = vals[i].lower()
-        if name not in ('family', 'weight', 'pos', 'dir'):
-          raise FeatMapParseError(f'FeatPoint option {name} not recognized on line {self._lineNum}')       
-        
-        i += 1
         if name == 'family':
-          val = vals[i].strip()
-          p.SetFamily(val)
+          p.SetFamily(vals[i + 1].strip())
         elif name == 'weight':
-          p.weight = float(vals[i])
+          p.weight = float(vals[i + 1])
         elif name == 'pos':
-          pos = self._parsePoint(vals[i])
-          p.SetPos(pos)
+          p.SetPos(self._parsePoint(vals[i + 1]))
         elif name == 'dir':
-          pos = self._parsePoint(vals[i])
-          p.featDirs.append(pos)
-          
-        i += 1
+          p.featDirs.append(self._parsePoint(vals[i + 1]))
+        else:
+          raise FeatMapParseError(f'FeatPoint option {name} not recognized on line {self._lineNum}')
+        
       feats.append(p)
       l = self._NextLine()
     return feats
