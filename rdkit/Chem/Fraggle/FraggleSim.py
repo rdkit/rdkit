@@ -119,12 +119,10 @@ def select_fragments(fragments, ftype, hac):
 
     # needs to be greater than 60% of parent mol
     if result and (result_hcount > 0.6 * hac):
-      result = '.'.join(result)
-    else:
-      result = None
-    return result
+      return '.'.join(result)
+    return None
 
-  elif ftype == FTYPE_CYCLIC:
+  if ftype == FTYPE_CYCLIC:
     # make sure it is 2 components
     if len(fragments) != 2:
       return None
@@ -135,11 +133,11 @@ def select_fragments(fragments, ftype, hac):
       # needs to be greater 3 heavy atoms and greater than 40% of parent mol
       if isValidRingCut(fMol):
         result_hcount = fMol.GetNumAtoms()
-        if (result_hcount > 3) and (result_hcount > 0.4 * hac):
-          result = f
+        if result_hcount > 3 and result_hcount > 0.4 * hac:
+            result = f
     return result
 
-  elif (ftype == FTYPE_CYCLIC_ACYCLIC):
+  if ftype == FTYPE_CYCLIC_ACYCLIC:
     # need to find the fragments which are valid which means they must be:
     #  Terminal (one attachment point) or valid ring cut
     result = []
@@ -165,13 +163,11 @@ def select_fragments(fragments, ftype, hac):
     # appropriate fragmentation must have 2 components and needs to be greater than 60% of
     # parent mol
     if len(result) == 2 and result_hcount > 0.6 * hac:
-      result = '.'.join(result)
-    else:
-      result = None
-    return result
+      return '.'.join(result)
+    return None
 
-  else:
-    raise NotImplementedError('Invalid fragmentation type {0}'.format(ftype))
+  # This should never happen
+  raise NotImplementedError('Invalid fragmentation type {0}'.format(ftype))
 
 
 def isValidRingCut(mol):
@@ -277,7 +273,7 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
   # generate mol object & fp for input mol (we are interested in the bits each atom sets)
   pMol = Chem.Mol(mol)
   aBits = []
-  _ = Chem.RDKFingerprint(pMol, atomBits=aBits, **rdkitFpParams)
+  Chem.RDKFingerprint(pMol, atomBits=aBits, **rdkitFpParams)
 
   # generate fp of query_substructs
   qsMol = Chem.MolFromSmiles(subs)
