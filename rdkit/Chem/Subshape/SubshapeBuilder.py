@@ -5,13 +5,12 @@
 
 
 import copy
+import pickle
 import time
 
 from rdkit import Chem, Geometry
 from rdkit.Chem import AllChem
-from rdkit.Chem.Subshape import BuilderUtils
-from rdkit.Chem.Subshape import SubshapeObjects
-import pickle
+from rdkit.Chem.Subshape import BuilderUtils, SubshapeObjects
 
 
 class SubshapeCombineOperations(object):
@@ -87,9 +86,10 @@ class SubshapeBuilder(object):
 
 
 if __name__ == '__main__':  # pragma: nocover
-  from rdkit.Chem.PyMol import MolViewer
   import pickle
   import tempfile
+
+  from rdkit.Chem.PyMol import MolViewer
 
   # cmpd = Chem.MolFromSmiles('CCCc1cc(C(=O)O)ccc1')
   # cmpd = Chem.AddHs(cmpd)

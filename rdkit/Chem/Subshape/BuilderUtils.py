@@ -7,7 +7,6 @@
 import math
 
 import numpy
-
 from rdkit import Geometry
 from rdkit.Chem.Subshape import SubshapeObjects
 
@@ -56,8 +55,7 @@ def ComputeShapeGridCentroid(pt, shapeGrid, winRad):
 
 def FindTerminalPtsFromShape(shape, winRad, fraction, maxGridVal=3):
   pts = Geometry.FindGridTerminalPoints(shape.grid, winRad, fraction)
-  termPts = [SubshapeObjects.SkeletonPoint(location=x) for x in pts]
-  return termPts
+  return [SubshapeObjects.SkeletonPoint(location=x) for x in pts] # termPts
 
 
 def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
@@ -65,26 +63,26 @@ def FindTerminalPtsFromConformer(conf, winRad, nbrCount):
   nAts = conf.GetNumAtoms()
   nbrLists = [[] for _ in range(nAts)]
   for i in range(nAts):
-    if (mol.GetAtomWithIdx(i).GetAtomicNum() <= 1):
+    if mol.GetAtomWithIdx(i).GetAtomicNum() <= 1:
       continue
     pi = conf.GetAtomPosition(i)
     nbrLists[i].append((i, pi))
     for j in range(i + 1, nAts):
-      if (mol.GetAtomWithIdx(j).GetAtomicNum() <= 1):
+      if mol.GetAtomWithIdx(j).GetAtomicNum() <= 1:
         continue
       pj = conf.GetAtomPosition(j)
       dist = pi.Distance(conf.GetAtomPosition(j))
       if dist < winRad:
         nbrLists[i].append((j, pj))
         nbrLists[j].append((i, pi))
-  termPts = []
+
   # for i in range(nAts):
   #  if not len(nbrLists[i]): continue
   #  if len(nbrLists[i])>10:
   #    print i+1,len(nbrLists[i])
   #  else:
   #    print i+1,len(nbrLists[i]),[x[0]+1 for x in nbrLists[i]]
-
+  termPts = []
   while 1:
     for i in range(nAts):
       if not nbrLists[i]:
@@ -112,7 +110,7 @@ def FindGridPointBetweenPoints(pt1, pt2, shapeGrid, winRad):
   center /= 2.0
   d = 1e8
   while d > shapeGrid.GetSpacing():
-    count, centroid = Geometry.ComputeGridCentroid(shapeGrid, center, winRad)
+    _, centroid = Geometry.ComputeGridCentroid(shapeGrid, center, winRad)
     d = center.Distance(centroid)
     center = centroid
   return center
@@ -122,11 +120,11 @@ def ClusterTerminalPts(pts, winRad, scale):
   res = []
   tagged = [(y, x) for x, y in enumerate(pts)]
   while tagged:
-    head, headIdx = tagged.pop(0)
+    head, _ = tagged.pop(0)
     currSet = [head]
     i = 0
     while i < len(tagged):
-      nbr, nbrIdx = tagged[i]
+      nbr, _ = tagged[i]
       if head.location.Distance(nbr.location) < scale * winRad:
         currSet.append(nbr)
         del tagged[i]
@@ -162,7 +160,7 @@ def GetMoreTerminalPoints(shape, pts, winRad, maxGridVal, targetNumber=5):
       if minVal > maxMin:
         maxMin = minVal
         bestPt = posI
-    count, centroid = Geometry.ComputeGridCentroid(shapeGrid, bestPt, winRad)
+    _, centroid = Geometry.ComputeGridCentroid(shapeGrid, bestPt, winRad)
     pts.append(SubshapeObjects.SkeletonPoint(location=centroid))
 
 
@@ -182,10 +180,8 @@ def FindFarthestGridPoint(shape, loc, winRad, maxGridVal):
     if dst > dMax:
       dMax = dst
       res = posI
-
-  count, centroid = Geometry.ComputeGridCentroid(shapeGrid, res, winRad)
-  res = centroid
-  return res
+      
+  return Geometry.ComputeGridCentroid(shapeGrid, res, winRad)[1]
 
 
 def ExpandTerminalPts(shape, pts, winRad, maxGridVal=3.0, targetNumPts=5):
@@ -222,8 +218,7 @@ def AppendSkeletonPoints(shapeGrid, termPts, winRad, stepDist, maxGridVal=3, max
     posI = shapeGrid.GetGridPointLoc(i)
     ok = True
     for pt in termPts:
-      dst = posI.Distance(pt.location)
-      if dst < stepDist:
+      if posI.Distance(pt.location) < stepDist:
         ok = False
         break
     if ok:

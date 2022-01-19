@@ -5,9 +5,7 @@
 
 
 import numpy
-
-from rdkit import Chem, Geometry
-from rdkit import RDLogger
+from rdkit import Chem, Geometry, RDLogger
 from rdkit.Chem.Subshape import SubshapeObjects
 from rdkit.Numerics import Alignment
 
@@ -33,10 +31,6 @@ def _getAllTriangles(pts, orderedTraversal=False):
     for j in range(jStart, len(pts)):
       if j == i:
         continue
-      if orderedTraversal:
-        kStart = j + 1
-      else:
-        kStart = 0
       for k in range(j + 1, len(pts)):
         if k == i or k == j:
           continue
@@ -51,15 +45,12 @@ class SubshapeDistanceMetric(object):
 def GetShapeShapeDistance(s1, s2, distMetric):
   """ returns the distance between two shapes according to the provided metric """
   if distMetric == SubshapeDistanceMetric.PROTRUDE:
-    # print(s1.grid.GetOccupancyVect().GetTotalVal(),s2.grid.GetOccupancyVect().GetTotalVal())
+    # print(s1.grid.GetOccupancyVect().GetTotalVal(), s2.grid.GetOccupancyVect().GetTotalVal())
     if s1.grid.GetOccupancyVect().GetTotalVal() < s2.grid.GetOccupancyVect().GetTotalVal():
-      d = Geometry.ProtrudeDistance(s1.grid, s2.grid)
-      # print(d)
-    else:
-      d = Geometry.ProtrudeDistance(s2.grid, s1.grid)
-  else:
-    d = Geometry.TanimotoDistance(s1.grid, s2.grid)
-  return d
+      return Geometry.ProtrudeDistance(s1.grid, s2.grid)
+    
+    return Geometry.ProtrudeDistance(s2.grid, s1.grid)
+  return Geometry.TanimotoDistance(s1.grid, s2.grid)
 
 
 def ClusterAlignments(mol, alignments, builder, neighborTol=0.1,
@@ -70,16 +61,16 @@ def ClusterAlignments(mol, alignments, builder, neighborTol=0.1,
   for i in range(len(alignments)):
     TransformMol(mol, alignments[i].transform, newConfId=tempConfId)
     shapeI = builder.GenerateSubshapeShape(mol, tempConfId, addSkeleton=False)
+    
     for j in range(i):
       TransformMol(mol, alignments[j].transform, newConfId=tempConfId + 1)
       shapeJ = builder.GenerateSubshapeShape(mol, tempConfId + 1, addSkeleton=False)
-      d = GetShapeShapeDistance(shapeI, shapeJ, distMetric)
-      dists.append(d)
+      dists.append(GetShapeShapeDistance(shapeI, shapeJ, distMetric))
       mol.RemoveConformer(tempConfId + 1)
+      
     mol.RemoveConformer(tempConfId)
   clusts = Butina.ClusterData(dists, len(alignments), neighborTol, isDistData=True)
-  res = [alignments[x[0]] for x in clusts]
-  return res
+  return [alignments[x[0]] for x in clusts]
 
 
 def TransformMol(mol, tform, confId=-1, newConfId=100):
@@ -119,19 +110,20 @@ class SubshapeAligner(object):
     tgtLs = {}
     for i in range(len(tgtPts)):
       for j in range(i + 1, len(tgtPts)):
-        l2 = (tgtPts[i].location - tgtPts[j].location).LengthSq()
-        tgtLs[(i, j)] = l2
+        tgtLs[(i, j)] = (tgtPts[i].location - tgtPts[j].location).LengthSq() # l2
+        
     queryLs = {}
     for i in range(len(queryPts)):
       for j in range(i + 1, len(queryPts)):
-        l2 = (queryPts[i].location - queryPts[j].location).LengthSq()
-        queryLs[(i, j)] = l2
+        queryLs[(i, j)] = (queryPts[i].location - queryPts[j].location).LengthSq() # l2
+        
     compatEdges = {}
     tol2 = self.edgeTol * self.edgeTol
     for tk, tv in tgtLs.items():
       for qk, qv in queryLs.items():
         if abs(tv - qv) < tol2:
           compatEdges[(tk, qk)] = 1
+          
     seqNo = 0
     for tgtTri in _getAllTriangles(tgtPts, orderedTraversal=True):
       tgtLocs = [tgtPts[x].location for x in tgtTri]
@@ -282,42 +274,44 @@ class SubshapeAligner(object):
   def GetSubshapeAlignments(self, targetMol, target, queryMol, query, builder, tgtConf=-1,
                             queryConf=-1, pruneStats=None):
     import time
+
     if pruneStats is None:
       pruneStats = {}
+
     logger.info("Generating triangle matches")
-    t1 = time.time()
+    t1 = time.perf_counter()
     res = [x for x in self.GetTriangleMatches(target, query)]
-    t2 = time.time()
-    logger.info("Got %d possible alignments in %.1f seconds" % (len(res), t2 - t1))
-    pruneStats['gtm_time'] = t2 - t1
+    pruneStats['gtm_time'] = time.perf_counter() - t1
+    logger.info("Got %d possible alignments in %.1f seconds" % (len(res), pruneStats['gtm_time']))
+
     if builder.featFactory:
       logger.info("Doing feature pruning")
-      t1 = time.time()
+      t1 = time.perf_counter()
       self.PruneMatchesUsingFeatures(target, query, res, pruneStats=pruneStats)
-      t2 = time.time()
-      pruneStats['feats_time'] = t2 - t1
-      logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), t2 - t1))
+      pruneStats['feats_time'] = time.perf_counter() - t1
+      logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), pruneStats['feats_time']))
     logger.info("Doing direction pruning")
-    t1 = time.time()
+
+    t1 = time.perf_counter()
     self.PruneMatchesUsingDirection(target, query, res, pruneStats=pruneStats)
-    t2 = time.time()
-    pruneStats['direction_time'] = t2 - t1
-    logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), t2 - t1))
-    t1 = time.time()
+    pruneStats['direction_time'] = time.perf_counter() - t1
+    logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), pruneStats['direction_time']))
+
+    t1 = time.perf_counter()
     self.PruneMatchesUsingShape(targetMol, target, queryMol, query, builder, res, tgtConf=tgtConf,
                                 queryConf=queryConf, pruneStats=pruneStats)
-    t2 = time.time()
-    pruneStats['shape_time'] = t2 - t1
+    pruneStats['shape_time'] = time.perf_counter() - t1
     return res
 
   def __call__(self, targetMol, target, queryMol, query, builder, tgtConf=-1, queryConf=-1,
                pruneStats=None):
     for alignment in self.GetTriangleMatches(target, query):
-      if (not self._checkMatchFeatures(target.skelPts, query.skelPts, alignment) and
-          builder.featFactory):
-        if pruneStats is not None:
-          pruneStats['features'] = pruneStats.get('features', 0) + 1
-        continue
+      if builder.featFactory:
+        if not self._checkMatchFeatures(target.skelPts, query.skelPts, alignment):
+          if pruneStats is not None:
+            pruneStats['features'] = pruneStats.get('features', 0) + 1
+          continue
+      
       if not self._checkMatchDirections(target.skelPts, query.skelPts, alignment):
         if pruneStats is not None:
           pruneStats['direction'] = pruneStats.get('direction', 0) + 1
@@ -335,6 +329,7 @@ class SubshapeAligner(object):
 
 if __name__ == '__main__':  # pragma: nocover
   import pickle
+
   from rdkit.Chem.PyMol import MolViewer
   with open('target.pkl', 'rb') as f:
     tgtMol, tgtShape = pickle.load(f)
