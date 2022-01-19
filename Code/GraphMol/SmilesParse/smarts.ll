@@ -354,6 +354,10 @@ A			{
 	yylval->bond->setQuery(makeBondNullQuery());
 	return BOND_TOKEN;  }
 
+\$	{ yylval->bond = new QueryBond(Bond::QUADRUPLE);
+	yylval->bond->setQuery(makeBondOrderEqualsQuery(Bond::QUADRUPLE));
+    return BOND_TOKEN; }
+
 [\\]{1,2}    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
 	return BOND_TOKEN;  }

@@ -17,6 +17,8 @@ DrawTextFTCairo::DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
                                  const std::string &font_file, cairo_t *dp_cr)
     : DrawTextFT(max_fnt_sz, min_fnt_sz, font_file), dp_cr_(dp_cr) {}
 
+void DrawTextFTCairo::setCairoContext(cairo_t *cr) { dp_cr_ = cr; }
+
 // ****************************************************************************
 double DrawTextFTCairo::extractOutline() {
   cairo_set_source_rgba(dp_cr_, colour().r, colour().g, colour().b, colour().a);

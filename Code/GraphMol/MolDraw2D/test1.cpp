@@ -51,7 +51,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test1_2.svg", 3756518769U},
     {"test1_3.svg", 2466979491U},
     {"test1_4.svg", 3312001249U},
-    {"test1_5.svg", 3680433096U},
+    {"test1_5.svg", 3701725660U},
     {"test1_6.svg", 2302426373U},
     {"test4_1.svg", 3135047047U},
     {"test5_1.svg", 4098074962U},
@@ -75,13 +75,13 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test3_7.svg", 1173444046U},
     {"test774_1.svg", 2168226972U},
     {"test774_2.svg", 291877070U},
-    {"test9_1.svg", 4293107790U},
+    {"test9_1.svg", 2364544131U},
     {"test852_1.svg", 2160661054U},
-    {"test852_2.svg", 4028481516U},
-    {"test852_2a.svg", 2656413440U},
-    {"test852_2b.svg", 3528483680U},
-    {"test852_2c.svg", 3770633776U},
-    {"test852_2d.svg", 403158481U},
+    {"test852_2.svg", 714904180U},
+    {"test852_2a.svg", 1870713354U},
+    {"test852_2b.svg", 1820591881U},
+    {"test852_2c.svg", 382261922U},
+    {"test852_2d.svg", 909403114U},
     {"test860_1.svg", 3379787385U},
     {"test860_2.svg", 1696713930U},
     {"test860_3.svg", 100405646U},
@@ -102,10 +102,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test10_6.svg", 2601983922U},
     {"test11_1.svg", 2982846572U},
     {"test11_2.svg", 717239576U},
-    {"test12_1.svg", 4001334642U},
-    {"test12_3.svg", 2718439435U},
-    {"test12_4.svg", 2718439435U},
-    {"test12_2.svg", 4250647988U},
+    {"test12_1.svg", 2442365062U},
+    {"test12_3.svg", 464861303U},
+    {"test12_4.svg", 464861303U},
+    {"test12_2.svg", 1489141262U},
     {"test13_1.svg", 3533854997U},
     {"testGithub1090_1.svg", 2535099142U},
     {"test1271_1.svg", 3250186735U},
@@ -117,8 +117,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test1322_2.svg", 3317974613U},
     {"test14_1.svg", 1611937867U},
     {"test14_2.svg", 2405055622U},
-    {"test15_1.svg", 2891524973U},
-    {"test15_2.svg", 238458373U},
+    {"test15_1.svg", 3283623192U},
+    {"test15_2.svg", 2248731444U},
     {"test17_1.svg", 867199271U},
     {"test17_2.svg", 3551160267U},
     {"test17_3.svg", 3931471413U},
@@ -131,12 +131,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test19_1.svg", 2622450140U},
     {"test19_2.svg", 226882495U},
     {"test16_1.svg", 247758111U},
-    {"test16_2.svg", 252943288U},
+    {"test16_2.svg", 2954201483U},
     {"testGithub2063_1.svg", 2158365418U},
     {"testGithub2063_2.svg", 2158365418U},
-    {"testGithub2151_1.svg", 739229913U},
-    {"testGithub2151_2.svg", 3095783108U},
-    {"testGithub2762.svg", 320023621U},
+    {"testGithub2151_1.svg", 1548174288U},
+    {"testGithub2151_2.svg", 1351950877U},
+    {"testGithub2762.svg", 1563811419U},
     {"testGithub2931_1.svg", 2708252551U},
     {"testGithub2931_2.svg", 2520170665U},
     {"test20_1.svg", 4167740575U},
@@ -159,12 +159,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_5.svg", 3635251234U},
     {"testGithub3305_6.svg", 1996529499U},
     {"testGithub3305_7.svg", 2003696554U},
-    {"testGithub3391_1.svg", 3216272110U},
-    {"testGithub3391_2.svg", 4241749225U},
-    {"testGithub3391_3.svg", 2634130947U},
-    {"testGithub3391_4.svg", 3347048145U},
-    {"testGithub4156_1.svg", 3587507438U},
-    {"testGithub4156_2.svg", 617944934U},
+    {"testGithub3391_1.svg", 3382283585U},
+    {"testGithub3391_2.svg", 19058005U},
+    {"testGithub3391_3.svg", 2028076970U},
+    {"testGithub3391_4.svg", 835518743U},
+    {"testGithub4156_1.svg", 860283528U},
+    {"testGithub4156_2.svg", 2621647806U},
     {"testGithub4496_1.svg", 3884377499U}};
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
@@ -172,7 +172,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test1_2.svg", 436586098U},
     {"test1_3.svg", 2057814158U},
     {"test1_4.svg", 3558596694U},
-    {"test1_5.svg", 3888582395U},
+    {"test1_5.svg", 417293441U},
     {"test1_6.svg", 3118807497U},
     {"test4_1.svg", 2036014054U},
     {"test5_1.svg", 1774913296U},
@@ -196,13 +196,13 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test3_7.svg", 3410424210U},
     {"test774_1.svg", 4249918177U},
     {"test774_2.svg", 3726741547U},
-    {"test9_1.svg", 3881616369U},
+    {"test9_1.svg", 3638131222U},
     {"test852_1.svg", 1747936364U},
-    {"test852_2.svg", 1995763141U},
-    {"test852_2a.svg", 781368964U},
-    {"test852_2b.svg", 855240733U},
-    {"test852_2c.svg", 617421834U},
-    {"test852_2d.svg", 239450370U},
+    {"test852_2.svg", 2678800522U},
+    {"test852_2a.svg", 3040310882U},
+    {"test852_2b.svg", 3338858659U},
+    {"test852_2c.svg", 462573587U},
+    {"test852_2d.svg", 2833515036U},
     {"test860_1.svg", 3684477751U},
     {"test860_2.svg", 2255345324U},
     {"test860_3.svg", 2317297396U},
@@ -223,10 +223,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test10_6.svg", 3464662207U},
     {"test11_1.svg", 2664209367U},
     {"test11_2.svg", 2916457382U},
-    {"test12_1.svg", 2960364537U},
-    {"test12_3.svg", 753038675U},
-    {"test12_4.svg", 753038675U},
-    {"test12_2.svg", 936927131U},
+    {"test12_1.svg", 539977551U},
+    {"test12_3.svg", 28997006U},
+    {"test12_4.svg", 28997006U},
+    {"test12_2.svg", 3346989038U},
     {"test13_1.svg", 1540336771U},
     {"testGithub1090_1.svg", 1292284867U},
     {"test1271_1.svg", 3250186735U},
@@ -238,8 +238,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test1322_2.svg", 1025658798U},
     {"test14_1.svg", 972851850U},
     {"test14_2.svg", 3049734321U},
-    {"test15_1.svg", 1665312890U},
-    {"test15_2.svg", 2368159640U},
+    {"test15_1.svg", 3563728313U},
+    {"test15_2.svg", 45418372U},
     {"test17_1.svg", 3799185367U},
     {"test17_2.svg", 554175906U},
     {"test17_3.svg", 4132524395U},
@@ -252,12 +252,12 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test19_1.svg", 1937998685U},
     {"test19_2.svg", 2158406784U},
     {"test16_1.svg", 3385311765U},
-    {"test16_2.svg", 2735861810U},
+    {"test16_2.svg", 780256778U},
     {"testGithub2063_1.svg", 4196564529U},
     {"testGithub2063_2.svg", 4196564529U},
-    {"testGithub2151_1.svg", 1816894413U},
-    {"testGithub2151_2.svg", 2185139506U},
-    {"testGithub2762.svg", 1991842363U},
+    {"testGithub2151_1.svg", 2919953586U},
+    {"testGithub2151_2.svg", 727377842U},
+    {"testGithub2762.svg", 1175516343U},
     {"testGithub2931_1.svg", 1459334551U},
     {"testGithub2931_2.svg", 2613847891U},
     {"test20_1.svg", 962316680U},
@@ -278,10 +278,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_5.svg", 2648802668U},
     {"testGithub3305_6.svg", 1394712294U},
     {"testGithub3305_7.svg", 643160167U},
-    {"testGithub3391_1.svg", 3043856820U},
-    {"testGithub3391_2.svg", 899401090U},
-    {"testGithub3391_3.svg", 1321562570U},
-    {"testGithub3391_4.svg", 4052907129U},
+    {"testGithub3391_1.svg", 1294777157U},
+    {"testGithub3391_2.svg", 977094070U},
+    {"testGithub3391_3.svg", 3320165629U},
+    {"testGithub3391_4.svg", 511761258U},
     {"testGithub4496_1.svg", 2353591199U}};
 #endif
 
@@ -351,7 +351,7 @@ std::hash_result_t hash_file(const std::string &filename) {
 
 void check_file_hash(const std::string &filename,
                      std::hash_result_t exp_hash = 0U) {
-  std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
+  // std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;
   if (filename.substr(filename.length() - 4) == ".svg") {
@@ -4150,7 +4150,7 @@ void testGithub4156() {
     outs.close();
     check_file_hash("testGithub4156_1.svg");
     // this is the start of the radical spot.
-    regex qry("<path d='M 58.[0-9]*,79.[0-9]* L 58.[0-9]*,79.[0-9]*");
+    regex qry("<path d='M 22.[0-9]*,75.[0-9]* L 22.[0-9]*,75.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
   {
@@ -4167,7 +4167,7 @@ void testGithub4156() {
     outs.close();
     check_file_hash("testGithub4156_2.svg");
     // this is the start of the radical spot.
-    regex qry("<path d='M 308.[0-9]*,79.[0-9]* L 308.[0-9]*,79.[0-9]*");
+    regex qry("<path d='M 272.[0-9]*,75.[0-9]* L 272.[0-9]*,75.[0-9]*");
     TEST_ASSERT(regex_search(text, qry));
   }
 #endif

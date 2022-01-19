@@ -975,3 +975,32 @@ TEST_CASE("one-component reactions") {
     }
   }
 }
+
+TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
+  std::string sma = "[C:1]Br.[C:2]O>>[C:2][C:1] |$Aryl;;;;;Aryl$|";
+  SECTION("SMARTS") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(sma));
+    REQUIRE(rxn);
+    // make sure we have a product and that it didn't end up with a name:
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+  SECTION("SMILES") {
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(sma, nullptr, true));
+    REQUIRE(rxn);
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+  SECTION("Ensure we still handle spaces before/after the >>") {
+    std::string sma2 = "[C:1]Br.[C:2]O >> [C:2][C:1] |$Aryl;;;;;Aryl$|";
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(sma2));
+    REQUIRE(rxn);
+    // make sure we have a product and that it didn't end up with a name:
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+}

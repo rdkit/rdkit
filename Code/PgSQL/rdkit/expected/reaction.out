@@ -201,9 +201,9 @@ $MOL
   5  6  4  0                                                         
   6  1  4  0                                                         
 M  END');
- reaction_from_ctab 
---------------------
- c1ccccc1>>c1ccncc1
+       reaction_from_ctab       
+--------------------------------
+ C1:C:C:C:C:C:1>>C1:C:C:N:C:C:1
 (1 row)
 
 CREATE TABLE tmp (id integer, tmprxn text);

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014-2020 David Cosgrove and Greg Landrum
+//  Copyright (C) 2014-2021 David Cosgrove and Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -426,7 +426,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
   setupTextDrawer();
 
   unique_ptr<RWMol> rwmol =
-      setupMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
+      initMoleculeDraw(mol, highlight_atoms, highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
   if (!draw_mol.getNumConformers()) {
     // clearly, the molecule is in a sorry state.
@@ -473,7 +473,6 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     }
     setFillPolys(true);
   }
-
   drawBonds(draw_mol, highlight_atoms, highlight_atom_map, highlight_bonds,
             highlight_bond_map);
 
@@ -539,7 +538,7 @@ void MolDraw2D::drawMoleculeWithHighlights(
   }
   pushDrawDetails();
   unique_ptr<RWMol> rwmol =
-      setupMoleculeDraw(mol, &highlight_atoms, &highlight_radii, confId);
+      initMoleculeDraw(mol, &highlight_atoms, &highlight_radii, confId);
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
   if (!draw_mol.getNumConformers()) {
     // clearly, the molecule is in a sorry state.
@@ -977,6 +976,8 @@ void MolDraw2D::drawMolecules(
   PRECONDITION(!confIds || confIds->size() == mols.size(), "bad size");
   PRECONDITION(panel_width_ != 0, "panel width cannot be zero");
   PRECONDITION(panel_height_ != 0, "panel height cannot be zero");
+  PRECONDITION(width_ > 0 && height_ > 0,
+               "drawMolecules() needs a fixed canvas size");
   if (!mols.size()) {
     return;
   }
@@ -1189,8 +1190,6 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
                                const std::vector<int> *highlight_atoms,
                                const std::map<int, double> *highlight_radii,
                                int confId) {
-  PRECONDITION(width > 0, "bad width");
-  PRECONDITION(height > 0, "bad height");
   PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
 
   // cout << "calculateScale  width = " << width << "  height = " << height
@@ -1239,7 +1238,32 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     y_max += 1.0;
   }
 
+  bool setWidth = false;
+  if (width < 0) {
+    // FIX: technically we need to take the legend width into account too!
+    width = drawOptions().scalingFactor * x_range_;
+    width_ = width;
+    panel_width_ = width;
+    setWidth = true;
+  }
+  bool setHeight = false;
+  if (height < 0) {
+    // we need to adjust the range for the legend
+    // if it's not present then legend_height_ will be zero and this will be a
+    // no-op
+    y_range_ += legend_height_ / drawOptions().scalingFactor;
+    height = drawOptions().scalingFactor * y_range_;
+    height_ = height;
+    panel_height_ = height;
+    setHeight = true;
+  }
+
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
+  }
+
   scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
+
   // we may need to adjust the scale if there are atom symbols that go off
   // the edges, and we probably need to do it iteratively because
   // get_string_size uses the current value of scale_.
@@ -1268,6 +1292,17 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
   y_range_ *= 1 + 2 * drawOptions().padding;
 
   if (x_range_ > 1e-4 || y_range_ > 1e-4) {
+    if (setWidth) {
+      width = drawOptions().scalingFactor * x_range_;
+      width_ = width;
+      panel_width_ = width;
+    }
+    if (setHeight) {
+      height = drawOptions().scalingFactor * y_range_;
+      height_ = height;
+      panel_height_ = height;
+    }
+
     scale_ = std::min(double(width) / x_range_, double(height) / y_range_);
     double fix_scale = scale_;
     // after all that, use the fixed scale unless it's too big, in which case
@@ -1307,8 +1342,6 @@ void MolDraw2D::calculateScale(int width, int height, const ROMol &mol,
     text_drawer_->setBaseFontSize(text_drawer_->baseFontSize() * 0.75);
   }
   text_drawer_->setFontScale(scale_);
-  // cout << "leaving calculateScale" << endl;
-  // cout << "final scale : " << scale_ << endl;
 }
 
 // ****************************************************************************
@@ -1498,7 +1531,8 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds) {
   text_drawer_->drawString(str, draw_cds, OrientType::N);
   //  int olw = lineWidth();
   //  setLineWidth(0);
-  //  text_drawer_->drawStringRects(str, OrientType::N, draw_cds, *this);
+  //  text_drawer_->drawStringRects(str, OrientType::N, TextAlignType::MIDDLE,
+  //                                draw_cds, *this);
   //  setLineWidth(olw);
 }
 
@@ -1560,6 +1594,28 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii, int confId, int width,
     int height) {
+  // some of the code in here, such as extractSGroupData requires
+  // that everything be working in original coords.  drawMolecules()
+  // passes through setupDrawMolecule twice, once to set the global
+  // scale, then to actually do the drawing.  It's essential that
+  // all the drawing scaling is set to initial values for this, so
+  // save the current values before resetting them.  This is relevant
+  // principally for when drawMolecules sets the global scale.
+  double curr_scale = scale_;
+  scale_ = 1.0;
+  double curr_font_scale = text_drawer_->fontScale();
+  text_drawer_->setFontScale(1.0, true);
+  double curr_x_trans = x_trans_;
+  double curr_y_trans = y_trans_;
+  int curr_x_offset = x_offset_;
+  int curr_y_offset = y_offset_;
+  double curr_x_min = x_min_;
+  double curr_y_min = y_min_;
+
+  x_trans_ = y_trans_ = 0.0;
+  x_offset_ = y_offset_ = 0;
+  x_min_ = y_min_ = 0.0;
+
   unique_ptr<RWMol> rwmol{new RWMol(mol)};
   if (drawOptions().prepareMolsBeforeDrawing || !mol.getNumConformers()) {
     MolDraw2DUtils::prepareMolForDrawing(*rwmol);
@@ -1571,6 +1627,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   }
   if (drawOptions().simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
+    // FIX: pull this out into a function
     auto sgs = mol.getStereoGroups();
     if (sgs.size() == 1) {
       boost::dynamic_bitset<> chiralAts(mol.getNumAtoms());
@@ -1618,11 +1675,6 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   if (drawOptions().addBondIndices) {
     MolDraw2D_detail::addBondIndices(*rwmol);
   }
-  if (!activeMolIdx_) {
-    if (drawOptions().clearBackground) {
-      clearDrawing();
-    }
-  }
   bool updateBBox = !activeMolIdx_;
   extractAtomCoords(*rwmol, confId, updateBBox);
   extractAtomSymbols(*rwmol);
@@ -1640,6 +1692,16 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   extractBrackets(*rwmol);
   extractMolNotes(*rwmol);
   extractLinkNodes(*rwmol);
+
+  // set everything to as it was before.
+  scale_ = curr_scale;
+  text_drawer_->setFontScale(curr_font_scale, true);
+  x_trans_ = curr_x_trans;
+  y_trans_ = curr_y_trans;
+  x_offset_ = curr_x_offset;
+  y_offset_ = curr_y_offset;
+  x_min_ = curr_x_min;
+  y_min_ = curr_y_min;
 
   if (!activeMolIdx_ && needs_scale_) {
     calculateScale(width, height, *rwmol, highlight_atoms, highlight_radii,
@@ -1676,13 +1738,24 @@ void MolDraw2D::popDrawDetails() {
 }
 
 // ****************************************************************************
-unique_ptr<RWMol> MolDraw2D::setupMoleculeDraw(
+unique_ptr<RWMol> MolDraw2D::initMoleculeDraw(
     const ROMol &mol, const vector<int> *highlight_atoms,
     const map<int, double> *highlight_radii, int confId) {
   unique_ptr<RWMol> rwmol =
       setupDrawMolecule(mol, highlight_atoms, highlight_radii, confId,
                         panelWidth(), drawHeight());
   ROMol const &draw_mol = rwmol ? *(rwmol) : mol;
+
+  // by this point the scale is calculated
+  if (needs_init_) {
+    initDrawing();
+    needs_init_ = false;
+  }
+  if (!activeMolIdx_) {
+    if (drawOptions().clearBackground) {
+      clearDrawing();
+    }
+  }
 
   if (drawOptions().includeAtomTags) {
     tagAtoms(draw_mol);
@@ -1835,23 +1908,21 @@ void MolDraw2D::drawLegend(const string &legend) {
     if (!next_piece.empty()) {
       legend_bits.push_back(next_piece);
     }
-    double ominfs = text_drawer_->minFontSize();
-    text_drawer_->setMinFontSize(-1);
 
     double o_font_scale = text_drawer_->fontScale();
     double fsize = text_drawer_->fontSize();
     double new_font_scale = o_font_scale * drawOptions().legendFontSize / fsize;
-    text_drawer_->setFontScale(new_font_scale);
+    text_drawer_->setFontScale(new_font_scale, true);
     double total_width, total_height;
     calc_legend_height(legend_bits, total_width, total_height);
     if (total_height > olh) {
       new_font_scale *= double(olh) / total_height;
-      text_drawer_->setFontScale(new_font_scale);
+      text_drawer_->setFontScale(new_font_scale, true);
       calc_legend_height(legend_bits, total_width, total_height);
     }
     if (total_width > panelWidth()) {
       new_font_scale *= double(panelWidth()) / total_width;
-      text_drawer_->setFontScale(new_font_scale);
+      text_drawer_->setFontScale(new_font_scale, true);
       calc_legend_height(legend_bits, total_width, total_height);
     }
 
@@ -1865,8 +1936,7 @@ void MolDraw2D::drawLegend(const string &legend) {
                                       y_max, true);
       loc.y += y_max - y_min;
     }
-    text_drawer_->setMinFontSize(ominfs);
-    text_drawer_->setFontScale(o_font_scale);
+    text_drawer_->setFontScale(o_font_scale, true);
   }
 
   legend_height_ = olh;
@@ -1946,12 +2016,11 @@ void MolDraw2D::calcLabelEllipse(int atom_idx,
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &,
-                                             const std::string &note) {
-  StringRect note_rect;
-  if (note.empty()) {
-    note_rect.width_ = -1.0;  // so we know it's not valid.
-    return note_rect;
+void MolDraw2D::calcAnnotationPosition(const ROMol &,
+                                       AnnotationType &annot) const {
+  if (annot.text_.empty()) {
+    annot.rect_.width_ = -1.0;  // so we know it's not valid.
+    return;
   }
 
   vector<std::shared_ptr<StringRect>> rects;
@@ -1962,21 +2031,13 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &,
   // don't make sense, as we're effectively operating on atom coords rather
   // than draw.
   double full_font_scale = text_drawer_->fontScale();
-  double min_fs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1);
-  double max_fs = text_drawer_->maxFontSize();
-  text_drawer_->setMaxFontSize(-1);
-  // text_drawer_->setFontScale(drawOptions().annotationFontScale *
-  //                           full_font_scale);
-  text_drawer_->setFontScale(1);
-  text_drawer_->getStringRects(note, OrientType::N, rects, draw_modes,
+  text_drawer_->setFontScale(1, true);
+  text_drawer_->getStringRects(annot.text_, OrientType::N, rects, draw_modes,
                                draw_chars);
-  text_drawer_->setFontScale(full_font_scale);
-  text_drawer_->setMinFontSize(min_fs);
-  text_drawer_->setMaxFontSize(max_fs);
+  text_drawer_->setFontScale(full_font_scale, true);
   // accumulate the widths of the rectangles so that we have the overall width
   for (const auto &rect : rects) {
-    note_rect.width_ += rect->width_;
+    annot.rect_.width_ += rect->width_;
   }
 
   Point2D centroid{0., 0.};
@@ -1993,38 +2054,31 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &,
 
   auto vect = maxPt - centroid;
   auto loc = centroid + vect * 0.9;
-  note_rect.trans_ = loc;
-
-  return note_rect;
+  annot.rect_.trans_ = loc;
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                             const std::string &note) {
+void MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Atom *atom,
+                                       AnnotationType &annot) const {
   PRECONDITION(atom, "no atom");
-  StringRect note_rect;
-  if (note.empty()) {
-    note_rect.width_ = -1.0;  // so we know it's not valid.
-    return note_rect;
+  if (annot.text_.empty()) {
+    annot.rect_.width_ = -1.0;  // so we know it's not valid.
+    return;
   }
 
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
-  note_rect.trans_.x = at_cds.x;
-  note_rect.trans_.y = at_cds.y;
+  annot.rect_.trans_.x = at_cds.x;
+  annot.rect_.trans_.y = at_cds.y;
   double start_ang = getNoteStartAngle(mol, atom);
-  calcAtomAnnotationPosition(mol, atom, start_ang, note_rect, note);
-
-  return note_rect;
+  calcAtomAnnotationPosition(mol, atom, start_ang, annot);
 }
 
 // ****************************************************************************
-StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond,
-                                             const std::string &note) {
+void MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond,
+                                       AnnotationType &annot) const {
   PRECONDITION(bond, "no bond");
-  StringRect note_rect;
-  if (note.empty()) {
-    note_rect.width_ = -1.0;  // so we know it's not valid.
-    return note_rect;
+  if (annot.text_.empty()) {
+    annot.rect_.width_ = -1.0;  // so we know it's not valid.
   }
   vector<std::shared_ptr<StringRect>> rects;
   vector<TextDrawType> draw_modes;
@@ -2034,17 +2088,10 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond,
   // don't make sense, as we're effectively operating on atom coords rather
   // than draw.
   double full_font_scale = text_drawer_->fontScale();
-  double min_fs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1);
-  double max_fs = text_drawer_->maxFontSize();
-  text_drawer_->setMaxFontSize(-1);
-  text_drawer_->setFontScale(drawOptions().annotationFontScale *
-                             full_font_scale);
-  text_drawer_->getStringRects(note, OrientType::N, rects, draw_modes,
+  text_drawer_->setFontScale(drawOptions().annotationFontScale, true);
+  text_drawer_->getStringRects(annot.text_, OrientType::N, rects, draw_modes,
                                draw_chars);
-  text_drawer_->setFontScale(full_font_scale);
-  text_drawer_->setMinFontSize(min_fs);
-  text_drawer_->setMaxFontSize(max_fs);
+  text_drawer_->setFontScale(full_font_scale, true);
 
   Point2D const &at1_cds = at_cds_[activeMolIdx_][bond->getBeginAtomIdx()];
   Point2D const &at2_cds = at_cds_[activeMolIdx_][bond->getEndAtomIdx()];
@@ -2062,37 +2109,35 @@ StringRect MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond,
         continue;  // multiple bonds will need a bigger offset.
       }
       double offset = j * offset_step;
-      note_rect.trans_ = mid + perp * offset;
-      StringRect tr(note_rect);
-      tr.trans_ =
-          getAtomCoords(make_pair(note_rect.trans_.x, note_rect.trans_.y));
-      tr.width_ *= scale();
-      tr.height_ *= scale();
-
-      if (!doesBondNoteClash(tr, rects, mol, bond)) {
-        return note_rect;
+      annot.rect_.trans_ = mid + perp * offset;
+      StringRect tr(annot.rect_);
+      Point2D note_pos =
+          getAtomCoords(make_pair(annot.rect_.trans_.x, annot.rect_.trans_.y));
+      int clash_score = doesBondNoteClash(note_pos, rects, mol, bond);
+      if (!clash_score) {
+        return;
       }
-      if (note_rect.clash_score_ < least_worst_rect.clash_score_) {
-        least_worst_rect = note_rect;
+      if (clash_score < least_worst_rect.clash_score_) {
+        least_worst_rect = annot.rect_;
       }
-      note_rect.trans_ = mid - perp * offset;
-      tr.trans_ =
-          getAtomCoords(make_pair(note_rect.trans_.x, note_rect.trans_.y));
-      if (!doesBondNoteClash(tr, rects, mol, bond)) {
-        return note_rect;
+      note_pos = mid - perp * offset;
+      annot.rect_.trans_ = mid - perp * offset;
+      note_pos = getAtomCoords(make_pair(note_pos.x, note_pos.y));
+      clash_score = doesBondNoteClash(note_pos, rects, mol, bond);
+      if (!clash_score) {
+        return;
       }
-      if (note_rect.clash_score_ < least_worst_rect.clash_score_) {
-        least_worst_rect = note_rect;
+      if (clash_score < least_worst_rect.clash_score_) {
+        least_worst_rect = annot.rect_;
       }
     }
   }
-  return least_worst_rect;
 }
 
 // ****************************************************************************
 void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                           double start_ang, StringRect &rect,
-                                           const std::string &note) {
+                                           double start_ang,
+                                           AnnotationType &annot) const {
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   auto const &atsym = atom_syms_[activeMolIdx_][atom->getIdx()];
 
@@ -2104,17 +2149,10 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
   // don't make sense, as we're effectively operating on atom coords rather
   // than draw.
   double full_font_scale = text_drawer_->fontScale();
-  double min_fs = text_drawer_->minFontSize();
-  text_drawer_->setMinFontSize(-1);
-  double max_fs = text_drawer_->maxFontSize();
-  text_drawer_->setMaxFontSize(-1);
-  text_drawer_->setFontScale(drawOptions().annotationFontScale *
-                             full_font_scale);
-  text_drawer_->getStringRects(note, OrientType::N, rects, draw_modes,
-                               draw_chars);
-  text_drawer_->setFontScale(full_font_scale);
-  text_drawer_->setMinFontSize(min_fs);
-  text_drawer_->setMaxFontSize(max_fs);
+  text_drawer_->setFontScale(drawOptions().annotationFontScale, true);
+  text_drawer_->getStringRects(annot.text_, OrientType::C, rects, draw_modes,
+                               draw_chars, false, annot.align_);
+  text_drawer_->setFontScale(full_font_scale, true);
 
   double rad_step = 0.25;
   StringRect least_worst_rect = StringRect();
@@ -2130,23 +2168,21 @@ void MolDraw2D::calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
     // clear for the annotation.
     for (int i = 0; i < 12; ++i) {
       double ang = start_ang + i * 30.0 * M_PI / 180.0;
-      rect.trans_.x = at_cds.x + cos(ang) * note_rad;
-      rect.trans_.y = at_cds.y + sin(ang) * note_rad;
-      // doesAtomNoteClash expects the rect to be in draw coords
-      StringRect tr(rect);
-      tr.trans_ = getAtomCoords(make_pair(rect.trans_.x, rect.trans_.y));
-      tr.width_ *= scale();
-      tr.height_ *= scale();
-      if (!doesAtomNoteClash(tr, rects, mol, atom->getIdx())) {
+      annot.rect_.trans_.x = at_cds.x + cos(ang) * note_rad;
+      annot.rect_.trans_.y = at_cds.y + sin(ang) * note_rad;
+      Point2D note_pos =
+          getAtomCoords(make_pair(annot.rect_.trans_.x, annot.rect_.trans_.y));
+      int clash_score = doesAtomNoteClash(note_pos, rects, mol, atom->getIdx());
+      if (!clash_score) {
         return;
       } else {
-        if (rect.clash_score_ < least_worst_rect.clash_score_) {
-          least_worst_rect = rect;
+        if (clash_score < least_worst_rect.clash_score_) {
+          least_worst_rect = annot.rect_;
         }
       }
     }
   }
-  rect = least_worst_rect;
+  annot.rect_ = least_worst_rect;
 }
 
 // ****************************************************************************
@@ -2406,14 +2442,14 @@ void MolDraw2D::extractAtomNotes(const ROMol &mol) {
     std::string note;
     if (atom->getPropIfPresent(common_properties::atomNote, note)) {
       if (!note.empty()) {
-        auto note_rect = calcAnnotationPosition(mol, atom, note);
-        if (note_rect.width_ < 0.0) {
-          cerr << "Couldn't find good place for note " << note << " for atom "
-               << atom->getIdx() << endl;
+        AnnotationType annot;
+        annot.text_ = note;
+        calcAnnotationPosition(mol, atom, annot);
+        if (annot.rect_.width_ < 0.0) {
+          BOOST_LOG(rdWarningLog)
+              << "Couldn't find good place for note " << note << " for atom "
+              << atom->getIdx() << endl;
         } else {
-          AnnotationType annot;
-          annot.text_ = note;
-          annot.rect_ = note_rect;
           annotations_[activeMolIdx_].push_back(annot);
         }
       }
@@ -2440,15 +2476,15 @@ void MolDraw2D::extractMolNotes(const ROMol &mol) {
   }
 
   if (!note.empty()) {
-    auto note_rect = calcAnnotationPosition(mol, note);
-    if (note_rect.width_ < 0.0) {
-      cerr << "Couldn't find good place for molecule note " << note << endl;
+    AnnotationType annot;
+    annot.text_ = note;
+    annot.align_ = TextAlignType::START;
+    annot.scaleText_ = false;
+    calcAnnotationPosition(mol, annot);
+    if (annot.rect_.width_ < 0.0) {
+      BOOST_LOG(rdWarningLog)
+          << "Couldn't find good place for molecule note " << note << endl;
     } else {
-      AnnotationType annot;
-      annot.text_ = note;
-      annot.rect_ = note_rect;
-      annot.align_ = TextAlignType::START;
-      annot.scaleText_ = false;
       annotations_[activeMolIdx_].push_back(annot);
     }
   }
@@ -2464,14 +2500,14 @@ void MolDraw2D::extractBondNotes(const ROMol &mol) {
     std::string note;
     if (bond->getPropIfPresent(common_properties::bondNote, note)) {
       if (!note.empty()) {
-        auto note_rect = calcAnnotationPosition(mol, bond, note);
-        if (note_rect.width_ < 0.0) {
-          cerr << "Couldn't find good place for note " << note << " for bond "
-               << bond->getIdx() << endl;
+        AnnotationType annot;
+        annot.text_ = note;
+        calcAnnotationPosition(mol, bond, annot);
+        if (annot.rect_.width_ < 0.0) {
+          BOOST_LOG(rdWarningLog)
+              << "Couldn't find good place for note " << note << " for bond "
+              << bond->getIdx() << endl;
         } else {
-          AnnotationType annot;
-          annot.text_ = note;
-          annot.rect_ = note_rect;
           annotations_[activeMolIdx_].push_back(annot);
         }
       }
@@ -2671,6 +2707,7 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
   PRECONDITION(activeMolIdx_ >= 0, "no mol id");
   PRECONDITION(static_cast<int>(annotations_.size()) > activeMolIdx_,
                "no space");
+
   if (!supportsAnnotations()) {
     return;
   }
@@ -2712,9 +2749,9 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
       std::string fieldDisp;
       if (sg.getPropIfPresent("FIELDDISP", fieldDisp)) {
         double xp = FileParserUtils::stripSpacesAndCast<double>(
-            fieldDisp.substr(3, 10));
+            fieldDisp.substr(0, 10));
         double yp = FileParserUtils::stripSpacesAndCast<double>(
-            fieldDisp.substr(13, 10));
+            fieldDisp.substr(10, 10));
         Point2D origLoc{xp, yp};
 
         if (fieldDisp[25] == 'R') {
@@ -2737,24 +2774,25 @@ void MolDraw2D::extractSGroupData(const ROMol &mol) {
         tform.TransformPoint(origLoc);
         rect.trans_ = origLoc;
       }
-      if (!located) {
-        if (atomIdx >= 0) {
-          rect = calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), text);
-        } else {
-          BOOST_LOG(rdWarningLog)
-              << "FIELDDISP info not found for DAT SGroup which isn't "
-                 "associated with an atom. SGroup will not be rendered."
-              << std::endl;
-          text = "";
-        }
-      }
+
       if (!text.empty()) {
         AnnotationType annot;
         annot.text_ = text;
-        annot.rect_ = rect;
         // looks like everybody renders these left justified
         annot.align_ = TextAlignType::START;
+        if (!located) {
+          if (atomIdx >= 0 && !text.empty()) {
+            calcAnnotationPosition(mol, mol.getAtomWithIdx(atomIdx), annot);
+          }
+        } else {
+          annot.rect_ = rect;
+        }
         annotations_[activeMolIdx_].push_back(annot);
+      } else {
+        BOOST_LOG(rdWarningLog)
+            << "FIELDDISP info not found for DAT SGroup which isn't "
+               "associated with an atom. SGroup will not be rendered."
+            << std::endl;
       }
     }
   }
@@ -3029,21 +3067,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
     d2d.drawOptions().scaleBondWidth = orig_slw;
   } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond.getBondDir() ||
                                     Bond::BEGINDASH == bond.getBondDir())) {
-    // swap the direction if at1 has does not have stereochem set
-    // or if at2 does have stereochem set and the bond starts there
-    auto at1 = bond.getBeginAtom();
-    auto at2 = bond.getEndAtom();
     auto inverted = false;
-    if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-         at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
-        (at1->getIdx() != bond.getBeginAtomIdx() &&
-         (at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-          at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))) {
-      // std::cerr << "  swap" << std::endl;
-      swap(at1_cds, at2_cds);
-      swap(col1, col2);
-      inverted = true;
-    }
     if (d2d.drawOptions().singleColourWedgeBonds) {
       col1 = d2d.drawOptions().symbolColour;
       col2 = d2d.drawOptions().symbolColour;
@@ -3426,7 +3450,6 @@ void MolDraw2D::drawBond(
                 bond->getIdx()) != highlight_bonds->end()) {
     highlight_bond = true;
   }
-
   DrawColour col1, col2;
   int orig_lw = lineWidth();
   if (bond_colours) {
@@ -3499,20 +3522,17 @@ void MolDraw2D::drawAnnotation(const AnnotationType &annot) {
   // than the letters, even if that makes it tiny.  The annotation positions
   // have been calculated on the assumption that this is the case, and if
   // minFontSize is applied, they may well clash with the atom symbols.
-  double omfs = text_drawer_->minFontSize();
   if (annot.scaleText_) {
-    text_drawer_->setMinFontSize(-1);
-    text_drawer_->setFontScale(drawOptions().annotationFontScale *
-                               full_font_scale);
+    text_drawer_->setFontScale(
+        drawOptions().annotationFontScale * full_font_scale, true);
   }
   Point2D draw_cds = getDrawCoords(annot.rect_.trans_);
   text_drawer_->drawString(annot.text_, draw_cds, annot.align_);
-
   if (annot.scaleText_) {
-    text_drawer_->setMinFontSize(omfs);
-    text_drawer_->setFontScale(full_font_scale);
+    text_drawer_->setFontScale(full_font_scale, true);
   }
 }
+
 // ****************************************************************************
 OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
                                       StringRect &rad_rect) {
@@ -3521,8 +3541,7 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
   Point2D const &at_cds = at_cds_[activeMolIdx_][atom->getIdx()];
   string const &at_sym = atom_syms_[activeMolIdx_][atom->getIdx()].first;
   OrientType orient = atom_syms_[activeMolIdx_][atom->getIdx()].second;
-  double rad_size = (3 * num_rade - 1) * spot_rad;
-  rad_size = (4 * num_rade - 2) * spot_rad;
+  double rad_size = (4 * num_rade - 2) * spot_rad;
   double x_min, y_min, x_max, y_max;
   Point2D at_draw_cds = getDrawCoords(at_cds);
   if (!at_sym.empty()) {
@@ -3548,7 +3567,7 @@ OrientType MolDraw2D::calcRadicalRect(const ROMol &mol, const Atom *atom,
     vector<std::shared_ptr<StringRect>> rad_rects(
         1, std::shared_ptr<StringRect>(new StringRect(rad_rect)));
     if (!text_drawer_->doesRectIntersect(at_sym, ornt, at_cds, rad_rect) &&
-        !doesAtomNoteClash(rad_rect, rad_rects, mol, atom->getIdx())) {
+        !doesAtomNoteClash(rad_rect.trans_, rad_rects, mol, atom->getIdx())) {
       rect_to_atom_coords(rad_rect);
       return true;
     } else {
@@ -3774,54 +3793,45 @@ double MolDraw2D::getNoteStartAngle(const ROMol &mol, const Atom *atom) const {
 }
 
 // ****************************************************************************
-bool MolDraw2D::doesAtomNoteClash(
-    StringRect &note_rect, const vector<std::shared_ptr<StringRect>> &rects,
-    const ROMol &mol, unsigned int atom_idx) {
+int MolDraw2D::doesAtomNoteClash(
+    const Point2D &note_pos, const vector<std::shared_ptr<StringRect>> &rects,
+    const ROMol &mol, unsigned int atom_idx) const {
   auto atom = mol.getAtomWithIdx(atom_idx);
 
-  note_rect.clash_score_ = 0;
-  if (doesNoteClashNbourBonds(note_rect, rects, mol, atom)) {
-    return true;
+  if (doesNoteClashNbourBonds(note_pos, rects, mol, atom)) {
+    return 1;
   }
-  note_rect.clash_score_ = 1;
-  if (doesNoteClashAtomLabels(note_rect, rects, mol, atom_idx)) {
-    return true;
+  if (doesNoteClashAtomLabels(note_pos, rects, mol, atom_idx)) {
+    return 2;
   }
-  note_rect.clash_score_ = 2;
-  if (doesNoteClashOtherNotes(note_rect, rects)) {
-    return true;
+  if (doesNoteClashOtherNotes(note_pos, rects)) {
+    return 3;
   }
-  note_rect.clash_score_ = 3;
-  return false;
+  return 0;
 }
 
 // ****************************************************************************
-bool MolDraw2D::doesBondNoteClash(
-    StringRect &note_rect, const vector<std::shared_ptr<StringRect>> &rects,
-    const ROMol &mol, const Bond *bond) {
-  note_rect.clash_score_ = 0;
+int MolDraw2D::doesBondNoteClash(
+    const Point2D &note_pos, const vector<std::shared_ptr<StringRect>> &rects,
+    const ROMol &mol, const Bond *bond) const {
   string note = bond->getProp<string>(common_properties::bondNote);
-  if (doesNoteClashNbourBonds(note_rect, rects, mol, bond->getBeginAtom())) {
-    return true;
+  if (doesNoteClashNbourBonds(note_pos, rects, mol, bond->getBeginAtom())) {
+    return 1;
   }
-  note_rect.clash_score_ = 1;
   unsigned int atom_idx = bond->getBeginAtomIdx();
-  if (doesNoteClashAtomLabels(note_rect, rects, mol, atom_idx)) {
-    return true;
+  if (doesNoteClashAtomLabels(note_pos, rects, mol, atom_idx)) {
+    return 2;
   }
-  note_rect.clash_score_ = 2;
-  if (doesNoteClashOtherNotes(note_rect, rects)) {
-    return true;
+  if (doesNoteClashOtherNotes(note_pos, rects)) {
+    return 3;
   }
-  note_rect.clash_score_ = 3;
-  return false;
+  return 0;
 }
 
 // ****************************************************************************
 bool MolDraw2D::doesNoteClashNbourBonds(
-    const StringRect &note_rect,
-    const vector<std::shared_ptr<StringRect>> &rects, const ROMol &mol,
-    const Atom *atom) const {
+    const Point2D &note_pos, const vector<std::shared_ptr<StringRect>> &rects,
+    const ROMol &mol, const Atom *atom) const {
   double double_bond_offset = -1.0;
   Point2D const &at2_dcds =
       getDrawCoords(at_cds_[activeMolIdx_][atom->getIdx()]);
@@ -3829,8 +3839,8 @@ bool MolDraw2D::doesNoteClashNbourBonds(
   double line_width = lineWidth() * scale() * 0.02;
   for (const auto &nbr : make_iterator_range(mol.getAtomNeighbors(atom))) {
     Point2D const &at1_dcds = getDrawCoords(at_cds_[activeMolIdx_][nbr]);
-    if (text_drawer_->doesLineIntersect(rects, note_rect.trans_, at1_dcds,
-                                        at2_dcds, line_width)) {
+    if (text_drawer_->doesLineIntersect(rects, note_pos, at1_dcds, at2_dcds,
+                                        line_width)) {
       return true;
     }
     // now see about clashing with other lines if not single
@@ -3852,7 +3862,7 @@ bool MolDraw2D::doesNoteClashNbourBonds(
     if (bt == Bond::DOUBLE || bt == Bond::AROMATIC || bt == Bond::TRIPLE) {
       Point2D l1s, l1f, l2s, l2f;
       if (bt == Bond::DOUBLE || bt == Bond::AROMATIC) {
-        // use the atom coords for this ot make sure the perp goes the
+        // use the atom coords for this to make sure the perp goes the
         // correct way (y coordinate issue).
         calcDoubleBondLines(mol, double_bond_offset, *bond,
                             at_cds_[activeMolIdx_][nbr],
@@ -3868,9 +3878,9 @@ bool MolDraw2D::doesNoteClashNbourBonds(
       l2s = getDrawCoords(l2s);
       l2f = getDrawCoords(l2f);
 
-      if (text_drawer_->doesLineIntersect(rects, note_rect.trans_, l1s, l1f,
+      if (text_drawer_->doesLineIntersect(rects, note_pos, l1s, l1f,
                                           line_width) ||
-          text_drawer_->doesLineIntersect(rects, note_rect.trans_, l2s, l2f,
+          text_drawer_->doesLineIntersect(rects, note_pos, l2s, l2f,
                                           line_width)) {
         return true;
       }
@@ -3882,13 +3892,12 @@ bool MolDraw2D::doesNoteClashNbourBonds(
 
 // ****************************************************************************
 bool MolDraw2D::doesNoteClashAtomLabels(
-    const StringRect &note_rect,
-    const vector<std::shared_ptr<StringRect>> &rects, const ROMol &mol,
-    unsigned int atom_idx) const {
+    const Point2D &note_pos, const vector<std::shared_ptr<StringRect>> &rects,
+    const ROMol &mol, unsigned int atom_idx) const {
   // try the atom_idx first as it's the most likely clash
   Point2D draw_cds = getDrawCoords(atom_idx);
   if (text_drawer_->doesStringIntersect(
-          rects, note_rect.trans_, atom_syms_[activeMolIdx_][atom_idx].first,
+          rects, note_pos, atom_syms_[activeMolIdx_][atom_idx].first,
           atom_syms_[activeMolIdx_][atom_idx].second, draw_cds)) {
     return true;
   }
@@ -3902,7 +3911,7 @@ bool MolDraw2D::doesNoteClashAtomLabels(
       continue;
     }
     draw_cds = getDrawCoords(atom->getIdx());
-    if (text_drawer_->doesStringIntersect(rects, note_rect.trans_, atsym.first,
+    if (text_drawer_->doesStringIntersect(rects, note_pos, atsym.first,
                                           atsym.second, draw_cds)) {
       return true;
     }
@@ -3913,10 +3922,10 @@ bool MolDraw2D::doesNoteClashAtomLabels(
 
 // ****************************************************************************
 bool MolDraw2D::doesNoteClashOtherNotes(
-    const StringRect &note_rect,
+    const Point2D &note_pos,
     const vector<std::shared_ptr<StringRect>> &rects) const {
   for (auto const &annot : annotations_[activeMolIdx_]) {
-    if (text_drawer_->doesRectIntersect(rects, note_rect.trans_, annot.rect_)) {
+    if (text_drawer_->doesRectIntersect(rects, note_pos, annot.rect_)) {
       return true;
     }
   }
@@ -4349,7 +4358,9 @@ void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
 // ****************************************************************************
 void MolDraw2D::tabulaRasa() {
   scale_ = 1.0;
-  text_drawer_->setFontScale(1.0);
+
+  // ignore the min and max font sizes when setting font size to 1.0
+  text_drawer_->setFontScale(1.0, true);
   x_trans_ = y_trans_ = 0.0;
   x_offset_ = y_offset_ = 0;
   d_metadata.clear();
@@ -4378,7 +4389,7 @@ void MolDraw2D::drawArc(const Point2D &centre, double xradius, double yradius,
   // going to be small.
   int num_steps = 1 + int((ang2 - ang1) / 5.0);
   double ang_incr = double((ang2 - ang1) / num_steps) * M_PI / 180.0;
-  double start_ang_rads = ang2 * M_PI / 180.0;
+  double start_ang_rads = ang1 * M_PI / 180.0;
   for (int i = 0; i <= num_steps; ++i) {
     double ang = start_ang_rads + double(i) * ang_incr;
     double x = centre.x + xradius * cos(ang);

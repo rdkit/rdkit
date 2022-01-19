@@ -82,6 +82,7 @@ RGroupDecomposition::RGroupDecomposition(
 RGroupDecomposition::~RGroupDecomposition() { delete data; }
 
 int RGroupDecomposition::add(const ROMol &inmol) {
+  constexpr const char *inputDummy = "INPUT_DUMMY";
   // get the sidechains if possible
   //  Add hs for better symmetrization
   RWMol mol(inmol);
@@ -89,6 +90,18 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   const bool addCoords = true;
   MolOps::addHs(mol, explicitOnly, addCoords);
 
+  // mark any wildcards in input molecule:
+  for (auto &atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      atom->setProp(inputDummy, true);
+      // clean any existing R group numbers
+      atom->setIsotope(0);
+      atom->setAtomMapNum(0);
+      if (atom->hasProp(common_properties::_MolFileRLabel)) {
+        atom->clearProp(common_properties::_MolFileRLabel);
+      }
+    }
+  }
   int core_idx = 0;
   const RCore *rcore = nullptr;
   std::vector<MatchVectType> tmatches;
@@ -275,17 +288,22 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             unsigned int index =
                 at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
-            int rlabel;
-            auto coreAtom = rcore->core->getAtomWithIdx(index);
-            coreAtomAnyMatched.insert(index);
-            if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
-              std::vector<int> rlabelsOnSideChain;
-              at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
-              rlabelsOnSideChain.push_back(rlabel);
-              at->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChain);
+            if (!at->hasProp(inputDummy)) {
+              int rlabel;
+              auto coreAtom = rcore->core->getAtomWithIdx(index);
+              coreAtomAnyMatched.insert(index);
+              if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
+                std::vector<int> rlabelsOnSideChain;
+                at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
+                rlabelsOnSideChain.push_back(rlabel);
+                at->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChain);
 
-              data->labels.insert(rlabel);  // keep track of all labels used
-              attachments.push_back(rlabel);
+                data->labels.insert(rlabel);  // keep track of all labels used
+                attachments.push_back(rlabel);
+              }
+            } else {
+              // restore input wildcard
+              at->clearProp(inputDummy);
             }
           }
         }

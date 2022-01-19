@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -31,7 +31,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   MolDraw2DSVG(int width, int height, std::ostream &os, int panelWidth = -1,
                int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
-    initDrawing();
     initTextDrawer(noFreetype);
   }
 
@@ -39,7 +38,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1,
                bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
-    initDrawing();
     initTextDrawer(noFreetype);
   }
 

@@ -54,7 +54,12 @@ macro(rdkit_library)
     if(RDK_INSTALL_STATIC_LIBS)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
+      set(skipNext FALSE)
       foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
+        if(skipNext)
+          set(skipNext FALSE)
+          continue()
+        endif()
         if(TARGET "${linkLib}")
           get_target_property(linkLib_IMPORTED "${linkLib}" IMPORTED)
           if (linkLib_IMPORTED)
@@ -65,6 +70,23 @@ macro(rdkit_library)
         elseif(EXISTS "${linkLib}")
           # linkLib is a file, so keep it as-is
           target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+          continue()
+        # cmake prepends the special keywords debug, optimized, general
+        # before the library name depending on whether they should be
+        # linked in Debug, Release or generic builds. Therefore we need
+        # to skip those, and also skip the library that follows if it
+        # is not relevant for the current build type
+        elseif ("${linkLib}" STREQUAL "debug")
+          if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+            set(skipNext TRUE)
+          endif()
+          continue()
+        elseif ("${linkLib}" STREQUAL "optimized")
+          if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+            set(skipNext TRUE)
+          endif()
+          continue()
+        elseif ("${linkLib}" STREQUAL "general")
           continue()
         endif()
 

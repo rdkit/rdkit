@@ -19,9 +19,7 @@ namespace RDKit {
 DrawTextCairo::DrawTextCairo(double max_fnt_sz, double min_fnt_sz,
                              cairo_t *dp_cr)
     : DrawText(max_fnt_sz, min_fnt_sz), dp_cr_(dp_cr) {
-  cairo_select_font_face(dp_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
-                         CAIRO_FONT_WEIGHT_NORMAL);
-  cairo_set_font_size(dp_cr, fontSize());
+  setCairoContext(dp_cr);
 }
 
 // ****************************************************************************
@@ -41,6 +39,15 @@ void DrawTextCairo::drawChar(char c, const Point2D &cds) {
   cairo_stroke(dp_cr_);
 }
 
+void DrawTextCairo::setCairoContext(cairo_t *cr) {
+  dp_cr_ = cr;
+  if (dp_cr_) {
+    cairo_select_font_face(dp_cr_, "sans", CAIRO_FONT_SLANT_NORMAL,
+                           CAIRO_FONT_WEIGHT_NORMAL);
+    cairo_set_font_size(dp_cr_, fontSize());
+  }
+}
+
 // ****************************************************************************
 void DrawTextCairo::getStringRects(const string &text,
                                    vector<shared_ptr<StringRect>> &rects,
@@ -52,6 +59,16 @@ void DrawTextCairo::getStringRects(const string &text,
   char_str[1] = 0;
   double max_y = 0.0;
   double full_fs = fontSize();
+  auto *p_cr = dp_cr_;
+  if (p_cr == nullptr) {
+    // allocate an arbitrarily sized context temporarily
+    cairo_surface_t *surf =
+        cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 200, 200);
+    p_cr = cairo_create(surf);
+    cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
+    cairo_select_font_face(p_cr, "sans", CAIRO_FONT_SLANT_NORMAL,
+                           CAIRO_FONT_WEIGHT_NORMAL);
+  }
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
@@ -62,10 +79,9 @@ void DrawTextCairo::getStringRects(const string &text,
 
     char_str[0] = text[i];
     cairo_text_extents_t extents;
-    cairo_set_font_size(dp_cr_,
-                        selectScaleFactor(text[i], draw_mode) * full_fs);
-    cairo_text_extents(dp_cr_, char_str, &extents);
-    cairo_set_font_size(dp_cr_, full_fs);
+    cairo_set_font_size(p_cr, selectScaleFactor(text[i], draw_mode) * full_fs);
+    cairo_text_extents(p_cr, char_str, &extents);
+    cairo_set_font_size(p_cr, full_fs);
     double twidth = extents.width;
     double theight = extents.height;
     Point2D offset(extents.x_bearing + twidth / 2.0, -extents.y_bearing / 2.0);
@@ -82,6 +98,11 @@ void DrawTextCairo::getStringRects(const string &text,
     r->offset_.y = max_y / 2.0;
   }
 
+  if (dp_cr_ == nullptr) {
+    if (cairo_get_reference_count(p_cr) > 0) {
+      cairo_destroy(p_cr);
+    }
+  }
   adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 

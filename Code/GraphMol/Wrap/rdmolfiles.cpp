@@ -253,6 +253,9 @@ std::string molFragmentToSmarts(const ROMol &mol, python::object atomsToUse,
                                 bool doIsomericSmarts = true) {
   auto atomIndices =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  if (!atomIndices) {
+    throw_value_error("atomsToUse argument must be non-empty");
+  }
   auto bondIndices =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
   return RDKit::MolFragmentToSmarts(mol, *atomIndices, bondIndices.get(),
@@ -264,6 +267,9 @@ std::string molFragmentToCXSmarts(const ROMol &mol, python::object atomsToUse,
                                   bool doIsomericSmarts = true) {
   auto atomIndices =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
+  if (!atomIndices) {
+    throw_value_error("atomsToUse argument must be non-empty");
+  }
   auto bondIndices =
       pythonObjectToVect(bondsToUse, static_cast<int>(mol.getNumBonds()));
   return RDKit::MolFragmentToCXSmarts(mol, *atomIndices, bondIndices.get(),

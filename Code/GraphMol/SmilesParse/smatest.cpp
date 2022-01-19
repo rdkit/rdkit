@@ -113,7 +113,7 @@ void testPass() {
     "C%(1000)CC(C%(1000))",  // github #2909
     "C%(1000)CC.C%(1000)",   // github #2909
     "[C;d2]",                // non-hydrogen degree
-
+    "C$C",                   // quadruple bonds
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -2681,7 +2681,7 @@ void testGithub2142() {
     std::unique_ptr<ROMol> m1(SmartsToMol(smarts));
     TEST_ASSERT(m1);
     auto csma1 = MolToSmarts(*m1);
-    TEST_ASSERT(csma1 == "[C;H1&$(C(-,:[#6])[#6]),H2&$(C[#6])]");
+    TEST_ASSERT(csma1 == "[C;H1&$(C([#6])[#6]),H2&$(C[#6])]");
   }
 
   {  // a second one from the issue

@@ -902,7 +902,7 @@ bool isAtomAromatic(const Atom *a) {
   PRECONDITION(a, "bad atom");
   bool res = false;
   if (!a->hasQuery()) {
-    res = a->getIsAromatic();
+    res = isAromaticAtom(*a);
   } else {
     std::string descr = a->getQuery()->getDescription();
     if (descr == "AtomAtomicNum") {

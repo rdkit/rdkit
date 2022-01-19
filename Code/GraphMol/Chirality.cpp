@@ -31,7 +31,8 @@ namespace {
 bool shouldDetectDoubleBondStereo(const Bond *bond) {
   const RingInfo *ri = bond->getOwningMol().getRingInfo();
   return (!ri->numBondRings(bond->getIdx()) ||
-          ri->minBondRingSize(bond->getIdx()) > 7);
+          ri->minBondRingSize(bond->getIdx()) >=
+              Chirality::minRingSizeForDoubleBondStereo);
 }
 
 // ----------------------------------- -----------------------------------

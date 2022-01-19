@@ -135,6 +135,66 @@ class TestCase(unittest.TestCase):
     nm = fragremover.remove(mol)
     self.assertEqual(nm.GetNumAtoms(), mol.GetNumAtoms())
 
+    smi3 = "CNC[C@@H]([C@H]([C@@H]([C@@H](CO)O)O)O)O.c1cc2c(cc1C(=O)O)oc(n2)c3cc(cc(c3)Cl)Cl"
+
+    lfParams = rdMolStandardize.CleanupParameters()
+    lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
+    mol3 = Chem.MolFromSmiles(smi3)
+    lfrag3 = lfrag_params.choose(mol3)
+    self.assertEqual(Chem.MolToSmiles(lfrag3), "CNC[C@H](O)[C@@H](O)[C@H](O)[C@H](O)CO")
+
+    lfParams = rdMolStandardize.CleanupParameters()
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = True
+    lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
+    mol3 = Chem.MolFromSmiles(smi3)
+    lfrag3 = lfrag_params.choose(mol3)
+    self.assertEqual(Chem.MolToSmiles(lfrag3), "O=C(O)c1ccc2nc(-c3cc(Cl)cc(Cl)c3)oc2c1")
+
+    lfParams = rdMolStandardize.CleanupParameters()
+    lfParams.largestFragmentChooserUseAtomCount = False
+    lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
+    mol3 = Chem.MolFromSmiles(smi3)
+    lfrag3 = lfrag_params.choose(mol3)
+    self.assertEqual(Chem.MolToSmiles(lfrag3), "O=C(O)c1ccc2nc(-c3cc(Cl)cc(Cl)c3)oc2c1")
+
+    smi4 = "CC.O=[Pb]=O"
+
+    lfParams = rdMolStandardize.CleanupParameters()
+    lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
+    mol4 = Chem.MolFromSmiles(smi4)
+    lfrag4 = lfrag_params.choose(mol4)
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "CC")
+
+    lfParams = rdMolStandardize.CleanupParameters()
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = True
+    lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
+    mol4 = Chem.MolFromSmiles(smi4)
+    lfrag4 = lfrag_params.choose(mol4)
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "O=[Pb]=O")
+
+    lfParams = rdMolStandardize.CleanupParameters()
+    lfParams.largestFragmentChooserUseAtomCount = False
+    lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
+    mol4 = Chem.MolFromSmiles(smi4)
+    lfrag4 = lfrag_params.choose(mol4)
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "O=[Pb]=O")
+
+    lfParams = rdMolStandardize.CleanupParameters()
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = True
+    lfParams.preferOrganic = True
+    lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
+    mol4 = Chem.MolFromSmiles(smi4)
+    lfrag4 = lfrag_params.choose(mol4)
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "CC")
+
+    lfParams = rdMolStandardize.CleanupParameters()
+    lfParams.largestFragmentChooserUseAtomCount = False
+    lfParams.preferOrganic = True
+    lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
+    mol4 = Chem.MolFromSmiles(smi4)
+    lfrag4 = lfrag_params.choose(mol4)
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "CC")
+
   def test8Normalize(self):
     normalizer = rdMolStandardize.Normalizer()
     mol = Chem.MolFromSmiles("C[n+]1ccccc1[O-]")
@@ -365,6 +425,12 @@ chlorine	[Cl]
 
     enumerator = rdMolStandardize.TautomerEnumerator()
     res68 = enumerator.Enumerate(m68)
+    self.assertEqual(len(res68), 252)
+    self.assertEqual(len(res68.tautomers), len(res68))
+    self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
+
+    enumerator = rdMolStandardize.GetV1TautomerEnumerator()
+    res68 = enumerator.Enumerate(m68)
     self.assertEqual(len(res68), 292)
     self.assertEqual(len(res68.tautomers), len(res68))
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTransformsReached)
@@ -550,9 +616,9 @@ chlorine	[Cl]
     res68 = enumerator.Enumerate(m68)
     # either the enumeration completed
     # or it ran very slowly and was canceled due to timeout
-    hasReachedTimeout = (len(res68.tautomers) < 375
+    hasReachedTimeout = (len(res68.tautomers) < 295
                          and res68.status == rdMolStandardize.TautomerEnumeratorStatus.Canceled)
-    hasCompleted = (len(res68.tautomers) == 375
+    hasCompleted = (len(res68.tautomers) == 295
                     and res68.status == rdMolStandardize.TautomerEnumeratorStatus.Completed)
     if hasReachedTimeout:
       print("Enumeration was canceled due to timeout (10 s)", file=sys.stderr)
@@ -566,6 +632,15 @@ chlorine	[Cl]
       enumerator.SetCallback(MyBrokenCallback())
     with self.assertRaises(AttributeError):
       enumerator.SetCallback(MyBrokenCallback2())
+
+    # GitHub #4736
+    enumerator = rdMolStandardize.TautomerEnumerator(params)
+    enumerator.SetCallback(MyTautomerEnumeratorCallback(self, 50.0))
+    enumerator_copy = rdMolStandardize.TautomerEnumerator(enumerator)
+    res68 = enumerator.Enumerate(m68)
+    res68_copy = enumerator_copy.Enumerate(m68)
+    self.assertTrue(res68.status == res68_copy.status)
+
 
   def test17PickCanonicalCIPChangeOnChiralCenter(self):
 

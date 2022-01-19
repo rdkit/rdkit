@@ -785,3 +785,32 @@ TEST_CASE("other edges") {
     CHECK(!m->getAtomWithIdx(1)->hasQuery());
   }
 }
+
+TEST_CASE(
+    "Github #4789: AdjustQueryProperties() is inconsistent when "
+    "adjustConjugatedFiveRings is set") {
+  SECTION("degree one neighbors") {
+    auto mol = "C1=CC=CC1C"_smiles;
+    REQUIRE(mol);
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.adjustConjugatedFiveRings = true;
+    ps.adjustSingleBondsToDegreeOneNeighbors = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(MolToSmarts(*mol) ==
+          "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1[#6]");
+  }
+  SECTION("between aromatic atoms") {
+    auto mol = "C1=CC=CC1C1=CC=CC1"_smiles;
+    REQUIRE(mol);
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.adjustConjugatedFiveRings = true;
+    ps.adjustSingleBondsBetweenAromaticAtoms = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    // clang-format off
+    CHECK(MolToSmarts(*mol) ==
+          "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
+    // clang-format on
+  }
+}

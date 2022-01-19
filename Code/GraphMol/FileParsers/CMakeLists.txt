@@ -58,7 +58,7 @@ rdkit_library(FileParsers
 							MultithreadedMolSupplier.cpp
 							MultithreadedSmilesMolSupplier.cpp
 							MultithreadedSDMolSupplier.cpp
-              LINK_LIBRARIES Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams} ${zlib_lib})
+              LINK_LIBRARIES GenericGroups Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams} ${zlib_lib})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(FileParsers.h

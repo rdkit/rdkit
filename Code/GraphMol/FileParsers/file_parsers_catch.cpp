@@ -4254,3 +4254,107 @@ M  END
     CHECK(mol1->hasProp(common_properties::molFileLinkNodes));
   }
 }
+
+TEST_CASE(
+    "Github #4785: MDL query with aromatic bond sets aromatic flag on atoms "
+    "even though they are not in an aromatic ring") {
+  SECTION("benzene") {
+    auto mol = R"CTAB(
+  Mrv2108 12102110572D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 128.125 -103.585 0 0
+M  V30 2 C 126.7913 -104.355 0 0
+M  V30 3 C 126.7913 -105.895 0 0
+M  V30 4 C 128.125 -106.665 0 0
+M  V30 5 C 129.4587 -105.895 0 0
+M  V30 6 C 129.4587 -104.355 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 6
+M  V30 6 4 1 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(mol->getBondWithIdx(0)->getIsAromatic());
+  }
+  SECTION("non-kekulizeable") {
+    auto mol = R"CTAB(
+  Mrv2108 12102110572D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 128.125 -103.585 0 0
+M  V30 2 C 126.7913 -104.355 0 0
+M  V30 3 C 126.7913 -105.895 0 0
+M  V30 4 C 128.125 -106.665 0 0
+M  V30 5 C 129.4587 -105.895 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 4 5 1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(!mol);
+  }
+  SECTION("as reported1") {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -0.3538    0.6163    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0668    0.2012    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  1  0
+M  MRV SMA   1 [#6;a;a]
+M  MRV SMA   2 [#6;a;a]
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+  SECTION("as reported2") {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -0.3538    0.6163    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0668    0.2012    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+  SECTION("as reported3") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 A -0.353800 0.616300 0.000000 0
+M  V30 2 A -1.066800 0.201200 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 4 1 2 TOPO=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+  }
+}

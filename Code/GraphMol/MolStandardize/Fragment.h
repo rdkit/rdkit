@@ -73,8 +73,12 @@ inline FragmentRemover *fragmentRemoverFromParams(
 class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
  public:
   //  LargestFragmentChooser() {}
-  LargestFragmentChooser(bool prefer_organic = false)
-      : PREFER_ORGANIC(prefer_organic) {}
+  LargestFragmentChooser(bool preferOrganic = false)
+      : preferOrganic(preferOrganic) {}
+  LargestFragmentChooser(const CleanupParameters &params)
+      : preferOrganic(params.preferOrganic),
+        useAtomCount(params.largestFragmentChooserUseAtomCount),
+        countHeavyAtomsOnly(params.largestFragmentChooserCountHeavyAtomsOnly) {}
   LargestFragmentChooser(const LargestFragmentChooser &other);
   ~LargestFragmentChooser() = default;
 
@@ -91,7 +95,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
   };
 
  private:
-  bool PREFER_ORGANIC;
+  bool preferOrganic;
+  bool useAtomCount{true};
+  bool countHeavyAtomsOnly{false};
 };  // class LargestFragmentChooser
 }  // namespace MolStandardize
 }  // namespace RDKit

@@ -136,7 +136,11 @@ struct RGroupData {
   bool isMolHydrogen(ROMol &mol) {
     for (ROMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
          ++atIt) {
-      if ((*atIt)->getAtomicNum() > 1) {
+      auto atom = *atIt;
+      if (atom->getAtomicNum() > 1) {
+        return false;
+      }
+      else if (atom->getAtomicNum() == 0 && ! atom->hasProp(SIDECHAIN_RLABELS)) {
         return false;
       }
     }
