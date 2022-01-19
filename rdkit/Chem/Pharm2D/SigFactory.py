@@ -64,11 +64,12 @@ class SigFactory(object):
         nPts, combo, scaffold = self.GetBitInfo(bitIdx)
         fams = self.GetFeatFamilies()
         labels = [fams[x] for x in combo]
-        dMat = numpy.zeros((nPts, nPts), dtype='int')
+        dMat = numpy.zeros((nPts, nPts), dtype=numpy.int64)
         dVect = Utils.nPointDistDict[nPts]
         for idx in range(len(dVect)):
             i, j = dVect[idx]
-            dMat[i, j], dMat[j, i] = scaffold[idx], scaffold[idx]
+            dMat[i, j] = scaffold[idx]
+            dMat[j, i] = scaffold[idx]
 
         return nPts, combo, scaffold, labels, dMat
 
@@ -324,8 +325,7 @@ class SigFactory(object):
             scaffoldsHere = Utils.GetPossibleScaffolds(i, self._bins,
                                                        useTriangleInequality=self.trianglePruneBins)
             self._scaffolds[nDistsHere] = scaffoldsHere
-            pointsHere = Utils.NumCombinations(self._nFeats, i) * len(scaffoldsHere) # ... * nBitsHere
-            accum += pointsHere
+            accum += (Utils.NumCombinations(self._nFeats, i) * len(scaffoldsHere))
         self._sigSize = accum
         if not self.useCounts:
             self.sigKlass = SparseBitVect

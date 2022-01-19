@@ -545,7 +545,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
   for i, j in weights:
     if j < i:
       i, j = j, i
-    ff.AddDistanceConstraint(i, j, bm[j, i], bm[i, j], forceConstant) # i, j, minV, maxV, forceConstant
+    ff.AddDistanceConstraint(i, j, bm[j, i], bm[i, j], forceConstant)
     
   if excludedVolumes:
     nAts = mol.GetNumAtoms()
@@ -775,7 +775,7 @@ def _getFeatDict(mol, featFactory, features):
   for feat in features:
     family = feat.GetFamily()
     if family not in molFeats:
-      molFeats[family] = featFactory.GetFeaturesForMol(mol, includeOnly=family) # matches
+      molFeats[family] = featFactory.GetFeaturesForMol(mol, includeOnly=family)
   return molFeats
 
 
