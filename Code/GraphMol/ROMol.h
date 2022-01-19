@@ -37,6 +37,7 @@
 #include "Conformer.h"
 #include "SubstanceGroup.h"
 #include "StereoGroup.h"
+#include "RingInfo.h"
 
 namespace RDKit {
 class SubstanceGroup;
@@ -50,7 +51,6 @@ class MolPickler;
 class RWMol;
 class QueryAtom;
 class QueryBond;
-class RingInfo;
 
 template <class T1, class T2>
 class AtomIterator_;
@@ -352,6 +352,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     d_graph = std::move(o.d_graph);
     d_atomBookmarks = std::move(o.d_atomBookmarks);
     d_bondBookmarks = std::move(o.d_bondBookmarks);
+    if (dp_ringInfo) {
+      delete dp_ringInfo;
+    }
     dp_ringInfo = o.dp_ringInfo;
 
     d_confs = std::move(o.d_confs);

@@ -28,14 +28,9 @@ class RDProps {
     d_props = rhs.d_props;
     return *this;
   }
-  RDProps(RDProps &&o) noexcept : d_props(std::move(o.d_props)) {}
-  RDProps &operator=(RDProps &&rhs) noexcept {
-    if (this == &rhs) {
-      return *this;
-    }
-    d_props = std::move(rhs.d_props);
-    return *this;
-  }
+  RDProps(RDProps &&o) noexcept = default;
+  RDProps &operator=(RDProps &&rhs) noexcept = default;
+
   void clear() { d_props.reset(); }
   //! gets the underlying Dictionary
   const Dict &getDict() const { return d_props; }

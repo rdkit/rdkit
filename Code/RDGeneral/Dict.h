@@ -60,14 +60,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     }
   }
 
-  Dict(Dict &&other) noexcept : _data(std::move(other._data)) {}
-  Dict &operator=(Dict &&other) noexcept {
-    if (this == &other) {
-      return *this;
-    }
-    _data = std::move(other._data);
-    return *this;
-  }
+  Dict(Dict &&other) noexcept = default;
 
   ~Dict() {
     reset();  // to clear pointers if necessary
@@ -101,8 +94,12 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   }
 
   Dict &operator=(const Dict &other) {
-    if (this == &other) return *this;
-    if (_hasNonPodData) reset();
+    if (this == &other) {
+      return *this;
+    }
+    if (_hasNonPodData) {
+      reset();
+    }
 
     if (other._hasNonPodData) {
       std::vector<Pair> data(other._data.size());
@@ -115,6 +112,18 @@ class RDKIT_RDGENERAL_EXPORT Dict {
       _data = other._data;
     }
     _hasNonPodData = other._hasNonPodData;
+    return *this;
+  }
+
+  Dict &operator=(Dict &&other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
+    if (_hasNonPodData) {
+      reset();
+    }
+    _hasNonPodData = std::move(other._hasNonPodData);
+    _data = std::move(other._data);
     return *this;
   }
 

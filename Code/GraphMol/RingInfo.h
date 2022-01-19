@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,15 +8,15 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_RINGINFO_H
-#define _RD_RINGINFO_H
+#ifndef RD_RINGINFO_H
+#define RD_RINGINFO_H
 
 #include <map>
 #include <vector>
+#ifdef RDK_USE_URF
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#ifdef RDK_USE_URF
 #include <RingDecomposerLib.h>
 #endif
 
