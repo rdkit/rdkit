@@ -843,6 +843,13 @@ Point2D MolDraw2D::getAtomCoords(int at_num) const {
 }
 
 // ****************************************************************************
+double MolDraw2D::scale() const {
+  PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
+               "bad active mol index");
+  return drawMols_[activeMolIdx_]->getScale();
+}
+
+// ****************************************************************************
 double MolDraw2D::fontSize() const { return text_drawer_->fontSize(); }
 
 // ****************************************************************************

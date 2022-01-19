@@ -306,7 +306,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   //! returns the drawing scale (conversion from molecular coords -> drawing
   /// coords)
-  double scale() const { return scale_; }
+  double scale() const;
   //! calculates the drawing scale (conversion from molecular coords -> drawing
   /// coords)
   void calculateScale(int width, int height, const ROMol &mol,

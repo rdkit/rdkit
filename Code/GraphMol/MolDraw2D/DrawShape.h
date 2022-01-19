@@ -41,6 +41,10 @@ class DrawShape {
             bool scaleLineWidth = false,
             DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
             int atom1 = -1, int atom2 = -1, int bond = -1);
+  DrawShape(const DrawShape &ds) = delete;
+  DrawShape(const DrawShape &&ds) = delete;
+  DrawShape &operator=(const DrawShape &ds) = delete;
+  DrawShape &operator=(const DrawShape &&ds) = delete;
 
   void draw(MolDraw2D &drawer);
   virtual void myDraw(MolDraw2D &drawer) const = 0;

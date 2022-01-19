@@ -422,8 +422,8 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
     const auto this_idx = bond->getIdx();
     const auto a_idx1 = bond->getBeginAtomIdx();
     const auto a_idx2 = bond->getEndAtomIdx();
-    const auto a1pos = getDrawCoords(atomCoords()[bond->getBeginAtomIdx()]);
-    const auto a2pos = getDrawCoords(atomCoords()[bond->getEndAtomIdx()]);
+    const auto a1pos = getDrawCoords(bond->getBeginAtomIdx());
+    const auto a2pos = getDrawCoords(bond->getEndAtomIdx());
     const auto width = 2 + lineWidth();
     if (drawOptions().splitBonds) {
       const auto midp = (a1pos + a2pos) / 2;
@@ -474,7 +474,7 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
   }
   for (const auto &at : mol.atoms()) {
     auto this_idx = at->getIdx();
-    auto pos = getDrawCoords(atomCoords()[this_idx]);
+    auto pos = getDrawCoords(this_idx);
     d_os << "<circle "
          << " cx='" << MolDraw2D_detail::formatDouble(pos.x) << "'"
          << " cy='" << MolDraw2D_detail::formatDouble(pos.y) << "'"
