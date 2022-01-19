@@ -10,9 +10,7 @@
 import os
 import re
 
-from aggdraw import Brush, Pen
-from aggdraw import Draw
-from aggdraw import Font
+from aggdraw import Brush, Draw, Font, Pen
 from rdkit import RDConfig
 from rdkit.Chem.Draw.canvasbase import CanvasBase
 
@@ -20,7 +18,7 @@ faceMap = {'sans': os.path.join(RDConfig.RDCodeDir, 'Chem', 'Draw', 'FreeSans.tt
 
 
 def convertColor(color):
-  return int(color[0] * 255), int(color[1] * 255), int(color[2] * 255)
+  return (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
 
 
 class Canvas(CanvasBase):

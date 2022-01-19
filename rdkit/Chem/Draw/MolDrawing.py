@@ -425,16 +425,15 @@ class MolDrawing(object):
           symbolLength = len(base)
           
           nHs = 0
-          hs = ''
           if not atom.HasQuery():
             nHs = atom.GetTotalNumHs()
-          if nHs > 0:
-            if nHs > 1:
-              hs = 'H<sub>%d</sub>' % nHs
-              symbolLength += 1 + len(str(nHs))
-            else:
-              hs = 'H'
-              symbolLength += 1
+          hs = ''
+          if nHs == 1:
+            hs = 'H'
+            symbolLength += 1
+          elif nHs > 1:
+            hs = 'H<sub>%d</sub>' % nHs
+            symbolLength += 1 + len(str(nHs))
 
           chg = atom.GetFormalCharge()
           if chg == 0:

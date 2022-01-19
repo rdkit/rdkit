@@ -34,7 +34,6 @@
 import copy
 import math
 
-from numpy.lib.arraysetops import isin
 try:
   from matplotlib import cm
   from matplotlib.colors import LinearSegmentedColormap
@@ -53,7 +52,7 @@ from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem import rdDepictor
 from rdkit.Chem import rdMolDescriptors as rdMD
 
-def _CleanFpInfoAttr_(mol):
+def _DeleteFpInfoAttr(mol):
   if hasattr(mol, '_fpInfo'):
     delattr(mol, '_fpInfo')
 
@@ -72,18 +71,18 @@ def GetAtomicWeightsForFingerprint(refMol, probeMol, fpFunction, metric=DataStru
     Note:
       If fpFunction needs additional parameters, use a lambda construct
     """
-  _CleanFpInfoAttr_(probeMol)
-  _CleanFpInfoAttr_(refMol)
+  _DeleteFpInfoAttr(probeMol)
+  _DeleteFpInfoAttr(refMol)
 
   refFP = fpFunction(refMol, -1)
   baseSimilarity = metric(refFP, fpFunction(probeMol, -1))
 
   # loop over atoms
-  weights = [baseSimilarity - metric(refFP, fpFunction(probeMol, atomId)) for atomId in range(probeMol.GetNumAtoms())]
+  weights = [baseSimilarity - metric(refFP, fpFunction(probeMol, atomId)) 
+             for atomId in range(probeMol.GetNumAtoms())]
 
-  _CleanFpInfoAttr_(probeMol)
-  _CleanFpInfoAttr_(refMol)
-    
+  _DeleteFpInfoAttr(probeMol)
+  _DeleteFpInfoAttr(refMol)
   return weights
 
 
@@ -98,13 +97,14 @@ def GetAtomicWeightsForModel(probeMol, fpFunction, predictionFunction):
       predictionFunction -- the prediction function of the ML model
     """
 
-  _CleanFpInfoAttr_(probeMol)
+  _DeleteFpInfoAttr(probeMol)
   baseProba = predictionFunction(fpFunction(probeMol, -1))
 
   # loop over atoms
-  weights = [baseProba - predictionFunction(fpFunction(probeMol, atomId)) for atomId in range(probeMol.GetNumAtoms())]
+  weights = [baseProba - predictionFunction(fpFunction(probeMol, atomId)) 
+             for atomId in range(probeMol.GetNumAtoms())]
   
-  _CleanFpInfoAttr_(probeMol)
+  _DeleteFpInfoAttr(probeMol)
   return weights
 
 
@@ -117,7 +117,7 @@ def GetStandardizedWeights(weights):
       weights -- the list with the atomic weights
     """
 
-  maxAbsWeight = max([math.fabs(w) for w in weights])
+  maxAbsWeight = max(math.fabs(w) for w in weights)
   
   if maxAbsWeight > 0:
     return [w / maxAbsWeight for w in weights], maxAbsWeight
