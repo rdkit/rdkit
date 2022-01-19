@@ -13,9 +13,7 @@ unit testing code for the Smiles file handling stuff
 """
 import unittest
 
-from rdkit import Chem
-
-from rdkit import RDLogger
+from rdkit import Chem, RDLogger
 
 
 class TestCase(unittest.TestCase):
