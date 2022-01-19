@@ -127,10 +127,7 @@ def is_organic(fragment):
     """
     # TODO: Consider a different definition?
     # Could allow only H, C, N, O, S, P, F, Cl, Br, I
-    for a in fragment.GetAtoms():
-        if a.GetAtomicNum() == 6:
-            return True
-    return False
+    return any(atom.GetAtomicNum() == 6 for atom in fragment.GetAtoms())
 
 
 class FragmentRemover(object):
@@ -166,12 +163,12 @@ class FragmentRemover(object):
         log.debug('Running FragmentRemover')
         # Iterate FragmentPatterns and remove matching fragments
         for frag in self.fragments:
-            # If nothing is left or leave_last and only one fragment, end here
+            # If nothing is left or leave_last and only one fragment, end here.
             if mol.GetNumAtoms() == 0 or (self.leave_last and len(Chem.GetMolFrags(mol)) <= 1):
                 break
             # Apply removal for this FragmentPattern
             removed = Chem.DeleteSubstructs(mol, frag.smarts, onlyFrags=True)
-            if not mol.GetNumAtoms() == removed.GetNumAtoms():
+            if mol.GetNumAtoms() != removed.GetNumAtoms():
                 log.info('Removed fragment: %s', frag.name)
             if self.leave_last and removed.GetNumAtoms() == 0:
                 # All the remaining fragments match this pattern - leave them all

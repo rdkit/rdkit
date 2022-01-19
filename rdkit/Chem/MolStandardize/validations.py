@@ -204,4 +204,3 @@ VALIDATIONS = (
 
 # People can define a filterer
 # This has a series of validations, and the required output - e.g. no error or no warns?
-
