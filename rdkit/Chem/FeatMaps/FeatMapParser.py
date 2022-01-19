@@ -158,8 +158,6 @@ class FeatMapParser(object):
       while vals.count(''):
         vals.remove('')
       p = FeatMapPoint.FeatMapPoint()
-
-      i = 0
       for i in range(0, len(vals), 2):
         name = vals[i].lower()
         if name == 'family':
