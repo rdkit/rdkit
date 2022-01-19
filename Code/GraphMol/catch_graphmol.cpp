@@ -2494,12 +2494,13 @@ TEST_CASE(
 }
 
 TEST_CASE("moves") {
-  auto m1 = "C[C@H](O)[C@H](C)F |o2:1,&1:3,r,SgD:5:atom_data:foo::::|"_smiles;
+  auto m1 =
+      "C[C@H](O)C(F)[C@H](C)O |o2:1,5,&1:3,r,@:3,SgD:4:atom_data:foo::::|"_smiles;
   REQUIRE(m1);
   m1->setProp("foo", 1u);
   auto check_dest = [](auto *m1, auto &m2) {
-    CHECK(m2.getNumAtoms() == 6);
-    CHECK(m2.getNumBonds() == 5);
+    CHECK(m2.getNumAtoms() == 8);
+    CHECK(m2.getNumBonds() == 7);
     for (const auto atom : m2.atoms()) {
       CHECK(&atom->getOwningMol() == &m2);
       CHECK(&atom->getOwningMol() != m1);
@@ -2508,16 +2509,17 @@ TEST_CASE("moves") {
       CHECK(&bond->getOwningMol() == &m2);
       CHECK(&bond->getOwningMol() != m1);
     }
-    CHECK(m2.getStereoGroups().size() == 3);
-    CHECK(m2.getStereoGroups()[0].getAtoms().size() == 1);
+    CHECK(m2.getStereoGroups().size() == 2);
+    CHECK(m2.getStereoGroups()[0].getAtoms().size() == 2);
     CHECK(m2.getStereoGroups()[0].getAtoms()[0]->getIdx() == 1);
+    CHECK(m2.getStereoGroups()[0].getAtoms()[1]->getIdx() == 5);
     CHECK(m2.getStereoGroups()[1].getAtoms().size() == 1);
-    CHECK(m2.getStereoGroups()[1].getAtoms()[0]->getIdx() == 2);
+    CHECK(m2.getStereoGroups()[1].getAtoms()[0]->getIdx() == 3);
 
     const auto &sgs = getSubstanceGroups(m2);
     CHECK(sgs.size() == 1);
     CHECK(sgs[0].getAtoms().size() == 1);
-    CHECK(sgs[0].getAtoms()[0] == 5);
+    CHECK(sgs[0].getAtoms()[0] == 4);
 
     // check the state of m1:
     CHECK(m1->getNumAtoms() == 0);
@@ -2531,8 +2533,8 @@ TEST_CASE("moves") {
     // make sure we can still do something with m1:
     *m1 = m2;
     CHECK(!m1->getDict().getData().empty());
-    CHECK(m1->getNumAtoms() == 6);
-    CHECK(m1->getNumBonds() == 5);
+    CHECK(m1->getNumAtoms() == 8);
+    CHECK(m1->getNumBonds() == 7);
     CHECK(m1->getRingInfo() != nullptr);
     CHECK(m1->getRingInfo()->isInitialized());
   };
