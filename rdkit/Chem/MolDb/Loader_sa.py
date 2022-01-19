@@ -7,20 +7,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import sqlalchemy
-
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import Lipinski, Descriptors, Crippen
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbModule
 import os
 
+from rdkit import Chem
+from rdkit.Chem import AllChem, Crippen, Descriptors, Lipinski
+from sqlalchemy import Column, Float, Integer, LargeBinary, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, MetaData
-from sqlalchemy import Integer, Text, String, ForeignKey, LargeBinary, DateTime, Float
-from sqlalchemy.orm import relation, mapper, sessionmaker, backref
-from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 decBase = declarative_base()
 
@@ -34,8 +27,7 @@ class Compound(decBase):
 def RegisterSchema(dbUrl, echo=False):
   engine = create_engine(dbUrl, echo=echo)
   decBase.metadata.create_all(engine)
-  maker = sessionmaker(bind=engine)
-  return maker
+  return sessionmaker(bind=engine)
 
 
 ConnectToSchema = RegisterSchema
@@ -43,15 +35,14 @@ ConnectToSchema = RegisterSchema
 
 def _ConnectToSchema(dbUrl, echo=False):
   engine = create_engine(dbUrl, echo=echo)
-  meta
   decBase.metadata.create_all(engine)
-  maker = sessionmaker(bind=engine)
-  return maker
+  return sessionmaker(bind=engine)
 
 
 #set up the logger:
 
 import rdkit.RDLogger as logging
+
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 
@@ -114,7 +105,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
   globalProps = {}
   if startAnew:
     if os.path.exists(dbName):
-      for i in range(5):
+      for _ in range(5):
         try:
           os.unlink(dbName)
           break

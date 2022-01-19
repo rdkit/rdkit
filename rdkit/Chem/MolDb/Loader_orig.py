@@ -7,15 +7,15 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import Lipinski, Descriptors, Crippen
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbModule
 import re
 
 #set up the logger:
 import rdkit.RDLogger as logging
+from rdkit import Chem
+from rdkit.Chem import AllChem, Crippen, Descriptors, Lipinski
+from rdkit.Dbase import DbModule
+from rdkit.Dbase.DbConnection import DbConnect
+
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 
@@ -38,6 +38,7 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
     return None
   namesSeen.add(nm)
   row = [nm]
+  pD = {}
   if not skipProps:
     if addComputedProps:
       nHD = Lipinski.NumHDonors(mol)
@@ -52,8 +53,7 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
       mol.SetProp('MolLogP', str(logp))
 
     pns = list(mol.GetPropNames())
-    pD = {}
-    for pi, pn in enumerate(pns):
+    for pn in pns:
       if pn.lower() == nameCol.lower():
         continue
       pv = mol.GetProp(pn).strip()
@@ -61,7 +61,7 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
         colTyp = globalProps.get(pn, 2)
         while colTyp > 0:
           try:
-            tpi = typeConversions[colTyp][1](pv)
+            typeConversions[colTyp][1](pv)
           except Exception:
             colTyp -= 1
           else:
@@ -70,27 +70,33 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
         pD[pn] = typeConversions[colTyp][1](pv)
       else:
         pD[pn] = pv
-  else:
-    pD = {}
+
   if redraw:
     AllChem.Compute2DCoords(m)
   if not skipSmiles:
     row.append(Chem.MolToSmiles(mol, True))
-  row.append(DbModule.binaryHolder(mol.ToBinary()))
-  row.append(pD)
+  row.extend([DbModule.binaryHolder(mol.ToBinary()), pD])
   return row
 
 
 def ConvertRows(rows, globalProps, defaultVal, skipSmiles):
+  #  globalProps is a python dictionary
+  PropsSize: int = len(globalProps)
   for i, row in enumerate(rows):
-    newRow = [row[0], row[1]]
+    newRow = [0] * (PropsSize + 3 + int(not skipSmiles))
+    newRow[0] = row[0]
+    newRow[1] = row[1]
+    
     pD = row[-1]
-    for pn in globalProps:
-      pv = pD.get(pn, defaultVal)
-      newRow.append(pv)
-    newRow.append(row[2])
+    for counter, pn in enumerate(globalProps): # pn is the key
+      newRow[2 + counter] = pD.get(pn, defaultVal)
+
     if not skipSmiles:
-      newRow.append(row[3])
+      newRow[-2] = row[2]
+      newRow[-1] = row[3]
+    else:
+      newRow[-1] = row[2]
+
     rows[i] = newRow
 
 
@@ -190,7 +196,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
         else:
           logger.warning('full error file support not complete')
       continue
-    tmpProps = {}
+
     row = ProcessMol(m, typeConversions, globalProps, nDone, nameProp=nameProp, nameCol=nameCol,
                      redraw=redraw, keepHs=keepHs, skipProps=skipProps,
                      addComputedProps=addComputedProps, skipSmiles=skipSmiles, uniqNames=uniqNames,
