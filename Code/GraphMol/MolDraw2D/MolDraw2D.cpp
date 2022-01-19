@@ -1547,7 +1547,7 @@ void MolDraw2D::calcReactionOffsets(
   // calculate the total width of the drawing - it may need re-scaling if
   // it's too wide for the panel.
   auto reactionWidth = [&](int gapWidth) -> int {
-    int totWidth = width() * drawOptions().padding;
+    int totWidth = 0;
     for (auto &dm : reagents) {
       totWidth += dm->width_ + gapWidth;
     }
@@ -1570,31 +1570,49 @@ void MolDraw2D::calcReactionOffsets(
     }
     return totWidth;
   };
-  int totWidth = reactionWidth(plusWidth);
-  double stretch = double(width_) / totWidth;
-  // If stretch < 1, we need to shrink the DrawMols to fit.  This isn't
-  // necessary if we're just stretching them along the panel as they already
-  // fit for height.
-  auto scaleDrawMols = [&](std::vector<std::unique_ptr<DrawMol>> &dms) {
-    for (auto &dm: dms) {
+
+  auto scaleDrawMols = [&](std::vector<std::unique_ptr<DrawMol>> &dms,
+                           double stretch) {
+    for (auto &dm : dms) {
       dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(),
                    false);
       dm->shrinkToFit();
     }
   };
-  if (stretch < 1.0) {
-    scaleDrawMols(reagents);
-    scaleDrawMols(agents);
-    scaleDrawMols(products);
+  // The DrawMols are sized/scaled according to the height() which is all
+  // there is to go on initially, so they may be wider than the width() in
+  // total. If so, shrink them to fit.  Because the shrinkng imposes min and max
+  // font sizes, we may not get the smaller size we want first go, so iterate
+  // until we do or we give up.
+  for (int i = 0; i < 5; ++i) {
+    int totWidth = reactionWidth(plusWidth);
+    int oldTotWidth = totWidth;
+    double stretch = double(width_ * (1 - drawOptions().padding)) / totWidth;
+    // If stretch < 1, we need to shrink the DrawMols to fit.  This isn't
+    // necessary if we're just stretching them along the panel as they already
+    // fit for height.
+    if (stretch < 1.0) {
+      scaleDrawMols(reagents, stretch);
+      scaleDrawMols(agents, stretch);
+      scaleDrawMols(products, stretch);
+    } else {
+      break;
+    }
+    totWidth = reactionWidth(plusWidth);
+    if (fabs(totWidth - oldTotWidth) < 0.01 * width()) {
+      break;
+    }
   }
-  // now work out a new plusWidth, based on the new widths of DrawMols,
+  // Now work out a new plusWidth, based on the new widths of DrawMols,
   // if that has changed.
   int numGaps = reagents.size();
   numGaps += agents.empty() ? 6 : 2 + agents.size();
   numGaps = products.empty() ? numGaps : numGaps + products.size() - 1;
-  totWidth = reactionWidth(0);
-  plusWidth = (width() - totWidth) / numGaps;
-  int xOffset = 0.5 * width() * drawOptions().padding;
+  int thinWidth = reactionWidth(0);
+  plusWidth = (width() - thinWidth) / numGaps;
+
+  // And finally work out where to put all the pieces.
+  int xOffset = 0;
   for (auto i = 0; i < reagents.size(); ++i) {
     offsets.emplace_back(
         Point2D(xOffset, (height() - reagents[i]->height_) / 2));
@@ -1638,6 +1656,7 @@ int MolDraw2D::drawReactionPart(std::vector<std::unique_ptr<DrawMol>> &reactBit,
     reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
     reactBit[i]->draw(*this);
 #if 0
+// this is convenient for debugging
     setColour(DrawColour(0, 1.0, 1.0));
     drawLine(Point2D(offsets[initOffset].x + reactBit[i]->width_, 0),
              Point2D(offsets[initOffset].x + reactBit[i]->width_, height_),
@@ -2029,7 +2048,6 @@ unique_ptr<RWMol> MolDraw2D::initMoleculeDraw(
         minv -= size / 2;
         maxv += size / 2;
         setColour(DrawColour(.8, .8, .8));
-        // drawEllipse(minv,maxv);
         drawRect(minv, maxv);
       }
     }

@@ -172,7 +172,6 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
 
 void test1() {
   std::cout << " ----------------- Test 1" << std::endl;
-#if 1
   {
     std::string smiles =
         "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=["
@@ -231,7 +230,6 @@ void test1() {
     drawit(rxn, nameBase);
     delete rxn;
   }
-#endif
   {
     std::string smiles =
         "[CH3:1][C:2](=[O:3])[OH:4].[CH3:5][NH2:6]>CC(O)C.[Pt]>[CH3:1][C:2](=["
@@ -244,8 +242,9 @@ void test1() {
     drawit(rxn, nameBase, true);
     delete rxn;
   }
-#if 1
   {
+    // With the new code (Jan 2022) it appears that the 2nd reagent overlaps
+    // the + sign, but this is an optical illusion.  Trust me :-).
     std::string smiles =
         "[N:1][C:2][C:3](=[O:4])[O:5].[N:6][C:7][C:8](=[O:9])[O:10]>>[N:1]1[C:"
         "2][C:3](=[O:4])[N:6][C:7][C:8]1=[O:9].[O:5][O:10]";
@@ -257,7 +256,6 @@ void test1() {
     drawit(rxn, nameBase, true);
     delete rxn;
   }
-#endif
   std::cout << " Done" << std::endl;
 }
 
