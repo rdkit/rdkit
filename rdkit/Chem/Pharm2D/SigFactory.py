@@ -39,7 +39,10 @@ class SigFactory(object):
         self.shortestPathsOnly = shortestPathsOnly
         self.includeBondOrder = includeBondOrder
         self.trianglePruneBins = trianglePruneBins
-        self.skipFeats = skipFeats if skipFeats is not None else []
+        if skipFeats is None:
+            self.skipFeats = []
+        else:
+            self.skipFeats = skipFeats
         self._bins = None
         self.sigKlass = None
 
