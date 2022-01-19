@@ -265,7 +265,7 @@ std::vector<Point2D> handdrawnLine(Point2D cds1, Point2D cds2, double scale,
                                    bool shiftBegin, bool shiftEnd,
                                    unsigned nSteps, double deviation,
                                    double endShift) {
-  // std::cerr << "   " << scale << " " << endShift / scale << endl;
+  // std::cout << "   " << scale << " " << endShift / scale << std::endl;
   while (endShift / scale > 0.02) {
     endShift *= 0.75;
   }

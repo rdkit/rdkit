@@ -198,13 +198,13 @@ void DrawMol::extractAtomCoords() {
 void DrawMol::extractAtomSymbols() {
   atomicNums_.clear();
   for (auto at1 : drawMol_->atoms()) {
-    std::pair<std::string, OrientType> atSym = getAtomSymbolAndOrientation(*at1);
-    atomSyms_.emplace_back(atSym);
     if (!isComplexQuery(at1)) {
       atomicNums_.emplace_back(at1->getAtomicNum());
     } else {
       atomicNums_.push_back(0);
     }
+    std::pair<std::string, OrientType> atSym = getAtomSymbolAndOrientation(*at1);
+    atomSyms_.emplace_back(atSym);
     if (!atSym.first.empty()) {
       DrawColour atCol = getColour(at1->getIdx(), drawOptions_, atomicNums_,
                                    &highlightAtoms_, &highlightAtomMap_);
@@ -377,6 +377,9 @@ void DrawMol::extractBondNotes() {
 
 // ****************************************************************************
 void DrawMol::extractRadicals() {
+  if (!drawOptions_.includeRadicals) {
+    return;
+  }
   for (auto atom : drawMol_->atoms()) {
     if (!atom->getNumRadicalElectrons()) {
       continue;
@@ -535,7 +538,7 @@ void DrawMol::extractBrackets() {
     return;
   }
   // details of this transformation are in extractAtomCoords
-  double rot = -drawOptions_.rotate * M_PI / 180.0;
+  double rot = drawOptions_.rotate * M_PI / 180.0;
   RDGeom::Transform2D trans;
   trans.SetTransform(Point2D(0.0, 0.0), rot);
   for (auto &sg : sgs) {
@@ -767,8 +770,10 @@ void DrawMol::calculateScale() {
   // and xRange_.  If both are negative, use drawOptions_scalingFactor.
   float newScale = 1.0;
   if (width_ < 0 && height_ < 0) {
-    width_ = drawOptions_.scalingFactor * xRange_;
-    drawHeight_ = drawOptions_.scalingFactor * yRange_;
+    width_ =
+        drawOptions_.scalingFactor * xRange_ * (1 + 2 * drawOptions_.padding);
+    drawHeight_ =
+        drawOptions_.scalingFactor * yRange_ * (1 + 2 * drawOptions_.padding);
   } else if(width_ < 0 && yRange_ > 1.0e-4) {
     newScale = double(height_) / yRange_;
     // if the molecule is very wide and short (e.g. HO-NH2) don't let the
@@ -908,7 +913,9 @@ void DrawMol::draw(MolDraw2D &drawer) const {
       annot->draw(drawer);
     }
   }
-  drawRadicals(drawer);
+  if (drawOptions_.includeRadicals) {
+    drawRadicals(drawer);
+  }
   for(auto &ps : postShapes_) {
     ps->draw(drawer);
   }
@@ -2260,7 +2267,8 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
 Point2D DrawMol::getDrawCoords(const Point2D &atCds, const Point2D &trans,
                                const Point2D &scaleFactor,
                                const Point2D &toCentre) const {
-  Point2D drawCoords{atCds};
+  // we always invert y
+  Point2D drawCoords{atCds.x, -atCds.y};
   drawCoords += trans;
   drawCoords.x *= scaleFactor.x;
   drawCoords.y *= scaleFactor.y;
@@ -2270,7 +2278,8 @@ Point2D DrawMol::getDrawCoords(const Point2D &atCds, const Point2D &trans,
 
 // ****************************************************************************
 Point2D DrawMol::getDrawCoords(const Point2D &atCds) const {
-  Point2D drawCoords{atCds};
+  // we always invert y
+  Point2D drawCoords{atCds.x, -atCds.y};
   Point2D trans, scale, toCentre;
   getDrawTransformers(trans, scale, toCentre);
   drawCoords += trans;
@@ -2289,7 +2298,8 @@ Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
   atCds.x /= scale.x;
   atCds.y /= scale.y;
   atCds -= trans;
-  return atCds;
+  // we always invert y
+  return Point2D{atCds.x, -atCds.y};
 }
 
 // ****************************************************************************

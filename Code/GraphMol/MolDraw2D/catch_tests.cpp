@@ -1153,7 +1153,7 @@ TEST_CASE("includeRadicals", "[options]") {
       outs << text;
       outs.close();
       check_file_hash("testIncludeRadicals_1a.svg");
-      CHECK(text.find("<path d='M") != std::string::npos);
+      CHECK(text.find("<path class='atom-0' d='M") != std::string::npos);
     }
     {
       MolDraw2DSVG drawer(250, 200, panelWidth, panelHeight, noFreeType);
@@ -1165,7 +1165,7 @@ TEST_CASE("includeRadicals", "[options]") {
       outs << text;
       outs.close();
       check_file_hash("testIncludeRadicals_1b.svg");
-      CHECK(text.find("<path d='M") == std::string::npos);
+      CHECK(text.find("<path class='atom-0' d='M") == std::string::npos);
     }
   }
 }
@@ -4099,6 +4099,7 @@ M  END)CTAB"_ctab;
     {
       MolDraw2DSVG drawer(400, 350);
       drawer.drawOptions().noAtomLabels = true;
+      drawer.drawOptions().addAtomIndices = true;
       drawer.drawMolecule(*mol, "drawArc");
       drawer.setFillPolys(false);
       drawer.setColour({1, 0, 0});
@@ -4157,7 +4158,8 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
   SECTION("basics") {
     auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);
-
+    // These look a bit pants with NO_FREETYPE=true, but much better with
+    // Freetype.
     {
       // default legend
       MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);

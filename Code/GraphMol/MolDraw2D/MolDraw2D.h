@@ -439,29 +439,32 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const ChemicalReaction &rxn, bool highlightByReactant,
       const std::vector<DrawColour> *highlightColorsReactants,
       const std::vector<int> *confIds,
-      std::vector<std::unique_ptr<DrawMol>> &reagents,
-      std::vector<std::unique_ptr<DrawMol>> &products,
-      std::vector<std::unique_ptr<DrawMol>> &agents, int &plusWidth);
+      std::vector<std::shared_ptr<DrawMol>> &reagents,
+      std::vector<std::shared_ptr<DrawMol>> &products,
+      std::vector<std::shared_ptr<DrawMol>> &agents, int &plusWidth);
   // take the given components from the reaction (bits will be either
   // reagents, products or agents) and return the corresponding DrawMols.
   void makeReactionComponents(std::vector<RDKit::ROMOL_SPTR> const &bits,
                               const std::vector<int> *confIds, int heightToUse,
                               std::map<int, DrawColour> &atomColours,
-                              std::vector<std::unique_ptr<DrawMol>> &dms,
-                              double &minScale, double &minFontScale) const;
+                              std::vector<std::shared_ptr<DrawMol>> &dms,
+                              double &minScale, double &minFontScale);
   void makeReactionDrawMol(RWMol &mol, int confId, int molHeight,
                            const std::vector<int> &highlightAtoms,
                            const std::vector<int> &highlightBonds,
                            const std::map<int, DrawColour> &highlightAtomMap,
                            const std::map<int, DrawColour> &highlightBondMap,
-                           std::vector<std::unique_ptr<DrawMol>> &mols) const;
-  void calcReactionOffsets(std::vector<std::unique_ptr<DrawMol>> &reagents,
-                           std::vector<std::unique_ptr<DrawMol>> &products,
-                           std::vector<std::unique_ptr<DrawMol>> &agents,
+                           std::vector<std::shared_ptr<DrawMol>> &mols);
+  // Strictly speaking, this isn't actually a const function, although the
+  // compiler can't spot it, because the scales of reagents etc may be changed,
+  // and they are also in drawMols_.
+  void calcReactionOffsets(std::vector<std::shared_ptr<DrawMol>> &reagents,
+                           std::vector<std::shared_ptr<DrawMol>> &products,
+                           std::vector<std::shared_ptr<DrawMol>> &agents,
                            int &plusWidth, std::vector<Point2D> &offsets,
-                           Point2D &arrowBeg, Point2D &arrowEnd) const;
+                           Point2D &arrowBeg, Point2D &arrowEnd);
   // returns the final offset. plusWidth of 0 means no pluses to be drawn.
-  int drawReactionPart(std::vector<std::unique_ptr<DrawMol>> &reactBit,
+  int drawReactionPart(std::vector<std::shared_ptr<DrawMol>> &reactBit,
                        int plusWidth, int initOffset,
                        const std::vector<Point2D> &offsets);
   // returns a map of colours indexed by the atomMapNum. Each reagent gives
@@ -485,7 +488,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   int activeAtmIdx1_;
   int activeAtmIdx2_;
   int activeBndIdx_;
-  std::vector<std::unique_ptr<DrawMol>> drawMols_;
+  // these are shared_ptr rather than unique_ptr because the reactions
+  // keep their own copy.
+  std::vector<std::shared_ptr<DrawMol>> drawMols_;
 
   DrawColour curr_colour_;
   DashPattern curr_dash_;

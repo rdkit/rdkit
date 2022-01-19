@@ -281,10 +281,11 @@ void MolDraw2D::drawMoleculeWithHighlights(
     const map<int, double> &highlight_radii,
     const map<int, int> &highlight_linewidth_multipliers, int confId) {
   setupTextDrawer();
-  drawMols_.emplace_back(std::unique_ptr<DrawMol>(new DrawMolMCH(
-      mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
-      highlight_atom_map, highlight_bond_map,
-      highlight_radii, highlight_linewidth_multipliers, confId)));
+  DrawMol *dm =
+      new DrawMolMCH(mol, legend, panelWidth(), panelHeight(), drawOptions(),
+                     *text_drawer_, highlight_atom_map, highlight_bond_map,
+                     highlight_radii, highlight_linewidth_multipliers, confId);
+  drawMols_.emplace_back(dm);
   drawMols_.back()->createDrawObjects();
   fixVariableDimensions(*drawMols_.back());
   ++activeMolIdx_;
@@ -484,9 +485,9 @@ void MolDraw2D::drawReaction(
     const std::vector<int> *confIds) {
   double spacing = 1.0;
 
-  std::vector<std::unique_ptr<DrawMol>> reagents;
-  std::vector<std::unique_ptr<DrawMol>> products;
-  std::vector<std::unique_ptr<DrawMol>> agents;
+  std::vector<std::shared_ptr<DrawMol>> reagents;
+  std::vector<std::shared_ptr<DrawMol>> products;
+  std::vector<std::shared_ptr<DrawMol>> agents;
 
   // I think a larger minimum font size than the default works better for this
   int mfs = drawOptions().minFontSize > 12 ? drawOptions().minFontSize : 12;
@@ -494,6 +495,12 @@ void MolDraw2D::drawReaction(
   int plusWidth;
   getReactionDrawMols(rxn, highlightByReactant, highlightColorsReactants,
                       confIds, reagents, products, agents, plusWidth);
+
+  if (height_ == -1) {
+    for (auto &dm : drawMols_) {
+      height_ = std::max(height_, dm->height_);
+    }
+  }
   std::vector<Point2D> offsets;
   Point2D arrowBeg, arrowEnd;
   calcReactionOffsets(reagents, products, agents, plusWidth, offsets,
@@ -506,6 +513,9 @@ void MolDraw2D::drawReaction(
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
 
+  if (drawOptions().includeMetadata) {
+    this->updateMetadata(rxn);
+  }
 #if 0
   ChemicalReaction nrxn(rxn);
   double spacing = 1.0;
@@ -872,7 +882,7 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   bool setFontScale = false;
   if (mol) {
     setupTextDrawer();
-    std::unique_ptr<DrawMol> drawMol(new DrawMol(
+    std::shared_ptr<DrawMol> drawMol(new DrawMol(
         *mol, "", panelWidth(), panelHeight(), drawOptions(), *text_drawer_));
     drawMol->createDrawObjects();
     x_min = min(minv.x, drawMol->xMin_);
@@ -1166,21 +1176,24 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
                          const DrawColour &col1, const DrawColour &col2,
                          bool rawCoords) {
   if (drawOptions().comicMode) {
+    // if rawCoords, we need a much bigger deviation.
+    double dev = rawCoords ? 0.5 : 0.03;
+    double scl = rawCoords ? 1.0 : scale_;
     setFillPolys(false);
     if (col1 == col2) {
       setColour(col1);
       auto pts =
-          MolDraw2D_detail::handdrawnLine(cds1, cds2, scale_, true, true);
+          MolDraw2D_detail::handdrawnLine(cds1, cds2, scl, true, true, 4, dev);
       drawPolygon(pts, rawCoords);
     } else {
       Point2D mid = (cds1 + cds2) * 0.5;
       setColour(col1);
       auto pts =
-          MolDraw2D_detail::handdrawnLine(cds1, mid, scale_, true, false);
+          MolDraw2D_detail::handdrawnLine(cds1, mid, scl, true, false, 4, dev);
       drawPolygon(pts);
       setColour(col2);
       auto pts2 =
-          MolDraw2D_detail::handdrawnLine(mid, cds2, scale_, false, true);
+          MolDraw2D_detail::handdrawnLine(mid, cds2, scl, false, true, 4, dev);
       drawPolygon(pts2, rawCoords);
     }
   } else {
@@ -1204,7 +1217,10 @@ void MolDraw2D::drawTriangle(const Point2D &cds1, const Point2D &cds2,
   if (!drawOptions().comicMode) {
     pts = {cds1, cds2, cds3};
   } else {
-    auto lpts = MolDraw2D_detail::handdrawnLine(cds1, cds2, scale_);
+    double dev = rawCoords ? 0.5 : 0.03;
+    double scl = rawCoords ? 1.0 : scale_;
+    auto lpts =
+        MolDraw2D_detail::handdrawnLine(cds1, cds2, scl, false, false, 4, dev);
     std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
     lpts = MolDraw2D_detail::handdrawnLine(cds2, cds3, scale_);
     std::move(lpts.begin(), lpts.end(), std::back_inserter(pts));
@@ -1422,9 +1438,9 @@ void MolDraw2D::getReactionDrawMols(
     const ChemicalReaction &rxn, bool highlightByReactant,
     const std::vector<DrawColour> *highlightColorsReactants,
     const std::vector<int> *confIds,
-    std::vector<std::unique_ptr<DrawMol>> &reagents,
-    std::vector<std::unique_ptr<DrawMol>> &products,
-    std::vector<std::unique_ptr<DrawMol>> &agents, int &plusWidth) {
+    std::vector<std::shared_ptr<DrawMol>> &reagents,
+    std::vector<std::shared_ptr<DrawMol>> &products,
+    std::vector<std::shared_ptr<DrawMol>> &agents, int &plusWidth) {
   ChemicalReaction nrxn(rxn);
 
   const double agentFrac = 0.4;
@@ -1464,7 +1480,7 @@ void MolDraw2D::getReactionDrawMols(
 void MolDraw2D::makeReactionComponents(
     const std::vector<RDKit::ROMOL_SPTR> &bits, const std::vector<int> *confIds,
     int heightToUse, std::map<int, DrawColour> &atomColours,
-    std::vector<std::unique_ptr<DrawMol>> &dms, double &minScale, double &minFontScale) const {
+    std::vector<std::shared_ptr<DrawMol>> &dms, double &minScale, double &minFontScale) {
   for (auto midx = 0; midx < bits.size(); ++midx) {
 
     std::vector<int> highlightAtoms, highlightBonds;
@@ -1512,7 +1528,7 @@ void MolDraw2D::makeReactionDrawMol(
     const std::vector<int> &highlightBonds,
     const std::map<int, DrawColour> &highlightAtomMap,
     const std::map<int, DrawColour> &highlightBondMap,
-    std::vector<std::unique_ptr<DrawMol>> &mols) const {
+    std::vector<std::shared_ptr<DrawMol>> &mols) {
   if (drawOptions().prepareMolsBeforeDrawing) {
     mol.updatePropertyCache(false);
     try {
@@ -1542,24 +1558,27 @@ void MolDraw2D::makeReactionDrawMol(
                                 &highlightAtomMap, &highlightBondMap, nullptr,
                                 nullptr, supportsAnnotations(), confId, true));
   mols.back()->createDrawObjects();
+  drawMols_.emplace_back(mols.back());
+  ++activeMolIdx_;
 }
 
 // ****************************************************************************
 void MolDraw2D::calcReactionOffsets(
-    std::vector<std::unique_ptr<DrawMol>> &reagents,
-    std::vector<std::unique_ptr<DrawMol>> &products,
-    std::vector<std::unique_ptr<DrawMol>> &agents, int &plusWidth,
+    std::vector<std::shared_ptr<DrawMol>> &reagents,
+    std::vector<std::shared_ptr<DrawMol>> &products,
+    std::vector<std::shared_ptr<DrawMol>> &agents, int &plusWidth,
     std::vector<Point2D> &offsets,
-    Point2D &arrowBeg, Point2D &arrowEnd) const {
+    Point2D &arrowBeg, Point2D &arrowEnd) {
   // calculate the total width of the drawing - it may need re-scaling if
   // it's too wide for the panel.
+  const int arrowMult = 3; // number of plusWidths for an empty arrow.
   auto reactionWidth = [&](int gapWidth) -> int {
     int totWidth = 0;
     for (auto &dm : reagents) {
       totWidth += dm->width_ + gapWidth;
     }
     if (agents.empty()) {
-      totWidth += 4 * gapWidth;
+      totWidth += arrowMult * gapWidth;
     } else {
       // the agent doesn't start at front of arrow
       totWidth += gapWidth;
@@ -1578,7 +1597,7 @@ void MolDraw2D::calcReactionOffsets(
     return totWidth;
   };
 
-  auto scaleDrawMols = [&](std::vector<std::unique_ptr<DrawMol>> &dms,
+  auto scaleDrawMols = [&](std::vector<std::shared_ptr<DrawMol>> &dms,
                            double stretch) {
     for (auto &dm : dms) {
       dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(),
@@ -1586,6 +1605,11 @@ void MolDraw2D::calcReactionOffsets(
       dm->shrinkToFit();
     }
   };
+
+  if (width_ == -1) {
+    width_ = reactionWidth(plusWidth);
+  }
+
   // The DrawMols are sized/scaled according to the height() which is all
   // there is to go on initially, so they may be wider than the width() in
   // total. If so, shrink them to fit.  Because the shrinkng imposes min and max
@@ -1613,7 +1637,7 @@ void MolDraw2D::calcReactionOffsets(
   // Now work out a new plusWidth, based on the new widths of DrawMols,
   // if that has changed.
   int numGaps = reagents.size();
-  numGaps += agents.empty() ? 6 : 2 + agents.size();
+  numGaps += agents.empty() ? 2 + arrowMult : 2 + agents.size();
   numGaps = products.empty() ? numGaps : numGaps + products.size() - 1;
   int thinWidth = reactionWidth(0);
   plusWidth = (width() - thinWidth) / numGaps;
@@ -1650,7 +1674,7 @@ void MolDraw2D::calcReactionOffsets(
 }
 
 // ****************************************************************************
-int MolDraw2D::drawReactionPart(std::vector<std::unique_ptr<DrawMol>> &reactBit,
+int MolDraw2D::drawReactionPart(std::vector<std::shared_ptr<DrawMol>> &reactBit,
                                 int plusWidth, int initOffset,
                                 const std::vector<Point2D> &offsets) {
   if (reactBit.empty()) {
@@ -2011,7 +2035,9 @@ void MolDraw2D::drawTheMolecule(DrawMol &drawMol) {
     drawMol.setScale(scale_, fontScale_);
   }
   drawMol.draw(*this);
-
+  if (drawOptions().includeMetadata) {
+    this->updateMetadata(*drawMol.drawMol_, drawMol.confId_);
+  }
 }
 
 // ****************************************************************************
