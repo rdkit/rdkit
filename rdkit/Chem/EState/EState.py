@@ -44,7 +44,7 @@ def EStateIndices(mol, force=True):
 
   tbl = Chem.GetPeriodicTable()
   nAtoms = mol.GetNumAtoms()
-  Is = [0.0] * nAtoms
+  Is = numpy.zeros(nAtoms, dtype=numpy.float64)
   for i in range(nAtoms):
     at = mol.GetAtomWithIdx(i)
     d = at.GetDegree()
@@ -55,7 +55,7 @@ def EStateIndices(mol, force=True):
       Is[i] = (4. / (N * N) * dv + 1) / d
   dists = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0) + 1
   
-  accum = [0.0] * nAtoms
+  accum = numpy.zeros(nAtoms, dtype=numpy.float64)
   for i in range(nAtoms):
     for j in range(i + 1, nAtoms):
       p = dists[i, j]
@@ -63,7 +63,8 @@ def EStateIndices(mol, force=True):
         tmp = (Is[i] - Is[j]) / (p * p)
         accum[i] += tmp
         accum[j] -= tmp
-  res = numpy.add(accum, Is, dtype='float')
+  
+  res = accum + Is
   mol._eStateIndices = res
   return res
 
@@ -86,14 +87,14 @@ MinEStateIndex.version = "1.0.0"
 
 
 def MaxAbsEStateIndex(mol, force=1):
-  return max([abs(x) for x in EStateIndices(mol, force)])
+  return max(abs(x) for x in EStateIndices(mol, force))
 
 
 MaxAbsEStateIndex.version = "1.0.0"
 
 
 def MinAbsEStateIndex(mol, force=1):
-  return min([abs(x) for x in EStateIndices(mol, force)])
+  return min(abs(x) for x in EStateIndices(mol, force))
 
 
 MinAbsEStateIndex.version = "1.0.0"
