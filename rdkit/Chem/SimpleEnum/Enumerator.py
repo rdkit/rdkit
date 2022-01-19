@@ -33,10 +33,8 @@
 
 import os
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem import AllChem
-from rdkit.Chem import rdChemReactions
+from rdkit import Chem, RDConfig
+from rdkit.Chem import AllChem, rdChemReactions
 
 
 def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'):
@@ -200,12 +198,16 @@ def EnumerateReaction(
 
 
   """
-  nWarn, nError, nReacts, nProds, reactantLabels = PreprocessReaction(reaction)
+  _, nError, nReacts, _, _ = PreprocessReaction(reaction)
   if nError:
     raise ValueError('bad reaction')
   if len(bbLists) != nReacts:
     raise ValueError('%d reactants in reaction, %d bb lists supplied' % (nReacts, len(bbLists)))
 
+  ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
+  if not uniqueProductsOnly:
+    return ps
+  
   def _uniqueOnly(lst):
     seen = []
     for entry in lst:
@@ -214,12 +216,8 @@ def EnumerateReaction(
         if smi not in seen:
           seen.append(smi)
           yield entry
-
-  ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
-  if not uniqueProductsOnly:
-    return ps
-  else:
-    return _uniqueOnly(ps)
+  
+  return _uniqueOnly(ps)
 
 
 # ------------------------------------
@@ -227,8 +225,8 @@ def EnumerateReaction(
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 
