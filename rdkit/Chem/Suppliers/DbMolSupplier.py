@@ -125,16 +125,14 @@ class ForwardDbMolSupplier(DbMolSupplier):
       NOTE: this has side effects
 
     """
+    # Refer to rdkit.Chem.Fingerprints.DbFpSupplier.ForwardDbFpSupplier.NextItem() if needed
     try:
       d = self._dataIter.next()
+      if d is not None:
+        return self._BuildMol(d)
     except StopIteration:
-      d = None
-    if d is not None:
-      newM = self._BuildMol(d)
-    else:
-      newM = None
-
-    return newM
+      return None
+    return None
 
 
 class RandomAccessDbMolSupplier(DbMolSupplier):
