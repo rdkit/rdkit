@@ -46,6 +46,12 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
       : ROMol(other, quickCopy, confId) {}
   RWMol(const RWMol &other) : ROMol(other) {}
   RWMol &operator=(const RWMol &);
+  RWMol(RWMol &&other) noexcept : ROMol(std::move(other)) {}
+  RWMol &operator=(RWMol &&other) noexcept { 
+    ROMol::operator=(std::move(other)); 
+    return *this;
+  }
+
 
   //! insert the atoms and bonds from \c other into this molecule
   void insertMol(const ROMol &other);

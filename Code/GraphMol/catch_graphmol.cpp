@@ -2493,51 +2493,120 @@ TEST_CASE(
   }
 }
 
+namespace {
+void check_dest(RWMol *m1, const ROMol &m2) {
+  CHECK(m2.getNumAtoms() == 8);
+  CHECK(m2.getNumBonds() == 7);
+  for (const auto atom : m2.atoms()) {
+    CHECK(&atom->getOwningMol() == &m2);
+    CHECK(&atom->getOwningMol() != m1);
+  }
+  for (const auto bond : m2.bonds()) {
+    CHECK(&bond->getOwningMol() == &m2);
+    CHECK(&bond->getOwningMol() != m1);
+  }
+  CHECK(m2.getStereoGroups().size() == 2);
+  CHECK(m2.getStereoGroups()[0].getAtoms().size() == 2);
+  CHECK(m2.getStereoGroups()[0].getAtoms()[0]->getIdx() == 1);
+  CHECK(m2.getStereoGroups()[0].getAtoms()[1]->getIdx() == 5);
+  CHECK(m2.getStereoGroups()[1].getAtoms().size() == 1);
+  CHECK(m2.getStereoGroups()[1].getAtoms()[0]->getIdx() == 3);
+
+  const auto &sgs = getSubstanceGroups(m2);
+  CHECK(sgs.size() == 1);
+  CHECK(sgs[0].getAtoms().size() == 1);
+  CHECK(sgs[0].getAtoms()[0] == 4);
+
+  // check the state of m1:
+  CHECK(m1->getNumAtoms() == 0);
+  CHECK(m1->getNumBonds() == 0);
+  CHECK(m1->getPropList().empty());
+  CHECK(m1->getDict().getData().empty());
+  CHECK(m1->getStereoGroups().empty());
+  CHECK(getSubstanceGroups(*m1).empty());
+  CHECK(m1->getRingInfo() == nullptr);
+
+  // make sure we can still do something with m1:
+  *m1 = m2;
+  CHECK(!m1->getDict().getData().empty());
+  CHECK(m1->getNumAtoms() == 8);
+  CHECK(m1->getNumBonds() == 7);
+  CHECK(m1->getRingInfo() != nullptr);
+  CHECK(m1->getRingInfo()->isInitialized() ==
+        m2.getRingInfo()->isInitialized());
+}
+}  // namespace
 TEST_CASE("moves") {
   auto m1 =
       "C[C@H](O)C(F)[C@H](C)O |o2:1,5,&1:3,r,@:3,SgD:4:atom_data:foo::::|"_smiles;
   REQUIRE(m1);
   m1->setProp("foo", 1u);
-  auto check_dest = [](auto *m1, auto &m2) {
-    CHECK(m2.getNumAtoms() == 8);
-    CHECK(m2.getNumBonds() == 7);
-    for (const auto atom : m2.atoms()) {
-      CHECK(&atom->getOwningMol() == &m2);
-      CHECK(&atom->getOwningMol() != m1);
-    }
-    for (const auto bond : m2.bonds()) {
-      CHECK(&bond->getOwningMol() == &m2);
-      CHECK(&bond->getOwningMol() != m1);
-    }
-    CHECK(m2.getStereoGroups().size() == 2);
-    CHECK(m2.getStereoGroups()[0].getAtoms().size() == 2);
-    CHECK(m2.getStereoGroups()[0].getAtoms()[0]->getIdx() == 1);
-    CHECK(m2.getStereoGroups()[0].getAtoms()[1]->getIdx() == 5);
-    CHECK(m2.getStereoGroups()[1].getAtoms().size() == 1);
-    CHECK(m2.getStereoGroups()[1].getAtoms()[0]->getIdx() == 3);
+  SECTION("molecule move") {
+    ROMol m2 = std::move(*m1);
+    check_dest(m1.get(), m2);
+  }
+  SECTION("molecule move-assign") {
+    ROMol m2;
+    m2 = std::move(*m1);
+    check_dest(m1.get(), m2);
+  }
+}
 
-    const auto &sgs = getSubstanceGroups(m2);
-    CHECK(sgs.size() == 1);
-    CHECK(sgs[0].getAtoms().size() == 1);
-    CHECK(sgs[0].getAtoms()[0] == 4);
+TEST_CASE("query moves") {
+  auto m1 =
+      "C[C@H](O)C(F)[C@H](C)O |o2:1,5,&1:3,r,@:3,SgD:4:atom_data:foo::::|"_smarts;
+  REQUIRE(m1);
+  m1->setProp("foo", 1u);
+  SECTION("molecule move") {
+    ROMol m2 = std::move(*m1);
+    check_dest(m1.get(), m2);
+  }
+  SECTION("molecule move-assign") {
+    ROMol m2;
+    m2 = std::move(*m1);
+    check_dest(m1.get(), m2);
+  }
+}
 
-    // check the state of m1:
-    CHECK(m1->getNumAtoms() == 0);
-    CHECK(m1->getNumBonds() == 0);
-    CHECK(m1->getPropList().empty());
-    CHECK(m1->getDict().getData().empty());
-    CHECK(m1->getStereoGroups().empty());
-    CHECK(getSubstanceGroups(*m1).empty());
-    CHECK(m1->getRingInfo() == nullptr);
+TEST_CASE("moves with conformer") {
+  auto m1 = R"CTAB(
+  Mrv2108 01192209042D          
 
-    // make sure we can still do something with m1:
-    *m1 = m2;
-    CHECK(!m1->getDict().getData().empty());
-    CHECK(m1->getNumAtoms() == 8);
-    CHECK(m1->getNumBonds() == 7);
-    CHECK(m1->getRingInfo() != nullptr);
-    CHECK(m1->getRingInfo()->isInitialized());
-  };
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.31 4.001 0 0
+M  V30 2 C 1.54 2.6674 0 0 CFG=2
+M  V30 3 O -0 2.6674 0 0
+M  V30 4 C 2.31 1.3337 0 0 CFG=1
+M  V30 5 F 3.85 1.3337 0 0
+M  V30 6 C 1.54 0 0 0 CFG=2
+M  V30 7 C 2.31 -1.3337 0 0
+M  V30 8 O 0 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=1
+M  V30 3 1 4 2
+M  V30 4 1 4 5 CFG=1
+M  V30 5 1 4 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8 CFG=3
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 5) FIELDNAME=atom_data -
+M  V30 FIELDDISP="    4.6200    0.5637    DA    ALL  0       0" FIELDDATA=foo
+M  V30 END SGROUP
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEREL2 ATOMS=(2 2 6)
+M  V30 MDLV30/STERAC1 ATOMS=(1 4)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m1);
+  m1->setProp("foo", 1u);
   SECTION("molecule move") {
     ROMol m2 = std::move(*m1);
     check_dest(m1.get(), m2);

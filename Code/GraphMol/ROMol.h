@@ -340,6 +340,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     for (auto bond : bonds()) {
       bond->setOwningMol(this);
     }
+    for (auto conf : d_confs) {
+      conf->setOwningMol(this);
+    }
     o.d_graph.clear();
     o.dp_ringInfo = nullptr;
     o.numBonds = 0;
@@ -369,6 +372,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     for (auto bond : bonds()) {
       bond->setOwningMol(this);
     }
+    for (auto conf : d_confs) {
+      conf->setOwningMol(this);
+    }
+
     o.d_graph.clear();
     o.dp_ringInfo = nullptr;
     o.numBonds = 0;
