@@ -12,7 +12,6 @@
 
 """
 import copy
-
 import numpy
 
 from rdkit.Chem.Pharm2D import Utils
@@ -40,10 +39,7 @@ class SigFactory(object):
         self.shortestPathsOnly = shortestPathsOnly
         self.includeBondOrder = includeBondOrder
         self.trianglePruneBins = trianglePruneBins
-        if skipFeats is None:
-            self.skipFeats = []
-        else:
-            self.skipFeats = skipFeats
+        self.skipFeats = skipFeats if skipFeats is not None else []
         self._bins = None
         self.sigKlass = None
 
@@ -65,12 +61,11 @@ class SigFactory(object):
         nPts, combo, scaffold = self.GetBitInfo(bitIdx)
         fams = self.GetFeatFamilies()
         labels = [fams[x] for x in combo]
-        dMat = numpy.zeros((nPts, nPts), numpy.int)
+        dMat = numpy.zeros((nPts, nPts), dtype='int')
         dVect = Utils.nPointDistDict[nPts]
         for idx in range(len(dVect)):
             i, j = dVect[idx]
-            dMat[i, j] = scaffold[idx]
-            dMat[j, i] = scaffold[idx]
+            dMat[i, j], dMat[j, i] = scaffold[idx], scaffold[idx]
 
         return nPts, combo, scaffold, labels, dMat
 
@@ -106,7 +101,7 @@ class SigFactory(object):
           a string
 
         """
-        nPts, combo, scaffold, labels, dMat = self._GetBitSummaryData(bitIdx)
+        _, _, _, labels, dMat = self._GetBitSummaryData(bitIdx)
         res = " ".join(labels) + " "
         for row in dMat:
             res += "|" + " ".join([str(x) for x in row])
@@ -325,9 +320,8 @@ class SigFactory(object):
             nDistsHere = len(Utils.nPointDistDict[i])
             scaffoldsHere = Utils.GetPossibleScaffolds(i, self._bins,
                                                        useTriangleInequality=self.trianglePruneBins)
-            nBitsHere = len(scaffoldsHere)
             self._scaffolds[nDistsHere] = scaffoldsHere
-            pointsHere = Utils.NumCombinations(self._nFeats, i) * nBitsHere
+            pointsHere = Utils.NumCombinations(self._nFeats, i) * len(scaffoldsHere) # ... * nBitsHere
             accum += pointsHere
         self._sigSize = accum
         if not self.useCounts:

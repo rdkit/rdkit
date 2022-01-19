@@ -33,7 +33,6 @@
 
 """
 
-
 from rdkit.Chem.Pharm2D import Utils, SigFactory
 from rdkit.RDLogger import logger
 
@@ -55,8 +54,7 @@ def _ShortestPathsMatch(match, featureSet, sig, dMat, sigFactory):
   bins = sigFactory.GetBins()
   minD, maxD = bins[0][0], bins[-1][1]
 
-  for i in range(nDists):
-    pt0, pt1 = distsToCheck[i]
+  for i, (pt0, pt1) in enumerate(distsToCheck):
     minSeen = maxD
     for idx1 in match[pt0]:
       for idx2 in match[pt1]:
@@ -75,7 +73,7 @@ def _ShortestPathsMatch(match, featureSet, sig, dMat, sigFactory):
     print('\t', dist, minD, maxD, idx)
 
   if sigFactory.useCounts:
-    sig[idx] = sig[idx] + 1
+    sig[idx] += 1
   else:
     sig.SetBit(idx)
   return idx
@@ -121,10 +119,10 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     dMat = Chem.GetDistanceMatrix(mol, useBO)
 
   # generate the permutations, if required
-  if perms is None:
+  if perms is None: 
     perms = []
     for count in range(minCount, maxCount + 1):
-      perms += Utils.GetIndexCombinations(nFeats, count)
+      perms.extend(Utils.GetIndexCombinations(nFeats, count))
 
   # generate the matches:
   featMatches = sigFactory.GetMolFeats(mol)
@@ -135,12 +133,9 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
   for perm in perms:
     # the permutation is a combination of feature indices
     #   defining the feature set for a proto-pharmacophore
-    featClasses = [0]
+    featClasses = [0] * len(perm)
     for i in range(1, len(perm)):
-      if perm[i] == perm[i - 1]:
-        featClasses.append(featClasses[-1])
-      else:
-        featClasses.append(featClasses[-1] + 1)
+      featClasses[i] = featClasses[i - 1] + int(perm[i] != perm[i - 1])
 
     # Get a set of matches at each index of
     #  the proto-pharmacophore.
@@ -152,8 +147,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     # Get all unique combinations of those possible matches:
     matchesToMap = Utils.GetUniqueCombinations(matchPerms, featClasses)
     for i, entry in enumerate(matchesToMap):
-      entry = [x[1] for x in entry]
-      matchesToMap[i] = entry
+      matchesToMap[i] = [x[1] for x in entry]
     if _verbose:
       print('    mtM:', matchesToMap)
 
