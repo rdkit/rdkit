@@ -51,12 +51,11 @@ Check if it results in more that one component
 keep correct if >60% query mol
 
 """
-from itertools import combinations
 import sys
+from itertools import combinations
 
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdqueries
-
 
 # our default rdkit fingerprinter parameters:
 rdkitFpParams = {'maxPath': 5, 'fpSize': 1024, 'nBitsPerHash': 2}
