@@ -135,7 +135,10 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     #   defining the feature set for a proto-pharmacophore
     featClasses = [0] * len(perm)
     for i in range(1, len(perm)):
-      featClasses[i] = featClasses[i - 1] + int(perm[i] != perm[i - 1])
+      if perm[i] == perm[i - 1]:
+        featClasses[i] = featClasses[i - 1]
+      else:
+        featClasses[i] = featClasses[i - 1] + 1
 
     # Get a set of matches at each index of
     #  the proto-pharmacophore.
