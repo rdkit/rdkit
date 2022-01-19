@@ -51,6 +51,7 @@ class MolPickler;
 class RWMol;
 class QueryAtom;
 class QueryBond;
+class RingInfo;
 
 template <class T1, class T2>
 class AtomIterator_;
