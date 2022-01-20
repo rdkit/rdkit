@@ -7,28 +7,52 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from collections import abc  # this won't work in python2, but we don't support that any more
 
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
-from rdkit.Chem import rdPartialCharges, rdMolDescriptors
+from collections import abc  # This won't work in python 2, but we don't support that any more
+from typing import Callable
+
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
-from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex,
-                                      MinAbsEStateIndex)
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
+from rdkit.Chem import rdPartialCharges
+from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex,
+                                      MinAbsEStateIndex, MinEStateIndex)
 from rdkit.Chem.QED import qed
 
 
-def _isCallable(thing):
-  return isinstance(thing, abc.Callable) or \
-              hasattr(thing, '__call__')
+def _isCallable(something):
+  return isinstance(something, (abc.Callable, Callable)) or hasattr(something, '__call__')
 
-
+def _belongToRDKit(something):
+  NAME = 'rdkit'
+  
+  try:
+    if something.__module__ == NAME:
+      return True
+    if NAME in something.__module__:
+      return True
+  except Exception:
+    pass
+  
+  try:
+    if something.__class__.__module__ == NAME:
+      return True
+    if NAME in something.__class__.__module__:
+      return True
+  except Exception:
+    pass
+  
+  return False
+  
 _descList = []
 
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
+  from rdkit.Chem import Descriptors3D  # Shortcut
+  from rdkit.Chem import (Crippen, Fragments, GraphDescriptors, Lipinski,
+                          MolSurf)
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
 
@@ -37,7 +61,7 @@ def _setupDescriptors(namespace):
   otherMods = [Chem]
 
   for nm, thing in tuple(namespace.items()):
-    if nm[0] != '_' and _isCallable(thing):
+    if nm[0] != '_' and _isCallable(thing) and _belongToRDKit(thing):
       _descList.append((nm, thing))
 
   others = []
@@ -46,7 +70,7 @@ def _setupDescriptors(namespace):
     for name in tmp:
       if name[0] != '_':
         thing = getattr(mod, name)
-        if _isCallable(thing):
+        if _isCallable(thing) and _belongToRDKit(thing):
           others.append(name)
 
   for mod in mods:
@@ -60,7 +84,7 @@ def _setupDescriptors(namespace):
         if name == 'print_function':
           continue
         thing = getattr(mod, name)
-        if _isCallable(thing):
+        if _isCallable(thing) and _belongToRDKit(thing):
           namespace[name] = thing
           _descList.append((name, thing))
   descList = _descList
@@ -149,9 +173,12 @@ NumRadicalElectrons.version = "1.1.0"
 
 
 def _ChargeDescriptors(mol, force=False):
+  """ Returns the charge descriptions of the molecule in a specific range: 2-value tuple
+  
+  """
   if not force and hasattr(mol, '_chargeDescriptors'):
     return mol._chargeDescriptors
-  chgs = rdPartialCharges.ComputeGasteigerCharges(mol)
+  rdPartialCharges.ComputeGasteigerCharges(mol)
   minChg = 500.
   maxChg = -500.
   for at in mol.GetAtoms():
@@ -164,16 +191,14 @@ def _ChargeDescriptors(mol, force=False):
 
 
 def MaxPartialCharge(mol, force=False):
-  _, res = _ChargeDescriptors(mol, force)
-  return res
+  return _ChargeDescriptors(mol, force)[1]
 
 
 MaxPartialCharge.version = "1.0.0"
 
 
 def MinPartialCharge(mol, force=False):
-  res, _ = _ChargeDescriptors(mol, force)
-  return res
+  return _ChargeDescriptors(mol, force)[0]
 
 
 MinPartialCharge.version = "1.0.0"
