@@ -82,6 +82,32 @@ DrawMol::DrawMol(const ROMol &mol, const std::string &legend,
 }
 
 // ****************************************************************************
+DrawMol::DrawMol(int width, int height, const MolDrawOptions &drawOptions,
+                 DrawText &textDrawer, double xmin, double xmax, double ymin,
+                 double ymax, double scale, double fontscale)
+    : drawOptions_(drawOptions),
+      textDrawer_(textDrawer),
+      isReactionMol_(false),
+      confId_(-1),
+      width_(width),
+      height_(height),
+      scale_(scale),
+      fontScale_(fontscale),
+      xMin_(xmin),
+      xMax_(xmax),
+      yMin_(ymin),
+      yMax_(ymax),
+      xRange_(xmax - xmin),
+      yRange_(ymax - ymin),
+      drawHeight_(height) {
+  textDrawer_.setFontScale(fontScale_, true);
+  // we reverse the y coords of everything, so do that here, too
+  yMin_ *= -1;
+  yMax_ *= -1;
+  std::swap(yMin_, yMax_);
+}
+
+// ****************************************************************************
 void DrawMol::createDrawObjects() {
   textDrawer_.setFontScale(fontScale_, true);
   partitionForLegend();
@@ -170,17 +196,12 @@ void DrawMol::extractAtomCoords() {
   // coord, it needs to be applied in a positive direction.
   double rot = drawOptions_.rotate * M_PI / 180.0;
   // assuming that if drawOptions_.rotate is set to 0.0, rot will be
-  // exactly 0.0 without worrying about floating point number dust.  Does
-  // anyone know if this is true?  It's not the end of the world if not,
-  // as it's just an extra largely pointless rotation.
-  // Floating point numbers are like piles of sand; every time you move
-  // them around, you lose a little sand and pick up a little dirt.
-  // — Brian Kernighan and P.J. Plauger
-  // Nothing brings fear to my heart more than a floating point number.
-  // — Gerald Jay Sussman
-  // Some developers, when encountering a problem, say: “I know, I’ll
-  // use floating-point numbers!”   Now, they have 1.9999999997 problems.
-  // — unknown
+  // exactly 0.0 without worrying about floating point number dust.
+  //
+  // NB - the y coord is inverted, so that the molecule coords and the
+  // draw coords always go down the page as y increases.  This is so
+  // we can have all the draw entities in molecule coords or draw coords
+  // and min and max y will be going in the same direction.
   RDGeom::Transform2D trans;
   trans.SetTransform(Point2D(0.0, 0.0), rot);
   atCds_.clear();
@@ -774,7 +795,7 @@ void DrawMol::calculateScale() {
         drawOptions_.scalingFactor * xRange_ * (1 + 2 * drawOptions_.padding);
     drawHeight_ =
         drawOptions_.scalingFactor * yRange_ * (1 + 2 * drawOptions_.padding);
-  } else if(width_ < 0 && yRange_ > 1.0e-4) {
+  } else if (width_ < 0 && yRange_ > 1.0e-4) {
     newScale = double(height_) / yRange_;
     // if the molecule is very wide and short (e.g. HO-NH2) don't let the
     // bonds get too long.
@@ -801,17 +822,9 @@ void DrawMol::calculateScale() {
     }
   }
 
-  // put a 5% buffer round the drawing and calculate a final scale
-  double xMin = xMin_ - drawOptions_.padding * xRange_;
-  double xMax = xMax_ + drawOptions_.padding * xRange_;
-  double xRange = xMax - xMin;
-  double yMin = yMin_ - drawOptions_.padding * yRange_;
-  double yMax = yMax_ + drawOptions_.padding * yRange_;
-  double yRange = yMax - yMin;
-
-  if (xRange > 1e-4 || yRange > 1e-4) {
-    newScale = std::min(double(width_) / xRange,
-                      double(drawHeight_) / yRange);
+  if (xRange_ > 1e-4 || yRange_ > 1e-4) {
+    newScale = std::min(double(width_) / xRange_,
+                      double(drawHeight_) / yRange_);
     double fix_scale = newScale;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
@@ -861,8 +874,14 @@ void DrawMol::findExtremes() {
     xMin_ = yMin_ = -1.0;
     xMax_ = yMax_ = 1.0;
   }
-  // calculate the x and y spans
+  // calculate the x and y spans with a 5% buffer
   xRange_ = xMax_ - xMin_;
+  xMin_ -= drawOptions_.padding * xRange_;
+  xMax_ += drawOptions_.padding * xRange_;
+  xRange_ = xMax_ - xMin_;
+  yRange_ = yMax_ - yMin_;
+  yMin_ -= drawOptions_.padding * yRange_;
+  yMax_ += drawOptions_.padding * yRange_;
   yRange_ = yMax_ - yMin_;
   if (xRange_ < 1e-4) {
     xRange_ = 2.0;
@@ -2290,6 +2309,12 @@ Point2D DrawMol::getDrawCoords(const Point2D &atCds) const {
 }
 
 // ****************************************************************************
+Point2D DrawMol::getDrawCoords(int atnum) const {
+  PRECONDITION(atnum >= 0 && atnum < atCds_.size(), "bad atom number");
+  return getDrawCoords(atCds_[atnum]);
+}
+
+// ****************************************************************************
 Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
   Point2D trans, scale, toCentre;
   getDrawTransformers(trans, scale, toCentre);
@@ -2300,6 +2325,12 @@ Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
   atCds -= trans;
   // we always invert y
   return Point2D{atCds.x, -atCds.y};
+}
+
+// ****************************************************************************
+Point2D DrawMol::getAtomCoords(int atnum) const {
+  PRECONDITION(atnum >= 0 && atnum < atCds_.size(), "bad atom number");
+  return atCds_[atnum];
 }
 
 // ****************************************************************************
@@ -2315,6 +2346,27 @@ void DrawMol::setScale(double newScale, double newFontScale,
   textDrawer_.setFontScale(newFontScale, ignoreFontLimits);
   scale_ = newScale;
   fontScale_ = textDrawer_.fontScale();
+  finishCreateDrawObjects();
+}
+
+// ****************************************************************************
+void DrawMol::setTransformation(const DrawMol &sourceMol) {
+  resetEverything();
+  double relFontScale = sourceMol.fontScale_ / sourceMol.scale_;
+  textDrawer_.setFontScale(relFontScale, true);
+  xMin_ = sourceMol.xMin_;
+  xMax_ = sourceMol.xMax_;
+  yMin_ = sourceMol.yMin_;
+  yMax_ = sourceMol.yMax_;
+  xRange_ = sourceMol.xRange_;
+  yRange_ = sourceMol.yRange_;
+  xOffset_ = sourceMol.xOffset_;
+  yOffset_ = sourceMol.yOffset_;
+
+  extractAll();
+  scale_ = sourceMol.scale_;
+  fontScale_ = sourceMol.fontScale_;
+  textDrawer_.setFontScale(fontScale_, true);
   finishCreateDrawObjects();
 }
 

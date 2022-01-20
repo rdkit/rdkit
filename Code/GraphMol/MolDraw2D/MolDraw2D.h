@@ -337,9 +337,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   Point2D offset() const { return Point2D(x_offset_, y_offset_); }
 
   //! returns the minimum point of the drawing (in molecular coords)
-  Point2D minPt() const { return Point2D(x_min_, y_min_); }
+  Point2D minPt() const;
   //! returns the width and height of the grid (in molecular coords)
-  Point2D range() const { return Point2D(x_range_, y_range_); }
+  Point2D range() const;
 
   //! font size in drawing coordinate units. That's probably pixels.
   virtual double fontSize() const;
@@ -426,6 +426,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
  protected:
   std::unique_ptr<DrawText> text_drawer_;
   std::string d_activeClass;
+  bool needs_init_ = true;
 
  private:
 
@@ -491,6 +492,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // these are shared_ptr rather than unique_ptr because the reactions
   // keep their own copy.
   std::vector<std::shared_ptr<DrawMol>> drawMols_;
+  // this is for when we want to set up a MolDraw2D to a given scale and be
+  // able to draw molecules and arbitrary lines, arcs etc. onto it all to the
+  // same drawing transformation.  If present, it will always be applied to
+  // any new drawMols_ before they are drawn.  A separate class might have
+  // been better, but this is convenient.
+  std::unique_ptr<DrawMol> globalDrawTrans_;
 
   DrawColour curr_colour_;
   DashPattern curr_dash_;
@@ -510,7 +517,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   Point2D bbox_[2];
   std::vector<std::vector<MolDrawShape>> pre_shapes_;
   std::vector<std::vector<MolDrawShape>> post_shapes_;
-  bool needs_init_ = true;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default

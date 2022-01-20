@@ -98,6 +98,28 @@ std::string DrawColourToSVG(const DrawColour &col) {
 }
 
 // ****************************************************************************
+MolDraw2DSVG::MolDraw2DSVG(int width, int height, std::ostream &os,
+                           int panelWidth, int panelHeight, bool noFreetype)
+    : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
+  if (width > 0 && height > 0) {
+    initDrawing();
+    needs_init_ = false;
+  }
+  initTextDrawer(noFreetype);
+}
+
+// ****************************************************************************
+MolDraw2DSVG::MolDraw2DSVG(int width, int height, int panelWidth,
+                           int panelHeight, bool noFreetype)
+    : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
+  if (width > 0 && height > 0) {
+    initDrawing();
+    needs_init_ = false;
+  }
+  initTextDrawer(noFreetype);
+}
+
+// ****************************************************************************
 void MolDraw2DSVG::initDrawing() {
   d_os << "<?xml version='1.0' encoding='iso-8859-1'?>\n";
   d_os << "<svg version='1.1' baseProfile='full'\n      \

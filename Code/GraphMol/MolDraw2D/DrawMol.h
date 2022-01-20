@@ -37,7 +37,10 @@ class DrawText;
 class DrawMol {
   friend class MolDraw2D;
 
-  // everything's private because we don't want anyone using it.
+ public:
+  virtual ~DrawMol() = default;
+
+  // everything's protected/private because we don't want anyone using it.
  protected:
   // Make the object, scaled to a given pixel size.
   /*!
@@ -72,6 +75,13 @@ class DrawMol {
           const std::map<int, double> *highlight_radii = nullptr,
           bool includeAnnotations = true, int confId = -1,
           bool isReactionMol = false);
+  // this one is for when there's no molecule to draw, but we still want
+  // a DrawMol in the MolDraw2D for scale, conversion of atom coords to
+  // draw coords etc.  And so DrawMol starts sounding like a poor name for
+  // the class.
+  DrawMol(int width, int height, const MolDrawOptions &drawOptions,
+          DrawText &textDrawer, double xmin, double xmax, double ymin,
+          double ymax, double scale, double fontscale);
   DrawMol(const DrawMol &) = delete;
   DrawMol(const DrawMol &&) = delete;
   DrawMol &operator=(const DrawMol &) = delete;
@@ -167,8 +177,10 @@ class DrawMol {
                         const Point2D &scaleFactor,
                         const Point2D &toCentre) const;
   Point2D getDrawCoords(const Point2D &atCds) const;
+  Point2D getDrawCoords(int atnum) const;
   // and the other way.
   Point2D getAtomCoords(const Point2D &screenCds) const;
+  Point2D getAtomCoords(int atnum) const;
   double getScale() const { return scale_; }
   double getFontScale() const { return textDrawer_.fontScale();}
   // more often than not, newScale and newFontScale will be the same,
@@ -176,6 +188,10 @@ class DrawMol {
   // The newFontScale will be used without checking the min and max.
   void setScale(double newScale, double newFontScale,
                 bool ignoreFontLimits = true);
+  // set all the transformation details from the incoming DrawMol to this
+  // one, so they can be overlaid properly.
+  void setTransformation(const DrawMol &sourceMol);
+
   // for drawing into a grid, for example.  Must be set before
   // changeToDrawCoords is called for it to have effect.
   void setOffsets(double xOffset, double yOffset);
@@ -201,6 +217,8 @@ class DrawMol {
 
   std::unique_ptr<RWMol> drawMol_;
   int confId_;
+  // atCds_ are as extracted from the molecule, except that the y is
+  // inverted and drawOptions_.rotate is applied.
   std::vector<Point2D> atCds_;
   std::vector<std::unique_ptr<DrawShape>> bonds_;
   std::vector<std::unique_ptr<DrawShape>> preShapes_;
@@ -222,7 +240,7 @@ class DrawMol {
   double xOffset_ = 0.0, yOffset_ = 0.0;
   double meanBondLengthSquare_ = 0.0;
   // if there's a legend, we reserve a bit for it.
-  int drawHeight_, legendHeight_;
+  int drawHeight_, legendHeight_ = 0;
   bool drawingInitialised_ = false;
 };
 

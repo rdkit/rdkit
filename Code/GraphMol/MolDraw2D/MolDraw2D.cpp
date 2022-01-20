@@ -516,156 +516,6 @@ void MolDraw2D::drawReaction(
   if (drawOptions().includeMetadata) {
     this->updateMetadata(rxn);
   }
-#if 0
-  ChemicalReaction nrxn(rxn);
-  double spacing = 1.0;
-  Point2D arrowBegin, arrowEnd;
-  std::vector<double> plusLocs;
-  get2DCoordsForReaction(nrxn, arrowBegin, arrowEnd, plusLocs, spacing,
-                         confIds);
-
-  MolDrawOptions origDrawOptions = drawOptions();
-  drawOptions().prepareMolsBeforeDrawing = false;
-  drawOptions().includeMetadata = false;
-
-  ROMol *tmol = ChemicalReactionToRxnMol(nrxn);
-  MolOps::findSSSR(*tmol);
-
-  if (needs_scale_ &&
-      (!nrxn.getNumReactantTemplates() || !nrxn.getNumProductTemplates())) {
-    // drawMolecule() will figure out the scaling so that the molecule
-    // fits the drawing pane. In order to ensure that we have space for the
-    // arrow, we need to figure out the scaling on our own.
-    RWMol tmol2;
-    tmol2.addAtom(new Atom(0), true, true);
-    tmol2.addAtom(new Atom(0), true, true);
-    tmol2.addConformer(new Conformer(2), true);
-    tmol2.getConformer().getAtomPos(0) =
-        RDGeom::Point3D(arrowBegin.x, arrowBegin.y, 0);
-    tmol2.getConformer().getAtomPos(1) =
-        RDGeom::Point3D(arrowEnd.x, arrowEnd.y, 0);
-
-    for (auto atom : tmol2.atoms()) {
-      atom->calcImplicitValence();
-    }
-
-    tmol2.insertMol(*tmol);
-    pushDrawDetails();
-    extractAtomCoords(tmol2, 0, true);
-    extractAtomSymbols(tmol2);
-    calculateScale(panelWidth(), drawHeight(), tmol2);
-    needs_scale_ = false;
-    popDrawDetails();
-  }
-
-  std::vector<int> *atom_highlights = nullptr;
-  std::map<int, DrawColour> *atom_highlight_colors = nullptr;
-  std::vector<int> *bond_highlights = nullptr;
-  std::map<int, DrawColour> *bond_highlight_colors = nullptr;
-  if (highlightByReactant) {
-    const std::vector<DrawColour> *colors =
-        &drawOptions().highlightColourPalette;
-    if (highlightColorsReactants) {
-      colors = highlightColorsReactants;
-    }
-    std::vector<int> atomfragmap;
-    MolOps::getMolFrags(*tmol, atomfragmap);
-
-    atom_highlights = new std::vector<int>();
-    atom_highlight_colors = new std::map<int, DrawColour>();
-    bond_highlights = new std::vector<int>();
-    bond_highlight_colors = new std::map<int, DrawColour>();
-    std::map<int, int> atommap_fragmap;
-    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
-      int atomRole = -1;
-      Atom *atom = tmol->getAtomWithIdx(aidx);
-      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 1 &&
-          atom->getAtomMapNum()) {
-        atommap_fragmap[atom->getAtomMapNum()] = atomfragmap[aidx];
-        atom_highlights->push_back(aidx);
-        (*atom_highlight_colors)[aidx] =
-            (*colors)[atomfragmap[aidx] % colors->size()];
-
-        atom->setAtomMapNum(0);
-        // add highlighted bonds to lower-numbered
-        // (and thus already covered) neighbors
-        for (const auto &nbri :
-             make_iterator_range(tmol->getAtomNeighbors(atom))) {
-          const Atom *nbr = (*tmol)[nbri];
-          if (nbr->getIdx() < aidx &&
-              atomfragmap[nbr->getIdx()] == atomfragmap[aidx]) {
-            int bondIdx =
-                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
-            bond_highlights->push_back(bondIdx);
-            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
-          }
-        }
-      }
-    }
-    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
-      int atomRole = -1;
-      Atom *atom = tmol->getAtomWithIdx(aidx);
-      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 2 &&
-          atom->getAtomMapNum() &&
-          atommap_fragmap.find(atom->getAtomMapNum()) !=
-              atommap_fragmap.end()) {
-        atom_highlights->push_back(aidx);
-        (*atom_highlight_colors)[aidx] =
-            (*colors)[atommap_fragmap[atom->getAtomMapNum()] % colors->size()];
-
-        atom->setAtomMapNum(0);
-        // add highlighted bonds to lower-numbered
-        // (and thus already covered) neighbors
-        for (const auto &nbri :
-             make_iterator_range(tmol->getAtomNeighbors(atom))) {
-          const Atom *nbr = (*tmol)[nbri];
-          if (nbr->getIdx() < aidx && (*atom_highlight_colors)[nbr->getIdx()] ==
-                                          (*atom_highlight_colors)[aidx]) {
-            int bondIdx =
-                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
-            bond_highlights->push_back(bondIdx);
-            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
-          }
-        }
-      }
-    }
-  }
-
-  drawMolecule(*tmol, "", atom_highlights, bond_highlights,
-               atom_highlight_colors, bond_highlight_colors);
-
-  delete tmol;
-  delete atom_highlights;
-  delete atom_highlight_colors;
-  delete bond_highlights;
-  delete bond_highlight_colors;
-
-  double o_font_scale = text_drawer_->fontScale();
-  double fsize = text_drawer_->fontSize();
-  double new_font_scale =
-      2.0 * o_font_scale * drawOptions().legendFontSize / fsize;
-  text_drawer_->setFontScale(new_font_scale);
-
-  DrawColour odc = colour();
-  setColour(options_.symbolColour);
-
-  // now add the symbols
-  for (auto plusLoc : plusLocs) {
-    Point2D loc(plusLoc, arrowBegin.y);
-    drawString("+", loc);
-  }
-
-  // The arrow:
-  drawArrow(arrowBegin, arrowEnd);
-
-  if (origDrawOptions.includeMetadata) {
-    this->updateMetadata(nrxn);
-  }
-
-  setColour(odc);
-  text_drawer_->setFontScale(o_font_scale);
-  drawOptions() = origDrawOptions;
-#endif
 }
 
 // ****************************************************************************
@@ -814,42 +664,78 @@ void MolDraw2D::highlightCloseContacts() {
 
 // ****************************************************************************
 // transform a set of coords in the molecule's coordinate system
-// to drawing system coordinates.
+// to drawing system coordinates.  Prefers globalDrawTrans_ if it exists.
 Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
-  PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
-               "bad active mol index");
-  return drawMols_[activeMolIdx_]->getDrawCoords(mol_cds);
+  PRECONDITION(globalDrawTrans_ || !drawMols_.empty(), "no scaling info");
+  if (globalDrawTrans_) {
+    return globalDrawTrans_->getDrawCoords(mol_cds);
+  } else {
+    return drawMols_[activeMolIdx_]->getDrawCoords(mol_cds);
+  }
 }
 
 // ****************************************************************************
 Point2D MolDraw2D::getDrawCoords(int at_num) const {
+  // this one can't use globalDrawTrans_, obviously.
   PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
                "bad active mol index");
   PRECONDITION(!drawMols_.empty(), "no draw mols");
   PRECONDITION(at_num < drawMols_[activeMolIdx_]->atCds_.size(), "bad atom number");
-  return getDrawCoords(drawMols_[activeMolIdx_]->atCds_[at_num]);
+  return drawMols_[activeMolIdx_]->getDrawCoords(at_num);
 }
 
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(const pair<int, int> &screen_cds) const {
-  PRECONDITION(!drawMols_.empty(), "no draw mols");
-  // TODO: use activeMolIdx_ for this, for when there's more than 1 draw mol.
+  // Prefers globalDrawTrans_ if it exists.
+  PRECONDITION(globalDrawTrans_ || !drawMols_.empty(), "no scaling info");
   return getAtomCoords(
       make_pair(double(screen_cds.first), double(screen_cds.second)));
 }
 
 // ****************************************************************************
+// Prefers globalDrawTrans_ if it exists.
 Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
-  PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
-               "bad active mol index");
-  return drawMols_[activeMolIdx_]->getAtomCoords(
-      Point2D(screen_cds.first, screen_cds.second));
+  // Prefers globalDrawTrans_ if it exists.
+  PRECONDITION(globalDrawTrans_ || !drawMols_.empty(), "no scaling info");
+  if (globalDrawTrans_) {
+    return globalDrawTrans_->getAtomCoords(
+        Point2D(screen_cds.first, screen_cds.second));
+  } else {
+    return drawMols_[activeMolIdx_]->getAtomCoords(
+        Point2D(screen_cds.first, screen_cds.second));
+  }
 }
 
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(int at_num) const {
-  PRECONDITION(activeMolIdx_ >= 0, "bad active mol");
+  PRECONDITION(!drawMols_.empty() && activeMolIdx_ >= 0 &&
+                   activeMolIdx_ <= drawMols_.size(),
+               "bad active mol index");
   return at_cds_[activeMolIdx_][at_num];
+}
+
+// ****************************************************************************
+Point2D MolDraw2D::minPt() const {
+  // Prefers globalDrawTrans_ if it exists.
+  PRECONDITION(globalDrawTrans_ || activeMolIdx_ >= 0, "bad active mol");
+  // the ys are inverted in the DrawMol.
+  if (globalDrawTrans_) {
+    return Point2D(globalDrawTrans_->xMin_, -globalDrawTrans_->yMax_);
+  } else {
+    return Point2D(drawMols_[activeMolIdx_]->xMin_,
+                   -drawMols_[activeMolIdx_]->yMax_);
+  }
+}
+// ****************************************************************************
+Point2D MolDraw2D::range() const {
+  // Prefers globalDrawTrans_ if it exists.
+  PRECONDITION(globalDrawTrans_ || activeMolIdx_ >= 0, "bad active mol");
+  if (globalDrawTrans_) {
+    return Point2D(globalDrawTrans_->xRange_, globalDrawTrans_->yRange_);
+  } else {
+    return Point2D(drawMols_[activeMolIdx_]->xRange_,
+                   drawMols_[activeMolIdx_]->yRange_);
+  }
 }
 
 // ****************************************************************************
@@ -885,10 +771,11 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
     std::shared_ptr<DrawMol> drawMol(new DrawMol(
         *mol, "", panelWidth(), panelHeight(), drawOptions(), *text_drawer_));
     drawMol->createDrawObjects();
+    // in the DrawMol, the ys are all inverted.
     x_min = min(minv.x, drawMol->xMin_);
-    y_min = min(minv.y, drawMol->yMin_);
+    y_min = min(minv.y, -drawMol->yMax_);
     x_max = max(maxv.x, drawMol->xMax_);
-    y_max = max(maxv.y, drawMol->yMax_);
+    y_max = max(maxv.y, -drawMol->yMin_);
     fontScale_ = drawMol->getFontScale();
     setFontScale = true;
   } else {
@@ -897,7 +784,6 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
     x_max = maxv.x;
     y_max = maxv.y;
   }
-
   x_range = x_max - x_min;
   y_range = y_max - y_min;
 
@@ -913,16 +799,27 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   // put a buffer round the drawing and calculate a final scale
   x_min -= drawOptions().padding * x_range;
   x_range *= 1 + 2 * drawOptions().padding;
+  x_max = x_min + x_range;
   y_min -= drawOptions().padding * y_range;
   y_range *= 1 + 2 * drawOptions().padding;
+  y_max = y_min + y_range;
 
   scale_ = std::min(double(width) / x_range, double(height) / y_range);
   // Absent any other information, we'll have to go with fontScale_ the
   // same as scale_.
   if (!setFontScale) {
     fontScale_ = scale_;
+  } else {
+    fontScale_ *= scale_ / fontScale_;
   }
   forceScale_ = true;
+
+  DrawMol *drawMol =
+      new DrawMol(panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
+                  x_min, x_max, y_min, y_max, scale_, fontScale_);
+  Point2D trans, scale, toCentre;
+  drawMol->getDrawTransformers(trans, scale, toCentre);
+  globalDrawTrans_.reset(drawMol);
 }
 
 // ****************************************************************************
@@ -1741,87 +1638,6 @@ void MolDraw2D::findReactionHighlights(
       }
     }
   }
-#if 0
-  std::unique_ptr<std::vector<int>>atom_highlights;
-  std::unique_ptr<std::map<int, DrawColour>> atom_highlight_colors;
-  std::unique_ptr<std::vector<int>> bond_highlights;
-  std::unique_ptr<std::map<int, DrawColour>> bond_highlight_colors;
-  std::map<int, int> atommap_fragmap;
-  if (highlightByReactant) {
-    const std::vector<DrawColour> *colors =
-        &drawOptions().highlightColourPalette;
-    if (highlightColorsReactants) {
-      colors = highlightColorsReactants;
-    }
-    std::vector<int> atomfragmap;
-    MolOps::getMolFrags(*tmol, atomfragmap);
-    atom_highlights.reset(new std::vector<int>());
-    atom_highlight_colors.reset(new std::map<int, DrawColour>());
-    bond_highlights.reset(new std::vector<int>());
-    bond_highlight_colors.reset(new std::map<int, DrawColour>());
-    std::map<int, int> atommap_fragmap;
-    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
-      int atomRole = -1;
-      Atom *atom = tmol->getAtomWithIdx(aidx);
-      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 1 &&
-          atom->getAtomMapNum()) {
-        atommap_fragmap[atom->getAtomMapNum()] = atomfragmap[aidx];
-        atom_highlights->push_back(aidx);
-        (*atom_highlight_colors)[aidx] =
-            (*colors)[atomfragmap[aidx] % colors->size()];
-
-        atom->setAtomMapNum(0);
-        // add highlighted bonds to lower-numbered
-        // (and thus already covered) neighbors
-        for (const auto &nbri :
-             make_iterator_range(tmol->getAtomNeighbors(atom))) {
-          const Atom *nbr = (*tmol)[nbri];
-          if (nbr->getIdx() < aidx &&
-              atomfragmap[nbr->getIdx()] == atomfragmap[aidx]) {
-            int bondIdx =
-                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
-            bond_highlights->push_back(bondIdx);
-            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
-          }
-        }
-      }
-    }
-    for(auto i : *atom_highlights) {
-      std::cout << i << " : " << atomfragmap[i] << " : "
-                << (*atom_highlight_colors)[i].r << ", "
-                << (*atom_highlight_colors)[i].g << ", "
-                << (*atom_highlight_colors)[i].b << std::endl;
-    }
-
-    for (unsigned int aidx = 0; aidx < tmol->getNumAtoms(); ++aidx) {
-      int atomRole = -1;
-      Atom *atom = tmol->getAtomWithIdx(aidx);
-      if (atom->getPropIfPresent("molRxnRole", atomRole) && atomRole == 2 &&
-          atom->getAtomMapNum() &&
-          atommap_fragmap.find(atom->getAtomMapNum()) !=
-              atommap_fragmap.end()) {
-        atom_highlights->push_back(aidx);
-        (*atom_highlight_colors)[aidx] =
-            (*colors)[atommap_fragmap[atom->getAtomMapNum()] % colors->size()];
-
-        atom->setAtomMapNum(0);
-        // add highlighted bonds to lower-numbered
-        // (and thus already covered) neighbors
-        for (const auto &nbri :
-             make_iterator_range(tmol->getAtomNeighbors(atom))) {
-          const Atom *nbr = (*tmol)[nbri];
-          if (nbr->getIdx() < aidx && (*atom_highlight_colors)[nbr->getIdx()] ==
-                                          (*atom_highlight_colors)[aidx]) {
-            int bondIdx =
-                tmol->getBondBetweenAtoms(aidx, nbr->getIdx())->getIdx();
-            bond_highlights->push_back(bondIdx);
-            (*bond_highlight_colors)[bondIdx] = (*atom_highlight_colors)[aidx];
-          }
-        }
-      }
-    }
-  }
-#endif
 }
 
 // ****************************************************************************
@@ -2031,7 +1847,9 @@ void MolDraw2D::startDrawing() {
 
 // ****************************************************************************
 void MolDraw2D::drawTheMolecule(DrawMol &drawMol) {
-  if (forceScale_) {
+  if (globalDrawTrans_) {
+    drawMol.setTransformation(*globalDrawTrans_);
+  } else if (forceScale_) {
     drawMol.setScale(scale_, fontScale_);
   }
   drawMol.draw(*this);
