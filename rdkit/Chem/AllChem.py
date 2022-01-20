@@ -14,13 +14,13 @@
 from collections import namedtuple
 
 import numpy
-from rdkit import DataStructs  # Unused import
-from rdkit import ForceField  # Unused import
-from rdkit import RDConfig  # Unused import
-from rdkit import rdBase  # Unused import
+from rdkit import DataStructs
+from rdkit import ForceField
+from rdkit import RDConfig
+from rdkit import rdBase
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
-# import but not being used as a module (shortcut)
+
 from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
                                                StereoEnumerationOptions)
 from rdkit.Chem.rdChemReactions import *
@@ -186,14 +186,6 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
     rmsvals = [GetConformerRMS(mol, confIds[0], confIds[i], atomIds=atomIds, prealigned=prealigned) for i in range(1, confIdSize)]
     
   # loop over the conformations (except the reference one)
-  """
-  OLD CODE: Delete this if accept the pull request
-  cmat = []
-  for i in range(1, confIdSize):
-    cmat.append(rmsvals[i - 1])
-    for j in range(1, i):
-      cmat.append(GetConformerRMS(mol, confIds[i], confIds[j], atomIds=atomIds, prealigned=True))
-  """
   cmat = [0] * (confIdSize * (confIdSize - 1) // 2)
   counter: int = 0
   for i in range(1, confIdSize):
@@ -257,9 +249,11 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False)
   ProductReactants = namedtuple('ProductReactants', 'products,reactants')
   for chains in _combiEnumerator(sidechainSets):
     prodSets = reaction.RunReactants(chains)
-    for prods in prodSets: # yield from may be better but not available in Python 3.x
-      yield ProductReactants(prods, chains) if returnReactants else prods
-
+    for prods in prodSets:
+      if returnReactants:
+        yield ProductReactants(prods, chains)
+      else:
+        yield prods
 
 
 def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
