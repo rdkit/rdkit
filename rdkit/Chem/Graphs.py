@@ -37,7 +37,7 @@ def CharacteristicPolynomial(mol, mat=None):
         A = mat
     I = 1. * numpy.identity(nAtoms)
     An = A
-    res = numpy.zeros(nAtoms + 1, numpy.float)
+    res = numpy.zeros(nAtoms + 1, numpy.float64)
     res[0] = 1.0
     for n in range(1, nAtoms + 1):
         res[n] = 1. / n * numpy.trace(An)
