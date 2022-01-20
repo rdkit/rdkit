@@ -234,14 +234,12 @@ class MolViewer(object):
   def GetAtomCoords(self, sels):
     res = {}
     for label, idx in sels:
-      whichSelection = label.lower()
-      whichSelection = self.displayables[label].id
+      whichSelection = self.displayables[label.lower()].id
       # DSViewer has atom ids from 1, we do it from 0:
       idx += 1
       cmd = 'GetPropertyValue molecule RD_Visual=%d; atom id=%d: xyz=?' % (whichSelection, idx)
-      coords = self.doc.DoCommand(cmd)
-      coords = [float(x) for x in coords.split(' ')]
-      res[(label, idx)] = coords
+      coords = self.doc.DoCommand(cmd).split(' ')
+      res[(label, idx)] = [float(x) for x in coords]
       #print 'grab:',label,idx,coords
     return res
 
@@ -300,7 +298,7 @@ class MolViewer(object):
     objName = objName.lower()
     o = self.displayables.get(objName, None)
     if o:
-      r = o.Select(state=True)
+      o.Select(state=True)
       self.doc.DoCommand('Center')
       self.doc.DoCommand('FitView')
       o.Select(state=False)
