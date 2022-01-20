@@ -327,7 +327,7 @@ bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       ++first;
     }
   }
-  if (first == last || *first != '$') {
+  if (first >= last || *first != '$') {
     return false;
   }
   ++first;
@@ -342,13 +342,13 @@ bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol) {
   while (first <= last && *first != '|' && *first != ',') {
     unsigned int atIdx;
     if (read_int(first, last, atIdx)) {
-      if (first == last || *first != '.') {
+      if (first >= last || *first != '.') {
         return false;
       }
       ++first;
       std::string pname = read_text_to(first, last, ".");
       if (pname != "") {
-        if (first == last || *first != '.') {
+        if (first >= last || *first != '.') {
           return false;
         }
         ++first;
@@ -389,7 +389,7 @@ bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       ++first;
     }
   }
-  if (first == last || *first != '$') {
+  if (first >= last || *first != '$') {
     return false;
   }
   ++first;
@@ -429,7 +429,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol) {
       ++first;
     }
   }
-  if (first == last || *first != ')') {
+  if (first >= last || *first != ')') {
     return false;
   }
   ++first;
