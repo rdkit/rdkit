@@ -66,16 +66,22 @@ class _StereoGroupFlipper(object):
     self._original_parities = [(a, a.GetChiralTag()) for a in group.GetAtoms()]
 
   def flip(self, flag):
-    if flag:
-      for a, original_parity in self._original_parities:
-        a.SetChiralTag(original_parity)
-    else:
-      for a, original_parity in self._original_parities:
-        if original_parity == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
-          a.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
-        elif original_parity == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
-          a.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CW)
-
+    CHIRAL_DICT = {Chem.ChiralType.CHI_TETRAHEDRAL_CW: Chem.ChiralType.CHI_TETRAHEDRAL_CCW,
+                   Chem.ChiralType.CHI_TETRAHEDRAL_CCW: Chem.ChiralType.CHI_TETRAHEDRAL_CW, 
+                   # Chem.ChiralType.CHI_UNSPECIFIED: Chem.ChiralType.CHI_UNSPECIFIED,
+                   # Chem.ChiralType.CHI_OTHER: Chem.ChiralType.CHI_OTHER,
+                   }
+    for atom, original_parity in self._original_parities:
+      try:
+        if flag:
+          chirality = original_parity 
+        else:
+          chirality = CHIRAL_DICT[original_parity]
+        atom.SetChiralTag(chirality)
+      except KeyError:
+        pass
+    del CHIRAL_DICT
+    
 
 def _getFlippers(mol, options):
   Chem.FindPotentialStereoBonds(mol)
@@ -83,13 +89,13 @@ def _getFlippers(mol, options):
   if not options.onlyStereoGroups:
     for atom in mol.GetAtoms():
       if atom.HasProp("_ChiralityPossible"):
-        if (not options.onlyUnassigned or atom.GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED):
+        if not options.onlyUnassigned or atom.GetChiralTag() == Chem.ChiralType.CHI_UNSPECIFIED:
           flippers.append(_AtomFlipper(atom))
 
     for bond in mol.GetBonds():
       bstereo = bond.GetStereo()
       if bstereo != Chem.BondStereo.STEREONONE:
-        if (not options.onlyUnassigned or bstereo == Chem.BondStereo.STEREOANY):
+        if not options.onlyUnassigned or bstereo == Chem.BondStereo.STEREOANY:
           flippers.append(_BondFlipper(bond))
 
   if options.onlyUnassigned:
@@ -303,7 +309,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     yield tm
     return
 
-  if (options.maxIsomers == 0 or 2**nCenters <= options.maxIsomers):
+  if options.maxIsomers == 0 or 2**nCenters <= options.maxIsomers:
     bitsource = _RangeBitsGenerator(nCenters)
   else:
     if options.rand is None:
@@ -334,7 +340,6 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
       cansmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
       if cansmi in isomersSeen:
         continue
-
       isomersSeen.add(cansmi)
 
     if options.tryEmbedding:

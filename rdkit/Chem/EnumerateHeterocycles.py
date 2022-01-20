@@ -5,9 +5,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import collections
+
+from collections import namedtuple
 from rdkit import Chem
 from rdkit.Chem import AllChem
+
 
 def GetHeterocycleReactionSmarts():
     """
@@ -23,7 +25,7 @@ def GetHeterocycleReactionSmarts():
     NEGATIVE_EXAMPLE - an example aromatic ring system that SMART should NOT match against, used in test cases
     DESCRIPTION - a human readable description of the SMARTS pattern matching
     """
-    HeteroAtomReaction = collections.namedtuple(
+    HeteroAtomReaction = namedtuple(
         'HeteroAtomReaction',
         ['SMARTS', 'CONVERT_FROM', 'CONVERT_TO', 'EXAMPLE', 'NEGATIVE_EXAMPLE', 'DESCRIPTION'])
     return [
