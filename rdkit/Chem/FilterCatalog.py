@@ -6,8 +6,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import sys
 
+# Error raised at this below file: and because the Chem module is not imported
+# File "/home/vsts/work/1/s/rdkit/Chem/rdfiltercatalog.so", line ?, in rdkit.Chem.rdfiltercatalog.SmartsMatcher
 from rdkit import Chem
 from rdkit.Chem.rdfiltercatalog import *
 

@@ -10,7 +10,8 @@
 #
 import sys
 
-from rdkit import Chem
+from numpy import argsort
+
 from rdkit.Chem.rdfragcatalog import *
 
 
@@ -84,14 +85,9 @@ def BuildAdjacencyList(catalog, bits, limitInclusion=1, orderLevels=0):
   return adjs, levels
 
 
-def GetMolsMatchingBit(mols, bit, fps):
-  res = []
+def GetMolsMatchingBit(mols, bit, fps):  
   if isinstance(bit, BitGainsInfo):
     bitId = bit.id
   else:
     bitId = bit
-  for i, mol in enumerate(mols):
-    fp = fps[i]
-    if fp[bitId]:
-      res.append(mol)
-  return res
+  return [mol for i, mol in enumerate(mols) if fps[i][bitId]]

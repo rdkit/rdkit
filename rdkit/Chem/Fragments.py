@@ -36,17 +36,15 @@ def _LoadPatterns(fileName=None):
         if len(line) and line[0] != '#':
           splitL = line.split('\t')
           if len(splitL) >= 3:
-            name = splitL[0]
-            descr = splitL[1]
+            name = splitL[0].replace('=', '_').replace('-', '_')
+            descr = splitL[1].replace('"', '')
             sma = splitL[2]
-            descr = descr.replace('"', '')
             patt = Chem.MolFromSmarts(sma)
             if not patt or patt.GetNumAtoms() == 0:
               raise ImportError('Smarts %s could not be parsed' % (repr(sma)))
+            
             fn = lambda mol, countUnique=True, pattern=patt: _CountMatches(mol, pattern, unique=countUnique)
             fn.__doc__ = descr
-            name = name.replace('=', '_')
-            name = name.replace('-', '_')
             fns.append((name, fn))
   except IOError:
     pass

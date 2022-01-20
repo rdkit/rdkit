@@ -60,10 +60,7 @@ class FGHierarchyNode(object):
         self.rxnSmarts = rxnSmarts
 
     def __len__(self):
-        res = 1
-        for child in self.children:
-            res += len(child)
-        return res
+        return sum(len(child) for child in self.children) + 1
 
 
 class FuncGroupFileParseError(ValueError):
@@ -160,10 +157,8 @@ def _SetNodeBits(mol, node, res, idx):
     return idx
 
 
-def CreateMolFingerprint(mol, hierarchy):
-    totL = 0
-    for entry in hierarchy:
-        totL += len(entry)
+def CreateMolFingerprint(mol, hierarchy):  
+    totL = int(sum(len(entry) for entry in hierarchy)) 
     res = [0] * totL
     idx = 0
     for entry in hierarchy:
