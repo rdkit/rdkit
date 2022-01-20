@@ -25,6 +25,7 @@
 
 #include <GraphMol/MonomerInfo.h>
 
+
 // PDBWriter support multiple "flavors" of PDB output
 // flavor & 1 : Ignore atoms in alternate conformations and dummy atoms
 // flavor & 2 : Read each MODEL into a separate molecule.
@@ -728,4 +729,384 @@ RWMol *PDBFileToMol(const std::string &fileName, bool sanitize, bool removeHs,
   return PDBDataStreamToMol(static_cast<std::istream *>(&ifs), sanitize,
                             removeHs, flavor, proximityBonding);
 }
+
+namespace {
+
+constexpr size_t GROUP_PDB=0, ATOMID=1, TYPE_SYMBOL=2, ATOMNAME=3, ALT_ID=4, \
+ RESNUM=5, RESNAME=6, CHAINID=7, INSCODE=8, OCCUPANCY=9, TEMPFACTOR=10, \
+ CHARGE=11,CARTNX=12, CARTNY=13, CARTNZ=14, AUTH_RESNUM=15, MODELNUM=16;
+constexpr size_t N_ATTRS=17;
+constexpr int NOT_PRESENT = -1;
+
+static inline bool is_quotation(char c) {
+  return c == '"';
+}
+
+// mmcif uses either '.' or '?' for blank values, change to ' ' to match PDB
+static inline void coerce_blank_values(std::string &value) {
+  if (value == ".") {
+    value = " ";
+  } else if (value == "?") {
+    value = " ";
+  }
+}
+
+void parseMmcifAtoms(std::istream &ifs, const std::array<int, N_ATTRS> &name2column,
+                     RWMol *&mol, unsigned int flavor) {
+  std::vector<std::string> tokens;
+  std::string line;
+
+  mol = new RWMol();
+
+  Conformer *conf = nullptr;
+  if (name2column[CARTNX] != NOT_PRESENT ||
+      name2column[CARTNY] != NOT_PRESENT ||
+      name2column[CARTNZ] != NOT_PRESENT) {
+    conf = new Conformer();
+    conf->set3D(true);
+    mol->addConformer(conf, false);
+  }
+
+  size_t atomnum = 0;
+  int modelnum = 1;
+  bool multi_conformer = false;
+  while (ifs.peek() != '#') {
+    std::getline(ifs, line);
+    boost::split(tokens, line, boost::is_any_of(" "),
+                 boost::token_compress_on);
+
+    // skip altloc?
+    if ((flavor & 1) == 0 && name2column[ALT_ID] != NOT_PRESENT) {
+      if (tokens[name2column[ALT_ID]][0] != '.')
+      continue;
+    }
+    // is this a different conformer?
+    if (name2column[MODELNUM] != NOT_PRESENT) {
+      int this_model;
+      try {
+        this_model = FileParserUtils::toInt(tokens[name2column[MODELNUM]]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Cannot determine model number for atom #" << atomnum;
+        throw FileParseException(errout.str());
+      }
+      if (modelnum != this_model) {
+        multi_conformer = true;
+        modelnum = this_model;
+        atomnum = 0;
+
+        if ((flavor & 2) == 0) {
+          conf = new Conformer(mol->getNumAtoms());
+          conf->set3D(true);
+          conf->setId(mol->getNumConformers());
+          mol->addConformer(conf, false);
+        }
+      }
+    }
+    if (multi_conformer && !conf) {
+      // if we reach second model and don't have conformers, we're done
+      break;
+    } else if (multi_conformer && (flavor & 2) != 0) {
+      break;
+    }
+
+    if (multi_conformer) {  // if 2nd or further model, just read coords
+      if (conf) {
+        RDGeom::Point3D pos = {0.0, 0.0, 0.0};
+
+        try {
+          if (name2column[CARTNX] != NOT_PRESENT) {
+            pos.x = FileParserUtils::toDouble(tokens[name2column[CARTNX]]);
+          }
+          if (name2column[CARTNY] != NOT_PRESENT) {
+            pos.y = FileParserUtils::toDouble(tokens[name2column[CARTNY]]);
+          }
+          if (name2column[CARTNZ] != NOT_PRESENT) {
+            pos.z = FileParserUtils::toDouble(tokens[name2column[CARTNZ]]);
+          }
+        } catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Problem with coordinates for PDB atom #" << atomnum;
+          throw FileParseException(errout.str());
+        }
+
+        conf->setAtomPos(atomnum, pos);
+      }
+      atomnum++;
+      continue;
+    }
+
+    std::string tmp = tokens[name2column[TYPE_SYMBOL]];
+    // BR -> Br etc
+    for (unsigned int i=1; i<tmp.length(); ++i) {
+      tmp[i] = tolower(tmp[i]);
+    }
+    auto a = PDBAtomFromSymbol(tmp.c_str());
+
+    if (!a) {
+      std::ostringstream errout;
+      errout << "Cannot determine element for PDB atom #" << atomnum;
+      throw FileParseException(errout.str());
+    }
+    mol->addAtom(a, true, true);
+
+    if (name2column[CHARGE] != NOT_PRESENT) {
+      tmp = tokens[name2column[CHARGE]];
+      int charge = 0;
+      if (tmp[0] != '?') {
+        try {
+          charge = FileParserUtils::toInt(tokens[name2column[CHARGE]]);
+        } catch (boost::bad_lexical_cast &) {
+          std::ostringstream errout;
+          errout << "Problem with formal charge for PDB atom #" << a->getIdx();
+          throw FileParseException(errout.str());
+        }
+        if (charge != 0) {
+          a->setFormalCharge(charge);
+        }
+      }
+    }
+
+    if (name2column[ATOMNAME != NOT_PRESENT]) {
+      tmp = name2column[ATOMNAME];
+      // "O5'" -> O5'
+      boost::algorithm::trim_if(tmp, is_quotation);
+    } else {
+      tmp = "UNL";
+    }
+
+    tmp = name2column[ATOMNAME] != NOT_PRESENT ? tokens[name2column[ATOMNAME]] : "UNL";
+
+    int serialno = 0;
+    if (name2column[ATOMID] != NOT_PRESENT) {
+      // these are usually but not always integers, use 0 if non integer
+      try {
+        serialno = FileParserUtils::toInt(tokens[name2column[ATOMID]]);
+      } catch (boost::bad_lexical_cast &) {
+        serialno = 0;
+      }
+    }
+
+    auto info = new AtomPDBResidueInfo(tmp, serialno);
+    a->setMonomerInfo(info);
+    if (tokens[name2column[GROUP_PDB]][0] == 'H') {  // HETATM
+      info->setIsHeteroAtom(true);
+    }
+
+    int resno = 1;
+    if (name2column[AUTH_RESNUM] != NOT_PRESENT) {
+      try {
+        resno = FileParserUtils::toInt(tokens[name2column[AUTH_RESNUM]]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with residue number for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+    } else if (name2column[RESNUM] != NOT_PRESENT) {
+      try {
+        resno = FileParserUtils::toInt(tokens[name2column[RESNUM]]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with residue number for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+    }
+    info->setResidueNumber(resno);
+
+    tmp = name2column[RESNAME] != NOT_PRESENT ? tokens[name2column[RESNAME]] : "UNL";
+    info->setResidueName(tmp);
+
+    tmp = name2column[ALT_ID] != NOT_PRESENT ? tokens[name2column[ALT_ID]] : " ";
+    coerce_blank_values(tmp);
+    info->setAltLoc(tmp);
+
+    tmp = name2column[CHAINID] != NOT_PRESENT ? tokens[name2column[CHAINID]] : " ";
+    coerce_blank_values(tmp);
+    info->setChainId(tmp);
+
+    tmp = name2column[INSCODE] != NOT_PRESENT ? tokens[name2column[INSCODE]] : " ";
+    coerce_blank_values(tmp);
+    info->setInsertionCode(tmp);
+
+    double occup = 1.0;
+    if (name2column[OCCUPANCY] != NOT_PRESENT) {
+      try {
+        occup = FileParserUtils::toDouble(tokens[name2column[OCCUPANCY]]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with occupancy for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+    }
+    info->setOccupancy(occup);
+
+    double bfactor = 0.0;
+    if (name2column[TEMPFACTOR] != NOT_PRESENT) {
+      try {
+        bfactor = FileParserUtils::toDouble(tokens[name2column[TEMPFACTOR]]);
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with temperature factor for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+    }
+    info->setTempFactor(bfactor);
+
+    if (conf) {
+      RDGeom::Point3D pos = {0.0, 0.0, 0.0};
+
+      try {
+        if (name2column[CARTNX] != NOT_PRESENT) {
+          pos.x = FileParserUtils::toDouble(tokens[name2column[CARTNX]]);
+        }
+        if (name2column[CARTNY] != NOT_PRESENT) {
+          pos.y = FileParserUtils::toDouble(tokens[name2column[CARTNY]]);
+        }
+        if (name2column[CARTNZ] != NOT_PRESENT) {
+          pos.z = FileParserUtils::toDouble(tokens[name2column[CARTNZ]]);
+        }
+      } catch (boost::bad_lexical_cast &) {
+        std::ostringstream errout;
+        errout << "Problem with coordinates for PDB atom #" << a->getIdx();
+        throw FileParseException(errout.str());
+      }
+
+      conf->setAtomPos(a->getIdx(), pos);
+    }
+    atomnum++;
+  }
+}
+
+
+void parseMMCifFile(RWMol *&mol,
+                    const std::string &fname, bool sanitize, bool removeHs,
+                    unsigned int flavor, bool proximityBonding) {
+  PRECONDITION(fname.length(), "no filename");
+
+  // we need to read up to 14 columns, which can be in arbitrary order
+  // this keeps track of which column is where, with -1 being column not present
+  std::array<int, N_ATTRS> name2column;
+  name2column.fill(NOT_PRESENT);
+
+  std::ifstream ifs(fname.c_str(), std::ios_base::binary);
+  if (!ifs || ifs.bad()) {
+    std::ostringstream errout;
+    errout << "Bad input file " << fname;
+    throw BadFileException(errout.str());
+  }
+
+  // first find header of atom_site section
+  std::string line;
+  bool found_atom_site = false;
+  while (!ifs.eof()) {
+    std::getline(ifs, line);
+    if (line != "loop_") {
+      continue;
+    }
+    // check what sort of loop we've hit
+    std::getline(ifs, line);
+    if (line.compare(0, 11, "_atom_site.") == 0) {  // startswith
+      found_atom_site = true;
+      break;
+    }
+  }
+  if (found_atom_site) {
+    int i = 0;
+    while (true) {  // sort out which columns we have and where they are
+      line.erase(0, 11);  // remove "_atom_site." prefix
+      boost::algorithm::trim_right(line);  // sometimes trailing whitespace
+
+      if (line == "group_PDB") {
+        name2column[GROUP_PDB] = i;
+      } else if (line == "id") {
+        name2column[ATOMID] = i;
+      } else if (line == "type_symbol") {
+        name2column[TYPE_SYMBOL] = i;
+      } else if (line == "label_atom_id") {
+        name2column[ATOMNAME] = i;
+      } else if (line == "label_alt_id") {
+        name2column[ALT_ID] = i;
+      } else if (line == "label_seq_id") {
+        name2column[RESNUM] = i;
+      } else if (line == "auth_seq_id") {
+        name2column[AUTH_RESNUM] = i;
+      } else if (line == "label_comp_id") {
+        name2column[RESNAME] = i;
+      } else if (line == "label_asym_id") {
+        name2column[CHAINID] = i;
+      } else if (line == "pdbx_PDB_ins_code") {
+        name2column[INSCODE] = i;
+      } else if (line == "occupancy") {
+        name2column[OCCUPANCY] = i;
+      } else if (line == "B_iso_or_equiv") {
+        name2column[TEMPFACTOR] = i;
+      } else if (line == "pdbx_formal_charge") {
+        name2column[CHARGE] = i;
+      } else if (line == "Cartn_x") {
+        name2column[CARTNX] = i;
+      } else if (line == "Cartn_y") {
+        name2column[CARTNY] = i;
+      } else if (line == "Cartn_z") {
+        name2column[CARTNZ] = i;
+      } else if (line == "pdbx_PDB_model_num") {
+        name2column[MODELNUM] = i;
+      }
+      if (ifs.peek() != '_') {
+        break;
+      }
+      std::getline(ifs, line);
+      i++;
+    }
+
+    // slurp all rows from atom_site section
+    {
+      Utils::LocaleSwitcher ls;
+      parseMmcifAtoms(ifs, name2column, mol, flavor);
+    }
+  }
+  if (!mol) {
+    return;
+  }
+
+  if (proximityBonding) {
+    ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
+  }
+  // flavor & 8 doesn't encode double bonds
+  if (proximityBonding || flavor & 8) {
+    StandardPDBResidueBondOrders(mol);
+  }
+
+  BasicPDBCleanup(*mol);
+
+  if (sanitize) {
+    if (removeHs) {
+      MolOps::removeHs(*mol, false, false);
+    } else {
+      MolOps::sanitizeMol(*mol);
+    }
+  } else {
+    // we need some properties for the chiral setup
+    mol->updatePropertyCache(false);
+  }
+
+  /* Set tetrahedral chirality from 3D co-ordinates */
+  MolOps::assignChiralTypesFrom3D(*mol);
+  StandardPDBResidueChirality(mol);
+}
+}  // namespace
+
+RWMol *mmcifFileToMol(const std::string &fname, bool sanitize, bool removeHs,
+                      unsigned int flavor, bool proximityBonding) {
+  RWMol *mol = nullptr;
+  try {
+    parseMMCifFile(mol, fname, sanitize, removeHs, flavor, proximityBonding);
+  } catch (...) {
+    delete mol;
+    throw;
+  }
+
+  return mol;
+}
+
+
 }  // namespace RDKit
