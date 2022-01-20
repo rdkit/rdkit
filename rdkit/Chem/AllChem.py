@@ -10,33 +10,34 @@
 """ Import all RDKit chemistry modules
 
 """
-import sys
-import warnings
+
 from collections import namedtuple
 
 import numpy
-
-from rdkit import DataStructs
-from rdkit import ForceField
-from rdkit import RDConfig
-from rdkit import rdBase
+from rdkit import DataStructs  # Unused import
+from rdkit import ForceField  # Unused import
+from rdkit import RDConfig  # Unused import
+from rdkit import rdBase  # Unused import
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
+# import but not being used as a module (shortcut)
+from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
+                                               StereoEnumerationOptions)
 from rdkit.Chem.rdChemReactions import *
 from rdkit.Chem.rdDepictor import *
 from rdkit.Chem.rdDistGeom import *
 from rdkit.Chem.rdForceFieldHelpers import *
 from rdkit.Chem.rdMolAlign import *
 from rdkit.Chem.rdMolDescriptors import *
+from rdkit.Chem.rdMolEnumerator import *
 from rdkit.Chem.rdMolTransforms import *
 from rdkit.Chem.rdPartialCharges import *
+from rdkit.Chem.rdqueries import *
 from rdkit.Chem.rdReducedGraphs import *
 from rdkit.Chem.rdShapeHelpers import *
-from rdkit.Chem.rdqueries import *
-from rdkit.Chem.rdMolEnumerator import *
+from rdkit.ForceField.rdForceField import *
 from rdkit.Geometry import rdGeometry
 from rdkit.RDLogger import logger
-from rdkit.Chem.EnumerateStereoisomers import StereoEnumerationOptions, EnumerateStereoisomers
 
 try:
   from rdkit.Chem.rdSLNParse import *
@@ -59,7 +60,7 @@ def TransformMol(mol, tform, confId=-1, keepConfs=False):
       confId = 0
     allConfIds = [c.GetId() for c in mol.GetConformers()]
     for cid in allConfIds:
-      if not cid == confId:
+      if cid != confId:
         mol.RemoveConformer(cid)
     # reset the conf Id to zero since there is only one conformer left
     mol.GetConformer(confId).SetId(0)
@@ -97,15 +98,15 @@ def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
   conf = mol.GetConformer(confId)
   CanonicalizeConformer(conf, ignoreHs=False)
   box = ComputeConfBox(conf)
-  sideLen = (box[1].x - box[0].x + 2 * boxMargin, box[1].y - box[0].y + 2 * boxMargin,
+  sideLen = (box[1].x - box[0].x + 2 * boxMargin, 
+             box[1].y - box[0].y + 2 * boxMargin,
              box[1].z - box[0].z + 2 * boxMargin)
   shape = rdGeometry.UniformGrid3D(sideLen[0], sideLen[1], sideLen[2], spacing=gridSpacing)
   EncodeShape(mol, shape, confId, ignoreHs=False, vdwScale=1.0)
-  voxelVol = gridSpacing**3
+  voxelVol = gridSpacing ** 3
   occVect = shape.GetOccupancyVect()
   voxels = [1 for x in occVect if x == 3]
-  vol = voxelVol * len(voxels)
-  return vol
+  return voxelVol * len(voxels)
 
 
 def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
@@ -175,21 +176,31 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
   # Note: the reference conformer is always the first one
   rmsvals = []
   confIds = [conf.GetId() for conf in mol.GetConformers()]
+  confIdSize = len(confIds)
   if not prealigned:
     if atomIds:
       AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
     else:
       AlignMolConformers(mol, RMSlist=rmsvals)
   else:  # already prealigned
-    for i in range(1, len(confIds)):
-      rmsvals.append(
-        GetConformerRMS(mol, confIds[0], confIds[i], atomIds=atomIds, prealigned=prealigned))
+    rmsvals = [GetConformerRMS(mol, confIds[0], confIds[i], atomIds=atomIds, prealigned=prealigned) for i in range(1, confIdSize)]
+    
   # loop over the conformations (except the reference one)
+  """
+  OLD CODE: Delete this if accept the pull request
   cmat = []
-  for i in range(1, len(confIds)):
+  for i in range(1, confIdSize):
     cmat.append(rmsvals[i - 1])
     for j in range(1, i):
       cmat.append(GetConformerRMS(mol, confIds[i], confIds[j], atomIds=atomIds, prealigned=True))
+  """
+  cmat = [0] * (confIdSize * (confIdSize - 1) // 2)
+  counter: int = 0
+  for i in range(1, confIdSize):
+    cmat[counter] = rmsvals[i - 1]
+    for j in range(1, i):
+      cmat[counter + j] = GetConformerRMS(mol, confIds[i], confIds[j], atomIds=atomIds, prealigned=True)
+    counter += i
   return cmat
 
 
@@ -199,8 +210,8 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False)
 
     >>> from rdkit import Chem
     >>> from rdkit.Chem import AllChem
-    >>> s1=[Chem.MolFromSmiles(x) for x in ('NC','NCC')]
-    >>> s2=[Chem.MolFromSmiles(x) for x in ('OC=O','OC(=O)C')]
+    >>> s1 = [Chem.MolFromSmiles(x) for x in ('NC','NCC')]
+    >>> s2 = [Chem.MolFromSmiles(x) for x in ('OC=O','OC(=O)C')]
     >>> rxn = AllChem.ReactionFromSmarts('[O:2]=[C:1][OH].[N:3]>>[O:2]=[C:1][N:3]')
     >>> r = AllChem.EnumerateLibraryFromReaction(rxn,[s2,s1])
     >>> [Chem.MolToSmiles(x[0]) for x in list(r)]
@@ -246,11 +257,9 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False)
   ProductReactants = namedtuple('ProductReactants', 'products,reactants')
   for chains in _combiEnumerator(sidechainSets):
     prodSets = reaction.RunReactants(chains)
-    for prods in prodSets:
-      if returnReactants:
-        yield ProductReactants(prods, chains)
-      else:
-        yield prods
+    for prods in prodSets: # yield from may be better but not available in Python 3.x
+      yield ProductReactants(prods, chains) if returnReactants else prods
+
 
 
 def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
@@ -302,12 +311,10 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
   match = mol.GetSubstructMatch(core)
   if not match:
     raise ValueError("molecule doesn't match the core")
-  coordMap = {}
-  coreConf = core.GetConformer(coreConfId)
-  for i, idxI in enumerate(match):
-    corePtI = coreConf.GetAtomPosition(i)
-    coordMap[idxI] = corePtI
 
+  coreConf = core.GetConformer(coreConfId)
+  coordMap = {idxI: coreConf.GetAtomPosition(i) for i, idxI in enumerate(match)}
+  
   ci = EmbedMolecule(mol, coordMap=coordMap, randomSeed=randomseed, **kwargs)
   if ci < 0:
     raise ValueError('Could not embed molecule.')
@@ -322,14 +329,6 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
         idxJ = match[j]
         d = coordMap[idxI].Distance(coordMap[idxJ])
         ff.AddDistanceConstraint(idxI, idxJ, d, d, 100.)
-    ff.Initialize()
-    n = 4
-    more = ff.Minimize()
-    while more and n:
-      more = ff.Minimize()
-      n -= 1
-    # rotate the embedded conformation onto the core:
-    rms = AlignMol(mol, core, atomMap=algMap)
   else:
     # rotate the embedded conformation onto the core:
     rms = AlignMol(mol, core, atomMap=algMap)
@@ -339,14 +338,22 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
       p = conf.GetAtomPosition(i)
       pIdx = ff.AddExtraPoint(p.x, p.y, p.z, fixed=True) - 1
       ff.AddDistanceConstraint(pIdx, match[i], 0, 0, 100.)
-    ff.Initialize()
-    n = 4
-    more = ff.Minimize(energyTol=1e-4, forceTol=1e-3)
-    while more and n:
-      more = ff.Minimize(energyTol=1e-4, forceTol=1e-3)
-      n -= 1
-    # realign
-    rms = AlignMol(mol, core, atomMap=algMap)
+  
+  # Minimize the force field at most 4 times and realign/rotate the embedded conformation onto the core
+  # If useTethers, we allow larger tolerance, otherwise just default
+  def minimizeForceField(ForceField, allowTethers: bool) -> bool:
+    if allowTethers:
+      return ForceField.Minimize(forceTol=1e-3, energyTol=1e-4) 
+    return ForceField.Minimize()
+  
+  ff.Initialize()
+  n = 4
+  more = minimizeForceField(ff, allowTethers=useTethers)
+  while more and n:
+    more = minimizeForceField(ff, allowTethers=useTethers)
+    n -= 1
+  
+  rms = AlignMol(mol, core, atomMap=algMap)
   mol.SetProp('EmbedRMS', str(rms))
   return mol
 
@@ -382,7 +389,7 @@ def AssignBondOrdersFromTemplate(refmol, mol):
 
     It also works if there are different formal charges (this was github issue 235):
 
-    >>> template=AllChem.MolFromSmiles('CN(C)C(=O)Cc1ccc2c(c1)NC(=O)c3ccc(cc3N2)c4ccc(c(c4)OC)[N+](=O)[O-]')
+    >>> template = AllChem.MolFromSmiles('CN(C)C(=O)Cc1ccc2c(c1)NC(=O)c3ccc(cc3N2)c4ccc(c(c4)OC)[N+](=O)[O-]')
     >>> mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', '4FTR_lig.mol'))
     >>> AllChem.MolToSmiles(mol)
     'COC1CC(C2CCC3C(O)NC4CC(CC(O)N(C)C)CCC4NC3C2)CCC1N(O)O'
@@ -395,47 +402,57 @@ def AssignBondOrdersFromTemplate(refmol, mol):
   mol2 = rdchem.Mol(mol)
   # do the molecules match already?
   matching = mol2.GetSubstructMatch(refmol2)
-  if not matching:  # no, they don't match
-    # check if bonds of mol are SINGLE
-    for b in mol2.GetBonds():
-      if b.GetBondType() != BondType.SINGLE:
-        b.SetBondType(BondType.SINGLE)
-        b.SetIsAromatic(False)
-    # set the bonds of mol to SINGLE
-    for b in refmol2.GetBonds():
+  if matching:
+    return mol2
+  
+  # If not matching, we need manually checking the bonds, atoms, etc.
+  # [1]: Check if bonds of mol are SINGLE
+  for b in mol2.GetBonds():
+    if b.GetBondType() != BondType.SINGLE:
       b.SetBondType(BondType.SINGLE)
       b.SetIsAromatic(False)
-    # set atom charges to zero;
-    for a in refmol2.GetAtoms():
-      a.SetFormalCharge(0)
-    for a in mol2.GetAtoms():
-      a.SetFormalCharge(0)
+      
+  # [2]: Set the bonds of mol to SINGLE
+  for b in refmol2.GetBonds():
+    b.SetBondType(BondType.SINGLE)
+    b.SetIsAromatic(False)
+    
+  # [3]: Set atom charges to zero;
+  for a in refmol2.GetAtoms():
+    a.SetFormalCharge(0)
+  for a in mol2.GetAtoms():
+    a.SetFormalCharge(0)
 
-    matching = mol2.GetSubstructMatches(refmol2, uniquify=False)
-    # do the molecules match now?
-    if matching:
-      if len(matching) > 1:
-        logger.warning("More than one matching pattern found - picking one")
-      matching = matching[0]
-      # apply matching: set bond properties
-      for b in refmol.GetBonds():
-        atom1 = matching[b.GetBeginAtomIdx()]
-        atom2 = matching[b.GetEndAtomIdx()]
-        b2 = mol2.GetBondBetweenAtoms(atom1, atom2)
-        b2.SetBondType(b.GetBondType())
-        b2.SetIsAromatic(b.GetIsAromatic())
-      # apply matching: set atom properties
-      for a in refmol.GetAtoms():
-        a2 = mol2.GetAtomWithIdx(matching[a.GetIdx()])
-        a2.SetHybridization(a.GetHybridization())
-        a2.SetIsAromatic(a.GetIsAromatic())
-        a2.SetNumExplicitHs(a.GetNumExplicitHs())
-        a2.SetFormalCharge(a.GetFormalCharge())
-      SanitizeMol(mol2)
-      if hasattr(mol2, '__sssAtoms'):
-        mol2.__sssAtoms = None  # we don't want all bonds highlighted
-    else:
-      raise ValueError("No matching found")
+  # Checking again. If not matching, we are disrupt the process.
+  matching = mol2.GetSubstructMatches(refmol2, uniquify=False)
+  if not matching:
+    raise ValueError("No matching found")  
+  
+  # More than one matching. Pick the first one only and adjust the refmol by bonds and atoms
+  if len(matching) > 1:
+    logger.warning("More than one matching pattern found - picking one")
+  matching = matching[0]
+  
+  # Apply matching: set bond properties
+  for b in refmol.GetBonds():
+    atom1 = matching[b.GetBeginAtomIdx()]
+    atom2 = matching[b.GetEndAtomIdx()]
+    b2 = mol2.GetBondBetweenAtoms(atom1, atom2)
+    b2.SetBondType(b.GetBondType())
+    b2.SetIsAromatic(b.GetIsAromatic())
+    
+  # Apply matching: set atom properties
+  for a in refmol.GetAtoms():
+    a2 = mol2.GetAtomWithIdx(matching[a.GetIdx()])
+    a2.SetHybridization(a.GetHybridization())
+    a2.SetIsAromatic(a.GetIsAromatic())
+    a2.SetNumExplicitHs(a.GetNumExplicitHs())
+    a2.SetFormalCharge(a.GetFormalCharge())
+  
+  SanitizeMol(mol2) # Clean up the molecule and return it
+  if hasattr(mol2, '__sssAtoms'):
+    mol2.__sssAtoms = None  # we don't want all bonds highlighted  
+
   return mol2
 
 
@@ -444,8 +461,8 @@ def AssignBondOrdersFromTemplate(refmol, mol):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

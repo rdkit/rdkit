@@ -63,18 +63,15 @@
 
 """
 
-
 import os
+import pickle
 import sys
 
 import numpy
-
 from rdkit import RDConfig
 from rdkit.Chem import FragmentCatalog
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import InfoTheory
-
-import pickle
 
 
 def message(msg, dest=sys.stdout):
@@ -117,6 +114,7 @@ def BuildCatalog(suppl, maxPts=-1, groupFileName=None, minPath=2, maxPath=6, rep
             nPts = len(suppl)
         else:
             nPts = -1
+        
     for i, mol in enumerate(suppl):
         if i == nPts:
             break
@@ -161,7 +159,7 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
 
     """
     nBits = catalog.GetFPLength()
-    resTbl = numpy.zeros((nBits, 2, nActs), numpy.int)
+    resTbl = numpy.zeros((nBits, 2, nActs), dtype=numpy.int64)
     obls = []
 
     if not actName and not acts:
@@ -171,15 +169,15 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
     suppl.reset()
     i = 1
     for mol in suppl:
-        if i and not i % reportFreq:
+        if not i % reportFreq:
             message('Done %d.\n' % (i))
         if mol:
             if not acts:
                 act = int(mol.GetProp(actName))
             else:
                 act = acts[i - 1]
-            fp = fpgen.GetFPForMol(mol, catalog)
-            obls.append([x for x in fp.GetOnBits()])
+            fp_OnBits = fpgen.GetFPForMol(mol, catalog).GetOnBits()
+            obls.append([x for x in fp_OnBits])
             for j in range(nBits):
                 resTbl[j, 0, act] += 1
             for id_ in obls[i - 1]:
@@ -225,7 +223,8 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
         nPts = maxPts
     else:
         nPts = len(bitLists)
-    resTbl = numpy.zeros((nBits, 2, nActs), numpy.int)
+        
+    resTbl = numpy.zeros((nBits, 2, nActs), dtype=numpy.int64)
     if not actName and not acts:
         actName = suppl[0].GetPropNames()[-1]
     suppl.reset()
@@ -275,9 +274,9 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
         ranker.SetBiasList(biasList)
     else:
         ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.ENTROPY)
-    i = 0
+
     fps = []
-    for mol in suppl:
+    for i, mol in enumerate(suppl):
         if not acts:
             try:
                 act = int(mol.GetProp(actName))
@@ -287,14 +286,13 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
                 raise KeyError(actName)
         else:
             act = acts[i]
-        if i and not i % reportFreq:
+        if i != 0 and not i % reportFreq:
             if nMols > 0:
                 message('Done %d of %d.\n' % (i, nMols))
             else:
                 message('Done %d.\n' % (i))
         fp = fpgen.GetFPForMol(mol, catalog)
         ranker.AccumulateVotes(fp, act)
-        i += 1
         if collectFps:
             fps.append(fp)
     gains = ranker.GetTopN(topN)
@@ -313,7 +311,6 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
         topN = nBits
     if not actName and not acts:
         actName = suppl[0].GetPropNames()[-1]
-
     if hasattr(suppl, '__len__'):
         nMols = len(suppl)
     else:
@@ -323,6 +320,7 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
         ranker.SetBiasList(biasList)
     else:
         ranker = InfoTheory.InfoBitRanker(nBits, nActs, InfoTheory.InfoType.ENTROPY)
+        
     for i, mol in enumerate(suppl):
         if not acts:
             try:
@@ -333,15 +331,13 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
                 raise KeyError(actName)
         else:
             act = acts[i]
-        if i and not i % reportFreq:
+        if i != 0 and not i % reportFreq:
             if nMols > 0:
                 message('Done %d of %d.\n' % (i, nMols))
             else:
                 message('Done %d.\n' % (i))
-        fp = fps[i]
-        ranker.AccumulateVotes(fp, act)
-    gains = ranker.GetTopN(topN)
-    return gains
+        ranker.AccumulateVotes(fps[i], act)
+    return ranker.GetTopN(topN)
 
 
 def OutputGainsData(outF, gains, cat, nActs=2):
@@ -367,7 +363,7 @@ def ProcessGainsData(inF, delim=',', idCol=0, gainCol=1):
 
     """
     res = []
-    _ = inF.readline()
+    inF.readline()
     for line in inF:
         splitL = line.strip().split(delim)
         res.append((splitL[idCol], float(splitL[gainCol])))
@@ -412,6 +408,7 @@ def SupplierFromDetails(details):
             nameName = m.GetPropNames()[details.nameCol]
             details.nameCol = nameName
             suppl.reset()
+            
     if isinstance(details.actCol, int):
         suppl.reset()
         m = next(suppl)
