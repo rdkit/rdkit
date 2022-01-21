@@ -14,13 +14,13 @@
 
 """
 
-
+import os
 import sys
-
-from rdkit.Dbase import DbInfo
-from rdkit.Dbase import DbModule
-from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
 from io import StringIO
+
+from rdkit import RDConfig
+from rdkit.Dbase import DbInfo, DbModule
+from rdkit.Dbase.DbResultSet import DbResultSet, RandomAccessDbResultSet
 
 
 def _take(fromL, what):
@@ -124,6 +124,7 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
             raise ValueError('forceList and transform arguments are not compatible')
         if not randomAccess:
             raise ValueError('when forceList is set, randomAccess must also be used')
+        
         data = c.fetchall()
         if removeDups >= 0:
             seen = set()
@@ -137,7 +138,6 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
             klass = RandomAccessDbResultSet
         else:
             klass = DbResultSet
-
         data = klass(c, cn, cmd, removeDups=removeDups, transform=transform, extras=extras)
 
     return data
@@ -182,14 +182,12 @@ def DatabaseToText(dBase, table, fields='*', join='', where='', user='sysdba', p
     colsToTake = []
     # the description field of the cursor carries around info about the columns
     #  of the table
-    for i in range(len(c.description)):
-        item = c.description[i]
+    for i, item in enumerate(c.description):
         if item[1] not in DbInfo.sqlBinTypes:
             colsToTake.append(i)
             headers.append(item[0])
 
-    lines = []
-    lines.append(delim.join(headers))
+    lines = [delim.join(headers)]
 
     # grab the data
     results = c.fetchall()
@@ -218,9 +216,10 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
             d = data[row][col]
             if d is None:
                 continue
+            
             locType = type(d)
-            if locType != float and locType != int:
-                locType = str
+            if not isinstance(d, (float, int)):
+                locType = str   
                 try:
                     d = str(d)
                 except UnicodeError as msg:
@@ -229,6 +228,7 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
                     raise UnicodeError(msg)
             else:
                 typeHere[1] = max(typeHere[1], len(str(d)))
+            
             if isinstance(d, str):
                 if nullMarker is None or d != nullMarker:
                     l = max(len(d), typeHere[1])
@@ -458,8 +458,6 @@ if __name__ == '__main__':  # pragma: nocover
     sio.write('1.1,4,5\n')
     sio.write('4,foo,6\n')
     sio.seek(0)
-    from rdkit import RDConfig
-    import os
     dirLoc = os.path.join(RDConfig.RDCodeDir, 'Dbase', 'TEST.GDB')
 
     TextFileToDatabase(dirLoc, 'fromtext', sio)

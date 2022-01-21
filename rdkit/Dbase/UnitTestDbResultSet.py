@@ -64,8 +64,7 @@ class TestCase(unittest.TestCase):
     cmd = 'select * from ten_elements'
     resultSet = RandomAccessDbResultSet(self.curs, self.conn, cmd)
     assert len(resultSet) == 10
-    for i in range(len(resultSet)):
-      _ = resultSet[i]
+    tValue = resultSet[0]
 
   def test3(self):
     cmd = 'select * from ten_elements'

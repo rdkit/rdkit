@@ -25,37 +25,36 @@ else:
     hasCDX = 0
   else:
     hasCDX = 1
-  from rdkit.utils import cactvs
+  import sys
+
   from rdkit.Chem import rdDepictor
   from rdkit.Chem.Draw import DrawUtils
-  from rdkit.Dbase.DbConnection import DbConnect
+  from rdkit.Chem.Draw.MolDrawing import DrawingOptions, MolDrawing
   from rdkit.Dbase import DbInfo
+  from rdkit.Dbase.DbConnection import DbConnect
   from rdkit.Reports.PDFReport import PDFReport, ReportUtils
   from rdkit.sping.ReportLab.pidReportLab import RLCanvas as Canvas
-  from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
+  from rdkit.utils import cactvs
   from reportlab.lib import colors
   from reportlab.lib.units import inch
-  import sys
+
 
   def GetReportlabTable(self, *args, **kwargs):
     """ this becomes a method of DbConnect  """
     dbRes = self.GetData(*args, **kwargs)
     rawD = [dbRes.GetColumnNames()]
     colTypes = dbRes.GetColumnTypes()
-    binCols = []
-    for i in range(len(colTypes)):
-      if colTypes[i] in DbInfo.sqlBinTypes or colTypes[i] == 'binary':
-        binCols.append(i)
-    nRows = 0
+    
+    binCols = [i for i, col in enumerate(colTypes) 
+               if col == 'binary' or col in DbInfo.sqlBinTypes]
+
     for entry in dbRes:
-      nRows += 1
+      entry = list(entry) 
       for col in binCols:
-        entry = list(entry)
         entry[col] = 'N/A'
       rawD.append(entry)
 
-    res = platypus.Table(rawD)
-    return res
+    return platypus.Table(rawD)
 
   class CDXImageTransformer(object):
 
@@ -218,9 +217,9 @@ else:
         tform = ReportLabImageTransformer(smiCol)
       else:
         tform = CactvsImageTransformer(smiCol)
-
     else:
       tform = None
+      
     kwargs['transform'] = tform
     tbl = conn.GetReportlabTable(*args, **kwargs)
     tbl.setStyle(
@@ -229,12 +228,12 @@ else:
 
     if smiCol > -1 and tform:
       tbl._argW[smiCol] = tform.width * 1.2
-    elements = [tbl]
+
     reportTemplate = PDFReport()
     reportTemplate.pageHeader = title
 
     doc = platypus.SimpleDocTemplate(fileName)
-    doc.build(elements, onFirstPage=reportTemplate.onPage, onLaterPages=reportTemplate.onPage)
+    doc.build([tbl], onFirstPage=reportTemplate.onPage, onLaterPages=reportTemplate.onPage)
 
   DbConnect.GetReportlabTable = GetReportlabTable
 

@@ -194,8 +194,9 @@ if __name__ == '__main__':  # pragma: nocover
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements')
   resultSet = RandomAccessDbResultSet(curs)
-  for i in range(len(resultSet)):
-    val = resultSet[i]
+  tSize, tValue = len(resultSet), resultSet[0]
+  if tSize > 0:
+    tValue = resultSet[0]
 
   print('use iter')
   curs = conn.GetCursor()
@@ -208,17 +209,13 @@ if __name__ == '__main__':  # pragma: nocover
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements_dups')
   resultSet = DbResultSet(curs)
-  r = []
-  for thing in resultSet:
-    r.append(thing)
+  r = [thing for thing in resultSet]
   assert len(r) == 20
 
   curs = conn.GetCursor()
   curs.execute('select * from ten_elements_dups')
   resultSet = DbResultSet(curs, removeDups=0)
-  r = []
-  for thing in resultSet:
-    r.append(thing)
+  r = [thing for thing in resultSet]
   assert len(r) == 10
 
   curs = conn.GetCursor()

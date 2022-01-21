@@ -11,6 +11,8 @@
 """ Various storage (molecular and otherwise) functionality
 
 """
+import doctest
+
 from rdkit import RDConfig
 from rdkit.Dbase import DbModule
 
@@ -32,6 +34,7 @@ def ValidateRDId(ID):
   splitId = ID.split('-')
   if len(splitId) < 4:
     return 0
+  
   accum = 0
   for entry in splitId[1:-1]:
     for char in entry:
@@ -40,8 +43,7 @@ def ValidateRDId(ID):
       except ValueError:
         return 0
       accum += v
-  crc = int(splitId[-1])
-  return accum % 10 == crc
+  return accum % 10 == int(splitId[-1])
 
 
 def RDIdToInt(ID, validate=1):
@@ -150,11 +152,8 @@ def GetNextId(conn, table, idColName='Id'):
   vals = conn.GetData(table=table, fields=idColName)
   maxVal = 0
   for val in vals:
-    val = RDIdToInt(val[0], validate=0)
-    if val > maxVal:
-      maxVal = val
-  maxVal += 1
-  return maxVal
+    maxVal = max(maxVal, RDIdToInt(val[0], validate=0))
+  return maxVal + 1
 
 
 def GetNextRDId(conn, table, idColName='Id', leadText=''):
@@ -165,9 +164,7 @@ def GetNextRDId(conn, table, idColName='Id', leadText=''):
   """
   if not leadText:
     val = conn.GetData(table=table, fields=idColName)[0][0]
-    val = val.replace('_', '-')
-    leadText = val.split('-')[0]
-
+    leadText = val.replace('_', '-').split('-')[0]
   ID = GetNextId(conn, table, idColName=idColName)
   return IndexToRDId(ID, leadText=leadText)
 
@@ -179,15 +176,15 @@ def RegisterItem(conn, table, value, columnName, data=None, id='', idColName='Id
   >>> conn = DbConnect(tempDbName)
   >>> tblName = 'StorageTest'
   >>> conn.AddTable(tblName,'id varchar(32) not null primary key,label varchar(40),val int')
-  >>> RegisterItem(conn,tblName,'label1','label',['label1',1])==(1, 'RDCmpd-000-001-1')
+  >>> RegisterItem(conn, tblName, 'label1', 'label', ['label1', 1]) == (1, 'RDCmpd-000-001-1')
   True
-  >>> RegisterItem(conn,tblName,'label2','label',['label2',1])==(1, 'RDCmpd-000-002-2')
+  >>> RegisterItem(conn, tblName, 'label2', 'label', ['label2', 1]) == (1, 'RDCmpd-000-002-2')
   True
-  >>> RegisterItem(conn,tblName,'label1','label',['label1',1])==(0, 'RDCmpd-000-001-1')
+  >>> RegisterItem(conn, tblName, 'label1', 'label', ['label1', 1]) == (0, 'RDCmpd-000-001-1')
   True
-  >>> str(GetNextRDId(conn,tblName))
+  >>> str(GetNextRDId(conn, tblName))
   'RDCmpd-000-003-3'
-  >>> tuple(conn.GetData(table=tblName)[0])==('RDCmpd-000-001-1', 'label1', 1)
+  >>> tuple(conn.GetData(table=tblName)[0]) == ('RDCmpd-000-001-1', 'label1', 1)
   True
 
   It's also possible to provide ids by hand:
@@ -221,9 +218,7 @@ def RegisterItems(conn, table, values, columnName, rows, startId='', idColName='
   if rows and len(rows) != len(values):
     raise ValueError("length mismatch between rows and values")
   nVals = len(values)
-  origOrder = {}
-  for i, v in enumerate(values):
-    origOrder[v] = i
+  origOrder = {v: i for i, v in enumerate(values)}
 
   curs = conn.GetCursor()
   qs = ','.join(DbModule.placeHolder * nVals)
@@ -284,19 +279,16 @@ __test__ = {"roundtrip": _roundtripTests}
 
 
 def _test():  # pragma: nocover
-  import doctest
-  import sys
   return doctest.testmod(sys.modules["__main__"], verbose=True)
 
 
 if __name__ == '__main__':  # pragma: nocover
+  import os
+  import shutil
   import sys
   import tempfile
-  import shutil
-  import os
   if RDConfig.useSqlLite:
-    tmpf, tempName = tempfile.mkstemp(suffix='sqlt')
-    tempDbName = tempName
+    tempDbName = tempfile.mkstemp(suffix='sqlt')[1]
     shutil.copyfile(RDConfig.RDTestDatabase, tempDbName)
   else:
     tempDbName = '::RDTests'
