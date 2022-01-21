@@ -1,11 +1,11 @@
-from contextlib import contextmanager
 import os
 import sys
 import unittest
+from contextlib import contextmanager
+from io import StringIO
 
 from rdkit import RDConfig
 from rdkit.Chem import FeatFinderCLI
-from io import StringIO
 
 
 class TestCase(unittest.TestCase):
