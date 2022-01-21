@@ -12,12 +12,11 @@ unit testing code for calculations in rdkit.Chem.MolSurf
 """
 
 
-from collections import namedtuple
 import os.path
 import unittest
+from collections import namedtuple
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import MolSurf
 
 doLong = False
@@ -49,7 +48,7 @@ class TestCase(unittest.TestCase):
       calc = MolSurf.TPSA(data.mol)
       self.assertAlmostEqual(
         calc, data.expected, delta=1e-4,
-        msg='bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
+        msg = 'bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
 
   def testTPSALong(self):
     if not doLong:
@@ -62,7 +61,7 @@ class TestCase(unittest.TestCase):
           'Line {0.lineNo}: TPSA Calculation failed for SMILES {0.smiles}'.format(data))
       self.assertAlmostEqual(
         calc, data.expected, delta=1e-4,
-        msg='bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
+        msg = 'bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
 
   def testTPSALongNCI(self):
     if not doLong:

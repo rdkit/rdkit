@@ -1,5 +1,3 @@
-
-
 from collections import namedtuple
 import doctest
 import os.path
