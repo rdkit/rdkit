@@ -13,13 +13,12 @@
 
 """
 
-
 import os
+import sys
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem import Lipinski, rdMolDescriptors, Crippen
+from rdkit import Chem, RDConfig
+from rdkit.Chem import Crippen, Lipinski, rdMolDescriptors
 
 NonStrict = "NUM_ROTATABLEBONDS_O"
 Strict = "NUM_ROTATABLEBONDS"
@@ -155,7 +154,6 @@ class TestCase_Regression(unittest.TestCase):
 
 if __name__ == '__main__':
   import argparse
-  import sys
   parser = argparse.ArgumentParser()
   parser.add_argument('-l', default=False, action='store_true', dest='doLong')
   args = parser.parse_args()

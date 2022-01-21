@@ -323,12 +323,12 @@ class TestTimeout(MCSTestCase):
   # This should take over two minutes to process. Give it 1 seconds.
   @unittest.skipIf(isDebugBuild(), "Timeout test will fail on debug builds.")
   def test_timeout(self):
-    t1 = time.time()
+    t1 = time.perf_counter()
     result = rdFMCS.FindMCS(lengthy_mols, timeout=1)
     self.assert_result(result, canceled=True)
     self.assertTrue(result.numAtoms > 1)
     self.assertTrue(result.numBonds >= result.numAtoms - 1, (result.numAtoms, result.numBonds))
-    t2 = time.time()
+    t2 = time.perf_counter()
     self.assertTrue(t2 - t1 < 2, t2 - t1)
 
   # Check for non-negative values

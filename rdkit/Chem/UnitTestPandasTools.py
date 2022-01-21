@@ -1,14 +1,16 @@
-from rdkit import RDConfig, rdBase, Chem
-from io import StringIO, BytesIO
-from rdkit.Chem import PandasTools
-import numpy
-import unittest
-import tempfile
-import shutil
-import os
-import gzip
 import doctest
-if (getattr(doctest, 'ELLIPSIS_MARKER')):
+import gzip
+import os
+import shutil
+import tempfile
+import unittest
+from io import BytesIO, StringIO
+
+import numpy
+from rdkit import Chem, RDConfig, rdBase
+from rdkit.Chem import PandasTools
+
+if getattr(doctest, 'ELLIPSIS_MARKER'):
   doctest.ELLIPSIS_MARKER = '*...*'
 
 try:
