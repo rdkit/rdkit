@@ -103,22 +103,18 @@ This can be reverted using the ChangeMoleculeRendering method
 
 '''
 
-from base64 import b64encode
+import logging
 import sys
 import types
-import logging
-
-import numpy as np
-from rdkit import Chem
-from rdkit import DataStructs
-from rdkit.Chem import AllChem
-from rdkit.Chem import Draw
-from rdkit.Chem import SDWriter
-from rdkit.Chem import rdchem
-from rdkit.Chem.Scaffolds import MurckoScaffold
+from base64 import b64encode
 from io import BytesIO
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
+
+import numpy as np
+from rdkit import Chem, DataStructs
+from rdkit.Chem import AllChem, Draw, SDWriter, rdchem
+from rdkit.Chem.Scaffolds import MurckoScaffold
 
 log = logging.getLogger(__name__)
 
@@ -778,6 +774,7 @@ if __name__ == '__main__':  # pragma: nocover
     @unittest.skipIf(xlsxwriter is None, 'xlsxwriter not installed')
     def testGithub1507(self):
       import os
+
       from rdkit import RDConfig
       sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
       frame = LoadSDF(sdfFile)

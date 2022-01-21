@@ -366,6 +366,7 @@ def _pyTPSAContribs(mol, verbose=False):
           numNeighbors -= 1
           nHs += 1
       tmp = -1
+        
       if atNum == 7:
         if numNeighbors == 1:
           if nHs == 0 and nTrip == 1 and chg == 0:
@@ -470,11 +471,7 @@ def _pyTPSA(mol, verbose=False):
 
    Implementation based on the Daylight contrib program tpsa.c
   """
-  contribs = _pyTPSAContribs(mol, verbose=verbose)
-  res = 0.0
-  for contrib in contribs:
-    res += contrib
-  return res
+  return sum(_pyTPSAContribs(mol, verbose=verbose))
 
 
 _pyTPSA.version = "1.0.1"

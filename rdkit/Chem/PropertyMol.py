@@ -2,6 +2,10 @@
 # Copyright (C) 2007-2010 Greg Landrum
 # All Rights Reserved
 #
+
+
+import sys
+
 from rdkit import Chem
 
 
@@ -60,7 +64,7 @@ class PropertyMol(Chem.Mol):
      >>> fn = tempfile.NamedTemporaryFile(suffix='.sdf', delete=False).name
      >>> w = Chem.SDWriter(fn)
      >>> w.write(pm)
-     >>> w=None
+     >>> w = None
      >>> with open(fn,'r') as inf:
      ...   txt = inf.read()
      >>> '<IntVal>' in txt
@@ -121,11 +125,9 @@ class PropertyMol(Chem.Mol):
 
 def _test():
     import doctest
-    import sys
     return doctest.testmod(sys.modules["__main__"], optionflags=doctest.ELLIPSIS)
 
 
 if __name__ == '__main__':
-    import sys
     failed, tried = _test()
     sys.exit(failed)
