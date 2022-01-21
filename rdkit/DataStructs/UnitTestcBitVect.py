@@ -11,7 +11,6 @@
 """ unit testing code for the C++ BitVects
 """
 
-
 import os
 import unittest
 

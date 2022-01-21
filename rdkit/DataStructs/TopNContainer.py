@@ -22,7 +22,7 @@ class TopNContainer(object):
     if size is negative, all entries will be kept in sorted order
     """
     self._size = size
-    if (size >= 0):
+    if size >= 0:
       self.best = [mostNeg] * self._size
       self.extras = [None] * self._size
     else:
@@ -60,8 +60,7 @@ class TopNContainer(object):
   def __len__(self):
     if self._size >= 0:
       return self._size
-    else:
-      return len(self.best)
+    return len(self.best)
 
   def __getitem__(self, which):
     return self.best[which], self.extras[which]

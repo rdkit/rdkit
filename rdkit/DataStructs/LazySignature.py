@@ -4,7 +4,6 @@
 #   All Rights Reserved
 #
 
-
 class LazySig:
 
   def __init__(self, computeFunc, sigSize):
@@ -55,16 +54,16 @@ class LazySig:
     """
     if which < 0:
       # handle negative indices
-      which = self.size + which
+      which += self.size
 
     if which <= 0 or which >= self.size:
       raise IndexError('bad index')
 
     if which in self._cache:
-      v = self._cache[which]
-    else:
-      v = self.computeFunc(which)
-      self._cache[which] = v
+      return self._cache[which]
+    
+    v = self.computeFunc(which)
+    self._cache[which] = v
     return v
 
 
