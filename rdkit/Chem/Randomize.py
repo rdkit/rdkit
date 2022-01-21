@@ -14,8 +14,7 @@ from rdkit import Chem
 
 def RandomizeMolBlock(molB):
     splitB = molB.split('\n')
-    res = []
-    res.extend(splitB[0:3])
+    res = [splitB[0], splitB[1], splitB[2]]
     idx = 3
     inL = splitB[idx]
     res.append(inL)
@@ -57,7 +56,7 @@ def RandomizeMol(mol):
 
 def CheckCanonicalization(mol, nReps=10):
     refSmi = Chem.MolToSmiles(mol, False)
-    for i in range(nReps):
+    for _ in range(nReps):
         m2 = RandomizeMol(mol)
         smi = Chem.MolToSmiles(m2, False)
         if smi != refSmi:
@@ -65,7 +64,6 @@ def CheckCanonicalization(mol, nReps=10):
 
 
 if __name__ == '__main__':
-    from rdkit.Chem import Randomize
     CheckCanonicalization(Chem.MolFromSmiles('CON'))
     CheckCanonicalization(Chem.MolFromSmiles('c1ccccn1'))
     CheckCanonicalization(Chem.MolFromSmiles('C/C=C/F'))

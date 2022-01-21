@@ -11,7 +11,6 @@
 
 """
 
-
 import itertools
 
 from rdkit import Chem
@@ -49,7 +48,6 @@ def SATISTypes(mol, neighborsToInclude=4):
      a list of strings nAtoms long
 
   """
-  nAtoms = mol.GetNumAtoms()
   atoms = mol.GetAtoms()
   atomicNums = [atom.GetAtomicNum() for atom in atoms]
 
@@ -61,16 +59,17 @@ def SATISTypes(mol, neighborsToInclude=4):
       matches = set(itertools.chain(*matches))
       specialCaseMatches.append((specialCaseIdx, matches))
 
-  codes = [None] * nAtoms
+  codes = [None] * mol.GetNumAtoms()
   for i, atom in enumerate(atoms):
     code = [99] * (neighborsToInclude + 1)
-
     # Atom
     code[0] = min(atom.GetAtomicNum(), 99)
 
     # Get atomic numbers of connected neighbours and use for code
-    otherIndices = [x.GetIdx() for x in atom.GetNeighbors()]
-    otherNums = sorted([atomicNums[x] for x in otherIndices] + [1] * atom.GetTotalNumHs())
+    otherNums = [atomicNums[x.GetIdx()] for x in atom.GetNeighbors()] 
+    otherNums.extend([1] * atom.GetTotalNumHs())
+    otherNums.sort()
+    
     if len(otherNums) > neighborsToInclude:
       # Get the last neighborsToInclude elements from otherNums
       otherNums = otherNums[-neighborsToInclude:]
