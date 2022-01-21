@@ -1,29 +1,20 @@
-
-import doctest
-import unittest
-
-import os
 import csv
+import os
+import unittest
 from random import Random
+
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.Chem.EnumerateHeterocycles import (
-    GetHeterocycleReactionSmarts,
-    GetHeterocycleReactions,
-    EnumerateHeterocycles,
-)
+from rdkit.Chem.EnumerateHeterocycles import (EnumerateHeterocycles,
+                                              GetHeterocycleReactions,
+                                              GetHeterocycleReactionSmarts)
+
 
 def has_radical(mol):
-    for atom in mol.GetAtoms():
-        if atom.GetNumRadicalElectrons():
-            return True
-    return False
+    return any(atom.GetNumRadicalElectrons() > 0 for atom in mol.GetAtoms())
 
 def has_aromatic(mol):
-    for atom in mol.GetAtoms():
-        if atom.GetIsAromatic():
-            return True
-    return False
+    return any(atom.GetIsAromatic() for atom in mol.GetAtoms())
 
 def check_smiles(smiles):
     mol = Chem.MolFromSmiles(smiles)
@@ -149,20 +140,16 @@ class TestCase(unittest.TestCase):
             for src, rxn in zip(GetHeterocycleReactionSmarts(), GetHeterocycleReactions()):
                 for smiles in get_unique_products(rxn, rdkit_mol):
                     assert_valid_change(orig_can_smi, smiles)
-                    row = {
-                        'SMILES'  : orig_can_smi,
-                        'MUTATED' : smiles,
-                        'REACTION' : src.SMARTS + '>>' + src.CONVERT_TO,
-                        'DESCRIPTION' : src.DESCRIPTION,
-                        }
-                    writer.writerow(row)
+                    desc = {'SMILES'  : orig_can_smi, 'MUTATED' : smiles,
+                           'REACTION' : src.SMARTS + '>>' + src.CONVERT_TO,
+                           'DESCRIPTION' : src.DESCRIPTION,
+                           }
+                    writer.writerow(desc)
                     changed = True
 
             # record aromatic fragments that no rule changes (possible problems?)
             if not changed and has_aromatic(rdkit_mol):
-                row = {'SMILES' : orig_can_smi,
-                       'TITLE'  : orig_can_smi}
-                notchanged.writerow(row)
+                notchanged.writerow({'SMILES' : orig_can_smi, 'TITLE'  : orig_can_smi}) # row
 
 # There are only 2 possible 6 member ring 3 heteroatom systems, 3 carbons in each (operating under the assumption we never seen 4+!)
 # c1ccnnn1 => c1ccnnn1, c1cnnnc1, c1nnncc1
@@ -250,7 +237,6 @@ class TestCase(unittest.TestCase):
             rdkit_mol = Chem.MolFromSmiles(orig_can_smi)
 
             changed = False
-
             for src, rxn in zip(GetHeterocycleReactionSmarts(), GetHeterocycleReactions()):
                 for smiles in get_unique_products(rxn, rdkit_mol):
                     total_generated += 1
@@ -261,28 +247,24 @@ class TestCase(unittest.TestCase):
                     uniq_fragments.add(smiles)
                     fragments.append(smiles)
 
-                    row = {
-                        'SMILES'  : orig_can_smi,
-                        'MUTATED' : smiles,
-                        'REACTION' : src.SMARTS + '>>' + src.CONVERT_TO,
-                        'DESCRIPTION' : src.DESCRIPTION,
-                        }
+                    row = {'SMILES': orig_can_smi, 'MUTATED': smiles,
+                           'REACTION': src.SMARTS + '>>' + src.CONVERT_TO, 
+                           'DESCRIPTION': src.DESCRIPTION, 
+                           }
                     writer.writerow(row)
-
 
             # record aromatic fragments that no rule changes (possible problems?)
             if not changed and orig_can_smi not in uniq_notchanged:
                 uniq_notchanged.add(orig_can_smi)
-                row = {'SMILES' : orig_can_smi,
-                       'TITLE'  : orig_can_smi}
+                row = {'SMILES': orig_can_smi, 'TITLE': orig_can_smi}
                 notchanged.writerow(row)
+                
         print(total_generated, "generated of which", len(uniq_fragments), "are unique fragments generated after", num_trials, "trials")
 
     def test_reaction_on_mol_with_attachments(self):
         src = self.get_six_member_ring_carbon_to_nitrogen_reaction()
         reaction = src.SMARTS + '>>' + src.CONVERT_TO
         rxn = AllChem.ReactionFromSmarts(reaction)
-
 
         rdkit_mol = Chem.MolFromSmiles('c1([*:2])ccccc1([*:3])')
         products = set(get_unique_products(rxn, rdkit_mol))
