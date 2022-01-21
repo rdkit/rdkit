@@ -32,19 +32,19 @@
 import gzip
 import io
 import os
+import pickle
 import re
 import unittest
 
-from rdkit import RDConfig
-from rdkit.Chem import rdDepictor
-from rdkit import RDLogger
-import pickle
-from rdkit.Chem import MolFromSmiles, MolToSmiles, ForwardSDMolSupplier, SanitizeMol
-from rdkit.Chem import MolFromMolBlock, MolToMolBlock
-from rdkit.Chem import INCHI_AVAILABLE
+from rdkit import RDConfig, RDLogger
+from rdkit.Chem import (INCHI_AVAILABLE, ForwardSDMolSupplier, MolFromMolBlock,
+                        MolFromSmiles, MolToMolBlock, MolToSmiles, SanitizeMol,
+                        rdDepictor)
+
 if INCHI_AVAILABLE:
-  from rdkit.Chem import InchiReadWriteError
-  from rdkit.Chem import MolToInchi, MolBlockToInchi, MolFromInchi, InchiToInchiKey, MolToInchiKey
+  from rdkit.Chem import (InchiReadWriteError, InchiToInchiKey,
+                          MolBlockToInchi, MolFromInchi, MolToInchi,
+                          MolToInchiKey)
 
 COLOR_RED = '\033[31m'
 COLOR_GREEN = '\033[32m'
@@ -61,8 +61,7 @@ def inchiDiffPrefix(inchi1, inchi2):
       break
   if len(inchi1) >= i:
     return inchi1[i][0]
-  else:
-    return inchi2[i][0]
+  return inchi2[i][0]
 
 
 def inchiDiff(inchi1, inchi2):
@@ -190,8 +189,7 @@ class TestCase(unittest.TestCase):
             MolToInchi(m, treatWarningAsError=True)
           except InchiReadWriteError as inst:
             _, error = inst.args
-            if 'Metal' in error or \
-                    'Charges were rearranged' in error:
+            if 'Metal' in error or 'Charges were rearranged' in error:
               reasonable += 1
               continue
           # THERE ARE NO EXAMPLES FOR THE FOLLOWING (no coverage)
