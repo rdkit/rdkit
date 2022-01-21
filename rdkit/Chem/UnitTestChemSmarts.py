@@ -13,7 +13,7 @@
 """
 from rdkit import RDConfig
 import unittest
-import os.path
+import os
 from rdkit import Chem
 
 

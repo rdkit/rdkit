@@ -12,7 +12,7 @@
 
 """
 
-import unittest, sys, os
+import unittest, os
 import io
 
 import numpy
@@ -46,10 +46,9 @@ class TestCase(unittest.TestCase):
       if len(line) and line[0] != '#':
         splitL = line.split(',')
         if len(splitL) == 3:
-          smi, clog, mr = splitL
-          smis.append(smi)
-          clogs.append(float(clog))
-          mrs.append(float(mr))
+          smis.append(splitL[0])
+          clogs.append(float(splitL[1]))
+          mrs.append(float(splitL[2]))
     self.smis = smis
     self.clogs = clogs
     self.mrs = mrs
@@ -95,14 +94,13 @@ class TestCase(unittest.TestCase):
   def _writeDetailFile(self, inF, outF):
     while 1:
       try:
-        smi, refContribs = pickle.load(inF)
+        smi, _ = pickle.load(inF)
       except EOFError:
         break
       else:
         mol = Chem.MolFromSmiles(smi)
         if mol:
           mol = Chem.AddHs(mol, 1)
-          smi2 = Chem.MolToSmiles(mol)
           contribs = Crippen._GetAtomContribs(mol)
           pickle.dump((smi, contribs), outF)
         else:
