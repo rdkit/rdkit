@@ -33,7 +33,9 @@ def _VertexDegrees(mat, onlyOnes=0):
   this is just a row sum of the matrix... simple, neh?
 
   """
-  return sum(mat) if not onlyOnes else sum(numpy.equal(mat, 1))
+  if not onlyOnes:
+    return sum(mat)
+  return sum(numpy.equal(mat, 1))
 
 
 def _NumAdjacencies(mol, dMat):

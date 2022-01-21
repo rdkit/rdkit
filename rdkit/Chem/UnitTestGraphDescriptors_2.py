@@ -12,12 +12,11 @@
 
 """
 
-
-import os.path
+import os
+import sys
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import GraphDescriptors
 
 doLong = False
@@ -423,9 +422,11 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles(smi)
       newBal = GraphDescriptors.BalabanJ(m, forceDMat=1)
       assert feq(newBal, bal, 1e-4), 'mol %s %f!=%f' % (smi, newBal, bal)
+      
       m = Chem.MolFromSmiles(smi)
       newCT = GraphDescriptors.BertzCT(m, forceDMat=1)
       assert feq(newCT, CT, 1e-4), 'mol %s (CT calc = %f) should have CT = %f' % (smi, newCT, CT)
+      
       m = Chem.MolFromSmiles(smi)
       newCT = GraphDescriptors.BertzCT(m, forceDMat=1)
       assert feq(newCT, CT, 1e-4), 'mol %s (CT calc = %f) should have CT = %f' % (smi, newCT, CT)
@@ -512,7 +513,6 @@ class TestCase_python(unittest.TestCase):
 
 if __name__ == '__main__':
   import argparse
-  import sys
   parser = argparse.ArgumentParser()
   parser.add_argument('-l', default=False, action='store_true', dest='doLong')
   args = parser.parse_args()

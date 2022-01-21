@@ -11,20 +11,26 @@
 
 """
 
-import io
-import os.path
-import unittest
 import doctest
+import os
+import pickle
+import unittest
 
 import numpy as np
 from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem import AllChem
-from rdkit.Chem import Descriptors
-from rdkit.Chem import Lipinski
-from rdkit.Chem import rdMolDescriptors
-import pickle
+from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors
 
+
+def __ShowDescriptors():
+  # This is used for debugging
+  print(Descriptors._descList) # debugging
+  print('Descriptors Size: ', len(Descriptors._descList))
+
+
+def __ShowDescriptorErrors(index, name, function):
+  # This is used for debugging
+  print(f"Error in Descriptor Function {index}: {name} - {function}")
+          
 
 def load_tests(loader, tests, ignore):
   """ Add the Doctests from the module """
@@ -33,36 +39,45 @@ def load_tests(loader, tests, ignore):
 
 
 class TestCase(unittest.TestCase):
-
+  
   def testGithub1287(self):
     smis = ('CCC', )
+    # __ShowDescriptors()
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
-      for nm, fn in Descriptors._descList:
+      for i, (nm, fn) in enumerate(Descriptors._descList):
         try:
-          _ = fn(m)
+          fn(m)
         except Exception:
           import traceback
           traceback.print_exc()
+          # __ShowDescriptorErrors(index=i, name=nm, function=fn)
           raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
 
   def testBadAtomHandling(self):
     smis = ('CC[Pu]', 'CC[*]')
+    # __ShowDescriptors()
     for smi in smis:
       m = Chem.MolFromSmiles(smi)
       self.assertTrue(m)
-      for nm, fn in Descriptors._descList:
+      for i, (nm, fn) in enumerate(Descriptors._descList):
         try:
-          v = fn(m)
+          fn(m)
         except RuntimeError:
           # 3D descriptors fail since the mol has no conformers
           pass
         except Exception:
           import traceback
           traceback.print_exc()
+          # __ShowDescriptorErrors(index=i, name=nm, function=fn)
           raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
 
+  def testInvalidDescriptors(self):
+    # This test is for the usage of Chem\GraphDescriptors.py
+    from collections import Counter
+    self.assertFalse(Descriptors._belongToRDKit(Counter))
+  
   def testMolFormula(self):
     for (smiles, expected) in (
       ("[NH4+]", "H4N+"),
