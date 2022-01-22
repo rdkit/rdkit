@@ -234,7 +234,7 @@ class TestCase(unittest.TestCase):
   def testDrawRDKit(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
-    Chem.RDKFingerprint(m, maxPath=5, bitInfo=bi)
+    _ = Chem.RDKFingerprint(m, maxPath=5, bitInfo=bi)
     self.assertTrue(1553 in bi)
     svg1 = Draw.DrawRDKitBit(m, 1553, bi)
     path = bi[1553][0]
