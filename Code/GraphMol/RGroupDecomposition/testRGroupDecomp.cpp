@@ -2715,7 +2715,6 @@ void testDoNotChooseUnrelatedCores() {
       RGroupDecomposition decomp(orderedCores);
       TEST_ASSERT(decomp.add(*m) == 0);
       TEST_ASSERT(decomp.process());
-      std::stringstream ss;
       auto cols = decomp.getRGroupsAsColumns();
       const auto &core = cols["Core"];
       TEST_ASSERT(core.size() == 1);
