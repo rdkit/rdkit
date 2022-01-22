@@ -9,9 +9,8 @@
 #  of the RDKit source tree.
 #
 
-
-from rdkit import Chem
 import sys
+from rdkit import Chem
 from rdkit.Chem import Randomize
 
 

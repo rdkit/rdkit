@@ -90,8 +90,7 @@ def _exploder(mol, depth, sidechains, core, chainIndices, autoNames=True, templa
   if resetCounter:
     nDumped = 0
   ourChains = sidechains[depth]
-  patt = '[%d*]' % (depth + 1)
-  patt = Chem.MolFromSmiles(patt)
+  patt = Chem.MolFromSmiles(f'[{depth + 1}*]')
   for i, (chainIdx, chain) in enumerate(ourChains):
     tchain = chainIndices[:]
     tchain.append((i, chainIdx))
@@ -163,6 +162,7 @@ def Explode(template, sidechains, outF, autoNames=True, do3D=False, useTethers=F
     templateName = template.GetProp('_Name')
   except KeyError:
     templateName = "template"
+  
   for mol in _exploder(template, 0, sidechains, core, chainIndices, autoNames=autoNames,
                        templateName=templateName, do3D=do3D, useTethers=useTethers):
     outF.write(Chem.MolToMolBlock(mol))
@@ -176,8 +176,7 @@ def MoveDummyNeighborsToBeginning(mol, useAll=False):
   matches = mol.GetSubstructMatches(dummyPatt)
   res = []
   for match in matches:
-    matchIdx = match[0]
-    smi = Chem.MolToSmiles(mol, True, rootedAtAtom=matchIdx)
+    smi = Chem.MolToSmiles(mol, rootedAtAtom=match[0])
     entry = Chem.MolFromSmiles(smi)
     # entry now has [*] as atom 0 and the neighbor
     # as atom 1. Cleave the [*]:
@@ -234,22 +233,25 @@ def ConstructSidechains(suppl, sma=None, replace=True, useAll=False):
         # atoms only:
         matches = mol.GetSubstructMatches(patt)
         if matches:
-          tmp = []
-          for match in matches:
-            smi = Chem.MolToSmiles(mol, True, rootedAtAtom=match[0])
+          tmp = [0] * len(matches)
+          for i, match in enumerate(matches):
+            smi = Chem.MolToSmiles(mol, rootedAtAtom=match[0])
             entry = Chem.MolFromSmiles(smi)
             for propN in mol.GetPropNames():
               entry.SetProp(propN, mol.GetProp(propN))
 
             # now we have a molecule with the atom to be joined
             # in position zero; Keep that:
-            tmp.append((idx + 1, entry))
+            tmp[i] = (idx + 1, entry)
+
         else:
           tmp = None
     else:
       tmp = [(idx + 1, mol)]
+    
     if tmp:
       res.extend(tmp)
+  
   return res
 
 
