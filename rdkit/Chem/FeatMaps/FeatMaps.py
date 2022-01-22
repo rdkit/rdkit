@@ -140,8 +140,7 @@ class FeatMap(object):
         score = 0.0
     elif params.featProfile == FeatMapParams.FeatProfile.Box:
       score = 1.0
-    weight = feat1.weight
-    score *= weight
+    score *= feat1.weight
 
     if self.dirScoreMode != FeatDirScoreMode.Ignore:
       dirScore = feat1.GetDirMatch(feat2)
@@ -183,11 +182,10 @@ class FeatMap(object):
     else:
       featsToFeatMapIdx = [None] * nToScore
     
-    if self.scoreMode != FeatMapScoreMode.All:
-      for i in range(nToScore):
+    for i in range(nToScore):
+      if self.scoreMode != FeatMapScoreMode.All:
         featsToFeatMapIdx[i] = [-1]
-    else:
-      for i in range(nToScore):
+      else:
         featsToFeatMapIdx[i] = []
     
     for oIdx, oFeat in enumerate(featsToScore):
@@ -221,7 +219,6 @@ class FeatMap(object):
           totScore += lScore
         else:
           featsScoreVect[oIdx] = 0
-
     else:
       totScore = sum(featsScoreVect)
       if self.scoreMode == FeatMapScoreMode.Best:
