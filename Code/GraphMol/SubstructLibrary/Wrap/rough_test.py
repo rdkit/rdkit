@@ -34,9 +34,10 @@
 it is intended to be shallow but broad.
 """
 
-
 import doctest, unittest, os, sys
 
+from rdkit import rdBase
+import logging
 from rdkit import RDConfig, RDLogger
 from rdkit.RDLogger import logger
 logger = logger()
@@ -46,9 +47,11 @@ import time
 import pickle
 import tempfile
 
+
 def load_tests(loader, tests, ignore):
   tests.addTests(doctest.DocTestSuite(rdSubstructLibrary))
   return tests
+
 
 def makeStereoExamples():
   el = "NO"
@@ -56,16 +59,17 @@ def makeStereoExamples():
   for e in el:
     for e2 in el:
       if e != e2:
-        smi = "C1CCO[C@@](%s)(%s)1"%(e,e2)
+        smi = "C1CCO[C@@](%s)(%s)1" % (e, e2)
         m = Chem.MolFromSmiles(smi)
         if m:
           mols.append(m)
-        smi = "C1CCO[C@](%s)(%s)1"%(e,e2)
+        smi = "C1CCO[C@](%s)(%s)1" % (e, e2)
         m = Chem.MolFromSmiles(smi)
         if m:
           mols.append(m)
 
   return mols
+
 
 class TestCase(unittest.TestCase):
 
@@ -75,14 +79,20 @@ class TestCase(unittest.TestCase):
   def test0SubstructLibrary(self):
     for keyholderCls in [None, rdSubstructLibrary.KeyFromPropHolder]:
       for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
-        for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
-                       rdSubstructLibrary.CachedSmilesMolHolder()]:
-          if fpholderCls: fpholder = fpholderCls()
-          else: fpholder = None
+        for holder in [
+            rdSubstructLibrary.MolHolder(),
+            rdSubstructLibrary.CachedMolHolder(),
+            rdSubstructLibrary.CachedSmilesMolHolder()
+        ]:
+          if fpholderCls:
+            fpholder = fpholderCls()
+          else:
+            fpholder = None
           if keyholderCls:
             keyholder = keyholderCls()
             self.assertEqual(keyholder.GetPropName(), "_Name")
-          else: keyholder = None
+          else:
+            keyholder = None
           slib_ = rdSubstructLibrary.SubstructLibrary(holder, fpholder, keyholder)
           for i in range(100):
             m = Chem.MolFromSmiles("c1ccccc1")
@@ -112,7 +122,7 @@ class TestCase(unittest.TestCase):
             self.assertEqual(len(res), 100)
             self.assertTrue(set(res) == set(list(range(100))))
 
-            res = slib.GetMatches(m, maxResults=100);
+            res = slib.GetMatches(m, maxResults=100)
             self.assertEqual(len(res), 100)
             self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=100)), 100)
 
@@ -122,25 +132,31 @@ class TestCase(unittest.TestCase):
   def test1SubstructLibrary(self):
     for keyholderCls in [None, rdSubstructLibrary.KeyFromPropHolder]:
       for fpholderCls in [None, rdSubstructLibrary.PatternHolder]:
-        for holder in [rdSubstructLibrary.MolHolder(), rdSubstructLibrary.CachedMolHolder(),
-                       rdSubstructLibrary.CachedSmilesMolHolder()]:
-          if fpholderCls: fpholder = fpholderCls()
-          else: fpholder = None
+        for holder in [
+            rdSubstructLibrary.MolHolder(),
+            rdSubstructLibrary.CachedMolHolder(),
+            rdSubstructLibrary.CachedSmilesMolHolder()
+        ]:
+          if fpholderCls:
+            fpholder = fpholderCls()
+          else:
+            fpholder = None
           if keyholderCls:
             keyholder = keyholderCls()
             self.assertEqual(keyholder.GetPropName(), "_Name")
-          else: keyholder = None
+          else:
+            keyholder = None
 
           slib_ = rdSubstructLibrary.SubstructLibrary(holder, fpholder, keyholder)
           mols = []
           for i in range(100):
             m = Chem.MolFromSmiles("c1ccccc1")
-            m.SetProp("_Name", str(i*2))
-            self.assertEqual(slib_.AddMol(m), i*2)
+            m.SetProp("_Name", str(i * 2))
+            self.assertEqual(slib_.AddMol(m), i * 2)
             mols.append(m)
             m2 = Chem.MolFromSmiles("CCCC")
-            m2.SetProp("_Name", str(i*2+1))
-            self.assertEqual(slib_.AddMol(m2), i*2+1)
+            m2.SetProp("_Name", str(i * 2 + 1))
+            self.assertEqual(slib_.AddMol(m2), i * 2 + 1)
             mols.append(m2)
 
           libs = [slib_]
@@ -153,24 +169,24 @@ class TestCase(unittest.TestCase):
           for slib in libs:
             res = slib.GetMatches(m)
             self.assertEqual(len(res), 100)
-            self.assertEqual(set(res), set(list(range(0,200,2))))
+            self.assertEqual(set(res), set(list(range(0, 200, 2))))
             if keyholderCls:
-              self.assertEqual([str(idx) for idx in res], [str(idx) for idx in range(0,200,2)])
+              self.assertEqual([str(idx) for idx in res], [str(idx) for idx in range(0, 200, 2)])
 
             res = slib.GetMatches(m2)
             self.assertEqual(len(res), 100)
-            self.assertTrue(set(res) == set(list(range(1,200,2))))
+            self.assertTrue(set(res) == set(list(range(1, 200, 2))))
             if keyholderCls:
-              self.assertEqual([str(idx) for idx in res], [str(idx) for idx in range(1,200,2)])
+              self.assertEqual([str(idx) for idx in res], [str(idx) for idx in range(1, 200, 2)])
 
             res = slib.GetMatches(m)
             self.assertEqual(len(res), 100)
 
-            res = slib.GetMatches(m, maxResults=100);
+            res = slib.GetMatches(m, maxResults=100)
             self.assertEqual(len(res), 100)
 
-            self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=50*2)), 50)
-            self.assertEqual(len(slib.GetMatches(m2, startIdx=1, endIdx=50*2+1)), 50)
+            self.assertEqual(len(slib.GetMatches(m, startIdx=0, endIdx=50 * 2)), 50)
+            self.assertEqual(len(slib.GetMatches(m2, startIdx=1, endIdx=50 * 2 + 1)), 50)
 
             self.assertTrue(slib.HasMatch(m))
             self.assertTrue(slib.HasMatch(m2))
@@ -259,7 +275,6 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(res),
                        len([x for x in mols if x.HasSubstructMatch(core, useChirality=True)]))
 
-
   def testTrustedSmilesCache(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
@@ -338,7 +353,7 @@ class TestCase(unittest.TestCase):
 
   def testRingSmartsWithTrustedSmiles(self):
     pat = Chem.MolFromSmarts("[C&R1]")
-    pat2 = Chem.MolFromSmarts("C@C") # ring bond
+    pat2 = Chem.MolFromSmarts("C@C")  # ring bond
     holder = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
     lib = rdSubstructLibrary.SubstructLibrary(holder)
     lib.AddMol(Chem.MolFromSmiles("C1CC1"))
@@ -391,7 +406,6 @@ class TestCase(unittest.TestCase):
     slib3.InitFromStream(sb)
     self.assertEqual(len(slib), len(slib2))
 
-
   def test_addpatterns(self):
     pdb_ligands = [
       "CCS(=O)(=O)c1ccc(OC)c(Nc2ncc(-c3cccc(-c4ccccn4)c3)o2)c1",
@@ -399,8 +413,7 @@ class TestCase(unittest.TestCase):
       "COc1ccc(-c2oc3ncnc(N)c3c2-c2ccc(NC(=O)Nc3cc(C(F)(F)F)ccc3F)cc2)cc1",
       "COC(=O)Nc1nc2ccc(Oc3ccc(NC(=O)Nc4cc(C(F)(F)F)ccc4F)cc3)cc2[nH]1",
       "COc1cc(Nc2ncnc(-c3cccnc3Nc3ccccc3)n2)cc(OC)c1OC",
-      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
-      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
+      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1", "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
       "CNC(=O)c1cc(Oc2ccc3[nH]c(Nc4ccc(Cl)c(C(F)(F)F)c4)nc3c2)ccn1",
       "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
       "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
@@ -415,22 +428,21 @@ class TestCase(unittest.TestCase):
       "COc1cc(Nc2nccc(N(C)c3ccc4c(C)n[nH]c4c3)n2)cc(OC)c1OC",
       "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
       "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
-      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
-      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
+      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1", "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
       "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
       "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
       "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
       "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
-      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21",
-      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
+      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21", "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
     ]
 
-
-    for patterns in [rdSubstructLibrary.PatternHolder(), rdSubstructLibrary.TautomerPatternHolder()]:
+    for patterns in [
+        rdSubstructLibrary.PatternHolder(),
+        rdSubstructLibrary.TautomerPatternHolder()
+    ]:
       mols = [Chem.MolFromSmiles(smi) for smi in pdb_ligands]
       holder = rdSubstructLibrary.CachedMolHolder()
       slib_with_patterns = rdSubstructLibrary.SubstructLibrary(holder, patterns)
-
 
       for mol in mols:
         slib_with_patterns.AddMol(mol)
@@ -445,8 +457,7 @@ class TestCase(unittest.TestCase):
           l1 = slib_with_patterns.CountMatches(mol)
           l2 = slib_without_patterns.CountMatches(mol)
           self.assertTrue(l1)
-          self.assertEqual(l1,l2)
-
+          self.assertEqual(l1, l2)
 
   def test_basic_addpatterns(self):
     # add mols
@@ -456,8 +467,7 @@ class TestCase(unittest.TestCase):
       "COc1ccc(-c2oc3ncnc(N)c3c2-c2ccc(NC(=O)Nc3cc(C(F)(F)F)ccc3F)cc2)cc1",
       "COC(=O)Nc1nc2ccc(Oc3ccc(NC(=O)Nc4cc(C(F)(F)F)ccc4F)cc3)cc2[nH]1",
       "COc1cc(Nc2ncnc(-c3cccnc3Nc3ccccc3)n2)cc(OC)c1OC",
-      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
-      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
+      "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1", "O=C(Nc1ccc(Oc2ccccc2)cc1)c1cccnc1NCc1ccncc1",
       "CNC(=O)c1cc(Oc2ccc3[nH]c(Nc4ccc(Cl)c(C(F)(F)F)c4)nc3c2)ccn1",
       "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
       "CNC(=O)c1cc(Oc2ccc3oc(Nc4ccc(Cl)c(OCC5CCC[NH+]5C)c4)nc3c2)ccn1",
@@ -472,31 +482,34 @@ class TestCase(unittest.TestCase):
       "COc1cc(Nc2nccc(N(C)c3ccc4c(C)n[nH]c4c3)n2)cc(OC)c1OC",
       "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
       "Cc1ccn(-c2ccc3c(c2)NCC3(C)C)c(=O)c1-c1ccc2nc(N)ncc2c1",
-      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
-      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
+      "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1", "Cc1ccc(C(=O)NCCC2CCCC2)cc1C(=O)Nc1ccc(N)nc1",
       "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
       "Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
       "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
       "O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
-      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21",
-      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
+      "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21", "CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
     ]
 
-    for holder in [rdSubstructLibrary.CachedSmilesMolHolder(),
-                   rdSubstructLibrary.CachedTrustedSmilesMolHolder()]:
+    for holder in [
+        rdSubstructLibrary.CachedSmilesMolHolder(),
+        rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+    ]:
       for smi in pdb_ligands:
         holder.AddSmiles(smi)
 
-      for patttern in [None, rdSubstructLibrary.PatternHolder(), rdSubstructLibrary.TautomerPatternHolder()]:
+      for patttern in [
+          None,
+          rdSubstructLibrary.PatternHolder(),
+          rdSubstructLibrary.TautomerPatternHolder()
+      ]:
         lib = rdSubstructLibrary.SubstructLibrary(holder)
         rdSubstructLibrary.AddPatterns(lib, numThreads=-1)
         self.assertEqual(len(lib.GetMolHolder()), len(lib.GetFpHolder()))
         for smi in pdb_ligands:
-          self.assertTrue( lib.CountMatches(Chem.MolFromSmiles(smi)) )
+          self.assertTrue(lib.CountMatches(Chem.MolFromSmiles(smi)))
 
   def test_PatternHolder(self):
-    for holder in [rdSubstructLibrary.PatternHolder,
-                   rdSubstructLibrary.TautomerPatternHolder]:
+    for holder in [rdSubstructLibrary.PatternHolder, rdSubstructLibrary.TautomerPatternHolder]:
       fname = os.path.join(os.environ["RDBASE"], "Data", "NCI", "first_5K.smi")
       suppl = Chem.SmilesMolSupplier(fname, delimiter="\t", titleLine=False)
       mols1 = rdSubstructLibrary.CachedTrustedSmilesMolHolder()
@@ -525,30 +538,29 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(matches1), len(matches2))
       self.assertTrue(all([m1 == matches2[i] for i, m1 in enumerate(matches1)]))
 
-
   def testMolBundles(self):
     ssl = rdSubstructLibrary.SubstructLibrary()
-    for smi in ('CCOC','CCNC','COOCOO','CCNC','CCCC'):
+    for smi in ('CCOC', 'CCNC', 'COOCOO', 'CCNC', 'CCCC'):
       ssl.AddMol(Chem.MolFromSmiles(smi))
     bndl = Chem.MolBundle()
     for smi in ('COC', 'CCC'):
       bndl.AddMol(Chem.MolFromSmiles(smi))
-    self.assertEqual(list(ssl.GetMatches(bndl)),[0, 4])
+    self.assertEqual(list(ssl.GetMatches(bndl)), [0, 4])
     bndl.AddMol(Chem.MolFromSmiles('CN'))
     self.assertEqual(list(sorted(ssl.GetMatches(bndl))), [0, 1, 3, 4])
 
   def testSubstructParameters(self):
     ssl = rdSubstructLibrary.SubstructLibrary()
-    for smi in ('C[C@H](F)Cl','C[C@@H](F)Cl','CC(F)Cl'):
+    for smi in ('C[C@H](F)Cl', 'C[C@@H](F)Cl', 'CC(F)Cl'):
       ssl.AddMol(Chem.MolFromSmiles(smi))
     bndl = Chem.MolBundle()
-    for smi in ('C[C@H](F)Cl',):
+    for smi in ('C[C@H](F)Cl', ):
       bndl.AddMol(Chem.MolFromSmiles(smi))
     params = Chem.SubstructMatchParameters()
-    self.assertEqual(list(sorted(ssl.GetMatches(bndl,params))), [0, 1, 2])
+    self.assertEqual(list(sorted(ssl.GetMatches(bndl, params))), [0, 1, 2])
 
     params.useChirality = True
-    self.assertEqual(list(sorted(ssl.GetMatches(bndl,params))), [0])
+    self.assertEqual(list(sorted(ssl.GetMatches(bndl, params))), [0])
 
   def testSearchOrder(self):
     for keyholder in [None, rdSubstructLibrary.KeyFromPropHolder()]:
@@ -558,25 +570,25 @@ class TestCase(unittest.TestCase):
         m.SetProp("_Name", str(idx))
         ssl.AddMol(m)
 
-      ssl.SetSearchOrder((3,2,0,1,4))
-      self.assertEqual(ssl.GetSearchOrder(),(3,2,0,1,4))
+      ssl.SetSearchOrder((3, 2, 0, 1, 4))
+      self.assertEqual(ssl.GetSearchOrder(), (3, 2, 0, 1, 4))
       qm = Chem.MolFromSmiles('COC')
-      self.assertEqual(list(ssl.GetMatches(qm,maxResults=2)),[3,2])
-      self.assertEqual(list(ssl.GetMatches(qm,maxResults=2)),[3,2])
+      self.assertEqual(list(ssl.GetMatches(qm, maxResults=2)), [3, 2])
+      self.assertEqual(list(ssl.GetMatches(qm, maxResults=2)), [3, 2])
       if keyholder:
         self.assertEqual(keyholder.GetPropName(), "_Name")
-        self.assertEqual(list(ssl.GetKeyHolder().GetKeys(ssl.GetMatches(qm,maxResults=2))),['3','2'])
+        self.assertEqual(list(ssl.GetKeyHolder().GetKeys(ssl.GetMatches(qm, maxResults=2))),
+                         ['3', '2'])
 
       # make sure we can clear the search order:
       ssl.SetSearchOrder(None)
-      self.assertEqual(ssl.GetSearchOrder(),())
+      self.assertEqual(ssl.GetSearchOrder(), ())
 
       ssl.SetSearchOrder((3, 2, 0, 1, 4))
       self.assertEqual(ssl.GetSearchOrder(), (3, 2, 0, 1, 4))
 
       ssl.SetSearchOrder([])
-      self.assertEqual(ssl.GetSearchOrder(),())
-
+      self.assertEqual(ssl.GetSearchOrder(), ())
 
   def testSearchOrder2(self):
     ssl = rdSubstructLibrary.SubstructLibrary()
@@ -586,12 +598,12 @@ class TestCase(unittest.TestCase):
     def setSearchSmallestFirst(sslib):
       searchOrder = list(range(len(sslib)))
       holder = sslib.GetMolHolder()
-      searchOrder.sort(key=lambda x,holder=holder:holder.GetMol(x).GetNumAtoms())
+      searchOrder.sort(key=lambda x, holder=holder: holder.GetMol(x).GetNumAtoms())
       sslib.SetSearchOrder(searchOrder)
 
     setSearchSmallestFirst(ssl)
     qm = Chem.MolFromSmiles('COC')
-    self.assertEqual(list(ssl.GetMatches(qm)),[3, 2, 0, 1, 4])
+    self.assertEqual(list(ssl.GetMatches(qm)), [3, 2, 0, 1, 4])
 
   def testPropHolder(self):
     for propname in [None, 'foo']:
@@ -646,20 +658,29 @@ class TestCase(unittest.TestCase):
       "&Cc1ccn(-c2cccc(C(F)(F)F)c2)c(=O)c1-c1ccc2nc(N)ncc2c1",
       "&O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
       "&O=C(Nc1cncnc1)c1c(Cl)ccc2c(Nc3cccc(C(F)(F)F)c3)noc12",
-      "&CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21",
-      "&CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
+      "&CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21", "&CC1(C)CNc2cc(NC(=O)c3cccnc3NCc3ccncc3)ccc21"
     ]
-    for holder in [rdSubstructLibrary.CachedSmilesMolHolder(),
-                   rdSubstructLibrary.CachedTrustedSmilesMolHolder()]:
+    # this test is really verbose, so disable the actual output without
+    # disabling that logging happens.
+    rdBase.LogToPythonLogger()
+    pylog = logging.getLogger("rdkit")
+    pylog.setLevel(logging.CRITICAL)
+    for holder in [
+        rdSubstructLibrary.CachedSmilesMolHolder(),
+        rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+    ]:
       for smi in pdb_ligands:
         holder.AddSmiles(smi)
-      lib = rdSubstructLibrary.SubstructLibrary(holder)  
+      lib = rdSubstructLibrary.SubstructLibrary(holder)
       # this should excercise the logger
       smi = "CCS(=O)(=O)c1ccc(OC)c(Nc2ncc(-c3cccc(-c4ccccn4)c3)o2)c1"
-      self.assertEqual(0, lib.CountMatches(Chem.MolFromSmiles(smi)) )
+      self.assertEqual(0, lib.CountMatches(Chem.MolFromSmiles(smi)))
 
       # test add patterns
       rdSubstructLibrary.AddPatterns(lib, -1)
-      
+    pylog.setLevel(logging.WARN)
+    rdBase.LogToCppStreams()
+
+
 if __name__ == '__main__':
   unittest.main()
