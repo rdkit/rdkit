@@ -204,7 +204,7 @@ class TestCase(unittest.TestCase):
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
-    rdMolDescriptors.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
+    _ = rdMolDescriptors.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
     self.assertTrue(872 in bi)
 
     svg1 = Draw.DrawMorganBit(m, 872, bi)
