@@ -113,33 +113,10 @@ void embedTBP(const RDKit::ROMol &mol, const RDKit::Atom *atom,
             [&atomRanks](const auto e1, const auto e2) {
               return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
             });
-  const RDKit::Atom *axial1 = nullptr;
-  const RDKit::Atom *axial2 = nullptr;
-  for (auto i = 0u; i < nbrs.size(); ++i) {
-    bool all90 = true;
-    for (auto j = 0u; j < nbrs.size(); ++j) {
-      if (j == i) {
-        continue;
-      }
-      auto angl =
-          RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs[i], nbrs[j]);
-      if (fabs(angl - 180) < 0.1) {
-        axial1 = nbrs[i];
-        axial2 = nbrs[j];
-        all90 = false;
-        break;
-      } else if (fabs(angl - 90) > 0.1) {
-        all90 = false;
-        break;
-      }
-    }
-    if (all90) {
-      axial1 = nbrs[i];
-    }
-    if (axial1) {
-      break;
-    }
-  }
+  const RDKit::Atom *axial1 =
+      RDKit::Chirality::getTrigonalBipyramidalAxialAtom(atom);
+  const RDKit::Atom *axial2 =
+      RDKit::Chirality::getTrigonalBipyramidalAxialAtom(atom, -1);
   if (axial1) {
     coordMap[axial1->getIdx()] = idealPoints[0];
   }
