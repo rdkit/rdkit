@@ -14,7 +14,7 @@ class SupplyNode(VLibNode):
 
     Usage Example:
     
-      >>> supplier = SupplyNode(contents=[1,2,3])
+      >>> supplier = SupplyNode(contents=[1, 2, 3])
       >>> supplier.next()
       1
       >>> supplier.next()
@@ -66,8 +66,8 @@ SupplyNode.__next__ = SupplyNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
     import doctest
+    import sys
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

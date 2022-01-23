@@ -3,9 +3,6 @@
 #  Copyright (C) 2003-2006 Rational Discovery LLC
 #     All Rights Reserved
 #
-import sys
-
-
 class VLibNode(object):
     """ base class for all virtual library nodes,
     defines minimal required interface
@@ -193,6 +190,7 @@ VLibNode.__next__ = VLibNode.next
 #
 def _runDoctests(verbose=None):  # pragma: nocover
     import doctest
+    import sys
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 
