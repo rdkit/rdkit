@@ -10,9 +10,7 @@
 import os
 import re
 
-from aggdraw import Brush, Pen
-from aggdraw import Draw
-from aggdraw import Font
+from aggdraw import Brush, Draw, Font, Pen
 from rdkit import RDConfig
 from rdkit.Chem.Draw.canvasbase import CanvasBase
 
@@ -20,8 +18,7 @@ faceMap = {'sans': os.path.join(RDConfig.RDCodeDir, 'Chem', 'Draw', 'FreeSans.tt
 
 
 def convertColor(color):
-  color = (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
-  return color
+  return (int(color[0] * 255), int(color[1] * 255), int(color[2] * 255))
 
 
 class Canvas(CanvasBase):
@@ -137,18 +134,17 @@ class Canvas(CanvasBase):
       subH *= 0.5
       h += supH + subH
       offset = w * pos[2]
-      dPos = [pos[0] - w / 2. + offset, pos[1] - h / 2.]
       if orientation == 'W':
         dPos = [pos[0] - w + offset, pos[1] - h / 2.]
       elif orientation == 'E':
         dPos = [pos[0] + offset, pos[1] - h / 2.]
       else:
-        dPos = [pos[0] - w / 2 + offset, pos[1] - h / 2.]
+        dPos = [pos[0] - w / 2. + offset, pos[1] - h / 2.]
 
       if supH:
         dPos[1] += supH
       for txt, fmt, tw, th in dblocks:
-        tPos = dPos[:]
+        tPos = dPos.copy()
         if fmt == 'sub':
           tPos[1] += subH
         elif fmt == 'sup':
@@ -163,7 +159,7 @@ class Canvas(CanvasBase):
 
   def addCanvasPolygon(self, ps, color=(0, 0, 0), fill=True, stroke=False, **kwargs):
     if not fill and not stroke:
-      return
+      return 
     dps = []
     for p in ps:
       dps.extend(p)
