@@ -12,8 +12,7 @@
 import doctest
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.SimDivFilters import SimilarityPickers
 

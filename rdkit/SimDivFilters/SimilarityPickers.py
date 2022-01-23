@@ -6,7 +6,7 @@
 
 
 import bisect
-
+  
 from rdkit import DataStructs
 from rdkit.DataStructs.TopNContainer import TopNContainer
 
@@ -33,18 +33,17 @@ class TopNOverallPicker(GenericPicker):
 
   Connect to a database and build molecules:
 
-  >>> from rdkit import Chem
-  >>> from rdkit import RDConfig
+  >>> from rdkit import Chem, RDConfig
   >>> import os.path
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> dbName = RDConfig.RDTestDatabase
-  >>> conn = DbConnect(dbName,'simple_mols1')
+  >>> conn = DbConnect(dbName, 'simple_mols1')
   >>> [x.upper() for x in conn.GetColumnNames()]
   ['SMILES', 'ID']
   >>> mols = []
-  >>> for smi,id in conn.GetData():
+  >>> for smi, id in conn.GetData():
   ...   mol = Chem.MolFromSmiles(str(smi))
-  ...   mol.SetProp('_Name',str(id))
+  ...   mol.SetProp('_Name', str(id))
   ...   mols.append(mol)
   >>> len(mols)
   12
@@ -62,10 +61,10 @@ class TopNOverallPicker(GenericPicker):
 
   >>> mol = Chem.MolFromSmiles('COC')
   >>> probeFp = Chem.RDKFingerprint(mol)
-  >>> picker = TopNOverallPicker(numToPick=2,probeFps=[probeFp],dataSet=probefps)
+  >>> picker = TopNOverallPicker(numToPick=2, probeFps=[probeFp], dataSet=probefps)
   >>> len(picker)
   2
-  >>> fp,score = picker[0]
+  >>> fp, score = picker[0]
   >>> id = fp._id
   >>> str(id)
   'ether-1'
@@ -74,7 +73,7 @@ class TopNOverallPicker(GenericPicker):
 
   The results come back in order:
 
-  >>> fp,score = picker[1]
+  >>> fp, score = picker[1]
   >>> id = fp._id
   >>> str(id)
   'ether-2'
@@ -87,17 +86,17 @@ class TopNOverallPicker(GenericPicker):
   >>> picker = TopNOverallPicker(numToPick=3,probeFps=fps,dataSet=probefps)
   >>> len(picker)
   3
-  >>> fp,score = picker[0]
+  >>> fp, score = picker[0]
   >>> id = fp._id
   >>> str(id)
   'acid-1'
-  >>> fp,score = picker[1]
+  >>> fp, score = picker[1]
   >>> id = fp._id
   >>> str(id)
   'ether-1'
   >>> score
   1.0
-  >>> fp,score = picker[2]
+  >>> fp, score = picker[2]
   >>> id = fp._id
   >>> str(id)
   'acid-2'
@@ -119,19 +118,17 @@ class TopNOverallPicker(GenericPicker):
 
   def MakePicks(self, force=False):
     if self._picks is not None and not force:
-      return
+      return None
+    
+    SIMILARITY_FUNCTION = DataStructs.FingerprintSimilarity
     picks = TopNContainer(self.numToPick)
-    for fp in self.data:
-      origFp = fp
+    
+    for origFp in self.data:
       bestScore = -1.0
       for probeFp in self.probes:
-        score = DataStructs.FingerprintSimilarity(origFp, probeFp, self.simMetric)
-        bestScore = max(score, bestScore)
-      picks.Insert(bestScore, fp)
-    self._picks = []
-    for score, pt in picks:
-      self._picks.append((pt, score))
-    self._picks.reverse()
+        bestScore = max(bestScore, SIMILARITY_FUNCTION(origFp, probeFp, self.simMetric))
+      picks.Insert(bestScore, origFp)
+    self._picks = [(picks[i][1], picks[i][0]) for i in range(len(picks) - 1, -1, -1)]
 
 
 class SpreadPicker(GenericPicker):
@@ -139,16 +136,15 @@ class SpreadPicker(GenericPicker):
 
   Connect to a database:
 
-  >>> from rdkit import Chem
-  >>> from rdkit import RDConfig
+  >>> from rdkit import Chem, RDConfig
   >>> import os.path
   >>> from rdkit.Dbase.DbConnection import DbConnect
   >>> dbName = RDConfig.RDTestDatabase
-  >>> conn = DbConnect(dbName,'simple_mols1')
+  >>> conn = DbConnect(dbName, 'simple_mols1')
   >>> [x.upper() for x in conn.GetColumnNames()]
   ['SMILES', 'ID']
   >>> mols = []
-  >>> for smi,id in conn.GetData():
+  >>> for smi, id in conn.GetData():
   ...   mol = Chem.MolFromSmiles(str(smi))
   ...   mol.SetProp('_Name',str(id))
   ...   mols.append(mol)
@@ -168,10 +164,10 @@ class SpreadPicker(GenericPicker):
 
   >>> mol = Chem.MolFromSmiles('COC')
   >>> probeFp = Chem.RDKFingerprint(mol)
-  >>> picker = SpreadPicker(numToPick=2,probeFps=[probeFp],dataSet=probefps)
+  >>> picker = SpreadPicker(numToPick=2, probeFps=[probeFp], dataSet=probefps)
   >>> len(picker)
   2
-  >>> fp,score = picker[0]
+  >>> fp, score = picker[0]
   >>> id = fp._id
   >>> str(id)
   'ether-1'
@@ -180,7 +176,7 @@ class SpreadPicker(GenericPicker):
 
   The results come back in order:
 
-  >>> fp,score = picker[1]
+  >>> fp, score = picker[1]
   >>> id = fp._id
   >>> str(id)
   'ether-2'
@@ -193,19 +189,19 @@ class SpreadPicker(GenericPicker):
   >>> picker = SpreadPicker(numToPick=3,probeFps=fps,dataSet=probefps)
   >>> len(picker)
   3
-  >>> fp,score = picker[0]
+  >>> fp, score = picker[0]
   >>> id = fp._id
   >>> str(id)
   'ether-1'
   >>> score
   1.0
-  >>> fp,score = picker[1]
+  >>> fp, score = picker[1]
   >>> id = fp._id
   >>> str(id)
   'acid-1'
   >>> score
   1.0
-  >>> fp,score = picker[2]
+  >>> fp, score = picker[2]
   >>> id = fp._id
   >>> str(id)
   'ether-2'
@@ -233,12 +229,10 @@ class SpreadPicker(GenericPicker):
     if self._picks is not None and not force:
       return
 
-    # start by getting the NxM score matrix
-    #  (N=num probes, M=num fps)
+    # start by getting the N x M score matrix (N=num probes, M=num fps)
     nProbes = len(self.probes)
-    scores = [None] * nProbes
-    for i in range(nProbes):
-      scores[i] = []
+    scores = [[] for _ in range(nProbes)] # Initialize a 2D-empty list
+    
     j = 0
     fps = []
     for origFp in self.data:
@@ -251,6 +245,7 @@ class SpreadPicker(GenericPicker):
         fps.append(origFp._fieldsFromDb[0])
       else:
         fps.append(origFp)
+        
       j += 1
       if not silent and not j % 1000:
         print('scored %d fps' % j)
@@ -260,15 +255,13 @@ class SpreadPicker(GenericPicker):
     self._picks = []
     taken = [0] * len(fps)
     while nPicked < self.numToPick:
-      rowIdx = nPicked % len(scores)
-      row = scores[rowIdx]
+      row = scores[nPicked % len(scores)]
       score, idx = row.pop()
       # make sure we haven't taken this one already (from another row):
       while taken[idx] and len(row):
         score, idx = row.pop()
       if not taken[idx]:
-        fp = fps[idx]
-        self._picks.append((fp, score))
+        self._picks.append((fps[idx], score))
         taken[idx] = 1
         nPicked += 1
 
