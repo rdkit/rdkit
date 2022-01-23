@@ -5,6 +5,7 @@
 #
 from qt import *
 import sys
+
 if sys.platform == 'win32':
   from rdkit.qtGui.qtActiveX import MakeActiveXClass
   import win32com.client.gencache
@@ -49,13 +50,11 @@ class ChemdrawPanel(QWidget):
     self.label.setFont(fnt)
 
   def pullData(self, fmt='chemical/daylight-smiles'):
-    data = self.cdx.GetData(fmt)
-    return str(data)
+    return str(self.cdx.GetData(fmt))
 
   def setData(self, data, fmt='chemical/daylight-smiles'):
     self.cdx.Objects.Clear()
-    res = self.cdx.SetData(fmt, data)
-    return res
+    return self.cdx.SetData(fmt, data)
 
   def resizeEvent(self, evt):
     sz = evt.size()
@@ -68,7 +67,6 @@ class ChemdrawPanel(QWidget):
 
 # demo code
 if __name__ == '__main__':
-  import sys, container
   a = QApplication(sys.argv)
   widg = QMainWindow()
   panel = ChemdrawPanel(widg)

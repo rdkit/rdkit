@@ -42,5 +42,4 @@ def MoveToMatchingLine(inFile, matchStr, fullMatch=0):
       inLine = inFile.readline()
   if matched:
     return inLine
-  else:
-    raise NoMatchFoundError(matchStr)
+  raise NoMatchFoundError(matchStr)

@@ -81,7 +81,7 @@ def GetAtomicData(atomDict, descriptorsDesired, dBase=_atomDbName, table='atomic
 def SplitComposition(compStr):
     """ Takes a simple chemical composition and turns into a list of element,# pairs.
 
-        i.e. 'Fe3Al' -> [('Fe',3),('Al',1)]
+        i.e. 'Fe3Al' -> [('Fe', 3), ('Al', 1)]
 
         **Arguments**
 
@@ -98,18 +98,9 @@ def SplitComposition(compStr):
 
     """
     target = r'([A-Z][a-z]?)([0-9\.]*)'
-
     theExpr = re.compile(target)
-
-    matches = theExpr.findall(compStr)
-    res = []
-    for match in matches:
-        if len(match[1]) > 0:
-            res.append((match[0], float(match[1])))
-        else:
-            res.append((match[0], 1))
-
-    return res
+    matches = theExpr.findall(compStr) 
+    return [(match[0], int(match[1])) if len(match[1]) > 0 else (match[0], 1) for match in matches]
 
 
 def ConfigToNumElectrons(config, ignoreFullD=0, ignoreFullF=0):
@@ -129,21 +120,22 @@ def ConfigToNumElectrons(config, ignoreFullD=0, ignoreFullF=0):
 
     """
     arr = config.split(' ')
-
+    baseConditionForDShell: bool = ignoreFullD and len(arr) > 2
+    baseConditionForFShell: bool = ignoreFullF and len(arr) > 2
+    
     nEl = 0
     for i in range(1, len(arr)):
         l = arr[i].split('^')
         incr = int(l[1])
-        if ignoreFullF and incr == 14 and l[0].find('f') != -1 and len(arr) > 2:
+        if baseConditionForFShell and incr == 14 and l[0].find('f') != -1:
             incr = 0
-        if ignoreFullD and incr == 10 and l[0].find('d') != -1 and len(arr) > 2:
+        if baseConditionForDShell and incr == 10 and l[0].find('d') != -1:
             incr = 0
-        nEl = nEl + incr
+        nEl += incr
     return nEl
 
 
 if __name__ == '__main__':  # pragma: nocover
-
     print(SplitComposition('Fe'))
     print(SplitComposition('Fe3Al'))
     print(SplitComposition('Fe99PdAl'))

@@ -1,5 +1,4 @@
-
-from numpy import *
+import numpy
 from rdkit.sping import pid
 import math
 
@@ -12,22 +11,24 @@ def DrawSpiral(canvas, startColor, endColor, startRadius, endRadius, nLoops, deg
   radPerStep = math.pi * degsPerStep / 180.
   stepsPerSlice = degsPerSlice / degsPerStep
   radiusStep = float(endRadius - startRadius) / (stepsPerSlice * nSlices)
-  colorStep = (array(endColor, float) - array(startColor, float)) / nSlices
+  colorStep = (numpy.array(endColor, dtype=numpy.float64) - numpy.array(startColor, dtype=numpy.float64)) / nSlices
   print('INFO:', nSlices, radPerStep, stepsPerSlice, radiusStep, colorStep)
 
   angle = math.pi * startAngle / 180.
   radius = startRadius
-  color = array(startColor, float)
+  color = numpy.array(startColor, dtype=numpy.float64)
 
-  for i in range(nSlices):
+  for _ in range(nSlices):
     pts = [(centerPos[0], centerPos[1])]
-    for j in range(stepsPerSlice):
+    
+    for _ in range(stepsPerSlice):
       xPos = centerPos[0] + radius * math.cos(angle)
       yPos = centerPos[1] + radius * math.sin(angle)
       pts.append((xPos, yPos))
 
       angle += dir * radPerStep
       radius += radiusStep
+      
     xPos = centerPos[0] + radius * math.cos(angle)
     yPos = centerPos[1] + radius * math.sin(angle)
     pts.append((xPos, yPos))

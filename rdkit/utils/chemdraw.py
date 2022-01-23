@@ -13,13 +13,16 @@
 """
 
 
-import tempfile, os, time
+import os
+import re
+import tempfile
+import time
+
 try:
   import pythoncom
-  from win32com.client import gencache, Dispatch, constants
-  import win32com.client.gencache
-  cdxModule = win32com.client.gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}", 0, 7,
-                                                    0)
+  from win32com.client import Dispatch, gencache
+
+  cdxModule = gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}", 0, 7, 0)
 except Exception:
   cdxModule = None
   _cdxVersion = 0
@@ -28,9 +31,9 @@ else:
   _cdxVersion = 7
 
 if cdxModule:
-  from win32com.client import Dispatch
   import win32gui
-import re
+  from win32com.client import Dispatch
+
 
 cdApp = None
 theDoc = None
@@ -39,13 +42,11 @@ selectItem = None
 cleanItem = None
 centerItem = None
 
-
 def StartChemDraw(visible=True, openDoc=False, showDoc=False):
   """ launches chemdraw """
   global cdApp, theDoc, theObjs, selectItem, cleanItem, centerItem
   if cdApp is not None:
     # if called more than once, do a restart
-    holder = None
     selectItem = None
     cleanItem = None
     centerItem = None
@@ -69,7 +70,6 @@ def StartChemDraw(visible=True, openDoc=False, showDoc=False):
     cdApp.Visible = 1
     if theDoc and showDoc:
       theDoc.Activate()
-
 
 def ReactivateChemDraw(openDoc=True, showDoc=True):
   global cdApp, theDoc, theObjs
@@ -155,7 +155,7 @@ def CDXDisplay(inData, inFormat='chemical/cdx', clear=1):
   if clear:
     theObjs.Clear()
   theObjs.SetData(inFormat, inData, pythoncom.Missing)
-  return
+  return None
 
 
 def CDXGrab(outFormat='chemical/x-mdl-molfile'):
@@ -164,16 +164,16 @@ def CDXGrab(outFormat='chemical/x-mdl-molfile'):
   """
   global cdApp, theDoc
   if cdApp is None:
-    res = ""
-  else:
-    cdApp.Visible = 1
-    if not cdApp.ActiveDocument:
-      ReactivateChemDraw()
-    try:
-      res = cdApp.ActiveDocument.Objects.GetData(outFormat)
-    except Exception:
-      res = ""
-  return res
+    return ""
+  
+  cdApp.Visible = 1
+  if not cdApp.ActiveDocument:
+    ReactivateChemDraw()
+  try:
+    return cdApp.ActiveDocument.Objects.GetData(outFormat)
+  except Exception:
+    pass
+  return ''
 
 
 def CloseChemdraw():
@@ -225,8 +225,7 @@ def RaiseWindowNamed(nameRe):
   # now check to see if any match our regexp:
   tgtWin = -1
   for win in wins:
-    txt = win32gui.GetWindowText(win)
-    if nameRe.match(txt):
+    if nameRe.match(win32gui.GetWindowText(win)):
       tgtWin = win
       break
 
@@ -241,8 +240,8 @@ def RaiseChemDraw():
 
 
 try:
-  from PIL import Image
   from io import StringIO
+  from PIL import Image
 
   def SmilesToPilImage(smilesStr):
     """takes a SMILES string and returns a PIL image using chemdraw
@@ -257,8 +256,7 @@ try:
     # do the conversion...
     res = CDXConvert(dataStr, inFormat, outFormat)
     dataFile = StringIO(str(res))
-    img = Image.open(dataFile).convert('RGB')
-    return img
+    return Image.open(dataFile).convert('RGB')
 except ImportError:
 
   def SmilesToPilImage(smilesStr):
@@ -381,7 +379,7 @@ def OptimizeSDFile(inFileName, outFileName, problemFileName='problems.sdf', rest
   nextLine = inFile.readline()
   skip = 0
   nDone = 0
-  t1 = time.time()
+  t1 = time.perf_counter()
   while nextLine != '':
     if nextLine.find('M  END') != -1:
       lines.append(nextLine)
@@ -397,10 +395,10 @@ def OptimizeSDFile(inFileName, outFileName, problemFileName='problems.sdf', rest
         skip = 0
         lines = [newMolBlock]
     elif nextLine.find('$$$$') != -1:
-      t2 = time.time()
       nDone += 1
-      print('finished molecule %d in %f seconds' % (nDone, time.time() - t1))
-      t1 = time.time()
+      print(f'finished molecule {nDone} in {time.perf_counter() - t1} seconds')
+      
+      t1 =  time.perf_counter()
       if nDone % restartEvery == 0:
         CloseChem3D()
         StartChem3D()

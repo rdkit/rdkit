@@ -29,6 +29,7 @@ def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0
       args += "ens get [ens create {%(smi)s}] E_GIF {} {width %(width)d height %(height)d bgcolor white filename %(name)s format gif symbolfontsize 24 frame %(frame)d linewidth 2.8 linespacing 4.0};" % locals(
       )
     nDone += 1
+  
   if args:
     with tempfile.NamedTemporaryFile('w+', suffix='.cmd', delete=False) as tmp:
       tmp.write(args + '\n')
