@@ -19,7 +19,7 @@ class DupeFilter(FilterNode):
     >>> import os
     >>> from rdkit import RDConfig
     >>> from rdkit.VLib.NodeLib.SDSupply import SDSupplyNode
-    >>> fileN = os.path.join(RDConfig.RDCodeDir, 'VLib',' NodeLib',\
+    >>> fileN = os.path.join(RDConfig.RDCodeDir, 'VLib', 'NodeLib',\
                              'test_data', 'NCI_aids.10.sdf')
     >>> suppl = SDSupplyNode(fileN)
     >>> filt = DupeFilter()
