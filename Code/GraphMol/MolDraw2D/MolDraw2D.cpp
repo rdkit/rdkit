@@ -2814,7 +2814,8 @@ void MolDraw2D::extractVariableBonds(const ROMol &mol) {
         bond->getPropIfPresent(common_properties::_MolFileBondAttach, attach)) {
       // FIX: maybe distinguish between "ANY" and "ALL" values of attach here?
       std::vector<unsigned int> oats =
-          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(
+              endpts, mol.getNumAtoms(), false);
       atomsInvolved.reset();
       // decrement the indices and do error checking:
       for (auto &oat : oats) {

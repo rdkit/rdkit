@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_DEPICT_UTILS_H_
-#define _RD_DEPICT_UTILS_H_
+#ifndef RD_DEPICT_UTILS_H
+#define RD_DEPICT_UTILS_H
 
 // REVIEW: remove extra headers here
 #include <RDGeneral/types.h>
@@ -21,6 +21,7 @@
 #include <queue>
 
 namespace RDDepict {
+
 RDKIT_DEPICTOR_EXPORT extern double BOND_LEN;
 RDKIT_DEPICTOR_EXPORT extern double COLLISION_THRES;
 RDKIT_DEPICTOR_EXPORT extern double BOND_THRES;
@@ -76,8 +77,7 @@ RDKIT_DEPICTOR_EXPORT void transformPoints(RDGeom::INT_POINT2D_MAP &nringCor,
 //! Find a point that bisects the angle at rcr
 /*!
   The new point lies between nb1 and nb2. The line (rcr, newPt) bisects the
-  angle
-  'ang' at rcr
+  angle 'ang' at rcr
 */
 RDKIT_DEPICTOR_EXPORT RDGeom::Point2D computeBisectPoint(
     const RDGeom::Point2D &rcr, double ang, const RDGeom::Point2D &nb1,
@@ -142,16 +142,14 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
 /// with other rings
 /*
   Bit of a weird function - this is typically called once we have embedded some
-  of the
-  rings in a fused system and we are looking for the ring that must be embedded
-  (or merged)
-  next. The heuristic used here is to pick the rings with the maximum number of
-  atoms
-  in common with the rings that are already embedded.
+  of the rings in a fused system and we are looking for the ring that must be
+  embedded (or merged) next. The heuristic used here is to pick the rings with
+  the maximum number of atoms in common with the rings that are already
+  embedded.
 
   \param doneRings    a vector of ring IDs that have been embedded already
-  \param fusedRings   list of all the rings in the fused system
-  \param nextId       this is where the ID for the next ring is written
+  \param fusedRings   list of all the rings in the fused system \param nextId
+  this is where the ID for the next ring is written
 
   \return list of atom ids that are common
 */
@@ -235,10 +233,10 @@ inline double computeSubAngle(unsigned int degree,
 inline int rotationDir(const RDGeom::Point2D &center,
                        const RDGeom::Point2D &loc1, const RDGeom::Point2D &loc2,
                        double remAngle) {
-  RDGeom::Point2D pt1 = loc1 - center;
-  RDGeom::Point2D pt2 = loc2 - center;
-  double cross = pt1.x * pt2.y - pt1.y * pt2.x;
-  double diffAngle = M_PI - remAngle;
+  auto pt1 = loc1 - center;
+  auto pt2 = loc2 - center;
+  auto cross = pt1.x * pt2.y - pt1.y * pt2.x;
+  auto diffAngle = M_PI - remAngle;
   cross *= diffAngle;
   if (cross >= 0.0) {
     return -1;
@@ -256,11 +254,10 @@ inline int rotationDir(const RDGeom::Point2D &center,
 */
 inline RDGeom::Point2D computeNormal(const RDGeom::Point2D &center,
                                      const RDGeom::Point2D &other) {
-  RDGeom::Point2D res = other - center;
+  auto res = other - center;
   res.normalize();
-  double tmp = res.x;
-  res.x = -res.y;
-  res.y = tmp;
+  std::swap(res.x, res.y);
+  res.x *= -1;
   return res;
 }
 
@@ -275,8 +272,8 @@ inline RDGeom::Point2D computeNormal(const RDGeom::Point2D &center,
 inline double computeAngle(const RDGeom::Point2D &center,
                            const RDGeom::Point2D &loc1,
                            const RDGeom::Point2D &loc2) {
-  RDGeom::Point2D v1 = loc1 - center;
-  RDGeom::Point2D v2 = loc2 - center;
+  auto v1 = loc1 - center;
+  auto v2 = loc2 - center;
   return v1.angleTo(v2);
 }
 

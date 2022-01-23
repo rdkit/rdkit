@@ -20,18 +20,17 @@ def GetPrincipleQuantumNumber(atNum):
   """ Get principal quantum number for atom number """
   if atNum <= 2:
     return 1
-  elif atNum <= 10:
+  if atNum <= 10:
     return 2
-  elif atNum <= 18:
+  if atNum <= 18:
     return 3
-  elif atNum <= 36:
+  if atNum <= 36:
     return 4
-  elif atNum <= 54:
+  if atNum <= 54:
     return 5
-  elif atNum <= 86:
+  if atNum <= 86:
     return 6
-  else:
-    return 7
+  return 7
 
 
 def EStateIndices(mol, force=True):
@@ -45,19 +44,18 @@ def EStateIndices(mol, force=True):
 
   tbl = Chem.GetPeriodicTable()
   nAtoms = mol.GetNumAtoms()
-  Is = numpy.zeros(nAtoms, numpy.float)
+  Is = numpy.zeros(nAtoms, dtype=numpy.float64)
   for i in range(nAtoms):
     at = mol.GetAtomWithIdx(i)
-    atNum = at.GetAtomicNum()
     d = at.GetDegree()
     if d > 0:
-      h = at.GetTotalNumHs()
-      dv = tbl.GetNOuterElecs(atNum) - h
+      atNum = at.GetAtomicNum()
+      dv = tbl.GetNOuterElecs(atNum) - at.GetTotalNumHs()
       N = GetPrincipleQuantumNumber(atNum)
       Is[i] = (4. / (N * N) * dv + 1) / d
-  dists = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0)
-  dists += 1
-  accum = numpy.zeros(nAtoms, numpy.float)
+  dists = Chem.GetDistanceMatrix(mol, useBO=0, useAtomWts=0) + 1
+  
+  accum = numpy.zeros(nAtoms, dtype=numpy.float64)
   for i in range(nAtoms):
     for j in range(i + 1, nAtoms):
       p = dists[i, j]
@@ -65,7 +63,7 @@ def EStateIndices(mol, force=True):
         tmp = (Is[i] - Is[j]) / (p * p)
         accum[i] += tmp
         accum[j] -= tmp
-
+  
   res = accum + Is
   mol._eStateIndices = res
   return res
@@ -89,14 +87,14 @@ MinEStateIndex.version = "1.0.0"
 
 
 def MaxAbsEStateIndex(mol, force=1):
-  return max([abs(x) for x in EStateIndices(mol, force)])
+  return max(abs(x) for x in EStateIndices(mol, force))
 
 
 MaxAbsEStateIndex.version = "1.0.0"
 
 
 def MinAbsEStateIndex(mol, force=1):
-  return min([abs(x) for x in EStateIndices(mol, force)])
+  return min(abs(x) for x in EStateIndices(mol, force))
 
 
 MinAbsEStateIndex.version = "1.0.0"

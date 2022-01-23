@@ -1099,12 +1099,12 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
 
       // recurse if needed (was github isusue 544)
       if (atom->hasQuery()) {
-        // std::cerr<<"  q: "<<atom->getQuery()->getDescription()<<std::endl;
         if (atom->getQuery()->getDescription() == "RecursiveStructure") {
-          auto *rqm = static_cast<RWMol *>(const_cast<ROMol *>(
-              static_cast<RecursiveStructureQuery *>(atom->getQuery())
-                  ->getQueryMol()));
+          auto *rsq = dynamic_cast<RecursiveStructureQuery *>(atom->getQuery());
+          CHECK_INVARIANT(rsq, "could not convert recursive structure query");
+          RWMol *rqm = new RWMol(*rsq->getQueryMol());
           mergeQueryHs(*rqm, mergeUnmappedOnly);
+          rsq->setQueryMol(rqm);
         }
 
         // FIX: shouldn't be repeating this code here
@@ -1113,14 +1113,12 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
         while (childStack.size()) {
           QueryAtom::QUERYATOM_QUERY::CHILD_TYPE qry = childStack.front();
           childStack.pop_front();
-          // std::cerr<<"      child: "<<qry->getDescription()<<std::endl;
           if (qry->getDescription() == "RecursiveStructure") {
-            // std::cerr<<"    recurse"<<std::endl;
-            auto *rqm = static_cast<RWMol *>(const_cast<ROMol *>(
-                static_cast<RecursiveStructureQuery *>(qry.get())
-                    ->getQueryMol()));
+            auto *rsq = dynamic_cast<RecursiveStructureQuery *>(qry.get());
+            CHECK_INVARIANT(rsq, "could not convert recursive structure query");
+            RWMol *rqm = new RWMol(*rsq->getQueryMol());
             mergeQueryHs(*rqm, mergeUnmappedOnly);
-            // std::cerr<<"    back"<<std::endl;
+            rsq->setQueryMol(rqm);
           } else if (qry->beginChildren() != qry->endChildren()) {
             childStack.insert(childStack.end(), qry->beginChildren(),
                               qry->endChildren());

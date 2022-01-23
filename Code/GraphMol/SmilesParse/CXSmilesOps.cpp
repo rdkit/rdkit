@@ -95,7 +95,7 @@ const std::string _tailCrossings = "_tailCrossings";
 template <typename Iterator>
 bool read_int(Iterator &first, Iterator last, unsigned int &res) {
   std::string num = "";
-  while (first != last && *first >= '0' && *first <= '9') {
+  while (first <= last && *first >= '0' && *first <= '9') {
     num += *first;
     ++first;
   }
@@ -110,7 +110,7 @@ bool read_int_list(Iterator &first, Iterator last,
                    std::vector<unsigned int> &res, char sep = ',') {
   while (1) {
     std::string num = "";
-    while (first != last && *first >= '0' && *first <= '9') {
+    while (first <= last && *first >= '0' && *first <= '9') {
       num += *first;
       ++first;
     }
@@ -142,7 +142,7 @@ std::string read_text_to(Iterator &first, Iterator last, std::string delims) {
   std::string res = "";
   Iterator start = first;
   // EFF: there are certainly faster ways to do this
-  while (first != last && delims.find_first_of(*first) == std::string::npos) {
+  while (first <= last && delims.find_first_of(*first) == std::string::npos) {
     if (*first == '&' && std::distance(first, last) > 2 &&
         *(first + 1) == '#') {
       // escaped char
@@ -324,18 +324,18 @@ bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   ++first;
   unsigned int atIdx = 0;
-  while (first != last && *first != '$') {
+  while (first <= last && *first != '$') {
     std::string tkn = read_text_to(first, last, ";$");
     if (tkn != "" && VALID_ATIDX(atIdx)) {
       mol.getAtomWithIdx(atIdx)->setProp(RDKit::common_properties::molFileValue,
                                          tkn);
     }
     ++atIdx;
-    if (first != last && *first != '$') {
+    if (first <= last && *first != '$') {
       ++first;
     }
   }
-  if (first == last || *first != '$') {
+  if (first >= last || *first != '$') {
     return false;
   }
   ++first;
@@ -348,16 +348,16 @@ bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol,
   if (first >= last) {
     return false;
   }
-  while (first != last && *first != '|' && *first != ',') {
+  while (first <= last && *first != '|' && *first != ',') {
     unsigned int atIdx;
     if (read_int(first, last, atIdx)) {
-      if (first == last || *first != '.') {
+      if (first >= last || *first != '.') {
         return false;
       }
       ++first;
       std::string pname = read_text_to(first, last, ".");
       if (!pname.empty()) {
-        if (first == last || *first != '.') {
+        if (first >= last || *first != '.') {
           return false;
         }
         ++first;
@@ -367,11 +367,11 @@ bool parse_atom_props(Iterator &first, Iterator last, RDKit::RWMol &mol,
         }
       }
     }
-    if (first != last && *first != '|' && *first != ',') {
+    if (first <= last && *first != '|' && *first != ',') {
       ++first;
     }
   }
-  if (first != last && *first != '|' && *first != ',') {
+  if (first <= last && *first != '|' && *first != ',') {
     return false;
   }
   if (*first != '|') {
@@ -388,18 +388,18 @@ bool parse_atom_labels(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   ++first;
   unsigned int atIdx = 0;
-  while (first != last && *first != '$') {
+  while (first <= last && *first != '$') {
     std::string tkn = read_text_to(first, last, ";$");
     if (!tkn.empty() && VALID_ATIDX(atIdx)) {
       mol.getAtomWithIdx(atIdx - startAtomIdx)
           ->setProp(RDKit::common_properties::atomLabel, tkn);
     }
     ++atIdx;
-    if (first != last && *first != '$') {
+    if (first <= last && *first != '$') {
       ++first;
     }
   }
-  if (first == last || *first != '$') {
+  if (first >= last || *first != '$') {
     return false;
   }
   ++first;
@@ -417,7 +417,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
   mol.addConformer(conf);
   ++first;
   unsigned int atIdx = 0;
-  while (first != last && *first != ')') {
+  while (first <= last && *first != ')') {
     RDGeom::Point3D pt;
     std::string tkn = read_text_to(first, last, ";)");
     if (VALID_ATIDX(atIdx)) {
@@ -438,11 +438,11 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
       conf->setAtomPos(atIdx - startAtomIdx, pt);
     }
     ++atIdx;
-    if (first != last && *first != ')') {
+    if (first <= last && *first != ')') {
       ++first;
     }
   }
-  if (first == last || *first != ')') {
+  if (first >= last || *first != ')') {
     return false;
   }
   ++first;
@@ -461,7 +461,7 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     return false;
   }
   ++first;
-  while (first != last && *first >= '0' && *first <= '9') {
+  while (first <= last && *first >= '0' && *first <= '9') {
     unsigned int aidx;
     unsigned int bidx;
     if (read_int_pair(first, last, aidx, bidx)) {
@@ -630,6 +630,9 @@ bool parse_linknodes(Iterator &first, Iterator last, RDKit::RWMol &mol,
     if (!read_int(first, last, startReps)) {
       return false;
     }
+    if (first + 1 >= last || *first != '.') {
+      return false;
+    }
     ++first;
     unsigned int endReps;
     if (!read_int(first, last, endReps)) {
@@ -794,7 +797,7 @@ bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
     } else {
       psg->getPropIfPresent("index", parentId);
     }
-    if (first != last && *first == ':') {
+    if (first <= last && *first == ':') {
       ++first;
       std::vector<unsigned int> children;
       if (!read_int_list(first, last, children, '.')) {
@@ -814,7 +817,7 @@ bool parse_sgroup_hierarchy(Iterator &first, Iterator last, RDKit::RWMol &mol) {
           }
         }
       }
-      if (first != last && *first == ',') {
+      if (first <= last && *first == ',') {
         ++first;
       } else {
         break;
@@ -877,20 +880,20 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   std::vector<unsigned int> headCrossing;
   std::vector<unsigned int> tailCrossing;
-  if (first != last && *first == ':') {
+  if (first <= last && *first == ':') {
     ++first;
     std::string subscript = read_text_to(first, last, ":|");
     if (keepSGroup && !subscript.empty()) {
       sgroup.setProp("LABEL", subscript);
     }
-    if (first != last && *first == ':') {
+    if (first <= last && *first == ':') {
       ++first;
       std::string superscript = read_text_to(first, last, ":|,");
       if (keepSGroup && !superscript.empty()) {
         sgroup.setProp("CONNECT", superscript);
       }
 
-      if (first != last && *first == ':') {
+      if (first <= last && *first == ':') {
         ++first;
         if (!read_int_list(first, last, headCrossing)) {
           return false;
@@ -906,7 +909,7 @@ bool parse_polymer_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
           }
           sgroup.setProp(_headCrossings, headCrossing, true);
         }
-        if (first != last && *first == ':') {
+        if (first <= last && *first == ':') {
           ++first;
           if (!read_int_list(first, last, tailCrossing)) {
             return false;
@@ -1156,7 +1159,7 @@ bool parse_enhanced_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
   ++first;
 
   std::vector<Atom *> atoms;
-  while (first != last && *first >= '0' && *first <= '9') {
+  while (first <= last && *first >= '0' && *first <= '9') {
     unsigned int aidx;
     if (read_int(first, last, aidx)) {
       if (VALID_ATIDX(aidx)) {
