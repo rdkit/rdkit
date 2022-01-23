@@ -82,58 +82,70 @@ constexpr unsigned char octahedral_across[31][6] = {
     {1, 0, 4, 5, 2, 3}   // OH30
 };
 
-bool isTrigonalBipyramidalAxialLigand(const Atom *cen, const Bond *qry) {
+constexpr unsigned char trigonalbipyramidal_axial[21][2] = {
+    {5, 5},  //
+    {0, 4},  // TB1
+    {0, 4},  // TB2
+    {0, 3},  // TB3
+    {0, 3},  // TB4
+    {0, 2},  // TB5
+    {0, 2},  // TB6
+    {0, 1},  // TB7
+    {0, 1},  // TB8
+    {1, 4},  // TB9
+    {1, 4},  // TB10
+    {1, 3},  // TB11
+    {1, 3},  // TB12
+    {1, 2},  // TB13
+    {1, 2},  // TB14
+    {2, 4},  // TB15
+    {2, 3},  // TB16
+    {3, 4},  // TB17
+    {3, 4},  // TB18
+    {2, 3},  // TB19
+    {2, 4}   // TB20
+};
+
+int isTrigonalBipyramidalAxialBond(const Atom *cen, const Bond *qry) {
   PRECONDITION(cen, "bad center pointer");
   PRECONDITION(qry, "bad query pointer");
   PRECONDITION(cen->hasOwningMol() && qry->hasOwningMol(), "no owning mol");
   PRECONDITION(&cen->getOwningMol() == &qry->getOwningMol(),
                "center and query must come from the same molecule");
-  if (cen->getChiralTag() != Atom::CHI_TRIGONALBIPYRAMIDAL) {
+  if (cen->getDegree() > 5 ||
+      cen->getChiralTag() != Atom::CHI_TRIGONALBIPYRAMIDAL) {
     return false;
   }
-  auto ref_max = 5;
   unsigned int perm = 0;
-  cen->getPropIfPresent(common_properties::_chiralPermutation, perm);
-  if (!perm) {
-    return false;
-  }
+  cen->getPropIfPresent(RDKit::common_properties::_chiralPermutation, perm);
+  if (perm == 0 || perm > 20) return 0;
 
-  auto &mol = cen->getOwningMol();
-  int found = -1;
-  int count = 0;
-  for (auto bnd : mol.atomBonds(cen)) {
-    if (count == ref_max) {
-      return false;
-    }
+  unsigned int count = 0;
+  for (const auto bnd : cen->getOwningMol().atomBonds(cen)) {
     if (bnd == qry) {
-      found = count;
-      break;
+      if (count == trigonalbipyramidal_axial[perm][0]) {
+        return 1;
+      }
+      if (count == trigonalbipyramidal_axial[perm][1]) {
+        return -1;
+      }
+      return 0;
     }
-    ++count;
+    count++;
   }
-
-  if (found >= 0) {
-    if (perm <= 20) {
-      found = trigonalbipyramidal_across[perm][found];
-    } else {
-      found = 5;
-    }
-    return found < ref_max;
-  } else {
-    return false;
-  }
+  return 0;
 }
 
-bool isTrigonalBipyramidalAxialLigand(const Atom *cen, const Atom *qry) {
+int isTrigonalBipyramidalAxialAtom(const Atom *cen, const Atom *qry) {
   PRECONDITION(cen, "bad center pointer");
   PRECONDITION(qry, "bad query pointer");
   PRECONDITION(cen->hasOwningMol(), "no owning mol");
   auto bnd =
       cen->getOwningMol().getBondBetweenAtoms(cen->getIdx(), qry->getIdx());
   if (!bnd) {
-    return false;
+    return 0;
   }
-  return isTrigonalBipyramidalAxialLigand(cen, bnd);
+  return isTrigonalBipyramidalAxialBond(cen, bnd);
 }
 
 Bond *getChiralAcrossBond(const Atom *cen, const Bond *qry) {
@@ -266,8 +278,8 @@ double getIdealAngleBetweenLigands(const Atom *cen, const Atom *lig1,
       if (getChiralAcrossAtom(cen, lig1) == lig2) {
         // both are axial
         return 180;
-      } else if (isTrigonalBipyramidalAxialLigand(cen, lig1) ||
-                 isTrigonalBipyramidalAxialLigand(cen, lig2)) {
+      } else if (isTrigonalBipyramidalAxialAtom(cen, lig1) ||
+                 isTrigonalBipyramidalAxialAtom(cen, lig2)) {
         // one is axial, the other equatorial
         return 90;
       } else {
@@ -280,6 +292,34 @@ double getIdealAngleBetweenLigands(const Atom *cen, const Atom *lig1,
   }
 }
 
+Bond *getTrigonalBipyramidalAxialBond(const Atom *cen, int axial) {
+  PRECONDITION(cen, "bad center pointer");
+  PRECONDITION(cen->hasOwningMol(), "no owning mol");
+  if (cen->getChiralTag() != RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL ||
+      cen->getDegree() > 5)
+    return nullptr;
+
+  unsigned int perm = 0;
+  cen->getPropIfPresent(RDKit::common_properties::_chiralPermutation, perm);
+  if (perm == 0 || perm > 20) return 0;
+
+  unsigned int idx = (axial != -1) ? trigonalbipyramidal_axial[perm][0]
+                                   : trigonalbipyramidal_axial[perm][1];
+
+  unsigned int count = 0;
+  for (const auto bnd : cen->getOwningMol().atomBonds(cen)) {
+    if (count == idx) return bnd;
+    count++;
+  }
+  return nullptr;
+}
+
+Atom *getTrigonalBipyramidalAxialAtom(const Atom *cen, int axial) {
+  PRECONDITION(cen, "bad center pointer");
+  PRECONDITION(cen->hasOwningMol(), "no owning mol");
+  auto bnd = getTrigonalBipyramidalAxialBond(cen, axial);
+  return bnd ? bnd->getOtherAtom(cen) : nullptr;
+}
 bool hasNonTetrahedralStereo(const Atom *cen) {
   PRECONDITION(cen, "bad center pointer");
   if (!cen->hasOwningMol()) {

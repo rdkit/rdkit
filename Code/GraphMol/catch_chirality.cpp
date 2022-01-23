@@ -2051,16 +2051,20 @@ TEST_CASE("getIdealAngle") {
   SECTION("TB1") {
     auto m = "S[As@TB1](F)(Cl)(Br)N"_smiles;
     REQUIRE(m);
-    CHECK(Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                      m->getAtomWithIdx(0)));
-    CHECK(Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                      m->getAtomWithIdx(5)));
-    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                       m->getAtomWithIdx(2)));
-    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                       m->getAtomWithIdx(3)));
-    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                       m->getAtomWithIdx(4)));
+    CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                    m->getAtomWithIdx(0)));
+    CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                    m->getAtomWithIdx(5)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(2)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(3)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(4)));
+    CHECK(Chirality::getTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1))
+              ->getIdx() == 0);
+    CHECK(Chirality::getTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1), -1)
+              ->getIdx() == 5);
 
     CHECK_THAT(
         Chirality::getIdealAngleBetweenLigands(
@@ -2099,14 +2103,18 @@ TEST_CASE("getIdealAngle") {
     auto m = "S[As@TB1](F)(Cl)Br"_smiles;
     REQUIRE(m);
 
-    CHECK(Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                      m->getAtomWithIdx(0)));
-    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                       m->getAtomWithIdx(2)));
-    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                       m->getAtomWithIdx(3)));
-    CHECK(!Chirality::isTrigonalBipyramidalAxialLigand(m->getAtomWithIdx(1),
-                                                       m->getAtomWithIdx(4)));
+    CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                    m->getAtomWithIdx(0)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(2)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(3)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(4)));
+    CHECK(Chirality::getTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1))
+              ->getIdx() == 0);
+    CHECK(Chirality::getTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     -1) == nullptr);
 
     CHECK_THAT(
         Chirality::getIdealAngleBetweenLigands(
