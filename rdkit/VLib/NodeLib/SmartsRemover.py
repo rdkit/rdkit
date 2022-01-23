@@ -16,6 +16,7 @@ class SmartsRemover(TransformNode):
 
 
   Sample Usage:
+    >>> from rdkit import Chem
     >>> smis = ['C1CCC1.C=O','C1CCC1C=O','CCC=O.C=O','NCC=O.C=O.CN']
     >>> mols = [Chem.MolFromSmiles(x) for x in smis]
     >>> from rdkit.VLib.Supply import SupplyNode
@@ -25,7 +26,7 @@ class SmartsRemover(TransformNode):
     4
 
     We can pass in SMARTS strings:
-    >>> smas = ['C=O','CN']
+    >>> smas = ['C=O', 'CN']
     >>> tform = SmartsRemover(patterns=smas)
     >>> tform.AddParent(suppl)
     >>> ms = [x for x in tform]
@@ -43,7 +44,7 @@ class SmartsRemover(TransformNode):
     We can also remove pieces of the molecule that are not complete
     fragments:
     >>> tform.Destroy()
-    >>> smas = ['C=O','CN']
+    >>> smas = ['C=O', 'CN']
     >>> smas = [Chem.MolFromSmarts(x) for x in smas]
     >>> tform = SmartsRemover(patterns=smas,wholeFragments=0)
     >>> tform.AddParent(suppl)
@@ -59,7 +60,7 @@ class SmartsRemover(TransformNode):
 
     Or patterns themselves:
     >>> tform.Destroy()
-    >>> smas = ['C=O','CN']
+    >>> smas = ['C=O', 'CN']
     >>> smas = [Chem.MolFromSmarts(x) for x in smas]
     >>> tform = SmartsRemover(patterns=smas)
     >>> tform.AddParent(suppl)
@@ -82,14 +83,15 @@ class SmartsRemover(TransformNode):
   def _initPatterns(self, patterns):
     nPatts = len(patterns)
     targets = [None] * nPatts
-    for i in range(nPatts):
-      p = patterns[i]
-      if type(p) in (str, bytes):
-        m = Chem.MolFromSmarts(p)
-        if not m:
-          raise ValueError('bad smarts: %s' % (p))
-        p = m
-      targets[i] = p
+    
+    for i, pattern in enumerate(patterns):
+      if isinstance(pattern, (str, bytes)):
+        mol = Chem.MolFromSmarts(pattern)
+        if not mol:
+          raise ValueError('bad smarts: %s' % (pattern))
+        pattern = mol
+      targets[i] = pattern
+
     self._patterns = tuple(targets)
 
   def transform(self, cmpd):
@@ -97,7 +99,6 @@ class SmartsRemover(TransformNode):
     for patt in self._patterns:
       cmpd = Chem.DeleteSubstructs(cmpd, patt, onlyFrags=self._wholeFragments)
       # sys.stderr.write('\t\tAfter %s: %s\n'%(Chem.MolToSmiles(patt),Chem.MolToSmiles(cmpd)))
-
     return cmpd
 
 

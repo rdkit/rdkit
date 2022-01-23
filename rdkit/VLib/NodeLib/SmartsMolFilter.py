@@ -28,8 +28,8 @@ class SmartsFilter(FilterNode):
     8
 
     We can pass in SMARTS strings:
-    >>> smas = ['C=O','CN']
-    >>> counts = [1,2]
+    >>> smas = ['C=O', 'CN']
+    >>> counts = [1, 2]
     >>> filt = SmartsFilter(patterns=smas,counts=counts)
     >>> filt.AddParent(suppl)
     >>> ms = [x for x in filt]
@@ -37,8 +37,8 @@ class SmartsFilter(FilterNode):
     5
 
     Alternatively, we can pass in molecule objects:
-    >>> mols =[Chem.MolFromSmarts(x) for x in smas]
-    >>> counts = [1,2]
+    >>> mols = [Chem.MolFromSmarts(x) for x in smas]
+    >>> counts = [1, 2]
     >>> filt.Destroy()
     >>> filt = SmartsFilter(patterns=mols,counts=counts)
     >>> filt.AddParent(suppl)
@@ -65,28 +65,21 @@ class SmartsFilter(FilterNode):
       raise ValueError('if counts is specified, it must match patterns in length')
     if not len(counts):
       counts = [1] * nPatts
+      
     targets = [None] * nPatts
-    for i in range(nPatts):
-      p = patterns[i]
-      c = counts[i]
-      if type(p) in (str, bytes):
-        m = Chem.MolFromSmarts(p)
-        if not m:
-          raise ValueError('bad smarts: %s' % (p))
-        p = m
-      targets[i] = p, c
+    for i, (pattern, count) in enumerate(zip(patterns, counts)):
+      if isinstance(pattern, (str, bytes)):
+        mol = Chem.MolFromSmarts(pattern)
+        if not mol:
+          raise ValueError('bad smarts:', pattern)
+        pattern = mol
+      targets[i] = (pattern, count)
     self._patterns = tuple(targets)
+      
 
-  def filter(self, cmpd):
-    res = False
-    for patt, count in self._patterns:
-      ms = cmpd.GetSubstructMatches(patt)
-      nMatches = len(ms)
-      if nMatches >= count:
-        # this query is an or, so we short circuit true:
-        res = True
-        break
-    return res
+  def filter(self, cmpd):   
+    return any(len(cmpd.GetSubstructMatches(patt)) >= count for patt, count in self._patterns)  
+ 
 
 
 # ------------------------------------

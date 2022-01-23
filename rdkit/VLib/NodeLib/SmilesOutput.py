@@ -18,6 +18,7 @@ class OutputNode(BaseOutputNode):
 
 
     Usage Example:
+      >>> from rdkit import Chem
       >>> smis = ['C1CCC1','C1CC1','C=O','NCC']
       >>> mols = [Chem.MolFromSmiles(x) for x in smis]
       >>> from rdkit.VLib.Supply import SupplyNode
@@ -57,14 +58,13 @@ class OutputNode(BaseOutputNode):
                 args = []
         else:
             args = []
-
+        
         if self._idField and mol.HasProp(self._idField):
             label = mol.GetProp(self._idField)
         else:
             label = str(self._nDumped)
-        smi = Chem.MolToSmiles(mol)
-        outp = [label, smi] + args
-        return '%s\n' % (self._delim.join(outp))
+        outp = [label, Chem.MolToSmiles(mol)] + args
+        return f'{self._delim.join(outp)}\n' 
 
 
 # ------------------------------------
@@ -72,8 +72,8 @@ class OutputNode(BaseOutputNode):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import doctest
     import sys
+    import doctest
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

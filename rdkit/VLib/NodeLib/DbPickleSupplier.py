@@ -3,11 +3,13 @@
 #  Copyright (C) 2004 Rational Discovery LLC
 #     All Rights Reserved
 #
+import pickle
+import sys
 
 from rdkit import RDConfig
-import sys, os.path
+from rdkit.Dbase.DbConnection import DbConnect
+from rdkit.VLib.NodeLib.DbMolSupply import DbMolSupplyNode
 from rdkit.VLib.Supply import SupplyNode
-import pickle
 
 if RDConfig.usePgSQL:
   from pyPgSQL import PgSQL as sql
@@ -32,10 +34,8 @@ if RDConfig.usePgSQL:
 
     def _validate(self):
       curs = self.cursor
-      if not curs or \
-             curs.closed or \
-             curs.conn is None or \
-             (curs.res.resultType != sql.RESULT_DQL and curs.closed is None):
+      if not curs or curs.closed or curs.conn is None or \
+        (curs.res.resultType != sql.RESULT_DQL and curs.closed is None):
         raise ValueError('bad cursor')
       if curs.res.nfields and curs.res.nfields < 2:
         raise ValueError('invalid number of results returned (%d), must be at least 2' %
@@ -59,15 +59,12 @@ if RDConfig.usePgSQL:
 
     def next(self):
       curs = self.cursor
-      if not curs or \
-             curs.closed or \
-             curs.conn is None or \
-             curs.res is None or \
-             (curs.res.resultType != sql.RESULT_DQL and curs.closed is None):
+      if not curs or curs.closed or curs.conn is None or curs.res is None or \
+        (curs.res.resultType != sql.RESULT_DQL and curs.closed is None):
         raise StopIteration
+      
       if not self._first:
         res = curs.conn.conn.query('fetch 1 from "%s"' % self.cursor.name)
-
         if res.ntuples == 0:
           raise StopIteration
         else:
@@ -79,6 +76,7 @@ if RDConfig.usePgSQL:
         t = curs.fetchone()
         val = str(t[self._pickleCol])
         self._first = 0
+        
       if self._depickle:
         if not self._klass:
           fp = pickle.loads(val)
@@ -110,7 +108,7 @@ if RDConfig.usePgSQL:
       self.rowCount = self.res.ntuples + 1
       self.idx = 0
       if self.res.nfields < 2:
-        raise ValueError('bad query result' % str(res))
+        raise ValueError('bad query result' % str(res)) # This code should not be raised
 
       return self
 
@@ -135,7 +133,7 @@ if RDConfig.usePgSQL:
         self.rowCount = self.res.ntuples + 1
         self.idx = 0
         if self.res.nfields < 2:
-          raise ValueError('bad query result' % str(res))
+          raise ValueError('bad query result' % str(res)) # This code should not be raised
 
       if idx < 0:
         idx = self.rowCount + idx
@@ -189,7 +187,6 @@ class DbPickleSupplyNode(SupplyNode):
 
 
 def GetNode(dbName, tableName):
-  from rdkit.Dbase.DbConnection import DbConnect
   conn = DbConnect(dbName, tableName)
   return DbMolSupplyNode(conn.GetData())
 
@@ -199,11 +196,10 @@ def GetNode(dbName, tableName):
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
+  import doctest
   return doctest.testmod(sys.modules["__main__"])
 
 
 if __name__ == '__main__':
-  import sys
   failed, tried = _test()
   sys.exit(failed)
