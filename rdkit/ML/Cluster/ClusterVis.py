@@ -17,6 +17,7 @@ try:
   piddle = pid
 except ImportError:
   from rdkit.piddle import piddle
+
 import numpy
 
 from . import ClusterUtils
@@ -50,13 +51,22 @@ class VisOpts(object):
   highlightRad = 10
 
 
-def _scaleMetric(val, power=2, min=1e-4):
-  val = float(val)
-  nval = pow(val, power)
+def _scaleMetric(val, power: int = 2, min: float = 1e-4) -> float:
+  nval = pow(float(val), power)
   if nval < min:
     return 0.0
-  else:
-    return numpy.log(nval / min)
+  return numpy.log(nval / min)
+
+
+def _isPositiveLogScale(logScale) -> bool:
+  return logScale > 0
+
+
+def _CalculateMetric(cluster, logScale: float) -> float:
+  # Reduce the code length by using a single metric
+  if _isPositiveLogScale(logScale):
+    return _scaleMetric(cluster.GetMetric(), logScale) 
+  return float(cluster.GetMetric())
 
 
 class ClusterRenderer(object):
@@ -78,12 +88,8 @@ class ClusterRenderer(object):
     self.nPts = len(self.pts)
     self.xSpace = float(self.size[0] - 2 * VisOpts.xOffset) / float(self.nPts - 1)
     ySize = self.size[1]
-    for i in range(self.nPts):
-      pt = self.pts[i]
-      if self.logScale > 0:
-        v = _scaleMetric(pt.GetMetric(), self.logScale)
-      else:
-        v = float(pt.GetMetric())
+    for i, pt in enumerate(self.pts):
+      v = _CalculateMetric(pt, logScale=self.logScale)
       pt._drawPos = (VisOpts.xOffset + i * self.xSpace,
                      ySize - (v * self.ySpace + VisOpts.yOffset) + terminalOffset)
 
@@ -99,13 +105,12 @@ class ClusterRenderer(object):
         for child in children:
           if not child.IsTerminal():
             examine.append(child)
+            
     # and reverse it (to run from bottom up)
     toDo.reverse()
     for node in toDo:
-      if self.logScale > 0:
-        v = _scaleMetric(node.GetMetric(), self.logScale)
-      else:
-        v = float(node.GetMetric())
+      v = _CalculateMetric(node, logScale=self.logScale)
+
       # average our children's x positions
       childLocs = [x._drawPos[0] for x in node.GetChildren()]
       if len(childLocs):
@@ -140,6 +145,7 @@ class ClusterRenderer(object):
             drawColor = VisOpts.lineColor
           cxp, cyp = child._drawPos
           self.canvas.drawLine(cxp, yp, cxp, cyp, drawColor, lineWidth)
+          
           if not child.IsTerminal():
             examine.append(child)
           else:
@@ -156,10 +162,7 @@ class ClusterRenderer(object):
                              lineWidth)
 
   def DrawTree(self, cluster, minHeight=2.0):
-    if self.logScale > 0:
-      v = _scaleMetric(cluster.GetMetric(), self.logScale)
-    else:
-      v = float(cluster.GetMetric())
+    v = _CalculateMetric(cluster, logScale=self.logScale)
     if v <= 0:
       v = minHeight
     self.ySpace = float(self.size[1] - 2 * VisOpts.yOffset) / v
@@ -168,8 +171,7 @@ class ClusterRenderer(object):
     self._AssignClusterLocations(cluster)
     if not self.stopAtCentroids:
       self._DrawToLimit(cluster)
-    else:
-      raise NotImplementedError('stopAtCentroids drawing not yet implemented')
+    raise NotImplementedError('stopAtCentroids drawing not yet implemented')
 
 
 def DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showIndices=0, showNodes=1,
@@ -238,23 +240,18 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
   pts = cluster.GetPoints()
   nPts = len(pts)
   if nPts <= 1:
-    return
+    return None
+  
   xSpace = float(size[0] - 2 * VisOpts.xOffset) / float(nPts - 1)
-  if logScale > 0:
-    v = _scaleMetric(cluster.GetMetric(), logScale)
-  else:
-    v = float(cluster.GetMetric())
+  v = _CalculateMetric(cluster, logScale)
   ySpace = float(size[1] - 2 * VisOpts.yOffset) / v
 
-  for i in range(nPts):
-    pt = pts[i]
-    if logScale > 0:
-      v = _scaleMetric(pt.GetMetric(), logScale)
-    else:
-      v = float(pt.GetMetric())
+  for i, pt in enumerate(pts):
+    v = _CalculateMetric(pt, logScale)
     pt._drawPos = (VisOpts.xOffset + i * xSpace, size[1] - (v * ySpace + VisOpts.yOffset))
-#     if not stopAtCentroids or not hasattr(pt, '_isCentroid'):
-#       allNodes.remove(pt)  # allNodes not defined
+  
+  #   if not stopAtCentroids or not hasattr(pt, '_isCentroid'):
+  #      allNodes.remove(pt)  # allNodes not defined
 
   if not stopAtCentroids:
     allNodes = ClusterUtils.GetNodeList(cluster)
@@ -265,33 +262,35 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
     node = allNodes.pop(0)
     children = node.GetChildren()
     if len(children):
-      if logScale > 0:
-        v = _scaleMetric(node.GetMetric(), logScale)
-      else:
-        v = float(node.GetMetric())
+      v = _CalculateMetric(node, logScale)
       yp = size[1] - (v * ySpace + VisOpts.yOffset)
       childLocs = [x._drawPos[0] for x in children]
       xp = sum(childLocs) / float(len(childLocs))
       node._drawPos = (xp, yp)
+      
       if not stopAtCentroids or node._aboveCentroid > 0:
         for child in children:
           if ptColors != [] and child.GetData() is not None:
             drawColor = ptColors[child.GetData()]
           else:
             drawColor = VisOpts.lineColor
+            
           if showNodes and hasattr(child, '_isCentroid'):
             canvas.drawLine(child._drawPos[0], child._drawPos[1] - VisOpts.nodeRad / 2,
                             child._drawPos[0], node._drawPos[1], drawColor, lineWidth)
           else:
             canvas.drawLine(child._drawPos[0], child._drawPos[1], child._drawPos[0],
                             node._drawPos[1], drawColor, lineWidth)
+            
         canvas.drawLine(children[0]._drawPos[0], node._drawPos[1], children[-1]._drawPos[0],
                         node._drawPos[1], VisOpts.lineColor, lineWidth)
+      
       else:
         for child in children:
           drawColor = VisOpts.hideColor
           canvas.drawLine(child._drawPos[0], child._drawPos[1], child._drawPos[0], node._drawPos[1],
                           drawColor, VisOpts.hideWidth)
+        
         canvas.drawLine(children[0]._drawPos[0], node._drawPos[1], children[-1]._drawPos[0],
                         node._drawPos[1], VisOpts.hideColor, VisOpts.hideWidth)
 
@@ -310,6 +309,7 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
       canvas.drawEllipse(node._drawPos[0] - rad / 2, node._drawPos[1] - rad / 2,
                          node._drawPos[0] + rad / 2, node._drawPos[1] + rad / 2, piddle.transparent,
                          fillColor=VisOpts.nodeColor)
+      
       txt = str(node._clustID)
       canvas.drawString(txt, node._drawPos[0] - canvas.stringWidth(txt) / 2,
                         node._drawPos[1] + canvas.fontHeight() / 4, color=piddle.Color(0, 0, 0))
@@ -317,8 +317,8 @@ def _DrawClusterTree(cluster, canvas, size, ptColors=[], lineWidth=None, showInd
   if showIndices and not stopAtCentroids:
     for pt in pts:
       txt = str(pt.GetIndex())
-      canvas.drawString(
-        str(pt.GetIndex()), pt._drawPos[0] - canvas.stringWidth(txt) / 2, pt._drawPos[1])
+      canvas.drawString(str(pt.GetIndex()), pt._drawPos[0] - canvas.stringWidth(txt) / 2, pt._drawPos[1])
+  return None
 
 
 def ClusterToPDF(cluster, fileName, size=(300, 300), ptColors=[], lineWidth=None, showIndices=0,

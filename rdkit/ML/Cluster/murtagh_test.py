@@ -1,23 +1,17 @@
-
-
 import numpy
 
 from rdkit.ML.Cluster import Murtagh
 
 print('1')
-d = numpy.array([[10.0, 5.0], [20.0, 20.0], [30.0, 10.0], [30.0, 15.0], [5.0, 10.0]], numpy.float)
+d = numpy.array([[10.0, 5.0], [20.0, 20.0], [30.0, 10.0], [30.0, 15.0], [5.0, 10.0]], dtype=numpy.float64)
 print('2')
 # clusters = Murtagh.ClusterData(d,len(d),Murtagh.WARDS)
 # for i in range(len(clusters)):
 #   clusters[i].Print()
 # print('3')
 
-dists = []
-for i in range(len(d)):
-  for j in range(i):
-    dist = sum((d[i] - d[j])**2)
-    dists.append(dist)
-dists = numpy.array(dists)
+# Array of Euclidean distance
+dists = numpy.array([sum((d[i] - d[j])**2) for i in range(len(d)) for j in range(i)], dtype=numpy.float64) 
 
 print('Wards:')
 clusters = Murtagh.ClusterData(dists, len(d), Murtagh.WARDS, isDistData=1)

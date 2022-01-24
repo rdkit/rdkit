@@ -13,16 +13,11 @@
 """
 
 import unittest
-
-import numpy
-
-from rdkit.ML.Cluster import ClusterUtils
-from rdkit.ML.Cluster import Clusters
-from rdkit.TestRunner import redirect_stdout
 from io import StringIO
 
-
-from rdkit.ML.Cluster import Murtagh
+import numpy
+from rdkit.ML.Cluster import Clusters, ClusterUtils, Murtagh
+from rdkit.TestRunner import redirect_stdout
 
 
 class TestCase(unittest.TestCase):
@@ -97,12 +92,8 @@ class TestCase(unittest.TestCase):
         sz = 5
         dataP = numpy.random.random((nPts, sz))
         newClust = Murtagh.ClusterData(dataP, nPts, Murtagh.UPGMA)[0]
-        ds = []
-        for i in range(nPts):
-            for j in range(i):
-                d = dataP[i] - dataP[j]
-                ds.append(sum(d * d))
-        ds = numpy.array(ds)
+
+        ds = numpy.array([sum((dataP[i] - dataP[j]) ** 2) for i in range(nPts) for j in range(i)], dtype=numpy.float64)
         newClust2 = Murtagh.ClusterData(ds, nPts, Murtagh.UPGMA, isDistData=1)[0]
 
         assert len(newClust) == len(newClust2), 'length mismatch2'

@@ -29,14 +29,15 @@ def GetNodeList(cluster):
   """
   if len(cluster) == 1:
     return [cluster]
-  else:
-    children = cluster.GetChildren()
-    children.sort(key=lambda x: len(x), reverse=True)
-    res = []
-    for child in children:
-      res += GetNodeList(child)
-    res += [cluster]
-    return res
+  
+  children = cluster.GetChildren()
+  children.sort(key=lambda x: len(x), reverse=True)
+  res = []
+  for child in children:
+    res.extend(GetNodeList(child))
+  res.append(cluster)
+  return res
+
 
 
 def GetNodesDownToCentroids(cluster, above=1):
@@ -51,15 +52,16 @@ def GetNodesDownToCentroids(cluster, above=1):
     cluster._aboveCentroid = above
   if len(cluster) == 1:
     return [cluster]
-  else:
-    res = []
-    children = cluster.GetChildren()
-    children.sort(key=lambda x: len(x), reverse=True)
-    #     children.sort(lambda x, y: cmp(len(y), len(x)))
-    for child in children:
-      res = res + GetNodesDownToCentroids(child, above)
-    res = res + [cluster]
-    return res
+  
+  res = []
+  children = cluster.GetChildren()
+  children.sort(key=lambda x: len(x), reverse=True)
+  #     children.sort(lambda x, y: cmp(len(y), len(x)))
+  for child in children:
+    res.extend(GetNodesDownToCentroids(child, above))
+  res.append(cluster)
+  res += [cluster]
+  return res
 
 
 def FindClusterCentroidFromDists(cluster, dists):
@@ -95,11 +97,12 @@ def FindClusterCentroidFromDists(cluster, dists):
         if dAccum >= best:
           # minor efficiency hack
           break
+        
     if dAccum < best:
       best = dAccum
       bestIdx = pt
-  for i in range(len(pts)):
-    pt = pts[i]
+      
+  for i, pt in enumerate(pts):
     if pt != bestIdx:
       if pt > bestIdx:
         row, col = bestIdx, pt
@@ -120,9 +123,10 @@ def _BreadthFirstSplit(cluster, n):
 
   """
   if len(cluster) < n:
-    raise ValueError('Cannot split cluster of length %d into %d pieces' % (len(cluster), n))
+    raise ValueError(f'Cannot split cluster of length {len(cluster)} into {n} pieces')
   if len(cluster) == n:
     return cluster.GetPoints()
+  
   clusters = [cluster]
   nxtIdx = 0
   for _ in range(n - 1):
@@ -146,6 +150,7 @@ def _HeightFirstSplit(cluster, n):
     raise ValueError('Cannot split cluster of length %d into %d pieces' % (len(cluster), n))
   if len(cluster) == n:
     return cluster.GetPoints()
+  
   clusters = [cluster]
   for _ in range(n - 1):
     nxtIdx = 0
@@ -179,6 +184,6 @@ def SplitIntoNClusters(cluster, n, breadthFirst=True):
 
   """
   if breadthFirst:
-    return _BreadthFirstSplit(cluster, n)
-  else:
-    return _HeightFirstSplit(cluster, n)
+    return _BreadthFirstSplit(cluster, n) 
+  return _HeightFirstSplit(cluster, n)
+  
