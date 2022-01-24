@@ -40,8 +40,8 @@ namespace RDKit {
 
 namespace MolDraw2D_detail {
 class DrawMol;
-}
 class DrawText;
+}
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
@@ -427,7 +427,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::string getActiveClass() const { return d_activeClass; }
 
  protected:
-  std::unique_ptr<DrawText> text_drawer_;
+  std::unique_ptr<MolDraw2D_detail::DrawText> text_drawer_;
   std::string d_activeClass;
   bool needs_init_ = true;
 

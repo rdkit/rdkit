@@ -12,6 +12,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawText::DrawText(double max_fnt_sz, double min_fnt_sz)
@@ -710,4 +711,5 @@ std::ostream &operator<<(std::ostream &oss, const OrientType &o) {
   return oss;
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

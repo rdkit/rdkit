@@ -21,8 +21,9 @@
 
 namespace RDKit {
 
-std::string DrawColourToSVG(const RDKit::DrawColour &col);
+std::string DrawColourToSVG(const DrawColour &col);
 
+namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextSVG::DrawTextSVG(double max_fnt_sz, double min_fnt_sz,
                          std::ostream &oss, std::string &d_act_class)
@@ -128,4 +129,5 @@ void DrawTextSVG::getStringRects(
   adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

@@ -28,6 +28,8 @@ namespace RDKit {
 
 struct StringRect;
 
+namespace MolDraw2D_detail {
+
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
  public:
@@ -87,6 +89,7 @@ int conicToFunction(const FT_Vector *control, const FT_Vector *to, void *user);
 int cubicToFunction(const FT_Vector *controlOne, const FT_Vector *controlTwo,
                     const FT_Vector *to, void *user);
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTFT_H

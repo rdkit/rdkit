@@ -13,8 +13,9 @@
 
 namespace RDKit {
 
-std::string DrawColourToSVG(const RDKit::DrawColour &col);
+std::string DrawColourToSVG(const DrawColour &col);
 
+namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextFTSVG::DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                              const std::string &font_file, std::ostream &oss,
@@ -100,4 +101,5 @@ int DrawTextFTSVG::CubicToFunctionImpl(const FT_Vector *controlOne,
   return 0;
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

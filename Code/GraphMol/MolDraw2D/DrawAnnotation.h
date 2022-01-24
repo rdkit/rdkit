@@ -21,12 +21,12 @@
 
 namespace RDKit {
 
-class DrawText;
 class MolDraw2D;
 
 namespace MolDraw2D_detail {
 
 class DrawMol;
+class DrawText;
 
 class DrawAnnotation {
   friend class DrawMol;

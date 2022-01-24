@@ -18,6 +18,8 @@
 namespace RDKit {
 extern const std::string telex_ttf;
 
+namespace MolDraw2D_detail {
+
 // ****************************************************************************
 DrawTextFT::DrawTextFT(double max_fnt_sz, double min_fnt_sz,
                        const std::string &font_file)
@@ -220,6 +222,7 @@ int cubicToFunction(const FT_Vector *controlOne, const FT_Vector *controlTwo,
   auto *rdft = static_cast<DrawTextFT *>(user);
   return rdft->CubicToFunctionImpl(controlOne, controlTwo, to);
 }
+}  // namespace MolDraw2D_detail
 
 namespace {
 

@@ -138,19 +138,19 @@ void MolDraw2DSVG::initTextDrawer(bool noFreetype) {
   double min_fnt_sz = drawOptions().minFontSize;
 
   if (noFreetype) {
-    text_drawer_.reset(
-        new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
+    text_drawer_.reset(new MolDraw2D_detail::DrawTextSVG(max_fnt_sz, min_fnt_sz,
+                                                         d_os, d_activeClass));
   } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     try {
-      text_drawer_.reset(new DrawTextFTSVG(
+      text_drawer_.reset(new MolDraw2D_detail::DrawTextFTSVG(
           max_fnt_sz, min_fnt_sz, drawOptions().fontFile, d_os, d_activeClass));
     } catch (std::runtime_error &e) {
       BOOST_LOG(rdWarningLog)
           << e.what() << std::endl
           << "Falling back to native SVG text handling." << std::endl;
-      text_drawer_.reset(
-          new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
+      text_drawer_.reset(new MolDraw2D_detail::DrawTextSVG(
+          max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
     }
 #else
     text_drawer_.reset(

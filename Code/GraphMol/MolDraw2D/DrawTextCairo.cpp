@@ -14,6 +14,7 @@
 using namespace std;
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawTextCairo::DrawTextCairo(double max_fnt_sz, double min_fnt_sz,
@@ -106,4 +107,5 @@ void DrawTextCairo::getStringRects(const string &text,
   adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

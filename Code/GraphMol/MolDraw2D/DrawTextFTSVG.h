@@ -16,6 +16,7 @@
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 class DrawTextFTSVG : public DrawTextFT {
@@ -41,6 +42,7 @@ class DrawTextFTSVG : public DrawTextFT {
   std::string &d_active_class_;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTFTSVG_H

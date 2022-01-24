@@ -18,6 +18,7 @@
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 
@@ -41,6 +42,7 @@ class DrawTextSVG : public DrawText {
                       std::vector<char> &draw_chars) const override;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTSVG_H

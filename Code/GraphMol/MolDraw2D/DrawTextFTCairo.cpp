@@ -11,6 +11,7 @@
 #include <GraphMol/MolDraw2D/DrawTextFTCairo.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawTextFTCairo::DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
@@ -89,4 +90,5 @@ int DrawTextFTCairo::CubicToFunctionImpl(const FT_Vector *controlOne,
   return 0;
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

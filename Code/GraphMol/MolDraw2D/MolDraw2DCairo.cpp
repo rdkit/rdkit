@@ -28,6 +28,7 @@
 #include <boost/format.hpp>
 
 namespace RDKit {
+
 void MolDraw2DCairo::initDrawing() {
   if (dp_cr) {
     if (cairo_get_reference_count(dp_cr) > 0) {
@@ -45,9 +46,10 @@ void MolDraw2DCairo::initDrawing() {
   } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     if (df_noFreetype) {
-      dynamic_cast<DrawTextCairo *>(text_drawer_.get())->setCairoContext(dp_cr);
+      dynamic_cast<MolDraw2D_detail::DrawTextCairo *>(text_drawer_.get())
+          ->setCairoContext(dp_cr);
     } else {
-      dynamic_cast<DrawTextFTCairo *>(text_drawer_.get())
+      dynamic_cast<MolDraw2D_detail::DrawTextFTCairo *>(text_drawer_.get())
           ->setCairoContext(dp_cr);
     }
 #else
@@ -61,17 +63,19 @@ void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
   double min_fnt_sz = drawOptions().minFontSize;
 
   if (noFreetype) {
-    text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
+    text_drawer_.reset(
+        new MolDraw2D_detail::DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
   } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     try {
-      text_drawer_.reset(new DrawTextFTCairo(max_fnt_sz, min_fnt_sz,
-                                             drawOptions().fontFile, dp_cr));
+      text_drawer_.reset(new MolDraw2D_detail::DrawTextFTCairo(
+          max_fnt_sz, min_fnt_sz, drawOptions().fontFile, dp_cr));
     } catch (std::runtime_error &e) {
       BOOST_LOG(rdWarningLog)
           << e.what() << std::endl
           << "Falling back to native Cairo text handling." << std::endl;
-      text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
+      text_drawer_.reset(
+          new MolDraw2D_detail::DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
     }
 #else
     text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));

@@ -16,6 +16,7 @@
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 
@@ -41,6 +42,7 @@ class DrawTextFTCairo : public DrawTextFT {
   cairo_t *dp_cr_;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTFTCAIRO_H

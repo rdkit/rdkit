@@ -34,6 +34,8 @@ std::ostream &operator<<(std::ostream &oss, const TextAlignType &tat);
 std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
 std::ostream &operator<<(std::ostream &oss, const OrientType &o);
 
+namespace MolDraw2D_detail {
+
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawText {
  public:
@@ -188,6 +190,7 @@ RDKIT_MOLDRAW2D_EXPORT bool setStringDrawMode(const std::string &instring,
 std::vector<std::string> atomLabelToPieces(const std::string &label,
                                            OrientType orient);
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXT_H

@@ -1285,7 +1285,8 @@ void MolDraw2D::getLabelSize(const string &label, OrientType orient,
   if (orient == OrientType::N || orient == OrientType::S) {
     label_height = 0.0;
     label_width = 0.0;
-    vector<string> sym_bits = atomLabelToPieces(label, orient);
+    vector<string> sym_bits =
+        MolDraw2D_detail::atomLabelToPieces(label, orient);
     double height, width;
     for (auto bit : sym_bits) {
       getStringSize(bit, width, height);
