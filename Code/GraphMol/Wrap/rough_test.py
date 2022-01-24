@@ -4433,27 +4433,6 @@ $$$$
       self.assertTrue("RDKIT:" in details)
       self.assertTrue(__version__ in details)
 
-  # this test should probably always be last since it wraps
-  #  the logging stream
-  def testLogging(self):
-    from io import StringIO
-    err = sys.stderr
-    try:
-      loggers = [("RDKit ERROR", "1", Chem.LogErrorMsg), ("RDKit WARNING", "2", Chem.LogWarningMsg)]
-      for msg, v, log in loggers:
-        sys.stderr = StringIO()
-        log(v)
-        self.assertEqual(sys.stderr.getvalue(), "")
-
-      Chem.WrapLogs()
-      for msg, v, log in loggers:
-        sys.stderr = StringIO()
-        log(v)
-        s = sys.stderr.getvalue()
-        self.assertTrue(msg in s)
-    finally:
-      sys.stderr = err
-
   def testGetSDText(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf')
