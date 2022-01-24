@@ -62,11 +62,7 @@ def GetAtomicData(atomDict, descriptorsDesired, dBase=_atomDbName, table='atomic
         return
     res = c.fetchall()
     for atom in res:
-        tDict = {}
-        for i in range(len(descriptorsDesired)):
-            desc = descriptorsDesired[i]
-            val = atom[i]
-            tDict[desc] = val
+        tDict = {desc: atom[i] for i, desc in enumerate(descriptorsDesired)}
         name = tDict['NAME']
         atomDict[name] = tDict
         if includeElCounts:
