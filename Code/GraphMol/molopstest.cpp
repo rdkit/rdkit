@@ -3495,6 +3495,29 @@ void testSFNetIssue2196817() {
   }
 
   {
+    for (auto smi : {"C1CC*2ccccc21", "C1C**2ccccc21"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (unsigned int i = 0; i < 3; ++i) {
+        TEST_ASSERT(!m->getAtomWithIdx(i)->getIsAromatic());
+      }
+      for (unsigned int i = 3; i < m->getNumAtoms(); ++i) {
+        TEST_ASSERT(m->getAtomWithIdx(i)->getIsAromatic());
+      }
+    }
+  }
+
+  {
+    auto m = "*12ccccc1CCC2"_smiles;
+    for (unsigned int i = 0; i < 6; ++i) {
+      TEST_ASSERT(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+    for (unsigned int i = 6; i < m->getNumAtoms(); ++i) {
+      TEST_ASSERT(!m->getAtomWithIdx(i)->getIsAromatic());
+    }
+  }
+
+  {
     for (auto smi : {"N1****1", "C1=C*2C=CC=C*2C=C1", "N1*C=CC=C1",
                      "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4*51"}) {
       std::unique_ptr<RWMol> m(SmilesToMol(smi));
