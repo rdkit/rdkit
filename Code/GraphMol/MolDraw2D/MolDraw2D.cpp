@@ -65,8 +65,8 @@ void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,
   Atom *at2 = bond.getEndAtom();
   Point2D perp;
   if (1 == at1->getDegree() || 1 == at2->getDegree() ||
-      isLinearAtom(*at1, at_cds) || isLinearAtom(*at2, at_cds)) {
-    perp = calcPerpendicular(at1_cds, at2_cds) * offset;
+      MolDraw2D_detail::isLinearAtom(*at1, at_cds) || MolDraw2D_detail::isLinearAtom(*at2, at_cds)) {
+    perp = MolDraw2D_detail::calcPerpendicular(at1_cds, at2_cds) * offset;
     l1s = at1_cds + perp;
     l1f = at2_cds + perp;
     l2s = at1_cds - perp;
@@ -74,7 +74,7 @@ void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,
   } else if ((Bond::EITHERDOUBLE == bond.getBondDir()) ||
              (Bond::STEREOANY == bond.getStereo())) {
     // crossed bond
-    perp = calcPerpendicular(at1_cds, at2_cds) * offset;
+    perp = MolDraw2D_detail::calcPerpendicular(at1_cds, at2_cds) * offset;
     l1s = at1_cds + perp;
     l1f = at2_cds - perp;
     l2s = at1_cds - perp;
@@ -85,9 +85,9 @@ void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,
     offset *= 2.0;
     if (mol.getRingInfo()->numBondRings(bond.getIdx())) {
       // in a ring, we need to draw the bond inside the ring
-      perp = bondInsideRing(mol, bond, at1_cds, at2_cds, at_cds);
+      perp = MolDraw2D_detail::bondInsideRing(mol, bond, at1_cds, at2_cds, at_cds);
     } else {
-      perp = bondInsideDoubleBond(mol, bond, at_cds);
+      perp = MolDraw2D_detail::bondInsideDoubleBond(mol, bond, at_cds);
     }
     Point2D bv = at1_cds - at2_cds;
     l2s = at1_cds - bv * multipleBondTruncation + perp * offset;
@@ -108,7 +108,7 @@ void calcTripleBondLines(double offset, const Bond &bond,
 
   // 2 lines, a bit shorter and offset on the perpendicular
   double dbo = 2.0 * offset;
-  Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+  Point2D perp = MolDraw2D_detail::calcPerpendicular(at1_cds, at2_cds);
   double end1_trunc = 1 == at1->getDegree() ? 0.0 : multipleBondTruncation;
   double end2_trunc = 1 == at2->getDegree() ? 0.0 : multipleBondTruncation;
   Point2D bv = at1_cds - at2_cds;
@@ -223,7 +223,7 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              const std::map<int, double> *highlight_radii,
                              int confId) {
   setupTextDrawer();
-  drawMols_.emplace_back(new DrawMol(
+  drawMols_.emplace_back(new MolDraw2D_detail::DrawMol(
       mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
       highlight_atoms, highlight_bonds, highlight_atom_map, highlight_bond_map,
       nullptr, highlight_radii, supportsAnnotations(), confId));
@@ -253,7 +253,8 @@ void MolDraw2D::drawMolecule(const ROMol &mol, const std::string &legend,
                              int confId) {
   vector<int> highlight_bonds;
   if (highlight_atoms) {
-    getBondHighlightsForAtoms(mol, *highlight_atoms, highlight_bonds);
+    MolDraw2D_detail::getBondHighlightsForAtoms(mol, *highlight_atoms,
+                                                highlight_bonds);
   }
   drawMolecule(mol, legend, highlight_atoms, &highlight_bonds,
                highlight_atom_map, nullptr, highlight_radii, confId);
@@ -281,10 +282,10 @@ void MolDraw2D::drawMoleculeWithHighlights(
     const map<int, double> &highlight_radii,
     const map<int, int> &highlight_linewidth_multipliers, int confId) {
   setupTextDrawer();
-  DrawMol *dm =
-      new DrawMolMCH(mol, legend, panelWidth(), panelHeight(), drawOptions(),
-                     *text_drawer_, highlight_atom_map, highlight_bond_map,
-                     highlight_radii, highlight_linewidth_multipliers, confId);
+  MolDraw2D_detail::DrawMol *dm = new MolDraw2D_detail::DrawMolMCH(
+      mol, legend, panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
+      highlight_atom_map, highlight_bond_map, highlight_radii,
+      highlight_linewidth_multipliers, confId);
   drawMols_.emplace_back(dm);
   drawMols_.back()->createDrawObjects();
   fixVariableDimensions(*drawMols_.back());
@@ -313,7 +314,7 @@ void MolDraw2D::get2DCoordsMol(RWMol &mol, double &offset, double spacing,
     RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   } else {
     // we need to center the molecule
-    centerMolForDrawing(mol, confId);
+    MolDraw2D_detail::centerMolForDrawing(mol, confId);
   }
   // when preparing a reaction component to be drawn we should neither kekulize
   // (we did that above if required) nor add chiralHs
@@ -485,9 +486,9 @@ void MolDraw2D::drawReaction(
     const std::vector<int> *confIds) {
   double spacing = 1.0;
 
-  std::vector<std::shared_ptr<DrawMol>> reagents;
-  std::vector<std::shared_ptr<DrawMol>> products;
-  std::vector<std::shared_ptr<DrawMol>> agents;
+  std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> reagents;
+  std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> products;
+  std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> agents;
 
   // I think a larger minimum font size than the default works better for this
   int mfs = drawOptions().minFontSize > 12 ? drawOptions().minFontSize : 12;
@@ -575,14 +576,14 @@ void MolDraw2D::drawMolecules(
       lhighlight_bonds.reset(new std::vector<int>((*highlight_bonds)[i]));
     } else if (drawOptions().continuousHighlight && highlight_atoms) {
       lhighlight_bonds.reset(new vector<int>());
-      getBondHighlightsForAtoms(*mols[i], (*highlight_atoms)[i],
-                                *lhighlight_bonds);
+      MolDraw2D_detail::getBondHighlightsForAtoms(
+          *mols[i], (*highlight_atoms)[i], *lhighlight_bonds);
     };
 
-    drawMols_.emplace_back(
-        new DrawMol(*mols[i], legend, panelWidth(), panelHeight(),
-                    drawOptions(), *text_drawer_, ha, lhighlight_bonds.get(),
-                    ham, hbm, nullptr, hr, supportsAnnotations(), confId));
+    drawMols_.emplace_back(new MolDraw2D_detail::DrawMol(
+        *mols[i], legend, panelWidth(), panelHeight(), drawOptions(),
+        *text_drawer_, ha, lhighlight_bonds.get(), ham, hbm, nullptr, hr,
+        supportsAnnotations(), confId));
     int row = 0;
     // note that this also works when no panel size is specified since
     // the panel dimensions defaults to -1
@@ -769,8 +770,9 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   bool setFontScale = false;
   if (mol) {
     setupTextDrawer();
-    std::shared_ptr<DrawMol> drawMol(new DrawMol(
-        *mol, "", panelWidth(), panelHeight(), drawOptions(), *text_drawer_));
+    std::shared_ptr<MolDraw2D_detail::DrawMol> drawMol(
+        new MolDraw2D_detail::DrawMol(*mol, "", panelWidth(), panelHeight(),
+                                      drawOptions(), *text_drawer_));
     drawMol->createDrawObjects();
     // in the DrawMol, the ys are all inverted.
     x_min = min(minv.x, drawMol->xMin_);
@@ -819,9 +821,9 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   }
   forceScale_ = true;
 
-  DrawMol *drawMol =
-      new DrawMol(panelWidth(), panelHeight(), drawOptions(), *text_drawer_,
-                  x_min, x_max, y_min, y_max, scale_, fontScale_);
+  MolDraw2D_detail::DrawMol *drawMol = new MolDraw2D_detail::DrawMol(
+      panelWidth(), panelHeight(), drawOptions(), *text_drawer_, x_min, x_max,
+      y_min, y_max, scale_, fontScale_);
   Point2D trans, scale, toCentre;
   drawMol->getDrawTransformers(trans, scale, toCentre);
   globalDrawTrans_.reset(drawMol);
@@ -1191,7 +1193,7 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2,
 void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
                                    const DrawColour &col, double len,
                                    unsigned int nSegments, bool rawCoords) {
-  Point2D perp = calcPerpendicular(cds1, cds2);
+  Point2D perp = MolDraw2D_detail::calcPerpendicular(cds1, cds2);
   Point2D p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
   Point2D p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
   drawWavyLine(p1, p2, col, col, nSegments, rawCoords);
@@ -1323,7 +1325,8 @@ void MolDraw2D::getStringExtremes(const string &label, OrientType orient,
 }
 
 // ****************************************************************************
-void MolDraw2D::fixVariableDimensions(const DrawMol &drawMol) {
+void MolDraw2D::fixVariableDimensions(
+    const MolDraw2D_detail::DrawMol &drawMol) {
   if (panel_width_ == -1) {
     width_ = panel_width_ = drawMol.width_;
   }
@@ -1337,9 +1340,10 @@ void MolDraw2D::getReactionDrawMols(
     const ChemicalReaction &rxn, bool highlightByReactant,
     const std::vector<DrawColour> *highlightColorsReactants,
     const std::vector<int> *confIds,
-    std::vector<std::shared_ptr<DrawMol>> &reagents,
-    std::vector<std::shared_ptr<DrawMol>> &products,
-    std::vector<std::shared_ptr<DrawMol>> &agents, int &plusWidth) {
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
+    int &plusWidth) {
   ChemicalReaction nrxn(rxn);
 
   const double agentFrac = 0.4;
@@ -1390,9 +1394,9 @@ void MolDraw2D::getReactionDrawMols(
 void MolDraw2D::makeReactionComponents(
     const std::vector<RDKit::ROMOL_SPTR> &bits, const std::vector<int> *confIds,
     int heightToUse, std::map<int, DrawColour> &atomColours,
-    std::vector<std::shared_ptr<DrawMol>> &dms, double &minScale, double &minFontScale) {
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
+    double &minScale, double &minFontScale) {
   for (auto midx = 0; midx < bits.size(); ++midx) {
-
     std::vector<int> highlightAtoms, highlightBonds;
     std::map<int, DrawColour> highlightAtomMap, highlightBondMap;
     int cid = -1;
@@ -1438,7 +1442,7 @@ void MolDraw2D::makeReactionDrawMol(
     const std::vector<int> &highlightBonds,
     const std::map<int, DrawColour> &highlightAtomMap,
     const std::map<int, DrawColour> &highlightBondMap,
-    std::vector<std::shared_ptr<DrawMol>> &mols) {
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &mols) {
   if (drawOptions().prepareMolsBeforeDrawing) {
     mol.updatePropertyCache(false);
     try {
@@ -1454,7 +1458,7 @@ void MolDraw2D::makeReactionDrawMol(
     RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   } else {
     // we need to center the molecule
-    centerMolForDrawing(mol, confId);
+    MolDraw2D_detail::centerMolForDrawing(mol, confId);
   }
   // when preparing a reaction component to be drawn we should neither kekulize
   // (we did that above if required) nor add chiralHs
@@ -1463,10 +1467,10 @@ void MolDraw2D::makeReactionDrawMol(
   MolDraw2DUtils::prepareMolForDrawing(mol, kekulize, addChiralHs);
   // the height is fixed, but the width is allowed to be as large as the
   // height and molecule dimensions dictate.
-  mols.emplace_back(new DrawMol(mol, "", -1, molHeight, drawOptions(),
-                                *text_drawer_, &highlightAtoms, &highlightBonds,
-                                &highlightAtomMap, &highlightBondMap, nullptr,
-                                nullptr, supportsAnnotations(), confId, true));
+  mols.emplace_back(new MolDraw2D_detail::DrawMol(
+      mol, "", -1, molHeight, drawOptions(), *text_drawer_, &highlightAtoms,
+      &highlightBonds, &highlightAtomMap, &highlightBondMap, nullptr, nullptr,
+      supportsAnnotations(), confId, true));
   mols.back()->createDrawObjects();
   drawMols_.emplace_back(mols.back());
   ++activeMolIdx_;
@@ -1474,11 +1478,11 @@ void MolDraw2D::makeReactionDrawMol(
 
 // ****************************************************************************
 void MolDraw2D::calcReactionOffsets(
-    std::vector<std::shared_ptr<DrawMol>> &reagents,
-    std::vector<std::shared_ptr<DrawMol>> &products,
-    std::vector<std::shared_ptr<DrawMol>> &agents, int &plusWidth,
-    std::vector<Point2D> &offsets,
-    Point2D &arrowBeg, Point2D &arrowEnd) {
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
+    int &plusWidth, std::vector<Point2D> &offsets, Point2D &arrowBeg,
+    Point2D &arrowEnd) {
   // calculate the total width of the drawing - it may need re-scaling if
   // it's too wide for the panel.
   const int arrowMult = 3; // number of plusWidths for an empty arrow.
@@ -1507,9 +1511,10 @@ void MolDraw2D::calcReactionOffsets(
     return totWidth;
   };
 
-  auto scaleDrawMols = [&](std::vector<std::shared_ptr<DrawMol>> &dms,
-                           double stretch) {
-    for (auto &dm : dms) {
+  auto scaleDrawMols =
+      [&](std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
+          double stretch) {
+        for (auto &dm : dms) {
       dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(),
                    false);
       dm->shrinkToFit();
@@ -1584,9 +1589,9 @@ void MolDraw2D::calcReactionOffsets(
 }
 
 // ****************************************************************************
-int MolDraw2D::drawReactionPart(std::vector<std::shared_ptr<DrawMol>> &reactBit,
-                                int plusWidth, int initOffset,
-                                const std::vector<Point2D> &offsets) {
+int MolDraw2D::drawReactionPart(
+    std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reactBit,
+    int plusWidth, int initOffset, const std::vector<Point2D> &offsets) {
   if (reactBit.empty()) {
     return initOffset;
   }
@@ -1732,7 +1737,7 @@ unique_ptr<RWMol> MolDraw2D::setupDrawMolecule(
   }
   if (drawOptions().centreMoleculesBeforeDrawing) {
     if (rwmol->getNumConformers()) {
-      centerMolForDrawing(*rwmol, confId);
+      MolDraw2D_detail::centerMolForDrawing(*rwmol, confId);
     }
   }
   if (drawOptions().simplifiedStereoGroupLabel &&
@@ -1859,7 +1864,7 @@ void MolDraw2D::startDrawing() {
 }
 
 // ****************************************************************************
-void MolDraw2D::drawTheMolecule(DrawMol &drawMol) {
+void MolDraw2D::drawTheMolecule(MolDraw2D_detail::DrawMol &drawMol) {
   if (globalDrawTrans_) {
     drawMol.setTransformation(*globalDrawTrans_);
   } else if (forceScale_) {
@@ -2231,7 +2236,7 @@ void MolDraw2D::calcAnnotationPosition(const ROMol &mol, const Bond *bond,
 
   Point2D const &at1_cds = at_cds_[activeMolIdx_][bond->getBeginAtomIdx()];
   Point2D const &at2_cds = at_cds_[activeMolIdx_][bond->getEndAtomIdx()];
-  Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+  Point2D perp = MolDraw2D_detail::calcPerpendicular(at1_cds, at2_cds);
   Point2D bond_vec = at1_cds.directionVector(at2_cds);
   double bond_len = (at1_cds - at2_cds).length();
   vector<double> mid_offsets{0.5, 0.33, 0.66, 0.25, 0.75};
@@ -2339,7 +2344,7 @@ void MolDraw2D::drawHighlightedBonds(
     int at2_idx = bond->getEndAtomIdx();
     Point2D at1_cds = at_cds_[activeMolIdx_][at1_idx];
     Point2D at2_cds = at_cds_[activeMolIdx_][at2_idx];
-    Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+    Point2D perp = MolDraw2D_detail::calcPerpendicular(at1_cds, at2_cds);
     double rad = 0.7 * drawOptions().highlightRadius;
     auto draw_adjusted_line = [&](Point2D p1, Point2D p2) {
       adjustLineEndForHighlight(at1_idx, highlight_radii, p2, p1);
@@ -3013,7 +3018,7 @@ void drawWedgedBond(MolDraw2D &d2d, const Bond &bond, bool inverted,
     }
   }
 
-  Point2D perp = calcPerpendicular(cds1, cds2);
+  Point2D perp = MolDraw2D_detail::calcPerpendicular(cds1, cds2);
   Point2D disp = perp * 0.15;
   // make sure the displacement isn't too large using the current scale factor
   // (part of github #985)
@@ -4177,7 +4182,7 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
     symbol = "";
     literal_symbol = false;
   } else if (isAtomListQuery(&atom)) {
-    symbol = getAtomListText(atom);
+    symbol = MolDraw2D_detail::getAtomListText(atom);
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
   } else if (drawOptions().atomLabelDeuteriumTritium &&
@@ -4242,7 +4247,7 @@ string MolDraw2D::getAtomSymbol(const RDKit::Atom &atom,
 
     // allenes need a C, but extend to any atom with degree 2 and both
     // bonds in a line.
-    if (isLinearAtom(atom, at_cds_[activeMolIdx_]) ||
+    if (MolDraw2D_detail::isLinearAtom(atom, at_cds_[activeMolIdx_]) ||
         (atom.getAtomicNum() != 6 || atom.getDegree() == 0 || preText.size() ||
          postText.size())) {
       symbol += atom.getSymbol();

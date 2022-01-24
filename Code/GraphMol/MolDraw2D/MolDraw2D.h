@@ -38,7 +38,9 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 
+namespace MolDraw2D_detail {
 class DrawMol;
+}
 class DrawText;
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
@@ -433,7 +435,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // if the width or height of the DrawMol was -1, the new dimensions need to be
   // transferred to MolDraw2D.
-  void fixVariableDimensions(const DrawMol &drawMol);
+  void fixVariableDimensions(const MolDraw2D_detail::DrawMol &drawMol);
 
   // split the reaction up into the reagents, products and agents, each as
   // a separate entity with its own scale.
@@ -441,32 +443,32 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const ChemicalReaction &rxn, bool highlightByReactant,
       const std::vector<DrawColour> *highlightColorsReactants,
       const std::vector<int> *confIds,
-      std::vector<std::shared_ptr<DrawMol>> &reagents,
-      std::vector<std::shared_ptr<DrawMol>> &products,
-      std::vector<std::shared_ptr<DrawMol>> &agents, int &plusWidth);
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents, int &plusWidth);
   // take the given components from the reaction (bits will be either
   // reagents, products or agents) and return the corresponding DrawMols.
   void makeReactionComponents(std::vector<RDKit::ROMOL_SPTR> const &bits,
                               const std::vector<int> *confIds, int heightToUse,
                               std::map<int, DrawColour> &atomColours,
-                              std::vector<std::shared_ptr<DrawMol>> &dms,
+                              std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
                               double &minScale, double &minFontScale);
   void makeReactionDrawMol(RWMol &mol, int confId, int molHeight,
                            const std::vector<int> &highlightAtoms,
                            const std::vector<int> &highlightBonds,
                            const std::map<int, DrawColour> &highlightAtomMap,
                            const std::map<int, DrawColour> &highlightBondMap,
-                           std::vector<std::shared_ptr<DrawMol>> &mols);
+                           std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &mols);
   // Strictly speaking, this isn't actually a const function, although the
   // compiler can't spot it, because the scales of reagents etc may be changed,
   // and they are also in drawMols_.
-  void calcReactionOffsets(std::vector<std::shared_ptr<DrawMol>> &reagents,
-                           std::vector<std::shared_ptr<DrawMol>> &products,
-                           std::vector<std::shared_ptr<DrawMol>> &agents,
+  void calcReactionOffsets(std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
+                           std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
+                           std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
                            int &plusWidth, std::vector<Point2D> &offsets,
                            Point2D &arrowBeg, Point2D &arrowEnd);
   // returns the final offset. plusWidth of 0 means no pluses to be drawn.
-  int drawReactionPart(std::vector<std::shared_ptr<DrawMol>> &reactBit,
+  int drawReactionPart(std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reactBit,
                        int plusWidth, int initOffset,
                        const std::vector<Point2D> &offsets);
   // returns a map of colours indexed by the atomMapNum. Each reagent gives
@@ -492,13 +494,13 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   int activeBndIdx_;
   // these are shared_ptr rather than unique_ptr because the reactions
   // keep their own copy.
-  std::vector<std::shared_ptr<DrawMol>> drawMols_;
+  std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> drawMols_;
   // this is for when we want to set up a MolDraw2D to a given scale and be
   // able to draw molecules and arbitrary lines, arcs etc. onto it all to the
   // same drawing transformation.  If present, it will always be applied to
   // any new drawMols_ before they are drawn.  A separate class might have
   // been better, but this is convenient.
-  std::unique_ptr<DrawMol> globalDrawTrans_;
+  std::unique_ptr<MolDraw2D_detail::DrawMol> globalDrawTrans_;
 
   DrawColour curr_colour_;
   DashPattern curr_dash_;
@@ -538,7 +540,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   // Do the drawing, the new way
   void startDrawing();
-  void drawTheMolecule(DrawMol &drawMol);
+  void drawTheMolecule(MolDraw2D_detail::DrawMol &drawMol);
 
   // do the initial setup bits for drawing a molecule.
   std::unique_ptr<RWMol> initMoleculeDraw(

@@ -26,13 +26,15 @@
 namespace RDKit {
 
 class MolDraw2D;
-class DrawMolMCH;
 
 namespace MolDraw2D_detail {
 
+class DrawMol;
+class DrawMolMCH;
+
 class AtomSymbol {
-  friend class RDKit::DrawMol;
-  friend class RDKit::DrawMolMCH;
+  friend class DrawMol;
+  friend class DrawMolMCH;
 
  public:
   ~AtomSymbol() = default;

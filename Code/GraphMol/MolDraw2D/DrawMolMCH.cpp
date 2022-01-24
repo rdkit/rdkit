@@ -13,6 +13,7 @@
 #include <GraphMol/MolDraw2D/DrawMolMCH.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawMolMCH::DrawMolMCH(
@@ -21,14 +22,12 @@ DrawMolMCH::DrawMolMCH(
     const std::map<int, std::vector<DrawColour>> &highlight_atom_map,
     const std::map<int, std::vector<DrawColour>> &highlight_bond_map,
     const std::map<int, double> &highlight_radii,
-    const std::map<int, int> &highlight_linewidth_multipliers,
-    int confId)
+    const std::map<int, int> &highlight_linewidth_multipliers, int confId)
     : DrawMol(mol, legend, width, height, drawOptions, textDrawer, nullptr,
               nullptr, nullptr, nullptr, nullptr, &highlight_radii, confId),
       mcHighlightAtomMap_(highlight_atom_map),
       mcHighlightBondMap_(highlight_bond_map),
-  highlightLinewidthMultipliers_(highlight_linewidth_multipliers) {
-}
+      highlightLinewidthMultipliers_(highlight_linewidth_multipliers) {}
 
 // ****************************************************************************
 void DrawMolMCH::extractHighlights() {
@@ -121,11 +120,9 @@ void DrawMolMCH::makeBondHighlights() {
           // draw even numbers from the bottom, odd from the top
           Point2D offset = perp * (rad - step * col_rad);
           if (!(i % 2)) {
-            draw_adjusted_line(at1_cds - offset, at2_cds - offset,
-                               cols[i]);
+            draw_adjusted_line(at1_cds - offset, at2_cds - offset, cols[i]);
           } else {
-            draw_adjusted_line(at1_cds + offset, at2_cds + offset,
-                               cols[i]);
+            draw_adjusted_line(at1_cds + offset, at2_cds + offset, cols[i]);
             step++;
           }
         }
@@ -146,14 +143,14 @@ void DrawMolMCH::makeAtomHighlights() {
       Point2D p1 = centre - offset;
       Point2D p2 = centre + offset;
       std::vector<Point2D> pts{p1, p2};
-      DrawShape *ell = new DrawShapeEllipse(
-          pts, lineWidth, true, ha.second.front(), drawOptions_.fillHighlights,
-          ha.first);
+      DrawShape *ell =
+          new DrawShapeEllipse(pts, lineWidth, true, ha.second.front(),
+                               drawOptions_.fillHighlights, ha.first);
       highlights_.emplace_back(std::unique_ptr<DrawShape>(ell));
     } else {
       double arc_size = 360.0 / double(ha.second.size());
       double arc_start = 270.0;
-      for (size_t i = 0; i < ha.second.size(); ++i){
+      for (size_t i = 0; i < ha.second.size(); ++i) {
         double arc_stop = arc_start + arc_size;
         arc_stop = arc_stop >= 360.0 ? arc_stop - 360.0 : arc_stop;
         std::vector<Point2D> pts{centre, Point2D(xradius, yradius)};
@@ -165,7 +162,6 @@ void DrawMolMCH::makeAtomHighlights() {
         arc_start = arc_start >= 360.0 ? arc_start - 360.0 : arc_start;
       }
     }
-
   }
 }
 
@@ -261,4 +257,5 @@ void DrawMolMCH::calcSymbolEllipse(unsigned int atomIdx, Point2D &centre,
   centre.y = 0.5 * (y_max + y_min);
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

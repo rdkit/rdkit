@@ -28,8 +28,10 @@ const DashPattern dots{2.0, 6.0};
 const DashPattern dashes{6, 0, 6.0};
 const DashPattern shortDashes{2.0, 2.0};
 
+namespace MolDraw2D_detail {
+
 class DrawShape {
-  friend class MolDraw2D;
+  friend class RDKit::MolDraw2D;
   friend class DrawMol;
   friend class DrawMolMCH;
 
@@ -73,8 +75,8 @@ class DrawShapeArrow : protected DrawShape {
   DrawShapeArrow(const std::vector<Point2D> &points, int lineWidth = 2,
                  bool scaleLineWidth = false,
                  DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
-                 int atom1 = -1, int atom2 = -1, int bond = -1, double frac = 0.2,
-                 double angle = M_PI / 6);
+                 int atom1 = -1, int atom2 = -1, int bond = -1,
+                 double frac = 0.2, double angle = M_PI / 6);
   void myDraw(MolDraw2D &drawer) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
@@ -240,6 +242,7 @@ class DrawShapeArc : protected DrawShape {
 std::vector<Point2D> calcScaledWedgePoints(const Point2D &point,
                                            const Point2D &end1,
                                            const Point2D &end2, double widthsq);
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWSHAPE_H

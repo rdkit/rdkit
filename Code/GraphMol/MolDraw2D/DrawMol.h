@@ -34,8 +34,10 @@ class ROMol;
 class RWMol;
 class DrawText;
 
+namespace MolDraw2D_detail {
+
 class DrawMol {
-  friend class MolDraw2D;
+  friend class RDKit::MolDraw2D;
 
  public:
   virtual ~DrawMol() = default;
@@ -160,15 +162,15 @@ class DrawMol {
   void makeAtomEllipseHighlights(int lineWidth);
   void makeBondHighlightLines(int lineWidth);
   void calcAnnotationPosition(const Atom *atom,
-                              MolDraw2D_detail::DrawAnnotation &annot) const;
+                              DrawAnnotation &annot) const;
   void calcAnnotationPosition(const Bond *bond,
-                              MolDraw2D_detail::DrawAnnotation &annot) const;
+                              DrawAnnotation &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
   void calcMolNotePosition(const std::vector<Point2D> atCds,
-                           MolDraw2D_detail::DrawAnnotation &annot) const;
+                           DrawAnnotation &annot) const;
   // see if the note will clash with anything else drawn on the molecule.
   // Returns 0 if no clash, 1-4 if there is a clash, denoting what clashed.
-  int doesNoteClash(const MolDraw2D_detail::DrawAnnotation &annot) const;
+  int doesNoteClash(const DrawAnnotation &annot) const;
   int doesRectClash(const StringRect &rect, double padding) const;
   OrientType calcRadicalRect(const Atom *atom, StringRect &rad_rect) const;
   void getDrawTransformers(Point2D &trans, Point2D &scale,
@@ -184,7 +186,7 @@ class DrawMol {
   Point2D getAtomCoords(const Point2D &screenCds) const;
   Point2D getAtomCoords(int atnum) const;
   double getScale() const { return scale_; }
-  double getFontScale() const { return textDrawer_.fontScale();}
+  double getFontScale() const { return textDrawer_.fontScale(); }
   // More often than not, newScale and newFontScale will be the same,
   // but not if minFontScale of maxFontScale have become involved.
   // The newFontScale will be used without checking the min and max.
@@ -231,10 +233,10 @@ class DrawMol {
   std::vector<std::unique_ptr<DrawShape>> postShapes_;
   std::vector<int> atomicNums_;
   std::vector<std::pair<std::string, OrientType>> atomSyms_;
-  std::vector<std::unique_ptr<MolDraw2D_detail::AtomSymbol>> atomLabels_;
+  std::vector<std::unique_ptr<AtomSymbol>> atomLabels_;
   std::vector<std::unique_ptr<DrawShape>> highlights_;
-  std::vector<std::unique_ptr<MolDraw2D_detail::DrawAnnotation>> annotations_;
-  std::vector<std::unique_ptr<MolDraw2D_detail::DrawAnnotation>> legends_;
+  std::vector<std::unique_ptr<DrawAnnotation>> annotations_;
+  std::vector<std::unique_ptr<DrawAnnotation>> legends_;
   std::vector<std::tuple<StringRect, OrientType, int>> radicals_;
 
   int width_, height_;
@@ -294,6 +296,8 @@ void findRectExtremes(const StringRect &rect, const TextAlignType &align,
 void getBondHighlightsForAtoms(const ROMol &mol,
                                const std::vector<int> &highlight_atoms,
                                std::vector<int> &highlight_bonds);
+
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWMOL_H

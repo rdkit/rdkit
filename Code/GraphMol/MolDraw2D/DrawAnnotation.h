@@ -21,14 +21,15 @@
 
 namespace RDKit {
 
-class DrawMol;
 class DrawText;
 class MolDraw2D;
 
 namespace MolDraw2D_detail {
 
+class DrawMol;
+
 class DrawAnnotation {
-  friend class RDKit::DrawMol;
+  friend class DrawMol;
 
  public:
   ~DrawAnnotation() = default;

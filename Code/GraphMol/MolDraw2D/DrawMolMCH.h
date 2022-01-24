@@ -20,8 +20,10 @@
 #include <GraphMol/MolDraw2D/DrawMol.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
+
 class DrawMolMCH : protected DrawMol {
-  friend class MolDraw2D;
+  friend class RDKit::MolDraw2D;
 
  protected:
   DrawMolMCH(const ROMol &mol, const std::string &legend, int width, int height,
@@ -41,14 +43,15 @@ class DrawMolMCH : protected DrawMol {
   void makeBondHighlights();
   void makeAtomHighlights();
   void adjustLineEndForHighlight(int at_idx, Point2D p1, Point2D &p2) const;
-  void calcSymbolEllipse(unsigned int atomIdx, Point2D &centre,
-                         double &xradius, double &yradius) const;
+  void calcSymbolEllipse(unsigned int atomIdx, Point2D &centre, double &xradius,
+                         double &yradius) const;
 
   const std::map<int, std::vector<DrawColour>> mcHighlightAtomMap_;
   const std::map<int, std::vector<DrawColour>> &mcHighlightBondMap_;
   const std::map<int, int> &highlightLinewidthMultipliers_;
 };
 
-} //namespace RDKit
+}  // namespace MolDraw2D_detail
+}  // namespace RDKit
 
 #endif  // RDKIT_DRAWMOLMCH_H
