@@ -87,8 +87,10 @@ bool DrawShape::doesRectClash(const StringRect &rect, double padding) const {
 DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
                                int lineWidth, bool scaleLineWidth,
                                DrawColour lineColour, bool fill,
+                               int atom1, int atom2, int bond,
                                double frac, double angle)
-    : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill),
+    : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill,
+                atom1, atom2, bond),
       frac_(frac),
       angle_(angle) {
   PRECONDITION(points_.size() == 2, "arrow bad points size");
@@ -97,20 +99,13 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
 // ****************************************************************************
 void DrawShapeArrow::myDraw(MolDraw2D &drawer) const {
   if (drawer.drawOptions().splitBonds) {
-    drawer.setActiveAtmIdx(atom1_);
-  }
-  drawer.drawLine(points_[0], points_[1], lineColour_, lineColour_, true);
-  if (drawer.drawOptions().splitBonds) {
     drawer.setActiveAtmIdx(atom2_);
-  }
-  if (!fill_) {
-    drawer.drawLine(points_[1], points_[2], lineColour_, lineColour_, true);
-    drawer.drawLine(points_[1], points_[3], lineColour_, lineColour_, true);
   } else {
-    drawer.setFillPolys(true);
-    std::vector<Point2D> head(points_.begin() + 1, points_.end());
-    drawer.drawPolygon(head, true);
+    drawer.setActiveAtmIdx(atom1_, atom2_);
   }
+  drawer.setActiveBndIdx(bond_);
+  drawer.drawArrow(points_[0], points_[1], lineColour_, fill_, frac_, angle_,
+                   true);
 }
 
 // ****************************************************************************

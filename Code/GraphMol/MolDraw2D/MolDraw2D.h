@@ -131,6 +131,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                             bool rawCoords = false);
   //! Draw an arrow with either lines or a filled head (when asPolygon is true)
   virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
+                         const DrawColour &col,
                          bool asPolygon = false, double frac = 0.05,
                          double angle = M_PI / 6, bool rawCoords = false);
   // draw a plus sign with lines at the given position.

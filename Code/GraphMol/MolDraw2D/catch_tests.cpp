@@ -569,11 +569,9 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_1.svg");
 
-    CHECK(
-        text.find(
-            "<path class='bond-0 atom-0 atom-1' d='M 126.1,100.0 L 86.0,100.0'"
-            " style='fill:none;fill-rule:evenodd;"
-            "stroke:#0000FF;") != std::string::npos);
+    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 121.2,89.1 L "
+                    "87.0,89.1' style='fill:none;fill-rule:evenodd;"
+                    "stroke:#0000FF;") != std::string::npos);
   }
   SECTION("more complex") {
     auto m1 = "N->1[C@@H]2CCCC[C@H]2N->[Pt]11OC(=O)C(=O)O1"_smiles;
@@ -588,9 +586,9 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_2.svg");
 
-    CHECK(text.find("<path class='bond-7 atom-7 atom-8' d='M 101.3,79.4 "
-                    "L 95.7,87.2' style='fill:none;"
-                    "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
+    CHECK(text.find("-8' d='M 100.9,80.0 L 95.9,86.9' "
+                    "style='fill:none;fill-rule:evenodd;stroke:#0000FF;") !=
+          std::string::npos);
   }
   SECTION("test colours") {
     // the dative bonds point the wrong way, but the point is to test
@@ -607,8 +605,8 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_3.svg");
 
-    CHECK(text.find("<path class='bond-2 atom-3 atom-4' d='M 53.3,140.7"
-                    " L 81.0,149.7' style='fill:none;"
+    CHECK(text.find("<path class='bond-2 atom-3 atom-4' d='M 48.4,140.5 L "
+                    "75.7,149.4' style='fill:none;"
                     "fill-rule:evenodd;stroke:#0000FF;") != std::string::npos);
   }
   SECTION("dative series") {
@@ -892,7 +890,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_2.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 4);
+      CHECK(tkns.size() == 3);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -918,7 +916,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_3.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 4);
+      CHECK(tkns.size() == 3);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -1195,9 +1193,9 @@ TEST_CASE("including legend in drawing results in offset drawing later",
     check_file_hash("testLegendsAndDrawing-1.svg");
 
     // make sure the polygon starts at a bond
-    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 322.0,140.0") !=
+    CHECK(text.find("<path class='bond-0 atom-0 atom-1' d='M 316.7,135.0") !=
           std::string::npos);
-    CHECK(text.find("<path d='M 322.0,140.0") != std::string::npos);
+    CHECK(text.find("<path d='M 316.7,135.0") != std::string::npos);
   }
 }
 
@@ -3754,7 +3752,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(6.0).margin(.1));
+    CHECK(drawer.fontSize() == Approx(5.5).margin(.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1b.svg");
     outs << text;
@@ -3765,7 +3763,7 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(14.2).margin(0.1));
+    CHECK(drawer.fontSize() == Approx(14.0).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2a.svg");
     outs << text;
@@ -3777,7 +3775,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Approx(20.5).margin(0.1));
+    CHECK(drawer.fontSize() == Approx(20.3).margin(0.1));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;
@@ -4169,7 +4167,7 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_1.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='34.5' y='195.2' class='legend' "
+      CHECK(text.find("<text x='38.4' y='200.0' class='legend' "
                       "style='font-size:16px;") != std::string::npos);
     }
     {
@@ -4183,8 +4181,8 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_2.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='1.6' y='190.4' class='legend' "
-                      "style='font-size:31px;") != std::string::npos);
+      CHECK(text.find("<text x='7.3' y='200.0' class='legend' "
+                      "style='font-size:32px;") != std::string::npos);
     }
     {
       // tiny
@@ -4196,9 +4194,8 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_3.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='69.3' y='196.2' class='legend' "
+      CHECK(text.find("<text x='71.4' y='200.0' class='legend' "
                       "style='font-size:12px;") != std::string::npos);
     }
-
   }
 }

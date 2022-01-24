@@ -509,7 +509,8 @@ void MolDraw2D::drawReaction(
   startDrawing();
   int xOffset = 0;
   xOffset = drawReactionPart(reagents, plusWidth, xOffset, offsets);
-  drawArrow(arrowBeg, arrowEnd, false, 0.05, M_PI / 6, true);
+  drawArrow(arrowBeg, arrowEnd, drawOptions().symbolColour, false, 0.05,
+            M_PI / 6, true);
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
 
@@ -808,7 +809,11 @@ void MolDraw2D::setScale(int width, int height, const Point2D &minv,
   // Absent any other information, we'll have to go with fontScale_ the
   // same as scale_.
   if (!setFontScale) {
-    fontScale_ = scale_;
+    // get the text drawer to decide on a suitable fontScale.
+    double ofs = text_drawer_->fontScale();
+    text_drawer_->setFontScale(scale_);
+    fontScale_ = text_drawer_->fontScale();
+    text_drawer_->setFontScale(ofs, true);
   } else {
     fontScale_ *= scale_ / fontScale_;
   }
@@ -1201,8 +1206,8 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
-                          bool asPolygon, double frac, double angle,
-                          bool rawCoords) {
+                          const DrawColour &col, bool asPolygon, double frac,
+                          double angle, bool rawCoords) {
   Point2D delta = arrowBegin - arrowEnd;
   double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
 
@@ -1214,19 +1219,16 @@ void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
   p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
   p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
 
-  drawLine(arrowBegin, arrowEnd, drawOptions().symbolColour,
-           drawOptions().symbolColour, rawCoords);
+  drawLine(arrowBegin, arrowEnd, col, col, rawCoords);
   if (!asPolygon) {
-    drawLine(arrowEnd, p1, drawOptions().symbolColour,
-             drawOptions().symbolColour, rawCoords);
-    drawLine(arrowEnd, p2, drawOptions().symbolColour,
-             drawOptions().symbolColour, rawCoords);
+    drawLine(arrowEnd, p1, col, col, rawCoords);
+    drawLine(arrowEnd, p2, col, col, rawCoords);
   } else {
     std::vector<Point2D> pts = {p1, arrowEnd, p2};
     bool fps = fillPolys();
     DrawColour dc = colour();
     setFillPolys(true);
-    setColour(drawOptions().symbolColour);
+    setColour(col);
     drawPolygon(pts, rawCoords);
     setFillPolys(fps);
     setColour(dc);
@@ -1370,6 +1372,17 @@ void MolDraw2D::getReactionDrawMols(
   for (auto &agent : agents) {
     agent->setScale(minScale, minFontScale);
     agent->shrinkToFit(false);
+  }
+
+  // set the active atom/bond indices so they run in series for all pieces.
+  // DrawMols start each new set at 0 by default.  The original code had
+  // reagents, products then agents, so do the same here.
+  int atomIdxOffset = 0, bondIdxOffset = 0;
+  for (auto &dm : drawMols_) {
+    dm->activeAtmIdxOffset_ = atomIdxOffset;
+    dm->activeBndIdxOffset_ = bondIdxOffset;
+    atomIdxOffset += dm->drawMol_->getNumAtoms();
+    bondIdxOffset += dm->drawMol_->getNumBonds();
   }
 }
 
@@ -3108,7 +3121,7 @@ void drawDativeBond(MolDraw2D &d2d, const Bond &bond, const Point2D &cds1,
   // so as not to trample on anything else.
   Point2D delta = mid - cds2;
   Point2D end = cds2 + delta * frac;
-  d2d.drawArrow(mid, end, asPolygon, frac, angle);
+  d2d.drawArrow(mid, end, col2, asPolygon, frac, angle);
   d2d.setActiveAtmIdx();
 }
 

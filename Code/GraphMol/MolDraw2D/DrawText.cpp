@@ -31,7 +31,6 @@ double DrawText::fontSize() const { return fontScale() * baseFontSize(); }
 
 // ****************************************************************************
 void DrawText::setFontSize(double new_size) {
-  std::cout << "DrawText::setFontSize : " << new_size << std::endl;
   if (new_size < minFontSize()) {
     BOOST_LOG(rdWarningLog)
         << "The new font size " << new_size << " is below the current minimum ("

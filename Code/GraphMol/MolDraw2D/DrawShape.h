@@ -73,7 +73,8 @@ class DrawShapeArrow : protected DrawShape {
   DrawShapeArrow(const std::vector<Point2D> &points, int lineWidth = 2,
                  bool scaleLineWidth = false,
                  DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
-                 double frac = 0.2, double angle = M_PI / 6);
+                 int atom1 = -1, int atom2 = -1, int bond = -1, double frac = 0.2,
+                 double angle = M_PI / 6);
   void myDraw(MolDraw2D &drawer) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 

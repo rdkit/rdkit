@@ -1150,7 +1150,7 @@ void test6() {
         std::string::npos);
     // start of first radical spot
     TEST_ASSERT(
-        txt.find("<path class='atom-1' d='M 43.1,188.0 L 43.1,188.2") !=
+        txt.find("<path class='atom-1' d='M 43.1,191.2 L 43.1,191.3") !=
         std::string::npos);
     check_file_hash(nameBase + ".svg");
   }
@@ -2267,7 +2267,6 @@ M  END";
     RDGeom::Point3D &p = m2->getConformer().getAtomPos(i);
     p -= c2;
   }
-
   {
     MolDraw2DSVG drawer(200, 200);
     drawer.drawOptions().padding = 0.2;
@@ -4314,7 +4313,6 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-
 #if 1
   test1();
   test2();

@@ -171,8 +171,8 @@ class DrawMol {
   OrientType calcRadicalRect(const Atom *atom, StringRect &rad_rect) const;
   void getDrawTransformers(Point2D &trans, Point2D &scale,
                            Point2D &toCentre) const;
-  // given some coords in molecule space (angstrom, probably) return the
-  // screen coords
+  // Given some coords in molecule space (angstrom, probably) return the
+  // screen coords.
   Point2D getDrawCoords(const Point2D &atCds, const Point2D &trans,
                         const Point2D &scaleFactor,
                         const Point2D &toCentre) const;
@@ -183,25 +183,29 @@ class DrawMol {
   Point2D getAtomCoords(int atnum) const;
   double getScale() const { return scale_; }
   double getFontScale() const { return textDrawer_.fontScale();}
-  // more often than not, newScale and newFontScale will be the same,
+  // More often than not, newScale and newFontScale will be the same,
   // but not if minFontScale of maxFontScale have become involved.
   // The newFontScale will be used without checking the min and max.
   void setScale(double newScale, double newFontScale,
                 bool ignoreFontLimits = true);
-  // set all the transformation details from the incoming DrawMol to this
-  // one, so they can be overlaid properly.
+  // Set all the transformation details from the incoming DrawMol to this
+  // one, so they can be overlaid properly.  Doesn't change the offsets.
   void setTransformation(const DrawMol &sourceMol);
 
-  // for drawing into a grid, for example.  Must be set before
+  // For drawing into a grid, for example.  Must be set before
   // changeToDrawCoords is called for it to have effect.
   void setOffsets(double xOffset, double yOffset);
-  // so we can add metadata later.  Most likely used after changeToDrawCoords
+  // So we can add metadata later.  Most likely used after changeToDrawCoords
   // has been called.
   void tagAtomsWithCoords();
-  // apply the transformations to everything. trans and toCentre are added,
+  // Apply the transformations to everything. trans and toCentre are added,
   // scale is multiplied.
   void transformAll(const Point2D *trans = nullptr, Point2D *scale = nullptr,
                     const Point2D *toCentre = nullptr);
+  // Apply the transformations to the given point and return a new one.
+  Point2D transformPoint(const Point2D &pt, const Point2D *trans = nullptr,
+                         Point2D *scale = nullptr,
+                         const Point2D *toCentre = nullptr) const;
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -242,6 +246,10 @@ class DrawMol {
   // if there's a legend, we reserve a bit for it.
   int drawHeight_, legendHeight_ = 0;
   bool drawingInitialised_ = false;
+  // when drawing the atoms and bonds in an SVG, they are given a class
+  // via MolDraw2D's activeAtmIdx[12]_ and activeBndIdx.  We don't always want
+  // them to start from 0 for atom/bond 0.
+  int activeAtmIdxOffset_ = 0, activeBndIdxOffset_ = 0;
 };
 
 void centerMolForDrawing(RWMol &mol, int confId = 1);
