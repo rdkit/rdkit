@@ -17,11 +17,12 @@
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 AtomSymbol::AtomSymbol(const std::string &symbol, int atIdx, OrientType orient,
-                     const Point2D &cds, const DrawColour &colour,
-                     DrawText &textDrawer)
+                       const Point2D &cds, const DrawColour &colour,
+                       DrawText &textDrawer)
     : symbol_(symbol),
       atIdx_(atIdx),
       orient_(orient),
@@ -31,13 +32,13 @@ AtomSymbol::AtomSymbol(const std::string &symbol, int atIdx, OrientType orient,
   if (symbol_.empty()) {
     return;
   }
-  textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_,
-                             drawChars_, false, TextAlignType::MIDDLE);
+  textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_, drawChars_,
+                             false, TextAlignType::MIDDLE);
 }
 
 // ****************************************************************************
 void AtomSymbol::findExtremes(double &xmin, double &xmax, double &ymin,
-                             double &ymax) const {
+                              double &ymax) const {
   Point2D bl, br, tl, tr, origTrans;
   for (auto rect : rects_) {
     origTrans = rect->trans_;
@@ -69,14 +70,12 @@ void AtomSymbol::scale(const Point2D &scaleFactor) {
   rects_.clear();
   drawModes_.clear();
   drawChars_.clear();
-  textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_,
-                             drawChars_, false, TextAlignType::MIDDLE);
+  textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_, drawChars_,
+                             false, TextAlignType::MIDDLE);
 }
 
 // ****************************************************************************
-void AtomSymbol::move(const Point2D &trans) {
-  cds_ += trans;
-}
+void AtomSymbol::move(const Point2D &trans) { cds_ += trans; }
 
 // ****************************************************************************
 void AtomSymbol::draw(MolDraw2D &molDrawer) const {
@@ -90,7 +89,7 @@ void AtomSymbol::draw(MolDraw2D &molDrawer) const {
   textDrawer_.setColour(colour_);
   textDrawer_.drawString(symbol_, cds_, orient_);
   molDrawer.setActiveClass(o_class);
-//  drawRects(molDrawer);
+  //  drawRects(molDrawer);
 }
 
 // ****************************************************************************
@@ -124,5 +123,6 @@ void AtomSymbol::drawRects(MolDraw2D &molDrawer) const {
   }
 }
 
+}  // namespace MolDraw2D_detail
 } // namespace RDKit
 

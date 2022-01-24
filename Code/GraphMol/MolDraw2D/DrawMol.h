@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <Geometry/point.h>
+#include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawAnnotation.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
@@ -31,7 +32,6 @@ class Atom;
 class Bond;
 class ROMol;
 class RWMol;
-class AtomSymbol;
 class DrawText;
 
 class DrawMol {
@@ -159,14 +159,16 @@ class DrawMol {
   void makeAtomCircleHighlights();
   void makeAtomEllipseHighlights(int lineWidth);
   void makeBondHighlightLines(int lineWidth);
-  void calcAnnotationPosition(const Atom *atom, DrawAnnotation &annot) const;
-  void calcAnnotationPosition(const Bond *bond, DrawAnnotation &annot) const;
+  void calcAnnotationPosition(const Atom *atom,
+                              MolDraw2D_detail::DrawAnnotation &annot) const;
+  void calcAnnotationPosition(const Bond *bond,
+                              MolDraw2D_detail::DrawAnnotation &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
   void calcMolNotePosition(const std::vector<Point2D> atCds,
-                           DrawAnnotation &annot) const;
+                           MolDraw2D_detail::DrawAnnotation &annot) const;
   // see if the note will clash with anything else drawn on the molecule.
   // Returns 0 if no clash, 1-4 if there is a clash, denoting what clashed.
-  int doesNoteClash(const DrawAnnotation &annot) const;
+  int doesNoteClash(const MolDraw2D_detail::DrawAnnotation &annot) const;
   int doesRectClash(const StringRect &rect, double padding) const;
   OrientType calcRadicalRect(const Atom *atom, StringRect &rad_rect) const;
   void getDrawTransformers(Point2D &trans, Point2D &scale,
@@ -229,10 +231,10 @@ class DrawMol {
   std::vector<std::unique_ptr<DrawShape>> postShapes_;
   std::vector<int> atomicNums_;
   std::vector<std::pair<std::string, OrientType>> atomSyms_;
-  std::vector<std::unique_ptr<AtomSymbol>> atomLabels_;
+  std::vector<std::unique_ptr<MolDraw2D_detail::AtomSymbol>> atomLabels_;
   std::vector<std::unique_ptr<DrawShape>> highlights_;
-  std::vector<std::unique_ptr<DrawAnnotation>> annotations_;
-  std::vector<std::unique_ptr<DrawAnnotation>> legends_;
+  std::vector<std::unique_ptr<MolDraw2D_detail::DrawAnnotation>> annotations_;
+  std::vector<std::unique_ptr<MolDraw2D_detail::DrawAnnotation>> legends_;
   std::vector<std::tuple<StringRect, OrientType, int>> radicals_;
 
   int width_, height_;

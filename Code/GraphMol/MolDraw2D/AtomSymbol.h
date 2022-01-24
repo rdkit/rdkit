@@ -26,16 +26,19 @@
 namespace RDKit {
 
 class MolDraw2D;
+class DrawMolMCH;
+
+namespace MolDraw2D_detail {
 
 class AtomSymbol {
-  friend class DrawMol;
-  friend class DrawMolMCH;
+  friend class RDKit::DrawMol;
+  friend class RDKit::DrawMolMCH;
 
  public:
   ~AtomSymbol() = default;
 
   // everything's private because we don't want anyone using it.
- private :
+ private:
   /*!
    *
    * @param symbol     : the full symbol
@@ -44,8 +47,8 @@ class AtomSymbol {
    * etc.
    */
   AtomSymbol(const std::string &symbol, int atIdx, OrientType orient,
-            const Point2D &cds, const DrawColour &colour,
-            DrawText &textDrawer);
+             const Point2D &cds, const DrawColour &colour,
+             DrawText &textDrawer);
 
   AtomSymbol(const AtomSymbol &) = delete;
   AtomSymbol(const AtomSymbol &&) = delete;
@@ -63,8 +66,8 @@ class AtomSymbol {
   std::vector<char> drawChars_;
 
   // expects xmin etc to be initialised to something sensible.
-  virtual void findExtremes(double &xmin, double &xmax,
-                            double &ymin, double &ymax) const;
+  virtual void findExtremes(double &xmin, double &xmax, double &ymin,
+                            double &ymax) const;
   // scaleFactor moves the cds_, but the fontScaleFactor changes rects_, because
   // we might be scaling the font differently from the drawing as a whole.
   virtual void scale(const Point2D &scaleFactor);
@@ -76,6 +79,7 @@ class AtomSymbol {
   void drawRects(MolDraw2D &molDrawer) const;
 };
 
+}  // namespace MolDraw2D_detail
 } // namespace RDKit
 
 #endif  // RDKIT_ATOMSYMBOL_H

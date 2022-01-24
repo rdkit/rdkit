@@ -14,6 +14,7 @@
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawAnnotation::DrawAnnotation(const std::string &note,
@@ -83,21 +84,20 @@ void DrawAnnotation::extractRects() {
 
 // ****************************************************************************
 void DrawAnnotation::draw(MolDraw2D &molDrawer) const {
-
   std::string o_class = molDrawer.getActiveClass();
-    std::string actClass = o_class;
-    if (!actClass.empty()) {
-      actClass += " ";
-    }
-    actClass += class_;
-    molDrawer.setActiveClass(actClass);
-    textDrawer_.setColour(colour_);
-    double ofs = textDrawer_.fontScale();
-    textDrawer_.setFontScale(relFontScale_ * ofs, true);
-    textDrawer_.drawString(text_, pos_, align_);
-    textDrawer_.setFontScale(ofs, true);
-    molDrawer.setActiveClass(o_class);
-//    drawRects(molDrawer);
+  std::string actClass = o_class;
+  if (!actClass.empty()) {
+    actClass += " ";
+  }
+  actClass += class_;
+  molDrawer.setActiveClass(actClass);
+  textDrawer_.setColour(colour_);
+  double ofs = textDrawer_.fontScale();
+  textDrawer_.setFontScale(relFontScale_ * ofs, true);
+  textDrawer_.drawString(text_, pos_, align_);
+  textDrawer_.setFontScale(ofs, true);
+  molDrawer.setActiveClass(o_class);
+  //    drawRects(molDrawer);
 }
 
 // ****************************************************************************
@@ -152,4 +152,5 @@ bool DrawAnnotation::doesRectClash(const StringRect &rect,
   return false;
 }
 
-} // namespace RDKit
+}  // namespace MolDraw2D_detail
+}  // namespace RDKit

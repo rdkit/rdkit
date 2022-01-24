@@ -21,11 +21,14 @@
 
 namespace RDKit {
 
+class DrawMol;
 class DrawText;
 class MolDraw2D;
 
+namespace MolDraw2D_detail {
+
 class DrawAnnotation {
-  friend class DrawMol;
+  friend class RDKit::DrawMol;
 
  public:
   ~DrawAnnotation() = default;
@@ -40,8 +43,8 @@ class DrawAnnotation {
   DrawAnnotation &operator=(const DrawAnnotation &) = delete;
 
   // expects xmin etc to be initialised to something sensible.
-  void findExtremes(double &xmin, double &xmax,
-                    double &ymin, double &ymax, double padding=0.0) const;
+  void findExtremes(double &xmin, double &xmax, double &ymin, double &ymax,
+                    double padding = 0.0) const;
   void getDimensions(double &width, double &height) const;
   void extractRects();
   void draw(MolDraw2D &molDrawer) const;
@@ -53,14 +56,14 @@ class DrawAnnotation {
 
   std::string text_;
   TextAlignType align_;
-  std::string class_; // for SVG output, most likely
-  double relFontScale_; // fraction of current fontScale to use
+  std::string class_;    // for SVG output, most likely
+  double relFontScale_;  // fraction of current fontScale to use
   DrawText &textDrawer_;
   Point2D pos_ = Point2D(0.0, 0.0);
   DrawColour colour_ = DrawColour(0.0, 0.0, 0.0, 0.0);
   std::vector<std::shared_ptr<StringRect>> rects_;
-}
- ;
+};
 
-} // namespace RDKit
+}  // namespace MolDraw2D_detail
+}  // namespace RDKit
 #endif  // RDKIT_DRAWANNOTATION_H

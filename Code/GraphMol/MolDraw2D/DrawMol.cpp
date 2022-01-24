@@ -221,12 +221,12 @@ void DrawMol::extractAtomSymbols() {
     if (!atSym.first.empty()) {
       DrawColour atCol = getColour(at1->getIdx(), drawOptions_, atomicNums_,
                                    &highlightAtoms_, &highlightAtomMap_);
-      AtomSymbol *al =
-          new AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
+      MolDraw2D_detail::AtomSymbol *al =
+          new MolDraw2D_detail::AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
                          atCds_[at1->getIdx()], atCol, textDrawer_);
-      atomLabels_.emplace_back(std::unique_ptr<AtomSymbol>(al));
+      atomLabels_.emplace_back(std::unique_ptr<MolDraw2D_detail::AtomSymbol>(al));
     } else {
-      atomLabels_.emplace_back(std::unique_ptr<AtomSymbol>());
+      atomLabels_.emplace_back(std::unique_ptr<MolDraw2D_detail::AtomSymbol>());
     }
   }
 }
@@ -348,9 +348,11 @@ void DrawMol::extractMolNotes() {
   }
 
   if (!note.empty()) {
-    DrawAnnotation *annot = new DrawAnnotation(
-        note, TextAlignType::START, "note", drawOptions_.annotationFontScale,
-        Point2D(0.0, 0.0), drawOptions_.annotationColour, textDrawer_);
+    MolDraw2D_detail::DrawAnnotation *annot =
+        new MolDraw2D_detail::DrawAnnotation(
+            note, TextAlignType::START, "note",
+            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+            drawOptions_.annotationColour, textDrawer_);
     calcMolNotePosition(atCds_, *annot);
     annotations_.emplace_back(annot);
   }
@@ -362,10 +364,11 @@ void DrawMol::extractAtomNotes() {
     std::string note;
     if (atom->getPropIfPresent(common_properties::atomNote, note)) {
       if (!note.empty()) {
-        DrawAnnotation *annot = new DrawAnnotation(
-            note, TextAlignType::MIDDLE, "note",
-            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+        MolDraw2D_detail::DrawAnnotation *annot =
+            new MolDraw2D_detail::DrawAnnotation(
+                note, TextAlignType::MIDDLE, "note",
+                drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+                drawOptions_.annotationColour, textDrawer_);
         calcAnnotationPosition(atom, *annot);
         annotations_.emplace_back(annot);
       }
@@ -379,10 +382,11 @@ void DrawMol::extractBondNotes() {
     std::string note;
     if (bond->getPropIfPresent(common_properties::bondNote, note)) {
       if (!note.empty()) {
-        DrawAnnotation *annot = new DrawAnnotation(
-            note, TextAlignType::MIDDLE, "note",
-            drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+        MolDraw2D_detail::DrawAnnotation *annot =
+            new MolDraw2D_detail::DrawAnnotation(
+                note, TextAlignType::MIDDLE, "note",
+                drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+                drawOptions_.annotationColour, textDrawer_);
         calcAnnotationPosition(bond, *annot);
         annotations_.emplace_back(annot);
       }
@@ -480,9 +484,11 @@ void DrawMol::extractSGroupData() {
 
       if (!text.empty()) {
         // looks like everybody renders these left justified
-        DrawAnnotation *annot = new DrawAnnotation(
-            text, TextAlignType::START, "note", drawOptions_.annotationFontScale,
-            Point2D(0.0, 0.0), drawOptions_.annotationColour, textDrawer_);
+        MolDraw2D_detail::DrawAnnotation *annot =
+            new MolDraw2D_detail::DrawAnnotation(
+                text, TextAlignType::START, "note",
+                drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+                drawOptions_.annotationColour, textDrawer_);
         if (!located) {
           if (atomIdx >= 0 && !text.empty()) {
             calcAnnotationPosition(drawMol_->getAtomWithIdx(atomIdx), *annot);
@@ -647,16 +653,18 @@ void DrawMol::extractBrackets() {
           botPt = brkShp.points_[1];
           brkPt = brkShp.points_[0];
         }
-        DrawAnnotation *da = new DrawAnnotation(
-            connect, TextAlignType::MIDDLE, "connect",
-            drawOptions_.annotationFontScale, botPt + (botPt - brkPt),
-            DrawColour(0.0, 0.0, 0.0), textDrawer_);
+        MolDraw2D_detail::DrawAnnotation *da =
+            new MolDraw2D_detail::DrawAnnotation(
+                connect, TextAlignType::MIDDLE, "connect",
+                drawOptions_.annotationFontScale, botPt + (botPt - brkPt),
+                DrawColour(0.0, 0.0, 0.0), textDrawer_);
         // if we're to the right of the bracket, we need to left justify,
         // otherwise things seem to work as is
         if (brkPt.x < botPt.x) {
           da->align_ = TextAlignType::START;
         }
-        annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
+        annotations_.emplace_back(
+            std::unique_ptr<MolDraw2D_detail::DrawAnnotation>(da));
       }
       std::string label;
       if (sg.getPropIfPresent("LABEL", label)) {
@@ -670,11 +678,13 @@ void DrawMol::extractBrackets() {
           topPt = brkShp.points_[2];
           brkPt = brkShp.points_[3];
         }
-        DrawAnnotation *da = new DrawAnnotation(
-            label, TextAlignType::MIDDLE, "connect",
-            drawOptions_.annotationFontScale, topPt + (topPt - brkPt),
-            DrawColour(0.0, 0.0, 0.0), textDrawer_);
-        annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
+        MolDraw2D_detail::DrawAnnotation *da =
+            new MolDraw2D_detail::DrawAnnotation(
+                label, TextAlignType::MIDDLE, "connect",
+                drawOptions_.annotationFontScale, topPt + (topPt - brkPt),
+                DrawColour(0.0, 0.0, 0.0), textDrawer_);
+        annotations_.emplace_back(
+            std::unique_ptr<MolDraw2D_detail::DrawAnnotation>(da));
       }
     }
   }
@@ -729,11 +739,13 @@ void DrawMol::extractLinkNodes() {
           (boost::format("(%d-%d)") % node.minRep % node.maxRep).str();
       Point2D perp = labelPerp;
       perp /= perp.length() * 5;
-      DrawAnnotation *da = new DrawAnnotation(
-          label, TextAlignType::START, "linknode",
-          drawOptions_.annotationFontScale, labelPt + perp,
-          DrawColour(0.0, 0.0, 0.0), textDrawer_);
-      annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
+      MolDraw2D_detail::DrawAnnotation *da =
+          new MolDraw2D_detail::DrawAnnotation(
+              label, TextAlignType::START, "linknode",
+              drawOptions_.annotationFontScale, labelPt + perp,
+              DrawColour(0.0, 0.0, 0.0), textDrawer_);
+      annotations_.emplace_back(
+          std::unique_ptr<MolDraw2D_detail::DrawAnnotation>(da));
     }
   }
 }
@@ -1379,9 +1391,10 @@ void DrawMol::extractLegend() {
     total_width = total_height = 0;
     for (auto &bit : legend_bits) {
       double height, width;
-      DrawAnnotation *da = new DrawAnnotation(
-          bit, TextAlignType::MIDDLE, "legend", relFontScale, Point2D(0.0, 0.0),
-          drawOptions_.legendColour, textDrawer_);
+      MolDraw2D_detail::DrawAnnotation *da =
+          new MolDraw2D_detail::DrawAnnotation(
+              bit, TextAlignType::MIDDLE, "legend", relFontScale,
+              Point2D(0.0, 0.0), drawOptions_.legendColour, textDrawer_);
       da->getDimensions(width, height);
       total_height += height;
       total_width = std::max(total_width, width);
@@ -1422,7 +1435,7 @@ void DrawMol::extractLegend() {
   }
   Point2D loc(width_ / 2 + xOffset_, height_ + yOffset_);
   for (auto bit : legend_bits) {
-    DrawAnnotation *da = new DrawAnnotation(
+    MolDraw2D_detail::DrawAnnotation *da = new MolDraw2D_detail::DrawAnnotation(
         bit, TextAlignType::MIDDLE, "legend", relFontScale, loc,
         drawOptions_.legendColour, textDrawer_);
     legends_.emplace_back(da);
@@ -1750,10 +1763,10 @@ void DrawMol::makeDativeBond(Bond *bond,
   newBondLine(end1, mid, cols.first, cols.first, at1->getIdx(), atid2,
               bond->getIdx(), noDash);
   std::vector<Point2D> pts{mid, end2};
-  DrawShapeArrow *a =
-      new DrawShapeArrow(pts, drawOptions_.bondLineWidth, false, cols.second,
-                         true, at1->getIdx() + activeAtmIdxOffset_,
-                         atid2 + activeAtmIdxOffset_, 0.2, M_PI / 6);
+  DrawShapeArrow *a = new DrawShapeArrow(
+      pts, drawOptions_.bondLineWidth, false, cols.second, true,
+      at1->getIdx() + activeAtmIdxOffset_, atid2 + activeAtmIdxOffset_,
+      bond->getIdx() + activeBndIdxOffset_, 0.2, M_PI / 6);
   bonds_.emplace_back(std::unique_ptr<DrawShape>(a));
 }
 
@@ -1981,8 +1994,8 @@ void DrawMol::makeBondHighlightLines(int lineWidth) {
 }
 
 // ****************************************************************************
-void DrawMol::calcAnnotationPosition(const Atom *atom,
-                                     DrawAnnotation &annot) const {
+void DrawMol::calcAnnotationPosition(
+    const Atom *atom, MolDraw2D_detail::DrawAnnotation &annot) const {
   PRECONDITION(atom, "no atom");
   Point2D const &at_cds = atCds_[atom->getIdx()];
   double start_ang = getNoteStartAngle(atom);
@@ -2019,8 +2032,8 @@ void DrawMol::calcAnnotationPosition(const Atom *atom,
 }
 
 // ****************************************************************************
-void DrawMol::calcAnnotationPosition(const Bond *bond,
-                                     DrawAnnotation &annot) const {
+void DrawMol::calcAnnotationPosition(
+    const Bond *bond, MolDraw2D_detail::DrawAnnotation &annot) const {
   PRECONDITION(bond, "no bond");
   Point2D const &at1_cds = atCds_[bond->getBeginAtomIdx()];
   Point2D const &at2_cds = atCds_[bond->getEndAtomIdx()];
@@ -2126,8 +2139,9 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
 }
 
 // ****************************************************************************
-void DrawMol::calcMolNotePosition(const std::vector<Point2D> atCds,
-                                  DrawAnnotation &annot) const {
+void DrawMol::calcMolNotePosition(
+    const std::vector<Point2D> atCds,
+    MolDraw2D_detail::DrawAnnotation &annot) const {
   Point2D centroid{0., 0.};
   double minY = std::numeric_limits<double>::max();
   double maxX = -std::numeric_limits<double>::max();
@@ -2149,7 +2163,8 @@ void DrawMol::calcMolNotePosition(const std::vector<Point2D> atCds,
 }
 
 // ****************************************************************************
-int DrawMol::doesNoteClash(const DrawAnnotation &annot) const {
+int DrawMol::doesNoteClash(
+    const MolDraw2D_detail::DrawAnnotation &annot) const {
   // note that this will return a clash if annot is in annotations_.
   // It's intended only to be used when finding where to put the
   // annotation, so annot should only  be added to annotations_ once
