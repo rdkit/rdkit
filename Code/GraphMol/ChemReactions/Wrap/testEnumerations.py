@@ -44,8 +44,8 @@ import itertools, time
 import numpy as np
 
 def log(s):
-  Chem.LogErrorMsg("== " + s)
-  
+  rdBase.LogErrorMsg("== " + s)
+
 class TestCase(unittest.TestCase) :
   def setUp(self):
     self.dataDir = os.path.join(RDConfig.RDBaseDir,'Code','GraphMol','ChemReactions','testData')

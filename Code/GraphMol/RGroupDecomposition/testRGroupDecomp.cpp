@@ -98,8 +98,8 @@ void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
 
   for (const auto &rgroups : *it) {
     // rlabel:smiles
-    str << rgroups.first << "\t" << MolToSmiles(*rgroups.second.get(), true)
-        << "\t";
+    str << rgroups.first << ":" << MolToSmiles(*rgroups.second.get(), true)
+        << " ";
   }
   std::cerr << str.str() << std::endl;
   result = str.str();
@@ -2627,6 +2627,69 @@ M  END
   }
 }
 
+void testWildcardInInput() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test that dummy atom in input molecule is handled correctly"
+      << std::endl;
+
+  auto core = R"CTAB(
+Mrv2008 12012115162D          
+
+  6  6  6  0  0  0            999 V2000
+  -21.0938  -16.9652    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.8082  -17.3777    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.8082  -18.2027    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.0938  -18.6152    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -20.3793  -18.2027    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -20.3793  -17.3777    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  6  0  0  0  0
+  2  3  7  0  0  0  0
+  3  4  6  0  0  0  0
+  4  5  7  0  0  0  0
+  5  6  6  0  0  0  0
+  1  6  7  0  0  0  0
+  1 F    2   6   7
+  2 F    2   6   7
+  3 F    2   6   7
+  4 F    2   6   7
+  5 F    2   6   7
+  6 F    2   6   7
+M  ALS   1  2 F C   N   
+M  ALS   2  2 F C   N   
+M  ALS   3  2 F C   N   
+M  ALS   4  2 F C   N   
+M  ALS   5  2 F C   N   
+M  ALS   6  2 F C   N   
+M  END
+)CTAB"_ctab;
+
+  auto structure = "CC1CCN(C1)C1=CC(O*)=C(Cl)C=C1C#N"_smiles;
+  RGroupDecomposition decomp(*core);
+  TEST_ASSERT(decomp.add(*structure) == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  RGroupRows::const_iterator it = rows.begin();
+  std::string expected(
+      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:Cl[*:1] R2:*O[*:2] "
+      "R3:CC1CCN([*:3])C1 R4:N#C[*:4]");
+  CHECK_RGROUP(it, expected);
+
+  structure = "CC1CCN(C1)C1=CC([*:2])=C(Cl)C=C1C#N"_smiles;
+  RGroupDecomposition decomp2(*core);
+  TEST_ASSERT(decomp2.add(*structure) == 0);
+  decomp2.process();
+  rows = decomp2.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  it = rows.begin();
+  expected =
+      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:Cl[*:1] R2:*[*:2] "
+      "R3:CC1CCN([*:3])C1 R4:N#C[*:4]";
+  CHECK_RGROUP(it, expected);
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2676,6 +2739,7 @@ int main() {
   testDoNotAddUnnecessaryRLabels();
   testCoreWithAlsRecords();
   testAlignOutputCoreToMolecule();
+  testWildcardInInput();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

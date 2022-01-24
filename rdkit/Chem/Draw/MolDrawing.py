@@ -416,27 +416,25 @@ class MolDrawing(object):
           symbolLength = len(symbol)
         else:
           base = atom.GetSymbol()
-          if (base == 'H' and (iso == 2 or iso == 3) and
-              self.drawingOptions.atomLabelDeuteriumTritium):
+          if base == 'H' and (iso == 2 or iso == 3) and self.drawingOptions.atomLabelDeuteriumTritium:
             if iso == 2:
               base = 'D'
             else:
               base = 'T'
             iso = 0
           symbolLength = len(base)
+          
+          nHs = 0
           if not atom.HasQuery():
             nHs = atom.GetTotalNumHs()
-          else:
-            nHs = 0
-          if nHs > 0:
-            if nHs > 1:
-              hs = 'H<sub>%d</sub>' % nHs
-              symbolLength += 1 + len(str(nHs))
-            else:
-              hs = 'H'
-              symbolLength += 1
-          else:
-            hs = ''
+          hs = ''
+          if nHs == 1:
+            hs = 'H'
+            symbolLength += 1
+          elif nHs > 1:
+            hs = 'H<sub>%d</sub>' % nHs
+            symbolLength += 1 + len(str(nHs))
+
           chg = atom.GetFormalCharge()
           if chg == 0:
             chg = ''
@@ -475,9 +473,10 @@ class MolDrawing(object):
           # the size of 'base', or the size of 'mapNum' and the size of 'base'
           # (depending on 'deg' and 'nbrSum[0]') in order to determine the exact
           # position of the base
+          
           if deg == 0:
-            if periodicTable.GetElementSymbol(atom.GetAtomicNum()) in ('O', 'S', 'Se', 'Te', 'F',
-                                                                       'Cl', 'Br', 'I', 'At'):
+            tSym = periodicTable.GetElementSymbol(atom.GetAtomicNum())
+            if tSym in ('O', 'S', 'Se', 'Te', 'F', 'Cl', 'Br', 'I', 'At'):
               symbol = '%s%s%s%s%s%s' % (hs, isotope, base, chg, rad, mapNum)
             else:
               symbol = '%s%s%s%s%s%s' % (isotope, base, hs, chg, rad, mapNum)
@@ -487,6 +486,7 @@ class MolDrawing(object):
           else:
             symbol = '%s%s%s%s%s%s' % (rad, chg, hs, isotope, base, mapNum)
             baseOffset = -0.5 + (mapNumLength + len(base) / 2.) / symbolLength
+            
           if deg == 1:
             if abs(nbrSum[1]) > 1:
               islope = nbrSum[0] / abs(nbrSum[1])
@@ -504,6 +504,7 @@ class MolDrawing(object):
                 orient = 'S'
           else:
             orient = 'C'
+        
         if highlightMap and idx in highlightMap:
           color = highlightMap[idx]
         elif highlightAtoms and idx in highlightAtoms:

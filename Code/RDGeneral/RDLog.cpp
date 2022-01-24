@@ -120,13 +120,12 @@ void InitLogs() {
   rdWarningLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
   rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
+
 std::ostream &toStream(std::ostream &logstrm) {
+  char buffer[16];
   time_t t = time(nullptr);
-  tm details = *localtime(&t);
-  logstrm << "[" << std::setw(2) << std::setfill('0') << details.tm_hour << ":"
-          << std::setw(2) << std::setfill('0') << details.tm_min << ":"
-          << std::setw(2) << std::setfill('0') << int(details.tm_sec) << "] ";
-  return logstrm;
+  strftime(buffer, 16, "[%T] ", localtime(&t));
+  return logstrm << buffer;
 }
 }  // namespace RDLog
 

@@ -15,11 +15,6 @@
 #include <GraphMol/SanitException.h>
 #include <RDBoost/import_array.h>
 
-#ifdef RDK_THREADSAFE_SSS
-// Thread local storage for output buffer for RDKit Logging
-#include <thread>
-#endif
-
 #include <sstream>
 #include <utility>
 
@@ -49,73 +44,6 @@ void wrap_molbundle();
 void wrap_sgroup();
 void wrap_chirality();
 
-struct PySysErrWrite : std::ostream, std::streambuf {
-  std::string prefix;
-
-  PySysErrWrite(std::string prefix)
-      : std::ostream(this), prefix(std::move(prefix)) {}
-
-  int overflow(int c) override {
-    write(c);
-    return 0;
-  }
-
-#ifdef RDK_THREADSAFE_SSS
-  void write(char c) {  // enable thread safe logging
-    static thread_local std::string buffer = "";
-    buffer += c;
-    if (c == '\n') {
-      // Python IO is not thread safe, so grab the GIL
-      {
-        PyGILStateHolder h;
-        PySys_WriteStderr("%s", (prefix + buffer).c_str());
-      }
-      buffer.clear();
-    }
-  }
-#else
-  std::string buffer;  // unlimited! flushes in endl
-  void write(char c) {
-    buffer += c;
-    if (c == '\n') {
-      PySys_WriteStderr("%s", (prefix + buffer).c_str());
-      buffer.clear();
-    }
-  }
-#endif
-};
-
-void RDLogError(const std::string &msg) {
-  NOGIL gil;
-  BOOST_LOG(rdErrorLog) << msg.c_str() << std::endl;
-}
-
-void RDLogWarning(const std::string &msg) {
-  NOGIL gil;
-  BOOST_LOG(rdWarningLog) << msg.c_str() << std::endl;
-}
-
-void WrapLogs() {
-  static PySysErrWrite debug("RDKit DEBUG: ");
-  static PySysErrWrite error("RDKit ERROR: ");
-  static PySysErrWrite info("RDKit INFO: ");
-  static PySysErrWrite warning("RDKit WARNING: ");
-  if (!rdDebugLog || !rdInfoLog || !rdErrorLog || !rdWarningLog) {
-    RDLog::InitLogs();
-  }
-  if (rdDebugLog != nullptr) {
-    rdDebugLog->SetTee(debug);
-  }
-  if (rdInfoLog != nullptr) {
-    rdInfoLog->SetTee(info);
-  }
-  if (rdErrorLog != nullptr) {
-    rdErrorLog->SetTee(error);
-  }
-  if (rdWarningLog != nullptr) {
-    rdWarningLog->SetTee(warning);
-  }
-}
 
 python::tuple getAtomIndicesHelper(const KekulizeException &self) {
   python::list res;
@@ -235,14 +163,6 @@ BOOST_PYTHON_MODULE(rdchem) {
       [&](const KekulizeException &exc) {
         sanitExceptionTranslator(exc, kekulizeExceptionType);
       });
-
-  python::def("WrapLogs", WrapLogs,
-              "Wrap the internal RDKit streams so they go to python's "
-              "SysStdErr");
-  python::def("LogWarningMsg", RDLogWarning,
-              "Log a warning message to the RDKit warning logs");
-  python::def("LogErrorMsg", RDLogError,
-              "Log a warning message to the RDKit error logs");
 
   //*********************************************
   //

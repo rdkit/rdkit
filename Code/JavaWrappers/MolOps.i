@@ -39,6 +39,10 @@
 %newobject RDKit::MolOps::renumberAtoms;
 %newobject RDKit::MolOps::removeHs;
 %newobject RDKit::MolOps::addHs;
+%newobject RDKit::MolOps::removeAllHs;
+%newobject RDKit::MolOps::mergeQueryHs;
+%newobject RDKit::MolOps::adjustQueryProperties;
+
 %ignore RDKit::MolOps::detectChemistryProblems;
 %include <GraphMol/MolOps.h>
 %ignore RDKit::MolOps::sanitizeMol(RWMol &,unsigned int &,unsigned int &);

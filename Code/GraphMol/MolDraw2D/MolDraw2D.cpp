@@ -473,7 +473,6 @@ void MolDraw2D::drawMolecule(const ROMol &mol,
     }
     setFillPolys(true);
   }
-
   drawBonds(draw_mol, highlight_atoms, highlight_atom_map, highlight_bonds,
             highlight_bond_map);
 
@@ -2815,7 +2814,8 @@ void MolDraw2D::extractVariableBonds(const ROMol &mol) {
         bond->getPropIfPresent(common_properties::_MolFileBondAttach, attach)) {
       // FIX: maybe distinguish between "ANY" and "ALL" values of attach here?
       std::vector<unsigned int> oats =
-          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(
+              endpts, mol.getNumAtoms(), false);
       atomsInvolved.reset();
       // decrement the indices and do error checking:
       for (auto &oat : oats) {
@@ -3068,21 +3068,7 @@ void drawNormalBond(MolDraw2D &d2d, const Bond &bond, bool highlight_bond,
     d2d.drawOptions().scaleBondWidth = orig_slw;
   } else if (Bond::SINGLE == bt && (Bond::BEGINWEDGE == bond.getBondDir() ||
                                     Bond::BEGINDASH == bond.getBondDir())) {
-    // swap the direction if at1 has does not have stereochem set
-    // or if at2 does have stereochem set and the bond starts there
-    auto at1 = bond.getBeginAtom();
-    auto at2 = bond.getEndAtom();
     auto inverted = false;
-    if ((at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
-         at1->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) ||
-        (at1->getIdx() != bond.getBeginAtomIdx() &&
-         (at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
-          at2->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW))) {
-      // std::cerr << "  swap" << std::endl;
-      swap(at1_cds, at2_cds);
-      swap(col1, col2);
-      inverted = true;
-    }
     if (d2d.drawOptions().singleColourWedgeBonds) {
       col1 = d2d.drawOptions().symbolColour;
       col2 = d2d.drawOptions().symbolColour;
@@ -3465,7 +3451,6 @@ void MolDraw2D::drawBond(
                 bond->getIdx()) != highlight_bonds->end()) {
     highlight_bond = true;
   }
-
   DrawColour col1, col2;
   int orig_lw = lineWidth();
   if (bond_colours) {

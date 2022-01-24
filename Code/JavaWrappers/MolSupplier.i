@@ -54,6 +54,7 @@
 
 %include <GraphMol/FileParsers/MolSupplier.h>
 
+#ifdef RDK_USE_BOOST_IOSTREAMS
 %extend RDKit::ForwardSDMolSupplier {
     ForwardSDMolSupplier(RDKit::gzstream *strm, bool sanitize=true, bool removeHs = true,
                   bool strictParsing = true) {
@@ -66,6 +67,7 @@
     return foo;
   }
 };
+#endif
 
 %include <GraphMol/Resonance.h>
 

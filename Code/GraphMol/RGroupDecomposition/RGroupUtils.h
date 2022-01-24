@@ -17,10 +17,10 @@
 namespace RDKit {
 
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL;
-extern const std::string RLABEL_TYPE;
-extern const std::string RLABEL_CORE_INDEX;
-extern const std::string SIDECHAIN_RLABELS;
-extern const std::string done;
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL_TYPE;
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL_CORE_INDEX;
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string SIDECHAIN_RLABELS;
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string done;
 
 const unsigned int EMPTY_CORE_LABEL = -100000;
 

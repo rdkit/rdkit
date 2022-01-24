@@ -49,14 +49,9 @@ RunFilterCatalog(const FilterCatalog &fc,
   std::vector<std::vector<FilterCatalog::CONST_SENTRY>> results(smiles.size());
 
 #ifdef RDK_THREADSAFE_SSS
-  if (numThreads == -1) {
-    numThreads = (int)getNumThreadsToUse(numThreads);
-  } else {
-    numThreads = std::min(numThreads, (int)getNumThreadsToUse(numThreads));
-  }
-
   std::vector<std::future<void>> thread_group;
-  for (int thread_group_idx = 0; thread_group_idx < numThreads + 1;
+  numThreads = (int)getNumThreadsToUse(numThreads);
+  for (int thread_group_idx = 0; thread_group_idx < numThreads;
        ++thread_group_idx) {
     // need to use std::ref otherwise things are passed by value
     thread_group.emplace_back(std::async(

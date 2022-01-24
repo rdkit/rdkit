@@ -215,6 +215,7 @@ struct atom_wrapper {
         .def("GetIsotope", &Atom::getIsotope)
         .def("SetNumRadicalElectrons", &Atom::setNumRadicalElectrons)
         .def("GetNumRadicalElectrons", &Atom::getNumRadicalElectrons)
+        .def("GetQueryType", &Atom::getQueryType)
 
         .def("SetChiralTag", &Atom::setChiralTag)
         .def("InvertChirality", &Atom::invertChirality)

@@ -35,9 +35,8 @@ def FingerprintMol(mol):
   esIndices = EStateIndices(mol)
 
   nPatts = len(AtomTypes.esPatterns)
-  counts = numpy.zeros(nPatts, numpy.int)
-  sums = numpy.zeros(nPatts, numpy.float)
-
+  counts = numpy.zeros(nPatts, dtype=numpy.int64)
+  sums = numpy.zeros(nPatts, dtype=numpy.float64)
   for i, (_, pattern) in enumerate(AtomTypes.esPatterns):
     matches = mol.GetSubstructMatches(pattern, uniquify=1)
     counts[i] = len(matches)
