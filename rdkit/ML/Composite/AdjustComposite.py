@@ -7,9 +7,7 @@
 
 """
 
-
 import copy
-
 import numpy
 
 
@@ -47,33 +45,27 @@ def BalanceComposite(model, set1, set2, weight, targetSize, names1=None, names2=
   startSize = len(model)
   scores = numpy.zeros(startSize, numpy.float)
   actQuantBounds = model.GetActivityQuantBounds()
-  if names1 is not None:
-    model.SetInputOrder(names1)
-  for pt in set1:
-    pred, conf = model.ClassifyExample(pt)
-    if actQuantBounds:
-      ans = model.QuantizeActivity(pt)[-1]
-    else:
-      ans = pt[-1]
-    votes = model.GetVoteDetails()
-    for i in range(startSize):
-      if votes[i] == ans:
-        scores[i] += weight1
-  if names2 is not None:
-    model.SetInputOrder(names2)
-  for pt in set2:
-    pred, conf = model.ClassifyExample(pt)
-    if actQuantBounds:
-      ans = model.QuantizeActivity(pt)[-1]
-    else:
-      ans = pt[-1]
-    votes = model.GetVoteDetails()
-    for i in range(startSize):
-      if votes[i] == ans:
-        scores[i] += weight2
+
+  objList = [[names1, weight1, set1], [names2, weight2, set2]]
+  for idx, (name, weight, s) in enumerate(objList):
+    if name is not None:
+      model.SetInputOrder(name)
+      
+    for _, pt in enumerate(s):
+      model.ClassifyExample(pt)
+      if actQuantBounds:
+        ans = model.QuantizeActivity(pt)[-1] 
+      else:
+        ans = pt[-1]
+      votes = model.GetVoteDetails()
+      for j in range(startSize):
+        if votes[j] == ans:
+          scores[j] += weight
+  
   # normalize the scores
   nPts = S1 + S2
   scores /= nPts
+  
   # sort them:
   bestOrder = list(numpy.argsort(scores))
   bestOrder.reverse()
