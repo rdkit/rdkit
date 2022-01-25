@@ -673,9 +673,6 @@ def _check_atom_classes(molno, num_atoms, atom_classes):
 # prune. But so far I don't have a test set which drives the need for
 # that.
 
-# UPDATED by Ichiru Take: Use collections.Counter to count the bond types, which is much faster.
-# See here: https://stackoverflow.com/questions/44012479/intersection-of-two-counters
-
 # Return a dictionary mapping iterator item to occurrence count
 def get_counts(it):
   return dict(Counter(it))
@@ -735,7 +732,8 @@ def remove_unknown_bondtypes(typed_mol, supported_canonical_bondtypes):
 
 
 def find_upper_fragment_size_limits(rdmol, atoms):
-  max_num_atoms, max_twice_num_bonds = 0, 0
+  max_num_atoms = 0
+  max_twice_num_bonds = 0
   for atom_indices in Chem.GetMolFrags(rdmol):
     max_num_atoms = max(max_num_atoms, len(atom_indices))
 
@@ -745,8 +743,8 @@ def find_upper_fragment_size_limits(rdmol, atoms):
     for atom_index in atom_indices:
       # XXX Why is there no 'atom.GetNumBonds()'?
       # Ichiru Take: len(atoms[atom_index].GetBonds()) would be more efficient but I don't know the input type.
-      twice_num_bonds += sum(1 for bond in atoms[atom_index].GetBonds()) 
-
+      twice_num_bonds += len(atoms[atom_index].GetBonds())
+       
     max_twice_num_bonds = max(max_twice_num_bonds, twice_num_bonds)
 
   return max_num_atoms, max_twice_num_bonds // 2
@@ -1164,7 +1162,7 @@ def canon(cangen_nodes):
 def get_closure_label(bond_smarts, closure):
   if closure < 10:
     return bond_smarts + str(closure)
-  return bond_smarts + "%%%02d" % closure
+  return bond_smarts + f"%{closure:02d}"
 
 # Precompute the initial closure heap. *Overall* performance went from 0.73 to 0.64 seconds!
 _available_closures = list(range(1, 101))
@@ -1301,8 +1299,7 @@ def generate_smarts(cangen_nodes):
 def make_canonical_smarts(subgraph, enumeration_mol, atom_assignment):
   cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, True)
   #canon(cangen_nodes)
-  smarts = generate_smarts(cangen_nodes)
-  return smarts
+  return generate_smarts(cangen_nodes)
 
 ## def make_semicanonical_smarts(subgraph, enumeration_mol, atom_assignment):
 ##     cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, True)
@@ -1317,8 +1314,7 @@ def make_arbitrary_smarts(subgraph, enumeration_mol, atom_assignment):
   # Use an arbitrary order
   for i, node in enumerate(cangen_nodes):
     node.value = i
-  smarts = generate_smarts(cangen_nodes)
-  return smarts
+  return generate_smarts(cangen_nodes)
 
 ############## Subgraph enumeration ##################
 
@@ -1892,7 +1888,7 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
   if timeout is None:
     end_time = None
   else:
-    end_time = time.time() + timeout
+    end_time = time.perf_counter() + timeout
 
   seeds = []
 
@@ -1978,7 +1974,7 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
 
   while seeds:
     if end_time:
-      if time.time() >= end_time:
+      if time.perf_counter() >= end_time:
         return False
 
       #print "There are", len(seeds), "seeds", seeds[0][:2]
@@ -2041,7 +2037,7 @@ class VerboseHeapOps(object):
     self.num_seeds_added = 0
     self.num_seeds_processed = 0
     self.verboseDelay = verboseDelay
-    self._time_for_next_report = time.time() + verboseDelay
+    self._time_for_next_report = time.perf_counter() + verboseDelay
     self.trigger = trigger
 
   def heappush(self, seeds, item):
@@ -2049,10 +2045,10 @@ class VerboseHeapOps(object):
     return heappush(seeds, item)
 
   def heappop(self, seeds):
-    if time.time() >= self._time_for_next_report:
+    if time.perf_counter() >= self._time_for_next_report:
       self.trigger()
       self.report()
-      self._time_for_next_report = time.time() + self.verboseDelay
+      self._time_for_next_report = time.perf_counter() + self.verboseDelay
     self.num_seeds_processed += 1
     return heappop(seeds)
 
@@ -2101,7 +2097,7 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None,
 
   remaining_time = None
   if timeout is not None:
-    stop_time = time.time() + timeout
+    stop_time = time.perf_counter() + timeout
 
   for query_index, fragmented_query_mol in enumerate(fragmented_mols):
     enumerated_query_fragments = fragmented_mol_to_enumeration_mols(fragmented_query_mol,
@@ -2109,7 +2105,7 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None,
 
     targets = typed_mols
     if timeout is not None:
-      remaining_time = stop_time - time.time()
+      remaining_time = stop_time - time.perf_counter()
     success = enumerate_subgraphs(enumerated_query_fragments, prune, atom_assignment,
                                   matches_all_targets, hits, remaining_time, push, pop)
     if query_index + threshold_count >= len(fragmented_mols):
@@ -2134,7 +2130,7 @@ class Timer(object):
     self.mark_times = {}
 
   def mark(self, name):
-    self.mark_times[name] = time.time()
+    self.mark_times[name] = time.perf_counter()
 
 
 def _update_times(timer, times):
@@ -2680,7 +2676,7 @@ def main(args=None):
                    "of --save-atom-indices-tag, --save-smarts-tag, --save-smiles-tag, "
                    "or --save-counts-tag")
 
-  t1 = time.time()
+  t1 = time.perf_counter()
   structures = []
   if args.verbosity > 1:
     sys.stderr.write("Loading structures from %s ..." % (filename, ))
@@ -2705,7 +2701,7 @@ def main(args=None):
   if args.verbosity > 1:
     sys.stderr.write("\r")
 
-  times = {"load": time.time() - t1}
+  times = {"load": time.perf_counter() - t1}
 
   if args.verbosity:
     print >> sys.stderr, "Loaded", len(structures), "structures from", filename, "    "
