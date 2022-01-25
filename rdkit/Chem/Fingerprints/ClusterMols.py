@@ -39,23 +39,25 @@ def GetDistanceMatrix(data, metric, isSimilarity=1):
 
   """
   nPts = len(data)
-  distsMatrix = [0.0] * (nPts * (nPts - 1) // 2)
+  distsMatrix = numpy.zeros((nPts * (nPts - 1) // 2), dtype=numpy.float64)
   nSoFar = 0
   for col in range(1, nPts):
     fp1 = data[col][1]
+    nBits1 = fp1.GetNumBits()
     for row in range(col):
       fp2 = data[row][1]
-      nBits1, nBits2 = fp1.GetNumBits(), fp2.GetNumBits()
+      nBits2 = fp2.GetNumBits()
       if nBits1 > nBits2:
         fp1 = DataStructs.FoldFingerprint(fp1, nBits1 / nBits2)
       elif nBits2 > nBits1:
         fp2 = DataStructs.FoldFingerprint(fp2, nBits2 / nBits1)
       
-      distsMatrix[nSoFar] = metric(fp1, fp2)
       if isSimilarity:
-        distsMatrix[nSoFar] = 1.0 - distsMatrix[nSoFar]
+        distsMatrix[nSoFar] = 1.0 - metric(fp1, fp2)
+      else:
+        distsMatrix[nSoFar] = metric(fp1, fp2)
       nSoFar += 1
-  return numpy.array(distsMatrix, dtype=numpy.float)
+  return distsMatrix
 
 
 def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
@@ -70,7 +72,7 @@ def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
     acts = [int(x[2]) for x in data]
 
   if not haveLabels:
-    labels = ['Mol: %s' % str(x[0]) for x in data]
+    labels = [f'Mol: {str(x[0])}' for x in data]
   else:
     labels = [x[0] for x in data]
   clustTree._ptLabels = labels
