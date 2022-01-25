@@ -15,13 +15,13 @@
 #include <vector>
 
 namespace RDKit {
-class QueryAtom;
-class QueryBond;
+class Atom;
+class Bond;
 namespace SmartsWrite {
-//! returns the SMARTS for a QueryAtom
-RDKIT_SMILESPARSE_EXPORT std::string GetAtomSmarts(const QueryAtom *qatom);
-//! returns the SMARTS for a QueryBond
-RDKIT_SMILESPARSE_EXPORT std::string GetBondSmarts(const QueryBond *qbond,
+//! returns the SMARTS for an Atom
+RDKIT_SMILESPARSE_EXPORT std::string GetAtomSmarts(const Atom *qatom);
+//! returns the SMARTS for a Bond
+RDKIT_SMILESPARSE_EXPORT std::string GetBondSmarts(const Bond *qbond,
                                                    int atomToLeftIdx = -1);
 }  // namespace SmartsWrite
 

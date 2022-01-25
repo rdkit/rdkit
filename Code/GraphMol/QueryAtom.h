@@ -73,6 +73,11 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   bool hasQuery() const override { return dp_query != nullptr; }
 
   //! replaces our current query with the value passed in
+  std::string getQueryType() const override {
+    return dp_query->getTypeLabel();
+  }
+
+  //! replaces our current query with the value passed in
   void setQuery(QUERYATOM_QUERY *what) override {
     delete dp_query;
     dp_query = what;

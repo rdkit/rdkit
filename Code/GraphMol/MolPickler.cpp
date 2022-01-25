@@ -214,8 +214,7 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
             ->getLower(),
         static_cast<const RangeQuery<int, T const *, true> *>(query)
             ->getUpper(),
-        static_cast<const EqualityQuery<int, T const *, true> *>(query)
-            ->getTol(),
+        static_cast<const RangeQuery<int, T const *, true> *>(query)->getTol(),
         ends));
   } else if (typeid(*query) == typeid(SetQuery<int, T const *, true>)) {
     std::set<int32_t> tset(

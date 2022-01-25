@@ -2,6 +2,8 @@
 (Changes relative to Release_2021.09.1)
 
 ## Backwards incompatible changes
+- When running in Jupyter Notebook, logs are now sent only to Python's
+  standard error stream, and no longer include the `RDKit LEVEL` prefix.
 
 ## Code removed in this release:
 - The `useCountSimulation` keyword argument for
@@ -13,6 +15,14 @@
 - The `computeBalabanJ()` functions from the `MolOps` namespace were removed.
   These were not exposed to Python, so this will not affect any Python code.
 
+## Deprecated code (to be removed in a future release):
+- Python function `rdkit.Chem.WrapLogs()` is deprecated in favor of
+  `rdkit.rdBase.LogToPythonStderr()`.  `rdkit.rdBase.WrapLogs()` also exists,
+  but unless you need the old teeing behavior, prefer the former.
+- Python function `rdkit.Chem.LogWarning()` is deprecated in favor of
+  `rdkit.rdBase.LogWarning()`.
+- Python function `rdkit.Chem.LogError()` is deprecated in favor of
+  `rdkit.rdBase.LogError()`.
 
 # Release_2021.09.1
 (Changes relative to Release_2021.03.1)
