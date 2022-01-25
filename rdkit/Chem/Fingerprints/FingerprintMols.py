@@ -88,11 +88,11 @@ def FingerprintsFromSmiles(dataSource, idCol, smiCol, fingerprinter=Chem.RDKFing
       res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
-        message('Done %d molecules\n' % nDone)
+        message(f'Done {nDone} molecules\n')
       if maxMols > 0 and nDone >= maxMols:
         break
     else:
-      error('Problems parsing SMILES: %s\n' % smi)
+      error(f'Problems parsing SMILES: {smi}\n')
   return res
 
 
