@@ -238,7 +238,7 @@ def FingerprintsFromDetails(details, reportFreq=10):
       colTypes = DbUtils.TypeFinder(data, len(data), len(data[0]))
       typeStrs = DbUtils.GetTypeStrings([details.idName, details.smilesName], colTypes,
                                         keyCol=details.idName)
-      cols = f'{typeStrs[0]}, {details.fpColName}, {DbModule.binaryTypeName}'
+      cols = f'{typeStrs[0]}, {details.fpColName} {DbModule.binaryTypeName}'
 
       # FIX: we should really check to see if the table
       #  is already there and, if so, add the appropriate
@@ -324,9 +324,9 @@ class FingerprinterDetails(object):
     metricDict = {DataStructs.DiceSimilarity: 'Dice', 
                   DataStructs.TanimotoSimilarity: 'Tanimoto', 
                   DataStructs.CosineSimilarity: 'Cosine', } 
-    self.metric = metricDict.get(self.metric, self.metric)
-    if self.metric:
-      return self.metric
+    metric = metricDict.get(self.metric, self.metric)
+    if metric:
+      return metric
     return 'Unknown'
 
   def SetMetricFromName(self, name):

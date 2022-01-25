@@ -72,7 +72,7 @@ def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
     acts = [int(x[2]) for x in data]
 
   if not haveLabels:
-    labels = [f'Mol: {str(x[0])}' for x in data]
+    labels = [f'Mol: {x[0]}' for x in data]
   else:
     labels = [x[0] for x in data]
   clustTree._ptLabels = labels
