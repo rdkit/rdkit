@@ -153,12 +153,12 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
   curs = conn.GetCursor()
   if startAnew:
     try:
-      curs.execute(f'drop table {regName}' % regName)
+      curs.execute(f'drop table {regName}')
     except Exception:
       pass
-    curs.execute(f'create table {regName} {",".join(typs)}')
+    curs.execute(f'create table {regName} ({",".join(typs)})')
   else:
-    curs.execute(f'select * from {regName} limit 1')
+    curs.execute(f'select * from {(regName, )} limit 1')
     ocolns = set([x[0] for x in curs.description])
     ncolns = set([x.split()[0] for x in typs])
     if ncolns != ocolns:
@@ -168,7 +168,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
     for row in rows:
       row[0] += offset
 
-  qs = ','.join([DbModule.placeHolder for x in typs])
+  qs = ','.join([DbModule.placeHolder for _ in typs])
 
   ConvertRows(rows, globalProps, defaultVal, skipSmiles)
   curs.executemany(f'insert into {regName} values ({qs})', rows)
