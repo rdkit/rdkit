@@ -30,6 +30,8 @@ const DashPattern shortDashes{2.0, 2.0};
 
 namespace MolDraw2D_detail {
 
+struct StringRect;
+
 class DrawShape {
   friend class RDKit::MolDraw2D;
   friend class DrawMol;

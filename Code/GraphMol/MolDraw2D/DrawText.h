@@ -20,6 +20,7 @@
 #include <RDGeneral/export.h>
 #include <Geometry/point.h>
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
+#include <GraphMol/MolDraw2D/StringRect.h>
 
 using RDGeom::Point2D;
 
@@ -44,6 +45,8 @@ std::ostream &operator<<(std::ostream &oss, const TextAlignType &tat);
 std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
 
 // ****************************************************************************
+// This is a private class, not intended to be used by the great unwashed.
+// If you want to draw a string used MolDraw2D::drawString().
 class RDKIT_MOLDRAW2D_EXPORT DrawText {
   friend class RDKit::MolDraw2D;
   friend class RDKit::MolDraw2DCairo;
@@ -210,6 +213,21 @@ RDKIT_MOLDRAW2D_EXPORT bool setStringDrawMode(const std::string &instring,
 // "N", "H<sub>2</sub>".
 std::vector<std::string> atomLabelToPieces(const std::string &label,
                                            OrientType orient);
+
+bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
+                       const Point2D &end2, double padding);
+bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
+                           const Point2D &pt2, const Point2D &pt3,
+                           double padding);
+bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
+                              double yradius, double padding,
+                              const Point2D &end1, const Point2D &end2);
+// angles expected in degrees, between 0 and 360.
+bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
+                          double start_ang, double stop_ang, double padding,
+                          const Point2D &end1, const Point2D &end2);
+bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
+                      const Point2D &l2s, const Point2D &l2f, Point2D *ip);
 
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
