@@ -158,7 +158,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
       pass
     curs.execute(f'create table {regName} ({",".join(typs)})')
   else:
-    curs.execute(f'select * from {(regName, )} limit 1')
+    curs.execute(f'select * from {regName} limit 1')
     ocolns = set([x[0] for x in curs.description])
     ncolns = set([x.split()[0] for x in typs])
     if ncolns != ocolns:
