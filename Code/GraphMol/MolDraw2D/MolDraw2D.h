@@ -232,15 +232,19 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // ang2 must be > ang1 - it won't draw backwards.  This is not enforced.
   // Angles in degrees.
   virtual void drawArc(const Point2D &centre, double radius, double ang1,
-                       double ang2,
-                       bool rawCoords = false);
+                       double ang2, bool rawCoords = false);
   // and a general ellipse form
   virtual void drawArc(const Point2D &centre, double xradius, double yradius,
-                       double ang1, double ang2,
-                       bool rawCoords = false);
+                       double ang1, double ang2, bool rawCoords = false);
   //! draw a rectangle given two opposite corners
   virtual void drawRect(const Point2D &cds1, const Point2D &cds2,
                         bool rawCoords = false);
+  //! draw a line indicating the presence of an attachment point (normally a
+  //! squiggle line perpendicular to a bond)
+  virtual void drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
+                                  const DrawColour &col, double len = 1.0,
+                                  unsigned int nSegments = 16,
+                                  bool rawCoords = false);
   //! draw a wavy line like that used to indicate unknown stereochemistry
   virtual void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                             const DrawColour &col1, const DrawColour &col2,

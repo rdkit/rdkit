@@ -478,6 +478,17 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2,
 }
 
 // ****************************************************************************
+//  we draw the line at cds2, perpendicular to the line cds1-cds2
+void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
+                                   const DrawColour &col, double len,
+                                   unsigned int nSegments, bool rawCoords) {
+  Point2D perp = MolDraw2D_detail::calcPerpendicular(cds1, cds2);
+  Point2D p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
+  Point2D p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
+  drawWavyLine(p1, p2, col, col, nSegments, rawCoords);
+}
+
+// ****************************************************************************
 void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                              const DrawColour &col1, const DrawColour &col2,
                              unsigned int, double, bool rawCoords) {
