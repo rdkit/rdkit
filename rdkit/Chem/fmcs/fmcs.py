@@ -680,7 +680,11 @@ def get_counts(it):
 # Merge two count dictionaries, returning the smallest count for any
 # entry which is in both.
 def intersect_counts(counts1, counts2):
-  return dict(counts1 & counts2)
+  d = {}
+  for k, v1 in counts1.items():
+    if k in counts2:
+      d[k] = min(v1, counts2[k])
+  return d
 
 
 # Figure out which canonical bonds SMARTS occur in every molecule
@@ -815,9 +819,6 @@ def get_typed_fragment(typed_mol, atom_indices):
       orig_bonds.append(orig_bond)
     elif count == 1:
       raise AssertionError("connected/disconnected atoms?")
-    elif count == 0:
-      # This means that the bond is not in the fragment or the source code above is the error.
-      raise AssertionError("Error Source Code?")
   return TypedFragment(emol.GetMol(),
                        [typed_mol.orig_atoms[atom_index] for atom_index in atom_indices],
                        orig_bonds, atom_smarts_types, bond_smarts_types, new_canonical_bondtypes)
