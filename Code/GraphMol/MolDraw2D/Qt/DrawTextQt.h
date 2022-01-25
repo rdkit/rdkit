@@ -20,6 +20,10 @@ namespace RDKit {
 class DrawTextQt : public DrawText {
  public:
   DrawTextQt(double max_fnt_sz, double min_fnt_sz, QPainter *qp);
+  MolDraw2DQt(const MolDraw2DQt &rhs) = delete;
+  MolDraw2DQt(const MolDraw2DQt &&rhs) = delete;
+  MolDraw2DQt &operator=(const MolDraw2DQt &rhs) = delete;
+  MolDraw2DQt &operator=(const MolDraw2DQt &&rhs) = delete;
 
 #if 0
   void getStringSize(const std::string &label, double &label_width,

@@ -217,49 +217,6 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 }
 
 // ****************************************************************************
-void MolDraw2DSVG::drawBond(
-    const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
-    const std::vector<int> *highlight_atoms,
-    const std::map<int, DrawColour> *highlight_atom_map,
-    const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_bond_map,
-    const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours) {
-  PRECONDITION(bond, "bad bond");
-  std::string o_class = d_activeClass;
-  if (!d_activeClass.empty()) {
-    d_activeClass += " ";
-  }
-  d_activeClass += boost::str(boost::format("bond-%d") % bond->getIdx());
-  MolDraw2D::drawBond(mol, bond, at1_idx, at2_idx, highlight_atoms,
-                      highlight_atom_map, highlight_bonds, highlight_bond_map,
-                      bond_colours);
-  d_activeClass = o_class;
-};
-
-// ****************************************************************************
-void MolDraw2DSVG::drawAtomLabel(int atom_num, const DrawColour &draw_colour) {
-  std::string o_class = getActiveClass();
-  std::string actClass = o_class;
-  if (!actClass.empty()) {
-    actClass += " ";
-  }
-  actClass += boost::str(boost::format("atom-%d") % atom_num);
-  MolDraw2D::drawAtomLabel(atom_num, draw_colour);
-  setActiveClass(o_class);
-}
-
-// ****************************************************************************
-void MolDraw2DSVG::drawAnnotation(const AnnotationType &annot) {
-  std::string o_class = d_activeClass;
-  if (!d_activeClass.empty()) {
-    d_activeClass += " ";
-  }
-  d_activeClass += "note";
-  MolDraw2D::drawAnnotation(annot);
-  d_activeClass = o_class;
-}
-
-// ****************************************************************************
 void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2,
                             bool rawCoords) {
   Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);

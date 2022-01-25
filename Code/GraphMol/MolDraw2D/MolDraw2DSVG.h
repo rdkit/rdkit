@@ -34,6 +34,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   // initialize to use the internal stringstream
   MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1,
                bool noFreetype = false);
+  MolDraw2DSVG(const MolDraw2DSVG &rhs) = delete;
+  MolDraw2DSVG(const MolDraw2DSVG &&rhs) = delete;
+  MolDraw2DSVG &operator=(const MolDraw2DSVG &rhs) = delete;
+  MolDraw2DSVG &operator=(const MolDraw2DSVG &&rhs) = delete;
 
   void setColour(const DrawColour &col) override;
 
@@ -71,32 +75,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void addMoleculeMetadata(const std::vector<ROMol *> &mols,
                            const std::vector<int> confIds = {});
 
-  void drawAnnotation(const AnnotationType &annot) override;
-
  private:
   std::ostream &d_os;
   std::stringstream d_ss;
 
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
-
- protected:
-  void drawBond(const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
-                const std::vector<int> *highlight_atoms = nullptr,
-                const std::map<int, DrawColour> *highlight_atom_map = nullptr,
-                const std::vector<int> *highlight_bonds = nullptr,
-                const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-                const std::vector<std::pair<DrawColour, DrawColour>>
-                    *bond_colours = nullptr) override;
-  void drawAtomLabel(int atom_num, const DrawColour &draw_colour) override;
-  //! DEPRECATED
-  void drawAnnotation(const std::string &note,
-                      const StringRect &note_rect) override {
-    AnnotationType annot;
-    annot.text_ = note;
-    annot.rect_ = note_rect;
-    drawAnnotation(annot);
-  }
 
   virtual void outputClasses();
 };

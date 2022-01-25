@@ -17,6 +17,7 @@
 #define RDKIT_DRAWANNOTATION_H
 
 #include <Geometry/point.h>
+#include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 
 namespace RDKit {
@@ -26,7 +27,6 @@ class MolDraw2D;
 namespace MolDraw2D_detail {
 
 class DrawMol;
-class DrawText;
 
 class DrawAnnotation {
   friend class DrawMol;

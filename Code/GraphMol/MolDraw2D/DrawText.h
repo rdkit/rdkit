@@ -25,16 +25,17 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 
+namespace MolDraw2D_detail {
+
+// for aligning the drawing of text to the passed in coords.
 enum class TextDrawType : unsigned char {
   TextDrawNormal = 0,
   TextDrawSuperscript,
   TextDrawSubscript
 };
+std::ostream &operator<<(std::ostream &oss, const OrientType &o);
 std::ostream &operator<<(std::ostream &oss, const TextAlignType &tat);
 std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
-std::ostream &operator<<(std::ostream &oss, const OrientType &o);
-
-namespace MolDraw2D_detail {
 
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawText {

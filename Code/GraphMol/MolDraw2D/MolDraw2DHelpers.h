@@ -20,9 +20,11 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 
+namespace MolDraw2D_detail {
 // for aligning the drawing of text to the passed in coords.
 enum class OrientType : unsigned char { C = 0, N, E, S, W };
 enum class TextAlignType : unsigned char { MIDDLE = 0, START, END };
+}
 
 struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
@@ -151,15 +153,6 @@ struct StringRect {
     }
     return false;
   }
-};
-struct AnnotationType {
-  std::string text_;
-  StringRect rect_;
-  OrientType orient_ = OrientType::C;
-  TextAlignType align_ = TextAlignType::MIDDLE;
-  bool scaleText_ = true;
-  DrawColour col_ = DrawColour(0, 0, 0);
-  double fontScale_ = 1.0;
 };
 
 typedef std::map<int, DrawColour> ColourPalette;
