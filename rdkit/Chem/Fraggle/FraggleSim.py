@@ -133,7 +133,7 @@ def select_fragments(fragments, ftype, hac):
       if isValidRingCut(fMol):
         result_hcount = fMol.GetNumAtoms()
         if result_hcount > 3 and result_hcount > 0.4 * hac:
-            result = f
+          result = f
     return result
 
   if ftype == FTYPE_CYCLIC_ACYCLIC:
@@ -164,9 +164,7 @@ def select_fragments(fragments, ftype, hac):
     if len(result) == 2 and result_hcount > 0.6 * hac:
       return '.'.join(result)
     return None
-
-  # This should never happen
-  raise NotImplementedError('Invalid fragmentation type {0}'.format(ftype))
+  raise NotImplementedError(f'Invalid fragmentation type {type}')
 
 
 def isValidRingCut(mol):
@@ -272,7 +270,7 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
   # generate mol object & fp for input mol (we are interested in the bits each atom sets)
   pMol = Chem.Mol(mol)
   aBits = []
-  Chem.RDKFingerprint(pMol, atomBits=aBits, **rdkitFpParams)
+  _ = Chem.RDKFingerprint(pMol, atomBits=aBits, **rdkitFpParams)
 
   # generate fp of query_substructs
   qsMol = Chem.MolFromSmiles(subs)
@@ -281,8 +279,9 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
   # loop through atoms of smiles get atoms that have a high similarity with substructure
   marked = set()
   for atom in pMol.GetAtoms():
-    if partialSimilarity(atom.GetIdx()) < tverskyThresh:
-      marked.add(atom.GetIdx())
+    atomIdx = atom.GetIdx()
+    if partialSimilarity(atomIdx) < tverskyThresh:
+      marked.add(atomIdx)
 
   # get rings to change
 
@@ -309,9 +308,8 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
       Chem.SanitizeMol(pMol, sanitizeOps=Chem.SANITIZE_ALL ^ Chem.SANITIZE_KEKULIZE ^
                        Chem.SANITIZE_SETAROMATICITY)
     except Exception:
-      sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
+      sys.stderr.write(f"Can't parse smiles: {Chem.MolToSmiles(pMol)}\n")
       pMol = Chem.Mol(mol)
-
   return pMol
 
 
@@ -324,7 +322,7 @@ def compute_fraggle_similarity_for_subs(inMol, qMol, qSmi, qSubs, tverskyThresh=
 
   rdkit_sim = DataStructs.TanimotoSimilarity(qFP, iFP)
 
-  qm_key = "%s_%s" % (qSubs, qSmi)
+  qm_key = f"{qSubs}_{qSmi}"
   if qm_key in modified_query_fps:
     qmMolFp = modified_query_fps[qm_key]
   else:
@@ -339,7 +337,7 @@ def compute_fraggle_similarity_for_subs(inMol, qMol, qSmi, qSubs, tverskyThresh=
     rmMolFp = Chem.RDKFingerprint(rmMol, **rdkitFpParams)
     fraggle_sim = max(DataStructs.FingerprintSimilarity(qmMolFp, rmMolFp), rdkit_sim)
   except Exception:
-    sys.stderr.write("Can't generate fp for: %s\n" % (Chem.MolToSmiles(rmMol, True)))
+    sys.stderr.write(f"Can't generate fp for: {Chem.MolToSmiles(rmMol)}\n")
     fraggle_sim = 0.0
 
   return rdkit_sim, fraggle_sim
