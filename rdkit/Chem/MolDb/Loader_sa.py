@@ -59,7 +59,7 @@ def ProcessMol(session, mol, globalProps, nDone, nameProp='_Name', nameCol='comp
   except KeyError:
     nm = None
   if not nm:
-    nm = 'Mol_%d' % nDone
+    nm = f'Mol_{nDone}' % nDone
 
   cmpd = Compound()
   session.add(cmpd)
@@ -98,9 +98,9 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
   else:
     nMols = -1
   if not silent:
-    logger.info("Generating molecular database in file %s" % dbName)
+    logger.info(f"Generating molecular database in file {dbName}")
     if not lazySupplier:
-      logger.info("  Processing %d molecules" % nMols)
+      logger.info(f"  Processing {nMols} molecules")
 
   globalProps = {}
   if startAnew:
@@ -113,7 +113,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
           import time
           time.sleep(2)
     if os.path.exists(dbName):
-      raise IOError('could not delete old database %s' % dbName)
+      raise IOError(f'could not delete old database {dbName}')
   sIter = iter(suppl)
   setattr(Compound, nameCol.lower(),
           Column(nameCol.lower(), String, default=defaultVal, unique=uniqNames))
@@ -141,7 +141,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
       Compound.RotatableBondCount = Column(Integer)
       Compound.AMW = Column(Float)
       Compound.MolLogP = Column(Float)
-  session = RegisterSchema('sqlite:///%s' % (dbName))()
+  session = RegisterSchema(f'sqlite:///{dbName}')()
 
   nDone = 0
   cache = []
@@ -163,7 +163,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
       cache.append(cmpd)
 
     if not silent and not nDone % 100:
-      logger.info('  done %d' % nDone)
+      logger.info(f'  done {nDone}')
       try:
         session.commit()
       except Exception:
@@ -205,5 +205,5 @@ if __name__ == '__main__':
   sdf = Chem.SDMolSupplier(sys.argv[1])
   db = sys.argv[2]
   LoadDb(sdf, db, addComputedProps=False)
-  session = RegisterSchema('sqlite:///%s' % (db))()
+  session = RegisterSchema(f'sqlite:///{db}')()
   print('>>>>', len(session.query(Compound).all()))

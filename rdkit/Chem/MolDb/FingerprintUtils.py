@@ -41,8 +41,7 @@ class LayeredOptions:
     @staticmethod
     def GetWords(mol, query=True):
         txt = LayeredOptions.GetFingerprint(mol, query=query).ToBitString()
-        words = [int(txt[x:x + 32], 2) for x in range(0, len(txt), 32)]
-        return words
+        return [int(txt[x:x + 32], 2) for x in range(0, len(txt), 32)]
 
     @staticmethod
     def GetQueryText(mol, query=True):
@@ -52,7 +51,7 @@ class LayeredOptions:
             if not word:
                 continue
             idx = idx + 1
-            colqs.append('%(word)d&Col_%(idx)d=%(word)d' % locals())
+            colqs.append(f'{word}&Col_{idx}={word}')
         return ' and '.join(colqs)
 
 
