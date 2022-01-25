@@ -8,10 +8,10 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from rdkit import Geometry
-from rdkit import Chem
-import numpy
 import math
+
+import numpy
+from rdkit import Chem, Geometry
 
 # BIG NOTE: we are going assume atom IDs starting from 0 instead of 1
 # for all the functions in this file. This is so that they
@@ -92,19 +92,21 @@ def ArbAxisRotation(theta, ax, pt):
   mat = [[t * X * X + c, t * X * Y + s * Z, t * X * Z - s * Y],
          [t * X * Y - s * Z, t * Y * Y + c, t * Y * Z + s * X],
          [t * X * Z + s * Y, t * Y * Z - s * X, t * Z * Z + c]]
-  mat = numpy.array(mat)
+  mat = numpy.array(mat, dtype=numpy.float64)
+  
   if isinstance(pt, Geometry.Point3D):
     pt = numpy.array((pt.x, pt.y, pt.z))
     tmp = numpy.dot(mat, pt)
-    res = Geometry.Point3D(tmp[0], tmp[1], tmp[2])
-  elif isinstance(pt, list) or isinstance(pt, tuple):
+    return Geometry.Point3D(tmp[0], tmp[1], tmp[2])
+  
+  if isinstance(pt, list) or isinstance(pt, tuple):
     res = []
     for p in pt:
       tmp = numpy.dot(mat, numpy.array((p.x, p.y, p.z)))
       res.append(Geometry.Point3D(tmp[0], tmp[1], tmp[2]))
-  else:
-    res = None
-  return res
+    return res
+  
+  return None
 
 
 def GetAcceptor2FeatVects(conf, featAtoms, scale=1.5):
