@@ -16,14 +16,21 @@
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 
 namespace RDKit {
+class MolDraw2DCairo;
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
 
-class DrawTextFTCairo : public DrawTextFT {
- public:
+class DrawTextFTCairo : protected DrawTextFT {
+  friend class RDKit::MolDraw2DCairo;
+
+ protected:
   DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
                   const std::string &font_file, cairo_t *dp_cr);
+  DrawTextFTCairo(const DrawTextFTCairo &rhs) = delete;
+  DrawTextFTCairo(const DrawTextFTCairo &&rsh) = delete;
+  DrawTextFTCairo &operator=(const DrawTextFTCairo &rsh) = delete;
+  DrawTextFTCairo &operator=(const DrawTextFTCairo &&rsh) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;
@@ -34,7 +41,6 @@ class DrawTextFTCairo : public DrawTextFT {
                           const FT_Vector *to) override;
   void setCairoContext(cairo_t *cr);
 
- protected:
   // adds x_trans_ and y_trans_ to coords returns x advance distance
   virtual double extractOutline() override;
 

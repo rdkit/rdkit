@@ -24,9 +24,13 @@ namespace RDKit {
 
 // ****************************************************************************
 
-class DrawTextJS : public DrawText {
- public:
+class DrawTextJS : protected DrawText {
+ protected:
   DrawTextJS(double max_fnt_sz, double min_fnt_sz, emscripten::val &context);
+  DrawTextJS(const DrawTextJS &rhs) = delete;
+  DrawTextJS(const DrawTextJS &&rhs) = delete;
+  DrawTextJS &operator=(const DrawTextJS &rhs) = delete;
+  DrawTextJS &operator=(const DrawTextJS &&rhs) = delete;
 
   void drawChar(char c, const Point2D &cds) override;
 

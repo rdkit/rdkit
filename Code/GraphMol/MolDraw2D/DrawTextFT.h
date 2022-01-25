@@ -31,14 +31,9 @@ struct StringRect;
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
+class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : protected DrawText {
  public:
-  DrawTextFT(double max_fnt_sz, double min_fnt_sz,
-             const std::string &font_file);
   ~DrawTextFT() override;
-
-  void drawChar(char c, const Point2D &cds) override;
-
   virtual int MoveToFunctionImpl(const FT_Vector *to) = 0;
   virtual int LineToFunctionImpl(const FT_Vector *to) = 0;
   virtual int ConicToFunctionImpl(const FT_Vector *control,
@@ -47,12 +42,22 @@ class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
                                   const FT_Vector *controlTwo,
                                   const FT_Vector *to) = 0;
 
+ protected:
+  DrawTextFT(double max_fnt_sz, double min_fnt_sz,
+             const std::string &font_file);
+  DrawTextFT(const DrawTextFT &rhs) = delete;
+  DrawTextFT(const DrawTextFT &&rhs) = delete;
+  DrawTextFT &operator=(const DrawTextFT &rhs) = delete;
+  DrawTextFT &operator=(const DrawTextFT &&rhs) = delete;
+
+  void drawChar(char c, const Point2D &cds) override;
+
+
   // unless over-ridden by the c'tor, this will return a hard-coded
   // file from $RDBASE.
   std::string getFontFile() const override;
   void setFontFile(const std::string &font_file) override;
 
- protected:
   double fontCoordToDrawCoord(FT_Pos fc) const;
   void fontPosToDrawPos(FT_Pos fx, FT_Pos fy, double &dx, double &dy) const;
   // adds x_trans_ and y_trans_ to coords returns x advance distance

@@ -16,14 +16,23 @@
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 
 namespace RDKit {
+
+class MolDraw2DSVG;
+
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-class DrawTextFTSVG : public DrawTextFT {
- public:
+class DrawTextFTSVG : protected DrawTextFT {
+  friend class RDKit::MolDraw2DSVG;
+
+ protected:
   DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                 const std::string &font_file, std::ostream &oss,
                 std::string &d_act_class);
+  DrawTextFTSVG(const DrawTextFTSVG &rhs) = delete;
+  DrawTextFTSVG(const DrawTextFTSVG &&rhs) = delete;
+  DrawTextFTSVG &operator=(const DrawTextFTSVG &rhs) = delete;
+  DrawTextFTSVG &operator=(const DrawTextFTSVG &&rhs) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;

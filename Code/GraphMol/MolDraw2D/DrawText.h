@@ -19,11 +19,17 @@
 
 #include <RDGeneral/export.h>
 #include <Geometry/point.h>
-#include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 
 using RDGeom::Point2D;
 
 namespace RDKit {
+
+class MolDraw2D;
+class MolDraw2DCairo;
+class MolDraw2DJS;
+class MolDraw2DSVG;
+class MolDraw2DQt;
 
 namespace MolDraw2D_detail {
 
@@ -39,12 +45,27 @@ std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
 
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawText {
+  friend class RDKit::MolDraw2D;
+  friend class RDKit::MolDraw2DCairo;
+  friend class RDKit::MolDraw2DJS;
+  friend class RDKit::MolDraw2DSVG;
+  friend class RDKit::MolDraw2DQt;
+  friend class AtomSymbol;
+  friend class DrawAnnotation;
+  friend class DrawMol;
+
  public:
+  virtual ~DrawText() = default;
+
+ protected:
   static constexpr double DEFAULT_FONT_SCALE =
       0.6;  // seems to be a good number
 
   DrawText(double max_fnt_sz, double min_fnt_sz);
-  virtual ~DrawText() {}
+  DrawText(const DrawText &rhs) = delete;
+  DrawText(const DrawText &&rhs) = delete;
+  DrawText &operator=(const DrawText &rhs) = delete;
+  DrawText &operator=(const DrawText &&rhs) = delete;
 
   DrawColour const &colour() const;
   void setColour(const DrawColour &col);
@@ -141,7 +162,6 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
                            const Point2D &cds1, const std::string &label2,
                            OrientType orient2, const Point2D &cds2) const;
 
- protected:
   // amount to scale subscripts and superscripts by
   constexpr static double SUBS_SCALE = 0.66;
   constexpr static double SUPER_SCALE = 0.66;

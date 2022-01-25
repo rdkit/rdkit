@@ -15,6 +15,7 @@
 
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
+#include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 namespace RDKit {
 namespace MolDraw2D_detail {

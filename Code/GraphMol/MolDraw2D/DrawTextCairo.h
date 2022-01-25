@@ -18,13 +18,21 @@
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
+
+class MolDraw2DCairo;
+
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-class DrawTextCairo : public DrawText {
- public:
-  DrawTextCairo(double max_fnt_sz, double min_fnt_sz, cairo_t *dp_cr);
+class DrawTextCairo : protected DrawText {
+  friend class RDKit::MolDraw2DCairo;
 
+ protected:
+  DrawTextCairo(double max_fnt_sz, double min_fnt_sz, cairo_t *dp_cr);
+  DrawTextCairo(const DrawTextCairo &rhs) = delete;
+  DrawTextCairo(const DrawTextCairo &&rhs) = delete;
+  DrawTextCairo &operator=(const DrawTextCairo &rhs) = delete;
+  DrawTextCairo &operator=(const DrawTextCairo &&rhs) = delete;
 #if 0
   void getStringSize(const std::string &label, double &label_width,
                      double &label_height) const override;

@@ -22,10 +22,14 @@ namespace RDKit {
 
 // ****************************************************************************
 
-class DrawTextFTQt : public DrawTextFT {
- public:
+class DrawTextFTQt : protected DrawTextFT {
+ protected:
   DrawTextFTQt(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, QPainter *qp);
+  DrawTextFTQt(const DrawTextFTQt &rhs) = delete;
+  DrawTextFTQt(const DrawTextFTQt &&rhs) = delete;
+  DrawTextFTQt &operator=(const DrawTextFTQt &rhs) = delete;
+  DrawTextFTQt &operator=(const DrawTextFTQt &&rhs) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;

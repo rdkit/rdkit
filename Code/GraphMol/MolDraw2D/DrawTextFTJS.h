@@ -19,10 +19,14 @@
 namespace RDKit {
 
 // ****************************************************************************
-class DrawTextFTJS : public DrawTextFT {
- public:
+class DrawTextFTJS : protected DrawTextFT {
+ protected:
   DrawTextFTJS(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, emscripten::val &context);
+  DrawTextFTJS(const DrawTextFTJS &rhs) = delete;
+  DrawTextFTJS(const DrawTextFTJS &&rhs) = delete;
+  DrawTextFTJS &operator=(const DrawTextFTJS &rhs) = delete;
+  DrawTextFTJS &operator=(const DrawTextFTJS &&rhs) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;

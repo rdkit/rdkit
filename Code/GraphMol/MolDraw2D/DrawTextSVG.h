@@ -18,14 +18,23 @@
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
+
+class MolDraw2DSVG;
+
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
 
-class DrawTextSVG : public DrawText {
- public:
+class DrawTextSVG : protected DrawText {
+  friend class RDKit::MolDraw2DSVG;
+
+ protected:
   DrawTextSVG(double max_fnt_sz, double min_fnt_sz, std::ostream &oss,
               std::string &d_act_class);
+  DrawTextSVG(const DrawTextSVG &rhs) = delete;
+  DrawTextSVG(const DrawTextSVG &&rhs) = delete;
+  DrawTextSVG &operator=(const DrawTextSVG &rhs) = delete;
+  DrawTextSVG &operator=(const DrawTextSVG &&rhs) = delete;
 
   void drawChar(char c, const Point2D &cds) override;
 

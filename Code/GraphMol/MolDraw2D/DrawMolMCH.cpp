@@ -10,6 +10,7 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <GraphMol/RWMol.h>
 #include <GraphMol/MolDraw2D/DrawMolMCH.h>
 
 namespace RDKit {
