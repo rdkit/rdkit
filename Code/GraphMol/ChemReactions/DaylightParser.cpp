@@ -150,7 +150,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     }
   }
   // remove any spaces at the beginning, end, or before the '>'s
-  text = boost::trim_copy(text);
+  boost::trim(text);
   std::vector<std::size_t> pos;
   for (std::size_t i = 0; i < text.length(); ++i) {
     if (text[i] == '>' && (i == 0 || text[i - 1] != '-')) {
@@ -193,7 +193,7 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     }
   }
 
-  // there's always the chance that one or more of the "<" was in the name
+  // there's always the chance that one or more of the ">" was in the name
   // part, so verify that we have exactly two:
   if (pos.size() < 2) {
     throw ChemicalReactionParserException(
