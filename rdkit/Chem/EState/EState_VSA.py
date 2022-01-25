@@ -15,9 +15,9 @@
 import bisect
 
 import numpy
-
 from rdkit.Chem.EState.EState import EStateIndices as EStateIndices_
 from rdkit.Chem.MolSurf import _LabuteHelper as VSAContribs_
+
 """
 
 These default VSA bins were chosen using the PP3K solubility data
@@ -41,7 +41,7 @@ def VSA_EState_(mol, bins=None, force=1):
   propContribs = EStateIndices_(mol, force=force)
   volContribs = VSAContribs_(mol)
 
-  ans = numpy.zeros(len(bins) + 1, numpy.float)
+  ans = numpy.zeros(len(bins) + 1, dtype=numpy.float64)
   for i, prop in enumerate(propContribs):
     if prop is not None:
       nbin = bisect.bisect_right(bins, volContribs[i + 1])
@@ -72,7 +72,7 @@ def EState_VSA_(mol, bins=None, force=1):
   propContribs = EStateIndices_(mol, force=force)
   volContribs = VSAContribs_(mol)
 
-  ans = numpy.zeros(len(bins) + 1, numpy.float)
+  ans = numpy.zeros(len(bins) + 1, dtype=numpy.float64)
   for i, prop in enumerate(propContribs):
     if prop is not None:
       nbin = bisect.bisect_right(bins, prop)

@@ -259,6 +259,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   // This method can be used to distinguish query atoms from standard atoms:
   virtual bool hasQuery() const { return false; }
 
+  virtual std::string getQueryType() const {return "";}
+
   //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);
 

@@ -2,10 +2,8 @@
 #  Copyright (C) 2006 Greg Landrum
 #  This file is part of RDKit and covered by $RDBASE/license.txt
 #
-
-
-import argparse
 import sys
+import argparse
 
 from rdkit import Chem
 from rdkit import Geometry
@@ -32,11 +30,12 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
       raise ValueError("Core does not map to itself")
   else:
     coreMatch = list(range(core.GetNumAtoms(onlyExplicit=True)))
+  
   if corePattern:
     match = mol.GetSubstructMatch(corePattern)
   else:
     match = mol.GetSubstructMatch(core)
-
+  
   if not match:
     if not acceptFailure:
       raise ValueError('Substructure match with core not found.')
@@ -47,8 +46,7 @@ def AlignDepict(mol, core, corePattern=None, acceptFailure=False):
     coordMap = {}
     for i, idx in enumerate(match):
       pt3 = conf.GetAtomPosition(coreMatch[i])
-      pt2 = Geometry.Point2D(pt3.x, pt3.y)
-      coordMap[idx] = pt2
+      coordMap[idx] = Geometry.Point2D(pt3.x, pt3.y)
   rdDepictor.Compute2DCoords(mol, clearConfs=True, coordMap=coordMap, canonOrient=False)
 
 

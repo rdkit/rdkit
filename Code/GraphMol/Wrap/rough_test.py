@@ -4433,27 +4433,6 @@ $$$$
       self.assertTrue("RDKIT:" in details)
       self.assertTrue(__version__ in details)
 
-  # this test should probably always be last since it wraps
-  #  the logging stream
-  def testLogging(self):
-    from io import StringIO
-    err = sys.stderr
-    try:
-      loggers = [("RDKit ERROR", "1", Chem.LogErrorMsg), ("RDKit WARNING", "2", Chem.LogWarningMsg)]
-      for msg, v, log in loggers:
-        sys.stderr = StringIO()
-        log(v)
-        self.assertEqual(sys.stderr.getvalue(), "")
-
-      Chem.WrapLogs()
-      for msg, v, log in loggers:
-        sys.stderr = StringIO()
-        log(v)
-        s = sys.stderr.getvalue()
-        self.assertTrue(msg in s)
-    finally:
-      sys.stderr = err
-
   def testGetSDText(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf')
@@ -5211,6 +5190,39 @@ M  END
       atom.SetQuery(q)
 
     self.assertTrue(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
+
+  def testGetQueryType(self):
+    query_a = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_A.mol')
+    m = next(Chem.SDMolSupplier(query_a))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
+
+    query_a_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_A.v3k.mol')
+    m = next(Chem.SDMolSupplier(query_a_v3k))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
+
+    query_q = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_Q.mol')
+    m = next(Chem.SDMolSupplier(query_q))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
+
+    query_q_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_Q.v3k.mol')
+    m = next(Chem.SDMolSupplier(query_q_v3k))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
+
+    m = Chem.MolFromSmiles("*CC")
+    params = Chem.rdmolops.AdjustQueryParameters.NoAdjustments()
+    params.makeDummiesQueries = True
+    m = Chem.rdmolops.AdjustQueryProperties(m, params)
+    self.assertTrue(m.GetAtomWithIdx(0).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(0).GetQueryType() == "")
+
 
   def testBondSetQuery(self):
     pat = Chem.MolFromSmarts('[#6]=[#6]')

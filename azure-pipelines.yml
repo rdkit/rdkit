@@ -4,10 +4,10 @@ trigger:
 - dev/*
 
 jobs:
-- job: Ubuntu_18_04_x64
+- job: Ubuntu_x64
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
   variables:
     python: python=3.8
     boost_version: 1.71.0
@@ -28,29 +28,27 @@ jobs:
     target_platform: 10.9
   steps:
   - template: .azure-pipelines/mac_build.yml
-- job: Windows_VS2017_x64
+- job: Windows_VS2022_x64
   timeoutInMinutes: 90
   pool:
-    vmImage: vs2017-win2016
+    vmImage: windows-latest
   variables:
-    compiler: vs2017_win-64
     boost_version: 1.67.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python37
   steps:
   - template: .azure-pipelines/vs_build.yml
-- job: Windows_VS2017_x64_dll
+- job: Windows_VS2022_x64_dll
   timeoutInMinutes: 90
   pool:
-    vmImage: vs2017-win2016
+    vmImage: windows-latest
   variables:
-    compiler: vs2017_win-64
     boost_version: 1.67.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python37
   steps:
   - template: .azure-pipelines/vs_build_dll.yml
-- job: Ubuntu_20_04_x64_java
+- job: Ubuntu_x64_java
   timeoutInMinutes: 90
   pool:
     vmImage: ubuntu-20.04
@@ -73,7 +71,7 @@ jobs:
     target_platform: 10.9
   steps:
   - template: .azure-pipelines/mac_build_java.yml
-- job: Ubuntu_20_04_x64_cartridge
+- job: Ubuntu_x64_cartridge
   timeoutInMinutes: 90
   pool:
     vmImage: ubuntu-20.04
@@ -82,10 +80,10 @@ jobs:
     number_of_cores: nproc
   steps:
   - template: .azure-pipelines/linux_build_cartridge.yml
-- job: Ubuntu_18_04_x64_limitexternaldependencies
+- job: Ubuntu_x64_limitexternaldependencies
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-18.04
+    vmImage: ubuntu-20.04
   variables:
     python: python=3.8
     boost_version: 1.71.0

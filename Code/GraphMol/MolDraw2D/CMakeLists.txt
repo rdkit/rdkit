@@ -12,7 +12,7 @@ if(RDK_BUILD_FREETYPE_SUPPORT AND RDK_INSTALL_COMIC_FONTS)
     set(needDownload "FALSE")
   endif()
   if(needDownload)
-    set(MD5Sum "23ed3f833c1ae0adb141a26b4a30d73e")
+    set(MD5Sum "850b0df852f1cda4970887b540f8f333")
     downloadAndCheckMD5("https://fonts.google.com/download?family=Comic%20Neue"
           "${CMAKE_CURRENT_SOURCE_DIR}/Comic_Neue.zip"
           ${MD5Sum})

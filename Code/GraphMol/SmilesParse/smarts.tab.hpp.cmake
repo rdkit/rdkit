@@ -99,7 +99,7 @@ extern int yysmarts_debug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 68 "smarts.yy"
+#line 65 "smarts.yy"
 
   int                      moli;
   RDKit::QueryAtom * atom;
@@ -116,9 +116,9 @@ typedef union YYSTYPE YYSTYPE;
 
 
 
-int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, void *scanner, int& start_token);
+int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, void *scanner, int& start_token);
 /* "%code provides" blocks.  */
-#line 63 "smarts.yy"
+#line 60 "smarts.yy"
 
 #define YY_DECL int yylex \
                (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)

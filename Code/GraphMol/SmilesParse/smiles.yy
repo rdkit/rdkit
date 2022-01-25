@@ -265,7 +265,6 @@ mol: atomd {
   Atom *atom=mp->getActiveAtom();
   Bond *newB = mp->createPartialBond(atom->getIdx(),
 				     Bond::SINGLE);
-  newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->setAtomBookmark(atom,$3);
   mp->setBondBookmark(newB,$3);
   if(!(mp->getAllBondsWithBookmark($3).size()%2)){
