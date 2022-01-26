@@ -110,7 +110,7 @@ def _pyGetAtomContribs(mol, patts=None, order=None, verbose=0, force=0):
           doneAtoms[firstIdx] = 1
           atomContribs[firstIdx] = (logp, mr)
           if verbose:
-            print('\tAtom %d: %s %4.4f %4.4f' % (match[0], sma, logp, mr))
+            print(f'\tAtom {match[0]}: {sma} {logp:4.4f} {mr:4.4f}')
           nAtomsFound += 1
           if nAtomsFound >= nAtoms:
             done = True
@@ -218,7 +218,7 @@ if __name__ == '__main__':
       ms.append((smi, Chem.MolFromSmiles(smi)))
 
     for smi, m in ms:
-      print('Mol: %s' % (smi))
+      print('Mol:', smi)
       logp = MolLogP(m, verbose=verbose)
       print('----')
       mr = MolMR(m, verbose=verbose)
