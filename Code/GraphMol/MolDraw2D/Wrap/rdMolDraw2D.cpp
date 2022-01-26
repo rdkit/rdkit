@@ -600,11 +600,12 @@ void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
 }
 
 void drawArrowHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
-                     const Point2D &cds2, python::tuple &pycol, bool asPolygon,
-                     double frac, double angle, bool rawCoords) {
+                     const Point2D &cds2, bool asPolygon,
+                     double frac, double angle, python::object pycol, bool rawCoords) {
   DrawColour col{0.0, 0.0, 0.0};
   if (pycol) {
-    col = pyTupleToDrawColour(pycol);
+    python::tuple pytup = python::extract<python::tuple>(pycol);
+    col = pyTupleToDrawColour(pytup);
   }
   self.drawArrow(cds1, cds2, asPolygon, frac, angle, col, rawCoords);
 }
@@ -941,9 +942,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame")
       .def("DrawArrow", RDKit::drawArrowHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
-            python::arg("color") = python::object(), python::arg("asPolygon") = false,
+            python::arg("asPolygon") = false,
             python::arg("frac") = 0.05, python::arg("angle") = M_PI / 6,
-            python::arg("rawCoords") = false),
+            python::arg("color") = python::object(), python::arg("rawCoords") = false),
            "draws an arrow with the current drawing style. The coordinates "
            "are in the molecule frame. If asPolygon is true the head of the "
            "arrow will be drawn as a triangle, otherwise two lines are used.")
