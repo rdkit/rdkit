@@ -352,37 +352,37 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
   """
     >>> from rdkit.Chem.MolKey import MolKey
     >>> from rdkit.Avalon import pyAvalonTools
-    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1C(F)Cl',True))
+    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1C(F)Cl', True))
     >>> res.mol_key
     '1|L7676nfGsSIU33wkx//NCg=='
     >>> res.stereo_code
     'R_ONE'
-    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1[C@H](F)Cl',True))
+    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1[C@H](F)Cl', True))
     >>> res.mol_key
     '1|Aj38EIxf13RuPDQG2A0UMw=='
     >>> res.stereo_code
     'S_ABS'
-    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1[C@@H](F)Cl',True))
+    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1ccccc1[C@@H](F)Cl', True))
     >>> res.mol_key
     '1|9ypfMrhxn1w0ncRooN5HXw=='
     >>> res.stereo_code
     'S_ABS'
-    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1[C@@H](F)Cl',True))
+    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1[C@@H](F)Cl', True))
     >>> res.mol_key
     '1|c96jMSlbn7O9GW5d5uB9Mw=='
     >>> res.stereo_code
     'S_PART'
-    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc([C@H](Br)Cl)c1[C@@H](F)Cl',True))
+    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc([C@H](Br)Cl)c1[C@@H](F)Cl', True))
     >>> res.mol_key
     '1|+B+GCEardrJteE8xzYdGLA=='
     >>> res.stereo_code
     'S_ABS'
-    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True))
+    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl', True))
     >>> res.mol_key
     '1|5H9R3LvclagMXHp3Clrc/g=='
     >>> res.stereo_code
     'S_UNKN'
-    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True),stereo_info='S_REL')
+    >>> res = MolKey.GetKeyForCTAB(pyAvalonTools.Generate2DCoords('c1cccc(C(Br)Cl)c1C(F)Cl',True), stereo_info='S_REL')
     >>> res.mol_key
     '1|cqKWVsUEY6QNpGCbDaDTYA=='
     >>> res.stereo_code
@@ -412,15 +412,15 @@ def GetKeyForCTAB(ctab, stereo_info=None, stereo_comment=None, logger=None):
       if not stereo_comment and len(info_flds) > 1:
         extra_structure_desc = info_flds[1].strip()
     else:
-      logger.warn('stereo code {0} not recognized. Using default value for ctab.'.format(code_fld))
+      logger.warn(f'stereo code {code_fld} not recognized. Using default value for ctab.')
 
   if not (err & BAD_SET):
     n_stereo, n_undef_stereo, is_meso, dummy = InchiInfo.InchiInfo(inchi).get_sp3_stereo()['main']['non-isotopic']
     if stereo_category is None or stereo_category == 'DEFAULT':  # compute if not set
       stereo_category = _get_chiral_identification_string(n_stereo - n_undef_stereo, n_undef_stereo)
   else:
-    raise NotImplementedError(
-      "currently cannot generate correct keys for molecules with struchk errors")
+    raise NotImplementedError("currently cannot generate correct keys for molecules with struchk errors")
+  
   key = _identify(err, fixed_mol, inchi, stereo_category, extra_structure_desc)
   return MolKeyResult(key, err, inchi, fixed_mol, stereo_category, extra_structure_desc)
 
