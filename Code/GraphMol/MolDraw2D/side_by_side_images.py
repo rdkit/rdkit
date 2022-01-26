@@ -38,7 +38,7 @@ with open(args.outfile, 'w') as f:
         <td></td>
         <td>{d1}</td>
         <td>{d2}</td>
-      </tr>''')
+      </tr>\n''')
 
     inglob = Path(d1) / args.file_glob
     fns = [Path(fn) for fn in glob.glob(inglob.name)]
@@ -53,8 +53,8 @@ with open(args.outfile, 'w') as f:
         <td>{fns}</td>
         <td><img src="{d1}/{fn}" alt="{fns}"/></td>
         <td><img src="{d2}/{fn}" alt="{fns}"/></td>
-        </tr>''')
+        </tr>\n''')
     
     f.write('''    </table>
   </body>
-</html>''')
+</html>\n''')
