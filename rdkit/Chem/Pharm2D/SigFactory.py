@@ -181,10 +181,9 @@ class SigFactory(object):
         featFamilies = self.GetFeatFamilies()
         featMatches = {}
         for fam in featFamilies:
-            featMatches[fam] = []
             feats = self.featFactory.GetFeaturesForMol(mol, includeOnly=fam)
-            for feat in feats:
-                featMatches[fam].append(feat.GetAtomIds())
+            featMatches[fam] = [feat.GetAtomIds() for feat in feats]
+
         return [featMatches[x] for x in featFamilies]
 
     def GetBitIdx(self, featIndices, dists, sortIndices=True):
@@ -273,7 +272,7 @@ class SigFactory(object):
 
         """
         if idx >= self._sigSize:
-            raise IndexError('bad index (%d) queried. %d is the max' % (idx, self._sigSize))
+            raise IndexError(f'bad index ({idx}) queried. {self._sigSize} is the max')
         # first figure out how many points are in the p'cophore
         nPts = self.minPointCount
         while nPts < self.maxPointCount and self._starts[nPts + 1] <= idx:
@@ -282,7 +281,7 @@ class SigFactory(object):
         # how far are we in from the start point?
         offsetFromStart = idx - self._starts[nPts]
         if _verbose:
-            print('\t %d Points, %d offset' % (nPts, offsetFromStart))
+            print(f'\t {nPts} Points, {offsetFromStart} offset')
 
         # lookup the number of scaffolds
         nDists = len(Utils.nPointDistDict[nPts])
@@ -295,13 +294,13 @@ class SigFactory(object):
         indexCombos = Utils.GetIndexCombinations(self._nFeats, nPts)
         combo = tuple(indexCombos[protoIdx])
         if _verbose:
-            print('\t combo: %s' % (str(combo)))
+            print(f'\t combo: {str(combo)}')
 
         # and which scaffold:
         scaffoldIdx = offsetFromStart % nScaffolds
         scaffold = scaffolds[scaffoldIdx]
         if _verbose:
-            print('\t scaffold: %s' % (str(scaffold)))
+            print(f'\t scaffold: {str(scaffold)}')
         return nPts, combo, scaffold
 
     def Init(self):
