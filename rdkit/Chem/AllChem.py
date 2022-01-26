@@ -11,16 +11,12 @@
 
 """
 
+from math import sqrt
 from collections import namedtuple
 
-import numpy
-from rdkit import DataStructs
-from rdkit import ForceField
-from rdkit import RDConfig
-from rdkit import rdBase
+from rdkit import DataStructs, ForceField, RDConfig, rdBase
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
-
 from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
                                                StereoEnumerationOptions)
 from rdkit.Chem.rdChemReactions import *
@@ -142,7 +138,7 @@ def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
     d = conf1.GetAtomPosition(i).Distance(conf2.GetAtomPosition(i))
     ssr += d * d
   ssr /= mol.GetNumAtoms()
-  return numpy.sqrt(ssr)
+  return sqrt(ssr)
 
 
 def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
@@ -394,9 +390,9 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     """
   refmol2 = rdchem.Mol(refmol)
   mol2 = rdchem.Mol(mol)
+  
   # do the molecules match already?
-  matching = mol2.GetSubstructMatch(refmol2)
-  if matching:
+  if mol2.GetSubstructMatch(refmol2):
     return mol2
   
   # If not matching, we need manually checking the bonds, atoms, etc.
