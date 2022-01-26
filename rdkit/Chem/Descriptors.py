@@ -8,8 +8,7 @@
 #  of the RDKit source tree.
 #
 
-from collections import \
-    abc  # This won't work in python 2, but we don't support that any more
+from collections import abc  # This won't work in python 2, but we don't support that any more
 from typing import Callable
 
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
