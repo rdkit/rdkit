@@ -1,13 +1,29 @@
 #!/usr/bin/env python
 # quick script for comparing SVGs in 2 different directories.
-import sys
+import argparse
 import glob
 from pathlib import Path
 
-d1 = '/Users/david/Projects/RDKit/Worktrees/RefactorMolDraw2D/cmake-build-debug/Code/GraphMol/MolDraw2D'
-d2 = '/Users/david/Projects/RDKit/gregs_fork/cmake-build-debug/Code/GraphMol/MolDraw2D'
+parser = argparse.ArgumentParser(description='Make an HTML table for comparing images.')
+parser.add_argument('--dir1', required=True, help='Name of first directory.')
+parser.add_argument('--dir2', required=True, help='Name of second directory.')
+parser.add_argument('--file-glob', required=True, help='glob for files in first directory')
+parser.add_argument('--outfile', default='side_by_side.html', help='Name of HTML file')
 
-print(f'''<!DOCTYPE html>
+args = parser.parse_args()
+
+d1 = args.dir1
+d2 = args.dir2
+
+if not Path(d1).exists():
+    print(f'Directory {d1} missing.')
+    exit(1)
+if not Path(d2).exists():
+    print(f'Directory {d2} missing.')
+    exit(1)
+
+with open(args.outfile, 'w') as f:
+    f.write(f'''<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -24,21 +40,21 @@ print(f'''<!DOCTYPE html>
         <td>{d2}</td>
       </tr>''')
 
-inglob = Path(d1) / sys.argv[1]
-fns = [Path(fn) for fn in glob.glob(inglob.name)]
-fns.sort(key = lambda f: f.stat().st_mtime, reverse=True)
+    inglob = Path(d1) / args.file_glob
+    fns = [Path(fn) for fn in glob.glob(inglob.name)]
+    fns.sort(key = lambda f: f.stat().st_mtime, reverse=True)
 
-for fp in fns:
-    fn = fp.name
-    if not fn.endswith('.svg') and not fn.endswith('.png'):
-        continue
-    fns = fn.replace('.svg', '')
-    print(f'''      <tr>
+    for fp in fns:
+        fn = fp.name
+        if not fn.endswith('.svg') and not fn.endswith('.png'):
+            continue
+        fns = fn.replace('.svg', '')
+        f.write(f'''      <tr>
         <td>{fns}</td>
         <td><img src="{d1}/{fn}" alt="{fns}"/></td>
         <td><img src="{d2}/{fn}" alt="{fns}"/></td>
-      </tr>''')
+        </tr>''')
     
-print('''    </table>
+    f.write('''    </table>
   </body>
 </html>''')
