@@ -65,7 +65,7 @@ def _ShortestPathsMatch(match, featureSet, sig, dMat, sigFactory):
     d = int(minSeen)
     # do a quick distance filter
     if d == 0 or d < minD or d >= maxD:
-      return
+      return None
     dist[i] = d
 
   idx = sigFactory.GetBitIdx(featureSet, dist, sortIndices=False)
@@ -115,8 +115,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
   # generate the molecule's distance matrix, if required
   if dMat is None:
     from rdkit import Chem
-    useBO = sigFactory.includeBondOrder
-    dMat = Chem.GetDistanceMatrix(mol, useBO)
+    dMat = Chem.GetDistanceMatrix(mol, sigFactory.includeBondOrder)
 
   # generate the permutations, if required
   if perms is None: 

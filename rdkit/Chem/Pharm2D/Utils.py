@@ -17,6 +17,8 @@
 
 """
 import itertools
+from math import factorial, comb
+
 
 #
 #  number of points in a scaffold -> sequence of distances (p1,p2) in
@@ -76,14 +78,8 @@ def GetTriangles(nPts):
     return res
 
 
-def _fact(x):
-    if x <= 1:
-        return 1
-
-    accum = 1
-    for i in range(x):
-        accum *= i + 1
-    return accum
+def _fact(x) -> int:
+    return factorial(x)
 
 
 def BinsTriangleInequality(d1, d2, d3):
@@ -114,8 +110,7 @@ def ScaffoldPasses(combo, bins=None):
 
     """
     # this is the number of points in the pharmacophore
-    nPts = nDistPointDict[len(combo)]
-    tris = GetTriangles(nPts)
+    tris = GetTriangles(nDistPointDict[len(combo)])
     for tri in tris:
         ds = [bins[combo[x]] for x in tri]
         if not BinsTriangleInequality(ds[0], ds[1], ds[2]):
@@ -139,7 +134,7 @@ def NumCombinations(nItems, nSlots):
     global _numCombDict
     res = _numCombDict.get((nItems, nSlots), -1)
     if res == -1:
-        res = _fact(nItems + nSlots - 1) // (_fact(nItems - 1) * _fact(nSlots))
+        res = comb(nItems + nSlots - 1, nSlots)
         _numCombDict[(nItems, nSlots)] = res
     return res
 
@@ -172,7 +167,7 @@ def CountUpTo(nItems, nSlots, vs, idx=0, startAt=0):
     """
     global _countCache
     if _verbose:
-        print('  ' * idx, 'CountUpTo(%d)' % idx, vs[idx], startAt)
+        print('  ' * idx, f'CountUpTo({idx})', vs[idx], startAt)
     if idx == 0 and (nItems, nSlots, tuple(vs)) in _countCache:
         return _countCache[(nItems, nSlots, tuple(vs))]
     elif idx >= nSlots:
@@ -185,10 +180,10 @@ def CountUpTo(nItems, nSlots, vs, idx=0, startAt=0):
         for i in range(startAt, vs[idx]):
             nLevsUnder = nSlots - idx - 1
             nValsOver = nItems - i
+            numCombs = NumCombinations(nValsOver, nLevsUnder)
             if _verbose:
-                print('  ' * idx, ' ', i, nValsOver, nLevsUnder,
-                      NumCombinations(nValsOver, nLevsUnder))
-            accum += NumCombinations(nValsOver, nLevsUnder)
+                print('  ' * idx, ' ', i, nValsOver, nLevsUnder, numCombs)
+            accum += numCombs
         accum += CountUpTo(nItems, nSlots, vs, idx + 1, vs[idx])
     if _verbose:
         print('  ' * idx, '>', accum)
@@ -254,26 +249,26 @@ def GetAllCombinations(choices, noDups=1, which=0):
 
       a list of lists
 
-    >>> GetAllCombinations([(0,),(1,),(2,)])
+    >>> GetAllCombinations([(0, ), (1, ), (2, )])
     [[0, 1, 2]]
-    >>> GetAllCombinations([(0,),(1,3),(2,)])
+    >>> GetAllCombinations([(0, ), (1, 3), (2, )])
     [[0, 1, 2], [0, 3, 2]]
 
-    >>> GetAllCombinations([(0,1),(1,3),(2,)])
+    >>> GetAllCombinations([(0, 1), (1, 3), (2, )])
     [[0, 1, 2], [0, 3, 2], [1, 3, 2]]
 
     """
     if which >= len(choices):
-        res = []
+        return []
     elif which == len(choices) - 1:
-        res = [[x] for x in choices[which]]
-    else:
-        res = []
-        tmp = GetAllCombinations(choices, noDups=noDups, which=which + 1)
-        for thing in choices[which]:
-            for other in tmp:
-                if not noDups or thing not in other:
-                    res.append([thing] + other)
+        return [[x] for x in choices[which]]
+    
+    res = []
+    tmp = GetAllCombinations(choices, noDups=noDups, which=which + 1)
+    for thing in choices[which]:
+        for other in tmp:
+            if not noDups or thing not in other:
+                res.append([thing] + other)
     return res
 
 
@@ -285,23 +280,23 @@ def GetUniqueCombinations(choices, classes, which=0):
     #   print(choices, classes)
     assert len(choices) == len(classes)
     if which >= len(choices):
-        res = []
+        return []
     elif which == len(choices) - 1:
-        res = [[(classes[which], x)] for x in choices[which]]
-    else:
-        res = []
-        tmp = GetUniqueCombinations(choices, classes, which=which + 1)
-        for thing in choices[which]:
-            for other in tmp:
-                idxThere = 0
-                for x in other:
-                    if x[1] == thing:
-                        idxThere += 1
-                if not idxThere:
-                    newL = [(classes[which], thing)] + other
-                    newL.sort()
-                    if newL not in res:
-                        res.append(newL)
+        return [[(classes[which], x)] for x in choices[which]]
+    
+    res = []
+    tmp = GetUniqueCombinations(choices, classes, which=which + 1)
+    for thing in choices[which]:
+        for other in tmp:
+            idxThere = 0
+            for x in other:
+                if x[1] == thing:
+                    idxThere += 1
+            if not idxThere:
+                newL = [(classes[which], thing)] + other
+                newL.sort()
+                if newL not in res:
+                    res.append(newL)
     return res
 
 
@@ -347,17 +342,13 @@ def GetPossibleScaffolds(nPts, bins, useTriangleInequality=True):
 
     """
     if nPts < 2:
-        res = 0
+        return 0
     elif nPts == 2:
-        res = [(x, ) for x in range(len(bins))]
-    else:
-        nDists = len(nPointDistDict[nPts])
-        combos = GetAllCombinations([range(len(bins))] * nDists, noDups=0)
-        res = []
-        for combo in combos:
-            if not useTriangleInequality or ScaffoldPasses(combo, bins):
-                res.append(tuple(combo))
-    return res
+        return [(x, ) for x in range(len(bins))]
+    
+    nDists = len(nPointDistDict[nPts])
+    combos = GetAllCombinations([range(len(bins))] * nDists, noDups=0)
+    return [tuple(combo) for combo in combos if not useTriangleInequality or ScaffoldPasses(combo, bins)]
 
 
 def OrderTriangle(featIndices, dists):
@@ -366,29 +357,27 @@ def OrderTriangle(featIndices, dists):
 
       It's easy if the features are all different:
 
-      >>> OrderTriangle([0,2,4],[1,2,3])
+      >>> OrderTriangle([0, 2, 4], [1, 2, 3])
       ([0, 2, 4], [1, 2, 3])
 
       It's trickiest if they are all the same:
       
-      >>> OrderTriangle([0,0,0],[1,2,3])
+      >>> OrderTriangle([0, 0, 0], [1, 2, 3])
       ([0, 0, 0], [3, 2, 1])
-      >>> OrderTriangle([0,0,0],[2,1,3])
+      >>> OrderTriangle([0, 0, 0], [2, 1, 3])
       ([0, 0, 0], [3, 2, 1])
-      >>> OrderTriangle([0,0,0],[1,3,2])
+      >>> OrderTriangle([0, 0, 0], [1, 3, 2])
       ([0, 0, 0], [3, 2, 1])
-      >>> OrderTriangle([0,0,0],[3,1,2])
+      >>> OrderTriangle([0, 0, 0], [3, 1, 2])
       ([0, 0, 0], [3, 2, 1])
-      >>> OrderTriangle([0,0,0],[3,2,1])
+      >>> OrderTriangle([0, 0, 0], [3, 2, 1])
       ([0, 0, 0], [3, 2, 1])
 
-      >>> OrderTriangle([0,0,1],[3,2,1])
+      >>> OrderTriangle([0, 0, 1], [3, 2, 1])
       ([0, 0, 1], [3, 2, 1])
-      >>> OrderTriangle([0,0,1],[1,3,2])
+      >>> OrderTriangle([0, 0, 1], [1, 3, 2])
       ([0, 0, 1], [1, 3, 2])
-      >>> OrderTriangle([0,0,1],[1,2,3])
-      ([0, 0, 1], [1, 3, 2])
-      >>> OrderTriangle([0,0,1],[1,3,2])
+      >>> OrderTriangle([0, 0, 1], [1, 2, 3])
       ([0, 0, 1], [1, 3, 2])
 
     """
@@ -451,6 +440,7 @@ def OrderTriangle(featIndices, dists):
             else:
                 ireorder = (0, 2, 1)
                 dreorder = (1, 0, 2)
+    
     dists = [dists[x] for x in dreorder]
     featIndices = [featIndices[x] for x in ireorder]
     return featIndices, dists
