@@ -44,8 +44,7 @@ if not inchi.INCHI_AVAILABLE:
 def _is_achiral_by_symmetry(INCHI):
   mol = Chem.MolFromInchi(INCHI)
   if not mol:
-    mol = Chem.MolFromInchi('InChI=1/{0}'.format(INCHI))
-
+    mol = Chem.MolFromInchi(f'InChI=1/{INCHI}')
   try:
     # is there any real chiral centre?
     return len(Chem.FindMolChiralCenters(mol, True, True)) == 0
