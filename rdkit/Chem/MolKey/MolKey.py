@@ -282,9 +282,9 @@ def _get_identification_string(err, ctab, inchi, stereo_category=None, extra_ste
   if not stereo_category:
     raise MolIdentifierException('Stereo category may not be left undefined')
   
-  pieces.append('ST=' + stereo_category)
+  pieces.append(f'ST={stereo_category}')
   if extra_stereo:
-    pieces.append('XTR=' + extra_stereo)
+    pieces.append(f'XTR={extra_stereo}')
   return '/'.join(pieces)
 
 
@@ -303,11 +303,10 @@ def _get_bad_mol_identification_string(ctab, stereo_category, extra_stereo):
   else:
     pass
   if stereo_category:  # add xtra info if available
-    pieces.append('ST={0}'.format(stereo_category))
+    pieces.append(f'ST={stereo_category}')
   if extra_stereo:  # add xtra info if available
-    pieces.append('XTR={0}'.format(extra_stereo))
-
-  return '/'.join(pieces) # key_string
+    pieces.append(f'XTR={extra_stereo}')
+  return '/'.join(pieces)
 
 
 def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
@@ -315,10 +314,10 @@ def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
     stereo category as well as extra structure
     information """
   key_string = _get_identification_string(err, ctab, inchi, stereo_category, extra_structure_desc)
-  if key_string:
-    key_string = base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode()
-    return f"{MOL_KEY_VERSION}|{key_string}"
-  return None
+  if not key_string:
+    return None
+  string = base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode()
+  return f"{MOL_KEY_VERSION}|{string}"
 
 
 def _get_chiral_identification_string(n_def, n_udf):
