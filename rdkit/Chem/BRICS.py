@@ -191,11 +191,11 @@ smartsGps = copy.deepcopy(reactionDefs)
 for gp in smartsGps:
     for j, defn in enumerate(gp):
         g1, g2, bnd = defn
-        r1 = environs['L' + g1]
-        r2 = environs['L' + g2]
+        r1 = environs[f'L{g1}']
+        r2 = environs[f'L{g2}']
         g1 = re.sub('[a-z,A-Z]', '', g1)
         g2 = re.sub('[a-z,A-Z]', '', g2)
-        gp[j] = f'[$({r1}):1]{bnd};!@[$({r2}):2]>>[{g1}*]-[*:1].[{g2}*]-[*:2]' % (r1, bnd, r2, g1, g2)
+        gp[j] = f'[$({r1}):1]{bnd};!@[$({r2}):2]>>[{g1}*]-[*:1].[{g2}*]-[*:2]'
 
 for gp in smartsGps:
     for defn in gp:
@@ -223,7 +223,7 @@ reverseReactions = []
 for i, rxnSet in enumerate(smartsGps):
     for j, sma in enumerate(rxnSet):
         rs, ps = sma.split('>>')
-        sma = f'{ps}>>{rs}' % (ps, rs)
+        sma = f'{ps}>>{rs}'
         rxn = Reactions.ReactionFromSmarts(sma)
         labels = re.findall(r'\[([0-9]+?)\*\]', ps)
         rxn._matchers = [Chem.MolFromSmiles(f'[{x}*]') for x in labels]
