@@ -234,7 +234,7 @@ class SigFactory(object):
 
         offset = Utils.CountUpTo(self._nFeats, nPoints, featIndices)
         if _verbose:
-            print('offset for feature %s: %d' % (str(featIndices), offset))
+            print(f'offset for feature {str(featIndices)}: {offset}')
         offset *= len(self._scaffolds[len(dists)])
 
         try:

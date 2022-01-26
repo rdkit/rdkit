@@ -880,9 +880,9 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    >>> boundsMat.shape == (3, 3)
    True
 
-   >>> print(', '.join(['%.3f'%x for x in bm[0]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[0]]))
    0.000, 3.000
-   >>> print(', '.join(['%.3f'%x for x in bm[1]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[1]]))
    2.000, 0.000
 
    if the threshold is high enough, we don't do anything:

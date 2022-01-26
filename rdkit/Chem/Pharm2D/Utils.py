@@ -78,10 +78,6 @@ def GetTriangles(nPts):
     return res
 
 
-def _fact(x) -> int:
-    return factorial(x)
-
-
 def BinsTriangleInequality(d1, d2, d3):
     """ checks the triangle inequality for combinations
       of distance bins.
@@ -98,7 +94,6 @@ def BinsTriangleInequality(d1, d2, d3):
         return False
     if d3[1] + d1[1] < d2[0]:
         return False
-
     return True
 
 
@@ -281,18 +276,14 @@ def GetUniqueCombinations(choices, classes, which=0):
     assert len(choices) == len(classes)
     if which >= len(choices):
         return []
-    elif which == len(choices) - 1:
+    if which == len(choices) - 1:
         return [[(classes[which], x)] for x in choices[which]]
     
     res = []
     tmp = GetUniqueCombinations(choices, classes, which=which + 1)
     for thing in choices[which]:
-        for other in tmp:
-            idxThere = 0
-            for x in other:
-                if x[1] == thing:
-                    idxThere += 1
-            if not idxThere:
+        for other in tmp:            
+            if not any(x[1] == thing for x in other):
                 newL = [(classes[which], thing)] + other
                 newL.sort()
                 if newL not in res:
@@ -343,7 +334,7 @@ def GetPossibleScaffolds(nPts, bins, useTriangleInequality=True):
     """
     if nPts < 2:
         return 0
-    elif nPts == 2:
+    if nPts == 2:
         return [(x, ) for x in range(len(bins))]
     
     nDists = len(nPointDistDict[nPts])

@@ -74,7 +74,7 @@ class TestCase(unittest.TestCase):
             onBits = sig.GetOnBits()
             for bit in onBits:
                 atoms = Matcher.GetAtomsMatchingBit(factory, bit, mol, justOne=1)
-                assert len(atoms), 'bit %d failed to match for smi %s' % (bit, smi)
+                assert len(atoms), f'bit {bit} failed to match for smi {smi}'
 
     def test_exampleCode(self):
         # We make sure that the example code runs
