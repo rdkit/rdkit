@@ -47,10 +47,9 @@ def _ShortestPathsMatch(match, featureSet, sig, dMat, sigFactory):
   """
   if _verbose:
     print('match:', match)
-  nPts = len(match)
-  distsToCheck = Utils.nPointDistDict[nPts]
-  nDists = len(distsToCheck)
-  dist = [0] * nDists
+
+  distsToCheck = Utils.nPointDistDict[len(match)]
+  dist = [0] * len(distsToCheck)
   bins = sigFactory.GetBins()
   minD, maxD = bins[0][0], bins[-1][1]
 
@@ -143,8 +142,8 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     #  the proto-pharmacophore.
     matchPerms = [featMatches[x] for x in perm]
     if _verbose:
-      print('\n->Perm: %s' % (str(perm)))
-      print('    matchPerms: %s' % (str(matchPerms)))
+      print(f'\n->Perm: {str(perm)}')
+      print(f'    matchPerms: {str(matchPerms)}')
 
     # Get all unique combinations of those possible matches:
     matchesToMap = Utils.GetUniqueCombinations(matchPerms, featClasses)
