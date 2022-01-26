@@ -44,11 +44,11 @@ DrawMol::DrawMol(
     const std::vector<std::pair<DrawColour, DrawColour>> *bond_colours,
     const std::map<int, double> *highlight_radii, bool includeAnnotations,
     int confId, bool isReactionMol)
-    : legend_(legend),
-      drawOptions_(drawOptions),
+    : drawOptions_(drawOptions),
       textDrawer_(textDrawer),
       includeAnnotations_(includeAnnotations),
       isReactionMol_(isReactionMol),
+      legend_(legend),
       confId_(confId),
       width_(width),
       height_(height),
@@ -95,8 +95,8 @@ DrawMol::DrawMol(int width, int height, const MolDrawOptions &drawOptions,
       scale_(scale),
       fontScale_(fontscale),
       xMin_(xmin),
-      xMax_(xmax),
       yMin_(ymin),
+      xMax_(xmax),
       yMax_(ymax),
       xRange_(xmax - xmin),
       yRange_(ymax - ymin),
@@ -621,7 +621,7 @@ void DrawMol::extractBrackets() {
       static const double cos45 = 1.0 / sqrt(2.0);
       bool horizontal = fabs(longline.x) > cos45 ? true : false;
       size_t labelBrk = postShapes_.size() - 1;
-      for (size_t i = 1; i < numBrackets; ++i) {
+      for (int i = 1; i < numBrackets; ++i) {
         const auto &brkShp = *postShapes_[postShapes_.size() - i - 1];
         if (horizontal) {
           if (brkShp.points_[2].y > postShapes_[labelBrk]->points_[2].y) {
@@ -1497,9 +1497,10 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
   auto midp = (at2_cds + at1_cds) / 2.;
   auto tdash = shortDashes;
   DrawColour queryColour{0.5, 0.5, 0.5};
-  int at1Idx, at2Idx;
 
   bool drawGenericQuery = false;
+  int at1Idx = begAt->getIdx();
+  int at2Idx = endAt->getIdx();
   if (qry->getDescription() == "SingleOrDoubleBond") {
     at1Idx = begAt->getIdx();
     at2Idx = drawOptions_.splitBonds ? -1 : endAt->getIdx();
@@ -1777,11 +1778,11 @@ void DrawMol::adjustBondEndsForLabels(int begAtIdx, int endAtIdx,
   begCds = atCds_[begAtIdx];
   endCds = atCds_[endAtIdx];
   if (atomLabels_[begAtIdx]) {
-    adjustBondEndForString(atCds_[begAtIdx], atCds_[endAtIdx], padding,
+    adjustBondEndForString(endCds, padding,
                            atomLabels_[begAtIdx]->rects_, begCds);
   }
   if (atomLabels_[endAtIdx]) {
-    adjustBondEndForString(atCds_[endAtIdx], atCds_[begAtIdx], padding,
+    adjustBondEndForString(begCds, padding,
                            atomLabels_[endAtIdx]->rects_, endCds);
   }
 }
@@ -1955,7 +1956,7 @@ void DrawMol::makeBondHighlightLines(int lineWidth) {
     unsigned int thisIdx = atom->getIdx();
     for (const auto &nbri : make_iterator_range(drawMol_->getAtomBonds(atom))) {
       const Bond *bond = (*drawMol_)[nbri];
-      int nbrIdx = bond->getOtherAtomIdx(thisIdx);
+      unsigned int nbrIdx = bond->getOtherAtomIdx(thisIdx);
       if (nbrIdx < static_cast<unsigned int>(atCds_.size()) &&
           nbrIdx > thisIdx) {
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
@@ -1981,7 +1982,6 @@ void DrawMol::makeBondHighlightLines(int lineWidth) {
 void DrawMol::calcAnnotationPosition(const Atom *atom,
                                      DrawAnnotation &annot) const {
   PRECONDITION(atom, "no atom");
-  Point2D const &at_cds = atCds_[atom->getIdx()];
   double start_ang = getNoteStartAngle(atom);
   Point2D const &atCds = atCds_[atom->getIdx()];
 
@@ -2216,41 +2216,33 @@ OrientType DrawMol::calcRadicalRect(const Atom *atom,
     y_max = atCds.y + 3 * spot_rad * textDrawer_.fontScale();
   }
 
-  auto try_all = [&](OrientType ornt) -> bool {
-    if (!doesRectClash(rad_rect, 0.0)) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
   auto try_north = [&]() -> bool {
     rad_rect.width_ = rad_size * textDrawer_.fontScale();
     rad_rect.height_ = spot_rad * 3.0 * textDrawer_.fontScale();
     rad_rect.trans_.x = atCds.x;
     rad_rect.trans_.y = y_max + 0.5 * rad_rect.height_;
-    return try_all(OrientType::N);
+    return !doesRectClash(rad_rect, 0.0);
   };
   auto try_south = [&]() -> bool {
     rad_rect.width_ = rad_size * textDrawer_.fontScale();
     rad_rect.height_ = spot_rad * 3.0 * textDrawer_.fontScale();
     rad_rect.trans_.x = atCds.x;
     rad_rect.trans_.y = y_min - 0.5 * rad_rect.height_;
-    return try_all(OrientType::S);
+    return !doesRectClash(rad_rect, 0.0);
   };
   auto try_east = [&]() -> bool {
     rad_rect.trans_.x = x_max + 3.0 * spot_rad * textDrawer_.fontScale();
     rad_rect.trans_.y = atCds.y;
     rad_rect.width_ = spot_rad * 1.5 * textDrawer_.fontScale();
     rad_rect.height_ = rad_size * textDrawer_.fontScale();
-    return try_all(OrientType::E);
+    return !doesRectClash(rad_rect, 0.0);
   };
   auto try_west = [&]() -> bool {
     rad_rect.trans_.x = x_min - 3.0 * spot_rad * textDrawer_.fontScale();
     rad_rect.trans_.y = atCds.y;
     rad_rect.width_ = spot_rad * 1.5 * textDrawer_.fontScale();
     rad_rect.height_ = rad_size * textDrawer_.fontScale();
-    return try_all(OrientType::W);
+    return !doesRectClash(rad_rect, 0.0);
   };
 
   auto try_rads = [&](OrientType ornt) -> bool {
@@ -2323,7 +2315,8 @@ Point2D DrawMol::getDrawCoords(const Point2D &atCds) const {
 
 // ****************************************************************************
 Point2D DrawMol::getDrawCoords(int atnum) const {
-  PRECONDITION(atnum >= 0 && atnum < atCds_.size(), "bad atom number");
+  PRECONDITION(atnum >= 0 && atnum < static_cast<int>(atCds_.size()),
+	       "bad atom number");
   return getDrawCoords(Point2D(atCds_[atnum].x, -atCds_[atnum].y));
 }
 
@@ -2342,7 +2335,8 @@ Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
 
 // ****************************************************************************
 Point2D DrawMol::getAtomCoords(int atnum) const {
-  PRECONDITION(atnum >= 0 && atnum < atCds_.size(), "bad atom number");
+  PRECONDITION(atnum >= 0 && atnum < static_cast<int>(atCds_.size()),
+	       "bad atom number");
   return atCds_[atnum];
 }
 
@@ -2847,7 +2841,7 @@ Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
 
 // ****************************************************************************
 void adjustBondEndForString(
-    const Point2D &end1, const Point2D &end2, double padding,
+    const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd) {
   Point2D labelPos = moveEnd;
   for (auto r : rects) {

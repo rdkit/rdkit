@@ -286,7 +286,7 @@ Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
 // return a point that is end1 moved so as not to clash with any of the
 // rects of a label.  end1 to end2 and the coords of 2 ends of a bond.
 void adjustBondEndForString(
-    const Point2D &end1, const Point2D &end2, double padding,
+    const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd);
 void findRadicalExtremes(
     const std::vector<std::tuple<StringRect, OrientType, int>> &radicals,

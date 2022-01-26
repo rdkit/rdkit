@@ -96,6 +96,20 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
       frac_(frac),
       angle_(angle) {
   PRECONDITION(points_.size() == 2, "arrow bad points size");
+
+  // the two ends of the arrowhead are used for collision detection so they
+  // may as well store them.
+  Point2D delta = points_[0] - points_[1];
+  double cos_angle = std::cos(angle_), sin_angle = std::sin(angle_);
+  Point2D p1 = points_[0];
+  p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
+  p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
+  points_.emplace_back(p1);
+  
+  Point2D p2 = points_[1];
+  p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
+  p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
+  points_.emplace_back(p2);
 }
 
 // ****************************************************************************
