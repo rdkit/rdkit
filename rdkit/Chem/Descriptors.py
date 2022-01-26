@@ -8,7 +8,8 @@
 #  of the RDKit source tree.
 #
 
-from collections import abc  # This won't work in python 2, but we don't support that any more
+from collections import \
+    abc  # This won't work in python 2, but we don't support that any more
 from typing import Callable
 
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
@@ -51,8 +52,7 @@ _descList = []
 def _setupDescriptors(namespace):
   global _descList, descList
   from rdkit.Chem import Descriptors3D  # Shortcut
-  from rdkit.Chem import (Crippen, Fragments, GraphDescriptors, Lipinski,
-                          MolSurf)
+  from rdkit.Chem import (Crippen, Fragments, GraphDescriptors, Lipinski, MolSurf)
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
 
@@ -183,8 +183,10 @@ def _ChargeDescriptors(mol, force=False):
   maxChg = -500.
   for at in mol.GetAtoms():
     chg = float(at.GetProp('_GasteigerCharge'))
-    minChg = min(chg, minChg)
-    maxChg = max(chg, maxChg)
+    if chg < minChg:
+      minChg = chg
+    elif chg > maxChg:
+      maxChg = chg
   res = (minChg, maxChg)
   mol._chargeDescriptors = res
   return res
@@ -249,17 +251,14 @@ _du.setDescriptorVersion('1.0.0')(FpDensityMorgan2)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan3)
 
 if hasattr(rdMolDescriptors, 'BCUT2D'):
-  names = [
-    "BCUT2D_%s" % s
-    for s in ('MWHI', "MWLOW", "CHGHI", "CHGLO", "LOGPHI", "LOGPLOW", "MRHI", "MRLOW")
-  ]
+  names = [f"BCUT2D_{s}" for s in ('MWHI', "MWLOW", "CHGHI", "CHGLO", "LOGPHI", "LOGPLOW", "MRHI", "MRLOW")]
   _du.VectorDescriptorWrapper(_rdMolDescriptors.BCUT2D, names=names, version="1.0.0",
                               namespace=locals())
 
 _setupDescriptors(locals())
 
 if hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'):
-  names = ["AUTOCORR2D_%s" % str(i + 1) for i in range(192)]
+  names = [f"AUTOCORR2D_{i + 1}" for i in range(192)]
   autocorr = _du.VectorDescriptorWrapper(_rdMolDescriptors.CalcAUTOCORR2D, names=names,
                                          version="1.0.0", namespace=locals())
 
@@ -298,8 +297,8 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

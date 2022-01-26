@@ -13,14 +13,13 @@
 
 
 """
-import numpy
 import math
-
-from rdkit import Chem
-from rdkit.Chem import Graphs
-from rdkit.Chem import rdMolDescriptors
-from rdkit.ML.InfoTheory import entropy
 from collections import Counter
+
+import numpy
+from rdkit import Chem
+from rdkit.Chem import Graphs, rdMolDescriptors
+from rdkit.ML.InfoTheory import entropy
 
 ptable = Chem.GetPeriodicTable()
 
@@ -555,7 +554,7 @@ def _CreateBondDictEtc(mol, numAtoms):
     if not aBond.GetIsAromatic():
       bondDict[(atom1, atom2)] = aBond.GetBondType()
     else:
-      # mark Kekulized systems as aromatic
+      # mark kekulized system as aromatic
       bondDict[(atom1, atom2)] = Chem.BondType.AROMATIC
     
     if nList[atom1] is None:
@@ -571,7 +570,7 @@ def _CreateBondDictEtc(mol, numAtoms):
     try:
       element.sort()
       vdList[i] = len(element)
-    except Exception: # this cannot be raised
+    except Exception:
       vdList[i] = 0
   return bondDict, nList, vdList
 
