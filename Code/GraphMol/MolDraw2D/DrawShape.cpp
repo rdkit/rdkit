@@ -106,8 +106,8 @@ void DrawShapeArrow::myDraw(MolDraw2D &drawer) const {
     drawer.setActiveAtmIdx(atom1_, atom2_);
   }
   drawer.setActiveBndIdx(bond_);
-  drawer.drawArrow(points_[0], points_[1], lineColour_, fill_, frac_, angle_,
-                   true);
+  drawer.drawArrow(points_[0], points_[1], fill_, frac_, angle_,
+                   lineColour_, true);
 }
 
 // ****************************************************************************

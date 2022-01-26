@@ -261,7 +261,6 @@ void MolDraw2D::drawReaction(
     const ChemicalReaction &rxn, bool highlightByReactant,
     const std::vector<DrawColour> *highlightColorsReactants,
     const std::vector<int> *confIds) {
-  double spacing = 1.0;
 
   std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> reagents;
   std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> products;
@@ -287,8 +286,9 @@ void MolDraw2D::drawReaction(
   startDrawing();
   int xOffset = 0;
   xOffset = drawReactionPart(reagents, plusWidth, xOffset, offsets);
-  drawArrow(arrowBeg, arrowEnd, drawOptions().symbolColour, false, 0.05,
-            M_PI / 6, true);
+  drawArrow(arrowBeg, arrowEnd, false, 0.05, M_PI / 6,
+	    drawOptions().symbolColour, true);
+  drawArrow(arrowBeg, arrowEnd);
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
 
@@ -430,8 +430,8 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
-                          const DrawColour &col, bool asPolygon, double frac,
-                          double angle, bool rawCoords) {
+                          bool asPolygon, double frac,
+                          double angle, const DrawColour &col, bool rawCoords) {
   Point2D delta = arrowBegin - arrowEnd;
   double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
 
@@ -505,10 +505,10 @@ Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
 // ****************************************************************************
 Point2D MolDraw2D::getDrawCoords(int at_num) const {
   // this one can't use globalDrawTrans_, obviously.
-  PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
+  PRECONDITION(activeMolIdx_ >= 0 && static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
                "bad active mol index");
   PRECONDITION(!drawMols_.empty(), "no draw mols");
-  PRECONDITION(at_num < drawMols_[activeMolIdx_]->atCds_.size(), "bad atom number");
+  PRECONDITION(static_cast<size_t>(at_num) < drawMols_[activeMolIdx_]->atCds_.size(), "bad atom number");
   return drawMols_[activeMolIdx_]->getDrawCoords(at_num);
 }
 
@@ -537,7 +537,7 @@ Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(int at_num) const {
   PRECONDITION(!drawMols_.empty() && activeMolIdx_ >= 0 &&
-                   activeMolIdx_ <= drawMols_.size(),
+	       static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
                "bad active mol index");
   return drawMols_[activeMolIdx_]->getAtomCoords(at_num);
 }
@@ -594,7 +594,7 @@ Point2D MolDraw2D::range() const {
 
 // ****************************************************************************
 double MolDraw2D::scale() const {
-  PRECONDITION(activeMolIdx_ >= 0 && activeMolIdx_ <= drawMols_.size(),
+  PRECONDITION(activeMolIdx_ >= 0 && static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
                "bad active mol index");
   return drawMols_[activeMolIdx_]->getScale();
 }
@@ -740,7 +740,7 @@ void MolDraw2D::getStringExtremes(const string &label, MolDraw2D_detail::OrientT
 
 // ****************************************************************************
 void MolDraw2D::setActiveMolIdx(int newIdx) {
-  PRECONDITION(newIdx >= -1 && newIdx < drawMols_.size(),
+  PRECONDITION(newIdx >= -1 && newIdx < static_cast<int>(drawMols_.size()),
                "bad new activeMolIdx_");
   activeMolIdx_ = newIdx;
 }
@@ -828,7 +828,7 @@ void MolDraw2D::makeReactionComponents(
     int heightToUse, std::map<int, DrawColour> &atomColours,
     std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
     double &minScale, double &minFontScale) {
-  for (auto midx = 0; midx < bits.size(); ++midx) {
+  for (size_t midx = 0; midx < bits.size(); ++midx) {
     std::vector<int> highlightAtoms, highlightBonds;
     std::map<int, DrawColour> highlightAtomMap, highlightBondMap;
     int cid = -1;
@@ -991,7 +991,7 @@ void MolDraw2D::calcReactionOffsets(
 
   // And finally work out where to put all the pieces.
   int xOffset = 0;
-  for (auto i = 0; i < reagents.size(); ++i) {
+  for (size_t i = 0; i < reagents.size(); ++i) {
     offsets.emplace_back(
         Point2D(xOffset, (height() - reagents[i]->height_) / 2));
     xOffset += reagents[i]->width_ + plusWidth;
@@ -1005,7 +1005,7 @@ void MolDraw2D::calcReactionOffsets(
     arrowEnd = Point2D(arrowBeg.x + 4 * plusWidth, height() / 2);
   } else {
     xOffset += plusWidth;
-    for (auto i = 0; i < agents.size(); ++i) {
+    for (size_t i = 0; i < agents.size(); ++i) {
       offsets.emplace_back(
           Point2D(xOffset, 0.475 * height() - agents[i]->height_));
       xOffset += agents[i]->width_ + plusWidth;
@@ -1013,7 +1013,7 @@ void MolDraw2D::calcReactionOffsets(
     arrowEnd = Point2D(xOffset, height() /2);
   }
   xOffset = arrowEnd.x + plusWidth;
-  for (auto i = 0; i < products.size(); ++i) {
+  for (size_t i = 0; i < products.size(); ++i) {
     offsets.emplace_back(
         Point2D(xOffset, (height() - products[i]->height_) / 2));
     xOffset += products[i]->width_ + plusWidth;
@@ -1029,7 +1029,7 @@ int MolDraw2D::drawReactionPart(
   }
 
   Point2D plusPos(0.0, height() / 2);
-  for (auto i = 0; i < reactBit.size(); ++i) {
+  for (size_t i = 0; i < reactBit.size(); ++i) {
     ++activeMolIdx_;
     reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
     reactBit[i]->draw(*this);
@@ -1076,7 +1076,7 @@ void MolDraw2D::findReactionHighlights(
     if (highlightColorsReactants) {
       colors = highlightColorsReactants;
     }
-    for (auto midx = 0; midx < rxn.getReactants().size(); ++midx) {
+    for (size_t midx = 0; midx < rxn.getReactants().size(); ++midx) {
       auto fragMol = rxn.getReactants()[midx].get();
       for (auto &atom : fragMol->atoms()) {
         int atomRole = -1;
