@@ -553,7 +553,7 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     idx = nAts
     for exVol in excludedVolumes:
       assert exVol.pos is not None
-      logger.debug(f'ff.AddExtraPoint({exVol.pos[0]:.4f},{exVol.pos[1]:.4f},{exVol.pos[2]:.4f})'
+      logger.debug(f'ff.AddExtraPoint({exVol.pos[0]:.4f},{exVol.pos[1]:.4f},{exVol.pos[2]:.4f}')
       ff.AddExtraPoint(exVol.pos[0], exVol.pos[1], exVol.pos[2], True)
       
       indices = []
