@@ -47,7 +47,7 @@ def GetRDKFingerprint(mol):
 def FoldFingerprintToTargetDensity(fp, **fpArgs):
   nOn = fp.GetNumOnBits()
   nTot = fp.GetNumBits()
-  while (float(nOn) / nTot < fpArgs['tgtDensity']):
+  while float(nOn) / nTot < fpArgs['tgtDensity']:
     if nTot / 2 > fpArgs['minSize']:
       fp = DataStructs.FoldFingerprint(fp, 2)
       nOn = fp.GetNumOnBits()
