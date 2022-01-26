@@ -59,8 +59,7 @@ def FoldFingerprintToTargetDensity(fp, **fpArgs):
 
 def FingerprintMol(mol, fingerprinter=Chem.RDKFingerprint, **fpArgs):
   if not fpArgs:
-    details = FingerprinterDetails()
-    fpArgs = details.__dict__
+    fpArgs = FingerprinterDetails().__dict__
 
   if fingerprinter != Chem.RDKFingerprint:
     fp = fingerprinter(mol, **fpArgs)
