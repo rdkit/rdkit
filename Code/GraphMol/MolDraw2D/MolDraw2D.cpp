@@ -287,8 +287,8 @@ void MolDraw2D::drawReaction(
   startDrawing();
   int xOffset = 0;
   xOffset = drawReactionPart(reagents, plusWidth, xOffset, offsets);
-  drawArrow(arrowBeg, arrowEnd, drawOptions().symbolColour, false, 0.05,
-            M_PI / 6, true);
+  drawArrow(arrowBeg, arrowEnd, false, 0.05,
+            M_PI / 6, drawOptions().symbolColour, true);
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
 
@@ -430,8 +430,8 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
-                          const DrawColour &col, bool asPolygon, double frac,
-                          double angle, bool rawCoords) {
+                          bool asPolygon, double frac, double angle,
+                          const DrawColour &col, bool rawCoords) {
   Point2D delta = arrowBegin - arrowEnd;
   double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
 

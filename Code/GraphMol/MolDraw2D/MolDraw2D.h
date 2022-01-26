@@ -41,7 +41,7 @@ namespace RDKit {
 namespace MolDraw2D_detail {
 class DrawMol;
 class DrawText;
-}
+}  // namespace MolDraw2D_detail
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
 class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
@@ -85,13 +85,13 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     coordinates
 
   */
-      virtual void drawMolecule(
-          const ROMol &mol, const std::string &legend,
-          const std::vector<int> *highlight_atoms,
-          const std::vector<int> *highlight_bonds,
-          const std::map<int, DrawColour> *highlight_atom_map = nullptr,
-          const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-          const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+  virtual void drawMolecule(
+      const ROMol &mol, const std::string &legend,
+      const std::vector<int> *highlight_atoms,
+      const std::vector<int> *highlight_bonds,
+      const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+      const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+      const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 
   //! \overload
   virtual void drawMolecule(
@@ -222,8 +222,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                         bool rawCoords = false);
   //! draw a triangle
   virtual void drawTriangle(const Point2D &cds1, const Point2D &cds2,
-                            const Point2D &cds3,
-                            bool rawCoords = false);
+                            const Point2D &cds3, bool rawCoords = false);
   //! draw an ellipse
   virtual void drawEllipse(const Point2D &cds1, const Point2D &cds2,
                            bool rawCoords = false);
@@ -249,13 +248,13 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                             const DrawColour &col1, const DrawColour &col2,
                             unsigned int nSegments = 16,
-                            double vertOffset = 0.05,
-                            bool rawCoords = false);
+                            double vertOffset = 0.05, bool rawCoords = false);
   //! Draw an arrow with either lines or a filled head (when asPolygon is true)
   virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
-                         const DrawColour &col,
                          bool asPolygon = false, double frac = 0.05,
-                         double angle = M_PI / 6, bool rawCoords = false);
+                         double angle = M_PI / 6,
+                         const DrawColour &col = DrawColour(0, 0, 0),
+                         bool rawCoords = false);
   // draw a plus sign with lines at the given position.
   virtual void drawPlus(const Point2D &cds, int plusWidth,
                         const DrawColour &col, bool rawCoords = false);
@@ -362,10 +361,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                              double &label_height) const;
   // get the overall size of the label, allowing for it being split
   // into pieces according to orientation.
-  void getLabelSize(const std::string &label, MolDraw2D_detail::OrientType orient,
-                    double &label_width, double &label_height) const;
+  void getLabelSize(const std::string &label,
+                    MolDraw2D_detail::OrientType orient, double &label_width,
+                    double &label_height) const;
   // return extremes for string in molecule coords.
-  void getStringExtremes(const std::string &label, MolDraw2D_detail::OrientType orient,
+  void getStringExtremes(const std::string &label,
+                         MolDraw2D_detail::OrientType orient,
                          const Point2D &cds, double &x_min, double &y_min,
                          double &x_max, double &y_max) const;
 
@@ -406,7 +407,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   std::vector<std::pair<std::string, std::string>> d_metadata;
   unsigned int d_numMetadataEntries = 0;
 
-
  private:
   //! \name Methods that must be provided by child classes
   //@{
@@ -425,32 +425,36 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::vector<int> *confIds,
       std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
       std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
-      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents, int &plusWidth);
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
+      int &plusWidth);
   // take the given components from the reaction (bits will be either
   // reagents, products or agents) and return the corresponding DrawMols.
-  void makeReactionComponents(std::vector<RDKit::ROMOL_SPTR> const &bits,
-                              const std::vector<int> *confIds, int heightToUse,
-                              std::map<int, DrawColour> &atomColours,
-                              std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
-                              double &minScale, double &minFontScale);
-  void makeReactionDrawMol(RWMol &mol, int confId, int molHeight,
-                           const std::vector<int> &highlightAtoms,
-                           const std::vector<int> &highlightBonds,
-                           const std::map<int, DrawColour> &highlightAtomMap,
-                           const std::map<int, DrawColour> &highlightBondMap,
-                           std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &mols);
+  void makeReactionComponents(
+      std::vector<RDKit::ROMOL_SPTR> const &bits,
+      const std::vector<int> *confIds, int heightToUse,
+      std::map<int, DrawColour> &atomColours,
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
+      double &minScale, double &minFontScale);
+  void makeReactionDrawMol(
+      RWMol &mol, int confId, int molHeight,
+      const std::vector<int> &highlightAtoms,
+      const std::vector<int> &highlightBonds,
+      const std::map<int, DrawColour> &highlightAtomMap,
+      const std::map<int, DrawColour> &highlightBondMap,
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &mols);
   // Strictly speaking, this isn't actually a const function, although the
   // compiler can't spot it, because the scales of reagents etc may be changed,
   // and they are also in drawMols_.
-  void calcReactionOffsets(std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
-                           std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
-                           std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
-                           int &plusWidth, std::vector<Point2D> &offsets,
-                           Point2D &arrowBeg, Point2D &arrowEnd);
+  void calcReactionOffsets(
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reagents,
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &products,
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
+      int &plusWidth, std::vector<Point2D> &offsets, Point2D &arrowBeg,
+      Point2D &arrowEnd);
   // returns the final offset. plusWidth of 0 means no pluses to be drawn.
-  int drawReactionPart(std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reactBit,
-                       int plusWidth, int initOffset,
-                       const std::vector<Point2D> &offsets);
+  int drawReactionPart(
+      std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &reactBit,
+      int plusWidth, int initOffset, const std::vector<Point2D> &offsets);
   // returns a map of colours indexed by the atomMapNum. Each reagent gives
   // a different colour.
   void findReactionHighlights(
@@ -495,7 +499,6 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void updateMetadata(const ChemicalReaction &rxn) {
     RDUNUSED_PARAM(rxn);
   }
-
 };
 
 inline void setDarkMode(MolDrawOptions &opts) {

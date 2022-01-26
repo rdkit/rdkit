@@ -599,6 +599,16 @@ void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
   self.drawWavyLine(cds1, cds2, col1, col2, nSegments, vertOffset, rawCoords);
 }
 
+void drawArrowHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
+                     const Point2D &cds2, python::tuple &pycol, bool asPolygon,
+                     double frac, double angle, bool rawCoords) {
+  DrawColour col{0.0, 0.0, 0.0};
+  if (pycol) {
+    col = pyTupleToDrawColour(pycol);
+  }
+  self.drawArrow(cds1, cds2, asPolygon, frac, angle, col, rawCoords);
+}
+
 void setDrawOptions(RDKit::MolDraw2D &self, const MolDrawOptions &opts) {
   self.drawOptions() = opts;
 }
@@ -649,6 +659,14 @@ void drawStringHelper(MolDraw2D &self, std::string text, const Point2D &loc,
   self.drawString(text, loc, talign, rawCoords);
 }
 
+void setScaleHelper(MolDraw2D &self, int width, int height, const Point2D &minv,
+                    const Point2D &maxv, python::object mol) {
+  ROMol *mol_p = nullptr;
+  if (mol) {
+    mol_p = python::extract<RDKit::ROMol *>(mol);
+  }
+  self.setScale(width, height, minv, maxv, mol_p);
+}
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolDraw2D) {
@@ -725,6 +743,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "clear the background before drawing a molecule")
       .def_readwrite("legendFontSize", &RDKit::MolDrawOptions::legendFontSize,
                      "font size in pixels of the legend (if drawn)")
+      .def_readwrite(
+          "legendFraction", &RDKit::MolDrawOptions::legendFraction,
+          "fraction of the draw panel to be used for the legend if present")
       .def_readwrite("maxFontSize", &RDKit::MolDrawOptions::maxFontSize,
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")
@@ -896,13 +917,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "set the offset (in drawing coordinates) for the drawing")
       .def("Offset", &RDKit::MolDraw2D::offset,
            "returns the offset (in drawing coordinates) for the drawing")
-      .def("SetScale",
-           (void(RDKit::MolDraw2D::*)(int, int, const Point2D &,
-                                      const Point2D &, const RDKit::ROMol *)) &
-               RDKit::MolDraw2D::setScale,
+      .def("SetScale", &RDKit::setScaleHelper,
            (python::arg("self"), python::arg("width"), python::arg("height"),
             python::arg("minv"), python::arg("maxv"),
-            python::arg("mol") = nullptr),
+            python::arg("mol") = python::object()),
            "uses the values provided to set the drawing scaling")
       .def("SetLineWidth", &RDKit::MolDraw2D::setLineWidth,
            "set the line width being used")
@@ -921,10 +939,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("rawCoords") = false),
            "draws a line with the current drawing style. The coordinates "
            "are in the molecule frame")
-      .def("DrawArrow", &RDKit::MolDraw2D::drawArrow,
+      .def("DrawArrow", RDKit::drawArrowHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
-            python::arg("asPolygon") = false, python::arg("frac") = 0.05,
-            python::arg("angle") = M_PI / 6, python::arg("rawCoords") = false),
+            python::arg("color") = python::object(), python::arg("asPolygon") = false,
+            python::arg("frac") = 0.05, python::arg("angle") = M_PI / 6,
+            python::arg("rawCoords") = false),
            "draws an arrow with the current drawing style. The coordinates "
            "are in the molecule frame. If asPolygon is true the head of the "
            "arrow will be drawn as a triangle, otherwise two lines are used.")
