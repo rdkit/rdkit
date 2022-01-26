@@ -146,7 +146,7 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
        https://doi.org/10.1002/9783527618279.ch37
 
        Definition:
-         sqrt(pm3**2 -pm1**2) / pm3**2
+         sqrt(pm3**2 -pm1**2) / pm3
 
     **Arguments**
 
