@@ -19,7 +19,7 @@ class OutputNode(BaseOutputNode):
 
     Usage Example:
       >>> from rdkit import Chem
-      >>> smis = ['C1CCC1','C1CC1','C=O','NCC']
+      >>> smis = ['C1CCC1', 'C1CC1', 'C=O', 'NCC']
       >>> mols = [Chem.MolFromSmiles(x) for x in smis]
       >>> from rdkit.VLib.Supply import SupplyNode
       >>> suppl = SupplyNode(contents=mols)

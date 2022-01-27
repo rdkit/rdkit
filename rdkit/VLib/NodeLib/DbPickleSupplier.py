@@ -38,12 +38,11 @@ if RDConfig.usePgSQL:
         (curs.res.resultType != sql.RESULT_DQL and curs.closed is None):
         raise ValueError('bad cursor')
       if curs.res.nfields and curs.res.nfields < 2:
-        raise ValueError('invalid number of results returned (%d), must be at least 2' %
-                         curs.res.nfields)
+        raise ValueError(f'invalid number of results returned ({curs.res.nfields}), must be at least 2')
       desc1 = curs.description[self._pickleCol]
       ftv = desc1[self._pickleCol].value
       if ftv != sql.BINARY:
-        raise TypeError('pickle column (%d) of bad type' % self._pickleCol)
+        raise TypeError(f'pickle column ({self._pickleCol}) of bad type')
 
     def __iter__(self):
       try:
@@ -64,12 +63,12 @@ if RDConfig.usePgSQL:
         raise StopIteration
       
       if not self._first:
-        res = curs.conn.conn.query('fetch 1 from "%s"' % self.cursor.name)
+        res = curs.conn.conn.query(f'fetch 1 from "{self.cursor.name}"')
         if res.ntuples == 0:
           raise StopIteration
         else:
           if res.nfields < 2:
-            raise ValueError('bad result: %s' % str(res))
+            raise ValueError(f'bad result: {str(res)}')
           t = [res.getvalue(0, x) for x in range(res.nfields)]
           val = t[self._pickleCol]
       else:
@@ -104,11 +103,11 @@ if RDConfig.usePgSQL:
       self.cursor.execute(self.cmd)
       self._first = self.cursor.fetchone()
       self._validate()
-      self.res = self.cursor.conn.conn.query('fetch all from "%s"' % self.cursor.name)
+      self.res = self.cursor.conn.conn.query(f'fetch all from "{self.cursor.name}"')
       self.rowCount = self.res.ntuples + 1
       self.idx = 0
       if self.res.nfields < 2:
-        raise ValueError('bad query result' % str(res)) # This code should not be raised
+        raise ValueError('bad query result', str(res))
 
       return self
 
@@ -129,11 +128,11 @@ if RDConfig.usePgSQL:
         self.cursor.execute(self.cmd)
         self._first = self.cursor.fetchone()
         self._validate()
-        self.res = self.cursor.conn.conn.query('fetch all from "%s"' % self.cursor.name)
+        self.res = self.cursor.conn.conn.query(f'fetch all from "{self.cursor.name}"')
         self.rowCount = self.res.ntuples + 1
         self.idx = 0
         if self.res.nfields < 2:
-          raise ValueError('bad query result' % str(res)) # This code should not be raised
+          raise ValueError('bad query result', str(res))
 
       if idx < 0:
         idx = self.rowCount + idx
@@ -151,7 +150,7 @@ if RDConfig.usePgSQL:
         except Exception:
           import logging
           del t[self._pickleCol]
-          logging.exception('Depickling failure in row: %s' % str(t))
+          logging.exception(f'Depickling failure in row: {str(t)}')
           raise
         del t[self._pickleCol]
         fp._fieldsFromDb = t

@@ -30,7 +30,7 @@ class SmartsFilter(FilterNode):
     We can pass in SMARTS strings:
     >>> smas = ['C=O', 'CN']
     >>> counts = [1, 2]
-    >>> filt = SmartsFilter(patterns=smas,counts=counts)
+    >>> filt = SmartsFilter(patterns=smas, counts=counts)
     >>> filt.AddParent(suppl)
     >>> ms = [x for x in filt]
     >>> len(ms)
@@ -40,7 +40,7 @@ class SmartsFilter(FilterNode):
     >>> mols = [Chem.MolFromSmarts(x) for x in smas]
     >>> counts = [1, 2]
     >>> filt.Destroy()
-    >>> filt = SmartsFilter(patterns=mols,counts=counts)
+    >>> filt = SmartsFilter(patterns=mols, counts=counts)
     >>> filt.AddParent(suppl)
     >>> ms = [x for x in filt]
     >>> len(ms)

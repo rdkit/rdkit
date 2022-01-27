@@ -17,7 +17,7 @@ class SmartsRemover(TransformNode):
 
   Sample Usage:
     >>> from rdkit import Chem
-    >>> smis = ['C1CCC1.C=O','C1CCC1C=O','CCC=O.C=O','NCC=O.C=O.CN']
+    >>> smis = ['C1CCC1.C=O', 'C1CCC1C=O', 'CCC=O.C=O', 'NCC=O.C=O.CN']
     >>> mols = [Chem.MolFromSmiles(x) for x in smis]
     >>> from rdkit.VLib.Supply import SupplyNode
     >>> suppl = SupplyNode(contents=mols)
@@ -46,7 +46,7 @@ class SmartsRemover(TransformNode):
     >>> tform.Destroy()
     >>> smas = ['C=O', 'CN']
     >>> smas = [Chem.MolFromSmarts(x) for x in smas]
-    >>> tform = SmartsRemover(patterns=smas,wholeFragments=0)
+    >>> tform = SmartsRemover(patterns=smas, wholeFragments=0)
     >>> tform.AddParent(suppl)
     >>> ms = [x for x in tform]
     >>> len(ms)
@@ -88,7 +88,7 @@ class SmartsRemover(TransformNode):
       if isinstance(pattern, (str, bytes)):
         mol = Chem.MolFromSmarts(pattern)
         if not mol:
-          raise ValueError('bad smarts: %s' % (pattern))
+          raise ValueError(f'bad smarts: {pattern}')
         pattern = mol
       targets[i] = pattern
 
@@ -103,7 +103,7 @@ class SmartsRemover(TransformNode):
 
 
 biggerTest = """
->>> smis = ['CCOC','CCO.Cl','CC(=O)[O-].[Na+]','OCC','C[N+](C)(C)C.[Cl-]']
+>>> smis = ['CCOC', 'CCO.Cl', 'CC(=O)[O-].[Na+]', 'OCC', 'C[N+](C)(C)C.[Cl-]']
 >>> mols = [Chem.MolFromSmiles(x) for x in smis]
 >>> from rdkit.VLib.Supply import SupplyNode
 >>> suppl = SupplyNode(contents=mols)
@@ -111,20 +111,20 @@ biggerTest = """
 >>> len(ms)
 5
 
-#>>> salts = ['[Cl;H1&X1,-]','[Na+]','[O;H2,H1&-,X0&-2]']
+#>>> salts = ['[Cl;H1&X1,-]', '[Na+]', '[O;H2,H1&-,X0&-2]']
 
->>> salts = ['[Cl;H1&X1,-]','[Na+]','[O;H2,H1&-,X0&-2]']
+>>> salts = ['[Cl;H1&X1,-]', '[Na+]', '[O;H2,H1&-,X0&-2]']
 >>> m = mols[2]
 >>> m.GetNumAtoms()
 5
 >>> patts = [Chem.MolFromSmarts(x) for x in salts]
->>> m2 = Chem.DeleteSubstructs(m,patts[0],1)
+>>> m2 = Chem.DeleteSubstructs(m, patts[0], 1)
 >>> m2.GetNumAtoms()
 5
->>> m2 = Chem.DeleteSubstructs(m2,patts[1],1)
+>>> m2 = Chem.DeleteSubstructs(m2, patts[1], 1)
 >>> m2.GetNumAtoms()
 4
->>> m2 = Chem.DeleteSubstructs(m2,patts[2],1)
+>>> m2 = Chem.DeleteSubstructs(m2, patts[2], 1)
 >>> m2.GetNumAtoms()
 4
 

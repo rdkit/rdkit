@@ -5,7 +5,7 @@
 #
 import sys
 
-from rdkit import RDConfig  # Maintain for backwards compatibility
+from rdkit import RDConfig
 from rdkit.Chem.Suppliers import DbMolSupplier
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.VLib.Supply import SupplyNode
@@ -18,7 +18,7 @@ class DbMolSupplyNode(SupplyNode):
     >>> from rdkit.Dbase.DbConnection import DbConnect
     >>> import os
     >>> dbName = os.path.join(RDConfig.RDCodeDir, 'Chem', 'Fingerprints', 'test_data', 'data.gdb')
-    >>> conn = DbConnect(dbName,'simple_mols')
+    >>> conn = DbConnect(dbName, 'simple_mols')
     >>> dataset = conn.GetData()
     >>> suppl = DbMolSupplyNode(dataset)
     >>> ms = [x for x in suppl]

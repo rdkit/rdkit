@@ -13,8 +13,7 @@ class SDSupplyNode(SupplyNode):
     Sample Usage:
       >>> import os
       >>> from rdkit import RDConfig
-      >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
-                               'test_data','NCI_aids.10.sdf')
+      >>> fileN = os.path.join(RDConfig.RDCodeDir, 'VLib', 'NodeLib', 'test_data', 'NCI_aids.10.sdf')
       >>> suppl = SDSupplyNode(fileN)
       >>> ms = [x for x in suppl]
       >>> len(ms)

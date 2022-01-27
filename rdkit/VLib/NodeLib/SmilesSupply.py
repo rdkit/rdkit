@@ -13,9 +13,8 @@ class SmilesSupplyNode(SupplyNode):
     Sample Usage:
       >>> import os
       >>> from rdkit import RDConfig
-      >>> fileN = os.path.join(RDConfig.RDCodeDir,'VLib','NodeLib',\
-                               'test_data','pgp_20.txt')
-      >>> suppl = SmilesSupplyNode(fileN,delim="\\t",smilesColumn=2,nameColumn=1,titleLine=1)
+      >>> fileN = os.path.join(RDConfig.RDCodeDir, 'VLib', 'NodeLib', 'test_data', 'pgp_20.txt')
+      >>> suppl = SmilesSupplyNode(fileN, delim="\\t", smilesColumn=2, nameColumn=1, titleLine=1)
       >>> ms = [x for x in suppl]
       >>> len(ms)
       20
