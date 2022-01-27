@@ -39,10 +39,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DJS : public MolDraw2D {
     PRECONDITION(height > 0, "bad height");
     initTextDrawer(noFreetype);
   }
-  MolDraw2DJS(const MolDraw2DJS &rhs) = delete;
-  MolDraw2DJS(const MolDraw2DJS &&rhs) = delete;
-  MolDraw2DJS &operator=(const MolDraw2DJS &rhs) = delete;
-  MolDraw2DJS &operator=(const MolDraw2DJS &&rhs) = delete;
+  MolDraw2DJS(const MolDraw2DJS &) = delete;
+  MolDraw2DJS(MolDraw2DJS &&) = delete;
+  MolDraw2DJS &operator=(const MolDraw2DJS &) = delete;
+  MolDraw2DJS &operator=(MolDraw2DJS &&) = delete;
 
   void drawLine(const Point2D &cds1, const Point2D &cds2,
                 bool rawCoords = false) override;

@@ -31,10 +31,10 @@ class DrawTextSVG : protected DrawText {
  protected:
   DrawTextSVG(double max_fnt_sz, double min_fnt_sz, std::ostream &oss,
               std::string &d_act_class);
-  DrawTextSVG(const DrawTextSVG &rhs) = delete;
-  DrawTextSVG(const DrawTextSVG &&rhs) = delete;
-  DrawTextSVG &operator=(const DrawTextSVG &rhs) = delete;
-  DrawTextSVG &operator=(const DrawTextSVG &&rhs) = delete;
+  DrawTextSVG(const DrawTextSVG &) = delete;
+  DrawTextSVG(DrawTextSVG &&) = delete;
+  DrawTextSVG &operator=(const DrawTextSVG &) = delete;
+  DrawTextSVG &operator=(DrawTextSVG &&) = delete;
 
   void drawChar(char c, const Point2D &cds) override;
 

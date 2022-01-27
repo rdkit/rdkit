@@ -65,10 +65,10 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
       0.6;  // seems to be a good number
 
   DrawText(double max_fnt_sz, double min_fnt_sz);
-  DrawText(const DrawText &rhs) = delete;
-  DrawText(const DrawText &&rhs) = delete;
-  DrawText &operator=(const DrawText &rhs) = delete;
-  DrawText &operator=(const DrawText &&rhs) = delete;
+  DrawText(const DrawText &) = delete;
+  DrawText(DrawText &&) = delete;
+  DrawText &operator=(const DrawText &) = delete;
+  DrawText &operator=(DrawText &&) = delete;
 
   DrawColour const &colour() const;
   void setColour(const DrawColour &col);

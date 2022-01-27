@@ -27,10 +27,10 @@ class DrawTextFTCairo : protected DrawTextFT {
  protected:
   DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
                   const std::string &font_file, cairo_t *dp_cr);
-  DrawTextFTCairo(const DrawTextFTCairo &rhs) = delete;
-  DrawTextFTCairo(const DrawTextFTCairo &&rsh) = delete;
-  DrawTextFTCairo &operator=(const DrawTextFTCairo &rsh) = delete;
-  DrawTextFTCairo &operator=(const DrawTextFTCairo &&rsh) = delete;
+  DrawTextFTCairo(const DrawTextFTCairo &) = delete;
+  DrawTextFTCairo(DrawTextFTCairo &&) = delete;
+  DrawTextFTCairo &operator=(const DrawTextFTCairo &) = delete;
+  DrawTextFTCairo &operator=(DrawTextFTCairo &&) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;

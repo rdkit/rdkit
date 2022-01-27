@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014-2021 David Cosgrove and other RDKit contributors
+//  Copyright (C) 2021-2022 David Cosgrove and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -53,8 +53,9 @@ class AtomSymbol {
              DrawText &textDrawer);
 
   AtomSymbol(const AtomSymbol &) = delete;
-  AtomSymbol(const AtomSymbol &&) = delete;
+  AtomSymbol(AtomSymbol &&) = delete;
   AtomSymbol &operator=(const AtomSymbol &) = delete;
+  AtomSymbol &operator=(AtomSymbol &&) = delete;
 
   std::string symbol_;
   int atIdx_;

@@ -41,10 +41,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DCairo : public MolDraw2D {
     initTextDrawer(noFreetype);
     df_noFreetype = noFreetype;
   }
-  MolDraw2DCairo(const MolDraw2DCairo &rhs) = delete;
-  MolDraw2DCairo(const MolDraw2DCairo &&rhs) = delete;
-  MolDraw2DCairo &operator=(const MolDraw2DCairo &rhs) = delete;
-  MolDraw2DCairo &operator=(const MolDraw2DCairo &&rhs) = delete;
+  MolDraw2DCairo(const MolDraw2DCairo &) = delete;
+  MolDraw2DCairo(MolDraw2DCairo &&) = delete;
+  MolDraw2DCairo &operator=(const MolDraw2DCairo &) = delete;
+  MolDraw2DCairo &operator=(MolDraw2DCairo &&) = delete;
   ~MolDraw2DCairo() {
     if (dp_cr) {
       if (cairo_get_reference_count(dp_cr) > 0) {

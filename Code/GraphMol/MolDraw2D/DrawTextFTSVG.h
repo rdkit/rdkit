@@ -29,10 +29,10 @@ class DrawTextFTSVG : protected DrawTextFT {
   DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                 const std::string &font_file, std::ostream &oss,
                 std::string &d_act_class);
-  DrawTextFTSVG(const DrawTextFTSVG &rhs) = delete;
-  DrawTextFTSVG(const DrawTextFTSVG &&rhs) = delete;
-  DrawTextFTSVG &operator=(const DrawTextFTSVG &rhs) = delete;
-  DrawTextFTSVG &operator=(const DrawTextFTSVG &&rhs) = delete;
+  DrawTextFTSVG(const DrawTextFTSVG &) = delete;
+  DrawTextFTSVG(DrawTextFTSVG &&) = delete;
+  DrawTextFTSVG &operator=(const DrawTextFTSVG &) = delete;
+  DrawTextFTSVG &operator=(DrawTextFTSVG &&) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;

@@ -21,10 +21,13 @@
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
-
+class MolDraw2DJS;
+namespace MolDraw2D_detail {
 // ****************************************************************************
 
 class DrawTextJS : protected DrawText {
+  friend class RDKit::MolDraw2DJS;
+
  protected:
   DrawTextJS(double max_fnt_sz, double min_fnt_sz, emscripten::val &context);
   DrawTextJS(const DrawTextJS &rhs) = delete;
@@ -46,6 +49,7 @@ class DrawTextJS : protected DrawText {
                       std::vector<char> &draw_chars) const override;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTSVG_H

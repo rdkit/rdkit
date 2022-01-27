@@ -45,10 +45,10 @@ class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : protected DrawText {
  protected:
   DrawTextFT(double max_fnt_sz, double min_fnt_sz,
              const std::string &font_file);
-  DrawTextFT(const DrawTextFT &rhs) = delete;
-  DrawTextFT(const DrawTextFT &&rhs) = delete;
-  DrawTextFT &operator=(const DrawTextFT &rhs) = delete;
-  DrawTextFT &operator=(const DrawTextFT &&rhs) = delete;
+  DrawTextFT(const DrawTextFT &) = delete;
+  DrawTextFT(DrawTextFT &&) = delete;
+  DrawTextFT &operator=(const DrawTextFT &) = delete;
+  DrawTextFT &operator=(DrawTextFT &&) = delete;
 
   void drawChar(char c, const Point2D &cds) override;
 

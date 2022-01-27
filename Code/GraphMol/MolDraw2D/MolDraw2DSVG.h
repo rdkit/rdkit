@@ -34,10 +34,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   // initialize to use the internal stringstream
   MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1,
                bool noFreetype = false);
-  MolDraw2DSVG(const MolDraw2DSVG &rhs) = delete;
-  MolDraw2DSVG(const MolDraw2DSVG &&rhs) = delete;
-  MolDraw2DSVG &operator=(const MolDraw2DSVG &rhs) = delete;
-  MolDraw2DSVG &operator=(const MolDraw2DSVG &&rhs) = delete;
+  MolDraw2DSVG(const MolDraw2DSVG &) = delete;
+  MolDraw2DSVG(MolDraw2DSVG &&) = delete;
+  MolDraw2DSVG &operator=(const MolDraw2DSVG &) = delete;
+  MolDraw2DSVG &operator=(MolDraw2DSVG &&) = delete;
 
   void setColour(const DrawColour &col) override;
 

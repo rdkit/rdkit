@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014-2021 David Cosgrove and other RDKit contributors
+//  Copyright (C) 2021-2022 David Cosgrove and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -45,10 +45,10 @@ class DrawShape {
             bool scaleLineWidth = false,
             DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
             int atom1 = -1, int atom2 = -1, int bond = -1);
-  DrawShape(const DrawShape &ds) = delete;
-  DrawShape(const DrawShape &&ds) = delete;
-  DrawShape &operator=(const DrawShape &ds) = delete;
-  DrawShape &operator=(const DrawShape &&ds) = delete;
+  DrawShape(const DrawShape &) = delete;
+  DrawShape(DrawShape &&) = delete;
+  DrawShape &operator=(const DrawShape &) = delete;
+  DrawShape &operator=(DrawShape &&) = delete;
 
   void draw(MolDraw2D &drawer);
   virtual void myDraw(MolDraw2D &drawer) const = 0;

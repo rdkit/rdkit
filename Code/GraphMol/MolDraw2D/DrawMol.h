@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014-2021 David Cosgrove and other RDKit contributors
+//  Copyright (C) 2021-2022 David Cosgrove and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -85,8 +85,9 @@ class DrawMol {
           DrawText &textDrawer, double xmin, double xmax, double ymin,
           double ymax, double scale, double fontscale);
   DrawMol(const DrawMol &) = delete;
-  DrawMol(const DrawMol &&) = delete;
+  DrawMol(DrawMol &&) = delete;
   DrawMol &operator=(const DrawMol &) = delete;
+  DrawMol &operator=(DrawMol &&) = delete;
 
   // this must be called before a drawing can be done.
   void createDrawObjects();

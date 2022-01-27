@@ -17,16 +17,19 @@
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 
 namespace RDKit {
-
+class MolDraw2DJS;
+namespace MolDraw2D_detail {
 // ****************************************************************************
 class DrawTextFTJS : protected DrawTextFT {
+  friend class RDKit::MolDraw2DJS;
+
  protected:
   DrawTextFTJS(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, emscripten::val &context);
-  DrawTextFTJS(const DrawTextFTJS &rhs) = delete;
-  DrawTextFTJS(const DrawTextFTJS &&rhs) = delete;
-  DrawTextFTJS &operator=(const DrawTextFTJS &rhs) = delete;
-  DrawTextFTJS &operator=(const DrawTextFTJS &&rhs) = delete;
+  DrawTextFTJS(const DrawTextFTJS &) = delete;
+  DrawTextFTJS(DrawTextFTJS &&) = delete;
+  DrawTextFTJS &operator=(const DrawTextFTJS &) = delete;
+  DrawTextFTJS &operator=(DrawTextFTJS &&) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;
@@ -44,6 +47,7 @@ class DrawTextFTJS : protected DrawTextFT {
   emscripten::val &context_;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTFTSVG_H

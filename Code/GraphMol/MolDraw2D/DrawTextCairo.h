@@ -29,10 +29,10 @@ class DrawTextCairo : protected DrawText {
 
  protected:
   DrawTextCairo(double max_fnt_sz, double min_fnt_sz, cairo_t *dp_cr);
-  DrawTextCairo(const DrawTextCairo &rhs) = delete;
-  DrawTextCairo(const DrawTextCairo &&rhs) = delete;
-  DrawTextCairo &operator=(const DrawTextCairo &rhs) = delete;
-  DrawTextCairo &operator=(const DrawTextCairo &&rhs) = delete;
+  DrawTextCairo(const DrawTextCairo &) = delete;
+  DrawTextCairo(DrawTextCairo &&) = delete;
+  DrawTextCairo &operator=(const DrawTextCairo &) = delete;
+  DrawTextCairo &operator=(DrawTextCairo &&) = delete;
 #if 0
   void getStringSize(const std::string &label, double &label_width,
                      double &label_height) const override;

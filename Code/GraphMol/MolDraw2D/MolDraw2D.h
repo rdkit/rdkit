@@ -61,9 +61,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   */
   MolDraw2D(int width, int height, int panelWidth, int panelHeight);
   MolDraw2D(const MolDraw2D &rhs) = delete;
-  MolDraw2D(const MolDraw2D &&rhs) = delete;
+  MolDraw2D(MolDraw2D &&rhs) = delete;
   MolDraw2D &operator=(const MolDraw2D &rhs) = delete;
-  MolDraw2D &operator=(const MolDraw2D &&rhs) = delete;
+  MolDraw2D &operator=(MolDraw2D &&rhs) = delete;
   virtual ~MolDraw2D();
 
   //! draw a single molecule
@@ -280,23 +280,27 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   //! transform a point from the molecule coordinate system into the drawing
   //! coordinate system.
-  // Prefers globalDrawTrans_ if it exists.
+  //! Prefers globalDrawTrans_ if it exists, otherwise
+  //! uses drawMols_[activeMolIdx_].
   virtual Point2D getDrawCoords(const Point2D &mol_cds) const;
   //! returns the drawing coordinates of a particular atom
   virtual Point2D getDrawCoords(int at_num) const;
-  // Prefers globalDrawTrans_ if it exists.
+  //! Prefers globalDrawTrans_ if it exists, otherwise
+  //! uses drawMols_[activeMolIdx_].
   virtual Point2D getAtomCoords(const std::pair<int, int> &screen_cds) const;
   //! transform a point from drawing coordinates to the molecule coordinate
-  //! system. Prefers globalDrawTrans_ if it exists.
+  //! system. Prefers globalDrawTrans_ if it exists, otherwise
+  //! uses drawMols_[activeMolIdx_].
   virtual Point2D getAtomCoords(
       const std::pair<double, double> &screen_cds) const;
-  //! returns the molecular coordinates of a particular atom
+  //! returns the molecular coordinates of a particular atom.  at_num refers
+  //! to the atom in activeMolIdx_.
   virtual Point2D getAtomCoords(int at_num) const;
   //@}
-  //! returns the coordinates of the atoms of the current molecule in molecular
-  //! coordinates
+  //! returns the coordinates of the atoms of the activeMolIdx_ molecule in
+  //! molecular coordinates.
   const std::vector<Point2D> &atomCoords() const;
-  //! returns the atomic symbols of the current molecule
+  //! returns the atomic symbols of the activeMolIdx_ molecule
   const std::vector<std::pair<std::string, MolDraw2D_detail::OrientType>>
       &atomSyms() const;
 
@@ -309,7 +313,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! return the height of the drawing panels.
   virtual int panelHeight() const { return panel_height_; }
   virtual int drawHeight() const { return panel_height_ - legend_height_; }
-  // calculate the width to draw a line in draw coords.
+  // returns the width to draw a line in draw coords.
   virtual double getDrawLineWidth() const;
 
   //! returns the drawing scale (conversion from molecular coords -> drawing
@@ -428,13 +432,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
       int &plusWidth);
   // take the given components from the reaction (bits will be either
-  // reagents, products or agents) and return the corresponding DrawMols.
+  // reagents, products or agents) and create the corresponding DrawMols.
   void makeReactionComponents(
       std::vector<RDKit::ROMOL_SPTR> const &bits,
       const std::vector<int> *confIds, int heightToUse,
       std::map<int, DrawColour> &atomColours,
       std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
       double &minScale, double &minFontScale);
+  // this puts a pointer to the DrawMol into _drawMols as well, hence the use
+  // of shared_ptr for reagents, products and agents above.
   void makeReactionDrawMol(
       RWMol &mol, int confId, int molHeight,
       const std::vector<int> &highlightAtoms,

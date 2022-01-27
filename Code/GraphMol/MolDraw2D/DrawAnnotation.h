@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014-2021 David Cosgrove and other RDKit contributors
+//  Copyright (C) 2021-2022 David Cosgrove and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -40,8 +40,9 @@ class DrawAnnotation {
                  const Point2D &pos, const DrawColour &colour,
                  DrawText &textDrawer);
   DrawAnnotation(const DrawAnnotation &) = delete;
-  DrawAnnotation(const DrawAnnotation &&) = delete;
+  DrawAnnotation(DrawAnnotation &&) = delete;
   DrawAnnotation &operator=(const DrawAnnotation &) = delete;
+  DrawAnnotation &operator=(DrawAnnotation &&) = delete;
 
   // expects xmin etc to be initialised to something sensible.
   void findExtremes(double &xmin, double &xmax, double &ymin, double &ymax,
