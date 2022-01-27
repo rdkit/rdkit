@@ -558,6 +558,9 @@ void CleanupAfterParsing(RWMol *mol) {
     bond->clearProp(common_properties::_unspecifiedOrder);
     bond->clearProp("_cxsmilesBondIdx");
   }
+  for (auto sg : RDKit::getSubstanceGroups(*mol)) {
+    sg.clearProp("_cxsmilesindex");
+  }
 }
 
 }  // end of namespace SmilesParseOps

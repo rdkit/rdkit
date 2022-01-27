@@ -109,7 +109,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
   // Find the first matching core (onlyMatchAtRGroups)
   // or the first core that requires the smallest number
-  // of newly added labels
+  // of newly added labels and is a superstructure of
+  // the first matching core
   int global_min_heavy_nbrs = -1;
   SubstructMatchParameters sssparams(params().substructmatchParams);
   sssparams.uniquify = false;
@@ -198,8 +199,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     if (!data->params.onlyMatchAtRGroups) {
       int min_heavy_nbrs = *std::min_element(tmatches_heavy_nbrs.begin(),
                                              tmatches_heavy_nbrs.end());
-      if (global_min_heavy_nbrs == -1 ||
-          min_heavy_nbrs < global_min_heavy_nbrs) {
+      if (!rcore || (min_heavy_nbrs < global_min_heavy_nbrs &&
+                     !SubstructMatch(*core.second.core, *rcore->core, sssparams)
+                          .empty())) {
         i = 0;
         tmatches_filtered.clear();
         for (const auto heavy_nbrs : tmatches_heavy_nbrs) {

@@ -1254,7 +1254,6 @@ TEST_CASE("SGroup hierarchy") {
           "|$star_e;;;;;star_e;;star_e$,,,Sg:any:2,1::ht:::,Sg:any:4,3,2,1,0,6:"
           ":ht:::,SgH:1:0|");
   }
-
   SECTION("nested") {
     auto mol =
         "*-CNC(CC(-*)C-*)O-* "
