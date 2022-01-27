@@ -36,18 +36,16 @@ class Forest(object):
     """
     nExamples = len(self.treeList)
     histo = []
-    i = 1
     lastErr = self.errList[0]
     countHere = self.countList[0]
-    eps = 0.001
-    while i < nExamples:
+    eps = 1e-3
+    
+    for i in range(1, nExamples):
       if self.errList[i] - lastErr > eps:
         histo.append((lastErr, countHere))
         lastErr = self.errList[i]
-        countHere = self.countList[i]
-      else:
-        countHere = countHere + self.countList[i]
-      i = i + 1
+        countHere = 0
+      countHere += self.countList[i]
 
     return histo
 
@@ -60,10 +58,7 @@ class Forest(object):
 
     """
     nTrees = len(self.treeList)
-    votes = [0] * nTrees
-    for i in range(nTrees):
-      votes[i] = self.treeList[i].ClassifyExample(example)
-    return votes
+    return [self.treeList[i].ClassifyExample(example) for i in range(nTrees)]
 
   def ClassifyExample(self, example):
     """ classifies the given example using the entire forest
@@ -80,8 +75,7 @@ class Forest(object):
     self.treeVotes = self.CollectVotes(example)
     votes = [0] * len(self._nPossible)
     for i in range(len(self.treeList)):
-      res = self.treeVotes[i]
-      votes[res] = votes[res] + self.countList[i]
+      votes[self.treeVotes[i]] += self.countList[i]
 
     totVotes = sum(votes)
     res = numpy.argmax(votes)

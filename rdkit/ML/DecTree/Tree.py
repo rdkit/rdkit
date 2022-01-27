@@ -5,9 +5,7 @@
 
 """
 
-
 import pickle
-
 
 # FIX: the TreeNode class has not been updated to new-style classes
 # (RD Issue380) because that would break all of our legacy pickled
@@ -285,6 +283,7 @@ class TreeNode:
         return True
       if self.name < other.name:
         return True
+      
       if self.label is not None:
         if other.label is not None:
           if self.label < other.label:
@@ -293,15 +292,19 @@ class TreeNode:
           return False
       elif other.label is not None:
         return True
+      
       if nChildren < oChildren:
         return True
       if nChildren > oChildren:
         return False
+      
       for i in range(nChildren):
         if self.children[i] < other.children[i]:
           return True
+        
     except AttributeError:
       return True
+    
     return False
 
   def __eq__(self, other):
