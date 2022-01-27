@@ -51,12 +51,11 @@ Check if it results in more that one component
 keep correct if >60% query mol
 
 """
-from itertools import combinations
 import sys
+from itertools import combinations
 
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdqueries
-
 
 # our default rdkit fingerprinter parameters:
 rdkitFpParams = {'maxPath': 5, 'fpSize': 1024, 'nBitsPerHash': 2}
@@ -119,12 +118,10 @@ def select_fragments(fragments, ftype, hac):
 
     # needs to be greater than 60% of parent mol
     if result and (result_hcount > 0.6 * hac):
-      result = '.'.join(result)
-    else:
-      result = None
-    return result
+      return '.'.join(result)
+    return None
 
-  elif ftype == FTYPE_CYCLIC:
+  if ftype == FTYPE_CYCLIC:
     # make sure it is 2 components
     if len(fragments) != 2:
       return None
@@ -135,11 +132,11 @@ def select_fragments(fragments, ftype, hac):
       # needs to be greater 3 heavy atoms and greater than 40% of parent mol
       if isValidRingCut(fMol):
         result_hcount = fMol.GetNumAtoms()
-        if (result_hcount > 3) and (result_hcount > 0.4 * hac):
+        if result_hcount > 3 and result_hcount > 0.4 * hac:
           result = f
     return result
 
-  elif (ftype == FTYPE_CYCLIC_ACYCLIC):
+  if ftype == FTYPE_CYCLIC_ACYCLIC:
     # need to find the fragments which are valid which means they must be:
     #  Terminal (one attachment point) or valid ring cut
     result = []
@@ -165,13 +162,9 @@ def select_fragments(fragments, ftype, hac):
     # appropriate fragmentation must have 2 components and needs to be greater than 60% of
     # parent mol
     if len(result) == 2 and result_hcount > 0.6 * hac:
-      result = '.'.join(result)
-    else:
-      result = None
-    return result
-
-  else:
-    raise NotImplementedError('Invalid fragmentation type {0}'.format(ftype))
+      return '.'.join(result)
+    return None
+  raise NotImplementedError(f'Invalid fragmentation type {type}')
 
 
 def isValidRingCut(mol):
@@ -286,8 +279,9 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
   # loop through atoms of smiles get atoms that have a high similarity with substructure
   marked = set()
   for atom in pMol.GetAtoms():
-    if partialSimilarity(atom.GetIdx()) < tverskyThresh:
-      marked.add(atom.GetIdx())
+    atomIdx = atom.GetIdx()
+    if partialSimilarity(atomIdx) < tverskyThresh:
+      marked.add(atomIdx)
 
   # get rings to change
 
@@ -314,9 +308,8 @@ def atomContrib(subs, mol, tverskyThresh=0.8):
       Chem.SanitizeMol(pMol, sanitizeOps=Chem.SANITIZE_ALL ^ Chem.SANITIZE_KEKULIZE ^
                        Chem.SANITIZE_SETAROMATICITY)
     except Exception:
-      sys.stderr.write("Can't parse smiles: %s\n" % (Chem.MolToSmiles(pMol)))
+      sys.stderr.write(f"Can't parse smiles: {Chem.MolToSmiles(pMol)}\n")
       pMol = Chem.Mol(mol)
-
   return pMol
 
 
@@ -329,7 +322,7 @@ def compute_fraggle_similarity_for_subs(inMol, qMol, qSmi, qSubs, tverskyThresh=
 
   rdkit_sim = DataStructs.TanimotoSimilarity(qFP, iFP)
 
-  qm_key = "%s_%s" % (qSubs, qSmi)
+  qm_key = f"{qSubs}_{qSmi}"
   if qm_key in modified_query_fps:
     qmMolFp = modified_query_fps[qm_key]
   else:
@@ -344,7 +337,7 @@ def compute_fraggle_similarity_for_subs(inMol, qMol, qSmi, qSubs, tverskyThresh=
     rmMolFp = Chem.RDKFingerprint(rmMol, **rdkitFpParams)
     fraggle_sim = max(DataStructs.FingerprintSimilarity(qmMolFp, rmMolFp), rdkit_sim)
   except Exception:
-    sys.stderr.write("Can't generate fp for: %s\n" % (Chem.MolToSmiles(rmMol, True)))
+    sys.stderr.write(f"Can't generate fp for: {Chem.MolToSmiles(rmMol)}\n")
     fraggle_sim = 0.0
 
   return rdkit_sim, fraggle_sim
