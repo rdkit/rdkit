@@ -67,17 +67,14 @@ Optional Arguments:
 # from rdkit.Dbase.DbConnection import DbConnect
 
 
+import pickle
 import sys
 
 import numpy
-
-from rdkit import DataStructs
-from rdkit import RDConfig
+from rdkit import DataStructs, RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData, Stats
-import pickle
-
 
 __VERSION_STRING = "2.4.0"
 
@@ -149,8 +146,8 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
         if hasattr(tmp, '_trainIndices') and not isinstance(tmp._trainIndices, dict):
             tis = {}
             if hasattr(tmp, '_trainIndices'):
-                for v in tmp._trainIndices:
-                    tis[v] = 1
+                tis = {v: 1 for v in tmp._trainIndices}
+
             tmp._trainIndices = tis
 
     res = []
@@ -161,6 +158,7 @@ def ScreenModel(mdl, descs, data, picking=[1], indices=[], errorEstimate=0):
 
     if not indices:
         indices = list(range(len(data)))
+    
     nTrueActives = 0
     for i in indices:
         if errorEstimate:

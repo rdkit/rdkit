@@ -94,17 +94,15 @@
 """
 
 
+import pickle
 import sys
 import time
 
 import numpy
-
 from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.ML import CompositeRun
-from rdkit.ML import ScreenComposite, BuildComposite
+from rdkit.ML import BuildComposite, CompositeRun, ScreenComposite
 from rdkit.ML.Composite import AdjustComposite
 from rdkit.ML.Data import DataUtils, SplitData
-import pickle
 
 _runDetails = CompositeRun.CompositeRun()
 
