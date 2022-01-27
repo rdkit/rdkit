@@ -3,7 +3,6 @@
 #    All Rights Reserved
 #
 
-
 import random
 
 from rdkit import RDRandom
@@ -50,14 +49,14 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
 
   The base approach always returns the same number of compounds in
   each set and has no duplicates:
-  >>> DataUtils.InitRandomNumbers((23,42))
-  >>> test,train = SplitIndices(10,.5)
+  >>> DataUtils.InitRandomNumbers((23, 42))
+  >>> test, train = SplitIndices(10, .5)
   >>> test
   [1, 5, 6, 4, 2]
   >>> train
   [3, 0, 7, 8, 9]
 
-  >>> test,train = SplitIndices(10,.5)
+  >>> test, train = SplitIndices(10, .5)
   >>> test
   [5, 2, 9, 8, 7]
   >>> train
@@ -66,14 +65,14 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
 
   The legacy approach can return varying numbers, but still has no
   duplicates.  Note the indices come back ordered:
-  >>> DataUtils.InitRandomNumbers((23,42))
-  >>> test,train = SplitIndices(10,.5,legacy=1)
+  >>> DataUtils.InitRandomNumbers((23, 42))
+  >>> test,train = SplitIndices(10, .5, legacy=1)
   >>> test
   [3, 5, 7, 8, 9]
   >>> train
   [0, 1, 2, 4, 6]
 
-  >>> test,train = SplitIndices(10,.5,legacy=1)
+  >>> test,train = SplitIndices(10, .5, legacy=1)
   >>> test
   [0, 1, 2, 3, 5, 8, 9]
   >>> train
@@ -82,13 +81,13 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
   The replacement approach returns a fixed number in the training set,
   a variable number in the test set and can contain duplicates in the
   training set.
-  >>> DataUtils.InitRandomNumbers((23,42))
-  >>> test,train = SplitIndices(10,.5,replacement=1)
+  >>> DataUtils.InitRandomNumbers((23, 42))
+  >>> test,train = SplitIndices(10, .5, replacement=1)
   >>> test
   [9, 9, 8, 0, 5]
   >>> train
   [1, 2, 3, 4, 6, 7]
-  >>> test,train = SplitIndices(10,.5,replacement=1)
+  >>> test,train = SplitIndices(10, .5, replacement=1)
   >>> test
   [4, 5, 1, 1, 4]
   >>> train
@@ -96,20 +95,18 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
 
   """
   if frac < 0. or frac > 1.:
-    raise ValueError('frac must be between 0.0 and 1.0 (frac=%f)' % (frac))
+    raise ValueError(f'frac must be between 0.0 and 1.0 (frac={frac:f})')
 
   if replacement:
     nTrain = int(nPts * frac)
     resData = [None] * nTrain
-    resTest = []
     for i in range(nTrain):
       val = int(RDRandom.random() * nPts)
       if val == nPts:
         val = nPts - 1
       resData[i] = val
-    for i in range(nPts):
-      if i not in resData:
-        resTest.append(i)
+    resTest = [i for i in range(nPts) if i not in resData]
+
   elif legacy:
     resData = []
     resTest = []
@@ -128,8 +125,8 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
     resTest = list(perm[nTrain:])
 
   if not silent:
-    print('Training with %d (of %d) points.' % (len(resData), nPts))
-    print('\t%d points are in the hold-out set.' % (len(resTest)))
+    print(f'Training with {len(resData)} (of {nPts}) points.')
+    print(f'\t{len(resTest)} points are in the hold-out set.')
   return resData, resTest
 
 
@@ -158,8 +155,8 @@ def SplitDataSet(data, frac, silent=0):
   resTest = [data[x] for x in test]
 
   if not silent:
-    print('Training with %d (of %d) points.' % (len(resData), nOrig))
-    print('\t%d points are in the hold-out set.' % (len(resTest)))
+    print(f'Training with {len(resData)} (of {nOrig}) points.')
+    print(f'\t{len(resTest)} points are in the hold-out set.')
   return resData, resTest
 
 
@@ -204,14 +201,14 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   >>> conn = DbConnect(RDConfig.RDTestDatabase)
 
   Pull a set of points from a simple table... take 33% of all points:
-  >>> DataUtils.InitRandomNumbers((23,42))
-  >>> train,test = SplitDbData(conn,1./3.,'basic_2class')
+  >>> DataUtils.InitRandomNumbers((23, 42))
+  >>> train,test = SplitDbData(conn, 1./3., 'basic_2class')
   >>> [str(x) for x in train]
   ['id-7', 'id-6', 'id-2', 'id-8']
 
   ...take 50% of actives and 50% of inactives:
-  >>> DataUtils.InitRandomNumbers((23,42))
-  >>> train,test = SplitDbData(conn,.5,'basic_2class',useActs=1)
+  >>> DataUtils.InitRandomNumbers((23, 42))
+  >>> train,test = SplitDbData(conn, .5, 'basic_2class', useActs=1)
   >>> [str(x) for x in train]
   ['id-5', 'id-3', 'id-1', 'id-4', 'id-10', 'id-8']
 
@@ -219,15 +216,15 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   Notice how the results came out sorted by activity
 
   We can be asymmetrical: take 33% of actives and 50% of inactives:
-  >>> DataUtils.InitRandomNumbers((23,42))
-  >>> train,test = SplitDbData(conn,[.5,1./3.],'basic_2class',useActs=1)
+  >>> DataUtils.InitRandomNumbers((23, 42))
+  >>> train,test = SplitDbData(conn, [.5, 1./3.], 'basic_2class', useActs=1)
   >>> [str(x) for x in train]
   ['id-5', 'id-3', 'id-1', 'id-4', 'id-10']
 
   And we can pull from tables with non-quantized activities by providing
   activity quantization bounds:
-  >>> DataUtils.InitRandomNumbers((23,42))
-  >>> train,test = SplitDbData(conn,.5,'float_2class',useActs=1,actBounds=[1.0])
+  >>> DataUtils.InitRandomNumbers((23, 42))
+  >>> train,test = SplitDbData(conn,.5, 'float_2class', useActs=1, actBounds=[1.0])
   >>> [str(x) for x in train]
   ['id-5', 'id-3', 'id-1', 'id-4', 'id-10', 'id-8']
 
@@ -237,13 +234,13 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   if actBounds and len(actBounds) != nActs - 1:
     raise ValueError('activity bounds list length incorrect')
   if useActs:
-    if type(fracs) not in SeqTypes:
+    if not isinstance(fracs, ((list, tuple))):
       fracs = tuple([fracs] * nActs)
     for frac in fracs:
       if frac < 0.0 or frac > 1.0:
         raise ValueError('fractions must be between 0.0 and 1.0')
   else:
-    if type(fracs) in SeqTypes:
+    if isinstance(fracs, ((list, tuple))):
       frac = fracs[0]
       if frac < 0.0 or frac > 1.0:
         raise ValueError('fractions must be between 0.0 and 1.0')
@@ -274,19 +271,18 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
     for act in range(nActs):
       frac = fracs[act]
       if not actBounds:
-        whereTxt = whereBase + '%s=%d' % (actCol, act)
+        whereTxt = whereBase + f'{actCol}={act}'
       else:
         whereTxt = whereBase
         if act != 0:
-          whereTxt += '%s>=%f ' % (actCol, actBounds[act - 1])
+          whereTxt += f'{actCol}>={actBounds[act - 1]} '
         if act < nActs - 1:
           if act != 0:
             whereTxt += 'and '
-          whereTxt += '%s<%f' % (actCol, actBounds[act])
+          whereTxt += f'{actCol}<{actBounds[act]}'
       d = conn.GetData(table=table, fields=idCol, join=join, where=whereTxt)
       ids = [x[0] for x in d]
-      nRes = len(ids)
-      train, test = SplitIndices(nRes, frac, silent=1)
+      train, test = SplitIndices(len(ids), frac, silent=1)
       trainPts.extend([ids[x] for x in train])
       testPts.extend([ids[x] for x in test])
 

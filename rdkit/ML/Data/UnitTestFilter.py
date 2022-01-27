@@ -25,8 +25,8 @@ class TestCase(unittest.TestCase):
     ]
     for frac, nKeep, nRej in probes:
       k, r = DataUtils.FilterData(self.d1, 1, frac)
-      assert len(k) == nKeep, 'bad nKeep (%d != %d)' % (len(k), nKeep)
-      assert len(r) == nRej, 'bad nRej (%d != %d)' % (len(r), nRej)
+      assert len(k) == nKeep, f'bad nKeep ({len(k)} != {nKeep})'
+      assert len(r) == nRej, f'bad nRej ({len(r)} != {nRej})'
 
   def test2_exceptions(self):
     # """ Exceptions """
@@ -46,15 +46,15 @@ class TestCase(unittest.TestCase):
     for frac, nKeep, nRej in probes:
       DataUtils.InitRandomNumbers((23, 42))
       k, r = DataUtils.FilterData(self.d1, 1, frac, indicesOnly=1)
-      assert len(k) == nKeep, 'bad nKeep (%d != %d)' % (len(k), nKeep)
-      assert len(r) == nRej, 'bad nRej (%d != %d)' % (len(r), nRej)
+      assert len(k) == nKeep, f'bad nKeep ({len(k)} != {nKeep})'
+      assert len(r) == nRej, f'bad nRej ({len(r)} != {nRej})'
       # make sure the indices are actually correct
       keep = [self.d1[x] for x in k]
       rej = [self.d1[x] for x in r]
       DataUtils.InitRandomNumbers((23, 42))
       tgtKeep, tgtRej = DataUtils.FilterData(self.d1, 1, frac)
-      assert keep == tgtKeep, '%.2f: %s!=%s' % (frac, str(keep), str(tgtKeep))
-      assert rej == tgtRej, '%.2f: %s!=%s' % (frac, str(rej), str(tgtRej))
+      assert keep == tgtKeep, f'{frac:.2f}: {str(keep)}!={str(tgtKeep)}'
+      assert rej == tgtRej, f'{frac:.2f}: {str(rej)}!={str(tgtRej)}'
 
   def test4_indicesOnly_indicesToUse(self):
     # """ indicesOnly with indicesToUse """
@@ -69,15 +69,15 @@ class TestCase(unittest.TestCase):
     for frac, nKeep, nRej in probes:
       DataUtils.InitRandomNumbers((23, 42))
       k, r = DataUtils.FilterData(self.d1, 1, frac, indicesToUse=range(nPts), indicesOnly=1)
-      assert len(k) == nKeep, 'bad nKeep (%d != %d)' % (len(k), nKeep)
-      assert len(r) == nRej, 'bad nRej (%d != %d)' % (len(r), nRej)
+      assert len(k) == nKeep, f'bad nKeep ({len(k)} != {nKeep})'
+      assert len(r) == nRej, f'bad nRej ({len(r)} != {nRej})'
       # make sure the indices are actually correct
       keep = [self.d1[x] for x in k]
       rej = [self.d1[x] for x in r]
       DataUtils.InitRandomNumbers((23, 42))
       tgtKeep, tgtRej = DataUtils.FilterData(self.d1, 1, frac)
-      assert keep == tgtKeep, '%.2f: %s!=%s' % (frac, str(keep), str(tgtKeep))
-      assert rej == tgtRej, '%.2f: %s!=%s' % (frac, str(rej), str(tgtRej))
+      assert keep == tgtKeep, f'{frac:.2f}: {str(keep)}!={str(tgtKeep)}'
+      assert rej == tgtRej, f'{frac:.2f}: {str(rej)}!={str(tgtRej)}'
 
   def test5_indicesToUse(self):
     # """ indicesToUse """
@@ -92,14 +92,14 @@ class TestCase(unittest.TestCase):
     for frac, nKeep, nRej in probes:
       DataUtils.InitRandomNumbers((23, 42))
       k, r = DataUtils.FilterData(self.d1, 1, frac, indicesToUse=range(nPts))
-      assert len(k) == nKeep, 'bad nKeep (%d != %d)' % (len(k), nKeep)
-      assert len(r) == nRej, 'bad nRej (%d != %d)' % (len(r), nRej)
+      assert len(k) == nKeep, f'bad nKeep ({len(k)} != {nKeep})'
+      assert len(r) == nRej, f'bad nRej ({len(r)} != {nRej})'
       keep, rej = k, r
       # make sure the examples are actually correct
       DataUtils.InitRandomNumbers((23, 42))
       tgtKeep, tgtRej = DataUtils.FilterData(self.d1, 1, frac)
-      assert keep == tgtKeep, '%.2f: %s!=%s' % (frac, str(keep), str(tgtKeep))
-      assert rej == tgtRej, '%.2f: %s!=%s' % (frac, str(rej), str(tgtRej))
+      assert keep == tgtKeep, f'{frac:.2f}: {str(keep)}!={str(tgtKeep)}'
+      assert rej == tgtRej, f'{frac:.2f}: {str(rej)}!={str(tgtRej)}'
 
 
 if __name__ == '__main__':  # pragma: nocover

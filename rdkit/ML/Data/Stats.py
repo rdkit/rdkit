@@ -44,7 +44,7 @@ def FormCovarianceMatrix(mat):
 
   """
   nPts = mat.shape[0]
-  sumVect = sum(mat)
+  sumVect = sum(mat) # np.sum is better
   sumVect /= float(nPts)
   for row in mat:
     row -= sumVect
@@ -115,12 +115,8 @@ def TransformPoints(tFormMat, pts):
   pts = numpy.array(pts)
   nPts = len(pts)
   avgP = sum(pts) / nPts
-  pts = pts - avgP
-  res = [None] * nPts
-  for i in range(nPts):
-    res[i] = numpy.dot(tFormMat, pts[i])
-
-  return res
+  pts -= avgP
+  return [numpy.dot(tFormMat, pts[i]) for i in range(nPts)]
 
 
 def MeanAndDev(vect, sampleSD=1):
@@ -136,7 +132,6 @@ def MeanAndDev(vect, sampleSD=1):
       dev = numpy.sqrt(sum(v * v) / (n - 1))
     else:
       dev = numpy.sqrt(sum(v * v) / (n))
-
   else:
     dev = 0
   return mean, dev
@@ -222,8 +217,6 @@ def GetConfidenceInterval(sd, n, level=95):
   idx = 0
   while idx < len(tTable) and tTable[idx][0] < dofs:
     idx += 1
-  if idx < len(tTable):
-    t = tTable[idx][col]
-  else:
-    t = tTable[-1][col]
+  
+  t = tTable[idx if idx < len(tTable) else -1][col]  
   return t * sem

@@ -21,7 +21,7 @@ class TestCase(unittest.TestCase):
         target = (1.8, 0.97095)
         self.assertEqual(
           [Quantize.feq(x, y, 1e-4) for x, y in zip(res, target)], [1, 1],
-          'result comparison failed: %s != %s' % (res, target))
+          f'result comparison failed: {res} != {target}')
 
     def testOneSplit2_noise(self):
         # """ some noise """
@@ -33,7 +33,7 @@ class TestCase(unittest.TestCase):
         target = (1.8, 0.60999)
         self.assertEqual(
           [Quantize.feq(x, y, 1e-4) for x, y in zip(res, target)], [1, 1],
-          'result comparison failed: %s != %s' % (res, target))
+          f'result comparison failed: {res} != {target}')
 
     def testOneSplit3(self):
         # """ optimal division not possible """
@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
         target = (1.3, 0.88129)
         self.assertEqual(
           [Quantize.feq(x, y, 1e-4) for x, y in zip(res, target)], [1, 1],
-          'result comparison failed: %s != %s' % (res, target))
+          f'result comparison failed: {res} != {target}')
 
     def testOneSplit4_duplicates(self):
         # """ lots of duplicates """
@@ -57,7 +57,7 @@ class TestCase(unittest.TestCase):
         target = (1.8, 0.68939)
         self.assertEqual(
           [Quantize.feq(x, y, 1e-4) for x, y in zip(res, target)], [1, 1],
-          'result comparison failed: %s != %s' % (res, target))
+          f'result comparison failed: {res} != {target}')
 
     def testOneSplit5_outOfOrder(self):
         # """ same as testOneSplit1 data, but out of order """
@@ -69,7 +69,7 @@ class TestCase(unittest.TestCase):
         target = (1.8, 0.97095)
         self.assertEqual(
           [Quantize.feq(x, y, 1e-4) for x, y in zip(res, target)], [1, 1],
-          'result comparison failed: %s != %s' % (res, target))
+          f'result comparison failed: {res} != {target}')
 
     def testMultSplit1_simple_dual(self):
         # """ simple dual split """
@@ -81,10 +81,10 @@ class TestCase(unittest.TestCase):
         target = ([1.3, 2.05], 1.55458)
         self.assertEqual(
           min([Quantize.feq(x, y, 1e-4) for x, y in zip(res[0], target[0])]), 1,
-          'split bound comparison failed: %s != %s' % (res[0], target[0]))
+          f'split bound comparison failed: {res[0]} != {target[0]}')
         self.assertTrue(
           Quantize.feq(res[1], target[1], 1e-4),
-          'InfoGain comparison failed: %s != %s' % (res[1], target[1]))
+          f'InfoGain comparison failed: {res[1]} != {target[1]}')
 
     def testMultSplit2_outOfOrder(self):
         # """ same test as testMultSplit1, but out of order """
@@ -96,10 +96,10 @@ class TestCase(unittest.TestCase):
         target = ([1.3, 2.05], 1.55458)
         self.assertTrue(
           Quantize.feq(res[1], target[1], 1e-4),
-          'InfoGain comparison failed: %s != %s' % (res[1], target[1]))
+          f'InfoGain comparison failed: {res[1]} != {target[1]}')
         self.assertEqual(
           min([Quantize.feq(x, y, 1e-4) for x, y in zip(res[0], target[0])]), 1,
-          'split bound comparison failed: %s != %s' % (res[0], target[0]))
+          f'split bound comparison failed: {res[0]} != {target[0]}')
 
     def testMultSplit3_4results(self):
         # """  4 possible results """
@@ -111,10 +111,10 @@ class TestCase(unittest.TestCase):
         target = ([1.30, 2.05, 2.65], 1.97722)
         self.assertTrue(
           Quantize.feq(res[1], target[1], 1e-4),
-          'InfoGain comparison failed: %s != %s' % (res[1], target[1]))
+          f'InfoGain comparison failed: {res[1]} != {target[1]}')
         self.assertEqual(
           min([Quantize.feq(x, y, 1e-4) for x, y in zip(res[0], target[0])]), 1,
-          'split bound comparison failed: %s != %s' % (res[0], target[0]))
+          f'split bound comparison failed: {res[0]} != {target[0]}')
 
     def testMultSplit4_dualValued_island(self):
         # """ dual valued, with an island """
@@ -126,10 +126,10 @@ class TestCase(unittest.TestCase):
         target = ([1.3, 2.05], .91830)
         self.assertTrue(
           Quantize.feq(res[1], target[1], 1e-4),
-          'InfoGain comparison failed: %s != %s' % (res[1], target[1]))
+          f'InfoGain comparison failed: {res[1]} != {target[1]}')
         self.assertEqual(
           min([Quantize.feq(x, y, 1e-4) for x, y in zip(res[0], target[0])]), 1,
-          'split bound comparison failed: %s != %s' % (res[0], target[0]))
+          f'split bound comparison failed: {res[0]} != {target[0]}')
 
     def testMultSplit5_dualValued_island_noisy(self):
         # """ dual valued, with an island, a bit noisy """
@@ -141,10 +141,10 @@ class TestCase(unittest.TestCase):
         target = ([1.3, 2.05], .34707)
         self.assertTrue(
           Quantize.feq(res[1], target[1], 1e-4),
-          'InfoGain comparison failed: %s != %s' % (res[1], target[1]))
+          f'InfoGain comparison failed: {res[1]} != {target[1]}')
         self.assertEqual(
           min([Quantize.feq(x, y, 1e-4) for x, y in zip(res[0], target[0])]), 1,
-          'split bound comparison failed: %s != %s' % (res[0], target[0]))
+          f'split bound comparison failed: {res[0]} != {target[0]}')
 
     def test9NewSplits(self):
         d = [(0, 0),

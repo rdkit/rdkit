@@ -72,9 +72,9 @@ class TestCase(unittest.TestCase):
     p0 = refPs[0]
     p3 = refPs[3]
     p5 = refPs[5]
-    assert max(abs(pts[0] - p0)) < FLOAT_TOL, 'p0 comparison failed %s!=%s' % (str(pts[0]), str(p0))
-    assert max(abs(pts[3] - p3)) < FLOAT_TOL, 'p3 comparison failed %s!=%s' % (str(pts[3]), str(p3))
-    assert max(abs(pts[5] - p5)) < FLOAT_TOL, 'p5 comparison failed %s!=%s' % (str(pts[5]), str(p5))
+    assert max(abs(pts[0] - p0)) < FLOAT_TOL, f'p0 comparison failed {pts[0]}!={p0}'
+    assert max(abs(pts[3] - p3)) < FLOAT_TOL, f'p3 comparison failed {pts[3]}!={p3}'
+    assert max(abs(pts[5] - p5)) < FLOAT_TOL, f'p5 comparison failed {pts[5]}!={p5}'
 
   def testTransform2(self):
     # """ testing that rotation of points into PCA frame
@@ -110,8 +110,9 @@ class TestCase(unittest.TestCase):
     avg = sum(self.d) / len(self.d)
     self.d -= avg
 
-    for i in range(len(pts)):
-      for j in range(len(pts)):
+    n_pts: int = len(pts)
+    for i in range(n_pts):
+      for j in range(n_pts):
         vi = self.d[i]
         vi /= numpy.sqrt(numpy.dot(vi, vi))
         vj = self.d[j]
@@ -120,8 +121,7 @@ class TestCase(unittest.TestCase):
         pvi /= numpy.sqrt(numpy.dot(pvi, pvi))
         pvj = pts[j]
         pvj /= numpy.sqrt(numpy.dot(pvj, pvj))
-        assert feq(numpy.dot(vi, vj), numpy.dot(pvi, pvj)), 'bad dot: %4.4f %4.4f' % (numpy.dot(
-          vi, vj), numpy.dot(pvi, pvj))
+        assert feq(numpy.dot(vi, vj), numpy.dot(pvi, pvj)), f'bad dot: {numpy.dot(vi, vj):4.4f} {numpy.dot(pvi, pvj):4.4f}'
 
 
 if __name__ == '__main__':  # pragma: nocover

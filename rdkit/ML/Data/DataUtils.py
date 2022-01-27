@@ -52,14 +52,13 @@
 
 
 import csv
+import pickle
 import random
 import re
 
 import numpy
-
 from rdkit.DataStructs import BitUtils
 from rdkit.ML.Data import MLData
-import pickle
 from rdkit.utils import fileutils
 
 
@@ -88,7 +87,7 @@ def WriteData(outFile, varNames, qBounds, examples):
     outFile.write('# ----------\n')
     outFile.write('# Variable Table\n')
     for i in range(len(varNames)):
-        outFile.write('# %s %s\n' % (varNames[i], str(qBounds[i])))
+        outFile.write(f'# {varNames[i]} {str(qBounds[i])}\n')
     outFile.write('# ----------\n')
     for example in examples:
         outFile.write(' '.join([str(e) for e in example]) + '\n')
@@ -120,7 +119,6 @@ def ReadVars(inFile):
         qBounds.append(splitLine[1][:-2])
         inLine = inFile.readline()
     for i in range(len(qBounds)):
-
         if qBounds[i] != '':
             l = qBounds[i].split(',')
             qBounds[i] = []
@@ -227,8 +225,7 @@ def BuildQuantDataSet(fileName):
     with open(fileName, 'r') as inFile:
         varNames, qBounds = ReadVars(inFile)
         ptNames, examples = ReadQuantExamples(inFile)
-    data = MLData.MLQuantDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
-    return data
+    return MLData.MLQuantDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
 
 
 def BuildDataSet(fileName):
@@ -246,8 +243,7 @@ def BuildDataSet(fileName):
     with open(fileName, 'r') as inFile:
         varNames, qBounds = ReadVars(inFile)
         ptNames, examples = ReadGeneralExamples(inFile)
-    data = MLData.MLDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
-    return data
+    return MLData.MLDataSet(examples, qBounds=qBounds, varNames=varNames, ptNames=ptNames)
 
 
 def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
@@ -294,7 +290,8 @@ def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
 
     nPts = len(data)
     for i in range(nPts):
-        for col in cols[:]:
+        copied = cols.copy()
+        for col in copied:
             d = data[i][order[col]]
             if type(d) in numericTypes:
                 if int(d) == d:
@@ -304,7 +301,7 @@ def CalcNPossibleUsingMap(data, order, qBounds, nQBounds=None, silent=True):
                     cols.remove(col)
             else:
                 if not silent:
-                    print('bye bye col %d: %s' % (col, repr(d)))
+                    print(f'bye bye col {col}: {repr(d)}')
                 nPossible[col] = -1
                 cols.remove(col)
     return [int(x) + 1 for x in nPossible]
@@ -334,20 +331,23 @@ def WritePickledData(outName, data):
 def TakeEnsemble(vect, ensembleIds, isDataVect=False):
     """
 
-    >>> v = [10,20,30,40,50]
-    >>> TakeEnsemble(v,(1,2,3))
+    >>> v = [10, 20, 30, 40, 50]
+    >>> TakeEnsemble(v, (1, 2, 3))
     [20, 30, 40]
-    >>> v = ['foo',10,20,30,40,50,1]
-    >>> TakeEnsemble(v,(1,2,3),isDataVect=True)
+    >>> v = ['foo', 10, 20, 30, 40, 50, 1]
+    >>> TakeEnsemble(v, (1, 2, 3), isDataVect=True)
     ['foo', 20, 30, 40, 1]
 
     """
-    if isDataVect:
-        ensembleIds = [x + 1 for x in ensembleIds]
-        vect = [vect[0]] + [vect[x] for x in ensembleIds] + [vect[-1]]
-    else:
-        vect = [vect[x] for x in ensembleIds]
-    return vect
+    if not isDataVect:
+        return [vect[x] for x in ensembleIds]
+    
+    arr = [0] * (len(ensembleIds) + 2)
+    for i, x in enumerate(ensembleIds, start=1):
+        arr[i] = vect[x + 1]
+    arr[0] = vect[0]
+    arr[-1] = vect[-1]
+    return arr
 
 
 def DBToData(dbName, tableName, user='sysdba', password='masterkey', dupCol=-1, what='*', where='',
@@ -401,9 +401,9 @@ def DBToData(dbName, tableName, user='sysdba', password='masterkey', dupCol=-1, 
             if ensembleIds:
                 tmp = TakeEnsemble(tmp, ensembleIds, isDataVect=True)
         vals[i] = tmp
+        
     varNames = conn.GetColumnNames(join=join, what=what)
-    data = MLData.MLDataSet(vals, varNames=varNames, ptNames=ptNames)
-    return data
+    return MLData.MLDataSet(vals, varNames=varNames, ptNames=ptNames)
 
 
 def TextToData(reader, ignoreCols=[], onlyCols=None):
@@ -421,15 +421,14 @@ def TextToData(reader, ignoreCols=[], onlyCols=None):
 
     varNames = next(reader)
     if not onlyCols:
-        keepCols = []
-        for i, name in enumerate(varNames):
-            if name not in ignoreCols:
-                keepCols.append(i)
+        keepCols = [i for i, name in enumerate(varNames) if name not in ignoreCols]
     else:
+        tOnlyColsIndexDict = {col: i for i, col in enumerate(onlyCols)}
         keepCols = [-1] * len(onlyCols)
         for i, name in enumerate(varNames):
-            if name in onlyCols:
-                keepCols[onlyCols.index(name)] = i
+            if name in tOnlyColsIndexDict:
+                keepCols[tOnlyColsIndexDict[name]] = i
+        del tOnlyColsIndexDict
 
     nCols = len(varNames)
     varNames = tuple([varNames[x] for x in keepCols])
@@ -453,8 +452,8 @@ def TextToData(reader, ignoreCols=[], onlyCols=None):
                         val = str(tmp[j + 1])
                 pt[j] = val
             vals.append(pt)
-    data = MLData.MLDataSet(vals, varNames=varNames, ptNames=ptNames)
-    return data
+
+    return MLData.MLDataSet(vals, varNames=varNames, ptNames=ptNames)
 
 
 def TextFileToData(fName, onlyCols=None):
@@ -517,7 +516,7 @@ def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
     while start < nOrig and tmp[start][col] != val:
         start += 1
     if start >= nOrig:
-        raise ValueError('target value (%d) not found in data' % (val))
+        raise ValueError(f'target value ({val}) not found in data')
 
     # find the end of the entries with value val
     finish = start + 1
@@ -530,8 +529,7 @@ def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
     # how many don't?
     nOthers = len(tmp) - nWithVal
 
-    currFrac = float(nWithVal) / nOrig
-    if currFrac < frac:
+    if float(nWithVal) / nOrig < frac:
         #
         # We're going to keep most of (all) the points with the target value,
         #  We need to figure out how many of the other points we'll
@@ -658,6 +656,7 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
             runDetails.randomized = 1
         nPossible = dataSet.GetNPossibleVals()[-1]
         acts = [random.randint(0, nPossible) for _ in len(examples)]
+    
     for i in range(nPts):
         tmp = dataSet[i]
         tmp[-1] = acts[i]
@@ -669,8 +668,8 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
     import doctest
+    import sys
     failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
     sys.exit(failed)
 

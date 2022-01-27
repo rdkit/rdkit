@@ -6,12 +6,10 @@
 
 """
 
-
 import copy
 import math
 
 import numpy
-
 
 numericTypes = (int, float)
 
@@ -100,7 +98,7 @@ class MLDataSet(object):
         for i, pt in enumerate(self.data):
             for col in cols[:]:
                 d = pt[col]
-                if type(d) in numericTypes:
+                if not isinstance(d, (int, float)):
                     if math.floor(d) == d:
                         nPossible[col] = max(math.floor(d), nPossible[col])
                     else:
@@ -146,10 +144,7 @@ class MLDataSet(object):
             name to the data list
 
         """
-        res = [None] * self.nPts
-        for i in range(self.nPts):
-            res[i] = [self.ptNames[i]] + self.data[i][:]
-        return res
+        return [ [self.ptNames[i]] + self.data[i][:] for i in range(self.nPts) ]
 
     def GetAllData(self):
         """ returns a *copy* of the data
@@ -173,12 +168,10 @@ class MLDataSet(object):
         """ Returns the result fields from each example
 
         """
-        if self.GetNResults() > 1:
-            v = self.GetNResults()
-            res = [x[-v:] for x in self.data]
-        else:
-            res = [x[-1] for x in self.data]
-        return res
+        v = self.GetNResults()
+        if v > 1:
+            return [x[-v:] for x in self.data]
+        return [x[-1] for x in self.data]
 
     def GetVarNames(self):
         return self.varNames
@@ -239,10 +232,8 @@ class MLQuantDataSet(MLDataSet):
             name to the data list
 
         """
-        res = [None] * self.nPts
-        for i in range(self.nPts):
-            res[i] = [self.ptNames[i]] + self.data[i].tolist()
-        return res
+
+        return [[self.ptNames[i]] + self.data[i].tolist() for i in range(self.nPts)]
 
     def GetAllData(self):
         """ returns a *copy* of the data
@@ -265,12 +256,10 @@ class MLQuantDataSet(MLDataSet):
         """ Returns the result fields from each example
 
         """
-        if self.GetNResults() > 1:
-            v = self.GetNResults()
-            res = [x[-v:] for x in self.data]
-        else:
-            res = [x[-1] for x in self.data]
-        return res
+        v = self.GetNResults()
+        if v > 1:
+            return [x[-v:] for x in self.data]
+        return [x[-1] for x in self.data]
 
     def __init__(self, data, nVars=None, nPts=None, nPossibleVals=None, qBounds=None, varNames=None,
                  ptNames=None, nResults=1):
