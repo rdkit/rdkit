@@ -29,29 +29,46 @@ except ImportError:
             raise ValueError(f"n ({n}) must be a positive integer")
         if k < 0:
             raise ValueError(f"k ({k}) must be a positive integer")
-        if k > n:
-            raise ValueError(f"k ({k}) must be less than or equal to n ({n})")
     
     @lru_cache(maxsize=128)
     def comb(n: int, k: int) -> int:
-        # https://github.com/python/cpython/blob/main/Modules/mathmodule.c
-        # https://github.com/python/cpython/commit/60c320c38e4e95877cde0b1d8562ebd6bc02ac61
-        # https://bugs.python.org/issue37295 
+        """
+        Return the number of ways to choose k items from n items without repetition and without order.
+        Evaluates to n! / (k! * (n - k)!) when k <= n and evaluates to zero when k > n.
+        
+        Arguments:
+        ----------
+            - n (integer): the number of items to choose from 
+            - k (integer): the number of items to choose
+        
+        Returns:
+        ----------
+            - integer: the number of ways to choose k items from n items without repetition and without order
+        
+        
+        Optimization reference:
+        1) https://github.com/python/cpython/blob/main/Modules/mathmodule.c (Line 3381 <-> 3568)
+        2) https://github.com/python/cpython/commit/60c320c38e4e95877cde0b1d8562ebd6bc02ac61
+        3) https://bugs.python.org/issue37295 
+        
+        """
         _CheckCombArgument(n, k)
-        if k == 0 or n == 0:
+        if k > n:
+            return 0
+        if k == 0 or n == 0 or k == n:
             return 1
         if n - k > k:
             k = n - k
          
-        if (k < n < 32) or (16 * k < n < 256):
-            res = 1
+        if k < 8 or (16 * k < n < 256) or (k < n < 32): # Optimization for small arguments
+            res: int = 1
             for i in range(k):
-                res = res * (n - i)
-                res = res // (i + 1)
+                res *= n - i
+                res: int = res // (i + 1)
             return res
-        else:
-            j = k // 2
-            return comb(n, j) * comb(n - j, k - j) // comb(k, j)
+        
+        j: int = k // 2
+        return comb(n, j) * comb(n - j, k - j) // comb(k, j)
     
 #
 #  number of points in a scaffold -> sequence of distances (p1, p2) in
