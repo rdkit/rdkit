@@ -79,6 +79,10 @@ class DrawShapeArrow : protected DrawShape {
                  DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
                  int atom1 = -1, int atom2 = -1, int bond = -1,
                  double frac = 0.2, double angle = M_PI / 6);
+  DrawShapeArrow(const DrawShapeArrow &) = delete;
+  DrawShapeArrow(DrawShapeArrow &&) = delete;
+  DrawShapeArrow &operator=(const DrawShapeArrow &) = delete;
+  DrawShapeArrow &operator=(DrawShapeArrow &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
@@ -100,6 +104,10 @@ class DrawShapeEllipse : protected DrawShape {
                    bool scaleLineWidth = false,
                    DrawColour lineColour = DrawColour(0, 0, 0),
                    bool fill = false, int atom1 = -1);
+  DrawShapeEllipse(const DrawShapeEllipse &) = delete;
+  DrawShapeEllipse(DrawShapeEllipse &&) = delete;
+  DrawShapeEllipse &operator=(const DrawShapeEllipse &) = delete;
+  DrawShapeEllipse &operator=(DrawShapeEllipse &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
   void findExtremes(double &xmin, double &xmax, double &ymin,
                     double &ymax) const override;
@@ -120,6 +128,10 @@ class DrawShapeSimpleLine : protected DrawShape {
                       DrawColour lineColour = DrawColour(0, 0, 0),
                       int atom1 = -1, int atom2 = -1, int bond = -1,
                       DashPattern dashPattern = noDash);
+  DrawShapeSimpleLine(const DrawShapeSimpleLine &) = delete;
+  DrawShapeSimpleLine(DrawShapeSimpleLine &&) = delete;
+  DrawShapeSimpleLine &operator=(const DrawShapeSimpleLine &) = delete;
+  DrawShapeSimpleLine &operator=(DrawShapeSimpleLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
@@ -140,6 +152,10 @@ class DrawShapePolyLine : protected DrawShape {
                     DrawColour lineColour = DrawColour(0, 0, 0),
                     bool fill = false, int atom1 = -1, int atom2 = -1,
                     int bond = -1, DashPattern dashPattern = noDash);
+  DrawShapePolyLine(const DrawShapePolyLine &) = delete;
+  DrawShapePolyLine(DrawShapePolyLine &&) = delete;
+  DrawShapePolyLine &operator=(const DrawShapePolyLine &) = delete;
+  DrawShapePolyLine &operator=(DrawShapePolyLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
@@ -157,6 +173,10 @@ class DrawShapeSolidWedge : protected DrawShape {
   DrawShapeSolidWedge(const std::vector<Point2D> points, const DrawColour &col1,
                       const DrawColour &col2, bool splitBonds, int atom1 = -1,
                       int atom2 = -1, int bond = -1);
+  DrawShapeSolidWedge(const DrawShapeSolidWedge &) = delete;
+  DrawShapeSolidWedge(DrawShapeSolidWedge &&) = delete;
+  DrawShapeSolidWedge &operator=(const DrawShapeSolidWedge &) = delete;
+  DrawShapeSolidWedge &operator=(DrawShapeSolidWedge &&) = delete;
   void buildTriangles();
   void myDraw(MolDraw2D &drawer) const override;
   void scale(const Point2D &scale_factor) override;
@@ -177,6 +197,10 @@ class DrawShapeDashedWedge : protected DrawShape {
   DrawShapeDashedWedge(const std::vector<Point2D> points,
                        const DrawColour &col1, const DrawColour &col2,
                        int atom1 = -1, int atom2 = -1, int bond = -1);
+  DrawShapeDashedWedge(const DrawShapeDashedWedge &) = delete;
+  DrawShapeDashedWedge(DrawShapeDashedWedge &&) = delete;
+  DrawShapeDashedWedge &operator=(const DrawShapeDashedWedge &) = delete;
+  DrawShapeDashedWedge &operator=(DrawShapeDashedWedge &&) = delete;
   void buildLines();
   void myDraw(MolDraw2D &drawer) const override;
   void scale(const Point2D &scale_factor) override;
@@ -204,6 +228,10 @@ class DrawShapeWavyLine : protected DrawShape {
                     const DrawColour &col2 = DrawColour(0, 0, 0),
                     double offset = 0.05, int atom1 = -1, int atom2 = -1,
                     int bond = -1);
+  DrawShapeWavyLine(const DrawShapeWavyLine &) = delete;
+  DrawShapeWavyLine(DrawShapeWavyLine &&) = delete;
+  DrawShapeWavyLine &operator=(const DrawShapeWavyLine &) = delete;
+  DrawShapeWavyLine &operator=(DrawShapeWavyLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
   void scale(const Point2D &scaleFactor) override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
@@ -231,6 +259,10 @@ class DrawShapeArc : protected DrawShape {
                int lineWidth = 2, bool scaleLineWidth = false,
                const DrawColour &col1 = DrawColour(0, 0, 0), bool fill = false,
                int atom1 = -1);
+  DrawShapeArc(const DrawShapeArc &) = delete;
+  DrawShapeArc(DrawShapeArc &&) = delete;
+  DrawShapeArc &operator=(const DrawShapeArc &) = delete;
+  DrawShapeArc &operator=(DrawShapeArc &&) = delete;
 
   void myDraw(MolDraw2D &drawer) const override;
   void findExtremes(double &xmin, double &xmax, double &ymin,
