@@ -61,9 +61,8 @@ def GenVarTable(examples, nPossibleVals, vars):
       a list of variable result tables. Each table is a Numeric array
         which is varValues x nResults
   """
-  nVars: int = len(vars)
   nFuncVals = nPossibleVals[-1]
-  res = [numpy.zeros((nPossibleVals[vars[i]], nFuncVals), dtype=numpy.int64) for i in range(nVars)]
+  res = [numpy.zeros((nPossibleVals[var], nFuncVals), dtype='i') for var in vars]
 
   for example in examples:
     value = int(example[-1])
@@ -142,7 +141,7 @@ def ID3(examples, target, attrs, nPossibleVals, depth=0, maxDepth=-1, **kwargs):
     best = attrs[numpy.argmax(gains)]
 
     # remove that variable from the lists of possible variables
-    nextAttrs = list(attrs)
+    nextAttrs = attrs[:]
     if not kwargs.get('recycleVars', 0):
       nextAttrs.remove(best)
 
@@ -189,7 +188,10 @@ def ID3Boot(examples, attrs, nPossibleVals, initialVar=None, depth=0, maxDepth=-
 
   # <perl>you've got to love any language which will let you
   # do this much work in a single line :-)</perl>
-  best = attrs[numpy.argmax([entropy.InfoGain(x) for x in varTable])] if initialVar is None else initialVar
+  if initialVar is None:
+    best = attrs[numpy.argmax([entropy.InfoGain(x) for x in varTable])]
+  else:
+    best = initialVar
 
   tree.SetName(f'Var: {best}')
   tree.SetData(totEntropy)
