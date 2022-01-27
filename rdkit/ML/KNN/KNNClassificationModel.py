@@ -10,7 +10,7 @@
 """
 
 from rdkit.ML.KNN import KNNModel
-
+from collections import Counter
 
 class KNNClassificationModel(KNNModel.KNNModel):
   """ This is used to represent a k-nearest neighbor classifier
@@ -57,24 +57,17 @@ class KNNClassificationModel(KNNModel.KNNModel):
 
     # first find the k-closest examples in the traning set
     knnLst = self.GetNeighbors(example)
-
+      
     # find out how many of the neighbors belong to each of the classes
-    clsCnt = {}
-    for knn in knnLst:
-      cls = knn[1][-1]
-      if (cls in clsCnt):
-        clsCnt[cls] += 1
-      else:
-        clsCnt[cls] = 1
+    clsCnt = Counter([knn[1][-1] for knn in knnLst])
     if neighborList is not None:
       neighborList.extend(knnLst)
-
+      
     # now return the class with the maximum count
     mkey = -1
     mcnt = -1
-    for key in clsCnt.keys():
-      if (mcnt < clsCnt[key]):
+    for key, cls in clsCnt.items():
+      if mcnt < cls:
         mkey = key
-        mcnt = clsCnt[key]
-
+        mcnt = cls
     return mkey

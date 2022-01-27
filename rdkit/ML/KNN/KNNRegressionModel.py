@@ -58,7 +58,7 @@ class KNNRegressionModel(KNNModel.KNNModel):
 
     # first find the k-closest examples in the training set
     knnLst = self.GetNeighbors(example)
-
+     
     accum = 0.0
     denom = 0.0
     for knn in knnLst:
@@ -74,8 +74,9 @@ class KNNRegressionModel(KNNModel.KNNModel):
         w = 1.0
       accum += w * knn[1][-1]
       denom += w
+    
     if denom:
-      accum /= denom
+      accum /= denom # average the values
     if neighborList is not None:
       neighborList.extend(knnLst)
     return accum
