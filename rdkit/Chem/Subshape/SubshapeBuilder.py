@@ -62,7 +62,7 @@ class SubshapeBuilder(object):
     pts = BuilderUtils.ClusterTerminalPts(pts, self.winRad, self.terminalPtRadScale)
     BuilderUtils.ExpandTerminalPts(shape, pts, self.winRad)
     if len(pts) < 3:
-      raise ValueError('only found %d terminals, need at least 3' % len(pts))
+      raise ValueError(f'only found {len(pts)} terminals, need at least 3')
 
     if not terminalPtsOnly:
       pts = BuilderUtils.AppendSkeletonPoints(shape.grid, pts, self.winRad, self.stepSize)
@@ -118,9 +118,9 @@ if __name__ == '__main__':  # pragma: nocover
   with open('subshape.pkl', 'w+') as f:
     pickle.dump(shape, f)
   for i, pt in enumerate(shape.skelPts):
-    v.server.sphere(tuple(pt.location), .5, (1, 0, 1), 'Pt-%d' % i)
+    v.server.sphere(tuple(pt.location), .5, (1, 0, 1), f'Pt-{i}')
     if not hasattr(pt, 'shapeDirs'):
       continue
     momBeg = pt.location - pt.shapeDirs[0]
     momEnd = pt.location + pt.shapeDirs[0]
-    v.server.cylinder(tuple(momBeg), tuple(momEnd), .1, (1, 0, 1), 'v-%d' % i)
+    v.server.cylinder(tuple(momBeg), tuple(momEnd), .1, (1, 0, 1), f'v-{i}')

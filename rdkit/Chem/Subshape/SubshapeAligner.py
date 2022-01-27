@@ -23,17 +23,25 @@ class SubshapeAlignment(object):
 
 
 def _getAllTriangles(pts, orderedTraversal=False):
-  for i in range(len(pts)):
+  nPts: int = len(pts)
+  for i in range(nPts):
     if orderedTraversal:
       jStart = i + 1
     else:
       jStart = 0
-    for j in range(jStart, len(pts)):
+    for j in range(jStart, nPts):
       if j == i:
         continue
-      for k in range(j + 1, len(pts)):
+      for k in range(j + 1, nPts):
         if k == i or k == j:
           continue
+        """
+        Dead code (Keep for potential bug)
+        if orderedTraversal:
+          kStart = j + 1
+        else:
+          kStart = 0
+        """
         yield (i, j, k)
 
 
@@ -48,8 +56,9 @@ def GetShapeShapeDistance(s1, s2, distMetric):
     # print(s1.grid.GetOccupancyVect().GetTotalVal(), s2.grid.GetOccupancyVect().GetTotalVal())
     if s1.grid.GetOccupancyVect().GetTotalVal() < s2.grid.GetOccupancyVect().GetTotalVal():
       return Geometry.ProtrudeDistance(s1.grid, s2.grid)
+    else:
+      return Geometry.ProtrudeDistance(s2.grid, s1.grid)
     
-    return Geometry.ProtrudeDistance(s2.grid, s1.grid)
   return Geometry.TanimotoDistance(s1.grid, s2.grid)
 
 
@@ -264,7 +273,7 @@ class SubshapeAligner(object):
       nDone += 1
       if not nDone % 100:
         nLeft = len(alignments)
-        logger.info('  processed %d of %d. %d alignments remain' % ((nDone, nOrig, nLeft)))
+        logger.info(f'  processed {nDone} of {nOrig}. {nLeft} alignments remain')
       if not self._checkMatchShape(targetMol, target, queryMol, query, alg, builder,
                                    targetConf=tgtConf, queryConf=queryConf, pruneStats=pruneStats):
         del alignments[i]
@@ -282,20 +291,20 @@ class SubshapeAligner(object):
     t1 = time.perf_counter()
     res = [x for x in self.GetTriangleMatches(target, query)]
     pruneStats['gtm_time'] = time.perf_counter() - t1
-    logger.info("Got %d possible alignments in %.1f seconds" % (len(res), pruneStats['gtm_time']))
+    logger.info(f"Got {len(res)} possible alignments in {pruneStats['gtm_time']:.1f} seconds")
 
     if builder.featFactory:
       logger.info("Doing feature pruning")
       t1 = time.perf_counter()
       self.PruneMatchesUsingFeatures(target, query, res, pruneStats=pruneStats)
       pruneStats['feats_time'] = time.perf_counter() - t1
-      logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), pruneStats['feats_time']))
+      logger.info(f"{len(res)} possible alignments remain. ({pruneStats['feats_time']:.1f} seconds required)")
     logger.info("Doing direction pruning")
 
     t1 = time.perf_counter()
     self.PruneMatchesUsingDirection(target, query, res, pruneStats=pruneStats)
     pruneStats['direction_time'] = time.perf_counter() - t1
-    logger.info("%d possible alignments remain. (%.1f seconds required)" % (len(res), pruneStats['direction_time']))
+    logger.info(f"{len(res)} possible alignments remain. ({pruneStats['direction_time']:.1f} seconds required)")
 
     t1 = time.perf_counter()
     self.PruneMatchesUsingShape(targetMol, target, queryMol, query, builder, res, tgtConf=tgtConf,
@@ -306,11 +315,12 @@ class SubshapeAligner(object):
   def __call__(self, targetMol, target, queryMol, query, builder, tgtConf=-1, queryConf=-1,
                pruneStats=None):
     for alignment in self.GetTriangleMatches(target, query):
-      if builder.featFactory:
-        if not self._checkMatchFeatures(target.skelPts, query.skelPts, alignment):
-          if pruneStats is not None:
-            pruneStats['features'] = pruneStats.get('features', 0) + 1
-          continue
+      if not self._checkMatchFeatures(target.skelPts, query.skelPts, alignment) and builder.featFactory: 
+        # Reversible condition for further optimization
+        if pruneStats is not None:
+          pruneStats['features'] = pruneStats.get('features', 0) + 1
+        continue
+  
       
       if not self._checkMatchDirections(target.skelPts, query.skelPts, alignment):
         if pruneStats is not None:

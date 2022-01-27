@@ -43,9 +43,9 @@ def ComputeShapeGridCentroid(pt, shapeGrid, winRad):
     idx = idxI + idxJ
     if idx >= 0 and idx < nGridPts:
       wt = shapeGridVect[idx]
-      tPt = shapeGrid.GetGridPointLoc(idx)
-      centroid += tPt * wt
+      centroid += shapeGrid.GetGridPointLoc(idx) * wt
       count += wt
+  
   if not count:
     raise ValueError('found no weight in sphere')
   centroid /= count
@@ -130,6 +130,7 @@ def ClusterTerminalPts(pts, winRad, scale):
         del tagged[i]
       else:
         i += 1
+    
     pt = Geometry.Point3D(0, 0, 0)
     for o in currSet:
       pt += o.location
@@ -192,6 +193,7 @@ def ExpandTerminalPts(shape, pts, winRad, maxGridVal=3.0, targetNumPts=5):
     # *farthest* from this one and use it:
     pt2 = FindFarthestGridPoint(shape, pts[0].location, winRad, maxGridVal)
     pts.append(SubshapeObjects.SkeletonPoint(location=pt2))
+    
   if len(pts) == 2:
     # add a point roughly in the middle:
     shapeGrid = shape.grid
@@ -199,6 +201,7 @@ def ExpandTerminalPts(shape, pts, winRad, maxGridVal=3.0, targetNumPts=5):
     pt2 = pts[1].location
     center = FindGridPointBetweenPoints(pt1, pt2, shapeGrid, winRad)
     pts.append(SubshapeObjects.SkeletonPoint(location=center))
+    
   if len(pts) < targetNumPts:
     GetMoreTerminalPoints(shape, pts, winRad, maxGridVal, targetNumPts)
 
