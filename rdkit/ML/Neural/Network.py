@@ -48,8 +48,7 @@ class Network:
     for node in self.nodeList:
       inputs = node.GetInputs()
       if inputs:
-        weights = [random.uniform(minWeight, maxWeight) for _ in range(len(inputs))]
-        node.SetWeights(weights)
+        node.SetWeights([random.uniform(minWeight, maxWeight) for _ in range(len(inputs))])
 
   def FullyConnectNodes(self):
     """ Fully connects each layer in the network to the one above it
@@ -61,15 +60,15 @@ class Network:
     """
     nodeList = list(range(self.numInputNodes))
     nConnections = 0
-    for layer in range(self.numHiddenLayers):
-      for i in self.layerIndices[layer + 1]:
+    for layer in range(1, self.numHiddenLayers + 1):
+      for i in self.layerIndices[layer]:
         self.nodeList[i].SetInputs(nodeList)
-        nConnections = nConnections + len(nodeList)
-      nodeList = self.layerIndices[layer + 1]
+        nConnections += len(nodeList)
+      nodeList = self.layerIndices[layer]
 
     for i in self.layerIndices[-1]:
       self.nodeList[i].SetInputs(nodeList)
-      nConnections = nConnections + len(nodeList)
+      nConnections += len(nodeList)
     self.nConnections = nConnections
 
   def ConstructNodes(self, nodeCounts, actFunc, actFuncParms):
@@ -91,7 +90,7 @@ class Network:
       self.numInHidden[i] = nodeCounts[i + 1]
 
     numNodes = sum(self.nodeCounts)
-    self.nodeList = [None] * (numNodes)
+    self.nodeList = [None] * numNodes
     for i in range(numNodes):
       self.nodeList[i] = NetNode.NetNode(i, self.nodeList, actFunc=actFunc,
                                          actFuncParms=actFuncParms)
@@ -158,17 +157,19 @@ class Network:
       else:
         example = example[:-self.numOutputNodes]
     assert len(example) == self.numInputNodes
+    
     totNumNodes = sum(self.nodeCounts)
-    results = numpy.zeros(totNumNodes, numpy.float64)
+    results = numpy.zeros(totNumNodes, dtype=numpy.float64)
     for i in range(self.numInputNodes):
       results[i] = example[i]
+      
     for i in range(self.numInputNodes, totNumNodes):
       self.nodeList[i].Eval(results)
+      
     self.lastResults = results[:]
     if self.numOutputNodes == 1:
       return results[-1]
-    else:
-      return results
+    return results
 
   def GetLastOutputs(self):
     """ returns the complete list of output layer values from the last time this node

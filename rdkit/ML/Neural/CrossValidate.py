@@ -13,7 +13,7 @@ from rdkit.ML.Data import SplitData
 import math
 
 
-def CrossValidate(net, testExamples, tolerance, appendExamples=0):
+def CrossValidate(net, testExamples, tolerance: float, appendExamples=0):
   """ Determines the classification error for the testExamples
     **Arguments**
 
@@ -35,18 +35,17 @@ def CrossValidate(net, testExamples, tolerance, appendExamples=0):
    **Note**
      At the moment, this is specific to nets with only one output
   """
-  nTest = len(testExamples)
+
   nBad = 0
   badExamples = []
-  for i in range(nTest):
-    testEx = testExamples[i]
-    trueRes = testExamples[i][-1]
+  for testEx in testExamples:
+    trueRes = testEx[-1]
     res = net.ClassifyExample(testEx)
     if math.fabs(trueRes - res) > tolerance:
       badExamples.append(testEx)
-      nBad = nBad + 1
+      nBad += 1
 
-  return float(nBad) / nTest, badExamples
+  return float(nBad) / len(testExamples), badExamples
 
 
 def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, silent=0,
@@ -90,11 +89,10 @@ def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, 
   """
   nTot = len(examples)
   if not kwargs.get('replacementSelection', 0):
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=1,
-                                                       replacement=0)
+    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=1, replacement=0)
   else:
-    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=0,
-                                                       replacement=1)
+    testIndices, trainIndices = SplitData.SplitIndices(nTot, holdOutFrac, silent=1, legacy=0, replacement=1)
+  
   trainExamples = [examples[x] for x in trainIndices]
   testExamples = [examples[x] for x in testIndices]
 
@@ -115,7 +113,8 @@ def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, 
 
   nTest = len(testExamples)
   if not silent:
-    print('Testing with %d examples' % nTest)
+    print(f'Testing with {nTest} examples')
+  
   if not calcTotalError:
     xValError, _ = CrossValidate(net, testExamples, tolerance)
   else:

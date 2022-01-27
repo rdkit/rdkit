@@ -68,6 +68,7 @@ class BackProp(Trainer):
       # classify the example
       net.ClassifyExample(trainVect)
       resVect = net.GetLastOutputs()
+      
     outputs = numpy.take(resVect, outputNodeList)
     errVect = targetVect - outputs
 
@@ -118,7 +119,7 @@ class BackProp(Trainer):
       # return the RMS error from the OLD network
     return numpy.sqrt(errVect * errVect)[0]
 
-  def TrainOnLine(self, examples, net, maxIts=5000, errTol=0.1, useAvgErr=1, silent=0):
+  def TrainOnLine(self, examples, net, maxIts: int = 5000, errTol: float = 0.1, useAvgErr=1, silent=0):
     """ carries out online training of a neural net
 
       The definition of online training is that the network is updated after
@@ -151,17 +152,19 @@ class BackProp(Trainer):
     """
     nExamples = len(examples)
     converged = 0
-    cycle = 0
 
-    while (not converged) and (cycle < maxIts):
+    for cycle in range(0, maxIts):
+      if converged:
+        break
+      
       maxErr = 0
       newErr = 0
       # print('bp: ',cycle)
       for example in examples:
         localErr = self.StepUpdate(example, net)
         newErr += localErr
-        if localErr > maxErr:
-          maxErr = localErr
+        maxErr = max(maxErr, localErr)
+      
       if useAvgErr == 1:
         newErr = newErr / nExamples
       else:
@@ -171,11 +174,10 @@ class BackProp(Trainer):
       if newErr <= errTol:
         converged = 1
 
-#      if cycle % 10 == 0 and not silent:
+      # if cycle % 10 == 0 and not silent:
       if not silent:
         print('epoch %d, error: % 6.4f' % (cycle, newErr))
 
-      cycle = cycle + 1
     if not silent:
       if converged:
         print('Converged after %d epochs.' % cycle)
@@ -251,8 +253,8 @@ if __name__ == '__main__':  # pragma: nocover
     random.seed(23)
     import profile
     import pstats
-    datFile = '%s.prof.dat' % (command)
-    profile.run('%s()' % command, datFile)
+    datFile = f'{command}.prof.dat'
+    profile.run(f'{command}()', datFile)
     stats = pstats.Stats(datFile)
     stats.strip_dirs()
     stats.sort_stats('time').print_stats()
