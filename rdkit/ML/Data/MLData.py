@@ -98,7 +98,7 @@ class MLDataSet(object):
         for i, pt in enumerate(self.data):
             for col in cols[:]:
                 d = pt[col]
-                if not isinstance(d, (int, float)):
+                if isinstance(d, (int, float)):
                     if math.floor(d) == d:
                         nPossible[col] = max(math.floor(d), nPossible[col])
                     else:
