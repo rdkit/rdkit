@@ -150,8 +150,9 @@ class TestCase(unittest.TestCase):
     nvars = len(examples[0]) - 2
     origNVars = nvars
     nvars = 10
-    npvals = [0] + [2] * nvars + [2]
-    qBounds = [0] + [0] * nvars + [0]
+    npvals = [2] * (nvars + 2)
+    npvals[0] = 0
+    qBounds = [0] * (nvars + 2)
 
     bitEx = []
     for eg in examples:
