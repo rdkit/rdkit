@@ -5,7 +5,6 @@
 
 """
 
-
 import unittest
 
 from rdkit.ML.Descriptors import Parser
@@ -40,9 +39,9 @@ class TestCase(unittest.TestCase):
       res = Parser.CalcMultipleCompoundsDescriptor([self.compos, self.compos], argVect, self.aDict,
                                                    [self.pDict, self.pDict])
       self.assertAlmostEqual(res[0], self.results[i], delta=self.tol,
-                             msg='Expression {0} failed'.format(cExpr))
+                             msg=f'Expression {cExpr} failed')
       self.assertAlmostEqual(res[1], self.results[i], delta=self.tol,
-                             msg='Expression {0} failed'.format(cExpr))
+                             msg=f'Expression {cExpr} failed')
 
   def _test_exampleCode(self):
     Parser._exampleCode()
