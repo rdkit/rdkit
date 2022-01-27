@@ -21,7 +21,8 @@ try:
     # his is available in Python 3.8: https://docs.python.org/3/library/math.html
     from math import comb
 except ImportError:
-    def comb(n: int, k: int) -> int:
+    from functools import lru_cache
+    def _CheckCombArgument(n: int, k: int) -> None:
         if not isinstance(n, int) or not isinstance(k, int):
             raise ValueError(f"n ({n}) and k ({k}) must be positive integers")
         if n < 0:
@@ -30,14 +31,27 @@ except ImportError:
             raise ValueError(f"k ({k}) must be a positive integer")
         if k > n:
             raise ValueError(f"k ({k}) must be less than or equal to n ({n})")
+    
+    @lru_cache(maxsize=128)
+    def comb(n: int, k: int) -> int:
+        # https://github.com/python/cpython/blob/main/Modules/mathmodule.c
+        # https://github.com/python/cpython/commit/60c320c38e4e95877cde0b1d8562ebd6bc02ac61
+        # https://bugs.python.org/issue37295 
+        _CheckCombArgument(n, k)
+        if k == 0 or n == 0:
+            return 1
         if n - k > k:
             k = n - k
          
-        accum: int = 1
-        for i in range(0, k, 1):
-            accum *= n - i
-            accum = accum // (i + 1)
-        return accum
+        if (k < n < 32) or (16 * k < n < 256):
+            res = 1
+            for i in range(k):
+                res = res * (n - i)
+                res = res // (i + 1)
+            return res
+        else:
+            j = k // 2
+            return comb(n, j) * comb(n - j, k - j) // comb(k, j)
     
 #
 #  number of points in a scaffold -> sequence of distances (p1, p2) in
