@@ -17,11 +17,30 @@
 
 """
 import itertools
-from math import factorial, comb
-
-
+try:
+    # his is available in Python 3.8: https://docs.python.org/3/library/math.html
+    from math import comb
+except ImportError:
+    def comb(n: int, k: int) -> int:
+        if not isinstance(n, int) or not isinstance(k, int):
+            raise ValueError(f"n ({n}) and k ({k}) must be positive integers")
+        if n < 0:
+            raise ValueError(f"n ({n}) must be a positive integer")
+        if k < 0:
+            raise ValueError(f"k ({k}) must be a positive integer")
+        if k > n:
+            raise ValueError(f"k ({k}) must be less than or equal to n ({n})")
+        if n - k > k:
+            k = n - k
+         
+        accum: int = 1
+        for i in range(0, k, 1):
+            accum *= n - i
+            accum = accum // (i + 1)
+        return accum
+    
 #
-#  number of points in a scaffold -> sequence of distances (p1,p2) in
+#  number of points in a scaffold -> sequence of distances (p1, p2) in
 #   the scaffold
 #
 nPointDistDict = {
@@ -119,8 +138,8 @@ _numCombDict = {}
 def NumCombinations(nItems, nSlots):
     """  returns the number of ways to fit nItems into nSlots
 
-      We assume that (x,y) and (y,x) are equivalent, and
-      (x,x) is allowed.
+      We assume that (x, y) and (y, x) are equivalent, and
+      (x, x) is allowed.
 
       General formula is, for N items and S slots:
         res = (N+S-1)! / ( (N-1)! * S! )
