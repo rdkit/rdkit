@@ -6,7 +6,6 @@
 
 """
 
-
 from rdkit import RDConfig
 from rdkit.ML.Descriptors import Parser, Descriptors
 from rdkit.utils import chemutils
@@ -120,7 +119,7 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     res = 0.0
     for atom, num in compos:
-      res = res + self.atomDict[atom][desc] * num
+      res += self.atomDict[atom][desc] * num
     return res
 
   def MEAN(self, desc, compos):
@@ -142,8 +141,8 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     res = 0.0
     nSoFar = 0.0
     for atom, num in compos:
-      res = res + self.atomDict[atom][desc] * num
-      nSoFar = nSoFar + num
+      res += self.atomDict[atom][desc] * num
+      nSoFar += num
     return res / nSoFar
 
   def DEV(self, desc, compos):
@@ -166,8 +165,8 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     res = 0.0
     nSoFar = 0.0
     for atom, num in compos:
-      res = res + abs(self.atomDict[atom][desc] - mean) * num
-      nSoFar = nSoFar + num
+      res += abs(self.atomDict[atom][desc] - mean) * num
+      nSoFar += num
     return res / nSoFar
 
   def MIN(self, desc, compos):
@@ -226,11 +225,12 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     for entry in lCopy:
       if 'NONZERO' in entry[1]:
         if entry[0] not in tList:
-          self.nonZeroDescriptors.append('%s != 0' % entry[0])
+          self.nonZeroDescriptors.append(f'{entry[0]} != 0')
         if len(entry[1]) == 1:
           self.simpleList.remove(entry)
         else:
           self.simpleList[self.simpleList.index(entry)][1].remove('NONZERO')
+          
     self.requiredDescriptors = map(lambda x: x[0], self.simpleList)
     for entry in tList:
       if entry in self.requiredDescriptors:
@@ -246,8 +246,9 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     # add in the atomic descriptors we will need
     for entry in self.compoundList:
       for atomicDesc in entry[1]:
-        if atomicDesc != '' and atomicDesc not in self.requiredDescriptors:
-          self.requiredDescriptors.append(atomicDesc)
+        if atomicDesc != '':
+          if atomicDesc not in self.requiredDescriptors:
+            self.requiredDescriptors.append(atomicDesc)
 
   def BuildAtomDict(self):
     """ builds the local atomic dict
@@ -304,11 +305,11 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
           try:
             method = getattr(self, target)
           except AttributeError:
-            print('Method %s does not exist' % (target))
+            print(f'Method {target} does not exist')
           else:
             res.append(method(descName, composList))
     except KeyError as msg:
-      print('composition %s caused problems' % composList)
+      print(f'composition {composList} caused problems')
       raise KeyError(msg)
     return res
 
@@ -338,11 +339,8 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     if composList is None:
       composList = chemutils.SplitComposition(compos)
-    res = []
-    for cl in self.compoundList:
-      val = Parser.CalcSingleCompoundDescriptor(composList, cl[1:], self.atomDict, propDict)
-      res.append(val)
-    return res
+      
+    return [Parser.CalcSingleCompoundDescriptor(composList, cl[1:], self.atomDict, propDict) for cl in self.compoundList]
 
   def CalcDescriptorsForComposition(self, composVect, propDict):
     """ calculates all descriptors for a given composition
@@ -383,18 +381,20 @@ class CompoundDescriptorCalculator(Descriptors.DescriptorCalculator):
     """
     if self.descriptorNames is not None:
       return self.descriptorNames
-    else:
-      res = []
-      for descName, targets in self.simpleList:
-        for target in targets:
-          if hasattr(self, target):
-            res.append('%s_%s' % (target, descName))
-          else:
-            print('Method %s does not exist' % (target))
-      for entry in self.compoundList:
-        res.append(entry[0])
-      self.descriptorNames = res[:]
-      return tuple(res)
+    
+    res = []
+    for descName, targets in self.simpleList:
+      for target in targets:
+        if hasattr(self, target):
+          res.append(f'{target}_{descName}')
+        else:
+          print(f'Method {target} does not exist')
+    
+    for entry in self.compoundList:
+      res.append(entry[0])
+    self.descriptorNames = res
+    return tuple(res)
+
 
   def __init__(self, simpleList, compoundList=None, dbName=None, dbTable='atomic_data',
                dbUser='sysdba', dbPassword='masterkey'):
