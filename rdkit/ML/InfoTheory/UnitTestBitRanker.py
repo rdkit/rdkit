@@ -5,12 +5,12 @@ This test currently fails. The database is not available.
 
 
 import os
+import pickle
 import unittest
 
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import InfoTheory
-import pickle
 
 RDConfig.usePgSQL = 0
 

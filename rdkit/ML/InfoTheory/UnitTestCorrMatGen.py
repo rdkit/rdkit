@@ -1,9 +1,9 @@
-from rdkit.ML.InfoTheory import rdInfoTheory
-from rdkit.ML.Data import DataUtils
-from rdkit import DataStructs
-import unittest
 import random
+import unittest
 
+from rdkit import DataStructs
+from rdkit.ML.Data import DataUtils
+from rdkit.ML.InfoTheory import rdInfoTheory
 
 try:
     from rdkit.ML.InfoTheory import BitClusterer
@@ -12,14 +12,14 @@ except ImportError:
 
 
 def getValLTM(i, j, mat):
+    if i == j:
+        return 0.0
+
     if i > j:
         id_ = i * (i - 1) // 2 + j
-        return mat[id_]
-    elif j > i:
-        id_ = j * (j - 1) // 2 + i
-        return mat[id_]
     else:
-        return 0.0
+        id_ = j * (j - 1) // 2 + i
+    return mat[id_]
 
 
 class TestCase(unittest.TestCase):
@@ -113,10 +113,7 @@ class TestCase(unittest.TestCase):
         rvc = bcl.MapToClusterScores(tfp)
         self.assertEqual(len(rvc), self.nbits // 2)
         for i in range(self.nbits // 2):
-            if i < self.nbits // 4:
-                self.assertEqual(rvc[i], 2)
-            else:
-                self.assertEqual(rvc[i], 0)
+            self.assertEqual(rvc[i], 2 if i < self.nbits // 4 else 0)
 
         nfp = bcl.MapToClusterFP(tfp)
         self.assertEqual(len(nfp), self.nbits // 2)
