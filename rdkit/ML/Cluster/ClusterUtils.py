@@ -60,7 +60,6 @@ def GetNodesDownToCentroids(cluster, above=1):
   for child in children:
     res.extend(GetNodesDownToCentroids(child, above))
   res.append(cluster)
-  res += [cluster]
   return res
 
 
@@ -112,9 +111,9 @@ def FindClusterCentroidFromDists(cluster, dists):
     else:
       children[i]._distToCenter = 0.0
     children[i]._clustCenter = bestIdx
+  
   cluster._clustCenter = bestIdx
   cluster._distToCenter = 0.0
-
   return bestIdx
 
 
@@ -147,7 +146,7 @@ def _HeightFirstSplit(cluster, n):
 
   """
   if len(cluster) < n:
-    raise ValueError('Cannot split cluster of length %d into %d pieces' % (len(cluster), n))
+    raise ValueError(f'Cannot split cluster of length {len(cluster)} into {n} pieces')
   if len(cluster) == n:
     return cluster.GetPoints()
   

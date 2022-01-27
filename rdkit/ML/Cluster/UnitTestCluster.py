@@ -48,14 +48,14 @@ class TestCase(unittest.TestCase):
         assert len(cs) == 4, 'bad split length'
         indices = [x.GetIndex() for x in cs]
         for index in [9, 8, 1, 2]:
-            assert index in indices, 'index %d not found in %s' % (index, str(indices))
+            assert index in indices, f'index {index} not found in {str(indices)}'
         # we may not want to preserve order, but test it for now
         assert indices == [9, 8, 1, 2], 'bad index order'
 
         cs2 = ClusterUtils.SplitIntoNClusters(c5, 4, breadthFirst=False)
         indices = [x.GetIndex() for x in cs2]
         for index in [8, 7, 5, 6]:
-            assert index in indices, 'index %d not found in %s' % (index, str(indices))
+            assert index in indices, f'index {index} not found in {str(indices)}'
         # we may not want to preserve order, but test it for now
         assert indices == [8, 7, 5, 6], 'bad index order'
 
