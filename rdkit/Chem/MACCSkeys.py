@@ -225,11 +225,11 @@ def _InitKeys(keyList, keyDict):
 
   """
   assert len(keyList) == len(keyDict.keys()), 'length mismatch'
-  for key, (pattern, count) in keyDict.items(): # value = (pattern, count)
+  for key, (pattern, count) in keyDict.items():
     if pattern != '?':
       sma = Chem.MolFromSmarts(pattern)
       if not sma:
-        print('SMARTS parser error for key #%d: %s' % (key, pattern))
+        print(f'SMARTS parser error for key #{key}: {pattern}')
       else:
         keyList[key - 1] = sma, count
   return None
