@@ -54,7 +54,7 @@ def GetAtomicData(atomDict, descriptorsDesired, dBase=_atomDbName, table='atomic
         if field in descriptorsDesired:
             descriptorsDesired.remove(field)
     toPull = ','.join(descriptorsDesired)
-    command = 'select %s from atomic_data %s' % (toPull, where)
+    command = f'select {toPull} from atomic_data {where}'
     try:
         c.execute(command)
     except Exception:

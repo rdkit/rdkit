@@ -338,7 +338,7 @@ def Add3DCoordsToMol(data, format, props={}):
 
   # generate the properties
   for prop in availChem3DProps:
-    props[prop] = eval('doc.%s' % prop)
+    props[prop] = eval(f'doc.{prop}')
 
   doc.Close(0)
 
@@ -406,7 +406,7 @@ def OptimizeSDFile(inFileName, outFileName, problemFileName='problems.sdf', rest
         outFile = open(outFileName, 'a')
       if not skip:
         for prop in props.keys():
-          lines.append('> <%s>\n%f\n\n' % (prop, props[prop]))
+          lines.append(f'> <{prop}>\n{props[prop]}\n\n')
         lines.append(nextLine)
         outFile.write(''.join(lines))
         lines = []
