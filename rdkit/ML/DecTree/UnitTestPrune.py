@@ -4,13 +4,13 @@
 """ """
 import os
 import unittest
-
-from rdkit.ML.DecTree import ID3, PruneTree, CrossValidate
-from rdkit.TestRunner import redirect_stdout
 from io import StringIO
 
+from rdkit.ML.DecTree import ID3, CrossValidate, PruneTree
+from rdkit.TestRunner import redirect_stdout
 
-def feq(a, b, tol=1e-4):
+
+def feq(a, b, tol: float = 1e-4):
     return abs(a - b) <= tol
 
 

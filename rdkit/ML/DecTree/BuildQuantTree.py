@@ -6,9 +6,9 @@
 """
 
 """
-
 import numpy
 import random
+
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
 from rdkit.ML.Data import Quantize
@@ -42,7 +42,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
             try:
                 vTable = [examples[x][var] for x in exIndices]
             except IndexError:
-                print('index error retrieving variable: %d' % var)
+                print(f'index error retrieving variable: {var}')
                 raise
             qBounds, gainHere = Quantize.FindVarMultQuantBounds(
                 vTable, nBounds, resCodes, nPossibleRes)
@@ -54,6 +54,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
         else:
             gainHere = -1e6
             qBounds = []
+            
         if gainHere > bestGain:
             bestGain = gainHere
             bestBounds = qBounds
@@ -62,6 +63,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
             if len(qBounds) < len(bestBounds):
                 best = var
                 bestBounds = qBounds
+                
     if best == -1:
         print('best unaltered')
         print('\tattrs:', attrs)
@@ -72,7 +74,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
 
     if 0:
         print('BEST:', len(exIndices), best, bestGain, bestBounds)
-        if (len(exIndices) < 10):
+        if len(exIndices) < 10:
             print(len(exIndices), len(resCodes), len(examples))
             exs = [examples[x] for x in exIndices]
             vals = [x[best] for x in exs]
@@ -80,7 +82,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
             sortVals = [exs[x] for x in sortIdx]
             sortResults = [resCodes[x] for x in sortIdx]
             for i in range(len(vals)):
-                print('   ', i, ['%.4f' % x for x in sortVals[i][1:-1]], sortResults[i])
+                print('   ', i, [f'{x:.4f}' for x in sortVals[i][1:-1]], sortResults[i])
     return best, bestGain, bestBounds
 
 
@@ -141,7 +143,7 @@ def BuildQuantTree(examples, target, attrs, nPossibleVals, nBoundsPerVar, depth=
         #  result
         v = numpy.argmax(counts)
         tree.SetLabel(v)
-        tree.SetName('%d?' % v)
+        tree.SetName(f'{v}?')
         tree.SetTerminal(1)
     else:
         # find the variable which gives us the largest information gain
@@ -153,7 +155,7 @@ def BuildQuantTree(examples, target, attrs, nPossibleVals, nBoundsPerVar, depth=
             nextAttrs.remove(best)
 
         # set some info at this node
-        tree.SetName('Var: %d' % (best))
+        tree.SetName(f'Var: {best}')
         tree.SetLabel(best)
         tree.SetQuantBounds(bestBounds)
         tree.SetTerminal(0)
@@ -175,7 +177,7 @@ def BuildQuantTree(examples, target, attrs, nPossibleVals, nBoundsPerVar, depth=
                     #  so there's not much sense in recursing.
                     #  This can (and does) happen.
                     v = numpy.argmax(counts)
-                    tree.AddChild('%d' % v, label=v, data=0.0, isTerminal=1)
+                    tree.AddChild(f'{v}', label=v, data=0.0, isTerminal=1)
                 else:
                     # recurse
                     tree.AddChildNode(
@@ -187,7 +189,7 @@ def BuildQuantTree(examples, target, attrs, nPossibleVals, nBoundsPerVar, depth=
                 nextExamples.append(index)
             if len(nextExamples) == 0:
                 v = numpy.argmax(counts)
-                tree.AddChild('%d' % v, label=v, data=0.0, isTerminal=1)
+                tree.AddChild(f'{v}', label=v, data=0.0, isTerminal=1)
             else:
                 tree.AddChildNode(
                   BuildQuantTree(examples, best, nextAttrs, nPossibleVals, nBoundsPerVar, depth=depth + 1,
@@ -200,7 +202,7 @@ def BuildQuantTree(examples, target, attrs, nPossibleVals, nBoundsPerVar, depth=
                         nextExamples.append(idx)
                 if len(nextExamples) == 0:
                     v = numpy.argmax(counts)
-                    tree.AddChild('%d' % v, label=v, data=0.0, isTerminal=1)
+                    tree.AddChild(f'{v}', label=v, data=0.0, isTerminal=1)
                 else:
                     tree.AddChildNode(
                       BuildQuantTree(examples, best, nextAttrs, nPossibleVals, nBoundsPerVar, depth=depth + 1,
@@ -220,9 +222,12 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
     """
     attrs = list(attrs)
     for i in range(len(nBoundsPerVar)):
-        if nBoundsPerVar[i] == -1 and i in attrs:
-            attrs.remove(i)
-
+        if nBoundsPerVar[i] == -1:
+            try:
+                attrs.remove(i)
+            except ValueError:
+                pass
+    
     tree = QuantTree.QuantTreeNode(None, 'node')
     nPossibleRes = nPossibleVals[-1]
     tree._nResultCodes = nPossibleRes
@@ -248,18 +253,19 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
             gainHere = -1e6
             qBounds = []
 
-    tree.SetName('Var: %d' % (best))
+    tree.SetName(f'Var: {best}')
     tree.SetData(gainHere)
     tree.SetLabel(best)
     tree.SetTerminal(0)
     tree.SetQuantBounds(qBounds)
-    nextAttrs = list(attrs)
+    nextAttrs = attrs.copy() # It has been converted to list once, copy faster
     if not kwargs.get('recycleVars', 0):
         nextAttrs.remove(best)
 
-    indices = list(range(len(examples)))
+    indices = list(range(len(examples))) # A list from 0 to len(examples)
     if len(qBounds) > 0:
         for bound in qBounds:
+            # Optimize here once: Recheck here if failed
             nextExamples = []
             for index in list(indices):
                 ex = examples[index]
@@ -273,31 +279,29 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
                                  maxDepth=maxDepth, **kwargs))
             else:
                 v = numpy.argmax(counts)
-                tree.AddChild('%d??' % (v), label=v, data=0.0, isTerminal=1)
+                tree.AddChild(f'{v}??', label=v, data=0.0, isTerminal=1)
+        
         # add the last points remaining
-        nextExamples = []
-        for index in indices:
-            nextExamples.append(examples[index])
+        nextExamples = [examples[index] for index in indices]    
+        
         if len(nextExamples) != 0:
             tree.AddChildNode(
               BuildQuantTree(nextExamples, best, nextAttrs, nPossibleVals, nBoundsPerVar, depth=1,
                              maxDepth=maxDepth, **kwargs))
         else:
             v = numpy.argmax(counts)
-            tree.AddChild('%d??' % (v), label=v, data=0.0, isTerminal=1)
+            tree.AddChild(f'{v}??', label=v, data=0.0, isTerminal=1)
+    
     else:
         for val in range(nPossibleVals[best]):
-            nextExamples = []
-            for example in examples:
-                if example[best] == val:
-                    nextExamples.append(example)
+            nextExamples = [example for example in examples if example[best] == val]                  
             if len(nextExamples) != 0:
                 tree.AddChildNode(
                   BuildQuantTree(nextExamples, best, nextAttrs, nPossibleVals, nBoundsPerVar, depth=1,
                                  maxDepth=maxDepth, **kwargs))
             else:
                 v = numpy.argmax(counts)
-                tree.AddChild('%d??' % (v), label=v, data=0.0, isTerminal=1)
+                tree.AddChild(f'{v}??', label=v, data=0.0, isTerminal=1)
     return tree
 
 

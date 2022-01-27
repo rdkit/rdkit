@@ -62,9 +62,7 @@ class DecTreeNode(Tree.TreeNode):
       self.examples.append(example)
     if self.terminalNode:
       return self.label
-    else:
-      val = example[self.label]
-      return self.children[val].ClassifyExample(example, appendExamples)
+    return self.children[example[self.label]].ClassifyExample(example, appendExamples)
 
   def AddChild(self, name, label=None, data=None, isTerminal=0):
     """ Constructs and adds a child with the specified data to our list

@@ -45,19 +45,20 @@ class SigTreeNode(DecTree.DecTreeNode):
       self.examples.append(example)
     if self.terminalNode:
       return self.label
-    else:
-      sig = example[1]
-      val = sig[self.label]
-      # print 'val:',val
-      if val and isinstance(sig, VectCollection):
-        # we need to copy and modify the example:
-        sig = copy.copy(sig)
-        sig.DetachVectsNotMatchingBit(self.label)
-        ex = [example[0], sig]
-        if len(example) > 2:
-          ex.extend(example[2:])
-        example = ex
-      return self.children[val].ClassifyExample(example, appendExamples=appendExamples)
+    
+    sig = example[1]
+    val = sig[self.label]
+    # print 'val:',val
+    if val and isinstance(sig, VectCollection):
+      # we need to copy and modify the example:
+      sig = copy.copy(sig)
+      sig.DetachVectsNotMatchingBit(self.label)
+      ex = [example[0], sig]
+      if len(example) > 2:
+        ex.extend(example[2:])
+      example = ex
+    return self.children[val].ClassifyExample(example, appendExamples=appendExamples)
+
 
   def __init__(self, *args, **kwargs):
     DecTree.DecTreeNode.__init__(self, *args, **kwargs)

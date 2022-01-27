@@ -6,13 +6,10 @@
 """
 
 """
-
-
 import copy
 import random
 
 import numpy
-
 from rdkit.DataStructs.VectCollection import VectCollection
 from rdkit.ML import InfoTheory
 from rdkit.ML.DecTree import SigTree
@@ -133,7 +130,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
     #  result
     v = numpy.argmax(counts)
     tree.SetLabel(v)
-    tree.SetName('%d?' % v)
+    tree.SetName(f'{v}?')
     tree.SetTerminal(1)
   else:
     # find the variable which gives us the best improvement
@@ -145,6 +142,8 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       ranker.SetBiasList(biasList)
     if CMIM is not None and useCMIM > 0 and not ensemble:
       ensemble = CMIM.SelectFeatures(examples, useCMIM, bvCol=1)
+    
+    availBits = None
     if random:
       if ensemble:
         if len(ensemble) > random:
@@ -154,8 +153,7 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
           availBits = list(range(len(ensemble)))
       else:
         availBits = _GenerateRandomEnsemble(random, nBits)
-    else:
-      availBits = None
+    
     if availBits:
       ranker.SetMaskBits(availBits)
     # print('  2:'*depth,availBits)
@@ -178,18 +176,21 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       traceback.print_exc()
       print('get top n failed')
       gain = -1.0
+      
     if gain <= 0.0:
       v = numpy.argmax(counts)
       tree.SetLabel(v)
-      tree.SetName('?%d?' % v)
+      tree.SetName(f'?{v}?')
       tree.SetTerminal(1)
       return tree
+    
     best = int(bitInfo[0])
+    
     # print('  '*depth,'\tbest:',bitInfo)
     if verbose:
       print('  ' * depth, '\tbest:', bitInfo)
     # set some info at this node
-    tree.SetName('Bit-%d' % (best))
+    tree.SetName(f'Bit-{best}')
     tree.SetLabel(best)
     # tree.SetExamples(examples)
     tree.SetTerminal(0)
@@ -211,16 +212,17 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
       else:
         offExamples.append(example)
     # print('    '*depth,len(offExamples),len(onExamples))
+    
     for ex in (offExamples, onExamples):
       if len(ex) == 0:
         v = numpy.argmax(counts)
-        tree.AddChild('%d??' % v, label=v, data=0.0, isTerminal=1)
+        tree.AddChild(f'{v}??', label=v, data=0.0, isTerminal=1)
       else:
         child = BuildSigTree(ex, nPossibleRes, random=random, ensemble=ensemble, metric=metric,
                              biasList=biasList, depth=depth + 1, maxDepth=maxDepth, verbose=verbose)
         if child is None:
           v = numpy.argmax(counts)
-          tree.AddChild('%d???' % v, label=v, data=0.0, isTerminal=1)
+          tree.AddChild(f'{v}???', label=v, data=0.0, isTerminal=1)
         else:
           tree.AddChildNode(child)
   return tree
@@ -228,5 +230,4 @@ def BuildSigTree(examples, nPossibleRes, ensemble=None, random=0,
 
 def SigTreeBuilder(examples, attrs, nPossibleVals, initialVar=None, ensemble=None,
                    randomDescriptors=0, **kwargs):
-  nRes = nPossibleVals[-1]
-  return BuildSigTree(examples, nRes, random=randomDescriptors, **kwargs)
+  return BuildSigTree(examples, nPossibleVals[-1], random=randomDescriptors, **kwargs)
