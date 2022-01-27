@@ -48,9 +48,7 @@ def BurgesRiskBound(VCDim, nData, nWrong, conf):
 
   numerator = h * (math.log(2. * l / h) + 1.) - math.log(eta / 4.)
   structRisk = math.sqrt(numerator / l)
-
   rEmp = float(nWrong) / l
-
   return rEmp + structRisk
 
 
