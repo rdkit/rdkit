@@ -18,6 +18,7 @@ _welcomeMessage = "This is ShowFeats version %s" % (_version)
 import math
 #set up the logger:
 from rdkit import RDLogger as logging
+
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 
@@ -163,78 +164,71 @@ def ShowMolFeats(mol, factory, viewer, radius=0.5, confId=-1, showOnly=True, nam
 
   molFeats = factory.GetFeaturesForMol(mol)
   if not featLabel:
-    featLabel = '%s-feats' % name
+    featLabel = f'{name}-feats'
     viewer.server.resetCGO(featLabel)
   if not dirLabel:
     dirLabel = featLabel + "-dirs"
     viewer.server.resetCGO(dirLabel)
 
-  for i, feat in enumerate(molFeats):
+  for feat in molFeats:
     family = feat.GetFamily()
     if family in excludeTypes:
       continue
     pos = feat.GetPos(confId)
     color = colors.get(family, (.5, .5, .5))
-    nm = '%s(%d)' % (family, i + 1)
 
     if transparency:
       _globalSphereCGO.extend([ALPHA, 1 - transparency])
     else:
       _globalSphereCGO.extend([ALPHA, 1])
-    _globalSphereCGO.extend([COLOR, color[0], color[1], color[2], SPHERE, pos.x, pos.y, pos.z,
-                             radius])
+    _globalSphereCGO.extend([COLOR, color[0], color[1], color[2], 
+                             SPHERE, pos.x, pos.y, pos.z, radius])
     if writeFeats:
       aidText = ' '.join([str(x + 1) for x in feat.GetAtomIds()])
-      print('%s\t%.3f\t%.3f\t%.3f\t1.0\t# %s' % (family, pos.x, pos.y, pos.z, aidText))
+      print(f'{family}\t{pos.x:.3f}\t{pos.y:.3f}\t{pos.z:.3f}\t1.0\t# {aidText}')
 
     if featMapFile:
-      print("  family=%s pos=(%.3f,%.3f,%.3f) weight=1.0" % (family, pos.x, pos.y, pos.z), end='',
-            file=featMapFile)
-
+      print(f"  family={family} pos=({pos.x:.3f}, {pos.y:.3f}, {pos.z:.3f}) weight=1.0", 
+            end='', file=featMapFile)
+      
     if useFeatDirs:
       ps = []
       if family == 'Aromatic':
-        ps, fType = FeatDirUtils.GetAromaticFeatVects(
-          mol.GetConformer(confId), feat.GetAtomIds(), pos, scale=1.0)
+        ps, _ = FeatDirUtils.GetAromaticFeatVects(mol.GetConformer(confId), feat.GetAtomIds(), pos, scale=1.0)
+      
       elif family == 'Donor':
         aids = feat.GetAtomIds()
         if len(aids) == 1:
+          FeatVectsDictMethod = {1: FeatDirUtils.GetDonor1FeatVects,
+                                 2: FeatDirUtils.GetDonor2FeatVects,
+                                 3: FeatDirUtils.GetDonor3FeatVects, }
           featAtom = mol.GetAtomWithIdx(aids[0])
-          hvyNbrs = [x for x in featAtom.GetNeighbors() if x.GetAtomicNum() != 1]
-          if len(hvyNbrs) == 1:
-            ps, fType = FeatDirUtils.GetDonor1FeatVects(mol.GetConformer(confId), aids, scale=1.0)
-          elif len(hvyNbrs) == 2:
-            ps, fType = FeatDirUtils.GetDonor2FeatVects(mol.GetConformer(confId), aids, scale=1.0)
-          elif len(hvyNbrs) == 3:
-            ps, fType = FeatDirUtils.GetDonor3FeatVects(mol.GetConformer(confId), aids, scale=1.0)
+          numHvyNbrs = len([1 for x in featAtom.GetNeighbors() if x.GetAtomicNum() > 1])
+          ps, _ = FeatVectsDictMethod[numHvyNbrs](mol.GetConformer(confId), aids, scale=1.0)
+
       elif family == 'Acceptor':
         aids = feat.GetAtomIds()
         if len(aids) == 1:
+          FeatVectsDictMethod = {1: FeatDirUtils.GetDonor1FeatVects,
+                                 2: FeatDirUtils.GetDonor2FeatVects,
+                                 3: FeatDirUtils.GetDonor3FeatVects, }
           featAtom = mol.GetAtomWithIdx(aids[0])
-          hvyNbrs = [x for x in featAtom.GetNeighbors() if x.GetAtomicNum() != 1]
-          if len(hvyNbrs) == 1:
-            ps, fType = FeatDirUtils.GetAcceptor1FeatVects(
-              mol.GetConformer(confId), aids, scale=1.0)
-          elif len(hvyNbrs) == 2:
-            ps, fType = FeatDirUtils.GetAcceptor2FeatVects(
-              mol.GetConformer(confId), aids, scale=1.0)
-          elif len(hvyNbrs) == 3:
-            ps, fType = FeatDirUtils.GetAcceptor3FeatVects(
-              mol.GetConformer(confId), aids, scale=1.0)
+          numHvyNbrs = len([x for x in featAtom.GetNeighbors() if x.GetAtomicNum() > 1])
+          ps, _ = FeatVectsDictMethod[numHvyNbrs](mol.GetConformer(confId), aids, scale=1.0)
 
       for tail, head in ps:
         ShowArrow(viewer, tail, head, radius, color, dirLabel, transparency=transparency,
                   includeArrowhead=includeArrowheads)
         if featMapFile:
           vect = head - tail
-          print('dir=(%.3f,%.3f,%.3f)' % (vect.x, vect.y, vect.z), end='', file=featMapFile)
+          print(f'dir=({vect.x:.3f}, {vect.y:.3f}, {vect.z:.3f})', end='', file=featMapFile)
 
     if featMapFile:
       aidText = ' '.join([str(x + 1) for x in feat.GetAtomIds()])
-      print('# %s' % (aidText), file=featMapFile)
+      print(f'# {aidText}', file=featMapFile)
 
 # --- ----  --- ----  --- ----  --- ----  --- ----  --- ----
-import sys, os, getopt
+import sys, os
 from rdkit import RDConfig
 from optparse import OptionParser
 parser = OptionParser(_usage, version='%prog ' + _version)
@@ -303,9 +297,9 @@ if __name__ == '__main__':
   i = 1
   for midx, molN in enumerate(args):
     if molN != '-':
-      featLabel = '%s_Feats' % molN
+      featLabel = f'{molN}_Feats' % molN
     else:
-      featLabel = 'Mol%d_Feats' % (midx + 1)
+      featLabel = f'Mol{midx + 1}_Feats'
 
     v.server.resetCGO(featLabel)
     # this is a big of kludgery to work around what seems to be a pymol cgo bug:
@@ -327,14 +321,14 @@ if __name__ == '__main__':
       ms.SetData(sys.stdin.read())
 
     for m in ms:
-      nm = 'Mol_%d' % (i)
+      nm = f'Mol_{i}'
       if m.HasProp('_Name'):
         nm += '_' + m.GetProp('_Name')
       if options.verbose:
         if m.HasProp('_Name'):
-          print("#Molecule: %s" % m.GetProp('_Name'))
+          print("#Molecule: ", m.GetProp('_Name'))
         else:
-          print("#Molecule: %s" % nm)
+          print("#Molecule: ", nm)
       ShowMolFeats(m, factory, v, transparency=0.25, excludeTypes=options.exclude, name=nm,
                    showOnly=False, useFeatDirs=options.useDirs, featLabel=featLabel,
                    dirLabel=dirLabel, includeArrowheads=options.includeArrowheads,
@@ -342,7 +336,8 @@ if __name__ == '__main__':
                    featMapFile=options.featMapFile)
       i += 1
       if not i % 100:
-        logger.info("Done %d poses" % i)
+        logger.info(f"Done {i} poses")
+    
     if ms:
       v.server.renderCGO(_globalSphereCGO, featLabel, 1)
       if options.useDirs:
