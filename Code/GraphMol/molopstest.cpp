@@ -135,6 +135,7 @@ void test3() {
     TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(i, 3));
     TEST_ASSERT(!m->getRingInfo()->isAtomInRingOfSize(i, 4));
     TEST_ASSERT(m->getRingInfo()->numAtomRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{3}));
     TEST_ASSERT(m->getRingInfo()->atomMembers(i).size() == 1 &&
                 m->getRingInfo()->atomMembers(i).at(0) == 0);
   }
@@ -142,6 +143,7 @@ void test3() {
     TEST_ASSERT(m->getRingInfo()->isBondInRingOfSize(i, 3));
     TEST_ASSERT(!m->getRingInfo()->isBondInRingOfSize(i, 4));
     TEST_ASSERT(m->getRingInfo()->numBondRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->bondRingSizes(i) == (INT_VECT{3}));
     TEST_ASSERT(m->getRingInfo()->bondMembers(i).size() == 1 &&
                 m->getRingInfo()->bondMembers(i).at(0) == 0);
   }
@@ -166,11 +168,13 @@ void test3() {
     TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(i, 4));
     TEST_ASSERT(!m->getRingInfo()->isAtomInRingOfSize(i, 3));
     TEST_ASSERT(m->getRingInfo()->numAtomRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{4}));
     TEST_ASSERT(m->getRingInfo()->atomMembers(i).size() == 1 &&
                 m->getRingInfo()->atomMembers(i).at(0) == 0);
   }
   TEST_ASSERT(m->getRingInfo()->isBondInRingOfSize(0, 4));
   TEST_ASSERT(m->getRingInfo()->numBondRings(0) == 1);
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(0) == (INT_VECT{4}));
   TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(0, 1));
   TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 4));
   TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 5));
@@ -207,11 +211,19 @@ void test3() {
       m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(0, 1)->getIdx()));
   TEST_ASSERT(m->getRingInfo()->atomMembers(0).size() == 1);
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(2).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(5) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(1) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(99).empty());
   TEST_ASSERT(m->getRingInfo()->areAtomsInSameRing(0, 1));
   TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 7));
   TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 5));
   TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRing(1, 2));
   TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(1, 2, 4));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(1).empty());
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(4) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(5) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(99).empty());
   TEST_ASSERT(m->getRingInfo()->bondMembers(0).size() == 1);
   TEST_ASSERT(m->getRingInfo()->bondMembers(1).empty());
   TEST_ASSERT(
@@ -247,6 +259,9 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->numAtomRings(1) == 1);
   TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(2, 5));
   TEST_ASSERT(m->getRingInfo()->numAtomRings(2) == 2);
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(0).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(1) == (INT_VECT{5}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(2) == (INT_VECT{5, 5}));
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).size() == 2);
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(0) == 0);
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(1) == 1);

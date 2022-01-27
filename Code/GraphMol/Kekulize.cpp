@@ -114,8 +114,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
     int sbo = 0;
     unsigned nToIgnore = 0;
     unsigned int nonArNonDummyNbr = 0;
-    for (const auto &bi : boost::make_iterator_range(mol.getAtomBonds(at))) {
-      auto bond = mol[bi];
+    for (const auto bond : mol.atomBonds(at)) {
       auto otherAt = bond->getOtherAtom(at);
       if (otherAt->getAtomicNum() && !otherAt->getIsAromatic() &&
           inAllAtms.test(otherAt->getIdx())) {
@@ -563,30 +562,32 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       allringsSSSR.empty() ? mol.getRingInfo()->atomRings() : allringsSSSR;
   VECT_INT_VECT arings;
   arings.reserve(allrings.size());
+  auto copyAtomRingsWithinFragmentUnlessAllDummy =
+      [&atomsToUse, &dummyAts](const INT_VECT &ring) {
+        bool ringOk = false;
+        for (auto ai : ring) {
+          if (!atomsToUse[ai]) {
+            return false;
+          }
+          if (!dummyAts[ai]) {
+            ringOk = true;
+          }
+        }
+        return ringOk;
+      };
   std::copy_if(allrings.begin(), allrings.end(), std::back_inserter(arings),
-               [&atomsToUse, &dummyAts](const INT_VECT &ring) {
-                 bool ringOk = false;
-                 for (auto ai : ring) {
-                   if (!atomsToUse[ai]) {
-                     return false;
-                   }
-                   if (!dummyAts[ai]) {
-                     ringOk = true;
-                   }
-                 }
-                 return ringOk;
-               });
+               copyAtomRingsWithinFragmentUnlessAllDummy);
 
   VECT_INT_VECT allbrings;
   RingUtils::convertToBonds(arings, allbrings, mol);
   VECT_INT_VECT brings;
   brings.reserve(allbrings.size());
+  auto copyBondRingsWithinFragment = [&bondsToUse](const INT_VECT &ring) {
+    return std::all_of(ring.begin(), ring.end(),
+                       [&bondsToUse](const int bi) { return bondsToUse[bi]; });
+  };
   std::copy_if(allbrings.begin(), allbrings.end(), std::back_inserter(brings),
-               [&bondsToUse](const INT_VECT &ring) {
-                 return std::all_of(
-                     ring.begin(), ring.end(),
-                     [&bondsToUse](const int bi) { return bondsToUse[bi]; });
-               });
+               copyBondRingsWithinFragment);
 
   // make a neighbor map for the rings i.e. a ring is a
   // neighbor to another candidate ring if it shares at least

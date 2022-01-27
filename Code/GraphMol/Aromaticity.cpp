@@ -132,8 +132,7 @@ typedef enum {
   TwoElectronDonorType,
   OneOrTwoElectronDonorType,
   AnyElectronDonorType,
-  NoElectronDonorType,
-  LastElectronDonorType = NoElectronDonorType
+  NoElectronDonorType
 } ElectronDonorType;  // used in setting aromaticity
 typedef std::vector<ElectronDonorType> VECT_EDON_TYPE;
 typedef VECT_EDON_TYPE::iterator VECT_EDON_TYPE_I;
@@ -250,8 +249,7 @@ bool incidentNonCyclicMultipleBond(const Atom *at, int &who) {
   // if yes check which atom this bond goes to
   // and record the atomID in who
   const auto &mol = at->getOwningMol();
-  for (const auto &bi : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    const auto bond = mol[bi];
+  for (const auto bond : mol.atomBonds(at)) {
     if (!mol.getRingInfo()->numBondRings(bond->getIdx())) {
       if (bond->getValenceContrib(at) >= 2.0) {
         who = bond->getOtherAtomIdx(at->getIdx());
@@ -265,8 +263,7 @@ bool incidentNonCyclicMultipleBond(const Atom *at, int &who) {
 bool incidentCyclicMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   const auto &mol = at->getOwningMol();
-  for (const auto &bi : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    const auto bond = mol[bi];
+  for (const auto bond : mol.atomBonds(at)) {
     if (mol.getRingInfo()->numBondRings(bond->getIdx())) {
       if (bond->getValenceContrib(at) >= 2.0) {
         return true;
@@ -280,8 +277,7 @@ bool incidentMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   const auto &mol = at->getOwningMol();
   int deg = at->getDegree() + at->getNumExplicitHs();
-  for (const auto &bi : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    const auto bond = mol[bi];
+  for (const auto bond : mol.atomBonds(at)) {
     if (!std::lround(bond->getValenceContrib(at))) {
       --deg;
     }
@@ -486,8 +482,8 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   if (nUnsaturations > 1) {
     unsigned int nMult = 0;
     const auto &mol = at->getOwningMol();
-    for (const auto &bi : boost::make_iterator_range(mol.getAtomBonds(at))) {
-      switch (mol[bi]->getBondType()) {
+    for (const auto bond : mol.atomBonds(at)) {
+      switch (bond->getBondType()) {
         case Bond::SINGLE:
         case Bond::AROMATIC:
           break;
@@ -517,8 +513,7 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
 
   if (!allowExocyclicMultipleBonds) {
     const auto &mol = at->getOwningMol();
-    for (const auto &bi : boost::make_iterator_range(mol.getAtomBonds(at))) {
-      const auto bond = mol[bi];
+    for (const auto bond : mol.atomBonds(at)) {
       if ((bond->getBondType() == Bond::DOUBLE ||
            bond->getBondType() == Bond::TRIPLE) &&
           !queryIsBondInRing(bond)) {
@@ -622,8 +617,7 @@ int countAtomElec(const Atom *at) {
   int degree = at->getDegree() + at->getTotalNumHs();
 
   const auto &mol = at->getOwningMol();
-  for (const auto &bi : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    auto bond = mol[bi];
+  for (const auto bond : mol.atomBonds(at)) {
     // don't count bonds that aren't actually contributing to the valence here:
     if (!std::lround(bond->getValenceContrib(at))) {
       --degree;

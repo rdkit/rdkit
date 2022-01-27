@@ -39,6 +39,12 @@ python::object atomMembers(const RingInfo *self, unsigned int idx) {
 python::object bondMembers(const RingInfo *self, unsigned int idx) {
   return python::tuple(self->bondMembers(idx));
 }
+python::object atomRingSizes(const RingInfo *self, unsigned int idx) {
+  return python::tuple(self->atomRingSizes(idx));
+}
+python::object bondRingSizes(const RingInfo *self, unsigned int idx) {
+  return python::tuple(self->bondRingSizes(idx));
+}
 
 #ifdef RDK_USE_URF
 python::object atomRingFamilies(const RingInfo *self) {
@@ -98,6 +104,8 @@ struct ringinfo_wrapper {
         .def("BondRings", bondRings)
         .def("AtomMembers", atomMembers)
         .def("BondMembers", bondMembers)
+        .def("AtomRingSizes", atomRingSizes)
+        .def("BondRingSizes", bondRingSizes)
 #ifdef RDK_USE_URF
         .def("NumRingFamilies", &RingInfo::numRingFamilies)
         .def("NumRelevantCycles", &RingInfo::numRelevantCycles)

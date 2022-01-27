@@ -118,7 +118,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  const INT_VECT &atomMembers(unsigned int idx) const;
+  INT_VECT atomMembers(unsigned int idx) const;
 
   //! returns whether or not atoms with indices \c idx1 and \c idx2 belong to
   //! the same ring.
@@ -127,7 +127,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   bool areAtomsInSameRing(unsigned int idx1, unsigned int idx2) const {
-    return areAtomsInSameRingInternal(idx1, idx2, false);
+    return areAtomsInSameRingOfSize(idx1, idx2, 0);
   }
 
   //! returns whether or not atoms with indices \c idx1 and \c idx2 belong to
@@ -137,9 +137,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   bool areAtomsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
-                                unsigned int size) const {
-    return areAtomsInSameRingInternal(idx1, idx2, true, size);
-  }
+                                unsigned int size) const;
 
   //@}
 
@@ -197,7 +195,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
-  const INT_VECT &bondMembers(unsigned int idx) const;
+  INT_VECT bondMembers(unsigned int idx) const;
 
   //! returns whether or not bonds with indices \c idx1 and \c idx2 belong to
   //! the same ring.
@@ -206,7 +204,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   bool areBondsInSameRing(unsigned int idx1, unsigned int idx2) const {
-    return areBondsInSameRingInternal(idx1, idx2, false);
+    return areBondsInSameRingOfSize(idx1, idx2, 0);
   }
 
   //! returns whether or not bonds with indices \c idx1 and \c idx2 belong to
@@ -216,9 +214,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   bool areBondsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
-                                unsigned int size) const {
-    return areBondsInSameRingInternal(idx1, idx2, true, size);
-  }
+                                unsigned int size) const;
 
 #ifdef RDK_USE_URF
   //! adds a ring family to our data
@@ -274,11 +270,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
  private:
   //! pre-allocates some memory to save time later
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
-  bool areAtomsInSameRingInternal(unsigned int idx1, unsigned int idx2,
-                                  bool useSize, unsigned int size = 0) const;
-  bool areBondsInSameRingInternal(unsigned int idx1, unsigned int idx2,
-                                  bool useSize, unsigned int size = 0) const;
-
   bool df_init{false};
   DataType d_atomMembers, d_bondMembers;
   VECT_INT_VECT d_atomRings, d_bondRings;
