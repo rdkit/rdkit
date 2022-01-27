@@ -3,21 +3,20 @@
 #
 """ unit tests for the model and descriptor packager """
 import os
+import pickle
 import random
 import unittest
+from io import BytesIO
 from xml.dom import minidom
 from xml.etree import ElementTree as ET
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import Descriptors
 from rdkit.ML.Composite import Composite
 from rdkit.ML.Data import DataUtils
 from rdkit.ML.Descriptors.MoleculeDescriptors import MolecularDescriptorCalculator
 from rdkit.ML.ModelPackage import Packager, PackageUtils
 from rdkit.ML.ModelPackage.Packager import ModelPackage
-from io import BytesIO
-import pickle
 
 
 def feq(a, b, tol=1e-4):
@@ -46,21 +45,21 @@ class TestCase(unittest.TestCase):
     def _verify(self, pkg, testD):
         for smi, pred, conf in testD:
             m = Chem.MolFromSmiles(smi)
-            self.assertTrue(m is not None, 'SMILES: %s failed\n' % (smi))
+            self.assertTrue(m is not None, f'SMILES: {smi} failed\n')
             p, c = pkg.Classify(m)
-            assert p == pred, 'bad prediction (%d) for smiles %s' % (p, smi)
-            assert feq(c, conf), 'bad confidence (%f) for smiles %s' % (c, smi)
+            assert p == pred, f'bad prediction ({p}) for smiles {smi}'
+            assert feq(c, conf), f'bad confidence ({c}) for smiles {smi}'
 
     def _verify2(self, pkg, testD):
         for smi, pred, conf in testD:
             m = Chem.MolFromSmiles(smi)
-            self.assertTrue(m is not None, 'SMILES: %s failed\n' % (smi))
+            self.assertTrue(m is not None, f'SMILES: {smi} failed\n')
             p, c = pkg.Classify(m)
-            assert p == pred, 'bad prediction (%d) for smiles %s' % (p, smi)
-            assert feq(c, conf), 'bad confidence (%f) for smiles %s' % (c, smi)
+            assert p == pred, f'bad prediction ({p}) for smiles {smi}'
+            assert feq(c, conf), f'bad confidence ({c}) for smiles {smi}'
             p, c = pkg.Classify(m)
-            assert p == pred, 'bad prediction (%d) for smiles %s' % (p, smi)
-            assert feq(c, conf), 'bad confidence (%f) for smiles %s' % (c, smi)
+            assert p == pred, f'bad prediction ({p}) for smiles {smi}'
+            assert feq(c, conf), f'bad confidence ({c}) for smiles {smi}'
 
     def testBuild(self):
         # """ tests building and screening a packager """
@@ -104,8 +103,7 @@ class TestCase(unittest.TestCase):
                 for desc in perm:
                     fn = getattr(Descriptors, desc, lambda x: 777)
                     val = fn(m)
-                    assert feq(val, ref[desc], 1e-4), '%s: %s(%s): %f!=%f' % (str(perm), smi, desc, val,
-                                                                              ref[desc])
+                    assert feq(val, ref[desc], 1e-4), f'{str(perm)}: {smi}({desc}): {val}!={ref[desc]}'
 
     def testPerm2(self):
         # """ tests the descriptor remapping stuff in a packager """

@@ -7,9 +7,13 @@ voting on a data set
   Uses *Numeric* and *PIL*
 
 """
-
-from PIL import Image, ImageDraw
+import sys
+import getopt
+import pickle
 import numpy
+
+from rdkit.ML.Data import DataUtils
+from PIL import Image, ImageDraw
 
 
 def CollectVotes(composite, data, badOnly):
@@ -58,12 +62,12 @@ pp      - the expanded list of vote details consists of:
       values.append(val)
       trueValues.append(predict)
       if val != predict:
-        misCount = misCount + 1
+        misCount += 1
       res.append(composite.GetVoteDetails() + [0, val, pt[-1]])
   return res, values, trueValues, misCount
 
 
-def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=10, yScale=2,
+def BuildVoteImage(nModels, data, values, trueValues=None, sortTrueVals=0, xScale=10, yScale=2,
                    addLine=1):
   """ constructs the actual image
 
@@ -93,12 +97,13 @@ def BuildVoteImage(nModels, data, values, trueValues=[], sortTrueVals=0, xScale=
       a PIL image
 
   """
+  if trueValues is None:
+    trueValues = []
+  
   nData = len(data)
   data = numpy.array(data, numpy.integer)
-  if sortTrueVals and trueValues != []:
-    order = numpy.argsort(trueValues)
-  else:
-    order = numpy.argsort(values)
+  order = numpy.argsort(trueValues if (sortTrueVals and trueValues != []) else values)
+
   data = [data[x] for x in order]
   maxVal = max(numpy.ravel(data))
   data = data * 255 / maxVal
@@ -147,9 +152,8 @@ def VoteAndBuildImage(composite, data, badOnly=0, sortTrueVals=0, xScale=10, ySc
   print('nModels:', nModels - 3)
 
   res, values, trueValues, misCount = CollectVotes(composite, data, badOnly)
-  print('%d examples were misclassified' % misCount)
-  img = BuildVoteImage(nModels, res, values, trueValues, sortTrueVals, xScale, yScale, addLine)
-  return img
+  print(f'{misCount} examples were misclassified')
+  return BuildVoteImage(nModels, res, values, trueValues, sortTrueVals, xScale, yScale, addLine)
 
 
 def Usage():
@@ -174,11 +178,6 @@ def Usage():
 
 
 if __name__ == '__main__':
-  import sys
-  import getopt
-  import pickle
-  from rdkit.ML.Data import DataUtils
-
   args, extra = getopt.getopt(sys.argv[1:], 'o:bthx:y:d:')
   if len(extra) < 2:
     Usage()
@@ -211,7 +210,7 @@ if __name__ == '__main__':
   fName = extra[1]
   if dbName == '':
     data = DataUtils.BuildQuantDataSet(fName)
-  else:
+  else: # This code cannot be reached
     data = DataUtils.DBToQuantData(dbName, fName)  # Function no longer defined
 
   dataSet = data.GetNamedData()
