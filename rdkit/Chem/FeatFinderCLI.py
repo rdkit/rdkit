@@ -59,15 +59,15 @@ _splashMessage = """
 def existingFile(filename):
   """ 'type' for argparse - check that filename exists """
   if not os.path.exists(filename):
-    raise argparse.ArgumentTypeError("{0} does not exist".format(filename))
+    raise argparse.ArgumentTypeError(f"{filename} does not exist")
   return filename
 
 
 def processArgs(args, parser):
   try:
-    factory = ChemicalFeatures.BuildFeatureFactory(args.fdefFilename)
+    factory = ChemicalFeatures.BuildFeatureFactory()
   except Exception:
-    parser.error("Could not parse Fdef file {0.fdefFilename}.".format(args))
+    parser.error(f"Could not parse Fdef file {args.fdefFilename}.")
 
   with open(args.smilesFilename) as inF:
     for lineNo, line in enumerate(inF, 1):
@@ -76,14 +76,14 @@ def processArgs(args, parser):
       smi = splitExpr.split(line.strip())[0].strip()
       mol = Chem.MolFromSmiles(smi)
       if mol is None:
-        logger.warning("Could not process smiles '%s' on line %d." % (smi, lineNo))
+        logger.warning(f"Could not process smiles '{smi}' on line {lineNo}.")
         continue
 
-      print('Mol-%d\t%s' % (lineNo, smi))
+      print(f'Mol-{lineNo}\t{smi}')
       if args.reverseIt:
         feats = factory.GetFeaturesForMol(mol)
         for feat in feats:
-          print('\t%s-%s: ' % (feat.GetFamily(), feat.GetType()), end='')
+          print(f'\t{feat.GetFamily()}-{feat.GetType()}: ', end='')
           print(', '.join([str(x) for x in feat.GetAtomIds()]))
       else:
         featInfo = GetAtomFeatInfo(factory, mol)

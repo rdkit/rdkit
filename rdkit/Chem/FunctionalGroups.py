@@ -101,26 +101,23 @@ def BuildFuncGroupHierarchy(fileNm=None, data=None, force=False):
             continue
         splitL = splitter.split(line)
         if len(splitL) < 3:
-            raise FuncGroupFileParseError(
-                "Input line %d (%s) is not long enough." % (lineNo, repr(line)))
+            raise FuncGroupFileParseError(f"Input line {lineNo} ({repr(line)}) is not long enough.")
         label = splitL[0].strip()
         if label in groupDefns:
-            raise FuncGroupFileParseError("Duplicate label on line %d." % lineNo)
+            raise FuncGroupFileParseError(f"Duplicate label on line {lineNo}.")
         labelHierarchy = label.split('.')
         if len(labelHierarchy) > 1:
             for i in range(len(labelHierarchy) - 1):
                 tmp = '.'.join(labelHierarchy[:i + 1])
                 if tmp not in groupDefns:
-                    raise FuncGroupFileParseError(
-                        "Hierarchy member %s (line %d) not found." % (tmp, lineNo))
+                    raise FuncGroupFileParseError(f"Hierarchy member {tmp} (line {lineNo}) not found.")
             parent = groupDefns['.'.join(labelHierarchy[:-1])]
         else:
             parent = None
         smarts = splitL[1]
         patt = Chem.MolFromSmarts(smarts)
         if not patt:
-            raise FuncGroupFileParseError(
-                'Smarts "%s" (line %d) could not be parsed.' % (smarts, lineNo))
+            raise FuncGroupFileParseError(f'Smarts "{smarts}" (line {lineNo}) could not be parsed.')
 
         name = splitL[2].strip()
 

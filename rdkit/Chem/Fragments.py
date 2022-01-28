@@ -41,7 +41,7 @@ def _LoadPatterns(fileName=None):
             sma = splitL[2]
             patt = Chem.MolFromSmarts(sma)
             if not patt or patt.GetNumAtoms() == 0:
-              raise ImportError('Smarts %s could not be parsed' % (repr(sma)))
+              raise ImportError(f'Smarts {repr(sma)} could not be parsed')
             
             fn = lambda mol, countUnique=True, pattern=patt: _CountMatches(mol, pattern, unique=countUnique)
             fn.__doc__ = descr
@@ -52,5 +52,5 @@ def _LoadPatterns(fileName=None):
 
 _LoadPatterns()
 for name, fn in fns:
-  exec('%s=fn' % (name))
+  exec(f'{name}=fn')
 fn = None
