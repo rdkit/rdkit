@@ -59,7 +59,7 @@ def ProcessMol(session, mol, globalProps, nDone, nameProp='_Name', nameCol='comp
   except KeyError:
     nm = None
   if not nm:
-    nm = f'Mol_{nDone}' % nDone
+    nm = f'Mol_{nDone}'
 
   cmpd = Compound()
   session.add(cmpd)
@@ -80,7 +80,7 @@ def ProcessMol(session, mol, globalProps, nDone, nameProp='_Name', nameCol='comp
       cmpd.AMW = Descriptors.MolWt(mol)
       cmpd.MolLogP = Crippen.MolLogP(mol)
     pns = list(mol.GetPropNames())
-    for pi, pn in enumerate(pns):
+    for pn in pns:
       if pn.lower() == nameCol.lower():
         continue
       pv = mol.GetProp(pn).strip()
