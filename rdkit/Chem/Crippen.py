@@ -47,7 +47,7 @@ def _ReadPatts(fileName):
     if len(splitLine) >= 4 and splitLine[0] != '':
       sma = splitLine[1]
       if sma == 'SMARTS':
-        print('Problems parsing smarts: %s' % (sma))
+        print(f'Problems parsing smarts: {sma}')
         continue
       
       sma.replace('"', '')
@@ -168,7 +168,7 @@ def _pyMolMR(inMol, patts=None, order=None, verbose=0, addHs=1):
     order = _patternOrder
 
   atomContribs = _pyGetAtomContribs(mol, patts, order, verbose=verbose)
-  return numpy.sum(atomContribs, 0)[1]
+  return numpy.sum(atomContribs, axis=0)[1]
 
 
 _pyMolMR.version = "1.1.0"

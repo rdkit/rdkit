@@ -11,8 +11,8 @@
 
 """
 
-from math import sqrt
 from collections import namedtuple
+from math import sqrt
 
 from rdkit import DataStructs, ForceField, RDConfig, rdBase
 from rdkit.Chem import *

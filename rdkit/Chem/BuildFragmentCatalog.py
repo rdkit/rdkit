@@ -120,9 +120,9 @@ def BuildCatalog(suppl, maxPts=-1, groupFileName=None, minPath=2, maxPath=6, rep
             break
         if i and not i % reportFreq:
             if nPts > -1:
-                message('Done %d of %d, %d paths\n' % (i, nPts, catalog.GetFPLength()))
+                message(f'Done {i} of {nPts}, {catalog.GetFPLength()} paths\n')
             else:
-                message('Done %d, %d paths\n' % (i, catalog.GetFPLength()))
+                message(f'Done {i}, {catalog.GetFPLength()} paths\n')
         fgen.AddFragsFromMol(mol, catalog)
     return catalog
 
@@ -167,10 +167,9 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
 
     fpgen = FragmentCatalog.FragFPGenerator()
     suppl.reset()
-    i = 1
-    for mol in suppl:
+    for i, mol in enumerate(suppl, start=1):
         if not i % reportFreq:
-            message('Done %d.\n' % (i))
+            message(f'Done {i}.\n')
         if mol:
             if not acts:
                 act = int(mol.GetProp(actName))
@@ -185,7 +184,6 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
                 resTbl[id_ - 1, 1, act] += 1
         else:
             obls.append([])
-        i += 1
     return resTbl, obls
 
 
@@ -234,8 +232,8 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
             act = int(mol.GetProp(actName))
         else:
             act = acts[i - 1]
-        if i and not i % reportFreq:
-            message('Done %d of %d\n' % (i, nPts))
+        if not i % reportFreq:
+            message(f'Done {i} of {nPts}\n')
         ids = set()
         for id_ in bitLists[i - 1]:
             ids.add(id_ - 1)
@@ -281,16 +279,16 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
             try:
                 act = int(mol.GetProp(actName))
             except KeyError:
-                message('ERROR: Molecule has no property: %s\n' % (actName))
-                message('\tAvailable properties are: %s\n' % (str(mol.GetPropNames())))
+                message(f'ERROR: Molecule has no property: {actName}\n')
+                message(f'\tAvailable properties are: {str(mol.GetPropNames())}\n')
                 raise KeyError(actName)
         else:
             act = acts[i]
         if i != 0 and not i % reportFreq:
             if nMols > 0:
-                message('Done %d of %d.\n' % (i, nMols))
+                message(f'Done {i} of {nMols}.\n')
             else:
-                message('Done %d.\n' % (i))
+                message(f'Done {i}.\n')
         fp = fpgen.GetFPForMol(mol, catalog)
         ranker.AccumulateVotes(fp, act)
         if collectFps:
@@ -326,34 +324,33 @@ def CalcGainsFromFps(suppl, fps, topN=-1, actName='', acts=None, nActs=2, report
             try:
                 act = int(mol.GetProp(actName))
             except KeyError:
-                message('ERROR: Molecule has no property: %s\n' % (actName))
-                message('\tAvailable properties are: %s\n' % (str(mol.GetPropNames())))
+                message(f'ERROR: Molecule has no property: {actName}\n')
+                message(f'\tAvailable properties are: {str(mol.GetPropNames())}\n')
                 raise KeyError(actName)
         else:
             act = acts[i]
         if i != 0 and not i % reportFreq:
             if nMols > 0:
-                message('Done %d of %d.\n' % (i, nMols))
+                message(f'Done {i} of {nMols}.\n')
             else:
-                message('Done %d.\n' % (i))
+                message(f'Done {i}.\n')
         ranker.AccumulateVotes(fps[i], act)
     return ranker.GetTopN(topN)
 
 
 def OutputGainsData(outF, gains, cat, nActs=2):
-    actHeaders = ['Act-%d' % (x) for x in range(nActs)]
+    actHeaders = [f'Act-{x}' for x in range(nActs)]
     if cat:
-        outF.write('id,Description,Gain,%s\n' % (','.join(actHeaders)))
+        outF.write(f'id,Description,Gain,{",".join(actHeaders)}\n')
     else:
-        outF.write('id,Gain,%s\n' % (','.join(actHeaders)))
+        outF.write(f'id,Gain,{",".join(actHeaders)}\n')
     for entry in gains:
         id_ = int(entry[0])
         outL = [str(id_)]
         if cat:
-            descr = cat.GetBitDescription(id_)
-            outL.append(descr)
-        outL.append('%.6f' % entry[1])
-        outL += ['%d' % x for x in entry[2:]]
+            outL.append(cat.GetBitDescription(id_))
+        outL.append(f'{entry[1]:.6f}')
+        outL += [f'{x}' for x in entry[2:]]
         outF.write(','.join(outL))
         outF.write('\n')
 
@@ -384,7 +381,7 @@ def ShowDetails(catalog, gains, nToDo=-1, outF=sys.stdout, idCol=0, gainCol=1, o
         gain = float(gains[i][gainCol])
         descr = catalog.GetFragDescription(id_)
         if descr:
-            outF.write('%s\n' % (outDelim.join((str(id_), descr, str(gain)))))
+            outF.write(f'{outDelim.join((str(id_), descr, str(gain)))}\n')
 
 
 def SupplierFromDetails(details):
@@ -562,11 +559,10 @@ if __name__ == '__main__':
             message("We require inData to generate a catalog\n")
             sys.exit(-2)
         message("Building catalog\n")
-        t1 = time.time()
+        t = time.perf_counter()
         cat = BuildCatalog(suppl, maxPts=details.numMols, minPath=details.minPath,
                            maxPath=details.maxPath)
-        t2 = time.time()
-        message("\tThat took %.2f seconds.\n" % (t2 - t1))
+        message(f"\tThat took {time.perf_counter() - t:.2f} seconds.\n")
         if details.catalogName:
             message("Dumping catalog data\n")
             pickle.dump(cat, open(details.catalogName, 'wb+'))
@@ -617,7 +613,7 @@ if __name__ == '__main__':
             message("We require either a catalog or fingerprints to calculate gains\n")
             sys.exit(-2)
         message("Calculating Gains\n")
-        t1 = time.time()
+        t = time.perf_counter()
         if details.fpName:
             collectFps = 1
         else:
@@ -633,8 +629,8 @@ if __name__ == '__main__':
         else:
             gains = CalcGainsFromFps(suppl, fps, topN=details.topN, actName=details.actCol,
                                      nActs=details.nActs, biasList=details.biasList)
-        t2 = time.time()
-        message("\tThat took %.2f seconds.\n" % (t2 - t1))
+
+        message(f"\tThat took {time.perf_counter() - t:.2f} seconds.\n")
         if details.gainsName:
             outF = open(details.gainsName, 'w+')
             OutputGainsData(outF, gains, cat, nActs=details.nActs)

@@ -313,14 +313,14 @@ def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
     >>> from rdkit import Chem
     >>> m = Chem.MolFromSmiles('CCCOCC')
     >>> m2 = BreakBRICSBonds(m)
-    >>> Chem.MolToSmiles(m2,True)
+    >>> Chem.MolToSmiles(m2)
     '[3*]O[3*].[4*]CC.[4*]CCC'
 
     a more complicated case:
 
     >>> m = Chem.MolFromSmiles('CCCOCCC(=O)c1ccccc1')
     >>> m2 = BreakBRICSBonds(m)
-    >>> Chem.MolToSmiles(m2,True)
+    >>> Chem.MolToSmiles(m2)
     '[16*]c1ccccc1.[3*]O[3*].[4*]CCC.[4*]CCC([6*])=O'
 
 
@@ -328,7 +328,7 @@ def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
 
     >>> m = Chem.MolFromSmiles('CCCOCC')
     >>> m2 = BreakBRICSBonds(m,[((3, 2), ('3', '4'))])
-    >>> Chem.MolToSmiles(m2,True)
+    >>> Chem.MolToSmiles(m2)
     '[3*]OCC.[4*]CCC'
 
     this can be used as an alternate approach for doing a BRICS decomposition by
@@ -514,7 +514,8 @@ def BRICSDecompose(mol, allNodes=None, minFragmentSize=1, onlyUseReactions=None,
     if not singlePass and not keepNonLeafNodes:
         if returnMols:
             return activePool.values()
-        return set(activePool.keys())
+        else:
+            return set(activePool.keys())
     if returnMols:
         return foundMols.values()
     return allNodes
