@@ -191,7 +191,8 @@ class VectCollection(object):
     
     def _DetachVectsByBit(self, dictKey, dictValue, bit, condition: bool):
         result = dictValue.GetBit(bit)
-        if result == condition: # Same condition as request
+        # Same condition as request
+        if (result == condition) or (result and condition) or (not result and not condition):
             self.__vects.pop(dictKey, None)
             if not self.__needReset:
                 self.__needReset = True
@@ -208,20 +209,6 @@ class VectCollection(object):
         for k, v in copied:
             self._DetachVectsByBit(dictKey=k, dictValue=v, bit=bit, condition=True)
 
-    def DetachVectsNotMatchingBits(self, bits):
-        copied = list(self.__vects.items())
-        for k, v in copied:
-            for bit in bits:
-                if self._DetachVectsByBit(dictKey=k, dictValue=v, bit=bit, condition=False):
-                    break
-
-    def DetachVectsMatchingBits(self, bits):
-        copied = list(self.__vects.items())
-        for k, v in copied:
-            for bit in bits:
-                if self._DetachVectsByBit(dictKey=k, dictValue=v, bit=bit, condition=True):
-                    break
-    
     def Uniquify(self, verbose=False):
         # Uniquify the VectCollection by values --> All values must be unique  
         reverseVects = {}
