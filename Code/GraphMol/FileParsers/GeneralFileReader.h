@@ -106,7 +106,11 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
   if (compressionFormat.empty()) {
     strm = new std::ifstream(path.c_str(), std::ios::in | std::ios::binary);
   } else {
+#if RDK_USE_BOOST_IOSTREAMS 
     strm = new gzstream(path);
+#else
+    throw BadFileException("Unsupported fileFormat: " + fileFormat);
+#endif
   }
 
   //! Dispatch to the appropriate supplier
