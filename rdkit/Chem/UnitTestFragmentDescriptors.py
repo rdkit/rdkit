@@ -25,9 +25,9 @@ class TestCase(unittest.TestCase):
   def _runTest(self, data, fn):
     for smi, tgtVal in data:
       mol = Chem.MolFromSmiles(smi)
-      assert mol, "Smiles parsing failed for %s" % (smi)
+      assert mol, f"Smiles parsing failed for {smi}"
       count = fn(mol)
-      assert count == tgtVal, "bad value (%d != %d) for smiles %s" % (count, tgtVal, smi)
+      assert count == tgtVal, f"bad value ({count} != {tgtVal}) for smiles {smi}"
 
   def test1(self):
     data = [('C=O', 1),
