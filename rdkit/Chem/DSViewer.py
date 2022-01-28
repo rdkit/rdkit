@@ -40,16 +40,16 @@ class Displayable(object):
       atomStr = '; atom "*"'
     else:
       # DSViewer has atom ids from 1, we do it from 0:
-      atoms = ['id=%d' % (x) for x in atoms]
-      atomStr = '; atom %s' % ','.join(atoms)
+      atoms = [f'id={x}' for x in atoms]
+      atomStr = f'; atom {",".join(atoms)}'
 
-    cmd = 'SetProperty object RD_Visual=%d %s: select=%s' % (self.id, atomStr, selText)
+    cmd = f'SetProperty object RD_Visual={self.id} {atomStr}: select={selText}'
     r = int(str(self.doc.DoCommand(cmd)))
     if not r and not atoms:
       # this handles an annoying case where if you try to select
       # a molecule by ID in DSViewer, you get nothing selected:
       atomStr = ''
-      cmd = 'SetProperty object RD_Visual=%d %s: select=%s' % (self.id, atomStr, selText)
+      cmd = f'SetProperty object RD_Visual={self.id} {atomStr}: select={selText}'
       r = int(str(self.doc.DoCommand(cmd)))
     #print 'sel cmd:',cmd
     #print 'result:', r
@@ -57,7 +57,7 @@ class Displayable(object):
     # stupid DSViewer will select the bonds between pairs of highlighted atoms,
     # stop that nonsense right now:
     if r:
-      cmd = 'SetProperty object RD_Visual=%d; bond index="*": select=off' % (self.id)
+      cmd = f'SetProperty object RD_Visual={self.id}; bond index="*": select=off'
       self.doc.DoCommand(cmd)
 
     if recurse:
@@ -136,9 +136,9 @@ class MolViewer(object):
       obj._molBlock = molB
       with tempfile.NamedTemporaryFile('w+', suffix='.mol') as tmpf:
         tmpf.write(molB)
-      self.doc.DoCommand('PasteFrom %s' % tmp.name)
-      self.doc.DoCommand('SetProperty molecule id=0 : RD_Visual=%d' % (obj.id))
-      self.doc.DoCommand('SetProperty molecule id=0 : id=%d' % (obj.id))
+      self.doc.DoCommand(f'PasteFrom {tmp.name}')
+      self.doc.DoCommand(f'SetProperty molecule id=0 : RD_Visual={obj.id}')
+      self.doc.DoCommand(f'SetProperty molecule id=0 : id={obj.id}')
       self.doc.DoCommand('SetProperty molecule id=0 : select=off')
     else:
       obj.Select(state=True)
@@ -155,13 +155,13 @@ class MolViewer(object):
   def LoadFile(self, filename, name, showOnly=False):
     if showOnly:
       self.DeleteAll()
-    self.doc.DoCommand('PasteFrom %s' % filename)
+    self.doc.DoCommand(f'PasteFrom {filename}')
     obj = Displayable(self.doc)
-    self.doc.DoCommand('SetProperty molecule id=0 : id=%d' % (obj.id))
+    self.doc.DoCommand(f'SetProperty molecule id=0 : id={obj.id}')
     self.doc.DoCommand('SetProperty molecule id=0 : select=off')
-    count = self.doc.DoCommand('SetProperty AminoAcidChain id=0 : RD_Visual=%d' % (obj.id))
+    count = self.doc.DoCommand(f'SetProperty AminoAcidChain id=0 : RD_Visual={obj.id}')
     if not count or int(count) <= 0:
-      count = self.doc.DoCommand('SetProperty molecule id=0 : RD_Visual=%d' % (obj.id))
+      count = self.doc.DoCommand(f'SetProperty molecule id=0 : RD_Visual={obj.id}')
     self.displayables[name.lower()] = obj
     return obj
 
@@ -187,9 +187,7 @@ class MolViewer(object):
     elif whichSelection.lower() in self.displayables:
       whichSelection = whichSelection.lower()
       whichSelection = self.displayables[whichSelection].id
-      d = str(
-        self.doc.DoCommand('GetPropertyValue molecule RD_Visual=%d; atom select=true: id=?' %
-                           whichSelection))
+      d = str(self.doc.DoCommand(f'GetPropertyValue molecule RD_Visual={whichSelection}; atom select=true: id=?'))
       molIds = [whichSelection] * (d.count(',') + 1)
     else:
       d = None
@@ -234,12 +232,11 @@ class MolViewer(object):
   def GetAtomCoords(self, sels):
     res = {}
     for label, idx in sels:
-      whichSelection = self.displayables[label.lower()].id
+      whichSelection = self.displayables[label].id
       # DSViewer has atom ids from 1, we do it from 0:
-      idx += 1
-      cmd = 'GetPropertyValue molecule RD_Visual=%d; atom id=%d: xyz=?' % (whichSelection, idx)
+      cmd = f'GetPropertyValue molecule RD_Visual={whichSelection}; atom id={idx}: xyz=?'
       coords = self.doc.DoCommand(cmd).split(' ')
-      res[(label, idx)] = [float(x) for x in coords]
+      res[(label, idx + 1)] = [float(x) for x in coords]
       #print 'grab:',label,idx,coords
     return res
 
@@ -247,17 +244,16 @@ class MolViewer(object):
     label = label.lower()
     self.SetDisplayUpdate(False)
     parent = Displayable(self.doc)
-    for i, loc in enumerate(locs):
-      color = colors[i]
-      color = ' '.join([str(int(255 * x)) for x in color])
+    for i, (loc, color) in enumerate(zip(locs, colors)):
+      color = ' '.join([f'{int(255 * x)}' for x in color])
       obj = Displayable(self.doc)
-      nm = 'sphere-%d' % obj.id
-      self.doc.DoCommand('Sphere %s' % nm)
-      self.doc.DoCommand('SetProperty Object name=%s : xyz=%f %f %f' % (nm, loc[0], loc[1], loc[2]))
-      self.doc.DoCommand('SetProperty Object name=%s : radius=%f' % (nm, sphereRad))
-      self.doc.DoCommand('SetProperty Object name=%s : color=%s' % (nm, color))
-      self.doc.DoCommand('SetProperty Object name=%s : RD_Visual=%d' % (nm, parent.id))
-      self.doc.DoCommand('SetProperty Object name=%s : id=%d' % (nm, parent.id))
+      nm = f'sphere-{obj.id}'
+      self.doc.DoCommand(f'Sphere {nm}')
+      self.doc.DoCommand(f'SetProperty Object name={nm} : xyz={loc[0]} {loc[1]} {loc[2]}')
+      self.doc.DoCommand(f'SetProperty Object name={nm} : radius={sphereRad}')
+      self.doc.DoCommand(f'SetProperty Object name={nm} : color={color}')
+      self.doc.DoCommand(f'SetProperty Object name={nm} : RD_Visual={parent.id}')
+      self.doc.DoCommand(f'SetProperty Object name={nm} : id={parent.id}')
       #parent.children.append(obj)
     self.displayables[label] = parent
     self.SetDisplayUpdate(True)
@@ -320,34 +316,31 @@ class MolViewer(object):
       self.SetDisplayUpdate(False)
       p.Show()
       self.doc.DoCommand('UnSelectAll')
-      tmp = self.doc.DoCommand('SetProperty object RD_Visual=%d;object id="*":select=on' % o.id)
-      tmp = self.doc.DoCommand('SelectByRadius inside %f atom' % distance)
+      _ = self.doc.DoCommand(f'SetProperty object RD_Visual={o.id};object id="*":select=on')
+      _ = self.doc.DoCommand(f'SelectByRadius inside {distance} atom')
       # that selects all atoms in the radius, now we need to make sure 
       #  only atoms in _inObj_ are selected:
       for obj in self.displayables.values():
         if obj.id != p.id:
-          self.doc.DoCommand('SetProperty object RD_Visual=%d;object id="*":select=off' % obj.id)
+          self.doc.DoCommand(f'SetProperty object RD_Visual={obj.id};object id="*":select=off')
 
       # ----
       # now get all the residue names for the selected atoms:
       rs = self.doc.DoCommand('GetPropertyValue atom select=true: parent=?')
       if rs:
         rs = rs.split(',')
-        residues = {}
-        for r in rs:
-          residues[r] = 1
+        unique_Rs = set(rs)
 
         # and select each atom in those residues:
-        parents = ','.join(['parent="%s"' % x for x in residues.keys()])
-        cmd = 'SetProperty atom %s: select=on' % parents
-        tmp = self.doc.DoCommand(cmd)
+        parents = ','.join([f'parent="{x}"' for x in unique_Rs])
+        cmd = f'SetProperty atom {parents}: select=on' 
+        _ = self.doc.DoCommand(cmd)
       if showSurface:
         # create the surface:
         self.doc.DoCommand('Surface')
         obj = Displayable(self.doc)
         self.displayables[name] = obj
-        self.doc.DoCommand('SetProperty surface id="*":RD_Visual=%d' % obj.id)
-
+        self.doc.DoCommand(f'SetProperty surface id="*":RD_Visual={obj.id}')
         self.doc.DoCommand('UnSelectAll')
 
       self.SetDisplayUpdate(True)
