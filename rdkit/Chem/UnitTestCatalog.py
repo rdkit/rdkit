@@ -71,10 +71,10 @@ class TestCase(unittest.TestCase):
       fp = fpgen.GetFPForMol(mol, fragCat)
       if i < len(obits):
         smi = Chem.MolToSmiles(mol)
-        assert fp.GetNumOnBits() == obits[i], '%s: %s' % (smi, str(fp.GetOnBits()))
+        assert fp.GetNumOnBits() == obits[i], f'{smi}: {str(fp.GetOnBits())}'
       obl = fp.GetOnBits()
       if i < len(obls):
-        assert tuple(obl) == obls[i], '%s: %s' % (smi, obl)
+        assert tuple(obl) == obls[i], f'{smi}: {obl}'
       i += 1
 
   def test1CatGen(self):
@@ -140,10 +140,9 @@ class TestCase(unittest.TestCase):
     for i in range(len(descrs)):
       ID, d, order, ids = descrs[i]
       descr = self.fragCat.GetBitDescription(ID)
-      assert descr == d, '%d: %s != %s' % (ID, descr, d)
+      assert descr == d, f'{ID}: {descr} != {d}'
       assert self.fragCat.GetBitOrder(ID) == order
-      assert tuple(self.fragCat.GetBitFuncGroupIds(ID)) == ids, '%d: %s != %s' % (
-        ID, str(self.fragCat.GetBitFuncGroupIds(ID)), str(ids))
+      assert tuple(self.fragCat.GetBitFuncGroupIds(ID)) == ids, f'{ID}: {str(self.fragCat.GetBitFuncGroupIds(ID))} != {str(ids)}'
 
   def _test5MoreComplex(self):
     lastIdx = 0
@@ -158,7 +157,7 @@ class TestCase(unittest.TestCase):
     for i, mol in enumerate(suppl):
       fp = fpgen.GetFPForMol(mol, self.fragCat)
       for bit in ranges[i]:
-        assert fp[bit], '%s: %s' % (Chem.MolToSmiles(mol), str(bit))
+        assert fp[bit], f'{Chem.MolToSmiles(mol)}: {str(bit)}'
 
   def test6Builder(self):
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
@@ -176,13 +175,12 @@ class TestCase(unittest.TestCase):
     scores, obls = BuildFragmentCatalog.ScoreMolecules(suppl, cat, acts=self.list2Acts,
                                                        reportFreq=20)
     for i in range(len(self.list2Obls)):
-      assert tuple(obls[i]) == self.list2Obls[i], '%d: %s != %s' % (i, str(obls[i]),
-                                                                    str(self.list2Obls[i]))
+      assert tuple(obls[i]) == self.list2Obls[i], f'{i}: {str(obls[i])} != {str(self.list2Obls[i])}'
 
     scores2 = BuildFragmentCatalog.ScoreFromLists(obls, suppl, cat, acts=self.list2Acts,
                                                   reportFreq=20)
     for i in range(len(scores)):
-      assert (scores[i] == scores2[i]).all(), '%d: %s != %s' % (i, str(scores[i]), str(scores2[i]))
+      assert (scores[i] == scores2[i]).all(), f'{i}: {str(scores[i])} != {str(scores2[i])}'
 
   def test8MolRanks(self):
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)

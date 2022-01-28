@@ -138,7 +138,7 @@ class TestCase(unittest.TestCase):
       newSmi = Chem.MolToSmiles(newM2)
       assert newM1.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
       assert newM2.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
-      assert oldSmi == newSmi, 'string compare failed: %s != %s' % (oldSmi, newSmi)
+      assert oldSmi == newSmi, f'string compare failed: {oldSmi} != {newSmi}'
 
   def test5Data(self):
     """ testing Get/Set/HasData """

@@ -73,7 +73,7 @@ class TestCase(unittest.TestCase):
 
   def _testPkl10(self):
     " testing 5k molecule pickles "
-    inLines = open('%s/NCI/first_5K.smi' % (RDConfig.RDDataDir), 'r').readlines()
+    inLines = open(f'{RDConfig.RDDataDir}/NCI/first_5K.smi', 'r').readlines()
     smis = []
     for line in inLines:
       smis.append(line.split('\t')[0])
@@ -87,8 +87,7 @@ class TestCase(unittest.TestCase):
       assert newM2.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
       assert len(newSmi1) > 0, 'empty smi1'
       assert len(newSmi2) > 0, 'empty smi2'
-      assert newSmi1 == newSmi2, 'string compare failed:\n%s\n\t!=\n%s\norig smiles:\n%s' % (
-        newSmi1, newSmi2, smi)
+      assert newSmi1 == newSmi2, f'string compare failed:\n{newSmi1}\n\t!=\n{newSmi2}\norig smiles:\n{smi}'
 
   def testPkl1(self):
     " testing single molecule pickle "
@@ -96,7 +95,7 @@ class TestCase(unittest.TestCase):
     outS = Chem.MolToSmiles(m)
     m2 = pickle.loads(pickle.dumps(m))
     outS2 = Chem.MolToSmiles(m2)
-    assert outS == outS2, "bad pickle: %s != %s" % (outS, outS2)
+    assert outS == outS2, f"bad pickle: {outS} != {outS2}"
 
   def testPkl2(self):
     """ further pickle tests """
@@ -109,7 +108,7 @@ class TestCase(unittest.TestCase):
       newSmi = Chem.MolToSmiles(newM2)
       assert newM1.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
       assert newM2.GetNumAtoms() == m.GetNumAtoms(), 'num atoms comparison failed'
-      assert oldSmi == newSmi, 'string compare failed: %s != %s' % (oldSmi, newSmi)
+      assert oldSmi == newSmi, f'string compare failed: {oldSmi} != {newSmi}'
 
   def testPkl(self):
     " testing molecule pickle "
@@ -138,9 +137,9 @@ class TestCase(unittest.TestCase):
       at = m.GetAtomWithIdx(i)
       n = at.GetAtomicNum()
       if n == 8:
-        assert not at.IsInRingSize(4), 'atom %d improperly in ring' % (i)
+        assert not at.IsInRingSize(4), f'atom {i} improperly in ring'
       else:
-        assert at.IsInRingSize(4), 'atom %d not in ring of size 4' % (i)
+        assert at.IsInRingSize(4), f'atom {i} not in ring of size 4'
 
   @unittest.skipIf(not hasattr(Chem, "MolToJSON"), "MolInterchange support not enabled")
   def testJSON1(self):

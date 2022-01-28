@@ -64,15 +64,15 @@ class TestCase(unittest.TestCase):
       if 1:
         clog = self.clogs[i]
         tmp = Crippen.MolLogP(mol)
-        self.assertTrue(feq(clog, tmp), 'bad logp for %s: %4.4f != %4.4f' % (smi, clog, tmp))
+        self.assertTrue(feq(clog, tmp), f'bad logp for {smi}: {clog:4.4f} != {tmp:4.4f}')
 
         mr = self.mrs[i]
         tmp = Crippen.MolMR(mol)
-        self.assertTrue(feq(mr, tmp), 'bad MR for %s: %4.4f != %4.4f' % (smi, mr, tmp))
+        self.assertTrue(feq(mr, tmp), f'bad MR for {smi}: {mr:4.4f} != {tmp:4.4f}')
       else:
         clog = Crippen.MolLogP(mol)
         mr = Crippen.MolMR(mol)
-        print('%s,%.4f,%.4f' % (smi, clog, mr), file=outF)
+        print(f'{smi},{clog:.4f},{mr:.4f}', file=outF)
 
   def testRepeat(self):
     self._readData()
@@ -84,12 +84,12 @@ class TestCase(unittest.TestCase):
       clog = self.clogs[i]
       tmp = Crippen.MolLogP(mol)
       tmp = Crippen.MolLogP(mol)
-      self.assertTrue(feq(clog, tmp), 'bad logp fooutF,r %s: %4.4f != %4.4f' % (smi, clog, tmp))
+      self.assertTrue(feq(clog, tmp), f'bad logp for {smi}: {clog:4.4f} != {tmp:4.4f}')
 
       mr = self.mrs[i]
       tmp = Crippen.MolMR(mol)
       tmp = Crippen.MolMR(mol)
-      self.assertTrue(feq(mr, tmp), 'bad MR for %s: %4.4f != %4.4f' % (smi, mr, tmp))
+      self.assertTrue(feq(mr, tmp), f'bad MR for {smi}: {mr:4.4f} != {tmp:4.4f}')
 
   def _writeDetailFile(self, inF, outF):
     while 1:
@@ -141,7 +141,7 @@ class TestCase(unittest.TestCase):
             refL = refContribs[refOrder[i]]
             l = contribs[order[i]]
             if not feq(refL, l):
-              print('%s (%s): %d %6.5f != %6.5f' % (smi, smi2, order[i], refL, l))
+              print(f'{smi} ({smi2}): {order[i]} {refL:6.5f} != {l:6.5f}')
               Crippen._GetAtomContribs(mol, force=1)
               print('-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*')
               nFails += 1

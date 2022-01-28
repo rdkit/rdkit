@@ -29,9 +29,9 @@ class TestCase(unittest.TestCase):
     " testing smarts match "
     p = Chem.MolFromSmarts('CC(=O)C')
     matches = self.m.GetSubstructMatches(p)
-    assert len(matches) == 2, 'bad UMapList: %s' % (str(res))
+    assert len(matches) == 2, f'bad UMapList: {str(res)}'
     for match in matches:
-      assert len(match) == 4, 'bad match: %s' % (str(match))
+      assert len(match) == 4, f'bad match: {str(match)}'
 
   def testOrder(self):
     " testing atom order in smarts match "
@@ -39,7 +39,7 @@ class TestCase(unittest.TestCase):
     matches = self.m.GetSubstructMatches(p)
     m = matches[0]
     atomList = [self.m.GetAtomWithIdx(x).GetSymbol() for x in m]
-    assert atomList == ['C', 'C', 'O', 'C'], 'bad atom ordering: %s' % str(atomList)
+    assert atomList == ['C', 'C', 'O', 'C'], f'bad atom ordering: {str(atomList)}'
 
 
 if __name__ == '__main__':
