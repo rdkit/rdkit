@@ -292,7 +292,7 @@ class VectTests(object):
         whichd += 1
         tgt = float(tgt)
         dist = cDataStructs.TanimotoSimilarity(fps[i], fps[j])
-        assert feq(tgt, dist), 'tanimoto between fps %d and %d failed' % (int(idx1), int(idx2))
+        assert feq(tgt, dist), f'tanimoto between fps {idx1} and {idx2} failed')
 
   def testFold(self):
     """ test folding fingerprints

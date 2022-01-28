@@ -26,7 +26,7 @@ def _InitScoreTable(self, dbConn, tableName, idInfo='', actInfo=''):
   else:
     cols = []
   for bit in self.GetBits():
-    cols.append('Bit_%d smallint' % (bit))
+    cols.append(f'Bit_{bit} smallint')
   if actInfo:
     cols.append(actInfo)
     

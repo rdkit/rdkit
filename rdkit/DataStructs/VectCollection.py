@@ -248,7 +248,7 @@ class VectCollection(object):
             p = v.ToBinary()
             l = len(p)
             pkl += struct.pack('<I', l)
-            pkl += struct.pack('%ds' % (l), p)
+            pkl += struct.pack(f'{l}s', p)
         return pkl
 
     def __setstate__(self, pkl):
@@ -268,8 +268,8 @@ class VectCollection(object):
             offset += szI
             l = struct.unpack('<I', pkl[offset:offset + szI])[0]
             offset += szI
-            sz = struct.calcsize('%ds' % l)
-            bv = DataStructs.ExplicitBitVect(struct.unpack('%ds' % l, pkl[offset:offset + sz])[0])
+            sz = struct.calcsize(f'{l}s')
+            bv = DataStructs.ExplicitBitVect(struct.unpack(f'{l}s', pkl[offset:offset + sz])[0])
             offset += sz
             self.AddVect(k, bv)
 

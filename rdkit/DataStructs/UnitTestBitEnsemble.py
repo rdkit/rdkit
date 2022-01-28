@@ -33,9 +33,9 @@ class TestCase(unittest.TestCase):
     bv.SetBit(13)
 
     score = ensemble.ScoreWithOnBits(bv)
-    assert score == 2, 'bad score: %d' % (score)
+    assert score == 2, f'bad score: {score}'
     score = ensemble.ScoreWithIndex(bv)
-    assert score == 2, 'bad score: %d' % (score)
+    assert score == 2, f'bad score: {score}'
 
   def test2(self):
     ensemble = BitEnsemble([1, 11, 21, 31])
@@ -45,9 +45,9 @@ class TestCase(unittest.TestCase):
     bv.SetBit(13)
 
     score = ensemble.ScoreWithOnBits(bv)
-    assert score == 2, 'bad score: %d' % (score)
+    assert score == 2, f'bad score: {score}'
     score = ensemble.ScoreWithIndex(bv)
-    assert score == 2, 'bad score: %d' % (score)
+    assert score == 2, f'bad score: {score}'
 
   def test3(self):
     ensemble = BitEnsemble()
@@ -59,9 +59,9 @@ class TestCase(unittest.TestCase):
     bv.SetBit(13)
 
     score = ensemble.ScoreWithOnBits(bv)
-    assert score == 2, 'bad score: %d' % (score)
+    assert score == 2, f'bad score: {score}'
     score = ensemble.ScoreWithIndex(bv)
-    assert score == 2, 'bad score: %d' % (score)
+    assert score == 2, f'bad score: {score}'
 
   def _setupDb(self):
     from rdkit.Dbase.DbConnection import DbConnect
@@ -105,7 +105,7 @@ class TestCase(unittest.TestCase):
     for i in range(len(sigBs)):
       bs, tgt = tuple(sigBs[i])
       dbRes = tuple(d[i])
-      assert dbRes == tgt, 'bad bits returned: %s != %s' % (str(dbRes), str(tgt))
+      assert dbRes == tgt, f'bad bits returned: {str(dbRes)} != {str(tgt)}'
     d = None
     self.conn = None
 
@@ -130,7 +130,7 @@ class TestCase(unittest.TestCase):
     for i in range(len(sigBs)):
       bs, tgt = tuple(sigBs[i])
       dbRes = tuple(d[i])
-      assert dbRes[1:-1] == tgt, 'bad bits returned: %s != %s' % (str(dbRes[1:-1]), str(tgt))
+      assert dbRes[1:-1] == tgt, f'bad bits returned: {str(dbRes[1:-1])} != {str(tgt)}'
 
     d = None
     self.conn = None
