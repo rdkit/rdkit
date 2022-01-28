@@ -65,7 +65,7 @@ def existingFile(filename):
 
 def processArgs(args, parser):
   try:
-    factory = ChemicalFeatures.BuildFeatureFactory()
+    factory = ChemicalFeatures.BuildFeatureFactory(args.fdefFilename)
   except Exception:
     parser.error(f"Could not parse Fdef file {args.fdefFilename}.")
 
