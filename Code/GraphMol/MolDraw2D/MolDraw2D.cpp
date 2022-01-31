@@ -286,7 +286,14 @@ void MolDraw2D::drawReaction(
   startDrawing();
   int xOffset = 0;
   xOffset = drawReactionPart(reagents, plusWidth, xOffset, offsets);
-  drawArrow(arrowBeg, arrowEnd, false, 0.05,
+  // make sure the arrowhead is big enough
+  double frac = 0.05;
+  double delta = (arrowEnd - arrowBeg).length() * frac;
+  // an arbitrary 5 pixel minimum
+  if (delta < 5) {
+    frac *= 5 / delta;
+  }
+  drawArrow(arrowBeg, arrowEnd, false, frac,
             M_PI / 6, drawOptions().symbolColour, true);
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
@@ -797,7 +804,7 @@ void MolDraw2D::getReactionDrawMols(
     product->shrinkToFit(false);
   }
   // set the spacing for the plus signs to be 0.5 Angstrom.
-  plusWidth = 0.5 * minScale;
+  plusWidth = minScale;
 
   // agents
   int agentHeight = int(agentFrac * height_);
@@ -914,24 +921,28 @@ void MolDraw2D::calcReactionOffsets(
     std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
     int &plusWidth, std::vector<Point2D> &offsets, Point2D &arrowBeg,
     Point2D &arrowEnd) {
+
   // calculate the total width of the drawing - it may need re-scaling if
   // it's too wide for the panel.
-  const int arrowMult = 3; // number of plusWidths for an empty arrow.
+  const int arrowMult = 2; // number of plusWidths for an empty arrow.
   auto reactionWidth = [&](int gapWidth) -> int {
     int totWidth = 0;
-    for (auto &dm : reagents) {
-      totWidth += dm->width_ + gapWidth;
+    if (!reagents.empty()) {
+      for (auto &dm : reagents) {
+        totWidth += dm->width_;
+      }
+      totWidth += gapWidth * (reagents.size() - 1);
     }
     if (agents.empty()) {
       totWidth += arrowMult * gapWidth;
     } else {
       // the agent doesn't start at front of arrow
-      totWidth += gapWidth;
       for (auto &dm : agents) {
         totWidth += dm->width_ + gapWidth;
       }
+      totWidth += gapWidth * (agents.size() - 1) / 2;
     }
-    totWidth += 2 * gapWidth;  // either side of arrow
+    totWidth += gapWidth;  // either side of arrow
     if (!products.empty()) {
       for (auto &dm : products) {
         totWidth += dm->width_;
@@ -948,7 +959,7 @@ void MolDraw2D::calcReactionOffsets(
         for (auto &dm : dms) {
       dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(),
                    false);
-      dm->shrinkToFit();
+      dm->shrinkToFit(false);
     }
   };
 
@@ -961,8 +972,16 @@ void MolDraw2D::calcReactionOffsets(
   // total. If so, shrink them to fit.  Because the shrinkng imposes min and max
   // font sizes, we may not get the smaller size we want first go, so iterate
   // until we do or we give up.
+  int totWidth = reactionWidth(plusWidth);
   for (int i = 0; i < 5; ++i) {
-    int totWidth = reactionWidth(plusWidth);
+    auto maxWidthIt =
+        std::max_element(drawMols_.begin(), drawMols_.end(),
+                         [&](std::shared_ptr<MolDraw2D_detail::DrawMol> &lhs,
+                             std::shared_ptr<MolDraw2D_detail::DrawMol> &rhs) {
+                           return lhs->width_ < rhs->width_;
+                         });
+    plusWidth = (*maxWidthIt)->width_ / 4;
+    plusWidth = plusWidth > width() / 20 ? width() / 20 : plusWidth;
     int oldTotWidth = totWidth;
     double stretch = double(width_ * (1 - drawOptions().padding)) / totWidth;
     // If stretch < 1, we need to shrink the DrawMols to fit.  This isn't
@@ -980,38 +999,51 @@ void MolDraw2D::calcReactionOffsets(
       break;
     }
   }
-  // Now work out a new plusWidth, based on the new widths of DrawMols,
-  // if that has changed.
-  int numGaps = reagents.size();
-  numGaps += agents.empty() ? 2 + arrowMult : 2 + agents.size();
-  numGaps = products.empty() ? numGaps : numGaps + products.size() - 1;
-  int thinWidth = reactionWidth(0);
-  plusWidth = (width() - thinWidth) / numGaps;
 
-  // And finally work out where to put all the pieces.
-  int xOffset = 0;
+  // make sure plusWidth remains 1A, in pixels.
+  if (!reagents.empty()) {
+    plusWidth = reagents.front()->scale_;
+  } else if (!products.empty()) {
+    plusWidth = products.front()->scale_;
+  }
+  // if there's space, we can afford make the extras a bit bigger.
+  int numGaps = reagents.empty() ? 0 : reagents.size() - 1;
+  numGaps += products.empty() ? 0 : products.size() - 1;
+  numGaps += 1;  // for either side of the arrow
+  numGaps += agents.empty() ? 2 : agents.size() - 1;
+  if (width() - totWidth > numGaps * 5) {
+    plusWidth += 5;
+  }
+  totWidth = reactionWidth(plusWidth);
+
+  // And finally work out where to put all the pieces, centring them.
+  int xOffset = (width() - totWidth) / 2;
   for (size_t i = 0; i < reagents.size(); ++i) {
     offsets.emplace_back(
         Point2D(xOffset, (height() - reagents[i]->height_) / 2));
     xOffset += reagents[i]->width_ + plusWidth;
   }
   if (reagents.empty()) {
-    xOffset += plusWidth;
+    xOffset += plusWidth / 2;
+  } else {
+    // only half a plusWidth to the arrow
+    xOffset -= plusWidth / 2;
   }
   arrowBeg.y = height() / 2;
   arrowBeg.x = xOffset;
   if (agents.empty()) {
-    arrowEnd = Point2D(arrowBeg.x + 4 * plusWidth, height() / 2);
+    arrowEnd = Point2D(arrowBeg.x + arrowMult * plusWidth, height() / 2);
   } else {
-    xOffset += plusWidth;
+    xOffset += plusWidth / 2;
     for (size_t i = 0; i < agents.size(); ++i) {
       offsets.emplace_back(
-          Point2D(xOffset, 0.475 * height() - agents[i]->height_));
-      xOffset += agents[i]->width_ + plusWidth;
+          Point2D(xOffset, 0.45 * height() - agents[i]->height_));
+      xOffset += agents[i]->width_ + plusWidth / 2;
     }
+    // the overlap at the end of the arrow has already been added in the loop
     arrowEnd = Point2D(xOffset, height() /2);
   }
-  xOffset = arrowEnd.x + plusWidth;
+  xOffset = arrowEnd.x + plusWidth / 2;
   for (size_t i = 0; i < products.size(); ++i) {
     offsets.emplace_back(
         Point2D(xOffset, (height() - products[i]->height_) / 2));
