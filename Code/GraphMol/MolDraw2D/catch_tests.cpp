@@ -4167,7 +4167,7 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_1.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='38.4' y='200.0' class='legend' "
+      CHECK(text.find("<text x='38.4' y='195.0' class='legend' "
                       "style='font-size:16px;") != std::string::npos);
     }
     {
@@ -4181,7 +4181,7 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_2.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='7.3' y='200.0' class='legend' "
+      CHECK(text.find("<text x='7.3' y='195.0' class='legend' "
                       "style='font-size:32px;") != std::string::npos);
     }
     {
@@ -4194,8 +4194,8 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
       std::ofstream outs("testVariableLegend_3.svg");
       outs << text;
       outs.flush();
-      CHECK(text.find("<text x='71.4' y='200.0' class='legend' "
-                      "style='font-size:12px;") != std::string::npos);
+      CHECK(text.find("<text x='85.7' y='195.0' class='legend' "
+                      "style='font-size:6px;") != std::string::npos);
     }
   }
 }

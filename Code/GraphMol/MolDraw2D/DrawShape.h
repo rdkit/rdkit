@@ -179,7 +179,6 @@ class DrawShapeSolidWedge : protected DrawShape {
   DrawShapeSolidWedge &operator=(DrawShapeSolidWedge &&) = delete;
   void buildTriangles();
   void myDraw(MolDraw2D &drawer) const override;
-  void scale(const Point2D &scale_factor) override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;

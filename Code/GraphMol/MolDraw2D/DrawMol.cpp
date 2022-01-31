@@ -1336,10 +1336,13 @@ void DrawMol::calcMeanBondLengthSquare() {
               .lengthSq();
       ++nBonds;
     }
+    meanBondLength_ = sqrt(meanBondLengthSquare_);
     if (nBonds) {
       meanBondLengthSquare_ /= nBonds;
+      meanBondLength_ /= nBonds;
     } else {
       meanBondLengthSquare_ = 0.0;
+      meanBondLength_ = 0.0;
     }
   }
 }
@@ -1403,21 +1406,23 @@ void DrawMol::extractLegend() {
     legend_bits.push_back(next_piece);
   }
 
-  // work out a font scale that allows the pieces to fit
+  // work out a font scale that allows the pieces to fit, remembering there's
+  // padding round the picture.
   double fsize = textDrawer_.fontSize();
   double relFontScale = drawOptions_.legendFontSize / fsize;
   double total_width, total_height;
-
+  double adjLegHt = legendHeight_ - 0.5 * drawOptions_.padding * height_;
   calc_legend_height(legend_bits, relFontScale, total_width, total_height);
-  if (total_height > legendHeight_) {
-    relFontScale *= double(legendHeight_) / total_height;
+  if (total_height > adjLegHt) {
+    relFontScale *= double(adjLegHt) / total_height;
     calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   }
   if (total_width > width_) {
     relFontScale *= double(width_) / total_width;
     calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   }
-  Point2D loc(width_ / 2 + xOffset_, height_ + yOffset_);
+  Point2D loc(width_ / 2 + xOffset_,
+              height_ * (1 - 0.5 * drawOptions_.padding) + yOffset_);
   for (auto bit : legend_bits) {
     DrawAnnotation *da =
         new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend", relFontScale,
@@ -1425,7 +1430,7 @@ void DrawMol::extractLegend() {
     legends_.emplace_back(da);
   }
   // The letters have different amounts above and below the centre,
-  // which maatters when placing them vertically.
+  // which matters when placing them vertically.
   // Draw them from the bottom up.
   double xmin, xmax, ymin, ymax;
   xmin = ymin = std::numeric_limits<double>::max();
@@ -1689,7 +1694,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
   // If either of the atoms has a label, make the padding a bit bigger
   // so the end of the wedge doesn't run up to the atom symbol.
   // Obviously, if we ever change how the padding round the label is
-  // calculated, this won't work.
+  // calculated, currently a function of the mean bond length, this won't work.
   if (atomLabels_[at1->getIdx()] || atomLabels_[at2->getIdx()]) {
     meanBondLengthSquare_ *= 2.0;
   }
@@ -1702,7 +1707,9 @@ void DrawMol::makeWedgedBond(Bond *bond,
   const Point2D &at2_cds = atCds_[at2->getIdx()];
 
   Point2D perp = calcPerpendicular(at1_cds, at2_cds);
-  Point2D disp = perp * 0.15;
+  // Set the 'fatness' of the wedge to be a fraction of the mean bond
+  // lenght, so we should always see something.
+  Point2D disp = perp * 0.33 * meanBondLength_;
   Point2D t1 = end2 + disp;
   Point2D t2 = end2 - disp;
   std::vector<Point2D> pts{end1, t1, t2};

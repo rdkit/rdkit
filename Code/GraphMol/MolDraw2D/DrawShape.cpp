@@ -338,27 +338,6 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
 }
 
 // ****************************************************************************
-void DrawShapeSolidWedge::scale(const Point2D &scale_factor) {
-  DrawShape::scale(scale_factor);
-
-  // don't let it get too wide.  A width of 8 pixels is similar to the
-  // original 0.15 scaled by 40.
-  Point2D end1, end2;
-  if (points_.size() == 3) {
-    end1 = points_[1];
-    end2 = points_[2];
-  } else {
-    end1 = points_[5];
-    end2 = points_[4];
-  }
-  double widthsq = (end1 - end2).lengthSq();
-  if (widthsq > 64.0) {
-    points_ = calcScaledWedgePoints(points_[0], end1, end2, widthsq);
-    buildTriangles();
-  }
-}
-
-// ****************************************************************************
 bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
                                         double padding) const {
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
@@ -450,27 +429,13 @@ void DrawShapeDashedWedge::scale(const Point2D &scale_factor) {
   at1Cds_.x *= scale_factor.x;
   at1Cds_.y *= scale_factor.y;
 
-  // if scaling down in size, we don't want to change the wodth or the number of
-  // dashes, so use the lines as they are.  This is because this has almost
-  // certainly been called by DrawMol::changeToAtomCoords after everything
-  // has been laid out as we want it.
-  if (scale_factor.x > 1.0 && scale_factor.y > 1.0) {
-    // don't let it get too wide.  A width of 12 pixels is similar to the
-    // original 0.15 scaled by 40.
-    Point2D point, end1, end2;
-    size_t lastPoint = points_.size() - 1;
-    point = at1Cds_;
-    end1 = points_[lastPoint];
-    end2 = points_[lastPoint - 1];
-    double widthsq = (end1 - end2).lengthSq();
-
-    if (widthsq > 144.0) {
-      points_ = calcScaledWedgePoints(point, end1, end2, widthsq);
-    } else {
-      points_ = std::vector<Point2D>{point, end1, end2};
-    }
-    buildLines();
-  }
+  // We may want to adjust the number of lines, so set everything up like
+  // the original triangle was passed in and rebuild.
+  Point2D point{at1Cds_};
+  Point2D end1{points_[points_.size() - 1]};
+  Point2D end2{points_[points_.size() - 2]};
+  points_ = std::vector<Point2D>{point, end1, end2};
+  buildLines();
 }
 
 // ****************************************************************************

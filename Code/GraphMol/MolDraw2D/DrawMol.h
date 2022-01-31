@@ -248,6 +248,7 @@ class DrawMol {
   // offsets are for drawing molecules in grids, for example.
   double xOffset_ = 0.0, yOffset_ = 0.0;
   double meanBondLengthSquare_ = 0.0;
+  double meanBondLength_ = 0.0;
   // if there's a legend, we reserve a bit for it.
   int drawHeight_, legendHeight_ = 0;
   bool drawingInitialised_ = false;
