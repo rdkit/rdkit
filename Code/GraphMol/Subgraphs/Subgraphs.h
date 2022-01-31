@@ -140,14 +140,10 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *
  *   The result is a path (a vector of bond indices)
  */
-
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
 findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
                              unsigned int rootedAtAtom, bool useHs = false, 
                              bool enforceSize = true, python::object atomMap = python::object());
-}  
-
-
-// namespace RDKit
+}  // namespace RDKit
 
 #endif

@@ -1709,7 +1709,6 @@ to the terminal dummy atoms.\n\
       Defaults to 1 (true).\n\
 \n\
   RETURNS: a vector of bond IDs\n\
-\n\
 \n";
     python::def("FindAtomEnvironmentOfRadiusN", &findAtomEnvironmentOfRadiusN,
                 (python::arg("mol"), python::arg("radius"),
@@ -1718,7 +1717,7 @@ to the terminal dummy atoms.\n\
                  python::arg("enforceSize") = true,
                  python::arg("atomMap") = python::object()), 
                 docString.c_str());
-    
+
     python::def("PathToSubmol", pathToSubmolHelper,
                 (python::arg("mol"), python::arg("path"),
                  python::arg("useQuery") = false,
