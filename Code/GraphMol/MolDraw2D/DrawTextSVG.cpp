@@ -29,7 +29,7 @@ namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextSVG::DrawTextSVG(double max_fnt_sz, double min_fnt_sz,
                          std::ostream &oss, std::string &d_act_class)
-    : DrawText(max_fnt_sz, min_fnt_sz),
+    : DrawTextNotFT(max_fnt_sz, min_fnt_sz),
       oss_(oss),
       d_active_class_(d_act_class) {}
 

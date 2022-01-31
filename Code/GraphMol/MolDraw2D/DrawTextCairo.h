@@ -17,7 +17,7 @@
 
 #include <cairo.h>
 
-#include <GraphMol/MolDraw2D/DrawText.h>
+#include <GraphMol/MolDraw2D/DrawTextNotFT.h>
 
 namespace RDKit {
 
@@ -25,7 +25,7 @@ class MolDraw2DCairo;
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-class DrawTextCairo : public DrawText {
+class DrawTextCairo : public DrawTextNotFT {
 
  public:
   DrawTextCairo(double max_fnt_sz, double min_fnt_sz, cairo_t *dp_cr);

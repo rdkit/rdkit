@@ -4097,7 +4097,6 @@ M  END)CTAB"_ctab;
     {
       MolDraw2DSVG drawer(400, 350);
       drawer.drawOptions().noAtomLabels = true;
-      drawer.drawOptions().addAtomIndices = true;
       drawer.drawMolecule(*mol, "drawArc");
       drawer.setFillPolys(false);
       drawer.setColour({1, 0, 0});

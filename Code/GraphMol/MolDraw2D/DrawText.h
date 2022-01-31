@@ -27,13 +27,7 @@
 using RDGeom::Point2D;
 
 namespace RDKit {
-
 class MolDraw2D;
-class MolDraw2DCairo;
-class MolDraw2DJS;
-class MolDraw2DSVG;
-class MolDraw2DQt;
-
 namespace MolDraw2D_detail {
 
 // for aligning the drawing of text to the passed in coords.
@@ -52,7 +46,7 @@ std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
 class RDKIT_MOLDRAW2D_EXPORT DrawText {
 
  public:
-  virtual ~DrawText() = default;
+  virtual ~DrawText() = 0;
 
   static constexpr double DEFAULT_FONT_SCALE =
       0.6;  // seems to be a good number
@@ -158,10 +152,6 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
                            const Point2D &cds1, const std::string &label2,
                            OrientType orient2, const Point2D &cds2) const;
 
-  // amount to scale subscripts and superscripts by
-  constexpr static double SUBS_SCALE = 0.66;
-  constexpr static double SUPER_SCALE = 0.66;
-
   virtual void alignString(
       TextAlignType align, const std::vector<TextDrawType> &draw_modes,
       std::vector<std::shared_ptr<StringRect>> &rects) const;
@@ -172,6 +162,10 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   // return a scale factor appropriate for the character and draw type
   // (normal or super- or subscript)
   double selectScaleFactor(char c, TextDrawType draw_type) const;
+
+  // amount to scale subscripts and superscripts by
+  constexpr static double SUBS_SCALE = 0.66;
+  constexpr static double SUPER_SCALE = 0.66;
 
   DrawColour colour_;
   double font_scale_;

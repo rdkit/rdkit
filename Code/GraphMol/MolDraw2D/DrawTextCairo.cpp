@@ -21,7 +21,7 @@ namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextCairo::DrawTextCairo(double max_fnt_sz, double min_fnt_sz,
                              cairo_t *dp_cr)
-    : DrawText(max_fnt_sz, min_fnt_sz), dp_cr_(dp_cr) {
+    : DrawTextNotFT(max_fnt_sz, min_fnt_sz), dp_cr_(dp_cr) {
   setCairoContext(dp_cr);
 }
 

@@ -18,7 +18,6 @@
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 
 namespace RDKit {
-class MolDraw2DCairo;
 namespace MolDraw2D_detail {
 
 // ****************************************************************************

@@ -20,14 +20,13 @@
 
 #include <emscripten.h>
 #include <emscripten/val.h>
-#include <GraphMol/MolDraw2D/DrawText.h>
+#include <GraphMol/MolDraw2D/DrawTextNotFT.h>
 
 namespace RDKit {
-class MolDraw2DJS;
 namespace MolDraw2D_detail {
 // ****************************************************************************
 
-class DrawTextJS : public DrawText {
+class DrawTextJS : public DrawTextNotFT {
 
  public:
   DrawTextJS(double max_fnt_sz, double min_fnt_sz, emscripten::val &context);
