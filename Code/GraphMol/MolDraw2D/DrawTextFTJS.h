@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 Greg Landrum and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -20,10 +22,9 @@ namespace RDKit {
 class MolDraw2DJS;
 namespace MolDraw2D_detail {
 // ****************************************************************************
-class DrawTextFTJS : protected DrawTextFT {
-  friend class RDKit::MolDraw2DJS;
+class DrawTextFTJS : public DrawTextFT {
 
- protected:
+ pubilc:
   DrawTextFTJS(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, emscripten::val &context);
   DrawTextFTJS(const DrawTextFTJS &) = delete;
@@ -39,11 +40,9 @@ class DrawTextFTJS : protected DrawTextFT {
                           const FT_Vector *controlTwo,
                           const FT_Vector *to) override;
 
- protected:
   // adds x_trans_ and y_trans_ to coords returns x advance distance
   virtual double extractOutline() override;
 
- private:
   emscripten::val &context_;
 };
 

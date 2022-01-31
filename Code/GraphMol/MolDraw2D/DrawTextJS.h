@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 Greg Landrum and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -25,10 +27,9 @@ class MolDraw2DJS;
 namespace MolDraw2D_detail {
 // ****************************************************************************
 
-class DrawTextJS : protected DrawText {
-  friend class RDKit::MolDraw2DJS;
+class DrawTextJS : public DrawText {
 
- protected:
+ public:
   DrawTextJS(double max_fnt_sz, double min_fnt_sz, emscripten::val &context);
   DrawTextJS(const DrawTextJS &rhs) = delete;
   DrawTextJS(const DrawTextJS &&rhs) = delete;
@@ -37,7 +38,6 @@ class DrawTextJS : protected DrawText {
 
   void drawChar(char c, const Point2D &cds) override;
 
- private:
   emscripten::val &context_;
 
   // fills a vector of StringRects, one for each char in text, with

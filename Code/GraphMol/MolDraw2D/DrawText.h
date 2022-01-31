@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -6,7 +8,7 @@
 //  of the RDKit source tree.
 //
 //
-// Original author: David Cosgrove (CozChemIx) on 29/04/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 // This is an abstract base class for drawing text into a MolDraw2D
 // object.
@@ -45,22 +47,13 @@ std::ostream &operator<<(std::ostream &oss, const TextAlignType &tat);
 std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
 
 // ****************************************************************************
-// This is a private class, not intended to be used by the great unwashed.
-// If you want to draw a string used MolDraw2D::drawString().
+// This is an implementation class, not intended to be used by the great
+// unwashed. If you want to draw a string used MolDraw2D::drawString().
 class RDKIT_MOLDRAW2D_EXPORT DrawText {
-  friend class RDKit::MolDraw2D;
-  friend class RDKit::MolDraw2DCairo;
-  friend class RDKit::MolDraw2DJS;
-  friend class RDKit::MolDraw2DSVG;
-  friend class RDKit::MolDraw2DQt;
-  friend class AtomSymbol;
-  friend class DrawAnnotation;
-  friend class DrawMol;
 
  public:
   virtual ~DrawText() = default;
 
- protected:
   static constexpr double DEFAULT_FONT_SCALE =
       0.6;  // seems to be a good number
 
@@ -180,7 +173,6 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
   // (normal or super- or subscript)
   double selectScaleFactor(char c, TextDrawType draw_type) const;
 
- private:
   DrawColour colour_;
   double font_scale_;
   double max_font_size_;

@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -6,7 +8,7 @@
 //  of the RDKit source tree.
 //
 //
-// Original author: David Cosgrove (CozChemIx) on 06/05/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 // This is an abstract base class derived from DrawText that does drawing
 // using FreeType.
@@ -31,7 +33,7 @@ struct StringRect;
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : protected DrawText {
+class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
  public:
   ~DrawTextFT() override;
   virtual int MoveToFunctionImpl(const FT_Vector *to) = 0;
@@ -42,7 +44,6 @@ class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : protected DrawText {
                                   const FT_Vector *controlTwo,
                                   const FT_Vector *to) = 0;
 
- protected:
   DrawTextFT(double max_fnt_sz, double min_fnt_sz,
              const std::string &font_file);
   DrawTextFT(const DrawTextFT &) = delete;
@@ -63,7 +64,6 @@ class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : protected DrawText {
   // adds x_trans_ and y_trans_ to coords returns x advance distance
   virtual double extractOutline();
 
- private:
   FT_Library library_;
   FT_Face face_;
   std::string font_file_;  // over-rides default if not empty.

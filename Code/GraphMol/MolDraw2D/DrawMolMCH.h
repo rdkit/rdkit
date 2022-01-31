@@ -22,10 +22,8 @@
 namespace RDKit {
 namespace MolDraw2D_detail {
 
-class DrawMolMCH : protected DrawMol {
-  friend class RDKit::MolDraw2D;
-
- protected:
+class DrawMolMCH : public DrawMol {
+ public:
   DrawMolMCH(const ROMol &mol, const std::string &legend, int width, int height,
              MolDrawOptions &drawOptions, DrawText &textDrawer,
              const std::map<int, std::vector<DrawColour>> &highlight_atom_map,
@@ -38,7 +36,6 @@ class DrawMolMCH : protected DrawMol {
   DrawMolMCH &operator=(const DrawMol &) = delete;
   DrawMolMCH &operator=(DrawMol &&) = delete;
 
- protected:
   void extractHighlights() override;
   void extractMCHighlights();
   void makeBondHighlights();

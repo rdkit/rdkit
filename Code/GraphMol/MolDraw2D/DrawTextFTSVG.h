@@ -1,3 +1,5 @@
+///
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -5,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// Original author: David Cosgrove (CozChemIx) on 08/05/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 
 #ifndef RDKIT_DRAWTEXTFTSVG_H
@@ -22,10 +24,9 @@ class MolDraw2DSVG;
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-class DrawTextFTSVG : protected DrawTextFT {
-  friend class RDKit::MolDraw2DSVG;
+class DrawTextFTSVG : public DrawTextFT {
 
- protected:
+ public:
   DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                 const std::string &font_file, std::ostream &oss,
                 std::string &d_act_class);
@@ -42,11 +43,9 @@ class DrawTextFTSVG : protected DrawTextFT {
                           const FT_Vector *controlTwo,
                           const FT_Vector *to) override;
 
- protected:
   // adds x_trans_ and y_trans_ to coords returns x advance distance
   double extractOutline() override;
 
- private:
   std::ostream &oss_;
   std::string &d_active_class_;
 };

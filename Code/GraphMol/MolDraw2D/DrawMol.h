@@ -37,13 +37,9 @@ class DrawText;
 namespace MolDraw2D_detail {
 
 class DrawMol {
-  friend class RDKit::MolDraw2D;
-
  public:
   virtual ~DrawMol() = default;
 
-  // everything's protected/private because we don't want anyone using it.
- protected:
   // Make the object, scaled to a given pixel size.
   /*!
     \param mol             : the molecule to draw

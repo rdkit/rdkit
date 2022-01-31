@@ -33,20 +33,14 @@ namespace MolDraw2D_detail {
 struct StringRect;
 
 class DrawShape {
-  friend class RDKit::MolDraw2D;
-  friend class DrawMol;
-  friend class DrawMolMCH;
-
  public:
-  virtual ~DrawShape() = default;
-
- protected:
   DrawShape(const std::vector<Point2D> &points, int lineWidth = 2,
             bool scaleLineWidth = false,
             DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
             int atom1 = -1, int atom2 = -1, int bond = -1);
   DrawShape(const DrawShape &) = delete;
   DrawShape(DrawShape &&) = delete;
+  virtual ~DrawShape() = default;
   DrawShape &operator=(const DrawShape &) = delete;
   DrawShape &operator=(DrawShape &&) = delete;
 
@@ -66,14 +60,8 @@ class DrawShape {
   int atom1_, atom2_, bond_;
 };
 
-class DrawShapeArrow : protected DrawShape {
-  friend class MolDraw2D;
-  friend class DrawMol;
-
+class DrawShapeArrow : public DrawShape {
  public:
-  ~DrawShapeArrow() = default;
-
- protected:
   DrawShapeArrow(const std::vector<Point2D> &points, int lineWidth = 2,
                  bool scaleLineWidth = false,
                  DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
@@ -81,6 +69,7 @@ class DrawShapeArrow : protected DrawShape {
                  double frac = 0.2, double angle = M_PI / 6);
   DrawShapeArrow(const DrawShapeArrow &) = delete;
   DrawShapeArrow(DrawShapeArrow &&) = delete;
+  virtual ~DrawShapeArrow() = default;
   DrawShapeArrow &operator=(const DrawShapeArrow &) = delete;
   DrawShapeArrow &operator=(DrawShapeArrow &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -90,15 +79,8 @@ class DrawShapeArrow : protected DrawShape {
   double angle_;
 };
 
-class DrawShapeEllipse : protected DrawShape {
-  friend class MolDraw2D;
-  friend class DrawMol;
-  friend class DrawMolMCH;
-
+class DrawShapeEllipse : public DrawShape {
  public:
-  ~DrawShapeEllipse() = default;
-
- protected:
   // points are the 2 foci of the ellipse
   DrawShapeEllipse(const std::vector<Point2D> &points, int lineWidth = 2,
                    bool scaleLineWidth = false,
@@ -106,6 +88,7 @@ class DrawShapeEllipse : protected DrawShape {
                    bool fill = false, int atom1 = -1);
   DrawShapeEllipse(const DrawShapeEllipse &) = delete;
   DrawShapeEllipse(DrawShapeEllipse &&) = delete;
+  ~DrawShapeEllipse() = default;
   DrawShapeEllipse &operator=(const DrawShapeEllipse &) = delete;
   DrawShapeEllipse &operator=(DrawShapeEllipse &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -114,15 +97,8 @@ class DrawShapeEllipse : protected DrawShape {
   bool doesRectClash(const StringRect &rect, double padding) const override;
 };
 
-class DrawShapeSimpleLine : protected DrawShape {
-  friend class MolDraw2D;
-  friend class DrawMol;
-  friend class DrawMolMCH;
-
+class DrawShapeSimpleLine : public DrawShape {
  public:
-  ~DrawShapeSimpleLine() = default;
-
- protected:
   DrawShapeSimpleLine(const std::vector<Point2D> &points, int lineWidth = 2,
                       bool scaleLineWidth = false,
                       DrawColour lineColour = DrawColour(0, 0, 0),
@@ -130,6 +106,7 @@ class DrawShapeSimpleLine : protected DrawShape {
                       DashPattern dashPattern = noDash);
   DrawShapeSimpleLine(const DrawShapeSimpleLine &) = delete;
   DrawShapeSimpleLine(DrawShapeSimpleLine &&) = delete;
+  ~DrawShapeSimpleLine() = default;
   DrawShapeSimpleLine &operator=(const DrawShapeSimpleLine &) = delete;
   DrawShapeSimpleLine &operator=(DrawShapeSimpleLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -138,15 +115,8 @@ class DrawShapeSimpleLine : protected DrawShape {
   DashPattern dashPattern_;
 };
 
-class DrawShapePolyLine : protected DrawShape {
-  friend class MolDraw2D;
-  friend class DrawMol;
-  friend class DrawMolMCH;
-
+class DrawShapePolyLine : public DrawShape {
  public:
-  ~DrawShapePolyLine() = default;
-
- protected:
   DrawShapePolyLine(const std::vector<Point2D> &points, int lineWidth = 2,
                     bool scaleLineWidth = false,
                     DrawColour lineColour = DrawColour(0, 0, 0),
@@ -154,6 +124,7 @@ class DrawShapePolyLine : protected DrawShape {
                     int bond = -1, DashPattern dashPattern = noDash);
   DrawShapePolyLine(const DrawShapePolyLine &) = delete;
   DrawShapePolyLine(DrawShapePolyLine &&) = delete;
+  ~DrawShapePolyLine() = default;
   DrawShapePolyLine &operator=(const DrawShapePolyLine &) = delete;
   DrawShapePolyLine &operator=(DrawShapePolyLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -162,19 +133,14 @@ class DrawShapePolyLine : protected DrawShape {
   DashPattern dashPattern_;
 };
 
-class DrawShapeSolidWedge : protected DrawShape {
-  friend class MolDraw2D;
-  friend class DrawMol;
-
+class DrawShapeSolidWedge : public DrawShape {
  public:
-  ~DrawShapeSolidWedge() = default;
-
- protected:
   DrawShapeSolidWedge(const std::vector<Point2D> points, const DrawColour &col1,
                       const DrawColour &col2, bool splitBonds, int atom1 = -1,
                       int atom2 = -1, int bond = -1);
   DrawShapeSolidWedge(const DrawShapeSolidWedge &) = delete;
   DrawShapeSolidWedge(DrawShapeSolidWedge &&) = delete;
+  ~DrawShapeSolidWedge() = default;
   DrawShapeSolidWedge &operator=(const DrawShapeSolidWedge &) = delete;
   DrawShapeSolidWedge &operator=(DrawShapeSolidWedge &&) = delete;
   void buildTriangles();
@@ -185,19 +151,14 @@ class DrawShapeSolidWedge : protected DrawShape {
   bool splitBonds_;
 };
 
-class DrawShapeDashedWedge : protected DrawShape {
-  friend class MolDraw2D;
-  friend class DrawMol;
-
+class DrawShapeDashedWedge : public DrawShape {
  public:
-  ~DrawShapeDashedWedge() = default;
-
- protected:
   DrawShapeDashedWedge(const std::vector<Point2D> points,
                        const DrawColour &col1, const DrawColour &col2,
                        int atom1 = -1, int atom2 = -1, int bond = -1);
   DrawShapeDashedWedge(const DrawShapeDashedWedge &) = delete;
   DrawShapeDashedWedge(DrawShapeDashedWedge &&) = delete;
+  ~DrawShapeDashedWedge() = default;
   DrawShapeDashedWedge &operator=(const DrawShapeDashedWedge &) = delete;
   DrawShapeDashedWedge &operator=(DrawShapeDashedWedge &&) = delete;
   void buildLines();
@@ -213,14 +174,8 @@ class DrawShapeDashedWedge : protected DrawShape {
   Point2D at1Cds_;
 };
 
-class DrawShapeWavyLine : protected DrawShape {
-  friend class MolDraw2D;
-  friend class DrawMol;
-
+class DrawShapeWavyLine : public DrawShape {
  public:
-  ~DrawShapeWavyLine() = default;
-
- protected:
   DrawShapeWavyLine(const std::vector<Point2D> points, int lineWidth = 2,
                     bool scaleLineWidth = false,
                     const DrawColour &col1 = DrawColour(0, 0, 0),
@@ -229,6 +184,7 @@ class DrawShapeWavyLine : protected DrawShape {
                     int bond = -1);
   DrawShapeWavyLine(const DrawShapeWavyLine &) = delete;
   DrawShapeWavyLine(DrawShapeWavyLine &&) = delete;
+  ~DrawShapeWavyLine() = default;
   DrawShapeWavyLine &operator=(const DrawShapeWavyLine &) = delete;
   DrawShapeWavyLine &operator=(DrawShapeWavyLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -239,15 +195,8 @@ class DrawShapeWavyLine : protected DrawShape {
   double offset_;
 };
 
-class DrawShapeArc : protected DrawShape {
-  friend class MolDraw2D;
-  friend class DrawMol;
-  friend class DrawMolMCH;
-
+class DrawShapeArc : public DrawShape {
  public:
-  ~DrawShapeArc() = default;
-
- protected:
   // draw the arc of an ellipse between ang1 and ang2.  Note that 0 is
   // at 3 o-clock and 90 at 12 o'clock as you'd expect from your maths.
   // ang2 must be > ang1 - it won't draw backwards. Angles in degrees,
@@ -260,6 +209,7 @@ class DrawShapeArc : protected DrawShape {
                int atom1 = -1);
   DrawShapeArc(const DrawShapeArc &) = delete;
   DrawShapeArc(DrawShapeArc &&) = delete;
+  ~DrawShapeArc() = default;
   DrawShapeArc &operator=(const DrawShapeArc &) = delete;
   DrawShapeArc &operator=(DrawShapeArc &&) = delete;
 

@@ -29,12 +29,9 @@ namespace MolDraw2D_detail {
 class DrawMol;
 
 class DrawAnnotation {
-  friend class DrawMol;
-
  public:
   ~DrawAnnotation() = default;
 
- private:
   DrawAnnotation(const std::string &note, const TextAlignType &align,
                  const std::string &cls, double relFontScale,
                  const Point2D &pos, const DrawColour &colour,
