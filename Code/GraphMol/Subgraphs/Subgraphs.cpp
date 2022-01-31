@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
-
+#include <RDBoost/python.h>
 #include "Subgraphs.h"
 #include "SubgraphUtils.h"
 
@@ -20,6 +20,8 @@
 #include <cstring>
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
+
+namespace python = boost::python;
 
 namespace RDKit {
 namespace Subgraphs {
@@ -540,9 +542,17 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
 }
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
-                                       unsigned int rootedAtAtom, bool useHs) {
+                                       unsigned int rootedAtAtom, bool useHs, 
+                                       bool enforceSize, python::object atomMap) {
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
+  }
+
+  if (atomMap != python::object()) {
+    // make sure the optional argument actually was a dictionary
+    python::dict typecheck = python::extract<python::dict>(atomMap);
+    atomMap.attr("clear")();
+    atomMap[rootedAtAtom] = 0;
   }
 
   PATH_TYPE res;
@@ -575,6 +585,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
 
         // add the next set of neighbors:
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
+        atomMap[oAtom] = i + 1;
         boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
         while (beg != end) {
           const Bond *bond = mol[*beg];
@@ -590,9 +601,11 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
     }
     nbrStack = nextLayer;
   }
-  if (i != radius) {
-    // this happens when there are no paths with the requested radius.
+  if (i != radius && enforceSize) {
+    // Condition[0]: this happens when there are no paths with the requested radius.
     // return nothing in this case:
+    // Condition[1]: If enforceSize is true, then there must be at least an atom located at requested radius.
+    // otherwise, all atoms must be inside the requested radius (maxSize(mol, res) <= radius)
     res.clear();
     res.resize(0);
   }

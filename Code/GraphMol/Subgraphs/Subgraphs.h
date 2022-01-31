@@ -32,6 +32,9 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <RDBoost/python.h>
+
+namespace python = boost::python;
 
 namespace RDKit {
 class ROMol;
@@ -137,9 +140,14 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *
  *   The result is a path (a vector of bond indices)
  */
+
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
 findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
-                             unsigned int rootedAtAtom, bool useHs = false);
-}  // namespace RDKit
+                             unsigned int rootedAtAtom, bool useHs = false, 
+                             bool enforceSize = true, python::object atomMap = python::dict());
+}  
+
+
+// namespace RDKit
 
 #endif

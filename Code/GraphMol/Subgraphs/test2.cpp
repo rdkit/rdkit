@@ -136,6 +136,42 @@ void test2() {
   std::cout << "Finished" << std::endl;
 }
 
+
+void test3() {
+  std::cout << "-----------------------\n Test 3: Atom Environments (Extension)"
+            << std::endl;
+  {
+    std::string smiles = "C=NC";
+    unsigned int rootAtAtom = 2;
+
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
+
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootAtAtom, false, true);
+    TEST_ASSERT(pth.size() == 2);
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootAtAtom, true, true);
+    TEST_ASSERT(pth.size() == 5);
+
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootAtAtom, false, true);
+    TEST_ASSERT(pth.size() == 0);
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootAtAtom, true, true);
+    TEST_ASSERT(pth.size() == 7);
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootAtAtom, true, false);
+    TEST_ASSERT(pth.size() == 7);
+
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootAtAtom, false, true);
+    TEST_ASSERT(pth.size() == 0);
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootAtAtom, true, true);
+    TEST_ASSERT(pth.size() == 0);
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootAtAtom, true, false);
+    TEST_ASSERT(pth.size() == 7);
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootAtAtom, false, false);
+    TEST_ASSERT(pth.size() == 7);
+  }
+
+}
+
 void testGithubIssue103() {
   std::cout << "-----------------------\n Testing github Issue103: "
                "stereochemistry and pathToSubmol"

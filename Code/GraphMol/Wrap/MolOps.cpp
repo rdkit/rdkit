@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1698,18 +1698,28 @@ to the terminal dummy atoms.\n\
 \n\
     - rootedAtAtom: the atom to consider\n\
 \n\
+    - atomMap: (optional) a python dictionary to store the mapping of atom IDs and radius\n\
+\n\
     - useHs: (optional) toggles whether or not bonds to Hs that are part of the graph\n\
       should be included in the results.\n\
       Defaults to 0.\n\
+\n\
+    - enforceSize (optional) toggles whether or not there must be at least one atom/bond\n\
+      should be located on the specified radius. Otherwise, possibly return an empty result \n\
+      Defaults to 1 (true).\n\
+
 \n\
   RETURNS: a vector of bond IDs\n\
 \n\
 \n";
     python::def("FindAtomEnvironmentOfRadiusN", &findAtomEnvironmentOfRadiusN,
                 (python::arg("mol"), python::arg("radius"),
-                 python::arg("rootedAtAtom"), python::arg("useHs") = false),
+                 python::arg("rootedAtAtom"), 
+                 python::arg("atomMap") = python::object(),                
+                 python::arg("useHs") = false, 
+                 python::arg("enforceSize") = true),
                 docString.c_str());
-
+    
     python::def("PathToSubmol", pathToSubmolHelper,
                 (python::arg("mol"), python::arg("path"),
                  python::arg("useQuery") = false,
