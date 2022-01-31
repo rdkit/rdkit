@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,6 +25,7 @@
       has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)
       but only 2 _paths_ of length 3: (0,1,3),(2,1,3)
 */
+#include <boost/python.hpp>
 #include <RDGeneral/export.h>
 #ifndef _RD_SUBGRAPHS_H_
 #define _RD_SUBGRAPHS_H_
@@ -32,7 +33,6 @@
 #include <vector>
 #include <list>
 #include <map>
-#include <RDBoost/python.h>
 
 namespace python = boost::python;
 

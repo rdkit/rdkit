@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <boost/python.hpp>
 #include <GraphMol/RDKitBase.h>
-#include <RDBoost/python.h>
 #include "Subgraphs.h"
 #include "SubgraphUtils.h"
 
