@@ -144,7 +144,7 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
 findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
                              unsigned int rootedAtAtom, bool useHs = false, 
-                             bool enforceSize = true, python::object atomMap = python::dict());
+                             bool enforceSize = true, python::object atomMap = python::object());
 }  
 
 

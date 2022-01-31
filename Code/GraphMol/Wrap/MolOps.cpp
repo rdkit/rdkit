@@ -1716,8 +1716,8 @@ to the terminal dummy atoms.\n\
                 (python::arg("mol"), python::arg("radius"),
                  python::arg("rootedAtAtom"), 
                  python::arg("useHs") = false, 
-                 python::arg("enforceSize") = true),
-                 python::arg("atomMap") = python::object(), 
+                 python::arg("enforceSize") = true,
+                 python::arg("atomMap") = python::object()), 
                 docString.c_str());
     
     python::def("PathToSubmol", pathToSubmolHelper,
