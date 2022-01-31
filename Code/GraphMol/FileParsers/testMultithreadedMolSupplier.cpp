@@ -339,6 +339,7 @@ void testPerformance() {
     std::cout << "Duration for SmilesMolSupplier: " << duration.count()
               << " (milliseconds) \n";
 
+#if RDK_USE_BOOST_IOSTREAMS
     for (unsigned int i = maxThreadCount; i >= 1; --i) {
       std::istream *strm = new gzstream(rdbase + gzpath);
       start = high_resolution_clock::now();
@@ -352,6 +353,7 @@ void testPerformance() {
                 << "  writer threads: " << duration.count()
                 << " (milliseconds) \n";
     }
+#endif
   }
 #endif
 
@@ -376,6 +378,7 @@ void testPerformance() {
     std::cout << "Duration for SDMolSupplier: " << duration.count()
               << " (milliseconds) \n";
 
+#if RDK_USE_BOOST_IOSTREAMS
     for (unsigned int i = maxThreadCount; i >= 1; --i) {
       std::istream *strm = new gzstream(rdbase + gzpath);
       bool takeOwnership = true;
@@ -388,6 +391,7 @@ void testPerformance() {
                 << "  writer threads: " << duration.count()
                 << " (milliseconds) \n";
     }
+#endif
   }
 }
 
