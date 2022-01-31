@@ -206,21 +206,6 @@ RDKIT_MOLDRAW2D_EXPORT bool setStringDrawMode(const std::string &instring,
 std::vector<std::string> atomLabelToPieces(const std::string &label,
                                            OrientType orient);
 
-bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
-                       const Point2D &end2, double padding);
-bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
-                           const Point2D &pt2, const Point2D &pt3,
-                           double padding);
-bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
-                              double yradius, double padding,
-                              const Point2D &end1, const Point2D &end2);
-// angles expected in degrees, between 0 and 360.
-bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
-                          double start_ang, double stop_ang, double padding,
-                          const Point2D &end1, const Point2D &end2);
-bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
-                      const Point2D &l2s, const Point2D &l2f, Point2D *ip);
-
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

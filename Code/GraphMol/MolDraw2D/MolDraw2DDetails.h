@@ -26,6 +26,8 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 namespace MolDraw2D_detail {
+struct StringRect;
+
 // data taken from the helvetica font info in
 // $RDBASE/rdkit/sping/PDF/pdfmetrics.py
 const int char_widths[] = {
@@ -104,6 +106,20 @@ inline std::string formatDouble(double val) {
   return boost::str(boost::format("%.1f") % val);
 }
 
+bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
+                       const Point2D &end2, double padding);
+bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
+                           const Point2D &pt2, const Point2D &pt3,
+                           double padding);
+bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
+                              double yradius, double padding,
+                              const Point2D &end1, const Point2D &end2);
+// angles expected in degrees, between 0 and 360.
+bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
+                          double start_ang, double stop_ang, double padding,
+                          const Point2D &end1, const Point2D &end2);
+bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
+                      const Point2D &l2s, const Point2D &l2f, Point2D *ip);
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

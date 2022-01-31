@@ -9,6 +9,7 @@
 //
 
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/StringRect.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/SubstanceGroup.h>
 
@@ -212,6 +213,144 @@ std::vector<Point2D> handdrawnLine(Point2D cds1, Point2D cds2, double scale,
   }
   pts.push_back(cds2);
   return pts;
+}
+
+// ****************************************************************************
+bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
+                       const Point2D &end2, double padding) {
+  Point2D tl, tr, bl, br;
+  rect.calcCorners(tl, tr, br, bl, padding);
+  if (doLinesIntersect(end2, end1, tl, tr, nullptr)) {
+    return true;
+  }
+  if (doLinesIntersect(end2, end1, tr, br, nullptr)) {
+    return true;
+  }
+  if (doLinesIntersect(end2, end1, br, bl, nullptr)) {
+    return true;
+  }
+  if (doLinesIntersect(end2, end1, bl, tl, nullptr)) {
+    return true;
+  }
+  return false;
+}
+
+// ****************************************************************************
+bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
+                           const Point2D &pt2, const Point2D &pt3,
+                           double padding) {
+  if (doesLineIntersect(rect, pt1, pt2, padding)) {
+    return true;
+  }
+  if (doesLineIntersect(rect, pt2, pt3, padding)) {
+    return true;
+  }
+  if (doesLineIntersect(rect, pt3, pt1, padding)) {
+    return true;
+  }
+  return false;
+}
+
+// ****************************************************************************
+bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
+                              double yradius, double padding,
+                              const Point2D &end1, const Point2D &end2) {
+  // using
+  // https://math.stackexchange.com/questions/76457/check-if-a-point-is-within-an-ellipse
+  // to see if either end1 or end2 are inside the ellipse.
+  double xr2 = (xradius + padding) * (xradius + padding);
+  double yr2 = (yradius + padding) * (yradius + padding);
+  double xdisc = (end1.x - centre.x) * (end1.x - centre.x) / xr2;
+  double ydisc = (end1.y - centre.y) * (end1.y - centre.y) / yr2;
+  if (xdisc + ydisc <= 1.0) {
+    return true;
+  }
+  xdisc = (end2.x - centre.x) * (end2.x - centre.x) / xr2;
+  ydisc = (end2.y - centre.y) * (end2.y - centre.y) / yr2;
+  if (xdisc + ydisc <= 1.0) {
+    return true;
+  }
+  return false;
+}
+
+// ****************************************************************************
+bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
+                          double start_ang, double stop_ang, double padding,
+                          const Point2D &end1, const Point2D &end2) {
+  double xr = xradius + padding;
+  double yr = yradius + padding;
+  double xr2 = xr * xr;
+  double yr2 = yr * yr;
+
+  auto pointInArc = [&](const Point2D &p) -> bool {
+    double xdisc = p.x * p.x / xr2;
+    double ydisc = p.y * p.y / yr2;
+    // start_ang can be more than stop_ang, if, for example, the arc goes from
+    // 315 to 45.
+    if (xdisc + ydisc <= 1.0) {
+      // end1 is inside the whole ellipse.  See if the angle it makes with the
+      // x axis lies between start_and and stop_ang.
+      double th = atan2(p.x, p.y) * 180.0 / M_PI;
+      if (th < 0.0) {
+        th += 360.0;
+      }
+      if (start_ang < stop_ang) {
+        // it's pretty straightforward
+        if (th >= start_ang && th <= stop_ang) {
+          return true;
+        }
+      } else {
+        // the arc crosses 0.
+        if (th >= start_ang && th <= 360.0) {
+          return true;
+        }
+        if (th >= 0.0 && th <= stop_ang) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  Point2D p1 = end1 - centre;
+  if (pointInArc(p1)) {
+    return true;
+  }
+  Point2D p2 = end2 - centre;
+  if (pointInArc(p2)) {
+    return true;
+  }
+  return false;
+}
+
+// ****************************************************************************
+bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
+                      const Point2D &l2s, const Point2D &l2f, Point2D *ip) {
+  // using spell from answer 2 of
+  // https://stackoverflow.com/questions/563198/how-do-you-detect-where-two-line-segments-intersect
+  double s1_x = l1f.x - l1s.x;
+  double s1_y = l1f.y - l1s.y;
+  double s2_x = l2f.x - l2s.x;
+  double s2_y = l2f.y - l2s.y;
+
+  double d = (-s2_x * s1_y + s1_x * s2_y);
+  if (d == 0.0) {
+    // parallel lines.
+    return false;
+  }
+  double s, t;
+  s = (-s1_y * (l1s.x - l2s.x) + s1_x * (l1s.y - l2s.y)) / d;
+  t = (s2_x * (l1s.y - l2s.y) - s2_y * (l1s.x - l2s.x)) / d;
+
+  if (s >= 0 && s <= 1 && t >= 0 && t <= 1) {
+    if (ip) {
+      ip->x = l1s.x + t * s1_x;
+      ip->y = l1s.y + t * s1_y;
+    }
+    return true;
+  }
+
+  return false;
 }
 
 }  // namespace MolDraw2D_detail

@@ -10,6 +10,7 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
