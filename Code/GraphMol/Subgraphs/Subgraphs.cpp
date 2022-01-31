@@ -585,7 +585,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
 
         // add the next set of neighbors:
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
-        atomMap[oAtom] = i + 1;
+        if (atomMap != python::object()) { atomMap[oAtom] = i + 1; }
         boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
         while (beg != end) {
           const Bond *bond = mol[*beg];

@@ -1707,7 +1707,6 @@ to the terminal dummy atoms.\n\
     - enforceSize (optional) toggles whether or not there must be at least one atom/bond\n\
       should be located on the specified radius. Otherwise, possibly return an empty result \n\
       Defaults to 1 (true).\n\
-
 \n\
   RETURNS: a vector of bond IDs\n\
 \n\
