@@ -448,16 +448,10 @@ void DrawShapeDashedWedge::move(const Point2D &trans) {
 // ****************************************************************************
 bool DrawShapeDashedWedge::doesRectClash(const StringRect &rect,
                                          double padding) const {
-  padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
   size_t last_point = points_.size() - 1;
-  if (doesLineIntersect(rect, at1Cds_, points_[last_point], padding)) {
-    return true;
-  }
-  if (doesLineIntersect(rect, points_[last_point], points_[last_point - 1],
-                        padding)) {
-    return true;
-  }
-  if (doesLineIntersect(rect, points_[last_point - 1], at1Cds_, padding)) {
+  padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
+  if (doesTriangleIntersect(rect, at1Cds_, points_[last_point],
+                               points_[last_point-1], padding)) {
     return true;
   }
   return false;

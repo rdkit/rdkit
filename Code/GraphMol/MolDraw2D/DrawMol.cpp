@@ -2020,6 +2020,7 @@ void DrawMol::calcAnnotationPosition(const Atom *atom,
       }
     }
   }
+  std::cout << "least worst pos" << std::endl;
   annot.pos_ = leastWorstPos;
 }
 

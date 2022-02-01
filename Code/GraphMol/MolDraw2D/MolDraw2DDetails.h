@@ -108,6 +108,7 @@ inline std::string formatDouble(double val) {
 
 bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
                        const Point2D &end2, double padding);
+// returns true if any corner of triangle is inside the rectangle.
 bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
                            const Point2D &pt2, const Point2D &pt3,
                            double padding);
@@ -120,6 +121,17 @@ bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
                           const Point2D &end1, const Point2D &end2);
 bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
                       const Point2D &l2s, const Point2D &l2f, Point2D *ip);
+// This uses the barycentric coordinate system method from
+// http://totologic.blogspot.com/2014/01/accurate-point-in-triangle-test.html
+// where it notes and provides a solution for instabilities when the point
+// in exactly on one of the edges of the triangle.  That refinement is not
+// implemented because it seems a bit of overkill for most uses.  It is an
+// issue when, for example, two triangles share an edge and the point is on that
+// edge, when it might give the disappointing result that the point is in
+// neither triangle.
+bool isPointInTriangle(const Point2D &pt, const Point2D &t1, const Point2D &t2,
+                       const Point2D &t3);
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

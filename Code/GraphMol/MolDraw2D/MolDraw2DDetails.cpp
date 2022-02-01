@@ -239,13 +239,18 @@ bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
 bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
                            const Point2D &pt2, const Point2D &pt3,
                            double padding) {
-  if (doesLineIntersect(rect, pt1, pt2, padding)) {
+  // the quick test is for any of the triangle points inside the rectangle.
+  // But if the rectangle is inside the triangle, that's not enough of a test.
+  if (rect.isPointInside(pt1, padding) || rect.isPointInside(pt2, padding) ||
+      rect.isPointInside(pt3, padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, pt2, pt3, padding)) {
-    return true;
-  }
-  if (doesLineIntersect(rect, pt3, pt1, padding)) {
+  Point2D tl, tr, br, bl;
+  rect.calcCorners(tl, tr, br, bl, padding);
+  if (isPointInTriangle(tl, pt1, pt2, pt3) ||
+      isPointInTriangle(tr, pt1, pt2, pt3) ||
+      isPointInTriangle(br, pt1, pt2, pt3) ||
+      isPointInTriangle(bl, pt1, pt2, pt3)) {
     return true;
   }
   return false;
@@ -351,6 +356,18 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
   }
 
   return false;
+}
+
+// ****************************************************************************
+bool isPointInTriangle(const Point2D &pt, const Point2D &t1, const Point2D &t2,
+                       const Point2D &t3) {
+  double d = ((t2.y - t3.y) * (t1.x - t3.x) + (t3.x - t2.x) * (t1.y - t3.y));
+  double a =
+      ((t2.y - t3.y) * (pt.x - t3.x) + (t3.x - t2.x) * (pt.y - t3.y)) / d;
+  double b =
+      ((t3.y - t1.y) * (pt.x - t3.x) + (t1.x - t3.x) * (pt.y - t3.y)) / d;
+  double c = 1 - a - b;
+  return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
 }
 
 }  // namespace MolDraw2D_detail

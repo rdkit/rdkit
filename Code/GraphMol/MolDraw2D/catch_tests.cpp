@@ -759,7 +759,9 @@ TEST_CASE("bad DrawMolecules() when molecules are not kekulized",
 }
 TEST_CASE("draw atom/bond indices", "[drawing]") {
   auto m1 = "C[C@H](F)N"_smiles;
+  auto m2 = "C[C@@H](F)N"_smiles;
   REQUIRE(m1);
+  REQUIRE(m2);
   SECTION("foundations") {
     {
       MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
@@ -843,6 +845,23 @@ TEST_CASE("draw atom/bond indices", "[drawing]") {
       CHECK(text.find(">2</text>") != std::string::npos);
       CHECK(text.find(">f</text>") != std::string::npos);
       CHECK(text.find(">o</text>") != std::string::npos);
+    }
+    {
+      // Make sure it works for solid wedges as well.
+      MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawMolecule(*m2);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testAtomBondIndices_6.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testAtomBondIndices_6.svg");
+      CHECK(text.find(">1</text>") != std::string::npos);
+      // it only appears once though:
+      CHECK(text.find(">1</text>", text.find(">1</text>") + 1) ==
+            std::string::npos);
+      CHECK(text.find("1,(S)") == std::string::npos);
     }
   }
 }
