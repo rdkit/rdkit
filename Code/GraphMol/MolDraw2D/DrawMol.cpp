@@ -350,9 +350,10 @@ void DrawMol::extractMolNotes() {
   }
 
   if (!note.empty()) {
+    // molecule annotations use a full-size font, hence the 1 below.
     DrawAnnotation *annot = new DrawAnnotation(
-        note, TextAlignType::START, "note", drawOptions_.annotationFontScale,
-        Point2D(0.0, 0.0), drawOptions_.annotationColour, textDrawer_);
+        note, TextAlignType::START, "note", 1, Point2D(0.0, 0.0),
+        drawOptions_.annotationColour, textDrawer_);
     calcMolNotePosition(atCds_, *annot);
     annotations_.emplace_back(annot);
   }

@@ -26,10 +26,10 @@ DrawAnnotation::DrawAnnotation(const std::string &note,
     : text_(note),
       align_(align),
       class_(cls),
-      relFontScale_(relFontScale),
       textDrawer_(textDrawer),
       pos_(pos),
       colour_(colour) {
+  fontScale_ = relFontScale * textDrawer_.fontScale();
   extractRects();
 }
 
@@ -77,7 +77,8 @@ void DrawAnnotation::extractRects() {
   std::vector<TextDrawType> drawModes;
   std::vector<char> drawChars;
   double ofs = textDrawer_.fontScale();
-  textDrawer_.setFontScale(relFontScale_ * textDrawer_.fontScale(), true);
+  textDrawer_.setFontScale(fontScale_, true);
+  fontScale_ = textDrawer_.fontScale();
   textDrawer_.getStringRects(text_, OrientType::C, rects_, drawModes, drawChars,
                              true, align_);
   textDrawer_.setFontScale(ofs, true);
@@ -94,11 +95,11 @@ void DrawAnnotation::draw(MolDraw2D &molDrawer) const {
   molDrawer.setActiveClass(actClass);
   textDrawer_.setColour(colour_);
   double ofs = textDrawer_.fontScale();
-  textDrawer_.setFontScale(relFontScale_ * ofs, true);
+  textDrawer_.setFontScale(fontScale_, true);
   textDrawer_.drawString(text_, pos_, align_);
   textDrawer_.setFontScale(ofs, true);
   molDrawer.setActiveClass(o_class);
-  //    drawRects(molDrawer);
+  // drawRects(molDrawer);
 }
 
 // ****************************************************************************
@@ -127,6 +128,9 @@ void DrawAnnotation::drawRects(MolDraw2D &molDrawer) const {
 void DrawAnnotation::scale(const Point2D &scaleFactor) {
   pos_.x *= scaleFactor.x;
   pos_.y *= scaleFactor.y;
+  // arbitrarily choose x scale for fonts.  It is highly unlikely that the
+  // x and y are different, in any case.
+  fontScale_ *= scaleFactor.x;
   // rebuild the rectangles, because the fontScale may be different,
   // and the widths etc might not scale by the same amount.
   rects_.clear();

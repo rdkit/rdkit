@@ -2480,7 +2480,6 @@ TEST_CASE("molecule annotations", "[extra]") {
   int panelHeight = -1;
   int panelWidth = -1;
   bool noFreeType = false;
-
   SECTION("basics") {
     auto m = "NCC(=O)O"_smiles;
     MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
