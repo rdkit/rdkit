@@ -105,12 +105,12 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
   Point2D p1 = points_[0];
   p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
   p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
-  points_.emplace_back(p1);
+  points_.push_back(p1);
   
   Point2D p2 = points_[1];
   p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
   p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
-  points_.emplace_back(p2);
+  points_.push_back(p2);
 }
 
 // ****************************************************************************
@@ -306,15 +306,15 @@ void DrawShapeSolidWedge::buildTriangles() {
     Point2D e2 = end2 - point;
     Point2D mid1 = point + e1 * 0.5;
     Point2D mid2 = point + e2 * 0.5;
-    points_.emplace_back(point);
-    points_.emplace_back(mid1);
-    points_.emplace_back(mid2);
-    points_.emplace_back(mid1);
-    points_.emplace_back(end2);
-    points_.emplace_back(end1);
-    points_.emplace_back(mid1);
-    points_.emplace_back(mid2);
-    points_.emplace_back(end2);
+    points_.push_back(point);
+    points_.push_back(mid1);
+    points_.push_back(mid2);
+    points_.push_back(mid1);
+    points_.push_back(end2);
+    points_.push_back(end1);
+    points_.push_back(mid1);
+    points_.push_back(mid2);
+    points_.push_back(end2);
   }
 }
 
@@ -396,12 +396,12 @@ void DrawShapeDashedWedge::buildLines() {
   for (unsigned int i = 1; i < nDashes + 1; ++i) {
     Point2D e11 = point + e1 * (rdcast<double>(i) / nDashes);
     Point2D e22 = point + e2 * (rdcast<double>(i) / nDashes);
-    points_.emplace_back(e11);
-    points_.emplace_back(e22);
+    points_.push_back(e11);
+    points_.push_back(e22);
     if (i > nDashes / 2) {
-      lineColours_.emplace_back(col2_);
+      lineColours_.push_back(col2_);
     } else {
-      lineColours_.emplace_back(lineColour_);
+      lineColours_.push_back(lineColour_);
     }
   }
 }
