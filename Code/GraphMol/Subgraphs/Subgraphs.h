@@ -25,7 +25,6 @@
       has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)
       but only 2 _paths_ of length 3: (0,1,3),(2,1,3)
 */
-#include <boost/python.hpp>
 #include <RDGeneral/export.h>
 #ifndef _RD_SUBGRAPHS_H_
 #define _RD_SUBGRAPHS_H_
@@ -33,8 +32,6 @@
 #include <vector>
 #include <list>
 #include <map>
-
-namespace python = boost::python;
 
 namespace RDKit {
 class ROMol;
@@ -142,8 +139,9 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
 findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
-                             unsigned int rootedAtAtom, bool useHs = false, 
-                             bool enforceSize = true, python::object atomMap = python::object());
+                             unsigned int rootedAtAtom, 
+                             bool useHs = false, bool enforceSize = true, 
+                             std::unordered_map<unsigned int, unsigned int> *atomMap = {});
 }  // namespace RDKit
 
 #endif

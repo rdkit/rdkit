@@ -792,6 +792,25 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   return python::tuple(res);
 };
 
+PATH_TYPE *findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radius, 
+                                                unsigned int rootedAtAtom, bool useHs, 
+                                                bool enforceSize, python::object atomMap) {
+  PATH_TYPE path;
+  std::unordered_map<unsigned int, unsigned int> cAtomMap;
+  path = Subgraphs::findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
+                                                 enforceSize, *cAtomMap);
+  if (atomMap != python::object()) {
+    // make sure the optional argument actually was a dictionary
+    python::dict typecheck = python::extract<python::dict>(atomMap);
+    if (atomMap.attr("__len__")() != 0) { atomMap.attr("clear")(); }
+    for (std::map<unsigned int, unsigned int>::const_iter cMap = cAtomMap.begin(), 
+         cMap != cAtomMap.end(); ++cMap) {
+      atomMap[cMap->first] = cMap->second;
+  }
+  delete cAtomMap;
+  return path;
+}
+
 ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
                           python::object atomMap) {
   ROMol *result;
@@ -1710,7 +1729,7 @@ to the terminal dummy atoms.\n\
 \n\
   RETURNS: a vector of bond IDs\n\
 \n";
-    python::def("FindAtomEnvironmentOfRadiusN", &findAtomEnvironmentOfRadiusN,
+    python::def("FindAtomEnvironmentOfRadiusN", &findAtomEnvironmentOfRadiusNHelper,
                 (python::arg("mol"), python::arg("radius"),
                  python::arg("rootedAtAtom"), 
                  python::arg("useHs") = false, 
