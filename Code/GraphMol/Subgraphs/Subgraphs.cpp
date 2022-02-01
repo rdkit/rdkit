@@ -618,4 +618,5 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
                                                useHs, enforceSize);
   atomMap.clear();
   return pth;
+  }
 }  // namespace RDKit
