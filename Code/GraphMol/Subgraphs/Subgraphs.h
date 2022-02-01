@@ -32,6 +32,7 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <unordered_map>
 
 namespace RDKit {
 class ROMol;
