@@ -795,10 +795,10 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
 PATH_TYPE *findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radius, 
                                                 unsigned int rootedAtAtom, bool useHs, 
                                                 bool enforceSize, python::object atomMap) {
-  PATH_TYPE path;
   std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
-  path = Subgraphs::findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
-                                                 enforceSize, cAtomMap);
+  PATH_TYPE path;
+  path = Subgraphs::findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, cAtomMap, 
+                                                 useHs, enforceSize);
   if (atomMap != python::object()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);

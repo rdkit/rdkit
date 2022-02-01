@@ -139,10 +139,20 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *   The result is a path (a vector of bond indices)
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
-                             unsigned int rootedAtAtom, 
-                             bool useHs = false, bool enforceSize = true, 
-                             std::unordered_map<unsigned int, unsigned int> &atomMap = {});
+findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
+                             std::unordered_map<unsigned int, unsigned int> &atomMap,
+                             bool useHs = false, bool enforceSize = true);
+
+RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
+findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
+                             bool useHs = false, bool enforceSize = true) {
+    std::unordered_map<unsigned int, unsigned int> atomMap = {};
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, atomMap, 
+                                                 useHs, enforceSize);
+    atomMap.clear();
+    return pth;
+};
+
 }  // namespace RDKit
 
 #endif

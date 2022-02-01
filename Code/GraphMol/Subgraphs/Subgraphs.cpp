@@ -540,8 +540,8 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
-    bool useHs, bool enforceSize,
-    std::unordered_map<unsigned int, unsigned int> &atomMap) {
+    std::unordered_map<unsigned int, unsigned int> &atomMap, 
+    bool useHs, bool enforceSize) {
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
