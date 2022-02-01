@@ -785,6 +785,7 @@ void DrawMol::extractCloseContacts() {
 
 // ****************************************************************************
 void DrawMol::calculateScale() {
+
   findExtremes();
 
   // if width < 0, we'll take the scale off the yRange_, and likewise with height and xRange_.  If both are negative, use drawOptions_scalingFactor.

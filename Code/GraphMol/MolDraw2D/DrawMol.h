@@ -183,7 +183,7 @@ class DrawMol {
   Point2D getAtomCoords(const Point2D &screenCds) const;
   Point2D getAtomCoords(int atnum) const;
   double getScale() const { return scale_; }
-  double getFontScale() const { return textDrawer_.fontScale(); }
+  double getFontScale() const { return fontScale_; }
   // More often than not, newScale and newFontScale will be the same,
   // but not if minFontScale of maxFontScale have become involved.
   // The newFontScale will be used without checking the min and max.

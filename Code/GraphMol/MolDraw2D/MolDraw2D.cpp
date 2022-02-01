@@ -233,14 +233,14 @@ void MolDraw2D::drawMolecules(
     if (drawMols_.back()->getScale() < drawMols_[minScaleMol]->getScale()) {
       minScaleMol = i;
     }
-    if (drawMols_.back()->getFontScale() < drawMols_[minScaleMol]->getFontScale()) {
+    if (drawMols_.back()->getFontScale() < drawMols_[minFontScaleMol]->getFontScale()) {
       minFontScaleMol = i;
     }
   }
 
   for (auto &drawMol : drawMols_) {
     drawMol->setScale(drawMols_[minScaleMol]->getScale(),
-                      drawMols_[minFontScaleMol]->getFontScale());
+                      drawMols_[minFontScaleMol]->getFontScale(), true);
     drawMol->tagAtomsWithCoords();
   }
 
