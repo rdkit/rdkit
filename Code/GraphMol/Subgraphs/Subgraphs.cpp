@@ -538,14 +538,15 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
                                    rootedAtAtom)[targetLen];
 }
 
-PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
-                                       unsigned int rootedAtAtom, bool useHs, bool enforceSize, 
-                                       std::unordered_map<unsigned int, unsigned int> *atomMap) {
+PATH_TYPE findAtomEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
+    bool useHs, bool enforceSize,
+    std::unordered_map<unsigned int, unsigned int> *atomMap) {
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
 
-  if (!atomMap.empty()) { atomMap.clear(); }
+  if (!atomMap->empty()) { atomMap - >clear(); }
 
   PATH_TYPE res;
   std::list<std::pair<int, int>> nbrStack;
@@ -557,7 +558,8 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
     if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))
                          ->getAtomicNum() != 1) {
       nbrStack.emplace_back(rootedAtAtom, bond->getIdx());
-      atomMap.emplace(std::make_pair<unsigned int, unsigned int>(rootedAtAtom, 0));
+      atomMap->emplace(
+          std::make_pair<unsigned int, unsigned int>(std::forward<unsigned int>(rootedAtAtom), 0));
     }
     ++beg;
   }
@@ -586,7 +588,8 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
             if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
                                  ->getAtomicNum() != 1) {
               nextLayer.emplace_back(oAtom, bond->getIdx());
-              atomMap.emplace(std::make_pair<unsigned int, unsigned int>(oAtom, i + 1));
+              atomMap->emplace(
+                  std::make_pair<unsigned int, unsigned int>(oAtom, i + 1));
             }
           }
           ++beg;
@@ -596,10 +599,11 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
     nbrStack = nextLayer;
   }
   if (i != radius && enforceSize) {
-    // Condition[0]: this happens when there are no paths with the requested radius.
-    // return nothing in this case:
-    // Condition[1]: If enforceSize is true, then there must be at least an atom located at requested radius.
-    // otherwise, all atoms must be inside the requested radius (maxSize(mol, res) <= radius)
+    // Condition[0]: this happens when there are no paths with the requested
+    // radius. return nothing in this case: Condition[1]: If enforceSize is
+    // true, then there must be at least an atom located at requested radius.
+    // otherwise, all atoms must be inside the requested radius (maxSize(mol,
+    // res) <= radius)
     res.clear();
     res.resize(0);
   }
