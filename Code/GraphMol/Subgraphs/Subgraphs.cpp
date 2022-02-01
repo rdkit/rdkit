@@ -599,11 +599,10 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
     nbrStack = nextLayer;
   }
   if (i != radius && enforceSize) {
-    // Condition[0]: this happens when there are no paths with the requested
-    // radius. return nothing in this case: Condition[1]: If enforceSize is
-    // true, then there must be at least an atom located at requested radius.
-    // otherwise, all atoms must be inside the requested radius (maxSize(mol,
-    // res) <= radius)
+    // If there are no paths found with the requested raidus, user can choose whether 
+    // or not to return nothing in this case. If enforceSize=true, this is similar to
+    // the previous bahviour (return an empty path/vector). Otherwise, it collect every 
+    // path within the requested radius. This is similar to maxPath(mol, res) < radius.
     res.clear();
     res.resize(0);
   }
