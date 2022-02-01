@@ -208,14 +208,14 @@ class CompositeRun:
       except AttributeError:
         pass
       else:
-        cols.append('%s' % name)
+        cols.append(f'{name}')
         vals.append(v)
 
     nToDo = len(vals)
     qs = ','.join([DbModule.placeHolder] * nToDo)
     vals = tuple(vals)
 
-    cmd = 'insert into %s (%s) values (%s)' % (table, ','.join(cols), qs)
+    cmd = f'insert into {table} ({",".join(cols)}) values ({qs})'
     curs.execute(cmd, vals)
     cn.Commit()
 

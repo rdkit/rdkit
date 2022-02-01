@@ -201,13 +201,15 @@ a QDAT file.
 
 
 import pickle
+import random
 import sys
 import time
 
 import numpy
 from rdkit import DataStructs
 from rdkit.Dbase import DbModule
-from rdkit.ML import CompositeRun, ScreenComposite
+from rdkit.ML import (KNN, CompositeRun, DecTree, NaiveBayes, Neural,
+                      ScreenComposite)
 from rdkit.ML.Composite import BayesComposite, Composite
 from rdkit.ML.Data import DataUtils, SplitData
 from rdkit.utils import listutils
@@ -387,7 +389,6 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   if details.lockRandom:
     seed = details.randomSeed
   else:
-    import random
     seed = (random.randint(0, 1e6), random.randint(0, 1e6))
   DataUtils.InitRandomNumbers(seed)
   testExamples = []
@@ -450,7 +451,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     for k in ks:
       message(str((k, counts[k])))
   nExamples = len(trainExamples)
-  message('Training with %d examples' % (nExamples))
+  message(f'Training with {nExamples} examples')
 
   nVars = data.GetNVars()
   attrs = list(range(1, nVars + 1))
@@ -497,15 +498,12 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     details.internalHoldoutFrac = 0.0
     
   if details.useTrees:
-    from rdkit.ML.DecTree import CrossValidate, PruneTree
     if details.qBounds != []:
-      from rdkit.ML.DecTree import BuildQuantTree
-      builder = BuildQuantTree.QuantTreeBoot
+      builder = DecTree.BuildQuantTree.QuantTreeBoot
     else:
-      from rdkit.ML.DecTree import ID3
-      builder = ID3.ID3Boot
-    driver = CrossValidate.CrossValidationDriver
-    pruner = PruneTree.PruneTree
+      builder = DecTree.ID3.ID3Boot
+    driver = DecTree.CrossValidate.CrossValidationDriver
+    pruner = DecTree.PruneTree.PruneTree
 
     composite.SetQuantBounds(details.qBounds)
     nPossibleVals = data.GetNPossibleVals()
@@ -521,9 +519,8 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       silent=not _verbose)
 
   elif details.useSigTrees:
-    from rdkit.ML.DecTree import BuildSigTree, CrossValidate
-    builder = BuildSigTree.SigTreeBuilder
-    driver = CrossValidate.CrossValidationDriver
+    builder = DecTree.BuildSigTree.SigTreeBuilder
+    driver = DecTree.CrossValidate.CrossValidationDriver
     nPossibleVals = data.GetNPossibleVals()
     if details.activityBounds:
       nPossibleVals[-1] = len(details.activityBounds) + 1
@@ -550,14 +547,12 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
       allowCollection=allowCollections, silent=not _verbose)
 
   elif details.useKNN:
-    from rdkit.ML.KNN import CrossValidate, DistFunctions
-
-    driver = CrossValidate.CrossValidationDriver
+    driver = KNN.CrossValidate.CrossValidationDriver
     dfunc = ''
     if details.knnDistFunc == "Euclidean":
-      dfunc = DistFunctions.EuclideanDist
+      dfunc = KNN.DistFunctions.EuclideanDist
     elif details.knnDistFunc == "Tanimoto":
-      dfunc = DistFunctions.TanimotoDist
+      dfunc = KNN.DistFunctions.TanimotoDist
     else:
       assert 0, "Bad KNN distance metric value"
 
@@ -566,8 +561,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
                    holdOutFrac=details.internalHoldoutFrac, distFunc=dfunc)
 
   elif details.useNaiveBayes or details.useSigBayes:
-    from rdkit.ML.NaiveBayes import CrossValidate
-    driver = CrossValidate.CrossValidationDriver
+    driver = NaiveBayes.CrossValidate.CrossValidationDriver
     if not (hasattr(details, 'useSigBayes') and details.useSigBayes):
       composite.Grow(trainExamples, attrs, nPossibleVals=[0] + nPossibleVals, buildDriver=driver,
                      nTries=details.nModels, needsQuantization=0, nQuantBounds=details.qBounds,
@@ -603,8 +597,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     # #                    silent=not _verbose)
 
   else:
-    from rdkit.ML.Neural import CrossValidate
-    driver = CrossValidate.CrossValidationDriver
+    driver = Neural.CrossValidate.CrossValidationDriver
     composite.Grow(trainExamples, attrs, [0] + nPossibleVals, nTries=details.nModels,
                    buildDriver=driver, needsQuantization=0)
 

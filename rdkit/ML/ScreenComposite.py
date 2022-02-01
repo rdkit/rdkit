@@ -143,9 +143,9 @@ def message(msg, noRet=0):
 
   """
   if noRet:
-    sys.stdout.write('%s ' % (msg))
+    sys.stdout.write(f'{msg} ')
   else:
-    sys.stdout.write('%s\n' % (msg))
+    sys.stdout.write(f'{msg}\n')
 
 
 def error(msg):
@@ -157,7 +157,7 @@ def error(msg):
       - msg: the string to be displayed
 
   """
-  sys.stderr.write('ERROR: %s\n' % (msg))
+  sys.stderr.write(f'ERROR: {msg}\n')
 
 
 def CalcEnrichment(mat, tgt=1):
@@ -217,7 +217,11 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
   for j in range(len(composite)):
     tmp = composite.GetModel(j)
     if hasattr(tmp, '_trainIndices') and not isinstance(tmp._trainIndices, dict):
-      tmp._trainIndices = {v: 1 for v in tmp._trainIndices} if hasattr(tmp, '_trainIndices') else {}
+      tis = {}
+      if hasattr(tmp, '_trainIndices'):
+        for v in tmp._trainIndices:
+          tis[v] = 1
+      tmp._trainIndices = tis
 
   nPts = len(indices)
   res = [None] * nPts
@@ -235,7 +239,10 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
       
     # print('IDX:',idx,'use:',use  )
     pred, conf = composite.ClassifyExample(example, appendExample=appendExamples, onlyModels=use)
-    answer = composite.QuantizeActivity(example)[-1] if composite.GetActivityQuantBounds() else example[-1]
+    if composite.GetActivityQuantBounds():
+      answer = composite.QuantizeActivity(example)[-1]
+    else:
+      answer = example[-1]
     res[i] = answer, pred, conf
     if callback:
       callback(i)
@@ -419,7 +426,7 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
     print('average correct confidence:   % 6.4f' % avgGood)
     print('average incorrect confidence: % 6.4f' % avgBad)
 
-  voteTab = numpy.zeros((nResultCodes, nResultCodes), dtype='int')
+  voteTab = numpy.zeros((nResultCodes, nResultCodes), dtype=numpy.int_)
   for res in goodRes:
     voteTab[res, res] += 1
   for ans, res, conf, idx in badVotes:
@@ -522,19 +529,19 @@ def ScreenIt(composite, indices, data, partialVote=0, voteTol=0.0, verbose=1, sc
 
   nGood = len(goodVotes)
   goodAccum = 0.
-  for res, pred, conf, idx in goodVotes:
+  for _, _, conf, _ in goodVotes:
     goodAccum += conf
 
   misCount = len(badVotes)
   badAccum = 0.
-  for res, pred, conf, idx in badVotes:
+  for _, _, conf, _ in badVotes:
     badAccum += conf
 
   nSkipped = len(noVotes)
   goodSkipped = 0
   badSkipped = 0
   skipAccum = 0.
-  for ans, pred, conf, idx in noVotes:
+  for ans, pred, conf, _ in noVotes:
     skipAccum += conf
     if ans != pred:
       badSkipped += 1
@@ -699,7 +706,10 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     else:
       data = details.GetDataSet()
   
-  details.partialVote = int(bool(details.threshold > 0.0))
+  if details.threshold > 0.0:
+    details.partialVote = 1
+  else:
+    details.partialVote = 0
 
   if not isinstance(models, (list, tuple)):
     models = (models, )
@@ -709,12 +719,12 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
   if setup is not None:
     setup(nModels * data.GetNPts())
 
-  nGood = numpy.zeros(nModels, dtype='float')
-  nBad = numpy.zeros(nModels, dtype='float')
-  nSkip = numpy.zeros(nModels, dtype='float')
-  confGood = numpy.zeros(nModels, dtype='float')
-  confBad = numpy.zeros(nModels, dtype='float')
-  confSkip = numpy.zeros(nModels, dtype='float')
+  nGood = numpy.zeros(nModels, dtype=numpy.float64)
+  nBad = numpy.zeros(nModels, dtype=numpy.float64)
+  nSkip = numpy.zeros(nModels, dtype=numpy.float64)
+  confGood = numpy.zeros(nModels, dtype=numpy.float64)
+  confBad = numpy.zeros(nModels, dtype=numpy.float64)
+  confSkip = numpy.zeros(nModels, dtype=numpy.float64)
   voteTab = None
   if goodVotes is None:
     goodVotes = []
@@ -772,13 +782,18 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
     cb = None
     if callback:
       cb = lambda x, y=callback, z=i * data.GetNPts(): y(x + z)
-    errorEstimate = int(not bool(not hasattr(details, 'errorEstimate') or not details.errorEstimate))
+    
+    if not hasattr(details, 'errorEstimate') or not details.errorEstimate:
+      errorEstimate = 0
+    else:
+      errorEstimate = 1
+      
     g, b, s, aG, aB, aS, vT = ShowVoteResults(
       testIdx, data, model, nPossible[-1], details.threshold, verbose=0, callback=cb,
       appendExamples=appendExamples, goodVotes=goodVotes, badVotes=badVotes, noVotes=noVotes,
       errorEstimate=errorEstimate)
     if voteTab is None:
-      voteTab = numpy.zeros(vT.shape, dtype='float')
+      voteTab = numpy.zeros(vT.shape, dtype=numpy.float64)
       
     if hasattr(details, 'errorAnalysis') and details.errorAnalysis:
       for a, _, _, idx in badVotes:
@@ -932,8 +947,8 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
   nPoss = len(voteTable)
   pureCounts = numpy.sum(voteTable, 1)
   accCounts = numpy.sum(voteTable, 0)
-  pureVect = numpy.zeros(nPoss, dtype='float')
-  accVect = numpy.zeros(nPoss, dtype='float')
+  pureVect = numpy.zeros(nPoss, dtype=numpy.float64)
+  accVect = numpy.zeros(nPoss, dtype=numpy.float64)
   for i in range(nPoss):
     if pureCounts[i]:
       pureVect[i] = float(voteTable[i, i]) / pureCounts[i]
@@ -1386,14 +1401,14 @@ if __name__ == '__main__':
       if len(details.screenVoteTol) > 1:
         message('\n-----*****-----*****-----*****-----*****-----*****-----*****-----\n')
         message('Tolerance: %f' % tol)
-      nGood = numpy.zeros(nModels, dtype='float')
-      nBad = numpy.zeros(nModels, dtype='float')
-      nSkip = numpy.zeros(nModels, dtype='float')
-      confGood = numpy.zeros(nModels, dtype='float')
-      confBad = numpy.zeros(nModels, dtype='float')
-      confSkip = numpy.zeros(nModels, dtype='float')
+      nGood = numpy.zeros(nModels, dtype=numpy.float64)
+      nBad = numpy.zeros(nModels, dtype=numpy.float64)
+      nSkip = numpy.zeros(nModels, dtype=numpy.float64)
+      confGood = numpy.zeros(nModels, dtype=numpy.float64)
+      confBad = numpy.zeros(nModels, dtype=numpy.float64)
+      confSkip = numpy.zeros(nModels, dtype=numpy.float64)
       if details.enrichTgt >= 0:
-        enrichments = numpy.zeros(nModels, dtype='float')
+        enrichments = numpy.zeros(nModels, dtype=numpy.float64)
       goodVoteDict = {}
       badVoteDict = {}
       noVoteDict = {}
@@ -1423,7 +1438,7 @@ if __name__ == '__main__':
             badVotes=badVotes, noVotes=noVotes, goodVotes=goodVotes,
             errorEstimate=details.errorEstimate)
           if voteTab is None:
-            voteTab = numpy.zeros(vT.shape, dtype='float')
+            voteTab = numpy.zeros(vT.shape, dtype=numpy.float64)
           if details.errorAnalysis:
             for a, p, c, idx in badVotes:
               label = testIdx[idx]

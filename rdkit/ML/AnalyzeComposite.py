@@ -64,11 +64,11 @@ def ProcessIt(composites, nToConsider=3, verbose=0):
         levels = TreeUtils.CollectLabelLevels(model, {}, 0, nToConsider)
         TreeUtils.CollectDescriptorNames(model, descNames, 0, nToConsider)
         for descId in levels.keys():
-          v = res.get(descId, numpy.zeros(nToConsider, dtype='float'))
+          v = res.get(descId, numpy.zeros(nToConsider, dtype=numpy.float64))
           v[levels[descId]] += 1. / nModels
           res[descId] = v
     for k in res:
-      v = globalRes.get(k, numpy.zeros(nToConsider, dtype='float')) 
+      v = globalRes.get(k, numpy.zeros(nToConsider, dtype=numpy.float64)) 
       v += res[k] / nComposites
       globalRes[k] = v
       
@@ -113,12 +113,12 @@ def ErrorStats(conn, where, enrich=1):
     sys.stderr.write('no runs found\n')
     return None
   
-  overall = numpy.zeros(nPts, dtype='float')
-  overallEnrich = numpy.zeros(nPts, dtype='float')
+  overall = numpy.zeros(nPts, dtype=numpy.float64)
+  overallEnrich = numpy.zeros(nPts, dtype=numpy.float64)
   oCorConf = 0.0
   oInCorConf = 0.0
-  holdout = numpy.zeros(nPts, dtype='float')
-  holdoutEnrich = numpy.zeros(nPts, dtype='float')
+  holdout = numpy.zeros(nPts, dtype=numpy.float64)
+  holdoutEnrich = numpy.zeros(nPts, dtype=numpy.float64)
   hCorConf = 0.0
   hInCorConf = 0.0
   overallMatrix = None
