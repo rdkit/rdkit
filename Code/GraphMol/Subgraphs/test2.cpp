@@ -158,6 +158,8 @@ void test3() {
     TEST_ASSERT(pth.size() == 7);
     pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, true, false);
     TEST_ASSERT(pth.size() == 7);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, false, false);
+    TEST_ASSERT(pth.size() == 2);
 
     pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, true);
     TEST_ASSERT(pth.size() == 0);
@@ -166,8 +168,88 @@ void test3() {
     pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, true, false);
     TEST_ASSERT(pth.size() == 7);
     pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, false);
-    TEST_ASSERT(pth.size() == 7);
+    TEST_ASSERT(pth.size() == 2);
   }
+
+  {
+    std::string smiles = "C=NO"; // C(0)=N(1)O(2)
+    unsigned int rootedAtAtom = 2;
+    std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
+
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
+
+    // Test on radius=2 at rootedAtAtom=2. enforceSize has zero effect
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, false, true, cAtomMap);
+    TEST_ASSERT(cAtomMap.size() == 3);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, false, false, cAtomMap);
+    TEST_ASSERT(cAtomMap.size() == 3);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, true, true, cAtomMap);
+    TEST_ASSERT(cAtomMap.size() == 4);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[5] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, true, false, cAtomMap);
+    TEST_ASSERT(cAtomMap.size() == 4);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[5] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+    
+    // Test on radius=4 at rootedAtAtom=2. enforceSize has significant effect
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, true, cAtomMap);
+    TEST_ASSERT(pth.size() == 0);
+    TEST_ASSERT(cAtomMap.size() == 0);
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, true, true, cAtomMap);
+    TEST_ASSERT(pth.size() == 0);
+    TEST_ASSERT(cAtomMap.size() == 0);
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, false, cAtomMap);
+    TEST_ASSERT(pth.size() == 2);
+    TEST_ASSERT(cAtomMap.size() == 3);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, true, false, cAtomMap);
+    TEST_ASSERT(pth.size() == 5);
+    TEST_ASSERT(cAtomMap.size() == 6);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[5] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    TEST_ASSERT(cAtomMap[3] == 3);
+    TEST_ASSERT(cAtomMap[4] == 3);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, true, false, cAtomMap);
+    TEST_ASSERT(pth.size() == 5);
+    TEST_ASSERT(cAtomMap.size() == 6);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[5] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    TEST_ASSERT(cAtomMap[3] == 3);
+    TEST_ASSERT(cAtomMap[4] == 3);
+  }
+
   std::cout << "Finished" << std::endl;
 }
 

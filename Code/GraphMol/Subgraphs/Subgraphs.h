@@ -142,7 +142,7 @@ RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
 findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
                              unsigned int rootedAtAtom, 
                              bool useHs = false, bool enforceSize = true, 
-                             std::unordered_map<unsigned int, unsigned int> *atomMap = {});
+                             std::unordered_map<unsigned int, unsigned int> &atomMap = {});
 }  // namespace RDKit
 
 #endif
