@@ -3583,6 +3583,34 @@ void testGithub2931() {
                   std::string::npos);
 #endif
     }
+    {
+      MolDraw2DSVG drawer(500, 500);
+      drawer.drawOptions().fillHighlights = false;
+      std::map<int, int> hb_lw_mult;
+      for (auto &hbi : hb_map) {
+        hb_lw_mult[hbi.first] = 20;
+      }
+      drawer.drawMoleculeWithHighlights(*m, "Test3", ha_map, hb_map, h_rads,
+                                        hb_lw_mult);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2931_3.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash("testGithub2931_3.svg");
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:40.0px") !=
+                  std::string::npos);
+#else
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:40.0px") !=
+                  std::string::npos);
+      TEST_ASSERT(text.find("<ellipse cx='242.2' cy='312.7'"
+                            " rx='10.4' ry='10.4' "
+                            " style='fill:none;stroke:#00FF00;") !=
+                  std::string::npos);
+#endif
+    }
   }
   std::cerr << " Done" << std::endl;
 }
