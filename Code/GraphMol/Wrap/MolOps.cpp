@@ -803,9 +803,10 @@ PATH_TYPE *findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int rad
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
     if (atomMap.attr("__len__")() != 0) { atomMap.attr("clear")(); }
-    for (std::map<unsigned int, unsigned int>::const_iter cMap = cAtomMap.begin(), 
+    for (std::map<unsigned int, unsigned int>::const_iterator cMap = cAtomMap.begin(), 
          cMap != cAtomMap.end(); ++cMap) {
       atomMap[cMap->first] = cMap->second;
+    }
   }
   delete cAtomMap;
   return path;
