@@ -66,14 +66,14 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   }
 
   QueryAtom(QueryAtom &&other) noexcept : Atom(std::move(other)) {
-    dp_query = std::move(other.dp_query);
+    dp_query = std::exchange(other.dp_query, nullptr);
   }
   QueryAtom &operator=(QueryAtom &&other) noexcept {
     if (this == &other) {
       return *this;
     }
     QueryAtom::operator=(std::move(other));
-    dp_query = std::move(other.dp_query);
+    dp_query = std::exchange(other.dp_query, nullptr);
     return *this;
   }
 

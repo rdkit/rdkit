@@ -328,12 +328,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
         d_graph(std::move(o.d_graph)),
         d_atomBookmarks(std::move(o.d_atomBookmarks)),
         d_bondBookmarks(std::move(o.d_bondBookmarks)),
-        dp_ringInfo(o.dp_ringInfo),
         d_confs(std::move(o.d_confs)),
         d_sgroups(std::move(o.d_sgroups)),
         d_stereo_groups(std::move(o.d_stereo_groups)),
-        dp_delAtoms(std::move(o.dp_delAtoms)),
-        dp_delBonds(std::move(o.dp_delBonds)),
         numBonds(o.numBonds) {
     for (auto atom : atoms()) {
       atom->setOwningMol(this);
@@ -345,8 +342,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       conf->setOwningMol(this);
     }
     o.d_graph.clear();
-    o.dp_ringInfo = nullptr;
     o.numBonds = 0;
+    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
+    dp_delAtoms = std::exchange(o.dp_delAtoms, nullptr);
+    dp_delBonds = std::exchange(o.dp_delBonds, nullptr);
   }
   ROMol &operator=(ROMol &&o) noexcept {
     if (this == &o) {
@@ -359,14 +358,16 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     if (dp_ringInfo) {
       delete dp_ringInfo;
     }
-    dp_ringInfo = o.dp_ringInfo;
+    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
 
     d_confs = std::move(o.d_confs);
     d_sgroups = std::move(o.d_sgroups);
     d_stereo_groups = std::move(o.d_stereo_groups);
-    dp_delAtoms = std::move(o.dp_delAtoms);
-    dp_delBonds = std::move(o.dp_delBonds);
+    dp_delAtoms = std::exchange(o.dp_delAtoms, nullptr);
+    dp_delBonds = std::exchange(o.dp_delBonds, nullptr);
     numBonds = o.numBonds;
+    o.numBonds = 0;
+
     for (auto atom : atoms()) {
       atom->setOwningMol(this);
     }
@@ -378,8 +379,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     }
 
     o.d_graph.clear();
-    o.dp_ringInfo = nullptr;
-    o.numBonds = 0;
     return *this;
   }
 

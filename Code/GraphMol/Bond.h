@@ -110,7 +110,6 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   Bond &operator=(const Bond &other);
 
   Bond(Bond &&o) noexcept : RDProps(std::move(o)) {
-    std::cerr << "bond move" << std::endl;
     df_isAromatic = o.df_isAromatic;
     df_isConjugated = o.df_isConjugated;
     d_bondType = o.d_bondType;
@@ -121,14 +120,11 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     d_endAtomIdx = o.d_endAtomIdx;
     // NOTE: this is somewhat fraught for bonds associated with molecules since
     // the molecule will still be pointing to the original object
-    dp_mol = o.dp_mol;
-    dp_stereoAtoms = o.dp_stereoAtoms;
-    o.dp_mol = nullptr;
-    o.dp_stereoAtoms = nullptr;
+    dp_mol = std::exchange(o.dp_mol, nullptr);
+    dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
   }
   Bond &operator=(Bond &&o) noexcept {
     if (this == &o) return *this;
-    std::cerr << "bond move assignment" << std::endl;
     RDProps::operator=(std::move(o));
     df_isAromatic = o.df_isAromatic;
     df_isConjugated = o.df_isConjugated;
@@ -140,11 +136,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     d_endAtomIdx = o.d_endAtomIdx;
     // NOTE: this is somewhat fraught for bonds associated with molecules since
     // the molecule will still be pointing to the original object
-    dp_mol = o.dp_mol;
     delete dp_stereoAtoms;
-    dp_stereoAtoms = o.dp_stereoAtoms;
-    o.dp_mol = nullptr;
-    o.dp_stereoAtoms = nullptr;
+    dp_mol = std::exchange(o.dp_mol, nullptr);
+    dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
     return *this;
   }
 
