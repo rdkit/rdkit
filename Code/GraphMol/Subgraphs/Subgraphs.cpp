@@ -546,7 +546,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
     throw ValueErrorException("bad atom index");
   }
 
-  if (!atomMap->empty()) { atomMap - >clear(); }
+  if (!atomMap->empty()) { atomMap->clear(); }
 
   PATH_TYPE res;
   std::list<std::pair<int, int>> nbrStack;
