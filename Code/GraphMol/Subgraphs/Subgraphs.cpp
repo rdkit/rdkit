@@ -609,4 +609,13 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   return res;
 }
 
+
+PATH_TYPE findAtomEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
+    bool useHs, bool enforceSize) {
+  std::unordered_map<unsigned int, unsigned int> atomMap;
+  PATH_TYPE pth = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, atomMap, 
+                                               useHs, enforceSize);
+  atomMap.clear();
+  return pth;
 }  // namespace RDKit
