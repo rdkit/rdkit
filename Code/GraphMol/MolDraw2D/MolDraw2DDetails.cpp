@@ -240,17 +240,34 @@ bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
                            const Point2D &pt2, const Point2D &pt3,
                            double padding) {
   // the quick test is for any of the triangle points inside the rectangle.
-  // But if the rectangle is inside the triangle, that's not enough of a test.
   if (rect.isPointInside(pt1, padding) || rect.isPointInside(pt2, padding) ||
       rect.isPointInside(pt3, padding)) {
     return true;
   }
+  // But if the rectangle is inside the triangle, that's not enough of a test.
   Point2D tl, tr, br, bl;
   rect.calcCorners(tl, tr, br, bl, padding);
   if (isPointInTriangle(tl, pt1, pt2, pt3) ||
       isPointInTriangle(tr, pt1, pt2, pt3) ||
       isPointInTriangle(br, pt1, pt2, pt3) ||
       isPointInTriangle(bl, pt1, pt2, pt3)) {
+    return true;
+  }
+  // and finally all the points in the rectangle can be outside the triangle,
+  // but the sides can cross it.  And vice versa.  So see if any of the sides
+  // intersect.
+  if (doLinesIntersect(tl, tr, pt1, pt2, nullptr) ||
+      doLinesIntersect(tl, tr, pt2, pt3, nullptr) ||
+      doLinesIntersect(tl, tr, pt3, pt1, nullptr) ||
+      doLinesIntersect(tr, br, pt1, pt2, nullptr) ||
+      doLinesIntersect(tr, br, pt2, pt3, nullptr) ||
+      doLinesIntersect(tr, br, pt3, pt1, nullptr) ||
+      doLinesIntersect(br, bl, pt1, pt2, nullptr) ||
+      doLinesIntersect(br, bl, pt2, pt3, nullptr) ||
+      doLinesIntersect(br, bl, pt3, pt1, nullptr) ||
+      doLinesIntersect(bl, tl, pt1, pt2, nullptr) ||
+      doLinesIntersect(bl, tl, pt2, pt3, nullptr) ||
+      doLinesIntersect(bl, tl, pt3, pt1, nullptr)) {
     return true;
   }
   return false;
