@@ -240,8 +240,8 @@ void DrawMol::extractBonds() {
   // mol files from, for example, Marvin use a bond length of 1 for just about
   // everything. When this is the case, the default multipleBondOffset is just
   // too much, so scale it back.
-  calcMeanBondLengthSquare();
-  if (meanBondLengthSquare_ < 1.4) {
+  calcMeanBondLength();
+  if (meanBondLength_ < 1.2) {
     doubleBondOffset *= 0.6;
   }
 
@@ -800,14 +800,14 @@ void DrawMol::calculateScale() {
     newScale = double(height_) / yRange_;
     // if the molecule is very wide and short (e.g. HO-NH2) don't let the
     // bonds get too long.
-    double mbl = sqrt(meanBondLengthSquare_) * newScale;
+    double mbl = meanBondLength_ * newScale;
     if (mbl > drawHeight_ / 2) {
       newScale *= (drawHeight_ / 2) / mbl;
     }
     width_ = newScale * xRange_;
   } else if (height_ < 0 && xRange_ > 1.0e-4) {
     newScale = double(width_) / xRange_;
-    double mbl = sqrt(meanBondLengthSquare_) * newScale;
+    double mbl = meanBondLength_ * newScale;
     if (mbl > width_ / 2) {
       newScale *= (width_ / 2) / mbl;
     }
@@ -1048,7 +1048,7 @@ void DrawMol::resetEverything() {
   yMax_ = -std::numeric_limits<double>::max() / 2.0;
   xRange_ = std::numeric_limits<double>::max();
   yRange_ = std::numeric_limits<double>::max();
-  meanBondLengthSquare_ = 0.0;
+  meanBondLength_ = 0.0;
   atCds_.clear();
   bonds_.clear();
   preShapes_.clear();
@@ -1328,22 +1328,17 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
 }
 
 // ****************************************************************************
-void DrawMol::calcMeanBondLengthSquare() {
-  // meanBondLengthSquare_ initialised to 0.0 in class declaration
-  if (meanBondLengthSquare_ == 0.0) {
-    unsigned int nBonds = 0;
+void DrawMol::calcMeanBondLength() {
+  // meanBondLength_ initialised to 0.0 in class declaration
+  if (meanBondLength_ == 0.0) {
     for (const auto &bond : drawMol_->bonds()) {
-      meanBondLengthSquare_ +=
+      meanBondLength_ +=
           (atCds_[bond->getBeginAtomIdx()] - atCds_[bond->getEndAtomIdx()])
-              .lengthSq();
-      ++nBonds;
+              .length();
     }
-    meanBondLength_ = sqrt(meanBondLengthSquare_);
-    if (nBonds) {
-      meanBondLengthSquare_ /= nBonds;
-      meanBondLength_ /= nBonds;
+    if (drawMol_->getNumBonds()) {
+      meanBondLength_ /= drawMol_->getNumBonds();
     } else {
-      meanBondLengthSquare_ = 0.0;
       meanBondLength_ = 0.0;
     }
   }
@@ -1698,20 +1693,20 @@ void DrawMol::makeWedgedBond(Bond *bond,
   // Obviously, if we ever change how the padding round the label is
   // calculated, currently a function of the mean bond length, this won't work.
   if (atomLabels_[at1->getIdx()] || atomLabels_[at2->getIdx()]) {
-    meanBondLengthSquare_ *= 2.0;
+    meanBondLength_ *= 2.0;
   }
   Point2D end1, end2;
   adjustBondEndsForLabels(at1->getIdx(), at2->getIdx(), end1, end2);
   if (atomLabels_[at1->getIdx()] || atomLabels_[at2->getIdx()]) {
-    meanBondLengthSquare_ /= 2.0;
+    meanBondLength_ /= 2.0;
   }
   const Point2D &at1_cds = atCds_[at1->getIdx()];
   const Point2D &at2_cds = atCds_[at2->getIdx()];
 
   Point2D perp = calcPerpendicular(at1_cds, at2_cds);
   // Set the 'fatness' of the wedge to be a fraction of the mean bond
-  // lenght, so we should always see something.
-  Point2D disp = perp * 0.33 * meanBondLength_;
+  // length, so we should always see something.
+  Point2D disp = perp * 0.1 * meanBondLength_;
   Point2D t1 = end2 + disp;
   Point2D t2 = end2 - disp;
   std::vector<Point2D> pts{end1, t1, t2};
@@ -1780,7 +1775,8 @@ void DrawMol::makeZeroBond(Bond *bond,
 // ****************************************************************************
 void DrawMol::adjustBondEndsForLabels(int begAtIdx, int endAtIdx,
                                       Point2D &begCds, Point2D &endCds) {
-  double padding = 0.025 * meanBondLengthSquare_;
+  // The scale factor is empirical.
+  double padding = 0.033 * meanBondLength_;
   if (drawOptions_.additionalAtomLabelPadding > 0.0) {
     padding += drawOptions_.additionalAtomLabelPadding;
   }
