@@ -250,6 +250,41 @@ void test3() {
     TEST_ASSERT(cAtomMap[4] == 3);
   }
 
+  {
+    std::string smiles = "c1cc[nH]c1";
+    unsigned int rootedAtAtom = 1;
+    std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
+
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    // This test worked on ring system to guarantee that the atom ID is marked correctly
+    // with the search radius
+    PATH_TYPE pth;
+    unsigned int size;
+    for (size = 2; size < 4; size++) {
+      pth = findAtomEnvironmentOfRadiusN(*mol, size, rootedAtAtom, false, true, cAtomMap);
+      TEST_ASSERT(cAtomMap.size() == 5);
+      TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+      TEST_ASSERT(cAtomMap[0] == 1);
+      TEST_ASSERT(cAtomMap[2] == 1);
+      TEST_ASSERT(cAtomMap[3] == 2);
+      TEST_ASSERT(cAtomMap[4] == 2);
+      cAtomMap.clear();
+    }
+    
+    for (size = 4; size < 6; size++) {
+      pth = findAtomEnvironmentOfRadiusN(*mol, size, rootedAtAtom, false, false, cAtomMap);
+      TEST_ASSERT(cAtomMap.size() == 5);
+      TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+      TEST_ASSERT(cAtomMap[0] == 1);
+      TEST_ASSERT(cAtomMap[2] == 1);
+      TEST_ASSERT(cAtomMap[3] == 2);
+      TEST_ASSERT(cAtomMap[4] == 2);
+      cAtomMap.clear();
+    }
+
+  }
   std::cout << "Finished" << std::endl;
 }
 

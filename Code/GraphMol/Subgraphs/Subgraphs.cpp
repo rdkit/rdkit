@@ -586,7 +586,8 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
             if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
                                  ->getAtomicNum() != 1) {
               nextLayer.emplace_back(oAtom, bond->getIdx());
-              atomMap[oAtom] = i + 1;
+              if {atomMap.find(oAtom) == atomMap.end()} { atomMap[oAtom] = i + 1; }
+              else {atomMap[oAtom] = std::min(atomMap[oAtom], i + 1); }
             }
           }
           ++beg;

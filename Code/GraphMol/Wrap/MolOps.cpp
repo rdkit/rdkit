@@ -792,9 +792,9 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   return python::tuple(res);
 };
 
-PATH_TYPE *findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radius, 
-                                              unsigned int rootedAtAtom, bool useHs, 
-                                              bool enforceSize, python::object atomMap) {
+PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radius, 
+                                             unsigned int rootedAtAtom, bool useHs, 
+                                             bool enforceSize, python::object atomMap) {
   std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
   PATH_TYPE path;
   path = Subgraphs::findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, cAtomMap, 
@@ -1728,7 +1728,7 @@ to the terminal dummy atoms.\n\
 \n\
   RETURNS: a vector of bond IDs\n\
 \n";
-    python::def("FindAtomEnvironmentOfRadiusN", &findAtomEnvironmentOfRadiusNHelper,
+    python::def("FindAtomEnvironmentOfRadiusN", findAtomEnvironmentOfRadiusNHelper,
                 (python::arg("mol"), python::arg("radius"),
                  python::arg("rootedAtAtom"), 
                  python::arg("useHs") = false, 
