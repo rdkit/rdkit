@@ -314,47 +314,47 @@ void test4() {
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 0, 1, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 2);
     TEST_ASSERT(cAtomMap.size() == 2);
-    cAtomMap.clear()
+    cAtomMap.clear();
 
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 0, 2, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 4);
     TEST_ASSERT(cAtomMap.size() == 4);
-    cAtomMap.clear()
+    cAtomMap.clear();
 
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 0, 3, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 5);
     TEST_ASSERT(cAtomMap.size() == 4);
-    cAtomMap.clear()
+    cAtomMap.clear();
 
     // Test on equal radius
     for (unsigned int size = 0, size < 4; size++) {
       pth = findAtomEnvironmentOfRadiusMToN(*mol, size, size, rootedAtAtom, cAtomMap, false);
       TEST_ASSERT(pth.size() == 0);
       TEST_ASSERT(cAtomMap.size() == 0);
-      cAtomMap.clear()
+      cAtomMap.clear();
     }
 
     // Test on different-active radius
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 1, 2, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 2);
     TEST_ASSERT(cAtomMap.size() == 2);
-    cAtomMap.clear()
+    cAtomMap.clear();
 
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 1, 3, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 3);
     TEST_ASSERT(cAtomMap.size() == 2);
-    cAtomMap.clear()
+    cAtomMap.clear();
 
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 2, 3, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 0);
-    cAtomMap.clear()
+    cAtomMap.clear();
 
     // Test on over-sized radius
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 4, 6, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 0);
     TEST_ASSERT(cAtomMap.size() == 0);
-    cAtomMap.clear()
+    cAtomMap.clear();
 
     delete mol;
   }
