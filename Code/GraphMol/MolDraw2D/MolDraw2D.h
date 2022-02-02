@@ -125,6 +125,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     \param highlight_radii : map from atomId -> radius (in molecule
     coordinates) for the radii of atomic highlights. If not provided for an
     index, the default value from \c drawOptions() will be used.
+    \param highlight_linewidth_multipliers : map from atomId -> int, used to
+    vary the width the highlight lines.  Only active if
+    drawOptions().fillHighlights is false.
     \param confId          : (optional) conformer ID to be used for atomic
     coordinates
   */
