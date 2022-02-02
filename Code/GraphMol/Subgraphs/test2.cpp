@@ -327,7 +327,7 @@ void test4() {
     cAtomMap.clear();
 
     // Test on equal radius
-    for (unsigned int size = 0, size < 4; size++) {
+    for (unsigned int size = 0; size < 4; size++) {
       pth = findAtomEnvironmentOfRadiusMToN(*mol, size, size, rootedAtAtom, cAtomMap, false);
       TEST_ASSERT(pth.size() == 0);
       TEST_ASSERT(cAtomMap.size() == 0);
