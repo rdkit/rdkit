@@ -2047,7 +2047,7 @@ TEST_CASE("remove hs and non-tetrahedral stereo") {
   }
 }
 
-TEST_CASE("getIdealAngle") {
+TEST_CASE("getIdealAngle", "[nontetrahedral]") {
   SECTION("TB1") {
     auto m = "S[As@TB1](F)(Cl)(Br)N"_smiles;
     REQUIRE(m);
@@ -2132,5 +2132,34 @@ TEST_CASE("getIdealAngle") {
         Chirality::getIdealAngleBetweenLigands(
             m->getAtomWithIdx(1), m->getAtomWithIdx(2), m->getAtomWithIdx(3)),
         Catch::Matchers::WithinAbs(120, 0.001));
+  }
+}
+
+TEST_CASE("getChiralPermutation", "[nontetrahedral]") {
+  SECTION("TB1") {
+    // clang-format off
+    std::vector<std::pair<std::list<int>, unsigned int>> data = {
+        {{2, 3, 4, 5, 6}, 1},
+
+        {{2, 3, 5, 4, 6}, 2},
+
+        {{2, 3, 4, 6, 5}, 3},
+        {{2, 3, 5, 6, 4}, 4},
+
+        {{2, 3, 6, 4, 5}, 5},
+        {{2, 3, 6, 5, 4}, 6},
+
+        {{2, 6, 3, 4, 5}, 7},
+        {{2, 6, 3, 5, 4}, 8},
+
+    };
+    // clang-format on
+    auto m = "CCS[As@TB1](F)(Cl)(Br)N"_smiles;
+    REQUIRE(m);
+    const auto atm = m->getAtomWithIdx(3);
+    for (const auto &pr : data) {
+      std::cerr << "---- " << pr.second << std::endl;
+      CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
+    }
   }
 }

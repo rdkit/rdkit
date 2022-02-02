@@ -160,6 +160,9 @@ RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
                                                          const Atom *lig1,
                                                          const Atom *lig2);
 
+RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
+                                                        const INT_LIST &probe);
+
 //@}
 
 }  // namespace Chirality
