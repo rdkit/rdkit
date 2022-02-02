@@ -221,7 +221,7 @@ void test3() {
     TEST_ASSERT(cAtomMap[0] == 2);
     cAtomMap.clear();
     
-    std::cout << "Test 3.2.2: radius=2" << std::endl;
+    std::cout << "Test 3.2.2: radius=4" << std::endl;
     pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, cAtomMap, false, true);
     TEST_ASSERT(pth.size() == 0);
     TEST_ASSERT(cAtomMap.size() == 0);
@@ -248,16 +248,6 @@ void test3() {
     TEST_ASSERT(cAtomMap[3] == 3);
     TEST_ASSERT(cAtomMap[4] == 3);
     cAtomMap.clear();
-
-    pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, cAtomMap, true, false);
-    TEST_ASSERT(pth.size() == 5);
-    TEST_ASSERT(cAtomMap.size() == 6);
-    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
-    TEST_ASSERT(cAtomMap[1] == 1);
-    TEST_ASSERT(cAtomMap[5] == 1);
-    TEST_ASSERT(cAtomMap[0] == 2);
-    TEST_ASSERT(cAtomMap[3] == 3);
-    TEST_ASSERT(cAtomMap[4] == 3);
 
     delete mol;
     delete mH;
