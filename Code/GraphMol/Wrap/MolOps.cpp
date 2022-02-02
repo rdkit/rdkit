@@ -792,16 +792,6 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   return python::tuple(res);
 };
 
-void _passAtomEnvMapToPythonDict(std::unordered_map<unsigned int, unsigned int> &cAtomMap, 
-                                 python::dict &atomMap) {
-  // make sure the atomMap is a dictionary
-  python::dict typecheck = python::extract<python::dict>(atomMap);
-  if (atomMap.attr("__len__")() != 0) { atomMap.attr("clear")(); }
-  for (auto pair: cAtomMap) {
-    atomMap[pair.first] = pair.second;
-  }
-}
-
 PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radius, 
                                              unsigned int rootedAtAtom, bool useHs, 
                                              bool enforceSize, python::object atomMap) {
@@ -810,7 +800,11 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radi
                                                 cAtomMap, useHs, enforceSize);
   if (atomMap != python::object()) {
     // make sure the optional argument (atomMap) is actually a dictionary
-    _passAtomEnvMapToPythonDict(cAtomMap, atomMap);
+    python::dict typecheck = python::extract<python::dict>(atomMap);
+    if (atomMap.attr("__len__")() != 0) { atomMap.attr("clear")(); }
+    for (auto pair: cAtomMap) {
+      atomMap[pair.first] = pair.second;
+    }
   }
   return path;
 }
@@ -823,7 +817,11 @@ PATH_TYPE findAtomEnvironmentOfRadiusMToNHelper(
                                                    rootedAtAtom, cAtomMap, useHs);
   if (atomMap != python::object()) {
     // make sure the optional argument (atomMap) is actually a dictionary
-    _passAtomEnvMapToPythonDict(cAtomMap, atomMap);
+    python::dict typecheck = python::extract<python::dict>(atomMap);
+    if (atomMap.attr("__len__")() != 0) { atomMap.attr("clear")(); }
+    for (auto pair: cAtomMap) {
+      atomMap[pair.first] = pair.second;
+    }
   }
   return path;
 }
