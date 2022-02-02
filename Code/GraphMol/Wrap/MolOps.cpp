@@ -796,9 +796,9 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radi
                                              unsigned int rootedAtAtom, bool useHs, 
                                              bool enforceSize, python::object atomMap) {
   std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
-  PATH_TYPE path;
-  path = Subgraphs::findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, cAtomMap, 
-                                                 useHs, enforceSize);
+  PATH_TYPE path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, 
+                                                cAtomMap, useHs, enforceSize);
+
   if (atomMap != python::object()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);

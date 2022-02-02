@@ -263,7 +263,7 @@ void test3() {
     PATH_TYPE pth;
     unsigned int size;
     for (size = 2; size < 4; size++) {
-      pth = findAtomEnvironmentOfRadiusN(*mol, size, rootedAtAtom, false, true, cAtomMap);
+      pth = findAtomEnvironmentOfRadiusN(*mol, size, rootedAtAtom, cAtomMap, false, true);
       TEST_ASSERT(cAtomMap.size() == 5);
       TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
       TEST_ASSERT(cAtomMap[0] == 1);
@@ -274,7 +274,7 @@ void test3() {
     }
     
     for (size = 4; size < 6; size++) {
-      pth = findAtomEnvironmentOfRadiusN(*mol, size, rootedAtAtom, false, false, cAtomMap);
+      pth = findAtomEnvironmentOfRadiusN(*mol, size, rootedAtAtom, cAtomMap, false, false);
       TEST_ASSERT(cAtomMap.size() == 5);
       TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
       TEST_ASSERT(cAtomMap[0] == 1);
