@@ -156,10 +156,14 @@ void DrawTextFT::getStringRects(const std::string &text,
     double p_y_max = oscale * fontCoordToDrawCoord(this_y_max);
     double p_advance = oscale * fontCoordToDrawCoord(advance);
     double width = p_x_max - p_x_min;
-    extras.push_back(p_advance - width);
+    // reduce the horizontal offset by p_x_min, which is the distance
+    // of the start of the glyph from the start of the char box.
+    // Otherwise spacing is uneven.
+    extras.push_back(p_advance - p_x_max);
     if (!this_x_max) {
-      // it was a space, probably.
-      width = p_advance;
+      // it was a space, probably, and we want small spaces because screen
+      // real estate is limited.
+      width = p_advance / 3;
     }
     double height = p_y_max - p_y_min;
     Point2D offset(p_x_min + width / 2.0, p_y_max / 2.0);
@@ -174,7 +178,7 @@ void DrawTextFT::getStringRects(const std::string &text,
     rects[i]->offset_.y = max_y / 2.0;
     if (i) {
       rects[i]->trans_.x = rects[i - 1]->trans_.x + rects[i - 1]->width_ / 2 +
-                           rects[i]->width_ / 2 + extras[i];
+                           rects[i]->width_ / 2 + extras[i-1];
     }
   }
 
@@ -196,7 +200,6 @@ void DrawTextFT::calcGlyphBBox(char c, FT_Pos &x_min, FT_Pos &y_min,
   y_min = bbox.yMin;
   x_max = bbox.xMax;
   y_max = bbox.yMax;
-
   advance = slot->advance.x;
 }
 
