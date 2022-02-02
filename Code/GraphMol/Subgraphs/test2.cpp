@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -137,8 +137,10 @@ void test2() {
 }
 
 void test3() {
-  std::cout << "-----------------------\n Test 3: Atom Environments (Extension)"
-            << std::endl;
+  std::cout << "-----------------------" << std::endl;
+  std::cout << "Test 3: Atom Environments (Extension)" << std::endl;
+  std::cout << "This test is for two hyper-parameter: forceSize and (c)atomMap" << std::endl;
+
   {
     std::string smiles = "C=NC";
     unsigned int rootedAtAtom = 2;
@@ -169,6 +171,9 @@ void test3() {
     TEST_ASSERT(pth.size() == 7);
     pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, false);
     TEST_ASSERT(pth.size() == 2);
+
+    delete mol;
+    delete mH;
   }
 
   {
@@ -248,6 +253,9 @@ void test3() {
     TEST_ASSERT(cAtomMap[0] == 2);
     TEST_ASSERT(cAtomMap[3] == 3);
     TEST_ASSERT(cAtomMap[4] == 3);
+
+    delete mol;
+    delete mH;
   }
 
   {
@@ -283,7 +291,72 @@ void test3() {
       TEST_ASSERT(cAtomMap[4] == 2);
       cAtomMap.clear();
     }
+    delete mol;
+  }
+  std::cout << "Finished" << std::endl;
+}
 
+void test4() {
+  std::cout << "-----------------------" << std::endl;
+  std::cout << "Test 4: Atom Environments From M to N (Extension)" << std::endl;
+
+  {
+    std::string smiles = "c1cc[nH]c1";
+    unsigned int rootedAtAtom = 1;
+    
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    PATH_TYPE pth;
+    std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
+
+    // Test on zero radius
+    pth = findAtomEnvironmentOfRadiusMToN(*mol, 0, 1, rootedAtAtom, cAtomMap, false);
+    TEST_ASSERT(pth.size() == 2);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    cAtomMap.clear()
+
+    pth = findAtomEnvironmentOfRadiusMToN(*mol, 0, 2, rootedAtAtom, cAtomMap, false);
+    TEST_ASSERT(pth.size() == 4);
+    TEST_ASSERT(cAtomMap.size() == 4);
+    cAtomMap.clear()
+
+    pth = findAtomEnvironmentOfRadiusMToN(*mol, 0, 3, rootedAtAtom, cAtomMap, false);
+    TEST_ASSERT(pth.size() == 5);
+    TEST_ASSERT(cAtomMap.size() == 4);
+    cAtomMap.clear()
+
+    // Test on equal radius
+    for (unsigned int size = 0, size < 4; size++) {
+      pth = findAtomEnvironmentOfRadiusMToN(*mol, size, size, rootedAtAtom, cAtomMap, false);
+      TEST_ASSERT(pth.size() == 0);
+      TEST_ASSERT(cAtomMap.size() == 0);
+      cAtomMap.clear()
+    }
+
+    // Test on different-active radius
+    pth = findAtomEnvironmentOfRadiusMToN(*mol, 1, 2, rootedAtAtom, cAtomMap, false);
+    TEST_ASSERT(pth.size() == 2);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    cAtomMap.clear()
+
+    pth = findAtomEnvironmentOfRadiusMToN(*mol, 1, 3, rootedAtAtom, cAtomMap, false);
+    TEST_ASSERT(pth.size() == 3);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    cAtomMap.clear()
+
+    pth = findAtomEnvironmentOfRadiusMToN(*mol, 2, 3, rootedAtAtom, cAtomMap, false);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 0);
+    cAtomMap.clear()
+
+    // Test on over-sized radius
+    pth = findAtomEnvironmentOfRadiusMToN(*mol, 4, 6, rootedAtAtom, cAtomMap, false);
+    TEST_ASSERT(pth.size() == 0);
+    TEST_ASSERT(cAtomMap.size() == 0);
+    cAtomMap.clear()
+
+    delete mol;
   }
   std::cout << "Finished" << std::endl;
 }
@@ -354,6 +427,7 @@ int main() {
   test1();
   test2();
   test3();
+  test4();
   testGithubIssue103();
   testGithubIssue2647();
   return 0;

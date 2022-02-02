@@ -147,6 +147,18 @@ RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
 findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
                              bool useHs = false, bool enforceSize = true);
 
+
+RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
+findAtomEnvironmentOfRadiusMToN(
+    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
+    unsigned int rootedAtAtom, std::unordered_map<unsigned int, unsigned int> &atomMap, 
+    bool useHs = true);
+
+RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
+findAtomEnvironmentOfRadiusMToN(
+    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
+    unsigned int rootedAtAtom, bool useHs = true);
+
 }  // namespace RDKit
 
 #endif
