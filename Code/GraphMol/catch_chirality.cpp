@@ -2180,4 +2180,79 @@ TEST_CASE("getChiralPermutation", "[nontetrahedral]") {
       CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
     }
   }
+
+  SECTION("SP1") {
+    // clang-format off
+    std::vector<std::pair<std::list<int>, unsigned int>> data = {
+        {{2, 3, 4, 5}, 1},
+        {{2, 4, 3, 5}, 2},
+        {{2, 3, 5, 4}, 3},
+    };
+    // clang-format on
+    auto m = "CCC[Pt@SP1](F)(Cl)N"_smiles;
+    REQUIRE(m);
+    const auto atm = m->getAtomWithIdx(3);
+    for (const auto &pr : data) {
+      std::cerr << "---- " << pr.second << std::endl;
+      CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
+    }
+  }
+  SECTION("OH1") {
+    // clang-format off
+    std::vector<std::pair<std::list<int>, unsigned int>> data = {
+        {{2, 3, 4, 5, 6, 7}, 1},
+        {{2, 3, 6, 5, 4, 7}, 2},
+
+        {{2, 3, 4, 5, 7, 6}, 3},
+        {{2, 3, 6, 5, 7, 4}, 16},
+
+        {{2, 3, 4, 7, 5, 6}, 6},
+        {{2, 3, 6, 7, 5, 4}, 18},
+
+        {{2, 3, 7, 4, 5, 6}, 19},
+        {{2, 3, 7, 6, 5, 4}, 24},
+
+        {{2, 7, 3, 4, 5, 6}, 25},
+        {{2, 7, 3, 6, 5, 4}, 30},
+
+        {{2, 3, 4, 6, 5, 7}, 4},
+        {{2, 3, 6, 4, 5, 7}, 14},
+
+        {{2, 3, 4, 6, 7, 5}, 5},
+        {{2, 3, 6, 4, 7, 5}, 15},
+
+        {{2, 3, 4, 7, 6, 5}, 7},
+        {{2, 3, 6, 7, 4, 5}, 17},
+
+        {{2, 3, 7, 4, 6, 5}, 20},
+        {{2, 3, 7, 6, 4, 5}, 23},
+
+        {{2, 7, 3, 4, 6, 5}, 26},
+        {{2, 7, 3, 6, 4, 5}, 29},
+
+        {{2, 3, 5, 6, 4, 7}, 10},
+        {{2, 3, 5, 4, 6, 7}, 8},
+
+        {{2, 3, 5, 6, 7, 4}, 11},
+        {{2, 3, 5, 4, 7, 6}, 9},
+
+        {{2, 3, 5, 7, 6, 4}, 13},
+        {{2, 3, 5, 7, 4, 6}, 12},
+
+        {{2, 3, 7, 5, 6, 4}, 22},
+        {{2, 3, 7, 5, 4, 6}, 21},
+
+        {{2, 7, 3, 5, 6, 4}, 28},
+        {{2, 7, 3, 5, 4, 6}, 27},
+
+    };
+    // clang-format on
+    auto m = "CCO[Co@OH1](Cl)(C)(N)(F)P"_smiles;
+    REQUIRE(m);
+    const auto atm = m->getAtomWithIdx(3);
+    for (const auto &pr : data) {
+      std::cerr << "---- " << pr.second << std::endl;
+      CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
+    }
+  }
 }
