@@ -793,12 +793,12 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
 };
 
 void _passAtomEnvMapToPythonDict(std::unordered_map<unsigned int, unsigned int> &cAtomMap, 
-                                 python::dict &pyDict) {
-  // make sure the pyDict is a dictionary
+                                 python::dict &atomMap) {
+  // make sure the atomMap is a dictionary
   python::dict typecheck = python::extract<python::dict>(atomMap);
   if (atomMap.attr("__len__")() != 0) { atomMap.attr("clear")(); }
   for (auto pair: cAtomMap) {
-    pyDict[pair.first] = pair.second;
+    atomMap[pair.first] = pair.second;
   }
 }
 
@@ -808,10 +808,9 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radi
   std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
   PATH_TYPE path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, 
                                                 cAtomMap, useHs, enforceSize);
-
   if (atomMap != python::object()) {
-    // make sure the optional argument is actually a dictionary
-    _passAtomEnvironmentMapToPythonDict(cAtomMap, atomMap);
+    // make sure the optional argument (atomMap) is actually a dictionary
+    _passAtomEnvMapToPythonDict(cAtomMap, atomMap);
   }
   return path;
 }
@@ -820,11 +819,11 @@ PATH_TYPE findAtomEnvironmentOfRadiusMToNHelper(
     const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius,
     unsigned int rootedAtAtom, bool useHs, python::object atomMap) {
   std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
-  PATH_TYPE path = findAtomEnvironmentOfRadiusMToN(mol, radius, rootedAtAtom, cAtomMap, useHs);
-
+  PATH_TYPE path = findAtomEnvironmentOfRadiusMToN(mol, smallRadius, largeRadius, 
+                                                   rootedAtAtom, cAtomMap, useHs);
   if (atomMap != python::object()) {
-    // make sure the optional argument is actually a dictionary
-    _passAtomEnvironmentMapToPythonDict(cAtomMap, atomMap);
+    // make sure the optional argument (atomMap) is actually a dictionary
+    _passAtomEnvMapToPythonDict(cAtomMap, atomMap);
   }
   return path;
 }
@@ -1777,7 +1776,8 @@ to the terminal dummy atoms.\n\
       should be located on the specified radius. Otherwise, possibly return an empty result \n\
       Defaults to 1 (true).\n\
 \n\
-    - atomMap: (optional) a python dictionary to store the mapping of atom IDs and radius\n\
+    - atomMap: (optional) a python dictionary to store the mapping of atom IDs and radius.\n\
+      Note that the atomMap does not mark the rooted atom.\n\
 \n\
   RETURNS: a vector of bond IDs\n\
 \n";
