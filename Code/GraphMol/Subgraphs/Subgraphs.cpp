@@ -661,8 +661,8 @@ PATH_TYPE findAtomEnvironmentOfRadiusMToN(
   }
 
   for (unsigned int bond: lPath) {
-    if (std::find(sPath.begin(), sPath.end(), lPath[i]) == sPath.end()) {
-      path.push_back(lPath[i]);
+    if (std::find(sPath.begin(), sPath.end(), bond) == sPath.end()) {
+      path.push_back(bond);
     }
   }
 
