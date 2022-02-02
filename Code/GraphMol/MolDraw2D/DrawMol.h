@@ -48,15 +48,17 @@ class DrawMol {
     set this to -1 to have the canvas size set automatically
     \param height          : height (in pixels) of the rendering
     set this to -1 to have the canvas size set automatically
-    \param highlight_atoms : (optional) vector of atom ids to highlight
-    \param highlight_atoms : (optional) vector of bond ids to highlight
-    \param highlight_atom_map   : (optional) map from atomId -> DrawColour
+    \param drawOptions    : a MolDrawOptions object from the owning MolDraw2D
+    \param textDrawer     : a DrawText object from the owning MolDraw2D
+    \param highlightAtoms : (optional) vector of atom ids to highlight
+    \param highlightBonds : (optional) vector of bond ids to highlight
+    \param highlightAtomMap   : (optional) map from atomId -> DrawColour
     providing the highlight colors. If not provided the default highlight colour
     from \c drawOptions() will be used.
-    \param highlight_bond_map   : (optional) map from bondId -> DrawColour
+    \param highlightBondMap   : (optional) map from bondId -> DrawColour
     providing the highlight colors. If not provided the default highlight colour
     from \c drawOptions() will be used.
-    \param highlight_radii : (optional) map from atomId -> radius (in molecule
+    \param highlightRadii : (optional) map from atomId -> radius (in molecule
     coordinates) for the radii of atomic highlights. If not provided the default
     value from \c drawOptions() will be used.
     \param confId          : (optional) conformer ID to be used for atomic
@@ -73,10 +75,22 @@ class DrawMol {
           const std::map<int, double> *highlight_radii = nullptr,
           bool includeAnnotations = true, int confId = -1,
           bool isReactionMol = false);
-  // this one is for when there's no molecule to draw, but we still want
-  // a DrawMol in the MolDraw2D for scale, conversion of atom coords to
-  // draw coords etc.  And so DrawMol starts sounding like a poor name for
-  // the class.
+  /*!
+   Make a DrawMol when there's no molecule to draw, but we still want
+   a DrawMol in the MolDraw2D for scale, conversion of atom coords to
+   draw coords etc.  And so DrawMol starts sounding like a poor name for
+   the class.
+   \param width        : width (in pixels) of the rendering
+   \param height       : height (in pixels) of the rendering
+   \param drawOptions  : a MolDrawOptions object from the owning MolDraw2D
+   \param textDrawer   : a DrawText object from the owning MolDraw2D
+   \param xmin         : minimum value expected in X
+   \param xmax         : miaximum value expected in X
+   \param ymin         : minimum value expected in Y
+   \param ymax         : maximum value expected in Y
+   \param scale        : scale to use
+   \param fontscale    : font scale to use
+   */
   DrawMol(int width, int height, const MolDrawOptions &drawOptions,
           DrawText &textDrawer, double xmin, double xmax, double ymin,
           double ymax, double scale, double fontscale);

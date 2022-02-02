@@ -389,13 +389,13 @@ void MolDraw2D::drawArc(const Point2D &centre, double xradius, double yradius,
     double ang = start_ang_rads + double(i) * ang_incr;
     double x = centre.x + xradius * cos(ang);
     double y = centre.y + yradius * sin(ang);
-    pts.emplace_back(Point2D(x, y));
+    pts.emplace_back(x, y);
   }
 
   if (fillPolys()) {
     // otherwise it draws an arc back to the pts.front() rather than filling
     // in the sector.
-    pts.emplace_back(centre);
+    pts.push_back(centre);
   }
   drawPolygon(pts, rawCoords);
 }
@@ -411,7 +411,7 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2,
   // if fillPolys() is false, it doesn't close the polygon because of
   // its use for drawing filled or open ellipse segments.
   if (!fillPolys()) {
-    pts.emplace_back(cds1);
+    pts.push_back(cds1);
   }
   drawPolygon(pts, rawCoords);
 }
@@ -910,7 +910,7 @@ void MolDraw2D::makeReactionDrawMol(
       &highlightBonds, &highlightAtomMap, &highlightBondMap, nullptr, nullptr,
       supportsAnnotations(), confId, true));
   mols.back()->createDrawObjects();
-  drawMols_.emplace_back(mols.back());
+  drawMols_.push_back(mols.back());
   ++activeMolIdx_;
 }
 
@@ -1019,8 +1019,7 @@ void MolDraw2D::calcReactionOffsets(
   // And finally work out where to put all the pieces, centring them.
   int xOffset = (width() - totWidth) / 2;
   for (size_t i = 0; i < reagents.size(); ++i) {
-    offsets.emplace_back(
-        Point2D(xOffset, (height() - reagents[i]->height_) / 2));
+    offsets.emplace_back(xOffset, (height() - reagents[i]->height_) / 2);
     xOffset += reagents[i]->width_ + plusWidth;
   }
   if (reagents.empty()) {
@@ -1036,8 +1035,7 @@ void MolDraw2D::calcReactionOffsets(
   } else {
     xOffset += plusWidth / 2;
     for (size_t i = 0; i < agents.size(); ++i) {
-      offsets.emplace_back(
-          Point2D(xOffset, 0.45 * height() - agents[i]->height_));
+      offsets.emplace_back(xOffset, 0.45 * height() - agents[i]->height_);
       xOffset += agents[i]->width_ + plusWidth / 2;
     }
     // the overlap at the end of the arrow has already been added in the loop
@@ -1045,8 +1043,7 @@ void MolDraw2D::calcReactionOffsets(
   }
   xOffset = arrowEnd.x + plusWidth / 2;
   for (size_t i = 0; i < products.size(); ++i) {
-    offsets.emplace_back(
-        Point2D(xOffset, (height() - products[i]->height_) / 2));
+    offsets.emplace_back(xOffset, (height() - products[i]->height_) / 2);
     xOffset += products[i]->width_ + plusWidth;
   }
 }

@@ -3527,7 +3527,7 @@ void testGithub2931() {
     SubstructMatch(mol, *query, hits_vect);
     for (size_t i = 0; i < hits_vect.size(); ++i) {
       for (size_t j = 0; j < hits_vect[i].size(); ++j) {
-        hit_atoms.emplace_back(hits_vect[i][j].second);
+        hit_atoms.push_back(hits_vect[i][j].second);
       }
     }
     delete query;
@@ -3542,7 +3542,7 @@ void testGithub2931() {
         if (i > j) {
           Bond *bnd = mol.getBondBetweenAtoms(i, j);
           if (bnd) {
-            hit_bonds.emplace_back(bnd->getIdx());
+            hit_bonds.push_back(bnd->getIdx());
           }
         }
       }
@@ -3560,7 +3560,7 @@ void testGithub2931() {
       } else {
         if (ex->second.end() ==
             find(ex->second.begin(), ex->second.end(), col)) {
-          ex->second.emplace_back(col);
+          ex->second.push_back(col);
         }
       }
     }

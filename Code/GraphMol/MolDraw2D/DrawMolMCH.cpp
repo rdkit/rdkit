@@ -67,7 +67,7 @@ void DrawMolMCH::makeBondHighlights() {
       DrawShape *pl = new DrawShapeSimpleLine(
           pts, lineWidth, drawOptions_.scaleBondWidth, col, at1_idx, at2_idx,
           bond->getIdx(), noDash);
-      highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
+      highlights_.push_back(std::unique_ptr<DrawShape>(pl));
     };
 
     if (hb.second.size() < 2) {
@@ -79,14 +79,14 @@ void DrawMolMCH::makeBondHighlights() {
       }
       if (drawOptions_.fillHighlights) {
         std::vector<Point2D> line_pts;
-        line_pts.emplace_back(at1_cds + perp * rad);
-        line_pts.emplace_back(at2_cds + perp * rad);
-        line_pts.emplace_back(at2_cds - perp * rad);
-        line_pts.emplace_back(at1_cds - perp * rad);
+        line_pts.push_back(at1_cds + perp * rad);
+        line_pts.push_back(at2_cds + perp * rad);
+        line_pts.push_back(at2_cds - perp * rad);
+        line_pts.push_back(at1_cds - perp * rad);
         DrawShape *pl = new DrawShapePolyLine(
             line_pts, lineWidth, drawOptions_.scaleBondWidth, col, true,
             at1_idx, at2_idx, bond->getIdx(), noDash);
-        highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
+        highlights_.push_back(std::unique_ptr<DrawShape>(pl));
       } else {
         draw_adjusted_line(at1_cds + perp * rad, at2_cds + perp * rad, col);
         draw_adjusted_line(at1_cds - perp * rad, at2_cds - perp * rad, col);
@@ -99,14 +99,14 @@ void DrawMolMCH::makeBondHighlights() {
         std::vector<Point2D> line_pts;
         for (size_t i = 0; i < hb.second.size(); ++i) {
           line_pts.clear();
-          line_pts.emplace_back(p1);
-          line_pts.emplace_back(p1 + perp * col_rad);
-          line_pts.emplace_back(p2 + perp * col_rad);
-          line_pts.emplace_back(p2);
+          line_pts.push_back(p1);
+          line_pts.push_back(p1 + perp * col_rad);
+          line_pts.push_back(p2 + perp * col_rad);
+          line_pts.push_back(p2);
           DrawShape *pl = new DrawShapePolyLine(
               line_pts, lineWidth, drawOptions_.scaleBondWidth, hb.second[i],
               true, at1_idx, at2_idx, bond->getIdx(), noDash);
-          highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
+          highlights_.push_back(std::unique_ptr<DrawShape>(pl));
           p1 += perp * col_rad;
           p2 += perp * col_rad;
         }
@@ -147,7 +147,7 @@ void DrawMolMCH::makeAtomHighlights() {
       DrawShape *ell =
           new DrawShapeEllipse(pts, lineWidth, true, ha.second.front(),
                                drawOptions_.fillHighlights, ha.first);
-      highlights_.emplace_back(std::unique_ptr<DrawShape>(ell));
+      highlights_.push_back(std::unique_ptr<DrawShape>(ell));
     } else {
       double arc_size = 360.0 / double(ha.second.size());
       double arc_start = 270.0;
@@ -158,7 +158,7 @@ void DrawMolMCH::makeAtomHighlights() {
         DrawShape *arc = new DrawShapeArc(
             pts, arc_start, arc_stop, lineWidth, true, ha.second[i],
             drawOptions_.fillHighlights, ha.first);
-        highlights_.emplace_back(std::unique_ptr<DrawShape>(arc));
+        highlights_.push_back(std::unique_ptr<DrawShape>(arc));
         arc_start += arc_size;
         arc_start = arc_start >= 360.0 ? arc_start - 360.0 : arc_start;
       }

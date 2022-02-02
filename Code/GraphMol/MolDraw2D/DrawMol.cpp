@@ -204,7 +204,7 @@ void DrawMol::extractAtomCoords() {
     if (rot != 0.0) {
       trans.TransformPoint(pt);
     }
-    atCds_.emplace_back(pt);
+    atCds_.push_back(pt);
   }
 }
 
@@ -213,23 +213,22 @@ void DrawMol::extractAtomSymbols() {
   atomicNums_.clear();
   for (auto at1 : drawMol_->atoms()) {
     if (!isComplexQuery(at1)) {
-      atomicNums_.emplace_back(at1->getAtomicNum());
+      atomicNums_.push_back(at1->getAtomicNum());
     } else {
       atomicNums_.push_back(0);
     }
     std::pair<std::string, OrientType> atSym =
         getAtomSymbolAndOrientation(*at1);
-    atomSyms_.emplace_back(atSym);
+    atomSyms_.push_back(atSym);
     if (!atSym.first.empty()) {
       DrawColour atCol = getColour(at1->getIdx(), drawOptions_, atomicNums_,
                                    &highlightAtoms_, &highlightAtomMap_);
       AtomSymbol *al =
           new AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
                          atCds_[at1->getIdx()], atCol, textDrawer_);
-      atomLabels_.emplace_back(
-          std::unique_ptr<AtomSymbol>(al));
+      atomLabels_.emplace_back(al);
     } else {
-      atomLabels_.emplace_back(std::unique_ptr<AtomSymbol>());
+      atomLabels_.push_back(std::unique_ptr<AtomSymbol>());
     }
   }
 }
@@ -298,7 +297,7 @@ void DrawMol::extractRegions() {
         pts[3] = Point2D(maxv.x, minv.y);
         DrawColour col(0.8, 0.8, 0.8);
         DrawShape *pl = new DrawShapePolyLine(pts, 1, false, col, true);
-        highlights_.emplace_back(std::unique_ptr<DrawShape>(pl));
+        highlights_.emplace_back(pl);
       }
     }
   }
@@ -329,7 +328,7 @@ void DrawMol::extractAttachments() {
         DrawShapeWavyLine *wl = new DrawShapeWavyLine(
             points, drawOptions_.bondLineWidth, false, col, col, 0.05,
             at2->getIdx() + activeAtmIdxOffset_);
-        bonds_.emplace_back(std::unique_ptr<DrawShape>(wl));
+        bonds_.emplace_back(wl);
       }
     }
   }
@@ -404,7 +403,7 @@ void DrawMol::extractRadicals() {
     }
     StringRect rad_rect;
     OrientType orient = calcRadicalRect(atom, rad_rect);
-    radicals_.emplace_back(std::make_tuple(rad_rect, orient, atom->getIdx()));
+    radicals_.emplace_back(rad_rect, orient, atom->getIdx());
   }
 }
 
@@ -530,7 +529,7 @@ void DrawMol::extractVariableBonds() {
         std::vector<Point2D> points{center + offset, center - offset};
         DrawShapeEllipse *ell = new DrawShapeEllipse(
             points, 1, true, drawOptions_.variableAttachmentColour, true, oat);
-        preShapes_.emplace_back(std::unique_ptr<DrawShape>(ell));
+        preShapes_.emplace_back(ell);
       }
 
       for (const auto bond : drawMol_->bonds()) {
@@ -544,7 +543,7 @@ void DrawMol::extractVariableBonds() {
               bond->getBeginAtomIdx() + activeAtmIdxOffset_,
               bond->getEndAtomIdx() + activeAtmIdxOffset_,
               bond->getIdx() + activeBndIdxOffset_);
-          preShapes_.emplace_back(std::unique_ptr<DrawShape>(sl));
+          preShapes_.emplace_back(sl);
         }
       }
       // correct the symbol of the end atom (remove the *):
@@ -611,7 +610,7 @@ void DrawMol::extractBrackets() {
       DrawShapePolyLine *pl =
           new DrawShapePolyLine(points, drawOptions_.bondLineWidth, false,
                                 DrawColour(0.0, 0.0, 0.0), false);
-      postShapes_.emplace_back(std::unique_ptr<DrawShape>(pl));
+      postShapes_.emplace_back(pl);
     }
     if (includeAnnotations_) {
       // Find the bottom-most or right-most bracket.  First work out if the
@@ -656,7 +655,7 @@ void DrawMol::extractBrackets() {
         if (brkPt.x < botPt.x) {
           da->align_ = TextAlignType::START;
         }
-        annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
+        annotations_.emplace_back(da);
       }
       std::string label;
       if (sg.getPropIfPresent("LABEL", label)) {
@@ -674,7 +673,7 @@ void DrawMol::extractBrackets() {
             label, TextAlignType::MIDDLE, "connect",
             drawOptions_.annotationFontScale, topPt + (topPt - brkPt),
             DrawColour(0.0, 0.0, 0.0), textDrawer_);
-        annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
+        annotations_.emplace_back(da);
       }
     }
   }
@@ -711,7 +710,7 @@ void DrawMol::extractLinkNodes() {
       DrawShapePolyLine *pl =
           new DrawShapePolyLine(points, drawOptions_.bondLineWidth, false,
                                 DrawColour(0.0, 0.0, 0.0), false);
-      postShapes_.emplace_back(std::unique_ptr<DrawShape>(pl));
+      postShapes_.emplace_back(pl);
 
       if (p1.x > labelPt.x) {
         labelPt = p1;
@@ -733,7 +732,7 @@ void DrawMol::extractLinkNodes() {
           new DrawAnnotation(label, TextAlignType::START, "linknode",
                              drawOptions_.annotationFontScale, labelPt + perp,
                              DrawColour(0.0, 0.0, 0.0), textDrawer_);
-      annotations_.emplace_back(std::unique_ptr<DrawAnnotation>(da));
+      annotations_.emplace_back(da);
     }
   }
 }
@@ -779,7 +778,7 @@ void DrawMol::extractCloseContacts() {
       DrawShapePolyLine *pl =
           new DrawShapePolyLine(points, drawOptions_.bondLineWidth, false,
                                 DrawColour(1.0, 0.0, 0.0), false, i);
-      postShapes_.emplace_back(std::unique_ptr<DrawShape>(pl));
+      postShapes_.emplace_back(pl);
     };
   }
 }
@@ -1589,7 +1588,7 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
                                   begAt->getIdx() + activeAtmIdxOffset_,
                                   endAt->getIdx() + activeAtmIdxOffset_,
                                   bond->getIdx() + activeBndIdxOffset_, noDash);
-        bonds_.emplace_back(std::unique_ptr<DrawShape>(pl));
+        bonds_.emplace_back(pl);
       } else {
         segment /= segment.length() * 10;
         auto l = segment.length();
@@ -1598,12 +1597,12 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
         std::vector<Point2D> pts{p1, p2};
         DrawShapeEllipse *ell =
             new DrawShapeEllipse(pts, 1, false, queryColour, false);
-        bonds_.emplace_back(std::unique_ptr<DrawShape>(ell));
+        bonds_.emplace_back(ell);
         p1 = midp - segment + Point2D(l, l);
         p2 = midp - segment - Point2D(l, l);
         pts = std::vector<Point2D>{p1, p2};
         ell = new DrawShapeEllipse(pts, 1, false, queryColour, false);
-        bonds_.emplace_back(std::unique_ptr<DrawShape>(ell));
+        bonds_.emplace_back(ell);
       }
     } else {
       drawGenericQuery = true;
@@ -1724,7 +1723,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
                                  at2->getIdx() + activeAtmIdxOffset_,
                                  bond->getIdx() + activeBndIdxOffset_);
   }
-  bonds_.emplace_back(std::unique_ptr<DrawShape>(s));
+  bonds_.push_back(std::unique_ptr<DrawShape>(s));
 }
 
 // ****************************************************************************
@@ -1737,7 +1736,7 @@ void DrawMol::makeWavyBond(Bond *bond,
   std::vector<Point2D> pts{end1, end2};
   DrawShapeWavyLine *s = new DrawShapeWavyLine(pts, drawOptions_.bondLineWidth,
                                                false, cols.first, cols.second);
-  bonds_.emplace_back(std::unique_ptr<DrawShape>(s));
+  bonds_.push_back(std::unique_ptr<DrawShape>(s));
 }
 
 // ****************************************************************************
@@ -1757,7 +1756,7 @@ void DrawMol::makeDativeBond(Bond *bond,
       pts, drawOptions_.bondLineWidth, false, cols.second, true,
       at1->getIdx() + activeAtmIdxOffset_, atid2 + activeAtmIdxOffset_,
       bond->getIdx() + activeBndIdxOffset_, 0.2, M_PI / 6);
-  bonds_.emplace_back(std::unique_ptr<DrawShape>(a));
+  bonds_.push_back(std::unique_ptr<DrawShape>(a));
 }
 
 // ****************************************************************************
@@ -1812,7 +1811,7 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
         pts, lineWidth, scaleWidth, col1, atom1Idx + activeAtmIdxOffset_,
         atom2Idx + activeAtmIdxOffset_, bondIdx + activeBndIdxOffset_,
         dashPattern);
-    bonds_.emplace_back(std::unique_ptr<DrawShape>(b));
+    bonds_.push_back(std::unique_ptr<DrawShape>(b));
   } else {
     Point2D mid = (pt1 + pt2) / 2.0;
     std::vector<Point2D> pts1{pt1, mid};
@@ -1822,14 +1821,14 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
         pts1, lineWidth, scaleWidth, col1, at1Idx + activeAtmIdxOffset_,
         at2Idx + activeAtmIdxOffset_, bondIdx + activeBndIdxOffset_,
         dashPattern);
-    bonds_.emplace_back(std::unique_ptr<DrawShape>(b1));
+    bonds_.push_back(std::unique_ptr<DrawShape>(b1));
     at1Idx = drawOptions_.splitBonds ? atom2Idx : atom1Idx;
     std::vector<Point2D> pts2{mid, pt2};
     DrawShape *b2 = new DrawShapeSimpleLine(
         pts2, lineWidth, scaleWidth, col2, at1Idx + activeAtmIdxOffset_,
         at2Idx + activeAtmIdxOffset_, bondIdx + activeBndIdxOffset_,
         dashPattern);
-    bonds_.emplace_back(std::unique_ptr<DrawShape>(b2));
+    bonds_.push_back(std::unique_ptr<DrawShape>(b2));
   }
 }
 
@@ -1906,7 +1905,7 @@ void DrawMol::makeAtomCircleHighlights() {
       std::vector<Point2D> pts{p1, p2};
       DrawShape *ell = new DrawShapeEllipse(pts, 2, false, col, true,
                                             thisIdx + activeAtmIdxOffset_);
-      highlights_.emplace_back(std::unique_ptr<DrawShape>(ell));
+      highlights_.push_back(std::unique_ptr<DrawShape>(ell));
     }
   }
 }
@@ -1950,7 +1949,7 @@ void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
       std::vector<Point2D> pts{p1, p2};
       DrawShape *ell = new DrawShapeEllipse(pts, lineWidth, true, col, true,
                                             thisIdx + activeAtmIdxOffset_);
-      highlights_.emplace_back(std::unique_ptr<DrawShape>(ell));
+      highlights_.push_back(std::unique_ptr<DrawShape>(ell));
     }
   }
 }
@@ -1976,7 +1975,7 @@ void DrawMol::makeBondHighlightLines(int lineWidth) {
               pts, lineWidth, drawOptions_.scaleHighlightBondWidth, col,
               thisIdx + activeAtmIdxOffset_, nbrIdx + activeAtmIdxOffset_,
               bond->getIdx() + activeBndIdxOffset_, noDash);
-          highlights_.emplace_back(std::unique_ptr<DrawShape>(hb));
+          highlights_.push_back(std::unique_ptr<DrawShape>(hb));
         }
       }
     }
@@ -2074,7 +2073,7 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
        make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
     Point2D bond_vec = at_cds.directionVector(atCds_[nbr]);
     bond_vec.normalize();
-    bond_vecs.emplace_back(bond_vec);
+    bond_vecs.push_back(bond_vec);
   }
 
   Point2D ret_vec;
