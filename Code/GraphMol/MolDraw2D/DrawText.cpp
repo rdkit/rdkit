@@ -303,7 +303,7 @@ void DrawText::getStringExtremes(const std::string &label, OrientType orient,
   }
 
   x_min = y_min = std::numeric_limits<double>::max();
-  x_max = y_max = -std::numeric_limits<double>::max();
+  x_max = y_max = std::numeric_limits<double>::lowest();
 
   std::vector<std::shared_ptr<StringRect>> rects;
   std::vector<TextDrawType> draw_modes;
@@ -359,9 +359,9 @@ void DrawText::alignString(
     // centre on the middle of the Normal text.  The super- or subscripts
     // should be at the ends.
     double x_min = std::numeric_limits<double>::max();
-    double x_max = -x_min;
+    double x_max = std::numeric_limits<double>::lowest();
     double y_min = std::numeric_limits<double>::max();
-    double y_max = -y_min;
+    double y_max = std::numeric_limits<double>::lowest();
     int num_norm = 0;
     size_t align_char = -1;
     for (size_t i = 0; i < rects.size(); ++i) {
@@ -502,7 +502,7 @@ void DrawText::getStringRects(const std::string &text, OrientType orient,
                               std::vector<TextDrawType> &draw_modes,
                               std::vector<char> &draw_chars, bool dontSplit,
                               TextAlignType textAlign) const {
-  PRECONDITION(text.size() > 0, "empty string");
+  PRECONDITION(!text.empty(), "empty string");
   std::vector<std::string> text_bits;
   if (!dontSplit) {
     text_bits = atomLabelToPieces(text, orient);
@@ -525,20 +525,20 @@ void DrawText::getStringRects(const std::string &text, OrientType orient,
   } else if (orient == OrientType::E) {
     // likewise, but forwards
     std::string new_lab;
-    for (auto lab : text_bits) {
+    for (const auto &lab : text_bits) {
       new_lab += lab;
     }
     getStringRects(new_lab, rects, draw_modes, draw_chars);
     alignString(TextAlignType::START, draw_modes, rects);
   } else {
     double running_y = 0;
-    for (auto tb : text_bits) {
+    for (const auto &tb : text_bits) {
       std::vector<std::shared_ptr<StringRect>> t_rects;
       std::vector<TextDrawType> t_draw_modes;
       std::vector<char> t_draw_chars;
       getStringRects(tb, t_rects, t_draw_modes, t_draw_chars);
       alignString(ta, t_draw_modes, t_rects);
-      double max_height = -std::numeric_limits<double>::max();
+      double max_height = std::numeric_limits<double>::lowest();
       for (auto r : t_rects) {
         max_height = std::max(r->height_, max_height);
         r->y_shift_ = running_y;

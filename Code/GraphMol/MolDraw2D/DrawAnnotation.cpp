@@ -48,14 +48,10 @@ void DrawAnnotation::findExtremes(double &xmin, double &xmax, double &ymin,
     // sometimes it's up.  For these purposes, we don't care so long as
     // the ymax is larger than the ymin.  We probably don't need to do
     // all the tests for xmin and xmax;
-    xmin = std::min(bl.x, xmin);
-    xmin = std::min(tr.x, xmin);
-    ymin = std::min(bl.y, ymin);
-    ymin = std::min(tr.y, ymin);
-    xmax = std::max(bl.x, xmax);
-    xmax = std::max(tr.x, xmax);
-    ymax = std::max(bl.y, ymax);
-    ymax = std::max(tr.y, ymax);
+    xmin = std::min({tr.x, bl.x, xmin});
+    ymin = std::min({tr.y, bl.y, ymin});
+    xmax = std::max({tr.x, bl.x, xmax});
+    ymax = std::max({tr.y, bl.y, ymax});
     r->trans_ = otrans;
   }
 }
@@ -64,7 +60,7 @@ void DrawAnnotation::findExtremes(double &xmin, double &xmax, double &ymin,
 void DrawAnnotation::getDimensions(double &width, double &height) const {
   double xMin, yMin, xMax, yMax;
   xMin = yMin = std::numeric_limits<double>::max();
-  xMax = yMax = -xMin;
+  xMax = yMax = std::numeric_limits<double>::lowest();
   findExtremes(xMin, xMax, yMin, yMax);
   width = xMax - xMin;
   height = yMax - yMin;

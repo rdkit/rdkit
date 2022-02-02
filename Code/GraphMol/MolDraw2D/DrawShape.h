@@ -222,9 +222,6 @@ class DrawShapeArc : public DrawShape {
   double ang1_, ang2_;
 };
 
-std::vector<Point2D> calcScaledWedgePoints(const Point2D &point,
-                                           const Point2D &end1,
-                                           const Point2D &end2, double widthsq);
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

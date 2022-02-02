@@ -26,8 +26,6 @@ class MolDraw2D;
 
 namespace MolDraw2D_detail {
 
-class DrawMol;
-
 class DrawAnnotation {
  public:
   ~DrawAnnotation() = default;

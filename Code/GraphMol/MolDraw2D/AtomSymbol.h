@@ -29,9 +29,6 @@ class MolDraw2D;
 
 namespace MolDraw2D_detail {
 
-class DrawMol;
-class DrawMolMCH;
-
 class AtomSymbol {
 
  public:

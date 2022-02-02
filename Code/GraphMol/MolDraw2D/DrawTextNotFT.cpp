@@ -56,9 +56,9 @@ void DrawTextNotFT::alignString(
     // centre on the middle of the Normal text.  The super- or subscripts
     // should be at the ends.
     double x_min = std::numeric_limits<double>::max();
-    double x_max = -x_min;
+    double x_max = std::numeric_limits<double>::lowest();
     double y_min = std::numeric_limits<double>::max();
-    double y_max = -y_min;
+    double y_max = std::numeric_limits<double>::lowest();
     align_offset.x = align_offset.y = 0.0;
     int num_norm = 0;
     for (size_t i = 0; i < rects.size(); ++i) {

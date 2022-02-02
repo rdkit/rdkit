@@ -52,8 +52,8 @@ void DrawMolMCH::makeBondHighlights() {
                                         &highlightLinewidthMultipliers_);
     }
     auto bond = drawMol_->getBondWithIdx(bond_idx);
-    int at1_idx = bond->getBeginAtomIdx();
-    int at2_idx = bond->getEndAtomIdx();
+    auto at1_idx = bond->getBeginAtomIdx();
+    auto at2_idx = bond->getEndAtomIdx();
     Point2D at1_cds = atCds_[at1_idx];
     Point2D at2_cds = atCds_[at2_idx];
     Point2D perp = calcPerpendicular(at1_cds, at2_cds);
@@ -248,7 +248,7 @@ void DrawMolMCH::calcSymbolEllipse(unsigned int atomIdx, Point2D &centre,
 
   double x_min, y_min, x_max, y_max;
   x_min = y_min = std::numeric_limits<double>::max();
-  x_max = y_max = -std::numeric_limits<double>::max();
+  x_max = y_max = std::numeric_limits<double>::lowest();
   atomLabels_[atomIdx]->findExtremes(x_min, x_max, y_min, y_max);
 
   static const double root_2 = sqrt(2.0);

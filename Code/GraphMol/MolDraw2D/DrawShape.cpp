@@ -494,19 +494,6 @@ bool DrawShapeWavyLine::doesRectClash(const StringRect &rect,
 }
 
 // ****************************************************************************
-std::vector<Point2D> calcScaledWedgePoints(const Point2D &point,
-                                           const Point2D &end1,
-                                           const Point2D &end2,
-                                           double widthsq) {
-  Point2D lastLine = end1 - end2;
-  Point2D mid = (end1 + end2) / 2.0;
-  lastLine /= sqrt(widthsq);
-  lastLine *= 4;
-  std::vector<Point2D> new_pts{point, mid + lastLine, mid - lastLine};
-  return new_pts;
-}
-
-// ****************************************************************************
 DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
                            double ang2, int lineWidth, bool scaleLineWidth,
                            const DrawColour &col1, bool fill, int atom1)

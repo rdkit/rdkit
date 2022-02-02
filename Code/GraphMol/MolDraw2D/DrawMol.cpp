@@ -56,8 +56,8 @@ DrawMol::DrawMol(
       fontScale_(1.0),
       xMin_(std::numeric_limits<double>::max() / 2.0),
       yMin_(std::numeric_limits<double>::max() / 2.0),
-      xMax_(-std::numeric_limits<double>::max() / 2.0),
-      yMax_(-std::numeric_limits<double>::max() / 2.0),
+      xMax_(std::numeric_limits<double>::lowest() / 2.0),
+      yMax_(std::numeric_limits<double>::lowest() / 2.0),
       xRange_(std::numeric_limits<double>::max()),
       yRange_(std::numeric_limits<double>::max()) {
   if (highlight_atoms) {
@@ -1043,8 +1043,8 @@ void DrawMol::resetEverything() {
   textDrawer_.setFontScale(1.0, true);
   xMin_ = std::numeric_limits<double>::max() / 2.0;
   yMin_ = std::numeric_limits<double>::max() / 2.0;
-  xMax_ = -std::numeric_limits<double>::max() / 2.0;
-  yMax_ = -std::numeric_limits<double>::max() / 2.0;
+  xMax_ = std::numeric_limits<double>::lowest() / 2.0;
+  yMax_ = std::numeric_limits<double>::lowest() / 2.0;
   xRange_ = std::numeric_limits<double>::max();
   yRange_ = std::numeric_limits<double>::max();
   meanBondLength_ = 0.0;
@@ -1430,14 +1430,14 @@ void DrawMol::extractLegend() {
   // Draw them from the bottom up.
   double xmin, xmax, ymin, ymax;
   xmin = ymin = std::numeric_limits<double>::max();
-  xmax = ymax = -xmin;
+  xmax = ymax = std::numeric_limits<double>::lowest();
   legends_.back()->findExtremes(xmin, xmax, ymin, ymax);
   double lastBelow = legends_.back()->pos_.y - ymax;
   double lastAbove = legends_.back()->pos_.y - ymin;
   legends_.back()->pos_.y += lastBelow;
   for (int i = legends_.size() - 2; i >= 0; --i) {
     xmin = ymin = std::numeric_limits<double>::max();
-    xmax = ymax = -xmin;
+    xmax = ymax = std::numeric_limits<double>::lowest();
     legends_[i]->findExtremes(xmin, xmax, ymin, ymax);
     double thisBelow = legends_[i]->pos_.y - ymax;
     double thisAbove = legends_[i]->pos_.y - ymin;
@@ -1935,7 +1935,7 @@ void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
       if (!drawOptions_.atomHighlightsAreCircles && atomLabels_[thisIdx]) {
         double xMin, yMin, xMax, yMax;
         xMin = yMin = std::numeric_limits<double>::max();
-        xMax = yMax = -std::numeric_limits<double>::max();
+        xMax = yMax = std::numeric_limits<double>::lowest();
         atomLabels_[thisIdx]->findExtremes(xMin, xMax, yMin, yMax);
         static const double root_2 = sqrt(2.0);
         xradius = std::max(xradius, root_2 * 0.5 * (xMax - xMin));
@@ -2132,7 +2132,7 @@ void DrawMol::calcMolNotePosition(const std::vector<Point2D> atCds,
                                   DrawAnnotation &annot) const {
   Point2D centroid{0., 0.};
   double minY = std::numeric_limits<double>::max();
-  double maxX = -std::numeric_limits<double>::max();
+  double maxX = std::numeric_limits<double>::lowest();
   for (const auto &pt : atCds) {
     centroid += pt;
     maxX = std::max(pt.x, maxX);
@@ -2211,7 +2211,7 @@ OrientType DrawMol::calcRadicalRect(const Atom *atom,
   double x_min, y_min, x_max, y_max;
   if (atomLabels_[atom->getIdx()]) {
     x_min = y_min = std::numeric_limits<double>::max();
-    x_max = y_max = -x_min;
+    x_max = y_max = std::numeric_limits<double>::lowest();
     atomLabels_[atom->getIdx()]->findExtremes(x_min, x_max, y_min, y_max);
   } else {
     x_min = atCds.x - 3 * spot_rad * textDrawer_.fontScale();
