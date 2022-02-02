@@ -754,6 +754,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "minimum font size in pixels. default=12, -1 means no"
                      " minimum.")
       .def_readwrite(
+          "baseFontSize", &RDKit::MolDrawOptions::baseFontSize,
+          "relative size of font.  Defaults to 0.6.  -1 means use default.")
+      .def_readwrite(
           "annotationFontScale", &RDKit::MolDrawOptions::annotationFontScale,
           "Scale of font for atom and bond annotation relative to atom"
           "label font.  Default=0.75.")
