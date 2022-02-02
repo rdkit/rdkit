@@ -35,6 +35,7 @@ AtomSymbol::AtomSymbol(const std::string &symbol, int atIdx, OrientType orient,
   }
   textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_, drawChars_,
                              false, TextAlignType::MIDDLE);
+  adjustColons();
 }
 
 // ****************************************************************************
@@ -99,6 +100,21 @@ bool AtomSymbol::doesRectClash(const StringRect &rect, double padding) const {
     }
   }
   return false;
+}
+
+// ****************************************************************************
+void AtomSymbol::adjustColons() {
+  if (symbol_.empty()) {
+    return; // but probable it's always got something in it.
+  }
+  size_t colonPos = symbol_.find(':');
+  if (colonPos == std::string::npos) {
+    return;
+  }
+  double leftHeight = colonPos ? rects_[colonPos - 1]->height_ : 0;
+  double rightHeight =
+      colonPos < symbol_.size() - 1 ? rects_[colonPos + 1]->height_ : 0;
+  rects_[colonPos]->height_ = std::min(leftHeight, rightHeight);
 }
 
 // ****************************************************************************

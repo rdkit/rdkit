@@ -70,6 +70,12 @@ class AtomSymbol {
   virtual void move(const Point2D &trans);
   void draw(MolDraw2D &molDrawer) const;
   bool doesRectClash(const StringRect &rect, double padding) const;
+  // Because a colon is a lot shorter than other characters, there are cases,
+  // such as rxn_test1_2 in rxn_test1.cpp, where a vertical bond can slip
+  // between the atom symbol and the atom map (C:8 in that case) which looks
+  // a bit pants.  This stretches the colon to be the same height as the
+  // smaller of the chars on either side.
+  void adjustColons();
 
   // this is for debugging almost always.
   void drawRects(MolDraw2D &molDrawer) const;
