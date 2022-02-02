@@ -580,6 +580,9 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
 
         // add the next set of neighbors:
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
+        if (atomMap.find(oAtom) == atomMap.end()) { atomMap[oAtom] = i + 1; }
+        else { atomMap[oAtom] = std::min(atomMap[oAtom], i + 1); }
+
         boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
         while (beg != end) {
           const Bond *bond = mol[*beg];
@@ -587,8 +590,6 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
             if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
                                  ->getAtomicNum() != 1) {
               nextLayer.emplace_back(oAtom, bond->getIdx());
-              if (atomMap.find(oAtom) == atomMap.end()) { atomMap[oAtom] = i + 1; }
-              else {atomMap[oAtom] = std::min(atomMap[oAtom], i + 1); }
             }
           }
           ++beg;

@@ -139,8 +139,9 @@ void test2() {
 void test3() {
   std::cout << "-----------------------" << std::endl;
   std::cout << "Test 3: Atom Environments (Extension)" << std::endl;
-  std::cout << "This test is for two hyper-parameter: forceSize and (c)atomMap" << std::endl;
+  std::cout << "This test is for two hyper-parameter: enforceSize and (c)atomMap" << std::endl;
 
+  std::cout << "Test 3.1: enforceSize & useHs" << std::endl;
   {
     std::string smiles = "C=NC";
     unsigned int rootedAtAtom = 2;
@@ -149,11 +150,13 @@ void test3() {
     TEST_ASSERT(mol);
     ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
 
+    std::cout << "Test 3.1.1: radius=2" << std::endl;
     PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, false, true);
     TEST_ASSERT(pth.size() == 2);
     pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, true, true);
     TEST_ASSERT(pth.size() == 5);
 
+    std::cout << "Test 3.1.2: radius=3" << std::endl;
     pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, false, true);
     TEST_ASSERT(pth.size() == 0);
     pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, true, true);
@@ -163,6 +166,7 @@ void test3() {
     pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, false, false);
     TEST_ASSERT(pth.size() == 2);
 
+    std::cout << "Test 3.1.3: radius=4" << std::endl;
     pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, true);
     TEST_ASSERT(pth.size() == 0);
     pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, true, true);
@@ -176,6 +180,7 @@ void test3() {
     delete mH;
   }
 
+  std::cout << "Test 3.2: cAtomMap" << std::endl;
   {
     std::string smiles = "C=NO"; // C(0)=N(1)O(2)
     unsigned int rootedAtAtom = 2;
@@ -185,7 +190,7 @@ void test3() {
     TEST_ASSERT(mol);
     ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
 
-    // Test on radius=2 at rootedAtAtom=2. enforceSize has zero effect
+    std::cout << "Test 3.2.1: radius=2" << std::endl;
     PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, cAtomMap, false, true);
     TEST_ASSERT(cAtomMap.size() == 3);
     TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
@@ -216,7 +221,7 @@ void test3() {
     TEST_ASSERT(cAtomMap[0] == 2);
     cAtomMap.clear();
     
-    // Test on radius=4 at rootedAtAtom=2. enforceSize has significant effect
+    std::cout << "Test 3.2.2: radius=2" << std::endl;
     pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, cAtomMap, false, true);
     TEST_ASSERT(pth.size() == 0);
     TEST_ASSERT(cAtomMap.size() == 0);
@@ -258,6 +263,7 @@ void test3() {
     delete mH;
   }
 
+  std::cout << "Test 3.3: cAtomMap in ring-state" << std::endl;
   {
     std::string smiles = "c1cc[nH]c1";
     unsigned int rootedAtAtom = 1;
@@ -266,8 +272,8 @@ void test3() {
     RWMol *mol = SmilesToMol(smiles);
     TEST_ASSERT(mol);
 
-    // This test worked on ring system to guarantee that the atom ID is marked correctly
-    // with the search radius
+    // This test worked on ring system to guarantee that the atom ID 
+    // is marked correctly with the search radius
     PATH_TYPE pth;
     unsigned int size;
     for (size = 2; size < 4; size++) {
@@ -300,6 +306,7 @@ void test4() {
   std::cout << "-----------------------" << std::endl;
   std::cout << "Test 4: Atom Environments From M to N (Extension)" << std::endl;
 
+  std::cout << "Test 4.1: cAtomMap & bond path" << std::endl;
   {
     std::string smiles = "c1cc[nH]c1";
     unsigned int rootedAtAtom = 1;
@@ -310,7 +317,7 @@ void test4() {
     PATH_TYPE pth;
     std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
 
-    // Test on zero radius
+    std::cout << "Test 4.1.1: smallRadius=0" << std::endl;
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 0, 1, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 2);
     TEST_ASSERT(cAtomMap.size() == 2);
@@ -326,7 +333,7 @@ void test4() {
     TEST_ASSERT(cAtomMap.size() == 4);
     cAtomMap.clear();
 
-    // Test on equal radius
+    std::cout << "Test 4.1.2: smallRadius=largeRadius" << std::endl;
     for (unsigned int size = 0; size < 4; size++) {
       pth = findAtomEnvironmentOfRadiusMToN(*mol, size, size, rootedAtAtom, cAtomMap, false);
       TEST_ASSERT(pth.size() == 0);
@@ -334,7 +341,7 @@ void test4() {
       cAtomMap.clear();
     }
 
-    // Test on different-active radius
+    std::cout << "Test 4.1.3: largeRadius > smallRadius" << std::endl;
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 1, 2, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 2);
     TEST_ASSERT(cAtomMap.size() == 2);
@@ -350,7 +357,7 @@ void test4() {
     TEST_ASSERT(cAtomMap.size() == 0);
     cAtomMap.clear();
 
-    // Test on over-sized radius
+    std::cout << "Test 4.1.4: largeRadius >= smallRadius >> maxDegree(bondPath)" << std::endl;
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 4, 6, rootedAtAtom, cAtomMap, false);
     TEST_ASSERT(pth.size() == 0);
     TEST_ASSERT(cAtomMap.size() == 0);
