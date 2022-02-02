@@ -861,6 +861,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "if true wedged and dashed bonds are drawn using symbolColour "
           "rather than inheriting their colour from the atoms. "
           "Default is false.")
+      .def_readwrite("scalingFactor", &RDKit::MolDrawOptions::scalingFactor,
+                     "scaling factor for pixels->angstrom when auto scaling"
+                     "being used.  Default is 20.")
+      .def_readwrite("drawMolsSameScale",
+                     &RDKit::MolDrawOptions::drawMolsSameScale,
+                     "when drawing multiple molecules with DrawMolecules,"
+                     "forces them to use the same scale.  Default is true.")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,

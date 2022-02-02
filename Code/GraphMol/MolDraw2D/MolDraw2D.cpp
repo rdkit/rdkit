@@ -239,8 +239,10 @@ void MolDraw2D::drawMolecules(
   }
 
   for (auto &drawMol : drawMols_) {
-    drawMol->setScale(drawMols_[minScaleMol]->getScale(),
-                      drawMols_[minFontScaleMol]->getFontScale(), true);
+    if (drawOptions().drawMolsSameScale) {
+      drawMol->setScale(drawMols_[minScaleMol]->getScale(),
+                        drawMols_[minFontScaleMol]->getFontScale(), true);
+    }
     drawMol->tagAtomsWithCoords();
   }
 

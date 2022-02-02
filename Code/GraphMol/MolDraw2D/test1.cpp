@@ -2516,6 +2516,18 @@ void test12DrawMols() {
     outs.close();
     check_file_hash("test12_1.svg");
   }
+  {
+    MolDraw2DSVG drawer(750, 400, 250, 200);
+    drawer.drawOptions().drawMolsSameScale = false;
+    drawer.drawMolecules(mols, legends.get());
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test12_5.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash("test12_5.svg");
+  }
   {  // github #1325: multiple molecules in one pane
     MolDraw2DSVG drawer(300, 300, 300, 300);
     drawer.drawMolecules(mols);

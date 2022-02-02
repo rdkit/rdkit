@@ -167,6 +167,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(legendFraction);
   PT_OPT_GET(maxFontSize);
   PT_OPT_GET(minFontSize);
+  PT_OPT_GET(baseFontSize);
   PT_OPT_GET(annotationFontScale);
   PT_OPT_GET(fontFile);
   PT_OPT_GET(multipleBondOffset);
@@ -197,6 +198,8 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(includeChiralFlagLabel);
   PT_OPT_GET(simplifiedStereoGroupLabel);
   PT_OPT_GET(singleColourWedgeBonds);
+  PT_OPT_GET(scalingFactor);
+  PT_OPT_GET(drawMolsSameScale);
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);

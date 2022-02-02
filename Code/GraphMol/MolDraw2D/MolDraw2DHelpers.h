@@ -245,12 +245,15 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // if true wedged and dashed bonds are drawn
               // using symbolColour rather than inheriting
               // their colour from the atoms
-  double scalingFactor = 20.0;  // scaling factor used for pixels->angstroms
+  double scalingFactor = 20.0;  // scaling factor used for pixels->angstrom
                                 // when auto scaling is being used
   double baseFontSize =
       -1.0;  // when > 0 this is used to set the baseFontSize used for text
              // drawing. As a reference point: the default value for
              // DrawText::baseFontSize  is 0.6
+  bool drawMolsSameScale = true; // when drawing multiple molecules with
+                                 // DrawMolecules, forces them to use the same
+                                 // scale.  Default is true.
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
