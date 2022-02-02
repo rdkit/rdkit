@@ -353,6 +353,7 @@ void testGithubIssue2647() {
 int main() {
   test1();
   test2();
+  test3();
   testGithubIssue103();
   testGithubIssue2647();
   return 0;
