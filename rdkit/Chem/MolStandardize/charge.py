@@ -243,10 +243,16 @@ class Reionizer(object):
         return mol
 
     def _strongest_protonated(self, mol):
-        return 0, mol.GetSubstructMatches(self.acid_base_pairs[0].acid)
+        for position, pair in enumerate(self.acid_base_pairs):
+            for occurrence in mol.GetSubstructMatches(pair.acid):
+                return position, occurrence
+        return None, None
 
     def _weakest_ionized(self, mol):
-        return len(self.acid_base_pairs) - 1, mol.GetSubstructMatches(self.acid_base_pairs[-1].base)
+        for position, pair in enumerate(reversed(self.acid_base_pairs)):
+            for occurrence in mol.GetSubstructMatches(pair.base):
+                return len(self.acid_base_pairs) - position - 1, occurrence
+        return None, None
 
 
 class Uncharger(object):
