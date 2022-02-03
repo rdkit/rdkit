@@ -210,12 +210,14 @@ environMatchers = {env: Chem.MolFromSmarts(sma) for env, sma in environs.items()
 
 bondMatchers = []
 for i, compats in enumerate(reactionDefs):
+    tmp = []
     bondMatchers.append([])
     for i1, i2, bType in compats:
         e1 = environs[f'L{i1}']
         e2 = environs[f'L{i2}']
         patt = Chem.MolFromSmarts(f'[$({e1})]{bType};!@[$({e2})]')
-        bondMatchers[-1].append((i1, i2, bType, patt))
+        tmp.append((i1, i2, bType, patt))
+    bondMatchers.append(tmp)
 
 
 reactions = tuple([[Reactions.ReactionFromSmarts(y) for y in x] for x in smartsGps])
@@ -301,10 +303,9 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
             i1 = letter.sub('', i1)
             i2 = letter.sub('', i2)
             for match in matches:
-                if match not in bondsDone:
-                    if (match[1], match[0]) not in bondsDone:
-                        bondsDone.add(match)
-                        yield (((match[0], match[1]), (i1, i2)))
+                if match not in bondsDone and (match[1], match[0]) not in bondsDone:
+                    bondsDone.add(match)
+                    yield (((match[0], match[1]), (i1, i2)))
 
 
 def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
@@ -377,6 +378,7 @@ def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
         if mol.GetNumConformers():
             dummyPositions.append((idxa, ib))
             dummyPositions.append((idxb, ia))
+    
     res = eMol.GetMol()
     if sanitize:
         Chem.SanitizeMol(res)
@@ -481,7 +483,8 @@ def BRICSDecompose(mol, allNodes=None, minFragmentSize=1, onlyUseReactions=None,
                 for prodSeq in ps:
                     seqOk = True
                     # we want to disqualify small fragments, so sort the product sequence by size
-                    tSeq = [(prod.GetNumAtoms(onlyExplicit=True), idx) for idx, prod in enumerate(prodSeq)]
+                    tSeq = [(prod.GetNumAtoms(onlyExplicit=True), idx) 
+                            for idx, prod in enumerate(prodSeq)]
                     tSeq.sort()
                     for nats, idx in tSeq:
                         prod = prodSeq[idx]
@@ -516,9 +519,11 @@ def BRICSDecompose(mol, allNodes=None, minFragmentSize=1, onlyUseReactions=None,
             return activePool.values()
         else:
             return set(activePool.keys())
-    if returnMols:
-        return foundMols.values()
-    return allNodes
+    else:
+        if returnMols:
+            return foundMols.values()
+        else:
+            return allNodes
 
 
 dummyPattern = Chem.MolFromSmiles('[*]')

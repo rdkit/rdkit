@@ -441,10 +441,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(list(EnumerateStereoisomers(mol, options=opts))), 2)
 
   def testShorcutImport(self):
-    """ Borrow test in testTryEmbeddingManyChirals 
-        See here if needed: https://stackoverflow.com/questions/4319825/python-unittest-opposite-of-assertraises
-
-    """
+    """ Borrow test in testTryEmbeddingManyChirals """
     smiles = "C1" + "C(Cl)(Br)" * 40 + "C1"
     mol = Chem.MolFromSmiles(smiles)
     try:
@@ -453,8 +450,7 @@ class TestCase(unittest.TestCase):
       self.fail(e)
     
     try:
-      tempV = AllChem.EnumerateStereoisomers(mol, options=opts)
-      self.assertEqual(len(list(tempV)), 2)
+      self.assertEqual(len(list(AllChem.EnumerateStereoisomers(mol, options=opts))), 2)
     except AttributeError as e:
       self.fail(e)
 

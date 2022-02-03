@@ -175,8 +175,8 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
                 act = int(mol.GetProp(actName))
             else:
                 act = acts[i - 1]
-            fp_OnBits = fpgen.GetFPForMol(mol, catalog).GetOnBits()
-            obls.append([x for x in fp_OnBits])
+            fp = fpgen.GetFPForMol(mol, catalog)
+            obls.append([x for x in fp.GetOnBits()])
             for j in range(nBits):
                 resTbl[j, 0, act] += 1
             for id_ in obls[i - 1]:
@@ -284,7 +284,7 @@ def CalcGains(suppl, catalog, topN=-1, actName='', acts=None, nActs=2, reportFre
                 raise KeyError(actName)
         else:
             act = acts[i]
-        if i != 0 and not i % reportFreq:
+        if i and not i % reportFreq:
             if nMols > 0:
                 message(f'Done {i} of {nMols}.\n')
             else:
@@ -360,7 +360,7 @@ def ProcessGainsData(inF, delim=',', idCol=0, gainCol=1):
 
     """
     res = []
-    inF.readline()
+    _ = inF.readline()
     for line in inF:
         splitL = line.strip().split(delim)
         res.append((splitL[idCol], float(splitL[gainCol])))

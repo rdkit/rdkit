@@ -133,35 +133,33 @@ def FindMolChiralCenters(mol, force: bool = True, includeUnassigned: bool = Fals
       if atom.HasProp('_CIPCode'):
         centers.append((atom.GetIdx(), atom.GetProp('_CIPCode')))
       elif includeUnassigned and atom.HasProp('_ChiralityPossible'):
-        centers.append((atom.GetIdx(), '?'))
-    return centers
+        centers.append((atom.GetIdx(), '?')) 
+  else:
+    itms = FindPotentialStereo(mol)
+    if includeCIP:
+      atomsToLabel = []
+      bondsToLabel = []
+      for si in itms:
+        if si.type == StereoType.Atom_Tetrahedral:
+          atomsToLabel.append(si.centeredOn)
+        elif si.type == StereoType.Bond_Double:
+          bondsToLabel.append(si.centeredOn)
+        AssignCIPLabels(mol, atomsToLabel=atomsToLabel, bondsToLabel=bondsToLabel)
   
-  itms = FindPotentialStereo(mol)
-  if includeCIP:
-    atomsToLabel = []
-    bondsToLabel = []
     for si in itms:
       if si.type == StereoType.Atom_Tetrahedral:
-        atomsToLabel.append(si.centeredOn)
-      elif si.type == StereoType.Bond_Double:
-        bondsToLabel.append(si.centeredOn)
-      AssignCIPLabels(mol, atomsToLabel=atomsToLabel, bondsToLabel=bondsToLabel)
-  
-  for si in itms:
-    if si.type == StereoType.Atom_Tetrahedral:
-      if includeUnassigned or si.specified == StereoSpecified.Specified:
-        idx = si.centeredOn
-        atm = mol.GetAtomWithIdx(idx)
-        if includeCIP and atm.HasProp("_CIPCode"):
-          code = atm.GetProp("_CIPCode")
-        else:
-          if si.specified:
-            code = str(si.descriptor)
+        if includeUnassigned or si.specified == StereoSpecified.Specified:
+          idx = si.centeredOn
+          atm = mol.GetAtomWithIdx(idx)
+          if includeCIP and atm.HasProp("_CIPCode"):
+            code = atm.GetProp("_CIPCode")
           else:
-            code = '?'
-            atm.SetIntProp('_ChiralityPossible', 1)
+            if si.specified:
+              code = str(si.descriptor)
+            else:
+              code = '?'
+              atm.SetIntProp('_ChiralityPossible', 1)
         centers.append((idx, code))
-
   return centers
 
 

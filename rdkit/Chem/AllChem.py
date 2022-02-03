@@ -329,20 +329,18 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
       pIdx = ff.AddExtraPoint(p.x, p.y, p.z, fixed=True) - 1
       ff.AddDistanceConstraint(pIdx, match[i], 0, 0, 100.)
   
-  # Minimize the force field at most 4 times and realign/rotate the embedded conformation onto the core
-  # If useTethers, we allow larger tolerance, otherwise just default
-  def minimizeForceField(ForceField, allowTethers: bool) -> bool:
-    if allowTethers:
-      return ForceField.Minimize(forceTol=1e-3, energyTol=1e-4) 
-    return ForceField.Minimize()
+  # Minimize the force field at most 5 times and realign/rotate the embedded conformation 
+  # onto the core. If useTethers, we allow larger tolerance, otherwise just default 
+  ForceFieldArgs = {}
+  if useTethers:
+    ForceFieldArgs = {'forceTol': 1e-3, 'energyTol': 1e-4}
   
   ff.Initialize()
-  n = 4
-  more = minimizeForceField(ff, allowTethers=useTethers)
-  while more and n:
-    more = minimizeForceField(ff, allowTethers=useTethers)
-    n -= 1
-  
+  for _ in range(5):
+    more = ForceField.Minimize(**ForceFieldArgs)
+    if not more:
+      break
+
   rms = AlignMol(mol, core, atomMap=algMap)
   mol.SetProp('EmbedRMS', str(rms))
   return mol

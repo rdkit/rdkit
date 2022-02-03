@@ -157,7 +157,7 @@ class TestCase(unittest.TestCase):
     for i, mol in enumerate(suppl):
       fp = fpgen.GetFPForMol(mol, self.fragCat)
       for bit in ranges[i]:
-        assert fp[bit], f'{Chem.MolToSmiles(mol)}: {str(bit)}'
+        assert fp[bit], f'{Chem.MolToSmiles(mol)}: {bit}'
 
   def test6Builder(self):
     suppl = Chem.SmilesMolSupplierFromText('\n'.join(self.smiList2), ',', 0, -1, 0)
