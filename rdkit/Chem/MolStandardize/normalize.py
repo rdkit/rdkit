@@ -29,13 +29,13 @@ class Normalization(object):
         :param string name: A name for this Normalization
         :param string transform: Reaction SMARTS to define the transformation.
         """
-        log.debug('Initializing Normalization: %s', name)
+        log.debug(f'Initializing Normalization: {name}')
         self.name = name
         self.transform_str = transform
 
     @memoized_property
     def transform(self):
-        log.debug('Loading Normalization transform: %s', self.name)
+        log.debug(f'Loading Normalization transform: {self.name}')
         return AllChem.ReactionFromSmarts(str(self.transform_str))
 
     def __repr__(self):
@@ -158,14 +158,14 @@ class Normalizer(object):
                 product = self._apply_transform(mol, normalization.transform)
                 if product:
                     # If transform changed mol, go back to first rule and apply each again
-                    log.info('Rule applied: %s', normalization.name)
+                    log.info(f'Rule applied: {normalization.name}')
                     mol = product
                     break
             else:
                 # For loop finishes normally, all applicable transforms have been applied
                 return mol
         # If we're still going after max_restarts (default 200), stop and warn, but still return the mol
-        log.warning('Gave up normalization after %s restarts', self.max_restarts)
+        log.warning(f'Gave up normalization after {self.max_restarts} restarts')
         return mol
 
     def _apply_transform(self, mol, rule):
