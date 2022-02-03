@@ -799,8 +799,13 @@ of the replacements argument.",
       "construct a ChemicalReaction from a string in MDL rxn format",
       python::return_value_policy<python::manage_new_object>());
   python::def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
-              (python::arg("reaction"), python::arg("separateAgents") = false),
+              (python::arg("reaction"), python::arg("separateAgents") = false,
+               python::arg("forceV3000") = false),
               "construct a string in MDL rxn format for a ChemicalReaction");
+  python::def(
+      "ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,
+      (python::arg("reaction"), python::arg("separateAgents") = false),
+      "construct a string in MDL v3000 rxn format for a ChemicalReaction");
 
   python::def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction,
               "construct a ChemicalReaction from metadata in a PNG file",
