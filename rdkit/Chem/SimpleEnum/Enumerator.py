@@ -202,7 +202,7 @@ def EnumerateReaction(
   if nError:
     raise ValueError('bad reaction')
   if len(bbLists) != nReacts:
-    raise ValueError(f'{nReacts} reactants in reaction, {len(bbLists)} bb lists supplied'))
+    raise ValueError(f'{nReacts} reactants in reaction, {len(bbLists)} bb lists supplied')
 
   ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
   if not uniqueProductsOnly:
