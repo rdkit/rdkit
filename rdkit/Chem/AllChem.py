@@ -331,13 +331,12 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
   
   # Minimize the force field at most 5 times and realign/rotate the embedded conformation 
   # onto the core. If useTethers, we allow larger tolerance, otherwise just default 
-  ForceFieldArgs = {}
-  if useTethers:
-    ForceFieldArgs = {'forceTol': 1e-3, 'energyTol': 1e-4}
-  
   ff.Initialize()
   for _ in range(5):
-    more = ForceField.Minimize(**ForceFieldArgs)
+    if useTethers:
+      more = ff.Minimize(forceTol=1e-3, energyTol=1e-4)
+    else:
+      more = ff.Minimize()
     if not more:
       break
 
