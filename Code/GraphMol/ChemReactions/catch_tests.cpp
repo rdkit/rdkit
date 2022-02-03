@@ -1187,11 +1187,16 @@ TEST_CASE("V3K rxn blocks") {
     // clang-format off
     REQUIRE(rxn);
     auto rxnb = ChemicalReactionToV3KRxnBlock(*rxn);
+    bool separateAgents=false;
+    bool forceV3000=true;
+    auto rxnb2 = ChemicalReactionToRxnBlock(*rxn,separateAgents,forceV3000);
+    CHECK(rxnb==rxnb2);
+
     std::unique_ptr<ChemicalReaction> rxn2{RxnBlockToChemicalReaction(rxnb)};
     REQUIRE(rxn2);
     CHECK(rxn->getNumAgentTemplates()==rxn2->getNumAgentTemplates());
     CHECK(rxn->getNumReactantTemplates()==rxn2->getNumReactantTemplates());
-    CHECK(rxn->getNumProductTemplates()==rxn2->getNumProductTemplates());
-    
+    CHECK(rxn->getNumProductTemplates()==rxn2->getNumProductTemplates());   
   }
+
 }
