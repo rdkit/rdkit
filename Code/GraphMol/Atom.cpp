@@ -43,7 +43,7 @@ bool isEarlyAtom(int atomicNum) {
   static const bool table[119] = {
     false, // #0 *
     false, // #1 H
-    true,  // #2 He
+    false,  // #2 He
     true,  // #3 Li
     true,  // #4 Be
     true,  // #5 B
