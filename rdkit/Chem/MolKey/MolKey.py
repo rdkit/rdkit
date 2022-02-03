@@ -316,8 +316,8 @@ def _identify(err, ctab, inchi, stereo_category, extra_structure_desc=None):
   key_string = _get_identification_string(err, ctab, inchi, stereo_category, extra_structure_desc)
   if not key_string:
     return None
-  string = base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode()
-  return f"{MOL_KEY_VERSION}|{string}"
+  hash_key = base64.b64encode(hashlib.md5(key_string.encode('UTF-8')).digest()).decode()
+  return f"{MOL_KEY_VERSION}|{hash_key}"
 
 
 def _get_chiral_identification_string(n_def, n_udf):
