@@ -42,7 +42,7 @@ else:
   rdCoordGen.SetDefaultTemplateFileDir(templDir)
 
 
-def QuickSmartsMatch(smi, sma, unique: bool = True, display: bool = False):
+def QuickSmartsMatch(smi, sma, unique=True, display=False):
   m = MolFromSmiles(smi)
   p = MolFromSmarts(sma)
   res = m.GetSubstructMatches(p, unique)
@@ -56,7 +56,7 @@ def CanonSmiles(smi, useChiral=1):
   return MolToSmiles(m, useChiral)
 
 
-def SupplierFromFilename(fileN, delim: str = '', **kwargs):
+def SupplierFromFilename(fileN, delim='', **kwargs):
   ext = fileN.split('.')[-1].lower()
   if ext == 'sdf':
     suppl = SDMolSupplier(fileN, **kwargs)
@@ -76,8 +76,8 @@ def SupplierFromFilename(fileN, delim: str = '', **kwargs):
   return suppl
 
 
-def _LegacyFindMolChiralCenters(mol, force: bool = True, includeUnassigned: bool = False) -> list:
-  centers: list = []
+def _LegacyFindMolChiralCenters(mol, force=True, includeUnassigned=False):
+  centers = []
   AssignStereochemistry(mol, force=force, flagPossibleStereoCenters=includeUnassigned)
   for atom in mol.GetAtoms():
     if atom.HasProp('_CIPCode'):
@@ -87,8 +87,8 @@ def _LegacyFindMolChiralCenters(mol, force: bool = True, includeUnassigned: bool
   return centers
 
 
-def FindMolChiralCenters(mol, force: bool = True, includeUnassigned: bool = False, includeCIP: bool = True,
-                         useLegacyImplementation: bool = True) -> list:
+def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=True,
+                         useLegacyImplementation=True):
   """
     >>> from rdkit import Chem
     >>> mol = Chem.MolFromSmiles('[C@H](Cl)(F)Br')
@@ -140,7 +140,7 @@ def FindMolChiralCenters(mol, force: bool = True, includeUnassigned: bool = Fals
   if useLegacyImplementation:
     return _LegacyFindMolChiralCenters(mol, force=force, includeUnassigned=includeUnassigned)
   
-  centers: list = []
+  centers = []
   itms = FindPotentialStereo(mol)
   if includeCIP:
     atomsToLabel = []
