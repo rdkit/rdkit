@@ -138,7 +138,7 @@ def FindMolChiralCenters(mol, force: bool = True, includeUnassigned: bool = Fals
 
   """
   if useLegacyImplementation:
-    return _LegacyFindMolChiralCenters(mol, force=force, flagPossibleStereoCenters=includeUnassigned)
+    return _LegacyFindMolChiralCenters(mol, force=force, includeUnassigned=includeUnassigned)
   
   centers: list = []
   itms = FindPotentialStereo(mol)
