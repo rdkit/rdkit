@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2010-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2010-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -40,6 +40,9 @@ RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(const std::string &input,
 RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string &input,
                                          bool acceptSpaces = true);
 
+// parses info from a V3000 CTAB into a molecule
+RDKIT_FILEPARSERS_EXPORT std::string getV3000CTAB(const ROMol &tmol,
+                                                  int confId = -1);
 // reads a line from an MDL v3K CTAB
 RDKIT_FILEPARSERS_EXPORT std::string getV3000Line(std::istream *inStream,
                                                   unsigned int &line);
@@ -56,7 +59,8 @@ RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(
     bool &chiralityPossible, unsigned int &nAtoms, unsigned int &nBonds,
     bool strictParsing = true);
 
-//! finishes up the processing (sanitization, etc.) of a molecule read from CTAB
+//! finishes up the processing (sanitization, etc.) of a molecule read from
+//! CTAB
 RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res,
                                                   bool chiralityPossible,
                                                   bool sanitize, bool removeHs);
@@ -106,7 +110,8 @@ void applyMolListPropToAtoms(ROMol &mol, const std::string &pn,
   }
 }
 
-//! applies all properties matching a particular prefix as an atom property list
+//! applies all properties matching a particular prefix as an atom property
+//! list
 template <typename T>
 void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
                               const std::string missingValueMarker = "n/a") {
@@ -117,8 +122,8 @@ void applyMolListPropsToAtoms(ROMol &mol, const std::string &prefix,
   }
 }
 static const std::string atomPropPrefix = "atom.";
-//! if the property name matches our rules for atom property lists, we'll apply
-//! it to the atoms
+//! if the property name matches our rules for atom property lists, we'll
+//! apply it to the atoms
 inline void processMolPropertyList(
     ROMol &mol, const std::string pn,
     const std::string &missingValueMarker = "n/a") {
@@ -145,8 +150,8 @@ inline void processMolPropertyList(
     }
   }
 }
-//! loops over all properties and applies the ones that match the rules for atom
-//! property lists to the atoms
+//! loops over all properties and applies the ones that match the rules for
+//! atom property lists to the atoms
 inline void processMolPropertyLists(
     ROMol &mol, const std::string &missingValueMarker = "n/a") {
   for (auto pn : mol.getPropList()) {

@@ -140,11 +140,25 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
 /*!
    \param rxn            chemical reaction
 
-   \param separateAgents flag to decide if agents were put in a separate block,
-                         otherwise they were included in the reactants block
+   \param separateAgents flag to decide if agents are put in a separate block,
+                         otherwise they are included in the reactants block
                          (default)
+
+   \param forceV3000     flag to cause the V3000 format to be used instead of
+                         V2000
  */
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnBlock(
+    const ChemicalReaction &rxn, bool separateAgents = false,
+    bool forceV3000 = false);
+//! returns an V3000 rxn block for a reaction
+/*!
+   \param rxn            chemical reaction
+
+   \param separateAgents flag to decide if agents are put in a separate block,
+                         otherwise they are included in the reactants block
+                         (default)
+*/
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToV3KRxnBlock(
     const ChemicalReaction &rxn, bool separateAgents = false);
 
 //@}

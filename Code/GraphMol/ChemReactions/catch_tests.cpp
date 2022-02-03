@@ -1178,3 +1178,20 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
   }
 #endif
 }
+
+TEST_CASE("V3K rxn blocks") {
+  SECTION("writing basics") {
+    // clang-format off
+    auto rxn =
+        "[cH:1]1[cH:2][cH:3][cH:4][cH:5][c:6]1-[Br].[#6:7]B(O)O>>[cH:1]1[cH:2][cH:3][cH:4][cH:5][c:6]1-[#6:7]"_rxnsmarts;
+    // clang-format off
+    REQUIRE(rxn);
+    auto rxnb = ChemicalReactionToV3KRxnBlock(*rxn);
+    std::unique_ptr<ChemicalReaction> rxn2{RxnBlockToChemicalReaction(rxnb)};
+    REQUIRE(rxn2);
+    CHECK(rxn->getNumAgentTemplates()==rxn2->getNumAgentTemplates());
+    CHECK(rxn->getNumReactantTemplates()==rxn2->getNumReactantTemplates());
+    CHECK(rxn->getNumProductTemplates()==rxn2->getNumProductTemplates());
+    
+  }
+}

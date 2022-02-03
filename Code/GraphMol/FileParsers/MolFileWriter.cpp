@@ -1155,7 +1155,74 @@ void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
     res += "M  V30 END COLLECTION\n";
   }
 }
+namespace FileParserUtils {
+std::string getV3000CTAB(const ROMol &tmol, int confId) {
+  auto nAtoms = tmol.getNumAtoms();
+  auto nBonds = tmol.getNumBonds();
+  const auto &sgroups = getSubstanceGroups(tmol);
+  auto nSGroups = sgroups.size();
 
+  unsigned chiralFlag = 0;
+  tmol.getPropIfPresent(common_properties::_MolFileChiralFlag, chiralFlag);
+
+  const Conformer *conf = nullptr;
+  if (confId >= 0 || tmol.getNumConformers()) {
+    conf = &(tmol.getConformer(confId));
+  }
+
+  std::string res = "M  V30 BEGIN CTAB\n";
+  std::stringstream ss;
+  ss << "M  V30 COUNTS " << nAtoms << " " << nBonds << " " << nSGroups << " 0 "
+     << chiralFlag << "\n";
+  //      |
+  //      num3DConstraints (not implemented)
+
+  res += ss.str();
+
+  boost::dynamic_bitset<> queryListAtoms(tmol.getNumAtoms());
+  res += "M  V30 BEGIN ATOM\n";
+  for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
+       atomIt != tmol.endAtoms(); ++atomIt) {
+    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms);
+    res += "\n";
+  }
+  res += "M  V30 END ATOM\n";
+
+  if (tmol.getNumBonds()) {
+    res += "M  V30 BEGIN BOND\n";
+    INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
+    for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
+         bondIt != tmol.endBonds(); ++bondIt) {
+      res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
+      res += "\n";
+    }
+    res += "M  V30 END BOND\n";
+  }
+
+  if (nSGroups > 0) {
+    res += "M  V30 BEGIN SGROUP\n";
+    unsigned int idx = 0;
+    for (const auto &sgroup : sgroups) {
+      res += GetV3000MolFileSGroupLines(++idx, sgroup);
+    }
+    res += "M  V30 END SGROUP\n";
+  }
+
+  if (tmol.hasProp(common_properties::molFileLinkNodes)) {
+    auto pval = tmol.getProp<std::string>(common_properties::molFileLinkNodes);
+
+    std::vector<std::string> linknodes;
+    boost::split(linknodes, pval, boost::is_any_of("|"));
+    for (const auto &linknode : linknodes) {
+      res += "M  V30 LINKNODE " + linknode + "\n";
+    }
+  }
+  appendEnhancedStereoGroups(res, tmol);
+
+  res += "M  V30 END CTAB\n";
+  return res;
+}
+}  // namespace FileParserUtils
 //------------------------------------------------
 //
 //  gets a mol block as a string
@@ -1280,57 +1347,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     // FIX: R-group logic, SGroups and 3D features etc.
   } else {
     // V3000 output.
-    res += "M  V30 BEGIN CTAB\n";
-    std::stringstream ss;
-    ss << "M  V30 COUNTS " << nAtoms << " " << nBonds << " " << nSGroups
-       << " 0 " << chiralFlag << "\n";
-    //      |
-    //      num3DConstraints (not implemented)
-
-    res += ss.str();
-
-    res += "M  V30 BEGIN ATOM\n";
-    for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
-         atomIt != tmol.endAtoms(); ++atomIt) {
-      res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms);
-      res += "\n";
-    }
-    res += "M  V30 END ATOM\n";
-
-    if (tmol.getNumBonds()) {
-      res += "M  V30 BEGIN BOND\n";
-      INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
-      for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
-           bondIt != tmol.endBonds(); ++bondIt) {
-        res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
-        res += "\n";
-      }
-      res += "M  V30 END BOND\n";
-    }
-
-    if (nSGroups > 0) {
-      res += "M  V30 BEGIN SGROUP\n";
-      unsigned int idx = 0;
-      for (const auto &sgroup : sgroups) {
-        res += GetV3000MolFileSGroupLines(++idx, sgroup);
-      }
-      res += "M  V30 END SGROUP\n";
-    }
-
-    if (tmol.hasProp(common_properties::molFileLinkNodes)) {
-      auto pval =
-          tmol.getProp<std::string>(common_properties::molFileLinkNodes);
-
-      std::vector<std::string> linknodes;
-      boost::split(linknodes, pval, boost::is_any_of("|"));
-      for (const auto &linknode : linknodes) {
-        res += "M  V30 LINKNODE " + linknode + "\n";
-      }
-    }
-
-    appendEnhancedStereoGroups(res, tmol);
-
-    res += "M  V30 END CTAB\n";
+    res += FileParserUtils::getV3000CTAB(tmol, confId);
   }
   res += "M  END\n";
   return res;
