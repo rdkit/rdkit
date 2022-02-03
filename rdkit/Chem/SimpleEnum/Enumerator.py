@@ -142,7 +142,7 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
   KeyError: 'carboxyliccaid,acidchloride'
   >>> rxn = rdChemReactions.ChemicalReaction()
   >>> rxn.Initialize()
-  >>> nWarn,nError,nReacts,nProds,reactantLabels = PreprocessReaction(rxn)
+  >>> nWarn, nError, nReacts, nProds, reactantLabels = PreprocessReaction(rxn)
   >>> reactantLabels
   ()
   >>> reactantLabels == ()
@@ -164,15 +164,15 @@ def EnumerateReaction(
     funcGroupFilename=os.path.join(RDConfig.RDDataDir, 'Functional_Group_Hierarchy.txt'),
     propName='molFileValue'):
   """
-  >>> testFile = os.path.join(RDConfig.RDCodeDir,'Chem','SimpleEnum','test_data','boronic1.rxn')
+  >>> testFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'SimpleEnum', 'test_data', 'boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
   >>> rxn.Initialize()
-  >>> reacts1=['Brc1ccccc1','Brc1ncccc1','Brc1cnccc1']
-  >>> reacts1=[Chem.MolFromSmiles(x) for x in reacts1]
-  >>> reacts2=['CCB(O)O','CCCB(O)O']
-  >>> reacts2=[Chem.MolFromSmiles(x) for x in reacts2]
+  >>> reacts1 = ['Brc1ccccc1', 'Brc1ncccc1', 'Brc1cnccc1']
+  >>> reacts1 = [Chem.MolFromSmiles(x) for x in reacts1]
+  >>> reacts2 = ['CCB(O)O', 'CCCB(O)O']
+  >>> reacts2 = [Chem.MolFromSmiles(x) for x in reacts2]
 
-  >>> prods = EnumerateReaction(rxn,(reacts1,reacts2))
+  >>> prods = EnumerateReaction(rxn, (reacts1, reacts2))
   >>> prods = list(prods)
 
   This is a bit nasty because of the symmetry of the boronic acid:
@@ -204,18 +204,20 @@ def EnumerateReaction(
   if len(bbLists) != nReacts:
     raise ValueError(f'{nReacts} reactants in reaction, {len(bbLists)} bb lists supplied')
 
+  def _uniqueOnly(lst):
+    seen = []
+    for entry in lst:
+      if entry:
+        smi = '.'.join(sorted([Chem.MolToSmiles(x, True) for x in entry]))
+        if smi not in seen:
+          seen.append(smi)
+          yield entry
+
   ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
   if not uniqueProductsOnly:
     return ps
   
-  seen = []
-  for entry in ps:
-    if entry:
-      smi = '.'.join(sorted([Chem.MolToSmiles(x) for x in entry]))
-      if smi not in seen:
-        seen.append(smi)
-        yield entry
-
+  return _uniqueOnly(ps)
 
 # ------------------------------------
 #
