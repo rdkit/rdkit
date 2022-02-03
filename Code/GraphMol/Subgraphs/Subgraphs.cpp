@@ -636,13 +636,9 @@ PATH_TYPE findAtomEnvironmentOfRadiusMToN(
   }
 
   PATH_TYPE path;
-  if (smallRadius == 0) {
+  if (smallRadius == 0 || largeRadius == 0 || smallRadius == largeRadius) {
+    if (smallRadius == largeRadius) { largeRadius = 0; }
     path = findAtomEnvironmentOfRadiusN(mol, largeRadius, rootedAtAtom, atomMap, useHs, true);
-    atomMap.erase(rootedAtAtom);
-    return path;
-  }
-  if (largeRadius == 0 || smallRadius == largeRadius) {
-    path = findAtomEnvironmentOfRadiusN(mol, 0, rootedAtAtom, atomMap, useHs, true);
     atomMap.erase(rootedAtAtom);
     return path;
   }
