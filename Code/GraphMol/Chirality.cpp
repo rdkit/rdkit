@@ -1826,6 +1826,28 @@ INT_VECT findStereoAtoms(const Bond *bond) {
   }
 }
 
+void cleanupStereoGroups(ROMol &mol) {
+  std::vector<StereoGroup> newsgs;
+  for (auto sg : mol.getStereoGroups()) {
+    std::vector<Atom *> okatoms;
+    bool keep = true;
+    for (const auto atom : sg.getAtoms()) {
+      if (atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED) {
+        keep = false;
+      } else {
+        okatoms.push_back(atom);
+      }
+    }
+
+    if (keep) {
+      newsgs.push_back(sg);
+    } else if (!okatoms.empty()) {
+      newsgs.emplace_back(sg.getGroupType(), std::move(okatoms));
+    }
+  }
+  mol.setStereoGroups(std::move(newsgs));
+}
+
 }  // namespace Chirality
 
 namespace MolOps {
@@ -2075,6 +2097,7 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
       }
 #endif
     }
+    Chirality::cleanupStereoGroups(mol);
   }
   mol.setProp(common_properties::_StereochemDone, 1, true);
 

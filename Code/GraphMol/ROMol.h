@@ -699,6 +699,15 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return d_stereo_groups;
   }
 
+  //! Sets groups of atoms with relative stereochemistry
+  /*!
+    \param stereo_groups the new set of stereo groups. All will be replaced.
+
+    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
+    file format. stereo_groups should be std::move()ed into this function.
+  */
+  void setStereoGroups(std::vector<StereoGroup> stereo_groups);
+
  private:
   MolGraph d_graph;
   ATOM_BOOKMARK_MAP d_atomBookmarks;
@@ -750,14 +759,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   */
   unsigned int addBond(Bond *bond, bool takeOwnership = false);
 
-  //! Sets groups of atoms with relative stereochemistry
-  /*!
-    \param stereo_groups the new set of stereo groups. All will be replaced.
-
-    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
-    file format. stereo_groups should be std::move()ed into this function.
-  */
-  void setStereoGroups(std::vector<StereoGroup> stereo_groups);
   //! adds a Bond to our collection
   /*!
     \param bond          pointer to the Bond to add
