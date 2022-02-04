@@ -7,8 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -228,5 +226,33 @@ TEST_CASE("Github issues", "[molhash]") {
     REQUIRE(mol);
     auto hsh = MolHash::MolHash(mol.get(), MolHash::HashFunction::MolFormula);
     CHECK(hsh == "C2H6Cl");
+  }
+}
+
+TEST_CASE("MolHash with CX extensions", "[molhash]") {
+  SECTION("basics") {
+    auto mol =
+        "C[C@@H](O)[C@@H](C)[C@@H](C)C[C@H](C1=CN=CN1)C1=CNC=N1 "
+        "|o1:8,5,&1:1,3,r,c:11,18,t:9,15|"_smiles;
+    REQUIRE(mol);
+
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer);
+      CHECK(
+          hsh ==
+          "C[C@@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@H](C)[C@@H](C)"
+          "[O]_3_0");
+    }
+    {
+      RWMol cp(*mol);
+
+      auto hsh =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer, true);
+      CHECK(
+          hsh ==
+          "C[C@@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@H](C)[C@@H](C)"
+          "[O]_3_0 |o1:1,&1:14,16|");
+    }
   }
 }
