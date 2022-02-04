@@ -1739,22 +1739,6 @@ TEST_CASE("StereoGroup Testing") {
   }
 }
 
-TEST_CASE("replaceAtom and StereoGroups") {
-  SECTION("basics") {
-    auto mol = "C[C@](O)(Cl)[C@H](F)Cl |o1:1,4|"_smiles;
-    REQUIRE(mol);
-    CHECK(mol->getStereoGroups().size() == 1);
-    CHECK(mol->getStereoGroups()[0].getAtoms().size() == 2);
-    CHECK(mol->getStereoGroups()[0].getAtoms()[0] == mol->getAtomWithIdx(1));
-
-    Atom acp(*mol->getAtomWithIdx(1));
-    mol->replaceAtom(1, &acp);
-    CHECK(mol->getStereoGroups().size() == 1);
-    CHECK(mol->getStereoGroups()[0].getAtoms().size() == 2);
-    CHECK(mol->getStereoGroups()[0].getAtoms()[0] == mol->getAtomWithIdx(1));
-  }
-}
-
 TEST_CASE("Removing stereogroups from unspecified atoms") {
   SECTION("basics") {
     auto mol = "C[C@](O)(Cl)F |o1:1|"_smiles;
@@ -1775,5 +1759,21 @@ TEST_CASE("Removing stereogroups from unspecified atoms") {
     CHECK(mol->getStereoGroups().size() == 1);
     CHECK(mol->getStereoGroups()[0].getAtoms().size() == 1);
     CHECK(mol->getStereoGroups()[0].getAtoms()[0]->getIdx() == 4);
+  }
+}
+
+TEST_CASE("replaceAtom and StereoGroups") {
+  SECTION("basics") {
+    auto mol = "C[C@](O)(Cl)[C@H](F)Cl |o1:1,4|"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getStereoGroups().size() == 1);
+    CHECK(mol->getStereoGroups()[0].getAtoms().size() == 2);
+    CHECK(mol->getStereoGroups()[0].getAtoms()[0] == mol->getAtomWithIdx(1));
+
+    Atom acp(*mol->getAtomWithIdx(1));
+    mol->replaceAtom(1, &acp);
+    CHECK(mol->getStereoGroups().size() == 1);
+    CHECK(mol->getStereoGroups()[0].getAtoms().size() == 2);
+    CHECK(mol->getStereoGroups()[0].getAtoms()[0] == mol->getAtomWithIdx(1));
   }
 }
