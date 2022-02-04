@@ -25,6 +25,10 @@ void Strip(RWMol *mol, unsigned int striptype) {
     for (auto aptr : mol->atoms()) {
       aptr->setChiralTag(RDKit::Atom::CHI_UNSPECIFIED);
     }
+    if (!mol->getStereoGroups().empty()) {
+      std::vector<StereoGroup> no_sgs;
+      mol->setStereoGroups(std::move(no_sgs));
+    }
   }
   if (striptype & static_cast<unsigned>(StripType::BondStereo)) {
     for (auto bptr : mol->bonds()) {
