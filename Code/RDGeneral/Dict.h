@@ -122,7 +122,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     if (_hasNonPodData) {
       reset();
     }
-    _hasNonPodData = std::move(other._hasNonPodData);
+    _hasNonPodData = other._hasNonPodData;
+    other._hasNonPodData = false;
     _data = std::move(other._data);
     return *this;
   }

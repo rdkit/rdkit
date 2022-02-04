@@ -98,8 +98,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   SubstanceGroup &operator=(const SubstanceGroup &other) = default;
 
   SubstanceGroup(SubstanceGroup &&other) noexcept : RDProps(std::move(other)) {
-    dp_mol = other.dp_mol;
-    other.dp_mol = nullptr;
+    dp_mol = std::exchange(other.dp_mol, nullptr);
     d_atoms = std::move(other.d_atoms);
     d_patoms = std::move(other.d_patoms);
     d_bonds = std::move(other.d_bonds);
@@ -113,8 +112,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
       return *this;
     }
     RDProps::operator=(std::move(other));
-    dp_mol = other.dp_mol;
-    other.dp_mol = nullptr;
+    dp_mol = std::exchange(other.dp_mol, nullptr);
     d_atoms = std::move(other.d_atoms);
     d_patoms = std::move(other.d_patoms);
     d_bonds = std::move(other.d_bonds);
