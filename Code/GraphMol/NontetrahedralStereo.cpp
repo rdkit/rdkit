@@ -511,48 +511,14 @@ unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe) {
   boost::dynamic_bitset<> swapped(probe.size());
   for (unsigned int i = 0; i < probePerm.size() - 1; ++i) {
     auto pval = probePerm[i];
-    std::cerr << "  check: " << i << " " << pval << " -> " << nbrPerm[i]
-              << std::endl;
-
     if (nbrPerm[i] == pval) {
       continue;
     }
     auto tgt = std::find(nbrPerm.begin() + i, nbrPerm.end(), pval);
     TEST_ASSERT(tgt != nbrPerm.end());
-    std::cerr << "  SWAP: " << i << " " << nbrPerm[i] << " -> " << *tgt << " , "
-              << tgt - nbrPerm.begin() << " => "
-              << swap_func(perm, i, tgt - nbrPerm.begin()) << std::endl;
     perm = swap_func(perm, i, tgt - nbrPerm.begin());
     std::swap(*tgt, nbrPerm[i]);
   }
-
-  std::cerr << "FINAL ";
-  for (unsigned int i = 0; i < nbrPerm.size(); ++i) {
-    std::cerr << probePerm[i] << ":" << nbrPerm[i] << " ";
-  }
-  std::cerr << std::endl;
-  // nbrIdx = 0;
-  // for (auto v : probe) {
-  //   // if (v == probe.back()) {
-  //   //   break;
-  //   // }
-  //   auto ov = order[v];
-  //   std::cerr << v << " " << nbrIdx << " " << ov << std::endl;
-  //   if (ov < 0) {
-  //     return 0;
-  //   }
-  //   if (nbrPerm[nbrIdx] == ov || swapped[ov]) {
-  //     ++nbrIdx;
-  //     continue;
-  //   }
-  //   // std::cerr << v << " " << nbrIdx << " " << ov << " "
-  //   //           << swap_func(perm, nbrIdx, ov) << std::endl;
-  //   std::cerr << " -> " << swap_func(perm, nbrIdx, ov) << std::endl;
-  //   perm = swap_func(perm, static_cast<unsigned int>(ov), nbrPerm[nbrIdx]);
-  //   nbrPerm[ov] = nbrIdx;
-  //   // swapped.set(nbrIdx);
-  //   ++nbrIdx;
-  // }
 
   return perm;
 }

@@ -2176,7 +2176,7 @@ TEST_CASE("getChiralPermutation", "[nontetrahedral]") {
     REQUIRE(m);
     const auto atm = m->getAtomWithIdx(3);
     for (const auto &pr : data) {
-      std::cerr << "---- " << pr.second << std::endl;
+      // std::cerr << "---- " << pr.second << std::endl;
       CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
     }
   }
@@ -2193,7 +2193,7 @@ TEST_CASE("getChiralPermutation", "[nontetrahedral]") {
     REQUIRE(m);
     const auto atm = m->getAtomWithIdx(3);
     for (const auto &pr : data) {
-      std::cerr << "---- " << pr.second << std::endl;
+      // std::cerr << "---- " << pr.second << std::endl;
       CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
     }
   }
@@ -2251,7 +2251,7 @@ TEST_CASE("getChiralPermutation", "[nontetrahedral]") {
     REQUIRE(m);
     const auto atm = m->getAtomWithIdx(3);
     for (const auto &pr : data) {
-      std::cerr << "---- " << pr.second << std::endl;
+      // std::cerr << "---- " << pr.second << std::endl;
       CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
     }
   }
