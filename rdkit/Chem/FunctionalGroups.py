@@ -132,7 +132,7 @@ def BuildFuncGroupHierarchy(fileNm=None, data=None, force=False):
         else:
             res.append(node)
         groupDefns[label] = node
-    hierarchy = res[:]
+    hierarchy = res.copy()
     return res
 
 
@@ -155,7 +155,7 @@ def _SetNodeBits(mol, node, res, idx):
 
 
 def CreateMolFingerprint(mol, hierarchy):  
-    totL = int(sum(len(entry) for entry in hierarchy)) 
+    totL = sum(len(entry) for entry in hierarchy)
     res = [0] * totL
     idx = 0
     for entry in hierarchy:
