@@ -82,12 +82,9 @@ TEST_CASE("non-canonical non-tetrahedral output") {
   SECTION("no reordering") {
     // clang-format off
     std::vector<std::string> data = {
-        "C[Pt@SP1](F)(O)Cl",
-        "C[Pt@SP2](F)(O)Cl",
-        "C[Pt@TB1](F)(O)(N)Cl",
-        "C[Pt@TB2](F)(O)(N)Cl",
-        "C[Pt@OH1](F)(O)(N)(Br)Cl",
-        "C[Pt@OH2](F)(O)(N)(Br)Cl",
+        "C[Pt@SP1](F)(O)Cl",        "C[Pt@SP2](F)(O)Cl",
+        "C[Pt@TB1](F)(O)(N)Cl",     "C[Pt@TB2](F)(O)(N)Cl",
+        "C[Pt@OH1](F)(O)(N)(Br)Cl", "C[Pt@OH2](F)(O)(N)(Br)Cl",
     };
     // clang-format on
     for (const auto &smi : data) {
@@ -98,6 +95,26 @@ TEST_CASE("non-canonical non-tetrahedral output") {
       // be sure to skip stereo assignment
       m->setProp(common_properties::_StereochemDone, true);
       CHECK(MolToSmiles(*m, writeps) == smi);
+    }
+  }
+  SECTION("reordering") {
+    // clang-format off
+    std::vector<std::pair<std::string,std::string>> data = {
+        {"F[Pt@SP1](C)(O)Cl","C[Pt@SP3](O)(F)Cl",},
+        {"F[Pt@SP2](C)(O)Cl","C[Pt@SP1](O)(F)Cl"},
+        {"S[As@TB1](F)(Cl)(Br)N","N[As@TB6](F)(S)(Cl)Br"},
+        {"C[Pt@OH1](F)(O)(N)(Br)Cl","C[Pt@OH16](N)(O)(F)(Cl)Br"},
+    };
+    // clang-format on
+    for (const auto &pr : data) {
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first)};
+      REQUIRE(m);
+      // SmilesWriteParams writeps;
+      // writeps.canonical = false;
+      // be sure to skip stereo assignment
+      // m->setProp(common_properties::_StereochemDone, true);
+      std::cerr << " start: " << pr.first << std::endl;
+      CHECK(MolToSmiles(*m) == pr.second);
     }
   }
 }
