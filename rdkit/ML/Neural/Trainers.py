@@ -119,7 +119,7 @@ class BackProp(Trainer):
       # return the RMS error from the OLD network
     return numpy.sqrt(errVect * errVect)[0]
 
-  def TrainOnLine(self, examples, net, maxIts: int = 5000, errTol: float = 0.1, useAvgErr=1, silent=0):
+  def TrainOnLine(self, examples, net, maxIts=5000, errTol=0.1, useAvgErr=1, silent=0):
     """ carries out online training of a neural net
 
       The definition of online training is that the network is updated after

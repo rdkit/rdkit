@@ -13,7 +13,7 @@ from rdkit.ML.Data import SplitData
 import math
 
 
-def CrossValidate(net, testExamples, tolerance: float, appendExamples=0):
+def CrossValidate(net, testExamples, tolerance, appendExamples=0):
   """ Determines the classification error for the testExamples
     **Arguments**
 
@@ -98,7 +98,7 @@ def CrossValidationDriver(examples, attrs=[], nPossibleVals=[], holdOutFrac=.3, 
 
   nTrain = len(trainExamples)
   if not silent:
-    print('Training with %d examples' % (nTrain))
+    print(f'Training with {nTrain} examples')
 
   nInput = len(examples[0]) - 1
   nOutput = 1
