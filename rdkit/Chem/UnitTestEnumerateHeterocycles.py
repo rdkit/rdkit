@@ -25,15 +25,15 @@ def check_smiles(smiles):
 
 def assert_valid_change(orig_can_smi, smiles):
     orig_mol = Chem.MolFromSmiles(orig_can_smi)
-    assert orig_can_smi != smiles, "%s != %s" % (orig_can_smi, smiles)
-    msg = "%s produced %s" % (orig_can_smi, smiles)
+    assert orig_can_smi != smiles, f"{orig_can_smi} != {smiles}"
+    msg = f"{orig_can_smi} produced {smiles}"
     try:
         mol = check_smiles(smiles)
     except:
         print(msg)
         raise
 
-    assert has_aromatic(mol), 'lost aromaticity when ' + msg
+    assert has_aromatic(mol), f'lost aromaticity when {msg}'
 
     orig_charge = Chem.rdmolops.GetFormalCharge(orig_mol)
     new_charge = Chem.rdmolops.GetFormalCharge(mol)
@@ -49,8 +49,7 @@ def get_unique_products(rxn, mol):
             continue
         uniq_smiles.add(isosmiles)
         newmol = Chem.MolFromSmiles(isosmiles)
-        assert newmol is not None, '%s produced %s when applying' % (Chem.MolToSmiles(mol, isomericSmiles=True),
-                                                                     isosmiles)
+        assert newmol is not None, f'{Chem.MolToSmiles(mol, isomericSmiles=True)} produced {isosmiles} when applying'
         yield Chem.MolToSmiles(newmol, isomericSmiles=True)
 
 
@@ -65,14 +64,14 @@ class TestCase(unittest.TestCase):
             for smiles in row.EXAMPLE.split(','):
                 assert smiles
                 mol = Chem.MolFromSmiles(smiles)
-                assert mol.HasSubstructMatch(substruct), "%s not in %s" % (smarts, smiles)
+                assert mol.HasSubstructMatch(substruct), f"{smarts} not in {smiles}"
 
             for smiles in row.NEGATIVE_EXAMPLE.split(','):
                 if not smiles:
                     continue
 
                 mol = Chem.MolFromSmiles(smiles)
-                assert not mol.HasSubstructMatch(substruct), "%s should not be in %s" % (smarts, smiles)
+                assert not mol.HasSubstructMatch(substruct), f"{smarts} should not be in {smiles}"
 
     def test_at_least_something_matches_every_negative_example(self):
         negative_examples = []
@@ -99,7 +98,7 @@ class TestCase(unittest.TestCase):
                 if mol.HasSubstructMatch(substruct):
                     something_hit = True
                     break
-            assert something_hit, ('nothing matched %s' % Chem.MolToSmiles(mol, isomericSmiles=True))
+            assert something_hit, f'nothing matched {Chem.MolToSmiles(mol, isomericSmiles=True)}'
 
     def test_reactions_modify_examples(self):
         for row in GetHeterocycleReactionSmarts():
@@ -149,7 +148,7 @@ class TestCase(unittest.TestCase):
 
             # record aromatic fragments that no rule changes (possible problems?)
             if not changed and has_aromatic(rdkit_mol):
-                notchanged.writerow({'SMILES' : orig_can_smi, 'TITLE'  : orig_can_smi}) # row
+                notchanged.writerow({'SMILES' : orig_can_smi, 'TITLE'  : orig_can_smi})
 
 # There are only 2 possible 6 member ring 3 heteroatom systems, 3 carbons in each (operating under the assumption we never seen 4+!)
 # c1ccnnn1 => c1ccnnn1, c1cnnnc1, c1nnncc1
@@ -190,7 +189,8 @@ class TestCase(unittest.TestCase):
             rdkit_mol = Chem.MolFromSmiles(smiles)
             num_rdkit_matches = len(rdkit_mol.GetSubstructMatches(smarts_mol))
 
-            assert num_rdkit_matches == expected_num_matches, "expected %u matches in %s, got %u" % (expected_num_matches, smiles, num_rdkit_matches)
+            assert num_rdkit_matches == expected_num_matches, \
+                f"expected {expected_num_matches} matches in {smiles}, got {num_rdkit_matches}"
 
 
     def test_fuzz_atom_mutations(self):
