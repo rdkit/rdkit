@@ -812,9 +812,10 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(
   if (bondDist != python::object()) {
     // make sure the optional argument (bondDist) is actually a list
     python::list typecheck = python::extract<python::list>(bondDist);
+    auto &bondDistList = static_cast<python::list &>(bondDist);
     if (bondDist.attr("__len__")() != 0) { bondDist.attr("clear")(); }
     for (auto bondID: cBondDist) {
-      bondDist.append(bondID);
+      bondDistList.append(bondID);
     }
   }
 
@@ -842,9 +843,10 @@ PATH_TYPE findAtomEnvironmentOfRadiusMToNHelper(
   if (bondDist != python::object()) {
     // make sure the optional argument (bondDist) is actually a list
     python::list typecheck = python::extract<python::list>(bondDist);
+    auto &bondDistList = static_cast<python::list &>(bondDist);
     if (bondDist.attr("__len__")() != 0) { bondDist.attr("clear")(); }
     for (auto bondID: cBondDist) {
-      bondDist.append(bondID);
+      bondDistList.append(bondID);
     }
   }
   return path;
