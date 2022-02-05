@@ -691,7 +691,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusMToN(
                                                  tBondDist, useHs, false);
 
   for (unsigned int i = 0; i < tPath.size(); i++) {
-    if (bondDist[i] > smallRadius) {
+    if (tBondDist[i] > smallRadius) {
       path.push_back(tPath[i]);
       bondDist.push_back(tBondDist[i]);
     }
