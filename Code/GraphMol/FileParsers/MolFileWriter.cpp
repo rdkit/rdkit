@@ -11,6 +11,7 @@
 //     V3000 mol block writer contributed by Jan Holst Jensen
 //
 #include "FileParsers.h"
+#include "FileParserUtils.h"
 #include "MolSGroupWriting.h"
 #include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
