@@ -446,7 +446,7 @@ void test4() {
 
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 0, 2, rootedAtAtom, cAtomMap, bondDist, false, true);
     TEST_ASSERT(pth.size() == 4);
-    TEST_ASSERT(cAtomMap.size() == 3);
+    TEST_ASSERT(cAtomMap.size() == 5);
     TEST_ASSERT(bondDist.size() == pth.size());
     bondDist.clear();
     bondDist.resize(0);
