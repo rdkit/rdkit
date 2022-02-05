@@ -792,12 +792,14 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   return python::tuple(res);
 };
 
-PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radius, 
-                                             unsigned int rootedAtAtom, bool useHs, 
-                                             bool enforceSize, python::object atomMap) {
+PATH_TYPE findAtomEnvironmentOfRadiusNHelper(
+  const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
+  bool useHs, bool enforceSize, python::object atomMap, python::object bondDist) {
   std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
-  PATH_TYPE path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, 
-                                                cAtomMap, useHs, enforceSize);
+  std::vector<unsigned int> cBondDist;
+  PATH_TYPE path;
+  path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, cAtomMap, 
+                                      cBondDist, useHs, enforceSize);
   if (atomMap != python::object()) {
     // make sure the optional argument (atomMap) is actually a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
@@ -806,21 +808,43 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol, unsigned int radi
       atomMap[pair.first] = pair.second;
     }
   }
+
+  if (bondDist != python::object()) {
+    // make sure the optional argument (bondDist) is actually a list
+    python::list typecheck = python::extract<python::list>(bondDist);
+    if (bondDist.attr("__len__")() != 0) { bondDist.attr("clear")(); }
+    for (auto bondID: cBondDist) {
+      bondDist.append(bondID);
+    }
+  }
+
   return path;
 }
 
 PATH_TYPE findAtomEnvironmentOfRadiusMToNHelper(
     const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius,
-    unsigned int rootedAtAtom, bool useHs, python::object atomMap) {
+    unsigned int rootedAtAtom, bool useHs, bool includeInnerAtom, 
+    python::object atomMap, python::object bondDist) {
   std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
-  PATH_TYPE path = findAtomEnvironmentOfRadiusMToN(mol, smallRadius, largeRadius, 
-                                                   rootedAtAtom, cAtomMap, useHs);
+  std::vector<unsigned int> cBondDist;
+  PATH_TYPE path;
+  path = findAtomEnvironmentOfRadiusMToN(mol, smallRadius, largeRadius, rootedAtAtom, 
+                                         cAtomMap, cBondDist, useHs, includeInnerAtom);
   if (atomMap != python::object()) {
     // make sure the optional argument (atomMap) is actually a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
     if (atomMap.attr("__len__")() != 0) { atomMap.attr("clear")(); }
     for (auto pair: cAtomMap) {
       atomMap[pair.first] = pair.second;
+    }
+  }
+
+  if (bondDist != python::object()) {
+    // make sure the optional argument (bondDist) is actually a list
+    python::list typecheck = python::extract<python::list>(bondDist);
+    if (bondDist.attr("__len__")() != 0) { bondDist.attr("clear")(); }
+    for (auto bondID: cBondDist) {
+      bondDist.append(bondID);
     }
   }
   return path;
@@ -1722,7 +1746,8 @@ to the terminal dummy atoms.\n\
 
     // ------------------------------------------------------------------------
     docString =
-        "Finds the bonds within a certain radius of an atom in a molecule\n\
+        "Find bonds of a particular radius around an atom. \n\
+         Return empty result if there is no bond at the requested radius.\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -1736,11 +1761,16 @@ to the terminal dummy atoms.\n\
       should be included in the results.\n\
       Defaults to 0.\n\
 \n\
-    - enforceSize (optional) toggles whether or not there must be at least one atom/bond\n\
-      should be located on the specified radius. Otherwise, possibly return an empty result \n\
-      Defaults to 1 (true).\n\
+    - enforceSize (optional) If set to False, all bonds within the requested radius is \n\
+      collected. Defaults to 1. \n\
 \n\
-    - atomMap: (optional) a python dictionary to store the mapping of atom IDs and radius\n\
+    - atomMap: (optional) If provided, it will measure the minimum distance of the atom \n\
+      from the rooted atom (start with 0 from the rooted atom). The result is a pair of \n\
+      the atom ID and the distance. \n\
+\n\
+    - bondDist: (optional) If provided, it will measure the minimum distance of the bond \n\
+      from the rooted atom (start with 1). The result is a list of distances, whose each \n\
+      element corresponds to the result. \n\
 \n\
   RETURNS: a vector of bond IDs\n\
 \n";
@@ -1749,20 +1779,21 @@ to the terminal dummy atoms.\n\
                  python::arg("rootedAtAtom"), 
                  python::arg("useHs") = false, 
                  python::arg("enforceSize") = true,
-                 python::arg("atomMap") = python::object()), 
+                 python::arg("atomMap") = python::object(), 
+                 python::arg("bondDist") = python::object()), 
                 docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
-        "Finds the all bonds within a certain range of radius of an atom in a molecule\n\
+        "Find bonds between two radiuses from smallRadius + 1 to largeRadius. \n\
 \n\
   ARGUMENTS:\n\
 \n\
     - mol: the molecule to use\n\
 \n\
-    - smallRadius: an integer with the target radius for the environment (inner boundary).\n\
+    - smallRadius: an integer correspond to the small radius of the subgraphs (inner boundary).\n\
 \n\
-    - largeRadius: an integer with the target radius for the environment (outer boundary).\n\
+    - largeRadius: an integer correspond to the large radius for the environment (outer boundary).\n\
 \n\
     - rootedAtAtom: the atom to consider\n\
 \n\
@@ -1770,12 +1801,15 @@ to the terminal dummy atoms.\n\
       should be included in the results.\n\
       Defaults to 0.\n\
 \n\
-    - enforceSize (optional) toggles whether or not there must be at least one atom/bond\n\
-      should be located on the specified radius. Otherwise, possibly return an empty result \n\
-      Defaults to 1 (true).\n\
+    - includeInnerAtom (optional) If set to True, all atom IDs whose distance is equal to \n\
+      the smallRadius can be collected. \n\
+      Defaults to 0.\n\
 \n\
     - atomMap: (optional) a python dictionary to store the mapping of atom IDs and radius.\n\
-      Note that the atomMap does not mark the rooted atom.\n\
+      It collect all atom IDs whose distance is larger than smallRadius. \n\
+\n\
+    - bondDist: (optional) a python list to store the distance of the bond.\n\
+      It collect all bond IDs whose distance is larger than smallRadius. \n\
 \n\
   RETURNS: a vector of bond IDs\n\
 \n";
@@ -1783,7 +1817,9 @@ to the terminal dummy atoms.\n\
                 (python::arg("mol"), python::arg("smallRadius"), 
                  python::arg("largeRadius"), python::arg("rootedAtAtom"), 
                  python::arg("useHs") = false, 
-                 python::arg("atomMap") = python::object()), 
+                 python::arg("includeInnerAtom") = false, 
+                 python::arg("atomMap") = python::object(), 
+                 python::arg("bondDist") = python::object()), 
                 docString.c_str());
 
     python::def("PathToSubmol", pathToSubmolHelper,
