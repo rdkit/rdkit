@@ -301,7 +301,7 @@ void test3() {
     TEST_ASSERT(mol);
     ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
 
-    std::cout << "Test 3.2.1: radius=2" << std::endl;
+    std::cout << "Test 3.4.1: radius=2" << std::endl;
     PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, bondDist, false, true);
     TEST_ASSERT(bondDist.size() == pth.size());
     TEST_ASSERT(bondDist[0] == 1); // bondID = 1
@@ -317,13 +317,14 @@ void test3() {
     bondDist.clear();
     bondDist.resize(0);
 
+    std::cout << "Test 3.4.2: radius=3" << std::endl;
     pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, bondDist, true, true);
     TEST_ASSERT(bondDist.size() == pth.size());
     TEST_ASSERT(bondDist[0] == 1); // bondID = 1
     TEST_ASSERT(bondDist[1] == 1); // bondID = 4
     TEST_ASSERT(bondDist[2] == 2); // bondID = 0
-    TEST_ASSERT(bondDist[1] == 3); // bondID = 3
-    TEST_ASSERT(bondDist[2] == 4); // bondID = 4
+    TEST_ASSERT(bondDist[3] == 3); // bondID = 2 || 3
+    TEST_ASSERT(bondDist[4] == 3); // bondID = 3 || 2
     bondDist.clear();
     bondDist.resize(0);
 
@@ -411,7 +412,7 @@ void test4() {
     bondDist.resize(0);
     cAtomMap.clear();
 
-    std::cout << "Test 4.1.4: largeRadius >= smallRadius >> maxDegree(bondPath)" << std::endl;
+    std::cout << "Test 4.1.4: largeRadius > smallRadius >> maxDegree(bondPath)" << std::endl;
     pth = findAtomEnvironmentOfRadiusMToN(*mol, 4, 6, rootedAtAtom, cAtomMap, bondDist, false, false);
     TEST_ASSERT(pth.size() == 0);
     TEST_ASSERT(cAtomMap.size() == 0);
