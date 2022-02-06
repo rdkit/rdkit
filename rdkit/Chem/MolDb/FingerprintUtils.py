@@ -5,8 +5,8 @@
 #
 
 import pickle
-from rdkit import DataStructs, Chem
-from rdkit import Chem
+
+from rdkit import Chem, DataStructs
 
 similarityMethods = {
   'RDK': DataStructs.ExplicitBitVect,
@@ -41,8 +41,7 @@ class LayeredOptions:
     @staticmethod
     def GetWords(mol, query=True):
         txt = LayeredOptions.GetFingerprint(mol, query=query).ToBitString()
-        words = [int(txt[x:x + 32], 2) for x in range(0, len(txt), 32)]
-        return words
+        return [int(txt[x:x + 32], 2) for x in range(0, len(txt), 32)]
 
     @staticmethod
     def GetQueryText(mol, query=True):
@@ -51,8 +50,8 @@ class LayeredOptions:
         for idx, word in enumerate(words):
             if not word:
                 continue
-            idx = idx + 1
-            colqs.append('%(word)d&Col_%(idx)d=%(word)d' % locals())
+
+            colqs.append(f'{word}&Col_{idx + 1}={word}')
         return ' and '.join(colqs)
 
 
@@ -86,8 +85,7 @@ def BuildTorsionsFP(mol):
 
 
 def BuildRDKitFP(mol):
-    fp = Chem.RDKFingerprint(mol, nBitsPerHash=1)
-    return fp
+    return Chem.RDKFingerprint(mol, nBitsPerHash=1)
 
 
 def BuildPharm2DFP(mol):
@@ -97,7 +95,7 @@ def BuildPharm2DFP(mol):
         fp = Generate.Gen2DFingerprint(mol, sigFactory)
     except IndexError:
         print('FAIL:', Chem.MolToSmiles(mol, True))
-        raise
+        raise 
     return fp
 
 
@@ -111,10 +109,8 @@ def BuildMorganFP(mol):
 def BuildAvalonFP(mol, smiles=None):
     from rdkit.Avalon import pyAvalonTools
     if smiles is None:
-        fp = pyAvalonTools.GetAvalonFP(mol)
-    else:
-        fp = pyAvalonTools.GetAvalonFP(smiles, True)
-    return fp
+        return pyAvalonTools.GetAvalonFP(mol)
+    return pyAvalonTools.GetAvalonFP(smiles, True)
 
 
 def DepickleFP(pkl, similarityMethod):

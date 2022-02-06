@@ -7,20 +7,13 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import sqlalchemy
-
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import Lipinski, Descriptors, Crippen
-from rdkit.Dbase.DbConnection import DbConnect
-from rdkit.Dbase import DbModule
 import os
 
+from rdkit import Chem
+from rdkit.Chem import AllChem, Crippen, Descriptors, Lipinski
+from sqlalchemy import Column, Float, Integer, LargeBinary, String, Text, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, MetaData
-from sqlalchemy import Integer, Text, String, ForeignKey, LargeBinary, DateTime, Float
-from sqlalchemy.orm import relation, mapper, sessionmaker, backref
-from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 decBase = declarative_base()
 
@@ -34,8 +27,7 @@ class Compound(decBase):
 def RegisterSchema(dbUrl, echo=False):
   engine = create_engine(dbUrl, echo=echo)
   decBase.metadata.create_all(engine)
-  maker = sessionmaker(bind=engine)
-  return maker
+  return sessionmaker(bind=engine)
 
 
 ConnectToSchema = RegisterSchema
@@ -43,15 +35,14 @@ ConnectToSchema = RegisterSchema
 
 def _ConnectToSchema(dbUrl, echo=False):
   engine = create_engine(dbUrl, echo=echo)
-  meta
   decBase.metadata.create_all(engine)
-  maker = sessionmaker(bind=engine)
-  return maker
+  return sessionmaker(bind=engine)
 
 
 #set up the logger:
 
 import rdkit.RDLogger as logging
+
 logger = logging.logger()
 logger.setLevel(logging.INFO)
 
@@ -68,7 +59,7 @@ def ProcessMol(session, mol, globalProps, nDone, nameProp='_Name', nameCol='comp
   except KeyError:
     nm = None
   if not nm:
-    nm = 'Mol_%d' % nDone
+    nm = f'Mol_{nDone}'
 
   cmpd = Compound()
   session.add(cmpd)
@@ -89,7 +80,7 @@ def ProcessMol(session, mol, globalProps, nDone, nameProp='_Name', nameCol='comp
       cmpd.AMW = Descriptors.MolWt(mol)
       cmpd.MolLogP = Crippen.MolLogP(mol)
     pns = list(mol.GetPropNames())
-    for pi, pn in enumerate(pns):
+    for pn in pns:
       if pn.lower() == nameCol.lower():
         continue
       pv = mol.GetProp(pn).strip()
@@ -107,14 +98,14 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
   else:
     nMols = -1
   if not silent:
-    logger.info("Generating molecular database in file %s" % dbName)
+    logger.info(f"Generating molecular database in file {dbName}")
     if not lazySupplier:
-      logger.info("  Processing %d molecules" % nMols)
+      logger.info(f"  Processing {nMols} molecules")
 
   globalProps = {}
   if startAnew:
     if os.path.exists(dbName):
-      for i in range(5):
+      for _ in range(5):
         try:
           os.unlink(dbName)
           break
@@ -122,7 +113,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
           import time
           time.sleep(2)
     if os.path.exists(dbName):
-      raise IOError('could not delete old database %s' % dbName)
+      raise IOError(f'could not delete old database {dbName}')
   sIter = iter(suppl)
   setattr(Compound, nameCol.lower(),
           Column(nameCol.lower(), String, default=defaultVal, unique=uniqNames))
@@ -150,7 +141,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
       Compound.RotatableBondCount = Column(Integer)
       Compound.AMW = Column(Float)
       Compound.MolLogP = Column(Float)
-  session = RegisterSchema('sqlite:///%s' % (dbName))()
+  session = RegisterSchema(f'sqlite:///{dbName}')()
 
   nDone = 0
   cache = []
@@ -172,7 +163,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
       cache.append(cmpd)
 
     if not silent and not nDone % 100:
-      logger.info('  done %d' % nDone)
+      logger.info(f'  done {nDone}')
       try:
         session.commit()
       except Exception:
@@ -214,5 +205,5 @@ if __name__ == '__main__':
   sdf = Chem.SDMolSupplier(sys.argv[1])
   db = sys.argv[2]
   LoadDb(sdf, db, addComputedProps=False)
-  session = RegisterSchema('sqlite:///%s' % (db))()
+  session = RegisterSchema(f'sqlite:///{db}')()
   print('>>>>', len(session.query(Compound).all()))
