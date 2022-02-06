@@ -32,9 +32,9 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
   except KeyError:
     nm = None
   if not nm:
-    nm = 'Mol_%d' % nDone
+    nm = f'Mol_{nDone}'
   if uniqNames and nm in namesSeen:
-    logger.error('duplicate compound id (%s) encountered. second instance skipped.' % nm)
+    logger.error(f'duplicate compound id ({nm}) encountered. second instance skipped.')
     return None
   namesSeen.add(nm)
   row = [nm]
@@ -81,8 +81,6 @@ def ProcessMol(mol, typeConversions, globalProps, nDone, nameProp='_Name', nameC
 
 
 def ConvertRows(rows, globalProps, defaultVal, skipSmiles):
-  #  globalProps is a python dictionary
-  PropsSize: int = len(globalProps)
   for i, row in enumerate(rows):
     newRow = [row[0], row[1]] 
     pD = row[-1] 
@@ -198,7 +196,7 @@ def LoadDb(suppl, dbName, nameProp='_Name', nameCol='compound_id', silent=False,
       continue
     rows.append([nDone] + row)
     if not silent and not nDone % 100:
-      logger.info('  done %d' % nDone)
+      logger.info(f'  done {nDone}')
     if len(rows) == maxRowsCached:
       ConvertRows(rows, globalProps, defaultVal, skipSmiles)
       curs.executemany(f'insert into {regName} values ({qs})', rows)

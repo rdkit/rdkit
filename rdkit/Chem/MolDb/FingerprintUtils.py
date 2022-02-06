@@ -50,8 +50,8 @@ class LayeredOptions:
         for idx, word in enumerate(words):
             if not word:
                 continue
-            idx = idx + 1
-            colqs.append(f'{word}&Col_{idx}={word}')
+
+            colqs.append(f'{word}&Col_{idx + 1}={word}')
         return ' and '.join(colqs)
 
 
@@ -93,9 +93,9 @@ def BuildPharm2DFP(mol):
     from rdkit.Chem.Pharm2D import Generate
     try:
         fp = Generate.Gen2DFingerprint(mol, sigFactory)
-    except IndexError as e:
+    except IndexError:
         print('FAIL:', Chem.MolToSmiles(mol, True))
-        raise e
+        raise 
     return fp
 
 
