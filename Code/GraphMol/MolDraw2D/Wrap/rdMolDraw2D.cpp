@@ -722,6 +722,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "clear the background before drawing a molecule")
       .def_readwrite("legendFontSize", &RDKit::MolDrawOptions::legendFontSize,
                      "font size in pixels of the legend (if drawn)")
+      .def_readwrite("baseFontSize", &RDKit::MolDrawOptions::baseFontSize,
+                     "when > 0 this is used to set the baseFontSize used for text "
+                     "drawing, which otherwise defaults to 0.6")
       .def_readwrite("maxFontSize", &RDKit::MolDrawOptions::maxFontSize,
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")
