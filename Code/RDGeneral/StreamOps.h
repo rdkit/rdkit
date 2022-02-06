@@ -307,7 +307,7 @@ template <class T>
 void streamReadVec(std::istream &ss, T &val) {
   boost::uint64_t size;
   streamRead(ss, size);
-  val.resize(size);
+  val.resize(boost::numeric_cast<size_t>(size));
 
   for (size_t i = 0; i < size; ++i) streamRead(ss, val[i]);
 }

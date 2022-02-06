@@ -942,7 +942,7 @@ std::vector<T> ParseV3000Array(std::stringstream &stream, int maxV,
         << "WARNING: first character of V3000 array is not '('" << std::endl;
   }
 
-  unsigned int count;
+  unsigned int count = 0;
   stream >> count;
   std::vector<T> values;
   if (maxV >= 0 && count > static_cast<unsigned int>(maxV)) {
@@ -1009,8 +1009,8 @@ void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
                         std::stringstream &stream, bool strictParsing) {
   stream.get();  // discard parentheses
 
-  unsigned int count;
-  unsigned int aIdxMark;
+  unsigned int count = 0;
+  unsigned int aIdxMark = 0;
   std::string lvIdxStr;  // In V3000 this may be a string
   std::string sapIdStr;
   stream >> count >> aIdxMark >> lvIdxStr >> sapIdStr;
