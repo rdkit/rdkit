@@ -310,9 +310,7 @@ class Uncharger(object):
                     neg_surplus -= 1
                     log.info('Removed negative charge')
         else:
-            #
-            negativeAtomIdxs = [mol.GetAtomWithIdx(x) for x in n]
-            for atom in negativeAtomIdxs:
+            for atom in [mol.GetAtomWithIdx(x) for x in n]:
                 while atom.GetFormalCharge() < 0:
                     atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
                     atom.SetFormalCharge(atom.GetFormalCharge() + 1)
