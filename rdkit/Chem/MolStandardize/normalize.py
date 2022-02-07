@@ -140,15 +140,14 @@ class Normalizer(object):
 
         log.debug('Running Normalizer')
         # Normalize each fragment separately to get around quirky RunReactants behaviour
-        NORMALIZE_FRAGMENT = self._normalize_fragment
-
-        Fragments = Chem.GetMolFrags(mol, asMols=True)
-        outmol = NORMALIZE_FRAGMENT(Fragments[-1])
-        for i in range(len(Fragments) - 2, -1, -1):
-            outmol = Chem.CombineMols(outmol, NORMALIZE_FRAGMENT(Fragments[i]))
-        Chem.SanitizeMol(outmol)
-
-        del Fragments # Free memory
+        fragments = []
+        for fragment in Chem.GetMolFrags(mol, asMols=True):
+            fragments.append(self._normalize_fragment(fragment))
+        
+        # Join normalized fragments into a single molecule again
+        outmol = fragments.pop()
+        for fragment in fragments:
+            outmol = Chem.CombineMols(outmol, fragment)
         return outmol
 
     def _normalize_fragment(self, mol):
