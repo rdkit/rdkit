@@ -40,7 +40,7 @@ class FragmentPattern(object):
         return Chem.MolFromSmarts(self.smarts_str)
 
     def __repr__(self):
-        return fr'FragmentPattern({self.name}, {self.smarts_str})'
+        return 'FragmentPattern({!r}, {!r})'.format(self.name, self.smarts_str)
 
     def __str__(self):
         return self.name

@@ -50,7 +50,7 @@ class AcidBasePair(object):
         return Chem.MolFromSmarts(self.base_str)
 
     def __repr__(self):
-        return fr'AcidBasePair({self.name}, {self.acid_str}, {self.base_str})'
+        return 'AcidBasePair({!r}, {!r}, {!r})'.format(self.name, self.acid_str, self.base_str)
 
     def __str__(self):
         return self.name
@@ -116,7 +116,7 @@ class ChargeCorrection(object):
         return Chem.MolFromSmarts(self.smarts_str)
 
     def __repr__(self):
-        return fr'ChargeCorrection({self.name}, {self.smarts_str}, {self.charge})'
+        return 'ChargeCorrection({!r}, {!r}, {!r})'.format(self.name, self.smarts_str, self.charge)
 
     def __str__(self):
         return self.name
