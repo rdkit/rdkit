@@ -8,9 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
-
 #include <bitset>
 #include <list>
 #include <string>
@@ -465,5 +462,52 @@ TEST_CASE("para-stereochemistry", "[accurateCIP]") {
     CHECK(mol->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
                                                    chirality) == true);
     CHECK(chirality == "S");
+  }
+}
+
+TEST_CASE(
+    "Github #4996: Bad handling of dummy atoms in the CIP assignment code",
+    "[accurateCIP]") {
+  // SECTION("case 0") {
+  //   auto m = "C[C@](F)(Cl)Br"_smiles;
+  //   REQUIRE(m);
+  //   m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+  //   CIPLabeler::assignCIPLabels(*m);
+  //   std::string cip;
+  //   CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+  //                                                cip));
+  //   CHECK(cip == "S");
+  // }
+  SECTION("case 1") {
+    auto m = "*[C@](F)(Cl)Br"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "S");
+  }
+  SECTION("dummies can match dummies") {
+    auto m = "*[C@](*)(Cl)Br"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    CIPLabeler::assignCIPLabels(*m);
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  }
+  SECTION("case 2") {
+    auto m = "C1CC[C@](*)2CCCC[C@H]2C1"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(3)->clearProp(common_properties::_CIPCode);
+    m->getAtomWithIdx(9)->clearProp(common_properties::_CIPCode);
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(3)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "s");
+    cip = "";
+    CHECK(m->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "s");
   }
 }
