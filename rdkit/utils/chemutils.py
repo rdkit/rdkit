@@ -116,8 +116,8 @@ def ConfigToNumElectrons(config, ignoreFullD=0, ignoreFullF=0):
 
     """
     arr = config.split(' ')
-    baseConditionForDShell: bool = ignoreFullD and len(arr) > 2
-    baseConditionForFShell: bool = ignoreFullF and len(arr) > 2
+    baseConditionForDShell = ignoreFullD and len(arr) > 2
+    baseConditionForFShell = ignoreFullF and len(arr) > 2
     
     nEl = 0
     for i in range(1, len(arr)):

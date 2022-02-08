@@ -34,12 +34,12 @@ def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0
     with tempfile.NamedTemporaryFile('w+', suffix='.cmd', delete=False) as tmp:
       tmp.write(args + '\n')
     try:
-      cmd = "%s < %s" % (baseCmd, tmp.name)
+      cmd = f"{baseCmd} < {tmp.name}"
       os.system(cmd)
     except Exception:
       import traceback
       traceback.print_exc()
-      sys.stderr.write('CMD: %s\n' % cmd)
+      sys.stderr.write(f'CMD: {cmd}\n')
       res = 0
     else:
       res = 1
@@ -47,6 +47,7 @@ def SmilesToGif(smiles, fileNames, size=(200, 200), cmd=None, dblSize=0, frame=0
         if not os.path.exists(name):
           res = 0
           break
+      
     try:
       os.unlink(tmp.name)
     except Exception:
