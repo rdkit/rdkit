@@ -109,11 +109,6 @@ TEST_CASE("non-canonical non-tetrahedral output") {
     for (const auto &pr : data) {
       std::unique_ptr<RWMol> m{SmilesToMol(pr.first)};
       REQUIRE(m);
-      // SmilesWriteParams writeps;
-      // writeps.canonical = false;
-      // be sure to skip stereo assignment
-      // m->setProp(common_properties::_StereochemDone, true);
-      std::cerr << " start: " << pr.first << std::endl;
       CHECK(MolToSmiles(*m) == pr.second);
     }
   }
@@ -230,14 +225,25 @@ TEST_CASE("getChiralAcross edges") {
 
 TEST_CASE("hasNonTetrahedralStereo") {
   std::vector<std::pair<std::string, bool>> data = {
-      {"C[Pt@SP1](F)(O)CC", true},    {"C[Pt](F)(O)CC", false},
-      {"C[Pt@](F)(O)CC", false},      {"C[Pt@TH1](F)(O)CC", false},
-      {"C[Pt@TB1](N)(F)(O)CC", true}, {"C[Pt@OH1](N)(N)(F)(O)CC", true},
-  };
+      {"C[Pt@SP1](F)(O)CC", true},     {"C[Pt@SP](F)(O)CC", true},
+      {"C[Pt](F)(O)CC", false},        {"C[Pt@](F)(O)CC", false},
+      {"C[Pt@TH1](F)(O)CC", false},    {"C[Pt@TB1](N)(F)(O)CC", true},
+      {"C[Pt@TB](N)(F)(O)CC", true},   {"C[Pt@OH1](N)(N)(F)(O)CC", true},
+      {"C[Pt@OH](N)(N)(F)(O)CC", true}};
   for (const auto &pr : data) {
     std::unique_ptr<RWMol> m{SmilesToMol(pr.first)};
     REQUIRE(m);
     CHECK(Chirality::hasNonTetrahedralStereo(m->getAtomWithIdx(1)) ==
           pr.second);
+  }
+}
+
+TEST_CASE("zero permutation is in SMILES") {
+  std::vector<std::string> smis = {"CC[Pt@SP](C)(O)F", "C[Pt@TB](N)(F)(Cl)Br",
+                                   "C[Pt@OH](N)(F)(Cl)(Br)I"};
+  for (auto smi : smis) {
+    std::unique_ptr<RWMol> m{SmilesToMol(smi)};
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == smi);
   }
 }

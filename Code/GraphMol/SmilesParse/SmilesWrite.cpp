@@ -82,21 +82,24 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
         case Atom::CHI_SQUAREPLANAR:
           atString = "@SP";
           if (atom->getPropIfPresent(common_properties::_chiralPermutation,
-                                     permutation)) {
+                                     permutation) &&
+              permutation != "0") {
             atString += permutation;
           }
           break;
         case Atom::CHI_TRIGONALBIPYRAMIDAL:
           atString = "@TB";
           if (atom->getPropIfPresent(common_properties::_chiralPermutation,
-                                     permutation)) {
+                                     permutation) &&
+              permutation != "0") {
             atString += permutation;
           }
           break;
         case Atom::CHI_OCTAHEDRAL:
           atString = "@OH";
           if (atom->getPropIfPresent(common_properties::_chiralPermutation,
-                                     permutation)) {
+                                     permutation) &&
+              permutation != "0") {
             atString += permutation;
           }
           break;
