@@ -33,7 +33,7 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
-  if(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
+  if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS))
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     if(RDK_INSTALL_DEV_COMPONENT)
@@ -54,14 +54,47 @@ macro(rdkit_library)
     if(RDK_INSTALL_STATIC_LIBS)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
+      set(skipNext FALSE)
       foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
-        if(${linkLib} MATCHES "^(Boost)|(Thread)|(boost)|^(optimized)|^(debug)|(libz)")
-          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib};")
-        else()
-          set(rdk_static_link_libraries "${rdk_static_link_libraries}${linkLib}_static;")
+        if(skipNext)
+          set(skipNext FALSE)
+          continue()
         endif()
+        if(TARGET "${linkLib}")
+          get_target_property(linkLib_IMPORTED "${linkLib}" IMPORTED)
+          if (linkLib_IMPORTED)
+            # linkLib is an imported target: use it as-is
+            target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+            continue()
+          endif()
+        elseif(EXISTS "${linkLib}")
+          # linkLib is a file, so keep it as-is
+          target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+          continue()
+        # cmake prepends the special keywords debug, optimized, general
+        # before the library name depending on whether they should be
+        # linked in Debug, Release or generic builds. Therefore we need
+        # to skip those, and also skip the library that follows if it
+        # is not relevant for the current build type
+        elseif ("${linkLib}" STREQUAL "debug")
+          if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+            set(skipNext TRUE)
+          endif()
+          continue()
+        elseif ("${linkLib}" STREQUAL "optimized")
+          if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+            set(skipNext TRUE)
+          endif()
+          continue()
+        elseif ("${linkLib}" STREQUAL "general")
+          continue()
+        endif()
+
+        # We haven't seen linkLib yet. This probably means it is a target
+        # we will be creating at some point (if not, then we are missing a find_package).
+        # Add the "_static" suffix to link against its static variant
+        target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}_static")
       endforeach()
-      target_link_libraries(${RDKLIB_NAME}_static PUBLIC ${rdk_static_link_libraries})
       target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
       if(RDK_INSTALL_DEV_COMPONENT)
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
@@ -182,6 +215,14 @@ macro(add_pytest)
   endif(RDK_BUILD_PYTHON_WRAPPERS)
 endmacro(add_pytest)
 
+function(add_jupytertest testname workingdir notebook)
+  if(RDK_BUILD_PYTHON_WRAPPERS AND RDK_NBVAL_AVAILABLE)
+    add_test(NAME ${testname}  COMMAND ${PYTHON_EXECUTABLE} -m py.test --nbval ${notebook}
+       WORKING_DIRECTORY ${workingdir} )
+    SET(RDKIT_JUPYTERTEST_CACHE "${testname};${RDKIT_JUPYTERTEST_CACHE}" CACHE INTERNAL "Global list of jupyter tests")
+  endif()
+endfunction(add_jupytertest)
+
 function(computeMD5 target md5chksum)
   execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${target} OUTPUT_VARIABLE md5list)
   string(REGEX REPLACE "([a-z0-9]+)" "\\1;" md5list "${md5list}")
@@ -235,16 +276,9 @@ function(createExportTestHeaders)
   list(SORT exportLibs)
   set(exportPath "Code/RDGeneral/export.h")
   file(WRITE "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
-    "// auto-generated __declspec definition header\n"
+    "// auto-generated export definition header\n"
     "#pragma once\n"
-    "#ifndef SWIG\n"
-    "#ifdef _MSC_VER\n"
-    "#pragma warning(disable:4251)\n"
-    "#pragma warning(disable:4275)\n"
-    "#endif\n"
-    "\n"
-    "#include <boost/config.hpp>\n"
-    "#endif\n")
+    "#include <RDGeneral/RDExportMacros.h>\n")
   set(testPath "Code/RDGeneral/test.h")
   file(WRITE "${CMAKE_BINARY_DIR}/${testPath}.tmp"
     "// auto-generated header to be imported in all cpp tests\n"
@@ -254,15 +288,10 @@ function(createExportTestHeaders)
     file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
       "\n"
       "// RDKIT_${exportLib}_EXPORT definitions\n"
-      "#if defined(BOOST_HAS_DECLSPEC) && defined(RDKIT_DYN_LINK) && !defined(SWIG)\n"
       "#ifdef RDKIT_${exportLib}_BUILD\n"
-      "#define RDKIT_${exportLib}_EXPORT __declspec(dllexport)\n"
+      "#define RDKIT_${exportLib}_EXPORT RDKIT_EXPORT_API\n"
       "#else\n"
-      "#define RDKIT_${exportLib}_EXPORT __declspec(dllimport)\n"
-      "#endif\n"
-      "#endif\n"
-      "#ifndef RDKIT_${exportLib}_EXPORT\n"
-      "#define RDKIT_${exportLib}_EXPORT\n"
+      "#define RDKIT_${exportLib}_EXPORT RDKIT_IMPORT_API\n"
       "#endif\n"
       "// RDKIT_${exportLib}_EXPORT end definitions\n")
     file(APPEND "${CMAKE_BINARY_DIR}/${testPath}.tmp"
@@ -271,6 +300,19 @@ function(createExportTestHeaders)
       "#undef RDKIT_${exportLib}_BUILD\n"
       "#endif\n")
   endforeach()
+  file(APPEND "${CMAKE_BINARY_DIR}/${exportPath}.tmp"
+  "\n"
+  "/*\n"
+  " * Do not dll export/import to export queries (it will mess up with the\n"
+  " * templates), but make sure it is visible for *nix\n"
+  " */\n"
+  "// RDKIT_QUERY_EXPORT definitions\n"
+  "#if defined(RDKIT_DYN_LINK) && defined(WIN32) && defined(BOOST_HAS_DECLSPEC)\n"
+  "#define RDKIT_QUERY_EXPORT\n"
+  "#else\n"
+  "#define RDKIT_QUERY_EXPORT RDKIT_GRAPHMOL_EXPORT\n"
+  "#endif\n"
+  "// RDKIT_QUERY_EXPORT end definitions\n")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${CMAKE_BINARY_DIR}/${exportPath}.tmp" "${CMAKE_SOURCE_DIR}/${exportPath}")
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different

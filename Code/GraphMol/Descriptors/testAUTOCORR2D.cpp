@@ -11,6 +11,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
 #include <vector>
@@ -19,6 +20,7 @@
 #include <sstream>
 
 #include <GraphMol/Descriptors/AUTOCORR2D.h>
+using namespace RDKit;
 
 void testautocorrelation() {
   BOOST_LOG(rdErrorLog)
@@ -85,7 +87,25 @@ void testautocorrelation() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub3806() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Github #3806: NaNs from AUTOCORR2D descriptor" << std::endl;
+
+  {
+    auto m = "CC"_smiles;
+    std::vector<double> vs;
+    RDKit::Descriptors::AUTOCORR2D(*m, vs);
+    TEST_ASSERT(vs.size() == 192);
+    for (unsigned i = 0; i < vs.size(); ++i) {
+      TEST_ASSERT(!std::isnan(vs[i]));
+    }
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   testautocorrelation();
+  testGithub3806();
 }

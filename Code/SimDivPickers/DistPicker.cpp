@@ -21,4 +21,4 @@ double getDistFromLTM(const double *distMat, unsigned int i, unsigned int j) {
     return distMat[j * (j - 1) / 2 + i];
   }
 }
-}
+}  // namespace RDPickers

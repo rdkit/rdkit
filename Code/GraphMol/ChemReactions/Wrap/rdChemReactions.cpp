@@ -1,5 +1,7 @@
 //
-//  Copyright (c) 2007-2018, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,7 +50,6 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 
 namespace python = boost::python;
 
@@ -145,6 +146,19 @@ PyObject *RunReactant(ChemicalReaction *self, T reactant,
                       python::converter::shared_ptr_to_python(mols[i][j]));
     }
     PyTuple_SetItem(res, i, lTpl);
+  }
+  return res;
+}
+
+bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant) {
+  auto react = static_cast<RWMol *>(reactant);
+  bool res = false;
+  {
+    NOGIL gil;
+    if (!self->isInitialized()) {
+      self->initReactantMatchers();
+    }
+    res = self->runReactant(*react);
   }
   return res;
 }
@@ -482,15 +496,8 @@ Sample Usage:
   'CN(C)C=O'
 )DOC";
 
-  // logic from https://stackoverflow.com/a/13017303
-  boost::python::type_info info =
-      boost::python::type_id<RDKit::MOL_SPTR_VECT>();
-  const boost::python::converter::registration *reg =
-      boost::python::converter::registry::query(info);
-  if (reg == nullptr || (*reg).m_to_python == nullptr) {
-    python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
-        .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
-  }
+  bool noproxy = true;
+  RegisterVectorConverter<RDKit::ROMOL_SPTR>("MOL_SPTR_VECT", noproxy);
 
   python::class_<RDKit::ChemicalReaction>(
       "ChemicalReaction", docString.c_str(),
@@ -554,6 +561,11 @@ Sample Usage:
            (PyObject * (*)(RDKit::ChemicalReaction *, python::object, unsigned))
                RDKit::RunReactant,
            "apply the reaction to a single reactant")
+      .def("RunReactantInPlace", RDKit::RunReactantInPlace,
+           (python::arg("self"), python::arg("reactant")),
+           "apply the reaction to a single reactant in place. The reactant "
+           "itself is modified. This can only be used for single reactant - "
+           "single product reactions.")
       .def("Initialize", &RDKit::ChemicalReaction::initReactantMatchers,
            (python::arg("self"), python::arg("silent") = false),
            "initializes the reaction so that it can be used")
@@ -787,8 +799,13 @@ of the replacements argument.",
       "construct a ChemicalReaction from a string in MDL rxn format",
       python::return_value_policy<python::manage_new_object>());
   python::def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
-              (python::arg("reaction"), python::arg("separateAgents") = false),
+              (python::arg("reaction"), python::arg("separateAgents") = false,
+               python::arg("forceV3000") = false),
               "construct a string in MDL rxn format for a ChemicalReaction");
+  python::def(
+      "ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,
+      (python::arg("reaction"), python::arg("separateAgents") = false),
+      "construct a string in MDL v3000 rxn format for a ChemicalReaction");
 
   python::def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction,
               "construct a ChemicalReaction from metadata in a PNG file",

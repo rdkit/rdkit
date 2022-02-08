@@ -1856,6 +1856,74 @@ void testEZVsCisTransMatch() {
   }
 }
 
+void testMostSubstitutedCoreMatch() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing getMostSubstitutedCoreMatch and "
+                          "sortMatchesByDegreeOfCoreSubstitution"
+                       << std::endl;
+  auto core = "[*:1]c1cc([*:2])ccc1[*:3]"_smarts;
+  auto orthoMeta = "c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1"_smiles;
+  auto ortho = "c1ccc(-c2ccccc2-c2ccccc2)cc1"_smiles;
+  auto meta = "c1ccc(-c2cccc(-c3ccccc3)c2)cc1"_smiles;
+  auto biphenyl = "c1ccccc1-c1ccccc1"_smiles;
+  auto phenyl = "c1ccccc1"_smiles;
+
+  struct numHsMatchingDummies {
+    static unsigned int get(const ROMol &mol, const ROMol &core,
+                            const MatchVectType &match) {
+      return std::count_if(
+          match.begin(), match.end(),
+          [&mol, &core](const std::pair<int, int> &pair) {
+            return (core.getAtomWithIdx(pair.first)->getAtomicNum() == 0 &&
+                    mol.getAtomWithIdx(pair.second)->getAtomicNum() == 1);
+          });
+    }
+  };
+
+  const auto &coreRef = *core;
+  for (auto &molResPair :
+       {std::make_pair(orthoMeta.get(), 0u), std::make_pair(ortho.get(), 1u),
+        std::make_pair(meta.get(), 1u), std::make_pair(biphenyl.get(), 2u),
+        std::make_pair(phenyl.get(), 3u)}) {
+    auto &mol = *molResPair.first;
+    const auto res = molResPair.second;
+    MolOps::addHs(mol);
+    auto matches = SubstructMatch(mol, coreRef);
+    auto bestMatch = getMostSubstitutedCoreMatch(mol, coreRef, matches);
+    TEST_ASSERT(numHsMatchingDummies::get(mol, coreRef, bestMatch) == res);
+    std::vector<unsigned int> ctrlCounts(matches.size());
+    std::transform(matches.begin(), matches.end(), ctrlCounts.begin(),
+                   [&mol, &coreRef](const MatchVectType &match) {
+                     return numHsMatchingDummies::get(mol, coreRef, match);
+                   });
+    std::sort(ctrlCounts.begin(), ctrlCounts.end());
+    std::vector<unsigned int> sortedCounts(matches.size());
+    auto sortedMatches =
+        sortMatchesByDegreeOfCoreSubstitution(mol, coreRef, matches);
+    std::transform(sortedMatches.begin(), sortedMatches.end(),
+                   sortedCounts.begin(),
+                   [&mol, &coreRef](const MatchVectType &match) {
+                     return numHsMatchingDummies::get(mol, coreRef, match);
+                   });
+    TEST_ASSERT(ctrlCounts == sortedCounts);
+  }
+  std::vector<MatchVectType> emptyMatches;
+  bool raised = false;
+  try {
+    getMostSubstitutedCoreMatch(*orthoMeta, coreRef, emptyMatches);
+  } catch (const Invar::Invariant &) {
+    raised = true;
+  }
+  TEST_ASSERT(raised);
+  raised = false;
+  try {
+    sortMatchesByDegreeOfCoreSubstitution(*orthoMeta, coreRef, emptyMatches);
+  } catch (const Invar::Invariant &) {
+    raised = true;
+  }
+  TEST_ASSERT(raised);
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   test1();
@@ -1881,6 +1949,7 @@ int main(int argc, char *argv[]) {
   testGithubIssue1489();
   testGithub2570();
   testEZVsCisTransMatch();
+  testMostSubstitutedCoreMatch();
 
   return 0;
 }

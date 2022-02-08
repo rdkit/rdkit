@@ -62,25 +62,16 @@ void AtomClearProp(const Atom *atom, const char *key) {
 
 python::tuple AtomGetNeighbors(Atom *atom) {
   python::list res;
-  const ROMol *parent = &atom->getOwningMol();
-  ROMol::ADJ_ITER begin, end;
-  boost::tie(begin, end) = parent->getAtomNeighbors(atom);
-  while (begin != end) {
-    res.append(python::ptr(parent->getAtomWithIdx(*begin)));
-    begin++;
+  for (auto nbr : atom->getOwningMol().atomNeighbors(atom)) {
+    res.append(python::ptr(nbr));
   }
   return python::tuple(res);
 }
 
 python::tuple AtomGetBonds(Atom *atom) {
   python::list res;
-  const ROMol *parent = &atom->getOwningMol();
-  ROMol::OEDGE_ITER begin, end;
-  boost::tie(begin, end) = parent->getAtomBonds(atom);
-  while (begin != end) {
-    const Bond *tmpB = (*parent)[*begin];
-    res.append(python::ptr(tmpB));
-    begin++;
+  for (auto bond : atom->getOwningMol().atomBonds(atom)) {
+    res.append(python::ptr(bond));
   }
   return python::tuple(res);
 }
@@ -119,6 +110,14 @@ void SetAtomMonomerInfo(Atom *atom, const AtomMonomerInfo *info) {
 AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
   return atom->getMonomerInfo();
 }
+
+void AtomSetPDBResidueInfo(Atom *atom, const AtomMonomerInfo *info) {
+  if (info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+    throw_value_error("MonomerInfo is not a PDB Residue");
+  }
+  atom->setMonomerInfo(info->copy());
+}
+
 AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
   AtomMonomerInfo *res = atom->getMonomerInfo();
   if (!res) {
@@ -216,6 +215,7 @@ struct atom_wrapper {
         .def("GetIsotope", &Atom::getIsotope)
         .def("SetNumRadicalElectrons", &Atom::setNumRadicalElectrons)
         .def("GetNumRadicalElectrons", &Atom::getNumRadicalElectrons)
+        .def("GetQueryType", &Atom::getQueryType)
 
         .def("SetChiralTag", &Atom::setChiralTag)
         .def("InvertChirality", &Atom::invertChirality)
@@ -411,6 +411,8 @@ struct atom_wrapper {
                  1, python::with_custodian_and_ward_postcall<0, 1>>(),
              "Returns the atom's MonomerInfo object, if there is one.\n\n")
         .def("SetMonomerInfo", SetAtomMonomerInfo,
+             "Sets the atom's MonomerInfo object.\n\n")
+        .def("SetPDBResidueInfo", AtomSetPDBResidueInfo,
              "Sets the atom's MonomerInfo object.\n\n")
         .def("GetAtomMapNum", &Atom::getAtomMapNum,
              "Gets the atoms map number, returns 0 if not set")

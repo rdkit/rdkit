@@ -24,7 +24,7 @@ struct TargetMatch {
   std::vector<bool> VisitedTargetBonds;
   std::vector<bool> VisitedTargetAtoms;  // for checking rings
  public:
-  TargetMatch()  {}
+  TargetMatch() {}
   TargetMatch(const TargetMatch& src) { *this = src; }
   TargetMatch& operator=(const TargetMatch& src) {
     Empty = src.Empty;

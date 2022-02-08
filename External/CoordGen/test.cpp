@@ -488,73 +488,65 @@ void testGithub3131() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-void testCoordgenMinimize() {
+void testZOBs() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "testing coordgen minimize" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing the zero-order bond setting with coordgen"
+                       << std::endl;
   {
     auto m1 =
         R"CTAB(
-  Mrv2014 08052005142D          
+     RDKit          2D
 
-  0  0  0     0  0            999 V3000
+  0  0  0  0  0  0  0  0  0  0999 V3000
 M  V30 BEGIN CTAB
-M  V30 COUNTS 8 8 0 0 0
+M  V30 COUNTS 8 7 0 0 0
 M  V30 BEGIN ATOM
-M  V30 1 C -2.1121 -0.3399 0 0
-M  V30 2 C -3.3708 0.5474 0 0
-M  V30 3 C -1.9835 0.9311 0 0
-M  V30 4 C -0.7248 0.0437 0 0
-M  V30 5 C 0.7926 0.3064 0 0
-M  V30 6 O 1.3239 1.7518 0 0
-M  V30 7 O 0.612 -1.2514 0 0
-M  V30 8 C 1.3429 -0.2989 0 0
+M  V30 1 Al 0.108450 -0.062175 0.000000 0 VAL=3
+M  V30 2 C 0.976250 -0.558975 0.000000 0
+M  V30 3 C 0.104850 0.937825 0.000000 0
+M  V30 4 C -0.755750 -0.565175 0.000000 0
+M  V30 5 C 1.840650 -0.055775 0.000000 0
+M  V30 6 C -1.623550 -0.068375 0.000000 0
+M  V30 7 C -2.487750 -0.571375 0.000000 0
+M  V30 8 C 1.836850 0.944025 0.000000 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
-M  V30 2 1 2 3
-M  V30 3 1 3 4
-M  V30 4 1 4 5
-M  V30 5 2 5 6
-M  V30 6 1 5 7
-M  V30 7 1 7 8
-M  V30 8 1 4 1
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 2 2 5
+M  V30 5 2 4 6
+M  V30 6 1 6 7
+M  V30 7 1 5 8
 M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     TEST_ASSERT(m1);
     TEST_ASSERT(m1->getNumConformers() == 1);
-    auto ref = R"CTAB(
-     RDKit          2D
-
-  8  8  0  0  0  0  0  0  0  0999 V2000
-   -1.5738   -1.1409    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -2.7946   -0.3071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -1.9122    0.8790    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   -0.6914    0.0452    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    0.7517    0.2885    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.2665    1.6721    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-    1.6941   -0.8483    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-    3.1500   -0.6002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0
-  2  3  1  0
-  3  4  1  0
-  4  5  1  0
-  5  6  2  0
-  5  7  1  0
-  7  8  1  0
-  4  1  1  0
-M  END
-)CTAB"_ctab;
-    TEST_ASSERT(ref);
-    TEST_ASSERT(ref->getNumConformers() == 1);
+    CoordGen::addCoords(*m1);
+    TEST_ASSERT(m1->getNumConformers() == 1);
+    {
+      std::unique_ptr<ROMol> nm{MolBlockToMol(MolToMolBlock(*m1))};
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getBondWithIdx(3)->getStereo() ==
+                  m1->getBondWithIdx(3)->getStereo());
+      TEST_ASSERT(nm->getBondWithIdx(4)->getStereo() ==
+                  m1->getBondWithIdx(4)->getStereo());
+    }
 
     CoordGen::CoordGenParams ps;
-    ps.minimizeOnly = true;
+    ps.treatNonterminalBondsToMetalAsZeroOrder = true;
     CoordGen::addCoords(*m1, &ps);
-    ROMol m2(*m1);
-    double rmsd = MolAlign::alignMol(m2, *ref);
-    TEST_ASSERT(rmsd < 0.1);
+    {
+      // the ZOB behavior screws up the double bond stereo here... detect that
+      std::unique_ptr<ROMol> nm{MolBlockToMol(MolToMolBlock(*m1))};
+      TEST_ASSERT(nm);
+      TEST_ASSERT(nm->getBondWithIdx(3)->getStereo() !=
+                  m1->getBondWithIdx(3)->getStereo());
+      TEST_ASSERT(nm->getBondWithIdx(4)->getStereo() !=
+                  m1->getBondWithIdx(4)->getStereo());
+    }
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -569,5 +561,5 @@ int main(int argc, char* argv[]) {
   testGithub1929();
   testGithub3131();
 #endif
-  testCoordgenMinimize();
+  testZOBs();
 }

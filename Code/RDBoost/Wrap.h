@@ -14,6 +14,7 @@
 #include <RDGeneral/Invariant.h>
 
 #include <RDGeneral/BoostStartInclude.h>
+#include <Numerics/Vector.h>
 //
 // Generic Wrapper utility functionality
 //
@@ -49,6 +50,20 @@ RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
 RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
+
+//! \brief Checks whether there is already a registered Python converter for a
+//!        particular type.
+//! In order to avoid warning about duplicated converters, this should be used
+//! before attempting to register a converter for any general type that might
+//! be used in more than one Python wrapper.
+template <typename T>
+bool is_python_converter_registered() {
+  // logic from https://stackoverflow.com/a/13017303
+  auto info = python::type_id<T>();
+  const auto *reg = python::converter::registry::query(info);
+  return reg != nullptr && reg->m_to_python != nullptr;
+}
+
 //! \brief Registers a templated converter for returning \c vectors of a
 //!        particular type.
 //! This should be used instead of calling \c vector_to_python<T>()
@@ -56,6 +71,9 @@ RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 //!    the specified converter has already been registered.
 template <typename T>
 void RegisterVectorConverter(const char *name, bool noproxy = false) {
+  if (is_python_converter_registered<std::vector<T>>()) {
+    return;
+  }
   if (noproxy) {
     python::class_<std::vector<T>>(name).def(
         python::vector_indexing_suite<std::vector<T>, 1>());
@@ -69,7 +87,6 @@ template <typename T>
 void RegisterVectorConverter(bool noproxy = false) {
   std::string name = "_vect";
   name += typeid(T).name();
-
   RegisterVectorConverter<T>(name.c_str(), noproxy);
 }
 
@@ -80,6 +97,9 @@ void RegisterVectorConverter(bool noproxy = false) {
 //!    the specified converter has already been registered.
 template <typename T>
 void RegisterListConverter(bool noproxy = false) {
+  if (is_python_converter_registered<std::list<T>>()) {
+    return;
+  }
   std::string name = "_list";
   name += typeid(T).name();
 
@@ -92,53 +112,58 @@ void RegisterListConverter(bool noproxy = false) {
   }
 }
 
+//! NOTE: this returns a nullptr if obj is None or empty
 template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj,
                                                    T maxV) {
   std::unique_ptr<std::vector<T>> res;
   if (obj) {
     res.reset(new std::vector<T>);
-    python::stl_input_iterator<T> beg(obj), end;
-    while (beg != end) {
-      T v = *beg;
+
+    auto check_max = [&maxV](const T &v) {
       if (v >= maxV) {
         throw_value_error("list element larger than allowed value");
       }
-      res->push_back(v);
-      ++beg;
-    }
+      return true;
+    };
+    std::copy_if(python::stl_input_iterator<T>(obj),
+                 python::stl_input_iterator<T>(), std::back_inserter(*res),
+                 check_max);
   }
   return res;
 }
+//! NOTE: this returns a nullptr if obj is None or empty
 template <typename T>
 std::unique_ptr<std::vector<T>> pythonObjectToVect(const python::object &obj) {
   std::unique_ptr<std::vector<T>> res;
   if (obj) {
-    res.reset(new std::vector<T>);
-    unsigned int nFrom = python::extract<unsigned int>(obj.attr("__len__")());
-    for (unsigned int i = 0; i < nFrom; ++i) {
-      T v = python::extract<T>(obj[i]);
-      res->push_back(v);
-    }
+    res.reset(new std::vector<T>(python::stl_input_iterator<T>(obj),
+                                 python::stl_input_iterator<T>()));
   }
   return res;
 }
+//! NOTE: \c res will be cleared if obj is None or empty
 template <typename T>
 void pythonObjectToVect(const python::object &obj, std::vector<T> &res) {
   if (obj) {
+    res.assign(python::stl_input_iterator<T>(obj),
+               python::stl_input_iterator<T>());
+  } else {
     res.clear();
-    python::stl_input_iterator<T> beg(obj), end;
-    while (beg != end) {
-      T v = *beg;
-      res.push_back(v);
-      ++beg;
-    }
   }
 }
 
-RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const python::object &obj,
-                                                   boost::dynamic_bitset<>::size_type maxV);
+RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(
+    const python::object &obj, boost::dynamic_bitset<>::size_type maxV);
 
+RDKIT_RDBOOST_EXPORT std::vector<std::pair<int, int>> *translateAtomMap(
+    const python::object &atomMap);
+RDKIT_RDBOOST_EXPORT std::vector<std::vector<std::pair<int, int>>>
+translateAtomMapSeq(const python::object &atomMapSeq);
+RDKIT_RDBOOST_EXPORT RDNumeric::DoubleVector *translateDoubleSeq(
+    const python::object &doubleSeq);
+RDKIT_RDBOOST_EXPORT std::vector<unsigned int> *translateIntSeq(
+    const python::object &intSeq);
 
 // Quiet warnings on GCC
 #if defined(__GNUC__) || defined(__GNUG__)
@@ -148,13 +173,11 @@ RDKIT_RDBOOST_EXPORT boost::dynamic_bitset<> pythonObjectToDynBitset(const pytho
 #endif
 
 class PyGILStateHolder {
-public:
-  PyGILStateHolder() :
-    d_gstate(PyGILState_Ensure()) {}
-  ~PyGILStateHolder() {
-    PyGILState_Release(d_gstate);
-  }
-private:
+ public:
+  PyGILStateHolder() : d_gstate(PyGILState_Ensure()) {}
+  ~PyGILStateHolder() { PyGILState_Release(d_gstate); }
+
+ private:
   PyGILState_STATE d_gstate;
 };
 

@@ -15,7 +15,6 @@
 
 #include <RDBoost/Wrap.h>
 #include <GraphMol/GraphMol.h>
-#include <boost/foreach.hpp>
 #include <RDBoost/import_array.h>
 
 #include <GraphMol/ReducedGraphs/ReducedGraphs.h>
@@ -69,7 +68,7 @@ PyObject *GetErGFingerprintHelper(const RDKit::ROMol &mol,
   delete dv;
   return PyArray_Return(res);
 }
-}
+}  // namespace
 
 BOOST_PYTHON_MODULE(rdReducedGraphs) {
   python::scope().attr("__doc__") =

@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C)  2004-2008 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,12 +26,12 @@
 #include <ForceField/UFF/TorsionConstraint.h>
 #include <ForceField/UFF/PositionConstraint.h>
 
-#include <GraphMol/Atom.h>
+#include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
-using namespace RDGeom;
+using namespace RDKit;
 
 void test1() {
   std::cerr << "-------------------------------------" << std::endl;
@@ -41,7 +40,7 @@ void test1() {
   ForceFields::ForceField ff;
   TEST_ASSERT(ff.dimension() == 3);
 
-  Point3D p1(0, 0, 0), p2(1, 0, 0), p3(2, 0, 0), p4(0, 1, 0);
+  RDGeom::Point3D p1(0, 0, 0), p2(1, 0, 0), p3(2, 0, 0), p4(0, 1, 0);
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -49,7 +48,7 @@ void test1() {
   ps.push_back(&p4);
 
 #if 0
-  Point3D f1,f2,f3,f4;
+  RDGeom::Point3D f1,f2,f3,f4;
   RDGeom::PointPtrVect &fs=ff.forces();
   fs.push_back(&f1);
   fs.push_back(&f2);
@@ -146,7 +145,7 @@ void testUFF2() {
   std::cerr << "Unit tests for UFF bond-stretch terms." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1(0, 0, 0), p2(1.514, 0, 0);
+  RDGeom::Point3D p1(0, 0, 0), p2(1.514, 0, 0);
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -301,7 +300,7 @@ void testUFF4() {
   std::cerr << "Unit tests for UFF angle-bend terms." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1(1.514, 0, 0), p2(0, 0, 0), p3(0.1, 1.5, 0);
+  RDGeom::Point3D p1(1.514, 0, 0), p2(0, 0, 0), p3(0.1, 1.5, 0);
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -528,7 +527,7 @@ void testUFF5() {
   std::cerr << " Test Simple UFF molecule optimizations." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1, p2, p3, p4, p5, p6;
+  RDGeom::Point3D p1, p2, p3, p4, p5, p6;
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -653,7 +652,7 @@ void testUFF6() {
   std::cerr << "Unit tests for UFF nonbonded terms." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1(0, 0, 0), p2(0.0, 0, 0);
+  RDGeom::Point3D p1(0, 0, 0), p2(0.0, 0, 0);
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -708,7 +707,7 @@ void testUFF7() {
   std::cerr << " Test UFF torsional terms." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1, p2, p3, p4;
+  RDGeom::Point3D p1, p2, p3, p4;
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -936,8 +935,7 @@ void testUFFParams() {
   std::cerr << "-------------------------------------" << std::endl;
   std::cerr << " Test UFF Parameter objects" << std::endl;
 
-  ForceFields::UFF::ParamCollection *params =
-      ForceFields::UFF::ParamCollection::getParams();
+  auto params = ForceFields::UFF::ParamCollection::getParams();
   TEST_ASSERT(params);
 
   const ForceFields::UFF::AtomicParams *ptr;
@@ -966,7 +964,7 @@ void testUFF8() {
   std::cerr << " Test Simple UFF molecule optimization, part 2." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1, p2, p3, p4, p5, p6;
+  RDGeom::Point3D p1, p2, p3, p4, p5, p6;
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -975,8 +973,7 @@ void testUFF8() {
   ps.push_back(&p5);
   ps.push_back(&p6);
 
-  ForceFields::UFF::ParamCollection *params =
-      ForceFields::UFF::ParamCollection::getParams();
+  auto params = ForceFields::UFF::ParamCollection::getParams();
   const ForceFields::UFF::AtomicParams *param1, *param2;
 
   // C_2 (sp2 carbon):
@@ -1106,7 +1103,7 @@ void testUFFTorsionConflict() {
   std::cerr << " Test UFF Torsion Conflicts." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1, p2, p3, p4, p5, p6, p7;
+  RDGeom::Point3D p1, p2, p3, p4, p5, p6, p7;
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -1116,8 +1113,7 @@ void testUFFTorsionConflict() {
   ps.push_back(&p6);
   ps.push_back(&p7);
 
-  ForceFields::UFF::ParamCollection *params =
-      ForceFields::UFF::ParamCollection::getParams();
+  auto params = ForceFields::UFF::ParamCollection::getParams();
   const ForceFields::UFF::AtomicParams *param1, *param2, *param3;
 
   // C_2 (sp2 carbon):
@@ -1255,7 +1251,7 @@ void testUFFDistanceConstraints() {
   std::cerr << "Unit tests for UFF distance constraint terms." << std::endl;
 
   ForceFields::ForceField ff;
-  Point3D p1(0, 0, 0), p2(1.514, 0, 0);
+  RDGeom::Point3D p1(0, 0, 0), p2(1.514, 0, 0);
   RDGeom::PointPtrVect &ps = ff.positions();
   ps.push_back(&p1);
   ps.push_back(&p2);
@@ -1403,7 +1399,7 @@ void testUFFAllConstraints() {
   TEST_ASSERT(field);
   field->initialize();
   ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, 90.0, 90.0,
-                                                    1.0e5);
+                                                    100.0);
   field->contribs().push_back(ForceFields::ContribPtr(ac));
   field->minimize();
   TEST_ASSERT(RDKit::feq(
@@ -1412,7 +1408,7 @@ void testUFFAllConstraints() {
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
   ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, true, -10.0,
-                                                    10.0, 1.0e5);
+                                                    10.0, 100.0);
   field->contribs().push_back(ForceFields::ContribPtr(ac));
   field->minimize();
   TEST_ASSERT(RDKit::feq(
@@ -1422,7 +1418,7 @@ void testUFFAllConstraints() {
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
   ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, false,
-                                                    -10.0, 10.0, 1.0e5);
+                                                    -10.0, 10.0, 100.0);
   field->contribs().push_back(ForceFields::ContribPtr(ac));
   field->minimize();
   TEST_ASSERT(RDKit::feq(
@@ -1439,34 +1435,34 @@ void testUFFAllConstraints() {
   TEST_ASSERT(field);
   field->initialize();
   tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, 10.0,
-                                                      20.0, 1.0e5);
+                                                      10.0, 100.0);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize();
   TEST_ASSERT(
       RDKit::feq(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8),
-                 20.0, 0.5));
+                 10.0, 0.5));
   delete field;
   MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, -30.0);
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
   tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, true,
-                                                      -10.0, 8.0, 1.0e5);
+                                                      -1.0, 1.0, 100.0);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize();
   TEST_ASSERT(
       RDKit::feq(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8),
-                 -40.0, 0.5));
+                 -30.0, 1.5));
   delete field;
   MolTransforms::setDihedralDeg(mol->getConformer(), 1, 3, 6, 8, -10.0);
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
   tc = new ForceFields::UFF::TorsionConstraintContrib(field, 1, 3, 6, 8, false,
-                                                      -10.0, 8.0, 1.0e6);
+                                                      -10.0, 8.0, 100.0);
   field->contribs().push_back(ForceFields::ContribPtr(tc));
   field->minimize(500);
   TEST_ASSERT(
       RDKit::feq(MolTransforms::getDihedralDeg(mol->getConformer(), 1, 3, 6, 8),
-                 -10.0, 0.5));
+                 -9.0, 2.0));
   delete field;
   delete mol;
 
@@ -1591,6 +1587,115 @@ void testUFFCopy() {
   std::cerr << "  done" << std::endl;
 }
 
+void testUFFButaneScan() {
+  std::cerr << "-------------------------------------" << std::endl;
+  std::cerr << "Unit test for UFF butane scan." << std::endl;
+
+  auto molblock = R"(
+     RDKit          3D
+
+ 14 13  0  0  0  0  0  0  0  0999 V2000
+   -1.5575    0.5684   -0.1320 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6987   -0.6064    0.3102 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6987   -0.6064   -0.3102 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5575    0.5684    0.1320 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6308    0.6129   -1.2232 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5700    0.4662    0.2715 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1524    1.5190    0.2272 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2059   -1.5359    0.0253 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6215   -0.6099    1.4037 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6215   -0.6099   -1.4037 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2059   -1.5359   -0.0253 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6308    0.6129    1.2232 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1524    1.5190   -0.2271 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5700    0.4662   -0.2715 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  1  5  1  0
+  1  6  1  0
+  1  7  1  0
+  2  8  1  0
+  2  9  1  0
+  3 10  1  0
+  3 11  1  0
+  4 12  1  0
+  4 13  1  0
+  4 14  1  0
+M  END
+)";
+
+  // torsion constraints
+  std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, true, false));
+  TEST_ASSERT(mol);
+  std::vector<std::pair<double, double>> diheEnergyVect;
+  std::vector<std::pair<double, double>> expectedDiheEnergyVect{
+      {179.9997, 1.7649},  {-175.1001, 1.8314}, {-170.1003, 2.0318},
+      {-165.1004, 2.3527}, {-160.1005, 2.7726}, {-155.1005, 3.2633},
+      {-150.1005, 3.7919}, {-145.1005, 4.3220}, {-140.1005, 4.8159},
+      {-135.1004, 5.2372}, {-130.1003, 5.5532}, {-125.1001, 5.7385},
+      {-119.9000, 5.7768}, {-114.8998, 5.6630}, {-109.8997, 5.4141},
+      {-104.8996, 5.0555}, {-99.8995, 4.6243},  {-94.8995, 4.1667},
+      {-89.8996, 3.7338},  {-84.8997, 3.3722},  {-79.8998, 3.1102},
+      {-74.8999, 2.9561},  {-70.1000, 2.9112},  {-65.1001, 2.9777},
+      {-60.1003, 3.1680},  {-55.1004, 3.4865},  {-50.1005, 3.9304},
+      {-45.1006, 4.4873},  {-40.1007, 5.1363},  {-35.1007, 5.8490},
+      {-30.1007, 6.5913},  {-25.1007, 7.3249},  {-20.1006, 8.0089},
+      {-15.1005, 8.6016},  {-10.1004, 9.0626},  {-5.1002, 9.3573},
+      {-0.1000, 9.4612},   {5.1002, 9.3573},    {10.1004, 9.0626},
+      {15.1005, 8.6016},   {20.1006, 8.0089},   {25.1007, 7.3249},
+      {30.1007, 6.5913},   {35.1007, 5.8490},   {40.1007, 5.1363},
+      {45.1006, 4.4873},   {50.1005, 3.9304},   {55.1004, 3.4865},
+      {60.1003, 3.1680},   {65.1001, 2.9777},   {70.1000, 2.9112},
+      {74.8999, 2.9561},   {79.8998, 3.1102},   {84.8997, 3.3722},
+      {89.8996, 3.7338},   {94.8995, 4.1667},   {99.8995, 4.6243},
+      {104.8996, 5.0555},  {109.8997, 5.4141},  {114.8998, 5.6630},
+      {119.9000, 5.7768},  {125.1001, 5.7385},  {130.1003, 5.5532},
+      {135.1004, 5.2372},  {140.1005, 4.8159},  {145.1005, 4.3220},
+      {150.1005, 3.7919},  {155.1005, 3.2633},  {160.1005, 2.7726},
+      {165.1004, 2.3527},  {170.1003, 2.0318},  {175.1001, 1.8314}};
+  std::unique_ptr<ForceFields::ForceField> globalFF(
+      RDKit::UFF::constructForceField(*mol));
+  TEST_ASSERT(globalFF);
+  globalFF->initialize();
+  std::unique_ptr<ROMol> mol2(new ROMol(*mol));
+  const int start = -180;
+  const int end = 180;
+  const int incr = 5;
+  MolTransforms::setDihedralDeg(mol2->getConformer(), 0, 1, 2, 3, start);
+  for (int diheIn = start; diheIn < end; diheIn += incr) {
+    std::unique_ptr<ForceFields::ForceField> localFF(
+        RDKit::UFF::constructForceField(*mol2));
+    TEST_ASSERT(localFF);
+    localFF->initialize();
+    auto *tc = new ForceFields::UFF::TorsionConstraintContrib(
+        localFF.get(), 0, 1, 2, 3, static_cast<double>(diheIn) - 0.1,
+        static_cast<double>(diheIn) + 0.1, 100.0);
+    localFF->contribs().push_back(ForceFields::ContribPtr(tc));
+    TEST_ASSERT(localFF->minimize(10000) == 0);
+    std::vector<double> pos(3 * localFF->numPoints());
+    TEST_ASSERT(localFF->numPoints() == globalFF->numPoints());
+    auto posns = localFF->positions();
+    for (unsigned int i = 0; i < localFF->numPoints(); ++i) {
+      for (unsigned int j = 0; j < 3; ++j) {
+        pos[i * 3 + j] = (*static_cast<RDGeom::Point3D *>(posns.at(i)))[j];
+      }
+    }
+    auto diheOut =
+        MolTransforms::getDihedralDeg(mol2->getConformer(), 0, 1, 2, 3);
+    auto energy = globalFF->calcEnergy(pos.data());
+    diheEnergyVect.emplace_back(diheOut, energy);
+  }
+  for (size_t i = 0; i < diheEnergyVect.size(); ++i) {
+    TEST_ASSERT(RDKit::feq(diheEnergyVect.at(i).first,
+                           expectedDiheEnergyVect.at(i).first, 1.0));
+    TEST_ASSERT(RDKit::feq(diheEnergyVect.at(i).second,
+                           expectedDiheEnergyVect.at(i).second, 0.2));
+  }
+
+  std::cerr << "  done" << std::endl;
+}
+
 int main() {
 #if 1
   test1();
@@ -1609,4 +1714,5 @@ int main() {
   testUFFDistanceConstraints();
   testUFFAllConstraints();
   testUFFCopy();
+  testUFFButaneScan();
 }

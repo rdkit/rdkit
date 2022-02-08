@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include <boost/python.hpp>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <RDBoost/Wrap.h>
 
 using namespace RDKit;
 namespace python = boost::python;
@@ -38,12 +39,10 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-  python::extract<std::vector<std::uint32_t>> countBoundsE(py_countBounds);
-  if (countBoundsE.check() && !countBoundsE().empty()) {
-    countBounds = countBoundsE();
+  if (py_countBounds) {
+    auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
+    countBounds = *tmp;
   }
-
-  const std::vector<std::uint32_t> countBoundsC = countBounds;
 
   return MorganFingerprint::getMorganGenerator<OutputType>(
       radius, countSimulation, includeChirality, useBondTypes,
@@ -76,7 +75,7 @@ BondInvariantsGenerator *getMorganBondInvGen(const bool useBondTypes,
 void exportMorgan() {
   python::def(
       "GetMorganGenerator", getMorganGenerator<std::uint64_t>,
-      (python::arg("radius") = 3, python::arg("useCountSimulation") = false,
+      (python::arg("radius") = 3, python::arg("countSimulation") = false,
        python::arg("includeChirality") = false,
        python::arg("useBondTypes") = true,
        python::arg("onlyNonzeroInvariants") = false,
@@ -88,7 +87,7 @@ void exportMorgan() {
       "Get a morgan fingerprint generator\n\n"
       "  ARGUMENTS:\n"
       "    - radius:  the number of iterations to grow the fingerprint\n"
-      "    - useCountSimulation: if set, use count simulation while generating "
+      "    - countSimulation: if set, use count simulation while generating "
       "the fingerprint\n"
       "    - includeChirality: if set, chirality information will be added to "
       "the generated fingerprint\n"
@@ -101,6 +100,10 @@ void exportMorgan() {
       "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
+      "This generator supports the following AdditionalOutput types:\n"
+      "    - atomToBits: which bits each atom is the center of\n"
+      "    - atomCounts: how many bits each atom sets\n"
+      "    - bitInfoMap: map from bitId to (atomId1, radius) pairs\n\n"
       "  RETURNS: FingerprintGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 

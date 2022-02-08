@@ -11,12 +11,15 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
 #include <Geometry/Transform3D.h>
-#include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <Geometry/point.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <iostream>
+#include <algorithm>
 
 using namespace RDKit;
 using namespace MolTransforms;
@@ -99,20 +102,25 @@ void test1Canonicalization() {
   // trans = computeCanonicalTransform(*conf);
   // transformConformer(*conf, *trans);
   canonicalizeConformer(*conf);
-  CHECK_INVARIANT(
-      comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.6418, 0.6158, 0.0)),
-      "");
-  CHECK_INVARIANT(
-      comparePts(conf->getAtomPos(1), RDGeom::Point3D(-0.2029, -0.8602, 0.0)),
-      "");
-  CHECK_INVARIANT(
-      comparePts(conf->getAtomPos(2), RDGeom::Point3D(0.8447, 0.2445, 0.0)),
-      "");
-  MolToMolFile(*mol, "junk.mol", 0);
-  // CHECK_INVARIANT(comparePts(conf->getAtomPos(0), RDGeom::Point3D(-0.75, 0.0,
-  // 0.0)), "");
-  // CHECK_INVARIANT(comparePts(conf->getAtomPos(1), RDGeom::Point3D(0.75, 0.0,
-  // 0.0)), "");
+
+// computeCanonicalTransform returns more approximate eigenvalues/eigencvectors
+// when built against the native RDKit PowerEigenSolver, so unit test results
+// differ slightly
+#ifdef RDK_HAS_EIGEN3
+  std::vector<RDGeom::Point3D> expected = {
+      RDGeom::Point3D(0.8244, -0.3268, 0.0),
+      RDGeom::Point3D(-0.6975, -0.5449, 0.0),
+      RDGeom::Point3D(-0.1269, 0.8716, 0.0)};
+#else
+  std::vector<RDGeom::Point3D> expected = {
+      RDGeom::Point3D(-0.6418, 0.6158, 0.0),
+      RDGeom::Point3D(-0.2029, -0.8602, 0.0),
+      RDGeom::Point3D(0.8447, 0.2445, 0.0)};
+#endif
+  CHECK_INVARIANT(comparePts(conf->getAtomPos(0), expected.at(0)), "");
+  CHECK_INVARIANT(comparePts(conf->getAtomPos(1), expected.at(1)), "");
+  CHECK_INVARIANT(comparePts(conf->getAtomPos(2), expected.at(2)), "");
+  MolToMolFile(*mol, "junk.mol", true, 0);
   delete mol;
 
   std::string rdbase = getenv("RDBASE");
@@ -312,19 +320,19 @@ void testGithub1908() {
 
     Conformer &conf = m->getConformer();
     double dist = getBondLength(conf, 0, 1);
-    //std::cerr << " 1: " << dist << std::endl;
+    // std::cerr << " 1: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
     dist = getBondLength(conf, 1, 2);
-    //std::cerr << " 2: " << dist << std::endl;
+    // std::cerr << " 2: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
 
     canonicalizeConformer(conf);
 
     dist = getBondLength(conf, 0, 1);
-    //std::cerr << " 3: " << dist << std::endl;
+    // std::cerr << " 3: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
     dist = getBondLength(conf, 1, 2);
-    //std::cerr << " 4: " << dist << std::endl;
+    // std::cerr << " 4: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
   }
   {  // a disc (benzene)
@@ -335,20 +343,73 @@ void testGithub1908() {
 
     Conformer &conf = m->getConformer();
     double dist = getBondLength(conf, 0, 1);
-    //std::cerr << " 1: " << dist << std::endl;
+    // std::cerr << " 1: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
     dist = getBondLength(conf, 1, 2);
-    //std::cerr << " 2: " << dist << std::endl;
+    // std::cerr << " 2: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
 
     canonicalizeConformer(conf);
 
     dist = getBondLength(conf, 0, 1);
-    //std::cerr << " 3: " << dist << std::endl;
+    // std::cerr << " 3: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
     dist = getBondLength(conf, 1, 2);
-    //std::cerr << " 4: " << dist << std::endl;
+    // std::cerr << " 4: " << dist << std::endl;
     TEST_ASSERT(feq(dist, 1.38, .02));
+  }
+}
+
+void testGithub4302() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/MolTransforms/test_data/github4302.sdf";
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/MolTransforms/test_data/github4302_canon.sdf";
+  RDKit::SDMolSupplier reader(fname1);
+  RDKit::SDWriter writer(fname2);
+  while (!reader.atEnd()) {
+    std::unique_ptr<RDKit::ROMol> mol(reader.next());
+    const RDKit::Conformer &conf = mol->getConformer();
+    auto canonConf = new RDKit::Conformer(conf);
+    auto cid = mol->addConformer(canonConf, true);
+    canonicalizeConformer(*canonConf);
+    // the native RDKit eigensolver comes up with non-canonical
+    // or distorted coordinates with these conformations
+#ifdef RDK_HAS_EIGEN3
+    for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+      TEST_ASSERT(comparePts(canonConf->getAtomPos(i), conf.getAtomPos(i)));
+    }
+#endif
+    writer.write(*mol, cid);
+  }
+  writer.close();
+}
+
+void testWeightedCentroid() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/MolTransforms/test_data/github4302.sdf";
+  RDKit::SDMolSupplier reader(fname1);
+  while (!reader.atEnd()) {
+    std::unique_ptr<RDKit::ROMol> mol(reader.next());
+    const RDKit::Conformer &conf = mol->getConformer();
+    std::vector<double> weights;
+    weights.reserve(mol->getNumAtoms());
+    for (const auto a : mol->atoms()) {
+      weights.push_back(
+          PeriodicTable::getTable()->getAtomicWeight(a->getAtomicNum()));
+    }
+    RDGeom::Point3D ctd;
+    double totalMass = 0.0;
+    for (const auto a : mol->atoms()) {
+      auto atomicMass =
+          PeriodicTable::getTable()->getAtomicWeight(a->getAtomicNum());
+      totalMass += atomicMass;
+      ctd += conf.getAtomPos(a->getIdx()) * atomicMass;
+    }
+    ctd /= totalMass;
+    TEST_ASSERT((ctd - computeCentroid(conf, true, &weights)).length() < 1.e-4);
   }
 }
 
@@ -381,6 +442,13 @@ int main() {
   std::cout
       << "\t testGithub1908: CanonicalizeMol() distorting bond lengths\n\n";
   testGithub1908();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGithub4302: native computeCanonicalTransform() "
+               "generates non-canonical coords\n\n";
+  testGithub4302();
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testWeightedCentroid \n\n";
+  testWeightedCentroid();
   std::cout << "***********************************************************\n";
   return (0);
 }

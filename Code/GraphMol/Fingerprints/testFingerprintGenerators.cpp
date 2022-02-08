@@ -174,7 +174,7 @@ void testAtomPairOld() {
     FingerprintGenerator<std::uint32_t> *atomPairGenerator =
         AtomPair::getAtomPairGenerator<std::uint32_t>();
 
-    BOOST_FOREACH (std::string sm, smis) {
+    for (const auto &sm : smis) {
       mol = SmilesToMol(sm);
       fp1 = AtomPairs::getAtomPairFingerprint(*mol);
       fpu = atomPairGenerator->getSparseCountFingerprint(*mol);
@@ -259,24 +259,20 @@ void testAtomPairNonSparseBitvector() {
 void testAtomPairOutput() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test atom-pair additional output" << std::endl;
+  auto mol = "CCC"_smiles;
+  TEST_ASSERT(mol);
+  AdditionalOutput additionalOutput;
 
-  ROMol *mol;
-  SparseIntVect<std::uint32_t> *fp;
-  std::uint32_t c1, c2, c3;
-  AdditionalOutput additionalOutput = {nullptr, nullptr, nullptr, nullptr};
-  std::vector<std::uint64_t> v;
+  auto atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>();
+  additionalOutput.allocateAtomToBits();
+  additionalOutput.allocateAtomCounts();
 
-  FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-      AtomPair::getAtomPairGenerator<std::uint32_t>();
-  mol = SmilesToMol("CCC");
-  additionalOutput.atomToBits =
-      new std::vector<std::vector<std::uint64_t>>(mol->getNumAtoms());
-  fp = atomPairGenerator->getSparseCountFingerprint(*mol, nullptr, nullptr, -1,
-                                                    &additionalOutput);
-  c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
-  c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
-  c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
-  v = additionalOutput.atomToBits->at(0);
+  auto fp = atomPairGenerator->getSparseCountFingerprint(*mol, nullptr, nullptr,
+                                                         -1, &additionalOutput);
+  auto c1 = AtomPair::getAtomCode(mol->getAtomWithIdx(0), 0, false);
+  auto c2 = AtomPair::getAtomCode(mol->getAtomWithIdx(1), 0, false);
+  auto c3 = AtomPair::getAtomCode(mol->getAtomWithIdx(2), 0, false);
+  auto v = additionalOutput.atomToBits->at(0);
   TEST_ASSERT(std::find(v.begin(), v.end(),
                         (AtomPair::getAtomPairCode(c1, c2, 1, false))) !=
               v.end());
@@ -297,10 +293,11 @@ void testAtomPairOutput() {
   TEST_ASSERT(std::find(v.begin(), v.end(),
                         (AtomPair::getAtomPairCode(c2, c3, 1, false))) !=
               v.end());
+  TEST_ASSERT(additionalOutput.atomCounts->at(0) == 2);
+  TEST_ASSERT(additionalOutput.atomCounts->at(1) == 2);
+  TEST_ASSERT(additionalOutput.atomCounts->at(2) == 2);
 
-  delete mol;
   delete fp;
-  delete additionalOutput.atomToBits;
   delete atomPairGenerator;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -598,7 +595,7 @@ void testMorganFPOld() {
   FingerprintGenerator<std::uint32_t> *morganGenerator =
       MorganFingerprint::getMorganGenerator<std::uint32_t>(radius);
 
-  BOOST_FOREACH (std::string sm, smis) {
+  for (const auto &sm : smis) {
     mol = SmilesToMol(sm);
     fp = morganGenerator->getSparseCountFingerprint(*mol);
     fpOld = MorganFingerprints::getFingerprint(*mol, radius);
@@ -1451,7 +1448,7 @@ void testRDKitFP() {
           atomInvariantsGenerator, countSimulation, countBounds, fpSize,
           numBitsPerFeature));
 
-  BOOST_FOREACH (std::string sm, smis) {
+  for (const auto &sm : smis) {
     mol = SmilesToMol(sm);
     fp = fpGenerator->getSparseCountFingerprint(*mol);
     fpTemp = getUnfoldedRDKFingerprintMol(*mol);
@@ -1585,7 +1582,7 @@ void testTopologicalTorsionFPOld() {
   FingerprintGenerator<std::uint64_t> *fpGenerator =
       TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
 
-  BOOST_FOREACH (std::string sm, smis) {
+  for (const auto &sm : smis) {
     mol = SmilesToMol(sm);
     fp = fpGenerator->getSparseCountFingerprint(*mol);
     fpSigned = AtomPairs::getTopologicalTorsionFingerprint(*mol);
@@ -2379,29 +2376,31 @@ void testBulkFP() {
 
   std::vector<const ROMol *> molVect;
 
-  BOOST_FOREACH (std::string sm, smis) { molVect.push_back(SmilesToMol(sm)); }
+  for (const auto &sm : smis) {
+    molVect.push_back(SmilesToMol(sm));
+  }
 
-  testPairs.emplace_back(
-      AtomPair::getAtomPairGenerator<std::uint64_t>(), FPType::AtomPairFP);
+  testPairs.emplace_back(AtomPair::getAtomPairGenerator<std::uint64_t>(),
+                         FPType::AtomPairFP);
 
   testPairs.emplace_back(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2),
       FPType::MorganFP);
 
-  testPairs.emplace_back(
-      RDKitFP::getRDKitFPGenerator<std::uint64_t>(), FPType::RDKitFP);
+  testPairs.emplace_back(RDKitFP::getRDKitFPGenerator<std::uint64_t>(),
+                         FPType::RDKitFP);
 
   testPairs.emplace_back(
       TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(),
       FPType::TopologicalTorsionFP);
 
-  BOOST_FOREACH (auto it, testPairs) {
+  for (const auto &it : testPairs) {
     std::vector<SparseIntVect<std::uint64_t> *> *results =
         getSparseCountFPBulk(molVect, it.second);
 
     std::vector<SparseIntVect<std::uint64_t> *> compareRes;
 
-    BOOST_FOREACH (auto m, molVect) {
+    for (const auto &m : molVect) {
       compareRes.push_back(it.first->getSparseCountFingerprint(*m));
     }
 
@@ -2415,8 +2414,12 @@ void testBulkFP() {
     delete results;
   }
 
-  BOOST_FOREACH (auto &&m, molVect) { delete m; }
-  BOOST_FOREACH (auto &&t, testPairs) { delete t.first; }
+  for (auto &&m : molVect) {
+    delete m;
+  }
+  for (auto &&t : testPairs) {
+    delete t.first;
+  }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

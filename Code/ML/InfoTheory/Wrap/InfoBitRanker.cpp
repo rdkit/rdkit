@@ -71,8 +71,7 @@ void SetMaskBits(InfoBitRanker *ranker, python::object maskBits) {
   ranker->setMaskBits(cList);
 }
 
-void tester(InfoBitRanker *ranker, python::object bitVect) {
-  RDUNUSED_PARAM(ranker);
+void tester(InfoBitRanker *, python::object bitVect) {
   python::extract<SparseBitVect> sbvWorks(bitVect);
   if (sbvWorks.check()) {
     SparseBitVect sv = python::extract<SparseBitVect>(bitVect);

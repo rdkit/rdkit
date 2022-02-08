@@ -77,10 +77,10 @@ static double Volume(struct npoint_t tetra[4]) {
 
 int DubiousStereochemistry(RWMol &mol) {
   /*
-  * Checks if there is some ill-defined stereochemistry in the
-  * molecule *mp. The function returns a bit set integer which defines
-  * the problems encountered.
-  */
+   * Checks if there is some ill-defined stereochemistry in the
+   * molecule *mp. The function returns a bit set integer which defines
+   * the problems encountered.
+   */
 
   int result = 0;
   //   int is_allene, ndb, jatom;
@@ -136,13 +136,15 @@ int DubiousStereochemistry(RWMol &mol) {
 
       for (unsigned j = 0; j < n_ligands; j++) {
         const Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
-        if (bj.getBeginAtomIdx() == i  &&
-            (RDKit::Bond::BEGINWEDGE == bj.getBondDir() ||   // == UP
+        if (bj.getBeginAtomIdx() == i &&
+            (RDKit::Bond::BEGINWEDGE == bj.getBondDir() ||  // == UP
              RDKit::Bond::BEGINDASH == bj.getBondDir())) {  // == DOWN))
           std::string name;
           mol.getPropIfPresent(common_properties::_Name, name);
-          BOOST_LOG(rdWarningLog) << boost::format("%10s    atom %3d : %s")%
-              name % i % "stereobond to non-stereogenic atom" << std::endl;
+          BOOST_LOG(rdWarningLog)
+              << boost::format("%10s    atom %3d : %s") % name % i %
+                     "stereobond to non-stereogenic atom"
+              << std::endl;
           result |= STEREO_BOND_AT_NON_STEREO_ATOM;
         }
       }
@@ -152,12 +154,12 @@ int DubiousStereochemistry(RWMol &mol) {
 
 int FixDubious3DMolecule(RWMol &mol) {
   /*
-  * Checks if the structure has 3D coordinates and/or flat sp3-carbons with
-  * stereo-bonds and
-  * converts the designation to 2D, clearing away any Z-component of the
-  * coordinates.
-  * Real 3D structures without stereo designations go through untouched.
-  */
+   * Checks if the structure has 3D coordinates and/or flat sp3-carbons with
+   * stereo-bonds and
+   * converts the designation to 2D, clearing away any Z-component of the
+   * coordinates.
+   * Real 3D structures without stereo designations go through untouched.
+   */
 
   int result = 0;
   bool non_zero_z = false;
@@ -179,7 +181,7 @@ int FixDubious3DMolecule(RWMol &mol) {
     if (RDKit::Bond::BEGINWEDGE == bond->getBondDir() ||
         RDKit::Bond::BEGINDASH == bond->getBondDir()
         //???    || RDKit::Bond::EITHERDOUBLE == bond->getBondDir()
-        )
+    )
       nstereo++;
   }
   if (0 == nstereo) return 0;
@@ -334,7 +336,7 @@ void RemoveDubiousStereochemistry(RWMol &mol) {
       for (unsigned j = 0; j < n_ligands; j++) {
         Bond &bj = *mol.getBondWithIdx(nbp.Bonds[j]);
         if (bj.getBeginAtomIdx() == i &&
-            (RDKit::Bond::BEGINWEDGE == bj.getBondDir()       // == UP
+            (RDKit::Bond::BEGINWEDGE == bj.getBondDir()      // == UP
              || RDKit::Bond::BEGINDASH == bj.getBondDir()))  // == DOWN))
           bj.setBondDir(RDKit::Bond::NONE);
       }
@@ -382,7 +384,7 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
   }
 
   if (reference == (-1)) {
-      return (UNDEFINED_PARITY);
+    return (UNDEFINED_PARITY);
   }
 
   if (reference == 0) {
@@ -440,9 +442,9 @@ static int Atom3Parity(struct stereo_bond_t ligands[3]) {
 
 static int Atom4Parity(struct stereo_bond_t ligands[4]) {
   /*
-  * Computes the stereo parity defined by four ligands.
-  * Assumes central atom at 0/0/0.
-  */
+   * Computes the stereo parity defined by four ligands.
+   * Assumes central atom at 0/0/0.
+   */
   struct npoint_t tetrahedron[4], h;
   int nup, ndown, nopposite;
   double angle;
@@ -509,7 +511,7 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
   for (unsigned i = 0; i < 4; i++)
     if ((ligands[i].direction == RDKit::Bond::BEGINWEDGE &&
          ligands[(i + 1) % 4].direction == RDKit::Bond::BEGINWEDGE)  // UP
-        || (ligands[i].direction == RDKit::Bond::BEGINDASH          // DOWN
+        || (ligands[i].direction == RDKit::Bond::BEGINDASH           // DOWN
             && ligands[(i + 1) % 4].direction == RDKit::Bond::BEGINDASH)) {
       // stereo_error = "Adjacent like stereobonds";
       std::cerr << "adjacent like" << std::endl;
@@ -545,10 +547,10 @@ static int Atom4Parity(struct stereo_bond_t ligands[4]) {
 
 int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
   /*
-  * Computes the stereo parity of atom number iatom in *mp relative
-  * to its numbering. The immediate neighbours are defined by *nbp
-  * to speed up processing.
-  */
+   * Computes the stereo parity of atom number iatom in *mp relative
+   * to its numbering. The immediate neighbours are defined by *nbp
+   * to speed up processing.
+   */
   struct stereo_bond_t stereo_ligands[4], h;
   bool multiple = false, allene = false, stereo = false;
 
@@ -580,7 +582,7 @@ int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
     if (bi.getBeginAtomIdx() == iatom) {
       stereo_ligands[i].direction = bi.getBondDir();
       if (stereo_ligands[i].direction == RDKit::Bond::BEGINWEDGE ||  // UP ||
-          stereo_ligands[i].direction == RDKit::Bond::BEGINDASH)    // DOWN
+          stereo_ligands[i].direction == RDKit::Bond::BEGINDASH)     // DOWN
         stereo = true;
     } else
       stereo_ligands[i].direction = RDKit::Bond::NONE;
@@ -616,9 +618,9 @@ int AtomParity(const ROMol &mol, unsigned iatom, const Neighbourhood &nbp) {
 
 bool CheckStereo(const ROMol &mol) {
   /*
-  * Checks if all potential stereocenters are either completely undefined
-  * or attributed with hashes and wedges according to MDL rules.
-  */
+   * Checks if all potential stereocenters are either completely undefined
+   * or attributed with hashes and wedges according to MDL rules.
+   */
   bool result = true;
   int parity;
   bool center_defined = false;
@@ -636,25 +638,24 @@ bool CheckStereo(const ROMol &mol) {
                                               || 8 == element    // "O"
                                               || 15 == element   // "P"
                                               || 14 == element)  // "Si"
-        ) {
+    ) {
       parity = AtomParity(mol, i, nbp);
-      
+
       const Atom *atom = mol.getAtomWithIdx(i);
       if (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW)
         center_defined = true;
-        
+
       if (parity == ILLEGAL_REPRESENTATION) {  // stereo_error
         result = false;
       } else if (parity == EVEN_PARITY || parity == ODD_PARITY ||
                  parity == ALLENE_PARITY) {
         center_defined = true;
-      }
-      else {
+      } else {
         for (unsigned j = 0; j < nbp.Bonds.size(); j++) {
           const Bond &bond = *mol.getBondWithIdx(j);
           if (bond.getBeginAtomIdx() == i &&
-              (RDKit::Bond::BEGINWEDGE == bond.getBondDir()         // == UP
+              (RDKit::Bond::BEGINWEDGE == bond.getBondDir()        // == UP
                || RDKit::Bond::BEGINDASH == bond.getBondDir())) {  // == DOWN))
             // stereobond to non-stereogenic atom
             std::cerr << "stereobond to nonstereogenic" << std::endl;
@@ -668,7 +669,7 @@ bool CheckStereo(const ROMol &mol) {
   unsigned int chiralFlag = 0;
   mol.getPropIfPresent(RDKit::common_properties::_MolFileChiralFlag,
                        chiralFlag);
-  
+
   if (chiralFlag && !center_defined) {  // no stereocenter defined
     std::cerr << "chiral flag, no stereocenter" << std::endl;
     result = false;
@@ -678,16 +679,16 @@ bool CheckStereo(const ROMol &mol) {
 
 bool AtomClash(RWMol &mol, double clash_limit) {
   /*
-  * Checks if any two atoms in *mp come closer than 10% of the
-  * average bond length or if an atom is too close the line
-  * between two bonded atoms.
-  */
+   * Checks if any two atoms in *mp come closer than 10% of the
+   * average bond length or if an atom is too close the line
+   * between two bonded atoms.
+   */
   double bond_square_median, dist, min_dist;
   double rr, rb, bb, h;
   std::vector<RDGeom::Point3D> atomPoint(
       mol.getNumAtoms());  // X,Y,Z coordinates of each atom
 
-  bool twod=true;
+  bool twod = true;
   getMolAtomPoints(mol, atomPoint, twod);
 
   // compute median of square of bond length (quick/dirty)
@@ -756,9 +757,10 @@ bool AtomClash(RWMol &mol, double clash_limit) {
           rb <= bb &&  // projection of r onto b does not exceed b
           (rr * bb - rb * rb) / (bb + EPS) <  // distance from bond < limit
               clash_limit * clash_limit * bond_square_median) {
-        BOOST_LOG(rdWarningLog) << "atom " << j << " " <<
-            100*sqrt((rr*bb-rb*rb)/(bb*bond_square_median+EPS)) <<
-            "% of average bond length " << a1 << "-" << a2 << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "atom " << j << " "
+            << 100 * sqrt((rr * bb - rb * rb) / (bb * bond_square_median + EPS))
+            << "% of average bond length " << a1 << "-" << a2 << std::endl;
         std::cerr << "clash 2" << std::endl;
         return true;
       }
@@ -769,10 +771,10 @@ bool AtomClash(RWMol &mol, double clash_limit) {
 //--------------------------------------------------------------------------
 
 /*
-* Sets the color field of the defined double bonds in *mp to CIS,
-* TRANS, or NONE depending on the ligands with the lowest numbering[].
-* It returns the number of defined double bonds found.
-*/
+ * Sets the color field of the defined double bonds in *mp to CIS,
+ * TRANS, or NONE depending on the ligands with the lowest numbering[].
+ * It returns the number of defined double bonds found.
+ */
 int CisTransPerception(const ROMol &mol,
                        const std::vector<RDGeom::Point3D> &points,
                        const std::vector<unsigned> &numbering,
@@ -792,9 +794,8 @@ int CisTransPerception(const ROMol &mol,
         // RDKit::Bond::ENDDOWNRIGHT
         // FIX:         && mol.getBondWithIdx(i)->getBondDir() !=
         // RDKit::Bond::ENDUPRIGHT
-        &&
-        mol.getBondWithIdx(i)->getBondDir() !=
-            RDKit::Bond::EITHERDOUBLE) {  // != CIS_TRANS_EITHER
+        && mol.getBondWithIdx(i)->getBondDir() !=
+               RDKit::Bond::EITHERDOUBLE) {  // != CIS_TRANS_EITHER
       unsigned j1 = mol.getBondWithIdx(i)->getBeginAtomIdx();
       unsigned j2 = mol.getBondWithIdx(i)->getEndAtomIdx();
       if (6 != mol.getAtomWithIdx(j1)->getAtomicNum())  // C

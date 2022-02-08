@@ -15,31 +15,59 @@
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/SparseBitVect.h>
+#include <utility>
+#include <vector>
+#include <memory>
 #include <cstdint>
 
 namespace RDKit {
 class ROMol;
 
 struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
-  // will review this structure once more fingerprint types are implemented
+  using atomToBitsType = std::vector<std::vector<std::uint64_t>>;
+  using bitInfoMapType =
+      std::map<std::uint64_t,
+               std::vector<std::pair<std::uint32_t, std::uint32_t>>>;
+  using bitPathsType = std::map<std::uint64_t, std::vector<std::vector<int>>>;
+  using atomCountsType = std::vector<unsigned int>;
 
-  std::vector<std::vector<std::uint64_t>> *atomToBits;
+  // numAtoms long
+  atomToBitsType *atomToBits = nullptr;
 
-  std::map<std::uint32_t, std::vector<std::pair<std::uint32_t, std::uint32_t>>>
-      *bitInfoMap;
-  // morgan fp
-  // maps bitId -> vector of (atomId, radius)
+  // bitId -> vector of (atomId, radius) for morgan
+  // bitId -> (atom1, atom2) for atom pairs
+  bitInfoMapType *bitInfoMap = nullptr;
 
-  std::pair<std::vector<std::vector<std::uint32_t>>,
-            std::map<std::uint32_t, std::vector<std::vector<int>>>> *bitInfo;
   // rdkit fp
-  // first part, vector of bits set for each atom, must have the same size as
-  // atom count for molecule
-  // second part, maps bitId -> vector of paths
+  // maps bitId -> vector of bond paths
+  bitPathsType *bitPaths = nullptr;
 
-  std::vector<unsigned int> *atomCounts;
   // number of paths that set bits for each atom, must have the same size as
   // atom count for molecule
+  atomCountsType *atomCounts = nullptr;
+
+  void allocateAtomToBits() {
+    atomToBitsHolder.reset(new atomToBitsType);
+    atomToBits = atomToBitsHolder.get();
+  }
+  void allocateBitInfoMap() {
+    bitInfoMapHolder.reset(new bitInfoMapType);
+    bitInfoMap = bitInfoMapHolder.get();
+  }
+  void allocateBitPaths() {
+    bitPathsHolder.reset(new bitPathsType);
+    bitPaths = bitPathsHolder.get();
+  }
+  void allocateAtomCounts() {
+    atomCountsHolder.reset(new atomCountsType);
+    atomCounts = atomCountsHolder.get();
+  }
+
+ private:
+  std::unique_ptr<atomToBitsType> atomToBitsHolder;
+  std::unique_ptr<bitInfoMapType> bitInfoMapHolder;
+  std::unique_ptr<bitPathsType> bitPathsHolder;
+  std::unique_ptr<atomCountsType> atomCountsHolder;
 };
 
 /*!
@@ -84,7 +112,7 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
    */
   std::string commonArgumentsString() const;
 
-  virtual ~FingerprintArguments(){};
+  virtual ~FingerprintArguments() {}
 };
 
 /*!
@@ -110,9 +138,10 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironment : private boost::noncopyable {
                               const std::vector<std::uint32_t> *atomInvariants,
                               const std::vector<std::uint32_t> *bondInvariants,
                               const AdditionalOutput *AdditionalOutput,
-                              const bool hashResults = false) const = 0;
+                              const bool hashResults = false,
+                              const std::uint64_t fpSize = 0) const = 0;
 
-  virtual ~AtomEnvironment(){};
+  virtual ~AtomEnvironment() {}
 };
 
 /*!
@@ -167,7 +196,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironmentGenerator
    */
   virtual std::string infoString() const = 0;
 
-  virtual ~AtomEnvironmentGenerator(){};
+  virtual ~AtomEnvironmentGenerator() {}
 };
 
 /*!
@@ -196,7 +225,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomInvariantsGenerator
    */
   virtual std::string infoString() const = 0;
 
-  virtual ~AtomInvariantsGenerator(){};
+  virtual ~AtomInvariantsGenerator() {}
   virtual AtomInvariantsGenerator *clone() const = 0;
 };
 
@@ -226,7 +255,7 @@ class RDKIT_FINGERPRINTS_EXPORT BondInvariantsGenerator
  */
   virtual std::string infoString() const = 0;
 
-  virtual ~BondInvariantsGenerator(){};
+  virtual ~BondInvariantsGenerator() {}
   virtual BondInvariantsGenerator *clone() const = 0;
 };  // namespace RDKit
 
@@ -301,12 +330,12 @@ class RDKIT_FINGERPRINTS_EXPORT UnimplementedFPException
     : public std::exception {
  public:
   //! construct with an error message
-  UnimplementedFPException(const char *msg) : _msg(msg){};
+  UnimplementedFPException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  UnimplementedFPException(const std::string &msg) : _msg(msg){};
+  UnimplementedFPException(std::string msg) : _msg(std::move(msg)) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~UnimplementedFPException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~UnimplementedFPException() noexcept override = default;
 
  private:
   std::string _msg;

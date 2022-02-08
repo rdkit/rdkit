@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include "GasteigerParams.h"
 
 #include <RDGeneral/BoostStartInclude.h>
@@ -70,7 +70,8 @@ Al      sp2     5.795   5.020   0.695 \n \
 
 typedef boost::flyweight<
     boost::flyweights::key_value<std::string, GasteigerParams>,
-    boost::flyweights::no_tracking> gparam_flyweight;
+    boost::flyweights::no_tracking>
+    gparam_flyweight;
 
 GasteigerParams::GasteigerParams(std::string paramData) {
   boost::char_separator<char> eolSep("\n");
@@ -122,4 +123,4 @@ const GasteigerParams *GasteigerParams::getParams(
   const GasteigerParams *res = &(gparam_flyweight(paramData).get());
   return res;
 }
-}
+}  // namespace RDKit

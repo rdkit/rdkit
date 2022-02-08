@@ -33,6 +33,25 @@ void LinkNodeOp::initFromMol() {
   if (!dp_mol) {
     return;
   }
+  d_variations.clear();
+  d_pointRanges.clear();
+  d_isotopeMap.clear();
+  if (!dp_mol->hasProp(common_properties::molFileLinkNodes)) {
+    return;
+  }
+
+  if (!dp_mol->hasProp(detail::idxPropName)) {
+    detail::preserveOrigIndices(*dp_mol);
+  }
+
+  d_atomMap.clear();
+  for (auto atom : dp_mol->atoms()) {
+    unsigned int oidx;
+    if (atom->getPropIfPresent(detail::idxPropName, oidx)) {
+      d_atomMap[oidx] = atom;
+    }
+  }
+
   std::vector<int> mapping;
   if (MolOps::getMolFrags(*dp_mol, mapping) > 1) {
     throw ValueErrorException(
@@ -40,17 +59,14 @@ void LinkNodeOp::initFromMol() {
         "fragment.");
   }
   dp_frame.reset(new RWMol(*dp_mol));
-  auto nodes = utils::getMolLinkNodes(*dp_frame);
+  auto nodes = utils::getMolLinkNodes(*dp_frame, true, &d_atomMap);
   std::string attachSmarts = "";
   std::vector<std::string> linkEnums;
   std::vector<std::string> molEnums;
-  d_variations.clear();
-  d_pointRanges.clear();
-  d_isotopeMap.clear();
   for (auto node : nodes) {
     if (node.nBonds != 2) {
       UNDER_CONSTRUCTION(
-        "only link nodes with 2 bonds are currently supported");
+          "only link nodes with 2 bonds are currently supported");
     }
     std::string productSmarts = "";
     d_countAtEachPoint.push_back(node.maxRep - node.minRep + 1);
@@ -59,21 +75,28 @@ void LinkNodeOp::initFromMol() {
     auto attach1 = dp_frame->getAtomWithIdx(node.bondAtoms[0].second);
     auto attach2 = dp_frame->getAtomWithIdx(node.bondAtoms[1].second);
     // save the isotope values:
-    if (d_isotopeMap.find(1000 * (node.bondAtoms[0].first+1)) == d_isotopeMap.end()) {
-      d_isotopeMap[1000 * (node.bondAtoms[0].first+1)] = varAtom->getIsotope();
+    if (d_isotopeMap.find(1000 * (node.bondAtoms[0].first + 1)) ==
+        d_isotopeMap.end()) {
+      d_isotopeMap[1000 * (node.bondAtoms[0].first + 1)] =
+          varAtom->getIsotope();
     }
-    if (d_isotopeMap.find(1000 * (node.bondAtoms[0].second+1)) == d_isotopeMap.end()) {
-      d_isotopeMap[1000 * (node.bondAtoms[0].second+1)] = attach1->getIsotope();
+    if (d_isotopeMap.find(1000 * (node.bondAtoms[0].second + 1)) ==
+        d_isotopeMap.end()) {
+      d_isotopeMap[1000 * (node.bondAtoms[0].second + 1)] =
+          attach1->getIsotope();
     }
-    if (d_isotopeMap.find(1000 * (node.bondAtoms[1].second+1)) == d_isotopeMap.end()) {
-      d_isotopeMap[1000 * (node.bondAtoms[1].second+1)] = attach2->getIsotope();
+    if (d_isotopeMap.find(1000 * (node.bondAtoms[1].second + 1)) ==
+        d_isotopeMap.end()) {
+      d_isotopeMap[1000 * (node.bondAtoms[1].second + 1)] =
+          attach2->getIsotope();
     }
-    varAtom->setIsotope(1000 * (node.bondAtoms[0].first+1));
-    attach1->setIsotope(1000 * (node.bondAtoms[0].second+1));
-    attach2->setIsotope(1000 * (node.bondAtoms[1].second+1));
+    varAtom->setIsotope(1000 * (node.bondAtoms[0].first + 1));
+    attach1->setIsotope(1000 * (node.bondAtoms[0].second + 1));
+    attach2->setIsotope(1000 * (node.bondAtoms[1].second + 1));
     d_variations.push_back(
-        std::make_tuple(1000 * (node.bondAtoms[0].first+1), 
-        1000 * (node.bondAtoms[0].second+1), 1000 * (node.bondAtoms[1].second+1)));
+        std::make_tuple(1000 * (node.bondAtoms[0].first + 1),
+                        1000 * (node.bondAtoms[0].second + 1),
+                        1000 * (node.bondAtoms[1].second + 1)));
   }
 }
 

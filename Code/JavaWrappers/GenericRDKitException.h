@@ -11,15 +11,25 @@
 
 #include <RDGeneral/export.h>
 #include <exception>
+#include <string>
+
+// RDKIT_JAVAWRAPPERS_EXPORT does not get defined in RDGeneral/export.h,
+// and we only use it here for non-windows builds, so just define it based
+// on RDKIT_RDGENERAL_EXPORT
+#if defined(RDKIT_DYN_LINK) && defined(WIN32) && defined(BOOST_HAS_DECLSPEC)
+#define RDKIT_JAVAWRAPPERS_EXPORT
+#else
+#define RDKIT_JAVAWRAPPERS_EXPORT RDKIT_RDGENERAL_EXPORT
+#endif
 
 namespace RDKit {
 
-class GenericRDKitException : public std::exception {
+class RDKIT_JAVAWRAPPERS_EXPORT GenericRDKitException : public std::exception {
  public:
-  GenericRDKitException(const std::string &i) : _value(i){};
-  GenericRDKitException(const char *msg) : _value(msg){};
-  const char *what() const noexcept override { return _value.c_str(); };
-  ~GenericRDKitException() noexcept {};
+  GenericRDKitException(const std::string &i) : _value(i) {}
+  GenericRDKitException(const char *msg) : _value(msg) {}
+  const char *what() const noexcept override { return _value.c_str(); }
+  ~GenericRDKitException() noexcept = default;
 
  private:
   std::string _value;

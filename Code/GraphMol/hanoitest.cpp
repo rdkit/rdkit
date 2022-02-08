@@ -865,7 +865,7 @@ void test6() {
 namespace {
 
 ROMol *_renumber(const ROMol *m, std::vector<unsigned int> &nVect,
-                 const std::string& /*inSmiles*/) {
+                 const std::string & /*inSmiles*/) {
   ROMol *nm = MolOps::renumberAtoms(*m, nVect);
   TEST_ASSERT(nm);
   TEST_ASSERT(nm->getNumAtoms() == m->getNumAtoms());

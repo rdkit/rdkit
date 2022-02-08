@@ -21,7 +21,7 @@ set(AVALON_SRC_PATH ${AVALONTOOLS_DIR}/common)
 
 if(needDownload)
   if(NOT DEFINED AVALONTOOLS_URL)
-    set(AVALONTOOLS_URL "http://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
+    set(AVALONTOOLS_URL "https://sourceforge.net/projects/avalontoolkit/files/AvalonToolkit_1.2/AvalonToolkit_1.2.0.source.tar")
   endif()
   if(NOT DEFINED AVALONTOOLS_MD5SUM)
     set(AVALONTOOLS_MD5SUM "092a94f421873f038aa67d4a6cc8cb54")
@@ -98,7 +98,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${AVALON_SRC_PATH})
 
 rdkit_library(AvalonLib AvalonTools.cpp SHARED 
-     LINK_LIBRARIES avalon_clib FileParsers SmilesParse GraphMol DataStructs  )
+     LINK_LIBRARIES avalon_clib SubstructMatch FileParsers SmilesParse GraphMol DataStructs  )
 target_compile_definitions(AvalonLib PRIVATE RDKIT_AVALONLIB_BUILD)
 rdkit_headers(AvalonTools.h DEST GraphMol)
 rdkit_test(testAvalonLib1 test1.cpp

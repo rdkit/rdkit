@@ -9,6 +9,7 @@
 //
 #include <RDGeneral/Invariant.h>
 
+#include <map>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/format.hpp>
@@ -27,7 +28,9 @@ struct LinkNode {
 };
 
 namespace utils {
-inline std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict = true) {
+inline std::vector<LinkNode> getMolLinkNodes(
+    const ROMol &mol, bool strict = true,
+    const std::map<unsigned, Atom *> *atomIdxMap = nullptr) {
   std::vector<LinkNode> res;
   std::string pval;
   if (!mol.getPropIfPresent(common_properties::molFileLinkNodes, pval)) {
@@ -106,10 +109,35 @@ inline std::vector<LinkNode> getMolLinkNodes(const ROMol &mol, bool strict = tru
         continue;
       }
     }
-    node.bondAtoms.push_back(std::make_pair(data[3] - 1, data[4] - 1));
-    node.bondAtoms.push_back(std::make_pair(data[5] - 1, data[6] - 1));
-    if (!mol.getBondBetweenAtoms(data[4] - 1, data[3] - 1) ||
-        !mol.getBondBetweenAtoms(data[6] - 1, data[5] - 1)) {
+
+    if (atomIdxMap) {
+      // map the indices back to the original atom numbers
+      for (unsigned int i = 3; i <= 6; ++i) {
+        const auto aidx = atomIdxMap->find(data[i] - 1);
+        if (aidx == atomIdxMap->end()) {
+          std::ostringstream errout;
+          errout << "atom index " << data[i]
+                 << " cannot be found in molecule for LINKNODE '"
+                 << linknodetext << "'";
+          if (strict) {
+            throw ValueErrorException(errout.str());
+          } else {
+            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+            continue;
+          }
+        } else {
+          data[i] = aidx->second->getIdx();
+        }
+      }
+    } else {
+      for (unsigned int i = 3; i <= 6; ++i) {
+        --data[i];
+      }
+    }
+    node.bondAtoms.push_back(std::make_pair(data[3], data[4]));
+    node.bondAtoms.push_back(std::make_pair(data[5], data[6]));
+    if (!mol.getBondBetweenAtoms(data[4], data[3]) ||
+        !mol.getBondBetweenAtoms(data[6], data[5])) {
       std::ostringstream errout;
       errout << "bond not found between atoms in LINKNODE '" << linknodetext
              << "'";

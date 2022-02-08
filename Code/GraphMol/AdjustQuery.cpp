@@ -61,7 +61,7 @@ unsigned int parseWhichString(const std::string &txt) {
   }
   return res;
 }
-
+constexpr const char *conjugatedOrAromatic = "_conjugatedOrAromatic";
 void adjustConjugatedFiveRings(RWMol &mol) {
   /*
    The idea here is to allow conjugated five-rings to match either aromatic or
@@ -100,6 +100,8 @@ void adjustConjugatedFiveRings(RWMol &mol) {
     qb.setQuery(makeSingleOrDoubleOrAromaticBondQuery());
     for (auto bi : ring) {
       const auto bond = mol.getBondWithIdx(bi);
+      bond->getBeginAtom()->setProp(conjugatedOrAromatic, 1, true);
+      bond->getEndAtom()->setProp(conjugatedOrAromatic, 1, true);
       if (std::find(bondTypesToModify.begin(), bondTypesToModify.end(),
                     bond->getBondType()) != bondTypesToModify.end()) {
         if (bond->hasQuery()) {
@@ -112,6 +114,10 @@ void adjustConjugatedFiveRings(RWMol &mol) {
       }
     }
   }
+}
+
+bool isAromaticOrConjugated(const Atom &atom) {
+  return atom.getIsAromatic() || atom.hasProp(conjugatedOrAromatic);
 }
 void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
                                         bool betweenAromaticAtoms) {
@@ -134,16 +140,16 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
   for (auto bond : mol.bonds()) {
     const auto bAt = bond->getBeginAtom();
     const auto eAt = bond->getEndAtom();
-    if (!bond->hasQuery() && bond->getBondType() == Bond::BondType::SINGLE &&
-        (bAt->getIsAromatic() || eAt->getIsAromatic())) {
-      if (toDegreeOneNeighbors &&
-          (bAt->getIsAromatic() ^ eAt->getIsAromatic())) {
-        if ((bAt->getIsAromatic() && eAt->getDegree() == 1) ||
-            (eAt->getIsAromatic() && bAt->getDegree() == 1)) {
+    if (!bond->hasQuery() && bond->getBondType() == Bond::BondType::SINGLE) {
+      auto bAtIsAromatic = isAromaticOrConjugated(*bAt);
+      auto eAtIsAromatic = isAromaticOrConjugated(*eAt);
+
+      if (toDegreeOneNeighbors && (bAtIsAromatic ^ eAtIsAromatic)) {
+        if ((bAtIsAromatic && eAt->getDegree() == 1) ||
+            (eAtIsAromatic && bAt->getDegree() == 1)) {
           mol.replaceBond(bond->getIdx(), &qb);
         }
-      } else if (betweenAromaticAtoms && bAt->getIsAromatic() &&
-                 eAt->getIsAromatic()) {
+      } else if (betweenAromaticAtoms && bAtIsAromatic && eAtIsAromatic) {
         mol.replaceBond(bond->getIdx(), &qb);
       }
     }
@@ -322,7 +328,7 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
   }
   which = boost::to_upper_copy<std::string>(pt.get("adjustRingChainFlags", ""));
   if (!which.empty()) {
-    p.adjustRingCountFlags = parseWhichString(which);
+    p.adjustRingChainFlags = parseWhichString(which);
   }
 }  // namespace MolOps
 
@@ -359,7 +365,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
             !ringInfo->numAtomRings(i)) &&
           !((params.makeAtomsGenericFlags & ADJUST_IGNORERINGS) &&
             ringInfo->numAtomRings(i)) &&
-          !((params.adjustDegreeFlags & ADJUST_IGNOREMAPPED) &&
+          !((params.makeAtomsGenericFlags & ADJUST_IGNOREMAPPED) &&
             isMapped(mol.getAtomWithIdx(i)))) {
         auto *qa = new QueryAtom();
         qa->setQuery(makeAtomNullQuery());
@@ -522,6 +528,11 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     adjustSingleBondsFromAromaticAtoms(
         mol, params.adjustSingleBondsToDegreeOneNeighbors,
         params.adjustSingleBondsBetweenAromaticAtoms);
+  }
+  if (params.setMDLFiveRingAromaticity) {
+    for (auto atom : mol.atoms()) {
+      atom->clearProp(conjugatedOrAromatic);
+    }
   }
 }
 }  // namespace MolOps

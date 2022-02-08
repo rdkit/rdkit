@@ -18,7 +18,9 @@
 #include "../Substruct/SubstructMatch.h"
 #include "SubstructMatchCustom.h"
 #include "MaximumCommonSubgraph.h"
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/graph/adjacency_list.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 namespace RDKit {
 namespace FMCS {
@@ -305,7 +307,7 @@ struct QueryRings {
 struct WeightedBond {
   const Bond* BondPtr{nullptr};
   unsigned Weight{0};
-  WeightedBond()  {}
+  WeightedBond() {}
   WeightedBond(const Bond* bond, const QueryRings& r)
       : BondPtr(bond), Weight(0) {
     // score ((bond.is_in_ring + atom1.is_in_ring + atom2.is_in_ring)
@@ -388,7 +390,13 @@ void MaximumCommonSubgraph::makeInitialSeeds() {
         QueryMoleculeMatchedBonds = seed.getNumBonds();
       }
     }
-  } else {  // create a set of seeds from each query bond
+    if (Seeds.empty()) {
+      BOOST_LOG(rdWarningLog)
+          << "The provided InitialSeed is not an MCS and will be ignored"
+          << std::endl;
+    }
+  }
+  if (Seeds.empty()) {  // create a set of seeds from each query bond
     // R1 additional performance OPTIMISATION
     // if(Parameters.BondCompareParameters.CompleteRingsOnly)
     // disable all mismatched rings, and do not generate initial seeds
@@ -569,6 +577,31 @@ bool checkIfRingsAreClosed(const Seed& fs) {
   return res;
 }
 
+bool checkNoLoneRingAtoms(const Seed& fs) {
+  if (!fs.MoleculeFragment.Atoms.size()) {
+    return true;
+  }
+
+  bool res = true;
+  const auto& om = fs.MoleculeFragment.Atoms[0]->getOwningMol();
+  const auto ri = om.getRingInfo();
+  for (const auto& ithRingAtomIndices : ri->atomRings()) {
+    size_t count = 0;
+    for (const auto atom : fs.MoleculeFragment.Atoms) {
+      if (std::find(ithRingAtomIndices.begin(), ithRingAtomIndices.end(),
+                    atom->getIdx()) != ithRingAtomIndices.end() &&
+          ++count > 1) {
+        break;
+      }
+    }
+    if (count == 1) {
+      res = false;
+      break;
+    }
+  }
+  return res;
+}
+
 }  // namespace
 bool MaximumCommonSubgraph::growSeeds() {
   bool mcsFound = false;
@@ -608,6 +641,9 @@ bool MaximumCommonSubgraph::growSeeds() {
         // #945: test here to see if the MCS actually has all rings closed
         if (possibleMCS && Parameters.BondCompareParameters.CompleteRingsOnly) {
           possibleMCS = checkIfRingsAreClosed(fs);
+        }
+        if (possibleMCS && Parameters.AtomCompareParameters.CompleteRingsOnly) {
+          possibleMCS = checkNoLoneRingAtoms(fs);
         }
         if (possibleMCS) {
           mcsFound = true;
@@ -908,18 +944,31 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     ThresholdCount = src_mols.size() - 1;
   }
 
+  // AtomCompareParameters.CompleteRingsOnly implies
+  // BondCompareParameters.CompleteRingsOnly
+  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
+    Parameters.BondCompareParameters.CompleteRingsOnly = true;
+  }
+
   // Selecting CompleteRingsOnly option also enables
   // --ring-matches-ring-only. ring--ring and chain bonds only match chain
   // bonds.
   if (Parameters.BondCompareParameters.CompleteRingsOnly) {
     Parameters.BondCompareParameters.RingMatchesRingOnly = true;
   }
+  if (Parameters.AtomCompareParameters.CompleteRingsOnly) {
+    Parameters.AtomCompareParameters.RingMatchesRingOnly = true;
+  }
 
+  unsigned i = 0;
+  boost::dynamic_bitset<> faked_ring_info(src_mols.size());
   for (const auto& src_mol : src_mols) {
     Molecules.push_back(src_mol.get());
     if (!Molecules.back()->getRingInfo()->isInitialized()) {
       Molecules.back()->getRingInfo()->initialize();  // but do not fill out !!!
+      faked_ring_info.set(i);
     }
+    ++i;
   }
 
   // sort source set of molecules by their 'size' and assume the smallest
@@ -1085,6 +1134,12 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
   }
 #endif
 
+  auto pos = faked_ring_info.find_first();
+  while (pos != boost::dynamic_bitset<>::npos) {
+    src_mols[pos]->getRingInfo()->reset();
+    pos = faked_ring_info.find_next(pos);
+  }
+
   clear();
   return res;
 }
@@ -1096,8 +1151,6 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
 #ifdef FAST_SUBSTRUCT_CACHE
   SubstructureCache::HashKey cacheKey;
   SubstructureCache::TIndexEntry* cacheEntry = nullptr;
-  bool cacheEntryIsValid = false;
-  RDUNUSED_PARAM(cacheEntryIsValid);  // unused var
 #endif
 
   bool foundInCache = false;
@@ -1125,7 +1178,6 @@ bool MaximumCommonSubgraph::checkIfMatchAndAppend(Seed& seed) {
 #endif
       cacheEntry =
           HashCache.find(seed, QueryAtomLabels, QueryBondLabels, cacheKey);
-      cacheEntryIsValid = true;
       if (cacheEntry) {  // possibly found. check for hash collision
 #ifdef VERBOSE_STATISTICS_ON
         ++VerboseStatistics.HashKeyFoundInCache;

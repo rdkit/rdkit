@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2018 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <algorithm>
+#include <iostream>
+#include <map>
+#include <math.h>
+#include <random>
+
 #include <RDGeneral/test.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
@@ -21,12 +27,6 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-
-#include <iostream>
-#include <map>
-#include <algorithm>
-#include <boost/foreach.hpp>
-#include <random>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -135,12 +135,24 @@ void test3() {
     TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(i, 3));
     TEST_ASSERT(!m->getRingInfo()->isAtomInRingOfSize(i, 4));
     TEST_ASSERT(m->getRingInfo()->numAtomRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{3}));
+    TEST_ASSERT(m->getRingInfo()->atomMembers(i).size() == 1 &&
+                m->getRingInfo()->atomMembers(i).at(0) == 0);
   }
   for (unsigned int i = 0; i < m->getNumBonds(); i++) {
     TEST_ASSERT(m->getRingInfo()->isBondInRingOfSize(i, 3));
     TEST_ASSERT(!m->getRingInfo()->isBondInRingOfSize(i, 4));
     TEST_ASSERT(m->getRingInfo()->numBondRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->bondRingSizes(i) == (INT_VECT{3}));
+    TEST_ASSERT(m->getRingInfo()->bondMembers(i).size() == 1 &&
+                m->getRingInfo()->bondMembers(i).at(0) == 0);
   }
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRing(0, 1));
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 3));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 4));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(0, 1));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 3));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 4));
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
 
@@ -156,9 +168,16 @@ void test3() {
     TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(i, 4));
     TEST_ASSERT(!m->getRingInfo()->isAtomInRingOfSize(i, 3));
     TEST_ASSERT(m->getRingInfo()->numAtomRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{4}));
+    TEST_ASSERT(m->getRingInfo()->atomMembers(i).size() == 1 &&
+                m->getRingInfo()->atomMembers(i).at(0) == 0);
   }
   TEST_ASSERT(m->getRingInfo()->isBondInRingOfSize(0, 4));
   TEST_ASSERT(m->getRingInfo()->numBondRings(0) == 1);
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(0) == (INT_VECT{4}));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(0, 1));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 4));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 5));
 
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
@@ -190,6 +209,23 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->numAtomRings(0) == 1);
   TEST_ASSERT(
       m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(0, 1)->getIdx()));
+  TEST_ASSERT(m->getRingInfo()->atomMembers(0).size() == 1);
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(2).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(5) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(1) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(99).empty());
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRing(0, 1));
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 7));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 5));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRing(1, 2));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(1, 2, 4));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(1).empty());
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(4) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(5) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(99).empty());
+  TEST_ASSERT(m->getRingInfo()->bondMembers(0).size() == 1);
+  TEST_ASSERT(m->getRingInfo()->bondMembers(1).empty());
   TEST_ASSERT(
       !m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(1, 2)->getIdx()));
   BOOST_LOG(rdInfoLog) << smi << "\n";
@@ -223,6 +259,12 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->numAtomRings(1) == 1);
   TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(2, 5));
   TEST_ASSERT(m->getRingInfo()->numAtomRings(2) == 2);
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(0).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(1) == (INT_VECT{5}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(2) == (INT_VECT{5, 5}));
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).size() == 2);
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(0) == 0);
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(1) == 1);
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
 
@@ -370,6 +412,22 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->numAtomRings(4) == 1);
   TEST_ASSERT(!m->getRingInfo()->isAtomInRingOfSize(4, 4));
   TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(4, 3));
+
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).size() == 2);
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRing(2, 3));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRing(1, 4));
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(2, 3, 3));
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(2, 3, 4));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(2, 3, 5));
+  TEST_ASSERT(m->getRingInfo()->bondMembers(2).size() == 2);
+  TEST_ASSERT(m->getRingInfo()->bondMembers(0).size() == 1);
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(1, 2));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(2, 5));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRing(1, 3));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(1, 2, 4));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(2, 5, 3));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(1, 2, 3));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(1, 3, 4));
   delete m;
 
   // This is a test of Issue 217
@@ -399,12 +457,7 @@ void test3() {
 }
 
 void test4() {
-  string smi;
-  Mol *m;
-  INT_VECT iv;
-  VECT_INT_VECT sssr;
-  smi = "CC";
-  m = SmilesToMol(smi);
+  auto m = "C=C"_smiles;
   TEST_ASSERT(m);
   double *adjMat = MolOps::getAdjacencyMatrix(*m);
   TEST_ASSERT(adjMat);
@@ -418,7 +471,13 @@ void test4() {
   TEST_ASSERT(adjMat[1] == 1);
   TEST_ASSERT(adjMat[2] == 1);
   TEST_ASSERT(adjMat[3] == 0);
-  delete m;
+  bool useBO = true;
+  adjMat = MolOps::getAdjacencyMatrix(*m, useBO);
+  TEST_ASSERT(adjMat);
+  TEST_ASSERT(adjMat[0] == 0);
+  TEST_ASSERT(adjMat[1] == 2.0);
+  TEST_ASSERT(adjMat[2] == 2.0);
+  TEST_ASSERT(adjMat[3] == 0);
 }
 
 void test5() {
@@ -658,7 +717,7 @@ void test8() {
   delete m2;
 
   std::string sma;
-  smi = "CC";
+  smi = "C-C";
   m = SmartsToMol(smi);
   MolOps::sanitizeMol(*((RWMol *)m));
   TEST_ASSERT(m);
@@ -790,14 +849,14 @@ void test9() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing Distance Matrix Operations"
       << std::endl;
-  ROMol *m;
-  std::string smi = "CC=C";
-  m = SmilesToMol(smi);
+  auto m = "CC=O"_smiles;
   TEST_ASSERT(m);
   TEST_ASSERT(m->getNumAtoms() == 3);
 
+  bool useBO = false;
+  bool useAtomWts = false;
   double *dMat;
-  dMat = MolOps::getDistanceMat(*m, false, false);
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
   TEST_ASSERT(dMat[0] == 0.0);
   TEST_ASSERT(dMat[1] == 1.0);
@@ -809,7 +868,7 @@ void test9() {
   TEST_ASSERT(dMat[7] == 1.0);
   TEST_ASSERT(dMat[8] == 0.0);
 
-  dMat = MolOps::getDistanceMat(*m, false, false);
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
   TEST_ASSERT(dMat[0] == 0.0);
   TEST_ASSERT(dMat[1] == 1.0);
@@ -822,7 +881,8 @@ void test9() {
   TEST_ASSERT(dMat[8] == 0.0);
 
   // test Issue328:
-  dMat = MolOps::getDistanceMat(*m, true, false);
+  useBO = true;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
   TEST_ASSERT(dMat[0] == 0.0);
   TEST_ASSERT(dMat[1] == 1.0);
@@ -834,7 +894,8 @@ void test9() {
   TEST_ASSERT(dMat[7] == 0.5);
   TEST_ASSERT(dMat[8] == 0.0);
 
-  dMat = MolOps::getDistanceMat(*m, false, false);
+  useBO = false;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
   TEST_ASSERT(dMat[0] == 0.0);
   TEST_ASSERT(dMat[1] == 1.0);
@@ -846,7 +907,76 @@ void test9() {
   TEST_ASSERT(dMat[7] == 1.0);
   TEST_ASSERT(dMat[8] == 0.0);
 
-  delete m;
+  useBO = false;
+  useAtomWts = true;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
+  TEST_ASSERT(dMat);
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    for (unsigned int j = 0; j < m->getNumAtoms(); ++j) {
+      std::cerr << dMat[i * m->getNumAtoms() + j] << " ";
+    }
+    std::cerr << std::endl;
+  }
+  TEST_ASSERT(dMat[0] == 1.0);
+  TEST_ASSERT(dMat[1] == 1.0);
+  TEST_ASSERT(dMat[2] == 2.0);
+  TEST_ASSERT(dMat[3] == 1.0);
+  TEST_ASSERT(dMat[4] == 1.0);
+  TEST_ASSERT(dMat[5] == 1.0);
+  TEST_ASSERT(dMat[6] == 2.0);
+  TEST_ASSERT(dMat[7] == 1.0);
+  TEST_ASSERT(dMat[8] == 6. / 8.);
+
+  useBO = true;
+  useAtomWts = true;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
+  TEST_ASSERT(dMat);
+  TEST_ASSERT(dMat[0] == 1.0);
+  TEST_ASSERT(dMat[1] == 1.0);
+  TEST_ASSERT(dMat[2] == 1.5);
+  TEST_ASSERT(dMat[3] == 1.0);
+  TEST_ASSERT(dMat[4] == 1.0);
+  TEST_ASSERT(dMat[5] == 0.5);
+  TEST_ASSERT(dMat[6] == 1.5);
+  TEST_ASSERT(dMat[7] == 0.5);
+  TEST_ASSERT(dMat[8] == 6. / 8.);
+
+  useBO = false;
+  useAtomWts = false;
+  dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
+  TEST_ASSERT(dMat);
+  TEST_ASSERT(dMat[0] == 0.0);
+  TEST_ASSERT(dMat[1] == 1.0);
+  TEST_ASSERT(dMat[2] == 2.0);
+  TEST_ASSERT(dMat[3] == 1.0);
+  TEST_ASSERT(dMat[4] == 0.0);
+  TEST_ASSERT(dMat[5] == 1.0);
+  TEST_ASSERT(dMat[6] == 2.0);
+  TEST_ASSERT(dMat[7] == 1.0);
+  TEST_ASSERT(dMat[8] == 0.0);
+
+  // limit participating atoms and bonds
+  std::vector<int> activeAtoms = {1, 2};
+  std::vector<const Bond *> activeBonds = {m->getBondWithIdx(1)};
+  useBO = false;
+  useAtomWts = false;
+  std::unique_ptr<double[]> dMat2{
+      MolOps::getDistanceMat(*m, activeAtoms, activeBonds, useBO, useAtomWts)};
+  TEST_ASSERT(dMat2);
+  TEST_ASSERT(dMat2[0] == 0.0);
+  TEST_ASSERT(dMat2[1] == 1.0);
+  TEST_ASSERT(dMat2[2] == 1.0);
+  TEST_ASSERT(dMat2[3] == 0.0);
+
+  useBO = true;
+  useAtomWts = true;
+  dMat2.reset(
+      MolOps::getDistanceMat(*m, activeAtoms, activeBonds, useBO, useAtomWts));
+  TEST_ASSERT(dMat2);
+  TEST_ASSERT(dMat2[0] == 1.0);
+  TEST_ASSERT(dMat2[1] == 0.5);
+  TEST_ASSERT(dMat2[2] == 0.5);
+  TEST_ASSERT(dMat2[3] == 6.0 / 8.0);
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -3331,6 +3461,112 @@ void testSFNetIssue2196817() {
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::AROMATIC);
     TEST_ASSERT(m->getBondBetweenAtoms(0, 14)->getBondType() == Bond::AROMATIC);
     delete m;
+  }
+
+  {
+    for (auto smi : {"c12ccccc1**CC2", "c12ccccc1C**C2", "*12ccccc1CCCC2",
+                     "*12ccccc1***C2"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (size_t i = 0; i < 6; ++i) {
+        size_t j = i < 5 ? i + 1 : 0;
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::AROMATIC);
+      }
+      for (size_t i = 5; i < 10; ++i) {
+        size_t j = i < 9 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::SINGLE);
+      }
+      MolOps::Kekulize(*m);
+      for (size_t i = 0; i < 6; ++i) {
+        size_t j = i < 5 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(
+            m->getBondBetweenAtoms(i, j)->getBondType() == Bond::SINGLE ||
+            m->getBondBetweenAtoms(i, j)->getBondType() == Bond::DOUBLE);
+      }
+      for (size_t i = 5; i < 10; ++i) {
+        size_t j = i < 9 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::SINGLE);
+      }
+    }
+  }
+
+  {
+    for (auto smi : {"c12ccccc1****2", "c12ccccc1***2", "C12=CC=CC=C1****2",
+                     "c1ccccc1N1****1", "c1ccccc1C1****1", "c1ccccc1*1****1",
+                     "c1ccccc1*1*=**=*1"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (unsigned int i = 6; i < m->getNumAtoms(); ++i) {
+        TEST_ASSERT(!m->getAtomWithIdx(i)->getIsAromatic());
+      }
+    }
+  }
+
+  {
+    for (auto smi : {"C1CC*2ccccc21", "C1C**2ccccc21"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (unsigned int i = 0; i < 3; ++i) {
+        TEST_ASSERT(!m->getAtomWithIdx(i)->getIsAromatic());
+      }
+      for (unsigned int i = 3; i < m->getNumAtoms(); ++i) {
+        TEST_ASSERT(m->getAtomWithIdx(i)->getIsAromatic());
+      }
+    }
+  }
+
+  {
+    auto m = "*12ccccc1CCC2"_smiles;
+    for (unsigned int i = 0; i < 6; ++i) {
+      TEST_ASSERT(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+    for (unsigned int i = 6; i < m->getNumAtoms(); ++i) {
+      TEST_ASSERT(!m->getAtomWithIdx(i)->getIsAromatic());
+    }
+  }
+
+  {
+    for (auto smi : {"N1****1", "C1=C*2C=CC=C*2C=C1", "N1*C=CC=C1",
+                     "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4*51"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (const auto b : m->bonds()) {
+        TEST_ASSERT(!b->getIsAromatic());
+      }
+    }
+  }
+
+  {
+    ROMOL_SPTR m = "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4N51"_smiles;
+    for (const auto a : m->atoms()) {
+      TEST_ASSERT(a->getIsAromatic());
+    }
+    unsigned int nNonAromaticBonds = 0;
+    for (const auto b : m->bonds()) {
+      if (!b->getIsAromatic()) {
+        ++nNonAromaticBonds;
+      }
+    }
+    TEST_ASSERT(nNonAromaticBonds == 5);
+  }
+
+  {
+    for (auto smi :
+         {"*1C=CC=C1", "N1*=**=*1", "C1=CC2=CC=C3C=CC4=CC=C5C=CN1N1N2N3N4N51",
+          "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1N2*3N4N51"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (const auto b : m->bonds()) {
+        TEST_ASSERT(b->getIsAromatic());
+      }
+    }
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -7715,8 +7951,11 @@ void testRemoveAndTrackIsotopes() {
   std::unique_ptr<ROMol> mNoH(removeHs(*static_cast<ROMol *>(m.get()), ps));
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->getAtomicNum() == 6);
   TEST_ASSERT(mNoH->getAtomWithIdx(0)->hasProp(common_properties::_isotopicHs));
-  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getProp<std::string>(
-                  common_properties::_isotopicHs) == "2");
+  std::vector<unsigned int> isoHs;
+  TEST_ASSERT(mNoH->getAtomWithIdx(0)->getPropIfPresent(
+      common_properties::_isotopicHs, isoHs));
+  TEST_ASSERT(isoHs.size() == 1);
+  TEST_ASSERT(isoHs.front() == 2);
   TEST_ASSERT(mNoH->getAtomWithIdx(30)->getAtomicNum() == 6);
   TEST_ASSERT(
       !mNoH->getAtomWithIdx(30)->hasProp(common_properties::_isotopicHs));
@@ -7764,7 +8003,8 @@ void testRemoveAndTrackIsotopes() {
   // shuffle atoms before adding Hs; result should not change
   std::vector<unsigned int> randomOrder(mNoH->getNumAtoms());
   std::iota(randomOrder.begin(), randomOrder.end(), 0U);
-  std::random_shuffle(randomOrder.begin(), randomOrder.end());
+  std::shuffle(randomOrder.begin(), randomOrder.end(),
+               std::default_random_engine());
   std::unique_ptr<ROMol> mNoHRen(MolOps::renumberAtoms(*mNoH, randomOrder));
   mH.reset(MolOps::addHs(*mNoHRen));
   mH_isotopicHsPerHeavy.reset(new IsotopicHsCount(*mH));
@@ -7918,6 +8158,7 @@ void testRemoveAndTrackIsotopes() {
     // 2) ...Removing all Hs including isotopes and then putting them back
     mNoH.reset(MolOps::removeHs(*static_cast<ROMol *>(mChiral.get()), ps));
     mH.reset(MolOps::addHs(*mNoH));
+
     MolOps::assignStereochemistry(*mH, true, true);
     match.clear();
     TEST_ASSERT(SubstructMatch(*mH, *mChiral, match));
@@ -7950,6 +8191,70 @@ void testRemoveAndTrackIsotopes() {
               *chiralTypeSetAfterRemoveAllHsAddHsRemoveHs.begin() ==
                   Atom::CHI_TETRAHEDRAL_CCW);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
+void testGithub3854() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 3854: "
+         "AddHs creates H atom with nan coordinates on edge case 2D structure"
+      << std::endl;
+
+  std::string molb = R"CTAB(
+     RDKit          2D
+
+  7  8  0  0  1  0  0  0  0  0999 V2000
+    5.0014    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1764    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3514    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9389    1.1271    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3514    1.8412    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1764    1.8412    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5889    1.1271    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  7  1  1  1
+  2  3  1  0
+  2  7  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  7  6  1  0
+M  END)CTAB";
+  bool sanitize = true;
+  bool removeHs = false;
+  std::unique_ptr<ROMol> m(MolBlockToMol(molb, sanitize, removeHs));
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 7);
+
+  bool explicitOnly = false;
+  bool addCoords = true;
+  std::vector<unsigned> onlyOnAtoms = {1, 6};
+  std::unique_ptr<ROMol> m2(
+      MolOps::addHs(*m, explicitOnly, addCoords, &onlyOnAtoms));
+  TEST_ASSERT(m2);
+  TEST_ASSERT(m2->getNumAtoms() == 9);
+
+  auto conf = m2->getConformer();
+  for (auto i = 7; i < 9; ++i) {
+    auto atom_pos = conf.getAtomPos(i);
+    TEST_ASSERT(!isnan(atom_pos.x) && !isnan(atom_pos.y) && !isnan(atom_pos.z));
+  }
+
+  // check that we bisect the correct angle and point outside the rings
+  auto v71 = conf.getAtomPos(7) - conf.getAtomPos(1);
+  auto v21 = conf.getAtomPos(2) - conf.getAtomPos(1);
+  auto v01 = conf.getAtomPos(0) - conf.getAtomPos(1);
+  auto v61 = conf.getAtomPos(6) - conf.getAtomPos(1);
+  TEST_ASSERT(fabs(fabs(v71.dotProduct(v01)) - fabs(v71.dotProduct(v21))) <
+              1e-3);
+  TEST_ASSERT(v71.dotProduct(v61) < -1e-4);
+
+  auto v86 = conf.getAtomPos(8) - conf.getAtomPos(6);
+  auto v06 = conf.getAtomPos(0) - conf.getAtomPos(6);
+  auto v56 = conf.getAtomPos(5) - conf.getAtomPos(6);
+  auto v16 = conf.getAtomPos(1) - conf.getAtomPos(6);
+  TEST_ASSERT(fabs(fabs(v86.dotProduct(v56)) - fabs(v86.dotProduct(v06))) <
+              1e-3);
+  TEST_ASSERT(v86.dotProduct(v16) < -1e-4);
 }
 
 #ifdef RDK_USE_URF
@@ -8004,11 +8309,90 @@ void testRingFamilies() {
 void testRingFamilies() {}
 #endif
 
+void testSetTerminalAtomCoords() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing adding "
+                          "coordinates to a terminal atom. "
+                       << std::endl;
+  auto mol = R"CTAB(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END)CTAB"_ctab;
+  auto atom = new Atom(0);
+  auto idx = mol->addAtom(atom);
+  delete atom;
+  mol->addBond(idx, 0);
+  MolOps::setTerminalAtomCoords(static_cast<ROMol &>(*mol), idx, 0);
+  auto &coord = mol->getConformer().getAtomPos(idx);
+  TEST_ASSERT(coord.x > 2.499 && coord.x < 2.501);
+  TEST_ASSERT(coord.y > -0.001 && coord.y < 0.001);
+  TEST_ASSERT(coord.z > -0.001 && coord.z < 0.001);
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
+void testGet3DDistanceMatrix() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n testing get3DDistanceMat(). " << std::endl;
+  auto mol = R"CTAB(bogus example
+     RDKit          3D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.1000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2000    0.0000    0.1000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5000    0.0000    0.1000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+M  END)CTAB"_ctab;
+  TEST_ASSERT(mol);
+
+  double *dm = MolOps::get3DDistanceMat(*mol);
+  TEST_ASSERT(dm);
+  TEST_ASSERT(dm[0] == 0.0);
+  TEST_ASSERT(dm[1] == 1.2);
+  TEST_ASSERT(dm[2] == 2.5);
+  TEST_ASSERT(dm[3] == 1.2);
+  TEST_ASSERT(dm[4] == 0.0);
+  TEST_ASSERT(dm[5] == 1.3);
+  TEST_ASSERT(dm[6] == 2.5);
+  TEST_ASSERT(dm[7] == 1.3);
+  TEST_ASSERT(dm[8] == 0.0);
+  // this will use a cached version:
+  double *dm2 = MolOps::get3DDistanceMat(*mol);
+  TEST_ASSERT(dm == dm2)
+
+  int confId = -1;
+  bool useAtomWts = true;
+  dm = MolOps::get3DDistanceMat(*mol, confId, useAtomWts);
+  TEST_ASSERT(dm);
+  TEST_ASSERT(dm[0] == 1.0);
+  TEST_ASSERT(dm[1] == 1.2);
+  TEST_ASSERT(dm[2] == 2.5);
+  TEST_ASSERT(dm[3] == 1.2);
+  TEST_ASSERT(dm[4] == 1.0);
+  TEST_ASSERT(dm[5] == 1.3);
+  TEST_ASSERT(dm[6] == 2.5);
+  TEST_ASSERT(dm[7] == 1.3);
+  TEST_ASSERT(dm[8] == 6.0 / 8.0);
+
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
   test1();
   test2();
   test3();
@@ -8116,8 +8500,10 @@ int main() {
   testGithub1990();
   testPotentialStereoBonds();
   testRingFamilies();
-#endif
   testRemoveAndTrackIsotopes();
+  testGithub3854();
+  testSetTerminalAtomCoords();
+  testGet3DDistanceMatrix();
 
   return 0;
 }

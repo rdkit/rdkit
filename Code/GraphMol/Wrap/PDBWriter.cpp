@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2013-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,6 +15,7 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RDKitBase.h>
 #include "rdchem.h"
+#include "ContextManagers.h"
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/python_streambuf.h>
 
@@ -48,6 +48,10 @@ struct pdbwriter_wrap {
         .def(python::init<std::string, unsigned int>(
             (python::arg("fileName"), python::arg("flavor") = 0),
             pdbwDocStr.c_str()))
+        .def("__enter__", &MolIOEnter<PDBWriter>,
+             python::return_internal_reference<>())
+        .def("__exit__", &MolIOExit<PDBWriter>)
+
         .def("write", &PDBWriter::write,
              (python::arg("self"), python::arg("mol"),
               python::arg("confId") = -1),

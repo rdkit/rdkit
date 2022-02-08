@@ -18,6 +18,7 @@
 #include <RDBoost/PySequenceHolder.h>
 
 #include "MolSupplier.h"
+#include "ContextManagers.h"
 
 namespace python = boost::python;
 
@@ -79,16 +80,16 @@ struct sdmolsup_wrap {
             (python::arg("fileName"), python::arg("sanitize") = true,
              python::arg("removeHs") = true,
              python::arg("strictParsing") = true)))
-        .def("__iter__", (SDMolSupplier * (*)(SDMolSupplier *)) & MolSupplIter,
+        .def("__enter__", &MolIOEnter<SDMolSupplier>,
+             python::return_internal_reference<>())
+        .def("__exit__", &MolIOExit<SDMolSupplier>)
+        .def("__iter__", &MolSupplIter<SDMolSupplier>,
              python::return_internal_reference<1>())
-        .def(
-            "__next__",
-            (ROMol * (*)(SDMolSupplier *)) & MolSupplNext,
-            "Returns the next molecule in the file.  Raises _StopIteration_ "
-            "on EOF.\n",
-            python::return_value_policy<python::manage_new_object>())
-        .def("__getitem__",
-             (ROMol * (*)(SDMolSupplier *, int)) & MolSupplGetItem,
+        .def("__next__", &MolSupplNext<SDMolSupplier>,
+             "Returns the next molecule in the file.  Raises _StopIteration_ "
+             "on EOF.\n",
+             python::return_value_policy<python::manage_new_object>())
+        .def("__getitem__", &MolSupplGetItem<SDMolSupplier>,
              python::return_value_policy<python::manage_new_object>())
         .def("reset", &SDMolSupplier::reset,
              "Resets our position in the file to the beginning.\n")

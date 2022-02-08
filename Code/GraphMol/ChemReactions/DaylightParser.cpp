@@ -1,6 +1,6 @@
-// $Id$
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,8 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesParseOps.h>
+#include <boost/range/iterator_range.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <vector>
@@ -93,61 +95,136 @@ ROMol *constructMolFromString(const std::string &txt,
                               bool useSmiles) {
   ROMol *mol;
   if (!useSmiles) {
-    mol = SmartsToMol(txt, 0, false, replacements);
+    SmartsParserParams ps;
+    ps.replacements = replacements;
+    ps.allowCXSMILES = false;
+    ps.parseName = false;
+    ps.mergeHs = false;
+    ps.skipCleanup = true;
+    mol = SmartsToMol(txt, ps);
   } else {
-    mol = SmilesToMol(txt, 0, false, replacements);
+    SmilesParserParams ps;
+    ps.replacements = replacements;
+    ps.allowCXSMILES = false;
+    ps.parseName = false;
+    ps.sanitize = false;
+    ps.removeHs = false;
+    ps.skipCleanup = true;
+    mol = SmilesToMol(txt, ps);
   }
   return mol;
 }
 
 }  // end of namespace DaylightParserUtils
 
+namespace {
+void removeSpacesAround(std::string &text, size_t pos) {
+  auto nextp = pos + 1;
+  while (nextp < text.size() && (text[nextp] == ' ' || text[nextp] == '\t')) {
+    text.erase(nextp, 1);
+  }
+  if (pos > 0) {
+    nextp = pos - 1;
+    while (text[nextp] == ' ' || text[nextp] == '\t') {
+      text.erase(nextp, 1);
+      if (nextp > 0) {
+        --nextp;
+      } else {
+        break;
+      }
+    }
+  }
+}
+}  // namespace
 ChemicalReaction *RxnSmartsToChemicalReaction(
-    const std::string &text, std::map<std::string, std::string> *replacements,
-    bool useSmiles) {
-
+    const std::string &origText,
+    std::map<std::string, std::string> *replacements, bool useSmiles,
+    bool allowCXSMILES) {
+  std::string text = origText;
+  std::string cxPart;
+  if (allowCXSMILES) {
+    auto sidx = origText.find_first_of("|");
+    if (sidx != std::string::npos && sidx != 0) {
+      text = origText.substr(0, sidx);
+      cxPart = boost::trim_copy(origText.substr(sidx, origText.size() - sidx));
+    }
+  }
+  // remove any spaces at the beginning, end, or before the '>'s
+  boost::trim(text);
   std::vector<std::size_t> pos;
+  for (std::size_t i = 0; i < text.length(); ++i) {
+    if (text[i] == '>' && (i == 0 || text[i - 1] != '-')) {
+      pos.push_back(i);
+    }
+  }
+  if (pos.size() < 2) {
+    throw ChemicalReactionParserException(
+        "a reaction requires at least two > characters");
+  }
 
+  // remove spaces around ">" symbols
+  for (auto p : boost::make_iterator_range(pos.rbegin(), pos.rend())) {
+    removeSpacesAround(text, p);
+  }
+
+  // remove spaces around "." symbols
+  pos.clear();
+  for (std::size_t i = 0; i < text.length(); ++i) {
+    if (text[i] == '.') {
+      pos.push_back(i);
+    }
+  }
+  for (auto p : boost::make_iterator_range(pos.rbegin(), pos.rend())) {
+    removeSpacesAround(text, p);
+  }
+
+  // we shouldn't have whitespace left in the reaction string, so go ahead and
+  // split and strip:
+  auto sidx = text.find_first_of(" \t");
+  if (sidx != std::string::npos && sidx != 0) {
+    text = text.substr(0, sidx);
+  }
+
+  // re-find the '>' characters so that we can split on them
+  pos.clear();
   for (std::size_t i = 0; i < text.length(); ++i) {
     if (text[i] == '>' && (i == 0 || text[i - 1] != '-')) {
       pos.push_back(i);
     }
   }
 
+  // there's always the chance that one or more of the ">" was in the name
+  // part, so verify that we have exactly two:
   if (pos.size() < 2) {
     throw ChemicalReactionParserException(
         "a reaction requires at least two > characters");
   }
-
-  std::size_t pos1 = pos[0];
-  std::size_t pos2 = pos[1];
-
   if (pos.size() > 2) {
     throw ChemicalReactionParserException("multi-step reactions not supported");
   }
 
-  std::string reactText = text.substr(0, pos1);
+  auto pos1 = pos[0];
+  auto pos2 = pos[1];
+
+  auto reactText = text.substr(0, pos1);
   std::string agentText;
   if (pos2 != pos1 + 1) {
     agentText = text.substr(pos1 + 1, (pos2 - pos1) - 1);
   }
-  std::string productText = text.substr(pos2 + 1);
+  auto productText = text.substr(pos2 + 1);
 
   // recognize changes within the same molecules, e.g., intra molecular bond
-  // formation
-  // therefore we need to correctly interpret parenthesis and dots in the
-  // reaction smarts
-  std::vector<std::string> reactSmarts =
-      DaylightParserUtils::splitSmartsIntoComponents(reactText);
-  std::vector<std::string> productSmarts =
+  // formation therefore we need to correctly interpret parenthesis and dots
+  // in the reaction smarts
+  auto reactSmarts = DaylightParserUtils::splitSmartsIntoComponents(reactText);
+  auto productSmarts =
       DaylightParserUtils::splitSmartsIntoComponents(productText);
 
   auto *rxn = new ChemicalReaction();
 
   for (const auto &txt : reactSmarts) {
-    ROMol *mol;
-    mol = DaylightParserUtils::constructMolFromString(txt, replacements,
-                                                      useSmiles);
+    auto mol = DaylightParserUtils::constructMolFromString(txt, replacements,
+                                                           useSmiles);
     if (!mol) {
       std::string errMsg = "Problems constructing reactant from SMARTS: ";
       errMsg += txt;
@@ -158,9 +235,8 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   }
 
   for (const auto &txt : productSmarts) {
-    ROMol *mol;
-    mol = DaylightParserUtils::constructMolFromString(txt, replacements,
-                                                      useSmiles);
+    auto mol = DaylightParserUtils::constructMolFromString(txt, replacements,
+                                                           useSmiles);
     if (!mol) {
       std::string errMsg = "Problems constructing product from SMARTS: ";
       errMsg += txt;
@@ -171,10 +247,9 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   }
   updateProductsStereochem(rxn);
 
-  ROMol *agentMol;
   // allow a reaction template to have no agent specified
   if (agentText.size() != 0) {
-    agentMol = DaylightParserUtils::constructMolFromString(
+    auto agentMol = DaylightParserUtils::constructMolFromString(
         agentText, replacements, useSmiles);
     if (!agentMol) {
       std::string errMsg = "Problems constructing agent from SMARTS: ";
@@ -189,9 +264,49 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
     }
   }
 
+  if (allowCXSMILES && !cxPart.empty()) {
+    unsigned int startAtomIdx = 0;
+    unsigned int startBondIdx = 0;
+    for (auto &mol : boost::make_iterator_range(rxn->beginReactantTemplates(),
+                                                rxn->endReactantTemplates())) {
+      SmilesParseOps::parseCXExtensions(*static_cast<RWMol *>(mol.get()),
+                                        cxPart, startAtomIdx, startBondIdx);
+      startAtomIdx += mol->getNumAtoms();
+      startBondIdx += mol->getNumBonds();
+    }
+    for (auto &mol : boost::make_iterator_range(rxn->beginAgentTemplates(),
+                                                rxn->endAgentTemplates())) {
+      SmilesParseOps::parseCXExtensions(*static_cast<RWMol *>(mol.get()),
+                                        cxPart, startAtomIdx, startBondIdx);
+      startAtomIdx += mol->getNumAtoms();
+      startBondIdx += mol->getNumBonds();
+    }
+    for (auto &mol : boost::make_iterator_range(rxn->beginProductTemplates(),
+                                                rxn->endProductTemplates())) {
+      SmilesParseOps::parseCXExtensions(*static_cast<RWMol *>(mol.get()),
+                                        cxPart, startAtomIdx, startBondIdx);
+      startAtomIdx += mol->getNumAtoms();
+      startBondIdx += mol->getNumBonds();
+    }
+  }
+
+  // final cleanups:
+  for (auto &mol : boost::make_iterator_range(rxn->beginReactantTemplates(),
+                                              rxn->endReactantTemplates())) {
+    SmilesParseOps::CleanupAfterParsing(static_cast<RWMol *>(mol.get()));
+  }
+  for (auto &mol : boost::make_iterator_range(rxn->beginAgentTemplates(),
+                                              rxn->endAgentTemplates())) {
+    SmilesParseOps::CleanupAfterParsing(static_cast<RWMol *>(mol.get()));
+  }
+  for (auto &mol : boost::make_iterator_range(rxn->beginProductTemplates(),
+                                              rxn->endProductTemplates())) {
+    SmilesParseOps::CleanupAfterParsing(static_cast<RWMol *>(mol.get()));
+  }
+
   // "SMARTS"-based reactions have implicit properties
   rxn->setImplicitPropertiesFlag(true);
 
   return rxn;
 }
-}
+}  // namespace RDKit

@@ -159,7 +159,7 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
 
     // assume that we a have a list of list of values (that can be extracted to
     // double)
-    std::vector<PySequenceHolder<double> > dData;
+    std::vector<PySequenceHolder<double>> dData;
     dData.reserve(nrows);
     for (unsigned int i = 0; i < nrows; i++) {
       // PySequenceHolder<double> row(seq[i]);
@@ -172,10 +172,11 @@ PyObject *getEuclideanDistMat(python::object descripMat) {
       dData.push_back(row);
     }
 
-    MetricMatrixCalc<std::vector<PySequenceHolder<double> >,
-                     PySequenceHolder<double> > mmCalc;
+    MetricMatrixCalc<std::vector<PySequenceHolder<double>>,
+                     PySequenceHolder<double>>
+        mmCalc;
     mmCalc.setMetricFunc(&EuclideanDistanceMetric<PySequenceHolder<double>,
-                                                  PySequenceHolder<double> >);
+                                                  PySequenceHolder<double>>);
     mmCalc.calcMetricMatrix(dData, nrows, ncols, dMat);
   }
   return PyArray_Return(distRes);
@@ -251,7 +252,7 @@ PyObject *getTanimotoSimMat(python::object bitVectList) {
   }
   return PyArray_Return(simRes);
 }
-}
+}  // namespace RDDataManip
 
 BOOST_PYTHON_MODULE(rdMetricMatrixCalc) {
   python::scope().attr("__doc__") =

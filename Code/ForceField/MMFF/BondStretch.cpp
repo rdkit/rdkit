@@ -96,5 +96,5 @@ void BondStretchContrib::getGrad(double *pos, double *grad) const {
     g2[i] -= dGrad;
   }
 }
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 
 #include <boost/function.hpp>
 #include <string>
+#include <utility>
 #include <iterator>
 #include <Catalogs/Catalog.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
@@ -54,18 +55,20 @@ class Tautomer {
   friend class TautomerEnumerator;
 
  public:
-  Tautomer() : d_numModifiedAtoms(0), d_numModifiedBonds(0) {}
-  Tautomer(const ROMOL_SPTR &t, const ROMOL_SPTR &k, size_t a = 0, size_t b = 0)
-      : tautomer(t),
-        kekulized(k),
+  Tautomer() : d_numModifiedAtoms(0), d_numModifiedBonds(0), d_done(false) {}
+  Tautomer(ROMOL_SPTR t, ROMOL_SPTR k, size_t a = 0, size_t b = 0)
+      : tautomer(std::move(t)),
+        kekulized(std::move(k)),
         d_numModifiedAtoms(a),
-        d_numModifiedBonds(b) {}
+        d_numModifiedBonds(b),
+        d_done(false) {}
   ROMOL_SPTR tautomer;
   ROMOL_SPTR kekulized;
 
  private:
   size_t d_numModifiedAtoms;
   size_t d_numModifiedBonds;
+  bool d_done;
 };
 
 typedef std::map<std::string, Tautomer> SmilesTautomerMap;
@@ -201,7 +204,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   TautomerEnumerator(const CleanupParameters &params = CleanupParameters());
   TautomerEnumerator(const TautomerEnumerator &other)
       : dp_catalog(other.dp_catalog),
-        d_callback(other.d_callback.get()),
+        d_callback(other.d_callback),
         d_maxTautomers(other.d_maxTautomers),
         d_maxTransforms(other.d_maxTransforms),
         d_removeSp3Stereo(other.d_removeSp3Stereo),
@@ -211,7 +214,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   TautomerEnumerator &operator=(const TautomerEnumerator &other) {
     if (this == &other) return *this;
     dp_catalog = other.dp_catalog;
-    d_callback.reset(other.d_callback.get());
+    d_callback = other.d_callback;
     d_maxTautomers = other.d_maxTautomers;
     d_maxTransforms = other.d_maxTransforms;
     d_removeSp3Stereo = other.d_removeSp3Stereo;
@@ -332,9 +335,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
                            TautomerScoringFunctions::scoreTautomer) const;
 
   //! returns the canonical tautomer from an iterable of possible tautomers
-  // When Iterable is TautomerEnumeratorResult we use the other non-templated
-  // overload for efficiency (TautomerEnumeratorResult already has SMILES so no
-  // need to recompute them)
+  /// When Iterable is TautomerEnumeratorResult we use the other non-templated
+  /// overload for efficiency (TautomerEnumeratorResult already has SMILES so no
+  /// need to recompute them)
   template <class Iterable,
             typename std::enable_if<
                 !std::is_same<Iterable, TautomerEnumeratorResult>::value,
@@ -396,7 +399,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   bool setTautomerStereoAndIsoHs(const ROMol &mol, ROMol &taut,
                                  const TautomerEnumeratorResult &res) const;
   std::shared_ptr<TautomerCatalog> dp_catalog;
-  std::unique_ptr<TautomerEnumeratorCallback> d_callback;
+  std::shared_ptr<TautomerEnumeratorCallback> d_callback;
   unsigned int d_maxTautomers;
   unsigned int d_maxTransforms;
   bool d_removeSp3Stereo;
@@ -404,6 +407,18 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerEnumerator {
   bool d_removeIsotopicHs;
   bool d_reassignStereo;
 };  // TautomerEnumerator class
+
+// caller owns the pointer
+inline TautomerEnumerator *tautomerEnumeratorFromParams(
+    const CleanupParameters &params) {
+  return new TautomerEnumerator(params);
+}
+// caller owns the pointer
+inline TautomerEnumerator *getV1TautomerEnumerator() {
+  TautomerCatalogParams tparms(
+      MolStandardize::defaults::defaultTautomerTransformsv1);
+  return new TautomerEnumerator(new TautomerCatalog(&tparms));
+}
 
 }  // namespace MolStandardize
 }  // namespace RDKit

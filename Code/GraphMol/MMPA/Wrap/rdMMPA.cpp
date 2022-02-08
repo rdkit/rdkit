@@ -13,23 +13,20 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDBoost/Wrap.h>
 #include <GraphMol/MMPA/MMPA.h>
-#include <boost/foreach.hpp>
 
 namespace python = boost::python;
 
 namespace {
-python::tuple fragmentMolHelper(const RDKit::ROMol& mol,
-                                unsigned int maxCuts,
+python::tuple fragmentMolHelper(const RDKit::ROMol& mol, unsigned int maxCuts,
                                 unsigned int maxCutBonds,
                                 const std::string& pattern,
                                 bool resultsAsMols) {
-  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
+  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, maxCuts, maxCutBonds, pattern);
   python::list pyres;
   if (ok) {
-    for (std::vector<std::pair<RDKit::ROMOL_SPTR,
-                               RDKit::ROMOL_SPTR> >::const_iterator pr =
-             tres.begin();
+    for (std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>>::
+             const_iterator pr = tres.begin();
          pr != tres.end(); ++pr) {
       python::list lres;
       if (resultsAsMols) {
@@ -49,20 +46,17 @@ python::tuple fragmentMolHelper(const RDKit::ROMol& mol,
   return python::tuple(pyres);
 }
 
-python::tuple fragmentMolHelper2(const RDKit::ROMol& mol,
-                                 unsigned int minCuts,
-                                 unsigned int maxCuts,
-                                 unsigned int maxCutBonds,
+python::tuple fragmentMolHelper2(const RDKit::ROMol& mol, unsigned int minCuts,
+                                 unsigned int maxCuts, unsigned int maxCutBonds,
                                  const std::string& pattern,
                                  bool resultsAsMols) {
-  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
+  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, minCuts, maxCuts, maxCutBonds,
                                      pattern);
   python::list pyres;
   if (ok) {
-    for (std::vector<std::pair<RDKit::ROMOL_SPTR,
-                               RDKit::ROMOL_SPTR> >::const_iterator pr =
-             tres.begin();
+    for (std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>>::
+             const_iterator pr = tres.begin();
          pr != tres.end(); ++pr) {
       python::list lres;
       if (resultsAsMols) {
@@ -82,19 +76,20 @@ python::tuple fragmentMolHelper2(const RDKit::ROMol& mol,
   return python::tuple(pyres);
 }
 
-python::tuple fragmentMolHelper3(const RDKit::ROMol& mol,
-                                 python::object ob,
-                                 unsigned int minCuts,
-                                 unsigned int maxCuts,
+python::tuple fragmentMolHelper3(const RDKit::ROMol& mol, python::object ob,
+                                 unsigned int minCuts, unsigned int maxCuts,
                                  bool resultsAsMols) {
-  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR> > tres;
-  std::unique_ptr<std::vector<unsigned int> > v= pythonObjectToVect<unsigned int>(ob);
+  std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>> tres;
+  std::unique_ptr<std::vector<unsigned int>> v =
+      pythonObjectToVect<unsigned int>(ob);
+  if (!v) {
+    throw_value_error("bondsToCut must be non-empty");
+  }
   bool ok = RDKit::MMPA::fragmentMol(mol, tres, *v, minCuts, maxCuts);
   python::list pyres;
   if (ok) {
-    for (std::vector<std::pair<RDKit::ROMOL_SPTR,
-                               RDKit::ROMOL_SPTR> >::const_iterator pr =
-             tres.begin();
+    for (std::vector<std::pair<RDKit::ROMOL_SPTR, RDKit::ROMOL_SPTR>>::
+             const_iterator pr = tres.begin();
          pr != tres.end(); ++pr) {
       python::list lres;
       if (resultsAsMols) {
@@ -114,7 +109,7 @@ python::tuple fragmentMolHelper3(const RDKit::ROMol& mol,
   return python::tuple(pyres);
 }
 
-}
+}  // namespace
 
 BOOST_PYTHON_MODULE(rdMMPA) {
   python::scope().attr("__doc__") =
@@ -130,21 +125,15 @@ BOOST_PYTHON_MODULE(rdMMPA) {
               docString.c_str());
 
   python::def("FragmentMol", fragmentMolHelper2,
-              (python::arg("mol"),
-               python::arg("minCuts"),
-               python::arg("maxCuts"),
-               python::arg("maxCutBonds"),
+              (python::arg("mol"), python::arg("minCuts"),
+               python::arg("maxCuts"), python::arg("maxCutBonds"),
                python::arg("pattern") = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]",
                python::arg("resultsAsMols") = true),
               docString.c_str());
-  
+
   python::def("FragmentMol", fragmentMolHelper3,
-              (python::arg("mol"),
-               python::arg("bondsToCut"),
-               python::arg("minCuts")=1,
-               python::arg("maxCuts")=3,
+              (python::arg("mol"), python::arg("bondsToCut"),
+               python::arg("minCuts") = 1, python::arg("maxCuts") = 3,
                python::arg("resultsAsMols") = true),
               docString.c_str());
-
-  
 }

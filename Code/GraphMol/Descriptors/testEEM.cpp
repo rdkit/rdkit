@@ -86,11 +86,11 @@ void testEEM1() {
       std::cout << nDone << "\n";
     }
 
-	if (errorAtoms > 0) {
-		std::cout << nDone << " " << inm << " " << errorAtoms << "\n";
-		++errorMols;
-	}
-	TEST_ASSERT(errorAtoms == 0);
+    if (errorAtoms > 0) {
+      std::cout << nDone << " " << inm << " " << errorAtoms << "\n";
+      ++errorMols;
+    }
+    TEST_ASSERT(errorAtoms == 0);
     delete m;
     // break;
     ++nDone;

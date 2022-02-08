@@ -16,10 +16,10 @@ struct ConrecSegment {
   RDGeom::Point2D p2;
   double isoVal;
   ConrecSegment(double x1, double y1, double x2, double y2, double isoVal)
-      : p1(x1, y1), p2(x2, y2), isoVal(isoVal){};
+      : p1(x1, y1), p2(x2, y2), isoVal(isoVal) {}
   ConrecSegment(const RDGeom::Point2D &p1, const RDGeom::Point2D &p2,
                 double isoVal)
-      : p1(p1), p2(p2), isoVal(isoVal){};
+      : p1(p1), p2(p2), isoVal(isoVal) {}
 };
 // adapted from conrec.c by Paul Bourke:
 // http://paulbourke.net/papers/conrec/conrec.c
@@ -186,8 +186,8 @@ inline void Contour(const double *d, size_t ilb, size_t iub, size_t jlb,
           }
 
           /* Finally draw the line */
-          res.emplace_back(RDGeom::Point2D(x1, y1),
-                                      RDGeom::Point2D(x2, y2), z[k]);
+          res.emplace_back(RDGeom::Point2D(x1, y1), RDGeom::Point2D(x2, y2),
+                           z[k]);
         } /* m */
       }   /* k - contour */
     }     /* i */

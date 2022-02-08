@@ -532,7 +532,9 @@ void testMMFFO3AMultiThread() {
     fut.get();
   }
 
-  BOOST_FOREACH (auto &&mol, mols) { delete mol; }
+  for (auto &&mol : mols) {
+    delete mol;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
@@ -599,7 +601,9 @@ void testCrippenO3AMultiThread() {
     fut.get();
   }
 
-  BOOST_FOREACH (ROMol *mol, mols) { delete mol; }
+  for (auto *mol : mols) {
+    delete mol;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 #endif
@@ -734,7 +738,9 @@ void testO3AMultiThreadBug() {
 
 #endif
   delete refMol;
-  BOOST_FOREACH (auto &&mol, mols) { delete mol; }
+  for (auto &&mol : mols) {
+    delete mol;
+  }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 

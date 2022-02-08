@@ -110,7 +110,7 @@ double getTverskyHelper(const FPBReader *self, unsigned int which,
   const auto *bv = reinterpret_cast<const std::uint8_t *>(bytes.c_str());
   return self->getTversky(which, bv, ca, cb);
 }
-}
+}  // namespace
 
 struct FPB_wrapper {
   static void wrap() {

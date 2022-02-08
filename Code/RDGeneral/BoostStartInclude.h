@@ -67,6 +67,9 @@
 #if (__GNUC__ > 4 || __GNUC_MINOR__ > 7)
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif
+#if (__GNUC__ > 8)
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
 #elif defined(__HP_cc) || defined(__HP_aCC)
 /* Hewlett-Packard C/aC++. ---------------------------------- */
 
@@ -84,4 +87,9 @@
 #elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 /* Oracle Solaris Studio. ----------------------------------- */
 
+#endif
+
+#ifndef BOOST_ALLOW_DEPRECATED_HEADERS
+#define RDK_ALLOW_BOOST_DEPRECATED_HEADERS
+#define BOOST_ALLOW_DEPRECATED_HEADERS
 #endif

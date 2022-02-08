@@ -171,11 +171,29 @@ void test2() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testCanRetrieveProp() {
+  BOOST_LOG(rdInfoLog) << "testing retrieving _ErGAtomTypes from property"
+                       << std::endl;
+  auto m = "OCCc1ccccc1"_smiles;
+  std::vector<std::vector<int>> expected{{0, 1}, {}, {}, {}, {5}};
+  std::vector<std::vector<int>> res;
+  std::unique_ptr<ROMol> mrg(
+      ReducedGraphs::generateMolExtendedReducedGraph(*m));
+  for (const auto atom : mrg->atoms()) {
+    std::vector<int> atomTypes;
+    TEST_ASSERT(atom->getPropIfPresent("_ErGAtomTypes", atomTypes));
+    res.push_back(atomTypes);
+  }
+  TEST_ASSERT(res == expected);
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
   test1();
   test2();
+  testCanRetrieveProp();
   return 0;
 }

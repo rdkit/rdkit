@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   // process it:
   std::vector<unsigned int> res;
-  std::vector<std::vector<unsigned int> > allRes;
+  std::vector<std::vector<unsigned int>> allRes;
   // start by finding our chunk:
   unsigned int nProcs = world.size();
   unsigned int chunkSize = data.size() / nProcs;

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_ACIDBASE_CATALOG_PARAMS_H__
-#define __RD_ACIDBASE_CATALOG_PARAMS_H__
+#ifndef RD_ACIDBASE_CATALOG_PARAMS_H
+#define RD_ACIDBASE_CATALOG_PARAMS_H
 
 #include <Catalogs/CatalogParams.h>
 #include "AcidBaseCatalogUtils.h"
@@ -32,6 +32,10 @@ class RDKIT_MOLSTANDARDIZE_EXPORT AcidBaseCatalogParams
 
   AcidBaseCatalogParams(const std::string &acidBaseFile);
   AcidBaseCatalogParams(std::istream &acidBaseFile);
+  AcidBaseCatalogParams(
+      const std::vector<std::tuple<std::string, std::string, std::string>>
+          &data);
+
   // copy constructor
   AcidBaseCatalogParams(const AcidBaseCatalogParams &other);
 

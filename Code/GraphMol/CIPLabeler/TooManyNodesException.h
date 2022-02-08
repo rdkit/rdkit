@@ -13,13 +13,16 @@
 #include <stdexcept>
 #include <string>
 
+#include <RDGeneral/export.h>
+
 namespace RDKit {
 namespace CIPLabeler {
 
-class TooManyNodesException : public std::runtime_error {
-public:
-  TooManyNodesException(const std::string &msg) : std::runtime_error(msg){};
+class RDKIT_CIPLABELER_EXPORT TooManyNodesException
+    : public std::runtime_error {
+ public:
+  TooManyNodesException(const std::string &msg) : std::runtime_error(msg) {}
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

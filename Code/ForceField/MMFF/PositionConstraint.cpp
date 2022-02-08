@@ -67,5 +67,5 @@ void PositionConstraintContrib::getGrad(double *pos, double *grad) const {
     grad[3 * d_atIdx + i] += dGrad;
   }
 }
-}
-}
+}  // namespace MMFF
+}  // namespace ForceFields

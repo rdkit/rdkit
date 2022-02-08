@@ -222,6 +222,112 @@ public class WrapperTests extends GraphMolTest {
         assertNotNull(tr);
     }
 
+    //Tests for Exception#getMessage() wrapping
+    private static final String TEST_MESSAGE = "test message";
+
+    @Test
+    public void testChemicalReactionException() {
+        final ChemicalReactionException e =
+                new ChemicalReactionException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+
+    }
+
+    @Test
+    public void testChemicalReactionParserException() {
+        final ChemicalReactionParserException e =
+                new ChemicalReactionParserException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+
+    }
+
+    @Test
+    public void testConformerException() {
+        ROMol mol = null;
+        try {
+            mol = RWMol.MolFromSmiles("c1ccccc1");
+            mol.getConformer();
+        } catch (ConformerException e) {
+            assertEquals("No conformations available on the molecule",
+                    e.getMessage());
+        } finally {
+            if (mol != null) {
+                mol.delete();
+            }
+        }
+
+    }
+
+    @Test
+    public void testMolPicklerException() {
+        final MolPicklerException e = new MolPicklerException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+
+    }
+
+    @Test
+    public void testMolSanitizeException() {
+        RWMol mol = null;
+        try {
+            mol = RWMol.MolFromSmiles("c1cccc1");
+            mol.sanitizeMol();
+        } catch (MolSanitizeException e) {
+            assertEquals("Can't kekulize mol.  Unkekulized atoms: 0 1 2 3 4\n",
+                    e.getMessage());
+        } finally {
+            if (mol != null) {
+                mol.delete();
+            }
+        }
+    }
+
+    @Test
+    public void testSmilesParseException() {
+        SmilesParseException e = new SmilesParseException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+    }
+
+    @Test
+    public void testGenericRDKitException() {
+        final GenericRDKitException e =
+                new GenericRDKitException(TEST_MESSAGE);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+
+    }
+
+    @Test
+    public void testAtomSanitizeException() {
+        final AtomSanitizeException e =
+                new AtomSanitizeException(TEST_MESSAGE, 1L);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+
+    }
+
+    @Test
+    public void testAtomValenceException() {
+        final AtomValenceException e =
+                new AtomValenceException(TEST_MESSAGE, 1L);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+    }
+
+    @Test
+    public void testAtomKekulizeException() {
+        final AtomKekulizeException e =
+                new AtomKekulizeException(TEST_MESSAGE, 1L);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+    }
+
+    @Test
+    public void testKekulizeException() {
+        final UInt_Vect uInt_Vect = new UInt_Vect();
+        uInt_Vect.add(1L);
+        final KekulizeException e =
+                new KekulizeException(TEST_MESSAGE, uInt_Vect);
+        assertEquals(TEST_MESSAGE, e.getMessage());
+        uInt_Vect.delete();
+        e.delete();
+    }
+    
     public static void main(String args[]) {
       org.junit.runner.JUnitCore.main("org.RDKit.WrapperTests");
     }

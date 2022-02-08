@@ -28,20 +28,10 @@ using namespace RDKit;
 using namespace MolStandardize;
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test2" << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test2" << std::endl;
   std::string smi1, smi2, smi3, smi4, smi5, smi6, smi8, smi9, smi10, smi11,
       smi12;
 
-  // testing parsing of fragment catalog
-  //  std::string rdbase = getenv("RDBASE");
-  //  std::string fgrpFile = rdbase +
-  //                         "/Code/GraphMol/MolStandardize/FragmentCatalog/"
-  //                         "data/fragmentPatterns.txt";
-  //  auto* fparams = new FragmentCatalogParams(fgrpFile);
-  //  unsigned int numfg = fparams->getNumFuncGroups();
-  //  TEST_ASSERT(fparams->getNumFuncGroups() == 61);
-  //
-  //  FragmentCatalog fcat(fparams);
   FragmentRemover fragremover;
 
   // single salt removal
@@ -116,14 +106,15 @@ void test2() {
   std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
   std::shared_ptr<ROMol> remove12(fragremover.remove(*m12));
   TEST_ASSERT(MolToSmiles(*remove12) == "CC(=O)Nc1ccc(O)cc1");
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void test_largest_fragment() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n test largest fragment"
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "-----------------------\n test largest fragment"
+                        << std::endl;
 
-  std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10;
+  std::string smi1, smi2, smi3, smi4, smi5, smi6, smi7, smi8, smi9, smi10,
+      smi11, smi12;
   LargestFragmentChooser lfragchooser;
   LargestFragmentChooser lfrag_preferOrg(true);
   MolStandardize::CleanupParameters params =
@@ -191,20 +182,92 @@ void test_largest_fragment() {
   std::shared_ptr<RWMol> res10(MolStandardize::fragmentParent(*m10, params));
   TEST_ASSERT(MolToSmiles(*res10) == "O=C([O-])[O-]");
 
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
-  // params->preferOrganic = true;
-  //
+  // Different fragment chosen depending on whether atom count is limited to
+  // heavy or not.
+  smi11 =
+      "CNC[C@@H]([C@H]([C@@H]([C@@H](CO)O)O)O)O.c1cc2c(cc1C(=O)O)oc(n2)c3cc(cc("
+      "c3)Cl)Cl";
+  {
+    CleanupParameters lfParams;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
+    std::shared_ptr<ROMol> lfrag6(lfrag_params.choose(*m11));
+    TEST_ASSERT(MolToSmiles(*lfrag6) ==
+                "CNC[C@H](O)[C@@H](O)[C@H](O)[C@H](O)CO");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
+    std::shared_ptr<ROMol> lfrag6(lfrag_params.choose(*m11));
+    TEST_ASSERT(MolToSmiles(*lfrag6) ==
+                "O=C(O)c1ccc2nc(-c3cc(Cl)cc(Cl)c3)oc2c1");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserUseAtomCount = false;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m11(SmilesToMol(smi11));
+    std::shared_ptr<ROMol> lfrag6(lfrag_params.choose(*m11));
+    TEST_ASSERT(MolToSmiles(*lfrag6) ==
+                "O=C(O)c1ccc2nc(-c3cc(Cl)cc(Cl)c3)oc2c1");
+  }
+
+  smi12 = "CC.O=[Pb]=O";
+  {
+    CleanupParameters lfParams;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "CC");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "O=[Pb]=O");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserUseAtomCount = false;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "O=[Pb]=O");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserCountHeavyAtomsOnly = true;
+    lfParams.preferOrganic = true;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "CC");
+  }
+  {
+    CleanupParameters lfParams;
+    lfParams.largestFragmentChooserUseAtomCount = false;
+    lfParams.preferOrganic = true;
+    LargestFragmentChooser lfrag_params(lfParams);
+    std::shared_ptr<ROMol> m12(SmilesToMol(smi12));
+    std::shared_ptr<ROMol> lfrag7(lfrag_params.choose(*m12));
+    TEST_ASSERT(MolToSmiles(*lfrag7) == "CC");
+  }
+
+  BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
 void testWhiteSpaceInSmarts() {
-  BOOST_LOG(rdInfoLog) << "----- Test Whitespace in SMARTS Fragment string."
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "----- Test Whitespace in SMARTS Fragment string."
+                        << std::endl;
 
-  std::vector<std::string> data({
-      "          ",    // whitespace only
-      "          \n",  // whitespace plus new line
-      " //   initial space plus comment\nfluorine\t[F]\n"
-  });
+  std::vector<std::string> data(
+      {"          ",    // whitespace only
+       "          \n",  // whitespace plus new line
+       " //   initial space plus comment\nfluorine\t[F]\n"});
 
   std::vector<size_t> reference_sizes({0, 0, 1});
 
@@ -215,18 +278,17 @@ void testWhiteSpaceInSmarts() {
     TEST_ASSERT(groups.size() == *reference);
     ++reference;
   }
-  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+  BOOST_LOG(rdDebugLog) << "---- Done" << std::endl;
 }
 
 void testFragmentWithoutSmarts() {
-  BOOST_LOG(rdInfoLog) << "----- Test Fragment string without SMARTS."
-                       << std::endl;
+  BOOST_LOG(rdDebugLog) << "----- Test Fragment string without SMARTS."
+                        << std::endl;
 
-  std::vector<std::string> data({
-      "//   Name	SMARTS\nnonsense\n",
-      "//   Name	SMARTS\nnonsense no new line",
-      "//   Name	SMARTS\nnonsense with tab\t\n"
-  });
+  std::vector<std::string> data(
+      {"//   Name	SMARTS\nnonsense\n",
+       "//   Name	SMARTS\nnonsense no new line",
+       "//   Name	SMARTS\nnonsense with tab\t\n"});
 
   for (const auto& smarts : data) {
     bool ok = false;
@@ -234,21 +296,71 @@ void testFragmentWithoutSmarts() {
     std::vector<std::shared_ptr<RDKit::ROMol>> groups;
     try {
       groups = readFuncGroups(input);
-    } catch (const Invar::Invariant&) {
+    } catch (const ValueErrorException&) {
       ok = true;
     }
     TEST_ASSERT(ok);
     TEST_ASSERT(groups.empty());
   }
-  BOOST_LOG(rdInfoLog) << "---- Done" << std::endl;
+  BOOST_LOG(rdDebugLog) << "---- Done" << std::endl;
+}
+
+void testParameters() {
+  BOOST_LOG(rdDebugLog) << "----- Test providing fragment parameters."
+                        << std::endl;
+  {
+    std::vector<std::pair<std::string, std::string>> data{
+        {"hydrogen", "[H]"}, {"fluorine", "[F]"}, {"chlorine", "[Cl]"}};
+
+    auto groups = readFuncGroups(data);
+    TEST_ASSERT(groups.size() == data.size());
+  }
+  {  // parse failure
+    std::vector<std::pair<std::string, std::string>> data{
+        {"hydrogen", "[H]"}, {"fluorine", "[F]"}, {"error", "[Cl"}};
+    bool ok = false;
+    try {
+      auto groups = readFuncGroups(data);
+    } catch (const ValueErrorException&) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+  {
+    std::vector<std::pair<std::string, std::string>> data{
+        {"hydrogen", "[H]"}, {"fluorine", "[F]"}, {"chlorine", "[Cl]"}};
+
+    FragmentRemover remover(data, true);
+    auto m = "[F-].[Cl-].[Br-].CC"_smiles;
+    TEST_ASSERT(m);
+
+    std::unique_ptr<ROMol> nm{remover.remove(*m)};
+    TEST_ASSERT(nm);
+    TEST_ASSERT(MolToSmiles(*nm) == "CC.[Br-]");
+  }
+
+  BOOST_LOG(rdDebugLog) << "---- Done" << std::endl;
+}
+
+void testEmptyMol() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test that "
+         "LargestFragmentChooser does not crash on an empty mol"
+      << std::endl;
+  LargestFragmentChooser lfragchooser;
+  std::unique_ptr<ROMol> emptyMol(new ROMol());
+  std::unique_ptr<ROMol> largestMol(lfragchooser.choose(*emptyMol));
+  TEST_ASSERT(!largestMol->getNumAtoms());
 }
 
 int main() {
-  // may want to enable this for debugging
-  // RDLog::InitLogs();
+  RDLog::InitLogs();
+  boost::logging::disable_logs("rdApp.info");
   test2();
   test_largest_fragment();
   testWhiteSpaceInSmarts();
   testFragmentWithoutSmarts();
+  testParameters();
+  testEmptyMol();
   return 0;
 }

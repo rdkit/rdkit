@@ -10,10 +10,10 @@
 // Tests of substructure searching
 //
 
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
 #include <tuple>
+#include <utility>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -31,13 +31,13 @@ class _IsSubstructOf : public Catch::MatcherBase<const ROMol &> {
   _IsSubstructOf(const ROMol &m) : m_mol(&m) {}
 
   _IsSubstructOf(const ROMol &m, SubstructMatchParameters ps)
-      : m_mol(&m), m_ps(ps) {}
+      : m_mol(&m), m_ps(std::move(ps)) {}
 
-  virtual bool match(const ROMol &query) const override {
+  bool match(const ROMol &query) const override {
     return !SubstructMatch(*m_mol, query, m_ps).empty();
   }
 
-  virtual std::string describe() const override {
+  std::string describe() const override {
     std::ostringstream ss;
     ss << "is not a substructure of " << MolToCXSmiles(*m_mol);
     return ss.str();
@@ -268,4 +268,71 @@ TEST_CASE("Enhanced stereochemistry", "[substruct][StereoGroup]") {
     CHECK_THAT(*mol_or_partial, IsSubstructOf(*mol_and_long, ps));
     CHECK_THAT(*mol_and_partial, !IsSubstructOf(*mol_or_long, ps));
   }
+}
+
+TEST_CASE("Github #4138: empty query produces non-empty results",
+          "[substruct][bug]") {
+  auto mol = "C1CCCCO1"_smiles;
+  auto emol = ""_smiles;
+  auto qry = "C"_smarts;
+  auto eqry = ""_smarts;
+  REQUIRE(mol);
+  REQUIRE(qry);
+  SECTION("empty query") {
+    {
+      auto matches = SubstructMatch(*mol, *eqry);
+      CHECK(matches.empty());
+    }
+    {
+      std::vector<MatchVectType> matches;
+      CHECK(!SubstructMatch(*mol, *eqry, matches));
+      CHECK(matches.empty());
+    }
+    {
+      MatchVectType match;
+      CHECK(!SubstructMatch(*mol, *eqry, match));
+      CHECK(match.empty());
+    }
+  }
+  SECTION("empty mol") {
+    {
+      auto matches = SubstructMatch(*emol, *qry);
+      CHECK(matches.empty());
+    }
+    {
+      std::vector<MatchVectType> matches;
+      CHECK(!SubstructMatch(*emol, *qry, matches));
+      CHECK(matches.empty());
+    }
+    {
+      MatchVectType match;
+      CHECK(!SubstructMatch(*emol, *qry, match));
+      CHECK(match.empty());
+    }
+  }
+}
+
+TEST_CASE("Github #4558: GetSubstructMatches() loops at 43690 iterations",
+          "[substruct][bug]") {
+  // We need LOTS of water molecules here.
+  auto num_mols = 22000;
+  std::stringstream smi;
+  for (int i = 1; i < num_mols; ++i) {
+    smi << "[H]O[H].";
+  }
+  smi << "[H]O[H]";  // last one (notice we started at 1)
+
+  int debug = 0;
+  bool sanitize = false;  // don't sanitize, it takes too long.
+  std::unique_ptr<ROMol> mol(SmilesToMol(smi.str(), debug, sanitize));
+  REQUIRE(mol);
+
+  auto qry = "[H]O[H]"_smarts;
+
+  SubstructMatchParameters ps;
+  ps.uniquify = false;           // don't uniquify, it takes too long.
+  ps.maxMatches = 3 * num_mols;  // exceed the numer of matches we expect
+
+  auto matches = SubstructMatch(*mol, *qry, ps);
+  CHECK(matches.size() == num_mols * 2);
 }

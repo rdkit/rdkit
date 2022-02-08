@@ -18,7 +18,6 @@
 #include <future>
 #endif
 
-#include <boost/foreach.hpp>
 #include "MultiFPBReader.h"
 #include <algorithm>
 
@@ -198,7 +197,7 @@ void get_containing_nbrs(
   res.clear();
   for (unsigned int i = 0; i < d_readers.size(); ++i) {
     std::vector<unsigned int> &r_res = accum[i];
-    BOOST_FOREACH (unsigned int ri, r_res) {
+    for (auto ri : r_res) {
       res.emplace_back(ri, i);
     }
   }
@@ -210,7 +209,7 @@ void get_containing_nbrs(
 
 void MultiFPBReader::init() {
   unsigned int nBits = 0;
-  BOOST_FOREACH (FPBReader *rdr, d_readers) {
+  for (auto *rdr : d_readers) {
     rdr->init();
     if (!nBits) {
       nBits = rdr->nBits();
@@ -228,7 +227,7 @@ MultiFPBReader::MultiFPBReader(std::vector<FPBReader *> &readers,
   df_init = false;
   df_takeOwnership = takeOwnership;
   df_initOnSearch = initOnSearch;
-  BOOST_FOREACH (FPBReader *rdr, readers) {
+  for (auto *rdr : readers) {
     PRECONDITION(rdr != nullptr, "bad reader");
   }
   d_readers = readers;
@@ -305,4 +304,4 @@ MultiFPBReader::getContainingNeighbors(const ExplicitBitVect &ebv,
   return res;
 }
 
-}  // end of RDKit namespace
+}  // namespace RDKit

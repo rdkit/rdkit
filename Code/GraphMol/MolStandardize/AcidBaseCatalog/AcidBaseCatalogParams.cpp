@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,14 +15,27 @@
 namespace RDKit {
 namespace MolStandardize {
 
+#include "acid_base_pairs.in"
+
 AcidBaseCatalogParams::AcidBaseCatalogParams(const std::string &acidBaseFile) {
   d_pairs.clear();
-  d_pairs = readPairs(acidBaseFile);
+  if (acidBaseFile.empty()) {
+    d_pairs = readPairs(defaults::defaultAcidBasePairs);
+  } else {
+    d_pairs = readPairs(acidBaseFile);
+  }
 }
 
 AcidBaseCatalogParams::AcidBaseCatalogParams(std::istream &acidBaseFile) {
   d_pairs.clear();
   d_pairs = readPairs(acidBaseFile);
+}
+
+AcidBaseCatalogParams::AcidBaseCatalogParams(
+    const std::vector<std::tuple<std::string, std::string, std::string>>
+        &data) {
+  d_pairs.clear();
+  d_pairs = readPairs(data);
 }
 
 AcidBaseCatalogParams::AcidBaseCatalogParams(
@@ -60,13 +73,11 @@ std::string AcidBaseCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void AcidBaseCatalogParams::initFromStream(std::istream &ss) {
-  RDUNUSED_PARAM(ss);
+void AcidBaseCatalogParams::initFromStream(std::istream &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 
-void AcidBaseCatalogParams::initFromString(const std::string &text) {
-  RDUNUSED_PARAM(text);
+void AcidBaseCatalogParams::initFromString(const std::string &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 

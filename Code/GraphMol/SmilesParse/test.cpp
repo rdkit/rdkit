@@ -111,6 +111,7 @@ void testPass() {
     "Ts']['Og']",  // a biovia pathology
     "[#6]",        // feature borrowed from SMARTS
     "[12#6]",
+    "C$C",  // quadruple bonds
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -145,7 +146,8 @@ void testFail() {
   // parsing
   // on good input:
   string smis[] = {
-      "CC=(CO)C",    "CC(=CO)C", "C1CC",  "C1CC1", "Ccc",   "CCC",
+      "CC=(CO)C",    "CC(=CO)C", "C1CC",
+      "C1CC1",       "Ccc",      "CCC",
       "fff",  // tests the situation where the parser cannot do anything at all
       "CCC",
       "N(=O)(=O)=O",  // bad sanitization failure
@@ -157,9 +159,9 @@ void testFail() {
       "C-0",  // part of sf.net issue 2525792
       "C1CC1",
       "C+0",  // part of sf.net issue 2525792
-      "C1CC1",       "[H2H]",    "C1CC1", "[HH2]", "C1CC1", 
-      "[555555555555555555C]", "C1CC1",
-      "EOS"};
+      "C1CC1",       "[H2H]",    "C1CC1",
+      "[HH2]",       "C1CC1",    "[555555555555555555C]",
+      "C1CC1",       "EOS"};
 
   // turn off the error log temporarily:
   while (smis[i] != "EOS") {
@@ -4013,22 +4015,24 @@ void testSmilesParseParams() {
     ROMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
     delete m;
-    {  // it's ignored
+    {  // it's parsed:
       SmilesParserParams params;
+      params.allowCXSMILES = false;
       m = SmilesToMol(smiles, params);
       TEST_ASSERT(m);
-      TEST_ASSERT(!m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->hasProp(common_properties::_Name));
+      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
+                  "the_name");
       delete m;
     }
     {
       SmilesParserParams params;
-      params.parseName = true;
+      params.strictCXSMILES = false;
+      params.parseName = false;
       m = SmilesToMol(smiles, params);
       TEST_ASSERT(m);
       TEST_ASSERT(m->getNumAtoms() == 4);
-      TEST_ASSERT(m->hasProp(common_properties::_Name));
-      TEST_ASSERT(m->getProp<std::string>(common_properties::_Name) ==
-                  "the_name");
+      TEST_ASSERT(!m->hasProp(common_properties::_Name));
       delete m;
     }
   }
@@ -4339,6 +4343,29 @@ void testOSSFuzzFailures() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub3967() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing Github Issue 3967: Double bond stereo gets "
+                          "flipped by SMILES reader/writer"
+                       << std::endl;
+
+  {
+    auto mol = "C=c1s/c2n(c1=O)CCCCCCC\\N=2"_smiles;
+    TEST_ASSERT(mol);
+    auto smi = MolToSmiles(*mol);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == "C=c1s/c2n(c1=O)CCCCCCC\\N=2");
+  }
+  {
+    auto mol = R"SMI(C1=C\C/C=C2C3=C/C/C=C\C=C/C\3C\2\C=C/1)SMI"_smiles;
+    TEST_ASSERT(mol);
+    auto smi = MolToSmiles(*mol);
+    std::cerr << smi << std::endl;
+    TEST_ASSERT(smi == R"SMI(C1=C\C/C=C2C3=C\C/C=C\C=C/C/3C\2\C=C/1)SMI");
+  }
+  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -4417,6 +4444,7 @@ int main(int argc, char *argv[]) {
   testdoRandomSmileGeneration();
   testGithub1028();
   testGithub3139();
+  testGithub3967();
 #endif
   testOSSFuzzFailures();
 }

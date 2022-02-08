@@ -36,6 +36,7 @@
 #include <utils/memutils.h>
 
 #include "rdkit.h"
+#include "cache.h"
 
 #define GETENTRY(vec,pos) ((bytea *) DatumGetPointer((vec)->vector[(pos)].key))
 

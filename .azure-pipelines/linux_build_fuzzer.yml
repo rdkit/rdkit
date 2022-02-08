@@ -15,8 +15,8 @@ steps:
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
 
-    export CC="clang-8"
-    export CXX="clang++-8"
+    export CC="clang-9"
+    export CXX="clang++-9"
     export SANITIZER_FLAGS_address="-fsanitize=address -fsanitize-address-use-after-scope"
     export COVERAGE_FLAGS="-fsanitize=fuzzer-no-link"
     export CFLAGS="-O1 -fno-omit-frame-pointer -gline-tables-only -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION $COVERAGE_FLAGS $SANITIZER_FLAGS_address"

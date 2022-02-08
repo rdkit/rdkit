@@ -1,4 +1,4 @@
-find_package(SWIG REQUIRED)
+find_package(SWIG 3.0 EXACT REQUIRED)
 include(${SWIG_USE_FILE})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
@@ -9,7 +9,7 @@ SET(CMAKE_SWIG_FLAGS "")
 
 
 set(swigRDKitLibSuffix "")
-if(RDK_SWIG_STATIC AND ((NOT MSVC) OR (MSVC AND RDK_INSTALL_DLLS_MSVC)))
+if(RDK_SWIG_STATIC AND (NOT WIN32))
   set(swigRDKitLibSuffix "_static")
 endif()
 set(swigRDKitLibList "")

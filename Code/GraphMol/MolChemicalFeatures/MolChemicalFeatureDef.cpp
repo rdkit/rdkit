@@ -33,4 +33,4 @@ void MolChemicalFeatureDef::normalizeWeights() {
     *i /= accum;
   }
 }
-}
+}  // namespace RDKit

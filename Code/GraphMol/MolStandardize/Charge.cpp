@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,27 +33,50 @@ std::vector<ChargeCorrection> CHARGE_CORRECTIONS = {
 typedef boost::flyweight<
     boost::flyweights::key_value<std::string, AcidBaseCatalogParams>,
     boost::flyweights::no_tracking>
-    param_flyweight;
+    param_filename_flyweight;
+
+typedef boost::flyweight<
+    boost::flyweights::key_value<
+        std::vector<std::tuple<std::string, std::string, std::string>>,
+        AcidBaseCatalogParams>,
+    boost::flyweights::no_tracking>
+    param_data_flyweight;
 
 // constructor
 Reionizer::Reionizer() {
   const AcidBaseCatalogParams *abparams =
-      &(param_flyweight(defaultCleanupParameters.acidbaseFile).get());
+      &(param_filename_flyweight(defaultCleanupParameters.acidbaseFile).get());
   this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile) {
   const AcidBaseCatalogParams *abparams =
-      &(param_flyweight(acidbaseFile).get());
+      &(param_filename_flyweight(acidbaseFile).get());
   this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = CHARGE_CORRECTIONS;
+}
+
+Reionizer::Reionizer(
+    const std::vector<std::tuple<std::string, std::string, std::string>>
+        &data) {
+  const AcidBaseCatalogParams *abparams = &(param_data_flyweight(data).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
+  this->d_ccs = CHARGE_CORRECTIONS;
+}
+
+Reionizer::Reionizer(
+    const std::vector<std::tuple<std::string, std::string, std::string>> &data,
+    const std::vector<ChargeCorrection> ccs) {
+  const AcidBaseCatalogParams *abparams = &(param_data_flyweight(data).get());
+  this->d_abcat = new AcidBaseCatalog(abparams);
+  this->d_ccs = ccs;
 }
 
 Reionizer::Reionizer(const std::string acidbaseFile,
                      const std::vector<ChargeCorrection> ccs) {
   const AcidBaseCatalogParams *abparams =
-      &(param_flyweight(acidbaseFile).get());
+      &(param_filename_flyweight(acidbaseFile).get());
   this->d_abcat = new AcidBaseCatalog(abparams);
   this->d_ccs = ccs;
 }
@@ -114,7 +137,7 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
       // returns the acid strength ranking (ppos)
       // and the substruct match (poccur) in a pair
       std::shared_ptr<std::pair<unsigned int, std::vector<unsigned int>>> res(
-          this->strongestProtonated(mol, abpairs));
+          this->strongestProtonated(*omol, abpairs));
       if (res == nullptr) {
         break;
       } else {

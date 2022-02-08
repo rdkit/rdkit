@@ -13,6 +13,7 @@
 #define RD_EMBEDDER_H_GUARD
 
 #include <map>
+#include <utility>
 #include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
 #include <boost/shared_ptr.hpp>
@@ -78,16 +79,25 @@ namespace DGeomHelpers {
   basinThresh    set the basin threshold for the DGeom force field,
                  (this shouldn't normally be altered in client code).
   onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
-  boundsMat	custom bound matrix to specify upper and lower bounds of atom
-  pairs embedFragmentsSeparately	embed each fragment of molecule in turn
+  boundsMat      custom bound matrix to specify upper and lower bounds of atom
+                 pairs
+  embedFragmentsSeparately	embed each fragment of molecule in turn
   useSmallRingTorsions	optional torsions to improve small ring conformer
-  sampling
-
+                sampling
   useMacrocycleTorsions	optional torsions to improve macrocycle conformer
-  sampling useMacrocycle14config  If 1-4 distances bound heuristics for
-  macrocycles is used
-
+                sampling
+  useMacrocycle14config  If 1-4 distances bound heuristics for
+                macrocycles is used
   CPCI	custom columbic interactions between atom pairs
+  callback	      void pointer to a function for reporting progress,
+                  will be called with the current iteration number.
+  forceTransAmides   constrain amide bonds to be trans.
+  useSymmetryForPruning   use molecule symmetry when doing the RMSD pruning.
+                          NOTE that for reasons of computational efficiency,
+                          setting this will also set onlyHeavyAtomsForRMS to
+                          true.
+
+
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -115,11 +125,11 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useMacrocycleTorsions{false};
   bool useMacrocycle14config{false};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
-  EmbedParameters()
-      : 
-        boundsMat(nullptr),
-        
-        CPCI(nullptr){};
+  void (*callback)(unsigned int);
+  bool forceTransAmides{true};
+  bool useSymmetryForPruning{true};
+  double boundsMatForceScaling{1.0};
+  EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
       unsigned int maxIterations, int numThreads, int randomSeed,
       bool clearConfs, bool useRandomCoords, double boxSizeMult,
@@ -133,7 +143,8 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
       bool embedFragmentsSeparately = true, bool useSmallRingTorsions = false,
       bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
       std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>>
-          CPCI = nullptr)
+          CPCI = nullptr,
+      void (*callback)(unsigned int) = nullptr)
       : maxIterations(maxIterations),
         numThreads(numThreads),
         randomSeed(randomSeed),
@@ -158,8 +169,13 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useSmallRingTorsions(useSmallRingTorsions),
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
-        CPCI(CPCI){};
+        CPCI(std::move(CPCI)),
+        callback(callback) {}
 };
+
+//*! update parameters from a JSON string
+RDKIT_DISTGEOMHELPERS_EXPORT void updateEmbedParametersFromJSON(
+    EmbedParameters &params, const std::string &json);
 
 //*! Embed multiple conformations for a molecule
 RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(
@@ -173,7 +189,7 @@ inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
 }
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
-// Geometry
+/// Geometry
 inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
   INT_VECT confIds;
   EmbedMultipleConfs(mol, confIds, 1, params);
@@ -188,7 +204,7 @@ inline int EmbedMolecule(ROMol &mol, const EmbedParameters &params) {
 }
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
-// Geometry
+/// Geometry
 /*!
   The following operations are performed (in order) here:
    -# Build a distance bounds matrix based on the topology, including 1-5

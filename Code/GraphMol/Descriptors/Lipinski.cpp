@@ -17,7 +17,6 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/foreach.hpp>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
@@ -54,15 +53,16 @@ class ss_matcher {
   ~ss_matcher() { delete m_matcher; };
 
  private:
-  ss_matcher() : m_pattern("") {};
+  ss_matcher() : m_pattern(""){};
   std::string m_pattern;
   bool m_needCopies{false};
   const RDKit::ROMol *m_matcher{nullptr};
 };
-}
+}  // namespace
 
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
-                         boost::flyweights::no_tracking> pattern_flyweight;
+                         boost::flyweights::no_tracking>
+    pattern_flyweight;
 #define SMARTSCOUNTFUNC(nm, pattern, vers)         \
   const std::string nm##Version = vers;            \
   unsigned int calc##nm(const RDKit::ROMol &mol) { \
@@ -96,17 +96,17 @@ unsigned int calcLipinskiHBD(const ROMol &mol) {
   return res;
 }
 
-
 namespace {
 #ifdef RDK_USE_STRICT_ROTOR_DEFINITION
 const NumRotatableBondsOptions DefaultStrictDefinition = Strict;
 #else
 const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
 #endif
-}
+}  // namespace
 
 const std::string NumRotatableBondsVersion = "3.0.0";
-unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions strict) {
+unsigned int calcNumRotatableBonds(const ROMol &mol,
+                                   NumRotatableBondsOptions strict) {
   if (strict == Default) {
     strict = DefaultStrictDefinition;
   }
@@ -115,8 +115,7 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
     std::string pattern = "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]";
     pattern_flyweight m(pattern);
     return m.get().countMatches(mol);
-  }
-  else if (strict==Strict) {
+  } else if (strict == Strict) {
     std::string strict_pattern =
         "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
         "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
@@ -142,7 +141,8 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
     pattern_flyweight rotBonds_matcher("[!$([D1&!#1])]-!@[!$([D1&!#1])]");
     pattern_flyweight nonRingAmides_matcher("[C&!R](=O)NC");
     pattern_flyweight symRings_matcher(
-        "[a;r6;$(a(-!@[a;r6])(a[!#1])a[!#1])]-!@[a;r6;$(a(-!@[a;r6])(a[!#1])a)]");
+        "[a;r6;$(a(-!@[a;r6])(a[!#1])a[!#1])]-!@[a;r6;$(a(-!@[a;r6])(a[!#1])a)"
+        "]");
     pattern_flyweight terminalTripleBonds_matcher("C#[#6,#7]");
 
     std::vector<MatchVectType> matches;
@@ -165,7 +165,7 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
     // removing amides is more complex
     boost::dynamic_bitset<> atomsSeen(mol.getNumAtoms());
     SubstructMatch(mol, *(nonRingAmides_matcher.get().getMatcher()), matches);
-    BOOST_FOREACH (const MatchVectType &iv, matches) {
+    for (const auto &iv : matches) {
       bool distinct = true;
       for (const auto &mIt : iv) {
         if (atomsSeen[mIt.second]) {
@@ -186,9 +186,7 @@ unsigned int calcNumRotatableBonds(const ROMol &mol, NumRotatableBondsOptions st
 }
 
 unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
-  return calcNumRotatableBonds(mol,
-                               (strict) ? Strict
-                                        : NonStrict );
+  return calcNumRotatableBonds(mol, (strict) ? Strict : NonStrict);
 }
 
 // SMARTSCOUNTFUNC(NumHBD,
@@ -214,7 +212,7 @@ double calcFractionCSP3(const ROMol &mol) {
   ROMol::VERTEX_ITER atBegin, atEnd;
   boost::tie(atBegin, atEnd) = mol.getVertices();
   while (atBegin != atEnd) {
-    const Atom* at = mol[*atBegin];
+    const Atom *at = mol[*atBegin];
     if (at->getAtomicNum() == 6) {
       ++nC;
       if (at->getTotalDegree() == 4) {
@@ -232,8 +230,8 @@ double calcFractionCSP3(const ROMol &mol) {
 const std::string NumHeterocyclesVersion = "1.0.0";
 unsigned int calcNumHeterocycles(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->atomRings()) {
-    BOOST_FOREACH (int i, iv) {
+  for (const auto &iv : mol.getRingInfo()->atomRings()) {
+    for (auto i : iv) {
       if (mol.getAtomWithIdx(i)->getAtomicNum() != 6) {
         ++res;
         break;
@@ -245,9 +243,9 @@ unsigned int calcNumHeterocycles(const ROMol &mol) {
 const std::string NumAromaticRingsVersion = "1.0.0";
 unsigned int calcNumAromaticRings(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
     ++res;
-    BOOST_FOREACH (int i, iv) {
+    for (auto i : iv) {
       if (!mol.getBondWithIdx(i)->getIsAromatic()) {
         --res;
         break;
@@ -259,9 +257,9 @@ unsigned int calcNumAromaticRings(const ROMol &mol) {
 const std::string NumSaturatedRingsVersion = "1.0.0";
 unsigned int calcNumSaturatedRings(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
     ++res;
-    BOOST_FOREACH (int i, iv) {
+    for (int i : iv) {
       if (mol.getBondWithIdx(i)->getBondType() != Bond::SINGLE ||
           mol.getBondWithIdx(i)->getIsAromatic()) {
         --res;
@@ -274,8 +272,8 @@ unsigned int calcNumSaturatedRings(const ROMol &mol) {
 const std::string NumAliphaticRingsVersion = "1.0.0";
 unsigned int calcNumAliphaticRings(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
-    BOOST_FOREACH (int i, iv) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
+    for (auto i : iv) {
       if (!mol.getBondWithIdx(i)->getIsAromatic()) {
         ++res;
         break;
@@ -287,9 +285,9 @@ unsigned int calcNumAliphaticRings(const ROMol &mol) {
 const std::string NumAromaticHeterocyclesVersion = "1.0.0";
 unsigned int calcNumAromaticHeterocycles(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
     bool countIt = false;
-    BOOST_FOREACH (int i, iv) {
+    for (auto i : iv) {
       if (!mol.getBondWithIdx(i)->getIsAromatic()) {
         countIt = false;
         break;
@@ -311,9 +309,9 @@ unsigned int calcNumAromaticHeterocycles(const ROMol &mol) {
 const std::string NumAromaticCarbocyclesVersion = "1.0.0";
 unsigned int calcNumAromaticCarbocycles(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
     bool countIt = true;
-    BOOST_FOREACH (int i, iv) {
+    for (auto i : iv) {
       if (!mol.getBondWithIdx(i)->getIsAromatic()) {
         countIt = false;
         break;
@@ -335,10 +333,10 @@ unsigned int calcNumAromaticCarbocycles(const ROMol &mol) {
 const std::string NumAliphaticHeterocyclesVersion = "1.0.0";
 unsigned int calcNumAliphaticHeterocycles(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
     bool hasAliph = false;
     bool hasHetero = false;
-    BOOST_FOREACH (int i, iv) {
+    for (auto i : iv) {
       if (!mol.getBondWithIdx(i)->getIsAromatic()) {
         hasAliph = true;
       }
@@ -359,10 +357,10 @@ unsigned int calcNumAliphaticHeterocycles(const ROMol &mol) {
 const std::string NumAliphaticCarbocyclesVersion = "1.0.0";
 unsigned int calcNumAliphaticCarbocycles(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
     bool hasAliph = false;
     bool hasHetero = false;
-    BOOST_FOREACH (int i, iv) {
+    for (auto i : iv) {
       if (!mol.getBondWithIdx(i)->getIsAromatic()) {
         hasAliph = true;
       }
@@ -383,9 +381,9 @@ unsigned int calcNumAliphaticCarbocycles(const ROMol &mol) {
 const std::string NumSaturatedHeterocyclesVersion = "1.0.0";
 unsigned int calcNumSaturatedHeterocycles(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
     bool countIt = false;
-    BOOST_FOREACH (int i, iv) {
+    for (auto i : iv) {
       if (mol.getBondWithIdx(i)->getBondType() != Bond::SINGLE ||
           mol.getBondWithIdx(i)->getIsAromatic()) {
         countIt = false;
@@ -408,9 +406,9 @@ unsigned int calcNumSaturatedHeterocycles(const ROMol &mol) {
 const std::string NumSaturatedCarbocyclesVersion = "1.0.0";
 unsigned int calcNumSaturatedCarbocycles(const ROMol &mol) {
   unsigned int res = 0;
-  BOOST_FOREACH (const INT_VECT &iv, mol.getRingInfo()->bondRings()) {
+  for (const auto &iv : mol.getRingInfo()->bondRings()) {
     bool countIt = true;
-    BOOST_FOREACH (int i, iv) {
+    for (auto i : iv) {
       if (mol.getBondWithIdx(i)->getBondType() != Bond::SINGLE ||
           mol.getBondWithIdx(i)->getIsAromatic()) {
         countIt = false;
@@ -483,7 +481,7 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
       Intersect(ri, rj, inter);
       if (inter.size() > 1) {
         INT_VECT atomCounts(mol.getNumAtoms(), 0);
-        BOOST_FOREACH (int ii, inter) {
+        for (auto ii : inter) {
           atomCounts[mol.getBondWithIdx(ii)->getBeginAtomIdx()] += 1;
           atomCounts[mol.getBondWithIdx(ii)->getEndAtomIdx()] += 1;
         }
@@ -504,14 +502,15 @@ namespace {
 bool hasStereoAssigned(const ROMol &mol) {
   return mol.hasProp(common_properties::_StereochemDone);
 }
-}
+}  // namespace
 const std::string NumAtomStereoCentersVersion = "1.0.0";
 unsigned int numAtomStereoCenters(const ROMol &mol) {
   if (!hasStereoAssigned(mol)) {
-    throw ValueErrorException("numStereoCenters called without stereo being assigned");
+    throw ValueErrorException(
+        "numStereoCenters called without stereo being assigned");
   }
 
-  unsigned int res=0;
+  unsigned int res = 0;
   for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
        ++atom) {
     if ((*atom)->hasProp(common_properties::_ChiralityPossible)) {
@@ -524,10 +523,11 @@ unsigned int numAtomStereoCenters(const ROMol &mol) {
 const std::string NumUnspecifiedAtomStereoCentersVersion = "1.0.0";
 unsigned int numUnspecifiedAtomStereoCenters(const ROMol &mol) {
   if (!hasStereoAssigned(mol)) {
-    throw ValueErrorException("numUnspecifiedStereoCenters called without stereo being assigned");
+    throw ValueErrorException(
+        "numUnspecifiedStereoCenters called without stereo being assigned");
   }
 
-  unsigned int res=0;
+  unsigned int res = 0;
   for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
        ++atom) {
     if ((*atom)->hasProp(common_properties::_ChiralityPossible) &&

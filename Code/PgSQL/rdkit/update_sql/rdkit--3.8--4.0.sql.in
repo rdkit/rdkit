@@ -1,0 +1,170 @@
+CREATE OR REPLACE FUNCTION rdkit_toolkit_version()
+RETURNS text
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_phi(mol)
+RETURNS real
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_exactmw(mol)
+RETURNS real
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_labuteasa(mol)
+RETURNS real
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_hallkieralpha(mol)
+RETURNS real
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_numamidebonds(mol)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count(mol, qmol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_json(mol)
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_json(qmol)
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_from_json(cstring)
+RETURNS mol
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION qmol_from_json(cstring)
+RETURNS qmol
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_from_json'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION qmol_from_smarts(cstring)
+RETURNS qmol
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_from_smarts'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_ctab(mol,bool default true, bool default false)
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_v3kctab(mol,bool default true)
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_cxsmiles(mol)
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_cxsmarts(mol)
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_cxsmarts(qmol)
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+DROP CAST IF EXISTS (mol as qmol);
+CREATE CAST (mol as qmol) WITHOUT FUNCTION;
+
+CREATE OR REPLACE FUNCTION substruct_chiral(mol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION rsubstruct_chiral(mol, mol)
+RETURNS bool
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_rsubstruct_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, mol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, qmol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, mol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION substruct_count_chiral(mol, qmol, bool default true)
+RETURNS int
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME', 'mol_substruct_count_chiral'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OPERATOR CLASS gist_qmol_ops
+DEFAULT FOR TYPE qmol USING gist
+AS
+    OPERATOR	3   @> (mol, mol),
+    OPERATOR    4   <@ (mol, mol),
+    OPERATOR    3   @> (mol, qmol),
+    OPERATOR    4   <@ (qmol, mol),
+    OPERATOR    6   @= (mol, mol),
+    FUNCTION    1   gmol_consistent (bytea, internal, int4),
+    FUNCTION    2   gmol_union (bytea, internal),
+    FUNCTION    3   gmol_compress (internal),
+    FUNCTION    4   gmol_decompress (internal),
+    FUNCTION    5   gmol_penalty (internal, internal, internal),
+    FUNCTION    6   gmol_picksplit (internal, internal),
+    FUNCTION    7   gmol_same (bytea, bytea, internal),
+STORAGE         bytea;
+
+CREATE OR REPLACE FUNCTION mol_adjust_query_properties(qmol,cstring default '')
+RETURNS qmol
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION mol_to_svg(qmol, cstring default '', integer default 250, integer default 200, cstring default '')
+RETURNS cstring
+@RDKIT_PARALLEL_SAFE@
+AS 'MODULE_PATHNAME'
+LANGUAGE C STRICT IMMUTABLE;
+

@@ -13,6 +13,8 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py
   DESTINATION ${RDKit_PythonDir}
   COMPONENT python)
 
+add_pytest(pythonTestDirRoot
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR} )
 add_pytest(pythonTestDirML
          ${CMAKE_CURRENT_SOURCE_DIR}/ML/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/ML )
 add_pytest(pythonTestDirDataStructs
@@ -23,8 +25,7 @@ add_pytest(pythonTestDirSimDivFilters
          ${CMAKE_CURRENT_SOURCE_DIR}/SimDivFilters/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/SimDivFilters )
 add_pytest(pythonTestDirVLib
          ${CMAKE_CURRENT_SOURCE_DIR}/VLib/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/VLib )
-add_pytest(pythonTestDirChem
-         ${CMAKE_CURRENT_SOURCE_DIR}/Chem/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/Chem --buildType ${CMAKE_BUILD_TYPE})
 add_pytest(pythonTestSping
          ${CMAKE_CURRENT_SOURCE_DIR}/Chem/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/sping )
 
+add_subdirectory(Chem)

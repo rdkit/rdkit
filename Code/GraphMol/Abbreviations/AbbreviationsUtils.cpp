@@ -163,13 +163,18 @@ ROMol *createAbbreviationMol(const std::string &txt, bool removeExtraDummies,
   unsigned int nDummies = std::count_if(smarts.begin(), smarts.end(),
                                         [](char c) { return c == '*'; });
   if (removeExtraDummies) {
-    for (unsigned int i = q->getNumAtoms() - 1; i > 0; --i) {
-      auto at = q->getAtomWithIdx(i);
+    q->beginBatchEdit();
+    for (const auto at : q->atoms()) {
+      if (!at->getIdx()) {
+        // skip the first atom
+        continue;
+      }
       if (at->hasQuery() && at->getQuery()->getDescription() == "AtomNull") {
-        q->removeAtom(i);
+        q->removeAtom(at->getIdx());
         --nDummies;
       }
     }
+    q->commitBatchEdit();
   }
   q->setProp(common_properties::numDummies, nDummies);
   return q;

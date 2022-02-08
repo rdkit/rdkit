@@ -1,6 +1,6 @@
-// $Id$
 //
-//  Copyright (c) 2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2021, Novartis Institutes for BioMedical Research Inc.
+//    and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,22 @@ Datum mol_substruct(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(i, a));
+  PG_RETURN_BOOL(MolSubstruct(i, a, false));
+}
+
+PGDLLEXPORT Datum mol_substruct_chiral(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_substruct_chiral);
+Datum mol_substruct_chiral(PG_FUNCTION_ARGS) {
+  CROMol i, a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(MolSubstruct(i, a, true));
 }
 
 PGDLLEXPORT Datum mol_rsubstruct(PG_FUNCTION_ARGS);
@@ -123,7 +138,21 @@ Datum mol_rsubstruct(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_BOOL(MolSubstruct(a, i));
+  PG_RETURN_BOOL(MolSubstruct(a, i, false));
+}
+PGDLLEXPORT Datum mol_rsubstruct_chiral(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_rsubstruct_chiral);
+Datum mol_rsubstruct_chiral(PG_FUNCTION_ARGS) {
+  CROMol i, a;
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_BOOL(MolSubstruct(a, i, true));
 }
 
 PGDLLEXPORT Datum mol_substruct_count(PG_FUNCTION_ARGS);
@@ -139,7 +168,22 @@ Datum mol_substruct_count(PG_FUNCTION_ARGS) {
       searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                      PG_GETARG_DATUM(1), NULL, &a, NULL);
 
-  PG_RETURN_INT32(MolSubstructCount(i, a, uniquify));
+  PG_RETURN_INT32(MolSubstructCount(i, a, uniquify, false));
+}
+PGDLLEXPORT Datum mol_substruct_count_chiral(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(mol_substruct_count_chiral);
+Datum mol_substruct_count_chiral(PG_FUNCTION_ARGS) {
+  CROMol i, a;
+  bool uniquify = PG_GETARG_BOOL(2);
+
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(0), NULL, &i, NULL);
+  fcinfo->flinfo->fn_extra =
+      searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
+                     PG_GETARG_DATUM(1), NULL, &a, NULL);
+
+  PG_RETURN_INT32(MolSubstructCount(i, a, uniquify, true));
 }
 
 #define MOLDESCR(name, func, ret)                                         \
@@ -154,8 +198,10 @@ Datum mol_substruct_count(PG_FUNCTION_ARGS) {
   }
 
 MOLDESCR(amw, MolAMW, FLOAT4)
+MOLDESCR(exactmw, MolExactMW, FLOAT4)
 MOLDESCR(logp, MolLogP, FLOAT4)
 MOLDESCR(tpsa, MolTPSA, FLOAT4)
+MOLDESCR(labuteasa, MolLabuteASA, FLOAT4)
 MOLDESCR(hba, MolHBA, INT32)
 MOLDESCR(hbd, MolHBD, INT32)
 MOLDESCR(numatoms, MolNumAtoms, INT32)
@@ -173,6 +219,7 @@ MOLDESCR(numaromaticcarbocycles, MolNumAromaticCarbocycles, INT32)
 MOLDESCR(numaliphaticcarbocycles, MolNumAliphaticCarbocycles, INT32)
 MOLDESCR(numsaturatedcarbocycles, MolNumSaturatedCarbocycles, INT32)
 MOLDESCR(numheterocycles, MolNumHeterocycles, INT32)
+MOLDESCR(numamidebonds, MolNumAmideBonds, INT32)
 
 MOLDESCR(fractioncsp3, MolFractionCSP3, FLOAT4)
 MOLDESCR(chi0n, MolChi0n, FLOAT4)
@@ -188,6 +235,8 @@ MOLDESCR(chi4v, MolChi4v, FLOAT4)
 MOLDESCR(kappa1, MolKappa1, FLOAT4)
 MOLDESCR(kappa2, MolKappa2, FLOAT4)
 MOLDESCR(kappa3, MolKappa3, FLOAT4)
+MOLDESCR(hallkieralpha, MolHallKierAlpha, FLOAT4)
+MOLDESCR(phi, MolPhi, FLOAT4)
 
 MOLDESCR(numspiroatoms, MolNumSpiroAtoms, INT32)
 MOLDESCR(numbridgeheadatoms, MolNumBridgeheadAtoms, INT32)
@@ -392,11 +441,11 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
   }
   if (PG_ARGISNULL(0) && !PG_ARGISNULL(1)) {  // first call
     /// elog(WARNING, "fmcs_mol2s_transition() called first time");
-    CROMol mol = PG_GETARG_DATUM(1);
+    CROMol mol;
     int len, ts_size;
     char *smiles;
-    elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
-         fcinfo->flinfo->fn_mcxt);
+    // elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
+    //      fcinfo->flinfo->fn_mcxt);
     fcinfo->flinfo->fn_extra =
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
@@ -420,10 +469,10 @@ Datum fmcs_mol2s_transition(PG_FUNCTION_ARGS) {
     // elog(WARNING, VARDATA(t0));
 
     // mol_to_smiles():
-    CROMol mol = PG_GETARG_DATUM(1);
+    CROMol mol;
     int len;
-    elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
-         fcinfo->flinfo->fn_mcxt);
+    // elog(WARNING, "mol=%p, fcinfo: %p, %p", mol, fcinfo->flinfo->fn_extra,
+    //      fcinfo->flinfo->fn_mcxt);
     fcinfo->flinfo->fn_extra =
         searchMolCache(fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt,
                        PG_GETARG_DATUM(1), NULL, &mol, NULL);
@@ -488,18 +537,18 @@ Datum fmcs_mol_transition(PG_FUNCTION_ARGS) {
   if (PG_ARGISNULL(0) && !PG_ARGISNULL(1)) {  // first call
     // elog(WARNING, "fmcs_mol_transition() called first time");
     void *lst = NULL;
-    CROMol mol = PG_GETARG_DATUM(1);
+    Mol *mol = PG_GETARG_MOL_P(1);
     lst = addMol2list(NULL, mol);
     // char t[256];
     // sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst,
     // fcinfo->flinfo->fn_extra, fcinfo->flinfo->fn_mcxt);
     // elog(WARNING, t);
     // fcinfo->flinfo->fn_extra = lst;
-    PG_RETURN_INT32((int32)lst);
+    PG_RETURN_POINTER(lst);
   } else if (!PG_ARGISNULL(0) &&
              !PG_ARGISNULL(1)) {  // Called in aggregate context...
     // elog(WARNING, "fmcs_mol_transition(): next iteration in the same run");
-    CROMol mol = PG_GETARG_DATUM(1);
+    Mol *mol = PG_GETARG_MOL_P(1);
     void *lst = addMol2list(PG_GETARG_POINTER(0), mol);
     // char t[256];
     // sprintf(t,"mol=%p, lst=%p, fcinfo: %p, %p", mol, lst,

@@ -7,7 +7,7 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
 
 
 rdkit_library(RDGeneral
-              Invariant.cpp types.cpp utils.cpp RDLog.cpp 
+              Invariant.cpp types.cpp utils.cpp RDGeneralExceptions.cpp RDLog.cpp
               LocaleSwitcher.cpp versions.cpp SHARED)
 target_compile_definitions(RDGeneral PRIVATE RDKIT_RDGENERAL_BUILD)
 
@@ -62,6 +62,7 @@ rdkit_headers(Exceptions.h
               LocaleSwitcher.h
               Ranking.h
               hanoiSort.h
+              RDExportMacros.h
               export.h
               test.h
               ConcurrentQueue.h

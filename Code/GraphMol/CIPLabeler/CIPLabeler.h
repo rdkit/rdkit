@@ -29,7 +29,7 @@ namespace CIPLabeler {
  * described in:
  *
  * Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A.,
- * Redkin, D. Algorithmic Analysis of Cahn−Ingold−Prelog Rules of
+ * Redkin, D. Algorithmic Analysis of Cahn--Ingold--Prelog Rules of
  * Stereochemistry: Proposals for Revised Rules and a Guide for Machine
  * Implementation. J. Chem. Inf. Model. 2018, 58, 1755-1765.
  *
@@ -52,8 +52,8 @@ RDKIT_CIPLABELER_EXPORT void assignCIPLabels(ROMol &mol);
  *   \param bonds - bitset with the bond indexes to be labeled.
  *
  */
-RDKIT_CIPLABELER_EXPORT void
-assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
-                const boost::dynamic_bitset<> &bonds);
-} // namespace CIPLabeler
-} // namespace RDKit
+RDKIT_CIPLABELER_EXPORT void assignCIPLabels(
+    ROMol &mol, const boost::dynamic_bitset<> &atoms,
+    const boost::dynamic_bitset<> &bonds);
+}  // namespace CIPLabeler
+}  // namespace RDKit

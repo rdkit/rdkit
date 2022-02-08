@@ -9,7 +9,6 @@
 //
 
 #include <RDBoost/python.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
 
@@ -26,8 +25,10 @@ ROMol *condenseMolAbbreviationsHelper(const ROMol *mol,
   RWMol *res = new RWMol(*mol);
   auto abbrevs =
       pythonObjectToVect<Abbreviations::AbbreviationDefinition>(pyabbrevs);
-  Abbreviations::condenseMolAbbreviations(*res, *abbrevs, maxCoverage,
-                                          sanitize);
+  if (abbrevs) {
+    Abbreviations::condenseMolAbbreviations(*res, *abbrevs, maxCoverage,
+                                            sanitize);
+  }
   return rdcast<ROMol *>(res);
 }
 
@@ -42,7 +43,9 @@ ROMol *labelMolAbbreviationsHelper(const ROMol *mol, python::object pyabbrevs,
   RWMol *res = new RWMol(*mol);
   auto abbrevs =
       pythonObjectToVect<Abbreviations::AbbreviationDefinition>(pyabbrevs);
-  Abbreviations::labelMolAbbreviations(*res, *abbrevs, maxCoverage);
+  if (abbrevs) {
+    Abbreviations::labelMolAbbreviations(*res, *abbrevs, maxCoverage);
+  }
   return rdcast<ROMol *>(res);
 }
 }  // namespace
@@ -84,7 +87,8 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
       (python::arg("mol"), python::arg("abbrevs"),
        python::arg("maxCoverage") = 0.4, python::arg("sanitize") = true),
       python::return_value_policy<python::manage_new_object>(),
-      "Finds and replaces abbreviations in a molecule. The result is not sanitized.");
+      "Finds and replaces abbreviations in a molecule. The result is not "
+      "sanitized.");
   python::def("LabelMolAbbreviations", &labelMolAbbreviationsHelper,
               (python::arg("mol"), python::arg("abbrevs"),
                python::arg("maxCoverage") = 0.4),

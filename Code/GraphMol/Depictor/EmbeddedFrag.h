@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_EMBEDDED_FRAG_H_
-#define _RD_EMBEDDED_FRAG_H_
+#ifndef RD_EMBEDDED_FRAG_H
+#define RD_EMBEDDED_FRAG_H
 
 #include <RDGeneral/types.h>
 #include <Geometry/Transform2D.h>
@@ -30,11 +30,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
  public:
   typedef enum { UNSPECIFIED = 0, CISTRANS, RING } EAtomType;
 
-  EmbeddedAtom()
-      
-        {
-    neighs.clear();
-  }
+  EmbeddedAtom() { neighs.clear(); }
 
   EmbeddedAtom(const EmbeddedAtom &other) = default;
 
@@ -88,8 +84,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   unsigned int aid{0};  // the id of the atom
 
   //! the angle that is already takes at this atom, so any new atom attaching to
-  // this
-  //! atom with have to fall in the available part
+  /// this atom with have to fall in the available part
   double angle{-1.0};
 
   //! the first neighbor of this atom that form the 'angle'
@@ -99,28 +94,25 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
   int nbr2{-1};
 
   //! is this is a cis/trans atom the neighbor of this atom that is involved in
-  // the
-  //! cis/trans system - defaults to -1
+  /// the cis/trans system - defaults to -1
   int CisTransNbr{-1};
 
   //! which direction do we rotate this normal to add the next bond
   //! if ccw is true we rotate counter clockwise, otherwise rotate clock wise,
-  // by an angle that is
-  //! <= PI/2
+  /// by an angle that is <= PI/2
   bool ccw{true};
 
   //! rotation direction around this atom when adding new atoms,
-  //! we determine this for the first neighbor and stick to this direction after
-  // that
+  /// we determine this for the first neighbor and stick to this direction
+  /// after that
   //! useful only on atoms that are degree >= 4
   int rotDir{0};
 
   RDGeom::Point2D loc;  // the current location of this atom
   //! this is a normal vector to one of the bonds that added this atom
-  //! it provides the side on which we want to add a new bond to this atom,
+  //! it provides the side on which we want to add a new bond to this atom
   //! this is only relevant when we are dealing with non ring atoms. We would
-  // like to draw chains in
-  //! a zig-zag manner
+  /// like to draw chains in a zig-zag manner
   RDGeom::Point2D normal;
 
   //! and these are the atom IDs of the neighbors that still need to be embedded
@@ -128,8 +120,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedAtom {
 
   // density of the atoms around this atoms
   // - this is sum of inverse of the square of distances to other atoms from
-  // this atom
-  // Used in the collision removal code - initialized to -1.0
+  //   this atom. Used in the collision removal code
+  // - initialized to -1.0
   double d_density{-1.0};
 
   //! if set this atom is fixed: further operations on the fragment may not
@@ -145,11 +137,11 @@ typedef INT_EATOM_MAP::const_iterator INT_EATOM_MAP_CI;
 /*
   Here is how this class is designed to be used
   - find a set of fused rings and compute the coordinates for the atoms in those
-  ring
+    ring
   - them grow this system either by adding non ring neighbors
   - or by adding other embedded fragment
   - so at the end of the process  the whole molecule end up being one these
-  embedded frag objects
+    embedded frag objects
 */
 class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   // REVIEW: think about moving member functions up to global level and just
@@ -161,7 +153,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   EmbeddedFrag() {
     d_eatoms.clear();
     d_attachPts.clear();
-  };
+  }
 
   //! Initializer from a single atom id
   /*!
@@ -172,20 +164,15 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   //! Constructor when the coordinates have been specified for a set of atoms
   /*!
      This simply initialized a set of EmbeddedAtom to have the same coordinates
-     as the
-     one's specified. No testing is done to verify any kind of correctness.
-     Also
-     this fragment is less ready (to expand and add new neighbors) than when
-     using other
-     constructors. This is because:
+     as the one's specified. No testing is done to verify any kind of
+     correctness. Also this fragment is less ready (to expand and add new
+     neighbors) than when using other constructors. This is because:
      - the user may have specified coords for only a part of the atoms in a
-     fused ring systems
-       in which case we need to find these atoms and merge these ring systems to
-     this fragment
+       fused ring systems in which case we need to find these atoms and merge
+       these ring systems to this fragment
      - The atoms are not yet aware of their neighbor (what is left to add etc.)
-     this again
-       depends on  atoms properly so that new
-       neighbors can be added to them
+       this again depends on  atoms properly so that new neighbors can be added
+       to them
   */
   EmbeddedFrag(const RDKit::ROMol *mol,
                const RDGeom::INT_POINT2D_MAP &coordMap);
@@ -207,7 +194,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   explicit EmbeddedFrag(const RDKit::Bond *dblBond);
 
   //! Expand this embedded system by adding neighboring atoms or other embedded
-  // systems
+  /// systems
   /*!
 
     Note that both nratms and efrags are modified in this function
@@ -355,7 +342,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void removeCollisionsOpenAngles();
 
   //! Remove collisions by shortening bonds along the shortest path between the
-  // atoms
+  /// atoms
   void removeCollisionsShortenBonds();
 
   //! helpers functions to
@@ -384,7 +371,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings);
 
   //! \brief Find a transform to join a ring to the current embedded frag when
-  // we
+  /// we
   //! have only on common atom
   /*!
     So this is the state of affairs assumed here:
@@ -543,7 +530,7 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   double d_px = 0.0, d_nx = 0.0, d_py = 0.0, d_ny = 0.0;
 
   //! a map that takes one from the atom id to the embeddedatom object for that
-  // atom.
+  /// atom.
   INT_EATOM_MAP d_eatoms;
 
   // RDKit::INT_DEQUE d_attachPts;

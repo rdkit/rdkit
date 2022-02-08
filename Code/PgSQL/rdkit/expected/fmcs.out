@@ -1,0 +1,23 @@
+-- github #3687 : crash on bogus fmcs input
+select fmcs(m::text) from pgmol where m@>'c1ncccc1';
+                     fmcs                     
+----------------------------------------------
+ [#6]1:,-[#7]:,-[#6]:,-[#6]:,-[#6]:,-[#6]:,-1
+(1 row)
+
+select fmcs(m) from pgmol where m@>'c1ncccc1';
+                     fmcs                     
+----------------------------------------------
+ [#6]1:,-[#6]:,-[#6]:,-[#6]:,-[#6]:,-[#7]:,-1
+(1 row)
+
+-- github #3687 : crash on bogus fmcs input
+select fmcs('q');
+ERROR:  findMCS: could not create molecule from SMILES 'q'
+CONTEXT:  SQL function "fmcs_smiles" statement 1
+select fmcs('p');
+ERROR:  findMCS: could not create molecule from SMILES 'p'
+CONTEXT:  SQL function "fmcs_smiles" statement 1
+select fmcs('C1CC');
+ERROR:  findMCS: could not create molecule from SMILES 'C1CC'
+CONTEXT:  SQL function "fmcs_smiles" statement 1

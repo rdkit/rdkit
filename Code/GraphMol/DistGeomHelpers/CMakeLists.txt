@@ -1,6 +1,6 @@
 
-rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp
-              LINK_LIBRARIES ForceFieldHelpers GraphMol DistGeometry Alignment
+rdkit_library(DistGeomHelpers BoundsMatrixBuilder.cpp Embedder.cpp EmbedderUtils.cpp
+              LINK_LIBRARIES ForceFieldHelpers SubstructMatch GraphMol DistGeometry Alignment
                 )
 target_compile_definitions(DistGeomHelpers PRIVATE RDKIT_DISTGEOMHELPERS_BUILD)
 
@@ -9,7 +9,11 @@ rdkit_headers(BoundsMatrixBuilder.h
 
 rdkit_test(testDistGeomHelpers testDgeomHelpers.cpp
            LINK_LIBRARIES
-           DistGeomHelpers MolAlign MolTransforms FileParsers SmilesParse SubstructMatch )
+           DistGeomHelpers MolAlign MolTransforms FileParsers SmilesParse  )
+
+rdkit_catch_test(distGeomHelpersCatch ../catch_main.cpp catch_tests.cpp 
+LINK_LIBRARIES DistGeomHelpers MolAlign MolTransforms FileParsers SmilesParse )
+
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

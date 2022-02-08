@@ -53,9 +53,7 @@ RDKit::SparseIntVect<std::uint32_t> *generateFingerprint(
       RDKit::SparseIntVect<std::int32_t> *tmp1 =
           RDKit::AtomPairs::getHashedAtomPairFingerprint(mol, fpSize);
       res = new RDKit::SparseIntVect<std::uint32_t>(fpSize);
-      BOOST_FOREACH (
-          RDKit::SparseIntVect<std::int32_t>::StorageType::value_type val,
-          tmp1->getNonzeroElements()) {
+      for (auto val : tmp1->getNonzeroElements()) {
         res->setVal(static_cast<std::uint32_t>(val.first), val.second);
       }
       delete tmp1;
@@ -64,9 +62,7 @@ RDKit::SparseIntVect<std::uint32_t> *generateFingerprint(
       RDKit::SparseIntVect<boost::int64_t> *tmp2 =
           RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol, fpSize);
       res = new RDKit::SparseIntVect<std::uint32_t>(fpSize);
-      BOOST_FOREACH (
-          RDKit::SparseIntVect<boost::int64_t>::StorageType::value_type val,
-          tmp2->getNonzeroElements()) {
+      for (auto val : tmp2->getNonzeroElements()) {
         res->setVal(static_cast<std::uint32_t>(val.first), val.second);
       }
       delete tmp2;
@@ -101,7 +97,7 @@ ExplicitBitVect *generateFingerprintAsBitVect(RDKit::ROMol &mol,
       break;
     case RDKit::TopologicalTorsion:
       res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(
-          mol);
+          mol, fpSize);
       break;
     case RDKit::MorganFP: {
       if (!mol.getRingInfo()->isInitialized()) {
@@ -120,14 +116,14 @@ ExplicitBitVect *generateFingerprintAsBitVect(RDKit::ROMol &mol,
   }
   return res;
 }
-}
+}  // namespace
 
 namespace RDKit {
 
 const ReactionFingerprintParams DefaultStructuralFPParams(true, 0.2, 1, 1, 4096,
-                                                            PatternFP);
+                                                          PatternFP);
 const ReactionFingerprintParams DefaultDifferenceFPParams(true, 0.0, 10, 1,
-                                                            2048, AtomPairFP);
+                                                          2048, AtomPairFP);
 
 SparseIntVect<std::uint32_t> *generateFingerprintChemReactionAsCountVect(
     const ChemicalReaction &rxn, unsigned int fpSize, FingerprintType t,
@@ -138,8 +134,7 @@ SparseIntVect<std::uint32_t> *generateFingerprintChemReactionAsCountVect(
   auto begin = getStartIterator(rxn, mt);
   auto end = getEndIterator(rxn, mt);
   for (; begin != end; ++begin) {
-    SparseIntVect<std::uint32_t> *tmp =
-        generateFingerprint(**begin, fpSize, t);
+    SparseIntVect<std::uint32_t> *tmp = generateFingerprint(**begin, fpSize, t);
     (*result) += *tmp;
     delete tmp;
   }
@@ -230,4 +225,4 @@ SparseIntVect<std::uint32_t> *DifferenceFingerprintChemReaction(
   delete productFP;
   return res;
 }
-}
+}  // namespace RDKit

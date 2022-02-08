@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2006 Greg Landrum
+//  Copyright (C) 2006-2021 Greg Landrum
 //
 #include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
@@ -70,6 +69,10 @@ void test1() {
   TEST_ASSERT(mcat->getNumEntries() == 3);
   TEST_ASSERT(mcat->getFPLength() == 3);
 
+  TEST_ASSERT(
+      mcat->getEntryWithIdx(mcat->getIdOfEntryWithBitId(0))->getBitId() == 0);
+  TEST_ASSERT(
+      mcat->getEntryWithIdx(mcat->getIdOfEntryWithBitId(2))->getBitId() == 2);
   TEST_ASSERT(mcat->getEntryWithBitId(0)->getMol()->getNumAtoms() == 10);
   TEST_ASSERT(mcat->getEntryWithBitId(1)->getMol()->getNumAtoms() == 1);
   TEST_ASSERT(mcat->getEntryWithBitId(2)->getMol()->getNumAtoms() == 3);

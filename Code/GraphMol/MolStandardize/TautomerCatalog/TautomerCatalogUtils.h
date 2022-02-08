@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_TAUTOMER_CATALOG_UTILS_H__
-#define __RD_TAUTOMER_CATALOG_UTILS_H__
+#ifndef RD_TAUTOMER_CATALOG_UTILS_H
+#define RD_TAUTOMER_CATALOG_UTILS_H
 
 #include <GraphMol/RDKitBase.h>
 #include "TautomerCatalogParams.h"
@@ -17,6 +17,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/Bond.h>
 #include <iostream>
+#include <utility>
 
 namespace RDKit {
 class ROMol;
@@ -34,13 +35,15 @@ class TautomerCatalogParams;
 // typedef std::vector<ROMol*, std::string, std::string> tautomerTransform;
 class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
  public:
-  ROMol* Mol;
+  ROMol* Mol = nullptr;
   std::vector<Bond::BondType> BondTypes;
   std::vector<int> Charges;
 
-  TautomerTransform(ROMol* mol, const std::vector<Bond::BondType>& bondtypes,
-                    const std::vector<int>& charges)
-      : Mol(mol), BondTypes(bondtypes), Charges(charges) {}
+  TautomerTransform(ROMol* mol, std::vector<Bond::BondType> bondtypes,
+                    std::vector<int> charges)
+      : Mol(mol),
+        BondTypes(std::move(bondtypes)),
+        Charges(std::move(charges)) {}
 
   TautomerTransform(const TautomerTransform& other)
       : BondTypes(other.BondTypes), Charges(other.Charges) {
@@ -49,12 +52,13 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
 
   TautomerTransform& operator=(const TautomerTransform& other) {
     if (this != &other) {
+      delete Mol;
       Mol = new ROMol(*other.Mol);
       BondTypes = other.BondTypes;
       Charges = other.Charges;
     }
     return *this;
-  };
+  }
 
   ~TautomerTransform() { delete Mol; }
 };
@@ -68,7 +72,9 @@ RDKIT_MOLSTANDARDIZE_EXPORT std::vector<TautomerTransform> readTautomers(
     std::string fileName);
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<TautomerTransform> readTautomers(
     std::istream& inStream, int nToRead = -1);
-
+RDKIT_MOLSTANDARDIZE_EXPORT std::vector<TautomerTransform> readTautomers(
+    const std::vector<
+        std::tuple<std::string, std::string, std::string, std::string>>& data);
 }  // namespace MolStandardize
 }  // namespace RDKit
 

@@ -78,4 +78,4 @@ bool triangleSmoothBounds(BoundsMatrix *boundsMat, double tol) {
   }
   return true;
 }
-}
+}  // namespace DistGeom

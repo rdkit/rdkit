@@ -105,7 +105,10 @@ void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol) {
     unsigned int hcount = aptr->getTotalNumHs();
     aptr->setNoImplicit(true);
     aptr->setNumExplicitHs(hcount);
-    aptr->updatePropertyCache();  // or else the valence is reported incorrectly
+
+    bool strict = false;
+    aptr->updatePropertyCache(
+        strict);  // or else the valence is reported incorrectly
   }
 }
 
@@ -460,11 +463,11 @@ static std::string ExtendedMurckoScaffold(RWMol *mol) {
       for_deletion.push_back(aptr);
     }
   }
-
+  mol->beginBatchEdit();
   for (auto &i : for_deletion) {
     mol->removeAtom(i);
   }
-
+  mol->commitBatchEdit();
   MolOps::assignRadicals(*mol);
   std::string result;
   result = MolToSmiles(*mol);
@@ -492,9 +495,11 @@ static std::string MurckoScaffoldHash(RWMol *mol) {
         for_deletion.push_back(aptr);
       }
     }
+    mol->beginBatchEdit();
     for (auto &i : for_deletion) {
       mol->removeAtom(i);
     }
+    mol->commitBatchEdit();
   } while (!for_deletion.empty());
   MolOps::assignRadicals(*mol);
   std::string result;

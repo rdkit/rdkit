@@ -39,8 +39,28 @@ extern "C" {
 #endif
 
 /*
- *  Cache subsystem. Molecules and fingerprints I/O is extremely expensive.
+ * Cache subsystem. Molecules and fingerprints I/O is extremely expensive.
+ *
+ * This module provides support for caching the toasted data values that
+ * functions receive as argument, together with their detoasted,
+ * deserialized, or signature representations. This may help saving the time
+ * that would be otherwise required to some queries to process the same
+ * argument values multiple times (for example repeatedly unpickling the
+ * same RDKit molecule).
+ * 
+ * This cache mechanism also provides the functions code with a high level
+ * API that encapsulates the details of the conversion from the toasted
+ * PostgreSQL Datum and the different representations of the supported
+ * value types.
+ * 
+ * A cache instance is associated with a memory context where the
+ * cached values are allocated, and it's therefore automatically cleared
+ * when the same context is reset or destroyed. For this reason the client
+ * code doesn't usually create/use this cache with the "current" memory
+ * context, but rather with the longer-living context that is available
+ * to the function as fcinfo->flinfo->fn_mcxt.
  */
+
 struct MemoryContextData; /* forward declaration to prevent conflicts with C++
                            */
 

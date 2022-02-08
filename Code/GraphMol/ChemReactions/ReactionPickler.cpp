@@ -220,7 +220,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
         "Bad pickle format: BEGINREACTANTS tag not found.");
   }
   for (unsigned int i = 0; i < numReactants; ++i) {
-    auto *mol = new ROMol();
+    auto *mol = new RWMol();
     MolPickler::molFromPickle(ss, mol);
     rxn->addReactantTemplate(ROMOL_SPTR(mol));
   }
@@ -235,7 +235,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
         "Bad pickle format: BEGINPRODUCTS tag not found.");
   }
   for (unsigned int i = 0; i < numProducts; ++i) {
-    auto *mol = new ROMol();
+    auto *mol = new RWMol();
     MolPickler::molFromPickle(ss, mol);
     rxn->addProductTemplate(ROMOL_SPTR(mol));
   }
@@ -251,7 +251,7 @@ void ReactionPickler::_depickle(std::istream &ss, ChemicalReaction *rxn,
           "Bad pickle format: BEGINAGENTS tag not found.");
     }
     for (unsigned int i = 0; i < numAgents; ++i) {
-      auto *mol = new ROMol();
+      auto *mol = new RWMol();
       MolPickler::molFromPickle(ss, mol);
       rxn->addAgentTemplate(ROMOL_SPTR(mol));
     }

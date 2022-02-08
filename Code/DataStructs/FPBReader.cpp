@@ -72,7 +72,7 @@ void extractPopCounts(FPBReader_impl *dp_impl, boost::uint64_t sz,
   PRECONDITION(dp_impl, "bad pointer");
   /* this section of the FPB format is under-documented in Andrew's code,
    * fortunately it looks pretty simple
-  */
+   */
   if (sz % 4) {
     throw ValueErrorException("POPC chunk size must be a multiple of 4 bytes");
   }
@@ -202,8 +202,8 @@ boost::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
 };
 
 // caller is responsible for delete'ing the result
-RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(const boost::uint8_t *fpData,
-                                       boost::uint32_t nBits) {
+RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(
+    const boost::uint8_t *fpData, boost::uint32_t nBits) {
   unsigned int nBytes = nBits / 8;
   if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
     // I believe this could be faster (needs to be verified of course)
@@ -218,7 +218,8 @@ RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(const boost::uin
 }
 
 // caller is responsible for delete []'ing the result
-RDKIT_DATASTRUCTS_EXPORT boost::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset) {
+RDKIT_DATASTRUCTS_EXPORT boost::uint8_t *bitsetToBytes(
+    const boost::dynamic_bitset<> &bitset) {
   unsigned int nBits = bitset.size();
   unsigned int nBytes = nBits / 8;
 
@@ -425,7 +426,7 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
 
 void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
                        double threshold,
-                       std::vector<std::pair<double, unsigned int> > &res,
+                       std::vector<std::pair<double, unsigned int>> &res,
                        bool usePopcountScreen, unsigned int readCache = 1000) {
   PRECONDITION(dp_impl, "bad reader pointer");
   PRECONDITION(bv, "bad bv");
@@ -481,7 +482,7 @@ void tanimotoNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
 
 void tverskyNeighbors(const FPBReader_impl *dp_impl, const boost::uint8_t *bv,
                       double ca, double cb, double threshold,
-                      std::vector<std::pair<double, unsigned int> > &res,
+                      std::vector<std::pair<double, unsigned int>> &res,
                       bool usePopcountScreen) {
   PRECONDITION(dp_impl, "bad reader pointer");
   PRECONDITION(bv, "bad bv");
@@ -562,7 +563,7 @@ void containingNeighbors(const FPBReader_impl *dp_impl,
   }
 }
 
-}  // end of detail namespace
+}  // namespace detail
 
 void FPBReader::init() {
   PRECONDITION(dp_istrm, "no stream");
@@ -607,8 +608,8 @@ void FPBReader::init() {
       } else if (chunkNm == "HASH") {
         // currently ignored
       } else {
-        BOOST_LOG(rdWarningLog) << "Unknown chunk: " << chunkNm << " ignored."
-                                << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "Unknown chunk: " << chunkNm << " ignored." << std::endl;
       }
       delete[] chunk;
     } else {
@@ -702,21 +703,21 @@ double FPBReader::getTanimoto(unsigned int idx,
   return res;
 }
 
-std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
+std::vector<std::pair<double, unsigned int>> FPBReader::getTanimotoNeighbors(
     const boost::uint8_t *bv, double threshold, bool usePopcountScreen) const {
   PRECONDITION(df_init, "not initialized");
-  std::vector<std::pair<double, unsigned int> > res;
+  std::vector<std::pair<double, unsigned int>> res;
   detail::tanimotoNeighbors(dp_impl, bv, threshold, res, usePopcountScreen);
   std::sort(res.begin(), res.end(),
             Rankers::pairGreater<double, unsigned int>());
   return res;
 }
 
-std::vector<std::pair<double, unsigned int> > FPBReader::getTanimotoNeighbors(
+std::vector<std::pair<double, unsigned int>> FPBReader::getTanimotoNeighbors(
     const ExplicitBitVect &ebv, double threshold,
     bool usePopcountScreen) const {
   const boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
-  std::vector<std::pair<double, unsigned int> > res =
+  std::vector<std::pair<double, unsigned int>> res =
       getTanimotoNeighbors(bv, threshold, usePopcountScreen);
   delete[] bv;
   return res;
@@ -735,11 +736,11 @@ double FPBReader::getTversky(unsigned int idx, const ExplicitBitVect &ebv,
   return res;
 }
 
-std::vector<std::pair<double, unsigned int> > FPBReader::getTverskyNeighbors(
+std::vector<std::pair<double, unsigned int>> FPBReader::getTverskyNeighbors(
     const boost::uint8_t *bv, double ca, double cb, double threshold,
     bool usePopcountScreen) const {
   PRECONDITION(df_init, "not initialized");
-  std::vector<std::pair<double, unsigned int> > res;
+  std::vector<std::pair<double, unsigned int>> res;
   detail::tverskyNeighbors(dp_impl, bv, ca, cb, threshold, res,
                            usePopcountScreen);
   std::sort(res.begin(), res.end(),
@@ -747,11 +748,11 @@ std::vector<std::pair<double, unsigned int> > FPBReader::getTverskyNeighbors(
   return res;
 }
 
-std::vector<std::pair<double, unsigned int> > FPBReader::getTverskyNeighbors(
+std::vector<std::pair<double, unsigned int>> FPBReader::getTverskyNeighbors(
     const ExplicitBitVect &ebv, double ca, double cb, double threshold,
     bool usePopcountScreen) const {
   const boost::uint8_t *bv = detail::bitsetToBytes(*(ebv.dp_bits));
-  std::vector<std::pair<double, unsigned int> > res =
+  std::vector<std::pair<double, unsigned int>> res =
       getTverskyNeighbors(bv, ca, cb, threshold, usePopcountScreen);
   delete[] bv;
   return res;
@@ -775,4 +776,4 @@ std::vector<unsigned int> FPBReader::getContainingNeighbors(
   return res;
 }
 
-}  // end of RDKit namespace
+}  // namespace RDKit

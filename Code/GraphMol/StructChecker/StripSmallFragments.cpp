@@ -70,9 +70,9 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
     mol.getPropIfPresent(common_properties::_Name, name);
     for (size_t i = 0; i < frags.size(); ++i) {
       if (i != maxFragIdx) {
-        BOOST_LOG(rdWarningLog) << name << " removed fragment i=" << i
-                                << " with " << frags[i].get()->getNumAtoms()
-                                << " atoms" << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << name << " removed fragment i=" << i << " with "
+            << frags[i].get()->getNumAtoms() << " atoms" << std::endl;
       }
     }
   }

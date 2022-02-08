@@ -54,14 +54,17 @@ public class SubstructLibraryTests extends GraphMolTest {
             assertEquals(0, csmh.size());
             CachedTrustedSmilesMolHolder ctsmh = new CachedTrustedSmilesMolHolder();
             assertEquals(0, ctsmh.size());
-
+	    KeyFromPropHolder keys = new KeyFromPropHolder();
+	    
             // fpholder - can we create it...
             PatternHolder ph = new PatternHolder();
+	    TautomerPatternHolder tph = new TautomerPatternHolder();
 
             // Now lets make some molecules
             mol = RWMol.MolFromSmiles("c1ccccc1");
             String smiles = mol.MolToSmiles();
-            
+            mol.setProp("_Name", "foo");
+	    
             mh.addMol(mol);
             assertEquals(1, mh.size());
             cmh.addMol(mol);
@@ -70,7 +73,9 @@ public class SubstructLibraryTests extends GraphMolTest {
             assertEquals(1, csmh.size());
             ctsmh.addMol(mol);
             assertEquals(1, ctsmh.size());
-            
+            keys.addMol(mol);
+	    assertEquals(1, keys.size());
+	    
             m = mh.getMol(0);
             assertEquals(smiles, m.MolToSmiles());
             m = cmh.getMol(0);
@@ -79,15 +84,19 @@ public class SubstructLibraryTests extends GraphMolTest {
             assertEquals(smiles, m.MolToSmiles());
             m = ctsmh.getMol(0);
             assertEquals(smiles, m.MolToSmiles());
-
+	    assertEquals("foo", keys.getKey(0));
+	    
             mol = RWMol.MolFromSmiles("CCN");
+	    mol.setProp("_Name", "bar");
             smiles = mol.MolToSmiles();
 
             mh.addMol(mol);
             assertEquals(2, mh.size());
             cmh.addMol(mol);
             assertEquals(2, mh.size());
-            
+	    keys.addMol(mol);
+	    assertEquals(2, keys.size());
+	    
             csmh.addSmiles("CCN");
             assertEquals(2, csmh.size());
             ctsmh.addSmiles("CCN");
@@ -101,6 +110,7 @@ public class SubstructLibraryTests extends GraphMolTest {
             assertEquals(smiles, m.MolToSmiles());
             m = ctsmh.getMol(1);
             assertEquals(smiles, m.MolToSmiles());
+	    assertEquals("bar", keys.getKey(1));
 	}
 
 
@@ -139,7 +149,10 @@ public class SubstructLibraryTests extends GraphMolTest {
 
             matches = lib.getMatches(mol);
             assertEquals(1, matches.size());
+	    assertEquals(1, lib.countMatches(mol));
+	    assertTrue(lib.hasMatch(mol));
 
+	    
             if(lib.canSerialize()) {
                 byte pickle[] = lib.Serialize();
                 assertTrue(pickle != null);
@@ -148,6 +161,8 @@ public class SubstructLibraryTests extends GraphMolTest {
                 assertEquals(lib.size(), 1);
                 matches = lib.getMatches(mol);
                 assertEquals(1, matches.size());
+		assertEquals(1, lib.countMatches(mol));
+		assertTrue(lib.hasMatch(mol));
             }
 
             // cached smiles mol holder
@@ -237,10 +252,111 @@ public class SubstructLibraryTests extends GraphMolTest {
             assertEquals(1, matches.size());
         }
 
+  	@Test 
+	public void test4Basics() {
+            MolHolder mh = new MolHolder();
+            TautomerPatternHolder pat = new TautomerPatternHolder();
+            assertEquals(0, mh.size());
+            CachedMolHolder cmh = new CachedMolHolder();
+            assertEquals(0, cmh.size());
+            CachedSmilesMolHolder csmh = new CachedSmilesMolHolder();
+            assertEquals(0, csmh.size());
+            CachedTrustedSmilesMolHolder ctsmh = new CachedTrustedSmilesMolHolder();
+            assertEquals(0, ctsmh.size());
+            mol = RWMol.MolFromSmiles("c1ccccc1");
+	    TautomerQuery tautomerQuery = TautomerQuery.fromMol(mol);
+	    
+            // mol holder
+            SubstructLibrary lib = new SubstructLibrary(mh, pat);
+            lib.addMol(mol);
+            
+            UInt_Vect matches = lib.getMatches(mol);
+            assertEquals(1, matches.size());
+
+	    matches = lib.getMatches(tautomerQuery);
+            assertEquals(1, matches.size());
+	    assertEquals(1, lib.countMatches(mol));
+	    assertEquals(1, lib.countMatches(tautomerQuery));
+	    
+            // cached mol holder
+            try {
+              lib = new SubstructLibrary(cmh, pat);
+              lib.addMol(mol);
+              assertTrue(false); // shouldn't get here can't share patternholder and addmol
+            } catch(Exception e) {
+              // ok to get here
+            }
+            cmh = new CachedMolHolder();
+            pat = new TautomerPatternHolder();
+            lib = new SubstructLibrary(cmh, pat);
+            lib.addMol(mol);
+            matches = lib.getMatches(mol);
+            assertEquals(1, matches.size());
+	    matches = lib.getMatches(tautomerQuery);
+            assertEquals(1, matches.size());
+	    assertEquals(1, lib.countMatches(mol));
+	    assertEquals(1, lib.countMatches(tautomerQuery));
+	    
+            // cached smiles mol holder
+            pat = new TautomerPatternHolder();
+            lib = new SubstructLibrary(csmh, pat);
+            lib.addMol(mol);
+
+            matches = lib.getMatches(mol);
+            assertEquals(1, matches.size());
+	    matches = lib.getMatches(tautomerQuery);
+            assertEquals(1, matches.size());
+	    assertEquals(1, lib.countMatches(mol));
+	    assertEquals(1, lib.countMatches(tautomerQuery));
+	    
+            // cached trusted smiles mol holder
+            pat = new TautomerPatternHolder();
+            lib = new SubstructLibrary(ctsmh, pat);
+            lib.addMol(mol);
+
+            matches = lib.getMatches(mol);
+            assertEquals(1, matches.size());
+	    matches = lib.getMatches(tautomerQuery);
+            assertEquals(1, matches.size());
+	    assertEquals(1, lib.countMatches(mol));
+	    assertEquals(1, lib.countMatches(tautomerQuery));
+        }
     
+
+  	@Test 
+	public void test5Basics() {
+            MolHolder mh = new MolHolder();
+            MolHolder mh2 = new MolHolder();
+            PatternHolder pat = new PatternHolder();
+            assertEquals(0, mh.size());
+            CachedMolHolder cmh = new CachedMolHolder();
+            assertEquals(0, cmh.size());
+            mol = RWMol.MolFromSmiles("c1ccccc1");
+	    mol.setProp("_Name", "foo");
+	    KeyFromPropHolder keys = new KeyFromPropHolder();
+	    KeyFromPropHolder keys2 = new KeyFromPropHolder();
+
+            // mol holder
+            SubstructLibrary lib = new SubstructLibrary(mh, pat, keys);
+            lib.addMol(mol);
+            
+            SubstructLibrary lib2 = new SubstructLibrary(mh2, keys2);
+	    lib2.addMol(mol);
+
+            UInt_Vect matches = lib.getMatches(mol);
+            UInt_Vect matches2 = lib2.getMatches(mol);
+            assertEquals(1, matches.size());
+	    assertEquals(matches.get(0), matches.get(0));
+
+	    Str_Vect ids = lib.getKeys().getKeys(matches);
+	    Str_Vect ids2 = lib2.getKeys().getKeys(matches2);
+	    assertEquals(ids.get(0), "foo");
+	    assertEquals(ids2.get(0), "foo");
+        }
   
 	public static void main(String args[]) {
 		org.junit.runner.JUnitCore.main("org.RDKit.SubstructLibraryTests");
 	}
 
 }
+

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2001-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright 2001-2021 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -64,6 +64,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string extraRings;  // vec<vec<int> >
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _smilesAtomOutputOrder;  // vec<int> computed
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _smilesBondOutputOrder;  // vec<int> computed
 RDKIT_RDGENERAL_EXPORT extern const std::string _StereochemDone;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string _NeedsQueryScan;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string _fragSMARTS;      // std::string
@@ -187,6 +189,9 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string
+
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _QueryAtomGenericLabel;  // string
 
 // Reaction Information (Reactions.cpp)
 RDKIT_RDGENERAL_EXPORT extern const std::string _QueryFormalCharge;  //  int
@@ -325,7 +330,7 @@ typedef INT_SET::const_iterator INT_SET_CI;
 //! functor to compare two doubles with a tolerance
 struct RDKIT_RDGENERAL_EXPORT ltDouble {
  public:
-  ltDouble(){};
+  ltDouble() {}
   bool operator()(double d1, double d2) const {
     if (fabs(d1 - d2) < _tol) {
       return false;
@@ -344,7 +349,7 @@ typedef std::map<double, int, ltDouble> DOUBLE_INT_MAP;
 //! functor for returning the larger of two values
 template <typename T>
 struct RDKIT_RDGENERAL_EXPORT larger_of {
-  T operator()(T arg1, T arg2) { return arg1 > arg2 ? arg1 : arg2; };
+  T operator()(T arg1, T arg2) { return arg1 > arg2 ? arg1 : arg2; }
 };
 
 //! functor for comparing two strings
@@ -353,7 +358,7 @@ struct RDKIT_RDGENERAL_EXPORT charptr_functor {
     // std::cout << s1 << " " << s2 << " " << strcmp(s1, s2) << "\n";
 
     return strcmp(s1, s2) < 0;
-  };
+  }
 };
 
 //! \brief calculate the union of two INT_VECTs and put the results in a

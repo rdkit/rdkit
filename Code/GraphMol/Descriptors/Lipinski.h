@@ -29,7 +29,7 @@ RDKIT_DESCRIPTORS_EXPORT unsigned int calcLipinskiHBA(const ROMol &mol);
 
 const std::string lipinskiHBDVersion = "2.0.0";
 //! calculates the standard Lipinski HBA definition (number of N-H and O-H
-// bonds)
+/// bonds)
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcLipinskiHBD(const ROMol &mol);
 
 enum NumRotatableBondsOptions {
@@ -91,7 +91,7 @@ RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumAromaticRings(const ROMol &mol);
 
 RDKIT_DESCRIPTORS_EXPORT extern const std::string NumAliphaticRingsVersion;
 //! calculates the number of aliphatic (at least one non-aromatic bond) SSSR
-// rings
+/// rings
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumAliphaticRings(const ROMol &mol);
 
 RDKIT_DESCRIPTORS_EXPORT extern const std::string NumSaturatedRingsVersion;
@@ -128,26 +128,26 @@ RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumSaturatedCarbocycles(
 RDKIT_DESCRIPTORS_EXPORT extern const std::string
     NumAliphaticHeterocyclesVersion;
 //! calculates the number of aliphatic (at least one non-aromatic bond) SSSR
-// heterocycles
+/// heterocycles
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumAliphaticHeterocycles(
     const ROMol &mol);
 
 RDKIT_DESCRIPTORS_EXPORT extern const std::string
     NumAliphaticCarbocyclesVersion;
 //! calculates the number of aliphatic (at least one non-aromatic bond) SSSR
-// carbocycles
+/// carbocycles
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumAliphaticCarbocycles(
     const ROMol &mol);
 
 RDKIT_DESCRIPTORS_EXPORT extern const std::string NumSpiroAtomsVersion;
 //! calculates the number of spiro atoms (atoms shared between rings that share
-// exactly one atom)
+/// exactly one atom)
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumSpiroAtoms(
     const ROMol &mol, std::vector<unsigned int> *atoms = nullptr);
 
 RDKIT_DESCRIPTORS_EXPORT extern const std::string NumBridgeheadAtomsVersion;
 //! calculates the number of bridgehead atoms (atoms shared between rings that
-// share at least two bonds)
+/// share at least two bonds)
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumBridgeheadAtoms(
     const ROMol &mol, std::vector<unsigned int> *atoms = nullptr);
 

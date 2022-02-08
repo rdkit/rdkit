@@ -10,12 +10,12 @@
 
 #define NO_IMPORT_ARRAY
 #include <boost/python.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 
 // ours
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <RDBoost/Wrap.h>
 #include "props.hpp"
 
 namespace python = boost::python;
@@ -23,6 +23,7 @@ namespace python = boost::python;
 namespace RDKit {
 
 namespace {
+
 SubstanceGroup *getMolSubstanceGroupWithIdx(ROMol &mol, unsigned int idx) {
   auto &sgs = getSubstanceGroups(mol);
   if (idx >= sgs.size()) {
@@ -88,6 +89,26 @@ python::tuple getAttachPointsHelper(const SubstanceGroup &self) {
   }
   return python::tuple(res);
 }
+
+void SetAtomsHelper(SubstanceGroup &self, const python::object &iterable) {
+  std::vector<unsigned int> atoms;
+  pythonObjectToVect(iterable, atoms);
+  self.setAtoms(atoms);
+}
+
+void SetParentAtomsHelper(SubstanceGroup &self,
+                          const python::object &iterable) {
+  std::vector<unsigned int> patoms;
+  pythonObjectToVect(iterable, patoms);
+  self.setParentAtoms(patoms);
+}
+
+void SetBondsHelper(SubstanceGroup &self, const python::object &iterable) {
+  std::vector<unsigned int> bonds;
+  pythonObjectToVect(iterable, bonds);
+  self.setBonds(bonds);
+}
+
 }  // namespace
 
 std::string sGroupClassDoc =
@@ -133,6 +154,18 @@ struct sgroup_wrap {
              "returns a list of the indices of the bonds in this "
              "SubstanceGroup",
              python::return_value_policy<python::copy_const_reference>())
+        .def("SetAtoms", SetAtomsHelper,
+             "Set the list of the indices of the atoms in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
+        .def("SetParentAtoms", SetParentAtomsHelper,
+             "Set the list of the indices of the parent atoms in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
+        .def("SetBonds", SetBondsHelper,
+             "Set the list of the indices of the bonds in this "
+             "SubstanceGroup.\nNote that this does not update "
+             "properties, CStates or Attachment Points.")
         .def("AddAtomWithIdx", &SubstanceGroup::addAtomWithIdx)
         .def("AddBondWithIdx", &SubstanceGroup::addBondWithIdx)
         .def("AddParentAtomWithIdx", &SubstanceGroup::addParentAtomWithIdx)
@@ -224,7 +257,11 @@ struct sgroup_wrap {
               python::arg("includeComputed") = true),
              "Returns a dictionary of the properties set on the "
              "SubstanceGroup.\n"
-             " n.b. some properties cannot be converted to python types.\n");
+             " n.b. some properties cannot be converted to python types.\n")
+        .def("ClearProp",
+             (void (RDProps::*)(const std::string &) const) &
+                 SubstanceGroup::clearProp,
+             "Removes a particular property (does nothing if not set).\n\n");
 
     python::def("GetMolSubstanceGroups", &getMolSubstanceGroups,
                 "returns a copy of the molecule's SubstanceGroups (if any)",

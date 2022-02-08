@@ -94,11 +94,11 @@ def ExplainAtomCode(code, branchSubtract=0, includeChirality=False):
 
     if not includeChirality:
         return (atomSymbol, nBranch, nPi)
-    else:
-        code = code >> rdMolDescriptors.AtomPairsParameters.numTypeBits
-        chiDict = {0: '', 1: 'R', 2: 'S'}
-        chiCode = int(code & chiMask)
-        return (atomSymbol, nBranch, nPi, chiDict[chiCode])
+    
+    code = code >> rdMolDescriptors.AtomPairsParameters.numTypeBits
+    chiDict = {0: '', 1: 'R', 2: 'S'}
+    chiCode = int(code & chiMask)
+    return (atomSymbol, nBranch, nPi, chiDict[chiCode])
 
 
 GetAtomCode = rdMolDescriptors.GetAtomPairAtomCode

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015 Greg Landrum
+//  Copyright (C) 2015-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -31,17 +31,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   MolDraw2DSVG(int width, int height, std::ostream &os, int panelWidth = -1,
                int panelHeight = -1, bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
-    initDrawing();
     initTextDrawer(noFreetype);
-  };
+  }
 
   // initialize to use the internal stringstream
   MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1,
                bool noFreetype = false)
       : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
-    initDrawing();
     initTextDrawer(noFreetype);
-  };
+  }
 
   void setColour(const DrawColour &col) override;
 
@@ -61,7 +59,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
                     double vertOffset = 0.05) override;
 
   // this only makes sense if the object was initialized without a stream
-  std::string getDrawingText() const { return d_ss.str(); };
+  std::string getDrawingText() const { return d_ss.str(); }
 
   // adds additional tags to the atoms and bonds in the SVG. This should be
   // invoked *after* the molecule has been drawn
@@ -96,13 +94,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
                     *bond_colours = nullptr) override;
   void drawAtomLabel(int atom_num, const DrawColour &draw_colour) override;
   //! DEPRECATED
-  virtual void drawAnnotation(const std::string &note,
-                              const StringRect &note_rect) override {
+  void drawAnnotation(const std::string &note,
+                      const StringRect &note_rect) override {
     AnnotationType annot;
     annot.text_ = note;
     annot.rect_ = note_rect;
     drawAnnotation(annot);
   }
+
+  virtual void outputClasses();
 };
 
 }  // namespace RDKit

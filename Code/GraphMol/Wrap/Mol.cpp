@@ -9,7 +9,6 @@
 //
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 
 #include "rdchem.h"
@@ -32,6 +31,10 @@
 namespace python = boost::python;
 
 namespace RDKit {
+
+void MolClearComputedPropsHelper(const ROMol &mol, bool includeRings) {
+  mol.clearComputedProps(includeRings);
+}
 
 python::object MolToBinary(const ROMol &self) {
   std::string res;
@@ -167,7 +170,7 @@ namespace {
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
+  ~pyobjFunctor() = default;
   bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
     return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
   }
@@ -204,9 +207,10 @@ class ReadWriteMol : public RWMol {
     PRECONDITION(atom, "bad atom");
     replaceAtom(idx, atom, updateLabel, preserveProps);
   };
-  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps) {
+  void ReplaceBond(unsigned int idx, Bond *bond, bool preserveProps,
+                   bool keepSGroups) {
     PRECONDITION(bond, "bad bond");
-    replaceBond(idx, bond, preserveProps);
+    replaceBond(idx, bond, preserveProps, keepSGroups);
   };
   void SetStereoGroups(python::list &stereo_groups) {
     std::vector<StereoGroup> groups;
@@ -228,6 +232,28 @@ class ReadWriteMol : public RWMol {
     auto *res = new ROMol(*this);
     return res;
   }
+
+  ReadWriteMol *enter() {
+    beginBatchEdit();
+    return this;
+  }
+  bool exit(python::object exc_type, python::object exc_val,
+            python::object traceback) {
+    RDUNUSED_PARAM(exc_val);
+    RDUNUSED_PARAM(traceback);
+    if (exc_type != python::object()) {
+      // exception thrown, abort the edits
+      rollbackBatchEdit();
+    } else {
+      commitBatchEdit();
+    }
+    // we haven't handled any possible exceptions (and shouldn't do so),
+    // so just return false;
+    return false;
+  }
+
+ private:
+  boost::shared_ptr<RWMol> dp_mol;
 };
 
 std::string molClassDoc =
@@ -268,6 +294,7 @@ struct mol_wrapper {
         .value("ComputedProps", RDKit::PicklerOps::ComputedProps)
         .value("AllProps", RDKit::PicklerOps::AllProps)
         .value("CoordsAsDouble", RDKit::PicklerOps::CoordsAsDouble)
+        .value("NoConformers", RDKit::PicklerOps::NoConformers)
         .export_values();
     ;
 
@@ -296,6 +323,11 @@ struct mol_wrapper {
             "aromaticMatchesConjugated",
             &RDKit::SubstructMatchParameters::aromaticMatchesConjugated,
             "aromatic and conjugated bonds match each other")
+        .def_readwrite(
+            "useGenericMatchers",
+            &RDKit::SubstructMatchParameters::useGenericMatchers,
+            "use generic groups (=homology groups) as a post-filtering step "
+            "(if any are present in the molecule)")
         .def_readwrite("useQueryQueryMatches",
                        &RDKit::SubstructMatchParameters::useQueryQueryMatches,
                        "Consider query-query matches, not just simple matches")
@@ -324,10 +356,12 @@ struct mol_wrapper {
     python::class_<ROMol, ROMOL_SPTR, boost::noncopyable>(
         "Mol", molClassDoc.c_str(),
         python::init<>("Constructor, takes no arguments"))
-        .def(python::init<const std::string &>())
-        .def(python::init<const ROMol &>())
-        .def(python::init<const ROMol &, bool>())
-        .def(python::init<const ROMol &, bool, int>())
+        .def(python::init<const std::string &>(python::args("pklString")))
+        .def(python::init<const std::string &, unsigned int>(
+            (python::args("pklString", "propertyFlags"))))
+        .def(python::init<const ROMol &, bool, int>(
+            (python::arg("mol"), python::arg("quickCopy") = false,
+             python::arg("confId") = -1)))
         .def("__copy__", &generic__copy__<ROMol>)
         .def("__deepcopy__", &generic__deepcopy__<ROMol>)
         .def(
@@ -688,7 +722,8 @@ struct mol_wrapper {
              "  ARGUMENTS:\n"
              "    - key: the name of the property to clear (a string).\n")
 
-        .def("ClearComputedProps", MolClearComputedProps<ROMol>,
+        .def("ClearComputedProps", MolClearComputedPropsHelper,
+             (python::arg("self"), python::arg("includeRings") = true),
              "Removes all computed properties from the molecule.\n\n")
 
         .def("UpdatePropertyCache", &ROMol::updatePropertyCache,
@@ -781,6 +816,7 @@ struct mol_wrapper {
         .def("GetRingInfo", &ROMol::getRingInfo,
              python::return_value_policy<python::reference_existing_object>(),
              "Returns the number of molecule's RingInfo object.\n\n");
+    python::register_ptr_to_python<std::shared_ptr<ROMol>>();
 
     // ---------------------------------------------------------------------------------------------
     python::def("_HasSubstructMatchStr", HasSubstructMatchStr,
@@ -804,11 +840,18 @@ struct mol_wrapper {
         "RWMol", rwmolClassDoc.c_str(),
         python::init<const ROMol &>("Construct from a Mol"))
         .def(python::init<>())
-        .def(python::init<const std::string &>())
-        .def(python::init<const ROMol &, bool>())
-        .def(python::init<const ROMol &, bool, int>())
+        .def(python::init<const std::string &>(python::args("pklString")))
+        .def(python::init<const std::string &, unsigned int>(
+            (python::args("pklString", "propertyFlags"))))
+        .def(python::init<const ROMol &, bool, int>(
+            (python::arg("mol"), python::arg("quickCopy") = false,
+             python::arg("confId") = -1)))
         .def("__copy__", &generic__copy__<ReadWriteMol>)
         .def("__deepcopy__", &generic__deepcopy__<ReadWriteMol>)
+        .def("__enter__", &ReadWriteMol::enter,
+             python::return_internal_reference<>())
+        .def("__exit__", &ReadWriteMol::exit)
+
         .def("RemoveAtom", &ReadWriteMol::RemoveAtom,
              "Remove the specified atom from the molecule")
         .def("RemoveBond", &ReadWriteMol::RemoveBond,
@@ -831,16 +874,27 @@ struct mol_wrapper {
              "explicit set on the new atom")
         .def("ReplaceBond", &ReadWriteMol::ReplaceBond,
              (python::arg("index"), python::arg("newBond"),
-              python::arg("preserveProps") = false),
+              python::arg("preserveProps") = false,
+              python::arg("keepSGroups") = true),
              "replaces the specified bond with the provided one.\n"
              "If preserveProps is True preserve keep the existing props unless "
-             "explicit set on the new bond")
+             "explicit set on the new bond. If keepSGroups is False, all"
+             "Substance Groups referencing the bond will be dropped.")
         .def("GetMol", &ReadWriteMol::GetMol,
              "Returns a Mol (a normal molecule)",
              python::return_value_policy<python::manage_new_object>())
 
         .def("SetStereoGroups", &ReadWriteMol::SetStereoGroups,
              (python::arg("stereo_groups")), "Set the stereo groups")
+
+        .def("InsertMol", &ReadWriteMol::insertMol, (python::arg("mol")),
+             "Insert (add) the given molecule into this one")
+
+        .def("BeginBatchEdit", &RWMol::beginBatchEdit, "starts batch editing")
+        .def("RollbackBatchEdit", &RWMol::rollbackBatchEdit,
+             "cancels batch editing")
+        .def("CommitBatchEdit", &RWMol::commitBatchEdit,
+             "finishes batch editing and makes the actual changes")
 
         // enable pickle support
         .def_pickle(mol_pickle_suite());

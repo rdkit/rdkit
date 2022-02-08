@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,9 +15,21 @@
 namespace RDKit {
 namespace MolStandardize {
 
+#include "tautomerTransforms.in"
+#include "tautomerTransforms.v1.in"
+
 TautomerCatalogParams::TautomerCatalogParams(const std::string &tautomerFile) {
   d_transforms.clear();
-  d_transforms = readTautomers(tautomerFile);
+  if (tautomerFile.empty()) {
+    d_transforms = readTautomers(defaults::defaultTautomerTransforms);
+  } else {
+    d_transforms = readTautomers(tautomerFile);
+  }
+}
+TautomerCatalogParams::TautomerCatalogParams(
+    const TautomerTransformDefs &data) {
+  d_transforms.clear();
+  d_transforms = readTautomers(data);
 }
 
 TautomerCatalogParams::TautomerCatalogParams(
@@ -54,13 +66,11 @@ std::string TautomerCatalogParams::Serialize() const {
   return ss.str();
 }
 
-void TautomerCatalogParams::initFromStream(std::istream &ss) {
-  RDUNUSED_PARAM(ss);
+void TautomerCatalogParams::initFromStream(std::istream &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 
-void TautomerCatalogParams::initFromString(const std::string &text) {
-  RDUNUSED_PARAM(text);
+void TautomerCatalogParams::initFromString(const std::string &) {
   UNDER_CONSTRUCTION("not implemented");
 }
 

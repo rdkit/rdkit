@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2005-2019 Rational Discovery LLC
+//   Copyright (C) 2005-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -83,6 +83,26 @@ void test2Compare() {
   delete m2;
 }
 
+void testGithub4364() {
+  RDGeom::UniformGrid3D grd(30.0, 16.0, 10.0);
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/ShapeHelpers/test_data/1oir.mol";
+  std::unique_ptr<RWMol> m(MolFileToMol(fname1));
+  MolTransforms::canonicalizeMol(*m);
+
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/ShapeHelpers/test_data/1oir_conf.mol";
+  std::unique_ptr<RWMol> m2(MolFileToMol(fname2));
+  MolTransforms::canonicalizeMol(*m2);
+  int cid1 = -1, cid2 = -1;
+  auto dist = MolShapes::tanimotoDistance(*m, *m2, cid1, cid2);
+  TEST_ASSERT(RDKit::feq(dist, 0.31, 0.01));
+  double gridSpacing = 1.0;
+  auto dist2 = MolShapes::tanimotoDistance(*m, *m2, cid1, cid2, gridSpacing);
+  TEST_ASSERT(fabs(dist - dist2) > 0.001);
+}
+
 int main() {
 #if 1
   std::cout << "***********************************************************\n";
@@ -95,7 +115,10 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test2Compare \n\n";
   test2Compare();
-  std::cout << "***********************************************************\n";
 #endif
+  std::cout << "\t---------------------------------\n";
+  std::cout << "\t testGithub4364 \n\n";
+  testGithub4364();
+  std::cout << "***********************************************************\n";
   return 0;
 }

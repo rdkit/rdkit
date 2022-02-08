@@ -1,4 +1,8 @@
-
+# This is a reference implementation of the Atom-Atom-Path (AAP) similarity metric 
+#  from Gobbi et al, J. Cheminf. (2015) 7:11. https://doi.org/10.1186/s13321-015-0056-8
+#
+# Original author: Richard Hall
+#
 import numpy
 import time
 import unittest

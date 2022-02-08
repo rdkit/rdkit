@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_34**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_38**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -48,7 +48,7 @@ Include an Atom Index
 ======================
 
 | **Author:** Takayuki Serizawa
-| **Source:** `<https://iwatobipen.wordpress.com/2017/02/25/draw-molecule-with-atom-index-in-rdkit/>`_
+| **Original Source:** `<https://iwatobipen.wordpress.com/2017/02/25/draw-molecule-with-atom-index-in-rdkit/>`_
 | **Index ID#:** RDKitCB_0
 | **Summary:** Draw a molecule with atom index numbers.
 
@@ -82,11 +82,31 @@ Include an Atom Index
    
 .. image:: images/RDKitCB_0_im1.png
 
+A simpler way to add atom indices is to adjust the IPythonConsole properties.
+This produces a similar image to the example above, the difference being that the atom 
+indices are now near the atom, rather than at the atom position.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+   from rdkit.Chem import Draw
+   IPythonConsole.drawOptions.addAtomIndices = True
+   IPythonConsole.molSize = 300,300
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles("C1CC2=C3C(=CC=C2)C(=CN3C1)[C@H]4[C@@H](C(=O)NC4=O)C5=CNC6=CC=CC=C65")
+   mol
+
+.. image:: images/RDKitCB_0_im2.png
+
+
 Include a Calculation
 ======================
 
 | **Author:** Greg Landrum
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36457619/>`_
+| **Original Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36457619/>`_
 | **Index ID#:** RDKitCB_23
 | **Summary:** Draw a molecule with a calculation value displayed (e.g., Gasteiger Charge)
 
@@ -94,6 +114,8 @@ Include a Calculation
 
    from rdkit import Chem
    from rdkit.Chem import AllChem
+   from rdkit.Chem.Draw import IPythonConsole
+   IPythonConsole.molSize = 250,250 
 
 .. testcode::
 
@@ -108,8 +130,8 @@ Include a Calculation
 
    m2 = Chem.Mol(m)
    for at in m2.GetAtoms():
-       lbl = '%s:%.2f'%(at.GetSymbol(),at.GetDoubleProp("_GasteigerCharge"))
-       at.SetProp('atomLabel',lbl)
+       lbl = '%.2f'%(at.GetDoubleProp("_GasteigerCharge"))
+       at.SetProp('atomNote',lbl)
    m2
 
 .. image:: images/RDKitCB_23_im1.png
@@ -216,6 +238,59 @@ Highlight a Substructure in a Molecule
 .. image:: images/RDKitCB_2_im1.png
 
 
+Highlight Molecule Differences
+==================================
+
+| **Author:** Takayuki Serizawa
+| **Original Source:** `<https://gist.github.com/iwatobipen/6d8708d8c77c615cfffbb89409be730d>`_
+| **Index ID#:** RDKitCB_36
+| **Summary:** Highlight molecule differences based on maximum common substructure
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import Draw
+   from rdkit.Chem.Draw import IPythonConsole
+   from rdkit.Chem import rdFMCS
+   from rdkit.Chem.Draw import rdDepictor
+   rdDepictor.SetPreferCoordGen(True)
+   IPythonConsole.drawOptions.minFontSize=20
+
+.. testcode::
+
+   mol1 = Chem.MolFromSmiles('FC1=CC=C2C(=C1)C=NN2')
+   mol2 = Chem.MolFromSmiles('CCC1=C2NN=CC2=CC(Cl)=C1')
+
+
+.. testcode::
+
+   Draw.MolsToGridImage([mol1, mol2])
+
+.. image:: images/RDKitCB_36_im0.png
+
+.. testcode::
+
+   def view_difference(mol1, mol2):
+       mcs = rdFMCS.FindMCS([mol1,mol2])
+       mcs_mol = Chem.MolFromSmarts(mcs.smartsString)
+       match1 = mol1.GetSubstructMatch(mcs_mol)
+       target_atm1 = []
+       for atom in mol1.GetAtoms():
+           if atom.GetIdx() not in match1:
+               target_atm1.append(atom.GetIdx())
+       match2 = mol2.GetSubstructMatch(mcs_mol)
+       target_atm2 = []
+       for atom in mol2.GetAtoms():    
+           if atom.GetIdx() not in match2:
+               target_atm2.append(atom.GetIdx())
+       return Draw.MolsToGridImage([mol1, mol2],highlightAtomLists=[target_atm1, target_atm2])
+
+.. testcode::
+
+   view_difference(mol1,mol2)
+
+.. image:: images/RDKitCB_36_im1.png
+
 Without Implicit Hydrogens
 ===========================
 
@@ -241,6 +316,189 @@ Without Implicit Hydrogens
 
 .. image:: images/RDKitCB_17_im1.png
 
+With Abbreviations
+===========================
+
+| **Author:** Greg Landrum
+| **Source:** `<https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb>`_
+| **Index ID#:** RDKitCB_34
+| **Summary:** Draw a molecule with functional group abbreviations
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+   from rdkit.Chem import Draw
+   from rdkit.Chem import rdAbbreviations
+
+.. testcode::
+
+   m = Chem.MolFromSmiles('COc1ccc(C(=O)[O-])cc1')
+   m
+
+.. image:: images/RDKitCB_34_im0.png
+   :scale: 75%
+
+.. testcode::
+
+   abbrevs = rdAbbreviations.GetDefaultAbbreviations()
+   nm = rdAbbreviations.CondenseMolAbbreviations(m,abbrevs)
+   nm
+
+.. image:: images/RDKitCB_34_im1.png
+   :scale: 75%
+
+.. testcode::
+
+   # abbreviations that cover more than 40% of the molecule won't be applied by default
+   m = Chem.MolFromSmiles('c1c[nH]cc1C(F)(F)F')
+   nm1 = rdAbbreviations.CondenseMolAbbreviations(m,abbrevs)
+   nm2 = rdAbbreviations.CondenseMolAbbreviations(m,abbrevs,maxCoverage=0.8)
+   Draw.MolsToGridImage((m,nm1,nm2),legends=('','default','maxCoverage=0.8'))
+
+.. image:: images/RDKitCB_34_im2.png
+
+.. testcode::
+
+   # See available abbreviations
+   abbrevs = rdAbbreviations.GetDefaultAbbreviations()
+   for a in abbrevs:
+       print(a.label)
+
+.. testoutput::
+
+   CO2Et
+   COOEt
+   OiBu
+   nDec
+   nNon
+   nOct
+   nHept
+   nHex
+   nPent
+   iPent
+   tBu
+   iBu
+   nBu
+   iPr
+   nPr
+   Et
+   NCF3
+   CF3
+   CCl3
+   CN
+   NC
+   N(OH)CH3
+   NO2
+   NO
+   SO3H
+   CO2H
+   COOH
+   OEt
+   OAc
+   NHAc
+   Ac
+   CHO
+   NMe
+   SMe
+   OMe
+   CO2-
+   COO-
+
+Using CoordGen Library
+========================
+
+| **Author:** Greg Landrum
+| **Source:** `<https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb>`_
+| **Index ID#:** RDKitCB_37
+| **Summary:** Draw a molecule using CoordGen Library
+
+Some molecules like macrocycles are not represented well using the default RDKit drawing code. As a result,
+it may be preferable to use the CoordGen integration.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+   IPythonConsole.molSize = 350,300
+   from rdkit.Chem import Draw
+
+.. testcode::
+
+   # default drawing
+   mol = Chem.MolFromSmiles("C/C=C/CC(C)C(O)C1C(=O)NC(CC)C(=O)N(C)CC(=O)N(C)C(CC(C)C)C(=O)NC(C(C)C)C(=O)N(C)C(CC(C)C)C(=O)NC(C)C(=O)NC(C)C(=O)N(C)C(CC(C)C)C(=O)N(C)C(CC(C)C)C(=O)N(C)C(C(C)C)C(=O)N1C")
+   mol
+
+.. image:: images/RDKitCB_37_im0.png
+
+.. testcode::
+
+   # with CoordGen
+   from rdkit.Chem import rdCoordGen
+   rdCoordGen.AddCoords(mol)
+   mol
+
+.. image:: images/RDKitCB_37_im1.png
+
+It is also possible to use CoordGen with the MolDraw2D class. Here is one way to do that:
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import Draw
+   from rdkit.Chem.Draw import rdMolDraw2D
+   from rdkit.Chem import rdDepictor
+   rdDepictor.SetPreferCoordGen(True)
+   from rdkit.Chem.Draw import IPythonConsole
+   from IPython.display import SVG
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles("C/C=C/CC(C)C(O)C1C(=O)NC(CC)C(=O)N(C)CC(=O)N(C)C(CC(C)C)C(=O)NC(C(C)C)C(=O)N(C)C(CC(C)C)C(=O)NC(C)C(=O)NC(C)C(=O)N(C)C(CC(C)C)C(=O)N(C)C(CC(C)C)C(=O)N(C)C(C(C)C)C(=O)N1C")
+   drawer = rdMolDraw2D.MolDraw2DSVG(300,300)
+   drawer.drawOptions().addStereoAnnotation = False
+   drawer.DrawMolecule(mol)
+   drawer.FinishDrawing()
+   SVG(drawer.GetDrawingText())
+
+.. image:: images/RDKitCB_37_im2.svg
+
+On a Plot
+======================
+
+| **Author:** Takayuki Serizawa
+| **Original Source:** `<https://gist.github.com/iwatobipen/1b384d145024663151b3252bf16d2aa8>`_
+| **Index ID#:** RDKitCB_35
+| **Summary:** Draw a molecule on a matplotlib plot.
+
+.. testcode::
+
+   import matplotlib.pyplot as plt
+   import numpy as np
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+
+.. testcode::
+
+   x = np.arange(0, 180, 1)
+   y = np.sin(x)
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles('C1CNCCC1C(=O)C')
+   im = Chem.Draw.MolToImage(mol)
+
+.. testcode::
+
+   fig = plt.figure(figsize=(10,5))
+   plt.plot(x, y)
+   plt.ylim(-1, 5)
+   ax = plt.axes([0.6, 0.47, 0.38, 0.38], frameon=True)
+   ax.imshow(im)
+   ax.axis('off')
+   # plt.show() # commented out to avoid creating plot with doctest
+
+.. image:: images/RDKitCB_35_im0.png
 
 Bonds and Bonding
 *******************
@@ -405,7 +663,7 @@ Identify Aromatic Atoms
 ==========================
 
 | **Author:** Paolo Tosco
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36862879/>`_
+| **Original Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36862879/>`_
 | **Index ID#:** RDKitCB_9
 | **Summary:** Differentiate aromatic carbon from olefinic carbon with SMARTS
 
@@ -430,6 +688,43 @@ Identify Aromatic Atoms
 .. testoutput::
 
    ((6,), (7,))
+
+There is also an alternative, more efficient approach, using the `rdqueries` module:
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import rdqueries
+
+.. testcode::
+
+   mol = Chem.MolFromSmiles("c1ccccc1C=CCC")
+   q = rdqueries.IsAromaticQueryAtom()
+   print([x.GetIdx() for x in mol.GetAtomsMatchingQuery(q)])
+
+.. testoutput::
+
+   [0, 1, 2, 3, 4, 5]
+
+.. testcode::
+
+   q = rdqueries.HybridizationEqualsQueryAtom(Chem.HybridizationType.SP2)
+   print([x.GetIdx() for x in mol.GetAtomsMatchingQuery(q)])
+
+.. testoutput::
+
+   [0, 1, 2, 3, 4, 5, 6, 7]
+
+.. testcode::
+
+   qcombined = rdqueries.IsAliphaticQueryAtom()
+   qcombined.ExpandQuery(q)
+   print([x.GetIdx() for x in mol.GetAtomsMatchingQuery(qcombined)])
+
+.. testoutput::
+
+   [6, 7]
+
 
 Stereochemistry
 ****************
@@ -589,9 +884,8 @@ Create Fragments
 .. testcode::
 
    # Finally, you can manually cut bonds using Chem.RWMol.RemoveBonds:
-   rwmol = Chem.RWMol(mol)
-   for b_idx in sorted([0, 2, 4], reverse=True): # reverse because when a bond or atom is deleted, 
-   # the bond or atom indices are remapped. If you remove bonds with a higher index first, bonds with lower indices will not be remapped.
+   with Chem.RWMol(mol) as rwmol:
+     for b_idx in [0, 2, 4]:
        b = rwmol.GetBondWithIdx(b_idx)
        rwmol.RemoveBond(b.GetBeginAtomIdx(), b.GetEndAtomIdx())
    # And then call Chem.GetMolFrags() to get sanitized fragments where empty valences were filled with implicit hydrogens:
@@ -1809,7 +2103,7 @@ Enumerate SMILES
 ==================
 
 | **Author:** Guillaume Godin and Greg Landrum
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36591616/>`_
+| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36591616/>`_ and `<https://github.com/rdkit/UGM_2020/blob/master/Notebooks/Landrum_WhatsNew.ipynb>`_
 | **Index ID#:** RDKitCB_24
 | **Summary:** Enumerate variations of SMILES strings for the same molecule.
 
@@ -1859,7 +2153,47 @@ Enumerate SMILES
     'CC(N)C1CC1',
     'C(C)(N)C1CC1']
 
+.. testcode::
 
+   # If you need the multiple random SMILES strings to be reproducible, 
+   # the 2020.09 release has an option for this:
+   m = Chem.MolFromSmiles('Oc1ncc(OC(CC)C)cc1')
+   print(Chem.MolToRandomSmilesVect(m,5))  # output order random; doctest skipped
+
+.. testoutput::
+   :options: +SKIP
+
+   ['c1c(cnc(O)c1)OC(CC)C', 'c1c(cnc(c1)O)OC(CC)C', 'c1cc(O)ncc1OC(CC)C', 'O(C(CC)C)c1ccc(nc1)O', 'O(C(C)CC)c1cnc(cc1)O']
+
+.. testcode::
+   
+   # by default the results are not reproducible:
+   print(Chem.MolToRandomSmilesVect(m,5)) # output order random; doctest skipped
+
+.. testoutput::
+   :options: +SKIP
+
+   ['c1nc(O)ccc1OC(CC)C', 'n1cc(OC(CC)C)ccc1O', 'c1c(OC(C)CC)ccc(O)n1', 'CCC(Oc1ccc(nc1)O)C', 'O(c1cnc(cc1)O)C(C)CC']
+
+.. testcode::
+
+   # But we can provide a random number seed:
+   m = Chem.MolFromSmiles('Oc1ncc(OC(CC)C)cc1')
+   s1 = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d)
+   print(s1)
+
+.. testoutput::
+
+   ['Oc1ccc(OC(CC)C)cn1', 'CC(CC)Oc1cnc(O)cc1', 'c1(O)ncc(cc1)OC(C)CC', 'c1cc(cnc1O)OC(CC)C', 'c1c(OC(CC)C)cnc(c1)O']
+
+.. testcode::
+
+   s2 = Chem.MolToRandomSmilesVect(m,5,randomSeed=0xf00d)
+   print(s2 == s1)
+
+.. testoutput::
+
+   True
 
 Reorder Atoms
 ==================================
@@ -1972,6 +2306,7 @@ One additional tool we used in the paper is changing the bounds matrix of a mole
    import rdkit.DistanceGeometry as DG
    
    mol = Chem.MolFromSmiles("C1CCC1C")
+   mol = Chem.AddHs(mol)
    bm = rdDistGeom.GetMoleculeBoundsMatrix(mol)
    bm[0,3] = 1.21
    bm[3,0] = 1.20

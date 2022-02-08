@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2018-2020 Greg Landrum
+//  Copyright (c) 2018-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,8 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 ///
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
@@ -638,4 +636,567 @@ TEST_CASE("Github #2891", "[Reaction][chirality][bug]") {
       CHECK(MolToSmiles(*ps[0][0]) == tsmi);
     }
   }
+}
+
+TEST_CASE("reaction literals") {
+  {
+    auto rxn = "[O:1]>>[N:1]"_rxnsmarts;
+    CHECK(rxn != nullptr);
+  }
+  {
+    auto rxn = "[O:1]>>[N:1]"_rxnsmiles;
+    CHECK(rxn != nullptr);
+  }
+  {
+    auto rxn = "CC1>>CC1"_rxnsmarts;
+    CHECK(rxn == nullptr);
+  }
+  {
+    auto rxn = "CC1>>CC1"_rxnsmiles;
+    CHECK(rxn == nullptr);
+  }
+  {
+    auto rxn = "Cc1cc1>>CCC"_rxnsmarts;
+    CHECK(rxn != nullptr);
+  }
+  {
+    auto rxn = "Cc1cc1>>CCC"_rxnsmiles;
+    CHECK(rxn != nullptr);
+  }
+}
+TEST_CASE("one-component reactions") {
+  SECTION("removing atoms") {
+    auto rxn = "CC[N:1]>>[N:1]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {  // molecule which does not match:
+      auto mol = "CCO"_smiles;
+      REQUIRE(mol);
+      CHECK(!rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CCO");
+    }
+    {
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+    {
+      auto mol = "CCNC"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 2);
+      CHECK(MolToSmiles(*mol) == "CN");
+    }
+    {
+      auto mol = "NCC"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+    {
+      auto mol = "CNCC"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 2);
+      CHECK(MolToSmiles(*mol) == "CN");
+    }
+    {
+      auto mol = "CCCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+    {
+      auto mol = "CCCN(C)CO"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 4);
+      CHECK(MolToSmiles(*mol) == "CNCO");
+    }
+    {  // multiple matches, we only modify one (and it's arbitrary which)
+      auto mol = "CCNCNCC"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 5);
+      CHECK(MolToSmiles(*mol) == "CCNCN");
+    }
+    {  // fragments don't pass through:
+      auto mol = "CCN.Cl"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+  }
+  SECTION("removing atoms 2") {
+    auto rxn = "[C:2][N:1]>>[N:1]"_rxnsmarts;
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    {
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 1);
+      CHECK(MolToSmiles(*mol) == "N");
+    }
+  }
+  SECTION("unmapped atoms in the product is an error") {
+    {
+      auto rxn = "[N:1]>>[N:1]CC"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "N"_smiles;
+      REQUIRE(mol);
+      CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+    {
+      auto rxn = "[N:1]>>[N:1][C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "N"_smiles;
+      REQUIRE(mol);
+      CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+  }
+  SECTION("modifying atoms") {
+    {
+      auto rxn = "[C:2][N:1]>>[C:2][O:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CCO");
+    }
+#if 0
+// does not currently work properly either here or in the main reaction code
+    {
+      auto rxn = "[C:2][N+1:1]>>[C:2][N+0:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[NH3+]"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CCN");
+    }
+#endif
+    {
+      auto rxn = "[C:2][N+0:1]>>[C:2][N+1:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CC[NH3+]");
+    }
+    {
+      auto rxn = "[C:2][N:1]>>[15N:1][C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CC[15NH2]");
+    }
+    {
+      auto rxn = "[C:2][15N:1]>>[0N:1][C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[15NH2]"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      MolOps::sanitizeMol(*mol);
+      CHECK(MolToSmiles(*mol) == "CCN");
+    }
+  }
+  SECTION("modifying bonds") {
+    {
+      auto rxn = "[C:2]-[N:1]>>([N:1].[C:2])"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CC.N");
+    }
+    {
+      auto rxn = "([C:2].[N:1])>>[N:1]-[C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC.N"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CCN");
+    }
+    {
+      auto rxn = "([CH3:2].[N:1])>>[N:1]-[C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "C1CN1");
+    }
+    {
+      auto rxn = "([CH2:2].[N:1])>>[N:1]-[C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(!rxn->runReactant(*mol));
+    }
+    {
+      auto rxn = "([CH2:2].[N:1])>>[N:1]=[C:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CC=N");
+    }
+    {
+      auto rxn = "[C:2]-[N:1]>>[C:2]=[O:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CC=O");
+    }
+    {
+      auto rxn = "[C:2]-[N:1]>>[C:2]~[O:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CCO");
+    }
+    {
+      auto rxn = "[C:2]~[N:1]>>[C:2]=[O:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CCN"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(MolToSmiles(*mol) == "CC=O");
+    }
+  }
+  SECTION("atom stereo") {
+    {  // remove
+      auto rxn =
+          "[C:1][C@:2]([F:3])([Cl:4])[I:5]>>[C:1][C:2]([F:3])([Cl:4])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CCC(F)(Cl)I");
+    }
+    {  // create
+      auto rxn =
+          "[C:1][C:2]([F:3])([Cl:4])[I:5]>>[C:1][C@@:2]([F:3])([Cl:4])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CC[C@@](F)(Cl)I");
+    }
+    {  // create, swap order
+      auto rxn =
+          "[C:1][C:2]([F:3])([Cl:4])[I:5]>>[C:1][C@@:2]([Cl:4])([F:3])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CC[C@](F)(Cl)I");
+    }
+
+    {  // invert
+      auto rxn =
+          "[C:1][C@:2]([F:3])([Cl:4])[I:5]>>[C:1][C@@:2]([F:3])([Cl:4])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CC[C@@](F)(Cl)I");
+    }
+    {  // preserve, but order swap
+      auto rxn =
+          "[C:1][C@:2]([F:3])([Cl:4])[I:5]>>[C:1][C@@:2]([Cl:4])([F:3])[I:5]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "CC[C@](F)(Cl)I"_smiles;
+      REQUIRE(mol);
+      CHECK(!rxn->runReactant(*mol));
+      CHECK(MolToSmiles(*mol) == "CC[C@](F)(Cl)I");
+    }
+  }
+  SECTION("check reactant/product count") {
+    {
+      auto rxn = "[N:1].[O:2]>>[N:1]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "N"_smiles;
+      REQUIRE(mol);
+      CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+    {
+      auto rxn = "[N:1]>>[N:1].[O:2]"_rxnsmarts;
+      REQUIRE(rxn);
+      rxn->initReactantMatchers();
+      auto mol = "N"_smiles;
+      REQUIRE(mol);
+      CHECK_THROWS_AS(rxn->runReactant(*mol), ChemicalReactionException);
+    }
+  }
+}
+
+TEST_CASE("Github #4759 Reaction parser fails when CX extensions are present") {
+  std::string sma = "[C:1]Br.[C:2]O>>[C:2][C:1] |$Aryl;;;;;Aryl$|";
+  SECTION("SMARTS") {
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(sma));
+    REQUIRE(rxn);
+    // make sure we have a product and that it didn't end up with a name:
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+    CHECK(rxn->getProducts()[0]->getAtomWithIdx(1)->hasProp(
+        common_properties::atomLabel));
+    CHECK(rxn->getProducts()[0]->getAtomWithIdx(1)->getProp<std::string>(
+              common_properties::atomLabel) == "Aryl");
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(0)->hasProp(
+        common_properties::atomLabel));
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(0)->getProp<std::string>(
+              common_properties::atomLabel) == "Aryl");
+  }
+  SECTION("SMILES") {
+    bool useSmiles = true;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(sma, nullptr, useSmiles));
+    REQUIRE(rxn);
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+  SECTION("disabling CXSMILES") {
+    bool useSmiles = false;
+    bool allowCXSMILES = false;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(sma, nullptr, useSmiles, allowCXSMILES));
+    REQUIRE(rxn);
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+    CHECK(!rxn->getProducts()[0]->getAtomWithIdx(1)->hasProp(
+        common_properties::atomLabel));
+    CHECK(!rxn->getReactants()[0]->getAtomWithIdx(0)->hasProp(
+        common_properties::atomLabel));
+  }
+  SECTION("Ensure we still handle spaces before/after the >>") {
+    auto rxn = " [C:1]Br.[C:2]O >> [C:2][C:1] |$Aryl;;;;;Aryl$|"_rxnsmarts;
+    // make sure we have a product and that it didn't end up with a name:
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+  SECTION("advanced space removal") {
+    // clang-format off
+    auto rxn =
+        " [C:1]Br  . [C:2]O    >  CCO  > [C:2][C:1] .   [Cl]    |$Aryl;;;;;Aryl$|"_rxnsmarts;
+    // clang-format n
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getAgents().size() ==1);
+    // make sure we have a product and that it didn't end up with a name:
+    CHECK(rxn->getProducts().size() == 2);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+  SECTION("not a cxsmiles") {
+    // clang-format off
+    auto rxn =
+        "[C:1]Br.[C:2]O>CCO>[C:2][C:1].[Cl]  reaction_name"_rxnsmarts;
+    // clang-format n
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getAgents().size() ==1);
+    // make sure we have a product and that it didn't end up with a name:
+    CHECK(rxn->getProducts().size() == 2);
+    CHECK(!rxn->getProducts()[0]->hasProp(common_properties::_Name));
+    CHECK(rxn->getProducts()[0]->getNumAtoms() == 2);
+  }
+}
+
+TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
+  SECTION("basics") {
+    // clang-format off
+    auto rxn = "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;$|"_rxnsmarts;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    std::string alabel;
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+  }
+  SECTION("basics with agents") {
+    // clang-format off
+    auto rxn = "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"_rxnsmarts;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    std::string alabel;
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+  }
+  SECTION("missing products") {
+    // clang-format off
+    auto rxn="[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>> |$;;;_AP1;;;_AP1$|"_rxnsmarts;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    std::string alabel;
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+  }
+  SECTION("coordinate bonds and sgroups") {
+    // when initially writing this, coordinate bonds were not properly parsed
+    // from SMARTS, so we use SMILES
+    // clang-format off
+    auto rxn = "[CH3:1][CH:2]([CH3:3])[*:4].[Fe:8][OH:5][CH2:6][*:7]>>[Fe:8][OH:5][CH2:6][CH2:1][CH:2]([CH3:3])[*:4] "
+    "|$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|"_rxnsmiles;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getProducts().size() == 1);
+    std::string alabel;
+    CHECK(rxn->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(rxn->getReactants()[1]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(getSubstanceGroups(*rxn->getReactants()[0]).empty());
+    CHECK(getSubstanceGroups(*rxn->getReactants()[1]).size() == 1);
+
+    const auto p0 = rxn->getProducts()[0];
+    CHECK(p0->getAtomWithIdx(6)->getPropIfPresent(common_properties::atomLabel,
+                                                  alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(getSubstanceGroups(*p0).size() == 1);
+  }
+  SECTION("sgroup hierarchy") {
+    // clang-format off
+    auto rxn = "[CH3:6][O:5][CH:3](-*)[O:2]-*>>[CH3:6][NH:5][CH:3](-*)[O:2]-* "
+    "|$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,SgD:7,6:foo:baz::::,Sg:n:4,2,1,0::ht,Sg:n:10,8,7,6::ht,SgH:2:0,3:1|"_rxnsmiles;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(getSubstanceGroups(*rxn->getReactants()[0]).size() == 2);
+    CHECK(getSubstanceGroups(*rxn->getProducts()[0]).size() == 2);
+  }
+  SECTION("link nodes") {
+    // clang-format off
+    auto rxn = "CO.OC1CCC(F)C1>>COC1CC(O)CC1F |LN:3:1.3.4.8,13:2.5.12.15|"_rxnsmarts;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(
+        !rxn->getReactants()[0]->hasProp(common_properties::molFileLinkNodes));
+    std::string lns;
+    CHECK(rxn->getReactants()[1]->getPropIfPresent(
+        common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "1 3 2 2 3 2 7");
+    CHECK(rxn->getProducts()[0]->getPropIfPresent(
+        common_properties::molFileLinkNodes, lns));
+    CHECK(lns == "2 5 2 5 4 5 7");
+  }
+#if 1
+  // note that these only work with the current parser if the
+  // variable-attachment point part is grouped with the molecule it's attached
+  // to. This probably isn't the end of the world
+  SECTION("variable attachment points") {
+    // clang-format off
+    auto rxn = "CN.(CO*.CC1=CN=CC=C1)>>(CNC1=C(C)C=CC=N1.CO*) |m:4:11.9.10,23:17.19.18|"_rxnsmarts;
+    // clang-format on
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 2);
+    CHECK(rxn->getProducts().size() == 1);
+    auto bnd = rxn->getReactants()[1]->getBondBetweenAtoms(1, 2);
+    REQUIRE(bnd);
+    CHECK(bnd->hasProp(common_properties::_MolFileBondAttach));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+          "ANY");
+    CHECK(bnd->hasProp(common_properties::_MolFileBondEndPts));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+          "(3 10 8 9)");
+
+    bnd = rxn->getProducts()[0]->getBondBetweenAtoms(10, 11);
+    REQUIRE(bnd);
+    CHECK(bnd->hasProp(common_properties::_MolFileBondAttach));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondAttach) ==
+          "ANY");
+    CHECK(bnd->hasProp(common_properties::_MolFileBondEndPts));
+    CHECK(bnd->getProp<std::string>(common_properties::_MolFileBondEndPts) ==
+          "(3 6 8 7)");
+  }
+#endif
+}
+
+TEST_CASE("V3K rxn blocks") {
+  SECTION("writing basics") {
+    // clang-format off
+    auto rxn =
+        "[cH:1]1[cH:2][cH:3][cH:4][cH:5][c:6]1-[Br].[#6:7]B(O)O>>[cH:1]1[cH:2][cH:3][cH:4][cH:5][c:6]1-[#6:7]"_rxnsmarts;
+    // clang-format off
+    REQUIRE(rxn);
+    auto rxnb = ChemicalReactionToV3KRxnBlock(*rxn);
+    bool separateAgents=false;
+    bool forceV3000=true;
+    auto rxnb2 = ChemicalReactionToRxnBlock(*rxn,separateAgents,forceV3000);
+    CHECK(rxnb==rxnb2);
+
+    std::unique_ptr<ChemicalReaction> rxn2{RxnBlockToChemicalReaction(rxnb)};
+    REQUIRE(rxn2);
+    CHECK(rxn->getNumAgentTemplates()==rxn2->getNumAgentTemplates());
+    CHECK(rxn->getNumReactantTemplates()==rxn2->getNumReactantTemplates());
+    CHECK(rxn->getNumProductTemplates()==rxn2->getNumProductTemplates());   
+  }
+
 }

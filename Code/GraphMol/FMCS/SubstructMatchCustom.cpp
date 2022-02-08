@@ -172,10 +172,8 @@ bool SubstructMatchCustom(
     const ROMol& querySrc  // seed and full source query molecule
     ,
     MCSAtomCompareFunction atomCompare, MCSBondCompareFunction bondCompare,
-    MCSFinalMatchCheckFunction finalCompare,
-    const MCSAtomCompareParameters& acp, const MCSBondCompareParameters& bcp,
-    void* ud, match_V_t* match) {
-  RDUNUSED_PARAM(finalCompare);
+    MCSFinalMatchCheckFunction, const MCSAtomCompareParameters& acp,
+    const MCSBondCompareParameters& bcp, void* ud, match_V_t* match) {
   MolMatchFinalCheckFunctor matchChecker(query, target, querySrc, mol, nullptr);
   AtomLabelFunctor atomLabeler(query, target, querySrc, mol, atomCompare, acp,
                                ud);
@@ -189,5 +187,5 @@ bool SubstructMatchCustom(
   return boost::vf2(query, target, atomLabeler, bondLabeler, matchChecker,
                     *match);
 }
-}
-}
+}  // namespace FMCS
+}  // namespace RDKit

@@ -26,7 +26,7 @@ DrawColour const &DrawText::colour() const { return colour_; }
 void DrawText::setColour(const DrawColour &col) { colour_ = col; }
 
 // ****************************************************************************
-double DrawText::fontSize() const { return fontScale() * FONT_SIZE; }
+double DrawText::fontSize() const { return fontScale() * baseFontSize(); }
 
 // ****************************************************************************
 void DrawText::setFontSize(double new_size) {
@@ -39,9 +39,14 @@ void DrawText::setFontSize(double new_size) {
         << "The new font size " << new_size << " is above the current maximum ("
         << maxFontSize() << ")." << std::endl;
   }
-  double new_scale = new_size / FONT_SIZE;
+  double new_scale = new_size / baseFontSize();
   setFontScale(new_scale);
 }
+
+// ****************************************************************************
+double DrawText::baseFontSize() const { return base_font_size_; }
+// ****************************************************************************
+void DrawText::setBaseFontSize(double val) { base_font_size_ = val; }
 
 // ****************************************************************************
 double DrawText::maxFontSize() const { return max_font_size_; }
@@ -59,14 +64,18 @@ void DrawText::setMinFontSize(double new_min) { min_font_size_ = new_min; }
 double DrawText::fontScale() const { return font_scale_; }
 
 // ****************************************************************************
-void DrawText::setFontScale(double new_scale) {
+void DrawText::setFontScale(double new_scale, bool ignoreExtremes) {
   font_scale_ = new_scale;
-  double nfs = fontSize();
-  if (max_font_size_ != -1 && nfs > max_font_size_) {
-    font_scale_ = max_font_size_ / FONT_SIZE;
+  if (ignoreExtremes) {
+    return;
   }
-  if (min_font_size_ != -1 && nfs < min_font_size_) {
-    font_scale_ = min_font_size_ / FONT_SIZE;
+
+  // fontSize == font_scale_ * base_font_size_
+  if (max_font_size_ > 0 && font_scale_ * base_font_size_ > max_font_size_) {
+    font_scale_ = max_font_size_ / base_font_size_;
+  }
+  if (min_font_size_ > 0 && font_scale_ * base_font_size_ < min_font_size_) {
+    font_scale_ = min_font_size_ / base_font_size_;
   }
 }
 
@@ -128,13 +137,14 @@ void DrawText::adjustLineForString(const std::string &label, OrientType orient,
 
 // ****************************************************************************
 void DrawText::drawStringRects(const std::string &label, OrientType orient,
-                               const Point2D &cds, MolDraw2D &mol_draw) const {
+                               TextAlignType talign, const Point2D &cds,
+                               MolDraw2D &mol_draw) const {
   std::vector<std::shared_ptr<StringRect>> rects;
   std::vector<TextDrawType> draw_modes;
   std::vector<char> draw_chars;
 
   size_t i = 0;
-  getStringRects(label, orient, rects, draw_modes, draw_chars);
+  getStringRects(label, orient, rects, draw_modes, draw_chars, false, talign);
   for (auto r : rects) {
     r->trans_.x += cds.x;
     r->trans_.y += cds.y;
@@ -497,14 +507,17 @@ bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
 void DrawText::getStringRects(const std::string &text, OrientType orient,
                               std::vector<std::shared_ptr<StringRect>> &rects,
                               std::vector<TextDrawType> &draw_modes,
-                              std::vector<char> &draw_chars,
-                              bool dontSplit) const {
+                              std::vector<char> &draw_chars, bool dontSplit,
+                              TextAlignType textAlign) const {
   std::vector<std::string> text_bits;
   if (!dontSplit) {
     text_bits = atomLabelToPieces(text, orient);
   } else {
     text_bits.push_back(text);
   }
+
+  TextAlignType ta =
+      orient == OrientType::C ? textAlign : TextAlignType::MIDDLE;
 
   if (orient == OrientType::W) {
     // stick the pieces together again backwards and draw as one so there
@@ -530,7 +543,7 @@ void DrawText::getStringRects(const std::string &text, OrientType orient,
       std::vector<TextDrawType> t_draw_modes;
       std::vector<char> t_draw_chars;
       getStringRects(text_bits[i], t_rects, t_draw_modes, t_draw_chars);
-      alignString(TextAlignType::MIDDLE, t_draw_modes, t_rects);
+      alignString(ta, t_draw_modes, t_rects);
       double max_height = -std::numeric_limits<double>::max();
       for (auto r : t_rects) {
         max_height = std::max(r->height_, max_height);

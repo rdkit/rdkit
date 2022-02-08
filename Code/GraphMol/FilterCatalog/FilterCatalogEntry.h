@@ -32,6 +32,7 @@
 #include <RDGeneral/export.h>
 #ifndef __RD_FILTER_CATALOG_H__
 #define __RD_FILTER_CATALOG_H__
+#include <utility>
 
 #include <RDGeneral/types.h>  // For Dict
 #include <GraphMol/RDKitBase.h>
@@ -68,7 +69,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
 
   FilterCatalogEntry(const std::string &name,
                      boost::shared_ptr<FilterMatcherBase> matcher)
-      : RDCatalog::CatalogEntry(), d_matcher(matcher) {
+      : RDCatalog::CatalogEntry(), d_matcher(std::move(matcher)) {
     setDescription(name);
   }
 
@@ -77,7 +78,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
         d_matcher(rhs.d_matcher),
         d_props(rhs.d_props) {}
 
-  virtual ~FilterCatalogEntry() {}
+  ~FilterCatalogEntry() override {}
 
   //------------------------------------
   //! Returns true if the Filters stored in this catalog entry are valid
@@ -86,7 +87,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
 
   //------------------------------------
   //! Returns the description of the catalog entry
-  std::string getDescription() const;
+  std::string getDescription() const override;
 
   //------------------------------------
   //! Sets the description of the catalog entry
@@ -179,9 +180,9 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
   void clearProp(const char *key) {
     std::string what(key);
     clearProp(what);
-  };
+  }
   //! \overload
-  void clearProp(const std::string &key) { d_props.clearVal(key); };
+  void clearProp(const std::string &key) { d_props.clearVal(key); }
 
   // -------------------------------------------
   //!  Properties usually contain the reference and source
@@ -213,13 +214,13 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
   }
 
   //! serializes (pickles) to a stream
-  virtual void toStream(std::ostream &ss) const;
+  void toStream(std::ostream &ss) const override;
   //! returns a string with a serialized (pickled) representation
-  virtual std::string Serialize() const;
+  std::string Serialize() const override;
   //! initializes from a stream pickle
-  virtual void initFromStream(std::istream &ss);
+  void initFromStream(std::istream &ss) override;
   //! initializes from a string pickle
-  virtual void initFromString(const std::string &text);
+  void initFromString(const std::string &text) override;
 
  private:
 #ifdef RDK_USE_BOOST_SERIALIZATION

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_UFFPARAMS_H__
-#define __RD_UFFPARAMS_H__
+#ifndef RD_UFFPARAMS_H
+#define RD_UFFPARAMS_H
 
 #include <memory>
 #include <string>
@@ -129,7 +129,7 @@ class RDKIT_FORCEFIELD_EXPORT ParamCollection {
       - if \c paramData is supplied, a new singleton will be instantiated.
         The current instantiation (if there is one) will be deleted.
   */
-  static ParamCollection *getParams(const std::string &paramData = "");
+  static const ParamCollection *getParams(const std::string &paramData = "");
   //! Looks up the parameters for a particular UFF key and returns them.
   /*!
     \return a pointer to the AtomicParams object, NULL on failure.
@@ -143,10 +143,9 @@ class RDKIT_FORCEFIELD_EXPORT ParamCollection {
     return nullptr;
   }
 
- private:
-  //! to force this to be a singleton, the constructor must be private
   ParamCollection(std::string paramData);
-  static class std::unique_ptr<ParamCollection> ds_instance;  //!< the singleton
+
+ private:
   std::map<std::string, AtomicParams> d_params;  //!< the parameter map
 };
 }  // namespace UFF

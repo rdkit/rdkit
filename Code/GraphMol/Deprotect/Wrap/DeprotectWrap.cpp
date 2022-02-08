@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Brian P Kelley
+//  Copyright (C) 2020-2021 Brian P Kelley and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,27 +14,33 @@
 
 namespace python = boost::python;
 namespace RDKit {
-// note: boost::python doesn't support unique_ptr so we convert to shared for
-//  python.
-boost::shared_ptr<ROMol> DeprotectVectWrap(const ROMol &mol,
-                                           const python::object &iterable) {
-  std::vector<Deprotect::DeprotectData> deprotections;
-  pythonObjectToVect<Deprotect::DeprotectData>(iterable, deprotections);
-  auto res = Deprotect::deprotect(mol, deprotections);
-  auto m = boost::shared_ptr<ROMol>(res.get());
-  res.release();
-  return m;
+
+boost::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol,
+                                       const python::object &iterable) {
+  if (iterable != python::object()) {
+    std::vector<Deprotect::DeprotectData> deprotections;
+    pythonObjectToVect<Deprotect::DeprotectData>(iterable, deprotections);
+    return Deprotect::deprotect(mol, deprotections);
+  } else {
+    return Deprotect::deprotect(mol, Deprotect::getDeprotections());
+  }
 }
 
-boost::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol) {
-  auto res = Deprotect::deprotect(mol, Deprotect::getDeprotections());
-  auto m = boost::shared_ptr<ROMol>(res.get());
-  res.release();
-  return m;
+bool DeprotectInPlaceWrap(ROMol &mol, const python::object &iterable) {
+  RWMol &rwmol = static_cast<RWMol &>(mol);
+  if (iterable != python::object()) {
+    std::vector<Deprotect::DeprotectData> deprotections;
+    pythonObjectToVect<Deprotect::DeprotectData>(iterable, deprotections);
+    return Deprotect::deprotectInPlace(rwmol, deprotections);
+  } else {
+    return Deprotect::deprotectInPlace(rwmol, Deprotect::getDeprotections());
+  }
 }
 
 //! Make a copy so we don't try and change a const vector
-std::vector<Deprotect::DeprotectData> GetDeprotectionsWrap() { return Deprotect::getDeprotections(); }
+std::vector<Deprotect::DeprotectData> GetDeprotectionsWrap() {
+  return Deprotect::getDeprotections();
+}
 }  // namespace RDKit
 
 struct deprotect_wrap {
@@ -64,19 +70,22 @@ struct deprotect_wrap {
         "\n"
         "\n";
 
-    python::class_<std::vector<RDKit::Deprotect::DeprotectData>>("DeprotectDataVect")
-        .def(
-	     python::vector_indexing_suite<std::vector<RDKit::Deprotect::DeprotectData>>());
+    RegisterVectorConverter<RDKit::Deprotect::DeprotectData>(
+        "DeprotectDataVect");
 
     python::class_<RDKit::Deprotect::DeprotectData>(
         "DeprotectData", deprotect_doc_string,
         python::init<std::string, std::string, std::string, std::string>(
-            constructor_doc))
+            constructor_doc,
+            python::args("deprotection_class", "reaction_smarts",
+                         "abbreviation", "full_name")))
         .def_readonly("deprotection_class",
                       &RDKit::Deprotect::DeprotectData::deprotection_class)
         .def_readonly("full_name", &RDKit::Deprotect::DeprotectData::full_name)
-        .def_readonly("abbreviation", &RDKit::Deprotect::DeprotectData::abbreviation)
-        .def_readonly("reaction_smarts", &RDKit::Deprotect::DeprotectData::reaction_smarts)
+        .def_readonly("abbreviation",
+                      &RDKit::Deprotect::DeprotectData::abbreviation)
+        .def_readonly("reaction_smarts",
+                      &RDKit::Deprotect::DeprotectData::reaction_smarts)
         .def_readonly("example", &RDKit::Deprotect::DeprotectData::example)
         .def("isValid", &RDKit::Deprotect::DeprotectData::isValid,
              "Returns True if the DeprotectData has a valid reaction");
@@ -84,13 +93,14 @@ struct deprotect_wrap {
     python::def("GetDeprotections", &RDKit::GetDeprotectionsWrap,
                 "Return the default list of deprotections");
 
-    python::def("Deprotect", &RDKit::DeprotectWrap, python::arg("mol"),
-                "Return the deprotected version of the molecule.");
-
-    python::def("Deprotect", &RDKit::DeprotectVectWrap, python::arg("mol"),
-                python::arg("deprotections"),
-                "Given a list of deprotections, return the deprotected version "
-                "of the molecule.");
+    python::def(
+        "Deprotect", &RDKit::DeprotectWrap,
+        (python::arg("mol"), python::arg("deprotections") = python::object()),
+        "Return the deprotected version of the molecule.");
+    python::def(
+        "DeprotectInPlace", &RDKit::DeprotectInPlaceWrap,
+        (python::arg("mol"), python::arg("deprotections") = python::object()),
+        "Deprotects the molecule in place.");
   }
 };
 

@@ -422,7 +422,7 @@ void testEnhancedStereo() {
 
   std::vector<unsigned int> atom_ref1({4, 5});
   {
-    std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|";
+    std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
@@ -445,13 +445,13 @@ void testEnhancedStereo() {
     {
       auto &atoms = stg->getAtoms();
       TEST_ASSERT(atoms.size() == 2);
-      TEST_ASSERT(atoms[0]->getIdx() == 4);
+      TEST_ASSERT(atoms[0]->getIdx() == 3);
       TEST_ASSERT(atoms[1]->getIdx() == 5);
     }
     delete m;
   }
   {
-    std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |&1:4,5,a:1|";
+    std::string smiles = "C[C@H](F)[C@H](C)[C@@H](C)Br |&1:3,5,a:1|";
     SmilesParserParams params;
     params.allowCXSMILES = true;
     ROMol *m = SmilesToMol(smiles, params);
@@ -467,7 +467,7 @@ void testEnhancedStereo() {
     {
       auto &atoms = stg->getAtoms();
       TEST_ASSERT(atoms.size() == 2);
-      TEST_ASSERT(atoms[0]->getIdx() == 4);
+      TEST_ASSERT(atoms[0]->getIdx() == 3);
       TEST_ASSERT(atoms[1]->getIdx() == 5);
     }
     ++stg;

@@ -160,8 +160,8 @@ PyObject *AlignPointPairs(python::object refPoints, python::object probePoints,
   PyTuple_SetItem(resTup, 1, PyArray_Return(res));
   return resTup;
 }
-}
-}
+}  // namespace Alignments
+}  // namespace RDNumeric
 
 BOOST_PYTHON_MODULE(rdAlignment) {
   rdkit_import_array();

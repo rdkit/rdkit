@@ -117,7 +117,7 @@ void mergeRingCycle(FeatTreeGraph &featGraph, FeatTreeGraph &featGraphCopy,
   }
 }
 
-}  // end of local utility namespace
+}  // namespace
 
 // -----------------------------------------------------------------------
 //

@@ -30,7 +30,7 @@ class AtomicParams;
  */
 class RDKIT_FORCEFIELD_EXPORT vdWContrib : public ForceFieldContrib {
  public:
-  vdWContrib(){};
+  vdWContrib() {}
 
   //! Constructor
   /*!
@@ -46,9 +46,9 @@ class RDKIT_FORCEFIELD_EXPORT vdWContrib : public ForceFieldContrib {
   vdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
              const AtomicParams *at1Params, const AtomicParams *at2Params,
              double threshMultiplier = 10.0);
-  double getEnergy(double *pos) const;
-  void getGrad(double *pos, double *grad) const;
-  virtual vdWContrib *copy() const { return new vdWContrib(*this); };
+  double getEnergy(double *pos) const override;
+  void getGrad(double *pos, double *grad) const override;
+  vdWContrib *copy() const override { return new vdWContrib(*this); }
 
  private:
   int d_at1Idx{-1};

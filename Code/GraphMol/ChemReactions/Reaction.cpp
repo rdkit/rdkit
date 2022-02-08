@@ -1,5 +1,7 @@
 //
-//  Copyright (c) 2007-2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,7 +37,6 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/QueryOps.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/foreach.hpp>
 #include <map>
 #include <algorithm>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -54,6 +55,14 @@ std::vector<MOL_SPTR_VECT> ChemicalReaction::runReactants(
 std::vector<MOL_SPTR_VECT> ChemicalReaction::runReactant(
     const ROMOL_SPTR reactant, unsigned int reactionTemplateIdx) const {
   return run_Reactant(*this, reactant, reactionTemplateIdx);
+}
+
+bool ChemicalReaction::runReactant(RWMol &reactant) const {
+  if (getReactants().size() != 1 || getProducts().size() != 1) {
+    throw ChemicalReactionException(
+        "Only single reactant - single product reactions can be run in place.");
+  }
+  return run_Reactant(*this, reactant);
 }
 
 ChemicalReaction::ChemicalReaction(const std::string &pickle) {

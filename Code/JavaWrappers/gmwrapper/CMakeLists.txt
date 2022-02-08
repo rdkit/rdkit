@@ -53,8 +53,10 @@ FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../*.java COPY_SOURCE)
 FILE(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/org/RDKit COPY_DEST)
 
 # Setup a few variables for environment-specific things
-if(WIN32)
+if(MSVC)
   ADD_COMPILE_OPTIONS(/W3 /wd4716 /wd4101 /bigobj)
+endif()
+if(WIN32)
   SET(PATH_SEP ";")
   SET(COPY_CMD xcopy ${COPY_SOURCE} ${COPY_DEST} /Y /I)
 else()
@@ -71,7 +73,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   SET(CMAKE_SWIG_FLAGS -package "org.RDKit")
 else()
   if (WIN32)
-    SET(CMAKE_SWIG_FLAGS -package "org.RDKit" "-DSWIGWORDSIZE64" "-DSWIGWIN")
+    SET(CMAKE_SWIG_FLAGS -package "org.RDKit")
   else()
       SET(CMAKE_SWIG_FLAGS -package "org.RDKit" "-DSWIGWORDSIZE64")
   endif()
@@ -141,7 +143,7 @@ ADD_CUSTOM_COMMAND(
 
   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
   ## Run Javadoc against newly created .java files to create docs
-  COMMAND ${JAVADOC_EXE}  ${DOCLINT_FLAGS} -tag notes -tag example -d ${CMAKE_CURRENT_SOURCE_DIR}/doc -sourcepath ${CMAKE_CURRENT_SOURCE_DIR}/src org.RDKit
+  COMMAND ${JAVADOC_EXE} ${DOCLINT_FLAGS} -tag notes -tag example -d ${CMAKE_CURRENT_SOURCE_DIR}/doc -sourcepath ${CMAKE_CURRENT_SOURCE_DIR}/src org.RDKit
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   ## Put the doc files into their own separate archive.
   COMMAND ${JAVA_ARCHIVE} cf
@@ -171,19 +173,19 @@ if(NOT RDK_BUILD_INCHI_SUPPORT)
 LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/InchiTests.java")
 endif()
 
+if(NOT RDK_USE_BOOST_IOSTREAMS)
+LIST(REMOVE_ITEM JAVA_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src-test/org/RDKit/GzStreamTests.java")
+endif()
+
 ADD_CUSTOM_COMMAND(
   OUTPUT ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class
-  COMMAND ${JAVA_COMPILE} ${DOCLINT_FLAGS} -d ${CMAKE_JAVA_TEST_OUTDIR} -cp "${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar${PATH_SEP}${JUNIT_JAR}" ${JAVA_TEST_FILES}
+  COMMAND ${JAVA_COMPILE} ${DOCLINT_FLAGS} -d ${CMAKE_JAVA_TEST_OUTDIR} -cp "\"${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar${PATH_SEP}${JUNIT_JAR}\"" ${JAVA_TEST_FILES}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS GraphMolWrapJar ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar ${JAVA_TEST_FILES}
 )
 ADD_CUSTOM_TARGET(BuildJavaWrapperTests ALL
   DEPENDS ${CMAKE_JAVA_TEST_OUTDIR}/org/RDKit/WrapperTests.class GraphMolWrap
   COMMENT "building test classes"
-)
-ADD_CUSTOM_TARGET(RunJavaWrapperTests
-  DEPENDS BuildJavaWrapperTests
-  COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/runUnitTests.sh
 )
 
 # need to add boost libs for testing
@@ -284,6 +286,12 @@ ADD_TEST(JavaSuppliersTests
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.SuppliersTests)
+if(RDK_USE_BOOST_IOSTREAMS)
+ADD_TEST(JavaGzStreamTests
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.GzStreamTests)
+endif(RDK_USE_BOOST_IOSTREAMS)
 ADD_TEST(JavaTrajectoryTests
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
@@ -389,7 +397,7 @@ ADD_TEST(JavaBitOpsTests
 		-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 		org.RDKit.BitOpsTests)
 
-    ADD_TEST(MolStandardizeTest
+ADD_TEST(MolStandardizeTest
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
     -cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
     org.RDKit.MolStandardizeTest)

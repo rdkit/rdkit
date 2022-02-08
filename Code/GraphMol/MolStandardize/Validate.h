@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,8 +15,8 @@
 
 */
 #include <RDGeneral/export.h>
-#ifndef __RD_VALIDATE_H__
-#define __RD_VALIDATE_H__
+#ifndef RD_VALIDATE_H
+#define RD_VALIDATE_H
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ROMol.h>
@@ -24,6 +24,7 @@
 #include <iostream>
 #include <exception>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace RDKit {
@@ -33,21 +34,21 @@ class ROMol;
 namespace MolStandardize {
 
 //! The ValidationErrorInfo class is used to store the information returned by a
-// ValidationMethod validate.
+/// ValidationMethod validate.
 class RDKIT_MOLSTANDARDIZE_EXPORT ValidationErrorInfo : public std::exception {
  public:
-  ValidationErrorInfo(const std::string &msg) : d_msg(msg) {
+  ValidationErrorInfo(std::string msg) : d_msg(std::move(msg)) {
     BOOST_LOG(rdInfoLog) << d_msg << std::endl;
-  };
-  const char *what() const noexcept override { return d_msg.c_str(); };
-  ~ValidationErrorInfo() noexcept {};
+  }
+  const char *what() const noexcept override { return d_msg.c_str(); }
+  ~ValidationErrorInfo() noexcept override = default;
 
  private:
   std::string d_msg;
 };  // class ValidationErrorInfo
 
 //! The ValidationMethod class is the abstract base class upon which all the
-// four different ValidationMethods inherit from.
+/// four different ValidationMethods inherit from.
 class RDKIT_MOLSTANDARDIZE_EXPORT ValidationMethod {
  public:
   ValidationMethod() = default;
@@ -58,7 +59,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT ValidationMethod {
 };
 
 //! The RDKitValidation class throws an error when there are no atoms in the
-// molecule or when there is incorrect atom valency.
+/// molecule or when there is incorrect atom valency.
 /*!
 
   <b>Notes:</b>
@@ -72,12 +73,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT RDKitValidation : public ValidationMethod {
 };
 
 //////////////////////////////
-// MolVS Validations
+/// MolVS Validations
 //
 //! The MolVSValidations class includes most of the same validations as
-// molvs.validations, namely NoAtomValidation, FragmentValidation,
-// NeutralValidation, IsotopeValidation. MolVS also has IsNoneValidation and
-// DichloroethaneValidation but these were not included here (yet).
+/// molvs.validations, namely NoAtomValidation, FragmentValidation,
+/// NeutralValidation, IsotopeValidation. MolVS also has IsNoneValidation and
+/// DichloroethaneValidation but these were not included here (yet).
 class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidations {
  public:
   virtual void run(const ROMol &mol, bool reportAllFailures,
@@ -86,7 +87,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidations {
 };
 
 //! The NoAtomValidation class throws an error if no atoms are present in the
-// molecule.
+/// molecule.
 class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation final
     : public MolVSValidations {
  public:
@@ -94,9 +95,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NoAtomValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of NoAtomValidation object and returns a MolVSValidations
   //! pointer to it
-  virtual boost::shared_ptr<MolVSValidations> copy() const override {
+  boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<NoAtomValidation>(*this);
-  };
+  }
 };
 
 //! The FragmentValidation class logs if certain fragments are present.
@@ -107,9 +108,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of FragmentValidation object and returns a MolVSValidations
   //! pointer to it
-  virtual boost::shared_ptr<MolVSValidations> copy() const override {
+  boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<FragmentValidation>(*this);
-  };
+  }
 };
 
 //! The NeutralValidation class logs if not an overall neutral system.
@@ -120,9 +121,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT NeutralValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of NeutralValidation object and returns a MolVSValidations
   //! pointer to it
-  virtual boost::shared_ptr<MolVSValidations> copy() const override {
+  boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<NeutralValidation>(*this);
-  };
+  }
 };
 
 //! The IsotopeValidation class logs if molecule contains isotopes.
@@ -133,9 +134,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT IsotopeValidation final
            std::vector<ValidationErrorInfo> &errors) const override;
   //! makes a copy of IsotopeValidation object and returns a MolVSValidations
   //! pointer to it
-  virtual boost::shared_ptr<MolVSValidations> copy() const override {
+  boost::shared_ptr<MolVSValidations> copy() const override {
     return boost::make_shared<IsotopeValidation>(*this);
-  };
+  }
 };
 
 ////////////////////////////////
@@ -149,7 +150,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidation : public ValidationMethod {
   MolVSValidation(
       const std::vector<boost::shared_ptr<MolVSValidations>> validations);
   MolVSValidation(const MolVSValidation &other);
-  ~MolVSValidation();
+  ~MolVSValidation() override;
 
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
@@ -160,12 +161,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT MolVSValidation : public ValidationMethod {
 
 //! The AllowedAtomsValidation class lets the user input a list of atoms,
 //! anything not on
-// the list throws an error.
+/// the list throws an error.
 class RDKIT_MOLSTANDARDIZE_EXPORT AllowedAtomsValidation
     : public ValidationMethod {
  public:
-  AllowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
-      : d_allowedList(atoms){};
+  AllowedAtomsValidation(std::vector<std::shared_ptr<Atom>> atoms)
+      : d_allowedList(std::move(atoms)) {}
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 
@@ -175,12 +176,12 @@ class RDKIT_MOLSTANDARDIZE_EXPORT AllowedAtomsValidation
 
 //! The DisallowedAtomsValidation class lets the user input a list of atoms and
 //! as long
-// as there are no atoms from the list it is deemed acceptable.
+/// as there are no atoms from the list it is deemed acceptable.
 class RDKIT_MOLSTANDARDIZE_EXPORT DisallowedAtomsValidation
     : public ValidationMethod {
  public:
-  DisallowedAtomsValidation(const std::vector<std::shared_ptr<Atom>> &atoms)
-      : d_disallowedList(atoms){};
+  DisallowedAtomsValidation(std::vector<std::shared_ptr<Atom>> atoms)
+      : d_disallowedList(std::move(atoms)) {}
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 

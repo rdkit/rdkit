@@ -1,0 +1,30 @@
+select regexp_replace(mol_to_json('CC'::mol)::text,'"toolkitVersion":".*?"','"toolkitVersion":""','g');
+                                                                                                                                                         regexp_replace                                                                                                                                                         
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"commonchem":{"version":10},"defaults":{"atom":{"z":6,"impHs":0,"chg":0,"nRad":0,"isotope":0,"stereo":"unspecified"},"bond":{"bo":1,"stereo":"unspecified"}},"molecules":[{"atoms":[{"impHs":3},{"impHs":3}],"bonds":[{"atoms":[0,1]}],"extensions":[{"name":"rdkitRepresentation","formatVersion":2,"toolkitVersion":""}]}]}
+(1 row)
+
+select regexp_replace(mol_to_json('C[O,N]'::qmol)::text,'"toolkitVersion":".*?"','"toolkitVersion":""','g');
+                                                                                                                                                                                                                                                                                                        regexp_replace                                                                                                                                                                                                                                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"commonchem":{"version":10},"defaults":{"atom":{"z":6,"impHs":0,"chg":0,"nRad":0,"isotope":0,"stereo":"unspecified"},"bond":{"bo":1,"stereo":"unspecified"}},"molecules":[{"atoms":[{},{"z":0}],"bonds":[{"atoms":[0,1]}],"extensions":[{"name":"rdkitRepresentation","formatVersion":2,"toolkitVersion":""},{"name":"rdkitQueries","formatVersion":10,"toolkitVersion":"","atomQueries":[{"descr":"AtomType","tag":33,"val":6},{"descr":"AtomOr","tag":31,"children":[{"descr":"AtomType","tag":33,"val":8},{"descr":"AtomType","tag":33,"val":7}]}],"bondQueries":[{"descr":"SingleOrAromaticBond","tag":33,"val":1}]}]}]}
+(1 row)
+
+select mol_to_smiles(mol_from_json(mol_to_json('CC'::mol)));
+ mol_to_smiles 
+---------------
+ CC
+(1 row)
+
+select mol_to_smarts(mol_from_json(mol_to_json('C[O,N]'::qmol)));
+ mol_to_smarts 
+---------------
+ C[O,N]
+(1 row)
+
+select mol_to_smarts(qmol_from_json(mol_to_json('C[O,N]'::qmol)));
+ mol_to_smarts 
+---------------
+ C[O,N]
+(1 row)
+

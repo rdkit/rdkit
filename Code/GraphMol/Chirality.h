@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2008-2020 Greg Landrum
+//  Copyright (C) 2008-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,6 +24,10 @@ class Bond;
 class ROMol;
 
 namespace Chirality {
+
+//! double bond stereo will be ignored/removed for rings smaller than this:
+constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
+
 /// @cond
 /*!
   \param mol the molecule to be altered
@@ -92,6 +96,7 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
            centeredOn == other.centeredOn && descriptor == other.descriptor &&
            controllingAtoms == other.controllingAtoms;
   }
+  bool operator!=(const StereoInfo &other) const { return !(*this == other); }
 };
 
 //! identifies potential stereoatoms and stereobonds in a molecule
@@ -108,6 +113,9 @@ RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
 //! overload
 RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
     const ROMol &mol);
+
+//! removes atoms without specified chirality from stereo groups
+RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(ROMol &mol);
 
 /// @cond
 namespace detail {

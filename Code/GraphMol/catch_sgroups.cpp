@@ -440,3 +440,71 @@ M  END)CTAB"_ctab;
     CHECK(sgs[0].getAttachPoints().size() == 0);
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #4434: v2000 SGroups do not generate an \"index\" property",
+    "[Sgroups][bug]") {
+  SECTION("basics") {
+    auto v2000_mol = R"CTAB(
+  MJ211300                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    1.4295    0.1449    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4266   -0.6801    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+M  STY  2   1 DAT   2 DAT
+M  SAL   1  1   1
+M  SDT   1 test sgroup 1                                         
+M  SDD   1     0.0000    0.0000    DRU   ALL  0       0  
+M  SED   1 sgroupval1
+M  SAL   2  1   2
+M  SDT   2 test sgroup 2                                         
+M  SDD   2     0.0000    0.0000    DRU   ALL  0       0  
+M  SED   2 sgroupval2
+M  END
+)CTAB"_ctab;
+    auto v3000_mol = R"CTAB(
+  Mrv2113 08202115042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.6684 0.2705 0 0
+M  V30 2 C 2.663 -1.2695 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 1) FIELDNAME="test sgroup 1" -
+M  V30 FIELDDISP="    0.0000    0.0000    DRU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=sgroupval1
+M  V30 2 DAT 0 ATOMS=(1 2) FIELDNAME="test sgroup 2" -
+M  V30 FIELDDISP="    0.0000    0.0000    DRU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=sgroupval2
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(v2000_mol);
+    REQUIRE(v3000_mol);
+
+    unsigned int index;
+    unsigned int count = 0;
+
+    for (const auto &sg : getSubstanceGroups(*v2000_mol)) {
+      ++count;
+      TEST_ASSERT(sg.getPropIfPresent("index", index));
+      TEST_ASSERT(index == count);
+    }
+
+    count = 0;
+    for (const auto &sg : getSubstanceGroups(*v3000_mol)) {
+      ++count;
+      TEST_ASSERT(sg.getPropIfPresent("index", index));
+      TEST_ASSERT(index == count);
+    }
+  }
+}

@@ -105,17 +105,12 @@ class ForwardDbFpSupplier(DbFpSupplier):
           NOTE: this has side effects
 
         """
-        try:
-            d = next(self._dataIter)
-        except StopIteration:
-            d = None
-        if d is not None:
-            newFp = self._BuildFp(d)
-        else:
-            newFp = None
-        return newFp
-
-
+        d = next(self._dataIter, None)
+        if d is None:
+          return d
+        return self._BuildFp(d)
+        
+        
 class RandomAccessDbFpSupplier(DbFpSupplier):
   """ DbFp supplier supporting random access:
 
@@ -146,7 +141,7 @@ class RandomAccessDbFpSupplier(DbFpSupplier):
 
   or we can use an indexed loop:
 
-  >>> fps = [None]*len(suppl)
+  >>> fps = [None] * len(suppl)
   >>> for i in range(len(suppl)):
   ...   fps[i] = suppl[i]
   >>> len(fps)

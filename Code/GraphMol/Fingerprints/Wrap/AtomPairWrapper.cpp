@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include <boost/python.hpp>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/AtomPairGenerator.h>
+#include <RDBoost/Wrap.h>
 
 using namespace RDKit;
 using namespace RDKit::AtomPair;
@@ -20,10 +21,9 @@ namespace RDKit {
 namespace AtomPairWrapper {
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getAtomPairGenerator(
-    const unsigned int minDistance, const unsigned int maxDistance,
-    const bool includeChirality, const bool use2D,
-    const bool useCountSimulation, python::object &py_countBounds,
-    const std::uint32_t fpSize, python::object &py_atomInvGen) {
+    unsigned int minDistance, unsigned int maxDistance, bool includeChirality,
+    bool use2D, bool countSimulation, python::object &py_countBounds,
+    std::uint32_t fpSize, python::object &py_atomInvGen) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
 
   python::extract<AtomInvariantsGenerator *> atomInvGen(py_atomInvGen);
@@ -32,16 +32,14 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-  python::extract<std::vector<std::uint32_t>> countBoundsE(py_countBounds);
-  if (countBoundsE.check() && !countBoundsE().empty()) {
-    countBounds = countBoundsE();
+  if (py_countBounds) {
+    auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
+    countBounds = *tmp;
   }
-
-  const std::vector<std::uint32_t> countBoundsC = countBounds;
 
   return AtomPair::getAtomPairGenerator<OutputType>(
       minDistance, maxDistance, includeChirality, use2D,
-      atomInvariantsGenerator, useCountSimulation, fpSize, countBoundsC, true);
+      atomInvariantsGenerator, countSimulation, fpSize, countBounds, true);
 }
 
 AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
@@ -49,24 +47,12 @@ AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
 }
 
 void exportAtompair() {
-  /*python::def(
-      "GetAtomPairGenerator", &getAtomPairGenerator<std::uint32_t>,
-      (python::arg("minDistance") = 1,
-       python::arg("maxDistance") = AtomPair::maxPathLen - 1,
-       python::arg("includeChirality") = false, python::arg("use2D") = true,
-       python::arg("useCountSimulation") = true,
-       python::arg("countBounds") = python::object(),
-       python::arg("fpSize") = 2048,
-       python::arg("atomInvariantsGenerator") = python::object()),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());*/
-
   python::def(
       "GetAtomPairGenerator", &getAtomPairGenerator<std::uint64_t>,
       (python::arg("minDistance") = 1,
        python::arg("maxDistance") = AtomPair::maxPathLen - 1,
        python::arg("includeChirality") = false, python::arg("use2D") = true,
-       python::arg("useCountSimulation") = true,
+       python::arg("countSimulation") = true,
        python::arg("countBounds") = python::object(),
        python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object()),
@@ -80,7 +66,7 @@ void exportAtompair() {
       "invariants, this is ignored if atomInvariantsGenerator is provided\n"
       "    - use2D: if set, the 2D (topological) distance matrix  will be "
       "used\n"
-      "    - useCountSimulation:  if set, use count simulation while  "
+      "    - countSimulation:  if set, use count simulation while  "
       "generating the fingerprint\n"
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "
@@ -89,6 +75,10 @@ void exportAtompair() {
       "sparse versions\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
+      "This generator supports the following AdditionalOutput types:\n"
+      "    - atomToBits: which bits each atom is involved in\n"
+      "    - atomCounts: how many bits each atom sets\n"
+      "    - bitInfoMap: map from bitId to (atomId, radius) pairs\n\n"
       "  RETURNS: FingerprintGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 

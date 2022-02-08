@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Greg Landrum
+//  Copyright (C) 2018-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,21 +14,40 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/RDKitQueries.h>
 
 #include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/MolInterchange/details.h>
 #include <RDGeneral/FileParseException.h>
+#include <GraphMol/MolPickler.h>
+
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/format.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+using namespace Queries;
 
 #include <sstream>
 #include <exception>
 #include <map>
 
+#if !defined(_MSC_VER)
+// g++ (at least as of v9.3.0) generates some spurious warnings from here.
+// disable them
+#if !defined(__clang__) and defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+#endif
 #include <rapidjson/document.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/pointer.h>
-
+#if !defined(_MSC_VER)
+#if !defined(__clang__) and defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+#endif
 namespace rj = rapidjson;
 
 namespace RDKit {
@@ -148,11 +167,14 @@ std::string getStringDefaultValue(const char *key, const rj::Value &from,
 }
 
 void readAtom(RWMol *mol, const rj::Value &atomVal,
-              const DefaultValueCache &atomDefaults) {
+              const DefaultValueCache &atomDefaults,
+              const JSONParseParameters &params) {
   PRECONDITION(mol, "no mol");
   Atom *at = new Atom(getIntDefaultValue("z", atomVal, atomDefaults));
-  at->setNoImplicit(true);
-  at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
+  if (params.useHCounts) {
+    at->setNoImplicit(true);
+    at->setNumExplicitHs(getIntDefaultValue("impHs", atomVal, atomDefaults));
+  }
   at->setFormalCharge(getIntDefaultValue("chg", atomVal, atomDefaults));
   at->setNumRadicalElectrons(getIntDefaultValue("nRad", atomVal, atomDefaults));
   at->setIsotope(getIntDefaultValue("isotope", atomVal, atomDefaults));
@@ -239,8 +261,7 @@ void readConformer(Conformer *conf, const rj::Value &confVal) {
 }
 
 void readPartialCharges(RWMol *mol, const rj::Value &repVal,
-                        const JSONParseParameters &params) {
-  RDUNUSED_PARAM(params);
+                        const JSONParseParameters &) {
   PRECONDITION(mol, "no molecule");
   PRECONDITION(repVal["name"].GetString() == std::string("partialCharges"),
                "bad charges");
@@ -272,6 +293,285 @@ void readPartialCharges(RWMol *mol, const rj::Value &repVal,
     }
   }
 }
+void processMol(RWMol *mol, const rj::Value &molval,
+                const DefaultValueCache &atomDefaults,
+                const DefaultValueCache &bondDefaults,
+                const JSONParseParameters &params);
+Query<int, Atom const *, true> *readQuery(Atom const *owner,
+                                          const rj::Value &repVal,
+                                          const DefaultValueCache &atomDefaults,
+                                          const DefaultValueCache &bondDefaults,
+                                          const JSONParseParameters &params);
+Query<int, Bond const *, true> *readQuery(Bond const *owner,
+                                          const rj::Value &repVal,
+                                          const DefaultValueCache &atomDefaults,
+                                          const DefaultValueCache &bondDefaults,
+                                          const JSONParseParameters &params);
+
+template <class T>
+Query<int, T const *, true> *readBaseQuery(T const *owner,
+                                           const rj::Value &repVal,
+                                           const JSONParseParameters &) {
+  PRECONDITION(owner, "no query");
+  PRECONDITION(repVal.HasMember("tag"), "no tag");
+  int tag = repVal["tag"].GetInt();
+  if (!repVal.HasMember("descr")) {
+    throw FileParseException("Bad Format: missing query description");
+  }
+  Query<int, T const *, true> *res = nullptr;
+  switch (tag) {
+    case MolPickler::QUERY_AND:
+      res = new AndQuery<int, T const *, true>();
+      break;
+    case MolPickler::QUERY_OR:
+      res = new OrQuery<int, T const *, true>();
+      break;
+    case MolPickler::QUERY_XOR:
+      res = new XOrQuery<int, T const *, true>();
+      break;
+    case MolPickler::QUERY_EQUALS:
+      res = new EqualityQuery<int, T const *, true>();
+      static_cast<EqualityQuery<int, T const *, true> *>(res)->setVal(
+          repVal["val"].GetInt());
+      if (repVal.HasMember("tol")) {
+        static_cast<EqualityQuery<int, T const *, true> *>(res)->setTol(
+            repVal["tol"].GetInt());
+      }
+      break;
+    case MolPickler::QUERY_GREATER:
+      res = new GreaterQuery<int, T const *, true>();
+      static_cast<GreaterQuery<int, T const *, true> *>(res)->setVal(
+          repVal["val"].GetInt());
+      if (repVal.HasMember("tol")) {
+        static_cast<GreaterQuery<int, T const *, true> *>(res)->setTol(
+            repVal["tol"].GetInt());
+      }
+      break;
+    case MolPickler::QUERY_GREATEREQUAL:
+      res = new GreaterEqualQuery<int, T const *, true>();
+      static_cast<GreaterEqualQuery<int, T const *, true> *>(res)->setVal(
+          repVal["val"].GetInt());
+      if (repVal.HasMember("tol")) {
+        static_cast<GreaterEqualQuery<int, T const *, true> *>(res)->setTol(
+            repVal["tol"].GetInt());
+      }
+      break;
+    case MolPickler::QUERY_LESS:
+      res = new LessQuery<int, T const *, true>();
+      static_cast<LessQuery<int, T const *, true> *>(res)->setVal(
+          repVal["val"].GetInt());
+      if (repVal.HasMember("tol")) {
+        static_cast<LessQuery<int, T const *, true> *>(res)->setTol(
+            repVal["tol"].GetInt());
+      }
+      break;
+    case MolPickler::QUERY_LESSEQUAL:
+      res = new LessEqualQuery<int, T const *, true>();
+      static_cast<LessEqualQuery<int, T const *, true> *>(res)->setVal(
+          repVal["val"].GetInt());
+      if (repVal.HasMember("tol")) {
+        static_cast<LessEqualQuery<int, T const *, true> *>(res)->setTol(
+            repVal["tol"].GetInt());
+      }
+      break;
+    case MolPickler::QUERY_NULL:
+      res = new Query<int, T const *, true>();
+      break;
+    case MolPickler::QUERY_RANGE:
+      res = new RangeQuery<int, T const *, true>();
+      static_cast<RangeQuery<int, T const *, true> *>(res)->setLower(
+          repVal["lower"].GetInt());
+      static_cast<RangeQuery<int, T const *, true> *>(res)->setUpper(
+          repVal["upper"].GetInt());
+      if (repVal.HasMember("tol")) {
+        static_cast<RangeQuery<int, T const *, true> *>(res)->setTol(
+            repVal["tol"].GetInt());
+      }
+      if (repVal.HasMember("ends")) {
+        short ends = repVal["ends"].GetInt();
+        const unsigned int lowerOpen = 1 << 1;
+        const unsigned int upperOpen = 1;
+        static_cast<RangeQuery<int, T const *, true> *>(res)->setEndsOpen(
+            ends & lowerOpen, ends & upperOpen);
+      }
+      break;
+    case MolPickler::QUERY_SET:
+      res = new SetQuery<int, T const *, true>();
+      if (repVal.HasMember("set")) {
+        for (const auto &member : repVal["set"].GetArray()) {
+          static_cast<SetQuery<int, T const *, true> *>(res)->insert(
+              member.GetInt());
+        }
+      }
+      break;
+    default:
+      throw FileParseException(
+          (boost::format("Bad Format: unknown query tag %s") % tag).str());
+  }
+
+  return res;
+}
+
+template <class T, class U>
+void finishQuery(T const *owner, U *res, const rj::Value &repVal,
+                 const DefaultValueCache &atomDefaults,
+                 const DefaultValueCache &bondDefaults,
+                 const JSONParseParameters &params) {
+  PRECONDITION(owner, "no owner");
+  PRECONDITION(res, "no result");
+  std::string descr = repVal["descr"].GetString();
+  res->setDescription(descr);
+  std::string typ;
+  if (repVal.HasMember("type")) {
+    typ = repVal["type"].GetString();
+  }
+  if (!typ.empty()) {
+    res->setTypeLabel(typ);
+  }
+  bool negated = false;
+  if (repVal.HasMember("negated")) {
+    negated = repVal["negated"].GetBool();
+  }
+  res->setNegation(negated);
+  QueryOps::finalizeQueryFromDescription(res, owner);
+
+  if (repVal.HasMember("children")) {
+    for (const auto &child : repVal["children"].GetArray()) {
+      typename U::CHILD_TYPE childq{
+          readQuery(owner, child, atomDefaults, bondDefaults, params)};
+      res->addChild(childq);
+    }
+  }
+}
+
+Query<int, Atom const *, true> *readQuery(Atom const *owner,
+                                          const rj::Value &repVal,
+                                          const DefaultValueCache &atomDefaults,
+                                          const DefaultValueCache &bondDefaults,
+                                          const JSONParseParameters &params) {
+  PRECONDITION(owner, "no owner");
+  if (!repVal.HasMember("tag")) {
+    throw FileParseException("Bad Format: missing atom query tag");
+  }
+  Query<int, Atom const *, true> *res = nullptr;
+  int tag = repVal["tag"].GetInt();
+  if (tag == MolPickler::QUERY_RECURSIVE) {
+    if (!repVal.HasMember("subquery")) {
+      throw FileParseException("Bad Format: missing subquery");
+    }
+    auto *mol = new RWMol();
+    processMol(mol, repVal["subquery"], atomDefaults, bondDefaults, params);
+    res = new RecursiveStructureQuery(mol);
+  } else if (tag == MolPickler::QUERY_ATOMRING) {
+    res = new AtomRingQuery();
+    static_cast<EqualityQuery<int, Atom const *, true> *>(res)->setVal(
+        repVal["val"].GetInt());
+    if (repVal.HasMember("tol")) {
+      static_cast<EqualityQuery<int, Atom const *, true> *>(res)->setTol(
+          repVal["tol"].GetInt());
+    }
+  } else {
+    res = readBaseQuery(owner, repVal, params);
+  }
+  if (res) {
+    finishQuery(owner, res, repVal, atomDefaults, bondDefaults, params);
+  }
+  return res;
+}
+Query<int, Bond const *, true> *readQuery(Bond const *bond,
+                                          const rj::Value &repVal,
+                                          const DefaultValueCache &atomDefaults,
+                                          const DefaultValueCache &bondDefaults,
+                                          const JSONParseParameters &params) {
+  PRECONDITION(bond, "no owner");
+  if (!repVal.HasMember("tag")) {
+    throw FileParseException("Bad Format: missing bond query tag");
+  }
+  Query<int, Bond const *, true> *res = nullptr;
+  res = readBaseQuery(bond, repVal, params);
+  if (res) {
+    finishQuery(bond, res, repVal, atomDefaults, bondDefaults, params);
+  }
+
+  return res;
+}
+
+void readQueries(RWMol *mol, const rj::Value &repVal,
+                 const DefaultValueCache &atomDefaults,
+                 const DefaultValueCache &bondDefaults,
+                 const JSONParseParameters &params) {
+  PRECONDITION(mol, "no molecule");
+  PRECONDITION(repVal["name"].GetString() == std::string("rdkitQueries"),
+               "bad queries");
+  if (!repVal.HasMember("formatVersion")) {
+    throw FileParseException("Bad Format: missing format_version");
+  }
+  if (repVal["formatVersion"].GetInt() > currentQueryRepresentationVersion) {
+    BOOST_LOG(rdWarningLog) << "RDKit query representation format version "
+                            << repVal["formatVersion"].GetInt()
+                            << " too recent. Ignoring it." << std::endl;
+    return;
+  }
+  {
+    const auto &miter = repVal.FindMember("atomQueries");
+    if (miter != repVal.MemberEnd()) {
+      size_t idx = 0;
+      for (const auto &val : miter->value.GetArray()) {
+        if (!val.IsObject()) {
+          throw FileParseException("Bad Format: atomQuery not object");
+        }
+        if (!val.HasMember("tag")) {
+          // nothing here, continue
+          continue;
+        }
+        if (idx >= mol->getNumAtoms()) {
+          throw FileParseException("too much atom data found");
+        }
+        auto atom = mol->getAtomWithIdx(idx);
+        CHECK_INVARIANT(atom != nullptr, "no atom");
+        // we need to replace the current atom with a query atom:
+        QueryAtom qatom(*atom);
+        // that copy created a bunch of query info by default,
+        // but we want to get the info from the JSON, so delete
+        // that:
+        qatom.setQuery(nullptr);
+        mol->replaceAtom(idx, &qatom);
+        atom = mol->getAtomWithIdx(idx);
+        static_cast<QueryAtom *>(atom)->setQuery(
+            readQuery(atom, val, atomDefaults, bondDefaults, params));
+        ++idx;
+      }
+    }
+  }
+  {
+    const auto &miter = repVal.FindMember("bondQueries");
+    if (miter != repVal.MemberEnd()) {
+      size_t idx = 0;
+      for (const auto &val : miter->value.GetArray()) {
+        if (!val.IsObject()) {
+          throw FileParseException("Bad Format: bondQuery not object");
+        }
+        if (!val.HasMember("tag")) {
+          // nothing here, continue
+          continue;
+        }
+        if (idx >= mol->getNumBonds()) {
+          throw FileParseException("too much bond data found");
+        }
+        auto bond = mol->getBondWithIdx(idx);
+        CHECK_INVARIANT(bond != nullptr, "no bond");
+        QueryBond qbond(*bond);
+        qbond.setQuery(nullptr);
+        mol->replaceBond(idx, &qbond);
+        bond = mol->getBondWithIdx(idx);
+        static_cast<QueryBond *>(bond)->setQuery(
+            readQuery(bond, val, atomDefaults, bondDefaults, params));
+        ++idx;
+      }
+    }
+  }
+}
+
 void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
                              const JSONParseParameters &params) {
   PRECONDITION(mol, "no molecule");
@@ -280,7 +580,7 @@ void readRDKitRepresentation(RWMol *mol, const rj::Value &repVal,
   if (!repVal.HasMember("formatVersion")) {
     throw FileParseException("Bad Format: missing format_version");
   }
-  if (repVal["formatVersion"].GetInt() > 1) {
+  if (repVal["formatVersion"].GetInt() > currentRDKitRepresentationVersion) {
     BOOST_LOG(rdWarningLog) << "RDKit representation format version "
                             << repVal["formatVersion"].GetInt()
                             << " too recent. Ignoring it." << std::endl;
@@ -388,7 +688,7 @@ void processMol(RWMol *mol, const rj::Value &molval,
   }
 
   for (const auto &atomVal : molval["atoms"].GetArray()) {
-    readAtom(mol, atomVal, atomDefaults);
+    readAtom(mol, atomVal, atomDefaults, params);
   }
   bool needStereoLoop = false;
   for (const auto &bondVal : molval["bonds"].GetArray()) {
@@ -430,9 +730,10 @@ void processMol(RWMol *mol, const rj::Value &molval,
       }
       if (propVal["name"].GetString() == std::string("rdkitRepresentation")) {
         readRDKitRepresentation(mol, propVal, params);
-      }
-      if (propVal["name"].GetString() == std::string("partialCharges")) {
+      } else if (propVal["name"].GetString() == std::string("partialCharges")) {
         readPartialCharges(mol, propVal, params);
+      } else if (propVal["name"].GetString() == std::string("rdkitQueries")) {
+        readQueries(mol, propVal, atomDefaults, bondDefaults, params);
       }
     }
   }

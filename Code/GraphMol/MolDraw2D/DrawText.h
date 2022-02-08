@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include <RDGeneral/export.h>
 #include <Geometry/point.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 
@@ -34,9 +35,10 @@ std::ostream &operator<<(std::ostream &oss, const TextDrawType &tdt);
 std::ostream &operator<<(std::ostream &oss, const OrientType &o);
 
 // ****************************************************************************
-class DrawText {
+class RDKIT_MOLDRAW2D_EXPORT DrawText {
  public:
-  static constexpr double FONT_SIZE = 0.6;  // seems to be a good number
+  static constexpr double DEFAULT_FONT_SCALE =
+      0.6;  // seems to be a good number
 
   DrawText(double max_fnt_sz, double min_fnt_sz);
   virtual ~DrawText() {}
@@ -44,15 +46,17 @@ class DrawText {
   DrawColour const &colour() const;
   void setColour(const DrawColour &col);
 
-  // size in "pixels" i.e scale() * FONT_SIZE.
+  // size in "pixels" i.e scale() * base_font_size_.
   double fontSize() const;
   void setFontSize(double new_size);
+  double baseFontSize() const;
+  void setBaseFontSize(double new_size);
   double maxFontSize() const;
   void setMaxFontSize(double new_max);
   double minFontSize() const;
   void setMinFontSize(double new_max);
   double fontScale() const;
-  void setFontScale(double new_scale);
+  void setFontScale(double new_scale, bool ignoreExtremes = false);
 
   // these are only relevant for the FreeType DrawText classes.
   virtual std::string getFontFile() const { return ""; }
@@ -73,11 +77,16 @@ class DrawText {
   void getStringExtremes(const std::string &label, OrientType orient,
                          double &x_min, double &y_min, double &x_max,
                          double &y_max, bool dontSplit = false) const;
+  // get the rectangles that go round each character of the string.  If
+  // dontSplit is false, it assumes it's an atom label and splits it
+  // in a sensible way for that.  If the OrientType is C, it applies
+  // textAlign, otherwise the text is aligned set appropriately for the
+  // OrientType.
   void getStringRects(const std::string &text, OrientType orient,
                       std::vector<std::shared_ptr<StringRect>> &rects,
                       std::vector<TextDrawType> &draw_modes,
-                      std::vector<char> &draw_chars,
-                      bool dontSplit = false) const;
+                      std::vector<char> &draw_chars, bool dontSplit = false,
+                      TextAlignType textAlign = TextAlignType::MIDDLE) const;
 
   //! drawString centres the string on cds.
   virtual void drawString(const std::string &str, const Point2D &cds,
@@ -102,7 +111,8 @@ class DrawText {
   // puts a colourful rectangle around each character in the string.
   // For debugging, mostly.
   void drawStringRects(const std::string &label, OrientType orient,
-                       const Point2D &cds, MolDraw2D &mol_draw) const;
+                       TextAlignType talign, const Point2D &cds,
+                       MolDraw2D &mol_draw) const;
 
   // cds in draw coords
   // does the label at cds intersect the given StringRect.
@@ -147,6 +157,7 @@ class DrawText {
   double font_scale_;
   double max_font_size_;
   double min_font_size_;
+  double base_font_size_ = DEFAULT_FONT_SCALE;
 
   // return a vector of StringRects, one for each char in text, with
   // super- and subscripts taken into account.  Sizes in pixel coords,
@@ -165,8 +176,9 @@ class DrawText {
 //! mode based on contents of instring from i onwards. Increments i
 //! appropriately
 //! \returns true or false depending on whether it did something or not
-bool setStringDrawMode(const std::string &instring, TextDrawType &draw_mode,
-                       size_t &i);
+RDKIT_MOLDRAW2D_EXPORT bool setStringDrawMode(const std::string &instring,
+                                              TextDrawType &draw_mode,
+                                              size_t &i);
 
 // take the label for the given atom and return the individual pieces
 // that need to be drawn for it.  So NH<sub>2</sub> will return

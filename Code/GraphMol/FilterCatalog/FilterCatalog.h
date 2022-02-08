@@ -67,11 +67,11 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
   FilterCatalogParams(const FilterCatalogParams &other)
       : RDCatalog::CatalogParams(other), d_catalogs(other.d_catalogs) {}
 
-  virtual ~FilterCatalogParams() {}
+  ~FilterCatalogParams() override {}
 
   //------------------------------------
   //! Adds an existing FilterCatalog specification to be used in the
-  // FilterCatalog
+  /// FilterCatalog
   //
   /*!
     Specifies an existing filter catalog to be used.
@@ -87,13 +87,13 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
   virtual void fillCatalog(FilterCatalog &catalog) const;
 
   //! serializes (pickles) to a stream
-  virtual void toStream(std::ostream &ss) const;
+  void toStream(std::ostream &ss) const override;
   //! returns a string with a serialized (pickled) representation
-  virtual std::string Serialize() const;
+  std::string Serialize() const override;
   //! initializes from a stream pickle
-  virtual void initFromStream(std::istream &ss);
+  void initFromStream(std::istream &ss) override;
   //! initializes from a string pickle
-  virtual void initFromString(const std::string &text);
+  void initFromString(const std::string &text) override;
 
  private:
   std::vector<FilterCatalogs> d_catalogs;
@@ -135,9 +135,9 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
 
   FilterCatalog(const std::string &binStr);
 
-  ~FilterCatalog();
+  ~FilterCatalog() override;
 
-  virtual std::string Serialize() const;
+  std::string Serialize() const override;
 
   // Adds a new FilterCatalogEntry to the catalog
   /*!
@@ -148,8 +148,8 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
     \param updateFPLength unused in the FilterCatalog object.
   */
 
-  virtual unsigned int addEntry(FilterCatalogEntry *entry,
-                                bool updateFPLength = true);
+  unsigned int addEntry(FilterCatalogEntry *entry,
+                        bool updateFPLength = true) override;
 
   // Adds a new FilterCatalogEntry to the catalog
   /*!
@@ -177,7 +177,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
   //------------------------------------
   //! returns a particular FilterCatalogEntry in the Catalog
   //!  required by Catalog.h API
-  virtual const FilterCatalogEntry *getEntryWithIdx(unsigned int idx) const;
+  const FilterCatalogEntry *getEntryWithIdx(unsigned int idx) const override;
 
   //------------------------------------
   //! returns a particular FilterCatalogEntry in the Catalog
@@ -192,7 +192,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
 
   //------------------------------------
   //! returns the number of entries in the catalog
-  virtual unsigned int getNumEntries() const {
+  unsigned int getNumEntries() const override {
     return static_cast<unsigned int>(d_entries.size());
   }
 
@@ -202,7 +202,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
     \param params  The new FilterCatalogParams specifying the new state of the
     catalog
   */
-  virtual void setCatalogParams(const FilterCatalogParams *params);
+  void setCatalogParams(const FilterCatalogParams *params) override;
 
   //------------------------------------
   //! Returns true if the molecule matches any entry in the catalog
@@ -242,19 +242,19 @@ RDKIT_FILTERCATALOG_EXPORT bool FilterCatalogCanSerialize();
 //! Run a filter catalog on a set of smiles strings
 /*
   \param smiles vector of smiles strings to analyze
-  \param nthreads specify the number of threads to use or specify 0 to use all processors
-                         [default 1]
+  \param nthreads specify the number of threads to use or specify 0 to use all
+         processors [default 1]
   \returns a vector of vectors.  For each input smiles string, returns
                    a vector of shared_ptr::FilterMatchEntry objects.
                    If a molecule matches no filters, the vector will be empty.
-                   If a smiles can't be parsed, a 'no valid RDKit molecule' catalog entry is returned.
+                   If a smiles can't be parsed, a 'no valid RDKit molecule'
+                   catalog entry is returned.
 
 */
 RDKIT_FILTERCATALOG_EXPORT
-std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>> RunFilterCatalog(
-              const FilterCatalog &filterCatalog,
-	      const std::vector<std::string> &smiles,
-	      int numThreads=1);
+std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>>
+RunFilterCatalog(const FilterCatalog &filterCatalog,
+                 const std::vector<std::string> &smiles, int numThreads = 1);
 }  // namespace RDKit
 
 #endif

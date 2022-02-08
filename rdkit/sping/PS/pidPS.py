@@ -861,7 +861,7 @@ translate
     # series of lines of the right overall size can follow
     # piddlePDF again
 
-    rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
+    rawimage = myimage.tobytes()
     assert len(rawimage) == imgwidth * imgheight, 'Wrong amount of data for image'
     #compressed = zlib.compress(rawimage) # no zlib at moment
     hex_encoded = self._AsciiHexEncode(rawimage)
@@ -950,7 +950,7 @@ translate
                       '/DataSource currentfile /ASCIIHexDecode filter', '>> % End image dictionary',
                       'image'])
     # after image operator just need to dump image dat to file as hexstring
-    rawimage = getattr(myimage, 'tobytes', myimage.tostring)()
+    rawimage = myimage.tobytes()
     assert len(rawimage) == imwidth * imheight, 'Wrong amount of data for image'
     #compressed = zlib.compress(rawimage) # no zlib at moment
     hex_encoded = self._AsciiHexEncode(rawimage)

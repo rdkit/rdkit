@@ -22,6 +22,15 @@ An aromatic bond must be between aromatic atoms, but a bond between aromatic ato
 
 For example the fusing bonds here are not considered to be aromatic by the RDKit:
 
+.. testsetup::
+  
+  # clean up in case these tests are running in a python process that has already
+  # imported the IPythonConsole code
+  from rdkit.Chem.Draw import IPythonConsole
+  IPythonConsole.UninstallIPythonRenderer()
+  from rdkit.Chem import rdDepictor
+  rdDepictor.SetPreferCoordGen(False)
+
 .. image:: images/picture_9.png
 
 .. doctest::
@@ -224,10 +233,16 @@ Specifying atoms by atomic number
 The ``[#6]`` construct from SMARTS is supported in SMILES.
 
 
-CXSMILES extensions
--------------------
+Quadruple bonds
+---------------
 
-The RDKit supports parsing and writing a subset of the extended SMILES functionality introduced by ChemAxon [#cxsmiles]_.
+The token ``$`` can be used to represent quadruple bonds in SMILES and SMARTS.
+
+
+CXSMILES/CXSMARTS extensions
+----------------------------
+
+The RDKit supports parsing and writing a subset of the extended SMILES/SMARTS functionality introduced by ChemAxon [#cxsmiles]_.
 
 The features which are parsed include:
 
@@ -244,9 +259,13 @@ The features which are parsed include:
 - ring bond count specifications ``rb``
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
+- SGroup Data ``SgD``
+- polymer SGroups ``Sg``
+- SGroup Hierarchy ``SgH``
 
-The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
-(note the specialized writer function) include:
+The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles` and
+:py:func:`rdkit.Chem.rdmolfiles.MolToCXSmarts` 
+(note the specialized writer functions) include:
 
 - atomic coordinates
 - atomic values
@@ -254,6 +273,10 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic properties
 - radicals
 - enhanced stereo
+- linknodes 
+- SGroup Data
+- polymer SGroups
+- SGroup Hierarchy
 
 .. doctest::
 
@@ -266,6 +289,60 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
   >>> Chem.MolToCXSmiles(m)
   'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
 
+Reading molecule names
+----------------------
+
+If the SMILES/SMARTS and the optional CXSMILES extensions are followed by whitespace and another string, the SMILES/SMARTS parsers will interpret this as the molecule name:
+
+.. doctest::
+
+  >>> m = Chem.MolFromSmiles('CO carbon monoxide')
+  >>> m.GetProp('_Name')
+  'carbon monoxide'
+  >>> m2 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide')
+  >>> m2.GetAtomWithIdx(0).GetProp('atomLabel')
+  'C2'
+  >>> m2.GetProp('_Name')
+  'carbon monoxide'
+
+This can be disabled while still parsing the CXSMILES:
+
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.parseName = False
+  >>> m3 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m3.HasProp('_Name')
+  0
+  >>> m3.GetAtomWithIdx(0).GetProp('atomLabel')
+  'C2'
+
+
+Note that if you disable CXSMILES parsing but pass in a string which includes CXSMILES it will be interpreted as (part of) the name:
+
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.allowCXSMILES = False
+  >>> m4 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m4.GetProp('_Name')
+  '|$C2;O1$| carbon monoxide'
+
+
+Finally, if you disable parsing of both CXSMILES and names, then extra text in the SMILES/SMARTS string will result in errors:
+.. doctest::
+
+  >>> ps = Chem.SmilesParserParams()
+  >>> ps.allowCXSMILES = False
+  >>> ps.parseName = False
+  >>> m5 = Chem.MolFromSmiles('CO |$C2;O1$| carbon monoxide',ps)
+  >>> m5 is None
+  True
+  >>> m5 = Chem.MolFromSmiles('CO carbon monoxide',ps)
+  >>> m5 is None
+  True
+
+The examples in this sectin all used the SMILES parser, but the SMARTS parser behaves the same way.
 
 SMARTS Support and Extensions
 =============================
@@ -545,8 +622,10 @@ The following atom types are potential tetrahedral stereogenic atoms:
   - atoms with degree 4
   - atoms with degree 3 and one implicit H
   - P or As with degree 3 or 4
-  - N with degree 3 which is in a ring of size 3
-  - S or Se with degree 3 and a total valence of 4 or a total valence of 3 and a net charge of +1.
+  - N with degree 3 which is in a ring of size 3 or which is shared between at
+    least 3 rings (this last condition is an extension to the InChI rules) 
+  - S or Se with degree 3 and a total valence of 4 or a total valence of 3 and a
+    net charge of +1.
 
 
 Brief description of the ``findPotentialStereo()`` algorithm
@@ -1100,6 +1179,72 @@ Demonstrated here:
   >>> Chem.MolFromSmiles('O[CH2]O').HasSubstructMatch(Chem.MolFromSmiles('[CH2]'))
   False
 
+Generic ("Markush") queries in substructure matching
+****************************************************
+
+*Note* This section describes functionality added in the `2022.03.1` release of the RDKit.
+
+The RDKit supports a set of generic queries used as part of the Beilstein and
+Reaxys systems. Here's an example:
+
+.. _ary_group_figure :
+
+.. figure:: images/ary_group.png
+  :scale: 50 %
+
+
+Information about generic queries can be read in from CXSMILES or V3000 Mol
+blocks (as `SUP` SGroups) and then calling the function
+`Chem.SetGenericQueriesFromProperties()` with the molecule to be modified as an
+argument. These features are not used by default when doing substructure
+queries, but can be enabled by setting the option
+`SubstructMatchParameters.useGenericMatchers` to `True`
+
+
+Here's an example of using the features:
+
+.. doctest::
+
+  >>> q = Chem.MolFromSmarts('OC* |$;;ARY$|')
+  >>> Chem.SetGenericQueriesFromProperties(q)
+  >>> Chem.MolFromSmiles('C1CCCCC1CO').HasSubstructMatch(q)
+  True
+  >>> Chem.MolFromSmiles('c1ccccc1CO').HasSubstructMatch(q)
+  True
+  >>> ps = Chem.SubstructMatchParameters()
+  >>> ps.useGenericMatchers = True
+  >>> Chem.MolFromSmiles('C1CCCCC1CO').HasSubstructMatch(q,ps)
+  False
+  >>> Chem.MolFromSmiles('c1ccccc1CO').HasSubstructMatch(q,ps)
+  True
+
+
+
+
+Here are the supported groups and a brief description of what they mean:
+
+ ========================   =========
+  Alkyl (ALK)               alkyl side chains
+  Alkenyl (AEL)             alkenyl side chains                
+  Alkynyl (AYL)             alkynyl side chains               
+  Alkoxy (AOX)              alkoxy side chains                
+  Carbocyclic (CBC)         carbocyclic side chains                
+  Carbocycloalkyl (CAL)     cycloalkyl side chains
+  Carbocycloalkenyl (CEL)   cycloalkenyl side chains
+  Carboaryl (ARY)           all-carbon aryl side chains
+  Cyclic (CYC)              cyclic side chains
+  Acyclic(ACY)              acyclic side chains
+  Carboacyclic (ABC)        all-carbon acyclic side chains
+  Heteroacyclic (AHC)       acyclic side chains with at least one heteroatom
+  Heterocyclic (CHC)        cyclic side chains with at least one heteroatom
+  Heteroaryl (HAR)          aryl side chains with at least one heteroatom
+  NoCarbonRing (CXX)        ring containing no carbon atoms
+ ========================   =========
+ 
+For more detailed descriptions, look at the documentation for the C++ file GenericGroups.h
+
+
+
 
 Molecular Sanitization
 **********************
@@ -1194,6 +1339,8 @@ ROMol  (Mol in Python)
 +------------------------+---------------------------------------------------+
 | _smilesAtomOutputOrder |   The order in which atoms were written to SMILES |
 +------------------------+---------------------------------------------------+
+| _smilesBondOutputOrder |   The order in which bonds were written to SMILES |
++------------------------+---------------------------------------------------+
 
 Atom
 ----
@@ -1266,16 +1413,11 @@ What has been tested
   - The chemical reactions code
   - The Open3DAlign code
   - The MolDraw2D drawing code
+  - The InChI code, with InChI IUPAC v1.06
 
 Known Problems
 --------------
 
-  - InChI generation and (probably) parsing. This seems to be a
-    limitation of the IUPAC InChI code. In order to allow the code to
-    be used in a multi-threaded environment, a mutex is used to ensure
-    that only one thread is using the IUPAC code at a time. This is
-    only enabled if the RDKit is built with the ``RDK_TEST_MULTITHREADED``
-    option enabled.
   - The MolSuppliers (e.g. SDMolSupplier, SmilesMolSupplier?) change
     their internal state when a molecule is read. It is not safe to
     use one supplier on more than one thread.
@@ -1608,6 +1750,127 @@ Some concrete examples of this:
   False
 
 
+Query Features in Molecule Drawings
+***********************************
+
+Compactly and clearly including information about query features in molecule
+drawings is a challenging problem. This is definitely a work in progress, but
+this section describes what is currently supported.
+
+Query Bonds
+===========
+
+Here is an example image showing how different bond and query-bond types are rendered.
+
+.. image:: images/query_bonds.png
+
+There's clearly some room for improvement here, for example, it's not trivial to
+distinguish "Any" bonds from query bonds where no special handling has been
+implemented ("other" query types):
+
+.. image:: images/query_bonds.2.png
+
+Query Atoms
+===========
+
+At the moment the only real support for atomic query features is rendering of
+atom lists (and "NOT" atom lists); other atomic queries are rendered with a simple `?`:
+
+.. image:: images/query_atoms.png
+
+
+Conformer Generation
+********************
+
+Introduction
+============
+
+The RDKit can generate conformers for molecules using two different
+methods.  The original method used distance geometry. [#blaney]_
+The default algorithm followed is:
+
+1. The molecule's distance bounds matrix is calculated based on the connection table and a set of rules.
+
+2. The bounds matrix is smoothed using a triangle-bounds smoothing algorithm.
+
+3. A random distance matrix that satisfies the bounds matrix is generated.
+
+4. This distance matrix is embedded in 3D dimensions (producing coordinates for each atom).
+
+5. The resulting coordinates are cleaned up somewhat using the "distance geometry force field", based on distance constraints from the bounds matrix.
+
+The RDKit also has an implementation of the ETKDG method of Riniker and Landrum
+[#riniker2]_ which modifies step 5 above to also use torsion angle preferences
+from the Cambridge Structural Database (CSD) to correct the conformers after
+distance geometry has been used to generate them. The ETDKDG approach can be
+extended to include additional torsion terms for small rings and/or macrocycles [#wangETKDG3]_.
+
+When using the ETKDG approaches the quality of the conformers generated is
+generally good enough to allow them to be used "as is" (i.e. without a
+subsequent minimization step with another force field) for many applications.
+
+
+Parameters Controlling Conformer Generation
+===========================================
+
+A large number of parameters which allow control over the conformer generation
+process are available in the ``EmbedParameters`` class. A subset of particularly
+useful parameters are described here:
+
+- ``randomSeed``: (default -1) allows you to set a random seed to allow reproducible results
+
+- ``numThreads``: (default 1) sets the number of compute threads to be used when 
+  generating multiple conformers. If set to 0 this will use the maximum number
+  of threads allowed on your system.
+
+- ``useRandomCoords``: (default False) if set to True then random-coordinate embedding will be
+  done: instead of steps 3. and 4. above, the atoms will be randomly placed in a
+  box and then their positions will be minimized with the "distance geometry force
+  field" in step 5. This approach was described in reference [#spellmeyerDG]_
+
+- ``enforceChirality``: (default True) ensures that the chirality of specified
+  stereocenters in the molecule is preserved in the conformers.
+
+- ``embedFragsSeparately``: (default True) for molecules made up of multiple
+  disconnected fragments, this cause conformers of the fragments to be generated
+  independently of each other.
+
+- ``coordMap``: (default empty) can be used to provide 3D coordinates which will
+  be used to constrain the positions of some of the atoms in the molecule.
+
+- ``boundsMat``: (default empty) can be used to provide the distance bounds matrix
+  for the molecule.
+
+- ``useExpTorsionAnglePrefs``: (default False) use the ET part of ETKDG [#riniker2]_
+
+- ``useBasicKnowledge``: (default False) use the K part of ETKDG [#riniker2]_
+
+- ``ETVersion``: (default 1) specify the version of the standard torsion
+  definitions to use. NOTE for both ETKDGv2 and ETKDGv3 this should be 2 since ETKDGv3 uses the
+  ETKDGv2 definitions for standard torsions (apologies for the confusing numbering)
+
+- ``useSmallRingTorsions``: (default False) use the sr part of srETDKGv3 [#wangETKDG3]_
+
+- ``useMacrocycleTorsions``: (default False) use the macrocycle torsions from ETKDGv3 [#wangETKDG3]_
+
+- ``useMacrocycle14config``: (default False) use the 1-4 distance bounds from ETKDGv3 [#wangETKDG3]_
+
+- ``forceTransAmides``: (default True) constrain amide bonds to be trans
+
+- ``pruneRMsThresh``: (default -1.0) if >0.0 this turns on RMSD pruning of the conformers
+
+- ``onlyHeavyAtomsForRMS``: (default: False) toggles ignoring H atoms when doing RMSD pruning
+
+- ``useSymmetryForPruning``: (default True) uses symmetry to calculate the minimum
+  RMSD between two conformers when doing RMSD pruning. Note that enabling this
+  causes the RMSD computation to act as if `onlyHeavyAtomsForRMS` is set to true
+  (even if the parameter itself is set to False).
+
+
+Note that there are pre-configured parameter objects for the available ETKDG
+versions: ``ETKDG``, ``ETKDGv2``, ``ETKDGv3``, and ``srETKDGv3``
+
+
 
 Additional Information About the Fingerprints
 *********************************************
@@ -1726,7 +1989,7 @@ type definitions.
 .. [#smirks] http://www.daylight.com/dayhtml/doc/theory/theory.smirks.html
 .. [#smiles] http://www.daylight.com/dayhtml/doc/theory/theory.smiles.html
 .. [#smarts] http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html
-.. [#cxsmiles] https://docs.chemaxon.com/display/docs/ChemAxon+Extended+SMILES+and+SMARTS+-+CXSMILES+and+CXSMARTS
+.. [#cxsmiles] https://docs.chemaxon.com/display/docs/chemaxon-extended-smiles-and-smarts-cxsmiles-and-cxsmarts.md
 .. [#intramolRxn] Thanks to James Davidson for this example.
 .. [#chiralRxn] Thanks to JP Ebejer and Paul Finn for this example.
 .. [#daylightFP] http://www.daylight.com/dayhtml/doc/theory/theory.finger.html
@@ -1735,16 +1998,21 @@ type definitions.
 .. [#morganFP] http://pubs.acs.org/doi/abs/10.1021/ci100050t
 .. [#gobbiFeats] https://doi.org/10.1002/(SICI)1097-0290(199824)61:1%3C47::AID-BIT9%3E3.0.CO;2-Z
 .. [#labutecip] Labute, P. "An Efficient Algorithm for the Determination of Topological RS Chirality" Journal of the Chemical Computing Group (1996)
-.. [#newcip]  Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D. "Algorithmic Analysis of Cahn−Ingold−Prelog Rules of Stereochemistry: Proposals for Revised Rules and a Guide for Machine Implementation." J. Chem. Inf. Model. 2018, 58, 1755-1765.
+.. [#newcip]  Hanson, R. M., Musacchio, S., Mayfield, J. W., Vainio, M. J., Yerin, A., Redkin, D. "Algorithmic Analysis of Cahn--Ingold--Prelog Rules of Stereochemistry: Proposals for Revised Rules and a Guide for Machine Implementation." J. Chem. Inf. Model. 2018, 58, 1755-1765.
 .. [#nadinecanon] Schneider, N., Sayle, R. A. & Landrum, G. A. Get Your Atoms in Order-An Open-Source Implementation of a Novel and Robust Molecular Canonicalization Algorithm. J. Chem. Inf. Model. 2015, 55, 2111-2120.
 .. [#eitherend] It's ok to have two identically ranked atoms on the two ends of the bond, but having two identically ranked atoms on the same end indicates that it's not a potential stereobond.
+.. [#blaney] Blaney, J. M.; Dixon, J. S. "Distance Geometry in Molecular Modeling".  *Reviews in Computational Chemistry*; VCH: New York, 1994.
+.. [#riniker2] Riniker, S.; Landrum, G. A. "Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation"  *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015) https://doi.org/10.1021/acs.jcim.5b00654
+.. [#wangETKDG3] Wang, S.; Witek, J.; Landrum, G. A.; Riniker, S. "Improving Conformer Generation for Small Rings and Macrocycles Based on Distance Geometry and Experimental Torsional-Angle Preferences." *J. Chem. Inf. Model.* **60**, 2044–58 (2020). https://doi.org/10.1021/acs.jcim.0c00025
+.. [#spellmeyerDG] Spellmeyer, D. C.; Wong, A. K.; Bower, M. J.; Blaney, J. M. "Conformational analysis using distance geometry methods." *J. Mol. Graph. Modell.* **15**, 18–36 (1997). https://doi.org/10.1016/s1093-3263(97)00014-4
+
 
 License
 *******
 
 .. image:: images/picture_5.png
 
-This document is copyright (C) 2007-2019 by Greg Landrum
+This document is copyright (C) 2007-2021 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License.
 To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/ or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.

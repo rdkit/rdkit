@@ -20,15 +20,15 @@ SELECT reaction_from_smiles('c1ccccc1>CC(=O)O>c1cccnc1');
 (1 row)
 
 SELECT reaction_from_smarts('[c1:1][c:2][c:3][c:4]c[c1:5]>CC(=O)O>[c1:1][c:2][c:3][c:4]n[c1:5]');
-                              reaction_from_smarts                               
----------------------------------------------------------------------------------
- c([cH:4][cH:3][cH:2][cH2:1])[cH2:5]>CC(=O)O>n([cH:4][cH:3][cH:2][cH2:1])[cH2:5]
+                       reaction_from_smarts                        
+-------------------------------------------------------------------
+ c([c:4][c:3][c:2][c:1])[c:5]>CC(O)=O>n([c:4][c:3][c:2][c:1])[c:5]
 (1 row)
 
 SELECT reaction_from_smarts('C(F)(F)F.[c1:1][c:2][c:3][c:4]c[c1:5]>CC(=O)O>[c1:1][c:2][c:3][c:4]n[c1:5]');
-                                  reaction_from_smarts                                  
-----------------------------------------------------------------------------------------
- c([cH:4][cH:3][cH:2][cH2:1])[cH2:5]>CC(=O)O.FC(F)F>n([cH:4][cH:3][cH:2][cH2:1])[cH2:5]
+                           reaction_from_smarts                           
+--------------------------------------------------------------------------
+ c([c:4][c:3][c:2][c:1])[c:5]>CC(O)=O.FC(F)F>n([c:4][c:3][c:2][c:1])[c:5]
 (1 row)
 
 SELECT reaction_from_smarts('c1ccc[n,c]c1>>c1nccnc1');
@@ -201,9 +201,9 @@ $MOL
   5  6  4  0                                                         
   6  1  4  0                                                         
 M  END');
- reaction_from_ctab 
---------------------
- c1ccccc1>>c1ccncc1
+       reaction_from_ctab       
+--------------------------------
+ C1:C:C:C:C:C:1>>C1:C:C:N:C:C:1
 (1 row)
 
 CREATE TABLE tmp (id integer, tmprxn text);
@@ -587,9 +587,9 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',2), reaction_st
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',2), reaction_structural_bfp('c1ncccc1>>c1ncncc1',2));
-   tanimoto_sml    
--------------------
- 0.461538461538462
+ tanimoto_sml 
+--------------
+          0.4
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',2), reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',2));
@@ -599,9 +599,9 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',2)
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',2), reaction_structural_bfp('c1ncccc1>[Na+]>c1ncncc1',2));
-   tanimoto_sml    
--------------------
- 0.461538461538462
+ tanimoto_sml 
+--------------
+          0.4
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',3), reaction_structural_bfp('c1ccccc1>>c1ccncc1',3));
@@ -782,9 +782,9 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',2), reaction_st
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',2), reaction_structural_bfp('c1ncccc1>>c1ncncc1',2));
-   tanimoto_sml    
--------------------
- 0.444444444444444
+ tanimoto_sml 
+--------------
+          0.4
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',2), reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',2));
@@ -794,9 +794,9 @@ SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',2)
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>CC(=O)O.[Na+]>c1ccncc1',2), reaction_structural_bfp('c1ncccc1>[Na+]>c1ncncc1',2));
-   tanimoto_sml    
--------------------
- 0.444444444444444
+ tanimoto_sml 
+--------------
+          0.4
 (1 row)
 
 SELECT tanimoto_sml(reaction_structural_bfp('c1ccccc1>>c1ccncc1',3), reaction_structural_bfp('c1ccccc1>>c1ccncc1',3));

@@ -28,7 +28,7 @@ using namespace std;
 struct Foo {
   int bar{0};
   float baz{0.f};
-  Foo()  {}
+  Foo() {}
   Foo(int bar, float baz) : bar(bar), baz(baz) {}
   ~Foo() { std::cerr << "deleted!" << std::endl; }
 };

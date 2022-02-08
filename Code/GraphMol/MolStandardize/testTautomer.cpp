@@ -23,16 +23,9 @@ void testEnumerator() {
 
   std::string rdbase = getenv("RDBASE");
   std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
+      rdbase + "/Code/GraphMol/MolStandardize/test_data/tautomerTransforms.in";
   auto tautparams = std::unique_ptr<TautomerCatalogParams>(
       new TautomerCatalogParams(tautomerFile));
-
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -387,9 +380,16 @@ void testEnumeratorParams() {
   {
     TautomerEnumerator te;
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
-    TEST_ASSERT(res68.size() == 292);
     TEST_ASSERT(res68.status() ==
                 TautomerEnumeratorStatus::MaxTransformsReached);
+    TEST_ASSERT(res68.size() == 252);
+  }
+  {  // test v1 of the tautomerization parameters
+    std::unique_ptr<TautomerEnumerator> te(getV1TautomerEnumerator());
+    TautomerEnumeratorResult res68 = te->enumerate(*m68);
+    TEST_ASSERT(res68.status() ==
+                TautomerEnumeratorStatus::MaxTransformsReached);
+    TEST_ASSERT(res68.size() == 292);
   }
   {
     CleanupParameters params;
@@ -602,12 +602,13 @@ void testEnumeratorCallback() {
     TautomerEnumerator te(params);
     te.setCallback(new MyTautomerEnumeratorCallback(10000.0));
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
+    std::cerr << res68.size() << std::endl;
     // either the enumeration completed
     // or it ran very slowly and was canceled due to timeout
     bool hasReachedTimeout =
-        (res68.size() < 375 &&
+        (res68.size() < 295 &&
          res68.status() == TautomerEnumeratorStatus::Canceled);
-    bool hasCompleted = (res68.size() == 375 &&
+    bool hasCompleted = (res68.size() == 295 &&
                          res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (10 s)"
@@ -618,6 +619,15 @@ void testEnumeratorCallback() {
     }
     TEST_ASSERT(hasReachedTimeout || hasCompleted);
     TEST_ASSERT(hasReachedTimeout ^ hasCompleted);
+  }
+  {
+    // GitHub #4736
+    TautomerEnumerator te(params);
+    te.setCallback(new MyTautomerEnumeratorCallback(50.0));
+    TautomerEnumeratorResult res68 = te.enumerate(*m68);
+    TautomerEnumerator teCopy(te);
+    TautomerEnumeratorResult res68Copy = teCopy.enumerate(*m68);
+    TEST_ASSERT(res68.status() == res68Copy.status());
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -697,17 +707,8 @@ void testCanonicalize() {
       << "-----------------------\n Testing tautomer canonicalization"
       << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -728,17 +729,8 @@ void testPickCanonical() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing pickCanonical"
                        << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -762,17 +754,8 @@ void testCustomScoreFunc() {
       << "-----------------------\n Testing custom scoring functions"
       << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -840,17 +823,8 @@ void testEnumerationProblems() {
       << "-----------------------\n Testing tautomer enumeration problems"
       << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -882,18 +856,8 @@ void testPickCanonical2() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing pickCanonical"
                        << std::endl;
 
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
-
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
 
@@ -926,18 +890,8 @@ void testEnumerateDetails() {
       << "-----------------------\n Testing getting details back "
          "from tautomer enumeration"
       << std::endl;
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
-
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
@@ -991,17 +945,8 @@ void testGithub2990() {
                           "Tautomer enumeration "
                           "should remove stereo in all tautomers"
                        << std::endl;
-  std::string rdbase = getenv("RDBASE");
-  std::string tautomerFile =
-      rdbase + "/Data/MolStandardize/tautomerTransforms.in";
-  auto tautparams = std::unique_ptr<TautomerCatalogParams>(
-      new TautomerCatalogParams(tautomerFile));
-  // DEPRECATED, remove from here in release 2021.01
-  {
-    unsigned int ntransforms = tautparams->getNumTautomers();
-    TEST_ASSERT(ntransforms == 36);
-  }
-  // DEPRECATED, remove until here in release 2021.01
+  auto tautparams =
+      std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
   TEST_ASSERT(ntransforms == 36);
@@ -1312,7 +1257,7 @@ void testTautomerEnumeratorResult_const_iterator() {
   TautomerEnumerator te;
   auto res = te.enumerate(*mol);
   TEST_ASSERT(res.status() == TautomerEnumeratorStatus::Completed);
-  TEST_ASSERT(res.size() == 12);
+  TEST_ASSERT(res.size() == 6);
   auto it = res.begin();
   auto it2 = res.begin();
   // Test semantic requirements of bidirectional_iterator
@@ -1411,8 +1356,27 @@ void testGithub3430() {
                    [](const ROMOL_SPTR &m) {
                      return TautomerScoringFunctions::scoreTautomer(*m);
                    });
+
     std::sort(scores.begin(), scores.end(), std::greater<int>());
     TEST_ASSERT(scores[1] < scores[0]);
+  }
+}
+
+void testGithub3755() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n testGithub3755"
+                       << std::endl;
+  // hydrates, aminals and hemiaminals should be scored lower than
+  // carboxylic acids, amides, amidines, and guanidines
+  std::vector<std::pair<std::string, std::string>> orig_vs_expected{
+      {"OC(=O)C(N)CO", "NC(CO)C(=O)O"}, {"C([C@@H](C(=O)O)N)O", "NC(CO)C(=O)O"},
+      {"OC(=O)C(N)CN", "NCC(N)C(=O)O"}, {"NC(=O)C(N)CO", "NC(=O)C(N)CO"},
+      {"NC(=N)C(N)CO", "N=C(N)C(N)CO"}, {"NC(=N)NC(N)CO", "N=C(N)NC(N)CO"}};
+  TautomerEnumerator te;
+  for (const auto &pair : orig_vs_expected) {
+    ROMOL_SPTR orig(SmilesToMol(pair.first));
+    TEST_ASSERT(orig);
+    ROMOL_SPTR canonical(te.canonicalize(*orig));
+    TEST_ASSERT(MolToSmiles(*canonical) == pair.second);
   }
 }
 
@@ -1433,5 +1397,6 @@ int main() {
   testPickCanonicalCIPChangeOnChiralCenter();
   testTautomerEnumeratorResult_const_iterator();
   testGithub3430();
+  testGithub3755();
   return 0;
 }

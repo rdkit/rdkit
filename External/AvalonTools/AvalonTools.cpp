@@ -1,4 +1,12 @@
-// $Id: AvalonTools.cpp 2355 2013-01-08 05:35:03Z glandrum $
+//
+//  Copyright (C) 2008-2021 Greg Landrum and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 //
 // Created by Greg Landrum, July 2008
 //
@@ -11,6 +19,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <Geometry/point.h>
 #include "AvalonTools.h"
 
@@ -221,22 +230,54 @@ void getAvalonFP(const ROMol &mol, std::vector<boost::uint32_t> &res,
 }
 
 unsigned int set2DCoords(ROMol &mol, bool clearConfs) {
+  bool origMolHasHs = false;
+  for (const auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 1 && !atom->getIsotope()) {
+      origMolHasHs = true;
+      break;
+    }
+  }
   auto smiles = MolToSmiles(mol);
   struct reaccs_molecule_t *mp = stringToReaccs(smiles, true);
   struct reaccs_molecule_t *mp2 = reaccsGetCoords(mp);
-  TEST_ASSERT(mp2->n_atoms == mol.getNumAtoms());
+  TEST_ASSERT(mp2->n_atoms >= mol.getNumAtoms());
 
   auto *conf = new RDKit::Conformer(mol.getNumAtoms());
   conf->set3D(false);
 
-  // Atoms in the intermediate smiles representation may be ordered
-  // differently compared to the original input molecule.
-  // Make sure that output coordinates are assigned in the correct order.
-  std::vector<unsigned int> atomOrdering;
-  mol.getProp(common_properties::_smilesAtomOutputOrder, atomOrdering);
+  std::vector<int> matchedIndices(mol.getNumAtoms());
+  // the toolkit may add chiral Hs without putting them at the end of the list
+  //    we need to be able to ignore them:
+  if (origMolHasHs || mp2->n_atoms > mol.getNumAtoms()) {
+    // the toolkit may have rearranged the atoms, we need to do a substructure
+    // match to figure out what's what
+    char *mb = MolToMolStr(mp2);
+    bool sanitize = false;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> avmol(MolBlockToMol(mb, sanitize, removeHs));
+    MyFree(mb);
+    CHECK_INVARIANT(avmol, "could not parse mol block from avalon toolkit");
+    TEST_ASSERT(avmol);
+    auto match = SubstructMatch(*avmol, mol);
+    CHECK_INVARIANT(
+        !match.empty(),
+        "no substructure match found between avalon mol and input mol");
+    for (const auto &pr : match[0]) {
+      matchedIndices[pr.first] = pr.second;
+    }
+  } else {
+    // Atoms in the intermediate smiles representation may be ordered
+    // differently compared to the original input molecule.
+    // Make sure that output coordinates are assigned in the correct order.
+    std::vector<unsigned int> atomOrdering;
+    mol.getProp(common_properties::_smilesAtomOutputOrder, atomOrdering);
+    for (size_t ai = 0; ai < mol.getNumAtoms(); ++ai) {
+      matchedIndices[ai] = atomOrdering[ai];
+    }
+  }
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    auto x = mp2->atom_array[atomOrdering[i]].x;
-    auto y = mp2->atom_array[atomOrdering[i]].y;
+    auto x = mp2->atom_array[matchedIndices[i]].x;
+    auto y = mp2->atom_array[matchedIndices[i]].y;
     RDGeom::Point3D loc(x, y, 0.);
     conf->setAtomPos(i, loc);
   }

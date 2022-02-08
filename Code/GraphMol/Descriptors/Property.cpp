@@ -48,11 +48,14 @@ namespace Descriptors {
 namespace {
 void _registerDescriptors() {
   REGISTER_DESCRIPTOR(exactmw, calcExactMW);
+  REGISTER_DESCRIPTOR(amw, calcAMW);
   REGISTER_DESCRIPTOR(lipinskiHBA, calcLipinskiHBA);
   REGISTER_DESCRIPTOR(lipinskiHBD, calcLipinskiHBD);
   REGISTER_DESCRIPTOR(NumRotatableBonds, calcNumRotatableBonds);
   REGISTER_DESCRIPTOR(NumHBD, calcNumHBD);
   REGISTER_DESCRIPTOR(NumHBA, calcNumHBA);
+  REGISTER_DESCRIPTOR(NumHeavyAtoms, calcNumHeavyAtoms);
+  REGISTER_DESCRIPTOR(NumAtoms, calcNumAtoms);
   REGISTER_DESCRIPTOR(NumHeteroatoms, calcNumHeteroatoms);
   REGISTER_DESCRIPTOR(NumAmideBonds, calcNumAmideBonds);
   REGISTER_DESCRIPTOR(FractionCSP3, calcFractionCSP3);
@@ -73,8 +76,23 @@ void _registerDescriptors() {
   REGISTER_DESCRIPTOR(tpsa, calcTPSA);
   REGISTER_DESCRIPTOR(CrippenClogP, calcClogP);
   REGISTER_DESCRIPTOR(CrippenMR, calcMR);
+  REGISTER_DESCRIPTOR(chi0v, calcChi0v);
+  REGISTER_DESCRIPTOR(chi1v, calcChi1v);
+  REGISTER_DESCRIPTOR(chi2v, calcChi3v);
+  REGISTER_DESCRIPTOR(chi3v, calcChi3v);
+  REGISTER_DESCRIPTOR(chi4v, calcChi4v);
+  REGISTER_DESCRIPTOR(chi0n, calcChi0n);
+  REGISTER_DESCRIPTOR(chi1n, calcChi1n);
+  REGISTER_DESCRIPTOR(chi2n, calcChi3n);
+  REGISTER_DESCRIPTOR(chi3n, calcChi3n);
+  REGISTER_DESCRIPTOR(chi4n, calcChi4n);
+  REGISTER_DESCRIPTOR(hallKierAlpha, calcHallKierAlpha);
+  REGISTER_DESCRIPTOR(kappa1, calcKappa1);
+  REGISTER_DESCRIPTOR(kappa2, calcKappa2);
+  REGISTER_DESCRIPTOR(kappa3, calcKappa3);
+  REGISTER_DESCRIPTOR(Phi, calcPhi);
 };
-}
+}  // namespace
 
 void registerDescriptors() {
 #ifdef RDK_THREADSAFE_SSS
@@ -105,8 +123,7 @@ int Properties::registerProperty(PropertyFunctor *prop) {
 std::vector<std::string> Properties::getAvailableProperties() {
   registerDescriptors();
   std::vector<std::string> names;
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
-                 Properties::registry) {
+  for (auto prop : Properties::registry) {
     names.push_back(prop->getName());
   }
   return names;
@@ -115,8 +132,7 @@ std::vector<std::string> Properties::getAvailableProperties() {
 boost::shared_ptr<PropertyFunctor> Properties::getProperty(
     const std::string &name) {
   registerDescriptors();
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
-                 Properties::registry) {
+  for (auto prop : Properties::registry) {
     if (prop.get() && prop->getName() == name) {
       return prop;
     }
@@ -126,22 +142,21 @@ boost::shared_ptr<PropertyFunctor> Properties::getProperty(
 
 Properties::Properties() : m_properties() {
   registerDescriptors();
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop,
-                 Properties::registry) {
+  for (auto prop : Properties::registry) {
     m_properties.push_back(prop);
   }
 }
 
 Properties::Properties(const std::vector<std::string> &propNames) {
   registerDescriptors();
-  BOOST_FOREACH (const std::string &name, propNames) {
+  for (const auto &name : propNames) {
     m_properties.push_back(Properties::getProperty(name));
   }
 }
 
 std::vector<std::string> Properties::getPropertyNames() const {
   std::vector<std::string> names;
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  for (auto prop : m_properties) {
     names.push_back(prop->getName());
   }
   return names;
@@ -151,7 +166,7 @@ std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol,
                                                   bool annotate) const {
   std::vector<double> res;
   res.reserve(m_properties.size());
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  for (auto prop : m_properties) {
     res.push_back((*prop)(mol));
     if (annotate) {
       mol.setProp<double>(prop->getName(), (*prop)(mol));
@@ -161,7 +176,7 @@ std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol,
 }
 
 void Properties::annotateProperties(RDKit::ROMol &mol) const {
-  BOOST_FOREACH (boost::shared_ptr<PropertyFunctor> prop, m_properties) {
+  for (auto prop : m_properties) {
     mol.setProp<double>(prop->getName(), (*prop)(mol));
   }
 }
@@ -172,5 +187,5 @@ PROP_RANGE_QUERY *makePropertyRangeQuery(const std::string &name, double min,
   filter->setDataFunc(Properties::getProperty(name)->d_dataFunc);
   return filter;
 }
-}
-}
+}  // namespace Descriptors
+}  // namespace RDKit

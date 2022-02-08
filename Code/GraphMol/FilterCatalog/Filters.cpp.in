@@ -652,8 +652,9 @@ const unsigned int NUM_NIH_PROPS =
 // doi:10.1021/jm901137j.
 // # Scope: PAINS filters (family A)
 //
-{{ PAINS_A }}
-
+{
+  { PAINS_A }
+}
 
 const unsigned int NUM_PAINS_A =
     static_cast<unsigned int>(sizeof(PAINS_A) / sizeof(FilterData_t));
@@ -681,8 +682,9 @@ const unsigned int NUM_PAINS_A_PROPS =
 // # imidazole_A(19)
 // n:1:c(:n(:c(:c:1-c:2:c:c:c:c:c:2)-c:3:c:c:c:c:c:3)-[#1])-[#6]:,=[!#1] 0
 //
-{{ PAINS_B }}
-
+{
+  { PAINS_B }
+}
 
 const unsigned int NUM_PAINS_B =
     static_cast<unsigned int>(sizeof(PAINS_B) / sizeof(FilterData_t));
@@ -706,9 +708,10 @@ const unsigned int NUM_PAINS_B_PROPS =
 // doi:10.1021/jm901137j.
 // # Scope: PAINS filters (family C)
 //
-{{ PAINS_C }}
+{
+  { PAINS_C }
+}
 
-  
 const unsigned int NUM_PAINS_C =
     static_cast<unsigned int>(sizeof(PAINS_C) / sizeof(FilterData_t));
 
@@ -866,4 +869,4 @@ const FilterProperty_t* GetFilterProperties(
       return 0;
   }
 }
-}
+}  // namespace RDKit

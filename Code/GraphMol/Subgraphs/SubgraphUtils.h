@@ -12,7 +12,10 @@
 #define _RD_SUBGRAPHUTILS_H_
 
 #include "Subgraphs.h"
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/tuple/tuple.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <cstdint>
 
 namespace RDKit {

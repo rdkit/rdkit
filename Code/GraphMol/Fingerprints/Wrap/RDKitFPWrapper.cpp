@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include <boost/python.hpp>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
+#include <RDBoost/Wrap.h>
 
 using namespace RDKit;
 namespace python = boost::python;
@@ -31,16 +32,15 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-  python::extract<std::vector<std::uint32_t>> countBoundsE(py_countBounds);
-  if (countBoundsE.check() && !countBoundsE().empty()) {
-    countBounds = countBoundsE();
-  }
 
-  const std::vector<std::uint32_t> countBoundsC = countBounds;
+  if (py_countBounds) {
+    auto tmp = pythonObjectToVect<std::uint32_t>(py_countBounds);
+    countBounds = *tmp;
+  }
 
   return RDKitFP::getRDKitFPGenerator<OutputType>(
       minPath, maxPath, useHs, branchedPaths, useBondOrder,
-      atomInvariantsGenerator, countSimulation, countBoundsC, fpSize,
+      atomInvariantsGenerator, countSimulation, countBounds, fpSize,
       numBitsPerFeature, true);
 }
 
@@ -68,7 +68,7 @@ void exportRDKit() {
       "linear paths\n"
       "    - useBondOrder: toggles inclusion of bond orders in the path "
       "hashes\n"
-      "    - useCountSimulation:  if set, use count simulation while  "
+      "    - countSimulation:  if set, use count simulation while  "
       "generating the fingerprint\n"
       "    - countBounds: boundaries for count simulation, corresponding bit "
       "will be  set if the count is higher than the number provided for that "
@@ -79,6 +79,11 @@ void exportRDKit() {
       "found\n"
       "    - atomInvariantsGenerator: atom invariants to be used during "
       "fingerprint generation\n\n"
+      "This generator supports the following AdditionalOutput types:\n"
+      "    - atomToBits: which bits each atom is involved in\n"
+      "    - atomCounts: how many bits each atom sets\n"
+      "    - bitPaths: map from bitId to vectors of bond indices for the "
+      "individual subgraphs\n\n"
       "  RETURNS: FingerprintGenerator\n\n",
       python::return_value_policy<python::manage_new_object>());
 

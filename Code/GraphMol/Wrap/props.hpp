@@ -104,11 +104,12 @@ T GetProp(RDOb *ob, const char *key) {
       throw python::error_already_set();
     }
     return res;
-  } catch (const boost::bad_any_cast &) {
+  } catch (const std::exception &e) {
     throw ValueErrorException(std::string("key `") + key +
                               "` exists but does not result in " +
-                              GetTypeName<T>());
+                              GetTypeName<T>() + " reason: " + e.what());
   }
+
   return res;
 }
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -35,6 +35,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentRemover {
                   bool skip_if_all_match = false);
   FragmentRemover(std::istream &fragmentStream, bool leave_last,
                   bool skip_if_all_match = false);
+  FragmentRemover(const std::vector<std::pair<std::string, std::string>> &data,
+                  bool leave_last, bool skip_if_all_match = false);
   ~FragmentRemover();
 
   //! making FragmentRemover objects non-copyable
@@ -55,13 +57,30 @@ class RDKIT_MOLSTANDARDIZE_EXPORT FragmentRemover {
 
 };  // class FragmentRemover
 
+// caller owns the returned pointer
+inline FragmentRemover *fragmentRemoverFromParams(
+    const CleanupParameters &params, bool leave_last = true,
+    bool skip_if_all_match = false) {
+  if (params.fragmentData.empty()) {
+    return new FragmentRemover(params.fragmentFile, leave_last,
+                               skip_if_all_match);
+  } else {
+    return new FragmentRemover(params.fragmentData, leave_last,
+                               skip_if_all_match);
+  }
+}
+
 class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
  public:
-  //  LargestFragmentChooser(){};
-  LargestFragmentChooser(bool prefer_organic = false)
-      : PREFER_ORGANIC(prefer_organic){};
+  //  LargestFragmentChooser() {}
+  LargestFragmentChooser(bool preferOrganic = false)
+      : preferOrganic(preferOrganic) {}
+  LargestFragmentChooser(const CleanupParameters &params)
+      : preferOrganic(params.preferOrganic),
+        useAtomCount(params.largestFragmentChooserUseAtomCount),
+        countHeavyAtomsOnly(params.largestFragmentChooserCountHeavyAtomsOnly) {}
   LargestFragmentChooser(const LargestFragmentChooser &other);
-  ~LargestFragmentChooser(){};
+  ~LargestFragmentChooser() = default;
 
   ROMol *choose(const ROMol &mol);
   struct Largest {
@@ -76,7 +95,9 @@ class RDKIT_MOLSTANDARDIZE_EXPORT LargestFragmentChooser {
   };
 
  private:
-  bool PREFER_ORGANIC;
+  bool preferOrganic;
+  bool useAtomCount{true};
+  bool countHeavyAtomsOnly{false};
 };  // class LargestFragmentChooser
 }  // namespace MolStandardize
 }  // namespace RDKit

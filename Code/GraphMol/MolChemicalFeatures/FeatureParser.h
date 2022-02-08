@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <utility>
 #include "MolChemicalFeatureDef.h"
 
 namespace RDKit {
@@ -24,11 +25,11 @@ class RDKIT_MOLCHEMICALFEATURES_EXPORT FeatureFileParseException
  public:
   FeatureFileParseException(unsigned int lineNo, std::string line,
                             std::string msg)
-      : d_lineNo(lineNo), d_line(line), d_msg(msg){};
-  unsigned int lineNo() const { return d_lineNo; };
-  std::string line() const { return d_line; };
-  const char *what() const noexcept override { return d_msg.c_str(); };
-  ~FeatureFileParseException() noexcept {};
+      : d_lineNo(lineNo), d_line(std::move(line)), d_msg(std::move(msg)) {}
+  unsigned int lineNo() const { return d_lineNo; }
+  std::string line() const { return d_line; }
+  const char *what() const noexcept override { return d_msg.c_str(); }
+  ~FeatureFileParseException() noexcept override = default;
 
  private:
   unsigned int d_lineNo;

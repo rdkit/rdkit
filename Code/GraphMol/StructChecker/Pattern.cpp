@@ -72,8 +72,8 @@ AABondType convertBondType(RDKit::Bond::BondType rdbt) {
 }
 
 /*
-* Checks if the ligand is compatible with the bond and the atom.
-*/
+ * Checks if the ligand is compatible with the bond and the atom.
+ */
 bool LigandMatches(const Atom &a, const Bond &b, const Ligand &l,
                    bool use_charge) {
   if (l.BondType != ANY_BOND && !isBondTypeMatch(b, l.BondType)) return false;
@@ -324,11 +324,11 @@ static bool RecMatchNeigh(std::vector<Neighbourhood> &matched_pairs,
 }
 
 /*
-* Recursively searches *mp for the next atom to be appended to
-* match[0..level]. Returns TRUE if all ligands in aap are mapped
-* successfully. nbp[i] describes the neighbour bonds and atoms
-* of atom i.
-*/
+ * Recursively searches *mp for the next atom to be appended to
+ * match[0..level]. Returns TRUE if all ligands in aap are mapped
+ * successfully. nbp[i] describes the neighbour bonds and atoms
+ * of atom i.
+ */
 bool RecMatch(const ROMol &mol, unsigned atomIdx, const AugmentedAtom &aa,
               const std::vector<Neighbourhood> &nbp, bool verbose) {
   const Neighbourhood &nbph = nbp[atomIdx];
@@ -430,11 +430,11 @@ aa.Ligands.size()<<" "<< aa.ShortName <<"\n";
 }
 */
 /*
-* Tests if atom i in *mp matches the augmented atom description
-* *aap. nbp[] is used to speed up access to neighbour atoms and
-* bonds. The first matching atom mapping is placed into match[1..].
-* i is stored in match[0].
-*/
+ * Tests if atom i in *mp matches the augmented atom description
+ * *aap. nbp[] is used to speed up access to neighbour atoms and
+ * bonds. The first matching atom mapping is placed into match[1..].
+ * i is stored in match[0].
+ */
 bool AAMatch(const ROMol &mol, unsigned i,
              //    std::vector<unsigned> &match,
              const AugmentedAtom &aa,
@@ -473,10 +473,10 @@ bool AAMatch(const ROMol &mol, unsigned i,
 }
 
 /*
-* Computes how many basis rings each bond shares and how many
-* ring bonds are attached to an atom. The results are stored in
-* atom_status[] and bond_status[] respectively.
-*/
+ * Computes how many basis rings each bond shares and how many
+ * ring bonds are attached to an atom. The results are stored in
+ * atom_status[] and bond_status[] respectively.
+ */
 static void RingState(const ROMol &mol, std::vector<unsigned> &atom_status,
                       std::vector<unsigned> &bond_status) {
   atom_status.resize(mol.getNumAtoms());
@@ -501,10 +501,10 @@ static void RingState(const ROMol &mol, std::vector<unsigned> &atom_status,
 }
 
 /*
-* Checks if every atom in *mp matches one of the augmented atoms
-* in good_atoms[0..ngood-1]. It returns TRUE if all atoms gave a match or FALSE
-* otherwise.
-*/
+ * Checks if every atom in *mp matches one of the augmented atoms
+ * in good_atoms[0..ngood-1]. It returns TRUE if all atoms gave a match or FALSE
+ * otherwise.
+ */
 bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
                 bool verbose) {
   if (good_atoms.empty()) return true;
@@ -565,8 +565,8 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
       if (neighbours[i].Atoms.size() == good_atoms[j].Ligands.size() &&
           AAMatch(mol, i, good_atoms[j], atom_status, neighbours, verbose)) {
         if (verbose) {
-          BOOST_LOG(rdInfoLog) << "AAMatch idx=" << i << " aa_idx=" << j
-                               << " ret TRUE !\n";
+          BOOST_LOG(rdInfoLog)
+              << "AAMatch idx=" << i << " aa_idx=" << j << " ret TRUE !\n";
         }
         // DEBUG:
         //        if (verbose && j >= 12 && j <= 21 &&
@@ -590,8 +590,8 @@ bool CheckAtoms(const ROMol &mol, const std::vector<AugmentedAtom> &good_atoms,
                            << LogNeighbourhood(mol, i, neighbours) << std::endl;
 
     if (verbose && j == good_atoms.size()) {  // failed this atom .. log it
-      BOOST_LOG(rdWarningLog) << LogNeighbourhood(mol, i, neighbours)
-                              << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << LogNeighbourhood(mol, i, neighbours) << std::endl;
     }
   }
   return (nmatch == mol.getNumAtoms());

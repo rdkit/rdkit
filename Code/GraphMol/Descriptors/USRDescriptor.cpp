@@ -35,7 +35,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <boost/foreach.hpp>
 #include "USRDescriptor.h"
 
 #include <boost/flyweight.hpp>
@@ -51,7 +50,7 @@ void calcDistances(const RDGeom::Point3DConstPtrVect &coords,
   distances.resize(coords.size());
   unsigned int i = 0;
   // loop over coordinates
-  BOOST_FOREACH (const RDGeom::Point3D *tpp, coords) {
+  for (const auto *tpp : coords) {
     distances[i++] = (*tpp - point).length();
   }
 }
@@ -62,7 +61,9 @@ void calcCentroid(const RDGeom::Point3DConstPtrVect &coords,
   // set pt to zero
   pt *= 0.0;
   // loop over coordinates
-  BOOST_FOREACH (const RDGeom::Point3D *opt, coords) { pt += *opt; }
+  for (const auto *opt : coords) {
+    pt += *opt;
+  }
   pt /= coords.size();
 }
 
@@ -164,7 +165,7 @@ void getAtomIdsForFeatures(const ROMol &mol,
                "atomIds must have be the same size as featureSmarts");
   std::vector<const ROMol *> featureMatchers;
   featureMatchers.reserve(numFeatures);
-  BOOST_FOREACH (const std::string &feature, featureSmarts) {
+  for (const auto &feature : featureSmarts) {
     const ROMol *matcher = pattern_flyweight(feature).get().getMatcher();
     featureMatchers.push_back(matcher);
   }
@@ -172,10 +173,9 @@ void getAtomIdsForFeatures(const ROMol &mol,
     std::vector<MatchVectType> matchVect;
     // to maintain thread safety, we have to copy the pattern molecules:
     SubstructMatch(mol, ROMol(*featureMatchers[i], true), matchVect);
-    BOOST_FOREACH (MatchVectType mv, matchVect) {
-      for (MatchVectType::const_iterator mIt = mv.begin(); mIt != mv.end();
-           ++mIt) {
-        atomIds[i].push_back(mIt->second);
+    for (const auto &mv : matchVect) {
+      for (auto mi : mv) {
+        atomIds[i].push_back(mi.second);
       }
     }
   }  // end loop over features
@@ -249,11 +249,11 @@ void USRCAT(const ROMol &mol, std::vector<double> &descriptor,
 
   // loop over the atom selections
   unsigned int featIdx = 12;
-  BOOST_FOREACH (std::vector<unsigned int> atomsInClass, atomIds) {
+  for (const auto &atomsInClass : atomIds) {
     // reduce the coordinates to the atoms of interest
     RDGeom::Point3DConstPtrVect reducedCoords;
     reducedCoords.reserve(atomsInClass.size());
-    BOOST_FOREACH (unsigned int idx, atomsInClass) {
+    for (const auto idx : atomsInClass) {
       reducedCoords.push_back(coords[idx]);
     }
     calcUSRDistributionsFromPoints(reducedCoords, points, distribs);

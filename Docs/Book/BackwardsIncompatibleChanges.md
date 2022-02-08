@@ -8,17 +8,44 @@ generally include changes in results that arise due to bug fixes; we try to call
 those out in the release notes. The release notes, in general, contain a more
 comprehensive version of this list.
 
+## Release 2021.03
+
+### Changes to conformer generation
+
+In the interest of providing higher quality results by default, the conformer
+generator now uses symmetry when doing RMS pruning. The pure distance geometry
+based conformer generator also now generates trans(oid) conformations for
+amides, esters, and related structures.
+
+### Changes to R-Group Decomposition results
+
+There have been a large number of changes in the R-group decomposition code
+which we believe improve the quality of the results and the handling of the many
+strange edge cases which arise when doing RGD.
+
+### Reactions now produce STEREONONE instead of STEREOANY for unspecified double bonds
+
+Double bonds in the products of reactions which have unspecified stereochemistry
+are now set to be `STEREONONE` instead of `STEREOANY`. Using `STEREONONE` is
+consistent with the rest of the behavior of the RDKit with respect to double
+bonds.
+
+### Moving MolToSVG()
+
+The function `Chem.MolToSVG()` (or `Chem.rdmolops.MolToSVG()`) has been moved to
+the `Chem.Draw` package along with the other drawing code.
+
+
 ## Release 2020.09
 
-### Changes in the chemistry model
+### Changes in the chemistry model [UPDATED for release 2020.09.2]
 
-We've added additional allowed valences for Cl (now 1, 3, 5), Br (now 1, 3, 5),
-I (now 1, 3, 5), At (now 1, 3, 5), Xe (now 0, 2, 4, 6), and Po (now 2, 4, 6).
-Molecules with atoms in the new valence states will no longer generate
-sanitization errors. Note that this has an impact on the chemistry of molecules
-containing 3-valent I and at least one  implicit H (present 24 times in ChEMBL
-27): previously this was incorrectly assigned two implicit Hs, now it has no
-implicit Hs. 
+We've added additional allowed valences for I (now 1, 3, 5), At (now 1, 3, 5),
+Xe (now 0, 2, 4, 6), and Po (now 2, 4, 6). Molecules with atoms in the new
+valence states will no longer generate sanitization errors. Note that this has
+an impact on the chemistry of molecules containing 3-valent I and at least one
+implicit H (present 24 times in ChEMBL 27): previously this was incorrectly
+assigned two implicit Hs, now it has no implicit Hs. 
 
 Aromaticity perception of molecules like `Cc1nnc2n1c1ccccc1n1c(C)nnc12` now
 correctly recognizes the full outer envelope, i.e. the bonds joining the rings

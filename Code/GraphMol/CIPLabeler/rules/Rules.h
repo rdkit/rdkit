@@ -20,8 +20,7 @@ namespace RDKit {
 namespace CIPLabeler {
 
 class Rules : public SequenceRule {
-
-public:
+ public:
   Rules() = delete;
 
   Rules(std::initializer_list<SequenceRule *> rules) {
@@ -83,9 +82,9 @@ public:
     return 0;
   }
 
-private:
+ private:
   std::vector<const SequenceRule *> d_rules;
 };
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

@@ -19,6 +19,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/format.hpp>
 #include "Chirality.h"
+#include <GraphMol/QueryOps.h>
 
 namespace RDKit {
 namespace Chirality {
@@ -253,11 +254,15 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
              (atom->getExplicitValence() == 3 &&
               atom->getFormalCharge() == 1))) {
           legalCenter = true;
-        } else if (atom->getAtomicNum() == 7 &&
-                   mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3)) {
-          // N in a three-membered ring is another one of the InChI special
-          // cases
-          legalCenter = true;
+        } else if (atom->getAtomicNum() == 7) {
+          // three-coordinate N additional requirements:
+          //   in a ring of size 3  (from InChI)
+          // OR
+          /// is a bridgehead atom (RDKit extension)
+          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+              queryIsAtomBridgehead(atom)) {
+            legalCenter = true;
+          }
         }
         return legalCenter;
       }
@@ -360,53 +365,51 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
   // tracks the number of rings with possible ring stereo that the bond is in
   //  (set for all bonds)
   std::vector<unsigned int> possibleRingStereoBonds(mol.getNumBonds());
-  if (flagPossible) {
-    boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
-    for (unsigned int ridx = 0; ridx < mol.getRingInfo()->atomRings().size();
-         ++ridx) {
-      const auto &aring = mol.getRingInfo()->atomRings()[ridx];
-      unsigned int nHere = 0;
-      auto sz = aring.size();
-      possibleAtomsInRing.reset();
-      for (unsigned int ai = 0; ai < aring.size(); ++ai) {
-        auto aidx = aring[ai];
-        if (!(aring.size() % 2)) {
-          // find the index of the atom on the opposite side of the even-sized
-          // ring
-          auto oppositeidx = aring[(ai + sz / 2) % sz];
-          if ((possibleAtoms[aidx] || knownAtoms[aidx]) &&
-              (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx])) {
-            ++nHere;
-            possibleAtomsInRing.set(aidx);
-            continue;
-          }
+  boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
+  for (unsigned int ridx = 0; ridx < mol.getRingInfo()->atomRings().size();
+       ++ridx) {
+    const auto &aring = mol.getRingInfo()->atomRings()[ridx];
+    unsigned int nHere = 0;
+    auto sz = aring.size();
+    possibleAtomsInRing.reset();
+    for (unsigned int ai = 0; ai < aring.size(); ++ai) {
+      auto aidx = aring[ai];
+      if (!(aring.size() % 2)) {
+        // find the index of the atom on the opposite side of the even-sized
+        // ring
+        auto oppositeidx = aring[(ai + sz / 2) % sz];
+        if ((possibleAtoms[aidx] || knownAtoms[aidx]) &&
+            (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx])) {
+          ++nHere;
+          possibleAtomsInRing.set(aidx);
+          continue;
         }
-        // if the atom is in more than one bond, see if there's
-        // a possible neighbor on a fusion bond
-        if (mol.getRingInfo()->numAtomRings(aidx) > 1) {
-          auto otheridx = aring[(ai + 1) % aring.size()];
-          if (possibleAtoms[otheridx] || knownAtoms[otheridx]) {
-            auto bnd = mol.getBondBetweenAtoms(aidx, otheridx);
-            CHECK_INVARIANT(bnd, "expected ring bond not found");
-            if (mol.getRingInfo()->numBondRings(bnd->getIdx()) > 1) {
-              nHere += 2;
-              possibleAtomsInRing.set(aidx);
-              possibleAtomsInRing.set(otheridx);
-            }
+      }
+      // if the atom is in more than one bond, see if there's
+      // a possible neighbor on a fusion bond
+      if (mol.getRingInfo()->numAtomRings(aidx) > 1) {
+        auto otheridx = aring[(ai + 1) % aring.size()];
+        if (possibleAtoms[otheridx] || knownAtoms[otheridx]) {
+          auto bnd = mol.getBondBetweenAtoms(aidx, otheridx);
+          CHECK_INVARIANT(bnd, "expected ring bond not found");
+          if (mol.getRingInfo()->numBondRings(bnd->getIdx()) > 1) {
+            nHere += 2;
+            possibleAtomsInRing.set(aidx);
+            possibleAtomsInRing.set(otheridx);
           }
         }
       }
-      // if the ring contains at least two atoms with possible stereo,
-      // then each of those possibleAtoms should be included for ring stereo
-      if (nHere > 1) {
-        for (auto aidx : aring) {
-          if (possibleAtomsInRing[aidx]) {
-            ++possibleRingStereoAtoms[aidx];
-          }
+    }
+    // if the ring contains at least two atoms with possible stereo,
+    // then each of those possibleAtoms should be included for ring stereo
+    if (nHere > 1) {
+      for (auto aidx : aring) {
+        if (possibleAtomsInRing[aidx]) {
+          ++possibleRingStereoAtoms[aidx];
         }
-        for (auto bidx : mol.getRingInfo()->bondRings()[ridx]) {
-          ++possibleRingStereoBonds[bidx];
-        }
+      }
+      for (auto bidx : mol.getRingInfo()->bondRings()[ridx]) {
+        ++possibleRingStereoBonds[bidx];
       }
     }
   }
@@ -477,12 +480,10 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
             // ok, we just hit a duplicate rank. If the atom we're concerned
             // about is a candidate for ring stereo and the bond to the atom
-            // with the duplicate rank is a ring bond that's not fused between
-            // rings, we can ignore the duplicate
+            // with the duplicate rank is a ring bond
             if (possibleRingStereoAtoms[aidx]) {
               auto bnd = mol.getBondBetweenAtoms(aidx, nbrIdx);
-              if (!bnd || !possibleRingStereoBonds[bnd->getIdx()] ||
-                  possibleRingStereoBonds[bnd->getIdx()] > 1) {
+              if (!bnd || !possibleRingStereoBonds[bnd->getIdx()]) {
                 haveADupe = true;
                 break;
               }
@@ -574,7 +575,7 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
     }
   }
   return res;
-}  // namespace Chirality
+}
 
 // const_casts are always ugly, but we know that findPotentialStereo() doesn't
 // modify the molecule if cleanIt is false:

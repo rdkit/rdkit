@@ -15,11 +15,26 @@
 
 namespace RDKit {
 //! Create pattern fingerprints for the given substructure library
-//!  The substructure library must not already have fingepints
+//!  The substructure library must not already have fingerprints
 /*
      \param sslib The substructure library (without pattern fingerprints)
-     \param numThreads the number of threads to use, -1 for all threads [default 1]
+     \param patterns if supplied, use this pattern holder and take ownership
+     \param numThreads the number of threads to use, -1 for all threads
+            [default 1]
 */
-RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib, int numThreads=1);  
-}
+RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(
+    SubstructLibrary &sslib, boost::shared_ptr<FPHolderBase> patterns,
+    int numThreads = 1);
+
+//! Create default pattern fingerprints for the given substructure library
+//!  The substructure library must not already have fingerprints
+/*
+     \param sslib The substructure library (without pattern fingerprints)
+     \param numThreads the number of threads to use, -1 for all threads
+            [default 1]
+*/
+RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(SubstructLibrary &sslib,
+                                               int numThreads = 1);
+}  // namespace RDKit
+
 #endif

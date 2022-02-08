@@ -50,7 +50,8 @@ struct charge_wrapper {
     std::string docString = "";
 
     python::class_<MolStandardize::ChargeCorrection, boost::noncopyable>(
-        "ChargeCorrection", python::init<std::string, std::string, int>())
+        "ChargeCorrection", python::init<std::string, std::string, int>(
+                                python::args("name", "smarts", "charge")))
         .def_readwrite("Name", &MolStandardize::ChargeCorrection::Name)
         .def_readwrite("Smarts", &MolStandardize::ChargeCorrection::Smarts)
         .def_readwrite("Charge", &MolStandardize::ChargeCorrection::Charge);

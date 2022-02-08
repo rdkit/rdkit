@@ -87,6 +87,49 @@ M  END
     bndl = rdMolEnumerator.Enumerate(m, ps)
     self.assertEqual(bndl.Size(), 4)
 
+  def testCombined(self):
+    mb = '''
+  Mrv2014 12212013392D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -6 4.7484 0 0
+M  V30 2 C -7.3337 3.9784 0 0
+M  V30 3 N -7.3337 2.4383 0 0
+M  V30 4 C -6 1.6683 0 0
+M  V30 5 C -4.6663 2.4383 0 0
+M  V30 6 C -4.6663 3.9784 0 0
+M  V30 7 C -5.8773 0.0617 0 0
+M  V30 8 C -3.2136 0.2013 0 0
+M  V30 9 C -4.5052 -0.6374 0 0
+M  V30 10 O -4.4246 -2.1753 0 0
+M  V30 11 * -6 4.235 0 0
+M  V30 12 C -4.845 6.2355 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 8 9
+M  V30 8 1 7 9
+M  V30 9 1 5 8
+M  V30 10 1 7 4
+M  V30 11 1 9 10
+M  V30 12 1 11 12 ENDPTS=(3 1 2 6) ATTACH=ANY
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 9 7 9 8
+M  V30 END CTAB
+M  END
+'''
+    m = Chem.MolFromMolBlock(mb)
+    bndl = rdMolEnumerator.Enumerate(m)
+    self.assertEqual(bndl.Size(), 9)
+
 
 if __name__ == '__main__':
   unittest.main()

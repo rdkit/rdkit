@@ -46,7 +46,7 @@ future releases.
 namespace RDKit {
 
 //! This is a class for providing enumeration options that control
-//   how enumerations are performed.
+///  how enumerations are performed.
 /*!
  Option
    reagentMaxMatchCount [default INT_MAX]
@@ -60,8 +60,7 @@ namespace RDKit {
 struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
   int reagentMaxMatchCount{INT_MAX};
   bool sanePartialProducts{false};
-  EnumerationParams()
-       {}
+  EnumerationParams() {}
 
   EnumerationParams(const EnumerationParams &rhs)
       : reagentMaxMatchCount(rhs.reagentMaxMatchCount),
@@ -69,9 +68,9 @@ struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
 };
 
 //!  Helper function, remove reagents that are incompatible
-//    with the reaction.
-//  rxn must be sanitized, initialized and preprocessed.
-//   this happens automatically in EnumerateLibrary
+///   with the reaction.
+/// rxn must be sanitized, initialized and preprocessed.
+///  this happens automatically in EnumerateLibrary
 RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
     const ChemicalReaction &rxn, EnumerationTypes::BBS bbs,
     const EnumerationParams &params = EnumerationParams());
@@ -132,10 +131,10 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
   const EnumerationTypes::BBS &getReagents() const { return m_bbs; }
 
   //! Get the next product set
-  std::vector<MOL_SPTR_VECT> next();
+  std::vector<MOL_SPTR_VECT> next() override;
 
-  void toStream(std::ostream &ss) const;
-  void initFromStream(std::istream &ss);
+  void toStream(std::ostream &ss) const override;
+  void initFromStream(std::istream &ss) override;
 
  private:
 #ifdef RDK_USE_BOOST_SERIALIZATION

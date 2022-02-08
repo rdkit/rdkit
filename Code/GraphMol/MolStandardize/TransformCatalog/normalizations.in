@@ -1,0 +1,69 @@
+//
+//  Copyright (C) 2021 Greg Landrum
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
+namespace defaults {
+std::vector<std::pair<std::string, std::string>> defaultNormalizations = {
+    // Opposite of #2.1 in InChI technical manual? Covered by RDKit
+    // Sanitization.
+    {"Nitro to N+(O-)=O",
+     "[N,P,As,Sb;X3:1](=[O,S,Se,Te:2])=[O,S,Se,Te:3]>>[*+1:1]([*-1:2])=[*:3]"},
+    {"Sulfone to S(=O)(=O)",
+     "[S+2:1]([O-:2])([O-:3])>>[S+0:1](=[O-0:2])(=[O-0:3])"},
+    {"Pyridine oxide to n+O-", "[nH0+0:1]=[OH0+0:2]>>[n+:1][O-:2]"},
+    {"Azide to N=N+=N-", "[*:1][N:2]=[N:3]#[N:4]>>[*:1][N:2]=[N+:3]=[N-:4]"},
+    {"Diazo/azo to =N+=N-", "[*:1]=[N:2]#[N:3]>>[*:1]=[N+:2]=[N-:3]"},
+    {"Sulfoxide to -S+(O-)-",
+     "[!O:1][S+0;X3:2](=[O:3])[!O:4]>>[*:1][S+1:2]([O-:3])[*:4]"},
+    // Equivalent to #1.5 in InChI technical manual
+    {"Phosphate to P(O-)=O",
+     "[O,S,Se,Te;-1:1][P+;D4:2][O,S,Se,Te;-1:3]>>[*+0:1]=[P+0;D5:2][*-1:3]"},
+    // Equivalent to #1.8 in InChI technical manual
+    {"C/S+N to C/S=N+",
+     "[C,S&!$([S+]-[O-]);X3+1:1]([NX3:2])[NX3!H0:3]>>[*+0:1]([N:2])=[N+:3]"},
+    // Equivalent to #1.8 in InChI technical manual
+    {"P+N to P=N+", "[P;X4+1:1]([NX3:2])[NX3!H0:3]>>[*+0:1]([N:2])=[N+:3]"},
+    {"Normalize hydrazine-diazonium",
+     "[CX4:1][NX3H:2]-[NX3H:3][CX4:4][NX2+:5]#[NX1:6]>>[CX4:1][NH0:2]=[NH+:3]["
+     "C:4][N+0:5]=[NH:6]"},
+    // Equivalent to #1.3 in InChI technical manual
+    {"Recombine 1,3-separated charges",
+     "[N,P,As,Sb,O,S,Se,Te;-1:1]-[A+0:2]=[N,P,As,Sb,O,S,Se,Te;+1:3]>>[*-0:1]=[*"
+     ":2]-[*+0:3]"},
+    {"Recombine 1,3-separated charges",
+     "[n,o,p,s;-1:1]:[a:2]=[N,O,P,S;+1:3]>>[*-0:1]:[*:2]-[*+0:3]"},
+    {"Recombine 1,3-separated charges",
+     "[N,O,P,S;-1:1]-[a:2]:[n,o,p,s;+1:3]>>[*-0:1]=[*:2]:[*+0:3]"},
+    {"Recombine 1,5-separated charges",
+     "[N,P,As,Sb,O,S,Se,Te;-1:1]-[A+0:2]=[A:3]-[A:4]=[N,P,As,Sb,O,S,Se,Te;+1:5]"
+     ">>[*-0:1]=[*:2]-[*:3]=[*:4]-[*+0:5]"},
+    {"Recombine 1,5-separated charges",
+     "[n,o,p,s;-1:1]:[a:2]:[a:3]:[c:4]=[N,O,P,S;+1:5]>>[*-0:1]:[*:2]:[*:3]:[c:"
+     "4]-[*+0:5]"},
+    {"Recombine 1,5-separated charges",
+     "[N,O,P,S;-1:1]-[c:2]:[a:3]:[a:4]:[n,o,p,s;+1:5]>>[*-0:1]=[c:2]:[*:3]:[*:"
+     "4]:[*+0:5]"},
+    // Conjugated cation rules taken from Francis Atkinson's standardiser. Those
+    // that can reduce aromaticity aren't included
+    {"Normalize 1,3 conjugated cation",
+     "[N,O;+0!H0:1]-[A:2]=[N!$(*[O-]),O;+1H0:3]>>[*+1:1]=[*:2]-[*+0:3]"},
+    {"Normalize 1,3 conjugated cation",
+     "[n;+0!H0:1]:[c:2]=[N!$(*[O-]),O;+1H0:3]>>[*+1:1]:[*:2]-[*+0:3]"},
+    {"Normalize 1,5 conjugated cation",
+     "[N,O;+0!H0:1]-[A:2]=[A:3]-[A:4]=[N!$(*[O-]),O;+1H0:5]>>[*+1:1]=[*:2]-[*:"
+     "3]=[*:4]-[*+0:5]"},
+    {"Normalize 1,5 conjugated cation",
+     "[n;+0!H0:1]:[a:2]:[a:3]:[c:4]=[N!$(*[O-]),O;+1H0:5]>>[n+1:1]:[*:2]:[*:3]:"
+     "[*:4]-[*+0:5]"},
+    // Equivalent to #1.6 in InChI technical manual. RDKit Sanitization handles
+    // this for perchlorate.
+    {"Charge normalization", "[F,Cl,Br,I,At;-1:1]=[O:2]>>[*-0:1][O-:2]"},
+    {"Charge recombination", "[N,P,As,Sb;-1:1]=[C+;v3:2]>>[*+0:1]#[C+0:2]"},
+};
+} // namespace defaults

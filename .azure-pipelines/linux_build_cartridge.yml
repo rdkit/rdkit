@@ -1,9 +1,12 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get install -y libboost-all-dev postgresql-10 postgresql-server-dev-10
-    sudo service postgresql start
-    #sudo su postgres
+    sudo apt-get remove postgresql-14 postgresql-client-14
+    sudo apt-get remove postgresql postgresql-common postgresql-client-common
+    sudo apt purge postgresql-14 postgresql-client-14
+    sudo apt purge postgresql postgresql-common postgresql-client-common
+    sudo apt-get install -y libboost-all-dev postgresql-common postgresql-12 postgresql-server-dev-12
+    echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
   displayName: Setup build environment
 - bash: |
@@ -37,6 +40,7 @@ steps:
     if [ -e ./Code/PgSQL/rdkit/regression.diffs ]
     then
       cat ./Code/PgSQL/rdkit/regression.diffs
+      exit 1
     fi
   displayName: Run tests
 

@@ -90,20 +90,34 @@ RDKitFPArguments<OutputType>::RDKitFPArguments(
 
 template <typename OutputType>
 OutputType RDKitFPAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *,  // arguments
-    const std::vector<std::uint32_t> *,  // atomInvariants
-    const std::vector<std::uint32_t> *,  // bondInvariants
-    const AdditionalOutput *,            // additionalOutput
-    const bool                           // hashResults
-    ) const {
-  // todo set additional outputs
+    FingerprintArguments<OutputType> *,                    // arguments
+    const std::vector<std::uint32_t> *,                    // atomInvariants
+    const std::vector<std::uint32_t> *,                    // bondInvariants
+    const AdditionalOutput *additionalOutput, const bool,  // hashResults
+    const std::uint64_t fpSize) const {
+  if (additionalOutput) {
+    OutputType bit_id = d_bitId;
+    if (fpSize) {
+      bit_id %= fpSize;
+    }
+    if (additionalOutput->bitPaths) {
+      (*additionalOutput->bitPaths)[bit_id].push_back(d_bondPath);
+    }
+    if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
+      for (size_t i = 0; i < d_atomsInPath.size(); ++i) {
+        if (d_atomsInPath[i]) {
+          if (additionalOutput->atomToBits) {
+            additionalOutput->atomToBits->at(i).push_back(bit_id);
+          }
+          if (additionalOutput->atomCounts) {
+            additionalOutput->atomCounts->at(i)++;
+          }
+        }
+      }
+    }
+  }
   return d_bitId;
 }
-
-template <typename OutputType>
-RDKitFPAtomEnv<OutputType>::RDKitFPAtomEnv(const OutputType bitId,
-                                           boost::dynamic_bitset<> atomsInPath)
-    : d_bitId(bitId), d_atomsInPath(std::move(atomsInPath)) {}
 
 template <typename OutputType>
 std::string RDKitFPEnvGenerator<OutputType>::infoString() const {
@@ -121,7 +135,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
     const bool                           // hashResults
-    ) const {
+) const {
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
@@ -145,7 +159,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
   boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
   for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
        paths++) {
-    BOOST_FOREACH (const PATH_TYPE &path, paths->second) {
+    for (const auto &path : paths->second) {
       // the bond hashes of the path
       std::vector<std::uint32_t> bondHashes = RDKitFPUtils::generateBondHashes(
           mol, atomsInPath, bondCache, isQueryBond, path,
@@ -169,7 +183,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
       }
 
       result.push_back(new RDKitFPAtomEnv<OutputType>(
-          static_cast<OutputType>(seed), atomsInPath));
+          static_cast<OutputType>(seed), atomsInPath, path));
     }
   }
 

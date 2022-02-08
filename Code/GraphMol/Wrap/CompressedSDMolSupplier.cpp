@@ -23,6 +23,7 @@ namespace io = boost::iostreams;
 
 // ours
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/Wrap/ContextManagers.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDBoost/Wrap.h>
 
@@ -105,11 +106,12 @@ struct compressedsdmolsup_wrap {
     python::class_<ForwardSDMolSupplier, boost::noncopyable>(
         "_CompressedSDMolSupplier", csdMolSupplierClassDoc.c_str(),
         python::no_init)
-        .def(
-            "__iter__",
-            (ForwardSDMolSupplier * (*)(ForwardSDMolSupplier *)) & MolSupplIter,
-            python::return_internal_reference<1>())
-        .def("__next__", (ROMol * (*)(ForwardSDMolSupplier *)) & MolSupplNext,
+        .def("__iter__", &MolSupplIter<ForwardSDMolSupplier>,
+             python::return_internal_reference<1>())
+        .def("__enter__", &MolIOEnter<ForwardSDMolSupplier>,
+             python::return_internal_reference<>())
+        .def("__exit__", &MolIOExit<ForwardSDMolSupplier>)
+        .def("__next__", &MolSupplNext<ForwardSDMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
              python::return_value_policy<python::manage_new_object>());

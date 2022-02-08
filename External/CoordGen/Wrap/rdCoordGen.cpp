@@ -69,25 +69,28 @@ struct coordgen_wrapper {
         .def_readwrite("templateFileDir",
                        &CoordGen::CoordGenParams::templateFileDir,
                        "directory containing the templates.mae file")
-        .def_readwrite("minimizeOnly", &CoordGen::CoordGenParams::minimizeOnly,
-                       "uses coordgen's force field to cleanup the 2D "
-                       "coordinates of the active conformation")
         .def_readonly("sketcherBestPrecision",
-                       &CoordGen::CoordGenParams::sketcherBestPrecision,
-                       "highest quality (and slowest) precision setting")
+                      &CoordGen::CoordGenParams::sketcherBestPrecision,
+                      "highest quality (and slowest) precision setting")
         .def_readonly("sketcherStandardPrecision",
-                       &CoordGen::CoordGenParams::sketcherStandardPrecision,
-                       "standard quality precision setting, the default for the coordgen project")
+                      &CoordGen::CoordGenParams::sketcherStandardPrecision,
+                      "standard quality precision setting, the default for the "
+                      "coordgen project")
         .def_readonly("sketcherQuickPrecision",
-                       &CoordGen::CoordGenParams::sketcherQuickPrecision,
-                       "faster precision setting")
-        .def_readonly("sketcherCoarsePrecision",
-                       &CoordGen::CoordGenParams::sketcherCoarsePrecision,
-                       "\"coarse\" (fastest) precision setting, produces good-quality coordinates"
-                       " most of the time, this is the default setting for the RDKit")
+                      &CoordGen::CoordGenParams::sketcherQuickPrecision,
+                      "faster precision setting")
+        .def_readonly(
+            "sketcherCoarsePrecision",
+            &CoordGen::CoordGenParams::sketcherCoarsePrecision,
+            "\"coarse\" (fastest) precision setting, produces good-quality "
+            "coordinates"
+            " most of the time, this is the default setting for the RDKit")
         .def_readwrite("minimizerPrecision",
                        &CoordGen::CoordGenParams::minimizerPrecision,
-                       "controls sketcher precision");
+                       "controls sketcher precision")
+        .def_readwrite(
+            "treatNonterminalBondsToMetalAsZOBs",
+            &CoordGen::CoordGenParams::treatNonterminalBondsToMetalAsZeroOrder);
     python::def("SetDefaultTemplateFileDir", SetDefaultTemplateFileDir);
     docString =
         "Add 2D coordinates.\n"

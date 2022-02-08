@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2012 Greg Landrum
+//  Copyright (C) 2012-2021 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -135,6 +135,10 @@ const std::string chiNnVersion = "1.2.0";
 
 //! calculate the Hall-Kier alpha value for a molecule
 //! From equation (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+//!
+//! \note Because hybridization is used to calculate this, results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
   \param atomContribs  if provided, this will be used to return the
@@ -149,6 +153,10 @@ const std::string hallKierAlphaVersion = "1.2.0";
 
 //! calculate the Hall-Kier kappa1 value for a molecule
 //! From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+//!
+//! \note Because hybridization is used to calculate this, results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
 */
@@ -157,6 +165,10 @@ const std::string kappa1Version = "1.1.0";
 
 //! calculate the Hall-Kier kappa2 value for a molecule
 //! From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+//!
+//! \note Because hybridization is used to calculate this results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
 */
@@ -165,12 +177,28 @@ const std::string kappa2Version = "1.1.0";
 
 //! calculate the Hall-Kier kappa3 value for a molecule
 //! From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422,
-//(1991)
+/// 1991)
+//!
+//! \note Because hybridization is used to calculate this results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
 /*!
   \param mol           the molecule of interest
 */
 RDKIT_DESCRIPTORS_EXPORT double calcKappa3(const ROMol &mol);
 const std::string kappa3Version = "1.1.0";
+
+//! calculate the Kier Phi value for a molecule
+//! From Quantitative Structure-Activity Relationships 8, 221–224 (1989).
+//!
+//! \note Because hybridization is used to calculate this results may differ
+//! from other implementations which have different conventions for assigning
+//! hybridization
+/*!
+  \param mol           the molecule of interest
+*/
+RDKIT_DESCRIPTORS_EXPORT double calcPhi(const ROMol &mol);
+const std::string PhiVersion = "1.0.0";
 
 namespace detail {
 RDKIT_DESCRIPTORS_EXPORT void hkDeltas(const ROMol &mol,

@@ -57,13 +57,11 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
       if (amatch.abbrev.mol &&
           mol.getAtomWithIdx(pr.second)->getDegree() >
               amatch.abbrev.mol->getAtomWithIdx(pr.first)->getDegree()) {
-        for (const auto& nbri : boost::make_iterator_range(
+        for (auto nbrIdx : boost::make_iterator_range(
                  mol.getAtomNeighbors(mol.getAtomWithIdx(pr.second)))) {
-          const auto& nbr = mol[nbri];
-          auto nbrIdx = nbr->getIdx();
           // if this neighbor isn't in the match:
           if (!std::any_of(amatch.match.begin(), amatch.match.end(),
-                           [&](const std::pair<int, int>& tpr) {
+                           [nbrIdx](const std::pair<int, int>& tpr) {
                              return tpr.second == rdcast<int>(nbrIdx);
                            })) {
             mol.addBond(nbrIdx, connectIdx, Bond::BondType::SINGLE);
@@ -76,11 +74,13 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
       mol.addBond(oaidx, connectIdx, Bond::BondType::SINGLE);
     }
   }
-  for (unsigned int i = toRemove.size(); i > 0; --i) {
-    if (toRemove[i - 1]) {
-      mol.removeAtom(i - 1);
+  mol.beginBatchEdit();
+  for (unsigned int i = 0; i < toRemove.size(); ++i) {
+    if (toRemove[i]) {
+      mol.removeAtom(i);
     }
   }
+  mol.commitBatchEdit();
 }
 
 void labelMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
@@ -112,7 +112,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
   }
 
   bool hasRings = mol.getRingInfo()->isInitialized();
-  if(!hasRings) {
+  if (!hasRings) {
     MolOps::fastFindRings(mol);
   }
 
@@ -169,10 +169,10 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
   }
 
   // if we added ring info, go ahead and remove it
-  if(!hasRings){
+  if (!hasRings) {
     mol.getRingInfo()->reset();
   }
-  
+
   return res;
 }
 

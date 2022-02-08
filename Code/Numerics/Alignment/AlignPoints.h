@@ -20,7 +20,7 @@ namespace RDNumeric {
 namespace Alignments {
 
 //! \brief Compute an optimal alignment (minimum sum of squared distance)
-// between
+/// between
 //! two sets of points in 3D
 /*!
   \param refPoints      A vector of pointers to the reference points

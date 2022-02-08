@@ -1,4 +1,6 @@
-//  Copyright (c) 2017, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2017-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,8 +35,6 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <boost/python/list.hpp>
-#include <boost/python/suite/indexing/map_indexing_suite.hpp>
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <string>
 #include <cmath>
 #include <chrono>
@@ -84,6 +84,11 @@ class RGroupDecompositionHelper {
   bool Process() {
     NOGIL gil;
     return decomp->process();
+  }
+  python::tuple ProcessAndScore() {
+    NOGIL gil;
+    auto result = decomp->processAndScore();
+    return python::make_tuple(result.success, result.score);
   }
 
   python::list GetRGroupLabels() {
@@ -166,15 +171,8 @@ python::object RGroupDecomp(python::object cores, python::object mols,
 
 struct rgroupdecomp_wrapper {
   static void wrap() {
-    // logic from https://stackoverflow.com/a/13017303
-    boost::python::type_info info =
-        boost::python::type_id<RDKit::MOL_SPTR_VECT>();
-    const boost::python::converter::registration *reg =
-        boost::python::converter::registry::query(info);
-    if (reg == nullptr || (*reg).m_to_python == nullptr) {
-      python::class_<RDKit::MOL_SPTR_VECT>("MOL_SPTR_VECT")
-          .def(python::vector_indexing_suite<RDKit::MOL_SPTR_VECT, true>());
-    }
+    bool noproxy = true;
+    RegisterVectorConverter<RDKit::ROMOL_SPTR>("MOL_SPTR_VECT", noproxy);
 
     std::string docString = "";
     python::enum_<RDKit::RGroupLabels>("RGroupLabels")
@@ -192,6 +190,7 @@ struct rgroupdecomp_wrapper {
         .value("GreedyChunks", RDKit::GreedyChunks)
         .value("Exhaustive", RDKit::Exhaustive)
         .value("NoSymmetrization", RDKit::NoSymmetrization)
+        .value("GA", RDKit::GA)
         .export_values();
 
     python::enum_<RDKit::RGroupLabelling>("RGroupLabelling")
@@ -205,6 +204,11 @@ struct rgroupdecomp_wrapper {
         .value("None", RDKit::NoAlignment)
         .value("NoAlignment", RDKit::NoAlignment)
         .value("MCS", RDKit::MCS)
+        .export_values();
+
+    python::enum_<RDKit::RGroupScore>("RGroupScore")
+        .value("Match", RDKit::Match)
+        .value("FingerprintVariance", RDKit::FingerprintVariance)
         .export_values();
 
     docString =
@@ -245,12 +249,17 @@ struct rgroupdecomp_wrapper {
         "                        RGroupLabels.MDLRGroup - store rgroups as mdl "
         "rgroups (for molblocks)\n"
         "                       default: AtomMap | MDLRGroup\n"
-        "    - matchOnlyAtRGroups: only allow rgroup decomposition at the "
+        "    - onlyMatchAtRGroups: only allow rgroup decomposition at the "
         "specified rgroups\n"
-        "    - setRemoveRGroupsThatAreAllHydrogen: remove all rgroups that "
+        "    - removeAllHydrogenRGroups: remove all user-defined rgroups that "
         "only have hydrogens\n"
+        "    - removeAllHydrogenRGroupsAndLabels: remove all user-defined "
+        "rgroups that only have hydrogens, and also remove the corresponding "
+        "labels from the core\n"
         "    - removeHydrogensPostMatch: remove all hydrogens from the output "
-        "molecules\n";
+        "molecules\n"
+        "    - allowNonTerminalRGroups: allow labelled Rgroups of degree 2 or "
+        "more\n";
     python::class_<RDKit::RGroupDecompositionParameters>(
         "RGroupDecompositionParameters", docString.c_str(),
         python::init<>("Constructor, takes no arguments"))
@@ -258,6 +267,8 @@ struct rgroupdecomp_wrapper {
         .def_readwrite("labels", &RDKit::RGroupDecompositionParameters::labels)
         .def_readwrite("matchingStrategy",
                        &RDKit::RGroupDecompositionParameters::matchingStrategy)
+        .def_readwrite("scoreMethod",
+                       &RDKit::RGroupDecompositionParameters::scoreMethod)
         .def_readwrite("rgroupLabelling",
                        &RDKit::RGroupDecompositionParameters::rgroupLabelling)
         .def_readwrite("alignment",
@@ -274,7 +285,30 @@ struct rgroupdecomp_wrapper {
             "removeHydrogensPostMatch",
             &RDKit::RGroupDecompositionParameters::removeHydrogensPostMatch)
         .def_readwrite("timeout",
-                       &RDKit::RGroupDecompositionParameters::timeout);
+                       &RDKit::RGroupDecompositionParameters::timeout)
+        .def_readwrite("gaPopulationSize",
+                       &RDKit::RGroupDecompositionParameters::gaPopulationSize)
+        .def_readwrite(
+            "gaMaximumOperations",
+            &RDKit::RGroupDecompositionParameters::gaMaximumOperations)
+        .def_readwrite("gaNumberOperationsWithoutImprovement",
+                       &RDKit::RGroupDecompositionParameters::
+                           gaNumberOperationsWithoutImprovement)
+        .def_readwrite("gaRandomSeed",
+                       &RDKit::RGroupDecompositionParameters::gaRandomSeed)
+        .def_readwrite("gaNumberRuns",
+                       &RDKit::RGroupDecompositionParameters::gaNumberRuns)
+        .def_readwrite("gaParallelRuns",
+                       &RDKit::RGroupDecompositionParameters::gaParallelRuns)
+        .def_readwrite(
+            "allowNonTerminalRGroups",
+            &RDKit::RGroupDecompositionParameters::allowNonTerminalRGroups)
+        .def_readwrite("removeAllHydrogenRGroupsAndLabels",
+                       &RDKit::RGroupDecompositionParameters::
+                           removeAllHydrogenRGroupsAndLabels)
+        .def_readonly(
+            "substructMatchParams",
+            &RDKit::RGroupDecompositionParameters::substructmatchParams);
 
     python::class_<RDKit::RGroupDecompositionHelper, boost::noncopyable>(
         "RGroupDecomposition", docString.c_str(),
@@ -287,6 +321,9 @@ struct rgroupdecomp_wrapper {
         .def("Add", &RGroupDecompositionHelper::Add)
         .def("Process", &RGroupDecompositionHelper::Process,
              "Process the rgroups (must be done prior to "
+             "GetRGroupsAsRows/Columns and GetRGroupLabels)")
+        .def("ProcessAndScore", &RGroupDecompositionHelper::ProcessAndScore,
+             "Process the rgroups and returns the score (must be done prior to "
              "GetRGroupsAsRows/Columns and GetRGroupLabels)")
         .def("GetRGroupLabels", &RGroupDecompositionHelper::GetRGroupLabels,
              "Return the current list of found rgroups.\n"

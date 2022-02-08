@@ -294,6 +294,9 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
   tm = Chem.Mol(m)
   for atom in tm.GetAtoms():
     atom.ClearProp("_CIPCode")
+  for bond in tm.GetBonds():
+    if bond.GetBondDir() == Chem.BondDir.EITHERDOUBLE:
+      bond.SetBondDir(Chem.BondDir.NONE)
   flippers = _getFlippers(tm, options)
   nCenters = len(flippers)
   if not nCenters:
@@ -324,7 +327,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
       flippers[i].flip(flag)
     isomer = Chem.Mol(tm)
     Chem.SetDoubleBondNeighborDirections(isomer)
-    isomer.ClearComputedProps()
+    isomer.ClearComputedProps(includeRings=False)
 
     Chem.AssignStereochemistry(isomer, cleanIt=True, force=True, flagPossibleStereoCenters=True)
     if options.unique:
@@ -336,7 +339,8 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
     if options.tryEmbedding:
       ntm = Chem.AddHs(isomer)
-      cid = EmbedMolecule(ntm, randomSeed=bitflag)
+      # mask bitflag to fit within C++ int.
+      cid = EmbedMolecule(ntm, randomSeed=(bitflag & 0x7fffffff))
       if cid >= 0:
         conf = Chem.Conformer(isomer.GetNumAtoms())
         for aid in range(isomer.GetNumAtoms()):

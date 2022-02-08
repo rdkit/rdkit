@@ -4,10 +4,14 @@
 /Code/JavaWrappers/gmwrapper/build/*
 /Code/JavaWrappers/gmwrapper/build-test/*
 /Code/JavaWrappers/csharp_wrapper/swig_csharp
+/Data/Fonts/ComicNeue-*
+/Data/Fonts/OFL.txt
 
 #- Eclipse files
 /.project
 /.pydevproject
+/.cproject
+/.settings/
 
 #- CLion files
 /cmake-build-*
@@ -36,6 +40,7 @@ __pycache__/
 /Code/RDBoost/test.h
 /Code/RDGeneral/RDConfig.h
 /Code/RDGeneral/export.h
+/Code/RDGeneral/test.h
 /Code/RDGeneral/versions.h
 /Code/RDGeneral/versions.cpp
 
@@ -55,6 +60,7 @@ __pycache__/
 /External/catch/catch/
 /External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
+/External/Eigen/eigen/
 /External/FreeSASA/freesasa-2.0.1/
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/
@@ -107,3 +113,8 @@ __pycache__/
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store
+
+# JS distribution or temp files
+Code/MinimalLib/dist
+MAIN_RDKIT_README*
+node_modules

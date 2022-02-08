@@ -39,13 +39,16 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
-#include <boost/foreach.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 #include <algorithm>
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include <RDGeneral/Exceptions.h>
 
 namespace {
 class ss_matcher {
@@ -78,9 +81,7 @@ uint32_t updateElement(SparseIntVect<uint32_t> &v, unsigned int elem,
   }
   return bit;
 }
-uint32_t updateElement(ExplicitBitVect &v, unsigned int elem,
-                       bool counting = false) {
-  RDUNUSED_PARAM(counting);
+uint32_t updateElement(ExplicitBitVect &v, unsigned int elem, bool) {
   uint32_t bit = elem % v.getNumBits();
   v.setBit(bit);
   return bit;
@@ -136,7 +137,9 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
 
   boost::dynamic_bitset<> includeAtoms(nAtoms);
   if (fromAtoms) {
-    BOOST_FOREACH (uint32_t idx, *fromAtoms) { includeAtoms.set(idx, 1); }
+    for (auto idx : *fromAtoms) {
+      includeAtoms.set(idx, 1);
+    }
   } else {
     includeAtoms.set();
   }
@@ -167,7 +170,7 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         atomNeighborhoods;
     std::vector<AccumTuple> neighborhoodsThisRound;
 
-    BOOST_FOREACH (unsigned int atomIdx, atomOrder) {
+    for (auto atomIdx : atomOrder) {
       if (!deadAtoms[atomIdx]) {
         const Atom *tAtom = lmol->getAtomWithIdx(atomIdx);
         if (!tAtom->getDegree()) {
@@ -260,7 +263,8 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
          iter != neighborhoodsThisRound.end(); ++iter) {
       // if we haven't seen this exact environment before, update the
       // fingerprint:
-      if (includeRedundantEnvironments || std::find(neighborhoods.begin(), neighborhoods.end(),
+      if (includeRedundantEnvironments ||
+          std::find(neighborhoods.begin(), neighborhoods.end(),
                     iter->get<0>()) == neighborhoods.end()) {
         if (!onlyNonzeroInvariants || invariantCpy[iter->get<2>()]) {
           if (includeAtoms[iter->get<2>()]) {
@@ -315,6 +319,9 @@ SparseIntVect<uint32_t> *getHashedFingerprint(
     std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
     bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
     BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
+  if (nBits == 0) {
+    throw ValueErrorException("nBits can not be zero");
+  }
   SparseIntVect<uint32_t> *res;
   res = new SparseIntVect<uint32_t>(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
@@ -323,14 +330,11 @@ SparseIntVect<uint32_t> *getHashedFingerprint(
   return res;
 }
 
-ExplicitBitVect *getFingerprintAsBitVect(const ROMol &mol, unsigned int radius,
-                                         unsigned int nBits,
-                                         std::vector<uint32_t> *invariants,
-                                         const std::vector<uint32_t> *fromAtoms,
-                                         bool useChirality, bool useBondTypes,
-                                         bool onlyNonzeroInvariants,
-                                         BitInfoMap *atomsSettingBits,
-                                         bool includeRedundantEnvironments) {
+ExplicitBitVect *getFingerprintAsBitVect(
+    const ROMol &mol, unsigned int radius, unsigned int nBits,
+    std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
+    bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
+    BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
   auto *res = new ExplicitBitVect(nBits);
   calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
                   useBondTypes, false, onlyNonzeroInvariants, atomsSettingBits,

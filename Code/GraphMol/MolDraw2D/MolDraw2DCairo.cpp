@@ -29,9 +29,31 @@
 
 namespace RDKit {
 void MolDraw2DCairo::initDrawing() {
-  PRECONDITION(dp_cr, "no draw context");
+  if (dp_cr) {
+    if (cairo_get_reference_count(dp_cr) > 0) {
+      cairo_destroy(dp_cr);
+    }
+    dp_cr = nullptr;
+  }
+  cairo_surface_t *surf =
+      cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width(), height());
+  dp_cr = cairo_create(surf);
+  cairo_surface_destroy(surf);  // dp_cr has a reference to this now;
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
-  //  drawOptions().backgroundColour = DrawColour(0.9, 0.9, 0.0);
+  if (!text_drawer_) {
+    initTextDrawer(df_noFreetype);
+  } else {
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    if (df_noFreetype) {
+      dynamic_cast<DrawTextCairo *>(text_drawer_.get())->setCairoContext(dp_cr);
+    } else {
+      dynamic_cast<DrawTextFTCairo *>(text_drawer_.get())
+          ->setCairoContext(dp_cr);
+    }
+#else
+    dynamic_cast<DrawTextCairo *>(text_drawer_.get())->setCairoContext(dp_cr);
+#endif
+  }
 }
 
 void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
@@ -55,6 +77,9 @@ void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
     text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
 #endif
   }
+  if (drawOptions().baseFontSize > 0.0) {
+    text_drawer_->setBaseFontSize(drawOptions().baseFontSize);
+  }
 }
 
 // ****************************************************************************
@@ -64,7 +89,7 @@ void MolDraw2DCairo::finishDrawing() {}
 void MolDraw2DCairo::setColour(const DrawColour &col) {
   PRECONDITION(dp_cr, "no draw context");
   MolDraw2D::setColour(col);
-  cairo_set_source_rgb(dp_cr, col.r, col.g, col.b);
+  cairo_set_source_rgba(dp_cr, col.r, col.g, col.b, col.a);
 }
 
 // ****************************************************************************
@@ -94,12 +119,10 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2) {
 }
 
 void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
-                                  const DrawColour &col1,
-                                  const DrawColour &col2,
+                                  const DrawColour &col1, const DrawColour &,
                                   unsigned int nSegments, double vertOffset) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(nSegments > 1, "too few segments");
-  RDUNUSED_PARAM(col2);
 
   if (nSegments % 2) {
     ++nSegments;  // we're going to assume an even number of segments
@@ -136,7 +159,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(cds.size() >= 3, "must have at least three points");
 
-  unsigned int width = getDrawLineWidth();
+  double width = getDrawLineWidth();
 
   cairo_line_cap_t olinecap = cairo_get_line_cap(dp_cr);
   cairo_line_join_t olinejoin = cairo_get_line_join(dp_cr);
@@ -228,7 +251,7 @@ void addMoleculeMetadata(
   bool includeStereo = true;
   if (mol.getNumConformers()) {
     bool kekulize = false;
-    auto molb = MolToMolBlock(mol, includeStereo, confId, kekulize);
+    auto molb = MolToV3KMolBlock(mol, includeStereo, confId, kekulize);
     metadata.push_back(
         std::make_pair(augmentTagName(PNGData::molTag + suffix), molb));
   }

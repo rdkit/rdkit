@@ -26,14 +26,14 @@ struct CrystalFFDetails {
   std::vector<std::pair<int, int>> bonds;
   std::vector<std::vector<int>> angles;
   std::vector<int> atomNums;
+  double boundsMatForceScaling;
 };
 
 //! Get the experimental torsional angles in a molecule
 RDKIT_FORCEFIELDHELPERS_EXPORT void getExperimentalTorsions(
     const RDKit::ROMol &mol, CrystalFFDetails &details,
-    bool useExpTorsions = false, 
-    bool useSmallRingTorsions = false, bool useMacrocycleTorsions = false,
-    bool useBasicKnowledge = false,
+    bool useExpTorsions = false, bool useSmallRingTorsions = false,
+    bool useMacrocycleTorsions = false, bool useBasicKnowledge = false,
     unsigned int version = 1, bool verbose = false);
 }  // namespace CrystalFF
 }  // namespace ForceFields

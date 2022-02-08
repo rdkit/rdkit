@@ -28,7 +28,7 @@ class RDKIT_GRAPHMOL_EXPORT BondIterator_ {
   // FIX: I'm not pleased with the lack of internal testing code
   //  (PREs and the like) in here
  public:
-  BondIterator_()  {};
+  BondIterator_() {}
   BondIterator_(ROMol *mol);
   BondIterator_(ROMol *mol, ROMol::EDGE_ITER pos);
   BondIterator_(const BondIterator_ &other);
@@ -51,7 +51,7 @@ class RDKIT_GRAPHMOL_EXPORT BondIterator_ {
 //! but it theoretically ought to be RandomAccess.
 class RDKIT_GRAPHMOL_EXPORT ConstBondIterator_ {
  public:
-  ConstBondIterator_()  {};
+  ConstBondIterator_() {}
   ConstBondIterator_(ROMol const *mol);
   ConstBondIterator_(ROMol const *mol, ROMol::EDGE_ITER pos);
   ConstBondIterator_(const ConstBondIterator_ &other);

@@ -110,9 +110,7 @@ bool ConstBondIterator_::operator!=(const ConstBondIterator_ &other) const {
   return _mol != other._mol || _pos != other._pos;
 }
 
-Bond const *ConstBondIterator_::operator*() const {
-  return (*_mol)[*_pos];
-}
+Bond const *ConstBondIterator_::operator*() const { return (*_mol)[*_pos]; }
 // pre-increment
 ConstBondIterator_ &ConstBondIterator_::operator++() {
   PRECONDITION(_pos != _end, "bad initial position")
@@ -143,4 +141,4 @@ ConstBondIterator_ ConstBondIterator_::operator--(int) {
   }
   return res;
 }
-}
+}  // namespace RDKit

@@ -41,11 +41,10 @@ PyObject *computeCanonTrans(const Conformer &conf,
 }
 
 #ifdef RDK_HAS_EIGEN3
-PyObject *computePrincAxesMomentsHelper(bool func(const Conformer &,
-                            Eigen::Matrix3d &, Eigen::Vector3d &,
-                            bool, bool, const std::vector<double> *),
-                            const Conformer &conf,
-                            bool ignoreHs, const python::object &weights) {
+PyObject *computePrincAxesMomentsHelper(
+    bool func(const Conformer &, Eigen::Matrix3d &, Eigen::Vector3d &, bool,
+              bool, const std::vector<double> *),
+    const Conformer &conf, bool ignoreHs, const python::object &weights) {
   Eigen::Matrix3d axes;
   Eigen::Vector3d moments;
   std::vector<double> *weightsVecPtr = nullptr;
@@ -54,7 +53,8 @@ PyObject *computePrincAxesMomentsHelper(bool func(const Conformer &,
   if (weights != python::object()) {
     size_t numElements = python::extract<int>(weights.attr("__len__")());
     if (numElements != conf.getNumAtoms()) {
-      throw ValueErrorException("The Python container must have length equal to conf.GetNumAtoms()");
+      throw ValueErrorException(
+          "The Python container must have length equal to conf.GetNumAtoms()");
     }
     weightsVec.resize(numElements);
     for (i = 0; i < numElements; ++i) {
@@ -84,24 +84,24 @@ PyObject *computePrincAxesMomentsHelper(bool func(const Conformer &,
     res = PyTuple_New(2);
     PyTuple_SetItem(res, 0, (PyObject *)axesNpy);
     PyTuple_SetItem(res, 1, (PyObject *)momentsNpy);
-  }
-  else {
+  } else {
     PyTuple_SetItem(res, 0, Py_None);
     PyTuple_SetItem(res, 1, Py_None);
   }
   return res;
 }
 
-PyObject *computePrincAxesMoments(const Conformer &conf,
-                            bool ignoreHs, const python::object &weights) {
+PyObject *computePrincAxesMoments(const Conformer &conf, bool ignoreHs,
+                                  const python::object &weights) {
   return computePrincAxesMomentsHelper(
-         MolTransforms::computePrincipalAxesAndMoments, conf, ignoreHs, weights);
+      MolTransforms::computePrincipalAxesAndMoments, conf, ignoreHs, weights);
 }
 
-PyObject *computePrincAxesMomentsFromGyrationMatrix(const Conformer &conf,
-                            bool ignoreHs, const python::object &weights) {
+PyObject *computePrincAxesMomentsFromGyrationMatrix(
+    const Conformer &conf, bool ignoreHs, const python::object &weights) {
   return computePrincAxesMomentsHelper(
-         MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix, conf, ignoreHs, weights);
+      MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix, conf,
+      ignoreHs, weights);
 }
 #endif
 
@@ -120,7 +120,7 @@ void transConformer(Conformer &conf, python::object trans) {
          dSize * sizeof(double));
   MolTransforms::transformConformer(conf, transform);
 }
-}
+}  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdMolTransforms) {
   python::scope().attr("__doc__") =
@@ -131,9 +131,12 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
 
   std::string docString =
       "Compute the centroid of the conformation - hydrogens are ignored and no attention\n\
-                           if paid to the difference in sizes of the heavy atoms\n";
+                           is paid to the difference in sizes of the heavy atoms; however,\n\
+                           an optional vector of weights can be passed.\n";
   python::def("ComputeCentroid", MolTransforms::computeCentroid,
-              (python::arg("conf"), python::arg("ignoreHs") = true),
+              (python::arg("conf"), python::arg("ignoreHs") = true,
+               python::arg("weights") =
+                   static_cast<const std::vector<double> *>(nullptr)),
               docString.c_str());
 
   docString =
@@ -146,7 +149,8 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
     - normalizeCovar : optionally normalize the covariance matrix by the number of atoms\n";
   python::def(
       "ComputeCanonicalTransform", RDKit::computeCanonTrans,
-      (python::arg("conf"), python::arg("center") = (RDGeom::Point3D *)nullptr,
+      (python::arg("conf"),
+       python::arg("center") = static_cast<RDGeom::Point3D *>(nullptr),
        python::arg("normalizeCovar") = false, python::arg("ignoreHs") = true),
       docString.c_str());
 
@@ -163,11 +167,10 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
     - ignoreHs : if True, ignore hydrogen atoms\n\
     - weights : if present, used to weight the atomic coordinates\n\n\
   Returns a (principal axes, principal moments) tuple\n";
-  python::def(
-      "ComputePrincipalAxesAndMoments", RDKit::computePrincAxesMoments,
-      (python::arg("conf"), python::arg("ignoreHs") = true,
-      python::arg("weights") = python::object()),
-      docString.c_str());
+  python::def("ComputePrincipalAxesAndMoments", RDKit::computePrincAxesMoments,
+              (python::arg("conf"), python::arg("ignoreHs") = true,
+               python::arg("weights") = python::object()),
+              docString.c_str());
 
   docString =
       "Compute principal axes and moments from the gyration matrix of a conformer\n\
@@ -181,11 +184,11 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
     - ignoreHs : if True, ignore hydrogen atoms\n\
     - weights : if present, used to weight the atomic coordinates\n\n\
   Returns a (principal axes, principal moments) tuple\n";
-  python::def(
-      "ComputePrincipalAxesAndMomentsFromGyrationMatrix", RDKit::computePrincAxesMomentsFromGyrationMatrix,
-      (python::arg("conf"), python::arg("ignoreHs") = true,
-      python::arg("weights") = python::object()),
-      docString.c_str());
+  python::def("ComputePrincipalAxesAndMomentsFromGyrationMatrix",
+              RDKit::computePrincAxesMomentsFromGyrationMatrix,
+              (python::arg("conf"), python::arg("ignoreHs") = true,
+               python::arg("weights") = python::object()),
+              docString.c_str());
 #endif
 
   python::def("TransformConformer", RDKit::transConformer,
@@ -211,6 +214,7 @@ BOOST_PYTHON_MODULE(rdMolTransforms) {
                python::arg("ignoreHs") = true),
               "Loop over the conformers in a molecule and canonicalize their "
               "orientation");
+
   python::def(
       "GetBondLength", &MolTransforms::getBondLength,
       (python::arg("conf"), python::arg("iAtomId"), python::arg("jAtomId")),

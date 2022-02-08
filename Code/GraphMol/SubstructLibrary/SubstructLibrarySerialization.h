@@ -48,11 +48,7 @@ namespace boost {
 namespace serialization {
 
 template <class Archive>
-void serialize(Archive &ar, RDKit::MolHolderBase &,
-               const unsigned int version) {
-  RDUNUSED_PARAM(version);
-  RDUNUSED_PARAM(ar);
-}
+void serialize(Archive &, RDKit::MolHolderBase &, const unsigned int) {}
 
 template <class Archive>
 void save(Archive &ar, const RDKit::MolHolder &molholder,
@@ -151,12 +147,31 @@ void serialize(Archive &ar, RDKit::PatternHolder &pattern_holder,
       pattern_holder.getNumBits() != RDKit::PatternHolder::defaultNumBits()) {
     ar &pattern_holder.getNumBits();
   } else if (Archive::is_loading::value) {
-    try { 
+    try {
       ar &pattern_holder.getNumBits();
-    } catch (boost::archive::archive_exception) {
+    } catch (boost::archive::archive_exception &) {
       pattern_holder.getNumBits() = RDKit::PatternHolder::defaultNumBits();
     }
   }
+}
+
+template <class Archive>
+void serialize(Archive &ar, RDKit::TautomerPatternHolder &pattern_holder,
+               const unsigned int version) {
+  RDUNUSED_PARAM(version);
+  ar &boost::serialization::base_object<RDKit::FPHolderBase>(pattern_holder);
+  ar &pattern_holder.getNumBits();
+}
+
+template <class Archive>
+void serialize(Archive &, RDKit::KeyHolderBase &, const unsigned int) {}
+
+template <class Archive>
+void serialize(Archive &ar, RDKit::KeyFromPropHolder &key_holder,
+               const unsigned int) {
+  ar &boost::serialization::base_object<RDKit::KeyHolderBase>(key_holder);
+  ar &key_holder.getPropName();
+  ar &key_holder.getKeys();
 }
 
 template <class Archive>
@@ -166,6 +181,8 @@ void registerSubstructLibraryTypes(Archive &ar) {
   ar.register_type(static_cast<RDKit::CachedSmilesMolHolder *>(nullptr));
   ar.register_type(static_cast<RDKit::CachedTrustedSmilesMolHolder *>(nullptr));
   ar.register_type(static_cast<RDKit::PatternHolder *>(nullptr));
+  ar.register_type(static_cast<RDKit::TautomerPatternHolder *>(nullptr));
+  ar.register_type(static_cast<RDKit::KeyFromPropHolder *>(nullptr));
 }
 
 template <class Archive>
@@ -173,6 +190,8 @@ void save(Archive &ar, const RDKit::SubstructLibrary &slib,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   registerSubstructLibraryTypes(ar);
+  ar &slib.getSearchOrder();
+  ar &slib.getKeyHolder();
   ar &slib.getMolHolder();
   ar &slib.getFpHolder();
 }
@@ -182,6 +201,10 @@ void load(Archive &ar, RDKit::SubstructLibrary &slib,
           const unsigned int version) {
   RDUNUSED_PARAM(version);
   registerSubstructLibraryTypes(ar);
+  if (version > 1) {
+    ar &slib.getSearchOrder();
+    ar &slib.getKeyHolder();
+  }
   ar &slib.getMolHolder();
   ar &slib.getFpHolder();
   slib.resetHolders();
@@ -195,7 +218,8 @@ BOOST_CLASS_VERSION(RDKit::CachedMolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::CachedSmilesMolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::CachedTrustedSmilesMolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::PatternHolder, 1);
-BOOST_CLASS_VERSION(RDKit::SubstructLibrary, 1);
+BOOST_CLASS_VERSION(RDKit::TautomerPatternHolder, 1);
+BOOST_CLASS_VERSION(RDKit::SubstructLibrary, 2);
 
 BOOST_SERIALIZATION_SPLIT_FREE(RDKit::MolHolder);
 BOOST_SERIALIZATION_SPLIT_FREE(RDKit::FPHolderBase);

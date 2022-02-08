@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -124,128 +124,85 @@ Atom *Bond::getOtherAtom(Atom const *what) const {
 };
 
 double Bond::getBondTypeAsDouble() const {
+  double res;
   switch (getBondType()) {
     case UNSPECIFIED:
     case IONIC:
     case ZERO:
-      return 0;
+      res = 0;
       break;
     case SINGLE:
-      return 1;
+      res = 1;
       break;
     case DOUBLE:
-      return 2;
+      res = 2;
       break;
     case TRIPLE:
-      return 3;
+      res = 3;
       break;
     case QUADRUPLE:
-      return 4;
+      res = 4;
       break;
     case QUINTUPLE:
-      return 5;
+      res = 5;
       break;
     case HEXTUPLE:
-      return 6;
+      res = 6;
       break;
     case ONEANDAHALF:
-      return 1.5;
+      res = 1.5;
       break;
     case TWOANDAHALF:
-      return 2.5;
+      res = 2.5;
       break;
     case THREEANDAHALF:
-      return 3.5;
+      res = 3.5;
       break;
     case FOURANDAHALF:
-      return 4.5;
+      res = 4.5;
       break;
     case FIVEANDAHALF:
-      return 5.5;
+      res = 5.5;
       break;
     case AROMATIC:
-      return 1.5;
+      res = 1.5;
       break;
     case DATIVEONE:
-      return 1.0;
+      res = 1.0;
       break;  // FIX: this should probably be different
     case DATIVE:
-      return 1.0;
+      res = 1.0;
       break;  // FIX: again probably wrong
+    case HYDROGEN:
+      res = 0.0;
+      break;
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }
+  return res;
 }
 
 double Bond::getValenceContrib(const Atom *atom) const {
-  switch (getBondType()) {
-    case UNSPECIFIED:
-    case IONIC:
-    case ZERO:
-      return 0;
-      break;
-    case SINGLE:
-      return 1;
-      break;
-    case DOUBLE:
-      return 2;
-      break;
-    case TRIPLE:
-      return 3;
-      break;
-    case QUADRUPLE:
-      return 4;
-      break;
-    case QUINTUPLE:
-      return 5;
-      break;
-    case HEXTUPLE:
-      return 6;
-      break;
-    case ONEANDAHALF:
-      return 1.5;
-      break;
-    case TWOANDAHALF:
-      return 2.5;
-      break;
-    case THREEANDAHALF:
-      return 3.5;
-      break;
-    case FOURANDAHALF:
-      return 4.5;
-      break;
-    case FIVEANDAHALF:
-      return 5.5;
-      break;
-    case AROMATIC:
-      return 1.5;
-      break;
-    case DATIVEONE:
-      if (atom->getIdx() == getEndAtomIdx()) {
-        return 1.0;
-      } else {
-        return 0.0;
-      }
-      break;
-    case DATIVE:
-      if (atom->getIdx() == getEndAtomIdx()) {
-        return 1.0;
-      } else {
-        return 0.0;
-      }
-      break;
-    default:
-      UNDER_CONSTRUCTION("Bad bond type");
+  if (atom != getBeginAtom() && atom != getEndAtom()) {
+    return 0.0;
   }
+  double res;
+  if ((getBondType() == DATIVE || getBondType() == DATIVEONE) &&
+      atom->getIdx() != getEndAtomIdx()) {
+    res = 0.0;
+  } else {
+    res = getBondTypeAsDouble();
+  }
+
+  return res;
 }
 
-void Bond::setQuery(QUERYBOND_QUERY *what) {
+void Bond::setQuery(QUERYBOND_QUERY *) {
   //  Bonds don't have queries at the moment because I have not
   //  yet figured out what a good base query should be.
   //  It would be nice to be able to do substructure searches
   //  using molecules alone, so it'd be nice if we got this
   //  issue resolved ASAP.
-  RDUNUSED_PARAM(what);
   PRECONDITION(0, "plain bonds have no Query");
 }
 
@@ -265,11 +222,8 @@ bool Bond::Match(Bond const *what) const {
   return res;
 };
 
-void Bond::expandQuery(Bond::QUERYBOND_QUERY *what,
-                       Queries::CompositeQueryType how, bool maintainOrder) {
-  RDUNUSED_PARAM(what);
-  RDUNUSED_PARAM(how);
-  RDUNUSED_PARAM(maintainOrder);
+void Bond::expandQuery(Bond::QUERYBOND_QUERY *, Queries::CompositeQueryType,
+                       bool) {
   PRECONDITION(0, "plain bonds have no query");
 };
 
@@ -349,11 +303,13 @@ uint8_t getTwiceBondType(const Bond &b) {
     case Bond::DATIVE:
       return 2;
       break;  // FIX: again probably wrong
+    case Bond::HYDROGEN:
+      return 0;
+      break;
     default:
       UNDER_CONSTRUCTION("Bad bond type");
   }
 }
-
 };  // namespace RDKit
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {

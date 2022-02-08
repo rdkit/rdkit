@@ -22,12 +22,12 @@ namespace Queries {
 //!
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class SetQuery
+class RDKIT_QUERY_EXPORT SetQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   typedef std::set<MatchFuncArgType> CONTAINER_TYPE;
 
-  SetQuery() : Query<MatchFuncArgType, DataFuncArgType, needsConversion>(){};
+  SetQuery() : Query<MatchFuncArgType, DataFuncArgType, needsConversion>() {}
 
   //! insert an entry into our \c set
   void insert(const MatchFuncArgType what) {
@@ -37,13 +37,14 @@ class SetQuery
   //! clears our \c set
   void clear() { this->d_set.clear(); }
 
-  bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     return (this->d_set.find(mfArg) != this->d_set.end()) ^ this->getNegation();
-  };
+  }
 
-  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     SetQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new SetQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
     res->setDataFunc(this->d_dataFunc);
@@ -55,17 +56,15 @@ class SetQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 
   typename CONTAINER_TYPE::const_iterator beginSet() const {
     return d_set.begin();
-  };
-  typename CONTAINER_TYPE::const_iterator endSet() const {
-    return d_set.end();
-  };
-  unsigned int size() const { return rdcast<unsigned int>(d_set.size()); };
+  }
+  typename CONTAINER_TYPE::const_iterator endSet() const { return d_set.end(); }
+  unsigned int size() const { return rdcast<unsigned int>(d_set.size()); }
 
-  std::string getFullDescription() const {
+  std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription() << " val";
     if (this->getNegation())

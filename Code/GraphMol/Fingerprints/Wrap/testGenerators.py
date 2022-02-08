@@ -1,5 +1,6 @@
-from rdkit import Chem
+from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
+import numpy as np
 import unittest
 
 
@@ -43,7 +44,7 @@ class TestCase(unittest.TestCase):
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 1)
 
-    g = rdFingerprintGenerator.GetAtomPairGenerator(useCountSimulation=False)
+    g = rdFingerprintGenerator.GetAtomPairGenerator(countSimulation=False)
     fp = g.GetSparseFingerprint(m)
     nzc = fp.GetNumOnBits()
     self.assertEqual(nzc, 2)
@@ -211,6 +212,76 @@ class TestCase(unittest.TestCase):
     g = rdFingerprintGenerator.GetRDKitFPGenerator(minPath=1, maxPath=2, numBitsPerFeature=1)
     fp = g.GetFingerprint(m1)
     self.assertEqual(fp.GetNumOnBits(), 4)
+
+  def testAdditionalOutput(self):
+    m1 = Chem.MolFromSmiles('CCO')
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
+    ao = rdFingerprintGenerator.AdditionalOutput()
+    ao.AllocateAtomCounts()
+    fp = g.GetFingerprint(m1, additionalOutput=ao)
+    self.assertEqual(ao.GetAtomCounts(), (2, 2, 2))
+    self.assertIsNone(ao.GetAtomToBits())
+    self.assertIsNone(ao.GetBitInfoMap())
+    self.assertIsNone(ao.GetBitPaths())
+
+    ao = rdFingerprintGenerator.AdditionalOutput()
+    ao.AllocateAtomToBits()
+    fp = g.GetFingerprint(m1, additionalOutput=ao)
+    self.assertIsNone(ao.GetAtomCounts())
+    self.assertEqual(ao.GetAtomToBits(), ((351, 479), (351, 399), (479, 399)))
+    self.assertIsNone(ao.GetBitInfoMap())
+    self.assertIsNone(ao.GetBitPaths())
+
+    ao = rdFingerprintGenerator.AdditionalOutput()
+    ao.AllocateBitInfoMap()
+    fp = g.GetFingerprint(m1, additionalOutput=ao)
+    self.assertIsNone(ao.GetAtomCounts())
+    self.assertIsNone(ao.GetAtomToBits())
+    self.assertEqual(ao.GetBitInfoMap(), {351: ((0, 1), ), 399: ((1, 2), ), 479: ((0, 2), )})
+    self.assertIsNone(ao.GetBitPaths())
+
+  def testCountBounds(self):
+    m = Chem.MolFromSmiles('COc1ccc(CCNC(=O)c2ccccc2C(=O)NCCc2ccc(OC)cc2)cc1')
+    fp1 = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048,
+                                                     countSimulation=True).GetFingerprint(m)
+    fp2 = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, countSimulation=True,
+                                                     countBounds=(1, 8, 16, 32)).GetFingerprint(m)
+    self.assertNotEqual(fp1.GetNumOnBits(), fp2.GetNumOnBits())
+    fp1 = rdFingerprintGenerator.GetTopologicalTorsionGenerator(
+      fpSize=2048, countSimulation=True).GetFingerprint(m)
+    fp2 = rdFingerprintGenerator.GetTopologicalTorsionGenerator(fpSize=2048, countSimulation=True,
+                                                                countBounds=(1, 8, 16,
+                                                                             32)).GetFingerprint(m)
+    self.assertNotEqual(fp1.GetNumOnBits(), fp2.GetNumOnBits())
+    fp1 = rdFingerprintGenerator.GetMorganGenerator(fpSize=2048,
+                                                    countSimulation=True).GetFingerprint(m)
+    fp2 = rdFingerprintGenerator.GetMorganGenerator(fpSize=2048, countSimulation=True,
+                                                    countBounds=(1, 8, 16, 32)).GetFingerprint(m)
+    self.assertNotEqual(fp1.GetNumOnBits(), fp2.GetNumOnBits())
+    fp1 = rdFingerprintGenerator.GetAtomPairGenerator(fpSize=2048,
+                                                      countSimulation=True).GetFingerprint(m)
+    fp2 = rdFingerprintGenerator.GetAtomPairGenerator(fpSize=2048, countSimulation=True,
+                                                      countBounds=(1, 8, 16, 32)).GetFingerprint(m)
+    self.assertNotEqual(fp1.GetNumOnBits(), fp2.GetNumOnBits())
+
+  def testNumpyFingerprints(self):
+    m = Chem.MolFromSmiles('COc1ccc(CCNC(=O)c2ccccc2C(=O)NCCc2ccc(OC)cc2)cc1')
+    for fn in (rdFingerprintGenerator.GetRDKitFPGenerator,
+               rdFingerprintGenerator.GetMorganGenerator,
+               rdFingerprintGenerator.GetAtomPairGenerator,
+               rdFingerprintGenerator.GetTopologicalTorsionGenerator):
+      gen = fn(fpSize=2048)
+      bv = gen.GetFingerprint(m)
+      oarr = np.zeros((bv.GetNumBits(), ), 'u1')
+      DataStructs.ConvertToNumpyArray(bv, oarr)
+      arr = gen.GetFingerprintAsNumPy(m)
+      np.testing.assert_array_equal(oarr, arr)
+
+      fp = gen.GetCountFingerprint(m)
+      oarr = np.zeros((fp.GetLength(), ), 'u4')
+      DataStructs.ConvertToNumpyArray(fp, oarr)
+      arr = gen.GetCountFingerprintAsNumPy(m)
+      np.testing.assert_array_equal(oarr, arr)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2020 Brian P Kelley, Joann Prescott-Roy
+//  Copyright (C) 2020-2021 Brian P Kelley, Joann Prescott-Roy and other RDKit
+//  contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -45,11 +46,9 @@ struct RDKIT_DEPROTECT_EXPORT DeprotectData {
   std::shared_ptr<ChemicalReaction>
       rxn;  // so much easier than unique_ptr, sigh...
 
-  DeprotectData(const std::string &deprotection_class,
-                const std::string &reaction_smarts,
-                const std::string &abbrevition,
-		const std::string &full_name,
-		const std::string &example="");
+  DeprotectData(std::string deprotection_class,
+                const std::string &reaction_smarts, std::string abbreviation,
+                std::string full_name, std::string example = "");
 
   bool operator==(const DeprotectData &other) const {
     return (deprotection_class == other.deprotection_class &&
@@ -57,6 +56,9 @@ struct RDKIT_DEPROTECT_EXPORT DeprotectData {
             abbreviation == other.abbreviation &&
             reaction_smarts == other.reaction_smarts &&
             isValid() == other.isValid());
+  }
+  bool operator!=(const DeprotectData &other) const {
+    return !(*this == other);
   }
 
   //! Returns true if the deprotection is valid
@@ -83,6 +85,21 @@ RDKIT_DEPROTECT_EXPORT const std::vector<DeprotectData> &getDeprotections();
 RDKIT_DEPROTECT_EXPORT std::unique_ptr<ROMol> deprotect(
     const ROMol &mol,
     const std::vector<DeprotectData> &deprotections = getDeprotections());
-}  // namspace Deprotect 
-} // namespace RDKit
+//! Deprotect a molecule in place
+/*!
+     The molecule is annotated with the deprotections used (property
+   DEPROTECTIONS) and the number of deprotections applied (property
+   DEPROTECTIION_COUNT)
+
+     \param mol the molecule to deprotect
+     \param deprotections - a vector of deprotections to use, defaults to the
+   built in deprotections.
+
+     \return whether or not the molecule was changed
+*/
+RDKIT_DEPROTECT_EXPORT bool deprotectInPlace(
+    RWMol &mol,
+    const std::vector<DeprotectData> &deprotections = getDeprotections());
+}  // namespace Deprotect
+}  // namespace RDKit
 #endif

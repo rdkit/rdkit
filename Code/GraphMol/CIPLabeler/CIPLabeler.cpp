@@ -41,9 +41,9 @@ const Rules constitutional_rules({new Rule1a, new Rule1b, new Rule2});
 const Rules all_rules({new Rule1a, new Rule1b, new Rule2, new Rule3, new Rule4a,
                        new Rule4b, new Rule4c, new Rule5New, new Rule6});
 
-std::vector<std::unique_ptr<Configuration>>
-findConfigs(CIPMol &mol, const boost::dynamic_bitset<> &atoms,
-            const boost::dynamic_bitset<> &bonds) {
+std::vector<std::unique_ptr<Configuration>> findConfigs(
+    CIPMol &mol, const boost::dynamic_bitset<> &atoms,
+    const boost::dynamic_bitset<> &bonds) {
   std::vector<std::unique_ptr<Configuration>> configs;
 
   for (auto index = atoms.find_first(); index != boost::dynamic_bitset<>::npos;
@@ -52,7 +52,6 @@ findConfigs(CIPMol &mol, const boost::dynamic_bitset<> &atoms,
     auto chiraltag = atom->getChiralTag();
     if (chiraltag == Atom::CHI_TETRAHEDRAL_CW ||
         chiraltag == Atom::CHI_TETRAHEDRAL_CCW) {
-
       std::unique_ptr<Tetrahedral> cfg{new Tetrahedral(mol, atom)};
       configs.push_back(std::move(cfg));
     }
@@ -64,16 +63,16 @@ findConfigs(CIPMol &mol, const boost::dynamic_bitset<> &atoms,
 
     auto bond_cfg = Bond::STEREONONE;
     switch (bond->getStereo()) {
-    case Bond::STEREOE:
-    case Bond::STEREOTRANS:
-      bond_cfg = Bond::STEREOTRANS;
-      break;
-    case Bond::STEREOZ:
-    case Bond::STEREOCIS:
-      bond_cfg = Bond::STEREOCIS;
-      break;
-    default:
-      continue;
+      case Bond::STEREOE:
+      case Bond::STEREOTRANS:
+        bond_cfg = Bond::STEREOTRANS;
+        break;
+      case Bond::STEREOZ:
+      case Bond::STEREOCIS:
+        bond_cfg = Bond::STEREOCIS;
+        break;
+      default:
+        continue;
     }
 
     std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(mol, bond, bond->getBeginAtom(),
@@ -105,8 +104,9 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
       if (foci.size() == 2) {
         for (const auto &edge : node->getEdges(foci[1])) {
           const auto &other_node = edge->getOther(node);
-          if (other_node->getDistance() < node->getDistance())
+          if (other_node->getDistance() < node->getDistance()) {
             low = other_node;
+          }
         }
       }
       if (!low->isDuplicate()) {
@@ -147,7 +147,6 @@ bool labelAux(std::vector<std::unique_ptr<Configuration>> &configs,
 }
 
 void label(std::vector<std::unique_ptr<Configuration>> &configs) {
-
   for (const auto &conf : configs) {
     auto desc = conf->label(constitutional_rules);
     if (desc != Descriptor::UNKNOWN) {
@@ -164,7 +163,7 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs) {
   }
 }
 
-} // namespace
+}  // namespace
 
 void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
                      const boost::dynamic_bitset<> &bonds) {
@@ -181,5 +180,5 @@ void assignCIPLabels(ROMol &mol) {
   assignCIPLabels(mol, atoms, bonds);
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

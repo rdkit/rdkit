@@ -950,6 +950,34 @@ void testReplaceCorePositions() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testReplaceCoreMatchVectMultipleMappingToCore() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing replaceCore with a matchvect with multiple "
+                          "dummy target atoms mapping to single core atom"
+                       << std::endl;
+
+  std::unique_ptr<RWMol> core, mol;
+
+  // 2 dummies in core map to single N in molecule
+  core = "C1([*:1])C([*:2])CC1"_smiles;
+  mol = "C1CC2NC12"_smiles;
+  MatchVectType mapping{{0, 4}, {1, 3}, {2, 2}, {3, 3}, {4, 1}, {5, 0}};
+
+  ROMOL_SPTR result(replaceCore(*mol.get(), *core.get(), mapping, false));
+  std::string smi = MolToSmiles(*result.get(), true);
+  TEST_ASSERT("[1*]N[2*]" == smi);
+
+  // 3 dummies in core map to single N in molecule
+  core = "C1([*:1])C([*:2])C([*:3])C1"_smiles;
+  mol = "C1C2C3N2C13"_smiles;
+  mapping.clear();
+  mapping.insert(mapping.end(),
+                 {{0, 4}, {1, 3}, {2, 2}, {3, 3}, {4, 1}, {5, 3}, {6, 0}});
+  result.reset(replaceCore(*mol.get(), *core.get(), mapping, false));
+  smi = MolToSmiles(*result.get(), true);
+  TEST_ASSERT("[1*]N([2*])[3*]" == smi);
+}
+
 void testReplaceCoreMatchVect() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing replaceCore with a matchvect" << std::endl;
@@ -1885,7 +1913,7 @@ void testGithubIssue429() {
     TEST_ASSERT(frags.size() == 2);
     std::vector<std::vector<int>> fragMap;
 
-    BOOST_FOREACH (ROMOL_SPTR romol, frags) {
+    for (auto romol : frags) {
       auto *rwmol = (RWMol *)(romol.get());
       MolOps::sanitizeMol(*rwmol);
     }
@@ -1953,7 +1981,7 @@ void testGithubIssue511() {
     TEST_ASSERT(frags->getNumAtoms() == 9);
 
     std::string csmi1 = MolToSmiles(*mol, true);
-    std::cerr << csmi1 << std::endl;
+    // std::cerr << csmi1 << std::endl;
 
     TEST_ASSERT(csmi1 == "CC[C@@](C)(N)OC");
     std::string csmi2 = MolToSmiles(*frags, true);
@@ -2073,6 +2101,69 @@ void testGithub3206() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub4019() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing GitHub #4019: dummy atoms should not be marked "
+      << "as aromatic, not have explicit Hs, not "
+      << "be bonded through an aromatic bond and "
+      << "not be bonded with each other" << std::endl;
+  {
+    auto mol = "c1ncccc1n1ccc2ccccc12"_smiles;
+    ROMOL_SPTR core(SmartsToMol("n1ccc2ccccc12"));
+    ROMOL_SPTR molNoSidechain(replaceSidechains(*mol, *core));
+    bool hasDummy = false;
+    for (auto a : molNoSidechain->atoms()) {
+      if (a->getAtomicNum() == 0) {
+        hasDummy = true;
+        TEST_ASSERT(!a->getIsAromatic());
+        a->setAtomicNum(1);
+        a->setIsotope(0);
+      }
+    }
+    TEST_ASSERT(hasDummy);
+    molNoSidechain.reset(MolOps::removeHs(*molNoSidechain));
+    TEST_ASSERT(MolToSmiles(*molNoSidechain) == "c1ccc2[nH]ccc2c1");
+  }
+  {
+    auto mol = "c1ccc2[nH]ccc2c1"_smiles;
+    ROMOL_SPTR core(SmartsToMol("c1ccccc1"));
+    ROMOL_SPTR molNoSidechain(replaceSidechains(*mol, *core));
+    unsigned int nDummies = 0;
+    for (auto a : molNoSidechain->atoms()) {
+      if (a->getAtomicNum() == 0) {
+        ++nDummies;
+        TEST_ASSERT(!a->getIsAromatic());
+        TEST_ASSERT(!a->getNumExplicitHs());
+      }
+    }
+    TEST_ASSERT(nDummies == 2);
+    for (auto b : molNoSidechain->bonds()) {
+      if (b->getBeginAtom()->getAtomicNum() == 0 ||
+          b->getEndAtom()->getAtomicNum() == 0) {
+        TEST_ASSERT(!b->getIsAromatic());
+        TEST_ASSERT(b->getBondType() == Bond::SINGLE);
+      }
+    }
+  }
+  {
+    auto mol = "c1ccccc1C1CC1"_smiles;
+    ROMOL_SPTR core(SmartsToMol("c1ccccc1C"));
+    ROMOL_SPTR molNoSidechain(replaceSidechains(*mol, *core));
+    std::vector<unsigned int> dummies;
+    for (auto a : molNoSidechain->atoms()) {
+      if (a->getAtomicNum() == 0) {
+        dummies.push_back(a->getIdx());
+        TEST_ASSERT(!a->getIsAromatic());
+        TEST_ASSERT(!a->getNumExplicitHs());
+      }
+    }
+    TEST_ASSERT(dummies.size() == 2);
+    TEST_ASSERT(
+        !molNoSidechain->getBondBetweenAtoms(dummies.front(), dummies.back()));
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -2090,6 +2181,7 @@ int main() {
   testReplaceCoreCrash();
   testReplaceCorePositions();
   testReplaceCoreMatchVect();
+  testReplaceCoreMatchVectMultipleMappingToCore();
 
   testMurckoDecomp();
   testReplaceCoreRequireDummies();
@@ -2113,6 +2205,7 @@ int main() {
 #endif
   testGithub1734();
   testGithub3206();
+  testGithub4019();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

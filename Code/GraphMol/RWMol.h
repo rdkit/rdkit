@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,8 +14,9 @@
 */
 
 #include <RDGeneral/export.h>
-#ifndef __RD_RWMOL_H__
-#define __RD_RWMOL_H__
+
+#ifndef RD_RWMOL_H
+#define RD_RWMOL_H
 
 // our stuff
 #include "ROMol.h"
@@ -30,8 +31,7 @@ namespace RDKit {
  */
 class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
  public:
-  RWMol() : ROMol() { d_partialBonds.clear(); }
-
+  RWMol() : ROMol() {}
   //! copy constructor with a twist
   /*!
     \param other     the molecule to be copied
@@ -43,10 +43,8 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
          the specified conformer from \c other.
   */
   RWMol(const ROMol &other, bool quickCopy = false, int confId = -1)
-      : ROMol(other, quickCopy, confId) {
-    d_partialBonds.clear();
-  };
-  RWMol(const RWMol &other) : ROMol(other){};
+      : ROMol(other, quickCopy, confId) {}
+  RWMol(const RWMol &other) : ROMol(other) {}
   RWMol &operator=(const RWMol &);
 
   //! insert the atoms and bonds from \c other into this molecule
@@ -79,7 +77,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   unsigned int addAtom(Atom *atom, bool updateLabel = true,
                        bool takeOwnership = false) {
     return ROMol::addAtom(atom, updateLabel, takeOwnership);
-  };
+  }
 
   //! adds an Atom to our collection
 
@@ -95,7 +93,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void replaceAtom(unsigned int idx, Atom *atom, bool updateLabel = false,
                    bool preserveProps = false);
   //! returns a pointer to the highest-numbered Atom
-  Atom *getLastAtom() { return getAtomWithIdx(getNumAtoms() - 1); };
+  Atom *getLastAtom() { return getAtomWithIdx(getNumAtoms() - 1); }
   //! returns a pointer to the "active" Atom
   /*!
      If we have an \c activeAtom, it will be returned,
@@ -137,7 +135,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   */
   unsigned int addBond(Bond *bond, bool takeOwnership = false) {
     return ROMol::addBond(bond, takeOwnership);
-  };
+  }
 
   //! starts a Bond and sets its beginAtomIdx
   /*!
@@ -186,34 +184,28 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     \param idx          the index of the Bond to replace
     \param bond         the new bond, which will be copied.
     \param preserveProps if true preserve the original bond property data
+    \param keepSGroups if true, keep Substance groups referencing the bond
 
   */
-  void replaceBond(unsigned int idx, Bond *bond, bool preserveProps = false);
+  void replaceBond(unsigned int idx, Bond *bond, bool preserveProps = false,
+                   bool keepSGroups = true);
 
   //@}
 
-  //! Sets groups of atoms with relative stereochemistry
-  /*!
-    \param stereo_groups the new set of stereo groups. All will be replaced.
-
-    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
-    file format. stereo_groups should be std::move()ed into this function.
-  */
-  void setStereoGroups(std::vector<StereoGroup> &&stereo_groups) {
-    return ROMol::setStereoGroups(std::move(stereo_groups));
-  };
-
-  //! removes all atoms, bonds, properties, bookmarks, etc.
+    //! removes all atoms, bonds, properties, bookmarks, etc.
   void clear() {
     destroy();
     d_confs.clear();
     ROMol::initMol();  // make sure we have a "fresh" ready to go copy
     numBonds = 0;
-  };
+  }
 
- private:
-  std::vector<Bond *> d_partialBonds;
-  void destroy();
+  void beginBatchEdit();
+  void rollbackBatchEdit() {
+    dp_delAtoms.reset();
+    dp_delBonds.reset();
+  }
+  void commitBatchEdit();
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;

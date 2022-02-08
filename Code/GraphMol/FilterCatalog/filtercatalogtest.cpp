@@ -38,7 +38,6 @@
 #include <iostream>
 #include <map>
 #include <algorithm>
-#include <boost/foreach.hpp>
 
 using namespace RDKit;
 using namespace std;
@@ -87,51 +86,24 @@ void testFilterCatalog() {
 
     FilterCatalog catalog(params);
     boost::scoped_ptr<ROMol> mol;
-    const IntPair match1[10] = {{0, 23},
-                                {1, 22},
-                                {2, 20},
-                                {3, 19},
-                                {4, 25},
-                                {5, 24},
-                                {6, 18},
-                                {7, 17},
-                                {8, 16},
-                                {9, 21}};
+    const IntPair match1[10] = {{0, 23}, {1, 22}, {2, 20}, {3, 19}, {4, 25},
+                                {5, 24}, {6, 18}, {7, 17}, {8, 16}, {9, 21}};
     MatchVectType matchvec1;
     for (auto i : match1) {
       matchvec1.push_back(std::make_pair(i.first, i.second));
     }
 
-    const IntPair match2[13] = {{0, 11},
-                                {1, 12},
-                                {2, 13},
-                                {3, 14},
-                                {4, 15},
-                                {5, 10},
-                                {6, 9},
-                                {7, 8},
-                                {8, 7},
-                                {9, 6},
-                                {10, 5},
-                                {11, 17},
-                                {12, 16}};
+    const IntPair match2[13] = {{0, 11}, {1, 12},  {2, 13}, {3, 14}, {4, 15},
+                                {5, 10}, {6, 9},   {7, 8},  {8, 7},  {9, 6},
+                                {10, 5}, {11, 17}, {12, 16}};
     MatchVectType matchvec2;
     for (auto i : match2) {
       matchvec2.push_back(std::make_pair(i.first, i.second));
     }
 
-    const IntPair match3[12] = {{0, 0},
-                                {1, 1},
-                                {2, 2},
-                                {3, 4},
-                                {4, 5},
-                                {5, 6},
-                                {6, 7},
-                                {7, 8},
-                                {8, 9},
-                                {9, 14},
-                                {10, 15},
-                                {11, 16}};
+    const IntPair match3[12] = {{0, 0}, {1, 1},  {2, 2},   {3, 4},
+                                {4, 5}, {5, 6},  {6, 7},   {7, 8},
+                                {8, 9}, {9, 14}, {10, 15}, {11, 16}};
     MatchVectType matchvec3;
     for (auto i : match3) {
       matchvec3.push_back(std::make_pair(i.first, i.second));
@@ -227,51 +199,50 @@ void testFilterCatalogEntry() {
 }
 
 void testFilterCatalogThreadedRunner() {
-    FilterCatalogParams params;
-    params.addCatalog(FilterCatalogParams::PAINS_A);
-    params.addCatalog(FilterCatalogParams::PAINS_B);
-    params.addCatalog(FilterCatalogParams::PAINS_C);
+  FilterCatalogParams params;
+  params.addCatalog(FilterCatalogParams::PAINS_A);
+  params.addCatalog(FilterCatalogParams::PAINS_B);
+  params.addCatalog(FilterCatalogParams::PAINS_C);
 
-    FilterCatalog catalog(params);
-    
-    std::string pathName = getenv("RDBASE");
-    pathName += "/Code/GraphMol/test_data/pains.smi";
+  FilterCatalog catalog(params);
 
-    std::ifstream infile(pathName);
-    std::vector<std::string> smiles;
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/pains.smi";
 
-    std::string line;
-    int count=0;
-    while (std::getline(infile, line))
-    {
-      if (count) {
-	std::cerr << line << std::endl;
-	smiles.push_back(line);
-      }
-      count += 1;
+  std::ifstream infile(pathName);
+  std::vector<std::string> smiles;
+
+  std::string line;
+  int count = 0;
+  while (std::getline(infile, line)) {
+    if (count) {
+      std::cerr << line << std::endl;
+      smiles.push_back(line);
     }
-    TEST_ASSERT(smiles.size() == 3);
+    count += 1;
+  }
+  TEST_ASSERT(smiles.size() == 3);
 
-    int numThreads = 3;  // one per entry
-    auto results = RunFilterCatalog(catalog, smiles, numThreads);
-    TEST_ASSERT(results.size() == smiles.size());
-    count=0;
-    for(auto &entries : results) {
-      TEST_ASSERT(entries.size() > 0);
-      std::cerr << count << " " << entries[0]->getDescription() << std::endl;
-      switch (count) {
+  int numThreads = 3;  // one per entry
+  auto results = RunFilterCatalog(catalog, smiles, numThreads);
+  TEST_ASSERT(results.size() == smiles.size());
+  count = 0;
+  for (auto &entries : results) {
+    TEST_ASSERT(entries.size() > 0);
+    std::cerr << count << " " << entries[0]->getDescription() << std::endl;
+    switch (count) {
       case 0:
-	TEST_ASSERT(entries[0]->getDescription() == "hzone_phenol_A(479)");
-	break;
+        TEST_ASSERT(entries[0]->getDescription() == "hzone_phenol_A(479)");
+        break;
       case 1:
-	TEST_ASSERT(entries[0]->getDescription() == "cyano_imine_B(17)");
-	break;
+        TEST_ASSERT(entries[0]->getDescription() == "cyano_imine_B(17)");
+        break;
       case 2:
-	TEST_ASSERT(entries[0]->getDescription() == "keto_keto_gamma(5)");
-	break;
-      }
-      count += 1;
+        TEST_ASSERT(entries[0]->getDescription() == "keto_keto_gamma(5)");
+        break;
     }
+    count += 1;
+  }
 }
 
 int main() {

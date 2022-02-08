@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2011 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,6 +15,7 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RDKitBase.h>
 #include "rdchem.h"
+#include "ContextManagers.h"
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/python_streambuf.h>
 
@@ -83,6 +83,9 @@ struct smiwriter_wrap {
              python::arg("isomericSmiles") = true,
              python::arg("kekuleSmiles") = false),
             swDocStr.c_str()))
+        .def("__enter__", &MolIOEnter<SmilesWriter>,
+             python::return_internal_reference<>())
+        .def("__exit__", &MolIOExit<SmilesWriter>)
         .def("SetProps", SetSmiWriterProps,
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"

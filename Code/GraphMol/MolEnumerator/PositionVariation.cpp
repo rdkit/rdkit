@@ -23,6 +23,9 @@ void PositionVariationOp::initFromMol() {
   if (!dp_mol) {
     return;
   }
+  if (!dp_mol->hasProp(detail::idxPropName)) {
+    detail::preserveOrigIndices(*dp_mol);
+  }
   for (const auto bond : dp_mol->bonds()) {
     std::string endpts;
     std::string attach;
@@ -33,20 +36,37 @@ void PositionVariationOp::initFromMol() {
       if (atom->getAtomicNum() == 0) {
         atom = bond->getEndAtom();
         if (atom->getAtomicNum() == 0) {
-          throw ValueErrorException(
-              "position variation bond does not have connection to a "
-              "non-dummy atom");
+          // marvin sketch seems to place the position-variation dummy at the
+          // beginning of the bond, so we're going to favor taking the end atom.
+          // In case other tools construct this differently, we have an
+          // exception to that if the end atom is an AtomNull query and the
+          // beginning atom is not one.
+          if (atom->hasQuery() &&
+              atom->getQuery()->getDescription() == "AtomNull" &&
+              bond->getBeginAtom()->hasQuery() &&
+              bond->getBeginAtom()->getQuery()->getDescription() !=
+                  "AtomNull") {
+            atom = bond->getBeginAtom();
+          }
         }
       }
       d_dummiesAtEachPoint.push_back(bond->getOtherAtomIdx(atom->getIdx()));
       std::vector<unsigned int> oats =
-          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
-      // decrement the indices and do error checking:
+          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(
+              endpts, dp_mol->getNumAtoms(), false);
+      // decrement the indices and do error checking and whatever additional
+      // cleanup is required:
       for (auto &oat : oats) {
         if (oat == 0 || oat > dp_mol->getNumAtoms()) {
           throw ValueErrorException("Bad variation point index");
         }
         --oat;
+        // github #4381: if we're connecting to an aromatic heteroatom which
+        // has implicit Hs, we should remove those
+        auto attachAtom = dp_mol->getAtomWithIdx(oat);
+        if (attachAtom->getIsAromatic() && attachAtom->getAtomicNum() != 6) {
+          attachAtom->setNumExplicitHs(0);
+        }
       }
       d_variationPoints.push_back(std::make_pair(atom->getIdx(), oats));
     }
@@ -87,12 +107,11 @@ std::unique_ptr<ROMol> PositionVariationOp::operator()(
     res->addBond(begAtomIdx, endAtomIdx, Bond::BondType::SINGLE);
   }
   // now remove the dummies:
-  std::vector<size_t> atsToRemove = d_dummiesAtEachPoint;
-  std::sort(atsToRemove.begin(), atsToRemove.end());
-  for (auto riter = atsToRemove.rbegin(); riter != atsToRemove.rend();
-       ++riter) {
-    res->removeAtom(*riter);
+  res->beginBatchEdit();
+  for (auto idx : d_dummiesAtEachPoint) {
+    res->removeAtom(idx);
   }
+  res->commitBatchEdit();
   return std::unique_ptr<ROMol>(static_cast<ROMol *>(res));
 }
 

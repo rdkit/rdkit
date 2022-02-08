@@ -18,11 +18,11 @@ If the dataframe is containing a molecule format in a column (e.g. smiles), like
 ...   'Name':'Ampicilline'}, ignore_index=True)#Ampicilline
 >>> print([str(x) for x in  antibiotics.columns])
 ['Name', 'Smiles']
->>> print(antibiotics) # doctest: +ELLIPSIS
+>>> print(antibiotics)
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
-1   Tetracycline  CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4*...*
-2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O*...*
+1   Tetracycline  CC1(C2CC3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4...
+2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O...
 
 a new column can be created holding the respective RDKit molecule objects. The fingerprint can be
 included to accelerate substructure searches on the dataframe.
@@ -37,10 +37,10 @@ Such the antibiotics containing the beta-lactam ring "C1C(=O)NC1" can be obtaine
 
 >>> beta_lactam = Chem.MolFromSmiles('C1C(=O)NC1')
 >>> beta_lactam_antibiotics = antibiotics[antibiotics['Molecule'] >= beta_lactam]
->>> print(beta_lactam_antibiotics[['Name','Smiles']]) # doctest: +ELLIPSIS
+>>> print(beta_lactam_antibiotics[['Name','Smiles']])
             Name                                             Smiles
 0  Penicilline G    CC1(C(N2C(S1)C(C2=O)NC(=O)CC3=CC=CC=C3)C(=O)O)C
-2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O*...*
+2  Ampicilline  CC1(C(N2C(S1)C(C2=O)NC(=O)C(C3=CC=CC=C3)N)C(=O...
 
 
 It is also possible to load an SDF file can be load into a dataframe.
@@ -82,8 +82,8 @@ The standard ForwardSDMolSupplier keywords are also available:
 
 Conversion to html is quite easy:
 
->>> htm = frame.to_html() # doctest: +ELLIPSIS
-*...*
+>>> htm = frame.to_html() # doctest:
+...
 >>> str(htm[:36])
 '<table border="1" class="dataframe">'
 
@@ -141,13 +141,18 @@ try:
           file=sys.stderr)
     pd = None
   else:
-    # saves the default pandas rendering to allow restoration
-    defPandasRendering = pd.core.frame.DataFrame.to_html
-    if pandasVersion > (0, 25, 0):
-      # this was github #2673
-      defPandasRepr = pd.core.frame.DataFrame._repr_html_
-    else:
-      defPandasRepr = None
+    if not hasattr(pd, "_rdkitpatched"):
+      # saves the default pandas rendering to allow restoration
+      pd.core.frame.DataFrame._orig_to_html = pd.core.frame.DataFrame.to_html
+      if pandasVersion > (0, 25, 0):
+        # this was github #2673
+        pd.core.frame.DataFrame._orig_repr_html_ = pd.core.frame.DataFrame._repr_html_
+      else:
+        pd.core.frame.DataFrame._orig_repr_html_ = None
+      pd._rdkitpatched = True
+
+    defPandasRendering = pd.core.frame.DataFrame._orig_to_html
+    defPandasRepr = pd.core.frame.DataFrame._orig_repr_html_
 except ImportError:
   import traceback
   traceback.print_exc()
@@ -158,20 +163,16 @@ except Exception as e:
   traceback.print_exc()
   pd = None
 
-if pd:
-  try:
-    from pandas.io.formats import format as fmt
-  except:
-    try:
-      from pandas.formats import format as fmt
-    except ImportError:
-      from pandas.core import format as fmt  # older versions
-else:
-  fmt = 'Pandas not available'
-
 highlightSubstructures = True
 molRepresentation = 'png'  # supports also SVG
 molSize = (200, 200)
+
+
+def getAdjustmentAttr():
+  # Github #3701 was a problem with a private function being renamed (made public) in
+  # pandas v1.2. Rather than relying on version numbers we just use getattr:
+  return ((hasattr(pd.io.formats.format, '_get_adjustment') and '_get_adjustment')
+          or (hasattr(pd.io.formats.format, 'get_adjustment') and 'get_adjustment') or None)
 
 
 def _patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
@@ -195,14 +196,19 @@ def patchPandasrepr(self, **kwargs):
   global defHTMLFormatter_write_cell
   global defPandasGetAdjustment
 
-  import pandas.io.formats.html  # necessary for loading HTMLFormatter
-  defHTMLFormatter_write_cell = pandas.io.formats.html.HTMLFormatter._write_cell
-  pandas.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-  defPandasGetAdjustment = pandas.io.formats.format._get_adjustment
-  pandas.io.formats.format._get_adjustment = _patched_get_adjustment
+  import pandas.io.formats.html
+  if not hasattr(pandas.io.formats.html.HTMLFormatter, "_rdkitpatched"):
+    defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+    pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
+    pandas.io.formats.html.HTMLFormatter._rdkitpatched = True
+  get_adjustment_attr = getAdjustmentAttr()
+  if get_adjustment_attr:
+    defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
+    setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
   res = defPandasRepr(self, **kwargs)
-  pandas.io.formats.format._get_adjustment = defPandasGetAdjustment
-  pandas.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+  if get_adjustment_attr:
+    setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
+  pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
   return res
 
 
@@ -229,11 +235,11 @@ def patchPandasHTMLrepr(self, **kwargs):
   except:
     # this happens up until at least pandas v0.22
     return patch_v1()
-  else:
-    if not hasattr(pd.io.formats.html, 'HTMLFormatter') or \
-      not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or \
-      not hasattr(pd.io.formats.format, '_get_adjustment'):
-      return patch_v1()
+  get_adjustment_attr = getAdjustmentAttr()
+
+  if (not hasattr(pd.io.formats.html, 'HTMLFormatter')
+      or not hasattr(pd.io.formats.html.HTMLFormatter, '_write_cell') or not get_adjustment_attr):
+    return patch_v1()
 
   # The "clean" patch:
   # 1. Temporarily set escape=False in HTMLFormatter._write_cell
@@ -247,18 +253,18 @@ def patchPandasHTMLrepr(self, **kwargs):
   #    be truncated.
 
   # store original _get_adjustment method
-  defPandasGetAdjustment = pd.io.formats.format._get_adjustment
+  defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
 
   try:
     # patch methods and call original to_html function
-    pd.io.formats.format._get_adjustment = _patched_get_adjustment
+    setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
     pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
     return defPandasRendering(self, **kwargs)
   except:
     pass
   finally:
     # restore original methods
-    pd.io.formats.format._get_adjustment = defPandasGetAdjustment
+    setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
     pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
 
   # If this point is reached, an error occurred in the previous try block.
@@ -415,8 +421,8 @@ def AddMoleculeColumnToFrame(frame, smilesCol='Smiles', molCol='ROMol', includeF
   if not includeFingerprints:
     frame[molCol] = frame[smilesCol].map(Chem.MolFromSmiles)
   else:
-    frame[molCol] = frame[smilesCol].map(lambda smiles: _MolPlusFingerprint(
-      Chem.MolFromSmiles(smiles)))
+    frame[molCol] = frame[smilesCol].map(
+      lambda smiles: _MolPlusFingerprint(Chem.MolFromSmiles(smiles)))
   RenderImagesInAllDataFrames(images=True)
 
 
@@ -460,8 +466,9 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
     close = None  # don't close an open file that was passed in
   records = []
   indices = []
+  sanitize = bool(molColName is not None or smilesName is not None)
   for i, mol in enumerate(
-      Chem.ForwardSDMolSupplier(f, sanitize=(molColName is not None), removeHs=removeHs,
+      Chem.ForwardSDMolSupplier(f, sanitize=sanitize, removeHs=removeHs,
                                 strictParsing=strictParsing)):
     if mol is None:
       continue
@@ -713,6 +720,7 @@ def RGroupDecompositionToFrame(groups, mols, include_core=False, redraw_sidechai
   """
   cols = ['Mol'] + list(groups.keys())
   if redraw_sidechains:
+    from rdkit.Chem import rdDepictor
     for k, vl in groups.items():
       if k == 'Core':
         continue
@@ -779,6 +787,12 @@ if __name__ == '__main__':  # pragma: nocover
       sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
       frame = LoadSDF(sdfFile)
       SaveXlsxFromFrame(frame, 'foo.xlsx')
+
+    def testGithub3701(self):
+      ' problem with update to pandas v1.2.0 '
+      df = pd.DataFrame({"name": ["ethanol", "furan"], "smiles": ["CCO", "c1ccoc1"]})
+      AddMoleculeColumnToFrame(df, 'smiles', 'molecule')
+      self.assertEqual(len(df.molecule), 2)
 
   if pd is None:
     print("pandas installation not found, skipping tests", file=sys.stderr)

@@ -10,6 +10,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_ABBREVIATIONS_H
 #define RD_ABBREVIATIONS_H
+#include <utility>
 #include <vector>
 #include <string>
 #include <memory>
@@ -19,7 +20,7 @@ class ROMol;
 class RWMol;
 
 namespace Abbreviations {
-RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
+struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationDefinition {
   std::string label;
   std::string displayLabel;
   std::string displayLabelW;
@@ -34,13 +35,13 @@ RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationDefinition {
     return !(*this == other);
   }
 };
-RDKIT_ABBREVIATIONS_EXPORT struct AbbreviationMatch {
+struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationMatch {
   std::vector<std::pair<int, int>> match;
   AbbreviationDefinition abbrev;
-  AbbreviationMatch(const std::vector<std::pair<int, int>>& matchArg,
-                    const AbbreviationDefinition& abbrevArg)
-      : match(matchArg), abbrev(abbrevArg){};
-  AbbreviationMatch() : match(), abbrev(){};
+  AbbreviationMatch(std::vector<std::pair<int, int>> matchArg,
+                    AbbreviationDefinition abbrevArg)
+      : match(std::move(matchArg)), abbrev(std::move(abbrevArg)) {}
+  AbbreviationMatch() : match(), abbrev() {}
   bool operator==(const AbbreviationMatch& other) const {
     return abbrev == other.abbrev && match == other.match;
   }

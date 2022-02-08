@@ -285,4 +285,4 @@ void InfoBitRanker::writeTopBitsToFile(const std::string &fileName) const {
   auto &outStream = static_cast<std::ostream &>(tmpStream);
   this->writeTopBitsToStream(&outStream);
 }
-}
+}  // namespace RDInfoTheory

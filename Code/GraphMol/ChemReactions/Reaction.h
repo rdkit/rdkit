@@ -1,5 +1,7 @@
 //
-//  Copyright (c) 2007-2018, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -47,12 +49,12 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionException
     : public std::exception {
  public:
   //! construct with an error message
-  explicit ChemicalReactionException(const char *msg) : _msg(msg){};
+  explicit ChemicalReactionException(const char *msg) : _msg(msg) {}
   //! construct with an error message
-  explicit ChemicalReactionException(const std::string msg) : _msg(msg){};
+  explicit ChemicalReactionException(const std::string msg) : _msg(msg) {}
   //! get the error message
-  const char *what() const noexcept override { return _msg.c_str(); };
-  ~ChemicalReactionException() noexcept {};
+  const char *what() const noexcept override { return _msg.c_str(); }
+  ~ChemicalReactionException() noexcept override = default;
 
  private:
   std::string _msg;
@@ -120,23 +122,23 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   friend class ReactionPickler;
 
  public:
-  ChemicalReaction() : RDProps(){};
+  ChemicalReaction() : RDProps() {}
   ChemicalReaction(const ChemicalReaction &other) : RDProps() {
     df_needsInit = other.df_needsInit;
     df_implicitProperties = other.df_implicitProperties;
     for (MOL_SPTR_VECT::const_iterator iter = other.beginReactantTemplates();
          iter != other.endReactantTemplates(); ++iter) {
-      ROMol *reactant = new ROMol(**iter);
+      RWMol *reactant = new RWMol(**iter);
       m_reactantTemplates.push_back(ROMOL_SPTR(reactant));
     }
     for (MOL_SPTR_VECT::const_iterator iter = other.beginProductTemplates();
          iter != other.endProductTemplates(); ++iter) {
-      ROMol *product = new ROMol(**iter);
+      RWMol *product = new RWMol(**iter);
       m_productTemplates.push_back(ROMOL_SPTR(product));
     }
     for (MOL_SPTR_VECT::const_iterator iter = other.beginAgentTemplates();
          iter != other.endAgentTemplates(); ++iter) {
-      ROMol *agent = new ROMol(**iter);
+      RWMol *agent = new RWMol(**iter);
       m_agentTemplates.push_back(ROMOL_SPTR(agent));
     }
     d_props = other.d_props;
@@ -176,7 +178,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   }
 
   //! Removes the reactant templates from a reaction if atom mapping ratio is
-  // below a given threshold
+  /// below a given threshold
   /*! By default the removed reactant templates were attached to the agent
      templates.
       An alternative will be to provide a pointer to a molecule vector where
@@ -187,7 +189,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
                                        MOL_SPTR_VECT *targetVector = nullptr);
 
   //! Removes the product templates from a reaction if its atom mapping ratio is
-  // below a given threshold
+  /// below a given threshold
   /*! By default the removed products templates were attached to the agent
      templates.
       An alternative will be to provide a pointer to a molecule vector where
@@ -227,6 +229,17 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   */
   std::vector<MOL_SPTR_VECT> runReactant(
       ROMOL_SPTR reactant, unsigned int reactantTemplateIdx) const;
+
+  //! Runs a single reactant in place (the reactant is modified)
+  /*!
+    This is only useable with reactions which have a single reactant and product
+    and where no atoms are added in the product.
+
+     \param reactant The single reactant to use
+
+     \return whether or not the reactant was actually modified
+  */
+  bool runReactant(RWMol &reactant) const;
 
   const MOL_SPTR_VECT &getReactants() const {
     return this->m_reactantTemplates;
@@ -277,13 +290,13 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   }
   unsigned int getNumReactantTemplates() const {
     return rdcast<unsigned int>(this->m_reactantTemplates.size());
-  };
+  }
   unsigned int getNumProductTemplates() const {
     return rdcast<unsigned int>(this->m_productTemplates.size());
-  };
+  }
   unsigned int getNumAgentTemplates() const {
     return rdcast<unsigned int>(this->m_agentTemplates.size());
-  };
+  }
 
   //! initializes our internal reactant-matching datastructures.
   /*!
@@ -296,10 +309,10 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   */
   void initReactantMatchers(bool silent = false);
 
-  bool isInitialized() const { return !df_needsInit; };
+  bool isInitialized() const { return !df_needsInit; }
 
   //! validates the reactants and products to make sure the reaction seems
-  //"reasonable"
+  /// "reasonable"
   /*!
       \return   true if the reaction validates without errors (warnings do not
       stop validation)
@@ -335,10 +348,10 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
       specified in the reaction.
 
   */
-  bool getImplicitPropertiesFlag() const { return df_implicitProperties; };
+  bool getImplicitPropertiesFlag() const { return df_implicitProperties; }
   //! sets the implicit properties flag. See the documentation for
   //! getImplicitProertiesFlag() for a discussion of what this means.
-  void setImplicitPropertiesFlag(bool val) { df_implicitProperties = val; };
+  void setImplicitPropertiesFlag(bool val) { df_implicitProperties = val; }
 
  private:
   bool df_needsInit{true};

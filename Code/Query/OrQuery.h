@@ -17,13 +17,13 @@ namespace Queries {
 //! a Query implementing AND: requires any child to be \c true
 template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
           bool needsConversion = false>
-class OrQuery
+class RDKIT_QUERY_EXPORT OrQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
   typedef Query<MatchFuncArgType, DataFuncArgType, needsConversion> BASE;
-  OrQuery() { this->df_negate = false; };
+  OrQuery() { this->df_negate = false; }
 
-  bool Match(const DataFuncArgType what) const {
+  bool Match(const DataFuncArgType what) const override {
     bool res = false;
     typename BASE::CHILD_VECT_CI it1;
     for (it1 = this->beginChildren(); it1 != this->endChildren(); ++it1) {
@@ -35,9 +35,10 @@ class OrQuery
     }
     if (this->getNegation()) res = !res;
     return res;
-  };
+  }
 
-  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy() const {
+  Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
+      const override {
     OrQuery<MatchFuncArgType, DataFuncArgType, needsConversion> *res =
         new OrQuery<MatchFuncArgType, DataFuncArgType, needsConversion>();
 
@@ -49,7 +50,7 @@ class OrQuery
     res->d_description = this->d_description;
     res->d_queryType = this->d_queryType;
     return res;
-  };
+  }
 };
 }  // namespace Queries
 #endif

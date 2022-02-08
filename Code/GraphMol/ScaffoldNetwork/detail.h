@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 
-
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ScaffoldNetwork/ScaffoldNetwork.h>
 
@@ -16,15 +15,20 @@
 namespace RDKit {
 namespace ScaffoldNetwork {
 namespace detail {
-RDKIT_SCAFFOLDNETWORK_EXPORT std::vector<std::pair<std::string, ROMOL_SPTR>> getMolFragments(
+RDKIT_SCAFFOLDNETWORK_EXPORT std::vector<std::pair<std::string, ROMOL_SPTR>>
+getMolFragments(const ROMol &mol, const ScaffoldNetworkParams &params);
+RDKIT_SCAFFOLDNETWORK_EXPORT ROMol *makeScaffoldGeneric(const ROMol &mol,
+                                                        bool doAtoms,
+                                                        bool doBonds);
+RDKIT_SCAFFOLDNETWORK_EXPORT ROMol *removeAttachmentPoints(
     const ROMol &mol, const ScaffoldNetworkParams &params);
-RDKIT_SCAFFOLDNETWORK_EXPORT ROMol *makeScaffoldGeneric(const ROMol &mol, bool doAtoms, bool doBonds);
-RDKIT_SCAFFOLDNETWORK_EXPORT ROMol *removeAttachmentPoints(const ROMol &mol,
-                              const ScaffoldNetworkParams &params);
-RDKIT_SCAFFOLDNETWORK_EXPORT ROMol *pruneMol(const ROMol &mol, const ScaffoldNetworkParams &params);
-RDKIT_SCAFFOLDNETWORK_EXPORT ROMol *flattenMol(const ROMol &mol, const ScaffoldNetworkParams &params);
-RDKIT_SCAFFOLDNETWORK_EXPORT void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
-                     const ScaffoldNetworkParams &params);
+RDKIT_SCAFFOLDNETWORK_EXPORT ROMol *pruneMol(
+    const ROMol &mol, const ScaffoldNetworkParams &params);
+RDKIT_SCAFFOLDNETWORK_EXPORT ROMol *flattenMol(
+    const ROMol &mol, const ScaffoldNetworkParams &params);
+RDKIT_SCAFFOLDNETWORK_EXPORT void addMolToNetwork(
+    const ROMol &mol, ScaffoldNetwork &network,
+    const ScaffoldNetworkParams &params);
 }  // namespace detail
 }  // namespace ScaffoldNetwork
 }  // namespace RDKit

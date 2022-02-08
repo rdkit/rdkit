@@ -1,6 +1,5 @@
-// $Id$
 //
-//   Copyright (C) 2005-2006 Rational Discovery LLC
+//   Copyright (C) 2005-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -98,22 +97,22 @@ void computeUnionBox(const RDGeom::Point3D &leftBottom1,
   uRightTop.z = std::max(rightTop1.z, rightTop2.z);
 }
 
-double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha, double beta, int confId1,
-                        int confId2, double gridSpacing,
-                        DiscreteValueVect::DiscreteValueType bitsPerPoint,
-                        double vdwScale, double stepSize, int maxLayers,
-                        bool ignoreHs) {
+double tverskyIndex(const ROMol &mol1, const ROMol &mol2, double alpha,
+                    double beta, int confId1, int confId2, double gridSpacing,
+                    DiscreteValueVect::DiscreteValueType bitsPerPoint,
+                    double vdwScale, double stepSize, int maxLayers,
+                    bool ignoreHs) {
   const Conformer &conf1 = mol1.getConformer(confId1);
   const Conformer &conf2 = mol2.getConformer(confId2);
   return tverskyIndex(conf1, conf2, alpha, beta, gridSpacing, bitsPerPoint,
-                          vdwScale, stepSize, maxLayers, ignoreHs);
+                      vdwScale, stepSize, maxLayers, ignoreHs);
 }
 
-double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha, double beta,
-                        double gridSpacing,
-                        DiscreteValueVect::DiscreteValueType bitsPerPoint,
-                        double vdwScale, double stepSize, int maxLayers,
-                        bool ignoreHs) {
+double tverskyIndex(const Conformer &conf1, const Conformer &conf2,
+                    double alpha, double beta, double gridSpacing,
+                    DiscreteValueVect::DiscreteValueType bitsPerPoint,
+                    double vdwScale, double stepSize, int maxLayers,
+                    bool ignoreHs) {
   RDGeom::Transform3D *trans = MolTransforms::computeCanonicalTransform(conf1);
 
   // now use this transform and figure out what size grid we will need
@@ -142,7 +141,6 @@ double tverskyIndex(const Conformer &conf1, const Conformer &conf2, double alpha
   return RDGeom::tverskyIndex(grd1, grd2, alpha, beta);
 }
 
-
 double tanimotoDistance(const ROMol &mol1, const ROMol &mol2, int confId1,
                         int confId2, double gridSpacing,
                         DiscreteValueVect::DiscreteValueType bitsPerPoint,
@@ -150,8 +148,8 @@ double tanimotoDistance(const ROMol &mol1, const ROMol &mol2, int confId1,
                         bool ignoreHs) {
   const Conformer &conf1 = mol1.getConformer(confId1);
   const Conformer &conf2 = mol2.getConformer(confId2);
-  return tanimotoDistance(conf1, conf2, gridSpacing = 0.5, bitsPerPoint,
-                          vdwScale, stepSize, maxLayers, ignoreHs);
+  return tanimotoDistance(conf1, conf2, gridSpacing, bitsPerPoint, vdwScale,
+                          stepSize, maxLayers, ignoreHs);
 }
 
 double tanimotoDistance(const Conformer &conf1, const Conformer &conf2,
@@ -241,5 +239,5 @@ double protrudeDistance(const Conformer &conf1, const Conformer &conf2,
   }
   return res;
 }
-}
-}
+}  // namespace MolShapes
+}  // namespace RDKit

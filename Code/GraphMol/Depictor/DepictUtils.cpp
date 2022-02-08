@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2010 greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2010 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -50,27 +49,19 @@ RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
 
   RDGeom::INT_POINT2D_MAP res;
 
-  unsigned int i, aid;
-  double x, y;
-
-  for (i = 0; i < na; i++) {
-    x = al * cos(i * ang);
-    y = al * sin(i * ang);
+  for (unsigned int i = 0; i < na; ++i) {
+    auto x = al * cos(i * ang);
+    auto y = al * sin(i * ang);
     RDGeom::Point2D loc(x, y);
-    aid = ring[i];
-    res[aid] = loc;
+    res[ring[i]] = loc;
   }
   return res;
 }
 
 void transformPoints(RDGeom::INT_POINT2D_MAP &nringCor,
                      const RDGeom::Transform2D &trans) {
-  RDGeom::INT_POINT2D_MAP_I nrci;
-  for (nrci = nringCor.begin(); nrci != nringCor.end(); nrci++) {
-    RDGeom::Point2D loc = nrci->second;
-    trans.TransformPoint(loc);
-    nrci->second = loc;
-  }
+  std::for_each(nringCor.begin(), nringCor.end(),
+                [&trans](auto &elem) { trans.TransformPoint(elem.second); });
 }
 
 RDGeom::Point2D computeBisectPoint(const RDGeom::Point2D &rcr, double ang,
@@ -114,10 +105,9 @@ RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point,
 
 void reflectPoints(RDGeom::INT_POINT2D_MAP &coordMap,
                    const RDGeom::Point2D &loc1, const RDGeom::Point2D &loc2) {
-  RDGeom::INT_POINT2D_MAP_I nci;
-  for (nci = coordMap.begin(); nci != coordMap.end(); nci++) {
-    nci->second = reflectPoint(nci->second, loc1, loc2);
-  }
+  std::for_each(coordMap.begin(), coordMap.end(), [&loc1, &loc2](auto &elem) {
+    reflectPoint(elem.second, loc1, loc2);
+  });
 }
 
 RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
@@ -125,18 +115,15 @@ RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
   PRECONDITION(aid < mol.getNumAtoms(), "");
   PR_QUEUE subsAid;
   int ref = -1;
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(mol.getAtomWithIdx(aid));
   // find the neighbor of aid that is not in nbrs i.e. atom A from the comments
-  // in the header file
-  // and the store the pair <degree, aid> in the order of increasing degree
-  while (nbrIdx != endNbrs) {
+  // in the header file and the store the pair <degree, aid> in the order of
+  // increasing degree
+  for (auto anbr : mol.atomNeighbors(mol.getAtomWithIdx(aid))) {
     // We used to use degree here instead we will start using the CIP rank here
-    if (std::find(nbrs.begin(), nbrs.end(), static_cast<int>(*nbrIdx)) ==
+    if (std::find(nbrs.begin(), nbrs.end(), static_cast<int>(anbr->getIdx())) ==
         nbrs.end()) {
-      ref = (*nbrIdx);
+      ref = anbr->getIdx();
     }
-    nbrIdx++;
   }
 
   RDKit::INT_VECT thold = nbrs;
@@ -181,9 +168,8 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
   for (const auto &fusedRing : fusedRings) {
     subs = 0;
     for (auto rii : fusedRing) {
-      int deg = mol.getAtomWithIdx(rii)->getDegree();
-      if (deg > 2) {
-        subs++;
+      if (mol.getAtomWithIdx(rii)->getDegree() > 2) {
+        ++subs;
       }
     }
     if (subs < minsubs) {
@@ -261,28 +247,23 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
       nextId = currRingId;
       res = commonAtoms;
     }
-    currRingId++;
+    ++currRingId;
   }
-  // here is an additional constrain we will put on the common atoms
-  // it is quite likely that the common atoms form a chain (it is possible we
-  // can
-  // construct some weird cases where this does not hold true - but for now we
-  // will
-  // assume this is true. However the IDs in the res may not be in the order of
-  // going
-  // from one end of the chain to the other - here is an example
-  // C1CCC(CC12)CCC2 - two rings here with three atoms in common
+  // here is an additional constrain we will put on the common atoms it is quite
+  // likely that the common atoms form a chain (it is possible we can construct
+  // some weird cases where this does not hold true - but for now we will assume
+  // this is true. However the IDs in the res may not be in the order of going
+  // from one end of the chain to the other -
+  //  here is an example C1CCC(CC12)CCC2
+  // - two rings here with three atoms in common
   // let ring1:(0,1,2,3,4,5) be a ring that is already embedded, then let
-  // ring2:(4,3,6,7,8,5) be the ring
-  // that we found to be the next ring we should embed. The commonAtoms are
-  // (4,3,5) - note that
-  // they will be in this order since the rings are always traversed in order.
-  // Now we would like these
-  // common atoms to be returned in the order (5,4,3) - then we have a
-  // continuous chain, we can
-  // do this by simply looking at the original ring order (4,3,6,7,8,5) and
-  // observing that 5 need to come to
-  // the front
+  // ring2:(4,3,6,7,8,5) be the ring that we found to be the next ring we should
+  // embed.
+  // The commonAtoms are (4,3,5) - note that they will be in this order since
+  // the rings are always traversed in order. Now we would like these common
+  // atoms to be returned in the order (5,4,3) - then we have a continuous
+  // chain, we can do this by simply looking at the original ring order
+  // (4,3,6,7,8,5) and observing that 5 need to come to the front
 
   // find out how many atoms from the end we need to move to the front
   unsigned int cmnLst = 0;
@@ -313,10 +294,9 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
 
 RDKit::INT_VECT getAllRotatableBonds(const RDKit::ROMol &mol) {
   RDKit::INT_VECT res;
-  RDKit::ROMol::ConstBondIterator bondIt;
-  for (bondIt = mol.beginBonds(); bondIt != mol.endBonds(); bondIt++) {
-    int bid = (*bondIt)->getIdx();
-    if (((*bondIt)->getStereo() <= RDKit::Bond::STEREOANY) &&
+  for (const auto bond : mol.bonds()) {
+    int bid = bond->getIdx();
+    if ((bond->getStereo() <= RDKit::Bond::STEREOANY) &&
         (!(mol.getRingInfo()->numBondRings(bid)))) {
       res.push_back(bid);
     }
@@ -340,11 +320,11 @@ RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol, unsigned int aid1,
                     "bad last element");
     path.pop_back();
 
-    RDKit::INT_LIST_CI pi = path.begin();
-    int pid = (*pi);
-    ++pi;
-    while (pi != path.end()) {
-      int aid = (*pi);
+    auto pid = path.front();
+    for (auto aid : path) {
+      if (aid == pid) {
+        continue;
+      }
       const RDKit::Bond *bond = mol.getBondBetweenAtoms(pid, aid);
       int bid = bond->getIdx();
       if ((bond->getStereo() <= RDKit::Bond::STEREOANY) &&
@@ -352,7 +332,6 @@ RDKit::INT_VECT getRotatableBonds(const RDKit::ROMol &mol, unsigned int aid1,
         res.push_back(bid);
       }
       pid = aid;
-      ++pi;
     }
   }
   return res;
@@ -364,16 +343,10 @@ void getNbrAtomAndBondIds(unsigned int aid, const RDKit::ROMol *mol,
   unsigned int na = mol->getNumAtoms();
   URANGE_CHECK(aid, na);
 
-  RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
-  boost::tie(nbrIdx, endNbrs) = mol->getAtomNeighbors(mol->getAtomWithIdx(aid));
-
-  unsigned int ai, bi;
-  while (nbrIdx != endNbrs) {
-    ai = (*nbrIdx);
-    bi = mol->getBondBetweenAtoms(aid, ai)->getIdx();
-    aids.push_back(ai);
+  for (auto nbr : mol->atomNeighbors(mol->getAtomWithIdx(aid))) {
+    auto bi = mol->getBondBetweenAtoms(aid, nbr->getIdx())->getIdx();
+    aids.push_back(nbr->getIdx());
     bids.push_back(bi);
-    nbrIdx++;
   }
 }
 
@@ -445,24 +418,11 @@ INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
   }
 }
 
-// compare the first elements of two pairs of integers/
-
-int _pairCompDescending(const INT_PAIR &arg1, const INT_PAIR &arg2) {
-  return (arg1.first != arg2.first ? arg1.first > arg2.first
-                                   : arg1.second > arg2.second);
-}
-
-int _pairCompAscending(const INT_PAIR &arg1, const INT_PAIR &arg2) {
-  return (arg1.first != arg2.first ? arg1.first < arg2.first
-                                   : arg1.second < arg2.second);
-}
-
 template <class T>
 T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
   size_t natms = commAtms.size();
   INT_PAIR_VECT rankAid;
   rankAid.reserve(natms);
-  T res;
   typename T::const_iterator ci;
   for (ci = commAtms.begin(); ci != commAtms.end(); ci++) {
     unsigned int rank;
@@ -475,15 +435,15 @@ T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
     rankAid.push_back(std::make_pair(rank, (*ci)));
   }
   if (ascending) {
-    std::stable_sort(rankAid.begin(), rankAid.end(), _pairCompAscending);
+    std::stable_sort(rankAid.begin(), rankAid.end(),
+                     [](const auto &e1, const auto &e2) { return e1 < e2; });
   } else {
-    std::stable_sort(rankAid.begin(), rankAid.end(), _pairCompDescending);
+    std::stable_sort(rankAid.begin(), rankAid.end(),
+                     [](const auto &e1, const auto &e2) { return e1 > e2; });
   }
-  INT_PAIR_VECT_CI rai;
-  for (rai = rankAid.begin(); rai != rankAid.end(); rai++) {
-    res.push_back(rai->second);
-  }
-
+  T res;
+  std::for_each(rankAid.begin(), rankAid.end(),
+                [&res](const auto &elem) { res.push_back(elem.second); });
   return res;
 }
 

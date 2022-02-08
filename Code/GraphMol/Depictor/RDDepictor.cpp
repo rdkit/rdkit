@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,7 +25,7 @@
 #include <Geometry/Transform2D.h>
 #include <Geometry/Transform3D.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
 #include <iostream>
@@ -44,19 +44,18 @@ void embedFusedSystems(const RDKit::ROMol &mol,
   RDKit::INT_INT_VECT_MAP neighMap;
   RingUtils::makeRingNeighborMap(arings, neighMap);
 
-  RDKit::INT_VECT fused;
-  size_t cnrs = arings.size();
+  auto cnrs = arings.size();
   boost::dynamic_bitset<> fusDone(cnrs);
-  size_t curr = 0;
 
+  auto curr = 0u;
   while (curr < cnrs) {
     // embed all ring and fused ring systems
-    fused.resize(0);
+    RDKit::INT_VECT fused;
     RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
     RDKit::VECT_INT_VECT frings;
     frings.reserve(fused.size());
-    for (RDKit::INT_VECT_CI rid = fused.begin(); rid != fused.end(); ++rid) {
-      frings.push_back(arings[*rid]);
+    for (auto rid : fused) {
+      frings.push_back(arings.at(rid));
     }
     EmbeddedFrag efrag(&mol, frings);
     efrag.setupNewNeighs();
@@ -76,22 +75,21 @@ void embedFusedSystems(const RDKit::ROMol &mol,
 
 void embedCisTransSystems(const RDKit::ROMol &mol,
                           std::list<EmbeddedFrag> &efrags) {
-  for (RDKit::ROMol::ConstBondIterator cbi = mol.beginBonds();
-       cbi != mol.endBonds(); ++cbi) {
+  for (auto bond : mol.bonds()) {
     // check if this bond is in a cis/trans double bond
     // and it is not a ring bond
-    if (((*cbi)->getBondType() == RDKit::Bond::DOUBLE)  // this is a double bond
-        && ((*cbi)->getStereo() >
+    if ((bond->getBondType() == RDKit::Bond::DOUBLE)  // this is a double bond
+        && (bond->getStereo() >
             RDKit::Bond::STEREOANY)  // and has stereo chemistry specified
-        && (!(*cbi)->getOwningMol().getRingInfo()->numBondRings(
-               (*cbi)->getIdx()))) {  // not in a ring
-      if ((*cbi)->getStereoAtoms().size() != 2) {
+        && (!bond->getOwningMol().getRingInfo()->numBondRings(
+               bond->getIdx()))) {  // not in a ring
+      if (bond->getStereoAtoms().size() != 2) {
         BOOST_LOG(rdWarningLog)
             << "WARNING: bond found with stereo spec but no stereo atoms"
             << std::endl;
         continue;
       }
-      EmbeddedFrag efrag(*cbi);
+      EmbeddedFrag efrag(bond);
       efrag.setupNewNeighs();
       efrags.push_back(efrag);
     }
@@ -103,14 +101,12 @@ RDKit::INT_LIST getNonEmbeddedAtoms(const RDKit::ROMol &mol,
   RDKit::INT_LIST res;
   boost::dynamic_bitset<> done(mol.getNumAtoms());
   for (const auto &efrag : efrags) {
-    const INT_EATOM_MAP &oatoms = efrag.GetEmbeddedAtoms();
+    const auto &oatoms = efrag.GetEmbeddedAtoms();
     for (const auto &oatom : oatoms) {
       done[oatom.first] = 1;
     }
   }
-  for (RDKit::ROMol::ConstAtomIterator ai = mol.beginAtoms();
-       ai != mol.endAtoms(); ai++) {
-    int aid = (*ai)->getIdx();
+  for (auto aid = 0u; aid < mol.getNumAtoms(); ++aid) {
     if (!done[aid]) {
       res.push_back(aid);
     }
@@ -125,7 +121,7 @@ std::list<EmbeddedFrag>::iterator _findLargestFrag(
     std::list<EmbeddedFrag> &efrags) {
   std::list<EmbeddedFrag>::iterator mfri;
   int msiz = 0;
-  for (auto efri = efrags.begin(); efri != efrags.end(); efri++) {
+  for (auto efri = efrags.begin(); efri != efrags.end(); ++efri) {
     if ((!efri->isDone()) && (efri->Size() > msiz)) {
       msiz = efri->Size();
       mfri = efri;
@@ -147,10 +143,10 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
     efrag.computeBox();
   }
   auto eri = efrags.begin();
-  double xmax = eri->getBoxPx();
-  double xmin = eri->getBoxNx();
-  double ymax = eri->getBoxPy();
-  double ymin = eri->getBoxNy();
+  auto xmax = eri->getBoxPx();
+  auto xmin = eri->getBoxNx();
+  auto ymax = eri->getBoxPy();
+  auto ymin = eri->getBoxNy();
 
   ++eri;
   while (eri != efrags.end()) {
@@ -159,10 +155,10 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
     if (xmax + xmin > ymax + ymin) {
       xshift = false;
     }
-    double xn = eri->getBoxNx();
-    double xp = eri->getBoxPx();
-    double yn = eri->getBoxNy();
-    double yp = eri->getBoxPy();
+    auto xn = eri->getBoxNx();
+    auto xp = eri->getBoxPx();
+    auto yn = eri->getBoxNy();
+    auto yp = eri->getBoxPy();
     RDGeom::Point2D shift(0.0, 0.0);
     if (xshift) {
       shift.x = xmax + xn + 1.0;
@@ -185,7 +181,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
                           std::list<EmbeddedFrag> &efrags) {
   RDKit::INT_VECT atomRanks;
   atomRanks.resize(mol.getNumAtoms());
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+  for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     atomRanks[i] = getAtomDepictRank(mol.getAtomWithIdx(i));
   }
   RDKit::VECT_INT_VECT arings;
@@ -216,7 +212,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
   DepictorLocal::embedCisTransSystems(mol, efrags);
   // now get the atoms that are not yet embedded in either a cis/trans system
   // or a ring system (or simply the first atom)
-  RDKit::INT_LIST nratms = DepictorLocal::getNonEmbeddedAtoms(mol, efrags);
+  auto nratms = DepictorLocal::getNonEmbeddedAtoms(mol, efrags);
   std::list<EmbeddedFrag>::iterator mri;
   if (preSpec) {
     // if the user specified coordinates on some of the atoms use that as
@@ -231,11 +227,10 @@ void computeInitialCoords(RDKit::ROMol &mol,
     if (mri == efrags.end()) {
       // we are out of embedded fragments, if there are any
       // non embedded atoms use them to start a fragment
-      int mrank, rank;
-      mrank = static_cast<int>(RDKit::MAX_INT);
-      RDKit::INT_LIST_I nri, mnri;
-      for (nri = nratms.begin(); nri != nratms.end(); nri++) {
-        rank = atomRanks[*nri];
+      auto mrank = static_cast<int>(RDKit::MAX_INT);
+      RDKit::INT_LIST_I mnri;
+      for (auto nri = nratms.begin(); nri != nratms.end(); ++nri) {
+        auto rank = atomRanks.at(*nri);
         rank *= mol.getNumAtoms();
         // use the atom index as well so that we at least
         // get reproducible depictions in cases where things
@@ -250,7 +245,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
       nratms.erase(mnri);
       efrags.push_back(efrag);
       mri = efrags.end();
-      mri--;
+      --mri;
     }
     mri->markDone();
     mri->expandEfrag(nratms, efrags);
@@ -266,14 +261,11 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   auto *conf = new RDKit::Conformer(mol.getNumAtoms());
   conf->set3D(false);
   std::list<EmbeddedFrag>::iterator eri;
-  for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-    const INT_EATOM_MAP &eatoms = eri->GetEmbeddedAtoms();
-    INT_EATOM_MAP_CI eai;
-    for (eai = eatoms.begin(); eai != eatoms.end(); eai++) {
-      int aid = eai->first;
-      RDGeom::Point2D cr = eai->second.loc;
+  for (const auto &efrag : efrags) {
+    for (const auto &eai : efrag.GetEmbeddedAtoms()) {
+      const auto &cr = eai.second.loc;
       RDGeom::Point3D fcr(cr.x, cr.y, 0.0);
-      conf->setAtomPos(aid, fcr);
+      conf->setAtomPos(eai.first, fcr);
     }
   }
   unsigned int confId = 0;
@@ -317,7 +309,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     if (coordMap) {
       params.coordMap = *coordMap;
     }
-    unsigned int cid = RDKit::CoordGen::addCoords(mol, &params);
+    auto cid = RDKit::CoordGen::addCoords(mol, &params);
     return cid;
   };
 #endif
@@ -325,49 +317,50 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, coordMap, efrags);
 
-  std::list<EmbeddedFrag>::iterator eri;
+#if 1
   // perform random sampling here to improve the density
-  for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+  for (auto &eri : efrags) {
     // either sample the 2D space by randomly flipping rotatable
     // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
     if ((nSamples > 0) && (nFlipsPerSample > 0)) {
-      eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
-                                            sampleSeed, nullptr, 0.0,
-                                            permuteDeg4Nodes);
+      eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
+                                           sampleSeed, nullptr, 0.0,
+                                           permuteDeg4Nodes);
     } else {
-      eri->removeCollisionsBondFlip();
+      eri.removeCollisionsBondFlip();
     }
   }
-  for (eri = efrags.begin(); eri != efrags.end(); eri++) {
+  for (auto &eri : efrags) {
     // if there are any remaining collisions
-    eri->removeCollisionsOpenAngles();
-    eri->removeCollisionsShortenBonds();
+    eri.removeCollisionsOpenAngles();
+    eri.removeCollisionsShortenBonds();
   }
   if (!coordMap || !coordMap->size()) {
     if (canonOrient && efrags.size()) {
       // if we do not have any prespecified coordinates - canonicalize
       // the orientation of the fragment so that the longest axes fall
       // along the x-axis etc.
-      for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-        eri->canonicalizeOrientation();
+      for (auto &eri : efrags) {
+        eri.canonicalizeOrientation();
       }
     }
   }
   DepictorLocal::_shiftCoords(efrags);
+#endif
   // create a conformation on the molecule and copy the coordinates
-  unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
+  auto cid = copyCoordinate(mol, efrags, clearConfs);
 
   // special case for a single-atom coordMap template
   if ((coordMap) && (coordMap->size() == 1)) {
-    RDKit::Conformer &conf = mol.getConformer(cid);
+    auto &conf = mol.getConformer(cid);
     auto cRef = coordMap->begin();
-    RDGeom::Point3D confPos = conf.getAtomPos(cRef->first);
-    RDGeom::Point2D refPos = cRef->second;
+    const auto &confPos = conf.getAtomPos(cRef->first);
+    auto refPos = cRef->second;
     refPos.x -= confPos.x;
     refPos.y -= confPos.y;
-    for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
-      confPos = conf.getAtomPos(i);
+    for (auto i = 0u; i < conf.getNumAtoms(); ++i) {
+      auto confPos = conf.getAtomPos(i);
       confPos.x += refPos.x;
       confPos.y += refPos.y;
       conf.setAtomPos(i, confPos);
@@ -422,9 +415,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 unsigned int compute2DCoordsMimicDistMat(
     RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat, bool canonOrient,
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
-    unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
-    bool forceRDKit) {
-  RDUNUSED_PARAM(forceRDKit);
+    unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
   computeInitialCoords(mol, nullptr, efrags);
@@ -432,76 +423,139 @@ unsigned int compute2DCoordsMimicDistMat(
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat
   std::list<EmbeddedFrag>::iterator eri;
-  for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-    eri->randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed,
-                                          dmat, weightDistMat,
-                                          permuteDeg4Nodes);
+  for (auto &eri : efrags) {
+    eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples, sampleSeed,
+                                         dmat, weightDistMat, permuteDeg4Nodes);
   }
   if (canonOrient && efrags.size()) {
     // canonicalize the orientation of the fragment so that the
     // longest axes fall along the x-axis etc.
-    for (eri = efrags.begin(); eri != efrags.end(); eri++) {
-      eri->canonicalizeOrientation();
+    for (auto &eri : efrags) {
+      eri.canonicalizeOrientation();
     }
   }
 
   DepictorLocal::_shiftCoords(efrags);
   // create a conformation on the molecule and copy the coordinates
-  unsigned int cid = copyCoordinate(mol, efrags, clearConfs);
-  return cid;
+  return copyCoordinate(mol, efrags, clearConfs);
+}
+
+//! \brief Compute 2D coordinates where a piece of the molecule is
+//   constrained to have the same coordinates as a reference;
+//   correspondences between reference and molecule atom indices
+//   are determined by refMatchVect
+void generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference,
+    const RDKit::MatchVectType &refMatchVect, int confId, bool forceRDKit) {
+  if (refMatchVect.size() > reference.getNumAtoms()) {
+    throw RDDepict::DepictException(
+        "When a refMatchVect is provided, it must have size "
+        "<= number of atoms in the reference");
+  }
+  RDGeom::INT_POINT2D_MAP coordMap;
+  const RDKit::Conformer &conf = reference.getConformer(confId);
+  for (const auto &mv : refMatchVect) {
+    if (mv.first > static_cast<int>(reference.getNumAtoms())) {
+      throw RDDepict::DepictException(
+          "Reference atom index in refMatchVect out of range");
+    }
+    if (mv.second > static_cast<int>(mol.getNumAtoms())) {
+      throw RDDepict::DepictException(
+          "Molecule atom index in refMatchVect out of range");
+    }
+    const auto &pt3 = conf.getAtomPos(mv.first);
+    RDGeom::Point2D pt2(pt3.x, pt3.y);
+    coordMap[mv.second] = pt2;
+  }
+  RDDepict::compute2DCoords(mol, &coordMap, false /* canonOrient */,
+                            true /* clearConfs */, 0, 0, 0, false, forceRDKit);
 }
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
 //   constrained to have the same coordinates as a reference.
-void generateDepictionMatching2DStructure(RDKit::ROMol &mol,
-                                          const RDKit::ROMol &reference,
-                                          int confId,
-                                          RDKit::ROMol *referencePattern,
-                                          bool acceptFailure, bool forceRDKit) {
+RDKit::MatchVectType generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
+    const RDKit::ROMol *referencePattern, bool acceptFailure, bool forceRDKit,
+    bool allowOptionalAttachments) {
+  std::unique_ptr<RDKit::ROMol> referenceHs;
   std::vector<int> refMatch;
   RDKit::MatchVectType matchVect;
-  if (referencePattern) {
-    if (reference.getNumAtoms(true) != referencePattern->getNumAtoms(true)) {
-      throw RDDepict::DepictException(
-          "When a pattern is provided, it must have the same number of atoms "
-          "as the reference");
+  std::vector<RDKit::MatchVectType> multiRefMatchVect;
+  RDKit::MatchVectType singleRefMatchVect;
+  auto &refMatchVectRef = singleRefMatchVect;
+  const RDKit::ROMol &query =
+      (referencePattern ? *referencePattern : reference);
+  if (allowOptionalAttachments) {
+    // we do not need the allowOptionalAttachments logic if there are no
+    // terminal dummy atoms
+    allowOptionalAttachments = false;
+    for (const auto queryAtom : query.atoms()) {
+      if (queryAtom->getAtomicNum() == 0 && queryAtom->getDegree() == 1) {
+        allowOptionalAttachments = true;
+        break;
+      }
     }
-    RDKit::MatchVectType refMatchVect;
-    RDKit::SubstructMatch(reference, *referencePattern, refMatchVect);
-    if (refMatchVect.empty()) {
+  }
+  if (referencePattern) {
+    if (allowOptionalAttachments &&
+        referencePattern->getNumAtoms() > reference.getNumAtoms()) {
+      referenceHs.reset(RDKit::MolOps::addHs(reference));
+      CHECK_INVARIANT(referenceHs, "addHs returned a nullptr");
+      multiRefMatchVect =
+          RDKit::SubstructMatch(*referenceHs, *referencePattern);
+      if (!multiRefMatchVect.empty()) {
+        refMatchVectRef = RDKit::getMostSubstitutedCoreMatch(
+            *referenceHs, *referencePattern, multiRefMatchVect);
+      }
+    } else if (referencePattern->getNumAtoms() <= reference.getNumAtoms()) {
+      RDKit::SubstructMatch(reference, *referencePattern, singleRefMatchVect);
+    }
+    if (refMatchVectRef.empty()) {
       throw RDDepict::DepictException(
           "Reference pattern does not map to reference.");
     }
-    refMatch.reserve(refMatchVect.size());
-    for (auto &i : refMatchVect) {
-      refMatch.push_back(i.second);
-    }
-    RDKit::SubstructMatch(mol, *referencePattern, matchVect);
-  } else {
-    refMatch.reserve(reference.getNumAtoms(true));
-    for (unsigned int i = 0; i < reference.getNumAtoms(true); ++i) {
-      refMatch.push_back(i);
-    }
-    RDKit::SubstructMatch(mol, reference, matchVect);
-  }
-
-  RDGeom::INT_POINT2D_MAP coordMap;
-  if (matchVect.empty()) {
-    if (!acceptFailure) {
-      throw RDDepict::DepictException(
-          "Substructure match with reference not found.");
+    refMatch.resize(query.getNumAtoms(), -1);
+    for (auto &i : refMatchVectRef) {
+      // skip indices corresponding to added Hs
+      if (allowOptionalAttachments &&
+          referenceHs->getAtomWithIdx(i.second)->getAtomicNum() == 1) {
+        continue;
+      }
+      refMatch[i.first] = i.second;
     }
   } else {
-    const RDKit::Conformer &conf = reference.getConformer(confId);
-    for (RDKit::MatchVectType::const_iterator mv = matchVect.begin();
-         mv != matchVect.end(); ++mv) {
-      RDGeom::Point3D pt3 = conf.getAtomPos(refMatch[mv->first]);
-      RDGeom::Point2D pt2(pt3.x, pt3.y);
-      coordMap[mv->second] = pt2;
+    refMatch.resize(reference.getNumAtoms());
+    std::iota(refMatch.begin(), refMatch.end(), 0);
+  }
+  if (allowOptionalAttachments) {
+    std::unique_ptr<RDKit::ROMol> molHs(RDKit::MolOps::addHs(mol));
+    CHECK_INVARIANT(molHs, "addHs returned a nullptr");
+    auto matches = SubstructMatch(*molHs, query);
+    if (matches.empty()) {
+      allowOptionalAttachments = false;
+    } else {
+      for (const auto &pair :
+           getMostSubstitutedCoreMatch(*molHs, query, matches)) {
+        if (molHs->getAtomWithIdx(pair.second)->getAtomicNum() != 1 &&
+            refMatch.at(pair.first) >= 0) {
+          matchVect.push_back(pair);
+        }
+      }
     }
   }
-  RDDepict::compute2DCoords(mol, &coordMap, false /* canonOrient */,
-                            true /* clearConfs */, 0, 0, 0, false, forceRDKit);
+  if (!allowOptionalAttachments) {
+    RDKit::SubstructMatch(mol, query, matchVect);
+  }
+  if (matchVect.empty() && !acceptFailure) {
+    throw RDDepict::DepictException(
+        "Substructure match with reference not found.");
+  }
+  for (auto &pair : matchVect) {
+    pair.first = refMatch.at(pair.first);
+  }
+  generateDepictionMatching2DStructure(mol, reference, matchVect, confId,
+                                       forceRDKit);
+  return matchVect;
 }
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
@@ -511,7 +565,7 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
                                           int confId,
                                           RDKit::ROMol *referencePattern,
                                           bool acceptFailure, bool forceRDKit) {
-  unsigned int num_ats = mol.getNumAtoms();
+  auto num_ats = mol.getNumAtoms();
   if (!referencePattern && reference.getNumAtoms() < num_ats) {
     if (acceptFailure) {
       RDDepict::compute2DCoords(mol);

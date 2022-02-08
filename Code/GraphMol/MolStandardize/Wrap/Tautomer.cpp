@@ -96,8 +96,9 @@ class PyTautomerEnumeratorCallback
   inline python::object getCallbackOverride() const {
     return get_override("__call__");
   }
-  bool operator()(const ROMol &mol,
-                  const MolStandardize::TautomerEnumeratorResult &res) {
+  bool operator()(
+      const ROMol &mol,
+      const MolStandardize::TautomerEnumeratorResult &res) override {
     PyTautomerEnumeratorResult pyRes(res);
     return getCallbackOverride()(boost::ref(mol), boost::ref(pyRes));
   }
@@ -204,10 +205,15 @@ MolStandardize::TautomerEnumerator *createDefaultEnumerator() {
   return EnumeratorFromParams(ps);
 }
 
+MolStandardize::TautomerEnumerator *copyEnumerator(
+    const MolStandardize::TautomerEnumerator &other) {
+  return new MolStandardize::TautomerEnumerator(other);
+}
+
 class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
-  ~pyobjFunctor() {}
+  ~pyobjFunctor() = default;
   int operator()(const ROMol &m) {
     return python::extract<int>(dp_obj(boost::ref(m)));
   }
@@ -358,6 +364,7 @@ struct tautomer_wrapper {
         "TautomerEnumerator", python::no_init)
         .def("__init__", python::make_constructor(createDefaultEnumerator))
         .def("__init__", python::make_constructor(EnumeratorFromParams))
+        .def("__init__", python::make_constructor(copyEnumerator))
         .def("Enumerate", &enumerateHelper,
              (python::arg("self"), python::arg("mol")),
              python::return_value_policy<python::manage_new_object>(),
@@ -477,6 +484,10 @@ struct tautomer_wrapper {
         .def_readonly(
             "tautomerScoreVersion",
             MolStandardize::TautomerScoringFunctions::tautomerScoringVersion);
+    python::def("GetV1TautomerEnumerator",
+                MolStandardize::getV1TautomerEnumerator,
+                "return a TautomerEnumerator using v1 of the enumeration rules",
+                python::return_value_policy<python::manage_new_object>());
   }
 };
 

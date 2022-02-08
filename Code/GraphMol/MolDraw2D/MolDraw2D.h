@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2014-2020 David Cosgrove and Greg Landrum
+//  Copyright (C) 2014-2021 David Cosgrove and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -46,7 +46,7 @@ struct DrawColour {
   double r = 0.0, g = 0.0, b = 0.0, a = 1.0;
   DrawColour() = default;
   DrawColour(double r, double g, double b, double a = 1.0)
-      : r(r), g(g), b(b), a(a){};
+      : r(r), g(g), b(b), a(a) {}
   bool operator==(const DrawColour &other) const {
     return r == other.r && g == other.g && b == other.b && a == other.a;
   }
@@ -55,7 +55,7 @@ struct DrawColour {
     return fabs(r - other.r) <= tol && fabs(g - other.g) <= tol &&
            fabs(b - other.b) <= tol &&
            (ignoreAlpha || fabs(a - other.a) <= tol);
-  };
+  }
   DrawColour operator+(const DrawColour &other) const {
     return {r + other.r, g + other.g, b + other.b, a + other.a};
   }
@@ -177,6 +177,7 @@ struct AnnotationType {
 typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<double> DashPattern;
 
+//! use the RDKit's default palette r
 inline void assignDefaultPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
@@ -184,6 +185,58 @@ inline void assignDefaultPalette(ColourPalette &palette) {
   palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
   palette[7] = DrawColour(0.0, 0.0, 1.0);
   palette[8] = DrawColour(1.0, 0.0, 0.0);
+  palette[9] = DrawColour(0.2, 0.8, 0.8);
+  palette[15] = DrawColour(1.0, 0.5, 0.0);
+  palette[16] = DrawColour(0.8, 0.8, 0.0);
+  palette[17] = DrawColour(0.0, 0.802, 0.0);
+  palette[35] = DrawColour(0.5, 0.3, 0.1);
+  palette[53] = DrawColour(0.63, 0.12, 0.94);
+};
+
+//! use the color palette from the Avalon renderer
+inline void assignAvalonPalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0, 0, 0);
+  palette[0] = DrawColour(0.1, 0.1, 0.1);
+  palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
+  palette[7] = DrawColour(0.0, 0.0, 1.0);
+  palette[8] = DrawColour(1.0, 0.0, 0.0);
+  palette[9] = DrawColour(0.0, 0.498, 0.0);
+  palette[15] = DrawColour(0.498, 0.0, 0.498);
+  palette[16] = DrawColour(0.498, 0.247, 0.0);
+  palette[17] = DrawColour(0.0, 0.498, 0.0);
+  palette[35] = DrawColour(0.0, 0.498, 0.0);
+  palette[53] = DrawColour(0.247, 0.0, 0.498);
+};
+
+//! use (part of) the CDK color palette
+/*!
+  data source:
+  https://github.com/cdk/cdk/blob/master/display/render/src/main/java/org/openscience/cdk/renderer/color/CDK2DAtomColors.java
+*/
+inline void assignCDKPalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0, 0, 0);
+  palette[0] = DrawColour(0.1, 0.1, 0.1);
+  palette[1] = palette[6] = DrawColour(0.0, 0.0, 0.0);
+  palette[7] = DrawColour(0.188, 0.314, 0.972);
+  palette[8] = DrawColour(1.0, 0.051, 0.051);
+  palette[9] = DrawColour(0.565, 0.878, 0.314);
+  palette[15] = DrawColour(1.0, 0.5, 0.0);
+  palette[16] = DrawColour(0.776, 0.776, 0.173);
+  palette[17] = DrawColour(0.122, 0.498, 0.122);
+  palette[35] = DrawColour(0.651, 0.161, 0.161);
+  palette[53] = DrawColour(0.580, 0.0, 0.580);
+  palette[5] = DrawColour(1.000, 0.710, 0.710);
+};
+
+inline void assignDarkModePalette(ColourPalette &palette) {
+  palette.clear();
+  palette[-1] = DrawColour(0.8, 0.8, 0.8);
+  palette[0] = DrawColour(0.9, 0.9, 0.9);
+  palette[1] = palette[6] = DrawColour(0.9, 0.9, 0.9);
+  palette[7] = DrawColour(0.2, 0.2, 1.0);
+  palette[8] = DrawColour(1.0, 0.2, 0.2);
   palette[9] = DrawColour(0.2, 0.8, 0.8);
   palette[15] = DrawColour(1.0, 0.5, 0.0);
   palette[16] = DrawColour(0.8, 0.8, 0.0);
@@ -202,6 +255,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // toggles replacing 2H with D and 3H with T
   bool dummiesAreAttachments = false;  // draws "breaks" at dummy atoms
   bool circleAtoms = true;             // draws circles under highlighted atoms
+  bool splitBonds = false;             // split bonds into per atom segments
+                            // most useful for dynamic manipulation of drawing
+                            // especially for svg
   DrawColour highlightColour{1, 0.5, 0.5, 1.0};  // default highlight color
   bool continuousHighlight = true;  // highlight by drawing an outline
                                     // *underneath* the molecule
@@ -242,6 +298,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   std::vector<std::vector<int>> atomRegions;  // regions
   DrawColour symbolColour{
       0, 0, 0, 1};  // color to be used for the symbols and arrows in reactions
+  DrawColour annotationColour{0, 0, 0, 1};  // color to be used for annotations
   int bondLineWidth = 2;        // default line width when drawing bonds
   bool scaleBondWidth = false;  // whether to apply scale() to the bond width
   bool scaleHighlightBondWidth = true;   // likewise with bond highlights.
@@ -270,8 +327,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                         // 0.0, fixedScale wins.
   double rotate = 0.0;  // angle in degrees to rotate coords by about centre
                         // before drawing.
-  bool addAtomIndices = false;  // adds atom indices to drawings.
-  bool addBondIndices = false;  // adds bond indices to drawings.
+  bool addAtomIndices = false;     // adds atom indices to drawings.
+  bool addBondIndices = false;     // adds bond indices to drawings.
+  bool isotopeLabels = true;       // adds isotope to non-dummy atoms.
+  bool dummyIsotopeLabels = true;  // adds isotope labels to dummy atoms.
 
   bool addStereoAnnotation = false;       // adds E/Z and R/S to drawings.
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be
@@ -301,6 +360,16 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // if all specified stereocenters are in a single StereoGroup,
               // show a molecule-level annotation instead of the individual
               // labels
+  bool singleColourWedgeBonds =
+      false;  // if true wedged and dashed bonds are drawn
+  // using symbolColour rather than inheriting
+  // their colour from the atoms
+  double scalingFactor = 20.0;  // scaling factor used for pixels->angstroms
+                                // when auto scaling is being used
+  double baseFontSize =
+      -1.0;  // when > 0 this is used to set the baseFontSize used for text
+             // drawing. As a reference point: the default value for
+             // DrawText::baseFontSize  is 0.6
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
@@ -320,7 +389,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
         DrawColour(.56, .93, .56));  // light green
     highlightColourPalette.emplace_back(DrawColour(.20, .63, .79));  // peacock
     assignDefaultPalette(atomColourPalette);
-  };
+  }
 };
 
 //! MolDraw2D is the base class for doing 2D renderings of molecules
@@ -329,7 +398,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! constructor for a particular size
   /*!
     \param width       : width (in pixels) of the rendering
+    set this to -1 to have the canvas size set automatically
     \param height      : height (in pixels) of the rendering
+    set this to -1 to have the canvas size set automatically
     \param panelWidth  : (optional) width (in pixels) of a single panel
     \param panelHeight : (optional) height (in pixels) of a single panel
 
@@ -350,7 +421,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! clears the contents of the drawing
   virtual void clearDrawing() = 0;
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
-  // in atom coords.
+  /// in atom coords.
   virtual void drawLine(const Point2D &cds1, const Point2D &cds2) = 0;
   //! draw a polygon.  Note that if fillPolys() returns false, it
   //! doesn't close the path.  If you want it to in that case, you
@@ -517,16 +588,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual int drawHeight() const { return panel_height_ - legend_height_; }
 
   //! returns the drawing scale (conversion from molecular coords -> drawing
-  // coords)
+  /// coords)
   double scale() const { return scale_; }
   //! calculates the drawing scale (conversion from molecular coords -> drawing
-  // coords)
+  /// coords)
   void calculateScale(int width, int height, const ROMol &mol,
                       const std::vector<int> *highlight_atoms = nullptr,
-                      const std::map<int, double> *highlight_radii = nullptr);
+                      const std::map<int, double> *highlight_radii = nullptr,
+                      int confId = -1);
   //! overload
-  // calculate a single scale that will suit all molecules.  For use by
-  // drawMolecules primarily.
+  /// calculate a single scale that will suit all molecules.  For use by
+  /// drawMolecules primarily.
   void calculateScale(int width, int height, const std::vector<ROMol *> &mols,
                       const std::vector<std::vector<int>> *highlight_atoms,
                       const std::vector<std::map<int, double>> *highlight_radii,
@@ -624,7 +696,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                         const DrawColour &col1, const DrawColour &col2);
   //! adds additional information about the atoms to the output. Does not make
   //! sense for all renderers.
-  virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); };
+  virtual void tagAtoms(const ROMol &mol) { RDUNUSED_PARAM(mol); }
   //! set whether or not polygons are being filled
   virtual bool fillPolys() const { return fill_polys_; }
   //! returns either or not polygons should be filled
@@ -640,12 +712,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   const std::vector<Point2D> &atomCoords() const {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return at_cds_[activeMolIdx_];
-  };
+  }
   //! returns the atomic symbols of the current molecule
   const std::vector<std::pair<std::string, OrientType>> &atomSyms() const {
     PRECONDITION(activeMolIdx_ >= 0, "no index");
     return atom_syms_[activeMolIdx_];
-  };
+  }
   //! Draw an arrow with either lines or a filled head (when asPolygon is true)
   virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
                          bool asPolygon = false, double frac = 0.05,
@@ -656,6 +728,19 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
   virtual bool supportsAnnotations() { return true; }
   virtual void drawAnnotation(const AnnotationType &annotation);
+
+  bool hasActiveAtmIdx() { return activeAtmIdx1_ >= 0; }
+  int getActiveAtmIdx1() { return activeAtmIdx1_; }
+  int getActiveAtmIdx2() { return activeAtmIdx2_; }
+  void setActiveAtmIdx(int at_idx1 = -1, int at_idx2 = -1) {
+    at_idx1 = (at_idx1 < 0 ? -1 : at_idx1);
+    at_idx2 = (at_idx2 < 0 ? -1 : at_idx2);
+    if (at_idx2 >= 0 && at_idx1 < 0) {
+      std::swap(at_idx1, at_idx2);
+    }
+    activeAtmIdx1_ = at_idx1;
+    activeAtmIdx2_ = at_idx2;
+  }
 
  protected:
   std::unique_ptr<DrawText> text_drawer_;
@@ -669,6 +754,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   int x_offset_, y_offset_;  // translation in screen coordinates
   bool fill_polys_;
   int activeMolIdx_;
+  int activeAtmIdx1_;
+  int activeAtmIdx2_;
 
   DrawColour curr_colour_;
   DashPattern curr_dash_;
@@ -688,6 +775,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   Point2D bbox_[2];
   std::vector<std::vector<MolDrawShape>> pre_shapes_;
   std::vector<std::vector<MolDrawShape>> post_shapes_;
+  bool needs_init_ = true;
 
   // return a DrawColour based on the contents of highlight_atoms or
   // highlight_map, falling back to atomic number by default
@@ -706,8 +794,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   void pushDrawDetails();
   void popDrawDetails();
 
-  // do the initial setup bits for drawing a molecule.
-  std::unique_ptr<RWMol> setupMoleculeDraw(
+  // do the initial setup and drawing bits for drawing a molecule.
+  std::unique_ptr<RWMol> initMoleculeDraw(
       const ROMol &mol, const std::vector<int> *highlight_atoms,
       const std::map<int, double> *highlight_radii, int confId = -1);
   void setupTextDrawer();
@@ -741,17 +829,17 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                         const std::map<int, double> *highlight_radii,
                         Point2D &centre, double &xradius,
                         double &yradius) const;
-  // StringRect will have a width of -1.0 if there's a problem.
-  StringRect calcAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                    const std::string &note);
-  StringRect calcAnnotationPosition(const ROMol &mol, const Bond *bond,
-                                    const std::string &note);
-  StringRect calcAnnotationPosition(const ROMol &mol, const std::string &note);
+  // annot.rect_ will have a width of -1.0 if there's a problem.
+  void calcAnnotationPosition(const ROMol &mol, const Atom *atom,
+                              AnnotationType &annot) const;
+  void calcAnnotationPosition(const ROMol &mol, const Bond *bond,
+                              AnnotationType &annot) const;
+  void calcAnnotationPosition(const ROMol &mol, AnnotationType &annot) const;
   // find where to put the given annotation around an atom.  Starting
   // search at angle start_ang, in degrees.
   void calcAtomAnnotationPosition(const ROMol &mol, const Atom *atom,
-                                  double start_ang, StringRect &rect,
-                                  const std::string &note);
+                                  double start_ang,
+                                  AnnotationType &annot) const;
 
   // draw 1 or more coloured line along bonds
   void drawHighlightedBonds(
@@ -790,27 +878,24 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   // Returns angle in radians.
   double getNoteStartAngle(const ROMol &mol, const Atom *atom) const;
   // see if the note will clash with anything else drawn on the molecule.
-  // note_vec should have unit length.  note_rad is the radius along
-  // note_vec that the note will be drawn.
-  bool doesAtomNoteClash(StringRect &note_rect,
-                         const std::vector<std::shared_ptr<StringRect>> &rects,
-                         const ROMol &mol, unsigned int atom_idx);
-  bool doesBondNoteClash(StringRect &note_rect,
-                         const std::vector<std::shared_ptr<StringRect>> &rects,
-                         const ROMol &mol, const Bond *bond);
-  // does the note_vec form an unacceptably acute angle with one of the
-  // bonds from atom to its neighbours.
+  // Returns 0 if no clash, 1-3 if there is a clash, denoting what clashed.
+  int doesAtomNoteClash(const Point2D &note_pos,
+                        const std::vector<std::shared_ptr<StringRect>> &rects,
+                        const ROMol &mol, unsigned int atom_idx) const;
+  int doesBondNoteClash(const Point2D &note_pos,
+                        const std::vector<std::shared_ptr<StringRect>> &rects,
+                        const ROMol &mol, const Bond *bond) const;
   bool doesNoteClashNbourBonds(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects, const ROMol &mol,
       const Atom *atom) const;
   // does the note intersect with atsym, and if not, any other atom symbol.
   bool doesNoteClashAtomLabels(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects, const ROMol &mol,
       unsigned int atom_idx) const;
   bool doesNoteClashOtherNotes(
-      const StringRect &note_rect,
+      const Point2D &note_pos,
       const std::vector<std::shared_ptr<StringRect>> &rects) const;
 
   // take the coords for atnum, with neighbour nbr_cds, and move cds out to
@@ -835,10 +920,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void updateMetadata(const ROMol &mol, int confId) {
     RDUNUSED_PARAM(mol);
     RDUNUSED_PARAM(confId);
-  };
+  }
   virtual void updateMetadata(const ChemicalReaction &rxn) {
     RDUNUSED_PARAM(rxn);
-  };
+  }
 
  protected:
   std::vector<std::pair<std::string, std::string>> d_metadata;
@@ -899,7 +984,29 @@ RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectLabel(const Point2D &ls,
                                                    const Point2D &lf,
                                                    const StringRect &lab_rect,
                                                    double padding = 0.0);
-
+inline void setDarkMode(MolDrawOptions &opts) {
+  assignDarkModePalette(opts.atomColourPalette);
+  opts.backgroundColour = DrawColour{0, 0, 0, 1};
+  opts.annotationColour = DrawColour{0.9, 0.9, 0.9, 1};
+  opts.legendColour = DrawColour{0.9, 0.9, 0.9, 1};
+  opts.symbolColour = DrawColour{0.9, 0.9, 0.9, 1};
+  opts.variableAttachmentColour = DrawColour{0.3, 0.3, 0.3, 1};
+}
+inline void setDarkMode(MolDraw2D &d2d) { setDarkMode(d2d.drawOptions()); }
+inline void setMonochromeMode(MolDrawOptions &opts, const DrawColour &fgColour,
+                              const DrawColour &bgColour) {
+  opts.atomColourPalette.clear();
+  opts.atomColourPalette[-1] = fgColour;
+  opts.backgroundColour = bgColour;
+  opts.annotationColour = fgColour;
+  opts.legendColour = fgColour;
+  opts.symbolColour = fgColour;
+  opts.variableAttachmentColour = fgColour;
+}
+inline void setMonochromeMode(MolDraw2D &opts, const DrawColour &fgColour,
+                              const DrawColour &bgColour) {
+  setMonochromeMode(opts.drawOptions(), fgColour, bgColour);
+}
 }  // namespace RDKit
 
 #endif  // RDKITMOLDRAW2D_H

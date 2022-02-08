@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Susan H. Leung
+//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_TAUTOMER_CATALOG_PARAMS_H__
-#define __RD_TAUTOMER_CATALOG_PARAMS_H__
+#ifndef RD_TAUTOMER_CATALOG_PARAMS_H
+#define RD_TAUTOMER_CATALOG_PARAMS_H
 
 #include <Catalogs/CatalogParams.h>
 #include "TautomerCatalogUtils.h"
@@ -24,6 +24,15 @@ class ROMol;
 namespace MolStandardize {
 class TautomerTransform;
 
+using TautomerTransformDefs =
+    std::vector<std::tuple<std::string, std::string, std::string, std::string>>;
+
+namespace defaults {
+RDKIT_MOLSTANDARDIZE_EXPORT extern const TautomerTransformDefs
+    defaultTautomerTransforms;
+RDKIT_MOLSTANDARDIZE_EXPORT extern const TautomerTransformDefs
+    defaultTautomerTransformsv1;
+}  // namespace defaults
 class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogParams
     : public RDCatalog::CatalogParams {
  public:
@@ -33,17 +42,11 @@ class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogParams
   }
 
   TautomerCatalogParams(const std::string &tautomerFile);
+  TautomerCatalogParams(const TautomerTransformDefs &data);
   // copy constructor
   TautomerCatalogParams(const TautomerCatalogParams &other);
 
   ~TautomerCatalogParams() override;
-
-  // DEPRECATED: remove in release 2021.01
-  // the function name is misleading and getTransforms().size()
-  // yields the same information
-  unsigned int getNumTautomers() const {
-    return static_cast<unsigned int>(d_transforms.size());
-  }
 
   const std::vector<TautomerTransform> &getTransforms() const;
 

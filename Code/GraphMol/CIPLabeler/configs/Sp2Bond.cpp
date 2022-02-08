@@ -35,27 +35,27 @@ Sp2Bond::Sp2Bond(const CIPMol &mol, Bond *bond, Atom *startAtom, Atom *endAtom,
 
 void Sp2Bond::setPrimaryLabel(Descriptor desc) {
   switch (desc) {
-  case Descriptor::seqTrans:
-  case Descriptor::E:
-  case Descriptor::seqCis:
-  case Descriptor::Z: {
-    auto carriers = getCarriers();
-    dp_bond->setStereoAtoms(carriers[0]->getIdx(), carriers[1]->getIdx());
-    dp_bond->setStereo(d_cfg);
-    dp_bond->setProp(common_properties::_CIPCode, to_string(desc));
-    return;
-  }
-  case Descriptor::R:
-  case Descriptor::S:
-  case Descriptor::r:
-  case Descriptor::s:
-  case Descriptor::SP_4:
-  case Descriptor::TBPY_5:
-  case Descriptor::OC_6:
-    throw std::runtime_error(
-        "Received a Descriptor that is not supported for bonds");
-  default:
-    throw std::runtime_error("Received an invalid Bond Descriptor");
+    case Descriptor::seqTrans:
+    case Descriptor::E:
+    case Descriptor::seqCis:
+    case Descriptor::Z: {
+      auto carriers = getCarriers();
+      dp_bond->setStereoAtoms(carriers[0]->getIdx(), carriers[1]->getIdx());
+      dp_bond->setStereo(d_cfg);
+      dp_bond->setProp(common_properties::_CIPCode, to_string(desc));
+      return;
+    }
+    case Descriptor::R:
+    case Descriptor::S:
+    case Descriptor::r:
+    case Descriptor::s:
+    case Descriptor::SP_4:
+    case Descriptor::TBPY_5:
+    case Descriptor::OC_6:
+      throw std::runtime_error(
+          "Received a Descriptor that is not supported for bonds");
+    default:
+      throw std::runtime_error("Received an invalid Bond Descriptor");
   }
 }
 
@@ -134,5 +134,5 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
   return Descriptor::UNKNOWN;
 }
 
-} // namespace CIPLabeler
-} // namespace RDKit
+}  // namespace CIPLabeler
+}  // namespace RDKit

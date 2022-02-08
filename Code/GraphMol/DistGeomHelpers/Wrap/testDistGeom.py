@@ -215,10 +215,28 @@ class TestCase(unittest.TestCase):
 
         nconfs = []
         expected = [4, 5, 5, 4, 5, 4]
+        expected = [3, 3, 5, 4, 4, 4]
         for smi in smiles:
             mol = Chem.MolFromSmiles(smi)
             cids = rdDistGeom.EmbedMultipleConfs(mol, 50, maxAttempts=30, randomSeed=100,
                                                  pruneRmsThresh=1.5)
+            nconfs.append(len(cids))
+
+        d = [abs(x - y) for x, y in zip(expected, nconfs)]
+        # print(nconfs)
+        self.assertTrue(max(d) <= 1)
+
+        # previous settings
+        params = rdDistGeom.ETKDG()
+        params.randomSeed = 100
+        params.maxIterations = 30
+        params.pruneRmsThresh = 1.5
+        params.useSymmetryForPruning = False
+        nconfs = []
+        expected = [4, 5, 5, 4, 5, 4]
+        for smi in smiles:
+            mol = Chem.MolFromSmiles(smi)
+            cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
             nconfs.append(len(cids))
 
         d = [abs(x - y) for x, y in zip(expected, nconfs)]
@@ -582,6 +600,39 @@ class TestCase(unittest.TestCase):
             conf1 = m1.GetConformer()
             conf2 = m2.GetConformer()
             self.assertTrue((conf2.GetAtomPosition(3)-conf2.GetAtomPosition(0)).Length() > (conf1.GetAtomPosition(3)-conf1.GetAtomPosition(0)).Length())
+
+    def testScaleBoundsMatForce(self):
+        """
+        for pentane, set a target distance for the 1-5 distance, and generate conformers with changing weights for (all) the atom pair distance restraints,
+        the conformer with the stronger weight for the atom pairs will always have a 1-5 distance closer to the target value than that with the weaker weight.
+        """
+        target = 4
+        for i in range(5):
+            ps = rdDistGeom.EmbedParameters()
+            ps.randomSeed = i
+            ps.useBasicKnowledge = True
+            ps.useRandomCoords = False
+            m1 = Chem.MolFromSmiles("CCCCC")
+            bm1 = rdDistGeom.GetMoleculeBoundsMatrix(m1)
+            bm1[0,4] = target
+            bm1[4,0] = target
+            DG.DoTriangleSmoothing(bm1)
+            ps.boundsMatForceScaling = 0.1
+            ps.SetBoundsMat(bm1)
+            self.assertEqual(rdDistGeom.EmbedMolecule(m1,ps),0)
+
+            m2 = Chem.MolFromSmiles("CCCCC")
+            ps = rdDistGeom.EmbedParameters()
+            ps.randomSeed = i
+            ps.useBasicKnowledge = True
+            ps.useRandomCoords = False
+            ps.boundsMatForceScaling = 10
+            ps.SetBoundsMat(bm1)
+            self.assertEqual(rdDistGeom.EmbedMolecule(m2,ps),0)
+
+            conf1 = m1.GetConformer()
+            conf2 = m2.GetConformer()
+            self.assertTrue(abs((conf2.GetAtomPosition(4)-conf2.GetAtomPosition(0)).Length() - target) < abs((conf1.GetAtomPosition(4)-conf1.GetAtomPosition(0)).Length() - target))
 
         
     def testETKDGv3amide(self):
