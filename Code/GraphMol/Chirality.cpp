@@ -1038,10 +1038,12 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     numRanks = *std::max_element(ranks.begin(), ranks.end()) + 1;
 
     // now truncate each vector and stick the rank at the end
-    for (unsigned int i = 0; i < numAtoms; ++i) {
-      cipEntries[i][numIts + 1] = ranks[i];
-      cipEntries[i].erase(cipEntries[i].begin() + numIts + 2,
-                          cipEntries[i].end());
+    if (static_cast<unsigned int>(lastNumRanks) != numRanks) {
+      for (unsigned int i = 0; i < numAtoms; ++i) {
+        cipEntries[i][numIts + 1] = ranks[i];
+        cipEntries[i].erase(cipEntries[i].begin() + numIts + 2,
+                            cipEntries[i].end());
+      }
     }
 
     ++numIts;

@@ -21,16 +21,13 @@ Sample Usage:
 
 """
 
-
-
 import getopt
+import pickle
 import sys
 
-from rdkit import Chem
-from rdkit import DataStructs
+from rdkit import Chem, DataStructs
 from rdkit.Chem import MACCSkeys
 from rdkit.ML.Cluster import Murtagh
-import pickle
 
 
 def error(msg):
@@ -50,7 +47,7 @@ def GetRDKFingerprint(mol):
 def FoldFingerprintToTargetDensity(fp, **fpArgs):
   nOn = fp.GetNumOnBits()
   nTot = fp.GetNumBits()
-  while (float(nOn) / nTot < fpArgs['tgtDensity']):
+  while float(nOn) / nTot < fpArgs['tgtDensity']:
     if nTot / 2 > fpArgs['minSize']:
       fp = DataStructs.FoldFingerprint(fp, 2)
       nOn = fp.GetNumOnBits()
@@ -62,17 +59,15 @@ def FoldFingerprintToTargetDensity(fp, **fpArgs):
 
 def FingerprintMol(mol, fingerprinter=Chem.RDKFingerprint, **fpArgs):
   if not fpArgs:
-    details = FingerprinterDetails()
-    fpArgs = details.__dict__
+    fpArgs = FingerprinterDetails().__dict__
 
   if fingerprinter != Chem.RDKFingerprint:
     fp = fingerprinter(mol, **fpArgs)
-    fp = FoldFingerprintToTargetDensity(fp, **fpArgs)
-  else:
-    fp = fingerprinter(mol, fpArgs['minPath'], fpArgs['maxPath'], fpArgs['fpSize'],
+    return FoldFingerprintToTargetDensity(fp, **fpArgs)
+
+  return fingerprinter(mol, fpArgs['minPath'], fpArgs['maxPath'], fpArgs['fpSize'],
                        fpArgs['bitsPerHash'], fpArgs['useHs'], fpArgs['tgtDensity'],
                        fpArgs['minSize'])
-  return fp
 
 
 def FingerprintsFromSmiles(dataSource, idCol, smiCol, fingerprinter=Chem.RDKFingerprint,
@@ -92,11 +87,11 @@ def FingerprintsFromSmiles(dataSource, idCol, smiCol, fingerprinter=Chem.RDKFing
       res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
-        message('Done %d molecules\n' % (nDone))
+        message(f'Done {nDone} molecules\n')
       if maxMols > 0 and nDone >= maxMols:
         break
     else:
-      error('Problems parsing SMILES: %s\n' % smi)
+      error(f'Problems parsing SMILES: {smi}\n')
   return res
 
 
@@ -115,11 +110,11 @@ def FingerprintsFromMols(mols, fingerprinter=Chem.RDKFingerprint, reportFreq=10,
       res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
-        message('Done %d molecules\n' % (nDone))
+        message(f'Done {nDone} molecules\n')
       if maxMols > 0 and nDone >= maxMols:
         break
     else:
-      error('Problems parsing SMILES: %s\n' % smi)
+      error(f'Problems parsing SMILES: {smi}\n')
   return res
 
 
@@ -140,31 +135,30 @@ def FingerprintsFromPickles(dataSource, idCol, pklCol, fingerprinter=Chem.RDKFin
       res.append((ID, fp))
       nDone += 1
       if reportFreq > 0 and not nDone % reportFreq:
-        message('Done %d molecules\n' % (nDone))
+        message(f'Done {nDone} molecules\n')
       if maxMols > 0 and nDone >= maxMols:
         break
     else:
-      error('Problems parsing pickle for ID: %s\n' % ID)
+      error(f'Problems parsing pickle for ID: {ID}\n')
   return res
 
 
 def FingerprintsFromDetails(details, reportFreq=10):
   data = None
   if details.dbName and details.tableName:
-    from rdkit.Dbase.DbConnection import DbConnect
     from rdkit.Dbase import DbInfo
+    from rdkit.Dbase.DbConnection import DbConnect
     from rdkit.ML.Data import DataUtils
     try:
       conn = DbConnect(details.dbName, details.tableName)
     except Exception:
       import traceback
-      error('Problems establishing connection to database: %s|%s\n' % (details.dbName,
-                                                                       details.tableName))
+      error(f'Problems establishing connection to database: {details.dbName}|{details.tableName}\n')
       traceback.print_exc()
     if not details.idName:
       details.idName = DbInfo.GetColumnNames(details.dbName, details.tableName)[0]
     dataSet = DataUtils.DBToData(details.dbName, details.tableName,
-                                 what='%s,%s' % (details.idName, details.smilesName))
+                                 what=f'{details.idName},{details.smilesName}')
     idCol = 0
     smiCol = 1
   elif details.inFileName and details.useSmiles:
@@ -177,14 +171,13 @@ def FingerprintsFromDetails(details, reportFreq=10):
                                          onlyCols=[details.idName, details.smilesName])
     except IOError:
       import traceback
-      error('Problems reading from file %s\n' % (details.inFileName))
+      error(f'Problems reading from file {details.inFileName}\n')
       traceback.print_exc()
 
     idCol = 0
     smiCol = 1
   elif details.inFileName and details.useSD:
     conn = None
-    dataset = None
     if not details.idName:
       details.idName = 'ID'
     dataSet = []
@@ -192,7 +185,7 @@ def FingerprintsFromDetails(details, reportFreq=10):
       s = Chem.SDMolSupplier(details.inFileName)
     except Exception:
       import traceback
-      error('Problems reading from file %s\n' % (details.inFileName))
+      error(f'Problems reading from file {details.inFileName}\n')
       traceback.print_exc()
     else:
       while 1:
@@ -203,8 +196,8 @@ def FingerprintsFromDetails(details, reportFreq=10):
         if m:
           dataSet.append(m)
           if reportFreq > 0 and not len(dataSet) % reportFreq:
-            message('Read %d molecules\n' % (len(dataSet)))
-            if details.maxMols > 0 and len(dataSet) >= details.maxMols:
+            message(f'Read {len(dataSet)} molecules\n')
+            if 0 < details.maxMols <= len(dataSet):
               break
 
     for i, mol in enumerate(dataSet):
@@ -234,8 +227,8 @@ def FingerprintsFromDetails(details, reportFreq=10):
       outF.close()
     dbName = details.outDbName or details.dbName
     if details.outTableName and dbName:
+      from rdkit.Dbase import DbModule, DbUtils
       from rdkit.Dbase.DbConnection import DbConnect
-      from rdkit.Dbase import DbUtils, DbModule
       conn = DbConnect(dbName)
       #
       #  We don't have a db open already, so we'll need to figure out
@@ -244,7 +237,7 @@ def FingerprintsFromDetails(details, reportFreq=10):
       colTypes = DbUtils.TypeFinder(data, len(data), len(data[0]))
       typeStrs = DbUtils.GetTypeStrings([details.idName, details.smilesName], colTypes,
                                         keyCol=details.idName)
-      cols = '%s, %s %s' % (typeStrs[0], details.fpColName, DbModule.binaryTypeName)
+      cols = f'{typeStrs[0]}, {details.fpColName} {DbModule.binaryTypeName}'
 
       # FIX: we should really check to see if the table
       #  is already there and, if so, add the appropriate
@@ -326,25 +319,21 @@ class FingerprinterDetails(object):
     self.actName = ''
 
   def GetMetricName(self):
-    if self.metric == DataStructs.TanimotoSimilarity:
-      return 'Tanimoto'
-    elif self.metric == DataStructs.DiceSimilarity:
-      return 'Dice'
-    elif self.metric == DataStructs.CosineSimilarity:
-      return 'Cosine'
-    elif self.metric:
-      return self.metric
-    else:
-      return 'Unknown'
+    # DataStructs.TverskySimilarity: 'Tversky'
+    metricDict = {DataStructs.DiceSimilarity: 'Dice', 
+                  DataStructs.TanimotoSimilarity: 'Tanimoto', 
+                  DataStructs.CosineSimilarity: 'Cosine', } 
+    metric = metricDict.get(self.metric, self.metric)
+    if metric:
+      return metric
+    return 'Unknown'
 
   def SetMetricFromName(self, name):
-    name = name.upper()
-    if name == "TANIMOTO":
-      self.metric = DataStructs.TanimotoSimilarity
-    elif name == "DICE":
-      self.metric = DataStructs.DiceSimilarity
-    elif name == "COSINE":
-      self.metric = DataStructs.CosineSimilarity
+    # 'TVERSKY': DataStructs.TverskySimilarity, 
+    metricDict = {'DICE': DataStructs.DiceSimilarity, 
+                  'TANIMOTO': DataStructs.TanimotoSimilarity, 
+                  'COSINE': DataStructs.CosineSimilarity, } 
+    self.metric = metricDict.get(name.upper(), self.metric)
 
 
 def Usage():
