@@ -511,3 +511,35 @@ TEST_CASE(
     CHECK(cip == "s");
   }
 }
+
+TEST_CASE("CIP code errors on fragments which cannot be kekulized",
+          "[accurateCIP]") {
+  SECTION("fragment not affecting the stereochem") {
+    auto m = "F[C@H](CNC)CCc(:c):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "S");
+  }
+  SECTION("fragment, unique bits") {
+    auto m = "F[C@H](C(N)C)c(:c):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+  }
+  SECTION("fragment, non-unique bits") {
+    auto m = "F[C@H]([C]([NH])[CH2])c(:n):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(!m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                  cip));
+  }
+}
