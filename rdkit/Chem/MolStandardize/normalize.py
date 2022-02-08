@@ -39,7 +39,7 @@ class Normalization(object):
         return AllChem.ReactionFromSmarts(str(self.transform_str))
 
     def __repr__(self):
-        return 'Normalization({!r}, {!r})'.format(self.name, self.transform_str)
+        return fr'Normalization({self.name}, {self.transform_str})'
 
     def __str__(self):
         return self.name

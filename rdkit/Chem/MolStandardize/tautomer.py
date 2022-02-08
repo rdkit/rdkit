@@ -58,7 +58,7 @@ class TautomerTransform(object):
         return Chem.MolFromSmarts(self.tautomer_str)
 
     def __repr__(self):
-        return 'TautomerTransform({!r}, {!r}, {!r}, {!r})'.format(self.name, self.tautomer_str, self.bonds, self.charges)
+        return fr'TautomerTransform({self.name}, {self.tautomer_str}, {self.bonds}, {self.charges})'
 
     def __str__(self):
         return self.name
@@ -83,7 +83,7 @@ class TautomerScore(object):
         return Chem.MolFromSmarts(self.smarts_str)
 
     def __repr__(self):
-        return 'TautomerScore({!r}, {!r}, {!r})'.format(self.name, self.smarts_str, self.score)
+        return fr'TautomerScore({self.name}, {self.smarts_str}, {self.score})'
 
     def __str__(self):
         return self.name
@@ -191,7 +191,7 @@ class TautomerCanonicalizer(object):
         highest = None
         for t in tautomers:
             smiles = Chem.MolToSmiles(t, isomericSmiles=True)
-            log.debug('Tautomer: %s', smiles)
+            log.debug(f'Tautomer: {smiles}')
             score = 0
             # Add aromatic ring scores
             ssr = Chem.GetSymmSSSR(t)
@@ -206,7 +206,7 @@ class TautomerCanonicalizer(object):
                         score += 150
             # Add SMARTS scores
             for tscore in self.scores:
-                for match in t.GetSubstructMatches(tscore.smarts):
+                for _ in t.GetSubstructMatches(tscore.smarts):
                     log.debug('Score %+d (%s)', tscore.score, tscore.name)
                     score += tscore.score
             # Add (P,S,Se,Te)-H scores
@@ -218,7 +218,7 @@ class TautomerCanonicalizer(object):
                         score -= hs
             # Set as highest if score higher or if score equal and smiles comes first alphabetically
             if not highest or highest['score'] < score or (highest['score'] == score and smiles < highest['smiles']):
-                log.debug('New highest tautomer: %s (%s)', smiles, score)
+                log.debug(f'New highest tautomer: {smiles} ({score})')
                 highest = {'smiles': smiles, 'tautomer': t, 'score': score}
         return highest['tautomer']
 
@@ -301,22 +301,22 @@ class TautomerEnumerator(object):
                         try:
                             Chem.SanitizeMol(product)
                             smiles = Chem.MolToSmiles(product, isomericSmiles=True)
-                            log.debug('Applied rule: %s to %s', transform.name, tsmiles)
+                            log.debug(f'Applied rule: {transform.name} to {tsmiles}')
                             if smiles not in tautomers:
-                                log.debug('New tautomer produced: %s' % smiles)
+                                log.debug(f'New tautomer produced: {smiles}')
                                 kekulized_product = copy.deepcopy(product)
                                 Chem.Kekulize(kekulized_product)
                                 tautomers[smiles] = product
                                 kekulized[smiles] = kekulized_product
                             else:
-                                log.debug('Previous tautomer produced again: %s' % smiles)
+                                log.debug(f'Previous tautomer produced again: {smiles}')
                         except ValueError:
-                            log.debug('ValueError Applying rule: %s', transform.name)
+                            log.debug(f'ValueError Applying rule: {transform.name}')
                 done.add(tsmiles)
             if len(tautomers) == len(done):
                 break
         else:
-            log.warning('Tautomer enumeration stopped at maximum %s', self.max_tautomers)
+            log.warning(f'Tautomer enumeration stopped at maximum {self.max_tautomers}')
         # Clean up stereochemistry
         for tautomer in tautomers.values():
             Chem.AssignStereochemistry(tautomer, force=True, cleanIt=True)

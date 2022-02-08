@@ -40,7 +40,7 @@ class FragmentPattern(object):
         return Chem.MolFromSmarts(self.smarts_str)
 
     def __repr__(self):
-        return 'FragmentPattern({!r}, {!r})'.format(self.name, self.smarts_str)
+        return fr'FragmentPattern({self.name}, {self.smarts_str})'
 
     def __str__(self):
         return self.name
@@ -169,7 +169,7 @@ class FragmentRemover(object):
             # Apply removal for this FragmentPattern
             removed = Chem.DeleteSubstructs(mol, frag.smarts, onlyFrags=True)
             if mol.GetNumAtoms() != removed.GetNumAtoms():
-                log.info('Removed fragment: %s', frag.name)
+                log.info(f'Removed fragment: {frag.name}')
             if self.leave_last and removed.GetNumAtoms() == 0:
                 # All the remaining fragments match this pattern - leave them all
                 break
@@ -212,7 +212,7 @@ class LargestFragmentChooser(object):
         largest = None
         for f in fragments:
             smiles = Chem.MolToSmiles(f, isomericSmiles=True)
-            log.debug('Fragment: %s', smiles)
+            log.debug(f'Fragment: {smiles}')
             organic = is_organic(f)
             if self.prefer_organic:
                 # Skip this fragment if not organic and we already have an organic fragment as the largest so far
@@ -236,7 +236,7 @@ class LargestFragmentChooser(object):
             if largest and atoms == largest['atoms'] and weight == largest['weight'] and smiles > largest['smiles']:
                 continue
             # Otherwise this is the largest so far
-            log.debug('New largest fragment: %s (%s)', smiles, atoms)
+            log.debug(f'New largest fragment: {smiles} ({atoms})')
             largest = {'smiles': smiles, 'fragment': f,
                 'atoms': atoms, 'weight': weight, 'organic': organic}
         return largest['fragment']

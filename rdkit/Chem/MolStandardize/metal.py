@@ -70,7 +70,6 @@ class MetalDisconnector(object):
                 atom1.SetFormalCharge(atom1.GetFormalCharge() + chg)
                 atom2 = mol.GetAtomWithIdx(j)
                 atom2.SetFormalCharge(atom2.GetFormalCharge() - chg)
-                log.info('Removed covalent bond between %s and %s',
-                         atom1.GetSymbol(), atom2.GetSymbol())
+                log.info(f'Removed covalent bond between {atom1.GetSymbol()} and {atom2.GetSymbol()}')
         Chem.SanitizeMol(mol)
         return mol
