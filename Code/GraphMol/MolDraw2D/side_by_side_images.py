@@ -40,8 +40,8 @@ with open(args.outfile, 'w') as f:
         <td>{d2}</td>
       </tr>\n''')
 
-    inglob = Path(d1) / args.file_glob
-    fns = [Path(fn) for fn in glob.glob(inglob.name)]
+    inglob = Path(d1)
+    fns = [Path(fn) for fn in inglob.glob(args.file_glob)]
     fns.sort(key = lambda f: f.stat().st_mtime, reverse=True)
 
     for fp in fns:
