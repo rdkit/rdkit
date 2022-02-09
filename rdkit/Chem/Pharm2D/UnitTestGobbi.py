@@ -143,7 +143,7 @@ class TestCase(unittest.TestCase):
             m2 = Chem.MolFromSmiles(csmi)
             # m2.Debug()
             sig2 = Generate.Gen2DFingerprint(m2, self.factory)
-            self.assertTrue(list(sig1.GetOnBits()) == list(sig2.GetOnBits()), '%s %s' % (smi, csmi))
+            self.assertTrue(list(sig1.GetOnBits()) == list(sig2.GetOnBits()), f'{smi} {csmi}')
             self.assertEqual(DataStructs.DiceSimilarity(sig1, sig2), 1.0)
             self.assertEqual(sig1, sig2)
             for _ in range(10):

@@ -9,13 +9,12 @@
 #
 import os.path
 import unittest
-
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem import ChemicalFeatures
-from rdkit.Chem.Pharm2D import Generate, SigFactory, Matcher, Gobbi_Pharm2D
-from rdkit.TestRunner import redirect_stdout
 from io import StringIO
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import ChemicalFeatures
+from rdkit.Chem.Pharm2D import Generate, Gobbi_Pharm2D, Matcher, SigFactory
+from rdkit.TestRunner import redirect_stdout
 
 
 class TestCase(unittest.TestCase):
@@ -75,7 +74,7 @@ class TestCase(unittest.TestCase):
             onBits = sig.GetOnBits()
             for bit in onBits:
                 atoms = Matcher.GetAtomsMatchingBit(factory, bit, mol, justOne=1)
-                assert len(atoms), 'bit %d failed to match for smi %s' % (bit, smi)
+                assert len(atoms), f'bit {bit} failed to match for smi {smi}'
 
     def test_exampleCode(self):
         # We make sure that the example code runs

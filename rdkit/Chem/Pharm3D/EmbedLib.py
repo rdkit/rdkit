@@ -14,14 +14,12 @@ import sys
 import time
 
 import numpy
-
+import rdkit.DistanceGeometry as DG
 from rdkit import Chem
 from rdkit import RDLogger as logging
-from rdkit.Chem import ChemicalFeatures
-from rdkit.Chem import ChemicalForceFields
+from rdkit.Chem import ChemicalFeatures, ChemicalForceFields
 from rdkit.Chem import rdDistGeom as MolDG
 from rdkit.Chem.Pharm3D import ExcludedVolume
-import rdkit.DistanceGeometry as DG
 from rdkit.ML.Data import Stats
 
 _times = {}
@@ -52,11 +50,7 @@ def GetAtomHeavyNeighbors(atom):
   2
 
   """
-  res = []
-  for nbr in atom.GetNeighbors():
-    if nbr.GetAtomicNum() != 1:
-      res.append(nbr)
-  return res
+  return [nbr for nbr in atom.GetNeighbors() if nbr.GetAtomicNum() != 1]
 
 
 def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatLength):
@@ -67,9 +61,9 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
      new bounds mat
      index of point added
 
-   >>> boundsMat = numpy.array([[0.0,2.0,2.0],[1.0,0.0,2.0],[1.0,1.0,0.0]])
-   >>> match = [0,1,2]
-   >>> bm,idx = ReplaceGroup(match,boundsMat,slop=0.0)
+   >>> boundsMat = numpy.array([[0.0, 2.0, 2.0],[1.0, 0.0, 2.0],[1.0, 1.0, 0.0]])
+   >>> match = [0, 1, 2]
+   >>> bm,idx = ReplaceGroup(match, boundsMat, slop=0.0)
 
    the index is at the end:
 
@@ -92,19 +86,18 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
    (i.e. pt 0 is a neighbor to pt 1 and pt N-1)
    and that the replacement point goes at the center:
 
-   >>> print(', '.join(['%.3f'%x for x in bm[-1]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[-1]]))
    0.577, 0.577, 0.577, 0.000
-   >>> print(', '.join(['%.3f'%x for x in bm[:,-1]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[:,-1]]))
    1.155, 1.155, 1.155, 0.000
 
    The slop argument (default = 0.01) is fractional:
 
-   >>> bm,idx = ReplaceGroup(match,boundsMat)
-   >>> print(', '.join(['%.3f'%x for x in bm[-1]]))
+   >>> bm, idx = ReplaceGroup(match, boundsMat)
+   >>> print(', '.join([f'{x:.3f}' for x in bm[-1]]))
    0.572, 0.572, 0.572, 0.000
-   >>> print(', '.join(['%.3f'%x for x in bm[:,-1]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[:,-1]]))
    1.166, 1.166, 1.166, 0.000
-
 
   """
   maxVal = -1000.0
@@ -128,11 +121,10 @@ def ReplaceGroup(match, bounds, slop=0.01, useDirs=False, dirLength=defaultFeatL
   maxVal *= scaleFact
 
   replaceIdx = bounds.shape[0]
-  if not useDirs:
-    bm = numpy.zeros((bounds.shape[0] + 1, bounds.shape[1] + 1), numpy.float)
-  else:
-    bm = numpy.zeros((bounds.shape[0] + 2, bounds.shape[1] + 2), numpy.float)
-  bm[0:bounds.shape[0], 0:bounds.shape[1]] = bounds
+  enhanceSize: int = int(bool(useDirs)) # Whether to increase the size of the bounds matrix by one
+  bm = numpy.zeros((bounds.shape[0] + 1 + enhanceSize, bounds.shape[1] + 1 + enhanceSize), 
+                   dtype=numpy.float64)
+  bm[:bounds.shape[0], :bounds.shape[1]] = bounds
   bm[:replaceIdx, replaceIdx] = 1000.
 
   if useDirs:
@@ -178,9 +170,9 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1, excludedVolumes
   nAts = mol.GetNumAtoms()
   weights = []
   if atomMatch:
-    for i in range(len(atomMatch)):
-      for j in range(i + 1, len(atomMatch)):
-        weights.append((i, j, weight))
+    atomMatchSize = len(atomMatch)
+    weights = [(i, j, weight) for i in range(atomMatchSize) for j in range(i + 1, atomMatchSize)]
+        
   if excludedVolumes:
     for vol in excludedVolumes:
       idx = vol.index
@@ -211,9 +203,9 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
   excludedVolumes is a list of ExcludedVolume objects
 
 
-   >>> boundsMat = numpy.array([[0.0,2.0,2.0],[1.0,0.0,2.0],[1.0,1.0,0.0]])
-   >>> ev1 = ExcludedVolume.ExcludedVolume(([(0,),0.5,1.0],),exclusionDist=1.5)
-   >>> bm = AddExcludedVolumes(boundsMat,(ev1,))
+   >>> boundsMat = numpy.array([[0.0, 2.0, 2.0],[1.0, 0.0, 2.0],[1.0, 1.0, 0.0]])
+   >>> ev1 = ExcludedVolume.ExcludedVolume(([(0, ), 0.5, 1.0], ), exclusionDist=1.5)
+   >>> bm = AddExcludedVolumes(boundsMat, (ev1, ))
 
    the results matrix is one bigger:
 
@@ -225,15 +217,15 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
    >>> boundsMat.shape == (3, 3)
    True
 
-   >>> print(', '.join(['%.3f'%x for x in bm[-1]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[-1]]))
    0.500, 1.500, 1.500, 0.000
-   >>> print(', '.join(['%.3f'%x for x in bm[:,-1]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[:,-1]]))
    1.000, 3.000, 3.000, 0.000
 
   """
   oDim = bm.shape[0]
   dim = oDim + len(excludedVolumes)
-  res = numpy.zeros((dim, dim), numpy.float)
+  res = numpy.zeros((dim, dim), dtype=numpy.float64)
   res[:oDim, :oDim] = bm
   for i, vol in enumerate(excludedVolumes):
     bmIdx = oDim + i
@@ -250,13 +242,13 @@ def AddExcludedVolumes(bm, excludedVolumes, smoothIt=True):
           res[bmIdx, index] = minV
           res[index, bmIdx] = maxV
         except IndexError:
-          logger.error('BAD INDEX: res[%d,%d], shape is %s' % (bmIdx, index, str(res.shape)))
+          logger.error(f'BAD INDEX: res[{bmIdx},{index}], shape is {str(res.shape)}')
           raise IndexError
 
     # set values to other excluded volumes:
     for j in range(bmIdx + 1, dim):
-      res[bmIdx, j:dim] = 0
-      res[j:dim, bmIdx] = 1000
+      res[bmIdx, j:dim] = 0.0
+      res[j:dim, bmIdx] = 1000.0
 
   if smoothIt:
     DG.DoTriangleSmoothing(res)
@@ -282,13 +274,13 @@ def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False, dirLength=
     ...   ChemicalFeatures.FreeChemicalFeature('HBondDonor', 'HDonor1',
     ...                                        Geometry.Point3D(2.65, 0.0, 0.0)),
     ...   ]
-    >>> pcophore=Pharmacophore.Pharmacophore(feats)
+    >>> pcophore = Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 1.0)
     >>> pcophore.setUpperBound(0,1, 2.0)
 
-    >>> boundsMat = numpy.array([[0.0,3.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
-    >>> atomMatch = ((0,),(1,))
-    >>> bm = UpdatePharmacophoreBounds(boundsMat,atomMatch,pcophore)
+    >>> boundsMat = numpy.array([[0.0, 3.0, 3.0],[2.0, 0.0, 3.0],[2.0, 2.0, 0.0]])
+    >>> atomMatch = ((0, ), (1, ))
+    >>> bm = UpdatePharmacophoreBounds(boundsMat, atomMatch, pcophore)
 
 
      In this case, there are no multi-atom features, so the result matrix
@@ -299,19 +291,18 @@ def UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=False, dirLength=
 
      this means, of course, that the input boundsMat is altered:
 
-     >>> print(', '.join(['%.3f'%x for x in boundsMat[0]]))
+     >>> print(', '.join([f'{x:.3f}' for x in boundsMat[0]]))
      0.000, 2.000, 3.000
-     >>> print(', '.join(['%.3f'%x for x in boundsMat[1]]))
+     >>> print(', '.join([f'{x:.3f}' for x in boundsMat[1]]))
      1.000, 0.000, 3.000
-     >>> print(', '.join(['%.3f'%x for x in boundsMat[2]]))
+     >>> print(', '.join([f'{x:.3f}' for x in boundsMat[2]]))
      2.000, 2.000, 0.000
 
   """
   replaceMap = {}
   for i, matchI in enumerate(atomMatch):
     if len(matchI) > 1:
-      bm, replaceIdx = ReplaceGroup(matchI, bm, useDirs=useDirs)
-      replaceMap[i] = replaceIdx
+      bm, replaceMap[i] = ReplaceGroup(matchI, bm, useDirs=useDirs)
 
   for i, matchI in enumerate(atomMatch):
     mi = replaceMap.get(i, matchI[0])
@@ -360,9 +351,9 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
     >>> pcophore=Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 2.5)
     >>> pcophore.setUpperBound(0,1, 3.5)
-    >>> atomMatch = ((0,),(3,))
+    >>> atomMatch = ((0, ), (3, ))
 
-    >>> bm,embeds,nFail = EmbedPharmacophore(m,atomMatch,pcophore,randomSeed=23,silent=1)
+    >>> bm,embeds,nFail = EmbedPharmacophore(m, atomMatch, pcophore, randomSeed=23, silent=1)
     >>> len(embeds)
     10
     >>> nFail
@@ -370,12 +361,12 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
 
     Set up a case that can't succeed:
 
-    >>> pcophore=Pharmacophore.Pharmacophore(feats)
+    >>> pcophore = Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 2.0)
     >>> pcophore.setUpperBound(0,1, 2.1)
-    >>> atomMatch = ((0,),(3,))
+    >>> atomMatch = ((0, ), (3, ))
 
-    >>> bm,embeds,nFail = EmbedPharmacophore(m,atomMatch,pcophore,randomSeed=23,silent=1)
+    >>> bm, embeds, nFail = EmbedPharmacophore(m, atomMatch, pcophore, randomSeed=23, silent=1)
     >>> len(embeds)
     0
     >>> nFail
@@ -391,15 +382,13 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
   if smoothFirst:
     DG.DoTriangleSmoothing(bounds)
 
-  bm = bounds.copy()
   # print '------------'
   # print 'initial'
   # for row in bm:
   #  print ' ',' '.join(['% 4.2f'%x for x in row])
   # print '------------'
 
-  bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=useDirs, mol=mol)
-
+  bm = UpdatePharmacophoreBounds(bounds.copy(), atomMatch, pcophore, useDirs=useDirs, mol=mol)
   if excludedVolumes:
     bm = AddExcludedVolumes(bm, excludedVolumes, smoothIt=False)
 
@@ -417,21 +406,20 @@ def EmbedPharmacophore(mol, atomMatch, pcophore, randomSeed=-1, count=10, smooth
   nFailed = 0
   res = []
   for i in range(count):
-    tmpM = bm[:, :]
     m2 = Chem.Mol(mol)
-    t1 = time.time()
+    t1 = time.perf_counter()
     try:
       if randomSeed <= 0:
         seed = i * 10 + 1
       else:
         seed = i * 10 + randomSeed
-      EmbedMol(m2, tmpM, atomMatch, randomSeed=seed, excludedVolumes=excludedVolumes)
+      EmbedMol(m2, bm.copy(), atomMatch, randomSeed=seed, excludedVolumes=excludedVolumes)
     except ValueError:
       if not silent:
         logger.info('Embed failed')
       nFailed += 1
     else:
-      t2 = time.time()
+      t2 = time.perf_counter()
       _times['embed'] = _times.get('embed', 0) + t2 - t1
       keepIt = True
       for idx, stereo in mol._chiralCenters:
@@ -486,8 +474,6 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
      2) the energy post-embedding
    NOTE that these energies include the energies of the constraints
 
-
-
     >>> from rdkit import Geometry
     >>> from rdkit.Chem.Pharm3D import Pharmacophore
     >>> m = Chem.MolFromSmiles('OCCN')
@@ -500,15 +486,15 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     >>> pcophore=Pharmacophore.Pharmacophore(feats)
     >>> pcophore.setLowerBound(0,1, 2.5)
     >>> pcophore.setUpperBound(0,1, 2.8)
-    >>> atomMatch = ((0,),(3,))
-    >>> bm,embeds,nFail = EmbedPharmacophore(m,atomMatch,pcophore,randomSeed=23,silent=1)
+    >>> atomMatch = ((0, ), (3, ))
+    >>> bm, embeds, nFail = EmbedPharmacophore(m, atomMatch, pcophore, randomSeed=23, silent=1)
     >>> len(embeds)
     10
     >>> testM = embeds[0]
 
     Do the optimization:
 
-    >>> e1,e2 = OptimizeMol(testM,bm,atomMatches=atomMatch)
+    >>> e1, e2 = OptimizeMol(testM,bm,atomMatches=atomMatch)
 
     Optimizing should have lowered the energy:
 
@@ -521,9 +507,9 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     >>> p0 = conf.GetAtomPosition(0)
     >>> p3 = conf.GetAtomPosition(3)
     >>> d03 = p0.Distance(p3)
-    >>> d03 >= pcophore.getLowerBound(0,1)-.01
+    >>> d03 >= pcophore.getLowerBound(0,1) - 0.01
     True
-    >>> d03 <= pcophore.getUpperBound(0,1)+.01
+    >>> d03 <= pcophore.getUpperBound(0,1) + 0.01
     True
 
     If we optimize without the distance constraints (provided via the atomMatches
@@ -532,16 +518,16 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     close together:
 
     >>> testM = embeds[1]
-    >>> e1,e2 = OptimizeMol(testM,bm)
+    >>> e1, e2 = OptimizeMol(testM,bm)
     >>> e2 < e1
     True
     >>> conf = testM.GetConformer(0)
     >>> p0 = conf.GetAtomPosition(0)
     >>> p3 = conf.GetAtomPosition(3)
     >>> d03 = p0.Distance(p3)
-    >>> d03 >= pcophore.getLowerBound(0,1)-.01
+    >>> d03 >= pcophore.getLowerBound(0, 1) - 0.01
     True
-    >>> d03 <= pcophore.getUpperBound(0,1)+.01
+    >>> d03 <= pcophore.getUpperBound(0, 1) + 0.01
     False
 
   """
@@ -552,63 +538,64 @@ def OptimizeMol(mol, bm, atomMatches=None, excludedVolumes=None, forceConstant=1
     return -1.0, -1.0
 
   weights = []
-  if (atomMatches):
-    for k in range(len(atomMatches)):
-      for i in atomMatches[k]:
-        for l in range(k + 1, len(atomMatches)):
-          for j in atomMatches[l]:
-            weights.append((i, j))
+  if atomMatches:
+    weights = [(i, j) for k in range(len(atomMatches)) for i in atomMatches[k] 
+               for l in range(k + 1, len(atomMatches)) for j in atomMatches[l]]
+
   for i, j in weights:
     if j < i:
       i, j = j, i
-    minV = bm[j, i]
-    maxV = bm[i, j]
-    ff.AddDistanceConstraint(i, j, minV, maxV, forceConstant)
+    ff.AddDistanceConstraint(i, j, bm[j, i], bm[i, j], forceConstant)
+    
   if excludedVolumes:
     nAts = mol.GetNumAtoms()
     conf = mol.GetConformer()
     idx = nAts
     for exVol in excludedVolumes:
       assert exVol.pos is not None
-      logger.debug('ff.AddExtraPoint(%.4f,%.4f,%.4f)' % (exVol.pos[0], exVol.pos[1], exVol.pos[2]))
+      logger.debug(f'ff.AddExtraPoint({exVol.pos[0]:.4f},{exVol.pos[1]:.4f},{exVol.pos[2]:.4f}')
       ff.AddExtraPoint(exVol.pos[0], exVol.pos[1], exVol.pos[2], True)
+      
       indices = []
       for localIndices, _, _ in exVol.featInfo:
-        indices += list(localIndices)
+        indices.extend(list(localIndices))
+      indicesSet = set(indices)
+      del indices
+      
       for i in range(nAts):
         v = numpy.array(conf.GetAtomPosition(i)) - numpy.array(exVol.pos)
         d = numpy.sqrt(numpy.dot(v, v))
-        if i not in indices:
+        if i not in indicesSet:
           if d < 5.0:
-            logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%d,%.0f)' %
-                         (i, idx, exVol.exclusionDist, 1000, forceConstant))
+            logger.debug(f'ff.AddDistanceConstraint({i},{idx},{exVol.exclusionDist:.3f},1000,{forceConstant:.0f})')
             ff.AddDistanceConstraint(i, idx, exVol.exclusionDist, 1000, forceConstant)
 
         else:
-          logger.debug('ff.AddDistanceConstraint(%d,%d,%.3f,%.3f,%.0f)' %
-                       (i, idx, bm[exVol.index, i], bm[i, exVol.index], forceConstant))
+          logger.debug(f'ff.AddDistanceConstraint({i},{idx},{bm[exVol.index, i]:.3f},'
+                       f'{bm[i, exVol.index]:.3f},{forceConstant:.0f})')
           ff.AddDistanceConstraint(i, idx, bm[exVol.index, i], bm[i, exVol.index], forceConstant)
       idx += 1
+  
   ff.Initialize()
   e1 = ff.CalcEnergy()
   if isNaN(e1):
     raise ValueError('bogus energy')
-
   if verbose:
     print(Chem.MolToMolBlock(mol))
     for i, _ in enumerate(excludedVolumes):
       pos = ff.GetExtraPointPos(i)
       print('   % 7.4f   % 7.4f   % 7.4f As  0  0  0  0  0  0  0  0  0  0  0  0' % tuple(pos),
             file=sys.stderr)
+      
   needsMore = ff.Minimize()
   nPasses = 0
   while needsMore and nPasses < maxPasses:
     needsMore = ff.Minimize()
     nPasses += 1
+  
   e2 = ff.CalcEnergy()
   if isNaN(e2):
     raise ValueError('bogus energy')
-
   if verbose:
     print('--------')
     print(Chem.MolToMolBlock(mol))
@@ -654,26 +641,27 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
   d23s = []
   d34s = []
   for m in ms:
-    t1 = time.time()
+    t1 = time.perf_counter()
     try:
       e1, e2 = OptimizeMol(m, bm, atomMatch)
     except ValueError:
       pass
     else:
-      t2 = time.time()
+      t2 = time.perf_counter()
       _times['opt1'] = _times.get('opt1', 0) + t2 - t1
 
       e1s.append(e1)
       e2s.append(e2)
 
       d12s.append(e1 - e2)
-      t1 = time.time()
+      
+      t1 = time.perf_counter()
       try:
         e3, e4 = OptimizeMol(m, bm)
       except ValueError:
         pass
       else:
-        t2 = time.time()
+        t2 = time.perf_counter()
         _times['opt2'] = _times.get('opt2', 0) + t2 - t1
         e3s.append(e3)
         e4s.append(e4)
@@ -702,8 +690,8 @@ def EmbedOne(mol, name, match, pcophore, count=1, silent=0, **kwargs):
     e4 = -1.0
     e4d = -1.0
   if not silent:
-    print('%s(%d): %.2f(%.2f) -> %.2f(%.2f) : %.2f(%.2f) -> %.2f(%.2f)' %
-          (name, nFailed, e1, e1d, e2, e2d, e3, e3d, e4, e4d))
+    print(f'{name}({nFailed}): {e1:.2f}({e1d:.2f}) -> {e2:.2f}({e2d:.2f}) : '
+          f'{e3:.2f}({e3d:.2f}) -> {e4:.2f}({e4d:.2f})')
   return e1, e1d, e2, e2d, e3, e3d, e4, e4d, nFailed
 
 
@@ -725,7 +713,7 @@ def MatchPharmacophoreToMol(mol, featFactory, pcophore):
     ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> pcophore= Pharmacophore.Pharmacophore(activeFeats)
     >>> m = Chem.MolFromSmiles('FCCN')
-    >>> match,mList = MatchPharmacophoreToMol(m,featFactory,pcophore)
+    >>> match, mList = MatchPharmacophoreToMol(m,featFactory,pcophore)
     >>> match
     True
 
@@ -759,13 +747,13 @@ def _getFeatDict(mol, featFactory, features):
 
     >>> import os.path
     >>> from rdkit import Geometry, RDConfig, Chem
-    >>> fdefFile = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data/BaseFeatures.fdef')
+    >>> fdefFile = os.path.join(RDConfig.RDCodeDir, 'Chem/Pharm3D/test_data/BaseFeatures.fdef')
     >>> featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
     >>> activeFeats = [
     ...  ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
-    ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
+    ...  ChemicalFeatures.FreeChemicalFeature('Donor', Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
-    >>> d =_getFeatDict(m,featFactory,activeFeats)
+    >>> d = _getFeatDict(m, featFactory, activeFeats)
     >>> sorted(list(d.keys()))
     ['Acceptor', 'Donor']
     >>> donors = d['Donor']
@@ -786,8 +774,7 @@ def _getFeatDict(mol, featFactory, features):
   for feat in features:
     family = feat.GetFamily()
     if family not in molFeats:
-      matches = featFactory.GetFeaturesForMol(mol, includeOnly=family)
-      molFeats[family] = matches
+      molFeats[family] = featFactory.GetFeaturesForMol(mol, includeOnly=family)
   return molFeats
 
 
@@ -801,13 +788,13 @@ def MatchFeatsToMol(mol, featFactory, features):
 
     >>> import os.path
     >>> from rdkit import RDConfig, Geometry
-    >>> fdefFile = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data/BaseFeatures.fdef')
+    >>> fdefFile = os.path.join(RDConfig.RDCodeDir, 'Chem/Pharm3D/test_data/BaseFeatures.fdef')
     >>> featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile)
     >>> activeFeats = [
     ...  ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
-    ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
+    ...  ChemicalFeatures.FreeChemicalFeature('Donor', Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> m = Chem.MolFromSmiles('FCCN')
-    >>> match,mList = MatchFeatsToMol(m,featFactory,activeFeats)
+    >>> match, mList = MatchFeatsToMol(m, featFactory, activeFeats)
     >>> match
     True
 
@@ -847,16 +834,16 @@ def CombiEnum(sequence):
   """ This generator takes a sequence of sequences as an argument and
   provides all combinations of the elements of the subsequences:
 
-  >>> gen = CombiEnum(((1,2),(10,20)))
+  >>> gen = CombiEnum(((1, 2), (10, 20)))
   >>> next(gen)
   [1, 10]
   >>> next(gen)
   [1, 20]
 
-  >>> [x for x in CombiEnum(((1,2),(10,20)))]
+  >>> [x for x in CombiEnum(((1, 2), (10,20)))]
   [[1, 10], [1, 20], [2, 10], [2, 20]]
 
-  >>> [x for x in CombiEnum(((1,2),(10,20),(100,200)))]
+  >>> [x for x in CombiEnum(((1, 2),(10, 20), (100, 200)))]
   [[1, 10, 100], [1, 10, 200], [1, 20, 100], [1, 20, 200], [2, 10, 100],
    [2, 10, 200], [2, 20, 100], [2, 20, 200]]
 
@@ -873,19 +860,18 @@ def CombiEnum(sequence):
 
 
 def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
-  """ removes rows from a bounds matrix that are
-  that are greater than a threshold value away from a set of
-  other points
+  """ Removes rows from a bounds matrix that are that are greater 
+  than a threshold value away from a set of other points
 
-  returns the modfied bounds matrix
+  Returns the modfied bounds matrix
 
   The goal of this function is to remove rows from the bounds matrix
-  that correspond to atoms that are likely to be quite far from
+  that correspond to atoms (atomic index) that are likely to be quite far from
   the pharmacophore we're interested in. Because the bounds smoothing
   we eventually have to do is N^3, this can be a big win
 
-   >>> boundsMat = numpy.array([[0.0,3.0,4.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
-   >>> bm = DownsampleBoundsMatrix(boundsMat,(0,),3.5)
+   >>> boundsMat = numpy.array([[0.0, 3.0, 4.0],[2.0, 0.0, 3.0],[2.0, 2.0, 0.0]])
+   >>> bm = DownsampleBoundsMatrix(boundsMat,(0, ), 3.5)
    >>> bm.shape == (2, 2)
    True
 
@@ -894,42 +880,50 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
    >>> boundsMat.shape == (3, 3)
    True
 
-   >>> print(', '.join(['%.3f'%x for x in bm[0]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[0]]))
    0.000, 3.000
-   >>> print(', '.join(['%.3f'%x for x in bm[1]]))
+   >>> print(', '.join([f'{x:.3f}' for x in bm[1]]))
    2.000, 0.000
 
    if the threshold is high enough, we don't do anything:
 
-   >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
-   >>> bm = DownsampleBoundsMatrix(boundsMat,(0,),5.0)
+   >>> boundsMat = numpy.array([[0.0, 4.0, 3.0],[2.0, 0.0, 3.0],[2.0, 2.0, 0.0]])
+   >>> bm = DownsampleBoundsMatrix(boundsMat, (0, ), 5.0)
    >>> bm.shape == (3, 3)
    True
 
    If there's a max value that's close enough to *any* of the indices
    we pass in, we'll keep it:
 
-   >>> boundsMat = numpy.array([[0.0,4.0,3.0],[2.0,0.0,3.0],[2.0,2.0,0.0]])
-   >>> bm = DownsampleBoundsMatrix(boundsMat,(0,1),3.5)
+   >>> boundsMat = numpy.array([[0.0, 4.0, 3.0],[2.0, 0.0, 3.0],[2.0, 2.0, 0.0]])
+   >>> bm = DownsampleBoundsMatrix(boundsMat, (0, 1), 3.5)
    >>> bm.shape == (3, 3)
+   True
+
+   However, the datatype should not be changed or uprank into np.float64 as default behaviour
+   >>> boundsMat = numpy.array([[0.0, 4.0, 3.0],[2.0, 0.0, 3.0],[2.0, 2.0, 0.0]], dtype=numpy.float32)
+   >>> bm = DownsampleBoundsMatrix(boundsMat,(0, 1), 3.5)
+   >>> bm.dtype == numpy.float64
+   False
+   >>> bm.dtype == numpy.float32 or numpy.issubdtype(bm.dtype, numpy.float32)
+   True
+   >>> bm.dtype == boundsMat.dtype or numpy.issubdtype(bm.dtype, boundsMat.dtype)
    True
 
   """
   nPts = bm.shape[0]
-  k = numpy.zeros(nPts, numpy.int0)
-  for idx in indices:
-    k[idx] = 1
-  for i in indices:
-    row = bm[i]
-    for j in range(i + 1, nPts):
-      if not k[j] and row[j] < maxThresh:
-        k[j] = 1
-  keep = numpy.nonzero(k)[0]
-  bm2 = numpy.zeros((len(keep), len(keep)), numpy.float)
-  for i, idx in enumerate(keep):
-    row = bm[idx]
-    bm2[i] = numpy.take(row, keep)
-  return bm2
+  if len(indices) == 0:
+      return numpy.zeros(shape=tuple([0] * len(bm.shape)), dtype=bm.dtype)
+  indicesSet = list(set(indices))
+  maskMatrix = numpy.zeros(nPts, dtype=numpy.uint8)
+  maskMatrix[indicesSet] = 1
+  for idx in indicesSet:
+    maskMatrix[numpy.nonzero(bm[idx, idx + 1:] < maxThresh)[0] + (idx + 1)] = 1
+  
+  keep = numpy.nonzero(maskMatrix)[0]
+  if keep.shape[0] == nPts:
+    return bm.copy()
+  return bm[numpy.ix_(keep, keep)]
 
 
 def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
@@ -944,31 +938,31 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   ...   ChemicalFeatures.FreeChemicalFeature('Aromatic', 'Aromatic1',
   ...                                        Geometry.Point3D(5.12, 0.908, 0.0)),
   ...   ]
-  >>> pcophore=Pharmacophore.Pharmacophore(feats)
-  >>> pcophore.setLowerBound(0,1, 1.1)
-  >>> pcophore.setUpperBound(0,1, 1.9)
-  >>> pcophore.setLowerBound(0,2, 2.1)
-  >>> pcophore.setUpperBound(0,2, 2.9)
-  >>> pcophore.setLowerBound(1,2, 2.1)
-  >>> pcophore.setUpperBound(1,2, 3.9)
+  >>> pcophore = Pharmacophore.Pharmacophore(feats)
+  >>> pcophore.setLowerBound(0, 1, 1.1)
+  >>> pcophore.setUpperBound(0, 1, 1.9)
+  >>> pcophore.setLowerBound(0, 2, 2.1)
+  >>> pcophore.setUpperBound(0, 2, 2.9)
+  >>> pcophore.setLowerBound(1, 2, 2.1)
+  >>> pcophore.setUpperBound(1, 2, 3.9)
 
-  >>> bounds = numpy.array([[0,2,3],[1,0,4],[2,3,0]],numpy.float)
-  >>> CoarseScreenPharmacophore(((0,),(1,)),bounds,pcophore)
+  >>> bounds = numpy.array([[0, 2, 3],[1, 0, 4],[2, 3, 0]], dtype=numpy.float64)
+  >>> CoarseScreenPharmacophore(((0, ),(1, )),bounds, pcophore)
   True
 
-  >>> CoarseScreenPharmacophore(((0,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((0, ),(2, )),bounds, pcophore)
   False
 
-  >>> CoarseScreenPharmacophore(((1,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((1, ),(2, )),bounds, pcophore)
   False
 
-  >>> CoarseScreenPharmacophore(((0,),(1,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((0, ),(1, ),(2, )),bounds, pcophore)
   True
 
-  >>> CoarseScreenPharmacophore(((1,),(0,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((1, ),(0, ),(2, )),bounds, pcophore)
   False
 
-  >>> CoarseScreenPharmacophore(((2,),(1,),(0,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((2, ),(1, ),(0, )),bounds, pcophore)
   False
 
   # we ignore the point locations here and just use their definitions:
@@ -996,32 +990,38 @@ def CoarseScreenPharmacophore(atomMatch, bounds, pcophore, verbose=False):
   >>> pcophore.setUpperBound(1,3, 1.9)
   >>> pcophore.setLowerBound(2,3, 1.1)
   >>> pcophore.setUpperBound(2,3, 1.9)
-  >>> bounds = numpy.array([[0,3,3,3],[2,0,2,2],[2,1,0,2],[2,1,1,0]],numpy.float)
+  >>> bounds = numpy.array([[0, 3, 3, 3], 
+  ...                       [2, 0, 2, 2], 
+  ...                       [2, 1, 0, 2], 
+  ...                       [2, 1, 1, 0]], 
+  ...                      dtype=numpy.float64)
 
-  >>> CoarseScreenPharmacophore(((0,),(1,),(2,),(3,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((0, ), (1, ), (2, ), (3, )), bounds, pcophore)
   True
 
-  >>> CoarseScreenPharmacophore(((0,),(1,),(3,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((0, ), (1, ), (3, ), (2, )), bounds, pcophore)
   True
 
-  >>> CoarseScreenPharmacophore(((1,),(0,),(3,),(2,)),bounds,pcophore)
+  >>> CoarseScreenPharmacophore(((1, ), (0, ), (3, ), (2, )), bounds, pcophore)
   False
 
   """
-  for k in range(len(atomMatch)):
+  atomMatchSize = len(atomMatch)
+  for k in range(atomMatchSize):
     if len(atomMatch[k]) == 1:
-      for l in range(k + 1, len(atomMatch)):
+      for l in range(k + 1, atomMatchSize):
         if len(atomMatch[l]) == 1:
-          idx0 = atomMatch[k][0]
-          idx1 = atomMatch[l][0]
-          if idx1 < idx0:
-            idx0, idx1 = idx1, idx0
-          if (bounds[idx1, idx0] >= pcophore.getUpperBound(k, l) or
-              bounds[idx0, idx1] <= pcophore.getLowerBound(k, l)):
+          if atomMatch[l][0] < atomMatch[k][0]:
+            idx0, idx1 = atomMatch[l][0], atomMatch[k][0]
+          else:
+            idx0, idx1 = atomMatch[k][0], atomMatch[l][0]
+          
+          if bounds[idx1, idx0] >= pcophore.getUpperBound(k, l) or \
+            bounds[idx0, idx1] <= pcophore.getLowerBound(k, l):
             if verbose:
-              print('\t  (%d,%d) [%d,%d] fail' % (idx1, idx0, k, l))
-              print('\t    %f,%f - %f,%f' % (bounds[idx1, idx0], pcophore.getUpperBound(k, l),
-                                             bounds[idx0, idx1], pcophore.getLowerBound(k, l)))
+              print(f'\t  ({idx1},{idx0}) [{k},{l}] fail')
+              print(f'\t    {bounds[idx1, idx0]},{pcophore.getUpperBound(k, l)} - '
+                    f'{bounds[idx0, idx1]},{pcophore.getLowerBound(k, l)}')
             # logger.debug('\t >%s'%str(atomMatch))
             # logger.debug()
             # logger.debug('\t    %f,%f - %f,%f'%(bounds[idx1,idx0],pcophore.getUpperBound(k,l),
@@ -1038,13 +1038,13 @@ def Check2DBounds(atomMatch, mol, pcophore):
     >>> from rdkit.Chem.Pharm3D import Pharmacophore
     >>> activeFeats = [
     ...  ChemicalFeatures.FreeChemicalFeature('Acceptor', Geometry.Point3D(0.0, 0.0, 0.0)),
-    ...  ChemicalFeatures.FreeChemicalFeature('Donor',Geometry.Point3D(0.0, 0.0, 0.0))]
+    ...  ChemicalFeatures.FreeChemicalFeature('Donor', Geometry.Point3D(0.0, 0.0, 0.0))]
     >>> pcophore= Pharmacophore.Pharmacophore(activeFeats)
-    >>> pcophore.setUpperBound2D(0,1,3)
+    >>> pcophore.setUpperBound2D(0, 1, 3)
     >>> m = Chem.MolFromSmiles('FCC(N)CN')
-    >>> Check2DBounds(((0,),(3,)),m,pcophore)
+    >>> Check2DBounds(((0, ), (3, )), m, pcophore)
     True
-    >>> Check2DBounds(((0,),(5,)),m,pcophore)
+    >>> Check2DBounds(((0, ), (5, )), m, pcophore)
     False
 
   """
@@ -1130,8 +1130,7 @@ def MatchPharmacophore(matches, bounds, pcophore, useDownsampling=False, use2DLi
 
   """
   for match, atomMatch in ConstrainedEnum(matches, mol, pcophore, bounds, use2DLimits=use2DLimits):
-    bm = bounds.copy()
-    bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore, useDirs=useDirs, mol=mol)
+    bm = UpdatePharmacophoreBounds(bounds.copy(), atomMatch, pcophore, useDirs=useDirs, mol=mol)
 
     if excludedVolumes:
       localEvs = []
@@ -1177,12 +1176,12 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
       if verbose:
         print('  ..CoarseScreen: Pass')
 
-      bm = bounds.copy()
       if verbose:
         print('pre update:')
         for row in bm:
           print(' ', ' '.join(['% 4.2f' % x for x in row]))
-      bm = UpdatePharmacophoreBounds(bm, atomMatch, pcophore)
+          
+      bm = UpdatePharmacophoreBounds(bounds.copy(), atomMatch, pcophore)
       if verbose:
         print('pre downsample:')
         for row in bm:
@@ -1191,7 +1190,7 @@ def GetAllPharmacophoreMatches(matches, bounds, pcophore, useDownsampling=0, pro
       if useDownsampling:
         indices = []
         for entry in atomMatch:
-          indices += list(entry)
+          indices.extend(list(entry))
         bm = DownsampleBoundsMatrix(bm, indices)
       if verbose:
         print('post downsample:')
@@ -1220,43 +1219,42 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
 
     R configuration atoms give negative volumes:
 
-    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-r.mol'))
+    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir, 'mol-r.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'R'
-    >>> ComputeChiralVolume(mol,1) < 0
+    >>> ComputeChiralVolume(mol, 1) < 0
     True
 
     S configuration atoms give positive volumes:
 
-    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s.mol'))
+    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir, 'mol-s.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'S'
-    >>> ComputeChiralVolume(mol,1) > 0
+    >>> ComputeChiralVolume(mol, 1) > 0
     True
 
     Non-chiral (or non-specified) atoms give zero volume:
 
-    >>> ComputeChiralVolume(mol,0) == 0.0
+    >>> ComputeChiralVolume(mol, 0) == 0.0
     True
 
     We also work on 3-coordinate atoms (with implicit Hs):
 
-    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-r-3.mol'))
+    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir, 'mol-r-3.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'R'
-    >>> ComputeChiralVolume(mol,1)<0
+    >>> ComputeChiralVolume(mol, 1) < 0
     True
 
-    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir,'mol-s-3.mol'))
+    >>> mol = Chem.MolFromMolFile(os.path.join(dataDir, 'mol-s-3.mol'))
     >>> Chem.AssignStereochemistry(mol)
     >>> mol.GetAtomWithIdx(1).GetProp('_CIPCode')
     'S'
-    >>> ComputeChiralVolume(mol,1)>0
+    >>> ComputeChiralVolume(mol, 1) > 0
     True
-
 
 
   """
@@ -1267,11 +1265,8 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     return 0.0
 
   nbrs = center.GetNeighbors()
-  nbrRanks = []
-  for nbr in nbrs:
-    rank = int(nbr.GetProp('_CIPRank'))
-    pos = conf.GetAtomPosition(nbr.GetIdx())
-    nbrRanks.append((rank, pos))
+  nbrRanks = [(int(nbr.GetProp('_CIPRank')), conf.GetAtomPosition(nbr.GetIdx())) 
+              for nbr in nbrs]
 
   # if we only have three neighbors (i.e. the determining H isn't present)
   # then use the central atom as the fourth point:
@@ -1283,9 +1278,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
   v1 = ps[0] - ps[3]
   v2 = ps[1] - ps[3]
   v3 = ps[2] - ps[3]
-
-  res = v1.DotProduct(v2.CrossProduct(v3))
-  return res
+  return v1.DotProduct(v2.CrossProduct(v3))
 
 
 # ------------------------------------
