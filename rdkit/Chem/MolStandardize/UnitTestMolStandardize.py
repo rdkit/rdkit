@@ -27,8 +27,3 @@ class TestCase(unittest.TestCase):
         tauts = enumerator.Enumerate(m)
         reordtauts = MolStandardize.ReorderTautomers(m)
         self.assertEquals(len(reordtauts), len(tauts))
-
-
-
-
-

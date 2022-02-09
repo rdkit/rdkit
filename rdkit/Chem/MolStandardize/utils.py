@@ -16,7 +16,7 @@ from itertools import tee
 
 def memoized_property(fget):
     """Decorator to create memoized properties."""
-    attr_name = '_{}'.format(fget.__name__)
+    attr_name = f'_{fget.__name__}'
 
     @functools.wraps(fget)
     def fget_memoized(self):
