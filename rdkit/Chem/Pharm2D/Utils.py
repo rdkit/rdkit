@@ -59,15 +59,16 @@ except ImportError:
             return 1
         if n - k > k:
             k = n - k
-         
-        if k < 8 or (16 * k < n < 256) or (k < n < 32): # Optimization for small arguments
-            res: int = 1
+        
+        # Optimization for small arguments
+        if k < 8 or (16 * k < n < 512) or (k < n < 32): 
+            res = 1
             for i in range(k):
                 res *= n - i
-                res: int = res // (i + 1)
+                res = res // (i + 1)
             return res
         
-        j: int = k // 2
+        j = k // 2
         return comb(n, j) * comb(n - j, k - j) // comb(k, j)
     
 #

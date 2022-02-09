@@ -170,7 +170,7 @@ def EmbedMol(mol, bm, atomMatch=None, weight=2.0, randomSeed=-1, excludedVolumes
   nAts = mol.GetNumAtoms()
   weights = []
   if atomMatch:
-    atomMatchSize: int = len(atomMatch)
+    atomMatchSize = len(atomMatch)
     weights = [(i, j, weight) for i in range(atomMatchSize) for j in range(i + 1, atomMatchSize)]
         
   if excludedVolumes:
@@ -915,12 +915,12 @@ def DownsampleBoundsMatrix(bm, indices, maxThresh=4.0):
   if len(indices) == 0:
       return numpy.zeros(shape=tuple([0] * len(bm.shape)), dtype=bm.dtype)
   indicesSet = list(set(indices))
-  k = numpy.zeros(nPts, dtype=numpy.uint8)
-  k[indicesSet] = 1
+  maskMatrix = numpy.zeros(nPts, dtype=numpy.uint8)
+  maskMatrix[indicesSet] = 1
   for idx in indicesSet:
-    k[numpy.nonzero(bm[idx, idx + 1:] < maxThresh)[0] + (idx + 1)] = 1
+    maskMatrix[numpy.nonzero(bm[idx, idx + 1:] < maxThresh)[0] + (idx + 1)] = 1
   
-  keep = numpy.nonzero(k)[0]
+  keep = numpy.nonzero(maskMatrix)[0]
   if keep.shape[0] == nPts:
     return bm.copy()
   return bm[numpy.ix_(keep, keep)]

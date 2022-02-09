@@ -137,18 +137,15 @@ class SigFactory(object):
           proto-pharmacophore.
 
         """
-        nDists = len(dists)
-        whichBins = [0] * nDists
-
+ 
+        whichBins = [0] * len(dists)
         # This would be a ton easier if we had contiguous bins
         # i.e. if we could maintain the bins as a list of bounds)
         # because then we could use Python's bisect module.
         # Since we can't do that, we've got to do our own binary
         # search here.
-        for i in range(nDists):
-            dist = dists[i]
+        for i, dist in enumerate(dists):
             where = -1
-
             # do a simple binary search:
             startP, endP = 0, len(bins)
             while startP < endP:
