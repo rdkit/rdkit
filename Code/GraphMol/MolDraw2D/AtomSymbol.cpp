@@ -129,6 +129,7 @@ void AtomSymbol::adjustColons() {
   if (colonPos == std::string::npos) {
     return;
   }
+  CHECK_INVARIANT(colonPos<=rects_.size(),"bad rects_ size");
   double leftHeight = colonPos ? rects_[colonPos - 1]->height_ : 0;
   double rightHeight =
       colonPos < symbol_.size() - 1 ? rects_[colonPos + 1]->height_ : 0;
