@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_QUERYATOM_H_
-#define _RD_QUERYATOM_H_
+#ifndef RD_QUERYATOM_H
+#define RD_QUERYATOM_H
 
 #include "Atom.h"
 #include <Query/QueryObjects.h>
@@ -64,6 +64,19 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
     }
     return *this;
   }
+
+  QueryAtom(QueryAtom &&other) noexcept : Atom(std::move(other)) {
+    dp_query = std::exchange(other.dp_query, nullptr);
+  }
+  QueryAtom &operator=(QueryAtom &&other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
+    QueryAtom::operator=(std::move(other));
+    dp_query = std::exchange(other.dp_query, nullptr);
+    return *this;
+  }
+
   ~QueryAtom() override;
 
   //! returns a copy of this query, owned by the caller
