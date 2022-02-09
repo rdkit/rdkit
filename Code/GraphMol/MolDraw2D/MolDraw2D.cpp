@@ -493,7 +493,8 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds,
 
 // ****************************************************************************
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
-                           MolDraw2D_detail::TextAlignType talign, bool rawCoords) {
+                           MolDraw2D_detail::TextAlignType talign,
+                           bool rawCoords) {
   Point2D draw_cds = rawCoords ? cds : getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, talign);
 }

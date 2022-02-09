@@ -1126,6 +1126,7 @@ void test6() {
     outs << txt;
     outs.close();
     // start of bond-0
+#if DO_TEST_ASSERT
     TEST_ASSERT(
         txt.find("<path class='bond-0 atom-0 atom-1' d='M 270.1,148.0") !=
         std::string::npos);
@@ -1134,6 +1135,7 @@ void test6() {
         txt.find("<path class='atom-0' d='M 284.1,152.0 L 284.1,152.2") !=
         std::string::npos);
     check_file_hash(nameBase + ".svg");
+#endif
   }
   {
     auto m = "N[C]"_smiles;
@@ -4441,7 +4443,9 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-#if 1
+  test6();
+  testGithub781();
+#if 0
   test1();
   test2();
   test4();

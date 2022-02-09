@@ -198,9 +198,8 @@ void DrawMol::extractAtomCoords() {
   RDGeom::Transform2D trans;
   trans.SetTransform(Point2D(0.0, 0.0), rot);
   atCds_.clear();
-  for (auto this_at : drawMol_->atoms()) {
-    int thisIdx = this_at->getIdx();
-    Point2D pt(locs[thisIdx].x, -locs[thisIdx].y);
+  for (auto pt3 : locs) {
+    Point2D pt{pt3.x, -pt3.y};
     if (rot != 0.0) {
       trans.TransformPoint(pt);
     }
@@ -228,7 +227,7 @@ void DrawMol::extractAtomSymbols() {
                          atCds_[at1->getIdx()], atCol, textDrawer_);
       atomLabels_.emplace_back(al);
     } else {
-      atomLabels_.push_back(std::unique_ptr<AtomSymbol>());
+      atomLabels_.emplace_back(nullptr);
     }
   }
 }
@@ -273,32 +272,30 @@ void DrawMol::extractHighlights() {
 
 // ****************************************************************************
 void DrawMol::extractRegions() {
-  if (!drawOptions_.atomRegions.empty()) {
-    for (auto &region : drawOptions_.atomRegions) {
-      if (region.size() > 1) {
-        Point2D minv = atCds_[region[0]];
-        Point2D maxv = atCds_[region[0]];
-        for (int idx : region) {
-          const Point2D &pt = atCds_[idx];
-          minv.x = std::min(minv.x, pt.x);
-          minv.y = std::min(minv.y, pt.y);
-          maxv.x = std::max(maxv.x, pt.x);
-          maxv.y = std::max(maxv.y, pt.y);
-        }
-        Point2D center = (maxv + minv) / 2;
-        Point2D size = (maxv - minv);
-        size *= 0.2;
-        minv -= size / 2;
-        maxv += size / 2;
-        std::vector<Point2D> pts(4);
-        pts[0] = minv;
-        pts[1] = Point2D(minv.x, maxv.y);
-        pts[2] = maxv;
-        pts[3] = Point2D(maxv.x, minv.y);
-        DrawColour col(0.8, 0.8, 0.8);
-        DrawShape *pl = new DrawShapePolyLine(pts, 1, false, col, true);
-        highlights_.emplace_back(pl);
+  for (const auto &region : drawOptions_.atomRegions) {
+    if (region.size() > 1) {
+      Point2D minv = atCds_[region[0]];
+      Point2D maxv = atCds_[region[0]];
+      for (int idx : region) {
+        const Point2D &pt = atCds_[idx];
+        minv.x = std::min(minv.x, pt.x);
+        minv.y = std::min(minv.y, pt.y);
+        maxv.x = std::max(maxv.x, pt.x);
+        maxv.y = std::max(maxv.y, pt.y);
       }
+      Point2D center = (maxv + minv) / 2;
+      Point2D size = (maxv - minv);
+      size *= 0.2;
+      minv -= size / 2;
+      maxv += size / 2;
+      std::vector<Point2D> pts(4);
+      pts[0] = minv;
+      pts[1] = Point2D(minv.x, maxv.y);
+      pts[2] = maxv;
+      pts[3] = Point2D(maxv.x, minv.y);
+      DrawColour col(0.8, 0.8, 0.8);
+      DrawShape *pl = new DrawShapePolyLine(pts, 1, false, col, true);
+      highlights_.emplace_back(pl);
     }
   }
 }
@@ -306,7 +303,7 @@ void DrawMol::extractRegions() {
 // ****************************************************************************
 void DrawMol::extractAttachments() {
   if (drawOptions_.dummiesAreAttachments) {
-    for (auto at1 : drawMol_->atoms()) {
+    for (const auto at1 : drawMol_->atoms()) {
       if (at1->hasProp(common_properties::atomLabel) ||
           drawOptions_.atomLabels.find(at1->getIdx()) !=
               drawOptions_.atomLabels.end()) {
@@ -360,7 +357,7 @@ void DrawMol::extractMolNotes() {
 
 // ****************************************************************************
 void DrawMol::extractAtomNotes() {
-  for (auto atom : drawMol_->atoms()) {
+  for (const auto atom : drawMol_->atoms()) {
     std::string note;
     if (atom->getPropIfPresent(common_properties::atomNote, note)) {
       if (!note.empty()) {
@@ -397,7 +394,7 @@ void DrawMol::extractRadicals() {
   if (!drawOptions_.includeRadicals) {
     return;
   }
-  for (auto atom : drawMol_->atoms()) {
+  for (const auto atom : drawMol_->atoms()) {
     if (!atom->getNumRadicalElectrons()) {
       continue;
     }
@@ -412,7 +409,7 @@ void DrawMol::extractSGroupData() {
   if (!includeAnnotations_) {
     return;
   }
-  auto &sgs = getSubstanceGroups(*drawMol_);
+  const auto &sgs = getSubstanceGroups(*drawMol_);
   if (sgs.empty()) {
     return;
   }
@@ -788,8 +785,9 @@ void DrawMol::calculateScale() {
 
   findExtremes();
 
-  // if width < 0, we'll take the scale off the yRange_, and likewise with height and xRange_.  If both are negative, use drawOptions_scalingFactor.
-  float newScale = 1.0;
+  // if width < 0, we'll take the scale off the yRange_, and likewise with
+  // height and xRange_.  If both are negative, use drawOptions_scalingFactor.
+  double newScale = 1.0;
   if (width_ < 0 && height_ < 0) {
     width_ =
         drawOptions_.scalingFactor * xRange_ * (1 + 2 * drawOptions_.padding);
@@ -846,27 +844,27 @@ void DrawMol::calculateScale() {
 
 // ****************************************************************************
 void DrawMol::findExtremes() {
-  for (auto &ps : preShapes_) {
+  for (const auto &ps : preShapes_) {
     ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
-  for (auto &bond : bonds_) {
+  for (const auto &bond : bonds_) {
     bond->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
-  for (auto &atLab : atomLabels_) {
+  for (const auto &atLab : atomLabels_) {
     if (atLab) {
       atLab->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
-  for (auto &hl : highlights_) {
+  for (const auto &hl : highlights_) {
     hl->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
   if (includeAnnotations_) {
-    for (auto const &a : annotations_) {
+    for (const auto &a : annotations_) {
       a->findExtremes(xMin_, xMax_, yMin_, yMax_);
     }
   }
   findRadicalExtremes(radicals_, xMin_, xMax_, yMin_, yMax_);
-  for (auto &ps : postShapes_) {
+  for (const auto &ps : postShapes_) {
     ps->findExtremes(xMin_, xMax_, yMin_, yMax_);
   }
 
@@ -949,8 +947,7 @@ void DrawMol::draw(MolDraw2D &drawer) const {
 void DrawMol::drawRadicals(MolDraw2D &drawer) const {
   // take account of differing font scale and main scale if we've hit
   // max or min font size.
-  double f_scale = textDrawer_.fontScale();
-  double spot_rad = 0.2 * drawOptions_.multipleBondOffset * f_scale;
+  double spot_rad = 0.2 * drawOptions_.multipleBondOffset * fontScale_;
   drawer.setColour(DrawColour(0.0, 0.0, 0.0));
   auto draw_spot = [&](const Point2D &cds) {
     bool ofp = drawer.fillPolys();
@@ -1016,14 +1013,14 @@ void DrawMol::drawRadicals(MolDraw2D &drawer) const {
   };
 
   size_t rad_num = 0;
-  for (auto atom : drawMol_->atoms()) {
+  for (const auto &atom : drawMol_->atoms()) {
     int num_rade = atom->getNumRadicalElectrons();
     if (!num_rade) {
       continue;
     }
-    auto rad_rect = get<0>(radicals_[rad_num]);
-    OrientType draw_or = get<1>(radicals_[rad_num]);
-    int atIdx = get<2>(radicals_[rad_num]);
+    auto rad_rect = std::get<0>(radicals_[rad_num]);
+    OrientType draw_or = std::get<1>(radicals_[rad_num]);
+    int atIdx = std::get<2>(radicals_[rad_num]);
     drawer.setActiveAtmIdx(atIdx);
     if (draw_or == OrientType::N || draw_or == OrientType::S ||
         draw_or == OrientType::C) {
@@ -1375,13 +1372,12 @@ void DrawMol::extractLegend() {
     total_width = total_height = 0;
     for (auto &bit : legend_bits) {
       double height, width;
-      DrawAnnotation *da = new DrawAnnotation(
-          bit, TextAlignType::MIDDLE, "legend", relFontScale, Point2D(0.0, 0.0),
-          drawOptions_.legendColour, textDrawer_);
-      da->getDimensions(width, height);
+      DrawAnnotation da(bit, TextAlignType::MIDDLE, "legend", relFontScale,
+                        Point2D(0.0, 0.0), drawOptions_.legendColour,
+                        textDrawer_);
+      da.getDimensions(width, height);
       total_height += height;
       total_width = std::max(total_width, width);
-      delete da;
     }
   };
 
@@ -1886,7 +1882,7 @@ void DrawMol::makeContinuousHighlights() {
 // ****************************************************************************
 void DrawMol::makeAtomCircleHighlights() {
   DrawColour col;
-  for (auto at : drawMol_->atoms()) {
+  for (const auto &at : drawMol_->atoms()) {
     unsigned int thisIdx = at->getIdx();
     if (std::find(highlightAtoms_.begin(), highlightAtoms_.end(), thisIdx) !=
         highlightAtoms_.end()) {
@@ -1916,7 +1912,7 @@ void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
     // we need a narrower circle
     lineWidth /= 2;
   }
-  for (auto atom : drawMol_->atoms()) {
+  for (const auto &atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
     if (std::find(highlightAtoms_.begin(), highlightAtoms_.end(), thisIdx) !=
         highlightAtoms_.end()) {
@@ -2173,22 +2169,22 @@ int DrawMol::doesNoteClash(const DrawAnnotation &annot) const {
 
 // ****************************************************************************
 int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
-  for (auto &bond : bonds_) {
+  for (const auto &bond : bonds_) {
     if (bond->doesRectClash(rect, padding)) {
       return 1;
     }
   }
-  for (auto &al : atomLabels_) {
+  for (const auto &al : atomLabels_) {
     if (al && al->doesRectClash(rect, padding)) {
       return 2;
     }
   }
-  for (auto &a : annotations_) {
+  for (const auto &a : annotations_) {
     if (a->doesRectClash(rect, padding)) {
       return 3;
     }
   }
-  for (auto &hl : highlights_) {
+  for (const auto &hl : highlights_) {
     if (hl->doesRectClash(rect, padding)) {
       return 4;
     }
@@ -2199,53 +2195,55 @@ int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
 // ****************************************************************************
 OrientType DrawMol::calcRadicalRect(const Atom *atom,
                                     StringRect &rad_rect) const {
+  std::cout << "fontScale_ : " << fontScale_ << std::endl;
   int num_rade = atom->getNumRadicalElectrons();
-  double spot_rad = 0.2 * drawOptions_.multipleBondOffset;
+  double spot_rad = 0.2 * drawOptions_.multipleBondOffset * fontScale_;
   Point2D atCds{atCds_[atom->getIdx()]};
 
   if (scale_ != 1.0) {
     atCds = getDrawCoords(atom->getIdx());
   }
   OrientType orient = atomSyms_[atom->getIdx()].second;
-  double rad_size = (4 * num_rade - 2) * spot_rad;
+  double rad_size = (4 * num_rade - 2) * spot_rad / fontScale_;
   double x_min, y_min, x_max, y_max;
   if (atomLabels_[atom->getIdx()]) {
     x_min = y_min = std::numeric_limits<double>::max();
     x_max = y_max = std::numeric_limits<double>::lowest();
     atomLabels_[atom->getIdx()]->findExtremes(x_min, x_max, y_min, y_max);
   } else {
-    x_min = atCds.x - 3 * spot_rad * textDrawer_.fontScale();
-    x_max = atCds.x + 3 * spot_rad * textDrawer_.fontScale();
-    y_min = atCds.y - 3 * spot_rad * textDrawer_.fontScale();
-    y_max = atCds.y + 3 * spot_rad * textDrawer_.fontScale();
+    x_min = atCds.x - 3 * spot_rad;
+
+    x_max = atCds.x + 3 * spot_rad;
+    y_min = atCds.y - 3 * spot_rad;
+    y_max = atCds.y + 3 * spot_rad;
   }
 
   auto try_north = [&]() -> bool {
-    rad_rect.width_ = rad_size * textDrawer_.fontScale();
-    rad_rect.height_ = spot_rad * 3.0 * textDrawer_.fontScale();
+    rad_rect.width_ = rad_size * fontScale_;
+    rad_rect.height_ = spot_rad * 3.0;
     rad_rect.trans_.x = atCds.x;
     rad_rect.trans_.y = y_max + 0.5 * rad_rect.height_;
     return !doesRectClash(rad_rect, 0.0);
   };
   auto try_south = [&]() -> bool {
-    rad_rect.width_ = rad_size * textDrawer_.fontScale();
-    rad_rect.height_ = spot_rad * 3.0 * textDrawer_.fontScale();
+    rad_rect.width_ = rad_size * fontScale_;
+    rad_rect.height_ = spot_rad * 3.0;
     rad_rect.trans_.x = atCds.x;
     rad_rect.trans_.y = y_min - 0.5 * rad_rect.height_;
     return !doesRectClash(rad_rect, 0.0);
   };
   auto try_east = [&]() -> bool {
-    rad_rect.trans_.x = x_max + 3.0 * spot_rad * textDrawer_.fontScale();
+    rad_rect.trans_.x = x_max + 3.0 * spot_rad;
     rad_rect.trans_.y = atCds.y;
-    rad_rect.width_ = spot_rad * 1.5 * textDrawer_.fontScale();
-    rad_rect.height_ = rad_size * textDrawer_.fontScale();
+    rad_rect.width_ = spot_rad * 1.5;
+    rad_rect.height_ = rad_size * fontScale_;
     return !doesRectClash(rad_rect, 0.0);
   };
   auto try_west = [&]() -> bool {
-    rad_rect.trans_.x = x_min - 3.0 * spot_rad * textDrawer_.fontScale();
+    rad_rect.trans_.x = x_min - 3.0 * spot_rad;
     rad_rect.trans_.y = atCds.y;
-    rad_rect.width_ = spot_rad * 1.5 * textDrawer_.fontScale();
-    rad_rect.height_ = rad_size * textDrawer_.fontScale();
+    rad_rect.width_ = spot_rad * 1.5;
+    rad_rect.height_ = rad_size * fontScale_;
     return !doesRectClash(rad_rect, 0.0);
   };
 
@@ -2348,8 +2346,8 @@ Point2D DrawMol::getAtomCoords(int atnum) const {
 void DrawMol::setScale(double newScale, double newFontScale,
                        bool ignoreFontLimits) {
   resetEverything();
-  double relFontScale = newFontScale / newScale;
-  textDrawer_.setFontScale(relFontScale, true);
+  fontScale_ = newFontScale / newScale;
+  textDrawer_.setFontScale(fontScale_, true);
 
   extractAll();
   findExtremes();
@@ -2743,7 +2741,7 @@ Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
                        const Point2D &cds2,
                        const std::vector<Point2D> &at_cds) {
   std::vector<size_t> bond_in_rings;
-  auto bond_rings = mol.getRingInfo()->bondRings();
+  const auto &bond_rings = mol.getRingInfo()->bondRings();
   for (size_t i = 0; i < bond_rings.size(); ++i) {
     if (find(bond_rings[i].begin(), bond_rings[i].end(), bond.getIdx()) !=
         bond_rings[i].end()) {
@@ -2878,7 +2876,7 @@ void adjustBondEndForString(
 void findRadicalExtremes(
     const std::vector<std::tuple<StringRect, OrientType, int>> &radicals,
     double &xmin, double &xmax, double &ymin, double &ymax) {
-  for (auto const &rad : radicals) {
+  for (const auto &rad : radicals) {
     findRectExtremes(get<0>(rad), TextAlignType::MIDDLE, xmin, xmax, ymin,
                      ymax);
   }

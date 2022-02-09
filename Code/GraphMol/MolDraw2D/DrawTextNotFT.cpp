@@ -57,8 +57,6 @@ void DrawTextNotFT::alignString(
     // should be at the ends.
     double x_min = std::numeric_limits<double>::max();
     double x_max = std::numeric_limits<double>::lowest();
-    double y_min = std::numeric_limits<double>::max();
-    double y_max = std::numeric_limits<double>::lowest();
     align_offset.x = align_offset.y = 0.0;
     int num_norm = 0;
     for (size_t i = 0; i < rects.size(); ++i) {
@@ -69,14 +67,8 @@ void DrawTextNotFT::alignString(
         // sometimes it's up.  For these purposes, we don't care so long as
         // the y_max is larger than the y_min.  We probably don't need to do
         // all the tests for x_min and x_max;
-        x_min = std::min(bl.x, x_min);
-        x_min = std::min(tr.x, x_min);
-        y_min = std::min(bl.y, y_min);
-        y_min = std::min(tr.y, y_min);
-        x_max = std::max(bl.x, x_max);
-        x_max = std::max(tr.x, x_max);
-        y_max = std::max(bl.y, y_max);
-        y_max = std::max(tr.y, y_max);
+        x_min = std::min({bl.x, tr.x, x_min});
+        x_max = std::max({bl.x, tr.x, x_max});
         align_offset += rects[i]->offset_;
         ++num_norm;
       }

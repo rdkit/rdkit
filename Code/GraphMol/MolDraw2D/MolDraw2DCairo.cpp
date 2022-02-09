@@ -45,18 +45,16 @@ void MolDraw2DCairo::initDrawing() {
     initTextDrawer(df_noFreetype);
   } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    // A dynamic cast requires a public interface which DrawText doesn't
-    // have.  But this should always be right.
     if (df_noFreetype) {
-      static_cast<MolDraw2D_detail::DrawTextCairo *>(text_drawer_.get())
+      dynamic_cast<MolDraw2D_detail::DrawTextCairo *>(text_drawer_.get())
           ->setCairoContext(dp_cr);
     } else {
       MolDraw2D_detail::DrawTextFTCairo *dt =
-          static_cast<MolDraw2D_detail::DrawTextFTCairo *>(text_drawer_.get());
+          dynamic_cast<MolDraw2D_detail::DrawTextFTCairo *>(text_drawer_.get());
       dt->setCairoContext(dp_cr);
     }
 #else
-    static_cast<DrawTextCairo *>(text_drawer_.get())->setCairoContext(dp_cr);
+    dynamic_cast<DrawTextCairo *>(text_drawer_.get())->setCairoContext(dp_cr);
 #endif
   }
 }

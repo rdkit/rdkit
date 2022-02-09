@@ -144,9 +144,11 @@ void DrawAnnotation::move(const Point2D &trans) {
 bool DrawAnnotation::doesRectClash(const StringRect &rect,
                                    double padding) const {
   for (auto &alrect : rects_) {
-    StringRect r{*alrect};
-    r.trans_ += pos_;
-    if (r.doesItIntersect(rect, padding)) {
+    auto oldTrans = alrect->trans_;
+    alrect->trans_ += pos_;
+    bool dii = alrect->doesItIntersect(rect, padding);
+    alrect->trans_ = oldTrans;
+    if (dii) {
       return true;
     }
   }

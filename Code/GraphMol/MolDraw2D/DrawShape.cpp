@@ -59,7 +59,7 @@ void DrawShape::draw(MolDraw2D &drawer) {
 // ****************************************************************************
 void DrawShape::findExtremes(double &xmin, double &xmax, double &ymin,
                              double &ymax) const {
-  for (auto &p : points_) {
+  for (const auto &p : points_) {
     xmin = std::min(xmin, p.x);
     xmax = std::max(xmax, p.x);
     ymin = std::min(ymin, p.y);
@@ -83,7 +83,7 @@ void DrawShape::move(const Point2D &trans) {
 }
 
 // ****************************************************************************
-bool DrawShape::doesRectClash(const StringRect &rect, double padding) const {
+bool DrawShape::doesRectClash(const StringRect &, double) const {
   return false;
 }
 
@@ -432,10 +432,8 @@ void DrawShapeDashedWedge::scale(const Point2D &scale_factor) {
 
   // We may want to adjust the number of lines, so set everything up like
   // the original triangle was passed in and rebuild.
-  Point2D point{at1Cds_};
-  Point2D end1{points_[points_.size() - 1]};
-  Point2D end2{points_[points_.size() - 2]};
-  points_ = std::vector<Point2D>{point, end1, end2};
+  points_ = std::vector<Point2D>{at1Cds_, points_[points_.size() - 1],
+                                 points_[points_.size() - 2]};
   buildLines();
 }
 
@@ -501,8 +499,8 @@ DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
       ang1_(ang1),
       ang2_(ang2) {
   PRECONDITION(points_.size() == 2, "arc wrong points");
-  PRECONDITION(ang1_ >= 0.0 && ang1_ <= 360.0, "ang1_ not 0-360")
-  PRECONDITION(ang2_ >= 0.0 && ang2_ <= 360.0, "ang2_ not 0-360")
+  RANGE_CHECK(0., ang1_, 360.);
+  RANGE_CHECK(0., ang2_, 360.);
 }
 
 // ****************************************************************************

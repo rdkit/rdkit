@@ -148,7 +148,6 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
   double width = panex * (rxn->getNumReactantTemplates() +
                           rxn->getNumProductTemplates() + 1);
   double height = paney;
-#if 0
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     MolDraw2DCairo drawer(width, height);
@@ -157,7 +156,6 @@ void drawit(ChemicalReaction *rxn, std::string nameBase,
     drawer.writeDrawingText(nameBase + ".png");
     check_file_hash(nameBase + ".png");
   }
-#endif
 #endif
   {
     std::ofstream outs((nameBase + ".svg").c_str());

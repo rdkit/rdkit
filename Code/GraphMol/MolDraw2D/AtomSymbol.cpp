@@ -82,7 +82,7 @@ void AtomSymbol::draw(MolDraw2D &molDrawer) const {
   if (!actClass.empty()) {
     actClass += " ";
   }
-  actClass += boost::str(boost::format("atom-%d") % atIdx_);
+  actClass += (boost::format("atom-%d") % atIdx_).str();
   molDrawer.setActiveClass(actClass);
   textDrawer_.setColour(colour_);
   textDrawer_.drawString(symbol_, cds_, orient_);
@@ -93,9 +93,11 @@ void AtomSymbol::draw(MolDraw2D &molDrawer) const {
 // ****************************************************************************
 bool AtomSymbol::doesRectClash(const StringRect &rect, double padding) const {
   for (auto &alrect : rects_) {
-    StringRect r{*alrect};
-    r.trans_ += cds_;
-    if (r.doesItIntersect(rect, padding)) {
+    auto oldTrans = alrect->trans_;
+    alrect->trans_ += cds_;
+    bool dii = alrect->doesItIntersect(rect, padding);
+    alrect->trans_ = oldTrans;
+    if (dii) {
       return true;
     }
   }
@@ -105,9 +107,25 @@ bool AtomSymbol::doesRectClash(const StringRect &rect, double padding) const {
 // ****************************************************************************
 void AtomSymbol::adjustColons() {
   if (symbol_.empty()) {
-    return; // but probable it's always got something in it.
+    return; // but probably it's always got something in it.
   }
   size_t colonPos = symbol_.find(':');
+  if (colonPos == std::string::npos) {
+    return;
+  }
+  // we need to allow for markup in the symbol, such as <lit>[CH2;X2:4]</lit>
+  // and the easiest way to do that is to use the fact that atomLabelToPieces
+  // strips it out.
+  std::string tmpSym = symbol_;
+  while (true) {
+    size_t ltPos = tmpSym.find('<');
+    if (ltPos == std::string::npos) {
+      break;
+    }
+    size_t gtPos = tmpSym.find('>');
+    tmpSym = tmpSym.substr(0, ltPos) + tmpSym.substr(gtPos + 1);
+  }
+  colonPos = tmpSym.find(':');
   if (colonPos == std::string::npos) {
     return;
   }

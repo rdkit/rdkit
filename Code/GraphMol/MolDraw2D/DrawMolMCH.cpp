@@ -59,7 +59,7 @@ void DrawMolMCH::makeBondHighlights() {
     Point2D perp = calcPerpendicular(at1_cds, at2_cds);
     double rad = 0.7 * drawOptions_.highlightRadius;
 
-    auto draw_adjusted_line = [&](Point2D p1, Point2D p2,
+    auto make_adjusted_line = [&](Point2D p1, Point2D p2,
                                   const DrawColour &col) {
       adjustLineEndForHighlight(at1_idx, p2, p1);
       adjustLineEndForHighlight(at2_idx, p1, p2);
@@ -67,7 +67,7 @@ void DrawMolMCH::makeBondHighlights() {
       DrawShape *pl = new DrawShapeSimpleLine(
           pts, lineWidth, drawOptions_.scaleBondWidth, col, at1_idx, at2_idx,
           bond->getIdx(), noDash);
-      highlights_.push_back(std::unique_ptr<DrawShape>(pl));
+      highlights_.emplace_back(pl);
     };
 
     if (hb.second.size() < 2) {
@@ -86,16 +86,16 @@ void DrawMolMCH::makeBondHighlights() {
         DrawShape *pl = new DrawShapePolyLine(
             line_pts, lineWidth, drawOptions_.scaleBondWidth, col, true,
             at1_idx, at2_idx, bond->getIdx(), noDash);
-        highlights_.push_back(std::unique_ptr<DrawShape>(pl));
+        highlights_.emplace_back(pl);
       } else {
-        draw_adjusted_line(at1_cds + perp * rad, at2_cds + perp * rad, col);
-        draw_adjusted_line(at1_cds - perp * rad, at2_cds - perp * rad, col);
+        make_adjusted_line(at1_cds + perp * rad, at2_cds + perp * rad, col);
+        make_adjusted_line(at1_cds - perp * rad, at2_cds - perp * rad, col);
       }
     } else {
       double col_rad = 2.0 * rad / hb.second.size();
       if (drawOptions_.fillHighlights) {
-        Point2D p1 = at1_cds - perp * rad;
-        Point2D p2 = at2_cds - perp * rad;
+        auto p1 = at1_cds - perp * rad;
+        auto p2 = at2_cds - perp * rad;
         std::vector<Point2D> line_pts;
         for (size_t i = 0; i < hb.second.size(); ++i) {
           line_pts.clear();
@@ -106,24 +106,24 @@ void DrawMolMCH::makeBondHighlights() {
           DrawShape *pl = new DrawShapePolyLine(
               line_pts, lineWidth, drawOptions_.scaleBondWidth, hb.second[i],
               true, at1_idx, at2_idx, bond->getIdx(), noDash);
-          highlights_.push_back(std::unique_ptr<DrawShape>(pl));
+          highlights_.emplace_back(pl);
           p1 += perp * col_rad;
           p2 += perp * col_rad;
         }
       } else {
         std::vector<DrawColour> cols{hb.second};
         if (cols.size() % 2) {
-          draw_adjusted_line(at1_cds, at2_cds, cols[0]);
+          make_adjusted_line(at1_cds, at2_cds, cols[0]);
           cols.erase(cols.begin());
         }
         int step = 0;
         for (size_t i = 0; i < cols.size(); ++i) {
           // draw even numbers from the bottom, odd from the top
-          Point2D offset = perp * (rad - step * col_rad);
+          auto offset = perp * (rad - step * col_rad);
           if (!(i % 2)) {
-            draw_adjusted_line(at1_cds - offset, at2_cds - offset, cols[i]);
+            make_adjusted_line(at1_cds - offset, at2_cds - offset, cols[i]);
           } else {
-            draw_adjusted_line(at1_cds + offset, at2_cds + offset, cols[i]);
+            make_adjusted_line(at1_cds + offset, at2_cds + offset, cols[i]);
             step++;
           }
         }
