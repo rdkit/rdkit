@@ -15,7 +15,6 @@ if inchi.INCHI_AVAILABLE:
   from rdkit.Chem.MolKey.InchiInfo import InchiInfo
 
 try:
-  from rdkit.Avalon import pyAvalonTools
   from rdkit.Chem.MolKey import MolKey
   _testMolKey = True
 except ImportError:
