@@ -160,6 +160,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   int maxFontSize = 40;  // maximum size in pixels for font in drawn molecule.
                                      // -1 means no max.
   int minFontSize = 6;   // likewise for -1.
+  int fixedFontSize =
+      -1;  // font size to use, in pixels.  Default -1 means not fixed.  If set,
+           // always used irrespective of scale, minFontSize and maxFontSize.
   double annotationFontScale = 0.5;  // scales font relative to atom labels for
                                      // atom and bond annotation.
   std::string fontFile = "";  // name of font for freetype rendering.  If given,
@@ -184,9 +187,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool scaleBondWidth = false;  // whether to apply scale() to the bond width
   bool scaleHighlightBondWidth = true;   // likewise with bond highlights.
   int highlightBondWidthMultiplier = 8;  // what to multiply standard bond width
-                                                   // by for highlighting.
+                                         // by for highlighting.
   bool prepareMolsBeforeDrawing = true;  // call prepareMolForDrawing() on each
-                                                   // molecule passed to drawMolecules()
+                                         // molecule passed to drawMolecules()
   std::vector<DrawColour> highlightColourPalette;  // defining 10 default colors
   // for highlighting atoms and bonds
   // or reactants in a reactions
@@ -200,12 +203,12 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
              // won't make it larger.  The default of -1.0 means no fix.
   double fixedBondLength =
       -1.0;             // fixes the bond length (and hence the scale) to
-                                              // always be this number of pixels.  Assuming a bond
-                                              // length in coordinates is 1, as is normal.  If
-                                              // scale comes out smaller than this, reduces scale,
-                                              // but won't make it larger.  The default -1.0 means no
-                                              // fix. If both fixedScale and fixedBondLength are >
-                                              // 0.0, fixedScale wins.
+                        // always be this number of pixels.  Assuming a bond
+                        // length in coordinates is 1, as is normal.  If
+                        // scale comes out smaller than this, reduces scale,
+                        // but won't make it larger.  The default -1.0 means no
+                        // fix. If both fixedScale and fixedBondLength are >
+                        // 0.0, fixedScale wins.
   double rotate = 0.0;  // angle in degrees to rotate coords by about centre
                                               // before drawing.
   bool addAtomIndices = false;     // adds atom indices to drawings.

@@ -115,8 +115,12 @@ void DrawMol::createDrawObjects() {
   extractAll();
   calculateScale();
 
-  if (!textDrawer_.setFontScale(fontScale_, false)) {
-    setScale(scale_, textDrawer_.fontScale());
+  bool ignoreFontLimits = drawOptions_.fixedFontSize != -1;
+  if (!textDrawer_.setFontScale(fontScale_, ignoreFontLimits) ||
+      ignoreFontLimits) {
+    // in either of these cases, the relative font size isn't what we were
+    // expecting, so we need to rebuild everything.
+    setScale(scale_, textDrawer_.fontScale(), ignoreFontLimits);
   } else {
     finishCreateDrawObjects();
   }
@@ -839,7 +843,11 @@ void DrawMol::calculateScale() {
   }
   double scale_mult = newScale / scale_;
   scale_ *= scale_mult;
-  fontScale_ *= scale_mult;
+  if (drawOptions_.fixedFontSize != -1) {
+    fontScale_ = drawOptions_.fixedFontSize / textDrawer_.baseFontSize();
+  } else {
+    fontScale_ *= scale_mult;
+  }
 }
 
 // ****************************************************************************

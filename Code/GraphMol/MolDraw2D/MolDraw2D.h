@@ -533,6 +533,7 @@ inline void setMonochromeMode(MolDraw2D &opts, const DrawColour &fgColour,
                               const DrawColour &bgColour) {
   setMonochromeMode(opts.drawOptions(), fgColour, bgColour);
 }
+
 }  // namespace RDKit
 
 #endif  // RDKITMOLDRAW2D_H

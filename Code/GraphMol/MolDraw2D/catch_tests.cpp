@@ -3834,7 +3834,7 @@ M  END
   REQUIRE(mol2);
   MolDraw2DUtils::prepareMolForDrawing(*mol2);
   SECTION("fixed canvas") {
-    MolDraw2DSVG drawer(308, 223, -1, -1, true);
+    MolDraw2DSVG drawer(308, 223, -1, -1);
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -3844,7 +3844,7 @@ M  END
     check_file_hash("testFlexiCanvas.1a.svg");
   }
   SECTION("flexicanvas1") {
-    MolDraw2DSVG drawer(-1, -1, -1, -1, true);
+    MolDraw2DSVG drawer(-1, -1, -1, -1);
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -3853,8 +3853,8 @@ M  END
     outs.flush();
     check_file_hash("testFlexiCanvas.1b.svg");
   }
-  SECTION("flexicanvas2") {
-    MolDraw2DSVG drawer(-1, -1, -1, -1, true);
+  SECTION("flexicanvas1") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1);
     drawer.drawOptions().scalingFactor = 30;
     drawer.drawOptions().baseFontSize = 0.6;
     drawer.drawMolecule(*mol1);
@@ -3865,8 +3865,21 @@ M  END
     outs.flush();
     check_file_hash("testFlexiCanvas.1c.svg");
   }
+  SECTION("flexicanvas1") {
+    MolDraw2DSVG drawer(-1, -1, -1, -1);
+    drawer.drawOptions().scalingFactor = 30;
+    drawer.drawOptions().fixedFontSize = 32;
+    drawer.drawMolecule(*mol1);
+    drawer.finishDrawing();
+    CHECK(drawer.fontSize() == Approx(32).margin(0.1));
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testFlexiCanvas.1d.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("testFlexiCanvas.1d.svg");
+  }
   SECTION("square") {
-    MolDraw2DSVG drawer(-1, -1, -1, -1, true);
+    MolDraw2DSVG drawer(-1, -1, -1, -1);
     drawer.drawOptions().baseFontSize = 0.8;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
@@ -3900,6 +3913,7 @@ M  END
     check_file_hash("testFlexiCanvas.2b.png");
   }
 #endif
+  // semiflexicanvas - with freetype
   SECTION("semiflexicanvas1") {
     MolDraw2DSVG drawer(308, -1, -1, -1, false);
     drawer.drawOptions().scalingFactor = 30;
@@ -3942,7 +3956,7 @@ M  END
     std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
         "[N:1]-[C:2]-[C:3](=[O:4])-[O:5].[N:6]-[C:7]-[C:8](=[O:9])-[O:10]>>[N:"
         "1]1-[C:2]-[C:3](=[O:4])-[N:6]-[C:7]-[C:8]-1=[O:9].[O:5]=[O:10]"));
-    MolDraw2DSVG drawer(-1, -1, -1, -1, 1);
+    MolDraw2DSVG drawer(-1, -1, -1, -1, true);
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -3988,8 +4002,7 @@ M  END)CTAB"_ctab;
       outs.flush();
       check_file_hash("testFlexiCanvas.4a.svg");
     }
-    {  // this one is slightly wonky because we don't get the width of the
-       // legend exactly right
+    {
       MolDraw2DSVG drawer(-1, -1);
       drawer.drawMolecule(*mol1, "legendary");
       drawer.finishDrawing();

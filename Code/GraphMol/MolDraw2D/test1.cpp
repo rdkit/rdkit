@@ -3218,7 +3218,7 @@ void test18FixedScales() {
     TEST_ASSERT(m);
     {
       MolDraw2DSVG drawer(300, 300);
-      drawer.drawMolecule(*m);
+      drawer.drawMolecule(*m, "default");
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs((nameBase + "1.svg").c_str());
@@ -3239,9 +3239,9 @@ void test18FixedScales() {
     }
     {
       MolDraw2DSVG drawer(300, 300);
-      // fix scale so bond is 5% if window width.
+      // fix scale so bond is 5% of window width.
       drawer.drawOptions().fixedScale = 0.05;
-      drawer.drawMolecule(*m);
+      drawer.drawMolecule(*m, "fixedScale 0.05");
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs((nameBase + "2.svg").c_str());
@@ -3269,7 +3269,7 @@ void test18FixedScales() {
 
     {
       MolDraw2DSVG drawer(300, 300);
-      drawer.drawMolecule(*m);
+      drawer.drawMolecule(*m, "default");
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs((nameBase + "3.svg").c_str());
@@ -3290,7 +3290,7 @@ void test18FixedScales() {
       // fix bond length to 10 pixels.
       MolDraw2DSVG drawer(300, 300);
       drawer.drawOptions().fixedBondLength = 10;
-      drawer.drawMolecule(*m);
+      drawer.drawMolecule(*m, "fixedBondLength 10");
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs((nameBase + "4.svg").c_str());
@@ -3312,7 +3312,7 @@ void test18FixedScales() {
       // up if the picture won't fit.
       MolDraw2DSVG drawer(300, 300);
       drawer.drawOptions().fixedBondLength = 30;
-      drawer.drawMolecule(*m);
+      drawer.drawMolecule(*m, "fixedBondLength 30");
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs((nameBase + "5.svg").c_str());
@@ -3320,6 +3320,52 @@ void test18FixedScales() {
       outs.flush();
       outs.close();
       check_file_hash(nameBase + "5.svg");
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#if DO_TEST_ASSERT
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 73.3 183.9") !=
+                  std::string::npos);
+#endif
+#else
+      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
+#endif
+    }
+    {
+      // this one fixes font size ot 24.
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawOptions().fixedFontSize = 24;
+      // to make sure it over-rides maxFontSize
+      drawer.drawOptions().maxFontSize = 20;
+      drawer.drawMolecule(*m, "fontSize 24");
+      drawer.finishDrawing();
+      TEST_ASSERT(drawer.fontSize() == 24);
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "6.svg").c_str());
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "6.svg");
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#if DO_TEST_ASSERT
+      TEST_ASSERT(text.find("<path class='atom-2' d='M 73.3 183.9") !=
+                  std::string::npos);
+#endif
+#else
+      TEST_ASSERT(text.find("font-size:10px") != std::string::npos);
+#endif
+    }
+    {
+      // this one fixes font size ot 4.  Default minFontSize is 6.
+      MolDraw2DSVG drawer(300, 300);
+      drawer.drawOptions().fixedFontSize = 4;
+      drawer.drawMolecule(*m, "fontSize 4");
+      drawer.finishDrawing();
+      TEST_ASSERT(drawer.fontSize() == 4);
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs((nameBase + "7.svg").c_str());
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "7.svg");
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
       TEST_ASSERT(text.find("<path class='atom-2' d='M 73.3 183.9") !=
@@ -4443,8 +4489,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  test6();
-  testGithub781();
+  test18FixedScales();
+
 #if 0
   test1();
   test2();

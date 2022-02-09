@@ -167,6 +167,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(legendFraction);
   PT_OPT_GET(maxFontSize);
   PT_OPT_GET(minFontSize);
+  PT_OPT_GET(fixedFontSize);
   PT_OPT_GET(baseFontSize);
   PT_OPT_GET(annotationFontScale);
   PT_OPT_GET(fontFile);
