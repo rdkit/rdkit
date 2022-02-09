@@ -65,7 +65,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D
    *
    * The rotation matrix is set to rotation by the specified angle
    * about an arbitrary axis.
-   * NB The axis must be a unit vector, otherwise scaling will also occur.
+   * Note: if the axis is not a unit vector scaling will also occur.
    * This can be ensured by a call to Point3D#normalize() prior to calling
    * this method
    */
