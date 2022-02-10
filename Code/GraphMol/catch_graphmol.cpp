@@ -2538,8 +2538,9 @@ void check_dest(RWMol *m1, const ROMol &m2) {
 }  // namespace
 TEST_CASE("moves") {
   auto m1 =
-      "C[C@H](O)C(F)[C@H](C)O |o2:1,5,&1:3,r,@:3,SgD:4:atom_data:foo::::|"_smiles;
+      "C[C@H](O)[C@H](F)[C@@H](C)O |o2:1,5,&1:3,SgD:4:atom_data:foo::::|"_smiles;
   REQUIRE(m1);
+  CHECK(m1->getStereoGroups().size() == 2);
   m1->setProp("foo", 1u);
   SECTION("molecule move") {
     ROMol m2 = std::move(*m1);
@@ -2554,8 +2555,9 @@ TEST_CASE("moves") {
 
 TEST_CASE("query moves") {
   auto m1 =
-      "C[C@H](O)C(F)[C@H](C)O |o2:1,5,&1:3,r,@:3,SgD:4:atom_data:foo::::|"_smarts;
+      "C[C@H](O)[C@H](F)[C@@H](C)O |o2:1,5,&1:3,SgD:4:atom_data:foo::::|"_smarts;
   REQUIRE(m1);
+  CHECK(m1->getStereoGroups().size() == 2);
   m1->setProp("foo", 1u);
   SECTION("molecule move") {
     ROMol m2 = std::move(*m1);
@@ -2587,7 +2589,7 @@ M  V30 8 O 0 0 0 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 2 1
-M  V30 2 1 2 3 CFG=1
+M  V30 2 1 2 3 CFG=3
 M  V30 3 1 4 2
 M  V30 4 1 4 5 CFG=1
 M  V30 5 1 4 6
@@ -2606,6 +2608,7 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
   REQUIRE(m1);
+  CHECK(m1->getStereoGroups().size() == 2);
   m1->setProp("foo", 1u);
   SECTION("molecule move") {
     ROMol m2 = std::move(*m1);
