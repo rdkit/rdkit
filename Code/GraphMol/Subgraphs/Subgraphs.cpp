@@ -540,14 +540,12 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
-    std::unordered_map<unsigned int, unsigned int> &atomMap, 
-    std::vector<unsigned int> &bondDist, bool useHs, bool enforceSize) {
+    bool useHs, bool enforceSize, std::unordered_map<unsigned int, unsigned int> &atomMap) {
+  
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
   if (!atomMap.empty()) { atomMap.clear(); }
-  if (!bondDist.empty()) { bondDist.clear(); bondDist.resize(0);}
-
   PATH_TYPE res;
   atomMap[rootedAtAtom] = 0;
   if (radius == 0) { return res; } // Return empty path if radius=0
@@ -578,7 +576,6 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
       if (!bondsIn.test(bondIdx)) {
         bondsIn.set(bondIdx);
         res.push_back(bondIdx);
-        bondDist.push_back(i + 1);
 
         // add the next set of neighbors:
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
@@ -609,141 +606,20 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
     res.clear();
     res.resize(0);
     atomMap.clear();
-    bondDist.clear();
-    bondDist.resize(0);
   }
   return res;
 }
 
-
-PATH_TYPE findAtomEnvironmentOfRadiusN(
-    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
-    std::unordered_map<unsigned int, unsigned int> &atomMap, 
-    bool useHs, bool enforceSize) {
-  std::vector<unsigned int> bondDist;
-  PATH_TYPE pth = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, atomMap, 
-                                               bondDist, useHs, enforceSize);
-  bondDist.clear();
-  bondDist.resize(0);
-  return pth;
-  }
-
-
-PATH_TYPE findAtomEnvironmentOfRadiusN(
-    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
-    std::vector<unsigned int> &bondDist, bool useHs, bool enforceSize) {
-  std::unordered_map<unsigned int, unsigned int> atomMap;
-  PATH_TYPE pth = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, atomMap, 
-                                               bondDist, useHs, enforceSize);
-  atomMap.clear();
-  return pth;
-  }
-
-
 PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
     bool useHs, bool enforceSize) {
+  // Overiding function for backward compatibility
   std::unordered_map<unsigned int, unsigned int> atomMap;
-  std::vector<unsigned int> bondDist;
-  PATH_TYPE pth = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, atomMap, 
-                                               bondDist, useHs, enforceSize);
-  atomMap.clear();
-  bondDist.clear();
-  bondDist.resize(0);
-  return pth;
-  }
-
-
-PATH_TYPE findAtomEnvironmentOfRadiusMToN(
-    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
-    unsigned int rootedAtAtom, std::unordered_map<unsigned int, unsigned int> &atomMap, 
-    std::vector<unsigned int> &bondDist, bool useHs, bool includeInnerAtoms) {
-  // This function is similar to findAtomEnvironmentOfRadiusN, except it returned all paths 
-  // from the radius (smallRadius + 1) to the radius (largeRadius). Note that in the result, 
-  // all bonds are gathered, which implies that enforceSize is set to false (0). 
-  // The central atom (rootedAtAtom) would never be marked in the atomMap.
-  // Restate: the distance to the marked atom will always be smaller than the defined radius.
-  if (smallRadius > largeRadius) { 
-    throw ValueErrorException("bad radius. smallRadius must be smaller or equal than largeRadius"); 
-  }
-
-  PATH_TYPE path;
-  // Optimization here to boost up the speed
-  if (smallRadius == 0 || largeRadius == 0) {
-    path = findAtomEnvironmentOfRadiusN(mol, largeRadius, rootedAtAtom, atomMap, 
-                                        bondDist, useHs, false);
-    if (!includeInnerAtoms) {atomMap.erase(rootedAtAtom);}
-    return path;
-  }
-  if (smallRadius == largeRadius && !includeInnerAtoms) {
-    path = findAtomEnvironmentOfRadiusN(mol, 0, rootedAtAtom, atomMap, 
-                                        bondDist, useHs, false);
-    atomMap.erase(rootedAtAtom);
-    return path;
-  }
-  
-  if (!atomMap.empty()) { atomMap.clear(); }
-  if (!bondDist.empty()) { bondDist.clear(); bondDist.resize(0);}
-
-  std::unordered_map<unsigned int, unsigned int> tAtomMap;
-  std::vector<unsigned int> tBondDist;
-  PATH_TYPE tPath = findAtomEnvironmentOfRadiusN(mol, largeRadius, rootedAtAtom, tAtomMap, 
-                                                 tBondDist, useHs, false);
-
-  for (unsigned int i = 0; i < tPath.size(); i++) {
-    if (tBondDist[i] > smallRadius) {
-      path.push_back(tPath[i]);
-      bondDist.push_back(tBondDist[i]);
-    }
-  }
-
-  for (auto x: tAtomMap) {
-    if (x.second > smallRadius || (includeInnerAtoms && x.second == smallRadius)) { 
-      atomMap[x.first] = x.second; 
-    }
-  }
-
-  tAtomMap.clear();
-  tBondDist.clear();
-  tBondDist.resize(0);
-  return path;
-}
-
-
-PATH_TYPE findAtomEnvironmentOfRadiusMToN(
-    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
-    unsigned int rootedAtAtom, std::unordered_map<unsigned int, unsigned int> &atomMap, 
-    bool useHs, bool includeInnerAtoms) {
-  std::vector<unsigned int> bondDist;
-  PATH_TYPE pth = findAtomEnvironmentOfRadiusMToN(mol, smallRadius, largeRadius, rootedAtAtom, 
-                                                  atomMap, bondDist, useHs, includeInnerAtoms);
-  bondDist.clear();
-  bondDist.resize(0);
-  return pth;
-}
-
-PATH_TYPE findAtomEnvironmentOfRadiusMToN(
-    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
-    unsigned int rootedAtAtom, std::vector<unsigned int> &bondDist, 
-    bool useHs, bool includeInnerAtoms) {
-  std::unordered_map<unsigned int, unsigned int> atomMap;
-  PATH_TYPE pth = findAtomEnvironmentOfRadiusMToN(mol, smallRadius, largeRadius, rootedAtAtom, 
-                                                  atomMap, bondDist, useHs, includeInnerAtoms);
+  PATH_TYPE pth = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, 
+                                               useHs, enforceSize, atomMap);
   atomMap.clear();
   return pth;
-}
+  }
 
-PATH_TYPE findAtomEnvironmentOfRadiusMToN(
-    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
-    unsigned int rootedAtAtom, bool useHs, bool includeInnerAtoms) {
-  std::unordered_map<unsigned int, unsigned int> atomMap;
-  std::vector<unsigned int> bondDist;
-  PATH_TYPE pth = findAtomEnvironmentOfRadiusMToN(mol, smallRadius, largeRadius, rootedAtAtom, 
-                                                  atomMap, bondDist, useHs, includeInnerAtoms);
-  atomMap.clear();
-  bondDist.clear();
-  bondDist.resize(0);
-  return pth;
-}
 
 }  // namespace RDKit

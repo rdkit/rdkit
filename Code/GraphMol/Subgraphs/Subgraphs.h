@@ -133,93 +133,26 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *   \param mol - the molecule to be considered
  *   \param radius - the radius of the subgraphs to be considered
  *   \param rootedAtAtom - the atom to consider
- *   \param atomMap - Optional: If provided, it will measure the
- *                    minimum distance of the atom from the rooted atom 
- *                    (start with 0 from the rooted atom). The result is 
- *                    a pair of the atom ID and the distance.
- *   \param bondDist - Optional: If provided, it will measure the
- *                     minimum distance of the bond from the rooted atom 
- *                     (start with 1). The argument's size is always 
- *                     equal to the vector path.
  *   \param useHs     - if set, hydrogens in the graph will be considered
  *                      eligible to be in paths. NOTE: this will not add
  *                      Hs to the graph.
  *   \param enforceSize - If false, all the bonds within the requested radius 
  *                        (<= radius) is collected. Otherwise, at least one bond
  *                        located at the requested radius must be found and added.
- *
+*   \param atomMap - Optional: If provided, it will measure the
+ *                   minimum distance of the atom from the rooted atom 
+ *                   (start with 0 from the rooted atom). The result is 
+ *                   a pair of the atom ID and the distance.
  *   The result is a path (a vector of bond indices)
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
 findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
-                             std::unordered_map<unsigned int, unsigned int> &atomMap,
-                             std::vector<unsigned int> &bondDist, 
-                             bool useHs = false, bool enforceSize = true);
-
-
-RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
-                             std::unordered_map<unsigned int, unsigned int> &atomMap,
-                             bool useHs = false, bool enforceSize = true);
-
-
-RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
-                             std::vector<unsigned int> &bondDist, 
-                             bool useHs = false, bool enforceSize = true);
-
+                             bool useHs, bool enforceSize, 
+                             std::unordered_map<unsigned int, unsigned int> &atomMap);
 
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
 findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
                              bool useHs = false, bool enforceSize = true);
-
-//! \brief Find bond subgraphs between two radiuses from smallRadius + 1
-//!        to largeRadius. The core function is findAtomEnvironmentOfRadiusN
-/*!
- *   \param mol - the molecule to be considered
- *   \param smallRadius - the small radius of the subgraphs to be considered
- *   \param largeRadius - the large radius of the subgraphs to be considered
- *   \param rootedAtAtom - the atom to consider
- *   \param atomMap - Optional: If provided, it collect all atom IDs whose
- *                    distance is larger than smallRadius. The result is a
- *                    pair of the atom ID and the distance.
- *   \param bondDist - Optional: If provided, it collect all bond IDs whose
- *                     distance is larger than smallRadius. The result is a 
- *                     vector of distance.
- *   \param useHs     - if set, hydrogens in the graph will be considered
- *                      eligible to be in paths. NOTE: this will not add
- *                      Hs to the graph.
- *   \param includeInnerAtoms - If set to True, all atom IDs whose distance is 
- *                              equal to the smallRadius can be collected. 
- *
- *   The result is a path (a vector of bond indices)
- */
-
-RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusMToN(
-    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
-    unsigned int rootedAtAtom, std::unordered_map<unsigned int, unsigned int> &atomMap, 
-    std::vector<unsigned int> &bondDist, bool useHs = false, bool includeInnerAtoms = false);
-
-
-RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusMToN(
-    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
-    unsigned int rootedAtAtom, std::unordered_map<unsigned int, unsigned int> &atomMap, 
-    bool useHs = false, bool includeInnerAtoms = false);
-
-
-RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusMToN(
-    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
-    unsigned int rootedAtAtom, std::vector<unsigned int> &bondDist, 
-    bool useHs = false, bool includeInnerAtoms = false);
-
-
-RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusMToN(
-    const ROMol &mol, unsigned int smallRadius, unsigned int largeRadius, 
-    unsigned int rootedAtAtom, bool useHs = false, bool includeInnerAtoms = false);
 
 }  // namespace RDKit
 
