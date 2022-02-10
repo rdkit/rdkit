@@ -306,9 +306,9 @@ void test3() {
     PATH_TYPE pth4 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false, false);
     PATH_TYPE pth5 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false, true);
     PATH_TYPE pth6 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false, false, cAtomMap);
-    cAtomMap.clear()
+    cAtomMap.clear();
     PATH_TYPE pth7 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false, true, cAtomMap);
-    cAtomMap.clear()
+    cAtomMap.clear();
     delete mol;
   }
   std::cout << "Finished" << std::endl;
