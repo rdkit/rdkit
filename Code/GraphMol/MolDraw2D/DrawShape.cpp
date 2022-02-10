@@ -100,14 +100,14 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
 
   // the two ends of the arrowhead are used for collision detection so they
   // may as well store them.
-  Point2D delta = points_[0] - points_[1];
-  double cos_angle = std::cos(angle_), sin_angle = std::sin(angle_);
-  Point2D p1 = points_[0];
+  auto delta = points_[0] - points_[1];
+  auto cos_angle = std::cos(angle_), sin_angle = std::sin(angle_);
+  auto p1 = points_[0];
   p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
   p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
   points_.push_back(p1);
-  
-  Point2D p2 = points_[1];
+
+  auto p2 = points_[1];
   p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
   p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
   points_.push_back(p2);
@@ -164,10 +164,10 @@ void DrawShapeEllipse::myDraw(MolDraw2D &drawer) const {
 // ****************************************************************************
 void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
                                     double &ymax) const {
-  double wb2 = (points_[1].x - points_[0].x) / 2;
-  double hb2 = (points_[1].y - points_[0].y) / 2;
-  double cx = points_[0].x + wb2;
-  double cy = points_[0].y + hb2;
+  auto wb2 = (points_[1].x - points_[0].x) / 2;
+  auto hb2 = (points_[1].y - points_[0].y) / 2;
+  auto cx = points_[0].x + wb2;
+  auto cy = points_[0].y + hb2;
   wb2 = wb2 > 0 ? wb2 : -1 * wb2;
   hb2 = hb2 > 0 ? hb2 : -1 * hb2;
   xmin = std::min(cx - wb2, xmin);
@@ -182,10 +182,10 @@ bool DrawShapeEllipse::doesRectClash(const StringRect &rect,
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
   Point2D tl, tr, br, bl;
   rect.calcCorners(tl, tr, br, bl, padding);
-  double w = points_[1].x - points_[0].x;
-  double h = points_[1].y - points_[0].y;
-  double cx = points_[0].x + w / 2;
-  double cy = points_[0].y + h / 2;
+  auto w = points_[1].x - points_[0].x;
+  auto h = points_[1].y - points_[0].y;
+  auto cx = points_[0].x + w / 2;
+  auto cy = points_[0].y + h / 2;
   w = w > 0 ? w : -1 * w;
   h = h > 0 ? h : -1 * h;
   Point2D centre{cx, cy};
@@ -298,14 +298,14 @@ DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> points,
 // ****************************************************************************
 void DrawShapeSolidWedge::buildTriangles() {
   if (!(lineColour_ == col2_) || splitBonds_) {
-    Point2D point = points_[0];
-    Point2D end1 = points_[1];
-    Point2D end2 = points_[2];
+    auto point = points_[0];
+    auto end1 = points_[1];
+    auto end2 = points_[2];
     points_.clear();
-    Point2D e1 = end1 - point;
-    Point2D e2 = end2 - point;
-    Point2D mid1 = point + e1 * 0.5;
-    Point2D mid2 = point + e2 * 0.5;
+    auto e1 = end1 - point;
+    auto e2 = end2 - point;
+    auto mid1 = point + e1 * 0.5;
+    auto mid2 = point + e2 * 0.5;
     points_.push_back(point);
     points_.push_back(mid1);
     points_.push_back(mid2);
@@ -375,13 +375,13 @@ DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
 void DrawShapeDashedWedge::buildLines() {
   // assumes this is the starting configuration, where the 3 points define
   // the enclosing triangle of the wedge.
-  Point2D point = points_[0];
-  Point2D end1 = points_[1];
-  Point2D end2 = points_[2];
+  auto point = points_[0];
+  auto end1 = points_[1];
+  auto end2 = points_[2];
   points_.clear();
   lineColours_.clear();
-  Point2D e1 = end1 - point;
-  Point2D e2 = end2 - point;
+  auto e1 = end1 - point;
+  auto e2 = end2 - point;
 
   unsigned int nDashes = 6;
   double sideLen = e1.length();
@@ -394,8 +394,8 @@ void DrawShapeDashedWedge::buildLines() {
     nDashes = nDashes < 3 ? 3 : nDashes;
   }
   for (unsigned int i = 1; i < nDashes + 1; ++i) {
-    Point2D e11 = point + e1 * (rdcast<double>(i) / nDashes);
-    Point2D e22 = point + e2 * (rdcast<double>(i) / nDashes);
+    auto e11 = point + e1 * (rdcast<double>(i) / nDashes);
+    auto e22 = point + e2 * (rdcast<double>(i) / nDashes);
     points_.push_back(e11);
     points_.push_back(e22);
     if (i > nDashes / 2) {

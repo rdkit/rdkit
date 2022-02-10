@@ -363,7 +363,7 @@ void DrawText::alignString(
     double y_min = std::numeric_limits<double>::max();
     double y_max = std::numeric_limits<double>::lowest();
     int num_norm = 0;
-    size_t align_char = -1;
+    int align_char = -1;
     for (size_t i = 0; i < rects.size(); ++i) {
       if (draw_modes[i] == TextDrawType::TextDrawNormal) {
         align_char = align_char == -1 ? i : align_char;
@@ -429,7 +429,7 @@ void DrawText::adjustStringRectsForSuperSubScript(
   }
 
   // contiguous sub- and super-scripts go at the same x.
-  for (auto i = 1; i < rects.size(); ++i) {
+  for (auto i = 1u; i < rects.size(); ++i) {
     if ((draw_modes[i] == TextDrawType::TextDrawSubscript &&
          draw_modes[i - 1] == TextDrawType::TextDrawSuperscript) ||
         (draw_modes[i - 1] == TextDrawType::TextDrawSubscript &&

@@ -170,16 +170,16 @@ $$$$
     suppl.setProcessPropertyLists(false);
     std::unique_ptr<RDKit::ROMol> m(suppl[0]);
     REQUIRE(m);
-    CHECK(m->hasProp("atom.prop.AtomSymbol"));
-    CHECK(!m->getAtomWithIdx(0)->hasProp("AtomSymbol"));
+    CHECK(m->hasProp("atom.prop.AtomLabel"));
+    CHECK(!m->getAtomWithIdx(0)->hasProp("AtomLabel"));
   }
   SECTION("with processing") {
     RDKit::SDMolSupplier suppl;
     suppl.setData(sdf);
     std::unique_ptr<RDKit::ROMol> m(suppl[0]);
     REQUIRE(m);
-    CHECK(m->hasProp("atom.prop.AtomSymbol"));
-    CHECK(m->getAtomWithIdx(0)->hasProp("AtomSymbol"));
+    CHECK(m->hasProp("atom.prop.AtomLabel"));
+    CHECK(m->getAtomWithIdx(0)->hasProp("AtomLabel"));
   }
 }
 
