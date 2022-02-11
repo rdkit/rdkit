@@ -233,7 +233,8 @@ void MolDraw2D::drawMolecules(
     if (drawMols_.back()->getScale() < drawMols_[minScaleMol]->getScale()) {
       minScaleMol = i;
     }
-    if (drawMols_.back()->getFontScale() < drawMols_[minFontScaleMol]->getFontScale()) {
+    if (drawMols_.back()->getFontScale() <
+        drawMols_[minFontScaleMol]->getFontScale()) {
       minFontScaleMol = i;
     }
   }
@@ -263,7 +264,6 @@ void MolDraw2D::drawReaction(
     const ChemicalReaction &rxn, bool highlightByReactant,
     const std::vector<DrawColour> *highlightColorsReactants,
     const std::vector<int> *confIds) {
-
   std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> reagents;
   std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> products;
   std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> agents;
@@ -282,8 +282,8 @@ void MolDraw2D::drawReaction(
   }
   std::vector<Point2D> offsets;
   Point2D arrowBeg, arrowEnd;
-  calcReactionOffsets(reagents, products, agents, plusWidth, offsets,
-                      arrowBeg, arrowEnd);
+  calcReactionOffsets(reagents, products, agents, plusWidth, offsets, arrowBeg,
+                      arrowEnd);
   activeMolIdx_ = -1;
   startDrawing();
   int xOffset = 0;
@@ -295,8 +295,8 @@ void MolDraw2D::drawReaction(
   if (delta < 5) {
     frac *= 5 / delta;
   }
-  drawArrow(arrowBeg, arrowEnd, false, frac,
-            M_PI / 6, drawOptions().symbolColour, true);
+  drawArrow(arrowBeg, arrowEnd, false, frac, M_PI / 6,
+            drawOptions().symbolColour, true);
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
 
@@ -311,8 +311,8 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
                          bool rawCoords) {
   if (drawOptions().comicMode) {
     // if rawCoords, we need a much bigger deviation.
-    double dev = rawCoords ? 0.5 : 0.03;
-    double scl = rawCoords ? 1.0 : scale_;
+    auto dev = rawCoords ? 0.5 : 0.03;
+    auto scl = rawCoords ? 1.0 : scale_;
     setFillPolys(false);
     if (col1 == col2) {
       setColour(col1);
@@ -320,7 +320,7 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
           MolDraw2D_detail::handdrawnLine(cds1, cds2, scl, true, true, 4, dev);
       drawPolygon(pts, rawCoords);
     } else {
-      Point2D mid = (cds1 + cds2) * 0.5;
+      auto mid = (cds1 + cds2) * 0.5;
       setColour(col1);
       auto pts =
           MolDraw2D_detail::handdrawnLine(cds1, mid, scl, true, false, 4, dev);
@@ -335,7 +335,7 @@ void MolDraw2D::drawLine(const Point2D &cds1, const Point2D &cds2,
       setColour(col1);
       drawLine(cds1, cds2, rawCoords);
     } else {
-      Point2D mid = (cds1 + cds2) * 0.5;
+      auto mid = (cds1 + cds2) * 0.5;
       setColour(col1);
       drawLine(cds1, mid, rawCoords);
       setColour(col2);
@@ -423,9 +423,9 @@ void MolDraw2D::drawRect(const Point2D &cds1, const Point2D &cds2,
 void MolDraw2D::drawAttachmentLine(const Point2D &cds1, const Point2D &cds2,
                                    const DrawColour &col, double len,
                                    unsigned int nSegments, bool rawCoords) {
-  Point2D perp = MolDraw2D_detail::calcPerpendicular(cds1, cds2);
-  Point2D p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
-  Point2D p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
+  auto perp = MolDraw2D_detail::calcPerpendicular(cds1, cds2);
+  auto p1 = Point2D(cds2.x - perp.x * len / 2, cds2.y - perp.y * len / 2);
+  auto p2 = Point2D(cds2.x + perp.x * len / 2, cds2.y + perp.y * len / 2);
   drawWavyLine(p1, p2, col, col, nSegments, rawCoords);
 }
 
@@ -440,14 +440,14 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
                           bool asPolygon, double frac, double angle,
                           const DrawColour &col, bool rawCoords) {
-  Point2D delta = arrowBegin - arrowEnd;
+  auto delta = arrowBegin - arrowEnd;
   double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
 
-  Point2D p1 = arrowEnd;
+  auto p1 = arrowEnd;
   p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
   p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
 
-  Point2D p2 = arrowEnd;
+  auto p2 = arrowEnd;
   p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
   p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
 
@@ -458,7 +458,7 @@ void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
   } else {
     std::vector<Point2D> pts = {p1, arrowEnd, p2};
     bool fps = fillPolys();
-    DrawColour dc = colour();
+    auto dc = colour();
     setFillPolys(true);
     setColour(col);
     drawPolygon(pts, rawCoords);
@@ -482,7 +482,7 @@ void MolDraw2D::drawPlus(const Point2D &plusPos, int plusWidth,
 // draws the string centred on cds
 void MolDraw2D::drawString(const string &str, const Point2D &cds,
                            bool rawCoords) {
-  Point2D draw_cds = rawCoords ? cds : getDrawCoords(cds);
+  auto draw_cds = rawCoords ? cds : getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, MolDraw2D_detail::OrientType::N);
   //  int olw = lineWidth();
   //  setLineWidth(0);
@@ -495,7 +495,7 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds,
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
                            MolDraw2D_detail::TextAlignType talign,
                            bool rawCoords) {
-  Point2D draw_cds = rawCoords ? cds : getDrawCoords(cds);
+  auto draw_cds = rawCoords ? cds : getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, talign);
 }
 
@@ -514,10 +514,13 @@ Point2D MolDraw2D::getDrawCoords(const Point2D &mol_cds) const {
 // ****************************************************************************
 Point2D MolDraw2D::getDrawCoords(int at_num) const {
   // this one can't use globalDrawTrans_, obviously.
-  PRECONDITION(activeMolIdx_ >= 0 && static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
+  PRECONDITION(activeMolIdx_ >= 0 &&
+                   static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
                "bad active mol index");
   PRECONDITION(!drawMols_.empty(), "no draw mols");
-  PRECONDITION(static_cast<size_t>(at_num) < drawMols_[activeMolIdx_]->atCds_.size(), "bad atom number");
+  PRECONDITION(
+      static_cast<size_t>(at_num) < drawMols_[activeMolIdx_]->atCds_.size(),
+      "bad atom number");
   return drawMols_[activeMolIdx_]->getDrawCoords(at_num);
 }
 
@@ -546,7 +549,7 @@ Point2D MolDraw2D::getAtomCoords(const pair<double, double> &screen_cds) const {
 // ****************************************************************************
 Point2D MolDraw2D::getAtomCoords(int at_num) const {
   PRECONDITION(!drawMols_.empty() && activeMolIdx_ >= 0 &&
-	       static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
+                   static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
                "bad active mol index");
   return drawMols_[activeMolIdx_]->getAtomCoords(at_num);
 }
@@ -603,7 +606,8 @@ Point2D MolDraw2D::range() const {
 
 // ****************************************************************************
 double MolDraw2D::scale() const {
-  PRECONDITION(activeMolIdx_ >= 0 && static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
+  PRECONDITION(activeMolIdx_ >= 0 &&
+                   static_cast<size_t>(activeMolIdx_) <= drawMols_.size(),
                "bad active mol index");
   return drawMols_[activeMolIdx_]->getScale();
 }
@@ -617,9 +621,7 @@ void MolDraw2D::setFontSize(double new_size) {
 }
 
 // ****************************************************************************
-void MolDraw2D::setScale(double newScale) {
-  scale_ = newScale;
-}
+void MolDraw2D::setScale(double newScale) { scale_ = newScale; }
 
 // ****************************************************************************
 void MolDraw2D::setScale(int width, int height, const Point2D &minv,
@@ -702,9 +704,11 @@ void MolDraw2D::getStringSize(const std::string &label, double &label_width,
 }
 
 // ****************************************************************************
-void MolDraw2D::getLabelSize(const string &label, MolDraw2D_detail::OrientType orient,
+void MolDraw2D::getLabelSize(const string &label,
+                             MolDraw2D_detail::OrientType orient,
                              double &label_width, double &label_height) const {
-  if (orient == MolDraw2D_detail::OrientType::N || orient == MolDraw2D_detail::OrientType::S) {
+  if (orient == MolDraw2D_detail::OrientType::N ||
+      orient == MolDraw2D_detail::OrientType::S) {
     label_height = 0.0;
     label_width = 0.0;
     vector<string> sym_bits =
@@ -723,19 +727,20 @@ void MolDraw2D::getLabelSize(const string &label, MolDraw2D_detail::OrientType o
 }
 
 // ****************************************************************************
-void MolDraw2D::getStringExtremes(const string &label, MolDraw2D_detail::OrientType orient,
+void MolDraw2D::getStringExtremes(const string &label,
+                                  MolDraw2D_detail::OrientType orient,
                                   const Point2D &cds, double &x_min,
                                   double &y_min, double &x_max,
                                   double &y_max) const {
   text_drawer_->getStringExtremes(label, orient, x_min, y_min, x_max, y_max);
-  Point2D draw_cds = getDrawCoords(cds);
+  auto draw_cds = getDrawCoords(cds);
   x_min += draw_cds.x;
   x_max += draw_cds.x;
   y_min += draw_cds.y;
   y_max += draw_cds.y;
 
-  Point2D new_mins = getAtomCoords(make_pair(x_min, y_min));
-  Point2D new_maxs = getAtomCoords(make_pair(x_max, y_max));
+  auto new_mins = getAtomCoords(make_pair(x_min, y_min));
+  auto new_maxs = getAtomCoords(make_pair(x_max, y_max));
   x_min = new_mins.x;
   y_min = new_mins.y;
   x_max = new_maxs.x;
@@ -924,10 +929,9 @@ void MolDraw2D::calcReactionOffsets(
     std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &agents,
     int &plusWidth, std::vector<Point2D> &offsets, Point2D &arrowBeg,
     Point2D &arrowEnd) {
-
   // calculate the total width of the drawing - it may need re-scaling if
   // it's too wide for the panel.
-  const int arrowMult = 2; // number of plusWidths for an empty arrow.
+  const int arrowMult = 2;  // number of plusWidths for an empty arrow.
   auto reactionWidth = [&](int gapWidth) -> int {
     int totWidth = 0;
     if (!reagents.empty()) {
@@ -960,11 +964,11 @@ void MolDraw2D::calcReactionOffsets(
       [&](std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &dms,
           double stretch) {
         for (auto &dm : dms) {
-      dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(),
-                   false);
-      dm->shrinkToFit(false);
-    }
-  };
+          dm->setScale(stretch * dm->getScale(), stretch * dm->getFontScale(),
+                       false);
+          dm->shrinkToFit(false);
+        }
+      };
 
   if (width_ == -1) {
     width_ = reactionWidth(plusWidth);
@@ -985,8 +989,8 @@ void MolDraw2D::calcReactionOffsets(
                          });
     plusWidth = (*maxWidthIt)->width_ / 4;
     plusWidth = plusWidth > width() / 20 ? width() / 20 : plusWidth;
-    int oldTotWidth = totWidth;
-    double stretch = double(width_ * (1 - drawOptions().padding)) / totWidth;
+    auto oldTotWidth = totWidth;
+    auto stretch = double(width_ * (1 - drawOptions().padding)) / totWidth;
     // If stretch < 1, we need to shrink the DrawMols to fit.  This isn't
     // necessary if we're just stretching them along the panel as they already
     // fit for height.
@@ -1042,7 +1046,7 @@ void MolDraw2D::calcReactionOffsets(
       xOffset += agents[i]->width_ + plusWidth / 2;
     }
     // the overlap at the end of the arrow has already been added in the loop
-    arrowEnd = Point2D(xOffset, height() /2);
+    arrowEnd = Point2D(xOffset, height() / 2);
   }
   xOffset = arrowEnd.x + plusWidth / 2;
   for (size_t i = 0; i < products.size(); ++i) {
@@ -1102,8 +1106,7 @@ void MolDraw2D::findReactionHighlights(
     std::map<int, DrawColour> &atomColours) const {
   std::unique_ptr<ROMol> tmol(ChemicalReactionToRxnMol(rxn));
   if (highlightByReactant) {
-    const std::vector<DrawColour> *colors =
-        &drawOptions().highlightColourPalette;
+    const auto *colors = &drawOptions().highlightColourPalette;
     if (highlightColorsReactants) {
       colors = highlightColorsReactants;
     }

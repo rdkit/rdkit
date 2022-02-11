@@ -378,7 +378,7 @@ void DrawMol::extractAtomNotes() {
 
 // ****************************************************************************
 void DrawMol::extractBondNotes() {
-  for (auto bond : drawMol_->bonds()) {
+  for (const auto bond : drawMol_->bonds()) {
     std::string note;
     if (bond->getPropIfPresent(common_properties::bondNote, note)) {
       if (!note.empty()) {
@@ -1960,7 +1960,7 @@ void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
 
 // ****************************************************************************
 void DrawMol::makeBondHighlightLines(int lineWidth) {
-  for (auto atom : drawMol_->atoms()) {
+  for (const auto atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
     for (const auto &nbri : make_iterator_range(drawMol_->getAtomBonds(atom))) {
       const Bond *bond = (*drawMol_)[nbri];

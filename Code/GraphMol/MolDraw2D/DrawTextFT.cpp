@@ -173,7 +173,7 @@ void DrawTextFT::getStringRects(const std::string &text,
     draw_modes.push_back(draw_mode);
     max_y = std::max(max_y, p_y_max);
   }
-  for (auto i = 0; i < rects.size(); ++i) {
+  for (auto i = 0u; i < rects.size(); ++i) {
     rects[i]->g_centre_.y = max_y - rects[i]->g_centre_.y;
     rects[i]->offset_.y = max_y / 2.0;
     if (i) {
