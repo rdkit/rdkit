@@ -17,10 +17,11 @@
 using namespace std;
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawTextQt::DrawTextQt(double max_fnt_sz, double min_fnt_sz, QPainter *qp)
-    : DrawText(max_fnt_sz, min_fnt_sz), d_qp(qp) {
+    : DrawTextNotFT(max_fnt_sz, min_fnt_sz), d_qp(qp) {
   PRECONDITION(
       QCoreApplication::instance(),
       "need a global QGuiApplication instance to use the Qt font system");
@@ -106,4 +107,5 @@ void DrawTextQt::getStringRects(const string &text,
   adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
