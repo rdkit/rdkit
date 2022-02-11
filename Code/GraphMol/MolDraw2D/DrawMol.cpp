@@ -2203,7 +2203,6 @@ int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
 // ****************************************************************************
 OrientType DrawMol::calcRadicalRect(const Atom *atom,
                                     StringRect &rad_rect) const {
-  std::cout << "fontScale_ : " << fontScale_ << std::endl;
   int num_rade = atom->getNumRadicalElectrons();
   double spot_rad = 0.2 * drawOptions_.multipleBondOffset * fontScale_;
   Point2D atCds{atCds_[atom->getIdx()]};
