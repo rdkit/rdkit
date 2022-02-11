@@ -7,7 +7,7 @@ target_compile_definitions(MolDraw2DQt PUBLIC "-DRDK_BUILD_QT_SUPPORT")
 find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
 target_link_libraries(MolDraw2DQt PRIVATE Qt5::Widgets Qt5::OpenGL)
 
-rdkit_headers(MolDraw2DQt.h DrawTextQt.h DEST GraphMol/MolDraw2D/Qt)
+rdkit_headers(MolDraw2DQt.h DEST GraphMol/MolDraw2D/Qt)
 if(RDK_INSTALL_STATIC_LIBS)
   target_link_libraries(MolDraw2DQt_static PRIVATE Qt5::Widgets Qt5::OpenGL)
   target_sources(MolDraw2DQt_static PRIVATE MolDraw2DQt.cpp DrawTextQt.cpp)
