@@ -48,7 +48,7 @@ def _GetCountDict(arr):
   """  *Internal Use Only*
 
   """
-  return dict(Counter(arr))
+  return Counter(arr)
 
 # WARNING: this data should probably go somewhere else...
 hallKierAlphas = {'Br': [None, None, 0.48],
@@ -166,7 +166,7 @@ def _pyKappa3(mol):
   P3 = len(Chem.FindAllPathsOfLengthN(mol, 3))
   alpha = HallKierAlpha(mol)
   denom = (P3 + alpha)**2
-  if denom:
+  if not denom:
     return 0
   
   A = mol.GetNumHeavyAtoms()
@@ -189,8 +189,8 @@ def Chi0(mol):
   """ From equations (1),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
   """
-  deltas = numpy.array([x.GetDegree() for x in mol.GetAtoms() if x.GetDegree() != 0], 'd')
-  return sum(numpy.sqrt(1. / deltas))
+  deltas = [x.GetDegree() for x in mol.GetAtoms() if x.GetDegree() != 0]
+  return sum(numpy.sqrt(1. / numpy.array(deltas, dtype=numpy.float64)))
 
 
 Chi0.version = "1.0.0"
@@ -200,11 +200,14 @@ def Chi1(mol):
   """ From equations (1),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
   """
-  c1s = [x.GetBeginAtom().GetDegree() * x.GetEndAtom().GetDegree() 
-         for x in mol.GetBonds() 
-         if x.GetBeginAtom().GetDegree() != 0 and x.GetEndAtom().GetDegree() != 0]
-  c1s = numpy.array(c1s, 'd')
-  return sum(numpy.sqrt(1. / c1s))
+  c1s = []
+  for bond in mol.GetBonds():
+    beginDegree = bond.GetBeginAtom().GetDegree()
+    if beginDegree != 0:
+      endDegree = bond.GetEndAtom().GetDegree()
+      if endDegree != 0:
+        c1s.append(beginDegree * endDegree)
+  return sum(numpy.sqrt(1. / numpy.array(c1s, dtype=numpy.float64)))
 
 
 Chi1.version = "1.0.0"
@@ -243,11 +246,9 @@ def _pyChi0v(mol):
 
   """
   deltas = _hkDeltas(mol)
-  deltas_ = [x for x in deltas if x != 0.0 or x != 0 or x != -0.0]
-  del deltas
+  deltas_ = [x for x in deltas if x != 0]
   mol._hkDeltas = None
-  res = sum(numpy.sqrt(1. / numpy.array(deltas_)))
-  return res
+  return sum(numpy.sqrt(1. / numpy.array(deltas_)))
 
 
 def _pyChi1v(mol):
@@ -273,8 +274,9 @@ def _pyChiNv_(mol, order=2):
   size 3.
 
   """
-  deltas = numpy.array(
-    [(1. / numpy.sqrt(hkd) if hkd != 0.0 else 0.0) for hkd in _hkDeltas(mol, skipHs=0)])
+  hkDs = _hkDeltas(mol, skipHs=0)
+  deltas = numpy.array([(1. / numpy.sqrt(hkd) if hkd != 0.0 else 0.0) for hkd in hkDs], 
+                       dtype=numpy.float64)
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
     accum += numpy.prod(deltas[numpy.array(path)])
@@ -317,19 +319,14 @@ def _pyChi0n(mol):
     value = _nVal(x)
     if value != 0:
       deltas.append(value)
-  deltas = numpy.array(deltas, 'd')
-  return sum(numpy.sqrt(1. / deltas))
+  return sum(numpy.sqrt(1. / numpy.array(deltas, dtype=numpy.float64)))
 
 
 def _pyChi1n(mol):
   """  Similar to Hall Kier Chi1v, but uses nVal instead of valence
 
   """
-  deltas = []
-  for x in mol.GetAtoms():
-    value = _nVal(x)
-    if value != 0:
-      deltas.append(value)
+  deltas = [_nVal(atom) for atom in mol.GetAtoms()]
   res = 0.0
   for bond in mol.GetBonds():
     v = deltas[bond.GetBeginAtomIdx()] * deltas[bond.GetEndAtomIdx()]
@@ -467,8 +464,7 @@ def BalabanJ(mol, dMat=None, forceDMat=0):
 
   sum_ = 0.
   nS = len(s)
-  for i in range(nS):
-    si = s[i]
+  for i, si in enumerate(s):
     for j in range(i, nS):
       if adjMat[i, j] == 1:
         sum_ += 1. / numpy.sqrt(si * s[j])
@@ -503,7 +499,7 @@ def _AssignSymmetryClasses(mol, vdList, bdMat, forceBDMat, numAtoms, cutoff):
   for i in range(numAtoms):
     tmpList = bdMat[i].tolist()
     tmpList.sort()
-    theKey = tuple(['%.4f' % x for x in tmpList[:cutoff]])
+    theKey = tuple(f'{x:.4f}' for x in tmpList[:cutoff])
     try:
       idx = keysSeen.index(theKey)
     except ValueError:
@@ -513,14 +509,14 @@ def _AssignSymmetryClasses(mol, vdList, bdMat, forceBDMat, numAtoms, cutoff):
   return tuple(symList)
 
 
-def _LookUpBondOrder(atom1Id, atom2Id, bondDic):
+def _LookUpBondOrder(atom1Id, atom2Id, bondDict):
   """
      Used by BertzCT
   """
   if atom1Id < atom2Id:
-    bondType = bondDic[(atom1Id, atom2Id)]
+    bondType = bondDict[(atom1Id, atom2Id)]
   else:
-    bondType = bondDic[(atom2Id, atom1Id)]
+    bondType = bondDict[(atom2Id, atom1Id)]
   if bondType == Chem.BondType.AROMATIC:
     return 1.5 
   return float(bondType)
@@ -647,7 +643,7 @@ def BertzCT(mol, cutoff=100, dMat=None, forceDMat=1):
       NiClass = symmetryClasses[neighbor_iIdx]
       bond_i_order = _LookUpBondOrder(atomIdx, neighbor_iIdx, bondDict)
       # print('\t',atomIdx,i,hingeAtomClass,NiClass,bond_i_order)
-      if bond_i_order > 1 and neighbor_iIdx > atomIdx:
+      if (bond_i_order > 1) and (neighbor_iIdx > atomIdx):
         numConnections = bond_i_order * (bond_i_order - 1) / 2
         connectionKey = (min(hingeAtomClass, NiClass), max(hingeAtomClass, NiClass))
         connectionDict[connectionKey] = connectionDict.get(connectionKey, 0) + numConnections

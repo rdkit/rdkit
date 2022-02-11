@@ -23,7 +23,7 @@ from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors
 
 def __ShowDescriptors():
   # This is used for debugging
-  print(Descriptors._descList) # debugging
+  print(Descriptors._descList)
   print('Descriptors Size: ', len(Descriptors._descList))
 
 
@@ -48,12 +48,12 @@ class TestCase(unittest.TestCase):
       self.assertTrue(m)
       for i, (nm, fn) in enumerate(Descriptors._descList):
         try:
-          fn(m)
+          _ = fn(m)
         except Exception:
           import traceback
           traceback.print_exc()
           # __ShowDescriptorErrors(index=i, name=nm, function=fn)
-          raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
+          raise AssertionError(f'SMILES: {smi}; Descriptor: {nm}')
 
   def testBadAtomHandling(self):
     smis = ('CC[Pu]', 'CC[*]')
@@ -63,7 +63,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(m)
       for i, (nm, fn) in enumerate(Descriptors._descList):
         try:
-          fn(m)
+          _ = fn(m)
         except RuntimeError:
           # 3D descriptors fail since the mol has no conformers
           pass
@@ -71,12 +71,23 @@ class TestCase(unittest.TestCase):
           import traceback
           traceback.print_exc()
           # __ShowDescriptorErrors(index=i, name=nm, function=fn)
-          raise AssertionError('SMILES: %s; Descriptor: %s' % (smi, nm))
+          raise AssertionError(f'SMILES: {smi}; Descriptor: {nm}')
 
-  def testInvalidDescriptors(self):
-    # This test is for the usage of Chem\GraphDescriptors.py
+  def testBelongToRDKit(self):
+    """
+    [FYI]: This test is for the usage of 'Counter' in Chem\GraphDescriptors.py
+    This test is applied to ensure that any third-party modules or libraries 
+    even if it can be applied on RDKit's Molecule cannot be embedded into the 
+    RDKit's system. 
+    [Trigger]: Apply on a built-in function 'Counter', third-party function 
+    'np.sum' or even 'numpy' library
+    
+    """
     from collections import Counter
-    self.assertFalse(Descriptors._belongToRDKit(Counter))
+    testFunction = Descriptors._belongToRDKit
+    self.assertFalse(testFunction(Counter))
+    self.assertFalse(testFunction(np.sum))
+    self.assertFalse(testFunction(np))
   
   def testMolFormula(self):
     for (smiles, expected) in (
@@ -174,7 +185,7 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('CCCc1ccccc1')
     results = rdMolDescriptors.BCUT2D(m)
     names = [
-      "BCUT2D_%s" % s
+      f"BCUT2D_{s}"
       for s in ('MWHI', "MWLOW", "CHGHI", "CHGLO", "LOGPHI", "LOGPLOW", "MRHI", "MRLOW")
     ]
     for i, n in enumerate(names):
@@ -182,7 +193,7 @@ class TestCase(unittest.TestCase):
       self.assertEqual(results[i], f(m))
 
     results = rdMolDescriptors.CalcAUTOCORR2D(m)
-    names = ["AUTOCORR2D_%s" % str(i + 1) for i in range(192)]
+    names = [f"AUTOCORR2D_{i + 1}" for i in range(192)]
     for i, n in enumerate(names):
       f = getattr(Descriptors, n)
       self.assertEqual(results[i], f(m))
@@ -194,7 +205,7 @@ class TestCase(unittest.TestCase):
     # First try only bcuts should exist
     descriptors = set([n for n, _ in Descriptors.descList])
     names = set([
-      "BCUT2D_%s" % i
+      f"BCUT2D_{i}"
       for i in ('MWHI', "MWLOW", "CHGHI", "CHGLO", "LOGPHI", "LOGPLOW", "MRHI", "MRLOW")
     ])
     self.assertEqual(descriptors.intersection(names), names)
@@ -203,7 +214,7 @@ class TestCase(unittest.TestCase):
     descriptors2 = set([n for n, _ in Descriptors.descList])
     self.assertEqual(descriptors2.intersection(descriptors), descriptors)
 
-    names = set(["AUTOCORR2D_%s" % str(i + 1) for i in range(192)])
+    names = set([f"AUTOCORR2D_{i + 1}" for i in range(192)])
     self.assertEqual(descriptors2.intersection(names), names)
 
   def test_issue_4567(self):

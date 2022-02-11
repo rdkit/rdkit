@@ -8,7 +8,7 @@
 #  of the RDKit source tree.
 #
 
-from collections import abc  # This won't work in python 2, but we don't support that any more
+from collections import abc, namedtuple
 from typing import Callable
 
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
@@ -23,6 +23,7 @@ from rdkit.Chem.QED import qed
 
 def _isCallable(something):
   return isinstance(something, (abc.Callable, Callable)) or hasattr(something, '__call__')
+
 
 def _belongToRDKit(something):
   NAME = 'rdkit'
@@ -50,8 +51,9 @@ _descList = []
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import Descriptors3D  # Shortcut
-  from rdkit.Chem import (Crippen, Fragments, GraphDescriptors, Lipinski, MolSurf)
+  # Question's comment (Later commit will delete it)
+  # Descriptors3D is not being used according to automatic import & variable-checking tool, should I remove it?
+  from rdkit.Chem import Descriptors3D, Crippen, Fragments, GraphDescriptors, Lipinski, MolSurf
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
 
@@ -170,6 +172,7 @@ def NumRadicalElectrons(mol):
 
 NumRadicalElectrons.version = "1.1.0"
 
+ChargeDescriptors = namedtuple('ChargeDescriptors', ['minCharge', 'maxCharge'])
 
 def _ChargeDescriptors(mol, force=False):
   """ Returns the charge descriptions of the molecule in a specific range: 2-value tuple
@@ -186,36 +189,36 @@ def _ChargeDescriptors(mol, force=False):
       minChg = chg
     elif chg > maxChg:
       maxChg = chg
-  res = (minChg, maxChg)
+  res = ChargeDescriptors(minChg, maxChg)
   mol._chargeDescriptors = res
   return res
 
 
 def MaxPartialCharge(mol, force=False):
-  return _ChargeDescriptors(mol, force)[1]
+  return _ChargeDescriptors(mol, force).maxCharge
 
 
 MaxPartialCharge.version = "1.0.0"
 
 
 def MinPartialCharge(mol, force=False):
-  return _ChargeDescriptors(mol, force)[0]
+  return _ChargeDescriptors(mol, force).minCharge
 
 
 MinPartialCharge.version = "1.0.0"
 
 
 def MaxAbsPartialCharge(mol, force=False):
-  v1, v2 = _ChargeDescriptors(mol, force)
-  return max(abs(v1), abs(v2))
+  charge = _ChargeDescriptors(mol, force)
+  return max(abs(charge.minCharge), abs(charge.maxCharge))
 
 
 MaxAbsPartialCharge.version = "1.0.0"
 
 
 def MinAbsPartialCharge(mol, force=False):
-  v1, v2 = _ChargeDescriptors(mol, force)
-  return min(abs(v1), abs(v2))
+  charge = _ChargeDescriptors(mol, force)
+  return min(abs(charge.minCharge), abs(charge.maxCharge))
 
 
 MinAbsPartialCharge.version = "1.0.0"
