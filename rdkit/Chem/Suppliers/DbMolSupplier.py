@@ -27,10 +27,8 @@ class DbMolSupplier(MolSupplier):
 
   """
 
-  def __init__(self, dbResults, molColumnFormats={'SMILES': 'SMI',
-                                                  'SMI': 'SMI',
-                                                  'MOLPKL': 'PKL'}, nameCol='', transformFunc=None,
-               **kwargs):
+  def __init__(self, dbResults, molColumnFormats={'SMILES': 'SMI', 'SMI': 'SMI', 'MOLPKL': 'PKL'}, 
+               nameCol='', transformFunc=None, **kwargs):
     """
 
       DbResults should be a subclass of Dbase.DbResultSet.DbResultBase
@@ -38,11 +36,10 @@ class DbMolSupplier(MolSupplier):
     """
     self._data = dbResults
     self._colNames = [x.upper() for x in self._data.GetColumnNames()]
-    nameCol = nameCol.upper()
     self.molCol = -1
     self.transformFunc = transformFunc
     try:
-      self.nameCol = self._colNames.index(nameCol)
+      self.nameCol = self._colNames.index(nameCol.upper())
     except ValueError:
       self.nameCol = -1
     for name in molColumnFormats:
@@ -73,7 +70,7 @@ class DbMolSupplier(MolSupplier):
       if self.molFmt == 'SMI':
         newM = Chem.MolFromSmiles(str(molD))
         if not newM:
-          warning('Problems processing mol %d, smiles: %s\n' % (self._numProcessed, molD))
+          warning(f'Problems processing mol {self._numProcessed}, smiles: {molD}\n')
       elif self.molFmt == 'PKL':
         newM = Chem.Mol(str(molD))
     except Exception:
@@ -90,9 +87,8 @@ class DbMolSupplier(MolSupplier):
           newM = None
       if newM:
         newM._fieldsFromDb = data
-        nFields = len(data)
-        for i in range(nFields):
-          newM.SetProp(self._colNames[i], str(data[i]))
+        for i, prop in enumerate(data):
+          newM.SetProp(self._colNames[i], str(prop))
         if self.nameCol >= 0:
           newM.SetProp('_Name', str(data[self.nameCol]))
     return newM
