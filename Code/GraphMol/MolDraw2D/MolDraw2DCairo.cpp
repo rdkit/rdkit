@@ -54,7 +54,8 @@ void MolDraw2DCairo::initDrawing() {
       dt->setCairoContext(dp_cr);
     }
 #else
-    dynamic_cast<DrawTextCairo *>(text_drawer_.get())->setCairoContext(dp_cr);
+    dynamic_cast<MolDraw2D_detail::DrawTextCairo *>(text_drawer_.get())
+        ->setCairoContext(dp_cr);
 #endif
   }
 }
@@ -79,7 +80,8 @@ void MolDraw2DCairo::initTextDrawer(bool noFreetype) {
           new MolDraw2D_detail::DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
     }
 #else
-    text_drawer_.reset(new DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
+    text_drawer_.reset(
+        new MolDraw2D_detail::DrawTextCairo(max_fnt_sz, min_fnt_sz, dp_cr));
 #endif
   }
   if (drawOptions().baseFontSize > 0.0) {

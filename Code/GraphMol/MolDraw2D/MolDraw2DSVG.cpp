@@ -153,8 +153,8 @@ void MolDraw2DSVG::initTextDrawer(bool noFreetype) {
           max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
     }
 #else
-    text_drawer_.reset(
-        new DrawTextSVG(max_fnt_sz, min_fnt_sz, d_os, d_activeClass));
+    text_drawer_.reset(new MolDraw2D_detail::DrawTextSVG(max_fnt_sz, min_fnt_sz,
+                                                         d_os, d_activeClass));
 #endif
   }
   if (drawOptions().baseFontSize > 0.0) {
