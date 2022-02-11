@@ -35,7 +35,6 @@
 #include <map>
 
 using namespace RDKit;
-
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
@@ -48,22 +47,15 @@ namespace {
 // left at the end of the run.
 static const bool DELETE_WITH_GOOD_HASH = true;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-    static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 4142488780U},
-    {"rxn_test1_2.svg", 2391235449U},
-    {"rxn_test1_3.svg", 1596835824U},
-    {"rxn_test1_4.svg", 2658830567U},
-    {"rxn_test1_5.svg", 3734154337U},
-    {"rxn_test1_6.svg", 1382455147U},
-    {"rxn_test1_7.svg", 850006879U},
-    {"rxn_test2_1.svg", 3558612822U},
-    {"rxn_test2_2_1.svg", 2748718550U},
-    {"rxn_test2_2_2.svg", 3634147033U},
-    {"rxn_test2_2_3.svg", 1683554313U},
-    {"rxn_test2_2_4.svg", 3008925605U},
-    {"rxn_test3_1.svg", 409355256U},
-    {"rxn_test4_1.svg", 1446031830U},
-    {"rxn_test4_2.svg", 265508036U}
+static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
+    {"rxn_test1_1.svg", 3047973630U},   {"rxn_test1_2.svg", 1460468838U},
+    {"rxn_test1_3.svg", 3199448360U},   {"rxn_test1_4.svg", 3061789596U},
+    {"rxn_test1_5.svg", 81251099U},     {"rxn_test1_6.svg", 2818292014U},
+    {"rxn_test1_7.svg", 2850249324U},   {"rxn_test2_1.svg", 1030590779U},
+    {"rxn_test2_2_1.svg", 1517577878U}, {"rxn_test2_2_2.svg", 1146043907U},
+    {"rxn_test2_2_3.svg", 638921908U},  {"rxn_test2_2_4.svg", 3727997630U},
+    {"rxn_test3_1.svg", 1836351688U},   {"rxn_test4_1.svg", 531981882U},
+    {"rxn_test4_2.svg", 915839129U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
@@ -88,21 +80,14 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"rxn_test1_1.png", 1360104321U},
-    {"rxn_test1_2.png", 2193860546U},
-    {"rxn_test1_3.png", 3637813871U},
-    {"rxn_test1_4.png", 2689827672U},
-    {"rxn_test1_5.png", 1081681982U},
-    {"rxn_test1_6.png", 1652373318U},
-    {"rxn_test1_7.png", 1129854251U},
-    {"rxn_test2_1.png", 2184440504U},
-    {"rxn_test2_2_1.png", 2843973557U},
-    {"rxn_test2_2_2.png", 3681916546U},
-    {"rxn_test2_2_3.png", 2917064875U},
-    {"rxn_test2_2_4.png", 1045873872U},
-    {"rxn_test3_1.png", 1460167503U},
-    {"rxn_test4_1.png", 2326178421U},
-    {"rxn_test4_2.png", 380646467U}
+    {"rxn_test1_1.png", 2867700423U},  {"rxn_test1_2.png", 2074724089U},
+    {"rxn_test1_3.png", 421271067U},   {"rxn_test1_4.png", 3523297494U},
+    {"rxn_test1_5.png", 3888923008U},  {"rxn_test1_6.png", 3767742095U},
+    {"rxn_test1_7.png", 254968254U},   {"rxn_test2_1.png", 432415333U},
+    {"rxn_test2_2_1.png", 519534633U}, {"rxn_test2_2_2.png", 1058522300U},
+    {"rxn_test2_2_3.png", 392287367U}, {"rxn_test2_2_4.png", 1762710408U},
+    {"rxn_test3_1.png", 3503835876U},  {"rxn_test4_1.png", 1845902236U},
+    {"rxn_test4_2.png", 2849520465U},
 };
 
 std::hash_result_t hash_file(const std::string &filename) {
@@ -119,7 +104,8 @@ std::hash_result_t hash_file(const std::string &filename) {
 
 void check_file_hash(const std::string &filename,
                      std::hash_result_t exp_hash = 0U) {
-//    std::cout << filename << " : " << hash_file(filename) << "U" << std::endl;
+  //    std::cout << filename << " : " << hash_file(filename) << "U" <<
+  //    std::endl;
 
   std::map<std::string, std::hash_result_t>::const_iterator it;
   if (filename.substr(filename.length() - 4) == ".svg") {
