@@ -268,11 +268,13 @@ void MolDraw2D::drawReaction(
   std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> products;
   std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> agents;
 
+  // Copy the reaction because processing for drawing alters it.
+  ChemicalReaction nrxn(rxn);
   // I think a larger minimum font size than the default works better for this
   int mfs = drawOptions().minFontSize > 12 ? drawOptions().minFontSize : 12;
   text_drawer_->setMinFontSize(mfs);
   int plusWidth;
-  getReactionDrawMols(rxn, highlightByReactant, highlightColorsReactants,
+  getReactionDrawMols(nrxn, highlightByReactant, highlightColorsReactants,
                       confIds, reagents, products, agents, plusWidth);
 
   if (height_ == -1) {
@@ -301,7 +303,7 @@ void MolDraw2D::drawReaction(
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
 
   if (drawOptions().includeMetadata) {
-    this->updateMetadata(rxn);
+    this->updateMetadata(nrxn);
   }
 }
 
