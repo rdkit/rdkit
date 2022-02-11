@@ -66,22 +66,16 @@ class _StereoGroupFlipper(object):
     self._original_parities = [(a, a.GetChiralTag()) for a in group.GetAtoms()]
 
   def flip(self, flag):
-    CHIRAL_DICT = {Chem.ChiralType.CHI_TETRAHEDRAL_CW: Chem.ChiralType.CHI_TETRAHEDRAL_CCW,
-                   Chem.ChiralType.CHI_TETRAHEDRAL_CCW: Chem.ChiralType.CHI_TETRAHEDRAL_CW, 
-                   # Chem.ChiralType.CHI_UNSPECIFIED: Chem.ChiralType.CHI_UNSPECIFIED,
-                   # Chem.ChiralType.CHI_OTHER: Chem.ChiralType.CHI_OTHER,
-                   }
-    for atom, original_parity in self._original_parities:
-      try:
-        if flag:
-          chirality = original_parity 
-        else:
-          chirality = CHIRAL_DICT[original_parity]
-        atom.SetChiralTag(chirality)
-      except KeyError:
-        pass
-    del CHIRAL_DICT
-    
+    if flag:
+      for a, original_parity in self._original_parities:
+        a.SetChiralTag(original_parity)
+    else:
+      for a, original_parity in self._original_parities:
+        if original_parity == Chem.ChiralType.CHI_TETRAHEDRAL_CW:
+          a.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+        elif original_parity == Chem.ChiralType.CHI_TETRAHEDRAL_CCW:
+          a.SetChiralTag(Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+    return None    
 
 def _getFlippers(mol, options):
   Chem.FindPotentialStereoBonds(mol)

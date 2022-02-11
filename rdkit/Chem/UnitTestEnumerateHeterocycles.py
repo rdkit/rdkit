@@ -11,7 +11,7 @@ from rdkit.Chem.EnumerateHeterocycles import (EnumerateHeterocycles,
 
 
 def has_radical(mol):
-    return any(atom.GetNumRadicalElectrons() > 0 for atom in mol.GetAtoms())
+    return any(atom.GetNumRadicalElectrons() for atom in mol.GetAtoms())
 
 def has_aromatic(mol):
     return any(atom.GetIsAromatic() for atom in mol.GetAtoms())
@@ -139,10 +139,12 @@ class TestCase(unittest.TestCase):
             for src, rxn in zip(GetHeterocycleReactionSmarts(), GetHeterocycleReactions()):
                 for smiles in get_unique_products(rxn, rdkit_mol):
                     assert_valid_change(orig_can_smi, smiles)
-                    desc = {'SMILES'  : orig_can_smi, 'MUTATED' : smiles,
-                           'REACTION' : src.SMARTS + '>>' + src.CONVERT_TO,
-                           'DESCRIPTION' : src.DESCRIPTION,
-                           }
+                    desc = {
+                        'SMILES'  : orig_can_smi, 
+                        'MUTATED' : smiles,
+                        'REACTION' : src.SMARTS + '>>' + src.CONVERT_TO,
+                        'DESCRIPTION' : src.DESCRIPTION,
+                        }
                     writer.writerow(desc)
                     changed = True
 
@@ -184,7 +186,6 @@ class TestCase(unittest.TestCase):
             ]
 
         smarts_mol = Chem.MolFromSmarts(rxn.SMARTS)
-
         for smiles, expected_num_matches in test_inputs:
             rdkit_mol = Chem.MolFromSmiles(smiles)
             num_rdkit_matches = len(rdkit_mol.GetSubstructMatches(smarts_mol))
@@ -195,7 +196,7 @@ class TestCase(unittest.TestCase):
 
     def test_fuzz_atom_mutations(self):
         fragment_library = os.path.join(os.path.dirname(__file__), 'test_data', 'fragments.csv')
-        base, ext = os.path.splitext(os.path.basename(fragment_library))
+        base, _ = os.path.splitext(os.path.basename(fragment_library))
 
         rand = Random(0xDEADBEEF)
         uniq_fragments = set()
@@ -247,10 +248,12 @@ class TestCase(unittest.TestCase):
                     uniq_fragments.add(smiles)
                     fragments.append(smiles)
 
-                    row = {'SMILES': orig_can_smi, 'MUTATED': smiles,
-                           'REACTION': src.SMARTS + '>>' + src.CONVERT_TO, 
-                           'DESCRIPTION': src.DESCRIPTION, 
-                           }
+                    row = {
+                        'SMILES': orig_can_smi, 
+                        'MUTATED': smiles,
+                        'REACTION': src.SMARTS + '>>' + src.CONVERT_TO, 
+                        'DESCRIPTION': src.DESCRIPTION, 
+                        }
                     writer.writerow(row)
 
             # record aromatic fragments that no rule changes (possible problems?)
