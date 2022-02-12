@@ -56,15 +56,18 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Transform3D
 
   /*! \brief set the rotation matrix
    *
-   * The rotation matrix is set to rotation by th specified angle
+   * The rotation matrix is set to rotation by the specified angle
    * about the specified axis
    */
   void SetRotation(double angle, AxisType axis);
 
   /*! \brief set the rotation matrix
    *
-   * The rotation matrix is set to rotation by th specified angle
-   * about an arbitrary axis
+   * The rotation matrix is set to rotation by the specified angle
+   * about an arbitrary axis.
+   * Note: if the axis is not a unit vector scaling will also occur.
+   * This can be ensured by a call to Point3D#normalize() prior to calling
+   * this method
    */
   void SetRotation(double angle, const Point3D &axis);
   void SetRotation(double cosT, double sinT, const Point3D &axis);

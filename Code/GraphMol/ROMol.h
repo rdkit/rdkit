@@ -37,6 +37,7 @@
 #include "Conformer.h"
 #include "SubstanceGroup.h"
 #include "StereoGroup.h"
+#include "RingInfo.h"
 
 namespace RDKit {
 class SubstanceGroup;
@@ -321,6 +322,68 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   ROMol(const std::string &binStr);
   //! construct a molecule from a pickle string
   ROMol(const std::string &binStr, unsigned int propertyFlags);
+
+  ROMol(ROMol &&o) noexcept
+      : RDProps(std::move(o)),
+        d_graph(std::move(o.d_graph)),
+        d_atomBookmarks(std::move(o.d_atomBookmarks)),
+        d_bondBookmarks(std::move(o.d_bondBookmarks)),
+        d_confs(std::move(o.d_confs)),
+        d_sgroups(std::move(o.d_sgroups)),
+        d_stereo_groups(std::move(o.d_stereo_groups)),
+        numBonds(o.numBonds) {
+    for (auto atom : atoms()) {
+      atom->setOwningMol(this);
+    }
+    for (auto bond : bonds()) {
+      bond->setOwningMol(this);
+    }
+    for (auto conf : d_confs) {
+      conf->setOwningMol(this);
+    }
+    o.d_graph.clear();
+    o.numBonds = 0;
+    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
+    dp_delAtoms = std::exchange(o.dp_delAtoms, nullptr);
+    dp_delBonds = std::exchange(o.dp_delBonds, nullptr);
+  }
+  ROMol &operator=(ROMol &&o) noexcept {
+    if (this == &o) {
+      return *this;
+    }
+    RDProps::operator=(std::move(o));
+    d_graph = std::move(o.d_graph);
+    d_atomBookmarks = std::move(o.d_atomBookmarks);
+    d_bondBookmarks = std::move(o.d_bondBookmarks);
+    if (dp_ringInfo) {
+      delete dp_ringInfo;
+    }
+    dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
+
+    d_confs = std::move(o.d_confs);
+    d_sgroups = std::move(o.d_sgroups);
+    d_stereo_groups = std::move(o.d_stereo_groups);
+    dp_delAtoms = std::exchange(o.dp_delAtoms, nullptr);
+    dp_delBonds = std::exchange(o.dp_delBonds, nullptr);
+    numBonds = o.numBonds;
+    o.numBonds = 0;
+
+    for (auto atom : atoms()) {
+      atom->setOwningMol(this);
+    }
+    for (auto bond : bonds()) {
+      bond->setOwningMol(this);
+    }
+    for (auto conf : d_confs) {
+      conf->setOwningMol(this);
+    }
+
+    o.d_graph.clear();
+    return *this;
+  }
+
+  ROMol &operator=(const ROMol &) =
+      delete;  // disable assignment, RWMol's support assignment
 
   virtual ~ROMol() { destroy(); }
 
@@ -699,6 +762,15 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     return d_stereo_groups;
   }
 
+  //! Sets groups of atoms with relative stereochemistry
+  /*!
+    \param stereo_groups the new set of stereo groups. All will be replaced.
+
+    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
+    file format. stereo_groups should be std::move()ed into this function.
+  */
+  void setStereoGroups(std::vector<StereoGroup> stereo_groups);
+
  private:
   MolGraph d_graph;
   ATOM_BOOKMARK_MAP d_atomBookmarks;
@@ -715,9 +787,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
       &getSubstanceGroups(const ROMol &);
   void clearSubstanceGroups() { d_sgroups.clear(); }
-
-  ROMol &operator=(
-      const ROMol &);  // disable assignment, RWMol's support assignment
 
  protected:
   unsigned int numBonds{0};
@@ -750,14 +819,6 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   */
   unsigned int addBond(Bond *bond, bool takeOwnership = false);
 
-  //! Sets groups of atoms with relative stereochemistry
-  /*!
-    \param stereo_groups the new set of stereo groups. All will be replaced.
-
-    Stereo groups are also called enhanced stereochemistry in the SDF/Mol3000
-    file format. stereo_groups should be std::move()ed into this function.
-  */
-  void setStereoGroups(std::vector<StereoGroup> stereo_groups);
   //! adds a Bond to our collection
   /*!
     \param bond          pointer to the Bond to add

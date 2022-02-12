@@ -2690,6 +2690,76 @@ M  END
   CHECK_RGROUP(it, expected);
 }
 
+void testDoNotChooseUnrelatedCores() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that later cores with more R-groups\n"
+                       << "are only chosen if superstructures of earlier\n"
+                       << "cores" << std::endl;
+  {
+    // 1st test, two unrelated cores:
+    // 1) 5 terms, 1 R-group
+    // 2) 6 terms, 3 R-groups
+    // dataset molecule can fit core 1 adding 1 non-user defined R label,
+    // and core 2 with no addition of R labels
+    ROMOL_SPTR core5Terms1RGroup = "[*:1]C1COCN1"_smiles;
+    ROMOL_SPTR core6Terms3RGroups = "[*:1]c1ccc([*:2])c([*:3])c1"_smiles;
+    std::vector<ROMOL_SPTR> cores{core5Terms1RGroup, core6Terms3RGroups};
+    auto m = "Cc1cc(ccc1F)C1NC(CO1)c1cccs1"_smiles;
+    // repeat the test twice, with cores in opposite orders
+    // in both cases core ordering should be honored and the first
+    // core (either 5-term of 6-term) should be chosen, even when adding
+    // R labels is required, as the 2 cores are not structurally related
+    for (unsigned int i = 0; i < 2; ++i) {
+      std::vector<ROMOL_SPTR> orderedCores{cores[i], cores[1 - i]};
+      RGroupDecomposition decomp(orderedCores);
+      TEST_ASSERT(decomp.add(*m) == 0);
+      TEST_ASSERT(decomp.process());
+      auto cols = decomp.getRGroupsAsColumns();
+      const auto &core = cols["Core"];
+      TEST_ASSERT(core.size() == 1);
+      TEST_ASSERT(
+          core.front()->getRingInfo()->atomRings().front().size() ==
+          orderedCores.front()->getRingInfo()->atomRings().front().size());
+    }
+  }
+  {
+    // 2nd test: two related cores:
+    // 1) 5 terms, 2 R-groups
+    // 2) 5 terms, 3 R-groups
+    // dataset molecule 1 has 1 substituent, fits both cores
+    // dataset molecule 2 has 2 substituents, fits both cores
+    // dataset molecule 3 has 3 substituents, fits core 2 with no need to add
+    // R labels
+    ROMOL_SPTR core5Terms2RGroups = "[*:1]C1COC([*:2])N1"_smiles;
+    ROMOL_SPTR core5Terms3RGroups = "[*:1]C1C([*:2])OC([*:3])N1"_smiles;
+    std::vector<ROMOL_SPTR> cores{core5Terms2RGroups, core5Terms3RGroups};
+    std::vector<ROMOL_SPTR> mols{"CC1NCCO1"_smiles, "CC1NC(F)CO1"_smiles,
+                                 "CC1NC(F)C(Cl)O1"_smiles};
+    // repeat the test twice, with cores in opposite orders
+    // Molecules (1) and (2) should always pick the first core
+    // in the order provided, though both cores could fit
+    // Molecule (3) should always pick the more specific core 2
+    for (unsigned int i = 0; i < 2; ++i) {
+      std::vector<ROMOL_SPTR> orderedCores{cores[i], cores[1 - i]};
+      RGroupDecomposition decomp(orderedCores);
+      int j = 0;
+      for (const auto &m : mols) {
+        TEST_ASSERT(decomp.add(*m) == j++);
+      }
+      TEST_ASSERT(decomp.process());
+      auto cols = decomp.getRGroupsAsColumns();
+      const auto &core = cols["Core"];
+      TEST_ASSERT(core.size() == 3);
+      TEST_ASSERT(MolToSmiles(*core.at(0)) ==
+                  MolToSmiles(*orderedCores.front()));
+      TEST_ASSERT(MolToSmiles(*core.at(1)) ==
+                  MolToSmiles(*orderedCores.front()));
+      TEST_ASSERT(MolToSmiles(*core.at(2)) == MolToSmiles(*core5Terms3RGroups));
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2740,6 +2810,7 @@ int main() {
   testCoreWithAlsRecords();
   testAlignOutputCoreToMolecule();
   testWildcardInInput();
+  testDoNotChooseUnrelatedCores();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

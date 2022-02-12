@@ -11,14 +11,12 @@ which attempts to neutralize ionized acids and bases on a molecule.
 :license: MIT, see LICENSE file for more details.
 """
 
-
 import copy
 import logging
 
 from rdkit import Chem
 
 from .utils import memoized_property
-
 
 log = logging.getLogger(__name__)
 
@@ -36,19 +34,19 @@ class AcidBasePair(object):
         :param string acid: SMARTS pattern for the protonated acid.
         :param string base: SMARTS pattern for the conjugate ionized base.
         """
-        log.debug('Initializing AcidBasePair: %s', name)
+        log.debug(f'Initializing AcidBasePair: {name}')
         self.name = name
         self.acid_str = acid
         self.base_str = base
 
     @memoized_property
     def acid(self):
-        log.debug('Loading AcidBasePair acid: %s', self.name)
+        log.debug(f'Loading AcidBasePair acid: {self.name}')
         return Chem.MolFromSmarts(self.acid_str)
 
     @memoized_property
     def base(self):
-        log.debug('Loading AcidBasePair base: %s', self.name)
+        log.debug(f'Loading AcidBasePair base: {self.name}')
         return Chem.MolFromSmarts(self.base_str)
 
     def __repr__(self):
@@ -107,14 +105,14 @@ class ChargeCorrection(object):
         :param string smarts: SMARTS pattern to match. Charge is applied to the first atom.
         :param int charge: The charge to apply.
         """
-        log.debug('Initializing ChargeCorrection: %s', name)
+        log.debug(f'Initializing ChargeCorrection: {name}')
         self.name = name
         self.smarts_str = smarts
         self.charge = charge
 
     @memoized_property
     def smarts(self):
-        log.debug('Loading ChargeCorrection smarts: %s', self.name)
+        log.debug(f'Loading ChargeCorrection smarts: {self.name}')
         return Chem.MolFromSmarts(self.smarts_str)
 
     def __repr__(self):
@@ -188,8 +186,7 @@ class Reionizer(object):
                 ppos, poccur = self._strongest_protonated(mol)
                 if ppos is None:
                     break
-                log.info('Ionizing %s to balance previous charge corrections',
-                         self.acid_base_pairs[ppos].name)
+                log.info(f'Ionizing {self.acid_base_pairs[ppos].name} to balance previous charge corrections')
                 patom = mol.GetAtomWithIdx(poccur[-1])
                 patom.SetFormalCharge(patom.GetFormalCharge() - 1)
                 if patom.GetNumExplicitHs() > 0:
@@ -215,8 +212,7 @@ class Reionizer(object):
                     break
                 already_moved.add(key)
 
-                log.info('Moved proton from %s to %s',
-                         self.acid_base_pairs[ppos].name, self.acid_base_pairs[ipos].name)
+                log.info(f'Moved proton from {self.acid_base_pairs[ppos].name} to {self.acid_base_pairs[ipos].name}')
 
                 # Remove hydrogen from strongest protonated
                 patom = mol.GetAtomWithIdx(poccur[-1])
@@ -293,6 +289,7 @@ class Uncharger(object):
         """
         log.debug('Running Uncharger')
         mol = copy.deepcopy(mol)
+        
         # Get atom ids for matches
         p = [x[0] for x in mol.GetSubstructMatches(self._pos_h)]
         q = [x[0] for x in mol.GetSubstructMatches(self._pos_quat)]
@@ -313,12 +310,12 @@ class Uncharger(object):
                     neg_surplus -= 1
                     log.info('Removed negative charge')
         else:
-            #
             for atom in [mol.GetAtomWithIdx(x) for x in n]:
                 while atom.GetFormalCharge() < 0:
                     atom.SetNumExplicitHs(atom.GetNumExplicitHs() + 1)
                     atom.SetFormalCharge(atom.GetFormalCharge() + 1)
                     log.info('Removed negative charge')
+        
         # Neutralize positive charges
         for atom in [mol.GetAtomWithIdx(x) for x in p]:
             # Remove hydrogen and reduce formal change until neutral or no more hydrogens

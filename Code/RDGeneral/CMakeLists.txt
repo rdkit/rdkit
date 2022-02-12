@@ -79,3 +79,5 @@ if(RDK_BUILD_THREADSAFE_SSS)
 rdkit_test(testConcurrentQueue testConcurrentQueue.cpp LINK_LIBRARIES RDGeneral)
 endif(RDK_BUILD_THREADSAFE_SSS)
 
+rdkit_catch_test(dictTestsCatch catch_dict.cpp catch_main.cpp
+           LINK_LIBRARIES RDGeneral )

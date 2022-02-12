@@ -151,6 +151,16 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool,
       }
     }
   }
+
+  // handle stereo group
+  for (auto &group : d_stereo_groups) {
+    auto atoms = group.getAtoms();
+    auto aiter = std::find(atoms.begin(), atoms.end(), orig_p);
+    if (aiter != atoms.end()) {
+      *aiter = atom_p;
+      group = StereoGroup(group.getGroupType(), std::move(atoms));
+    }
+  }
 };
 
 void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps,

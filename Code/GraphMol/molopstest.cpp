@@ -135,12 +135,24 @@ void test3() {
     TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(i, 3));
     TEST_ASSERT(!m->getRingInfo()->isAtomInRingOfSize(i, 4));
     TEST_ASSERT(m->getRingInfo()->numAtomRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{3}));
+    TEST_ASSERT(m->getRingInfo()->atomMembers(i).size() == 1 &&
+                m->getRingInfo()->atomMembers(i).at(0) == 0);
   }
   for (unsigned int i = 0; i < m->getNumBonds(); i++) {
     TEST_ASSERT(m->getRingInfo()->isBondInRingOfSize(i, 3));
     TEST_ASSERT(!m->getRingInfo()->isBondInRingOfSize(i, 4));
     TEST_ASSERT(m->getRingInfo()->numBondRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->bondRingSizes(i) == (INT_VECT{3}));
+    TEST_ASSERT(m->getRingInfo()->bondMembers(i).size() == 1 &&
+                m->getRingInfo()->bondMembers(i).at(0) == 0);
   }
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRing(0, 1));
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 3));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 4));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(0, 1));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 3));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 4));
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
 
@@ -156,9 +168,16 @@ void test3() {
     TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(i, 4));
     TEST_ASSERT(!m->getRingInfo()->isAtomInRingOfSize(i, 3));
     TEST_ASSERT(m->getRingInfo()->numAtomRings(i) == 1);
+    TEST_ASSERT(m->getRingInfo()->atomRingSizes(i) == (INT_VECT{4}));
+    TEST_ASSERT(m->getRingInfo()->atomMembers(i).size() == 1 &&
+                m->getRingInfo()->atomMembers(i).at(0) == 0);
   }
   TEST_ASSERT(m->getRingInfo()->isBondInRingOfSize(0, 4));
   TEST_ASSERT(m->getRingInfo()->numBondRings(0) == 1);
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(0) == (INT_VECT{4}));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(0, 1));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 4));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(0, 1, 5));
 
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
@@ -190,6 +209,23 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->numAtomRings(0) == 1);
   TEST_ASSERT(
       m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(0, 1)->getIdx()));
+  TEST_ASSERT(m->getRingInfo()->atomMembers(0).size() == 1);
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(2).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(5) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(1) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(99).empty());
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRing(0, 1));
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 7));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(0, 1, 5));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRing(1, 2));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(1, 2, 4));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(1).empty());
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(4) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(5) == (INT_VECT{7}));
+  TEST_ASSERT(m->getRingInfo()->bondRingSizes(99).empty());
+  TEST_ASSERT(m->getRingInfo()->bondMembers(0).size() == 1);
+  TEST_ASSERT(m->getRingInfo()->bondMembers(1).empty());
   TEST_ASSERT(
       !m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(1, 2)->getIdx()));
   BOOST_LOG(rdInfoLog) << smi << "\n";
@@ -223,6 +259,12 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->numAtomRings(1) == 1);
   TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(2, 5));
   TEST_ASSERT(m->getRingInfo()->numAtomRings(2) == 2);
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(0).empty());
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(1) == (INT_VECT{5}));
+  TEST_ASSERT(m->getRingInfo()->atomRingSizes(2) == (INT_VECT{5, 5}));
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).size() == 2);
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(0) == 0);
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(1) == 1);
   BOOST_LOG(rdInfoLog) << smi << "\n";
   delete m;
 
@@ -370,6 +412,22 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->numAtomRings(4) == 1);
   TEST_ASSERT(!m->getRingInfo()->isAtomInRingOfSize(4, 4));
   TEST_ASSERT(m->getRingInfo()->isAtomInRingOfSize(4, 3));
+
+  TEST_ASSERT(m->getRingInfo()->atomMembers(2).size() == 2);
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRing(2, 3));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRing(1, 4));
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(2, 3, 3));
+  TEST_ASSERT(m->getRingInfo()->areAtomsInSameRingOfSize(2, 3, 4));
+  TEST_ASSERT(!m->getRingInfo()->areAtomsInSameRingOfSize(2, 3, 5));
+  TEST_ASSERT(m->getRingInfo()->bondMembers(2).size() == 2);
+  TEST_ASSERT(m->getRingInfo()->bondMembers(0).size() == 1);
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(1, 2));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRing(2, 5));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRing(1, 3));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(1, 2, 4));
+  TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(2, 5, 3));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(1, 2, 3));
+  TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(1, 3, 4));
   delete m;
 
   // This is a test of Issue 217
@@ -853,8 +911,8 @@ void test9() {
   useAtomWts = true;
   dMat = MolOps::getDistanceMat(*m, useBO, useAtomWts);
   TEST_ASSERT(dMat);
-  for (auto i = 0; i < m->getNumAtoms(); ++i) {
-    for (auto j = 0; j < m->getNumAtoms(); ++j) {
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    for (unsigned int j = 0; j < m->getNumAtoms(); ++j) {
       std::cerr << dMat[i * m->getNumAtoms() + j] << " ";
     }
     std::cerr << std::endl;
@@ -3403,6 +3461,112 @@ void testSFNetIssue2196817() {
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1)->getBondType() == Bond::AROMATIC);
     TEST_ASSERT(m->getBondBetweenAtoms(0, 14)->getBondType() == Bond::AROMATIC);
     delete m;
+  }
+
+  {
+    for (auto smi : {"c12ccccc1**CC2", "c12ccccc1C**C2", "*12ccccc1CCCC2",
+                     "*12ccccc1***C2"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (size_t i = 0; i < 6; ++i) {
+        size_t j = i < 5 ? i + 1 : 0;
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::AROMATIC);
+      }
+      for (size_t i = 5; i < 10; ++i) {
+        size_t j = i < 9 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::SINGLE);
+      }
+      MolOps::Kekulize(*m);
+      for (size_t i = 0; i < 6; ++i) {
+        size_t j = i < 5 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(
+            m->getBondBetweenAtoms(i, j)->getBondType() == Bond::SINGLE ||
+            m->getBondBetweenAtoms(i, j)->getBondType() == Bond::DOUBLE);
+      }
+      for (size_t i = 5; i < 10; ++i) {
+        size_t j = i < 9 ? i + 1 : 0;
+        TEST_ASSERT(!m->getBondBetweenAtoms(i, j)->getIsAromatic());
+        TEST_ASSERT(m->getBondBetweenAtoms(i, j)->getBondType() ==
+                    Bond::SINGLE);
+      }
+    }
+  }
+
+  {
+    for (auto smi : {"c12ccccc1****2", "c12ccccc1***2", "C12=CC=CC=C1****2",
+                     "c1ccccc1N1****1", "c1ccccc1C1****1", "c1ccccc1*1****1",
+                     "c1ccccc1*1*=**=*1"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (unsigned int i = 6; i < m->getNumAtoms(); ++i) {
+        TEST_ASSERT(!m->getAtomWithIdx(i)->getIsAromatic());
+      }
+    }
+  }
+
+  {
+    for (auto smi : {"C1CC*2ccccc21", "C1C**2ccccc21"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (unsigned int i = 0; i < 3; ++i) {
+        TEST_ASSERT(!m->getAtomWithIdx(i)->getIsAromatic());
+      }
+      for (unsigned int i = 3; i < m->getNumAtoms(); ++i) {
+        TEST_ASSERT(m->getAtomWithIdx(i)->getIsAromatic());
+      }
+    }
+  }
+
+  {
+    auto m = "*12ccccc1CCC2"_smiles;
+    for (unsigned int i = 0; i < 6; ++i) {
+      TEST_ASSERT(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+    for (unsigned int i = 6; i < m->getNumAtoms(); ++i) {
+      TEST_ASSERT(!m->getAtomWithIdx(i)->getIsAromatic());
+    }
+  }
+
+  {
+    for (auto smi : {"N1****1", "C1=C*2C=CC=C*2C=C1", "N1*C=CC=C1",
+                     "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4*51"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (const auto b : m->bonds()) {
+        TEST_ASSERT(!b->getIsAromatic());
+      }
+    }
+  }
+
+  {
+    ROMOL_SPTR m = "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4N51"_smiles;
+    for (const auto a : m->atoms()) {
+      TEST_ASSERT(a->getIsAromatic());
+    }
+    unsigned int nNonAromaticBonds = 0;
+    for (const auto b : m->bonds()) {
+      if (!b->getIsAromatic()) {
+        ++nNonAromaticBonds;
+      }
+    }
+    TEST_ASSERT(nNonAromaticBonds == 5);
+  }
+
+  {
+    for (auto smi :
+         {"*1C=CC=C1", "N1*=**=*1", "C1=CC2=CC=C3C=CC4=CC=C5C=CN1N1N2N3N4N51",
+          "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1N2*3N4N51"}) {
+      std::unique_ptr<RWMol> m(SmilesToMol(smi));
+      TEST_ASSERT(m);
+      for (const auto b : m->bonds()) {
+        TEST_ASSERT(b->getIsAromatic());
+      }
+    }
   }
 
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;

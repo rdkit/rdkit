@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2014 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -103,6 +103,11 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   explicit Atom(const std::string &what);
   Atom(const Atom &other);
   Atom &operator=(const Atom &other);
+  // NOTE: the move methods are somewhat fraught for atoms associated with
+  // molecules since the molecule will still be pointing to the original object
+  Atom(Atom &&other) = default;
+  Atom &operator=(Atom &&other) = default;
+
   virtual ~Atom();
 
   //! makes a copy of this Atom and returns a pointer to it.

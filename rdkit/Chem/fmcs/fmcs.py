@@ -248,9 +248,8 @@ import itertools
 import re
 import weakref
 from heapq import heappush, heappop, heapify
-from itertools import chain, combinations, product
-import collections
-from collections import defaultdict
+from itertools import chain, combinations
+from collections import defaultdict, Counter, namedtuple
 import time
 
 ### A place to set global options
@@ -674,23 +673,17 @@ def _check_atom_classes(molno, num_atoms, atom_classes):
 # prune. But so far I don't have a test set which drives the need for
 # that.
 
-
 # Return a dictionary mapping iterator item to occurrence count
 def get_counts(it):
-  d = defaultdict(int)
-  for item in it:
-    d[item] += 1
-  return dict(d)
-
+  return dict(Counter(it))
 
 # Merge two count dictionaries, returning the smallest count for any
 # entry which is in both.
 def intersect_counts(counts1, counts2):
   d = {}
-  for k, v1 in counts1.iteritems():
+  for k, v1 in counts1.items():
     if k in counts2:
-      v = min(v1, counts2[k])
-      d[k] = v
+      d[k] = min(v1, counts2[k])
   return d
 
 
@@ -743,20 +736,20 @@ def remove_unknown_bondtypes(typed_mol, supported_canonical_bondtypes):
 
 
 def find_upper_fragment_size_limits(rdmol, atoms):
-  max_num_atoms = max_twice_num_bonds = 0
+  max_num_atoms = 0
+  max_twice_num_bonds = 0
   for atom_indices in Chem.GetMolFrags(rdmol):
-    num_atoms = len(atom_indices)
-    if num_atoms > max_num_atoms:
-      max_num_atoms = num_atoms
+    max_num_atoms = max(max_num_atoms, len(atom_indices))
 
     # Every bond is connected to two atoms, so this is the
     # simplest way to count the number of bonds in the fragment.
     twice_num_bonds = 0
     for atom_index in atom_indices:
       # XXX Why is there no 'atom.GetNumBonds()'?
-      twice_num_bonds += sum(1 for bond in atoms[atom_index].GetBonds())
-    if twice_num_bonds > max_twice_num_bonds:
-      max_twice_num_bonds = twice_num_bonds
+      # Ichiru Take: len(atoms[atom_index].GetBonds()) would be more efficient but I don't know the input type.
+      twice_num_bonds += len(atoms[atom_index].GetBonds())
+       
+    max_twice_num_bonds = max(max_twice_num_bonds, twice_num_bonds)
 
   return max_num_atoms, max_twice_num_bonds // 2
 
@@ -775,10 +768,9 @@ def find_upper_fragment_size_limits(rdmol, atoms):
 # An Atom has a list of "bond_indices", which are offsets into the bonds.
 # A Bond has a 2-element list of "atom_indices", which are offsets into the atoms.
 
-EnumerationMolecule = collections.namedtuple("Molecule", "rdmol atoms bonds directed_edges")
-Atom = collections.namedtuple("Atom", "real_atom atom_smarts bond_indices is_in_ring")
-Bond = collections.namedtuple("Bond",
-                              "real_bond bond_smarts canonical_bondtype atom_indices is_in_ring")
+EnumerationMolecule = namedtuple("Molecule", "rdmol atoms bonds directed_edges")
+Atom = namedtuple("Atom", "real_atom atom_smarts bond_indices is_in_ring")
+Bond = namedtuple("Bond", "real_bond bond_smarts canonical_bondtype atom_indices is_in_ring")
 
 # A Bond is linked to by two 'DirectedEdge's; one for each direction.
 # The DirectedEdge.bond_index references the actual RDKit bond instance.
@@ -786,10 +778,10 @@ Bond = collections.namedtuple("Bond",
 # This is used in a 'directed_edges' dictionary so that
 #     [edge.end_atom_index for edge in directed_edges[atom_index]]
 # is the list of all atom indices connected to 'atom_index'
-DirectedEdge = collections.namedtuple("DirectedEdge", "bond_index end_atom_index")
+DirectedEdge = namedtuple("DirectedEdge", "bond_index end_atom_index")
 
 # A Subgraph is a list of atom and bond indices in an EnumerationMolecule
-Subgraph = collections.namedtuple("Subgraph", "atom_indices bond_indices")
+Subgraph = namedtuple("Subgraph", "atom_indices bond_indices")
 
 
 def get_typed_fragment(typed_mol, atom_indices):
@@ -859,7 +851,7 @@ def fragmented_mol_to_enumeration_mols(typed_mol, minNumAtoms=2):
       atom_smarts = '[' + atom_smarts_type + ']'
       atoms.append(Atom(atom, atom_smarts, bond_indices, orig_atom.IsInRing()))
 
-    directed_edges = collections.defaultdict(list)
+    directed_edges = defaultdict(list)
     bonds = []
     for bond_index, (bond, orig_bond, bond_smarts, canonical_bondtype) in enumerate(
         zip(rdmol.GetBonds(), typed_fragment.orig_bonds, typed_fragment.bond_smarts_types,
@@ -956,7 +948,7 @@ class CangenNode(object):
 
 # The outgoing edge information is used to generate the SMARTS output
 # The index numbers are offsets in the subgraph, not in the original molecule
-OutgoingEdge = collections.namedtuple(
+OutgoingEdge = namedtuple(
   "OutgoingEdge", "from_atom_index bond_index bond_smarts other_node_idx other_node")
 
 
@@ -1106,7 +1098,7 @@ def canon(cangen_nodes):
     # See if any of the duplicates have been resolved.
     new_duplicates = []
     unchanged = True  # This is buggy? Need to check the entire state XXX
-    for (start, end) in duplicates:
+    for start, end in duplicates:
       # Special case when there's only two elements to store.
       # This optimization sped up cangen by about 8% because I
       # don't go through the sort machinery
@@ -1171,8 +1163,7 @@ def canon(cangen_nodes):
 def get_closure_label(bond_smarts, closure):
   if closure < 10:
     return bond_smarts + str(closure)
-  else:
-    return bond_smarts + "%%%02d" % closure
+  return bond_smarts + f"%{closure:02d}"
 
 # Precompute the initial closure heap. *Overall* performance went from 0.73 to 0.64 seconds!
 _available_closures = list(range(1, 101))
@@ -1309,8 +1300,7 @@ def generate_smarts(cangen_nodes):
 def make_canonical_smarts(subgraph, enumeration_mol, atom_assignment):
   cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, True)
   #canon(cangen_nodes)
-  smarts = generate_smarts(cangen_nodes)
-  return smarts
+  return generate_smarts(cangen_nodes)
 
 ## def make_semicanonical_smarts(subgraph, enumeration_mol, atom_assignment):
 ##     cangen_nodes = get_initial_cangen_nodes(subgraph, enumeration_mol, atom_assignment, True)
@@ -1325,8 +1315,7 @@ def make_arbitrary_smarts(subgraph, enumeration_mol, atom_assignment):
   # Use an arbitrary order
   for i, node in enumerate(cangen_nodes):
     node.value = i
-  smarts = generate_smarts(cangen_nodes)
-  return smarts
+  return generate_smarts(cangen_nodes)
 
 ############## Subgraph enumeration ##################
 
@@ -1900,7 +1889,7 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
   if timeout is None:
     end_time = None
   else:
-    end_time = time.time() + timeout
+    end_time = time.perf_counter() + timeout
 
   seeds = []
 
@@ -1986,7 +1975,7 @@ def enumerate_subgraphs(enumeration_mols, prune, atom_assignment, matches_all_ta
 
   while seeds:
     if end_time:
-      if time.time() >= end_time:
+      if time.perf_counter() >= end_time:
         return False
 
       #print "There are", len(seeds), "seeds", seeds[0][:2]
@@ -2049,7 +2038,7 @@ class VerboseHeapOps(object):
     self.num_seeds_added = 0
     self.num_seeds_processed = 0
     self.verboseDelay = verboseDelay
-    self._time_for_next_report = time.time() + verboseDelay
+    self._time_for_next_report = time.perf_counter() + verboseDelay
     self.trigger = trigger
 
   def heappush(self, seeds, item):
@@ -2057,10 +2046,10 @@ class VerboseHeapOps(object):
     return heappush(seeds, item)
 
   def heappop(self, seeds):
-    if time.time() >= self._time_for_next_report:
+    if time.perf_counter() >= self._time_for_next_report:
       self.trigger()
       self.report()
-      self._time_for_next_report = time.time() + self.verboseDelay
+      self._time_for_next_report = time.perf_counter() + self.verboseDelay
     self.num_seeds_processed += 1
     return heappop(seeds)
 
@@ -2109,7 +2098,7 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None,
 
   remaining_time = None
   if timeout is not None:
-    stop_time = time.time() + timeout
+    stop_time = time.perf_counter() + timeout
 
   for query_index, fragmented_query_mol in enumerate(fragmented_mols):
     enumerated_query_fragments = fragmented_mol_to_enumeration_mols(fragmented_query_mol,
@@ -2117,7 +2106,7 @@ def compute_mcs(fragmented_mols, typed_mols, minNumAtoms, threshold_count=None,
 
     targets = typed_mols
     if timeout is not None:
-      remaining_time = stop_time - time.time()
+      remaining_time = stop_time - time.perf_counter()
     success = enumerate_subgraphs(enumerated_query_fragments, prune, atom_assignment,
                                   matches_all_targets, hits, remaining_time, push, pop)
     if query_index + threshold_count >= len(fragmented_mols):
@@ -2142,7 +2131,7 @@ class Timer(object):
     self.mark_times = {}
 
   def mark(self, name):
-    self.mark_times[name] = time.time()
+    self.mark_times[name] = time.perf_counter()
 
 
 def _update_times(timer, times):
@@ -2688,7 +2677,7 @@ def main(args=None):
                    "of --save-atom-indices-tag, --save-smarts-tag, --save-smiles-tag, "
                    "or --save-counts-tag")
 
-  t1 = time.time()
+  t1 = time.perf_counter()
   structures = []
   if args.verbosity > 1:
     sys.stderr.write("Loading structures from %s ..." % (filename, ))
@@ -2713,7 +2702,7 @@ def main(args=None):
   if args.verbosity > 1:
     sys.stderr.write("\r")
 
-  times = {"load": time.time() - t1}
+  times = {"load": time.perf_counter() - t1}
 
   if args.verbosity:
     print >> sys.stderr, "Loaded", len(structures), "structures from", filename, "    "

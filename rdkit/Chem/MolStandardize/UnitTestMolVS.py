@@ -11,15 +11,14 @@ molvs.standardize.canonicalize_tautomer_smiles
 molvs.validate.Validator()
 Standardizer().fragment_parent
 """
-from collections import namedtuple
-import unittest
 import gzip
 import os.path
+import unittest
+from collections import namedtuple
 
-from rdkit import Chem
-from rdkit import RDConfig
 import molvs
 from molvs import Standardizer, validate
+from rdkit import Chem, RDConfig
 
 doLong = False
 TestData = namedtuple('TestData', 'lineNo,smiles,mol,expected')
@@ -57,8 +56,7 @@ class TestCase(unittest.TestCase):
             try:
                 ss = molvs.standardize_smiles(data.smiles)
             except Exception:
-                raise AssertionError(
-                    'Line {0.lineNo}: MolVS standardization failed for SMILES {0.smiles}'.format(data))
+                raise AssertionError(f'Line {data.lineNo}: MolVS standardization failed for SMILES {data.smiles}')
             self.assertEqual(ss, data.expected)
 
     def testNormalizeShort(self):
@@ -77,8 +75,7 @@ class TestCase(unittest.TestCase):
                 nm = n.normalize(data.mol)
                 ns = Chem.MolToSmiles(nm)
             except Exception:
-                raise AssertionError(
-                    'Line {0.lineNo}: MolVS normalization failed for SMILES {0.smiles}'.format(data))
+                raise AssertionError(f'Line {data.lineNo}: MolVS normalization failed for SMILES {data.smiles}')
             self.assertEqual(ns, data.expected)
 
     def testMetalShort(self):
@@ -97,8 +94,7 @@ class TestCase(unittest.TestCase):
                 nm = n.disconnect_metals(data.mol)
                 ns = Chem.MolToSmiles(nm)
             except Exception:
-                raise AssertionError(
-                    'Line {0.lineNo}: MolVS normalization failed for SMILES {0.smiles}'.format(data))
+                raise AssertionError(f'Line {data.lineNo}: MolVS normalization failed for SMILES {data.smiles}')
             self.assertEqual(ns, data.expected)
 
     def testReionizeShort(self):
@@ -117,8 +113,7 @@ class TestCase(unittest.TestCase):
                 nm = n.reionize(data.mol)
                 ns = Chem.MolToSmiles(nm)
             except Exception:
-                raise AssertionError(
-                    'Line {0.lineNo}: MolVS normalization failed for SMILES {0.smiles}'.format(data))
+                raise AssertionError(f'Line {data.lineNo}: MolVS normalization failed for SMILES {data.smiles}')
             self.assertEqual(ns, data.expected)
 
     def testFragmentShort(self):
@@ -137,8 +132,7 @@ class TestCase(unittest.TestCase):
                 frag = s.fragment_parent(data.mol)
                 ns = Chem.MolToSmiles(frag)
             except Exception:
-                raise AssertionError(
-                    'Line {0.lineNo}: MolVS normalization failed for SMILES {0.smiles}'.format(data))
+                raise AssertionError(f'Line {data.lineNo}: MolVS normalization failed for SMILES {data.smiles}')
             self.assertEqual(ns, data.expected)
 
     def testTautomerShort(self):
@@ -153,8 +147,7 @@ class TestCase(unittest.TestCase):
             try:
                 canon_taut = molvs.standardize.canonicalize_tautomer_smiles(data.smiles)
             except Exception:
-                raise AssertionError(
-                    'Line {0.lineNo}: MolVS normalization failed for SMILES {0.smiles}'.format(data))
+                raise AssertionError(f'Line {data.lineNo}: MolVS normalization failed for SMILES {data.smiles}')
             self.assertEqual(canon_taut, data.expected)
 
     def testValidateShort(self):
@@ -181,7 +174,7 @@ class TestCase(unittest.TestCase):
                 # print(i, stdout)
             except Exception:
                 raise AssertionError(
-                    'Line {0.lineNo}: MolVS normalization failed for SMILES {0.smiles}'.format(data))
+                    f'Line {data.lineNo}: MolVS normalization failed for SMILES {data.smiles}')
             self.assertEqual(stdout, data.expected)
 
 def readPCStestData(filename):
@@ -194,7 +187,7 @@ def readPCStestData(filename):
             expected = ",".join(line.strip().split(',')[1:])
             mol = Chem.MolFromSmiles(smiles)
             if not mol:
-                raise AssertionError('molecule construction failed on line %d' % lineNo)
+                raise AssertionError(f'molecule construction failed on line {lineNo}')
             yield TestData(lineNo, smiles, mol, expected)
 
 if __name__ == '__main__':

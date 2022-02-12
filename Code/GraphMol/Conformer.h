@@ -62,7 +62,22 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   //! Copy Constructor: initialize from a second conformation.
   Conformer(const Conformer &other);
   Conformer &operator=(const Conformer &other);
-
+  Conformer(Conformer &&o) noexcept
+      : RDProps(std::move(o)),
+        df_is3D(std::move(o.df_is3D)),
+        d_id(std::move(o.d_id)),
+        dp_mol(std::move(o.dp_mol)),
+        d_positions(std::move(o.d_positions)){};
+  Conformer &operator=(Conformer &&o) noexcept {
+    if (this == &o) {
+      return *this;
+    }
+    RDProps::operator=(std::move(o));
+    df_is3D = std::move(o.df_is3D);
+    d_id = std::move(o.d_id);
+    dp_mol = std::move(o.dp_mol);
+    d_positions = std::move(o.d_positions);
+  }
   //! Destructor
   ~Conformer() = default;
 

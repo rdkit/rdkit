@@ -21,8 +21,8 @@ class Pharmacophore:
   def __init__(self, feats, initMats=True):
     self._initializeFeats(feats)
     nf = len(feats)
-    self._boundsMat = numpy.zeros((nf, nf), numpy.float)
-    self._boundsMat2D = numpy.zeros((nf, nf), numpy.int)
+    self._boundsMat = numpy.zeros((nf, nf), dtype=numpy.float64)
+    self._boundsMat2D = numpy.zeros((nf, nf), dtype=numpy.int64)
     if initMats:
       self._initializeMatrices()
 
@@ -186,8 +186,7 @@ class ExplicitPharmacophore:
       if txt:
         splitL = spaces.split(txt)
         if len(splitL) < 5:
-          logger.error('Input line %d only contains %d fields, 5 are required. Read failed.' %
-                       (lineNum, len(splitL)))
+          logger.error(f'Input line {lineNum} only contains {len(splitL)} fields, 5 are required. Read failed.')
           return
         fName = splitL[0]
         try:
@@ -196,7 +195,7 @@ class ExplicitPharmacophore:
           zP = float(splitL[3])
           rad = float(splitL[4])
         except ValueError:
-          logger.error('Error parsing a number of line %d. Read failed.' % (lineNum))
+          logger.error(f'Error parsing a number of line {lineNum}. Read failed.')
           return
         feats.append(
           ChemicalFeatures.FreeChemicalFeature(fName, fName, Geometry.Point3D(xP, yP, zP)))

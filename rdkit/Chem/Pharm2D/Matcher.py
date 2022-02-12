@@ -103,7 +103,7 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
       idx1, idx2 = protoPharm[a1][0], protoPharm[a2][0]
       dist = dMat[idx1, idx2]
       if _verbose:
-        print('\t dist: %d->%d = %d (%d,%d)' % (idx1, idx2, dist, dLow, dHigh))
+        print(f'\t dist: {idx1}->{idx2} = {dist} ({dLow}, {dHigh})')
       if dist < dLow or dist >= dHigh:
         break
     else:
@@ -138,7 +138,7 @@ def _exampleCode():
   _verbose = 0
   for bit in sig.GetOnBits():
     atoms = GetAtomsMatchingBit(factory, bit, mol)
-    print('\tBit %d: ' % (bit), atoms)
+    print(f'\tBit {bit}: ', atoms)
 
   print('finished')
 

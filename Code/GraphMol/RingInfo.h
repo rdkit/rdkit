@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2019 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,15 +8,15 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_RINGINFO_H
-#define _RD_RINGINFO_H
+#ifndef RD_RINGINFO_H
+#define RD_RINGINFO_H
 
 #include <map>
 #include <vector>
+#ifdef RDK_USE_URF
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#ifdef RDK_USE_URF
 #include <RingDecomposerLib.h>
 #endif
 
@@ -35,21 +35,10 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   typedef std::vector<INT_VECT> VECT_INT_VECT;
 
   RingInfo() {}
-  RingInfo(const RingInfo &other)
-      : df_init(other.df_init),
-        d_atomMembers(other.d_atomMembers),
-        d_bondMembers(other.d_bondMembers),
-        d_atomRings(other.d_atomRings),
-        d_bondRings(other.d_bondRings),
-        d_atomRingFamilies(other.d_atomRingFamilies),
-        d_bondRingFamilies(other.d_bondRingFamilies)
-#ifdef RDK_USE_URF
-        ,
-        dp_urfData(other.dp_urfData)
-#endif
-  {
-  }
-
+  RingInfo(const RingInfo &other) = default;
+  RingInfo &operator=(const RingInfo &other) = default;
+  RingInfo(RingInfo &&other) noexcept = default;
+  RingInfo &operator=(RingInfo &&other) noexcept = default;
   //! checks to see if we've been properly initialized
   bool isInitialized() const { return df_init; }
   //! does initialization
@@ -102,12 +91,42 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int minAtomRingSize(unsigned int idx) const;
 
-  //! returns our \c atom-rings vectors
+  //! returns our \c atom-rings vectors, i.e. a vector of int vectors
+  //! reporting the atom indices which are part of each ring
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
   const VECT_INT_VECT &atomRings() const { return d_atomRings; }
+
+  //! returns our \c atom-members vector for atom idx (i.e.,
+  //! a vector of ints reporting the ring indices that
+  //! atom idx is member of), or an empty vector if the atom is
+  //! not in any ring.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  INT_VECT atomMembers(unsigned int idx) const;
+
+  //! returns whether or not atoms with indices \c idx1 and \c idx2 belong to
+  //! the same ring.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  bool areAtomsInSameRing(unsigned int idx1, unsigned int idx2) const {
+    return areAtomsInSameRingOfSize(idx1, idx2, 0);
+  }
+
+  //! returns whether or not atoms with indices \c idx1 and \c idx2 belong to
+  //! the same ring of size \c size.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  bool areAtomsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
+                                unsigned int size) const;
 
   //@}
 
@@ -149,12 +168,42 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   */
   unsigned int numRings() const;
 
-  //! returns our \c bond-rings vectors
+  //! returns our \c bond-rings vectors, i.e. a vector of int vectors
+  //! reporting the bond indices which are part of each ring
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
   */
   const VECT_INT_VECT &bondRings() const { return d_bondRings; }
+
+  //! returns our \c bond-members vector for bond idx (i.e.,
+  //! a vector of ints reporting the ring indices that
+  //! bond idx is member of), or an empty vector if the bond is
+  //! not in any ring.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  INT_VECT bondMembers(unsigned int idx) const;
+
+  //! returns whether or not bonds with indices \c idx1 and \c idx2 belong to
+  //! the same ring.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  bool areBondsInSameRing(unsigned int idx1, unsigned int idx2) const {
+    return areBondsInSameRingOfSize(idx1, idx2, 0);
+  }
+
+  //! returns whether or not bonds with indices \c idx1 and \c idx2 belong to
+  //! the same ring of size \c size.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  bool areBondsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
+                                unsigned int size) const;
 
 #ifdef RDK_USE_URF
   //! adds a ring family to our data
@@ -210,7 +259,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
  private:
   //! pre-allocates some memory to save time later
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
-
   bool df_init{false};
   DataType d_atomMembers, d_bondMembers;
   VECT_INT_VECT d_atomRings, d_bondRings;
