@@ -46,6 +46,8 @@ namespace {
 static const bool DELETE_WITH_GOOD_HASH = true;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
+// These values are for a build with FreeType, so expect them all to be
+// wrong when building without.
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomTags_1.svg", 758653557U},
     {"testAtomTags_2.svg", 1404202323U},
