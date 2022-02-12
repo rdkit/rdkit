@@ -8,7 +8,7 @@
 #  of the RDKit source tree.
 #
 
-from collections import abc, namedtuple
+from collections import abc
 from typing import Callable
 
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
@@ -173,9 +173,6 @@ def NumRadicalElectrons(mol):
 NumRadicalElectrons.version = "1.1.0"
 
 
-_ChargeDescriptorsClass = namedtuple('ChargeDescriptors', ['minCharge', 'maxCharge'])
-
-
 def _ChargeDescriptors(mol, force=False):
   """ Returns the charge descriptions of the molecule in a specific range: 2-value tuple
   
@@ -191,36 +188,38 @@ def _ChargeDescriptors(mol, force=False):
       minChg = chg
     elif chg > maxChg:
       maxChg = chg
-  res = _ChargeDescriptorsClass(minChg, maxChg)
+  res = (minChg, maxChg)
   mol._chargeDescriptors = res
   return res
 
 
 def MaxPartialCharge(mol, force=False):
-  return _ChargeDescriptors(mol, force).maxCharge
+  _, maxCharge = _ChargeDescriptors(mol, force)
+  return maxCharge
 
 
 MaxPartialCharge.version = "1.0.0"
 
 
 def MinPartialCharge(mol, force=False):
-  return _ChargeDescriptors(mol, force).minCharge
+  minCharge, _ = _ChargeDescriptors(mol, force)
+  return minCharge
 
 
 MinPartialCharge.version = "1.0.0"
 
 
 def MaxAbsPartialCharge(mol, force=False):
-  charge = _ChargeDescriptors(mol, force)
-  return max(abs(charge.minCharge), abs(charge.maxCharge))
+  minCharge, maxCharge = _ChargeDescriptors(mol, force)
+  return max(abs(minCharge), abs(maxCharge))
 
 
 MaxAbsPartialCharge.version = "1.0.0"
 
 
 def MinAbsPartialCharge(mol, force=False):
-  charge = _ChargeDescriptors(mol, force)
-  return min(abs(charge.minCharge), abs(charge.maxCharge))
+  minCharge, maxCharge = _ChargeDescriptors(mol, force)
+  return min(abs(minCharge), abs(maxCharge))
 
 
 MinAbsPartialCharge.version = "1.0.0"
