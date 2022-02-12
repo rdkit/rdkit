@@ -172,7 +172,9 @@ def NumRadicalElectrons(mol):
 
 NumRadicalElectrons.version = "1.1.0"
 
-ChargeDescriptors = namedtuple('ChargeDescriptors', ['minCharge', 'maxCharge'])
+
+_ChargeDescriptorsClass = namedtuple('ChargeDescriptors', ['minCharge', 'maxCharge'])
+
 
 def _ChargeDescriptors(mol, force=False):
   """ Returns the charge descriptions of the molecule in a specific range: 2-value tuple
@@ -180,7 +182,7 @@ def _ChargeDescriptors(mol, force=False):
   """
   if not force and hasattr(mol, '_chargeDescriptors'):
     return mol._chargeDescriptors
-  rdPartialCharges.ComputeGasteigerCharges(mol)
+  _ = rdPartialCharges.ComputeGasteigerCharges(mol)
   minChg = 500.
   maxChg = -500.
   for at in mol.GetAtoms():
@@ -189,7 +191,7 @@ def _ChargeDescriptors(mol, force=False):
       minChg = chg
     elif chg > maxChg:
       maxChg = chg
-  res = ChargeDescriptors(minChg, maxChg)
+  res = _ChargeDescriptorsClass(minChg, maxChg)
   mol._chargeDescriptors = res
   return res
 

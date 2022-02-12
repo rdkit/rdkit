@@ -255,7 +255,7 @@ def _pyChi1v(mol):
   """  From equations (5),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
   """
-  deltas = numpy.array(_hkDeltas(mol, skipHs=0))
+  deltas = _hkDeltas(mol, skipHs=0)
   res = 0.0
   for bond in mol.GetBonds():
     v = deltas[bond.GetBeginAtomIdx()] * deltas[bond.GetEndAtomIdx()]
@@ -277,8 +277,9 @@ def _pyChiNv_(mol, order=2):
   hkDs = _hkDeltas(mol, skipHs=0)
   deltas = numpy.array([(1. / numpy.sqrt(hkd) if hkd != 0.0 else 0.0) for hkd in hkDs], 
                        dtype=numpy.float64)
+  paths = Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0)
   accum = 0.0
-  for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
+  for path in paths:
     accum += numpy.prod(deltas[numpy.array(path)])
   return accum
 
@@ -346,7 +347,8 @@ def _pyChiNn_(mol, order=2):
 
   """
   nval = [_nVal(x) for x in mol.GetAtoms()]
-  deltas = numpy.array([(1. / numpy.sqrt(x) if x else 0.0) for x in nval])
+  deltas = numpy.array([(1. / numpy.sqrt(x) if x else 0.0) for x in nval], 
+                       dtype=numpy.float64)
   accum = 0.0
   for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
     accum += numpy.prod(deltas[numpy.array(path)])
