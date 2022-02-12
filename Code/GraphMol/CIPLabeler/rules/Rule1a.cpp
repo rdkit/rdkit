@@ -20,9 +20,6 @@ Rule1a::Rule1a() = default;
 int Rule1a::compare(const Edge *a, const Edge *b) const {
   const auto afrac = a->getEnd()->getAtomicNumFraction();
   const auto bfrac = b->getEnd()->getAtomicNumFraction();
-  if (afrac.numerator() == 0 || bfrac.numerator() == 0) {
-    return 0;
-  }
 
   return three_way_comparison(afrac, bfrac);
 }
