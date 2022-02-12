@@ -62,7 +62,10 @@ int CIPMol::getBondOrder(Bond *bond) const {
   PRECONDITION(bond, "bad bond")
   if (dp_kekulized_mol == nullptr) {
     auto tmp = new RWMol(d_mol);
-    MolOps::Kekulize(*tmp);
+    try {
+      MolOps::Kekulize(*tmp);
+    } catch (const MolSanitizeException &) {
+    }
     const_cast<CIPMol *>(this)->dp_kekulized_mol.reset(tmp);
   }
 
@@ -71,26 +74,31 @@ int CIPMol::getBondOrder(Bond *bond) const {
   // Dative bonds might need to be considered with a different bond order
   // for the end atom at the end of the bond.
   switch (kekulized_bond->getBondType()) {
-  case Bond::ZERO:
-  case Bond::HYDROGEN:
-  case Bond::DATIVE:
-  case Bond::DATIVEL:
-  case Bond::DATIVER:
-    return 0;
-  case Bond::SINGLE:
-    return 1;
-  case Bond::DOUBLE:
-    return 2;
-  case Bond::TRIPLE:
-    return 3;
-  case Bond::QUADRUPLE:
-    return 4;
-  case Bond::QUINTUPLE:
-    return 5;
-  case Bond::HEXTUPLE:
-    return 6;
-  default:
-    throw std::runtime_error("Non integer-order bonds are not allowed.");
+    case Bond::ZERO:
+    case Bond::HYDROGEN:
+    case Bond::DATIVE:
+    case Bond::DATIVEL:
+    case Bond::DATIVER:
+      return 0;
+    case Bond::SINGLE:
+      return 1;
+    case Bond::AROMATIC:
+      BOOST_LOG(rdWarningLog)
+          << "non kekulizable aromatic bond being treated as bond order 1"
+          << std::endl;
+      return 1;
+    case Bond::DOUBLE:
+      return 2;
+    case Bond::TRIPLE:
+      return 3;
+    case Bond::QUADRUPLE:
+      return 4;
+    case Bond::QUINTUPLE:
+      return 5;
+    case Bond::HEXTUPLE:
+      return 6;
+    default:
+      throw std::runtime_error("Non integer-order bonds are not allowed.");
   }
 };
 
