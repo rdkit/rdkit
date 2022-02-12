@@ -1132,7 +1132,7 @@ void MolDraw2D::startDrawing() {
     initDrawing();
     needs_init_ = false;
   }
-  if (!activeMolIdx_ && drawOptions().clearBackground) {
+  if (activeMolIdx_ <= 0 && drawOptions().clearBackground) {
     clearDrawing();
   }
 }

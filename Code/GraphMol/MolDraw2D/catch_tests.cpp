@@ -74,7 +74,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomBondIndices_6.svg", 3548449169U},
     {"testGithub3226_1.svg", 4133242855U},
     {"testGithub3226_2.svg", 1284710968U},
-    {"testGithub3226_3.svg", 1344750691U},
+    {"testGithub3226_3.svg", 3576515669U},
     {"testGithub3369_1.svg", 3427946604U},
     {"testIncludeRadicals_1a.svg", 2528551797U},
     {"testIncludeRadicals_1b.svg", 3075507489U},
@@ -150,8 +150,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHydrogenBonds2.svg", 3829372791U},
     {"testGithub3912.1.svg", 3081580881U},
     {"testGithub3912.2.svg", 1662866562U},
-    {"testGithub2976.svg", 2633544312U},
-    {"testReactionCoords.svg", 3555452245U},
+    {"testGithub2976.svg", 716635560U},
+    {"testReactionCoords.svg", 258153716U},
     {"testAnnotationColors.svg", 11788540U},
     {"testGithub4323_1.svg", 1407816475U},
     {"testGithub4323_2.svg", 2915352032U},
@@ -184,7 +184,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testSemiFlexiCanvas.1a.svg", 1387116588U},
     {"testSemiFlexiCanvas.1b.svg", 4011474384U},
     {"testSemiFlexiCanvas.1c.svg", 3129493597U},
-    {"testFlexiCanvas.3.svg", 3841018306U},
+    {"testFlexiCanvas.3.svg", 1503902249U},
     {"testFlexiCanvas.4a.svg", 428287035U},
     {"testFlexiCanvas.4b.svg", 2697900619U},
     {"testFlexiCanvas.4c.svg", 2505619220U},
@@ -211,7 +211,7 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub3226_2.png", 2515387942U},
     {"testGithub3226_3.png", 913109891U},
     {"testPNGMetadata_1.png", 2398100960U},
-    {"testPNGMetadata_2.png", 2197923962U},
+    {"testPNGMetadata_2.png", 1766095719U},
     {"testHandDrawn-1.png", 1894099095U},
     {"testHandDrawn-2.png", 2745741502U},
     {"testHandDrawn-3.png", 1157236326U},
@@ -941,7 +941,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
 #endif
   SECTION("middle SVG") {
     {
-      MolDraw2DSVG drawer(250, 200);
+      MolDraw2DSVG drawer(300, 200);
       drawer.drawMolecule(*m1);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
