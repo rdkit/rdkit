@@ -812,8 +812,9 @@ bool _atomListQueryHelper(const T query) {
         return false;
       }
     }
+    return true;
   }
-  return true;
+  return false;
 }
 }  // namespace
 bool isAtomListQuery(const Atom *a) {
