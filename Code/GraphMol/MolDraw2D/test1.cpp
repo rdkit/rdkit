@@ -165,7 +165,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3391_4.svg", 835518743U},
     {"testGithub4156_1.svg", 860283528U},
     {"testGithub4156_2.svg", 2621647806U},
-    {"testGithub4496_1.svg", 3884377499U}};
+    {"testGithub4496_1.svg", 3884377499U},
+    {"testGithub5006_1.svg", 2396996464U}};
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test1_1.svg", 2810365302U},
@@ -282,7 +283,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3391_2.svg", 977094070U},
     {"testGithub3391_3.svg", 3320165629U},
     {"testGithub3391_4.svg", 511761258U},
-    {"testGithub4496_1.svg", 2353591199U}};
+    {"testGithub4496_1.svg", 2353591199U},
+    {"testGithub5006_1.svg", 784091497U}};
 #endif
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4222,6 +4224,27 @@ void testGithub4496() {
   std::cerr << " Done" << std::endl;
 }
 
+void testGithub5006() {
+  std::cerr << " ----------------- Test AND queries" << std::endl;
+  auto m = "[c,nH1]"_smarts;
+  MolDraw2DSVG drawer(200, 200);
+  drawer.drawMolecule(*m);
+  drawer.finishDrawing();
+  std::ofstream outs("testGithub5006_1.svg");
+  std::string text = drawer.getDrawingText();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+  TEST_ASSERT(text.find("<path  class='atom-0' d='M 95.6 108.3") !=
+              std::string::npos);
+#else
+  TEST_ASSERT(text.find(">?</text>") != std::string::npos);
+#endif
+  outs << text;
+  outs.flush();
+  outs.close();
+  check_file_hash("testGithub5006_1.svg");
+  std::cerr << " Done" << std::endl;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -4278,5 +4301,6 @@ int main() {
   testGithub4156();
   test23JSONAtomColourPalette();
   testGithub4496();
+  testGithub5006();
 #endif
 }
