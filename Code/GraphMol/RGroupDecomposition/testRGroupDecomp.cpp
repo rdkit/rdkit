@@ -1316,9 +1316,9 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
   {
     RGroupDecompositionParameters ps = RGroupDecompositionParameters();
 #ifdef NDEBUG
-    ps.timeout = 1.0;
-#else
     ps.timeout = 5.0;
+#else
+    ps.timeout = 25.0;
 #endif
     ps.matchingStrategy = RDKit::NoSymmetrization;
     std::cerr << "bulk, no symmetry" << std::endl;
