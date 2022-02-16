@@ -77,6 +77,7 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
     d_id = std::move(o.d_id);
     dp_mol = std::move(o.dp_mol);
     d_positions = std::move(o.d_positions);
+    return *this;
   }
   //! Destructor
   ~Conformer() = default;
