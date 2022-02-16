@@ -331,7 +331,8 @@ def _pyChi1n(mol):
   res = 0.0
   for bond in mol.GetBonds():
     v = deltas[bond.GetBeginAtomIdx()] * deltas[bond.GetEndAtomIdx()]
-    res += numpy.sqrt(1. / v)
+    if v != 0.0:
+      res += numpy.sqrt(1. / v)
   return res
 
 

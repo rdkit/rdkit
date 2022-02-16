@@ -9,7 +9,6 @@
 #
 
 from collections import abc
-from typing import Callable
 
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
 from rdkit import Chem
@@ -22,7 +21,7 @@ from rdkit.Chem.QED import qed
 
 
 def _isCallable(something):
-  return isinstance(something, (abc.Callable, Callable)) or hasattr(something, '__call__')
+  return isinstance(something, abc.Callable) or hasattr(something, '__call__')
 
 
 def _belongToRDKit(something):
@@ -51,8 +50,6 @@ _descList = []
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  # Question's comment (Later commit will delete it)
-  # Descriptors3D is not being used according to automatic import & variable-checking tool, should I remove it?
   from rdkit.Chem import Descriptors3D, Crippen, Fragments, GraphDescriptors, Lipinski, MolSurf
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
