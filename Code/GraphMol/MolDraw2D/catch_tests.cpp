@@ -4255,3 +4255,21 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
     }
   }
 }
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
+  auto rxn = "[CH3:1][OH:2]>>[CH2:1]=[OH0:2]"_rxnsmarts;
+  REQUIRE(rxn);
+  MolDraw2DCairo drawer(400, 200);
+  bool highlightByReactant = true;
+  drawer.drawReaction(*rxn, highlightByReactant);
+  drawer.finishDrawing();
+  auto png = drawer.getDrawingText();
+  std::unique_ptr<ChemicalReaction> rxn2{PNGStringToChemicalReaction(png)};
+  REQUIRE(rxn2);
+  CHECK(rxn->getReactants()[0]->getAtomWithIdx(0)->getAtomMapNum() == 1);
+  CHECK(rxn->getReactants()[0]->getAtomWithIdx(1)->getAtomMapNum() == 2);
+  CHECK(rxn2->getReactants()[0]->getAtomWithIdx(0)->getAtomMapNum() == 1);
+  CHECK(rxn2->getReactants()[0]->getAtomWithIdx(1)->getAtomMapNum() == 2);
+}
+#endif

@@ -303,7 +303,7 @@ void MolDraw2D::drawReaction(
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
 
   if (drawOptions().includeMetadata) {
-    this->updateMetadata(nrxn);
+    this->updateMetadata(rxn);
   }
 }
 
