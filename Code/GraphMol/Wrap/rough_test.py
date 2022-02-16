@@ -2106,6 +2106,28 @@ CAS<~>
     self.assertTrue(ri.IsAtomInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 3))
     self.assertTrue(ri.IsBondInRingOfSize(2, 4))
+    self.assertEqual(ri.AtomRings(), ((0, 3, 2, 1), (4, 3, 2)))
+    self.assertEqual(ri.BondRings(), ((4, 2, 1, 0), (3, 2, 5)))
+    self.assertEqual(len(ri.AtomMembers(2)), 2)
+    self.assertEqual(ri.AtomRingSizes(2), (4, 3))
+    self.assertEqual(ri.AtomRingSizes(99), ())
+    self.assertTrue(ri.AreAtomsInSameRing(2, 3))
+    self.assertFalse(ri.AreAtomsInSameRing(1, 4))
+    self.assertTrue(ri.AreAtomsInSameRingOfSize(2, 3, 3))
+    self.assertTrue(ri.AreAtomsInSameRingOfSize(2, 3, 4))
+    self.assertFalse(ri.AreAtomsInSameRingOfSize(2, 3, 5))
+    self.assertEqual(len(ri.BondMembers(2)), 2)
+    self.assertEqual(len(ri.BondMembers(0)), 1)
+    self.assertEqual(ri.BondRingSizes(2), (4, 3))
+    self.assertEqual(ri.BondRingSizes(0), (4,))
+    self.assertEqual(ri.BondRingSizes(99), ())
+    self.assertTrue(ri.AreBondsInSameRing(1, 2))
+    self.assertTrue(ri.AreBondsInSameRing(2, 5))
+    self.assertFalse(ri.AreBondsInSameRing(1, 3))
+    self.assertTrue(ri.AreBondsInSameRingOfSize(1, 2, 4))
+    self.assertTrue(ri.AreBondsInSameRingOfSize(2, 5, 3))
+    self.assertFalse(ri.AreBondsInSameRingOfSize(1, 2, 3))
+    self.assertFalse(ri.AreBondsInSameRingOfSize(1, 3, 4))
 
     if hasattr(Chem, 'FindRingFamilies'):
       ri = m.GetRingInfo()
@@ -4433,27 +4455,6 @@ $$$$
       self.assertTrue("RDKIT:" in details)
       self.assertTrue(__version__ in details)
 
-  # this test should probably always be last since it wraps
-  #  the logging stream
-  def testLogging(self):
-    from io import StringIO
-    err = sys.stderr
-    try:
-      loggers = [("RDKit ERROR", "1", Chem.LogErrorMsg), ("RDKit WARNING", "2", Chem.LogWarningMsg)]
-      for msg, v, log in loggers:
-        sys.stderr = StringIO()
-        log(v)
-        self.assertEqual(sys.stderr.getvalue(), "")
-
-      Chem.WrapLogs()
-      for msg, v, log in loggers:
-        sys.stderr = StringIO()
-        log(v)
-        s = sys.stderr.getvalue()
-        self.assertTrue(msg in s)
-    finally:
-      sys.stderr = err
-
   def testGetSDText(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf')
@@ -5211,6 +5212,39 @@ M  END
       atom.SetQuery(q)
 
     self.assertTrue(Chem.MolFromSmiles("c1ccccc1").HasSubstructMatch(pat))
+
+  def testGetQueryType(self):
+    query_a = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_A.mol')
+    m = next(Chem.SDMolSupplier(query_a))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
+
+    query_a_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_A.v3k.mol')
+    m = next(Chem.SDMolSupplier(query_a_v3k))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
+
+    query_q = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_Q.mol')
+    m = next(Chem.SDMolSupplier(query_q))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
+
+    query_q_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                      'query_Q.v3k.mol')
+    m = next(Chem.SDMolSupplier(query_q_v3k))
+    self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
+
+    m = Chem.MolFromSmiles("*CC")
+    params = Chem.rdmolops.AdjustQueryParameters.NoAdjustments()
+    params.makeDummiesQueries = True
+    m = Chem.rdmolops.AdjustQueryProperties(m, params)
+    self.assertTrue(m.GetAtomWithIdx(0).HasQuery())
+    self.assertTrue(m.GetAtomWithIdx(0).GetQueryType() == "")
+
 
   def testBondSetQuery(self):
     pat = Chem.MolFromSmarts('[#6]=[#6]')

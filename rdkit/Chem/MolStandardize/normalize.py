@@ -29,13 +29,13 @@ class Normalization(object):
         :param string name: A name for this Normalization
         :param string transform: Reaction SMARTS to define the transformation.
         """
-        log.debug('Initializing Normalization: %s', name)
+        log.debug(f'Initializing Normalization: {name}')
         self.name = name
         self.transform_str = transform
 
     @memoized_property
     def transform(self):
-        log.debug('Loading Normalization transform: %s', self.name)
+        log.debug(f'Loading Normalization transform: {self.name}')
         return AllChem.ReactionFromSmarts(str(self.transform_str))
 
     def __repr__(self):
@@ -137,33 +137,34 @@ class Normalizer(object):
         :return: The normalized fragment.
         :rtype: :rdkit:`Mol <Chem.rdchem.Mol-class.html>`
         """
+
         log.debug('Running Normalizer')
         # Normalize each fragment separately to get around quirky RunReactants behaviour
         fragments = []
         for fragment in Chem.GetMolFrags(mol, asMols=True):
             fragments.append(self._normalize_fragment(fragment))
+        
         # Join normalized fragments into a single molecule again
         outmol = fragments.pop()
         for fragment in fragments:
             outmol = Chem.CombineMols(outmol, fragment)
-        Chem.SanitizeMol(outmol)
         return outmol
 
     def _normalize_fragment(self, mol):
-        for n in range(self.max_restarts):
+        for _ in range(self.max_restarts):
             # Iterate through Normalization transforms and apply each in order
             for normalization in self.normalizations:
                 product = self._apply_transform(mol, normalization.transform)
                 if product:
                     # If transform changed mol, go back to first rule and apply each again
-                    log.info('Rule applied: %s', normalization.name)
+                    log.info(f'Rule applied: {normalization.name}')
                     mol = product
                     break
             else:
                 # For loop finishes normally, all applicable transforms have been applied
                 return mol
         # If we're still going after max_restarts (default 200), stop and warn, but still return the mol
-        log.warning('Gave up normalization after %s restarts', self.max_restarts)
+        log.warning(f'Gave up normalization after {self.max_restarts} restarts')
         return mol
 
     def _apply_transform(self, mol, rule):

@@ -39,28 +39,28 @@ class TestCase(unittest.TestCase):  # pragma: nocover
     mol = Chem.MolFromSmiles('OCC(=O)CCCN')
     factory = self.getFactory()
     sig = factory.GetSignature()
-    assert sig.GetSize() == 105, 'bad signature size: %d' % (sig.GetSize())
+    assert sig.GetSize() == 105, f'bad signature size: {sig.GetSize()}'
     sig.SetIncludeBondOrder(0)
     gen = LazyGenerator.Generator(sig, mol)
-    assert len(gen) == sig.GetSize(), 'length mismatch %d!=%d' % (len(gen), sig.GetSize())
+    assert len(gen) == sig.GetSize(), f'length mismatch {len(gen)}!={sig.GetSize()}'
 
     tgt = (1, 5, 48)
     for bit in tgt:
-      assert gen[bit], 'bit %d not properly set' % (bit)
-      assert gen.GetBit(bit), 'bit %d not properly set' % (bit)
-      assert not gen[bit + 50], 'bit %d improperly set' % (bit + 100)
+      assert gen[bit], f'bit {bit} not properly set'
+      assert gen.GetBit(bit), f'bit {bit} not properly set'
+      assert not gen[bit + 50], f'bit {bit + 100} improperly set'
 
     sig = factory.GetSignature()
-    assert sig.GetSize() == 105, 'bad signature size: %d' % (sig.GetSize())
+    assert sig.GetSize() == 105, f'bad signature size: {sig.GetSize()}'
     sig.SetIncludeBondOrder(1)
     gen = LazyGenerator.Generator(sig, mol)
-    assert len(gen) == sig.GetSize(), 'length mismatch %d!=%d' % (len(gen), sig.GetSize())
+    assert len(gen) == sig.GetSize(), f'length mismatch {len(gen)}!={sig.GetSize()}'
 
     tgt = (1, 4, 5, 45)
     for bit in tgt:
-      assert gen[bit], 'bit %d not properly set' % (bit)
-      assert gen.GetBit(bit), 'bit %d not properly set' % (bit)
-      assert not gen[bit + 50], 'bit %d improperly set' % (bit + 100)
+      assert gen[bit], f'bit {bit} not properly set'
+      assert gen.GetBit(bit), f'bit {bit} not properly set'
+      assert not gen[bit + 50], f'bit {bit + 100} improperly set'
 
     try:
       gen[sig.GetSize() + 1]

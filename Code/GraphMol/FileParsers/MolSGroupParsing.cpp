@@ -934,16 +934,22 @@ void ParseSGroupV2000SBTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 /* ------------------ V3000 Utils  ------------------ */
 
 template <class T>
-std::vector<T> ParseV3000Array(std::stringstream &stream) {
+std::vector<T> ParseV3000Array(std::stringstream &stream, int maxV,
+                               bool strictParsing) {
   auto paren = stream.get();  // discard parentheses
   if (paren != '(') {
     BOOST_LOG(rdWarningLog)
         << "WARNING: first character of V3000 array is not '('" << std::endl;
   }
 
-  unsigned int count;
+  unsigned int count = 0;
   stream >> count;
   std::vector<T> values;
+  if (maxV >= 0 && count > static_cast<unsigned int>(maxV)) {
+    SGroupWarnOrThrow(strictParsing, "invalid count value");
+    return values;
+  }
+
   values.reserve(count);
   T value;
   for (unsigned i = 0; i < count; ++i) {
@@ -959,8 +965,9 @@ std::vector<T> ParseV3000Array(std::stringstream &stream) {
 }
 
 // force instantiation of the versions of this that we use
-template std::vector<unsigned int> ParseV3000Array(std::stringstream &stream);
-template std::vector<int> ParseV3000Array(std::stringstream &stream);
+template std::vector<unsigned int> ParseV3000Array(std::stringstream &stream,
+                                                   int, bool);
+template std::vector<int> ParseV3000Array(std::stringstream &stream, int, bool);
 
 void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
                            std::stringstream &stream, unsigned int line,
@@ -1002,8 +1009,8 @@ void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
                         std::stringstream &stream, bool strictParsing) {
   stream.get();  // discard parentheses
 
-  unsigned int count;
-  unsigned int aIdxMark;
+  unsigned int count = 0;
+  unsigned int aIdxMark = 0;
   std::string lvIdxStr;  // In V3000 this may be a string
   std::string sapIdStr;
   stream >> count >> aIdxMark >> lvIdxStr >> sapIdStr;
@@ -1075,28 +1082,32 @@ void ParseV3000ParseLabel(const std::string &label,
                           std::stringstream &lineStream, STR_VECT &dataFields,
                           unsigned int line, SubstanceGroup &sgroup, size_t,
                           RWMol *mol, bool strictParsing) {
+  PRECONDITION(mol, "bad mol");
   // TODO: we could handle these in a more structured way
   try {
     if (label == "XBHEAD" || label == "XBCORR") {
-      std::vector<unsigned int> bvect =
-          ParseV3000Array<unsigned int>(lineStream);
+      std::vector<unsigned int> bvect = ParseV3000Array<unsigned int>(
+          lineStream, mol->getNumBonds(), strictParsing);
       std::transform(bvect.begin(), bvect.end(), bvect.begin(),
                      [](unsigned int v) -> unsigned int { return v - 1; });
       sgroup.setProp(label, bvect);
     } else if (label == "ATOMS") {
-      for (auto atomIdx : ParseV3000Array<unsigned int>(lineStream)) {
+      for (auto atomIdx : ParseV3000Array<unsigned int>(
+               lineStream, mol->getNumAtoms(), strictParsing)) {
         sgroup.addAtomWithBookmark(atomIdx);
       }
     } else if (label == "PATOMS") {
-      for (auto patomIdx : ParseV3000Array<unsigned int>(lineStream)) {
+      for (auto patomIdx : ParseV3000Array<unsigned int>(
+               lineStream, mol->getNumAtoms(), strictParsing)) {
         sgroup.addParentAtomWithBookmark(patomIdx);
       }
     } else if (label == "CBONDS" || label == "XBONDS") {
-      for (auto bondIdx : ParseV3000Array<unsigned int>(lineStream)) {
+      for (auto bondIdx : ParseV3000Array<unsigned int>(
+               lineStream, mol->getNumBonds(), strictParsing)) {
         sgroup.addBondWithBookmark(bondIdx);
       }
     } else if (label == "BRKXYZ") {
-      auto coords = ParseV3000Array<double>(lineStream);
+      auto coords = ParseV3000Array<double>(lineStream, 9, strictParsing);
       if (coords.size() != 9) {
         std::ostringstream errout;
         errout << "Unexpected number of coordinates for BRKXYZ on line "
@@ -1167,6 +1178,8 @@ void ParseV3000ParseLabel(const std::string &label,
 std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
                                    unsigned int nSgroups, RWMol *mol,
                                    bool strictParsing) {
+  PRECONDITION(inStream, "no stream");
+  PRECONDITION(mol, "no molecule");
   unsigned int defaultLineNum = 0;
   std::string defaultString;
 

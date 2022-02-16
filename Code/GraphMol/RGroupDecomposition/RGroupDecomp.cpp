@@ -82,6 +82,7 @@ RGroupDecomposition::RGroupDecomposition(
 RGroupDecomposition::~RGroupDecomposition() { delete data; }
 
 int RGroupDecomposition::add(const ROMol &inmol) {
+  constexpr const char *inputDummy = "INPUT_DUMMY";
   // get the sidechains if possible
   //  Add hs for better symmetrization
   RWMol mol(inmol);
@@ -89,6 +90,18 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   const bool addCoords = true;
   MolOps::addHs(mol, explicitOnly, addCoords);
 
+  // mark any wildcards in input molecule:
+  for (auto &atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      atom->setProp(inputDummy, true);
+      // clean any existing R group numbers
+      atom->setIsotope(0);
+      atom->setAtomMapNum(0);
+      if (atom->hasProp(common_properties::_MolFileRLabel)) {
+        atom->clearProp(common_properties::_MolFileRLabel);
+      }
+    }
+  }
   int core_idx = 0;
   const RCore *rcore = nullptr;
   std::vector<MatchVectType> tmatches;
@@ -96,7 +109,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
   // Find the first matching core (onlyMatchAtRGroups)
   // or the first core that requires the smallest number
-  // of newly added labels
+  // of newly added labels and is a superstructure of
+  // the first matching core
   int global_min_heavy_nbrs = -1;
   SubstructMatchParameters sssparams(params().substructmatchParams);
   sssparams.uniquify = false;
@@ -185,8 +199,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     if (!data->params.onlyMatchAtRGroups) {
       int min_heavy_nbrs = *std::min_element(tmatches_heavy_nbrs.begin(),
                                              tmatches_heavy_nbrs.end());
-      if (global_min_heavy_nbrs == -1 ||
-          min_heavy_nbrs < global_min_heavy_nbrs) {
+      if (!rcore || (min_heavy_nbrs < global_min_heavy_nbrs &&
+                     !SubstructMatch(*core.second.core, *rcore->core, sssparams)
+                          .empty())) {
         i = 0;
         tmatches_filtered.clear();
         for (const auto heavy_nbrs : tmatches_heavy_nbrs) {
@@ -275,17 +290,22 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             unsigned int index =
                 at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
-            int rlabel;
-            auto coreAtom = rcore->core->getAtomWithIdx(index);
-            coreAtomAnyMatched.insert(index);
-            if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
-              std::vector<int> rlabelsOnSideChain;
-              at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
-              rlabelsOnSideChain.push_back(rlabel);
-              at->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChain);
+            if (!at->hasProp(inputDummy)) {
+              int rlabel;
+              auto coreAtom = rcore->core->getAtomWithIdx(index);
+              coreAtomAnyMatched.insert(index);
+              if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
+                std::vector<int> rlabelsOnSideChain;
+                at->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChain);
+                rlabelsOnSideChain.push_back(rlabel);
+                at->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChain);
 
-              data->labels.insert(rlabel);  // keep track of all labels used
-              attachments.push_back(rlabel);
+                data->labels.insert(rlabel);  // keep track of all labels used
+                attachments.push_back(rlabel);
+              }
+            } else {
+              // restore input wildcard
+              at->clearProp(inputDummy);
             }
           }
         }

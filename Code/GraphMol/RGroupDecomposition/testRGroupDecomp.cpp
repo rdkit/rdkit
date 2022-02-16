@@ -98,8 +98,8 @@ void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
 
   for (const auto &rgroups : *it) {
     // rlabel:smiles
-    str << rgroups.first << "\t" << MolToSmiles(*rgroups.second.get(), true)
-        << "\t";
+    str << rgroups.first << ":" << MolToSmiles(*rgroups.second.get(), true)
+        << " ";
   }
   std::cerr << str.str() << std::endl;
   result = str.str();
@@ -2627,6 +2627,139 @@ M  END
   }
 }
 
+void testWildcardInInput() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test that dummy atom in input molecule is handled correctly"
+      << std::endl;
+
+  auto core = R"CTAB(
+Mrv2008 12012115162D          
+
+  6  6  6  0  0  0            999 V2000
+  -21.0938  -16.9652    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.8082  -17.3777    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.8082  -18.2027    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -21.0938  -18.6152    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -20.3793  -18.2027    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  -20.3793  -17.3777    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  6  0  0  0  0
+  2  3  7  0  0  0  0
+  3  4  6  0  0  0  0
+  4  5  7  0  0  0  0
+  5  6  6  0  0  0  0
+  1  6  7  0  0  0  0
+  1 F    2   6   7
+  2 F    2   6   7
+  3 F    2   6   7
+  4 F    2   6   7
+  5 F    2   6   7
+  6 F    2   6   7
+M  ALS   1  2 F C   N   
+M  ALS   2  2 F C   N   
+M  ALS   3  2 F C   N   
+M  ALS   4  2 F C   N   
+M  ALS   5  2 F C   N   
+M  ALS   6  2 F C   N   
+M  END
+)CTAB"_ctab;
+
+  auto structure = "CC1CCN(C1)C1=CC(O*)=C(Cl)C=C1C#N"_smiles;
+  RGroupDecomposition decomp(*core);
+  TEST_ASSERT(decomp.add(*structure) == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  RGroupRows::const_iterator it = rows.begin();
+  std::string expected(
+      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:Cl[*:1] R2:*O[*:2] "
+      "R3:CC1CCN([*:3])C1 R4:N#C[*:4]");
+  CHECK_RGROUP(it, expected);
+
+  structure = "CC1CCN(C1)C1=CC([*:2])=C(Cl)C=C1C#N"_smiles;
+  RGroupDecomposition decomp2(*core);
+  TEST_ASSERT(decomp2.add(*structure) == 0);
+  decomp2.process();
+  rows = decomp2.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  it = rows.begin();
+  expected =
+      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:Cl[*:1] R2:*[*:2] "
+      "R3:CC1CCN([*:3])C1 R4:N#C[*:4]";
+  CHECK_RGROUP(it, expected);
+}
+
+void testDoNotChooseUnrelatedCores() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that later cores with more R-groups\n"
+                       << "are only chosen if superstructures of earlier\n"
+                       << "cores" << std::endl;
+  {
+    // 1st test, two unrelated cores:
+    // 1) 5 terms, 1 R-group
+    // 2) 6 terms, 3 R-groups
+    // dataset molecule can fit core 1 adding 1 non-user defined R label,
+    // and core 2 with no addition of R labels
+    ROMOL_SPTR core5Terms1RGroup = "[*:1]C1COCN1"_smiles;
+    ROMOL_SPTR core6Terms3RGroups = "[*:1]c1ccc([*:2])c([*:3])c1"_smiles;
+    std::vector<ROMOL_SPTR> cores{core5Terms1RGroup, core6Terms3RGroups};
+    auto m = "Cc1cc(ccc1F)C1NC(CO1)c1cccs1"_smiles;
+    // repeat the test twice, with cores in opposite orders
+    // in both cases core ordering should be honored and the first
+    // core (either 5-term of 6-term) should be chosen, even when adding
+    // R labels is required, as the 2 cores are not structurally related
+    for (unsigned int i = 0; i < 2; ++i) {
+      std::vector<ROMOL_SPTR> orderedCores{cores[i], cores[1 - i]};
+      RGroupDecomposition decomp(orderedCores);
+      TEST_ASSERT(decomp.add(*m) == 0);
+      TEST_ASSERT(decomp.process());
+      auto cols = decomp.getRGroupsAsColumns();
+      const auto &core = cols["Core"];
+      TEST_ASSERT(core.size() == 1);
+      TEST_ASSERT(
+          core.front()->getRingInfo()->atomRings().front().size() ==
+          orderedCores.front()->getRingInfo()->atomRings().front().size());
+    }
+  }
+  {
+    // 2nd test: two related cores:
+    // 1) 5 terms, 2 R-groups
+    // 2) 5 terms, 3 R-groups
+    // dataset molecule 1 has 1 substituent, fits both cores
+    // dataset molecule 2 has 2 substituents, fits both cores
+    // dataset molecule 3 has 3 substituents, fits core 2 with no need to add
+    // R labels
+    ROMOL_SPTR core5Terms2RGroups = "[*:1]C1COC([*:2])N1"_smiles;
+    ROMOL_SPTR core5Terms3RGroups = "[*:1]C1C([*:2])OC([*:3])N1"_smiles;
+    std::vector<ROMOL_SPTR> cores{core5Terms2RGroups, core5Terms3RGroups};
+    std::vector<ROMOL_SPTR> mols{"CC1NCCO1"_smiles, "CC1NC(F)CO1"_smiles,
+                                 "CC1NC(F)C(Cl)O1"_smiles};
+    // repeat the test twice, with cores in opposite orders
+    // Molecules (1) and (2) should always pick the first core
+    // in the order provided, though both cores could fit
+    // Molecule (3) should always pick the more specific core 2
+    for (unsigned int i = 0; i < 2; ++i) {
+      std::vector<ROMOL_SPTR> orderedCores{cores[i], cores[1 - i]};
+      RGroupDecomposition decomp(orderedCores);
+      int j = 0;
+      for (const auto &m : mols) {
+        TEST_ASSERT(decomp.add(*m) == j++);
+      }
+      TEST_ASSERT(decomp.process());
+      auto cols = decomp.getRGroupsAsColumns();
+      const auto &core = cols["Core"];
+      TEST_ASSERT(core.size() == 3);
+      TEST_ASSERT(MolToSmiles(*core.at(0)) ==
+                  MolToSmiles(*orderedCores.front()));
+      TEST_ASSERT(MolToSmiles(*core.at(1)) ==
+                  MolToSmiles(*orderedCores.front()));
+      TEST_ASSERT(MolToSmiles(*core.at(2)) == MolToSmiles(*core5Terms3RGroups));
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2676,6 +2809,8 @@ int main() {
   testDoNotAddUnnecessaryRLabels();
   testCoreWithAlsRecords();
   testAlignOutputCoreToMolecule();
+  testWildcardInInput();
+  testDoNotChooseUnrelatedCores();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

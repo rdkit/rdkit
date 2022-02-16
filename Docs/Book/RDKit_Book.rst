@@ -233,6 +233,12 @@ Specifying atoms by atomic number
 The ``[#6]`` construct from SMARTS is supported in SMILES.
 
 
+Quadruple bonds
+---------------
+
+The token ``$`` can be used to represent quadruple bonds in SMILES and SMARTS.
+
+
 CXSMILES/CXSMARTS extensions
 ----------------------------
 
@@ -1983,7 +1989,7 @@ type definitions.
 .. [#smirks] http://www.daylight.com/dayhtml/doc/theory/theory.smirks.html
 .. [#smiles] http://www.daylight.com/dayhtml/doc/theory/theory.smiles.html
 .. [#smarts] http://www.daylight.com/dayhtml/doc/theory/theory.smarts.html
-.. [#cxsmiles] https://docs.chemaxon.com/display/docs/ChemAxon+Extended+SMILES+and+SMARTS+-+CXSMILES+and+CXSMARTS
+.. [#cxsmiles] https://docs.chemaxon.com/display/docs/chemaxon-extended-smiles-and-smarts-cxsmiles-and-cxsmarts.md
 .. [#intramolRxn] Thanks to James Davidson for this example.
 .. [#chiralRxn] Thanks to JP Ebejer and Paul Finn for this example.
 .. [#daylightFP] http://www.daylight.com/dayhtml/doc/theory/theory.finger.html

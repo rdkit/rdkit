@@ -40,6 +40,7 @@ void convertPyArguments(python::object py_fromAtoms,
         python::extract<unsigned int>(py_fromAtoms.attr("__len__")());
     if (len) {
       fromAtoms = new std::vector<std::uint32_t>();
+      fromAtoms->reserve(len);
       for (unsigned int i = 0; i < len; ++i) {
         fromAtoms->push_back(python::extract<std::uint32_t>(py_fromAtoms[i]));
       }
@@ -51,6 +52,7 @@ void convertPyArguments(python::object py_fromAtoms,
         python::extract<unsigned int>(py_ignoreAtoms.attr("__len__")());
     if (len) {
       ignoreAtoms = new std::vector<std::uint32_t>();
+      ignoreAtoms->reserve(len);
       for (unsigned int i = 0; i < len; ++i) {
         ignoreAtoms->push_back(
             python::extract<std::uint32_t>(py_ignoreAtoms[i]));
@@ -63,6 +65,7 @@ void convertPyArguments(python::object py_fromAtoms,
         python::extract<unsigned int>(py_atomInvs.attr("__len__")());
     if (len) {
       customAtomInvariants = new std::vector<std::uint32_t>();
+      customAtomInvariants->reserve(len);
       for (unsigned int i = 0; i < len; ++i) {
         customAtomInvariants->push_back(
             python::extract<std::uint32_t>(py_atomInvs[i]));
@@ -75,6 +78,7 @@ void convertPyArguments(python::object py_fromAtoms,
         python::extract<unsigned int>(py_bondInvs.attr("__len__")());
     if (len) {
       customBondInvariants = new std::vector<std::uint32_t>();
+      customBondInvariants->reserve(len);
       for (unsigned int i = 0; i < len; ++i) {
         customBondInvariants->push_back(
             python::extract<std::uint32_t>(py_bondInvs[i]));
@@ -209,7 +213,7 @@ python::object getNumPyFingerprint(
       getFingerprint(fpGen, mol, py_fromAtoms, py_ignoreAtoms, confId,
                      py_atomInvs, py_bondInvs, py_additionalOutput)};
 
-  npy_intp size[1] = {ebv->size()};
+  npy_intp size[1] = {static_cast<npy_intp>(ebv->size())};
   PyObject *arr = PyArray_ZEROS(1, size, NPY_UINT8, 0);
   PyObject *one = PyInt_FromLong(1);
   for (auto i = 0u; i < ebv->size(); ++i) {
@@ -234,7 +238,7 @@ python::object getNumPyCountFingerprint(
       getCountFingerprint(fpGen, mol, py_fromAtoms, py_ignoreAtoms, confId,
                           py_atomInvs, py_bondInvs, py_additionalOutput)};
 
-  npy_intp size[1] = {fp->size()};
+  npy_intp size[1] = {static_cast<npy_intp>(fp->size())};
   PyObject *arr = PyArray_ZEROS(1, size, NPY_UINT32, 0);
   for (auto i = 0u; i < fp->size(); ++i) {
     auto v = (*fp)[i];

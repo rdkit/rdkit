@@ -812,8 +812,9 @@ bool _atomListQueryHelper(const T query) {
         return false;
       }
     }
+    return true;
   }
-  return true;
+  return false;
 }
 }  // namespace
 bool isAtomListQuery(const Atom *a) {
@@ -941,18 +942,20 @@ bool isAtomAromatic(const Atom *a) {
 
 namespace QueryOps {
 namespace {
-void completeQueryAndChildren(ATOM_EQUALS_QUERY *query, Atom *tgt,
+void completeQueryAndChildren(Atom::QUERYATOM_QUERY *query, Atom *tgt,
                               unsigned int magicVal) {
   PRECONDITION(query, "no query");
   PRECONDITION(tgt, "no atom");
-  if (static_cast<unsigned int>(query->getVal()) == magicVal) {
-    int tgtVal = query->getDataFunc()(tgt);
-    query->setVal(tgtVal);
+  auto eqQuery = dynamic_cast<ATOM_EQUALS_QUERY *>(query);
+  if (eqQuery) {
+    if (static_cast<unsigned int>(eqQuery->getVal()) == magicVal) {
+      int tgtVal = eqQuery->getDataFunc()(tgt);
+      eqQuery->setVal(tgtVal);
+    }
   }
   for (auto childIt = query->beginChildren(); childIt != query->endChildren();
        ++childIt) {
-    completeQueryAndChildren((ATOM_EQUALS_QUERY *)(childIt->get()), tgt,
-                             magicVal);
+    completeQueryAndChildren(childIt->get(), tgt, magicVal);
   }
 }
 }  // namespace
@@ -960,8 +963,7 @@ void completeMolQueries(RWMol *mol, unsigned int magicVal) {
   PRECONDITION(mol, "bad molecule");
   for (auto atom : mol->atoms()) {
     if (atom->hasQuery()) {
-      auto *query = static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery());
-      completeQueryAndChildren(query, atom, magicVal);
+      completeQueryAndChildren(atom->getQuery(), atom, magicVal);
     }
   }
 }

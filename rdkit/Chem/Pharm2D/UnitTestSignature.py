@@ -13,8 +13,7 @@
 import os.path
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import ChemicalFeatures
 from rdkit.Chem.Pharm2D import Generate, SigFactory
 

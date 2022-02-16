@@ -75,6 +75,7 @@ def GetScaffoldForMol(mol):
     res.UpdatePropertyCache()
     Chem.GetSymmSSSR(res)
   else:
+    # This code cannot be reached
     res = _pyGetScaffoldForMol(mol)
   return res
 
@@ -84,8 +85,9 @@ def _pyGetScaffoldForMol(mol):
     for patt in murckoPatts:
       mol = Chem.DeleteSubstructs(mol, patt)
   for atom in mol.GetAtoms():
-    if atom.GetAtomicNum() == 6 and atom.GetNoImplicit() and atom.GetExplicitValence() < 4:
-      atom.SetNoImplicit(False)
+    if atom.GetAtomicNum() == 6:
+      if atom.GetNoImplicit() and atom.GetExplicitValence() < 4:
+        atom.SetNoImplicit(False)
   h = Chem.MolFromSmiles('[H]')
   mol = Chem.ReplaceSubstructs(mol, Chem.MolFromSmarts('[D1;$([D1]-n)]'), h, True)[0]
   mol = Chem.RemoveHs(mol)

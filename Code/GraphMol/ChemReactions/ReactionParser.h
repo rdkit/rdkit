@@ -1,5 +1,7 @@
 //
-//  Copyright (c) 2007-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2022, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -69,21 +71,25 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
 
 //! Parse a string containing "Reaction SMARTS" into a ChemicalReaction
 /*!
-   Our definition of Reaction SMARTS is something that looks a lot like
-   reaction SMILES, except that SMARTS queries are allowed on the reactant
-   side and that atom-map numbers are required (at least for now)
+   Our definition of Reaction SMARTS is something that looks a lot like reaction
+   SMILES, except that SMARTS queries are allowed on the reactant side and that
+   atom-map numbers are required (at least for now)
 
    \param text          the SMARTS to convert
-   \param replacements  a string->string map of replacement strings.
-                        \see SmilesToMol for more information about replacements
+
+   \param replacements  a string->string map of replacement strings. \see
+   SmilesToMol for more information about replacements
+
    \param useSmiles     if set, the SMILES parser will be used instead of the
-   SMARTS
-                         parserfor the individual components
+   SMARTS parserfor the individual components
+
+   \param allowCXSMILES     if set, any CXSMILES extensions present will be
+   parsed, otherwise it will be ignored
  */
 RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text,
     std::map<std::string, std::string> *replacements = nullptr,
-    bool useSmiles = false);
+    bool useSmiles = false, bool allowCXSMILES = true);
 
 //! returns the reaction SMARTS for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
@@ -101,9 +107,8 @@ RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
 //! Parse a ROMol into a ChemicalReaction, RXN role must be set before
 /*!
    Alternative to build a reaction from a molecule (fragments) which have RXN
-   roles
-   set as atom properties: common_properties::molRxnRole (1=reactant, 2=product,
-   3=agent)
+   roles set as atom properties: common_properties::molRxnRole (1=reactant,
+   2=product, 3=agent)
 
    \param mol           ROMol with RXN roles set
  */
@@ -134,11 +139,26 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
 //! returns an rxn block for a reaction
 /*!
    \param rxn            chemical reaction
-   \param separateAgents flag to decide if agents were put in a separate block,
-                         otherwise they were included in the reactants block
-   (default)
+
+   \param separateAgents flag to decide if agents are put in a separate block,
+                         otherwise they are included in the reactants block
+                         (default)
+
+   \param forceV3000     flag to cause the V3000 format to be used instead of
+                         V2000
  */
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnBlock(
+    const ChemicalReaction &rxn, bool separateAgents = false,
+    bool forceV3000 = false);
+//! returns an V3000 rxn block for a reaction
+/*!
+   \param rxn            chemical reaction
+
+   \param separateAgents flag to decide if agents are put in a separate block,
+                         otherwise they are included in the reactants block
+                         (default)
+*/
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToV3KRxnBlock(
     const ChemicalReaction &rxn, bool separateAgents = false);
 
 //@}
@@ -249,6 +269,6 @@ inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmiles(const char *text,
   return std::unique_ptr<ChemicalReaction>(ptr);
 }
 
-};  // namespace RDKit
+}  // namespace RDKit
 
 #endif

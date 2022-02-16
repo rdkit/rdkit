@@ -12,16 +12,14 @@ import doctest
 import gzip
 import io
 import os
+import pickle
 import unittest
 
 from rdkit import Chem
 from rdkit import DistanceGeometry as DG
-from rdkit import Geometry
-from rdkit import RDConfig
+from rdkit import Geometry, RDConfig
 from rdkit.Chem import ChemicalFeatures, rdDistGeom
-from rdkit.Chem.Pharm3D import EmbedLib
-from rdkit.Chem.Pharm3D import Pharmacophore
-import pickle
+from rdkit.Chem.Pharm3D import EmbedLib, Pharmacophore
 
 
 def feq(n1, n2, tol=1e-5):
@@ -76,10 +74,7 @@ class TestCase(unittest.TestCase):
     matched, matches = EmbedLib.MatchPharmacophoreToMol(mol, featFactory, pcophore)
     if matched:
       r = EmbedLib.MatchPharmacophore(matches, boundsMat, pcophore, useDownsampling=downSample)
-      if r[0]:
-        return 0
-      else:
-        return 1
+      return int(not bool(r[0]))
     else:
       return 0
 
@@ -154,7 +149,7 @@ class TestCase(unittest.TestCase):
             tgt = testResults[name]
             self.assertEqual(len(tgt), len(stats))
             print(name)
-            print(','.join(['%.2f' % x for x in stats]))
+            print(','.join([f'{x:.2f}' for x in stats]))
             # we'll use different tolerances for the different values:
             self.assertTrue(feq(tgt[0], stats[0], 5.0), (tgt[0], stats[0]))
             for i in range(2, len(tgt)):

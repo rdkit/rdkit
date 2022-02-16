@@ -362,10 +362,8 @@ class Canvas(CanvasBase):
 
   def addCanvasText(self, text, pos, font, color=(0, 0, 0), **kwargs):
     if have_pango:
-      textSize = self._addCanvasText2(text, pos, font, color, **kwargs)
-    else:
-      textSize = self._addCanvasText1(text, pos, font, color, **kwargs)
-    return textSize
+      return self._addCanvasText2(text, pos, font, color, **kwargs)
+    return self._addCanvasText1(text, pos, font, color, **kwargs)
 
   def addCanvasPolygon(self, ps, color=(0, 0, 0), fill=True, stroke=False, **kwargs):
     if not fill and not stroke:

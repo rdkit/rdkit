@@ -133,7 +133,7 @@ class FragmentValidation(Validation):
             matches = frozenset(frozenset(match) for match in mol.GetSubstructMatches(fp.smarts))
             fragments = frozenset(frozenset(frag) for frag in Chem.GetMolFrags(mol))
             if matches & fragments:
-                self.log.info('%s is present', fp.name)
+                self.log.info(f'{fp.name} is present', )
 
 
 class NeutralValidation(Validation):
@@ -143,7 +143,7 @@ class NeutralValidation(Validation):
         charge = Chem.GetFormalCharge(mol)
         if not charge == 0:
             chargestring = '+%s' % charge if charge > 0 else '%s' % charge
-            self.log.info('Not an overall neutral system (%s)', chargestring)
+            self.log.info(f'Not an overall neutral system ({chargestring})')
 
 
 class IsotopeValidation(Validation):
@@ -154,9 +154,9 @@ class IsotopeValidation(Validation):
         for atom in mol.GetAtoms():
             isotope = atom.GetIsotope()
             if not isotope == 0:
-                isotopes.add('%s%s' % (isotope, atom.GetSymbol()))
+                isotopes.add(f'{isotope}{atom.GetSymbol()}')
         for isotope in isotopes:
-            self.log.info('Molecule contains isotope %s', isotope)
+            self.log.info(f'Molecule contains isotope {isotope}')
 
 
 #: The default list of :class:`Validations <molvs.validations.Validation>` used by :class:`~molvs.validate.Validator`.
@@ -204,4 +204,3 @@ VALIDATIONS = (
 
 # People can define a filterer
 # This has a series of validations, and the required output - e.g. no error or no warns?
-

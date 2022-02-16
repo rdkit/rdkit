@@ -52,7 +52,8 @@ void PositionVariationOp::initFromMol() {
       }
       d_dummiesAtEachPoint.push_back(bond->getOtherAtomIdx(atom->getIdx()));
       std::vector<unsigned int> oats =
-          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(
+              endpts, dp_mol->getNumAtoms(), false);
       // decrement the indices and do error checking and whatever additional
       // cleanup is required:
       for (auto &oat : oats) {

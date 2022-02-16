@@ -36,7 +36,7 @@ class TestCase(unittest.TestCase):
     ]
     for combo, tgt in vals:
       res = Utils.CountUpTo(3, 3, combo)
-      assert res == tgt, 'Bad res (%d) for combo %s' % (res, str((combo, tgt)))
+      assert res == tgt, f'Bad res ({res}) for combo {str((combo, tgt))}'
 
   def testGetTriangles(self):
     vals = [
@@ -48,8 +48,8 @@ class TestCase(unittest.TestCase):
     for tpl in vals:
       nPts, cnt, tris = tpl
       r = Utils.GetTriangles(nPts)
-      assert len(r) == cnt, 'bad triangle length %d for probe %s' % (len(r), str(tpl))
-      assert r == tris, 'bad triangle list %s for probe %s' % (str(r), str(tpl))
+      assert len(r) == cnt, f'bad triangle length {len(r)} for probe {str(tpl)}'
+      assert r == tris, f'bad triangle list {str(r)} for probe {str(tpl)}'
 
   def testDistTriangleInequality(self):
     bins = [(1, 2), (2, 3), (5, 6)]
@@ -64,7 +64,7 @@ class TestCase(unittest.TestCase):
       ds, tgt = tpl
       distBins = [bins[x] for x in ds]
       r = Utils.BinsTriangleInequality(distBins[0], distBins[1], distBins[2])
-      assert r == tgt, 'bad result %d for probe %s' % (r, str(tpl))
+      assert r == tgt, f'bad result {r} for probe {str(tpl)}'
 
   def testLimitPharmacophores(self):
     bins = [(1, 2), (2, 3), (5, 6)]
@@ -78,7 +78,7 @@ class TestCase(unittest.TestCase):
     for tpl in vals:
       ds, tgt = tpl
       r = Utils.ScaffoldPasses(ds, bins)
-      assert r == tgt, 'bad result %d for probe %s' % (r, str(tpl))
+      assert r == tgt, f'bad result {r} for probe {str(tpl)}'
 
   def testGetPossiblePharmacophores(self):
     bins = [(1, 2), (2, 3), (5, 6)]
@@ -90,7 +90,7 @@ class TestCase(unittest.TestCase):
       num, tgt = tpl
       pphores = Utils.GetPossibleScaffolds(num, bins)
       cnt = len(pphores)
-      assert cnt == tgt, 'bad pharmacophore count %d for probe %s' % (cnt, str(tpl))
+      assert cnt == tgt, f'bad pharmacophore count {cnt} for probe {str(tpl)}'
     self.assertEqual(Utils.GetPossibleScaffolds(1, bins), 0)
 
   def testOrderTriangle(self):

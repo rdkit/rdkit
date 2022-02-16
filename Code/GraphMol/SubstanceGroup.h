@@ -95,10 +95,32 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   SubstanceGroup(ROMol *owning_mol, const std::string &type);
 
   SubstanceGroup(const SubstanceGroup &other) = default;
-  SubstanceGroup(SubstanceGroup &&other) = default;
-
   SubstanceGroup &operator=(const SubstanceGroup &other) = default;
-  SubstanceGroup &operator=(SubstanceGroup &&other) = default;
+
+  SubstanceGroup(SubstanceGroup &&other) noexcept : RDProps(std::move(other)) {
+    dp_mol = std::exchange(other.dp_mol, nullptr);
+    d_atoms = std::move(other.d_atoms);
+    d_patoms = std::move(other.d_patoms);
+    d_bonds = std::move(other.d_bonds);
+    d_brackets = std::move(other.d_brackets);
+    d_cstates = std::move(other.d_cstates);
+    d_saps = std::move(other.d_saps);
+  }
+
+  SubstanceGroup &operator=(SubstanceGroup &&other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
+    RDProps::operator=(std::move(other));
+    dp_mol = std::exchange(other.dp_mol, nullptr);
+    d_atoms = std::move(other.d_atoms);
+    d_patoms = std::move(other.d_patoms);
+    d_bonds = std::move(other.d_bonds);
+    d_brackets = std::move(other.d_brackets);
+    d_cstates = std::move(other.d_cstates);
+    d_saps = std::move(other.d_saps);
+    return *this;
+  }
 
   //! Destructor
   ~SubstanceGroup() = default;
@@ -208,7 +230,7 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   std::vector<Bracket> d_brackets;
   std::vector<CState> d_cstates;
   std::vector<AttachPoint> d_saps;
-};
+};  // namespace RDKit
 
 namespace SubstanceGroupChecks {
 

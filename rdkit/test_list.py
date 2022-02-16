@@ -1,12 +1,7 @@
 tests = [
-  ("python", "test_list.py", {'dir': 'ML'}),
-  ("python", "test_list.py", {'dir': 'Chem'}),
-  ("python", "test_list.py", {'dir': 'DataStructs'}),
-  ("python", "test_list.py", {'dir': 'Dbase'}),
-  ("python", "test_list.py", {'dir': 'SimDivFilters'}),
-  ("python", "test_list.py", {'dir': 'VLib'}),
-  ("python", "test_list.py", {'dir': 'utils'}),
-  ("python", "test_list.py", {'dir': 'sping'}),
+  # Only local unit tests go in here!
+  # Subdirectories get their own entries in ./CMakeLists.txt
+  ("python", "UnitTestLogging.py", {}),
 ]
 
 longTests = []

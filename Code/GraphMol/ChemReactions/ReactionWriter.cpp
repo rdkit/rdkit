@@ -1,5 +1,7 @@
 //
-//  Copyright (c) 2010-2018, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2010-2022, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +36,7 @@
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/MolOps.h>
@@ -113,10 +116,55 @@ std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
   return chemicalReactionToRxnToString(rxn, true, canonical);
 };
 
-#if 1
+//! returns an RXN block for a reaction
+std::string ChemicalReactionToV3KRxnBlock(const ChemicalReaction &rxn,
+                                          bool separateAgents) {
+  if (separateAgents) {
+    // V3000 doesn't seem to support agent blocks
+    BOOST_LOG(rdWarningLog)
+        << "V3000 RXN blocks do not support separating agents. Agents will be "
+           "written to the reactants block"
+        << std::endl;
+  }
+  std::ostringstream res;
+  res << "$RXN V3000\n\n      RDKit\n\n";
+  res << "M  V30 COUNTS "
+      << rxn.getNumReactantTemplates() + rxn.getNumAgentTemplates() << " "
+      << rxn.getNumProductTemplates();
+  res << "\n";
+
+  res << "M  V30 BEGIN REACTANT\n";
+  for (const auto &rt : boost::make_iterator_range(
+           rxn.beginReactantTemplates(), rxn.endReactantTemplates())) {
+    // to write the mol block, we need ring information:
+    MolOps::findSSSR(*rt);
+    res << FileParserUtils::getV3000CTAB(*rt, -1);
+  }
+  for (const auto &rt : boost::make_iterator_range(rxn.beginAgentTemplates(),
+                                                   rxn.endAgentTemplates())) {
+    // to write the mol block, we need ring information:
+    MolOps::findSSSR(*rt);
+    res << FileParserUtils::getV3000CTAB(*rt, -1);
+  }
+  res << "M  V30 END REACTANT\n";
+  res << "M  V30 BEGIN PRODUCT\n";
+  for (const auto &rt : boost::make_iterator_range(rxn.beginProductTemplates(),
+                                                   rxn.endProductTemplates())) {
+    // to write the mol block, we need ring information:
+    MolOps::findSSSR(*rt);
+    res << FileParserUtils::getV3000CTAB(*rt, -1);
+  }
+  res << "M  V30 END PRODUCT\n";
+  res << "M  END\n";
+  return res.str();
+}
+
 //! returns an RXN block for a reaction
 std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
-                                       bool separateAgents) {
+                                       bool separateAgents, bool forceV3000) {
+  if (forceV3000) {
+    return ChemicalReactionToV3KRxnBlock(rxn, separateAgents);
+  }
   std::ostringstream res;
   res << "$RXN\n\n      RDKit\n\n";
   if (separateAgents) {
@@ -163,7 +211,6 @@ std::string ChemicalReactionToRxnBlock(const ChemicalReaction &rxn,
   }
   return res.str();
 };
-#endif
 
 //! returns a ROMol with RXNMolRole used for a reaction
 ROMol *ChemicalReactionToRxnMol(const ChemicalReaction &rxn) {

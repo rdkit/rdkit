@@ -8,9 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
-
 #include <bitset>
 #include <list>
 #include <string>
@@ -465,5 +462,93 @@ TEST_CASE("para-stereochemistry", "[accurateCIP]") {
     CHECK(mol->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
                                                    chirality) == true);
     CHECK(chirality == "S");
+  }
+}
+
+TEST_CASE(
+    "Github #4996: Bad handling of dummy atoms in the CIP assignment code",
+    "[accurateCIP]") {
+  SECTION("case 1") {
+    auto m = "*[C@](F)(Cl)Br"_smiles;
+    REQUIRE(m);
+    bool cleanit = true;
+    bool force = true;
+    // original assignment:
+    MolOps::assignStereochemistry(*m, cleanit, force);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "S");
+
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    CIPLabeler::assignCIPLabels(*m);
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "S");
+  }
+  SECTION("dummies can match dummies") {
+    auto m = "*[C@](*)(Cl)Br"_smiles;
+    REQUIRE(m);
+    bool cleanit = true;
+    bool force = true;
+    // original assignment:
+    MolOps::assignStereochemistry(*m, cleanit, force);
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+
+    CIPLabeler::assignCIPLabels(*m);
+    CHECK(!m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
+  }
+  SECTION("case 2") {
+    auto m = "C1CC[C@](*)2CCCC[C@H]2C1"_smiles;
+    REQUIRE(m);
+
+    bool cleanit = true;
+    bool force = true;
+    // original assignment doesn't work for these:
+    MolOps::assignStereochemistry(*m, cleanit, force);
+    CHECK(!m->getAtomWithIdx(3)->hasProp(common_properties::_CIPCode));
+    CHECK(!m->getAtomWithIdx(9)->hasProp(common_properties::_CIPCode));
+
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(3)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "s");
+    cip = "";
+    CHECK(m->getAtomWithIdx(9)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "s");
+  }
+}
+
+TEST_CASE("CIP code errors on fragments which cannot be kekulized",
+          "[accurateCIP]") {
+  SECTION("fragment not affecting the stereochem") {
+    auto m = "F[C@H](CNC)CCc(:c):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+    CHECK(cip == "S");
+  }
+  SECTION("fragment, unique bits") {
+    auto m = "F[C@H](C(N)C)c(:c):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                 cip));
+  }
+  SECTION("fragment, non-unique bits") {
+    auto m = "F[C@H]([C]([NH])[CH2])c(:n):c"_smarts;
+    m->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    m->updatePropertyCache();
+    CIPLabeler::assignCIPLabels(*m);
+    std::string cip;
+    CHECK(!m->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                  cip));
   }
 }

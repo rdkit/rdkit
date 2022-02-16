@@ -19,12 +19,12 @@ Sample Usage:
 """
 
 
-import numpy
+import pickle
 
+import numpy
 from rdkit import DataStructs
 from rdkit.Chem.Fingerprints import FingerprintMols, MolSimilarity
 from rdkit.ML.Cluster import Murtagh
-import pickle
 
 message = FingerprintMols.message
 error = FingerprintMols.error
@@ -39,22 +39,25 @@ def GetDistanceMatrix(data, metric, isSimilarity=1):
 
   """
   nPts = len(data)
-  res = numpy.zeros((nPts * (nPts - 1) // 2), numpy.float)
+  distsMatrix = numpy.zeros((nPts * (nPts - 1) // 2), dtype=numpy.float64)
   nSoFar = 0
   for col in range(1, nPts):
+    fp1 = data[col][1]
+    nBits1 = fp1.GetNumBits()
     for row in range(col):
-      fp1 = data[col][1]
       fp2 = data[row][1]
-      if fp1.GetNumBits() > fp2.GetNumBits():
-        fp1 = DataStructs.FoldFingerprint(fp1, fp1.GetNumBits() / fp2.GetNumBits())
-      elif fp2.GetNumBits() > fp1.GetNumBits():
-        fp2 = DataStructs.FoldFingerprint(fp2, fp2.GetNumBits() / fp1.GetNumBits())
-      sim = metric(fp1, fp2)
+      nBits2 = fp2.GetNumBits()
+      if nBits1 > nBits2:
+        fp1 = DataStructs.FoldFingerprint(fp1, nBits1 / nBits2)
+      elif nBits2 > nBits1:
+        fp2 = DataStructs.FoldFingerprint(fp2, nBits2 / nBits1)
+      
       if isSimilarity:
-        sim = 1. - sim
-      res[nSoFar] = sim
+        distsMatrix[nSoFar] = 1.0 - metric(fp1, fp2)
+      else:
+        distsMatrix[nSoFar] = metric(fp1, fp2)
       nSoFar += 1
-  return res
+  return distsMatrix
 
 
 def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
@@ -69,12 +72,13 @@ def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
     acts = [int(x[2]) for x in data]
 
   if not haveLabels:
-    labels = ['Mol: %s' % str(x[0]) for x in data]
+    labels = [f'Mol: {x[0]}' for x in data]
   else:
     labels = [x[0] for x in data]
   clustTree._ptLabels = labels
   if acts:
     clustTree._ptValues = acts
+  
   for pt in clustTree.GetPoints():
     idx = pt.GetIndex() - 1
     pt.SetName(labels[idx])
@@ -83,10 +87,10 @@ def ClusterPoints(data, metric, algorithmId, haveLabels=False, haveActs=True,
         pt.SetData(int(acts[idx]))
       except Exception:
         pass
+  
   if not returnDistances:
     return clustTree
-  else:
-    return clustTree, dMat
+  return clustTree, dMat
 
 
 def ClusterFromDetails(details):

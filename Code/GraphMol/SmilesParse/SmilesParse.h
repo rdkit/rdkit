@@ -31,6 +31,8 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool removeHs = true;  /**< remove Hs after constructing the molecule */
   bool useLegacyStereo =
       true; /**< use the legacy stereochemistry perception code */
+  bool skipCleanup =
+      false; /**<  skip the final cleanup stage (for internal use) */
 };
 RDKIT_SMILESPARSE_EXPORT RWMol *SmilesToMol(const std::string &smi,
                                             const SmilesParserParams &params);
@@ -91,6 +93,8 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
   bool parseName = true; /**< parse (and set) the molecule name as well */
   bool mergeHs =
       true; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
+  bool skipCleanup =
+      false; /**<  skip the final cleanup stage (for internal use) */
 };
 RDKIT_SMILESPARSE_EXPORT RWMol *SmartsToMol(const std::string &sma,
                                             const SmartsParserParams &ps);

@@ -297,12 +297,12 @@ select rsubstruct_chiral('C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'C[C@@H](O)[C@@H
 -- substructure counts
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol);
 select substruct_count('c1ccncc1'::mol,'c1ccncc1'::mol,false);
-select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
-select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
-select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol);
-select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol);
-select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,false);
-select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol,false);
+select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:7,9,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:7,9,r|'::mol);
+select substruct_count('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:7,9,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:7,9,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:7,9,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:7,9,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:7,9,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:7,9,r|'::mol);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |&1:7,9,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |o1:7,9,r|'::mol,false);
+select substruct_count_chiral('c1ccccc1C[C@@H](O)[C@@H](C)F |o1:7,9,r|'::mol,'c1ccccc1C[C@@H](O)[C@@H](C)F |&1:7,9,r|'::mol,false);
 
 -- special queries
 select 'c1ccc[nH]1'::mol@>mol_from_smiles('c1cccn1[H]') as match;
@@ -459,13 +459,13 @@ select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::qmol));
 
 
 -- CXSmiles
-SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
-SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
-SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
-SELECT mol_to_cxsmarts(qmol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
+SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
+SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
+SELECT mol_to_cxsmarts(qmol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
 
 -- CXSmiles from mol_out
-SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:4,5|'));
+SELECT mol_out(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
 
 -- github #3688: bad input to qmol_from_ctab() crashes db
 select qmol_from_ctab('a'::cstring,false);

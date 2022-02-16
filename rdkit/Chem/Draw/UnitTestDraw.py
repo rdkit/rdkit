@@ -202,10 +202,9 @@ class TestCase(unittest.TestCase):
     self.assertIn("class='note'", svg)
 
   def testDrawMorgan(self):
-    from rdkit.Chem import rdMolDescriptors
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
-    fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
+    _ = rdMolDescriptors.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
     self.assertTrue(872 in bi)
 
     svg1 = Draw.DrawMorganBit(m, 872, bi)
@@ -235,7 +234,7 @@ class TestCase(unittest.TestCase):
   def testDrawRDKit(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
-    rdkfp = Chem.RDKFingerprint(m, maxPath=5, bitInfo=bi)
+    _ = Chem.RDKFingerprint(m, maxPath=5, bitInfo=bi)
     self.assertTrue(1553 in bi)
     svg1 = Draw.DrawRDKitBit(m, 1553, bi)
     path = bi[1553][0]
@@ -258,7 +257,7 @@ class TestCase(unittest.TestCase):
     rxn = AllChem.ReactionFromSmarts(
       "[c;H1:3]1:[c:4]:[c:5]:[c;H1:6]:[c:7]2:[nH:8]:[c:9]:[c;H1:1]:[c:2]:1:2.O=[C:10]1[#6;H2:11][#6;H2:12][N:13][#6;H2:14][#6;H2:15]1>>[#6;H2:12]3[#6;H1:11]=[C:10]([c:1]1:[c:9]:[n:8]:[c:7]2:[c:6]:[c:5]:[c:4]:[c:3]:[c:2]:1:2)[#6;H2:15][#6;H2:14][N:13]3"
     )
-    img = Draw.ReactionToImage(rxn)
+    _ = Draw.ReactionToImage(rxn)
 
   def testGithub3762(self):
     m = Chem.MolFromSmiles('CC(=O)O')
