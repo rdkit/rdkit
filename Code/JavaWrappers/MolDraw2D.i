@@ -36,6 +36,7 @@
 %include "boost_tuple.i"
 %{
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
@@ -70,6 +71,7 @@
 %ignore RDKit::MolDraw2DUtils::contourAndDrawGrid;
 
 
+%include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 %include <GraphMol/MolDraw2D/MolDraw2D.h>
 %include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 %include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
