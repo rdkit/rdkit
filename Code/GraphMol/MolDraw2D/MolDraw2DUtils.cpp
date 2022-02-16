@@ -359,16 +359,13 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
     maxP.y += drawer.drawOptions().padding * dims.y;
 
     if (params.extraGridPadding > 0) {
-      Point2D p1(0, 0), p2(params.extraGridPadding, 0);
-      double pad =
-          fabs(drawer.getDrawCoords(p2).x - drawer.getDrawCoords(p1).x);
-      minP.x -= pad;
-      minP.y -= pad;
-      maxP.x += pad;
-      maxP.y += pad;
+      minP.x -= params.extraGridPadding;
+      minP.y -= params.extraGridPadding;
+      maxP.x += params.extraGridPadding;
+      maxP.y += params.extraGridPadding;
     }
-
     drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
+
   }
 
   size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;
