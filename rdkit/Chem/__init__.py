@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000-2017  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2000-2017  greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -82,24 +82,24 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
   """
     >>> from rdkit import Chem
     >>> mol = Chem.MolFromSmiles('[C@H](Cl)(F)Br')
-    >>> FindMolChiralCenters(mol)
+    >>> Chem.FindMolChiralCenters(mol)
     [(0, 'R')]
     >>> mol = Chem.MolFromSmiles('[C@@H](Cl)(F)Br')
-    >>> FindMolChiralCenters(mol)
+    >>> Chem.FindMolChiralCenters(mol)
     [(0, 'S')]
 
-    >>> FindMolChiralCenters(Chem.MolFromSmiles('CCC'))
+    >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('CCC'))
     []
 
     By default unassigned stereo centers are not reported:
 
     >>> mol = Chem.MolFromSmiles('C[C@H](F)C(F)(Cl)Br')
-    >>> FindMolChiralCenters(mol,force=True)
+    >>> Chem.FindMolChiralCenters(mol,force=True)
     [(1, 'S')]
 
     but this can be changed:
 
-    >>> FindMolChiralCenters(mol,force=True,includeUnassigned=True)
+    >>> Chem.FindMolChiralCenters(mol,force=True,includeUnassigned=True)
     [(1, 'S'), (3, '?')]
 
     The handling of unassigned stereocenters for dependent stereochemistry is not correct 
@@ -159,22 +159,28 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
             code = str(si.descriptor)
           else:
             code = '?'
-            atm.SetIntProp('_ChiralityPossible',1)
+            atm.SetIntProp('_ChiralityPossible', 1)
         centers.append((idx, code))
   return centers
 
+
 import warnings
+
+
 def WrapLogs():
   warnings.warn("Deprecated: use the rdkit.rdBase.LogTo*() functions instead.", DeprecationWarning)
   rdBase.LogToPythonStderr()
+
 
 def LogWarningMsg(msg):
   warnings.warn("Deprecated: use rdkit.rdBase.LogWarningMsg() instead.", DeprecationWarning)
   rdBase.LogWarningMsg(msg)
 
+
 def LogErrorMsg(msg):
   warnings.warn("Deprecated: use rdkit.rdBase.LogErrorMsg() instead.", DeprecationWarning)
   rdBase.LogErrorMsg(msg)
+
 
 #------------------------------------
 #
