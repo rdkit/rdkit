@@ -369,8 +369,7 @@ def PrintAsBase64PNGString(x, renderer=None):
     return svg.toxml()
   else:
     data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
-    return '<img data-content="rdkit/molecule" src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(
-      data)
+    return f'<img data-content="rdkit/molecule" src="data:image/png;base64,{_get_image(data)}" alt="Mol"/>'
 
 
 def PrintDefaultMolRep(x):
@@ -603,10 +602,8 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
   worksheet.set_column('A:A', size[0] / 6.)  # column width
 
   # Write first row with column names
-  c2 = 1
-  for x in cols:
-    worksheet.write_string(0, c2, x)
-    c2 += 1
+  for i, x in enumerate(cols, start=1):
+    worksheet.write_string(0, i, x)
 
   c = 1
   for _, row in frame.iterrows():
@@ -617,17 +614,15 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
     worksheet.set_row(c, height=size[1])  # looks like height is not in px?
     worksheet.insert_image(c, 0, "f", {'image_data': image_data})
 
-    c2 = 1
-    for x in cols:
+    for i, x in enumerate(cols, start=1):
       if str(dataTypes[x]) == "object":
         # string length is limited in xlsx
-        worksheet.write_string(c, c2, str(row[x])[:32000])
+        worksheet.write_string(c, i, str(row[x])[:32000])
       elif ('float' in str(dataTypes[x])) or ('int' in str(dataTypes[x])):
         if (row[x] != np.nan) or (row[x] != np.inf):
-          worksheet.write_number(c, c2, row[x])
+          worksheet.write_number(c, i, row[x])
       elif 'datetime' in str(dataTypes[x]):
-        worksheet.write_datetime(c, c2, row[x])
-      c2 += 1
+        worksheet.write_datetime(c, i, row[x])
     c += 1
 
   workbook.close()

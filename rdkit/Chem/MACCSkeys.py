@@ -269,8 +269,7 @@ def _pyGenMACCSKeys(mol, **kwargs):
       if count == 0:
         res[i] = mol.HasSubstructMatch(patt)
       else:
-        matches = mol.GetSubstructMatches(patt)
-        if len(matches) > count:
+        if len(mol.GetSubstructMatches(patt)) > count:
           res[i] = 1
           
     elif i == 125:
@@ -279,9 +278,8 @@ def _pyGenMACCSKeys(mol, **kwargs):
       nArom = 0
       res[125] = 0
       for ring in ri.BondRings():
-        isArom = not any(not mol.GetBondWithIdx(bondIdx).GetIsAromatic() 
-                         for bondIdx in ring)  
-        if isArom:
+        if not any(not mol.GetBondWithIdx(bondIdx).GetIsAromatic() 
+                   for bondIdx in ring):
           nArom += 1
           if nArom > 1:
             res[125] = 1

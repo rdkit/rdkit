@@ -11,6 +11,7 @@
 """ uses pymol to interact with molecules
 
 """
+from sympy import Idx
 from rdkit import Chem
 import os, tempfile
 
@@ -68,8 +69,7 @@ class MolViewer(object):
     """
     if showOnly:
       self.DeleteAll()
-    id = self.server.loadFile(filename, name)
-    return id
+    return self.server.loadFile(filename, name)
 
   def ShowMol(self, mol, name='molecule', showOnly=True, highlightFeatures=[], molB="", confId=-1,
               zoom=True, forcePDB=False, showSticks=False):
@@ -106,7 +106,7 @@ class MolViewer(object):
     else:
       self.server.do('view rdinterface,recall')
     if showSticks:  # show molecule in stick view
-      self.server.do('show sticks, {}'.format(name))
+      self.server.do(f'show sticks, {name}')
     return mid
 
   def GetSelectedAtoms(self, whichSelection=None):
@@ -125,36 +125,34 @@ class MolViewer(object):
   def SelectAtoms(self, itemId, atomIndices, selName='selection'):
     " selects a set of atoms "
     ids = '(id '
-    ids += ','.join(['%d' % (x + 1) for x in atomIndices])
+    ids += ','.join([f'{x + 1}' for x in atomIndices])
     ids += ')'
-    cmd = 'select %s,%s and %s' % (selName, ids, itemId)
-    self.server.do(cmd)
+    self.server.do(f'select {selName},{ids} and {itemId}')
 
   def HighlightAtoms(self, indices, where, extraHighlight=False):
     " highlights a set of atoms "
     if extraHighlight:
-      idxText = ','.join(['%s and (id %d)' % (where, x) for x in indices])
-      self.server.do('edit %s' % idxText)
+      idxText = ','.join([f'{where} and (id {x})' for x in indices])
+      self.server.do(f'edit {idxText}')
     else:
-      idxText = ' or '.join(['id %d' % x for x in indices])
-      self.server.do('select selection, %s and (%s)' % (where, idxText))
+      idxText = ' or '.join([f'id {x}' for x in indices])
+      self.server.do(f'select selection, {where} and ({idxText})')
 
   def SetDisplayStyle(self, obj, style=''):
     " change the display style of the specified object "
-    self.server.do('hide everything,%s' % (obj, ))
+    self.server.do(f'hide everything,{obj}')
     if style:
-      self.server.do('show %s,%s' % (style, obj))
+      self.server.do(f'show {style},{obj}')
 
   def SelectProteinNeighborhood(self, aroundObj, inObj, distance=5.0, name='neighborhood',
                                 showSurface=False):
     """ selects the area of a protein around a specified object/selection name;
     optionally adds a surface to that """
-    self.server.do('select %(name)s,byres (%(aroundObj)s around %(distance)f) and %(inObj)s' %
-                   locals())
+    self.server.do(f'select {name},byres ({aroundObj} around {distance}) and {inObj}')
 
     if showSurface:
-      self.server.do('show surface,%s' % name)
-      self.server.do('disable %s' % name)
+      self.server.do(f'show surface,{name}')
+      self.server.do(f'disable {name}')
 
   def AddPharmacophore(self, locs, colors, label, sphereRad=0.5):
     " adds a set of spheres "
@@ -162,7 +160,7 @@ class MolViewer(object):
     self.server.resetCGO(label)
     for i, loc in enumerate(locs):
       self.server.sphere(loc, sphereRad, colors[i], label, 1)
-    self.server.do('enable %s' % label)
+    self.server.do(f'enable {label}')
     self.server.do('view rdinterface,recall')
 
   def SetDisplayUpdate(self, val):
@@ -173,20 +171,17 @@ class MolViewer(object):
 
   def GetAtomCoords(self, sels):
     " returns the coordinates of the selected atoms "
-    res = {}
-    for label, idx in sels:
-      coords = self.server.getAtomCoords('(%s and id %d)' % (label, idx))
-      res[(label, idx)] = coords
-    return res
+    return {(label, idx): self.server.getAtomCoords(f'({label} and id {idx})') 
+            for label, idx in sels}
 
   def HideAll(self):
     self.server.do('disable all')
 
   def HideObject(self, objName):
-    self.server.do('disable %s' % objName)
+    self.server.do(f'disable {objName}')
 
   def DisplayObject(self, objName):
-    self.server.do('enable %s' % objName)
+    self.server.do(f'enable {objName}')
 
   def Redraw(self):
     self.server.do('refresh')
@@ -232,7 +227,7 @@ class MolViewer(object):
       time.sleep(preDelay)
     fd = tempfile.NamedTemporaryFile(suffix='.png', delete=False)
     fd.close()
-    self.server.do('png %s' % fd.name)
+    self.server.do(f'png {fd.name}')
     time.sleep(0.2)  # <- wait a short period so that PyMol can finish
     for _ in range(10):
       try:

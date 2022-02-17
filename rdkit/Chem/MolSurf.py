@@ -16,16 +16,14 @@ descriptors.
 
 
 import bisect
+from math import pi
 
 import numpy
-
 from rdkit import Chem
-from rdkit.Chem import Crippen
-from rdkit.Chem import rdPartialCharges, rdMolDescriptors
-
+from rdkit.Chem import Crippen, rdMolDescriptors, rdPartialCharges
 
 ptable = Chem.GetPeriodicTable()
-bondScaleFacts = [.1, 0, .2, .3]  # aromatic,single,double,triple
+bondScaleFacts = [.1, 0, .2, .3]  # aromatic, single, double, triple
 
 
 def _LabuteHelper(mol, includeHs=1, force=0):
@@ -44,8 +42,7 @@ def _LabuteHelper(mol, includeHs=1, force=0):
     else:
       if res:
         return res
-  tpl = rdMolDescriptors._CalcLabuteASAContribs(mol, includeHs)
-  ats, hs = tpl
+  ats, hs = rdMolDescriptors._CalcLabuteASAContribs(mol, includeHs)
   Vi = [hs] + list(ats)
   mol._labuteContribs = Vi
   return Vi
@@ -59,7 +56,6 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
   **Note:** Changes here affect the version numbers of all ASA descriptors
 
   """
-  import math
   if not force:
     try:
       res = mol._labuteContribs
@@ -70,8 +66,9 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
         return res
 
   nAts = mol.GetNumAtoms()
-  Vi = numpy.zeros(nAts + 1, 'd')
-  rads = numpy.zeros(nAts + 1, 'd')
+  size = nAts + 1
+  Vi = numpy.zeros(size, dtype=numpy.float64)
+  rads = [0.0] * size
 
   # 0 contains the H information
   rads[0] = ptable.GetRb0(1)
@@ -104,14 +101,13 @@ def _pyLabuteHelper(mol, includeHs=1, force=0):
       Vi[i] += Rj * Rj - (Ri - dij) ** 2 / dij
       Vi[j] += Ri * Ri - (Rj - dij) ** 2 / dij
 
-  for i in range(nAts + 1):
-    Ri = rads[i]
-    Vi[i] = 4 * math.pi * Ri ** 2 - math.pi * Ri * Vi[i]
+  for i, Ri in enumerate(rads):
+    Vi[i] = pi * Ri * (4 * Ri - Vi[i])
 
   mol._labuteContribs = Vi
   return Vi
 
-# def SMR_VSA(mol,bins=[0.11,0.26,0.35,0.39,0.44,0.485,0.56]):
+# def SMR_VSA(mol,bins=[0.11, 0.26, 0.35, 0.39, 0.44, 0.485, 0.56]):
 # original default bins from assuming Labute values are logs
 # mrBins=[1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63]
 mrBins = [1.29, 1.82, 2.24, 2.45, 2.75, 3.05, 3.63, 3.8, 4.0]
@@ -135,13 +131,10 @@ def pySMR_VSA_(mol, bins=None, force=1):
   propContribs = Crippen._GetAtomContribs(mol, force=force)
   volContribs = _LabuteHelper(mol)
 
-  ans = numpy.zeros(len(bins) + 1, 'd')
-  for i in range(len(propContribs)):
-    prop = propContribs[i]
-    vol = volContribs[i + 1]
+  ans = numpy.zeros(len(bins) + 1, dtype=numpy.float64)
+  for i, prop in enumerate(propContribs):
     if prop is not None:
-      bin_ = bisect.bisect_right(bins, prop[1])
-      ans[bin_] += vol
+      ans[bisect.bisect_right(bins, prop[1])] += volContribs[i + 1]
 
   mol._smrVSA = ans
   return ans
@@ -174,13 +167,10 @@ def pySlogP_VSA_(mol, bins=None, force=1):
   propContribs = Crippen._GetAtomContribs(mol, force=force)
   volContribs = _LabuteHelper(mol)
 
-  ans = numpy.zeros(len(bins) + 1, 'd')
-  for i in range(len(propContribs)):
-    prop = propContribs[i]
-    vol = volContribs[i + 1]
+  ans = numpy.zeros(len(bins) + 1, dtype=numpy.float64)
+  for i, prop in enumerate(propContribs):
     if prop is not None:
-      bin_ = bisect.bisect_right(bins, prop[0])
-      ans[bin_] += vol
+      ans[bisect.bisect_right(bins, prop[0])] += volContribs[i + 1]
 
   mol._slogpVSA = ans
   return ans
@@ -220,13 +210,10 @@ def pyPEOE_VSA_(mol, bins=None, force=1):
     propContribs.append(v)
   volContribs = _LabuteHelper(mol)
 
-  ans = numpy.zeros(len(bins) + 1, 'd')
-  for i in range(len(propContribs)):
-    prop = propContribs[i]
-    vol = volContribs[i + 1]
+  ans = numpy.zeros(len(bins) + 1, dtype=numpy.float64)
+  for i, prop in enumerate(propContribs):
     if prop is not None:
-      bin_ = bisect.bisect_right(bins, prop)
-      ans[bin_] += vol
+      ans[bisect.bisect_right(bins, prop)] += volContribs[i + 1]
 
   mol._peoeVSA = ans
   return ans
@@ -334,8 +321,9 @@ def _pyTPSAContribs(mol, verbose=False):
    implementation.
 
   """
-  res = [0] * mol.GetNumAtoms()
-  for i in range(mol.GetNumAtoms()):
+  nAts = mol.GetNumAtoms()
+  res = [0] * nAts
+  for i in range(nAts):
     atom = mol.GetAtomWithIdx(i)
     atNum = atom.GetAtomicNum()
     if atNum in [7, 8]:
