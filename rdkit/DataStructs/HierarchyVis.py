@@ -39,13 +39,11 @@ visOpts = VisOpts()
 
 def GetMinCanvasSize(adjList, levelList):
   maxAcross = -1
-  for _, v in levelList.items():
+  for v in levelList.values():
     maxAcross = max(maxAcross, len(v))
 
-  nLevs = len(levelList.keys())
-  minSize = (maxAcross * (visOpts.minCircRad * 2 + visOpts.horizOffset),
-             visOpts.topMargin + nLevs * visOpts.vertOffset)
-  return minSize
+  return (maxAcross * (visOpts.minCircRad * 2 + visOpts.horizOffset),
+          visOpts.topMargin + len(levelList.keys()) * visOpts.vertOffset)
 
 
 def DrawHierarchy(adjList, levelList, canvas, entryColors=None, bitIds=None, minLevel=-1,
@@ -70,20 +68,19 @@ def DrawHierarchy(adjList, levelList, canvas, entryColors=None, bitIds=None, min
   maxLevel = min(maxLevel, levelLengths[-1])
 
   dims = canvas.size
+  canvas.defaultFont = visOpts.labelFont
   drawLocs = {}
   # start at the bottom of the hierarchy and work up:
   for levelLen in range(maxLevel, minLevel - 1, -1):
-    nLevelsDown = levelLen - minLevel
-    pos = [0, visOpts.vertOffset * nLevelsDown + visOpts.topMargin]
+    pos = [0, visOpts.vertOffset * (levelLen - minLevel) + visOpts.topMargin]
 
     ids = levelList.get(levelLen, [])
 
     # FIX: we'll eventually want to figure out some kind of sorting here:
     nHere = len(ids)
-    canvas.defaultFont = visOpts.labelFont
     if nHere:
       # figure the size of each node at this level:
-      spacePerNode = float(dims[0]) / nHere - visOpts.horizOffset
+      spacePerNode = (float(dims[0]) / nHere) - visOpts.horizOffset
       nodeRad = min(visOpts.maxCircRad, max(spacePerNode / 2, visOpts.minCircRad))
       spacePerNode = nodeRad * 2 + visOpts.horizOffset
       
