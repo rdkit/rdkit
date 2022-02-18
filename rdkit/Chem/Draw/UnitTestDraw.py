@@ -262,10 +262,15 @@ class TestCase(unittest.TestCase):
   def testGithub3762(self):
     m = Chem.MolFromSmiles('CC(=O)O')
     ats = [1, 2, 3]
-    svg = Draw._moltoSVG(m, (250, 200), ats, "", False)
-    self.assertIn('stroke:#FF7F7F;stroke-width:2', svg)
-    svg = Draw._moltoSVG(m, (250, 200), ats, "", False, highlightBonds=[])
-    self.assertNotIn('stroke:#FF7F7F;stroke-width:2', svg)
+    svg1 = Draw._moltoSVG(m, (250, 200), ats, "", False)
+    svg2 = Draw._moltoSVG(m, (250, 200), ats, "", False, highlightBonds=[])
+    # there are minor differences between the freetype and non-freetype versions:
+    if '>O<' not in svg1:
+      self.assertIn('stroke:#FF7F7F;stroke-width:20', svg1)
+      self.assertNotIn('stroke:#FF7F7F;stroke-width:20', svg2)
+    else:
+      self.assertIn('stroke:#FF7F7F;stroke-width:19', svg1)
+      self.assertNotIn('stroke:#FF7F7F;stroke-width:19', svg2)
 
 
 if __name__ == '__main__':

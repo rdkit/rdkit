@@ -20,12 +20,17 @@ class QPainterPath;
 
 namespace RDKit {
 
+namespace MolDraw2D_detail {
 // ****************************************************************************
 
 class DrawTextFTQt : public DrawTextFT {
  public:
   DrawTextFTQt(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, QPainter *qp);
+  DrawTextFTQt(const DrawTextFTQt &rhs) = delete;
+  DrawTextFTQt(DrawTextFTQt &&rhs) = delete;
+  DrawTextFTQt &operator=(const DrawTextFTQt &rhs) = delete;
+  DrawTextFTQt &operator=(DrawTextFTQt &&rhs) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;
@@ -35,7 +40,6 @@ class DrawTextFTQt : public DrawTextFT {
                           const FT_Vector *controlTwo,
                           const FT_Vector *to) override;
 
- protected:
   // adds x_trans_ and y_trans_ to coords returns x advance distance
   virtual double extractOutline() override;
 
@@ -44,6 +48,6 @@ class DrawTextFTQt : public DrawTextFT {
   std::unique_ptr<QPainterPath> dp_qpp;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
-
 #endif  // RDKIT_DRAWTEXTFTQT_H

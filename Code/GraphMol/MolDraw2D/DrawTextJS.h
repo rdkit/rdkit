@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 Greg Landrum and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -18,19 +20,23 @@
 
 #include <emscripten.h>
 #include <emscripten/val.h>
-#include <GraphMol/MolDraw2D/DrawText.h>
+#include <GraphMol/MolDraw2D/DrawTextNotFT.h>
 
 namespace RDKit {
-
+namespace MolDraw2D_detail {
 // ****************************************************************************
 
-class DrawTextJS : public DrawText {
+class DrawTextJS : public DrawTextNotFT {
+
  public:
   DrawTextJS(double max_fnt_sz, double min_fnt_sz, emscripten::val &context);
+  DrawTextJS(const DrawTextJS &rhs) = delete;
+  DrawTextJS(const DrawTextJS &&rhs) = delete;
+  DrawTextJS &operator=(const DrawTextJS &rhs) = delete;
+  DrawTextJS &operator=(const DrawTextJS &&rhs) = delete;
 
   void drawChar(char c, const Point2D &cds) override;
 
- private:
   emscripten::val &context_;
 
   // fills a vector of StringRects, one for each char in text, with
@@ -42,6 +48,7 @@ class DrawTextJS : public DrawText {
                       std::vector<char> &draw_chars) const override;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTSVG_H

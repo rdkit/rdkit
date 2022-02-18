@@ -30,9 +30,11 @@ class RDKIT_MOLDRAW2DQT_EXPORT MolDraw2DQt : public MolDraw2D {
 
   void setColour(const DrawColour &col) override;
 
-  void drawLine(const Point2D &cds1, const Point2D &cds2) override;
+  void drawLine(const Point2D &cds1, const Point2D &cds2,
+                bool rawCoords = false) override;
   void drawChar(char c, const Point2D &cds);
-  void drawPolygon(const std::vector<Point2D> &cds) override;
+  void drawPolygon(const std::vector<Point2D> &cds,
+                   bool rawCoords = false) override;
   void clearDrawing() override;
 
  private:

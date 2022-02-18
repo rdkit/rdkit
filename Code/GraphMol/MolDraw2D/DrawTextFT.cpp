@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -6,7 +8,7 @@
 //  of the RDKit source tree.
 //
 //
-// Original author: David Cosgrove (CozChemIx) on 06/05/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 
 #include <cstdio>
@@ -17,6 +19,8 @@
 
 namespace RDKit {
 extern const std::string telex_ttf;
+
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawTextFT::DrawTextFT(double max_fnt_sz, double min_fnt_sz,
@@ -133,7 +137,8 @@ void DrawTextFT::getStringRects(const std::string &text,
                                 std::vector<TextDrawType> &draw_modes,
                                 std::vector<char> &draw_chars) const {
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
-  double running_x = 0.0, max_y = 0.0;
+  double max_y = 0.0;
+  std::vector<double> extras;
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
     // markup
@@ -151,23 +156,30 @@ void DrawTextFT::getStringRects(const std::string &text,
     double p_y_max = oscale * fontCoordToDrawCoord(this_y_max);
     double p_advance = oscale * fontCoordToDrawCoord(advance);
     double width = p_x_max - p_x_min;
+    // reduce the horizontal offset by p_x_min, which is the distance
+    // of the start of the glyph from the start of the char box.
+    // Otherwise spacing is uneven.
+    extras.push_back(p_advance - p_x_max);
     if (!this_x_max) {
-      // it was a space, probably.
-      width = p_advance;
+      // it was a space, probably, and we want small spaces because screen
+      // real estate is limited.
+      width = p_advance / 3;
     }
     double height = p_y_max - p_y_min;
     Point2D offset(p_x_min + width / 2.0, p_y_max / 2.0);
     Point2D g_centre(offset.x, p_y_max - height / 2.0);
     rects.push_back(std::shared_ptr<StringRect>(
         new StringRect(offset, g_centre, width, height)));
-    rects.back()->trans_.x = running_x;
     draw_modes.push_back(draw_mode);
-    running_x += this_x_max ? p_x_max : p_advance;
     max_y = std::max(max_y, p_y_max);
   }
-  for (auto r : rects) {
-    r->g_centre_.y = max_y - r->g_centre_.y;
-    r->offset_.y = max_y / 2.0;
+  for (auto i = 0u; i < rects.size(); ++i) {
+    rects[i]->g_centre_.y = max_y - rects[i]->g_centre_.y;
+    rects[i]->offset_.y = max_y / 2.0;
+    if (i) {
+      rects[i]->trans_.x = rects[i - 1]->trans_.x + rects[i - 1]->width_ / 2 +
+                           rects[i]->width_ / 2 + extras[i-1];
+    }
   }
 
   adjustStringRectsForSuperSubScript(draw_modes, rects);
@@ -188,7 +200,6 @@ void DrawTextFT::calcGlyphBBox(char c, FT_Pos &x_min, FT_Pos &y_min,
   y_min = bbox.yMin;
   x_max = bbox.xMax;
   y_max = bbox.yMax;
-
   advance = slot->advance.x;
 }
 
@@ -216,6 +227,7 @@ int cubicToFunction(const FT_Vector *controlOne, const FT_Vector *controlTwo,
   auto *rdft = static_cast<DrawTextFT *>(user);
   return rdft->CubicToFunctionImpl(controlOne, controlTwo, to);
 }
+}  // namespace MolDraw2D_detail
 
 namespace {
 

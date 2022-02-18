@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -6,7 +8,7 @@
 //  of the RDKit source tree.
 //
 //
-// Original author: David Cosgrove (CozChemIx) on 06/05/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 // This is an abstract base class derived from DrawText that does drawing
 // using FreeType.
@@ -28,15 +30,12 @@ namespace RDKit {
 
 struct StringRect;
 
+namespace MolDraw2D_detail {
+
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
  public:
-  DrawTextFT(double max_fnt_sz, double min_fnt_sz,
-             const std::string &font_file);
   ~DrawTextFT() override;
-
-  void drawChar(char c, const Point2D &cds) override;
-
   virtual int MoveToFunctionImpl(const FT_Vector *to) = 0;
   virtual int LineToFunctionImpl(const FT_Vector *to) = 0;
   virtual int ConicToFunctionImpl(const FT_Vector *control,
@@ -45,18 +44,26 @@ class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
                                   const FT_Vector *controlTwo,
                                   const FT_Vector *to) = 0;
 
+  DrawTextFT(double max_fnt_sz, double min_fnt_sz,
+             const std::string &font_file);
+  DrawTextFT(const DrawTextFT &) = delete;
+  DrawTextFT(DrawTextFT &&) = delete;
+  DrawTextFT &operator=(const DrawTextFT &) = delete;
+  DrawTextFT &operator=(DrawTextFT &&) = delete;
+
+  void drawChar(char c, const Point2D &cds) override;
+
+
   // unless over-ridden by the c'tor, this will return a hard-coded
   // file from $RDBASE.
   std::string getFontFile() const override;
   void setFontFile(const std::string &font_file) override;
 
- protected:
   double fontCoordToDrawCoord(FT_Pos fc) const;
   void fontPosToDrawPos(FT_Pos fx, FT_Pos fy, double &dx, double &dy) const;
   // adds x_trans_ and y_trans_ to coords returns x advance distance
   virtual double extractOutline();
 
- private:
   FT_Library library_;
   FT_Face face_;
   std::string font_file_;  // over-rides default if not empty.
@@ -87,6 +94,7 @@ int conicToFunction(const FT_Vector *control, const FT_Vector *to, void *user);
 int cubicToFunction(const FT_Vector *controlOne, const FT_Vector *controlTwo,
                     const FT_Vector *to, void *user);
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTFT_H

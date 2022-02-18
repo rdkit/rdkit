@@ -150,7 +150,7 @@ M  END
 >  <atom.iprop.NumHeavyNeighbors>  (1) 
 2 2 2
 
->  <atom.prop.AtomLabel>  (1) 
+>  <atom.prop.AtomLabel>  (1)
 C1 N2 C3
 
 >  <atom.bprop.IsCarbon>  (1) 

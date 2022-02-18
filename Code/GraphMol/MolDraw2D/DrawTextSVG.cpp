@@ -1,11 +1,13 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// Original author: David Cosgrove (CozChemIx) on 29/04/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 // A concrete class derived from DrawText that uses SVG
 // to draw text onto a picture.
@@ -21,12 +23,13 @@
 
 namespace RDKit {
 
-std::string DrawColourToSVG(const RDKit::DrawColour &col);
+std::string DrawColourToSVG(const DrawColour &col);
 
+namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextSVG::DrawTextSVG(double max_fnt_sz, double min_fnt_sz,
                          std::ostream &oss, std::string &d_act_class)
-    : DrawText(max_fnt_sz, min_fnt_sz),
+    : DrawTextNotFT(max_fnt_sz, min_fnt_sz),
       oss_(oss),
       d_active_class_(d_act_class) {}
 
@@ -128,4 +131,5 @@ void DrawTextSVG::getStringRects(
   adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

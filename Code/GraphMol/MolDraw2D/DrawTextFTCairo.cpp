@@ -1,16 +1,19 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// Original author: David Cosgrove (CozChemIx) on 08/05/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 
 #include <GraphMol/MolDraw2D/DrawTextFTCairo.h>
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawTextFTCairo::DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
@@ -89,4 +92,5 @@ int DrawTextFTCairo::CubicToFunctionImpl(const FT_Vector *controlOne,
   return 0;
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

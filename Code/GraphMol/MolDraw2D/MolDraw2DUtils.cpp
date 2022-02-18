@@ -164,8 +164,11 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(includeAtomTags);
   PT_OPT_GET(clearBackground);
   PT_OPT_GET(legendFontSize);
+  PT_OPT_GET(legendFraction);
   PT_OPT_GET(maxFontSize);
   PT_OPT_GET(minFontSize);
+  PT_OPT_GET(fixedFontSize);
+  PT_OPT_GET(baseFontSize);
   PT_OPT_GET(annotationFontScale);
   PT_OPT_GET(fontFile);
   PT_OPT_GET(multipleBondOffset);
@@ -196,6 +199,8 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(includeChiralFlagLabel);
   PT_OPT_GET(simplifiedStereoGroupLabel);
   PT_OPT_GET(singleColourWedgeBonds);
+  PT_OPT_GET(scalingFactor);
+  PT_OPT_GET(drawMolsSameScale);
 
   get_colour_option(&pt, "highlightColour", opts.highlightColour);
   get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
@@ -231,7 +236,7 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
   size_t nX = xcoords.size();
   size_t nY = ycoords.size();
   double minV = std::numeric_limits<double>::max();
-  double maxV = -std::numeric_limits<double>::max();
+  double maxV = std::numeric_limits<double>::lowest();
   if (!levels.size() || params.fillGrid) {
     for (size_t i = 0; i < nX; ++i) {
       for (size_t j = 0; j < nY; ++j) {
@@ -340,7 +345,7 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
   if (params.setScale) {
     Point2D minP, maxP;
     minP.x = minP.y = std::numeric_limits<double>::max();
-    maxP.x = maxP.y = -std::numeric_limits<double>::max();
+    maxP.x = maxP.y = std::numeric_limits<double>::lowest();
     for (const auto &loc : locs) {
       minP.x = std::min(loc.x, minP.x);
       minP.y = std::min(loc.y, minP.y);
@@ -354,16 +359,13 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
     maxP.y += drawer.drawOptions().padding * dims.y;
 
     if (params.extraGridPadding > 0) {
-      Point2D p1(0, 0), p2(params.extraGridPadding, 0);
-      double pad =
-          fabs(drawer.getDrawCoords(p2).x - drawer.getDrawCoords(p1).x);
-      minP.x -= pad;
-      minP.y -= pad;
-      maxP.x += pad;
-      maxP.y += pad;
+      minP.x -= params.extraGridPadding;
+      minP.y -= params.extraGridPadding;
+      maxP.x += params.extraGridPadding;
+      maxP.y += params.extraGridPadding;
     }
-
     drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
+
   }
 
   size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;

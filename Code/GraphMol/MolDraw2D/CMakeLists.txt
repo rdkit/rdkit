@@ -27,15 +27,14 @@ rdkit_headers(MolDraw2D.h
   MolDraw2Dwx.h
   MolDraw2DJS.h
   MolDraw2DUtils.h
-  DrawText.h
-  DrawTextSVG.h
-  DrawTextJS.h
+  MolDraw2DHelpers.h
   DEST GraphMol/MolDraw2D
 )
 
 rdkit_library(MolDraw2D MolDraw2D.cpp MolDraw2DSVG.cpp
-  MolDraw2DDetails.cpp MolDraw2DUtils.cpp DrawText.cpp
-  DrawTextSVG.cpp 
+  MolDraw2DDetails.cpp MolDraw2DUtils.cpp AtomSymbol.cpp
+  DrawAnnotation.cpp DrawMol.cpp DrawMolMCH.cpp
+  DrawShape.cpp DrawText.cpp DrawTextNotFT.cpp DrawTextSVG.cpp
   MolDraw2DJS.cpp DrawTextJS.cpp
   LINK_LIBRARIES
   ChemReactions Depictor MolTransforms 

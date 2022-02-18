@@ -1,11 +1,13 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// Original author: David Cosgrove (CozChemIx) on 29/04/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 // A concrete class derived from DrawText that uses the Cairo
 // toy API to draw text onto a surface.
@@ -15,19 +17,22 @@
 
 #include <cairo.h>
 
-#include <GraphMol/MolDraw2D/DrawText.h>
+#include <GraphMol/MolDraw2D/DrawTextNotFT.h>
 
 namespace RDKit {
 
+class MolDraw2DCairo;
+namespace MolDraw2D_detail {
+
 // ****************************************************************************
-class DrawTextCairo : public DrawText {
+class DrawTextCairo : public DrawTextNotFT {
+
  public:
   DrawTextCairo(double max_fnt_sz, double min_fnt_sz, cairo_t *dp_cr);
-
-#if 0
-  void getStringSize(const std::string &label, double &label_width,
-                     double &label_height) const override;
-#endif
+  DrawTextCairo(const DrawTextCairo &) = delete;
+  DrawTextCairo(DrawTextCairo &&) = delete;
+  DrawTextCairo &operator=(const DrawTextCairo &) = delete;
+  DrawTextCairo &operator=(DrawTextCairo &&) = delete;
   void drawChar(char c, const Point2D &cds) override;
   void setCairoContext(cairo_t *cr);
 
@@ -43,6 +48,7 @@ class DrawTextCairo : public DrawText {
                       std::vector<char> &draw_chars) const override;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTCAIRO_H

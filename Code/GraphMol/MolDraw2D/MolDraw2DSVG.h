@@ -29,17 +29,15 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
  public:
   // initialize to use a particular ostream
   MolDraw2DSVG(int width, int height, std::ostream &os, int panelWidth = -1,
-               int panelHeight = -1, bool noFreetype = false)
-      : MolDraw2D(width, height, panelWidth, panelHeight), d_os(os) {
-    initTextDrawer(noFreetype);
-  }
+               int panelHeight = -1, bool noFreetype = false);
 
   // initialize to use the internal stringstream
   MolDraw2DSVG(int width, int height, int panelWidth = -1, int panelHeight = -1,
-               bool noFreetype = false)
-      : MolDraw2D(width, height, panelWidth, panelHeight), d_os(d_ss) {
-    initTextDrawer(noFreetype);
-  }
+               bool noFreetype = false);
+  MolDraw2DSVG(const MolDraw2DSVG &) = delete;
+  MolDraw2DSVG(MolDraw2DSVG &&) = delete;
+  MolDraw2DSVG &operator=(const MolDraw2DSVG &) = delete;
+  MolDraw2DSVG &operator=(MolDraw2DSVG &&) = delete;
 
   void setColour(const DrawColour &col) override;
 
@@ -48,15 +46,18 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   // but we'll start here
   void finishDrawing();
 
-  void drawLine(const Point2D &cds1, const Point2D &cds2) override;
-  void drawPolygon(const std::vector<Point2D> &cds) override;
-  void drawEllipse(const Point2D &cds1, const Point2D &cds2) override;
+  void drawLine(const Point2D &cds1, const Point2D &cds2,
+                bool rawCoords = false) override;
+  void drawPolygon(const std::vector<Point2D> &cds,
+                   bool rawCoords = false) override;
+  void drawEllipse(const Point2D &cds1, const Point2D &cds2,
+                   bool rawCoords = false) override;
   void clearDrawing() override;
 
   void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                     const DrawColour &col1, const DrawColour &col2,
-                    unsigned int nSegments = 16,
-                    double vertOffset = 0.05) override;
+                    unsigned int nSegments = 16, double vertOffset = 0.05,
+                    bool rawCoords = false) override;
 
   // this only makes sense if the object was initialized without a stream
   std::string getDrawingText() const { return d_ss.str(); }
@@ -72,35 +73,14 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   // molecules to be re-built from SVG with MolFromSVG
   void addMoleculeMetadata(const ROMol &mol, int confId = -1) const;
   void addMoleculeMetadata(const std::vector<ROMol *> &mols,
-                           const std::vector<int> confIds = {}) const;
-
-  void drawAnnotation(const AnnotationType &annot) override;
+                           const std::vector<int> confIds = {});
 
  private:
   std::ostream &d_os;
   std::stringstream d_ss;
-  std::string d_activeClass;
 
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
-
- protected:
-  void drawBond(const ROMol &mol, const Bond *bond, int at1_idx, int at2_idx,
-                const std::vector<int> *highlight_atoms = nullptr,
-                const std::map<int, DrawColour> *highlight_atom_map = nullptr,
-                const std::vector<int> *highlight_bonds = nullptr,
-                const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-                const std::vector<std::pair<DrawColour, DrawColour>>
-                    *bond_colours = nullptr) override;
-  void drawAtomLabel(int atom_num, const DrawColour &draw_colour) override;
-  //! DEPRECATED
-  void drawAnnotation(const std::string &note,
-                      const StringRect &note_rect) override {
-    AnnotationType annot;
-    annot.text_ = note;
-    annot.rect_ = note_rect;
-    drawAnnotation(annot);
-  }
 
   virtual void outputClasses();
 };

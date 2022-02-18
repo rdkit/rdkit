@@ -1,11 +1,13 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// Original author: David Cosgrove (CozChemIx) on 29/04/2020.
+// Original author: David Cosgrove (CozChemIx).
 //
 
 #include <GraphMol/MolDraw2D/DrawTextCairo.h>
@@ -14,11 +16,12 @@
 using namespace std;
 
 namespace RDKit {
+namespace MolDraw2D_detail {
 
 // ****************************************************************************
 DrawTextCairo::DrawTextCairo(double max_fnt_sz, double min_fnt_sz,
                              cairo_t *dp_cr)
-    : DrawText(max_fnt_sz, min_fnt_sz), dp_cr_(dp_cr) {
+    : DrawTextNotFT(max_fnt_sz, min_fnt_sz), dp_cr_(dp_cr) {
   setCairoContext(dp_cr);
 }
 
@@ -106,4 +109,5 @@ void DrawTextCairo::getStringRects(const string &text,
   adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit

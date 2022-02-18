@@ -26,6 +26,8 @@ using RDGeom::Point2D;
 
 namespace RDKit {
 namespace MolDraw2D_detail {
+struct StringRect;
+
 // data taken from the helvetica font info in
 // $RDBASE/rdkit/sping/PDF/pdfmetrics.py
 const int char_widths[] = {
@@ -94,9 +96,6 @@ RDKIT_MOLDRAW2D_EXPORT std::vector<Point2D> getBracketPoints(
     const Point2D &p1, const Point2D &p2, const Point2D &refPt,
     const std::vector<std::pair<Point2D, Point2D>> &bondSegments,
     double bracketFrac = 0.1);
-RDKIT_MOLDRAW2D_EXPORT void drawShapes(MolDraw2D &drawer,
-                                       const std::vector<MolDrawShape> &shapes);
-
 // there are a several empirically determined constants here.
 RDKIT_MOLDRAW2D_EXPORT std::vector<Point2D> handdrawnLine(
     Point2D cds1, Point2D cds2, double scale, bool shiftBegin = false,
@@ -106,6 +105,32 @@ RDKIT_MOLDRAW2D_EXPORT std::vector<Point2D> handdrawnLine(
 inline std::string formatDouble(double val) {
   return boost::str(boost::format("%.1f") % val);
 }
+
+bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
+                       const Point2D &end2, double padding);
+// returns true if any corner of triangle is inside the rectangle.
+bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
+                           const Point2D &pt2, const Point2D &pt3,
+                           double padding);
+bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
+                              double yradius, double padding,
+                              const Point2D &end1, const Point2D &end2);
+// angles expected in degrees, between 0 and 360.
+bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
+                          double start_ang, double stop_ang, double padding,
+                          const Point2D &end1, const Point2D &end2);
+bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
+                      const Point2D &l2s, const Point2D &l2f, Point2D *ip);
+// This uses the barycentric coordinate system method from
+// http://totologic.blogspot.com/2014/01/accurate-point-in-triangle-test.html
+// where it notes and provides a solution for instabilities when the point
+// in exactly on one of the edges of the triangle.  That refinement is not
+// implemented because it seems a bit of overkill for most uses.  It is an
+// issue when, for example, two triangles share an edge and the point is on that
+// edge, when it might give the disappointing result that the point is in
+// neither triangle.
+bool isPointInTriangle(const Point2D &pt, const Point2D &t1, const Point2D &t2,
+                       const Point2D &t3);
 
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

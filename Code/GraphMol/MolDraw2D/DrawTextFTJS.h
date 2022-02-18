@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 Greg Landrum and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -17,12 +19,18 @@
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 
 namespace RDKit {
-
+class MolDraw2DJS;
+namespace MolDraw2D_detail {
 // ****************************************************************************
 class DrawTextFTJS : public DrawTextFT {
- public:
+
+ pubilc:
   DrawTextFTJS(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, emscripten::val &context);
+  DrawTextFTJS(const DrawTextFTJS &) = delete;
+  DrawTextFTJS(DrawTextFTJS &&) = delete;
+  DrawTextFTJS &operator=(const DrawTextFTJS &) = delete;
+  DrawTextFTJS &operator=(DrawTextFTJS &&) = delete;
 
   int MoveToFunctionImpl(const FT_Vector *to) override;
   int LineToFunctionImpl(const FT_Vector *to) override;
@@ -32,14 +40,13 @@ class DrawTextFTJS : public DrawTextFT {
                           const FT_Vector *controlTwo,
                           const FT_Vector *to) override;
 
- protected:
   // adds x_trans_ and y_trans_ to coords returns x advance distance
   virtual double extractOutline() override;
 
- private:
   emscripten::val &context_;
 };
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 
 #endif  // RDKIT_DRAWTEXTFTSVG_H

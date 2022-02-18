@@ -1,4 +1,6 @@
 //
+//  Copyright (C) 2020-2022 David Cosgrove and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -13,8 +15,9 @@
 
 namespace RDKit {
 
-std::string DrawColourToSVG(const RDKit::DrawColour &col);
+std::string DrawColourToSVG(const DrawColour &col);
 
+namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextFTSVG::DrawTextFTSVG(double max_fnt_sz, double min_fnt_sz,
                              const std::string &font_file, std::ostream &oss,
@@ -29,10 +32,10 @@ double DrawTextFTSVG::extractOutline() {
 
   oss_ << "<path ";
   if (!d_active_class_.empty()) {
-    oss_ << " class='" << d_active_class_ << "'"
+    oss_ << "class='" << d_active_class_ << "'"
          << " d='";
   } else {
-    oss_ << " d='";
+    oss_ << "d='";
   }
 
   double adv = DrawTextFT::extractOutline();
@@ -100,4 +103,5 @@ int DrawTextFTSVG::CubicToFunctionImpl(const FT_Vector *controlOne,
   return 0;
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
