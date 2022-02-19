@@ -272,7 +272,7 @@ public class WrapperTests extends GraphMolTest {
             mol = RWMol.MolFromSmiles("c1cccc1");
             mol.sanitizeMol();
         } catch (MolSanitizeException e) {
-            assertEquals("Can't kekulize mol.  Unkekulized atoms: 0 1 2 3 4\n",
+            assertEquals("Can't kekulize mol.  Unkekulized atoms: 0 1 2 3 4",
                     e.getMessage());
         } finally {
             if (mol != null) {
