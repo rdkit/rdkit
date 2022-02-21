@@ -128,6 +128,9 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
                                    ats[obnd->getEndAtomIdx()]);
     // FIX: This is no doubt wrong
     switch (obnd->getBondType()) {
+      case Bond::ZERO:
+        bnd->bondOrder = 0;
+        break;
       case Bond::SINGLE:
         bnd->bondOrder = 1;
         break;
