@@ -2611,7 +2611,6 @@ int main(int argc, const char* argv[]) {
 
   T0 = nanoClock();
   t0 = nanoClock();
-  testBondStereo();
 
 #if 1
   testJSONParameters();
