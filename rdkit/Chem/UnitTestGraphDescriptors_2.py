@@ -49,7 +49,7 @@ def _regressionData(filename, col):
       smi = splitL[0]
       mol = Chem.MolFromSmiles(smi)
       if mol is None:
-        raise AssertionError('line %d, smiles: %s' % (lineNum, smi))
+        raise AssertionError(f'line {lineNum}, smiles: {smi}')
       expected = float(splitL[col])
       yield lineNum, smi, mol, expected
 
@@ -69,8 +69,8 @@ class TestCase(unittest.TestCase):
         val = func(mol)
       except Exception:
         val = 666
-      assert feq(val, expected, 1e-4), 'line %d, mol %s (calc = %f) should have val = %f' % (
-        lineNum, smi, val, expected)
+      assert feq(val, expected, 1e-4), \
+        f'line {lineNum}, mol {smi} (calc = {val}) should have val = expected'
 
   def test_FullRegression(self):
     if not doLong:
@@ -86,8 +86,7 @@ class TestCase(unittest.TestCase):
       m = Chem.MolFromSmiles(smi)
       newCT = GraphDescriptors.BertzCT(m, forceDMat=1)
       self.assertAlmostEqual(newCT, expected, delta=1e-3,
-                             msg='mol %s (CT calc = %f) should have CT = %f' %
-                             (smi, newCT, expected))
+                             msg=f'mol {smi} (CT calc = {newCT}) should have CT = {expected}')
 
     if doLong:
       # We need to skip molecules with aromatic rings, due to changes in the
@@ -111,18 +110,16 @@ class TestCase(unittest.TestCase):
       Ipc = GraphDescriptors.Ipc(m, forceDMat=1)
       Ipc_avg = GraphDescriptors.Ipc(m, avg=1, forceDMat=1)
       self.assertAlmostEqual(Ipc_avg, res1, delta=1e-3,
-                             msg='mol %s (Ipc_avg=%f) should have Ipc_avg=%f' % (smi, Ipc_avg,
-                                                                                 res1))
+                             msg=f'mol {smi} (Ipc_avg={Ipc_avg}) should have Ipc_avg={res1}')
       self.assertAlmostEqual(Ipc, res2, delta=1e-3,
-                             msg='mol %s (Ipc=%f) should have Ipc=%f' % (smi, Ipc, res2))
+                             msg=f'mol {smi} (Ipc={Ipc}) should have Ipc={res2}')
 
       Ipc = GraphDescriptors.Ipc(m)
       Ipc_avg = GraphDescriptors.Ipc(m, avg=1)
       self.assertAlmostEqual(Ipc_avg, res1, delta=1e-3,
-                             msg='2nd pass: mol %s (Ipc_avg=%f) should have Ipc_avg=%f' % (
-                               smi, Ipc_avg, res1))
+                             msg=f'2nd pass: mol {smi} (Ipc_avg={Ipc_avg}) should have Ipc_avg={res1}')
       self.assertAlmostEqual(Ipc, res2, delta=1e-3,
-                             msg='2nd pass: mol %s (Ipc=%f) should have Ipc=%f' % (smi, Ipc, res2))
+                             msg=f'2nd pass: mol {smi}s (Ipc={Ipc}) should have Ipc={res2}')
 
       if doLong:
         self.__testDesc('PP_descrs_regress.csv', 4, GraphDescriptors.Ipc)
@@ -139,7 +136,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       kappa = GraphDescriptors.Kappa1(m)
-      assert feq(kappa, res, 1e-3), 'mol %s (kappa1=%f) should have kappa1=%f' % (smi, kappa, res)
+      assert feq(kappa, res, 1e-3), f'mol {smi} (kappa1={kappa}) should have kappa1={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 31, GraphDescriptors.Kappa1)
@@ -162,7 +159,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       kappa = GraphDescriptors.Kappa2(m)
-      assert feq(kappa, res, 1e-3), 'mol %s (kappa2=%f) should have kappa2=%f' % (smi, kappa, res)
+      assert feq(kappa, res, 1e-3), f'mol {smi} (kappa2={kappa}) should have kappa2={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 32, GraphDescriptors.Kappa2)
@@ -181,7 +178,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       kappa = GraphDescriptors.Kappa3(m)
-      assert feq(kappa, res, 1e-3), 'mol %s (kappa3=%f) should have kappa3=%f' % (smi, kappa, res)
+      assert feq(kappa, res, 1e-3), f'mol {smi} (kappa3={kappa}) should have kappa3={res}'
 
     self.__testDesc('PP_descrs_regress.csv', 5, GraphDescriptors.Kappa3)
     if doLong:
@@ -241,9 +238,9 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       j = GraphDescriptors.BalabanJ(m, forceDMat=1)
-      assert feq(j, res), 'mol %s (J=%f) should have J=%f' % (smi, j, res)
+      assert feq(j, res), f'mol {smi} (J={j}) should have J={res}'
       j = GraphDescriptors.BalabanJ(m)
-      assert feq(j, res), 'second pass: mol %s (J=%f) should have J=%f' % (smi, j, res)
+      assert feq(j, res), f'second pass: mol {smi} (J={j}) should have J={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 1, GraphDescriptors.BalabanJ)
@@ -266,7 +263,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi0v(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi0v=%f) should have Chi0V=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi0v={chi}) should have Chi0V={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 7, GraphDescriptors.Chi0v)
@@ -278,7 +275,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi1v(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi1v=%f) should have Chi1V=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi1v={chi}) should have Chi1V={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 10, GraphDescriptors.Chi1v)
@@ -296,7 +293,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi2v(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi2v=%f) should have Chi2V=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi2v={chi}) should have Chi2V={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 12, GraphDescriptors.Chi2v)
@@ -308,7 +305,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi3v(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi3v=%f) should have Chi3V=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi3v={chi}) should have Chi3V={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 14, GraphDescriptors.Chi3v,
@@ -321,7 +318,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi4v(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi4v=%f) should have Chi4V=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi4v={chi}) should have Chi4V={res}'
 
   def testChi5v(self):
     data = [('CCCCCC', 0.250), ('CCC(C)CC', 0.000), ('CC(C)CCC', 0.000), ('CC(C)C(C)C', 0.000),
@@ -330,7 +327,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.ChiNv_(m, 5)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi5v=%f) should have Chi5V=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi5v={chi}) should have Chi5V={res}'
 
   def testChi0n(self):
     data = [('CCCCCC', 4.828),
@@ -348,7 +345,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi0n(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi0n=%f) should have Chi0n=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi0n={chi}) should have Chi0n={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 6, GraphDescriptors.Chi0n)
@@ -363,7 +360,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi1n(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi1n=%f) should have Chi1N=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi1n={chi}) should have Chi1N={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 9, GraphDescriptors.Chi1n)
@@ -375,7 +372,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi2n(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi2n=%f) should have Chi2N=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi2n={chi}) should have Chi2N={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 11, GraphDescriptors.Chi2n)
@@ -387,7 +384,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi3n(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi3n=%f) should have Chi3N=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi3n={chi}) should have Chi3N={res}'
 
     if doLong:
       self.__testDesc('PP_descrs_regress.rest.2.csv', 13, GraphDescriptors.Chi3n,
@@ -400,7 +397,7 @@ class TestCase(unittest.TestCase):
     for smi, res in data:
       m = Chem.MolFromSmiles(smi)
       chi = GraphDescriptors.Chi4n(m)
-      assert feq(chi, res, 1e-3), 'mol %s (Chi4n=%f) should have Chi4N=%f' % (smi, chi, res)
+      assert feq(chi, res, 1e-3), f'mol {smi} (Chi4n={chi}) should have Chi4N={res}'
 
   def testIssue125(self):
     # test an issue with calculating BalabanJ
@@ -421,23 +418,23 @@ class TestCase(unittest.TestCase):
     for smi, CT, bal in data:
       m = Chem.MolFromSmiles(smi)
       newBal = GraphDescriptors.BalabanJ(m, forceDMat=1)
-      assert feq(newBal, bal, 1e-4), 'mol %s %f!=%f' % (smi, newBal, bal)
+      assert feq(newBal, bal, 1e-4), f'mol {smi} {newBal}!={bal}'
       
       m = Chem.MolFromSmiles(smi)
       newCT = GraphDescriptors.BertzCT(m, forceDMat=1)
-      assert feq(newCT, CT, 1e-4), 'mol %s (CT calc = %f) should have CT = %f' % (smi, newCT, CT)
+      assert feq(newCT, CT, 1e-4), f'mol {smi} (CT calc = {newCT}) should have CT = {CT}'
       
       m = Chem.MolFromSmiles(smi)
       newCT = GraphDescriptors.BertzCT(m, forceDMat=1)
-      assert feq(newCT, CT, 1e-4), 'mol %s (CT calc = %f) should have CT = %f' % (smi, newCT, CT)
+      assert feq(newCT, CT, 1e-4), f'mol {smi} (CT calc = {newCT}) should have CT = {CT}'
       newBal = GraphDescriptors.BalabanJ(m, forceDMat=1)
-      assert feq(newBal, bal, 1e-4), 'mol %s %f!=%f' % (smi, newBal, bal)
+      assert feq(newBal, bal, 1e-4), f'mol {smi} {newBal}!={bal}'
 
       m = Chem.MolFromSmiles(smi)
       newBal = GraphDescriptors.BalabanJ(m, forceDMat=1)
-      assert feq(newBal, bal, 1e-4), 'mol %s %f!=%f' % (smi, newBal, bal)
+      assert feq(newBal, bal, 1e-4), f'mol {smi} {newBal}!={bal}'
       newCT = GraphDescriptors.BertzCT(m, forceDMat=1)
-      assert feq(newCT, CT, 1e-4), 'mol %s (CT calc = %f) should have CT = %f' % (smi, newCT, CT)
+      assert feq(newCT, CT, 1e-4), f'mol {smi} (CT calc = {newCT}) should have CT = {CT}'
 
   def testPathCounts(self):
     """ FIX: this should be in some other file
@@ -507,8 +504,7 @@ class TestCase_python(unittest.TestCase):
         continue
       cVal = cFunc(mol)
       pyVal = pyFunc(mol)
-      assert feq(cVal, pyVal, 1e-4), 'line %d, mol %s (c = %f, py = %f)' % (lineNum, smi, cVal,
-                                                                            pyVal)
+      assert feq(cVal, pyVal, 1e-4), f'line {lineNum}, mol {smi} (c = {cVal}, py = {pyVal})'
 
 
 if __name__ == '__main__':
