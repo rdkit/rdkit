@@ -179,7 +179,9 @@ def GetSimilarityMapFromWeights(mol, weights, colorMap=None, scale=-1, size=(250
       if cm is not None and isinstance(colorMap, type(cm.Blues)):
         # it's a matplotlib colormap:
         clrs = [tuple(x) for x in colorMap([0, 0.5, 1])]
-      elif cm is not None and type(colorMap)==str:
+      elif type(colorMap)==str:
+        if cm is None:
+          raise ValueError("cannot provide named colormaps unless matplotlib is installed")
         clrs = [tuple(x) for x in cm.get_cmap(colorMap)([0, 0.5, 1])]
       else:
         clrs = [colorMap[0], colorMap[1], colorMap[2]]
