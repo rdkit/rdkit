@@ -196,5 +196,20 @@ class TestCase(unittest.TestCase):
       pass
 
 
+  def testGithub4763(self):
+    mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+    refmol = Chem.MolFromSmiles('CCCN(CCCCN1CCN(c2ccccc2OC)CC1)Cc1ccc2ccccc2c1')
+    d = Draw.MolDraw2DSVG(400, 400)
+    d.ClearDrawing()
+    _, maxWeight = sm.GetSimilarityMapForFingerprint(
+      refmol, mol, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), draw2d=d, colorMap="coolwarm")
+    d.FinishDrawing()
+    svg = d.GetDrawingText()
+    with open('github4763.svg', 'w+') as outf:
+      outf.write(svg)
+    self.assertFalse('fill:#FBFCFB7F' in svg)
+    self.assertTrue('fill:#DDDCDB' in svg)
+
+
 if __name__ == '__main__':
   unittest.main()
