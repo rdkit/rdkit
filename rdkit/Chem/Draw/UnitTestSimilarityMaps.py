@@ -193,6 +193,7 @@ class TestCase(unittest.TestCase):
       pass
 
 
+  @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testGithub4763(self):
     mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
     refmol = Chem.MolFromSmiles('CCCN(CCCCN1CCN(c2ccccc2OC)CC1)Cc1ccc2ccccc2c1')
