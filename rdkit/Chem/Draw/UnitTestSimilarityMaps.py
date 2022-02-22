@@ -55,7 +55,6 @@ class TestCase(unittest.TestCase):
     self.mol1 = Chem.MolFromSmiles('c1ccccc1')
     self.mol2 = Chem.MolFromSmiles('c1ccncc1')
 
-  @unittest.skipIf(sys.platform=='win32', 'test skipped on Windows')
   @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMap(self):
     # Morgan2 BV
@@ -119,7 +118,6 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertAlmostEqual(w, r, 4)
 
-  @unittest.skipIf(sys.platform=='win32', 'test skipped on Windows')
   @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMapKWArgs(self):
     # Morgan2 BV
@@ -157,7 +155,6 @@ class TestCase(unittest.TestCase):
     # chiral center drops:
     self.assertTrue(weights[2] > weights2[2])
 
-  @unittest.skipIf(sys.platform=='win32', 'test skipped on Windows')
   def testSimilarityMapsMolDraw2D(self):
     # nothing really sensible to test here, just make sure things run
     mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
@@ -194,6 +191,22 @@ class TestCase(unittest.TestCase):
         outf.write(d.GetDrawingText())
     except ImportError:
       pass
+
+
+  @unittest.skipUnless(matplotlib, 'Matplotlib required')
+  def testGithub4763(self):
+    mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
+    refmol = Chem.MolFromSmiles('CCCN(CCCCN1CCN(c2ccccc2OC)CC1)Cc1ccc2ccccc2c1')
+    d = Draw.MolDraw2DSVG(400, 400)
+    d.ClearDrawing()
+    _, maxWeight = sm.GetSimilarityMapForFingerprint(
+      refmol, mol, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), draw2d=d, colorMap="coolwarm")
+    d.FinishDrawing()
+    svg = d.GetDrawingText()
+    with open('github4763.svg', 'w+') as outf:
+      outf.write(svg)
+    self.assertFalse('fill:#FBFCFB7F' in svg)
+    self.assertTrue('fill:#DDDCDB' in svg)
 
 
 if __name__ == '__main__':
