@@ -374,6 +374,8 @@ bool checkBondStereo(const MCSBondCompareParameters&, const ROMol& mol1,
   if (b1->getBondType() == Bond::DOUBLE && b2->getBondType() == Bond::DOUBLE) {
     if (bs1 > Bond::STEREOANY && !(bs2 > Bond::STEREOANY)) {
       return false;
+    } else {
+      return bs1 == bs2;
     }
   }
   return true;
