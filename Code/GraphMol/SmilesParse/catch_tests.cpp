@@ -1883,3 +1883,16 @@ TEST_CASE("Github #4878: cannot parse coordinate bonds from CXSMARTS",
     }
   }
 }
+
+TEST_CASE("Github #4981: Invalid SMARTS for negated single-atoms", "[smarts]") {
+  SECTION("basics") {
+    auto mol = "[!C]"_smarts;
+    REQUIRE(mol);
+    CHECK(SmartsWrite::GetAtomSmarts(mol->getAtomWithIdx(0)) == "[!C]");
+  }
+  SECTION("as reported") {
+    auto mol = "[NX3H2+0,NX4H3+;!$([N][!C]);!$([N]*~[#7,#8,#15,#16])]"_smarts;
+    REQUIRE(mol);
+    CHECK(MolToSmarts(*mol).find("N!C") == std::string::npos);
+  }
+}
