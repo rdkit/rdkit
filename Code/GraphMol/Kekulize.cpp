@@ -496,7 +496,6 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
         problemAtoms.push_back(i);
       }
     }
-    errout << std::endl;
     std::string msg = errout.str();
     BOOST_LOG(rdErrorLog) << msg << std::endl;
     throw KekulizeException(msg, problemAtoms);
