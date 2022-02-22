@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build $(python) cmake \
         boost-cpp=$(boost_version) \
         py-boost=$(boost_version) \
-        numpy pillow eigen pandas \
+        numpy pillow eigen pandas matplotlib \
         qt
     conda activate rdkit_build
     conda install -c conda-forge nbval
