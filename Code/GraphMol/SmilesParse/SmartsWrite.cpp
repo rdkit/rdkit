@@ -859,6 +859,7 @@ std::string GetAtomSmarts(const QueryAtom *qatom) {
     res = getAtomSmartsSimple(qatom, tquery, needParen);
     if (tquery->getNegation()) {
       res = "!" + res;
+      needParen = true;
     }
   }
   std::string mapNum;
