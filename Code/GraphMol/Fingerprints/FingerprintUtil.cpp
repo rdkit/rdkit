@@ -266,7 +266,7 @@ void getConnectivityInvariants(const ROMol &mol, std::vector<uint32_t> &invars,
     std::vector<uint32_t> components;
     components.push_back(atom->getAtomicNum());
     components.push_back(atom->getTotalDegree());
-    components.push_back(atom->getTotalNumHs());
+    components.push_back(atom->getTotalNumHs(true));
     components.push_back(atom->getFormalCharge());
     int deltaMass = static_cast<int>(
         atom->getMass() -
