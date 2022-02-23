@@ -114,14 +114,14 @@ inline void assignDarkModePalette(ColourPalette &palette) {
   palette[-1] = DrawColour(0.8, 0.8, 0.8);
   palette[0] = DrawColour(0.9, 0.9, 0.9);
   palette[1] = palette[6] = DrawColour(0.9, 0.9, 0.9);
-  palette[7] = DrawColour(0.2, 0.2, 1.0);
+  palette[7] = DrawColour(0.33, 0.41, 0.92);
   palette[8] = DrawColour(1.0, 0.2, 0.2);
   palette[9] = DrawColour(0.2, 0.8, 0.8);
   palette[15] = DrawColour(1.0, 0.5, 0.0);
   palette[16] = DrawColour(0.8, 0.8, 0.0);
   palette[17] = DrawColour(0.0, 0.802, 0.0);
-  palette[35] = DrawColour(0.5, 0.3, 0.1);
-  palette[53] = DrawColour(0.63, 0.12, 0.94);
+  palette[35] = DrawColour(0.71, 0.4, 0.07);
+  palette[53] = DrawColour(0.89, 0.004, 1);
 };
 
 inline void assignBWPalette(ColourPalette &palette) {
