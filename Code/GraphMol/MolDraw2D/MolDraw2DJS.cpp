@@ -37,20 +37,20 @@ void MolDraw2DJS::initTextDrawer(bool noFreetype) {
   double min_fnt_sz = drawOptions().minFontSize;
 
   if (noFreetype) {
-    text_drawer_.reset(new DrawTextJS(max_fnt_sz, min_fnt_sz, d_context));
+    text_drawer_.reset(new MolDraw2D_detail::DrawTextJS(max_fnt_sz, min_fnt_sz, d_context));
   } else {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     try {
-      text_drawer_.reset(new DrawTextFTJS(max_fnt_sz, min_fnt_sz,
+      text_drawer_.reset(new MolDraw2D_detail::DrawTextFTJS(max_fnt_sz, min_fnt_sz,
                                           drawOptions().fontFile, d_context));
     } catch (std::runtime_error &e) {
       BOOST_LOG(rdWarningLog)
           << e.what() << std::endl
           << "Falling back to native JS text handling." << std::endl;
-      text_drawer_.reset(new DrawTextJS(max_fnt_sz, min_fnt_sz, d_context));
+      text_drawer_.reset(new MolDraw2D_detail::DrawTextJS(max_fnt_sz, min_fnt_sz, d_context));
     }
 #else
-    text_drawer_.reset(new DrawTextJS(max_fnt_sz, min_fnt_sz, d_context));
+    text_drawer_.reset(new MolDraw2D_detail::DrawTextJS(max_fnt_sz, min_fnt_sz, d_context));
 #endif
   }
   if (drawOptions().baseFontSize > 0.0) {

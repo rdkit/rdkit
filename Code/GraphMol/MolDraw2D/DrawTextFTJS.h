@@ -24,7 +24,7 @@ namespace MolDraw2D_detail {
 // ****************************************************************************
 class DrawTextFTJS : public DrawTextFT {
 
- pubilc:
+ public:
   DrawTextFTJS(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, emscripten::val &context);
   DrawTextFTJS(const DrawTextFTJS &) = delete;

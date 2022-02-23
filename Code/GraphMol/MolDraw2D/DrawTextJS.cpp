@@ -23,10 +23,11 @@ namespace RDKit {
 
 std::string DrawColourToSVG(const RDKit::DrawColour &col);
 
+namespace MolDraw2D_detail {
 // ****************************************************************************
 DrawTextJS::DrawTextJS(double max_fnt_sz, double min_fnt_sz,
                        emscripten::val &context)
-    : DrawText(max_fnt_sz, min_fnt_sz), context_(context) {}
+    : DrawTextNotFT(max_fnt_sz, min_fnt_sz), context_(context) {}
 
 // ****************************************************************************
 // draw the char, with the bottom left hand corner at cds
@@ -103,5 +104,6 @@ void DrawTextJS::getStringRects(const std::string &text,
   adjustStringRectsForSuperSubScript(draw_modes, rects);
 }
 
+}  // namespace MolDraw2D_detail
 }  // namespace RDKit
 #endif  // __EMSCRIPTEN__
