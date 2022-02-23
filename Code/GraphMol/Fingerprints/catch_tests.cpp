@@ -753,3 +753,16 @@ TEST_CASE("RDKit set countBounds", "[fpgenerator][rdkit]") {
     CHECK(fp2->getNumOnBits() != fp1->getNumOnBits());
   }
 }
+
+TEST_CASE(
+    "github #5036: Neighboring Hs not taken into account in connectivity "
+    "invariants",
+    "[morgan]") {
+  SECTION("basics") {
+    auto mol = "CC[2H]"_smiles;
+    REQUIRE(mol);
+    std::vector<std::uint32_t> invars(mol->getNumAtoms());
+    MorganFingerprints::getConnectivityInvariants(*mol, invars);
+    CHECK(invars[1] == invars[0]);
+  }
+}
