@@ -124,7 +124,7 @@ class LeaderPicker : public DistPicker {
 
 #ifdef USE_THREADED_LEADERPICKER
 // Note that this block of code currently only works on linux (which is why it's
-// disabled by default). In order to work on other platforms we need
+// disabled by default elsewhere). In order to work on other platforms we need
 // cross-platform threading primitives which support a barrier; or a rewrite.
 // Given that we will get the cross-platform threading for free with C++20, I
 // think it makes sense to just wait
