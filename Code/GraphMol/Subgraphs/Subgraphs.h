@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2022 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2008 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.

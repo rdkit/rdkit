@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2022 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -583,7 +583,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
         else { atomMap[oAtom] = std::min(atomMap[oAtom], i + 1); }
 
         boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
-        while (beg != end) {
+        while ((beg != end) && (i != radius - 1)) {
           const Bond *bond = mol[*beg];
           if (!bondsIn.test(bond->getIdx())) {
             if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
