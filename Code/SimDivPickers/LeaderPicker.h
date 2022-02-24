@@ -16,6 +16,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/RDThreads.h>
 #include <cstdlib>
 #include "DistPicker.h"
 
@@ -115,11 +116,18 @@ class LeaderPicker : public DistPicker {
   }
 };
 
+#if defined(RDK_THREADSAFE_SSS)
+#if defined(unix) || defined(__unix__) || defined(__unix)
+#define USE_THREADED_LEADERPICKER
+#endif
+#endif
+
 #ifdef USE_THREADED_LEADERPICKER
 // Note that this block of code currently only works on linux (which is why it's
-// disabled by default) We will revisit this during the 2020.03 release cycle in
-// order to get a multi-threaded version of the LeaderPicker that works on all
-// supported platforms
+// disabled by default). In order to work on other platforms we need
+// cross-platform threading primitives which support a barrier; or a rewrite.
+// Given that we will get the cross-platform threading for free with C++20, I
+// think it makes sense to just wait
 template <typename T>
 void *LeaderPickerWork(void *arg);
 
@@ -371,6 +379,8 @@ RDKit::INT_VECT LeaderPicker::lazyPick(T &func, unsigned int poolSize,
 
   if (!pickSize) pickSize = poolSize;
   RDKit::INT_VECT picks;
+
+  nthreads = RDKit::getNumThreadsToUse(nthreads);
 
   LeaderPickerState<T> stat(poolSize, nthreads);
   stat.threshold = threshold;
