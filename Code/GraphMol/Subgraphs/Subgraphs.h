@@ -26,8 +26,8 @@
       but only 2 _paths_ of length 3: (0,1,3),(2,1,3)
 */
 #include <RDGeneral/export.h>
-#ifndef _RD_SUBGRAPHS_H_
-#define _RD_SUBGRAPHS_H_
+#ifndef RD_SUBGRAPHS_H
+#define RD_SUBGRAPHS_H
 
 #include <vector>
 #include <list>
@@ -136,23 +136,18 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *   \param useHs     - if set, hydrogens in the graph will be considered
  *                      eligible to be in paths. NOTE: this will not add
  *                      Hs to the graph.
- *   \param enforceSize - If false, all the bonds within the requested radius 
+ *   \param enforceSize - If false, all the bonds within the requested radius
  *                        (<= radius) is collected. Otherwise, at least one bond
- *                        located at the requested radius must be found and added.
- *   \param atomMap - Optional: If provided, it will measure the
- *                   minimum distance of the atom from the rooted atom 
- *                   (start with 0 from the rooted atom). The result is 
- *                   a pair of the atom ID and the distance.
- *   The result is a path (a vector of bond indices)
+ *                        located at the requested radius must be found and
+ * added. \param atomMap - Optional: If provided, it will measure the minimum
+ * distance of the atom from the rooted atom (start with 0 from the rooted
+ * atom). The result is a pair of the atom ID and the distance. The result is a
+ * path (a vector of bond indices)
  */
-RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
-                             bool useHs, bool enforceSize, 
-                             std::unordered_map<unsigned int, unsigned int> &atomMap);
-
-RDKIT_SUBGRAPHS_EXPORT PATH_TYPE
-findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
-                             bool useHs = false, bool enforceSize = true);
+RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
+    bool useHs=false, bool enforceSize=true,
+    std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr);
 
 }  // namespace RDKit
 

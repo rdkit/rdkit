@@ -792,23 +792,26 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   return python::tuple(res);
 };
 
-PATH_TYPE findAtomEnvironmentOfRadiusNHelper(
-  const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom, 
-  bool useHs, bool enforceSize, python::object atomMap) {
-  std::unordered_map<unsigned int, unsigned int> cAtomMap = {};
-
+PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
+                                             unsigned int radius,
+                                             unsigned int rootedAtAtom,
+                                             bool useHs, bool enforceSize,
+                                             python::object atomMap) {
   PATH_TYPE path;
-  path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, 
-                                      useHs, enforceSize, cAtomMap);
-  if (atomMap != python::object()) {
+  if (atomMap == python::object()) {
+    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
+                                        enforceSize);
+  } else {
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
+                                        enforceSize, &cAtomMap);
     // make sure the optional argument (atomMap) is actually a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
     atomMap.attr("clear")();
-    for (auto pair: cAtomMap) {
+    for (auto pair : cAtomMap) {
       atomMap[pair.first] = pair.second;
     }
   }
-
   return path;
 }
 
@@ -1732,13 +1735,12 @@ to the terminal dummy atoms.\n\
 \n\
   RETURNS: a vector of bond IDs\n\
 \n";
-    python::def("FindAtomEnvironmentOfRadiusN", findAtomEnvironmentOfRadiusNHelper,
-                (python::arg("mol"), python::arg("radius"),
-                 python::arg("rootedAtAtom"), 
-                 python::arg("useHs") = false, 
-                 python::arg("enforceSize") = true,
-                 python::arg("atomMap") = python::object()), 
-                docString.c_str());
+    python::def(
+        "FindAtomEnvironmentOfRadiusN", findAtomEnvironmentOfRadiusNHelper,
+        (python::arg("mol"), python::arg("radius"), python::arg("rootedAtAtom"),
+         python::arg("useHs") = false, python::arg("enforceSize") = true,
+         python::arg("atomMap") = python::object()),
+        docString.c_str());
 
     python::def("PathToSubmol", pathToSubmolHelper,
                 (python::arg("mol"), python::arg("path"),
@@ -2612,10 +2614,10 @@ A note on the flags controlling which atoms/bonds are modified:
         .def_readwrite("adjustHeavyDegree",
                        &MolOps::AdjustQueryParameters::adjustHeavyDegree,
                        "adjust the heavy-atom degree")
-        .def_readwrite(
-            "adjustHeavyDegreeFlags",
-            &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
-            "controls which atoms have their heavy-atom degree queries changed")
+        .def_readwrite("adjustHeavyDegreeFlags",
+                       &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
+                       "controls which atoms have their heavy-atom degree "
+                       "queries changed")
         .def_readwrite("adjustRingCount",
                        &MolOps::AdjustQueryParameters::adjustRingCount,
                        "add ring-count queries")
@@ -2660,7 +2662,8 @@ A note on the flags controlling which atoms/bonds are modified:
         .def_readwrite(
             "setMDLFiveRingAromaticity",
             &MolOps::AdjustQueryParameters::setMDLFiveRingAromaticity,
-            "uses the 5-ring aromaticity behavior of the (former) MDL software "
+            "uses the 5-ring aromaticity behavior of the (former) MDL "
+            "software "
             "as documented in the Chemical Representation Guide")
         .def_readwrite("adjustSingleBondsToDegreeOneNeighbors",
                        &MolOps::AdjustQueryParameters::
@@ -2678,7 +2681,8 @@ A note on the flags controlling which atoms/bonds are modified:
         .staticmethod("NoAdjustments");
 
     docString =
-        "Returns a new molecule where the query properties of atoms have been "
+        "Returns a new molecule where the query properties of atoms have "
+        "been "
         "modified.";
     python::def("AdjustQueryProperties", adjustQueryPropertiesHelper,
                 (python::arg("mol"), python::arg("params") = python::object()),
