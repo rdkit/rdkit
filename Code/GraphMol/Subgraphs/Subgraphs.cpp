@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -583,7 +583,11 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
         else { atomMap[oAtom] = std::min(atomMap[oAtom], i + 1); }
 
         boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
-        while ((beg != end) && (i != radius - 1)) {
+        // `i != radius - 1` is a specific optimization that reduce further graph branching at the end 
+        // of the loop. The idea is that we don't need to extract the bond at the distance `radius` 
+        // because it would never being used. Moreover, `nbrStack` or `nextLayer` would be empty instead.
+        // NOTE: Removing this optim does not cause any harm, but the execution time is slightly increased.
+        while ((i != radius - 1) && (beg != end)) {
           const Bond *bond = mol[*beg];
           if (!bondsIn.test(bond->getIdx())) {
             if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
@@ -602,7 +606,6 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
     // or not to return nothing in this case. If enforceSize=true, this is similar to
     // the previous bahviour (return an empty path/vector). Otherwise, it collect every 
     // path within the requested radius. This is similar to maxPath(mol, res) <= radius.
-    // The atomMap would have similar behaviour as bondPath.
     res.clear();
     res.resize(0);
     atomMap.clear();
@@ -617,7 +620,6 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   std::unordered_map<unsigned int, unsigned int> atomMap;
   PATH_TYPE pth = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, 
                                                useHs, enforceSize, atomMap);
-  atomMap.clear();
   return pth;
   }
 
