@@ -540,15 +540,21 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
-    bool useHs, bool enforceSize, std::unordered_map<unsigned int, unsigned int> &atomMap) {
-  
+    bool useHs, bool enforceSize,
+    std::unordered_map<unsigned int, unsigned int> *atomMap) {
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
-  if (!atomMap.empty()) { atomMap.clear(); }
+  if (atomMap) {
+    atomMap->clear();
+  }
   PATH_TYPE res;
-  atomMap[rootedAtAtom] = 0;
-  if (radius == 0) { return res; } // Return empty path if radius=0
+  if (atomMap) {
+    (*atomMap)[rootedAtAtom] = 0;
+  }
+  if (radius == 0) {
+    return res;
+  }  // Return empty path if radius=0
 
   std::list<std::pair<int, int>> nbrStack;
   ROMol::OEDGE_ITER beg, end;
@@ -579,49 +585,42 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
 
         // add the next set of neighbors:
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
-        if (atomMap.find(oAtom) == atomMap.end()) { atomMap[oAtom] = i + 1; }
-        else { atomMap[oAtom] = std::min(atomMap[oAtom], i + 1); }
-
-        boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
-        // `i != radius - 1` is a specific optimization that reduce further graph branching at the end 
-        // of the loop. The idea is that we don't need to extract the bond at the distance `radius` 
-        // because it would never being used. Moreover, `nbrStack` or `nextLayer` would be empty instead.
-        // NOTE: Removing this optim does not cause any harm, but the execution time is slightly increased.
-        while ((i != radius - 1) && (beg != end)) {
-          const Bond *bond = mol[*beg];
-          if (!bondsIn.test(bond->getIdx())) {
-            if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
-                                 ->getAtomicNum() != 1) {
-              nextLayer.emplace_back(oAtom, bond->getIdx());
+        if (atomMap) {
+          if (atomMap->find(oAtom) == atomMap->end()) {
+            (*atomMap)[oAtom] = i + 1;
+          } else {
+            (*atomMap)[oAtom] = std::min(atomMap->at(oAtom), i + 1);
+          }
+        }
+        // if we're going to do another iteration, then push the neighbors from
+        // this round onto the stack
+        if (i < radius - 1) {
+          for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
+            if (!bondsIn.test(bond->getIdx())) {
+              if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
+                                   ->getAtomicNum() != 1) {
+                nextLayer.emplace_back(oAtom, bond->getIdx());
+              }
             }
           }
-          ++beg;
         }
       }
     }
-    nbrStack = nextLayer;
+    nbrStack = std::move(nextLayer);
   }
   if (i != radius && enforceSize) {
-    // If there are no paths found with the requested radius, user can choose whether 
-    // or not to return nothing in this case. If enforceSize=true, this is similar to
-    // the previous bahviour (return an empty path/vector). Otherwise, it collect every 
-    // path within the requested radius. This is similar to maxPath(mol, res) <= radius.
+    // If there are no paths found with the requested radius, user can choose
+    // whether or not to return nothing in this case. If enforceSize=true, this
+    // is similar to the previous bahviour (return an empty path/vector).
+    // Otherwise, it collect every path within the requested radius. This is
+    // similar to maxPath(mol, res) <= radius.
     res.clear();
     res.resize(0);
-    atomMap.clear();
+    if (atomMap) {
+      atomMap->clear();
+    }
   }
   return res;
 }
-
-PATH_TYPE findAtomEnvironmentOfRadiusN(
-    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
-    bool useHs, bool enforceSize) {
-  // Overiding function for backward compatibility
-  std::unordered_map<unsigned int, unsigned int> atomMap;
-  PATH_TYPE pth = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, 
-                                               useHs, enforceSize, atomMap);
-  return pth;
-  }
-
 
 }  // namespace RDKit
