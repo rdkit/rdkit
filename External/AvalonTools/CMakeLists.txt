@@ -84,10 +84,10 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wreturn-type -Wimplicit-function-declaration -Wabsolute-value -Wno-parentheses -Wno-logical-op-parentheses -Wno-dangling-else -Wno-format")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-type -Wno-implicit-function-declaration -Wno-absolute-value -Wno-parentheses -Wno-logical-op-parentheses -Wno-dangling-else -Wno-format")
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wunused-result -Wformat-overflow= -Wformat= -Wformat-security -Wimplicit-function-declaration")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-result -Wformat-overflow=0 -Wformat=0 -Wno-format-security -Wno-implicit-function-declaration")
 endif()
 
 

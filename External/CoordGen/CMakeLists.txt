@@ -52,7 +52,7 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     file(GLOB MAESOURCES "${MAEPARSER_DIR}/*.cpp")
 
      if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wdeprecated-copy")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated-copy")
      endif()
 
     rdkit_library(maeparser ${MAESOURCES} LINK_LIBRARIES ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} SHARED)
