@@ -2467,7 +2467,7 @@ EXAMPLES:\n\n\
       .def(python::init<MolzipLabel>(python::arg("label")))
 
       .def_readwrite("label", &MolzipParams::label,
-                     "Set the atom labelling system used to zip moleclues together")
+                     "Set the atom labelling system used to zip molecules together")
       .def("SetLabel", &MolzipParams::setLabel,
 	   "Set the atom labelling system used to zip molecules together")
       .def("SetAtomSymbols", setAtomSymbolsHelper,
