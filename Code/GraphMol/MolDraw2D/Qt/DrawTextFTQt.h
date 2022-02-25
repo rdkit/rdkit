@@ -41,7 +41,7 @@ class DrawTextFTQt : public DrawTextFT {
                           const FT_Vector *to) override;
 
   // adds x_trans_ and y_trans_ to coords returns x advance distance
-  virtual double extractOutline() override;
+  double extractOutline() override;
 
  private:
   QPainter *d_qp;
