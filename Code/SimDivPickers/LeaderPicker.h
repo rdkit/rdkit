@@ -164,7 +164,6 @@ struct LeaderPickerState {
   LeaderPickerState(unsigned int count, int nt) {
     v.resize(count);
     for (unsigned int i = 0; i < count; i++) v[i] = i;
-    std::cerr << "Using numthreads " << nt << std::endl;
     // InitializeBlocks
     unsigned int bcount;
     unsigned int bsize;
