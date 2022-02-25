@@ -23,8 +23,9 @@ class MolDraw2DJS;
 namespace MolDraw2D_detail {
 // ****************************************************************************
 class DrawTextFTJS : public DrawTextFT {
-
  public:
+  ~DrawTextFTJS() default;
+
   DrawTextFTJS(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, emscripten::val &context);
   DrawTextFTJS(const DrawTextFTJS &) = delete;
@@ -41,7 +42,7 @@ class DrawTextFTJS : public DrawTextFT {
                           const FT_Vector *to) override;
 
   // adds x_trans_ and y_trans_ to coords returns x advance distance
-  virtual double extractOutline() override;
+  double extractOutline() override;
 
   emscripten::val &context_;
 };

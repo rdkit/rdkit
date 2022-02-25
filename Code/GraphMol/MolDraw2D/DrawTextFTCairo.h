@@ -23,8 +23,8 @@ namespace MolDraw2D_detail {
 // ****************************************************************************
 
 class DrawTextFTCairo : public DrawTextFT {
-
  public:
+  ~DrawTextFTCairo() default;
   DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
                   const std::string &font_file, cairo_t *dp_cr);
   DrawTextFTCairo(const DrawTextFTCairo &) = delete;
@@ -42,7 +42,7 @@ class DrawTextFTCairo : public DrawTextFT {
   void setCairoContext(cairo_t *cr);
 
   // adds x_trans_ and y_trans_ to coords returns x advance distance
-  virtual double extractOutline() override;
+  double extractOutline() override;
 
   cairo_t *dp_cr_;
 };
