@@ -6,9 +6,14 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
               ${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h )
 
 
+if(APPLE)
+  set(EXTRA_HEADERS pthread_barrier.h)
+  set(EXTRA_SOURCE pthread_barrier.c)
+endif(APPLE)
+
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDGeneralExceptions.cpp RDLog.cpp
-              LocaleSwitcher.cpp versions.cpp SHARED)
+              LocaleSwitcher.cpp versions.cpp ${EXTRA_SOURCE} SHARED)
 target_compile_definitions(RDGeneral PRIVATE RDKIT_RDGENERAL_BUILD)
 
 if(MINGW)
@@ -36,6 +41,7 @@ endif(MINGW)
 if(RDK_USE_BOOST_STACKTRACE AND UNIX AND NOT APPLE)
 set(EXTRA_STACKTRACE_LIBS dl)
 endif()
+
 
 target_link_libraries(RDGeneral PUBLIC ${RDKit_THREAD_LIBS} ${MSVC_RUNTIME_DLL} ${EXTRA_STACKTRACE_LIBS})
 
@@ -66,6 +72,7 @@ rdkit_headers(Exceptions.h
               export.h
               test.h
               ConcurrentQueue.h
+	      ${EXTRA_HEADERS}
               DEST RDGeneral)
 
 if (NOT RDK_INSTALL_INTREE)

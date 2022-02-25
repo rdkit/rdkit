@@ -117,14 +117,17 @@ class LeaderPicker : public DistPicker {
 };
 
 #if defined(RDK_THREADSAFE_SSS)
-#if defined(unix) || defined(__unix__) || defined(__unix)
+#if defined(unix) || defined(__unix__) || defined(__unix) || defined(__APPLE__)
 #define USE_THREADED_LEADERPICKER
+#ifdef __APPLE__
+#include <RDGeneral/pthread_barrier.h>
+#endif
 #endif
 #endif
 
 #ifdef USE_THREADED_LEADERPICKER
-// Note that this block of code currently only works on linux (which is why it's
-// disabled by default). In order to work on other platforms we need
+// Note that this block of code currently only works on linux and osx (which is why it's
+// disabled by default elsewhere). In order to work on other platforms we need
 // cross-platform threading primitives which support a barrier; or a rewrite.
 // Given that we will get the cross-platform threading for free with C++20, I
 // think it makes sense to just wait
@@ -161,7 +164,7 @@ struct LeaderPickerState {
   LeaderPickerState(unsigned int count, int nt) {
     v.resize(count);
     for (unsigned int i = 0; i < count; i++) v[i] = i;
-
+    std::cerr << "Using numthreads " << nt << std::endl;
     // InitializeBlocks
     unsigned int bcount;
     unsigned int bsize;
