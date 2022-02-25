@@ -24,7 +24,7 @@ namespace MolDraw2D_detail {
 
 class DrawTextFTCairo : public DrawTextFT {
  public:
-  ~DrawTextFTCairo() default;
+  ~DrawTextFTCairo() override = default;
   DrawTextFTCairo(double max_fnt_sz, double min_fnt_sz,
                   const std::string &font_file, cairo_t *dp_cr);
   DrawTextFTCairo(const DrawTextFTCairo &) = delete;
