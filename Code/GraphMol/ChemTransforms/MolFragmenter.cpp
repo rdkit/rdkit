@@ -845,6 +845,14 @@ struct ZipBond {
 };
 }  // namespace
 
+void MolzipParams::setLabel(MolzipLabel label) {
+  this->label = label;
+}
+
+void MolzipParams::setAtomSymbols(const std::vector<std::string> &atomSymbols) {
+  this->atomSymbols = atomSymbols;
+}
+
 std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
                               const MolzipParams &params) {
   std::unique_ptr<RWMol> newmol;

@@ -115,11 +115,9 @@ struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
     atomSymbols(atomSymbols) {
   }
   //! Set the labelling type for zipping molecules together
-  void setLabel(MolzipLabel label) { this->label = label; }
+  void setLabel(MolzipLabel label);
   //! Set the list of atom symbols to zip together when using AtomType labelling.
-  void setAtomSymbols(const std::vector<std::string> &atomSymbols) {
-    this->atomSymbols = atomSymbols;
-  }
+  void setAtomSymbols(const std::vector<std::string> &atomSymbols);
 };
 
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
