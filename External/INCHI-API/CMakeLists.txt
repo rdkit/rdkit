@@ -71,8 +71,14 @@ if(RDK_BUILD_INCHI_SUPPORT)
   endif()
 
      if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wcomment -Wno-parentheses -Wno-logical-op-parentheses")
      endif()
+     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat-overflow= -Wformat= -Wformat-security")
+     endif()
+
+
+
   rdkit_library(RDInchiLib inchi.cpp SHARED LINK_LIBRARIES ${INCHI_LIBRARIES}
                 GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
   target_compile_definitions(RDInchiLib PRIVATE RDKIT_RDINCHILIB_BUILD)
