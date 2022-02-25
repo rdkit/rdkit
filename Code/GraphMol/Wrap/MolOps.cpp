@@ -887,6 +887,17 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
   MolOps::setDoubleBondNeighborDirections(mol, conf);
 }
 
+void setAtomSymbolsHelper(MolzipParams &params, python::list symbols) {
+  params.atomSymbols.clear();
+  if (symbols) {
+    unsigned int nVs =
+      python::extract<unsigned int>(symbols.attr("__len__")());
+    for (unsigned int i = 0; i < nVs; ++i) {
+      params.atomSymbols.push_back(python::extract<std::string>(symbols[i]));
+    }
+  }
+}
+
 ROMol *molzip_new(const ROMol &a, const ROMol &b, const MolzipParams &p) {
   return molzip(a, b, p).release();
 }
@@ -2452,11 +2463,17 @@ EXAMPLES:\n\n\
   MolzipLabel.AtomTypes: choose the atom types to act as matching dummy atoms.\n\
     i.e.  'C[V]' and 'N[Xe]' with atoms pairs [('V', 'Xe')] results in 'CN'\n\
 ";
+    python::class_<MolzipParams>("MolzipParams", docString.c_str(), python::init<>())
+      .def(python::init<MolzipLabel>(python::arg("label")))
 
-    python::class_<MolzipParams>("MolzipParams", docString.c_str(),
-                                 python::init<>())
-        .def_readwrite("label", &MolzipParams::label,
-                       "Set the atom labelling system to zip together");
+      .def_readwrite("label", &MolzipParams::label,
+                     "Set the atom labelling system used to zip moleclues together")
+      .def("SetLabel", &MolzipParams::setLabel,
+	   "Set the atom labelling system used to zip molecules together")
+      .def("SetAtomSymbols", setAtomSymbolsHelper,
+	   (python::arg("atomSymbols")),
+	   "Set the atom symbols to zip together when using AtomType zipping")
+      ;
 
     docString =
         "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\

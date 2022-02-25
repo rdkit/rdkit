@@ -106,6 +106,20 @@ enum class MolzipLabel { AtomMapNumber, Isotope, FragmentOnBonds, AtomType };
 struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   MolzipLabel label = MolzipLabel::AtomMapNumber;
   std::vector<std::string> atomSymbols;
+
+  MolzipParams() = default;
+  MolzipParams(MolzipLabel label) : label(label), atomSymbols() {}
+  MolzipParams(MolzipLabel label,
+	       const std::vector<std::string> &atomSymbols) :
+    label(label),
+    atomSymbols(atomSymbols) {
+  }
+  //! Set the labelling type for zipping molecules together
+  void setLabel(MolzipLabel label) { this->label = label; }
+  //! Set the list of atom symbols to zip together when using AtomType labelling.
+  void setAtomSymbols(const std::vector<std::string> &atomSymbols) {
+    this->atomSymbols = atomSymbols;
+  }
 };
 
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
