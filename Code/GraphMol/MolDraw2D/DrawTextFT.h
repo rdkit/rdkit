@@ -35,7 +35,7 @@ namespace MolDraw2D_detail {
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
  public:
-  ~DrawTextFT() override;
+  virtual ~DrawTextFT() override;
   virtual int MoveToFunctionImpl(const FT_Vector *to) = 0;
   virtual int LineToFunctionImpl(const FT_Vector *to) = 0;
   virtual int ConicToFunctionImpl(const FT_Vector *control,
@@ -52,7 +52,6 @@ class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
   DrawTextFT &operator=(DrawTextFT &&) = delete;
 
   void drawChar(char c, const Point2D &cds) override;
-
 
   // unless over-ridden by the c'tor, this will return a hard-coded
   // file from $RDBASE.

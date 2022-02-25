@@ -82,7 +82,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
 
-  virtual void outputClasses();
+  void outputClasses();
 };
 
 }  // namespace RDKit
