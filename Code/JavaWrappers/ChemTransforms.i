@@ -82,6 +82,8 @@ RDKit::ROMol * new_molzip(
 %newobject new_molzip;
 %ignore fragmentOnBonds;
 %ignore molzip;
+%ignore RDKit::MolzipParams::setLabel;
+%ignore RDKit::MolzipParams::setAtomSymbols;
 %rename("fragmentOnBonds") fragmentMolOnBonds;
 %rename("molzip") new_molzip;
 
