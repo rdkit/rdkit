@@ -71,7 +71,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
   endif()
 
      if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment -Wno-parentheses -Wno-logical-op-parentheses")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment -Wno-parentheses -Wno-logical-op-parentheses -Wno-pointer-bool-conversion -Wno-unused-value -Wno-unsequenced -Wno-constant-logical-operand")
      endif()
      if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat-overflow=0 -Wformat=0 -Wno-format-security")
