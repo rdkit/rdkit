@@ -21,7 +21,7 @@ if(RDK_BUILD_FREETYPE_SUPPORT)
     target_compile_definitions(MolDraw2DQt_static PUBLIC "-DRDK_BUILD_FREETYPE_SUPPORT")
     target_sources(MolDraw2DQt_static PRIVATE DrawTextFTQt.cpp)
   endif()
-  rdkit_headers(DrawTextFTQt.h DEST GraphMol/MolDraw2D/Qt)
+  rdkit_headers(DrawTextFTQt.h DrawTextQt.h DEST GraphMol/MolDraw2D/Qt)
   # I think Emscripten with Qt is nonsense, so 
   find_package(Freetype REQUIRED)
   target_link_libraries(MolDraw2DQt PUBLIC Freetype::Freetype)
