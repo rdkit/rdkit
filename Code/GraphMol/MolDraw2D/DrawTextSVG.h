@@ -17,7 +17,6 @@
 
 #include <iosfwd>
 
-#include <RDGeneral/export.h>
 #include <GraphMol/MolDraw2D/DrawTextNotFT.h>
 
 namespace RDKit {
@@ -28,7 +27,8 @@ namespace MolDraw2D_detail {
 
 // ****************************************************************************
 
-class RDKIT_MOLDRAW2D_EXPORT DrawTextSVG : public DrawTextNotFT {
+class DrawTextSVG : public DrawTextNotFT {
+
  public:
   DrawTextSVG(double max_fnt_sz, double min_fnt_sz, std::ostream &oss,
               std::string &d_act_class);

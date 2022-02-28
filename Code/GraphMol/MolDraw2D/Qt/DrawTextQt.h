@@ -20,7 +20,7 @@ namespace RDKit {
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-class RDKIT_MOLDRAW2D_EXPORT DrawTextQt : public DrawTextNotFT {
+class RDKIT_MOLDRAW2DQT_EXPORT DrawTextQt : public DrawTextNotFT {
  public:
   DrawTextQt(double max_fnt_sz, double min_fnt_sz, QPainter *qp);
   DrawTextQt(const DrawTextQt &rhs) = delete;
