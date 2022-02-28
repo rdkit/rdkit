@@ -887,6 +887,17 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
   MolOps::setDoubleBondNeighborDirections(mol, conf);
 }
 
+void setAtomSymbols(MolzipParams &p, python::object symbols) {
+  p.atomSymbols.clear();
+  if (symbols) {
+    unsigned int nVs =
+        python::extract<unsigned int>(symbols.attr("__len__")());
+    for (unsigned int i = 0; i < nVs; ++i) {
+      p.atomSymbols.push_back(python::extract<std::string>(symbols[i]));
+    }
+  }
+}
+  
 ROMol *molzip_new(const ROMol &a, const ROMol &b, const MolzipParams &p) {
   return molzip(a, b, p).release();
 }
@@ -2456,7 +2467,10 @@ EXAMPLES:\n\n\
     python::class_<MolzipParams>("MolzipParams", docString.c_str(),
                                  python::init<>())
         .def_readwrite("label", &MolzipParams::label,
-                       "Set the atom labelling system to zip together");
+                       "Set the atom labelling system to zip together")
+        .def("setAtomSymbols", &RDKit::setAtomSymbols,
+             "Set the atom symbols used to zip mols together when using AtomType labeling")
+      ;
 
     docString =
         "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
