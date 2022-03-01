@@ -84,8 +84,12 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-parentheses -Wno-logical-op-parentheses -Wno-dangling-else -Wno-format")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-return-type -Wno-implicit-function-declaration -Wno-absolute-value -Wno-parentheses -Wno-logical-op-parentheses -Wno-dangling-else -Wno-format")
 endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-result -Wformat-overflow=0 -Wformat=0 -Wno-format-security -Wno-implicit-function-declaration")
+endif()
+
 
 
 rdkit_library(avalon_clib ${avalon_clib_srcs})

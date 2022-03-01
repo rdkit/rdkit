@@ -315,9 +315,9 @@ TEST_CASE("Github #4138: empty query produces non-empty results",
 TEST_CASE("Github #4558: GetSubstructMatches() loops at 43690 iterations",
           "[substruct][bug]") {
   // We need LOTS of water molecules here.
-  auto num_mols = 22000;
+  auto num_mols = 22000u;
   std::stringstream smi;
-  for (int i = 1; i < num_mols; ++i) {
+  for (auto i = 1u; i < num_mols; ++i) {
     smi << "[H]O[H].";
   }
   smi << "[H]O[H]";  // last one (notice we started at 1)
