@@ -51,6 +51,6 @@ class TestCase(unittest.TestCase):
       self.assertEqual(
         chemutils.ConfigToNumElectrons(entry, ignoreFullD=False, ignoreFullF=False), expected)
 
-
+ 
 if __name__ == "__main__":  # pragma: nocover
   unittest.main()
