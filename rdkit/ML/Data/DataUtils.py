@@ -121,9 +121,7 @@ def ReadVars(inFile):
     for i in range(len(qBounds)):
         if qBounds[i] != '':
             l = qBounds[i].split(',')
-            qBounds[i] = []
-            for item in l:
-                qBounds[i].append(float(item))
+            qBounds[i] = [float(item) for item in l]
         else:
             qBounds[i] = []
     return varNames, qBounds
