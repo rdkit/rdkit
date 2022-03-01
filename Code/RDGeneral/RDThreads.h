@@ -13,12 +13,13 @@
 #define RDTHREADS_H_2015
 
 #include <RDGeneral/Invariant.h>
-#ifdef __APPLE__
-# include "pthread_barrier.h"
-#endif
 
 #ifdef RDK_THREADSAFE_SSS
 #include <thread>
+
+#ifdef __APPLE__
+# include "pthread_barrier.h"
+#endif
 
 namespace RDKit {
 inline unsigned int getNumThreadsToUse(int target) {
