@@ -29,8 +29,8 @@ def MaxCount(examples):
     """
     resList = [x[-1] for x in examples]
     maxVal = max(resList)   
-    counts = [len([None for x in resList if x == i]) for i in range(maxVal + 1)] # O(N^2) instead of O(2*N^2)
-    return numpy.argmax(counts) # Counts can be done in-place if memory is a concern
+    counts = [len([None for x in resList if x == i]) for i in range(maxVal + 1)]
+    return numpy.argmax(counts)
 
 
 def _GetLocalError(node):

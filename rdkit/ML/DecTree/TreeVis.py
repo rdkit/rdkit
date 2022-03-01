@@ -134,9 +134,8 @@ def DrawTreeNode(node, loc, canvas, nRes=2, scaleLeaves=False, showPurity=False)
   childY = loc[1] + visOpts.vertOffset
   # this is the left-hand side of the leftmost span
   childX = loc[0] - ((visOpts.horizOffset + visOpts.circRad) * node.totNChildren) / 2
-  for i in range(len(children)):
+  for i, child in enumerate(children):
     # center on this child's space
-    child = children[i]
     halfWidth = ((visOpts.horizOffset + visOpts.circRad) * child.totNChildren) / 2
 
     childX = childX + halfWidth

@@ -5,7 +5,7 @@ from rdkit.ML.DecTree import ID3
 
 
 def GenRandomExamples(nVars=10, randScale=0.3, bitProb=0.5, nExamples=500, seed=(0, 0),
-                      addResults=1) -> tuple:
+                      addResults=1):
   random.seed(seed[0])
   varWeights = numpy.array([random.random() for _ in range(nVars)]) * randScale
   examples = [None] * nExamples

@@ -258,11 +258,11 @@ def QuantTreeBoot(examples, attrs, nPossibleVals, nBoundsPerVar, initialVar=None
     tree.SetLabel(best)
     tree.SetTerminal(0)
     tree.SetQuantBounds(qBounds)
-    nextAttrs = attrs.copy() # It has been converted to list once, copy faster
+    nextAttrs = attrs.copy()
     if not kwargs.get('recycleVars', 0):
         nextAttrs.remove(best)
 
-    indices = list(range(len(examples))) # A list from 0 to len(examples)
+    indices = list(range(len(examples)))
     if len(qBounds) > 0:
         for bound in qBounds:
             # Optimize here once: Recheck here if failed

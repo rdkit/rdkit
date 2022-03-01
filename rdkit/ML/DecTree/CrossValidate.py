@@ -195,18 +195,18 @@ def CrossValidationDriver(examples, attrs, nPossibleVals, holdOutFrac=.3, silent
     print(f'Testing with {nTest} examples')
   
   if not calcTotalError:
-    cv = CrossValidate(tree, testExamples, appendExamples=1)
+    xValError, badExamples = CrossValidate(tree, testExamples, appendExamples=1)
   else:
-    cv = CrossValidate(tree, examples, appendExamples=0)
+    xValError, badExamples = CrossValidate(tree, examples, appendExamples=0)
     
   if not silent:
-    print('Validation error was %%%4.2f' % (100 * cv[0]))
+    print('Validation error was %%%4.2f' % (100 * xValError))
     
-  tree.SetBadExamples(cv[1]) # badExamples
+  tree.SetBadExamples(badExamples)
   tree.SetTrainingExamples(trainExamples)
   tree.SetTestExamples(testExamples)
   tree._trainIndices = trainIndices
-  return tree, cv[0] # xValError
+  return tree, xValError
 
 
 def TestRun():
