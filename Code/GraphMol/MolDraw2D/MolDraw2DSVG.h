@@ -19,7 +19,6 @@
 #include <iostream>
 #include <sstream>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
-#include <GraphMol/MolDraw2D/DrawTextSVG.h>
 
 // ****************************************************************************
 
@@ -82,7 +81,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DSVG : public MolDraw2D {
   void initDrawing() override;
   void initTextDrawer(bool noFreetype) override;
 
-  virtual void outputClasses();
+  void outputClasses();
 };
 
 }  // namespace RDKit

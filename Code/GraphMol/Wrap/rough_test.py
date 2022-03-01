@@ -6482,6 +6482,14 @@ M  END
     c = Chem.molzip(a, p)
     self.assertEqual(Chem.MolToSmiles(c), 'C=C/N=C/O')
 
+    a = Chem.MolFromSmiles("[C@H]([Xe])(F)([V])")
+    b = Chem.MolFromSmiles("[Xe]N.[V]I")
+    p = Chem.MolzipParams()
+    p.label = Chem.MolzipLabel.AtomType;
+    p.setAtomSymbols(["Xe", "V"])
+    c = Chem.molzip(a, b, p)
+    self.assertEqual(Chem.MolToSmiles(c), "N[C@@H](F)I")
+
   def testContextManagers(self):
     from rdkit import RDLogger
     RDLogger.DisableLog('rdApp.*')

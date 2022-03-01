@@ -69,7 +69,7 @@ class DrawShapeArrow : public DrawShape {
                  double frac = 0.2, double angle = M_PI / 6);
   DrawShapeArrow(const DrawShapeArrow &) = delete;
   DrawShapeArrow(DrawShapeArrow &&) = delete;
-  virtual ~DrawShapeArrow() = default;
+  ~DrawShapeArrow() = default;
   DrawShapeArrow &operator=(const DrawShapeArrow &) = delete;
   DrawShapeArrow &operator=(DrawShapeArrow &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;

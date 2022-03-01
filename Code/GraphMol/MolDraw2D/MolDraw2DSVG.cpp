@@ -15,10 +15,9 @@
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <Geometry/point.h>
+#include <GraphMol/MolDraw2D/DrawTextSVG.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #include <GraphMol/MolDraw2D/DrawTextFTSVG.h>
-#else
-#include <GraphMol/MolDraw2D/DrawTextSVG.h>
 #endif
 
 #include <boost/format.hpp>
@@ -199,7 +198,8 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   d_os << "d='M" << c1.x << "," << c1.y;
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = cds1 + delta * i;
-    Point2D segpt = rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
+    Point2D segpt =
+        rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
     Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
     cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
     Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
