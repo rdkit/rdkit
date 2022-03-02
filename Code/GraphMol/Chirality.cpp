@@ -2317,8 +2317,9 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
   return 0;
 }
 
-static bool assignChiralTypeFrom3D(ROMol &mol, const Conformer &conf,
-                                   Atom *atom) {
+static bool assignNontetrahedralChiralTypeFrom3D(ROMol &mol,
+                                                 const Conformer &conf,
+                                                 Atom *atom) {
   // FIX: add tests for dative and zero order bonds
 
   // Fail fast check for non-tetrahedral elements
@@ -2540,10 +2541,10 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       // not enough explicit neighbors or too many total neighbors
       continue;
     }
-    if (assignChiralTypeFrom3D(mol, conf, atom)) {
+    if (assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
       continue;
     }
-    /* Tetrahedral cases */
+    /* We're only doing tetrahedral cases here */
     if (totdeg > 4) {
       continue;
     }

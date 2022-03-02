@@ -2256,3 +2256,102 @@ TEST_CASE("getChiralPermutation", "[nontetrahedral]") {
     }
   }
 }
+
+TEST_CASE("isAtomPotentialNontetrahedralCenter", "[nontetrahedral]") {
+  SECTION("basics") {
+    {
+      auto mol = "C[S+](O)F"_smiles;
+      REQUIRE(mol);
+      CHECK(!Chirality::detail::isAtomPotentialNontetrahedralCenter(
+          mol->getAtomWithIdx(1)));
+    }
+    {
+      auto mol = "C[SH](O)F"_smiles;
+      REQUIRE(mol);
+      CHECK(Chirality::detail::isAtomPotentialNontetrahedralCenter(
+          mol->getAtomWithIdx(1)));
+    }
+    {
+      auto mol = "C[S@SP](O)F"_smiles;
+      REQUIRE(mol);
+      CHECK(Chirality::detail::isAtomPotentialNontetrahedralCenter(
+          mol->getAtomWithIdx(1)));
+    }
+  }
+}
+TEST_CASE("nontetrahedral StereoInfo", "[nontetrahedral]") {
+  SECTION("SP") {
+    auto m = "C[Pt@SP1](F)(Cl)O"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_SquarePlanar);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 1);
+    CHECK(sinfo[0].controllingAtoms == std::vector<unsigned int>{0, 2, 3, 4});
+  }
+  SECTION("TB") {
+    auto m = "C[Fe@TB4](F)(Cl)(O)N"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_TrigonalBipyramidal);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 4);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5});
+  }
+  SECTION("TB0") {
+    auto m = "C[Fe@TB](F)(Cl)(O)N"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].specified == Chirality::StereoSpecified::Unknown);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_TrigonalBipyramidal);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 0);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5});
+  }
+  SECTION("perceived as possible") {
+    auto m = "C[Fe](F)(Cl)(O)N"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].specified == Chirality::StereoSpecified::Unspecified);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_TrigonalBipyramidal);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 0);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5});
+  }
+
+  SECTION("OH") {
+    auto m = "C[Fe@OH9](F)(Cl)(O)(N)Br"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_Octahedral);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 9);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5, 6});
+  }
+  SECTION("OH missing ligand") {
+    auto m = "C[Fe@OH9](F)(Cl)(O)N"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_Octahedral);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 9);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5});
+  }
+}

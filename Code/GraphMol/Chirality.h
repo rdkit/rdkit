@@ -64,6 +64,9 @@ RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
 enum class StereoType {
   Unspecified,
   Atom_Tetrahedral,
+  Atom_SquarePlanar,
+  Atom_TrigonalBipyramidal,
+  Atom_Octahedral,
   Bond_Double,         // single double bond and odd-numbered cumulenes
   Bond_Cumulene_Even,  // even-numbered cumulenes
   Bond_Atropisomer
@@ -89,11 +92,13 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   StereoSpecified specified = StereoSpecified::Unspecified;
   unsigned centeredOn = NOATOM;
   StereoDescriptor descriptor = StereoDescriptor::None;
+  unsigned permutation = 0;  // for the non-tetrahedral stereo cases
   std::vector<unsigned> controllingAtoms;  // all atoms around the atom or bond.
   // Order is important
   bool operator==(const StereoInfo &other) const {
     return type == other.type && specified == other.specified &&
            centeredOn == other.centeredOn && descriptor == other.descriptor &&
+           permutation == other.permutation &&
            controllingAtoms == other.controllingAtoms;
   }
   bool operator!=(const StereoInfo &other) const { return !(*this == other); }
@@ -119,6 +124,8 @@ RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(ROMol &mol);
 
 /// @cond
 namespace detail {
+RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialNontetrahedralCenter(
+    const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialTetrahedralCenter(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialStereoAtom(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isBondPotentialStereoBond(const Bond *bond);
@@ -162,7 +169,6 @@ RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
 
 RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
                                                         const INT_LIST &probe);
-
 //@}
 
 }  // namespace Chirality
