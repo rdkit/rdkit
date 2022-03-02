@@ -16,15 +16,16 @@
 #ifndef RDKIT_DRAWTEXTNOTFT_H
 #define RDKIT_DRAWTEXTNOTFT_H
 
+#include <RDGeneral/export.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
 
 namespace RDKit {
-namespace MolDraw2D_detail{
+namespace MolDraw2D_detail {
 
-class DrawTextNotFT : public DrawText {
+class RDKIT_MOLDRAW2D_EXPORT DrawTextNotFT : public DrawText {
  public:
   DrawTextNotFT(double max_fnt_sz, double min_fnt_sz);
-  virtual ~DrawTextNotFT() = 0;
+  virtual ~DrawTextNotFT();
 
   void alignString(
       TextAlignType align, const std::vector<TextDrawType> &draw_modes,

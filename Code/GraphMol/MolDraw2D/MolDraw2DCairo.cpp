@@ -13,10 +13,9 @@
 #include <cairo.h>
 #include <fstream>
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+#include <GraphMol/MolDraw2D/DrawTextCairo.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #include <GraphMol/MolDraw2D/DrawTextFTCairo.h>
-#else
-#include <GraphMol/MolDraw2D/DrawTextCairo.h>
 #endif
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -153,7 +152,8 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   cairo_move_to(dp_cr, c1.x, c1.y);
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = cds1 + delta * i;
-    Point2D segpt = rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
+    Point2D segpt =
+        rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
     Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
     cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
     Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);

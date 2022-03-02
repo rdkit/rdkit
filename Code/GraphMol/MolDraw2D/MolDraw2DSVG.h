@@ -19,7 +19,6 @@
 #include <iostream>
 #include <sstream>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
-#include <GraphMol/MolDraw2D/DrawTextSVG.h>
 
 // ****************************************************************************
 

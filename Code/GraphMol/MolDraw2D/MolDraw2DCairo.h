@@ -18,7 +18,6 @@
 
 #include <cairo.h>
 
-#include <GraphMol/MolDraw2D/DrawTextCairo.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 
 // ****************************************************************************
