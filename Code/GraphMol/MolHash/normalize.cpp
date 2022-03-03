@@ -1,13 +1,11 @@
-/*==============================================*/
-/* Copyright (C)  2019       NextMove Software  */
-/* All rights reserved.                         */
-/*                                              */
-/* This file is part of molhash.                */
-/*                                              */
-/* The contents are covered by the terms of the */
-/* BSD license, which is included in the file   */
-/* license.txt.                                 */
-/*==============================================*/
+//
+//  Copyright (C) 2019-2022 NextMove Software and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
