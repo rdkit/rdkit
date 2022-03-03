@@ -4,6 +4,10 @@
 ## Backwards incompatible changes
 - When running in Jupyter Notebook, logs are now sent only to Python's
   standard error stream, and no longer include the `RDKit LEVEL` prefix.
+- The MolHash functions now reassign stereochemistry after modifying the
+  molecule and before calculating the hash. Previous versions would still
+  include information about atom/bond stereochemistry in the output hash even if
+  that no longer applies in the modified molecule.
 
 ## Code removed in this release:
 - The `useCountSimulation` keyword argument for
