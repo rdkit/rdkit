@@ -290,7 +290,7 @@ void NormalizeHCount(Atom *aptr) {
   aptr->setNumExplicitHs(hcount);
 }
 
-std::string AnonymousGraph(RWMol *mol, bool elem) {
+std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   int charge = 0;
@@ -312,7 +312,19 @@ std::string AnonymousGraph(RWMol *mol, bool elem) {
     bptr->setBondType(Bond::SINGLE);
   }
   MolOps::assignRadicals(*mol);
+
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+
   result = MolToSmiles(*mol);
+
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  }
+
   return result;
 }
 
@@ -492,6 +504,13 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles) {
   }
   mol->commitBatchEdit();
   MolOps::assignRadicals(*mol);
+
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+
   std::string result;
   result = MolToSmiles(*mol);
   if (useCXSmiles) {
@@ -528,6 +547,13 @@ std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles) {
     mol->commitBatchEdit();
   } while (!for_deletion.empty());
   MolOps::assignRadicals(*mol);
+
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+
   std::string result;
   result = MolToSmiles(*mol);
   if (useCXSmiles) {
@@ -842,10 +868,10 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
   switch (func) {
     default:
     case HashFunction::AnonymousGraph:
-      result = AnonymousGraph(mol, false);
+      result = AnonymousGraph(mol, false, useCXSmiles);
       break;
     case HashFunction::ElementGraph:
-      result = AnonymousGraph(mol, true);
+      result = AnonymousGraph(mol, true, useCXSmiles);
       break;
     case HashFunction::CanonicalSmiles:
       result = MolToSmiles(*mol);
