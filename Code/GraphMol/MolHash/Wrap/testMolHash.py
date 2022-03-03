@@ -35,6 +35,17 @@ class TestCase(unittest.TestCase):
     self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.ArthorSubstructureOrder),
                      '000f001001000c000300005f000000')
 
+  def testCxSmiles(self):
+    m = Chem.MolFromSmiles(
+      'C[C@@H](O)[C@@H](C)[C@@H](C)C[C@H](C1=CN=CN1)C1=CNC=N1 |o1:8,5,&1:1,3,r,c:11,18,t:9,15|')
+
+    self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomer),
+                     'C[C@@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@H](C)[C@@H](C)[O]_3_0')
+
+    self.assertEqual(
+      rdMolHash.MolHash(m, rdMolHash.HashFunction.HetAtomTautomer, True),
+      'C[C@@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@H](C)[C@@H](C)[O]_3_0 |o1:1,&1:14,16|')
+
 
 if __name__ == "__main__":
   unittest.main()

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Greg Landrum
+//  Copyright (C) 2020-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,9 +17,10 @@ using namespace RDKit;
 
 namespace {
 
-std::string MolHashHelper(const ROMol &mol, MolHash::HashFunction func) {
+std::string MolHashHelper(const ROMol &mol, MolHash::HashFunction func,
+                          bool useCXSmiles) {
   RWMol cpy(mol);
-  return MolHash::MolHash(&cpy, func);
+  return MolHash::MolHash(&cpy, func, useCXSmiles);
 }
 }  // namespace
 
@@ -48,7 +49,8 @@ BOOST_PYTHON_MODULE(rdMolHash) {
              MolHash::HashFunction::ArthorSubstructureOrder);
 
   python::def("MolHash", MolHashHelper,
-              (python::arg("mol"), python::arg("func")),
+              (python::arg("mol"), python::arg("func"),
+               python::arg("useCxSmiles") = false),
               "Generate a hash for a molecule. The func argument determines "
               "which hash is generated.");
 }
