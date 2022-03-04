@@ -11,6 +11,7 @@
 #ifndef RD_QUERYATOM_H
 #define RD_QUERYATOM_H
 
+#include <utility>
 #include "Atom.h"
 #include <Query/QueryObjects.h>
 #include <GraphMol/QueryOps.h>
@@ -86,9 +87,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   bool hasQuery() const override { return dp_query != nullptr; }
 
   //! replaces our current query with the value passed in
-  std::string getQueryType() const override {
-    return dp_query->getTypeLabel();
-  }
+  std::string getQueryType() const override { return dp_query->getTypeLabel(); }
 
   //! replaces our current query with the value passed in
   void setQuery(QUERYATOM_QUERY *what) override {

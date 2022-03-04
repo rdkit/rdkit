@@ -8,11 +8,12 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_BOND_H
-#define _RD_BOND_H
+#ifndef RD_BOND_H
+#define RD_BOND_H
 
 // std stuff
 #include <iostream>
+#include <utility>
 
 // Ours
 #include <RDGeneral/Invariant.h>
