@@ -124,9 +124,9 @@ def IndexToRDId(idx, leadText='RDCmpd'):
 
   res = leadText + '-'
   tmpIdx = idx
-  if idx >= 1e6:
-    res += f'{(idx // 1e6):03d}-'
-    tmpIdx = idx % int(1e6)
+  if idx >= 1_000_000:
+    res += f'{(idx // 1_000_000):03d}-'
+    tmpIdx = idx % int(1_000_000)
   if tmpIdx < 1000:
     res += '000-'
   else:
