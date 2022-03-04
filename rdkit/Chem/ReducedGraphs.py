@@ -10,6 +10,8 @@
 #
 # Created by Greg Landrum, July 2013
 
+from rdkit.Chem.rdReducedGraphs import *
+
 def TanimotoSimilarity(arr1, arr2):
   numer = arr1.dot(arr2)
   if numer == 0.0:
