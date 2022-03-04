@@ -60,7 +60,7 @@ def CheckCanonicalization(mol, nReps=10):
         m2 = RandomizeMol(mol)
         smi = Chem.MolToSmiles(m2, False)
         if smi != refSmi:
-            raise ValueError('\nRef: %s\n   : %s' % (refSmi, smi))
+            raise ValueError(f'\nRef: {refSmi}\n   : {smi}')
 
 
 if __name__ == '__main__':

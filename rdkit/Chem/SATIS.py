@@ -84,5 +84,5 @@ def SATISTypes(mol, neighborsToInclude=4):
           code[-1] = specialCaseIdx
           break
 
-    codes[i] = ''.join('%02d' % (x) for x in code)
+    codes[i] = ''.join(f'{x:02d}' for x in code)
   return codes

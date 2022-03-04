@@ -48,7 +48,7 @@ class TestCase(unittest.TestCase):
       calc = MolSurf.TPSA(data.mol)
       self.assertAlmostEqual(
         calc, data.expected, delta=1e-4,
-        msg = 'bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
+        msg=f'bad TPSA for SMILES {data.smiles} ({calc:.2f} != {data.expected:.2f})')
 
   def testTPSALong(self):
     if not doLong:
@@ -57,11 +57,10 @@ class TestCase(unittest.TestCase):
       try:
         calc = MolSurf.TPSA(data.mol)
       except Exception:
-        raise AssertionError(
-          'Line {0.lineNo}: TPSA Calculation failed for SMILES {0.smiles}'.format(data))
+        raise AssertionError(f'Line {data.lineNo}: TPSA Calculation failed for SMILES {data.smiles}')
       self.assertAlmostEqual(
         calc, data.expected, delta=1e-4,
-        msg = 'bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
+        msg=f'bad TPSA for SMILES {data.smiles} ({calc:.2f} != {data.expected:.2f})')
 
   def testTPSALongNCI(self):
     if not doLong:
@@ -71,10 +70,10 @@ class TestCase(unittest.TestCase):
         calc = MolSurf.TPSA(data.mol)
       except Exception:
         raise AssertionError(
-          'Line {0.lineNo}: TPSA Calculation failed for SMILES {0.smiles}'.format(data))
+          f'Line {data.lineNo}: TPSA Calculation failed for SMILES {data.smiles}')
       self.assertAlmostEqual(
         calc, data.expected, delta=1e-4,
-        msg='bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
+        msg=f'bad TPSA for SMILES {data.smiles} ({calc:.2f} != {data.expected:.2f})')
 
   def testHsAndTPSA(self):
     """
@@ -101,7 +100,7 @@ class TestCase(unittest.TestCase):
       calc = MolSurf.TPSA(mol)
       self.assertAlmostEqual(
         calc, data.expected, delta=1e-4,
-        msg='bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
+        msg=f'bad TPSA for SMILES {data.smiles} ({calc:.2f} != {data.expected:.2f})')
 
     if doLong:
       for data in self.readNCI_5000():
@@ -109,7 +108,7 @@ class TestCase(unittest.TestCase):
         calc = MolSurf.TPSA(mol)
         self.assertAlmostEqual(
           calc, data.expected, delta=1e-4,
-          msg='bad TPSA for SMILES {0.smiles} ({1:.2f} != {0.expected:.2f})'.format(data, calc))
+          msg=f'bad TPSA for SMILES {data.smiles} ({calc:.2f} != {data.expected:.2f})')
 
 
 class TestCase_descriptorRegression(unittest.TestCase):
@@ -125,8 +124,7 @@ class TestCase_descriptorRegression(unittest.TestCase):
         val = 666
       self.assertAlmostEqual(
         val, data.expected, delta=1e-4,
-        msg='line {0.lineNo}, mol {0.smiles} (calc = {1}) should have val = {0.expected}'.format(
-          data, val))
+        msg=f'line {data.lineNo}, mol {data.smiles} (calc = {val}) should have val = {data.expected}')
 
   def testLabuteASALong(self):
     if not doLong:
@@ -185,8 +183,7 @@ class TestCase_python(unittest.TestCase):
   def test_pyPEOE_VSA_(self):
     for data in TestCase.readNCI_200():
       molPy = Chem.MolFromSmiles(data.smiles)
-      for calcC, calcPy in zip(MolSurf.PEOE_VSA_(data.mol), MolSurf.pyPEOE_VSA_(molPy,
-                                                                                force=False)):
+      for calcC, calcPy in zip(MolSurf.PEOE_VSA_(data.mol), MolSurf.pyPEOE_VSA_(molPy, force=False)):
         self.assertAlmostEqual(calcC, calcPy)
 
   def test_pySlogP_VSA_(self):
@@ -218,7 +215,7 @@ def readPSAtestData(filename):
       smiles, expected = line.strip().split(',')
       mol = Chem.MolFromSmiles(smiles)
       if not mol:
-        raise AssertionError('molecule construction failed on line %d' % lineNo)
+        raise AssertionError(f'molecule construction failed on line {lineNo}') 
       yield TestData(lineNo, smiles, mol, float(expected))
 
 
@@ -234,7 +231,7 @@ def readRegressionData(filename, col):
       smi = splitL[0]
       mol = Chem.MolFromSmiles(smi)
       if mol is None:
-        raise AssertionError('line %d, smiles: %s' % (lineNum, smi))
+        raise AssertionError(f'line {lineNum}, smiles: {smi}')
       expected = float(splitL[col])
       yield TestData(lineNum, smi, mol, expected)
 

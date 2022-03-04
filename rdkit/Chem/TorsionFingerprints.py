@@ -24,7 +24,8 @@ def _doMatch(inv, atoms):
 
       Return: boolean
   """
-  return not any(inv[atoms[i].GetIdx()] != inv[atoms[j].GetIdx()] for i in range(len(atoms) - 1) 
+  return not any(inv[atoms[i].GetIdx()] != inv[atoms[j].GetIdx()] 
+                 for i in range(len(atoms) - 1) 
                  for j in range(i + 1, len(atoms)))
 
 
@@ -114,23 +115,24 @@ def _getIndexforTorsion(neighbors, inv):
   """
   if len(neighbors) == 1:  # atom has only one neighbor
     return [neighbors[0]]
-  elif _doMatch(inv, neighbors):  # atom has all symmetric neighbors
+  
+  if _doMatch(inv, neighbors):  # atom has all symmetric neighbors
     return neighbors
   
-  elif _doNotMatch(inv, neighbors):  # atom has all different neighbors
+  if _doNotMatch(inv, neighbors):  # atom has all different neighbors
     # sort by atom inv and simply use the first neighbor
     neighbors = sorted(neighbors, key=lambda x: inv[x.GetIdx()])
     return [neighbors[0]]
   
-  elif len(neighbors) == 3:
+  if len(neighbors) == 3:
     at = _doMatchExcept1(inv, neighbors)  # two neighbors the same, one different
     if at is None:
       raise ValueError("Atom neighbors are either all the same or all different")
     return [at]
-  else:  # weird case
-    # sort by atom inv and simply use the first neighbor
-    neighbors = sorted(neighbors, key=lambda x: inv[x.GetIdx()])
-    return [neighbors[0]]
+  
+  # weird case: sort by atom inv and simply use the first neighbor
+  neighbors = sorted(neighbors, key=lambda x: inv[x.GetIdx()])
+  return [neighbors[0]]
 
 
 def _getBondsForTorsions(mol, ignoreColinearBonds):
@@ -247,10 +249,7 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2, ignoreColinearBonds
         tors_list.append(([(nb.GetIdx(), a1, a2, d2[0].GetIdx()) for nb in d1], 60.0))
     
     else:  # both symmetric
-      tmp = []
-      for n1 in d1:
-        for n2 in d2:
-          tmp.append((n1.GetIdx(), a1, a2, n2.GetIdx()))
+      tmp = [(n1.GetIdx(), a1, a2, n2.GetIdx()) for n1 in d1 for n2 in d2]
       if len(nb1) == 2 and len(nb2) == 2:  # case 9
         tors_list.append((tmp, 90.0))
       elif len(nb1) == 3 and len(nb2) == 3:  # case 21
@@ -260,7 +259,7 @@ def CalculateTorsionLists(mol, maxDev='equal', symmRadius=2, ignoreColinearBonds
   
   # maximal possible deviation for non-cyclic bonds
   if maxDev == 'equal':
-    tors_list = [(t, 180.0) for t, d in tors_list]
+    tors_list = [(t, 180.0) for t, _ in tors_list]
   # rings
   rings = Chem.GetSymmSSSR(mol)
   tors_list_rings = []
@@ -306,6 +305,8 @@ def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
 
       Return: list of torsion angles
   """
+  RAD_TO_DEG = 180.0 / math.pi
+  
   torsions = []
   conf = mol.GetConformer(confId)
   for quartets, maxdev in tors_list:
@@ -313,7 +314,7 @@ def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
     # loop over torsions and calculate angle
     for atoms in quartets:
       p1, p2, p3, p4 = _getTorsionAtomPositions(atoms, conf)
-      tmpTors = (Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4) / math.pi) * 180.0
+      tmpTors = Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4) * RAD_TO_DEG
       if tmpTors < 0:
         tmpTors += 360.0  # angle between 0 and 360
       tors.append(tmpTors)
@@ -326,8 +327,7 @@ def CalculateTorsionAngles(mol, tors_list, tors_list_rings, confId=-1):
     tors = 0
     for atoms in quartets:
       p1, p2, p3, p4 = _getTorsionAtomPositions(atoms, conf)
-      tmpTors = abs((Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4) / math.pi) * 180.0)
-      tors += tmpTors
+      tors += abs(Geometry.ComputeSignedDihedralAngle(p1, p2, p3, p4) * RAD_TO_DEG)
     tors /= num
     torsions.append(([tors], maxdev))
   return torsions
@@ -355,6 +355,7 @@ def _findCentralBond(mol, distmat):
     stds.append((std(tmp), i))
   stds.sort()
   aid1 = stds[0][1]
+  
   # find the second most central bond that is bonded to aid1
   i = 1
   while 1:
@@ -383,7 +384,7 @@ def _calculateBeta(mol, distmat, aid1):
   for b in mol.GetBonds():
     # nb1 = _getHeavyAtomNeighbors(b.GetBeginAtom())
     nb2 = _getHeavyAtomNeighbors(b.GetEndAtom())
-    if len(nb2) > 1 and len(nb2) > 1:
+    if len(nb2) > 1: # if len(nb1) > 1 and len(nb2) > 1:
       bonds.append(b)
   
   # get shortest distance

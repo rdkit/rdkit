@@ -83,8 +83,7 @@ def AlignMolToTemplate2D(mol, template, match=None, clearConfs=False, templateCo
   for i, idx in enumerate(match):
     p = templateConf.GetAtomPosition(i)
     atomMap[idx] = Geometry.Point2D(p.x, p.y)
-  molConfId = rdDepictor.Compute2DCoords(mol, clearConfs=clearConfs, coordMap=atomMap)
-  return molConfId
+  return rdDepictor.Compute2DCoords(mol, clearConfs=clearConfs, coordMap=atomMap)
 
 
 #------------------------------------

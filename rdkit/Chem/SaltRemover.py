@@ -95,7 +95,7 @@ class SaltRemover(object):
         """
 
         >>> remover = SaltRemover()
-        >>> len(remover.salts)>0
+        >>> len(remover.salts) > 0
         True
 
         Default input format is SMARTS
@@ -281,8 +281,9 @@ class SaltRemover(object):
         natoms = mol.GetNumAtoms()
         for salt in self.salts:
             mol = _applyPattern(mol, salt, dontRemoveEverything)
-            if natoms != mol.GetNumAtoms():
-                natoms = mol.GetNumAtoms()
+            updatedNumAtoms = mol.GetNumAtoms()
+            if natoms != updatedNumAtoms:
+                natoms = updatedNumAtoms
                 modified = True
                 deleted.append(salt)
                 if dontRemoveEverything and len(Chem.GetMolFrags(mol)) <= 1:
