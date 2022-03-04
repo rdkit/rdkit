@@ -221,15 +221,15 @@ class DbConnect(object):
     """
     c = self.GetCursor()
     try:
-      c.execute('drop table %s cascade' % tableName)
+      c.execute(f'drop table {tableName} cascade')
     except Exception:
       try:
-        c.execute('drop table %s' % tableName)
+        c.execute(f'drop table {tableName}')
       except Exception:
         pass
     self.Commit()
 
-    addStr = 'create table %s (%s)' % (tableName, colString)
+    addStr = f'create table {tableName} ({colString})'
     try:
       c.execute(addStr)
     except Exception:
@@ -255,7 +255,7 @@ class DbConnect(object):
     insTxt = '(' + ','.join([DbModule.placeHolder] * len(vals)) + ')'
     # insTxt = '(%s'%('%s,'*len(vals))
     # insTxt = insTxt[0:-1]+')'
-    cmd = "insert into %s values %s" % (tableName, insTxt)
+    cmd = f"insert into {tableName} values {insTxt}" 
     try:
       c.execute(cmd, vals)
     except Exception:
@@ -281,7 +281,7 @@ class DbConnect(object):
 
     """
     c = self.GetCursor()
-    cmd = "update %s set %s=%s where %s" % (tableName, columnName, DbModule.placeHolder, where)
+    cmd = f"update {tableName} set {columnName}={DbModule.placeHolder} where {where}"
     c.execute(cmd, (value, ))
 
   def AddColumn(self, tableName, colName, colType):
@@ -298,7 +298,7 @@ class DbConnect(object):
     """
     c = self.GetCursor()
     try:
-      c.execute("alter table %s add %s %s" % (tableName, colName, colType))
+      c.execute(f"alter table {tableName} add {colName} {colType}")
     except Exception:
       print('AddColumn failed')
 

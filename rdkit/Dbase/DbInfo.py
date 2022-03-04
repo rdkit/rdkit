@@ -40,7 +40,7 @@ def GetDbNames(user='sysdba', password='masterkey', dirName='.', dBase='::templa
             try:
                 cn = DbModule.connect(dBase, user, password)
             except Exception:
-                print('Problems opening database: %s' % (dBase))
+                print(f'Problems opening database: {dBase}')
                 return []
         c = cn.cursor()
         c.execute(DbModule.getDbSql)
@@ -78,7 +78,7 @@ def GetTableNames(dBase, user='sysdba', password='masterkey', includeViews=0, cn
         try:
             cn = DbModule.connect(dBase, user, password)
         except Exception:
-            print('Problems opening database: %s' % (dBase))
+            print(f'Problems opening database: {dBase}')
             return []
 
     c = cn.cursor()
@@ -110,7 +110,7 @@ def GetColumnInfoFromCursor(cursor):
             elif cType in sqlBinTypes:
                 typeStr = 'binary'
             else:
-                sys.stderr.write('odd type in col %s: %s\n' % (cName, str(cType)))
+                sys.stderr.write(f'odd type in col {cName}: {str(cType)}\n')
             results.append((cName, typeStr))
     else:
         r = cursor.fetchone()
@@ -128,7 +128,7 @@ def GetColumnInfoFromCursor(cursor):
             elif isinstance(v, (memoryview, bytes)):
                 typeStr = 'binary'
             else:
-                sys.stderr.write('odd type in col %s: %s\n' % (cName, typ))
+                sys.stderr.write(f'odd type in col {cName}: {typ}\n')
             results.append((cName, typeStr))
     return results
 
@@ -163,9 +163,9 @@ def GetColumnNamesAndTypes(dBase, table, user='sysdba', password='masterkey', jo
     if not cn:
         cn = DbModule.connect(dBase, user, password)
     c = cn.cursor()
-    cmd = 'select %s from %s' % (what, table)
+    cmd = f'select {what} from {table}'
     if join:
-        cmd += ' join %s' % (join)
+        cmd += f' join {join}'
     c.execute(cmd)
     return GetColumnInfoFromCursor(c)
 
@@ -195,10 +195,10 @@ def GetColumnNames(dBase, table, user='sysdba', password='masterkey', join='', w
     if not cn:
         cn = DbModule.connect(dBase, user, password)
     c = cn.cursor()
-    cmd = 'select %s from %s' % (what, table)
+    cmd = f'select {what} from {table}'
     if join:
         if join.strip().find('join') != 0:
-            join = 'join %s' % (join)
+            join = f'join {join}'
         cmd += ' ' + join
     c.execute(cmd)
     c.fetchone()

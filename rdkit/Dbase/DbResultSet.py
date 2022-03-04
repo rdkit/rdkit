@@ -36,7 +36,7 @@ class DbResultBase(object):
       else:
         self.cursor.execute(self.cmd, self.extras)
     except Exception:
-      sys.stderr.write('the command "%s" generated errors:\n' % (self.cmd))
+      sys.stderr.write(f'the command "{self.cmd}" generated errors:\n')
       import traceback
       traceback.print_exc()
 
@@ -133,7 +133,7 @@ class RandomAccessDbResultSet(DbResultBase):
     if self.cursor is None:
       if len(self.results):
         if idx >= len(self.results):
-          raise IndexError('index %d too large (%d max)' % (idx, len(self.results)))
+          raise IndexError(f'index {idx} too large ({len(self.results)} max)')
       else:
         raise ValueError('Invalid cursor')
 
@@ -143,7 +143,7 @@ class RandomAccessDbResultSet(DbResultBase):
         r = self.cursor.fetchone()
         if not r:
           self.cursor = None
-          raise IndexError('index %d too large (%d max)' % (idx, len(self.results)))
+          raise IndexError(f'index {idx} too large ({len(self.results)} max)')
 
         if self.transform is not None:
           r = self.transform(r)

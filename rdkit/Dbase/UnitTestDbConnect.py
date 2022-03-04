@@ -60,7 +60,7 @@ class TestCase(unittest.TestCase):
     newTblName = 'NEW_TABLE'
     conn = DbConnect(self.tempDbName)
     try:
-      conn.GetCursor().execute('drop table %s' % (newTblName))
+      conn.GetCursor().execute(f'drop table {newTblName}')
     except Exception:
       pass
     conn.Commit()
@@ -71,7 +71,7 @@ class TestCase(unittest.TestCase):
 
     self.assertEqual(conn.GetColumnNames(table=newTblName), ['id'])
 
-    conn.GetCursor().execute('drop table %s' % (newTblName))
+    conn.GetCursor().execute(f'drop table {newTblName}')
 
   def testCursor(self):
     """ tests GetCursor and GetTableNames functionalities """
@@ -81,11 +81,11 @@ class TestCase(unittest.TestCase):
     curs = conn.GetCursor()
     assert curs
     try:
-      curs.execute('drop view %s' % (viewName))
+      curs.execute(f'drop view {viewName}')
     except Exception:
       pass
     try:
-      curs.execute('create view %s as select val,id from ten_elements' % (viewName))
+      curs.execute(f'create view {viewName} as select val,id from ten_elements')
     except Exception:
       import traceback
       traceback.print_exc()
@@ -97,7 +97,7 @@ class TestCase(unittest.TestCase):
     self.assertIn(viewName, [x.strip() for x in conn.GetTableNames(includeViews=1)],
                   'improper view not found')
     try:
-      curs.execute('drop view %s' % (viewName))
+      curs.execute(f'drop view {viewName}')
     except Exception:
       raise AssertionError('drop table failed')
 
@@ -192,7 +192,7 @@ class TestCase(unittest.TestCase):
     newTblName = 'NEW_TABLE'
     conn = DbConnect(self.tempDbName)
     try:
-      conn.GetCursor().execute('drop table %s' % (newTblName))
+      conn.GetCursor().execute(f'drop table {newTblName}')
     except Exception:
       pass
     conn.Commit()
@@ -211,14 +211,14 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(d), 10)
     self.assertTrue(all(r[1] is None for r in d))
     for r in d:
-      conn.InsertColumnData(newTblName, 'val3', r[0], 'id={0}'.format(r[0]))
+      conn.InsertColumnData(newTblName, 'val3', r[0], f'id={r[0]}')
     conn.Commit()
     d = conn.GetColumns('id,val3', table=newTblName)
     self.assertTrue(all(r[0] == r[1] for r in d))
 
     d = None
     try:
-      conn.GetCursor().execute('drop table %s' % (newTblName))
+      conn.GetCursor().execute(f'drop table {newTblName}')
     except Exception:
       assert 0, 'drop table failed'
 
@@ -227,7 +227,7 @@ class TestCase(unittest.TestCase):
     newTblName = 'NEW_TABLE'
     conn = DbConnect(self.tempDbName)
     try:
-      conn.GetCursor().execute('drop table %s' % (newTblName))
+      conn.GetCursor().execute(f'drop table {newTblName}')
     except Exception:
       pass
     conn.Commit()
@@ -240,7 +240,7 @@ class TestCase(unittest.TestCase):
 
     d = None
     try:
-      conn.GetCursor().execute('drop table %s' % (newTblName))
+      conn.GetCursor().execute(f'drop table {newTblName}')
     except Exception:
       assert 0, 'drop table failed'
 

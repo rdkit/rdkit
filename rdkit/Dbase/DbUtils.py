@@ -54,10 +54,10 @@ def GetColumns(dBase, table, fieldString, user='sysdba', password='masterkey', j
     if not cn:
         cn = DbModule.connect(dBase, user, password)
     c = cn.cursor()
-    cmd = 'select %s from %s' % (fieldString, table)
+    cmd = f'select {fieldString} from {table}'
     if join:
         if join.strip().find('join') != 0:
-            join = 'join %s' % (join)
+            join = f'join {join}'
         cmd += ' ' + join
     c.execute(cmd)
     return c.fetchall()
@@ -99,14 +99,14 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
     if not cn:
         cn = DbModule.connect(dBase, user, password)
     c = cn.cursor()
-    cmd = 'select %s from %s' % (fieldString, table)
+    cmd = f'select {fieldString} from {table}'
     if join:
         if join.strip().find('join') != 0:
-            join = 'join %s' % (join)
+            join = f'join {join}'
         cmd += ' ' + join
     if whereString:
         if whereString.strip().find('where') != 0:
-            whereString = 'where %s' % (whereString)
+            whereString = f'where {whereString}'
         cmd += ' ' + whereString
 
     if forceList:
@@ -116,7 +116,7 @@ def GetData(dBase, table, fieldString='*', whereString='', user='sysdba', passwo
             else:
                 c.execute(cmd, extras)
         except Exception:
-            sys.stderr.write('the command "%s" generated errors:\n' % (cmd))
+            sys.stderr.write(f'the command "{cmd}" generated errors:\n')
             import traceback
             traceback.print_exc()
             return None
@@ -170,10 +170,10 @@ def DatabaseToText(dBase, table, fields='*', join='', where='', user='sysdba', p
 
     """
     if len(where) and where.strip().find('where') == -1:
-        where = 'where %s' % (where)
+        where = f'where {where}'
     if len(join) and join.strip().find('join') == -1:
-        join = 'join %s' % (join)
-    sqlCommand = 'select %s from %s %s %s' % (fields, table, join, where)
+        join = f'join {join}'
+    sqlCommand = f'select {fields} from {table} {join} {where}'
     if not cn:
         cn = DbModule.connect(dBase, user, password)
     c = cn.cursor()
@@ -223,8 +223,8 @@ def TypeFinder(data, nRows, nCols, nullMarker=None):
                 try:
                     d = str(d)
                 except UnicodeError as msg:
-                    print('cannot convert text from row %d col %d to a string' % (row + 2, col))
-                    print('\t>%s' % (repr(d)))
+                    print(f'cannot convert text from row {row + 2} col {col} to a string')
+                    print(f'\t>{repr(d)}')
                     raise UnicodeError(msg)
             else:
                 typeHere[1] = max(typeHere[1], len(str(d)))
@@ -265,7 +265,7 @@ def _AdjustColHeadings(colHeadings, maxColLabelLen):
             # interbase (at least) has a limit on the maximum length of a column name
             newHead = colHeadings[i].replace('_', '')
             newHead = newHead[:maxColLabelLen]
-            print('\tHeading %s too long, changed to %s' % (colHeadings[i], newHead))
+            print(f'\tHeading {colHeadings[i]} too long, changed to {newHead}')
             colHeadings[i] = newHead
     return colHeadings
 
@@ -277,13 +277,13 @@ def GetTypeStrings(colHeadings, colTypes, keyCol=None):
     for i in range(len(colTypes)):
         typ = colTypes[i]
         if typ[0] == float:
-            typeStrs.append('%s double precision' % colHeadings[i])
+            typeStrs.append(f'{colHeadings[i]} double precision')
         elif typ[0] == int:
-            typeStrs.append('%s integer' % colHeadings[i])
+            typeStrs.append(f'{colHeadings[i]} integer')
         else:
-            typeStrs.append('%s varchar(%d)' % (colHeadings[i], typ[1]))
+            typeStrs.append(f'{colHeadings[i]} varchar({typ[1]})')
         if colHeadings[i] == keyCol:
-            typeStrs[-1] = '%s not null primary key' % (typeStrs[-1])
+            typeStrs[-1] = f'{typeStrs[-1]} not null primary key'
     return typeStrs
 
 
@@ -321,11 +321,11 @@ def _AddDataToDb(dBase, table, user, password, colDefs, colTypes, data, nullMark
         cn = DbModule.connect(dBase, user, password)
     c = cn.cursor()
     try:
-        c.execute('drop table %s' % (table))
+        c.execute(f'drop table {table}')
     except Exception:
-        print('cannot drop table %s' % (table))
+        print(f'cannot drop table {table}')
     try:
-        sqlStr = 'create table %s (%s)' % (table, colDefs)
+        sqlStr = f'create table {table} ({colDefs})'
         c.execute(sqlStr)
     except Exception:
         print('create table failed: ', sqlStr)
@@ -339,7 +339,7 @@ def _AddDataToDb(dBase, table, user, password, colDefs, colTypes, data, nullMark
     block = []
     entryTxt = [DbModule.placeHolder] * len(data[0])
     dStr = ','.join(entryTxt)
-    sqlStr = 'insert into %s values (%s)' % (table, dStr)
+    sqlStr = f'insert into {table} values ({dStr})'
     nDone = 0
     for row in data:
         entries = [None] * len(row)

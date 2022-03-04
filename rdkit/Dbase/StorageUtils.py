@@ -125,15 +125,15 @@ def IndexToRDId(idx, leadText='RDCmpd'):
   res = leadText + '-'
   tmpIdx = idx
   if idx >= 1e6:
-    res += '%03d-' % (idx // 1e6)
+    res += f'{(idx // 1e6):03d}-'
     tmpIdx = idx % int(1e6)
   if tmpIdx < 1000:
     res += '000-'
   else:
-    res += '%03d-' % (tmpIdx // 1000)
+    res += f'{(tmpIdx // 1000):03d}-'
     tmpIdx = tmpIdx % 1000
 
-  res += '%03d-' % (tmpIdx)
+  res += f'{tmpIdx:03d}-'
   accum = 0
   txt = str(idx)
   for char in txt:
@@ -197,7 +197,7 @@ def RegisterItem(conn, table, value, columnName, data=None, id='', idColName='Id
 
   """
   curs = conn.GetCursor()
-  query = 'select %s from %s where %s=%s' % (idColName, table, columnName, DbModule.placeHolder)
+  query = f'select {idColName} from {table} where {columnName}={DbModule.placeHolder}'
   curs.execute(query, (value, ))
   tmp = curs.fetchone()
   if tmp:
@@ -222,10 +222,9 @@ def RegisterItems(conn, table, values, columnName, rows, startId='', idColName='
 
   curs = conn.GetCursor()
   qs = ','.join(DbModule.placeHolder * nVals)
-  curs.execute("create temporary table regitemstemp (%(columnName)s)" % locals())
+  curs.execute(f"create temporary table regitemstemp ({columnName})")
   curs.executemany("insert into regitemstemp values (?)", [(x, ) for x in values])
-  query = ('select %(columnName)s,%(idColName)s from %(table)s ' +
-           'where %(columnName)s in (select * from regitemstemp)' % locals())
+  query = f'select {columnName},{idColName} from {table} where {columnName} in (select * from regitemstemp)'
   curs.execute(query)
 
   dbData = curs.fetchall()
@@ -253,7 +252,7 @@ def RegisterItems(conn, table, values, columnName, rows, startId='', idColName='
   if rowsToInsert:
     nCols = len(rowsToInsert[0])
     qs = ','.join(DbModule.placeHolder * nCols)
-    curs.executemany('insert into %(table)s values (%(qs)s)' % locals(), rowsToInsert)
+    curs.executemany(f'insert into {table} values ({qs})', rowsToInsert)
     conn.Commit()
   return len(values) - len(dbData), ids
 

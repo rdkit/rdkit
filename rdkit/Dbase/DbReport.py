@@ -101,7 +101,7 @@ else:
     def __call__(self, arg):
       res = list(arg)
       if self.verbose:
-        sys.stderr.write('Render(%d): %s\n' % (self.smiCol, str(res[0])))
+        sys.stderr.write(f'Render({self.smiCol}): {str(res[0])}\n')
       smi = res[self.smiCol]
       tmpName = self.tempHandler.get('.gif')
       aspect = 1
@@ -132,7 +132,7 @@ else:
     def __call__(self, arg):
       res = list(arg)
       if self.verbose:
-        sys.stderr.write('Render(%d): %s\n' % (self.smiCol, str(res[0])))
+        sys.stderr.write(f'Render({self.smiCol}): {str(res[0])}\n')
       smi = res[self.smiCol]
       aspect = 1
       width = self.width
@@ -175,7 +175,7 @@ else:
     def __call__(self, arg):
       res = list(arg)
       if self.verbose:
-        sys.stderr.write('Render(%d): %s\n' % (self.smiCol, str(res[0])))
+        sys.stderr.write(f'Render({self.smiCol}): {str(res[0])}\n')
       smi = res[self.smiCol]
       tmpName = self.tempHandler.get('.jpg')
       aspect = 1
