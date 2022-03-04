@@ -28,7 +28,7 @@ except:
 # "enabling jupyter" message at the root logger.
 log_handler = logging.StreamHandler(sys.stderr)
 logger.addHandler(log_handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARN)
 logger.propagate = False
 
 # Uncomment this to use Python logging by default:
