@@ -1757,7 +1757,7 @@ void rCleanUp(RWMol& mol) {
 
 std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
                        const char* options) {
-  auto* m = new RWMol(mol);
+  std::unique_ptr<RWMol> m{new RWMol(mol)};
 
   // assign stereochem:
   if (mol.needsUpdatePropertyCache()) {
@@ -2095,7 +2095,7 @@ std::string MolToInchi(const ROMol& mol, ExtraInchiReturnValues& rv,
   if (stereo0Ds) {
     delete[] stereo0Ds;
   }
-  delete m;
+
   return inchi;
 }
 
