@@ -27,371 +27,384 @@ from rdkit import rdBase
 
 
 class CaptureStream:
-    """Helper class that captures output to a file descriptor"""
-    def __init__(self, fd):
-        self.fd  = fd
-        self.old = os.dup(self.fd)
-        self.tmp = tempfile.TemporaryFile()
-        os.dup2(self.tmp.fileno(), self.fd)
+  """Helper class that captures output to a file descriptor"""
 
-    def release(self):
-        self.tmp.seek(0)
-        result = self.tmp.read()
+  def __init__(self, fd):
+    self.fd = fd
+    self.old = os.dup(self.fd)
+    self.tmp = tempfile.TemporaryFile()
+    os.dup2(self.tmp.fileno(), self.fd)
 
-        os.dup2(self.old, self.fd)
-        os.close(self.old)
-        self.tmp.close()
+  def release(self):
+    self.tmp.seek(0)
+    result = self.tmp.read()
 
-        return result.decode('utf-8')
+    os.dup2(self.old, self.fd)
+    os.close(self.old)
+    self.tmp.close()
+
+    return result.decode('utf-8')
 
 
 class CapturePython:
-    """Helper class that captures Python output"""
-    def __init__(self, stream):
-        self.stream = stream
-        self.new    = io.StringIO()
-        self.old    = getattr(sys, self.stream)
-        setattr(sys, self.stream, self.new)
+  """Helper class that captures Python output"""
 
-    def release(self):
-        setattr(sys, self.stream, self.old)
-        return self.new.getvalue()
+  def __init__(self, stream):
+    self.stream = stream
+    self.new = io.StringIO()
+    self.old = getattr(sys, self.stream)
+    setattr(sys, self.stream, self.new)
+
+  def release(self):
+    setattr(sys, self.stream, self.old)
+    return self.new.getvalue()
 
 
 class CaptureLogger(logging.Handler):
-    """Helper class that captures Python logger output"""
-    def __init__(self, module=None):
-        super(CaptureLogger, self).__init__(level=logging.DEBUG)
-        self.logs = collections.defaultdict(str)
+  """Helper class that captures Python logger output"""
 
-        self.devnull = open(os.devnull, 'w')
-        rdkit.log_handler.setStream(self.devnull)
-        rdkit.logger.addHandler(self)
+  def __init__(self, module=None):
+    super(CaptureLogger, self).__init__(level=logging.DEBUG)
+    self.logs = collections.defaultdict(str)
 
-    def handle(self, record):
-        key = record.levelname
-        val = self.format(record)
-        self.logs[key] += val
-        return False
+    self.devnull = open(os.devnull, 'w')
+    rdkit.log_handler.setStream(self.devnull)
+    rdkit.logger.addHandler(self)
 
-    def release(self):
-        rdkit.log_handler.setStream(sys.stderr)
-        rdkit.logger.removeHandler(self)
-        self.devnull.close()
-        return self.logs
+  def handle(self, record):
+    key = record.levelname
+    val = self.format(record)
+    self.logs[key] += val
+    return False
+
+  def release(self):
+    rdkit.log_handler.setStream(sys.stderr)
+    rdkit.logger.removeHandler(self)
+    self.devnull.close()
+    return self.logs
 
 
 class CaptureOutput:
-    """Helper class that captures all output"""
-    def __init__(self):
-        self.captured = {}
+  """Helper class that captures all output"""
 
-    def __enter__(self):
-        self.osout = CaptureStream(1)
-        self.oserr = CaptureStream(2)
-        self.pyout = CapturePython('stdout')
-        self.pyerr = CapturePython('stderr')
-        self.pylog = CaptureLogger()
-        return self.captured
+  def __init__(self):
+    self.captured = {}
 
-    def __exit__(self, x, y, z):
-        for key, output in self.pylog.release().items():
-            self.captured[key] = output
+  def __enter__(self):
+    self.osout = CaptureStream(1)
+    self.oserr = CaptureStream(2)
+    self.pyout = CapturePython('stdout')
+    self.pyerr = CapturePython('stderr')
+    self.pylog = CaptureLogger()
+    return self.captured
 
-        pyout = self.pyout.release()
-        if pyout:
-            self.captured['sys.stdout'] = pyout
+  def __exit__(self, x, y, z):
+    for key, output in self.pylog.release().items():
+      self.captured[key] = output
 
-        pyerr = self.pyerr.release()
-        if pyerr:
-            self.captured['sys.stderr'] = pyerr
+    pyout = self.pyout.release()
+    if pyout:
+      self.captured['sys.stdout'] = pyout
 
-        osout = self.osout.release()
-        if osout:
-            self.captured['std::cout'] = osout
+    pyerr = self.pyerr.release()
+    if pyerr:
+      self.captured['sys.stderr'] = pyerr
 
-        oserr = self.oserr.release()
-        if oserr:
-            self.captured['std::cerr'] = oserr
+    osout = self.osout.release()
+    if osout:
+      self.captured['std::cout'] = osout
+
+    oserr = self.oserr.release()
+    if oserr:
+      self.captured['std::cerr'] = oserr
+
 
 # Helpers for the non-threaded tests:
 def timestamp(message):
+  ts = time.time()
+  if ts % 1 > 0.95:
+    # Avoid failures when seconds roll over:
+    time.sleep(0.06)
     ts = time.time()
-    if ts % 1 > 0.95:
-        # Avoid failures when seconds roll over:
-        time.sleep(0.06)
-        ts = time.time()
 
-    dt = datetime.datetime.fromtimestamp(ts)
-    return dt.strftime('[%H:%M:%S] ') + message
+  dt = datetime.datetime.fromtimestamp(ts)
+  return dt.strftime('[%H:%M:%S] ') + message
+
 
 def expect_debug(message):
-    expect = timestamp(message)
-    rdBase.LogDebugMsg(message)
-    return expect
+  expect = timestamp(message)
+  rdBase.LogDebugMsg(message)
+  return expect
+
 
 def expect_info(message):
-    expect = timestamp(message)
-    rdBase.LogInfoMsg(message)
-    return expect
+  expect = timestamp(message)
+  rdBase.LogInfoMsg(message)
+  return expect
+
 
 def expect_warning(message):
-    expect = timestamp(message)
-    rdBase.LogWarningMsg(message)
-    return expect
+  expect = timestamp(message)
+  rdBase.LogWarningMsg(message)
+  return expect
+
 
 def expect_error(message):
-    expect = timestamp(message)
-    rdBase.LogErrorMsg(message)
-    return expect
+  expect = timestamp(message)
+  rdBase.LogErrorMsg(message)
+  return expect
+
 
 # Helpers for the threaded tests:
 nthreads = 5
 nlogs = 50
 
+logger = logging.getLogger("rdkit")
+logger.setLevel(logging.DEBUG)
+
+
 def go(func, *args):
-    thread = threading.Thread(target=func, args=args)
-    thread.start()
-    return thread
+  thread = threading.Thread(target=func, args=args)
+  thread.start()
+  return thread
+
 
 def LogDebugs(nlogs, t=1):
-    for i in range(1, nlogs+1):
-        rdBase.LogDebugMsg("Debug %d.%d: My dog has fleas!" % (t, i))
+  for i in range(1, nlogs + 1):
+    rdBase.LogDebugMsg("Debug %d.%d: My dog has fleas!" % (t, i))
+
 
 def LogInfos(nlogs, t=1):
-    for i in range(1, nlogs+1):
-        rdBase.LogInfoMsg("Info %d.%d: Everything is fine." % (t, i))
+  for i in range(1, nlogs + 1):
+    rdBase.LogInfoMsg("Info %d.%d: Everything is fine." % (t, i))
+
 
 def LogWarnings(nlogs, t=1):
-    for i in range(1, nlogs+1):
-        rdBase.LogWarningMsg("Warning %d.%d: Every good boy does fine." % (t, i))
+  for i in range(1, nlogs + 1):
+    rdBase.LogWarningMsg("Warning %d.%d: Every good boy does fine." % (t, i))
+
 
 def LogErrors(nlogs, t=1):
-    for i in range(1, nlogs+1):
-        rdBase.LogErrorMsg("Error %d.%d: Intruder detected!" % (t, i))
+  for i in range(1, nlogs + 1):
+    rdBase.LogErrorMsg("Error %d.%d: Intruder detected!" % (t, i))
+
 
 def LogAllLevels(nlogs, t=1):
-    for i in range(1, nlogs+1):
-        rdBase.LogDebugMsg("Debug %d.%d: Headin' out..." % (t, i))
-        rdBase.LogInfoMsg("Info %d.%d: There is no cow level." % (t, i))
-        rdBase.LogWarningMsg("Warning %d.%d: Nuclear launch detected!" % (t, i))
-        rdBase.LogErrorMsg("Error %d.%d: We require more vespene gas." % (t, i))
+  for i in range(1, nlogs + 1):
+    rdBase.LogDebugMsg("Debug %d.%d: Headin' out..." % (t, i))
+    rdBase.LogInfoMsg("Info %d.%d: There is no cow level." % (t, i))
+    rdBase.LogWarningMsg("Warning %d.%d: Nuclear launch detected!" % (t, i))
+    rdBase.LogErrorMsg("Error %d.%d: We require more vespene gas." % (t, i))
+
 
 def RunOneThreadPerLevel(nthreads):
-    threads = []
-    for i in range(1, nthreads+1):
-        threads.append(go(LogDebugs,   nlogs, i))
-        threads.append(go(LogInfos,    nlogs, i))
-        threads.append(go(LogErrors,   nlogs, i))
-        threads.append(go(LogWarnings, nlogs, i))
-    for t in threads:
-        t.join()
+  threads = []
+  for i in range(1, nthreads + 1):
+    threads.append(go(LogDebugs, nlogs, i))
+    threads.append(go(LogInfos, nlogs, i))
+    threads.append(go(LogErrors, nlogs, i))
+    threads.append(go(LogWarnings, nlogs, i))
+  for t in threads:
+    t.join()
+
 
 def RunManyThreadsPerLevel(nthreads):
-    threads = []
-    for i in range(1, nthreads+1):
-        threads.append(go(LogAllLevels, nlogs, i))
-    for t in threads:
-        t.join()
+  threads = []
+  for i in range(1, nthreads + 1):
+    threads.append(go(LogAllLevels, nlogs, i))
+  for t in threads:
+    t.join()
 
 
 class TestLogToCppStreams(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        rdBase.LogToCppStreams()
 
-    def testDebug(self):
-        with CaptureOutput() as captured:
-            expect = expect_debug('debug') + '\n'
-        self.assertEqual(captured, {'std::cerr': expect})
+  @classmethod
+  def setUpClass(cls):
+    rdBase.LogToCppStreams()
 
-    def testInfo(self):
-        with CaptureOutput() as captured:
-            expect = expect_info('info') + '\n'
-        self.assertEqual(captured, {'std::cout': expect})
+  def testDebug(self):
+    with CaptureOutput() as captured:
+      expect = expect_debug('debug') + '\n'
+    self.assertEqual(captured, {'std::cerr': expect})
 
-    def testWarning(self):
-        with CaptureOutput() as captured:
-            expect = expect_warning('warning') + '\n'
-        self.assertEqual(captured, {'std::cerr': expect})
+  def testInfo(self):
+    with CaptureOutput() as captured:
+      expect = expect_info('info') + '\n'
+    self.assertEqual(captured, {'std::cout': expect})
 
-    def testError(self):
-        with CaptureOutput() as captured:
-            expect = expect_error('error') + '\n'
-        self.assertEqual(captured, {'std::cerr': expect})
+  def testWarning(self):
+    with CaptureOutput() as captured:
+      expect = expect_warning('warning') + '\n'
+    self.assertEqual(captured, {'std::cerr': expect})
 
-    def testSynchronous(self):
-        with CaptureOutput() as captured:
-            LogAllLevels(nlogs)
-        cout = captured['std::cout']
-        cerr = captured['std::cerr']
-        self.assertEqual(cerr.count('Debug'),   nlogs)
-        self.assertEqual(cout.count('Info'),    nlogs)
-        self.assertEqual(cerr.count('Warning'), nlogs)
-        self.assertEqual(cerr.count('Error'),   nlogs)
+  def testError(self):
+    with CaptureOutput() as captured:
+      expect = expect_error('error') + '\n'
+    self.assertEqual(captured, {'std::cerr': expect})
 
-    def testAsynchronous1(self):
-        with CaptureOutput() as captured:
-            RunOneThreadPerLevel(nthreads)
-        cout = captured['std::cout']
-        cerr = captured['std::cerr']
-        self.assertEqual(cerr.count('Debug'),   nthreads * nlogs)
-        self.assertEqual(cout.count('Info'),    nthreads * nlogs)
-        self.assertEqual(cerr.count('Warning'), nthreads * nlogs)
-        self.assertEqual(cerr.count('Error'),   nthreads * nlogs)
+  def testSynchronous(self):
+    with CaptureOutput() as captured:
+      LogAllLevels(nlogs)
+    cout = captured['std::cout']
+    cerr = captured['std::cerr']
+    self.assertEqual(cerr.count('Debug'), nlogs)
+    self.assertEqual(cout.count('Info'), nlogs)
+    self.assertEqual(cerr.count('Warning'), nlogs)
+    self.assertEqual(cerr.count('Error'), nlogs)
 
-    def testAsynchronous2(self):
-        with CaptureOutput() as captured:
-            RunManyThreadsPerLevel(nthreads)
-        cout = captured['std::cout']
-        cerr = captured['std::cerr']
-        self.assertEqual(cerr.count('Debug'),   nthreads * nlogs)
-        self.assertEqual(cout.count('Info'),    nthreads * nlogs)
-        self.assertEqual(cerr.count('Warning'), nthreads * nlogs)
-        self.assertEqual(cerr.count('Error'),   nthreads * nlogs)
+  def testAsynchronous1(self):
+    with CaptureOutput() as captured:
+      RunOneThreadPerLevel(nthreads)
+    cout = captured['std::cout']
+    cerr = captured['std::cerr']
+    self.assertEqual(cerr.count('Debug'), nthreads * nlogs)
+    self.assertEqual(cout.count('Info'), nthreads * nlogs)
+    self.assertEqual(cerr.count('Warning'), nthreads * nlogs)
+    self.assertEqual(cerr.count('Error'), nthreads * nlogs)
+
+  def testAsynchronous2(self):
+    with CaptureOutput() as captured:
+      RunManyThreadsPerLevel(nthreads)
+    cout = captured['std::cout']
+    cerr = captured['std::cerr']
+    self.assertEqual(cerr.count('Debug'), nthreads * nlogs)
+    self.assertEqual(cout.count('Info'), nthreads * nlogs)
+    self.assertEqual(cerr.count('Warning'), nthreads * nlogs)
+    self.assertEqual(cerr.count('Error'), nthreads * nlogs)
 
 
 class TestLogToPythonLogger(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        rdBase.LogToPythonLogger()
 
-    def testDebug(self):
-        with CaptureOutput() as captured:
-            expect = expect_debug('debug')
-        self.assertEqual(captured, {'DEBUG': expect})
+  @classmethod
+  def setUpClass(cls):
+    rdBase.LogToPythonLogger()
 
-    def testInfo(self):
-        with CaptureOutput() as captured:
-            expect = expect_info('info')
-        self.assertEqual(captured, {'INFO': expect})
+  def testDebug(self):
+    with CaptureOutput() as captured:
+      expect = expect_debug('debug')
+    self.assertEqual(captured, {'DEBUG': expect})
 
-    def testWarning(self):
-        with CaptureOutput() as captured:
-            expect = expect_warning('warning')
-        self.assertEqual(captured, {'WARNING': expect})
+  def testInfo(self):
+    with CaptureOutput() as captured:
+      expect = expect_info('info')
+    self.assertEqual(captured, {'INFO': expect})
 
-    def testError(self):
-        with CaptureOutput() as captured:
-            expect = expect_error('error')
-        self.assertEqual(captured, {'ERROR': expect})
+  def testWarning(self):
+    with CaptureOutput() as captured:
+      expect = expect_warning('warning')
+    self.assertEqual(captured, {'WARNING': expect})
 
-    def testSynchronous(self):
-        with CaptureOutput() as captured:
-            LogAllLevels(nlogs)
-        self.assertEqual(captured['DEBUG'  ].count('Debug'),   nlogs)
-        self.assertEqual(captured['INFO'   ].count('Info'),    nlogs)
-        self.assertEqual(captured['WARNING'].count('Warning'), nlogs)
-        self.assertEqual(captured['ERROR'  ].count('Error'),   nlogs)
+  def testError(self):
+    with CaptureOutput() as captured:
+      expect = expect_error('error')
+    self.assertEqual(captured, {'ERROR': expect})
 
-    def testAsynchronous1(self):
-        with CaptureOutput() as captured:
-            RunOneThreadPerLevel(nthreads)
-        self.assertEqual(captured['DEBUG'  ].count('Debug'),   nthreads * nlogs)
-        self.assertEqual(captured['INFO'   ].count('Info'),    nthreads * nlogs)
-        self.assertEqual(captured['WARNING'].count('Warning'), nthreads * nlogs)
-        self.assertEqual(captured['ERROR'  ].count('Error'),   nthreads * nlogs)
+  def testSynchronous(self):
+    with CaptureOutput() as captured:
+      LogAllLevels(nlogs)
+    self.assertEqual(captured['DEBUG'].count('Debug'), nlogs)
+    self.assertEqual(captured['INFO'].count('Info'), nlogs)
+    self.assertEqual(captured['WARNING'].count('Warning'), nlogs)
+    self.assertEqual(captured['ERROR'].count('Error'), nlogs)
 
-    def testAsynchronous2(self):
-        with CaptureOutput() as captured:
-            RunManyThreadsPerLevel(nthreads)
-        self.assertEqual(captured['DEBUG'  ].count('Debug'),   nthreads * nlogs)
-        self.assertEqual(captured['INFO'   ].count('Info'),    nthreads * nlogs)
-        self.assertEqual(captured['WARNING'].count('Warning'), nthreads * nlogs)
-        self.assertEqual(captured['ERROR'  ].count('Error'),   nthreads * nlogs)
+  def testAsynchronous1(self):
+    with CaptureOutput() as captured:
+      RunOneThreadPerLevel(nthreads)
+    self.assertEqual(captured['DEBUG'].count('Debug'), nthreads * nlogs)
+    self.assertEqual(captured['INFO'].count('Info'), nthreads * nlogs)
+    self.assertEqual(captured['WARNING'].count('Warning'), nthreads * nlogs)
+    self.assertEqual(captured['ERROR'].count('Error'), nthreads * nlogs)
+
+  def testAsynchronous2(self):
+    with CaptureOutput() as captured:
+      RunManyThreadsPerLevel(nthreads)
+    self.assertEqual(captured['DEBUG'].count('Debug'), nthreads * nlogs)
+    self.assertEqual(captured['INFO'].count('Info'), nthreads * nlogs)
+    self.assertEqual(captured['WARNING'].count('Warning'), nthreads * nlogs)
+    self.assertEqual(captured['ERROR'].count('Error'), nthreads * nlogs)
 
 
 class TestLogToPythonStderr(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        rdBase.LogToPythonStderr()
 
-    def testDebug(self):
-        with CaptureOutput() as captured:
-            expect = expect_debug('debug') + '\n'
-        self.assertEqual(captured, {'sys.stderr': expect})
+  @classmethod
+  def setUpClass(cls):
+    rdBase.LogToPythonStderr()
 
-    def testInfo(self):
-        with CaptureOutput() as captured:
-            expect = expect_info('info') + '\n'
-        self.assertEqual(captured, {'sys.stderr': expect})
+  def testDebug(self):
+    with CaptureOutput() as captured:
+      expect = expect_debug('debug') + '\n'
+    self.assertEqual(captured, {'sys.stderr': expect})
 
-    def testWarning(self):
-        with CaptureOutput() as captured:
-            expect = expect_warning('warning') + '\n'
-        self.assertEqual(captured, {'sys.stderr': expect})
+  def testInfo(self):
+    with CaptureOutput() as captured:
+      expect = expect_info('info') + '\n'
+    self.assertEqual(captured, {'sys.stderr': expect})
 
-    def testError(self):
-        with CaptureOutput() as captured:
-            expect = expect_error('error') + '\n'
-        self.assertEqual(captured, {'sys.stderr': expect})
+  def testWarning(self):
+    with CaptureOutput() as captured:
+      expect = expect_warning('warning') + '\n'
+    self.assertEqual(captured, {'sys.stderr': expect})
 
-    def testSynchronous(self):
-        with CaptureOutput() as captured:
-            LogAllLevels(nlogs)
-        output = captured['sys.stderr']
-        self.assertEqual(output.count('Debug'),   nlogs)
-        self.assertEqual(output.count('Info'),    nlogs)
-        self.assertEqual(output.count('Warning'), nlogs)
-        self.assertEqual(output.count('Error'),   nlogs)
+  def testError(self):
+    with CaptureOutput() as captured:
+      expect = expect_error('error') + '\n'
+    self.assertEqual(captured, {'sys.stderr': expect})
 
-    def testAsynchronous1(self):
-        with CaptureOutput() as captured:
-            RunOneThreadPerLevel(nthreads)
-        output = captured['sys.stderr']
-        self.assertEqual(output.count('Debug'),   nthreads * nlogs)
-        self.assertEqual(output.count('Info'),    nthreads * nlogs)
-        self.assertEqual(output.count('Warning'), nthreads * nlogs)
-        self.assertEqual(output.count('Error'),   nthreads * nlogs)
+  def testSynchronous(self):
+    with CaptureOutput() as captured:
+      LogAllLevels(nlogs)
+    output = captured['sys.stderr']
+    self.assertEqual(output.count('Debug'), nlogs)
+    self.assertEqual(output.count('Info'), nlogs)
+    self.assertEqual(output.count('Warning'), nlogs)
+    self.assertEqual(output.count('Error'), nlogs)
 
-    def testAsynchronous2(self):
-        with CaptureOutput() as captured:
-            RunManyThreadsPerLevel(nthreads)
-        output = captured['sys.stderr']
-        self.assertEqual(output.count('Debug'),   nthreads * nlogs)
-        self.assertEqual(output.count('Info'),    nthreads * nlogs)
-        self.assertEqual(output.count('Warning'), nthreads * nlogs)
-        self.assertEqual(output.count('Error'),   nthreads * nlogs)
+  def testAsynchronous1(self):
+    with CaptureOutput() as captured:
+      RunOneThreadPerLevel(nthreads)
+    output = captured['sys.stderr']
+    self.assertEqual(output.count('Debug'), nthreads * nlogs)
+    self.assertEqual(output.count('Info'), nthreads * nlogs)
+    self.assertEqual(output.count('Warning'), nthreads * nlogs)
+    self.assertEqual(output.count('Error'), nthreads * nlogs)
+
+  def testAsynchronous2(self):
+    with CaptureOutput() as captured:
+      RunManyThreadsPerLevel(nthreads)
+    output = captured['sys.stderr']
+    self.assertEqual(output.count('Debug'), nthreads * nlogs)
+    self.assertEqual(output.count('Info'), nthreads * nlogs)
+    self.assertEqual(output.count('Warning'), nthreads * nlogs)
+    self.assertEqual(output.count('Error'), nthreads * nlogs)
 
 
 class TestWrapLogs(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        rdBase.LogToCppStreams()
-        rdBase.WrapLogs()
 
-    def testDebug(self):
-        with CaptureOutput() as captured:
-            expect = expect_debug('debug') + '\n'
-        self.assertEqual(captured, {
-            'sys.stderr': expect,
-            'std::cerr':  expect
-        })
+  @classmethod
+  def setUpClass(cls):
+    rdBase.LogToCppStreams()
+    rdBase.WrapLogs()
 
-    def testInfo(self):
-        with CaptureOutput() as captured:
-            expect = expect_info('info') + '\n'
-        self.assertEqual(captured, {
-            'sys.stderr': expect,
-            'std::cout':  expect
-        })
+  def testDebug(self):
+    with CaptureOutput() as captured:
+      expect = expect_debug('debug') + '\n'
+    self.assertEqual(captured, {'sys.stderr': expect, 'std::cerr': expect})
 
-    def testWarning(self):
-        with CaptureOutput() as captured:
-            expect = expect_warning('warning') + '\n'
-        self.assertEqual(captured, {
-            'sys.stderr': expect,
-            'std::cerr':  expect
-        })
+  def testInfo(self):
+    with CaptureOutput() as captured:
+      expect = expect_info('info') + '\n'
+    self.assertEqual(captured, {'sys.stderr': expect, 'std::cout': expect})
 
-    def testError(self):
-        with CaptureOutput() as captured:
-            expect = expect_error('error') + '\n'
-        self.assertEqual(captured, {
-            'sys.stderr': expect,
-            'std::cerr':  expect
-        })
+  def testWarning(self):
+    with CaptureOutput() as captured:
+      expect = expect_warning('warning') + '\n'
+    self.assertEqual(captured, {'sys.stderr': expect, 'std::cerr': expect})
+
+  def testError(self):
+    with CaptureOutput() as captured:
+      expect = expect_error('error') + '\n'
+    self.assertEqual(captured, {'sys.stderr': expect, 'std::cerr': expect})
 
 
-if __name__ == '__main__': # pragma: nocover
-    unittest.main()
+if __name__ == '__main__':  # pragma: nocover
+  unittest.main()
