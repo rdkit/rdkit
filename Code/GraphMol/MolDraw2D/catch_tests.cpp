@@ -4256,6 +4256,40 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
   }
 }
 
+TEST_CASE("Github 5061 - draw reaction with no reagents and scaleBondWidth true") {
+  SECTION("basics") {
+    std::string data = R"RXN($RXN
+
+  Mrv16425    091201171606
+
+  0  1
+$MOL
+
+  Mrv1642509121716062D
+
+  2  1  0  0  0  0            999 V2000
+    3.5357    0.0000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    2.7107    0.0000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  RGP  2   1   1   2   2
+
+
+M  END)RXN";
+    {
+      std::unique_ptr<ChemicalReaction> rxn{RxnBlockToChemicalReaction(data)};
+      MolDraw2DSVG drawer(450, 200);
+      drawer.drawOptions().scaleBondWidth = true;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub_5061.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub_5061.svg");
+    }
+  }
+}
+
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
   auto rxn = "[CH3:1][OH:2]>>[CH2:1]=[OH0:2]"_rxnsmarts;
