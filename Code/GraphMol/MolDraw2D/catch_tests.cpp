@@ -199,6 +199,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testVariableLegend_1.svg", 2181678815U},
     {"testVariableLegend_2.svg", 2392644674U},
     {"testVariableLegend_3.svg", 2954965314U},
+    {"testGithub_5061.svg", 632991478U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4252,6 +4253,40 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
       CHECK(text.find("<text x='84.7' y='195.0' class='legend' "
                       "style='font-size:6px;") != std::string::npos);
       check_file_hash("testVariableLegend_3.svg");
+    }
+  }
+}
+
+TEST_CASE("Github 5061 - draw reaction with no reagents and scaleBondWidth true") {
+  SECTION("basics") {
+    std::string data = R"RXN($RXN
+
+  Mrv16425    091201171606
+
+  0  1
+$MOL
+
+  Mrv1642509121716062D
+
+  2  1  0  0  0  0            999 V2000
+    3.5357    0.0000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    2.7107    0.0000    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  RGP  2   1   1   2   2
+
+
+M  END)RXN";
+    {
+      std::unique_ptr<ChemicalReaction> rxn{RxnBlockToChemicalReaction(data)};
+      MolDraw2DSVG drawer(450, 200);
+      drawer.drawOptions().scaleBondWidth = true;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub_5061.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub_5061.svg");
     }
   }
 }
