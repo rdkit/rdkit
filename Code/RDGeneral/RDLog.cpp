@@ -116,7 +116,9 @@ std::string log_status() {
 namespace RDLog {
 void InitLogs() {
   rdDebugLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
+  rdDebugLog->df_enabled = false;
   rdInfoLog = std::make_shared<boost::logging::rdLogger>(&std::cout);
+  rdInfoLog->df_enabled = false;
   rdWarningLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
   rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
