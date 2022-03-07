@@ -160,6 +160,24 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
     throw ValueErrorException("molecule has no atoms");
   }
 
+  class VerboseSaver {
+    bool d_originallyEnabled = false;
+
+   public:
+    VerboseSaver(bool newState) {
+      if (rdInfoLog) {
+        d_originallyEnabled = rdInfoLog->df_enabled;
+        rdInfoLog->df_enabled = newState;
+      }
+    }
+    ~VerboseSaver() {
+      if (rdInfoLog) {
+        rdInfoLog->df_enabled = d_originallyEnabled;
+      }
+    }
+  };
+  VerboseSaver saver(verbose);
+
   // check that vectors are empty
   details.expTorsionAtoms.clear();
   details.expTorsionAngles.clear();
