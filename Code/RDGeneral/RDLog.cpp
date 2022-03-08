@@ -23,11 +23,11 @@ RDLogger rdInfoLog = nullptr;
 RDLogger rdErrorLog = nullptr;
 RDLogger rdWarningLog = nullptr;
 RDLogger rdStatusLog = nullptr;
-
-const static std::vector<RDLogger> allLogs = {
-    rdAppLog, rdDebugLog, rdInfoLog, rdErrorLog, rdWarningLog, rdStatusLog};
+namespace RDLog {
 
 LogStateSetter::LogStateSetter() {
+  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
+                                   rdErrorLog, rdWarningLog, rdStatusLog};
   for (auto i = 0u; i < allLogs.size(); ++i) {
     if (allLogs[i] && allLogs[i]->df_enabled) {
       d_origState |= 1 << i;
@@ -45,13 +45,15 @@ LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
 }
 
 LogStateSetter::~LogStateSetter() {
+  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
+                                   rdErrorLog, rdWarningLog, rdStatusLog};
   for (auto i = 0u; i < allLogs.size(); ++i) {
     if (d_origState & 1 << i && allLogs[i]) {
       allLogs[i]->df_enabled = true;
     }
   }
 }
-
+}  // namespace RDLog
 namespace boost {
 namespace logging {
 

@@ -103,6 +103,19 @@ RDKIT_RDGENERAL_EXPORT extern RDLogger rdErrorLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdWarningLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdStatusLog;
 
+#else
+#define BOOST_LOG_NO_LIB
+#include <boost/log/log.hpp>
+BOOST_DECLARE_LOG(rdAppLog)
+BOOST_DECLARE_LOG(rdDebugLog)
+BOOST_DECLARE_LOG(rdInfoLog)
+BOOST_DECLARE_LOG(rdErrorLog)
+BOOST_DECLARE_LOG(rdWarningLog)
+BOOST_DECLARE_LOG(rdStatusLog)
+#endif
+namespace RDLog {
+RDKIT_RDGENERAL_EXPORT void InitLogs();
+
 using RDLoggerList = std::initializer_list<RDLogger>;
 class RDKIT_RDGENERAL_EXPORT LogStateSetter {
  public:
@@ -117,20 +130,9 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter {
  private:
   std::uint64_t d_origState = 0;
 };
-#else
-#define BOOST_LOG_NO_LIB
-#include <boost/log/log.hpp>
-BOOST_DECLARE_LOG(rdAppLog)
-BOOST_DECLARE_LOG(rdDebugLog)
-BOOST_DECLARE_LOG(rdInfoLog)
-BOOST_DECLARE_LOG(rdErrorLog)
-BOOST_DECLARE_LOG(rdWarningLog)
-BOOST_DECLARE_LOG(rdStatusLog)
-#endif
-namespace RDLog {
-RDKIT_RDGENERAL_EXPORT void InitLogs();
 
 // ! Temporarily block logging until this object goes out of scope
+// DEPRECATED, please use LogStateSetter() instead
 struct RDKIT_RDGENERAL_EXPORT BlockLogs {
   std::vector<RDLogger> logs_to_reenable;
   BlockLogs();
