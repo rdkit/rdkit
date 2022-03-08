@@ -379,7 +379,7 @@ TEST_CASE("molzip", "[]") {
     p.sanitize = false;
     auto a = "CC(=[*:1])N"_smiles;
     auto b = "[*:1]-N=C"_smiles;
-    auto mol = molzip(*a, *b, params);
+    auto mol = molzip(*a, *b, p);
   }
 }
 
