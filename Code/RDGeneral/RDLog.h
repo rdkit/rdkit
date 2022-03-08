@@ -18,7 +18,7 @@
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
 #include <iostream>
-#include <initializer_list>
+#include <vector>
 
 #include <vector>
 namespace boost {
@@ -116,7 +116,7 @@ BOOST_DECLARE_LOG(rdStatusLog)
 namespace RDLog {
 RDKIT_RDGENERAL_EXPORT void InitLogs();
 
-using RDLoggerList = std::initializer_list<RDLogger>;
+using RDLoggerList = std::vector<RDLogger>;
 class RDKIT_RDGENERAL_EXPORT LogStateSetter {
  public:
   //! enables only the logs in the list, the current state will be restored when
