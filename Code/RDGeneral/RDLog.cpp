@@ -48,8 +48,8 @@ LogStateSetter::~LogStateSetter() {
   std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
                                    rdErrorLog, rdWarningLog, rdStatusLog};
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (d_origState & 1 << i && allLogs[i]) {
-      allLogs[i]->df_enabled = true;
+    if (allLogs[i]) {
+      allLogs[i]->df_enabled = d_origState & 1 << i;
     }
   }
 }
