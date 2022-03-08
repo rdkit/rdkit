@@ -48,6 +48,7 @@ using std::smatch;
 #include <locale>
 #include <cstdlib>
 #include <cstdio>
+#include <string_view>
 
 using namespace RDKit::SGroupParsing;
 
@@ -55,13 +56,13 @@ namespace RDKit {
 
 namespace FileParserUtils {
 
-int toInt(const std::string &input, bool acceptSpaces) {
+int toInt(std::string_view input, bool acceptSpaces) {
   int res = 0;
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
 
   // sanity check on the input since strtol doesn't do it for us:
-  const char *txt = input.c_str();
+  const char *txt = input.data();
   while (*txt != '\x00') {
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
         *txt == '+' || *txt == '-') {
@@ -70,17 +71,19 @@ int toInt(const std::string &input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  res = strtol(input.c_str(), nullptr, 10);
+  res = strtol(input.data(), nullptr, 10);
   return res;
 }
-
-unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
+int toInt(const std::string &input, bool acceptSpaces) {
+  return toInt(std::string_view(input.c_str()), acceptSpaces);
+}
+unsigned int toUnsigned(std::string_view input, bool acceptSpaces) {
   unsigned res = 0;
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
 
   // sanity check on the input since strtol doesn't do it for us:
-  const char *txt = input.c_str();
+  const char *txt = input.data();
   while (*txt != '\x00') {
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
         *txt == '+') {
@@ -89,13 +92,15 @@ unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  res = strtoul(input.c_str(), nullptr, 10);
+  res = strtoul(input.data(), nullptr, 10);
   return res;
 }
-
-double toDouble(const std::string &input, bool acceptSpaces) {
+unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
+  return toUnsigned(std::string_view(input.c_str()), acceptSpaces);
+}
+double toDouble(std::string_view input, bool acceptSpaces) {
   // sanity check on the input since strtol doesn't do it for us:
-  const char *txt = input.c_str();
+  const char *txt = input.data();
   // check for ',' and '.' because locale
   while (*txt != '\x00') {
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
@@ -105,10 +110,12 @@ double toDouble(const std::string &input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  double res = atof(input.c_str());
+  double res = atof(input.data());
   return res;
 }
-
+double toDouble(const std::string &input, bool acceptSpaces) {
+  return toDouble(std::string_view(input.c_str()), acceptSpaces);
+}
 std::string getV3000Line(std::istream *inStream, unsigned int &line) {
   // FIX: technically V3K blocks are case-insensitive. We should really be
   // up-casing everything here.
@@ -221,7 +228,8 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
 //
 //*************************************
 
-void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
+void ParseOldAtomList(RWMol *mol, const std::string_view &text,
+                      unsigned int line) {
   PRECONDITION(mol, "bad mol");
   unsigned int idx;
   try {
@@ -1870,7 +1878,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   } else {
     if (tempStr[0] != 'M' && tempStr[0] != 'A' && tempStr[0] != 'V' &&
         tempStr[0] != 'G' && tempStr[0] != 'S') {
-      ParseOldAtomList(mol, tempStr, line);
+      ParseOldAtomList(mol, std::string_view(tempStr.c_str()), line);
     }
   }
 

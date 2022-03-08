@@ -18,6 +18,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <string_view>
 
 namespace RDKit {
 class RWMol;
@@ -25,19 +26,41 @@ class Conformer;
 
 namespace FileParserUtils {
 template <typename T>
-T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
-  std::string trimmed = boost::trim_copy(input);
+T stripSpacesAndCast(std::string_view input, bool acceptSpaces = false) {
+  auto trimmed = input;
+  unsigned idx = 0u;
+  while (input[idx] == ' ') {
+    ++idx;
+  }
+  trimmed.remove_prefix(idx);
+  if (!trimmed.empty()) {
+    idx = trimmed.size() - 1;
+    while (trimmed[idx] == ' ') {
+      --idx;
+    }
+    trimmed.remove_suffix(trimmed.size() - idx - 1);
+  }
   if (acceptSpaces && trimmed == "") {
     return 0;
   } else {
     return boost::lexical_cast<T>(trimmed);
   }
 }
+template <typename T>
+T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
+  return stripSpacesAndCast<T>(std::string_view(input.c_str()), acceptSpaces);
+}
 RDKIT_FILEPARSERS_EXPORT int toInt(const std::string &input,
                                    bool acceptSpaces = true);
 RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(const std::string &input,
                                                  bool acceptSpaces = true);
 RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string &input,
+                                         bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT int toInt(std::string_view input,
+                                   bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(std::string_view input,
+                                                 bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT double toDouble(std::string_view input,
                                          bool acceptSpaces = true);
 
 // parses info from a V3000 CTAB into a molecule
