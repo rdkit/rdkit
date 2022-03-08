@@ -151,7 +151,7 @@ std::unique_ptr<ROMol> LinkNodeOp::operator()(
     ROMOL_SPTR reactant(new ROMol(*res));
     std::vector<MOL_SPTR_VECT> ps;
     {
-      RDLog::BlockLogs blocker;
+      RDLog::LogStateSetter blocker;
       ps = rxn->runReactant(reactant, 0);
     }
     ASSERT_INVARIANT(!ps.empty(), "no products from reaction");

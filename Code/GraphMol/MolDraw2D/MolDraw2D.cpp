@@ -894,7 +894,7 @@ void MolDraw2D::makeReactionDrawMol(
   if (drawOptions().prepareMolsBeforeDrawing) {
     mol.updatePropertyCache(false);
     try {
-      RDLog::BlockLogs blocker;
+      RDLog::LogStateSetter blocker;
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
     } catch (const MolSanitizeException &) {
       // don't need to do anything

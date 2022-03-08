@@ -24,6 +24,34 @@ RDLogger rdErrorLog = nullptr;
 RDLogger rdWarningLog = nullptr;
 RDLogger rdStatusLog = nullptr;
 
+const static std::vector<RDLogger> allLogs = {
+    rdAppLog, rdDebugLog, rdInfoLog, rdErrorLog, rdWarningLog, rdStatusLog};
+
+LogStateSetter::LogStateSetter() {
+  for (auto i = 0u; i < allLogs.size(); ++i) {
+    if (allLogs[i] && allLogs[i]->df_enabled) {
+      d_origState |= 1 << i;
+      allLogs[i]->df_enabled = false;
+    }
+  }
+}
+
+LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
+  for (auto &log : toEnable) {
+    if (log) {
+      log->df_enabled = true;
+    }
+  }
+}
+
+LogStateSetter::~LogStateSetter() {
+  for (auto i = 0u; i < allLogs.size(); ++i) {
+    if (d_origState & 1 << i && allLogs[i]) {
+      allLogs[i]->df_enabled = true;
+    }
+  }
+}
+
 namespace boost {
 namespace logging {
 
@@ -77,17 +105,15 @@ void disable_logs(const std::string &arg) {
 };
 
 bool is_log_enabled(RDLogger log) {
-  if (log && log.get() != nullptr) {
-    if (log->df_enabled) {
-      return true;
-    }
+  if (log && log->df_enabled) {
+    return true;
   }
   return false;
 }
 
 void get_log_status(std::ostream &ss, const std::string &name, RDLogger log) {
   ss << name << ":";
-  if (log && log.get() != nullptr) {
+  if (log) {
     if (log->df_enabled) {
       ss << "enabled";
     } else {

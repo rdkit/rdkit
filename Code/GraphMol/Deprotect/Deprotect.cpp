@@ -126,7 +126,7 @@ std::unique_ptr<ROMol> deprotect(
       for (auto &prods : deprotect.rxn->runReactant(m, 0)) {
         m = prods[0];
         try {
-          RDLog::BlockLogs blocker;
+          RDLog::LogStateSetter blocker;
           MolOps::sanitizeMol(*dynamic_cast<RWMol *>(m.get()));
         } catch (MolSanitizeException &) {
           continue;
@@ -163,7 +163,7 @@ bool deprotectInPlace(RWMol &mol,
       bool changes = deprotect.rxn->runReactant(mol);
       if (changes) {
         try {
-          RDLog::BlockLogs blocker;
+          RDLog::LogStateSetter blocker;
           MolOps::sanitizeMol(mol);
         } catch (MolSanitizeException &) {
           continue;

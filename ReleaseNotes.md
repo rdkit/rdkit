@@ -30,6 +30,7 @@
   `rdkit.rdBase.LogWarning()`.
 - Python function `rdkit.Chem.LogError()` is deprecated in favor of
   `rdkit.rdBase.LogError()`.
+- The C++ class `RDLog::BlockLogs` is deprecated in favor of the the class `RDLog::LogStateSetter`.
 
 # Release_2021.09.1
 (Changes relative to Release_2021.03.1)
