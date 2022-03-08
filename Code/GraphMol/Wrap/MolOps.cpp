@@ -2468,6 +2468,8 @@ EXAMPLES:\n\n\
                                  python::init<>())
         .def_readwrite("label", &MolzipParams::label,
                        "Set the atom labelling system to zip together")
+        .def_readwrite("sanitize", &MolzipParams::sanitize,
+		       "If true (default) performs simple sanitization of the output")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
              "Set the atom symbols used to zip mols together when using AtomType labeling")
       ;
