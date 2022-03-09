@@ -2620,3 +2620,11 @@ M  END
     check_dest(m1.get(), m2);
   }
 }
+
+TEST_CASE("Github #5055") {
+  SECTION("as reported") {
+    auto m =
+        "CC1(C)NC(=O)CN2C=C(C[C@H](C(=O)NC)NC(=O)CN3CCN(C(=O)[C@H]4Cc5c([nH]c6ccccc56)CN4C(=O)CN4CN(c5ccccc5)C5(CCN(CC5)C1=O)C4=O)[C@@H](Cc1ccccc1)C3=O)[N-][NH2+]2"_smiles;
+    REQUIRE(m);
+  }
+}
