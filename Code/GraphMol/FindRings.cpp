@@ -18,10 +18,8 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 #include <cstdint>
-#include <tuple>
-#include <RDGeneral/hash/hash.hpp>
 
-using RINGINVAR = std::tuple<std::uint32_t, std::uint32_t, std::uint32_t>;
+using RINGINVAR = boost::dynamic_bitset<>;
 using RINGINVAR_SET = std::set<RINGINVAR>;
 using RINGINVAR_VECT = std::vector<RINGINVAR>;
 
@@ -30,10 +28,12 @@ const size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
 
 using namespace RDKit;
 
-RINGINVAR computeRingInvariant(INT_VECT ring, unsigned int) {
-  std::sort(ring.begin(), ring.end());
-  std::uint32_t rhash = gboost::hash_range(ring.begin(), ring.end());
-  return {rhash, ring.size(), ring.back()};
+RINGINVAR computeRingInvariant(INT_VECT ring, unsigned int numAtoms) {
+  boost::dynamic_bitset<> res(numAtoms);
+  for (auto idx : ring) {
+    res.set(idx);
+  }
+  return res;
 }
 
 void convertToBonds(const INT_VECT &ring, INT_VECT &bondRing,
@@ -184,10 +184,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
         if (nring.size() == minSiz) {
           auto invr = RingUtils::computeRingInvariant(nring, mol.getNumAtoms());
 #if 0
-          std::cerr << "    res: "
-                    << "(" << std::get<0>(invr) << "," << std::get<1>(invr)
-                    << "," << std::get<2>(invr) << ")"
-                    << " | ";
+          std::cerr << "    res: " << invr << " | ";
           std::copy(nring.begin(), nring.end(),
                     std::ostream_iterator<int>(std::cerr, " "));
           std::cerr << std::endl;
