@@ -1,6 +1,6 @@
 // $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,7 +9,6 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
-
 #include "Subgraphs.h"
 #include "SubgraphUtils.h"
 
@@ -539,13 +538,24 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
                                    rootedAtAtom)[targetLen];
 }
 
-PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
-                                       unsigned int rootedAtAtom, bool useHs) {
+PATH_TYPE findAtomEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
+    bool useHs, bool enforceSize,
+    std::unordered_map<unsigned int, unsigned int> *atomMap) {
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
-
+  if (atomMap) {
+    atomMap->clear();
+  }
   PATH_TYPE res;
+  if (atomMap) {
+    (*atomMap)[rootedAtAtom] = 0;
+  }
+  if (radius == 0) {
+    return res;
+  }  // Return empty path if radius=0
+
   std::list<std::pair<int, int>> nbrStack;
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(rootedAtAtom));
@@ -575,28 +585,41 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(const ROMol &mol, unsigned int radius,
 
         // add the next set of neighbors:
         int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
-        boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(oAtom));
-        while (beg != end) {
-          const Bond *bond = mol[*beg];
-          if (!bondsIn.test(bond->getIdx())) {
-            if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
-                                 ->getAtomicNum() != 1) {
-              nextLayer.emplace_back(oAtom, bond->getIdx());
+        if (atomMap) {
+          if (atomMap->find(oAtom) == atomMap->end()) {
+            (*atomMap)[oAtom] = i + 1;
+          } else {
+            (*atomMap)[oAtom] = std::min(atomMap->at(oAtom), i + 1);
+          }
+        }
+        // if we're going to do another iteration, then push the neighbors from
+        // this round onto the stack
+        if (i < radius - 1) {
+          for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
+            if (!bondsIn.test(bond->getIdx())) {
+              if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
+                                   ->getAtomicNum() != 1) {
+                nextLayer.emplace_back(oAtom, bond->getIdx());
+              }
             }
           }
-          ++beg;
         }
       }
     }
-    nbrStack = nextLayer;
+    nbrStack = std::move(nextLayer);
   }
-  if (i != radius) {
-    // this happens when there are no paths with the requested radius.
-    // return nothing in this case:
+  if (i != radius && enforceSize) {
+    // If there are no paths found with the requested radius, user can choose
+    // whether or not to return nothing in this case. If enforceSize=true, this
+    // is similar to the previous bahviour (return an empty path/vector).
+    // Otherwise, it collect every path within the requested radius. This is
+    // similar to maxPath(mol, res) <= radius.
     res.clear();
     res.resize(0);
+    if (atomMap) {
+      atomMap->clear();
+    }
   }
-
   return res;
 }
 

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -791,6 +791,29 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   }
   return python::tuple(res);
 };
+
+PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
+                                             unsigned int radius,
+                                             unsigned int rootedAtAtom,
+                                             bool useHs, bool enforceSize,
+                                             python::object atomMap) {
+  PATH_TYPE path;
+  if (atomMap == python::object()) {
+    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
+                                        enforceSize);
+  } else {
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
+                                        enforceSize, &cAtomMap);
+    // make sure the optional argument (atomMap) is actually a dictionary
+    python::dict typecheck = python::extract<python::dict>(atomMap);
+    atomMap.attr("clear")();
+    for (auto pair : cAtomMap) {
+      atomMap[pair.first] = pair.second;
+    }
+  }
+  return path;
+}
 
 ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
                           python::object atomMap) {
@@ -1699,7 +1722,8 @@ to the terminal dummy atoms.\n\
 
     // ------------------------------------------------------------------------
     docString =
-        "Finds the bonds within a certain radius of an atom in a molecule\n\
+        "Find bonds of a particular radius around an atom. \n\
+         Return empty result if there is no bond at the requested radius.\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -1713,13 +1737,21 @@ to the terminal dummy atoms.\n\
       should be included in the results.\n\
       Defaults to 0.\n\
 \n\
-  RETURNS: a vector of bond IDs\n\
+    - enforceSize (optional) If set to False, all bonds within the requested radius is \n\
+      collected. Defaults to 1. \n\
 \n\
+    - atomMap: (optional) If provided, it will measure the minimum distance of the atom \n\
+      from the rooted atom (start with 0 from the rooted atom). The result is a pair of \n\
+      the atom ID and the distance. \n\
+\n\
+  RETURNS: a vector of bond IDs\n\
 \n";
-    python::def("FindAtomEnvironmentOfRadiusN", &findAtomEnvironmentOfRadiusN,
-                (python::arg("mol"), python::arg("radius"),
-                 python::arg("rootedAtAtom"), python::arg("useHs") = false),
-                docString.c_str());
+    python::def(
+        "FindAtomEnvironmentOfRadiusN", findAtomEnvironmentOfRadiusNHelper,
+        (python::arg("mol"), python::arg("radius"), python::arg("rootedAtAtom"),
+         python::arg("useHs") = false, python::arg("enforceSize") = true,
+         python::arg("atomMap") = python::object()),
+        docString.c_str());
 
     python::def("PathToSubmol", pathToSubmolHelper,
                 (python::arg("mol"), python::arg("path"),
@@ -2596,10 +2628,10 @@ A note on the flags controlling which atoms/bonds are modified:
         .def_readwrite("adjustHeavyDegree",
                        &MolOps::AdjustQueryParameters::adjustHeavyDegree,
                        "adjust the heavy-atom degree")
-        .def_readwrite(
-            "adjustHeavyDegreeFlags",
-            &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
-            "controls which atoms have their heavy-atom degree queries changed")
+        .def_readwrite("adjustHeavyDegreeFlags",
+                       &MolOps::AdjustQueryParameters::adjustHeavyDegreeFlags,
+                       "controls which atoms have their heavy-atom degree "
+                       "queries changed")
         .def_readwrite("adjustRingCount",
                        &MolOps::AdjustQueryParameters::adjustRingCount,
                        "add ring-count queries")
@@ -2644,7 +2676,8 @@ A note on the flags controlling which atoms/bonds are modified:
         .def_readwrite(
             "setMDLFiveRingAromaticity",
             &MolOps::AdjustQueryParameters::setMDLFiveRingAromaticity,
-            "uses the 5-ring aromaticity behavior of the (former) MDL software "
+            "uses the 5-ring aromaticity behavior of the (former) MDL "
+            "software "
             "as documented in the Chemical Representation Guide")
         .def_readwrite("adjustSingleBondsToDegreeOneNeighbors",
                        &MolOps::AdjustQueryParameters::
@@ -2662,7 +2695,8 @@ A note on the flags controlling which atoms/bonds are modified:
         .staticmethod("NoAdjustments");
 
     docString =
-        "Returns a new molecule where the query properties of atoms have been "
+        "Returns a new molecule where the query properties of atoms have "
+        "been "
         "modified.";
     python::def("AdjustQueryProperties", adjustQueryPropertiesHelper,
                 (python::arg("mol"), python::arg("params") = python::object()),
