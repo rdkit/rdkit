@@ -235,7 +235,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
     for prop in ('legends', 'highlightAtoms', 'highlightBonds'):
       if prop in kwargs:
         kwargs[prop] = kwargs[prop][:maxMols]
-  if not "drawOptions" in kwargs:
+  if "drawOptions" not in kwargs:
     kwargs["drawOptions"] = drawOptions
   
   res = fn(mols, **kwargs)

@@ -24,23 +24,23 @@ class TestCase(unittest.TestCase):
   def testAtomPairTypes(self):
     params = rdMD.AtomPairsParameters
     mol = Chem.MolFromSmiles("C=C")
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
                     rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)))
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
                     1 | (1 | 1<<params.numPiBits)<<params.numBranchBits)
 
     mol = Chem.MolFromSmiles("C#CO")
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))!=\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))!=
                     rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1)))
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(0))==
                     1 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1))==
                     2 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(2))==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(2))==
                     1 | (0 | 3<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),1)==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),1)==
                     1 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
-    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==\
+    self.assertTrue(rdMD.GetAtomPairAtomCode(mol.GetAtomWithIdx(1),2)==
                     0 | (2 | 1<<params.numPiBits)<<params.numBranchBits)
 
   def testAtomPairTypesChirality(self):

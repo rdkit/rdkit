@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     if (qID not in query_size):
       qMol = Chem.MolFromSmiles(qSmi)
-      if (qMol == None):
+      if qMol is None:
         sys.stderr.write("Can't generate mol for: %s\n" % (qSmi))
         continue
       query_mols[qID] = qMol
@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
     iMol = Chem.MolFromSmiles(inSmi)
 
-    if (iMol == None):
+    if iMol is None:
       sys.stderr.write("Can't generate mol for: %s\n" % (inSmi))
       continue
 

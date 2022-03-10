@@ -392,7 +392,7 @@ def _enumerate(rgroups, fw,
         smi = ".".join(set([g.smiles for g in groups]))
         try:
             mol = molzip(Chem.MolFromSmiles(smi))
-        except:
+        except Exception:
             rejected_bad += 1
             continue
             

@@ -198,7 +198,7 @@ def RecapDecompose(mol, allNodes=None, minFragmentSize=0, onlyUseReactions=None)
                         for nats, prod in prodSeq:
                             pSmi = prod.pSmi
                             # print '\t',nats,pSmi
-                            if not pSmi in allNodes:
+                            if pSmi not in allNodes:
                                 pNode = RecapHierarchyNode(prod)
                                 pNode.smiles = pSmi
                                 pNode.parents[nSmi] = weakref.proxy(node)

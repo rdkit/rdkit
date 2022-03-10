@@ -475,7 +475,7 @@ class TestCase(unittest.TestCase):
 
     # AlignMol() would return this for the rms: 2.50561
     # But the best rms is: 2.43449
-    rmsd = rdMolAlign.GetBestRMS(mol1, mol2);
+    rmsd = rdMolAlign.GetBestRMS(mol1, mol2)
 
     self.failUnlessAlmostEqual(rmsd, 2.43449209)
 

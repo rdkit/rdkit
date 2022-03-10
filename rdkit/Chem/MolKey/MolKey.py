@@ -106,7 +106,7 @@ stereo_code_dict['UNDEFINED'] = 200
 def _fix_all(pat, sbt, my_string):
   try:
     return re.sub(pat, sbt, my_string)
-  except:
+  except Exception:
     return None
 
 

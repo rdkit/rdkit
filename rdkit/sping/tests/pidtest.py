@@ -325,7 +325,7 @@ def wxTest(testfunc):
         return
 
     global wx_app
-    if not 'wx_app' in globals():
+    if 'wx_app' not in globals():
 
         class CanvasApp(wxApp):
             "The wxApp that runs canvas.  Initializes windows, and handles redrawing"
@@ -450,7 +450,7 @@ def mainLoop():
         print
 
         # now, if we have a valid backend and test, run it
-        if backend != None and test != None:
+        if backend is not None and test is not None:
             runtest(backends[backend], tests[test])
 
 
