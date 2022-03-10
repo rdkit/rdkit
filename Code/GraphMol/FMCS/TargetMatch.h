@@ -66,10 +66,12 @@ struct TargetMatch {
                 for(size_t i = 0; i < TargetBondIdx.size(); i++)
                     TargetBondIdx[i] = -1;
     */
-    for (size_t i = 0; i < VisitedTargetBonds.size(); i++)
+    for (size_t i = 0; i < VisitedTargetBonds.size(); i++) {
       VisitedTargetBonds[i] = false;
-    for (size_t i = 0; i < VisitedTargetAtoms.size(); i++)
+    }
+    for (size_t i = 0; i < VisitedTargetAtoms.size(); i++) {
       VisitedTargetAtoms[i] = false;
+    }
 
     MatchedAtomSize = match.size();
     for (match_V_t::const_iterator mit = match.begin(); mit != match.end();

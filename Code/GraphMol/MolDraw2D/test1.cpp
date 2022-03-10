@@ -537,7 +537,9 @@ void test1() {
     // https://stackoverflow.com/questions/22489073/counting-the-number-of-occurrences-of-a-string-within-a-string
     auto countSubstring = [](const std::string &str,
                              const std::string &sub) -> int {
-      if (sub.length() == 0) return 0;
+      if (sub.length() == 0) {
+        return 0;
+      }
       int count = 0;
       for (size_t offset = str.find(sub); offset != std::string::npos;
            offset = str.find(sub, offset + sub.length())) {

@@ -65,12 +65,16 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
 
   // get the length of the direction vector:
   sum = 0.0;
-  for (unsigned int i = 0; i < dim; i++) sum += dir[i] * dir[i];
+  for (unsigned int i = 0; i < dim; i++) {
+    sum += dir[i] * dir[i];
+  }
   sum = sqrt(sum);
 
   // rescale if we're trying to move too far:
   if (sum > maxStep) {
-    for (unsigned int i = 0; i < dim; i++) dir[i] *= maxStep / sum;
+    for (unsigned int i = 0; i < dim; i++) {
+      dir[i] *= maxStep / sum;
+    }
   }
 
   // make sure our direction has at least some component along
@@ -86,7 +90,9 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
   test = 0.0;
   for (unsigned int i = 0; i < dim; i++) {
     double temp = fabs(dir[i]) / std::max(fabs(oldPt[i]), 1.0);
-    if (temp > test) test = temp;
+    if (temp > test) {
+      test = temp;
+    }
   }
 
   lambdaMin = MOVETOL / test;
@@ -242,7 +248,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       xi[i] = newPos[i] - pos[i];
       pos[i] = newPos[i];
       double temp = fabs(xi[i]) / std::max(fabs(pos[i]), 1.0);
-      if (temp > test) test = temp;
+      if (temp > test) {
+        test = temp;
+      }
       dGrad[i] = grad[i];
     }
     // std::cerr<<"      iter: "<<iter<<" "<<fp<<" "<<test<<"

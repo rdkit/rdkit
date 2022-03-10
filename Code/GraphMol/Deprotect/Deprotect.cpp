@@ -135,8 +135,9 @@ std::unique_ptr<ROMol> deprotect(
         if (deprotections_used.size() >= MAX_DEPROTECTIONS) {
           BOOST_LOG(rdErrorLog)
               << "Too many deprotections, halting..." << std::endl;
-        } else
+        } else {
           something_happened = true;
+        }
         break;
       }
     }

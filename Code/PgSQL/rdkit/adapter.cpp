@@ -985,8 +985,12 @@ extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
 #endif
     }
 
-    if (s[n].low == 0 || s[n].low > iterV) s[n].low = iterV;
-    if (s[n].high < iterV) s[n].high = iterV;
+    if (s[n].low == 0 || s[n].low > iterV) {
+      s[n].low = iterV;
+    }
+    if (s[n].high < iterV) {
+      s[n].high = iterV;
+    }
   }
 
   return res;
@@ -1015,8 +1019,9 @@ extern "C" void countOverlapValues(bytea *sign, CSfp data, int numBits,
   } else {
     /* Assume, sign has only true bits */
     for (iter = v->getNonzeroElements().begin();
-         iter != v->getNonzeroElements().end(); iter++)
+         iter != v->getNonzeroElements().end(); iter++) {
       *sum += iter->second;
+    }
 
     *overlapSum = *sum;
     *overlapN = v->getNonzeroElements().size();
@@ -1050,9 +1055,10 @@ extern "C" void countLowOverlapValues(bytea *sign, CSfp data, int numInts,
 
   for (n = 0; n < numInts; n++) {
     *keySum += s[n].low;
-    if (s[n].low != s[n].high)
-      *keySum += s[n].high; /* there is at least two key mapped into current
-                               backet */
+    if (s[n].low != s[n].high) {
+      *keySum += s[n].high;
+    } /* there is at least two key mapped into current
+                                    backet */
   }
 
   Assert(*overlapUp <= *keySum);
@@ -2151,9 +2157,10 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
   try {
     MCSResult res = RDKit::findMCS(molecules, &p);
     mcs = res.SmartsString;
-    if (!res.isCompleted())
+    if (!res.isCompleted()) {
       ereport(WARNING, (errcode(ERRCODE_WARNING),
                         errmsg("findMCS timed out, result is not maximal")));
+    }
   } catch (...) {
     ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));
     mcs.clear();
@@ -2206,9 +2213,10 @@ extern "C" char *findMCS(void *vmols, char *params) {
 
   try {
     MCSResult res = RDKit::findMCS(*molecules, &p);
-    if (!res.isCompleted())
+    if (!res.isCompleted()) {
       ereport(WARNING, (errcode(ERRCODE_WARNING),
                         errmsg("findMCS timed out, result is not maximal")));
+    }
     mcs = res.SmartsString;
   } catch (...) {
     ereport(WARNING, (errcode(ERRCODE_WARNING), errmsg("findMCS: failed")));

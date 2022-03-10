@@ -164,7 +164,9 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
          ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size(); ++ii) {
       int cmp =
           bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-      if (cmp) return cmp;
+      if (cmp) {
+        return cmp;
+      }
     }
 
     std::vector<std::pair<unsigned int, unsigned int>> swapsi;
@@ -177,7 +179,9 @@ class RDKIT_GRAPHMOL_EXPORT SpecialChiralityAtomCompareFunctor {
     }
     for (unsigned int ii = 0; ii < swapsi.size() && ii < swapsj.size(); ++ii) {
       int cmp = swapsi[ii].second - swapsj[ii].second;
-      if (cmp) return cmp;
+      if (cmp) {
+        return cmp;
+      }
     }
     return 0;
   }
@@ -229,7 +233,9 @@ class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
          ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size(); ++ii) {
       int cmp =
           bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-      if (cmp) return cmp;
+      if (cmp) {
+        return cmp;
+      }
     }
 
     if (dp_atoms[i].bonds.size() < dp_atoms[j].bonds.size()) {
@@ -243,7 +249,9 @@ class RDKIT_GRAPHMOL_EXPORT SpecialSymmetryAtomCompareFunctor {
 
 class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   unsigned int getAtomRingNbrCode(unsigned int i) const {
-    if (!dp_atoms[i].hasRingNbr) return 0;
+    if (!dp_atoms[i].hasRingNbr) {
+      return 0;
+    }
 
     int *nbrs = dp_atoms[i].nbrIds;
     unsigned int code = 0;
@@ -469,26 +477,29 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
     // always start with the current class:
     ivi = dp_atoms[i].index;
     ivj = dp_atoms[j].index;
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // move onto atomic number
     ivi = dp_atoms[i].atom->getAtomicNum();
     ivj = dp_atoms[j].atom->getAtomicNum();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // isotopes:
     ivi = dp_atoms[i].atom->getIsotope();
     ivj = dp_atoms[j].atom->getIsotope();
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // atom stereochem:
     ivi = 0;
@@ -502,10 +513,11 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
                                            cipCode)) {
       ivj = cipCode == "R" ? 2 : 1;
     }
-    if (ivi < ivj)
+    if (ivi < ivj) {
       return -1;
-    else if (ivi > ivj)
+    } else if (ivi > ivj) {
       return 1;
+    }
 
     // bond stereo is taken care of in the neighborhood comparison
     return 0;
@@ -523,7 +535,9 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
     PRECONDITION(dp_mol, "no molecule");
     PRECONDITION(i != j, "bad call");
     int v = basecomp(i, j);
-    if (v) return v;
+    if (v) {
+      return v;
+    }
 
     if (df_useNbrs) {
       getAtomNeighborhood(dp_atoms[i].bonds);
@@ -537,14 +551,18 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
            ++ii) {
         int cmp = bondholder::compare(
             dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii], ATNUM_CLASS_OFFSET);
-        if (cmp) return cmp;
+        if (cmp) {
+          return cmp;
+        }
       }
       for (unsigned int ii = 0;
            ii < dp_atoms[i].bonds.size() && ii < dp_atoms[j].bonds.size();
            ++ii) {
         int cmp =
             bondholder::compare(dp_atoms[i].bonds[ii], dp_atoms[j].bonds[ii]);
-        if (cmp) return cmp;
+        if (cmp) {
+          return cmp;
+        }
       }
       if (dp_atoms[i].bonds.size() < dp_atoms[j].bonds.size()) {
         return -1;
@@ -621,7 +639,9 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     // count:"<<count[index]<<std::endl;
     for (i = count[index]; i < len; i++) {
       index = start[i];
-      if (count[index]) symclass = offset + i;
+      if (count[index]) {
+        symclass = offset + i;
+      }
       atoms[index].index = symclass;
       // std::cerr<<" "<<index+1<<"("<<symclass<<")";
       // if(mode && (activeset<0 || count[index]>count[activeset]) ){

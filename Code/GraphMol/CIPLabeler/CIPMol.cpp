@@ -20,8 +20,9 @@ CIPMol::CIPMol(ROMol &mol) : d_mol{mol} {}
 
 boost::rational<int> CIPMol::getFractionalAtomicNum(Atom *atom) const {
   PRECONDITION(atom, "bad atom")
-  if (d_atomnums.empty())
+  if (d_atomnums.empty()) {
     const_cast<CIPMol *>(this)->d_atomnums = calcFracAtomNums(*this);
+  }
   return d_atomnums[atom->getIdx()];
 }
 

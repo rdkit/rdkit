@@ -67,7 +67,9 @@ void rankVect(const std::vector<T1> &vect, T2 &res) {
   unsigned int nEntries = rdcast<unsigned int>(vect.size());
 
   std::vector<unsigned int> indices(nEntries);
-  for (unsigned int i = 0; i < nEntries; ++i) indices[i] = i;
+  for (unsigned int i = 0; i < nEntries; ++i) {
+    indices[i] = i;
+  }
   std::sort(indices.begin(), indices.end(), argless<std::vector<T1>>(vect));
 
   int currRank = 0;

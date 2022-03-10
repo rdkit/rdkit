@@ -87,8 +87,9 @@ class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
   const EnumerationTypes::RGROUPS &next() override {
     if (m_numPermutationsProcessed) {
       increment();
-    } else
+    } else {
       ++m_numPermutationsProcessed;
+    }
 
     return m_permutation;
   }
@@ -120,7 +121,9 @@ class RDKIT_CHEMREACTIONS_EXPORT CartesianProductStrategy
   }
 
   void next(size_t rowToIncrement) {
-    if (!hasNext()) return;
+    if (!hasNext()) {
+      return;
+    }
     m_permutation[rowToIncrement] += 1;
     size_t max_index_of_row = m_permutationSizes[rowToIncrement] - 1;
     if (m_permutation[rowToIncrement] > max_index_of_row) {

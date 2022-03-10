@@ -54,7 +54,9 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
     }
   }
   QueryAtom &operator=(const QueryAtom &other) {
-    if (this == &other) return *this;
+    if (this == &other) {
+      return *this;
+    }
     Atom::operator=(other);
     delete dp_query;
     if (other.dp_query) {
@@ -134,7 +136,9 @@ namespace detail {
 inline std::string qhelper(Atom::QUERYATOM_QUERY *q, unsigned int depth) {
   std::string res = "";
   if (q) {
-    for (unsigned int i = 0; i < depth; ++i) res += "  ";
+    for (unsigned int i = 0; i < depth; ++i) {
+      res += "  ";
+    }
     res += q->getFullDescription() + "\n";
     for (Atom::QUERYATOM_QUERY::CHILD_VECT_CI ci = q->beginChildren();
          ci != q->endChildren(); ++ci) {

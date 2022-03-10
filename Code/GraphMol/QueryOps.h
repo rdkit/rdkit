@@ -142,11 +142,15 @@ static inline void parseAtomType(int val, int &atomic_num, bool &aromatic) {
   }
 }
 static inline bool getAtomTypeIsAromatic(int val) {
-  if (val > 1000) return true;
+  if (val > 1000) {
+    return true;
+  }
   return false;
 }
 static inline int getAtomTypeAtomicNum(int val) {
-  if (val > 1000) return val - 1000;
+  if (val > 1000) {
+    return val - 1000;
+  }
   return val;
 }
 

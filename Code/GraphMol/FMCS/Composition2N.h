@@ -32,16 +32,20 @@ class Composition2N {  // generator of 2^N-1 possible bit combinations
     if ((++Bits) <= MaxValue) {
       InverseBits = (~Bits + 1) & ValueMask;
       return true;
-    } else
+    } else {
       return false;
+    }
   }
   bool is2Power() const {  // one bit is set only
     BitSet bits = getBitSet();
     unsigned n = 0;
     while (0 == (bits & 1uLL) &&
-           ++n < sizeof(bits) * 8)        // find lowest bitwise 1
+           ++n < sizeof(bits) * 8) {      // find lowest bitwise 1
       bits >>= 1u;                        // shift all zero lower bits
-    if (0 != (bits & 1uLL)) bits >>= 1u;  // shift first set bit too
+    }
+    if (0 != (bits & 1uLL)) {
+      bits >>= 1u;  // shift first set bit too
+    }
     return 0 == bits;                     // remained bits except lowest 1
   }
   // unused:        bool nonZero() {return 0!=getBitSet();}

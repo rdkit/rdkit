@@ -1852,7 +1852,9 @@ void testMultipleCoreRelabellingIssues() {
       auto smiles = line.substr(pos + 1);
       std::shared_ptr<ROMol> mol(SmilesToMol(smiles));
       molecules.push_back(mol);
-      if (molecules.size() == 30) break;
+      if (molecules.size() == 30) {
+        break;
+      }
     }
   }
 

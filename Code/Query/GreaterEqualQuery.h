@@ -39,15 +39,17 @@ class RDKIT_QUERY_EXPORT GreaterEqualQuery
     MatchFuncArgType mfArg =
         this->TypeConvert(what, Int2Type<needsConversion>());
     if (queryCmp(this->d_val, mfArg, this->d_tol) >= 0) {
-      if (this->getNegation())
+      if (this->getNegation()) {
         return false;
-      else
+      } else {
         return true;
+      }
     } else {
-      if (this->getNegation())
+      if (this->getNegation()) {
         return true;
-      else
+      } else {
         return false;
+      }
     }
   }
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
@@ -68,10 +70,11 @@ class RDKIT_QUERY_EXPORT GreaterEqualQuery
     std::ostringstream res;
     res << this->getDescription();
     res << " " << this->d_val;
-    if (this->getNegation())
+    if (this->getNegation()) {
       res << " ! >= ";
-    else
+    } else {
       res << " >= ";
+    }
     return res.str();
   }
 };

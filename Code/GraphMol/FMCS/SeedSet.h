@@ -47,8 +47,11 @@ class RDKIT_FMCS_EXPORT SeedSet {  // sorted by amount of bonds
   Value& add(const Value& seed) {
     iterator where;
     for (where = Seeds.begin(); where != Seeds.end();
-         where++)  // find position in sorted list
-      if (where->getNumBonds() < seed.getNumBonds()) break;
+         where++) {  // find position in sorted list
+      if (where->getNumBonds() < seed.getNumBonds()) {
+        break;
+      }
+    }
     iterator it = Seeds.insert(where, EmptySeed);
     Value& val = *it;
     val.setMoleculeFragment(seed);

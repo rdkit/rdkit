@@ -200,7 +200,9 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::selectParent() {
   double sum = SELECT_START, currentFitness = SELECT_START;
   auto iterator = population.begin();
   for (size_t i = 0; i < popsize; i++) {
-    if (val <= sum) return iterator->second;
+    if (val <= sum) {
+      return iterator->second;
+    }
     currentFitness += scaledFitnessStep;
     sum += currentFitness;
     ++iterator;
@@ -436,7 +438,9 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::findExactMatch(
   for (auto iterator = iterators.first; iterator != iterators.second;
        ++iterator) {
     const std::shared_ptr<Chromosome>& other = iterator->second;
-    if (c.equals(*other)) return iterator;
+    if (c.equals(*other)) {
+      return iterator;
+    }
   }
   return population.end();
 }

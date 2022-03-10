@@ -42,7 +42,9 @@ enum EEndian {
 // parameter (could sizeof be used?).
 template <class T, unsigned int size>
 inline T SwapBytes(T value) {
-  if (size < 2) return value;
+  if (size < 2) {
+    return value;
+  }
 
   union {
     T value;
@@ -71,13 +73,17 @@ inline T EndianSwapBytes(T value) {
   // A : La donnée à swapper à une taille de 2, 4 ou 8 octets
   BOOST_STATIC_ASSERT(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
                       sizeof(T) == 8);
-  if (sizeof(T) == 1) return value;
+  if (sizeof(T) == 1) {
+    return value;
+  }
 
   // A : La donnée à swapper est d'un type arithmetic
   // BOOST_STATIC_ASSERT(boost::is_arithmetic<T>::value);
 
   // Si from et to sont du même type on ne swap pas.
-  if (from == to) return value;
+  if (from == to) {
+    return value;
+  }
 
   return SwapBytes<T, sizeof(T)>(value);
 }
@@ -266,7 +272,9 @@ inline void streamWrite(std::ostream &ss, const std::string &what) {
 template <typename T>
 void streamWriteVec(std::ostream &ss, const T &val) {
   streamWrite(ss, static_cast<boost::uint64_t>(val.size()));
-  for (size_t i = 0; i < val.size(); ++i) streamWrite(ss, val[i]);
+  for (size_t i = 0; i < val.size(); ++i) {
+    streamWrite(ss, val[i]);
+  }
 }
 
 //! does a binary read of an object from a stream
@@ -309,7 +317,9 @@ void streamReadVec(std::istream &ss, T &val) {
   streamRead(ss, size);
   val.resize(boost::numeric_cast<size_t>(size));
 
-  for (size_t i = 0; i < size; ++i) streamRead(ss, val[i]);
+  for (size_t i = 0; i < size; ++i) {
+    streamRead(ss, val[i]);
+  }
 }
 
 inline void streamReadStringVec(std::istream &ss, std::vector<std::string> &val,
@@ -318,7 +328,9 @@ inline void streamReadStringVec(std::istream &ss, std::vector<std::string> &val,
   streamRead(ss, size);
   val.resize(size);
 
-  for (size_t i = 0; i < size; ++i) streamRead(ss, val[i], version);
+  for (size_t i = 0; i < size; ++i) {
+    streamRead(ss, val[i], version);
+  }
 }
 
 //! grabs the next line from an instream and returns it.

@@ -33,7 +33,9 @@ class RDKIT_QUERY_EXPORT OrQuery
         break;
       }
     }
-    if (this->getNegation()) res = !res;
+    if (this->getNegation()) {
+      res = !res;
+    }
     return res;
   }
 
