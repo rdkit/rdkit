@@ -49,7 +49,7 @@ const std::vector<
         std::make_tuple(
             std::string("1,3 heteroatom H shift"),
             std::string(
-                "[#7+0,S,O,Se,Te;!H0]-[#7X2,#6,#15]=[#7+0,#16,#8,Se,Te]"),
+                "[#7+0,S,O,Se,Te;!H0]-[#7X2,#6,#15X3H0]=[#7+0,#16,#8,Se,Te]"),
             std::string(""), std::string("")),
         std::make_tuple(
             std::string("1,5 aromatic heteroatom H shift"),
@@ -135,9 +135,9 @@ const std::vector<
                         std::string("[N+!H0]#[C-]"), std::string("#"),
                         std::string("-+")),
         std::make_tuple(std::string("phosphonic acid f"),
-                        std::string("[OH]-[PH0]"), std::string("="),
+                        std::string("[OH]-[PX3H0]"), std::string("="),
                         std::string("")),
         std::make_tuple(std::string("phosphonic acid r"),
-                        std::string("[PH]=[O]"), std::string("-"),
+                        std::string("[PX4H]=[O]"), std::string("-"),
                         std::string(""))};
 }  // namespace defaults
