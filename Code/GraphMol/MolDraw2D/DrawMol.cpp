@@ -60,7 +60,8 @@ DrawMol::DrawMol(
       yMax_(std::numeric_limits<double>::lowest() / 2.0),
       xRange_(std::numeric_limits<double>::max()),
       yRange_(std::numeric_limits<double>::max()),
-      flexiCanvas_(height_ < 0.0 || width_ < 0.0) {
+      flexiCanvasX_(width_ < 0.0),
+      flexiCanvasY_(height_ < 0.0) {
   if (highlight_atoms) {
     highlightAtoms_ = *highlight_atoms;
   }
@@ -1412,7 +1413,7 @@ void DrawMol::extractLegend() {
   double total_width, total_height;
   calc_legend_height(legend_bits, relFontScale, total_width, total_height);
   if (total_width >= width_) {
-    if (!flexiCanvas_) {
+    if (!flexiCanvasX_) {
       relFontScale *= double(width_) / total_width;
       calc_legend_height(legend_bits, relFontScale, total_width, total_height);
     } else {
@@ -1421,7 +1422,7 @@ void DrawMol::extractLegend() {
     }
   }
 
-  if (!flexiCanvas_) {
+  if (!flexiCanvasY_) {
     auto adjLegHt = height_ * drawOptions_.legendFraction;
     // subtract off space for the padding.
     adjLegHt -= 0.5 * drawOptions_.padding * height_;

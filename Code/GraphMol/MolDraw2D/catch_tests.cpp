@@ -43,7 +43,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = true;
+static const bool DELETE_WITH_GOOD_HASH = false;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
@@ -195,6 +195,14 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testFlexiCanvas.5b.svg", 4143043529U},
     {"testFlexiCanvas.5c.svg", 54804156U},
     {"testFlexiCanvas.5d.svg", 2580215972U},
+    {"testFlexiCanvas.6a.svg", 1705496796U},
+    {"testFlexiCanvas.6b.svg", 1850606159U},
+    {"testFlexiCanvas.6c.svg", 1705496796U},
+    {"testFlexiCanvas.6d.svg", 1705496796U},
+    {"testFlexiCanvas.7a.svg", 332655605U},
+    {"testFlexiCanvas.7b.svg", 3708997766U},
+    {"testFlexiCanvas.7c.svg", 332655605U},
+    {"testFlexiCanvas.7d.svg", 332655605U},
     {"testGithub4764.sz1.svg", 2195931596U},
     {"testGithub4764.sz2.svg", 3477099305U},
     {"testGithub4764.sz3.svg", 3324176273U},
@@ -4107,6 +4115,100 @@ M  END)CTAB"_ctab;
       outs << text;
       outs.flush();
       check_file_hash("testFlexiCanvas.5d.svg");
+    }
+  }
+
+  SECTION("partially flexicanvas (height) + legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6d.svg");
+    }
+  }
+
+  SECTION("partially flexicanvas (width) + legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7d.svg");
     }
   }
 }
