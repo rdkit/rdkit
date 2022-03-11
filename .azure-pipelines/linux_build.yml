@@ -10,10 +10,10 @@ steps:
         boost-cpp=$(boost_version) \
         py-boost=$(boost_version) \
         numpy pillow eigen pandas matplotlib-base \
-        qt
+        qt cairo
     conda activate rdkit_build
-    conda install -c conda-forge nbval
-    conda install -c rdkit nox cairo=1.14.6
+    conda install -c conda-forge nbval ipykernel>=6.0
+    # conda install -c rdkit nox cairo=1.14.6
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
