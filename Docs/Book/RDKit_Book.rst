@@ -662,15 +662,50 @@ Starting with the 2022.03 release, the RDKit has partial, but evolving, support
 for non-tetrahedral stereochemistry. The status of this work is being tracked in
 this github issue: https://github.com/rdkit/rdkit/issues/4851
 
+This code is being released in a preliminary state in order to get feedback as
+soon as we can and to start to gather experience working with these systems.
 
-This discussion of the SMILES notation here is drawn heavily from the OpenSMILES
-documentation: http://opensmiles.org/opensmiles.html Many thanks to the team
-which put that document together and to John Mayfield for his excellent CDK
-Depict tool, which I used double check my work on this.
+
+Status as of 2022.03.1 release
+------------------------------
+
+"Complete"
+^^^^^^^^^^
+(Note that since is new territory, the term "complete" should be taken with a
+grain of salt.)
+
+- The basic representation
+- Parsing SMILES and SMARTS
+- Generation of 2D coordinates
+- Assignment of non-tetrahedral stereo from 3D structures
+
+Partial
+^^^^^^^
+- Writing SMILES. The SMILES generated should be correct, but they are not
+  canonical.
+- Generation of 3D coordinates. The basics here work but the "chirality" of TBP
+  and OH structures is not correct.
+- Writing mol files. Need wedged bonds for these to actually be done
+
+Totally missing
+^^^^^^^^^^^^^^^
+- Wedging bonds
+- Writing SMARTS
+- Substructure search integration
+- CIP assignment
+- Canonicalization
+- Stereochemistry cleanup: recognizing incorrect stereochemistry specifications
+- Assignment of non-tetrahedral stereo from 2D structures
 
 
 SMILES notation
 ---------------
+
+This discussion of the SMILES notation is drawn heavily from the OpenSMILES
+documentation: http://opensmiles.org/opensmiles.html Many thanks to the team
+which put that document together and to John Mayfield for his excellent CDK
+Depict tool, which I used double check my work on this.
+
 
 The representation has a tag for what the stereo is, e.g. ``@SP``, and a permutation number.
 
