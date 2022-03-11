@@ -43,7 +43,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = false;
+static const bool DELETE_WITH_GOOD_HASH = true;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
@@ -188,21 +188,21 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testSemiFlexiCanvas.1c.svg", 3129493597U},
     {"testFlexiCanvas.3.svg", 1503902249U},
     {"testFlexiCanvas.4a.svg", 428287035U},
-    {"testFlexiCanvas.4b.svg", 2666113420U},
-    {"testFlexiCanvas.4c.svg", 966336388U},
-    {"testFlexiCanvas.4d.svg", 2157934249U},
-    {"testFlexiCanvas.5a.svg", 2806793427U},
-    {"testFlexiCanvas.5b.svg", 4143043529U},
-    {"testFlexiCanvas.5c.svg", 54804156U},
-    {"testFlexiCanvas.5d.svg", 2580215972U},
+    {"testFlexiCanvas.4b.svg", 3643035210U},
+    {"testFlexiCanvas.4c.svg", 377546443U},
+    {"testFlexiCanvas.4d.svg", 2960126120U},
+    {"testFlexiCanvas.5a.svg", 948987396U},
+    {"testFlexiCanvas.5b.svg", 768214783U},
+    {"testFlexiCanvas.5c.svg", 1950949146U},
+    {"testFlexiCanvas.5d.svg", 4273629948U},
     {"testFlexiCanvas.6a.svg", 1705496796U},
     {"testFlexiCanvas.6b.svg", 1850606159U},
     {"testFlexiCanvas.6c.svg", 1705496796U},
     {"testFlexiCanvas.6d.svg", 1705496796U},
-    {"testFlexiCanvas.7a.svg", 332655605U},
-    {"testFlexiCanvas.7b.svg", 3708997766U},
-    {"testFlexiCanvas.7c.svg", 332655605U},
-    {"testFlexiCanvas.7d.svg", 332655605U},
+    {"testFlexiCanvas.7a.svg", 1790658127U},
+    {"testFlexiCanvas.7b.svg", 1178964791U},
+    {"testFlexiCanvas.7c.svg", 1790658127U},
+    {"testFlexiCanvas.7d.svg", 1790658127U},
     {"testGithub4764.sz1.svg", 2195931596U},
     {"testGithub4764.sz2.svg", 3477099305U},
     {"testGithub4764.sz3.svg", 3324176273U},

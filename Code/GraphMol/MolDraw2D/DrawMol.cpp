@@ -816,11 +816,9 @@ void DrawMol::calculateScale() {
     drawHeight_ = newScale * yRange_;
   }
   if (height_ < 0) {
+    height_ = drawHeight_;
     if (legend_.empty()) {
-      height_ = drawHeight_;
       legendHeight_ = 0;
-    } else {
-      height_ = drawHeight_;
     }
   }
 
@@ -1417,8 +1415,7 @@ void DrawMol::extractLegend() {
       relFontScale *= double(width_) / total_width;
       calc_legend_height(legend_bits, relFontScale, total_width, total_height);
     } else {
-      width_ = total_width;
-      width_ += width_ * drawOptions_.padding;
+      width_ = total_width * (1 + drawOptions_.padding);
     }
   }
 
@@ -1432,8 +1429,7 @@ void DrawMol::extractLegend() {
     }
   } else {
     height_ += total_height;
-    // REVIEW: is this factoring in the padding for the drawing bit twice?
-    height_ += height_ * drawOptions_.padding;
+    // height_ += height_ * drawOptions_.padding;
   }
 
   Point2D loc(width_ / 2 + xOffset_,
