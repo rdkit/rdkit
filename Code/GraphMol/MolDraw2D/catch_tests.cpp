@@ -188,9 +188,13 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testSemiFlexiCanvas.1c.svg", 3129493597U},
     {"testFlexiCanvas.3.svg", 1503902249U},
     {"testFlexiCanvas.4a.svg", 428287035U},
-    {"testFlexiCanvas.4b.svg", 2697900619U},
-    {"testFlexiCanvas.4c.svg", 2505619220U},
-    {"testFlexiCanvas.4d.svg", 1845451441U},
+    {"testFlexiCanvas.4b.svg", 2666113420U},
+    {"testFlexiCanvas.4c.svg", 966336388U},
+    {"testFlexiCanvas.4d.svg", 2157934249U},
+    {"testFlexiCanvas.5a.svg", 2806793427U},
+    {"testFlexiCanvas.5b.svg", 4143043529U},
+    {"testFlexiCanvas.5c.svg", 54804156U},
+    {"testFlexiCanvas.5d.svg", 2580215972U},
     {"testGithub4764.sz1.svg", 2195931596U},
     {"testGithub4764.sz2.svg", 3477099305U},
     {"testGithub4764.sz3.svg", 3324176273U},
@@ -4059,6 +4063,52 @@ M  END)CTAB"_ctab;
       check_file_hash("testFlexiCanvas.4d.svg");
     }
   }
+  SECTION("including legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5d.svg");
+    }
+  }
 }
 
 TEST_CASE("Github #4764") {
@@ -4257,7 +4307,8 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
   }
 }
 
-TEST_CASE("Github 5061 - draw reaction with no reagents and scaleBondWidth true") {
+TEST_CASE(
+    "Github 5061 - draw reaction with no reagents and scaleBondWidth true") {
   SECTION("basics") {
     std::string data = R"RXN($RXN
 
