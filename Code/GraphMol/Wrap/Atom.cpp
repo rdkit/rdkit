@@ -435,6 +435,11 @@ struct atom_wrapper {
         .value("CHI_TETRAHEDRAL_CW", Atom::CHI_TETRAHEDRAL_CW)
         .value("CHI_TETRAHEDRAL_CCW", Atom::CHI_TETRAHEDRAL_CCW)
         .value("CHI_OTHER", Atom::CHI_OTHER)
+        .value("CHI_TETRAHEDRAL", Atom::CHI_TETRAHEDRAL)
+        .value("CHI_ALLEND", Atom::CHI_ALLENE)
+        .value("CHI_SQUAREPLANER", Atom::CHI_SQUAREPLANAR)
+        .value("CHI_TRIGONALBIPYRAMIDAL", Atom::CHI_TRIGONALBIPYRAMIDAL)
+        .value("CHI_OCTAHEDRAL", Atom::CHI_OCTAHEDRAL)
         .export_values();
     ;
 
