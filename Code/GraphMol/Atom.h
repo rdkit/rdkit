@@ -241,7 +241,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
 
   //! sets our \c chiralTag
   void setChiralTag(ChiralType what) { d_chiralTag = what; }
-  //! inverts our \c chiralTag
+  //! inverts our \c chiralTag, returns whether or not a change was made
   bool invertChirality();
   //! returns our \c chiralTag
   ChiralType getChiralTag() const {
@@ -270,7 +270,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   // This method can be used to distinguish query atoms from standard atoms:
   virtual bool hasQuery() const { return false; }
 
-  virtual std::string getQueryType() const {return "";}
+  virtual std::string getQueryType() const { return ""; }
 
   //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);
