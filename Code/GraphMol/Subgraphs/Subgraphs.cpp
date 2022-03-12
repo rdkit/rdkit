@@ -538,6 +538,74 @@ findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
                                    rootedAtAtom)[targetLen];
 }
 
+namespace {
+  void prepareNeighborStack(
+    const ROMol &mol, unsigned int atomIdx,
+    std::list<std::pair<int, int>> &nbrStack, bool useHs) {
+      // This function is to prepare the neighbor stack for the
+      // findEnvironmentOfRadiusN function.
+      ROMol::OEDGE_ITER beg, end;
+      boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(atomIdx));
+      while (beg != end) {
+        const Bond *bond = mol[*beg];
+        if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(atomIdx))
+                         ->getAtomicNum() != 1) {
+          nbrStack.emplace_back(atomIdx, bond->getIdx());
+        }
+        ++beg;
+      }
+    }
+  
+  unsigned int findEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, PATH_TYPE &path,
+    std::list<std::pair<int, int>> &nbrStack, bool useHs, 
+    std::unordered_map<unsigned int, unsigned int> *atomMap) {
+      
+      boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
+      unsigned int maxRolledRadius;
+      for (maxRolledRadius = 0; i < radius; ++i) {
+        if (nbrStack.empty()) {
+          break;
+        }
+
+        std::list<std::pair<int, int>> nextLayer;
+        while (!nbrStack.empty()) {
+          int bondIdx, startAtom;
+          boost::tie(startAtom, bondIdx) = nbrStack.front();
+          nbrStack.pop_front();
+          if (!bondsIn.test(bondIdx)) {
+            bondsIn.set(bondIdx);
+            path.push_back(bondIdx);
+
+            // add the next set of neighbors:
+            int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
+            if (atomMap) {
+              if (atomMap->find(oAtom) == atomMap->end()) {
+                (*atomMap)[oAtom] = maxRolledRadius + 1;
+              } else {
+                (*atomMap)[oAtom] = std::min(atomMap->at(oAtom), maxRolledRadius + 1);
+              }
+            }
+            // if we're going to do another iteration, then push the neighbors from
+            // this round onto the stack
+            if (i < radius - 1) {
+              for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
+                if (!bondsIn.test(bond->getIdx())) {
+                  if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
+                                       ->getAtomicNum() != 1) {
+                    nextLayer.emplace_back(oAtom, bond->getIdx());
+                  }
+                }
+              }
+            }
+          }
+        }
+        nbrStack = std::move(nextLayer);
+      }
+      return i;
+    }
+}
+
 PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
     bool useHs, bool enforceSize,
@@ -545,75 +613,76 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
-  if (atomMap) {
-    atomMap->clear();
-  }
   PATH_TYPE res;
   if (atomMap) {
+    atomMap->clear();
     (*atomMap)[rootedAtAtom] = 0;
   }
+  
   if (radius == 0) {
     return res;
   }  // Return empty path if radius=0
 
   std::list<std::pair<int, int>> nbrStack;
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol.getAtomBonds(mol.getAtomWithIdx(rootedAtAtom));
-  while (beg != end) {
-    const Bond *bond = mol[*beg];
-    if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(rootedAtAtom))
-                         ->getAtomicNum() != 1) {
-      nbrStack.emplace_back(rootedAtAtom, bond->getIdx());
-    }
-    ++beg;
-  }
-  boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
-  unsigned int i;
-  for (i = 0; i < radius; ++i) {
-    if (nbrStack.empty()) {
-      break;
-    }
+  // Select all neighboring bonds for iteration
+  prepareNeighborStack(mol, rootedAtAtom, nbrStack, useHs);
 
-    std::list<std::pair<int, int>> nextLayer;
-    while (!nbrStack.empty()) {
-      int bondIdx, startAtom;
-      boost::tie(startAtom, bondIdx) = nbrStack.front();
-      nbrStack.pop_front();
-      if (!bondsIn.test(bondIdx)) {
-        bondsIn.set(bondIdx);
-        res.push_back(bondIdx);
+  // Perform BFS to find the environment
+  unsigned int maxRolledRadius = _findMaxRolledRadius(mol, radius, res, nbrStack,
+                                                      useHs, &atomMap);
 
-        // add the next set of neighbors:
-        int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
-        if (atomMap) {
-          if (atomMap->find(oAtom) == atomMap->end()) {
-            (*atomMap)[oAtom] = i + 1;
-          } else {
-            (*atomMap)[oAtom] = std::min(atomMap->at(oAtom), i + 1);
-          }
-        }
-        // if we're going to do another iteration, then push the neighbors from
-        // this round onto the stack
-        if (i < radius - 1) {
-          for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
-            if (!bondsIn.test(bond->getIdx())) {
-              if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
-                                   ->getAtomicNum() != 1) {
-                nextLayer.emplace_back(oAtom, bond->getIdx());
-              }
-            }
-          }
-        }
-      }
-    }
-    nbrStack = std::move(nextLayer);
-  }
-  if (i != radius && enforceSize) {
+  if (maxRolledRadius != radius && enforceSize) {
     // If there are no paths found with the requested radius, user can choose
     // whether or not to return nothing in this case. If enforceSize=true, this
     // is similar to the previous bahviour (return an empty path/vector).
     // Otherwise, it collect every path within the requested radius. This is
     // similar to maxPath(mol, res) <= radius.
+    res.clear();
+    res.resize(0);
+    if (atomMap) {
+      atomMap->clear();
+    }
+  }
+  return res;
+}
+
+
+PATH_TYPE findBondEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtBond,
+    bool useHs, bool enforceSize,
+    std::unordered_map<unsigned int, unsigned int> *atomMap) {
+  if (rootedAtBond >= mol.getNumBonds()) {
+    throw ValueErrorException("bad bond index");
+  }
+  PATH_TYPE res;
+  res.push_back(rootedAtBond);
+  const Bond &rootedBond = *mol.getBondWithIdx(rootedAtBond);
+  unsigned int beginAtomIdx = rootedBond.getBeginAtomIdx();
+  unsigned int endAtomIdx = rootedBond.getEndAtomIdx();
+  
+  if (atomMap) {
+    atomMap->clear();
+    (*atomMap)[beginAtomIdx] = 0;
+    (*atomMap)[endAtomIdx] = 0;
+  }
+
+  if (radius == 0) {
+    return res;
+  }  // Return empty path if radius=0
+
+  std::list<std::pair<int, int>> nbrStack;
+  // Select all neighboring bonds for iteration, the rooted bond is ignored
+  prepareNeighborStack(mol, beginAtomIdx, nbrStack, useHs); 
+  prepareNeighborStack(mol, endAtomIdx, nbrStack, useHs); 
+  std::erase_if(nbrStack.begin(), nbrStack.end(),
+                [&rootedAtBond](const std::pair<int, int> &p) {
+                  return p.second == rootedAtBond;
+                });
+  
+  // Perform BFS to find the environment
+  unsigned int maxRolledRadius = _findMaxRolledRadius(mol, radius, res, nbrStack,
+                                                      useHs, &atomMap);
+  if (maxRolledRadius != radius && enforceSize) {
     res.clear();
     res.resize(0);
     if (atomMap) {

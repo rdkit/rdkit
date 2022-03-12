@@ -138,8 +138,8 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *                      Hs to the graph.
  *   \param enforceSize - If false, all the bonds within the requested radius
  *                        (<= radius) is collected. Otherwise, at least one bond
- *                        located at the requested radius must be found and
- * added. \param atomMap - Optional: If provided, it will measure the minimum
+ *                        located at the asked radius must be found and added. 
+ *   \param atomMap - Optional: If provided, it will measure the minimum
  * distance of the atom from the rooted atom (start with 0 from the rooted
  * atom). The result is a pair of the atom ID and the distance. The result is a
  * path (a vector of bond indices)
@@ -148,6 +148,32 @@ RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
     bool useHs=false, bool enforceSize=true,
     std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr);
+
+//! \brief Find bond subgraphs of a particular radius around a bond.
+//!        Return empty result if there is no bond at the requested radius.
+//!        The function is equivalent as `findAtomEnvironmentOfRadiusN` on 
+//!        two connected atoms, and uniquely aggregate together with minimal 
+//!        bond distance.
+/*!
+ *   \param mol - the molecule to be considered
+ *   \param radius - the radius of the subgraphs to be considered
+ *   \param rootedAtBond - the bond to consider
+ *   \param useHs     - if set, hydrogens in the graph will be considered
+ *                      eligible to be in paths. NOTE: this will not add
+ *                      Hs to the graph.
+ *   \param enforceSize - If false, all the bonds within the requested radius
+ *                        (<= radius) is collected. Otherwise, at least one bond
+ *                        located at the asked radius must be found and added. 
+ *   \param atomMap - Optional: If provided, it will measure the minimum
+ * distance of the atom from the rooted bond (start with 0 from the connected
+ * atom). The result is a pair of the atom ID and the distance. The result is a
+ * path (a vector of bond indices)
+ */
+RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findBondEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtBond,
+    bool useHs=false, bool enforceSize=true,
+    std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr);
+
 
 }  // namespace RDKit
 
