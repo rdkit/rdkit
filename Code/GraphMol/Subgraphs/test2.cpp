@@ -326,7 +326,7 @@ void test4() {
 
   {
     // Non-ring-membered bond;
-    std::string smiles = "S(C(CNC)(N=C)NO)S(C(CNC)(N=C)NO)"; // Non-canonical
+    std::string smiles = "C=NC(CNC)(NO)SSC(CNC)(N=C)NO" // Non-canonical "S(C(CNC)(N=C)NO)S(C(CNC)(N=C)NO)"
     unsigned int rootedAtBond = 8; // S-S bond
  
     RWMol *mol = SmilesToMol(smiles);
@@ -337,16 +337,18 @@ void test4() {
     PATH_TYPE pth;
     
     // ---------------------------------------------------------------------------------
-    // useHs = false, enforceSize = false
-    {
-      pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, false, false, &cAtomMap);
-      TEST_ASSERT(pth.size() == 1);
-      TEST_ASSERT(pth[0] == rootedAtBond);
-      TEST_ASSERT(cAtomMap.size() == 2);
-      TEST_ASSERT(cAtomMap[0] == 0);
-      TEST_ASSERT(cAtomMap[9] == 0);
-      cAtomMap.clear();
+    // Zero radius
+    pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, true, false, &cAtomMap);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(pth[0] == rootedAtBond);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cAtomMap[8] == 0);
+    TEST_ASSERT(cAtomMap[9] == 0);
+    cAtomMap.clear();
 
+    // ---------------------------------------------------------------------------------
+    // useHs = false
+    {
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 3);
       TEST_ASSERT(cAtomMap.size() == 4);
@@ -373,33 +375,15 @@ void test4() {
       TEST_ASSERT(cAtomMap.size() == 18);
       cAtomMap.clear();
 
-      pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, false, false, &cAtomMap);
-      TEST_ASSERT(pth.size() == 17);
-      TEST_ASSERT(cAtomMap.size() == 18);
-      cAtomMap.clear();
-
       pth = findBondEnvironmentOfRadiusN(*mH, 5, rootedAtBond, false, true, &cAtomMap);
-      TEST_ASSERT(pth.size() == 0);
-      TEST_ASSERT(cAtomMap.size() == 0);
-      cAtomMap.clear();
-
-      pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, false, true, &cAtomMap);
       TEST_ASSERT(pth.size() == 0);
       TEST_ASSERT(cAtomMap.size() == 0);
       cAtomMap.clear();
     }
   
     // ---------------------------------------------------------------------------------
-    // useHs = true, enforceSize = false
+    // useHs = true
     {
-      pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, true, false, &cAtomMap);
-      TEST_ASSERT(pth.size() == 1);
-      TEST_ASSERT(pth[0] == rootedAtBond);
-      TEST_ASSERT(cAtomMap.size() == 2);
-      TEST_ASSERT(cAtomMap[0] == 0);
-      TEST_ASSERT(cAtomMap[9] == 0);
-      cAtomMap.clear();
-
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, true, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 3);
       TEST_ASSERT(cAtomMap.size() == 4);
@@ -425,6 +409,7 @@ void test4() {
       TEST_ASSERT(cAtomMap.size() == 38);
       cAtomMap.clear();
 
+      // -------------------------------------------
       pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, true, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 37);
       TEST_ASSERT(cAtomMap.size() == 38);
@@ -442,8 +427,8 @@ void test4() {
 
   {
     // Ring-membered bond;
-    std::string smiles = "S1CCCCCCCS1"; 
-    unsigned int rootedAtBond = 8;
+    std::string smiles = "C1CCCSSCCC1"; 
+    unsigned int rootedAtBond = 4;
 
     RWMol *mol = SmilesToMol(smiles);
     TEST_ASSERT(mol);
@@ -453,16 +438,18 @@ void test4() {
     PATH_TYPE pth;
 
     // ---------------------------------------------------------------------------------
+    // Zero radius
+    pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, true, false, &cAtomMap);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(pth[0] == rootedAtBond);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cAtomMap[4] == 0);
+    TEST_ASSERT(cAtomMap[5] == 0);
+    cAtomMap.clear();
+
+    // ---------------------------------------------------------------------------------
     // useHs = false
     {
-      pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, false, false, &cAtomMap);
-      TEST_ASSERT(pth.size() == 1);
-      TEST_ASSERT(pth[0] == rootedAtBond);
-      TEST_ASSERT(cAtomMap.size() == 2);
-      TEST_ASSERT(cAtomMap[0] == 0);
-      TEST_ASSERT(cAtomMap[8] == 0);
-      cAtomMap.clear();
-
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 3);
       TEST_ASSERT(cAtomMap.size() == 4);
@@ -487,7 +474,8 @@ void test4() {
       TEST_ASSERT(pth.size() == 9);
       TEST_ASSERT(cAtomMap.size() == 9);
       cAtomMap.clear();
-
+      
+      // ---------------------------------------------------------------------------------
       pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 9);
       TEST_ASSERT(cAtomMap.size() == 9);
@@ -502,14 +490,6 @@ void test4() {
     // ---------------------------------------------------------------------------------
     // useHs = true
     {
-      pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, true, false, &cAtomMap);
-      TEST_ASSERT(pth.size() == 1);
-      TEST_ASSERT(pth[0] == rootedAtBond);
-      TEST_ASSERT(cAtomMap.size() == 2);
-      TEST_ASSERT(cAtomMap[0] == 0);
-      TEST_ASSERT(cAtomMap[8] == 0);
-      cAtomMap.clear();
-
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, true, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 3);
       TEST_ASSERT(cAtomMap.size() == 4);
@@ -534,7 +514,8 @@ void test4() {
       TEST_ASSERT(pth.size() == 23);
       TEST_ASSERT(cAtomMap.size() == 23);
       cAtomMap.clear();
-
+      
+      // ---------------------------------------------------------------------------------
       pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, true, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 23);
       TEST_ASSERT(cAtomMap.size() == 23);
@@ -546,8 +527,6 @@ void test4() {
       cAtomMap.clear();
     }
 
-    // ---------------------------------------------------------------------------------
-    // useHs = true, enforceSize = true: This is skipped
     delete mol;
     delete mH;
   }
