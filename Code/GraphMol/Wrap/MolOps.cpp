@@ -815,6 +815,29 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
   return path;
 }
 
+PATH_TYPE findBondEnvironmentOfRadiusNHelper(const ROMol &mol,
+                                             unsigned int radius,
+                                             unsigned int rootedAtBond,
+                                             bool useHs, bool enforceSize,
+                                             python::object atomMap) {
+  PATH_TYPE path;
+  if (atomMap == python::object()) {
+    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs,
+                                        enforceSize);
+  } else {
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs,
+                                        enforceSize, &cAtomMap);
+    // make sure the optional argument (atomMap) is actually a dictionary
+    python::dict typecheck = python::extract<python::dict>(atomMap);
+    atomMap.attr("clear")();
+    for (auto pair : cAtomMap) {
+      atomMap[pair.first] = pair.second;
+    }
+  }
+  return path;
+}
+
 ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
                           python::object atomMap) {
   ROMol *result;
@@ -1741,7 +1764,7 @@ to the terminal dummy atoms.\n\
       collected. Defaults to 1. \n\
 \n\
     - atomMap: (optional) If provided, it will measure the minimum distance of the atom \n\
-      from the rooted atom (start with 0 from the rooted atom). The result is a pair of \n\
+      from the rooted atom (start with 0). The result is a pair of \n\
       the atom ID and the distance. \n\
 \n\
   RETURNS: a vector of bond IDs\n\
@@ -1749,6 +1772,42 @@ to the terminal dummy atoms.\n\
     python::def(
         "FindAtomEnvironmentOfRadiusN", findAtomEnvironmentOfRadiusNHelper,
         (python::arg("mol"), python::arg("radius"), python::arg("rootedAtAtom"),
+         python::arg("useHs") = false, python::arg("enforceSize") = true,
+         python::arg("atomMap") = python::object()),
+        docString.c_str());
+
+    // ------------------------------------------------------------------------
+    docString =
+        "Find bonds of a particular radius around an atom. \n\
+         Return empty result if there is no bond at the requested radius.\n\
+         The function is equivalent as `findAtomEnvironmentOfRadiusN` on \n\
+         two connected atoms, and uniquely aggregate together with minimal \n\
+         bond distance.\n\
+\n\
+  ARGUMENTS:\n\
+\n\
+    - mol: the molecule to use\n\
+\n\
+    - radius: an integer with the target radius for the environment.\n\
+\n\
+    - rootedAtBond: the atom to consider\n\
+\n\
+    - useHs: (optional) toggles whether or not bonds to Hs that are part of the graph\n\
+      should be included in the results.\n\
+      Defaults to 0.\n\
+\n\
+    - enforceSize (optional) If set to False, all bonds within the requested radius is \n\
+      collected. Defaults to 1. \n\
+\n\
+    - atomMap: (optional) If provided, it will measure the minimum distance of the atom \n\
+      from the connected atom (start with 0). The result is a pair of \n\
+      the atom ID and the distance. \n\
+\n\
+  RETURNS: a vector of bond IDs\n\
+\n";
+    python::def(
+        "FindBondEnvironmentOfRadiusN", findBondEnvironmentOfRadiusNHelper,
+        (python::arg("mol"), python::arg("radius"), python::arg("rootedAtBond"),
          python::arg("useHs") = false, python::arg("enforceSize") = true,
          python::arg("atomMap") = python::object()),
         docString.c_str());
