@@ -656,7 +656,6 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
     throw ValueErrorException("bad bond index");
   }
   PATH_TYPE res;
-  res.push_back(rootedAtBond);
   const Bond &rootedBond = *mol.getBondWithIdx(rootedAtBond);
   unsigned int beginAtomIdx = rootedBond.getBeginAtomIdx();
   unsigned int endAtomIdx = rootedBond.getEndAtomIdx();
@@ -676,7 +675,8 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   prepareNeighborStack(mol, beginAtomIdx, nbrStack, useHs); 
   prepareNeighborStack(mol, endAtomIdx, nbrStack, useHs); 
 
-  // I am not sure if duplication at rooted bond is needed, but it seems to work
+  // I am not sure if removing duplication at rooted bond is needed or 
+  // added any complexity, but it would keep our idea to be clear enough
   std::erase_if(nbrStack.begin(), nbrStack.end(),
                 [&rootedAtBond](const std::pair<int, int> &p) {
                   return p.second == rootedAtBond;
@@ -684,7 +684,8 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   
   // Perform BFS to find the environment
   boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
-  bondsIn.set(rootAtBond);
+  res.push_back(rootedAtBond);
+  bondsIn.set(rootedAtBond);
   unsigned int maxRolledRadius = _findMaxRolledRadius(mol, radius, res, nbrStack, 
                                                       bondsIn, useHs, &atomMap);
   if (maxRolledRadius != radius && enforceSize) {
