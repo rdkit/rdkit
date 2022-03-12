@@ -675,6 +675,8 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   // Select all neighboring bonds for iteration, the rooted bond is ignored
   prepareNeighborStack(mol, beginAtomIdx, nbrStack, useHs); 
   prepareNeighborStack(mol, endAtomIdx, nbrStack, useHs); 
+
+  // I am not sure if duplication at rooted bond is needed, but it seems to work
   std::erase_if(nbrStack.begin(), nbrStack.end(),
                 [&rootedAtBond](const std::pair<int, int> &p) {
                   return p.second == rootedAtBond;
