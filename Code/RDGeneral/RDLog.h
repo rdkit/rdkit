@@ -1,5 +1,5 @@
 //
-// Copyright (C)  2005-2008 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2005-2022 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -9,8 +9,8 @@
 //
 
 #include <RDGeneral/export.h>
-#ifndef _RDLOG_H_29JUNE2005_
-#define _RDLOG_H_29JUNE2005_
+#ifndef RDLOG_H_29JUNE2005
+#define RDLOG_H_29JUNE2005
 
 #if 1
 #include "BoostStartInclude.h"
@@ -18,6 +18,8 @@
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
 #include <iostream>
+#include <vector>
+
 #include <vector>
 namespace boost {
 namespace logging {
@@ -114,7 +116,23 @@ BOOST_DECLARE_LOG(rdStatusLog)
 namespace RDLog {
 RDKIT_RDGENERAL_EXPORT void InitLogs();
 
+using RDLoggerList = std::vector<RDLogger>;
+class RDKIT_RDGENERAL_EXPORT LogStateSetter {
+ public:
+  //! enables only the logs in the list, the current state will be restored when
+  //! this object is destroyed
+  LogStateSetter(RDLoggerList toEnable);
+  //! disables all logs, the current state will be restored when this object is
+  //! destroyed
+  LogStateSetter();
+  ~LogStateSetter();
+
+ private:
+  std::uint64_t d_origState = 0;
+};
+
 // ! Temporarily block logging until this object goes out of scope
+// DEPRECATED, please use LogStateSetter() instead
 struct RDKIT_RDGENERAL_EXPORT BlockLogs {
   std::vector<RDLogger> logs_to_reenable;
   BlockLogs();

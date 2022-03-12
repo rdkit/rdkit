@@ -81,3 +81,6 @@ endif(RDK_BUILD_THREADSAFE_SSS)
 
 rdkit_catch_test(dictTestsCatch catch_dict.cpp catch_main.cpp
            LINK_LIBRARIES RDGeneral )
+
+rdkit_catch_test(logTestsCatch catch_logs.cpp catch_main.cpp
+           LINK_LIBRARIES RDGeneral )

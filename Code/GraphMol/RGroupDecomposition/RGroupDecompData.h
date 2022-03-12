@@ -404,7 +404,7 @@ struct RGroupDecompData {
     addAtoms(mol, atomsToAdd);
 
     if (params.removeHydrogensPostMatch) {
-      RDLog::BlockLogs blocker;
+      RDLog::LogStateSetter blocker;
       bool implicitOnly = false;
       bool updateExplicitCount = false;
       bool sanitize = false;

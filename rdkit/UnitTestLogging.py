@@ -221,6 +221,8 @@ class TestLogToCppStreams(unittest.TestCase):
   @classmethod
   def setUpClass(cls):
     rdBase.LogToCppStreams()
+    rdBase.EnableLog('rdApp.debug')
+    rdBase.EnableLog('rdApp.info')
 
   def testDebug(self):
     with CaptureOutput() as captured:
@@ -384,6 +386,8 @@ class TestWrapLogs(unittest.TestCase):
   def setUpClass(cls):
     rdBase.LogToCppStreams()
     rdBase.WrapLogs()
+    rdBase.EnableLog('rdApp.debug')
+    rdBase.EnableLog('rdApp.info')
 
   def testDebug(self):
     with CaptureOutput() as captured:

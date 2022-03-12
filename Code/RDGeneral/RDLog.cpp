@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C)  2005-2010 Greg Landrum and Rational Discovery LLC
+// Copyright (C)  2005-2022 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -23,7 +22,37 @@ RDLogger rdInfoLog = nullptr;
 RDLogger rdErrorLog = nullptr;
 RDLogger rdWarningLog = nullptr;
 RDLogger rdStatusLog = nullptr;
+namespace RDLog {
 
+LogStateSetter::LogStateSetter() {
+  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
+                                   rdErrorLog, rdWarningLog, rdStatusLog};
+  for (auto i = 0u; i < allLogs.size(); ++i) {
+    if (allLogs[i] && allLogs[i]->df_enabled) {
+      d_origState |= 1 << i;
+      allLogs[i]->df_enabled = false;
+    }
+  }
+}
+
+LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
+  for (auto &log : toEnable) {
+    if (log) {
+      log->df_enabled = true;
+    }
+  }
+}
+
+LogStateSetter::~LogStateSetter() {
+  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
+                                   rdErrorLog, rdWarningLog, rdStatusLog};
+  for (auto i = 0u; i < allLogs.size(); ++i) {
+    if (allLogs[i]) {
+      allLogs[i]->df_enabled = d_origState & 1 << i;
+    }
+  }
+}
+}  // namespace RDLog
 namespace boost {
 namespace logging {
 
@@ -77,17 +106,15 @@ void disable_logs(const std::string &arg) {
 };
 
 bool is_log_enabled(RDLogger log) {
-  if (log && log.get() != nullptr) {
-    if (log->df_enabled) {
-      return true;
-    }
+  if (log && log->df_enabled) {
+    return true;
   }
   return false;
 }
 
 void get_log_status(std::ostream &ss, const std::string &name, RDLogger log) {
   ss << name << ":";
-  if (log && log.get() != nullptr) {
+  if (log) {
     if (log->df_enabled) {
       ss << "enabled";
     } else {
@@ -116,7 +143,9 @@ std::string log_status() {
 namespace RDLog {
 void InitLogs() {
   rdDebugLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
+  rdDebugLog->df_enabled = false;
   rdInfoLog = std::make_shared<boost::logging::rdLogger>(&std::cout);
+  rdInfoLog->df_enabled = false;
   rdWarningLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
   rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }

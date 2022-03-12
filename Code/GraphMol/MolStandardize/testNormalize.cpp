@@ -455,6 +455,8 @@ Azide to N=N+=N-	[N:2]=[N:3]#[N:4]>>[N:2]=[N+:3]=[N-:4]
 Broken azide to N=N+=N-	[N:2]=[N:3]=[N:4]>>[NH0:2]=[NH0+:3]=[NH0-:4])DATA";
   std::stringstream azideNormalizationsStream(azideNormalizations);
   std::stringstream captureLog;
+  auto ostate = rdInfoLog->df_enabled;
+  rdInfoLog->df_enabled = true;
   rdInfoLog->SetTee(captureLog);
   Normalizer nn(azideNormalizationsStream, 200);
   const std::string brokenAzideSmi = "CN=[N+]=[NH-]";
@@ -470,6 +472,7 @@ Broken azide to N=N+=N-	[N:2]=[N:3]=[N:4]>>[NH0:2]=[NH0+:3]=[NH0-:4])DATA";
       ++count;
     }
   }
+  rdInfoLog->df_enabled = ostate;
   TEST_ASSERT(count == 1);
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -479,12 +482,15 @@ void testGithub3460() {
                           "Normalization rule incorrectly matches sulfones"
                        << std::endl;
   std::stringstream captureLog;
+  auto ostate = rdInfoLog->df_enabled;
+  rdInfoLog->df_enabled = true;
   rdInfoLog->SetTee(captureLog);
   Normalizer nn;
   auto mol = "[O-][S+]1Nc2c(Cl)cc(Cl)c3c(Cl)cc(Cl)c(c23)N1"_smiles;
   TEST_ASSERT(mol);
   ROMOL_SPTR normalized(nn.normalize(*mol));
   rdInfoLog->ClearTee();
+  rdInfoLog->df_enabled = ostate;
   auto logged = captureLog.str();
   TEST_ASSERT(logged.find("Running Normalizer") != std::string::npos);
   TEST_ASSERT(logged.find("Rule applied: C/S+NtoC/S=N+") == std::string::npos);
@@ -509,9 +515,12 @@ void testGithub4281() {
   auto mol = "Cn1c(=O)c2nc[nH][n+](=O)c2n(C)c1=O"_smiles;
   std::stringstream captureLog;
   rdInfoLog->SetTee(captureLog);
+  auto ostate = rdInfoLog->df_enabled;
+  rdInfoLog->df_enabled = true;
   Normalizer nn;
   std::unique_ptr<ROMol> normalized(nn.normalize(*mol));
   rdInfoLog->ClearTee();
+  rdInfoLog->df_enabled = ostate;
   auto logged = captureLog.str();
   TEST_ASSERT(logged.find("FAILED sanitizeMol") == std::string::npos);
 }
