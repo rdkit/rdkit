@@ -336,7 +336,7 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
       CHECK(bm->getLowerBound(2, 4) - bm->getLowerBound(2, 3) > 0.5);
     }
   }
-#if 0
+#if 1
   SECTION("Embedding") {
     {
       auto m = "Cl[Pt@SP1](<-N)(<-N)[Cl]"_smiles;
@@ -344,7 +344,16 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
       m->setProp("_Name", "cis platin");
       MolOps::addHs(*m);
       CHECK(DGeomHelpers::EmbedMolecule(*m) == 0);
-      std::cerr << MolToV3KMolBlock(*m) << std::endl;
+      auto mb = MolToV3KMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+      MolOps::assignStereochemistryFrom3D(*m2);
+      CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      unsigned int perm = 100;
+      CHECK(m2->getAtomWithIdx(1)->getPropIfPresent(
+          common_properties::_chiralPermutation, perm));
+      CHECK(perm == 1);
     }
     {
       auto m = "Cl[Pt@SP3](<-N)(<-N)[Cl]"_smiles;
@@ -352,7 +361,16 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
       m->setProp("_Name", "trans platin");
       MolOps::addHs(*m);
       CHECK(DGeomHelpers::EmbedMolecule(*m) == 0);
-      std::cerr << MolToV3KMolBlock(*m) << std::endl;
+      auto mb = MolToV3KMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+      MolOps::assignStereochemistryFrom3D(*m2);
+      CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      unsigned int perm = 100;
+      CHECK(m2->getAtomWithIdx(1)->getPropIfPresent(
+          common_properties::_chiralPermutation, perm));
+      CHECK(perm == 3);
     }
   }
 #endif

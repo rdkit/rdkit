@@ -2317,11 +2317,14 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
   return 0;
 }
 
+// The tolerance here is pretty high in order to accomodate things coming from
+// the dgeom code As we get more experience with real-world structures and/or
+// improve the dgeom code, we can think about lowering this.
 static bool assignNontetrahedralChiralTypeFrom3D(ROMol &mol,
                                                  const Conformer &conf,
-                                                 Atom *atom) {
+                                                 Atom *atom,
+                                                 double tolerance = 0.1) {
   // FIX: add tests for dative and zero order bonds
-
   // Fail fast check for non-tetrahedral elements
   if (atom->getAtomicNum() < 15) {
     return false;
@@ -2353,11 +2356,7 @@ static bool assignNontetrahedralChiralTypeFrom3D(ROMol &mol,
   unsigned int pairs = 0;
   for (unsigned int i = 0; i < count; i++) {
     for (unsigned int j = i + 1; j < count; j++) {
-      // double angle = v[i].angleTo(v[j]);
-      // if (angle > ((175.0*M_PI)/180.0)) {
-      // REVIEW: this tolerance may be too strict to deal with real-world
-      // structures
-      if (v[i].dotProduct(v[j]) < -0.997) {
+      if (v[i].dotProduct(v[j]) < -(1 - tolerance)) {
         if (pair[i] || pair[j]) {
           return false;
         }
