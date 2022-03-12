@@ -366,45 +366,14 @@ void test4() {
       TEST_ASSERT(pth.size() == 17);
       TEST_ASSERT(cAtomMap.size() == 18);
       cAtomMap.clear();
-
+      
+      // -------------------------------------------
       pth = findBondEnvironmentOfRadiusN(*mH, 5, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 17);
       TEST_ASSERT(cAtomMap.size() == 18);
       cAtomMap.clear();
 
       pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, false, false, &cAtomMap);
-      TEST_ASSERT(pth.size() == 17);
-      TEST_ASSERT(cAtomMap.size() == 18);
-      cAtomMap.clear();
-    }
-  
-    // ---------------------------------------------------------------------------------
-    // useHs = false, enforceSize = true
-    {
-      pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, false, true, &cAtomMap);
-      TEST_ASSERT(pth.size() == 1);
-      TEST_ASSERT(pth[0] == rootedAtBond);
-      TEST_ASSERT(cAtomMap.size() == 2);
-      TEST_ASSERT(cAtomMap[0] == 0);
-      TEST_ASSERT(cAtomMap[9] == 0);
-      cAtomMap.clear();
-
-      pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, false, true, &cAtomMap);
-      TEST_ASSERT(pth.size() == 3);
-      TEST_ASSERT(cAtomMap.size() == 4);
-      cAtomMap.clear();
-
-      pth = findBondEnvironmentOfRadiusN(*mH, 2, rootedAtBond, false, true, &cAtomMap);
-      TEST_ASSERT(pth.size() == 9);
-      TEST_ASSERT(cAtomMap.size() == 10);
-      cAtomMap.clear();
-
-      pth = findBondEnvironmentOfRadiusN(*mH, 3, rootedAtBond, false, true, &cAtomMap);
-      TEST_ASSERT(pth.size() == 15);
-      TEST_ASSERT(cAtomMap.size() == 16);
-      cAtomMap.clear();
-
-      pth = findBondEnvironmentOfRadiusN(*mH, 4, rootedAtBond, false, true, &cAtomMap);
       TEST_ASSERT(pth.size() == 17);
       TEST_ASSERT(cAtomMap.size() == 18);
       cAtomMap.clear();
@@ -419,7 +388,7 @@ void test4() {
       TEST_ASSERT(cAtomMap.size() == 0);
       cAtomMap.clear();
     }
-
+  
     // ---------------------------------------------------------------------------------
     // useHs = true, enforceSize = false
     {
@@ -485,7 +454,6 @@ void test4() {
 
     // ---------------------------------------------------------------------------------
     // useHs = false
-
     {
       pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 1);
@@ -531,7 +499,6 @@ void test4() {
       cAtomMap.clear();
     }
 
-  
     // ---------------------------------------------------------------------------------
     // useHs = true
     {
@@ -540,7 +507,7 @@ void test4() {
       TEST_ASSERT(pth[0] == rootedAtBond);
       TEST_ASSERT(cAtomMap.size() == 2);
       TEST_ASSERT(cAtomMap[0] == 0);
-      TEST_ASSERT(cAtomMap[9] == 0);
+      TEST_ASSERT(cAtomMap[8] == 0);
       cAtomMap.clear();
 
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, true, false, &cAtomMap);
