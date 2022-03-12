@@ -228,20 +228,10 @@ void embedNontetrahedralStereo(const RDKit::ROMol &mol,
   if (consider.empty()) {
     return;
   }
-  // for the moment we will skip anything which is already embedded:
-  // for (const auto &efrag : efrags) {
-  //   const auto &oatoms = efrag.GetEmbeddedAtoms();
-  //   for (const auto &oatom : oatoms) {
-  //     consider[oatom.first] = 0;
-  //   }
-  // }
-  // if (consider.empty()) {
-  //   return;
-  // }
   for (const auto atm : mol.atoms()) {
-    // if (!consider[atm->getIdx()]) {
-    //   continue;
-    // }
+    if (!consider[atm->getIdx()]) {
+      continue;
+    }
     switch (atm->getChiralTag()) {
       case RDKit::Atom::ChiralType::CHI_SQUAREPLANAR:
         embedSquarePlanar(mol, atm, efrags, atomRanks);

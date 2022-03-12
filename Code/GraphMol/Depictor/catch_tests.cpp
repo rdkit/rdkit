@@ -67,7 +67,7 @@ TEST_CASE("square planar", "[nontetrahedral]") {
     auto m = "C1[Pt@SP2](CCC1)(<-[NH3])<-[NH3]"_smiles;
     REQUIRE(m);
     CHECK(RDDepict::compute2DCoords(*m) == 0);
-    std::cerr << MolToV3KMolBlock(*m) << std::endl;
+    // std::cerr << MolToV3KMolBlock(*m) << std::endl;
     auto &conf = m->getConformer();
     auto v1 = conf.getAtomPos(0) - conf.getAtomPos(2);
     auto v2 = conf.getAtomPos(0) - conf.getAtomPos(5);
@@ -77,7 +77,7 @@ TEST_CASE("square planar", "[nontetrahedral]") {
     auto m = "C1[Pt@SP1](CCC1)(<-[NH3])<-[NH3]"_smiles;
     REQUIRE(m);
     CHECK(RDDepict::compute2DCoords(*m) == 0);
-    std::cerr << MolToV3KMolBlock(*m) << std::endl;
+    // std::cerr << MolToV3KMolBlock(*m) << std::endl;
     auto &conf = m->getConformer();
     auto v1 = conf.getAtomPos(0) - conf.getAtomPos(2);
     auto v2 = conf.getAtomPos(0) - conf.getAtomPos(5);
