@@ -2024,26 +2024,36 @@ TEST_CASE("assignStereochemistry shouldn't remove nontetrahedral stereo",
   }
 }
 
-TEST_CASE("remove hs and non-tetrahedral stereo") {
+TEST_CASE("remove hs and non-tetrahedral stereo", "[nontetrahedral]") {
   SmilesParserParams parseps;
   parseps.sanitize = false;
   parseps.removeHs = false;
-  std::unique_ptr<RWMol> m{SmilesToMol("F[Pt@TB1]([H])(Br)(N)Cl", parseps)};
-  REQUIRE(m);
-  CHECK(m->getNumAtoms(6));
-  {
-    // the default is to not remove Hs to non-tetrahedral stereocenters
-    RWMol molcp(*m);
-    MolOps::removeHs(molcp);
-    CHECK(molcp.getNumAtoms() == 6);
-  }
-  {
-    // but we can enable it
-    RWMol molcp(*m);
-    MolOps::RemoveHsParameters ps;
-    ps.removeNontetrahedralNeighbors = true;
-    MolOps::removeHs(molcp, ps);
-    CHECK(molcp.getNumAtoms() == 5);
+  std::vector<std::string> smiles = {"F[Pt@TB1]([H])(Br)(N)Cl",
+                                     "F[Pt@TB]([H])(Br)(N)Cl"};
+  for (const auto &smi : smiles) {
+    std::unique_ptr<RWMol> m{SmilesToMol(smi, parseps)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms(6));
+    {
+      // the default is to not remove Hs to non-tetrahedral stereocenters
+      RWMol molcp(*m);
+      MolOps::removeHs(molcp);
+      CHECK(molcp.getNumAtoms() == 6);
+    }
+    {
+      // but we can enable it
+      RWMol molcp(*m);
+      MolOps::RemoveHsParameters ps;
+      ps.removeNontetrahedralNeighbors = true;
+      MolOps::removeHs(molcp, ps);
+      CHECK(molcp.getNumAtoms() == 5);
+    }
+    {
+      // but we can enable it
+      RWMol molcp(*m);
+      MolOps::removeAllHs(molcp);
+      CHECK(molcp.getNumAtoms() == 5);
+    }
   }
 }
 

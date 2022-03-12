@@ -951,6 +951,7 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   ps.removeInSGroups = true;
   ps.showWarnings = false;
   ps.removeHydrides = true;
+  ps.removeNontetrahedralNeighbors = true;
   removeHs(mol, ps, sanitize);
 };
 ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
