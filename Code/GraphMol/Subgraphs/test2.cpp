@@ -464,6 +464,7 @@ void test4() {
 
     // ---------------------------------------------------------------------------------
     // useHs = false
+    PATH_TYPE pth;
     pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, false, false, &cAtomMap);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(pth[0] == rootedAtBond);
