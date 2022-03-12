@@ -563,7 +563,7 @@ namespace {
     std::unordered_map<unsigned int, unsigned int> *atomMap) {
       
       unsigned int maxRolledRadius;
-      for (maxRolledRadius = 0; i < radius; ++i) {
+      for (maxRolledRadius = 0; maxRolledRadius < radius; ++maxRolledRadius) {
         if (nbrStack.empty()) {
           break;
         }
@@ -588,7 +588,7 @@ namespace {
             }
             // if we're going to do another iteration, then push the neighbors from
             // this round onto the stack
-            if (i < radius - 1) {
+            if (maxRolledRadius < radius - 1) {
               for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
                 if (!bondsIn.test(bond->getIdx())) {
                   if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
@@ -602,7 +602,7 @@ namespace {
         }
         nbrStack = std::move(nextLayer);
       }
-      return i;
+      return maxRolledRadius;
     }
 }
 
@@ -629,21 +629,21 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
 
   // Perform BFS to find the environment
   boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
-  unsigned int maxRolledRadius = _findMaxRolledRadius(mol, radius, res, nbrStack,
-                                                      bondsIn, useHs, &atomMap);
-
-  if (maxRolledRadius != radius && enforceSize) {
-    // If there are no paths found with the requested radius, user can choose
-    // whether or not to return nothing in this case. If enforceSize=true, this
-    // is similar to the previous bahviour (return an empty path/vector).
-    // Otherwise, it collect every path within the requested radius. This is
-    // similar to maxPath(mol, res) <= radius.
-    res.clear();
-    res.resize(0);
-    if (atomMap) {
-      atomMap->clear();
+  unsigned int maxRolledRadius = findEnvironmentOfRadiusN(mol, radius, res, nbrStack,
+                                                          bondsIn, useHs, atomMap);
+  if (enforceSize) {
+    if (maxRolledRadius != radius) {
+      // If there are no paths found with the requested radius, user can choose
+      // whether or not to return nothing in this case. If enforceSize=true,
+      // this is similar to the previous bahviour (return an empty path/vector).
+      res.clear();
+      res.resize(0);
+      if (atomMap) {
+        atomMap->clear();
+      }
     }
   }
+  
   return res;
 }
 
@@ -674,25 +674,24 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   // Select all neighboring bonds for iteration, the rooted bond is ignored
   prepareNeighborStack(mol, beginAtomIdx, nbrStack, useHs); 
   prepareNeighborStack(mol, endAtomIdx, nbrStack, useHs); 
-
-  // I am not sure if removing duplication at rooted bond is needed or 
-  // added any complexity, but it would keep our idea to be clear enough
-  std::erase_if(nbrStack.begin(), nbrStack.end(),
-                [&rootedAtBond](const std::pair<int, int> &p) {
-                  return p.second == rootedAtBond;
-                });
   
+  // Duplicated at rooted bond is available, but we set the constraint below. 
   // Perform BFS to find the environment
   boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
   res.push_back(rootedAtBond);
   bondsIn.set(rootedAtBond);
-  unsigned int maxRolledRadius = _findMaxRolledRadius(mol, radius, res, nbrStack, 
-                                                      bondsIn, useHs, &atomMap);
-  if (maxRolledRadius != radius && enforceSize) {
-    res.clear();
-    res.resize(0);
-    if (atomMap) {
-      atomMap->clear();
+  unsigned int maxRolledRadius = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, 
+                                                          bondsIn, useHs, atomMap);
+  if (enforceSize) {
+    if (maxRolledRadius != radius) {
+      // If there are no paths found with the requested radius, user can choose
+      // whether or not to return nothing in this case. If enforceSize=true,
+      // this is similar to the previous bahviour (return an empty path/vector).
+      res.clear();
+      res.resize(0);
+      if (atomMap) {
+        atomMap->clear();
+      }
     }
   }
   return res;
