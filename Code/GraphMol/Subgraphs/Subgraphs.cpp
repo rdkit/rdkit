@@ -558,10 +558,10 @@ namespace {
   
   unsigned int findEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, PATH_TYPE &path,
-    std::list<std::pair<int, int>> &nbrStack, bool useHs, 
+    std::list<std::pair<int, int>> &nbrStack, 
+    boost::dynamic_bitset<> &bondsIn, bool useHs, 
     std::unordered_map<unsigned int, unsigned int> *atomMap) {
       
-      boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
       unsigned int maxRolledRadius;
       for (maxRolledRadius = 0; i < radius; ++i) {
         if (nbrStack.empty()) {
@@ -628,8 +628,9 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   prepareNeighborStack(mol, rootedAtAtom, nbrStack, useHs);
 
   // Perform BFS to find the environment
+  boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
   unsigned int maxRolledRadius = _findMaxRolledRadius(mol, radius, res, nbrStack,
-                                                      useHs, &atomMap);
+                                                      bondsIn, useHs, &atomMap);
 
   if (maxRolledRadius != radius && enforceSize) {
     // If there are no paths found with the requested radius, user can choose
@@ -680,8 +681,10 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
                 });
   
   // Perform BFS to find the environment
-  unsigned int maxRolledRadius = _findMaxRolledRadius(mol, radius, res, nbrStack,
-                                                      useHs, &atomMap);
+  boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
+  bondsIn.set(rootAtBond);
+  unsigned int maxRolledRadius = _findMaxRolledRadius(mol, radius, res, nbrStack, 
+                                                      bondsIn, useHs, &atomMap);
   if (maxRolledRadius != radius && enforceSize) {
     res.clear();
     res.resize(0);
