@@ -188,9 +188,21 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testSemiFlexiCanvas.1c.svg", 3129493597U},
     {"testFlexiCanvas.3.svg", 1503902249U},
     {"testFlexiCanvas.4a.svg", 428287035U},
-    {"testFlexiCanvas.4b.svg", 2697900619U},
-    {"testFlexiCanvas.4c.svg", 2505619220U},
-    {"testFlexiCanvas.4d.svg", 1845451441U},
+    {"testFlexiCanvas.4b.svg", 3643035210U},
+    {"testFlexiCanvas.4c.svg", 377546443U},
+    {"testFlexiCanvas.4d.svg", 2960126120U},
+    {"testFlexiCanvas.5a.svg", 948987396U},
+    {"testFlexiCanvas.5b.svg", 768214783U},
+    {"testFlexiCanvas.5c.svg", 1950949146U},
+    {"testFlexiCanvas.5d.svg", 4273629948U},
+    {"testFlexiCanvas.6a.svg", 1705496796U},
+    {"testFlexiCanvas.6b.svg", 1850606159U},
+    {"testFlexiCanvas.6c.svg", 1705496796U},
+    {"testFlexiCanvas.6d.svg", 1705496796U},
+    {"testFlexiCanvas.7a.svg", 1790658127U},
+    {"testFlexiCanvas.7b.svg", 1178964791U},
+    {"testFlexiCanvas.7c.svg", 1790658127U},
+    {"testFlexiCanvas.7d.svg", 1790658127U},
     {"testGithub4764.sz1.svg", 2195931596U},
     {"testGithub4764.sz2.svg", 3477099305U},
     {"testGithub4764.sz3.svg", 3324176273U},
@@ -4059,6 +4071,146 @@ M  END)CTAB"_ctab;
       check_file_hash("testFlexiCanvas.4d.svg");
     }
   }
+  SECTION("including legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.5d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.5d.svg");
+    }
+  }
+
+  SECTION("partially flexicanvas (height) + legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(-1, 200);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.6d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.6d.svg");
+    }
+  }
+
+  SECTION("partially flexicanvas (width) + legends") {
+    // add an atomNote so that we can compare font sizes
+    mol1->getAtomWithIdx(0)->setProp(common_properties::atomNote, "n1");
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7a.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7a.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawMolecule(*mol1, "legend\nwith two lines");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7b.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7b.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawOptions().scalingFactor = 45;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7c.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7c.svg");
+    }
+    {
+      MolDraw2DSVG drawer(300, -1);
+      drawer.drawOptions().scalingFactor = 10;
+      drawer.drawMolecule(*mol1, "legend");
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testFlexiCanvas.7d.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testFlexiCanvas.7d.svg");
+    }
+  }
 }
 
 TEST_CASE("Github #4764") {
@@ -4257,7 +4409,8 @@ TEST_CASE("vary proporition of panel for legend", "[drawing]") {
   }
 }
 
-TEST_CASE("Github 5061 - draw reaction with no reagents and scaleBondWidth true") {
+TEST_CASE(
+    "Github 5061 - draw reaction with no reagents and scaleBondWidth true") {
   SECTION("basics") {
     std::string data = R"RXN($RXN
 
