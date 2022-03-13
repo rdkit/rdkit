@@ -12,10 +12,10 @@ elseif(EXISTS "${CATCH_DIR}/single_include/catch2/catch.hpp")
 else()
   message("-- Catch not found in ${CATCH_DIR}")
   include(RDKitUtils)
-  set(RELEASE_NO "2.12.4")
+  set(RELEASE_NO "2.13.8")
   downloadAndCheckMD5("https://github.com/catchorg/Catch2/archive/v${RELEASE_NO}.tar.gz"
         "${CMAKE_CURRENT_SOURCE_DIR}/v${RELEASE_NO}.tar.gz"
-        "dbe4fa691e37dd51256876641a821ec8")
+        "3639fb4cb8020de0dcf1fd5addb39418")
   execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
     ${CMAKE_CURRENT_SOURCE_DIR}/v${RELEASE_NO}.tar.gz
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
