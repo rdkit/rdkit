@@ -427,7 +427,7 @@ void test4() {
 
   {
     // Ring-membered bond;
-    std::string smiles = "C1CCCSSCCC1"; 
+    std::string smiles = "C1CCCSSCCC1"; // Exceptional case
     unsigned int rootedAtBond = 4;
 
     RWMol *mol = SmilesToMol(smiles);
