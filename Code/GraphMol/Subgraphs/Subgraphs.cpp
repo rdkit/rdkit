@@ -656,7 +656,7 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
     throw ValueErrorException("bad bond index");
   }
   PATH_TYPE res;
-  Bond *rootedBond = mol.getBondWithIdx(rootedAtBond);
+  const Bond *rootedBond = mol.getBondWithIdx(rootedAtBond);
   unsigned int beginAtomIdx = rootedBond->getBeginAtomIdx();
   unsigned int endAtomIdx = rootedBond->getEndAtomIdx();
   
