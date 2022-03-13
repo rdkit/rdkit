@@ -469,13 +469,17 @@ void test4() {
       TEST_ASSERT(pth.size() == 9);
       TEST_ASSERT(cAtomMap.size() == 9);
       cAtomMap.clear();
-
+      // ---------------------------------------------------------------------------------
       pth = findBondEnvironmentOfRadiusN(*mH, 5, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 9);
       TEST_ASSERT(cAtomMap.size() == 9);
       cAtomMap.clear();
       
-      // ---------------------------------------------------------------------------------
+      pth = findBondEnvironmentOfRadiusN(*mH, 5, rootedAtBond, false, true, &cAtomMap);
+      TEST_ASSERT(pth.size() == 9);
+      TEST_ASSERT(cAtomMap.size() == 9);
+      cAtomMap.clear();
+      
       pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 9);
       TEST_ASSERT(cAtomMap.size() == 9);
