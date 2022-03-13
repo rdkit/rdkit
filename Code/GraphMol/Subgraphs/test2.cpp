@@ -326,7 +326,7 @@ void test4() {
 
   {
     // Non-ring-membered bond;
-    std::string smiles = "C=NC(CNC)(NO)SSC(CNC)(N=C)NO" // Non-canonical "S(C(CNC)(N=C)NO)S(C(CNC)(N=C)NO)"
+    std::string smiles = "C=NC(CNC)(NO)SSC(CNC)(N=C)NO"; // Non-canonical "S(C(CNC)(N=C)NO)S(C(CNC)(N=C)NO)"
     unsigned int rootedAtBond = 8; // S-S bond
  
     RWMol *mol = SmilesToMol(smiles);
