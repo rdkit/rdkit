@@ -576,7 +576,7 @@ namespace {
           if (bondsInMap.find(bondIdx) == bondsInMap.end()) {
             // The value assigned in bondsInMap is unimportant, but
             // it can be used to indicate the minimum travel distance.
-            bondsInMap[bondIdx] = dist + 1;
+            bondsInMap[bondIdx] = i + 1;
             path.push_back(bondIdx);
 
             // add the next set of neighbors:
