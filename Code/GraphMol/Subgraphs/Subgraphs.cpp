@@ -561,7 +561,7 @@ namespace {
     std::list<std::pair<int, int>> &nbrStack, 
     std::unordered_map<unsigned int, int> &bondsInMap,
     bool useHs, std::unordered_map<unsigned int, unsigned int> *atomMap) {
-      
+      // Perform BFS to find the environment
       unsigned int i;
       for (i = 0; i < radius; ++i) {
         if (nbrStack.empty()) {
@@ -628,7 +628,6 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   // Select all neighboring bonds for iteration
   prepareNeighborStack(mol, rootedAtAtom, nbrStack, useHs);
 
-  // Perform BFS to find the environment
   std::unordered_map<unsigned int, int> bondsInMap;
   unsigned int traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack,
                                                        bondsInMap, useHs, atomMap);
@@ -676,7 +675,6 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   prepareNeighborStack(mol, endAtomIdx, nbrStack, useHs); 
   
   // Duplicated at rooted bond is available, but we set the constraint below. 
-  // Perform BFS to find the environment
   std::unordered_map<unsigned int, int> bondsInMap;
   bondsInMap[rootedAtBond] = -1;
   res.push_back(rootedAtBond);
