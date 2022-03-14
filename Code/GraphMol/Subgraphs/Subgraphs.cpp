@@ -604,7 +604,7 @@ namespace {
       }
       return i;
     }
-    
+
 } // Private namespace
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(
@@ -678,7 +678,7 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   // Duplicated at rooted bond is available, but we set the constraint below. 
   // Perform BFS to find the environment
   std::unordered_map<unsigned int, int> bondsInMap;
-  bondsInMap[rootedAtBond] = -1
+  bondsInMap[rootedAtBond] = -1;
   res.push_back(rootedAtBond);
   unsigned int traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, 
                                                        bondsInMap, useHs, atomMap);
