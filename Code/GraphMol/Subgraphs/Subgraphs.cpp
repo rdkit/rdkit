@@ -574,7 +574,9 @@ namespace {
           boost::tie(startAtom, bondIdx) = nbrStack.front();
           nbrStack.pop_front();
           if (bondsInMap.find(bondIdx) == bondsInMap.end()) {
-            bondsInMap[bondIdx] = -1;
+            // The value assigned in bondsInMap is unimportant, but
+            // it can be used to indicate the minimum travel distance.
+            bondsInMap[bondIdx] = dist + 1;
             path.push_back(bondIdx);
 
             // add the next set of neighbors:
@@ -676,7 +678,7 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   
   // Duplicated at rooted bond is available, but we set the constraint below. 
   std::unordered_map<unsigned int, int> bondsInMap;
-  bondsInMap[rootedAtBond] = -1;
+  bondsInMap[rootedAtBond] = 0;
   res.push_back(rootedAtBond);
   unsigned int traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, 
                                                        bondsInMap, useHs, atomMap);
