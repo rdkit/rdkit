@@ -452,7 +452,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(n == mols.size() - 1);
       CHECK(rows.size() == n);
       CHECK(unmatched.size() == mols.size() - n);
-      std::cerr << toJSON(rows) << std::endl;
+      // std::cerr << toJSON(rows) << std::endl;
 
       // the core output here is SMARTS because the CXSMILES parser replaces the
       // dummy atom with a query
@@ -486,7 +486,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(n == mols.size() - 1);
       CHECK(rows.size() == n);
       CHECK(unmatched.size() == 1);
-      std::cerr << toJSON(rows) << std::endl;
+      // std::cerr << toJSON(rows) << std::endl;
 
       // the core output here is SMARTS because the CXSMILES parser replaces the
       // dummy atom with a query
@@ -527,7 +527,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(n == mols.size() - 2);
       CHECK(rows.size() == n);
       CHECK(unmatched.size() == mols.size() - n);
-      std::cerr << toJSON(rows) << std::endl;
+      // std::cerr << toJSON(rows) << std::endl;
       // the core output here is SMARTS because the CXSMILES parser replaces the
       // dummy atom with a query
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
@@ -555,7 +555,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(n == mols.size() - 1);
       CHECK(rows.size() == n);
       CHECK(unmatched.size() == 1);
-      std::cerr << toJSON(rows) << std::endl;
+      // std::cerr << toJSON(rows) << std::endl;
       // the core output here is SMARTS because the CXSMILES parser replaces the
       // dummy atom with a query
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
@@ -600,6 +600,125 @@ TEST_CASE("github4809: ring double bonds written as crossed bonds after RGD") {
       auto r1 = rows[0]["R1"];
       auto mb = MolToV3KMolBlock(*r1);
       CHECK(mb.find("CFG=2") == std::string::npos);
+    }
+  }
+}
+
+TEST_CASE("rgroupLabelling") {
+  std::vector<std::string> smis = {"C1CN[C@H]1F", "C1CN[C@]1(O)F",
+                                   "C1CN[C@@H]1F", "C1CN[CH]1F"};
+  auto mols = smisToMols(smis);
+  std::vector<std::string> csmis = {"C1CNC1[*:1]"};
+  auto cores = smisToMols(csmis);
+  SECTION("Isotope") {
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    params.rgroupLabelling = RGroupLabelling::Isotope;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"[1*]C1([2*])CCN1",
+    "R1":"[1*]F",
+    "R2":"[2*][H]"
+  },
+  {
+    "Core":"[1*]C1([2*])CCN1",
+    "R1":"[1*]F",
+    "R2":"[2*]O"
+  },
+  {
+    "Core":"[1*]C1([2*])CCN1",
+    "R1":"[1*]F",
+    "R2":"[2*][H]"
+  },
+  {
+    "Core":"[1*]C1([2*])CCN1",
+    "R1":"[1*]F",
+    "R2":"[2*][H]"
+  }
+]
+    )JSON"));
+    }
+  }
+  SECTION("RGroup") {
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    params.rgroupLabelling = RGroupLabelling::MDLRGroup;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      // in this case the labels don't show up in the output SMILES
+      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"*C1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  },
+  {
+    "Core":"*C1(*)CCN1",
+    "R1":"*F",
+    "R2":"*O"
+  },
+  {
+    "Core":"*C1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  },
+  {
+    "Core":"*C1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  }
+]
+    )JSON"));
+    }
+  }
+  SECTION("Isotope|Map") {
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    params.rgroupLabelling =
+        RGroupLabelling::Isotope | RGroupLabelling::AtomMap;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+
+[
+  {
+    "Core":"C1CC([1*:1])([2*:2])N1",
+    "R1":"F[1*:1]",
+    "R2":"[H][2*:2]"
+  },
+  {
+    "Core":"C1CC([1*:1])([2*:2])N1",
+    "R1":"F[1*:1]",
+    "R2":"O[2*:2]"
+  },
+  {
+    "Core":"C1CC([1*:1])([2*:2])N1",
+    "R1":"F[1*:1]",
+    "R2":"[H][2*:2]"
+  },
+  {
+    "Core":"C1CC([1*:1])([2*:2])N1",
+    "R1":"F[1*:1]",
+    "R2":"[H][2*:2]"
+  }
+]
+    )JSON"));
     }
   }
 }

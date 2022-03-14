@@ -454,7 +454,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
     if (atom->getAtomicNum()) {
       continue;
     }
-    auto label = atom->getAtomMapNum();
+    auto label = data->getRlabel(atom);
     Atom *nbrAtom = nullptr;
     for (const auto &nbri :
          boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
