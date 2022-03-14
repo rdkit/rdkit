@@ -657,6 +657,7 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
     throw ValueErrorException("bad bond index");
   }
   PATH_TYPE res;
+  res.push_back(rootedAtBond);
   const Bond *rootedBond = mol.getBondWithIdx(rootedAtBond);
   unsigned int beginAtomIdx = rootedBond->getBeginAtomIdx();
   unsigned int endAtomIdx = rootedBond->getEndAtomIdx();
@@ -679,7 +680,6 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   // Duplicated at rooted bond is available, but we set the constraint below. 
   std::unordered_map<unsigned int, int> bondsInMap;
   bondsInMap[rootedAtBond] = 0;
-  res.push_back(rootedAtBond);
   unsigned int traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, 
                                                        bondsInMap, useHs, atomMap);
   if (enforceSize) {
