@@ -559,11 +559,11 @@ namespace {
   unsigned int findEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, PATH_TYPE &path,
     std::list<std::pair<int, int>> &nbrStack, 
-    boost::dynamic_bitset<> &bondsIn, bool useHs, 
-    std::unordered_map<unsigned int, unsigned int> *atomMap) {
+    std::unordered_map<unsigned int, int> &bondsInMap,
+    bool useHs, std::unordered_map<unsigned int, unsigned int> *atomMap) {
       
-      unsigned int maxRolledRadius;
-      for (maxRolledRadius = 0; maxRolledRadius < radius; ++maxRolledRadius) {
+      unsigned int i;
+      for (i = 0; i < radius; ++i) {
         if (nbrStack.empty()) {
           break;
         }
@@ -573,24 +573,24 @@ namespace {
           int bondIdx, startAtom;
           boost::tie(startAtom, bondIdx) = nbrStack.front();
           nbrStack.pop_front();
-          if (!bondsIn.test(bondIdx)) {
-            bondsIn.set(bondIdx);
+          if (bondsInMap.find(bondIdx) == bondsInMap.end()) {
+            bondsInMap[bondIdx] = -1;
             path.push_back(bondIdx);
 
             // add the next set of neighbors:
             int oAtom = mol.getBondWithIdx(bondIdx)->getOtherAtomIdx(startAtom);
             if (atomMap) {
               if (atomMap->find(oAtom) == atomMap->end()) {
-                (*atomMap)[oAtom] = maxRolledRadius + 1;
+                (*atomMap)[oAtom] = i + 1;
               } else {
-                (*atomMap)[oAtom] = std::min(atomMap->at(oAtom), maxRolledRadius + 1);
+                (*atomMap)[oAtom] = std::min(atomMap->at(oAtom), i + 1);
               }
             }
             // if we're going to do another iteration, then push the neighbors from
             // this round onto the stack
-            if (maxRolledRadius < radius - 1) {
+            if (i < radius - 1) {
               for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
-                if (!bondsIn.test(bond->getIdx())) {
+                if (bondsInMap.find(bond->getIdx()) == bondsInMap.end()) {
                   if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
                                        ->getAtomicNum() != 1) {
                     nextLayer.emplace_back(oAtom, bond->getIdx());
@@ -602,9 +602,10 @@ namespace {
         }
         nbrStack = std::move(nextLayer);
       }
-      return maxRolledRadius;
+      return i;
     }
-}
+    
+} // Private namespace
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
@@ -628,11 +629,11 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   prepareNeighborStack(mol, rootedAtAtom, nbrStack, useHs);
 
   // Perform BFS to find the environment
-  boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
-  unsigned int maxRolledRadius = findEnvironmentOfRadiusN(mol, radius, res, nbrStack,
-                                                          bondsIn, useHs, atomMap);
+  std::unordered_map<unsigned int, int> bondsInMap;
+  unsigned int traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack,
+                                                       bondsInMap, useHs, atomMap);
   if (enforceSize) {
-    if (maxRolledRadius != radius) {
+    if (traveledDist != radius) {
       // If there are no paths found with the requested radius, user can choose
       // whether or not to return nothing in this case. If enforceSize=true,
       // this is similar to the previous bahviour (return an empty path/vector).
@@ -643,7 +644,6 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
       }
     }
   }
-  
   return res;
 }
 
@@ -677,13 +677,13 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   
   // Duplicated at rooted bond is available, but we set the constraint below. 
   // Perform BFS to find the environment
-  boost::dynamic_bitset<> bondsIn(mol.getNumBonds());
+  std::unordered_map<unsigned int, int> bondsInMap;
+  bondsInMap[rootedAtBond] = -1
   res.push_back(rootedAtBond);
-  bondsIn.set(rootedAtBond);
-  unsigned int maxRolledRadius = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, 
-                                                          bondsIn, useHs, atomMap);
+  unsigned int traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, 
+                                                       bondsInMap, useHs, atomMap);
   if (enforceSize) {
-    if (maxRolledRadius != radius) {
+    if (traveledDist != radius) {
       // If there are no paths found with the requested radius, user can choose
       // whether or not to return nothing in this case. If enforceSize=true,
       // this is similar to the previous bahviour (return an empty path/vector).

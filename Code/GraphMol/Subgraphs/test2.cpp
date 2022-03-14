@@ -326,6 +326,7 @@ void test4() {
 
   {
     // Non-ring-membered bond;
+    std::cout << "Non-ring-membered bond" << std::endl;
     std::string smiles = "C=NC(CNC)(NO)SSC(CNC)(N=C)NO"; // Non-canonical "S(C(CNC)(N=C)NO)S(C(CNC)(N=C)NO)"
     unsigned int rootedAtBond = 8; // S-S bond
  
@@ -338,6 +339,7 @@ void test4() {
     
     // ---------------------------------------------------------------------------------
     // Zero radius
+    std::cout << "Test zero radius" << std::endl;
     pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, true, false, &cAtomMap);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(pth[0] == rootedAtBond);
@@ -349,6 +351,7 @@ void test4() {
     // ---------------------------------------------------------------------------------
     // useHs = false
     {
+      std::cout << "Test useHs=false" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 3);
       TEST_ASSERT(cAtomMap.size() == 4);
@@ -370,6 +373,7 @@ void test4() {
       cAtomMap.clear();
       
       // -------------------------------------------
+      std::cout << "Test enforceSize" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 5, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 17);
       TEST_ASSERT(cAtomMap.size() == 18);
@@ -384,6 +388,7 @@ void test4() {
     // ---------------------------------------------------------------------------------
     // useHs = true
     {
+      std::cout << "Test useHs=true" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, true, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 3);
       TEST_ASSERT(cAtomMap.size() == 4);
@@ -410,6 +415,7 @@ void test4() {
       cAtomMap.clear();
 
       // -------------------------------------------
+      std::cout << "Test enforceSize" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, true, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 37);
       TEST_ASSERT(cAtomMap.size() == 38);
@@ -427,6 +433,7 @@ void test4() {
 
   {
     // Ring-membered bond;
+    std::cout << "Ring-membered bond" << std::endl;
     std::string smiles = "C1CCCSSCCC1"; // Exceptional case of enforceSize
     unsigned int rootedAtBond = 4;
 
@@ -439,6 +446,7 @@ void test4() {
 
     // ---------------------------------------------------------------------------------
     // Zero radius
+    std::cout << "Test zero radius" << std::endl;
     pth = findBondEnvironmentOfRadiusN(*mH, 0, rootedAtBond, true, false, &cAtomMap);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(pth[0] == rootedAtBond);
@@ -450,6 +458,7 @@ void test4() {
     // ---------------------------------------------------------------------------------
     // useHs = false
     {
+      std::cout << "Test useHs=false" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 3);
       TEST_ASSERT(cAtomMap.size() == 4);
@@ -470,6 +479,7 @@ void test4() {
       TEST_ASSERT(cAtomMap.size() == 9);
       cAtomMap.clear();
       // ---------------------------------------------------------------------------------
+      std::cout << "Test enforceSize v1" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 5, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 9);
       TEST_ASSERT(cAtomMap.size() == 9);
@@ -480,6 +490,7 @@ void test4() {
       TEST_ASSERT(cAtomMap.size() == 9);
       cAtomMap.clear();
       
+      std::cout << "Test enforceSize v2" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, false, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 9);
       TEST_ASSERT(cAtomMap.size() == 9);
@@ -494,6 +505,7 @@ void test4() {
     // ---------------------------------------------------------------------------------
     // useHs = true
     {
+      std::cout << "Test useHs=true" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 1, rootedAtBond, true, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 3);
       TEST_ASSERT(cAtomMap.size() == 4);
@@ -520,6 +532,7 @@ void test4() {
       cAtomMap.clear();
       
       // ---------------------------------------------------------------------------------
+      std::cout << "Test enforceSize" << std::endl;
       pth = findBondEnvironmentOfRadiusN(*mH, 6, rootedAtBond, true, false, &cAtomMap);
       TEST_ASSERT(pth.size() == 23);
       TEST_ASSERT(cAtomMap.size() == 23);
@@ -534,7 +547,6 @@ void test4() {
     delete mol;
     delete mH;
   }
-
   std::cout << "Finished" << std::endl;
 }
 
