@@ -28,8 +28,9 @@ SELECT mol_from_smiles('');
 SELECT mol_to_smiles(mol_from_smiles(''));
 
 
-CREATE TABLE pgmol (id int, m mol);
-\copy pgmol from 'data/data'
+CREATE TABLE insmiles (id int, smiles text);
+\copy insmiles from 'data/data'
+SELECT id, mol_from_smiles(smiles::cstring) m into pgmol from insmiles;
 
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
 
@@ -475,3 +476,14 @@ select qmol_from_smiles('C1C'::cstring);
 
 -- casting from mol to qmol
 select mol_from_smiles('C=C')::qmol;
+
+-- github #5095: cannot restore molecule
+select mol_in('c1cccc'::cstring);
+select mol_in('c1cccc1'::cstring);
+select mol_in('c1co(C)cc1'::cstring);
+select mol_in('c1cccc'::cstring);
+select 'c1cccc1'::mol;
+select 'c1co(C)cc1'::mol;
+select mol_in('c1cccc1'::cstring) @> '[r5]'::qmol;
+select 'c1cccc1'::mol @> '[r5]'::qmol;
+select mol_in('Cc1ccc2c(c1)-n1-c(=O)c=cc(=O)-n-2-c2cc(C)ccc2-1')

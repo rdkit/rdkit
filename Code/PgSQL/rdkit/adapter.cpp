@@ -183,13 +183,23 @@ extern "C" Mol *deconstructROMol(CROMol data) {
 }
 
 extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
-                               bool asQuery) {
+                               bool asQuery, bool sanitize) {
   RWMol *mol = nullptr;
 
   try {
     if (!asSmarts) {
       if (!asQuery) {
-        mol = SmilesToMol(data);
+        SmilesParserParams ps;
+        ps.sanitize = sanitize;
+        mol = SmilesToMol(data, ps);
+        if (mol && !sanitize) {
+          mol->updatePropertyCache(false);
+          unsigned int failedOp;
+          unsigned int ops = MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_CLEANUP ^
+                             MolOps::SANITIZE_PROPERTIES ^
+                             MolOps::SANITIZE_KEKULIZE;
+          MolOps::sanitizeMol(*mol, failedOp, ops);
+        }
       } else {
         mol = SmilesToMol(data, 0, false);
         if (mol != nullptr) {
@@ -2117,7 +2127,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
   while (*s && *s <= ' ') {
     s++;
   }
-  while (s < s_end && *s > ' ') {
+  while (s<s_end && * s> ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;

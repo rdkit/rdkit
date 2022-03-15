@@ -11,6 +11,7 @@
   molecule and before calculating the hash. Previous versions would still
   include information about atom/bond stereochemistry in the output hash even if
   that no longer applies in the modified molecule.
+- In the PostgreSQL cartridge the `::mol` typecast operator and `mol_in()` function no longer perform full sanitization of the molecule. If you want to convert text to a molecule with full sanitization, use the `mol_from_smiles()` function.
 
 ## Code removed in this release:
 - The `useCountSimulation` keyword argument for

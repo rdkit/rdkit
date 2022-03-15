@@ -111,8 +111,9 @@ SELECT mol_to_smiles(mol_from_smiles(''));
  
 (1 row)
 
-CREATE TABLE pgmol (id int, m mol);
-\copy pgmol from 'data/data'
+CREATE TABLE insmiles (id int, smiles text);
+\copy insmiles from 'data/data'
+SELECT id, mol_from_smiles(smiles::cstring) m into pgmol from insmiles;
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
 SELECT count(*) FROM pgmol;
  count 
@@ -1398,5 +1399,52 @@ select mol_from_smiles('C=C')::qmol;
  mol_from_smiles 
 -----------------
  [#6]=[#6]
+(1 row)
+
+-- github #5095: cannot restore molecule
+select mol_in('c1cccc'::cstring);
+ERROR:  could not create molecule from SMILES 'c1cccc'
+select mol_in('c1cccc1'::cstring);
+ mol_in  
+---------
+ c1cccc1
+(1 row)
+
+select mol_in('c1co(C)cc1'::cstring);
+  mol_in  
+----------
+ Co1cccc1
+(1 row)
+
+select mol_in('c1cccc'::cstring);
+ERROR:  could not create molecule from SMILES 'c1cccc'
+select 'c1cccc1'::mol;
+   mol   
+---------
+ c1cccc1
+(1 row)
+
+select 'c1co(C)cc1'::mol;
+   mol    
+----------
+ Co1cccc1
+(1 row)
+
+select mol_in('c1cccc1'::cstring) @> '[r5]'::qmol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'c1cccc1'::mol @> '[r5]'::qmol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select mol_in('Cc1ccc2c(c1)-n1-c(=O)c=cc(=O)-n-2-c2cc(C)ccc2-1')
+                     mol_in                      
+-------------------------------------------------
+ Cc1ccc2c(c1)-n1-c(=O)c=cc(=O)-n-2-c2cc(C)ccc2-1
 (1 row)
 

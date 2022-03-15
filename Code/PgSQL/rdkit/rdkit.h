@@ -101,7 +101,8 @@ Mol *deconstructROMol(CROMol data);
 
 CROMol parseMolBlob(char *data, int len);
 char *makeMolBlob(CROMol data, int *len);
-CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery);
+/* sanitize argument is only used if asSmarts and asQuery are false */
+CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery, bool sanitize);
 CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                     bool asQuery);
 char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles);
