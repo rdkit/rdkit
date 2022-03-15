@@ -1417,6 +1417,18 @@ select mol_in('c1co(C)cc1'::cstring);
 
 select mol_in('c1cccc'::cstring);
 ERROR:  could not create molecule from SMILES 'c1cccc'
+select mol_in('CN(=O)=O'::cstring);
+    mol_in     
+---------------
+ C[N+](=O)[O-]
+(1 row)
+
+select 'CN(=O)=O'::mol;
+      mol      
+---------------
+ C[N+](=O)[O-]
+(1 row)
+
 select 'c1cccc1'::mol;
    mol   
 ---------
@@ -1459,5 +1471,11 @@ WARNING:  could not create molecule from SMILES 'c1cccc1'
  mol 
 -----
  
+(1 row)
+
+select mol_from_smiles('CCN(=O)=O') @> 'CN(=O)=O';
+ ?column? 
+----------
+ t
 (1 row)
 

@@ -195,7 +195,7 @@ extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
         if (mol && !sanitize) {
           mol->updatePropertyCache(false);
           unsigned int failedOp;
-          unsigned int ops = MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_CLEANUP ^
+          unsigned int ops = MolOps::SANITIZE_ALL ^
                              MolOps::SANITIZE_PROPERTIES ^
                              MolOps::SANITIZE_KEKULIZE;
           MolOps::sanitizeMol(*mol, failedOp, ops);
