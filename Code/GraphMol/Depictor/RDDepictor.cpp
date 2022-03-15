@@ -42,6 +42,20 @@ namespace DepictorLocal {
 constexpr auto ISQRT2 = 0.707107;
 constexpr auto SQRT3_2 = 0.866025;
 
+std::vector<const RDKit::Atom *> getRankedAtomNeighbors(
+    const RDKit::ROMol &mol, const RDKit::Atom *atom,
+    const std::vector<int> &atomRanks) {
+  std::vector<const RDKit::Atom *> nbrs;
+  for (auto nbr : mol.atomNeighbors(atom)) {
+    nbrs.push_back(nbr);
+  }
+  std::sort(nbrs.begin(), nbrs.end(),
+            [&atomRanks](const auto e1, const auto e2) {
+              return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
+            });
+  return nbrs;
+}
+
 void embedSquarePlanar(const RDKit::ROMol &mol, const RDKit::Atom *atom,
                        std::list<EmbeddedFrag> &efrags,
                        const std::vector<int> &atomRanks) {
@@ -55,16 +69,9 @@ void embedSquarePlanar(const RDKit::ROMol &mol, const RDKit::Atom *atom,
   if (atom->getChiralTag() != RDKit::Atom::ChiralType::CHI_SQUAREPLANAR) {
     return;
   }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
   RDGeom::INT_POINT2D_MAP coordMap;
   coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
-  std::vector<const RDKit::Atom *> nbrs;
-  for (auto nbr : mol.atomNeighbors(atom)) {
-    nbrs.push_back(nbr);
-  }
-  std::sort(nbrs.begin(), nbrs.end(),
-            [&atomRanks](const auto e1, const auto e2) {
-              return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
-            });
   coordMap[nbrs[0]->getIdx()] = idealPoints[0];
   bool q2Full = false;
   for (const auto nbr : nbrs) {
@@ -103,16 +110,9 @@ void embedTBP(const RDKit::ROMol &mol, const RDKit::Atom *atom,
       RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL) {
     return;
   }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
   RDGeom::INT_POINT2D_MAP coordMap;
   coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
-  std::vector<const RDKit::Atom *> nbrs;
-  for (auto nbr : mol.atomNeighbors(atom)) {
-    nbrs.push_back(nbr);
-  }
-  std::sort(nbrs.begin(), nbrs.end(),
-            [&atomRanks](const auto e1, const auto e2) {
-              return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
-            });
   const RDKit::Atom *axial1 =
       RDKit::Chirality::getTrigonalBipyramidalAxialAtom(atom);
   const RDKit::Atom *axial2 =
@@ -147,16 +147,9 @@ void embedOctahedral(const RDKit::ROMol &mol, const RDKit::Atom *atom,
   if (atom->getChiralTag() != RDKit::Atom::ChiralType::CHI_OCTAHEDRAL) {
     return;
   }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
   RDGeom::INT_POINT2D_MAP coordMap;
   coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
-  std::vector<const RDKit::Atom *> nbrs;
-  for (auto nbr : mol.atomNeighbors(atom)) {
-    nbrs.push_back(nbr);
-  }
-  std::sort(nbrs.begin(), nbrs.end(),
-            [&atomRanks](const auto e1, const auto e2) {
-              return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
-            });
   const RDKit::Atom *axial1 = nullptr;
   const RDKit::Atom *axial2 = nullptr;
   for (auto i = 0u; i < nbrs.size(); ++i) {
