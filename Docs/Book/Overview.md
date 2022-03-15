@@ -40,6 +40,60 @@
 -   June 2006: Open-source (BSD license) release of software, Rational Discovery shuts down
 -   to present: Open-source development continues, use within Novartis, contributions from Novartis back to open-source version
 
+## Citing the RDKit
+
+There is still no official RDKit publication, our recommended citation is:
+```
+RDKit: Open-source cheminformatics. https://www.rdkit.org
+```
+We also recommend that you include the DOI for the version of the RDKit you used in the work. You can look these up here:
+https://doi.org/10.5281/zenodo.591637
+
+
+### Powered by RDKit
+[![RDKit badge](https://img.shields.io/badge/Powered%20by-RDKit-3838ff.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAFVBMVEXc3NwUFP8UPP9kZP+MjP+0tP////9ZXZotAAAAAXRSTlMAQObYZgAAAAFiS0dEBmFmuH0AAAAHdElNRQfmAwsPGi+MyC9RAAAAQElEQVQI12NgQABGQUEBMENISUkRLKBsbGwEEhIyBgJFsICLC0iIUdnExcUZwnANQWfApKCK4doRBsKtQFgKAQC5Ww1JEHSEkAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0wMy0xMVQxNToyNjo0NyswMDowMDzr2J4AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMDMtMTFUMTU6MjY6NDcrMDA6MDBNtmAiAAAAAElFTkSuQmCC)](https://www.rdkit.org/)
+
+If you use RDKit in one of your projects, you can show your support and help us track it by adding our badge.
+Simply copy the code from one of the markup languages below and paste it in your README file:
+
+<details>
+  <summary>Markdown</summary>
+  <div style="display: flex">
+    <textarea rows="1" wrap="off" readonly style="display: inline-block; width: 100%; resize: none; overflow-y: hidden">[![Powered by RDKit](https://img.shields.io/badge/Powered%20by-RDKit-3838ff.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAFVBMVEXc3NwUFP8UPP9kZP+MjP+0tP////9ZXZotAAAAAXRSTlMAQObYZgAAAAFiS0dEBmFmuH0AAAAHdElNRQfmAwsPGi+MyC9RAAAAQElEQVQI12NgQABGQUEBMENISUkRLKBsbGwEEhIyBgJFsICLC0iIUdnExcUZwnANQWfApKCK4doRBsKtQFgKAQC5Ww1JEHSEkAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0wMy0xMVQxNToyNjo0NyswMDowMDzr2J4AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMDMtMTFUMTU6MjY6NDcrMDA6MDBNtmAiAAAAAElFTkSuQmCC)](https://www.rdkit.org/)
+    </textarea>
+    <button onclick="copyBadgeMarkdown(this)" style="display: inline-block; padding: 0 8px">Copy</button>
+  </div>
+</details>
+
+<details>
+  <summary>reStructuredText</summary>
+  <div style="display: flex">
+    <textarea rows="1" wrap="off" readonly style="display: inline-block; width: 100%; resize: none; overflow-y: hidden">.. image:: https://img.shields.io/badge/Powered%20by-RDKit-3838ff.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAFVBMVEXc3NwUFP8UPP9kZP+MjP+0tP////9ZXZotAAAAAXRSTlMAQObYZgAAAAFiS0dEBmFmuH0AAAAHdElNRQfmAwsPGi+MyC9RAAAAQElEQVQI12NgQABGQUEBMENISUkRLKBsbGwEEhIyBgJFsICLC0iIUdnExcUZwnANQWfApKCK4doRBsKtQFgKAQC5Ww1JEHSEkAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0wMy0xMVQxNToyNjo0NyswMDowMDzr2J4AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMDMtMTFUMTU6MjY6NDcrMDA6MDBNtmAiAAAAAElFTkSuQmCC
+      :alt: Powered by RDKit
+      :target: https://www.rdkit.org/
+    </textarea>
+    <button onclick="copyBadgeMarkdown(this)" style="display: inline-block; padding: 0 8px">Copy</button>
+  </div>
+</details>
+
+<details>
+  <summary>HTML</summary>
+  <div style="display: flex">
+    <textarea rows="1" wrap="off" readonly style="display: inline-block; width: 100%; resize: none; overflow-y: hidden"><a href="https://www.rdkit.org/"><img alt="Powered by RDKit" src="https://img.shields.io/badge/Powered%20by-RDKit-3838ff.svg?logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAFVBMVEXc3NwUFP8UPP9kZP+MjP+0tP////9ZXZotAAAAAXRSTlMAQObYZgAAAAFiS0dEBmFmuH0AAAAHdElNRQfmAwsPGi+MyC9RAAAAQElEQVQI12NgQABGQUEBMENISUkRLKBsbGwEEhIyBgJFsICLC0iIUdnExcUZwnANQWfApKCK4doRBsKtQFgKAQC5Ww1JEHSEkAAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMi0wMy0xMVQxNToyNjo0NyswMDowMDzr2J4AAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjItMDMtMTFUMTU6MjY6NDcrMDA6MDBNtmAiAAAAAElFTkSuQmCC"></a>
+    </textarea>
+    <button onclick="copyBadgeMarkdown(this)" style="display: inline-block; padding: 0 8px">Copy</button>
+  </div>
+</details>
+
+<script>
+  function copyBadgeMarkdown(btn) {
+    if (navigator.clipboard) {
+      var text = btn.previousElementSibling.textContent;
+      navigator.clipboard.writeText(text);
+    }
+  }
+</script>
+
 ## Integration with other open-source projects
 - [KNIME](https://www.knime.com/rdkit): Workflow and analytics tool
 - [PostgreSQL](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Cartridge.rst): Extensible relational database
@@ -80,7 +134,6 @@ a Python library for building, manipulating, analyzing and automatic design of m
 - [Vernalis KNIME nodes](https://www.knime.com/book/vernalis-nodes-for-knime-trusted-extension)
 - [Erlwood KNIME nodes](https://www.knime.com/community/erlwood)
 - [AZOrange](https://github.com/AZcompTox/AZOrange)
-
 
 ## The Contrib Directory
 
