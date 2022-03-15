@@ -376,7 +376,7 @@ TEST_CASE("molzip", "[]") {
   {
     // check to see we can make a non sanitizable zipped mol
     MolzipParams p;
-    p.sanitize = false;
+    p.enforceValenceRules = false;
     auto a = "CC(=[*:1])N"_smiles;
     auto b = "[*:1]-N=C"_smiles;
     auto mol = molzip(*a, *b, p);

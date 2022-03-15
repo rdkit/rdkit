@@ -6493,7 +6493,7 @@ M  END
     a = Chem.MolFromSmiles("C(=[*:1])N")
     b = Chem.MolFromSmiles("[*:1]-N=C")
     p = Chem.MolzipParams()
-    p.sanitize = False
+    p.enforceValenceRules = False
     c = Chem.molzip(a, b, p)
     
 
