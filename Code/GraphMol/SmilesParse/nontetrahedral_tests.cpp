@@ -258,3 +258,12 @@ TEST_CASE("zero permutation is in SMILES") {
     CHECK(MolToSmiles(*m) == smi);
   }
 }
+
+TEST_CASE("do not write bogus permutation values") {
+  auto m = "CC[Pt@SP](C)(O)F"_smiles;
+  REQUIRE(m);
+  m->getAtomWithIdx(2)->setProp(common_properties::_chiralPermutation, 10);
+  CHECK_THROWS_AS(MolToSmiles(*m), ValueErrorException);
+  m->getAtomWithIdx(2)->setProp(common_properties::_chiralPermutation, -1);
+  CHECK_THROWS_AS(MolToSmiles(*m), ValueErrorException);
+}

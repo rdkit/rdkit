@@ -50,6 +50,11 @@ inline void parseCXExtensions(RDKit::RWMol &mol, const std::string &extText,
 };
 //! removes formal charge, isotope, etc. Primarily useful for QueryAtoms
 RDKIT_SMILESPARSE_EXPORT void ClearAtomChemicalProps(RDKit::Atom *atom);
-};  // namespace SmilesParseOps
+
+//! returns whether or not the combination of tag and permutation provided are
+//! legal
+RDKIT_SMILESPARSE_EXPORT bool checkChiralPermutation(int chiralTag,
+                                                     int permutation);
+}  // namespace SmilesParseOps
 
 #endif

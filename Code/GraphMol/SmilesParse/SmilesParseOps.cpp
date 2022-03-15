@@ -361,12 +361,21 @@ void swapBondDirIfNeeded(Bond *bond1, const Bond *bond2) {
 }
 }  // namespace
 
-static const std::map<RDKit::Atom::ChiralType, int> permutationLimits = {
+static const std::map<int, int> permutationLimits = {
     {RDKit::Atom::ChiralType::CHI_TETRAHEDRAL, 2},
     {RDKit::Atom::ChiralType::CHI_ALLENE, 2},
     {RDKit::Atom::ChiralType::CHI_SQUAREPLANAR, 3},
     {RDKit::Atom::ChiralType::CHI_OCTAHEDRAL, 30},
     {RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL, 20}};
+
+bool checkChiralPermutation(int chiralTag, int permutation) {
+  if (chiralTag > RDKit::Atom::ChiralType::CHI_OTHER &&
+      permutationLimits.find(chiralTag) != permutationLimits.end() &&
+      (permutation < 0 || permutation > permutationLimits.at(chiralTag))) {
+    return false;
+  }
+  return true;
+}
 
 void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
   PRECONDITION(mol, "no molecule");
@@ -377,7 +386,7 @@ void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
             permutationLimits.end() &&
         atom->getPropIfPresent(common_properties::_chiralPermutation,
                                permutation)) {
-      if (permutation > permutationLimits.at(atom->getChiralTag())) {
+      if (!checkChiralPermutation(atom->getChiralTag(), permutation)) {
         std::string error =
             (boost::format("Invalid chiral specification on atom %d") %
              atom->getIdx())
