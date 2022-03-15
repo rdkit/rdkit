@@ -13,11 +13,10 @@
   that no longer applies in the modified molecule.
 - In the PostgreSQL cartridge the `mol_in()` function no longer performs full
   sanitization of the molecule. One consequence of this is that directly casting
-  from strings to molecules also no longer does sanitization, so `select
-  'C1=CC=CC=C1'::mol` does not sanitize the molecule. If you want to convert a
-  string to a molecule with full sanitization you can either cast to `text`
-  first (i.e. `select 'C1=CC=CC=C1'::text::mol` or use the `mol_from_smiles()`
-  function.
+  from strings to molecules also no longer does sanitization, so `select 'CN(=O)=O'::mol` 
+  does not sanitize the molecule. If you want to convert a string to a molecule
+  with full sanitization you can either cast to `text` first 
+  (i.e. `select 'CN(=O)=O'::text::mol` or use the `mol_from_smiles()` function.
 
 ## Code removed in this release:
 - The `useCountSimulation` keyword argument for
