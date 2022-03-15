@@ -28,9 +28,8 @@ SELECT mol_from_smiles('');
 SELECT mol_to_smiles(mol_from_smiles(''));
 
 
-CREATE TABLE insmiles (id int, smiles text);
-\copy insmiles from 'data/data'
-SELECT id, mol_from_smiles(smiles::cstring) m into pgmol from insmiles;
+CREATE TABLE pgmol (id int, m mol);
+\copy pgmol from 'data/data'
 
 CREATE UNIQUE INDEX mol_ididx ON pgmol (id);
 
