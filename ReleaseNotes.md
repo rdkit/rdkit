@@ -4,6 +4,9 @@
 ## Backwards incompatible changes
 - When running in Jupyter Notebook, logs are now sent only to Python's
   standard error stream, and no longer include the `RDKit LEVEL` prefix.
+- The Debug and Info logs are now disabled by default. If you would like to
+  enable them within your code you can call `rdBase.EnableLog("rdApp.info")`
+  and/or `rdBase.EnableLog("rdApp.debug")`.
 - The MolHash functions now reassign stereochemistry after modifying the
   molecule and before calculating the hash. Previous versions would still
   include information about atom/bond stereochemistry in the output hash even if
@@ -27,6 +30,7 @@
   `rdkit.rdBase.LogWarning()`.
 - Python function `rdkit.Chem.LogError()` is deprecated in favor of
   `rdkit.rdBase.LogError()`.
+- The C++ class `RDLog::BlockLogs` is deprecated in favor of the the class `RDLog::LogStateSetter`.
 
 # Release_2021.09.1
 (Changes relative to Release_2021.03.1)
