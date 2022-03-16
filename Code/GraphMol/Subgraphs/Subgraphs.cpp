@@ -633,8 +633,8 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   // Select all neighboring bonds for iteration
   std::list<std::pair<int, int>> nbrStack;
   prepareNeighborStack(mol, rootedAtAtom, nbrStack, useHs);
+  
   unsigned int traveledDist;
-
   if (bondMap) {
     traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, atomMap);
   } else {
