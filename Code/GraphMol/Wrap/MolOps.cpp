@@ -792,18 +792,51 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
   return python::tuple(res);
 };
 
-PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
-                                             unsigned int radius,
-                                             unsigned int rootedAtAtom,
-                                             bool useHs, bool enforceSize,
-                                             python::object atomMap) {
+PATH_TYPE findAtomEnvironmentOfRadiusNHelper(
+  const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
+  bool useHs, bool enforceSize, python::object atomMap, 
+  python::object bondMap) {
   PATH_TYPE path;
+  std::unordered_map<unsigned int, unsigned int> cBondMap;
+
   if (atomMap == python::object()) {
     path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
-                                        enforceSize);
+                                        enforceSize, nullptr, &cBondMap);
   } else {
     std::unordered_map<unsigned int, unsigned int> cAtomMap;
     path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
+                                        enforceSize, &cAtomMap, &cBondMap);
+    // make sure the optional argument (atomMap) is actually a dictionary
+    python::dict typecheck = python::extract<python::dict>(atomMap);
+    atomMap.attr("clear")();
+    for (auto pair : cAtomMap) {
+      atomMap[pair.first] = pair.second;
+    }
+  }
+
+  if (bondMap != python::object()) {
+    python::dict typecheck = python::extract<python::dict>(bondMap);
+    bondMap.attr("clear")();
+    for (auto pair : cBondMap) {
+      bondMap[pair.first] = pair.second;
+    }
+  }
+
+  return path;
+}
+
+PATH_TYPE findBondEnvironmentOfRadiusNHelper(
+  const ROMol &mol, unsigned int radius, unsigned int rootedAtBond,
+  bool useHs, bool enforceSize, python::object atomMap, 
+  python::object bondMap) {
+  PATH_TYPE path;
+  std::unordered_map<unsigned int, unsigned int> cBondMap;
+  if (atomMap == python::object()) {
+    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs,
+                                        enforceSize);
+  } else {
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs,
                                         enforceSize, &cAtomMap);
     // make sure the optional argument (atomMap) is actually a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
@@ -812,27 +845,12 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
       atomMap[pair.first] = pair.second;
     }
   }
-  return path;
-}
 
-PATH_TYPE findBondEnvironmentOfRadiusNHelper(const ROMol &mol,
-                                             unsigned int radius,
-                                             unsigned int rootedAtBond,
-                                             bool useHs, bool enforceSize,
-                                             python::object atomMap) {
-  PATH_TYPE path;
-  if (atomMap == python::object()) {
-    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs,
-                                        enforceSize);
-  } else {
-    std::unordered_map<unsigned int, unsigned int> cAtomMap;
-    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs,
-                                        enforceSize, &cAtomMap);
-    // make sure the optional argument (atomMap) is actually a dictionary
-    python::dict typecheck = python::extract<python::dict>(atomMap);
-    atomMap.attr("clear")();
-    for (auto pair : cAtomMap) {
-      atomMap[pair.first] = pair.second;
+  if (bondMap != python::object()) {
+    python::dict typecheck = python::extract<python::dict>(bondMap);
+    bondMap.attr("clear")();
+    for (auto pair : cBondMap) {
+      bondMap[pair.first] = pair.second;
     }
   }
   return path;
@@ -1767,18 +1785,23 @@ to the terminal dummy atoms.\n\
       from the rooted atom (start with 0). The result is a pair of \n\
       the atom ID and the distance. \n\
 \n\
+    - bondMap: (optional) If provided, it will measure the minimum distance of the bond \n\
+      from the connected bond (start with 1). The result is a pair of \n\
+      the bond ID and the distance. \n\
+\n\
   RETURNS: a vector of bond IDs\n\
 \n";
     python::def(
         "FindAtomEnvironmentOfRadiusN", findAtomEnvironmentOfRadiusNHelper,
         (python::arg("mol"), python::arg("radius"), python::arg("rootedAtAtom"),
          python::arg("useHs") = false, python::arg("enforceSize") = true,
-         python::arg("atomMap") = python::object()),
+         python::arg("atomMap") = python::object(), 
+         python::arg("bondMap") = python::object()),
         docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =
-        "Find bonds of a particular radius around an atom. \n\
+        "Find bonds of a particular radius around a bond. \n\
          Return empty result if there is no bond at the requested radius.\n\
          The function is equivalent as `findAtomEnvironmentOfRadiusN` on \n\
          two connected atoms, and uniquely aggregate together with minimal \n\
@@ -1803,13 +1826,18 @@ to the terminal dummy atoms.\n\
       from the connected atom (start with 0). The result is a pair of \n\
       the atom ID and the distance. \n\
 \n\
+    - bondMap: (optional) If provided, it will measure the minimum distance of the bond \n\
+      from the rooted bond (start with 0). The result is a pair of \n\
+      the bond ID and the distance. \n\
+\n\
   RETURNS: a vector of bond IDs\n\
 \n";
     python::def(
         "FindBondEnvironmentOfRadiusN", findBondEnvironmentOfRadiusNHelper,
         (python::arg("mol"), python::arg("radius"), python::arg("rootedAtBond"),
          python::arg("useHs") = false, python::arg("enforceSize") = true,
-         python::arg("atomMap") = python::object()),
+         python::arg("atomMap") = python::object(), 
+         python::arg("bondMap") = python::object()),
         docString.c_str());
 
     python::def("PathToSubmol", pathToSubmolHelper,

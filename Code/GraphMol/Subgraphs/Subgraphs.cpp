@@ -612,37 +612,45 @@ namespace {
 PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
     bool useHs, bool enforceSize,
-    std::unordered_map<unsigned int, unsigned int> *atomMap) {
+    std::unordered_map<unsigned int, unsigned int> *atomMap, 
+    std::unordered_map<unsigned int, unsigned int> *bondMap) {
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
+  
   PATH_TYPE res;
   if (atomMap) {
     atomMap->clear();
     (*atomMap)[rootedAtAtom] = 0;
   }
-  
+  if (bondMap) {
+    bondMap->clear();
+  }
   if (radius == 0) {
     return res;
   }  // Return empty path if radius=0
 
-  std::list<std::pair<int, int>> nbrStack;
   // Select all neighboring bonds for iteration
+  std::list<std::pair<int, int>> nbrStack;
   prepareNeighborStack(mol, rootedAtAtom, nbrStack, useHs);
+  unsigned int traveledDist;
 
-  std::unordered_map<unsigned int, int> bondsInMap;
-  unsigned int traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack,
-                                                       bondsInMap, useHs, atomMap);
+  if (bondMap) {
+    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, atomMap);
+  } else {
+    std::unordered_map<unsigned int, int> cBondMap;
+    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, cBondMap, useHs, atomMap);
+  }
+
   if (enforceSize) {
     if (traveledDist != radius) {
       // If there are no paths found with the requested radius, user can choose
       // whether or not to return nothing in this case. If enforceSize=true,
-      // this is similar to the previous bahviour (return an empty path/vector).
+      // this is similar to the previous behaviour (return an empty path/vector).
       res.clear();
       res.resize(0);
-      if (atomMap) {
-        atomMap->clear();
-      }
+      if (atomMap) { atomMap->clear(); }
+      if (bondMap) { bondMap->clear(); }
     }
   }
   return res;
@@ -652,46 +660,54 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
 PATH_TYPE findBondEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtBond,
     bool useHs, bool enforceSize,
-    std::unordered_map<unsigned int, unsigned int> *atomMap) {
+    std::unordered_map<unsigned int, unsigned int> *atomMap, 
+    std::unordered_map<unsigned int, unsigned int> *bondMap) {
   if (rootedAtBond >= mol.getNumBonds()) {
     throw ValueErrorException("bad bond index");
   }
+
   PATH_TYPE res;
   res.push_back(rootedAtBond);
   const Bond *rootedBond = mol.getBondWithIdx(rootedAtBond);
   unsigned int beginAtomIdx = rootedBond->getBeginAtomIdx();
   unsigned int endAtomIdx = rootedBond->getEndAtomIdx();
-  
   if (atomMap) {
     atomMap->clear();
     (*atomMap)[beginAtomIdx] = 0;
     (*atomMap)[endAtomIdx] = 0;
   }
-
+  if (bondMap) {
+    bondMap->clear();
+    (*bondMap)[rootedAtBond] = 0;
+  }
   if (radius == 0) {
     return res;
   }  // Return empty path if radius=0
 
+  // Select all neighboring bonds for iteration, duplicated rooted bond is available
+  // but we will set the constraint below to ignore rooted bond. 
   std::list<std::pair<int, int>> nbrStack;
-  // Select all neighboring bonds for iteration, the rooted bond is ignored
   prepareNeighborStack(mol, beginAtomIdx, nbrStack, useHs); 
   prepareNeighborStack(mol, endAtomIdx, nbrStack, useHs); 
   
-  // Duplicated at rooted bond is available, but we set the constraint below. 
-  std::unordered_map<unsigned int, int> bondsInMap;
-  bondsInMap[rootedAtBond] = 0;
-  unsigned int traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, 
-                                                       bondsInMap, useHs, atomMap);
+  unsigned int traveledDist;
+  if (bondMap) {
+    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, atomMap);
+  } else {
+    std::unordered_map<unsigned int, int> cBondMap;
+    cBondMap[rootedAtBond] = 0;
+    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, cBondMap, useHs, atomMap);
+  }
+
   if (enforceSize) {
     if (traveledDist != radius) {
       // If there are no paths found with the requested radius, user can choose
       // whether or not to return nothing in this case. If enforceSize=true,
-      // this is similar to the previous bahviour (return an empty path/vector).
+      // this is similar to the previous behaviour (return an empty path/vector).
       res.clear();
       res.resize(0);
-      if (atomMap) {
-        atomMap->clear();
-      }
+      if (atomMap) { atomMap->clear(); }
+      if (bondMap) { bondMap->clear(); }
     }
   }
   return res;
