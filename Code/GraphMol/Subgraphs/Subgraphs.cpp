@@ -559,7 +559,7 @@ namespace {
   unsigned int findEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, PATH_TYPE &path,
     std::list<std::pair<int, int>> &nbrStack, 
-    std::unordered_map<unsigned int, int> &bondsInMap,
+    std::unordered_map<unsigned int, unsigned int> &bondMap,
     bool useHs, std::unordered_map<unsigned int, unsigned int> *atomMap) {
       // Perform BFS to find the environment
       unsigned int i;
@@ -573,10 +573,10 @@ namespace {
           int bondIdx, startAtom;
           boost::tie(startAtom, bondIdx) = nbrStack.front();
           nbrStack.pop_front();
-          if (bondsInMap.find(bondIdx) == bondsInMap.end()) {
-            // The value assigned in bondsInMap is unimportant, but
+          if (bondMap.find(bondIdx) == bondMap.end()) {
+            // The value assigned in bondMap is unimportant, but
             // it can be used to indicate the minimum travel distance.
-            bondsInMap[bondIdx] = i + 1;
+            bondMap[bondIdx] = i + 1;
             path.push_back(bondIdx);
 
             // add the next set of neighbors:
@@ -592,7 +592,7 @@ namespace {
             // this round onto the stack
             if (i < radius - 1) {
               for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
-                if (bondsInMap.find(bond->getIdx()) == bondsInMap.end()) {
+                if (bondMap.find(bond->getIdx()) == bondMap.end()) {
                   if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
                                        ->getAtomicNum() != 1) {
                     nextLayer.emplace_back(oAtom, bond->getIdx());
@@ -638,7 +638,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   if (bondMap) {
     traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, atomMap);
   } else {
-    std::unordered_map<unsigned int, int> cBondMap;
+    std::unordered_map<unsigned int, unsigned int> cBondMap;
     traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, cBondMap, useHs, atomMap);
   }
 
@@ -694,7 +694,7 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   if (bondMap) {
     traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, atomMap);
   } else {
-    std::unordered_map<unsigned int, int> cBondMap;
+    std::unordered_map<unsigned int, unsigned int> cBondMap;
     cBondMap[rootedAtBond] = 0;
     traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, cBondMap, useHs, atomMap);
   }
