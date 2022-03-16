@@ -104,12 +104,12 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
     By default unassigned stereo centers are not reported:
 
     >>> mol = Chem.MolFromSmiles('C[C@H](F)C(F)(Cl)Br')
-    >>> FindMolChiralCenters(mol, force=True)
+    >>> Chem.FindMolChiralCenters(mol,force=True)
     [(1, 'S')]
 
     but this can be changed:
 
-    >>> FindMolChiralCenters(mol, force=True, includeUnassigned=True)
+    >>> Chem.FindMolChiralCenters(mol,force=True,includeUnassigned=True)
     [(1, 'S'), (3, '?')]
 
     The handling of unassigned stereocenters for dependent stereochemistry is not correct 
