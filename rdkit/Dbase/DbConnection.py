@@ -12,7 +12,7 @@
 """
 
 
-from rdkit.Dbase import DbUtils, DbInfo, DbModule
+from rdkit.Dbase import DbUtils, DbInfo, DbModule 
 
 
 class DbError(RuntimeError):
