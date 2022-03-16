@@ -92,13 +92,13 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
   """
     >>> from rdkit import Chem
     >>> mol = Chem.MolFromSmiles('[C@H](Cl)(F)Br')
-    >>> FindMolChiralCenters(mol)
+    >>> Chem.FindMolChiralCenters(mol)
     [(0, 'R')]
     >>> mol = Chem.MolFromSmiles('[C@@H](Cl)(F)Br')
-    >>> FindMolChiralCenters(mol)
+    >>> Chem.FindMolChiralCenters(mol)
     [(0, 'S')]
 
-    >>> FindMolChiralCenters(Chem.MolFromSmiles('CCC'))
+    >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('CCC'))
     []
 
     By default unassigned stereo centers are not reported:
