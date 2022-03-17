@@ -11,6 +11,15 @@
   molecule and before calculating the hash. Previous versions would still
   include information about atom/bond stereochemistry in the output hash even if
   that no longer applies in the modified molecule.
+- The rules for aromaticity in rings containing dummy atoms have been changed.
+  The general intention of the new handling is that aromaticity will not be
+  perceived for rings containing dummy atoms unless it's clear that the dummies
+  should be aromatic. As an example: the SMILES `C1=C*2=CC=CC=*2C=C1` is
+  perceived to be aromatic while the SMILES `C1=C*2C=CC=C*2C=C1` (which does not
+  have any double bonds to the dummy atoms) is not; in previous RDKit releases
+  both of these structures were aromatic. There's more information about this in
+  the discussion of PR #4722 (https://github.com/rdkit/rdkit/pull/4722) and
+  Issue #4721 (https://github.com/rdkit/rdkit/issues/4721).
 - In the PostgreSQL cartridge the `mol_in()` function no longer performs full
   sanitization of the molecule. One consequence of this is that directly casting
   from strings to molecules also no longer does sanitization, so `select 'CN(=O)=O'::mol` 
@@ -37,6 +46,7 @@
 - Python function `rdkit.Chem.LogError()` is deprecated in favor of
   `rdkit.rdBase.LogError()`.
 - The C++ class `RDLog::BlockLogs` is deprecated in favor of the the class `RDLog::LogStateSetter`.
+
 
 # Release_2021.09.1
 (Changes relative to Release_2021.03.1)
