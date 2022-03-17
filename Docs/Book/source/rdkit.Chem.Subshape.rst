@@ -10,7 +10,6 @@ Submodules
    rdkit.Chem.Subshape.SubshapeAligner
    rdkit.Chem.Subshape.SubshapeBuilder
    rdkit.Chem.Subshape.SubshapeObjects
-   rdkit.Chem.Subshape.testCombined
 
 Module contents
 ---------------

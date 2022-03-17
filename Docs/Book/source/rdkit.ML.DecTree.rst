@@ -18,7 +18,6 @@ Submodules
    rdkit.ML.DecTree.Tree
    rdkit.ML.DecTree.TreeUtils
    rdkit.ML.DecTree.TreeVis
-   rdkit.ML.DecTree.randomtest
 
 Module contents
 ---------------
