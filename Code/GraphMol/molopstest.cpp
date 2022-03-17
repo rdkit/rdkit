@@ -8389,6 +8389,41 @@ M  END)CTAB"_ctab;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub5099() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing github issue 5099: "
+         "Removing H preserving only wedged ones strips all H"
+      << std::endl;
+
+  std::string smi{"FC([H])(O)Cl"};
+  std::unique_ptr<RWMol> m{SmilesToMol(smi, false, false)};
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 5);
+  m->getBondBetweenAtoms(1, 2)->setBondDir(Bond::BondDir::BEGINWEDGE);
+
+  auto ps = MolOps::RemoveHsParameters();
+  ps.showWarnings = false;
+
+  // Remove all but Wedged/dashed H
+  ps.removeWithWedgedBond = false;
+  ps.removeDefiningBondStereo = true;
+  ps.removeDegreeZero = true;
+  ps.removeDummyNeighbors = true;
+  ps.removeHigherDegrees = true;
+  ps.removeHydrides = true;
+  ps.removeInSGroups = true;
+  ps.removeIsotopes = true;
+  ps.removeMapped = true;
+  ps.removeNonimplicit = true;
+  ps.removeOnlyHNeighbors = true;
+  ps.removeWithQuery = true;
+
+  removeHs(*m, ps);
+
+  // H shouldn't be removed
+  TEST_ASSERT(m->getNumAtoms() == 5);
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8504,6 +8539,7 @@ int main() {
   testGithub3854();
   testSetTerminalAtomCoords();
   testGet3DDistanceMatrix();
+  testGithub5099();
 
   return 0;
 }
