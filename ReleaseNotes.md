@@ -26,6 +26,25 @@
   does not sanitize the molecule. If you want to convert a string to a molecule
   with full sanitization you can either cast to `text` first 
   (i.e. `select 'CN(=O)=O'::text::mol` or use the `mol_from_smiles()` function.
+- The code to calculate bit vector topological torsion fingerprints for
+  reactions no longer ignore the fingerprint size argument.
+
+## Highlights
+- The RDKit can now integrate with the python logger: calling
+  `rdBase.LogToPythonLogger()` enables this. All log messages are sent to a
+  logger named "rdkit".
+- The backend of the MolDraw2D code has been extensively refactored. This should
+  be mostly invisible to RDKit users, but it makes supporting and extending that
+  code much easier.
+- Beilstein generics (i.e. things like "ARY", "ALK", or "CAL") are now supported
+  when doing substructure queries. This is a first step towards enabling some
+  really cool substructure search possibilities.
+
+
+
+## Acknowledgements
+
+
 
 ## Code removed in this release:
 - The `useCountSimulation` keyword argument for
