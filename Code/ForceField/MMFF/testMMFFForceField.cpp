@@ -39,8 +39,7 @@ using namespace RDKit;
 
 bool fexist(std::string filename) {
   std::ifstream ifStream(filename.c_str());
-
-  return (ifStream ? true : false);
+  return !ifStream.fail();
 }
 
 bool fgrep(std::fstream &fStream, std::string key, std::string &line) {

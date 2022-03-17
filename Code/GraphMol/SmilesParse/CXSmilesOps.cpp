@@ -1086,10 +1086,7 @@ bool processRadicalSection(Iterator &first, Iterator last, RDKit::RWMol &mol,
           ->setNumRadicalElectrons(numRadicalElectrons);
     }
   }
-  if (first >= last) {
-    return false;
-  }
-  return true;
+  return first < last;
 }
 
 template <typename Iterator>

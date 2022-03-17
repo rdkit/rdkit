@@ -276,10 +276,7 @@ bool DrawShapePolyLine::doesRectClash(const StringRect &rect,
       return true;
     }
   }
-  if (doesLineIntersect(rect, points_.front(), points_.back(), padding)) {
-    return true;
-  }
-  return false;
+  return doesLineIntersect(rect, points_.front(), points_.back(), padding);
 }
 
 // ****************************************************************************
@@ -448,11 +445,8 @@ bool DrawShapeDashedWedge::doesRectClash(const StringRect &rect,
                                          double padding) const {
   size_t last_point = points_.size() - 1;
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
-  if (doesTriangleIntersect(rect, at1Cds_, points_[last_point],
-                               points_[last_point-1], padding)) {
-    return true;
-  }
-  return false;
+  return doesTriangleIntersect(rect, at1Cds_, points_[last_point],
+                               points_[last_point - 1], padding);
 }
 
 // ****************************************************************************

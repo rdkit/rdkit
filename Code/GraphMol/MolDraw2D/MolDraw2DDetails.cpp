@@ -289,10 +289,7 @@ bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
   }
   xdisc = (end2.x - centre.x) * (end2.x - centre.x) / xr2;
   ydisc = (end2.y - centre.y) * (end2.y - centre.y) / yr2;
-  if (xdisc + ydisc <= 1.0) {
-    return true;
-  }
-  return false;
+  return xdisc + ydisc <= 1.0;
 }
 
 // ****************************************************************************
@@ -339,10 +336,7 @@ bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
     return true;
   }
   Point2D p2 = end2 - centre;
-  if (pointInArc(p2)) {
-    return true;
-  }
-  return false;
+  return pointInArc(p2);
 }
 
 // ****************************************************************************

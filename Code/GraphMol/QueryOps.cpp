@@ -890,11 +890,7 @@ bool isComplexQuery(const Atom *a) {
     if (_complexQueryHelper(a->getQuery(), hasAtNum)) {
       return true;
     }
-    if (hasAtNum) {
-      return false;
-    } else {
-      return true;
-    }
+    return !hasAtNum;
   }
 
   return true;

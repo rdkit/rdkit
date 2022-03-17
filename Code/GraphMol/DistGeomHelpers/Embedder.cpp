@@ -303,11 +303,7 @@ bool _volumeTest(const DistGeom::ChiralSetPtr &chiralSet,
   if (verbose) {
     std::cerr << "   " << fabs(vol) << std::endl;
   }
-  if (fabs(vol) < MIN_TETRAHEDRAL_CHIRAL_VOL) {
-    return false;
-  }
-
-  return true;
+  return fabs(vol) >= MIN_TETRAHEDRAL_CHIRAL_VOL;
 }
 
 bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
@@ -713,7 +709,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
   bool gotCoords = false;
   unsigned int iter = 0;
-  while ((gotCoords == false) && (iter < embedParams.maxIterations)) {
+  while (!gotCoords && iter < embedParams.maxIterations) {
     ++iter;
     if (embedParams.callback != nullptr) {
       embedParams.callback(iter);
@@ -964,10 +960,7 @@ bool multiplication_overflows_(T a, T b) {
   if (a == 0 || b == 0) {
     return false;
   }
-  if (a > std::numeric_limits<T>::max() / b) {
-    return true;
-  }
-  return false;
+  return a > std::numeric_limits<T>::max() / b;
 }
 
 void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
