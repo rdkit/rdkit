@@ -1227,12 +1227,9 @@ bool _checkMacrocycleTwoInSameRingAmideEster14(
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
 
-  if (a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
-      (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
-      (a2Num == 8 || (a2Num == 7))) {
-    return true;
-  }
-  return false;
+  return a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
+         (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
+         (a2Num == 8 || a2Num == 7);
 }
 
 void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,

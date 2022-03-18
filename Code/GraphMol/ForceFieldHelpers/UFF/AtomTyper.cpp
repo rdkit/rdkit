@@ -424,12 +424,12 @@ bool getUFFBondStretchParams(const ROMol &mol, unsigned int idx1,
   AtomicParamVect paramVect(2);
   unsigned int i;
   const Bond *bond = mol.getBondBetweenAtoms(idx1, idx2);
-  bool res = (bond ? true : false);
+  bool res = bond != nullptr;
   for (i = 0; res && (i < 2); ++i) {
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     std::string atomKey = Tools::getAtomLabel(atom);
     paramVect[i] = (*params)(atomKey);
-    res = (paramVect[i] ? true : false);
+    res = paramVect[i] != nullptr;
   }
   if (res) {
     double bondOrder = bond->getBondTypeAsDouble();
@@ -453,13 +453,13 @@ bool getUFFAngleBendParams(const ROMol &mol, unsigned int idx1,
   for (i = 0; res && (i < 3); ++i) {
     if (i < 2) {
       bond[i] = mol.getBondBetweenAtoms(idx[i], idx[i + 1]);
-      res = (bond[i] ? true : false);
+      res = bond[i] != nullptr;
     }
     if (res) {
       const Atom *atom = mol.getAtomWithIdx(idx[i]);
       std::string atomKey = Tools::getAtomLabel(atom);
       paramVect[i] = (*params)(atomKey);
-      res = (paramVect[i] ? true : false);
+      res = paramVect[i] != nullptr;
     }
   }
   if (res) {
@@ -487,7 +487,7 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
   bool hasSP2 = false;
   for (i = 0; res && (i < 4); ++i) {
     if (i < 3) {
-      res = (mol.getBondBetweenAtoms(idx[i], idx[i + 1]) ? true : false);
+      res = mol.getBondBetweenAtoms(idx[i], idx[i + 1]) != nullptr;
     }
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     if ((i == 1) || (i == 2)) {
@@ -496,7 +496,7 @@ bool getUFFTorsionParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
       hyb[j] = atom->getHybridization();
       std::string atomKey = Tools::getAtomLabel(atom);
       paramVect[j] = (*params)(atomKey);
-      res = (paramVect[j] ? true : false);
+      res = paramVect[j] != nullptr;
     } else if (atom->getHybridization() == Atom::SP2) {
       hasSP2 = true;
     }
@@ -606,7 +606,7 @@ bool getUFFVdWParams(const ROMol &mol, unsigned int idx1, unsigned int idx2,
     const Atom *atom = mol.getAtomWithIdx(idx[i]);
     std::string atomKey = Tools::getAtomLabel(atom);
     paramVect[i] = (*params)(atomKey);
-    res = (paramVect[i] ? true : false);
+    res = paramVect[i] != nullptr;
   }
   if (res) {
     uffVdWParams.x_ij =

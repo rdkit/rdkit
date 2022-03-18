@@ -1,7 +1,7 @@
-rdkit.VLib.NodeLib.demo module
+rdkit.ML.Data.cQuantize module
 ==============================
 
-.. automodule:: rdkit.VLib.NodeLib.demo
+.. automodule:: rdkit.ML.Data.cQuantize
     :members:
     :undoc-members:
     :show-inheritance:

@@ -124,7 +124,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT MMFFMolProperties {
     PRECONDITION((mmffVariant == "MMFF94") || (mmffVariant == "MMFF94s"),
                  "bad MMFF variant");
 
-    this->d_mmffs = ((mmffVariant == "MMFF94s") ? true : false);
+    this->d_mmffs = mmffVariant == "MMFF94s";
   }
   const std::string getMMFFVariant() {
     return (this->d_mmffs ? "MMFF94s" : "MMFF94");

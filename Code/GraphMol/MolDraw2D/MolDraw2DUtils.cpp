@@ -32,13 +32,10 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
   // conditions for needing a chiral H:
   //   - stereochem specified
   //   - in at least two rings
-  if (mol.getRingInfo()->isInitialized() &&
-      mol.getRingInfo()->numAtomRings(atom->getIdx()) > 1 &&
-      (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
-       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW)) {
-    return true;
-  }
-  return false;
+  return mol.getRingInfo()->isInitialized() &&
+         mol.getRingInfo()->numAtomRings(atom->getIdx()) > 1u &&
+         (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+          atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
 }
 }  // end of anonymous namespace
 

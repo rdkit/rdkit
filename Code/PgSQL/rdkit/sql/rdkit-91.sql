@@ -475,3 +475,19 @@ select qmol_from_smiles('C1C'::cstring);
 
 -- casting from mol to qmol
 select mol_from_smiles('C=C')::qmol;
+
+-- github #5095: cannot restore molecule
+select mol_in('c1cccc'::cstring);
+select mol_in('c1cccc1'::cstring);
+select mol_in('c1co(C)cc1'::cstring);
+select mol_in('c1cccc'::cstring);
+select mol_in('CN(=O)=O'::cstring);
+select 'CN(=O)=O'::mol;
+select 'c1cccc1'::mol;
+select 'c1co(C)cc1'::mol;
+select mol_in('c1cccc1'::cstring) @> '[r5]'::qmol;
+select 'c1cccc1'::mol @> '[r5]'::qmol;
+select mol_in('Cc1ccc2c(c1)-n1-c(=O)c=cc(=O)-n-2-c2cc(C)ccc2-1');
+select 'c1cccc1'::text::mol;
+select 'c1cccc1'::varchar::mol;
+select mol_from_smiles('CCN(=O)=O') @> 'CN(=O)=O';
