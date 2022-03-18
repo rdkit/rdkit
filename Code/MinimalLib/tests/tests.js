@@ -488,6 +488,18 @@ M  END
         "atomProp:6.dummyLabel.R1:7.dummyLabel.R2|");
 }
 
+function test_flexicanvas() {
+    
+    var mol = RDKitModule.get_mol("CCCC");
+    assert.equal(mol.is_valid(),1);
+    
+    var svg = mol.get_svg(-1,-1);
+    assert(svg.search("svg")>0);
+    assert(svg.search("width='95px'")>0);
+    assert(svg.search("height='21px'")>0);
+}
+
+
 
 initRDKitModule().then(function(instance) {
     var done = {};
@@ -521,6 +533,7 @@ initRDKitModule().then(function(instance) {
     test_get_mol_no_kekulize();
     test_get_smarts();
     test_get_cxsmarts();
+    test_flexicanvas();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
