@@ -14,7 +14,6 @@ Submodules
    rdkit.VLib.NodeLib.SmilesDupeFilter
    rdkit.VLib.NodeLib.SmilesOutput
    rdkit.VLib.NodeLib.SmilesSupply
-   rdkit.VLib.NodeLib.demo
 
 Module contents
 ---------------
