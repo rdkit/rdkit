@@ -232,6 +232,9 @@ Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
  (github pull #5044 from bp-kelley)
   - Clean up the warning landscape
  (github pull #5048 from greglandrum)
+  - Cleanup of python API documentation stubs
+ (github pull #5105 from greglandrum)
+
 
 ## New Features and Enhancements:
   - Update coordgenlibs to v3.0.0
@@ -295,7 +298,6 @@ Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
   - "Powered by RDKit" Badge
  (github pull #5085 from cbouy)
 
-
 ## Deprecated code (to be removed in a future release):
 - Python function `rdkit.Chem.WrapLogs()` is deprecated in favor of
   `rdkit.rdBase.LogToPythonStderr()`.  `rdkit.rdBase.WrapLogs()` also exists,
@@ -305,7 +307,6 @@ Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
 - Python function `rdkit.Chem.LogError()` is deprecated in favor of
   `rdkit.rdBase.LogError()`.
 - The C++ class `RDLog::BlockLogs` is deprecated in favor of the the class `RDLog::LogStateSetter`.
-
 
 # Release_2021.09.1
 (Changes relative to Release_2021.03.1)
