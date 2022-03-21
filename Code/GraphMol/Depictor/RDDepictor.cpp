@@ -681,7 +681,7 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool smallestRotation) {
                     });
   unsigned int n60 = std::count_if(
       thetaValues.begin(), thetaValues.end(),
-      [d_thetaMin, INCR_DEG, TOL_DEG](double theta) {
+      [d_thetaMin, INCR_DEG, TOL_DEG, ALMOST_ZERO](double theta) {
         theta += d_thetaMin;
         return (fabs(fmod(theta, INCR_DEG)) < TOL_DEG &&
                 !(abs(static_cast<int>(

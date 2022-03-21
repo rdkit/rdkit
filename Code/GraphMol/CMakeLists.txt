@@ -129,7 +129,7 @@ rdkit_test(graphmolMolOpsTest molopstest.cpp
 
 rdkit_test(graphmoltestChirality testChirality.cpp
            LINK_LIBRARIES SmilesParse FileParsers
-	   GraphMol )
+	   GraphMol MolTransforms )
 
 rdkit_test(graphmoltestPickler testPickler.cpp
            LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol )
@@ -165,7 +165,7 @@ rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp catch_main.cpp
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
            
 rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp catch_main.cpp
-           LINK_LIBRARIES FileParsers SmilesParse GraphMol )
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol MolTransforms )
 
 rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp catch_main.cpp
            LINK_LIBRARIES SubstructMatch SmilesParse GraphMol )
