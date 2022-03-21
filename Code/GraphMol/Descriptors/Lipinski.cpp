@@ -104,7 +104,7 @@ const NumRotatableBondsOptions DefaultStrictDefinition = NonStrict;
 #endif
 }  // namespace
 
-const std::string NumRotatableBondsVersion = "3.0.0";
+const std::string NumRotatableBondsVersion = "3.1.0";
 unsigned int calcNumRotatableBonds(const ROMol &mol,
                                    NumRotatableBondsOptions strict) {
   if (strict == Default) {
@@ -112,16 +112,16 @@ unsigned int calcNumRotatableBonds(const ROMol &mol,
   }
 
   if (strict == NonStrict) {
-    std::string pattern = "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]";
+    std::string pattern = "[!$(*#*)&!D1]-,:;!@[!$(*#*)&!D1]";
     pattern_flyweight m(pattern);
     return m.get().countMatches(mol);
   } else if (strict == Strict) {
     std::string strict_pattern =
         "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
         "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
-        "[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-!@[!$(*#"
-        "*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])([CH3])"
-        "[CH3])]";
+        "[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-,:;!@[!$"
+        "(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])(["
+        "CH3])[CH3])]";
     pattern_flyweight m(strict_pattern);
     return m.get().countMatches(mol);
   } else {
@@ -138,17 +138,20 @@ unsigned int calcNumRotatableBonds(const ROMol &mol,
     //     - the linking bond in systems like Cc1cccc(C)c1-c1c(C)cccc1 is now
     //     considered
     //       non-rotatable
-    pattern_flyweight rotBonds_matcher("[!$([D1&!#1])]-!@[!$([D1&!#1])]");
+    pattern_flyweight rotBonds_matcher("[!$([D1&!#1])]-,:;!@[!$([D1&!#1])]");
     pattern_flyweight nonRingAmides_matcher("[C&!R](=O)NC");
     pattern_flyweight symRings_matcher(
-        "[a;r6;$(a(-!@[a;r6])(a[!#1])a[!#1])]-!@[a;r6;$(a(-!@[a;r6])(a[!#1])a)"
-        "]");
+        "[a;r6;$(a(-,:;!@[a;r6])(a[!#1])a[!#1])]-,:;!@[a;r6;$(a(-,:;!@[a;r6])("
+        "a[!#1])a)]");
     pattern_flyweight terminalTripleBonds_matcher("C#[#6,#7]");
 
     std::vector<MatchVectType> matches;
 
     // initialize to the number of bonds matching the base pattern:
     int res = rotBonds_matcher.get().countMatches(mol);
+    if (!res) {
+      return 0;
+    }
 
     // remove symmetrical rings:
     res -= symRings_matcher.get().countMatches(mol);
