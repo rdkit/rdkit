@@ -24,7 +24,7 @@ class JSMol {
   std::string get_v3Kmolblock() const;
   std::string get_inchi() const;
   std::string get_json() const;
-  std::string get_svg(unsigned int width, unsigned int height) const;
+  std::string get_svg(int width, int height) const;
   std::string get_svg() const {
     return get_svg(d_defaultWidth, d_defaultHeight);
   }
@@ -76,8 +76,8 @@ class JSMol {
   std::string add_hs() const;
 
   std::unique_ptr<RDKit::RWMol> d_mol;
-  static constexpr unsigned int d_defaultWidth = 250;
-  static constexpr unsigned int d_defaultHeight = 200;
+  static constexpr int d_defaultWidth = 250;
+  static constexpr int d_defaultHeight = 200;
 };
 
 class JSSubstructLibrary {

@@ -59,15 +59,15 @@ std::string JSMol::get_cxsmarts() const {
   if (!d_mol) return "";
   return MolToCXSmarts(*d_mol);
 }
-std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
+std::string JSMol::get_svg(int w, int h) const {
   if (!d_mol) return "";
   return MinimalLib::mol_to_svg(*d_mol, w, h);
 }
 std::string JSMol::get_svg_with_highlights(const std::string &details) const {
   if (!d_mol) return "";
 
-  unsigned int w = MinimalLib::d_defaultWidth;
-  unsigned int h = MinimalLib::d_defaultHeight;
+  int w = MinimalLib::d_defaultWidth;
+  int h = MinimalLib::d_defaultHeight;
   return MinimalLib::mol_to_svg(*d_mol, w, h, details);
 }
 
