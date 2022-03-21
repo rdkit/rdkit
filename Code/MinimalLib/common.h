@@ -131,6 +131,7 @@ RWMol *mol_from_input(const std::string &input,
   }
   return res;
 }
+
 RWMol *mol_from_input(const std::string &input, const char *details_json) {
   std::string json;
   if (details_json) {
@@ -173,6 +174,7 @@ RWMol *qmol_from_input(const std::string &input,
   }
   return res;
 }
+
 RWMol *qmol_from_input(const std::string &input, const char *details_json) {
   std::string json;
   if (details_json) {
@@ -184,7 +186,7 @@ RWMol *qmol_from_input(const std::string &input, const char *details_json) {
 std::string process_details(const std::string &details, int &width, int &height,
                             int &offsetx, int &offsety, std::string &legend,
                             std::vector<int> &atomIds,
-                            std::vector<int> &bondIds) {
+                            std::vector<int> &bondIds, bool &kekulize) {
   rj::Document doc;
   doc.Parse(details.c_str());
   if (!doc.IsObject()) return "Invalid JSON";
@@ -243,6 +245,15 @@ std::string process_details(const std::string &details, int &width, int &height,
     legend = doc["legend"].GetString();
   }
 
+  if (doc.HasMember("kekulize")) {
+    if (!doc["kekulize"].IsBool()) {
+      return "JSON contains 'kekulize' field, but it is not a bool";
+    }
+    kekulize = doc["kekulize"].GetBool();
+  } else {
+    kekulize = true;
+  }
+
   return "";
 }
 
@@ -272,15 +283,28 @@ void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
   obj.AddMember("bonds", rjBonds, doc.GetAllocator());
 }
 
+void prepare_and_draw_mol(MolDraw2D &d2d, const ROMol &mol,
+                          const std::string &legend,
+                          const std::vector<int> &atomIds,
+                          const std::vector<int> &bondIds, bool kekulize) {
+  RWMol cpy(mol);
+  MolDraw2DUtils::prepareMolForDrawing(cpy, kekulize);
+  bool savedFlag = d2d.drawOptions().prepareMolsBeforeDrawing;
+  d2d.drawOptions().prepareMolsBeforeDrawing = false;
+  d2d.drawMolecule(cpy, legend, &atomIds, &bondIds);
+  d2d.drawOptions().prepareMolsBeforeDrawing = savedFlag;
+}
+
 std::string mol_to_svg(const ROMol &m, int w, int h,
                        const std::string &details = "") {
   std::vector<int> atomIds;
   std::vector<int> bondIds;
   std::string legend = "";
   int offsetx = 0, offsety = 0;
+  bool kekulize = true;
   if (!details.empty()) {
     auto problems = process_details(details, w, h, offsetx, offsety, legend,
-                                    atomIds, bondIds);
+                                    atomIds, bondIds, kekulize);
     if (!problems.empty()) {
       return problems;
     }
@@ -292,7 +316,7 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
   }
   drawer.setOffset(offsetx, offsety);
 
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds);
+  prepare_and_draw_mol(drawer, m, legend, atomIds, bondIds, kekulize);
   drawer.finishDrawing();
 
   return drawer.getDrawingText();

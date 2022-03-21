@@ -1418,7 +1418,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       res->setAtomicNum(0);
     }
     if (massDiff == 0 && symb[0] == 'R') {
-      if (symb.length() > 1) {
+      if (symb.length() > 1 && symb >= "R0" && symb <= "R99") {
         std::string rlabel = "";
         rlabel = symb.substr(1, symb.length() - 1);
         int rnumber;
