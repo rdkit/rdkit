@@ -211,6 +211,29 @@ void test_svg() {
   printf("--------------------------\n");
 }
 
+void test_flexicanvas() {
+  char *pkl;
+  size_t pkl_size;
+
+  printf("--------------------------\n");
+  printf("  test_flexicanvas\n");
+
+  pkl = get_mol("CCCC", &pkl_size, "");
+  assert(pkl);
+  assert(pkl_size > 0);
+
+  char *svg = get_svg(pkl, pkl_size, "{\"width\":-1,\"height\":-1}");
+  assert(strstr(svg, "width='95px'"));
+  assert(strstr(svg, "height='21px'"));
+  assert(strstr(svg, "</svg>"));
+  free(svg);
+
+  free(pkl);
+  pkl = NULL;
+  printf("  done\n");
+  printf("--------------------------\n");
+}
+
 void test_substruct() {
   printf("--------------------------\n");
   printf("  test_substruct\n");
@@ -515,6 +538,7 @@ int main() {
 
   test_io();
   test_svg();
+  test_flexicanvas();
   test_substruct();
   test_descriptors();
   test_fingerprints();

@@ -20,9 +20,8 @@ using namespace RDKit;
 
 namespace RDKit {
 namespace MinimalLib {
-extern std::string process_details(const std::string &details,
-                                   unsigned int &width, unsigned int &height,
-                                   int &offsetx, int &offsety,
+extern std::string process_details(const std::string &details, int &width,
+                                   int &height, int &offsetx, int &offsety,
                                    std::string &legend,
                                    std::vector<int> &atomIds,
                                    std::vector<int> &bondIds);
@@ -64,8 +63,8 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
 
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
 
-  unsigned int w = canvas["width"].as<unsigned int>();
-  unsigned int h = canvas["height"].as<unsigned int>();
+  int w = canvas["width"].as<int>();
+  int h = canvas["height"].as<int>();
   int offsetx = 0;
   int offsety = 0;
   std::string legend = "";
@@ -123,8 +122,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_svg",
                 select_overload<std::string() const>(&JSMol::get_svg))
       .function("get_svg",
-                select_overload<std::string(unsigned int, unsigned int) const>(
-                    &JSMol::get_svg))
+                select_overload<std::string(int, int) const>(&JSMol::get_svg))
 
       .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
 #ifdef __EMSCRIPTEN__
