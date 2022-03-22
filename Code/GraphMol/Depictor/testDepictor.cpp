@@ -1291,6 +1291,143 @@ M  END)RES"_ctab;
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testNormalizeStraighten() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Test normalize and straighten depiction"
+      << std::endl;
+
+  struct Rmsd {
+    static double compute(const Conformer &c1, const Conformer &c2) {
+      TEST_ASSERT(c1.getNumAtoms() == c2.getNumAtoms());
+      double msd = 0.0;
+      for (unsigned int i = 0; i < c1.getNumAtoms(); ++i) {
+        msd += (c1.getAtomPos(i) - c2.getAtomPos(i)).lengthSq();
+      }
+      msd /= static_cast<double>(c1.getNumAtoms());
+      return sqrt(msd);
+    }
+  };
+
+  auto noradrenalineMJ = R"RES(
+  MJ201100                      
+
+ 12 12  0  0  1  0  0  0  0  0999 V2000
+    2.2687    1.0716    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4437    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0312    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4437   -0.3572    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2062    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2062   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0312   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4437   -1.0716    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4437    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2687    0.3572    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0312    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2062    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  3  2  1  0  0  0  0
+  3  4  1  6  0  0  0
+  3  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7  9  2  0  0  0  0
+  9 10  1  0  0  0  0
+  9 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+  5 12  1  0  0  0  0
+M  END)RES"_ctab;
+  {
+    auto noradrenalineMJCopy =
+        std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
+    auto conformerCopy = new Conformer(noradrenalineMJCopy->getConformer());
+    noradrenalineMJCopy->addConformer(conformerCopy, true);
+    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
+                              noradrenalineMJCopy->getConformer(0)) < 1.e-5);
+    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
+                              noradrenalineMJCopy->getConformer(1)) < 1.e-5);
+    auto scalingFactor = RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1);
+    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
+                              noradrenalineMJCopy->getConformer(0)) < 1.e-5);
+    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
+                              noradrenalineMJCopy->getConformer(1)) > 1.e-5);
+    TEST_ASSERT(static_cast<int>(std::round(scalingFactor * 1.e3)) == 1875);
+    auto bond10_11Conf0 = noradrenalineMJCopy->getConformer(0).getAtomPos(11) -
+                          noradrenalineMJCopy->getConformer(0).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.x * 1.e3)) == 825);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.y * 1.e3)) == 0);
+    auto bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
+                          noradrenalineMJCopy->getConformer(1).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 1513);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == -321);
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
+    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
+                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 1340);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == -773);
+    auto bond4_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
+                         noradrenalineMJCopy->getConformer(1).getAtomPos(4);
+    TEST_ASSERT(static_cast<int>(std::round(bond4_11Conf1.x * 1.e3)) == 0);
+    TEST_ASSERT(static_cast<int>(std::round(bond4_11Conf1.y * 1.e3)) == 1547);
+  }
+  {
+    auto noradrenalineMJCopy =
+        std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
+    auto conformerCopy = new Conformer(noradrenalineMJCopy->getConformer());
+    noradrenalineMJCopy->addConformer(conformerCopy, true);
+    auto scalingFactor =
+        RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, -1);
+    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
+                              noradrenalineMJCopy->getConformer(0)) < 1.e-5);
+    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
+                              noradrenalineMJCopy->getConformer(1)) > 1.e-5);
+    TEST_ASSERT(static_cast<int>(std::round(scalingFactor * 1.e3)) == 1875);
+    auto bond10_11Conf0 = noradrenalineMJCopy->getConformer(0).getAtomPos(11) -
+                          noradrenalineMJCopy->getConformer(0).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.x * 1.e3)) == 825);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.y * 1.e3)) == 0);
+    auto bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
+                          noradrenalineMJCopy->getConformer(1).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 321);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 1513);
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
+    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
+                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 0);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 1547);
+  }
+  {
+    auto noradrenalineMJCopy =
+        std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
+    auto conformerCopy = new Conformer(noradrenalineMJCopy->getConformer());
+    noradrenalineMJCopy->addConformer(conformerCopy, true);
+    auto scalingFactor =
+        RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, 0, 3.0);
+    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
+                              noradrenalineMJCopy->getConformer(0)) < 1.e-5);
+    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
+                              noradrenalineMJCopy->getConformer(1)) > 1.e-5);
+    TEST_ASSERT(static_cast<int>(std::round(scalingFactor * 1.e3)) == 3000);
+    auto bond10_11Conf0 = noradrenalineMJCopy->getConformer(0).getAtomPos(11) -
+                          noradrenalineMJCopy->getConformer(0).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.x * 1.e3)) == 825);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.y * 1.e3)) == 0);
+    auto bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
+                          noradrenalineMJCopy->getConformer(1).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 2475);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 0);
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
+    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
+                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 2143);
+    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == -1237);
+    auto bond4_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
+                         noradrenalineMJCopy->getConformer(1).getAtomPos(4);
+    TEST_ASSERT(static_cast<int>(std::round(bond4_11Conf1.x * 1.e3)) == 0);
+    TEST_ASSERT(static_cast<int>(std::round(bond4_11Conf1.y * 1.e3)) == 2475);
+  }
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -1493,6 +1630,7 @@ int main() {
   testGithub2027();
   testGenerate2DDepictionRefPatternMatchVect();
   testGenerate2DDepictionAllowRGroups();
+  testNormalizeStraighten();
 
   return (0);
 }
