@@ -7,13 +7,20 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+from IPython.display import SVG
+from xml.dom import minidom
+import uuid
+import json
 import base64
 import copy
 import warnings
 from io import BytesIO
-
+from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.Chem import Draw
+from rdkit.Chem import rdchem, rdChemReactions
+from rdkit import Chem
 import IPython
-from IPython.display import SVG
+from IPython.display import HTML, SVG
 from rdkit import Chem
 from rdkit.Chem import Draw, rdchem, rdChemReactions
 from rdkit.Chem.Draw import rdMolDraw2D
@@ -41,6 +48,98 @@ molSize_3d = (400, 400)
 drawing_type_3d = 'stick'  # default drawing type for 3d structures
 bgcolor_3d = '0xeeeeee'
 drawOptions = rdMolDraw2D.MolDrawOptions()
+structure_renderer_js = "https://unpkg.com/rdkit-structure-renderer/dist/rdkit-structure-renderer-module.js"
+minimallib_js = "https://unpkg.com/rdkit-structure-renderer/public/RDKit_minimal.js"
+structure_renderer_parent_node_class_query = "jp-NotebookPanel-notebook"
+structure_renderer_before_node_class_query = "jp-Notebook-cell"
+#structure_renderer_scrolling_node_class_query = "jp-OutputArea-output"
+
+
+def initStructureRenderer():
+  return HTML(f'<script type="module">'
+    f'import Renderer from "{structure_renderer_js}";'
+    f'Renderer.init("{minimallib_js}");'
+    '</script>')
+
+def injectHTMLHeaderBeforeTable(html):
+  doc = minidom.parseString(html.replace(" scoped", ""))
+  table = doc.getElementsByTagName("table")
+  if len(table) != 1:
+    return html
+  table = table.pop(0)
+  tbody = table.getElementsByTagName("tbody")
+  if tbody:
+    if len(tbody) != 1:
+      return html
+    tbody = tbody.pop(0)
+  else:
+    tbody = table
+  div_list = tbody.getElementsByTagName("div")
+  if any(div.getAttribute("class") == "rdk-str-rnr-mol-container" for div in div_list):
+    return generateStructureRendererHTMLHeader(doc, table)
+  return html
+
+
+def wrapHTMLIntoTable(html):
+  return injectHTMLHeaderBeforeTable(
+    f'<div><table><tbody><tr><td style="width: {molSize[0]}px; height: {molSize[1]}px; text-align: center;">' +
+      html.replace(" scoped", "") +
+      "</td></tr></tbody></table></div>")
+
+
+def generateStructureRendererHTMLHeader(doc, element):
+  element_parent = element.parentNode
+  script = doc.createElement("script")
+  script.setAttribute("type", "module")
+  # avoid arrow function as minidom encodes => into HTML (grrr)
+  # Also use single quotes to avoid the &quot; encoding
+  cmd = doc.createTextNode(
+    f"import Renderer from '{structure_renderer_js}';"
+    f"Renderer.init('{minimallib_js}').then("
+    "function(r) { r.updateMolDrawDivs(); })"
+  )
+  script.appendChild(cmd)
+  element_parent.appendChild(script)
+  html = doc.toxml()
+  return html
+
+
+def generateStructureRendererHTMLBody(useSvg, mol, size):
+  def newline_to_xml(molblock):
+    return molblock.replace("\n", "<\\n>")
+
+  def xml_to_newline(xmlblock):
+    return xmlblock.replace("&lt;\\n&gt;", "&#10;")
+
+  def to_data_mol(mol):
+    return mol.GetNumConformers() and newline_to_xml(Chem.MolToMolBlock(mol)) or Chem.MolToSmiles(mol)
+
+  doc = minidom.Document()
+  unique_id = str(uuid.uuid1())
+  div = doc.createElement("div")
+  for attr, value in [
+    ("style", f"width: {size[0]}px; height: {size[1]}px;"),
+    ("class", "rdk-str-rnr-mol-container"),
+    ("id", f"rdk-str-rnr-mol-{unique_id}"),
+    ("data-mol", to_data_mol(mol)),
+    ("data-content", "rdkit/molecule"),
+    ("data-parent-node", structure_renderer_parent_node_class_query),
+    ("data-before-node", structure_renderer_before_node_class_query),
+    #("data-scrolling-node", structure_renderer_scrolling_node_class_query),
+    ("data-draw-opts", json.dumps({
+      "bondLineWidth": 2,
+      "minFontSize": 12,
+      "annotationFontScale": 0.7
+    }, separators=(',', ':'))),
+  ]:
+    div.setAttribute(attr, value)
+  if useSvg:
+    div.setAttribute("data-use-svg", "true")
+  if hasattr(mol, "__scaffold"):
+    div.setAttribute("data-scaffold", to_data_mol(getattr(mol, "__scaffold")))
+
+  doc.appendChild(div)
+  return xml_to_newline(div.toxml())
 
 
 def addMolToView(mol, view, confId=-1, drawAs=None):
@@ -96,20 +195,27 @@ def _toHTML(mol):
     return _toJSON(mol)
   props = mol.GetPropsAsDict()
   if not ipython_showProperties or not props:
-    return _toSVG(mol)
+    if hasattr(mol, '__structureRenderer'):
+      return wrapHTMLIntoTable(generateStructureRendererHTMLBody(ipython_useSVG, mol, molSize))
+    else:
+      return _toSVG(mol)
   if mol.HasProp('_Name'):
     nm = mol.GetProp('_Name')
   else:
     nm = ''
     
   res = []
-  if not ipython_useSVG:
-    png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
-    png = base64.b64encode(png)
-    res.append(f'<tr><td colspan=2 style="text-align:center"><image src="data:image/png;base64,{png.decode()}"></td></tr>')
+  useStructRenderer = hasattr(mol, '__structureRenderer')
+  if useStructRenderer:
+    content = generateStructureRendererHTMLBody(ipython_useSVG, mol, molSize)
   else:
-    svg = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures, drawOptions=drawOptions)
-    res.append(f'<tr><td colspan=2 style="text-align:center">{svg}</td></tr>')
+    if not ipython_useSVG:
+      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
+      png = base64.b64encode(png)
+      res.append(f'<tr><td colspan=2 style="text-align:center"><image src="data:image/png;base64,{png.decode()}"></td></tr>')
+    else:
+      content = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures, drawOptions=drawOptions)
+  res.append(f'<tr><td colspan=2 style="text-align:center">{content}</td></tr>')
 
   for i,(pn, pv) in enumerate(props.items()):
     if ipython_maxProperties >= 0 and i >= ipython_maxProperties:
@@ -117,8 +223,11 @@ def _toHTML(mol):
       break
     res.append(
       f'<tr><th style="text-align:right">{pn}</th><td style="text-align:left">{pv}</td></tr>')
-  res = "\n".join(res)
-  return f'<table>{res}</table>'
+  res = '\n'.join(res)
+  res = f'<table>{res}</table>'
+  if useStructRenderer:
+    res = injectHTMLHeaderBeforeTable(res)
+  return res
 
 
 def _toPNG(mol):
@@ -419,3 +528,4 @@ def UninstallIPythonRenderer():
     rdchem.Mol.Debug = rdchem.Mol.__DebugMol
     del rdchem.Mol.__DebugMol
   _rendererInstalled = False
+  
