@@ -1470,6 +1470,17 @@ TEST_CASE("pickBondsToWedge() should avoid double bonds") {
     CHECK(head->first == 6);
     CHECK(head->second == 3);
   }
+  SECTION("existing specification") {
+    auto mol = "CC[C@H](O)C"_smiles;
+    REQUIRE(mol);
+    // pretend input came from an SD file with wedges
+    mol->getBondBetweenAtoms(1, 2)->setProp(common_properties::_MolFileBondStereo, 1u);
+    auto wedgedBonds = pickBondsToWedge(*mol);
+    REQUIRE(wedgedBonds.size() == 1);
+    auto wedgedBond = wedgedBonds.begin();
+    CHECK(wedgedBond->first == 1);
+    CHECK(wedgedBond->second == 2);
+  }
 }
 
 TEST_CASE("addWavyBondsForStereoAny()") {

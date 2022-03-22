@@ -118,16 +118,13 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     }
     nChiralNbrs[at->getIdx()] = 0;
     chiNbrs = true;
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
-    while (nbrIdx != endNbrs) {
-      const Atom *nat = mol[*nbrIdx];
-      ++nbrIdx;
+    for (auto nat: mol.atomNeighbors(at)) {
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:
         nChiralNbrs[at->getIdx()] -= 10;
         continue;
       }
+      // prefer not to wedge bonds to chiral atoms
       type = nat->getChiralTag();
       if (type != Atom::CHI_TETRAHEDRAL_CW &&
           type != Atom::CHI_TETRAHEDRAL_CCW) {
@@ -221,6 +218,11 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
         nbrScore += 11000 * hasDoubleBond;
         nbrScore += 12000 * hasKnownDoubleBond;
         nbrScore += 13000 * hasAnyDoubleBond;
+
+        // If the input SDF wedged this bond, prefer to do so as well.
+        if (bond->hasProp(common_properties::_MolFileBondStereo) || bond->hasProp(common_properties::_MolFileBondCfg )) {
+          nbrScore -= 1000;
+        }
 
         // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
         //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
