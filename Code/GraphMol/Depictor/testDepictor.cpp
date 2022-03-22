@@ -1360,12 +1360,7 @@ M  END)RES"_ctab;
                           noradrenalineMJCopy->getConformer(1).getAtomPos(10);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 1513);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == -321);
-    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1, true);
-    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 1547);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 0);
-    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1, false);
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
     bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
                      noradrenalineMJCopy->getConformer(1).getAtomPos(10);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 1340);
@@ -1381,7 +1376,7 @@ M  END)RES"_ctab;
     auto conformerCopy = new Conformer(noradrenalineMJCopy->getConformer());
     noradrenalineMJCopy->addConformer(conformerCopy, true);
     auto scalingFactor =
-        RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, 1);
+        RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, -1);
     TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
                               noradrenalineMJCopy->getConformer(0)) < 1.e-5);
     TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
@@ -1395,12 +1390,7 @@ M  END)RES"_ctab;
                           noradrenalineMJCopy->getConformer(1).getAtomPos(10);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 321);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 1513);
-    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1, true);
-    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 0);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 1547);
-    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1, false);
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
     bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
                      noradrenalineMJCopy->getConformer(1).getAtomPos(10);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 0);
@@ -1412,7 +1402,7 @@ M  END)RES"_ctab;
     auto conformerCopy = new Conformer(noradrenalineMJCopy->getConformer());
     noradrenalineMJCopy->addConformer(conformerCopy, true);
     auto scalingFactor =
-        RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, -1, 3.0);
+        RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, 0, 3.0);
     TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
                               noradrenalineMJCopy->getConformer(0)) < 1.e-5);
     TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
@@ -1426,12 +1416,7 @@ M  END)RES"_ctab;
                           noradrenalineMJCopy->getConformer(1).getAtomPos(10);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 2475);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 0);
-    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1, true);
-    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 2475);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 0);
-    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1, false);
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
     bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
                      noradrenalineMJCopy->getConformer(1).getAtomPos(10);
     TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 2143);

@@ -629,7 +629,7 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
                                         25, true, forceRDKit);
 }
 
-void straightenDepiction(RDKit::ROMol &mol, int confId, bool smallestRotation) {
+void straightenDepiction(RDKit::ROMol &mol, int confId) {
   constexpr double RAD2DEG = 180. / M_PI;
   constexpr double DEG2RAD = M_PI / 180.;
   constexpr double INCR_DEG = 30.;
@@ -673,6 +673,10 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool smallestRotation) {
       d_thetaMin = d_thetaAvg;
     }
   }
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-lambda-capture"
+#endif
   unsigned int n30 =
       std::count_if(thetaValues.begin(), thetaValues.end(),
                     [d_thetaMin, INCR_DEG, TOL_DEG](double theta) {
@@ -689,8 +693,11 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool smallestRotation) {
                       DepictorLocal::copySign(0.5, theta, ALMOST_ZERO))) %
                   2));
       });
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
   bool shouldRotate = (n60 > n30 / 2);
-  if (shouldRotate && !smallestRotation) {
+  if (shouldRotate) {
     d_thetaMin -= DepictorLocal::copySign(INCR_DEG, d_thetaMin, ALMOST_ZERO);
   }
   d_thetaMin *= DEG2RAD;
@@ -729,29 +736,26 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
       scaleFactor = RDKIT_BOND_LEN / mostCommonBondLength;
     }
   }
-  boost::shared_ptr<RDGeom::Transform3D> canonTrans;
-  boost::shared_ptr<RDGeom::Transform3D> trans;
-  if (canonicalize == 0 || canonicalize == 1) {
+  std::unique_ptr<RDGeom::Transform3D> canonTrans;
+  if (canonicalize) {
     auto ctd = MolTransforms::computeCentroid(conf);
     canonTrans.reset(MolTransforms::computeCanonicalTransform(conf, &ctd));
-    if (canonicalize == 1) {
-      boost::shared_ptr<RDGeom::Transform3D> rotate90(
-          new RDGeom::Transform3D());
-      rotate90->SetRotation(0., 1., RDGeom::Point3D(0., 0., 1.));
-      *canonTrans *= *rotate90;
+    if (canonicalize < 0) {
+      RDGeom::Transform3D rotate90;
+      rotate90.SetRotation(0., 1., RDGeom::Point3D(0., 0., 1.));
+      *canonTrans *= rotate90;
     }
-    trans = canonTrans;
   }
   if (scaleFactor > 0. && fabs(scaleFactor - 1.0) > 1.e-5) {
-    trans.reset(new RDGeom::Transform3D());
-    trans->setVal(0, 0, scaleFactor);
-    trans->setVal(1, 1, scaleFactor);
-    if (canonTrans.get()) {
-      *trans *= *canonTrans;
+    RDGeom::Transform3D trans;
+    trans.setVal(0, 0, scaleFactor);
+    trans.setVal(1, 1, scaleFactor);
+    if (canonTrans) {
+      trans *= *canonTrans;
     }
-  }
-  if (trans.get()) {
-    MolTransforms::transformConformer(conf, *trans);
+    MolTransforms::transformConformer(conf, trans);
+  } else if (canonTrans) {
+    MolTransforms::transformConformer(conf, *canonTrans);
   }
   return scaleFactor;
 }

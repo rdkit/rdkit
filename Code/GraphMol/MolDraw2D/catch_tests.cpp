@@ -294,6 +294,27 @@ TEST_CASE("prepareAndDrawMolecule", "[drawing]") {
     std::string text = drawer.getDrawingText();
     CHECK(text.find(">H</text>") != std::string::npos);
   }
+  SECTION("kekulize") {
+    auto m1 = "c1ccccc1"_smiles;
+    REQUIRE(m1);
+
+    {
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      CHECK(text.find("stroke-dasharray") == std::string::npos);
+    }
+    {
+      MolDraw2DSVG drawer(200, 200, -1, -1, NO_FREETYPE);
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1, "", nullptr, nullptr,
+                                             nullptr, nullptr, nullptr, -1,
+                                             false);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      CHECK(text.find("stroke-dasharray") != std::string::npos);
+    }
+  }
 }
 
 TEST_CASE("tag atoms in SVG", "[drawing][SVG]") {
@@ -4358,7 +4379,7 @@ M  END)CTAB"_ctab;
   }
 }
 
-TEST_CASE("vary proporition of panel for legend", "[drawing]") {
+TEST_CASE("vary proportion of panel for legend", "[drawing]") {
   SECTION("basics") {
     auto m1 = "C1N[C@@H]2OCC12"_smiles;
     REQUIRE(m1);

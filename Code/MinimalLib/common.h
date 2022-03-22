@@ -283,18 +283,6 @@ void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
   obj.AddMember("bonds", rjBonds, doc.GetAllocator());
 }
 
-void prepare_and_draw_mol(MolDraw2D &d2d, const ROMol &mol,
-                          const std::string &legend,
-                          const std::vector<int> &atomIds,
-                          const std::vector<int> &bondIds, bool kekulize) {
-  RWMol cpy(mol);
-  MolDraw2DUtils::prepareMolForDrawing(cpy, kekulize);
-  bool savedFlag = d2d.drawOptions().prepareMolsBeforeDrawing;
-  d2d.drawOptions().prepareMolsBeforeDrawing = false;
-  d2d.drawMolecule(cpy, legend, &atomIds, &bondIds);
-  d2d.drawOptions().prepareMolsBeforeDrawing = savedFlag;
-}
-
 std::string mol_to_svg(const ROMol &m, int w, int h,
                        const std::string &details = "") {
   std::vector<int> atomIds;
@@ -316,7 +304,9 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
   }
   drawer.setOffset(offsetx, offsety);
 
-  prepare_and_draw_mol(drawer, m, legend, atomIds, bondIds, kekulize);
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds,
+                                         nullptr, nullptr, nullptr, -1,
+                                         kekulize);
   drawer.finishDrawing();
 
   return drawer.getDrawingText();

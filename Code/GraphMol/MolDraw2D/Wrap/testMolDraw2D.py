@@ -346,6 +346,18 @@ M  END""")
     txt = d.GetDrawingText()
     self.assertTrue(txt.find(">H</text>") > 0)
 
+    m = Chem.MolFromSmiles("c1ccccc1")
+    d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, m)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertLess(txt.find("stroke-dasharray"), 0)
+    d = Draw.MolDraw2DSVG(300, 300, -1, -1, True)
+    rdMolDraw2D.PrepareAndDrawMolecule(d, m, kekulize=False)
+    d.FinishDrawing()
+    txt = d.GetDrawingText()
+    self.assertGreater(txt.find("stroke-dasharray"), 0)
+
   def testAtomTagging(self):
     m = Chem.MolFromSmiles("C1N[C@@H]2OCC12")
     d = Draw.MolDraw2DSVG(300, 300)

@@ -25,11 +25,6 @@ extern std::string process_details(const std::string &details, int &width,
                                    std::string &legend,
                                    std::vector<int> &atomIds,
                                    std::vector<int> &bondIds, bool &kekulize);
-extern void prepare_and_draw_mol(MolDraw2D &d2d, const ROMol &mol,
-                                 const std::string &legend,
-                                 const std::vector<int> &atomIds,
-                                 const std::vector<int> &bondIds,
-                                 bool kekulize);
 }  // namespace MinimalLib
 }  // namespace RDKit
 
@@ -86,8 +81,9 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   }
   d2d->setOffset(offsetx, offsety);
 
-  MinimalLib::prepare_and_draw_mol(*d2d, *self.d_mol, legend, atomIds, bondIds,
-                                   kekulize);
+  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *self.d_mol, legend, &atomIds,
+                                         &bondIds, nullptr, nullptr, nullptr,
+                                         -1, kekulize);
   delete d2d;
   return "";
 }
@@ -96,32 +92,27 @@ JSMol *get_mol_no_details(const std::string &input) {
   return get_mol(input, std::string());
 }
 
+emscripten::val binary_string_to_uint8array(const std::string &pkl) {
+  emscripten::val view(emscripten::typed_memory_view(
+      pkl.size(), reinterpret_cast<const unsigned char *>(pkl.c_str())));
+  auto res = emscripten::val::global("Uint8Array").new_(pkl.size());
+  res.call<void>("set", view);
+  return res;
+}
+
 emscripten::val get_as_uint8array(const JSMol &self) {
-  auto pickle = self.get_pickle();
-  emscripten::val view(emscripten::typed_memory_view(
-      pickle.size(), reinterpret_cast<const unsigned char *>(pickle.c_str())));
-  auto res = emscripten::val::global("Uint8Array").new_(pickle.size());
-  res.call<void>("set", view);
-  return res;
+  return binary_string_to_uint8array(self.get_pickle());
 }
 
-JSMol *get_mol_from_uint8array(const emscripten::val &pickleAsUInt8Array) {
-  return get_mol_from_pickle(pickleAsUInt8Array.as<std::string>());
-}
-
-emscripten::val get_fp_as_uint8array(const std::string &fp) {
-  emscripten::val view(emscripten::typed_memory_view(
-      fp.size(), reinterpret_cast<const unsigned char *>(fp.c_str())));
-  auto res = emscripten::val::global("Uint8Array").new_(fp.size());
-  res.call<void>("set", view);
-  return res;
+JSMol *get_mol_from_uint8array(const emscripten::val &pklAsUInt8Array) {
+  return get_mol_from_pickle(pklAsUInt8Array.as<std::string>());
 }
 
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
                                             unsigned int radius,
                                             unsigned int fplen) {
   std::string fp = self.get_morgan_fp_as_binary_text(radius, fplen);
-  return get_fp_as_uint8array(fp);
+  return binary_string_to_uint8array(fp);
 }
 
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
@@ -131,7 +122,7 @@ emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
 emscripten::val get_pattern_fp_as_uint8array(const JSMol &self,
                                              unsigned int fplen) {
   std::string fp = self.get_pattern_fp_as_binary_text(fplen);
-  return get_fp_as_uint8array(fp);
+  return binary_string_to_uint8array(fp);
 }
 
 emscripten::val get_pattern_fp_as_uint8array(const JSMol &self) {
@@ -230,10 +221,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<double(int)>(&JSMol::normalize_depiction))
       .function("normalize_depiction", select_overload<double(int, double)>(
                                            &JSMol::normalize_depiction))
-      .function("straighten_depiction",
-                select_overload<void()>(&JSMol::straighten_depiction))
-      .function("straighten_depiction",
-                select_overload<void(bool)>(&JSMol::straighten_depiction));
+      .function("straighten_depiction", &JSMol::straighten_depiction);
 
   class_<JSSubstructLibrary>("SubstructLibrary")
       .constructor<>()

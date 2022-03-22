@@ -382,9 +382,9 @@ double JSMol::normalize_depiction(int canonicalize, double scaleFactor) {
   return RDDepict::normalizeDepiction(*d_mol, -1, canonicalize, scaleFactor);
 }
 
-void JSMol::straighten_depiction(bool smallestRotation) {
+void JSMol::straighten_depiction() {
   if (!d_mol || !d_mol->getNumAtoms() || !d_mol->getNumConformers()) return;
-  RDDepict::straightenDepiction(*d_mol, -1, smallestRotation);
+  RDDepict::straightenDepiction(*d_mol, -1);
 }
 
 JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
@@ -475,12 +475,12 @@ JSMol *get_mol(const std::string &input, const std::string &details_json) {
   return new JSMol(mol);
 }
 
-JSMol *get_mol_from_pickle(const std::string &pickle) {
+JSMol *get_mol_from_pickle(const std::string &pkl) {
   RWMol *mol = nullptr;
-  if (!pickle.empty()) {
+  if (!pkl.empty()) {
     mol = new RWMol();
     try {
-      MolPickler::molFromPickle(pickle, mol);
+      MolPickler::molFromPickle(pkl, mol);
     } catch (...) {
       delete mol;
       mol = nullptr;

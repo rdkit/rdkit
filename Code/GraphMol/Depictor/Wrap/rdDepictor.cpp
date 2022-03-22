@@ -323,39 +323,32 @@ BOOST_PYTHON_MODULE(rdDepictor) {
       docString.c_str());
 
   docString =
-      "Rotate the 2D depiction such that the majority bonds have an angle \n\
-  with the X axis which is a multiple of 30 degrees.\n\
-  ARGUMENTS: \n\n\
-  mol -    the molecule to be rotated. \n\
-  confId -       (optional) the id of the reference conformation to use \n\
-  smallestRotation -  (optional) if True, the smallest rotation that \n\
-                  leads to the majority of bonds having an angle which \n\
-                  is multiple of 30 degrees will be chosen.\n\
-                  If False, and the angle is 0, a larger rotation that \n\
-                  leads to an angle of 30 degrees will be chosen";
+      "Rotate the 2D depiction such that the majority of bonds have a\n\
+  30-degree angle with the X axis.\n\
+  ARGUMENTS:\n\n\
+  mol -    the molecule to be rotated.\n\
+  confId -       (optional) the id of the reference conformation to use";
 
   python::def("StraightenDepiction", RDDepict::straightenDepiction,
-              (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("smallestRotation") = false),
+              (python::arg("mol"), python::arg("confId") = -1),
               docString.c_str());
 
   docString =
       "Normalizes the 2D depiction.\n\
-If canonicalize is >= 0, the depiction is subjected to a canonical\n\
-transformation. If canonicalize is 0 or 1, following the canonical\n\
-tranformation, the depiction is rotated by 90 degrees if needed, such that its\n\
-main axis is aligned along the X (0) or Y (1) axis. If scaleFactor is <0.0\n\
-(the default) the depiction is scaled such that bond lengths conform to RDKit\n\
-standards. The applied scaling factor is returned.\n\n\
+If canonicalize is != 0, the depiction is subjected to a canonical\n\
+transformation such that its main axis is aligned along the X axis\n\
+(canonicalize >0, the default) or the Y axis (canonicalize <0).\n\
+If canonicalize is 0, no canonicalization takes place.\n\
+If scaleFactor is <0.0 (the default) the depiction is scaled such\n\
+that bond lengths conform to RDKit standards. The applied scaling\n\
+factor is returned.\n\n\
 ARGUMENTS:\n\n\
 mol          - the molecule to be normalized\n\
 confId       - (optional) the id of the reference conformation to use\n\
-canonicalize - (optional) if 0 or 1, a canonical transformation is\n\
-               applied, If 0 (the default), the main molecule axis is aligned\n\
-               to the X axis.\n\
-               if 1, the canonical orientation is rotated by 90-degree\n\
-               to align the main molecule axis to the Y axis.\n\
-               If >1, no canonical transformation is applied.\n\
+canonicalize - (optional) if != 0, a canonical transformation is\n\
+               applied: if >0 (the default), the main molecule axis is\n\
+               aligned to the X axis, if <0 to the Y axis.\n\
+               If 0, no canonical transformation is applied.\n\
 scaleFactor  - (optional) if >0.0, the scaling factor to apply. The default\n\
                (-1.0) means that the depiction is automatically scaled\n\
                such that bond lengths are the standard RDKit ones.\n\n\
@@ -364,6 +357,6 @@ RETURNS: the applied scaling factor.";
   python::def(
       "NormalizeDepiction", RDDepict::normalizeDepiction,
       (python::arg("mol"), python::arg("confId") = -1,
-       python::arg("canonicalize") = 0, python::arg("scaleFactor") = -1.),
+       python::arg("canonicalize") = 1, python::arg("scaleFactor") = -1.),
       docString.c_str());
 }

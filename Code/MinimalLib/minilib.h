@@ -88,9 +88,8 @@ class JSMol {
   double normalize_depiction(int canonicalize) {
     return normalize_depiction(canonicalize, -1.);
   }
-  double normalize_depiction() { return normalize_depiction(0, -1.); }
-  void straighten_depiction(bool smallestRotation);
-  void straighten_depiction() { return straighten_depiction(false); }
+  double normalize_depiction() { return normalize_depiction(1, -1.); }
+  void straighten_depiction();
 
   std::unique_ptr<RDKit::RWMol> d_mol;
   static constexpr int d_defaultWidth = 250;
@@ -136,7 +135,7 @@ class JSSubstructLibrary {
 
 std::string get_inchikey_for_inchi(const std::string &input);
 JSMol *get_mol(const std::string &input, const std::string &details_json);
-JSMol *get_mol_from_pickle(const std::string &pickle);
+JSMol *get_mol_from_pickle(const std::string &pkl);
 JSMol *get_mol_copy(const JSMol &other);
 JSMol *get_qmol(const std::string &input);
 std::string version();
