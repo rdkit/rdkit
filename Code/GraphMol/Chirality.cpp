@@ -2580,10 +2580,15 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
   boost::dynamic_bitset<> atomsSet(mol.getNumAtoms(), 0);
   for (auto &bond : mol.bonds()) {
     const Bond::BondDir dir = bond->getBondDir();
-    if (dir != Bond::UNKNOWN) {
+    Atom *atom = bond->getBeginAtom();
+    if (dir == Bond::UNKNOWN) {
+      if (atomsSet[atom->getIdx()] || replaceExistingTags) {
+        atom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        atomsSet.set(atom->getIdx());
+      }
+    } else {
       // the bond is marked as chiral:
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
-        Atom *atom = bond->getBeginAtom();
         if (atomsSet[atom->getIdx()] ||
             (!replaceExistingTags &&
              atom->getChiralTag() != Atom::CHI_UNSPECIFIED)) {
