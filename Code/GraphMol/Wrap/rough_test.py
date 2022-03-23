@@ -6732,7 +6732,61 @@ CAS<~>
       self.assertTrue(bond.GetIsAromatic())
       self.assertEqual(bond.GetBondType(), Chem.BondType.AROMATIC)
 
+  def testMTMWriter(self):
+    good1 = Chem.MolFromSmiles('C')
+    #good1.SetProp('molname', 'good1')
+    good2 = Chem.MolFromSmiles('CC')
+    #good2.SetProp('molname', 'good2')
+    good3 = Chem.MolFromSmiles('CCC')
+    #good3.SetProp('molname', 'good3')
+    bad = Chem.MolFromSmiles('CN(C)(C)C', sanitize=False)
+    #bad.SetProp('molname', 'bad')
+    
+    with Chem.SDWriter("good1_good2_good3.sdf") as w:
+      w.write(good1)
+      w.write(good2)
+      w.write(good3)
+      w.write(good1)
+      w.write(good2)
+      w.write(good3)      
+      
+    with Chem.SDWriter("good1_good2_good3_bad.sdf") as w:
+      w.write(good1)
+      w.write(good2)
+      w.write(good3)
+      w.write(bad)
+      
+    with Chem.SDWriter("good1_good2_bad_good3.sdf") as w:
+      w.write(good1)
+      w.write(good2)
+      w.write(bad)
+      w.write(good3)
 
+    with Chem.SDWriter("bad_good1_good2_good3.sdf") as w:
+      w.write(good1)
+      w.write(good2)
+      w.write(bad)
+      w.write(good3)
+
+    def read_mols(supplier, filename):
+      i = 0
+      with supplier(filename) as sdSuppl:
+        count = -1
+        for count, mol in enumerate(sdSuppl):
+          if mol is not None:
+            i += 1
+      return i
+
+    counts = []
+    for i, s in enumerate((Chem.SDMolSupplier, Chem.MultithreadedSDMolSupplier)):
+      for j, f in enumerate(('good1_good2_good3.sdf',
+                             'good1_good2_bad_good3.sdf',
+                             'good1_good2_bad_good3.sdf',
+                             'bad_good1_good2_good3.sdf')):
+        print(f'---------------\n{s.__name__} {f}')
+        if i == 0: counts.append(read_mols(s, f))
+        else: assert counts[j] == read_mols(s, f), f"Failed {s} count should be {counts[j]}"
+        
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
