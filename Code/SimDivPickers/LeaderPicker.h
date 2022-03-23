@@ -118,10 +118,14 @@ class LeaderPicker : public DistPicker {
 
 #if defined(RDK_THREADSAFE_SSS)
 #if defined(unix) || defined(__unix__) || defined(__unix) || defined(__APPLE__)
-#define USE_THREADED_LEADERPICKER
-#ifdef __APPLE__
-#include <RDGeneral/pthread_barrier.h>
-#endif
+# ifdef __APPLE__
+#  ifdef RDK_DARWIN_PTHREAD_BARRIER
+#   include <RDGeneral/pthread_barrier.h>
+#   define USE_THREADED_LEADERPICKER
+#  endif
+# else
+#  define USE_THREADED_LEADERPICKER
+# endif
 #endif
 #endif
 

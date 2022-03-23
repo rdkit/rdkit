@@ -1,0 +1,20 @@
+--- ademakov-DarwinPthreadBarrier-dabcb1a/src/pthread_barrier.h	2015-04-28 15:39:45.000000000 -0400
++++ pthread_barrier.h	2022-03-23 12:14:50.000000000 -0400
+@@ -30,7 +30,7 @@
+ #include <pthread.h>
+ 
+ #ifdef __APPLE__
+-
++#define restrict __restrict
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+@@ -75,7 +75,7 @@
+ #ifdef  __cplusplus
+ }
+ #endif
+-
++#undef restrict
+ #endif /* __APPLE__ */
+ 
+ #endif /* PTHREAD_BARRIER_H */

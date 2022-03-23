@@ -18,7 +18,9 @@
 #include <thread>
 
 #ifdef __APPLE__
-# include "pthread_barrier.h"
+# ifdef RDK_DARWIN_PTHREAD_BARRIER
+#  include "pthread_barrier.h"
+# endif
 #endif
 
 namespace RDKit {

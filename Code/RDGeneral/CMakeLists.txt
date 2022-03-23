@@ -6,7 +6,34 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
               ${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h )
 
 
-if(APPLE)
+if(APPLE AND RDK_OSX_PTHREAD_BARRIER)
+    if(NOT EXISTS "pthread_barrier.h")
+        set(MD5 "147dd3f8807de180f7c2e83cb2b8fdb9")
+        downloadAndCheckMD5("https://codeload.github.com/ademakov/DarwinPthreadBarrier/legacy.tar.gz/refs/heads/master"
+              "${CMAKE_CURRENT_SOURCE_DIR}/darwin-pthread.tar.gz" ${MD5})
+	message("-- done downloading")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
+          ${CMAKE_CURRENT_SOURCE_DIR}/darwin-pthread.tar.gz
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} COMMAND_ERROR_IS_FATAL ANY)
+	set(in_file "${CMAKE_CURRENT_SOURCE_DIR}/ademakov-DarwinPthreadBarrier-dabcb1a/src/pthread_barrier.h")
+	set(out_file "${CMAKE_CURRENT_SOURCE_DIR}/pthread_barrier.h")
+	set(patch_file "${CMAKE_CURRENT_SOURCE_DIR}/pthread_barrier.patch")
+	message("-- patching")
+	execute_process(COMMAND patch ${in_file} --input=${patch_file} --output=${out_file} --ignore-whitespace
+  	  TIMEOUT 15
+	  COMMAND_ECHO STDOUT
+	  RESULT_VARIABLE ret
+	)
+
+	if(NOT ret EQUAL 0)
+	  message(FATAL_ERROR "Failed to apply patch ${patch_file} to ${in_file} with ${PATCH}")
+	endif()
+	
+	file(RENAME "${CMAKE_CURRENT_SOURCE_DIR}/ademakov-DarwinPthreadBarrier-dabcb1a/src/pthread_barrier.c" "${CMAKE_CURRENT_SOURCE_DIR}/pthread_barrier.c")
+    else()
+      message("-- Found darwin-pthread source in ${CMAKE_CURRENT_SOURCE_DIR}/darwin-pthread}")
+    endif()
+
   set(EXTRA_HEADERS pthread_barrier.h)
   set(EXTRA_SOURCE pthread_barrier.c)
 endif(APPLE)
