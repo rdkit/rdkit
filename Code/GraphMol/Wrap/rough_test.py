@@ -6732,7 +6732,10 @@ CAS<~>
       self.assertTrue(bond.GetIsAromatic())
       self.assertEqual(bond.GetBondType(), Chem.BondType.AROMATIC)
 
-  def testMTMWriter(self):
+  def testgithub4992(self):
+    if not hasattr(Chem, "Chem.MultithreadedSDMolSupplier"):
+      return
+    
     good1 = Chem.MolFromSmiles('C')
     #good1.SetProp('molname', 'good1')
     good2 = Chem.MolFromSmiles('CC')
