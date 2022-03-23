@@ -321,4 +321,42 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("refPatt") = python::object(),
        python::arg("acceptFailure") = false, python::arg("forceRDKit") = false),
       docString.c_str());
+
+  docString =
+      "Rotate the 2D depiction such that the majority of bonds have a\n\
+  30-degree angle with the X axis.\n\
+  ARGUMENTS:\n\n\
+  mol -    the molecule to be rotated.\n\
+  confId -       (optional) the id of the reference conformation to use";
+
+  python::def("StraightenDepiction", RDDepict::straightenDepiction,
+              (python::arg("mol"), python::arg("confId") = -1),
+              docString.c_str());
+
+  docString =
+      "Normalizes the 2D depiction.\n\
+If canonicalize is != 0, the depiction is subjected to a canonical\n\
+transformation such that its main axis is aligned along the X axis\n\
+(canonicalize >0, the default) or the Y axis (canonicalize <0).\n\
+If canonicalize is 0, no canonicalization takes place.\n\
+If scaleFactor is <0.0 (the default) the depiction is scaled such\n\
+that bond lengths conform to RDKit standards. The applied scaling\n\
+factor is returned.\n\n\
+ARGUMENTS:\n\n\
+mol          - the molecule to be normalized\n\
+confId       - (optional) the id of the reference conformation to use\n\
+canonicalize - (optional) if != 0, a canonical transformation is\n\
+               applied: if >0 (the default), the main molecule axis is\n\
+               aligned to the X axis, if <0 to the Y axis.\n\
+               If 0, no canonical transformation is applied.\n\
+scaleFactor  - (optional) if >0.0, the scaling factor to apply. The default\n\
+               (-1.0) means that the depiction is automatically scaled\n\
+               such that bond lengths are the standard RDKit ones.\n\n\
+RETURNS: the applied scaling factor.";
+
+  python::def(
+      "NormalizeDepiction", RDDepict::normalizeDepiction,
+      (python::arg("mol"), python::arg("confId") = -1,
+       python::arg("canonicalize") = 1, python::arg("scaleFactor") = -1.),
+      docString.c_str());
 }

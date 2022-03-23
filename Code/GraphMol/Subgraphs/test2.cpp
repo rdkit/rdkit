@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,6 +16,8 @@
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 
 #include <iostream>
+#include <algorithm>
+
 using namespace std;
 using namespace RDKit;
 
@@ -136,6 +138,188 @@ void test2() {
   std::cout << "Finished" << std::endl;
 }
 
+void test3() {
+  std::cout << "-----------------------" << std::endl;
+  std::cout << "Test 3: Atom Environments (Extension)" << std::endl;
+
+  {
+    std::string smiles = "C=NC";
+    unsigned int rootedAtAtom = 2;
+
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
+
+    PATH_TYPE pth =
+        findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, false, true);
+    TEST_ASSERT(pth.size() == 2);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, true, true);
+    TEST_ASSERT(pth.size() == 5);
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, false, true);
+    TEST_ASSERT(pth.size() == 0);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, true, true);
+    TEST_ASSERT(pth.size() == 7);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, true, false);
+    TEST_ASSERT(pth.size() == 7);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 3, rootedAtAtom, false, false);
+    TEST_ASSERT(pth.size() == 2);
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, true);
+    TEST_ASSERT(pth.size() == 0);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, true, true);
+    TEST_ASSERT(pth.size() == 0);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, true, false);
+    TEST_ASSERT(pth.size() == 7);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, false);
+    TEST_ASSERT(pth.size() == 2);
+
+    delete mol;
+    delete mH;
+  }
+
+  {
+    std::string smiles = "C=NO";  // C(0)=N(1)O(2)
+    unsigned int rootedAtAtom = 2;
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
+
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, false,
+                                                 true, &cAtomMap);
+    TEST_ASSERT(cAtomMap.size() == 3);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, false, false,
+                                       &cAtomMap);
+    TEST_ASSERT(cAtomMap.size() == 3);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, true, true,
+                                       &cAtomMap);
+    TEST_ASSERT(cAtomMap.size() == 4);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[5] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, rootedAtAtom, true, false,
+                                       &cAtomMap);
+    TEST_ASSERT(cAtomMap.size() == 4);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[5] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, true,
+                                       &cAtomMap);
+    TEST_ASSERT(pth.size() == 0);
+    TEST_ASSERT(cAtomMap.size() == 0);
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, true, true,
+                                       &cAtomMap);
+    TEST_ASSERT(pth.size() == 0);
+    TEST_ASSERT(cAtomMap.size() == 0);
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, false, false,
+                                       &cAtomMap);
+    TEST_ASSERT(pth.size() == 2);
+    TEST_ASSERT(cAtomMap.size() == 3);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    cAtomMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mH, 4, rootedAtAtom, true, false,
+                                       &cAtomMap);
+    TEST_ASSERT(pth.size() == 5);
+    TEST_ASSERT(cAtomMap.size() == 6);
+    TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+    TEST_ASSERT(cAtomMap[1] == 1);
+    TEST_ASSERT(cAtomMap[5] == 1);
+    TEST_ASSERT(cAtomMap[0] == 2);
+    TEST_ASSERT(cAtomMap[3] == 3);
+    TEST_ASSERT(cAtomMap[4] == 3);
+    cAtomMap.clear();
+
+    delete mol;
+    delete mH;
+  }
+
+  {
+    std::string smiles = "c1cc[nH]c1";
+    unsigned int rootedAtAtom = 1;
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    // This test worked on ring system to guarantee that the atom ID
+    // is marked correctly with the search radius
+    PATH_TYPE pth;
+    unsigned int size;
+    for (size = 2; size < 4; size++) {
+      pth = findAtomEnvironmentOfRadiusN(*mol, size, rootedAtAtom, false, true,
+                                         &cAtomMap);
+      TEST_ASSERT(cAtomMap.size() == 5);
+      TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+      TEST_ASSERT(cAtomMap[0] == 1);
+      TEST_ASSERT(cAtomMap[2] == 1);
+      TEST_ASSERT(cAtomMap[3] == 2);
+      TEST_ASSERT(cAtomMap[4] == 2);
+      cAtomMap.clear();
+    }
+
+    for (size = 4; size < 6; size++) {
+      pth = findAtomEnvironmentOfRadiusN(*mol, size, rootedAtAtom, false, false,
+                                         &cAtomMap);
+      TEST_ASSERT(cAtomMap.size() == 5);
+      TEST_ASSERT(cAtomMap[rootedAtAtom] == 0);
+      TEST_ASSERT(cAtomMap[0] == 1);
+      TEST_ASSERT(cAtomMap[2] == 1);
+      TEST_ASSERT(cAtomMap[3] == 2);
+      TEST_ASSERT(cAtomMap[4] == 2);
+      cAtomMap.clear();
+    }
+    delete mol;
+  }
+
+  {
+    std::string smiles = "c1cc[nH]c1";
+    unsigned int rootedAtAtom = 1;
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+
+    PATH_TYPE pth1 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom);
+    PATH_TYPE pth2 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false);
+    PATH_TYPE pth3 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, true);
+    PATH_TYPE pth4 =
+        findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false, false);
+    PATH_TYPE pth5 =
+        findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false, true);
+    PATH_TYPE pth6 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false,
+                                                  false, &cAtomMap);
+    cAtomMap.clear();
+    PATH_TYPE pth7 = findAtomEnvironmentOfRadiusN(*mol, 2, rootedAtAtom, false,
+                                                  true, &cAtomMap);
+    cAtomMap.clear();
+    delete mol;
+  }
+  std::cout << "Finished" << std::endl;
+}
+
 void testGithubIssue103() {
   std::cout << "-----------------------\n Testing github Issue103: "
                "stereochemistry and pathToSubmol"
@@ -201,6 +385,7 @@ void testGithubIssue2647() {
 int main() {
   test1();
   test2();
+  test3();
   testGithubIssue103();
   testGithubIssue2647();
   return 0;

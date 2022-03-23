@@ -197,19 +197,19 @@ def patchPandasrepr(self, **kwargs):
   global defPandasGetAdjustment
 
   import pandas.io.formats.html
-  if not hasattr(pandas.io.formats.html.HTMLFormatter, "_rdkitpatched"):
-    defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
-    pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-    pandas.io.formats.html.HTMLFormatter._rdkitpatched = True
-  get_adjustment_attr = getAdjustmentAttr()
-  if get_adjustment_attr:
-    defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
-    setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
-  res = defPandasRepr(self, **kwargs)
-  if get_adjustment_attr:
-    setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
-  pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
-  return res
+  defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+  pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
+  try:
+    get_adjustment_attr = getAdjustmentAttr()
+    if get_adjustment_attr:
+      defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
+      setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
+    res = defPandasRepr(self, **kwargs)
+    if get_adjustment_attr:
+      setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
+    return res
+  finally:
+    pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
 
 
 def patchPandasHTMLrepr(self, **kwargs):
@@ -232,7 +232,7 @@ def patchPandasHTMLrepr(self, **kwargs):
 
   try:
     import pandas.io.formats.html  # necessary for loading HTMLFormatter
-  except:
+  except Exception:
     # this happens up until at least pandas v0.22
     return patch_v1()
   get_adjustment_attr = getAdjustmentAttr()
@@ -260,7 +260,7 @@ def patchPandasHTMLrepr(self, **kwargs):
     setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
     pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
     return defPandasRendering(self, **kwargs)
-  except:
+  except Exception:
     pass
   finally:
     # restore original methods
@@ -481,7 +481,7 @@ def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False
     if smilesName is not None:
       try:
         row[smilesName] = Chem.MolToSmiles(mol, isomericSmiles=isomericSmiles)
-      except:
+      except Exception:
         log.warning('No valid smiles could be generated for molecule %s', i)
         row[smilesName] = None
     if molColName is not None and not includeFingerprints:

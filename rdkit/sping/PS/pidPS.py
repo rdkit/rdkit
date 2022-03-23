@@ -524,7 +524,7 @@ translate
       self.code.append('%s %s %s setrgbcolor' % (r, g, b))
 
   def _updateLineWidth(self, width):
-    if width == None:
+    if width is None:
       width = self.defaultLineWidth
     if width != self._currentWidth:
       self._currentWidth = width

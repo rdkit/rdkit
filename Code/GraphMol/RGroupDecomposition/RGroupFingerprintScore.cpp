@@ -39,7 +39,9 @@ void addFingerprintToRGroupData(RGroupData *rgroupData) {
       // TODO- Handle multiple attachments differently?
       if (atom->getAtomicNum() == 0) {
         atom->setAtomicNum(5);
-        if (atom->getIsotope() > 0) atom->setIsotope(0);
+        if (atom->getIsotope() > 0) {
+          atom->setIsotope(0);
+        }
       }
     }
     try {
@@ -266,7 +268,9 @@ void VarianceDataForLabel::removeRgroupData(RGroupData *rgroupData) {
 // calculate the mean variance for a bit counts array
 double VarianceDataForLabel::variance() const {
   auto lambda = [this](double sum, int bitCount) {
-    if (bitCount == 0) return sum;
+    if (bitCount == 0) {
+      return sum;
+    }
     // variance calculation because fingerprint is binary:
     // sum  == squared sum == bit count
     // ss = sqrSum - (sum * sum) / cnt;

@@ -236,6 +236,49 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId = -1,
     RDKit::ROMol *referencePattern = nullptr, bool acceptFailure = false,
     bool forceRDKit = false);
+
+//! \brief Rotate the 2D depiction such that the majority of bonds have a
+//! 30-degree angle with the X axis.
+/*!
+
+  ARGUMENTS:
+  \param mol - the molecule to be rotated
+  \param confId - (optional) the id of the reference conformation to use
+*/
+
+RDKIT_DEPICTOR_EXPORT void straightenDepiction(RDKit::ROMol &mol,
+                                               int confId = -1);
+
+//! \brief Normalizes the 2D depiction.
+/*!
+  If canonicalize is != 0, the depiction is subjected to a canonical
+  transformation such that its main axis is aligned along the X axis
+  (canonicalize >0, the default) or the Y axis (canonicalize <0).
+  If canonicalize is 0, no canonicalization takes place.
+  If scaleFactor is <0.0 (the default) the depiction is scaled such
+  that bond lengths conform to RDKit standards. The applied scaling
+  factor is returned.
+
+  ARGUMENTS:
+  \param mol          - the molecule to be normalized
+  \param confId       - (optional) the id of the reference conformation to use
+  \param canonicalize - (optional) if != 0, a canonical transformation is
+                        applied: if >0 (the default), the main molecule axis is
+                        aligned to the X axis, if <0 to the Y axis.
+                        If 0, no canonical transformation is applied.
+  \param scaleFactor  - (optional) if >0.0, the scaling factor to apply. The
+                        default (-1.0) means that the depiction is automatically
+                        scaled such that bond lengths are the standard RDKit
+                        ones.
+  RETURNS:
+
+  \return the applied scaling factor.
+*/
+
+RDKIT_DEPICTOR_EXPORT double normalizeDepiction(RDKit::ROMol &mol,
+                                                int confId = -1,
+                                                int canonicalize = 1,
+                                                double scaleFactor = -1.0);
 };  // namespace RDDepict
 
 #endif

@@ -59,7 +59,7 @@ Usage: TemplateExpand [options] template <sidechains>
    
    --templateSmarts="smarts":  provides a space-delimited list containing the SMARTS 
                                patterns to be used to recognize attachment points in
-			                         the template
+                               the template
              
    --autoNames:          when set this toggle causes the resulting compounds to be named
                          based on there sequence id in the file, e.g. 

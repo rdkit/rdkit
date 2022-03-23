@@ -1418,7 +1418,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       res->setAtomicNum(0);
     }
     if (massDiff == 0 && symb[0] == 'R') {
-      if (symb.length() > 1) {
+      if (symb.length() > 1 && symb >= "R0" && symb <= "R99") {
         std::string rlabel = "";
         rlabel = symb.substr(1, symb.length() - 1);
         int rnumber;
@@ -3386,12 +3386,8 @@ RWMol *MolDataStreamToMol(std::istream *inStream, unsigned int &line,
       tempStr = getLine(inStream);
       ++line;
     }
-    if (!inStream->eof() || tempStr.substr(0, 6) == "M  END" ||
-        tempStr.substr(0, 4) == "$$$$") {
-      fileComplete = true;
-    } else {
-      fileComplete = false;
-    }
+    fileComplete = !inStream->eof() || tempStr.substr(0, 6) == "M  END" ||
+                   tempStr.substr(0, 4) == "$$$$";
   } catch (FileParseException &e) {
     // catch our exceptions and throw them back after cleanup
     delete res;

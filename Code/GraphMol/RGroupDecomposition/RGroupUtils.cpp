@@ -104,7 +104,9 @@ bool isUserRLabel(const Atom &atom) {
 }
 
 bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
-  if (atom.getDegree() > 1) return true;
+  if (atom.getDegree() > 1) {
+    return true;
+  }
   return !isUserRLabel(atom);
 }
 

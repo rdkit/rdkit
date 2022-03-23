@@ -2500,7 +2500,7 @@ MMFFMolProperties::MMFFMolProperties(ROMol &mol, const std::string &mmffVariant,
                                      std::uint8_t verbosity,
                                      std::ostream &oStream)
     : d_valid(true),
-      d_mmffs(mmffVariant == "MMFF94s" ? true : false),
+      d_mmffs(mmffVariant == "MMFF94s"),
       d_bondTerm(true),
       d_angleTerm(true),
       d_stretchBendTerm(true),

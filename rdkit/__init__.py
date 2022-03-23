@@ -21,14 +21,14 @@ try:
     logger.info("Enabling RDKit %s jupyter extensions" % __version__)
     from rdkit.Chem.Draw import IPythonConsole
     rdBase.LogToPythonStderr()
-except:
+except Exception:
   pass
 
 # Do logging setup at the end, so users can suppress the
 # "enabling jupyter" message at the root logger.
 log_handler = logging.StreamHandler(sys.stderr)
 logger.addHandler(log_handler)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARN)
 logger.propagate = False
 
 # Uncomment this to use Python logging by default:

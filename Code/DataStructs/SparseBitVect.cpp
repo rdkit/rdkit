@@ -62,11 +62,7 @@ bool SparseBitVect::operator[](const unsigned int which) const {
   if (which >= d_size) {
     throw IndexErrorException(which);
   }
-  if (dp_bits->count(which)) {
-    return true;
-  } else {
-    return false;
-  }
+  return dp_bits->count(which) > 0u;
 }
 
 // """ -------------------------------------------------------
@@ -157,11 +153,7 @@ bool SparseBitVect::getBit(const unsigned int which) const {
   if (which >= d_size) {
     throw IndexErrorException(which);
   }
-  if (dp_bits->count(which)) {
-    return true;
-  } else {
-    return false;
-  }
+  return dp_bits->count(which) > 0u;
 }
 
 // """ -------------------------------------------------------
@@ -174,11 +166,7 @@ bool SparseBitVect::getBit(const IntVectIter which) const {
   if (*which < 0 || static_cast<unsigned int>(*which) >= d_size) {
     throw IndexErrorException(*which);
   }
-  if (dp_bits->count(*which)) {
-    return true;
-  } else {
-    return false;
-  }
+  return dp_bits->count(*which) > 0u;
 }
 
 // """ -------------------------------------------------------
@@ -191,11 +179,7 @@ bool SparseBitVect::getBit(const IntSetIter which) const {
   if (*which < 0 || static_cast<unsigned int>(*which) >= d_size) {
     throw IndexErrorException(*which);
   }
-  if (dp_bits->count(*which)) {
-    return true;
-  } else {
-    return false;
-  }
+  return dp_bits->count(*which) > 0u;
 }
 
 // """ -------------------------------------------------------

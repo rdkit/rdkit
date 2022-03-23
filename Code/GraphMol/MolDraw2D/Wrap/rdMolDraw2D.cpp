@@ -239,7 +239,7 @@ void prepareAndDrawMoleculeHelper(
     MolDraw2D &drawer, const ROMol &mol, std::string legend,
     python::object highlight_atoms, python::object highlight_bonds,
     python::object highlight_atom_map, python::object highlight_bond_map,
-    python::object highlight_atom_radii, int confId) {
+    python::object highlight_atom_radii, int confId, bool kekulize) {
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
   std::unique_ptr<std::vector<int>> highlightBonds =
@@ -250,7 +250,7 @@ void prepareAndDrawMoleculeHelper(
   std::map<int, double> *har = pyDictToDoubleMap(highlight_atom_radii);
   MolDraw2DUtils::prepareAndDrawMolecule(
       drawer, mol, legend, highlightAtoms.get(), highlightBonds.get(), ham, hbm,
-      har, confId);
+      har, confId, kekulize);
 
   delete ham;
   delete hbm;
@@ -1107,7 +1107,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("highlightAtomColors") = python::object(),
        python::arg("highlightBondColors") = python::object(),
        python::arg("highlightAtomRadii") = python::object(),
-       python::arg("confId") = -1),
+       python::arg("confId") = -1, python::arg("kekulize") = true),
       "Preps a molecule for drawing and actually draws it\n");
   docString = "Parameters for drawing contours";
   python::class_<RDKit::MolDraw2DUtils::ContourParams>(

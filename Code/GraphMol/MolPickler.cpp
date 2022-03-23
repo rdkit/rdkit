@@ -487,7 +487,9 @@ Query<int, Atom const *, true> *unpickleQuery(std::istream &ss,
 
   res->setNegation(isNegated);
   res->setDescription(descr);
-  if (!typeLabel.empty()) res->setTypeLabel(typeLabel);
+  if (!typeLabel.empty()) {
+    res->setTypeLabel(typeLabel);
+  }
 
   QueryOps::finalizeQueryFromDescription(res, owner);
 

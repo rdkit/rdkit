@@ -33,7 +33,9 @@ string currentTime() {
 }
 
 bool startsWith(string str, string prefix) {
-  if (prefix.length() > str.length()) return false;
+  if (prefix.length() > str.length()) {
+    return false;
+  }
   return str.compare(0, prefix.length(), prefix) == 0;
 }
 
@@ -44,16 +46,18 @@ string getUserName() {
   const int bufsize = 100;
   char buffer[bufsize];
 
-  if (!getlogin_r(buffer, bufsize))
+  if (!getlogin_r(buffer, bufsize)) {
     return string(buffer);
-  else
+  } else {
     return string("");
+  }
 #endif
 }
 
 string &removeTrailingLF(string &line) {
-  if (!line.empty() && line[line.length() - 1] == '\r')
+  if (!line.empty() && line[line.length() - 1] == '\r') {
     line.erase(line.length() - 1);
+  }
   return line;
 }
 
@@ -81,7 +85,9 @@ bool equalsIgnoreCase(const string &str1, const string &str2) {
 }
 
 bool endsWith(const string &str, const string &suffix) {
-  if (suffix.length() > str.length()) return false;
+  if (suffix.length() > str.length()) {
+    return false;
+  }
   return str.compare(str.length() - suffix.length(), string::npos, suffix) == 0;
 }
 

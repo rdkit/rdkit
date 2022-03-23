@@ -8,11 +8,12 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_BOND_H
-#define _RD_BOND_H
+#ifndef RD_BOND_H
+#define RD_BOND_H
 
 // std stuff
 #include <iostream>
+#include <utility>
 
 // Ours
 #include <RDGeneral/Invariant.h>
@@ -124,7 +125,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
     dp_stereoAtoms = std::exchange(o.dp_stereoAtoms, nullptr);
   }
   Bond &operator=(Bond &&o) noexcept {
-    if (this == &o) return *this;
+    if (this == &o) {
+      return *this;
+    }
     RDProps::operator=(std::move(o));
     df_isAromatic = o.df_isAromatic;
     df_isConjugated = o.df_isConjugated;
@@ -346,7 +349,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   }
   //! \overload
   INT_VECT &getStereoAtoms() {
-    if (!dp_stereoAtoms) dp_stereoAtoms = new INT_VECT();
+    if (!dp_stereoAtoms) {
+      dp_stereoAtoms = new INT_VECT();
+    }
     return *dp_stereoAtoms;
   }
 

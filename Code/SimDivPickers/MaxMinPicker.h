@@ -114,9 +114,12 @@ class RDKIT_SIMDIVPICKERS_EXPORT MaxMinPicker : public DistPicker {
                        unsigned int pickSize, RDKit::INT_VECT firstPicks,
                        int seed = -1) const {
     CHECK_INVARIANT(distMat, "Invalid Distance Matrix");
-    if (!poolSize) throw ValueErrorException("empty pool to pick from");
-    if (poolSize < pickSize)
+    if (!poolSize) {
+      throw ValueErrorException("empty pool to pick from");
+    }
+    if (poolSize < pickSize) {
       throw ValueErrorException("pickSize cannot be larger than the poolSize");
+    }
     distmatFunctor functor(distMat);
     return this->lazyPick(functor, poolSize, pickSize, firstPicks, seed);
   }
@@ -142,10 +145,13 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
                                        unsigned int pickSize,
                                        const RDKit::INT_VECT &firstPicks,
                                        int seed, double &threshold) const {
-  if (!poolSize) throw ValueErrorException("empty pool to pick from");
+  if (!poolSize) {
+    throw ValueErrorException("empty pool to pick from");
+  }
 
-  if (poolSize < pickSize)
+  if (poolSize < pickSize) {
     throw ValueErrorException("pickSize cannot be larger than the poolSize");
+  }
 
   RDKit::INT_VECT picks;
 
@@ -201,11 +207,12 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
   unsigned int pool_list = 0;
   unsigned int *prev = &pool_list;
   // enter the pool into a list so that we can pick out of it easily
-  for (unsigned int i = 0; i < poolSize; i++)
+  for (unsigned int i = 0; i < poolSize; i++) {
     if (pinfo[i].picks == 0) {
       *prev = i;
       prev = &pinfo[i].next;
     }
+  }
   *prev = 0;
 
   unsigned int poolIdx;
@@ -240,7 +247,9 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
           pi++;
           if (dist <= minTOi) {
             minTOi = dist;
-            if (minTOi <= maxOFmin) break;
+            if (minTOi <= maxOFmin) {
+              break;
+            }
           }
         }
         pinfo[poolIdx].dist_bound = minTOi;
@@ -255,7 +264,9 @@ RDKit::INT_VECT MaxMinPicker::lazyPick(T &func, unsigned int poolSize,
     } while (*prev != 0);
 
     // if the current distance is closer then threshold, we're done
-    if (maxOFmin <= threshold && threshold >= 0.0) break;
+    if (maxOFmin <= threshold && threshold >= 0.0) {
+      break;
+    }
     tmpThreshold = maxOFmin;
     // now add the new pick to picks and remove it from the pool
     *pick_prev = pinfo[pick].next;

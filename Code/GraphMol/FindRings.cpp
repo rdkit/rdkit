@@ -18,20 +18,21 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 #include <cstdint>
-#include <RDGeneral/hash/hash.hpp>
 
-typedef std::set<std::uint32_t> RINGINVAR_SET;
-typedef RINGINVAR_SET::const_iterator RINGINVAR_SET_CI;
-typedef std::vector<std::uint32_t> RINGINVAR_VECT;
+using RINGINVAR = boost::dynamic_bitset<>;
+using RINGINVAR_SET = std::set<RINGINVAR>;
+using RINGINVAR_VECT = std::vector<RINGINVAR>;
 
 namespace RingUtils {
 const size_t MAX_BFSQ_SIZE = 200000;  // arbitrary huge value
 
 using namespace RDKit;
 
-std::uint32_t computeRingInvariant(INT_VECT ring, unsigned int) {
-  std::sort(ring.begin(), ring.end());
-  std::uint32_t res = gboost::hash_range(ring.begin(), ring.end());
+RINGINVAR computeRingInvariant(INT_VECT ring, unsigned int numAtoms) {
+  boost::dynamic_bitset<> res(numAtoms);
+  for (auto idx : ring) {
+    res.set(idx);
+  }
   return res;
 }
 
@@ -142,15 +143,7 @@ void pickD2Nodes(const ROMol &tMol, INT_VECT &d2nodes, const INT_VECT &currFrag,
   }
 }
 
-#if 0
-  typedef std::map<double, INT_VECT> DOUBLE_INT_VECT_MAP;
-  typedef DOUBLE_INT_VECT_MAP::iterator DOUBLE_INT_VECT_MAP_I;
-  typedef DOUBLE_INT_VECT_MAP::const_iterator DOUBLE_INT_VECT_MAP_CI;
-#else
-typedef std::map<std::uint32_t, INT_VECT> RINGINVAR_INT_VECT_MAP;
-typedef RINGINVAR_INT_VECT_MAP::iterator RINGINVAR_INT_VECT_MAP_I;
-typedef RINGINVAR_INT_VECT_MAP::const_iterator RINGINVAR_INT_VECT_MAP_CI;
-#endif
+using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, INT_VECT>;
 
 void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
                          RINGINVAR_SET &invars, const INT_INT_VECT_MAP dupMap,
@@ -187,13 +180,17 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
           nrings.push_back((*sri));
         }
       }
-
-      for (VECT_INT_VECT_CI nri = nrings.begin(); nri != nrings.end(); ++nri) {
-        if (nri->size() == minSiz) {
-          std::uint32_t invr =
-              RingUtils::computeRingInvariant(*nri, mol.getNumAtoms());
+      for (const auto &nring : nrings) {
+        if (nring.size() == minSiz) {
+          auto invr = RingUtils::computeRingInvariant(nring, mol.getNumAtoms());
+#if 0
+          std::cerr << "    res: " << invr << " | ";
+          std::copy(nring.begin(), nring.end(),
+                    std::ostream_iterator<int>(std::cerr, " "));
+          std::cerr << std::endl;
+#endif
           if (invars.find(invr) == invars.end()) {
-            res.push_back((*nri));
+            res.push_back(nring);
             invars.insert(invr);
           }
         }
@@ -344,8 +341,7 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
     // we have to find all non duplicate possible smallest rings for each node
     bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
     for (const auto &nring : srings) {
-      std::uint32_t invr =
-          RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
+      auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
       if (invars.find(invr) == invars.end()) {
         res.push_back(nring);
         invars.insert(invr);
@@ -442,8 +438,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
 
   for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
     const INT_VECT &nring = (*sri);
-    std::uint32_t invr =
-        RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
+    auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
     if (invars.find(invr) == invars.end()) {
       res.push_back(nring);
       invars.insert(invr);
@@ -507,8 +502,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
-        std::uint32_t invr =
-            RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
+        auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
 
         if (invars.find(invr) == invars.end()) {
           res.push_back(nring);
@@ -548,8 +542,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
-        std::uint32_t invr =
-            RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
+        auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
         if (invars.find(invr) == invars.end()) {
           res.push_back(nring);
           invars.insert(invr);
@@ -563,8 +556,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
-        std::uint32_t invr =
-            RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
+        auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
         if (invars.find(invr) == invars.end()) {
           res.push_back(nring);
           invars.insert(invr);
@@ -789,8 +781,7 @@ bool _atomSearchBFS(const ROMol &tMol, unsigned int startAtomIdx,
           nv.push_back(rdcast<unsigned int>(*nbrIdx));
           // make sure the ring we just found isn't already in our set
           // of rings (this was an extension of sf.net issue 249)
-          std::uint32_t invr =
-              RingUtils::computeRingInvariant(nv, tMol.getNumAtoms());
+          auto invr = RingUtils::computeRingInvariant(nv, tMol.getNumAtoms());
           if (invars.find(invr) == invars.end()) {
             // we're done!
             res.resize(nv.size());
@@ -826,8 +817,7 @@ bool findRingConnectingAtoms(const ROMol &tMol, const Bond *bond,
   INT_VECT nring;
   if (_atomSearchBFS(tMol, bond->getBeginAtomIdx(), bond->getEndAtomIdx(),
                      ringAtoms, nring, invars)) {
-    std::uint32_t invr =
-        RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
+    auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
     if (invars.find(invr) == invars.end()) {
       res.push_back(nring);
       invars.insert(invr);

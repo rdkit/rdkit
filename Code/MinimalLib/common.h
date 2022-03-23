@@ -59,8 +59,8 @@ namespace rj = rapidjson;
 namespace RDKit {
 namespace MinimalLib {
 
-static constexpr unsigned int d_defaultWidth = 250;
-static constexpr unsigned int d_defaultHeight = 200;
+static constexpr int d_defaultWidth = 250;
+static constexpr int d_defaultHeight = 200;
 
 #define LPT_OPT_GET(opt) opt = pt.get(#opt, opt);
 #define LPT_OPT_GET2(holder, opt) holder.opt = pt.get(#opt, holder.opt);
@@ -131,6 +131,7 @@ RWMol *mol_from_input(const std::string &input,
   }
   return res;
 }
+
 RWMol *mol_from_input(const std::string &input, const char *details_json) {
   std::string json;
   if (details_json) {
@@ -173,6 +174,7 @@ RWMol *qmol_from_input(const std::string &input,
   }
   return res;
 }
+
 RWMol *qmol_from_input(const std::string &input, const char *details_json) {
   std::string json;
   if (details_json) {
@@ -181,10 +183,10 @@ RWMol *qmol_from_input(const std::string &input, const char *details_json) {
   return qmol_from_input(input, json);
 }
 
-std::string process_details(const std::string &details, unsigned int &width,
-                            unsigned int &height, int &offsetx, int &offsety,
-                            std::string &legend, std::vector<int> &atomIds,
-                            std::vector<int> &bondIds) {
+std::string process_details(const std::string &details, int &width, int &height,
+                            int &offsetx, int &offsety, std::string &legend,
+                            std::vector<int> &atomIds,
+                            std::vector<int> &bondIds, bool &kekulize) {
   rj::Document doc;
   doc.Parse(details.c_str());
   if (!doc.IsObject()) return "Invalid JSON";
@@ -209,17 +211,17 @@ std::string process_details(const std::string &details, unsigned int &width,
   }
 
   if (doc.HasMember("width")) {
-    if (!doc["width"].IsUint()) {
-      return "JSON contains 'width' field, but it is not an unsigned int";
+    if (!doc["width"].IsInt()) {
+      return "JSON contains 'width' field, but it is not an int";
     }
-    width = doc["width"].GetUint();
+    width = doc["width"].GetInt();
   }
 
   if (doc.HasMember("height")) {
-    if (!doc["height"].IsUint()) {
-      return "JSON contains 'height' field, but it is not an unsigned int";
+    if (!doc["height"].IsInt()) {
+      return "JSON contains 'height' field, but it is not an int";
     }
-    height = doc["height"].GetUint();
+    height = doc["height"].GetInt();
   }
 
   if (doc.HasMember("offsetx")) {
@@ -241,6 +243,15 @@ std::string process_details(const std::string &details, unsigned int &width,
       return "JSON contains 'legend' field, but it is not a string";
     }
     legend = doc["legend"].GetString();
+  }
+
+  if (doc.HasMember("kekulize")) {
+    if (!doc["kekulize"].IsBool()) {
+      return "JSON contains 'kekulize' field, but it is not a bool";
+    }
+    kekulize = doc["kekulize"].GetBool();
+  } else {
+    kekulize = true;
   }
 
   return "";
@@ -272,15 +283,16 @@ void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
   obj.AddMember("bonds", rjBonds, doc.GetAllocator());
 }
 
-std::string mol_to_svg(const ROMol &m, unsigned int w, unsigned int h,
+std::string mol_to_svg(const ROMol &m, int w, int h,
                        const std::string &details = "") {
   std::vector<int> atomIds;
   std::vector<int> bondIds;
   std::string legend = "";
   int offsetx = 0, offsety = 0;
+  bool kekulize = true;
   if (!details.empty()) {
     auto problems = process_details(details, w, h, offsetx, offsety, legend,
-                                    atomIds, bondIds);
+                                    atomIds, bondIds, kekulize);
     if (!problems.empty()) {
       return problems;
     }
@@ -292,7 +304,9 @@ std::string mol_to_svg(const ROMol &m, unsigned int w, unsigned int h,
   }
   drawer.setOffset(offsetx, offsety);
 
-  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds);
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds,
+                                         nullptr, nullptr, nullptr, -1,
+                                         kekulize);
   drawer.finishDrawing();
 
   return drawer.getDrawingText();

@@ -955,7 +955,7 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
       }
     }
   }
-  newmol->updatePropertyCache();
+  newmol->updatePropertyCache(params.enforceValenceRules);
   newmol->setProp(common_properties::_StereochemDone, true);
   return newmol;
 }

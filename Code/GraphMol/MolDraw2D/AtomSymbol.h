@@ -32,7 +32,7 @@ namespace MolDraw2D_detail {
 class AtomSymbol {
 
  public:
-  ~AtomSymbol() = default;
+  virtual ~AtomSymbol() = default;
 
   /*!
    *

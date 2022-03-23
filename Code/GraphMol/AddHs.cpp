@@ -831,7 +831,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     bool removeIt = true;
     if (atom->getDegree() &&
         (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
-         !ps.removeOnlyHNeighbors)) {
+         !ps.removeOnlyHNeighbors || !ps.removeWithWedgedBond)) {
       bool onlyHNeighbors = true;
       ROMol::ADJ_ITER begin, end;
       boost::tie(begin, end) = mol.getAtomNeighbors(atom);

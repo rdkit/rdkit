@@ -32,13 +32,10 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
   // conditions for needing a chiral H:
   //   - stereochem specified
   //   - in at least two rings
-  if (mol.getRingInfo()->isInitialized() &&
-      mol.getRingInfo()->numAtomRings(atom->getIdx()) > 1 &&
-      (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
-       atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW)) {
-    return true;
-  }
-  return false;
+  return mol.getRingInfo()->isInitialized() &&
+         mol.getRingInfo()->numAtomRings(atom->getIdx()) > 1u &&
+         (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+          atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
 }
 }  // end of anonymous namespace
 
@@ -86,9 +83,9 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             const std::map<int, DrawColour> *highlight_atom_map,
                             const std::map<int, DrawColour> *highlight_bond_map,
                             const std::map<int, double> *highlight_radii,
-                            int confId) {
+                            int confId, bool kekulize) {
   RWMol cpy(mol);
-  prepareMolForDrawing(cpy);
+  prepareMolForDrawing(cpy, kekulize);
   // having done the prepare, we don't want to do it again in drawMolecule.
   bool old_prep_mol = drawer.drawOptions().prepareMolsBeforeDrawing;
   drawer.drawOptions().prepareMolsBeforeDrawing = false;

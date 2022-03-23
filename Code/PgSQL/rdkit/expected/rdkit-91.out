@@ -1400,3 +1400,82 @@ select mol_from_smiles('C=C')::qmol;
  [#6]=[#6]
 (1 row)
 
+-- github #5095: cannot restore molecule
+select mol_in('c1cccc'::cstring);
+ERROR:  could not create molecule from SMILES 'c1cccc'
+select mol_in('c1cccc1'::cstring);
+ mol_in  
+---------
+ c1cccc1
+(1 row)
+
+select mol_in('c1co(C)cc1'::cstring);
+  mol_in  
+----------
+ Co1cccc1
+(1 row)
+
+select mol_in('c1cccc'::cstring);
+ERROR:  could not create molecule from SMILES 'c1cccc'
+select mol_in('CN(=O)=O'::cstring);
+    mol_in     
+---------------
+ C[N+](=O)[O-]
+(1 row)
+
+select 'CN(=O)=O'::mol;
+      mol      
+---------------
+ C[N+](=O)[O-]
+(1 row)
+
+select 'c1cccc1'::mol;
+   mol   
+---------
+ c1cccc1
+(1 row)
+
+select 'c1co(C)cc1'::mol;
+   mol    
+----------
+ Co1cccc1
+(1 row)
+
+select mol_in('c1cccc1'::cstring) @> '[r5]'::qmol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'c1cccc1'::mol @> '[r5]'::qmol;
+ ?column? 
+----------
+ t
+(1 row)
+
+select mol_in('Cc1ccc2c(c1)-n1-c(=O)c=cc(=O)-n-2-c2cc(C)ccc2-1');
+                     mol_in                      
+-------------------------------------------------
+ Cc1ccc2c(c1)-n1-c(=O)c=cc(=O)-n-2-c2cc(C)ccc2-1
+(1 row)
+
+select 'c1cccc1'::text::mol;
+WARNING:  could not create molecule from SMILES 'c1cccc1'
+ mol 
+-----
+ 
+(1 row)
+
+select 'c1cccc1'::varchar::mol;
+WARNING:  could not create molecule from SMILES 'c1cccc1'
+ mol 
+-----
+ 
+(1 row)
+
+select mol_from_smiles('CCN(=O)=O') @> 'CN(=O)=O';
+ ?column? 
+----------
+ t
+(1 row)
+

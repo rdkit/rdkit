@@ -538,13 +538,9 @@ bool hasNonDefaultValence(const Atom *atom) {
       SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
-    if (atom->getNoImplicit() &&
-        (atom->getExplicitValence() !=
-         PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()))) {
-      return true;
-    } else {
-      return false;
-    }
+    return atom->getNoImplicit() &&
+           (atom->getExplicitValence() !=
+            PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
   }
   return true;
 }
@@ -975,7 +971,9 @@ const std::string GetV3000MolFileAtomLine(
     }
     if (atom->getPropIfPresent(common_properties::molInversionFlag, iprop) &&
         iprop) {
-      if (iprop == 1 || iprop == 2) ss << " INVRET=" << iprop;
+      if (iprop == 1 || iprop == 2) {
+        ss << " INVRET=" << iprop;
+      }
     }
     if (atom->getPropIfPresent(common_properties::molStereoCare, iprop) &&
         iprop) {

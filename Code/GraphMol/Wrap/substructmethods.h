@@ -98,7 +98,9 @@ PyObject *helpGetSubstructMatch(T1 &mol, T2 &query,
   std::vector<MatchVectType> matches;
   pySubstructHelper(mol, query, params, matches);
   MatchVectType match;
-  if (matches.size()) match = matches[0];
+  if (matches.size()) {
+    match = matches[0];
+  }
   return convertMatches(match);
 }
 

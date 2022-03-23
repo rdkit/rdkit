@@ -1001,7 +1001,7 @@ MCSResult MaximumCommonSubgraph::find(const std::vector<ROMOL_SPTR>& src_mols) {
     }
 
     areSeedsEmpty = Seeds.empty();
-    res.Canceled = areSeedsEmpty || growSeeds() ? false : true;
+    res.Canceled = !(areSeedsEmpty || growSeeds());
     // verify what MCS is equal to one of initial seed for chirality match
     if ((FinalMatchCheckFunction == Parameters.FinalMatchChecker &&
          1 == getMaxNumberBonds()) ||

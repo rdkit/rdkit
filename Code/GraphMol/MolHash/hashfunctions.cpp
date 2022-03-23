@@ -1,13 +1,11 @@
-/*==============================================*/
-/* Copyright (C)  2011-2019  NextMove Software  */
-/* All rights reserved.                         */
-/*                                              */
-/* This file is part of molhash.                */
-/*                                              */
-/* The contents are covered by the terms of the */
-/* BSD license, which is included in the file   */
-/* license.txt.                                 */
-/*==============================================*/
+//
+//  Copyright (C) 2011-2022 NextMove Software and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <cstring>
@@ -23,6 +21,16 @@
 #include "mf.h"
 
 namespace {
+
+void addCXExtensions(RDKit::RWMol *mol, std::string &result,
+                     unsigned additionalSkips = 0) {
+  auto cxext = RDKit::SmilesWrite::getCXExtensions(
+      *mol, RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_COORDS ^
+                additionalSkips);
+  if (!cxext.empty()) {
+    result += " " + cxext;
+  }
+}
 unsigned int NMRDKitBondGetOrder(const RDKit::Bond *bnd) {
   PRECONDITION(bnd, "bad bond");
   switch (bnd->getBondType()) {
@@ -116,8 +124,10 @@ void NMRDKitSanitizeHydrogens(RDKit::RWMol *mol) {
 
 namespace RDKit {
 namespace MolHash {
-static unsigned int NMDetermineComponents(RWMol *mol, unsigned int *parts,
-                                          unsigned int acount) {
+
+namespace {
+unsigned int NMDetermineComponents(RWMol *mol, unsigned int *parts,
+                                   unsigned int acount) {
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(parts, "bad parts pointer");
   memset(parts, 0, acount * sizeof(unsigned int));
@@ -148,8 +158,8 @@ static unsigned int NMDetermineComponents(RWMol *mol, unsigned int *parts,
   return result;
 }
 
-static std::string NMMolecularFormula(RWMol *mol, const unsigned int *parts,
-                                      unsigned int part) {
+std::string NMMolecularFormula(RWMol *mol, const unsigned int *parts,
+                               unsigned int part) {
   PRECONDITION(mol, "bad molecule");
   PRECONDITION((!part || parts), "bad parts pointer");
   unsigned int hist[256];
@@ -202,7 +212,7 @@ static std::string NMMolecularFormula(RWMol *mol, const unsigned int *parts,
   return result;
 }
 
-static std::string NMMolecularFormula(RWMol *mol, bool sep = false) {
+std::string NMMolecularFormula(RWMol *mol, bool sep = false) {
   PRECONDITION(mol, "bad molecule");
   if (!sep) {
     return NMMolecularFormula(mol, nullptr, 0);
@@ -237,7 +247,7 @@ static std::string NMMolecularFormula(RWMol *mol, bool sep = false) {
   return result;
 }
 
-static void NormalizeHCount(Atom *aptr) {
+void NormalizeHCount(Atom *aptr) {
   PRECONDITION(aptr, "bad atom pointer");
   unsigned int hcount;
 
@@ -280,7 +290,7 @@ static void NormalizeHCount(Atom *aptr) {
   aptr->setNumExplicitHs(hcount);
 }
 
-static std::string AnonymousGraph(RWMol *mol, bool elem) {
+std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   int charge = 0;
@@ -302,11 +312,23 @@ static std::string AnonymousGraph(RWMol *mol, bool elem) {
     bptr->setBondType(Bond::SINGLE);
   }
   MolOps::assignRadicals(*mol);
+
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+
   result = MolToSmiles(*mol);
+
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  }
+
   return result;
 }
 
-static std::string MesomerHash(RWMol *mol, bool netq) {
+std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -323,15 +345,25 @@ static std::string MesomerHash(RWMol *mol, bool netq) {
   }
 
   MolOps::assignRadicals(*mol);
+
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+
   result = MolToSmiles(*mol);
   if (netq) {
     sprintf(buffer, "_%d", charge);
     result += buffer;
   }
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  }
   return result;
 }
 
-static std::string TautomerHash(RWMol *mol, bool proto) {
+std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -372,10 +404,14 @@ static std::string TautomerHash(RWMol *mol, bool proto) {
     sprintf(buffer, "_%d", hcount - charge);
   }
   result += buffer;
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  }
+
   return result;
 }
 
-static bool TraverseForRing(Atom *atom, unsigned char *visit) {
+bool TraverseForRing(Atom *atom, unsigned char *visit) {
   PRECONDITION(atom, "bad atom pointer");
   PRECONDITION(visit, "bad pointer");
   visit[atom->getIdx()] = 1;
@@ -395,8 +431,7 @@ static bool TraverseForRing(Atom *atom, unsigned char *visit) {
   return false;
 }
 
-static bool DepthFirstSearchForRing(Atom *root, Atom *nbor,
-                                    unsigned int maxatomidx) {
+bool DepthFirstSearchForRing(Atom *root, Atom *nbor, unsigned int maxatomidx) {
   PRECONDITION(root, "bad atom pointer");
   PRECONDITION(nbor, "bad atom pointer");
 
@@ -425,7 +460,7 @@ bool IsInScaffold(Atom *atom, unsigned int maxatomidx) {
   return count > 1;
 }
 
-static bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
+bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
   PRECONDITION(aptr, "bad atom pointer");
   PRECONDITION(is_in_scaffold, "bad pointer");
   for (auto nbri : boost::make_iterator_range(
@@ -438,7 +473,7 @@ static bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
   return false;
 }
 
-static std::string ExtendedMurckoScaffold(RWMol *mol) {
+std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   RDKit::MolOps::fastFindRings(*mol);
 
@@ -469,12 +504,22 @@ static std::string ExtendedMurckoScaffold(RWMol *mol) {
   }
   mol->commitBatchEdit();
   MolOps::assignRadicals(*mol);
+
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+
   std::string result;
   result = MolToSmiles(*mol);
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  }
   return result;
 }
 
-static std::string MurckoScaffoldHash(RWMol *mol) {
+std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   std::vector<Atom *> for_deletion;
   do {
@@ -502,12 +547,22 @@ static std::string MurckoScaffoldHash(RWMol *mol) {
     mol->commitBatchEdit();
   } while (!for_deletion.empty());
   MolOps::assignRadicals(*mol);
+
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+
   std::string result;
   result = MolToSmiles(*mol);
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+  }
   return result;
 }
 
-static std::string NetChargeHash(RWMol *mol) {
+std::string NetChargeHash(RWMol *mol) {
   PRECONDITION(mol, "bad molecule");
   int totalq = 0;
 
@@ -520,7 +575,7 @@ static std::string NetChargeHash(RWMol *mol) {
   return buffer;
 }
 
-static std::string SmallWorldHash(RWMol *mol, bool brl) {
+std::string SmallWorldHash(RWMol *mol, bool brl) {
   PRECONDITION(mol, "bad molecule");
   char buffer[64];
 
@@ -542,7 +597,7 @@ static std::string SmallWorldHash(RWMol *mol, bool brl) {
   return buffer;
 }
 
-static void DegreeVector(RWMol *mol, unsigned int *v) {
+void DegreeVector(RWMol *mol, unsigned int *v) {
   memset(v, 0, 4 * sizeof(unsigned int));
   for (auto aptr : mol->atoms()) {
     switch (aptr->getDegree()) {
@@ -562,7 +617,7 @@ static void DegreeVector(RWMol *mol, unsigned int *v) {
   }
 }
 
-static bool HasDoubleBond(Atom *atom) {
+bool HasDoubleBond(Atom *atom) {
   PRECONDITION(atom, "bad atom");
   for (const auto &nbri :
        boost::make_iterator_range(atom->getOwningMol().getAtomBonds(atom))) {
@@ -581,7 +636,7 @@ static bool HasDoubleBond(Atom *atom) {
 // 2 means break, with hydrogen on beg and asterisk on end
 // 3 means break, with asterisks on both beg and end
 
-static int RegioisomerBond(Bond *bnd) {
+int RegioisomerBond(Bond *bnd) {
   PRECONDITION(bnd, "bad bond");
   if (NMRDKitBondGetOrder(bnd) != 1) {
     return -1;
@@ -619,7 +674,7 @@ static int RegioisomerBond(Bond *bnd) {
   return -1;
 }
 
-static void ClearEZStereo(Atom *atm) {
+void ClearEZStereo(Atom *atm) {
   PRECONDITION(atm, "bad atom");
   for (const auto &nbri :
        boost::make_iterator_range(atm->getOwningMol().getAtomBonds(atm))) {
@@ -630,7 +685,7 @@ static void ClearEZStereo(Atom *atm) {
   }
 }
 
-static std::string RegioisomerHash(RWMol *mol) {
+std::string RegioisomerHash(RWMol *mol, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
 
   // we need a copy of the molecule so that we can loop over the bonds of
@@ -671,12 +726,21 @@ static std::string RegioisomerHash(RWMol *mol) {
     }
   }
 
-  std::string result;
-  result = MolToSmiles(*mol);
+  // we may have just destroyed some stereocenters/bonds
+  // clean that up:
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*mol, cleanIt, force);
+
+  std::string result = MolToSmiles(*mol);
+  if (useCXSmiles) {
+    addCXExtensions(mol, result);
+  }
+
   return result;
 }
 
-static std::string ArthorSubOrderHash(RWMol *mol) {
+std::string ArthorSubOrderHash(RWMol *mol) {
   PRECONDITION(mol, "bad molecule");
   char buffer[256];
 
@@ -793,8 +857,9 @@ static std::string ArthorSubOrderHash(RWMol *mol) {
           pcount, ccount, ocount, zcount, rcount, qcount, icount);
   return buffer;
 }
+}  // namespace
 
-std::string MolHash(RWMol *mol, HashFunction func) {
+std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -803,31 +868,34 @@ std::string MolHash(RWMol *mol, HashFunction func) {
   switch (func) {
     default:
     case HashFunction::AnonymousGraph:
-      result = AnonymousGraph(mol, false);
+      result = AnonymousGraph(mol, false, useCXSmiles);
       break;
     case HashFunction::ElementGraph:
-      result = AnonymousGraph(mol, true);
+      result = AnonymousGraph(mol, true, useCXSmiles);
       break;
     case HashFunction::CanonicalSmiles:
       result = MolToSmiles(*mol);
+      if (useCXSmiles) {
+        addCXExtensions(mol, result);
+      }
       break;
     case HashFunction::MurckoScaffold:
-      result = MurckoScaffoldHash(mol);
+      result = MurckoScaffoldHash(mol, useCXSmiles);
       break;
     case HashFunction::ExtendedMurcko:
-      result = ExtendedMurckoScaffold(mol);
+      result = ExtendedMurckoScaffold(mol, useCXSmiles);
       break;
     case HashFunction::Mesomer:
-      result = MesomerHash(mol, true);
+      result = MesomerHash(mol, true, useCXSmiles);
       break;
     case HashFunction::RedoxPair:
-      result = MesomerHash(mol, false);
+      result = MesomerHash(mol, false, useCXSmiles);
       break;
     case HashFunction::HetAtomTautomer:
-      result = TautomerHash(mol, false);
+      result = TautomerHash(mol, false, useCXSmiles);
       break;
     case HashFunction::HetAtomProtomer:
-      result = TautomerHash(mol, true);
+      result = TautomerHash(mol, true, useCXSmiles);
       break;
     case HashFunction::MolFormula:
       result = NMMolecularFormula(mol);
@@ -855,7 +923,7 @@ std::string MolHash(RWMol *mol, HashFunction func) {
       result = ArthorSubOrderHash(mol);
       break;
     case HashFunction::Regioisomer:
-      result = RegioisomerHash(mol);
+      result = RegioisomerHash(mol, useCXSmiles);
       break;
   }
   return result;

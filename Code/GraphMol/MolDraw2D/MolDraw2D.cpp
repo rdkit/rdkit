@@ -297,11 +297,17 @@ void MolDraw2D::drawReaction(
   if (delta < 5) {
     frac *= 5 / delta;
   }
-  drawArrow(arrowBeg, arrowEnd, false, frac, M_PI / 6,
-            drawOptions().symbolColour, true);
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
   xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
-
+  auto osbw = drawOptions().scaleBondWidth;
+  if (reagents.empty() && products.empty() && agents.empty()) {
+    // if it's an empty reaction, we won't have a DrawMol with a scale,
+    // so we won't be able to do a scaled bond width
+    drawOptions().scaleBondWidth = false;
+  }
+  drawArrow(arrowBeg, arrowEnd, false, frac, M_PI / 6,
+            drawOptions().symbolColour, true);
+  drawOptions().scaleBondWidth = osbw;
   if (drawOptions().includeMetadata) {
     this->updateMetadata(rxn);
   }
@@ -894,7 +900,7 @@ void MolDraw2D::makeReactionDrawMol(
   if (drawOptions().prepareMolsBeforeDrawing) {
     mol.updatePropertyCache(false);
     try {
-      RDLog::BlockLogs blocker;
+      RDLog::LogStateSetter blocker;
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
     } catch (const MolSanitizeException &) {
       // don't need to do anything

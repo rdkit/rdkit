@@ -856,12 +856,39 @@ void testGithub3645() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void test_clean_up_on_kekulization_error() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "To INCHI conversion leaks on kekulization failure"
+                       << std::endl;
+
+  {
+    // This will fail kekulization because of the ambiguous valence
+    // on the N atom
+    SmilesParserParams params;
+    params.sanitize = false;
+
+    std::unique_ptr<ROMol> mol{SmilesToMol("c1ccnc1", params)};
+    TEST_ASSERT(mol);
+
+    ExtraInchiReturnValues tmp;
+    bool ok = true;
+    try {
+      auto inchi = MolToInchi(*mol, tmp);
+    } catch (const std::exception &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
-#if 1
+
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();
@@ -874,8 +901,8 @@ int main() {
   testGithubIssue614();
   testGithubIssue1572();
   testMolBlockToInchi();
-#endif
   testGithubIssue562();
   testGithub3365();
   testGithub3645();
+  test_clean_up_on_kekulization_error();
 }

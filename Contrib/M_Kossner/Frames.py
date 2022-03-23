@@ -43,13 +43,13 @@ def flatten(x):
 
 def GetFrame(mol, mode='Scaff'):
   '''return a ganeric molecule defining the reduced scaffold of the input mol.
-	mode can be 'Scaff' or 'RedScaff':
-	
-	Scaff	->	chop off the side chains and return the scaffold
-	
-	RedScaff	->	remove all linking chains and connect the rings 
-	directly at the atoms where the linker was
-	'''
+    mode can be 'Scaff' or 'RedScaff':
+
+    Scaff	->	chop off the side chains and return the scaffold
+
+    RedScaff	->	remove all linking chains and connect the rings
+    directly at the atoms where the linker was
+    '''
 
   ring = mol.GetRingInfo()
   RingAtoms = flatten(ring.AtomRings())
@@ -75,7 +75,7 @@ def GetFrame(mol, mode='Scaff'):
   while len(Paths) > 0:
     NewPaths = []
     for P in Paths:
-      if P == None:
+      if P is None:
         print('ooh')
       else:
         for neighbor in mol.GetAtomWithIdx(P[-1]).GetNeighbors():
@@ -130,7 +130,7 @@ def GetFrame(mol, mode='Scaff'):
     todel = []
     NonRingAtoms.sort(reverse=True)
     for i in NonRingAtoms:
-      if i != None:
+      if i is not None:
         if i not in Framework:
           todel.append(i)
     em = Chem.EditableMol(mol)

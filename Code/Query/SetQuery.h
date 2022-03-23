@@ -31,7 +31,9 @@ class RDKIT_QUERY_EXPORT SetQuery
 
   //! insert an entry into our \c set
   void insert(const MatchFuncArgType what) {
-    if (d_set.find(what) == this->d_set.end()) this->d_set.insert(what);
+    if (d_set.find(what) == this->d_set.end()) {
+      this->d_set.insert(what);
+    }
   }
 
   //! clears our \c set
@@ -67,10 +69,11 @@ class RDKIT_QUERY_EXPORT SetQuery
   std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription() << " val";
-    if (this->getNegation())
+    if (this->getNegation()) {
       res << " not in ";
-    else
+    } else {
       res << " in (";
+    }
     std::copy(d_set.begin(), d_set.end(),
               std::ostream_iterator<MatchFuncArgType>(res, ", "));
     res << ")";

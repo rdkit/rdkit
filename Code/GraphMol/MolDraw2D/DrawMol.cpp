@@ -59,7 +59,9 @@ DrawMol::DrawMol(
       xMax_(std::numeric_limits<double>::lowest() / 2.0),
       yMax_(std::numeric_limits<double>::lowest() / 2.0),
       xRange_(std::numeric_limits<double>::max()),
-      yRange_(std::numeric_limits<double>::max()) {
+      yRange_(std::numeric_limits<double>::max()),
+      flexiCanvasX_(width_ < 0.0),
+      flexiCanvasY_(height_ < 0.0) {
   if (highlight_atoms) {
     highlightAtoms_ = *highlight_atoms;
   }
@@ -620,7 +622,7 @@ void DrawMol::extractBrackets() {
       Point2D longline = brkShp.points_[1] - brkShp.points_[2];
       longline.normalize();
       static const double cos45 = 1.0 / sqrt(2.0);
-      bool horizontal = fabs(longline.x) > cos45 ? true : false;
+      bool horizontal = fabs(longline.x) > cos45;
       size_t labelBrk = postShapes_.size() - 1;
       for (int i = 1; i < numBrackets; ++i) {
         const auto &brkShp = *postShapes_[postShapes_.size() - i - 1];
@@ -786,7 +788,6 @@ void DrawMol::extractCloseContacts() {
 
 // ****************************************************************************
 void DrawMol::calculateScale() {
-
   findExtremes();
 
   // if width < 0, we'll take the scale off the yRange_, and likewise with
@@ -815,12 +816,9 @@ void DrawMol::calculateScale() {
     drawHeight_ = newScale * yRange_;
   }
   if (height_ < 0) {
+    height_ = drawHeight_;
     if (legend_.empty()) {
-      height_ = drawHeight_;
       legendHeight_ = 0;
-    } else {
-      height_ = drawHeight_ / (1.0 - drawOptions_.legendFraction);
-      drawHeight_ = height_ - legendHeight_;
     }
   }
 
@@ -1359,7 +1357,7 @@ void DrawMol::partitionForLegend() {
       drawHeight_ = height_ - legendHeight_;
     } else {
       drawHeight_ = height_;
-      legendHeight_ = 15;
+      // the legendHeight_ isn't needed for the flexiCanvas
     }
   }
 }
@@ -1411,16 +1409,29 @@ void DrawMol::extractLegend() {
   double fsize = textDrawer_.fontSize();
   double relFontScale = drawOptions_.legendFontSize / fsize;
   double total_width, total_height;
-  double adjLegHt = legendHeight_ - 0.5 * drawOptions_.padding * height_;
   calc_legend_height(legend_bits, relFontScale, total_width, total_height);
-  if (total_height > adjLegHt) {
-    relFontScale *= double(adjLegHt) / total_height;
-    calc_legend_height(legend_bits, relFontScale, total_width, total_height);
+  if (total_width >= width_) {
+    if (!flexiCanvasX_) {
+      relFontScale *= double(width_) / total_width;
+      calc_legend_height(legend_bits, relFontScale, total_width, total_height);
+    } else {
+      width_ = total_width * (1 + drawOptions_.padding);
+    }
   }
-  if (total_width > width_) {
-    relFontScale *= double(width_) / total_width;
-    calc_legend_height(legend_bits, relFontScale, total_width, total_height);
+
+  if (!flexiCanvasY_) {
+    auto adjLegHt = height_ * drawOptions_.legendFraction;
+    // subtract off space for the padding.
+    adjLegHt -= 0.5 * drawOptions_.padding * height_;
+    if (total_height > adjLegHt) {
+      relFontScale *= double(adjLegHt) / total_height;
+      calc_legend_height(legend_bits, relFontScale, total_width, total_height);
+    }
+  } else {
+    height_ += total_height;
+    // height_ += height_ * drawOptions_.padding;
   }
+
   Point2D loc(width_ / 2 + xOffset_,
               height_ * (1 - 0.5 * drawOptions_.padding) + yOffset_);
   for (auto bit : legend_bits) {
@@ -1786,12 +1797,12 @@ void DrawMol::adjustBondEndsForLabels(int begAtIdx, int endAtIdx,
   begCds = atCds_[begAtIdx];
   endCds = atCds_[endAtIdx];
   if (atomLabels_[begAtIdx]) {
-    adjustBondEndForString(endCds, padding,
-                           atomLabels_[begAtIdx]->rects_, begCds);
+    adjustBondEndForString(endCds, padding, atomLabels_[begAtIdx]->rects_,
+                           begCds);
   }
   if (atomLabels_[endAtIdx]) {
-    adjustBondEndForString(begCds, padding,
-                           atomLabels_[endAtIdx]->rects_, endCds);
+    adjustBondEndForString(begCds, padding, atomLabels_[endAtIdx]->rects_,
+                           endCds);
   }
 }
 
@@ -2325,7 +2336,7 @@ Point2D DrawMol::getDrawCoords(const Point2D &atCds) const {
 // ****************************************************************************
 Point2D DrawMol::getDrawCoords(int atnum) const {
   PRECONDITION(atnum >= 0 && atnum < static_cast<int>(atCds_.size()),
-	       "bad atom number");
+               "bad atom number");
   return getDrawCoords(Point2D(atCds_[atnum].x, -atCds_[atnum].y));
 }
 
@@ -2345,7 +2356,7 @@ Point2D DrawMol::getAtomCoords(const Point2D &screenCds) const {
 // ****************************************************************************
 Point2D DrawMol::getAtomCoords(int atnum) const {
   PRECONDITION(atnum >= 0 && atnum < static_cast<int>(atCds_.size()),
-	       "bad atom number");
+               "bad atom number");
   return atCds_[atnum];
 }
 

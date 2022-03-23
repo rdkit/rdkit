@@ -28,12 +28,9 @@ bool isAtomConjugCand(const Atom *at) {
   // the first row of the periodic table.  (Conjugation in aromatic rings
   // has already been attended to, so this is safe.)
   int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
-  if (((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
-       (nouter == 6 && at->getTotalDegree() < 2)) &&
-      (MolOps::countAtomElec(at) > 0)) {
-    return true;
-  }
-  return false;
+  return ((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
+          (nouter == 6 && at->getTotalDegree() < 2u)) &&
+         (MolOps::countAtomElec(at) > 0);
 }
 
 void markConjAtomBonds(Atom *at) {

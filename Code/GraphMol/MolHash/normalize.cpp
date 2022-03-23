@@ -1,13 +1,11 @@
-/*==============================================*/
-/* Copyright (C)  2019       NextMove Software  */
-/* All rights reserved.                         */
-/*                                              */
-/* This file is part of molhash.                */
-/*                                              */
-/* The contents are covered by the terms of the */
-/* BSD license, which is included in the file   */
-/* license.txt.                                 */
-/*==============================================*/
+//
+//  Copyright (C) 2019-2022 NextMove Software and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
@@ -24,6 +22,10 @@ void Strip(RWMol *mol, unsigned int striptype) {
   if (striptype & static_cast<unsigned>(StripType::AtomStereo)) {
     for (auto aptr : mol->atoms()) {
       aptr->setChiralTag(RDKit::Atom::CHI_UNSPECIFIED);
+    }
+    if (!mol->getStereoGroups().empty()) {
+      std::vector<StereoGroup> no_sgs;
+      mol->setStereoGroups(std::move(no_sgs));
     }
   }
   if (striptype & static_cast<unsigned>(StripType::BondStereo)) {
@@ -49,11 +51,9 @@ void Strip(RWMol *mol, unsigned int striptype) {
 }
 
 void SplitMolecule(RWMol *mol, std::vector<RWMol *> &molv) {
-  RDKit::MOL_SPTR_VECT mfrags = RDKit::MolOps::getMolFrags(*mol);
-  RDKit::MOL_SPTR_VECT::iterator vit;
-  for (vit = mfrags.begin(); vit != mfrags.end(); ++vit) {
-    RDKit::ROMol *wrappedmol =
-        (*vit).get();  // reach inside the shared pointer...
+  auto mfrags = RDKit::MolOps::getMolFrags(*mol);
+  for (const auto &frag : mfrags) {
+    const auto *wrappedmol = frag.get();  // reach inside the shared pointer...
     molv.push_back(new RWMol(*wrappedmol));  // ...and make a copy
   }
 }

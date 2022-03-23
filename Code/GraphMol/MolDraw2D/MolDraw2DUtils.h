@@ -70,7 +70,8 @@ RDKIT_MOLDRAW2D_EXPORT void prepareAndDrawMolecule(
     const std::vector<int> *highlight_bonds = nullptr,
     const std::map<int, DrawColour> *highlight_atom_map = nullptr,
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+    const std::map<int, double> *highlight_radii = nullptr, int confId = -1,
+    bool kekulize = true);
 
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const char *json);

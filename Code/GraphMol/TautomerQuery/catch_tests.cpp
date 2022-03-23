@@ -36,7 +36,9 @@ TEST_CASE("TEMPLATE_ERROR") {
     std::cout << "Tautomer " << MolToSmiles(*taut) << " match " << test
               << std::endl;
 #endif
-    if (test) match = true;
+    if (test) {
+      match = true;
+    }
   }
   CHECK(match);
 

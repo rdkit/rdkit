@@ -102,7 +102,9 @@ class TautomerQueryMatcher {
 #ifdef VERBOSE
           std::cout << "Got Match " << std::endl;
 #endif
-          if (d_matchingTautomers) d_matchingTautomers->push_back(tautomer);
+          if (d_matchingTautomers) {
+            d_matchingTautomers->push_back(tautomer);
+          }
         }
         return matchingTautomer;
       }

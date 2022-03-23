@@ -228,7 +228,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue([x.GetNumExplicitHs() for x in aList] == [0, 0, 0, 2])
     self.assertTrue([x.GetIsAromatic() for x in aList] == [1, 1, 0, 0])
     self.assertTrue([x.GetHybridization() for x in aList]==[Chem.HybridizationType.SP2,Chem.HybridizationType.SP2,
-                                                   Chem.HybridizationType.SP3,Chem.HybridizationType.SP3],\
+                                                   Chem.HybridizationType.SP3,Chem.HybridizationType.SP3],
                                                    [x.GetHybridization() for x in aList])
 
   def test8Bond(self):
@@ -508,7 +508,7 @@ class TestCase(unittest.TestCase):
       pass
 
     m.SetBoolProp("a", False)
-    self.assertTrue(m.GetBoolProp("a") == False)
+    self.assertFalse(m.GetBoolProp("a"))
 
     self.assertEqual(m.GetPropsAsDict(), {'a': False, 'prop1': 'foob'})
     m.SetDoubleProp("b", 1000.0)
@@ -1005,10 +1005,10 @@ class TestCase(unittest.TestCase):
       self.assertTrue(mol.HasProp("ID"))
       self.assertTrue(mol.GetProp("ID") == "Lig1")
       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == \
-        "No blank line before dollars\n" \
-        "$$$$\n" \
-        "Structure1\n" \
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") ==
+        "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
         "csChFnd70/05230312262D")
       i += 1
     self.assertTrue(i == 1)
@@ -1038,10 +1038,10 @@ class TestCase(unittest.TestCase):
       self.assertTrue(mol.HasProp("ID"))
       self.assertTrue(mol.GetProp("ID") == "Lig1")
       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") == \
-        "No blank line before dollars\n" \
-        "$$$$\n" \
-        "Structure1\n" \
+      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") ==
+        "No blank line before dollars\n"
+        "$$$$\n"
+        "Structure1\n"
         "csChFnd70/05230312262D")
       i += 1
     self.assertTrue(i == 1)
@@ -2214,7 +2214,7 @@ CAS<~>
     try:
       Chem.ReplaceCore(mol, smarts, (3, ))
       self.asssertFalse(True)
-    except:
+    except Exception:
       pass
 
     mol = Chem.MolFromSmiles("C")
@@ -2222,7 +2222,7 @@ CAS<~>
     try:
       Chem.ReplaceCore(mol, smarts, (0, 0))
       self.asssertFalse(True)
-    except:
+    except Exception:
       pass
 
   def test47RWMols(self):
@@ -2730,17 +2730,17 @@ CAS<~>
   def test64MoleculeCleanup(self):
     m = Chem.MolFromSmiles('CN(=O)=O', False)
     self.assertTrue(m)
-    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==0 and \
-                      m.GetAtomWithIdx(2).GetFormalCharge()==0 and \
+    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==0 and
+                      m.GetAtomWithIdx(2).GetFormalCharge()==0 and
                       m.GetAtomWithIdx(3).GetFormalCharge()==0)
-    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.DOUBLE and \
+    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.DOUBLE and
                       m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.DOUBLE )
     Chem.Cleanup(m)
     m.UpdatePropertyCache()
-    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==1 and \
-                      (m.GetAtomWithIdx(2).GetFormalCharge()==-1 or \
+    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==1 and
+                      (m.GetAtomWithIdx(2).GetFormalCharge()==-1 or
                          m.GetAtomWithIdx(3).GetFormalCharge()==-1))
-    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.SINGLE or \
+    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.SINGLE or
                       m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.SINGLE )
 
   def test65StreamSupplier(self):
@@ -3856,9 +3856,9 @@ CAS<~>
     self.assertFalse(resMolSuppl.GetIsEnumerated())
     resMolSuppl.Enumerate()
     self.assertTrue(resMolSuppl.GetIsEnumerated())
-    self.assertTrue((resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() \
+    self.assertTrue((resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType()
       != resMolSuppl[1].GetBondBetweenAtoms(0, 1).GetBondType())
-      or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() \
+      or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType()
       != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
@@ -3871,8 +3871,8 @@ CAS<~>
 
     bondTypeDict = {}
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ALLOW_INCOMPLETE_OCTETS \
-      | Chem.UNCONSTRAINED_CATIONS \
+      Chem.ALLOW_INCOMPLETE_OCTETS
+      | Chem.UNCONSTRAINED_CATIONS
       | Chem.UNCONSTRAINED_ANIONS)
     self.assertEqual(len(resMolSuppl), 32)
     for i in range(len(resMolSuppl)):
@@ -3885,8 +3885,8 @@ CAS<~>
     cmpFormalChargeBondOrder(self, resMolSuppl[0], next(resMolSuppl))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ALLOW_INCOMPLETE_OCTETS \
-      | Chem.UNCONSTRAINED_CATIONS \
+      Chem.ALLOW_INCOMPLETE_OCTETS
+      | Chem.UNCONSTRAINED_CATIONS
       | Chem.UNCONSTRAINED_ANIONS, 10)
     self.assertEqual(len(resMolSuppl), 10)
 
@@ -5268,7 +5268,7 @@ M  END
     # simple check, this used to throw an exception
     try:
       Chem.MolToSmarts(Chem.MolFromSmarts("[C@]"))
-    except:
+    except Exception:
       self.fail("[C@] caused an exception when roundtripping smarts")
 
   def testGetEnhancedStereo(self):
@@ -6482,6 +6482,21 @@ M  END
     c = Chem.molzip(a, p)
     self.assertEqual(Chem.MolToSmiles(c), 'C=C/N=C/O')
 
+    a = Chem.MolFromSmiles("[C@H]([Xe])(F)([V])")
+    b = Chem.MolFromSmiles("[Xe]N.[V]I")
+    p = Chem.MolzipParams()
+    p.label = Chem.MolzipLabel.AtomType
+    p.setAtomSymbols(["Xe", "V"])
+    c = Chem.molzip(a, b, p)
+    self.assertEqual(Chem.MolToSmiles(c), "N[C@@H](F)I")
+
+    a = Chem.MolFromSmiles("C(=[*:1])N")
+    b = Chem.MolFromSmiles("[*:1]-N=C")
+    p = Chem.MolzipParams()
+    p.enforceValenceRules = False
+    c = Chem.molzip(a, b, p)
+    
+
   def testContextManagers(self):
     from rdkit import RDLogger
     RDLogger.DisableLog('rdApp.*')
@@ -6613,7 +6628,7 @@ CAS<~>
       with Chem.RWMol(mol) as rwmol:
         rwmol.RemoveAtom(2)
         rwmol.RemoveAtom(6)
-    except:
+    except Exception:
       pass
     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
 

@@ -42,7 +42,8 @@ enum class HashFunction {
   ArthorSubstructureOrder = 17
 };
 
-RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, HashFunction func);
+RDKIT_MOLHASH_EXPORT std::string MolHash(RWMol *mol, HashFunction func,
+                                         bool useCXSmiles = false);
 
 enum class StripType {
   AtomStereo = 1,

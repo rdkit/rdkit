@@ -75,10 +75,7 @@ struct StringRect {
       std::swap(tl, bl);
       std::swap(tr, br);
     }
-    if (pt.x >= tl.x && pt.x <= br.x && pt.y >= br.y && pt.y <= tl.y) {
-      return true;
-    }
-    return false;
+    return pt.x >= tl.x && pt.x <= br.x && pt.y >= br.y && pt.y <= tl.y;
   }
   bool doesItIntersect(const StringRect &other, double padding = 0.0) const {
     Point2D ttl, ttr, tbr, tbl;

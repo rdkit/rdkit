@@ -98,7 +98,7 @@ M  END
     failed = False
     try:
       axes, moments = rdmt.ComputePrincipalAxesAndMoments(m.GetConformer(), weights = (0.5, 0.5))
-    except:
+    except Exception:
       failed = True
     self.assertTrue(failed)
     axesWeightedRef = (
@@ -150,7 +150,7 @@ M  END
     failed = False
     try:
       axes, moments = rdmt.ComputePrincipalAxesAndMomentsFromGyrationMatrix(m.GetConformer(), weights = (0.5, 0.5))
-    except:
+    except Exception:
       failed = True
     self.assertTrue(failed)
     axesWeightedRef = (

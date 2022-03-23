@@ -44,88 +44,104 @@ namespace RDKit {
 // string casts
 template <>
 inline std::string rdvalue_cast<std::string>(RDValue_cast_t v) {
-  if (rdvalue_is<std::string>(v)) return *v.ptrCast<std::string>();
+  if (rdvalue_is<std::string>(v)) {
+    return *v.ptrCast<std::string>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::string &rdvalue_cast<std::string &>(RDValue_cast_t v) {
-  if (rdvalue_is<std::string>(v)) return *v.ptrCast<std::string>();
+  if (rdvalue_is<std::string>(v)) {
+    return *v.ptrCast<std::string>();
+  }
   throw boost::bad_any_cast();
 }
 
 // Special Vecor Casts
 template <>
 inline std::vector<double> rdvalue_cast<std::vector<double>>(RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<double>>(v))
+  if (rdvalue_is<std::vector<double>>(v)) {
     return *v.ptrCast<std::vector<double>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<double> &rdvalue_cast<std::vector<double> &>(
     RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<double>>(v))
+  if (rdvalue_is<std::vector<double>>(v)) {
     return *v.ptrCast<std::vector<double>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<float> rdvalue_cast<std::vector<float>>(RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<float>>(v))
+  if (rdvalue_is<std::vector<float>>(v)) {
     return *v.ptrCast<std::vector<float>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<float> &rdvalue_cast<std::vector<float> &>(
     RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<float>>(v))
+  if (rdvalue_is<std::vector<float>>(v)) {
     return *v.ptrCast<std::vector<float>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<std::string> rdvalue_cast<std::vector<std::string>>(
     RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<std::string>>(v))
+  if (rdvalue_is<std::vector<std::string>>(v)) {
     return *v.ptrCast<std::vector<std::string>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<std::string> &rdvalue_cast<std::vector<std::string> &>(
     RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<std::string>>(v))
+  if (rdvalue_is<std::vector<std::string>>(v)) {
     return *v.ptrCast<std::vector<std::string>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<int> rdvalue_cast<std::vector<int>>(RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<int>>(v)) return *v.ptrCast<std::vector<int>>();
+  if (rdvalue_is<std::vector<int>>(v)) {
+    return *v.ptrCast<std::vector<int>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<int> &rdvalue_cast<std::vector<int> &>(RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<int>>(v)) return *v.ptrCast<std::vector<int>>();
+  if (rdvalue_is<std::vector<int>>(v)) {
+    return *v.ptrCast<std::vector<int>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<unsigned int> rdvalue_cast<std::vector<unsigned int>>(
     RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<unsigned int>>(v))
+  if (rdvalue_is<std::vector<unsigned int>>(v)) {
     return *v.ptrCast<std::vector<unsigned int>>();
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::vector<unsigned int> &rdvalue_cast<std::vector<unsigned int> &>(
     RDValue_cast_t v) {
-  if (rdvalue_is<std::vector<unsigned int>>(v))
+  if (rdvalue_is<std::vector<unsigned int>>(v)) {
     return *v.ptrCast<std::vector<unsigned int>>();
+  }
   throw boost::bad_any_cast();
 }
 

@@ -316,7 +316,9 @@ bool removedParentInHierarchy(
     const boost::dynamic_bitset<> &toRemove,
     const std::map<unsigned int, unsigned int> &indexLookup) {
   PRECONDITION(idx < sgs.size(), "cannot find SubstanceGroup");
-  if (toRemove[idx]) return true;
+  if (toRemove[idx]) {
+    return true;
+  }
 
   unsigned int parent;
   if (sgs[idx].getPropIfPresent("PARENT", parent)) {

@@ -17,6 +17,7 @@
 #ifndef _RD_SGROUP_H
 #define _RD_SGROUP_H
 
+#include <utility>
 #include <unordered_map>
 
 #include <Geometry/point.h>
