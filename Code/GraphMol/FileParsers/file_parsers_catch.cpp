@@ -4418,3 +4418,96 @@ M  END
     REQUIRE_THROWS_AS(mol.reset(MolBlockToMol(mb)), FileParseException);
   }
 }
+
+TEST_CASE("Github #5108: Wiggly bonds don't override wedged bonds") {
+  SECTION("as reported") {
+    auto m = R"CTAB(
+  Mrv2102 03212207042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.54 -1.54 0 0
+M  V30 2 C 1.54 0 0 0
+M  V30 3 O 1.54 1.54 0 0
+M  V30 4 F 3.08 -0 0 0
+M  V30 5 Cl 0 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 3 CFG=2
+M  V30 3 1 2 4 CFG=1
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("as reported, bond ordering changed") {
+    auto m = R"CTAB(
+  Mrv2102 03212207042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.54 -1.54 0 0
+M  V30 2 C 1.54 0 0 0
+M  V30 3 O 1.54 1.54 0 0
+M  V30 4 F 3.08 -0 0 0
+M  V30 5 Cl 0 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 4 CFG=1
+M  V30 3 1 2 3 CFG=2
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("assignChiralTypesFromBondDirs details") {
+    auto m = R"CTAB(
+  Mrv2102 03212207042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.54 -1.54 0 0
+M  V30 2 C 1.54 0 0 0
+M  V30 3 O 1.54 1.54 0 0
+M  V30 4 F 3.08 -0 0 0
+M  V30 5 Cl 0 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 1 2 4 CFG=1
+M  V30 3 1 2 3
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    m->getBondBetweenAtoms(1, 2)->setBondDir(Bond::BondDir::UNKNOWN);
+    bool replaceExistingTags = false;
+    MolOps::assignChiralTypesFromBondDirs(*m, -1, replaceExistingTags);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    replaceExistingTags = true;
+    MolOps::assignChiralTypesFromBondDirs(*m, -1, replaceExistingTags);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
