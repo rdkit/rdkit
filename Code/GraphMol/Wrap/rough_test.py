@@ -6787,8 +6787,10 @@ CAS<~>
                              'good1_good2_bad_good3.sdf',
                              'bad_good1_good2_good3.sdf')):
         print(f'---------------\n{s.__name__} {f}')
-        if i == 0: counts.append(read_mols(s, f))
-        else: assert counts[j] == read_mols(s, f), f"Failed {s} count should be {counts[j]}"
+        if i == 0: 
+          counts.append(read_mols(s, f))
+        else: 
+          self.assertEqual(counts[j], read_mols(s, f))
         
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
