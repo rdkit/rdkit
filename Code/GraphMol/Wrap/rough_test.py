@@ -6766,9 +6766,9 @@ CAS<~>
       w.write(good3)
 
     with Chem.SDWriter("bad_good1_good2_good3.sdf") as w:
+      w.write(bad)
       w.write(good1)
       w.write(good2)
-      w.write(bad)
       w.write(good3)
 
     def read_mols(supplier, filename):
