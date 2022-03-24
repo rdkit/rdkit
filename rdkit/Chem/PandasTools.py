@@ -117,7 +117,7 @@ from rdkit.Chem import Draw
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from rdkit.Chem.Draw.IPythonConsole import generateStructureRendererHTMLBody, injectHTMLHeaderBeforeTable
+from rdkit.Chem.Draw.IPythonConsole import InteractiveRenderer
 from io import BytesIO
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
@@ -168,9 +168,6 @@ except Exception as e:
 highlightSubstructures = True
 molRepresentation = 'png'  # supports also SVG
 molSize = (200, 200)
-structureRendererSize = (300, 200)
-style_regex = re.compile("^(.*style=[\"'].*)([\"'].*)$")
-style_tags = "text-align: center;"
 
 def getAdjustmentAttr():
   # Github #3701 was a problem with a private function being renamed (made public) in
@@ -180,6 +177,10 @@ def getAdjustmentAttr():
 
 
 def _patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
+  if not hasattr(_patched_HTMLFormatter_write_cell, 'styleRegex'):
+    _patched_HTMLFormatter_write_cell.styleRegex = re.compile("^(.*style=[\"'].*)([\"'].*)$")
+  styleTags = "text-align: center;"
+  styleRegex = _patched_HTMLFormatter_write_cell.styleRegex
   def_escape = self.escape
   try:
     if is_molecule_image(s):
@@ -187,13 +188,13 @@ def _patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
       kind = kwargs.get('kind', None)
       if kind == 'td':
         tags = kwargs.get('tags', None) or ''
-        match = style_regex.match(tags)
+        match = styleRegex.match(tags)
         if match:
-          tags = style_regex.sub(f'\\1 {style_tags}\\2', tags)
+          tags = styleRegex.sub(f'\\1 {styleTags}\\2', tags)
         else:
           if tags:
             tags += ' '
-          tags += f'style="{style_tags}"'
+          tags += f'style="{styleTags}"'
         kwargs['tags'] = tags
 
     return defHTMLFormatter_write_cell(self, s, *args, **kwargs)
@@ -275,7 +276,7 @@ def patchPandasHTMLrepr(self, **kwargs):
     # patch methods and call original to_html function
     setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
     pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-    return injectHTMLHeaderBeforeTable(defPandasRendering(self, **kwargs))
+    return InteractiveRenderer.injectHTMLHeaderBeforeTable(defPandasRendering(self, **kwargs))
   except Exception:
     pass
   finally:
@@ -384,9 +385,9 @@ def PrintAsBase64PNGString(x, renderer=None):
   # except ValueError:
   #     rdDepictor.Compute2DCoords(x)
   useSvg = (molRepresentation.lower() == 'svg')
-  if hasattr(x, '__structureRenderer'):
-    size = [max(30, s) for s in structureRendererSize]
-    return generateStructureRendererHTMLBody(useSvg, x, size)
+  if InteractiveRenderer.isEnabled(x):
+    size = [max(30, s) for s in molSize]
+    return InteractiveRenderer.generateHTMLBody(useSvg, x, size)
   else:
     if useSvg:
       svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
@@ -720,7 +721,7 @@ def RGroupDecompositionToFrame(groups, mols, include_core=False, redraw_sidechai
   >>> import pandas as pd
   >>> scaffold = Chem.MolFromSmiles('c1ccccn1')
   >>> mols = [Chem.MolFromSmiles(smi) for smi in 'c1c(F)cccn1 c1c(Cl)c(C)ccn1 c1c(O)cccn1 c1c(F)c(C)ccn1 c1cc(Cl)c(F)cn1'.split()]
-  >>> groups,_ = rdRGroupDecomposition.RGroupDecompose([scaffold],mols,asSmiles=False,asRows=False) 
+  >>> groups,_ = rdRGroupDecomposition.RGroupDecompose([scaffold],mols,asSmiles=False,asRows=False)
   >>> df = PandasTools.RGroupDecompositionToFrame(groups,mols,include_core=True)
   >>> list(df.columns)
   ['Mol', 'Core', 'R1', 'R2']
