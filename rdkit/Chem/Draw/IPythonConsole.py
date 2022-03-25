@@ -7,7 +7,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from IPython.display import SVG
 from xml.dom import minidom
 import uuid
 import json

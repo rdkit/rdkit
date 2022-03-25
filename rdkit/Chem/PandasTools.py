@@ -117,7 +117,11 @@ from rdkit.Chem import Draw
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
-from rdkit.Chem.Draw.IPythonConsole import InteractiveRenderer
+try:
+  from rdkit.Chem.Draw.IPythonConsole import InteractiveRenderer
+except ImportError:
+  InteractiveRenderer = None
+
 from io import BytesIO
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
@@ -276,7 +280,9 @@ def patchPandasHTMLrepr(self, **kwargs):
     # patch methods and call original to_html function
     setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
     pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-    return InteractiveRenderer.injectHTMLHeaderBeforeTable(defPandasRendering(self, **kwargs))
+    res = defPandasRendering(self, **kwargs)
+    return (InteractiveRenderer.injectHTMLHeaderBeforeTable(res)
+      if InteractiveRenderer and InteractiveRenderer.isEnabled() else res)
   except Exception:
     pass
   finally:
@@ -385,7 +391,7 @@ def PrintAsBase64PNGString(x, renderer=None):
   # except ValueError:
   #     rdDepictor.Compute2DCoords(x)
   useSvg = (molRepresentation.lower() == 'svg')
-  if InteractiveRenderer.isEnabled(x):
+  if InteractiveRenderer and InteractiveRenderer.isEnabled(x):
     size = [max(30, s) for s in molSize]
     return InteractiveRenderer.generateHTMLBody(useSvg, x, size)
   else:
