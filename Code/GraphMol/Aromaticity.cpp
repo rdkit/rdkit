@@ -797,7 +797,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     //   all atoms are candidates to be aromatic
     //     OR
     //   at least three members are candidates to be aromatic AND all of the
-    //     non-candidates are in at least three fused rings
+    //     non-candidates are in at least two fused rings
     //   This last condition is there to handle the molecule
     //      C1=CC2=CC3=CC=C4C=C1C2C34
     //   where the outer envelope is aromatic, but all of the sub-rings have SP3
