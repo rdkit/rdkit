@@ -1,5 +1,6 @@
 #
-#  Copyright (C) 2022 Paolo Tosco and other RDKit contributors
+#  Copyright (C) 2022 Novartis Institute of BioMedical Research
+#  and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -84,17 +85,17 @@ def setEnabled():
 <div
 class="lm-Widget p-Widget jp-RenderedText jp-mod-trusted jp-OutputArea-output"
 id="{div_uuid}"
->Loading rdkit-structure-renderer.js</div>
+>Loading rdkit-structure-renderer.js...</div>
 <script type="module">
 const jsLoader = document.getElementById('{div_uuid}') || {{}};
 const setError = e => jsLoader.innerHTML = 'Failed to load rdkit-structure-renderer.js:<br>' +
 e.toString() + '<br>' +
-'Interactive molecule rendering will not be available in this Jupyter Notebook.<br>'
+'Interactive molecule rendering will not be available in this Jupyter Notebook.'
 try {{
 import('{rdkitStructureRendererJsUrl}').then(
   ({{ default: Renderer }}) =>
     Renderer.init('{minimalLibJsUrl}').then(
-      () => jsLoader.innerHTML = 'Using rdkit-structure-renderer.js'
+      () => jsLoader.innerHTML = 'Interactive molecule rendering is available in this Jupyter Notebook.'
     ).catch(
       e => setError(e)
     )
