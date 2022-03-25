@@ -527,6 +527,10 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
     }
   }
 
+  if (queryIsAtomBridgehead(at)) {
+    return false;
+  }
+
   return (true);
 }
 
