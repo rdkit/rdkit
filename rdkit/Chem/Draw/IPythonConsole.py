@@ -7,10 +7,6 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from xml.dom import minidom
-import uuid
-import json
-import re
 import base64
 import copy
 import warnings
@@ -20,6 +16,7 @@ from IPython.display import HTML, SVG
 from rdkit import Chem
 from rdkit.Chem import Draw, rdchem, rdChemReactions
 from rdkit.Chem.Draw import rdMolDraw2D
+from . import InteractiveRenderer
 
 if IPython.release.version < '0.11':
   raise ImportError('this module requires at least v0.11 of IPython')
@@ -44,277 +41,7 @@ molSize_3d = (400, 400)
 drawing_type_3d = 'stick'  # default drawing type for 3d structures
 bgcolor_3d = '0xeeeeee'
 drawOptions = rdMolDraw2D.MolDrawOptions()
-
-class InteractiveRenderer:
-  """ Interactive molecule rendering through rdkit-structure-renderer.js """
-
-  rdkitStructureRendererJsUrl = "https://unpkg.com/rdkit-structure-renderer/dist/rdkit-structure-renderer-module.js"
-  minimalLibJsUrl = "https://unpkg.com/rdkit-structure-renderer/public/RDKit_minimal.js"
-  parentNodeQuery = "div[class*=jp-NotebookPanel-notebook]"
-  _enabled = False
-  _camelCaseOptToTagRe = re.compile("[A-Z]")
-  _opts = "__rnrOpts"
-  _disabled = "_disabled"
-  _defaultDrawOptions = None
-
-  @staticmethod
-  def _isAcceptedKeyValue(key, value):
-    return not key.startswith("__") and (
-      type(value) in (bool, int, float, str, tuple, list) or (
-        callable(value) and key.startswith("get")
-      )
-    )
-
-  @staticmethod
-  def _getValueFromKey(d, key):
-    value = getattr(d, key)
-    return value() if callable(value) else value
-
-  @classmethod
-  def _molDrawOptionsToDict(cls, molDrawOptions=rdMolDraw2D.MolDrawOptions()):
-    return {key: cls._getValueFromKey(molDrawOptions, key) for key in dir(molDrawOptions)
-      if cls._isAcceptedKeyValue(key, getattr(molDrawOptions, key))}
-
-  @classmethod
-  def _isDrawOptionEqual(cls, v1, v2):
-    if type(v1) != type(v2):
-      return False
-    if type(v1) in (tuple, list):
-      if len(v1) != len(v2):
-        return False
-      return all(cls._isDrawOptionEqual(item1, v2[i]) for i, item1 in enumerate(v1))
-    if type(v1) == float:
-      return abs(v1 - v2) < 1.e-5
-    return v1 == v2
-
-  @classmethod
-  def filterDefaultDrawOpts(cls, molDrawOptions):
-    if not isinstance(molDrawOptions, rdMolDraw2D.MolDrawOptions):
-      raise ValueError(f"Bad args for {cls.__name__}.filterDefaultDrawOpts("
-        "molDrawOptions: Chem.Draw.rdMolDraw2D.MolDrawOptions)")
-    molDrawOptionsAsDict = cls._molDrawOptionsToDict(molDrawOptions)
-    if (cls._defaultDrawOptions is None):
-      cls._defaultDrawOptions = cls._molDrawOptionsToDict()
-    return {key: value for key, value in molDrawOptionsAsDict.items()
-      if not cls._isDrawOptionEqual(value, cls._defaultDrawOptions[key])}
-
-  @classmethod
-  def setEnabled(cls):
-    """ Enable interactive molecule rendering """
-    if cls._enabled:
-      return
-    cls._enabled = True
-    div_uuid = str(uuid.uuid1())
-    return HTML(f"""\
-<div
-  class="lm-Widget p-Widget jp-RenderedText jp-mod-trusted jp-OutputArea-output"
-  id="{div_uuid}"
->Loading rdkit-structure-renderer.js</div>
-<script type="module">
-const jsLoader = document.getElementById('{div_uuid}') || {{}};
-const setError = e => jsLoader.innerHTML = 'Failed to load rdkit-structure-renderer.js:<br>' +
-  e.toString() + '<br>' +
-  'Interactive molecule rendering will not be available in this Jupyter Notebook.<br>'
-try {{
-  import('{cls.rdkitStructureRendererJsUrl}').then(
-    ({{ default: Renderer }}) =>
-      Renderer.init('{cls.minimalLibJsUrl}').then(
-        () => jsLoader.innerHTML = 'Using rdkit-structure-renderer.js'
-      ).catch(
-        e => setError(e)
-      )
-    ).catch(
-      e => setError(e)
-    );
-}} catch(e) {{
-  setError(e);
-}}
-</script>""")
-
-  @classmethod
-  def isEnabled(cls, mol=None):
-    return cls._enabled and (mol is None or not cls.isNoInteractive(mol))
-
-  @classmethod
-  def getOpts(cls, mol):
-    if not isinstance(mol, Chem.Mol):
-      raise ValueError(f"Bad args for {cls.__name__}.getOpts(mol: Chem.Mol)")
-    opts = {}
-    if hasattr(mol, cls._opts):
-      opts = getattr(mol, cls._opts)
-      if not isinstance(opts, dict):
-        opts = {}
-    return opts
-
-  @classmethod
-  def setOpts(cls, mol, opts):
-    if not isinstance(mol, Chem.Mol) or not isinstance(opts, dict):
-      raise ValueError(f"Bad args for {cls.__name__}.setOpts(mol: Chem.Mol, opts: dict)")
-    if not all(opts.keys()):
-      raise ValueError(f"{cls.__name__}.setOpts(mol: Chem.Mol, opts: dict): no key in opts should be null")
-    if opts:
-      setattr(mol, cls._opts, opts)
-    else:
-      delattr(mol, cls._opts)
-
-  @classmethod
-  def setOpt(cls, mol, key, value):
-    if not isinstance(mol, Chem.Mol) or not isinstance(key, str) or not key:
-      raise ValueError(f"Bad args for {cls.__name__}.setOpt(mol: Chem.Mol, key: str, value: Any)")
-    opts = cls.getOpts(cls, mol)
-    opts[key] = value
-    cls.setOpts(mol, opts)
-
-  @classmethod
-  def clearOpts(cls, mol):
-    if not isinstance(mol, Chem.Mol):
-      raise ValueError(f"Bad args for {cls.__name__}.clearOpts(mol: Chem.Mol)")
-    cls.setOpts(mol, {})
-
-  @classmethod
-  def clearOpt(cls, mol, key):
-    if not isinstance(mol, Chem.Mol) or not isinstance(key, str):
-      raise ValueError(f"Bad args for {cls.__name__}.clearOpt(mol: Chem.Mol, key: str)")
-    opts = cls.getOpts(cls, mol)
-    if key in opts:
-      opts.pop(key)
-    cls.setOpts(mol, opts)
-
-  @classmethod
-  def setNoInteractive(cls, mol, shouldSet=True):
-    opts = cls.getOpts(mol)
-    if shouldSet:
-      opts[cls._disabled] = True
-    elif cls._disabled in opts:
-      opts.pop(cls._disabled)
-    cls.setOpts(mol, opts)
-
-  @classmethod
-  def isNoInteractive(cls, mol):
-    opts = cls.getOpts(mol)
-    return cls._disabled in opts
-
-  @classmethod
-  def injectHTMLHeaderBeforeTable(cls, html):
-    doc = minidom.parseString(html.replace(" scoped", ""))
-    table = doc.getElementsByTagName("table")
-    if len(table) != 1:
-      return html
-    table = table.pop(0)
-    tbody = table.getElementsByTagName("tbody")
-    if tbody:
-      if len(tbody) != 1:
-        return html
-      tbody = tbody.pop(0)
-    else:
-      tbody = table
-    div_list = tbody.getElementsByTagName("div")
-    if any(div.getAttribute("class") == "rdk-str-rnr-mol-container" for div in div_list):
-      return cls.generateHTMLHeader(doc, table)
-    return html
-
-  @classmethod
-  def wrapHTMLIntoTable(cls, html):
-    return cls.injectHTMLHeaderBeforeTable(
-      f'<div><table><tbody><tr><td style="width: {molSize[0]}px; ' +
-      f'height: {molSize[1]}px; text-align: center;">' +
-      html.replace(" scoped", "") +
-      '</td></tr></tbody></table></div>')
-
-  @classmethod
-  def generateHTMLHeader(cls, doc, element):
-    element_parent = element.parentNode
-    script = doc.createElement("script")
-    script.setAttribute("type", "module")
-    # avoid arrow function as minidom encodes => into HTML (grrr)
-    # Also use single quotes to avoid the &quot; encoding
-    cmd = doc.createTextNode(f"""\
-try {{
-  import('{cls.rdkitStructureRendererJsUrl}').then(
-    function({{ default: Renderer }}) {{
-      Renderer.init('{cls.minimalLibJsUrl}').then(
-        function(Renderer) {{
-          Renderer.updateMolDrawDivs();
-        }}
-      ).catch()
-    }}
-  ).catch();
-}} catch {{}}""")
-    script.appendChild(cmd)
-    element_parent.appendChild(script)
-    html = doc.toxml()
-    return html
-
-  @staticmethod
-  def newlineToXml(molblock):
-    return molblock.replace("\n", "<\\n>")
-
-  @staticmethod
-  def xmlToNewline(xmlblock):
-    return xmlblock.replace("&lt;\\n&gt;", "&#10;")
-
-  @classmethod
-  def toDataMol(cls, mol):
-    return (mol.GetNumConformers() and
-      cls.newlineToXml(Chem.MolToMolBlock(mol)) or
-      Chem.MolToSmiles(mol))
-
-  @staticmethod
-  def _dashLower(m):
-    return "-" + m.group(0).lower()
-
-  @classmethod
-  def camelCaseOptToDataTag(cls, opt):
-    tag = cls._camelCaseOptToTagRe.sub(cls._dashLower, opt)
-    if not tag.startswith("data-"):
-      tag = "data-" + tag
-    return tag
-
-  @classmethod
-  def generateHTMLBody(cls, useSvg, mol, size):
-    doc = minidom.Document()
-    unique_id = str(uuid.uuid1())
-    div = doc.createElement("div")
-    for key, value in [
-      ("style", f"width: {size[0]}px; height: {size[1]}px;"),
-      ("class", "rdk-str-rnr-mol-container"),
-      ("id", f"rdk-str-rnr-mol-{unique_id}"),
-      ("data-mol", cls.toDataMol(mol)),
-      ("data-content", "rdkit/molecule"),
-      ("data-parent-node", cls.parentNodeQuery),
-    ]:
-      div.setAttribute(key, value)
-    userDrawOpts = cls.filterDefaultDrawOpts(drawOptions)
-    molOpts = cls.getOpts(mol)
-    molOptsDashed = {}
-    for key, value in molOpts.items():
-      keyDashed = cls.camelCaseOptToDataTag(key)
-      if keyDashed == "data-draw-opts":
-        if isinstance(value, str):
-          value = json.loads(value)
-        if not isinstance(value, dict):
-          raise ValueError(f"data-draw-opts: expected dict, found {str(type(value))}")
-        userDrawOpts.update(value)
-      else:
-        molOptsDashed[keyDashed] = value
-    if "addAtomIndices" in userDrawOpts:
-      addAtomIndices = userDrawOpts["addAtomIndices"]
-      if addAtomIndices:
-        molOptsDashed["data-atom-idx"] = True
-      userDrawOpts.pop('addAtomIndices')
-    for key, value in molOptsDashed.items():
-      if isinstance(value, Chem.Mol):
-        value = cls.toDataMol(value)
-      elif not isinstance(value, str):
-        value = json.dumps(value, separators=(',', ':'))
-      div.setAttribute(key, value)
-    if userDrawOpts:
-      div.setAttribute("data-draw-opts", json.dumps(userDrawOpts, separators=(',', ':')))
-    if useSvg:
-      div.setAttribute("data-use-svg", "true")
-    doc.appendChild(div)
-    return cls.xmlToNewline(div.toxml())
-
+InteractiveRenderer._defaultDrawOptions = drawOptions
 
 def addMolToView(mol, view, confId=-1, drawAs=None):
   if mol.GetNumAtoms() >= 999 or drawAs == 'cartoon':
@@ -364,6 +91,13 @@ def _toJSON(mol):
   return ""
 
 
+def _wrapHTMLIntoTable(html):
+  return InteractiveRenderer.injectHTMLHeaderBeforeTable(f'<div><table><tbody><tr><td style="width: {molSize[0]}px; ' +
+                                     f'height: {molSize[1]}px; text-align: center;">' +
+                                     html.replace(" scoped", "") +
+                                     '</td></tr></tbody></table></div>')
+
+
 def _toHTML(mol):
   useInteractiveRenderer = InteractiveRenderer.isEnabled(mol)
   if _canUse3D and ipython_3d and mol.GetNumConformers():
@@ -371,8 +105,8 @@ def _toHTML(mol):
   props = mol.GetPropsAsDict()
   if not ipython_showProperties or not props:
     if useInteractiveRenderer:
-      return InteractiveRenderer.wrapHTMLIntoTable(
-        InteractiveRenderer.generateHTMLBody(ipython_useSVG, mol, molSize))
+      return _wrapHTMLIntoTable(
+        InteractiveRenderer.generateHTMLBody(ipython_useSVG, mol, molSize, drawOptions))
     else:
       return _toSVG(mol)
   if mol.HasProp('_Name'):
@@ -387,14 +121,19 @@ def _toHTML(mol):
     if not ipython_useSVG:
       png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
       png = base64.b64encode(png)
-      res.append(f'<tr><td colspan=2 style="text-align:center"><image src="data:image/png;base64,{png.decode()}"></td></tr>')
+      res.append(
+        f'<tr><td colspan=2 style="text-align:center"><image src="data:image/png;base64,{png.decode()}"></td></tr>'
+      )
     else:
-      content = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures, drawOptions=drawOptions)
+      content = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures,
+                               drawOptions=drawOptions)
   res.append(f'<tr><td colspan=2 style="text-align:center">{content}</td></tr>')
 
-  for i,(pn, pv) in enumerate(props.items()):
+  for i, (pn, pv) in enumerate(props.items()):
     if ipython_maxProperties >= 0 and i >= ipython_maxProperties:
-      res.append('<tr><td colspan=2 style="text-align:center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>')
+      res.append(
+        '<tr><td colspan=2 style="text-align:center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>'
+      )
       break
     res.append(
       f'<tr><th style="text-align:right">{pn}</th><td style="text-align:left">{pv}</td></tr>')
