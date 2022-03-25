@@ -2628,3 +2628,39 @@ TEST_CASE("Github #5055") {
     REQUIRE(m);
   }
 }
+
+TEST_CASE("Github #5134: Fused ring system not perceived as aromatic") {
+  SECTION("as reported") {
+    auto m = "C1=CC2=CC3=CC=C4C=C1C2C34"_smiles;
+    REQUIRE(m);
+    for (auto i = 0u; i < 10; ++i) {
+      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+  }
+  SECTION("Related") {
+    auto m = "C1=CC2=CC=C3C=CC=C4C=CC(=C1)C2C34"_smiles;
+    REQUIRE(m);
+    for (auto i = 0u; i < 14; ++i) {
+      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+  }
+  SECTION("trickier") {
+    auto m = "C1=CC2=CC=C3C=CC4=CC=C5C=CC=C6C5C4C3C2C6=C1"_smiles;
+    REQUIRE(m);
+    for (auto i = 0u; i < 16; ++i) {
+      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+    CHECK(m->getAtomWithIdx(20)->getIsAromatic());
+  }
+  SECTION("some edge cases where the new rule does not apply") {
+    std::vector<std::string> smis = {"C1CC2C=C3C=CC4=CC1C2C34",
+                                     "C1C=C2C=CC3=CC=C1C23"};
+    for (const auto &smi : smis) {
+      std::unique_ptr<ROMol> mol(SmilesToMol(smi));
+      REQUIRE(mol);
+      for (auto atom : mol->atoms()) {
+        CHECK(!atom->getIsAromatic());
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -290,6 +290,7 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
   if (ring.size() < minRingSize) {
     return false;
   }
+
   int atlw, atup, rlw, rup, rie;
   bool aromatic = false;
   rlw = 0;
@@ -302,6 +303,9 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
       if (nAnyElectronDonorType > 1) {
         return false;
       }
+    } else if (edonType == NoElectronDonorType) {
+      // if the ring includes atoms which can't be aromatic we can just skip it
+      return false;
     }
     getMinMaxAtomElecs(edonType, atlw, atup);
     rlw += atlw;
@@ -319,9 +323,11 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
     aromatic = true;
   }
 #if 0
-    std::cerr <<" ring: ";
-    std::copy(ring.begin(),ring.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr <<" rlw: "<<rlw<<" rup: "<<rup<<" aromatic? "<<aromatic<<std::endl;
+  std::cerr << " ring: ";
+  std::copy(ring.begin(), ring.end(),
+            std::ostream_iterator<int>(std::cerr, " "));
+  std::cerr << " rlw: " << rlw << " rup: " << rup << " aromatic? " << aromatic
+            << std::endl;
 #endif
   return aromatic;
 }
@@ -395,7 +401,6 @@ void applyHuckelToFused(
     if (ringNeighs.size() && !RingUtils::checkFused(curRs, ringNeighs)) {
       continue;
     }
-
     // check aromaticity on the current fused system
     INT_VECT atsInRingSystem(mol.getNumAtoms(), 0);
     for (auto ridx : curRs) {
@@ -788,7 +793,17 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       continue;
     }
 
-    bool allAromatic = true;
+    // conditions for a ring/fused ring to be considered for aromaticity here:
+    //   all atoms are candidates to be aromatic
+    //     OR
+    //   at least three members are candidates to be aromatic AND all of the
+    //     non-candidates are in at least three fused rings
+    //   This last condition is there to handle the molecule
+    //      C1=CC2=CC3=CC=C4C=C1C2C34
+    //   where the outer envelope is aromatic, but all of the sub-rings have SP3
+    //   carbons in them. (This was github #5134)
+    unsigned int numNonAromatic = 0;
+    bool nonCandidatesInFusedRings = true;
     bool allDummy = true;
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
@@ -799,7 +814,10 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
 
       if (aseen[firstIdx]) {
         if (!acands[firstIdx]) {
-          allAromatic = false;
+          ++numNonAromatic;
+          nonCandidatesInFusedRings =
+              nonCandidatesInFusedRings &&
+              (mol.getRingInfo()->numAtomRings(firstIdx) >= 2);
         }
         continue;
       }
@@ -812,10 +830,15 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       edon[firstIdx] = getAtomDonorTypeArom(at);
       acands[firstIdx] = isAtomCandForArom(at, edon[firstIdx]);
       if (!acands[firstIdx]) {
-        allAromatic = false;
+        ++numNonAromatic;
+        nonCandidatesInFusedRings =
+            nonCandidatesInFusedRings &&
+            (mol.getRingInfo()->numAtomRings(firstIdx) >= 2);
       }
     }
-    if (allAromatic && !allDummy) {
+    if (!allDummy &&
+        (!numNonAromatic ||
+         ((sring.size() - numNonAromatic) >= 2 && nonCandidatesInFusedRings))) {
       cRings.push_back(sring);
     }
   }
