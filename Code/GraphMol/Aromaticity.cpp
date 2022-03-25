@@ -796,7 +796,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     // conditions for a ring/fused ring to be considered for aromaticity here:
     //   all atoms are candidates to be aromatic
     //     OR
-    //   at least three members are candidates to be aromatic AND all of the
+    //   at least two members are candidates to be aromatic AND all of the
     //     non-candidates are in at least two fused rings
     //   This last condition is there to handle the molecule
     //      C1=CC2=CC3=CC=C4C=C1C2C34
