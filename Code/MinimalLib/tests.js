@@ -518,8 +518,6 @@ M  END
         "atomProp:6.dummyLabel.R1:7.dummyLabel.R2|");
 }
 
-<<<<<<< HEAD
-=======
 function test_normalize_depiction() {
     var mol = RDKitModule.get_mol(`
   MJ201100                      
@@ -618,7 +616,6 @@ function test_sanitize() {
     assert(mol.is_valid());
 }
 
->>>>>>> origin/master
 function test_flexicanvas() {
     
     var mol = RDKitModule.get_mol("CCCC");
@@ -665,14 +662,11 @@ initRDKitModule().then(function(instance) {
     test_get_mol_no_kekulize();
     test_get_smarts();
     test_get_cxsmarts();
-<<<<<<< HEAD
-=======
     test_has_coords();
     test_kekulize();
     test_sanitize();
     test_normalize_depiction();
     test_straighten_depiction();
->>>>>>> origin/master
     test_flexicanvas();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
