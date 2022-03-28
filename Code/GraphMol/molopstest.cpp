@@ -226,6 +226,8 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->bondRingSizes(99).empty());
   TEST_ASSERT(m->getRingInfo()->bondMembers(0).size() == 1);
   TEST_ASSERT(m->getRingInfo()->bondMembers(1).empty());
+  TEST_ASSERT(!m->getRingInfo()->isRingFused(0));
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(0) == 0);
   TEST_ASSERT(
       !m->getRingInfo()->numBondRings(m->getBondBetweenAtoms(1, 2)->getIdx()));
   BOOST_LOG(rdInfoLog) << smi << "\n";
@@ -265,7 +267,11 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).size() == 2);
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(0) == 0);
   TEST_ASSERT(m->getRingInfo()->atomMembers(2).at(1) == 1);
-  BOOST_LOG(rdInfoLog) << smi << "\n";
+  TEST_ASSERT(m->getRingInfo()->isRingFused(0));
+  TEST_ASSERT(m->getRingInfo()->isRingFused(1));
+  TEST_ASSERT(m->getRingInfo()->areRingsFused(0, 1));
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(0) == 2);
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(1) == 2);
   delete m;
 
   smi = "C(C1C2C3C41)(C2C35)C45";  // cubane
@@ -294,6 +300,10 @@ void test3() {
     BOOST_LOG(rdInfoLog) << ")\n";
   }
   BOOST_LOG(rdInfoLog) << smi << "\n";
+  for (unsigned int i = 0; i < m->getRingInfo()->numRings(); ++i) {
+    TEST_ASSERT(m->getRingInfo()->isRingFused(i));
+    TEST_ASSERT(m->getRingInfo()->numFusedBonds(i) == 4);
+  }
 
   delete m;
 
@@ -428,6 +438,11 @@ void test3() {
   TEST_ASSERT(m->getRingInfo()->areBondsInSameRingOfSize(2, 5, 3));
   TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(1, 2, 3));
   TEST_ASSERT(!m->getRingInfo()->areBondsInSameRingOfSize(1, 3, 4));
+  TEST_ASSERT(m->getRingInfo()->isRingFused(0));
+  TEST_ASSERT(m->getRingInfo()->isRingFused(1));
+  TEST_ASSERT(m->getRingInfo()->areRingsFused(0, 1));
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(0) == 1);
+  TEST_ASSERT(m->getRingInfo()->numFusedBonds(1) == 1);
   delete m;
 
   // This is a test of Issue 217

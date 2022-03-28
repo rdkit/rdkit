@@ -112,19 +112,19 @@ namespace FMCS {
 //#define VERBOSE_STATISTICS_FASTCALLS_ON
 
 struct ExecStatistics {
-  unsigned TotalSteps{0}, MCSFoundStep{0};
+  unsigned int TotalSteps{0}, MCSFoundStep{0};
   unsigned long long MCSFoundTime;
-  unsigned InitialSeed{0}, MismatchedInitialSeed{0};
-  unsigned Seed{0}, RemainingSizeRejected{0};
-  unsigned SeedCheck{0}, SingleBondExcluded{0};
-  unsigned MatchCall{0}, MatchCallTrue{0};
-  unsigned FastMatchCall{0}, FastMatchCallTrue{0}, SlowMatchCallTrue{0};
-  unsigned ExactMatchCall{0}, ExactMatchCallTrue{0};  // hash cache
-  unsigned FindHashInCache{0}, HashKeyFoundInCache{0};
-  unsigned AtomCompareCalls{0}, BondCompareCalls{0};  // long long
-  unsigned AtomFunctorCalls{0}, BondFunctorCalls{0};  // long long
-  unsigned WrongCompositionRejected{0}, WrongCompositionDetected{0};
-  unsigned DupCacheFound{0}, DupCacheFoundMatch{0};
+  unsigned int InitialSeed{0}, MismatchedInitialSeed{0};
+  unsigned int Seed{0}, RemainingSizeRejected{0};
+  unsigned int SeedCheck{0}, SingleBondExcluded{0};
+  unsigned int MatchCall{0}, MatchCallTrue{0};
+  unsigned int FastMatchCall{0}, FastMatchCallTrue{0}, SlowMatchCallTrue{0};
+  unsigned int ExactMatchCall{0}, ExactMatchCallTrue{0};  // hash cache
+  unsigned int FindHashInCache{0}, HashKeyFoundInCache{0};
+  unsigned int AtomCompareCalls{0}, BondCompareCalls{0};  // long long
+  unsigned int AtomFunctorCalls{0}, BondFunctorCalls{0};  // long long
+  unsigned int WrongCompositionRejected{0}, WrongCompositionDetected{0};
+  unsigned int DupCacheFound{0}, DupCacheFoundMatch{0};
 
   ExecStatistics() : MCSFoundTime(nanoClock()) {}
 };

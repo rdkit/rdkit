@@ -16,6 +16,7 @@
 #include "Graph.h"
 
 namespace RDKit {
+
 struct MCSParameters;
 
 typedef enum {
@@ -102,10 +103,15 @@ RDKIT_FMCS_EXPORT bool MCSAtomCompareIsotopes(
 RDKIT_FMCS_EXPORT bool checkBondStereo(const MCSBondCompareParameters& p,
                                        const ROMol& mol1, unsigned int bond1,
                                        const ROMol& mol2, unsigned int bond2);
+
+RDKIT_FMCS_EXPORT bool havePairOfCompatibleRings(
+    const MCSBondCompareParameters& p, const ROMol& mol1, unsigned int bond1,
+    const ROMol& mol2, unsigned int bond2);
+
 RDKIT_FMCS_EXPORT bool checkBondRingMatch(const MCSBondCompareParameters& p,
                                           const ROMol& mol1, unsigned int bond1,
-                                          const ROMol& mol2, unsigned int bond2,
-                                          void* v_ringMatchMatrixSet);
+                                          const ROMol& mol2,
+                                          unsigned int bond2);
 
 RDKIT_FMCS_EXPORT bool MCSBondCompareAny(const MCSBondCompareParameters& p,
                                          const ROMol& mol1, unsigned int bond1,
@@ -120,9 +126,9 @@ RDKIT_FMCS_EXPORT bool MCSBondCompareOrderExact(
     const ROMol& mol2, unsigned int bond2, void* userData);
 
 struct RDKIT_FMCS_EXPORT MCSProgressData {
-  unsigned NumAtoms{0};
-  unsigned NumBonds{0};
-  unsigned SeedProcessed{0};
+  unsigned int NumAtoms{0};
+  unsigned int NumBonds{0};
+  unsigned int SeedProcessed{0};
 
  public:
   MCSProgressData() {}
@@ -137,8 +143,8 @@ RDKIT_FMCS_EXPORT bool MCSProgressCallbackTimeout(const MCSProgressData& stat,
 
 struct RDKIT_FMCS_EXPORT MCSParameters {
   bool MaximizeBonds = true;
-  double Threshold = 1.0;  // match all molecules
-  unsigned Timeout = -1;   // in seconds
+  double Threshold = 1.0;     // match all molecules
+  unsigned int Timeout = -1;  // in seconds
   bool Verbose = false;
   MCSAtomCompareParameters AtomCompareParameters;
   MCSBondCompareParameters BondCompareParameters;
@@ -158,8 +164,8 @@ struct RDKIT_FMCS_EXPORT MCSParameters {
 };
 
 struct RDKIT_FMCS_EXPORT MCSResult {
-  unsigned NumAtoms{0};
-  unsigned NumBonds{0};
+  unsigned int NumAtoms{0};
+  unsigned int NumBonds{0};
   std::string SmartsString;
   bool Canceled{false};  // interrupted by timeout or user defined progress
                          // callback. Contains valid current MCS !
@@ -180,15 +186,15 @@ RDKIT_FMCS_EXPORT MCSResult findMCS_P(const std::vector<ROMOL_SPTR>& mols,
 
 RDKIT_FMCS_EXPORT MCSResult findMCS(
     const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds, double threshold,
-    unsigned timeout, bool verbose, bool matchValences,
+    unsigned int timeout, bool verbose, bool matchValences,
     bool ringMatchesRingOnly, bool completeRingsOnly, bool matchChiralTag,
     AtomComparator atomComp, BondComparator bondComp, RingComparator ringComp);
-RDKIT_FMCS_EXPORT MCSResult
-findMCS(const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
-        double threshold = 1.0, unsigned timeout = 3600, bool verbose = false,
-        bool matchValences = false, bool ringMatchesRingOnly = false,
-        bool completeRingsOnly = false, bool matchChiralTag = false,
-        AtomComparator atomComp = AtomCompareElements,
-        BondComparator bondComp = BondCompareOrder);
+RDKIT_FMCS_EXPORT MCSResult findMCS(
+    const std::vector<ROMOL_SPTR>& mols, bool maximizeBonds,
+    double threshold = 1.0, unsigned int timeout = 3600, bool verbose = false,
+    bool matchValences = false, bool ringMatchesRingOnly = false,
+    bool completeRingsOnly = false, bool matchChiralTag = false,
+    AtomComparator atomComp = AtomCompareElements,
+    BondComparator bondComp = BondCompareOrder);
 
 }  // namespace RDKit

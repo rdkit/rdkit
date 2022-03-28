@@ -20,19 +20,19 @@ class DuplicatedSeedCache {
  public:
   typedef bool TValue;
   class TKey {
-    std::vector<unsigned> AtomIdx;  // sorted
-    std::vector<unsigned> BondIdx;  // sorted
+    std::vector<unsigned int> AtomIdx;  // sorted
+    std::vector<unsigned int> BondIdx;  // sorted
    public:
     size_t getNumAtoms() const { return AtomIdx.size(); }
     size_t getNumBonds() const { return BondIdx.size(); }
 
-    void addAtom(unsigned i) {
-      std::vector<unsigned>::iterator it =
+    void addAtom(unsigned int i) {
+      std::vector<unsigned int>::iterator it =
           std::lower_bound(AtomIdx.begin(), AtomIdx.end(), i);
       AtomIdx.insert(it, i);
     }
-    void addBond(unsigned i) {
-      std::vector<unsigned>::iterator it =
+    void addBond(unsigned int i) {
+      std::vector<unsigned int>::iterator it =
           std::lower_bound(BondIdx.begin(), BondIdx.end(), i);
       BondIdx.insert(it, i);
     }
@@ -41,9 +41,9 @@ class DuplicatedSeedCache {
       return AtomIdx.size() == right.AtomIdx.size() &&
              BondIdx.size() == right.BondIdx.size() &&
              0 == memcmp(&AtomIdx[0], &right.AtomIdx[0],
-                         AtomIdx.size() * sizeof(unsigned)) &&
+                         AtomIdx.size() * sizeof(unsigned int)) &&
              0 == memcmp(&BondIdx[0], &right.BondIdx[0],
-                         BondIdx.size() * sizeof(unsigned));
+                         BondIdx.size() * sizeof(unsigned int));
     }
 
     bool operator<(const TKey& right) const {
@@ -64,7 +64,7 @@ class DuplicatedSeedCache {
       // everything is equal -> perform straight comparison
       int diff;
       diff = memcmp(&AtomIdx[0], &right.AtomIdx[0],
-                    AtomIdx.size() * sizeof(unsigned));
+                    AtomIdx.size() * sizeof(unsigned int));
       if (diff < 0) {
         return true;
       }
@@ -72,7 +72,7 @@ class DuplicatedSeedCache {
         return false;
       }
       return memcmp(&BondIdx[0], &right.BondIdx[0],
-                    BondIdx.size() * sizeof(unsigned)) < 0;
+                    BondIdx.size() * sizeof(unsigned int)) < 0;
     }
   };
 

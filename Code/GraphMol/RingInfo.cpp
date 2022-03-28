@@ -177,13 +177,13 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   PRECONDITION(atomIndices.size() == bondIndices.size(), "length mismatch");
   for (auto i : atomIndices) {
     if (i >= static_cast<int>(d_atomMembers.size())) {
-      d_atomMembers.resize((i) + 1);
+      d_atomMembers.resize(i + 1);
     }
     d_atomMembers[i].push_back(d_atomRings.size());
   }
   for (auto i : bondIndices) {
     if (i >= static_cast<int>(d_bondMembers.size())) {
-      d_bondMembers.resize((i) + 1);
+      d_bondMembers.resize(i + 1);
     }
     d_bondMembers[i].push_back(d_bondRings.size());
   }
@@ -191,6 +191,59 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
   d_bondRings.push_back(bondIndices);
   POSTCONDITION(d_atomRings.size() == d_bondRings.size(), "length mismatch");
   return rdcast<unsigned int>(d_atomRings.size());
+}
+
+bool RingInfo::isRingFused(unsigned int ringIdx) {
+  PRECONDITION(ringIdx < d_bondRings.size(), "ringIdx out of bounds");
+  if (d_fusedRings.empty()) {
+    initFusedRings();
+  }
+  return d_fusedRings.at(ringIdx).any();
+}
+
+bool RingInfo::areRingsFused(unsigned int ring1Idx, unsigned int ring2Idx) {
+  PRECONDITION(ring1Idx < d_bondRings.size(), "ring1Idx out of bounds");
+  PRECONDITION(ring2Idx < d_bondRings.size(), "ring2Idx out of bounds");
+  if (d_fusedRings.empty()) {
+    initFusedRings();
+  }
+  return d_fusedRings.at(ring1Idx).test(ring2Idx);
+}
+
+unsigned int RingInfo::numFusedBonds(unsigned int ringIdx) {
+  PRECONDITION(ringIdx < d_bondRings.size(), "ringIdx out of bounds");
+  if (d_numFusedBonds.empty()) {
+    d_numFusedBonds.resize(d_bondRings.size(), 0);
+    for (unsigned int ri = 0; ri < d_bondRings.size(); ++ri) {
+      d_numFusedBonds[ri] += std::count_if(
+          d_bondRings[ri].begin(), d_bondRings[ri].end(),
+          [this](unsigned int bi) { return numBondRings(bi) > 1; });
+    }
+  }
+  return d_numFusedBonds[ringIdx];
+}
+
+void RingInfo::initFusedRings() {
+  if (d_bondRings.empty()) {
+    return;
+  }
+  d_fusedRings.resize(d_bondRings.size());
+  for (auto &fusedRing : d_fusedRings) {
+    fusedRing.resize(d_bondRings.size());
+  }
+  for (const auto &ringIndices : d_bondMembers) {
+    if (ringIndices.size() <= 1) {
+      continue;
+    }
+    for (unsigned int i = 0; i < ringIndices.size() - 1; ++i) {
+      unsigned int ringIdx1 = ringIndices[i];
+      for (unsigned int j = i + 1; j < ringIndices.size(); ++j) {
+        unsigned int ringIdx2 = ringIndices[j];
+        d_fusedRings[ringIdx1].set(ringIdx2);
+        d_fusedRings[ringIdx2].set(ringIdx1);
+      }
+    }
+  }
 }
 
 #ifdef RDK_USE_URF

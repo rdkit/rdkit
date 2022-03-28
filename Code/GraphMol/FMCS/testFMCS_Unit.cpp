@@ -76,7 +76,7 @@ std::string getSmilesOnly(
     const char* smiles,
     std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
   const char* sp = strchr(smiles, ' ');
-  unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
+  unsigned int n = (sp ? sp - smiles + 1 : strlen(smiles));
   if (id) {
     *id = std::string(smiles + n);
   }
@@ -328,7 +328,7 @@ void test504() {
       "CHEMBL529994",
   };
   RWMol* qm = SmilesToMol(getSmilesOnly(smi[0]));
-  unsigned nq = qm->getNumAtoms();
+  unsigned int nq = qm->getNumAtoms();
   for (size_t ai = 0; ai < nq; ai++) {
     Atom* atom = qm->getAtomWithIdx(ai);
     atom->setProp("molAtomMapNumber", (int)ai);
@@ -367,7 +367,7 @@ void test18() {
       //# 18 .  20 20 0.04 sec. Python MCS: CC(c1ccccn1)N(CCCCN)Ccnccc
   };
   RWMol* qm = SmilesToMol(getSmilesOnly(smi[0]));
-  unsigned nq = qm->getNumAtoms();
+  unsigned int nq = qm->getNumAtoms();
   for (size_t ai = 0; ai < nq; ai++) {
     Atom* atom = qm->getAtomWithIdx(ai);
     atom->setProp("molAtomMapNumber", (int)ai);
@@ -534,7 +534,7 @@ void testTarget_no_10188_49064() {
 
 #define MCSTESTREPEATS 0  // To run MCS repeatedly to measure performance
 MCSResult checkMCS(const std::vector<ROMOL_SPTR> mols, const MCSParameters p,
-                   unsigned expectedAtoms, unsigned expectedBonds) {
+                   unsigned int expectedAtoms, unsigned int expectedBonds) {
   t0 = nanoClock();
   MCSResult res = findMCS(mols, &p);
   // std::shared_ptr<RWMol>
@@ -1461,7 +1461,7 @@ void testGithub2034() {
     bool maximizeBonds = true, verbose = false, matchValences = false,
          ringMatchesRingOnly = true;
     double threshold = 1.0;
-    unsigned timeout = 3000;
+    unsigned int timeout = 3000;
     MCSResult res = findMCS(mols, maximizeBonds, threshold, timeout, verbose,
                             matchValences, ringMatchesRingOnly);
     BOOST_LOG(rdInfoLog) << "MCS: " << res.SmartsString << " " << res.NumAtoms
@@ -2521,8 +2521,7 @@ void testGitHub4498() {
 
 void testBondStereo() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "FindMCS should check bond stereo"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog) << "FindMCS should check bond stereo" << std::endl;
   {
     std::vector<ROMOL_SPTR> mols = {"CC\\C=C/CC"_smiles, "CC\\C=C\\CC"_smiles};
 
@@ -2585,6 +2584,29 @@ void testBondStereo() {
     TEST_ASSERT(mcs_resf.SmartsString == mcs_rest.SmartsString);
   }
 }
+
+void testSlowCompleteRingsOnly() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "FindMCS should be more efficient when" << std::endl;
+  BOOST_LOG(rdInfoLog) << "CompleteRingsOnly is set" << std::endl;
+  std::vector<ROMOL_SPTR> mols = {
+    "CC(CC(C1CC2CCC(CC3CC(CC3C)C(C)(C)C)CC2C1)C1CCC(C)(C)CC1)C1CCCC1C"_smiles,
+    "CC(CC(C1CC2CCC(CC3CC(CC3C)C(C)(C)C)CC2C1)C1CCC(C)(C)C1)C1CCCC1C"_smiles
+  };
+
+  MCSParameters p;
+  p.BondCompareParameters.CompleteRingsOnly = true;
+  p.AtomTyper = MCSAtomCompareAny;
+  p.BondTyper = MCSBondCompareAny;
+  // This test runs in ~1.5s on my machine, while it used to take ~12m
+  p.Timeout = 10;
+  auto mcs = findMCS(mols, &p);
+
+  TEST_ASSERT(!mcs.Canceled);
+  TEST_ASSERT(mcs.NumAtoms == 31);
+  TEST_ASSERT(mcs.NumBonds == 34);
+}
+
 
 //====================================================================================================
 //====================================================================================================
@@ -2671,6 +2693,7 @@ int main(int argc, const char* argv[]) {
   testAtomCompareCompleteRingsOnly();
   testGitHub4498();
   testBondStereo();
+  testSlowCompleteRingsOnly();
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;
