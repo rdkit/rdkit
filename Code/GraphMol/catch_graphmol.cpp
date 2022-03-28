@@ -2729,4 +2729,12 @@ M  END)CTAB"_ctab;
     std::unique_ptr<RWMol> m2(SmilesToMol(smiles));
     REQUIRE(m2);
   }
+  SECTION("found during testing") {
+    std::cerr << "\n\n\n\n\n\n\n\n\n\n----------------" << std::endl;
+    auto m =
+        "c1ccc2c(c1)c1cc[n+]2Cc2ccc(cc2)C[n+]2ccc(c3ccccc32)NCc2ccc(cc2)CN1"_smiles;
+    REQUIRE(m);
+    CHECK(!m->getAtomWithIdx(29)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(30)->getIsAromatic());
+  }
 }

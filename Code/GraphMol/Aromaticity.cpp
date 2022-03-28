@@ -47,11 +47,14 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
   res.push_back(curr);
 
   const auto &neighs = pos->second;
-#if 0
-    std::cerr<<"depth: "<<depth<<" ring: "<<curr<<" size: "<<res.size()<<" neighs: "<<neighs.size()<<std::endl;
-    std::cerr<<"   ";
-    std::copy(neighs.begin(),neighs.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr<<"\n";
+#if 1
+  std::cerr << "depth: " << depth << " ring: " << curr
+            << " size: " << res.size() << " neighs: " << neighs.size()
+            << std::endl;
+  std::cerr << "   ";
+  std::copy(neighs.begin(), neighs.end(),
+            std::ostream_iterator<int>(std::cerr, " "));
+  std::cerr << "\n";
 #endif
   for (int neigh : neighs) {
     if (!done[neigh]) {
@@ -322,7 +325,7 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
   } else if (rup == 2) {
     aromatic = true;
   }
-#if 0
+#if 1
   std::cerr << " ring: ";
   std::copy(ring.begin(), ring.end(),
             std::ostream_iterator<int>(std::cerr, " "));
@@ -409,6 +412,7 @@ void applyHuckelToFused(
       }
     }
     INT_VECT unon;
+    std::cerr << "   counting: ";
     for (i = 0; i < atsInRingSystem.size(); ++i) {
       // condition for inclusion of an atom in the aromaticity of a fused ring
       // system is that it's present in one or two of the rings. this was #2895:
@@ -416,8 +420,10 @@ void applyHuckelToFused(
       // aromatic atoms
       if (atsInRingSystem[i] == 1 || atsInRingSystem[i] == 2) {
         unon.push_back(i);
+        std::cerr << i << "(" << atsInRingSystem[i] << ") ";
       }
     }
+    std::cerr << std::endl;
     if (applyHuckel(mol, unon, edon, minRingSize)) {
       // mark the atoms and bonds in these rings to be aromatic
       markAtomsBondsArom(mol, srings, brings, curRs, doneBonds, bondsByIdx);
@@ -844,6 +850,10 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
         (!numNonAromatic ||
          ((sring.size() - numNonAromatic) >= 2 && nonCandidatesInFusedRings))) {
       cRings.push_back(sring);
+      std::cerr << "candidate " << cRings.size() - 1 << ": ";
+      std::copy(sring.begin(), sring.end(),
+                std::ostream_iterator<int>(std::cerr, ", "));
+      std::cerr << std::endl;
     }
   }
 
