@@ -106,6 +106,7 @@ This can be reverted using the ChangeMoleculeRendering method
 from base64 import b64encode
 import sys
 import types
+import re
 import logging
 
 import numpy as np
@@ -116,6 +117,11 @@ from rdkit.Chem import Draw
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
+try:
+  from rdkit.Chem.Draw.IPythonConsole import InteractiveRenderer
+except ImportError:
+  InteractiveRenderer = None
+
 from io import BytesIO
 from xml.dom import minidom
 from xml.parsers.expat import ExpatError
@@ -167,7 +173,6 @@ highlightSubstructures = True
 molRepresentation = 'png'  # supports also SVG
 molSize = (200, 200)
 
-
 def getAdjustmentAttr():
   # Github #3701 was a problem with a private function being renamed (made public) in
   # pandas v1.2. Rather than relying on version numbers we just use getattr:
@@ -176,10 +181,26 @@ def getAdjustmentAttr():
 
 
 def _patched_HTMLFormatter_write_cell(self, s, *args, **kwargs):
+  if not hasattr(_patched_HTMLFormatter_write_cell, 'styleRegex'):
+    _patched_HTMLFormatter_write_cell.styleRegex = re.compile("^(.*style=[\"'].*)([\"'].*)$")
+  styleTags = "text-align: center;"
+  styleRegex = _patched_HTMLFormatter_write_cell.styleRegex
   def_escape = self.escape
   try:
     if is_molecule_image(s):
       self.escape = False
+      kind = kwargs.get('kind', None)
+      if kind == 'td':
+        tags = kwargs.get('tags', None) or ''
+        match = styleRegex.match(tags)
+        if match:
+          tags = styleRegex.sub(f'\\1 {styleTags}\\2', tags)
+        else:
+          if tags:
+            tags += ' '
+          tags += f'style="{styleTags}"'
+        kwargs['tags'] = tags
+
     return defHTMLFormatter_write_cell(self, s, *args, **kwargs)
   finally:
     self.escape = def_escape
@@ -197,19 +218,19 @@ def patchPandasrepr(self, **kwargs):
   global defPandasGetAdjustment
 
   import pandas.io.formats.html
-  defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
-  pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-  try:
-    get_adjustment_attr = getAdjustmentAttr()
-    if get_adjustment_attr:
-      defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
-      setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
-    res = defPandasRepr(self, **kwargs)
-    if get_adjustment_attr:
-      setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
-    return res
-  finally:
-    pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+  if not hasattr(pandas.io.formats.html.HTMLFormatter, "_rdkitpatched"):
+    defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+    pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
+    pandas.io.formats.html.HTMLFormatter._rdkitpatched = True
+  get_adjustment_attr = getAdjustmentAttr()
+  if get_adjustment_attr:
+    defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
+    setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
+  res = defPandasRepr(self, **kwargs)
+  if get_adjustment_attr:
+    setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
+  pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
+  return res
 
 
 def patchPandasHTMLrepr(self, **kwargs):
@@ -259,7 +280,9 @@ def patchPandasHTMLrepr(self, **kwargs):
     # patch methods and call original to_html function
     setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
     pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-    return defPandasRendering(self, **kwargs)
+    res = defPandasRendering(self, **kwargs)
+    return (InteractiveRenderer.injectHTMLHeaderBeforeTable(res)
+      if InteractiveRenderer and InteractiveRenderer.isEnabled() else res)
   except Exception:
     pass
   finally:
@@ -279,9 +302,9 @@ def is_molecule_image(s):
     xml = minidom.parseString(s)
     root_node = xml.firstChild
     # check data-content attribute
-    if root_node.nodeName in ['svg', 'img'] and \
-       'data-content' in root_node.attributes.keys() and \
-       root_node.attributes['data-content'].value == 'rdkit/molecule':
+    if (root_node.nodeName in ['svg', 'img', 'div'] and
+        'data-content' in root_node.attributes.keys() and
+        root_node.attributes['data-content'].value == 'rdkit/molecule'):
       result = True
   except ExpatError:
     pass  # parsing xml failed and text is not a molecule image
@@ -353,7 +376,6 @@ def _molge(x, y):
   else:
     return False
 
-
 def PrintAsBase64PNGString(x, renderer=None):
   '''returns the molecules as base64 encoded PNG image
     '''
@@ -368,18 +390,23 @@ def PrintAsBase64PNGString(x, renderer=None):
   #     x.GetConformer(-1)
   # except ValueError:
   #     rdDepictor.Compute2DCoords(x)
-  if molRepresentation.lower() == 'svg':
-    svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
-    svg = minidom.parseString(svg)
-    svg = svg.getElementsByTagName('svg')[0]
-    svg.attributes['viewbox'] = f'0 0 {molSize[0]} {molSize[1]}'
-    svg.attributes['style'] = f'max-width: {molSize[0]}px; height: {molSize[1]}px;'
-    svg.attributes['data-content'] = 'rdkit/molecule'
-    return svg.toxml()
+  useSvg = (molRepresentation.lower() == 'svg')
+  if InteractiveRenderer and InteractiveRenderer.isEnabled(x):
+    size = [max(30, s) for s in molSize]
+    return InteractiveRenderer.generateHTMLBody(useSvg, x, size)
   else:
-    data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
-    return '<img data-content="rdkit/molecule" src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(
-      data)
+    if useSvg:
+      svg = Draw._moltoSVG(x, molSize, highlightAtoms, "", True)
+      svg = minidom.parseString(svg)
+      svg = svg.getElementsByTagName('svg')[0]
+      svg.attributes['viewbox'] = f'0 0 {molSize[0]} {molSize[1]}'
+      svg.attributes['style'] = f'max-width: {molSize[0]}px; height: {molSize[1]}px;'
+      svg.attributes['data-content'] = 'rdkit/molecule'
+      return svg.toxml()
+    else:
+      data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True)
+      return '<img data-content="rdkit/molecule" src="data:image/png;base64,%s" alt="Mol"/>' % _get_image(
+        data)
 
 
 def PrintDefaultMolRep(x):
@@ -700,7 +727,7 @@ def RGroupDecompositionToFrame(groups, mols, include_core=False, redraw_sidechai
   >>> import pandas as pd
   >>> scaffold = Chem.MolFromSmiles('c1ccccn1')
   >>> mols = [Chem.MolFromSmiles(smi) for smi in 'c1c(F)cccn1 c1c(Cl)c(C)ccn1 c1c(O)cccn1 c1c(F)c(C)ccn1 c1cc(Cl)c(F)cn1'.split()]
-  >>> groups,_ = rdRGroupDecomposition.RGroupDecompose([scaffold],mols,asSmiles=False,asRows=False) 
+  >>> groups,_ = rdRGroupDecomposition.RGroupDecompose([scaffold],mols,asSmiles=False,asRows=False)
   >>> df = PandasTools.RGroupDecompositionToFrame(groups,mols,include_core=True)
   >>> list(df.columns)
   ['Mol', 'Core', 'R1', 'R2']

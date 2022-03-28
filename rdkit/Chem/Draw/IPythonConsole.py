@@ -11,12 +11,12 @@ import base64
 import copy
 import warnings
 from io import BytesIO
-
 import IPython
-from IPython.display import SVG
+from IPython.display import HTML, SVG
 from rdkit import Chem
 from rdkit.Chem import Draw, rdchem, rdChemReactions
 from rdkit.Chem.Draw import rdMolDraw2D
+from . import InteractiveRenderer
 
 if IPython.release.version < '0.11':
   raise ImportError('this module requires at least v0.11 of IPython')
@@ -41,7 +41,7 @@ molSize_3d = (400, 400)
 drawing_type_3d = 'stick'  # default drawing type for 3d structures
 bgcolor_3d = '0xeeeeee'
 drawOptions = rdMolDraw2D.MolDrawOptions()
-
+InteractiveRenderer._defaultDrawOptions = drawOptions
 
 def addMolToView(mol, view, confId=-1, drawAs=None):
   if mol.GetNumAtoms() >= 999 or drawAs == 'cartoon':
@@ -66,7 +66,7 @@ def drawMol3D(m, view=None, confId=-1, drawAs=None, bgColor=None, size=None):
   if view is None:
     view = py3Dmol.view(width=size[0], height=size[1])
   view.removeAllModels()
-  
+
   try:
     ms = iter(m)
     for m in ms:
@@ -91,34 +91,57 @@ def _toJSON(mol):
   return ""
 
 
+def _wrapHTMLIntoTable(html):
+  return InteractiveRenderer.injectHTMLHeaderBeforeTable(f'<div><table><tbody><tr><td style="width: {molSize[0]}px; ' +
+                                     f'height: {molSize[1]}px; text-align: center;">' +
+                                     html.replace(" scoped", "") +
+                                     '</td></tr></tbody></table></div>')
+
+
 def _toHTML(mol):
+  useInteractiveRenderer = InteractiveRenderer.isEnabled(mol)
   if _canUse3D and ipython_3d and mol.GetNumConformers():
     return _toJSON(mol)
   props = mol.GetPropsAsDict()
   if not ipython_showProperties or not props:
-    return _toSVG(mol)
+    if useInteractiveRenderer:
+      return _wrapHTMLIntoTable(
+        InteractiveRenderer.generateHTMLBody(ipython_useSVG, mol, molSize, drawOptions))
+    else:
+      return _toSVG(mol)
   if mol.HasProp('_Name'):
     nm = mol.GetProp('_Name')
   else:
     nm = ''
-    
-  res = []
-  if not ipython_useSVG:
-    png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
-    png = base64.b64encode(png)
-    res.append(f'<tr><td colspan=2 style="text-align:center"><image src="data:image/png;base64,{png.decode()}"></td></tr>')
-  else:
-    svg = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures, drawOptions=drawOptions)
-    res.append(f'<tr><td colspan=2 style="text-align:center">{svg}</td></tr>')
 
-  for i,(pn, pv) in enumerate(props.items()):
+  res = []
+  if useInteractiveRenderer:
+    content = InteractiveRenderer.generateHTMLBody(ipython_useSVG, mol, molSize)
+  else:
+    if not ipython_useSVG:
+      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
+      png = base64.b64encode(png)
+      res.append(
+        f'<tr><td colspan=2 style="text-align:center"><image src="data:image/png;base64,{png.decode()}"></td></tr>'
+      )
+    else:
+      content = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures,
+                               drawOptions=drawOptions)
+  res.append(f'<tr><td colspan=2 style="text-align:center">{content}</td></tr>')
+
+  for i, (pn, pv) in enumerate(props.items()):
     if ipython_maxProperties >= 0 and i >= ipython_maxProperties:
-      res.append('<tr><td colspan=2 style="text-align:center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>')
+      res.append(
+        '<tr><td colspan=2 style="text-align:center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>'
+      )
       break
     res.append(
       f'<tr><th style="text-align:right">{pn}</th><td style="text-align:left">{pv}</td></tr>')
-  res = "\n".join(res)
-  return f'<table>{res}</table>'
+  res = '\n'.join(res)
+  res = f'<table>{res}</table>'
+  if useInteractiveRenderer:
+    res = InteractiveRenderer.injectHTMLHeaderBeforeTable(res)
+  return res
 
 
 def _toPNG(mol):
@@ -226,7 +249,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
     fn = _MolsToGridImageSaved
   else:
     fn = Draw.MolsToGridImage
-    
+
   if len(mols) > maxMols:
     warnings.warn(
       "Truncating the list of molecules to be displayed to %d. Change the maxMols value to display more."
@@ -237,7 +260,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
         kwargs[prop] = kwargs[prop][:maxMols]
   if "drawOptions" not in kwargs:
     kwargs["drawOptions"] = drawOptions
-  
+
   res = fn(mols, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
@@ -252,7 +275,7 @@ ShowMols.__doc__ = Draw.MolsToGridImage.__doc__
 def _DrawBit(fn, *args, **kwargs):
   if 'useSVG' not in kwargs:
     kwargs['useSVG'] = ipython_useSVG
-  
+
   res = fn(*args, **kwargs)
   if kwargs['useSVG']:
     return SVG(res)
