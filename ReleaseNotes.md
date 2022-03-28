@@ -1,4 +1,4 @@
-# Release_2022.03.1b1
+# Release_2022.03.1
 (Changes relative to Release_2021.09.1)
 
 ## Backwards incompatible changes
@@ -194,6 +194,10 @@ Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
  (github issue #5099 from ricrogz)
  - fix a mistake in the enhanced stereochemistry substructure table
  (github issue #5101 from greglandrum)
+  - NumRotatableBonds() incorrect for partially sanitized molecule
+ (github issue #5104 from greglandrum)
+  - Wiggly bonds don't override wedged bonds
+ (github issue #5108 from greglandrum)
 
 ## Cleanup work:
   - Do the deprecations for the 2022.03  release
@@ -297,6 +301,12 @@ Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
  (github pull #5069 from bp-kelley)
   - "Powered by RDKit" Badge
  (github pull #5085 from cbouy)
+  - Add a couple of depiction helper functions and some JS bindings
+ (github pull #5115 from ptosco)
+  - Swig MolDraw2D cairo
+ (github pull #5128 from jones-gareth)
+  - Enables rdkit-structure-renderer.js in Jupyter Lab and Notebook
+ (github pull #5132 from ptosco)
 
 ## Deprecated code (to be removed in a future release):
 - Python function `rdkit.Chem.WrapLogs()` is deprecated in favor of
