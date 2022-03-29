@@ -861,7 +861,6 @@ def DrawMorganEnv(mol, atomId, radius, molSize=(150, 150), baseRad=0.3, useSVG=T
     drawOptions = drawer.drawOptions()
   drawOptions.continuousHighlight = False
   drawOptions.includeMetadata = False
-  drawOptions.prepareMolsBeforeDrawing = False
   drawer.SetDrawOptions(drawOptions)
   drawer.DrawMolecule(menv.submol, highlightAtoms=menv.highlightAtoms,
                       highlightAtomColors=menv.atomColors, highlightBonds=menv.highlightBonds,
