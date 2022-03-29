@@ -2644,14 +2644,6 @@ TEST_CASE("Github #5134: Fused ring system not perceived as aromatic") {
       CHECK(m->getAtomWithIdx(i)->getIsAromatic());
     }
   }
-  SECTION("trickier") {
-    auto m = "C1=CC2=CC=C3C=CC4=CC=C5C=CC=C6C5C4C3C2C6=C1"_smiles;
-    REQUIRE(m);
-    for (auto i = 0u; i < 16; ++i) {
-      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
-    }
-    CHECK(m->getAtomWithIdx(20)->getIsAromatic());
-  }
   SECTION("some edge cases where the new rule does not apply") {
     std::vector<std::string> smis = {"C1CC2C=C3C=CC4=CC1C2C34",
                                      "C1C=C2C=CC3=CC=C1C23"};
@@ -2729,12 +2721,25 @@ M  END)CTAB"_ctab;
     std::unique_ptr<RWMol> m2(SmilesToMol(smiles));
     REQUIRE(m2);
   }
+  SECTION("trickier") {
+    auto m = "C1=CC2=CC=C3C=CC4=CC=C5C=CC=C6C5C4C3C2C6=C1"_smiles;
+    REQUIRE(m);
+    for (auto i = 0u; i < 16; ++i) {
+      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+    CHECK(m->getAtomWithIdx(20)->getIsAromatic());
+  }
   SECTION("found during testing") {
-    std::cerr << "\n\n\n\n\n\n\n\n\n\n----------------" << std::endl;
     auto m =
         "c1ccc2c(c1)c1cc[n+]2Cc2ccc(cc2)C[n+]2ccc(c3ccccc32)NCc2ccc(cc2)CN1"_smiles;
     REQUIRE(m);
+    CHECK(m->getAtomWithIdx(6)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(11)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(18)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(30)->getIsAromatic());
+
+    CHECK(!m->getAtomWithIdx(28)->getIsAromatic());
     CHECK(!m->getAtomWithIdx(29)->getIsAromatic());
-    CHECK(!m->getAtomWithIdx(30)->getIsAromatic());
+  }
   }
 }

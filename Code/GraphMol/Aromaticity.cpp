@@ -47,7 +47,7 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
   res.push_back(curr);
 
   const auto &neighs = pos->second;
-#if 1
+#if 0
   std::cerr << "depth: " << depth << " ring: " << curr
             << " size: " << res.size() << " neighs: " << neighs.size()
             << std::endl;
@@ -288,6 +288,27 @@ bool incidentMultipleBond(const Atom *at) {
   return at->getExplicitValence() != deg;
 }
 
+bool ringCanBeAromatic(ROMol &, const INT_VECT &ring,
+                       const VECT_EDON_TYPE &edon, unsigned int minRingSize) {
+  if (ring.size() < minRingSize) {
+    return false;
+  }
+  unsigned int nAnyElectronDonorType = 0;
+  for (auto idx : ring) {
+    ElectronDonorType edonType = edon[idx];
+    if (edonType == AnyElectronDonorType) {
+      ++nAnyElectronDonorType;
+      if (nAnyElectronDonorType > 1) {
+        return false;
+      }
+    } else if (edonType == NoElectronDonorType) {
+      // if the ring includes atoms which can't be aromatic we can just skip it
+      return false;
+    }
+  }
+  return true;
+}
+
 bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
                  unsigned int minRingSize) {
   if (ring.size() < minRingSize) {
@@ -404,15 +425,27 @@ void applyHuckelToFused(
     if (ringNeighs.size() && !RingUtils::checkFused(curRs, ringNeighs)) {
       continue;
     }
+    std::vector<unsigned int> ringAdjacencies(
+        mol.getNumAtoms() * mol.getNumAtoms(), 0);
     // check aromaticity on the current fused system
     INT_VECT atsInRingSystem(mol.getNumAtoms(), 0);
     for (auto ridx : curRs) {
-      for (auto rid : srings[ridx]) {
+      const auto &sring = srings[ridx];
+      for (auto ri = 0u; ri < sring.size(); ++ri) {
+        auto rid = sring[ri];
         ++atsInRingSystem[rid];
+        unsigned nextAt;
+        if (ri < sring.size() - 1) {
+          nextAt = sring[ri + 1];
+        } else {
+          nextAt = sring[0];
+        }
+        // keep track of which ring atoms are adjacent to each other
+        ringAdjacencies[rid * mol.getNumAtoms() + nextAt]++;
+        ringAdjacencies[nextAt * mol.getNumAtoms() + rid]++;
       }
     }
     INT_VECT unon;
-    std::cerr << "   counting: ";
     for (i = 0; i < atsInRingSystem.size(); ++i) {
       // condition for inclusion of an atom in the aromaticity of a fused ring
       // system is that it's present in one or two of the rings. this was #2895:
@@ -420,10 +453,26 @@ void applyHuckelToFused(
       // aromatic atoms
       if (atsInRingSystem[i] == 1 || atsInRingSystem[i] == 2) {
         unon.push_back(i);
-        std::cerr << i << "(" << atsInRingSystem[i] << ") ";
       }
     }
-    std::cerr << std::endl;
+
+    // make sure that we still actually have a ring: each atom which is left
+    // should have at least(?) two connections to other atoms in the ring
+    std::vector<unsigned int> nbrCounts(unon.size(), 0);
+    for (auto i = 0u; i < unon.size(); ++i) {
+      for (auto j = i; j < unon.size(); ++j) {
+        if (ringAdjacencies[unon[i] * mol.getNumAtoms() + unon[j]]) {
+          nbrCounts[i] += 1;
+          nbrCounts[j] += 1;
+          // TODO: can we stop this if we exceed 2? There's probably some edge
+          // case where that happens
+        }
+      }
+    }
+    if (*std::min_element(nbrCounts.begin(), nbrCounts.end()) < 2) {
+      continue;
+    }
+
     if (applyHuckel(mol, unon, edon, minRingSize)) {
       // mark the atoms and bonds in these rings to be aromatic
       markAtomsBondsArom(mol, srings, brings, curRs, doneBonds, bondsByIdx);
@@ -850,10 +899,10 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
         (!numNonAromatic ||
          ((sring.size() - numNonAromatic) >= 2 && nonCandidatesInFusedRings))) {
       cRings.push_back(sring);
-      std::cerr << "candidate " << cRings.size() - 1 << ": ";
-      std::copy(sring.begin(), sring.end(),
-                std::ostream_iterator<int>(std::cerr, ", "));
-      std::cerr << std::endl;
+      // std::cerr << "candidate " << cRings.size() - 1 << ": ";
+      // std::copy(sring.begin(), sring.end(),
+      //           std::ostream_iterator<int>(std::cerr, ", "));
+      // std::cerr << std::endl;
     }
   }
 
