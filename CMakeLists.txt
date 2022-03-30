@@ -11,7 +11,7 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 # Enable CTest
 include(CTest)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_MODULE_PATH
@@ -127,7 +127,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #-------
 # Config variables:
 set(RDKit_Year "2022")
-set(RDKit_Month "03")
+set(RDKit_Month "09")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
