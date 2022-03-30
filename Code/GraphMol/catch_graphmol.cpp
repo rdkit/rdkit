@@ -2630,6 +2630,7 @@ TEST_CASE("Github #5055") {
 }
 
 TEST_CASE("Github #5134: Fused ring system not perceived as aromatic") {
+#if 1
   SECTION("as reported") {
     auto m = "C1=CC2=CC3=CC=C4C=C1C2C34"_smiles;
     REQUIRE(m);
@@ -2729,6 +2730,20 @@ M  END)CTAB"_ctab;
     }
     CHECK(m->getAtomWithIdx(20)->getIsAromatic());
   }
+  SECTION("another odd edge case") {
+    auto m = "C2=CC1=S(S2)SC=C1"_smiles;
+    REQUIRE(m);
+    for (auto atom : m->atoms()) {
+      CHECK(!atom->getIsAromatic());
+    }
+  }
+  SECTION("macrocycle bridgehead edge case") {
+    auto m = "C2CCCCCCCCCN1C=C(CC2)C=CC1=O"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(10)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(11)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(12)->getIsAromatic());
+  }
   SECTION("found during testing") {
     auto m =
         "c1ccc2c(c1)c1cc[n+]2Cc2ccc(cc2)C[n+]2ccc(c3ccccc32)NCc2ccc(cc2)CN1"_smiles;
@@ -2741,5 +2756,13 @@ M  END)CTAB"_ctab;
     CHECK(!m->getAtomWithIdx(28)->getIsAromatic());
     CHECK(!m->getAtomWithIdx(29)->getIsAromatic());
   }
+#endif
+  SECTION("more testing fun") {
+    auto m = "CC1C2c3ccccc3C(c3ccccc32)C1CN"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(4)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(14)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(2)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(9)->getIsAromatic());
   }
 }

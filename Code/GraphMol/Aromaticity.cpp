@@ -165,7 +165,9 @@ static void applyHuckelToFused(
     ROMol &mol,                   // molecule of interest
     const VECT_INT_VECT &srings,  // list of all ring as atom IDS
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
-    const INT_VECT &fused,       // list of ring ids in the current fused system
+    const INT_VECT &fused,  // list of ring ids in the current fused system
+    const boost::dynamic_bitset<>
+        &acands,  // whether or not an atom is a candidate for aromaticity
     const VECT_EDON_TYPE &edon,  // electron donor state for each atom
     INT_INT_VECT_MAP &ringNeighs,
     int &narom,  // number of aromatic ring so far
@@ -334,6 +336,8 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
     getMinMaxAtomElecs(edonType, atlw, atup);
     rlw += atlw;
     rup += atup;
+    // std::cerr << "  atom: " << idx << ": " << atlw << "-" << atup <<
+    // std::endl;
   }
 
   if (rup >= 6) {
@@ -346,7 +350,7 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
   } else if (rup == 2) {
     aromatic = true;
   }
-#if 1
+#if 0
   std::cerr << " ring: ";
   std::copy(ring.begin(), ring.end(),
             std::ostream_iterator<int>(std::cerr, " "));
@@ -360,8 +364,10 @@ void applyHuckelToFused(
     ROMol &mol,                   // molecule of interest
     const VECT_INT_VECT &srings,  // list of all ring as atom IDS
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
-    const INT_VECT &fused,       // list of ring ids in the current fused system
-    const VECT_EDON_TYPE &edon,  // electron donor state for each atom
+    const INT_VECT &fused,  // list of ring ids in the current fused system
+    const boost::dynamic_bitset<>
+        &acands,  // whether or not an atom is a candidate for aromaticity
+    const VECT_EDON_TYPE &edon,    // electron donor state for each atom
     INT_INT_VECT_MAP &ringNeighs,  // list of neighbors for each candidate ring
     int &narom,                    // number of aromatic ring so far
     unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
@@ -391,6 +397,7 @@ void applyHuckelToFused(
     }
     nRingBonds = rdcast<unsigned int>(fusedBonds.count());
   }
+
   std::set<unsigned int> doneBonds;
   while (1) {
     if (pos == -1) {
@@ -446,6 +453,7 @@ void applyHuckelToFused(
       }
     }
     INT_VECT unon;
+    bool nonAromaticAtomsInRing = false;
     for (i = 0; i < atsInRingSystem.size(); ++i) {
       // condition for inclusion of an atom in the aromaticity of a fused ring
       // system is that it's present in one or two of the rings. this was #2895:
@@ -453,9 +461,16 @@ void applyHuckelToFused(
       // aromatic atoms
       if (atsInRingSystem[i] == 1 || atsInRingSystem[i] == 2) {
         unon.push_back(i);
+        if (!acands[i]) {
+          // std::cerr << " atom " << i << " not a candidate" << std::endl;
+          nonAromaticAtomsInRing = true;
+          break;
+        }
       }
     }
-
+    if (nonAromaticAtomsInRing) {
+      continue;
+    }
     // make sure that we still actually have a ring: each atom which is left
     // should have at least(?) two connections to other atoms in the ring
     std::vector<unsigned int> nbrCounts(unon.size(), 0);
@@ -582,11 +597,28 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
     }
   }
 
-  if (queryIsAtomBridgehead(at)) {
-    return false;
+  // It seems like we'd want to exclude atoms for being bridgeheads since they
+  // are going to be 3D and not actually conjugated
+  // But we need to be careful about that since rings fused onto macrocycles
+  // have "bridgeheads" according to our definition and we don't want to
+  // exclude things like:
+  //   c1cc2ccc1CCCCCCCCCCCCCCCC2
+  // where atoms 2 and 5 are "bridgeheads" but in a macrocycle
+  if (queryIsAtomBridgehead(at) && !nUnsaturations) {
+    bool inMacrocycle = false;
+    for (const auto &aring : at->getOwningMol().getRingInfo()->atomRings()) {
+      if (aring.size() > 10 &&
+          std::find(aring.begin(), aring.end(), at->getIdx()) != aring.end()) {
+        inMacrocycle = true;
+        break;
+      }
+    }
+    if (!inMacrocycle) {
+      return false;
+    }
   }
 
-  return (true);
+  return true;
 }
 
 ElectronDonorType getAtomDonorTypeArom(
@@ -808,8 +840,8 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
     RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
     const unsigned int maxFused = 6;
     const unsigned int minRingSize = 6;
-    applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
-                       maxFused, bondsByIdx, minRingSize);
+    applyHuckelToFused(mol, cRings, brings, fused, acands, edon, neighMap,
+                       narom, maxFused, bondsByIdx, minRingSize);
 
     int rix;
     for (rix = 0; rix < cnrs; ++rix) {
@@ -905,7 +937,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       // std::cerr << std::endl;
     }
   }
-
+  std::cerr << " acands: " << acands << std::endl;
   // first convert all rings to bonds ids
   VECT_INT_VECT brings;
   RingUtils::convertToBonds(cRings, brings, mol);
@@ -925,8 +957,8 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       fused.push_back(ri);
       const unsigned int maxFused = 6;
       const unsigned int minRingSize = 0;
-      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
-                         maxFused, bondsByIdx, minRingSize);
+      applyHuckelToFused(mol, cRings, brings, fused, acands, edon, neighMap,
+                         narom, maxFused, bondsByIdx, minRingSize);
     }
   } else {
     // make the neighbor map for the rings
@@ -947,8 +979,8 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
     while (curr < cnrs) {
       fused.clear();
       RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6,
-                         bondsByIdx);
+      applyHuckelToFused(mol, cRings, brings, fused, acands, edon, neighMap,
+                         narom, 6, bondsByIdx);
 
       int rix;
       for (rix = 0; rix < cnrs; ++rix) {
