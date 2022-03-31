@@ -637,7 +637,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         auto beginAtom = newBond->getBeginAtom();
         auto endAtom = newBond->getEndAtom();
         if (newMol->getNumConformers()) {
-          if (endAtom->getAtomicNum() == 0) {
+          if (endAtom->getAtomicNum() == 0 &&
+              !endAtom->hasProp(common_properties::_rgroupInputDummy)) {
             MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
                                           beginAtom->getIdx());
           } else {

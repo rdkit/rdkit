@@ -2762,6 +2762,51 @@ void testDoNotChooseUnrelatedCores() {
   }
 }
 
+void atomDegreePreconditionBug() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test that we don't get a bad atom degree precondition violation" 
+      << std::endl;
+  
+  auto structure = R"CTAB(
+     RDKit          2D
+
+ 12 12  0  0  0  0  0  0  0  0999 V2000
+    3.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    0.0000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500    1.2990    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7500    1.2990    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000   -2.5981    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0000   -2.5981    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7500   -3.8971    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000   -5.1962    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5000    2.5981    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  2  0
+  3  4  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  4  8  1  0
+  8  9  2  0
+  8 10  1  0
+ 10 11  1  0
+  7  2  1  0
+  6 12  1  0
+M  RGP  1  12   3
+M  END
+
+)CTAB"_ctab;
+
+  auto core = "[#6]1:[#7]:[#6]:[#6]:[#6]:[#7]:1"_smarts;
+  RGroupDecomposition decomp(*core);
+  TEST_ASSERT(decomp.add(*structure) == 0);
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2813,6 +2858,7 @@ int main() {
   testAlignOutputCoreToMolecule();
   testWildcardInInput();
   testDoNotChooseUnrelatedCores();
+  atomDegreePreconditionBug();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
