@@ -1515,7 +1515,7 @@ std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
         --unassignedAtoms;
 
         // sort the list of neighbors by their CIP ranks:
-        std::sort(nbrs.begin(), nbrs.end(), Rankers::pairLess<int, int>());
+        std::sort(nbrs.begin(), nbrs.end(), Rankers::pairLess);
 
         // collect the list of neighbor indices:
         std::list<int> nbrIndices;
