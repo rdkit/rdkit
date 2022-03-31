@@ -176,14 +176,14 @@ function test_get_aromatic_kekule_form() {
     const kekRegExp = /  \d  \d  [12]  \d\n/g;
     var mol = RDKitModule.get_mol("c1ccccc1");
     var molblock = mol.get_molblock();
-    assert ([...molblock.matchAll(aromRegExp)].length === 0);
-    assert ([...molblock.matchAll(kekRegExp)].length === 6);
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
     var molblock = mol.get_kekule_form();
-    assert ([...molblock.matchAll(aromRegExp)].length === 0);
-    assert ([...molblock.matchAll(kekRegExp)].length === 6);
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
     molblock = mol.get_aromatic_form();
-    assert ([...molblock.matchAll(aromRegExp)].length === 6);
-    assert ([...molblock.matchAll(kekRegExp)].length === 0);
+    assert (molblock.match(aromRegExp).length === 6);
+    assert (molblock.match(kekRegExp) === null);
 }
 
 function test_sketcher_services() {
