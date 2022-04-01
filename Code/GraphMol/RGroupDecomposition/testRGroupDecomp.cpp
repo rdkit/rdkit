@@ -2766,9 +2766,9 @@ void atomDegreePreconditionBug() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog)
-      << "Test that we don't get a bad atom degree precondition violation" 
+      << "Test that we don't get a bad atom degree precondition violation when the input structure has dummy atoms"
       << std::endl;
-  
+
   auto structure = R"CTAB(
      RDKit          2D
 
@@ -2805,6 +2805,20 @@ M  END
   auto core = "[#6]1:[#7]:[#6]:[#6]:[#6]:[#7]:1"_smarts;
   RGroupDecomposition decomp(*core);
   TEST_ASSERT(decomp.add(*structure) == 0);
+  decomp.process();
+  auto rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  RGroupRows::const_iterator it = rows.begin();
+  std::string expected(
+      "Core:c1c([*:1])nc([*:3])nc1[*:2] R1:COC(=O)[*:1] R2:C[*:2] R3:*[*:3]");
+  // Check R3 atom labelling
+  auto r3 = rows[0]["R3"];
+  TEST_ASSERT(r3->getNumAtoms() == 2)
+  TEST_ASSERT(r3->getAtomWithIdx(0)->hasProp(common_properties::dummyLabel));
+  TEST_ASSERT(r3->getAtomWithIdx(1)->hasProp(common_properties::dummyLabel));
+  TEST_ASSERT(r3->getAtomWithIdx(0)->getProp<std::string>(common_properties::dummyLabel) == "*");
+  TEST_ASSERT(r3->getAtomWithIdx(1)->getProp<std::string>(common_properties::dummyLabel) == "R3");
+ CHECK_RGROUP(it, expected);
 }
 
 int main() {

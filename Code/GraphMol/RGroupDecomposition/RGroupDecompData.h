@@ -399,7 +399,9 @@ struct RGroupDecompData {
           CHECK_INVARIANT(label != mappings.end(), "Unprocessed mapping");
 
           if (atom->getAtomicNum() == 0) {
-            setRlabel(atom, label->second);
+            if (! atom->hasProp(common_properties::_rgroupInputDummy)) {
+              setRlabel(atom, label->second);
+            }
           } else if (atom->hasProp(RLABEL_CORE_INDEX)) {
             atom->setAtomicNum(0);
             setRlabel(atom, label->second);

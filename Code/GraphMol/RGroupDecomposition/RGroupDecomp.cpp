@@ -97,6 +97,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       if (atom->hasProp(common_properties::_MolFileRLabel)) {
         atom->clearProp(common_properties::_MolFileRLabel);
       }
+      atom->setProp(common_properties::dummyLabel, "*");
     }
   }
   int core_idx = 0;
