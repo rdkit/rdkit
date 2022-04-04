@@ -2630,7 +2630,7 @@ TEST_CASE("Github #5055") {
 }
 
 TEST_CASE("Github #5134: Fused ring system not perceived as aromatic") {
-#if 1
+#if 0
   SECTION("as reported") {
     auto m = "C1=CC2=CC3=CC=C4C=C1C2C34"_smiles;
     REQUIRE(m);
@@ -2756,7 +2756,6 @@ M  END)CTAB"_ctab;
     CHECK(!m->getAtomWithIdx(28)->getIsAromatic());
     CHECK(!m->getAtomWithIdx(29)->getIsAromatic());
   }
-#endif
   SECTION("more testing fun") {
     auto m = "CC1C2c3ccccc3C(c3ccccc32)C1CN"_smiles;
     REQUIRE(m);
@@ -2764,5 +2763,31 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(14)->getIsAromatic());
     CHECK(!m->getAtomWithIdx(2)->getIsAromatic());
     CHECK(!m->getAtomWithIdx(9)->getIsAromatic());
+  }
+#endif
+  // SECTION("porphyrin-like1") {
+  //   auto m =
+  //       "c1ccc(-c2c3nc(c(-c4ccccc4)c4[nH]c(c(-c5ccccc5)c5nc(c(-c6ccccc6)c6[nH]c2c2ccccc62)-c2ccccc2-5)c2ccccc42)-c2ccccc2-3)cc1"_smiles;
+  //   REQUIRE(m);
+  //   CHECK(m->getAtomWithIdx(8)->getIsAromatic());
+  //   CHECK(m->getAtomWithIdx(7)->getIsAromatic());
+  //   CHECK(m->getAtomWithIdx(6)->getIsAromatic());
+  // }
+  SECTION("porphyrin-like2b") {
+    std::cerr << "222222222222222222222222222222222222" << std::endl;
+    std::unique_ptr<RWMol> m(SmilesToMol(
+        "C1CC1C1C2C(C3)C3C(C2)C(C2CC2)C(C2CC2)C2C(C3)C3C(C2)C1C2CC2", 0,
+        false));
+    REQUIRE(m);
+    m->updatePropertyCache();
+    VECT_INT_VECT rings;
+    MolOps::findSSSR(*m, rings);
+    for (const auto &ring : rings) {
+      std::cerr << "!! ";
+      std::copy(ring.begin(), ring.end(),
+                std::ostream_iterator<int>(std::cerr, ","));
+      std::cerr << std::endl;
+    }
+    CHECK(rings.size() == 9);
   }
 }

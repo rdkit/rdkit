@@ -350,7 +350,7 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
   } else if (rup == 2) {
     aromatic = true;
   }
-#if 0
+#if 1
   std::cerr << " ring: ";
   std::copy(ring.begin(), ring.end(),
             std::ostream_iterator<int>(std::cerr, " "));
@@ -597,26 +597,28 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
     }
   }
 
-  // It seems like we'd want to exclude atoms for being bridgeheads since they
-  // are going to be 3D and not actually conjugated
-  // But we need to be careful about that since rings fused onto macrocycles
-  // have "bridgeheads" according to our definition and we don't want to
-  // exclude things like:
-  //   c1cc2ccc1CCCCCCCCCCCCCCCC2
-  // where atoms 2 and 5 are "bridgeheads" but in a macrocycle
-  if (queryIsAtomBridgehead(at) && !nUnsaturations) {
-    bool inMacrocycle = false;
-    for (const auto &aring : at->getOwningMol().getRingInfo()->atomRings()) {
-      if (aring.size() > 10 &&
-          std::find(aring.begin(), aring.end(), at->getIdx()) != aring.end()) {
-        inMacrocycle = true;
-        break;
-      }
-    }
-    if (!inMacrocycle) {
-      return false;
-    }
-  }
+  // // It seems like we'd want to exclude atoms for being bridgeheads since
+  // they
+  // // are going to be 3D and not actually conjugated
+  // // But we need to be careful about that since rings fused onto macrocycles
+  // // have "bridgeheads" according to our definition and we don't want to
+  // // exclude things like:
+  // //   c1cc2ccc1CCCCCCCCCCCCCCCC2
+  // // where atoms 2 and 5 are "bridgeheads" but in a macrocycle
+  // if (queryIsAtomBridgehead(at) && !nUnsaturations) {
+  //   bool inMacrocycle = false;
+  //   for (const auto &aring : at->getOwningMol().getRingInfo()->atomRings()) {
+  //     if (aring.size() > 10 &&
+  //         std::find(aring.begin(), aring.end(), at->getIdx()) != aring.end())
+  //         {
+  //       inMacrocycle = true;
+  //       break;
+  //     }
+  //   }
+  //   if (!inMacrocycle) {
+  //     return false;
+  //   }
+  // }
 
   return true;
 }
@@ -927,17 +929,22 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
             (mol.getRingInfo()->numAtomRings(firstIdx) >= 2);
       }
     }
+    std::cerr << "  RING ";
+    std::copy(sring.begin(), sring.end(),
+              std::ostream_iterator<int>(std::cerr, ","));
     if (!allDummy &&
         (!numNonAromatic ||
          ((sring.size() - numNonAromatic) >= 2 && nonCandidatesInFusedRings))) {
       cRings.push_back(sring);
+      std::cerr << "  accepted";
       // std::cerr << "candidate " << cRings.size() - 1 << ": ";
       // std::copy(sring.begin(), sring.end(),
       //           std::ostream_iterator<int>(std::cerr, ", "));
       // std::cerr << std::endl;
     }
+    std::cerr << std::endl;
   }
-  std::cerr << " acands: " << acands << std::endl;
+  // std::cerr << " acands: " << acands << std::endl;
   // first convert all rings to bonds ids
   VECT_INT_VECT brings;
   RingUtils::convertToBonds(cRings, brings, mol);
@@ -1000,6 +1007,22 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
   return narom;
 }
 
+void removeAromaticityFromAtomsWithNoAromaticBonds(RWMol &mol) {
+  for (auto atom : mol.atoms()) {
+    if (atom->getIsAromatic()) {
+      unsigned int nAromaticBonds = 0;
+      for (auto bond : mol.atomBonds(atom)) {
+        if (bond->getIsAromatic()) {
+          ++nAromaticBonds;
+        }
+      }
+      if (nAromaticBonds < 2) {
+        atom->setIsAromatic(false);
+      }
+    }
+  }
+}
+
 }  // end of anonymous namespace
 
 int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
@@ -1020,6 +1043,7 @@ int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
     case AROMATICITY_DEFAULT:
     case AROMATICITY_RDKIT:
       res = aromaticityHelper(mol, srings, 0, 0, true);
+      removeAromaticityFromAtomsWithNoAromaticBonds(mol);
       break;
     case AROMATICITY_SIMPLE:
       res = aromaticityHelper(mol, srings, 5, 6, false);
@@ -1036,6 +1060,7 @@ int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
     default:
       throw ValueErrorException("Bad AromaticityModel");
   }
+
   return res;
 }
 

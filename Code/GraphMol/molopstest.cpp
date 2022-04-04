@@ -3545,9 +3545,13 @@ void testSFNetIssue2196817() {
 
   {
     ROMOL_SPTR m = "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4N51"_smiles;
+    unsigned int nNonAromaticAtoms = 0;
     for (const auto a : m->atoms()) {
-      TEST_ASSERT(a->getIsAromatic());
+      if (!a->getIsAromatic()) {
+        ++nNonAromaticAtoms;
+      }
     }
+    TEST_ASSERT(nNonAromaticAtoms == 2);
     unsigned int nNonAromaticBonds = 0;
     for (const auto b : m->bonds()) {
       if (!b->getIsAromatic()) {

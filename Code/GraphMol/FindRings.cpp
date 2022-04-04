@@ -171,6 +171,7 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
 
         // now find the smallest ring/s around (*dupi)
         VECT_INT_VECT srings;
+        std::cerr << "p1" << std::endl;
         bfs_workspace.smallestRingsBfs(mol, dupCand, srings, activeBondsCopy);
         for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end();
              ++sri) {
@@ -311,7 +312,9 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
                       boost::dynamic_bitset<> &activeBonds,
                       boost::dynamic_bitset<> &ringBonds,
                       boost::dynamic_bitset<> &ringAtoms) {
-  // place to record any duplicate rings discovered from the current d2 nodes
+  std::cerr << "frd2n" << std::endl;
+  // place to record any duplicate rings discovered from the current d2
+  // nodes
   RINGINVAR_INT_VECT_MAP dupD2Cands;
   INT_SET changed;
 
@@ -339,6 +342,7 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
     // std::cerr<<"    smallest rings bfs: "<<cand<<std::endl;
     VECT_INT_VECT srings;
     // we have to find all non duplicate possible smallest rings for each node
+    std::cerr << "p2" << std::endl;
     bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
     for (const auto &nring : srings) {
       auto invr = RingUtils::computeRingInvariant(nring, tMol.getNumAtoms());
@@ -408,8 +412,9 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
 void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
                      RINGINVAR_SET &invars, int cand, INT_VECT &,
                      boost::dynamic_bitset<> activeBonds) {
-  // this is brutal - we have no degree 2 nodes - find the first possible degree
-  // 3 node
+  std::cerr << "frd3n" << std::endl;
+  // this is brutal - we have no degree 2 nodes - find the first possible
+  // degree 3 node
   int nsmall;
 
   // We've got a degree three node. The goal of what follows is to find the
@@ -434,6 +439,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
   // first find all smallest possible rings
   VECT_INT_VECT srings;
   BFSWorkspace bfs_workspace;
+  std::cerr << "p3" << std::endl;
   nsmall = bfs_workspace.smallestRingsBfs(tMol, cand, srings, activeBonds);
 
   for (VECT_INT_VECT_CI sri = srings.begin(); sri != srings.end(); ++sri) {
@@ -499,6 +505,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       VECT_INT_VECT trings;
       INT_VECT forb;
       forb.push_back(f);
+      std::cerr << "p4" << std::endl;
       bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
@@ -539,6 +546,8 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       VECT_INT_VECT trings;
       INT_VECT forb;
       forb.push_back(f2);
+      std::cerr << "p5" << std::endl;
+
       bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
@@ -553,6 +562,8 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
       trings.clear();
       forb.clear();
       forb.push_back(f1);
+      std::cerr << "p6" << std::endl;
+
       bfs_workspace.smallestRingsBfs(tMol, cand, trings, activeBonds, &forb);
       for (VECT_INT_VECT_CI sri = trings.begin(); sri != trings.end(); ++sri) {
         const INT_VECT &nring = (*sri);
@@ -644,12 +655,17 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
                                    VECT_INT_VECT &rings,
                                    boost::dynamic_bitset<> &activeBonds,
                                    INT_VECT *forbidden) {
+  std::cerr << "BFS FROM " << root << std::endl;
+  std::cerr << "    " << activeBonds << std::endl;
+  std::cerr << "    " << (forbidden ? forbidden->size() : 666) << std::endl;
+
   // this function finds the smallest ring with the given root atom.
   // if multiple smallest rings are found all of them are returned
-  // if any atoms are specified in the forbidden list, those atoms are avoided.
+  // if any atoms are specified in the forbidden list, those atoms are
+  // avoided.
 
-  // FIX: this should be number of atoms in the fragment (if it's required at
-  // all, see below)
+  // FIX: this should be number of atoms in the fragment (if it's required
+  // at all, see below)
   const int WHITE = 0, GRAY = 1, BLACK = 2;
   d_done.assign(mol.getNumAtoms(), WHITE);
 
@@ -736,6 +752,10 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
           if (ring.size() <= curSize) {
             curSize = rdcast<unsigned int>(ring.size());
             rings.push_back(ring);
+            std::cerr << "  keeping: ";
+            std::copy(ring.begin(), ring.end(),
+                      std::ostream_iterator<int>(std::cerr, ","));
+            std::cerr << std::endl;
           } else {
             // we are done with the smallest rings
             return rdcast<unsigned int>(rings.size());
@@ -952,42 +972,44 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
     boost::dynamic_bitset<> doneAts(nats);
     unsigned int nAtomsDone = 0;
     while (nAtomsDone < curFrag.size()) {
-      // std::cerr<<" ndone: "<<nAtomsDone<<std::endl;
-      // std::cerr<<" activeBonds: "<<activeBonds<<std::endl;
-      // std::cerr<<"  done: ";
+      std::cerr << " ndone: " << nAtomsDone << std::endl;
+      std::cerr << " activeBonds: " << activeBonds << std::endl;
+      std::cerr << "  done: ";
       // trim all bonds that connect to degree 0 and 1 atoms
       while (changed.size() > 0) {
         int cand = *(changed.begin());
         changed.erase(changed.begin());
         if (!doneAts[cand]) {
-          // std::cerr<<cand<<" ";
+          std::cerr << cand << " ";
           doneAts.set(cand);
           ++nAtomsDone;
           FindRings::trimBonds(cand, mol, changed, atomDegrees, activeBonds);
         }
       }
-      // std::cerr<<std::endl;
-      // std::cerr<<"activeBonds2: "<<activeBonds<<std::endl;
+      std::cerr << std::endl;
+      std::cerr << "activeBonds2: " << activeBonds << std::endl;
 
       // all atoms left in the fragment should at least have a degree >= 2
       // collect all the degree two nodes;
       INT_VECT d2nodes;
       FindRings::pickD2Nodes(mol, d2nodes, curFrag, atomDegrees, activeBonds);
-#if 0
-          std::cerr<<"d2nodes: ";
-          std::copy(d2nodes.begin(),d2nodes.end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
+#if 1
+      std::cerr << "d2nodes: ";
+      std::copy(d2nodes.begin(), d2nodes.end(),
+                std::ostream_iterator<int>(std::cerr, " "));
+      std::cerr << std::endl;
 #endif
       if (d2nodes.size() > 0) {  // deal with the current degree two nodes
         // place to record any duplicate rings discovered from the current d2
         // nodes
         FindRings::findRingsD2nodes(mol, fragRes, invars, d2nodes, atomDegrees,
                                     activeBonds, ringBonds, ringAtoms);
-#if 0
-            std::cerr<<"  d2nodes post: ";
-            std::copy(d2nodes.begin(),d2nodes.end(),std::ostream_iterator<int>(std::cerr," "));
-            std::cerr<<std::endl;
-            std::cerr<<"  ring bonds: "<<ringBonds<<std::endl;
+#if 1
+        std::cerr << "  d2nodes post: ";
+        std::copy(d2nodes.begin(), d2nodes.end(),
+                  std::ostream_iterator<int>(std::cerr, " "));
+        std::cerr << std::endl;
+        std::cerr << "  ring bonds: " << ringBonds << std::endl;
 #endif
         INT_VECT_CI d2i;
         // trim after we have dealt with all the current d2 nodes,
