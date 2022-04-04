@@ -4511,3 +4511,86 @@ M  END
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
 }
+
+TEST_CASE(
+    "Github #5152: presence of exocyclic query bonds in CTAB prevents "
+    "aromaticity perception") {
+  SECTION("as reported") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.229300 0.915100 0.000000 0
+M  V30 2 C -3.562800 0.145100 0.000000 0
+M  V30 3 C -3.562800 -1.395100 0.000000 0
+M  V30 4 C -2.229300 -2.165100 0.000000 0
+M  V30 5 C -0.895500 -1.395100 0.000000 0
+M  V30 6 C -0.895500 0.145100 0.000000 0
+M  V30 7 A 0.438100 0.915100 0.000000 0
+M  V30 8 A 0.438100 -2.165100 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 6 6 7
+M  V30 8 6 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getIsAromatic());
+    CHECK(m->getBondWithIdx(0)->getIsAromatic());
+  }
+  SECTION("more detailed") {
+    std::string molb = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.229300 0.915100 0.000000 0
+M  V30 2 C -3.562800 0.145100 0.000000 0
+M  V30 3 C -3.562800 -1.395100 0.000000 0
+M  V30 4 C -2.229300 -2.165100 0.000000 0
+M  V30 5 C -0.895500 -1.395100 0.000000 0
+M  V30 6 C -0.895500 0.145100 0.000000 0
+M  V30 7 A 0.438100 0.915100 0.000000 0
+M  V30 8 A 0.438100 -2.165100 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 6 6 7
+M  V30 8 6 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+    std::string ptrn = "7 6 6 7";
+    std::vector<std::string> alternatives = {
+        "7 5 6 7",  // S/D
+        "7 7 6 7",  // D/A
+        "7 8 6 7",  // any
+    };
+    auto pos = molb.find(ptrn);
+    REQUIRE(pos != std::string::npos);
+    for (auto alternative : alternatives) {
+      auto mb2 = molb.replace(pos, ptrn.size(), alternative);
+      std::unique_ptr<RWMol> m(MolBlockToMol(mb2));
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(0)->getIsAromatic());
+      CHECK(m->getBondWithIdx(0)->getIsAromatic());
+    }
+  }
+}
