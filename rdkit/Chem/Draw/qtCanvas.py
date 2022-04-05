@@ -54,7 +54,7 @@ class Canvas(CanvasBase):
 
   def addCanvasText(self, text, pos, font, color=(0, 0, 0), **kwargs):
     orientation = kwargs.get('orientation', 'E')
-    qfont = QtGui.QFont("Helvetica", font.size * 1.5)
+    qfont = QtGui.QFont("Helvetica", int(font.size * 1.5))
     qtext = QtGui.QTextDocument()
     qtext.setDefaultFont(qfont)
     colored = [int(c * 255) for c in color]
@@ -78,6 +78,7 @@ class Canvas(CanvasBase):
     polygon = QtGui.QPolygonF()
     for ver in ps:
       polygon.append(QtCore.QPointF(*ver))
+    color = [int(c * 255) for c in color]
     pen = QtGui.QPen(QtGui.QColor(*color), 1, QtCore.Qt.SolidLine)
     self.painter.setPen(pen)
     self.painter.setBrush(QtGui.QColor(0, 0, 0))
