@@ -348,6 +348,25 @@ bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
   }
   return false;
 }
+
+bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
+                                  std::vector<unsigned int> &which) {
+  if (!rxn.isInitialized()) {
+    throw ChemicalReactionException(
+        "initReactantMatchers() must be called first");
+  }
+  which.clear();
+  unsigned int reactant_template_idx = 0;
+  for (auto iter = rxn.beginReactantTemplates();
+       iter != rxn.endReactantTemplates(); ++iter, ++reactant_template_idx) {
+    MatchVectType tvect;
+    if (SubstructMatch(mol, **iter, tvect)) {
+      which.push_back(reactant_template_idx);
+    }
+  }
+  return !which.empty();
+}
+
 bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,
                                   const ROMol &mol) {
   unsigned int ignore;
@@ -370,6 +389,25 @@ bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
   }
   return false;
 }
+
+bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
+                                 std::vector<unsigned int> &which) {
+  if (!rxn.isInitialized()) {
+    throw ChemicalReactionException(
+        "initReactantMatchers() must be called first");
+  }
+  which.clear();
+  unsigned int product_template_idx = 0;
+  for (auto iter = rxn.beginProductTemplates();
+       iter != rxn.endProductTemplates(); ++iter, ++product_template_idx) {
+    MatchVectType tvect;
+    if (SubstructMatch(mol, **iter, tvect)) {
+      which.push_back(product_template_idx);
+    }
+  }
+  return !which.empty();
+}
+
 bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,
                                  const ROMol &mol) {
   unsigned int ignore;
@@ -406,6 +444,34 @@ bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
     }
   }
   return false;
+}
+
+bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
+                               std::vector<unsigned int> &which) {
+  if (!rxn.isInitialized()) {
+    throw ChemicalReactionException(
+        "initReactantMatchers() must be called first");
+  }
+  which.clear();
+  unsigned int agent_template_idx = 0;
+  for (auto iter = rxn.beginAgentTemplates(); iter != rxn.endAgentTemplates();
+       ++iter, ++agent_template_idx) {
+    if (iter->get()->getNumHeavyAtoms() != mol.getNumHeavyAtoms()) {
+      continue;
+    }
+    if (iter->get()->getNumBonds() != mol.getNumBonds()) {
+      continue;
+    }
+    if (RDKit::Descriptors::calcAMW(*iter->get()) !=
+        RDKit::Descriptors::calcAMW(mol)) {
+      continue;
+    }
+    MatchVectType tvect;
+    if (SubstructMatch(mol, **iter, tvect)) {
+      which.push_back(agent_template_idx);
+    }
+  }
+  return !which.empty();
 }
 
 bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol) {

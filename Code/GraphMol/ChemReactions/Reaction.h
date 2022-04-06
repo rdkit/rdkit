@@ -369,6 +369,10 @@ RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol, unsigned int &which);
 //! \overload
 RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol,
+    std::vector<unsigned int> &which);
+//! \overload
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol);
 
 //! tests whether or not the molecule has a substructure match
@@ -380,6 +384,10 @@ RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol, unsigned int &which);
 //! \overload
 RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol,
+    std::vector<unsigned int> &which);
+//! \overload
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol);
 
 //! tests whether or not the molecule has a substructure match
@@ -389,6 +397,10 @@ RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(
 //! of agents on return
 RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol, unsigned int &which);
+//! \overload
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol,
+    std::vector<unsigned int> &which);
 //! \overload
 RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeAgentOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol);
