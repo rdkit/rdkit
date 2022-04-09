@@ -6835,24 +6835,34 @@ CAS<~>
 
   def test_blocklogs(self):
     with capture_logging(logging.INFO) as log_stream:
+
+      # Logging is known to be problematic with static linked libs
+      # so let's skip the test if we can't see the expected error
+      # log before we block logging.
+      Chem.MolFromSmiles('garbage_0')
+      if 'garbage_0' not in log_stream.getvalue():
+        self.skipTest('cannot fetch log msgs')
+      else:
+        log_stream.truncate(0)
+
       with rdBase.BlockLogs():
         Chem.MolFromSmiles('garbage_1')
-      self.assertEqual(len(log_stream.getvalue()), 0)
+      self.assertNotIn('garbage_1', log_stream.getvalue())
 
       Chem.MolFromSmiles('garbage_2')
-      self.assertNotEqual(len(log_stream.getvalue()), 0)
+      self.assertIn('garbage_2', log_stream.getvalue())
       log_stream.truncate(0)
 
       block = rdBase.BlockLogs()
       self.assertIsNotNone(block)
 
       Chem.MolFromSmiles('garbage_3')
-      self.assertEqual(len(log_stream.getvalue()), 0)
+      self.assertNotIn('garbage_3', log_stream.getvalue())
 
       del block
 
       Chem.MolFromSmiles('garbage_4')
-      self.assertNotEqual(len(log_stream.getvalue()), 0)
+      self.assertIn('garbage_4', log_stream.getvalue())
       log_stream.truncate(0)
 
 
