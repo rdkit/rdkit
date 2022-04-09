@@ -203,9 +203,9 @@ void LogMessage(std::string spec, std::string msg) {
   }
 }
 
-class BlockLogs : public RDLog::LogStateSetter, public boost::noncopyable {
+class BlockLogs : public boost::noncopyable {
  public:
-  BlockLogs() : RDLog::LogStateSetter() {}
+  BlockLogs() : m_log_setter{new RDLog::LogStateSetter} {}
   ~BlockLogs() = default;
 
   BlockLogs *enter() { return this; }
@@ -215,7 +215,11 @@ class BlockLogs : public RDLog::LogStateSetter, public boost::noncopyable {
     RDUNUSED_PARAM(exc_type);
     RDUNUSED_PARAM(exc_val);
     RDUNUSED_PARAM(traceback);
+    m_log_setter.reset();
   }
+
+ private:
+  std::unique_ptr<RDLog::LogStateSetter> m_log_setter;
 };
 
 namespace {
