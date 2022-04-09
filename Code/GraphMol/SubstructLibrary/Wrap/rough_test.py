@@ -34,22 +34,18 @@
 it is intended to be shallow but broad.
 """
 
-import doctest
+import doctest, unittest, os, sys
+
+from rdkit import rdBase
 import logging
-import os
-import pickle
-import tempfile
-import time
-import unittest
-from contextlib import contextmanager
-from io import StringIO
-
-from rdkit import RDLogger, rdBase
+from rdkit import RDConfig, RDLogger
 from rdkit.RDLogger import logger
-
 logger = logger()
 from rdkit import Chem
 from rdkit.Chem import rdSubstructLibrary
+import time
+import pickle
+import tempfile
 
 
 def load_tests(loader, tests, ignore):
@@ -73,42 +69,6 @@ def makeStereoExamples():
           mols.append(m)
 
   return mols
-
-
-@contextmanager
-def log_to_python(level=None):
-  """
-    Temporarily redirect logging to Python streams, optionally
-    setting a specific log level.
-  """
-  rdBase.LogToPythonLogger()
-  pylog = logging.getLogger("rdkit")
-  if level is not None:
-    original_level = pylog.level
-    pylog.setLevel(level)
-
-  yield pylog
-
-  if level is not None:
-    pylog.setLevel(original_level)
-  rdBase.LogToCppStreams()
-
-
-@contextmanager
-def capture_logging(level=None):
-  """
-    Temporarily redirect logging to a Python StringIO, optionally
-    setting a specific log level.
-  """
-  log_stream = StringIO()
-  stream_handler = logging.StreamHandler(stream=log_stream)
-
-  with log_to_python(level) as pylog:
-    pylog.addHandler(stream_handler)
-
-    yield log_stream
-
-    pylog.removeHandler(stream_handler)
 
 
 class TestCase(unittest.TestCase):
@@ -436,7 +396,7 @@ class TestCase(unittest.TestCase):
         slib2.InitFromStream(file)
         self.assertEqual(len(slib), len(slib2))
 
-    from io import BytesIO, StringIO
+    from io import StringIO, BytesIO
     s = StringIO()
     slib.ToStream(s)
 
@@ -702,43 +662,24 @@ class TestCase(unittest.TestCase):
     ]
     # this test is really verbose, so disable the actual output without
     # disabling that logging happens.
+    rdBase.LogToPythonLogger()
+    pylog = logging.getLogger("rdkit")
+    pylog.setLevel(logging.CRITICAL)
+    for holder in [
+        rdSubstructLibrary.CachedSmilesMolHolder(),
+        rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+    ]:
+      for smi in pdb_ligands:
+        holder.AddSmiles(smi)
+      lib = rdSubstructLibrary.SubstructLibrary(holder)
+      # this should excercise the logger
+      smi = "CCS(=O)(=O)c1ccc(OC)c(Nc2ncc(-c3cccc(-c4ccccn4)c3)o2)c1"
+      self.assertEqual(0, lib.CountMatches(Chem.MolFromSmiles(smi)))
 
-    with log_to_python(logging.CRITICAL):
-      for holder in [
-          rdSubstructLibrary.CachedSmilesMolHolder(),
-          rdSubstructLibrary.CachedTrustedSmilesMolHolder()
-      ]:
-        for smi in pdb_ligands:
-          holder.AddSmiles(smi)
-        lib = rdSubstructLibrary.SubstructLibrary(holder)
-        # this should excercise the logger
-        smi = "CCS(=O)(=O)c1ccc(OC)c(Nc2ncc(-c3cccc(-c4ccccn4)c3)o2)c1"
-        self.assertEqual(0, lib.CountMatches(Chem.MolFromSmiles(smi)))
-
-        # test add patterns
-        rdSubstructLibrary.AddPatterns(lib, -1)
-
-  def test_blocklogs(self):
-    with capture_logging(logging.INFO) as log_stream:
-      with rdBase.BlockLogs():
-        Chem.MolFromSmiles('garbage_1')
-      self.assertEqual(len(log_stream.getvalue()), 0)
-
-      Chem.MolFromSmiles('garbage_2')
-      self.assertNotEqual(len(log_stream.getvalue()), 0)
-      log_stream.truncate(0)
-
-      block = rdBase.BlockLogs()
-      self.assertIsNotNone(block)
-
-      Chem.MolFromSmiles('garbage_3')
-      self.assertEqual(len(log_stream.getvalue()), 0)
-
-      del block
-
-      Chem.MolFromSmiles('garbage_4')
-      self.assertNotEqual(len(log_stream.getvalue()), 0)
-      log_stream.truncate(0)
+      # test add patterns
+      rdSubstructLibrary.AddPatterns(lib, -1)
+    pylog.setLevel(logging.WARN)
+    rdBase.LogToCppStreams()
 
 
 if __name__ == '__main__':
