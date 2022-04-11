@@ -131,12 +131,5 @@ class RDKIT_RDGENERAL_EXPORT LogStateSetter {
   std::uint64_t d_origState = 0;
 };
 
-// ! Temporarily block logging until this object goes out of scope
-// DEPRECATED, please use LogStateSetter() instead
-struct RDKIT_RDGENERAL_EXPORT BlockLogs {
-  std::vector<RDLogger> logs_to_reenable;
-  BlockLogs();
-  ~BlockLogs();
-};
 }  // namespace RDLog
 #endif
