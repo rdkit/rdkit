@@ -7667,6 +7667,7 @@ void testMultiTemplateRxnQueries() {
 
   ROMol* reactant = SmilesToMol("SC1=CC(CSSCC2=CC=CC=C2)=CC=C1");
   ROMol* product = reactant;
+  ROMol* neither = SmilesToMol("c1ccccc1");
 
   std::vector<unsigned int> which;
   bool is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant, which);
@@ -7679,6 +7680,15 @@ void testMultiTemplateRxnQueries() {
   is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant);
   TEST_ASSERT(is_reactant);
 
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither, which);
+  TEST_ASSERT(!is_reactant);
+  TEST_ASSERT(which.empty());
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither, first_match);
+  TEST_ASSERT(!is_reactant);
+  TEST_ASSERT(first_match == 2);
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither);
+  TEST_ASSERT(!is_reactant);
+
   bool is_product = isMoleculeProductOfReaction(*rxn, *product, which);
   TEST_ASSERT(is_product);
   TEST_ASSERT(which == std::vector<unsigned int>({0,1}));
@@ -7688,7 +7698,17 @@ void testMultiTemplateRxnQueries() {
   is_product = isMoleculeProductOfReaction(*rxn, *product);
   TEST_ASSERT(is_product);
 
+  is_product = isMoleculeProductOfReaction(*rxn, *neither, which);
+  TEST_ASSERT(!is_product);
+  TEST_ASSERT(which.empty());
+  is_product = isMoleculeProductOfReaction(*rxn, *neither, first_match);
+  TEST_ASSERT(!is_product);
+  TEST_ASSERT(first_match == 2);
+  is_product = isMoleculeProductOfReaction(*rxn, *neither);
+  TEST_ASSERT(!is_product);
+
   delete reactant;
+  delete neither;
   delete rxn;
 }
 
