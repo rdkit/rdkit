@@ -218,25 +218,3 @@ void InitLogs() {
 
 }  // namespace RDLog
 #endif
-
-namespace RDLog {
-
-BlockLogs::BlockLogs() {
-  auto logs = {rdDebugLog, rdInfoLog, rdWarningLog, rdErrorLog};
-  for (auto log : logs) {
-    if (log != nullptr && is_log_enabled(log)) {
-      log->df_enabled = false;
-      logs_to_reenable.push_back(log);
-    }
-  }
-}
-
-BlockLogs::~BlockLogs() {
-  for (auto log : logs_to_reenable) {
-    if (log != nullptr && log.get() != nullptr) {
-      log->df_enabled = true;
-    }
-  }
-}
-
-}  // namespace RDLog
