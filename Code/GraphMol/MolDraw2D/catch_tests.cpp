@@ -4481,9 +4481,14 @@ TEST_CASE(
       std::ofstream outs("testGithub_5185.svg");
       outs << text;
       outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
       CHECK(text.find("<path class='note' d='M 92.5 130.1")
             != std::string::npos);
       check_file_hash("testGithub_5185.svg");
+#else
+      CHECK(text.find("<text x='90.4' y='130.3' class='note' ")
+            != std::string::npos);
+#endif
     }
   }
 }
