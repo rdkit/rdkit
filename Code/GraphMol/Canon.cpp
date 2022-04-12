@@ -77,11 +77,8 @@ bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
            !details::isUnsaturated(atom, mol)));
 }
 
-struct _possibleCompare
-    : public std::binary_function<PossibleType, PossibleType, bool> {
-  bool operator()(const PossibleType &arg1, const PossibleType &arg2) const {
-    return (arg1.get<0>() < arg2.get<0>());
-  }
+auto _possibleCompare = [](const PossibleType &arg1, const PossibleType &arg2) {
+  return (arg1.get<0>() < arg2.get<0>());
 };
 
 bool checkBondsInSameBranch(MolStack &molStack, Bond *dblBnd, Bond *dirBnd) {
@@ -652,7 +649,7 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
   //  Sort on ranks
   //
   // ---------------------
-  std::sort(possibles.begin(), possibles.end(), _possibleCompare());
+  std::sort(possibles.begin(), possibles.end(), _possibleCompare);
   // if (possibles.size())
   //   std::cerr << " aIdx1: " << atomIdx
   //             << " first: " << possibles.front().get<0>() << " "
@@ -823,7 +820,7 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   //  Sort on ranks
   //
   // ---------------------
-  std::sort(possibles.begin(), possibles.end(), _possibleCompare());
+  std::sort(possibles.begin(), possibles.end(), _possibleCompare);
   // if (possibles.size())
   //   std::cerr << " aIdx2: " << atomIdx
   //             << " first: " << possibles.front().get<0>() << " "
