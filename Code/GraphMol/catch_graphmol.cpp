@@ -2628,3 +2628,141 @@ TEST_CASE("Github #5055") {
     REQUIRE(m);
   }
 }
+
+TEST_CASE("Github #5134: Fused ring system not perceived as aromatic") {
+#if 1
+  SECTION("as reported") {
+    auto m = "C1=CC2=CC3=CC=C4C=C1C2C34"_smiles;
+    REQUIRE(m);
+    for (auto i = 0u; i < 10; ++i) {
+      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+  }
+  SECTION("Related") {
+    auto m = "C1=CC2=CC=C3C=CC=C4C=CC(=C1)C2C34"_smiles;
+    REQUIRE(m);
+    for (auto i = 0u; i < 14; ++i) {
+      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+  }
+  SECTION("some edge cases where the new rule does not apply") {
+    std::vector<std::string> smis = {"C1CC2C=C3C=CC4=CC1C2C34",
+                                     "C1C=C2C=CC3=CC=C1C23"};
+    for (const auto &smi : smis) {
+      std::unique_ptr<ROMol> mol(SmilesToMol(smi));
+      REQUIRE(mol);
+      for (auto atom : mol->atoms()) {
+        CHECK(!atom->getIsAromatic());
+      }
+    }
+  }
+  SECTION("no bridgeheads!") {
+    auto m = "O=C1C2=C(C=CC=C2)C(=O)C3=C1C4C5=C(C=CC=C5)C3C6=C4C=CC=C6"_smiles;
+    REQUIRE(m);
+    CHECK(!m->getAtomWithIdx(12)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(19)->getIsAromatic());
+  }
+  SECTION("Github #5078: Can't roundtrip CHEMBL4080644 through SMILES") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 22 25  0  0  0  0  0  0  0  0999 V2000
+    6.1174   -5.5956    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.5355   -6.1734    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9052   -6.9054    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.7157   -6.7800    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8468   -5.9705    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9896   -4.3666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9885   -5.1861    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6965   -5.5951    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6947   -3.9577    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.4033   -4.3630    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.4067   -5.1882    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1123   -3.9452    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8293   -4.3571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8321   -5.1820    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5468   -5.5902    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2590   -5.1746    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2522   -4.3466    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5370   -3.9422    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2804   -5.5941    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.9563   -3.9319    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.6601   -5.9680    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.7196   -6.1277    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  1  1  0
+  6  7  2  0
+  7  8  1  0
+  8 11  2  0
+ 10  9  2  0
+  9  6  1  0
+ 10 11  1  0
+ 10 12  1  0
+ 11  1  1  0
+  1 14  1  0
+ 13 12  1  0
+ 13 14  2  0
+ 14 15  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 17 18  2  0
+ 18 13  1  0
+  7 19  1  0
+ 17 20  1  0
+  5 21  2  0
+  2 22  2  0
+  2 12  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(!m->getAtomWithIdx(11)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(0)->getIsAromatic());
+    auto smiles = MolToSmiles(*m);
+    std::unique_ptr<RWMol> m2(SmilesToMol(smiles));
+    REQUIRE(m2);
+  }
+  SECTION("trickier") {
+    auto m = "C1=CC2=CC=C3C=CC4=CC=C5C=CC=C6C5C4C3C2C6=C1"_smiles;
+    REQUIRE(m);
+    for (auto i = 0u; i < 16; ++i) {
+      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
+    }
+    CHECK(m->getAtomWithIdx(20)->getIsAromatic());
+  }
+  SECTION("another odd edge case") {
+    auto m = "C2=CC1=S(S2)SC=C1"_smiles;
+    REQUIRE(m);
+    for (auto atom : m->atoms()) {
+      CHECK(!atom->getIsAromatic());
+    }
+  }
+  SECTION("macrocycle bridgehead edge case") {
+    auto m = "C2CCCCCCCCCN1C=C(CC2)C=CC1=O"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(10)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(11)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(12)->getIsAromatic());
+  }
+  SECTION("found during testing") {
+    auto m =
+        "c1ccc2c(c1)c1cc[n+]2Cc2ccc(cc2)C[n+]2ccc(c3ccccc32)NCc2ccc(cc2)CN1"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(6)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(11)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(18)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(30)->getIsAromatic());
+
+    CHECK(!m->getAtomWithIdx(28)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(29)->getIsAromatic());
+  }
+#endif
+  SECTION("more testing fun") {
+    auto m = "CC1C2c3ccccc3C(c3ccccc32)C1CN"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(4)->getIsAromatic());
+    CHECK(m->getAtomWithIdx(14)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(2)->getIsAromatic());
+    CHECK(!m->getAtomWithIdx(9)->getIsAromatic());
+  }
+}
