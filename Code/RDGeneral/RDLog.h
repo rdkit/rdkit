@@ -117,7 +117,7 @@ namespace RDLog {
 RDKIT_RDGENERAL_EXPORT void InitLogs();
 
 using RDLoggerList = std::vector<RDLogger>;
-class RDKIT_RDGENERAL_EXPORT LogStateSetter {
+class RDKIT_RDGENERAL_EXPORT LogStateSetter : public boost::noncopyable {
  public:
   //! enables only the logs in the list, the current state will be restored when
   //! this object is destroyed

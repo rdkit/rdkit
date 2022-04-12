@@ -24,31 +24,35 @@ RDLogger rdWarningLog = nullptr;
 RDLogger rdStatusLog = nullptr;
 namespace RDLog {
 
+namespace {
+const std::vector<RDLogger *> allLogs = {&rdAppLog,     &rdDebugLog,
+                                         &rdInfoLog,    &rdErrorLog,
+                                         &rdWarningLog, &rdStatusLog};
+}
+
 LogStateSetter::LogStateSetter() {
-  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
-                                   rdErrorLog, rdWarningLog, rdStatusLog};
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (allLogs[i] && allLogs[i]->df_enabled) {
+    if (*allLogs[i] && (*allLogs[i])->df_enabled) {
       d_origState |= 1 << i;
-      allLogs[i]->df_enabled = false;
+      (*allLogs[i])->df_enabled = false;
     }
   }
 }
 
 LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
-  for (auto &log : toEnable) {
-    if (log) {
-      log->df_enabled = true;
+  for (auto i = 0u; i < allLogs.size(); ++i) {
+    if (*allLogs[i] && std::find(toEnable.begin(), toEnable.end(),
+                                 *allLogs[i]) != toEnable.end()) {
+      d_origState ^= 1 << i;
+      (*allLogs[i])->df_enabled = true;
     }
   }
 }
 
 LogStateSetter::~LogStateSetter() {
-  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
-                                   rdErrorLog, rdWarningLog, rdStatusLog};
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (allLogs[i]) {
-      allLogs[i]->df_enabled = d_origState & 1 << i;
+    if (*allLogs[i]) {
+      (*allLogs[i])->df_enabled ^= d_origState >> i & 1;
     }
   }
 }

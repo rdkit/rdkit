@@ -29,12 +29,11 @@ namespace logging = boost::logging;
 
 std::string _version() { return "$Id$"; }
 
-
 // std::ostream wrapper around Python's stderr stream
 struct PyErrStream : std::ostream, std::streambuf {
   static thread_local std::string buffer;
 
-  PyErrStream(): std::ostream(this) {
+  PyErrStream() : std::ostream(this) {
     // All done!
   }
 
@@ -48,8 +47,7 @@ struct PyErrStream : std::ostream, std::streambuf {
       PyGILStateHolder h;
       PySys_WriteStderr("%s\n", buffer.c_str());
       buffer.clear();
-    }
-    else {
+    } else {
       buffer += c;
     }
   }
@@ -60,7 +58,7 @@ struct PyLogStream : std::ostream, std::streambuf {
   static thread_local std::string buffer;
   PyObject *logfn = nullptr;
 
-  PyLogStream(std::string level): std::ostream(this) {
+  PyLogStream(std::string level) : std::ostream(this) {
     PyObject *module = PyImport_ImportModule("logging");
     PyObject *logger = nullptr;
 
@@ -100,8 +98,7 @@ struct PyLogStream : std::ostream, std::streambuf {
       PyObject *result = PyObject_CallFunction(logfn, "s", buffer.c_str());
       Py_XDECREF(result);
       buffer.clear();
-    }
-    else {
+    } else {
       buffer += c;
     }
   }
@@ -111,17 +108,16 @@ struct PyLogStream : std::ostream, std::streambuf {
 thread_local std::string PyErrStream::buffer;
 thread_local std::string PyLogStream::buffer;
 
-
 void LogToPythonLogger() {
   static PyLogStream debug("debug");
   static PyLogStream info("info");
   static PyLogStream warning("warning");
   static PyLogStream error("error");
 
-  rdDebugLog   = std::make_shared<logging::rdLogger>(&debug);
-  rdInfoLog    = std::make_shared<logging::rdLogger>(&info);
+  rdDebugLog = std::make_shared<logging::rdLogger>(&debug);
+  rdInfoLog = std::make_shared<logging::rdLogger>(&info);
   rdWarningLog = std::make_shared<logging::rdLogger>(&warning);
-  rdErrorLog   = std::make_shared<logging::rdLogger>(&error);
+  rdErrorLog = std::make_shared<logging::rdLogger>(&error);
 }
 
 void LogToPythonStderr() {
@@ -130,17 +126,17 @@ void LogToPythonStderr() {
   static PyErrStream warning;
   static PyErrStream error;
 
-  rdDebugLog   = std::make_shared<logging::rdLogger>(&debug);
-  rdInfoLog    = std::make_shared<logging::rdLogger>(&info);
+  rdDebugLog = std::make_shared<logging::rdLogger>(&debug);
+  rdInfoLog = std::make_shared<logging::rdLogger>(&info);
   rdWarningLog = std::make_shared<logging::rdLogger>(&warning);
-  rdErrorLog   = std::make_shared<logging::rdLogger>(&error);
+  rdErrorLog = std::make_shared<logging::rdLogger>(&error);
 }
 
 void WrapLogs() {
-  static PyErrStream debug; //("RDKit DEBUG: ");
-  static PyErrStream error; //("RDKit ERROR: ");
-  static PyErrStream warning; //("RDKit WARNING: ");
-  static PyErrStream info; //("RDKit INFO: ");
+  static PyErrStream debug;    //("RDKit DEBUG: ");
+  static PyErrStream error;    //("RDKit ERROR: ");
+  static PyErrStream warning;  //("RDKit WARNING: ");
+  static PyErrStream info;     //("RDKit INFO: ");
 
   if (!rdDebugLog || !rdInfoLog || !rdErrorLog || !rdWarningLog) {
     RDLog::InitLogs();
@@ -152,18 +148,11 @@ void WrapLogs() {
   rdErrorLog->SetTee(error);
 }
 
+void EnableLog(std::string spec) { logging::enable_logs(spec); }
 
-void EnableLog(std::string spec) {
-  logging::enable_logs(spec);
-}
+void DisableLog(std::string spec) { logging::disable_logs(spec); }
 
-void DisableLog(std::string spec) {
-  logging::disable_logs(spec);
-}
-
-std::string LogStatus() {
-  return logging::log_status();
-}
+std::string LogStatus() { return logging::log_status(); }
 
 void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
   (void)spec;
@@ -181,7 +170,6 @@ void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
 #endif
 #endif
 }
-
 
 void LogDebugMsg(const std::string &msg) {
   // NOGIL nogil;
@@ -215,6 +203,24 @@ void LogMessage(std::string spec, std::string msg) {
   }
 }
 
+class BlockLogs : public boost::noncopyable {
+ public:
+  BlockLogs() : m_log_setter{new RDLog::LogStateSetter} {}
+  ~BlockLogs() = default;
+
+  BlockLogs *enter() { return this; }
+
+  void exit(python::object exc_type, python::object exc_val,
+            python::object traceback) {
+    RDUNUSED_PARAM(exc_type);
+    RDUNUSED_PARAM(exc_val);
+    RDUNUSED_PARAM(traceback);
+    m_log_setter.reset();
+  }
+
+ private:
+  std::unique_ptr<RDLog::LogStateSetter> m_log_setter;
+};
 
 namespace {
 struct python_streambuf_wrapper {
@@ -223,7 +229,7 @@ struct python_streambuf_wrapper {
   static void wrap() {
     using namespace boost::python;
     class_<wt, boost::noncopyable>("streambuf", no_init)
-        .def(init<object&, std::size_t>(
+        .def(init<object &, std::size_t>(
             (arg("python_file_obj"), arg("buffer_size") = 0),
             "documentation")[with_custodian_and_ward_postcall<0, 2>()]);
   }
@@ -236,14 +242,13 @@ struct python_ostream_wrapper {
     using namespace boost::python;
     class_<std::ostream, boost::noncopyable>("std_ostream", no_init);
     class_<wt, boost::noncopyable, bases<std::ostream>>("ostream", no_init)
-        .def(init<object&, std::size_t>(
+        .def(init<object &, std::size_t>(
             (arg("python_file_obj"), arg("buffer_size") = 0)));
   }
 };
 
 void seedRNG(unsigned int seed) { std::srand(seed); }
 }  // namespace
-
 
 BOOST_PYTHON_MODULE(rdBase) {
   python::scope().attr("__doc__") =
@@ -296,14 +301,12 @@ BOOST_PYTHON_MODULE(rdBase) {
 
   python::def("LogDebugMsg", LogDebugMsg,
               "Log a message to the RDKit debug logs");
-  python::def("LogInfoMsg", LogInfoMsg,
-              "Log a message to the RDKit info logs");
+  python::def("LogInfoMsg", LogInfoMsg, "Log a message to the RDKit info logs");
   python::def("LogWarningMsg", LogWarningMsg,
               "Log a message to the RDKit warning logs");
   python::def("LogErrorMsg", LogErrorMsg,
               "Log a message to the RDKit error logs");
-  python::def("LogMessage", LogMessage,
-              "Log a message to any rdApp.* log");
+  python::def("LogMessage", LogMessage, "Log a message to any rdApp.* log");
 
   python::def("AttachFileToLog", AttachFileToLog,
               "Causes the log to write to a file",
@@ -319,8 +322,11 @@ BOOST_PYTHON_MODULE(rdBase) {
   python_streambuf_wrapper::wrap();
   python_ostream_wrapper::wrap();
 
-  python::class_<RDLog::LogStateSetter, boost::noncopyable>(
+  python::class_<BlockLogs, boost::noncopyable>(
       "BlockLogs",
-      "Temporarily block logs from outputting while this instance is in "
-      "scope.");
+      "Temporarily block logs from outputting while this instance is in scope.",
+      python::init<>())
+      .def("__enter__", &BlockLogs::enter,
+           python::return_internal_reference<>())
+      .def("__exit__", &BlockLogs::exit);
 }

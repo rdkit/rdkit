@@ -446,8 +446,8 @@ def _okToKekulizeMol(mol, kekulize):
 
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
   try:
-    blocker = rdBase.BlockLogs()
-    mol.GetAtomWithIdx(0).GetExplicitValence()
+    with rdBase.BlockLogs():
+      mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
 
@@ -455,8 +455,8 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
   wedge = kwargs.get('wedgeBonds', True)
 
   try:
-    blocker = rdBase.BlockLogs()
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
+    with rdBase.BlockLogs():
+      mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
@@ -489,16 +489,16 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs):
   try:
-    blocker = rdBase.BlockLogs()
-    mol.GetAtomWithIdx(0).GetExplicitValence()
+    with rdBase.BlockLogs():
+      mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
 
   kekulize = _okToKekulizeMol(mol, kekulize)
 
   try:
-    blocker = rdBase.BlockLogs()
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
+    with rdBase.BlockLogs():
+      mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
   d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
