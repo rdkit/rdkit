@@ -601,6 +601,141 @@ void test4() {
   std::cout << "Finished" << std::endl;
 }
 
+void test5() {
+  std::cout << "-----------------------" << std::endl;
+  std::cout << "Test 5: Assume Isolated Hydrogen" << std::endl;
+
+  {
+    // Test on hydrogen air with `useHs` parameter.
+    std::string smiles = "[H][H]";
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+    std::unordered_map<unsigned int, unsigned int> cBondMap;
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
+
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, true, false, &cAtomMap, &cBondMap, true);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cBondMap.size() == 1);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, true, false, &cAtomMap, &cBondMap, false);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cBondMap.size() == 1);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, false, false, &cAtomMap, &cBondMap, true);
+    TEST_ASSERT(pth.size() == 0);
+    TEST_ASSERT(cAtomMap.size() == 1);
+    TEST_ASSERT(cBondMap.size() == 0);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, false, false, &cAtomMap, &cBondMap, false);
+    TEST_ASSERT(pth.size() == 0);
+    TEST_ASSERT(cAtomMap.size() == 1);
+    TEST_ASSERT(cBondMap.size() == 0);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    delete mol;
+    delete mH;
+  }
+
+  {
+    // Test on methane with `useHs` parameter.
+    std::string smiles = "C";
+    std::unordered_map<unsigned int, unsigned int> cAtomMap;
+    std::unordered_map<unsigned int, unsigned int> cBondMap;
+    RWMol *mol = SmilesToMol(smiles);
+    TEST_ASSERT(mol);
+    ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
+
+    // Test on carbon atom (`radius` is independent if enforceSize=false)
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, true, false, &cAtomMap, &cBondMap, true);
+    TEST_ASSERT(pth.size() == 4);
+    TEST_ASSERT(cAtomMap.size() == 5);
+    TEST_ASSERT(cBondMap.size() == 4);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, true, false, &cAtomMap, &cBondMap, false);
+    TEST_ASSERT(pth.size() == 4);
+    TEST_ASSERT(cAtomMap.size() == 5);
+    TEST_ASSERT(cBondMap.size() == 4);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    // Test on hydrogen atom (`radius` is independent)
+    // useHs=true:
+    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 1, true, false, &cAtomMap, &cBondMap, true);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cBondMap.size() == 1);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 1, true, false, &cAtomMap, &cBondMap, false);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cBondMap.size() == 1);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 2, 1, true, false, &cAtomMap, &cBondMap, true);
+    TEST_ASSERT(pth.size() == 4);
+    TEST_ASSERT(cAtomMap.size() == 5);
+    TEST_ASSERT(cBondMap.size() == 4);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 2, 1, true, false, &cAtomMap, &cBondMap, false);
+    TEST_ASSERT(pth.size() == 4);
+    TEST_ASSERT(cAtomMap.size() == 5);
+    TEST_ASSERT(cBondMap.size() == 4);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    // useHs=false:
+    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 1, false, false, &cAtomMap, &cBondMap, true);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cBondMap.size() == 1);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 2, 1, false, false, &cAtomMap, &cBondMap, true);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cBondMap.size() == 1);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 1, false, false, &cAtomMap, &cBondMap, false);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cBondMap.size() == 1);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    pth = findAtomEnvironmentOfRadiusN(*mol, 2, 1, false, false, &cAtomMap, &cBondMap, false);
+    TEST_ASSERT(pth.size() == 1);
+    TEST_ASSERT(cAtomMap.size() == 2);
+    TEST_ASSERT(cBondMap.size() == 1);
+    cAtomMap.clear();
+    cBondMap.clear();
+
+    delete mol;
+    delete mH;
+  }
+
+}
+
 void testGithubIssue103() {
   std::cout << "-----------------------\n Testing github Issue103: "
                "stereochemistry and pathToSubmol"
@@ -668,6 +803,7 @@ int main() {
   test2();
   test3();
   test4();
+  test5();
   testGithubIssue103();
   testGithubIssue2647();
   return 0;

@@ -795,17 +795,17 @@ python::object findAllSubgraphsOfLengthsMtoNHelper(const ROMol &mol,
 PATH_TYPE findAtomEnvironmentOfRadiusNHelper(
   const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
   bool useHs, bool enforceSize, python::object atomMap, 
-  python::object bondMap) {
+  python::object bondMap, bool assumeIsolatedHydro) {
   PATH_TYPE path;
   std::unordered_map<unsigned int, unsigned int> cBondMap;
 
   if (atomMap == python::object()) {
-    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
-                                        enforceSize, nullptr, &cBondMap);
+    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs, enforceSize, 
+                                        nullptr, &cBondMap, assumeIsolatedHydro);
   } else {
     std::unordered_map<unsigned int, unsigned int> cAtomMap;
-    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
-                                        enforceSize, &cAtomMap, &cBondMap);
+    path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs, enforceSize, 
+                                        &cAtomMap, &cBondMap, assumeIsolatedHydro);
     // make sure the optional argument (atomMap) is actually a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
     atomMap.attr("clear")();
@@ -828,16 +828,16 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(
 PATH_TYPE findBondEnvironmentOfRadiusNHelper(
   const ROMol &mol, unsigned int radius, unsigned int rootedAtBond,
   bool useHs, bool enforceSize, python::object atomMap, 
-  python::object bondMap) {
+  python::object bondMap, bool assumeIsolatedHydro) {
   PATH_TYPE path;
   std::unordered_map<unsigned int, unsigned int> cBondMap;
   if (atomMap == python::object()) {
-    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs,
-                                        enforceSize);
+    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs, enforceSize, 
+                                        nullptr, &cBondMap, assumeIsolatedHydro);
   } else {
     std::unordered_map<unsigned int, unsigned int> cAtomMap;
-    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs,
-                                        enforceSize, &cAtomMap);
+    path = findBondEnvironmentOfRadiusN(mol, radius, rootedAtBond, useHs, enforceSize, 
+                                        &cAtomMap, &cBondMap, assumeIsolatedHydro);
     // make sure the optional argument (atomMap) is actually a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
     atomMap.attr("clear")();
@@ -1789,6 +1789,11 @@ to the terminal dummy atoms.\n\
       from the connected bond (start with 1). The result is a pair of \n\
       the bond ID and the distance. \n\
 \n\
+    - assumeIsolatedHydro: (optional) If True, the speed-up is achievable by assuming \n\
+      that all the hydrogen atoms (except the rooted atom) is located at the final node \n\
+      of branch in the molecular graph (one connected bond only) and is unable to \n\
+      traverse the graph. Default to False. \n\
+\n\
   RETURNS: a vector of bond IDs\n\
 \n";
     python::def(
@@ -1796,7 +1801,8 @@ to the terminal dummy atoms.\n\
         (python::arg("mol"), python::arg("radius"), python::arg("rootedAtAtom"),
          python::arg("useHs") = false, python::arg("enforceSize") = true,
          python::arg("atomMap") = python::object(), 
-         python::arg("bondMap") = python::object()),
+         python::arg("bondMap") = python::object(), 
+         python::arg("assumeIsolatedHydro") = false),
         docString.c_str());
 
     // ------------------------------------------------------------------------
@@ -1830,6 +1836,11 @@ to the terminal dummy atoms.\n\
       from the rooted bond (start with 0). The result is a pair of \n\
       the bond ID and the distance. \n\
 \n\
+    - assumeIsolatedHydro: (optional) If True, the speed-up is achievable by assuming \n\
+      that all the hydrogen atoms (except the rooted atom) is located at the final node \n\
+      of branch in the molecular graph (one connected bond only) and is unable to \n\
+      traverse the graph. Default to False. \n\
+\n\
   RETURNS: a vector of bond IDs\n\
 \n";
     python::def(
@@ -1837,7 +1848,8 @@ to the terminal dummy atoms.\n\
         (python::arg("mol"), python::arg("radius"), python::arg("rootedAtBond"),
          python::arg("useHs") = false, python::arg("enforceSize") = true,
          python::arg("atomMap") = python::object(), 
-         python::arg("bondMap") = python::object()),
+         python::arg("bondMap") = python::object(), 
+         python::arg("assumeIsolatedHydro") = false),
         docString.c_str());
 
     python::def("PathToSubmol", pathToSubmolHelper,

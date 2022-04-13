@@ -560,7 +560,8 @@ namespace {
     const ROMol &mol, unsigned int radius, PATH_TYPE &path,
     std::list<std::pair<int, int>> &nbrStack, 
     std::unordered_map<unsigned int, unsigned int> &bondMap,
-    bool useHs, std::unordered_map<unsigned int, unsigned int> *atomMap) {
+    bool useHs, bool assumeIsolatedHydro, 
+    std::unordered_map<unsigned int, unsigned int> *atomMap) {
       // Perform BFS to find the environment
       unsigned int i;
       for (i = 0; i < radius; ++i) {
@@ -591,11 +592,14 @@ namespace {
             // if we're going to do another iteration, then push the neighbors from
             // this round onto the stack
             if (i < radius - 1) {
-              for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
-                if (bondMap.find(bond->getIdx()) == bondMap.end()) {
-                  if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
-                                       ->getAtomicNum() != 1) {
-                    nextLayer.emplace_back(oAtom, bond->getIdx());
+              // assumeIsolatedHydro: See discussion 5162
+              if ((assumeIsolatedHydro && mol.getAtomWithIdx(oAtom)->getAtomicNum() != 1) || !assumeIsolatedHydro) {
+                for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(oAtom))) {
+                  if (bondMap.find(bond->getIdx()) == bondMap.end()) {
+                    if (useHs || mol.getAtomWithIdx(bond->getOtherAtomIdx(oAtom))
+                                        ->getAtomicNum() != 1) {
+                      nextLayer.emplace_back(oAtom, bond->getIdx());
+                    }
                   }
                 }
               }
@@ -613,7 +617,8 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
     bool useHs, bool enforceSize,
     std::unordered_map<unsigned int, unsigned int> *atomMap, 
-    std::unordered_map<unsigned int, unsigned int> *bondMap) {
+    std::unordered_map<unsigned int, unsigned int> *bondMap, 
+    bool assumeIsolatedHydro) {
   if (rootedAtAtom >= mol.getNumAtoms()) {
     throw ValueErrorException("bad atom index");
   }
@@ -636,10 +641,10 @@ PATH_TYPE findAtomEnvironmentOfRadiusN(
   
   unsigned int traveledDist;
   if (bondMap) {
-    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, atomMap);
+    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, assumeIsolatedHydro, atomMap);
   } else {
     std::unordered_map<unsigned int, unsigned int> cBondMap;
-    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, cBondMap, useHs, atomMap);
+    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, cBondMap, useHs, assumeIsolatedHydro, atomMap);
   }
 
   if (enforceSize) {
@@ -661,7 +666,8 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtBond,
     bool useHs, bool enforceSize,
     std::unordered_map<unsigned int, unsigned int> *atomMap, 
-    std::unordered_map<unsigned int, unsigned int> *bondMap) {
+    std::unordered_map<unsigned int, unsigned int> *bondMap, 
+    bool assumeIsolatedHydro) {
   if (rootedAtBond >= mol.getNumBonds()) {
     throw ValueErrorException("bad bond index");
   }
@@ -692,11 +698,11 @@ PATH_TYPE findBondEnvironmentOfRadiusN(
   
   unsigned int traveledDist;
   if (bondMap) {
-    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, atomMap);
+    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, *bondMap, useHs, assumeIsolatedHydro, atomMap);
   } else {
     std::unordered_map<unsigned int, unsigned int> cBondMap;
     cBondMap[rootedAtBond] = 0;
-    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, cBondMap, useHs, atomMap);
+    traveledDist = findEnvironmentOfRadiusN(mol, radius, res, nbrStack, cBondMap, useHs, assumeIsolatedHydro, atomMap);
   }
 
   if (enforceSize) {

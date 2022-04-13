@@ -146,12 +146,17 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *   \param bondMap - Optional: If provided, it will measure the minimum 
  * distance of the bond from the connected bond (start with 1). 
  * The result is a pair of the bond ID and the distance.
+ *   \param assumeIsolatedHydro - Optional: If True, the speed-up is achievable by 
+ * assuming that all the hydrogen atoms (except the rooted atom) is located at the 
+ * final node of branch in the molecular graph (one connected bond only) and is 
+ * unable to traverse the graph. Default to False. 
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
     bool useHs=false, bool enforceSize=true,
     std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr, 
-    std::unordered_map<unsigned int, unsigned int> *bondMap=nullptr);
+    std::unordered_map<unsigned int, unsigned int> *bondMap=nullptr, 
+    bool assumeIsolatedHydro=false);
 
 //! \brief Find bond subgraphs of a particular radius around a bond. 
 //!        The result is a path (a vector of bond indices).
@@ -175,12 +180,17 @@ RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(
  *   \param bondMap - Optional: If provided, it will measure the minimum 
  * distance of the bond from the rooted bond (start with 0). 
  * The result is a pair of the bond ID and the distance.
+ *   \param assumeIsolatedHydro - Optional: If True, the speed-up is achievable by 
+ * assuming that all the hydrogen atoms (except the rooted atom) is located at the 
+ * final node of branch in the molecular graph (one connected bond only) and is 
+ * unable to traverse the graph. Default to False. 
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findBondEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtBond,
     bool useHs=false, bool enforceSize=true,
     std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr, 
-    std::unordered_map<unsigned int, unsigned int> *bondMap=nullptr);
+    std::unordered_map<unsigned int, unsigned int> *bondMap=nullptr, 
+    bool assumeIsolatedHydro=false);
 
 }  // namespace RDKit
 
