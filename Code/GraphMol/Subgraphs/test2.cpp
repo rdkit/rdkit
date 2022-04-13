@@ -614,28 +614,28 @@ void test5() {
     TEST_ASSERT(mol);
     ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
 
-    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, true, false, &cAtomMap, &cBondMap, true);
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 1, 0, true, false, &cAtomMap, &cBondMap, true);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 2);
     TEST_ASSERT(cBondMap.size() == 1);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, true, false, &cAtomMap, &cBondMap, false);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 1, 0, true, false, &cAtomMap, &cBondMap, false);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 2);
     TEST_ASSERT(cBondMap.size() == 1);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, false, false, &cAtomMap, &cBondMap, true);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 1, 0, false, false, &cAtomMap, &cBondMap, true);
     TEST_ASSERT(pth.size() == 0);
     TEST_ASSERT(cAtomMap.size() == 1);
     TEST_ASSERT(cBondMap.size() == 0);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, false, false, &cAtomMap, &cBondMap, false);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 1, 0, false, false, &cAtomMap, &cBondMap, false);
     TEST_ASSERT(pth.size() == 0);
     TEST_ASSERT(cAtomMap.size() == 1);
     TEST_ASSERT(cBondMap.size() == 0);
@@ -656,14 +656,14 @@ void test5() {
     ROMol *mH = MolOps::addHs(static_cast<const ROMol &>(*mol));
 
     // Test on carbon atom (`radius` is independent if enforceSize=false)
-    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, true, false, &cAtomMap, &cBondMap, true);
+    PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mH, 1, 0, true, false, &cAtomMap, &cBondMap, true);
     TEST_ASSERT(pth.size() == 4);
     TEST_ASSERT(cAtomMap.size() == 5);
     TEST_ASSERT(cBondMap.size() == 4);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 0, true, false, &cAtomMap, &cBondMap, false);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 1, 0, true, false, &cAtomMap, &cBondMap, false);
     TEST_ASSERT(pth.size() == 4);
     TEST_ASSERT(cAtomMap.size() == 5);
     TEST_ASSERT(cBondMap.size() == 4);
@@ -672,28 +672,28 @@ void test5() {
 
     // Test on hydrogen atom (`radius` is independent)
     // useHs=true:
-    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 1, true, false, &cAtomMap, &cBondMap, true);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 1, 1, true, false, &cAtomMap, &cBondMap, true);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 2);
     TEST_ASSERT(cBondMap.size() == 1);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 1, true, false, &cAtomMap, &cBondMap, false);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 1, 1, true, false, &cAtomMap, &cBondMap, false);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 2);
     TEST_ASSERT(cBondMap.size() == 1);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 2, 1, true, false, &cAtomMap, &cBondMap, true);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, 1, true, false, &cAtomMap, &cBondMap, true);
     TEST_ASSERT(pth.size() == 4);
     TEST_ASSERT(cAtomMap.size() == 5);
     TEST_ASSERT(cBondMap.size() == 4);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 2, 1, true, false, &cAtomMap, &cBondMap, false);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, 1, true, false, &cAtomMap, &cBondMap, false);
     TEST_ASSERT(pth.size() == 4);
     TEST_ASSERT(cAtomMap.size() == 5);
     TEST_ASSERT(cBondMap.size() == 4);
@@ -701,14 +701,14 @@ void test5() {
     cBondMap.clear();
 
     // useHs=false:
-    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 1, false, false, &cAtomMap, &cBondMap, true);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 1, 1, false, false, &cAtomMap, &cBondMap, true);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 2);
     TEST_ASSERT(cBondMap.size() == 1);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 2, 1, false, false, &cAtomMap, &cBondMap, true);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, 1, false, false, &cAtomMap, &cBondMap, true);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 2);
     TEST_ASSERT(cBondMap.size() == 1);
@@ -716,14 +716,14 @@ void test5() {
     cBondMap.clear();
 
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 1, 1, false, false, &cAtomMap, &cBondMap, false);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 1, 1, false, false, &cAtomMap, &cBondMap, false);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 2);
     TEST_ASSERT(cBondMap.size() == 1);
     cAtomMap.clear();
     cBondMap.clear();
 
-    pth = findAtomEnvironmentOfRadiusN(*mol, 2, 1, false, false, &cAtomMap, &cBondMap, false);
+    pth = findAtomEnvironmentOfRadiusN(*mH, 2, 1, false, false, &cAtomMap, &cBondMap, false);
     TEST_ASSERT(pth.size() == 1);
     TEST_ASSERT(cAtomMap.size() == 2);
     TEST_ASSERT(cBondMap.size() == 1);
