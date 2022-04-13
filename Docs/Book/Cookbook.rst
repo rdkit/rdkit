@@ -883,7 +883,7 @@ Create Fragments
 
 .. testcode::
 
-   # Finally, you can manually cut bonds using Chem.RWMol.RemoveBonds:
+   # Finally, you can manually cut bonds using Chem.RWMol.RemoveBond:
    with Chem.RWMol(mol) as rwmol:
      for b_idx in [0, 2, 4]:
        b = rwmol.GetBondWithIdx(b_idx)
