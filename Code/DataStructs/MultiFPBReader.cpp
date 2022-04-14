@@ -11,7 +11,6 @@
 #include <boost/tuple/tuple_comparison.hpp>
 
 #include <RDGeneral/Invariant.h>
-#include <RDGeneral/Ranking.h>
 #include <RDGeneral/RDThreads.h>
 #ifdef RDK_THREADSAFE_SSS
 #include <thread>
