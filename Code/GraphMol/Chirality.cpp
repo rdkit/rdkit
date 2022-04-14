@@ -2294,9 +2294,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     mol.clearProp(common_properties::_StereochemDone);
   }
 
-  for (ROMol::AtomIterator atomIt = mol.beginAtoms(); atomIt != mol.endAtoms();
-       ++atomIt) {
-    Atom *atom = *atomIt;
+  for (auto atom : mol.atoms()) {
     // if we aren't replacing existing tags and the atom is already tagged,
     // punt:
     if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
@@ -2318,7 +2316,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
         continue;
       }
     }
-    const RDGeom::Point3D &p0 = conf.getAtomPos(atom->getIdx());
+    const auto &p0 = conf.getAtomPos(atom->getIdx());
     const RDGeom::Point3D *nbrs[3];
     unsigned int nbrIdx = 0;
     for (const auto bond : mol.atomBonds(atom)) {
@@ -2330,9 +2328,9 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
         break;
       }
     }
-    RDGeom::Point3D v1 = *nbrs[0] - p0;
-    RDGeom::Point3D v2 = *nbrs[1] - p0;
-    RDGeom::Point3D v3 = *nbrs[2] - p0;
+    auto v1 = *nbrs[0] - p0;
+    auto v2 = *nbrs[1] - p0;
+    auto v3 = *nbrs[2] - p0;
 
     double chiralVol = v1.dotProduct(v2.crossProduct(v3));
     if (chiralVol < -ZERO_VOLUME_TOL) {
