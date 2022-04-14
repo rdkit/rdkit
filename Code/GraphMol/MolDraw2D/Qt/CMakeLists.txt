@@ -30,6 +30,7 @@ install(TARGETS QtDependencies EXPORT ${RDKit_EXPORTED_TARGETS} COMPONENT dev )
 rdkit_headers(MolDraw2DQt.h DEST GraphMol/MolDraw2D/Qt)
 if(RDK_INSTALL_STATIC_LIBS)
   target_link_libraries(MolDraw2DQt_static PUBLIC QtDependencies)
+  target_compile_definitions(MolDraw2DQt_static PRIVATE "-DRDK_QT_VERSION=\"${RDK_QT_VERSION_STRING}\"")
   target_sources(MolDraw2DQt_static PRIVATE MolDraw2DQt.cpp DrawTextQt.cpp)
 endif()
 
