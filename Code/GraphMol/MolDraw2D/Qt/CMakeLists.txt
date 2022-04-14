@@ -14,7 +14,13 @@ else(RDK_USE_QT6)
   find_package(Qt5 COMPONENTS Core Widgets OpenGL REQUIRED)
   target_link_libraries(QtDependencies INTERFACE Qt5::Core Qt5::OpenGL Qt5::Widgets)
   set(RDK_QT_VERSION_STRING ${Qt5Core_VERSION})
+  if (RDK_QT_VERSION_STRING STREQUAL "")
+    # QT < 5.9 uses Qt5Core_VERSION_STRING
+    set(RDK_QT_VERSION_STRING ${Qt5Core_VERSION_STRING})
+  endif()
 endif(RDK_USE_QT6)
+
+message(STATUS "Building with Qt version ${RDK_QT_VERSION_STRING}")
 
 target_link_libraries(MolDraw2DQt PUBLIC QtDependencies)
 target_compile_definitions(MolDraw2DQt PRIVATE "-DRDK_QT_VERSION=\"${RDK_QT_VERSION_STRING}\"")
