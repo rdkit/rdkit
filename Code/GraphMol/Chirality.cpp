@@ -780,6 +780,8 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 }  // namespace
 
+namespace Chirality {
+namespace detail {
 bool bondAffectsAtomChirality(const Bond *bond, const Atom *atom) {
   PRECONDITION(bond, "bad bond pointer");
   PRECONDITION(atom, "bad atom pointer");
@@ -803,8 +805,8 @@ unsigned int getAtomNonzeroDegree(const Atom *atom) {
   }
   return res;
 }
+}  // namespace detail
 
-namespace Chirality {
 typedef std::pair<int, int> INT_PAIR;
 typedef std::vector<INT_PAIR> INT_PAIR_VECT;
 typedef std::vector<INT_PAIR>::iterator INT_PAIR_VECT_I;
@@ -1424,7 +1426,7 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
   bool legalCenter = true;
   bool hasDupes = false;
 
-  auto nzDegree = getAtomNonzeroDegree(atom);
+  auto nzDegree = Chirality::detail::getAtomNonzeroDegree(atom);
   auto tnzDegree = nzDegree + atom->getTotalNumHs();
   if (tnzDegree > 4) {
     // we only know tetrahedral chirality
@@ -1470,7 +1472,7 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
     if (legalCenter) {
       boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
       for (const auto bond : mol.atomBonds(atom)) {
-        if (!bondAffectsAtomChirality(bond, atom)) {
+        if (!Chirality::detail::bondAffectsAtomChirality(bond, atom)) {
           continue;
         }
         unsigned int otherIdx = bond->getOtherAtom(atom)->getIdx();
@@ -2267,7 +2269,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
     atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     // additional reasons to skip the atom:
-    auto nzDegree = getAtomNonzeroDegree(atom);
+    auto nzDegree = Chirality::detail::getAtomNonzeroDegree(atom);
     auto tnzDegree = nzDegree + atom->getTotalNumHs();
     if (nzDegree < 3 || tnzDegree > 4) {
       // not enough explicit neighbors or too many total neighbors
@@ -2285,7 +2287,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     const RDGeom::Point3D *nbrs[3];
     unsigned int nbrIdx = 0;
     for (const auto bond : mol.atomBonds(atom)) {
-      if (!bondAffectsAtomChirality(bond, atom)) {
+      if (!Chirality::detail::bondAffectsAtomChirality(bond, atom)) {
         continue;
       }
       nbrs[nbrIdx++] = &conf.getAtomPos(bond->getOtherAtomIdx(atom->getIdx()));
