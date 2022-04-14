@@ -34,7 +34,7 @@ set( LIBS Boost::program_options Boost::iostreams Boost::filesystem
   ${RDKit_THREAD_LIBS}
   FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
-   z QtWidgetDependencies)
+   z QtDependencies)
 
 add_executable( rdkitsv ${RDKitSV_SRCS}
   ${RDKitSV_MOC_SRCS} ${RDKitSV_INCS} )
