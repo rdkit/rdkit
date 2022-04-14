@@ -1920,7 +1920,7 @@ M  END)CTAB"_ctab;
           mol->getAtomWithIdx(1)));
       bool cleanit = true;
       auto sinfo = Chirality::findPotentialStereo(*mol, cleanit);
-      CHECK(sinfo.size() == 0);
+      CHECK(sinfo.empty());
       CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
