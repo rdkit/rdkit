@@ -1779,6 +1779,19 @@ TEST_CASE("replaceAtom and StereoGroups") {
 }
 
 TEST_CASE(
+    "Github #5200: FindPotentialStereo does not clean stereoflags from atoms "
+    "which cannot be stereocenters") {
+  auto m = "CCF"_smiles;
+  REQUIRE(m);
+  m->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  bool cleanIt = true;
+  auto sinfo = Chirality::findPotentialStereo(*m, cleanIt);
+  CHECK(sinfo.empty());
+  CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+        Atom::ChiralType::CHI_UNSPECIFIED);
+}
+
+TEST_CASE(
     "Github #5196: Zero & coordinate bonds are being taken into account for "
     "chirality") {
   RDLog::LogStateSetter setter;  // disable irritating warning messages

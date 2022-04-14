@@ -350,6 +350,9 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
       }
     } else {
       atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+      if (cleanIt) {
+        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+      }
     }
   }
 
