@@ -199,15 +199,13 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
   }      // end of loop over all set of duplicate candidates
 }
 
-struct compRingSize : public std::binary_function<INT_VECT, INT_VECT, bool> {
-  bool operator()(const INT_VECT &v1, const INT_VECT &v2) const {
-    return v1.size() < v2.size();
-  }
+auto compRingSize = [](const auto &v1, const auto &v2) {
+  return v1.size() < v2.size();
 };
 
 void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
   // sort on size
-  std::sort(res.begin(), res.end(), compRingSize());
+  std::sort(res.begin(), res.end(), compRingSize);
 
 #if 0
         std::cerr<<"\n\nSORTED\n";

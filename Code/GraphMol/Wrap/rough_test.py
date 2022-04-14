@@ -8,16 +8,21 @@ it's intended to be shallow, but broad
 
 """
 
-import os, sys, tempfile, gzip, gc
-import unittest, doctest
-from datetime import datetime, timedelta
-from rdkit import RDConfig, rdBase
-from rdkit import DataStructs
-from rdkit import Chem
-import rdkit.Chem.rdDepictor
-from rdkit.Chem import rdqueries
+import doctest
+import gc
+import gzip
+import logging
+import os
+import sys
 import tempfile
-from rdkit import __version__
+import unittest
+from contextlib import contextmanager
+from datetime import datetime, timedelta
+from io import StringIO
+
+import rdkit.Chem.rdDepictor
+from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
+from rdkit.Chem import rdqueries
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
@@ -32,6 +37,42 @@ def ReplaceCore(*a, **kw):
     return Chem.ReplaceCore(*a, **kw)
 """ % "\n".join([x.lstrip() for x in Chem.ReplaceCore.__doc__.split("\n")])
 exec(code, TestReplaceCore.__dict__)
+
+
+@contextmanager
+def log_to_python(level=None):
+  """
+    Temporarily redirect logging to Python streams, optionally
+    setting a specific log level.
+  """
+  rdBase.LogToPythonLogger()
+  pylog = logging.getLogger("rdkit")
+  if level is not None:
+    original_level = pylog.level
+    pylog.setLevel(level)
+
+  yield pylog
+
+  if level is not None:
+    pylog.setLevel(original_level)
+  rdBase.LogToCppStreams()
+
+
+@contextmanager
+def capture_logging(level=None):
+  """
+    Temporarily redirect logging to a Python StringIO, optionally
+    setting a specific log level.
+  """
+  log_stream = StringIO()
+  stream_handler = logging.StreamHandler(stream=log_stream)
+
+  with log_to_python(level) as pylog:
+    pylog.addHandler(stream_handler)
+
+    yield log_stream
+
+    pylog.removeHandler(stream_handler)
 
 
 def load_tests(loader, tests, ignore):
@@ -227,9 +268,10 @@ class TestCase(unittest.TestCase):
     self.assertTrue([x.GetNoImplicit() for x in aList] == [0, 0, 0, 1])
     self.assertTrue([x.GetNumExplicitHs() for x in aList] == [0, 0, 0, 2])
     self.assertTrue([x.GetIsAromatic() for x in aList] == [1, 1, 0, 0])
-    self.assertTrue([x.GetHybridization() for x in aList]==[Chem.HybridizationType.SP2,Chem.HybridizationType.SP2,
-                                                   Chem.HybridizationType.SP3,Chem.HybridizationType.SP3],
-                                                   [x.GetHybridization() for x in aList])
+    self.assertTrue([x.GetHybridization() for x in aList] == [
+      Chem.HybridizationType.SP2, Chem.HybridizationType.SP2, Chem.HybridizationType.SP3,
+      Chem.HybridizationType.SP3
+    ], [x.GetHybridization() for x in aList])
 
   def test8Bond(self):
     mol = Chem.MolFromSmiles('n1ccccc1CC(=O)O')
@@ -1005,8 +1047,8 @@ class TestCase(unittest.TestCase):
       self.assertTrue(mol.HasProp("ID"))
       self.assertTrue(mol.GetProp("ID") == "Lig1")
       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") ==
-        "No blank line before dollars\n"
+      self.assertTrue(
+        mol.GetProp("ANOTHER_PROPERTY") == "No blank line before dollars\n"
         "$$$$\n"
         "Structure1\n"
         "csChFnd70/05230312262D")
@@ -1038,8 +1080,8 @@ class TestCase(unittest.TestCase):
       self.assertTrue(mol.HasProp("ID"))
       self.assertTrue(mol.GetProp("ID") == "Lig1")
       self.assertTrue(mol.HasProp("ANOTHER_PROPERTY"))
-      self.assertTrue(mol.GetProp("ANOTHER_PROPERTY") ==
-        "No blank line before dollars\n"
+      self.assertTrue(
+        mol.GetProp("ANOTHER_PROPERTY") == "No blank line before dollars\n"
         "$$$$\n"
         "Structure1\n"
         "csChFnd70/05230312262D")
@@ -2124,7 +2166,7 @@ CAS<~>
     self.assertTrue(ri.NumFusedBonds(0) == 1)
     self.assertTrue(ri.NumFusedBonds(1) == 1)
     self.assertEqual(ri.BondRingSizes(2), (4, 3))
-    self.assertEqual(ri.BondRingSizes(0), (4,))
+    self.assertEqual(ri.BondRingSizes(0), (4, ))
     self.assertEqual(ri.BondRingSizes(99), ())
     self.assertTrue(ri.AreBondsInSameRing(1, 2))
     self.assertTrue(ri.AreBondsInSameRing(2, 5))
@@ -2735,18 +2777,20 @@ CAS<~>
   def test64MoleculeCleanup(self):
     m = Chem.MolFromSmiles('CN(=O)=O', False)
     self.assertTrue(m)
-    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==0 and
-                      m.GetAtomWithIdx(2).GetFormalCharge()==0 and
-                      m.GetAtomWithIdx(3).GetFormalCharge()==0)
-    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.DOUBLE and
-                      m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.DOUBLE )
+    self.assertTrue(
+      m.GetAtomWithIdx(1).GetFormalCharge() == 0 and m.GetAtomWithIdx(2).GetFormalCharge() == 0
+      and m.GetAtomWithIdx(3).GetFormalCharge() == 0)
+    self.assertTrue(
+      m.GetBondBetweenAtoms(1, 3).GetBondType() == Chem.BondType.DOUBLE
+      and m.GetBondBetweenAtoms(1, 2).GetBondType() == Chem.BondType.DOUBLE)
     Chem.Cleanup(m)
     m.UpdatePropertyCache()
-    self.assertTrue(m.GetAtomWithIdx(1).GetFormalCharge()==1 and
-                      (m.GetAtomWithIdx(2).GetFormalCharge()==-1 or
-                         m.GetAtomWithIdx(3).GetFormalCharge()==-1))
-    self.assertTrue(m.GetBondBetweenAtoms(1,3).GetBondType()==Chem.BondType.SINGLE or
-                      m.GetBondBetweenAtoms(1,2).GetBondType()==Chem.BondType.SINGLE )
+    self.assertTrue(
+      m.GetAtomWithIdx(1).GetFormalCharge() == 1 and
+      (m.GetAtomWithIdx(2).GetFormalCharge() == -1 or m.GetAtomWithIdx(3).GetFormalCharge() == -1))
+    self.assertTrue(
+      m.GetBondBetweenAtoms(1, 3).GetBondType() == Chem.BondType.SINGLE
+      or m.GetBondBetweenAtoms(1, 2).GetBondType() == Chem.BondType.SINGLE)
 
   def test65StreamSupplier(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -3861,10 +3905,10 @@ CAS<~>
     self.assertFalse(resMolSuppl.GetIsEnumerated())
     resMolSuppl.Enumerate()
     self.assertTrue(resMolSuppl.GetIsEnumerated())
-    self.assertTrue((resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType()
-      != resMolSuppl[1].GetBondBetweenAtoms(0, 1).GetBondType())
-      or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType()
-      != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
+    self.assertTrue(
+      (resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() != resMolSuppl[1].GetBondBetweenAtoms(
+        0, 1).GetBondType()) or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() !=
+                                 resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
@@ -3875,8 +3919,8 @@ CAS<~>
     self.assertEqual(len(bondTypeSet), 2)
 
     bondTypeDict = {}
-    resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ALLOW_INCOMPLETE_OCTETS
+    resMolSuppl = Chem.ResonanceMolSupplier(
+      mol, Chem.ALLOW_INCOMPLETE_OCTETS
       | Chem.UNCONSTRAINED_CATIONS
       | Chem.UNCONSTRAINED_ANIONS)
     self.assertEqual(len(resMolSuppl), 32)
@@ -3889,8 +3933,8 @@ CAS<~>
     resMolSuppl.reset()
     cmpFormalChargeBondOrder(self, resMolSuppl[0], next(resMolSuppl))
 
-    resMolSuppl = Chem.ResonanceMolSupplier(mol,
-      Chem.ALLOW_INCOMPLETE_OCTETS
+    resMolSuppl = Chem.ResonanceMolSupplier(
+      mol, Chem.ALLOW_INCOMPLETE_OCTETS
       | Chem.UNCONSTRAINED_CATIONS
       | Chem.UNCONSTRAINED_ANIONS, 10)
     self.assertEqual(len(resMolSuppl), 10)
@@ -4810,6 +4854,7 @@ M  END
   def testOldPropPickles(self):
     data = 'crdkit.Chem.rdchem\nMol\np0\n(S\'\\xef\\xbe\\xad\\xde\\x00\\x00\\x00\\x00\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00)\\x00\\x00\\x00-\\x00\\x00\\x00\\x80\\x01\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x07\\x00`\\x00\\x00\\x00\\x02\\x01\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x01\\x03\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00(\\x00\\x00\\x00\\x03\\x03\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06 4\\x00\\x00\\x00\\x01\\x01\\x04\\x06\\x00(\\x00\\x00\\x00\\x03\\x04\\x08\\x00(\\x00\\x00\\x00\\x03\\x02\\x07\\x00h\\x00\\x00\\x00\\x03\\x02\\x01\\x06 4\\x00\\x00\\x00\\x02\\x01\\x04\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@h\\x00\\x00\\x00\\x03\\x03\\x01\\x06@(\\x00\\x00\\x00\\x03\\x04\\x06\\x00`\\x00\\x00\\x00\\x03\\x01\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x06\\x00`\\x00\\x00\\x00\\x02\\x02\\x0b\\x00\\x01\\x00\\x01\\x02\\x00\\x02\\x03\\x00\\x02\\x04\\x00\\x04\\x05(\\x02\\x04\\x06 \\x06\\x07\\x00\\x07\\x08\\x00\\x08\\t(\\x02\\x08\\n \\n\\x0b\\x00\\x0b\\x0c\\x00\\x0c\\r\\x00\\r\\x0e \\x0e\\x0fh\\x0c\\x0f\\x10h\\x0c\\x10\\x11h\\x0c\\x11\\x12h\\x0c\\x12\\x13h\\x0c\\x0c\\x14\\x00\\x14\\x15\\x00\\x15\\x16\\x00\\x16\\x17(\\x02\\x16\\x18 \\x18\\x19\\x00\\x19\\x1a\\x00\\x1a\\x1b\\x00\\x1b\\x1c\\x00\\x1c\\x1d\\x00\\x1d\\x1eh\\x0c\\x1e\\x1fh\\x0c\\x1f h\\x0c !h\\x0c!"h\\x0c\\x07#\\x00#$\\x00$%\\x00%&\\x00&\\\'\\x00\\\'(\\x00\\x15\\n\\x00"\\x19\\x00(#\\x00\\x13\\x0eh\\x0c"\\x1dh\\x0c\\x14\\x05\\x05\\x0b\\n\\x15\\x14\\x0c\\x06\\x0f\\x10\\x11\\x12\\x13\\x0e\\x06\\x1a\\x1b\\x1c\\x1d"\\x19\\x06\\x1e\\x1f !"\\x1d\\x06$%&\\\'(#\\x17\\x00\\x00\\x00\\x00\\x12\\x03\\x00\\x00\\x00\\x07\\x00\\x00\\x00numArom\\x01\\x02\\x00\\x00\\x00\\x0f\\x00\\x00\\x00_StereochemDone\\x01\\x01\\x00\\x00\\x00\\x03\\x00\\x00\\x00foo\\x00\\x03\\x00\\x00\\x00bar\\x13:\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x12\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x000\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1d\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x001\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x15\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x002\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x00\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x003\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1a\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x004\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02"\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x005\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x006\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x16\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x007\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x008\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02$\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x01\\x00\\x00\\x009\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02 \\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0010\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x13\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0011\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x18\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0012\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02!\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0013\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x19\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0014\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0015\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0016\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x08\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0017\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0018\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0f\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0019\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x07\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0020\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x17\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00S\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0021\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1b\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0022\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02#\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0023\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x1e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0024\\x04\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x14\\x00\\x00\\x00\\x12\\x00\\x00\\x00_ChiralityPossible\\x01\\x01\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPCode\\x00\\x01\\x00\\x00\\x00R\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0025\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x06\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0026\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x03\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0027\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x05\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0028\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x10\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0029\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0c\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0030\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\t\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0031\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\n\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0032\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\r\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0033\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x11\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0034\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x0e\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0035\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0036\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0037\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x01\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0038\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x02\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0039\\x02\\x00\\x00\\x00\\x08\\x00\\x00\\x00_CIPRank\\x02\\x04\\x00\\x00\\x00\\x05\\x00\\x00\\x00myidx\\x00\\x02\\x00\\x00\\x0040\\x13\\x16\'\np1\ntp2\nRp3\n.'
     import pickle
+
     # bonds were broken in v1
     m2 = pickle.loads(data.encode("utf-8"), encoding='bytes')
 
@@ -5220,25 +5265,25 @@ M  END
 
   def testGetQueryType(self):
     query_a = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-                      'query_A.mol')
+                           'query_A.mol')
     m = next(Chem.SDMolSupplier(query_a))
     self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
     self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
 
     query_a_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-                      'query_A.v3k.mol')
+                               'query_A.v3k.mol')
     m = next(Chem.SDMolSupplier(query_a_v3k))
     self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
     self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "A")
 
     query_q = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-                      'query_Q.mol')
+                           'query_Q.mol')
     m = next(Chem.SDMolSupplier(query_q))
     self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
     self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
 
     query_q_v3k = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
-                      'query_Q.v3k.mol')
+                               'query_Q.v3k.mol')
     m = next(Chem.SDMolSupplier(query_q_v3k))
     self.assertTrue(m.GetAtomWithIdx(6).HasQuery())
     self.assertTrue(m.GetAtomWithIdx(6).GetQueryType() == "Q")
@@ -5249,7 +5294,6 @@ M  END
     m = Chem.rdmolops.AdjustQueryProperties(m, params)
     self.assertTrue(m.GetAtomWithIdx(0).HasQuery())
     self.assertTrue(m.GetAtomWithIdx(0).GetQueryType() == "")
-
 
   def testBondSetQuery(self):
     pat = Chem.MolFromSmarts('[#6]=[#6]')
@@ -6500,7 +6544,6 @@ M  END
     p = Chem.MolzipParams()
     p.enforceValenceRules = False
     c = Chem.molzip(a, b, p)
-    
 
   def testContextManagers(self):
     from rdkit import RDLogger
@@ -6651,8 +6694,8 @@ CAS<~>
     self.assertEqual(m.GetSubstructMatches(q), ())
 
   def testGithub4144(self):
-    ''' the underlying problem with #4144 was that the 
-    includeRings argument could not be passed to ClearComputedProps() 
+    ''' the underlying problem with #4144 was that the
+    includeRings argument could not be passed to ClearComputedProps()
     from Python. Make sure that's fixed
     '''
     m = Chem.MolFromSmiles('c1ccccc1')
@@ -6740,7 +6783,7 @@ CAS<~>
   def testgithub4992(self):
     if not hasattr(Chem, "Chem.MultithreadedSDMolSupplier"):
       return
-    
+
     good1 = Chem.MolFromSmiles('C')
     #good1.SetProp('molname', 'good1')
     good2 = Chem.MolFromSmiles('CC')
@@ -6749,21 +6792,21 @@ CAS<~>
     #good3.SetProp('molname', 'good3')
     bad = Chem.MolFromSmiles('CN(C)(C)C', sanitize=False)
     #bad.SetProp('molname', 'bad')
-    
+
     with Chem.SDWriter("good1_good2_good3.sdf") as w:
       w.write(good1)
       w.write(good2)
       w.write(good3)
       w.write(good1)
       w.write(good2)
-      w.write(good3)      
-      
+      w.write(good3)
+
     with Chem.SDWriter("good1_good2_good3_bad.sdf") as w:
       w.write(good1)
       w.write(good2)
       w.write(good3)
       w.write(bad)
-      
+
     with Chem.SDWriter("good1_good2_bad_good3.sdf") as w:
       w.write(good1)
       w.write(good2)
@@ -6787,16 +6830,47 @@ CAS<~>
 
     counts = []
     for i, s in enumerate((Chem.SDMolSupplier, Chem.MultithreadedSDMolSupplier)):
-      for j, f in enumerate(('good1_good2_good3.sdf',
-                             'good1_good2_bad_good3.sdf',
-                             'good1_good2_bad_good3.sdf',
-                             'bad_good1_good2_good3.sdf')):
+      for j, f in enumerate(('good1_good2_good3.sdf', 'good1_good2_bad_good3.sdf',
+                             'good1_good2_bad_good3.sdf', 'bad_good1_good2_good3.sdf')):
         print(f'---------------\n{s.__name__} {f}')
-        if i == 0: 
+        if i == 0:
           counts.append(read_mols(s, f))
-        else: 
+        else:
           self.assertEqual(counts[j], read_mols(s, f))
-        
+
+  def test_blocklogs(self):
+    with capture_logging(logging.INFO) as log_stream:
+
+      # Logging is known to be problematic with static linked libs
+      # so let's skip the test if we can't see the expected error
+      # log before we block logging.
+      Chem.MolFromSmiles('garbage_0')
+      if 'garbage_0' not in log_stream.getvalue():
+        self.skipTest('cannot fetch log msgs')
+      else:
+        log_stream.truncate(0)
+
+      with rdBase.BlockLogs():
+        Chem.MolFromSmiles('garbage_1')
+      self.assertNotIn('garbage_1', log_stream.getvalue())
+
+      Chem.MolFromSmiles('garbage_2')
+      self.assertIn('garbage_2', log_stream.getvalue())
+      log_stream.truncate(0)
+
+      block = rdBase.BlockLogs()
+      self.assertIsNotNone(block)
+
+      Chem.MolFromSmiles('garbage_3')
+      self.assertNotIn('garbage_3', log_stream.getvalue())
+
+      del block
+
+      Chem.MolFromSmiles('garbage_4')
+      self.assertIn('garbage_4', log_stream.getvalue())
+      log_stream.truncate(0)
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

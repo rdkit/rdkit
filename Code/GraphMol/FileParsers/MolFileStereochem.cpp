@@ -140,9 +140,11 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     indices[i] = i;
   }
+
   if (chiNbrs) {
-    std::sort(indices.begin(), indices.end(),
-              Rankers::argless<INT_VECT>(nChiralNbrs));
+    std::sort(indices.begin(), indices.end(), [&](auto i1, auto i2) {
+      return nChiralNbrs[i1] < nChiralNbrs[i2];
+    });
   }
 #if 0
   std::cerr << "  nbrs: ";
@@ -237,8 +239,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     // happen; I'll kick myself and do the hard solution at that point.)
     CHECK_INVARIANT(nbrScores.size(),
                     "no eligible neighbors for chiral center");
-    std::sort(nbrScores.begin(), nbrScores.end(),
-              Rankers::pairLess<int, int>());
+    std::sort(nbrScores.begin(), nbrScores.end(), Rankers::pairLess);
     res[nbrScores[0].second] = idx;
   }
   return res;

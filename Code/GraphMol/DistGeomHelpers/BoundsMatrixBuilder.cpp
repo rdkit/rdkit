@@ -334,10 +334,8 @@ void _setRingAngle(Atom::HybridizationType aHyb, unsigned int ringSize,
   }
 }
 
-struct lessVector : public std::binary_function<INT_VECT, INT_VECT, bool> {
-  bool operator()(const INT_VECT &v1, const INT_VECT &v2) const {
-    return v1.size() < v2.size();
-  }
+auto lessVector = [](const auto &v1, const auto &v2) {
+  return v1.size() < v2.size();
 };
 
 void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
@@ -368,7 +366,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   double angle;
 
   VECT_INT_VECT atomRings = rinfo->atomRings();
-  std::sort(atomRings.begin(), atomRings.end(), lessVector());
+  std::sort(atomRings.begin(), atomRings.end(), lessVector);
   // sort the rings based on the ring size
   VECT_INT_VECT_CI rii;
   INT_VECT visited(npt, 0);
