@@ -1,19 +1,28 @@
-from rdkit import RDConfig
+import sys
 import unittest
+
 from rdkit import Chem
-from rdkit.Chem import Draw, AllChem, rdDepictor
+from rdkit import RDConfig
+from rdkit.Chem import AllChem
+from rdkit.Chem import Draw
+from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2DQt
 
-import sys
 try:
-  from PyQt5.Qt import *
+  if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
+    from PyQt6.Qt import *
+  else:
+    from PyQt5.Qt import *
 except ImportError:
   # If we can't find Qt, there's nothing we can do
   sip = None
 else:
   try:
-    # Prefer the PyQt5-bundled sip
-    from PyQt5 import sip
+    # Prefer the PyQt-bundled sip
+    if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
+      from PyQt6 import sip
+    else:
+      from PyQt5 import sip
   except ImportError:
     # No bundled sip, try the standalone package
     try:
@@ -21,7 +30,6 @@ else:
     except ImportError:
       # No sip at all
       sip = None
-
 
 
 @unittest.skipIf(sip is None, "skipping tests because pyqt is not installed")

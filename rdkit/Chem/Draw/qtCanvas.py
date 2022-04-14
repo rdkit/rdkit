@@ -9,13 +9,27 @@
 #
 
 from rdkit.Chem.Draw.canvasbase import CanvasBase
+from rdkit.Chem.Draw.rdMolDraw2DQt import rdkitQtVersion
+
 try:
-  from PySide import QtGui, QtCore
+  from PySide import QtCore
+  from PySide import QtGui
 except ImportError:
   try:
-    from PyQt5 import QtGui, QtCore
+    if rdkitQtVersion.startswith('6'):
+      from PyQt6 import QtCore
+      from PyQt6 import QtGui
+    else:
+      from PyQt5 import QtCore
+      from PyQt5 import QtGui
   except ImportError:
-    from PySide2 import QtGui, QtCore
+    if rdkitQtVersion.startswith('6'):
+      # PySide version numbers leapt at Qt6
+      from PySide6 import QtCore
+      from PySide6 import QtGui
+    else:
+      from PySide2 import QtCore
+      from PySide2 import QtGui
 
 
 class Canvas(CanvasBase):

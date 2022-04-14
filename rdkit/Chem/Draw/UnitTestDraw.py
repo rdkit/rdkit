@@ -14,8 +14,8 @@ import unittest
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
-from rdkit.Chem import rdDepictor
 from rdkit.Chem import Draw
+from rdkit.Chem import rdDepictor
 from rdkit.Chem import rdMolDescriptors
 
 try:
@@ -105,13 +105,21 @@ class TestCase(unittest.TestCase):
 
   @unittest.skipIf(qtCanvas is None, 'Skipping Qt test')
   def testQtImage(self):
+    from rdkit.Chem.Draw.rdMolDraw2DQt import rdkitQtVersion
     try:
       from PySide import QtGui
     except ImportError:
       try:
-        from PyQt5 import QtGui
+        if rdkitQtVersion.startswith('6'):
+          from PyQt6.Qt import QtGui
+        else:
+          from PyQt5.Qt import QtGui
       except ImportError:
-        from PySide2 import QtGui
+        if rdkitQtVersion.startswith('6'):
+          # PySide version numbers leapt at Qt6
+          from PySide6 import QtGui
+        else:
+          from PySide2 import QtGui
     _ = QtGui.QGuiApplication(sys.argv)
     img = Draw.MolToQPixmap(self.mol, size=(300, 300))
     self.assertTrue(img)
