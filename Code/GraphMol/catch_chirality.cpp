@@ -1781,6 +1781,7 @@ TEST_CASE("replaceAtom and StereoGroups") {
 TEST_CASE(
     "Github #5196: Zero & coordinate bonds are being taken into account for "
     "chirality") {
+  RDLog::LogStateSetter setter;  // disable irritating warning messages
   auto mol = R"CTAB(
      RDKit          3D
 
@@ -1876,6 +1877,30 @@ M  END)CTAB"_ctab;
     MolOps::assignStereochemistryFrom3D(*mol);
     for (auto idx : {0, 1, 2, 3}) {
       CHECK(mol->getAtomWithIdx(idx)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("assignStereochemistry - dative") {
+    auto mol = "[Fe]C(=C)O |C:1.0|"_smiles;
+    REQUIRE(mol);
+    mol->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    bool cleanit = true;
+    bool force = true;
+    MolOps::assignStereochemistry(*mol, cleanit, force);
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("assignStereochemistry - ZOB and unspecified") {
+    auto mol = "[Fe]C(=C)O |C:1.0|"_smiles;
+    REQUIRE(mol);
+    for (auto bt : {Bond::BondType::ZERO, Bond::BondType::UNSPECIFIED}) {
+      mol->getAtomWithIdx(1)->setChiralTag(
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+      mol->getBondWithIdx(0)->setBondType(bt);
+      bool cleanit = true;
+      bool force = true;
+      MolOps::assignStereochemistry(*mol, cleanit, force);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
