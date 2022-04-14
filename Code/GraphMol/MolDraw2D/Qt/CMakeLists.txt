@@ -4,12 +4,21 @@ rdkit_library(MolDraw2DQt MolDraw2DQt.cpp DrawTextQt.cpp
   MolDraw2D)
 target_compile_definitions(MolDraw2DQt PRIVATE RDKIT_MOLDRAW2DQT_BUILD)
 target_compile_definitions(MolDraw2DQt PUBLIC "-DRDK_BUILD_QT_SUPPORT")
-find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
-target_link_libraries(MolDraw2DQt PUBLIC Qt5::Widgets Qt5::OpenGL)
+
+add_library(QtDependencies INTERFACE)
+if (RDK_USE_QT6)
+  find_package(Qt6 COMPONENTS Core Widgets OpenGL REQUIRED)
+  target_link_libraries(QtDependencies INTERFACE Qt6::Core Qt6::OpenGL Qt6::Widgets)
+else(RDK_USE_QT6)
+  find_package(Qt5 COMPONENTS Core Widgets OpenGL REQUIRED)
+  target_link_libraries(QtDependencies INTERFACE Qt5::Core Qt5::OpenGL Qt5::Widgets)
+endif(RDK_USE_QT6)
+
+target_link_libraries(MolDraw2DQt PUBLIC QtDependencies)
 
 rdkit_headers(MolDraw2DQt.h DEST GraphMol/MolDraw2D/Qt)
 if(RDK_INSTALL_STATIC_LIBS)
-  target_link_libraries(MolDraw2DQt_static PUBLIC Qt5::Widgets Qt5::OpenGL)
+  target_link_libraries(MolDraw2DQt_static PUBLIC QtDependencies)
   target_sources(MolDraw2DQt_static PRIVATE MolDraw2DQt.cpp DrawTextQt.cpp)
 endif()
 
@@ -21,7 +30,7 @@ if(RDK_BUILD_FREETYPE_SUPPORT)
     target_compile_definitions(MolDraw2DQt_static PUBLIC "-DRDK_BUILD_FREETYPE_SUPPORT")
     target_sources(MolDraw2DQt_static PRIVATE DrawTextFTQt.cpp)
   endif()
-  # I think Emscripten with Qt is nonsense, so 
+  # I think Emscripten with Qt is nonsense, so
   find_package(Freetype REQUIRED)
   target_link_libraries(MolDraw2DQt PUBLIC Freetype::Freetype)
   if(RDK_INSTALL_STATIC_LIBS)
@@ -30,8 +39,7 @@ if(RDK_BUILD_FREETYPE_SUPPORT)
 endif(RDK_BUILD_FREETYPE_SUPPORT)
 
 if(RDK_BUILD_QT_SUPPORT)
-rdkit_catch_test(moldraw2DTestQt catch_qt.cpp LINK_LIBRARIES
-  MolDraw2DQt Qt5::Widgets Qt5::OpenGL)
+  rdkit_catch_test(moldraw2DTestQt catch_qt.cpp LINK_LIBRARIES MolDraw2DQt)
 endif(RDK_BUILD_QT_SUPPORT)
 
 if(RDK_BUILD_QT_DEMO)

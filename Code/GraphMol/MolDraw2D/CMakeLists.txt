@@ -1,5 +1,6 @@
 
 option(RDK_BUILD_QT_SUPPORT "build support for QT drawing" OFF )
+option(RDK_USE_QT6 "Use Qt6 instead of Qt5" OFF )
 option(RDK_BUILD_QT_DEMO "build the QT drawing demo" OFF )
 option(RDK_BUILD_CAIRO_SUPPORT "build support for Cairo drawing" OFF )
 option(RDK_BUILD_FREETYPE_SUPPORT "build support for FreeType font handling" ON)
