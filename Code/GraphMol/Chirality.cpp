@@ -2252,6 +2252,30 @@ void cleanupChirality(RWMol &mol) {
   }
 }
 
+bool bondAffectsAtomChirality(const Bond *bond, const Atom *atom) {
+  PRECONDITION(bond, "bad bond pointer");
+  PRECONDITION(atom, "bad atom pointer");
+  if (bond->getBondType() == Bond::BondType::UNSPECIFIED ||
+      bond->getBondType() == Bond::BondType::ZERO ||
+      (bond->getBondType() == Bond::BondType::DATIVE &&
+       bond->getBeginAtomIdx() == atom->getIdx())) {
+    return false;
+  }
+  return true;
+}
+unsigned int getAtomNonzeroDegree(const Atom *atom) {
+  PRECONDITION(atom, "bad pointer");
+  PRECONDITION(atom->hasOwningMol(), "no owning molecule");
+  unsigned int res = 0;
+  for (auto bond : atom->getOwningMol().atomBonds(atom)) {
+    if (!bondAffectsAtomChirality(bond, atom)) {
+      continue;
+    }
+    ++res;
+  }
+  return res;
+}
+
 void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   const double ZERO_VOLUME_TOL = 0.1;
   if (!mol.getNumConformers()) {
@@ -2280,30 +2304,35 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     }
     atom->setChiralTag(Atom::CHI_UNSPECIFIED);
     // additional reasons to skip the atom:
-    if (atom->getDegree() < 3 || atom->getTotalDegree() > 4) {
+    auto nzDegree = getAtomNonzeroDegree(atom);
+    auto tnzDegree = nzDegree + atom->getTotalNumHs();
+    if (nzDegree < 3 || tnzDegree > 4) {
       // not enough explicit neighbors or too many total neighbors
       continue;
     } else {
       int anum = atom->getAtomicNum();
       if (anum != 16 && anum != 34 &&  // S or Se are special
                                        // (just using the InChI list for now)
-          (atom->getTotalDegree() != 4 ||  // not enough total neighbors
+          (tnzDegree != 4 ||           // not enough total neighbors
            atom->getTotalNumHs(true) > 1)) {
         continue;
       }
     }
     const RDGeom::Point3D &p0 = conf.getAtomPos(atom->getIdx());
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
-    const RDGeom::Point3D &p1 = conf.getAtomPos(*nbrIdx);
-    ++nbrIdx;
-    const RDGeom::Point3D &p2 = conf.getAtomPos(*nbrIdx);
-    ++nbrIdx;
-    const RDGeom::Point3D &p3 = conf.getAtomPos(*nbrIdx);
-
-    RDGeom::Point3D v1 = p1 - p0;
-    RDGeom::Point3D v2 = p2 - p0;
-    RDGeom::Point3D v3 = p3 - p0;
+    const RDGeom::Point3D *nbrs[3];
+    unsigned int nbrIdx = 0;
+    for (const auto bond : mol.atomBonds(atom)) {
+      if (!bondAffectsAtomChirality(bond, atom)) {
+        continue;
+      }
+      nbrs[nbrIdx++] = &conf.getAtomPos(bond->getOtherAtomIdx(atom->getIdx()));
+      if (nbrIdx == 3) {
+        break;
+      }
+    }
+    RDGeom::Point3D v1 = *nbrs[0] - p0;
+    RDGeom::Point3D v2 = *nbrs[1] - p0;
+    RDGeom::Point3D v3 = *nbrs[2] - p0;
 
     double chiralVol = v1.dotProduct(v2.crossProduct(v3));
     if (chiralVol < -ZERO_VOLUME_TOL) {
