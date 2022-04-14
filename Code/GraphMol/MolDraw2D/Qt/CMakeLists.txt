@@ -9,12 +9,17 @@ add_library(QtDependencies INTERFACE)
 if (RDK_USE_QT6)
   find_package(Qt6 COMPONENTS Core Widgets OpenGL REQUIRED)
   target_link_libraries(QtDependencies INTERFACE Qt6::Core Qt6::OpenGL Qt6::Widgets)
+  set(RDK_QT_VERSION_STRING ${Qt6Core_VERSION})
 else(RDK_USE_QT6)
   find_package(Qt5 COMPONENTS Core Widgets OpenGL REQUIRED)
   target_link_libraries(QtDependencies INTERFACE Qt5::Core Qt5::OpenGL Qt5::Widgets)
+  set(RDK_QT_VERSION_STRING ${Qt5Core_VERSION})
 endif(RDK_USE_QT6)
 
 target_link_libraries(MolDraw2DQt PUBLIC QtDependencies)
+target_compile_definitions(MolDraw2DQt PRIVATE "-DRDK_QT_VERSION=\"${RDK_QT_VERSION_STRING}\"")
+
+install(TARGETS QtDependencies EXPORT ${RDKit_EXPORTED_TARGETS} COMPONENT dev )
 
 rdkit_headers(MolDraw2DQt.h DEST GraphMol/MolDraw2D/Qt)
 if(RDK_INSTALL_STATIC_LIBS)

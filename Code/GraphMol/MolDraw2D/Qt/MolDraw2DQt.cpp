@@ -24,6 +24,8 @@ using namespace std;
 
 namespace RDKit {
 
+const char *rdkitQtVersion = RDK_QT_VERSION;
+
 // ****************************************************************************
 MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter *qp, int panelWidth,
                          int panelHeight, bool noFreetype)
