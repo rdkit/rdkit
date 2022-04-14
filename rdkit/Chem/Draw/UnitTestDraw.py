@@ -114,7 +114,7 @@ class TestCase(unittest.TestCase):
         from PySide6 import QtGui
     else:
       try:
-        from PyQt5.Qt import QtGui
+        from PyQt5 import QtGui
       except ImportError:
         try:
           from PySide import QtGui

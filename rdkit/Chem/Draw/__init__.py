@@ -180,7 +180,7 @@ if _sip_available():
       if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
         from PyQt6 import sip
       else:
-        from PyQt5.Qt import sip
+        from PyQt5 import sip
     except ImportError:
       # No bundled sip, try the standalone package
       import sip
