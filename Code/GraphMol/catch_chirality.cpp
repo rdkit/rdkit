@@ -1893,26 +1893,34 @@ M  END)CTAB"_ctab;
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }
-  SECTION("assignStereochemistry - dative") {
+  SECTION("assignStereochemistry") {
     auto mol = "[Fe]C(=C)O |C:1.0|"_smiles;
     REQUIRE(mol);
-    mol->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-    bool cleanit = true;
-    bool force = true;
-    MolOps::assignStereochemistry(*mol, cleanit, force);
-    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
-          Atom::ChiralType::CHI_UNSPECIFIED);
-  }
-  SECTION("assignStereochemistry - ZOB and unspecified") {
-    auto mol = "[Fe]C(=C)O |C:1.0|"_smiles;
-    REQUIRE(mol);
-    for (auto bt : {Bond::BondType::ZERO, Bond::BondType::UNSPECIFIED}) {
+    for (auto bt : {Bond::BondType::DATIVE, Bond::BondType::ZERO,
+                    Bond::BondType::UNSPECIFIED}) {
       mol->getAtomWithIdx(1)->setChiralTag(
           Atom::ChiralType::CHI_TETRAHEDRAL_CW);
       mol->getBondWithIdx(0)->setBondType(bt);
       bool cleanit = true;
       bool force = true;
       MolOps::assignStereochemistry(*mol, cleanit, force);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("isAtomPotentialTetrahedralCenter() and getStereoInfo()") {
+    auto mol = "[Fe]C(=C)O |C:1.0|"_smiles;
+    REQUIRE(mol);
+    for (auto bt : {Bond::BondType::DATIVE, Bond::BondType::ZERO,
+                    Bond::BondType::UNSPECIFIED}) {
+      mol->getAtomWithIdx(1)->setChiralTag(
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+      mol->getBondWithIdx(0)->setBondType(bt);
+      CHECK(!Chirality::detail::isAtomPotentialStereoAtom(
+          mol->getAtomWithIdx(1)));
+      bool cleanit = true;
+      auto sinfo = Chirality::findPotentialStereo(*mol, cleanit);
+      CHECK(sinfo.size() == 0);
       CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
