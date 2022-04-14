@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
-#include <RDGeneral/Ranking.h>
 #include <GraphMol/new_canon.h>
 #include <RDGeneral/types.h>
 #include <algorithm>

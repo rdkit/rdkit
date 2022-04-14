@@ -17,7 +17,6 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstanceGroup.h>
-#include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
 #include <vector>
@@ -510,7 +509,9 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
     vs.emplace_back(idx, v);
     ++nbrIdx;
   }
-  std::sort(vs.begin(), vs.end(), Rankers::pairLess);
+  std::sort(vs.begin(), vs.end(), [](const auto &v1, const auto &v2) {
+    return v1.first < v2.first;
+  });
   double vol;
   if (vs.size() == 4) {
     vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);
