@@ -10,9 +10,11 @@ from rdkit.Chem.Draw import rdMolDraw2DQt
 
 try:
   if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
-    from PyQt6.Qt import *
+    from PyQt6.QtGui import *
+    Format_RGB32 = QImage.Format.Format_RGB32
   else:
     from PyQt5.Qt import *
+    Format_RGB32 = QImage.Format_RGB32
 except ImportError:
   # If we can't find Qt, there's nothing we can do
   sip = None
@@ -41,7 +43,7 @@ class TestCase(unittest.TestCase):
   def testSIPBasics(self):
     m = Chem.MolFromSmiles('c1ccccc1O')
     Draw.PrepareMolForDrawing(m)
-    qimg = QImage(250, 200, QImage.Format_RGB32)
+    qimg = QImage(250, 200, Format_RGB32)
     with QPainter(qimg) as qptr:
       p = sip.unwrapinstance(qptr)
       d2d = rdMolDraw2DQt.MolDraw2DFromQPainter_(250, 200, p)
@@ -51,7 +53,7 @@ class TestCase(unittest.TestCase):
   def testBasics(self):
     m = Chem.MolFromSmiles('c1ccccc1O')
     Draw.PrepareMolForDrawing(m)
-    qimg = QImage(250, 200, QImage.Format_RGB32)
+    qimg = QImage(250, 200, Format_RGB32)
     with QPainter(qimg) as qptr:
       d2d = Draw.MolDraw2DFromQPainter(qptr)
       d2d.DrawMolecule(m)
@@ -62,7 +64,7 @@ class TestCase(unittest.TestCase):
     def testfunc():
       m = Chem.MolFromSmiles('c1ccccc1O')
       Draw.PrepareMolForDrawing(m)
-      qimg = QImage(250, 200, QImage.Format_RGB32)
+      qimg = QImage(250, 200, Format_RGB32)
       with QPainter(qimg) as qptr:
         p = sip.unwrapinstance(qptr)
         d2d = rdMolDraw2DQt.MolDraw2DFromQPainter_(250, 200, p, -1, -1)
@@ -76,7 +78,7 @@ class TestCase(unittest.TestCase):
     def testfunc():
       m = Chem.MolFromSmiles('c1ccccc1O')
       Draw.PrepareMolForDrawing(m)
-      qimg = QImage(250, 200, QImage.Format_RGB32)
+      qimg = QImage(250, 200, Format_RGB32)
       with QPainter(qimg) as qptr:
         d2d = Draw.MolDraw2DFromQPainter(qptr)
       raise ValueError("expected")

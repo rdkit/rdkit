@@ -172,13 +172,13 @@ if _sip_available():
   def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
     from rdkit.Chem.Draw import rdMolDraw2DQt
     if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
-      from PyQt6.Qt import QPainter
+      from PyQt6.QtGui import QPainter
     else:
       from PyQt5.Qt import QPainter
     try:
       # Prefer the PyQt-bundled sip
       if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
-        from PyQt6.Qt import sip
+        from PyQt6 import sip
       else:
         from PyQt5.Qt import sip
     except ImportError:
