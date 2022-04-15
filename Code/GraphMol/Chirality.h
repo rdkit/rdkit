@@ -124,7 +124,9 @@ RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialStereoAtom(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isBondPotentialStereoBond(const Bond *bond);
 RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Bond *bond);
 RDKIT_GRAPHMOL_EXPORT StereoInfo getStereoInfo(const Atom *atom);
-
+RDKIT_GRAPHMOL_EXPORT bool bondAffectsAtomChirality(const Bond *bond,
+                                                    const Atom *atom);
+RDKIT_GRAPHMOL_EXPORT unsigned int getAtomNonzeroDegree(const Atom *atom);
 }  // namespace detail
 /// @endcond
 

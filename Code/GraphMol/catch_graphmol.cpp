@@ -10,6 +10,11 @@
 
 #include "catch.hpp"
 
+#include <algorithm>
+#include <limits>
+
+#include <boost/format.hpp>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/RDKitQueries.h>
@@ -20,8 +25,6 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <boost/format.hpp>
-#include <limits>
 
 using namespace RDKit;
 #if 1
@@ -2626,5 +2629,41 @@ TEST_CASE("Github #5055") {
     auto m =
         "CC1(C)NC(=O)CN2C=C(C[C@H](C(=O)NC)NC(=O)CN3CCN(C(=O)[C@H]4Cc5c([nH]c6ccccc56)CN4C(=O)CN4CN(c5ccccc5)C5(CCN(CC5)C1=O)C4=O)[C@@H](Cc1ccccc1)C3=O)[N-][NH2+]2"_smiles;
     REQUIRE(m);
+  }
+}
+TEST_CASE("Iterators") {
+  auto m = "CCCCCCC=N"_smiles;
+  REQUIRE(m);
+  SECTION("Atom Iterator") {
+    auto atoms = m->atoms();
+    auto n_atom = std::find_if(atoms.begin(), atoms.end(), [](const auto &a) {
+      return a->getAtomicNum() == 7;
+    });
+    REQUIRE(n_atom != atoms.end());
+    CHECK((*n_atom)->getIdx() == 7);
+  }
+  SECTION("Atom Neighbor Iterator") {
+    auto nbrs = m->atomNeighbors(m->getAtomWithIdx(6));
+    auto n_atom = std::find_if(nbrs.begin(), nbrs.end(), [](const auto &a) {
+      return a->getAtomicNum() == 7;
+    });
+    REQUIRE(n_atom != nbrs.end());
+    CHECK((*n_atom)->getIdx() == 7);
+  }
+  SECTION("Bond Iterator") {
+    auto bonds = m->bonds();
+    auto dbl_bnd = std::find_if(bonds.begin(), bonds.end(), [](const auto &b) {
+      return b->getBondType() == Bond::DOUBLE;
+    });
+    REQUIRE(dbl_bnd != bonds.end());
+    CHECK((*dbl_bnd)->getIdx() == 6);
+  }
+  SECTION("Atom Bond Iterator") {
+    auto nbr_bonds = m->atomBonds(m->getAtomWithIdx(6));
+    auto dbl_bnd = std::find_if(
+        nbr_bonds.begin(), nbr_bonds.end(),
+        [](const auto &b) { return b->getBondType() == Bond::DOUBLE; });
+    REQUIRE(dbl_bnd != nbr_bonds.end());
+    CHECK((*dbl_bnd)->getIdx() == 6);
   }
 }

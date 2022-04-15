@@ -47,6 +47,12 @@
   (i.e. `select 'CN(=O)=O'::text::mol` or use the `mol_from_smiles()` function.
 - The code to calculate bit vector topological torsion fingerprints for
   reactions no longer ignore the fingerprint size argument.
+- The rules for tautomer enumeration in `MolStandardize` have been updated to
+  more closely match the rules in the original publication. These changes
+  primarily consist of making the rules more specific; the consequence is that
+  less tautomers will be generated with this version. The previous rules can
+  still be accessed via the function `GetV1TautomerEnumerator()` (Python) or
+  `getV1TautomerEnumerator()` (C++)
 
 ## Highlights
 - The RDKit can now integrate with the python logger: calling
@@ -62,11 +68,11 @@
 ## Acknowledgements
 Marcel Baltruschat, Jason Biggs, Kevin Burk, Cédric Bouysset, David Cosgrove,
 Joel Duerksen, Jacob Gora, Gareth Jones, Toshiki Kataoka, Eisuke Kawashima,
-Brian Kelley, Niels Kristian Kjærgård Madsen, Hector Martinez-Seara, Dan
-Nealschneider, Alex Rebert, Ricardo Rodriguez-Schmidt, Steve Roughley, Roger
-Sayle, Nikolai Schapin, Ansgar Schuffenhauer, Kaushalesh Shukla, Jon Sorenson,
-Ichiru Take, Paolo Tosco, Kazuya Ujihara, Fabio Urbina, Riccardo Vianello Rachel
-Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
+Brian Kelley, Sonia Liggi, Niels Kristian Kjærgård Madsen, Hector
+Martinez-Seara, Dan Nealschneider, Alex Rebert, Ricardo Rodriguez-Schmidt, Steve
+Roughley, Roger Sayle, Nikolai Schapin, Ansgar Schuffenhauer, Kaushalesh Shukla,
+Jon Sorenson, Ichiru Take, Paolo Tosco, Kazuya Ujihara, Fabio Urbina, Riccardo
+Vianello Rachel Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
 
 ## Code removed in this release:
 - The `useCountSimulation` keyword argument for
@@ -99,6 +105,8 @@ Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
  (github pull #4690 from jones-gareth)
   - RGD:  fix for cores with MOL  block atom lists
  (github pull #4695 from jones-gareth)
+  - Wrong tautomers generated
+ (github issue #4700 from sonial)
   - RGD align output core to input structure
  (github pull #4709 from jones-gareth)
   - TorsionFingerprints raises error with S(Cl)F4 group
