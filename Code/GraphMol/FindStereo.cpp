@@ -216,19 +216,19 @@ bool isBondPotentialStereoBond(const Bond *bond) {
 
 bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
   PRECONDITION(atom, "atom is null");
-
-  if (atom->getTotalDegree() > 4) {
+  auto nzDegree = getAtomNonzeroDegree(atom);
+  auto tnzDegree = nzDegree + atom->getTotalNumHs();
+  if (tnzDegree > 4) {
     return false;
   } else {
     const auto &mol = atom->getOwningMol();
-    auto degree = mol.getAtomDegree(atom);
-    if (degree == 4) {
+    if (nzDegree == 4) {
       // chirality is always possible with 4 nbrs
       return true;
-    } else if (degree == 1) {
+    } else if (nzDegree == 1) {
       // chirality is never possible with 1 nbr
       return false;
-    } else if (degree < 3 &&
+    } else if (nzDegree < 3 &&
                (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
       // less than three neighbors is never stereogenic
       // unless it is a phosphine/arsine with implicit H
@@ -239,7 +239,7 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
       // are always treated as stereogenic even with H atom neighbors.
       // Accept automatically.
       return true;
-    } else if (degree == 3) {
+    } else if (nzDegree == 3) {
       // three-coordinate with a single H we'll accept automatically:
       if (atom->getTotalNumHs() == 1) {
         return true;
@@ -350,6 +350,9 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
       }
     } else {
       atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+      if (cleanIt) {
+        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+      }
     }
   }
 
