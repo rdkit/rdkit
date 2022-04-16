@@ -59,6 +59,7 @@ const std::string SIDECHAIN_RLABELS = "sideChainRlabels";
 const std::string done = "RLABEL_PROCESSED";
 const std::string CORE = "Core";
 const std::string RPREFIX = "R";
+const std::string _rgroupInputDummy = "_rgroupInputDummy";
 
 namespace {
 void ADD_MATCH(R_DECOMP &match, int rlabel) {
@@ -90,7 +91,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // mark any wildcards in input molecule:
   for (auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
-      atom->setProp(common_properties::_rgroupInputDummy, true);
+      atom->setProp(_rgroupInputDummy, true);
       // clean any existing R group numbers
       atom->setIsotope(0);
       atom->setAtomMapNum(0);
@@ -288,7 +289,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             unsigned int index =
                 at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
-            if (!at->hasProp(common_properties::_rgroupInputDummy)) {
+            if (!at->hasProp(_rgroupInputDummy)) {
               int rlabel;
               auto coreAtom = rcore->core->getAtomWithIdx(index);
               coreAtomAnyMatched.insert(index);
@@ -303,7 +304,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               }
             } else {
               // restore input wildcard
-              at->clearProp(common_properties::_rgroupInputDummy);
+              at->clearProp(_rgroupInputDummy);
             }
           }
         }
