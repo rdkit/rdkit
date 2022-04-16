@@ -152,7 +152,8 @@ void InitLogs() {
 std::ostream &toStream(std::ostream &logstrm) {
   char buffer[16];
   time_t t = time(nullptr);
-  strftime(buffer, 16, "[%T] ", localtime(&t));
+  struct tm buf;
+  strftime(buffer, 16, "[%T] ", localtime_r(&t, &buf));
   return logstrm << buffer;
 }
 }  // namespace RDLog
