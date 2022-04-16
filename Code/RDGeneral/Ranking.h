@@ -24,13 +24,13 @@
 #include <cstdint>
 
 namespace Rankers {
-auto pairGreater = [](const auto &v1, const auto &v2) {
+inline auto pairGreater = [](const auto &v1, const auto &v2) {
   return v1.first > v2.first;
 };
 
 //! function for implementing < on two std::pairs.  The first entries are
 /// compared.
-auto pairLess = [](const auto &v1, const auto &v2) {
+inline auto pairLess = [](const auto &v1, const auto &v2) {
   return v1.first < v2.first;
 };
 

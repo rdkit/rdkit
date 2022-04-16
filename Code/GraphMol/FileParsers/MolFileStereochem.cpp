@@ -14,7 +14,6 @@
 #include <Geometry/point.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
-#include "MolFileStereochem.h"
 #include <RDGeneral/Ranking.h>
 
 namespace RDKit {
