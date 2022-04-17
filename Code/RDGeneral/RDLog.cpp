@@ -152,7 +152,14 @@ void InitLogs() {
 std::ostream &toStream(std::ostream &logstrm) {
   char buffer[16];
   time_t t = time(nullptr);
+  struct tm *tm;
+// localtime() is thread safe on windows, but not on *nix
+#ifdef WIN32
   strftime(buffer, 16, "[%T] ", localtime(&t));
+#else
+  struct tm buf;
+  strftime(buffer, 16, "[%T] ", localtime_r(&t, &buf));
+#endif
   return logstrm << buffer;
 }
 }  // namespace RDLog
