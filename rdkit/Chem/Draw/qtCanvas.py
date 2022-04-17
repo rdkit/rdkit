@@ -9,13 +9,41 @@
 #
 
 from rdkit.Chem.Draw.canvasbase import CanvasBase
-try:
-  from PySide import QtGui, QtCore
-except ImportError:
+from rdkit.Chem.Draw.rdMolDraw2DQt import rdkitQtVersion
+
+if rdkitQtVersion.startswith('6'):
   try:
-    from PyQt5 import QtGui, QtCore
+    from PyQt6 import QtCore
+    from PyQt6 import QtGui
   except ImportError:
-    from PySide2 import QtGui, QtCore
+    # PySide version numbers leapt at Qt6
+    from PySide6 import QtCore
+    from PySide6 import QtGui
+
+  QPainter_Antialiasing = QtGui.QPainter.RenderHint.Antialiasing
+  QPainter_SmoothPixmapTransform = QtGui.QPainter.RenderHint.SmoothPixmapTransform
+  GlobalColor_white = QtCore.Qt.GlobalColor.white
+  PenStile_SolidLine = QtCore.Qt.PenStyle.SolidLine
+  PenStile_DashLine = QtCore.Qt.PenStyle.DashLine
+
+else:
+  try:
+    from PyQt5 import QtCore
+    from PyQt5 import QtGui
+  except ImportError:
+    try:
+      from PySide import QtCore
+      from PySide import QtGui
+    except ImportError:
+      # PySide2 supports Qt >= 5.12
+      from PySide2 import QtCore
+      from PySide2 import QtGui
+
+  QPainter_Antialiasing = QtGui.QPainter.Antialiasing
+  QPainter_SmoothPixmapTransform = QtGui.QPainter.SmoothPixmapTransform
+  GlobalColor_white = QtCore.Qt.white
+  PenStile_SolidLine = QtCore.Qt.SolidLine
+  PenStile_DashLine = QtCore.Qt.DashLine
 
 
 class Canvas(CanvasBase):
@@ -25,15 +53,15 @@ class Canvas(CanvasBase):
     self.qsize = QtCore.QSize(*size)
     self.pixmap = QtGui.QPixmap(self.qsize)
     self.painter = QtGui.QPainter(self.pixmap)
-    self.painter.setRenderHint(QtGui.QPainter.Antialiasing, True)
-    self.painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform, True)
-    self.painter.fillRect(0, 0, size[0], size[1], QtCore.Qt.white)
+    self.painter.setRenderHint(QPainter_Antialiasing, True)
+    self.painter.setRenderHint(QPainter_SmoothPixmapTransform, True)
+    self.painter.fillRect(0, 0, size[0], size[1], GlobalColor_white)
 
   def addCanvasLine(self, p1, p2, color=(0, 0, 0), color2=None, **kwargs):
     if 'dash' in kwargs:
-      line_type = QtCore.Qt.DashLine
+      line_type = PenStile_DashLine
     else:
-      line_type = QtCore.Qt.SolidLine
+      line_type = PenStile_SolidLine
     qp1 = QtCore.QPointF(*p1)
     qp2 = QtCore.QPointF(*p2)
     qpm = QtCore.QPointF((p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2)
@@ -79,14 +107,14 @@ class Canvas(CanvasBase):
     for ver in ps:
       polygon.append(QtCore.QPointF(*ver))
     color = [int(c * 255) for c in color]
-    pen = QtGui.QPen(QtGui.QColor(*color), 1, QtCore.Qt.SolidLine)
+    pen = QtGui.QPen(QtGui.QColor(*color), 1, PenStile_DashLine)
     self.painter.setPen(pen)
     self.painter.setBrush(QtGui.QColor(0, 0, 0))
     self.painter.drawPolygon(polygon)
 
   def addCanvasDashedWedge(self, p1, p2, p3, dash=(2, 2), color=(0, 0, 0), color2=None, **kwargs):
     rgb = [int(c * 255) for c in color]
-    pen = QtGui.QPen(QtGui.QColor(*rgb), 1, QtCore.Qt.SolidLine)
+    pen = QtGui.QPen(QtGui.QColor(*rgb), 1, PenStile_DashLine)
     self.painter.setPen(pen)
     dash = (4, 4)
     pts1 = self._getLinePoints(p1, p2, dash)
