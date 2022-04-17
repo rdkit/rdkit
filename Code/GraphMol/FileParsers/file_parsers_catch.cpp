@@ -4620,7 +4620,7 @@ TEST_CASE(
         SDMolSupplier suppl(fName);
         ROMol *mol = suppl.next();
         auto groups = mol->getStereoGroups();
-        CHECK(!groups.empty());
+        CHECK(groups.size()==2);
         if (!groups.empty()) {
             CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
             CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
