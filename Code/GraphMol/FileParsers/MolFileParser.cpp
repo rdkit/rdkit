@@ -161,7 +161,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   // M  V30 MDLV30/STEREL1 ATOMS=(1 12)
   // M  V30 MDLV30/STERAC1 ATOMS=(1 12)
   const regex stereo_label(
-      R"regex(MDLV30/STE(...)[0-9]* +ATOMS=\(([0-9]+) +(.*)\))regex");
+      R"regex(MDLV30/STE(...)[0-9]* +ATOMS=\(([0-9]+) +(.*)\) *)regex");
 
   smatch match;
   std::vector<StereoGroup> groups;
