@@ -9,6 +9,7 @@
 //
 #include <RDGeneral/export.h>
 #pragma once
+#include <limits>
 #include <vector>
 #include "FMCS.h"
 #include "Graph.h"
@@ -19,7 +20,7 @@ namespace FMCS {
 typedef std::vector<
     std::pair<FMCS::Graph::vertex_descriptor, FMCS::Graph::vertex_descriptor>>
     match_V_t;
-const unsigned int NotSet = (unsigned int)-1;
+const unsigned int NotSet = std::numeric_limits<unsigned int>::max();
 
 RDKIT_FMCS_EXPORT bool SubstructMatchCustomTable(
     const FMCS::Graph& target, const ROMol& target_mol,
