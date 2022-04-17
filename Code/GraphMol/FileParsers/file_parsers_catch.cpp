@@ -4605,9 +4605,10 @@ TEST_CASE(
           rdbase + "/Code/GraphMol/FileParsers/test_data/mol_with_enhanced_stereo_2_And_groups.sdf";
         SDMolSupplier suppl(fName);
         ROMol *mol = suppl.next();
+        REQUIRE(mol);
         auto groups = mol->getStereoGroups();
         CHECK(groups.size()==2);
-        if (!groups.empty()) {
+        if (groups.size()==2) {
             CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
             CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
         }
@@ -4619,9 +4620,10 @@ TEST_CASE(
           rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
         SDMolSupplier suppl(fName);
         ROMol *mol = suppl.next();
+        REQUIRE(mol);
         auto groups = mol->getStereoGroups();
         CHECK(groups.size()==2);
-        if (!groups.empty()) {
+        if (groups.size()==2) {
             CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
             CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
         }
