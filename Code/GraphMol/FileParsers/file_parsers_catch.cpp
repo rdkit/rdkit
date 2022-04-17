@@ -4607,11 +4607,9 @@ TEST_CASE(
         ROMol *mol = suppl.next();
         REQUIRE(mol);
         auto groups = mol->getStereoGroups();
-        CHECK(groups.size()==2);
-        if (groups.size()==2) {
-            CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-            CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-        }
+        REQUIRE(groups.size()==2);
+        CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+        CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
     }
     
     SECTION("as reported, less whitespace") {
