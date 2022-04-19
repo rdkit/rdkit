@@ -419,7 +419,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(
 RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
     const ROMol &mol, const std::vector<unsigned int> &newOrder);
 
-//@}
+//! @}
 
 //! \name Sanitization
 /// {
@@ -651,10 +651,10 @@ RDKIT_GRAPHMOL_EXPORT void setConjugation(ROMol &mol);
 //! calculates and sets the hybridization of all a molecule's Stoms
 RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
 
-// @}
+//!  @}
 
 //! \name Ring finding and SSSR
-//@{
+//! @{
 
 //! finds a molecule's Smallest Set of Smallest Rings
 /*!
@@ -745,10 +745,10 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
 
-//@}
+//! @}
 
 //! \name Shortest paths and other matrices
-//@{
+//! @{
 
 //! returns a molecule's adjacency matrix
 /*!
@@ -869,10 +869,10 @@ RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(
 RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
                                                      int aid2);
 
-//@}
+//! @}
 
 //! \name Stereochemistry
-//@{
+//! @{
 
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
@@ -1002,7 +1002,7 @@ RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
     ROMol &mol, bool replaceExistingTags = true);
 
-//@}
+//! @}
 
 //! returns the number of atoms which have a particular property set
 RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(

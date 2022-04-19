@@ -234,7 +234,7 @@ RDKIT_FILEPARSERS_EXPORT void MolToTPLFile(
 //-----
 
 typedef enum {
-  CORINA = 0  //! supports output from Corina and some dbtranslate output
+  CORINA = 0  //!< supports output from Corina and some dbtranslate output
 } Mol2Type;
 
 // \brief construct a molecule from a Tripos mol2 file

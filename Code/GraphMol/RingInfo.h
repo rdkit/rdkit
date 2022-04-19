@@ -63,7 +63,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
                        const INT_VECT &bondIndices);
 
   //! \name Atom information
-  //@{
+  //! @{
 
   //! returns a vector with sizes of the rings that atom with index \c idx is
   //! in.
@@ -128,10 +128,10 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   bool areAtomsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
                                 unsigned int size) const;
 
-  //@}
+  //! @}
 
   //! \name Bond information
-  //@{
+  //! @{
 
   //! returns a vector with sizes of the rings that bond with index \c idx is
   //! in.
@@ -254,7 +254,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }
 #endif
 
-  //@}
+  //! @}
 
  private:
   //! pre-allocates some memory to save time later
