@@ -2815,11 +2815,6 @@ M  END
     auto mol = row.at("R1");
     auto groupSmiles = MolToSmiles(*mol);
     TEST_ASSERT(groupSmiles == "CO[*:1]");
-    for (const auto group : row) {
-      std::cerr << group.first << ":" << MolToSmiles(*group.second.get(), true)
-                << " ";
-    }
-    std::cerr << std::endl;
   }
 }
 
