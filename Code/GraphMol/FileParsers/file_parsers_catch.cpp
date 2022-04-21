@@ -4594,3 +4594,35 @@ M  END)CTAB";
     }
   }
 }
+
+TEST_CASE(
+    "Github #5165: issue with V3000 SD files containing enhanced "
+    "stereochemistry information") {
+    
+    SECTION("as reported") {
+        std::string rdbase = getenv("RDBASE");
+        std::string fName =
+          rdbase + "/Code/GraphMol/FileParsers/test_data/mol_with_enhanced_stereo_2_And_groups.sdf";
+        SDMolSupplier suppl(fName);
+        ROMol *mol = suppl.next();
+        REQUIRE(mol);
+        auto groups = mol->getStereoGroups();
+        REQUIRE(groups.size()==2);
+        CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+        CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    }
+    
+    SECTION("as reported, less whitespace") {
+        std::string rdbase = getenv("RDBASE");
+        std::string fName =
+          rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
+        SDMolSupplier suppl(fName);
+        ROMol *mol = suppl.next();
+        REQUIRE(mol);
+        auto groups = mol->getStereoGroups();
+        REQUIRE(groups.size()==2);
+        CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+        CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    }
+    
+}

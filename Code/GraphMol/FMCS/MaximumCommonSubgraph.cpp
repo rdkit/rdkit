@@ -102,8 +102,8 @@ void MaximumCommonSubgraph::init() {
   unsigned int currentLabelValue = 1;
   std::vector<LabelDefinition> labels;
   nq = QueryMolecule->getNumAtoms();
-  QueryAtomLabels.resize(nq);
-  for (size_t ai = 0; ai < nq; ai++) {
+  QueryAtomLabels.resize(nq, NotSet);
+  for (size_t ai = 0; ai < nq; ++ai) {
     if (MCSAtomCompareAny ==
         Parameters.AtomTyper) {  // predefined functor without atom compare
                                  // parameters
@@ -145,8 +145,8 @@ void MaximumCommonSubgraph::init() {
   labels.clear();
   currentLabelValue = 1;
   nq = QueryMolecule->getNumBonds();
-  QueryBondLabels.resize(nq);
-  for (size_t aj = 0; aj < nq; aj++) {
+  QueryBondLabels.resize(nq, NotSet);
+  for (size_t aj = 0; aj < nq; ++aj) {
     const auto bond = QueryMolecule->getBondWithIdx(aj);
     unsigned int ring = 0;
     if (!Parameters.CompareFunctionsUserData &&
@@ -186,7 +186,7 @@ void MaximumCommonSubgraph::init() {
           break;
         }
       }
-      if (NotSet == QueryAtomLabels[aj]) {  // not found -> create new label
+      if (NotSet == QueryBondLabels[aj]) {  // not found -> create new label
         QueryBondLabels[aj] = ++currentLabelValue;
         labels.emplace_back(aj, currentLabelValue);
       }

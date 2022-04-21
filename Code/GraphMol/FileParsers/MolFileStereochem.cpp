@@ -13,7 +13,7 @@
 #include <Geometry/point.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
-#include "MolFileStereochem.h"
+#include <RDGeneral/Ranking.h>
 
 namespace RDKit {
 typedef std::list<double> DOUBLE_LIST;

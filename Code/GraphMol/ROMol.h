@@ -19,6 +19,8 @@
 #define RD_ROMOL_H
 
 /// Std stuff
+#include <cstddef>
+#include <iterator>
 #include <utility>
 #include <map>
 
@@ -111,6 +113,12 @@ struct CXXAtomIterator {
   Iterator vstart, vend;
 
   struct CXXAtomIter {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Vertex;
+    using pointer = Vertex *;
+    using reference = Vertex &;
+
     Graph *graph;
     Iterator pos;
     Atom *current;
@@ -118,7 +126,7 @@ struct CXXAtomIterator {
     CXXAtomIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
-    Vertex &operator*() {
+    reference operator*() {
       current = (*graph)[*pos];
       return current;
     }
@@ -147,6 +155,12 @@ struct CXXBondIterator {
   Iterator vstart, vend;
 
   struct CXXBondIter {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Edge;
+    using pointer = Edge *;
+    using reference = Edge &;
+
     Graph *graph;
     Iterator pos;
     Bond *current;
@@ -154,7 +168,7 @@ struct CXXBondIterator {
     CXXBondIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
-    Edge &operator*() {
+    reference operator*() {
       current = (*graph)[*pos];
       return current;
     }
