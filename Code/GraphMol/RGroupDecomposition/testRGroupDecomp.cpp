@@ -2762,6 +2762,67 @@ void testDoNotChooseUnrelatedCores() {
   }
 }
 
+void testGithub5222() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that Github5222 is fixed"
+                       << std::endl;
+
+  auto core = R"CTAB(
+  ChemDraw04112214222D
+
+  6  6  3  0  0  0  0  0  0  0999 V2000
+   -0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.4125    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.4125    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.8250    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0      
+  2  3  1  0      
+  3  4  2  0      
+  4  5  1  0      
+  5  6  2  0      
+  6  1  1  0      
+  2 F    2   6   7
+  4 F    2   6   7
+  6 F    2   6   7
+M  ALS   2  2 F C   N   
+M  ALS   4  2 F C   N   
+M  ALS   6  2 F C   N   
+M  END
+)CTAB"_ctab;
+  std::vector<std::string> smiArray(10, "COc1ccccc1");
+  smiArray.push_back("COc1ccncn1");
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  RGroupDecomposition decomp(*core, params);
+  for (const auto smiles : smiArray) {
+    ROMol *mol = SmilesToMol(smiles);
+    int res = decomp.add(*mol);
+    TEST_ASSERT(res >= 0);
+    delete mol;
+  }
+
+  decomp.process();
+  std::cerr << "Best mapping" << std::endl;
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 11);
+  for (const auto row : rows) {
+    TEST_ASSERT(row.size() == 2);
+    TEST_ASSERT(row.count("Core") == 1);
+    TEST_ASSERT(row.count("R1") == 1);
+    auto mol = row.at("R1");
+    auto groupSmiles = MolToSmiles(*mol);
+    TEST_ASSERT(groupSmiles == "CO[*:1]");
+    for (const auto group : row) {
+      std::cerr << group.first << ":" << MolToSmiles(*group.second.get(), true)
+                << " ";
+    }
+    std::cerr << std::endl;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2770,6 +2831,12 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
+  // testSDFGRoupMultiCoreNoneShouldMatch();
+  // testScorePermutations();
+  // testUnlabelledRGroupsOnAromaticNitrogen();
+  // testCoreWithAlsRecords();
+  // testWildcardInInput();
+  
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
@@ -2813,6 +2880,7 @@ int main() {
   testAlignOutputCoreToMolecule();
   testWildcardInInput();
   testDoNotChooseUnrelatedCores();
+  testGithub5222();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
