@@ -315,7 +315,7 @@ struct RGroupDecompData {
 
     // Deal with non-user supplied labels
     // traverse these in reverse order, so we get the same results after changes to the tie-braking code.
-    // previously the heaviest rgroups were selected on the lowest indices, now they are the higher.
+    // previously heavy rgroups were selected on the lowest indices, now they are the higher.
     for (auto it = indexLabels.rbegin(); it != indexLabels.rend(); it++) {
       auto newLabel = *it;
       auto atm = atoms.find(newLabel);
