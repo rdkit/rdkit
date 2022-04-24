@@ -23,8 +23,6 @@
 
 // #define DEBUG
 
-#define VARIANCE_CORRECTION
-
 namespace RDKit {
 
 namespace detail {
@@ -239,13 +237,9 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
   // double the penalty to catch systems like
   // https://github.com/rdkit/rdkit/issues/3896
 
-#ifdef VARIANCE_CORRECTION
   auto rootSum = sqrt(sum);
   auto score = rootSum + 2.0 * rgroupPenalty;
   score = rootSum;
-#else
-  auto score = sum + 2.0 * rgroupPenalty;
-#endif
 
 #ifdef DEBUG
   std::cerr << " sum " << sum << " root sum " << rootSum << " rgroup penalty "
@@ -311,10 +305,8 @@ double VarianceDataForLabel::variance() const {
     // variance calculation because fingerprint is binary:
     // sum  == squared sum == bit count
     // ss = sqrSum - (sum * sum) / cnt;
-#ifdef VARIANCE_CORRECTION
     // correction to bit count:
     dBitCount = dNumberFingerprints / 2.0 + dBitCount / 2.0;
-#endif
     auto ss = dBitCount - (dBitCount * dBitCount) / dNumberFingerprints;
     double variancePerBit = ss / dNumberFingerprints;
 #ifdef DEBUG
@@ -324,10 +316,6 @@ double VarianceDataForLabel::variance() const {
     return sum + variancePerBit;
   };
 
-  auto countLambda = [this](double cnt, int bitCount) {
-    return bitCount == 0 ? cnt : cnt + 1.0;
-  };
-
 #ifdef DEBUG
   std::cerr << label << ": Bitcounts "
             << GarethUtil::collectionToString(bitCounts, ",") << std::endl;
@@ -335,23 +323,17 @@ double VarianceDataForLabel::variance() const {
 #endif
   auto totalVariance =
       std::accumulate(bitCounts.cbegin(), bitCounts.cend(), 0.0, lambda);
-  // auto numBitsSet = std::accumulate(bitCounts.begin(), bitCounts.end(), 0.0,
-  // countLambda); totalVariance = totalVariance / numBitsSet;
 
 #ifdef DEBUG
   std::cerr << std::endl;
 #endif
-  auto rmsVariance = sqrt(totalVariance);
 #ifdef DEBUG
+  auto rmsVariance = sqrt(totalVariance);
   std::cerr << "Total Variance " << totalVariance << " RMS Variance "
             << rmsVariance << std::endl;
 #endif
 
-#ifdef VARIANCE_CORRECTION
   return totalVariance;
-#else
-  return rmsVariance;
-#endif
 }
 
 void FingerprintVarianceScoreData::clear() {
