@@ -246,6 +246,10 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   //! returns whether ring fusion information is available for bond
   //! with idx \c idx. The function returns true unless the fused
   //! ring system bond idx belongs to is too large.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
   bool hasRingFusionInfoForBond(unsigned int idx);
 
   //! returns whether bond with idx \c idx is in a ring of size \c size,
