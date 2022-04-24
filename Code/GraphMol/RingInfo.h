@@ -13,12 +13,17 @@
 
 #include <map>
 #include <vector>
+#include <stack>
+#include <limits>
+#include <numeric>
+#include <exception>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #ifdef RDK_USE_URF
 #include <boost/shared_ptr.hpp>
 #endif
 #include <RDGeneral/BoostEndInclude.h>
+#include <RDGeneral/Invariant.h>
 #ifdef RDK_USE_URF
 #include <RingDecomposerLib.h>
 #endif
@@ -208,6 +213,13 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   bool areBondsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
                                 unsigned int size) const;
 
+  //! returns the indices of rings fused to ring with index \c ringIdx.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  INT_VECT fusedRings(unsigned int ringIdx);
+
   //! returns whether ring with index \c ringIdx is fused with other rings.
   /*!
     <b>Notes:</b>
@@ -230,6 +242,35 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   unsigned int numFusedBonds(unsigned int ringIdx);
+
+  //! returns whether ring fusion information is available for bond
+  //! with idx \c idx. The function returns true unless the fused
+  //! ring system bond idx belongs to is too large.
+  bool hasRingFusionInfoForBond(unsigned int idx);
+
+  //! returns whether bond with idx \c idx is in a ring of size \c size,
+  //! taking into account ring fusion. For example, for decalin it would
+  //! return true for both size 6 and 10 for any bond but the fusion bond,
+  //! while it would return true only for size 6 for the fusion bond.
+  //! Throws FusedSystemTooLarge if there is no ring fusion information
+  //! for the bond.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  bool isBondInFusedRingOfSize(unsigned int idx, unsigned int size);
+
+  //! returns a vector with sizes of the rings that bond with index \c idx is
+  //! in, taking into account all possible permutations of fused rings.
+  //! For example, for decalin it would return 6 and 10 for any bond but
+  //! the fusion bond, while it would return only 6 for the fusion bond.
+  //! Throws FusedSystemTooLarge if there is no ring fusion information
+  //! for the bond.
+  /*!
+    <b>Notes:</b>
+      - the object must be initialized before calling this
+  */
+  INT_VECT bondFusedRingSizes(unsigned int idx);
 
 #ifdef RDK_USE_URF
   //! adds a ring family to our data
@@ -283,15 +324,120 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   //@}
 
  private:
+  class FusedRingInfo;
+  class RingNbrPermutations {
+   public:
+    RingNbrPermutations(const FusedRingInfo *fusedRingInfo,
+                        unsigned int ringIdx);
+    void setMask(const boost::dynamic_bitset<> &mask);
+    int next();
+    void reset() { d_permutationIdx = 0; }
+    bool empty() { return d_permutations.empty(); }
+
+   private:
+    typedef uint16_t perm_type;
+    const FusedRingInfo *d_fusedRingInfo;
+    unsigned int d_permutationIdx = 0;
+    std::vector<int> d_toLocalIndex;
+    std::vector<int> d_fromLocalIndex;
+    std::vector<perm_type> d_permutations;
+    perm_type d_mask;
+  };
+
+  class FusedRingInfo {
+    friend class RingNbrPermutations;
+
+   public:
+    FusedRingInfo() {}
+    void init(RingInfo *ringInfo);
+    bool isInitialized() const { return (d_ringInfo != nullptr); }
+    bool isRingFused(unsigned int ringIdx) const {
+      checkInitialized();
+      return d_fusedRings.at(ringIdx).any();
+    }
+    bool areRingsFused(unsigned int ring1Idx, unsigned int ring2Idx) const {
+      checkInitialized();
+      return d_fusedRings.at(ring1Idx).test(ring2Idx);
+    }
+    INT_VECT fusedRings(unsigned int ringIdx) const {
+      checkInitialized();
+      INT_VECT res;
+      const auto &fusedRings = d_fusedRings[ringIdx];
+      for (unsigned int i = 0; i < fusedRings.size(); ++i) {
+        if (fusedRings.test(i)) {
+          res.push_back(i);
+        }
+      }
+      return res;
+    }
+    bool hasRingFusionInfoForBond(unsigned int idx) {
+      checkInitialized();
+      if (d_fusedRingSystems.empty()) {
+        initFusedRingSystems();
+      }
+      for (auto ringIdx : d_ringInfo->bondMembers(idx)) {
+        if (d_fusedRingSizesVec.at(ringIdx).empty()) {
+          return false;
+        }
+      }
+      return true;
+    }
+    unsigned int numFusedBonds(unsigned int ringIdx) const {
+      checkInitialized();
+      return d_numFusedBonds.at(ringIdx);
+    }
+    const boost::dynamic_bitset<> &ringSizesForBond(unsigned int idx);
+
+   private:
+    //! thrown when the fused system is too large to enumerate
+    //! all possible permutations
+    class FusedSystemTooLarge : public std::exception {
+     public:
+      FusedSystemTooLarge(const char *msg) : d_msg(msg) {}
+      FusedSystemTooLarge(std::string msg) : d_msg(std::move(msg)) {}
+      FusedSystemTooLarge(const FusedSystemTooLarge &other)
+          : d_msg(other.d_msg) {}
+      const char *what() const noexcept override { return d_msg.c_str(); }
+      ~FusedSystemTooLarge() noexcept override {}
+      virtual FusedSystemTooLarge *copy() const {
+        return new FusedSystemTooLarge(*this);
+      }
+      virtual std::string getType() const { return "FusedSystemTooLarge"; }
+
+     protected:
+      std::string d_msg;
+    };
+    void initFusedRingSystems();
+    void checkInitialized() const {
+      PRECONDITION(d_ringInfo, "FusedRingInfo not initialized");
+    }
+    void addNbrRings(boost::dynamic_bitset<> &ringNbrs,
+                     boost::dynamic_bitset<> &visited, unsigned int ringIdx);
+    boost::dynamic_bitset<> getRingIdxMask(const RingInfo::INT_VECT &bondRings);
+    RingInfo *d_ringInfo = nullptr;
+    std::vector<unsigned int> d_numFusedBonds;
+    std::vector<boost::dynamic_bitset<>> d_fusedRings;
+    std::vector<boost::dynamic_bitset<>> d_fusedRingSystems;
+    std::vector<boost::dynamic_bitset<>> d_bondRingsAsBitset;
+    std::vector<boost::dynamic_bitset<>> d_bondFusedRingSizes;
+    std::vector<RingNbrPermutations> d_fusedRingSizesVec;
+  };
+
   //! pre-allocates some memory to save time later
   void preallocate(unsigned int numAtoms, unsigned int numBonds);
-  void initFusedRings();
+  void checkInitialized() const {
+    PRECONDITION(df_init, "RingInfo not initialized");
+  }
+  void initFusedRingInfo() {
+    if (!d_fusedRingInfo.isInitialized()) {
+      d_fusedRingInfo.init(this);
+    }
+  }
   bool df_init{false};
   DataType d_atomMembers, d_bondMembers;
   VECT_INT_VECT d_atomRings, d_bondRings;
   VECT_INT_VECT d_atomRingFamilies, d_bondRingFamilies;
-  std::vector<boost::dynamic_bitset<>> d_fusedRings;
-  std::vector<unsigned int> d_numFusedBonds;
+  FusedRingInfo d_fusedRingInfo;
 
 #ifdef RDK_USE_URF
  public:

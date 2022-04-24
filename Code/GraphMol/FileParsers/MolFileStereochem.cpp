@@ -10,6 +10,7 @@
 //
 #include <list>
 #include <RDGeneral/RDLog.h>
+#include "MolFileStereochem.h"
 #include <Geometry/point.h>
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
@@ -237,9 +238,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     // happen; I'll kick myself and do the hard solution at that point.)
     CHECK_INVARIANT(nbrScores.size(),
                     "no eligible neighbors for chiral center");
-    std::sort(nbrScores.begin(), nbrScores.end(), [](const auto &v1, const auto &v2) {
-    return v1.first < v2.first;
-  });
+    std::sort(nbrScores.begin(), nbrScores.end(), Rankers::pairLess);
     res[nbrScores[0].second] = idx;
   }
   return res;

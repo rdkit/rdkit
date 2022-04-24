@@ -45,6 +45,9 @@ python::object atomRingSizes(const RingInfo *self, unsigned int idx) {
 python::object bondRingSizes(const RingInfo *self, unsigned int idx) {
   return python::tuple(self->bondRingSizes(idx));
 }
+python::object bondFusedRingSizes(RingInfo *self, unsigned int idx) {
+  return python::tuple(self->bondFusedRingSizes(idx));
+}
 
 #ifdef RDK_USE_URF
 python::object atomRingFamilies(const RingInfo *self) {
@@ -103,6 +106,9 @@ struct ringinfo_wrapper {
         .def("IsRingFused", &RingInfo::isRingFused)
         .def("AreRingsFused", &RingInfo::areRingsFused)
         .def("NumFusedBonds", &RingInfo::numFusedBonds)
+        .def("HasRingFusionInfoForBond", &RingInfo::hasRingFusionInfoForBond)
+        .def("IsBondInFusedRingOfSize", &RingInfo::isBondInFusedRingOfSize)
+        .def("BondFusedRingSizes", bondFusedRingSizes)
         .def("AtomRings", atomRings)
         .def("BondRings", bondRings)
         .def("AtomMembers", atomMembers)
