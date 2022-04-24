@@ -536,23 +536,23 @@ void testGitHubIssue1705() {
     }
     delete core;
     std::string expected = R"RES(Rgroup===Core
-Oc1ccc([*:2])cc1[*:1]
-Oc1ccc([*:2])cc1[*:1]
-Oc1ccc([*:2])cc1[*:1]
-Oc1ccc([*:2])cc1[*:1]
-Oc1ccc([*:2])cc1[*:1]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
 Rgroup===R1
 [H][*:1]
-F[*:1]
-F[*:1]
-F[*:1]
-Cl[*:1]
+[H][*:1]
+[H][*:1]
+N[*:1]
+[H][*:1]
 Rgroup===R2
 [H][*:2]
-[H][*:2]
-[H][*:2]
-N[*:2]
-[H][*:2]
+F[*:2]
+F[*:2]
+F[*:2]
+Cl[*:2]
 )RES";
 #ifdef DEBUG
     if (ss.str() != expected) {
@@ -596,13 +596,13 @@ Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Rgroup===R1
 [H][*:1]
-F[*:1]
-F[*:1]
+[H][*:1]
+[H][*:1]
 F[*:1]
 Rgroup===R2
 [H][*:2]
-[H][*:2]
-[H][*:2]
+F[*:2]
+F[*:2]
 F[*:2]
 )RES";
 #ifdef DEBUG
@@ -979,16 +979,15 @@ $$$$)CTAB";
     RGroupRows rows = decomp.getRGroupsAsRows();
 
     const char *expected[4] = {
-        "Core:C1C([*:4])C2C(NC([*:1])NC2N([*:2])[*:6])N1[*:5] "
-        "R1:[H][*:1] R2:C(CC[*:2])CC[*:6] R4:[H][*:4] R5:[H][*:5] "
-        "R6:C(CC[*:2])CC[*:6]",
-        "Core:C1SC2NC([*:1])NC(N([*:2])[*:6])C2C1[*:4] "
-        "R1:[H][*:1] R2:C[*:2] R4:CC(C)[*:4] R6:[H][*:6]",
-        "Core:C1SC2CC([*:1])NC(N([*:2])[*:6])C2C1[*:4] "
-        "R1:[H][*:1] R2:C[*:2] R4:CC(C)[*:4] R6:[H][*:6]",
-        "Core:C1C2C(C(N([*:2])[*:6])NC1[*:1])N([*:4])CN2[*:5] R1:O[*:1] "
+        "Core:C1C([*:6])C2C(N([*:2])[*:4])NC([*:1])NC2N1[*:5] "
+        "R1:[H][*:1] R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:[H][*:5] "
+        "R6:[H][*:6]",
+        "Core:C1SC2NC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
+        "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
+        "Core:C1SC2CC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
+        "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
+        "Core:C1C2C(C(N([*:2])[*:4])NC1[*:1])N([*:6])CN2[*:5] R1:O[*:1] "
         "R2:[H][*:2] R4:[H][*:4] R5:C[*:5] R6:[H][*:6]"};
-
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
@@ -1371,13 +1370,13 @@ Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Rgroup===R1
 [H][*:1]
-F[*:1]
-F[*:1]
+[H][*:1]
+[H][*:1]
 F[*:1]
 Rgroup===R2
 [H][*:2]
-[H][*:2]
-[H][*:2]
+F[*:2]
+F[*:2]
 F[*:2]
 )RES";
 #ifdef DEBUG
@@ -1419,13 +1418,13 @@ Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Rgroup===R1
 Cl[*:1]
-F[*:1]
-F[*:1]
+Cl[*:1]
+Cl[*:1]
 F[*:1]
 Rgroup===R2
 Cl[*:2]
-Cl[*:2]
-Cl[*:2]
+F[*:2]
+F[*:2]
 F[*:2]
 )RES";
 #ifdef DEBUG
@@ -2292,8 +2291,9 @@ void testUnlabelledRGroupsOnAromaticNitrogen() {
   TEST_ASSERT(rows.size() == 2);
   size_t i = 0;
   std::vector<std::string> expected{
-      "Core:c1ccc(-c2cccc3c2cnn3[*:1])nc1 R1:C[*:1]",
-      "Core:c1cc[n+]([*:2])c(-c2cccc3c2cnn3[*:1])c1 R1:[H][*:1] R2:CC[*:2]"};
+      "Core:c1ccc(-c2cccc3c2cnn3[*:2])nc1 R2:C[*:2]",
+      "Core:c1cc[n+]([*:1])c(-c2cccc3c2cnn3[*:2])c1 R1:CC[*:1] R2:[H][*:2]",
+  };
   for (RGroupRows::const_iterator it = rows.begin(); it != rows.end(); ++it) {
     CHECK_RGROUP(it, expected.at(i++));
   }
@@ -2503,7 +2503,7 @@ M  END
   auto pos = core_mol_block.find("ALS");
   TEST_ASSERT(pos == std::string::npos);
   std::string expected(
-      "Core:c1cc([*:1])ncc1[*:2] R1:C1CCN([*:1])C1 R2:Cl[*:2]");
+      "Core:c1cc([*:2])ncc1[*:1] R1:Cl[*:1] R2:C1CCN([*:2])C1");
   RGroupRows::const_iterator it = rows.begin();
   CHECK_RGROUP(it, expected);
 }
@@ -2675,8 +2675,8 @@ M  END
   TEST_ASSERT(rows.size() == 1)
   RGroupRows::const_iterator it = rows.begin();
   std::string expected(
-      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:N#C[*:1] R2:CC1CCN([*:2])C1 "
-      "R3:*O[*:3] R4:Cl[*:4]");
+      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:Cl[*:1] R2:*O[*:2] "
+      "R3:CC1CCN([*:3])C1 R4:N#C[*:4]");
   CHECK_RGROUP(it, expected);
 
   structure = "CC1CCN(C1)C1=CC([*:2])=C(Cl)C=C1C#N"_smiles;
@@ -2687,8 +2687,8 @@ M  END
   TEST_ASSERT(rows.size() == 1)
   it = rows.begin();
   expected =
-      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:N#C[*:1] R2:CC1CCN([*:2])C1 "
-      "R3:*[*:3] R4:Cl[*:4]";
+      "Core:c1c([*:2])c([*:1])cc([*:4])c1[*:3] R1:Cl[*:1] R2:*[*:2] "
+      "R3:CC1CCN([*:3])C1 R4:N#C[*:4]";
   CHECK_RGROUP(it, expected);
 }
 
@@ -2766,7 +2766,7 @@ void testGithub5222() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Test that Github5222 is fixed" << std::endl;
-
+  
   auto core = R"CTAB(
   ChemDraw04112214222D
 
@@ -2777,12 +2777,12 @@ void testGithub5222() {
     0.7145   -0.4125    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
     0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.0000    0.8250    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0      
-  2  3  1  0      
-  3  4  2  0      
-  4  5  1  0      
-  5  6  2  0      
-  6  1  1  0      
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
   2 F    2   6   7
   4 F    2   6   7
   6 F    2   6   7
