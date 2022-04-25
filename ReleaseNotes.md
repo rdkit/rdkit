@@ -1,3 +1,47 @@
+# Release_2022.03.2
+(Changes relative to Release_2022.03.1)
+
+## Acknowledgements
+David Cosgrove, Aleš Erjavec, Mosè Giordano, Sreya Gogineni, Ricardo
+Rodriguez-Schmidt, David W.H. Swenson, Paolo Tosco, Rachel Walker, 'GLPG-GT'
+
+## Bug Fixes:
+  - Image Generation: Highlighting looks off when bondLineWidth is increased for PNG generation
+ (github #5122 from rachelnwalker)
+  - RDKit crashes on CIP label calculation
+ (github #5142 from ricrogz)
+  - Modified the JS tests to comply with older nodejs versions
+ (github #5148 from ptosco)
+  - Presence of exocyclic S/D, S/A or D/A query bonds prevents benzene from being recognized as aromatic
+ (github #5152 from rachelnwalker)
+  - Very small fix to avoid an AttributeError
+ (github #5163 from ptosco)
+  - issue with V3000 SD files containing enhanced stereochemistry information
+ (github #5165 from GLPG-GT)
+  - Draw.MolToQPixmap raises a TypeError with Python 3.10
+ (github #5166 from ales-erjavec)
+  - Multiple calls to BlockLogs() permanently disable logging
+ (github #5172 from ricrogz)
+  - Check architecture of the target system to optimise popcnt
+ (github #5182 from giordano)
+  - More consistently check for `WIN32` instead of `MSVC` in CMake files
+ (github #5183 from giordano)
+  - Atom indices inside double bond
+ (github #5185 from DavidACosgrove)
+  - Bug in IPython display after setting a molecule property
+ (github #5192 from dwhswenson)
+  - Zero & coordinate bonds are being taken into account for chirality
+ (github #5196 from ricrogz)
+  - FindPotentialStereo does not clean stereoflags from atoms which cannot be stereocenters
+ (github #5200 from greglandrum)
+  - Fixes array overflow in FMCS code
+ (github #5205 from ricrogz)
+  - PeriodicTable initialization is not thread safe
+ (github #5207 from ricrogz)
+  - Fix use of not thread safe function localtime() 
+ (github #5211 from ricrogz)
+
+
 # Release_2022.03.1
 (Changes relative to Release_2021.09.1)
 
@@ -28,6 +72,13 @@
   (i.e. `select 'CN(=O)=O'::text::mol` or use the `mol_from_smiles()` function.
 - The code to calculate bit vector topological torsion fingerprints for
   reactions no longer ignore the fingerprint size argument.
+- The rules for tautomer enumeration in `MolStandardize` have been updated to
+  more closely match the rules in the original publication. These changes
+  primarily consist of making the rules more specific; the consequence is that
+  less tautomers will be generated with this version. The previous rules can
+  still be accessed via the function `GetV1TautomerEnumerator()` (Python) or
+  `getV1TautomerEnumerator()` (C++)
+
 
 ## Highlights
 - The RDKit can now integrate with the python logger: calling
@@ -43,11 +94,11 @@
 ## Acknowledgements
 Marcel Baltruschat, Jason Biggs, Kevin Burk, Cédric Bouysset, David Cosgrove,
 Joel Duerksen, Jacob Gora, Gareth Jones, Toshiki Kataoka, Eisuke Kawashima,
-Brian Kelley, Niels Kristian Kjærgård Madsen, Hector Martinez-Seara, Dan
-Nealschneider, Alex Rebert, Ricardo Rodriguez-Schmidt, Steve Roughley, Roger
-Sayle, Nikolai Schapin, Ansgar Schuffenhauer, Kaushalesh Shukla, Jon Sorenson,
-Ichiru Take, Paolo Tosco, Kazuya Ujihara, Fabio Urbina, Riccardo Vianello Rachel
-Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
+Brian Kelley, Sonia Liggi, Niels Kristian Kjærgård Madsen, Hector
+Martinez-Seara, Dan Nealschneider, Alex Rebert, Ricardo Rodriguez-Schmidt, Steve
+Roughley, Roger Sayle, Nikolai Schapin, Ansgar Schuffenhauer, Kaushalesh Shukla,
+Jon Sorenson, Ichiru Take, Paolo Tosco, Kazuya Ujihara, Fabio Urbina, Riccardo
+Vianello Rachel Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
 
 ## Code removed in this release:
 - The `useCountSimulation` keyword argument for
@@ -80,6 +131,8 @@ Walker, Maciej Wójcikowski, SPKorhonen, yuri@FreeBSD,
  (github pull #4690 from jones-gareth)
   - RGD:  fix for cores with MOL  block atom lists
  (github pull #4695 from jones-gareth)
+  - Wrong tautomers generated
+ (github issue #4700 from sonial)
   - RGD align output core to input structure
  (github pull #4709 from jones-gareth)
   - TorsionFingerprints raises error with S(Cl)F4 group
