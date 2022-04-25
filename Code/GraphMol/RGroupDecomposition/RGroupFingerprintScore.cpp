@@ -26,7 +26,9 @@
 namespace RDKit {
 
 namespace detail {
-RData dummyFingerprint(int label) {
+// Create a fingerprint for empty or missing R groups 
+// that is the same as a hydrogen R group
+RData dummyHydrogenFingerprint(int label) {
   static RData fp = nullptr;
   if (fp == nullptr) {
     fp = boost::make_shared<RGroupData>();
@@ -98,7 +100,7 @@ void FingerprintVarianceScoreData::modifyVarianceData(
     if (rg != match.rgroups.end()) {
       rgroupData = rg->second;
     } else {
-      rgroupData = detail::dummyFingerprint(l);
+      rgroupData = detail::dummyHydrogenFingerprint(l);
     }
     auto df = labelsToVarianceData.find(l);
     if (df == labelsToVarianceData.end()) {
@@ -188,7 +190,7 @@ double fingerprintVarianceScore(
       if (rg != match.rgroups.end()) {
         rgroupData = rg->second;
       } else {
-        rgroupData = detail::dummyFingerprint(l);
+        rgroupData = detail::dummyHydrogenFingerprint(l);
       }
 #ifdef DEBUG
       std::cerr << rgroupData->smiles << ", ";
@@ -220,7 +222,7 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
 #endif
   auto sum = std::accumulate(
       labelsToVarianceData.cbegin(), labelsToVarianceData.cend(), 0.0,
-      [this](double sum,
+      [](double sum,
              std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
 #ifdef DEBUG
