@@ -44,7 +44,6 @@ void wrap_molbundle();
 void wrap_sgroup();
 void wrap_chirality();
 
-
 python::tuple getAtomIndicesHelper(const KekulizeException &self) {
   python::list res;
   for (auto idx : self.getAtomIndices()) {

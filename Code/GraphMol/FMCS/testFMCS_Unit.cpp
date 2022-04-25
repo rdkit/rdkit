@@ -2590,9 +2590,8 @@ void testSlowCompleteRingsOnly() {
   BOOST_LOG(rdInfoLog) << "FindMCS should be more efficient when" << std::endl;
   BOOST_LOG(rdInfoLog) << "CompleteRingsOnly is set" << std::endl;
   std::vector<ROMOL_SPTR> mols = {
-    "CC(CC(C1CC2CCC(CC3CC(CC3C)C(C)(C)C)CC2C1)C1CCC(C)(C)CC1)C1CCCC1C"_smiles,
-    "CC(CC(C1CC2CCC(CC3CC(CC3C)C(C)(C)C)CC2C1)C1CCC(C)(C)C1)C1CCCC1C"_smiles
-  };
+      "CC(CC(C1CC2CCC(CC3CC(CC3C)C(C)(C)C)CC2C1)C1CCC(C)(C)CC1)C1CCCC1C"_smiles,
+      "CC(CC(C1CC2CCC(CC3CC(CC3C)C(C)(C)C)CC2C1)C1CCC(C)(C)C1)C1CCCC1C"_smiles};
 
   MCSParameters p;
   p.BondCompareParameters.CompleteRingsOnly = true;
@@ -2606,7 +2605,6 @@ void testSlowCompleteRingsOnly() {
   TEST_ASSERT(mcs.NumAtoms == 31);
   TEST_ASSERT(mcs.NumBonds == 34);
 }
-
 
 //====================================================================================================
 //====================================================================================================

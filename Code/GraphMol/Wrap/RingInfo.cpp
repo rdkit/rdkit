@@ -50,7 +50,8 @@ python::object bondFusedRingSizes(RingInfo *self, unsigned int idx) {
   return python::tuple(self->bondFusedRingSizes(idx));
 }
 ExplicitBitVect *bondFusedRingSizesAsBitset(RingInfo *self, unsigned int idx) {
-  auto bitset = new boost::dynamic_bitset<>(self->bondFusedRingSizesAsBitset(idx));
+  auto bitset =
+      new boost::dynamic_bitset<>(self->bondFusedRingSizesAsBitset(idx));
   return new ExplicitBitVect(bitset);
 }
 
@@ -115,7 +116,8 @@ struct ringinfo_wrapper {
         .def("IsBondInFusedRingOfSize", &RingInfo::isBondInFusedRingOfSize)
         .def("BondFusedRingSizes", bondFusedRingSizes)
         .def("BondFusedRingSizesAsBitset", bondFusedRingSizesAsBitset,
-             "Returns all the ring sizes a bond in a fused system is in as an ExplicitBitVect",
+             "Returns all the ring sizes a bond in a fused system is in as an "
+             "ExplicitBitVect",
              python::return_value_policy<python::manage_new_object>())
         .def("AtomRings", atomRings)
         .def("BondRings", bondRings)

@@ -394,7 +394,8 @@ bool havePairOfCompatibleRings(const MCSBondCompareParameters&,
                                const ROMol& mol2, unsigned int bond2) {
   auto ri1 = mol1.getRingInfo();
   auto ri2 = mol2.getRingInfo();
-  if (ri1->hasRingFusionInfoForBond(bond1) && ri2->hasRingFusionInfoForBond(bond2)) {
+  if (ri1->hasRingFusionInfoForBond(bond1) &&
+      ri2->hasRingFusionInfoForBond(bond2)) {
     auto ringSizes1 = ri1->bondFusedRingSizesAsBitset(bond1);
     auto ringSizes2 = ri2->bondFusedRingSizesAsBitset(bond2);
     if (ringSizes1.size() > ringSizes2.size()) {
