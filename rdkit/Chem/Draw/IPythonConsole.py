@@ -121,9 +121,7 @@ def _toHTML(mol):
     if not ipython_useSVG:
       png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
       png = base64.b64encode(png)
-      res.append(
-        f'<tr><td colspan=2 style="text-align:center"><image src="data:image/png;base64,{png.decode()}"></td></tr>'
-      )
+      content = f'<image src="data:image/png;base64,{png.decode()}">'
     else:
       content = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures,
                                drawOptions=drawOptions)
