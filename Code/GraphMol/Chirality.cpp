@@ -1486,8 +1486,9 @@ std::pair<bool, bool> assignAtomChiralCodes(ROMol &mol, UINT_VECT &ranks,
         assignAtomCIPRanks(mol, ranks);
       }
       Chirality::INT_PAIR_VECT nbrs;
+      bool legalCenter, hasDupes;
       // note that hasDupes is only evaluated if legalCenter==true
-      auto [legalCenter, hasDupes] =
+      std::tie(legalCenter, hasDupes) =
           isAtomPotentialChiralCenter(atom, mol, ranks, nbrs);
       if (legalCenter) {
         ++unassignedAtoms;
