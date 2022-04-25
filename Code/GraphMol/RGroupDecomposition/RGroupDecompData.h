@@ -314,8 +314,7 @@ struct RGroupDecompData {
     }
 
     // Deal with non-user supplied labels
-    for (auto it = indexLabels.begin(); it != indexLabels.end(); it++) {
-      auto newLabel = *it;
+    for (auto newLabel : indexLabels) {
       auto atm = atoms.find(newLabel);
       if (atm == atoms.end()) {
         continue;
