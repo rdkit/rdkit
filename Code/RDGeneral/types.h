@@ -204,7 +204,6 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string NullBond;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupAtomMaps;
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupBonds;
-RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupInputDummy;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactantAtomIdx;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactionMapNum;
 
