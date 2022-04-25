@@ -6870,6 +6870,57 @@ CAS<~>
       self.assertIn('garbage_4', log_stream.getvalue())
       log_stream.truncate(0)
 
+  def testFusedSystems(self):
+    mol = Chem.MolFromSmiles("C1CCC2CC3C(CC2C1)CC1CCCC2CCCC3C21")
+    expected = (
+        (6, 10, 14, 18, 20),
+        (6, 10, 14, 18, 20),
+        (6, 10, 14, 18, 20),
+        (6, 10, 14, 16, 18, 20),
+        (6, 10, 14, 16, 18, 20),
+        (6, 10, 12),
+        (6, 10, 14, 16, 18, 20),
+        (6, 10, 14, 16, 18, 20),
+        (6, 10, 14, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 12, 14, 16, 18, 20),
+        (6, 10, 14, 18),
+        (6, 10, 14, 18, 20),
+        (6, 10, 14, 18),
+        (6, 10, 14, 16),
+        (6, 10, 14, 18),
+        (6, 10, 12, 14, 16, 18, 20),
+    )
+    ri = mol.GetRingInfo()
+    self.assertIsNotNone(ri)
+    for b in mol.GetBonds():
+        bi = b.GetIdx()
+        self.assertTrue(ri.HasRingFusionInfoForBond(bi))
+        self.assertEqual(ri.BondFusedRingSizes(bi), expected[bi])
+        if ri.NumBondRings(bi) == 1:
+            self.assertTrue(ri.IsBondInFusedRingOfSize(bi, 6))
+            self.assertTrue(ri.IsBondInFusedRingOfSize(bi, 10))
+            self.assertTrue(ri.IsBondInFusedRingOfSize(bi, 14))
+            self.assertTrue(ri.IsBondInFusedRingOfSize(bi, 18))
+            self.assertTrue(ri.IsBondInFusedRingOfSize(bi, 20))
+            self.assertFalse(ri.IsBondInFusedRingOfSize(bi, 8))
+
+    c60 = Chem.MolFromSmiles("c12c3c4c5c1c1c6c7c2c2c8c3c3c9c4c4c%10c5c5c1c1c6c6c%11c7c2c2c7c8c3c3c8c9c4c4c9c%10c5c5c1c1c6c6c%11c2c2c7c3c3c8c4c4c9c5c1c1c6c2c3c41")
+    ri = c60.GetRingInfo()
+    self.assertIsNotNone(ri)
+    for b in mol.GetBonds():
+        bi = b.GetIdx()
+        self.assertFalse(ri.HasRingFusionInfoForBond(bi))
+        with self.assertRaises(Chem.FusedSystemTooLarge):
+          ri.IsBondInFusedRingOfSize(bi, 6)
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

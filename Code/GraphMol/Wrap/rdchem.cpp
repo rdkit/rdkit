@@ -58,11 +58,12 @@ PyObject *atomSanitizeExceptionType = nullptr;
 PyObject *atomValenceExceptionType = nullptr;
 PyObject *atomKekulizeExceptionType = nullptr;
 PyObject *kekulizeExceptionType = nullptr;
+PyObject *fusedSystemTooLargeExceptionType = nullptr;
 
 // pattern from here:
 // https://stackoverflow.com/questions/11448735/boostpython-export-custom-exception-and-inherit-from-pythons-exception
 template <typename EXC_TYPE>
-void sanitExceptionTranslator(const EXC_TYPE &x, PyObject *pyExcType) {
+void cppExceptionTranslator(const EXC_TYPE &x, PyObject *pyExcType) {
   PRECONDITION(pyExcType != nullptr, "global type not initialized");
   python::object pyExcInstance(python::handle<>(python::borrowed(pyExcType)));
   pyExcInstance.attr("cause") = x;
@@ -115,7 +116,7 @@ BOOST_PYTHON_MODULE(rdchem) {
   molSanitizeExceptionType = createExceptionClass("MolSanitizeException");
   python::register_exception_translator<RDKit::MolSanitizeException>(
       [&](const MolSanitizeException &exc) {
-        sanitExceptionTranslator(exc, molSanitizeExceptionType);
+        cppExceptionTranslator(exc, molSanitizeExceptionType);
       });
 
   python::class_<AtomSanitizeException, python::bases<MolSanitizeException>>(
@@ -127,7 +128,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       createExceptionClass("AtomSanitizeException", molSanitizeExceptionType);
   python::register_exception_translator<RDKit::AtomSanitizeException>(
       [&](const AtomSanitizeException &exc) {
-        sanitExceptionTranslator(exc, atomSanitizeExceptionType);
+        cppExceptionTranslator(exc, atomSanitizeExceptionType);
       });
 
   python::class_<AtomValenceException, python::bases<AtomSanitizeException>>(
@@ -138,7 +139,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       createExceptionClass("AtomValenceException", atomSanitizeExceptionType);
   python::register_exception_translator<RDKit::AtomValenceException>(
       [&](const AtomValenceException &exc) {
-        sanitExceptionTranslator(exc, atomValenceExceptionType);
+        cppExceptionTranslator(exc, atomValenceExceptionType);
       });
 
   python::class_<AtomKekulizeException, python::bases<AtomSanitizeException>>(
@@ -149,7 +150,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       createExceptionClass("AtomKekulizeException", atomSanitizeExceptionType);
   python::register_exception_translator<RDKit::AtomKekulizeException>(
       [&](const AtomKekulizeException &exc) {
-        sanitExceptionTranslator(exc, atomKekulizeExceptionType);
+        cppExceptionTranslator(exc, atomKekulizeExceptionType);
       });
 
   python::class_<KekulizeException, python::bases<MolSanitizeException>>(
@@ -161,7 +162,20 @@ BOOST_PYTHON_MODULE(rdchem) {
       createExceptionClass("KekulizeException", molSanitizeExceptionType);
   python::register_exception_translator<RDKit::KekulizeException>(
       [&](const KekulizeException &exc) {
-        sanitExceptionTranslator(exc, kekulizeExceptionType);
+        cppExceptionTranslator(exc, kekulizeExceptionType);
+      });
+
+  python::class_<FusedSystemTooLarge>(
+      "_cppFusedSystemTooLarge", "exception arising from fused ring perception",
+      python::no_init)
+      .def("Message", &FusedSystemTooLarge::what)
+      .def("GetType", &FusedSystemTooLarge::getType);
+  python::register_ptr_to_python<boost::shared_ptr<FusedSystemTooLarge>>();
+  fusedSystemTooLargeExceptionType =
+      createExceptionClass("FusedSystemTooLarge");
+  python::register_exception_translator<RDKit::FusedSystemTooLarge>(
+      [&](const FusedSystemTooLarge &exc) {
+        cppExceptionTranslator(exc, fusedSystemTooLargeExceptionType);
       });
 
   //*********************************************

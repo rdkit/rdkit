@@ -8439,6 +8439,77 @@ void testGithub5099() {
   TEST_ASSERT(m->getNumAtoms() == 5);
 }
 
+void testFusedSystems() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n testFusedSystems "
+                          "enumerate sizes of fused systems a bond belongs to"
+                       << std::endl;
+
+  {
+    auto m = "C1CCC2CC3C(CC2C1)CC1CCCC2CCCC3C21"_smiles;
+    TEST_ASSERT(m);
+    std::vector<RingInfo::INT_VECT> expected = {
+        {6, 10, 14, 18, 20},
+        {6, 10, 14, 18, 20},
+        {6, 10, 14, 18, 20},
+        {6, 10, 14, 16, 18, 20},
+        {6, 10, 14, 16, 18, 20},
+        {6, 10, 12},
+        {6, 10, 14, 16, 18, 20},
+        {6, 10, 14, 16, 18, 20},
+        {6, 10, 14, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 12, 14, 16, 18, 20},
+        {6, 10, 14, 18},
+        {6, 10, 14, 18, 20},
+        {6, 10, 14, 18},
+        {6, 10, 14, 16},
+        {6, 10, 14, 18},
+        {6, 10, 12, 14, 16, 18, 20},
+    };
+    auto ri = m->getRingInfo();
+    TEST_ASSERT(ri);
+    for (const auto b : m->bonds()) {
+      auto bi = b->getIdx();
+      TEST_ASSERT(ri->hasRingFusionInfoForBond(bi));
+      TEST_ASSERT(ri->bondFusedRingSizes(bi) == expected.at(bi));
+      if (ri->numBondRings(bi) == 1) {
+        TEST_ASSERT(ri->isBondInFusedRingOfSize(bi, 6));
+        TEST_ASSERT(ri->isBondInFusedRingOfSize(bi, 10));
+        TEST_ASSERT(ri->isBondInFusedRingOfSize(bi, 14));
+        TEST_ASSERT(ri->isBondInFusedRingOfSize(bi, 18));
+        TEST_ASSERT(ri->isBondInFusedRingOfSize(bi, 20));
+        TEST_ASSERT(!ri->isBondInFusedRingOfSize(bi, 8));
+      }
+    }
+  }
+  {
+    auto c60 =
+        "c12c3c4c5c1c1c6c7c2c2c8c3c3c9c4c4c%10c5c5c1c1c6c6c%11c7c2c2c7c8c3c3c8c9c4c4c9c%10c5c5c1c1c6c6c%11c2c2c7c3c3c8c4c4c9c5c1c1c6c2c3c41"_smiles;
+    auto ri = c60->getRingInfo();
+    TEST_ASSERT(ri);
+    for (const auto b : c60->bonds()) {
+      auto bi = b->getIdx();
+      TEST_ASSERT(!ri->hasRingFusionInfoForBond(bi));
+      int hasThrown = -1;
+      try {
+        ri->isBondInFusedRingOfSize(bi, 6);
+        hasThrown = 0;
+      } catch (const FusedSystemTooLarge &) {
+        hasThrown = 1;
+      }
+      TEST_ASSERT(hasThrown == 1);
+    }
+  }
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -8555,6 +8626,7 @@ int main() {
   testSetTerminalAtomCoords();
   testGet3DDistanceMatrix();
   testGithub5099();
+  testFusedSystems();
 
   return 0;
 }

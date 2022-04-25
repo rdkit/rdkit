@@ -29,6 +29,25 @@
 #endif
 
 namespace RDKit {
+
+//! thrown when the fused system is too large to enumerate
+//! all possible permutations
+class FusedSystemTooLarge : public std::exception {
+ public:
+  FusedSystemTooLarge(const char *msg) : d_msg(msg) {}
+  FusedSystemTooLarge(std::string msg) : d_msg(std::move(msg)) {}
+  FusedSystemTooLarge(const FusedSystemTooLarge &other) : d_msg(other.d_msg) {}
+  const char *what() const noexcept override { return d_msg.c_str(); }
+  ~FusedSystemTooLarge() noexcept override {}
+  virtual FusedSystemTooLarge *copy() const {
+    return new FusedSystemTooLarge(*this);
+  }
+  virtual std::string getType() const { return "FusedSystemTooLarge"; }
+
+ protected:
+  std::string d_msg;
+};
+
 //! A class to store information about a molecule's rings
 /*!
 
@@ -393,24 +412,6 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
     const boost::dynamic_bitset<> &ringSizesForBond(unsigned int idx);
 
    private:
-    //! thrown when the fused system is too large to enumerate
-    //! all possible permutations
-    class FusedSystemTooLarge : public std::exception {
-     public:
-      FusedSystemTooLarge(const char *msg) : d_msg(msg) {}
-      FusedSystemTooLarge(std::string msg) : d_msg(std::move(msg)) {}
-      FusedSystemTooLarge(const FusedSystemTooLarge &other)
-          : d_msg(other.d_msg) {}
-      const char *what() const noexcept override { return d_msg.c_str(); }
-      ~FusedSystemTooLarge() noexcept override {}
-      virtual FusedSystemTooLarge *copy() const {
-        return new FusedSystemTooLarge(*this);
-      }
-      virtual std::string getType() const { return "FusedSystemTooLarge"; }
-
-     protected:
-      std::string d_msg;
-    };
     void initFusedRingSystems();
     void checkInitialized() const {
       PRECONDITION(d_ringInfo, "FusedRingInfo not initialized");
