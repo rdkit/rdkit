@@ -45,9 +45,6 @@ RData dummyHydrogenFingerprint(int label) {
 static const int fingerprintSize = 512;
 static const bool useTopologicalFingerprints = false;
 
-// TODO scale variance by the number of separate attachments (as that variance
-// will be counted for each attachment).
-
 // Add fingerprint information to RGroupData
 void addFingerprintToRGroupData(RGroupData *rgroupData) {
   if (rgroupData->fingerprint == nullptr) {
