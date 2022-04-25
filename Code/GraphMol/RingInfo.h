@@ -294,6 +294,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
       - the object must be initialized before calling this
   */
   INT_VECT bondFusedRingSizes(unsigned int idx);
+  boost::dynamic_bitset<> bondFusedRingSizesAsBitset(unsigned int idx);
 
 #ifdef RDK_USE_URF
   //! adds a ring family to our data

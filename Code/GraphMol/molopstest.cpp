@@ -8479,7 +8479,15 @@ void testFusedSystems() {
     for (const auto b : m->bonds()) {
       auto bi = b->getIdx();
       TEST_ASSERT(ri->hasRingFusionInfoForBond(bi));
-      TEST_ASSERT(ri->bondFusedRingSizes(bi) == expected.at(bi));
+      auto fusedRingSizes = ri->bondFusedRingSizes(bi);
+      auto fusedRingSizesAsBitset = ri->bondFusedRingSizesAsBitset(bi);
+      unsigned int j = 0;
+      for (unsigned int i = 0; i < fusedRingSizesAsBitset.size(); ++i) {
+        if (fusedRingSizesAsBitset.test(i)) {
+          TEST_ASSERT(static_cast<int>(i) == fusedRingSizes.at(j++));
+        }
+      }
+      TEST_ASSERT(fusedRingSizes == expected.at(bi));
       if (ri->numBondRings(bi) == 1) {
         TEST_ASSERT(ri->isBondInFusedRingOfSize(bi, 6));
         TEST_ASSERT(ri->isBondInFusedRingOfSize(bi, 10));

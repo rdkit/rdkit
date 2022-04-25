@@ -13,6 +13,7 @@
 #include <RDBoost/Wrap.h>
 
 #include <GraphMol/RDKitBase.h>
+#include <DataStructs/ExplicitBitVect.h>
 #include <RDGeneral/types.h>
 
 namespace python = boost::python;
@@ -47,6 +48,10 @@ python::object bondRingSizes(const RingInfo *self, unsigned int idx) {
 }
 python::object bondFusedRingSizes(RingInfo *self, unsigned int idx) {
   return python::tuple(self->bondFusedRingSizes(idx));
+}
+ExplicitBitVect *bondFusedRingSizesAsBitset(RingInfo *self, unsigned int idx) {
+  auto bitset = new boost::dynamic_bitset<>(self->bondFusedRingSizesAsBitset(idx));
+  return new ExplicitBitVect(bitset);
 }
 
 #ifdef RDK_USE_URF
@@ -109,6 +114,9 @@ struct ringinfo_wrapper {
         .def("HasRingFusionInfoForBond", &RingInfo::hasRingFusionInfoForBond)
         .def("IsBondInFusedRingOfSize", &RingInfo::isBondInFusedRingOfSize)
         .def("BondFusedRingSizes", bondFusedRingSizes)
+        .def("BondFusedRingSizesAsBitset", bondFusedRingSizesAsBitset,
+             "Returns all the ring sizes a bond in a fused system is in as an ExplicitBitVect",
+             python::return_value_policy<python::manage_new_object>())
         .def("AtomRings", atomRings)
         .def("BondRings", bondRings)
         .def("AtomMembers", atomMembers)

@@ -394,26 +394,18 @@ bool havePairOfCompatibleRings(const MCSBondCompareParameters&,
                                const ROMol& mol2, unsigned int bond2) {
   auto ri1 = mol1.getRingInfo();
   auto ri2 = mol2.getRingInfo();
-  const auto& bondRings1 = ri1->bondRings();
-  const auto& bondRings2 = ri2->bondRings();
-  for (unsigned int ringIdx1 : ri1->bondMembers(bond1)) {
-    const auto& ring1 = bondRings1.at(ringIdx1);
-    bool isRing1Fused = ri1->isRingFused(ringIdx1);
-    for (unsigned int ringIdx2 : ri2->bondMembers(bond2)) {
-      const auto& ring2 = bondRings2.at(ringIdx2);
-      if (ring1.size() == ring2.size()) {
-        return true;
-      }
-      if (isRing1Fused && ring2.size() > ring1.size()) {
-        return true;
-      }
-      bool isRing2Fused = ri2->isRingFused(ringIdx2);
-      if (isRing2Fused && ring1.size() > ring2.size()) {
-        return true;
-      }
+  if (ri1->hasRingFusionInfoForBond(bond1) && ri2->hasRingFusionInfoForBond(bond2)) {
+    auto ringSizes1 = ri1->bondFusedRingSizesAsBitset(bond1);
+    auto ringSizes2 = ri2->bondFusedRingSizesAsBitset(bond2);
+    if (ringSizes1.size() > ringSizes2.size()) {
+      ringSizes2.resize(ringSizes1.size());
+    } else if (ringSizes2.size() > ringSizes1.size()) {
+      ringSizes1.resize(ringSizes2.size());
     }
+    ringSizes1 &= ringSizes2;
+    return ringSizes1.any();
   }
-  return false;
+  return true;
 }
 
 bool checkBondRingMatch(const MCSBondCompareParameters& p, const ROMol& mol1,

@@ -10,8 +10,6 @@
 #include "RingInfo.h"
 #include <algorithm>
 
-//#define DEBUG_PERM 1
-
 namespace RDKit {
 
 RingInfo::INT_VECT RingInfo::atomRingSizes(unsigned int idx) const {
@@ -258,6 +256,16 @@ RingInfo::INT_VECT RingInfo::bondFusedRingSizes(unsigned int idx) {
   return res;
 }
 
+boost::dynamic_bitset<> RingInfo::bondFusedRingSizesAsBitset(unsigned int idx) {
+  checkInitialized();
+  boost::dynamic_bitset<> res;
+  if (idx < d_bondMembers.size()) {
+    initFusedRingInfo();
+    res = d_fusedRingInfo.ringSizesForBond(idx);
+  }
+  return res;
+}
+
 RingInfo::RingNbrPermutations::RingNbrPermutations(
     const FusedRingInfo *fusedRingInfo, unsigned int ringIdx)
     : d_fusedRingInfo(fusedRingInfo) {
@@ -313,25 +321,6 @@ RingInfo::RingNbrPermutations::RingNbrPermutations(
       permTmp >>= 1;
     }
   }
-#ifdef DEBUG_PERM
-  std::cerr << "RingNbrPermutations::RingNbrPermutations ringIdx " << ringIdx
-            << std::endl;
-  for (auto perm : d_permutations) {
-    for (unsigned int i = 0; i < MAX_FUSED_NBRS; ++i) {
-      if (perm) {
-        if (perm & 1) {
-          std::cerr << " 1";
-        } else {
-          std::cerr << " 0";
-        }
-        perm >>= 1;
-      } else {
-        std::cerr << " 0";
-      }
-    }
-    std::cerr << std::endl;
-  }
-#endif
 }
 
 void RingInfo::FusedRingInfo::init(RingInfo *ringInfo) {
@@ -370,29 +359,12 @@ void RingInfo::FusedRingInfo::initFusedRingSystems() {
   auto maxBondIdx = d_ringInfo->d_bondMembers.size();
   d_fusedRingSystems.resize(numRings);
   boost::dynamic_bitset<> visited(numRings);
-#ifdef DEBUG_PERM
-  std::cerr << "initFusedRingSystems\n--------------------\n  ";
-  for (unsigned int i = 0; i < bondRings.size(); ++i) {
-    std::cerr << i << " ";
-  }
-  std::cerr << std::endl;
-#endif
   for (unsigned int i = 0; i < numRings; ++i) {
     visited.reset();
     auto &fusedRingSystem = d_fusedRingSystems[i];
     fusedRingSystem.resize(numRings);
     addNbrRings(fusedRingSystem, visited, i);
-#ifdef DEBUG_PERM
-    std::cerr << i << " ";
-    for (unsigned int i = 0; i < numRings; ++i) {
-      std::cerr << fusedRingSystem.test(i) << " ";
-    }
-    std::cerr << std::endl;
-#endif
   }
-#ifdef DEBUG_PERM
-  std::cerr << "--------------------" << std::endl;
-#endif
   d_bondRingsAsBitset.resize(numRings);
   for (unsigned int i = 0; i < numRings; ++i) {
     auto &bondRingAsBitset = d_bondRingsAsBitset[i];
@@ -420,26 +392,14 @@ const boost::dynamic_bitset<> &RingInfo::FusedRingInfo::ringSizesForBond(
     bondFusedRingSizes.resize(d_ringInfo->d_bondMembers.size());
     const auto &rings = d_ringInfo->d_bondMembers.at(idx);
     auto ringIdxMask = getRingIdxMask(rings);
-#ifdef DEBUG_PERM
-    std::cerr << "RingInfo::bondFusedRingSizes ringIdxMask " << ringIdxMask
-              << std::endl;
-#endif
     for (auto ringIdx : rings) {
       auto ringIdxMaskTmp = ringIdxMask;
       ringIdxMaskTmp.reset(ringIdx);
-#ifdef DEBUG_PERM
-      std::cerr << "RingInfo::bondFusedRingSizes ringIdxMaskTmp "
-                << ringIdxMaskTmp << std::endl;
-#endif
       auto &fusedRingSizes = d_fusedRingSizesVec[ringIdx];
       fusedRingSizes.setMask(ringIdxMaskTmp);
       fusedRingSizes.reset();
       while (1) {
         auto ringSize = fusedRingSizes.next();
-#ifdef DEBUG_PERM
-        std::cerr << "RingInfo::bondFusedRingSizes ringSize " << ringSize
-                  << std::endl;
-#endif
         if (ringSize == -1) {
           break;
         }
@@ -491,9 +451,6 @@ int RingInfo::RingNbrPermutations::next() {
   if (perm & d_mask) {
     return next();
   }
-#ifdef DEBUG_PERM
-  std::cerr << "RingInfo::RingNbrPermutations::next" << std::endl;
-#endif
   unsigned int localRingIdx = 0;
   boost::dynamic_bitset<> envelope(
       d_fusedRingInfo->d_ringInfo->d_bondMembers.size());
@@ -503,15 +460,9 @@ int RingInfo::RingNbrPermutations::next() {
       CHECK_INVARIANT(ringIdx != -1, "bad localRingIdx");
       envelope ^= d_fusedRingInfo->d_bondRingsAsBitset.at(ringIdx);
     }
-#ifdef DEBUG_PERM
-    std::cerr << (perm & 1) << " ";
-#endif
     ++localRingIdx;
     perm >>= 1;
   }
-#ifdef DEBUG_PERM
-  std::cerr << std::endl;
-#endif
   return static_cast<int>(envelope.count());
 }
 

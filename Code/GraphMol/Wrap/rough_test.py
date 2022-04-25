@@ -6904,7 +6904,10 @@ CAS<~>
     for b in mol.GetBonds():
         bi = b.GetIdx()
         self.assertTrue(ri.HasRingFusionInfoForBond(bi))
-        self.assertEqual(ri.BondFusedRingSizes(bi), expected[bi])
+        fusedRingSizes = ri.BondFusedRingSizes(bi)
+        fusedRingSizesAsBitset = ri.BondFusedRingSizesAsBitset(bi)
+        self.assertEqual(tuple(fusedRingSizesAsBitset.GetOnBits()), fusedRingSizes)
+        self.assertEqual(fusedRingSizes, expected[bi])
         if ri.NumBondRings(bi) == 1:
             self.assertTrue(ri.IsBondInFusedRingOfSize(bi, 6))
             self.assertTrue(ri.IsBondInFusedRingOfSize(bi, 10))
