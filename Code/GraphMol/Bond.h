@@ -384,6 +384,9 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
 //! (e.g. SINGLE->2, AROMATIC->3, etc.)
 RDKIT_GRAPHMOL_EXPORT extern uint8_t getTwiceBondType(const RDKit::Bond &b);
 
+bool RDKIT_GRAPHMOL_EXPORT bondAffectsAtomChirality(const Bond *bond,
+                                                    const Atom *atom);
+
 };  // namespace RDKit
 
 //! allows Bond objects to be dumped to streams

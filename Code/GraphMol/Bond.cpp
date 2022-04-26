@@ -14,6 +14,18 @@
 
 namespace RDKit {
 
+bool bondAffectsAtomChirality(const Bond *bond, const Atom *atom) {
+  PRECONDITION(bond, "bad bond pointer");
+  PRECONDITION(atom, "bad atom pointer");
+  if (bond->getBondType() == Bond::BondType::UNSPECIFIED ||
+      bond->getBondType() == Bond::BondType::ZERO ||
+      (bond->getBondType() == Bond::BondType::DATIVE &&
+       bond->getBeginAtomIdx() == atom->getIdx())) {
+    return false;
+  }
+  return true;
+}
+
 Bond::Bond() : RDProps() { initBond(); };
 
 Bond::Bond(BondType bT) : RDProps() {

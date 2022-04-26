@@ -264,7 +264,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   // This method can be used to distinguish query atoms from standard atoms:
   virtual bool hasQuery() const { return false; }
 
-  virtual std::string getQueryType() const {return "";}
+  virtual std::string getQueryType() const { return ""; }
 
   //! NOT CALLABLE
   virtual void setQuery(QUERYATOM_QUERY *what);
@@ -434,16 +434,18 @@ RDKIT_GRAPHMOL_EXPORT std::string getAtomValue(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
                                                       const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
-};  // namespace RDKit
-//! allows Atom objects to be dumped to streams
-RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
-                                               const RDKit::Atom &at);
 
-namespace RDKit {
 //! returns true if the atom is to the left of C
 RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
 //! returns true if the atom is aromatic or has an aromatic bond
 RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
 
+unsigned int RDKIT_GRAPHMOL_EXPORT getAtomNonzeroDegree(const Atom *atom);
+
 }  // namespace RDKit
+
+//! allows Atom objects to be dumped to streams
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
+                                               const RDKit::Atom &at);
+
 #endif
