@@ -15,6 +15,7 @@
 #include "../SmilesParse/SmilesWrite.h"
 
 #include <set>
+#include <limits>
 
 namespace RDKit {
 namespace FMCS {
@@ -206,7 +207,7 @@ void Seed::grow(MaximumCommonSubgraph& mcs) const {
   // add all other from 2^k-1 possible seeds, where k=newBonds.size()
   // if just one new bond, then seed has already been created
   if (NewBonds.size() > 1) {
-    if (sizeof(unsigned long long) * 8 < NewBonds.size()) {
+    if (std::numeric_limits<unsigned long long>::digits < NewBonds.size()) {
       throw std::runtime_error(
           "Max number of new external bonds of a seed >64");
     }
