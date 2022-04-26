@@ -78,11 +78,11 @@ struct PyLogStream : std::ostream, std::streambuf {
   }
 
   ~PyLogStream() {
-    #if PY_VERSION_HEX > 0x03070000
+#if PY_VERSION_HEX > 0x03070000
     if (!_Py_IsFinalizing()) {
       Py_XDECREF(logfn);
     }
-    #endif
+#endif
   }
 
   int overflow(int c) override {
