@@ -30,13 +30,11 @@ set( RDKitSV_INCS MolDisplay2DWidget.H
   QTGet2Strings.H
   QT4SelectItems.H )
 
-find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
-
 set( LIBS Boost::program_options Boost::iostreams Boost::filesystem
   ${RDKit_THREAD_LIBS}
   FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
-   z Qt5::Widgets Qt5::OpenGL )
+   z QtDependencies)
 
 add_executable( rdkitsv ${RDKitSV_SRCS}
   ${RDKitSV_MOC_SRCS} ${RDKitSV_INCS} )

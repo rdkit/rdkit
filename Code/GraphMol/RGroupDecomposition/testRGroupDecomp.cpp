@@ -536,23 +536,23 @@ void testGitHubIssue1705() {
     }
     delete core;
     std::string expected = R"RES(Rgroup===Core
-Oc1ccc([*:2])cc1[*:1]
-Oc1ccc([*:2])cc1[*:1]
-Oc1ccc([*:2])cc1[*:1]
-Oc1ccc([*:2])cc1[*:1]
-Oc1ccc([*:2])cc1[*:1]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
+Oc1ccc([*:1])cc1[*:2]
 Rgroup===R1
 [H][*:1]
-F[*:1]
-F[*:1]
-F[*:1]
-Cl[*:1]
+[H][*:1]
+[H][*:1]
+N[*:1]
+[H][*:1]
 Rgroup===R2
 [H][*:2]
-[H][*:2]
-[H][*:2]
-N[*:2]
-[H][*:2]
+F[*:2]
+F[*:2]
+F[*:2]
+Cl[*:2]
 )RES";
 #ifdef DEBUG
     if (ss.str() != expected) {
@@ -596,13 +596,13 @@ Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Rgroup===R1
 [H][*:1]
-F[*:1]
-F[*:1]
+[H][*:1]
+[H][*:1]
 F[*:1]
 Rgroup===R2
 [H][*:2]
-[H][*:2]
-[H][*:2]
+F[*:2]
+F[*:2]
 F[*:2]
 )RES";
 #ifdef DEBUG
@@ -1370,13 +1370,13 @@ Cc1c([*:1])cccc1[*:2]
 Cc1c([*:1])cccc1[*:2]
 Rgroup===R1
 [H][*:1]
-F[*:1]
-F[*:1]
+[H][*:1]
+[H][*:1]
 F[*:1]
 Rgroup===R2
 [H][*:2]
-[H][*:2]
-[H][*:2]
+F[*:2]
+F[*:2]
 F[*:2]
 )RES";
 #ifdef DEBUG
@@ -2766,7 +2766,8 @@ void atomDegreePreconditionBug() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog)
-      << "Test that we don't get a bad atom degree precondition violation when the input structure has dummy atoms"
+      << "Test that we don't get a bad atom degree precondition violation when "
+         "the input structure has dummy atoms"
       << std::endl;
 
   auto structure = R"CTAB(
@@ -2816,9 +2817,66 @@ M  END
   TEST_ASSERT(r3->getNumAtoms() == 2)
   TEST_ASSERT(r3->getAtomWithIdx(0)->hasProp(common_properties::dummyLabel));
   TEST_ASSERT(r3->getAtomWithIdx(1)->hasProp(common_properties::dummyLabel));
-  TEST_ASSERT(r3->getAtomWithIdx(0)->getProp<std::string>(common_properties::dummyLabel) == "*");
-  TEST_ASSERT(r3->getAtomWithIdx(1)->getProp<std::string>(common_properties::dummyLabel) == "R3");
- CHECK_RGROUP(it, expected);
+  TEST_ASSERT(r3->getAtomWithIdx(0)->getProp<std::string>(
+                  common_properties::dummyLabel) == "*");
+  TEST_ASSERT(r3->getAtomWithIdx(1)->getProp<std::string>(
+                  common_properties::dummyLabel) == "R3");
+  CHECK_RGROUP(it, expected);
+}
+
+void testGithub5222() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that Github5222 is fixed" << std::endl;
+
+  auto core = R"CTAB(
+  ChemDraw04112214222D
+
+  6  6  3  0  0  0  0  0  0  0999 V2000
+   -0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.4125    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.4125    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.8250    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+  2 F    2   6   7
+  4 F    2   6   7
+  6 F    2   6   7
+M  ALS   2  2 F C   N   
+M  ALS   4  2 F C   N   
+M  ALS   6  2 F C   N   
+M  END
+)CTAB"_ctab;
+  std::vector<std::string> smiArray(10, "COc1ccccc1");
+  smiArray.push_back("COc1ccncn1");
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  RGroupDecomposition decomp(*core, params);
+  for (const auto smiles : smiArray) {
+    ROMol *mol = SmilesToMol(smiles);
+    int res = decomp.add(*mol);
+    TEST_ASSERT(res >= 0);
+    delete mol;
+  }
+
+  decomp.process();
+  std::cerr << "Best mapping" << std::endl;
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 11);
+  for (const auto row : rows) {
+    TEST_ASSERT(row.size() == 2);
+    TEST_ASSERT(row.count("Core") == 1);
+    TEST_ASSERT(row.count("R1") == 1);
+    auto mol = row.at("R1");
+    auto groupSmiles = MolToSmiles(*mol);
+    TEST_ASSERT(groupSmiles == "CO[*:1]");
+  }
 }
 
 int main() {
@@ -2873,6 +2931,7 @@ int main() {
   testWildcardInInput();
   testDoNotChooseUnrelatedCores();
   atomDegreePreconditionBug();
+  testGithub5222();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

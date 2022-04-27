@@ -333,21 +333,39 @@ bool ChemicalReaction::validate(unsigned int &numWarnings,
 }
 
 bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
-                                  unsigned int &which) {
+                                  std::vector<unsigned int> &which,
+                                  bool stopAtFirstMatch) {
   if (!rxn.isInitialized()) {
     throw ChemicalReactionException(
         "initReactantMatchers() must be called first");
   }
-  which = 0;
+  which.clear();
+  unsigned int reactant_template_idx = 0;
   for (auto iter = rxn.beginReactantTemplates();
-       iter != rxn.endReactantTemplates(); ++iter, ++which) {
+       iter != rxn.endReactantTemplates(); ++iter, ++reactant_template_idx) {
     MatchVectType tvect;
     if (SubstructMatch(mol, **iter, tvect)) {
-      return true;
+      which.push_back(reactant_template_idx);
+      if (stopAtFirstMatch) {
+        return true;
+      }
     }
   }
-  return false;
+  return !which.empty();
 }
+
+bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
+                                  unsigned int &which) {
+  std::vector<unsigned int> matches;
+  bool is_reactant = isMoleculeReactantOfReaction(rxn, mol, matches, true);
+  if (matches.empty()) {
+    which = rxn.getNumReactantTemplates();
+  } else {
+    which = matches[0];
+  }
+  return is_reactant;
+}
+
 bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,
                                   const ROMol &mol) {
   unsigned int ignore;
@@ -355,21 +373,39 @@ bool isMoleculeReactantOfReaction(const ChemicalReaction &rxn,
 }
 
 bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
-                                 unsigned int &which) {
+                                 std::vector<unsigned int> &which,
+                                 bool stopAtFirstMatch) {
   if (!rxn.isInitialized()) {
     throw ChemicalReactionException(
         "initReactantMatchers() must be called first");
   }
-  which = 0;
+  which.clear();
+  unsigned int product_template_idx = 0;
   for (auto iter = rxn.beginProductTemplates();
-       iter != rxn.endProductTemplates(); ++iter, ++which) {
+       iter != rxn.endProductTemplates(); ++iter, ++product_template_idx) {
     MatchVectType tvect;
     if (SubstructMatch(mol, **iter, tvect)) {
-      return true;
+      which.push_back(product_template_idx);
+      if (stopAtFirstMatch) {
+        return true;
+      }
     }
   }
-  return false;
+  return !which.empty();
 }
+
+bool isMoleculeProductOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
+                                 unsigned int &which) {
+  std::vector<unsigned int> matches;
+  bool is_product = isMoleculeProductOfReaction(rxn, mol, matches, true);
+  if (matches.empty()) {
+    which = rxn.getNumProductTemplates();
+  } else {
+    which = matches[0];
+  }
+  return is_product;
+}
+
 bool isMoleculeProductOfReaction(const ChemicalReaction &rxn,
                                  const ROMol &mol) {
   unsigned int ignore;

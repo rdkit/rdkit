@@ -131,7 +131,7 @@ def setOpts(mol, opts):
       f"{__name__}.setOpts(mol: Chem.Mol, opts: dict): no key in opts should be null")
   if opts:
     setattr(mol, _opts, opts)
-  else:
+  elif hasattr(mol, _opts):
     delattr(mol, _opts)
 
 

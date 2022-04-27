@@ -1777,3 +1777,152 @@ TEST_CASE("replaceAtom and StereoGroups") {
     CHECK(mol->getStereoGroups()[0].getAtoms()[0] == mol->getAtomWithIdx(1));
   }
 }
+
+TEST_CASE(
+    "Github #5200: FindPotentialStereo does not clean stereoflags from atoms "
+    "which cannot be stereocenters") {
+  auto m = "CCF"_smiles;
+  REQUIRE(m);
+  m->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  bool cleanIt = true;
+  auto sinfo = Chirality::findPotentialStereo(*m, cleanIt);
+  CHECK(sinfo.empty());
+  CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+        Atom::ChiralType::CHI_UNSPECIFIED);
+}
+
+TEST_CASE(
+    "Github #5196: Zero & coordinate bonds are being taken into account for "
+    "chirality") {
+  RDLog::LogStateSetter setter;  // disable irritating warning messages
+  auto mol = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 18 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.136359 0.025241 -0.986870 0
+M  V30 2 C 0.211183 -0.810922 0.138318 0
+M  V30 3 C -0.446638 -0.713741 1.305561 0
+M  V30 4 C -1.141107 0.914647 -0.916429 0
+M  V30 5 R -1.628248 -0.983190 -0.411960 0
+M  V30 6 H 0.392055 -0.106505 -1.920607 0
+M  V30 7 H 0.974038 -1.568492 0.017171 0
+M  V30 8 H -0.209921 -1.406535 2.084966 0
+M  V30 9 H -1.378909 1.482059 -1.807349 0
+M  V30 10 C -1.544607 0.306162 1.588191 0
+M  V30 11 C -1.946856 1.186683 0.358271 0
+M  V30 12 H -1.207983 0.944410 2.407927 0
+M  V30 13 H -2.419549 -0.225146 1.965589 0
+M  V30 14 H -3.006492 1.040978 0.144313 0
+M  V30 15 H -1.830875 2.240146 0.620809 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1
+M  V30 2 2 3 2
+M  V30 3 2 4 1
+M  V30 4 0 1 5
+M  V30 5 0 2 5
+M  V30 6 0 3 5
+M  V30 7 0 4 5
+M  V30 8 1 1 6
+M  V30 9 1 2 7
+M  V30 10 1 3 8
+M  V30 11 1 4 9
+M  V30 12 1 10 3
+M  V30 13 1 11 4
+M  V30 14 1 11 10
+M  V30 15 1 12 10
+M  V30 16 1 13 10
+M  V30 17 1 14 11
+M  V30 18 1 15 11
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(mol);
+  SECTION("as reported") {
+    MolOps::assignStereochemistryFrom3D(*mol);
+    for (auto aidx : {0, 1, 2, 3}) {
+      CHECK(mol->getAtomWithIdx(aidx)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("as reported - ZOBs") {
+    for (auto bidx : {3, 4, 5, 6}) {
+      mol->getBondWithIdx(bidx)->setBondType(Bond::BondType::ZERO);
+    }
+    MolOps::assignStereochemistryFrom3D(*mol);
+    for (auto idx : {0, 1, 2, 3}) {
+      CHECK(mol->getAtomWithIdx(idx)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("as reported - datives") {
+    for (auto bidx : {3, 4, 5, 6}) {
+      mol->getBondWithIdx(bidx)->setBondType(Bond::BondType::DATIVE);
+    }
+    MolOps::assignStereochemistryFrom3D(*mol);
+    for (auto idx : {0, 1, 2, 3}) {
+      CHECK(mol->getAtomWithIdx(idx)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("as reported - reversed datives") {
+    // structure is bogus, but we want to test
+    for (auto bidx : {3, 4, 5, 6}) {
+      auto bond = mol->getBondWithIdx(bidx);
+      bond->setEndAtomIdx(bond->getBeginAtomIdx());
+      bond->setBeginAtomIdx(4);
+      bond->setBondType(Bond::BondType::DATIVE);
+    }
+    MolOps::assignStereochemistryFrom3D(*mol);
+    for (auto idx : {0, 1, 2, 3}) {
+      CHECK(mol->getAtomWithIdx(idx)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("as reported - singles") {
+    // structure is bogus, but we want to test
+    for (auto bidx : {3, 4, 5, 6}) {
+      mol->getBondWithIdx(bidx)->setBondType(Bond::BondType::SINGLE);
+    }
+    MolOps::assignStereochemistryFrom3D(*mol);
+    for (auto idx : {0, 1, 2, 3}) {
+      CHECK(mol->getAtomWithIdx(idx)->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("assignStereochemistry") {
+    auto mol = "[Fe]C(=C)O |C:1.0|"_smiles;
+    REQUIRE(mol);
+    for (auto bt : {Bond::BondType::DATIVE, Bond::BondType::ZERO,
+                    Bond::BondType::UNSPECIFIED}) {
+      mol->getAtomWithIdx(1)->setChiralTag(
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+      mol->getBondWithIdx(0)->setBondType(bt);
+      bool cleanit = true;
+      bool force = true;
+      MolOps::assignStereochemistry(*mol, cleanit, force);
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+  SECTION("isAtomPotentialTetrahedralCenter() and getStereoInfo()") {
+    auto mol = "[Fe]C(=C)O |C:1.0|"_smiles;
+    REQUIRE(mol);
+    for (auto bt : {Bond::BondType::DATIVE, Bond::BondType::ZERO,
+                    Bond::BondType::UNSPECIFIED}) {
+      mol->getAtomWithIdx(1)->setChiralTag(
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+      mol->getBondWithIdx(0)->setBondType(bt);
+      CHECK(!Chirality::detail::isAtomPotentialStereoAtom(
+          mol->getAtomWithIdx(1)));
+      bool cleanit = true;
+      auto sinfo = Chirality::findPotentialStereo(*mol, cleanit);
+      CHECK(sinfo.empty());
+      CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+  }
+}

@@ -2003,7 +2003,6 @@ void DrawMol::calcAnnotationPosition(const Atom *atom,
   PRECONDITION(atom, "no atom");
   double start_ang = getNoteStartAngle(atom);
   Point2D const &atCds = atCds_[atom->getIdx()];
-
   double radStep = 0.25;
   Point2D leastWorstPos = atCds;
   int leastWorstScore = 100;
@@ -2188,6 +2187,20 @@ int DrawMol::doesNoteClash(const DrawAnnotation &annot) const {
 
 // ****************************************************************************
 int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
+
+  // see if the rectangle clashes with any of the double bonds themselves,
+  // as opposed to the draw shapes derived from them.  Github 5185 shows
+  // that sometimes atom indices can just fit between the lines of a
+  // double bond.
+  for (auto bond : drawMol_->bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE) {
+      auto at1 = bond->getBeginAtomIdx();
+      auto at2 = bond->getEndAtomIdx();
+      if (doesLineIntersect(rect, atCds_[at1], atCds_[at2], 0.0)) {
+        return 1;
+      }
+    }
+  }
   for (const auto &bond : bonds_) {
     if (bond->doesRectClash(rect, padding)) {
       return 1;

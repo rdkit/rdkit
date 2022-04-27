@@ -193,15 +193,15 @@ class TestPandasTools(unittest.TestCase):
     df = PandasTools.RGroupDecompositionToFrame(groups, mols, include_core=True)
     self.assertEqual(len(df), len(mols))
     self.assertEqual(list(df.columns), ['Mol', 'Core', 'R1', 'R2'])
-    self.assertEqual(list(df.R1), ['F[*:1]', 'Cl[*:1]', 'O[*:1]', 'F[*:1]', 'F[*:1]'])
+    self.assertEqual(list(df.R2), ['F[*:2]', 'Cl[*:2]', 'O[*:2]', 'F[*:2]', 'F[*:2]'])
 
     groups, _ = rdRGroupDecomposition.RGroupDecompose([scaffold], mols, asSmiles=False,
                                                       asRows=False)
     df = PandasTools.RGroupDecompositionToFrame(groups, mols, include_core=True)
     self.assertEqual(len(df), len(mols))
     self.assertEqual(list(df.columns), ['Mol', 'Core', 'R1', 'R2'])
-    self.assertEqual([Chem.MolToSmiles(x) for x in df.R1],
-                     ['F[*:1]', 'Cl[*:1]', 'O[*:1]', 'F[*:1]', 'F[*:1]'])
+    self.assertEqual([Chem.MolToSmiles(x) for x in df.R2],
+                     ['F[*:2]', 'Cl[*:2]', 'O[*:2]', 'F[*:2]', 'F[*:2]'])
 
 
 @unittest.skipIf(PandasTools.pd is None, 'Pandas not installed, skipping')

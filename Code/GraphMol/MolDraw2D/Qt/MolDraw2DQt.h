@@ -23,6 +23,8 @@ class QString;
 
 namespace RDKit {
 
+RDKIT_MOLDRAW2DQT_EXPORT extern const char *rdkitQtVersion;
+
 class RDKIT_MOLDRAW2DQT_EXPORT MolDraw2DQt : public MolDraw2D {
  public:
   MolDraw2DQt(int width, int height, QPainter *qp, int panelWidth = -1,

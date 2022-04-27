@@ -57,7 +57,7 @@ struct call_hash
 #if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
 
 template <class T>
-struct hash : std::unary_function<T, std::hash_result_t> {
+struct hash : boost::functional::detail::unary_function<T, std::hash_result_t> {
 #if !defined(BOOST_NO_FUNCTION_TEMPLATE_ORDERING)
   std::hash_result_t operator()(T const& val) const { return hash_value(val); }
 #else
@@ -69,7 +69,8 @@ struct hash : std::unary_function<T, std::hash_result_t> {
 
 #if BOOST_WORKAROUND(__DMC__, <= 0x848)
 template <class T, unsigned int n>
-struct hash<T[n]> : std::unary_function<T[n], std::hash_result_t> {
+struct hash<T[n]>
+    : boost::functional::detail::unary_function<T[n], std::hash_result_t> {
   std::hash_result_t operator()(const T* val) const {
     return gboost::hash_range(val, val + n);
   }
@@ -91,7 +92,8 @@ struct hash_impl;
 template <>
 struct hash_impl<false> {
   template <class T>
-  struct inner : std::unary_function<T, std::hash_result_t> {
+  struct inner
+      : boost::functional::detail::unary_function<T, std::hash_result_t> {
 #if !defined(BOOST_NO_FUNCTION_TEMPLATE_ORDERING)
     std::hash_result_t operator()(T const& val) const {
       return hash_value(val);
@@ -112,7 +114,9 @@ struct hash_impl<false> {
 template <bool IsConst>
 struct hash_impl_msvc {
   template <class T>
-  struct inner : public std::unary_function<T, std::hash_result_t> {
+  struct inner
+      : public boost::functional::detail::unary_function<T,
+                                                         std::hash_result_t> {
     std::hash_result_t operator()(T const& val) const {
       return hash_detail::call_hash<T const>::call(val);
     }
@@ -126,7 +130,9 @@ struct hash_impl_msvc {
 template <>
 struct hash_impl_msvc<true> {
   template <class T>
-  struct inner : public std::unary_function<T, std::hash_result_t> {
+  struct inner
+      : public boost::functional::detail::unary_function<T,
+                                                         std::hash_result_t> {
     std::hash_result_t operator()(T& val) const {
       return hash_detail::call_hash<T>::call(val);
     }
