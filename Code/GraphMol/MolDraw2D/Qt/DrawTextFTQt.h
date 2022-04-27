@@ -12,8 +12,6 @@
 #ifndef RDKIT_DRAWTEXTFTQT_H
 #define RDKIT_DRAWTEXTFTQT_H
 
-#include <boost/noncopyable.hpp>
-
 #include <RDGeneral/export.h>
 #include <GraphMol/MolDraw2D/DrawTextFT.h>
 #include "DrawTextQt.h"
@@ -26,8 +24,7 @@ namespace RDKit {
 namespace MolDraw2D_detail {
 // ****************************************************************************
 
-class RDKIT_MOLDRAW2DQT_EXPORT DrawTextFTQt : public DrawTextFT,
-                                              public boost::noncopyable {
+class RDKIT_MOLDRAW2DQT_EXPORT DrawTextFTQt : public DrawTextFT {
  public:
   DrawTextFTQt(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, QPainter *qp);
