@@ -67,19 +67,19 @@ TEST_CASE("toJSONTests", "[unittests]") {
     CHECK(rows.size() == mols.size());
     std::string expected = R"JSON([
     {
-        "Core": "Cc1cccc([*:2])c1[*:1]",
-        "R1": "CO[*:1]",
-        "R2": "[H][*:2]"
-    },
-    {
-        "Core": "Cc1cccc([*:2])c1[*:1]",
-        "R1": "CO[*:1]",
-        "R2": "[H][*:2]"
-    },
-    {
-        "Core": "Cc1cccc([*:2])c1[*:1]",
+        "Core": "Cc1cccc([*:1])c1[*:2]",
         "R1": "[H][*:1]",
         "R2": "CO[*:2]"
+    },
+    {
+        "Core": "Cc1cccc([*:1])c1[*:2]",
+        "R1": "[H][*:1]",
+        "R2": "CO[*:2]"
+    },
+    {
+        "Core": "Cc1cccc([*:1])c1[*:2]",
+        "R1": "CO[*:1]",
+        "R2": "[H][*:2]"
     }
 ])JSON";
     CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(expected));
@@ -91,19 +91,19 @@ TEST_CASE("toJSONTests", "[unittests]") {
     CHECK(cols.size() == mols.size());
     std::string expected = R"JSON([
   "Core": [
-    "Cc1cccc([*:2])c1[*:1]",
-    "Cc1cccc([*:2])c1[*:1]",
-    "Cc1cccc([*:2])c1[*:1]"
+    "Cc1cccc([*:1])c1[*:2]",
+    "Cc1cccc([*:1])c1[*:2]",
+    "Cc1cccc([*:1])c1[*:2]"
   ],
   "R1": [
-    "CO[*:1]",
-    "CO[*:1]",
-    "[H][*:1]"
+    "[H][*:1]",
+    "[H][*:1]",
+    "CO[*:1]"
   ],
   "R2": [
-    "[H][*:2]",
-    "[H][*:2]",
-    "CO[*:2]"
+    "CO[*:2]",
+    "CO[*:2]",
+    "[H][*:2]"
   ]
 ]
 )JSON";
