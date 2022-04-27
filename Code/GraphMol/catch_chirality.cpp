@@ -1926,3 +1926,37 @@ M  END)CTAB"_ctab;
     }
   }
 }
+
+TEST_CASE(
+    "Github #5239: Precondition violation on chiral Atoms with zero order "
+    "bonds") {
+  RDLog::LogStateSetter setter;  // disable irritating warning messages
+  auto molblock = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.446600 -0.713700 1.305600 0
+M  V30 2 Fe -1.628200 -0.983200 -0.412000 0
+M  V30 3 Cl -0.049300 -1.876700 2.613900 0
+M  V30 4 C -1.544600 0.306200 1.588200 0
+M  V30 5 F 0.673700 0.029200 0.993700 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 4 CFG=1
+M  V30 3 1 1 5
+M  V30 4 0 2 1
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+  bool sanitize = false;
+  std::unique_ptr<ROMol> mol(MolBlockToMol(molblock, sanitize));
+  REQUIRE(mol);
+  MolOps::assignStereochemistryFrom3D(*mol);
+
+  CHECK(mol->getAtomWithIdx(0)->getChiralTag() !=
+        Atom::ChiralType::CHI_UNSPECIFIED);
+}
