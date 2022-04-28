@@ -28,6 +28,9 @@ class RDKIT_MOLDRAW2DQT_EXPORT DrawTextFTQt : public DrawTextFT {
  public:
   DrawTextFTQt(double max_fnt_sz, double min_fnt_sz,
                const std::string &font_file, QPainter *qp);
+
+  ~DrawTextFTQt();
+
   DrawTextFTQt(const DrawTextFTQt &rhs) = delete;
   DrawTextFTQt(DrawTextFTQt &&rhs) = delete;
   DrawTextFTQt &operator=(const DrawTextFTQt &rhs) = delete;
