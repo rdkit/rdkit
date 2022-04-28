@@ -1428,6 +1428,8 @@ Known Problems
     ``RDK_BUILD_THREADSAFE_SSS`` argument (the default for the binaries
     we provide), a mutex is used to ensure that only one thread is
     using a given recursive query at a time.
+  - Calling MolToSmiles on the same molecule concurrently from multiple
+	threads can result in undefined behavior.
 
 Implementation of the TPSA Descriptor
 =====================================
