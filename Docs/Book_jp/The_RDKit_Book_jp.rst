@@ -859,8 +859,6 @@ RDKitを書いている間、コードがマルチスレッド環境でも作動
    コードが``RDK_BUILD_THREADSAFE_SSS`` 引数を使って作られている場合（我々が提供しているバイナリのデフォルトです）、
    一度にスレッド一つだけが与えられた再起的クエリを使っていることを確実に保証するためミューテックスが使われます。
 
--  複数のスレッドから同時に同じ分子でMolToSmilesを呼び出すと、未定義の動作が発生する可能性があります。
-
 TPSA記述子の実装
 =====================================
 [`Implementation of the TPSA Descriptor <https://www.rdkit.org/docs/RDKit_Book.html#implementation-of-the-tpsa-descriptor>`__]
