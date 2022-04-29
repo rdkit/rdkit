@@ -238,11 +238,13 @@ static std::mutex groupMutex;
 
 // add an rgroup structure to a bit counts array
 void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
+  {
 #ifdef RDK_THREADSAFE_SSS
-  const std::lock_guard<std::mutex> lock(groupMutex);
+    const std::lock_guard<std::mutex> lock(groupMutex);
 #endif
-  if (rgroupData->fingerprint == nullptr) {
-    addFingerprintToRGroupData(rgroupData);
+    if (rgroupData->fingerprint == nullptr) {
+      addFingerprintToRGroupData(rgroupData);
+    }
   }
 
   ++numberFingerprints;
