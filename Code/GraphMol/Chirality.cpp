@@ -1436,10 +1436,11 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
     if (legalCenter) {
       boost::dynamic_bitset<> codesSeen(mol.getNumAtoms());
       for (const auto bond : mol.atomBonds(atom)) {
+        unsigned int otherIdx = bond->getOtherAtom(atom)->getIdx();
+        nbrs.push_back(std::make_pair(ranks[otherIdx], bond->getIdx()));
         if (!Chirality::detail::bondAffectsAtomChirality(bond, atom)) {
           continue;
         }
-        unsigned int otherIdx = bond->getOtherAtom(atom)->getIdx();
         CHECK_INVARIANT(ranks[otherIdx] < mol.getNumAtoms(),
                         "CIP rank higher than the number of atoms.");
         // watch for neighbors with duplicate ranks, which would mean
@@ -1450,7 +1451,6 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
           break;
         }
         codesSeen[ranks[otherIdx]] = 1;
-        nbrs.push_back(std::make_pair(ranks[otherIdx], bond->getIdx()));
       }
     }
   }
