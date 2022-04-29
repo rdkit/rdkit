@@ -345,7 +345,7 @@ TEST_CASE("Serialization") {
         std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
     CHECK(15 == tautomerQuery->getTautomers().size());
 
-    std::string pickle = tautomerQuery->toBinary();
+    std::string pickle = tautomerQuery->serialize();
     TautomerQuery serialized(pickle);
     CHECK(serialized.getTautomers().size() ==
           tautomerQuery->getTautomers().size());

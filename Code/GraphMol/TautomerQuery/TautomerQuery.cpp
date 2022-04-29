@@ -304,7 +304,7 @@ void TautomerQuery::toStream(std::ostream &ss) const {
 #endif
 }
 
-std::string TautomerQuery::toBinary() const {
+std::string TautomerQuery::serialize() const {
   std::stringstream ss;
   toStream(ss);
   return ss.str();

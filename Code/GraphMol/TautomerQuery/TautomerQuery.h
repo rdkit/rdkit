@@ -107,7 +107,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
   //! serializes (pickles) to a stream
   void toStream(std::ostream &ss) const;
   //! returns a string with a serialized (pickled) representation
-  std::string toBinary() const;
+  std::string serialize() const;
   //! initializes from a stream pickle
   void initFromStream(std::istream &ss);
   //! initializes from a string pickle
