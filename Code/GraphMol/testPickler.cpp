@@ -1773,26 +1773,52 @@ void testBoostSerialization() {
   m1->setProp("foo", 1);
   m1->getAtomWithIdx(0)->setProp("afoo", 2);
   m1->getBondWithIdx(0)->setProp("bfoo", 3);
-  std::stringstream ss;
   {
-    boost::archive::text_oarchive ar(ss);
-    ar << *m1;
+    std::stringstream ss;
+    {
+      boost::archive::text_oarchive ar(ss);
+      ar << *m1;
+    }
+    ss.seekg(0);
+    ROMol m2;
+    {
+      boost::archive::text_iarchive ar(ss);
+      ar >> m2;
+    }
+    TEST_ASSERT(m2.getNumAtoms(m1->getNumAtoms()));
+    int pval = 0;
+    TEST_ASSERT(m2.getPropIfPresent("foo", pval));
+    TEST_ASSERT(pval == 1);
+    TEST_ASSERT(m2.getAtomWithIdx(0)->getPropIfPresent("afoo", pval));
+    TEST_ASSERT(pval == 2);
+    TEST_ASSERT(m2.getBondWithIdx(0)->getPropIfPresent("bfoo", pval));
+    TEST_ASSERT(pval == 3);
   }
-  ss.seekg(0);
-  ROMol m2;
-  {
-    boost::archive::text_iarchive ar(ss);
-    ar >> m2;
+
+  {  // test RWMol
+    RWMol m3(*m1);
+    std::stringstream ss;
+    {
+      boost::archive::text_oarchive ar(ss);
+      ar << m3;
+    }
+    ss.seekg(0);
+    RWMol m2;
+    {
+      boost::archive::text_iarchive ar(ss);
+      ar >> m2;
+    }
+    TEST_ASSERT(m2.getNumAtoms(m1->getNumAtoms()));
+    int pval = 0;
+    TEST_ASSERT(m2.getPropIfPresent("foo", pval));
+    TEST_ASSERT(pval == 1);
+    TEST_ASSERT(m2.getAtomWithIdx(0)->getPropIfPresent("afoo", pval));
+    TEST_ASSERT(pval == 2);
+    TEST_ASSERT(m2.getBondWithIdx(0)->getPropIfPresent("bfoo", pval));
+    TEST_ASSERT(pval == 3);
   }
-  TEST_ASSERT(m2.getNumAtoms(m1->getNumAtoms()));
-  int pval = 0;
-  TEST_ASSERT(m2.getPropIfPresent("foo", pval));
-  TEST_ASSERT(pval == 1);
-  TEST_ASSERT(m2.getAtomWithIdx(0)->getPropIfPresent("afoo", pval));
-  TEST_ASSERT(pval == 2);
-  TEST_ASSERT(m2.getBondWithIdx(0)->getPropIfPresent("bfoo", pval));
-  TEST_ASSERT(pval == 3);
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+
 #endif
 }
 int main(int argc, char *argv[]) {
