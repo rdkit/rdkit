@@ -21,6 +21,10 @@
 #include <map>
 #include <list>
 
+#ifdef RDK_THREADSAFE_SSS
+#include <mutex>
+#endif
+
 //#define VERBOSE_CANON 1
 
 namespace RDKit {
