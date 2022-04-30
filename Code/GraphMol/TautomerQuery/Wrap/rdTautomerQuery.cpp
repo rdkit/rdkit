@@ -232,6 +232,11 @@ struct TautomerQuery_wrapper {
                 &TautomerQuery::patternFingerprintTarget,
                 (python::arg("target"), python::arg("fingerprintSize") = 2048),
                 python::return_value_policy<python::manage_new_object>());
+
+    python::def(
+        "TautomerQueryCanSerialize", TautomerQueryCanSerialize,
+        "Returns True if the TautomerQuery is serializable "
+        "(requires that the RDKit was built with boost::serialization)");
   }
 };
 
