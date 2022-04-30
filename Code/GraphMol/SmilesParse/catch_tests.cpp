@@ -9,6 +9,10 @@
 //
 
 #include "catch.hpp"
+#ifdef RDK_THREADSAFE_SSS
+#include <future>
+#include <thread>
+#endif
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -1896,3 +1900,28 @@ TEST_CASE("Github #4981: Invalid SMARTS for negated single-atoms", "[smarts]") {
     CHECK(MolToSmarts(*mol).find("N!C") == std::string::npos);
   }
 }
+
+#ifdef RDK_THREADSAFE_SSS
+namespace {
+  void runblock(const ROMol *mol) {
+    MolToSmiles(*mol);
+  }
+}
+
+TEST_CASE("Github #xxxx: Multithreaded smiles testing") {
+  SECTION("smiles from the same molecule") {
+    auto mol = "CCCCCCCCC"_smiles;
+    REQUIRE(mol);
+    std::vector<std::future<void>> tg;
+    unsigned int count = 100;
+    for (unsigned int i = 0; i < count; ++i) {
+      tg.emplace_back(std::async(std::launch::async, runblock, mol.get()));
+    }
+    for (auto &fut : tg) {
+      fut.get();
+    }
+    tg.clear();
+    
+  }
+}
+#endif
