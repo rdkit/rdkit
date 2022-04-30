@@ -125,12 +125,12 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
       MolPickler::pickleMol(*taut, pkl);
       pkls.push_back(pkl);
     }
-    ar &pkls;
+    ar << pkls;
     std::string molpkl;
     MolPickler::pickleMol(*d_templateMolecule, molpkl);
-    ar &molpkl;
-    ar &d_modifiedAtoms;
-    ar &d_modifiedBonds;
+    ar << molpkl;
+    ar << d_modifiedAtoms;
+    ar << d_modifiedBonds;
   }
 
   template <class Archive>
@@ -138,17 +138,17 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
     RDUNUSED_PARAM(version);
 
     std::vector<std::string> pkls;
-    ar &pkls;
+    ar >> pkls;
     d_tautomers.clear();
     for (const auto &pkl : pkls) {
       d_tautomers.push_back(ROMOL_SPTR(new ROMol(pkl)));
     }
     std::string molpkl;
-    ar &molpkl;
+    ar >> molpkl;
     d_templateMolecule.reset(new ROMol(molpkl));
 
-    ar &d_modifiedAtoms;
-    ar &d_modifiedBonds;
+    ar >> d_modifiedAtoms;
+    ar >> d_modifiedBonds;
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER()
 #endif
