@@ -1908,7 +1908,7 @@ namespace {
   }
 }
 
-TEST_CASE("Github #xxxx: Multithreaded smiles testing") {
+TEST_CASE("Github #5245: Multithreaded smiles testing") {
   SECTION("smiles from the same molecule") {
     auto mol = "CCCCCCCCC"_smiles;
     REQUIRE(mol);
