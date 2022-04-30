@@ -1,7 +1,13 @@
+if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
+    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
+else()
+    message("== Making SubstructLibrary without boost Serialization support")
+    set(RDKit_SERIALIZATION_LIBS )
+endif()
 
 rdkit_library(TautomerQuery 
               TautomerQuery.cpp
-              LINK_LIBRARIES GraphMol RDGeneral MolStandardize)
+              LINK_LIBRARIES GraphMol RDGeneral MolStandardize ${RDKit_SERIALIZATION_LIBS})
 target_compile_definitions(TautomerQuery PRIVATE RDKIT_TAUTOMERQUERY_BUILD)
 
 rdkit_headers(TautomerQuery.h
