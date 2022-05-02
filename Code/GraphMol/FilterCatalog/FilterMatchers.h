@@ -345,28 +345,21 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   friend class boost::serialization::access;
   template <class Archive>
   void save(Archive &ar, const unsigned int version) const {
+    RDUNUSED_PARAM(version);
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
-    if (version < 2) {
-      std::string res;
-      MolPickler::pickleMol(*d_pattern.get(), res);
-      ar &res;
-    } else {
-      ar &d_pattern;
-    }
+    std::string res;
+    MolPickler::pickleMol(*d_pattern.get(), res);
+    ar &res;
     ar &d_min_count;
     ar &d_max_count;
   }
   template <class Archive>
   void load(Archive &ar, const unsigned int version) {
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
-    if (version < 2) {
-      std::string res;
-      ar &res;
-      d_pattern = boost::shared_ptr<ROMol>(new ROMol(res));
-    } else {
-      ar &d_pattern;
-    }
-    ar &d_pattern;
+    RDUNUSED_PARAM(version);
+    std::string res;
+    ar &res;
+    d_pattern = boost::shared_ptr<ROMol>(new ROMol(res));
     ar &d_min_count;
     ar &d_max_count;
   }
@@ -579,7 +572,7 @@ void registerFilterMatcherTypes(Archive &ar) {
 }  // namespace RDKit
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-BOOST_CLASS_VERSION(RDKit::SmartsMatcher, 2)
+BOOST_CLASS_VERSION(RDKit::SmartsMatcher, 1)
 BOOST_CLASS_VERSION(RDKit::ExclusionList, 1)
 BOOST_CLASS_VERSION(RDKit::FilterHierarchyMatcher, 1)
 #endif
