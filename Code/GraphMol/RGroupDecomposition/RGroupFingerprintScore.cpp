@@ -59,7 +59,7 @@ void addFingerprintToRGroupData(RGroupData *rgroupData) {
                            : MorganFingerprints::getFingerprintAsBitVect(
                                  mol, 2, fingerprintSize);
     fingerprint->getOnBits(rgroupData->fingerprintOnBits);
-    rgroupData->fingerprint = std::unique_ptr<ExplicitBitVect>(fingerprint);
+    rgroupData->fingerprint.reset(fingerprint);
 
 #ifdef DEBUG
     std::cerr << "Combined mol smiles " << MolToSmiles(*rgroupData->combinedMol)
@@ -238,7 +238,7 @@ static std::mutex groupMutex;
 
 // add an rgroup structure to a bit counts array
 void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
-  if (rgroupData->fingerprint == nullptr) {
+  {
 #ifdef RDK_THREADSAFE_SSS
     const std::lock_guard<std::mutex> lock(groupMutex);
 #endif
@@ -246,6 +246,7 @@ void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
       addFingerprintToRGroupData(rgroupData);
     }
   }
+
   ++numberFingerprints;
   const auto &onBits = rgroupData->fingerprintOnBits;
   for (int b : onBits) {
