@@ -636,8 +636,11 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
         newMol->addBond(newBond, true);
         auto beginAtom = newBond->getBeginAtom();
         auto endAtom = newBond->getEndAtom();
+        CHECK_INVARIANT(
+            beginAtom->getDegree() == 1 || endAtom->getDegree() == 1,
+            "neither atom has degree one");
         if (newMol->getNumConformers()) {
-          if (endAtom->getAtomicNum() == 0) {
+          if (endAtom->getAtomicNum() == 0 && endAtom->getDegree() == 1) {
             MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
                                           beginAtom->getIdx());
           } else {

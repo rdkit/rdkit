@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2017 Novartis Institutes for BioMedical Research
+//  Copyright (C) 2017-2022 Novartis Institutes for BioMedical Research and
+//  other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +23,9 @@
 // #define VERBOSE 1
 
 namespace RDKit {
+
+extern const std::string _rgroupInputDummy;
+
 struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
   std::map<int, RCore> cores;
@@ -399,7 +403,9 @@ struct RGroupDecompData {
           CHECK_INVARIANT(label != mappings.end(), "Unprocessed mapping");
 
           if (atom->getAtomicNum() == 0) {
-            setRlabel(atom, label->second);
+            if (!atom->hasProp(_rgroupInputDummy)) {
+              setRlabel(atom, label->second);
+            }
           } else if (atom->hasProp(RLABEL_CORE_INDEX)) {
             atom->setAtomicNum(0);
             setRlabel(atom, label->second);
