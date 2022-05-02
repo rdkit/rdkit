@@ -75,7 +75,9 @@ class RDKIT_MOLCATALOG_EXPORT MolCatalogEntry : public RDCatalog::CatalogEntry {
 
   //! returns true if such a property exists
   bool hasProp(const char *key) const {
-    if (!dp_props) return false;
+    if (!dp_props) {
+      return false;
+    }
     return dp_props->hasVal(key);
   }
   //! \overload

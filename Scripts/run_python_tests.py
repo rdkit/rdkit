@@ -15,7 +15,7 @@ if __name__ == '__main__':
     script = 'test_list.py'
     os.chdir(RDConfig.RDCodeDir)
     t1 = time.time()
-    failed,nTests = TestRunner.RunScript(script,doLongTests=False,\
+    failed,nTests = TestRunner.RunScript(script,doLongTests=False,
         verbose=True)
     t2 = time.time()
     TestRunner.ReportResults(script,failed,nTests,t2-t1,verbose=True,dest=sys.stderr)

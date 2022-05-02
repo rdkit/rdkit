@@ -222,7 +222,9 @@ int addBranchToMol(std::vector<RWMol *> &molList, unsigned int molIdx,
   for (ROMol::ATOM_BOOKMARK_MAP::const_iterator bmIt =
            branch->getAtomBookmarks()->begin();
        bmIt != branch->getAtomBookmarks()->end(); ++bmIt) {
-    if (bmIt->first < 0) continue;
+    if (bmIt->first < 0) {
+      continue;
+    }
     if (mp->hasAtomBookmark(bmIt->first)) {
       std::stringstream err;
       err << "SLN Parser error: Atom ID " << bmIt->first

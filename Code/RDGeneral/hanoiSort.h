@@ -73,16 +73,18 @@ bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
   if (hanoi(b1, n1, t1, count, changed, compar)) {
     if (hanoi(b2, n2, t2, count, changed, compar)) {
       s2 = t2;
-    } else
+    } else {
       s2 = b2;
+    }
     result = false;
     ptr = base;
     s1 = t1;
   } else {
     if (hanoi(b2, n2, t2, count, changed, compar)) {
       s2 = t2;
-    } else
+    } else {
       s2 = b2;
+    }
     result = true;
     ptr = temp;
     s1 = b1;
@@ -103,7 +105,9 @@ bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
       ptr += len1;
       n1 -= len1;
       if (n1 == 0) {
-        if (ptr != s2) memmove(ptr, s2, n2 * sizeof(int));
+        if (ptr != s2) {
+          memmove(ptr, s2, n2 * sizeof(int));
+        }
         return result;
       }
       s1 += len1;
@@ -122,7 +126,9 @@ bool hanoi(int *base, int nel, int *temp, int *count, int *changed,
       ptr += len1;
       n1 -= len1;
       if (n1 == 0) {
-        if (ptr != s2) memmove(ptr, s2, n2 * sizeof(int));
+        if (ptr != s2) {
+          memmove(ptr, s2, n2 * sizeof(int));
+        }
         return result;
       }
       s1 += len1;
@@ -147,8 +153,9 @@ void hanoisort(int *base, int nel, int *count, int *changed,
   assert(base);
   int *temp = (int *)malloc(nel * sizeof(int));
   assert(temp);
-  if (hanoi(base, nel, temp, count, changed, compar))
+  if (hanoi(base, nel, temp, count, changed, compar)) {
     memmove(base, temp, nel * sizeof(int));
+  }
   free(temp);
 }
 }  // namespace RDKit

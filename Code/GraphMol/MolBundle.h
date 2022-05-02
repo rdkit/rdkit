@@ -61,7 +61,9 @@ class MolBundle : public RDProps {
   virtual size_t size() const { return d_mols.size(); }
   //! returns a particular molecule in the bundle
   virtual const boost::shared_ptr<ROMol> getMol(size_t idx) const {
-    if (idx >= d_mols.size()) throw IndexErrorException(static_cast<int>(idx));
+    if (idx >= d_mols.size()) {
+      throw IndexErrorException(static_cast<int>(idx));
+    }
     return d_mols[idx];
   }
   //! returns a particular molecule from the bundle
@@ -100,13 +102,15 @@ class FixedMolSizeMolBundle : public MolBundle {
   size_t addMol(boost::shared_ptr<ROMol> nmol) override {
     PRECONDITION(nmol.get(), "bad mol pointer");
     if (d_mols.size()) {
-      if (nmol->getNumAtoms() != d_mols[0]->getNumAtoms())
+      if (nmol->getNumAtoms() != d_mols[0]->getNumAtoms()) {
         throw ValueErrorException(
             "all molecules in a bundle must have the same number of atoms");
+      }
       // REVIEW: should we allow different numbers of bonds?
-      if (nmol->getNumBonds() != d_mols[0]->getNumBonds())
+      if (nmol->getNumBonds() != d_mols[0]->getNumBonds()) {
         throw ValueErrorException(
             "all molecules in a bundle must have the same number of bonds");
+      }
     }
     d_mols.push_back(nmol);
     return (d_mols.size());

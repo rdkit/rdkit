@@ -24,6 +24,8 @@ using namespace std;
 
 namespace RDKit {
 
+const char *rdkitQtVersion = RDK_QT_VERSION;
+
 // ****************************************************************************
 MolDraw2DQt::MolDraw2DQt(int width, int height, QPainter *qp, int panelWidth,
                          int panelHeight, bool noFreetype)
@@ -95,6 +97,7 @@ void MolDraw2DQt::drawLine(const Point2D &cds1, const Point2D &cds2,
     pen.setDashPattern(dd);
   } else {
     pen.setStyle(Qt::SolidLine);
+    pen.setCapStyle(Qt::FlatCap);
   }
   pen.setWidth(getDrawLineWidth());
   d_qp->setPen(pen);

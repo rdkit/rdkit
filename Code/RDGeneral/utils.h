@@ -86,10 +86,11 @@ RDKIT_RDGENERAL_EXPORT std::string augmentTagName(const std::string &tag);
 template <unsigned n>
 inline double int_pow(double x) {
   double half = int_pow<n / 2>(x);
-  if (n % 2 == 0)  // even
+  if (n % 2 == 0) {  // even
     return half * half;
-  else
+  } else {
     return half * half * x;
+  }
 }
 
 template <>

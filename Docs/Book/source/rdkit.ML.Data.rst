@@ -10,6 +10,7 @@ Submodules
    rdkit.ML.Data.FindQuantBounds
    rdkit.ML.Data.MLData
    rdkit.ML.Data.Quantize
+   rdkit.ML.Data.cQuantize
    rdkit.ML.Data.SplitData
    rdkit.ML.Data.Stats
    rdkit.ML.Data.Transforms

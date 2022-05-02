@@ -164,24 +164,6 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
   return centers
 
 
-import warnings
-
-
-def WrapLogs():
-  warnings.warn("Deprecated: use the rdkit.rdBase.LogTo*() functions instead.", DeprecationWarning)
-  rdBase.LogToPythonStderr()
-
-
-def LogWarningMsg(msg):
-  warnings.warn("Deprecated: use rdkit.rdBase.LogWarningMsg() instead.", DeprecationWarning)
-  rdBase.LogWarningMsg(msg)
-
-
-def LogErrorMsg(msg):
-  warnings.warn("Deprecated: use rdkit.rdBase.LogErrorMsg() instead.", DeprecationWarning)
-  rdBase.LogErrorMsg(msg)
-
-
 #------------------------------------
 #
 #  doctest boilerplate

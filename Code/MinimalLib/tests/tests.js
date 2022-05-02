@@ -21,9 +21,13 @@ const readline = require('readline');
 // the goal here isn't to be comprehensive (the RDKit has tests for that),
 // just to make sure that the wrappers are working as expected
 function test_basics() {
-    var bmol = RDKitModule.get_mol("c1ccccc");
-    assert.equal(bmol.is_valid(),0);
-    
+    var bmol = null;
+    try {
+        bmol = RDKitModule.get_mol("c1ccccc");
+        assert.equal(bmol.is_valid(),0);
+    } catch {
+        assert(bmol === null);
+    }
     var mol = RDKitModule.get_mol("c1ccccc1O");
     assert.equal(mol.is_valid(),1);
     assert.equal(mol.get_smiles(),"Oc1ccccc1");
@@ -70,7 +74,18 @@ function test_basics() {
     assert.equal((fp2.match(/1/g)||[]).length,3);
     var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
     checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
-    
+
+    fp1 = mol.get_pattern_fp();
+    assert.equal(fp1.length,2048);
+    assert.equal((fp1.match(/1/g)||[]).length,73);
+    fp1Uint8Array = mol.get_pattern_fp_as_uint8array();
+    checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
+    fp2 = mol.get_pattern_fp(256);
+    assert.equal(fp2.length,256);
+    assert.equal((fp2.match(/1/g)||[]).length,65);
+    fp2Uint8Array = mol.get_pattern_fp_as_uint8array(256);
+    checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+
     var svg = mol.get_svg();
     assert(svg.search("svg")>0);
 
@@ -156,6 +171,21 @@ M  END`;
     assert.equal(mol.is_valid(),1);
 }
 
+function test_get_aromatic_kekule_form() {
+    const aromRegExp = /  \d  \d  4  \d\n/g;
+    const kekRegExp = /  \d  \d  [12]  \d\n/g;
+    var mol = RDKitModule.get_mol("c1ccccc1");
+    var molblock = mol.get_molblock();
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    var molblock = mol.get_kekule_form();
+    assert (molblock.match(aromRegExp) === null);
+    assert (molblock.match(kekRegExp).length === 6);
+    molblock = mol.get_aromatic_form();
+    assert (molblock.match(aromRegExp).length === 6);
+    assert (molblock.match(kekRegExp) === null);
+}
+
 function test_sketcher_services() {
     var mol = RDKitModule.get_mol("C[C@](F)(Cl)/C=C/C(F)Br");
     assert.equal(mol.is_valid(),1);
@@ -179,7 +209,6 @@ function test_sketcher_services2() {
     molb2 = mol2.remove_hs();
     assert(molb2.search(" H ")<0); 
 }
-
 
 function test_abbreviations() {
     var bmol = RDKitModule.get_mol("C1CCC1C(F)(F)F");
@@ -283,7 +312,6 @@ function test_generate_aligned_coords() {
     assert.equal(mol.generate_aligned_coords(qmol, true), "");
 }
 
-
 function test_isotope_labels() {
     var mol = RDKitModule.get_mol("[1*]c1cc([2*])c([3*])c[14c]1");
     assert.equal(mol.is_valid(), 1);
@@ -305,7 +333,6 @@ function test_isotope_labels() {
     resSorted.sort((a, b) => (a - b));
     assert.ok(res.every((resItem, i) => (resItem === resSorted[i])));
 }
-
 
 function test_generate_aligned_coords_allow_rgroups() {
     var template_molblock = `
@@ -354,7 +381,6 @@ M  END`;
     assert.equal(JSON.parse(phenyl.generate_aligned_coords(
         template_ref, false, true)).atoms.length, 6);
 }
-
 
 function test_accept_failure() {
     var template_molblock = `
@@ -419,12 +445,17 @@ M  END
 }
 
 function test_get_mol_no_kekulize() {
-    var mol = RDKitModule.get_mol("c");
-    assert(!mol.is_valid());
+    var molIsValid = true;
+    try {
+        mol = RDKitModule.get_mol("c");
+        molIsValid = mol.is_valid();
+    } catch (e) {
+        molIsValid = false;
+    }
+    assert(!molIsValid);
     mol = RDKitModule.get_mol("c", JSON.stringify({kekulize: false}));
     assert(mol.is_valid());
 }
-
 
 function test_get_smarts() {
     var mol = RDKitModule.get_mol(`
@@ -454,7 +485,6 @@ M  END
     smarts = mol.get_smarts();
     assert(smarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@*");
 }
-
 
 function test_get_cxsmarts() {
     var mol = RDKitModule.get_mol(`
@@ -488,6 +518,116 @@ M  END
         "atomProp:6.dummyLabel.R1:7.dummyLabel.R2|");
 }
 
+function test_normalize_depiction() {
+    var mol = RDKitModule.get_mol(`
+  MJ201100                      
+
+  9 10  0  0  0  0  0  0  0  0999 V2000
+   -1.5402    1.3161    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2546    0.9036    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2546    0.0785    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5402   -0.3339    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8257    0.0785    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8257    0.9036    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0411   -0.1764    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4438    0.4909    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0410    1.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  8  9  2  0  0  0  0
+  6  9  1  0  0  0  0
+  7  8  1  0  0  0  0
+  5  7  1  0  0  0  0
+M  END
+`);
+    const scalingFactor = mol.normalize_depiction();
+    assert(scalingFactor > 1.8 && scalingFactor < 1.9);
+}
+
+function test_straighten_depiction() {
+    var mol1 = RDKitModule.get_mol(`
+  MJ201900                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -0.3904    2.1535    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1049    1.7410    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+M  END
+`);
+    var mol2 = RDKitModule.get_mol(`
+  MJ201900                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    0.1899    1.9526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5245    1.5401    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+M  END
+`);
+    mol1.normalize_depiction();
+    mol1.straighten_depiction();
+    mol2.normalize_depiction();
+    mol2.straighten_depiction();
+    assert(mol1.get_molblock() === mol2.get_molblock());
+}
+
+function test_has_coords() {
+    var mol = RDKitModule.get_mol('CC');
+    assert(!mol.has_coords());
+    var mol2 = RDKitModule.get_mol(mol.get_new_coords());
+    assert(mol2.has_coords());
+    assert(!mol.has_coords());
+    mol.set_new_coords();
+    assert(mol.has_coords());
+}
+
+function test_kekulize() {
+    const badAromaticSmiles = 'c1cccc1';
+    var mol = null;
+    try {
+        mol = RDKitModule.get_mol(badAromaticSmiles);
+        assert(!mol.is_valid());
+    } catch {
+        assert(mol === null);
+    }
+    mol = RDKitModule.get_mol(badAromaticSmiles, JSON.stringify({ kekulize: false }));
+    assert(mol.is_valid());
+}
+
+function test_sanitize() {
+    const badValenceSmiles = 'N(C)(C)(C)C';
+    var mol = null;
+    try {
+        mol = RDKitModule.get_mol(badValenceSmiles);
+        assert(!mol.is_valid());
+    } catch {
+        assert(mol === null);
+    }
+    try {
+        mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ kekulize: false }));
+        assert(!mol.is_valid());
+    } catch {
+        assert(mol === null);
+    }
+    mol = RDKitModule.get_mol(badValenceSmiles, JSON.stringify({ sanitize: false }));
+    assert(mol.is_valid());
+}
+
+function test_flexicanvas() {
+    
+    var mol = RDKitModule.get_mol("CCCC");
+    assert.equal(mol.is_valid(),1);
+    
+    var svg = mol.get_svg(-1,-1);
+    assert(svg.search("svg")>0);
+    assert(svg.search("width='95px'")>0);
+    assert(svg.search("height='21px'")>0);
+}
+
+
 
 initRDKitModule().then(function(instance) {
     var done = {};
@@ -506,6 +646,7 @@ initRDKitModule().then(function(instance) {
     test_basics();
     test_molblock_nostrict();
     test_molblock_rgp();
+    test_get_aromatic_kekule_form();
     test_sketcher_services();
     test_sketcher_services2();
     test_abbreviations();
@@ -521,6 +662,12 @@ initRDKitModule().then(function(instance) {
     test_get_mol_no_kekulize();
     test_get_smarts();
     test_get_cxsmarts();
+    test_has_coords();
+    test_kekulize();
+    test_sanitize();
+    test_normalize_depiction();
+    test_straighten_depiction();
+    test_flexicanvas();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Rings.h>
 #include <RDGeneral/types.h>
@@ -603,6 +604,16 @@ ElectronDonorType getAtomDonorTypeArom(
 
 namespace RDKit {
 namespace MolOps {
+bool isBondOrderQuery(const Bond *bond) {
+  if (bond->getBondType() == Bond::BondType::UNSPECIFIED && bond->hasQuery()) {
+    auto label =
+        dynamic_cast<const QueryBond *>(bond)->getQuery()->getTypeLabel();
+    if (label == "BondOrder") {
+      return true;
+    }
+  }
+  return false;
+}
 int countAtomElec(const Atom *at) {
   PRECONDITION(at, "bad atom");
 
@@ -619,7 +630,7 @@ int countAtomElec(const Atom *at) {
   const auto &mol = at->getOwningMol();
   for (const auto bond : mol.atomBonds(at)) {
     // don't count bonds that aren't actually contributing to the valence here:
-    if (!std::lround(bond->getValenceContrib(at))) {
+    if (!isBondOrderQuery(bond) && !std::lround(bond->getValenceContrib(at))) {
       --degree;
     }
   }

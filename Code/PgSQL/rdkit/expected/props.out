@@ -232,7 +232,8 @@ SELECT mol_numrotatablebonds('CCCC'::mol) mol_numrotatablebonds;
                      1
 (1 row)
 
-SELECT mol_numrotatablebonds('c1ccccc1c1ccc(CCC)cc1'::mol) mol_numrotatablebonds;
+-- mol_from_smiles() shouldn't be necessary, but there's an RDKit bug (#5104)
+SELECT mol_numrotatablebonds(mol_from_smiles('c1ccccc1c1ccc(CCC)cc1')) mol_numrotatablebonds;
  mol_numrotatablebonds 
 -----------------------
                      3

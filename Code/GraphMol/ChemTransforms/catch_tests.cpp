@@ -322,8 +322,9 @@ TEST_CASE("molzip", "[]") {
             RDKit::MolFragmenter::fragmentOnBonds(*m, bonds)};
         auto smiles = MolToSmiles(*resa);
 
-        if (std::count(smiles.begin(), smiles.end(), '/') != 2)
+        if (std::count(smiles.begin(), smiles.end(), '/') != 2) {
           continue;  // we removed bond stereo in fragment to bonds!
+        }
         MolzipParams p;
         p.label = MolzipLabel::FragmentOnBonds;
         CHECK(MolToSmiles(*molzip(*resa, p)) == MolToSmiles(*m));
@@ -334,8 +335,9 @@ TEST_CASE("molzip", "[]") {
             *m, bonds, true, &dummyLabels)};
         auto smiles = MolToSmiles(*res);
 
-        if (std::count(smiles.begin(), smiles.end(), '/') != 2)
+        if (std::count(smiles.begin(), smiles.end(), '/') != 2) {
           continue;  // we removed bond stereo in fragment to bonds!
+        }
         for (auto *atom : res->atoms()) {
           if (atom->getIsotope()) {
             atom->setAtomMapNum(atom->getIsotope());
@@ -371,6 +373,15 @@ TEST_CASE("molzip", "[]") {
       caught = true;
     }
     CHECK(caught == true);
+  }
+
+  {
+    // check to see we can make a non sanitizable zipped mol
+    MolzipParams p;
+    p.enforceValenceRules = false;
+    auto a = "CC(=[*:1])N"_smiles;
+    auto b = "[*:1]-N=C"_smiles;
+    auto mol = molzip(*a, *b, p);
   }
 }
 

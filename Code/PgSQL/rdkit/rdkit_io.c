@@ -48,7 +48,7 @@ mol_in(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,false,false,false);
+  mol = parseMolText(data,false,false,false,false);
   if(!mol){
     ereport(ERROR,
             (errcode(ERRCODE_DATA_EXCEPTION),
@@ -163,7 +163,7 @@ mol_from_smarts(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,true,true,false);
+  mol = parseMolText(data,true,true,false,false);
   if (!mol) {
     PG_RETURN_NULL();
   }
@@ -181,7 +181,7 @@ mol_from_smiles(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,false,true,false);
+  mol = parseMolText(data,false,true,false,true);
   if (!mol) {
     PG_RETURN_NULL();
   }
@@ -199,7 +199,7 @@ qmol_from_smiles(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,false,true,true);
+  mol = parseMolText(data,false,true,true,false);
   if (!mol) {
     PG_RETURN_NULL();
   }
@@ -414,7 +414,7 @@ qmol_in(PG_FUNCTION_ARGS) {
   CROMol  mol;
   Mol     *res;
 
-  mol = parseMolText(data,true,false,false);
+  mol = parseMolText(data,true,false,false,false);
   if(!mol){
     ereport(ERROR,
             (errcode(ERRCODE_DATA_EXCEPTION),

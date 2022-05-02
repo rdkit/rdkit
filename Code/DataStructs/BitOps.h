@@ -43,7 +43,9 @@ double SimilarityWrapper(const T& bv1, const T& bv2,
   } else {
     res = metric(bv1, bv2);
   }
-  if (returnDistance) res = 1.0 - res;
+  if (returnDistance) {
+    res = 1.0 - res;
+  }
   return res;
 }
 //! \overload
@@ -63,7 +65,9 @@ double SimilarityWrapper(const T& bv1, const T& bv2, double a, double b,
   } else {
     res = metric(bv1, bv2, a, b);
   }
-  if (returnDistance) res = 1.0 - res;
+  if (returnDistance) {
+    res = 1.0 - res;
+  }
   return res;
 }
 

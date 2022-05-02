@@ -70,10 +70,11 @@ class RDKIT_QUERY_EXPORT Query {
   const std::string &getDescription() const { return this->d_description; }
   //! returns a fuller text description
   virtual std::string getFullDescription() const {
-    if (!getNegation())
+    if (!getNegation()) {
       return getDescription();
-    else
+    } else {
       return "not " + getDescription();
+    }
   }
 
   //! sets our type label
@@ -109,15 +110,17 @@ class RDKIT_QUERY_EXPORT Query {
   virtual bool Match(const DataFuncArgType arg) const {
     MatchFuncArgType mfArg = TypeConvert(arg, Int2Type<needsConversion>());
     bool tRes;
-    if (this->d_matchFunc)
+    if (this->d_matchFunc) {
       tRes = this->d_matchFunc(mfArg);
-    else
+    } else {
       tRes = static_cast<bool>(mfArg);
+    }
 
-    if (this->getNegation())
+    if (this->getNegation()) {
       return !tRes;
-    else
+    } else {
       return tRes;
+    }
   }
 
   //! returns a copy of this Query

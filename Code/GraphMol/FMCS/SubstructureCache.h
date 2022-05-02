@@ -52,15 +52,20 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
       std::vector<unsigned long> currCodes(nv);
       std::vector<unsigned long> prevCodes(nv);
       size_t nIterations = seed.getNumBonds();
-      if (nIterations > 5) nIterations = 5;
+      if (nIterations > 5) {
+        nIterations = 5;
+      }
 
       for (unsigned seedAtomIdx = 0; seedAtomIdx < seed.getNumAtoms();
-           seedAtomIdx++)
+           seedAtomIdx++) {
         currCodes[seedAtomIdx] =
             queryAtomLabels[seed.MoleculeFragment.AtomsIdx[seedAtomIdx]];
+      }
 
       for (size_t iter = 0; iter < nIterations; iter++) {
-        for (size_t i = 0; i < nv; i++) prevCodes[i] = currCodes[i];
+        for (size_t i = 0; i < nv; i++) {
+          prevCodes[i] = currCodes[i];
+        }
 
         for (size_t seedBondIdx = 0; seedBondIdx < ne; seedBondIdx++) {
           const Bond* bond = seed.MoleculeFragment.Bonds[seedBondIdx];
@@ -124,7 +129,9 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
     key.computeKey(seed, queryAtomLabels, queryBondLabels);
     std::map<KeyNumericMetrics::TValue, size_t>::const_iterator entryit =
         NumericIndex.find(key.NumericMetrics.Value);
-    if (NumericIndex.end() != entryit) return &ValueStorage[entryit->second];
+    if (NumericIndex.end() != entryit) {
+      return &ValueStorage[entryit->second];
+    }
     return nullptr;  // not found
   }
 
@@ -147,8 +154,9 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
     if (!NumericIndex
              .insert(std::pair<KeyNumericMetrics::TValue, size_t>(
                  key.NumericMetrics.Value, ValueStorage.size() - 1))
-             .second)
+             .second) {
       return;  // not enough memory room to add the item, but it is just cache
+    }
   }
 
   size_t keyssize() const {  // for statistics only
@@ -158,8 +166,9 @@ class RDKIT_FMCS_EXPORT SubstructureCache {
   size_t fullsize() const {  // for statistics only
     size_t n = 0;
     for (std::vector<TIndexEntry>::const_iterator e = ValueStorage.begin();
-         e != ValueStorage.end(); e++)
+         e != ValueStorage.end(); e++) {
       n += e->size();
+    }
     return n;
   }
 };

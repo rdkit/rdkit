@@ -9,14 +9,19 @@
 #
 import os
 import warnings
+from collections import namedtuple
 from importlib.util import find_spec
+from io import BytesIO
 
-from rdkit.Chem.Draw import rdMolDraw2D
-from rdkit.Chem.Draw.MolDrawing import MolDrawing, DrawingOptions
-from rdkit.Chem.Draw.rdMolDraw2D import *
-from rdkit.Chem import rdDepictor
-from rdkit import Chem, rdBase
+import numpy
+from rdkit import Chem
 from rdkit import RDConfig
+from rdkit import rdBase
+from rdkit.Chem import rdDepictor
+from rdkit.Chem.Draw import rdMolDraw2D
+from rdkit.Chem.Draw.MolDrawing import DrawingOptions
+from rdkit.Chem.Draw.MolDrawing import MolDrawing
+from rdkit.Chem.Draw.rdMolDraw2D import *
 
 
 def _getCanvas():
@@ -150,24 +155,35 @@ def _legacyMolToImage(mol, size, kekulize, wedgeBonds, fitImage, options, canvas
 
 
 def _sip_available():
-  if find_spec('PyQt5') and find_spec('PyQt5.sip'):
+  try:
+    from rdkit.Chem.Draw.rdMolDraw2DQt import rdkitQtVersion
+  except ImportError:
+    return False
+  pyqt_pkg = f'PyQt{rdkitQtVersion[0]}'
+  if find_spec(pyqt_pkg) and find_spec(f'{pyqt_pkg}.sip'):
     return True
   elif find_spec('sip'):
     return True
   return False
 
 
-if find_spec('rdkit.Chem.Draw.rdMolDraw2DQt') and _sip_available():
+if _sip_available():
 
   def MolDraw2DFromQPainter(qpainter, width=-1, height=-1, panelWidth=-1, panelHeight=-1):
-    from PyQt5.Qt import QPainter
+    from rdkit.Chem.Draw import rdMolDraw2DQt
+    if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
+      from PyQt6.QtGui import QPainter
+    else:
+      from PyQt5.Qt import QPainter
     try:
-      # Prefer the PyQt5-bundled sip
-      from PyQt5 import sip
+      # Prefer the PyQt-bundled sip
+      if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
+        from PyQt6 import sip
+      else:
+        from PyQt5 import sip
     except ImportError:
       # No bundled sip, try the standalone package
       import sip
-    from rdkit.Chem.Draw import rdMolDraw2DQt
 
     if not isinstance(qpainter, QPainter):
       raise ValueError("argument must be a QPainter instance")
@@ -312,6 +328,7 @@ def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit M
   """ Generates a picture of a molecule and displays it in a Tkinter window
   """
   import tkinter
+
   from PIL import ImageTk
 
   img = MolToImage(mol, size, kekulize, wedgeBonds, **kwargs)
@@ -359,9 +376,6 @@ def MolToMPL(mol, size=(300, 300), kekulize=True, wedgeBonds=True, imageType=Non
     omol._atomPs[k] = canvas.rescalePt(v)
   canvas._figure.set_size_inches(float(size[0]) / 100, float(size[1]) / 100)
   return canvas._figure
-
-
-import numpy
 
 
 def _bivariate_normal(X, Y, sigmax=1.0, sigmay=1.0, mux=0.0, muy=0.0, sigmaxy=0.0):
@@ -426,9 +440,6 @@ def MolsToImage(mols, subImgSize=(200, 200), legends=None, **kwargs):
   return res
 
 
-from io import BytesIO
-
-
 def _drawerToImage(d2d):
   from PIL import Image
   sio = BytesIO(d2d.GetDrawingText())
@@ -446,8 +457,8 @@ def _okToKekulizeMol(mol, kekulize):
 
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
   try:
-    blocker = rdBase.BlockLogs()
-    mol.GetAtomWithIdx(0).GetExplicitValence()
+    with rdBase.BlockLogs():
+      mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
 
@@ -455,8 +466,8 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
   wedge = kwargs.get('wedgeBonds', True)
 
   try:
-    blocker = rdBase.BlockLogs()
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
+    with rdBase.BlockLogs():
+      mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize, wedgeBonds=wedge)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False, wedgeBonds=wedge)
   if not hasattr(rdMolDraw2D, 'MolDraw2DCairo'):
@@ -489,16 +500,16 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs):
   try:
-    blocker = rdBase.BlockLogs()
-    mol.GetAtomWithIdx(0).GetExplicitValence()
+    with rdBase.BlockLogs():
+      mol.GetAtomWithIdx(0).GetExplicitValence()
   except RuntimeError:
     mol.UpdatePropertyCache(False)
 
   kekulize = _okToKekulizeMol(mol, kekulize)
 
   try:
-    blocker = rdBase.BlockLogs()
-    mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
+    with rdBase.BlockLogs():
+      mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
   except ValueError:  # <- can happen on a kekulization failure
     mc = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
   d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
@@ -717,7 +728,6 @@ def DrawMorganBits(tpls, **kwargs):
 
 # adapted from the function drawFPBits._drawFPBit() from the CheTo package
 # original author Nadine Schneider
-from collections import namedtuple
 FingerprintEnv = namedtuple(
   'FingerprintEnv',
   ('submol', 'highlightAtoms', 'atomColors', 'highlightBonds', 'bondColors', 'highlightRadii'))

@@ -184,3 +184,48 @@ TEST_CASE(
   // }
 }
 #endif
+
+TEST_CASE(
+    "Github #5104: NumRotatableBonds() incorrect for partially sanitized "
+    "molecule") {
+  SECTION("basics") {
+    auto m1 = "c1ccccc1c1ccc(CCC)cc1"_smiles;
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::NonStrict) == 3);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::Strict) == 3);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::StrictLinkages) == 2);
+    m1->getBondBetweenAtoms(5, 6)->setBondType(Bond::BondType::AROMATIC);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::NonStrict) == 3);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::Strict) == 3);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::StrictLinkages) == 2);
+  }
+  SECTION("as reported") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m1(SmilesToMol("c1ccccc1c1ccc(CCC)cc1", ps));
+    REQUIRE(m1);
+    unsigned int whatFailed;
+    MolOps::sanitizeMol(*m1, whatFailed,
+                        MolOps::SanitizeFlags::SANITIZE_ALL ^
+                            MolOps::SanitizeFlags::SANITIZE_KEKULIZE);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::NonStrict) == 3);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::Strict) == 3);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::StrictLinkages) == 2);
+  }
+  SECTION("linkages") {
+    auto m1 = "c1cc[nH]c1c1[nH]c(CCC)cc1"_smiles;
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::StrictLinkages) == 3);
+    m1->getBondBetweenAtoms(4, 5)->setBondType(Bond::BondType::AROMATIC);
+    CHECK(Descriptors::calcNumRotatableBonds(
+              *m1, Descriptors::NumRotatableBondsOptions::StrictLinkages) == 3);
+  }
+}

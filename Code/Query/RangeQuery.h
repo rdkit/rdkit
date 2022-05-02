@@ -64,20 +64,23 @@ class RDKIT_QUERY_EXPORT RangeQuery
     int lCmp = queryCmp(this->d_lower, mfArg, this->d_tol);
     int uCmp = queryCmp(this->d_upper, mfArg, this->d_tol);
     bool lowerRes, upperRes;
-    if (this->df_lowerOpen)
+    if (this->df_lowerOpen) {
       lowerRes = lCmp < 0;
-    else
+    } else {
       lowerRes = lCmp <= 0;
-    if (this->df_upperOpen)
+    }
+    if (this->df_upperOpen) {
       upperRes = uCmp > 0;
-    else
+    } else {
       upperRes = uCmp >= 0;
+    }
 
     bool tempR = !(lowerRes && upperRes);
-    if (this->getNegation())
+    if (this->getNegation()) {
       return tempR;
-    else
+    } else {
       return !tempR;
+    }
   }
 
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
@@ -98,7 +101,9 @@ class RDKIT_QUERY_EXPORT RangeQuery
   std::string getFullDescription() const override {
     std::ostringstream res;
     res << this->getDescription();
-    if (this->getNegation()) res << " ! ";
+    if (this->getNegation()) {
+      res << " ! ";
+    }
     res << " " << this->d_lower << " val " << this->d_upper;
     return res.str();
   }

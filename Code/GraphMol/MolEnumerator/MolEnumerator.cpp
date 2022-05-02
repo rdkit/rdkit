@@ -29,7 +29,9 @@ void getVariations(size_t level, std::vector<size_t> base,
       getVariations(level + 1, base, variations, variationCounts,
                     maxToEnumerate, doRandom);
     }
-    if (variations.size() >= maxToEnumerate) return;
+    if (variations.size() >= maxToEnumerate) {
+      return;
+    }
   }
 }
 void enumerateVariations(std::vector<std::vector<size_t>> &variations,

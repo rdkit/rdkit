@@ -121,7 +121,9 @@ namespace detail {
 inline std::string qhelper(Bond::QUERYBOND_QUERY *q, unsigned int depth) {
   std::string res;
   if (q) {
-    for (unsigned int i = 0; i < depth; ++i) res += "  ";
+    for (unsigned int i = 0; i < depth; ++i) {
+      res += "  ";
+    }
     res += q->getFullDescription() + "\n";
     for (Bond::QUERYBOND_QUERY::CHILD_VECT_CI ci = q->beginChildren();
          ci != q->endChildren(); ++ci) {

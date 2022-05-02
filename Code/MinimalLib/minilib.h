@@ -22,9 +22,10 @@ class JSMol {
   std::string get_cxsmarts() const;
   std::string get_molblock() const;
   std::string get_v3Kmolblock() const;
+  std::string get_pickle() const;
   std::string get_inchi() const;
   std::string get_json() const;
-  std::string get_svg(unsigned int width, unsigned int height) const;
+  std::string get_svg(int width, int height) const;
   std::string get_svg() const {
     return get_svg(d_defaultWidth, d_defaultHeight);
   }
@@ -37,7 +38,13 @@ class JSMol {
   std::string get_morgan_fp_as_binary_text(unsigned int radius,
                                            unsigned int len) const;
   std::string get_morgan_fp_as_binary_text() const {
-    return get_morgan_fp(2, 2048);
+    return get_morgan_fp_as_binary_text(2, 2048);
+  }
+  std::string get_pattern_fp(unsigned int len) const;
+  std::string get_pattern_fp() const { return get_pattern_fp(2048); }
+  std::string get_pattern_fp_as_binary_text(unsigned int len) const;
+  std::string get_pattern_fp_as_binary_text() const {
+    return get_pattern_fp_as_binary_text(2048);
   }
   std::string condense_abbreviations(double maxCoverage, bool useLinkers);
   std::string condense_abbreviations() {
@@ -63,21 +70,30 @@ class JSMol {
   std::string generate_aligned_coords(const JSMol &templateMol) {
     return generate_aligned_coords(templateMol, false, false, true);
   }
-
   bool is_valid() const { return d_mol.get() != nullptr; }
+  bool has_coords() const {
+    return d_mol.get() != nullptr && d_mol->getNumConformers() != 0;
+  }
 
-  // functionality primarily useful in ketcher
   std::string get_stereo_tags() const;
   std::string get_aromatic_form() const;
   std::string get_kekule_form() const;
+  bool set_new_coords(bool useCoordGen);
+  bool set_new_coords() { return set_new_coords(false); }
   std::string get_new_coords(bool useCoordGen) const;
   std::string get_new_coords() const { return get_new_coords(false); }
   std::string remove_hs() const;
   std::string add_hs() const;
+  double normalize_depiction(int canonicalize, double scaleFactor);
+  double normalize_depiction(int canonicalize) {
+    return normalize_depiction(canonicalize, -1.);
+  }
+  double normalize_depiction() { return normalize_depiction(1, -1.); }
+  void straighten_depiction();
 
   std::unique_ptr<RDKit::RWMol> d_mol;
-  static constexpr unsigned int d_defaultWidth = 250;
-  static constexpr unsigned int d_defaultHeight = 200;
+  static constexpr int d_defaultWidth = 250;
+  static constexpr int d_defaultHeight = 200;
 };
 
 class JSSubstructLibrary {
@@ -119,6 +135,8 @@ class JSSubstructLibrary {
 
 std::string get_inchikey_for_inchi(const std::string &input);
 JSMol *get_mol(const std::string &input, const std::string &details_json);
+JSMol *get_mol_from_pickle(const std::string &pkl);
+JSMol *get_mol_copy(const JSMol &other);
 JSMol *get_qmol(const std::string &input);
 std::string version();
 void prefer_coordgen(bool prefer);

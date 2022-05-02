@@ -71,7 +71,7 @@ if __name__ == '__main__':
   (options, args) = parser.parse_args()
 
   #print options.transform_file
-  if (options.transform_file == None):
+  if options.transform_file is None:
     print("Please specify the transform file.")
     sys.exit(1)
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
   #read the STDIN
   for line in sys.stdin:
     line = line.rstrip()
-    smi, id = re.split('\s|,', line)
+    smi, id = re.split(r'\s|,', line)
     #print smiles,id
     smiles.append((smi, id))
 

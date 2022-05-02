@@ -361,10 +361,13 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
 };
 
 //! tests whether or not the molecule has a substructure match
-//! to any of the reaction's reactants
+//! to the reaction's reactants
 //! the \c which argument is used to return which of the reactants
-//! the molecule matches. If there's no match, it is equal to the number
-//! of reactants on return
+//! the molecule matches.
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol,
+    std::vector<unsigned int> &which, bool stopAtFirstMatch = false);
+//! \overload
 RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol, unsigned int &which);
 //! \overload
@@ -372,10 +375,13 @@ RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeReactantOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol);
 
 //! tests whether or not the molecule has a substructure match
-//! to any of the reaction's products
+//! to the reaction's products
 //! the \c which argument is used to return which of the products
-//! the molecule matches. If there's no match, it is equal to the number
-//! of products on return
+//! the molecule matches.
+RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(
+    const ChemicalReaction &rxn, const ROMol &mol,
+    std::vector<unsigned int> &which, bool stopAtFirstMatch = false);
+//! \overload
 RDKIT_CHEMREACTIONS_EXPORT bool isMoleculeProductOfReaction(
     const ChemicalReaction &rxn, const ROMol &mol, unsigned int &which);
 //! \overload

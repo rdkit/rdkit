@@ -86,10 +86,11 @@ void testMMFFMultiThread() {
     fut.get();
   }
   std::cerr << "done" << std::endl;
-  for (unsigned int i = 0; i < count; ++i)
+  for (unsigned int i = 0; i < count; ++i) {
     for (auto *mol : mols[i]) {
       delete mol;
     }
+  }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }

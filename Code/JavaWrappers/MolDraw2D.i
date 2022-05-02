@@ -45,6 +45,12 @@
 #include <utility>
 %}
 
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+%{
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+ %}
+#endif
+
 %template(Int_String_Map) std::map< int, std::string >;
 
 #ifdef SWIGJAVA
@@ -74,6 +80,47 @@
 %include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>
 %include <GraphMol/MolDraw2D/MolDraw2D.h>
 %include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    
+#ifdef SWIGJAVA
+%typemap(jni) std::string RDKit::MolDraw2DCairo::toByteArray "jbyteArray"
+%typemap(jtype) std::string RDKit::MolDraw2DCairo::toByteArray "byte[]"
+%typemap(jstype) std::string RDKit::MolDraw2DCairo::toByteArray "byte[]"
+%typemap(javaout) std::string RDKit::MolDraw2DCairo::toByteArray {
+  return $jnicall;
+}
+%typemap(out) std::string RDKit::MolDraw2DCairo::toByteArray {
+  $result = JCALL1(NewByteArray, jenv, $1.size());
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
+}
+#endif
+
+#ifdef SWIGCSHARP
+%template(UChar_Vect) std::vector<unsigned char>;
+#endif
+          
+%include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+    
+#ifdef SWIGJAVA
+%extend RDKit::MolDraw2DCairo {
+  const std::string toByteArray() {
+     return ($self)->getDrawingText();
+  }
+}
+#endif
+
+#ifdef SWIGCSHARP
+%extend RDKit::MolDraw2DCairo {
+    const std::vector<unsigned char> getImage() {
+        const auto text = ($self)->getDrawingText();
+        const std::vector<unsigned char> image(text.begin(), text.end());
+        return image;
+    }
+};
+#endif
+        
+#endif // RDK_BUILD_CAIRO_SUPPORT
+        
 %include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
 %inline %{

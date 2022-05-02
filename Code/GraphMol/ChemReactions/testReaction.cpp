@@ -7650,6 +7650,68 @@ void testGithub4410() {
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == R"(C/C(Cl)=C(\Cl)Br)");
 }
 
+void testMultiTemplateRxnQueries() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing multi-template isMoleculeXOfReaction queries"
+                       << std::endl;
+
+  std::string rxn_smarts =
+    "[S;v1&H0,v2&H1:1].[S;v2;H0,H1:2][S;v2;H0,H1:3]>>[S:3].[S:1][S:2]";
+  ChemicalReaction* rxn = RxnSmartsToChemicalReaction(rxn_smarts);
+  TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+  TEST_ASSERT(rxn->getNumProductTemplates() == 2);
+  rxn->initReactantMatchers();
+  unsigned int nWarn, nError;
+  TEST_ASSERT(rxn->validate(nWarn, nError, false));
+  TEST_ASSERT(nWarn == 0 && nError == 0);
+
+  ROMol* reactant = SmilesToMol("SC1=CC(CSSCC2=CC=CC=C2)=CC=C1");
+  ROMol* product = reactant;
+  ROMol* neither = SmilesToMol("c1ccccc1");
+
+  std::vector<unsigned int> which;
+  bool is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant, which);
+  TEST_ASSERT(is_reactant);
+  TEST_ASSERT(which == std::vector<unsigned int>({0,1}));
+  unsigned int first_match;
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant, first_match);
+  TEST_ASSERT(is_reactant);
+  TEST_ASSERT(first_match == 0);
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant);
+  TEST_ASSERT(is_reactant);
+
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither, which);
+  TEST_ASSERT(!is_reactant);
+  TEST_ASSERT(which.empty());
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither, first_match);
+  TEST_ASSERT(!is_reactant);
+  TEST_ASSERT(first_match == 2);
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither);
+  TEST_ASSERT(!is_reactant);
+
+  bool is_product = isMoleculeProductOfReaction(*rxn, *product, which);
+  TEST_ASSERT(is_product);
+  TEST_ASSERT(which == std::vector<unsigned int>({0,1}));
+  is_product = isMoleculeProductOfReaction(*rxn, *product, first_match);
+  TEST_ASSERT(is_product);
+  TEST_ASSERT(first_match == 0);
+  is_product = isMoleculeProductOfReaction(*rxn, *product);
+  TEST_ASSERT(is_product);
+
+  is_product = isMoleculeProductOfReaction(*rxn, *neither, which);
+  TEST_ASSERT(!is_product);
+  TEST_ASSERT(which.empty());
+  is_product = isMoleculeProductOfReaction(*rxn, *neither, first_match);
+  TEST_ASSERT(!is_product);
+  TEST_ASSERT(first_match == 2);
+  is_product = isMoleculeProductOfReaction(*rxn, *neither);
+  TEST_ASSERT(!is_product);
+
+  delete reactant;
+  delete neither;
+  delete rxn;
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7747,6 +7809,7 @@ int main() {
   testGithub4114();
   testGithub4183();
   testGithub4410();
+  testMultiTemplateRxnQueries();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

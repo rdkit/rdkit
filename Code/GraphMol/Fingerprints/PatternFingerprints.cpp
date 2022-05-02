@@ -169,10 +169,7 @@ bool isPatternComplexQuery(const Bond *b) {
   std::string descr = b->getQuery()->getDescription();
   // std::cerr<<"   !!!!!! "<<b->getIdx()<<"
   // "<<b->getBeginAtomIdx()<<"-"<<b->getEndAtomIdx()<<" "<<descr<<std::endl;
-  if (descr == "BondOrder") {
-    return false;
-  }
-  return true;
+  return descr != "BondOrder";
 }
 
 bool isTautomerBondQuery(const Bond *b) {

@@ -252,7 +252,7 @@ class SVGCanvas(Canvas):
     file = <an open file object>.  By default, I've made the fomrat extension be
     .svg.  By default it saves the file to "self.name" + '.svg' """
 
-    if file == None:
+    if file is None:
       file = self.name
 
     if isinstance(file, str):
@@ -261,7 +261,7 @@ class SVGCanvas(Canvas):
       isFileName = 0
 
     if isFileName:
-      if format == None:
+      if format is None:
         if '.' not in file:
           file = file + '.svg'
       else:
@@ -330,7 +330,7 @@ class SVGCanvas(Canvas):
     if not edgeColor:
       edgeColor = self.defaultLineColor
     # set edge width...
-    if edgeWidth == None:
+    if edgeWidth is None:
       edgeWidth = self.defaultLineWidth
 
     # SVG markers
@@ -373,7 +373,7 @@ class SVGCanvas(Canvas):
     if not edgeColor:
       edgeColor = self.defaultLineColor
     # set edge width...
-    if edgeWidth == None:
+    if edgeWidth is None:
       edgeWidth = self.defaultLineWidth
 
     edgeStr = 'stroke="%s" stroke-width="%d"' % (_ColorToSVG(edgeColor), int(edgeWidth))
@@ -425,7 +425,7 @@ class SVGCanvas(Canvas):
     if not edgeColor:
       edgeColor = self.defaultLineColor
     # set edge width...
-    if edgeWidth == None:
+    if edgeWidth is None:
       edgeWidth = self.defaultLineWidth
 
     # SVG markers
@@ -475,7 +475,7 @@ class SVGCanvas(Canvas):
       edgeColor = self.defaultLineColor
 
     # set edge width...
-    if edgeWidth == None:
+    if edgeWidth is None:
       edgeWidth = self.defaultLineWidth
 
     # SVG markers
@@ -563,7 +563,7 @@ class SVGCanvas(Canvas):
     if not edgeColor:
       edgeColor = self.defaultLineColor
     # set edge width...
-    if edgeWidth == None:
+    if edgeWidth is None:
       edgeWidth = self.defaultLineWidth
 
     # SVG markers

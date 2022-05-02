@@ -510,8 +510,7 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
     vs.emplace_back(idx, v);
     ++nbrIdx;
   }
-  std::sort(vs.begin(), vs.end(),
-            Rankers::pairLess<unsigned int, RDGeom::Point3D>());
+  std::sort(vs.begin(), vs.end(), Rankers::pairLess);
   double vol;
   if (vs.size() == 4) {
     vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);
@@ -538,13 +537,9 @@ bool hasNonDefaultValence(const Atom *atom) {
       SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
-    if (atom->getNoImplicit() &&
-        (atom->getExplicitValence() !=
-         PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()))) {
-      return true;
-    } else {
-      return false;
-    }
+    return atom->getNoImplicit() &&
+           (atom->getExplicitValence() !=
+            PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
   }
   return true;
 }
@@ -975,7 +970,9 @@ const std::string GetV3000MolFileAtomLine(
     }
     if (atom->getPropIfPresent(common_properties::molInversionFlag, iprop) &&
         iprop) {
-      if (iprop == 1 || iprop == 2) ss << " INVRET=" << iprop;
+      if (iprop == 1 || iprop == 2) {
+        ss << " INVRET=" << iprop;
+      }
     }
     if (atom->getPropIfPresent(common_properties::molStereoCare, iprop) &&
         iprop) {

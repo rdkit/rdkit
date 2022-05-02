@@ -334,10 +334,8 @@ void _setRingAngle(Atom::HybridizationType aHyb, unsigned int ringSize,
   }
 }
 
-struct lessVector : public std::binary_function<INT_VECT, INT_VECT, bool> {
-  bool operator()(const INT_VECT &v1, const INT_VECT &v2) const {
-    return v1.size() < v2.size();
-  }
+auto lessVector = [](const auto &v1, const auto &v2) {
+  return v1.size() < v2.size();
 };
 
 void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
@@ -368,7 +366,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   double angle;
 
   VECT_INT_VECT atomRings = rinfo->atomRings();
-  std::sort(atomRings.begin(), atomRings.end(), lessVector());
+  std::sort(atomRings.begin(), atomRings.end(), lessVector);
   // sort the rings based on the ring size
   VECT_INT_VECT_CI rii;
   INT_VECT visited(npt, 0);
@@ -866,7 +864,9 @@ bool _checkMacrocycleAllInSameRingAmideEster14(const ROMol &mol, const Bond *,
   unsigned int a2Num = atm2->getAtomicNum();
   unsigned int a3Num = atm3->getAtomicNum();
 
-  if (a3Num != 6) return false;
+  if (a3Num != 6) {
+    return false;
+  }
 
   if (a2Num == 7 || a2Num == 8) {
     if (mol.getAtomDegree(atm2) == 3 && mol.getAtomDegree(atm3) == 3) {
@@ -1225,12 +1225,9 @@ bool _checkMacrocycleTwoInSameRingAmideEster14(
   unsigned int a3Num = atm3->getAtomicNum();
   unsigned int a4Num = atm4->getAtomicNum();
 
-  if (a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
-      (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
-      (a2Num == 8 || (a2Num == 7))) {
-    return true;
-  }
-  return false;
+  return a1Num != 1 && a3Num == 6 && bnd3->getBondType() == Bond::DOUBLE &&
+         (a4Num == 8 || a4Num == 7) && bnd1->getBondType() == Bond::SINGLE &&
+         (a2Num == 8 || a2Num == 7);
 }
 
 void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,

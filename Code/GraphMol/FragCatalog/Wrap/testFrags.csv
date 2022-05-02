@@ -23,7 +23,7 @@ fr_aldehyde	"Number of aldehydes"	[CX3H1](=O)[#6]
 ############
 # Nitrogens
 ############
-fr_quatN	"Number of quarternary nitrogens"	[$([NX4+]),$([NX4]=*)]	[NX4]	
+fr_quatN	"Number of quaternary nitrogens"	[$([NX4+]),$([NX4]=*)]	[NX4]	
 fr_NH2	"Number of Primary amines"	[NH2,nH2]	[NH2]	"Include aromatic Ns"
 fr_NH1	"Number of Secondary amines"	[NH1,nH1]	"[NH1] or [nH1]"	
 fr_NH0	"Number of Tertiary amines"	[NH0,nH0]	"[NH0] or [nH0]"	

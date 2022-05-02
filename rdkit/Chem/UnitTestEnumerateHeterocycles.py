@@ -38,7 +38,7 @@ def assert_valid_change(orig_can_smi, smiles):
     msg = "%s produced %s" % (orig_can_smi, smiles)
     try:
         mol = check_smiles(smiles)
-    except:
+    except Exception:
         print(msg)
         raise
 

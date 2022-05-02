@@ -115,10 +115,11 @@ class SparseIntVect {
     int res = 0;
     typename StorageType::const_iterator iter;
     for (iter = d_data.begin(); iter != d_data.end(); ++iter) {
-      if (!doAbs)
+      if (!doAbs) {
         res += iter->second;
-      else
+      } else {
         res += abs(iter->second);
+      }
     }
     return res;
   }
@@ -523,7 +524,9 @@ double DiceSimilarity(const SparseIntVect<IndexType> &v1,
   } else {
     sim = 2. * numer / denom;
   }
-  if (returnDistance) sim = 1. - sim;
+  if (returnDistance) {
+    sim = 1. - sim;
+  }
   // std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" " << numer << " " << sim <<std::endl;
   return sim;
 }
@@ -550,7 +553,9 @@ double TverskySimilarity(const SparseIntVect<IndexType> &v1,
   } else {
     sim = andSum / denom;
   }
-  if (returnDistance) sim = 1. - sim;
+  if (returnDistance) {
+    sim = 1. - sim;
+  }
   // std::cerr<<" "<<v1Sum<<" "<<v2Sum<<" " << numer << " " << sim <<std::endl;
   return sim;
 }

@@ -185,10 +185,7 @@ bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
   }
   Point3D dOffset = d_offSet;
   dOffset -= other.getOffset();
-  if (dOffset.lengthSq() > OFFSET_TOL) {
-    return false;
-  }
-  return true;
+  return dOffset.lengthSq() <= OFFSET_TOL;
 }
 
 void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,

@@ -844,3 +844,46 @@ TEST_CASE(
     CHECK(m2->getAtomWithIdx(1)->getFormalCharge() == -1);
   }
 }
+
+TEST_CASE("Github #5008: bad tautomers for phosphorous compounds") {
+  SECTION("as reported") {
+    auto m = "NP(=O)(O)N(CCCl)CCCl"_smiles;
+    REQUIRE(m);
+    MolStandardize::TautomerEnumerator tenum;
+    auto tauts = tenum.enumerate(*m);
+    CHECK(tauts.size() == 1);
+  }
+  SECTION("P which should tautomerize") {
+    auto m = "CP(O)C"_smiles;
+    REQUIRE(m);
+    MolStandardize::TautomerEnumerator tenum;
+    auto tauts = tenum.enumerate(*m);
+    CHECK(tauts.size() == 2);
+  }
+  SECTION("Canonical version") {
+    auto m = "CP(O)C"_smiles;
+    REQUIRE(m);
+    std::unique_ptr<RWMol> ct(MolStandardize::canonicalTautomer(m.get()));
+    REQUIRE(ct);
+    CHECK(MolToSmiles(*ct) == "C[PH](C)=O");
+  }
+}
+
+TEST_CASE("Github #5169: Standardization via RDKit breaks molecules",
+          "[uncharger]") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::vector<std::string> smis = {"C[O+](C)C", "[H]/[O+]=C/Cl"};
+    for (const auto &smi : smis) {
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      REQUIRE(m);
+      m->updatePropertyCache(false);
+      MolStandardize::Uncharger uncharger;
+      std::unique_ptr<ROMol> outm(uncharger.uncharge(*m));
+      REQUIRE(outm);
+      INFO("failing for smiles " << smi);
+      CHECK(outm->getAtomWithIdx(1)->getFormalCharge() == 1);
+    }
+  }
+}

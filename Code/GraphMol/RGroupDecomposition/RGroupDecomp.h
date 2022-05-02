@@ -206,7 +206,9 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT unsigned int RGroupDecompose(
 
 inline bool checkForTimeout(const std::chrono::steady_clock::time_point &t0,
                             double timeout, bool throwOnTimeout = true) {
-  if (timeout <= 0) return false;
+  if (timeout <= 0) {
+    return false;
+  }
   auto t1 = std::chrono::steady_clock::now();
   std::chrono::duration<double> elapsed = t1 - t0;
   if (elapsed.count() >= timeout) {

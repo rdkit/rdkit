@@ -162,10 +162,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAromCollection {
     \return a pointer to the MMFFArom object, NULL on failure.
   */
   bool isMMFFAromatic(const unsigned int atomType) const {
-    return ((std::find(d_params.begin(), d_params.end(), atomType) !=
-             d_params.end())
-                ? true
-                : false);
+    return std::find(d_params.begin(), d_params.end(), atomType) !=
+           d_params.end();
   }
 
   MMFFAromCollection(const std::vector<std::uint8_t> *mmffArom = nullptr);

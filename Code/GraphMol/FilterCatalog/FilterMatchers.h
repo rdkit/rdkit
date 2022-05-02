@@ -43,7 +43,9 @@ namespace RDKit {
 
 namespace {
 std::string getArgName(const boost::shared_ptr<FilterMatcherBase> &arg) {
-  if (arg.get()) return arg->getName();
+  if (arg.get()) {
+    return arg->getName();
+  }
   return "<nullmatcher>";
 }
 }  // namespace
@@ -403,8 +405,11 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
   }
 
   bool isValid() const override {
-    for (size_t i = 0; i < d_offPatterns.size(); ++i)
-      if (!d_offPatterns[i]->isValid()) return false;
+    for (size_t i = 0; i < d_offPatterns.size(); ++i) {
+      if (!d_offPatterns[i]->isValid()) {
+        return false;
+      }
+    }
     return true;
   }
 

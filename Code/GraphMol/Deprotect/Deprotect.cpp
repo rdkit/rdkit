@@ -126,7 +126,7 @@ std::unique_ptr<ROMol> deprotect(
       for (auto &prods : deprotect.rxn->runReactant(m, 0)) {
         m = prods[0];
         try {
-          RDLog::BlockLogs blocker;
+          RDLog::LogStateSetter blocker;
           MolOps::sanitizeMol(*dynamic_cast<RWMol *>(m.get()));
         } catch (MolSanitizeException &) {
           continue;
@@ -135,8 +135,9 @@ std::unique_ptr<ROMol> deprotect(
         if (deprotections_used.size() >= MAX_DEPROTECTIONS) {
           BOOST_LOG(rdErrorLog)
               << "Too many deprotections, halting..." << std::endl;
-        } else
+        } else {
           something_happened = true;
+        }
         break;
       }
     }
@@ -163,7 +164,7 @@ bool deprotectInPlace(RWMol &mol,
       bool changes = deprotect.rxn->runReactant(mol);
       if (changes) {
         try {
-          RDLog::BlockLogs blocker;
+          RDLog::LogStateSetter blocker;
           MolOps::sanitizeMol(mol);
         } catch (MolSanitizeException &) {
           continue;

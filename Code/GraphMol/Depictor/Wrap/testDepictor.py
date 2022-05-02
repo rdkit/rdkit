@@ -389,7 +389,6 @@ M  END"""
   6  1  1  0
 M  END""")
         genericRefPatternWithRGroups = Chem.MolFromSmarts("[*:3]a1a([*:1])aa([*:2])aa1")
-        pyridineRefHs = Chem.AddHs(pyridineRef)
 
         for mol in (ortho, meta, biphenyl, phenyl):
             atomMap = rdDepictor.GenerateDepictionMatching2DStructure(
@@ -401,6 +400,111 @@ M  END""")
                         mol.GetConformer().GetAtomPosition(molIdx)).LengthSq()
             msd /= len(atomMap)
             self.assertAlmostEqual(msd, 0.0)
+
+    def testNormalizeStraighten(self):
+        def computeRmsd(c1, c2):
+            self.assertEqual(c1.GetNumAtoms(), c2.GetNumAtoms())
+            msd = 0.0
+            for i in range(c1.GetNumAtoms()):
+                msd += (c1.GetAtomPosition(i) - c2.GetAtomPosition(i)).LengthSq()
+            msd /= c1.GetNumAtoms()
+            return np.sqrt(msd)
+
+        noradrenalineMJ = Chem.MolFromMolBlock("""
+  MJ201100                      
+
+ 12 12  0  0  1  0  0  0  0  0999 V2000
+    2.2687    1.0716    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4437    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0312    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4437   -0.3572    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2062    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2062   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0312   -0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4437   -1.0716    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4437    0.3572    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2687    0.3572    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0312    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2062    1.0716    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  3  2  1  0  0  0  0
+  3  4  1  6  0  0  0
+  3  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  7  9  2  0  0  0  0
+  9 10  1  0  0  0  0
+  9 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+  5 12  1  0  0  0  0
+M  END)""")
+
+        noradrenalineMJCopy = Chem.Mol(noradrenalineMJ)
+        conformerCopy = Chem.Conformer(noradrenalineMJCopy.GetConformer())
+        noradrenalineMJCopy.AddConformer(conformerCopy, True)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(0)), 0., 3)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(1)), 0., 3)
+        scalingFactor = rdDepictor.NormalizeDepiction(noradrenalineMJCopy, 1)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(0)), 0.0, 3)
+        self.assertGreater(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(1)), 0.1)
+        self.assertAlmostEqual(scalingFactor, 1.875, 3)
+        bond10_11Conf0 = noradrenalineMJCopy.GetConformer(0).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(0).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf0.x, 0.825, 3)
+        self.assertAlmostEqual(bond10_11Conf0.y, 0., 3)
+        bond10_11Conf1 = noradrenalineMJCopy.GetConformer(1).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(1).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf1.x, 1.513, 3)
+        self.assertAlmostEqual(bond10_11Conf1.y, -0.321, 3)
+        rdDepictor.StraightenDepiction(noradrenalineMJCopy, 1)
+        bond10_11Conf1 = noradrenalineMJCopy.GetConformer(1).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(1).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf1.x, 1.34, 3)
+        self.assertAlmostEqual(bond10_11Conf1.y, -0.773, 3)
+        bond4_11Conf1 = noradrenalineMJCopy.GetConformer(1).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(1).GetAtomPosition(4)
+        self.assertAlmostEqual(bond4_11Conf1.x, 0., 3)
+        self.assertAlmostEqual(bond4_11Conf1.y, 1.547, 3)
+
+        noradrenalineMJCopy = Chem.Mol(noradrenalineMJ)
+        conformerCopy = Chem.Conformer(noradrenalineMJCopy.GetConformer())
+        noradrenalineMJCopy.AddConformer(conformerCopy, True)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(0)), 0., 3)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(1)), 0., 3)
+        scalingFactor = rdDepictor.NormalizeDepiction(noradrenalineMJCopy, 1, -1)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(0)), 0.0, 3)
+        self.assertGreater(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(1)), 0.1)
+        self.assertAlmostEqual(scalingFactor, 1.875, 3)
+        bond10_11Conf0 = noradrenalineMJCopy.GetConformer(0).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(0).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf0.x, 0.825, 3)
+        self.assertAlmostEqual(bond10_11Conf0.y, 0., 3)
+        bond10_11Conf1 = noradrenalineMJCopy.GetConformer(1).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(1).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf1.x, 0.321, 3)
+        self.assertAlmostEqual(bond10_11Conf1.y, 1.513, 3)
+        rdDepictor.StraightenDepiction(noradrenalineMJCopy, 1)
+        bond10_11Conf1 = noradrenalineMJCopy.GetConformer(1).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(1).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf1.x, 0., 3)
+        self.assertAlmostEqual(bond10_11Conf1.y, 1.547, 3)
+
+        noradrenalineMJCopy = Chem.Mol(noradrenalineMJ)
+        conformerCopy = Chem.Conformer(noradrenalineMJCopy.GetConformer())
+        noradrenalineMJCopy.AddConformer(conformerCopy, True)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(0)), 0., 3)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(1)), 0., 3)
+        scalingFactor = rdDepictor.NormalizeDepiction(noradrenalineMJCopy, 1, 0, 3.0)
+        self.assertAlmostEqual(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(0)), 0.0, 3)
+        self.assertGreater(computeRmsd(noradrenalineMJ.GetConformer(0), noradrenalineMJCopy.GetConformer(1)), 0.1)
+        self.assertAlmostEqual(scalingFactor, 3., 3)
+        bond10_11Conf0 = noradrenalineMJCopy.GetConformer(0).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(0).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf0.x, 0.825, 3)
+        self.assertAlmostEqual(bond10_11Conf0.y, 0., 3)
+        bond10_11Conf1 = noradrenalineMJCopy.GetConformer(1).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(1).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf1.x, 2.475, 3)
+        self.assertAlmostEqual(bond10_11Conf1.y, 0., 3)
+        rdDepictor.StraightenDepiction(noradrenalineMJCopy, 1)
+        bond10_11Conf1 = noradrenalineMJCopy.GetConformer(1).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(1).GetAtomPosition(10)
+        self.assertAlmostEqual(bond10_11Conf1.x, 2.143, 3)
+        self.assertAlmostEqual(bond10_11Conf1.y, -1.237, 3)
+        bond4_11Conf1 = noradrenalineMJCopy.GetConformer(1).GetAtomPosition(11) - noradrenalineMJCopy.GetConformer(1).GetAtomPosition(4)
+        self.assertAlmostEqual(bond4_11Conf1.x, 0., 3)
+        self.assertAlmostEqual(bond4_11Conf1.y, 2.475, 3)
 
 if __name__ == '__main__':
     rdDepictor.SetPreferCoordGen(False)

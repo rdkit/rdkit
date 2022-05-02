@@ -31,6 +31,8 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+#include <Geometry/Transform3D.h>
 #include <DataStructs/BitOps.h>
 
 #include <INCHI-API/inchi.h>
@@ -59,15 +61,15 @@ std::string JSMol::get_cxsmarts() const {
   if (!d_mol) return "";
   return MolToCXSmarts(*d_mol);
 }
-std::string JSMol::get_svg(unsigned int w, unsigned int h) const {
+std::string JSMol::get_svg(int w, int h) const {
   if (!d_mol) return "";
   return MinimalLib::mol_to_svg(*d_mol, w, h);
 }
 std::string JSMol::get_svg_with_highlights(const std::string &details) const {
   if (!d_mol) return "";
 
-  unsigned int w = MinimalLib::d_defaultWidth;
-  unsigned int h = MinimalLib::d_defaultHeight;
+  int w = MinimalLib::d_defaultWidth;
+  int h = MinimalLib::d_defaultHeight;
   return MinimalLib::mol_to_svg(*d_mol, w, h, details);
 }
 
@@ -87,6 +89,13 @@ std::string JSMol::get_v3Kmolblock() const {
 std::string JSMol::get_json() const {
   if (!d_mol) return "";
   return MolInterchange::MolToJSONData(*d_mol);
+}
+
+std::string JSMol::get_pickle() const {
+  if (!d_mol) return std::string();
+  std::string pickle;
+  MolPickler::pickleMol(*d_mol, pickle);
+  return pickle;
 }
 
 std::string JSMol::get_substruct_match(const JSMol &q) const {
@@ -139,18 +148,32 @@ std::string JSMol::get_descriptors() const {
 std::string JSMol::get_morgan_fp(unsigned int radius,
                                  unsigned int fplen) const {
   if (!d_mol) return "";
-  auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::unique_ptr<ExplicitBitVect> fp(
+      MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen));
   std::string res = BitVectToText(*fp);
-  delete fp;
   return res;
 }
 
 std::string JSMol::get_morgan_fp_as_binary_text(unsigned int radius,
                                                 unsigned int fplen) const {
   if (!d_mol) return "";
-  auto fp = MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen);
+  std::unique_ptr<ExplicitBitVect> fp(
+      MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen));
   std::string res = BitVectToBinaryText(*fp);
-  delete fp;
+  return res;
+}
+
+std::string JSMol::get_pattern_fp(unsigned int fplen) const {
+  if (!d_mol) return "";
+  std::unique_ptr<ExplicitBitVect> fp(PatternFingerprintMol(*d_mol, fplen));
+  std::string res = BitVectToText(*fp);
+  return res;
+}
+
+std::string JSMol::get_pattern_fp_as_binary_text(unsigned int fplen) const {
+  if (!d_mol) return "";
+  std::unique_ptr<ExplicitBitVect> fp(PatternFingerprintMol(*d_mol, fplen));
+  std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
@@ -233,6 +256,21 @@ std::string JSMol::get_kekule_form() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
+bool JSMol::set_new_coords(bool useCoordGen) {
+  if (!d_mol) return false;
+
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  bool oprefer = RDDepict::preferCoordGen;
+  RDDepict::preferCoordGen = useCoordGen;
+#endif
+  RDDepict::compute2DCoords(*d_mol);
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = oprefer;
+#endif
+
+  return true;
+}
+
 std::string JSMol::get_new_coords(bool useCoordGen) const {
   if (!d_mol) return "";
 
@@ -267,8 +305,6 @@ std::string JSMol::add_hs() const {
 
   RWMol molCopy(*d_mol);
   MolOps::addHs(molCopy);
-
-  // RDDepict::generateDepictionMatching2DStructure(molCopy, *d_mol);
 
   bool includeStereo = true;
   int confId = -1;
@@ -339,7 +375,17 @@ std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
   RDDepict::preferCoordGen = oprefer;
 #endif
   return res;
-};
+}
+
+double JSMol::normalize_depiction(int canonicalize, double scaleFactor) {
+  if (!d_mol || !d_mol->getNumAtoms() || !d_mol->getNumConformers()) return -1.;
+  return RDDepict::normalizeDepiction(*d_mol, -1, canonicalize, scaleFactor);
+}
+
+void JSMol::straighten_depiction() {
+  if (!d_mol || !d_mol->getNumAtoms() || !d_mol->getNumConformers()) return;
+  RDDepict::straightenDepiction(*d_mol, -1);
+}
 
 JSSubstructLibrary::JSSubstructLibrary(unsigned int num_bits)
     : d_sslib(new SubstructLibrary(
@@ -358,11 +404,11 @@ int JSSubstructLibrary::add_trusted_smiles(const std::string &smi) {
     return -1;
   }
   mol->updatePropertyCache();
-  ExplicitBitVect *bv = PatternFingerprintMol(*mol, d_num_bits);
-  if (!bv) {
+  auto fp = PatternFingerprintMol(*mol, d_num_bits);
+  if (!fp) {
     return -1;
   }
-  d_fpHolder->addFingerprint(bv);
+  d_fpHolder->addFingerprint(fp);
   auto ret = d_molHolder->addSmiles(smi);
   return ret;
 }
@@ -419,8 +465,27 @@ std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
 
+JSMol *get_mol_copy(const JSMol &other) {
+  RWMol *mol = new RWMol(*other.d_mol);
+  return new JSMol(mol);
+}
+
 JSMol *get_mol(const std::string &input, const std::string &details_json) {
   RWMol *mol = MinimalLib::mol_from_input(input, details_json);
+  return new JSMol(mol);
+}
+
+JSMol *get_mol_from_pickle(const std::string &pkl) {
+  RWMol *mol = nullptr;
+  if (!pkl.empty()) {
+    mol = new RWMol();
+    try {
+      MolPickler::molFromPickle(pkl, mol);
+    } catch (...) {
+      delete mol;
+      mol = nullptr;
+    }
+  }
   return new JSMol(mol);
 }
 

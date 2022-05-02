@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2017 Novartis Institutes for BioMedical Research
+//  Copyright (C) 2017-2022 Novartis Institutes for BioMedical Research and
+//  other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +23,9 @@
 // #define VERBOSE 1
 
 namespace RDKit {
+
+extern const std::string _rgroupInputDummy;
+
 struct RGroupDecompData {
   // matches[mol_idx] == vector of potential matches
   std::map<int, RCore> cores;
@@ -77,7 +81,7 @@ struct RGroupDecompData {
   }
 
   void setRlabel(Atom *atom, int rlabel) {
-    PRECONDITION(rlabel != 0, "RLabels must be >0");
+    PRECONDITION(rlabel > 0, "RLabels must be >0");
     if (params.rgroupLabelling & AtomMap) {
       atom->setAtomMapNum(rlabel);
     }
@@ -89,8 +93,26 @@ struct RGroupDecompData {
     }
 
     if (params.rgroupLabelling & Isotope) {
-      atom->setIsotope(rlabel + 1);
+      atom->setIsotope(rlabel);
     }
+  }
+
+  int getRlabel(Atom *atom) const {
+    if (params.rgroupLabelling & AtomMap) {
+      return atom->getAtomMapNum();
+    }
+    if (params.rgroupLabelling & Isotope) {
+      return atom->getIsotope();
+    }
+
+    if (params.rgroupLabelling & MDLRGroup) {
+      unsigned int label = 0;
+      if (atom->getPropIfPresent(common_properties::_MolFileRLabel, label)) {
+        return label;
+      }
+    }
+
+    CHECK_INVARIANT(0, "no valid r label found");
   }
 
   double scoreFromPrunedData(const std::vector<size_t> &permutation,
@@ -381,7 +403,9 @@ struct RGroupDecompData {
           CHECK_INVARIANT(label != mappings.end(), "Unprocessed mapping");
 
           if (atom->getAtomicNum() == 0) {
-            setRlabel(atom, label->second);
+            if (!atom->hasProp(_rgroupInputDummy)) {
+              setRlabel(atom, label->second);
+            }
           } else if (atom->hasProp(RLABEL_CORE_INDEX)) {
             atom->setAtomicNum(0);
             setRlabel(atom, label->second);
@@ -404,7 +428,7 @@ struct RGroupDecompData {
     addAtoms(mol, atomsToAdd);
 
     if (params.removeHydrogensPostMatch) {
-      RDLog::BlockLogs blocker;
+      RDLog::LogStateSetter blocker;
       bool implicitOnly = false;
       bool updateExplicitCount = false;
       bool sanitize = false;

@@ -265,6 +265,8 @@ class DrawMol {
   // via MolDraw2D's activeAtmIdx[12]_ and activeBndIdx.  We don't always want
   // them to start from 0 for atom/bond 0.
   int activeAtmIdxOffset_ = 0, activeBndIdxOffset_ = 0;
+  bool flexiCanvasX_ = false;
+  bool flexiCanvasY_ = false;
 };
 
 void centerMolForDrawing(RWMol &mol, int confId = 1);

@@ -474,7 +474,9 @@ void MolDraw2DSVG::tagAtoms(const ROMol &mol, double radius,
 
 // ****************************************************************************
 void MolDraw2DSVG::outputClasses() {
-  if (d_activeClass.empty() && !hasActiveAtmIdx()) return;
+  if (d_activeClass.empty() && !hasActiveAtmIdx()) {
+    return;
+  }
 
   d_os << "class='";
   if (!d_activeClass.empty()) {

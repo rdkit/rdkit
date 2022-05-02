@@ -401,5 +401,5 @@ class WXCanvas(PiddleWxDc):
   def setInfoLine(self, s):
     """For interactive Canvases, displays the given string in the 'info
        line' somewhere where the user can probably see it."""
-    if self.sb != None:
+    if self.sb is not None:
       self.sb.SetStatusText(s)

@@ -41,6 +41,7 @@ from rdkit import RDConfig
 from rdkit.RDLogger import logger
 logger = logger()
 from rdkit import Chem
+from rdkit import rdBase
 from rdkit.Chem import rdfiltercatalog
 from rdkit.Chem import FilterCatalog, rdMolDescriptors
 from rdkit.Chem.FilterCatalog import FilterCatalogParams
@@ -541,7 +542,7 @@ class TestCase(unittest.TestCase):
     smiles = ['mydoghasfleas']
     results = FilterCatalog.RunFilterCatalog(fc, smiles, numThreads=3)
     self.assertEquals(len(results[0]), 1)
-    self.assertEquals(results[0][0].GetDescription(), "no valid RDKit molecule");
+    self.assertEquals(results[0][0].GetDescription(), "no valid RDKit molecule")
 
   def testThreadedPythonFilter(self):
 
@@ -559,7 +560,7 @@ class TestCase(unittest.TestCase):
         mw = rdMolDescriptors.CalcExactMolWt(mol)
         res = not self.minMw <= mw <= self.maxMw
         Chem.MolFromSmiles("---")
-        Chem.LogErrorMsg("dasfsadf")
+        rdBase.LogErrorMsg("dasfsadf")
         return res
 
     path = os.path.join(os.environ['RDBASE'], 'Code', 'GraphMol', 'test_data', 'pains.smi')

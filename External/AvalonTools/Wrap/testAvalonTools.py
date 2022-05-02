@@ -254,16 +254,16 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles('c1ccccc1C1(CC1)N')
     pyAvalonTools.Generate2DCoords(m)
     self.assertEqual(m.GetNumConformers(), 1)
-    self.assertTrue(m.GetConformer(0).Is3D() == False)
+    self.assertFalse(m.GetConformer(0).Is3D())
 
   def test6(self):
     mb = pyAvalonTools.Generate2DCoords('c1ccccc1C1(CC1)N', True)
     m = Chem.MolFromMolBlock(mb)
     self.assertEqual(m.GetNumConformers(), 1)
-    self.assertTrue(m.GetConformer(0).Is3D() == False)
+    self.assertFalse(m.GetConformer(0).Is3D())
 
   def testGitHub1062(self):
-    s0 = 'C/C=C\C'
+    s0 = r'C/C=C\C'
     m1 = Chem.MolFromSmiles(s0)
     s1 = Chem.MolToSmiles(m1)
     pyAvalonTools.Generate2DCoords(m1)
@@ -275,7 +275,7 @@ class TestCase(unittest.TestCase):
     # repeat the test with an input smiles that is not canonical
     # to verify that the implementation is not sensitive to the
     # ordering of atoms
-    s0 = 'C/C=C(F)\C'
+    s0 = r'C/C=C(F)\C'
     m1 = Chem.MolFromSmiles(s0)
     s1 = Chem.MolToSmiles(m1)
     self.assertNotEqual(s1, s0)

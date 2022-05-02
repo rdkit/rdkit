@@ -44,7 +44,8 @@ select mol_formula('[2H][13CH2]CO'::mol, true, false);
 --
 SELECT mol_numrotatablebonds('CCC'::mol) mol_numrotatablebonds;
 SELECT mol_numrotatablebonds('CCCC'::mol) mol_numrotatablebonds;
-SELECT mol_numrotatablebonds('c1ccccc1c1ccc(CCC)cc1'::mol) mol_numrotatablebonds;
+-- mol_from_smiles() shouldn't be necessary, but there's an RDKit bug (#5104)
+SELECT mol_numrotatablebonds(mol_from_smiles('c1ccccc1c1ccc(CCC)cc1')) mol_numrotatablebonds;
 SELECT mol_numheavyatoms('CCC'::mol) val;
 SELECT mol_numatoms('CCC'::mol) val;
 SELECT mol_numheteroatoms('CCC'::mol) val;

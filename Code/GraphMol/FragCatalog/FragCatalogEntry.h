@@ -102,7 +102,9 @@ class RDKIT_FRAGCATALOG_EXPORT FragCatalogEntry
   }
 
   bool hasProp(const char *key) const {
-    if (!dp_props) return false;
+    if (!dp_props) {
+      return false;
+    }
     return dp_props->hasVal(key);
   }
   bool hasProp(const std::string &key) const { return hasProp(key.c_str()); }

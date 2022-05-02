@@ -26,7 +26,9 @@ int StringChromosome<bool, BinaryStringChromosomePolicy>::decodeToInt(
   int mask = 1, result = 0;
   bool *ptr = string.get() + start;
   for (int i = 0; i < nBits; i++, mask <<= 1) {
-    if (*ptr++ == true) result |= mask;
+    if (*ptr++) {
+      result |= mask;
+    }
   }
   return result;
 }
@@ -49,13 +51,13 @@ void StringChromosome<int, IntegerStringChromosomePolicy>::fullMixing(
   int *p2 = parent2.getString();
 
   for (int i = 0; i < length; i++, c1++, c2++, p1++, p2++) {
-    if (*p1 == -1 && *p2 == -1)
+    if (*p1 == -1 && *p2 == -1) {
       *c1 = *c2 = -1;
-    else if (*p1 != -1 && *p2 == -1)
+    } else if (*p1 != -1 && *p2 == -1) {
       *c1 = *c2 = *p1;
-    else if (*p1 == -1 && *p2 != -1)
+    } else if (*p1 == -1 && *p2 != -1) {
       *c1 = *c2 = *p2;
-    else {
+    } else {
       *c1 = *p1;
       *c2 = *p2;
     }
@@ -78,7 +80,9 @@ void StringChromosome<int, IntegerStringChromosomePolicy>::fullMixingAndCrossove
   int site = getRng().randomInt(0, length);
 
   bool switchFlag = false;
-  if (getChromosomePolicy().isAllowSwitch()) switchFlag = getRng().randomBoolean();
+  if (getChromosomePolicy().isAllowSwitch()) {
+    switchFlag = getRng().randomBoolean();
+  }
 
   int *c1 = switchFlag ? child2.string.get() : child1.string.get();
   int *c2 = switchFlag ? child1.string.get() : child2.string.get();
@@ -88,11 +92,11 @@ void StringChromosome<int, IntegerStringChromosomePolicy>::fullMixingAndCrossove
   // create child before cross point
   int i = 0;
   for (; i < site; i++, p1++, p2++, c1++, c2++) {
-    if (*p1 == -1 && *p2 != -1)
+    if (*p1 == -1 && *p2 != -1) {
       *c1 = *c2 = *p2;
-    else if (*p1 != -1 && *p2 == -1)
+    } else if (*p1 != -1 && *p2 == -1) {
       *c1 = *c2 = *p1;
-    else {
+    } else {
       *c2 = *p2;
       *c1 = *p1;
     }
@@ -100,11 +104,11 @@ void StringChromosome<int, IntegerStringChromosomePolicy>::fullMixingAndCrossove
 
   // child after cross point
   for (; i < length; i++, p1++, p2++, c1++, c2++) {
-    if (*p1 == -1 && *p2 != -1)
+    if (*p1 == -1 && *p2 != -1) {
       *c1 = *c2 = *p2;
-    else if (*p1 != -1 && *p2 == -1)
+    } else if (*p1 != -1 && *p2 == -1) {
       *c1 = *c2 = *p1;
-    else {
+    } else {
       *c2 = *p1;
       *c1 = *p2;
     }

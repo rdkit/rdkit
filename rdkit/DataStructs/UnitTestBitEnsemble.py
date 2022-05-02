@@ -81,7 +81,7 @@ class TestCase(unittest.TestCase):
     if hasattr(self, 'tempDbName') and RDConfig.useSqlLite and os.path.exists(self.tempDbName):
       try:
         os.unlink(self.tempDbName)
-      except:  # pragma: nocover
+      except Exception:  # pragma: nocover
         import traceback
         traceback.print_exc()
 

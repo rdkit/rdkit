@@ -304,8 +304,9 @@ struct RDValue {
 //   copy act's like a move for better value semantics.
 //  Containers may need to copy though.
 inline void copy_rdvalue(RDValue &dest, const RDValue &src) {
-  if (&dest == &src)  // don't copy over yourself
+  if (&dest == &src) {  // don't copy over yourself
     return;
+  }
   dest.destroy();
   dest.type = src.type;
   switch (src.type) {
@@ -349,7 +350,9 @@ template <class T>
 inline bool rdvalue_is(RDValue_cast_t v) {
   const short tag =
       RDTypeTag::GetTag<typename boost::remove_reference<T>::type>();
-  if (v.getTag() == tag) return true;
+  if (v.getTag() == tag) {
+    return true;
+  }
 
   // If we are an Any tag, check the any type info
   if (v.getTag() == RDTypeTag::AnyTag) {
@@ -389,45 +392,67 @@ inline T rdvalue_cast(RDValue_cast_t v) {
 // POD casts
 template <>
 inline double rdvalue_cast<double>(RDValue_cast_t v) {
-  if (rdvalue_is<double>(v)) return v.value.d;
-  if (rdvalue_is<float>(v)) return v.value.f;
+  if (rdvalue_is<double>(v)) {
+    return v.value.d;
+  }
+  if (rdvalue_is<float>(v)) {
+    return v.value.f;
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline float rdvalue_cast<float>(RDValue_cast_t v) {
-  if (rdvalue_is<float>(v)) return v.value.f;
-  if (rdvalue_is<double>(v)) return boost::numeric_cast<float>(v.value.d);
+  if (rdvalue_is<float>(v)) {
+    return v.value.f;
+  }
+  if (rdvalue_is<double>(v)) {
+    return boost::numeric_cast<float>(v.value.d);
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline int rdvalue_cast<int>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v)) return v.value.i;
-  if (rdvalue_is<unsigned int>(v)) return boost::numeric_cast<int>(v.value.u);
+  if (rdvalue_is<int>(v)) {
+    return v.value.i;
+  }
+  if (rdvalue_is<unsigned int>(v)) {
+    return boost::numeric_cast<int>(v.value.u);
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::int8_t rdvalue_cast<std::int8_t>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::int8_t>(v.value.i);
-  if (rdvalue_is<unsigned int>(v))
+  if (rdvalue_is<int>(v)) {
+    return boost::numeric_cast<std::int8_t>(v.value.i);
+  }
+  if (rdvalue_is<unsigned int>(v)) {
     return boost::numeric_cast<std::int8_t>(v.value.u);
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::int16_t rdvalue_cast<std::int16_t>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::int16_t>(v.value.i);
-  if (rdvalue_is<unsigned int>(v))
+  if (rdvalue_is<int>(v)) {
+    return boost::numeric_cast<std::int16_t>(v.value.i);
+  }
+  if (rdvalue_is<unsigned int>(v)) {
     return boost::numeric_cast<std::int16_t>(v.value.u);
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::int64_t rdvalue_cast<std::int64_t>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v)) return static_cast<std::int64_t>(v.value.i);
-  if (rdvalue_is<unsigned int>(v)) return static_cast<std::int64_t>(v.value.u);
+  if (rdvalue_is<int>(v)) {
+    return static_cast<std::int64_t>(v.value.i);
+  }
+  if (rdvalue_is<unsigned int>(v)) {
+    return static_cast<std::int64_t>(v.value.u);
+  }
   if (rdvalue_is<boost::any>(v)) {
     return boost::any_cast<std::int64_t>(*v.ptrCast<boost::any>());
   }
@@ -436,31 +461,45 @@ inline std::int64_t rdvalue_cast<std::int64_t>(RDValue_cast_t v) {
 
 template <>
 inline unsigned int rdvalue_cast<unsigned int>(RDValue_cast_t v) {
-  if (rdvalue_is<unsigned int>(v)) return v.value.u;
-  if (rdvalue_is<int>(v)) return boost::numeric_cast<unsigned int>(v.value.i);
+  if (rdvalue_is<unsigned int>(v)) {
+    return v.value.u;
+  }
+  if (rdvalue_is<int>(v)) {
+    return boost::numeric_cast<unsigned int>(v.value.i);
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::uint8_t rdvalue_cast<std::uint8_t>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::uint8_t>(v.value.i);
-  if (rdvalue_is<unsigned int>(v))
+  if (rdvalue_is<int>(v)) {
+    return boost::numeric_cast<std::uint8_t>(v.value.i);
+  }
+  if (rdvalue_is<unsigned int>(v)) {
     return boost::numeric_cast<std::uint8_t>(v.value.u);
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::uint16_t rdvalue_cast<std::uint16_t>(RDValue_cast_t v) {
-  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::uint16_t>(v.value.i);
-  if (rdvalue_is<unsigned int>(v))
+  if (rdvalue_is<int>(v)) {
+    return boost::numeric_cast<std::uint16_t>(v.value.i);
+  }
+  if (rdvalue_is<unsigned int>(v)) {
     return boost::numeric_cast<std::uint16_t>(v.value.u);
+  }
   throw boost::bad_any_cast();
 }
 
 template <>
 inline std::uint64_t rdvalue_cast<std::uint64_t>(RDValue_cast_t v) {
-  if (rdvalue_is<unsigned int>(v)) return static_cast<std::uint64_t>(v.value.u);
-  if (rdvalue_is<int>(v)) return boost::numeric_cast<std::uint64_t>(v.value.i);
+  if (rdvalue_is<unsigned int>(v)) {
+    return static_cast<std::uint64_t>(v.value.u);
+  }
+  if (rdvalue_is<int>(v)) {
+    return boost::numeric_cast<std::uint64_t>(v.value.i);
+  }
   if (rdvalue_is<boost::any>(v)) {
     return boost::any_cast<std::uint64_t>(*v.ptrCast<boost::any>());
   }
@@ -469,7 +508,9 @@ inline std::uint64_t rdvalue_cast<std::uint64_t>(RDValue_cast_t v) {
 
 template <>
 inline bool rdvalue_cast<bool>(RDValue_cast_t v) {
-  if (rdvalue_is<bool>(v)) return v.value.b;
+  if (rdvalue_is<bool>(v)) {
+    return v.value.b;
+  }
   throw boost::bad_any_cast();
 }
 

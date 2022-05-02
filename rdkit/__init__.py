@@ -21,7 +21,7 @@ try:
     logger.info("Enabling RDKit %s jupyter extensions" % __version__)
     from rdkit.Chem.Draw import IPythonConsole
     rdBase.LogToPythonStderr()
-except:
+except Exception:
   pass
 
 # Do logging setup at the end, so users can suppress the

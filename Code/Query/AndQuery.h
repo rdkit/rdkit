@@ -34,7 +34,9 @@ class RDKIT_QUERY_EXPORT AndQuery
         break;
       }
     }
-    if (this->getNegation()) res = !res;
+    if (this->getNegation()) {
+      res = !res;
+    }
     return res;
   }
   Query<MatchFuncArgType, DataFuncArgType, needsConversion> *copy()
