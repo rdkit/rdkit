@@ -610,15 +610,12 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   }
   {
 #ifdef RDK_THREADSAFE_SSS
-      smiles_setprop_locker().lock();
+      std::scoped_lock locker(smiles_setprop_locker());
 #endif
       mol.setProp(common_properties::_smilesAtomOutputOrder, flattenedAtomOrdering,
                   true);
       mol.setProp(common_properties::_smilesBondOutputOrder, flattenedBondOrdering,
                   true);
-#ifdef RDK_THREADSAFE_SSS
-      smiles_setprop_locker().unlock();
-#endif
   }
   return result;
 }  // end of MolToSmiles()
@@ -822,13 +819,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
     
   {
 #ifdef RDK_THREADSAFE_SSS
-      smiles_setprop_locker().lock();
+      std::scoped_lock locker(smiles_setprop_locker());
 #endif
       mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
       mol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
-#ifdef RDK_THREADSAFE_SSS
-      smiles_setprop_locker().unlock();
-#endif
   }
   return res;
 }  // end of MolFragmentToSmiles()
