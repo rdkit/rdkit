@@ -693,9 +693,9 @@ void ROMol::load(Archive &ar, const unsigned int) {
   numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
 }
 
-template void ROMol::save<boost::archive::text_oarchive>(
+template RDKIT_GRAPHMOL_EXPORT void ROMol::save<boost::archive::text_oarchive>(
     boost::archive::text_oarchive &, const unsigned int) const;
-template void ROMol::load<boost::archive::text_iarchive>(
+template RDKIT_GRAPHMOL_EXPORT void ROMol::load<boost::archive::text_iarchive>(
     boost::archive::text_iarchive &, const unsigned int);
 #endif
 

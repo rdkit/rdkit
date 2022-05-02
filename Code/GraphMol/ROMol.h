@@ -45,15 +45,6 @@
 #include "StereoGroup.h"
 #include "RingInfo.h"
 
-#ifdef RDK_USE_BOOST_SERIALIZATION
-namespace boost {
-namespace archive {
-class text_oarchive;
-class text_iarchive;
-}  // namespace archive
-}  // namespace boost
-#endif
-
 namespace RDKit {
 class SubstanceGroup;
 class Atom;
@@ -877,13 +868,6 @@ typedef std::vector<ROMOL_SPTR> MOL_SPTR_VECT;
 
 typedef MOL_PTR_VECT::const_iterator MOL_PTR_VECT_CI;
 typedef MOL_PTR_VECT::iterator MOL_PTR_VECT_I;
-
-#ifdef RDK_USE_BOOST_SERIALIZATION
-template RDKIT_GRAPHMOL_EXPORT void ROMol::save<boost::archive::text_oarchive>(
-    boost::archive::text_oarchive &, const unsigned int) const;
-template RDKIT_GRAPHMOL_EXPORT void ROMol::load<boost::archive::text_iarchive>(
-    boost::archive::text_iarchive &, const unsigned int);
-#endif
 
 };  // namespace RDKit
 #endif
