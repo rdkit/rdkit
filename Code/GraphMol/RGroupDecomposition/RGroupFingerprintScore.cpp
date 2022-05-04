@@ -11,6 +11,7 @@
 #include "RGroupFingerprintScore.h"
 #include "GraphMol/Fingerprints/Fingerprints.h"
 #include "GraphMol//Fingerprints/MorganFingerprints.h"
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include "../../../External/GA/util/Util.h"
 #include <memory>
 #include <utility>
@@ -24,11 +25,25 @@
 
 namespace RDKit {
 
+namespace detail {
+// Create a fingerprint for empty or missing R groups 
+// that is the same as a hydrogen R group
+RData dummyHydrogenFingerprint(int label) {
+  static RData fp = nullptr;
+  if (fp == nullptr) {
+    fp = boost::make_shared<RGroupData>();
+    auto mol = ROMOL_SPTR(SmilesToMol("*[H]"));
+    std::vector<int> attachments{label};
+    fp->add(mol, attachments);
+  }
+  fp->attachments.clear();
+  fp->attachments.insert(label);
+  return fp;
+}
+}  // namespace detail
+
 static const int fingerprintSize = 512;
 static const bool useTopologicalFingerprints = false;
-
-// TODO scale variance by the number of separate attachments (as that variance
-// will be counted for each attachment).
 
 // Add fingerprint information to RGroupData
 void addFingerprintToRGroupData(RGroupData *rgroupData) {
@@ -52,20 +67,19 @@ void addFingerprintToRGroupData(RGroupData *rgroupData) {
           << rgroupData->smiles << std::endl;
     }
 #ifdef DEBUG
-    std::cerr << "Fingerprint mol smiles " << MolToSmiles(mol) << std::endl;
+    std::cerr << "Fingerprint mol smiles " << MolToSmiles(mol) << " ";
 #endif
     auto fingerprint = useTopologicalFingerprints
                            ? RDKFingerprintMol(mol, 1, 7, fingerprintSize)
                            : MorganFingerprints::getFingerprintAsBitVect(
                                  mol, 2, fingerprintSize);
     fingerprint->getOnBits(rgroupData->fingerprintOnBits);
-    rgroupData->fingerprint = std::unique_ptr<ExplicitBitVect>(fingerprint);
-
-#ifdef DEBUG
-    std::cerr << "Combined mol smiles " << MolToSmiles(*rgroupData->combinedMol)
-              << std::endl;
-#endif
+    rgroupData->fingerprint.reset(fingerprint);
   }
+#ifdef DEBUG
+  std::cerr << "Combined mol smiles " << MolToSmiles(*rgroupData->combinedMol)
+            << std::endl;
+#endif
 }
 
 // Adds or subtracts a molecule match to the rgroup fingerprint bit counts
@@ -78,21 +92,27 @@ void FingerprintVarianceScoreData::modifyVarianceData(
   const auto &match = matches.at(matchNumber).at(permutationNumber);
   for (int l : labels) {
     auto rg = match.rgroups.find(l);
+    std::shared_ptr<VarianceDataForLabel> variableDataForLabel;
+    RData rgroupData;
     if (rg != match.rgroups.end()) {
-      auto rgroupData = rg->second;
-      std::shared_ptr<VarianceDataForLabel> variableDataForLabel;
-      auto df = labelsToVarianceData.find(l);
-      if (df == labelsToVarianceData.end()) {
-        variableDataForLabel = std::make_shared<VarianceDataForLabel>(l);
-        labelsToVarianceData.emplace(l, variableDataForLabel);
-      } else {
-        variableDataForLabel = df->second;
-      }
-      if (add) {
-        variableDataForLabel->addRgroupData(rgroupData.get());
-      } else {
-        variableDataForLabel->removeRgroupData(rgroupData.get());
-      }
+      rgroupData = rg->second;
+    } else {
+      rgroupData = detail::dummyHydrogenFingerprint(l);
+    }
+    auto df = labelsToVarianceData.find(l);
+    if (df == labelsToVarianceData.end()) {
+      variableDataForLabel = std::make_shared<VarianceDataForLabel>(l);
+      labelsToVarianceData.emplace(l, variableDataForLabel);
+    } else {
+      variableDataForLabel = df->second;
+    }
+    if (add) {
+#ifdef DEBUG
+      std::cerr << "Label " << l << " ";
+#endif
+      variableDataForLabel->addRgroupData(rgroupData.get());
+    } else {
+      variableDataForLabel->removeRgroupData(rgroupData.get());
     }
   }
   auto rgroupsMissing = match.numberMissingUserRGroups;
@@ -148,7 +168,7 @@ double fingerprintVarianceScore(
   // For each label (group)
   for (int l : labels) {
 #ifdef DEBUG
-    std::cerr << "Label: " << l << std::endl;
+    std::cerr << "Label: " << l << " ";
 #endif
 
     std::shared_ptr<VarianceDataForLabel> variableDataForLabel;
@@ -163,11 +183,20 @@ double fingerprintVarianceScore(
     for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
       const auto &match = matches[m].at(permutation[m]);
       auto rg = match.rgroups.find(l);
+      RData rgroupData;
       if (rg != match.rgroups.end()) {
-        auto rgroupData = rg->second;
-        variableDataForLabel->addRgroupData(rgroupData.get());
+        rgroupData = rg->second;
+      } else {
+        rgroupData = detail::dummyHydrogenFingerprint(l);
       }
+#ifdef DEBUG
+      std::cerr << rgroupData->smiles << ", ";
+#endif
+      variableDataForLabel->addRgroupData(rgroupData.get());
     }
+#ifdef DEBUG
+    std::cerr << std::endl;
+#endif
   }
 
   size_t numberMissingRGroups = 0;
@@ -191,13 +220,8 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
   auto sum = std::accumulate(
       labelsToVarianceData.cbegin(), labelsToVarianceData.cend(), 0.0,
       [](double sum,
-         std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
+             std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
-    // perhaps here the variance should be weighted by occupancy- so that
-    // sparsely populated rgroups are penalized
-
-    // e.g variance *= ((double) numberOfMolecules) /
-    // ((double)pair.second->numberFingerprints);
 #ifdef DEBUG
         std::cerr << variance << ',';
 #endif
@@ -211,10 +235,14 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
       (double)numberOfMissingUserRGroups / (double)numberOfMolecules;
   // double the penalty to catch systems like
   // https://github.com/rdkit/rdkit/issues/3896
-  auto score = sum + 2.0 * rgroupPenalty;
+
+  auto rootSum = sqrt(sum);
+  auto score = rootSum + 2.0 * rgroupPenalty;
+  score = rootSum;
+
 #ifdef DEBUG
-  std::cerr << " sum " << sum << " rgroup penalty " << rgroupPenalty
-            << " score " << score << std::endl;
+  std::cerr << " sum " << sum << " root sum " << rootSum << " rgroup penalty "
+            << rgroupPenalty << " score " << score << std::endl;
 #endif
   // want to minimize this score
   return -score;
@@ -238,7 +266,7 @@ static std::mutex groupMutex;
 
 // add an rgroup structure to a bit counts array
 void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
-  if (rgroupData->fingerprint == nullptr) {
+  {
 #ifdef RDK_THREADSAFE_SSS
     const std::lock_guard<std::mutex> lock(groupMutex);
 #endif
@@ -246,6 +274,7 @@ void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
       addFingerprintToRGroupData(rgroupData);
     }
   }
+
   ++numberFingerprints;
   const auto &onBits = rgroupData->fingerprintOnBits;
   for (int b : onBits) {
@@ -271,11 +300,15 @@ double VarianceDataForLabel::variance() const {
     if (bitCount == 0) {
       return sum;
     }
+    auto dNumberFingerprints = (double)numberFingerprints;
+    auto dBitCount = (double)bitCount;
     // variance calculation because fingerprint is binary:
     // sum  == squared sum == bit count
     // ss = sqrSum - (sum * sum) / cnt;
-    auto ss = bitCount - (bitCount * bitCount) / (double)numberFingerprints;
-    double variancePerBit = ss / (double)numberFingerprints;
+    // correction to bit count:
+    dBitCount = dNumberFingerprints / 2.0 + dBitCount / 2.0;
+    auto ss = dBitCount - (dBitCount * dBitCount) / dNumberFingerprints;
+    double variancePerBit = ss / dNumberFingerprints;
 #ifdef DEBUG
     std::cerr << variancePerBit << ',';
 #endif
@@ -284,21 +317,23 @@ double VarianceDataForLabel::variance() const {
   };
 
 #ifdef DEBUG
-  std::cerr << "Bitcounts " << GarethUtil::collectionToString(bitCounts, ",")
-            << std::endl;
+  std::cerr << label << ": Bitcounts "
+            << GarethUtil::collectionToString(bitCounts, ",") << std::endl;
   std::cerr << "Variance per bit ";
 #endif
   auto totalVariance =
-      std::accumulate(bitCounts.begin(), bitCounts.end(), 0.0, lambda);
+      std::accumulate(bitCounts.cbegin(), bitCounts.cend(), 0.0, lambda);
+
 #ifdef DEBUG
   std::cerr << std::endl;
 #endif
-  auto rmsVariance = sqrt(totalVariance);
 #ifdef DEBUG
+  auto rmsVariance = sqrt(totalVariance);
   std::cerr << "Total Variance " << totalVariance << " RMS Variance "
             << rmsVariance << std::endl;
 #endif
-  return rmsVariance;
+
+  return totalVariance;
 }
 
 void FingerprintVarianceScoreData::clear() {

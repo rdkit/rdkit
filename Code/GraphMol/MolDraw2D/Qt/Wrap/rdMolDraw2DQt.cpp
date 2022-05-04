@@ -34,6 +34,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2DQt) {
   python::scope().attr("__doc__") =
       "Module containing a C++ implementation of 2D molecule drawing using Qt";
 
+  python::scope().attr("rdkitQtVersion") = RDKit::rdkitQtVersion;
+
   std::string docString = "Qt molecule drawer";
   python::class_<RDKit::MolDraw2DQt, python::bases<RDKit::MolDraw2D>,
                  boost::noncopyable>("MolDraw2DQt", docString.c_str(),

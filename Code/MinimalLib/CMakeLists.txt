@@ -21,7 +21,7 @@ endif(RDK_BUILD_MINIMAL_LIB)
 if(RDK_BUILD_CFFI_LIB)
 
     set(CMAKE_C_STANDARD 99)
-    if((NOT MSVC) OR (MSVC AND RDK_INSTALL_DLLS_MSVC))
+    if((NOT WIN32) OR (WIN32 AND RDK_INSTALL_DLLS_MSVC))
         set(LIBS_TO_USE 
             MolStandardize_static DistGeomHelpers_static ForceFieldHelpers_static DistGeometry_static
             ForceField_static Alignment_static

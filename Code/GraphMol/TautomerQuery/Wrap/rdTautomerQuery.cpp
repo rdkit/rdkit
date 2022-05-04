@@ -1,7 +1,7 @@
 //
 // Created by Gareth Jones on 5/30/2020.
 //
-// Copyright 2020 Schrodinger, Inc
+// Copyright 2020-2022 Schrodinger, Inc and other RDKit contributors
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -12,10 +12,12 @@
 #include <RDBoost/python.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
 #include <GraphMol/Wrap/substructmethods.h>
+#include <RDBoost/python_streambuf.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL rdtautomerquery_array_API
 
 namespace python = boost::python;
+using boost_adaptbx::python::streambuf;
 using namespace RDKit;
 
 namespace {
@@ -133,6 +135,38 @@ PyObject *tautomerGetSubstructMatchesWithTautomers(
 
 }  // namespace
 
+namespace RDKit {
+struct tautomerquery_pickle_suite : python::pickle_suite {
+  static python::tuple getinitargs(const TautomerQuery &self) {
+    if (!TautomerQueryCanSerialize()) {
+      throw_runtime_error("Pickling of TautomerQuery instances is not enabled");
+    }
+    auto res = self.serialize();
+    return python::make_tuple(python::object(python::handle<>(
+        PyBytes_FromStringAndSize(res.c_str(), res.length()))));
+  };
+};
+
+void toStream(const TautomerQuery &tq, python::object &fileobj) {
+  streambuf ss(fileobj, 't');
+  streambuf::ostream ost(ss);
+  tq.toStream(ost);
+}
+
+void initFromStream(TautomerQuery &tq, python::object &fileobj) {
+  streambuf ss(fileobj,
+               'b');  // python StringIO can't seek, so need binary data
+  streambuf::istream is(ss);
+  tq.initFromStream(is);
+}
+
+python::object TQToBinary(const TautomerQuery &tq) {
+  auto res = tq.serialize();
+  return python::object(
+      python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+}
+}  // namespace RDKit
+
 struct TautomerQuery_wrapper {
   static void wrap() {
     RegisterVectorConverter<size_t>("UnsignedLong_Vect");
@@ -146,6 +180,7 @@ struct TautomerQuery_wrapper {
         "TautomerQuery", docString, python::no_init)
         .def("__init__", python::make_constructor(createDefaultTautomerQuery))
         .def("__init__", python::make_constructor(&TautomerQuery::fromMol))
+        .def(python::init<std::string>())
         .def("IsSubstructOf", tautomerIsSubstructOf,
              (python::arg("self"), python::arg("target"),
               python::arg("recursionPossible") = true,
@@ -189,12 +224,19 @@ struct TautomerQuery_wrapper {
              python::return_internal_reference<>())
         .def("GetModifiedAtoms", &TautomerQuery::getModifiedAtoms)
         .def("GetModifiedBonds", &TautomerQuery::getModifiedBonds)
-        .def("GetTautomers", getTautomers);
+        .def("GetTautomers", getTautomers)
+        .def("ToBinary", TQToBinary)
+        .def_pickle(tautomerquery_pickle_suite());
 
     python::def("PatternFingerprintTautomerTarget",
                 &TautomerQuery::patternFingerprintTarget,
                 (python::arg("target"), python::arg("fingerprintSize") = 2048),
                 python::return_value_policy<python::manage_new_object>());
+
+    python::def(
+        "TautomerQueryCanSerialize", TautomerQueryCanSerialize,
+        "Returns True if the TautomerQuery is serializable "
+        "(requires that the RDKit was built with boost::serialization)");
   }
 };
 

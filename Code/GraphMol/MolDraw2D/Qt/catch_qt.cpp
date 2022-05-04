@@ -77,6 +77,35 @@ TEST_CASE("Github #4764") {
   }
 }
 
+TEST_CASE("Github #5122: bad highlighting when bondLineWidth is increased") {
+  SECTION("basics") {
+    auto mol = "CC1=CC=C(C=C1)C1=CC=CC=C1"_smiles;
+    REQUIRE(mol);
+    std::vector<int> highlightAtoms{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    std::vector<int> highlightBonds{1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13};
+
+    {
+      QImage qimg(400, 400, QImage::Format_ARGB32);
+      QPainter qpt(&qimg);
+      MolDraw2DQt drawer(qimg.width(), qimg.height(), &qpt);
+      drawer.drawOptions().bondLineWidth = 3;
+      drawer.drawOptions().scaleHighlightBondWidth = true;
+      drawer.drawMolecule(*mol, "highlight both", &highlightAtoms,
+                          &highlightBonds);
+      qimg.save("testGithub5122.qt.1.png");
+    }
+    {
+      QImage qimg(400, 400, QImage::Format_ARGB32);
+      QPainter qpt(&qimg);
+      MolDraw2DQt drawer(qimg.width(), qimg.height(), &qpt);
+      drawer.drawOptions().bondLineWidth = 3;
+      drawer.drawOptions().scaleHighlightBondWidth = true;
+      drawer.drawMolecule(*mol, "highlight bonds", nullptr, &highlightBonds);
+      qimg.save("testGithub5122.qt.2.png");
+    }
+  }
+}
+
 int main(int argc, char* argv[]) {
   QGuiApplication app(argc, argv);
 

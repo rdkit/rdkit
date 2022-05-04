@@ -548,3 +548,9 @@ TEST_CASE("CIP code errors on fragments which cannot be kekulized",
                                                   cip));
   }
 }
+
+TEST_CASE("GitHub Issue #5142", "[bug][accurateCIP]") {
+  auto mol = "*C1C[C@H](CCC)[C@@H](C)[C@H](C)C1"_smiles;
+  REQUIRE(mol);
+  CIPLabeler::assignCIPLabels(*mol);
+}

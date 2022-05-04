@@ -139,8 +139,8 @@ struct RGroupData {
       auto atom = *atIt;
       if (atom->getAtomicNum() > 1) {
         return false;
-      }
-      else if (atom->getAtomicNum() == 0 && ! atom->hasProp(SIDECHAIN_RLABELS)) {
+      } else if (atom->getAtomicNum() == 0 &&
+                 !atom->hasProp(SIDECHAIN_RLABELS)) {
         return false;
       }
     }

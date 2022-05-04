@@ -39,8 +39,6 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
-#include <GraphMol/FMCS/FMCS.h>
-#include <boost/scoped_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <set>
 #include <utility>
@@ -61,6 +59,7 @@ const std::string SIDECHAIN_RLABELS = "sideChainRlabels";
 const std::string done = "RLABEL_PROCESSED";
 const std::string CORE = "Core";
 const std::string RPREFIX = "R";
+const std::string _rgroupInputDummy = "_rgroupInputDummy";
 
 namespace {
 void ADD_MATCH(R_DECOMP &match, int rlabel) {
@@ -82,7 +81,6 @@ RGroupDecomposition::RGroupDecomposition(
 RGroupDecomposition::~RGroupDecomposition() { delete data; }
 
 int RGroupDecomposition::add(const ROMol &inmol) {
-  constexpr const char *inputDummy = "INPUT_DUMMY";
   // get the sidechains if possible
   //  Add hs for better symmetrization
   RWMol mol(inmol);
@@ -93,13 +91,14 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // mark any wildcards in input molecule:
   for (auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
-      atom->setProp(inputDummy, true);
+      atom->setProp(_rgroupInputDummy, true);
       // clean any existing R group numbers
       atom->setIsotope(0);
       atom->setAtomMapNum(0);
       if (atom->hasProp(common_properties::_MolFileRLabel)) {
         atom->clearProp(common_properties::_MolFileRLabel);
       }
+      atom->setProp(common_properties::dummyLabel, "*");
     }
   }
   int core_idx = 0;
@@ -290,7 +289,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             unsigned int index =
                 at->getIsotope();  // this is the index into the core
             // it messes up when there are multiple ?
-            if (!at->hasProp(inputDummy)) {
+            if (!at->hasProp(_rgroupInputDummy)) {
               int rlabel;
               auto coreAtom = rcore->core->getAtomWithIdx(index);
               coreAtomAnyMatched.insert(index);
@@ -305,7 +304,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
               }
             } else {
               // restore input wildcard
-              at->clearProp(inputDummy);
+              at->clearProp(_rgroupInputDummy);
             }
           }
         }

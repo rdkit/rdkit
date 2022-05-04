@@ -212,6 +212,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testVariableLegend_2.svg", 2392644674U},
     {"testVariableLegend_3.svg", 2954965314U},
     {"testGithub_5061.svg", 632991478U},
+    {"testGithub_5185.svg", 1652507399U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4461,6 +4462,33 @@ M  END)RXN";
       outs << text;
       outs.flush();
       check_file_hash("testGithub_5061.svg");
+    }
+  }
+}
+
+TEST_CASE(
+    "Github 5185 - don't draw atom indices between double bond") {
+  SECTION("basics") {
+    auto m1 = "OC(=O)CCCC(=O)O"_smiles;
+    REQUIRE(m1);
+    {
+      // default legend
+      MolDraw2DSVG drawer(400, 200, -1, -1);
+      drawer.drawOptions().addAtomIndices = true;
+      MolDraw2DUtils::prepareAndDrawMolecule(drawer, *m1);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testGithub_5185.svg");
+      outs << text;
+      outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+      CHECK(text.find("<path class='note' d='M 92.5 130.1")
+            != std::string::npos);
+      check_file_hash("testGithub_5185.svg");
+#else
+      CHECK(text.find("<text x='90.4' y='130.3' class='note' ")
+            != std::string::npos);
+#endif
     }
   }
 }
