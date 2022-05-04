@@ -1,5 +1,10 @@
-
-#define CATCH_CONFIG_MAIN
+//
+// Copyright 2020-2022 Schrodinger, Inc and other RDKit contributors
+//  @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
 
 #include "catch.hpp"
 
@@ -329,4 +334,37 @@ TEST_CASE("github #3821 check TAUTOMERQUERY_OPERATOR= does a deep copy") {
   auto tautomerQueryAssigned = *tautomerQuery;
   CHECK(&(tautomerQuery->getTemplateMolecule()) !=
         &tautomerQueryAssigned.getTemplateMolecule());
+}
+
+TEST_CASE("Serialization") {
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  SECTION("basics") {
+    auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
+    REQUIRE(mol);
+    auto tautomerQuery =
+        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+    CHECK(15 == tautomerQuery->getTautomers().size());
+
+    std::string pickle = tautomerQuery->serialize();
+    TautomerQuery serialized(pickle);
+    CHECK(serialized.getTautomers().size() ==
+          tautomerQuery->getTautomers().size());
+
+    auto queryFingerprint = serialized.patternFingerprintTemplate();
+    REQUIRE(queryFingerprint);
+    std::vector<std::string> targetSmis{"CCc1nc2[nH]c(=N)nc(O)c2[nH]1",
+                                        "CN1C2=NC=NC2=C(O)N=C1N"};
+    for (auto targetSmiles : targetSmis) {
+      auto target = SmilesToMol(targetSmiles);
+      REQUIRE(target);
+      CHECK(serialized.isSubstructOf(*target));
+      auto targetFingerprint = TautomerQuery::patternFingerprintTarget(*target);
+      REQUIRE(targetFingerprint);
+      CHECK(AllProbeBitsMatch(*queryFingerprint, *targetFingerprint));
+      delete targetFingerprint;
+      delete target;
+    }
+    delete queryFingerprint;
+  }
+#endif
 }

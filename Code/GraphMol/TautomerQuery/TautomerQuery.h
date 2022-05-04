@@ -1,7 +1,7 @@
 //
 // Created by Gareth Jones on 5/7/2020.
 //
-// Copyright 2020 Schrodinger, Inc
+// Copyright 2020-2022 Schrodinger, Inc and other RDKit contributors
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -14,13 +14,24 @@
 #define RDKIT_TAUTOMERQUERY_H
 
 #include <GraphMol/ROMol.h>
+#include <GraphMol/MolPickler.h>
 #include <vector>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <DataStructs/ExplicitBitVect.h>
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/split_member.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#endif
+
 namespace RDKit {
 
 class RWMol;
+
+RDKIT_TAUTOMERQUERY_EXPORT bool TautomerQueryCanSerialize();
 
 class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
  private:
@@ -29,8 +40,8 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
   // Template query for substructure search
   std::unique_ptr<const ROMol> d_templateMolecule;
   // Tautomeric bonds and atoms
-  const std::vector<size_t> d_modifiedAtoms;
-  const std::vector<size_t> d_modifiedBonds;
+  std::vector<size_t> d_modifiedAtoms;
+  std::vector<size_t> d_modifiedBonds;
 
   // tests if a match to the template matches a specific tautomer
   bool matchTautomer(const ROMol &mol, const ROMol &tautomer,
@@ -56,6 +67,8 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
       d_tautomers.push_back(boost::make_shared<ROMol>(*taut));
     }
   }
+
+  TautomerQuery(const std::string &pickle) { initFromString(pickle); }
 
   // Factory to build TautomerQuery
   // Caller owns the memory
@@ -91,7 +104,54 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
 
   const std::vector<size_t> getModifiedBonds() const { return d_modifiedBonds; }
 
+  //! serializes (pickles) to a stream
+  void toStream(std::ostream &ss) const;
+  //! returns a string with a serialized (pickled) representation
+  std::string serialize() const;
+  //! initializes from a stream pickle
+  void initFromStream(std::istream &ss);
+  //! initializes from a string pickle
+  void initFromString(const std::string &text);
+
   friend class TautomerQueryMatcher;
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  template <class Archive>
+  void save(Archive &ar, const unsigned int version) const {
+    RDUNUSED_PARAM(version);
+    std::vector<std::string> pkls;
+    for (const auto taut : d_tautomers) {
+      std::string pkl;
+      MolPickler::pickleMol(*taut, pkl);
+      pkls.push_back(pkl);
+    }
+    ar << pkls;
+    std::string molpkl;
+    MolPickler::pickleMol(*d_templateMolecule, molpkl);
+    ar << molpkl;
+    ar << d_modifiedAtoms;
+    ar << d_modifiedBonds;
+  }
+
+  template <class Archive>
+  void load(Archive &ar, const unsigned int version) {
+    RDUNUSED_PARAM(version);
+
+    std::vector<std::string> pkls;
+    ar >> pkls;
+    d_tautomers.clear();
+    for (const auto &pkl : pkls) {
+      d_tautomers.push_back(ROMOL_SPTR(new ROMol(pkl)));
+    }
+    std::string molpkl;
+    ar >> molpkl;
+    d_templateMolecule.reset(new ROMol(molpkl));
+
+    ar >> d_modifiedAtoms;
+    ar >> d_modifiedBonds;
+  }
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
+#endif
 };
 
 // so we can use the templates in Code/GraphMol/Substruct/SubstructMatch.h
