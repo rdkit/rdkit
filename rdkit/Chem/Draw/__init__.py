@@ -758,7 +758,11 @@ def _getMorganEnv(mol, atomId, radius, baseRad, aromaticColor, ringColor, center
 
   # set the coordinates of the submol based on the coordinates of the original molecule
   amap = {}
-  submol = Chem.PathToSubmol(mol, enlargedEnv, atomMap=amap)
+  if enlargedEnv:
+    submol = Chem.PathToSubmol(mol, enlargedEnv, atomMap=amap)
+  else:
+    # generate submol from fragments with no bonds
+    submol = Chem.MolFromSmiles(Chem.MolFragmentToSmiles(mol, atomsToUse=atomsToUse))
   Chem.FastFindRings(submol)
   conf = Chem.Conformer(submol.GetNumAtoms())
   confOri = mol.GetConformer(0)
