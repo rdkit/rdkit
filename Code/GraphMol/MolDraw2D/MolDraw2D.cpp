@@ -897,8 +897,8 @@ void MolDraw2D::makeReactionDrawMol(
     const std::map<int, DrawColour> &highlightAtomMap,
     const std::map<int, DrawColour> &highlightBondMap,
     std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &mols) {
+  mol.updatePropertyCache(false);
   if (drawOptions().prepareMolsBeforeDrawing) {
-    mol.updatePropertyCache(false);
     try {
       RDLog::LogStateSetter blocker;
       MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
