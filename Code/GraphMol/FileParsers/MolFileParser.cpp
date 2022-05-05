@@ -1442,7 +1442,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
     res->setIsotope(3);
   } else if (symb == "Pol" || symb == "Mod") {
     res->setAtomicNum(0);
-    res->setProp(common_properties::_MolFilePseudoAtom, symb);
+    res->setProp(common_properties::dummyLabel, symb);
   } else {
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
       symb[1] = static_cast<char>(tolower(symb[1]));
@@ -2114,7 +2114,7 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
       res->setIsotope(3);
     } else if (token == "Pol" || token == "Mod") {
       res = new Atom(0);
-      res->setProp(common_properties::_MolFilePseudoAtom, token);
+      res->setProp(common_properties::dummyLabel, token);
     } else {
       if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
         token[1] = static_cast<char>(tolower(token[1]));

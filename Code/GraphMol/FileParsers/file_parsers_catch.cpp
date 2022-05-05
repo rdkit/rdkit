@@ -4648,11 +4648,14 @@ M  END
     REQUIRE(mol);
     std::string val;
     CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
-        common_properties::_MolFilePseudoAtom, val));
+        common_properties::dummyLabel, val));
     CHECK(val == "Pol");
 
     auto mb = MolToV3KMolBlock(*mol);
     CHECK(mb.find("1 Pol") != std::string::npos);
+    mol->clearConformers();
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "*CC |$Pol_p;;$|");
   }
   SECTION("V2000") {
     auto mol = R"CTAB(
@@ -4669,9 +4672,12 @@ M  END
     REQUIRE(mol);
     std::string val;
     CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
-        common_properties::_MolFilePseudoAtom, val));
+        common_properties::dummyLabel, val));
     CHECK(val == "Mod");
     auto mb = MolToMolBlock(*mol);
     CHECK(mb.find("0 Mod 0") != std::string::npos);
+    mol->clearConformers();
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "*CC |$Mod_p;;$|");
   }
 }

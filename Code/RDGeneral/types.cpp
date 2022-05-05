@@ -45,7 +45,6 @@ const std::string _MolFileBondAttach = "_MolFileBondAttach";
 const std::string _MolFileBondType = "_MolFileBondType";
 const std::string _MolFileBondStereo = "_MolFileBondStereo";
 const std::string _MolFileBondCfg = "_MolFileBondCfg";
-const std::string _MolFilePseudoAtom = "_MolFilePseudoAtom";
 
 const std::string _Name = "_Name";
 const std::string _NeedsQueryScan = "_NeedsQueryScan";
