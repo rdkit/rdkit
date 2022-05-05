@@ -392,7 +392,9 @@ const std::string AtomGetMolFileSymbol(
   } else if (atom->getAtomicNum()) {
     res = atom->getSymbol();
   } else {
-    if (!atom->hasProp(common_properties::dummyLabel)) {
+    if (atom->getPropIfPresent(common_properties::_MolFilePseudoAtom, res)) {
+      // no additional work required
+    } else if (!atom->hasProp(common_properties::dummyLabel)) {
       if (atom->hasQuery() &&
           (atom->getQuery()->getTypeLabel() == "A" ||
            (atom->getQuery()->getNegation() &&

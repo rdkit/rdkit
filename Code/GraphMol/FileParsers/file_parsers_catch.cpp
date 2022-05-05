@@ -4650,6 +4650,9 @@ M  END
     CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
         common_properties::_MolFilePseudoAtom, val));
     CHECK(val == "Pol");
+
+    auto mb = MolToV3KMolBlock(*mol);
+    CHECK(mb.find("1 Pol") != std::string::npos);
   }
   SECTION("V2000") {
     auto mol = R"CTAB(
@@ -4668,5 +4671,7 @@ M  END
     CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
         common_properties::_MolFilePseudoAtom, val));
     CHECK(val == "Mod");
+    auto mb = MolToMolBlock(*mol);
+    CHECK(mb.find("0 Mod 0") != std::string::npos);
   }
 }
