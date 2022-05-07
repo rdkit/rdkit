@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,6 +29,10 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <boost/serialization/split_member.hpp>
+#endif
 #include <RDGeneral/BoostEndInclude.h>
 
 // our stuff
@@ -784,6 +788,17 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     file format. stereo_groups should be std::move()ed into this function.
   */
   void setStereoGroups(std::vector<StereoGroup> stereo_groups);
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  //! \name boost::serialization support
+  //@{
+  template <class Archive>
+  void save(Archive &ar, const unsigned int version) const;
+  template <class Archive>
+  void load(Archive &ar, const unsigned int version);
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
+  //@}
+#endif
 
  private:
   MolGraph d_graph;

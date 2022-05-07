@@ -53,35 +53,41 @@ void serialize(Archive &, RDKit::MolHolderBase &, const unsigned int) {}
 template <class Archive>
 void save(Archive &ar, const RDKit::MolHolder &molholder,
           const unsigned int version) {
-  RDUNUSED_PARAM(version);
   ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
 
-  std::int64_t pkl_count = molholder.getMols().size();
-  ar &pkl_count;
+  if (version < 2) {
+    std::int64_t pkl_count = molholder.getMols().size();
+    ar &pkl_count;
 
-  for (auto &mol : molholder.getMols()) {
-    std::string pkl;
-    RDKit::MolPickler::pickleMol(*mol.get(), pkl);
-    ar << pkl;
+    for (auto &mol : molholder.getMols()) {
+      std::string pkl;
+      RDKit::MolPickler::pickleMol(*mol.get(), pkl);
+      ar << pkl;
+    }
+  } else {
+    ar &molholder.getMols();
   }
 }
 
 template <class Archive>
 void load(Archive &ar, RDKit::MolHolder &molholder,
           const unsigned int version) {
-  RDUNUSED_PARAM(version);
   ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
 
   std::vector<boost::shared_ptr<RDKit::ROMol>> &mols = molholder.getMols();
   mols.clear();
 
-  std::int64_t pkl_count = -1;
-  ar &pkl_count;
+  if (version < 2) {
+    std::int64_t pkl_count = -1;
+    ar &pkl_count;
 
-  for (std::int64_t i = 0; i < pkl_count; ++i) {
-    std::string pkl;
-    ar >> pkl;
-    mols.push_back(boost::make_shared<RDKit::ROMol>(pkl));
+    for (std::int64_t i = 0; i < pkl_count; ++i) {
+      std::string pkl;
+      ar >> pkl;
+      mols.push_back(boost::make_shared<RDKit::ROMol>(pkl));
+    }
+  } else {
+    ar &mols;
   }
 }
 
@@ -215,7 +221,7 @@ void load(Archive &ar, RDKit::SubstructLibrary &slib,
 }  // end namespace serialization
 }  // end namespace boost
 
-BOOST_CLASS_VERSION(RDKit::MolHolder, 1);
+BOOST_CLASS_VERSION(RDKit::MolHolder, 2);
 BOOST_CLASS_VERSION(RDKit::CachedMolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::CachedSmilesMolHolder, 1);
 BOOST_CLASS_VERSION(RDKit::CachedTrustedSmilesMolHolder, 1);
