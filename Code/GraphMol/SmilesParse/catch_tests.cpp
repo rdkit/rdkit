@@ -1896,3 +1896,26 @@ TEST_CASE("Github #4981: Invalid SMARTS for negated single-atoms", "[smarts]") {
     CHECK(MolToSmarts(*mol).find("N!C") == std::string::npos);
   }
 }
+
+TEST_CASE("Pol and Mod atoms in CXSMILES", "[cxsmiles]") {
+  SECTION("Pol basics") {
+    auto mol = "CC* |$;;Pol_p$|"_smiles;
+    REQUIRE(mol);
+    std::string val;
+    CHECK(mol->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::dummyLabel, val));
+    CHECK(val == "Pol");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "*CC |$Pol_p;;$|");
+  }
+  SECTION("Mod basics") {
+    auto mol = "CC* |$;;Mod_p$|"_smiles;
+    REQUIRE(mol);
+    std::string val;
+    CHECK(mol->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::dummyLabel, val));
+    CHECK(val == "Mod");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "*CC |$Mod_p;;$|");
+  }
+}

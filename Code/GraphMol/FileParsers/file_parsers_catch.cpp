@@ -4598,31 +4598,86 @@ M  END)CTAB";
 TEST_CASE(
     "Github #5165: issue with V3000 SD files containing enhanced "
     "stereochemistry information") {
-    
-    SECTION("as reported") {
-        std::string rdbase = getenv("RDBASE");
-        std::string fName =
-          rdbase + "/Code/GraphMol/FileParsers/test_data/mol_with_enhanced_stereo_2_And_groups.sdf";
-        SDMolSupplier suppl(fName);
-        ROMol *mol = suppl.next();
-        REQUIRE(mol);
-        auto groups = mol->getStereoGroups();
-        REQUIRE(groups.size()==2);
-        CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-        CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-    }
-    
-    SECTION("as reported, less whitespace") {
-        std::string rdbase = getenv("RDBASE");
-        std::string fName =
-          rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
-        SDMolSupplier suppl(fName);
-        ROMol *mol = suppl.next();
-        REQUIRE(mol);
-        auto groups = mol->getStereoGroups();
-        REQUIRE(groups.size()==2);
-        CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-        CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-    }
-    
+  SECTION("as reported") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase +
+                        "/Code/GraphMol/FileParsers/test_data/"
+                        "mol_with_enhanced_stereo_2_And_groups.sdf";
+    SDMolSupplier suppl(fName);
+    ROMol *mol = suppl.next();
+    REQUIRE(mol);
+    auto groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 2);
+    CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+  }
+
+  SECTION("as reported, less whitespace") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
+    SDMolSupplier suppl(fName);
+    ROMol *mol = suppl.next();
+    REQUIRE(mol);
+    auto groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 2);
+    CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+  }
+}
+TEST_CASE("POL atoms in CTABS") {
+  SECTION("V3000") {
+    auto mol = R"CTAB(
+  Mrv2102 05042219282D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Pol -6.25 3.375 0 0
+M  V30 2 C -4.9163 4.145 0 0
+M  V30 3 C -3.5826 3.375 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    std::string val;
+    CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
+        common_properties::dummyLabel, val));
+    CHECK(val == "Pol");
+
+    auto mb = MolToV3KMolBlock(*mol);
+    CHECK(mb.find("1 Pol") != std::string::npos);
+    mol->clearConformers();
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "*CC |$Pol_p;;$|");
+  }
+  SECTION("V2000") {
+    auto mol = R"CTAB(
+  Mrv2102 05042219412D          
+
+  3  2  0  0  0  0            999 V2000
+   -3.3482    1.8080    0.0000 Mod 0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6337    2.2205    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9193    1.8080    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    std::string val;
+    CHECK(mol->getAtomWithIdx(0)->getPropIfPresent(
+        common_properties::dummyLabel, val));
+    CHECK(val == "Mod");
+    auto mb = MolToMolBlock(*mol);
+    CHECK(mb.find("0 Mod 0") != std::string::npos);
+    mol->clearConformers();
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "*CC |$Mod_p;;$|");
+  }
 }

@@ -26,6 +26,10 @@ using namespace RDKit;
 
 const std::string cxsmilesindex = "_cxsmilesindex";
 
+// FIX: once this can be automated using constexpr, do so
+const std::vector<std::string_view> pseudoatoms{"Pol", "Mod"};
+const std::vector<std::string_view> pseudoatoms_p{"Pol_p", "Mod_p"};
+
 std::map<std::string, std::string> sgroupTypemap = {
     {"n", "SRU"},   {"mon", "MON"}, {"mer", "MER"}, {"co", "COP"},
     {"xl", "CRO"},  {"mod", "MOD"}, {"mix", "MIX"}, {"f", "FOR"},
@@ -46,13 +50,13 @@ void addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
   delete qa;
 }
 
-void processCXSmilesLabels(RDKit::RWMol &mol) {
+void processCXSmilesLabels(RWMol &mol) {
   if (mol.hasProp("_cxsmilesLabelsProcessed")) {
     return;
   }
   for (auto atom : mol.atoms()) {
     std::string symb = "";
-    if (atom->getPropIfPresent(RDKit::common_properties::atomLabel, symb)) {
+    if (atom->getPropIfPresent(common_properties::atomLabel, symb)) {
       if (symb == "star_e") {
         /* according to the MDL spec, these match anything, but in MARVIN they
         are "unspecified end groups" for polymers */
@@ -78,6 +82,12 @@ void processCXSmilesLabels(RDKit::RWMol &mol) {
         addquery(makeMAtomQuery(), symb, mol, atom->getIdx());
       } else if (symb == "MH_p") {
         addquery(makeMHAtomQuery(), symb, mol, atom->getIdx());
+      } else if (std::find(pseudoatoms_p.begin(), pseudoatoms_p.end(), symb) !=
+                 pseudoatoms_p.end()) {
+        // strip off the "_p":
+        atom->setProp(common_properties::dummyLabel,
+                      symb.substr(0, symb.size() - 2));
+        atom->clearProp(common_properties::atomLabel);
       }
     } else if (atom->getAtomicNum() == 0 && !atom->hasQuery() &&
                atom->getSymbol() == "*") {
@@ -1626,6 +1636,12 @@ std::string get_atomlabel_block(const ROMol &mol,
     if (atom->getPropIfPresent(common_properties::_QueryAtomGenericLabel,
                                lbl)) {
       res += quote_string(lbl + "_p");
+    } else if (!atom->getAtomicNum() &&
+               atom->getPropIfPresent(common_properties::dummyLabel, lbl) &&
+               std::find(SmilesParseOps::pseudoatoms.begin(),
+                         SmilesParseOps::pseudoatoms.end(),
+                         lbl) != SmilesParseOps::pseudoatoms.end()) {
+      res += quote_string(lbl + "_p");
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
       res += quote_string(lbl);
     }
@@ -1727,12 +1743,19 @@ std::string get_atom_props_block(const ROMol &mol,
     bool includePrivate = false, includeComputed = false;
     for (const auto &pn : atom->getPropList(includePrivate, includeComputed)) {
       if (std::find(skip.begin(), skip.end(), pn) == skip.end()) {
+        std::string pv = atom->getProp<std::string>(pn);
+        if (pn == "dummyLabel" &&
+            std::find(SmilesParseOps::pseudoatoms.begin(),
+                      SmilesParseOps::pseudoatoms.end(),
+                      pv) != SmilesParseOps::pseudoatoms.end()) {
+          // it's a pseudoatom, skip it
+          continue;
+        }
         if (res.size() == 0) {
           res += "atomProp";
         }
-        res +=
-            boost::str(boost::format(":%d.%s.%s") % which % quote_string(pn) %
-                       quote_string(atom->getProp<std::string>(pn)));
+        res += boost::str(boost::format(":%d.%s.%s") % which %
+                          quote_string(pn) % quote_string(pv));
       }
     }
     ++which;
@@ -1797,7 +1820,8 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   for (auto idx : atomOrder) {
     const auto at = mol.getAtomWithIdx(idx);
     if (at->hasProp(common_properties::atomLabel) ||
-        at->hasProp(common_properties::_QueryAtomGenericLabel)) {
+        at->hasProp(common_properties::_QueryAtomGenericLabel) ||
+        at->hasProp(common_properties::dummyLabel)) {
       needLabels = true;
     }
     if (at->hasProp(common_properties::molFileValue)) {
