@@ -654,12 +654,15 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
         idx = NOLABEL;
       }
       break;
-      case MolzipLabel::FragmentOnBonds:
+    case MolzipLabel::FragmentOnBonds:
         // shouldn't ever get here
         CHECK_INVARIANT(
             0, "FragmentOnBonds is not an atom label, it is an atom index");
         break;
-      default:
+    case MolzipLabel::AtomProperty:
+        a->getPropIfPresent<unsigned int>(p.atomProperty, idx);
+        break;
+    default:
         CHECK_INVARIANT(0, "bogus MolZipLabel value in MolZip::get_label");
     }
   }
@@ -955,7 +958,7 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
       }
     }
   }
-  newmol->updatePropertyCache(params.enforceValenceRules);
+  newmol->updatePropertyCache();
   newmol->setProp(common_properties::_StereochemDone, true);
   return newmol;
 }

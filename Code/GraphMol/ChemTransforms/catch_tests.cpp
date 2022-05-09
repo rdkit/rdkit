@@ -322,9 +322,8 @@ TEST_CASE("molzip", "[]") {
             RDKit::MolFragmenter::fragmentOnBonds(*m, bonds)};
         auto smiles = MolToSmiles(*resa);
 
-        if (std::count(smiles.begin(), smiles.end(), '/') != 2) {
+        if (std::count(smiles.begin(), smiles.end(), '/') != 2)
           continue;  // we removed bond stereo in fragment to bonds!
-        }
         MolzipParams p;
         p.label = MolzipLabel::FragmentOnBonds;
         CHECK(MolToSmiles(*molzip(*resa, p)) == MolToSmiles(*m));
@@ -335,9 +334,8 @@ TEST_CASE("molzip", "[]") {
             *m, bonds, true, &dummyLabels)};
         auto smiles = MolToSmiles(*res);
 
-        if (std::count(smiles.begin(), smiles.end(), '/') != 2) {
+        if (std::count(smiles.begin(), smiles.end(), '/') != 2)
           continue;  // we removed bond stereo in fragment to bonds!
-        }
         for (auto *atom : res->atoms()) {
           if (atom->getIsotope()) {
             atom->setAtomMapNum(atom->getIsotope());
@@ -382,6 +380,18 @@ TEST_CASE("molzip", "[]") {
     auto a = "CC(=[*:1])N"_smiles;
     auto b = "[*:1]-N=C"_smiles;
     auto mol = molzip(*a, *b, p);
+  }
+    
+  {
+      // check atom property zipping
+      auto a = "C=C*.O/C=N/*"_smiles;
+      a->getAtomWithIdx(2)->setProp<unsigned int>("fuse", 1);
+      a->getAtomWithIdx(6)->setProp<unsigned int>("fuse", 1);
+      MolzipParams p;
+      p.atomProperty = "fuse";
+      p.label = MolzipLabel::AtomProperty;
+      auto mol = molzip(*a, p);
+      CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
   }
 }
 
