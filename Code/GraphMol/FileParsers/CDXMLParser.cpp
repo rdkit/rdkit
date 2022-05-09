@@ -18,7 +18,7 @@ using boost::property_tree::ptree;
 namespace RDKit {
 
 namespace {
-const std::string NEEDS_FUSE(NEEDS_FUSE);
+const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
 const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
 const std::string FUSE_LABEL("CDXML_NODE_ID");
 
