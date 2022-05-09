@@ -63,8 +63,7 @@ void set_fuse_label(Atom*atm, unsigned int idx) {
 void parse_fragment(RWMol &mol,
                     ptree &frag,
 		            std::map<unsigned int, Atom *> &ids,
-                    int external_attachment = -1,
-                    bool sanitize=false) {
+                    int external_attachment = -1) {
   // XXX Need to put the fragid on the molecule so we can properly make reactions
     
   int frag_id = frag.get<int>("<xmlattr>.id", -1);
@@ -155,8 +154,8 @@ void parse_fragment(RWMol &mol,
       if (nodetype == "Nickname" || nodetype == "Fragment") {
           for(auto &fragment: node.second) {
               if(fragment.first == "fragment") {
-                  parse_fragment(mol, fragment.second, ids, atom_id, sanitize=sanitize);
-                  mol.setProp<bool>(NEEDS_FUSE, true);
+		parse_fragment(mol, fragment.second, ids, atom_id);
+		mol.setProp<bool>(NEEDS_FUSE, true);
               }
           }
       }
@@ -225,7 +224,8 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
   MolzipParams molzip_params;
   molzip_params.label = MolzipLabel::AtomProperty;
   molzip_params.atomProperty = FUSE_LABEL;
-    
+  molzip_params.enforceValenceRules = false;
+  
   for( auto &cdxml : pt ) {
       if(cdxml.first == "CDXML") {
           for( auto &node : cdxml.second) {
@@ -234,8 +234,6 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                       if (frag.first == "fragment") { // chemical matter
                           std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
                           parse_fragment(*mol, frag.second, ids);
-                          MolOps::assignChiralTypesFromBondDirs(*mol);
-                          MolOps::assignStereochemistry(*mol);
                           unsigned int frag_id = mol->getProp<unsigned int>(CDXML_FRAG_ID);
                           fragment_lookup[frag_id] = mols.size();
                           if(mol->hasProp(NEEDS_FUSE)) {
@@ -245,6 +243,21 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                           } else {
                               mols.push_back(std::move(mol));
                           }
+			  if (sanitize) {
+			    RWMol *res = mols.back().get();
+			    if (removeHs) {
+			      MolOps::removeHs(*res, false, false);
+			    } else {
+			      MolOps::sanitizeMol(*res);
+			    }
+			    // now that atom stereochem has been perceived, the wedging
+			    // information is no longer needed, so we clear
+			    // single bond dir flags:
+			    //ClearSingleBondDirFlags(*res); XXX steal from mol parser
+			    MolOps::assignChiralTypesFromBondDirs(*res);
+			    MolOps::assignStereochemistry(*res);
+			    MolOps::detectBondStereochemistry(*res);
+			  }
                       } else if (frag.first == "scheme") { // get the reaction info
                           int scheme_id = frag.second.get<int>("<xmlattr>.id", -1);
                           for(auto &node : frag.second) {

@@ -766,7 +766,7 @@ TEST_CASE("CDXML") {
   MinorAxisEnd3D="336.67 349.67 0"
  /></page></CDXML>)";
         std::vector<std::string> expected = {"CC(C)(C)OC(=O)C1CCCCCC1[*:1]",
-            "C1=CC=C([*:1])C=C1",
+            "c1ccc([*:1])cc1",
             "C1CC1",
             "C1CCC1"};
         std::stringstream iss(cdxml1);
