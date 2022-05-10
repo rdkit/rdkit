@@ -32,6 +32,9 @@
 #include <GraphMol/MolStandardize/MolStandardize.h>
 #include <GraphMol/MolStandardize/Charge.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
+#include <GraphMol/ChemReactions/SanitizeRxn.h>
 
 #include <sstream>
 #include <RDGeneral/BoostStartInclude.h>
@@ -183,77 +186,204 @@ RWMol *qmol_from_input(const std::string &input, const char *details_json) {
   return qmol_from_input(input, json);
 }
 
+ChemicalReaction *rxn_from_input(const std::string &input,
+                                 const std::string &details_json = "") {
+  bool useSmiles = false;
+  bool sanitize = false;
+  ChemicalReaction *rxn = nullptr;
+  boost::property_tree::ptree pt;
+  if (!details_json.empty()) {
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(sanitize);
+    LPT_OPT_GET(useSmiles);
+  }
+  try {
+    if (input.find("$RXN") != std::string::npos) {
+      bool removeHs = false;
+      bool strictParsing = false;
+      LPT_OPT_GET(removeHs);
+      LPT_OPT_GET(strictParsing);
+      rxn = RxnBlockToChemicalReaction(input, false, removeHs, strictParsing);
+    } else {
+      rxn = RxnSmartsToChemicalReaction(input, nullptr, useSmiles);
+    }
+  } catch (...) {
+    // we really don't want exceptions to be thrown in here
+    rxn = nullptr;
+  }
+  if (rxn) {
+    try {
+      if (sanitize) {
+        unsigned int failedOp;
+        unsigned int sanitizeOps = RxnOps::SANITIZE_ALL;
+        bool adjustReactants = true;
+        bool mergeQueryHs = true;
+        LPT_OPT_GET(adjustReactants);
+        LPT_OPT_GET(mergeQueryHs);
+        if (!adjustReactants) {
+          sanitizeOps ^= RxnOps::SANITIZE_ADJUST_REACTANTS;
+        }
+        if (!mergeQueryHs) {
+          sanitizeOps ^= RxnOps::SANITIZE_MERGEHS;
+        }
+        RxnOps::sanitizeRxn(*rxn, failedOp, sanitizeOps);
+      }
+    } catch (...) {
+      delete rxn;
+      rxn = nullptr;
+    }
+  }
+  return rxn;
+}
+
+ChemicalReaction *rxn_from_input(const std::string &input,
+                                 const char *details_json) {
+  std::string json;
+  if (details_json) {
+    json = details_json;
+  }
+  return rxn_from_input(input, json);
+}
+
 std::string process_details(const std::string &details, int &width, int &height,
                             int &offsetx, int &offsety, std::string &legend,
                             std::vector<int> &atomIds,
                             std::vector<int> &bondIds, bool &kekulize) {
   rj::Document doc;
   doc.Parse(details.c_str());
-  if (!doc.IsObject()) return "Invalid JSON";
+  if (!doc.IsObject()) {
+    return "Invalid JSON";
+  }
 
-  if (doc.HasMember("atoms")) {
-    if (!doc["atoms"].IsArray()) {
-      return "JSON doesn't contain 'atoms' field, or it is not an array";
+  const auto atomsIt = doc.FindMember("atoms");
+  if (atomsIt != doc.MemberEnd()) {
+    if (!atomsIt->value.IsArray()) {
+      return "JSON contains 'atoms' field, but it is not an array";
     }
-    for (const auto &molval : doc["atoms"].GetArray()) {
-      if (!molval.IsInt()) return ("Atom IDs should be integers");
+    for (const auto &molval : atomsIt->value.GetArray()) {
+      if (!molval.IsInt()) {
+        return ("Atom IDs should be integers");
+      }
       atomIds.push_back(molval.GetInt());
     }
   }
-  if (doc.HasMember("bonds")) {
-    if (!doc["bonds"].IsArray()) {
-      return "JSON contain 'bonds' field, but it is not an array";
+
+  const auto bondsIt = doc.FindMember("bonds");
+  if (bondsIt != doc.MemberEnd()) {
+    if (!bondsIt->value.IsArray()) {
+      return "JSON contains 'bonds' field, but it is not an array";
     }
-    for (const auto &molval : doc["bonds"].GetArray()) {
-      if (!molval.IsInt()) return ("Bond IDs should be integers");
+    for (const auto &molval : bondsIt->value.GetArray()) {
+      if (!molval.IsInt()) {
+        return ("Bond IDs should be integers");
+      }
       bondIds.push_back(molval.GetInt());
     }
   }
 
-  if (doc.HasMember("width")) {
-    if (!doc["width"].IsInt()) {
+  const auto widthIt = doc.FindMember("width");
+  if (widthIt != doc.MemberEnd()) {
+    if (!widthIt->value.IsInt()) {
       return "JSON contains 'width' field, but it is not an int";
     }
-    width = doc["width"].GetInt();
+    width = widthIt->value.GetInt();
   }
 
-  if (doc.HasMember("height")) {
-    if (!doc["height"].IsInt()) {
+  const auto heightIt = doc.FindMember("height");
+  if (heightIt != doc.MemberEnd()) {
+    if (!heightIt->value.IsInt()) {
       return "JSON contains 'height' field, but it is not an int";
     }
-    height = doc["height"].GetInt();
+    height = heightIt->value.GetInt();
   }
 
-  if (doc.HasMember("offsetx")) {
-    if (!doc["offsetx"].IsInt()) {
+  const auto offsetxIt = doc.FindMember("offsetx");
+  if (offsetxIt != doc.MemberEnd()) {
+    if (!offsetxIt->value.IsInt()) {
       return "JSON contains 'offsetx' field, but it is not an int";
     }
-    offsetx = doc["offsetx"].GetInt();
+    offsetx = offsetxIt->value.GetInt();
   }
 
-  if (doc.HasMember("offsety")) {
-    if (!doc["offsety"].IsInt()) {
+  const auto offsetyIt = doc.FindMember("offsety");
+  if (offsetyIt != doc.MemberEnd()) {
+    if (!offsetyIt->value.IsInt()) {
       return "JSON contains 'offsety' field, but it is not an int";
     }
-    offsety = doc["offsety"].GetInt();
+    offsety = offsetyIt->value.GetInt();
   }
 
-  if (doc.HasMember("legend")) {
-    if (!doc["legend"].IsString()) {
+  const auto legendIt = doc.FindMember("legend");
+  if (legendIt != doc.MemberEnd()) {
+    if (!legendIt->value.IsString()) {
       return "JSON contains 'legend' field, but it is not a string";
     }
-    legend = doc["legend"].GetString();
+    legend = legendIt->value.GetString();
   }
 
-  if (doc.HasMember("kekulize")) {
-    if (!doc["kekulize"].IsBool()) {
+  const auto kekulizeIt = doc.FindMember("kekulize");
+  if (kekulizeIt != doc.MemberEnd()) {
+    if (!kekulizeIt->value.IsBool()) {
       return "JSON contains 'kekulize' field, but it is not a bool";
     }
-    kekulize = doc["kekulize"].GetBool();
+    kekulize = kekulizeIt->value.GetBool();
   } else {
     kekulize = true;
   }
 
+  return "";
+}
+
+std::string process_rxn_details(
+    const std::string &details, int &width, int &height, int &offsetx,
+    int &offsety, std::string &legend, std::vector<int> &atomIds,
+    std::vector<int> &bondIds, bool &kekulize, bool &highlightByReactant,
+    std::vector<DrawColour> &highlightColorsReactants) {
+  auto problems = process_details(details, width, height, offsetx, offsety,
+                                  legend, atomIds, bondIds, kekulize);
+  if (!problems.empty()) {
+    return problems;
+  }
+  rj::Document doc;
+  doc.Parse(details.c_str());
+  if (!doc.IsObject()) {
+    return "Invalid JSON";
+  }
+  auto highlightByReactantIt = doc.FindMember("highlightByReactant");
+  if (highlightByReactantIt != doc.MemberEnd()) {
+    if (!highlightByReactantIt->value.IsBool()) {
+      return "JSON contains 'highlightByReactant' field, but it is not a bool";
+    }
+    highlightByReactant = highlightByReactantIt->value.GetBool();
+  } else {
+    highlightByReactant = false;
+  }
+  auto highlightColorsReactantsIt = doc.FindMember("highlightColorsReactants");
+  if (highlightColorsReactantsIt != doc.MemberEnd()) {
+    if (!highlightColorsReactantsIt->value.IsArray()) {
+      return "JSON contains 'highlightColorsReactants' field, but it is not an "
+             "array";
+    }
+    for (const auto &color : highlightColorsReactantsIt->value.GetArray()) {
+      if (!color.IsArray() || color.Size() < 3 || color.Size() > 4) {
+        return "JSON contains 'highlightColorsReactants' array, but the "
+               "elements are not R,G,B[,A] arrays";
+      }
+      std::vector<double> rgba(4, 1.0);
+      unsigned int i = 0;
+      for (const auto &component : color.GetArray()) {
+        if (!component.IsDouble()) {
+          return "JSON contains 'highlightColorsReactants' array, but the "
+                 "R,G,B[,A] arrays contain non-float values";
+        }
+        CHECK_INVARIANT(i < 4, "");
+        rgba[i++] = component.GetDouble();
+      }
+      highlightColorsReactants.emplace_back(rgba[0], rgba[1], rgba[2], rgba[3]);
+    }
+  }
   return "";
 }
 
@@ -288,7 +418,8 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
   std::vector<int> atomIds;
   std::vector<int> bondIds;
   std::string legend = "";
-  int offsetx = 0, offsety = 0;
+  int offsetx = 0;
+  int offsety = 0;
   bool kekulize = true;
   if (!details.empty()) {
     auto problems = process_details(details, w, h, offsetx, offsety, legend,
@@ -309,6 +440,37 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
                                          kekulize);
   drawer.finishDrawing();
 
+  return drawer.getDrawingText();
+}
+
+std::string rxn_to_svg(const ChemicalReaction &rxn, int w, int h,
+                       const std::string &details = "") {
+  std::vector<int> atomIds;
+  std::vector<int> bondIds;
+  std::string legend = "";
+  int offsetx = 0;
+  int offsety = 0;
+  bool kekulize = true;
+  bool highlightByReactant = false;
+  std::vector<DrawColour> highlightColorsReactants;
+  if (!details.empty()) {
+    auto problems = process_rxn_details(
+        details, w, h, offsetx, offsety, legend, atomIds, bondIds, kekulize,
+        highlightByReactant, highlightColorsReactants);
+    if (!problems.empty()) {
+      return problems;
+    }
+  }
+
+  MolDraw2DSVG drawer(w, h);
+  if (!kekulize) {
+    drawer.drawOptions().prepareMolsBeforeDrawing = false;
+  }
+  drawer.drawReaction(rxn, highlightByReactant,
+                      !highlightByReactant || highlightColorsReactants.empty()
+                          ? nullptr
+                          : &highlightColorsReactants);
+  drawer.finishDrawing();
   return drawer.getDrawingText();
 }
 

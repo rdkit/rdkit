@@ -11,6 +11,8 @@
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/ChemReactions/Reaction.h>
+#include <GraphMol/ChemReactions/ReactionParser.h>
 
 class JSMol {
  public:
@@ -33,19 +35,81 @@ class JSMol {
   std::string get_substruct_match(const JSMol &q) const;
   std::string get_substruct_matches(const JSMol &q) const;
   std::string get_descriptors() const;
-  std::string get_morgan_fp(unsigned int radius, unsigned int len) const;
+  std::string get_morgan_fp(unsigned int radius, unsigned int fplen) const;
   std::string get_morgan_fp() const { return get_morgan_fp(2, 2048); }
   std::string get_morgan_fp_as_binary_text(unsigned int radius,
-                                           unsigned int len) const;
+                                           unsigned int fplen) const;
   std::string get_morgan_fp_as_binary_text() const {
     return get_morgan_fp_as_binary_text(2, 2048);
   }
-  std::string get_pattern_fp(unsigned int len) const;
+  std::string get_pattern_fp(unsigned int fplen) const;
   std::string get_pattern_fp() const { return get_pattern_fp(2048); }
-  std::string get_pattern_fp_as_binary_text(unsigned int len) const;
+  std::string get_pattern_fp_as_binary_text(unsigned int fplen) const;
   std::string get_pattern_fp_as_binary_text() const {
     return get_pattern_fp_as_binary_text(2048);
   }
+  std::string get_topological_torsion_fp(unsigned int fplen) const;
+  std::string get_topological_torsion_fp() const {
+    return get_topological_torsion_fp(2048);
+  };
+  std::string get_topological_torsion_fp_as_binary_text(
+      unsigned int fplen) const;
+  std::string get_topological_torsion_fp_as_binary_text() const {
+    return get_topological_torsion_fp_as_binary_text(2048);
+  }
+  std::string get_rdk_fp(unsigned int fplen, int minPath, int maxPath) const;
+  std::string get_rdk_fp(unsigned int fplen, int minPath) const {
+    return get_rdk_fp(fplen, minPath, 30);
+  }
+  std::string get_rdk_fp(unsigned int fplen) const {
+    return get_rdk_fp(fplen, 1, 30);
+  }
+  std::string get_rdk_fp() const {
+    return get_rdk_fp(2048, 1, 30);
+  }
+  std::string get_rdk_fp_as_binary_text(unsigned int fplen, int minPath,
+                                        int maxPath) const;
+  std::string get_rdk_fp_as_binary_text(unsigned int fplen, int minPath) const {
+    return get_rdk_fp_as_binary_text(fplen, minPath, 30);
+  }
+  std::string get_rdk_fp_as_binary_text(unsigned int fplen) const {
+    return get_rdk_fp_as_binary_text(fplen, 1, 30);
+  }
+  std::string get_rdk_fp_as_binary_text() const {
+    return get_rdk_fp_as_binary_text(2048, 1, 30);
+  }
+  std::string get_atom_pair_fp(unsigned int fplen, int minDistance,
+                               int maxDistance) const;
+  std::string get_atom_pair_fp(unsigned int fplen, int minDistance) const {
+    return get_atom_pair_fp(fplen, minDistance, 30);
+  }
+  std::string get_atom_pair_fp(unsigned int fplen) const {
+    return get_atom_pair_fp(fplen, 1, 30);
+  }
+  std::string get_atom_pair_fp() const {
+    return get_atom_pair_fp(2048, 1, 30);
+  }
+  std::string get_atom_pair_fp_as_binary_text(unsigned int fplen,
+                                              int minDistance,
+                                              int maxDistance) const;
+  std::string get_atom_pair_fp_as_binary_text(unsigned int fplen,
+                                              int minDistance) const {
+    return get_atom_pair_fp_as_binary_text(fplen, minDistance, 30);
+  }
+  std::string get_atom_pair_fp_as_binary_text(unsigned int fplen) const {
+    return get_atom_pair_fp_as_binary_text(fplen, 1, 30);
+  }
+  std::string get_atom_pair_fp_as_binary_text() const {
+    return get_atom_pair_fp_as_binary_text(2048, 1, 30);
+  }
+  #ifdef RDK_BUILD_AVALON_SUPPORT
+  std::string get_avalon_fp(unsigned int fplen) const;
+  std::string get_avalon_fp() const { return get_avalon_fp(512); }
+  std::string get_avalon_fp_as_binary_text(unsigned int fplen) const;
+  std::string get_avalon_fp_as_binary_text() const {
+    return get_avalon_fp_as_binary_text(512);
+  }
+  #endif
   std::string condense_abbreviations(double maxCoverage, bool useLinkers);
   std::string condense_abbreviations() {
     return condense_abbreviations(0.4, false);
@@ -96,6 +160,23 @@ class JSMol {
   static constexpr int d_defaultHeight = 200;
 };
 
+class JSReaction {
+ public:
+  JSReaction() : d_rxn(nullptr) {}
+  JSReaction(RDKit::ChemicalReaction *rxn) : d_rxn(rxn) {}
+  bool is_valid() const { return d_rxn.get() != nullptr; }
+
+  std::string get_svg(int width, int height) const;
+  std::string get_svg() const {
+    return get_svg(d_defaultWidth, d_defaultHeight);
+  }
+  std::string get_svg_with_highlights(const std::string &details) const;
+
+  std::unique_ptr<RDKit::ChemicalReaction> d_rxn;
+  static constexpr int d_defaultWidth = 800;
+  static constexpr int d_defaultHeight = 200;
+};
+
 class JSSubstructLibrary {
  public:
   JSSubstructLibrary(unsigned int num_bits);
@@ -138,5 +219,7 @@ JSMol *get_mol(const std::string &input, const std::string &details_json);
 JSMol *get_mol_from_pickle(const std::string &pkl);
 JSMol *get_mol_copy(const JSMol &other);
 JSMol *get_qmol(const std::string &input);
+JSReaction *get_reaction(const std::string &input,
+                         const std::string &details_json);
 std::string version();
 void prefer_coordgen(bool prefer);
