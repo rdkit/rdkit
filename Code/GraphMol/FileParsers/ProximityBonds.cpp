@@ -273,6 +273,7 @@ static bool StandardPDBDoubleBond(unsigned int rescode, unsigned int atm1,
   }
 
   switch (rescode) {
+    case BCNAM('A', 'C', 'E'):
     case BCNAM('A', 'L', 'A'):
     case BCNAM('C', 'Y', 'S'):
     case BCNAM('G', 'L', 'Y'):
