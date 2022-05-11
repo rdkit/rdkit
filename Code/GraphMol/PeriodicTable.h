@@ -94,6 +94,12 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
     return anum;
   }
 
+  //! returns the full element name
+  std::string getElementName(UINT atomicNumber) const {
+    PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
+    return byanum[atomicNumber].Name();
+  }
+
   //! returns the atomic symbol
   std::string getElementSymbol(UINT atomicNumber) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
