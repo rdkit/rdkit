@@ -98,7 +98,7 @@ void parse_fragment(RWMol &mol,
       int mergeparent = -1;
       int rgroup_num = -1;
       bool has_atom_stereo = false;
-      std::vector<unsigned int> bond_ordering;
+      std::vector<int> bond_ordering;
       std::vector<double> atom_coords;
       std::string nodetype = "";
       for(auto &attr: node.second.get_child("<xmlattr>")) {
@@ -145,7 +145,14 @@ void parse_fragment(RWMol &mol,
                   has_atom_stereo = true;
               }
           } else if (attr.first == "BondOrdering") {
-              bond_ordering = to_vec<unsigned int>(attr.second.data());
+              std::vector<int> order = to_vec<int>(attr.second.data());
+              // remove any idx that is 0, they can appear anywhere in the BondOrdering
+              //  I really don't know why...
+              for(auto idx : order) {
+                  if(idx) {
+                      bond_ordering.push_back(idx);
+                  }
+              }
           } else if (attr.first == "p") {
               atom_coords = to_vec<double>(attr.second.data());
           }
@@ -162,7 +169,7 @@ void parse_fragment(RWMol &mol,
           rd_atom->setProp<int>("MergeParent", mergeparent);
       }
       if(has_atom_stereo) {
-          rd_atom->setProp<std::vector<unsigned int>>("CDXML_BOND_ORDERING", bond_ordering);
+          rd_atom->setProp<std::vector<int>>("CDXML_BOND_ORDERING", bond_ordering);
       }
       
       if(ids.find(atom_id) != ids.end()) {
@@ -208,11 +215,11 @@ void parse_fragment(RWMol &mol,
     } // end if atom or bond
   } // for node
     
-  
+  // add bonds
   for(auto &bond: bonds) {
       unsigned int bond_idx;
       if(bond.display == "WedgeEnd" || bond.display == "WedgedHashEnd") {
-          // swap atom direction
+      //    // swap atom direction
           bond_idx = mol.addBond(ids[bond.end]->getIdx(), ids[bond.start]->getIdx(),
                        bond.getBondType()) - 1;
       } else {
@@ -220,6 +227,7 @@ void parse_fragment(RWMol &mol,
                        bond.getBondType()) - 1;
       }
       Bond * bnd = mol.getBondWithIdx(bond_idx);
+      bnd->setProp("CDX_BOND_ID", bond.bond_id);
       if(bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
           bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
       } else if (bond.display == "WedgedHashBegin" || bond.display == "WedgedHashEnd") {
@@ -281,9 +289,29 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                                     p.z = 0.0;
                                 }
                                 conf->setAtomPos(atm->getIdx(), p);
-                            }
+                          }
                           res->addConformer(conf);
                           DetectAtomStereoChemistry(*res, conf);
+                          
+                          // fix the bond ordering around the tetrahedral center between the chemdraw and rdkit representations
+                          for(auto &atom : res->atoms()) {
+                              if(atom->hasProp("CDXML_BOND_ORDERING")) {
+                                  const std::vector<int> &ordering = atom->getProp<std::vector<int>>("CDXML_BOND_ORDERING");
+                                  std::vector<int> cdx_ordering(ordering.size(), 0);
+                                  int bond_idx = 0;
+                                  for(auto &bond : res->atomBonds(atom)) {
+                                      unsigned int cdx_id = bond->getProp<int>("CDX_BOND_ID");
+                                      auto itr = std::find(ordering.begin(), ordering.end(), cdx_id);
+                                      CHECK_INVARIANT(itr != ordering.end(), "Cannot find CDX BOND ID in ordering");
+                                      cdx_ordering[std::distance(ordering.begin(), itr)] = bond->getIdx();
+                                  }
+                                  std::list<int> cdx_list(cdx_ordering.begin(), cdx_ordering.end());
+                                  
+                                  if (atom->getPerturbationOrder(cdx_list) % 2 ) {
+                                      atom->invertChirality();
+                                  }
+                              }
+                          }
                           
                           if (sanitize) {
                             if (removeHs) {

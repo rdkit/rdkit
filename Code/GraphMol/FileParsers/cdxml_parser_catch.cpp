@@ -777,8 +777,7 @@ TEST_CASE("CDXML") {
             CHECK(MolToSmiles(*mol) == expected[i++]);
         }
     }
-     
-SECTION("RINC CHIRALITY") {
+    SECTION("RINC CHIRALITY") {
         std::string cdx = R"(<?xml version="1.0" encoding="UTF-8" ?>
         <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
         <CDXML
