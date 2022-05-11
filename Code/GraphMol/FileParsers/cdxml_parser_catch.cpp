@@ -17,6 +17,7 @@
 #include <boost/algorithm/string.hpp>
 
 using namespace RDKit;
+
 TEST_CASE("CDXML") {
     SECTION("SIMPLE") {
         std::string cdxml1 = R"(<?xml version="1.0" encoding="UTF-8" ?>
@@ -770,6 +771,442 @@ TEST_CASE("CDXML") {
             "C1CC1",
             "C1CCC1"};
         std::stringstream iss(cdxml1);
+        auto mols = CDXMLToMols(iss);
+        int i=0;
+        for(auto &mol : mols) {
+            CHECK(MolToSmiles(*mol) == expected[i++]);
+        }
+    }
+     
+SECTION("RINC CHIRALITY") {
+        std::string cdx = R"(<?xml version="1.0" encoding="UTF-8" ?>
+        <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
+        <CDXML
+         CreationProgram="ChemDraw 21.0.0.28"
+         Name="test1.cdxml"
+         BoundingBox="217.54 328.75 322.46 391.25"
+         WindowPosition="0 0"
+         WindowSize="0 0"
+         FractionalWidths="yes"
+         InterpretChemically="yes"
+         ShowAtomQuery="yes"
+         ShowAtomStereo="no"
+         ShowAtomEnhancedStereo="yes"
+         ShowAtomNumber="no"
+         ShowResidueID="no"
+         ShowBondQuery="yes"
+         ShowBondRxn="yes"
+         ShowBondStereo="no"
+         ShowTerminalCarbonLabels="no"
+         ShowNonTerminalCarbonLabels="no"
+         HideImplicitHydrogens="no"
+         LabelFont="21"
+         LabelSize="10"
+         LabelFace="96"
+         CaptionFont="21"
+         CaptionSize="12"
+         HashSpacing="2.70"
+         MarginWidth="2"
+         LineWidth="1"
+         BoldWidth="4"
+         BondLength="30"
+         BondSpacing="12"
+         ChainAngle="120"
+         LabelJustification="Auto"
+         CaptionJustification="Left"
+         AminoAcidTermini="HOH"
+         ShowSequenceTermini="yes"
+         ShowSequenceBonds="yes"
+         ShowSequenceUnlinkedBranches="no"
+         ResidueWrapCount="40"
+         ResidueBlockCount="10"
+         ResidueZigZag="yes"
+         NumberResidueBlocks="no"
+         PrintMargins="36 36 36 36"
+         MacPrintInfo="00030000004800480000000002DE0240FFEEFFEE030602520367052803FC00020000004800480000000002DE0240000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
+         ChemPropName=""
+         ChemPropFormula="Chemical Formula: "
+         ChemPropExactMass="Exact Mass: "
+         ChemPropMolWt="Molecular Weight: "
+         ChemPropMOverZ="m/z: "
+         ChemPropAnalysis="Elemental Analysis: "
+         ChemPropBoilingPt="Boiling Point: "
+         ChemPropMeltingPt="Melting Point: "
+         ChemPropCritTemp="Critical Temp: "
+         ChemPropCritPres="Critical Pres: "
+         ChemPropCritVol="Critical Vol: "
+         ChemPropGibbs="Gibbs Energy: "
+         ChemPropLogP="Log P: "
+         ChemPropMR="MR: "
+         ChemPropHenry="Henry&apos;s Law: "
+         ChemPropEForm="Heat of Form: "
+         ChemProptPSA="tPSA: "
+         ChemPropID=""
+         ChemPropFragmentLabel=""
+         color="0"
+         bgcolor="1"
+         RxnAutonumberStart="1"
+         RxnAutonumberConditions="no"
+         RxnAutonumberStyle="Roman"
+        ><colortable>
+        <color r="1" g="1" b="1"/>
+        <color r="0" g="0" b="0"/>
+        <color r="1" g="0" b="0"/>
+        <color r="1" g="1" b="0"/>
+        <color r="0" g="1" b="0"/>
+        <color r="0" g="1" b="1"/>
+        <color r="0" g="0" b="1"/>
+        <color r="1" g="0" b="1"/>
+        </colortable><fonttable>
+        <font id="21" charset="x-mac-roman" name="Helvetica"/>
+        </fonttable><page
+         id="108"
+         BoundingBox="0 0 540 720"
+         HeaderPosition="36"
+         FooterPosition="36"
+         PrintTrimMarks="yes"
+         HeightPages="1"
+         WidthPages="1"
+        ><fragment
+         id="24"
+         BoundingBox="217.54 328.75 322.46 391.25"
+         Z="16"
+        ><n
+         id="1"
+         p="321.96 345"
+         Z="17"
+         AS="N"
+        /><n
+         id="2"
+         p="295.98 330"
+         Z="18"
+         AS="N"
+        /><n
+         id="3"
+         p="270 345"
+         Z="19"
+         Geometry="Tetrahedral"
+         AS="s"
+         BondOrdering="13 14 19 0"
+        /><n
+         id="4"
+         p="244.02 330"
+         Z="20"
+         AS="N"
+        /><n
+         id="5"
+         p="218.04 345"
+         Z="21"
+         AS="N"
+        /><n
+         id="6"
+         p="218.04 375"
+         Z="22"
+         AS="N"
+        /><n
+         id="7"
+         p="244.02 390"
+         Z="23"
+         AS="N"
+        /><n
+         id="8"
+         p="270 375"
+         Z="24"
+         Geometry="Tetrahedral"
+         AS="s"
+         BondOrdering="19 18 20 0"
+        /><n
+         id="9"
+         p="295.98 390"
+         Z="25"
+         AS="N"
+        /><n
+         id="10"
+         p="321.96 375"
+         Z="26"
+         AS="N"
+        /><b
+         id="12"
+         Z="27"
+         B="1"
+         E="2"
+         BS="N"
+        /><b
+         id="13"
+         Z="28"
+         B="2"
+         E="3"
+         Display="WedgedHashEnd"
+         BS="N"
+        /><b
+         id="14"
+         Z="29"
+         B="3"
+         E="4"
+         BS="N"
+        /><b
+         id="15"
+         Z="30"
+         B="4"
+         E="5"
+         BS="N"
+        /><b
+         id="16"
+         Z="31"
+         B="5"
+         E="6"
+         BS="N"
+        /><b
+         id="17"
+         Z="32"
+         B="6"
+         E="7"
+         BS="N"
+        /><b
+         id="18"
+         Z="33"
+         B="7"
+         E="8"
+         Display="WedgedHashEnd"
+         BS="N"
+        /><b
+         id="19"
+         Z="34"
+         B="3"
+         E="8"
+         BS="N"
+        /><b
+         id="20"
+         Z="35"
+         B="8"
+         E="9"
+         BS="N"
+        /><b
+         id="21"
+         Z="36"
+         B="9"
+         E="10"
+         BS="N"
+        /><b
+         id="22"
+         Z="37"
+         B="1"
+         E="10"
+         BS="N"
+        /></fragment></page></CDXML>)";
+        std::vector<std::string> expected = {"C1CC[C@H]2CCCC[C@H]2C1"};
+        std::stringstream iss(cdx);
+        auto mols = CDXMLToMols(iss);
+        int i=0;
+        for(auto &mol : mols) {
+            CHECK(MolToSmiles(*mol) == expected[i++]);
+        }
+    }
+    SECTION("SIMPLE CHIRAL") {
+        std::string cdx = R"(<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 21.0.0.28"
+ Name="test1.cdxml"
+ BoundingBox="217.79 329.73 322.21 393.08"
+ WindowPosition="0 0"
+ WindowSize="0 0"
+ FractionalWidths="yes"
+ InterpretChemically="yes"
+ ShowAtomQuery="yes"
+ ShowAtomStereo="no"
+ ShowAtomEnhancedStereo="yes"
+ ShowAtomNumber="no"
+ ShowResidueID="no"
+ ShowBondQuery="yes"
+ ShowBondRxn="yes"
+ ShowBondStereo="no"
+ ShowTerminalCarbonLabels="no"
+ ShowNonTerminalCarbonLabels="no"
+ HideImplicitHydrogens="no"
+ LabelFont="21"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="21"
+ CaptionSize="12"
+ HashSpacing="2.70"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ LabelJustification="Auto"
+ CaptionJustification="Left"
+ AminoAcidTermini="HOH"
+ ShowSequenceTermini="yes"
+ ShowSequenceBonds="yes"
+ ShowSequenceUnlinkedBranches="no"
+ ResidueWrapCount="40"
+ ResidueBlockCount="10"
+ ResidueZigZag="yes"
+ NumberResidueBlocks="no"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="00030000004800480000000002DE0240FFEEFFEE030602520367052803FC00020000004800480000000002DE0240000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
+ ChemPropName=""
+ ChemPropFormula="Chemical Formula: "
+ ChemPropExactMass="Exact Mass: "
+ ChemPropMolWt="Molecular Weight: "
+ ChemPropMOverZ="m/z: "
+ ChemPropAnalysis="Elemental Analysis: "
+ ChemPropBoilingPt="Boiling Point: "
+ ChemPropMeltingPt="Melting Point: "
+ ChemPropCritTemp="Critical Temp: "
+ ChemPropCritPres="Critical Pres: "
+ ChemPropCritVol="Critical Vol: "
+ ChemPropGibbs="Gibbs Energy: "
+ ChemPropLogP="Log P: "
+ ChemPropMR="MR: "
+ ChemPropHenry="Henry&apos;s Law: "
+ ChemPropEForm="Heat of Form: "
+ ChemProptPSA="tPSA: "
+ ChemPropID=""
+ ChemPropFragmentLabel=""
+ color="0"
+ bgcolor="1"
+ RxnAutonumberStart="1"
+ RxnAutonumberConditions="no"
+ RxnAutonumberStyle="Roman"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="21" charset="x-mac-roman" name="Helvetica"/>
+</fonttable><page
+ id="280"
+ BoundingBox="0 0 540 720"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="255"
+ BoundingBox="217.79 329.73 322.21 393.08"
+ Z="193"
+><n
+ id="256"
+ p="295.98 333.32"
+ Z="194"
+ Element="7"
+ NumHydrogens="2"
+ NeedsClean="yes"
+ AS="N"
+><t
+ p="292.37 336.90"
+ BoundingBox="293.13 329.73 310.67 339.20"
+ LabelJustification="Left"
+ LabelAlignment="Left"
+><s font="21" size="10" color="0" face="96">NH2</s></t></n><n
+ id="257"
+ p="295.98 363.32"
+ Z="195"
+ Geometry="Tetrahedral"
+ AS="S"
+ BondOrdering="263 264 265 0"
+/><n
+ id="258"
+ p="321.96 378.32"
+ Z="196"
+ AS="N"
+/><n
+ id="259"
+ p="270 378.32"
+ Z="197"
+ NumHydrogens="2"
+ NeedsClean="yes"
+ AS="N"
+><t
+ p="266.39 382"
+ BoundingBox="266.83 374.63 277.47 393.08"
+ LabelJustification="Left"
+ LabelAlignment="Below"
+ LineStarts="2 4"
+><s font="21" size="10" color="0" face="96">CH2</s></t></n><n
+ id="260"
+ p="244.02 363.32"
+ Z="198"
+ NumHydrogens="1"
+ NeedsClean="yes"
+ Geometry="Tetrahedral"
+ AS="S"
+ BondOrdering="266 267 0 268"
+><t
+ p="240.41 367"
+ BoundingBox="240.85 359.63 247.21 375.78"
+ LabelJustification="Left"
+ LabelAlignment="Below"
+ LineStarts="2 3"
+><s font="21" size="10" color="0" face="96">CH</s></t></n><n
+ id="261"
+ p="218.04 378.32"
+ Z="199"
+ AS="N"
+/><n
+ id="262"
+ p="244.02 333.32"
+ Z="200"
+ Element="7"
+ NumHydrogens="2"
+ NeedsClean="yes"
+ AS="N"
+><t
+ p="240.41 336.90"
+ BoundingBox="241.17 329.73 258.71 339.20"
+ LabelJustification="Left"
+ LabelAlignment="Left"
+><s font="21" size="10" color="0" face="96">NH2</s></t></n><b
+ id="263"
+ Z="201"
+ B="256"
+ E="257"
+ Display="WedgeEnd"
+ BS="N"
+/><b
+ id="264"
+ Z="202"
+ B="257"
+ E="258"
+ BS="N"
+/><b
+ id="265"
+ Z="203"
+ B="257"
+ E="259"
+ BS="N"
+/><b
+ id="266"
+ Z="204"
+ B="259"
+ E="260"
+ BS="N"
+/><b
+ id="267"
+ Z="205"
+ B="260"
+ E="261"
+ BS="N"
+/><b
+ id="268"
+ Z="206"
+ B="260"
+ E="262"
+ Display="WedgedHashBegin"
+ BS="N"
+/></fragment></page></CDXML>)";
+        std::vector<std::string> expected = {"C[C@H](N)C[C@H](C)N"};
+        std::stringstream iss(cdx);
         auto mols = CDXMLToMols(iss);
         int i=0;
         for(auto &mol : mols) {

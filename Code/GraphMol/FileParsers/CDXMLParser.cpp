@@ -4,6 +4,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include "MolFileStereochem.h"
 
 // TODO
 //  I'm currently using atom map numbers to join structures
@@ -23,6 +24,7 @@ const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
 const std::string FUSE_LABEL("CDXML_NODE_ID");
 
 struct BondInfo {
+    int bond_id;
     int start;
     int end;
     int order;
@@ -59,7 +61,15 @@ void set_fuse_label(Atom*atm, unsigned int idx) {
         atm->clearProp(FUSE_LABEL);
     }
 }
-  
+
+template<class T>
+std::vector<T> to_vec(const std::string &s) {
+    std::vector<T> n;
+    std::stringstream ss(s);
+    std::copy(std::istream_iterator<T>(ss), std::istream_iterator<T>(), std::back_inserter(n));
+    return n;
+}
+
 void parse_fragment(RWMol &mol,
                     ptree &frag,
 		            std::map<unsigned int, Atom *> &ids,
@@ -77,6 +87,7 @@ void parse_fragment(RWMol &mol,
   // for atom in frag
   int atom_id;
   std::vector<BondInfo> bonds;
+  std::map<unsigned int, Bond*> bond_ids;
   // nodetypes = https://www.cambridgesoft.com/services/documentation/sdk/chemdraw/cdx/properties/Node_Type.htm
   for(auto &node: frag) {
     if(node.first == "n") { // atom node
@@ -86,6 +97,9 @@ void parse_fragment(RWMol &mol,
       int atommap = 0;
       int mergeparent = -1;
       int rgroup_num = -1;
+      bool has_atom_stereo = false;
+      std::vector<unsigned int> bond_ordering;
+      std::vector<double> atom_coords;
       std::string nodetype = "";
       for(auto &attr: node.second.get_child("<xmlattr>")) {
           if(attr.first == "id") {
@@ -126,8 +140,14 @@ void parse_fragment(RWMol &mol,
               } else if (nodetype == "ElementList") {
                   // query atom?
               }
+          } else if (attr.first == "Geometry") {
+              if (attr.second.data() == "Tetrahedral") {
+                  has_atom_stereo = true;
+              }
+          } else if (attr.first == "BondOrdering") {
+              bond_ordering = to_vec<unsigned int>(attr.second.data());
           } else if (attr.first == "p") {
-              // grab coordinates
+              atom_coords = to_vec<double>(attr.second.data());
           }
       }
       // add the atom
@@ -141,10 +161,14 @@ void parse_fragment(RWMol &mol,
       if(mergeparent > 0) {
           rd_atom->setProp<int>("MergeParent", mergeparent);
       }
+      if(has_atom_stereo) {
+          rd_atom->setProp<std::vector<unsigned int>>("CDXML_BOND_ORDERING", bond_ordering);
+      }
       
       if(ids.find(atom_id) != ids.end()) {
           // error fail processing
       }
+      rd_atom->setProp<std::vector<double>>("CDX_ATOM_POS", atom_coords);
       ids[atom_id] = rd_atom;
       const bool updateLabels=true;
       const bool takeOwnership=true;
@@ -154,18 +178,21 @@ void parse_fragment(RWMol &mol,
       if (nodetype == "Nickname" || nodetype == "Fragment") {
           for(auto &fragment: node.second) {
               if(fragment.first == "fragment") {
-		parse_fragment(mol, fragment.second, ids, atom_id);
-		mol.setProp<bool>(NEEDS_FUSE, true);
+                  parse_fragment(mol, fragment.second, ids, atom_id);
+                  mol.setProp<bool>(NEEDS_FUSE, true);
               }
           }
       }
     } else if (node.first == "b") { // bond
+          int bond_id = -1;
           int start_atom = -1;
           int end_atom = -1;
           int order = 1;
           std::string display;
           for(auto &attr: node.second.get_child("<xmlattr>")) {
-              if(attr.first == "B") {
+              if(attr.first == "id") {
+                  bond_id = stoi(attr.second.data());
+              } else if(attr.first == "B") {
                   start_atom = stoi(attr.second.data());
               } else if (attr.first == "E") {
                   end_atom = stoi(attr.second.data());
@@ -176,33 +203,30 @@ void parse_fragment(RWMol &mol,
               }
           }
         CHECK_INVARIANT(start_atom>=0 && end_atom>=0 && start_atom != end_atom, "Bad bond in CDXML");
-        bonds.push_back({start_atom, end_atom, order, display});
+        bonds.push_back({bond_id, start_atom, end_atom, order, display});
           
     } // end if atom or bond
   } // for node
     
+  
   for(auto &bond: bonds) {
       unsigned int bond_idx;
-      if(bond.display == "WedgeEnd" || bond.display == "WedgeHashBegin") {
+      if(bond.display == "WedgeEnd" || bond.display == "WedgedHashEnd") {
+          // swap atom direction
           bond_idx = mol.addBond(ids[bond.end]->getIdx(), ids[bond.start]->getIdx(),
-                       bond.getBondType());
+                       bond.getBondType()) - 1;
       } else {
           bond_idx = mol.addBond(ids[bond.start]->getIdx(), ids[bond.end]->getIdx(),
-                       bond.getBondType());
+                       bond.getBondType()) - 1;
       }
-      
-      if(bond.display == "WedgeEnd" || bond.display == "WedgeHashBegin" ||
-         bond.display == "WedgeBegin" || bond.display == "WedgeHashEnd") {
-          mol.getBondWithIdx(bond_idx-1)->setBondDir(Bond::BondDir::BEGINWEDGE);
+      Bond * bnd = mol.getBondWithIdx(bond_idx);
+      if(bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
+          bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+      } else if (bond.display == "WedgedHashBegin" || bond.display == "WedgedHashEnd") {
+          bnd->setBondDir(Bond::BondDir::BEGINDASH);
       }
-    }
-}
-
-std::vector<unsigned int> ints_to_vec(const std::string &s) {
-    std::vector<unsigned int> n;
-    std::stringstream ss(s);
-    std::copy(std::istream_iterator<unsigned int>(ss), std::istream_iterator<unsigned int>(), std::back_inserter(n));
-    return n;
+      bond_ids[bond_idx] = bnd;
+  }
 }
 } // namepspace
 
@@ -233,6 +257,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                   for( auto &frag: node.second ) {
                       if (frag.first == "fragment") { // chemical matter
                           std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
+                          std::vector<std::vector<double>> coords;
                           parse_fragment(*mol, frag.second, ids);
                           unsigned int frag_id = mol->getProp<unsigned int>(CDXML_FRAG_ID);
                           fragment_lookup[frag_id] = mols.size();
@@ -243,21 +268,37 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                           } else {
                               mols.push_back(std::move(mol));
                           }
-			  if (sanitize) {
-			    RWMol *res = mols.back().get();
-			    if (removeHs) {
-			      MolOps::removeHs(*res, false, false);
-			    } else {
-			      MolOps::sanitizeMol(*res);
-			    }
-			    // now that atom stereochem has been perceived, the wedging
-			    // information is no longer needed, so we clear
-			    // single bond dir flags:
-			    //ClearSingleBondDirFlags(*res); XXX steal from mol parser
-			    MolOps::assignChiralTypesFromBondDirs(*res);
-			    MolOps::assignStereochemistry(*res);
-			    MolOps::detectBondStereochemistry(*res);
-			  }
+                          RWMol *res = mols.back().get();
+                          Conformer *conf = new Conformer(res->getNumAtoms());
+                            conf->set3D(false);
+                          for(auto &atm: res->atoms()) {
+                              const std::vector<double> coord =  atm->getProp<std::vector<double>>("CDX_ATOM_POS");
+                          
+                                RDGeom::Point3D p;
+                                if(coords.size() == 2) {
+                                    p.x = coord[0];
+                                    p.y = coord[1];
+                                    p.z = 0.0;
+                                }
+                                conf->setAtomPos(atm->getIdx(), p);
+                            }
+                          res->addConformer(conf);
+                          DetectAtomStereoChemistry(*res, conf);
+                          
+                          if (sanitize) {
+                            if (removeHs) {
+                              MolOps::removeHs(*res, false, false);
+                            } else {
+                              MolOps::sanitizeMol(*res);
+                            }
+                            // now that atom stereochem has been perceived, the wedging
+                            // information is no longer needed, so we clear
+                            // single bond dir flags:
+
+                            ClearSingleBondDirFlags(*res);
+                            MolOps::detectBondStereochemistry(*res);
+                            MolOps::assignStereochemistry(*res, true, true, true);
+                        }
                       } else if (frag.first == "scheme") { // get the reaction info
                           int scheme_id = frag.second.get<int>("<xmlattr>.id", -1);
                           for(auto &node : frag.second) {
@@ -268,13 +309,13 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                                   scheme.step_id = step_id;
                                   for(auto &attrib : node.second.get_child("<xmlattr>")) {
                                       if(attrib.first == "ReactionStepProducts") {
-                                          scheme.ReactionStepProducts = ints_to_vec(attrib.second.data());
+                                          scheme.ReactionStepProducts = to_vec<unsigned int>(attrib.second.data());
                                       } else if (attrib.first == "ReactionStepReactants") {
-                                          scheme.ReactionStepReactants = ints_to_vec(attrib.second.data());
+                                          scheme.ReactionStepReactants = to_vec<unsigned int>(attrib.second.data());
                                       } else if (attrib.first == "ReactionStepObjectsAboveArrow") {
-                                          scheme.ReactionStepObjectsAboveArrow = ints_to_vec(attrib.second.data());
+                                          scheme.ReactionStepObjectsAboveArrow = to_vec<unsigned int>(attrib.second.data());
                                       } else if (attrib.first == "ReactionStepObjectsBelowArrow") {
-                                          scheme.ReactionStepObjectsBelowArrow = ints_to_vec(attrib.second.data());
+                                          scheme.ReactionStepObjectsBelowArrow = to_vec<unsigned int>(attrib.second.data());
                                       }
                                   }
                                   schemes.push_back(std::move(scheme));
