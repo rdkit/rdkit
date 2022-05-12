@@ -219,7 +219,8 @@ void parse_fragment(RWMol &mol,
   for(auto &bond: bonds) {
       unsigned int bond_idx;
       if(bond.display == "WedgeEnd" || bond.display == "WedgedHashEnd") {
-      //    // swap atom direction
+          // here The "END" of the bond is really our Beginning.
+          // swap atom direction
           bond_idx = mol.addBond(ids[bond.end]->getIdx(), ids[bond.start]->getIdx(),
                        bond.getBondType()) - 1;
       } else {
@@ -265,7 +266,6 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                   for( auto &frag: node.second ) {
                       if (frag.first == "fragment") { // chemical matter
                           std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
-                          std::vector<std::vector<double>> coords;
                           parse_fragment(*mol, frag.second, ids);
                           unsigned int frag_id = mol->getProp<unsigned int>(CDXML_FRAG_ID);
                           fragment_lookup[frag_id] = mols.size();
@@ -283,7 +283,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                               const std::vector<double> coord =  atm->getProp<std::vector<double>>("CDX_ATOM_POS");
                           
                                 RDGeom::Point3D p;
-                                if(coords.size() == 2) {
+                                if(coord.size() == 2) {
                                     p.x = coord[0];
                                     p.y = coord[1];
                                     p.z = 0.0;
@@ -292,26 +292,6 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                           }
                           res->addConformer(conf);
                           DetectAtomStereoChemistry(*res, conf);
-                          
-                          // fix the bond ordering around the tetrahedral center between the chemdraw and rdkit representations
-                          for(auto &atom : res->atoms()) {
-                              if(atom->hasProp("CDXML_BOND_ORDERING")) {
-                                  const std::vector<int> &ordering = atom->getProp<std::vector<int>>("CDXML_BOND_ORDERING");
-                                  std::vector<int> cdx_ordering(ordering.size(), 0);
-                                  int bond_idx = 0;
-                                  for(auto &bond : res->atomBonds(atom)) {
-                                      unsigned int cdx_id = bond->getProp<int>("CDX_BOND_ID");
-                                      auto itr = std::find(ordering.begin(), ordering.end(), cdx_id);
-                                      CHECK_INVARIANT(itr != ordering.end(), "Cannot find CDX BOND ID in ordering");
-                                      cdx_ordering[std::distance(ordering.begin(), itr)] = bond->getIdx();
-                                  }
-                                  std::list<int> cdx_list(cdx_ordering.begin(), cdx_ordering.end());
-                                  
-                                  if (atom->getPerturbationOrder(cdx_list) % 2 ) {
-                                      atom->invertChirality();
-                                  }
-                              }
-                          }
                           
                           if (sanitize) {
                             if (removeHs) {
