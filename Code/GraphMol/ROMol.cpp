@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +21,13 @@
 #include "MolPickler.h"
 #include "Conformer.h"
 #include "SubstanceGroup.h"
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#endif
 
 namespace RDKit {
 class QueryAtom;
@@ -666,5 +673,30 @@ unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
   d_confs.push_back(nConf);
   return conf->getId();
 }
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+template <class Archive>
+void ROMol::save(Archive &ar, const unsigned int) const {
+  std::string pkl;
+  MolPickler::pickleMol(*this, pkl, PicklerOps::AllProps);
+  ar << pkl;
+}
+
+template <class Archive>
+void ROMol::load(Archive &ar, const unsigned int) {
+  std::string pkl;
+  ar >> pkl;
+
+  initMol();
+  numBonds = 0;
+  MolPickler::molFromPickle(pkl, *this, PicklerOps::AllProps);
+  numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
+}
+
+template RDKIT_GRAPHMOL_EXPORT void ROMol::save<boost::archive::text_oarchive>(
+    boost::archive::text_oarchive &, const unsigned int) const;
+template RDKIT_GRAPHMOL_EXPORT void ROMol::load<boost::archive::text_iarchive>(
+    boost::archive::text_iarchive &, const unsigned int);
+#endif
 
 }  // namespace RDKit

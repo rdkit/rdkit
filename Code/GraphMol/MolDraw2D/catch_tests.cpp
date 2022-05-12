@@ -4493,6 +4493,17 @@ TEST_CASE(
   }
 }
 
+TEST_CASE(
+    "Github 5259 - drawReaction should not fail when prepareMolsBeforeDrawing is false") {
+  SECTION("basics") {
+    auto rxn = "[CH3:1][OH:2]>>[CH2:1]=[OH0:2]"_rxnsmarts;
+    REQUIRE(rxn);
+    MolDraw2DSVG drawer(400, 200, -1, -1);
+    drawer.drawOptions().prepareMolsBeforeDrawing = false;
+    REQUIRE_NOTHROW(drawer.drawReaction(*rxn));
+  }
+}
+
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
   auto rxn = "[CH3:1][OH:2]>>[CH2:1]=[OH0:2]"_rxnsmarts;

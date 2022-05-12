@@ -357,7 +357,6 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   bool df_needsInit{true};
   bool df_implicitProperties{false};
   MOL_SPTR_VECT m_reactantTemplates, m_productTemplates, m_agentTemplates;
-  ChemicalReaction &operator=(const ChemicalReaction &);  // disable assignment
 };
 
 //! tests whether or not the molecule has a substructure match

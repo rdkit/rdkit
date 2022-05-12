@@ -1,3 +1,9 @@
+if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
+    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
+else()
+    message("== Making SubstructLibrary without boost Serialization support")
+    set(RDKit_SERIALIZATION_LIBS )
+endif()
 
 rdkit_library(GraphMol
               Atom.cpp QueryAtom.cpp QueryBond.cpp Bond.cpp
@@ -9,7 +15,7 @@ rdkit_library(GraphMol
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
               SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral  )
+              LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS} )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if(RDK_USE_URF)
   target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
