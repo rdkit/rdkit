@@ -21,9 +21,22 @@
 #include <map>
 #include <list>
 
+#ifdef RDK_THREADSAFE_SSS
+#include <mutex>
+#endif
+
 //#define VERBOSE_CANON 1
 
 namespace RDKit {
+
+#ifdef RDK_THREADSAFE_SSS
+namespace {
+std::mutex & smiles_setprop_locker() {
+    static std::mutex locker;
+    return locker;
+}
+}
+#endif //RDK_THREADSAFE_SSS
 
 namespace SmilesWrite {
 const int atomicSmiles[] = {0, 5, 6, 7, 8, 9, 15, 16, 17, 35, 53, -1};
@@ -595,10 +608,15 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
       }
     }
   }
-  mol.setProp(common_properties::_smilesAtomOutputOrder, flattenedAtomOrdering,
-              true);
-  mol.setProp(common_properties::_smilesBondOutputOrder, flattenedBondOrdering,
-              true);
+  {
+#ifdef RDK_THREADSAFE_SSS
+      std::scoped_lock locker(smiles_setprop_locker());
+#endif
+      mol.setProp(common_properties::_smilesAtomOutputOrder, flattenedAtomOrdering,
+                  true);
+      mol.setProp(common_properties::_smilesBondOutputOrder, flattenedBondOrdering,
+                  true);
+  }
   return result;
 }  // end of MolToSmiles()
 
@@ -798,8 +816,14 @@ std::string MolFragmentToSmiles(const ROMol &mol,
       res += ".";
     }
   }
-  mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
-  mol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
+    
+  {
+#ifdef RDK_THREADSAFE_SSS
+      std::scoped_lock locker(smiles_setprop_locker());
+#endif
+      mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
+      mol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
+  }
   return res;
 }  // end of MolFragmentToSmiles()
 
