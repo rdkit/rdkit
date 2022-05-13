@@ -9,4 +9,4 @@ rdkit_headers(Matrix.h
               Conrec.h DEST Numerics)
 
 rdkit_test(testMatrices testMatrices.cpp LINK_LIBRARIES RDGeneral)
-rdkit_catch_test(testConrec testConrec.cpp LINK_LIBRARIES RDGeometryLib )
+rdkit_catch_test(testConrec testConrec.cpp LINK_LIBRARIES rdkitCatch RDGeometryLib )

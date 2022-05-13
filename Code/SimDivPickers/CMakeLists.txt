@@ -11,7 +11,7 @@ rdkit_headers(DistPicker.h LeaderPicker.h
 rdkit_test(testSimDivPickers testPickers.cpp LINK_LIBRARIES SimDivPickers)
 
 rdkit_catch_test(pickersTestsCatch catch_tests.cpp
-           LINK_LIBRARIES SimDivPickers DataStructs)
+           LINK_LIBRARIES rdkitCatch SimDivPickers DataStructs)
 
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

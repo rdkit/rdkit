@@ -46,7 +46,7 @@ target_compile_definitions(EHTLib PRIVATE RDKIT_EHTLIB_BUILD)
 add_dependencies(EHTLib yaehmop_project)
 rdkit_headers(EHTTools.h DEST GraphMol)
 rdkit_catch_test(testEHTLib1 test1.cpp
-           LINK_LIBRARIES EHTLib FileParsers SmilesParse )
+           LINK_LIBRARIES rdkitCatch EHTLib FileParsers SmilesParse )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
