@@ -102,7 +102,7 @@ rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
            LINK_LIBRARIES FileParsers )
 
 rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp 
-           LINK_LIBRARIES rdkitCatch FileParsers )
+           LINK_LIBRARIES FileParsers )
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp
-           LINK_LIBRARIES rdkitCatch FileParsers )
+           LINK_LIBRARIES FileParsers )

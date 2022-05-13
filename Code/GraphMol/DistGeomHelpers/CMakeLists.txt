@@ -12,7 +12,7 @@ rdkit_test(testDistGeomHelpers testDgeomHelpers.cpp
            DistGeomHelpers MolAlign MolTransforms FileParsers SmilesParse  )
 
 rdkit_catch_test(distGeomHelpersCatch catch_tests.cpp 
-LINK_LIBRARIES rdkitCatch DistGeomHelpers MolAlign MolTransforms FileParsers SmilesParse )
+LINK_LIBRARIES DistGeomHelpers MolAlign MolTransforms FileParsers SmilesParse )
 
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

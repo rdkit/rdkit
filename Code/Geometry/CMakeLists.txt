@@ -17,7 +17,7 @@ rdkit_headers(Grid3D.h
 rdkit_test(testTransforms testTransforms.cpp LINK_LIBRARIES RDGeometryLib )
 rdkit_test(testGrid testGrid.cpp LINK_LIBRARIES RDGeometryLib)
 rdkit_catch_test(geometryTestsCatch catch_tests.cpp
-           LINK_LIBRARIES rdkitCatch RDGeometryLib)
+           LINK_LIBRARIES RDGeometryLib)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

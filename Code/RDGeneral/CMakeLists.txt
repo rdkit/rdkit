@@ -85,7 +85,7 @@ target_include_directories(rdkitCatch PUBLIC ${CATCH_INCLUDE_DIR})
 
 
 rdkit_catch_test(dictTestsCatch catch_dict.cpp 
-           LINK_LIBRARIES rdkitCatch RDGeneral )
+           LINK_LIBRARIES RDGeneral )
 
 rdkit_catch_test(logTestsCatch catch_logs.cpp 
-           LINK_LIBRARIES rdkitCatch RDGeneral )
+           LINK_LIBRARIES RDGeneral )

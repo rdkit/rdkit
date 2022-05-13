@@ -96,7 +96,7 @@ rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   MolDraw2D )
 
 rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
-  rdkitCatch MolDraw2D CIPLabeler )
+  MolDraw2D CIPLabeler )
 
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
   MolDraw2D )
