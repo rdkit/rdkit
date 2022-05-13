@@ -213,6 +213,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testVariableLegend_3.svg", 2954965314U},
     {"testGithub_5061.svg", 632991478U},
     {"testGithub_5185.svg", 1652507399U},
+    {"testGithub_5269_1.svg", 1465405815U},
+    {"testGithub_5269_2.svg", 112102270U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4501,6 +4503,71 @@ TEST_CASE(
     MolDraw2DSVG drawer(400, 200, -1, -1);
     drawer.drawOptions().prepareMolsBeforeDrawing = false;
     REQUIRE_NOTHROW(drawer.drawReaction(*rxn));
+  }
+}
+
+TEST_CASE(
+    "Github 5269 - bad index positions with highlights") {
+  SECTION("basics") {
+    auto m1 = "CC(=O)Oc1c(C(=O)O)cccc1"_smiles;
+    auto q1 = "CC(=O)Oc1c(C(=O)O)cccc1"_smarts;
+    REQUIRE(m1);
+    REQUIRE(q1);
+    {
+      std::vector<int> hit_atoms;
+      std::vector<MatchVectType> hits_vect;
+      SubstructMatch(*m1, *q1, hits_vect);
+      for( size_t i = 0 ; i < hits_vect.size() ; ++i ) {
+        for( size_t j = 0 ; j < hits_vect[i].size() ; ++j ) {
+          hit_atoms.push_back(hits_vect[i][j].second);
+        }
+      }
+      std::vector<int> hit_bonds;
+      for(int i: hit_atoms) {
+        for(int j: hit_atoms) {
+          if(i > j) {
+            Bond *bnd = m1->getBondBetweenAtoms(i, j);
+            if(bnd) {
+              hit_bonds.push_back(bnd->getIdx());
+            }
+          }
+        }
+      }
+      {
+        MolDraw2DSVG drawer(400, 400, -1, -1);
+        drawer.drawOptions().addAtomIndices = true;
+        drawer.drawMolecule(*m1, &hit_atoms, &hit_bonds);
+        drawer.finishDrawing();
+        auto text = drawer.getDrawingText();
+        std::ofstream outs("testGithub_5269_1.svg");
+        outs << text;
+        outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+        check_file_hash("testGithub_5269_1.svg");
+#endif
+      }
+    }
+  }
+  {
+    auto m2 = "CN(C)C(C)C=O"_smiles;
+    REQUIRE(m2);
+    std::vector<int> hit_atoms{0, 1, 2};
+    auto atom = m2->getAtomWithIdx(0);
+    atom->setProp(common_properties::atomNote, "0.91");
+    atom = m2->getAtomWithIdx(1);
+    atom->setProp(common_properties::atomNote, "1.03");
+    atom = m2->getAtomWithIdx(2);
+    atom->setProp(common_properties::atomNote, "0.74");
+    MolDraw2DSVG drawer(400, 400, -1, -1);
+    drawer.drawMolecule(*m2, &hit_atoms);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testGithub_5269_2.svg");
+    outs << text;
+    outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    check_file_hash("testGithub_5269_2.svg");
+#endif
   }
 }
 
