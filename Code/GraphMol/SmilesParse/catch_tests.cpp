@@ -1903,10 +1903,8 @@ TEST_CASE("Github #4981: Invalid SMARTS for negated single-atoms", "[smarts]") {
 
 #ifdef RDK_THREADSAFE_SSS
 namespace {
-  void runblock(const ROMol *mol) {
-    MolToSmiles(*mol);
-  }
-}
+void runblock(const ROMol *mol) { MolToSmiles(*mol); }
+}  // namespace
 
 TEST_CASE("Github #5245: Multithreaded smiles testing") {
   SECTION("smiles from the same molecule") {
@@ -1921,7 +1919,6 @@ TEST_CASE("Github #5245: Multithreaded smiles testing") {
       fut.get();
     }
     tg.clear();
-    
   }
 }
 #endif
@@ -1946,5 +1943,36 @@ TEST_CASE("Pol and Mod atoms in CXSMILES", "[cxsmiles]") {
     CHECK(val == "Mod");
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "*CC |$Mod_p;;$|");
+  }
+}
+
+TEST_CASE("empty atom label block", "[cxsmiles]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  MJ201100                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0491    1.5839    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0491   -0.0661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3798    1.5839    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    0.3798   -0.0661    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  1  0  0  2  0
+  5  8  1  0  0  2  0
+M  RGP  2   7   1   8   2
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    m->clearConformers();
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi.find("$") == std::string::npos);
   }
 }
