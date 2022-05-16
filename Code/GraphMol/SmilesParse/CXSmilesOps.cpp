@@ -1835,11 +1835,11 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     res += "(" + get_coords_block(mol, atomOrder) + ")";
   }
   if ((flags & SmilesWrite::CXSmilesFields::CX_ATOM_LABELS) && needLabels) {
-    if (res.size() > 1) {
-      res += ",";
-    }
     auto lbls = get_atomlabel_block(mol, atomOrder);
     if (!lbls.empty()) {
+      if (res.size() > 1) {
+        res += ",";
+      }
       res += "$" + lbls + "$";
     }
   }
