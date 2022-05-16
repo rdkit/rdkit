@@ -1624,12 +1624,9 @@ std::string get_sgroup_data_block(const ROMol &mol,
 std::string get_atomlabel_block(const ROMol &mol,
                                 const std::vector<unsigned int> &atomOrder) {
   std::string res = "";
-  bool first = true;
   for (auto idx : atomOrder) {
-    if (!first) {
+    if (idx != atomOrder.front()) {
       res += ";";
-    } else {
-      first = false;
     }
     std::string lbl;
     const auto atom = mol.getAtomWithIdx(idx);
@@ -1645,6 +1642,11 @@ std::string get_atomlabel_block(const ROMol &mol,
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
       res += quote_string(lbl);
     }
+  }
+  // if we didn't find anything return an empty string
+  if (std::find_if_not(res.begin(), res.end(),
+                       [](const auto c) { return c == ';'; }) == res.end()) {
+    res.clear();
   }
   return res;
 }
@@ -1836,7 +1838,10 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     if (res.size() > 1) {
       res += ",";
     }
-    res += "$" + get_atomlabel_block(mol, atomOrder) + "$";
+    auto lbls = get_atomlabel_block(mol, atomOrder);
+    if (!lbls.empty()) {
+      res += "$" + lbls + "$";
+    }
   }
   if ((flags & SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES) && needValues) {
     if (res.size() > 1) {
