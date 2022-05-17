@@ -13,4 +13,4 @@ rdkit_headers(ChemTransforms.h
 rdkit_test(testChemTransforms testChemTransforms.cpp 
            LINK_LIBRARIES ChemTransforms FileParsers)
 
-rdkit_catch_test(chemTransformsTestCatch ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES ChemTransforms FileParsers)
+rdkit_catch_test(chemTransformsTestCatch catch_tests.cpp LINK_LIBRARIES ChemTransforms FileParsers)
