@@ -2820,6 +2820,9 @@ void assignStereochemistryFrom3D(ROMol &mol, int confId,
   if (!mol.getNumConformers() || !mol.getConformer(confId).is3D()) {
     return;
   }
+  if (mol.needsUpdatePropertyCache()) {
+    mol.updatePropertyCache(false);
+  }
 
   detectBondStereochemistry(mol, confId);
   assignChiralTypesFrom3D(mol, confId, replaceExistingTags);
