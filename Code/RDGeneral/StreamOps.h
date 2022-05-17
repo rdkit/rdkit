@@ -337,8 +337,8 @@ inline void streamReadStringVec(std::istream &ss, std::vector<std::string> &val,
 inline std::string getLine(std::istream *inStream) {
   std::string res;
   std::getline(*inStream, res);
-  if ((res.length() > 0) && (res[res.length() - 1] == '\r')) {
-    res.erase(res.length() - 1);
+  if (!res.empty() && (res.back() == '\r')) {
+    res.resize(res.length() - 1);
   }
   return res;
 }

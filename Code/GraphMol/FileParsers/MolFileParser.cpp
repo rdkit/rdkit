@@ -1185,18 +1185,18 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   delete a;
 }
 
-void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
+void ParseV3000RGroups(RWMol *mol, Atom *&atom, std::string_view text,
                        unsigned int line) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(atom, "bad atom");
-  if (text[0] != '(' || text[text.size() - 1] != ')') {
+  if (text[0] != '(' || text.back() != ')') {
     std::ostringstream errout;
     errout << "Bad RGROUPS specification '" << text << "' on line " << line
            << ". Missing parens.";
     throw FileParseException(errout.str());
   }
   std::vector<std::string> splitToken;
-  std::string resid = text.substr(1, text.size() - 2);
+  std::string resid = std::string(text.substr(1, text.size() - 2));
   boost::split(splitToken, resid, boost::is_any_of(std::string(" ")));
   if (splitToken.size() < 1) {
     std::ostringstream errout;
@@ -2162,15 +2162,14 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
 }
 
 bool splitAssignToken(std::string_view token, std::string &prop,
-                      std::string &val) {
-  std::vector<std::string> splitToken;
-  boost::split(splitToken, token, boost::is_any_of("="));
-  if (splitToken.size() != 2) {
+                      std::string_view &val) {
+  auto equalsLoc = token.find("=");
+  if (equalsLoc == token.npos || equalsLoc != token.rfind("=")) {
     return false;
   }
-  prop = splitToken[0];
+  prop = token.substr(0, equalsLoc);
   boost::to_upper(prop);
-  val = splitToken[1];
+  val = token.substr(equalsLoc + 1);
   return true;
 }
 
@@ -2182,7 +2181,8 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
   PRECONDITION(atom, "bad atom");
   std::ostringstream errout;
   while (token != tokens.end()) {
-    std::string prop, val;
+    std::string prop;
+    std::string_view val;
     if (!splitAssignToken(*token, prop, val)) {
       errout << "Invalid atom property: '" << *token << "' for atom "
              << atom->getIdx() + 1 << " on line " << line << std::endl;
@@ -2347,7 +2347,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         atom->setProp(common_properties::molAttachOrder, ival);
       }
     } else if (prop == "CLASS") {
-      atom->setProp(common_properties::molAtomClass, val);
+      atom->setProp(common_properties::molAtomClass, std::string(val));
     } else if (prop == "SEQID") {
       if (val != "0") {
         auto ival = FileParserUtils::toInt(val);
@@ -2621,14 +2621,16 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     unsigned int lPos = 4;
     std::ostringstream errout;
     while (lPos < splitLine.size()) {
-      std::string prop, val;
+      std::string prop;
+      std::string_view val;
       if (!splitAssignToken(splitLine[lPos], prop, val)) {
         errout << "bad bond property '" << splitLine[lPos] << "' on line "
                << line;
         throw FileParseException(errout.str());
       }
       if (prop == "CFG") {
-        unsigned int cfg = atoi(val.c_str());
+        unsigned int cfg = 0;
+        std::from_chars(val.begin(), val.begin() + val.size(), cfg);
         switch (cfg) {
           case 0:
             break;
@@ -2675,11 +2677,11 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         int reactStatus = FileParserUtils::toInt(val);
         bond->setProp(common_properties::molReactStatus, reactStatus);
       } else if (prop == "STBOX") {
-        bond->setProp(common_properties::molStereoCare, val);
+        bond->setProp(common_properties::molStereoCare, std::string(val));
       } else if (prop == "ENDPTS") {
-        bond->setProp(common_properties::_MolFileBondEndPts, val);
+        bond->setProp(common_properties::_MolFileBondEndPts, std::string(val));
       } else if (prop == "ATTACH") {
-        bond->setProp(common_properties::_MolFileBondAttach, val);
+        bond->setProp(common_properties::_MolFileBondAttach, std::string(val));
       }
       ++lPos;
     }
