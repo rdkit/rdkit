@@ -21,7 +21,7 @@ rdkit_test(testRGroupDecomp testRGroupDecomp.cpp
 rdkit_test(testRGroupDecompInternals testRGroupInternals.cpp
 		LINK_LIBRARIES RGroupDecomposition )
 
-rdkit_catch_test(rgroupCatchTests catch_rgd.cpp ../catch_main.cpp
+rdkit_catch_test(rgroupCatchTests catch_rgd.cpp 
 		LINK_LIBRARIES RGroupDecomposition )
 
 

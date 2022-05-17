@@ -24,7 +24,7 @@ rdkit_headers(MolInterchange.h details.h
 rdkit_test(molInterchangeTest1 test1.cpp
            LINK_LIBRARIES MolInterchange FileParsers SmilesParse)
 
-rdkit_catch_test(molInterchangeCatchTest ../catch_main.cpp molinterchange_catch.cpp 
+rdkit_catch_test(molInterchangeCatchTest molinterchange_catch.cpp 
 LINK_LIBRARIES MolInterchange FileParsers SmilesParse )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

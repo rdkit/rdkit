@@ -24,4 +24,4 @@ endif()
 rdkit_test(substructLibraryTest substructLibraryTest.cpp
            LINK_LIBRARIES TautomerQuery MolStandardize SubstructLibrary FileParsers )
 
-rdkit_catch_test(substructLibraryCatchTest ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES SubstructLibrary FileParsers )
+rdkit_catch_test(substructLibraryCatchTest catch_tests.cpp LINK_LIBRARIES SubstructLibrary FileParsers )

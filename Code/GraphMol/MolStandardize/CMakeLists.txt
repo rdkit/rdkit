@@ -62,6 +62,6 @@ rdkit_test(molChargeTest testCharge.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molTautomerTest testTautomer.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molStandardizeSmallTest test2.cpp LINK_LIBRARIES MolStandardize )
 rdkit_test(molFragmentTest testFragment.cpp LINK_LIBRARIES MolStandardize )
-rdkit_catch_test(molStandardizeCatchTest ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES MolStandardize )
+rdkit_catch_test(molStandardizeCatchTest catch_tests.cpp LINK_LIBRARIES MolStandardize )
 
 
