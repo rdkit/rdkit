@@ -9,7 +9,6 @@
 //
 #include "Abbreviations.h"
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>
 
@@ -74,13 +73,20 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
       mol.addBond(oaidx, connectIdx, Bond::BondType::SINGLE);
     }
   }
+  std::vector<int> mapping;
+  std::vector<int> prevMapping;
+  bool hasPrevMapping =
+      mol.getPropIfPresent(common_properties::abbreviationMapping, prevMapping);
   mol.beginBatchEdit();
   for (unsigned int i = 0; i < toRemove.size(); ++i) {
     if (toRemove[i]) {
       mol.removeAtom(i);
+    } else {
+      mapping.push_back(hasPrevMapping ? prevMapping.at(i) : i);
     }
   }
   mol.commitBatchEdit();
+  mol.setProp(common_properties::abbreviationMapping, mapping);
 }
 
 void labelMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {

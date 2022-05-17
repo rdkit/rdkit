@@ -45,6 +45,22 @@ namespace rj = rapidjson;
 
 using namespace RDKit;
 
+namespace {
+std::string mappingToJsonArray(const std::vector<int> &mapping) {
+  rj::Document doc;
+  doc.SetArray();
+  auto &alloc = doc.GetAllocator();
+  for (auto i : mapping) {
+    doc.PushBack(i, alloc);
+  }
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  std::string res = buffer.GetString();
+  return res;
+}
+}  // end of anonymous namespace
+
 std::string JSMol::get_smiles() const {
   if (!d_mol) return "";
   return MolToSmiles(*d_mol);
@@ -321,7 +337,10 @@ std::string JSMol::condense_abbreviations(double maxCoverage, bool useLinkers) {
     Abbreviations::condenseMolAbbreviations(
         *d_mol, Abbreviations::Utils::getDefaultLinkers(), maxCoverage);
   }
-  return "";
+  std::vector<int> mapping;
+  d_mol->getPropIfPresent(Abbreviations::common_properties::abbreviationMapping,
+                          mapping);
+  return mappingToJsonArray(mapping);
 }
 
 std::string JSMol::condense_abbreviations_from_defs(
@@ -341,7 +360,11 @@ std::string JSMol::condense_abbreviations_from_defs(
       return "cannot parse abbreviations";
     }
   }
+  std::vector<int> mapping;
   Abbreviations::condenseMolAbbreviations(*d_mol, abbrevs, maxCoverage);
+  d_mol->getPropIfPresent(Abbreviations::common_properties::abbreviationMapping,
+                          mapping);
+  return mappingToJsonArray(mapping);
 }
 
 std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
