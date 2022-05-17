@@ -143,22 +143,23 @@ std::string getV3000Line(std::istream *inStream, unsigned int &line) {
   // FIX: technically V3K blocks are case-insensitive. We should really be
   // up-casing everything here.
   PRECONDITION(inStream, "bad stream");
-  std::string res, tempStr;
-
+  std::string res;
   ++line;
-  tempStr = getLine(inStream);
+  auto inl = getLine(inStream);
+  std::string_view tempStr = inl;
   if (tempStr.size() < 7 || tempStr.substr(0, 7) != "M  V30 ") {
     std::ostringstream errout;
     errout << "Line " << line << " does not start with 'M  V30 '" << std::endl;
     throw FileParseException(errout.str());
   }
   // FIX: do we need to handle trailing whitespace after a -?
-  while (tempStr[tempStr.length() - 1] == '-') {
+  while (tempStr.back() == '-') {
     // continuation character, append what we read:
     res += tempStr.substr(7, tempStr.length() - 8);
     // and then read another line:
     ++line;
-    tempStr = getLine(inStream);
+    inl = getLine(inStream);
+    tempStr = inl;
     if (tempStr.size() < 7 || tempStr.substr(0, 7) != "M  V30 ") {
       std::ostringstream errout;
       errout << "Line " << line << " does not start with 'M  V30 '"
@@ -1345,7 +1346,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
 // CXSMILES
 const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
                                                  "X", "XH", "M", "MH"};
-void convertComplexNameToQuery(Atom *query, const std::string &symb) {
+void convertComplexNameToQuery(Atom *query, std::string_view symb) {
   if (symb == "Q") {
     query->setQuery(makeQAtomQuery());
   } else if (symb == "QH") {
@@ -2051,21 +2052,21 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   return fileComplete;
 }
 
-Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
+Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
   bool negate = false;
-  boost::trim(token);
-  std::string cpy = token;
-  boost::to_upper(cpy);
-  if (cpy.size() > 3 && cpy.substr(0, 3) == "NOT") {
+  token = strip(token);
+  if (token.size() > 3 && (token[0] == 'N' || token[0] == 'n') &&
+      (token[1] == 'O' || token[1] == 'o') &&
+      (token[2] == 'T' || token[2] == 't')) {
     negate = true;
     token = token.substr(3, token.size() - 3);
-    boost::trim(token);
+    token = strip(token);
   }
 
   Atom *res = nullptr;
   if (token[0] == '[') {
     // atom list:
-    if (token[token.length() - 1] != ']') {
+    if (token.back() != ']') {
       std::ostringstream errout;
       errout << "Bad atom token '" << token << "' on line: " << line;
       throw FileParseException(errout.str());
@@ -2077,8 +2078,9 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
 
     for (std::vector<std::string>::const_iterator stIt = splitToken.begin();
          stIt != splitToken.end(); ++stIt) {
-      std::string atSymb = boost::trim_copy(*stIt);
-      if (atSymb == "") {
+      std::string_view stoken = *stIt;
+      std::string atSymb(strip(stoken));
+      if (atSymb.empty()) {
         continue;
       }
       if (atSymb.size() == 2 && atSymb[1] >= 'A' && atSymb[1] <= 'Z') {
@@ -2123,8 +2125,7 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
         res->setAtomicNum(0);
       }
       if (token[0] == 'R' && token >= "R0" && token <= "R99") {
-        std::string rlabel = "";
-        rlabel = token.substr(1, token.length() - 1);
+        auto rlabel = token.substr(1, token.length() - 1);
         int rnumber;
         try {
           rnumber = boost::lexical_cast<int>(rlabel);
@@ -2145,13 +2146,14 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
       res->setIsotope(3);
     } else if (token == "Pol" || token == "Mod") {
       res = new Atom(0);
-      res->setProp(common_properties::dummyLabel, token);
+      res->setProp(common_properties::dummyLabel, std::string(token));
     } else {
+      std::string tcopy(token);
       if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
-        token[1] = static_cast<char>(tolower(token[1]));
+        tcopy[1] = static_cast<char>(tolower(token[1]));
       }
 
-      res = new Atom(PeriodicTable::getTable()->getAtomicNumber(token));
+      res = new Atom(PeriodicTable::getTable()->getAtomicNumber(tcopy));
     }
   }
 
@@ -2159,7 +2161,7 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
   return res;
 }
 
-bool splitAssignToken(const std::string &token, std::string &prop,
+bool splitAssignToken(std::string_view token, std::string &prop,
                       std::string &val) {
   std::vector<std::string> splitToken;
   boost::split(splitToken, token, boost::is_any_of("="));
@@ -2356,7 +2358,8 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
   }
 }
 
-void tokenizeV3000Line(std::string line, std::vector<std::string> &tokens) {
+void tokenizeV3000Line(std::string_view line,
+                       std::vector<std::string_view> &tokens) {
   tokens.clear();
   bool inQuotes = false, inParens = false;
   unsigned int start = 0;
@@ -2415,21 +2418,22 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
   PRECONDITION(nAtoms > 0, "bad atom count");
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(conf, "bad conformer");
-  std::string tempStr;
   std::vector<std::string> splitLine;
 
-  tempStr = getV3000Line(inStream, line);
+  auto inl = getV3000Line(inStream, line);
+  std::string_view tempStr = inl;
   if (tempStr.length() < 10 || tempStr.substr(0, 10) != "BEGIN ATOM") {
     std::ostringstream errout;
     errout << "BEGIN ATOM line not found on line " << line;
     throw FileParseException(errout.str());
   }
   for (unsigned int i = 0; i < nAtoms; ++i) {
-    tempStr = getV3000Line(inStream, line);
-    std::string trimmed = boost::trim_copy(tempStr);
+    inl = getV3000Line(inStream, line);
+    tempStr = inl;
+    auto trimmed = strip(tempStr);
 
-    std::vector<std::string> tokens;
-    std::vector<std::string>::iterator token;
+    std::vector<std::string_view> tokens;
+    std::vector<std::string_view>::iterator token;
 
     tokenizeV3000Line(trimmed, tokens);
     token = tokens.begin();
@@ -2439,7 +2443,8 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line" << line;
       throw FileParseException(errout.str());
     }
-    unsigned int molIdx = atoi(token->c_str());
+    unsigned int molIdx = 0;
+    std::from_chars(token->begin(), token->begin() + token->size(), molIdx);
 
     // start with the symbol:
     ++token;
@@ -2459,7 +2464,8 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    pos.x = atof(token->c_str());
+
+    pos.x = atof(std::string(*token).c_str());
     ++token;
     if (token == tokens.end()) {
       delete atom;
@@ -2467,7 +2473,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    pos.y = atof(token->c_str());
+    pos.y = atof(std::string(*token).c_str());
     ++token;
     if (token == tokens.end()) {
       delete atom;
@@ -2475,7 +2481,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    pos.z = atof(token->c_str());
+    pos.z = atof(std::string(*token).c_str());
     // the map number:
     ++token;
     if (token == tokens.end()) {
@@ -2484,7 +2490,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    int mapNum = atoi(token->c_str());
+    int mapNum = atoi(std::string(*token).c_str());
     if (mapNum > 0) {
       atom->setProp(common_properties::molAtomMapNumber, mapNum);
     }
@@ -2499,7 +2505,8 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     mol->setAtomBookmark(atom, molIdx);
     conf->setAtomPos(aid, pos);
   }
-  tempStr = getV3000Line(inStream, line);
+  inl = getV3000Line(inStream, line);
+  tempStr = inl;
   if (tempStr.length() < 8 || tempStr.substr(0, 8) != "END ATOM") {
     std::ostringstream errout;
     errout << "END ATOM line not found on line " << line;
@@ -2526,13 +2533,16 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   PRECONDITION(nBonds > 0, "bad bond count");
   PRECONDITION(mol, "bad molecule");
 
-  auto tempStr = getV3000Line(inStream, line);
+  auto inl = getV3000Line(inStream, line);
+  std::string_view tempStr = inl;
   if (tempStr.length() < 10 || tempStr.substr(0, 10) != "BEGIN BOND") {
     throw FileParseException("BEGIN BOND line not found");
   }
   for (unsigned int i = 0; i < nBonds; ++i) {
-    tempStr = boost::trim_copy(getV3000Line(inStream, line));
-    std::vector<std::string> splitLine;
+    inl = getV3000Line(inStream, line);
+    tempStr = inl;
+    tempStr = strip(tempStr);
+    std::vector<std::string_view> splitLine;
     tokenizeV3000Line(tempStr, splitLine);
     if (splitLine.size() < 4) {
       std::ostringstream errout;
@@ -2540,10 +2550,18 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       throw FileParseException(errout.str());
     }
     Bond *bond;
-    unsigned int bondIdx = atoi(splitLine[0].c_str());
-    unsigned int bType = atoi(splitLine[1].c_str());
-    unsigned int a1Idx = atoi(splitLine[2].c_str());
-    unsigned int a2Idx = atoi(splitLine[3].c_str());
+    unsigned int bondIdx = 0;
+    std::from_chars(splitLine[0].begin(),
+                    splitLine[0].begin() + splitLine[0].size(), bondIdx);
+    unsigned int bType = 0;
+    std::from_chars(splitLine[1].begin(),
+                    splitLine[1].begin() + splitLine[1].size(), bType);
+    unsigned int a1Idx = 0;
+    std::from_chars(splitLine[2].begin(),
+                    splitLine[2].begin() + splitLine[2].size(), a1Idx);
+    unsigned int a2Idx = 0;
+    std::from_chars(splitLine[3].begin(),
+                    splitLine[3].begin() + splitLine[3].size(), a2Idx);
 
     switch (bType) {
       case 1:
@@ -2685,7 +2703,8 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       }
     }
   }
-  tempStr = getV3000Line(inStream, line);
+  inl = getV3000Line(inStream, line);
+  tempStr = inl;
   if (tempStr.length() < 8 || tempStr.substr(0, 8) != "END BOND") {
     std::ostringstream errout;
     errout << "END BOND line not found at line " << line;
