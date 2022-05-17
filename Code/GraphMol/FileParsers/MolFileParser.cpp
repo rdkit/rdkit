@@ -33,6 +33,8 @@
 #include <RDGeneral/LocaleSwitcher.h>
 #include <typeinfo>
 #include <exception>
+#include <charconv>
+
 #ifdef RDKIT_USE_BOOST_REGEX
 #include <boost/regex.hpp>
 using boost::regex;
@@ -56,14 +58,13 @@ namespace RDKit {
 
 namespace FileParserUtils {
 
-int toInt(std::string_view input, bool acceptSpaces) {
-  int res = 0;
+int toInt(const std::string_view input, bool acceptSpaces) {
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
 
   // sanity check on the input since strtol doesn't do it for us:
   const char *txt = input.data();
-  while (*txt != '\x00') {
+  for (size_t i = 0u; i < input.size() && *txt != '\x00'; ++i) {
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
         *txt == '+' || *txt == '-') {
       ++txt;
@@ -71,20 +72,29 @@ int toInt(std::string_view input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  res = strtol(input.data(), nullptr, 10);
+  // remove leading spaces
+  txt = input.data();
+  unsigned int sz = input.size();
+  if (acceptSpaces) {
+    while (*txt == ' ') {
+      ++txt;
+      --sz;
+    }
+  }
+  int res = 0;
+  std::from_chars(txt, txt + sz, res);
   return res;
 }
 int toInt(const std::string &input, bool acceptSpaces) {
   return toInt(std::string_view(input.c_str()), acceptSpaces);
 }
-unsigned int toUnsigned(std::string_view input, bool acceptSpaces) {
-  unsigned res = 0;
+unsigned int toUnsigned(const std::string_view input, bool acceptSpaces) {
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
 
   // sanity check on the input since strtol doesn't do it for us:
   const char *txt = input.data();
-  while (*txt != '\x00') {
+  for (size_t i = 0u; i < input.size() && *txt != '\x00'; ++i) {
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
         *txt == '+') {
       ++txt;
@@ -92,17 +102,27 @@ unsigned int toUnsigned(std::string_view input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  res = strtoul(input.data(), nullptr, 10);
+  // remove leading spaces
+  txt = input.data();
+  unsigned int sz = input.size();
+  if (acceptSpaces) {
+    while (*txt == ' ') {
+      ++txt;
+      --sz;
+    }
+  }
+  unsigned int res = 0;
+  std::from_chars(txt, txt + sz, res);
   return res;
 }
 unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
   return toUnsigned(std::string_view(input.c_str()), acceptSpaces);
 }
-double toDouble(std::string_view input, bool acceptSpaces) {
+double toDouble(const std::string_view input, bool acceptSpaces) {
   // sanity check on the input since strtol doesn't do it for us:
   const char *txt = input.data();
-  // check for ',' and '.' because locale
-  while (*txt != '\x00') {
+  for (size_t i = 0u; i < input.size() && *txt != '\x00'; ++i) {
+    // check for ',' and '.' because locale
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
         *txt == '+' || *txt == '-' || *txt == ',' || *txt == '.') {
       ++txt;
@@ -110,6 +130,9 @@ double toDouble(std::string_view input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
+  // unfortunately from_chars() with doubles didn't work on g++ until v11.1
+  // and the status with clang is hard to figure out... we remain old-school
+  // remove leading spaces
   double res = atof(input.data());
   return res;
 }
@@ -1346,7 +1369,7 @@ void convertComplexNameToQuery(Atom *query, const std::string &symb) {
   }
 }
 
-Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
+Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
                            unsigned int line, bool strictParsing) {
   std::string symb;
   int massDiff, chg, hCount;
@@ -1376,7 +1399,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       massDiff = FileParserUtils::toInt(text.substr(34, 2), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(34, 2) << "' to into on line "
+      errout << "1Cannot convert '" << text.substr(34, 2) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1387,7 +1410,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       chg = FileParserUtils::toInt(text.substr(36, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(36, 3) << "' to int on line "
+      errout << "2Cannot convert '" << text.substr(36, 3) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1398,7 +1421,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       hCount = FileParserUtils::toInt(text.substr(42, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(42, 3) << "' to int on line "
+      errout << "3Cannot convert '" << text.substr(42, 3) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1617,7 +1640,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
   return res;
 }
 
-Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
+Bond *ParseMolFileBondLine(const std::string_view text, unsigned int line) {
   unsigned int idx1, idx2, bType, stereo;
   int spos = 0;
 
