@@ -17,6 +17,10 @@
 
 namespace python = boost::python;
 
+void setAllowNontetrahedral(bool val) {
+  RDKit::Chirality::allowNontetrahedralChirality = val;
+}
+
 namespace RDKit {
 struct chirality_wrapper {
   static void wrap() {
@@ -58,6 +62,9 @@ struct chirality_wrapper {
         .def_readonly("controllingAtoms",
                       &Chirality::StereoInfo::controllingAtoms,
                       "indices of the atoms controlling the stereo");
+    python::def(
+        "SetAllowNontetrahedralChirality", setAllowNontetrahedral,
+        "toggles recognition of non-tetrahedral chirality from 3D structures");
   };
 };
 }  // namespace RDKit

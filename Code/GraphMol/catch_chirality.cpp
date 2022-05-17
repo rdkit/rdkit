@@ -1962,9 +1962,9 @@ M  END)CTAB";
         Atom::ChiralType::CHI_UNSPECIFIED);
 }
 TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/nontetrahedral_3d.sdf";
   SECTION("basics") {
-    std::string pathName = getenv("RDBASE");
-    pathName += "/Code/GraphMol/test_data/nontetrahedral_3d.sdf";
     SDMolSupplier suppl(pathName);
     while (!suppl.atEnd()) {
       std::unique_ptr<ROMol> m{suppl.next()};
@@ -1988,6 +1988,24 @@ TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
       CHECK(atom->getProp<unsigned>(common_properties::_chiralPermutation) ==
             cp);
     }
+  }
+  SECTION("disable nontetrahedral stereo") {
+    Chirality::allowNontetrahedralChirality = false;
+    SDMolSupplier suppl(pathName);
+    while (!suppl.atEnd()) {
+      std::unique_ptr<ROMol> m{suppl.next()};
+      REQUIRE(m);
+      MolOps::assignChiralTypesFrom3D(*m);
+      auto ct = m->getProp<std::string>("ChiralType");
+      auto atom = m->getAtomWithIdx(0);
+
+      if (ct == "TH") {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL);
+      } else {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED);
+      }
+    }
+    Chirality::allowNontetrahedralChirality = true;
   }
 }
 

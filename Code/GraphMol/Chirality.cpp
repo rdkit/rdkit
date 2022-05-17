@@ -767,6 +767,8 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 }  // namespace
 
 namespace Chirality {
+bool allowNontetrahedralChirality = true;
+
 namespace detail {
 bool bondAffectsAtomChirality(const Bond *bond, const Atom *atom) {
   // FIX consider how to handle organometallics
@@ -2540,7 +2542,8 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       // not enough explicit neighbors or too many total neighbors
       continue;
     }
-    if (assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
+    if (Chirality::allowNontetrahedralChirality &&
+        assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
       continue;
     }
     /* We're only doing tetrahedral cases here */

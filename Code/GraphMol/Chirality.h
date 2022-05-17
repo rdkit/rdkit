@@ -27,6 +27,8 @@ namespace Chirality {
 
 //! double bond stereo will be ignored/removed for rings smaller than this:
 constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
+extern bool allowNontetrahedralChirality;  //!< Toggle perception of
+                                           //!< nontetrahedral chirality from 3D
 
 /// @cond
 /*!
