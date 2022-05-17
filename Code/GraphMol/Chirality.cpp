@@ -2536,7 +2536,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     // additional reasons to skip the atom:
     auto nzDegree = Chirality::detail::getAtomNonzeroDegree(atom);
     auto tnzDegree = nzDegree + atom->getTotalNumHs();
-    if (nzdegree < 3 || tnzdegree > 6) {
+    if (nzDegree < 3 || tnzDegree > 6) {
       // not enough explicit neighbors or too many total neighbors
       continue;
     }
@@ -2544,13 +2544,13 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       continue;
     }
     /* We're only doing tetrahedral cases here */
-    if (totdeg > 4) {
+    if (tnzDegree > 4) {
       continue;
     }
     int anum = atom->getAtomicNum();
-    if (anum != 16 && anum != 34 &&      // S or Se are special
-                                         // (just using the InChI list for now)
-        (atom->getTotalDegree() != 4 ||  // not enough total neighbors
+    if (anum != 16 && anum != 34 &&  // S or Se are special
+                                     // (just using the InChI list for now)
+        (tnzDegree != 4 ||           // not enough total neighbors
          atom->getTotalNumHs(true) > 1)) {
       continue;
     }

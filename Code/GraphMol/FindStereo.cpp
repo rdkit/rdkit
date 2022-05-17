@@ -29,8 +29,9 @@ namespace detail {
 
 bool isAtomPotentialNontetrahedralCenter(const Atom *atom) {
   PRECONDITION(atom, "atom is null");
-  auto degree = atom->getTotalDegree();
-  if (atom->getAtomicNum() < 15 || degree > 6 || degree < 2) {
+  auto tnzdegree =
+      Chirality::detail::getAtomNonzeroDegree(atom) + atom->getTotalNumHs();
+  if (atom->getAtomicNum() < 15 || tnzdegree > 6 || tnzdegree < 2) {
     return false;
   }
   auto chiralType = atom->getChiralTag();
@@ -41,7 +42,7 @@ bool isAtomPotentialNontetrahedralCenter(const Atom *atom) {
 
   // with at least four neighbors but nothing specified we can start to imagine
   // that it might be enhanced stereo
-  if (chiralType == Atom::ChiralType::CHI_UNSPECIFIED && degree >= 4) {
+  if (chiralType == Atom::ChiralType::CHI_UNSPECIFIED && tnzdegree >= 4) {
     return true;
   }
 
@@ -49,19 +50,19 @@ bool isAtomPotentialNontetrahedralCenter(const Atom *atom) {
 }
 bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
   PRECONDITION(atom, "atom is null");
-
-  if (atom->getTotalDegree() > 4) {
+  auto nzDegree = getAtomNonzeroDegree(atom);
+  auto tnzDegree = nzDegree + atom->getTotalNumHs();
+  if (tnzDegree > 4) {
     return false;
   } else {
     const auto &mol = atom->getOwningMol();
-    auto degree = mol.getAtomDegree(atom);
-    if (degree == 4) {
+    if (nzDegree == 4) {
       // chirality is always possible with 4 nbrs
       return true;
-    } else if (degree == 1) {
+    } else if (nzDegree == 1) {
       // chirality is never possible with 1 nbr
       return false;
-    } else if (degree < 3 &&
+    } else if (nzDegree < 3 &&
                (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
       // less than three neighbors is never stereogenic
       // unless it is a phosphine/arsine with implicit H
@@ -72,7 +73,7 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
       // are always treated as stereogenic even with H atom neighbors.
       // Accept automatically.
       return true;
-    } else if (degree == 3) {
+    } else if (nzDegree == 3) {
       // three-coordinate with a single H we'll accept automatically:
       if (atom->getTotalNumHs() == 1) {
         return true;
@@ -104,6 +105,7 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
     }
   }
 }
+
 bool isAtomPotentialStereoAtom(const Atom *atom) {
   return isAtomPotentialTetrahedralCenter(atom) ||
          isAtomPotentialNontetrahedralCenter(atom);
@@ -333,67 +335,6 @@ bool isBondPotentialStereoBond(const Bond *bond) {
   } else {
     return false;
   }
-}
-
-bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
-  PRECONDITION(atom, "atom is null");
-  auto nzDegree = getAtomNonzeroDegree(atom);
-  auto tnzDegree = nzDegree + atom->getTotalNumHs();
-  if (tnzDegree > 4) {
-    return false;
-  } else {
-    const auto &mol = atom->getOwningMol();
-    if (nzDegree == 4) {
-      // chirality is always possible with 4 nbrs
-      return true;
-    } else if (nzDegree == 1) {
-      // chirality is never possible with 1 nbr
-      return false;
-    } else if (nzDegree < 3 &&
-               (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
-      // less than three neighbors is never stereogenic
-      // unless it is a phosphine/arsine with implicit H
-      return false;
-    } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
-      // from logical flow: degree is 2 or 3 (implicit H)
-      // Since InChI Software v. 1.02-standard (2009), phosphines and arsines
-      // are always treated as stereogenic even with H atom neighbors.
-      // Accept automatically.
-      return true;
-    } else if (nzDegree == 3) {
-      // three-coordinate with a single H we'll accept automatically:
-      if (atom->getTotalNumHs() == 1) {
-        return true;
-      } else {
-        // otherwise we default to not being a legal center
-        bool legalCenter = false;
-        // but there are a few special cases we'll accept
-        // sulfur or selenium with either a positive charge or a double
-        // bond:
-        if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) &&
-            (atom->getExplicitValence() == 4 ||
-             (atom->getExplicitValence() == 3 &&
-              atom->getFormalCharge() == 1))) {
-          legalCenter = true;
-        } else if (atom->getAtomicNum() == 7) {
-          // three-coordinate N additional requirements:
-          //   in a ring of size 3  (from InChI)
-          // OR
-          /// is a bridgehead atom (RDKit extension)
-          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
-              queryIsAtomBridgehead(atom)) {
-            legalCenter = true;
-          }
-        }
-        return legalCenter;
-      }
-    } else {
-      return false;
-    }
-  }
-}
-bool isAtomPotentialStereoAtom(const Atom *atom) {
-  return isAtomPotentialTetrahedralCenter(atom);
 }
 }  // namespace detail
 
