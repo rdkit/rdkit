@@ -2444,7 +2444,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       throw FileParseException(errout.str());
     }
     unsigned int molIdx = 0;
-    std::from_chars(token->begin(), token->begin() + token->size(), molIdx);
+    std::from_chars(token->data(), token->data() + token->size(), molIdx);
 
     // start with the symbol:
     ++token;
@@ -2551,17 +2551,17 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     }
     Bond *bond;
     unsigned int bondIdx = 0;
-    std::from_chars(splitLine[0].begin(),
-                    splitLine[0].begin() + splitLine[0].size(), bondIdx);
+    std::from_chars(splitLine[0].data(),
+                    splitLine[0].data() + splitLine[0].size(), bondIdx);
     unsigned int bType = 0;
-    std::from_chars(splitLine[1].begin(),
-                    splitLine[1].begin() + splitLine[1].size(), bType);
+    std::from_chars(splitLine[1].data(),
+                    splitLine[1].data() + splitLine[1].size(), bType);
     unsigned int a1Idx = 0;
-    std::from_chars(splitLine[2].begin(),
-                    splitLine[2].begin() + splitLine[2].size(), a1Idx);
+    std::from_chars(splitLine[2].data(),
+                    splitLine[2].data() + splitLine[2].size(), a1Idx);
     unsigned int a2Idx = 0;
-    std::from_chars(splitLine[3].begin(),
-                    splitLine[3].begin() + splitLine[3].size(), a2Idx);
+    std::from_chars(splitLine[3].data(),
+                    splitLine[3].data() + splitLine[3].size(), a2Idx);
 
     switch (bType) {
       case 1:
@@ -2630,7 +2630,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       }
       if (prop == "CFG") {
         unsigned int cfg = 0;
-        std::from_chars(val.begin(), val.begin() + val.size(), cfg);
+        std::from_chars(val.data(), val.data() + val.size(), cfg);
         switch (cfg) {
           case 0:
             break;
