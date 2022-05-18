@@ -52,7 +52,8 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationMatch {
 };
 namespace common_properties {
 RDKIT_ABBREVIATIONS_EXPORT extern const std::string numDummies;
-RDKIT_ABBREVIATIONS_EXPORT extern const std::string abbreviationMapping;
+RDKIT_ABBREVIATIONS_EXPORT extern const std::string origAtomMapping;
+RDKIT_ABBREVIATIONS_EXPORT extern const std::string origBondMapping;
 }
 namespace Utils {
 //! returns the default set of abbreviation definitions

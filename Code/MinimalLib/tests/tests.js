@@ -214,10 +214,16 @@ function test_abbreviations() {
     var bmol = RDKitModule.get_mol("C1CC(C(F)(F)F)C1");
     assert.equal(bmol.is_valid(),1);
     var mapping = bmol.condense_abbreviations();
-    assert.equal(mapping, JSON.stringify([0, 1, 2, 3, 4, 5, 6, 7]));
+    assert.equal(mapping, JSON.stringify({
+        atoms: [0, 1, 2, 3, 4, 5, 6, 7],
+        bonds: [0, 1, 2, 3, 4, 5, 6, 7],
+    }));
     assert.equal(bmol.get_cxsmiles(),"FC(F)(F)C1CCC1");
     mapping = bmol.condense_abbreviations(1.0,false);
-    assert.equal(mapping, JSON.stringify([0, 1, 2, 3, 7]));
+    assert.equal(mapping, JSON.stringify({
+        atoms: [0, 1, 2, 3, 7],
+        bonds: [0, 1, 2, 6, 7],
+    }));
     assert.equal(bmol.get_cxsmiles(),"*C1CCC1 |$CF3;;;;$|");
 }
 

@@ -164,10 +164,14 @@ TEST_CASE("applyMatches") {
       Abbreviations::applyMatches(*m, matches);
       CHECK(m->getNumAtoms() == 3);
       CHECK(MolToCXSmiles(*m) == "*C* |$CF3;;CO2H$|");
-      std::vector<int> mapping;
+      std::vector<unsigned int> atomMapping;
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{1, 4, 5});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{1, 4, 5});
+      std::vector<unsigned int> bondMapping;
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{3, 4});
     }
   }
 }
@@ -188,10 +192,14 @@ Cy   *C1CCC(*)CC1  Cy)ABBREV");
       Abbreviations::applyMatches(*m, matches);
       CHECK(m->getNumAtoms() == 5);
       CHECK(MolToCXSmiles(*m) == "FC**Cl |$;;PEG3;Pent;$|");
-      std::vector<int> mapping;
+      std::vector<unsigned int> atomMapping;
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{0, 1, 2, 11, 16});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{0, 1, 2, 11, 16});
+      std::vector<unsigned int> bondMapping;
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{0, 1, 10, 15});
     }
     {
       auto m = "COC1CCC(C)CC1"_smiles;
@@ -203,10 +211,14 @@ Cy   *C1CCC(*)CC1  Cy)ABBREV");
       Abbreviations::applyMatches(*m, matches);
       CHECK(m->getNumAtoms() == 4);
       CHECK(MolToCXSmiles(*m) == "C*OC |$;Cy;;$|");
-      std::vector<int> mapping;
+      std::vector<unsigned int> atomMapping;
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{0, 1, 2, 6});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{0, 1, 2, 6});
+      std::vector<unsigned int> bondMapping;
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{0, 1, 5});
     }
   }
 }
@@ -220,10 +232,14 @@ TEST_CASE("condense abbreviations") {
       double maxCoverage = 1.0;
       Abbreviations::condenseMolAbbreviations(*m, abbrevs, maxCoverage);
       CHECK(MolToCXSmiles(*m) == "*C* |$CF3;;CO2H$|");
-      std::vector<int> mapping;
+      std::vector<unsigned int> atomMapping;
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{1, 4, 5});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{1, 4, 5});
+      std::vector<unsigned int> bondMapping;
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{3, 4});
     }
   }
 }
@@ -262,10 +278,14 @@ val *N[C@@H](C(C)C)C(=O)* val)ABBREV");
       Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
       CHECK(m->getNumAtoms() == 5);
       CHECK(MolToCXSmiles(*m) == "FC**Cl |$;;PEG3;Hept;$|");
-      std::vector<int> mapping;
+      std::vector<unsigned int> atomMapping;
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{0, 1, 2, 11, 18});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{0, 1, 2, 11, 18});
+      std::vector<unsigned int> bondMapping;
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{0, 1, 10, 17});
     }
     {
       auto m = "COC1CCC(C)CC1"_smiles;
@@ -274,10 +294,14 @@ val *N[C@@H](C(C)C)C(=O)* val)ABBREV");
       Abbreviations::condenseMolAbbreviations(*m, customLinkers, maxCoverage);
       CHECK(m->getNumAtoms() == 4);
       CHECK(MolToCXSmiles(*m) == "C*OC |$;Cy;;$|");
-      std::vector<int> mapping;
+      std::vector<unsigned int> atomMapping;
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{0, 1, 2, 6});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{0, 1, 2, 6});
+      std::vector<unsigned int> bondMapping;
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{0, 1, 5});
     }
   }
   SECTION("peptides") {
@@ -286,10 +310,16 @@ val *N[C@@H](C(C)C)C(=O)* val)ABBREV");
     double maxCoverage = 1.0;
     Abbreviations::condenseMolAbbreviations(*m, customLinkers, maxCoverage);
     CHECK(MolToCXSmiles(*m) == "NCC(=O)****O |$;;;;tyr;thr;lys;cys;$|");
-    std::vector<int> mapping;
-    CHECK(m->getPropIfPresent(
-        Abbreviations::common_properties::abbreviationMapping, mapping));
-    CHECK(mapping == std::vector<int>{0, 1, 2, 3, 4, 16, 23, 32, 38});
+    std::vector<unsigned int> atomMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origAtomMapping,
+                              atomMapping));
+    CHECK(atomMapping ==
+          std::vector<unsigned int>{0, 1, 2, 3, 4, 16, 23, 32, 38});
+    std::vector<unsigned int> bondMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origBondMapping,
+                              bondMapping));
+    CHECK(bondMapping ==
+          std::vector<unsigned int>{0, 1, 2, 15, 38, 37, 31, 22});
   }
 }
 
@@ -305,16 +335,23 @@ TEST_CASE("abbreviations and linkers") {
       Abbreviations::condenseMolAbbreviations(*m, abbrevs, maxCoverage);
       CHECK(m->getNumAtoms() == 8);
       CHECK(MolToCXSmiles(*m) == "*C1CCC(C)CC1 |$OMe;;;;;;;$|");
-      std::vector<int> mapping;
+      std::vector<unsigned int> atomMapping;
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{1, 2, 3, 4, 5, 6, 7, 8});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{1, 2, 3, 4, 5, 6, 7, 8});
+      std::vector<unsigned int> bondMapping;
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{1, 2, 3, 4, 5, 6, 7, 8});
       Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
       CHECK(m->getNumAtoms() == 3);
       CHECK(MolToCXSmiles(*m) == "**C |$OMe;Cy;$|");
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{1, 2, 6});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{1, 2, 6});
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{1, 5});
     }
     {  // a more sensible order
       auto m = "COC1CCC(C)CC1"_smiles;
@@ -323,16 +360,23 @@ TEST_CASE("abbreviations and linkers") {
       Abbreviations::condenseMolAbbreviations(*m, linkers, maxCoverage);
       CHECK(m->getNumAtoms() == 4);
       CHECK(MolToCXSmiles(*m) == "C*OC |$;Cy;;$|");
-      std::vector<int> mapping;
+      std::vector<unsigned int> atomMapping;
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
-      CHECK(mapping == std::vector<int>{0, 1, 2, 6});
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
+      CHECK(atomMapping == std::vector<unsigned int>{0, 1, 2, 6});
+      std::vector<unsigned int> bondMapping;
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{0, 1, 5});
       Abbreviations::condenseMolAbbreviations(*m, abbrevs, maxCoverage);
       CHECK(m->getPropIfPresent(
-          Abbreviations::common_properties::abbreviationMapping, mapping));
+          Abbreviations::common_properties::origAtomMapping, atomMapping));
       CHECK(m->getNumAtoms() == 4);
       CHECK(MolToCXSmiles(*m) == "C*OC |$;Cy;;$|");
-      CHECK(mapping == std::vector<int>{0, 1, 2, 6});
+      CHECK(atomMapping == std::vector<unsigned int>{0, 1, 2, 6});
+      CHECK(m->getPropIfPresent(
+          Abbreviations::common_properties::origBondMapping, bondMapping));
+      CHECK(bondMapping == std::vector<unsigned int>{0, 1, 5});
     }
   }
 }
@@ -444,10 +488,14 @@ M  END)CTAB"_ctab;
     CHECK(m->getNumAtoms() == 10);
     Abbreviations::condenseAbbreviationSubstanceGroups(*m);
     CHECK(m->getNumAtoms() == 5);
-    std::vector<int> mapping;
-    CHECK(m->getPropIfPresent(
-        Abbreviations::common_properties::abbreviationMapping, mapping));
-    CHECK(mapping == std::vector<int>{0, 1, 4, 5, 6});
+    std::vector<unsigned int> atomMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origAtomMapping,
+                              atomMapping));
+    CHECK(atomMapping == std::vector<unsigned int>{0, 1, 4, 5, 6});
+    std::vector<unsigned int> bondMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origBondMapping,
+                              bondMapping));
+    CHECK(bondMapping == std::vector<unsigned int>{2, 3, 4, 5, 9});
     // remove the conformer before generating CXSMILES
     m->clearConformers();
     CHECK(MolToCXSmiles(*m) == "*C1CC1* |$CO2H;;;;CF3$|");
@@ -489,10 +537,14 @@ M  END
     CHECK(m->getNumAtoms() == 4);
     // remove the conformer before generating CXSMILES
     Abbreviations::condenseAbbreviationSubstanceGroups(*m);
-    std::vector<int> mapping;
-    CHECK(m->getPropIfPresent(
-        Abbreviations::common_properties::abbreviationMapping, mapping));
-    CHECK(mapping == std::vector<int>{0, 1, 2, 4});
+    std::vector<unsigned int> atomMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origAtomMapping,
+                              atomMapping));
+    CHECK(atomMapping == std::vector<unsigned int>{0, 1, 2, 4});
+    std::vector<unsigned int> bondMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origBondMapping,
+                              bondMapping));
+    CHECK(bondMapping == std::vector<unsigned int>{0, 1, 2, 3});
     m->clearConformers();
     CHECK(MolToCXSmiles(*m) == "*C1CC1 |$CF3;;;$|");
   }
@@ -532,10 +584,14 @@ M  END)CTAB"_ctab;
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 8);
     Abbreviations::condenseAbbreviationSubstanceGroups(*m);
-    std::vector<int> mapping;
-    CHECK(m->getPropIfPresent(
-        Abbreviations::common_properties::abbreviationMapping, mapping));
-    CHECK(mapping == std::vector<int>{0, 1, 7});
+    std::vector<unsigned int> atomMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origAtomMapping,
+                              atomMapping));
+    CHECK(atomMapping == std::vector<unsigned int>{0, 1, 7});
+    std::vector<unsigned int> bondMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origBondMapping,
+                              bondMapping));
+    CHECK(bondMapping == std::vector<unsigned int>{0, 6});
     CHECK(m->getNumAtoms() == 3);
     // remove the conformer before generating CXSMILES
     m->clearConformers();
@@ -577,10 +633,14 @@ M  END
     REQUIRE(m);
     CHECK(m->getNumAtoms() == 8);
     Abbreviations::condenseAbbreviationSubstanceGroups(*m);
-    std::vector<int> mapping;
-    CHECK(m->getPropIfPresent(
-        Abbreviations::common_properties::abbreviationMapping, mapping));
-    CHECK(mapping == std::vector<int>{0, 1, 7});
+    std::vector<unsigned int> atomMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origAtomMapping,
+                              atomMapping));
+    CHECK(atomMapping == std::vector<unsigned int>{0, 1, 7});
+    std::vector<unsigned int> bondMapping;
+    CHECK(m->getPropIfPresent(Abbreviations::common_properties::origBondMapping,
+                              bondMapping));
+    CHECK(bondMapping == std::vector<unsigned int>{0, 6});
     CHECK(m->getNumAtoms() == 3);
     // remove the conformer before generating CXSMILES
     m->clearConformers();

@@ -21,7 +21,8 @@ namespace Abbreviations {
 
 namespace common_properties {
 const std::string numDummies = "_numDummies";
-const std::string abbreviationMapping = "_abbreviationMapping";
+const std::string origAtomMapping = "_origAtomMapping";
+const std::string origBondMapping = "_origBondMapping";
 }
 
 namespace Utils {

@@ -46,13 +46,27 @@ namespace rj = rapidjson;
 using namespace RDKit;
 
 namespace {
-std::string mappingToJsonArray(const std::vector<int> &mapping) {
+std::string mappingToJsonArray(const ROMol &mol) {
+  std::vector<unsigned int> atomMapping;
+  std::vector<unsigned int> bondMapping;
+  mol.getPropIfPresent(Abbreviations::common_properties::origAtomMapping,
+                       atomMapping);
+  mol.getPropIfPresent(Abbreviations::common_properties::origBondMapping,
+                       bondMapping);
   rj::Document doc;
-  doc.SetArray();
+  doc.SetObject();
   auto &alloc = doc.GetAllocator();
-  for (auto i : mapping) {
-    doc.PushBack(i, alloc);
+  rj::Value rjAtoms(rj::kArrayType);
+  for (auto i : atomMapping) {
+    rjAtoms.PushBack(i, alloc);
   }
+  doc.AddMember("atoms", rjAtoms, alloc);
+
+  rj::Value rjBonds(rj::kArrayType);
+  for (auto i : bondMapping) {
+    rjBonds.PushBack(i, alloc);
+  }
+  doc.AddMember("bonds", rjBonds, alloc);
   rj::StringBuffer buffer;
   rj::Writer<rj::StringBuffer> writer(buffer);
   doc.Accept(writer);
@@ -337,10 +351,7 @@ std::string JSMol::condense_abbreviations(double maxCoverage, bool useLinkers) {
     Abbreviations::condenseMolAbbreviations(
         *d_mol, Abbreviations::Utils::getDefaultLinkers(), maxCoverage);
   }
-  std::vector<int> mapping;
-  d_mol->getPropIfPresent(Abbreviations::common_properties::abbreviationMapping,
-                          mapping);
-  return mappingToJsonArray(mapping);
+  return mappingToJsonArray(*d_mol);
 }
 
 std::string JSMol::condense_abbreviations_from_defs(
@@ -360,11 +371,8 @@ std::string JSMol::condense_abbreviations_from_defs(
       return "cannot parse abbreviations";
     }
   }
-  std::vector<int> mapping;
   Abbreviations::condenseMolAbbreviations(*d_mol, abbrevs, maxCoverage);
-  d_mol->getPropIfPresent(Abbreviations::common_properties::abbreviationMapping,
-                          mapping);
-  return mappingToJsonArray(mapping);
+  return mappingToJsonArray(*d_mol);
 }
 
 std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
