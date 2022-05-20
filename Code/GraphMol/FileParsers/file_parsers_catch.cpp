@@ -4604,7 +4604,7 @@ TEST_CASE(
                         "/Code/GraphMol/FileParsers/test_data/"
                         "mol_with_enhanced_stereo_2_And_groups.sdf";
     SDMolSupplier suppl(fName);
-    ROMol *mol = suppl.next();
+    std::unique_ptr<ROMol> mol{suppl.next()};
     REQUIRE(mol);
     auto groups = mol->getStereoGroups();
     REQUIRE(groups.size() == 2);
@@ -4617,7 +4617,7 @@ TEST_CASE(
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
     SDMolSupplier suppl(fName);
-    ROMol *mol = suppl.next();
+    std::unique_ptr<ROMol> mol{suppl.next()};
     REQUIRE(mol);
     auto groups = mol->getStereoGroups();
     REQUIRE(groups.size() == 2);
@@ -4682,7 +4682,6 @@ M  END
     CHECK(smi == "*CC |$Mod_p;;$|");
   }
 }
-
 
 TEST_CASE("PDB ACE caps bond order") {
   auto mol = R"DATA(HEADER TEST
