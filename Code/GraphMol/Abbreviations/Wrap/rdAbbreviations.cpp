@@ -99,6 +99,6 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
       "CondenseAbbreviationSubstanceGroups", &condenseAbbreviationSGroupHelper,
       (python::arg("mol")),
       python::return_value_policy<python::manage_new_object>(),
-      "Finds and replaces abbrevation (i.e. \"SUP\") substance groups in a "
+      "Finds and replaces abbreviation (i.e. \"SUP\") substance groups in a "
       "molecule. The result is not sanitized.");
 }
