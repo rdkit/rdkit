@@ -877,7 +877,7 @@ RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
-//! \brief Uses a conformer to assign ChiralType to a molecule's atoms
+//! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
   \param mol                  the molecule of interest
   \param confId               the conformer to use
@@ -885,6 +885,12 @@ RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
                               tags will be replaced
 
   If the conformer provided is not a 3D conformer, nothing will be done.
+
+
+  NOTE that this does not check to see if atoms are chiral centers (i.e. all
+  substituents are different), it merely sets the chiral type flags based on the
+  coordinates and atom ordering. Use \c assignStereochemistryFrom3D() if you
+  want chiral flags only on actual stereocenters.
 */
 RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFrom3D(
     ROMol &mol, int confId = -1, bool replaceExistingTags = true);

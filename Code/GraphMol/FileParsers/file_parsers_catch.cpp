@@ -1380,7 +1380,7 @@ TEST_CASE("CML writer", "[CML][writer]") {
     mol->addConformer(conf);
 
     mol->updatePropertyCache();
-    MolOps::assignChiralTypesFrom3D(*mol);
+    MolOps::assignStereochemistryFrom3D(*mol);
 
     const std::string cmlblock = MolToCMLBlock(*mol);
     const std::string cmlblock_expected =
@@ -4682,7 +4682,6 @@ M  END
     CHECK(smi == "*CC |$Mod_p;;$|");
   }
 }
-
 
 TEST_CASE("PDB ACE caps bond order") {
   auto mol = R"DATA(HEADER TEST
