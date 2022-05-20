@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2021 Greg Landrun and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,10 +29,110 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
                         bool tolerateChargeMismatch) {
   PRECONDITION(atom, "bad atom");
   int totalValence = atom->getTotalValence();
-  atom->getFormalCharge();
-
+  int fc = atom->getFormalCharge();
   // FIX: come up with some way of handling metals here
   switch (atom->getAtomicNum()) {
+    // Atoms only +1 in default UFF params
+    case 29:  // Cu
+    case 47:  // Ag
+      if (totalValence == 1 || fc == 1 || tolerateChargeMismatch) {
+        atomKey += "+1";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +2 in default UFF params
+    case 4:   // Be
+    case 20:  // Ca
+    case 25:  // Mn
+    case 26:  // Fe
+    case 28:  // Ni
+              //  case 30:  // Zn
+    case 46:  // Pd
+              //  case 48:  // Cd
+    case 78:  // Pt
+      if (totalValence == 2 || fc == 2 || tolerateChargeMismatch) {
+        atomKey += "+2";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +3 in default UFF params
+    case 21:   // Sc
+    case 24:   // Cr
+    case 27:   // Co
+               //  case 49:  // In
+    case 79:   // Au
+    case 89:   // Ac
+    case 96:   // Cm
+    case 97:   // Bk
+    case 98:   // Cf
+    case 99:   // Es
+    case 100:  // Fm
+    case 101:  // Md
+    case 102:  // No
+    case 103:  // Lr/Lw
+      if (totalValence == 3 || fc == 3 || tolerateChargeMismatch) {
+        atomKey += "+3";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +4 in default UFF params
+    case 2:   // He
+    case 18:  // Ar
+    case 22:  // Ti
+    case 36:  // Kr
+    case 54:  // Xe
+    case 90:  // Th
+    case 91:  // Pa
+    case 92:  // U
+    case 93:  // Np
+    case 94:  // Pu
+    case 95:  // Am
+      if (totalValence == 4 || fc == 4 || tolerateChargeMismatch) {
+        atomKey += "+4";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +5 in default UFF params
+    case 23:  // V
+    case 41:  // Nb
+    case 43:  // Tc
+    case 73:  // Ta
+      if (totalValence == 5 || fc == 5 || tolerateChargeMismatch) {
+        atomKey += "+5";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
+    // Atoms only +6 in default UFF params
+    case 42:  // Mo
+      if (totalValence == 6 || fc == 6 || tolerateChargeMismatch) {
+        atomKey += "+6";
+      } else {
+        BOOST_LOG(rdErrorLog)
+            << "UFFTYPER: Unrecognized charge state for atom: "
+            << atom->getIdx() << std::endl;
+      }
+      break;
+
     case 12:  // Mg
       switch (totalValence) {
         case 2:
@@ -212,6 +312,18 @@ void addAtomChargeFlags(const Atom *atom, std::string &atomKey,
               << atom->getIdx() << std::endl;
       }
       break;
+    case 75:  // Re
+      if (tolerateChargeMismatch) {
+        if (atomKey == "Re6") {
+          atomKey = "Re6+5";
+        } else if (atomKey == "Re3") {
+          atomKey = "Re3+7";
+        }
+      }
+      BOOST_LOG(rdErrorLog)
+          << "UFFTYPER: Unrecognized charge state for atom: " << atom->getIdx()
+          << std::endl;
+      break;
     case 80:  // Hg
       switch (totalValence) {
         case 2:
@@ -364,6 +476,10 @@ std::string getAtomLabel(const Atom *atom) {
 
             case Atom::SP3:
               atomKey += '3';
+              break;
+
+            case Atom::SP2D:
+              atomKey += '4';
               break;
 
             case Atom::SP3D:

@@ -337,7 +337,8 @@ std::ostream &operator<<(std::ostream &target,
   unsigned int i, j;
   for (i = 0; i < nr; i++) {
     for (j = 0; j < nc; j++) {
-      target << std::setw(7) << std::setprecision(3) << mat.getVal(i, j);
+      target << std::setfill(' ') << std::setw(7) << std::setprecision(3)
+             << mat.getVal(i, j) << " ";
     }
     target << "\n";
   }

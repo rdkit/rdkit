@@ -1367,19 +1367,24 @@ TEST_CASE("hybridization of unknown atom types", "[bug][molops]") {
   SECTION("Basics") {
     auto m = "[U][U][U]"_smiles;
     REQUIRE(m);
-    for (const auto atom : m->atoms()) {
-      CHECK(atom->getHybridization() == Atom::HybridizationType::S);
-    }
+    CHECK(m->getAtomWithIdx(0)->getHybridization() ==
+          Atom::HybridizationType::S);
+    CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+          Atom::HybridizationType::SP);
+    CHECK(m->getAtomWithIdx(2)->getHybridization() ==
+          Atom::HybridizationType::S);
   }
   SECTION("comprehensive") {
-    std::string smiles = "";
+    std::string smiles = "F";
     for (unsigned int i = 89; i <= 118; ++i) {
       smiles += (boost::format("[#%d]") % i).str();
     }
+    smiles += "F";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
     REQUIRE(m);
-    for (const auto atom : m->atoms()) {
-      CHECK(atom->getHybridization() == Atom::HybridizationType::S);
+    for (auto i = 1u; i < m->getNumAtoms() - 1; ++i) {
+      CHECK(m->getAtomWithIdx(i)->getHybridization() ==
+            Atom::HybridizationType::SP);
     }
   }
 }
@@ -2665,5 +2670,65 @@ TEST_CASE("Iterators") {
         [](const auto &b) { return b->getBondType() == Bond::DOUBLE; });
     REQUIRE(dbl_bnd != nbr_bonds.end());
     CHECK((*dbl_bnd)->getIdx() == 6);
+  }
+}
+
+TEST_CASE("general hybridization") {
+  auto m = "CS(=O)(=O)C"_smiles;
+  REQUIRE(m);
+  CHECK(m->getAtomWithIdx(0)->getHybridization() ==
+        Atom::HybridizationType::SP3);
+  CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+        Atom::HybridizationType::SP3);
+  CHECK(m->getAtomWithIdx(4)->getHybridization() ==
+        Atom::HybridizationType::SP3);
+}
+
+TEST_CASE("metal hybridization") {
+  SECTION("square planar") {
+    {
+      auto m = "F[U@SP](F)(F)F"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+            Atom::HybridizationType::SP2D);
+    }
+    {
+      auto m = "F[U@SP](F)F"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+            Atom::HybridizationType::SP2D);
+    }
+    {
+      auto m = "F[U@SP](F)(F)F"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+            Atom::HybridizationType::SP2D);
+    }
+    {
+      auto m = "F[U@TH](F)(F)F"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+            Atom::HybridizationType::SP3);
+    }
+  }
+  SECTION("octahedral") {
+    {
+      auto m = "F[S@OH](F)(F)(F)(F)F"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+            Atom::HybridizationType::SP3D2);
+    }
+    {
+      auto m = "F[P@OH](F)(F)(F)F"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+            Atom::HybridizationType::SP3D2);
+    }
+    {
+      auto m = "F[P](F)(F)(F)F"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getHybridization() ==
+            Atom::HybridizationType::SP3D);
+    }
   }
 }

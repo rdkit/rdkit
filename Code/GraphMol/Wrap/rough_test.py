@@ -6865,6 +6865,33 @@ CAS<~>
       self.assertIn('garbage_4', log_stream.getvalue())
       log_stream.truncate(0)
 
+  def testDisableNontetrahedralStereo(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'nontetrahedral_3d.sdf')
+    suppl = Chem.SDMolSupplier(fileN, sanitize=False)
+    for mol in suppl:
+      Chem.AssignStereochemistryFrom3D(mol)
+      ct = mol.GetProp("ChiralType")
+      at = mol.GetAtomWithIdx(0)
+      if ct=="SP":
+        self.assertEqual(at.GetChiralTag(),Chem.ChiralType.CHI_SQUAREPLANAR)
+      elif ct=="TB":
+        self.assertEqual(at.GetChiralTag(),Chem.ChiralType.CHI_TRIGONALBIPYRAMIDAL)
+      elif ct=="OH":
+        self.assertEqual(at.GetChiralTag(),Chem.ChiralType.CHI_OCTAHEDRAL)
+      elif ct=="TH":
+        self.assertEqual(at.GetChiralTag(),Chem.ChiralType.CHI_TETRAHEDRAL)
+    Chem.SetAllowNontetrahedralChirality(False)
+    suppl = Chem.SDMolSupplier(fileN, sanitize=False)
+    for mol in suppl:
+      Chem.AssignStereochemistryFrom3D(mol)
+      ct = mol.GetProp("ChiralType")
+      at = mol.GetAtomWithIdx(0)
+      if ct=="TH":
+        self.assertEqual(at.GetChiralTag(),Chem.ChiralType.CHI_TETRAHEDRAL)
+      else:
+        self.assertEqual(at.GetChiralTag(),Chem.ChiralType.CHI_UNSPECIFIED)
+
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
