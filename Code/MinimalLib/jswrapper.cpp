@@ -249,6 +249,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 
   function("version", &version);
   function("prefer_coordgen", &prefer_coordgen);
+  function("use_legacy_stereo_perception", &use_legacy_stereo_perception);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
   function("get_mol", &get_mol, allow_raw_pointers());
   function("get_mol", &get_mol_no_details, allow_raw_pointers());
