@@ -768,6 +768,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 namespace Chirality {
 bool allowNontetrahedralChirality = true;
+bool useLegacyStereoPerception = true;
 
 namespace detail {
 bool bondAffectsAtomChirality(const Bond *bond, const Atom *atom) {
@@ -1837,6 +1838,11 @@ namespace MolOps {
 void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
                            bool flagPossibleStereoCenters) {
   if (!force && mol.hasProp(common_properties::_StereochemDone)) {
+    return;
+  }
+
+  if (!Chirality::useLegacyStereoPerception) {
+    Chirality::findPotentialStereo(mol, cleanIt, flagPossibleStereoCenters);
     return;
   }
 

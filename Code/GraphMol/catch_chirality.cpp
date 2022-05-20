@@ -2383,3 +2383,73 @@ TEST_CASE("nontetrahedral StereoInfo", "[nontetrahedral]") {
           std::vector<unsigned int>{0, 2, 3, 4, 5});
   }
 }
+TEST_CASE("useLegacyStereoPerception feature flag") {
+  SECTION("original failing example") {
+    Chirality::useLegacyStereoPerception = true;
+    auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("use new code") {
+    Chirality::useLegacyStereoPerception = false;
+    auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  std::string molblock = R"CTAB(
+  Mrv2108 05202206352D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.5417 3.165 0 0
+M  V30 2 C -5.8753 2.395 0 0
+M  V30 3 C -5.8753 0.855 0 0
+M  V30 4 C -4.5417 0.085 0 0 CFG=1
+M  V30 5 C -3.208 0.855 0 0
+M  V30 6 C -3.208 2.395 0 0
+M  V30 7 C -4.5417 -1.455 0 0
+M  V30 8 C -1.8743 0.085 0 0
+M  V30 9 C -4.5417 6.2451 0 0 CFG=2
+M  V30 10 C -5.8753 5.4751 0 0
+M  V30 11 C -5.8753 3.9351 0 0
+M  V30 12 C -3.208 3.9351 0 0
+M  V30 13 C -3.208 5.4751 0 0
+M  V30 14 C -4.5417 7.7851 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 1 6
+M  V30 7 1 4 7 CFG=1
+M  V30 8 1 5 8
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 1 12 13
+M  V30 12 1 9 13
+M  V30 13 1 11 1
+M  V30 14 1 1 12
+M  V30 15 1 9 14 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  SECTION("original example, from mol block") {
+    Chirality::useLegacyStereoPerception = true;
+    std::unique_ptr<RWMol> m{MolBlockToMol(molblock)};
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("original example, from mol block, new code") {
+    Chirality::useLegacyStereoPerception = false;
+    std::unique_ptr<RWMol> m{MolBlockToMol(molblock)};
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+}

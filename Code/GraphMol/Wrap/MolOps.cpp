@@ -21,6 +21,7 @@
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Wrap/substructmethods.h>
@@ -44,6 +45,7 @@ namespace RDKit {
 void setAllowNontetrahedral(bool val) {
   RDKit::Chirality::allowNontetrahedralChirality = val;
 }
+void setLegacyStereo(bool val) { Chirality::useLegacyStereoPerception = val; }
 
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
@@ -2732,6 +2734,8 @@ A note on the flags controlling which atoms/bonds are modified:
     python::def(
         "SetAllowNontetrahedralChirality", setAllowNontetrahedral,
         "toggles recognition of non-tetrahedral chirality from 3D structures");
+    python::def("SetLegacyStereoPerception", setLegacyStereo,
+                "toggles usage of the legacy stereo perception code");
   }
 };
 }  // namespace RDKit

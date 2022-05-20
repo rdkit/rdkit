@@ -6891,6 +6891,16 @@ CAS<~>
       else:
         self.assertEqual(at.GetChiralTag(),Chem.ChiralType.CHI_UNSPECIFIED)
 
+  def test_legacyStereochemGlobal(self):
+    Chem.SetLegacyStereoPerception(True)
+    m = Chem.MolFromSmiles("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2")
+    self.assertEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+
+    Chem.SetLegacyStereoPerception(False)
+    m = Chem.MolFromSmiles("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2")
+    self.assertNotEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
 
 
 if __name__ == '__main__':

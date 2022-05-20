@@ -31,6 +31,10 @@ RDKIT_GRAPHMOL_EXPORT extern bool
     allowNontetrahedralChirality;  //!< Toggle perception of
                                    //!< nontetrahedral chirality from 3D
 
+RDKIT_GRAPHMOL_EXPORT extern bool
+    useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
+                                //!< perception code
+
 /// @cond
 /*!
   \param mol the molecule to be altered
