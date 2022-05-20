@@ -383,6 +383,7 @@ python::object getCairoDrawingText(const RDKit::MolDraw2DCairo &self) {
 #endif
 ROMol *prepMolForDrawing(const ROMol *m, bool kekulize, bool addChiralHs,
                          bool wedgeBonds, bool forceCoords, bool wavyBonds) {
+  PRECONDITION(m, "molecule must not be None");
   auto *res = new RWMol(*m);
   MolDraw2DUtils::prepareMolForDrawing(*res, kekulize, addChiralHs, wedgeBonds,
                                        forceCoords, wavyBonds);
