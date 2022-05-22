@@ -104,6 +104,9 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
       abparams->getPairs();
 
   auto *omol = new ROMol(mol);
+  if (omol->needsUpdatePropertyCache()) {
+    omol->updatePropertyCache(false);
+  }
   int start_charge = MolOps::getFormalCharge(*omol);
 
   for (const auto &cc : this->d_ccs) {
@@ -339,7 +342,9 @@ bool neutralizeNegIfPossible(Atom *atom) {
 ROMol *Uncharger::uncharge(const ROMol &mol) {
   BOOST_LOG(rdInfoLog) << "Running Uncharger\n";
   auto *omol = new ROMol(mol);
-
+  if (omol->needsUpdatePropertyCache()) {
+    omol->updatePropertyCache(false);
+  }
   std::vector<MatchVectType> p_matches;
   std::vector<MatchVectType> q_matches;
   std::vector<MatchVectType> n_matches;

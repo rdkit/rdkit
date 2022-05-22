@@ -927,3 +927,40 @@ TEST_CASE("Github 5317: standardization failing with zwitterionic sulfone") {
     CHECK(MolToSmiles(*res) == "C[S+2]([O-])([O-])C([O-])C(=O)O.[Na+]");
   }
 }
+
+TEST_CASE("Github 5318: standardizing unsanitized molecules should work") {
+  SmilesParserParams ps;
+  ps.sanitize = false;
+  ps.removeHs = false;
+  std::unique_ptr<RWMol> m{SmilesToMol("C[S+2]([O-])([O-])C([O-])C(=O)O", ps)};
+  REQUIRE(m);
+  std::unique_ptr<RWMol> m2{SmilesToMol("Cc1[nH]ncc1.[Cl]", ps)};
+  REQUIRE(m2);
+  SECTION("reionizer") {
+    MolStandardize::Reionizer reion;
+    std::unique_ptr<ROMol> res{reion.reionize(*m)};
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "C[S+2]([O-])([O-])C(O)C(=O)[O-]");
+  }
+  SECTION("uncharger") {
+    MolStandardize::Uncharger uc;
+    std::unique_ptr<ROMol> res{uc.uncharge(*m)};
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "C[S+2]([O-])([O-])C(O)C(=O)O");
+  }
+  SECTION("normalizer") {
+    std::unique_ptr<ROMol> res{MolStandardize::normalize(m.get())};
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "CS(=O)(=O)C([O-])C(=O)O");
+  }
+  SECTION("tautomer") {
+    std::unique_ptr<ROMol> res{MolStandardize::canonicalTautomer(m2.get())};
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "Cc1cc[nH]n1.Cl");
+  }
+  SECTION("fragments") {
+    std::unique_ptr<ROMol> res{MolStandardize::removeFragments(m2.get())};
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "Cc1ccn[nH]1");
+  }
+}
