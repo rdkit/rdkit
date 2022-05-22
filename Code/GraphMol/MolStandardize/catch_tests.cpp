@@ -908,3 +908,22 @@ TEST_CASE("asymmetric imine tautomer generation", "[tautomers]") {
     }
   }
 }
+
+TEST_CASE("Github 5317: standardization failing with zwitterionic sulfone") {
+  SECTION("basics") {
+    auto m = "C[S+2]([O-])([O-])C([O-])C(=O)O"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uc;
+    std::unique_ptr<ROMol> res{uc.uncharge(*m)};
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "C[S+2]([O-])([O-])C(O)C(=O)O");
+  }
+  SECTION("don't overdo it") {
+    auto m = "C[S+2]([O-])([O-])C([O-])C(=O)O.[Na+]"_smiles;
+    REQUIRE(m);
+    MolStandardize::Uncharger uc;
+    std::unique_ptr<ROMol> res{uc.uncharge(*m)};
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "C[S+2]([O-])([O-])C([O-])C(=O)O.[Na+]");
+  }
+}

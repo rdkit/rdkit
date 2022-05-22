@@ -355,6 +355,14 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   unsigned int n_matched = SubstructMatch(*omol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);
 
+  // count the total number of negative atoms
+  unsigned int n_neg = 0;
+  for (const auto atom : omol->atoms()) {
+    if (atom->getFormalCharge() < 0) {
+      n_neg += 1;
+    }
+  }
+
   bool needsNeutralization =
       (q_matched > 0 && (n_matched > 0 || a_matched > 0));
   std::vector<unsigned int> atomRanks(omol->getNumAtoms());
@@ -383,8 +391,8 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   // Neutralize negative charges
   if (needsNeutralization) {
     // Surplus negative charges more than non-neutralizable positive charges
-    int neg_surplus = n_matched - q_matched;
-    if (neg_surplus > 0) {
+    int neg_surplus = n_neg - q_matched;
+    if (neg_surplus > 0 && n_matched) {
       boost::dynamic_bitset<> nonAcids(omol->getNumAtoms());
       nonAcids.set();
       for (const auto &pair : a_atoms) {
