@@ -964,3 +964,17 @@ TEST_CASE("Github 5318: standardizing unsanitized molecules should work") {
     CHECK(MolToSmiles(*res) == "Cc1ccn[nH]1");
   }
 }
+
+TEST_CASE("Github #5320: cleanup() and stereochemistry") {
+  SECTION("basics") {
+    auto m = "Cl[C@](O)([O-])C(=O)O"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    std::unique_ptr<RWMol> m2{MolStandardize::cleanup(m.get())};
+    REQUIRE(m2);
+    CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(MolToSmiles(*m2) == "O=C([O-])C(O)(O)Cl");
+  }
+}
