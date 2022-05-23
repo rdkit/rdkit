@@ -482,15 +482,17 @@ class TestCase(unittest.TestCase):
 
   def test18GetBestRMSAndConjugatedGroups(self):
     mol = Chem.MolFromSmiles(
-      "CC(=O)[O-] |(-0.65,-0.05,-0.10;0.82,0.02,0.11;1.48,-0.99,0.42;1.51,1.21,-0.02)|")
+      "CCC(=O)[O-] |(-1.11,0.08,-0.29;0.08,-0.18,0.58;1.34,0.03,-0.16;1.74,1.22,-0.32;2.06,-1.04,-0.66)|"
+    )
     qry = Chem.MolFromSmiles(
-      "CC([O-])=O |(-0.65,-0.05,-0.10;0.82,0.02,0.11;1.48,-0.99,0.42;1.51,1.21,-0.02)|")
+      "CCC([O-])=O |(-1.11,0.08,-0.29;0.08,-0.18,0.58;1.34,0.03,-0.16;1.74,1.22,-0.32;2.06,-1.04,-0.66)|"
+    )
 
     rmsd = rdMolAlign.GetBestRMS(qry, mol)
     self.failUnlessAlmostEqual(rmsd, 0, 3)
 
     rmsd = rdMolAlign.GetBestRMS(qry, mol, symmetrizeConjugatedTerminalGroups=False)
-    self.failUnlessAlmostEqual(rmsd, 0.077, 3)
+    self.failUnlessAlmostEqual(rmsd, 0.747, 3)
 
 
 if __name__ == '__main__':

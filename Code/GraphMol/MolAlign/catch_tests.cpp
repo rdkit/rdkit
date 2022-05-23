@@ -20,16 +20,16 @@ using namespace RDKit;
 TEST_CASE("symmetric functional groups") {
   SECTION("basics") {
     auto m1 =
-        "CC(=O)[O-] "
-        "|(-0.65,-0.05,-0.10;0.82,0.02,0.11;1.48,-0.99,0.42;1.51,1.21,-0.02)|"_smiles;
+        "CCC(=O)[O-] "
+        "|(-1.11,0.08,-0.29;0.08,-0.18,0.58;1.34,0.03,-0.16;1.74,1.22,-0.32;2.06,-1.04,-0.66)|"_smiles;
     REQUIRE(m1);
 
     // swap the bond orders to the Os
     RWMol m2(*m1);
-    m2.getAtomWithIdx(2)->setFormalCharge(-1);
-    m2.getAtomWithIdx(3)->setFormalCharge(0);
-    m2.getBondBetweenAtoms(1, 2)->setBondType(Bond::BondType::SINGLE);
-    m2.getBondBetweenAtoms(1, 3)->setBondType(Bond::BondType::DOUBLE);
+    m2.getAtomWithIdx(3)->setFormalCharge(-1);
+    m2.getAtomWithIdx(4)->setFormalCharge(0);
+    m2.getBondBetweenAtoms(2, 3)->setBondType(Bond::BondType::SINGLE);
+    m2.getBondBetweenAtoms(2, 4)->setBondType(Bond::BondType::DOUBLE);
 
     {
       auto rmsd = MolAlign::getBestRMS(m2, *m1);
@@ -44,7 +44,7 @@ TEST_CASE("symmetric functional groups") {
       bool symmetrize = false;
       auto rmsd = MolAlign::getBestRMS(m2, *m1, probeId, refId, mp, maxMatches,
                                        symmetrize);
-      CHECK(rmsd == Approx(0.076).margin(1e-3));
+      CHECK(rmsd == Approx(0.747).margin(1e-3));
     }
   }
   SECTION("terminal sulfate1") {
