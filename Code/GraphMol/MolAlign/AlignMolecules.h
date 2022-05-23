@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2006 Rational Discovery LLC
+//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -122,6 +122,9 @@ RDKIT_MOLALIGN_EXPORT double alignMol(
                     substructure search.
   \param maxMatches (optional) if map is empty, this will be the max number of
                     matches found in a SubstructMatch().
+  \param symmetrizeConjugatedTerminalGroups (optional) if set, conjugated
+  terminal functional groups (like nitro or carboxylate) will be considered
+  symmetrically
 
   <b>Returns</b>
   Best RMSD value found
@@ -129,7 +132,7 @@ RDKIT_MOLALIGN_EXPORT double alignMol(
 RDKIT_MOLALIGN_EXPORT double getBestRMS(
     ROMol &probeMol, ROMol &refMol, int probeId = -1, int refId = -1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
-    int maxMatches = 1e6);
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true);
 
 //! Returns the RMS between two molecules, taking symmetry into account.
 /*!
