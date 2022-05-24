@@ -45,7 +45,11 @@ namespace RDKit {
 void setAllowNontetrahedral(bool val) {
   RDKit::Chirality::allowNontetrahedralChirality = val;
 }
+bool getAllowNontetrahedral() {
+  return RDKit::Chirality::allowNontetrahedralChirality;
+}
 void setLegacyStereo(bool val) { Chirality::useLegacyStereoPerception = val; }
+bool getLegacyStereo() { return Chirality::useLegacyStereoPerception; }
 
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
@@ -2734,8 +2738,14 @@ A note on the flags controlling which atoms/bonds are modified:
     python::def(
         "SetAllowNontetrahedralChirality", setAllowNontetrahedral,
         "toggles recognition of non-tetrahedral chirality from 3D structures");
+    python::def("GetAllowNontetrahedralChirality", getAllowNontetrahedral,
+                "returns whether or not recognition of non-tetrahedral "
+                "chirality from 3D structures is enabled");
     python::def("SetLegacyStereoPerception", setLegacyStereo,
                 "toggles usage of the legacy stereo perception code");
+    python::def("GetLegacyStereoPerception", getLegacyStereo,
+                "returns whether or not the legacy stereo perception code is "
+                "being used");
   }
 };
 }  // namespace RDKit
