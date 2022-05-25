@@ -1739,25 +1739,23 @@ void testAtomParity() {
     m->getAtomWithIdx(1)->getProp(common_properties::molParity, parity);
     TEST_ASSERT(parity == 1);
 
-    // if we don't perceive the stereochem first, no parity
-    // flags end up in the output:
-    std::string molBlock = MolToMolBlock(*m);
-    RWMol *m2 = MolBlockToMol(molBlock);
-    TEST_ASSERT(m2);
-    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
-    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
-    delete m2;
-
-    // now perceive stereochem, then look for the parity
-    // flags:
-    MolOps::assignChiralTypesFrom3D(*m);
-    molBlock = MolToMolBlock(*m);
-    m2 = MolBlockToMol(molBlock);
+    // look for the parity flags on output:
+    auto molBlock = MolToMolBlock(*m);
+    auto m2 = MolBlockToMol(molBlock);
     TEST_ASSERT(m2);
     TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
     TEST_ASSERT(m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
     m2->getAtomWithIdx(1)->getProp(common_properties::molParity, parity);
     TEST_ASSERT(parity == 1);
+    delete m2;
+
+    // if we clear the stereo, no parity flags end up in the output:
+    m->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+    molBlock = MolToMolBlock(*m);
+    m2 = MolBlockToMol(molBlock);
+    TEST_ASSERT(m2);
+    TEST_ASSERT(!m2->getAtomWithIdx(0)->hasProp(common_properties::molParity));
+    TEST_ASSERT(!m2->getAtomWithIdx(1)->hasProp(common_properties::molParity));
     delete m2;
 
     delete m;

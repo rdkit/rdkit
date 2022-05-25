@@ -2319,6 +2319,18 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
   return 0;
 }
 
+bool isWigglyBond(const Bond *bond, const Atom *atom) {
+  int hasWigglyBond = 0;
+  if (bond->getBeginAtomIdx() == atom->getIdx() &&
+      bond->getBondType() == Bond::BondType::SINGLE &&
+      (bond->getBondDir() == Bond::BondDir::UNKNOWN ||
+       (bond->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                    hasWigglyBond) &&
+        hasWigglyBond))) {
+    return true;
+  }
+  return false;
+}
 // The tolerance here is pretty high in order to accomodate things coming from
 // the dgeom code As we get more experience with real-world structures and/or
 // improve the dgeom code, we can think about lowering this.
@@ -2332,6 +2344,12 @@ static bool assignNontetrahedralChiralTypeFrom3D(ROMol &mol,
     return false;
   }
 
+  // check for wiggly bonds
+  for (const auto bond : mol.atomBonds(atom)) {
+    if (isWigglyBond(bond, atom)) {
+      return false;
+    }
+  }
   RDGeom::Point3D cen = conf.getAtomPos(atom->getIdx());
   RDGeom::Point3D v[6];
   unsigned int count = 0;
@@ -2561,7 +2579,12 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     const auto &p0 = conf.getAtomPos(atom->getIdx());
     const RDGeom::Point3D *nbrs[3];
     unsigned int nbrIdx = 0;
+    int hasWigglyBond = 0;
     for (const auto bond : mol.atomBonds(atom)) {
+      hasWigglyBond = isWigglyBond(bond, atom);
+      if (hasWigglyBond) {
+        break;
+      }
       if (!Chirality::detail::bondAffectsAtomChirality(bond, atom)) {
         continue;
       }
@@ -2569,6 +2592,9 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       if (nbrIdx == 3) {
         break;
       }
+    }
+    if (hasWigglyBond) {
+      continue;
     }
     auto v1 = *nbrs[0] - p0;
     auto v2 = *nbrs[1] - p0;
