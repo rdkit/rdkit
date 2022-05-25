@@ -782,6 +782,13 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 }  // namespace
 
 namespace Chirality {
+
+#if _MSC_VER
+int setenv(const char *name, const char *value, int ) {
+  return _putenv_s(name, value);
+}
+#endif
+
 void setAllowNontetrahedralChirality(bool val) {
   if (val) {
     setenv(nonTetrahedralStereoEnvVar, "1", 1);
