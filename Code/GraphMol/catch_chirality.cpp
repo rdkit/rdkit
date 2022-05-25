@@ -1990,7 +1990,7 @@ TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
     }
   }
   SECTION("disable nontetrahedral stereo") {
-    Chirality::allowNontetrahedralChirality = false;
+    Chirality::setAllowNontetrahedralChirality(false);
     SDMolSupplier suppl(pathName);
     while (!suppl.atEnd()) {
       std::unique_ptr<ROMol> m{suppl.next()};
@@ -2005,7 +2005,7 @@ TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
         CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED);
       }
     }
-    Chirality::allowNontetrahedralChirality = true;
+    Chirality::setAllowNontetrahedralChirality(true);
   }
 }
 
@@ -2385,14 +2385,14 @@ TEST_CASE("nontetrahedral StereoInfo", "[nontetrahedral]") {
 }
 TEST_CASE("useLegacyStereoPerception feature flag") {
   SECTION("original failing example") {
-    Chirality::useLegacyStereoPerception = true;
+    Chirality::setUseLegacyStereoPerception(true);
     auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
   SECTION("use new code") {
-    Chirality::useLegacyStereoPerception = false;
+    Chirality::setUseLegacyStereoPerception(false);
     auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
@@ -2441,13 +2441,13 @@ M  V30 END CTAB
 M  END
 )CTAB";
   SECTION("original example, from mol block") {
-    Chirality::useLegacyStereoPerception = true;
+    Chirality::setUseLegacyStereoPerception(true);
     std::unique_ptr<RWMol> m{MolBlockToMol(molblock)};
     CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_UNSPECIFIED);
   }
   SECTION("original example, from mol block, new code") {
-    Chirality::useLegacyStereoPerception = false;
+    Chirality::setUseLegacyStereoPerception(false);
     std::unique_ptr<RWMol> m{MolBlockToMol(molblock)};
     CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(8)->getChiralTag() != Atom::CHI_UNSPECIFIED);

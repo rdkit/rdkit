@@ -42,15 +42,6 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
-void setAllowNontetrahedral(bool val) {
-  RDKit::Chirality::allowNontetrahedralChirality = val;
-}
-bool getAllowNontetrahedral() {
-  return RDKit::Chirality::allowNontetrahedralChirality;
-}
-void setLegacyStereo(bool val) { Chirality::useLegacyStereoPerception = val; }
-bool getLegacyStereo() { return Chirality::useLegacyStereoPerception; }
-
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
                                         unsigned int nToBreak, bool addDummies,
@@ -2736,14 +2727,18 @@ A note on the flags controlling which atoms/bonds are modified:
                 GenericGroups::convertGenericQueriesToSubstanceGroups,
                 python::arg("mol"), "documentation");
     python::def(
-        "SetAllowNontetrahedralChirality", setAllowNontetrahedral,
+        "SetAllowNontetrahedralChirality",
+        Chirality::setAllowNontetrahedralChirality,
         "toggles recognition of non-tetrahedral chirality from 3D structures");
-    python::def("GetAllowNontetrahedralChirality", getAllowNontetrahedral,
+    python::def("GetAllowNontetrahedralChirality",
+                Chirality::getAllowNontetrahedralChirality,
                 "returns whether or not recognition of non-tetrahedral "
                 "chirality from 3D structures is enabled");
-    python::def("SetLegacyStereoPerception", setLegacyStereo,
+    python::def("SetUseLegacyStereoPerception",
+                Chirality::setUseLegacyStereoPerception,
                 "toggles usage of the legacy stereo perception code");
-    python::def("GetLegacyStereoPerception", getLegacyStereo,
+    python::def("GetUseLegacyStereoPerception",
+                Chirality::getUseLegacyStereoPerception,
                 "returns whether or not the legacy stereo perception code is "
                 "being used");
   }

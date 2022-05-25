@@ -535,5 +535,5 @@ void prefer_coordgen(bool useCoordGen) {
 }
 
 void use_legacy_stereo_perception(bool value) {
-  Chirality::useLegacyStereoPerception = value;
+  Chirality::setUseLegacyStereoPerception(value);
 }

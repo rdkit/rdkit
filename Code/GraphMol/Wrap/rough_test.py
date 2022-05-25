@@ -6896,18 +6896,18 @@ CAS<~>
     Chem.SetAllowNontetrahedralChirality(origVal)
 
   def test_legacyStereochemGlobal(self):
-    origVal = Chem.GetLegacyStereoPerception()
-    Chem.SetLegacyStereoPerception(True)
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(True)
     m = Chem.MolFromSmiles("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2")
     self.assertEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
     self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
 
-    Chem.SetLegacyStereoPerception(False)
+    Chem.SetUseLegacyStereoPerception(False)
     m = Chem.MolFromSmiles("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2")
     self.assertNotEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
     self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
 
-    Chem.SetLegacyStereoPerception(origVal)
+    Chem.SetUseLegacyStereoPerception(origVal)
 
 
 if __name__ == '__main__':

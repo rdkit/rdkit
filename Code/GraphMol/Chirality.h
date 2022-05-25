@@ -27,9 +27,20 @@ namespace Chirality {
 
 //! double bond stereo will be ignored/removed for rings smaller than this:
 constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
-RDKIT_GRAPHMOL_EXPORT extern bool
-    allowNontetrahedralChirality;  //!< Toggle perception of
-                                   //!< nontetrahedral chirality from 3D
+
+constexpr auto nonTetrahedralStereoEnvVar = "RDK_ENABLE_NONTETRAHEDRAL_STEREO";
+constexpr auto useLegacyStereoEnvVar = "RDK_USE_LEGACY_STEREO_PERCEPTION";
+constexpr bool nonTetrahedralStereoDefaultVal =
+    true;  //!< whether or not nontetrahedral stereo is perceived by default
+constexpr bool useLegacyStereoDefaultVal =
+    true;  //!< whether or not the legacy stereo perception code is used by
+           //!< default
+
+RDKIT_GRAPHMOL_EXPORT extern void setAllowNontetrahedralChirality(bool val);
+RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
+
+RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyStereoPerception(bool val);
+RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
 
 RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
