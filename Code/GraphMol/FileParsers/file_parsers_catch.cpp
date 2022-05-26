@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -4827,6 +4828,147 @@ M  V30 1 1 1 2
 M  V30 2 1 2 3
 M  V30 3 1 2 4
 M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("double bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOTRANS);
+  }
+  SECTION("double bond, crossed") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3 CFG=2
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOANY);
+  }
+  SECTION("double bond, wiggly bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOANY);
+  }
+  SECTION("non-tetrahedral") {
+    auto m = R"CTAB(
+  Mrv2108 05252216313D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.7191 0.2488 -3.5085 0
+M  V30 2 As -1.0558 1.9209 -2.6345 0
+M  V30 3 F -0.4636 3.422 -1.7567 0
+M  V30 4 O -2.808 2.4243 -2.1757 0
+M  V30 5 Cl -0.1145 2.6609 -4.5048 0
+M  V30 6 Br 0.2255 0.6458 -1.079 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 5 1 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+  }
+  SECTION("non-tetrahedral, wiggly") {
+    auto m = R"CTAB(
+  Mrv2108 05252216313D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.7191 0.2488 -3.5085 0
+M  V30 2 As -1.0558 1.9209 -2.6345 0
+M  V30 3 F -0.4636 3.422 -1.7567 0
+M  V30 4 O -2.808 2.4243 -2.1757 0
+M  V30 5 Cl -0.1145 2.6609 -4.5048 0
+M  V30 6 Br 0.2255 0.6458 -1.079 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5 CFG=2
+M  V30 5 1 2 6
 M  V30 END BOND
 M  V30 END CTAB
 M  END
