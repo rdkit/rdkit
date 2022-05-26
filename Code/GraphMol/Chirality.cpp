@@ -24,7 +24,6 @@
 #include "Chirality.h"
 
 #include <cstdlib>
-#include <stdlib.h>
 
 // #define VERBOSE_CANON 1
 
