@@ -1665,7 +1665,7 @@ What has been tested
 --------------------
 
   - Reading molecules from SMILES/SMARTS/Mol blocks
-  - Writing molecules to SMILES/SMARTS/Mol blocks
+  - Writing molecules to SMILES/SMARTS/Mol blocks (see below)
   - Generating 2D coordinates
   - Generating 3D conformations with the distance geometry code
   - Optimizing molecules with UFF or MMFF
@@ -1694,6 +1694,8 @@ Known Problems
     ``RDK_BUILD_THREADSAFE_SSS`` argument (the default for the binaries
     we provide), a mutex is used to ensure that only one thread is
     using a given recursive query at a time.
+  - Calling MolToSmiles() on the same molecule from multiple threads can lead to
+    data races with the calculated properties on the molecule.
 
 Implementation of the TPSA Descriptor
 =====================================
