@@ -635,6 +635,18 @@ function test_flexicanvas() {
     assert(svg.search("height='21px'")>0);
 }
 
+function test_legacy_stereochem() {
+    RDKitModule.use_legacy_stereo_perception(true);
+    var mol = RDKitModule.get_mol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2");
+    assert.equal(mol.is_valid(),1);
+    assert.equal(mol.get_smiles(),"CC1CCC2(CC1)CC[C@H](C)C(C)C2");
+    
+    RDKitModule.use_legacy_stereo_perception(false);
+    mol = RDKitModule.get_mol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2");
+    assert.equal(mol.is_valid(),1);
+    assert.equal(mol.get_smiles(),"CC1CC2(CC[C@H](C)CC2)CC[C@@H]1C");
+}
+
 
 
 initRDKitModule().then(function(instance) {
@@ -676,6 +688,7 @@ initRDKitModule().then(function(instance) {
     test_normalize_depiction();
     test_straighten_depiction();
     test_flexicanvas();
+    test_legacy_stereochem();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

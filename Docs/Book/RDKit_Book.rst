@@ -658,7 +658,7 @@ Brief description of the ``findPotentialStereo()`` algorithm
 Support for non-tetrahedral atomic stereochemistry
 ==================================================
 
-Starting with the 2022.03 release, the RDKit has partial, but evolving, support
+Starting with the 2022.09 release, the RDKit has partial, but evolving, support
 for non-tetrahedral stereochemistry. The status of this work is being tracked in
 this github issue: https://github.com/rdkit/rdkit/issues/4851
 
@@ -666,7 +666,7 @@ This code is being released in a preliminary state in order to get feedback as
 soon as we can and to start to gather experience working with these systems.
 
 
-Status as of 2022.03.1 release
+Status as of 2022.09.1 release
 ------------------------------
 
 "Complete"
@@ -2248,6 +2248,45 @@ The idea of the fingerprint is generate features using the same subgraph (or
 path) enumeration algorithm used in the RDKit fingerprint. After a subgraph has
 been generated, it is used to set multiple bits based on different atom and bond
 type definitions.
+
+
+Feature Flags: global variables affecting RDKit behavior
+********************************************************
+
+The RDKit uses a number of "feature flags": global variables which affect its
+behavior. These have generally been added to maintain backwards compatibility
+when introducing new algorithms which yield different results.
+
+Here's are the current feature flags:
+
+  - ``preferCoordGen``: when this is ``true`` Schrodinger's open-source Coordgen
+    library will be used to generate 2D coordinates of molecules. The default
+    value is ``false``. This can be set from C++ using the variable
+    ``RDKit::RDDepict::preferCoordGen`` or from Python using the function
+    ``rdDepictor.SetPreferCoordGen()``. Added in the 2018.03 release.
+
+  - ``allowNontetrahedralChirality``: when this is ``true`` non-tetrahedral
+    chirality will be perceived from 3D coordinates. The default value is
+    ``true`` unless the environment variable
+    ``RDK_ENABLE_NONTETRAHEDRAL_STEREO`` is set to ``"0"``. Can set/checked from
+    C++ using the functions
+    ``RDKit::Chirality::setAllowNontetrahedralChirality()`` /
+    ``RDKit::Chirality::getAllowNontetrahedralChirality()`` or from Python using
+    the functions ``Chem.SetAllowNontetrahedralChirality()`` /
+    ``Chem.GetAllowNontetrahedralChirality()``. Added in the 2022.09 release.
+
+  - ``useLegacyStereoPerception``: when this is ``true`` the legacy
+    implementation for perceiving stereochemistry will be used. 
+    The default value is ``true`` unless the environment variable
+    ``RDK_USE_LEGACY_STEREO_PERCEPTION`` is set to ``"0"``. Can set/checked from
+    C++ using the functions
+    ``RDKit::Chirality::setUseLegacyStereoPerception()`` /
+    ``RDKit::Chirality::getUseLegacyStereoPerception()`` or from Python using
+    the functions ``Chem.SetUseLegacyStereoPerception()`` /
+    ``Chem.GetUseLegacyStereoPerception()``. Added in the 2022.09 release.
+
+
+
 
 
 .. rubric:: Footnotes

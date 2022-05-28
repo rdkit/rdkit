@@ -16,6 +16,7 @@
 #include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -531,4 +532,8 @@ void prefer_coordgen(bool useCoordGen) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = useCoordGen;
 #endif
+}
+
+void use_legacy_stereo_perception(bool value) {
+  Chirality::setUseLegacyStereoPerception(value);
 }

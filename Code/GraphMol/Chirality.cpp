@@ -23,6 +23,8 @@
 #include <Geometry/point.h>
 #include "Chirality.h"
 
+#include <cstdlib>
+
 // #define VERBOSE_CANON 1
 
 namespace RDKit {
@@ -33,6 +35,18 @@ bool shouldDetectDoubleBondStereo(const Bond *bond) {
   return (!ri->numBondRings(bond->getIdx()) ||
           ri->minBondRingSize(bond->getIdx()) >=
               Chirality::minRingSizeForDoubleBondStereo);
+}
+
+bool getValFromEnvironment(const char *var, bool defVal) {
+  auto evar = std::getenv(var);
+  if (evar != nullptr) {
+    if (!strcmp(evar, "0")) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  return defVal;
 }
 
 // ----------------------------------- -----------------------------------
@@ -767,7 +781,36 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 }  // namespace
 
 namespace Chirality {
-bool allowNontetrahedralChirality = true;
+
+#if _MSC_VER
+int setenv(const char *name, const char *value, int ) {
+  return _putenv_s(name, value);
+}
+#endif
+
+void setAllowNontetrahedralChirality(bool val) {
+  if (val) {
+    setenv(nonTetrahedralStereoEnvVar, "1", 1);
+  } else {
+    setenv(nonTetrahedralStereoEnvVar, "0", 1);
+  }
+}
+bool getAllowNontetrahedralChirality() {
+  return getValFromEnvironment(nonTetrahedralStereoEnvVar,
+                               nonTetrahedralStereoDefaultVal);
+}
+
+void setUseLegacyStereoPerception(bool val) {
+  if (val) {
+    setenv(useLegacyStereoEnvVar, "1", 1);
+  } else {
+    setenv(useLegacyStereoEnvVar, "0", 1);
+  }
+}
+bool getUseLegacyStereoPerception() {
+  return getValFromEnvironment(useLegacyStereoEnvVar,
+                               useLegacyStereoDefaultVal);
+}
 
 namespace detail {
 bool bondAffectsAtomChirality(const Bond *bond, const Atom *atom) {
@@ -1840,6 +1883,11 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
     return;
   }
 
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    Chirality::findPotentialStereo(mol, cleanIt, flagPossibleStereoCenters);
+    return;
+  }
+
   // later we're going to need ring information, get it now if we don't
   // have it already:
   if (!mol.getRingInfo()->isInitialized()) {
@@ -2546,6 +2594,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     mol.clearProp(common_properties::_StereochemDone);
   }
 
+  auto allowNontetrahedralStereo = Chirality::getAllowNontetrahedralChirality();
   for (auto atom : mol.atoms()) {
     // if we aren't replacing existing tags and the atom is already tagged,
     // punt:
@@ -2560,7 +2609,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       // not enough explicit neighbors or too many total neighbors
       continue;
     }
-    if (Chirality::allowNontetrahedralChirality &&
+    if (allowNontetrahedralStereo &&
         assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
       continue;
     }
