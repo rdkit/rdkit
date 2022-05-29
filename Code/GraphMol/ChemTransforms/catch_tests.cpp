@@ -227,6 +227,8 @@ TEST_CASE("molzip", "[]") {
         if (i != j) {
           std::vector<unsigned int> bonds{i, j};
           auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
+          auto smiles = MolToSmiles(*resa);
+            std::cout << smiles << std::endl;
           MolzipParams p;
           p.label = MolzipLabel::FragmentOnBonds;
           CHECK(MolToSmiles(*molzip(*resa, p)) == MolToSmiles(*m));
@@ -327,6 +329,7 @@ TEST_CASE("molzip", "[]") {
         }
         MolzipParams p;
         p.label = MolzipLabel::FragmentOnBonds;
+          std::cout << smiles << std::endl;
         CHECK(MolToSmiles(*molzip(*resa, p)) == MolToSmiles(*m));
       }
       {
@@ -417,5 +420,24 @@ TEST_CASE(
     REQUIRE(res);
     auto mb = MolToV3KMolBlock(*res);
     CHECK(mb.find("CFG=2") != std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "Github5335: ReplaceCore should set stereo on ring bonds when it breaks "
+    "rings") {
+  SECTION("segfault") {
+    auto a = "C([*:1])[*:2].[C@@H](Cl)([1*:1])[2*:2]"_smiles;
+    bool caught = false;
+    try {
+        auto mol = molzip(*a);
+        CHECK(false);
+    } catch (Invar::Invariant &e) {
+        CHECK(e.toUserString().find(
+                  "molzip: zipped Bond already exists, perhaps labels are duplicated") !=
+              std::string::npos);
+        caught = true;
+    }
+    CHECK(caught);
   }
 }
