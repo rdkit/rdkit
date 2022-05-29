@@ -1397,6 +1397,97 @@ void testGitHubIssue613() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testSquarePlanar() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test square planar complexes" << std::endl;
+  auto mol = R"CTAB(
+  Mrv2102 09072117482D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl -8.4583 1.2083 0 0
+M  V30 2 Pt -6.9183 1.2083 0 0 
+M  V30 3 F -5.3783 1.2083 0 0 CHG=-1
+M  V30 4 Cl -6.9183 2.7483 0 0
+M  V30 5 F -6.9183 -0.3317 0 0 CHG=-1
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 9 3 2
+M  V30 3 1 2 4
+M  V30 4 9 5 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  TEST_ASSERT(mol);
+  // explicit hybridization:
+  mol->getAtomWithIdx(1)->setHybridization(Atom::HybridizationType::SP2D);
+
+  std::unique_ptr<ForceFields::ForceField> field{
+      UFF::constructForceField(*mol)};
+  TEST_ASSERT(field);
+  field->initialize();
+  auto e1 = field->calcEnergy();
+  auto needMore = field->minimize(200, 1e-6, 1e-3);
+  auto e2 = field->calcEnergy();
+  TEST_ASSERT(e2 < e1);
+  TEST_ASSERT(!needMore);
+  // make sure it's still square planar
+  auto conf = mol->getConformer();
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    TEST_ASSERT(feq(conf.getAtomPos(i).z, 0.0));
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testOctahedral() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test octahedral complexes" << std::endl;
+  auto mol = R"CTAB(
+  Mrv2102 09082104493D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 F 1.9744 4.203 5.9405 0
+M  V30 2 U 0.2018 4.3631 7.0863 0
+M  V30 3 F 1.3377 4.551 8.8617 0
+M  V30 4 F 0.2351 6.4527 6.7888 0
+M  V30 5 F 0.1927 2.2693 7.3707 0
+M  V30 6 F -1.5636 4.5586 8.2312 0
+M  V30 7 F -0.977 4.1505 5.3427 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 4
+M  V30 3 1 5 2
+M  V30 4 1 3 2
+M  V30 5 1 2 6
+M  V30 6 1 2 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getHybridization() ==
+              Atom::HybridizationType::SP3D2);
+
+  std::unique_ptr<ForceFields::ForceField> field{
+      UFF::constructForceField(*mol)};
+  TEST_ASSERT(field);
+  field->initialize();
+  auto e1 = field->calcEnergy();
+  auto needMore = field->minimize(200, 1e-6, 1e-3);
+  auto e2 = field->calcEnergy();
+  TEST_ASSERT(e2 < e1);
+  TEST_ASSERT(!needMore);
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1427,6 +1518,8 @@ int main() {
   testUFFMultiThread3();
 #endif
   testGitHubIssue62();
-#endif
   testGitHubIssue613();
+  testSquarePlanar();
+#endif
+  testOctahedral();
 }

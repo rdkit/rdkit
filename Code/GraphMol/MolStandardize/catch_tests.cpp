@@ -887,3 +887,24 @@ TEST_CASE("Github #5169: Standardization via RDKit breaks molecules",
     }
   }
 }
+
+TEST_CASE("asymmetric imine tautomer generation", "[tautomers]") {
+  SECTION("basics") {
+    MolStandardize::TautomerEnumerator tenum;
+    // clang-format off
+    std::vector<std::pair<std::string, unsigned>> data = {
+        {"C=C1NNC(=O)N1*", 2},
+        {"CC1=NN=C(O)N1*", 2},
+        {"C-C=NC", 1},
+        {"C-C=N", 2},
+        {"C-C=Nc1ccccc1", 2},
+    };
+    // clang-format on
+    for (const auto &pr : data) {
+      INFO(pr.first);
+      std::unique_ptr<RWMol> m(SmilesToMol(pr.first));
+      auto res = tenum.enumerate(*m);
+      CHECK(res.size() == pr.second);
+    }
+  }
+}

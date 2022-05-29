@@ -17,6 +17,7 @@
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -1959,4 +1960,496 @@ M  END)CTAB";
 
   CHECK(mol->getAtomWithIdx(0)->getChiralTag() !=
         Atom::ChiralType::CHI_UNSPECIFIED);
+}
+TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/nontetrahedral_3d.sdf";
+  SECTION("basics") {
+    SDMolSupplier suppl(pathName);
+    while (!suppl.atEnd()) {
+      std::unique_ptr<ROMol> m{suppl.next()};
+      REQUIRE(m);
+      MolOps::assignChiralTypesFrom3D(*m);
+      auto ct = m->getProp<std::string>("ChiralType");
+      auto cp = m->getProp<unsigned>("ChiralPermutation");
+      auto atom = m->getAtomWithIdx(0);
+
+      if (ct == "SP") {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_SQUAREPLANAR);
+      } else if (ct == "TB") {
+        CHECK(atom->getChiralTag() ==
+              Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+      } else if (ct == "TH") {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL);
+      } else if (ct == "OH") {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_OCTAHEDRAL);
+      }
+
+      CHECK(atom->getProp<unsigned>(common_properties::_chiralPermutation) ==
+            cp);
+    }
+  }
+  SECTION("disable nontetrahedral stereo") {
+    Chirality::setAllowNontetrahedralChirality(false);
+    SDMolSupplier suppl(pathName);
+    while (!suppl.atEnd()) {
+      std::unique_ptr<ROMol> m{suppl.next()};
+      REQUIRE(m);
+      MolOps::assignChiralTypesFrom3D(*m);
+      auto ct = m->getProp<std::string>("ChiralType");
+      auto atom = m->getAtomWithIdx(0);
+
+      if (ct == "TH") {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL);
+      } else {
+        CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED);
+      }
+    }
+    Chirality::setAllowNontetrahedralChirality(true);
+  }
+}
+
+TEST_CASE("assignStereochemistry shouldn't remove nontetrahedral stereo",
+          "[nontetrahedral]") {
+  SECTION("basics") {
+    SmilesParserParams parseps;
+    parseps.sanitize = false;
+    parseps.removeHs = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("F[Pt@TB1](O)(Br)(N)Cl", parseps)};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+    bool cleanIt = true;
+    bool force = true;
+    MolOps::assignStereochemistry(*m, cleanIt, force);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+  }
+  SECTION("standard SMILES parsing") {
+    std::unique_ptr<RWMol> m{SmilesToMol("F[Pt@TB1](O)(Br)(N)Cl")};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+  }
+  SECTION("SMILES parsing w/o sanitization") {
+    SmilesParserParams parseps;
+    // we need to skip stereo assignment
+    parseps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("F[Pt@TB1](O)(Br)(N)Cl", parseps)};
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+  }
+}
+
+TEST_CASE("remove hs and non-tetrahedral stereo", "[nontetrahedral]") {
+  SmilesParserParams parseps;
+  parseps.sanitize = false;
+  parseps.removeHs = false;
+  std::vector<std::string> smiles = {"F[Pt@TB1]([H])(Br)(N)Cl",
+                                     "F[Pt@TB]([H])(Br)(N)Cl"};
+  for (const auto &smi : smiles) {
+    std::unique_ptr<RWMol> m{SmilesToMol(smi, parseps)};
+    REQUIRE(m);
+    CHECK(m->getNumAtoms(6));
+    {
+      // the default is to not remove Hs to non-tetrahedral stereocenters
+      RWMol molcp(*m);
+      MolOps::removeHs(molcp);
+      CHECK(molcp.getNumAtoms() == 6);
+    }
+    {
+      // but we can enable it
+      RWMol molcp(*m);
+      MolOps::RemoveHsParameters ps;
+      ps.removeNontetrahedralNeighbors = true;
+      MolOps::removeHs(molcp, ps);
+      CHECK(molcp.getNumAtoms() == 5);
+    }
+    {
+      // but we can enable it
+      RWMol molcp(*m);
+      MolOps::removeAllHs(molcp);
+      CHECK(molcp.getNumAtoms() == 5);
+    }
+  }
+}
+
+TEST_CASE("getIdealAngle", "[nontetrahedral]") {
+  SECTION("TB1") {
+    auto m = "S[As@TB1](F)(Cl)(Br)N"_smiles;
+    REQUIRE(m);
+    CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                    m->getAtomWithIdx(0)));
+    CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                    m->getAtomWithIdx(5)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(2)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(3)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(4)));
+    CHECK(Chirality::getTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1))
+              ->getIdx() == 0);
+    CHECK(Chirality::getTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1), -1)
+              ->getIdx() == 5);
+
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(4)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(2), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(120, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(5)),
+        Catch::Matchers::WithinAbs(180, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(5), m->getAtomWithIdx(2)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(5), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(5), m->getAtomWithIdx(4)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+  }
+  SECTION("TB1 missing 1") {
+    auto m = "S[As@TB1](F)(Cl)Br"_smiles;
+    REQUIRE(m);
+
+    CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                    m->getAtomWithIdx(0)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(2)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(3)));
+    CHECK(!Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     m->getAtomWithIdx(4)));
+    CHECK(Chirality::getTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1))
+              ->getIdx() == 0);
+    CHECK(Chirality::getTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
+                                                     -1) == nullptr);
+
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(4)),
+        Catch::Matchers::WithinAbs(90, 0.001));
+    CHECK_THAT(
+        Chirality::getIdealAngleBetweenLigands(
+            m->getAtomWithIdx(1), m->getAtomWithIdx(2), m->getAtomWithIdx(3)),
+        Catch::Matchers::WithinAbs(120, 0.001));
+  }
+}
+
+TEST_CASE("getChiralPermutation", "[nontetrahedral]") {
+  SECTION("TB1") {
+    // clang-format off
+    std::vector<std::pair<std::list<int>, unsigned int>> data = {
+        {{2, 3, 4, 5, 6}, 1},
+        {{2, 3, 5, 4, 6}, 2},
+
+        {{2, 3, 4, 6, 5}, 3},
+        {{2, 3, 5, 6, 4}, 4},
+
+        {{2, 3, 6, 4, 5}, 5},
+        {{2, 3, 6, 5, 4}, 6},
+
+        {{2, 6, 3, 4, 5}, 7},
+        {{2, 6, 3, 5, 4}, 8},
+
+        {{3, 2, 4, 5, 6}, 9},
+        {{3, 2, 5, 4, 6}, 11},
+
+        {{3, 2, 4, 6, 5}, 10},
+        {{3, 2, 5, 6, 4}, 12},
+
+        {{3, 2, 6, 4, 5}, 13},
+        {{3, 2, 6, 5, 4}, 14},
+
+        {{3, 4, 2, 5, 6}, 15},
+        {{3, 5, 2, 4, 6}, 20},
+
+        {{3, 4, 2, 6, 5}, 16},
+        {{3, 5, 2, 6, 4}, 19},
+
+        {{3, 4, 5, 2, 6}, 17},
+        {{3, 5, 4, 2, 6}, 18},
+
+
+    };
+    // clang-format on
+    auto m = "CCS[As@TB1](F)(Cl)(Br)N"_smiles;
+    REQUIRE(m);
+    const auto atm = m->getAtomWithIdx(3);
+    for (const auto &pr : data) {
+      // std::cerr << "---- " << pr.second << std::endl;
+      CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
+    }
+  }
+
+  SECTION("SP1") {
+    // clang-format off
+    std::vector<std::pair<std::list<int>, unsigned int>> data = {
+        {{2, 3, 4, 5}, 1},
+        {{2, 4, 3, 5}, 2},
+        {{2, 3, 5, 4}, 3},
+    };
+    // clang-format on
+    auto m = "CCC[Pt@SP1](F)(Cl)N"_smiles;
+    REQUIRE(m);
+    const auto atm = m->getAtomWithIdx(3);
+    for (const auto &pr : data) {
+      // std::cerr << "---- " << pr.second << std::endl;
+      CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
+    }
+  }
+  SECTION("OH1") {
+    // clang-format off
+    std::vector<std::pair<std::list<int>, unsigned int>> data = {
+        {{2, 3, 4, 5, 6, 7}, 1},
+        {{2, 3, 6, 5, 4, 7}, 2},
+
+        {{2, 3, 4, 5, 7, 6}, 3},
+        {{2, 3, 6, 5, 7, 4}, 16},
+
+        {{2, 3, 4, 7, 5, 6}, 6},
+        {{2, 3, 6, 7, 5, 4}, 18},
+
+        {{2, 3, 7, 4, 5, 6}, 19},
+        {{2, 3, 7, 6, 5, 4}, 24},
+
+        {{2, 7, 3, 4, 5, 6}, 25},
+        {{2, 7, 3, 6, 5, 4}, 30},
+
+        {{2, 3, 4, 6, 5, 7}, 4},
+        {{2, 3, 6, 4, 5, 7}, 14},
+
+        {{2, 3, 4, 6, 7, 5}, 5},
+        {{2, 3, 6, 4, 7, 5}, 15},
+
+        {{2, 3, 4, 7, 6, 5}, 7},
+        {{2, 3, 6, 7, 4, 5}, 17},
+
+        {{2, 3, 7, 4, 6, 5}, 20},
+        {{2, 3, 7, 6, 4, 5}, 23},
+
+        {{2, 7, 3, 4, 6, 5}, 26},
+        {{2, 7, 3, 6, 4, 5}, 29},
+
+        {{2, 3, 5, 6, 4, 7}, 10},
+        {{2, 3, 5, 4, 6, 7}, 8},
+
+        {{2, 3, 5, 6, 7, 4}, 11},
+        {{2, 3, 5, 4, 7, 6}, 9},
+
+        {{2, 3, 5, 7, 6, 4}, 13},
+        {{2, 3, 5, 7, 4, 6}, 12},
+
+        {{2, 3, 7, 5, 6, 4}, 22},
+        {{2, 3, 7, 5, 4, 6}, 21},
+
+        {{2, 7, 3, 5, 6, 4}, 28},
+        {{2, 7, 3, 5, 4, 6}, 27},
+
+    };
+    // clang-format on
+    auto m = "CCO[Co@OH1](Cl)(C)(N)(F)P"_smiles;
+    REQUIRE(m);
+    const auto atm = m->getAtomWithIdx(3);
+    for (const auto &pr : data) {
+      // std::cerr << "---- " << pr.second << std::endl;
+      CHECK(Chirality::getChiralPermutation(atm, pr.first) == pr.second);
+    }
+  }
+}
+
+TEST_CASE("isAtomPotentialNontetrahedralCenter", "[nontetrahedral]") {
+  SECTION("basics") {
+    {
+      auto mol = "C[S+](O)F"_smiles;
+      REQUIRE(mol);
+      CHECK(!Chirality::detail::isAtomPotentialNontetrahedralCenter(
+          mol->getAtomWithIdx(1)));
+    }
+    {
+      auto mol = "C[SH](O)F"_smiles;
+      REQUIRE(mol);
+      CHECK(Chirality::detail::isAtomPotentialNontetrahedralCenter(
+          mol->getAtomWithIdx(1)));
+    }
+    {
+      auto mol = "C[S@SP](O)F"_smiles;
+      REQUIRE(mol);
+      CHECK(Chirality::detail::isAtomPotentialNontetrahedralCenter(
+          mol->getAtomWithIdx(1)));
+    }
+  }
+}
+TEST_CASE("nontetrahedral StereoInfo", "[nontetrahedral]") {
+  SECTION("SP") {
+    auto m = "C[Pt@SP1](F)(Cl)O"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_SquarePlanar);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 1);
+    CHECK(sinfo[0].controllingAtoms == std::vector<unsigned int>{0, 2, 3, 4});
+  }
+  SECTION("TB") {
+    auto m = "C[Fe@TB4](F)(Cl)(O)N"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_TrigonalBipyramidal);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 4);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5});
+  }
+  SECTION("TB0") {
+    auto m = "C[Fe@TB](F)(Cl)(O)N"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].specified == Chirality::StereoSpecified::Unknown);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_TrigonalBipyramidal);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 0);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5});
+  }
+  SECTION("perceived as possible") {
+    auto m = "C[Fe](F)(Cl)(O)N"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].specified == Chirality::StereoSpecified::Unspecified);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_TrigonalBipyramidal);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 0);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5});
+  }
+
+  SECTION("OH") {
+    auto m = "C[Fe@OH9](F)(Cl)(O)(N)Br"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_Octahedral);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 9);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5, 6});
+  }
+  SECTION("OH missing ligand") {
+    auto m = "C[Fe@OH9](F)(Cl)(O)N"_smiles;
+    REQUIRE(m);
+    auto sinfo = Chirality::findPotentialStereo(*m);
+    REQUIRE(sinfo.size() == 1);
+    CHECK(sinfo[0].centeredOn == 1);
+    CHECK(sinfo[0].type == Chirality::StereoType::Atom_Octahedral);
+    CHECK(sinfo[0].descriptor == Chirality::StereoDescriptor::None);
+    CHECK(sinfo[0].permutation == 9);
+    CHECK(sinfo[0].controllingAtoms ==
+          std::vector<unsigned int>{0, 2, 3, 4, 5});
+  }
+}
+TEST_CASE("useLegacyStereoPerception feature flag") {
+  SECTION("original failing example") {
+    Chirality::setUseLegacyStereoPerception(true);
+    auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("use new code") {
+    Chirality::setUseLegacyStereoPerception(false);
+    auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  std::string molblock = R"CTAB(
+  Mrv2108 05202206352D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.5417 3.165 0 0
+M  V30 2 C -5.8753 2.395 0 0
+M  V30 3 C -5.8753 0.855 0 0
+M  V30 4 C -4.5417 0.085 0 0 CFG=1
+M  V30 5 C -3.208 0.855 0 0
+M  V30 6 C -3.208 2.395 0 0
+M  V30 7 C -4.5417 -1.455 0 0
+M  V30 8 C -1.8743 0.085 0 0
+M  V30 9 C -4.5417 6.2451 0 0 CFG=2
+M  V30 10 C -5.8753 5.4751 0 0
+M  V30 11 C -5.8753 3.9351 0 0
+M  V30 12 C -3.208 3.9351 0 0
+M  V30 13 C -3.208 5.4751 0 0
+M  V30 14 C -4.5417 7.7851 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 1 6
+M  V30 7 1 4 7 CFG=1
+M  V30 8 1 5 8
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 1 12 13
+M  V30 12 1 9 13
+M  V30 13 1 11 1
+M  V30 14 1 1 12
+M  V30 15 1 9 14 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  SECTION("original example, from mol block") {
+    Chirality::setUseLegacyStereoPerception(true);
+    std::unique_ptr<RWMol> m{MolBlockToMol(molblock)};
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("original example, from mol block, new code") {
+    Chirality::setUseLegacyStereoPerception(false);
+    std::unique_ptr<RWMol> m{MolBlockToMol(molblock)};
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
 }

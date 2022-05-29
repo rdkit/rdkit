@@ -374,15 +374,14 @@ void testEnumeratorParams() {
       << std::endl;
 
   // Test a structure with hundreds of tautomers.
-  std::string smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
+  std::string smi68 = "C(CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
   ROMOL_SPTR m68(SmilesToMol(smi68));
 
   {
     TautomerEnumerator te;
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
-    TEST_ASSERT(res68.status() ==
-                TautomerEnumeratorStatus::MaxTransformsReached);
-    TEST_ASSERT(res68.size() == 252);
+    TEST_ASSERT(res68.status() == TautomerEnumeratorStatus::Completed);
+    TEST_ASSERT(res68.size() == 72);
   }
   {  // test v1 of the tautomerization parameters
     std::unique_ptr<TautomerEnumerator> te(getV1TautomerEnumerator());
@@ -577,6 +576,8 @@ void testEnumeratorCallback() {
   CleanupParameters params;
   params.maxTransforms = 10000;
   params.maxTautomers = 10000;
+  params.tautomerTransformData =
+      MolStandardize::defaults::defaultTautomerTransformsv1;
   {
     TautomerEnumerator te(params);
     te.setCallback(new MyTautomerEnumeratorCallback(50.0));
@@ -606,9 +607,9 @@ void testEnumeratorCallback() {
     // either the enumeration completed
     // or it ran very slowly and was canceled due to timeout
     bool hasReachedTimeout =
-        (res68.size() < 295 &&
+        (res68.size() < 375 &&
          res68.status() == TautomerEnumeratorStatus::Canceled);
-    bool hasCompleted = (res68.size() == 295 &&
+    bool hasCompleted = (res68.size() == 375 &&
                          res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (10 s)"

@@ -85,6 +85,7 @@ const std::string _queryRootAtom = "_queryRootAtom";
 const std::string _ringStereoAtoms = "_ringStereoAtoms";
 const std::string _ringStereoWarning = "_ringStereoWarning";
 const std::string _ringStereochemCand = "_ringStereochemCand";
+const std::string _chiralPermutation = "_chiralPermutation";
 const std::string _smilesAtomOutputOrder = "_smilesAtomOutputOrder";
 const std::string _smilesBondOutputOrder = "_smilesBondOutputOrder";
 const std::string _starred = "_starred";

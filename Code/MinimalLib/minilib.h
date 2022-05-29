@@ -223,3 +223,4 @@ JSReaction *get_reaction(const std::string &input,
                          const std::string &details_json);
 std::string version();
 void prefer_coordgen(bool prefer);
+void use_legacy_stereo_perception(bool value);

@@ -696,18 +696,104 @@ int Atom::getPerturbationOrder(const INT_LIST &probe) const {
   return nSwaps;
 }
 
-void Atom::invertChirality() {
+static const unsigned char octahedral_invert[31] = {
+    0,   //  0 -> 0
+    2,   //  1 -> 2
+    1,   //  2 -> 1
+    16,  //  3 -> 16
+    14,  //  4 -> 14
+    15,  //  5 -> 15
+    18,  //  6 -> 18
+    17,  //  7 -> 17
+    10,  //  8 -> 10
+    11,  //  9 -> 11
+    8,   // 10 -> 8
+    9,   // 11 -> 9
+    13,  // 12 -> 13
+    12,  // 13 -> 12
+    4,   // 14 -> 4
+    5,   // 15 -> 5
+    3,   // 16 -> 3
+    7,   // 17 -> 7
+    6,   // 18 -> 6
+    24,  // 19 -> 24
+    23,  // 20 -> 23
+    22,  // 21 -> 22
+    21,  // 22 -> 21
+    20,  // 23 -> 20
+    19,  // 24 -> 19
+    30,  // 25 -> 30
+    29,  // 26 -> 29
+    28,  // 27 -> 28
+    27,  // 28 -> 27
+    26,  // 29 -> 26
+    25   // 30 -> 25
+};
+
+static const unsigned char trigonalbipyramidal_invert[21] = {
+    0,   //  0 -> 0
+    2,   //  1 -> 2
+    1,   //  2 -> 1
+    4,   //  3 -> 4
+    3,   //  4 -> 3
+    6,   //  5 -> 6
+    5,   //  6 -> 5
+    8,   //  7 -> 8
+    7,   //  8 -> 7
+    11,  //  9 -> 11
+    12,  // 10 -> 12
+    9,   // 11 -> 9
+    10,  // 12 -> 10
+    14,  // 13 -> 14
+    13,  // 14 -> 13
+    20,  // 15 -> 20
+    19,  // 16 -> 19
+    18,  // 17 -> 28
+    17,  // 18 -> 17
+    16,  // 19 -> 16
+    15   // 20 -> 15
+};
+
+bool Atom::invertChirality() {
+  unsigned int perm;
   switch (getChiralTag()) {
     case CHI_TETRAHEDRAL_CW:
       setChiralTag(CHI_TETRAHEDRAL_CCW);
-      break;
+      return true;
     case CHI_TETRAHEDRAL_CCW:
       setChiralTag(CHI_TETRAHEDRAL_CW);
+      return true;
+    case CHI_TETRAHEDRAL:
+      if (getPropIfPresent(common_properties::_chiralPermutation, perm)) {
+        if (perm == 1) {
+          perm = 2;
+        } else if (perm == 2) {
+          perm = 1;
+        } else {
+          perm = 0;
+        }
+        setProp(common_properties::_chiralPermutation, perm);
+        return perm != 0;
+      }
       break;
-    case CHI_OTHER:
-    case CHI_UNSPECIFIED:
+    case CHI_TRIGONALBIPYRAMIDAL:
+      if (getPropIfPresent(common_properties::_chiralPermutation, perm)) {
+        perm = (perm <= 20) ? trigonalbipyramidal_invert[perm] : 0;
+        setProp(common_properties::_chiralPermutation, perm);
+        return perm != 0;
+      }
+      break;
+    case CHI_OCTAHEDRAL:
+      if (getPropIfPresent(common_properties::_chiralPermutation, perm)) {
+        perm = (perm <= 30) ? octahedral_invert[perm] : 0;
+        setProp(common_properties::_chiralPermutation, perm);
+        return perm != 0;
+      }
+      break;
+    default:
       break;
   }
+  return false;
 }
 
 void setAtomRLabel(Atom *atm, int rlabel) {
