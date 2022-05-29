@@ -686,7 +686,7 @@ int num_swaps_to_interconvert(std::vector<unsigned int> &orders) {
       auto j = i;
       while (orders[j] != i) {
         j = orders[j];
-        CHECK_INVARIANT(j < orders.size(), "Bond index outside of number of bonds for atom")
+        CHECK_INVARIANT(j < orders.size(), "molzip: bond index outside of number of bonds for atom")
         seen[j] = true;
         nswaps++;
       }
