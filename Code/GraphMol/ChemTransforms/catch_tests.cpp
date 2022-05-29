@@ -424,7 +424,7 @@ TEST_CASE(
 }
 
 TEST_CASE(
-    "Github5335: ReplaceCore should set stereo on ring bonds when it breaks "
+    "Github5334: ReplaceCore should set stereo on ring bonds when it breaks "
     "rings") {
   SECTION("segfault") {
     auto a = "C([*:1])[*:2].[C@@H](Cl)([1*:1])[2*:2]"_smiles;
