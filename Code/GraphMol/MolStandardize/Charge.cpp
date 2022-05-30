@@ -104,6 +104,9 @@ ROMol *Reionizer::reionize(const ROMol &mol) {
       abparams->getPairs();
 
   auto *omol = new ROMol(mol);
+  if (omol->needsUpdatePropertyCache()) {
+    omol->updatePropertyCache(false);
+  }
   int start_charge = MolOps::getFormalCharge(*omol);
 
   for (const auto &cc : this->d_ccs) {
@@ -339,7 +342,9 @@ bool neutralizeNegIfPossible(Atom *atom) {
 ROMol *Uncharger::uncharge(const ROMol &mol) {
   BOOST_LOG(rdInfoLog) << "Running Uncharger\n";
   auto *omol = new ROMol(mol);
-
+  if (omol->needsUpdatePropertyCache()) {
+    omol->updatePropertyCache(false);
+  }
   std::vector<MatchVectType> p_matches;
   std::vector<MatchVectType> q_matches;
   std::vector<MatchVectType> n_matches;
@@ -354,6 +359,14 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   }
   unsigned int n_matched = SubstructMatch(*omol, *(this->neg), n_matches);
   unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);
+
+  // count the total number of negative atoms
+  unsigned int n_neg = 0;
+  for (const auto atom : omol->atoms()) {
+    if (atom->getFormalCharge() < 0) {
+      n_neg++;
+    }
+  }
 
   bool needsNeutralization =
       (q_matched > 0 && (n_matched > 0 || a_matched > 0));
@@ -383,8 +396,8 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   // Neutralize negative charges
   if (needsNeutralization) {
     // Surplus negative charges more than non-neutralizable positive charges
-    int neg_surplus = n_matched - q_matched;
-    if (neg_surplus > 0) {
+    int neg_surplus = n_neg - q_matched;
+    if (neg_surplus > 0 && n_matched) {
       boost::dynamic_bitset<> nonAcids(omol->getNumAtoms());
       nonAcids.set();
       for (const auto &pair : a_atoms) {
