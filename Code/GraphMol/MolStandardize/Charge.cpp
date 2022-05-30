@@ -361,12 +361,9 @@ ROMol *Uncharger::uncharge(const ROMol &mol) {
   unsigned int a_matched = SubstructMatch(*omol, *(this->neg_acid), a_matches);
 
   // count the total number of negative atoms
-  unsigned int n_neg = 0;
-  for (const auto atom : omol->atoms()) {
-    if (atom->getFormalCharge() < 0) {
-      n_neg += 1;
-    }
-  }
+  unsigned int n_neg = std::count_if(
+      omol->atoms().begin(), omol->atoms().end(),
+      [](const auto atom) { return (atom->getFormalCharge() < 0); });
 
   bool needsNeutralization =
       (q_matched > 0 && (n_matched > 0 || a_matched > 0));
