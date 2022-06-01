@@ -686,6 +686,7 @@ int num_swaps_to_interconvert(std::vector<unsigned int> &orders) {
       auto j = i;
       while (orders[j] != i) {
         j = orders[j];
+        CHECK_INVARIANT(j < orders.size(), "molzip: bond index outside of number of bonds for atom")
         seen[j] = true;
         nswaps++;
       }
@@ -715,12 +716,21 @@ struct ZipBond {
 
   // bond a<->b for now only use single bonds
   //  XXX FIX ME take the highest bond order.
-  bool bond(RWMol &newmol) const {
+  bool bond(RWMol &newmol, const MolzipParams &params) const {
     if (!a || !b || !a_dummy || !b_dummy) {
       BOOST_LOG(rdWarningLog)
           << "Incomplete atom labelling, cannot make bond" << std::endl;
       return false;
     }
+    
+    // Fragment on bonds allows multiple links to the same atom
+    // i.e. C.[1C].[1C]
+    //  otherwise throw an invariant error
+    CHECK_INVARIANT(params.label == MolzipLabel::FragmentOnBonds || !a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx()),
+                  "molzip: zipped Bond already exists, perhaps labels are duplicated");
+
+
+    
     if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
       CHECK_INVARIANT(&a->getOwningMol() == &newmol,
                       "Owning mol is not the combined molecule!!");
@@ -922,7 +932,7 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
     }
   }
   for (auto &kv : mappings) {
-    kv.second.bond(*newmol);
+    kv.second.bond(*newmol, params);
   }
   newmol->beginBatchEdit();
   for (auto &atom : deletions) {
