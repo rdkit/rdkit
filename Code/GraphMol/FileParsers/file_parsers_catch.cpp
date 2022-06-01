@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -4598,31 +4599,230 @@ M  END)CTAB";
 TEST_CASE(
     "Github #5165: issue with V3000 SD files containing enhanced "
     "stereochemistry information") {
-    
-    SECTION("as reported") {
-        std::string rdbase = getenv("RDBASE");
-        std::string fName =
-          rdbase + "/Code/GraphMol/FileParsers/test_data/mol_with_enhanced_stereo_2_And_groups.sdf";
-        SDMolSupplier suppl(fName);
-        ROMol *mol = suppl.next();
-        REQUIRE(mol);
-        auto groups = mol->getStereoGroups();
-        REQUIRE(groups.size()==2);
-        CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-        CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-    }
-    
-    SECTION("as reported, less whitespace") {
-        std::string rdbase = getenv("RDBASE");
-        std::string fName =
-          rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
-        SDMolSupplier suppl(fName);
-        ROMol *mol = suppl.next();
-        REQUIRE(mol);
-        auto groups = mol->getStereoGroups();
-        REQUIRE(groups.size()==2);
-        CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-        CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
-    }
-    
+  SECTION("as reported") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase +
+                        "/Code/GraphMol/FileParsers/test_data/"
+                        "mol_with_enhanced_stereo_2_And_groups.sdf";
+    SDMolSupplier suppl(fName);
+    ROMol *mol = suppl.next();
+    REQUIRE(mol);
+    auto groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 2);
+    CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+  }
+
+  SECTION("as reported, less whitespace") {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
+    SDMolSupplier suppl(fName);
+    ROMol *mol = suppl.next();
+    REQUIRE(mol);
+    auto groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 2);
+    CHECK(groups[0].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+    CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
+  }
+}
+
+TEST_CASE(
+    "github #5327: MolFromMolBlock should correctly assign stereochemistry "
+    "to 3D molecules") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("wiggly bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=2
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("3D as 2D") {
+    // here we lie to the RDKit and tell it that a 3D conformer is 2D,
+    //  the code detects that and still sets the conformer to be 3D and
+    //  assigns stereo:
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("2D as 3D") {
+    // here we lie to the RDKit and tell it that a 2D conformer is 3D,
+    //  there's no chiral volume, so we don't end up with a chiral center
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.299038 -0.750000 0.000000 0
+M  V30 2 C 0.000000 -0.000000 0.000000 0
+M  V30 3 F 0.750000 -1.299038 0.000000 0
+M  V30 4 Cl -0.750000 1.299038 0.000000 0
+M  V30 5 O 1.299038 0.750000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("double bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOTRANS);
+  }
+  SECTION("double bond, crossed") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3 CFG=2
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOANY);
+  }
+  SECTION("double bond, wiggly bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOANY);
+  }
 }

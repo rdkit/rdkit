@@ -2200,6 +2200,19 @@ void cleanupChirality(RWMol &mol) {
   }
 }
 
+bool isWigglyBond(const Bond *bond, const Atom *atom) {
+  int hasWigglyBond = 0;
+  if (bond->getBeginAtomIdx() == atom->getIdx() &&
+      bond->getBondType() == Bond::BondType::SINGLE &&
+      (bond->getBondDir() == Bond::BondDir::UNKNOWN ||
+       (bond->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                    hasWigglyBond) &&
+        hasWigglyBond))) {
+    return true;
+  }
+  return false;
+}
+
 void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   const double ZERO_VOLUME_TOL = 0.1;
   if (!mol.getNumConformers()) {
@@ -2243,7 +2256,12 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     const auto &p0 = conf.getAtomPos(atom->getIdx());
     const RDGeom::Point3D *nbrs[3];
     unsigned int nbrIdx = 0;
+    int hasWigglyBond = 0;
     for (const auto bond : mol.atomBonds(atom)) {
+      hasWigglyBond = isWigglyBond(bond, atom);
+      if (hasWigglyBond) {
+        break;
+      }
       if (!Chirality::detail::bondAffectsAtomChirality(bond, atom)) {
         continue;
       }
@@ -2251,6 +2269,9 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       if (nbrIdx == 3) {
         break;
       }
+    }
+    if (hasWigglyBond) {
+      continue;
     }
     auto v1 = *nbrs[0] - p0;
     auto v2 = *nbrs[1] - p0;
