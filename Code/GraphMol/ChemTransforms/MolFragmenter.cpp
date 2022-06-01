@@ -726,10 +726,9 @@ struct ZipBond {
     // Fragment on bonds allows multiple links to the same atom
     // i.e. C.[1C].[1C]
     //  otherwise throw an invariant error
-    if (!(params.label == MolzipLabel::FragmentOnBonds) &&  a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
-      CHECK_INVARIANT(!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx()),
-                      "molzip: zipped Bond already exists, perhaps labels are duplicated");
-    }
+    CHECK_INVARIANT(params.label == MolzipLabel::FragmentOnBonds || !a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx()),
+                  "molzip: zipped Bond already exists, perhaps labels are duplicated");
+
 
     
     if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {

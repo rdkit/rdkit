@@ -227,8 +227,6 @@ TEST_CASE("molzip", "[]") {
         if (i != j) {
           std::vector<unsigned int> bonds{i, j};
           auto resa = RDKit::MolFragmenter::fragmentOnBonds(*m, bonds);
-          auto smiles = MolToSmiles(*resa);
-            std::cout << smiles << std::endl;
           MolzipParams p;
           p.label = MolzipLabel::FragmentOnBonds;
           CHECK(MolToSmiles(*molzip(*resa, p)) == MolToSmiles(*m));
@@ -329,7 +327,6 @@ TEST_CASE("molzip", "[]") {
         }
         MolzipParams p;
         p.label = MolzipLabel::FragmentOnBonds;
-          std::cout << smiles << std::endl;
         CHECK(MolToSmiles(*molzip(*resa, p)) == MolToSmiles(*m));
       }
       {
