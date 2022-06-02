@@ -1,3 +1,52 @@
+# Release_2022.03.3
+(Changes relative to Release_2022.03.2)
+
+## Acknowledgements
+Andy Cai, David Cosgrove, JP Ebejer, Emanuele Guidotti, Per Johnsson, Gareth
+Jones, Brian Kelley, Ricardo Rodriguez-Schmidt, Paolo Tosco, Antonio Trande 
+
+## Bug Fixes:
+  - DrawMorganBit returns empty image for "isolated" fingerprints
+ (github #4242 from eguidotti)
+  - Fix for RGD dummy atom bug in RDKit::replaceCore
+ (github #5154 from jones-gareth)
+  - Standardization via RDKit breaks molecules
+ (github #5169 from malteseunderdog)
+  - Fix duplicate non thread safe check in VarianceDataForLabel
+ (github #5212 from ricrogz)
+  - RDKit::Utils::LocaleSwitcher is not thread safe
+ (github #5214 from ricrogz)
+  - Core with query atoms and no user definded attachment points may create poor decompostions
+ (github #5222 from jones-gareth)
+  - Fix qt build under VS2019
+ (github #5238 from ricrogz)
+  - Precondition violation on chiral Atoms with zero order bonds
+ (github #5239 from ricrogz)
+  - pyForceFieldConstraints test failed
+ (github #5252 from sagitter)
+  - drawReaction() should not hit a PRECONDITION with prepareMolsBeforeDrawing=false
+ (github #5259 from ptosco)
+  - Atom annotations poorly placed on highlighted atoms
+ (github #5269 from DavidACosgrove)
+  - make the catch tests build faster
+ (github #5284 from greglandrum)
+  - rdMolDraw2D.PrepareMolForDrawing(None) causes segmentation fault
+ (github #5298 from perjo)
+  - make the logging tests more robust
+ (github #5312 from greglandrum)
+  - MolStandardize: uncharger failing in molecules with zwitterionic sulfone
+ (github #5317 from greglandrum)
+  - MolStandardize: some operations throwing on non-standardized molecules
+ (github #5318 from greglandrum)
+  - MolStandardize: cleanup() function not correctly reassigning stereochemistry
+ (github #5320 from greglandrum)
+  - MolFromMolBlock should correctly assign stereochemistry to 3D molecules
+ (github #5327 from greglandrum)
+  - assignChiralTypesFrom3D() ignores wiggly bonds
+ (github #5328 from greglandrum)
+  - Molzip segfaults instead of throwing an error when multiple bonds are formed to the same pairs of atoms
+ (github #5334 from loluwot)
+
 # Release_2022.03.2
 (Changes relative to Release_2022.03.1)
 
