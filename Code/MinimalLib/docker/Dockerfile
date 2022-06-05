@@ -35,7 +35,7 @@ RUN mkdir /src
 WORKDIR /src
 ENV RDBASE=/src/rdkit
 ARG RDKIT_BRANCH=${RDKIT_BRANCH:-master}
-RUN git clone https://github.com/rdkit/rdkit.git
+RUN git clone https://github.com/michelml/rdkit.git
 WORKDIR $RDBASE
 RUN git fetch --all --tags && \
   git checkout $RDKIT_BRANCH
