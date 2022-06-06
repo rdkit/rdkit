@@ -34,7 +34,7 @@ struct StringRect;
 
 class DrawShape {
  public:
-  DrawShape(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShape(const std::vector<Point2D> &points, double lineWidth = 2.0,
             bool scaleLineWidth = false,
             DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
             int atom1 = -1, int atom2 = -1, int bond = -1);
@@ -53,7 +53,7 @@ class DrawShape {
   virtual bool doesRectClash(const StringRect &rect, double padding) const;
 
   std::vector<Point2D> points_;
-  int lineWidth_;
+  double lineWidth_;
   bool scaleLineWidth_;
   DrawColour lineColour_;
   bool fill_;
@@ -62,7 +62,7 @@ class DrawShape {
 
 class DrawShapeArrow : public DrawShape {
  public:
-  DrawShapeArrow(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShapeArrow(const std::vector<Point2D> &points, double lineWidth = 2.0,
                  bool scaleLineWidth = false,
                  DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
                  int atom1 = -1, int atom2 = -1, int bond = -1,
@@ -82,7 +82,7 @@ class DrawShapeArrow : public DrawShape {
 class DrawShapeEllipse : public DrawShape {
  public:
   // points are the 2 foci of the ellipse
-  DrawShapeEllipse(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShapeEllipse(const std::vector<Point2D> &points, double lineWidth = 2.0,
                    bool scaleLineWidth = false,
                    DrawColour lineColour = DrawColour(0, 0, 0),
                    bool fill = false, int atom1 = -1);
@@ -99,7 +99,7 @@ class DrawShapeEllipse : public DrawShape {
 
 class DrawShapeSimpleLine : public DrawShape {
  public:
-  DrawShapeSimpleLine(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShapeSimpleLine(const std::vector<Point2D> &points, double lineWidth = 2.0,
                       bool scaleLineWidth = false,
                       DrawColour lineColour = DrawColour(0, 0, 0),
                       int atom1 = -1, int atom2 = -1, int bond = -1,
@@ -117,7 +117,7 @@ class DrawShapeSimpleLine : public DrawShape {
 
 class DrawShapePolyLine : public DrawShape {
  public:
-  DrawShapePolyLine(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShapePolyLine(const std::vector<Point2D> &points, double lineWidth = 2.0,
                     bool scaleLineWidth = false,
                     DrawColour lineColour = DrawColour(0, 0, 0),
                     bool fill = false, int atom1 = -1, int atom2 = -1,
@@ -176,7 +176,7 @@ class DrawShapeDashedWedge : public DrawShape {
 
 class DrawShapeWavyLine : public DrawShape {
  public:
-  DrawShapeWavyLine(const std::vector<Point2D> points, int lineWidth = 2,
+  DrawShapeWavyLine(const std::vector<Point2D> points, double lineWidth = 2.0,
                     bool scaleLineWidth = false,
                     const DrawColour &col1 = DrawColour(0, 0, 0),
                     const DrawColour &col2 = DrawColour(0, 0, 0),
@@ -204,7 +204,7 @@ class DrawShapeArc : public DrawShape {
   // Points should be size 2 - the first entry is the centre, the second
   // gives the x and y radii of the ellipse.
   DrawShapeArc(const std::vector<Point2D> points, double ang1, double ang2,
-               int lineWidth = 2, bool scaleLineWidth = false,
+               double lineWidth = 2.0, bool scaleLineWidth = false,
                const DrawColour &col1 = DrawColour(0, 0, 0), bool fill = false,
                int atom1 = -1);
   DrawShapeArc(const DrawShapeArc &) = delete;

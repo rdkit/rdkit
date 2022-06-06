@@ -170,8 +170,8 @@ class DrawMol {
   std::pair<DrawColour, DrawColour> getBondColours(Bond *bond);
   void makeContinuousHighlights();
   void makeAtomCircleHighlights();
-  void makeAtomEllipseHighlights(int lineWidth);
-  void makeBondHighlightLines(int lineWidth);
+  void makeAtomEllipseHighlights(double lineWidth);
+  void makeBondHighlightLines(double lineWidth);
   void calcAnnotationPosition(const Atom *atom,
                               DrawAnnotation &annot) const;
   void calcAnnotationPosition(const Bond *bond,

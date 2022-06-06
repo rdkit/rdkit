@@ -4588,3 +4588,47 @@ TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
   CHECK(rxn2->getReactants()[0]->getAtomWithIdx(1)->getAtomMapNum() == 2);
 }
 #endif
+
+TEST_CASE("ACS 1996 mode") {
+  SECTION("basics") {
+    auto m = R"CTAB(mol1
+  ChemDraw05162216032D
+
+ 11 11  0  0  0  0  0  0  0  0999 V2000
+    1.1514    0.9038    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1514    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9360   -0.1762    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4209    0.4913    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9360    1.1587    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4369   -0.3337    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2775    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9920   -0.3337    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7065    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4209   -0.3337    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4369   -1.1587    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  1  1  0
+  2  6  1  0
+  6  7  1  0
+  7  8  2  3
+  8  9  1  0
+  9 10  3  0
+  6 11  1  4
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    bool res1 = MolDraw2DUtils::drawMolACS1996("acs1996_1.svg", *m, "",
+                                               nullptr, nullptr);
+    REQUIRE(res1);
+#if 0
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    bool res2 = MolDraw2DUtils::drawMolACS1996("acs1996_1.png", *m, "test 1",
+                                               nullptr, nullptr);
+    REQUIRE(res2);
+#endif
+#endif
+
+  }
+}

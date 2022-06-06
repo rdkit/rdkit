@@ -183,7 +183,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   DrawColour symbolColour{
       0, 0, 0, 1};  // color to be used for the symbols and arrows in reactions
   DrawColour annotationColour{0, 0, 0, 1};  // color to be used for annotations
-  int bondLineWidth = 2;        // default line width when drawing bonds
+  double bondLineWidth = 2.0;        // default line width when drawing bonds
   bool scaleBondWidth = false;  // whether to apply scale() to the bond width
   bool scaleHighlightBondWidth = true;   // likewise with bond highlights.
   int highlightBondWidthMultiplier = 8;  // what to multiply standard bond width

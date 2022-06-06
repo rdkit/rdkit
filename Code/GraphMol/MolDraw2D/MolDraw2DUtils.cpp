@@ -8,6 +8,10 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+#endif
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
 #include <GraphMol/RWMol.h>
@@ -400,5 +404,144 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
   contourAndDrawGrid(drawer, grid.get(), xcoords, ycoords, nContours, levels,
                      paramsCopy);
 };
+
+// ****************************************************************************
+void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
+                    const std::string &legend,
+                    const std::vector<int> *highlight_atoms,
+                    const std::vector<int> *highlight_bonds,
+                    const std::map<int, DrawColour> *highlight_atom_map,
+                    const std::map<int, DrawColour> *highlight_bond_map,
+                    const std::map<int, double> *highlight_radii,
+                    int confId) {
+  // that's yet another copy, think about removing the need later.
+  ROMol mol_cp(mol);
+  setACS1996Options(drawer.drawOptions());
+  useMDLBondWedging(mol_cp);
+  drawer.drawMolecule(mol_cp, legend, highlight_atoms, highlight_bonds,
+                      highlight_atom_map, highlight_bond_map, highlight_radii,
+                      confId);
+}
+
+// ****************************************************************************
+bool drawMolACS1996(const std::string &outfile, const ROMol &mol,
+                    const std::string &legend,
+                    const std::vector<int> *highlight_atoms,
+                    const std::vector<int> *highlight_bonds,
+                    const std::map<int, DrawColour> *highlight_atom_map,
+                    const std::map<int, DrawColour> *highlight_bond_map,
+                    const std::map<int, double> *highlight_radii,
+                    int confId) {
+  std::string txt;
+  auto open_mode = std::ios_base::out;
+  if (outfile.substr(outfile.length() - 4) == ".svg") {
+    txt = drawMolACS1996SVG(mol, legend, highlight_atoms, highlight_bonds,
+                            highlight_atom_map, highlight_bond_map,
+                            highlight_radii, confId);
+  } else if (outfile.substr(outfile.length() - 4) == ".png") {
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    txt = drawMolACS1996Cairo(mol, legend, highlight_atoms, highlight_bonds,
+                              highlight_atom_map, highlight_bond_map,
+                              highlight_radii, confId);
+    open_mode |= std::ios_base::binary;
+#endif
+  } else {
+    BOOST_LOG(rdErrorLog) << "Failed to recognise graphics file type for"
+                          << outfile << " so nothing written." << std::endl;
+    return false;
+  }
+  std::ofstream outs(outfile.c_str(), open_mode);
+  if (!outs || outs.bad()) {
+    BOOST_LOG(rdErrorLog) << "Failed to write file " << outfile << std::endl;
+    return false;
+  }
+  if (open_mode & std::ios_base::binary) {
+    outs.write(txt.c_str(), txt.size());
+  } else {
+    outs << txt;
+  }
+  outs.close();
+
+  return true;
+}
+
+// ****************************************************************************
+std::string drawMolACS1996SVG(
+    const ROMol &mol, const std::string &legend,
+    const std::vector<int> *highlight_atoms,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_atom_map,
+    const std::map<int, DrawColour> *highlight_bond_map,
+    const std::map<int, double> *highlight_radii, int confId) {
+
+  MolDraw2DSVG drawer(-1, -1);
+  drawMolACS1996(drawer, mol, legend, highlight_atoms, highlight_bonds,
+                 highlight_atom_map, highlight_bond_map, highlight_radii,
+                 confId);
+  drawer.finishDrawing();
+  return drawer.getDrawingText();
+}
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+// ****************************************************************************
+std::string drawMolACS1996Cairo(
+    const ROMol &mol, const std::string &legend,
+    const std::vector<int> *highlight_atoms,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_atom_map,
+    const std::map<int, DrawColour> *highlight_bond_map,
+    const std::map<int, double> *highlight_radii, int confId) {
+  MolDraw2DCairo drawer(-1, -1);
+  drawMolACS1996(drawer, mol, legend, highlight_atoms, highlight_bonds,
+                 highlight_atom_map, highlight_bond_map, highlight_radii,
+                 confId);
+  drawer.finishDrawing();
+  return drawer.getDrawingText();
+}
+#endif
+
+// ****************************************************************************
+void setACS1996Options(MolDrawOptions &opts) {
+  opts.addAtomIndices = true;
+  opts.bondLineWidth = 0.6;
+  opts.fixedFontSize = 10;
+  opts.scalingFactor = 14.5;
+  setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
+}
+
+// ****************************************************************************
+void useMDLBondWedging(ROMol &mol) {
+  for (auto a: mol.atoms()) {
+    std::cout << a->getIdx() << " : " << a->getChiralTag() << " : ";
+    auto props = a->getPropList(true);
+    for (auto p: props) {
+      std::cout << "  " << p;
+    }
+    std::cout << std::endl;
+  }
+  for (auto b: mol.bonds()) {
+    std::cout << b->getIdx() << " : " << b->getBeginAtomIdx() << "->"
+              << b->getEndAtomIdx() << " " << b->getBondType() << " :: ";
+    auto props = b->getPropList(true);
+    for (auto p : props) {
+      std::cout << "  " << p;
+    }
+    std::cout << std::endl;
+  }
+  for (auto b: mol.bonds()) {
+    if (b->getBondType() == Bond::SINGLE) {
+      int explicit_unknown_stereo;
+      if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                   explicit_unknown_stereo) &&
+          explicit_unknown_stereo) {
+        std::cout << "setting " << b->getIdx() << "  " << b->getBeginAtomIdx() << "->"
+                  << b->getEndAtomIdx() << " " << " from " << b->getBondDir()
+                  << " to " << Bond::UNKNOWN << " bcos " << explicit_unknown_stereo << std::endl;
+        b->setBondDir(Bond::UNKNOWN);
+      }
+    }
+  }
+}
+
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit

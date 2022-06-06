@@ -958,7 +958,7 @@ void DrawMol::drawRadicals(MolDraw2D &drawer) const {
   auto draw_spot = [&](const Point2D &cds) {
     bool ofp = drawer.fillPolys();
     drawer.setFillPolys(true);
-    int olw = drawer.lineWidth();
+    double olw = drawer.lineWidth();
     drawer.setLineWidth(0);
     drawer.drawArc(cds, spot_rad, 0, 360, true);
     drawer.setLineWidth(olw);
@@ -1628,7 +1628,7 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
   if (drawGenericQuery) {
     newBondLine(at1_cds, at2_cds, queryColour, queryColour, at1Idx, at2Idx,
                 bond->getIdx(), dots);
-    bonds_.back()->lineWidth_ = 1;
+    bonds_.back()->lineWidth_ = drawOptions_.bondLineWidth;
     bonds_.back()->scaleLineWidth_ = false;
   }
   atCds_[begAt->getIdx()] = sat1;
@@ -1812,7 +1812,7 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
                           int atom1Idx, int atom2Idx, int bondIdx,
                           const DashPattern &dashPattern) {
   bool scaleWidth = drawOptions_.scaleBondWidth;
-  int lineWidth = drawOptions_.bondLineWidth;
+  double lineWidth = drawOptions_.bondLineWidth;
   if (!drawOptions_.continuousHighlight &&
       std::find(highlightBonds_.begin(), highlightBonds_.end(), bondIdx) !=
           highlightBonds_.end()) {
@@ -1926,10 +1926,10 @@ void DrawMol::makeAtomCircleHighlights() {
 }
 
 // ****************************************************************************
-void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
+void DrawMol::makeAtomEllipseHighlights(double lineWidth) {
   if (!drawOptions_.fillHighlights) {
     // we need a narrower circle
-    lineWidth /= 2;
+    lineWidth /= 2.0;
   }
   for (const auto &atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
@@ -1970,7 +1970,7 @@ void DrawMol::makeAtomEllipseHighlights(int lineWidth) {
 }
 
 // ****************************************************************************
-void DrawMol::makeBondHighlightLines(int lineWidth) {
+void DrawMol::makeBondHighlightLines(double lineWidth) {
   for (const auto atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
     for (const auto &nbri : make_iterator_range(drawMol_->getAtomBonds(atom))) {

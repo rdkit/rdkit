@@ -20,7 +20,7 @@ namespace RDKit {
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-DrawShape::DrawShape(const std::vector<Point2D> &points, int lineWidth,
+DrawShape::DrawShape(const std::vector<Point2D> &points, double lineWidth,
                      bool scaleLineWidth, DrawColour lineColour, bool fill,
                      int atom1, int atom2, int bond)
     : points_(points),
@@ -89,7 +89,7 @@ bool DrawShape::doesRectClash(const StringRect &, double) const {
 
 // ****************************************************************************
 DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
-                               int lineWidth, bool scaleLineWidth,
+                               double lineWidth, bool scaleLineWidth,
                                DrawColour lineColour, bool fill, int atom1,
                                int atom2, int bond, double frac, double angle)
     : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill, atom1,
@@ -146,7 +146,7 @@ bool DrawShapeArrow::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapeEllipse::DrawShapeEllipse(const std::vector<Point2D> &points,
-                                   int lineWidth, bool scaleLineWidth,
+                                   double lineWidth, bool scaleLineWidth,
                                    DrawColour lineColour, bool fill, int atom1)
     : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill, atom1) {
   PRECONDITION(points_.size() == 2, "ellipse wrong points");
@@ -206,7 +206,7 @@ bool DrawShapeEllipse::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapeSimpleLine::DrawShapeSimpleLine(const std::vector<Point2D> &points,
-                                         int lineWidth, bool scaleLineWidth,
+                                         double lineWidth, bool scaleLineWidth,
                                          DrawColour lineColour, int atom1,
                                          int atom2, int bond,
                                          DashPattern dashPattern)
@@ -218,6 +218,7 @@ DrawShapeSimpleLine::DrawShapeSimpleLine(const std::vector<Point2D> &points,
 
 // ****************************************************************************
 void DrawShapeSimpleLine::myDraw(MolDraw2D &drawer) const {
+  std::cout << "draw simple line : " << lineWidth_ << std::endl;
   auto od = drawer.dash();
   auto dp = dashPattern_;
   if (dp == shortDashes) {
@@ -250,7 +251,7 @@ bool DrawShapeSimpleLine::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapePolyLine::DrawShapePolyLine(const std::vector<Point2D> &points,
-                                     int lineWidth, bool scaleLineWidth,
+                                     double lineWidth, bool scaleLineWidth,
                                      DrawColour lineColour, bool fill,
                                      int atom1, int atom2, int bond,
                                      DashPattern dashPattern)
@@ -451,7 +452,7 @@ bool DrawShapeDashedWedge::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapeWavyLine::DrawShapeWavyLine(const std::vector<Point2D> points,
-                                     int lineWidth, bool scaleLineWidth,
+                                     double lineWidth, bool scaleLineWidth,
                                      const DrawColour &col1,
                                      const DrawColour &col2, double offset,
                                      int atom1, int atom2, int bond)
@@ -467,6 +468,7 @@ void DrawShapeWavyLine::myDraw(MolDraw2D &drawer) const {
   // nSegments is 16 by default in MolDraw2D.
   // use a negative offset because of inverted y coords to make it look the
   // same as it used to.
+  std::cout << "draw wavy line : " << lineWidth_ << std::endl;
   drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, 16, -offset_,
                       true);
 }
@@ -487,7 +489,7 @@ bool DrawShapeWavyLine::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
-                           double ang2, int lineWidth, bool scaleLineWidth,
+                           double ang2, double lineWidth, bool scaleLineWidth,
                            const DrawColour &col1, bool fill, int atom1)
     : DrawShape(points, lineWidth, scaleLineWidth, col1, fill, atom1),
       ang1_(ang1),

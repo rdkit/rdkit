@@ -19,7 +19,6 @@
 
 namespace RDKit {
 class MolDraw2D;
-class MolDraw2DColour;
 
 namespace MolDraw2DUtils {
 
@@ -173,6 +172,47 @@ RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
   contourAndDrawGaussians(drawer, locs, heights, widths, nContours, levels, ps,
                           mol);
 };
+
+// Draw a molecule to file using settings to reproduce as closely as possible
+// the ACS1996 guidelines, as described at
+// https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+// drawer.drawOptions() are changed.
+void drawMolACS1996(
+    MolDraw2D &drawer, const ROMol &mol, const std::string &legend,
+    const std::vector<int> *highlight_atoms,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+    const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+// Filename should end in '.png' or '.svg' and the appropriate format will be
+// selected.
+bool drawMolACS1996(
+    const std::string &outfile, const ROMol &mol, const std::string &legend,
+    const std::vector<int> *highlight_atoms,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+    const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+// return string containing SVG for ACS1996 mode drawing
+std::string drawMolACS1996SVG(
+    const ROMol &mol, const std::string &legend,
+    const std::vector<int> *highlight_atoms,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+    const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+// return string containing PNG for ACS1996 mode drawing
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+std::string drawMolACS1996Cairo(
+    const ROMol &mol, const std::string &legend,
+    const std::vector<int> *highlight_atoms,
+    const std::vector<int> *highlight_bonds,
+    const std::map<int, DrawColour> *highlight_atom_map = nullptr,
+    const std::map<int, DrawColour> *highlight_bond_map = nullptr,
+    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
+#endif
+void setACS1996Options(MolDrawOptions &opts);
+void useMDLBondWedging(ROMol &mol);
 
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit
