@@ -3150,7 +3150,7 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
   // perceive chirality, then remove the Hs and sanitize.
   //
   const Conformer &conf = res->getConformer();
-  if (chiralityPossible) {
+  if (chiralityPossible || conf.is3D()) {
     if (!conf.is3D()) {
       DetectAtomStereoChemistry(*res, &conf);
     } else {
