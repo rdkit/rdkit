@@ -272,29 +272,13 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
     // we tried... nothing more we can do
     return;
   }
-  // bondIndexMap uses the position in the vector for the SMILES index and
-  // the value in that position as the actual bond index.
-  std::vector<int> bondIndexMap(mol.getNumBonds(), -1);
-  for (const auto bond : mol.bonds()) {
-    unsigned int smilesIdx;
-    if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx)) {
-      bondIndexMap[smilesIdx] = bond->getIdx();
-    }
-  }
+
   for (auto &bondIdx : headCrossings) {
-    if (bondIdx < 0) {
-      throw RDKit::SmilesParseException(
-          "could not find SGroup bond index in molecule");
-    }
     sgroup.addBondWithIdx(bondIdx);
   }
   sgroup.setProp("XBHEAD", headCrossings);
 
   for (auto &bondIdx : tailCrossings) {
-    if (bondIdx < 0) {
-      throw RDKit::SmilesParseException(
-          "could not find SGroup bond index in molecule");
-    }
     sgroup.addBondWithIdx(bondIdx);
   }
 
