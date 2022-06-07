@@ -2514,3 +2514,63 @@ M  END
     CHECK(m->getAtomWithIdx(8)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
 }
+
+TEST_CASE("wedgeMolBonds to aromatic rings") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 11 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.948889 -2.986305 0.000000 0
+M  V30 2 C 2.560660 -4.435194 0.000000 0
+M  V30 3 N 1.111771 -4.046965 0.000000 0
+M  V30 4 C 1.500000 -2.598076 0.000000 0
+M  V30 5 C 0.750000 -1.299038 0.000000 0
+M  V30 6 C 1.500000 0.000000 0.000000 0
+M  V30 7 C 0.750000 1.299038 0.000000 0
+M  V30 8 C -0.750000 1.299038 0.000000 0
+M  V30 9 C -1.500000 0.000000 0.000000 0
+M  V30 10 C -0.750000 -1.299038 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 
+M  V30 4 1 4 5 CFG=1
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 2 7 8
+M  V30 8 1 8 9
+M  V30 9 2 9 10
+M  V30 10 1 4 1
+M  V30 11 1 10 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  CHECK(m->getAtomWithIdx(3)->getChiralTag() !=
+        Atom::ChiralType::CHI_UNSPECIFIED);
+  CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+  CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
+
+  SECTION("generating mol blocks") {
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("M  V30 10 1 4 1 CFG=1") == std::string::npos);
+    CHECK(mb.find("M  V30 4 1 4 5 CFG=1") != std::string::npos);
+  }
+
+  SECTION("details: pickBondsWedge()") {
+    // this is with aromatic bonds
+    auto bnds = pickBondsToWedge(*m);
+    CHECK(bnds.at(3) == 3);
+    RWMol cp(*m);
+
+    // now try kekulized:
+    MolOps::Kekulize(cp);
+    bnds = pickBondsToWedge(cp);
+    CHECK(bnds.at(3) == 3);
+  }
+}
