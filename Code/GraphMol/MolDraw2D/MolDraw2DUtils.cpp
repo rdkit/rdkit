@@ -502,8 +502,9 @@ std::string drawMolACS1996Cairo(
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts) {
-  opts.addAtomIndices = true;
+//  opts.addAtomIndices = true;
   opts.bondLineWidth = 0.6;
+  opts.scaleBondWidth = false;
   opts.fixedFontSize = 10;
   opts.scalingFactor = 14.5;
   setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
@@ -511,23 +512,23 @@ void setACS1996Options(MolDrawOptions &opts) {
 
 // ****************************************************************************
 void useMDLBondWedging(ROMol &mol) {
-  for (auto a: mol.atoms()) {
-    std::cout << a->getIdx() << " : " << a->getChiralTag() << " : ";
-    auto props = a->getPropList(true);
-    for (auto p: props) {
-      std::cout << "  " << p;
-    }
-    std::cout << std::endl;
-  }
-  for (auto b: mol.bonds()) {
-    std::cout << b->getIdx() << " : " << b->getBeginAtomIdx() << "->"
-              << b->getEndAtomIdx() << " " << b->getBondType() << " :: ";
-    auto props = b->getPropList(true);
-    for (auto p : props) {
-      std::cout << "  " << p;
-    }
-    std::cout << std::endl;
-  }
+//  for (auto a: mol.atoms()) {
+//    std::cout << a->getIdx() << " : " << a->getChiralTag() << " : ";
+//    auto props = a->getPropList(true);
+//    for (auto p: props) {
+//      std::cout << "  " << p;
+//    }
+//    std::cout << std::endl;
+//  }
+//  for (auto b: mol.bonds()) {
+//    std::cout << b->getIdx() << " : " << b->getBeginAtomIdx() << "->"
+//              << b->getEndAtomIdx() << " " << b->getBondType() << " :: ";
+//    auto props = b->getPropList(true);
+//    for (auto p : props) {
+//      std::cout << "  " << p;
+//    }
+//    std::cout << std::endl;
+//  }
   for (auto b: mol.bonds()) {
     if (b->getBondType() == Bond::SINGLE) {
       int explicit_unknown_stereo;

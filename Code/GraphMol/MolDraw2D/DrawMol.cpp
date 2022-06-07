@@ -1733,7 +1733,10 @@ void DrawMol::makeWedgedBond(Bond *bond,
                                 at2->getIdx() + activeAtmIdxOffset_,
                                 bond->getIdx() + activeBndIdxOffset_);
   } else {
-    s = new DrawShapeDashedWedge(pts, col1, col2,
+    double lineWidth = drawOptions_.bondLineWidth < 1.0
+                           ? drawOptions_.bondLineWidth
+                           : drawOptions_.bondLineWidth / 2.0;
+    s = new DrawShapeDashedWedge(pts, col1, col2, lineWidth,
                                  at1->getIdx() + activeAtmIdxOffset_,
                                  at2->getIdx() + activeAtmIdxOffset_,
                                  bond->getIdx() + activeBndIdxOffset_);
@@ -1749,8 +1752,9 @@ void DrawMol::makeWavyBond(Bond *bond,
   Point2D end1, end2;
   adjustBondEndsForLabels(at1->getIdx(), at2->getIdx(), end1, end2);
   std::vector<Point2D> pts{end1, end2};
-  DrawShapeWavyLine *s = new DrawShapeWavyLine(pts, drawOptions_.bondLineWidth,
-                                               false, cols.first, cols.second);
+  DrawShapeWavyLine *s = new DrawShapeWavyLine(
+      pts, drawOptions_.bondLineWidth, false, cols.first, cols.second, 0.075,
+      at1->getIdx(), at2->getIdx(), bond->getIdx());
   bonds_.push_back(std::unique_ptr<DrawShape>(s));
 }
 

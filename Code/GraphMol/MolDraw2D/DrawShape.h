@@ -155,6 +155,7 @@ class DrawShapeDashedWedge : public DrawShape {
  public:
   DrawShapeDashedWedge(const std::vector<Point2D> points,
                        const DrawColour &col1, const DrawColour &col2,
+                       double lineWidth = 1.0,
                        int atom1 = -1, int atom2 = -1, int bond = -1);
   DrawShapeDashedWedge(const DrawShapeDashedWedge &) = delete;
   DrawShapeDashedWedge(DrawShapeDashedWedge &&) = delete;
@@ -165,13 +166,15 @@ class DrawShapeDashedWedge : public DrawShape {
   void myDraw(MolDraw2D &drawer) const override;
   void scale(const Point2D &scale_factor) override;
   void move(const Point2D &trans) override;
+  void findExtremes(double &xmin, double &xmax, double &ymin,
+                    double &ymax) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;
   std::vector<DrawColour> lineColours_;
   // for when we re-create the lines when it gets too wide, this is
-  // the initial points[0] from the c'tor.
-  Point2D at1Cds_;
+  // the initial points[0-2] from the c'tor.
+  Point2D at1Cds_, end1Cds_, end2Cds_;
 };
 
 class DrawShapeWavyLine : public DrawShape {

@@ -10,6 +10,8 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <cmath>
+
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
@@ -218,7 +220,6 @@ DrawShapeSimpleLine::DrawShapeSimpleLine(const std::vector<Point2D> &points,
 
 // ****************************************************************************
 void DrawShapeSimpleLine::myDraw(MolDraw2D &drawer) const {
-  std::cout << "draw simple line : " << lineWidth_ << std::endl;
   auto od = drawer.dash();
   auto dp = dashPattern_;
   if (dp == shortDashes) {
@@ -360,12 +361,15 @@ bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
 // ****************************************************************************
 DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
                                            const DrawColour &col1,
-                                           const DrawColour &col2, int atom1,
+                                           const DrawColour &col2,
+                                           double lineWidth, int atom1,
                                            int atom2, int bond)
-    : DrawShape(points, 1, false, col1, false, atom1, atom2, bond),
+    : DrawShape(points, lineWidth, false, col1, false, atom1, atom2, bond),
       col2_(col2) {
   PRECONDITION(points_.size() == 3, "dashed wedge wrong points");
   at1Cds_ = points[0];
+  end1Cds_ = points[1];
+  end2Cds_ = points[2];
   buildLines();
 }
 
@@ -373,27 +377,38 @@ DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
 void DrawShapeDashedWedge::buildLines() {
   // assumes this is the starting configuration, where the 3 points define
   // the enclosing triangle of the wedge.
-  auto point = points_[0];
-  auto end1 = points_[1];
-  auto end2 = points_[2];
+  std::cout << "DrawShapeDashedWedge::buildLines" << std::endl;
+  std::cout << "at1Cds_ : " << at1Cds_.x << ", " << at1Cds_.y << std::endl;
+  std::cout << "end1Cds_ : " << end1Cds_.x << ", " << end1Cds_.y << std::endl;
+  std::cout << "end2Cds_ : " << end2Cds_.x << ", " << end2Cds_.y << std::endl;
+  auto midend = (end1Cds_ + end2Cds_) * 0.5;
   points_.clear();
   lineColours_.clear();
-  auto e1 = end1 - point;
-  auto e2 = end2 - point;
-
-  unsigned int nDashes = 6;
-  double sideLen = e1.length();
-  double dashSep = sideLen / nDashes;
-  // don't have the dashes too far apart or too close together.
-  if (dashSep > 20.0) {
-    nDashes = sideLen / 20;
-  } else if (dashSep < 5.0) {
-    nDashes = sideLen / 5;
-    nDashes = nDashes < 3 ? 3 : nDashes;
-  }
+  auto e1 = (end1Cds_ - at1Cds_);
+  auto e2 = (end2Cds_ - at1Cds_);
+  e1.normalize();
+  e2.normalize();
+//  unsigned int nDashes = 6;
+//  double sideLen = e1.length();
+//  double dashSep = sideLen / nDashes;
+//  // don't have the dashes too far apart or too close together.
+//  if (dashSep > 20.0) {
+//    nDashes = sideLen / 20;
+//  } else if (dashSep < 5.0) {
+//    nDashes = sideLen / 5;
+//    nDashes = nDashes < 3 ? 3 : nDashes;
+//  }
+  // the ACS1996 rules say the dash separation should be 2.5px.  It seems
+  // like a good result for all of them.
+  std::cout << e1.x << ", " << e1.y << " and " << e2.x << ", " << e2.y << std::endl;
+  std::cout << (at1Cds_-midend).x << ", " << (at1Cds_-midend).y << " : " << (at1Cds_-midend).length() << std::endl;
+  unsigned int nDashes = rdcast<unsigned int>(std::round((at1Cds_ - midend).length() / 2.5));
+  std::cout << "nDashes : " << nDashes << std::endl;
   for (unsigned int i = 1; i < nDashes + 1; ++i) {
-    auto e11 = point + e1 * (rdcast<double>(i) / nDashes);
-    auto e22 = point + e2 * (rdcast<double>(i) / nDashes);
+    auto e11 = at1Cds_ + e1 * rdcast<double>(i) * 2.5;
+    std::cout << "e11 : " << e11.x << ", " << e11.y << std::endl;
+    auto e22 = at1Cds_ + e2 * rdcast<double>(i) * 2.5;
+    std::cout << "e22 : " << e22.x << ", " << e22.y << std::endl;
     points_.push_back(e11);
     points_.push_back(e22);
     if (i > nDashes / 2) {
@@ -406,6 +421,7 @@ void DrawShapeDashedWedge::buildLines() {
 
 // ****************************************************************************
 void DrawShapeDashedWedge::myDraw(MolDraw2D &drawer) const {
+  std::cout << "draw dashed wedge : lineWidth_ = " << lineWidth_ << std::endl;
   drawer.setFillPolys(false);
   drawer.setActiveAtmIdx(atom1_, atom2_);
   drawer.setActiveBndIdx(bond_);
@@ -420,6 +436,13 @@ void DrawShapeDashedWedge::myDraw(MolDraw2D &drawer) const {
     drawer.drawLine(points_[i], points_[i + 1], lineColours_[j],
                     lineColours_[j], true);
   }
+//  std::cout << "at1Cds_ : " << at1Cds_.x << ", " << at1Cds_.y << " : "
+//            << end1Cds_.x << ", " << end1Cds_.y << " :: "
+//            << (end1Cds_ - at1Cds_).length() << std::endl;
+//  drawer.drawLine(at1Cds_, end1Cds_, DrawColour(1.0, 0.0, 0.0),
+//                  DrawColour(1.0, 0.0, 0.0), true);
+//  drawer.drawLine(at1Cds_, end2Cds_, DrawColour(0.0, 1.0, 0.0),
+//                  DrawColour(0.0, 1.0, 0.0), true);
 }
 
 // ****************************************************************************
@@ -427,11 +450,10 @@ void DrawShapeDashedWedge::scale(const Point2D &scale_factor) {
   DrawShape::scale(scale_factor);
   at1Cds_.x *= scale_factor.x;
   at1Cds_.y *= scale_factor.y;
-
-  // We may want to adjust the number of lines, so set everything up like
-  // the original triangle was passed in and rebuild.
-  points_ = std::vector<Point2D>{at1Cds_, points_[points_.size() - 1],
-                                 points_[points_.size() - 2]};
+  end1Cds_.x *= scale_factor.x;
+  end1Cds_.y *= scale_factor.y;
+  end2Cds_.x *= scale_factor.x;
+  end2Cds_.y *= scale_factor.y;
   buildLines();
 }
 
@@ -439,15 +461,24 @@ void DrawShapeDashedWedge::scale(const Point2D &scale_factor) {
 void DrawShapeDashedWedge::move(const Point2D &trans) {
   DrawShape::move(trans);
   at1Cds_ += trans;
+  end1Cds_ += trans;
+  end2Cds_ += trans;
+}
+
+// ****************************************************************************
+void DrawShapeDashedWedge::findExtremes(double &xmin, double &xmax,
+                                        double &ymin, double &ymax) const {
+  xmin = std::min({at1Cds_.x, end1Cds_.x, end2Cds_.x});
+  xmax = std::max({at1Cds_.x, end1Cds_.x, end2Cds_.x});
+  ymin = std::min({at1Cds_.y, end1Cds_.y, end2Cds_.y});
+  ymax = std::max({at1Cds_.y, end1Cds_.y, end2Cds_.y});
 }
 
 // ****************************************************************************
 bool DrawShapeDashedWedge::doesRectClash(const StringRect &rect,
                                          double padding) const {
-  size_t last_point = points_.size() - 1;
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
-  return doesTriangleIntersect(rect, at1Cds_, points_[last_point],
-                               points_[last_point - 1], padding);
+  return doesTriangleIntersect(rect, at1Cds_, end1Cds_, end2Cds_, padding);
 }
 
 // ****************************************************************************
@@ -468,9 +499,13 @@ void DrawShapeWavyLine::myDraw(MolDraw2D &drawer) const {
   // nSegments is 16 by default in MolDraw2D.
   // use a negative offset because of inverted y coords to make it look the
   // same as it used to.
-  std::cout << "draw wavy line : " << lineWidth_ << std::endl;
-  drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, 16, -offset_,
-                      true);
+  std::cout << "DrawshapeWavyLine" << std::endl
+            << points_[0].x << ", " << points_[0].y << " and "
+            << points_[1].x << ", " << points_[1].y << " :: "
+            << (points_[0] - points_[1]).length() << std::endl;
+  int nsegs = int(std::round((points_[0] - points_[1]).length() / 2.0));
+  drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, nsegs,
+                      -offset_, true);
 }
 
 // ****************************************************************************

@@ -200,9 +200,9 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
     Point2D startpt = cds1 + delta * i;
     Point2D segpt =
         rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
-    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
+    Point2D cpt1 = startpt + perp * (i % 2 ? -1 : 1);
     cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
-    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    Point2D cpt2 = segpt + perp * (i % 2 ? -1 : 1);
     cpt2 = rawCoords ? cpt2 : getDrawCoords(cpt2);
     d_os << " C" << cpt1.x << "," << cpt1.y << " " << cpt2.x << "," << cpt2.y
          << " " << segpt.x << "," << segpt.y;

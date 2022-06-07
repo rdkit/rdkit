@@ -4591,7 +4591,7 @@ TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
 
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
-    auto m = R"CTAB(mol1
+    auto m1 = R"CTAB(mol1
   ChemDraw05162216032D
 
  11 11  0  0  0  0  0  0  0  0999 V2000
@@ -4618,17 +4618,65 @@ TEST_CASE("ACS 1996 mode") {
   9 10  3  0
   6 11  1  4
 M  END)CTAB"_ctab;
-    REQUIRE(m);
-    bool res1 = MolDraw2DUtils::drawMolACS1996("acs1996_1.svg", *m, "",
+    REQUIRE(m1);
+    bool res1 = MolDraw2DUtils::drawMolACS1996("acs1996_1.svg", *m1, "",
                                                nullptr, nullptr);
     REQUIRE(res1);
 #if 0
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-    bool res2 = MolDraw2DUtils::drawMolACS1996("acs1996_1.png", *m, "test 1",
+    bool res2 = MolDraw2DUtils::drawMolACS1996("acs1996_1.png", *m1, "r",
                                                nullptr, nullptr);
     REQUIRE(res2);
 #endif
 #endif
+    auto m2 = R"CTAB(
+  ChemDraw06062216302D
 
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 11 11 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.151400 0.903800 0.000000 0
+M  V30 2 C 1.151400 0.078800 0.000000 0
+M  V30 3 N 1.935999 -0.176199 0.000000 0
+M  V30 4 C 2.420899 0.491300 0.000000 0
+M  V30 5 N 1.935999 1.158700 0.000000 0
+M  V30 6 C 0.436900 -0.333700 0.000000 0
+M  V30 7 C -0.277500 0.078800 0.000000 0
+M  V30 8 C -0.992000 -0.333700 0.000000 0
+M  V30 9 C -1.706500 0.078800 0.000000 0
+M  V30 10 N -2.420899 -0.333700 0.000000 0
+M  V30 11 C 0.436900 -1.158700 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 1
+M  V30 6 1 2 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8 CFG=2
+M  V30 9 1 8 9
+M  V30 10 3 9 10
+M  V30 11 1 6 11 CFG=3
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 6)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m2);
+    bool res3 = MolDraw2DUtils::drawMolACS1996("acs1996_2.svg", *m2, "",
+                                               nullptr, nullptr);
+    REQUIRE(res3);
+#if 0
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    bool res4 = MolDraw2DUtils::drawMolACS1996("acs1996_2.png", *m2, "",
+                                               nullptr, nullptr);
+    REQUIRE(res4);
+#endif
+#endif
   }
 }
