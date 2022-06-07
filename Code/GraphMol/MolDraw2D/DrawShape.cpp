@@ -377,10 +377,6 @@ DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
 void DrawShapeDashedWedge::buildLines() {
   // assumes this is the starting configuration, where the 3 points define
   // the enclosing triangle of the wedge.
-  std::cout << "DrawShapeDashedWedge::buildLines" << std::endl;
-  std::cout << "at1Cds_ : " << at1Cds_.x << ", " << at1Cds_.y << std::endl;
-  std::cout << "end1Cds_ : " << end1Cds_.x << ", " << end1Cds_.y << std::endl;
-  std::cout << "end2Cds_ : " << end2Cds_.x << ", " << end2Cds_.y << std::endl;
   auto midend = (end1Cds_ + end2Cds_) * 0.5;
   points_.clear();
   lineColours_.clear();
@@ -388,33 +384,30 @@ void DrawShapeDashedWedge::buildLines() {
   auto e2 = (end2Cds_ - at1Cds_);
   e1.normalize();
   e2.normalize();
-//  unsigned int nDashes = 6;
-//  double sideLen = e1.length();
-//  double dashSep = sideLen / nDashes;
-//  // don't have the dashes too far apart or too close together.
-//  if (dashSep > 20.0) {
-//    nDashes = sideLen / 20;
-//  } else if (dashSep < 5.0) {
-//    nDashes = sideLen / 5;
-//    nDashes = nDashes < 3 ? 3 : nDashes;
-//  }
   // the ACS1996 rules say the dash separation should be 2.5px.  It seems
   // like a good result for all of them.
-  std::cout << e1.x << ", " << e1.y << " and " << e2.x << ", " << e2.y << std::endl;
-  std::cout << (at1Cds_-midend).x << ", " << (at1Cds_-midend).y << " : " << (at1Cds_-midend).length() << std::endl;
-  unsigned int nDashes = rdcast<unsigned int>(std::round((at1Cds_ - midend).length() / 2.5));
-  std::cout << "nDashes : " << nDashes << std::endl;
-  for (unsigned int i = 1; i < nDashes + 1; ++i) {
-    auto e11 = at1Cds_ + e1 * rdcast<double>(i) * 2.5;
-    std::cout << "e11 : " << e11.x << ", " << e11.y << std::endl;
-    auto e22 = at1Cds_ + e2 * rdcast<double>(i) * 2.5;
-    std::cout << "e22 : " << e22.x << ", " << e22.y << std::endl;
-    points_.push_back(e11);
-    points_.push_back(e22);
-    if (i > nDashes / 2) {
-      lineColours_.push_back(col2_);
-    } else {
-      lineColours_.push_back(lineColour_);
+  double centralLen = (at1Cds_ - midend).length();
+  unsigned int nDashes = rdcast<unsigned int>(std::round(centralLen / 2.5));
+  if (!nDashes) {
+    points_.push_back(end1Cds_);
+    points_.push_back(end2Cds_);
+    lineColours_.push_back(lineColour_);
+  } else {
+    double dashSep = centralLen / rdcast<double>(nDashes);
+    std::cout << "nDashes : " << nDashes << "  dashSep = " << dashSep
+              << std::endl;
+    for (unsigned int i = 1; i < nDashes + 1; ++i) {
+      auto e11 = at1Cds_ + e1 * rdcast<double>(i) * dashSep;
+      auto e22 = at1Cds_ + e2 * rdcast<double>(i) * dashSep;
+      points_.push_back(e11);
+      points_.push_back(e22);
+      if (i > nDashes / 2) {
+        lineColours_.push_back(col2_);
+      } else {
+        lineColours_.push_back(lineColour_);
+      }
+      std::cout << e22.x << ", " << e22.y << " vs " << end2Cds_.x << ", "
+                << end2Cds_.y << std::endl;
     }
   }
 }
@@ -436,13 +429,6 @@ void DrawShapeDashedWedge::myDraw(MolDraw2D &drawer) const {
     drawer.drawLine(points_[i], points_[i + 1], lineColours_[j],
                     lineColours_[j], true);
   }
-//  std::cout << "at1Cds_ : " << at1Cds_.x << ", " << at1Cds_.y << " : "
-//            << end1Cds_.x << ", " << end1Cds_.y << " :: "
-//            << (end1Cds_ - at1Cds_).length() << std::endl;
-//  drawer.drawLine(at1Cds_, end1Cds_, DrawColour(1.0, 0.0, 0.0),
-//                  DrawColour(1.0, 0.0, 0.0), true);
-//  drawer.drawLine(at1Cds_, end2Cds_, DrawColour(0.0, 1.0, 0.0),
-//                  DrawColour(0.0, 1.0, 0.0), true);
 }
 
 // ****************************************************************************
@@ -468,10 +454,10 @@ void DrawShapeDashedWedge::move(const Point2D &trans) {
 // ****************************************************************************
 void DrawShapeDashedWedge::findExtremes(double &xmin, double &xmax,
                                         double &ymin, double &ymax) const {
-  xmin = std::min({at1Cds_.x, end1Cds_.x, end2Cds_.x});
-  xmax = std::max({at1Cds_.x, end1Cds_.x, end2Cds_.x});
-  ymin = std::min({at1Cds_.y, end1Cds_.y, end2Cds_.y});
-  ymax = std::max({at1Cds_.y, end1Cds_.y, end2Cds_.y});
+  xmin = std::min({at1Cds_.x, end1Cds_.x, end2Cds_.x, xmin});
+  xmax = std::max({at1Cds_.x, end1Cds_.x, end2Cds_.x, xmax});
+  ymin = std::min({at1Cds_.y, end1Cds_.y, end2Cds_.y, ymin});
+  ymax = std::max({at1Cds_.y, end1Cds_.y, end2Cds_.y, ymax});
 }
 
 // ****************************************************************************
