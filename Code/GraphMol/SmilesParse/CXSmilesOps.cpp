@@ -281,27 +281,21 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
       bondIndexMap[smilesIdx] = bond->getIdx();
     }
   }
-  for (auto &smilesIdx : headCrossings) {
-    int bondIdx = bondIndexMap[smilesIdx];
+  for (auto &bondIdx : headCrossings) {
     if (bondIdx < 0) {
       throw RDKit::SmilesParseException(
           "could not find SGroup bond index in molecule");
     }
     sgroup.addBondWithIdx(bondIdx);
-    // and replace the original value
-    smilesIdx = bondIdx;
   }
   sgroup.setProp("XBHEAD", headCrossings);
 
-  for (auto &smilesIdx : tailCrossings) {
-    int bondIdx = bondIndexMap[smilesIdx];
+  for (auto &bondIdx : tailCrossings) {
     if (bondIdx < 0) {
       throw RDKit::SmilesParseException(
           "could not find SGroup bond index in molecule");
     }
     sgroup.addBondWithIdx(bondIdx);
-    // and replace the original value
-    smilesIdx = bondIdx;
   }
 
   // now we can setup XBCORR
