@@ -159,7 +159,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4323_2.svg", 2915352032U},
     {"testGithub4323_3.svg", 2725419149U},
     {"testGithub4323_4.svg", 3108996984U},
-    {"testGithub4238_1.svg", 3072374075U},
+    {"testGithub4238_1.svg", 1666729785U},
     {"testGithub4508_1.svg", 4261373064U},
     {"testGithub4508_1b.svg", 3090854313U},
     {"testGithub4508_2.svg", 1114092U},
@@ -215,6 +215,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_5185.svg", 1652507399U},
     {"testGithub_5269_1.svg", 1465405815U},
     {"testGithub_5269_2.svg", 112102270U},
+    {"test_classes_wavy_bonds.svg", 1548800567U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4588,3 +4589,50 @@ TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
   CHECK(rxn2->getReactants()[0]->getAtomWithIdx(1)->getAtomMapNum() == 2);
 }
 #endif
+
+TEST_CASE("Class values in SVG for wavy bonds.") {
+  SECTION("basics") {
+    auto m1 = R"CTAB(mol1
+  ChemDraw05162216032D
+
+ 11 11  0  0  0  0  0  0  0  0999 V2000
+    1.1514    0.9038    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1514    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9360   -0.1762    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4209    0.4913    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9360    1.1587    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4369   -0.3337    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2775    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9920   -0.3337    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7065    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4209   -0.3337    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4369   -1.1587    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  1  1  0
+  2  6  1  0
+  6  7  1  0
+  7  8  2  3
+  8  9  1  0
+  9 10  3  0
+  6 11  1  4
+M  END)CTAB"_ctab;
+    REQUIRE(m1);
+    auto b10 = m1->getBondWithIdx(10);
+    b10->setBondDir(Bond::UNKNOWN);
+    MolDraw2DSVG drawer(400, 400, -1, -1);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("<path class='bond-10 atom-5 atom-10'") !=
+          std::string::npos);
+    std::ofstream outs("test_classes_wavy_bonds.svg");
+    outs << text;
+    outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    check_file_hash("test_classes_wavy_bonds.svg");
+#endif
+  }
+}
