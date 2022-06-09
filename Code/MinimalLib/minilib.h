@@ -140,3 +140,4 @@ JSMol *get_mol_copy(const JSMol &other);
 JSMol *get_qmol(const std::string &input);
 std::string version();
 void prefer_coordgen(bool prefer);
+void use_legacy_stereo_perception(bool value);

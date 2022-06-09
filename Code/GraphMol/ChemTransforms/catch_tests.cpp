@@ -419,3 +419,22 @@ TEST_CASE(
     CHECK(mb.find("CFG=2") != std::string::npos);
   }
 }
+
+TEST_CASE(
+    "Github5334: ReplaceCore should set stereo on ring bonds when it breaks "
+    "rings") {
+  SECTION("segfault") {
+    auto a = "C([*:1])[*:2].[C@@H](Cl)([1*:1])[2*:2]"_smiles;
+    bool caught = false;
+    try {
+        auto mol = molzip(*a);
+        CHECK(false);
+    } catch (Invar::Invariant &e) {
+        CHECK(e.toUserString().find(
+                  "molzip: zipped Bond already exists, perhaps labels are duplicated") !=
+              std::string::npos);
+        caught = true;
+    }
+    CHECK(caught);
+  }
+}

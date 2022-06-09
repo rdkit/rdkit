@@ -21,6 +21,7 @@
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Wrap/substructmethods.h>
@@ -40,10 +41,6 @@ namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
-
-void setAllowNontetrahedral(bool val) {
-  RDKit::Chirality::allowNontetrahedralChirality = val;
-}
 
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
@@ -2734,8 +2731,20 @@ A note on the flags controlling which atoms/bonds are modified:
                 GenericGroups::convertGenericQueriesToSubstanceGroups,
                 python::arg("mol"), "documentation");
     python::def(
-        "SetAllowNontetrahedralChirality", setAllowNontetrahedral,
+        "SetAllowNontetrahedralChirality",
+        Chirality::setAllowNontetrahedralChirality,
         "toggles recognition of non-tetrahedral chirality from 3D structures");
+    python::def("GetAllowNontetrahedralChirality",
+                Chirality::getAllowNontetrahedralChirality,
+                "returns whether or not recognition of non-tetrahedral "
+                "chirality from 3D structures is enabled");
+    python::def("SetUseLegacyStereoPerception",
+                Chirality::setUseLegacyStereoPerception,
+                "toggles usage of the legacy stereo perception code");
+    python::def("GetUseLegacyStereoPerception",
+                Chirality::getUseLegacyStereoPerception,
+                "returns whether or not the legacy stereo perception code is "
+                "being used");
   }
 };
 }  // namespace RDKit

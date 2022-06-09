@@ -1990,7 +1990,7 @@ TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
     }
   }
   SECTION("disable nontetrahedral stereo") {
-    Chirality::allowNontetrahedralChirality = false;
+    Chirality::setAllowNontetrahedralChirality(false);
     SDMolSupplier suppl(pathName);
     while (!suppl.atEnd()) {
       std::unique_ptr<ROMol> m{suppl.next()};
@@ -2005,7 +2005,7 @@ TEST_CASE("nontetrahedral stereo from 3D", "[nontetrahedral]") {
         CHECK(atom->getChiralTag() == Atom::ChiralType::CHI_UNSPECIFIED);
       }
     }
-    Chirality::allowNontetrahedralChirality = true;
+    Chirality::setAllowNontetrahedralChirality(true);
   }
 }
 
@@ -2384,10 +2384,141 @@ TEST_CASE("nontetrahedral StereoInfo", "[nontetrahedral]") {
   }
 }
 
+TEST_CASE("github #5328: assignChiralTypesFrom3D() ignores wiggly bonds") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=2
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    MolOps::assignChiralTypesFrom3D(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("non-tetrahedral") {
+    auto m = R"CTAB(
+  Mrv2108 05252216313D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.7191 0.2488 -3.5085 0
+M  V30 2 As -1.0558 1.9209 -2.6345 0
+M  V30 3 F -0.4636 3.422 -1.7567 0
+M  V30 4 O -2.808 2.4243 -2.1757 0
+M  V30 5 Cl -0.1145 2.6609 -4.5048 0
+M  V30 6 Br 0.2255 0.6458 -1.079 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5 CFG=2
+M  V30 5 1 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    MolOps::assignChiralTypesFrom3D(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE("useLegacyStereoPerception feature flag") {
+  SECTION("original failing example") {
+    Chirality::setUseLegacyStereoPerception(true);
+    auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("use new code") {
+    Chirality::setUseLegacyStereoPerception(false);
+    auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+  std::string molblock = R"CTAB(
+  Mrv2108 05202206352D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.5417 3.165 0 0
+M  V30 2 C -5.8753 2.395 0 0
+M  V30 3 C -5.8753 0.855 0 0
+M  V30 4 C -4.5417 0.085 0 0 CFG=1
+M  V30 5 C -3.208 0.855 0 0
+M  V30 6 C -3.208 2.395 0 0
+M  V30 7 C -4.5417 -1.455 0 0
+M  V30 8 C -1.8743 0.085 0 0
+M  V30 9 C -4.5417 6.2451 0 0 CFG=2
+M  V30 10 C -5.8753 5.4751 0 0
+M  V30 11 C -5.8753 3.9351 0 0
+M  V30 12 C -3.208 3.9351 0 0
+M  V30 13 C -3.208 5.4751 0 0
+M  V30 14 C -4.5417 7.7851 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 1 6
+M  V30 7 1 4 7 CFG=1
+M  V30 8 1 5 8
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 1 12 13
+M  V30 12 1 9 13
+M  V30 13 1 11 1
+M  V30 14 1 1 12
+M  V30 15 1 9 14 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  SECTION("original example, from mol block") {
+    Chirality::setUseLegacyStereoPerception(true);
+    std::unique_ptr<RWMol> m{MolBlockToMol(molblock)};
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() == Atom::CHI_UNSPECIFIED);
+  }
+  SECTION("original example, from mol block, new code") {
+    Chirality::setUseLegacyStereoPerception(false);
+    std::unique_ptr<RWMol> m{MolBlockToMol(molblock)};
+    CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+    CHECK(m->getAtomWithIdx(8)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  }
+}
+
 TEST_CASE("github 5307: AssignAtomChiralTagsFromStructure ignores Hydrogens") {
   std::string mb = R"CTAB(
      RDKit          3D
-
+     
   0  0  0  0  0  0  0  0  0  0999 V3000
 M  V30 BEGIN CTAB
 M  V30 COUNTS 5 4 0 0 0

@@ -129,7 +129,9 @@ RWMol *cleanup(const RWMol *mol, const CleanupParameters &params) {
   md.disconnect(m);
   RWMOL_SPTR normalized(MolStandardize::normalize(&m, params));
   RWMol *reionized = MolStandardize::reionize(normalized.get(), params);
-  MolOps::assignStereochemistry(*reionized);
+  bool cleanIt = true;
+  bool force = true;
+  MolOps::assignStereochemistry(*reionized, cleanIt, force);
 
   // update properties of reionized using m.
   reionized->updateProps(m);

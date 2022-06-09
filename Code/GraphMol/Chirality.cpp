@@ -23,6 +23,8 @@
 #include <Geometry/point.h>
 #include "Chirality.h"
 
+#include <cstdlib>
+
 // #define VERBOSE_CANON 1
 
 namespace RDKit {
@@ -33,6 +35,18 @@ bool shouldDetectDoubleBondStereo(const Bond *bond) {
   return (!ri->numBondRings(bond->getIdx()) ||
           ri->minBondRingSize(bond->getIdx()) >=
               Chirality::minRingSizeForDoubleBondStereo);
+}
+
+bool getValFromEnvironment(const char *var, bool defVal) {
+  auto evar = std::getenv(var);
+  if (evar != nullptr) {
+    if (!strcmp(evar, "0")) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  return defVal;
 }
 
 // ----------------------------------- -----------------------------------
@@ -767,7 +781,36 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 }  // namespace
 
 namespace Chirality {
-bool allowNontetrahedralChirality = true;
+
+#if _MSC_VER
+int setenv(const char *name, const char *value, int ) {
+  return _putenv_s(name, value);
+}
+#endif
+
+void setAllowNontetrahedralChirality(bool val) {
+  if (val) {
+    setenv(nonTetrahedralStereoEnvVar, "1", 1);
+  } else {
+    setenv(nonTetrahedralStereoEnvVar, "0", 1);
+  }
+}
+bool getAllowNontetrahedralChirality() {
+  return getValFromEnvironment(nonTetrahedralStereoEnvVar,
+                               nonTetrahedralStereoDefaultVal);
+}
+
+void setUseLegacyStereoPerception(bool val) {
+  if (val) {
+    setenv(useLegacyStereoEnvVar, "1", 1);
+  } else {
+    setenv(useLegacyStereoEnvVar, "0", 1);
+  }
+}
+bool getUseLegacyStereoPerception() {
+  return getValFromEnvironment(useLegacyStereoEnvVar,
+                               useLegacyStereoDefaultVal);
+}
 
 namespace detail {
 bool bondAffectsAtomChirality(const Bond *bond, const Atom *atom) {
@@ -1840,6 +1883,11 @@ void assignStereochemistry(ROMol &mol, bool cleanIt, bool force,
     return;
   }
 
+  if (!Chirality::getUseLegacyStereoPerception()) {
+    Chirality::findPotentialStereo(mol, cleanIt, flagPossibleStereoCenters);
+    return;
+  }
+
   // later we're going to need ring information, get it now if we don't
   // have it already:
   if (!mol.getRingInfo()->isInitialized()) {
@@ -2319,6 +2367,18 @@ static unsigned int OctahedralPermFrom3D(unsigned char *pair,
   return 0;
 }
 
+bool isWigglyBond(const Bond *bond, const Atom *atom) {
+  int hasWigglyBond = 0;
+  if (bond->getBeginAtomIdx() == atom->getIdx() &&
+      bond->getBondType() == Bond::BondType::SINGLE &&
+      (bond->getBondDir() == Bond::BondDir::UNKNOWN ||
+       (bond->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                    hasWigglyBond) &&
+        hasWigglyBond))) {
+    return true;
+  }
+  return false;
+}
 // The tolerance here is pretty high in order to accomodate things coming from
 // the dgeom code As we get more experience with real-world structures and/or
 // improve the dgeom code, we can think about lowering this.
@@ -2332,6 +2392,12 @@ static bool assignNontetrahedralChiralTypeFrom3D(ROMol &mol,
     return false;
   }
 
+  // check for wiggly bonds
+  for (const auto bond : mol.atomBonds(atom)) {
+    if (isWigglyBond(bond, atom)) {
+      return false;
+    }
+  }
   RDGeom::Point3D cen = conf.getAtomPos(atom->getIdx());
   RDGeom::Point3D v[6];
   unsigned int count = 0;
@@ -2528,6 +2594,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     mol.clearProp(common_properties::_StereochemDone);
   }
 
+  auto allowNontetrahedralStereo = Chirality::getAllowNontetrahedralChirality();
   for (auto atom : mol.atoms()) {
     // if we aren't replacing existing tags and the atom is already tagged,
     // punt:
@@ -2542,7 +2609,7 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       // not enough explicit neighbors or too many total neighbors
       continue;
     }
-    if (Chirality::allowNontetrahedralChirality &&
+    if (allowNontetrahedralStereo &&
         assignNontetrahedralChiralTypeFrom3D(mol, conf, atom)) {
       continue;
     }
@@ -2561,7 +2628,12 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     const auto &p0 = conf.getAtomPos(atom->getIdx());
     const RDGeom::Point3D *nbrs[3];
     unsigned int nbrIdx = 0;
+    int hasWigglyBond = 0;
     for (const auto bond : mol.atomBonds(atom)) {
+      hasWigglyBond = isWigglyBond(bond, atom);
+      if (hasWigglyBond) {
+        break;
+      }
       if (!Chirality::detail::bondAffectsAtomChirality(bond, atom)) {
         continue;
       }
@@ -2569,6 +2641,9 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       if (nbrIdx == 3) {
         break;
       }
+    }
+    if (hasWigglyBond) {
+      continue;
     }
     auto v1 = *nbrs[0] - p0;
     auto v2 = *nbrs[1] - p0;

@@ -16,6 +16,7 @@ import datetime
 import io
 import logging
 import os
+import re
 import sys
 import tempfile
 import threading
@@ -86,6 +87,8 @@ class CaptureLogger(logging.Handler):
 
 class CaptureOutput:
   """Helper class that captures all output"""
+  timeexpr = re.compile('^\[.*?\]')
+  timereplacement = '[timestamp]'
 
   def __init__(self):
     self.captured = {}
@@ -100,35 +103,29 @@ class CaptureOutput:
 
   def __exit__(self, x, y, z):
     for key, output in self.pylog.release().items():
-      self.captured[key] = output
+      self.captured[key] = self.timeexpr.sub(self.timereplacement, output)
 
     pyout = self.pyout.release()
     if pyout:
-      self.captured['sys.stdout'] = pyout
+      self.captured['sys.stdout'] = self.timeexpr.sub(self.timereplacement, pyout)
 
     pyerr = self.pyerr.release()
     if pyerr:
-      self.captured['sys.stderr'] = pyerr
+      self.captured['sys.stderr'] = self.timeexpr.sub(self.timereplacement, pyerr)
 
     osout = self.osout.release()
     if osout:
-      self.captured['std::cout'] = osout
+      self.captured['std::cout'] = self.timeexpr.sub(self.timereplacement, osout)
 
     oserr = self.oserr.release()
     if oserr:
-      self.captured['std::cerr'] = oserr
+      self.captured['std::cerr'] = self.timeexpr.sub(self.timereplacement, oserr)
 
 
 # Helpers for the non-threaded tests:
 def timestamp(message):
-  ts = time.time()
-  if ts % 1 > 0.95:
-    # Avoid failures when seconds roll over:
-    time.sleep(0.06)
-    ts = time.time()
-
-  dt = datetime.datetime.fromtimestamp(ts)
-  return dt.strftime('[%H:%M:%S] ') + message
+  # using actual timestamps is asking for failures during CI
+  return f'{CaptureOutput.timereplacement} {message}'
 
 
 def expect_debug(message):

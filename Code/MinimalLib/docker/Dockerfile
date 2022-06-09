@@ -65,7 +65,7 @@ RUN make -j2 RDKit_minimal && \
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
-RUN nodejs tests.js
+RUN node tests.js
 
 # Copy js and wasm rdkit files to use in browser
 # This feature requires the BuildKit backend
