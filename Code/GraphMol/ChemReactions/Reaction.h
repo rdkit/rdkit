@@ -121,30 +121,41 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionException
 class RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction : public RDProps {
   friend class ReactionPickler;
 
- public:
-  ChemicalReaction() : RDProps() {}
-  ChemicalReaction(const ChemicalReaction &other) : RDProps() {
+ private:
+  void copy(const ChemicalReaction &other) {
+    RDProps::operator=(other);
     df_needsInit = other.df_needsInit;
     df_implicitProperties = other.df_implicitProperties;
-    for (MOL_SPTR_VECT::const_iterator iter = other.beginReactantTemplates();
-         iter != other.endReactantTemplates(); ++iter) {
-      RWMol *reactant = new RWMol(**iter);
-      m_reactantTemplates.push_back(ROMOL_SPTR(reactant));
+    m_reactantTemplates.clear();
+    m_reactantTemplates.reserve(other.m_reactantTemplates.size());
+    for (ROMOL_SPTR reactant_template : other.m_reactantTemplates) {
+      m_reactantTemplates.emplace_back(new RWMol(*reactant_template));
     }
-    for (MOL_SPTR_VECT::const_iterator iter = other.beginProductTemplates();
-         iter != other.endProductTemplates(); ++iter) {
-      RWMol *product = new RWMol(**iter);
-      m_productTemplates.push_back(ROMOL_SPTR(product));
+    m_productTemplates.clear();
+    m_productTemplates.reserve(other.m_productTemplates.size());
+    for (ROMOL_SPTR product_template : other.m_productTemplates) {
+      m_productTemplates.emplace_back(new RWMol(*product_template));
     }
-    for (MOL_SPTR_VECT::const_iterator iter = other.beginAgentTemplates();
-         iter != other.endAgentTemplates(); ++iter) {
-      RWMol *agent = new RWMol(**iter);
-      m_agentTemplates.push_back(ROMOL_SPTR(agent));
+    m_agentTemplates.clear();
+    m_agentTemplates.reserve(other.m_agentTemplates.size());
+    for (ROMOL_SPTR agent_template : other.m_agentTemplates) {
+      m_agentTemplates.emplace_back(new RWMol(*agent_template));
     }
-    d_props = other.d_props;
   }
+
+ public:
+  ChemicalReaction() : RDProps() {}
   //! construct a reaction from a pickle string
   ChemicalReaction(const std::string &binStr);
+  ChemicalReaction(const ChemicalReaction &other) : RDProps() {
+    copy(other);
+  }
+  ChemicalReaction &operator=(const ChemicalReaction &other) {
+    if (this != &other) {
+      copy(other);
+    }
+    return *this;
+  }
 
   //! Adds a new reactant template
   /*!

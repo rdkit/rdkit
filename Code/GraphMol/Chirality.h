@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2008-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2008-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,6 +27,24 @@ namespace Chirality {
 
 //! double bond stereo will be ignored/removed for rings smaller than this:
 constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
+
+constexpr auto nonTetrahedralStereoEnvVar = "RDK_ENABLE_NONTETRAHEDRAL_STEREO";
+constexpr auto useLegacyStereoEnvVar = "RDK_USE_LEGACY_STEREO_PERCEPTION";
+constexpr bool nonTetrahedralStereoDefaultVal =
+    true;  //!< whether or not nontetrahedral stereo is perceived by default
+constexpr bool useLegacyStereoDefaultVal =
+    true;  //!< whether or not the legacy stereo perception code is used by
+           //!< default
+
+RDKIT_GRAPHMOL_EXPORT extern void setAllowNontetrahedralChirality(bool val);
+RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
+
+RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyStereoPerception(bool val);
+RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
+
+RDKIT_GRAPHMOL_EXPORT extern bool
+    useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
+                                //!< perception code
 
 /// @cond
 /*!
@@ -64,6 +82,9 @@ RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
 enum class StereoType {
   Unspecified,
   Atom_Tetrahedral,
+  Atom_SquarePlanar,
+  Atom_TrigonalBipyramidal,
+  Atom_Octahedral,
   Bond_Double,         // single double bond and odd-numbered cumulenes
   Bond_Cumulene_Even,  // even-numbered cumulenes
   Bond_Atropisomer
@@ -89,11 +110,13 @@ struct RDKIT_GRAPHMOL_EXPORT StereoInfo {
   StereoSpecified specified = StereoSpecified::Unspecified;
   unsigned centeredOn = NOATOM;
   StereoDescriptor descriptor = StereoDescriptor::None;
+  unsigned permutation = 0;  // for the non-tetrahedral stereo cases
   std::vector<unsigned> controllingAtoms;  // all atoms around the atom or bond.
   // Order is important
   bool operator==(const StereoInfo &other) const {
     return type == other.type && specified == other.specified &&
            centeredOn == other.centeredOn && descriptor == other.descriptor &&
+           permutation == other.permutation &&
            controllingAtoms == other.controllingAtoms;
   }
   bool operator!=(const StereoInfo &other) const { return !(*this == other); }
@@ -119,6 +142,8 @@ RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(ROMol &mol);
 
 /// @cond
 namespace detail {
+RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialNontetrahedralCenter(
+    const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialTetrahedralCenter(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialStereoAtom(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT bool isBondPotentialStereoBond(const Bond *bond);
@@ -131,6 +156,38 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getAtomNonzeroDegree(const Atom *atom);
 /// @endcond
 
 RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
+
+//! \name Non-tetrahedral stereochemistry
+//@{
+RDKIT_GRAPHMOL_EXPORT bool hasNonTetrahedralStereo(const Atom *center);
+RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
+                                                const Bond *qry);
+RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
+                                                const Atom *qry);
+RDKIT_GRAPHMOL_EXPORT Atom *getChiralAcrossAtom(const Atom *center,
+                                                const Bond *qry);
+RDKIT_GRAPHMOL_EXPORT Atom *getChiralAcrossAtom(const Atom *center,
+                                                const Atom *qry);
+// \param which: if this is -1 then the second axial bond will be returned,
+// otherwise the first
+RDKIT_GRAPHMOL_EXPORT Bond *getTrigonalBipyramidalAxialBond(const Atom *center,
+                                                            int which = 0);
+RDKIT_GRAPHMOL_EXPORT Atom *getTrigonalBipyramidalAxialAtom(const Atom *center,
+                                                            int which = 0);
+
+// \returns 1 if it's the first axial atom, -1 if it's the second
+RDKIT_GRAPHMOL_EXPORT int isTrigonalBipyramidalAxialBond(const Atom *center,
+                                                         const Bond *qry);
+RDKIT_GRAPHMOL_EXPORT int isTrigonalBipyramidalAxialAtom(const Atom *center,
+                                                         const Atom *qry);
+
+RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
+                                                         const Atom *lig1,
+                                                         const Atom *lig2);
+
+RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
+                                                        const INT_LIST &probe);
+//@}
 
 }  // namespace Chirality
 }  // namespace RDKit

@@ -1430,6 +1430,26 @@ TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
   }
 }
 
+TEST_CASE("non-tetrahedral chirality") {
+  SECTION("allowed values") {
+    {
+      auto m = "C[Fe@SP3](Cl)(F)N"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      CHECK(m->getAtomWithIdx(1)->getProp<unsigned int>(
+                common_properties::_chiralPermutation) == 3);
+    }
+    {
+      auto m = "C[Fe@SP3](Cl)(F)N"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      CHECK(m->getAtomWithIdx(1)->getProp<unsigned int>(
+                common_properties::_chiralPermutation) == 3);
+    }
+  }
+}
 TEST_CASE(
     "Github #4503: MolFromSmiles and MolFromSmarts incorrectly accepting input "
     "with spaces") {
@@ -1900,28 +1920,6 @@ TEST_CASE("Github #4981: Invalid SMARTS for negated single-atoms", "[smarts]") {
     CHECK(MolToSmarts(*mol).find("N!C") == std::string::npos);
   }
 }
-
-#ifdef RDK_THREADSAFE_SSS
-namespace {
-void runblock(const ROMol *mol) { MolToSmiles(*mol); }
-}  // namespace
-
-TEST_CASE("Github #5245: Multithreaded smiles testing") {
-  SECTION("smiles from the same molecule") {
-    auto mol = "CCCCCCCCC"_smiles;
-    REQUIRE(mol);
-    std::vector<std::future<void>> tg;
-    unsigned int count = 100;
-    for (unsigned int i = 0; i < count; ++i) {
-      tg.emplace_back(std::async(std::launch::async, runblock, mol.get()));
-    }
-    for (auto &fut : tg) {
-      fut.get();
-    }
-    tg.clear();
-  }
-}
-#endif
 
 TEST_CASE("Pol and Mod atoms in CXSMILES", "[cxsmiles]") {
   SECTION("Pol basics") {

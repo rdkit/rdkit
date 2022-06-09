@@ -211,11 +211,19 @@ function test_sketcher_services2() {
 }
 
 function test_abbreviations() {
-    var bmol = RDKitModule.get_mol("C1CCC1C(F)(F)F");
+    var bmol = RDKitModule.get_mol("C1CC(C(F)(F)F)C1");
     assert.equal(bmol.is_valid(),1);
-    bmol.condense_abbreviations();
+    var mapping = bmol.condense_abbreviations();
+    assert.equal(mapping, JSON.stringify({
+        atoms: [0, 1, 2, 3, 4, 5, 6, 7],
+        bonds: [0, 1, 2, 3, 4, 5, 6, 7],
+    }));
     assert.equal(bmol.get_cxsmiles(),"FC(F)(F)C1CCC1");
-    bmol.condense_abbreviations(1.0,false);
+    mapping = bmol.condense_abbreviations(1.0,false);
+    assert.equal(mapping, JSON.stringify({
+        atoms: [0, 1, 2, 3, 7],
+        bonds: [0, 1, 2, 6, 7],
+    }));
     assert.equal(bmol.get_cxsmiles(),"*C1CCC1 |$CF3;;;;$|");
 }
 
@@ -627,6 +635,18 @@ function test_flexicanvas() {
     assert(svg.search("height='21px'")>0);
 }
 
+function test_legacy_stereochem() {
+    RDKitModule.use_legacy_stereo_perception(true);
+    var mol = RDKitModule.get_mol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2");
+    assert.equal(mol.is_valid(),1);
+    assert.equal(mol.get_smiles(),"CC1CCC2(CC1)CC[C@H](C)C(C)C2");
+    
+    RDKitModule.use_legacy_stereo_perception(false);
+    mol = RDKitModule.get_mol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2");
+    assert.equal(mol.is_valid(),1);
+    assert.equal(mol.get_smiles(),"CC1CC2(CC[C@H](C)CC2)CC[C@@H]1C");
+}
+
 
 
 initRDKitModule().then(function(instance) {
@@ -668,6 +688,7 @@ initRDKitModule().then(function(instance) {
     test_normalize_depiction();
     test_straighten_depiction();
     test_flexicanvas();
+    test_legacy_stereochem();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

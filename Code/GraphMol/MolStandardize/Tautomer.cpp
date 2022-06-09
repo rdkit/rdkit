@@ -281,8 +281,16 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   std::string smi = MolToSmiles(mol, true);
   // taut is a copy of the input molecule
   ROMOL_SPTR taut(new ROMol(mol));
+  // do whatever sanitization bits are required
+  if (taut->needsUpdatePropertyCache()) {
+    taut->updatePropertyCache(false);
+  }
+  if (!taut->getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(*taut);
+  }
+
   // Create a kekulized form of the molecule to match the SMARTS against
-  RWMOL_SPTR kekulized(new RWMol(mol));
+  RWMOL_SPTR kekulized(new RWMol(*taut));
   MolOps::Kekulize(*kekulized, false);
   res.d_tautomers = {{smi, Tautomer(taut, kekulized, 0, 0)}};
   res.d_modifiedAtoms.resize(mol.getNumAtoms());

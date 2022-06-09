@@ -117,11 +117,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     }
     nChiralNbrs[at->getIdx()] = 0;
     chiNbrs = true;
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
-    while (nbrIdx != endNbrs) {
-      const Atom *nat = mol[*nbrIdx];
-      ++nbrIdx;
+    for (const auto nat : mol.atomNeighbors(at)) {
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:
         nChiralNbrs[at->getIdx()] -= 10;
@@ -177,12 +173,8 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    RDKit::ROMol::OBOND_ITER_PAIR atomBonds = mol.getAtomBonds(atom);
     std::vector<std::pair<int, int>> nbrScores;
-    while (atomBonds.first != atomBonds.second) {
-      const Bond *bond = mol[*atomBonds.first];
-      ++atomBonds.first;
-
+    for (const auto bond : mol.atomBonds(atom)) {
       // can only wedge single bonds:
       if (bond->getBondType() != Bond::SINGLE) {
         continue;
@@ -209,19 +201,28 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
           // the counts are negative, so we have to subtract them off
           nbrScore -= 100000 * nChiralNbrs[oIdx];
         }
+
         // prefer bonds to non-ring atoms:
         nbrScore += 10000 * mol.getRingInfo()->numAtomRings(oIdx);
         // prefer non-ring bonds;
-        nbrScore += 10000 * mol.getRingInfo()->numBondRings(bid);
+        nbrScore += 20000 * mol.getRingInfo()->numBondRings(bid);
         // prefer bonds to atoms which don't have a double bond from them
         unsigned int hasDoubleBond;       // is a double bond there?
         unsigned int hasKnownDoubleBond;  // is specified stereo there?
         unsigned int hasAnyDoubleBond;    // is STEREOANY there?
         std::tie(hasDoubleBond, hasKnownDoubleBond, hasAnyDoubleBond) =
             getDoubleBondPresence(mol, *oatom);
+        // NOTE that the relative weightings of ring atoms/bonds and the
+        // presence of ring double bonds is only appropriate if we aren't adding
+        // a squiggly wedge. We really don't want to add those between
+        // chiral centers and double bonds.
+
         nbrScore += 11000 * hasDoubleBond;
         nbrScore += 12000 * hasKnownDoubleBond;
-        nbrScore += 13000 * hasAnyDoubleBond;
+        nbrScore +=
+            23000 * hasAnyDoubleBond;  // we weight these really high in case we
+                                       // need to add a squiggly bond to
+                                       // indicate the double bond
 
         // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
         //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]

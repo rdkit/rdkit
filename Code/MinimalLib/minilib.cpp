@@ -16,6 +16,7 @@
 #include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -44,6 +45,36 @@
 namespace rj = rapidjson;
 
 using namespace RDKit;
+
+namespace {
+std::string mappingToJsonArray(const ROMol &mol) {
+  std::vector<unsigned int> atomMapping;
+  std::vector<unsigned int> bondMapping;
+  mol.getPropIfPresent(Abbreviations::common_properties::origAtomMapping,
+                       atomMapping);
+  mol.getPropIfPresent(Abbreviations::common_properties::origBondMapping,
+                       bondMapping);
+  rj::Document doc;
+  doc.SetObject();
+  auto &alloc = doc.GetAllocator();
+  rj::Value rjAtoms(rj::kArrayType);
+  for (auto i : atomMapping) {
+    rjAtoms.PushBack(i, alloc);
+  }
+  doc.AddMember("atoms", rjAtoms, alloc);
+
+  rj::Value rjBonds(rj::kArrayType);
+  for (auto i : bondMapping) {
+    rjBonds.PushBack(i, alloc);
+  }
+  doc.AddMember("bonds", rjBonds, alloc);
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  std::string res = buffer.GetString();
+  return res;
+}
+}  // end of anonymous namespace
 
 std::string JSMol::get_smiles() const {
   if (!d_mol) return "";
@@ -321,7 +352,7 @@ std::string JSMol::condense_abbreviations(double maxCoverage, bool useLinkers) {
     Abbreviations::condenseMolAbbreviations(
         *d_mol, Abbreviations::Utils::getDefaultLinkers(), maxCoverage);
   }
-  return "";
+  return mappingToJsonArray(*d_mol);
 }
 
 std::string JSMol::condense_abbreviations_from_defs(
@@ -342,6 +373,7 @@ std::string JSMol::condense_abbreviations_from_defs(
     }
   }
   Abbreviations::condenseMolAbbreviations(*d_mol, abbrevs, maxCoverage);
+  return mappingToJsonArray(*d_mol);
 }
 
 std::string JSMol::generate_aligned_coords(const JSMol &templateMol,
@@ -500,4 +532,8 @@ void prefer_coordgen(bool useCoordGen) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = useCoordGen;
 #endif
+}
+
+void use_legacy_stereo_perception(bool value) {
+  Chirality::setUseLegacyStereoPerception(value);
 }

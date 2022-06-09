@@ -21,6 +21,7 @@
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Wrap/substructmethods.h>
@@ -33,12 +34,14 @@
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
+#include <GraphMol/Chirality.h>
 
 #include <sstream>
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
+
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
                                         unsigned int nToBreak, bool addDummies,
@@ -913,14 +916,13 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
 void setAtomSymbols(MolzipParams &p, python::object symbols) {
   p.atomSymbols.clear();
   if (symbols) {
-    unsigned int nVs =
-        python::extract<unsigned int>(symbols.attr("__len__")());
+    unsigned int nVs = python::extract<unsigned int>(symbols.attr("__len__")());
     for (unsigned int i = 0; i < nVs; ++i) {
       p.atomSymbols.push_back(python::extract<std::string>(symbols[i]));
     }
   }
 }
-  
+
 ROMol *molzip_new(const ROMol &a, const ROMol &b, const MolzipParams &p) {
   return molzip(a, b, p).release();
 }
@@ -1208,6 +1210,11 @@ struct molops_wrapper {
         .def_readwrite("removeHydrides",
                        &MolOps::RemoveHsParameters::removeHydrides,
                        "hydrogens with formal charge -1")
+        .def_readwrite(
+            "removeNontetrahedralNeighbors",
+            &MolOps::RemoveHsParameters::removeNontetrahedralNeighbors,
+            "hydrogens with neighbors that have non-tetrahedral "
+            "stereochemistry")
         .def_readwrite(
             "showWarnings", &MolOps::RemoveHsParameters::showWarnings,
             "display warning messages for some classes of removed Hs")
@@ -2500,12 +2507,13 @@ EXAMPLES:\n\n\
                                  python::init<>())
         .def_readwrite("label", &MolzipParams::label,
                        "Set the atom labelling system to zip together")
-        .def_readwrite("enforceValenceRules", &MolzipParams::enforceValenceRules,
-		       "If true (default) enforce valences after zipping\n\
+        .def_readwrite("enforceValenceRules",
+                       &MolzipParams::enforceValenceRules,
+                       "If true (default) enforce valences after zipping\n\
 Setting this to false allows assembling chemically incorrect fragments.")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
-             "Set the atom symbols used to zip mols together when using AtomType labeling")
-      ;
+             "Set the atom symbols used to zip mols together when using "
+             "AtomType labeling");
 
     docString =
         "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
@@ -2718,6 +2726,21 @@ A note on the flags controlling which atoms/bonds are modified:
     python::def("ConvertGenericQueriesToSubstanceGroups",
                 GenericGroups::convertGenericQueriesToSubstanceGroups,
                 python::arg("mol"), "documentation");
+    python::def(
+        "SetAllowNontetrahedralChirality",
+        Chirality::setAllowNontetrahedralChirality,
+        "toggles recognition of non-tetrahedral chirality from 3D structures");
+    python::def("GetAllowNontetrahedralChirality",
+                Chirality::getAllowNontetrahedralChirality,
+                "returns whether or not recognition of non-tetrahedral "
+                "chirality from 3D structures is enabled");
+    python::def("SetUseLegacyStereoPerception",
+                Chirality::setUseLegacyStereoPerception,
+                "toggles usage of the legacy stereo perception code");
+    python::def("GetUseLegacyStereoPerception",
+                Chirality::getUseLegacyStereoPerception,
+                "returns whether or not the legacy stereo perception code is "
+                "being used");
   }
 };
 }  // namespace RDKit

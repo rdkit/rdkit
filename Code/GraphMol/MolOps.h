@@ -251,6 +251,9 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool updateExplicitCount =
       false; /**< DEPRECATED equivalent of updateExplicitCount */
   bool removeHydrides = true; /**< Removing Hydrides */
+  bool removeNontetrahedralNeighbors =
+      false; /**<  remove Hs which are bonded to atoms with specified
+                non-tetrahedral stereochemistry */
 };
 //! \overload
 /// modifies the molecule in place
