@@ -1941,6 +1941,10 @@ to the terminal dummy atoms.\n\
     docString =
         "Sets the chiral tags on a molecule's atoms based on\n\
   a 3D conformation.\n\
+  NOTE that this does not check to see if atoms are chiral centers (i.e. all\n\
+  substituents are different), it merely sets the chiral type flags based on the\n\
+  coordinates and atom ordering. Use \c AssignStereochemistryFrom3D() if you\n\
+  want chiral flags only on actual stereocenters.\n\
 \n\
   ARGUMENTS:\n\
 \n\

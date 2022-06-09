@@ -1381,7 +1381,7 @@ TEST_CASE("CML writer", "[CML][writer]") {
     mol->addConformer(conf);
 
     mol->updatePropertyCache();
-    MolOps::assignChiralTypesFrom3D(*mol);
+    MolOps::assignStereochemistryFrom3D(*mol);
 
     const std::string cmlblock = MolToCMLBlock(*mol);
     const std::string cmlblock_expected =

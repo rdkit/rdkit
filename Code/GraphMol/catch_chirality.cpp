@@ -2414,7 +2414,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("non-tetrahedral") {
     auto m = R"CTAB(
-  Mrv2108 05252216313D          
+  Mrv2108 05252216313D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2573,4 +2573,40 @@ M  END
     bnds = pickBondsToWedge(cp);
     CHECK(bnds.at(3) == 3);
   }
+}
+
+TEST_CASE("github 5307: AssignAtomChiralTagsFromStructure ignores Hydrogens") {
+  std::string mb = R"CTAB(
+     RDKit          3D
+     
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.022097 0.003215 0.016520 0
+M  V30 2 H -0.669009 0.889360 -0.100909 0
+M  V30 3 H -0.377788 -0.857752 -0.588296 0
+M  V30 4 H 0.096421 -0.315125 1.063781 0
+M  V30 5 H 0.972473 0.280302 -0.391096 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  bool sanitize = true;
+  bool removeHs = false;
+  std::unique_ptr<RWMol> m{MolBlockToMol(mb, sanitize, removeHs)};
+  REQUIRE(m);
+  MolOps::assignChiralTypesFrom3D(*m);
+  CHECK(m->getAtomWithIdx(0)->getChiralTag() !=
+        Atom::ChiralType::CHI_UNSPECIFIED);
+  // assignStereochemistryFrom3D() actually checks:
+  MolOps::assignStereochemistryFrom3D(*m);
+  CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+        Atom::ChiralType::CHI_UNSPECIFIED);
 }
