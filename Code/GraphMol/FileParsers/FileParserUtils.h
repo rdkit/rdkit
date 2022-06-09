@@ -28,17 +28,12 @@ namespace FileParserUtils {
 template <typename T>
 T stripSpacesAndCast(std::string_view input, bool acceptSpaces = false) {
   auto trimmed = input;
-  unsigned idx = 0u;
-  while (input[idx] == ' ') {
-    ++idx;
-  }
-  trimmed.remove_prefix(idx);
-  if (!trimmed.empty()) {
-    idx = trimmed.size() - 1;
-    while (trimmed[idx] == ' ') {
-      --idx;
-    }
-    trimmed.remove_suffix(trimmed.size() - idx - 1);
+  auto start = trimmed.find_first_not_of(' ');
+  if (start != std::string_view::npos) {
+    auto end = trimmed.find_last_not_of(' ') + 1;
+    trimmed = trimmed.substr(start, end - start);
+  } else {
+    trimmed = "";
   }
   if (acceptSpaces && trimmed == "") {
     return 0;

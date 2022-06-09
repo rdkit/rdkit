@@ -37,7 +37,7 @@ std::string strip(const std::string &orig) {
 std::string_view strip(const std::string_view orig) {
   std::string_view res = orig;
   res.remove_prefix(std::min(res.find_first_not_of(" \t\r\n"), res.size()));
-  res.remove_suffix(std::min(res.find_first_not_of(" \t\r\n"), res.size()));
+  res.remove_suffix(res.size() - res.find_last_not_of(" \t\r\n") - 1);
   return res;
 }
 
