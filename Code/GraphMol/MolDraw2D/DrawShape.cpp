@@ -386,16 +386,24 @@ void DrawShapeDashedWedge::buildLines() {
   e2.normalize();
   // the ACS1996 rules say the dash separation should be 2.5px.  It seems
   // like a good result for all of them.
+  // It appears that this means a 2.5px gap between each line, so we need
+  // to take the line width into account.  Each line that the gap is
+  // between will contribute half a width.
+  double dashSep = 2.5 + lineWidth_;
   double centralLen = (at1Cds_ - midend).length();
-  unsigned int nDashes = rdcast<unsigned int>(std::round(centralLen / 2.5));
+  unsigned int nDashes = rdcast<unsigned int>(std::round(centralLen / dashSep));
   if (!nDashes) {
     points_.push_back(end1Cds_);
     points_.push_back(end2Cds_);
     lineColours_.push_back(lineColour_);
   } else {
-    double dashSep = centralLen / rdcast<double>(nDashes);
-    std::cout << "nDashes : " << nDashes << "  dashSep = " << dashSep
-              << std::endl;
+    // re-adjust so the last dash is on the end of the wedge.
+    dashSep = centralLen / rdcast<double>(nDashes);
+    // we want the separation down the sides of the triangle, so use
+    // similar triangles to scale.
+    dashSep *= (end1Cds_ - at1Cds_).length() / centralLen;
+    //    std::cout << "nDashes : " << nDashes << "  dashSep = " << dashSep
+    //              << std::endl;
     for (unsigned int i = 1; i < nDashes + 1; ++i) {
       auto e11 = at1Cds_ + e1 * rdcast<double>(i) * dashSep;
       auto e22 = at1Cds_ + e2 * rdcast<double>(i) * dashSep;
@@ -406,8 +414,6 @@ void DrawShapeDashedWedge::buildLines() {
       } else {
         lineColours_.push_back(lineColour_);
       }
-      std::cout << e22.x << ", " << e22.y << " vs " << end2Cds_.x << ", "
-                << end2Cds_.y << std::endl;
     }
   }
 }
@@ -486,9 +492,9 @@ void DrawShapeWavyLine::myDraw(MolDraw2D &drawer) const {
   // use a negative offset because of inverted y coords to make it look the
   // same as it used to.
   std::cout << "DrawshapeWavyLine" << std::endl
-            << points_[0].x << ", " << points_[0].y << " and "
-            << points_[1].x << ", " << points_[1].y << " :: "
-            << (points_[0] - points_[1]).length() << std::endl;
+            << points_[0].x << ", " << points_[0].y << " and " << points_[1].x
+            << ", " << points_[1].y
+            << " :: " << (points_[0] - points_[1]).length() << std::endl;
   int nsegs = int(std::round((points_[0] - points_[1]).length() / 2.0));
   drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, nsegs,
                       -offset_, true);
