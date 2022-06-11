@@ -159,7 +159,7 @@ void DrawTextFT::getStringRects(const std::string &text,
     // reduce the horizontal offset by p_x_min, which is the distance
     // of the start of the glyph from the start of the char box.
     // Otherwise spacing is uneven.
-    extras.push_back(p_advance - p_x_max);
+    extras.push_back(p_advance - p_x_max + 0.5);
     if (!this_x_max) {
       // it was a space, probably, and we want small spaces because screen
       // real estate is limited.
@@ -178,7 +178,7 @@ void DrawTextFT::getStringRects(const std::string &text,
     rects[i]->offset_.y = max_y / 2.0;
     if (i) {
       rects[i]->trans_.x = rects[i - 1]->trans_.x + rects[i - 1]->width_ / 2 +
-                           rects[i]->width_ / 2 + extras[i-1];
+                           rects[i]->width_ / 2 + extras[i - 1];
     }
   }
 
