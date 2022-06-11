@@ -8,6 +8,10 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/Chirality.h>
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #endif
@@ -27,6 +31,12 @@
 #include <limits>
 #include <cmath>
 #include <Numerics/Conrec.h>
+
+namespace RDKit {
+void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
+                              const Conformer *conf, int &dirCode,
+                              bool &reverse);
+}
 
 namespace RDKit {
 namespace MolDraw2DUtils {
@@ -366,7 +376,6 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y += params.extraGridPadding;
     }
     drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
-
   }
 
   size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;
@@ -412,12 +421,16 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
                     const std::vector<int> *highlight_bonds,
                     const std::map<int, DrawColour> *highlight_atom_map,
                     const std::map<int, DrawColour> *highlight_bond_map,
-                    const std::map<int, double> *highlight_radii,
-                    int confId) {
+                    const std::map<int, double> *highlight_radii, int confId) {
   // that's yet another copy, think about removing the need later.
   ROMol mol_cp(mol);
-  setACS1996Options(drawer.drawOptions());
+  std::string mol_name;
+  mol_cp.getProp<std::string>("_Name", mol_name);
+  std::cout << "Drawing " << mol_name << std::endl;
+  double meanBondLen = MolDraw2D_detail::meanBondLength(mol_cp, confId);
+  setACS1996Options(drawer.drawOptions(), meanBondLen);
   useMDLBondWedging(mol_cp);
+  useStrictStereo(mol_cp, confId);
   drawer.drawMolecule(mol_cp, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
@@ -430,8 +443,7 @@ bool drawMolACS1996(const std::string &outfile, const ROMol &mol,
                     const std::vector<int> *highlight_bonds,
                     const std::map<int, DrawColour> *highlight_atom_map,
                     const std::map<int, DrawColour> *highlight_bond_map,
-                    const std::map<int, double> *highlight_radii,
-                    int confId) {
+                    const std::map<int, double> *highlight_radii, int confId) {
   std::string txt;
   auto open_mode = std::ios_base::out;
   if (outfile.substr(outfile.length() - 4) == ".svg") {
@@ -473,7 +485,6 @@ std::string drawMolACS1996SVG(
     const std::map<int, DrawColour> *highlight_atom_map,
     const std::map<int, DrawColour> *highlight_bond_map,
     const std::map<int, double> *highlight_radii, int confId) {
-
   MolDraw2DSVG drawer(-1, -1);
   drawMolACS1996(drawer, mol, legend, highlight_atoms, highlight_bonds,
                  highlight_atom_map, highlight_bond_map, highlight_radii,
@@ -501,48 +512,126 @@ std::string drawMolACS1996Cairo(
 #endif
 
 // ****************************************************************************
-void setACS1996Options(MolDrawOptions &opts) {
-//  opts.addAtomIndices = true;
+void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
+  //  opts.addAtomIndices = true;
+  //  opts.addBondIndices = true;
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
   opts.fixedFontSize = 10;
-  opts.scalingFactor = 14.5;
+  // the guideline is for a bond length of 14.5px, and we set things up
+  // in pixels per Angstrom.
+  opts.scalingFactor = 14.5 / meanBondLen;
   setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
+  std::string fName = getenv("RDBASE");
+  fName += "/Data/Fonts/FreeSans.ttf";
+  opts.fontFile = fName;
 }
 
 // ****************************************************************************
 void useMDLBondWedging(ROMol &mol) {
-//  for (auto a: mol.atoms()) {
-//    std::cout << a->getIdx() << " : " << a->getChiralTag() << " : ";
-//    auto props = a->getPropList(true);
-//    for (auto p: props) {
-//      std::cout << "  " << p;
-//    }
-//    std::cout << std::endl;
-//  }
-//  for (auto b: mol.bonds()) {
-//    std::cout << b->getIdx() << " : " << b->getBeginAtomIdx() << "->"
-//              << b->getEndAtomIdx() << " " << b->getBondType() << " :: ";
-//    auto props = b->getPropList(true);
-//    for (auto p : props) {
-//      std::cout << "  " << p;
-//    }
-//    std::cout << std::endl;
-//  }
-  for (auto b: mol.bonds()) {
+  //  for (auto a : mol.atoms()) {
+  //    std::cout << a->getIdx() << " : " << a->getChiralTag() << " : ";
+  //    auto props = a->getPropList(true);
+  //    for (auto p : props) {
+  //      std::cout << "  " << p;
+  //    }
+  //    std::cout << std::endl;
+  //  }
+  const auto conf = mol.getConformer();
+  //  for (auto b : mol.bonds()) {
+  //    std::cout << b->getIdx() << " : " << b->getBeginAtomIdx() << "->"
+  //              << b->getEndAtomIdx() << " " << b->getBondType() << " : "
+  //              << b->getBondDir() << "(" << Bond::UNSPECIFIED
+  //              << ") : " << b->getStereo() << "(" << Bond::STEREOANY << ") ::
+  //              ";
+  //    auto props = b->getPropList(true);
+  //    for (auto p : props) {
+  //      std::cout << "  " << p;
+  //    }
+  //    std::cout << std::endl;
+  //  }
+  for (auto b : mol.bonds()) {
     if (b->getBondType() == Bond::SINGLE) {
       int explicit_unknown_stereo;
       if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
                                    explicit_unknown_stereo) &&
           explicit_unknown_stereo) {
-        std::cout << "setting " << b->getIdx() << "  " << b->getBeginAtomIdx() << "->"
-                  << b->getEndAtomIdx() << " " << " from " << b->getBondDir()
-                  << " to " << Bond::UNKNOWN << " bcos " << explicit_unknown_stereo << std::endl;
+        //        std::cout << "setting " << b->getIdx() << "  " <<
+        //        b->getBeginAtomIdx()
+        //                  << "->" << b->getEndAtomIdx() << " "
+        //                  << " from " << b->getBondDir() << " to " <<
+        //                  Bond::UNKNOWN
+        //                  << " bcos " << explicit_unknown_stereo << std::endl;
         b->setBondDir(Bond::UNKNOWN);
       }
     }
   }
+  //  std::cout << MolToMolBlock(mol) << std::endl;
 }
 
+// ****************************************************************************
+void useStrictStereo(ROMol &mol, int confId) {
+  std::cout << "useStrictStereo" << std::endl;
+  INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
+  const auto conf = mol.getConformer(confId);
+  for (auto b : mol.bonds()) {
+    //    std::cout << b->getIdx() << " : " << b->getBeginAtomIdx() << "->"
+    //              << b->getEndAtomIdx() << " " << b->getBondType() << " : "
+    //              << std::endl;
+    if (b->getBondType() == Bond::DOUBLE) {
+      int dirCode;
+      bool reverse;
+      RDKit::GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode, reverse);
+      //      std::cout << "double : " << dirCode << std::endl;
+      if (dirCode == 3) {
+        b->setStereo(Bond::STEREOANY);
+      }
+    }
+  }
+  static int noNbrs = 100;
+  auto si = Chirality::findPotentialStereo(mol);
+  if (si.size()) {
+    std::pair<bool, INT_VECT> retVal = countChiralNbours(mol, noNbrs);
+    bool chiNbrs = retVal.first;
+    INT_VECT nChiralNbrs = retVal.second;
+    for (auto i : si) {
+      //      std::cout << i.centeredOn << " : " << i.type << " : " <<
+      //      i.specified
+      //                << std::endl;
+      if (i.type == Chirality::StereoType::Atom_Tetrahedral &&
+          i.specified == Chirality::StereoSpecified::Unspecified) {
+        i.specified = Chirality::StereoSpecified::Unknown;
+        auto atom = mol.getAtomWithIdx(i.centeredOn);
+        //        std::cout << "Current chiral tag : " << atom->getChiralTag()
+        //                  << std::endl;
+        INT_MAP_INT resSoFar;
+        int bndIdx = pickBondToWedge(atom, mol, nChiralNbrs, resSoFar, noNbrs);
+        //        std::cout << "bond to wiggle : " << bndIdx << std::endl;
+        auto bond = mol.getBondWithIdx(bndIdx);
+        bond->setBondDir(Bond::UNKNOWN);
+      }
+    }
+  }
+}
 }  // namespace MolDraw2DUtils
+
+namespace MolDraw2D_detail {
+
+// ****************************************************************************
+double meanBondLength(ROMol &mol, int confId) {
+  double bondLen = 0.0;
+  auto conf = mol.getConformer(confId);
+  for (auto bond : mol.bonds()) {
+    double bl = MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
+                                             bond->getEndAtomIdx());
+    bondLen += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
+                                            bond->getEndAtomIdx());
+  }
+  bondLen /= mol.getNumBonds();
+  std::cout << "Mean bond length : " << bondLen << std::endl;
+  return bondLen;
+}
+
+}  // namespace MolDraw2D_detail
+
 }  // namespace RDKit

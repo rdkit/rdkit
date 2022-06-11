@@ -4468,8 +4468,7 @@ M  END)RXN";
   }
 }
 
-TEST_CASE(
-    "Github 5185 - don't draw atom indices between double bond") {
+TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
   SECTION("basics") {
     auto m1 = "OC(=O)CCCC(=O)O"_smiles;
     REQUIRE(m1);
@@ -4484,19 +4483,20 @@ TEST_CASE(
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      CHECK(text.find("<path class='note' d='M 92.5 130.1")
-            != std::string::npos);
+      CHECK(text.find("<path class='note' d='M 92.5 130.1") !=
+            std::string::npos);
       check_file_hash("testGithub_5185.svg");
 #else
-      CHECK(text.find("<text x='90.4' y='130.3' class='note' ")
-            != std::string::npos);
+      CHECK(text.find("<text x='90.4' y='130.3' class='note' ") !=
+            std::string::npos);
 #endif
     }
   }
 }
 
 TEST_CASE(
-    "Github 5259 - drawReaction should not fail when prepareMolsBeforeDrawing is false") {
+    "Github 5259 - drawReaction should not fail when prepareMolsBeforeDrawing "
+    "is false") {
   SECTION("basics") {
     auto rxn = "[CH3:1][OH:2]>>[CH2:1]=[OH0:2]"_rxnsmarts;
     REQUIRE(rxn);
@@ -4506,8 +4506,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "Github 5269 - bad index positions with highlights") {
+TEST_CASE("Github 5269 - bad index positions with highlights") {
   SECTION("basics") {
     auto m1 = "CC(=O)Oc1c(C(=O)O)cccc1"_smiles;
     auto q1 = "CC(=O)Oc1c(C(=O)O)cccc1"_smarts;
@@ -4517,17 +4516,17 @@ TEST_CASE(
       std::vector<int> hit_atoms;
       std::vector<MatchVectType> hits_vect;
       SubstructMatch(*m1, *q1, hits_vect);
-      for( size_t i = 0 ; i < hits_vect.size() ; ++i ) {
-        for( size_t j = 0 ; j < hits_vect[i].size() ; ++j ) {
+      for (size_t i = 0; i < hits_vect.size(); ++i) {
+        for (size_t j = 0; j < hits_vect[i].size(); ++j) {
           hit_atoms.push_back(hits_vect[i][j].second);
         }
       }
       std::vector<int> hit_bonds;
-      for(int i: hit_atoms) {
-        for(int j: hit_atoms) {
-          if(i > j) {
+      for (int i : hit_atoms) {
+        for (int j : hit_atoms) {
+          if (i > j) {
             Bond *bnd = m1->getBondBetweenAtoms(i, j);
-            if(bnd) {
+            if (bnd) {
               hit_bonds.push_back(bnd->getIdx());
             }
           }
@@ -4591,6 +4590,7 @@ TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
 
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
+#if 0
     auto m1 = R"CTAB(mol1
   ChemDraw05162216032D
 
@@ -4622,14 +4622,12 @@ M  END)CTAB"_ctab;
     bool res1 = MolDraw2DUtils::drawMolACS1996("acs1996_1.svg", *m1, "",
                                                nullptr, nullptr);
     REQUIRE(res1);
-#if 0
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     bool res2 = MolDraw2DUtils::drawMolACS1996("acs1996_1.png", *m1, "r",
                                                nullptr, nullptr);
     REQUIRE(res2);
 #endif
-#endif
-    auto m2 = R"CTAB(
+    auto m2 = R"CTAB(mol2
   ChemDraw06062216302D
 
   0  0  0     0  0              0 V3000
@@ -4671,12 +4669,132 @@ M  END
     bool res3 = MolDraw2DUtils::drawMolACS1996("acs1996_2.svg", *m2, "",
                                                nullptr, nullptr);
     REQUIRE(res3);
-#if 0
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     bool res4 = MolDraw2DUtils::drawMolACS1996("acs1996_2.png", *m2, "",
                                                nullptr, nullptr);
     REQUIRE(res4);
 #endif
+    auto m3 = R"(c1c(nc[nH]1)[C@@H](C)\C=C\C#N)"_smiles;
+    m3->setProp<std::string>("_Name", "mol3");
+    REQUIRE(m3);
+    MolDraw2DUtils::prepareMolForDrawing(*m3);
+    bool res5 = MolDraw2DUtils::drawMolACS1996("acs1996_3.svg", *m3, "",
+                                               nullptr, nullptr);
+    REQUIRE(res5);
+#endif
+    auto m4 = "c1c(nc[nH]1)C(C)C=CC#N"_smiles;
+    m4->setProp<std::string>("_Name", "mol4");
+    REQUIRE(m4);
+    MolDraw2DUtils::prepareMolForDrawing(*m4);
+    bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_4.svg", *m4, "",
+                                               nullptr, nullptr);
+    REQUIRE(res6);
+#if 0
+    {
+      auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
+      m->setProp<std::string>("_Name", "mol5");
+      REQUIRE(m);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_5.svg", *m, "",
+                                                 nullptr, nullptr);
+      REQUIRE(res6);
+    }
+#endif
+    {
+      auto m = "CC(I)CC(Cl)CC(F)C"_smiles;
+      m->setProp<std::string>("_Name", "mol5");
+      REQUIRE(m);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_6.svg", *m, "",
+                                                 nullptr, nullptr);
+      REQUIRE(res6);
+    }
+#if 0
+    {
+      auto m = R"CTAB(
+  ChemDraw06112209342D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 30 33 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.240810 -1.031250 0.000000 0
+M  V30 2 C -2.240810 -0.206250 0.000000 0
+M  V30 3 C -2.955281 0.206250 0.000000 0
+M  V30 4 C -2.955281 1.031250 0.000000 0
+M  V30 5 C -3.669752 1.443750 0.000000 0
+M  V30 6 C -4.384224 1.031250 0.000000 0
+M  V30 7 C -4.384224 0.206250 0.000000 0
+M  V30 8 C -3.669752 -0.206250 0.000000 0
+M  V30 9 Cl -3.669752 -1.031250 0.000000 0
+M  V30 10 F -5.098694 -0.206250 0.000000 0
+M  V30 11 Cl -2.240810 1.443750 0.000000 0
+M  V30 12 O -1.526340 0.206250 0.000000 0
+M  V30 13 C -0.811869 -0.206250 0.000000 0
+M  V30 14 C -0.811869 -1.031250 0.000000 0
+M  V30 15 N -0.097397 -1.443750 0.000000 0
+M  V30 16 C 0.617074 -1.031250 0.000000 0
+M  V30 17 C 0.617074 -0.206250 0.000000 0
+M  V30 18 C -0.097397 0.206250 0.000000 0
+M  V30 19 C 1.331544 0.206250 0.000000 0
+M  V30 20 C 2.085220 -0.129308 0.000000 0
+M  V30 21 N 2.637252 0.483787 0.000000 0
+M  V30 22 N 2.224752 1.198258 0.000000 0
+M  V30 23 C 1.417781 1.026730 0.000000 0
+M  V30 24 C 3.457733 0.397551 0.000000 0
+M  V30 25 C 3.942655 1.064990 0.000000 0
+M  V30 26 C 4.763136 0.978754 0.000000 0
+M  V30 27 N 5.098694 0.225079 0.000000 0
+M  V30 28 C 4.613771 -0.442361 0.000000 0
+M  V30 29 C 3.793290 -0.356124 0.000000 0
+M  V30 30 N -1.526340 -1.443750 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 2 7 8
+M  V30 8 1 3 8
+M  V30 9 1 8 9
+M  V30 10 1 7 10
+M  V30 11 1 4 11
+M  V30 12 1 2 12
+M  V30 13 1 12 13
+M  V30 14 2 13 14
+M  V30 15 1 14 15
+M  V30 16 2 15 16
+M  V30 17 1 16 17
+M  V30 18 2 17 18
+M  V30 19 1 13 18
+M  V30 20 1 17 19
+M  V30 21 2 19 20
+M  V30 22 1 20 21
+M  V30 23 1 21 22
+M  V30 24 2 22 23
+M  V30 25 1 19 23
+M  V30 26 1 21 24
+M  V30 27 1 24 25
+M  V30 28 1 25 26
+M  V30 29 1 26 27
+M  V30 30 1 27 28
+M  V30 31 1 28 29
+M  V30 32 1 24 29
+M  V30 33 1 14 30
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 2)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      bool res = MolDraw2DUtils::drawMolACS1996("acs1996_7.svg", *m, "",
+                                                nullptr, nullptr);
+      REQUIRE(res);
+    }
 #endif
   }
 }

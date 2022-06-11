@@ -51,6 +51,12 @@ RDKIT_FILEPARSERS_EXPORT void addWavyBondsForStereoAny(
 //! picks the bonds which should be wedged
 /// \returns a map from bond idx -> controlling atom idx
 RDKIT_FILEPARSERS_EXPORT INT_MAP_INT pickBondsToWedge(const ROMol &mol);
+RDKIT_FILEPARSERS_EXPORT int pickBondToWedge(const Atom *atom, const ROMol &mol,
+                                             const INT_VECT &nChiralNbrs,
+                                             const INT_MAP_INT &resSoFar,
+                                             int noNbrs);
+RDKIT_FILEPARSERS_EXPORT std::pair<bool, INT_VECT> countChiralNbours(
+    const ROMol &mol, int noNbrs);
 RDKIT_FILEPARSERS_EXPORT void ClearSingleBondDirFlags(ROMol &mol);
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);
