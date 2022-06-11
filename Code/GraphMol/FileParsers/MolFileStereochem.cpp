@@ -35,12 +35,7 @@ void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
 
 void WedgeMolBonds(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf, "no conformer");
-  std::cout << "WedgeMolBonds" << std::endl;
   auto wedgeBonds = pickBondsToWedge(mol);
-  for (auto wb : wedgeBonds) {
-    std::cout << "Bond wedgebonds" << wb.first << " : " << wb.second
-              << std::endl;
-  }
   for (auto bond : mol.bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
       Bond::BondDir dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
@@ -82,7 +77,7 @@ std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
   return std::make_tuple(hasDouble, hasKnownDouble, hasAnyDouble);
 }
 
-std::pair<bool, INT_VECT > countChiralNbours(const ROMol &mol, int noNbrs) {
+std::pair<bool, INT_VECT> countChiralNbours(const ROMol &mol, int noNbrs) {
   // we need ring information; make sure findSSSR has been called before
   // if not call now
   if (!mol.getRingInfo()->isInitialized()) {
@@ -139,14 +134,14 @@ std::pair<bool, INT_VECT > countChiralNbours(const ROMol &mol, int noNbrs) {
       nChiralNbrs[at->getIdx()] -= 1;
     }
   }
-  return std::pair<bool, INT_VECT >(chiNbrs, nChiralNbrs);
+  return std::pair<bool, INT_VECT>(chiNbrs, nChiralNbrs);
 }
 
 // picks a bond for atom that we will wedge when we write the mol file
 // returns idx of that bond.
 int pickBondToWedge(const Atom *atom, const ROMol &mol,
-                    const INT_VECT &nChiralNbrs,
-                    const INT_MAP_INT &resSoFar, int noNbrs) {
+                    const INT_VECT &nChiralNbrs, const INT_MAP_INT &resSoFar,
+                    int noNbrs) {
   // here is what we are going to do
   // - at each chiral center look for a bond that is begins at the atom and
   //   is not yet picked to be wedged for a different chiral center, preferring
@@ -177,9 +172,8 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
       // prefer lower atomic numbers with lower degrees and no specified
       // chirality:
       const Atom *oatom = bond->getOtherAtom(atom);
-      int nbrScore =
-          oatom->getAtomicNum() + 100 * oatom->getDegree() +
-          1000 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
+      int nbrScore = oatom->getAtomicNum() + 100 * oatom->getDegree() +
+                     1000 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
       // prefer neighbors that are nonchiral or have as few chiral neighbors
       // as possible:
       int oIdx = oatom->getIdx();
@@ -214,8 +208,7 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
   // We'll catch that as an error here and hope that it's as unlikely to occur
   // as it seems like it is. (I'm going into this knowing that it's bound to
   // happen; I'll kick myself and do the hard solution at that point.)
-  CHECK_INVARIANT(nbrScores.size(),
-                  "no eligible neighbors for chiral center");
+  CHECK_INVARIANT(nbrScores.size(), "no eligible neighbors for chiral center");
   std::sort(nbrScores.begin(), nbrScores.end(), Rankers::pairLess);
   return nbrScores[0].second;
 }
@@ -228,7 +221,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     indices[i] = i;
   }
   static int noNbrs = 100;
-  std::pair<bool, INT_VECT > retVal = countChiralNbours(mol, noNbrs);
+  std::pair<bool, INT_VECT> retVal = countChiralNbours(mol, noNbrs);
   bool chiNbrs = retVal.first;
   INT_VECT nChiralNbrs = retVal.second;
   if (chiNbrs) {

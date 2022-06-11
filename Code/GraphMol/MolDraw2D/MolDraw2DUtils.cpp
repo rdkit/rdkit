@@ -517,11 +517,12 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   //  opts.addBondIndices = true;
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
-  opts.fixedFontSize = 10;
   // the guideline is for a bond length of 14.5px, and we set things up
   // in pixels per Angstrom.
   opts.scalingFactor = 14.5 / meanBondLen;
   setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
+
+  opts.fixedFontSize = 10;
   std::string fName = getenv("RDBASE");
   fName += "/Data/Fonts/FreeSans.ttf";
   opts.fontFile = fName;
@@ -571,7 +572,7 @@ void useMDLBondWedging(ROMol &mol) {
 
 // ****************************************************************************
 void useStrictStereo(ROMol &mol, int confId) {
-  std::cout << "useStrictStereo" << std::endl;
+  //  std::cout << "useStrictStereo" << std::endl;
   INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
   const auto conf = mol.getConformer(confId);
   for (auto b : mol.bonds()) {
@@ -628,7 +629,6 @@ double meanBondLength(ROMol &mol, int confId) {
                                             bond->getEndAtomIdx());
   }
   bondLen /= mol.getNumBonds();
-  std::cout << "Mean bond length : " << bondLen << std::endl;
   return bondLen;
 }
 

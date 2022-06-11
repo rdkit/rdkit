@@ -420,7 +420,6 @@ void DrawShapeDashedWedge::buildLines() {
 
 // ****************************************************************************
 void DrawShapeDashedWedge::myDraw(MolDraw2D &drawer) const {
-  std::cout << "draw dashed wedge : lineWidth_ = " << lineWidth_ << std::endl;
   drawer.setFillPolys(false);
   drawer.setActiveAtmIdx(atom1_, atom2_);
   drawer.setActiveBndIdx(bond_);
@@ -491,10 +490,6 @@ void DrawShapeWavyLine::myDraw(MolDraw2D &drawer) const {
   // nSegments is 16 by default in MolDraw2D.
   // use a negative offset because of inverted y coords to make it look the
   // same as it used to.
-  std::cout << "DrawshapeWavyLine" << std::endl
-            << points_[0].x << ", " << points_[0].y << " and " << points_[1].x
-            << ", " << points_[1].y
-            << " :: " << (points_[0] - points_[1]).length() << std::endl;
   int nsegs = int(std::round((points_[0] - points_[1]).length() / 2.0));
   drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, nsegs,
                       -offset_, true);

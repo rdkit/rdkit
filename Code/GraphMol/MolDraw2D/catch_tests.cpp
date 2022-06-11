@@ -4590,7 +4590,7 @@ TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
 
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
-#if 0
+#if 1
     auto m1 = R"CTAB(mol1
   ChemDraw05162216032D
 
@@ -4689,7 +4689,7 @@ M  END
     bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_4.svg", *m4, "",
                                                nullptr, nullptr);
     REQUIRE(res6);
-#if 0
+#if 1
     {
       auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
@@ -4709,9 +4709,9 @@ M  END
                                                  nullptr, nullptr);
       REQUIRE(res6);
     }
-#if 0
+#if 1
     {
-      auto m = R"CTAB(
+      auto m = R"CTAB(mol7
   ChemDraw06112209342D
 
   0  0  0     0  0              0 V3000
