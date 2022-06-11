@@ -1753,8 +1753,9 @@ void DrawMol::makeWavyBond(Bond *bond,
   adjustBondEndsForLabels(at1->getIdx(), at2->getIdx(), end1, end2);
   std::vector<Point2D> pts{end1, end2};
   DrawShapeWavyLine *s = new DrawShapeWavyLine(
-      pts, drawOptions_.bondLineWidth, false, cols.first, cols.second, 0.075,
-      at1->getIdx(), at2->getIdx(), bond->getIdx());
+      pts, drawOptions_.bondLineWidth, false, cols.first, cols.second, 0.15,
+      at1->getIdx() + activeAtmIdxOffset_, at2->getIdx() + activeAtmIdxOffset_,
+      bond->getIdx() + activeBndIdxOffset_);
   bonds_.push_back(std::unique_ptr<DrawShape>(s));
 }
 
@@ -2191,7 +2192,6 @@ int DrawMol::doesNoteClash(const DrawAnnotation &annot) const {
 
 // ****************************************************************************
 int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
-
   // see if the rectangle clashes with any of the double bonds themselves,
   // as opposed to the draw shapes derived from them.  Github 5185 shows
   // that sometimes atom indices can just fit between the lines of a
