@@ -523,6 +523,7 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
 
   opts.fixedFontSize = 10;
+  opts.additionalAtomLabelPadding = 0.05;
   std::string fName = getenv("RDBASE");
   fName += "/Data/Fonts/FreeSans.ttf";
   opts.fontFile = fName;
