@@ -1,0 +1,4 @@
+FreeSans is a GNU FreeFont.  See the URL below for license details.
+
+https://www.gnu.org/software/freefont/license.html
+
