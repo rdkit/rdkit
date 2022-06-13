@@ -22,6 +22,15 @@ namespace {
 const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
 const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
 const std::string FUSE_LABEL("CDXML_NODE_ID");
+const std::string CDX_SCHEME_ID("CDX_SCHEME_ID");
+const std::string CDX_STEP_ID("CDX_STEP_ID");
+const std::string CDX_REAGENT_ID("CDX_REAGENT_ID");
+const std::string CDX_PRODUCT_ID("CDX_PRODUCT_ID");
+const std::string CDX_AGENT_ID("CDX_AGENT_ID");
+const std::string CDX_ATOM_POS("CDX_ATOM_POS");
+const std::string CDX_ATOM_ID("CDX_ATOM_ID");
+const std::string CDX_BOND_ID("CDX_BOND_ID");
+const std::string CDX_BOND_ORDERING("DXML_BOND_ORDERING");
 
 struct BondInfo {
     int bond_id;
@@ -170,14 +179,14 @@ void parse_fragment(RWMol &mol,
           rd_atom->setProp<int>("MergeParent", mergeparent);
       }
       if(has_atom_stereo) {
-          rd_atom->setProp<std::vector<int>>("CDXML_BOND_ORDERING", bond_ordering);
+          rd_atom->setProp<std::vector<int>>(CDX_BOND_ORDERING, bond_ordering);
       }
       
       if(ids.find(atom_id) != ids.end()) {
           // error fail processing
       }
-      rd_atom->setProp<std::vector<double>>("CDX_ATOM_POS", atom_coords);
-      rd_atom->setProp<unsigned int>("CDX_ATOM_IDX", atom_id);
+      rd_atom->setProp<std::vector<double>>(CDX_ATOM_POS, atom_coords);
+      rd_atom->setProp<unsigned int>(CDX_ATOM_ID, atom_id);
       ids[atom_id] = rd_atom;
       const bool updateLabels=true;
       const bool takeOwnership=true;
@@ -260,8 +269,8 @@ void set_reaction_data(std::string type,
             continue;
         }
         auto &mol = mols[iter->second];
-        mol->setProp("CDX_SCHEME_IDX", scheme.scheme_id);
-        mol->setProp("CDX_STEP_IDX", scheme.step_id);
+        mol->setProp(CDX_SCHEME_ID, scheme.scheme_id);
+        mol->setProp(CDX_STEP_ID, scheme.step_id);
         mol->setProp(prop, reagent_idx++);
     }
 }
@@ -309,7 +318,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                           Conformer *conf = new Conformer(res->getNumAtoms());
                             conf->set3D(false);
                           for(auto &atm: res->atoms()) {
-                              const std::vector<double> coord =  atm->getProp<std::vector<double>>("CDX_ATOM_POS");
+                              const std::vector<double> coord =  atm->getProp<std::vector<double>>(CDX_ATOM_POS);
                           
                                 RDGeom::Point3D p;
                                 if(coord.size() == 2) {
@@ -376,7 +385,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
               auto idx = mol->getProp<unsigned int>(CDXML_FRAG_ID);
               fragments[idx] = mol_idx++;
               for(auto &atom:mol->atoms()) {
-                  unsigned int idx = atom->getProp<unsigned int>("CDX_ATOM_IDX");
+                  unsigned int idx = atom->getProp<unsigned int>(CDX_ATOM_ID);
                   atoms[idx] = atom;
               }
           }
@@ -384,13 +393,13 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
           for(auto &scheme:schemes) {
               // Set the molecule properties
               set_reaction_data("ReactionStepReactants",
-                                "CDX_REAGENT_IDX",
+                                CDX_REAGENT_ID,
                                 scheme,
                                 scheme.ReactionStepReactants,
                                 fragments,
                                 mols);
               set_reaction_data("ReactionStepProducts",
-                                "CDX_PRODUCT_IDX",
+                                CDX_PRODUCT_ID,
                                 scheme,
                                 scheme.ReactionStepProducts,
                                 fragments,
@@ -400,7 +409,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                          scheme.ReactionStepObjectsBelowArrow.begin(),
                          scheme.ReactionStepObjectsBelowArrow.end());
               set_reaction_data("ReactionStepAgents",
-                                "CDX_AGENTS_IDX",
+                                CDX_AGENT_ID,
                                 scheme,
                                 agents,
                                 fragments,
