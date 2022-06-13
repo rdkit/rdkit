@@ -40,7 +40,8 @@ tests = [("python", "UnitTestChem.py", {}), ("python", "UnitTestChemv2.py", {}),
            'dir': 'Features'
          }), ("python", "test_list.py", {
            'dir': 'MolStandardize'
-         })]
+         }), 
+         ("python", "UnitTestRegistrationHash.py", {})]
 
 # only attempt the MolKey tests if we have the pre-reqs:
 try:
