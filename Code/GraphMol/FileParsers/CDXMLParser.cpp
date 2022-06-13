@@ -44,6 +44,7 @@ struct SchemeInfo {
     std::vector<unsigned int> ReactionStepReactants;
     std::vector<unsigned int> ReactionStepObjectsAboveArrow;
     std::vector<unsigned int> ReactionStepObjectsBelowArrow;
+    std::vector<unsigned int> ReactionStepAtomMap;
 };
 
 unsigned int get_fuse_label(Atom*atm) {
@@ -176,6 +177,7 @@ void parse_fragment(RWMol &mol,
           // error fail processing
       }
       rd_atom->setProp<std::vector<double>>("CDX_ATOM_POS", atom_coords);
+      rd_atom->setProp<unsigned int>("CDX_ATOM_IDX", atom_id);
       ids[atom_id] = rd_atom;
       const bool updateLabels=true;
       const bool takeOwnership=true;
@@ -187,6 +189,7 @@ void parse_fragment(RWMol &mol,
               if(fragment.first == "fragment") {
                   parse_fragment(mol, fragment.second, ids, atom_id);
                   mol.setProp<bool>(NEEDS_FUSE, true);
+                  mol.setProp<unsigned int>(CDXML_FRAG_ID, frag_id);
               }
           }
       }
@@ -237,6 +240,31 @@ void parse_fragment(RWMol &mol,
       bond_ids[bond_idx] = bnd;
   }
 }
+
+void set_reaction_data(std::string type,
+                       std::string prop,
+                       SchemeInfo &scheme,
+                       const std::vector<unsigned int> &frag_ids,
+                       const std::map<unsigned int, size_t> &fragments,
+                       const std::vector<std::unique_ptr<RWMol>> &mols) {
+    unsigned int reagent_idx = 0;
+    for(auto idx : frag_ids) {
+        auto iter = fragments.find(idx);
+        if (iter == fragments.end()) {
+            BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id <<
+            " " << type << " fragment " << idx << " not found in document." << std::endl;
+            continue;
+        }
+        if(iter->second >= mols.size() ) {
+            // shouldn't get here
+            continue;
+        }
+        auto &mol = mols[iter->second];
+        mol->setProp("CDX_SCHEME_IDX", scheme.scheme_id);
+        mol->setProp("CDX_STEP_IDX", scheme.step_id);
+        mol->setProp(prop, reagent_idx++);
+    }
+}
 } // namepspace
 
 std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
@@ -272,6 +300,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                           if(mol->hasProp(NEEDS_FUSE)) {
                               mol->clearProp(NEEDS_FUSE);
                               auto fused = molzip(*mol, molzip_params);
+                              fused->setProp<unsigned int>(CDXML_FRAG_ID, frag_id);
                               mols.emplace_back(dynamic_cast<RWMol*>(fused.release()));
                           } else {
                               mols.push_back(std::move(mol));
@@ -324,12 +353,78 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
                                           scheme.ReactionStepObjectsAboveArrow = to_vec<unsigned int>(attrib.second.data());
                                       } else if (attrib.first == "ReactionStepObjectsBelowArrow") {
                                           scheme.ReactionStepObjectsBelowArrow = to_vec<unsigned int>(attrib.second.data());
+                                      }  else if (attrib.first == "ReactionStepAtomMap") {
+                                          scheme.ReactionStepAtomMap = to_vec<unsigned int>(attrib.second.data());
                                       }
                                   }
                                   schemes.push_back(std::move(scheme));
                               }
                           }
                       }
+                  }
+              }
+          }
+      }
+      // Apply schemes
+      if(schemes.size()) {
+          std::map<unsigned int, size_t> fragments;
+          std::map<unsigned int, size_t> agents;
+          std::map<unsigned int, size_t> products;
+          std::map<unsigned int, Atom*> atoms;
+          size_t mol_idx=0;
+          for(auto &mol:mols) {
+              auto idx = mol->getProp<unsigned int>(CDXML_FRAG_ID);
+              fragments[idx] = mol_idx++;
+              for(auto &atom:mol->atoms()) {
+                  unsigned int idx = atom->getProp<unsigned int>("CDX_ATOM_IDX");
+                  atoms[idx] = atom;
+              }
+          }
+    
+          for(auto &scheme:schemes) {
+              // Set the molecule properties
+              set_reaction_data("ReactionStepReactants",
+                                "CDX_REAGENT_IDX",
+                                scheme,
+                                scheme.ReactionStepReactants,
+                                fragments,
+                                mols);
+              set_reaction_data("ReactionStepProducts",
+                                "CDX_PRODUCT_IDX",
+                                scheme,
+                                scheme.ReactionStepProducts,
+                                fragments,
+                                mols);
+              auto agents = scheme.ReactionStepObjectsAboveArrow;
+              agents.insert(agents.end(),
+                         scheme.ReactionStepObjectsBelowArrow.begin(),
+                         scheme.ReactionStepObjectsBelowArrow.end());
+              set_reaction_data("ReactionStepAgents",
+                                "CDX_AGENTS_IDX",
+                                scheme,
+                                agents,
+                                fragments,
+                                mols);
+              // Set the Atom Maps
+              int sz = scheme.ReactionStepAtomMap.size();
+              if(sz%2 == 1) {
+                  BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap has odd number of entries, skipping." << std::endl;
+                  continue;
+              }
+              assert (sz%2 == 0);
+              for(int i=0; i<sz/2; ++i) {
+                  unsigned int idx1 = scheme.ReactionStepAtomMap[i*2];
+                  unsigned int idx2 = scheme.ReactionStepAtomMap[i*2 + 1];
+                  if( atoms.find(idx1) != atoms.end() ) {
+                      atoms[idx1]->setAtomMapNum(i+1);
+                  } else {
+                      BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap cannot find atom with node id " << idx1 << std::endl;
+                  }
+                  if( atoms.find(idx2) != atoms.end() ) {
+                      atoms[idx2]->setAtomMapNum(i+1);
+                  } else {
+                      // XXX log error
+                      BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap cannot find atom with node id " << idx2 << std::endl;
                   }
               }
           }
