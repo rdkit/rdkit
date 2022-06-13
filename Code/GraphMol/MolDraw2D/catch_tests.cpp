@@ -4627,6 +4627,8 @@ M  END)CTAB"_ctab;
                                                nullptr, nullptr);
     REQUIRE(res2);
 #endif
+#endif
+#if 1
     auto m2 = R"CTAB(mol2
   ChemDraw06062216302D
 
@@ -4674,6 +4676,8 @@ M  END
                                                nullptr, nullptr);
     REQUIRE(res4);
 #endif
+#endif
+#if 1
     auto m3 = R"(c1c(nc[nH]1)[C@@H](C)\C=C\C#N)"_smiles;
     m3->setProp<std::string>("_Name", "mol3");
     REQUIRE(m3);
@@ -4682,6 +4686,7 @@ M  END
                                                nullptr, nullptr);
     REQUIRE(res5);
 #endif
+#if 1
     auto m4 = "c1c(nc[nH]1)C(C)C=CC#N"_smiles;
     m4->setProp<std::string>("_Name", "mol4");
     REQUIRE(m4);
@@ -4689,9 +4694,10 @@ M  END
     bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_4.svg", *m4, "",
                                                nullptr, nullptr);
     REQUIRE(res6);
+#endif
 #if 1
     {
-      auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
+      auto m = "C[C@H](I)CC(Cl)C[C@@H](F)CC=C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
       REQUIRE(m);
       MolDraw2DUtils::prepareMolForDrawing(*m);
@@ -4700,6 +4706,7 @@ M  END
       REQUIRE(res6);
     }
 #endif
+#if 1
     {
       auto m = "CC(I)CC(Cl)CC(F)C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
@@ -4709,6 +4716,7 @@ M  END
                                                  nullptr, nullptr);
       REQUIRE(res6);
     }
+#endif
 #if 1
     {
       auto m = R"CTAB(mol7

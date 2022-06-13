@@ -172,10 +172,8 @@ class DrawMol {
   void makeAtomCircleHighlights();
   void makeAtomEllipseHighlights(double lineWidth);
   void makeBondHighlightLines(double lineWidth);
-  void calcAnnotationPosition(const Atom *atom,
-                              DrawAnnotation &annot) const;
-  void calcAnnotationPosition(const Bond *bond,
-                              DrawAnnotation &annot) const;
+  void calcAnnotationPosition(const Atom *atom, DrawAnnotation &annot) const;
+  void calcAnnotationPosition(const Bond *bond, DrawAnnotation &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
   void calcMolNotePosition(const std::vector<Point2D> atCds,
                            DrawAnnotation &annot) const;
@@ -221,6 +219,11 @@ class DrawMol {
   Point2D transformPoint(const Point2D &pt, const Point2D *trans = nullptr,
                          Point2D *scale = nullptr,
                          const Point2D *toCentre = nullptr) const;
+  void bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
+                      Point2D &l2f) const;
+  void calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
+                           Point2D &l1f, Point2D &l2s, Point2D &l2f) const;
+  Point2D doubleBondEnd(int at1, int at2, int at3, double offset) const;
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -283,17 +286,12 @@ int getHighlightBondWidth(
     const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers);
 
-void calcDoubleBondLines(const ROMol &mol, double offset, const Bond &bond,
-                         const std::vector<Point2D> &at_cds, Point2D &l1s,
-                         Point2D &l1f, Point2D &l2s, Point2D &l2f);
 void calcTripleBondLines(double offset, const Bond &bond,
                          const std::vector<Point2D> &at_cds, Point2D &l1s,
                          Point2D &l1f, Point2D &l2s, Point2D &l2f);
 Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
                                const Point2D &cds3);
-Point2D bondInsideRing(const ROMol &mol, const Bond &bond, const Point2D &cds1,
-                       const Point2D &cds2, const std::vector<Point2D> &at_cds);
 Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
                              const std::vector<Point2D> &at_cds);
 // return a point that is end1 moved so as not to clash with any of the
