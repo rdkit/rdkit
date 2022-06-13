@@ -109,5 +109,5 @@ rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp
            LINK_LIBRARIES FileParsers )
 
-rdkit_catch_test(cdxmlParserCatchTest cdxml_parser_catch.cpp catch_main.cpp
+rdkit_catch_test(cdxmlParserCatchTest cdxml_parser_catch.cpp
            LINK_LIBRARIES FileParsers )
