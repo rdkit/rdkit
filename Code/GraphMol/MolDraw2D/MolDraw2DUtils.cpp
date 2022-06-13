@@ -513,17 +513,19 @@ std::string drawMolACS1996Cairo(
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
-  //  opts.addAtomIndices = true;
+  opts.addAtomIndices = true;
   //  opts.addBondIndices = true;
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
-  // the guideline is for a bond length of 14.5px, and we set things up
+  // the guideline is for a bond length of 14.4px, and we set things up
   // in pixels per Angstrom.
-  opts.scalingFactor = 14.5 / meanBondLen;
+  opts.scalingFactor = 14.4 / meanBondLen;
+  opts.multipleBondOffset = 0.09 * meanBondLen;
+  std::cout << "mbo : " << opts.multipleBondOffset << std::endl;
   setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
 
   opts.fixedFontSize = 10;
-  opts.additionalAtomLabelPadding = 0.05;
+  opts.additionalAtomLabelPadding = 0.066;
   std::string fName = getenv("RDBASE");
   fName += "/Data/Fonts/FreeSans.ttf";
   opts.fontFile = fName;
@@ -622,14 +624,16 @@ namespace MolDraw2D_detail {
 // ****************************************************************************
 double meanBondLength(ROMol &mol, int confId) {
   double bondLen = 0.0;
-  auto conf = mol.getConformer(confId);
-  for (auto bond : mol.bonds()) {
-    double bl = MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
-                                             bond->getEndAtomIdx());
-    bondLen += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
-                                            bond->getEndAtomIdx());
+  if (mol.getNumBonds()) {
+    auto conf = mol.getConformer(confId);
+    for (auto bond : mol.bonds()) {
+      double bl = MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
+                                               bond->getEndAtomIdx());
+      bondLen += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
+                                              bond->getEndAtomIdx());
+    }
+    bondLen /= mol.getNumBonds();
   }
-  bondLen /= mol.getNumBonds();
   return bondLen;
 }
 
