@@ -66,6 +66,7 @@ yysmarts_error( const char *input,
   int                      moli;
   RDKit::QueryAtom * atom;
   RDKit::QueryBond * bond;
+  RDKit::Atom::ChiralType chiraltype;
   int                      ival;
 }
 
@@ -79,12 +80,12 @@ yysmarts_error( const char *input,
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN
 %token RANGE_OPEN_TOKEN RANGE_CLOSE_TOKEN
 %token HASH_TOKEN MINUS_TOKEN PLUS_TOKEN
-%token CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN BEGIN_RECURSE END_RECURSE
 %token COLON_TOKEN UNDERSCORE_TOKEN
 %token <bond> BOND_TOKEN
+%token <chiraltype> CHI_CLASS_TOKEN 
 %type <moli>  mol branch
 %type <atom> atomd simple_atom hydrogen_atom
 %type <atom> atom_expr point_query atom_query recursive_query possible_range_query
@@ -593,6 +594,20 @@ atom_query:	simple_atom
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
   newQ->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+  $$=newQ;
+}
+| CHI_CLASS_TOKEN {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomNullQuery());
+  newQ->setChiralTag($1);
+  newQ->setProp(common_properties::_chiralPermutation,0);
+  $$=newQ;
+}
+| CHI_CLASS_TOKEN number {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomNullQuery());
+  newQ->setChiralTag($1);
+  newQ->setProp(common_properties::_chiralPermutation,$2);
   $$=newQ;
 }
 | HYB_TOKEN

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2021 Greg Landrum and Rational Discovery LLC
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -136,11 +136,48 @@ void setHybridization(ROMol &mol) {
   for (auto atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
       atom->setHybridization(Atom::UNSPECIFIED);
-    } else if (atom->getAtomicNum() >= 89) {
-      // don't bother with the actinides and beyond
-      atom->setHybridization(Atom::S);
     } else {
-      auto norbs = numBondsPlusLonePairs(atom);
+      // if the stereo spec matches the coordination number, this is easy
+      switch (atom->getChiralTag()) {
+        case Atom::ChiralType::CHI_TETRAHEDRAL:
+        case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
+        case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
+          if (atom->getTotalDegree() == 4) {
+            atom->setHybridization(Atom::HybridizationType::SP3);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_SQUAREPLANAR:
+          if (atom->getTotalDegree() <= 4 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP2D);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+          if (atom->getTotalDegree() <= 5 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP3D);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_OCTAHEDRAL:
+          if (atom->getTotalDegree() <= 6 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP3D2);
+            continue;
+          }
+          break;
+        default:
+          break;
+      }
+      // otherwise we have to do some work
+      int norbs;
+      // try to be smart for early elements, but for later
+      // ones just use the degree
+      // FIX: we should probably also be using the degree for metals
+      if (atom->getAtomicNum() < 89) {
+        norbs = numBondsPlusLonePairs(atom);
+      } else {
+        norbs = atom->getTotalDegree();
+      }
       switch (norbs) {
         case 0:
           // This occurs for things like Na+
@@ -165,7 +202,8 @@ void setHybridization(ROMol &mol) {
           //   has norbs = 4, and a conjugated bond, but clearly should
           //   not be SP2)
           // This is Issue276
-          if (atom->getDegree() > 3 || !MolOps::atomHasConjugatedBond(atom)) {
+          if (atom->getTotalDegree() > 3 ||
+              !MolOps::atomHasConjugatedBond(atom)) {
             atom->setHybridization(Atom::SP3);
           } else {
             atom->setHybridization(Atom::SP2);

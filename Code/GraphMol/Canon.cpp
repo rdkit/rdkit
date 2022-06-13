@@ -9,6 +9,8 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/Chirality.h>
+
 #include <GraphMol/SmilesParse/SmilesParseOps.h>
 #include <GraphMol/RDKitQueries.h>
 #include <RDGeneral/Exceptions.h>
@@ -1072,13 +1074,13 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   // collect some information about traversal order on chiral atoms
   boost::dynamic_bitset<> numSwapsChiralAtoms(nAtoms);
+  std::vector<int> atomPermutationIndices(nAtoms, 0);
   if (doIsomericSmiles) {
     for (const auto atom : mol.atoms()) {
       if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
         // check if all of this atom's bonds are in play
-        for (const auto &bndItr :
-             boost::make_iterator_range(mol.getAtomBonds(atom))) {
-          if (bondsInPlay && !(*bondsInPlay)[mol[bndItr]->getIdx()]) {
+        for (const auto bnd : mol.atomBonds(atom)) {
+          if (bondsInPlay && !(*bondsInPlay)[bnd->getIdx()]) {
             atom->setProp(common_properties::_brokenChirality, true);
             break;
           }
@@ -1087,27 +1089,39 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           continue;
         }
         const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
+        int perm = 0;
+        if (Chirality::hasNonTetrahedralStereo(atom)) {
+          atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
+        }
 
         // Check if the atom can be chiral, and if chirality needs inversion
         if (trueOrder.size() >= 3) {
-          int nSwaps;
+          int nSwaps = 0;
           // We have to make sure that trueOrder contains all the
-          // bonds, even if they won't be written to the SMARTS
+          // bonds, even if they won't be written to the SMILES
           if (trueOrder.size() < atom->getDegree()) {
             INT_LIST tOrder = trueOrder;
-            for (const auto &bndItr :
-                 boost::make_iterator_range(mol.getAtomBonds(atom))) {
-              int bndIdx = mol[bndItr]->getIdx();
+            for (const auto bnd : mol.atomBonds(atom)) {
+              int bndIdx = bnd->getIdx();
               if (std::find(trueOrder.begin(), trueOrder.end(), bndIdx) ==
                   trueOrder.end()) {
                 tOrder.push_back(bndIdx);
                 break;
               }
             }
-            nSwaps = atom->getPerturbationOrder(tOrder);
+            if (!perm) {
+              nSwaps = atom->getPerturbationOrder(tOrder);
+            } else {
+              perm = Chirality::getChiralPermutation(atom, tOrder);
+            }
           } else {
-            nSwaps = atom->getPerturbationOrder(trueOrder);
+            if (!perm) {
+              nSwaps = atom->getPerturbationOrder(trueOrder);
+            } else {
+              perm = Chirality::getChiralPermutation(atom, trueOrder);
+            }
           }
+          // FIX: handle this case for non-tet stereo too
           if (chiralAtomNeedsTagInversion(
                   mol, atom,
                   molStack.begin()->obj.atom->getIdx() == atom->getIdx(),
@@ -1124,6 +1138,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           if (nSwaps % 2) {
             numSwapsChiralAtoms.set(atom->getIdx());
           }
+          atomPermutationIndices[atom->getIdx()] = perm;
         }
       }
     }
@@ -1212,15 +1227,15 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
             }
           }
         } else {
-          if (msI.obj.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+          if (msI.obj.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+              msI.obj.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
             if ((numSwapsChiralAtoms[msI.obj.atom->getIdx()])) {
               msI.obj.atom->invertChirality();
             }
-          } else if (msI.obj.atom->getChiralTag() ==
-                     Atom::CHI_TETRAHEDRAL_CCW) {
-            if ((numSwapsChiralAtoms[msI.obj.atom->getIdx()])) {
-              msI.obj.atom->invertChirality();
-            }
+          } else if (atomPermutationIndices[msI.obj.atom->getIdx()]) {
+            msI.obj.atom->setProp(
+                common_properties::_chiralPermutation,
+                atomPermutationIndices[msI.obj.atom->getIdx()]);
           }
         }
       }

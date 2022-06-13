@@ -8,8 +8,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do
-                           // this in one cpp file
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and  Rational Discovery LLC
+//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -112,6 +112,15 @@ void testPass() {
     "[#6]",        // feature borrowed from SMARTS
     "[12#6]",
     "C$C",  // quadruple bonds
+    // extended chirality
+    "C[Fe@TH](O)(Cl)F",
+    "C[Fe@TH1](O)(Cl)F",
+    "C[Fe@SP](O)(Cl)F",
+    "C[Fe@SP1](O)(Cl)F",
+    "C[Fe@TB](O)(Cl)(Br)F",
+    "C[Fe@TB10](O)(Cl)(Br)F",
+    "C[Fe@OH](O)(Cl)(Br)(N)F",
+    "C[Fe@OH20](O)(Cl)(Br)(N)F",
     "EOS"
   };
   while (smis[i] != "EOS") {
@@ -161,7 +170,14 @@ void testFail() {
       "C+0",  // part of sf.net issue 2525792
       "C1CC1",       "[H2H]",    "C1CC1",
       "[HH2]",       "C1CC1",    "[555555555555555555C]",
-      "C1CC1",       "EOS"};
+      "C1CC1",             //
+      "[Fe@TD]",     "C",  //
+      "[Fe@TH3]",    "C",  //
+      "[Fe@SP4]",    "C",  //
+      "[Fe@AL3]",    "C",  //
+      "[Fe@TB21]",   "C",  //
+      "[Fe@OH31]",   "C",  //
+      "EOS"};
 
   // turn off the error log temporarily:
   while (smis[i] != "EOS") {

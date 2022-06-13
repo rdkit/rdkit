@@ -95,7 +95,7 @@ endif(RDK_BUILD_FREETYPE_SUPPORT)
 rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
   MolDraw2D )
 
-rdkit_catch_test(moldraw2DTestCatch ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES
+rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
   MolDraw2D CIPLabeler )
 
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES

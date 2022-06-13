@@ -18,6 +18,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
+#include <GraphMol/Chirality.h>
 #include <cmath>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Rings.h>
@@ -37,6 +38,209 @@ namespace RDDepict {
 bool preferCoordGen = false;
 
 namespace DepictorLocal {
+
+constexpr auto ISQRT2 = 0.707107;
+constexpr auto SQRT3_2 = 0.866025;
+
+std::vector<const RDKit::Atom *> getRankedAtomNeighbors(
+    const RDKit::ROMol &mol, const RDKit::Atom *atom,
+    const std::vector<int> &atomRanks) {
+  std::vector<const RDKit::Atom *> nbrs;
+  for (auto nbr : mol.atomNeighbors(atom)) {
+    nbrs.push_back(nbr);
+  }
+  std::sort(nbrs.begin(), nbrs.end(),
+            [&atomRanks](const auto e1, const auto e2) {
+              return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
+            });
+  return nbrs;
+}
+
+void embedSquarePlanar(const RDKit::ROMol &mol, const RDKit::Atom *atom,
+                       std::list<EmbeddedFrag> &efrags,
+                       const std::vector<int> &atomRanks) {
+  static const RDGeom::Point2D idealPoints[] = {
+      RDGeom::Point2D(ISQRT2 * BOND_LEN, ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(ISQRT2 * BOND_LEN, -ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(-ISQRT2 * BOND_LEN, -ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(-ISQRT2 * BOND_LEN, ISQRT2 * BOND_LEN),
+  };
+  PRECONDITION(atom, "bad atom");
+  if (atom->getChiralTag() != RDKit::Atom::ChiralType::CHI_SQUAREPLANAR) {
+    return;
+  }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
+  RDGeom::INT_POINT2D_MAP coordMap;
+  coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
+  coordMap[nbrs[0]->getIdx()] = idealPoints[0];
+  bool q2Full = false;
+  for (const auto nbr : nbrs) {
+    if (nbr == nbrs.front()) {
+      continue;
+    }
+    auto angle =
+        RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs.front(), nbr);
+    if (fabs(angle - 180) < 0.1) {
+      coordMap[nbr->getIdx()] = idealPoints[2];
+    } else {
+      if (!q2Full) {
+        coordMap[nbr->getIdx()] = idealPoints[1];
+        q2Full = true;
+      } else {
+        coordMap[nbr->getIdx()] = idealPoints[3];
+      }
+    }
+  }
+  efrags.emplace_back(&mol, coordMap);
+}
+
+void embedTBP(const RDKit::ROMol &mol, const RDKit::Atom *atom,
+              std::list<EmbeddedFrag> &efrags,
+              const std::vector<int> &atomRanks) {
+  static const RDGeom::Point2D idealPoints[] = {
+      RDGeom::Point2D(0, BOND_LEN),                        // axial
+      RDGeom::Point2D(0, -BOND_LEN),                       // axial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN, BOND_LEN / 2),  // equatorial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN,
+                      -BOND_LEN / 2),  // equatorial
+      RDGeom::Point2D(BOND_LEN, 0),    // equatorial
+  };
+  PRECONDITION(atom, "bad atom");
+  if (atom->getChiralTag() !=
+      RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL) {
+    return;
+  }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
+  RDGeom::INT_POINT2D_MAP coordMap;
+  coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
+  const RDKit::Atom *axial1 =
+      RDKit::Chirality::getTrigonalBipyramidalAxialAtom(atom);
+  const RDKit::Atom *axial2 =
+      RDKit::Chirality::getTrigonalBipyramidalAxialAtom(atom, -1);
+  if (axial1) {
+    coordMap[axial1->getIdx()] = idealPoints[0];
+  }
+  if (axial2) {
+    coordMap[axial2->getIdx()] = idealPoints[1];
+  }
+  unsigned whichEq = 2;
+  for (const auto nbr : nbrs) {
+    if (nbr != axial1 && nbr != axial2) {
+      coordMap[nbr->getIdx()] = idealPoints[whichEq++];
+    }
+  }
+  efrags.emplace_back(&mol, coordMap);
+}
+
+void embedOctahedral(const RDKit::ROMol &mol, const RDKit::Atom *atom,
+                     std::list<EmbeddedFrag> &efrags,
+                     const std::vector<int> &atomRanks) {
+  static const RDGeom::Point2D idealPoints[] = {
+      RDGeom::Point2D(0, BOND_LEN),                         // axial
+      RDGeom::Point2D(0, -BOND_LEN),                        // axial
+      RDGeom::Point2D(SQRT3_2 * BOND_LEN, BOND_LEN / 2),    // equatorial
+      RDGeom::Point2D(SQRT3_2 * BOND_LEN, -BOND_LEN / 2),   // equatorial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN, -BOND_LEN / 2),  // equatorial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN, BOND_LEN / 2),   // equatorial
+  };
+  PRECONDITION(atom, "bad atom");
+  if (atom->getChiralTag() != RDKit::Atom::ChiralType::CHI_OCTAHEDRAL) {
+    return;
+  }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
+  RDGeom::INT_POINT2D_MAP coordMap;
+  coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
+  const RDKit::Atom *axial1 = nullptr;
+  const RDKit::Atom *axial2 = nullptr;
+  for (auto i = 0u; i < nbrs.size(); ++i) {
+    bool all90 = true;
+    for (auto j = i + 1; j < nbrs.size(); ++j) {
+      if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs[i],
+                                                             nbrs[j]) -
+               180) < 0.1) {
+        axial1 = nbrs[i];
+        axial2 = nbrs[j];
+        all90 = false;
+        break;
+      } else if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(
+                          atom, nbrs[i], nbrs[j]) -
+                      90) > 0.1) {
+        all90 = false;
+      }
+    }
+    if (all90) {
+      axial1 = nbrs[i];
+    }
+    if (axial1) {
+      break;
+    }
+  }
+  if (axial1) {
+    coordMap[axial1->getIdx()] = idealPoints[0];
+  }
+  if (axial2) {
+    coordMap[axial2->getIdx()] = idealPoints[1];
+  }
+  const RDKit::Atom *refEqAtom1 = nullptr;
+  const RDKit::Atom *refEqAtom2 = nullptr;
+  for (const auto nbr : nbrs) {
+    if (nbr != axial1 && nbr != axial2) {
+      if (!refEqAtom1) {
+        refEqAtom1 = nbr;
+        coordMap[nbr->getIdx()] = idealPoints[2];
+        refEqAtom2 = RDKit::Chirality::getChiralAcrossAtom(atom, nbr);
+        if (refEqAtom2) {
+          coordMap[refEqAtom2->getIdx()] = idealPoints[4];
+        }
+      } else {
+        if (nbr == refEqAtom2 || nbr == refEqAtom1) {
+          continue;
+        }
+        coordMap[nbr->getIdx()] = idealPoints[3];
+        const auto acrossAtom2 =
+            RDKit::Chirality::getChiralAcrossAtom(atom, nbr);
+        if (acrossAtom2) {
+          coordMap[acrossAtom2->getIdx()] = idealPoints[5];
+        }
+        break;
+      }
+    }
+  }
+  efrags.emplace_back(&mol, coordMap);
+}
+
+void embedNontetrahedralStereo(const RDKit::ROMol &mol,
+                               std::list<EmbeddedFrag> &efrags,
+                               const std::vector<int> &atomRanks) {
+  boost::dynamic_bitset<> consider(mol.getNumAtoms());
+  for (const auto atm : mol.atoms()) {
+    if (RDKit::Chirality::hasNonTetrahedralStereo(atm)) {
+      consider[atm->getIdx()] = 1;
+    }
+  }
+  if (consider.empty()) {
+    return;
+  }
+  for (const auto atm : mol.atoms()) {
+    if (!consider[atm->getIdx()]) {
+      continue;
+    }
+    switch (atm->getChiralTag()) {
+      case RDKit::Atom::ChiralType::CHI_SQUAREPLANAR:
+        embedSquarePlanar(mol, atm, efrags, atomRanks);
+        break;
+      case RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+        embedTBP(mol, atm, efrags, atomRanks);
+        break;
+      case RDKit::Atom::ChiralType::CHI_OCTAHEDRAL:
+        embedOctahedral(mol, atm, efrags, atomRanks);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 // arings: indices of atoms in rings
 void embedFusedSystems(const RDKit::ROMol &mol,
                        const RDKit::VECT_INT_VECT &arings,
@@ -184,7 +388,7 @@ double copySign(double to, double from, double tol) {
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
                           std::list<EmbeddedFrag> &efrags) {
-  RDKit::INT_VECT atomRanks;
+  std::vector<int> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     atomRanks[i] = getAtomDepictRank(mol.getAtomWithIdx(i));
@@ -213,6 +417,10 @@ void computeInitialCoords(RDKit::ROMol &mol,
     // first deal with the fused rings
     DepictorLocal::embedFusedSystems(mol, arings, efrags);
   }
+
+  // do non-tetrahedral stereo
+  DepictorLocal::embedNontetrahedralStereo(mol, efrags, atomRanks);
+
   // deal with any cis/trans systems
   DepictorLocal::embedCisTransSystems(mol, efrags);
   // now get the atoms that are not yet embedded in either a cis/trans system

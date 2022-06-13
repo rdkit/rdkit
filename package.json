@@ -5,7 +5,7 @@
   "main": "Code/MinimalLib/dist/RDKit_minimal.js",
   "scripts": {
     "build": "bash Code/MinimalLib/scripts/build_rdkitjs.sh",
-    "prepublish": "bash Code/MinimalLib/scripts/npm_prepublish.sh",
+    "prepublishOnly": "bash Code/MinimalLib/scripts/npm_prepublish.sh",
     "postpublish": "bash Code/MinimalLib/scripts/npm_postpublish.sh",
     "resetVersion": "jq '.version = \"PLACEHOLDER\"' package.json > temp && mv temp package.json",
     "test": "echo \"Tests are run during the docker build. See https://github.com/rdkit/rdkit/blob/master/Code/MinimalLib/docker/Dockerfile .\" && exit 1"

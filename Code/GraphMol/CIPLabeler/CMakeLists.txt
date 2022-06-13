@@ -28,7 +28,7 @@ rdkit_headers(CIPLabeler.h
               TooManyNodesException.h
               DEST CIPLabeler)
 
-rdkit_catch_test(testCIPLabeler catch_tests.cpp ../catch_main.cpp
+rdkit_catch_test(testCIPLabeler catch_tests.cpp 
                  CIPMol.cpp CIPLabeler.cpp
                  Mancude.cpp Digraph.cpp Node.cpp Edge.cpp Sort.cpp
                  ${configs_src} ${rules_src}

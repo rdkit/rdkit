@@ -9,6 +9,10 @@
 //
 
 #include "catch.hpp"
+#ifdef RDK_THREADSAFE_SSS
+#include <future>
+#include <thread>
+#endif
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -1426,6 +1430,26 @@ TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
   }
 }
 
+TEST_CASE("non-tetrahedral chirality") {
+  SECTION("allowed values") {
+    {
+      auto m = "C[Fe@SP3](Cl)(F)N"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      CHECK(m->getAtomWithIdx(1)->getProp<unsigned int>(
+                common_properties::_chiralPermutation) == 3);
+    }
+    {
+      auto m = "C[Fe@SP3](Cl)(F)N"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      CHECK(m->getAtomWithIdx(1)->getProp<unsigned int>(
+                common_properties::_chiralPermutation) == 3);
+    }
+  }
+}
 TEST_CASE(
     "Github #4503: MolFromSmiles and MolFromSmarts incorrectly accepting input "
     "with spaces") {
@@ -1917,5 +1941,36 @@ TEST_CASE("Pol and Mod atoms in CXSMILES", "[cxsmiles]") {
     CHECK(val == "Mod");
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "*CC |$Mod_p;;$|");
+  }
+}
+
+TEST_CASE("empty atom label block", "[cxsmiles]") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  MJ201100                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.0491    1.5839    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7635    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0491   -0.0661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3346    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3798    1.5839    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    0.3798   -0.0661    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  1  0  0  2  0
+  5  8  1  0  0  2  0
+M  RGP  2   7   1   8   2
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    m->clearConformers();
+    auto smi = MolToCXSmiles(*m);
+    CHECK(smi.find("$") == std::string::npos);
   }
 }

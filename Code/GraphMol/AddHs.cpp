@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,6 +12,7 @@
 #include "QueryAtom.h"
 #include "QueryOps.h"
 #include "MonomerInfo.h"
+#include "Chirality.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 #include <boost/algorithm/string/classification.hpp>
@@ -754,6 +755,106 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
   mol.removeAtom(atom);
 }
 
+bool shouldRemoveH(const RWMol &mol, const Atom *atom,
+                   const RemoveHsParameters &ps) {
+  if (atom->getAtomicNum() != 1) {
+    return false;
+  }
+  if (!ps.removeWithQuery && atom->hasQuery()) {
+    return false;
+  }
+  if (!ps.removeDegreeZero && !atom->getDegree()) {
+    if (ps.showWarnings) {
+      BOOST_LOG(rdWarningLog)
+          << "WARNING: not removing hydrogen atom without neighbors"
+          << std::endl;
+    }
+    return false;
+  }
+  if (!ps.removeHigherDegrees && atom->getDegree() > 1) {
+    return false;
+  }
+  if (!ps.removeIsotopes && !ps.removeAndTrackIsotopes && atom->getIsotope()) {
+    return false;
+  }
+  if (!ps.removeNonimplicit && !atom->hasProp(common_properties::isImplicit)) {
+    return false;
+  }
+  if (!ps.removeMapped && atom->getAtomMapNum()) {
+    return false;
+  }
+  if (!ps.removeInSGroups) {
+    for (const auto &sg : getSubstanceGroups(mol)) {
+      if (sg.includesAtom(atom->getIdx())) {
+        return false;
+      }
+    }
+  }
+  if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
+    return false;
+  }
+  bool removeIt = true;
+  if (atom->getDegree() &&
+      (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
+       !ps.removeOnlyHNeighbors || !ps.removeNontetrahedralNeighbors ||
+       !ps.removeWithWedgedBond)) {
+    bool onlyHNeighbors = true;
+    for (const auto nbr : mol.atomNeighbors(atom)) {
+      // is it a dummy?
+      if (!ps.removeDummyNeighbors && nbr->getAtomicNum() < 1) {
+        if (ps.showWarnings) {
+          BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
+                                     "with dummy atom neighbors"
+                                  << std::endl;
+        }
+        return false;
+      }
+      // does it have non-tetrahedral stereo:
+      if (!ps.removeNontetrahedralNeighbors &&
+          Chirality::hasNonTetrahedralStereo(nbr)) {
+        if (ps.showWarnings) {
+          BOOST_LOG(rdWarningLog)
+              << "WARNING: not removing hydrogen atom "
+                 "with neighbor that has non-tetrahedral stereochemistry"
+              << std::endl;
+        }
+        return false;
+      }
+      if (!ps.removeOnlyHNeighbors && nbr->getAtomicNum() != 1) {
+        onlyHNeighbors = false;
+      }
+      if (!ps.removeWithWedgedBond) {
+        const auto bnd = mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx());
+        if (bnd->getBondDir() == Bond::BEGINDASH ||
+            bnd->getBondDir() == Bond::BEGINWEDGE) {
+          if (ps.showWarnings) {
+            BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
+                                       "with wedged bond"
+                                    << std::endl;
+          }
+          return false;
+        }
+      }
+      // Check to see if the neighbor has a double bond and we're the only
+      // neighbor at this end.  This was part of github #1810
+      if (!ps.removeDefiningBondStereo && nbr->getDegree() == 2) {
+        for (const auto bnd : mol.atomBonds(nbr)) {
+          if (bnd->getBondType() == Bond::DOUBLE &&
+              (bnd->getStereo() > Bond::STEREOANY ||
+               mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
+                       ->getBondDir() > Bond::NONE)) {
+            return false;
+          }
+        }
+      }
+    }
+    if (removeIt && (!ps.removeOnlyHNeighbors && onlyHNeighbors)) {
+      return false;
+    }
+  }
+  return removeIt;
+}
+
 }  // end of anonymous namespace
 
 void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
@@ -785,105 +886,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
   for (auto atom : mol.atoms()) {
-    if (atom->getAtomicNum() != 1) {
-      continue;
-    }
-    if (!ps.removeWithQuery && atom->hasQuery()) {
-      continue;
-    }
-    if (!ps.removeDegreeZero && !atom->getDegree()) {
-      if (ps.showWarnings) {
-        BOOST_LOG(rdWarningLog)
-            << "WARNING: not removing hydrogen atom without neighbors"
-            << std::endl;
-      }
-      continue;
-    }
-    if (!ps.removeHigherDegrees && atom->getDegree() > 1) {
-      continue;
-    }
-    if (!ps.removeIsotopes && !ps.removeAndTrackIsotopes &&
-        atom->getIsotope()) {
-      continue;
-    }
-    if (!ps.removeNonimplicit &&
-        !atom->hasProp(common_properties::isImplicit)) {
-      continue;
-    }
-    if (!ps.removeMapped && atom->getAtomMapNum()) {
-      continue;
-    }
-    if (!ps.removeInSGroups) {
-      bool skipIt = false;
-      for (const auto &sg : getSubstanceGroups(mol)) {
-        if (sg.includesAtom(atom->getIdx())) {
-          skipIt = true;
-          break;
-        }
-      }
-      if (skipIt) {
-        continue;
-      }
-    }
-    if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
-      continue;
-    }
-    bool removeIt = true;
-    if (atom->getDegree() &&
-        (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
-         !ps.removeOnlyHNeighbors || !ps.removeWithWedgedBond)) {
-      bool onlyHNeighbors = true;
-      ROMol::ADJ_ITER begin, end;
-      boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-      while (begin != end && removeIt) {
-        auto nbr = mol.getAtomWithIdx(*begin);
-        // is it a dummy?
-        if (!ps.removeDummyNeighbors && nbr->getAtomicNum() < 1) {
-          removeIt = false;
-          if (ps.showWarnings) {
-            BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
-                                       "with dummy atom neighbors"
-                                    << std::endl;
-          }
-        }
-        if (!ps.removeOnlyHNeighbors && nbr->getAtomicNum() != 1) {
-          onlyHNeighbors = false;
-        }
-        if (!ps.removeWithWedgedBond) {
-          const auto bnd =
-              mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx());
-          if (bnd->getBondDir() == Bond::BEGINDASH ||
-              bnd->getBondDir() == Bond::BEGINWEDGE) {
-            removeIt = false;
-            if (ps.showWarnings) {
-              BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
-                                         "with wedged bond"
-                                      << std::endl;
-            }
-          }
-        }
-        // Check to see if the neighbor has a double bond and we're the only
-        // neighbor at this end.  This was part of github #1810
-        if (!ps.removeDefiningBondStereo && nbr->getDegree() == 2) {
-          for (const auto &nbri :
-               boost::make_iterator_range(mol.getAtomBonds(nbr))) {
-            const Bond *bnd = mol[nbri];
-            if (bnd->getBondType() == Bond::DOUBLE &&
-                (bnd->getStereo() > Bond::STEREOANY ||
-                 mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
-                         ->getBondDir() > Bond::NONE)) {
-              removeIt = false;
-              break;
-            }
-          }
-        }
-        ++begin;
-      }
-      if (removeIt && (!ps.removeOnlyHNeighbors && onlyHNeighbors)) {
-        removeIt = false;
-      }
-    }
-    if (removeIt) {
+    if (shouldRemoveH(mol, atom, ps)) {
       atomsToRemove.set(atom->getIdx());
     }
   }  // end of the loop over atoms
@@ -948,6 +951,7 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   ps.removeInSGroups = true;
   ps.showWarnings = false;
   ps.removeHydrides = true;
+  ps.removeNontetrahedralNeighbors = true;
   removeHs(mol, ps, sanitize);
 };
 ROMol *removeAllHs(const ROMol &mol, bool sanitize) {

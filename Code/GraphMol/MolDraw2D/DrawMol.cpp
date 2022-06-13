@@ -1747,10 +1747,13 @@ void DrawMol::makeWavyBond(Bond *bond,
   auto at1 = bond->getBeginAtom();
   auto at2 = bond->getEndAtom();
   Point2D end1, end2;
+  double offset = 0.05;
   adjustBondEndsForLabels(at1->getIdx(), at2->getIdx(), end1, end2);
   std::vector<Point2D> pts{end1, end2};
-  DrawShapeWavyLine *s = new DrawShapeWavyLine(pts, drawOptions_.bondLineWidth,
-                                               false, cols.first, cols.second);
+  DrawShapeWavyLine *s = new DrawShapeWavyLine(
+      pts, drawOptions_.bondLineWidth, false, cols.first, cols.second, offset,
+      at1->getIdx() + activeAtmIdxOffset_, at2->getIdx() + activeAtmIdxOffset_,
+      bond->getIdx() + activeBndIdxOffset_);
   bonds_.push_back(std::unique_ptr<DrawShape>(s));
 }
 
@@ -2192,6 +2195,8 @@ int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
   // as opposed to the draw shapes derived from them.  Github 5185 shows
   // that sometimes atom indices can just fit between the lines of a
   // double bond.
+  // Also, no longer check if it clashes with highlights.  This frequently
+  // results in bad pictures and things look ok on top of highlights.
   for (auto bond : drawMol_->bonds()) {
     if (bond->getBondType() == Bond::DOUBLE) {
       auto at1 = bond->getBeginAtomIdx();
@@ -2214,11 +2219,6 @@ int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
   for (const auto &a : annotations_) {
     if (a->doesRectClash(rect, padding)) {
       return 3;
-    }
-  }
-  for (const auto &hl : highlights_) {
-    if (hl->doesRectClash(rect, padding)) {
-      return 4;
     }
   }
   return 0;

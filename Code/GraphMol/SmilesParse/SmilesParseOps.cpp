@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2020 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -360,6 +360,55 @@ void swapBondDirIfNeeded(Bond *bond1, const Bond *bond2) {
   }
 }
 }  // namespace
+
+static const std::map<int, int> permutationLimits = {
+    {RDKit::Atom::ChiralType::CHI_TETRAHEDRAL, 2},
+    {RDKit::Atom::ChiralType::CHI_ALLENE, 2},
+    {RDKit::Atom::ChiralType::CHI_SQUAREPLANAR, 3},
+    {RDKit::Atom::ChiralType::CHI_OCTAHEDRAL, 30},
+    {RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL, 20}};
+
+bool checkChiralPermutation(int chiralTag, int permutation) {
+  if (chiralTag > RDKit::Atom::ChiralType::CHI_OTHER &&
+      permutationLimits.find(chiralTag) != permutationLimits.end() &&
+      (permutation < 0 || permutation > permutationLimits.at(chiralTag))) {
+    return false;
+  }
+  return true;
+}
+
+void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
+  PRECONDITION(mol, "no molecule");
+  for (const auto atom : mol->atoms()) {
+    int permutation;
+    if (atom->getChiralTag() > RDKit::Atom::ChiralType::CHI_OTHER &&
+        permutationLimits.find(atom->getChiralTag()) !=
+            permutationLimits.end() &&
+        atom->getPropIfPresent(common_properties::_chiralPermutation,
+                               permutation)) {
+      if (!checkChiralPermutation(atom->getChiralTag(), permutation)) {
+        std::string error =
+            (boost::format("Invalid chiral specification on atom %d") %
+             atom->getIdx())
+                .str();
+        BOOST_LOG(rdWarningLog) << error << std::endl;
+        if (strict) {
+          throw SmilesParseException(error);
+        }
+      }
+      // directly convert @TH1 -> @ and @TH2 -> @@
+      if (atom->getChiralTag() == RDKit::Atom::ChiralType::CHI_TETRAHEDRAL) {
+        if (permutation == 0 || permutation == 1) {
+          atom->setChiralTag(RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+          atom->clearProp(common_properties::_chiralPermutation);
+        } else if (permutation == 2) {
+          atom->setChiralTag(RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          atom->clearProp(common_properties::_chiralPermutation);
+        }
+      }
+    }
+  }
+}
 
 void CloseMolRings(RWMol *mol, bool toleratePartials) {
   //  Here's what we want to do here:

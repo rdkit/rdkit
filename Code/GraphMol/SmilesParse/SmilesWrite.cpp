@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "SmilesWrite.h"
+#include "SmilesParseOps.h"
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 #include <GraphMol/Canon.h>
@@ -16,6 +17,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/BoostEndInclude.h>
+#include <boost/format.hpp>
 
 #include <sstream>
 #include <map>
@@ -58,6 +60,17 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
        atom->getOwningMol().hasProp(common_properties::_doIsoSmiles))) {
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         !atom->hasProp(common_properties::_brokenChirality)) {
+      int permutation = 0;
+      std::string permText;
+      if (atom->getChiralTag() > Atom::ChiralType::CHI_OTHER &&
+          atom->getPropIfPresent(common_properties::_chiralPermutation,
+                                 permutation) &&
+          !SmilesParseOps::checkChiralPermutation(atom->getChiralTag(),
+                                                  permutation)) {
+        throw ValueErrorException("bad chirality spec");
+      } else if (permutation) {
+        permText = (boost::format("%d") % permutation).str();
+      }
       switch (atom->getChiralTag()) {
         case Atom::CHI_TETRAHEDRAL_CW:
           atString = "@@";
@@ -65,9 +78,19 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
         case Atom::CHI_TETRAHEDRAL_CCW:
           atString = "@";
           break;
+        case Atom::CHI_SQUAREPLANAR:
+          atString = "@SP";
+          break;
+        case Atom::CHI_TRIGONALBIPYRAMIDAL:
+          atString = "@TB";
+          break;
+        case Atom::CHI_OCTAHEDRAL:
+          atString = "@OH";
+          break;
         default:
           break;
       }
+      atString += permText;
     }
   }
 
@@ -798,8 +821,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
       res += ".";
     }
   }
+
   mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
   mol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
+
   return res;
 }  // end of MolFragmentToSmiles()
 

@@ -738,5 +738,10 @@ M  END''')
     with self.assertRaises(ValueError):
       d2d.DrawString("fail", Geometry.Point2D(1, 4), 3)
 
+  def testGithub5298(self):
+    with self.assertRaises(RuntimeError):
+      rdMolDraw2D.PrepareMolForDrawing(None)
+
+
 if __name__ == "__main__":
   unittest.main()

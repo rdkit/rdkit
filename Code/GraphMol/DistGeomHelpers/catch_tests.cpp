@@ -12,10 +12,12 @@
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include "Embedder.h"
+#include "BoundsMatrixBuilder.h"
 #include <tuple>
 
 using namespace RDKit;
@@ -203,4 +205,173 @@ TEST_CASE(
     CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
           Bond::BondStereo::STEREOZ);
   }
+}
+TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
+  SECTION("bounds matrix basics") {
+    {
+      auto m = "Cl[Pt@SP1]([35Cl])([36Cl])[37Cl]"_smiles;
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(0))
+                ->getIdx() == 3);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(2))
+                ->getIdx() == 4);
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
+          Catch::Matchers::WithinAbs(180, 0.001));
+
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+      // std::cerr << *bm << std::endl;
+      CHECK(bm->getLowerBound(0, 3) - bm->getLowerBound(0, 2) > 1.0);
+      CHECK(bm->getUpperBound(0, 3) - bm->getUpperBound(0, 2) > 1.0);
+    }
+
+    {
+      auto m = "Cl[Pt@SP1]([35Cl])[36Cl]"_smiles;
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(0))
+                ->getIdx() == 3);
+      CHECK(!Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                            m->getAtomWithIdx(2)));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(3)),
+          Catch::Matchers::WithinAbs(180, 0.001));
+
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+      // std::cerr << *bm << std::endl;
+      CHECK(bm->getLowerBound(0, 3) - bm->getLowerBound(0, 2) > 1.0);
+      CHECK(bm->getUpperBound(0, 3) - bm->getUpperBound(0, 2) > 1.0);
+    }
+
+    {
+      // note that things aren't quite as nice here since we don't actually have
+      // TBP UFF parameters
+      auto m = "Cl[Pt@TB1]([35Cl])([36Cl])([37Cl])[38Cl]"_smiles;
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(0))
+                ->getIdx() == 5);
+      CHECK(!Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                            m->getAtomWithIdx(2)));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(5)),
+          Catch::Matchers::WithinAbs(180, 0.001));
+
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(3), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(120, 0.001));
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+      CHECK(bm->getLowerBound(0, 5) - bm->getLowerBound(0, 2) > 0.5);
+      CHECK(bm->getUpperBound(0, 5) - bm->getUpperBound(0, 2) > 0.5);
+      CHECK(bm->getLowerBound(0, 5) - bm->getLowerBound(2, 3) > 0.5);
+      CHECK(bm->getUpperBound(0, 5) - bm->getUpperBound(2, 3) > 0.5);
+      CHECK(bm->getLowerBound(2, 3) - bm->getLowerBound(0, 2) > 0.5);
+      CHECK(bm->getUpperBound(2, 3) - bm->getUpperBound(0, 2) > 0.5);
+    }
+    {
+      auto m = "Cl[Th@OH1]([35Cl])([36Cl])([37Cl])([38Cl])[39Cl]"_smiles;
+      REQUIRE(m);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(0))
+                ->getIdx() == 6);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(2))
+                ->getIdx() == 4);
+      CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
+                                           m->getAtomWithIdx(3))
+                ->getIdx() == 5);
+
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(6)),
+          Catch::Matchers::WithinAbs(180, 0.001));
+
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(0), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(4), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(180, 0.001));
+      CHECK_THAT(
+          Chirality::getIdealAngleBetweenLigands(
+              m->getAtomWithIdx(1), m->getAtomWithIdx(3), m->getAtomWithIdx(2)),
+          Catch::Matchers::WithinAbs(90, 0.001));
+
+      DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(m->getNumAtoms())};
+      DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+      DGeomHelpers::setTopolBounds(*m, bm);
+      CHECK(bm->getLowerBound(0, 6) - bm->getLowerBound(0, 2) > 0.5);
+      CHECK(bm->getUpperBound(0, 6) - bm->getUpperBound(0, 3) > 0.5);
+      CHECK(bm->getLowerBound(0, 6) - bm->getLowerBound(2, 3) > 0.5);
+      CHECK(bm->getUpperBound(0, 6) - bm->getUpperBound(2, 4) < 0.01);
+      CHECK(bm->getLowerBound(2, 4) - bm->getLowerBound(2, 3) > 0.5);
+    }
+  }
+#if 1
+  SECTION("Embedding") {
+    {
+      auto m = "Cl[Pt@SP1](<-N)(<-N)[Cl]"_smiles;
+      REQUIRE(m);
+      m->setProp("_Name", "cis platin");
+      MolOps::addHs(*m);
+      CHECK(DGeomHelpers::EmbedMolecule(*m) == 0);
+      auto mb = MolToV3KMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+      MolOps::assignStereochemistryFrom3D(*m2);
+      CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      unsigned int perm = 100;
+      CHECK(m2->getAtomWithIdx(1)->getPropIfPresent(
+          common_properties::_chiralPermutation, perm));
+      CHECK(perm == 1);
+    }
+    {
+      auto m = "Cl[Pt@SP3](<-N)(<-N)[Cl]"_smiles;
+      REQUIRE(m);
+      m->setProp("_Name", "trans platin");
+      MolOps::addHs(*m);
+      CHECK(DGeomHelpers::EmbedMolecule(*m) == 0);
+      auto mb = MolToV3KMolBlock(*m);
+      // std::cerr << mb << std::endl;
+      std::unique_ptr<RWMol> m2(MolBlockToMol(mb));
+      MolOps::assignStereochemistryFrom3D(*m2);
+      CHECK(m2->getAtomWithIdx(1)->getChiralTag() ==
+            Atom::ChiralType::CHI_SQUAREPLANAR);
+      unsigned int perm = 100;
+      CHECK(m2->getAtomWithIdx(1)->getPropIfPresent(
+          common_properties::_chiralPermutation, perm));
+      CHECK(perm == 3);
+    }
+  }
+#endif
 }
