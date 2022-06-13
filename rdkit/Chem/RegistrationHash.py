@@ -105,7 +105,7 @@ class HashScheme(enum.Enum):
     )
 
 
-def get_molhash(all_layers,
+def GetMolHash(all_layers,
                 hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> str:
     """
     Generate a molecular hash using a specified set of layers.
@@ -121,7 +121,7 @@ def get_molhash(all_layers,
     return h.hexdigest()
 
 
-def get_mol_layers(original_molecule: Chem.rdchem.Mol,
+def GetMolLayers(original_molecule: Chem.rdchem.Mol,
                    data_field_names: Optional[Iterable] = None,
                    escape: Optional[str] = None) -> set(HashLayer):
     """
