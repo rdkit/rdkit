@@ -1,5 +1,5 @@
 """
-Tests for rdkit.Chem.MolStandardize.molhash
+Tests for rdkit.Chem.RegistrationHash
 
 Focus is on molecules that have differing SMILES, but
 are actually the same.
@@ -10,8 +10,8 @@ import unittest
 
 from rdkit import Chem
 
-from rdkit.Chem.MolStandardize import molhash
-from rdkit.Chem.MolStandardize.molhash import HashLayer
+from rdkit.Chem import RegistrationHash
+from rdkit.Chem.RegistrationHash import HashLayer
 
 
 def hash_sdf(molblock: str, escape=None, data_field_names=None):
@@ -26,7 +26,7 @@ def hash_sdf(molblock: str, escape=None, data_field_names=None):
     :return: A dict with the hash & the layers
     """
     mol = Chem.MolFromMolBlock(molblock)
-    return molhash.get_mol_layers(mol,
+    return RegistrationHash.GetMolLayers(mol,
                                     escape=escape,
                                     data_field_names=data_field_names)
 
@@ -227,13 +227,13 @@ class CanonicalizerTest(unittest.TestCase):
 
     def test_stereo_imine_hash(self):
         stereo_mol = Chem.MolFromSmiles(r'[H]\N=C\C', sanitize=False)
-        stereo = molhash.get_mol_layers(stereo_mol)
+        stereo = RegistrationHash.GetMolLayers(stereo_mol)
 
         no_stereo_mol = Chem.MolFromSmiles('N=CC', sanitize=False)
-        no_stereo = molhash.get_mol_layers(no_stereo_mol)
+        no_stereo = RegistrationHash.GetMolLayers(no_stereo_mol)
 
         hydrogen_as_is_mol = Chem.MolFromSmiles('N=CC[H]', sanitize=False)
-        hydrogen_as_is = molhash.get_mol_layers(hydrogen_as_is_mol)
+        hydrogen_as_is = RegistrationHash.GetMolLayers(hydrogen_as_is_mol)
 
         self.assertNotEqual(stereo[HashLayer.CANONICAL_SMILES], no_stereo[
             HashLayer.CANONICAL_SMILES])
@@ -258,7 +258,7 @@ class CanonicalizerTest(unittest.TestCase):
     def test_empty(self):
         """Can the hasher operate on an empty molecule without traceback?"""
         mol = Chem.Mol()
-        molhash.get_mol_layers(mol)
+        RegistrationHash.GetMolLayers(mol)
 
 
     def test_enhanced_stereo_canonicalizer(self):
@@ -288,7 +288,7 @@ class CanonicalizerTest(unittest.TestCase):
             csmis = set()
             for smi in mols_smis:
                 mol = Chem.MolFromSmiles(smi)
-                csmi, _ = molhash.canonicalize_stereo_groups(mol)
+                csmi, _ = RegistrationHash._CanonicalizeStereoGroups(mol)
                 csmis.add(csmi)
             self.assertEqual(len(csmis), 1)
 
@@ -301,7 +301,7 @@ class CanonicalizerTest(unittest.TestCase):
         csmis = set()
         for smi in (s1, s3):
             mol = Chem.MolFromSmiles(smi)
-            csmi, _ = molhash.canonicalize_stereo_groups(mol)
+            csmi, _ = RegistrationHash._CanonicalizeStereoGroups(mol)
             csmis.add(csmi)
 
         self.assertEqual(len(csmis), 2)
@@ -313,7 +313,7 @@ class CanonicalizerTest(unittest.TestCase):
         'C[C@@H](O)[C@H](C)CC1C[C@H](C)C[C@H](C)C1 |o1:1,11;o2:3,8|',
         ))
         for cxsmiles in cxsmileses:
-            self.assertEqual(cxsmiles.count(':'), len(molhash.ENHANCED_STEREO_GROUP_REGEX.findall(cxsmiles)))
+            self.assertEqual(cxsmiles.count(':'), len(RegistrationHash.ENHANCED_STEREO_GROUP_REGEX.findall(cxsmiles)))
 
     def test_shared_7984(self):
         smi = '[2H]C([2H])=C([2H])C(=O)O'
@@ -326,8 +326,8 @@ class CanonicalizerTest(unittest.TestCase):
         stereo_mol.GetBondWithIdx(2).SetStereo(Chem.BondStereo.STEREOANY)
         stereo_mol.GetBondWithIdx(2).SetBondDir(Chem.BondDir.EITHERDOUBLE)
 
-        no_stereo_hash = molhash.get_mol_layers(no_stereo_mol)
-        stereo_hash = molhash.get_mol_layers(stereo_mol)
+        no_stereo_hash = RegistrationHash.GetMolLayers(no_stereo_mol)
+        stereo_hash = RegistrationHash.GetMolLayers(stereo_mol)
 
         self.assertEqual(no_stereo_hash, stereo_hash)
 
@@ -335,7 +335,7 @@ class CanonicalizerTest(unittest.TestCase):
     def test_hash_schemes(self):
 
         def get_hash(m, scheme):
-            hash = molhash.get_molhash(molhash.get_mol_layers(m), scheme)
+            hash = RegistrationHash.GetMolHash(RegistrationHash.GetMolLayers(m), scheme)
             self.assertEqual(len(hash), 40)  # SHA-1 hashes are 40 hex digits long
             return hash
 
@@ -346,11 +346,11 @@ class CanonicalizerTest(unittest.TestCase):
             "C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|")
         self.assertEqual(mol1.GetNumAtoms(), 14)
 
-        all_layers_hash = get_hash(mol1, molhash.HashScheme.ALL_LAYERS)
+        all_layers_hash = get_hash(mol1, RegistrationHash.HashScheme.ALL_LAYERS)
         stereo_insensitive_layers_hash = get_hash(
-            mol1, molhash.HashScheme.STEREO_INSENSITIVE_LAYERS)
+            mol1, RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS)
         tautomer_insensitive_layers_hash = get_hash(
-            mol1, molhash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS)
+            mol1, RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS)
 
         self.assertNotEqual(all_layers_hash, tautomer_insensitive_layers_hash)
         self.assertNotEqual(all_layers_hash, stereo_insensitive_layers_hash)
@@ -358,29 +358,29 @@ class CanonicalizerTest(unittest.TestCase):
 
         # Compare stereoisomers
         mol2 = Chem.MolFromSmiles("CC(O)C(C)CC1CC(C)CC(C)C1")
-        self.assertFalse(same_hash(mol1, mol2, molhash.HashScheme.ALL_LAYERS))
-        self.assertTrue(same_hash(mol1, mol2, molhash.HashScheme.STEREO_INSENSITIVE_LAYERS))
+        self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
+        self.assertTrue(same_hash(mol1, mol2, RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
         self.assertFalse(same_hash(mol1, mol2,
-                            molhash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+                            RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
 
         # Compare tautomers
         mol1 = Chem.MolFromSmiles("N1C=NC2=CN=CN=C12")
         mol2 = Chem.MolFromSmiles("N1C=NC2=NC=NC=C12")
-        self.assertFalse(same_hash(mol1, mol2, molhash.HashScheme.ALL_LAYERS))
+        self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
         self.assertFalse(same_hash(mol1, mol2,
-                            molhash.HashScheme.STEREO_INSENSITIVE_LAYERS))
-        self.assertTrue(same_hash(mol1, mol2, molhash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+                            RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
+        self.assertTrue(same_hash(mol1, mol2, RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
 
         # Compare with and without sgroup data we canonicalize on (DAT/SRU/COP)
         smiles = "CNCC(=O)OC"
         mol1 = Chem.MolFromSmiles(smiles)
         mol2 = Chem.MolFromSmiles(f"{smiles} |Sg:n:5,3,4::ht|")
         # ...where all hash schemes account for sgroup data
-        self.assertFalse(same_hash(mol1, mol2, molhash.HashScheme.ALL_LAYERS))
+        self.assertFalse(same_hash(mol1, mol2, RegistrationHash.HashScheme.ALL_LAYERS))
         self.assertFalse(same_hash(mol1, mol2,
-                            molhash.HashScheme.STEREO_INSENSITIVE_LAYERS))
+                            RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
         self.assertFalse(same_hash(mol1, mol2,
-                            molhash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
+                            RegistrationHash.HashScheme.TAUTOMER_INSENSITIVE_LAYERS))
 
     def test_no_stereo_hash(self):
         """
@@ -391,9 +391,9 @@ class CanonicalizerTest(unittest.TestCase):
         mol = Chem.MolFromSmiles(smi)
         self.assertEqual(mol.GetNumAtoms(), 6)
 
-        layers = molhash.get_mol_layers(mol)
+        layers = RegistrationHash.GetMolLayers(mol)
 
-        for layer in molhash.HashScheme.STEREO_INSENSITIVE_LAYERS.value:
+        for layer in RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS.value:
             self.assertNotIn('@', layers[layer])
             self.assertNotIn('/', layers[layer])
             self.assertNotIn('\\', layers[layer])
@@ -404,8 +404,8 @@ class CanonicalizerTest(unittest.TestCase):
         """
         mol_w_atom_map = Chem.MolFromSmiles('Oc1cc([*:1])ccn1')
         mol = Chem.MolFromSmiles('Oc1cc([*])ccn1')
-        atom_map_hash_layers = molhash.get_mol_layers(mol_w_atom_map)
-        hash_layers = molhash.get_mol_layers(mol)
+        atom_map_hash_layers = RegistrationHash.GetMolLayers(mol_w_atom_map)
+        hash_layers = RegistrationHash.GetMolLayers(mol)
         assert atom_map_hash_layers[HashLayer.CANONICAL_SMILES] == hash_layers[
             HashLayer.CANONICAL_SMILES]
 
@@ -414,13 +414,13 @@ class CanonicalizerTest(unittest.TestCase):
             "C[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|")
         no_stereo_mol = Chem.MolFromSmiles("CC(O)C(C)CC1CC(C)CC(C)C1")
 
-        stereo_layers = molhash.get_mol_layers(stereo_mol)
-        stereo_insensitive_layers = molhash.get_mol_layers(no_stereo_mol)
-        self.assertEqual(molhash.get_molhash(
+        stereo_layers = RegistrationHash.GetMolLayers(stereo_mol)
+        stereo_insensitive_layers = RegistrationHash.GetMolLayers(no_stereo_mol)
+        self.assertEqual(RegistrationHash.GetMolHash(
             stereo_layers,
-            molhash.HashScheme.STEREO_INSENSITIVE_LAYERS), molhash.get_molhash(
+            RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS), RegistrationHash.GetMolHash(
                 stereo_insensitive_layers,
-                molhash.HashScheme.STEREO_INSENSITIVE_LAYERS))
+                RegistrationHash.HashScheme.STEREO_INSENSITIVE_LAYERS))
         self.assertEqual(stereo_layers[
             HashLayer.NO_STEREO_SMILES], "CC1CC(C)CC(CC(C)C(C)O)C1")
         self.assertEqual(stereo_insensitive_layers[
@@ -569,8 +569,8 @@ class CanonicalizerTest(unittest.TestCase):
     def test_escape_layer(self):
         mol = Chem.MolFromSmiles("c1ccccc1")
 
-        layers = molhash.get_mol_layers(mol)
-        layers_with_escape = molhash.get_mol_layers(mol, escape="make it unique")
+        layers = RegistrationHash.GetMolLayers(mol)
+        layers_with_escape = RegistrationHash.GetMolLayers(mol, escape="make it unique")
         assert layers_with_escape[HashLayer.ESCAPE] == "make it unique"
         for k in layers_with_escape:
             if k != HashLayer.ESCAPE:
@@ -579,22 +579,22 @@ class CanonicalizerTest(unittest.TestCase):
     def test_shared_8516(self):
         no_explicit_h_mol = Chem.MolFromSmiles('C[C@H](N)C(=O)O', sanitize=False)
         with_explicit_h_mol = Chem.MolFromSmiles('[H][C@@](C)(N)C(=O)O', sanitize=False)
-        no_explicit_h_layers = molhash.get_mol_layers(no_explicit_h_mol)
-        with_explicit_h_layers = molhash.get_mol_layers(with_explicit_h_mol)
+        no_explicit_h_layers = RegistrationHash.GetMolLayers(no_explicit_h_mol)
+        with_explicit_h_layers = RegistrationHash.GetMolLayers(with_explicit_h_mol)
         self.assertEqual(no_explicit_h_layers, with_explicit_h_layers)
 
     def test_mol_layers_distinguish_carbon_isotopes(self):
         benzene = Chem.MolFromSmiles("c1ccccc1")
         benzene_with_c13 = Chem.MolFromSmiles("[13c]1ccccc1")
 
-        layers1 = molhash.get_mol_layers(benzene)
-        layers2 = molhash.get_mol_layers(benzene_with_c13)
+        layers1 = RegistrationHash.GetMolLayers(benzene)
+        layers2 = RegistrationHash.GetMolLayers(benzene_with_c13)
 
         self.assertNotEqual(layers1, layers2)
 
     def test_mol_layers_distinguish_non_tautomeric_hydrogen_isotopes(self):
         benzene_with_deuterium = Chem.MolFromSmiles("[2H]c1ccccc1")
-        layers = molhash.get_mol_layers(benzene_with_deuterium)
+        layers = RegistrationHash.GetMolLayers(benzene_with_deuterium)
 
         expected_layers = {
             HashLayer.CANONICAL_SMILES: "[2H]c1ccccc1",
@@ -612,8 +612,8 @@ class CanonicalizerTest(unittest.TestCase):
         mol1 = Chem.MolFromSmiles("[2H]N1C=NC2=CN=CN=C12")
         mol2 = Chem.MolFromSmiles("[2H]N1C=NC2=NC=NC=C12")
 
-        layers1 = molhash.get_mol_layers(mol1)
-        layers2 = molhash.get_mol_layers(mol2)
+        layers1 = RegistrationHash.GetMolLayers(mol1)
+        layers2 = RegistrationHash.GetMolLayers(mol2)
 
         expected_layers1 = {
             HashLayer.CANONICAL_SMILES: "[2H]n1cnc2cncnc21",
@@ -637,3 +637,5 @@ class CanonicalizerTest(unittest.TestCase):
 
         self.assertEqual(layers1, expected_layers1)
         self.assertEqual(layers2, expected_layers2)
+if __name__ == '__main__':  # pragma: nocover
+  unittest.main()
