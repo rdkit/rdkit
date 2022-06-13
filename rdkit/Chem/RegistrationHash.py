@@ -136,14 +136,14 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol,
     # Work on a copy with all non-stereogenic Hydrogens removed
     mol = _RemoveUnnecessaryHs(original_molecule,
                                  preserve_stereogenic_hs=True)
-    StripAtomMapLabels(mol)
+    _StripAtomMapLabels(mol)
 
     formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
-    cxsmiles, canonical_mol = CanonicalizeStereoGroups(mol)
+    cxsmiles, canonical_mol = _CanonicalizeStereoGroups(mol)
     tautomer_hash = GetStereoTautomerHash(canonical_mol)
 
     canonical_smiles = GetCanonicalSmiles(cxsmiles)
-    sgroup_data = CanonicalizeSGroups(canonical_mol,
+    sgroup_data = _CanonicalizeSGroups(canonical_mol,
                                        dataFieldNames=data_field_names)
 
     no_stereo_tautomer_hash, no_stereo_smiles = GetNoStereoLayers(
@@ -160,7 +160,7 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol,
     }
 
 
-def StripAtomMapLabels(mol):
+def _StripAtomMapLabels(mol):
     for at in mol.GetAtoms():
         if at.HasProp(ATOM_PROP_MAP_NUMBER):
             at.ClearProp(ATOM_PROP_MAP_NUMBER)
@@ -236,7 +236,7 @@ def GetNoStereoLayers(mol):
     return (no_stereo_tautomer_hash, no_stereo_smiles)
 
 
-def GetCanonicalAtomRanksAndBonds(mol, useSmilesOrdering=True):
+def _GetCanonicalAtomRanksAndBonds(mol, useSmilesOrdering=True):
     """
     returns a 2-tuple with:
 
@@ -272,7 +272,7 @@ def GetCanonicalAtomRanksAndBonds(mol, useSmilesOrdering=True):
     return atRanks, bndOrder
 
 
-def CanonicalizeDataSGroup(sg,
+def _CanonicalizeDataSGroup(sg,
                              atRanks,
                              bndOrder,
                              fieldNames=None,
@@ -304,7 +304,7 @@ def CanonicalizeDataSGroup(sg,
     return res
 
 
-def GetCanononicalBondRep(bond, atomRanks):
+def _GetCanononicalBondRep(bond, atomRanks):
     aid1 = bond.GetBeginAtomIdx()
     aid2 = bond.GetEndAtomIdx()
     if atomRanks[aid1] > atomRanks[aid2] or (atomRanks[aid1] == atomRanks[aid2]
@@ -313,7 +313,7 @@ def GetCanononicalBondRep(bond, atomRanks):
     return (aid1, aid2)
 
 
-def CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder):
+def _CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder):
     """
     NOTES: if sortAtomAndBondOrder is true then the atom and bond lists will be sorted.
     This assumes that the ordering of those lists is not important
@@ -339,14 +339,14 @@ def CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder):
         res["PARENT"] = props["PARENT"]
     if "XBHEAD" in props:
         xbhbonds = tuple(
-            GetCanononicalBondRep(mol.GetBondWithIdx(x), atRanks)
+            _GetCanononicalBondRep(mol.GetBondWithIdx(x), atRanks)
             for x in props["XBHEAD"])
         if sortAtomAndBondOrder:
             xbhbonds = tuple(sorted(xbhbonds))
         res["XBHEAD"] = xbhbonds
     if "XBCORR" in props:
         xbcorrbonds = tuple(
-            GetCanononicalBondRep(mol.GetBondWithIdx(x), atRanks)
+            _GetCanononicalBondRep(mol.GetBondWithIdx(x), atRanks)
             for x in props["XBCORR"])
         if len(xbcorrbonds) % 2:
             raise ValueError("XBCORR should have 2N bonds")
@@ -363,7 +363,7 @@ def CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder, sortAtomAndBondOrder):
     return res
 
 
-def CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
+def _CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
     """
     NOTES: if sortAtomAndBondOrder is true then the atom and bond lists will be sorted.
     This assumes that the ordering of those lists is not important
@@ -379,25 +379,25 @@ def CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder):
     return res
 
 
-def CanonicalizeSGroups(mol, dataFieldNames=None, sortAtomAndBondOrder=True):
+def _CanonicalizeSGroups(mol, dataFieldNames=None, sortAtomAndBondOrder=True):
     """
     NOTES: if sortAtomAndBondOrder is true then the atom and bond lists will be sorted.
     This assumes that the ordering of those lists is not important
     """
     dataFieldNames = dataFieldNames or ["Atrop"]
-    atRanks, bndOrder = GetCanonicalAtomRanksAndBonds(mol)
+    atRanks, bndOrder = _GetCanonicalAtomRanksAndBonds(mol)
     res = []
     for sg in Chem.GetMolSubstanceGroups(mol):
         lres = None
         if sg.GetProp("TYPE") == "DAT":
-            lres = CanonicalizeDataSGroup(sg, atRanks, bndOrder,
+            lres = _CanonicalizeDataSGroup(sg, atRanks, bndOrder,
                                             dataFieldNames,
                                             sortAtomAndBondOrder)
         elif sg.GetProp("TYPE") == "SRU":
-            lres = CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder,
+            lres = _CanonicalizeSRUSGroup(mol, sg, atRanks, bndOrder,
                                            sortAtomAndBondOrder)
         elif sg.GetProp("TYPE") == "COP":
-            lres = CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder)
+            lres = _CaonicalizeCOPSGroup(sg, atRanks, sortAtomAndBondOrder)
 
         if lres is not None:
             res.append(lres)
@@ -423,7 +423,7 @@ class EnhancedStereoUpdateMode(enum.Enum):
     REMOVE_WEIGHTS = enum.auto()
 
 
-def UpdateEnhancedStereoGroupWeights(mol, mode):
+def _UpdateEnhancedStereoGroupWeights(mol, mode):
     if mode == EnhancedStereoUpdateMode.ADD_WEIGHTS:
         factor = 1
     elif mode == EnhancedStereoUpdateMode.REMOVE_WEIGHTS:
@@ -451,7 +451,7 @@ def UpdateEnhancedStereoGroupWeights(mol, mode):
     return mol, isotopesModified
 
 
-def CanonicalizeStereoGroups(mol):
+def _CanonicalizeStereoGroups(mol):
     """
     Returns canonical CXSmiles and the corresponding molecule with the
     stereo groups canonicalized.
@@ -474,7 +474,7 @@ def CanonicalizeStereoGroups(mol):
     # groups. These allow the canonicalization to tell the difference between
     # AND and OR (and have the happy side effect of allowing the
     # presence/absence of a stereo group to affect the canonicalization)
-    mol, isotopesModified = UpdateEnhancedStereoGroupWeights(
+    mol, isotopesModified = _UpdateEnhancedStereoGroupWeights(
         mol, EnhancedStereoUpdateMode.ADD_WEIGHTS)
 
     # We're going to be generating canonical SMILES here anyway, so skip the
@@ -496,7 +496,7 @@ def CanonicalizeStereoGroups(mol):
     res_csmi = EXTRA_ISOTOPE_REMOVAL_REGEX.sub(r'[\1@', res_csmi)
 
     if isotopesModified:
-        res, _ = UpdateEnhancedStereoGroupWeights(
+        res, _ = _UpdateEnhancedStereoGroupWeights(
             res, EnhancedStereoUpdateMode.REMOVE_WEIGHTS)
 
     return res_csmi, res
