@@ -230,9 +230,9 @@ void parse_fragment(RWMol &mol,
       Bond * bnd = mol.getBondWithIdx(bond_idx);
       bnd->setProp("CDX_BOND_ID", bond.bond_id);
       if(bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
-          bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
-      } else if (bond.display == "WedgedHashBegin" || bond.display == "WedgedHashEnd") {
           bnd->setBondDir(Bond::BondDir::BEGINDASH);
+      } else if (bond.display == "WedgedHashBegin" || bond.display == "WedgedHashEnd") {
+          bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
       }
       bond_ids[bond_idx] = bnd;
   }
