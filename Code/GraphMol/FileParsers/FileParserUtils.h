@@ -18,6 +18,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include "FileParserUtils.h"
 #include <string_view>
 
 namespace RDKit {
@@ -25,17 +26,23 @@ class RWMol;
 class Conformer;
 
 namespace FileParserUtils {
+RDKIT_FILEPARSERS_EXPORT inline std::string_view strip(
+    std::string_view orig, std::string stripChars = " \t\r\n") {
+  std::string_view res = orig;
+  auto start = res.find_first_not_of(stripChars);
+  if (start != std::string_view::npos) {
+    auto end = res.find_last_not_of(stripChars) + 1;
+    res = res.substr(start, end - start);
+  } else {
+    res = "";
+  }
+  return res;
+}
+
 template <typename T>
 T stripSpacesAndCast(std::string_view input, bool acceptSpaces = false) {
-  auto trimmed = input;
-  auto start = trimmed.find_first_not_of(' ');
-  if (start != std::string_view::npos) {
-    auto end = trimmed.find_last_not_of(' ') + 1;
-    trimmed = trimmed.substr(start, end - start);
-  } else {
-    trimmed = "";
-  }
-  if (acceptSpaces && trimmed == "") {
+  auto trimmed = strip(input, " ");
+  if (acceptSpaces && trimmed.empty()) {
     return 0;
   } else {
     return boost::lexical_cast<T>(trimmed);

@@ -34,12 +34,6 @@ std::string strip(const std::string &orig) {
   res = boost::trim_left_copy_if(res, boost::is_any_of(" \t\r\n"));
   return res;
 }
-std::string_view strip(const std::string_view orig) {
-  std::string_view res = orig;
-  res.remove_prefix(std::min(res.find_first_not_of(" \t\r\n"), res.size()));
-  res.remove_suffix(res.size() - res.find_last_not_of(" \t\r\n") - 1);
-  return res;
-}
 
 ForwardSDMolSupplier::ForwardSDMolSupplier(std::istream *inStream,
                                            bool takeOwnership, bool sanitize,
@@ -80,7 +74,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
   // FIX: report files missing the $$$$ marker
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
          (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
-    tempStr = strip(tempStr);
+    tempStr = FileParserUtils::strip(tempStr);
     if (!tempStr.empty()) {
       if (tempStr[0] == '>') {  // data header line: start of a data item
         // ignore all other crap and seek for for a data label enclosed
@@ -102,7 +96,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           d_line++;
           std::getline(*dp_inStream, inl);
           tempStr = inl;
-          auto stmp = strip(tempStr);
+          auto stmp = FileParserUtils::strip(tempStr);
           while (stmp.length() != 0) {
             d_line++;
             std::getline(*dp_inStream, inl);
@@ -120,7 +114,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           tempStr = inl;
 
           std::string prop = "";
-          auto stmp = strip(tempStr);
+          auto stmp = FileParserUtils::strip(tempStr);
           int nplines = 0;  // number of lines for this property
           while (stmp.length() != 0 || tempStr[0] == ' ' ||
                  tempStr[0] == '\t') {
@@ -140,7 +134,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
             inl.erase();
             std::getline(*dp_inStream, inl);
             tempStr = inl;
-            stmp = strip(tempStr);
+            stmp = FileParserUtils::strip(tempStr);
           }
           mol->setProp(dlabel, prop);
           if (df_processPropertyLists) {

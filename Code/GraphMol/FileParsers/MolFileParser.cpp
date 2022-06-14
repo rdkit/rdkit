@@ -2054,13 +2054,13 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
 
 Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
   bool negate = false;
-  token = strip(token);
+  token = FileParserUtils::strip(token);
   if (token.size() > 3 && (token[0] == 'N' || token[0] == 'n') &&
       (token[1] == 'O' || token[1] == 'o') &&
       (token[2] == 'T' || token[2] == 't')) {
     negate = true;
     token = token.substr(3, token.size() - 3);
-    token = strip(token);
+    token = FileParserUtils::strip(token);
   }
 
   Atom *res = nullptr;
@@ -2079,7 +2079,7 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
     for (std::vector<std::string>::const_iterator stIt = splitToken.begin();
          stIt != splitToken.end(); ++stIt) {
       std::string_view stoken = *stIt;
-      std::string atSymb(strip(stoken));
+      std::string atSymb(FileParserUtils::strip(stoken));
       if (atSymb.empty()) {
         continue;
       }
@@ -2430,7 +2430,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
   for (unsigned int i = 0; i < nAtoms; ++i) {
     inl = getV3000Line(inStream, line);
     tempStr = inl;
-    auto trimmed = strip(tempStr);
+    auto trimmed = FileParserUtils::strip(tempStr);
 
     std::vector<std::string_view> tokens;
     std::vector<std::string_view>::iterator token;
@@ -2541,7 +2541,7 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   for (unsigned int i = 0; i < nBonds; ++i) {
     inl = getV3000Line(inStream, line);
     tempStr = inl;
-    tempStr = strip(tempStr);
+    tempStr = FileParserUtils::strip(tempStr);
     std::vector<std::string_view> splitLine;
     tokenizeV3000Line(tempStr, splitLine);
     if (splitLine.size() < 4) {
