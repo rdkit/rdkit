@@ -1400,7 +1400,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       massDiff = FileParserUtils::toInt(text.substr(34, 2), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "1Cannot convert '" << text.substr(34, 2) << "' to int on line "
+      errout << "Cannot convert '" << text.substr(34, 2) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1411,7 +1411,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       chg = FileParserUtils::toInt(text.substr(36, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "2Cannot convert '" << text.substr(36, 3) << "' to int on line "
+      errout << "Cannot convert '" << text.substr(36, 3) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1422,7 +1422,7 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
       hCount = FileParserUtils::toInt(text.substr(42, 3), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "3Cannot convert '" << text.substr(42, 3) << "' to int on line "
+      errout << "Cannot convert '" << text.substr(42, 3) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
