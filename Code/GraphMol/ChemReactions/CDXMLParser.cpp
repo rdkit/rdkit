@@ -37,9 +37,8 @@ void make_query_atoms(RWMol *mol) {
 }  // namespace
 
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
-std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(std::istream &inStream) {
-  const bool sanitize = false;
-  const bool removeHs = false;
+std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(
+  std::istream &inStream, bool sanitize, bool removeHs) {
   auto mols = CDXMLToMols(inStream, sanitize, removeHs);
   std::vector<std::unique_ptr<ChemicalReaction>> result;
     
@@ -85,19 +84,23 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(std::ist
     updateProductsStereochem(res);
     // RXN-based reactions do not have implicit properties
     res->setImplicitPropertiesFlag(false);
-    unsigned int failed;
-    sanitizeRxn(*res, failed, RxnOps::SANITIZE_ADJUST_REACTANTS, RxnOps::ChemDrawRxnAdjustParams());
-    std::cout << "failed" << failed << std::endl;
+
+    if (!sanitize) { // we still need to fix the reaction for smarts style matching
+      unsigned int failed;
+      sanitizeRxn(*res, failed, RxnOps::SANITIZE_ADJUST_REACTANTS, RxnOps::ChemDrawRxnAdjustParams());
+    }
   }
   return result;
 }
 
-std::vector<std::unique_ptr<ChemicalReaction>> CDXMLBlockToChemicalReactions(const std::string &rxnBlock) {
+std::vector<std::unique_ptr<ChemicalReaction>> CDXMLBlockToChemicalReactions(
+  const std::string &rxnBlock, bool sanitize, bool removeHs) {
   std::istringstream inStream(rxnBlock);
-  return CDXMLToChemicalReactions(inStream);
+  return CDXMLToChemicalReactions(inStream, sanitize, removeHs);
 }
 
-std::vector<std::unique_ptr<ChemicalReaction>> CDXMLFileToChemicalReactions(const std::string &fName) {
+std::vector<std::unique_ptr<ChemicalReaction>> CDXMLFileToChemicalReactions(
+  const std::string &fName, bool sanitize, bool removeHs) {
   std::ifstream inStream(fName.c_str());
   std::vector<std::unique_ptr<ChemicalReaction>> res;;
     
@@ -105,7 +108,7 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLFileToChemicalReactions(cons
     return res;
   }
   if (!inStream.eof()) {
-    return CDXMLToChemicalReactions(inStream);
+    return CDXMLToChemicalReactions(inStream, sanitize, removeHs);
   }
   return res;
 }

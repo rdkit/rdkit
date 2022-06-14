@@ -145,8 +145,9 @@ static RDKit::ChemicalReaction *RxnFromBinary(std::vector<int> pkl){
     return res;
   };
 
-static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLBlockToChemicalReactions(const std::string &block) {
-  auto reactions = RDKit::CDXMLBlockToChemicalReactions(block);
+static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLBlockToChemicalReactions(
+  const std::string &block, bool sanitize=false, bool removeHs=false) {
+  auto reactions = RDKit::CDXMLBlockToChemicalReactions(block, sanitize, removeHs);
   std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
   for(auto &rxn : reactions) {
     result.push_back(std::shared_ptr<RDKit::ChemicalReaction>(rxn.release()));
@@ -154,8 +155,9 @@ static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLBlockToChemicalReacti
   return result;
 }
 
-static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLFileToChemicalReactions(const std::string &filename) {
-  auto reactions = RDKit::CDXMLFileToChemicalReactions(filename);
+static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLFileToChemicalReactions(
+  const std::string &filename, bool sanitize=false, bool removeHs=false) {
+  auto reactions = RDKit::CDXMLFileToChemicalReactions(filename, sanitize, removeHs);
   std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
   for(auto &rxn : reactions) {
     result.push_back(std::shared_ptr<RDKit::ChemicalReaction>(rxn.release()));
