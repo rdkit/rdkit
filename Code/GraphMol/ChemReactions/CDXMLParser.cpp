@@ -86,7 +86,7 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(std::ist
   return result;
 }
 
-std::vector<std::unique_ptr<ChemicalReaction>> CDXMLBlockToChemicalReaction(const std::string &rxnBlock) {
+std::vector<std::unique_ptr<ChemicalReaction>> CDXMLBlockToChemicalReactions(const std::string &rxnBlock) {
   std::istringstream inStream(rxnBlock);
   return CDXMLToChemicalReactions(inStream);
 }

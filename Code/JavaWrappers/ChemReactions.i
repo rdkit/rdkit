@@ -145,4 +145,22 @@ static RDKit::ChemicalReaction *RxnFromBinary(std::vector<int> pkl){
     return res;
   };
 
+static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLBlockToChemicalReactions(const std::string &block) {
+  auto reactions = RDKit::CDXMLBlockToChemicalReactions(block);
+  std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
+  for(auto &rxn : reactions) {
+    result.push_back(std::shared_ptr<RDKit::ChemicalReaction>(rxn.release()));
+  }
+  return result;
+}
+
+static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLFileToChemicalReactions(const std::string &filename) {
+  auto reactions = RDKit::CDXMLFileToChemicalReactions(filename);
+  std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
+  for(auto &rxn : reactions) {
+    result.push_back(std::shared_ptr<RDKit::ChemicalReaction>(rxn.release()));
+  }
+  return result;
+}
+
 }

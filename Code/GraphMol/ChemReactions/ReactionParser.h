@@ -275,13 +275,13 @@ inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmiles(const char *text,
 
 //! Parse a text block in CDXML rxn format into a vector of ChemicalReactions
 RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
-CDXMLBlockToChemicalReactions(const std::string &rxnBlock);
+  CDXMLBlockToChemicalReactions(const std::string &rxnBlock);
 //! Parse a file in CDXML rxn format into a vector of ChemicalReactions
 RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
-CDXMLFileToChemicalReactions(const std::string &fileName);
+  CDXMLFileToChemicalReactions(const std::string &fileName);
 //! Parse a text stream in CDXML rxn format into a vector of ChemicalReactions
 RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
-CDXMLToChemicalReactions(std::istream &rxnStream);
+  CDXMLToChemicalReactions(std::istream &rxnStream);
 
 }  // namespace RDKit
 
