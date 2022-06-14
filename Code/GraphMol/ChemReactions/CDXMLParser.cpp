@@ -15,6 +15,7 @@
 #include <sstream>
 #include <RDGeneral/StreamOps.h>
 #include <RDGeneral/FileParseException.h>
+#include "SanitizeRxn.h"
 
 #include <fstream>
 #include <RDGeneral/BoostStartInclude.h>
@@ -37,7 +38,9 @@ void make_query_atoms(RWMol *mol) {
 
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
 std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(std::istream &inStream) {
-  auto mols = CDXMLToMols(inStream);
+  const bool sanitize = false;
+  const bool removeHs = false;
+  auto mols = CDXMLToMols(inStream, sanitize, removeHs);
   std::vector<std::unique_ptr<ChemicalReaction>> result;
     
   std::map<std::pair<unsigned int, unsigned int>, std::vector<unsigned int>> schemes;
@@ -82,6 +85,9 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(std::ist
     updateProductsStereochem(res);
     // RXN-based reactions do not have implicit properties
     res->setImplicitPropertiesFlag(false);
+    unsigned int failed;
+    sanitizeRxn(*res, failed, RxnOps::SANITIZE_ADJUST_REACTANTS, RxnOps::ChemDrawRxnAdjustParams());
+    std::cout << "failed" << failed << std::endl;
   }
   return result;
 }
