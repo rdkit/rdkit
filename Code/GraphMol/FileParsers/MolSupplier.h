@@ -34,7 +34,6 @@ class Block;
 
 namespace RDKit {
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
-RDKIT_FILEPARSERS_EXPORT std::string_view strip(const std::string_view orig);
 
 /*!
 //
