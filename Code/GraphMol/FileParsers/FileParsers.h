@@ -25,7 +25,6 @@
 namespace RDKit {
 const int MOLFILE_MAXLINE = 256;
 RDKIT_FILEPARSERS_EXPORT std::string strip(const std::string &orig);
-RDKIT_FILEPARSERS_EXPORT std::string_view strip(const std::string_view orig);
 
 class RDKIT_FILEPARSERS_EXPORT MolFileUnhandledFeatureException
     : public std::exception {
