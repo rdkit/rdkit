@@ -13,6 +13,9 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <RDGeneral/BadFileException.h>
+#include <fstream>
+#include <sstream>
 #include "MolFileStereochem.h"
 
 // TODO
@@ -288,8 +291,7 @@ void set_reaction_data(std::string type,
 std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
 			       std::istream &inStream,
 			       bool sanitize,
-			       bool removeHs,
-			       bool strictParsing) {
+			       bool removeHs) {
   
   // populate tree structure pt
   using boost::property_tree::ptree;
@@ -451,6 +453,27 @@ std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
 
   // what do we do with the reaction schemes here???
   return mols;
+}
+
+std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(
+			       const std::string &fileName,
+			       bool sanitize,
+			       bool removeHs) {
+  std::ifstream ifs(fileName);
+  if (!ifs || ifs.bad()) {
+    std::ostringstream errout;
+    errout << "Bad input file " << fileName;
+    throw BadFileException(errout.str());
+  }
+  return CDXMLToMols(ifs, sanitize, removeHs);
+}
+  
+std::vector<std::unique_ptr<RWMol>> CDXMLStringToMols(
+			       const std::string &cdxml,
+			       bool sanitize,
+			       bool removeHs) {
+  std::stringstream iss(cdxml);
+  return CDXMLToMols(iss, sanitize, removeHs);
 }
 
 }

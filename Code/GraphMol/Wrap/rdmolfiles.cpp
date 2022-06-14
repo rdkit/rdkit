@@ -573,6 +573,37 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
   return python::tuple(res);
 }
 
+python::object MolsFromCDXMLFile(const char *filename, bool sanitize, bool removeHs) {
+  std::vector<std::unique_ptr<RWMol>> mols;
+  try {
+    mols = CDXMLFileToMols(filename, sanitize, removeHs);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  python::list res;
+  for (auto &mol : mols) {
+    // take ownership of the data from the unique_ptr
+    ROMOL_SPTR sptr(static_cast<ROMol*>(mol.release()));
+    res.append(sptr);
+  }
+  return python::tuple(res);
+}
+
+python::tuple MolsFromCDXMLString(python::object cdxml, bool sanitize, bool removeHs) {
+  auto mols = CDXMLStringToMols(pyObjectToString(cdxml), sanitize, removeHs);
+  python::list res;
+  for (auto &mol : mols) {
+    // take ownership of the data from the unique_ptr
+    ROMOL_SPTR sptr(static_cast<ROMol*>(mol.release()));
+    res.append(sptr);
+  }
+  return python::tuple(res);
+}
+
 namespace {
 python::dict translateMetadata(
     const std::vector<std::pair<std::string, std::string>> &metadata) {
@@ -1908,7 +1939,13 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("filename"), python::arg("tag") = PNGData::pklTag,
                python::arg("params") = python::object()),
               "returns a tuple of molecules constructed from the PNG file");
-
+  python::def("MolsFromCDXMLFile", MolsFromCDXMLFile,
+	      (python::arg("filename"), python::arg("sanitize")=true, python::arg("removeHs")=true),
+	      "returns a tuple of molecules constructed from a CDXML file");
+  python::def("MolsFromCDXMLString", MolsFromCDXMLString,
+	      (python::arg("cdxml"), python::arg("sanitize")=true, python::arg("removeHs")=true),
+	      "returns a tuple of molecules constructed from a CDXML string");
+  
   docString =
       R"DOC(Adds molecular metadata to PNG data read from a file.
 

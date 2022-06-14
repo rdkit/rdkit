@@ -22,20 +22,46 @@
 #include <boost/shared_ptr.hpp>
 
 namespace RDKit {
-// \brief construct a molecule from an CDXML file
+// \brief construct molecules from a CDXML file
 /*!
- *   \param molBlock - string containing the mol block
+ *   \param inStream - string containing the mol block
  *   \param sanitize - toggles sanitization and stereochemistry
  *                     perception of the molecule
  *   \param removeHs - toggles removal of Hs from the molecule. H removal
  *                     is only done if the molecule is sanitized
- *   \param strictParsing - if set to false, the parser is more lax about
  * correctness of the contents.
  */
 RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
 			       std::istream &inStream,
 			       bool sanitize = true,
-			       bool removeHs = true,
-			       bool strictParsing = true);  
+			       bool removeHs = true);
+// \brief construct molecules from a CDXML file
+/*!
+ *   \param fileName - cdxml fileName
+ *   \param sanitize - toggles sanitization and stereochemistry
+ *                     perception of the molecule
+ *   \param removeHs - toggles removal of Hs from the molecule. H removal
+ *                     is only done if the molecule is sanitized
+ * correctness of the contents.
+ */
+RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(
+			       const std::string &filename,
+			       bool sanitize = true,
+			       bool removeHs = true);
+
+// \brief construct molecules from a CDXML file
+/*!
+ *   \param cdxml - string containing the mol block
+ *   \param sanitize - toggles sanitization and stereochemistry
+ *                     perception of the molecule
+ *   \param removeHs - toggles removal of Hs from the molecule. H removal
+ *                     is only done if the molecule is sanitized
+ * correctness of the contents.
+ */
+RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLStringToMols(
+			       const std::string &cdxml,
+			       bool sanitize = true,
+			       bool removeHs = true);
+
 }
 #endif // _RD_CDXML_FILEPARSERS_H
