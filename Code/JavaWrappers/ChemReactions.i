@@ -42,6 +42,10 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 %}
 
+%ignore RDKit::CDXMLBlockToChemicalReactions;  //(const std::string &);
+%ignore RDKit::CDXMLFileToChemicalReactions; //(const std::string &);
+%ignore RDKit::CDXMLToChemicalReactions; //(std::istream &);
+
 %include <GraphMol/ChemReactions/Reaction.h>
 %include <GraphMol/ChemReactions/ReactionParser.h>
 %ignore RDKit::ChemicalReaction::validate(unsigned int &,unsigned int &,bool);
@@ -50,6 +54,7 @@
                                             unsigned int &);
 %ignore RDKit::isMoleculeProductOfReaction(const ChemicalReaction &r,const ROMol &,
                                             unsigned int &);
+
 
 %newobject ReactionFromSmarts;
 %newobject ReactionFromRxnBlock;
