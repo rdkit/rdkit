@@ -1203,7 +1203,8 @@ TEST_CASE("V3K rxn blocks") {
     CHECK(rxn->getNumProductTemplates()==rxn2->getNumProductTemplates());   
   }
      
-  SECTION("githubXXXX") {
+  SECTION("github5324") {
+    // Test sgroup in a ring - this example failed with improperr tail crossings
     auto mol = "C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"_smarts;
     MolOps::findSSSR(*mol);
     auto mbk = FileParserUtils::getV3000CTAB(*mol, -1);
