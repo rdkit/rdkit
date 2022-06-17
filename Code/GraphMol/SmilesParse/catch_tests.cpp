@@ -1896,3 +1896,14 @@ TEST_CASE("Github #4981: Invalid SMARTS for negated single-atoms", "[smarts]") {
     CHECK(MolToSmarts(*mol).find("N!C") == std::string::npos);
   }
 }
+
+TEST_CASE("Github #5372: errors with fragments and doRandom=True") {
+  SECTION("basics") {
+    auto m = "C.C"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    ps.doRandom = true;
+    auto smi = MolToSmiles(*m, ps);
+    CHECK(smi == "C.C");
+  }
+}
