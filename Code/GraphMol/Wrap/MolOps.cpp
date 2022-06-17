@@ -1312,19 +1312,24 @@ struct molops_wrapper {
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
+    - A bond is only formed to the remaining atoms, if any, that were bonded \n\
+      to the first atom in the substructure query. (For finer control over\n\
+      substructure replacement, consider using ChemicalReaction.)\n\
 \n\
   EXAMPLES:\n\
 \n\
    The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
    to actually use molecules:\n\
 \n\
-    - ReplaceSubstructs('CCOC','OC','NC') -> ('CCNC',)\n\
+    - ReplaceSubstructs('CCOC','O[CH3]','NC') -> ('CCNC',)\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','NC') -> ('COCCNC','CNCCOC')\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','NC') -> ('COCCNC','CNCCOC')\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','NC',True) -> ('CNCCNC',)\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','NC',True) -> ('CNCCNC',)\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','CN',True,1) -> ('CNCCNC',)\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','CN',True,1) -> ('CNCCNC',)\n\
+\n\
+    - ReplaceSubstructs('CCOC','[CH3]O','NC') -> ('CC.CN',)\n\
 \n";
     python::def("ReplaceSubstructs", replaceSubstructures,
                 (python::arg("mol"), python::arg("query"),
