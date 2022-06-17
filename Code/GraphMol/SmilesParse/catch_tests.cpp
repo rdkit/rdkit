@@ -1947,8 +1947,8 @@ TEST_CASE("Pol and Mod atoms in CXSMILES", "[cxsmiles]") {
 TEST_CASE("empty atom label block", "[cxsmiles]") {
   SECTION("basics") {
     auto m = R"CTAB(
-  MJ201100                      
-
+  MJ201100
+                        
   8  8  0  0  0  0  0  0  0  0999 V2000
    -1.0491    1.5839    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
    -1.7635    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1972,5 +1972,16 @@ M  END)CTAB"_ctab;
     m->clearConformers();
     auto smi = MolToCXSmiles(*m);
     CHECK(smi.find("$") == std::string::npos);
+  }
+}
+
+TEST_CASE("Github #5372: errors with fragments and doRandom=True") {
+  SECTION("basics") {
+    auto m = "C.C"_smiles;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    ps.doRandom = true;
+    auto smi = MolToSmiles(*m, ps);
+    CHECK(smi == "C.C");
   }
 }
