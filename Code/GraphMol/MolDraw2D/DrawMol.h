@@ -219,11 +219,25 @@ class DrawMol {
   Point2D transformPoint(const Point2D &pt, const Point2D *trans = nullptr,
                          Point2D *scale = nullptr,
                          const Point2D *toCentre = nullptr) const;
-  void bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
-                      Point2D &l2f) const;
   void calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
                            Point2D &l1f, Point2D &l2s, Point2D &l2f) const;
-  Point2D doubleBondEnd(int at1, int at2, int at3, double offset) const;
+  void bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
+                      Point2D &l2f) const;
+  void bondNonRing(const Bond &bond, double offset, Point2D &l2s,
+                   Point2D &l2f) const;
+  // deal with terminal double bond between at1 and at2, either to atoms of
+  // degree 2 or 3.
+  void doubleBondTerminal(Atom *at1, Atom *at2, double offset, Point2D &l1s,
+                          Point2D &l1f, Point2D &l2s, Point2D &l2f) const;
+  // assuming at[1-3] are atoms where at1 is bonded to at2 and at2 is bonded
+  // to at3, find the position of the at2 end of a double bond between at2
+  // and at3.  If trunc, it'll be along the vector that bisects the two bonds on
+  // the inside, otherwise it's a perpendicular to the bond from at1 to at2.
+  // If opposite, the end will be on the other side of the double bond from
+  // at3, but this only works when trunc is false.  It's difficult to imagine
+  // when you'd want truncated and opposite and the maths is complicated.
+  Point2D doubleBondEnd(int at1, int at2, int at3, double offset, bool trunc,
+                        bool opposite) const;
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -307,6 +321,14 @@ void findRectExtremes(const StringRect &rect, const TextAlignType &align,
 void getBondHighlightsForAtoms(const ROMol &mol,
                                const std::vector<int> &highlight_atoms,
                                std::vector<int> &highlight_bonds);
+// returns true if the vector at2->at1 points in roughly the opposite
+// direction to at3->at4.  Basically, if the dot product is negative.
+bool areBondsTrans(const Point2D &at1, const Point2D &at2, const Point2D &at3,
+                   const Point2D &at4);
+
+// find the nborNum'th neighbour of firstAtom that isn't secondAtom
+const Atom *otherNeighbor(const Atom *firstAtom, const Atom *secondAtom,
+                          int nborNum, const ROMol &mol);
 
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit

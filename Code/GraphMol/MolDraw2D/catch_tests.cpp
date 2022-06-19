@@ -4590,7 +4590,7 @@ TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
 
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
-#if 1
+#if 0
     auto m1 = R"CTAB(mol1
   ChemDraw05162216032D
 
@@ -4628,7 +4628,7 @@ M  END)CTAB"_ctab;
     REQUIRE(res2);
 #endif
 #endif
-#if 1
+#if 0
     auto m2 = R"CTAB(mol2
   ChemDraw06062216302D
 
@@ -4677,7 +4677,7 @@ M  END
     REQUIRE(res4);
 #endif
 #endif
-#if 1
+#if 0
     auto m3 = R"(c1c(nc[nH]1)[C@@H](C)\C=C\C#N)"_smiles;
     m3->setProp<std::string>("_Name", "mol3");
     REQUIRE(m3);
@@ -4686,7 +4686,7 @@ M  END
                                                nullptr, nullptr);
     REQUIRE(res5);
 #endif
-#if 1
+#if 0
     auto m4 = "c1c(nc[nH]1)C(C)C=CC#N"_smiles;
     m4->setProp<std::string>("_Name", "mol4");
     REQUIRE(m4);
@@ -4695,7 +4695,7 @@ M  END
                                                nullptr, nullptr);
     REQUIRE(res6);
 #endif
-#if 1
+#if 0
     {
       auto m = "C[C@H](I)CC(Cl)C[C@@H](F)CC=C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
@@ -4706,7 +4706,7 @@ M  END
       REQUIRE(res6);
     }
 #endif
-#if 1
+#if 0
     {
       auto m = "CC(I)CC(Cl)CC(F)C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
@@ -4717,7 +4717,7 @@ M  END
       REQUIRE(res6);
     }
 #endif
-#if 1
+#if 0
     {
       auto m = R"CTAB(mol7
   ChemDraw06112209342D
@@ -4800,6 +4800,58 @@ M  END
 )CTAB"_ctab;
       REQUIRE(m);
       bool res = MolDraw2DUtils::drawMolACS1996("acs1996_7.svg", *m, "",
+                                                nullptr, nullptr);
+      REQUIRE(res);
+    }
+#endif
+#if 1
+    {
+      auto m = R"CTAB(mol8
+  ChemDraw06132212082D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 16 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.427702 0.413216 0.000000 0
+M  V30 2 C -0.715712 0.824284 0.000000 0
+M  V30 3 C -2.139692 0.824284 0.000000 0
+M  V30 4 C -0.003721 0.413216 0.000000 0
+M  V30 5 C 0.708270 0.824284 0.000000 0
+M  V30 6 C 1.420260 0.413216 0.000000 0
+M  V30 7 C 0.708270 1.646420 0.000000 0
+M  V30 8 C -1.427702 -0.408920 0.000000 0
+M  V30 9 C -0.715712 -0.819988 0.000000 0
+M  V30 10 C -2.139692 -0.819988 0.000000 0
+M  V30 11 C -0.003721 -0.408920 0.000000 0
+M  V30 12 C 2.134731 0.825716 0.000000 0
+M  V30 13 C 0.710751 -0.821420 0.000000 0
+M  V30 14 C 1.425221 -0.408920 0.000000 0
+M  V30 15 C 2.139692 -0.821420 0.000000 0
+M  V30 16 C 2.139692 -1.646420 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 1 3
+M  V30 3 1 2 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 5 7
+M  V30 7 1 1 8
+M  V30 8 2 8 9 CFG=2
+M  V30 9 1 8 10
+M  V30 10 1 9 11
+M  V30 11 2 6 12
+M  V30 12 2 11 13
+M  V30 13 1 13 14
+M  V30 14 2 14 15
+M  V30 15 1 15 16
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      bool res = MolDraw2DUtils::drawMolACS1996("acs1996_8.svg", *m, "",
                                                 nullptr, nullptr);
       REQUIRE(res);
     }
