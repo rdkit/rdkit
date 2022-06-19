@@ -232,12 +232,9 @@ class DrawMol {
   // assuming at[1-3] are atoms where at1 is bonded to at2 and at2 is bonded
   // to at3, find the position of the at2 end of a double bond between at2
   // and at3.  If trunc, it'll be along the vector that bisects the two bonds on
-  // the inside, otherwise it's a perpendicular to the bond from at1 to at2.
-  // If opposite, the end will be on the other side of the double bond from
-  // at3, but this only works when trunc is false.  It's difficult to imagine
-  // when you'd want truncated and opposite and the maths is complicated.
-  Point2D doubleBondEnd(int at1, int at2, int at3, double offset, bool trunc,
-                        bool opposite) const;
+  // the inside, otherwise it's perpendicular to the bond from at1 to at2.
+  Point2D doubleBondEnd(int at1, int at2, int at3, double offset,
+                        bool trunc) const;
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;

@@ -246,7 +246,6 @@ void DrawMol::extractBonds() {
   // too much, so scale it back.
   calcMeanBondLength();
   if (meanBondLength_ < 1.2) {
-    std::cout << "munging doublebondoffset : " << meanBondLength_ << std::endl;
     //    doubleBondOffset *= 0.6;
   }
 
@@ -2531,7 +2530,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_)) {
     const Point2D &at1_cds = atCds_[at1->getIdx()];
     const Point2D &at2_cds = atCds_[at2->getIdx()];
-    perp = calcPerpendicular(at1_cds, at2_cds) * offset;
+    perp = calcPerpendicular(at1_cds, at2_cds) * offset * 0.5;
     l1s = at1_cds + perp;
     l1f = at2_cds + perp;
     l2s = at1_cds - perp;
@@ -2543,7 +2542,6 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
     const Point2D &at2_cds = atCds_[at2->getIdx()];
     l1s = at1_cds;
     l1f = at2_cds;
-    offset *= 2.0;
     if (drawMol_->getRingInfo()->numBondRings(bond.getIdx())) {
       // in a ring, we need to draw the bond inside the ring
       bondInsideRing(bond, offset, l2s, l2f);
@@ -2583,7 +2581,6 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
     for (const auto atBond :
          make_iterator_range(drawMol_->getAtomBonds(atom))) {
       const Bond *bond2 = (*drawMol_)[atBond];
-      std::cout << bond2->getIdx() << std::endl;
       if (bond2->getIdx() == bond.getIdx()) {
         continue;
       }
@@ -2622,20 +2619,12 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
 
   // either bond is in 1 ring, or we couldn't decide above, so just use the
   // first one
-  std::cout << "bond : " << bond.getBeginAtomIdx() << "->"
-            << bond.getEndAtomIdx() << " : ";
-  for (auto ra : *ringToUse) {
-    std::cout << ra << " ";
-  }
-  std::cout << std::endl;
   int thirdAtom = other_ring_atom(bond.getBeginAtomIdx(), bond, *ringToUse);
   int fourthAtom = other_ring_atom(bond.getEndAtomIdx(), bond, *ringToUse);
-  std::cout << thirdAtom << "->" << bond.getBeginAtomIdx() << "->"
-            << bond.getEndAtomIdx() << "->" << fourthAtom << std::endl;
   l2s = doubleBondEnd(thirdAtom, bond.getBeginAtomIdx(), bond.getEndAtomIdx(),
-                      offset, bool(atomLabels_[bond.getBeginAtomIdx()]), false);
+                      offset, !bool(atomLabels_[bond.getBeginAtomIdx()]));
   l2f = doubleBondEnd(fourthAtom, bond.getEndAtomIdx(), bond.getBeginAtomIdx(),
-                      offset, bool(atomLabels_[bond.getEndAtomIdx()]), false);
+                      offset, !bool(atomLabels_[bond.getEndAtomIdx()]));
 }
 
 // ****************************************************************************
@@ -2643,31 +2632,32 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
 // Returns in l2s and l2f the start and finish points of the inner line
 void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
                           Point2D &l2f) const {
-  const auto begAt = bond.getBeginAtom();
-  const auto endAt = bond.getEndAtom();
+  auto begAt = bond.getBeginAtom();
+  auto endAt = bond.getEndAtom();
   const Atom *thirdAtom = nullptr;
   const Atom *fourthAtom = nullptr;
 
-  std::cout << std::endl
-            << "bondNonRing for " << begAt->getIdx() << " - " << endAt->getIdx()
-            << " :: " << begAt->getDegree() << " and " << endAt->getDegree()
-            << std::endl;
   if (begAt->getDegree() == 2 && endAt->getDegree() == 2) {
-    std::cout << "two and two" << std::endl;
     thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
     fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
     l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
-                        offset, true, false);
+                        offset, true);
     bool isTrans =
         areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
                       atCds_[endAt->getIdx()], atCds_[fourthAtom->getIdx()]);
-    l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
-                        offset, !isTrans, isTrans);
-  } else if (begAt->getDegree() > 2 && endAt->getDegree() == 2) {
-    std::cout << "> two and two" << std::endl;
+    if (isTrans) {
+      Point2D perp = calcInnerPerpendicular(atCds_[endAt->getIdx()],
+                                            atCds_[begAt->getIdx()],
+                                            atCds_[thirdAtom->getIdx()]);
+      l2f = atCds_[endAt->getIdx()] + perp * offset;
+    } else {
+      l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(),
+                          begAt->getIdx(), offset, true);
+    }
+  } else if ((begAt->getDegree() > 2 && endAt->getDegree() == 2)) {
     thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
     l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
-                        offset, true, false);
+                        offset, true);
     fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
     bool isTrans =
         areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
@@ -2675,15 +2665,12 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
     if (isTrans) {
       fourthAtom = otherNeighbor(endAt, begAt, 1, *drawMol_);
     }
-    std::cout << "third atom  : " << thirdAtom->getIdx()
-              << "  fourth atom : " << fourthAtom->getIdx() << std::endl;
     l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
-                        offset, true, false);
+                        offset, true);
   } else if (begAt->getDegree() == 2 && endAt->getDegree() > 2) {
-    std::cout << "two and > two" << std::endl;
     thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
     l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
-                        offset, true, false);
+                        offset, true);
     fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
     bool isTrans =
         areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
@@ -2691,15 +2678,12 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
     if (isTrans) {
       fourthAtom = otherNeighbor(endAt, begAt, 1, *drawMol_);
     }
-    std::cout << "third atom  : " << thirdAtom->getIdx()
-              << "  fourth atom : " << fourthAtom->getIdx() << std::endl;
     l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
-                        offset, true, false);
+                        offset, true);
   } else if (begAt->getDegree() > 2 && endAt->getDegree() > 2) {
-    std::cout << "> two and > two" << std::endl;
     thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
     l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
-                        offset, true, false);
+                        offset, true);
     fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
     bool isTrans =
         areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
@@ -2708,7 +2692,7 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
       fourthAtom = otherNeighbor(endAt, begAt, 1, *drawMol_);
     }
     l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
-                        offset, true, false);
+                        offset, true);
   }
 }
 
@@ -2724,6 +2708,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
   if (at2->getDegree() > 2) {
     // lines either side of the bond line but at the at2 end,
     // the bonds extend to the intersection of the other bonds.
+    // only need 1/2 the offset in this case.
+    offset /= 2.0;
     Point2D perp = calcPerpendicular(at1_cds, at2_cds) * offset;
     l1s = at1_cds + perp;
     l1f = at2_cds + perp;
@@ -2748,47 +2734,35 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     }
   } else {
     // one line as normal, the 2nd truncates at the internal end only
-    offset *= 2.0;
     l1s = at1_cds;
     l1f = at2_cds;
     Point2D perp = calcPerpendicular(at2_cds, at1_cds) * offset;
     l2s = at1_cds + perp;
     const Atom *thirdAtom = otherNeighbor(at2, at1, 0, *drawMol_);
     l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
-                        offset, true, false);
+                        offset, true);
   }
 }
 
 // ****************************************************************************
 Point2D DrawMol::doubleBondEnd(int at1, int at2, int at3, double offset,
-                               bool trunc, bool opposite) const {
-  std::cout << "doublebondend : " << at1 << " to " << at2 << " to " << at3
-            << " : " << trunc << " : " << opposite << std::endl;
-  Point2D v21 = atCds_[at1] - atCds_[at2];
-  v21.normalize();
-  Point2D v23 = atCds_[at3] - atCds_[at2];
-  v23.normalize();
+                               bool trunc) const {
+  Point2D v21 = atCds_[at2].directionVector(atCds_[at1]);
+  Point2D v23 = atCds_[at2].directionVector(atCds_[at3]);
   Point2D bis = v21 + v23;
   bis.normalize();
   Point2D v23perp(-v23.y, v23.x);
   v23perp.normalize();
-  if (v23perp.dotProduct(bis) < 0.0 || opposite) {
+  if (v23perp.dotProduct(bis) < 0.0) {
     v23perp = v23perp * -1.0;
   }
   Point2D ip;
-  std::cout << "two lines are : " << atCds_[at2] << " - > " << atCds_[at2] + bis
-            << " and " << atCds_[at2] + v23perp * offset << " - > "
-            << atCds_[at3] + v23perp * offset << std::endl;
   // if there's an atom label, we don't need to step the bond end back
   // because both ends are shortened to accommodate the letters.
   if (trunc) {
     bool ins = doLinesIntersect(atCds_[at2], atCds_[at2] + bis,
                                 atCds_[at2] + v23perp * offset,
                                 atCds_[at3] + v23perp * offset, &ip);
-    std::cout << ins << " : " << atCds_[at1].x << ", " << atCds_[at1].y
-              << " -> " << atCds_[at2].x << ", " << atCds_[at2].y << " - > "
-              << atCds_[at3].x << ", " << atCds_[at3].y << " : " << ip.x << ", "
-              << ip.y << std::endl;
   } else {
     ip = atCds_[at2] + v23perp * offset;
   }
