@@ -572,7 +572,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        the alignment is computed (defaults to first conformation)\n\
       - atomMap   a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
                        used to compute the alignments. If this mapping is \n\
-                       not specified an attempt is made to generate on by\n\
+                       not specified an attempt is made to generate one by\n\
                        substructure matching\n\
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
@@ -606,7 +606,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        the alignment is computed (defaults to first conformation)\n\
       - atomMap   a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
                        used to compute the alignments. If this mapping is \n\
-                       not specified an attempt is made to generate on by\n\
+                       not specified an attempt is made to generate one by\n\
                        substructure matching\n\
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
