@@ -4964,5 +4964,40 @@ M  END
       REQUIRE(res);
     }
 #endif
+#if 1
+    {
+      auto m = R"CTAB(mol11
+  ChemDraw06202211162D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.355995 -0.411068 0.000000 0
+M  V30 2 C 0.355995 0.411068 0.000000 0
+M  V30 3 C -0.355996 0.822136 0.000000 0
+M  V30 4 C -1.067986 0.411068 0.000000 0
+M  V30 5 C -1.067986 -0.411068 0.000000 0
+M  V30 6 C -0.355996 -0.822136 0.000000 0
+M  V30 7 N 1.067986 0.822136 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 2 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+      REQUIRE(m);
+      bool res = MolDraw2DUtils::drawMolACS1996("acs1996_11.svg", *m, "",
+                                                nullptr, nullptr);
+      REQUIRE(res);
+    }
+#endif
   }
 }

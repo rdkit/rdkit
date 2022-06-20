@@ -2180,12 +2180,13 @@ int DrawMol::doesNoteClash(const DrawAnnotation &annot) const {
 
 // ****************************************************************************
 int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
+  // No longer check if it clashes with highlights.  This frequently
+  // results in bad pictures and things look ok on top of highlights.
+
   // see if the rectangle clashes with any of the double bonds themselves,
   // as opposed to the draw shapes derived from them.  Github 5185 shows
   // that sometimes atom indices can just fit between the lines of a
   // double bond.
-  // Also, no longer check if it clashes with highlights.  This frequently
-  // results in bad pictures and things look ok on top of highlights.
   for (auto bond : drawMol_->bonds()) {
     if (bond->getBondType() == Bond::DOUBLE) {
       auto at1 = bond->getBeginAtomIdx();

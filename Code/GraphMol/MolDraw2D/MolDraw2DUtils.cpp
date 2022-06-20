@@ -513,7 +513,7 @@ std::string drawMolACS1996Cairo(
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
-  opts.addAtomIndices = true;
+  //  opts.addAtomIndices = true;
   //  opts.addBondIndices = true;
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
@@ -533,60 +533,28 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
 
 // ****************************************************************************
 void useMDLBondWedging(ROMol &mol) {
-  //  for (auto a : mol.atoms()) {
-  //    std::cout << a->getIdx() << " : " << a->getChiralTag() << " : ";
-  //    auto props = a->getPropList(true);
-  //    for (auto p : props) {
-  //      std::cout << "  " << p;
-  //    }
-  //    std::cout << std::endl;
-  //  }
   const auto conf = mol.getConformer();
-  //  for (auto b : mol.bonds()) {
-  //    std::cout << b->getIdx() << " : " << b->getBeginAtomIdx() << "->"
-  //              << b->getEndAtomIdx() << " " << b->getBondType() << " : "
-  //              << b->getBondDir() << "(" << Bond::UNSPECIFIED
-  //              << ") : " << b->getStereo() << "(" << Bond::STEREOANY << ") ::
-  //              ";
-  //    auto props = b->getPropList(true);
-  //    for (auto p : props) {
-  //      std::cout << "  " << p;
-  //    }
-  //    std::cout << std::endl;
-  //  }
   for (auto b : mol.bonds()) {
     if (b->getBondType() == Bond::SINGLE) {
       int explicit_unknown_stereo;
       if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
                                    explicit_unknown_stereo) &&
           explicit_unknown_stereo) {
-        //        std::cout << "setting " << b->getIdx() << "  " <<
-        //        b->getBeginAtomIdx()
-        //                  << "->" << b->getEndAtomIdx() << " "
-        //                  << " from " << b->getBondDir() << " to " <<
-        //                  Bond::UNKNOWN
-        //                  << " bcos " << explicit_unknown_stereo << std::endl;
         b->setBondDir(Bond::UNKNOWN);
       }
     }
   }
-  //  std::cout << MolToMolBlock(mol) << std::endl;
 }
 
 // ****************************************************************************
 void useStrictStereo(ROMol &mol, int confId) {
-  //  std::cout << "useStrictStereo" << std::endl;
   INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
   const auto conf = mol.getConformer(confId);
   for (auto b : mol.bonds()) {
-    //    std::cout << b->getIdx() << " : " << b->getBeginAtomIdx() << "->"
-    //              << b->getEndAtomIdx() << " " << b->getBondType() << " : "
-    //              << std::endl;
     if (b->getBondType() == Bond::DOUBLE) {
       int dirCode;
       bool reverse;
       RDKit::GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode, reverse);
-      //      std::cout << "double : " << dirCode << std::endl;
       if (dirCode == 3) {
         b->setStereo(Bond::STEREOANY);
       }
@@ -599,18 +567,12 @@ void useStrictStereo(ROMol &mol, int confId) {
     bool chiNbrs = retVal.first;
     INT_VECT nChiralNbrs = retVal.second;
     for (auto i : si) {
-      //      std::cout << i.centeredOn << " : " << i.type << " : " <<
-      //      i.specified
-      //                << std::endl;
       if (i.type == Chirality::StereoType::Atom_Tetrahedral &&
           i.specified == Chirality::StereoSpecified::Unspecified) {
         i.specified = Chirality::StereoSpecified::Unknown;
         auto atom = mol.getAtomWithIdx(i.centeredOn);
-        //        std::cout << "Current chiral tag : " << atom->getChiralTag()
-        //                  << std::endl;
         INT_MAP_INT resSoFar;
         int bndIdx = pickBondToWedge(atom, mol, nChiralNbrs, resSoFar, noNbrs);
-        //        std::cout << "bond to wiggle : " << bndIdx << std::endl;
         auto bond = mol.getBondWithIdx(bndIdx);
         bond->setBondDir(Bond::UNKNOWN);
       }
