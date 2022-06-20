@@ -138,6 +138,7 @@ void DrawTextFT::getStringRects(const std::string &text,
                                 std::vector<char> &draw_chars) const {
   TextDrawType draw_mode = TextDrawType::TextDrawNormal;
   double max_y = 0.0;
+  double mean_width = 0.0;
   std::vector<double> extras;
   for (size_t i = 0; i < text.length(); ++i) {
     // setStringDrawMode moves i along to the end of any <sub> or <sup>
@@ -156,10 +157,13 @@ void DrawTextFT::getStringRects(const std::string &text,
     double p_y_max = oscale * fontCoordToDrawCoord(this_y_max);
     double p_advance = oscale * fontCoordToDrawCoord(advance);
     double width = p_x_max - p_x_min;
-    // reduce the horizontal offset by p_x_min, which is the distance
+    // The mean width is to define the spacing between the characters, so
+    // use full size characters.
+    mean_width += width / oscale;
+    // reduce the horizontal offset, which is the distance
     // of the start of the glyph from the start of the char box.
     // Otherwise spacing is uneven.
-    extras.push_back(p_advance - p_x_max + 0.5);
+    extras.push_back(p_advance - p_x_max);
     if (!this_x_max) {
       // it was a space, probably, and we want small spaces because screen
       // real estate is limited.
@@ -173,7 +177,11 @@ void DrawTextFT::getStringRects(const std::string &text,
     draw_modes.push_back(draw_mode);
     max_y = std::max(max_y, p_y_max);
   }
+  // Use the mean width of the characters to define some extra space between
+  // the characters.
+  mean_width /= rects.size();
   for (auto i = 0u; i < rects.size(); ++i) {
+    extras[i] += mean_width / 10;
     rects[i]->g_centre_.y = max_y - rects[i]->g_centre_.y;
     rects[i]->offset_.y = max_y / 2.0;
     if (i) {
