@@ -157,7 +157,8 @@ class DrawMol {
                            const std::pair<DrawColour, DrawColour> &cols);
   void makeWedgedBond(Bond *bond,
                       const std::pair<DrawColour, DrawColour> &cols);
-  void makeWavyBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols);
+  void makeWavyBond(Bond *bond, double offset,
+                    const std::pair<DrawColour, DrawColour> &cols);
   void makeDativeBond(Bond *bond,
                       const std::pair<DrawColour, DrawColour> &cols);
   void makeZeroBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols,
@@ -235,6 +236,8 @@ class DrawMol {
   // the inside, otherwise it's perpendicular to the bond from at1 to at2.
   Point2D doubleBondEnd(int at1, int at2, int at3, double offset,
                         bool trunc) const;
+  void calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
+                           Point2D &l1f, Point2D &l2s, Point2D &l2f);
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -297,14 +300,9 @@ int getHighlightBondWidth(
     const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers);
 
-void calcTripleBondLines(double offset, const Bond &bond,
-                         const std::vector<Point2D> &at_cds, Point2D &l1s,
-                         Point2D &l1f, Point2D &l2s, Point2D &l2f);
 Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
                                const Point2D &cds3);
-Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
-                             const std::vector<Point2D> &at_cds);
 // return a point that is end1 moved so as not to clash with any of the
 // rects of a label.  end1 to end2 and the coords of 2 ends of a bond.
 void adjustBondEndForString(

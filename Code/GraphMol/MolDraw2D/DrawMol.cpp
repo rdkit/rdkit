@@ -1465,7 +1465,7 @@ void DrawMol::makeStandardBond(Bond *bond, double doubleBondOffset) {
                                     bond->getBondDir() == Bond::BEGINDASH)) {
     makeWedgedBond(bond, cols);
   } else if (bt == Bond::SINGLE && bond->getBondDir() == Bond::UNKNOWN) {
-    makeWavyBond(bond, cols);
+    makeWavyBond(bond, doubleBondOffset / 2.0, cols);
   } else if (bt == Bond::DATIVE || bt == Bond::DATIVEL || bt == Bond::DATIVER) {
     makeDativeBond(bond, cols);
   } else if (bt == Bond::ZERO) {
@@ -1668,7 +1668,7 @@ void DrawMol::makeTripleBondLines(
   sat2 = atCds_[at2Idx];
   atCds_[at2Idx] = end2;
   int bondIdx = bond->getIdx();
-  calcTripleBondLines(doubleBondOffset, *bond, atCds_, l1s, l1f, l2s, l2f);
+  calcTripleBondLines(doubleBondOffset, *bond, l1s, l1f, l2s, l2f);
   newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
               noDash);
   newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
@@ -1733,7 +1733,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
 }
 
 // ****************************************************************************
-void DrawMol::makeWavyBond(Bond *bond,
+void DrawMol::makeWavyBond(Bond *bond, double offset,
                            const std::pair<DrawColour, DrawColour> &cols) {
   auto at1 = bond->getBeginAtom();
   auto at2 = bond->getEndAtom();
@@ -1741,7 +1741,7 @@ void DrawMol::makeWavyBond(Bond *bond,
   adjustBondEndsForLabels(at1->getIdx(), at2->getIdx(), end1, end2);
   std::vector<Point2D> pts{end1, end2};
   DrawShapeWavyLine *s = new DrawShapeWavyLine(
-      pts, drawOptions_.bondLineWidth, false, cols.first, cols.second, 0.15,
+      pts, drawOptions_.bondLineWidth, false, cols.first, cols.second, offset,
       at1->getIdx() + activeAtmIdxOffset_, at2->getIdx() + activeAtmIdxOffset_,
       bond->getIdx() + activeBndIdxOffset_);
   bonds_.push_back(std::unique_ptr<DrawShape>(s));
@@ -2654,20 +2654,8 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
       l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(),
                           begAt->getIdx(), offset, true);
     }
-  } else if ((begAt->getDegree() > 2 && endAt->getDegree() == 2)) {
-    thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
-    l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
-                        offset, true);
-    fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
-    bool isTrans =
-        areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
-                      atCds_[endAt->getIdx()], atCds_[fourthAtom->getIdx()]);
-    if (isTrans) {
-      fourthAtom = otherNeighbor(endAt, begAt, 1, *drawMol_);
-    }
-    l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
-                        offset, true);
-  } else if (begAt->getDegree() == 2 && endAt->getDegree() > 2) {
+  } else if ((begAt->getDegree() > 2 && endAt->getDegree() == 2) ||
+             (begAt->getDegree() == 2 && endAt->getDegree() > 2)) {
     thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
     l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
                         offset, true);
@@ -2767,6 +2755,22 @@ Point2D DrawMol::doubleBondEnd(int at1, int at2, int at3, double offset,
     ip = atCds_[at2] + v23perp * offset;
   }
   return ip;
+}
+
+// ****************************************************************************
+void DrawMol::calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
+                                  Point2D &l1f, Point2D &l2s, Point2D &l2f) {
+  Atom *at1 = bond.getBeginAtom();
+  Atom *at2 = bond.getEndAtom();
+  const Point2D &at1_cds = atCds_[at1->getIdx()];
+  const Point2D &at2_cds = atCds_[at2->getIdx()];
+
+  Point2D perp = calcPerpendicular(at1_cds, at2_cds);
+  Point2D bv = at1_cds - at2_cds;
+  l1s = at1_cds - bv + perp * offset;
+  l1f = at2_cds + bv + perp * offset;
+  l2s = at1_cds - bv - perp * offset;
+  l2f = at2_cds + bv - perp * offset;
 }
 
 // ****************************************************************************
@@ -2906,30 +2910,6 @@ int getHighlightBondWidth(
 }
 
 // ****************************************************************************
-void calcTripleBondLines(double offset, const Bond &bond,
-                         const std::vector<Point2D> &at_cds, Point2D &l1s,
-                         Point2D &l1f, Point2D &l2s, Point2D &l2f) {
-  // the percent shorter that the extra bonds in a double bond are
-  const double multipleBondTruncation = 0.0;
-
-  Atom *at1 = bond.getBeginAtom();
-  Atom *at2 = bond.getEndAtom();
-  const Point2D &at1_cds = at_cds[at1->getIdx()];
-  const Point2D &at2_cds = at_cds[at2->getIdx()];
-
-  // 2 lines, a bit shorter and offset on the perpendicular
-  double dbo = 2.0 * offset;
-  Point2D perp = calcPerpendicular(at1_cds, at2_cds);
-  double end1_trunc = 1 == at1->getDegree() ? 0.0 : multipleBondTruncation;
-  double end2_trunc = 1 == at2->getDegree() ? 0.0 : multipleBondTruncation;
-  Point2D bv = at1_cds - at2_cds;
-  l1s = at1_cds - (bv * end1_trunc) + perp * dbo;
-  l1f = at2_cds + (bv * end2_trunc) + perp * dbo;
-  l2s = at1_cds - (bv * end1_trunc) - perp * dbo;
-  l2f = at2_cds + (bv * end2_trunc) - perp * dbo;
-}
-
-// ****************************************************************************
 // calculate normalised perpendicular to vector between two coords
 Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2) {
   double bv[2] = {cds1.x - cds2.x, cds1.y - cds2.y};
@@ -2959,36 +2939,6 @@ Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
   }
 
   return perp;
-}
-
-// ****************************************************************************
-// Returns the perpendicular pointing into the inside of the bond
-Point2D bondInsideDoubleBond(const ROMol &mol, const Bond &bond,
-                             const std::vector<Point2D> &at_cds) {
-  // a chain double bond, where it looks nicer IMO if the 2nd line is inside
-  // the angle of outgoing bond. Unless it's an allene, which is dealt with
-  // separately.
-  const Atom *at1 = bond.getBeginAtom();
-  const Atom *at2 = bond.getEndAtom();
-  const Atom *bondAt, *endAtom;
-  if (at1->getDegree() > 1) {
-    bondAt = at1;
-    endAtom = at2;
-  } else {
-    bondAt = at2;
-    endAtom = at1;
-  }
-  int at3 = -1;  // to stop the compiler whinging.
-  for (const auto &nbri2 : make_iterator_range(mol.getAtomBonds(bondAt))) {
-    const Bond *bond2 = mol[nbri2];
-    if (&bond != bond2) {
-      at3 = bond2->getOtherAtomIdx(bondAt->getIdx());
-      break;
-    }
-  }
-
-  return calcInnerPerpendicular(at_cds[endAtom->getIdx()],
-                                at_cds[bondAt->getIdx()], at_cds[at3]);
 }
 
 // ****************************************************************************
