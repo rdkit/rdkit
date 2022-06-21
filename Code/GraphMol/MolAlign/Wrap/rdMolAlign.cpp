@@ -152,7 +152,8 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
 }
 
 double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
-                  python::object map, int maxMatches) {
+                  python::object map, int maxMatches,
+                  bool symmetrizeTerminalGroups) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
@@ -161,8 +162,8 @@ double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
   double rmsd;
   {
     NOGIL gil;
-    rmsd =
-        MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec, maxMatches);
+    rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec,
+                                maxMatches, symmetrizeTerminalGroups);
   }
   return rmsd;
 }
@@ -646,6 +647,9 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        using a substructure search.\n\
         - maxMatches:  (optional) if map isn't specified, this will be\n\
                        the max number of matches found in a SubstructMatch()\n\
+        - symmetrizeConjugatedTerminalGroups:  (optional) if set, conjugated\n\
+                       terminal functional groups (like nitro or carboxylate)\n\
+                       will be considered symmetrically\n\
        \n\
       RETURNS\n\
       The best RMSD found\n\
@@ -654,7 +658,8 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       "GetBestRMS", RDKit::GetBestRMS,
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
-       python::arg("maxMatches") = 1000000),
+       python::arg("maxMatches") = 1000000,
+       python::arg("symmetrizeConjugatedTerminalGroups") = true),
       docString.c_str());
 
   docString =
