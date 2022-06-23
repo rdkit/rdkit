@@ -229,15 +229,15 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@H](Cl)/C=C/C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C/C=C/[C@H](F)Cl
-    F[C@@H](Cl)/C=C/C=C\\[C@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C/[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C/[C@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C\\[C@@H](F)Cl
-    F[C@@H](Cl)/C=C\\C=C\\[C@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C/[C@@H](F)Cl
+    F[C@@H](Cl)/C=C\C=C\[C@@H](F)Cl
+    F[C@H](Cl)/C=C/C=C/[C@@H](F)Cl
     F[C@H](Cl)/C=C/C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\\C=C/[C@H](F)Cl
-    F[C@H](Cl)/C=C\\C=C\\[C@H](F)Cl
+    F[C@H](Cl)/C=C/C=C\[C@@H](F)Cl
+    F[C@H](Cl)/C=C\C=C/[C@@H](F)Cl
+    F[C@H](Cl)/C=C\C=C/[C@H](F)Cl
+    F[C@H](Cl)/C=C\C=C\[C@@H](F)Cl
+    F[C@H](Cl)/C=C\C=C\[C@H](F)Cl
 
     By default the code only expands unspecified stereocenters:
 

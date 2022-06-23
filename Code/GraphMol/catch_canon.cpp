@@ -112,16 +112,39 @@ TEST_CASE("chirality and canonicalization") {
     std::vector<unsigned int> ranks;
     bool breakTies = false;
     Canon::rankMolAtoms(*mol, ranks, breakTies);
-    // std::copy(ranks.begin(), ranks.end(),
-    //           std::ostream_iterator<unsigned int>(std::cerr, " "));
-    // std::cerr << std::endl;
     CHECK(ranks[1] == ranks[7]);
     mol->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
     mol->getAtomWithIdx(7)->clearProp(common_properties::_CIPCode);
     Canon::rankMolAtoms(*mol, ranks, breakTies);
-    // std::copy(ranks.begin(), ranks.end(),
-    //           std::ostream_iterator<unsigned int>(std::cerr, " "));
-    // std::cerr << std::endl;
     CHECK(ranks[1] == ranks[7]);
+  }
+
+  SECTION("swap parity") {
+    auto mol = "F[C@](O)(Cl)C[C@@](O)(Cl)F"_smiles;
+    REQUIRE(mol);
+    bool cleanIt = false;
+    bool force = true;
+    MolOps::assignStereochemistry(*mol, cleanIt, force);
+    std::string cip;
+    CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
+                                                   cip));
+    CHECK(cip == "S");
+    CHECK(mol->getAtomWithIdx(5)->getPropIfPresent(common_properties::_CIPCode,
+                                                   cip));
+    CHECK(cip == "S");
+    std::vector<unsigned int> ranks;
+    bool breakTies = false;
+    Canon::rankMolAtoms(*mol, ranks, breakTies);
+    std::copy(ranks.begin(), ranks.end(),
+              std::ostream_iterator<unsigned int>(std::cerr, " "));
+    std::cerr << std::endl;
+    CHECK(ranks[1] == ranks[5]);
+    mol->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
+    mol->getAtomWithIdx(5)->clearProp(common_properties::_CIPCode);
+    Canon::rankMolAtoms(*mol, ranks, breakTies);
+    std::copy(ranks.begin(), ranks.end(),
+              std::ostream_iterator<unsigned int>(std::cerr, " "));
+    std::cerr << std::endl;
+    CHECK(ranks[1] == ranks[5]);
   }
 }
