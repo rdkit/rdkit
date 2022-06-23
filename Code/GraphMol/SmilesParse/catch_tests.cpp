@@ -1861,12 +1861,12 @@ M  END)CTAB"_ctab;
     REQUIRE(mol);
     auto csmiles = MolToSmiles(*mol);
     std::cerr << csmiles << std::endl;
+    // clang-format off
     CHECK(
         csmiles ==
-        "CC(=O)N[C@@H](CCCC/N=C/C1=C/"
-        "C[C@H]2[C@@]3(CC[C@]2(C)C[C@H]2[C@@H]1C(=O)C[C@@]2(C)O)O[C@@H](C=C(C)"
-        "C)C[C@@H]3C)C(=O)O");
+        "CC(=O)N[C@@H](CCCC/N=C/C1=C/C[C@@H]2[C@](C)(CC[C@@]23O[C@@H](C=C(C)C)C[C@@H]3C)C[C@H]2[C@@H]1C(=O)C[C@@]2(C)O)C(=O)O");
   }
+  // clang-format on
 }
 
 TEST_CASE(

@@ -349,20 +349,25 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       // first atom stereochem:
       ivi = 0;
       ivj = 0;
+      bool seenCIP = false;
+#if 0
       std::string cipCode;
       if (dp_atoms[i].atom->getPropIfPresent(common_properties::_CIPCode,
                                              cipCode)) {
         ivi = cipCode == "R" ? 2 : 1;
+        seenCIP = true;
       }
       if (dp_atoms[j].atom->getPropIfPresent(common_properties::_CIPCode,
                                              cipCode)) {
         ivj = cipCode == "R" ? 2 : 1;
+        seenCIP = true;
       }
       if (ivi < ivj) {
         return -1;
       } else if (ivi > ivj) {
         return 1;
       }
+#endif
       // can't actually use values here, because they are arbitrary
       ivi = dp_atoms[i].atom->getChiralTag() != 0;
       ivj = dp_atoms[j].atom->getChiralTag() != 0;
@@ -370,6 +375,66 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         return -1;
       } else if (ivi > ivj) {
         return 1;
+      }
+      // stereo set, but CIP not assigned
+      if (ivi && ivj && !seenCIP) {
+        std::vector<unsigned int> perm;
+        if (ivi) {
+          perm.reserve(dp_atoms[i].atom->getDegree());
+          for (const auto nbr : dp_mol->atomNeighbors(dp_atoms[i].atom)) {
+            auto rnk = dp_atoms[nbr->getIdx()].index;
+            // make sure we don't have duplicate ranks
+            if (std::find(perm.begin(), perm.end(), rnk) != perm.end()) {
+              break;
+            } else {
+              perm.push_back(rnk);
+            }
+          }
+          if (perm.size() == dp_atoms[i].atom->getDegree()) {
+            auto ctag = dp_atoms[i].atom->getChiralTag();
+            if (ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CW ||
+                ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CCW) {
+              auto sortedPerm = perm;
+              std::sort(sortedPerm.begin(), sortedPerm.end());
+              auto nswaps = countSwapsToInterconvert(perm, sortedPerm);
+              ivi = ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CW ? 2 : 1;
+              if (nswaps % 2) {
+                ivi = ivi == 2 ? 1 : 2;
+              }
+            }
+          }
+        }
+        if (ivj) {
+          perm.clear();
+          perm.reserve(dp_atoms[j].atom->getDegree());
+          for (const auto nbr : dp_mol->atomNeighbors(dp_atoms[j].atom)) {
+            auto rnk = dp_atoms[nbr->getIdx()].index;
+            // make sure we don't have duplicate ranks
+            if (std::find(perm.begin(), perm.end(), rnk) != perm.end()) {
+              break;
+            } else {
+              perm.push_back(rnk);
+            }
+          }
+          if (perm.size() == dp_atoms[j].atom->getDegree()) {
+            auto ctag = dp_atoms[j].atom->getChiralTag();
+            if (ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CW ||
+                ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CCW) {
+              auto sortedPerm = perm;
+              std::sort(sortedPerm.begin(), sortedPerm.end());
+              auto nswaps = countSwapsToInterconvert(perm, sortedPerm);
+              ivj = ctag == Atom::ChiralType::CHI_TETRAHEDRAL_CW ? 2 : 1;
+              if (nswaps % 2) {
+                ivj = ivj == 2 ? 1 : 2;
+              }
+            }
+          }
+        }
+        if (ivi < ivj) {
+          return -1;
+        } else if (ivi > ivj) {
+          return 1;
+        }
       }
     }
 
