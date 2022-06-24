@@ -21,30 +21,55 @@
 namespace RDKit {
 namespace Canon {
 
+namespace {
+void flipIfNeeded(Bond::BondStereo &st1,
+                  const canon_atom *const *controllingAtoms) {
+  CHECK_INVARIANT(controllingAtoms[0], "missing controlling atom");
+  CHECK_INVARIANT(controllingAtoms[2], "missing controlling atom");
+  bool flip = false;
+  if (controllingAtoms[1] &&
+      controllingAtoms[1]->index > controllingAtoms[0]->index) {
+    flip = !flip;
+  }
+  if (controllingAtoms[3] &&
+      controllingAtoms[3]->index > controllingAtoms[2]->index) {
+    flip = !flip;
+  }
+  if (flip) {
+    if (st1 == Bond::BondStereo::STEREOCIS) {
+      st1 = Bond::BondStereo::STEREOTRANS;
+    } else if (st1 == Bond::BondStereo::STEREOTRANS) {
+      st1 = Bond::BondStereo::STEREOCIS;
+    }
+  }
+}
+}  // namespace
+
 int bondholder::compareStereo(const bondholder &o) const {
-  if (stype == Bond::BondStereo::STEREONONE) {
-    if (o.stype == Bond::BondStereo::STEREONONE) {
-      return 0;
-    } else {
-      return -1;
-    }
-  }
-  if (o.stype == Bond::BondStereo::STEREONONE) {
-    return 1;
-  }
-  if (o.stype == Bond::BondStereo::STEREOANY) {
-    if (o.stype == Bond::BondStereo::STEREOANY) {
-      return 0;
-    } else {
-      return -1;
-    }
-  }
-  if (o.stype == Bond::BondStereo::STEREOANY) {
-    return 1;
-  }
-  // we have some kind of specified stereo on each bond, work is required
   auto st1 = stype;
   auto st2 = o.stype;
+  if (st1 == Bond::BondStereo::STEREONONE) {
+    if (st2 == Bond::BondStereo::STEREONONE) {
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+  if (st2 == Bond::BondStereo::STEREONONE) {
+    return 1;
+  }
+  if (st1 == Bond::BondStereo::STEREOANY) {
+    if (st2 == Bond::BondStereo::STEREOANY) {
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+  if (st2 == Bond::BondStereo::STEREOANY) {
+    return 1;
+  }
+  // we have some kind of specified stereo on both bonds, work is required
+
   // if both have absolute stereo labels we can compare them directly
   if ((st1 == Bond::BondStereo::STEREOE || st1 == Bond::BondStereo::STEREOZ) &&
       (st2 == Bond::BondStereo::STEREOE || st2 == Bond::BondStereo::STEREOZ)) {
@@ -57,46 +82,8 @@ int bondholder::compareStereo(const bondholder &o) const {
   }
 
   // check to see if we need to flip the controlling atoms due to atom ranks
-  {
-    CHECK_INVARIANT(controllingAtoms[0], "missing controlling atom");
-    CHECK_INVARIANT(controllingAtoms[2], "missing controlling atom");
-    bool flip = false;
-    if (controllingAtoms[1] &&
-        controllingAtoms[1]->index > controllingAtoms[0]->index) {
-      flip = !flip;
-    }
-    if (controllingAtoms[3] &&
-        controllingAtoms[3]->index > controllingAtoms[2]->index) {
-      flip = !flip;
-    }
-    if (flip) {
-      if (st1 == Bond::BondStereo::STEREOCIS) {
-        st1 = Bond::BondStereo::STEREOTRANS;
-      } else if (st1 == Bond::BondStereo::STEREOTRANS) {
-        st1 = Bond::BondStereo::STEREOCIS;
-      }
-    }
-  }
-  {
-    CHECK_INVARIANT(o.controllingAtoms[0], "missing controlling atom");
-    CHECK_INVARIANT(o.controllingAtoms[2], "missing controlling atom");
-    bool flip = false;
-    if (o.controllingAtoms[1] &&
-        o.controllingAtoms[1]->index > o.controllingAtoms[0]->index) {
-      flip = !flip;
-    }
-    if (o.controllingAtoms[3] &&
-        o.controllingAtoms[3]->index > o.controllingAtoms[2]->index) {
-      flip = !flip;
-    }
-    if (flip) {
-      if (st2 == Bond::BondStereo::STEREOCIS) {
-        st2 = Bond::BondStereo::STEREOTRANS;
-      } else if (st2 == Bond::BondStereo::STEREOTRANS) {
-        st2 = Bond::BondStereo::STEREOCIS;
-      }
-    }
-  }
+  flipIfNeeded(st1, controllingAtoms);
+  flipIfNeeded(st2, o.controllingAtoms);
   if (st1 < st2) {
     return -1;
   } else if (st1 > st2) {
