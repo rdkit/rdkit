@@ -135,16 +135,62 @@ TEST_CASE("chirality and canonicalization") {
     std::vector<unsigned int> ranks;
     bool breakTies = false;
     Canon::rankMolAtoms(*mol, ranks, breakTies);
-    std::copy(ranks.begin(), ranks.end(),
-              std::ostream_iterator<unsigned int>(std::cerr, " "));
-    std::cerr << std::endl;
     CHECK(ranks[1] == ranks[5]);
     mol->getAtomWithIdx(1)->clearProp(common_properties::_CIPCode);
     mol->getAtomWithIdx(5)->clearProp(common_properties::_CIPCode);
     Canon::rankMolAtoms(*mol, ranks, breakTies);
+    CHECK(ranks[1] == ranks[5]);
+  }
+}
+TEST_CASE("double bond stereo and canonicalization") {
+  SECTION("basics") {
+    auto mol = "CC=C(F)C(B)C(F)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 4);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOTRANS);
+    mol->getBondWithIdx(7)->setStereoAtoms(4, 9);
+    mol->getBondWithIdx(7)->setStereo(Bond::BondStereo::STEREOCIS);
+    bool breakTies = false;
+    std::vector<unsigned int> ranks;
+    Canon::rankMolAtoms(*mol, ranks, breakTies);
     std::copy(ranks.begin(), ranks.end(),
               std::ostream_iterator<unsigned int>(std::cerr, " "));
     std::cerr << std::endl;
-    CHECK(ranks[1] == ranks[5]);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
+    mol->getBondWithIdx(7)->setStereo(Bond::BondStereo::STEREOTRANS);
+    std::vector<unsigned int> ranks2;
+    Canon::rankMolAtoms(*mol, ranks2, breakTies);
+    std::copy(ranks2.begin(), ranks2.end(),
+              std::ostream_iterator<unsigned int>(std::cerr, " "));
+    std::cerr << std::endl;
+    CHECK(ranks[0] == ranks2[9]);
+    CHECK(ranks[1] == ranks2[8]);
+    CHECK(ranks[2] == ranks2[6]);
+    CHECK(ranks[3] == ranks2[7]);
+    CHECK(ranks[4] == ranks2[4]);
+    CHECK(ranks[5] == ranks2[5]);
+
+    // same as previous example, different controlling atoms
+    mol->getBondWithIdx(7)->setStereoAtoms(7, 9);
+    mol->getBondWithIdx(7)->setStereo(Bond::BondStereo::STEREOCIS);
+    std::vector<unsigned int> ranks3;
+    Canon::rankMolAtoms(*mol, ranks3, breakTies);
+    std::copy(ranks3.begin(), ranks3.end(),
+              std::ostream_iterator<unsigned int>(std::cerr, " "));
+    std::cerr << std::endl;
+    CHECK(ranks2 == ranks3);
+  }
+  SECTION("STEREOANY is higher priority than STEREONONE") {
+    auto mol = "CC=C(F)C(B)C(F)=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(7)->setStereoAtoms(4, 9);
+    mol->getBondWithIdx(7)->setStereo(Bond::BondStereo::STEREOANY);
+    bool breakTies = false;
+    std::vector<unsigned int> ranks;
+    Canon::rankMolAtoms(*mol, ranks, breakTies);
+    std::copy(ranks.begin(), ranks.end(),
+              std::ostream_iterator<unsigned int>(std::cerr, " "));
+    std::cerr << std::endl;
+    CHECK(ranks[0] < ranks[9]);
   }
 }
