@@ -10,6 +10,7 @@
 //
 
 #include "MolDraw2DQt.h"
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <QPainter>
 #include <QString>
 
@@ -18,9 +19,6 @@
 #else
 #include "DrawTextQt.h"
 #endif
-
-using namespace boost;
-using namespace std;
 
 namespace RDKit {
 
@@ -114,14 +112,15 @@ void MolDraw2DQt::drawChar(char c, const Point2D &cds) {
 }
 
 // ****************************************************************************
-void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds, bool rawCoords) {
+void MolDraw2DQt::drawPolygon(const std::vector<Point2D> &cds, bool rawCoords) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
   d_qp->save();
   QBrush brush = d_qp->brush();
-  if (fillPolys())
+  if (fillPolys()) {
     brush.setStyle(Qt::SolidPattern);
-  else
+  } else {
     brush.setStyle(Qt::NoBrush);
+  }
   d_qp->setBrush(brush);
 
   QPointF *points = new QPointF[cds.size()];
@@ -135,6 +134,42 @@ void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds, bool rawCoords) {
 }
 
 // ****************************************************************************
+void MolDraw2DQt::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                               const DrawColour &col1, const DrawColour &,
+                               unsigned int nSegments, double vertOffset,
+                               bool rawCoords) {
+  PRECONDITION(nSegments > 1, "too few segments");
+
+  auto segments =
+      MolDraw2D_detail::getWavyLineSegments(cds1, cds2, nSegments, vertOffset);
+
+  QPen pen = d_qp->pen();
+  pen.setStyle(Qt::SolidLine);
+  pen.setCapStyle(Qt::FlatCap);
+  pen.setWidth(getDrawLineWidth());
+
+  setColour(col1);
+
+  QPainterPath path;
+
+  auto c1 = std::get<0>(segments[0]);
+  c1 = rawCoords ? c1 : getDrawCoords(c1);
+
+  path.moveTo(QPointF(c1.x, c1.y));
+  for (unsigned int i = 0; i < nSegments; ++i) {
+    auto cpt1 = std::get<1>(segments[i]);
+    cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
+    auto cpt2 = std::get<2>(segments[i]);
+    cpt2 = rawCoords ? cpt2 : getDrawCoords(cpt2);
+    auto segpt = std::get<3>(segments[i]);
+    segpt = rawCoords ? segpt : getDrawCoords(segpt);
+    path.cubicTo(QPointF(cpt1.x, cpt1.y), QPointF(cpt2.x, cpt2.y),
+                 QPointF(segpt.x, segpt.y));
+  }
+  d_qp->strokePath(path, pen);
+}
+
+// ****************************************************************************
 void MolDraw2DQt::clearDrawing() {
   QColor this_col(int(255.0 * drawOptions().backgroundColour.r),
                   int(255.0 * drawOptions().backgroundColour.g),
@@ -144,5 +179,4 @@ void MolDraw2DQt::clearDrawing() {
   d_qp->setBackground(QBrush(this_col));
   d_qp->fillRect(offset().x, offset().y, width(), height(), this_col);
 }
-
 }  // namespace RDKit

@@ -106,6 +106,34 @@ TEST_CASE("Github #5122: bad highlighting when bondLineWidth is increased") {
   }
 }
 
+TEST_CASE("wavy bonds and Qt") {
+  {
+    auto mol = "CC=CC"_smiles;
+    REQUIRE(mol);
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOANY);
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
+    CHECK(mol->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+
+    {
+      QImage qimg(400, 400, QImage::Format_ARGB32);
+      QPainter qpt(&qimg);
+      MolDraw2DQt drawer(qimg.width(), qimg.height(), &qpt);
+      drawer.drawOptions().bondLineWidth = 3;
+      drawer.drawOptions().scaleHighlightBondWidth = true;
+      drawer.drawMolecule(*mol, "wavy bonds");
+      qimg.save("testWavyBonds.qt.1.png");
+    }
+  }
+}
+
 int main(int argc, char* argv[]) {
   QGuiApplication app(argc, argv);
 
