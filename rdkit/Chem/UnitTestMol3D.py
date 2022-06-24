@@ -381,7 +381,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromMolFile(filename)
     smiles = set(Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol))
     # switches the centers linked by an "OR", but not the absolute group
-    self.assertEqual(smiles, {r'C[C@H]([C@@H](C)F)[C@@H](C)Br', r'C[C@H](F)[C@H](C)[C@@H](C)Br'})
+    self.assertEqual(smiles, {r'C[C@H]([C@@H](C)F)[C@@H](C)Br', r'C[C@@H]([C@H](C)F)[C@@H](C)Br'})
 
     original_smiles = Chem.MolToSmiles(mol)
     self.assertIn(original_smiles, smiles)
