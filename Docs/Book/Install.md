@@ -269,7 +269,7 @@ See below for a list of FAQ and solutions.
 
 ##### Specifying install location
 
-You need to turn `RDK_INSTALL_INTRE` off:
+You need to turn `RDK_INSTALL_INTREE` off:
 
 ```
 cmake -DRDK_INSTALL_INTREE=OFF -DCMAKE_INSTALL_PREFIX=/path/as/you/like ..
