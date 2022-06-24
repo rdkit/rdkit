@@ -381,5 +381,32 @@ bool isPointInTriangle(const Point2D &pt, const Point2D &t1, const Point2D &t2,
   return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1;
 }
 
+std::vector<std::tuple<Point2D, Point2D, Point2D, Point2D>> getWavyLineSegments(
+    const Point2D &p1, const Point2D &p2, unsigned int nSegments,
+    double vertOffset) {
+  std::vector<std::tuple<Point2D, Point2D, Point2D, Point2D>> res;
+
+  PRECONDITION(nSegments > 1, "too few segments");
+
+  if (nSegments % 2) {
+    ++nSegments;  // we're going to assume an even number of segments
+  }
+
+  Point2D delta = (p2 - p1);
+  Point2D perp(delta.y, -delta.x);
+  perp.normalize();
+  perp *= vertOffset;
+  delta /= nSegments;
+
+  for (unsigned int i = 0; i < nSegments; ++i) {
+    Point2D startpt = p1 + delta * i;
+    Point2D segpt = startpt + delta;
+    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
+    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    res.emplace_back(startpt, cpt1, cpt2, segpt);
+  }
+  return res;
+}
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
