@@ -114,22 +114,32 @@ void MolDraw2DQt::drawChar(char c, const Point2D &cds) {
 // ****************************************************************************
 void MolDraw2DQt::drawPolygon(const std::vector<Point2D> &cds, bool rawCoords) {
   PRECONDITION(cds.size() >= 3, "must have at least three points");
-  d_qp->save();
-  QBrush brush = d_qp->brush();
-  if (fillPolys()) {
-    brush.setStyle(Qt::SolidPattern);
-  } else {
-    brush.setStyle(Qt::NoBrush);
-  }
-  d_qp->setBrush(brush);
-
   QPointF *points = new QPointF[cds.size()];
   for (unsigned int i = 0; i < cds.size(); ++i) {
     Point2D lc = rawCoords ? cds[i] : getDrawCoords(cds[i]);
     points[i] = QPointF(lc.x, lc.y);
   }
-  d_qp->drawConvexPolygon(points, cds.size());
-  d_qp->restore();
+  QPen pen = d_qp->pen();
+  pen.setStyle(Qt::SolidLine);
+  pen.setCapStyle(Qt::FlatCap);
+  pen.setWidth(getDrawLineWidth());
+  if (fillPolys()) {
+    d_qp->save();
+    d_qp->setPen(pen);
+    QBrush brush = d_qp->brush();
+    brush.setStyle(Qt::SolidPattern);
+    d_qp->setBrush(brush);
+
+    d_qp->drawConvexPolygon(points, cds.size());
+    d_qp->restore();
+  } else {
+    QPainterPath path;
+    path.moveTo(points[0]);
+    for (unsigned int i = 0; i < cds.size(); ++i) {
+      path.lineTo(points[i]);
+    }
+    d_qp->strokePath(path, pen);
+  }
   delete[] points;
 }
 
