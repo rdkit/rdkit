@@ -11,6 +11,8 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/BadFileException.h>
@@ -84,6 +86,23 @@ void set_fuse_label(Atom*atm, unsigned int idx) {
     }
 }
 
+template <typename Q>
+Atom * addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
+  PRECONDITION(qry, "bad query");
+  auto *atm = mol.getAtomWithIdx(idx);
+  auto *qa = new QueryAtom(*atm);
+  qa->setQuery(qry);
+  qa->setNoImplicit(true);
+  mol.replaceAtom(idx, qa);
+  Atom *res =mol.getAtomWithIdx(idx);
+  if (symbol != "") {
+    res->setProp(RDKit::common_properties::atomLabel,
+                                     symbol);
+  }
+  delete qa;
+  return res;
+}
+
 template<class T>
 std::vector<T> to_vec(const std::string &s) {
     std::vector<T> n;
@@ -120,6 +139,7 @@ void parse_fragment(RWMol &mol,
       int mergeparent = -1;
       int rgroup_num = -1;
       int isotope = 0;
+      std::string query_label;
       bool has_atom_stereo = false;
       std::vector<int> bond_ordering;
       std::vector<double> atom_coords;
@@ -152,9 +172,20 @@ void parse_fragment(RWMol &mol,
                           for(auto &snode : tnode.second) {
                               if(snode.first == "s") {
                                   auto s = snode.second.data();
-                                  if(s.size()  && s[0] == 'R') {
-                                      rgroup_num = stoi(s.substr(1));
-                                      elemno = 0;
+                                  if(s.size()) {
+                                      if(s[0] == 'R') {
+                                          if (s.size() > 1) {
+                                              rgroup_num = stoi(s.substr(1));
+                                          }
+                                          elemno = 0;
+                                          query_label = s;
+                                      } else if (s == "A") {
+                                          query_label = s;
+                                          elemno = 0;
+                                      } else if (s == "Q") {
+                                          query_label = s;
+                                          elemno = 0;
+                                      }
                                   }
                                   break;
                               }
@@ -203,12 +234,23 @@ void parse_fragment(RWMol &mol,
       }
       rd_atom->setProp<std::vector<double>>(CDX_ATOM_POS, atom_coords);
       rd_atom->setProp<unsigned int>(CDX_ATOM_ID, atom_id);
-      ids[atom_id] = rd_atom;
+      
       const bool updateLabels=true;
       const bool takeOwnership=true;
       auto idx = mol.addAtom(rd_atom, updateLabels, takeOwnership);
-        assert (idx == rd_atom->getIdx());
-      
+      if (query_label.size()) {
+          if (query_label[0] == 'R') {
+              rd_atom = addquery(makeAtomNullQuery(), query_label, mol, idx);
+          }
+          else if (query_label == "A") {
+              rd_atom = addquery(makeAAtomQuery(), query_label, mol, idx);
+          } else if (query_label == "Q") {
+              rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);
+          } else {
+              rd_atom->setProp(RDKit::common_properties::atomLabel, query_label);
+          }
+      }
+      ids[atom_id] = rd_atom;
       if (nodetype == "Nickname" || nodetype == "Fragment") {
           for(auto &fragment: node.second) {
               if(fragment.first == "fragment") {

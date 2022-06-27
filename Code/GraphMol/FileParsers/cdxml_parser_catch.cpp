@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -372,6 +373,22 @@ TEST_CASE("CDXML") {
             for(auto &mol : mols) {
                 CHECK(MolToSmiles(*mol) == expected[i++]);
             }
+        }
+    }
+    SECTION("Queries") {
+        auto fname = cdxmlbase + "query-atoms.cdxml";
+        
+        std::vector<std::string> expected = {"*c1ccccc1", "*c1ccccc1", "*c1ccccc1"};
+        std::vector<std::string> expected_smarts = {
+            "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-*",
+            "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#1]",
+            "[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[!#6&!#1]"};
+        auto mols = CDXMLFileToMols(fname);
+        CHECK(mols.size()==expected.size());
+        int i=0;
+        for(auto &mol : mols) {
+            CHECK(MolToSmarts(*mol) == expected_smarts[i]);
+            CHECK(MolToSmiles(*mol) == expected[i++]);
         }
     }
 }
