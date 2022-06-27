@@ -119,6 +119,7 @@ void parse_fragment(RWMol &mol,
       int atommap = 0;
       int mergeparent = -1;
       int rgroup_num = -1;
+      int isotope = 0;
       bool has_atom_stereo = false;
       std::vector<int> bond_ordering;
       std::vector<double> atom_coords;
@@ -132,6 +133,8 @@ void parse_fragment(RWMol &mol,
               num_hydrogens = stoi(attr.second.data());
           } else if (attr.first == "Charge") {
               charge = stoi(attr.second.data());
+          } else if (attr.first == "Isotope") {
+              isotope = stoi(attr.second.data());
           } else if(attr.first == "NodeType") {
               nodetype = attr.second.data();
               if (nodetype == "Nickname" || nodetype == "Fragment") {
@@ -183,9 +186,10 @@ void parse_fragment(RWMol &mol,
       Atom *rd_atom = new Atom(elemno);
       rd_atom->setFormalCharge(charge);
       rd_atom->setNumExplicitHs(num_hydrogens);
-        if(rgroup_num >= 0) {
-            rd_atom->setAtomMapNum(rgroup_num);
-        }
+      rd_atom->setIsotope(isotope);
+      if(rgroup_num >= 0) {
+          rd_atom->setAtomMapNum(rgroup_num);
+      }
       set_fuse_label(rd_atom, atommap);
       if(mergeparent > 0) {
           rd_atom->setProp<int>("MergeParent", mergeparent);

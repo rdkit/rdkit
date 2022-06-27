@@ -344,4 +344,34 @@ TEST_CASE("CDXML") {
             CHECK(MolToSmiles(*mol) == expected[i++]);
         }
     }
+    SECTION("DEUTERIUM") {
+        auto fname = cdxmlbase + "deuterium.cdxml";
+        {
+            std::vector<std::string> expected = {"[2H]c1c([2H])c([2H])c([2H])c([2H])c1[2H]"};
+            auto mols = CDXMLFileToMols(fname);
+            CHECK(mols.size()==expected.size());
+            int i=0;
+            for(auto &mol : mols) {
+                CHECK(MolToSmiles(*mol) == expected[i++]);
+            }
+        }
+        {
+            std::vector<std::string> expected = {"[2H]C1=C([2H])C([2H])=C([2H])C([2H])=C1[2H]"};
+            auto mols = CDXMLFileToMols(fname, false, false);
+            CHECK(mols.size()==expected.size());
+            int i=0;
+            for(auto &mol : mols) {
+                CHECK(MolToSmiles(*mol) == expected[i++]);
+            }
+        }
+        {
+            std::vector<std::string> expected = {"[2H]C1=C([2H])C([2H])=C([2H])C([2H])=C1[2H]"};
+            auto mols = CDXMLFileToMols(fname, false, true);
+            CHECK(mols.size()==expected.size());
+            int i=0;
+            for(auto &mol : mols) {
+                CHECK(MolToSmiles(*mol) == expected[i++]);
+            }
+        }
+    }
 }
