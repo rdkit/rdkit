@@ -37,7 +37,7 @@ void make_query_atoms(RWMol *mol) {
 }  // namespace
 
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
-std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(
+std::vector<std::unique_ptr<ChemicalReaction>> CDXMLDataStreamToChemicalReactions(
   std::istream &inStream, bool sanitize, bool removeHs) {
   auto mols = CDXMLDataStreamToMols(inStream, sanitize, removeHs);
   std::vector<std::unique_ptr<ChemicalReaction>> result;
@@ -93,7 +93,7 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(
   return result;
 }
 
-std::vector<std::unique_ptr<ChemicalReaction>> CDXMLBlockToChemicalReactions(
+std::vector<std::unique_ptr<ChemicalReaction>> CDXMLToChemicalReactions(
   const std::string &rxnBlock, bool sanitize, bool removeHs) {
   std::istringstream inStream(rxnBlock);
   return CDXMLDataStreamToChemicalReactions(inStream, sanitize, removeHs);
