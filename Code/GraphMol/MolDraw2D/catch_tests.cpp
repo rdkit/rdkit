@@ -4636,3 +4636,42 @@ M  END)CTAB"_ctab;
 #endif
   }
 }
+
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+TEST_CASE("GitHub #5383: cairo error when using similarity maps", "") {
+  auto m1 = "C1N[C@@H]2OCC12"_smiles;
+  REQUIRE(m1);
+
+  SECTION("basics") {
+    MolDraw2DCairo drawer(250, 250, -1, -1, NO_FREETYPE);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    drawer.drawOptions().padding = 0.1;
+
+    const auto conf = m1->getConformer();
+    std::vector<Point2D> cents(conf.getNumAtoms());
+    std::vector<double> weights(conf.getNumAtoms());
+    std::vector<double> widths(conf.getNumAtoms());
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+      weights[i] = 1;
+      widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
+                            m1->getAtomWithIdx(i)->getAtomicNum());
+    }
+
+    std::vector<double> levels;
+    drawer.clearDrawing();
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("contourMol_2.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("contourMol_2.svg");
+  }
+}
+#endif

@@ -200,6 +200,10 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds,
 
 // ****************************************************************************
 void MolDraw2DCairo::clearDrawing() {
+  if (needs_init_) {
+    initDrawing();
+    needs_init_ = false;
+  }
   PRECONDITION(dp_cr, "no draw context");
   setColour(drawOptions().backgroundColour);
   cairo_rectangle(dp_cr, offset().x, offset().y, width(), height());
