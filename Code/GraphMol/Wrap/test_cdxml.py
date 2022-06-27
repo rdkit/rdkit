@@ -275,7 +275,7 @@ class TestCase(unittest.TestCase):
          E="28"
          BS="N"
         /></fragment></page></CDXML>"""
-    mols = Chem.MolsFromCDXMLString(cdxml)
+    mols = Chem.MolsFromCDXML(cdxml)
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1");
     

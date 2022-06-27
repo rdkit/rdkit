@@ -8,20 +8,17 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_CDXML_FILEPARSERS_H
-#define _RD_CDXML_FILEPARSERS_H
+#ifndef RD_CDXML_FILEPARSERS_H
+#define RD_CDXML_FILEPARSERS_H
 
 #include <RDGeneral/types.h>
-#include <GraphMol/RDKitBase.h>
-
 #include <string>
 #include <iostream>
 #include <vector>
-#include <exception>
-
-#include <boost/shared_ptr.hpp>
 
 namespace RDKit {
+class RWMol;
+
 // \brief construct molecules from a CDXML file
 /*!
  *   \param inStream - string containing the mol block
@@ -31,7 +28,7 @@ namespace RDKit {
  *                     is only done if the molecule is sanitized
  * correctness of the contents.
  */
-RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
+RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
 			       std::istream &inStream,
 			       bool sanitize = true,
 			       bool removeHs = true);
@@ -58,7 +55,7 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(
  *                     is only done if the molecule is sanitized
  * correctness of the contents.
  */
-RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLStringToMols(
+RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
 			       const std::string &cdxml,
 			       bool sanitize = true,
 			       bool removeHs = true);

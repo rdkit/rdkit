@@ -288,7 +288,7 @@ void set_reaction_data(std::string type,
 }
 } // namepspace
 
-std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
+std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
 			       std::istream &inStream,
 			       bool sanitize,
 			       bool removeHs) {
@@ -465,15 +465,15 @@ std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
   }
-  return CDXMLToMols(ifs, sanitize, removeHs);
+  return CDXMLDataStreamToMols(ifs, sanitize, removeHs);
 }
   
-std::vector<std::unique_ptr<RWMol>> CDXMLStringToMols(
+std::vector<std::unique_ptr<RWMol>> CDXMLToMols(
 			       const std::string &cdxml,
 			       bool sanitize,
 			       bool removeHs) {
   std::stringstream iss(cdxml);
-  return CDXMLToMols(iss, sanitize, removeHs);
+  return CDXMLDataStreamToMols(iss, sanitize, removeHs);
 }
 
 }

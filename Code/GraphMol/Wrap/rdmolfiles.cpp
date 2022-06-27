@@ -593,7 +593,7 @@ python::object MolsFromCDXMLFile(const char *filename, bool sanitize, bool remov
   return python::tuple(res);
 }
 
-python::tuple MolsFromCDXMLString(python::object cdxml, bool sanitize, bool removeHs) {
+python::tuple MolsFromCDXML(python::object cdxml, bool sanitize, bool removeHs) {
   auto mols = CDXMLStringToMols(pyObjectToString(cdxml), sanitize, removeHs);
   python::list res;
   for (auto &mol : mols) {
@@ -1942,7 +1942,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def("MolsFromCDXMLFile", MolsFromCDXMLFile,
 	      (python::arg("filename"), python::arg("sanitize")=true, python::arg("removeHs")=true),
 	      "returns a tuple of molecules constructed from a CDXML file");
-  python::def("MolsFromCDXMLString", MolsFromCDXMLString,
+  python::def("MolsFromCDXML", MolsFromCDXML,
 	      (python::arg("cdxml"), python::arg("sanitize")=true, python::arg("removeHs")=true),
 	      "returns a tuple of molecules constructed from a CDXML string");
   
