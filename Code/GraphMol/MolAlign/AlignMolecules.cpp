@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +13,9 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/QueryOps.h>
+#include <GraphMol/QueryBond.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
 #include <Numerics/Alignment/AlignPoints.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 
@@ -70,8 +72,38 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   return res;
 }
 
+namespace {
+void symmetrizeTerminalAtoms(RWMol &mol) {
+  // clang-format off
+  static const std::string qsmarts =
+      "[{atomPattern};$([{atomPattern}]-[*]=[{atomPattern}]),$([{atomPattern}]=[*]-[{atomPattern}])]~[*]";
+  static std::map<std::string, std::string> replacements = {
+      {"{atomPattern}", "O,N;D1"}};
+  // clang-format on
+  static SmartsParserParams ps;
+  ps.replacements = &replacements;
+  static const std::unique_ptr<RWMol> qry{SmartsToMol(qsmarts, ps)};
+  CHECK_INVARIANT(qry, "bad query pattern");
+
+  auto matches = SubstructMatch(mol, *qry);
+  if (matches.empty()) {
+    return;
+  }
+
+  QueryBond qb;
+  qb.setQuery(makeSingleOrDoubleBondQuery());
+  for (const auto &match : matches) {
+    mol.getAtomWithIdx(match[0].second)->setFormalCharge(0);
+    auto obond = mol.getBondBetweenAtoms(match[0].second, match[1].second);
+    CHECK_INVARIANT(obond, "could not find expected bond");
+    mol.replaceBond(obond->getIdx(), &qb);
+  }
+}
+}  // namespace
+
 double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
-                  const std::vector<MatchVectType> &map, int maxMatches) {
+                  const std::vector<MatchVectType> &map, int maxMatches,
+                  bool symmetrizeConjugatedTerminalGroups) {
   std::vector<MatchVectType> matches = map;
   if (matches.empty()) {
     bool uniquify = false;
@@ -79,7 +111,11 @@ double getBestRMS(ROMol &probeMol, ROMol &refMol, int probeId, int refId,
     bool useChirality = false;
     bool useQueryQueryMatches = false;
 
-    SubstructMatch(refMol, probeMol, matches, uniquify, recursionPossible,
+    std::unique_ptr<RWMol> probeQuery{new RWMol(probeMol)};
+    if (symmetrizeConjugatedTerminalGroups) {
+      symmetrizeTerminalAtoms(*probeQuery);
+    }
+    SubstructMatch(refMol, *probeQuery, matches, uniquify, recursionPossible,
                    useChirality, useQueryQueryMatches, maxMatches);
 
     if (matches.empty()) {
