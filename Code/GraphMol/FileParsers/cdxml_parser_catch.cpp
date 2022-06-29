@@ -391,4 +391,30 @@ TEST_CASE("CDXML") {
             CHECK(MolToSmiles(*mol) == expected[i++]);
         }
     }
+    SECTION("Enhanced Stereo") {
+        auto fname = cdxmlbase + "beta-cypermethrin.cdxml";
+        std::vector<std::string> expected = {"CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
+        std::vector<std::string> expected_cx = {"CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1 |&1:3,&2:8,12|"};
+        auto mols = CDXMLFileToMols(fname);
+        CHECK(mols.size()==expected.size());
+        int i=0;
+        for(auto &mol : mols) {
+            mol.get()->clearConformers();
+            CHECK(MolToSmiles(*mol) == expected[i]);
+            CHECK(MolToCXSmiles(*mol) == expected_cx[i++]);
+        }
+    }
+    SECTION("Enhanced Stereo 2") {
+        auto fname = cdxmlbase + "beta-cypermethrin-or-abs.cdxml";
+        std::vector<std::string> expected = {"CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
+        std::vector<std::string> expected_cx = {"CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1 |o1:8,12|"};
+        auto mols = CDXMLFileToMols(fname);
+        CHECK(mols.size()==expected.size());
+        int i=0;
+        for(auto &mol : mols) {
+            mol.get()->clearConformers();
+            CHECK(MolToSmiles(*mol) == expected[i]);
+            CHECK(MolToCXSmiles(*mol) == expected_cx[i++]);
+        }
+    }
 }

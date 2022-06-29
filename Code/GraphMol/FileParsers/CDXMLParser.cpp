@@ -42,9 +42,9 @@ const std::string CDX_REAGENT_ID("CDX_REAGENT_ID");
 const std::string CDX_PRODUCT_ID("CDX_PRODUCT_ID");
 const std::string CDX_AGENT_ID("CDX_AGENT_ID");
 const std::string CDX_ATOM_POS("CDX_ATOM_POS");
-const std::string CDX_ATOM_ID("CDX_ATOM_ID");
-const std::string CDX_BOND_ID("CDX_BOND_ID");
-const std::string CDX_BOND_ORDERING("DXML_BOND_ORDERING");
+const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
+const std::string CDX_BOND_ID("_CDX_BOND_ID");
+const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
 
 struct BondInfo {
     int bond_id;
@@ -58,6 +58,13 @@ struct BondInfo {
         // handle aromatic bond type
         return Bond::BondType::UNSPECIFIED;
     }
+};
+
+struct StereoGroupInfo {
+    int sgroup = -1;
+    bool conflictingSgroupTypes = false;
+    RDKit::StereoGroupType grouptype;
+    std::vector<Atom*> atoms;
 };
 
 struct SchemeInfo {
@@ -128,6 +135,8 @@ void parse_fragment(RWMol &mol,
   // for atom in frag
   int atom_id;
   std::vector<BondInfo> bonds;
+  std::map<int, StereoGroupInfo> sgroups;
+    
   // nodetypes = https://www.cambridgesoft.com/services/documentation/sdk/chemdraw/cdx/properties/Node_Type.htm
   for(auto &node: frag) {
     if(node.first == "n") { // atom node
@@ -138,6 +147,10 @@ void parse_fragment(RWMol &mol,
       int mergeparent = -1;
       int rgroup_num = -1;
       int isotope = 0;
+      int sgroup = -1;
+      StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+      bool skipEnhancedStereo = false;
+        
       std::string query_label;
       bool has_atom_stereo = false;
       std::vector<int> bond_ordering;
@@ -211,7 +224,22 @@ void parse_fragment(RWMol &mol,
               }
           } else if (attr.first == "p") {
               atom_coords = to_vec<double>(attr.second.data());
+          } else if (attr.first == "EnhancedStereoGroupNum") {
+              sgroup = stoi(attr.second.data());
+          } else if (attr.first == "EnhancedStereoType") {
+              auto stereo_type = attr.second.data();
+              if (stereo_type == "And") {
+                  grouptype = RDKit::StereoGroupType::STEREO_AND;
+              } else if (stereo_type == "Or") {
+                  grouptype = RDKit::StereoGroupType::STEREO_OR;
+              } else if (stereo_type == "Absolute") {
+                  grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+              } else {
+                  BOOST_LOG(rdWarningLog) << "Unhandled enhanced stereo type " << stereo_type << " ignoring" << std::endl;
+                  skipEnhancedStereo = true;
+              }
           }
+          
       }
       // add the atom
       Atom *rd_atom = new Atom(elemno);
@@ -225,9 +253,9 @@ void parse_fragment(RWMol &mol,
       if(mergeparent > 0) {
           rd_atom->setProp<int>("MergeParent", mergeparent);
       }
-      if(has_atom_stereo) {
-          rd_atom->setProp<std::vector<int>>(CDX_BOND_ORDERING, bond_ordering);
-      }
+      //if(has_atom_stereo) {
+      //    rd_atom->setProp<std::vector<int>>(CDX_BOND_ORDERING, bond_ordering);
+      //}
       
       rd_atom->setProp<std::vector<double>>(CDX_ATOM_POS, atom_coords);
       rd_atom->setProp<unsigned int>(CDX_ATOM_ID, atom_id);
@@ -246,6 +274,15 @@ void parse_fragment(RWMol &mol,
           } else {
               rd_atom->setProp(RDKit::common_properties::atomLabel, query_label);
           }
+      }
+      if( sgroup!=-1 ) {
+          auto &stereo = sgroups[sgroup];
+          if(stereo.sgroup != -1 && stereo.grouptype != grouptype ) {
+              BOOST_LOG(rdWarningLog) << "StereoGroup " << sgroup << " has conflicting stereo group types, ignoring" << std::endl;
+              stereo.conflictingSgroupTypes = true;
+          }
+          stereo.grouptype = grouptype;
+          stereo.atoms.push_back(rd_atom);
       }
       ids[atom_id] = rd_atom; // The mol has ownership so this can't leak
       if (nodetype == "Nickname" || nodetype == "Fragment") {
@@ -303,6 +340,16 @@ void parse_fragment(RWMol &mol,
           bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
       }
   }
+    
+  // Add the stereo groups
+  if(!sgroups.empty()) {
+      std::vector<StereoGroup> stereo_groups;
+      for(auto &sgroup: sgroups) {
+          stereo_groups.emplace_back(StereoGroup(sgroup.second.grouptype, sgroup.second.atoms));
+      }
+      mol.setStereoGroups(std::move(stereo_groups));
+  }
+  
 }
 
 void set_reaction_data(std::string type,
@@ -371,18 +418,24 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                           RWMol *res = mols.back().get();
                           Conformer *conf = new Conformer(res->getNumAtoms());
                             conf->set3D(false);
+                          bool hasConf = false;
                           for(auto &atm: res->atoms()) {
-                              const std::vector<double> coord =  atm->getProp<std::vector<double>>(CDX_ATOM_POS);
-                          
-                                RDGeom::Point3D p;
-                                if(coord.size() == 2) {
-                                    p.x = coord[0];
-                                    p.y = coord[1];
-                                    p.z = 0.0;
-                                }
-                                conf->setAtomPos(atm->getIdx(), p);
+                              if(atm->hasProp(CDX_ATOM_POS)) {
+                                  hasConf = true;
+                                  const std::vector<double> coord =  atm->getProp<std::vector<double>>(CDX_ATOM_POS);
+                                  
+                                    RDGeom::Point3D p;
+                                    if(coord.size() == 2) {
+                                        p.x = coord[0];
+                                        p.y = coord[1];
+                                        p.z = 0.0;
+                                    }
+                                    conf->setAtomPos(atm->getIdx(), p);
+                                  atm->clearProp(CDX_ATOM_POS);
+                              }
                           }
-                          res->addConformer(conf);
+                          if(hasConf)
+                              res->addConformer(conf);
                           DetectAtomStereoChemistry(*res, conf);
                           
                           if (sanitize) {
