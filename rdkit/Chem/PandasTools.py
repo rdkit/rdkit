@@ -110,6 +110,7 @@ import re
 import logging
 
 import numpy as np
+import rdkit
 from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import AllChem
@@ -117,10 +118,12 @@ from rdkit.Chem import Draw
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
-try:
-  from rdkit.Chem.Draw.IPythonConsole import InteractiveRenderer
-except ImportError:
-  InteractiveRenderer = None
+InteractiveRenderer = None
+if hasattr(rdkit, 'IPythonConsole'):
+  try:
+    from rdkit.Chem.Draw.IPythonConsole import InteractiveRenderer
+  except ImportError:
+    pass
 
 from io import BytesIO
 from xml.dom import minidom
