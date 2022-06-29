@@ -128,7 +128,6 @@ void parse_fragment(RWMol &mol,
   // for atom in frag
   int atom_id;
   std::vector<BondInfo> bonds;
-  std::map<unsigned int, Bond*> bond_ids;
   // nodetypes = https://www.cambridgesoft.com/services/documentation/sdk/chemdraw/cdx/properties/Node_Type.htm
   for(auto &node: frag) {
     if(node.first == "n") { // atom node
@@ -147,6 +146,7 @@ void parse_fragment(RWMol &mol,
       for(auto &attr: node.second.get_child("<xmlattr>")) {
           if(attr.first == "id") {
               atom_id = stoi(attr.second.data());
+              CHECK_INVARIANT(ids.find(atom_id) == ids.end(), "Invalid cdxml file, duplicated atom_id");
           } else if (attr.first == "Element") {
               elemno = stoi(attr.second.data());
           } else if(attr.first == "NumHydrogens") {
@@ -229,9 +229,6 @@ void parse_fragment(RWMol &mol,
           rd_atom->setProp<std::vector<int>>(CDX_BOND_ORDERING, bond_ordering);
       }
       
-      if(ids.find(atom_id) != ids.end()) {
-          // error fail processing
-      }
       rd_atom->setProp<std::vector<double>>(CDX_ATOM_POS, atom_coords);
       rd_atom->setProp<unsigned int>(CDX_ATOM_ID, atom_id);
       
@@ -250,7 +247,7 @@ void parse_fragment(RWMol &mol,
               rd_atom->setProp(RDKit::common_properties::atomLabel, query_label);
           }
       }
-      ids[atom_id] = rd_atom;
+      ids[atom_id] = rd_atom; // The mol has ownership so this can't leak
       if (nodetype == "Nickname" || nodetype == "Fragment") {
           for(auto &fragment: node.second) {
               if(fragment.first == "fragment") {
@@ -269,6 +266,7 @@ void parse_fragment(RWMol &mol,
           for(auto &attr: node.second.get_child("<xmlattr>")) {
               if(attr.first == "id") {
                   bond_id = stoi(attr.second.data());
+                  // CHECK_INVARIANT(bond_ids.find(bond_id) == bond_ids.end(), "Invalid cdxml file, duplicated atom_id");
               } else if(attr.first == "B") {
                   start_atom = stoi(attr.second.data());
               } else if (attr.first == "E") {
@@ -304,7 +302,6 @@ void parse_fragment(RWMol &mol,
       } else if (bond.display == "WedgedHashBegin" || bond.display == "WedgedHashEnd") {
           bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
       }
-      bond_ids[bond_idx] = bnd;
   }
 }
 
