@@ -429,7 +429,7 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
   std::cout << "Drawing " << mol_name << std::endl;
   double meanBondLen = MolDraw2D_detail::meanBondLength(mol_cp, confId);
   setACS1996Options(drawer.drawOptions(), meanBondLen);
-  useMDLBondWedging(mol_cp);
+  reapplyMolBlockWedging(mol_cp);
   useStrictStereo(mol_cp, confId);
   drawer.drawMolecule(mol_cp, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
@@ -514,7 +514,7 @@ std::string drawMolACS1996Cairo(
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   //  opts.addAtomIndices = true;
-  //  opts.addBondIndices = true;
+  opts.addBondIndices = true;
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
   // the guideline is for a bond length of 14.4px, and we set things up
@@ -529,21 +529,6 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   std::string fName = getenv("RDBASE");
   fName += "/Data/Fonts/FreeSans.ttf";
   opts.fontFile = fName;
-}
-
-// ****************************************************************************
-void useMDLBondWedging(ROMol &mol) {
-  const auto conf = mol.getConformer();
-  for (auto b : mol.bonds()) {
-    if (b->getBondType() == Bond::SINGLE) {
-      int explicit_unknown_stereo;
-      if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                   explicit_unknown_stereo) &&
-          explicit_unknown_stereo) {
-        b->setBondDir(Bond::UNKNOWN);
-      }
-    }
-  }
 }
 
 // ****************************************************************************
@@ -579,6 +564,54 @@ void useStrictStereo(ROMol &mol, int confId) {
     }
   }
 }
+
+// ****************************************************************************
+void reapplyMolBlockWedging(ROMol &mol) {
+  for (auto b : mol.bonds()) {
+    int explicit_unknown_stereo = -1;
+    b->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                             explicit_unknown_stereo);
+    int bond_dir = -1;
+    b->getPropIfPresent<int>(common_properties::_MolFileBondStereo, bond_dir);
+    int cfg = -1;
+    b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg);
+    std::cout << b->getIdx() << " : " << b->getBondDir() << " : "
+              << explicit_unknown_stereo << " : " << bond_dir << " : " << cfg;
+    std::cout << std::endl;
+    if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                 explicit_unknown_stereo) &&
+        explicit_unknown_stereo) {
+      b->setBondDir(Bond::UNKNOWN);
+    }
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
+                                 bond_dir)) {
+      if (bond_dir == 1) {
+        b->setBondDir(Bond::BEGINWEDGE);
+      } else if (bond_dir == 6) {
+        b->setBondDir(Bond::BEGINDASH);
+      }
+    }
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
+      switch (cfg) {
+        case 1:
+          b->setBondDir(Bond::BEGINWEDGE);
+          break;
+        case 2:
+          if (b->getBondType() == Bond::SINGLE) {
+            b->setBondDir(Bond::UNKNOWN);
+          } else if (b->getBondType() == Bond::DOUBLE) {
+            b->setBondDir(Bond::EITHERDOUBLE);
+            b->setStereo(Bond::STEREOANY);
+          }
+          break;
+        case 3:
+          b->setBondDir(Bond::BEGINDASH);
+          break;
+      }
+    }
+  }
+}
+
 }  // namespace MolDraw2DUtils
 
 namespace MolDraw2D_detail {
