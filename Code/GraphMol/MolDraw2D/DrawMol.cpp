@@ -1724,7 +1724,8 @@ void DrawMol::makeWedgedBond(Bond *bond,
     double lineWidth = drawOptions_.bondLineWidth < 1.0
                            ? drawOptions_.bondLineWidth
                            : drawOptions_.bondLineWidth / 2.0;
-    s = new DrawShapeDashedWedge(pts, col1, col2, lineWidth,
+    bool oneLessDash(at2->getDegree() > 1);
+    s = new DrawShapeDashedWedge(pts, col1, col2, oneLessDash, lineWidth,
                                  at1->getIdx() + activeAtmIdxOffset_,
                                  at2->getIdx() + activeAtmIdxOffset_,
                                  bond->getIdx() + activeBndIdxOffset_);

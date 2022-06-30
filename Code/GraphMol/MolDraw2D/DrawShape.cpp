@@ -362,10 +362,11 @@ bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
 DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
                                            const DrawColour &col1,
                                            const DrawColour &col2,
-                                           double lineWidth, int atom1,
-                                           int atom2, int bond)
+                                           bool oneLessDash, double lineWidth,
+                                           int atom1, int atom2, int bond)
     : DrawShape(points, lineWidth, false, col1, false, atom1, atom2, bond),
-      col2_(col2) {
+      col2_(col2),
+      oneLessDash_(oneLessDash) {
   PRECONDITION(points_.size() == 3, "dashed wedge wrong points");
   at1Cds_ = points[0];
   end1Cds_ = points[1];
@@ -404,7 +405,8 @@ void DrawShapeDashedWedge::buildLines() {
     dashSep *= (end1Cds_ - at1Cds_).length() / centralLen;
     //    std::cout << "nDashes : " << nDashes << "  dashSep = " << dashSep
     //              << std::endl;
-    for (unsigned int i = 1; i < nDashes + 1; ++i) {
+    int extra = oneLessDash_ ? 0 : 1;
+    for (unsigned int i = 1; i < nDashes + extra; ++i) {
       auto e11 = at1Cds_ + e1 * rdcast<double>(i) * dashSep;
       auto e22 = at1Cds_ + e2 * rdcast<double>(i) * dashSep;
       points_.push_back(e11);
