@@ -594,7 +594,7 @@ python::object MolsFromCDXMLFile(const char *filename, bool sanitize, bool remov
 }
 
 python::tuple MolsFromCDXML(python::object cdxml, bool sanitize, bool removeHs) {
-  auto mols = CDXMLStringToMols(pyObjectToString(cdxml), sanitize, removeHs);
+  auto mols = CDXMLToMols(pyObjectToString(cdxml), sanitize, removeHs);
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
