@@ -5,7 +5,6 @@ Focus is on molecules that have differing SMILES, but
 are actually the same.
 """
 
-import textwrap
 import unittest
 
 from rdkit import Chem
@@ -37,81 +36,77 @@ class CanonicalizerTest(unittest.TestCase):
     def test_example_structure(self):
 
         structure = """
+     RDKit          2D
 
-             RDKit          2D
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 21 23 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.00838 1.55562 0 0
+M  V30 2 C -2.00918 0.555619 0 0
+M  V30 3 C -2.87558 0.056219 0 0
+M  V30 4 C -2.87638 -0.943781 0 0
+M  V30 5 C -3.74278 -1.44298 0 0
+M  V30 6 N -2.01078 -1.44438 0 0
+M  V30 7 C -1.14438 -0.945181 0 0
+M  V30 8 C -0.278781 -1.44578 0 0
+M  V30 9 C 0.587619 -0.946381 0 0
+M  V30 10 N 1.45322 -1.44718 0 0
+M  V30 11 C 2.31962 -0.947781 0 0
+M  V30 12 O 3.18522 -1.44858 0 0
+M  V30 13 C 2.32042 0.0522191 0 0
+M  V30 14 C 1.45482 0.552819 0 0
+M  V30 15 C 1.45562 1.55282 0 0
+M  V30 16 F 2.45562 1.55202 0 0
+M  V30 17 F 1.95642 2.41842 0 0
+M  V30 18 F 0.590019 2.05362 0 0
+M  V30 19 C 0.588419 0.0536191 0 0
+M  V30 20 C -0.277181 0.554219 0 0
+M  V30 21 C -1.14358 0.054819 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 1 CFG=3
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5 CFG=3
+M  V30 5 1 4 6
+M  V30 6 1 6 7
+M  V30 7 2 7 8
+M  V30 8 1 8 9
+M  V30 9 2 9 10
+M  V30 10 1 10 11
+M  V30 11 1 11 12
+M  V30 12 2 11 13
+M  V30 13 1 13 14
+M  V30 14 1 14 15
+M  V30 15 1 15 16
+M  V30 16 1 15 17
+M  V30 17 1 15 18
+M  V30 18 2 14 19
+M  V30 19 1 19 20
+M  V30 20 2 20 21
+M  V30 21 1 21 2
+M  V30 22 1 21 7
+M  V30 23 1 19 9
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEREL1 ATOMS=(2 2 4)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
 
-          0  0  0  0  0  0  0  0  0  0999 V3000
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 21 23 0 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 C -2.00838 1.55562 0 0
-        M  V30 2 C -2.00918 0.555619 0 0
-        M  V30 3 C -2.87558 0.056219 0 0
-        M  V30 4 C -2.87638 -0.943781 0 0
-        M  V30 5 C -3.74278 -1.44298 0 0
-        M  V30 6 N -2.01078 -1.44438 0 0
-        M  V30 7 C -1.14438 -0.945181 0 0
-        M  V30 8 C -0.278781 -1.44578 0 0
-        M  V30 9 C 0.587619 -0.946381 0 0
-        M  V30 10 N 1.45322 -1.44718 0 0
-        M  V30 11 C 2.31962 -0.947781 0 0
-        M  V30 12 O 3.18522 -1.44858 0 0
-        M  V30 13 C 2.32042 0.0522191 0 0
-        M  V30 14 C 1.45482 0.552819 0 0
-        M  V30 15 C 1.45562 1.55282 0 0
-        M  V30 16 F 2.45562 1.55202 0 0
-        M  V30 17 F 1.95642 2.41842 0 0
-        M  V30 18 F 0.590019 2.05362 0 0
-        M  V30 19 C 0.588419 0.0536191 0 0
-        M  V30 20 C -0.277181 0.554219 0 0
-        M  V30 21 C -1.14358 0.054819 0 0
-        M  V30 END ATOM
-        M  V30 BEGIN BOND
-        M  V30 1 1 2 1 CFG=3
-        M  V30 2 1 2 3
-        M  V30 3 1 3 4
-        M  V30 4 1 4 5 CFG=3
-        M  V30 5 1 4 6
-        M  V30 6 1 6 7
-        M  V30 7 2 7 8
-        M  V30 8 1 8 9
-        M  V30 9 2 9 10
-        M  V30 10 1 10 11
-        M  V30 11 1 11 12
-        M  V30 12 2 11 13
-        M  V30 13 1 13 14
-        M  V30 14 1 14 15
-        M  V30 15 1 15 16
-        M  V30 16 1 15 17
-        M  V30 17 1 15 18
-        M  V30 18 2 14 19
-        M  V30 19 1 19 20
-        M  V30 20 2 20 21
-        M  V30 21 1 21 2
-        M  V30 22 1 21 7
-        M  V30 23 1 19 9
-        M  V30 END BOND
-        M  V30 BEGIN COLLECTION
-        M  V30 MDLV30/STEREL1 ATOMS=(2 2 4)
-        M  V30 END COLLECTION
-        M  V30 END CTAB
-        M  END
-        >  <_CXSMILES_Data>  (1)
-        |o1:1,3|
-
-        $$$$
-        """
-        structure = textwrap.dedent(structure[1:])
+$$$$
+"""
 
         layers = hash_sdf(structure)
         expected_layers = {
-                HashLayer.CANONICAL_SMILES: "C[C@H]1C[C@@H](C)Nc2cc3nc(O)cc(C(F)(F)F)c3cc21 |o1:1,3|",
+                HashLayer.CANONICAL_SMILES: "C[C@@H]1C[C@H](C)Nc2cc3nc(O)cc(C(F)(F)F)c3cc21 |o1:1,3|",
                 HashLayer.ESCAPE: "",
                 HashLayer.FORMULA: "C15H15F3N2O",
                 HashLayer.NO_STEREO_SMILES: "CC1CC(C)c2cc3c(C(F)(F)F)cc(O)nc3cc2N1",
                 HashLayer.NO_STEREO_TAUTOMER_HASH: "CC1CC(C)[C]2[CH][C]3[C]([CH][C]2[N]1)[N][C]([O])[CH][C]3C(F)(F)F_2_0",
                 HashLayer.SGROUP_DATA: "[]",
-                HashLayer.TAUTOMER_HASH: "C[C@H]1C[C@@H](C)[N][C]2[CH][C]3[N][C]([O])[CH][C](C(F)(F)F)[C]3[CH][C]21_2_0 |o1:1,3|",
+                HashLayer.TAUTOMER_HASH: "C[C@@H]1C[C@H](C)[N][C]2[CH][C]3[N][C]([O])[CH][C](C(F)(F)F)[C]3[CH][C]21_2_0 |o1:1,3|",
         }
         self.assertEqual(layers, expected_layers)
 
@@ -125,37 +120,35 @@ class CanonicalizerTest(unittest.TestCase):
     def test_XBHEAD_XBCORR(self):
         # rdkit/Code/GraphMol/FileParsers/sgroup_test_data/repeat_groups_query1.mol
         structure = """
+  Mrv1824 06192020192D
 
-          Mrv1824 06192020192D
-
-          0  0  0     0  0            999 V3000
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 6 6 1 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 C -1.25 0.7484 0 0
-        M  V30 2 C -2.5837 -0.0216 0 0
-        M  V30 3 C -2.5837 -1.5617 0 0
-        M  V30 4 C -1.25 -2.3317 0 0
-        M  V30 5 C 0.0837 -1.5617 0 0
-        M  V30 6 C 0.0837 -0.0216 0 0
-        M  V30 END ATOM
-        M  V30 BEGIN BOND
-        M  V30 1 1 1 2
-        M  V30 2 1 2 3
-        M  V30 3 1 3 4
-        M  V30 4 1 4 5
-        M  V30 5 1 5 6
-        M  V30 6 1 1 6
-        M  V30 END BOND
-        M  V30 BEGIN SGROUP
-        M  V30 1 SRU 0 ATOMS=(1 1) XBONDS=(2 1 6) XBHEAD=(2 6 1) XBCORR=(4 6 6 1 1) -
-        M  V30 BRKXYZ=(9 -2.02 -0.0216 0 -2.02 1.5184 0 0 0 0) BRKXYZ=(9 -0.48 1.5184 -
-        M  V30 0 -0.48 -0.0216 0 0 0 0) CONNECT=HT LABEL="1-3"
-        M  V30 END SGROUP
-        M  V30 END CTAB
-        M  END
-        """
-        structure = textwrap.dedent(structure[1:])
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.25 0.7484 0 0
+M  V30 2 C -2.5837 -0.0216 0 0
+M  V30 3 C -2.5837 -1.5617 0 0
+M  V30 4 C -1.25 -2.3317 0 0
+M  V30 5 C 0.0837 -1.5617 0 0
+M  V30 6 C 0.0837 -0.0216 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 1 6
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(1 1) XBONDS=(2 1 6) XBHEAD=(2 6 1) XBCORR=(4 6 6 1 1) -
+M  V30 BRKXYZ=(9 -2.02 -0.0216 0 -2.02 1.5184 0 0 0 0) BRKXYZ=(9 -0.48 1.5184 -
+M  V30 0 -0.48 -0.0216 0 0 0 0) CONNECT=HT LABEL="1-3"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+"""
 
         expected_layers = {
             HashLayer.CANONICAL_SMILES: "C1CCCCC1",
@@ -179,38 +172,36 @@ class CanonicalizerTest(unittest.TestCase):
     def test_data_sgroups(self):
         # see SHARED-7879
         structure = """
+   Mrv1808 05312108392D
 
-           Mrv1808 05312108392D
-
-          0  0  0     0  0            999 V3000
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 7 6 1 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 C -5.6458 2.7017 0 0
-        M  V30 2 C -4.3121 1.9317 0 0
-        M  V30 3 C -2.9785 2.7017 0 0
-        M  V30 4 C -1.6448 1.9317 0 0
-        M  V30 5 C -0.3111 2.7017 0 0
-        M  V30 6 C 1.0226 1.9317 0 0
-        M  V30 7 C 2.3563 2.7017 0 0
-        M  V30 END ATOM
-        M  V30 BEGIN BOND
-        M  V30 1 1 1 2
-        M  V30 2 1 2 3
-        M  V30 3 1 3 4
-        M  V30 4 1 4 5
-        M  V30 5 1 5 6
-        M  V30 6 1 6 7
-        M  V30 END BOND
-        M  V30 BEGIN SGROUP
-        M  V30 1 DAT 0 ATOMS=(1 7) FIELDNAME="lambda max" FIELDINFO=nm -
-        M  V30 FIELDDISP="    1.4300   -0.7700    DRU   ALL  0       0" -
-        M  V30 MRV_FIELDDISP=0 FIELDDATA=250
-        M  V30 END SGROUP
-        M  V30 END CTAB
-        M  END
-        """
-        structure = textwrap.dedent(structure[1:])
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -5.6458 2.7017 0 0
+M  V30 2 C -4.3121 1.9317 0 0
+M  V30 3 C -2.9785 2.7017 0 0
+M  V30 4 C -1.6448 1.9317 0 0
+M  V30 5 C -0.3111 2.7017 0 0
+M  V30 6 C 1.0226 1.9317 0 0
+M  V30 7 C 2.3563 2.7017 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 7) FIELDNAME="lambda max" FIELDINFO=nm -
+M  V30 FIELDDISP="    1.4300   -0.7700    DRU   ALL  0       0" -
+M  V30 MRV_FIELDDISP=0 FIELDDATA=250
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+"""
 
         expected_layers = {
                 HashLayer.CANONICAL_SMILES: 'CCCCCCC',
@@ -435,90 +426,88 @@ class CanonicalizerTest(unittest.TestCase):
 
     def test_sgroup_data_hashes(self):
         structure1 = '''
+  Mrv2108 11252113552D
 
-          Mrv2108 11252113552D
-
-          0  0  0     0  0            999 V3000
-        M  V30 BEGIN CTAB
-        M  V30 COUNTS 30 34 2 0 0
-        M  V30 BEGIN ATOM
-        M  V30 1 C 8.78 -9.2456 0 0
-        M  V30 2 C 7.2925 -8.8469 0 0
-        M  V30 3 C 6.2033 -9.9358 0 0
-        M  V30 4 C 6.6021 -11.4235 0 0
-        M  V30 5 C 8.0896 -11.8222 0 0
-        M  V30 6 C 9.1786 -10.733 0 0
-        M  V30 7 C 10.6662 -11.1317 0 0
-        M  V30 8 C 11.7552 -10.0426 0 0
-        M  V30 9 C 11.3565 -8.5552 0 0
-        M  V30 10 C 9.8688 -8.1565 0 0
-        M  V30 11 C 13.2428 -10.441 0 0
-        M  V30 12 C 14.3317 -9.3519 0 0 CFG=2
-        M  V30 13 C 15.8524 -9.5927 0 0
-        M  V30 14 C 16.5517 -8.2207 0 0
-        M  V30 15 C 15.463 -7.1316 0 0
-        M  V30 16 C 14.0905 -7.8307 0 0
-        M  V30 17 C 16.5515 -10.9649 0 0
-        M  V30 18 C 8.4882 -13.3096 0 0
-        M  V30 19 C 5.5131 -12.5124 0 0
-        M  V30 20 C 5.9117 -14.0001 0 0
-        M  V30 21 C 4.8227 -15.0888 0 0
-        M  V30 22 C 3.3352 -14.6902 0 0
-        M  V30 23 C 2.9365 -13.2027 0 0
-        M  V30 24 C 4.0255 -12.1139 0 0
-        M  V30 25 C 3.6269 -10.6262 0 0
-        M  V30 26 Cl 4.7157 -9.5372 0 0
-        M  V30 27 C 5.2472 -16.5691 0 0
-        M  V30 28 C 6.7414 -16.9417 0 0
-        M  V30 29 C 7.8112 -15.8339 0 0
-        M  V30 30 C 7.3867 -14.3535 0 0
-        M  V30 END ATOM
-        M  V30 BEGIN BOND
-        M  V30 1 2 1 2
-        M  V30 2 1 2 3
-        M  V30 3 2 3 4
-        M  V30 4 1 4 5
-        M  V30 5 2 5 6
-        M  V30 6 1 6 1
-        M  V30 7 1 6 7
-        M  V30 8 2 7 8
-        M  V30 9 1 8 9
-        M  V30 10 2 9 10
-        M  V30 11 1 10 1
-        M  V30 12 1 12 11 CFG=1
-        M  V30 13 1 12 13
-        M  V30 14 1 13 14
-        M  V30 15 1 14 15
-        M  V30 16 1 15 16
-        M  V30 17 1 16 12
-        M  V30 18 1 13 17
-        M  V30 19 1 5 18
-        M  V30 20 1 4 19
-        M  V30 21 1 19 20
-        M  V30 22 2 20 21
-        M  V30 23 1 21 22
-        M  V30 24 2 22 23
-        M  V30 25 1 23 24
-        M  V30 26 2 24 19
-        M  V30 27 1 24 25
-        M  V30 28 1 3 26
-        M  V30 29 1 21 27
-        M  V30 30 1 20 30
-        M  V30 31 2 29 30
-        M  V30 32 1 28 29
-        M  V30 33 2 27 28
-        M  V30 34 1 8 11
-        M  V30 END BOND
-        M  V30 BEGIN SGROUP
-        M  V30 1 DAT 0 ATOMS=(1 12) FIELDNAME=stereolabel -
-        M  V30 FIELDDISP="   14.8391  -10.2748    DA    ALL  1       5" FIELDDATA=R
-        M  V30 2 DAT 0 ATOMS=(2 4 19) FIELDNAME=STEREOLABEL -
-        M  V30 FIELDDISP="    6.4455  -12.6102    DA    ALL  1       5" FIELDDATA=R
-        M  V30 END SGROUP
-        M  V30 END CTAB
-        M  END
-        '''
-        structure1 = textwrap.dedent(structure1[1:])
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 30 34 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 8.78 -9.2456 0 0
+M  V30 2 C 7.2925 -8.8469 0 0
+M  V30 3 C 6.2033 -9.9358 0 0
+M  V30 4 C 6.6021 -11.4235 0 0
+M  V30 5 C 8.0896 -11.8222 0 0
+M  V30 6 C 9.1786 -10.733 0 0
+M  V30 7 C 10.6662 -11.1317 0 0
+M  V30 8 C 11.7552 -10.0426 0 0
+M  V30 9 C 11.3565 -8.5552 0 0
+M  V30 10 C 9.8688 -8.1565 0 0
+M  V30 11 C 13.2428 -10.441 0 0
+M  V30 12 C 14.3317 -9.3519 0 0 CFG=2
+M  V30 13 C 15.8524 -9.5927 0 0
+M  V30 14 C 16.5517 -8.2207 0 0
+M  V30 15 C 15.463 -7.1316 0 0
+M  V30 16 C 14.0905 -7.8307 0 0
+M  V30 17 C 16.5515 -10.9649 0 0
+M  V30 18 C 8.4882 -13.3096 0 0
+M  V30 19 C 5.5131 -12.5124 0 0
+M  V30 20 C 5.9117 -14.0001 0 0
+M  V30 21 C 4.8227 -15.0888 0 0
+M  V30 22 C 3.3352 -14.6902 0 0
+M  V30 23 C 2.9365 -13.2027 0 0
+M  V30 24 C 4.0255 -12.1139 0 0
+M  V30 25 C 3.6269 -10.6262 0 0
+M  V30 26 Cl 4.7157 -9.5372 0 0
+M  V30 27 C 5.2472 -16.5691 0 0
+M  V30 28 C 6.7414 -16.9417 0 0
+M  V30 29 C 7.8112 -15.8339 0 0
+M  V30 30 C 7.3867 -14.3535 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1
+M  V30 7 1 6 7
+M  V30 8 2 7 8
+M  V30 9 1 8 9
+M  V30 10 2 9 10
+M  V30 11 1 10 1
+M  V30 12 1 12 11 CFG=1
+M  V30 13 1 12 13
+M  V30 14 1 13 14
+M  V30 15 1 14 15
+M  V30 16 1 15 16
+M  V30 17 1 16 12
+M  V30 18 1 13 17
+M  V30 19 1 5 18
+M  V30 20 1 4 19
+M  V30 21 1 19 20
+M  V30 22 2 20 21
+M  V30 23 1 21 22
+M  V30 24 2 22 23
+M  V30 25 1 23 24
+M  V30 26 2 24 19
+M  V30 27 1 24 25
+M  V30 28 1 3 26
+M  V30 29 1 21 27
+M  V30 30 1 20 30
+M  V30 31 2 29 30
+M  V30 32 1 28 29
+M  V30 33 2 27 28
+M  V30 34 1 8 11
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 12) FIELDNAME=stereolabel -
+M  V30 FIELDDISP="   14.8391  -10.2748    DA    ALL  1       5" FIELDDATA=R
+M  V30 2 DAT 0 ATOMS=(2 4 19) FIELDNAME=STEREOLABEL -
+M  V30 FIELDDISP="    6.4455  -12.6102    DA    ALL  1       5" FIELDDATA=R
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+'''
         structure2 = structure1.replace('FIELDDATA=R', 'FIELDDATA=S')
         structure3 = structure1.replace('FIELDDATA=R', 'FIELDDATA=S', 1)
 
@@ -637,5 +626,19 @@ class CanonicalizerTest(unittest.TestCase):
 
         self.assertEqual(layers1, expected_layers1)
         self.assertEqual(layers2, expected_layers2)
+
+    def testIodine(self):
+        """Does stereo group canonicalization mess up isotopes?"""
+        mol = Chem.MolFromSmiles('CC[C@H](C)[999C@H](C)O  |o1:2,4|')
+        layers = RegistrationHash.GetMolLayers(mol)
+        self.assertEqual(layers[HashLayer.CANONICAL_SMILES], 'CC[C@@H](C)[999C@@H](C)O |o1:2,4|')
+
+        mol = Chem.MolFromSmiles('CC[C@H](C)[1000C@H](C)O  |o1:2,4|')
+        with self.assertRaisesRegex(ValueError, expected_regex=r'does not support isotopes above 999'):
+            layers = RegistrationHash.GetMolLayers(mol)
+
+
+
+
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

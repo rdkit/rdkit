@@ -31,19 +31,16 @@ import logging
 import re
 from typing import Iterable
 from typing import Optional
+from xml.etree.ElementTree import canonicalize
 
 from rdkit import Chem
 from rdkit.Chem import EnumerateStereoisomers
-from rdkit.Chem import rdDepictor
 from rdkit.Chem import rdMolHash
 
 ATOM_PROP_MAP_NUMBER = 'molAtomMapNumber'
 
 logger = logging.getLogger(__name__)
 
-rdDepictor.SetPreferCoordGen(True)
-
-EXTRA_ISOTOPE_REMOVAL_REGEX = re.compile(r'\[[1-3]0*([1-9]?[0-9]*[A-Z][a-z]?)@')
 ENHANCED_STEREO_GROUP_REGEX = re.compile(r'((?:a|[&o]\d+):\d+(?:,\d+)*)')
 
 ENHANCED_STEREO_GROUP_WEIGHTS = {
@@ -162,8 +159,7 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol,
 
 def _StripAtomMapLabels(mol):
     for at in mol.GetAtoms():
-        if at.HasProp(ATOM_PROP_MAP_NUMBER):
-            at.ClearProp(ATOM_PROP_MAP_NUMBER)
+        at.ClearProp(ATOM_PROP_MAP_NUMBER)
 
 
 def _RemoveUnnecessaryHs(rdk_mol, preserve_stereogenic_hs=False):
@@ -276,10 +272,11 @@ def _CanonicalizeDataSGroup(sg,
                              atRanks,
                              bndOrder,
                              fieldNames=None,
-                             sortAtomOrder=True):
+                             sortAtomAndBondOrder=True):
     """
-    NOTES: if sortAtomOrder is true then the atom list will be sorted.
-    This assumes that the order of the atoms in that list is not important
+    NOTES: if sortAtomAndBondOrder is true then the atom and bond lists will
+    be sorted. This assumes that the order of the atoms in that list is not
+    important
 
     """
     if sg.GetProp("TYPE") != "DAT" or not sg.HasProp("FIELDNAME"):
@@ -296,9 +293,11 @@ def _CanonicalizeDataSGroup(sg,
             "cannot canonicalize data groups with multiple data fields")
     data = data[0]
     ats = tuple(atRanks[x] for x in sg.GetAtoms())
-    if sortAtomOrder:
+    if sortAtomAndBondOrder:
         ats = tuple(sorted(ats))
     bnds = tuple(bndOrder[x] for x in sg.GetBonds())
+    # if sortAtomAndBondOrder:
+    #     bnds = tuple(sorted(bnds))
 
     res = dict(fieldName=fieldName, atom=ats, bonds=bnds, value=data)
     return res
@@ -441,9 +440,9 @@ def _UpdateEnhancedStereoGroupWeights(mol, mode):
             # Make sure the isotope is reasonable and is not present in more than
             # one stereo group, and we are not messing it up
             isotope = at.GetIsotope()
-            if mode == EnhancedStereoUpdateMode.ADD_WEIGHTS and isotope >= 100:
+            if mode == EnhancedStereoUpdateMode.ADD_WEIGHTS and isotope > 999:
                 raise ValueError(
-                    f'Atom {at.GetIdx()} is an unusual isotope ({isotope})')
+                    f'Enhanced stereo group canonicalization does not support isotopes above 999. Atom {at.GetIdx()} is {isotope}')
 
             at.SetIsotope(isotope + weight)
             isotopesModified = True
@@ -483,20 +482,21 @@ def _CanonicalizeStereoGroups(mol):
     opts.onlyStereoGroups = True
     opts.unique = False
 
-    res = None
-    res_csmi = ''
+    resultMol = None
+    resultCXSmiles = ''
     for isomer in EnumerateStereoisomers.EnumerateStereoisomers(mol, opts):
         # We need to generate the canonical CXSMILES for the molecule with
         # the isotope tags.
-        csmi = Chem.MolToCXSmiles(isomer)
-        if res is None or csmi < res_csmi:
-            res = isomer
-            res_csmi = csmi
+        cxSmiles = Chem.MolToCXSmiles(isomer)
+        if resultMol is None or cxSmiles < resultCXSmiles:
+            resultMol = isomer
+            resultCXSmiles = cxSmiles
 
-    res_csmi = EXTRA_ISOTOPE_REMOVAL_REGEX.sub(r'[\1@', res_csmi)
+    extraIsotopeRemovalRegex = re.compile(r'\[[1-3]0*([1-9]?[0-9]*[A-Z][a-z]?)@')
+    resultCXSmiles = extraIsotopeRemovalRegex.sub(r'[\1@', resultCXSmiles)
 
     if isotopesModified:
-        res, _ = _UpdateEnhancedStereoGroupWeights(
-            res, EnhancedStereoUpdateMode.REMOVE_WEIGHTS)
+        resultMol, _ = _UpdateEnhancedStereoGroupWeights(
+            resultMol, EnhancedStereoUpdateMode.REMOVE_WEIGHTS)
 
-    return res_csmi, res
+    return resultCXSmiles, resultMol
