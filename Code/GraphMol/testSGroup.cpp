@@ -1007,7 +1007,9 @@ void testSubstanceGroupsAndRemoveHs(const std::string &rdbase) {
   {
     std::string fName =
         rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_Hs_1.mol";
-    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName, sanitize, removeHs));
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms() == 8);
     TEST_ASSERT(getSubstanceGroups(*mol).size() == 1);
@@ -1018,13 +1020,13 @@ void testSubstanceGroupsAndRemoveHs(const std::string &rdbase) {
       ps.removeInSGroups = true;
       MolOps::removeHs(mol_copy, ps);
       TEST_ASSERT(mol_copy.getNumAtoms() == 6);
-      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 0);
+      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 1);
     }
     {  // check removeAllHs() too
       RWMol mol_copy = *mol;
       MolOps::removeAllHs(mol_copy);
       TEST_ASSERT(mol_copy.getNumAtoms() == 6);
-      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 0);
+      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 1);
     }
   }
 }
