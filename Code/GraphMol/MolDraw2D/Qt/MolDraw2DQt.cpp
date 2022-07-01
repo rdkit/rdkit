@@ -12,6 +12,7 @@
 #include "MolDraw2DQt.h"
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <QPainter>
+#include <QPainterPath>
 #include <QString>
 
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
