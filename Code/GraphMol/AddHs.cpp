@@ -652,8 +652,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
 void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
   auto atom = mol.getAtomWithIdx(idx);
   PRECONDITION(atom->getAtomicNum() == 1, "idx corresponds to a non-Hydrogen");
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
-    const Bond *bond = mol[nbri];
+  for (const auto bond : mol.atomBonds(atom)) {
     Atom *heavyAtom = bond->getOtherAtom(atom);
     int heavyAtomNum = heavyAtom->getAtomicNum();
 
@@ -753,7 +752,27 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       // This was part of github #1810
       adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
     }
+
+    // remove the bond from any SGroups that might include it.
+    for (auto &sg : getSubstanceGroups(mol)) {
+      sg.removeBondWithIdx(bond->getIdx());
+    }
   }
+
+  // Finally, remove the atom from any SGroups that might include it, so that
+  // the SGroups don't get removed in removeAtom(). Since we allow removing
+  // SGroup SAP lvidx H atoms, we need to check for those and update them.
+  for (auto &sg : getSubstanceGroups(mol)) {
+    sg.removeAtomWithIdx(idx);
+    sg.removeParentAtomWithIdx(idx);
+
+    for (auto &sap : sg.getAttachPoints()) {
+      if (sap.lvIdx == idx) {
+        sap.lvIdx = -1;
+      }
+    }
+  }
+
   mol.removeAtom(atom);
 }
 

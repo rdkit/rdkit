@@ -154,6 +154,12 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   void addParentAtomWithBookmark(int mark);
   void addBondWithBookmark(int mark);
 
+  // These methods should be handled with care, since they can leave
+  // Attachment points and CStates in an invalid state!
+  void removeAtomWithIdx(unsigned int idx);
+  void removeParentAtomWithIdx(unsigned int idx);
+  void removeBondWithIdx(unsigned int idx);
+
   void addBracket(const Bracket &bracket);
   void addCState(unsigned int bondIdx, const RDGeom::Point3D &vector);
   void addAttachPoint(unsigned int aIdx, int lvIdx, const std::string &idStr);

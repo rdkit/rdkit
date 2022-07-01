@@ -15,6 +15,17 @@
 
 namespace RDKit {
 
+namespace {
+
+template <class T>
+void remove_element(std::vector<T> &container, unsigned int element) {
+  auto pos = std::find(container.begin(), container.end(), element);
+  if (pos != container.end()) {
+    container.erase(pos);
+  }
+}
+}
+
 SubstanceGroup::SubstanceGroup(ROMol *owning_mol, const std::string &type)
     : RDProps(), dp_mol(owning_mol) {
   PRECONDITION(owning_mol, "supplied owning molecule is bad");
@@ -101,6 +112,21 @@ void SubstanceGroup::addBondWithBookmark(int mark) {
   PRECONDITION(dp_mol, "bad mol");
   Bond *bond = dp_mol->getUniqueBondWithBookmark(mark);
   d_bonds.push_back(bond->getIdx());
+}
+
+void SubstanceGroup::removeAtomWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_atoms, idx);
+}
+
+void SubstanceGroup::removeParentAtomWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_patoms, idx);
+}
+
+void SubstanceGroup::removeBondWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_bonds, idx);
 }
 
 void SubstanceGroup::addBracket(const SubstanceGroup::Bracket &bracket) {
