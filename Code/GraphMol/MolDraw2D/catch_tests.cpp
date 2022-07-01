@@ -243,6 +243,8 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub4764.sz1.png", 1677681492U},
     {"testGithub4764.sz2.png", 468390008U},
     {"testGithub4764.sz3.png", 552619356U},
+    {"testGithub4238_1.png", 4211452604U},
+
 };
 
 std::hash_result_t hash_file(const std::string &filename) {
@@ -3278,17 +3280,29 @@ TEST_CASE("Github #4238: prepareMolForDrawing and wavy bonds") {
     CHECK(mol2.getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
     CHECK(mol2.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
 
-    MolDraw2DSVG drawer(500, 200, 250, 200);
-    // drawer.drawOptions().prepareMolsBeforeDrawing = false;
     MOL_PTR_VECT ms{mol.get(), &mol2};
-    std::vector<std::string> legends = {"before", "after"};
-    drawer.drawMolecules(ms, &legends);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub4238_1.svg");
-    outs << text;
-    outs.flush();
-    check_file_hash("testGithub4238_1.svg");
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      // drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      std::vector<std::string> legends = {"before", "after"};
+      drawer.drawMolecules(ms, &legends);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4238_1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4238_1.svg");
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(500, 200, 250, 200);
+      std::vector<std::string> legends = {"before", "after"};
+      drawer.drawMolecules(ms, &legends);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub4238_1.png");
+      check_file_hash("testGithub4238_1.png");
+    }
+#endif
   }
 }
 
@@ -4469,8 +4483,7 @@ M  END)RXN";
   }
 }
 
-TEST_CASE(
-    "Github 5185 - don't draw atom indices between double bond") {
+TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
   SECTION("basics") {
     auto m1 = "OC(=O)CCCC(=O)O"_smiles;
     REQUIRE(m1);
@@ -4485,19 +4498,20 @@ TEST_CASE(
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      CHECK(text.find("<path class='note' d='M 92.5 130.1")
-            != std::string::npos);
+      CHECK(text.find("<path class='note' d='M 92.5 130.1") !=
+            std::string::npos);
       check_file_hash("testGithub_5185.svg");
 #else
-      CHECK(text.find("<text x='90.4' y='130.3' class='note' ")
-            != std::string::npos);
+      CHECK(text.find("<text x='90.4' y='130.3' class='note' ") !=
+            std::string::npos);
 #endif
     }
   }
 }
 
 TEST_CASE(
-    "Github 5259 - drawReaction should not fail when prepareMolsBeforeDrawing is false") {
+    "Github 5259 - drawReaction should not fail when prepareMolsBeforeDrawing "
+    "is false") {
   SECTION("basics") {
     auto rxn = "[CH3:1][OH:2]>>[CH2:1]=[OH0:2]"_rxnsmarts;
     REQUIRE(rxn);
@@ -4507,8 +4521,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "Github 5269 - bad index positions with highlights") {
+TEST_CASE("Github 5269 - bad index positions with highlights") {
   SECTION("basics") {
     auto m1 = "CC(=O)Oc1c(C(=O)O)cccc1"_smiles;
     auto q1 = "CC(=O)Oc1c(C(=O)O)cccc1"_smarts;
@@ -4518,17 +4531,17 @@ TEST_CASE(
       std::vector<int> hit_atoms;
       std::vector<MatchVectType> hits_vect;
       SubstructMatch(*m1, *q1, hits_vect);
-      for( size_t i = 0 ; i < hits_vect.size() ; ++i ) {
-        for( size_t j = 0 ; j < hits_vect[i].size() ; ++j ) {
+      for (size_t i = 0; i < hits_vect.size(); ++i) {
+        for (size_t j = 0; j < hits_vect[i].size(); ++j) {
           hit_atoms.push_back(hits_vect[i][j].second);
         }
       }
       std::vector<int> hit_bonds;
-      for(int i: hit_atoms) {
-        for(int j: hit_atoms) {
-          if(i > j) {
+      for (int i : hit_atoms) {
+        for (int j : hit_atoms) {
+          if (i > j) {
             Bond *bnd = m1->getBondBetweenAtoms(i, j);
-            if(bnd) {
+            if (bnd) {
               hit_bonds.push_back(bnd->getIdx());
             }
           }
