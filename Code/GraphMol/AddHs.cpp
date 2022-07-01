@@ -890,6 +890,38 @@ bool shouldRemoveH(const RWMol &mol, const Atom *atom,
   return removeIt;
 }
 
+// Do not remove H atoms that are part of SGroups that only contain H atoms.
+void filter_sgroup_emptying_hydrogens(const ROMol &mol,
+                                      boost::dynamic_bitset<> &atomsToRemove) {
+  for (const auto &sg : getSubstanceGroups(mol)) {
+    const auto &atoms = sg.getAtoms();
+    const auto &patoms = sg.getParentAtoms();
+
+    // If the SGroup already didn't have atoms, we don't care about it
+    if (atoms.empty() && patoms.empty()) {
+      continue;
+    }
+
+    auto would_remove_atom = [&atomsToRemove](const auto idx) {
+      return atomsToRemove[idx];
+    };
+
+    auto no_atoms = atoms.empty() ||
+                    std::all_of(atoms.begin(), atoms.end(), would_remove_atom);
+    auto no_patoms = patoms.empty() || std::all_of(patoms.begin(), patoms.end(),
+                                                   would_remove_atom);
+
+    if (no_atoms && no_patoms) {
+      for (auto atom : atoms) {
+        atomsToRemove.set(atom, false);
+      }
+      for (auto patom : patoms) {
+        atomsToRemove.set(patom, false);
+      }
+    }
+  }
+}
+
 }  // end of anonymous namespace
 
 void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
@@ -926,6 +958,10 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
       atomsToRemove.set(atom->getIdx());
     }
   }  // end of the loop over atoms
+
+  // Once we know which H atoms would be removed, filter out those that
+  // would cause any SGroups to become empty
+  filter_sgroup_emptying_hydrogens(mol, atomsToRemove);
 
   // now that we know which atoms need to be removed, go ahead and remove them
   // NOTE: there's too much complexity around stereochemistry here
