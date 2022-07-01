@@ -494,8 +494,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // for their coordinates
   unsigned int numAddHyds = 0;
   for (auto at : mol.atoms()) {
-    if (!onlyOnAtoms || std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
-                                  at->getIdx()) != onlyOnAtoms->end()) {
+    if (!onlyOnAtoms ||
+        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), at->getIdx()) !=
+            onlyOnAtoms->end()) {
       numAddHyds += at->getNumExplicitHs();
       if (!explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
@@ -513,8 +514,9 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
 
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    if (onlyOnAtoms && std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
-                                 aidx) == onlyOnAtoms->end()) {
+    if (onlyOnAtoms &&
+        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), aidx) ==
+            onlyOnAtoms->end()) {
       continue;
     }
 
@@ -918,11 +920,13 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     }
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
+
   for (auto atom : mol.atoms()) {
     if (shouldRemoveH(mol, atom, ps)) {
       atomsToRemove.set(atom->getIdx());
     }
   }  // end of the loop over atoms
+
   // now that we know which atoms need to be removed, go ahead and remove them
   // NOTE: there's too much complexity around stereochemistry here
   // to be able to safely use batch editing.
