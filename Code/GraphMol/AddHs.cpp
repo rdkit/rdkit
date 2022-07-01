@@ -783,13 +783,46 @@ bool shouldRemoveH(const RWMol &mol, const Atom *atom,
   if (!ps.removeMapped && atom->getAtomMapNum()) {
     return false;
   }
-  if (!ps.removeInSGroups) {
+
+  if (ps.removeInSGroups) {
+    // If removing H in SGroups, do not remove H atoms in special
+    // roles in the SGroup
+    for (const auto &sg : getSubstanceGroups(mol)) {
+      // The H atom is one of the "caps" of the SGroup. Technically,
+      // it's not part of the group, but it defines its boundaries.
+      for (const auto &bond_idx : sg.getBonds()) {
+        if (sg.getBondType(bond_idx) == SubstanceGroup::BondType::XBOND) {
+          auto bond = mol.getBondWithIdx(bond_idx);
+          if (bond->getBeginAtom() == atom || bond->getEndAtom() == atom) {
+            return false;
+          }
+        }
+      }
+
+      for (const auto &sap : sg.getAttachPoints()) {
+        // The H atoms is an attach point. This would be weird, but is possible.
+        // (if it is a 'leaving atom' we don't care, though)
+        if (sap.aIdx == atom->getIdx()) {
+          return false;
+        }
+      }
+
+      for (const auto &cs : sg.getCStates()) {
+        // The bond to the H atom defines a CState
+        auto bond = mol.getBondWithIdx(cs.bondIdx);
+        if (bond->getBeginAtom() == atom || bond->getEndAtom() == atom) {
+          return false;
+        }
+      }
+    }
+  } else {
     for (const auto &sg : getSubstanceGroups(mol)) {
       if (sg.includesAtom(atom->getIdx())) {
         return false;
       }
     }
   }
+
   if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
     return false;
   }
