@@ -1708,7 +1708,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
   Point2D perp = calcPerpendicular(at1_cds, at2_cds);
   // Set the 'fatness' of the wedge to be a fraction of the mean bond
   // length, so we should always see something.
-  Point2D disp = perp * 0.1 * meanBondLength_;
+  Point2D disp = perp * drawOptions_.multipleBondOffset / 2.0;
   Point2D t1 = end2 + disp;
   Point2D t2 = end2 - disp;
   std::vector<Point2D> pts{end1, t1, t2};
@@ -1721,8 +1721,6 @@ void DrawMol::makeWedgedBond(Bond *bond,
   if (Bond::BEGINWEDGE == bond->getBondDir()) {
     std::vector<Point2D> otherBondVecs;
     findOtherBondVecs(at2, at1, otherBondVecs);
-    //    col1 = DrawColour(1.0, 0.0, 0.0);
-    //    col2 = col1;
     s = new DrawShapeSolidWedge(pts, col1, col2, drawOptions_.splitBonds,
                                 otherBondVecs, lineWidth,
                                 at1->getIdx() + activeAtmIdxOffset_,
@@ -2792,8 +2790,6 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
     Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
     otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
   }
-  std::cout << "atom " << atom->getIdx() << " : " << atom->getDegree()
-            << " num vecs = " << otherBondVecs.size() << std::endl;
 }
 
 // ****************************************************************************
