@@ -136,8 +136,10 @@ class DrawShapePolyLine : public DrawShape {
 class DrawShapeSolidWedge : public DrawShape {
  public:
   DrawShapeSolidWedge(const std::vector<Point2D> points, const DrawColour &col1,
-                      const DrawColour &col2, bool splitBonds, int atom1 = -1,
-                      int atom2 = -1, int bond = -1);
+                      const DrawColour &col2, bool splitBonds,
+                      std::vector<Point2D> &otherBondVecs,
+                      double lineWidth = 1.0, int atom1 = -1, int atom2 = -1,
+                      int bond = -1);
   DrawShapeSolidWedge(const DrawShapeSolidWedge &) = delete;
   DrawShapeSolidWedge(DrawShapeSolidWedge &&) = delete;
   ~DrawShapeSolidWedge() = default;
@@ -146,9 +148,13 @@ class DrawShapeSolidWedge : public DrawShape {
   void buildTriangles();
   void myDraw(MolDraw2D &drawer) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
+  // if otherBondVecs_.size() > 2, then we only want the two vecs with the
+  // widest angle between them.
+  void trimOtherBondVecs();
 
   DrawColour col2_;
   bool splitBonds_;
+  std::vector<Point2D> otherBondVecs_;
 };
 
 class DrawShapeDashedWedge : public DrawShape {
@@ -173,7 +179,7 @@ class DrawShapeDashedWedge : public DrawShape {
   DrawColour col2_;
   bool oneLessDash_;
   std::vector<DrawColour> lineColours_;
-  // for when we re-create the lines when it gets too wide, this is
+  // for when we re-create the lines, such as after scaling, this is
   // the initial points[0-2] from the c'tor.
   Point2D at1Cds_, end1Cds_, end2Cds_;
 };

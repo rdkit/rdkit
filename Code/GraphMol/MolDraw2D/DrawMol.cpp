@@ -1715,15 +1715,20 @@ void DrawMol::makeWedgedBond(Bond *bond,
 
   // deliberately not scaling highlighted bond width
   DrawShape *s;
+  double lineWidth = drawOptions_.bondLineWidth < 1.0
+                         ? drawOptions_.bondLineWidth
+                         : drawOptions_.bondLineWidth / 2.0;
   if (Bond::BEGINWEDGE == bond->getBondDir()) {
+    std::vector<Point2D> otherBondVecs;
+    findOtherBondVecs(at2, at1, otherBondVecs);
+    //    col1 = DrawColour(1.0, 0.0, 0.0);
+    //    col2 = col1;
     s = new DrawShapeSolidWedge(pts, col1, col2, drawOptions_.splitBonds,
+                                otherBondVecs, lineWidth,
                                 at1->getIdx() + activeAtmIdxOffset_,
                                 at2->getIdx() + activeAtmIdxOffset_,
                                 bond->getIdx() + activeBndIdxOffset_);
   } else {
-    double lineWidth = drawOptions_.bondLineWidth < 1.0
-                           ? drawOptions_.bondLineWidth
-                           : drawOptions_.bondLineWidth / 2.0;
     bool oneLessDash(at2->getDegree() > 1);
     s = new DrawShapeDashedWedge(pts, col1, col2, oneLessDash, lineWidth,
                                  at1->getIdx() + activeAtmIdxOffset_,
@@ -2773,6 +2778,22 @@ void DrawMol::calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
   l1f = at2_cds + bv + perp * offset;
   l2s = at1_cds - bv - perp * offset;
   l2f = at2_cds + bv - perp * offset;
+}
+
+// ****************************************************************************
+void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
+                                std::vector<Point2D> &otherBondVecs) const {
+  if (atom->getDegree() == 1) {
+    return;
+  }
+  for (int i = 1; i < atom->getDegree(); ++i) {
+    auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
+    Point2D const &at1_cds = atCds_[atom->getIdx()];
+    Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
+    otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+  }
+  std::cout << "atom " << atom->getIdx() << " : " << atom->getDegree()
+            << " num vecs = " << otherBondVecs.size() << std::endl;
 }
 
 // ****************************************************************************

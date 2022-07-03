@@ -238,6 +238,9 @@ class DrawMol {
                         bool trunc) const;
   void calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
                            Point2D &l1f, Point2D &l2s, Point2D &l2f);
+  // find the vectors of any atoms bonded to atom that aren't otherAtom.
+  void findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
+                         std::vector<Point2D> &otherBondVecs) const;
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -324,7 +327,6 @@ bool areBondsTrans(const Point2D &at1, const Point2D &at2, const Point2D &at3,
 // find the nborNum'th neighbour of firstAtom that isn't secondAtom
 const Atom *otherNeighbor(const Atom *firstAtom, const Atom *secondAtom,
                           int nborNum, const ROMol &mol);
-
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

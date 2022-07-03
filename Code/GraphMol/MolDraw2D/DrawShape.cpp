@@ -285,22 +285,73 @@ bool DrawShapePolyLine::doesRectClash(const StringRect &rect,
 DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> points,
                                          const DrawColour &col1,
                                          const DrawColour &col2,
-                                         bool splitBonds, int atom1, int atom2,
+                                         bool splitBonds,
+                                         std::vector<Point2D> &otherBondVecs,
+                                         double lineWidth, int atom1, int atom2,
                                          int bond)
-    : DrawShape(points, 1, false, col1, false, atom1, atom2, bond),
+    : DrawShape(points, lineWidth / 2.0, false, col1, false, atom1, atom2,
+                bond),
       col2_(col2),
-      splitBonds_(splitBonds) {
+      splitBonds_(splitBonds),
+      otherBondVecs_(otherBondVecs) {
   PRECONDITION(points_.size() == 3, "solid wedge wrong points");
+  if (otherBondVecs_.size() > 2) {
+    trimOtherBondVecs();
+  }
   buildTriangles();
 }
 
 // ****************************************************************************
 void DrawShapeSolidWedge::buildTriangles() {
+  auto point = points_[0];
+  auto end1 = points_[1];
+  auto end2 = points_[2];
+  auto midEnd = (end1 + end2) / 2.0;
+  auto adjend1 = end1;
+  auto adjend2 = end2;
+  points_.clear();
+  // adjust adjend1 and adjend2 to line up with otherBondVecs_.
+  if (otherBondVecs_.size() == 0) {
+    points_.push_back(point);
+    points_.push_back(adjend1);
+    points_.push_back(adjend2);
+  } else if (otherBondVecs_.size() == 1) {
+    auto side1 = point.directionVector(end1) * 2.0;
+    if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend1)) {
+      std::cout << "side1 missed" << std::endl;
+      adjend1 = end1;
+    }
+    auto side2 = point.directionVector(end2) * 2.0;
+    if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend2)) {
+      std::cout << "side2 missed" << std::endl;
+      adjend2 = end2;
+    }
+    points_.push_back(point);
+    points_.push_back(adjend1);
+    points_.push_back(adjend2);
+  } else if (otherBondVecs_.size() == 2) {
+    auto side1 = point.directionVector(end1) * 2.0;
+    if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend1)) {
+      std::cout << "side1 missed" << std::endl;
+      adjend1 = end1;
+    }
+    points_.push_back(point);
+    points_.push_back(adjend1);
+    points_.push_back(midEnd);
+    auto side2 = point.directionVector(end2) * 2.0;
+    if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[1],
+                          midEnd + otherBondVecs_[1], &adjend2)) {
+      std::cout << "side2 missed" << std::endl;
+      adjend2 = end2;
+    }
+    points_.push_back(point);
+    points_.push_back(midEnd);
+    points_.push_back(adjend2);
+  }
   if (!(lineColour_ == col2_) || splitBonds_) {
-    auto point = points_[0];
-    auto end1 = points_[1];
-    auto end2 = points_[2];
-    points_.clear();
     auto e1 = end1 - point;
     auto e2 = end2 - point;
     auto mid1 = point + e1 * 0.5;
@@ -308,12 +359,15 @@ void DrawShapeSolidWedge::buildTriangles() {
     points_.push_back(point);
     points_.push_back(mid1);
     points_.push_back(mid2);
-    points_.push_back(mid1);
-    points_.push_back(end2);
-    points_.push_back(end1);
-    points_.push_back(mid1);
-    points_.push_back(mid2);
-    points_.push_back(end2);
+    if (otherBondVecs_.empty()) {
+      points_.push_back(mid1);
+      points_.push_back(adjend2);
+      points_.push_back(adjend1);
+      points_.push_back(mid1);
+      points_.push_back(mid2);
+      points_.push_back(adjend2);
+      return;
+    }
   }
 }
 
@@ -356,6 +410,28 @@ bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
     }
   }
   return false;
+}
+
+// ****************************************************************************
+void DrawShapeSolidWedge::trimOtherBondVecs() {
+  if (otherBondVecs_.size() < 3) {
+    return;
+  }
+  int firstVec, secondVec;
+  double largestAng = -1.0;
+  for (int i = 0; i < otherBondVecs_.size() - 1; ++i) {
+    for (int j = i + 1; j < otherBondVecs_.size(); ++j) {
+      auto ang = otherBondVecs_[i].angleTo(otherBondVecs_[j]);
+      if (ang > largestAng) {
+        firstVec = i;
+        secondVec = j;
+        largestAng = ang;
+      }
+    }
+  }
+  std::vector<Point2D> newVecs{otherBondVecs_[firstVec],
+                               otherBondVecs_[secondVec]};
+  otherBondVecs_ = newVecs;
 }
 
 // ****************************************************************************

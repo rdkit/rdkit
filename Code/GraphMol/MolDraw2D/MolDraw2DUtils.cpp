@@ -513,8 +513,8 @@ std::string drawMolACS1996Cairo(
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
-  //  opts.addAtomIndices = true;
-  opts.addBondIndices = true;
+  opts.addAtomIndices = true;
+  //  opts.addBondIndices = true;
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
   // the guideline is for a bond length of 14.4px, and we set things up
@@ -569,20 +569,12 @@ void useStrictStereo(ROMol &mol, int confId) {
 void reapplyMolBlockWedging(ROMol &mol) {
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
-    b->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                             explicit_unknown_stereo);
-    int bond_dir = -1;
-    b->getPropIfPresent<int>(common_properties::_MolFileBondStereo, bond_dir);
-    int cfg = -1;
-    b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg);
-    std::cout << b->getIdx() << " : " << b->getBondDir() << " : "
-              << explicit_unknown_stereo << " : " << bond_dir << " : " << cfg;
-    std::cout << std::endl;
     if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
                                  explicit_unknown_stereo) &&
         explicit_unknown_stereo) {
       b->setBondDir(Bond::UNKNOWN);
     }
+    int bond_dir = -1;
     if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
                                  bond_dir)) {
       if (bond_dir == 1) {
@@ -591,6 +583,7 @@ void reapplyMolBlockWedging(ROMol &mol) {
         b->setBondDir(Bond::BEGINDASH);
       }
     }
+    int cfg = -1;
     if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
       switch (cfg) {
         case 1:
