@@ -507,7 +507,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively
-      rootedAtAtom = getRandomGenerator()() % mol.getNumAtoms();
+      rootedAtAtom = getRandomGenerator()() % tmol->getNumAtoms();
     }
 
     std::string res;

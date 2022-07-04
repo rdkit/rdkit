@@ -13,6 +13,8 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
@@ -21,6 +23,7 @@
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/FileParsers/PNGParser.h>
+#include <GraphMol/FileParsers/FileParserUtils.h>
 
 using namespace RDKit;
 using std::unique_ptr;
@@ -1180,6 +1183,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
 }
 
 TEST_CASE("V3K rxn blocks") {
+    
   SECTION("writing basics") {
     // clang-format off
     auto rxn =
@@ -1198,5 +1202,17 @@ TEST_CASE("V3K rxn blocks") {
     CHECK(rxn->getNumReactantTemplates()==rxn2->getNumReactantTemplates());
     CHECK(rxn->getNumProductTemplates()==rxn2->getNumProductTemplates());   
   }
-
+     
+  SECTION("github5324") {
+    // Test sgroup in a ring - this example failed with improperr tail crossings
+    auto mol = "C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"_smarts;
+    MolOps::findSSSR(*mol);
+    auto mbk = FileParserUtils::getV3000CTAB(*mol, -1);
+    CHECK(mbk.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)")!=std::string::npos);
+    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      				          ">>C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"));
+    auto rxnb = ChemicalReactionToV3KRxnBlock(*rxn);
+    CHECK(rxnb.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)")!=std::string::npos);
+  }
 }
+

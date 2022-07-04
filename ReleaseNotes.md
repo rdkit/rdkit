@@ -2,6 +2,15 @@
 (Changes relative to Release_2022.03.1)
 
 ## Backwards incompatible changes
+- `GetBestRMS()` by default now treats terminal conjugated functional groups
+  like carboxylate and nitro symmetrically. For example, the group
+  `C(=[O:1])[O-:2]` can match in either orientation. The SMARTS pattern which is
+  used to recognize affected groups is:
+  `[{atomP};$([{atomP}]-[*]=[{atomP}]),$([{atomP}]=[*]-[{atomP}])]~[*]` where
+  `{atomP}` is `O,N;D1`. The previous behavior can be restored using by setting
+  the `symmetrizeConjugatedTerminalGroups` argument to false when calling
+  `GetBestRMS()`
+
 
 ## Code removed in this release:
 - The C++ class `RDLog::BlockLogs` has been removed. Please use the class `RDLog::LogStateSetter`. The Python class rdBase.BlockLogs() is still available and supported.

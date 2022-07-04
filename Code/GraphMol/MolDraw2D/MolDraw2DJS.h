@@ -51,6 +51,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DJS : public MolDraw2D {
   void drawEllipse(const Point2D &cds1, const Point2D &cds2,
                    bool rawCoords = false) override;
   void clearDrawing() override;
+  void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                    const DrawColour &col1, const DrawColour &col2,
+                    unsigned int nSegments = 16, double vertOffset = 0.05,
+                    bool rawCoords = false) override;
 
  private:
   emscripten::val &d_context;

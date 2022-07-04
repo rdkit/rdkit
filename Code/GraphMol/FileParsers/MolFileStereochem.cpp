@@ -116,11 +116,7 @@ std::pair<bool, INT_VECT> countChiralNbours(const ROMol &mol, int noNbrs) {
     }
     nChiralNbrs[at->getIdx()] = 0;
     chiNbrs = true;
-    ROMol::ADJ_ITER nbrIdx, endNbrs;
-    boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(at);
-    while (nbrIdx != endNbrs) {
-      const Atom *nat = mol[*nbrIdx];
-      ++nbrIdx;
+    for (const auto nat : mol.atomNeighbors(at)) {
       if (nat->getAtomicNum() == 1) {
         // special case: it's an H... we weight these especially high:
         nChiralNbrs[at->getIdx()] -= 10;
@@ -184,7 +180,7 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
       // prefer bonds to non-ring atoms:
       nbrScore += 10000 * mol.getRingInfo()->numAtomRings(oIdx);
       // prefer non-ring bonds;
-      nbrScore += 10000 * mol.getRingInfo()->numBondRings(bid);
+      nbrScore += 20000 * mol.getRingInfo()->numBondRings(bid);
       // prefer bonds to atoms which don't have a double bond from them
       unsigned int hasDoubleBond;       // is a double bond there?
       unsigned int hasKnownDoubleBond;  // is specified stereo there?
@@ -193,7 +189,7 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
           getDoubleBondPresence(mol, *oatom);
       nbrScore += 11000 * hasDoubleBond;
       nbrScore += 12000 * hasKnownDoubleBond;
-      nbrScore += 13000 * hasAnyDoubleBond;
+      nbrScore += 23000 * hasAnyDoubleBond;
 
       // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
       //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]

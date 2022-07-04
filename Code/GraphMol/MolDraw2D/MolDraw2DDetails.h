@@ -136,6 +136,12 @@ bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
 bool isPointInTriangle(const Point2D &pt, const Point2D &t1, const Point2D &t2,
                        const Point2D &t3);
 
+// returns a vector of p1,c1,c2,p2 tuples for bezier curves
+RDKIT_MOLDRAW2D_EXPORT
+std::vector<std::tuple<Point2D, Point2D, Point2D, Point2D>> getWavyLineSegments(
+    const Point2D &p1, const Point2D &p2, unsigned int nSegments,
+    double vertOffset);
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

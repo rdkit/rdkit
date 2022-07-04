@@ -33,6 +33,8 @@
 #include <RDGeneral/LocaleSwitcher.h>
 #include <typeinfo>
 #include <exception>
+#include <charconv>
+
 #ifdef RDKIT_USE_BOOST_REGEX
 #include <boost/regex.hpp>
 using boost::regex;
@@ -48,6 +50,7 @@ using std::smatch;
 #include <locale>
 #include <cstdlib>
 #include <cstdio>
+#include <string_view>
 
 using namespace RDKit::SGroupParsing;
 
@@ -55,14 +58,13 @@ namespace RDKit {
 
 namespace FileParserUtils {
 
-int toInt(const std::string &input, bool acceptSpaces) {
-  int res = 0;
+int toInt(const std::string_view input, bool acceptSpaces) {
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
 
   // sanity check on the input since strtol doesn't do it for us:
-  const char *txt = input.c_str();
-  while (*txt != '\x00') {
+  const char *txt = input.data();
+  for (size_t i = 0u; i < input.size() && *txt != '\x00'; ++i) {
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
         *txt == '+' || *txt == '-') {
       ++txt;
@@ -70,18 +72,29 @@ int toInt(const std::string &input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  res = strtol(input.c_str(), nullptr, 10);
+  // remove leading spaces
+  txt = input.data();
+  unsigned int sz = input.size();
+  if (acceptSpaces) {
+    while (*txt == ' ') {
+      ++txt;
+      --sz;
+    }
+  }
+  int res = 0;
+  std::from_chars(txt, txt + sz, res);
   return res;
 }
-
-unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
-  unsigned res = 0;
+int toInt(const std::string &input, bool acceptSpaces) {
+  return toInt(std::string_view(input.c_str()), acceptSpaces);
+}
+unsigned int toUnsigned(const std::string_view input, bool acceptSpaces) {
   // don't need to worry about locale stuff here because
   // we're not going to have delimiters
 
   // sanity check on the input since strtol doesn't do it for us:
-  const char *txt = input.c_str();
-  while (*txt != '\x00') {
+  const char *txt = input.data();
+  for (size_t i = 0u; i < input.size() && *txt != '\x00'; ++i) {
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
         *txt == '+') {
       ++txt;
@@ -89,15 +102,27 @@ unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  res = strtoul(input.c_str(), nullptr, 10);
+  // remove leading spaces
+  txt = input.data();
+  unsigned int sz = input.size();
+  if (acceptSpaces) {
+    while (*txt == ' ') {
+      ++txt;
+      --sz;
+    }
+  }
+  unsigned int res = 0;
+  std::from_chars(txt, txt + sz, res);
   return res;
 }
-
-double toDouble(const std::string &input, bool acceptSpaces) {
+unsigned int toUnsigned(const std::string &input, bool acceptSpaces) {
+  return toUnsigned(std::string_view(input.c_str()), acceptSpaces);
+}
+double toDouble(const std::string_view input, bool acceptSpaces) {
   // sanity check on the input since strtol doesn't do it for us:
-  const char *txt = input.c_str();
-  // check for ',' and '.' because locale
-  while (*txt != '\x00') {
+  const char *txt = input.data();
+  for (size_t i = 0u; i < input.size() && *txt != '\x00'; ++i) {
+    // check for ',' and '.' because locale
     if ((*txt >= '0' && *txt <= '9') || (acceptSpaces && *txt == ' ') ||
         *txt == '+' || *txt == '-' || *txt == ',' || *txt == '.') {
       ++txt;
@@ -105,30 +130,36 @@ double toDouble(const std::string &input, bool acceptSpaces) {
       throw boost::bad_lexical_cast();
     }
   }
-  double res = atof(input.c_str());
+  // unfortunately from_chars() with doubles didn't work on g++ until v11.1
+  // and the status with clang is hard to figure out... we remain old-school
+  // remove leading spaces
+  double res = atof(input.data());
   return res;
 }
-
+double toDouble(const std::string &input, bool acceptSpaces) {
+  return toDouble(std::string_view(input.c_str()), acceptSpaces);
+}
 std::string getV3000Line(std::istream *inStream, unsigned int &line) {
   // FIX: technically V3K blocks are case-insensitive. We should really be
   // up-casing everything here.
   PRECONDITION(inStream, "bad stream");
-  std::string res, tempStr;
-
+  std::string res;
   ++line;
-  tempStr = getLine(inStream);
+  auto inl = getLine(inStream);
+  std::string_view tempStr = inl;
   if (tempStr.size() < 7 || tempStr.substr(0, 7) != "M  V30 ") {
     std::ostringstream errout;
     errout << "Line " << line << " does not start with 'M  V30 '" << std::endl;
     throw FileParseException(errout.str());
   }
   // FIX: do we need to handle trailing whitespace after a -?
-  while (tempStr[tempStr.length() - 1] == '-') {
+  while (tempStr.back() == '-') {
     // continuation character, append what we read:
     res += tempStr.substr(7, tempStr.length() - 8);
     // and then read another line:
     ++line;
-    tempStr = getLine(inStream);
+    inl = getLine(inStream);
+    tempStr = inl;
     if (tempStr.size() < 7 || tempStr.substr(0, 7) != "M  V30 ") {
       std::ostringstream errout;
       errout << "Line " << line << " does not start with 'M  V30 '"
@@ -221,7 +252,8 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
 //
 //*************************************
 
-void ParseOldAtomList(RWMol *mol, const std::string &text, unsigned int line) {
+void ParseOldAtomList(RWMol *mol, const std::string_view &text,
+                      unsigned int line) {
   PRECONDITION(mol, "bad mol");
   unsigned int idx;
   try {
@@ -1153,18 +1185,18 @@ void ParseNewAtomList(RWMol *mol, const std::string &text, unsigned int line) {
   delete a;
 }
 
-void ParseV3000RGroups(RWMol *mol, Atom *&atom, const std::string &text,
+void ParseV3000RGroups(RWMol *mol, Atom *&atom, std::string_view text,
                        unsigned int line) {
   PRECONDITION(mol, "bad mol");
   PRECONDITION(atom, "bad atom");
-  if (text[0] != '(' || text[text.size() - 1] != ')') {
+  if (text[0] != '(' || text.back() != ')') {
     std::ostringstream errout;
     errout << "Bad RGROUPS specification '" << text << "' on line " << line
            << ". Missing parens.";
     throw FileParseException(errout.str());
   }
   std::vector<std::string> splitToken;
-  std::string resid = text.substr(1, text.size() - 2);
+  std::string resid = std::string(text.substr(1, text.size() - 2));
   boost::split(splitToken, resid, boost::is_any_of(std::string(" ")));
   if (splitToken.size() < 1) {
     std::ostringstream errout;
@@ -1314,7 +1346,7 @@ void ParseAtomValue(RWMol *mol, std::string text, unsigned int line) {
 // CXSMILES
 const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
                                                  "X", "XH", "M", "MH"};
-void convertComplexNameToQuery(Atom *query, const std::string &symb) {
+void convertComplexNameToQuery(Atom *query, std::string_view symb) {
   if (symb == "Q") {
     query->setQuery(makeQAtomQuery());
   } else if (symb == "QH") {
@@ -1338,7 +1370,7 @@ void convertComplexNameToQuery(Atom *query, const std::string &symb) {
   }
 }
 
-Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
+Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
                            unsigned int line, bool strictParsing) {
   std::string symb;
   int massDiff, chg, hCount;
@@ -1368,7 +1400,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
       massDiff = FileParserUtils::toInt(text.substr(34, 2), true);
     } catch (boost::bad_lexical_cast &) {
       std::ostringstream errout;
-      errout << "Cannot convert '" << text.substr(34, 2) << "' to into on line "
+      errout << "Cannot convert '" << text.substr(34, 2) << "' to int on line "
              << line;
       throw FileParseException(errout.str());
     }
@@ -1609,7 +1641,7 @@ Atom *ParseMolFileAtomLine(const std::string text, RDGeom::Point3D &pos,
   return res;
 }
 
-Bond *ParseMolFileBondLine(const std::string &text, unsigned int line) {
+Bond *ParseMolFileBondLine(const std::string_view text, unsigned int line) {
   unsigned int idx1, idx2, bType, stereo;
   int spos = 0;
 
@@ -1870,7 +1902,7 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   } else {
     if (tempStr[0] != 'M' && tempStr[0] != 'A' && tempStr[0] != 'V' &&
         tempStr[0] != 'G' && tempStr[0] != 'S') {
-      ParseOldAtomList(mol, tempStr, line);
+      ParseOldAtomList(mol, std::string_view(tempStr.c_str()), line);
     }
   }
 
@@ -2020,21 +2052,21 @@ bool ParseMolBlockProperties(std::istream *inStream, unsigned int &line,
   return fileComplete;
 }
 
-Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
+Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
   bool negate = false;
-  boost::trim(token);
-  std::string cpy = token;
-  boost::to_upper(cpy);
-  if (cpy.size() > 3 && cpy.substr(0, 3) == "NOT") {
+  token = FileParserUtils::strip(token);
+  if (token.size() > 3 && (token[0] == 'N' || token[0] == 'n') &&
+      (token[1] == 'O' || token[1] == 'o') &&
+      (token[2] == 'T' || token[2] == 't')) {
     negate = true;
     token = token.substr(3, token.size() - 3);
-    boost::trim(token);
+    token = FileParserUtils::strip(token);
   }
 
   Atom *res = nullptr;
   if (token[0] == '[') {
     // atom list:
-    if (token[token.length() - 1] != ']') {
+    if (token.back() != ']') {
       std::ostringstream errout;
       errout << "Bad atom token '" << token << "' on line: " << line;
       throw FileParseException(errout.str());
@@ -2046,8 +2078,9 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
 
     for (std::vector<std::string>::const_iterator stIt = splitToken.begin();
          stIt != splitToken.end(); ++stIt) {
-      std::string atSymb = boost::trim_copy(*stIt);
-      if (atSymb == "") {
+      std::string_view stoken = *stIt;
+      std::string atSymb(FileParserUtils::strip(stoken));
+      if (atSymb.empty()) {
         continue;
       }
       if (atSymb.size() == 2 && atSymb[1] >= 'A' && atSymb[1] <= 'Z') {
@@ -2092,8 +2125,7 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
         res->setAtomicNum(0);
       }
       if (token[0] == 'R' && token >= "R0" && token <= "R99") {
-        std::string rlabel = "";
-        rlabel = token.substr(1, token.length() - 1);
+        auto rlabel = token.substr(1, token.length() - 1);
         int rnumber;
         try {
           rnumber = boost::lexical_cast<int>(rlabel);
@@ -2114,13 +2146,14 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
       res->setIsotope(3);
     } else if (token == "Pol" || token == "Mod") {
       res = new Atom(0);
-      res->setProp(common_properties::dummyLabel, token);
+      res->setProp(common_properties::dummyLabel, std::string(token));
     } else {
+      std::string tcopy(token);
       if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
-        token[1] = static_cast<char>(tolower(token[1]));
+        tcopy[1] = static_cast<char>(tolower(token[1]));
       }
 
-      res = new Atom(PeriodicTable::getTable()->getAtomicNumber(token));
+      res = new Atom(PeriodicTable::getTable()->getAtomicNumber(tcopy));
     }
   }
 
@@ -2128,16 +2161,15 @@ Atom *ParseV3000AtomSymbol(std::string token, unsigned int &line) {
   return res;
 }
 
-bool splitAssignToken(const std::string &token, std::string &prop,
-                      std::string &val) {
-  std::vector<std::string> splitToken;
-  boost::split(splitToken, token, boost::is_any_of("="));
-  if (splitToken.size() != 2) {
+bool splitAssignToken(std::string_view token, std::string &prop,
+                      std::string_view &val) {
+  auto equalsLoc = token.find("=");
+  if (equalsLoc == token.npos || equalsLoc != token.rfind("=")) {
     return false;
   }
-  prop = splitToken[0];
+  prop = token.substr(0, equalsLoc);
   boost::to_upper(prop);
-  val = splitToken[1];
+  val = token.substr(equalsLoc + 1);
   return true;
 }
 
@@ -2149,7 +2181,8 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
   PRECONDITION(atom, "bad atom");
   std::ostringstream errout;
   while (token != tokens.end()) {
-    std::string prop, val;
+    std::string prop;
+    std::string_view val;
     if (!splitAssignToken(*token, prop, val)) {
       errout << "Invalid atom property: '" << *token << "' for atom "
              << atom->getIdx() + 1 << " on line " << line << std::endl;
@@ -2314,7 +2347,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         atom->setProp(common_properties::molAttachOrder, ival);
       }
     } else if (prop == "CLASS") {
-      atom->setProp(common_properties::molAtomClass, val);
+      atom->setProp(common_properties::molAtomClass, std::string(val));
     } else if (prop == "SEQID") {
       if (val != "0") {
         auto ival = FileParserUtils::toInt(val);
@@ -2325,7 +2358,8 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
   }
 }
 
-void tokenizeV3000Line(std::string line, std::vector<std::string> &tokens) {
+void tokenizeV3000Line(std::string_view line,
+                       std::vector<std::string_view> &tokens) {
   tokens.clear();
   bool inQuotes = false, inParens = false;
   unsigned int start = 0;
@@ -2384,21 +2418,22 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
   PRECONDITION(nAtoms > 0, "bad atom count");
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(conf, "bad conformer");
-  std::string tempStr;
   std::vector<std::string> splitLine;
 
-  tempStr = getV3000Line(inStream, line);
+  auto inl = getV3000Line(inStream, line);
+  std::string_view tempStr = inl;
   if (tempStr.length() < 10 || tempStr.substr(0, 10) != "BEGIN ATOM") {
     std::ostringstream errout;
     errout << "BEGIN ATOM line not found on line " << line;
     throw FileParseException(errout.str());
   }
   for (unsigned int i = 0; i < nAtoms; ++i) {
-    tempStr = getV3000Line(inStream, line);
-    std::string trimmed = boost::trim_copy(tempStr);
+    inl = getV3000Line(inStream, line);
+    tempStr = inl;
+    auto trimmed = FileParserUtils::strip(tempStr);
 
-    std::vector<std::string> tokens;
-    std::vector<std::string>::iterator token;
+    std::vector<std::string_view> tokens;
+    std::vector<std::string_view>::iterator token;
 
     tokenizeV3000Line(trimmed, tokens);
     token = tokens.begin();
@@ -2408,7 +2443,8 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line" << line;
       throw FileParseException(errout.str());
     }
-    unsigned int molIdx = atoi(token->c_str());
+    unsigned int molIdx = 0;
+    std::from_chars(token->data(), token->data() + token->size(), molIdx);
 
     // start with the symbol:
     ++token;
@@ -2428,7 +2464,8 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    pos.x = atof(token->c_str());
+
+    pos.x = atof(std::string(*token).c_str());
     ++token;
     if (token == tokens.end()) {
       delete atom;
@@ -2436,7 +2473,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    pos.y = atof(token->c_str());
+    pos.y = atof(std::string(*token).c_str());
     ++token;
     if (token == tokens.end()) {
       delete atom;
@@ -2444,7 +2481,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    pos.z = atof(token->c_str());
+    pos.z = atof(std::string(*token).c_str());
     // the map number:
     ++token;
     if (token == tokens.end()) {
@@ -2453,7 +2490,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    int mapNum = atoi(token->c_str());
+    int mapNum = atoi(std::string(*token).c_str());
     if (mapNum > 0) {
       atom->setProp(common_properties::molAtomMapNumber, mapNum);
     }
@@ -2468,7 +2505,8 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
     mol->setAtomBookmark(atom, molIdx);
     conf->setAtomPos(aid, pos);
   }
-  tempStr = getV3000Line(inStream, line);
+  inl = getV3000Line(inStream, line);
+  tempStr = inl;
   if (tempStr.length() < 8 || tempStr.substr(0, 8) != "END ATOM") {
     std::ostringstream errout;
     errout << "END ATOM line not found on line " << line;
@@ -2495,13 +2533,16 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
   PRECONDITION(nBonds > 0, "bad bond count");
   PRECONDITION(mol, "bad molecule");
 
-  auto tempStr = getV3000Line(inStream, line);
+  auto inl = getV3000Line(inStream, line);
+  std::string_view tempStr = inl;
   if (tempStr.length() < 10 || tempStr.substr(0, 10) != "BEGIN BOND") {
     throw FileParseException("BEGIN BOND line not found");
   }
   for (unsigned int i = 0; i < nBonds; ++i) {
-    tempStr = boost::trim_copy(getV3000Line(inStream, line));
-    std::vector<std::string> splitLine;
+    inl = getV3000Line(inStream, line);
+    tempStr = inl;
+    tempStr = FileParserUtils::strip(tempStr);
+    std::vector<std::string_view> splitLine;
     tokenizeV3000Line(tempStr, splitLine);
     if (splitLine.size() < 4) {
       std::ostringstream errout;
@@ -2509,10 +2550,18 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       throw FileParseException(errout.str());
     }
     Bond *bond;
-    unsigned int bondIdx = atoi(splitLine[0].c_str());
-    unsigned int bType = atoi(splitLine[1].c_str());
-    unsigned int a1Idx = atoi(splitLine[2].c_str());
-    unsigned int a2Idx = atoi(splitLine[3].c_str());
+    unsigned int bondIdx = 0;
+    std::from_chars(splitLine[0].data(),
+                    splitLine[0].data() + splitLine[0].size(), bondIdx);
+    unsigned int bType = 0;
+    std::from_chars(splitLine[1].data(),
+                    splitLine[1].data() + splitLine[1].size(), bType);
+    unsigned int a1Idx = 0;
+    std::from_chars(splitLine[2].data(),
+                    splitLine[2].data() + splitLine[2].size(), a1Idx);
+    unsigned int a2Idx = 0;
+    std::from_chars(splitLine[3].data(),
+                    splitLine[3].data() + splitLine[3].size(), a2Idx);
 
     switch (bType) {
       case 1:
@@ -2572,14 +2621,16 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
     unsigned int lPos = 4;
     std::ostringstream errout;
     while (lPos < splitLine.size()) {
-      std::string prop, val;
+      std::string prop;
+      std::string_view val;
       if (!splitAssignToken(splitLine[lPos], prop, val)) {
         errout << "bad bond property '" << splitLine[lPos] << "' on line "
                << line;
         throw FileParseException(errout.str());
       }
       if (prop == "CFG") {
-        unsigned int cfg = atoi(val.c_str());
+        unsigned int cfg = 0;
+        std::from_chars(val.data(), val.data() + val.size(), cfg);
         switch (cfg) {
           case 0:
             break;
@@ -2626,11 +2677,11 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
         int reactStatus = FileParserUtils::toInt(val);
         bond->setProp(common_properties::molReactStatus, reactStatus);
       } else if (prop == "STBOX") {
-        bond->setProp(common_properties::molStereoCare, val);
+        bond->setProp(common_properties::molStereoCare, std::string(val));
       } else if (prop == "ENDPTS") {
-        bond->setProp(common_properties::_MolFileBondEndPts, val);
+        bond->setProp(common_properties::_MolFileBondEndPts, std::string(val));
       } else if (prop == "ATTACH") {
-        bond->setProp(common_properties::_MolFileBondAttach, val);
+        bond->setProp(common_properties::_MolFileBondAttach, std::string(val));
       }
       ++lPos;
     }
@@ -2654,7 +2705,8 @@ void ParseV3000BondBlock(std::istream *inStream, unsigned int &line,
       }
     }
   }
-  tempStr = getV3000Line(inStream, line);
+  inl = getV3000Line(inStream, line);
+  tempStr = inl;
   if (tempStr.length() < 8 || tempStr.substr(0, 8) != "END BOND") {
     std::ostringstream errout;
     errout << "END BOND line not found at line " << line;
