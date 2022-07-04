@@ -476,11 +476,23 @@ void DrawShapeDashedWedge::buildLines() {
   } else {
     // re-adjust so the last dash is on the end of the wedge.
     dashSep = centralLen / rdcast<double>(nDashes);
+    // if doing one less dash, we want a shorter wedge that is just as wide
+    if (oneLessDash_) {
+      double halfEndWidth = (midend - end1Cds_).length();
+      Point2D centLine = at1Cds_.directionVector(midend);
+      midend = at1Cds_ + centLine * (centralLen - dashSep);
+      Point2D perp{-centLine.y, centLine.x};
+      perp.normalize();
+      Point2D newEnd1 = midend - perp * halfEndWidth;
+      Point2D newEnd2 = midend + perp * halfEndWidth;
+      e1 = (newEnd1 - at1Cds_);
+      e2 = (newEnd2 - at1Cds_);
+      e1.normalize();
+      e2.normalize();
+    }
     // we want the separation down the sides of the triangle, so use
     // similar triangles to scale.
     dashSep *= (end1Cds_ - at1Cds_).length() / centralLen;
-    //    std::cout << "nDashes : " << nDashes << "  dashSep = " << dashSep
-    //              << std::endl;
     int extra = oneLessDash_ ? 0 : 1;
     for (unsigned int i = 1; i < nDashes + extra; ++i) {
       auto e11 = at1Cds_ + e1 * rdcast<double>(i) * dashSep;

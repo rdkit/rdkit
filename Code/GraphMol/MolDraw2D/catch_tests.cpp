@@ -4652,7 +4652,7 @@ M  END)CTAB"_ctab;
 
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
-#if 0
+#if 1
     auto m1 = R"CTAB(mol1
   ChemDraw05162216032D
 
@@ -4690,7 +4690,7 @@ M  END)CTAB"_ctab;
     REQUIRE(res2);
 #endif
 #endif
-#if 0
+#if 1
     auto m2 = R"CTAB(mol2
   ChemDraw06062216302D
 
@@ -4739,7 +4739,7 @@ M  END
     REQUIRE(res4);
 #endif
 #endif
-#if 0
+#if 1
     auto m3 = R"(c1c(nc[nH]1)[C@@H](C)\C=C\C#N)"_smiles;
     m3->setProp<std::string>("_Name", "mol3");
     REQUIRE(m3);
@@ -4748,7 +4748,7 @@ M  END
                                                nullptr, nullptr);
     REQUIRE(res5);
 #endif
-#if 0
+#if 1
     auto m4 = "c1c(nc[nH]1)C(C)C=CC#N"_smiles;
     m4->setProp<std::string>("_Name", "mol4");
     REQUIRE(m4);
@@ -4757,7 +4757,7 @@ M  END
                                                nullptr, nullptr);
     REQUIRE(res6);
 #endif
-#if 0
+#if 1
     {
       auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
@@ -4768,7 +4768,7 @@ M  END
       REQUIRE(res6);
     }
 #endif
-#if 0
+#if 1
     {
       auto m = "CC(I)CC(Cl)CC(F)C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
@@ -4779,7 +4779,7 @@ M  END
       REQUIRE(res6);
     }
 #endif
-#if 0
+#if 1
     {
       auto m = R"CTAB(mol7
   ChemDraw06112209342D
@@ -4866,7 +4866,7 @@ M  END
       REQUIRE(res);
     }
 #endif
-#if 0
+#if 1
     {
       auto m = R"CTAB(mol8
   ChemDraw06132212082D
@@ -4918,7 +4918,7 @@ M  END
       REQUIRE(res);
     }
 #endif
-#if 0
+#if 1
     {
       auto m = R"CTAB(mol9
   ChemDraw06192209132D
@@ -4970,7 +4970,7 @@ M  END
       REQUIRE(res);
     }
 #endif
-#if 0
+#if 1
     {
       auto m = R"CTAB(mol10
   ChemDraw06192209312D
@@ -5026,7 +5026,7 @@ M  END
       REQUIRE(res);
     }
 #endif
-#if 0
+#if 1
     {
       auto m = R"CTAB(mol11
   ChemDraw06202211162D
@@ -5122,29 +5122,30 @@ M  END
 #if 1
   {
     auto m = R"CTAB(mol13
-  ChemDraw06302214212D
+  ChemDraw07042207302D
 
   0  0  0     0  0              0 V3000
 M  V30 BEGIN CTAB
-M  V30 COUNTS 17 16 0 0 1
+M  V30 COUNTS 18 17 0 0 1
 M  V30 BEGIN ATOM
 M  V30 1 C -2.500648 -0.206250 0.000000 0
 M  V30 2 C -1.786177 0.206250 0.000000 0
 M  V30 3 C -1.071707 -0.206250 0.000000 0
-M  V30 4 C -0.357236 0.206250 0.000000 0
+M  V30 4 C -0.357237 0.206250 0.000000 0
 M  V30 5 C 0.357236 -0.206250 0.000000 0
 M  V30 6 C 1.071707 0.206250 0.000000 0
 M  V30 7 C 1.786177 -0.206250 0.000000 0
 M  V30 8 C 2.500648 0.206250 0.000000 0
-M  V30 9 C -1.786177 1.031250 0.000000 0
+M  V30 9 C -1.786177 1.031251 0.000000 0
 M  V30 10 C -2.500648 1.443750 0.000000 0
-M  V30 11 C -0.357236 1.031250 0.000000 0
+M  V30 11 C -0.357237 1.031251 0.000000 0
 M  V30 12 C -1.071707 1.443750 0.000000 0
 M  V30 13 C 0.357236 1.443750 0.000000 0
 M  V30 14 C 1.786177 -1.031250 0.000000 0
 M  V30 15 C 2.500648 -1.443750 0.000000 0
 M  V30 16 Cl 0.357236 -1.031250 0.000000 0
 M  V30 17 C -1.071707 -1.031250 0.000000 0
+M  V30 18 C 1.071707 1.031250 0.000000 0
 M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
@@ -5163,9 +5164,10 @@ M  V30 13 1 7 14 CFG=3
 M  V30 14 2 14 15
 M  V30 15 1 5 16 CFG=3
 M  V30 16 1 3 17
+M  V30 17 1 6 18 CFG=3
 M  V30 END BOND
 M  V30 BEGIN COLLECTION
-M  V30 MDLV30/STEABS ATOMS=(4 2 4 5 7)
+M  V30 MDLV30/STEABS ATOMS=(5 2 4 5 6 7)
 M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
