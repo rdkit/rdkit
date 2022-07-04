@@ -401,8 +401,8 @@ std::vector<std::tuple<Point2D, Point2D, Point2D, Point2D>> getWavyLineSegments(
   for (unsigned int i = 0; i < nSegments; ++i) {
     Point2D startpt = p1 + delta * i;
     Point2D segpt = startpt + delta;
-    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
-    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    Point2D cpt1 = startpt + perp * (i % 2 ? -1 : 1);
+    Point2D cpt2 = segpt + perp * (i % 2 ? -1 : 1);
     res.emplace_back(startpt, cpt1, cpt2, segpt);
   }
   return res;
