@@ -5000,7 +5000,7 @@ M  END
     }
 #endif
   }
-#if 0
+#if 1
   {
     auto m = R"CTAB(mol12
   ChemDraw06302210552D
@@ -5057,7 +5057,7 @@ M  END
     REQUIRE(res);
   }
 #endif
-#if 0
+#if 1
   {
     auto m = R"CTAB(mol13
   ChemDraw06302214212D
@@ -5116,7 +5116,7 @@ M  END
 #endif
 #if 1
   {
-    auto m = R"CTAB(ACS Document 1996
+    auto m = R"CTAB(mol14
   ChemDraw06302215142D
 
   0  0  0     0  0              0 V3000
