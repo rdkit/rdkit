@@ -1,3 +1,42 @@
+# Release_2022.03.4
+(Changes relative to Release_2022.03.3)
+
+## Acknowledgements
+David Cosgrove, Peter Gedeck, Chris Kuenneth, Michel Moreau, Alex Rich, Ricardo
+Rodriguez-Schmidt, Paolo Tosco, Ivan Tubert-Brohman, Rachel Walker, 
+
+## Bug Fixes:
+  - Runtime error when writing reaction with substance group to V3000 rxnblock
+ (github #5324 from rachelnwalker)
+  - Update docs for ReplaceSubstructs
+ (github #5343 from i-tub)
+  - Minimallib NPM release fixes - wrong node bin command in Dockerfile and prepublish npm script command replacement
+ (github #5349 from MichelML)
+  - Update code formatting in GettingStartedInPython.rst
+ (github #5350 from gedeck)
+  - Prevent wedging ring bonds
+ (github #5356 from greglandrum)
+  - Class info info missing for for wavy bonds in SVGs.
+ (github #5358 from DavidACosgrove)
+  - MolToSmiles with doRandom=True raises errors with molecules containing fragments.
+ (github #5372 from greglandrum)
+  - Fixes #1812
+ (github #5373 from kuelumbus)
+  - Fix typos in docString.
+ (github #5377 from DavidACosgrove)
+  - Restore #5103 that was accidentally reverted in #5132
+ (github #5381 from ptosco)
+  - cairo error when using similarity maps
+ (github #5383 from glandrum)
+  - MolDraw2DQt and MolDraw2DJS don't draw wavy bonds
+ (github #5386 from greglandrum)
+  - Typos in Install.md
+ (github #5388 from gedeck)
+  - MolDraw2DQt draws brackets incorrectly
+ (github #5389 from greglandrum)
+  - PandasTools should not always bring in IPythonConsole
+ (github #5392 from greglandrum)
+
 # Release_2022.03.3
 (Changes relative to Release_2022.03.2)
 
