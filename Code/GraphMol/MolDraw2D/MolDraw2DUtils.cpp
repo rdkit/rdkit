@@ -527,8 +527,8 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   opts.fixedFontSize = 10;
   opts.additionalAtomLabelPadding = 0.066;
   std::string fName = getenv("RDBASE");
-  fName += "/Data/Fonts/FreeSans.ttf";
-  opts.fontFile = fName;
+  fName += "/Data/Fonts/Abel-Regular.ttf";
+  opts.fontFile = "BuiltinRobotoRegular";
 }
 
 // ****************************************************************************

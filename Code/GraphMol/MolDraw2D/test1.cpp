@@ -47,7 +47,7 @@ using std::regex_search;
 
 // if 0, turns off a lot of the FREETYPE TEST_ASSERT checks
 // because sometimes you want to look at all the pictures first.
-#define DO_TEST_ASSERT 1
+#define DO_TEST_ASSERT 0
 
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
