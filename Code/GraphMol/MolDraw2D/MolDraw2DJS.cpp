@@ -138,6 +138,8 @@ void MolDraw2DJS::drawEllipse(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 void MolDraw2DJS::clearDrawing() {
+  MolDraw2D::clearDrawing();
+
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
   d_context.call<void>("clearRect", offset().x, offset().y, width(), height());
   d_context.set("fillStyle", col);

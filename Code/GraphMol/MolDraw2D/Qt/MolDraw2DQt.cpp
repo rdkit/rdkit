@@ -136,6 +136,8 @@ void MolDraw2DQt::drawPolygon(const vector<Point2D> &cds, bool rawCoords) {
 
 // ****************************************************************************
 void MolDraw2DQt::clearDrawing() {
+  MolDraw2D::clearDrawing();
+
   QColor this_col(int(255.0 * drawOptions().backgroundColour.r),
                   int(255.0 * drawOptions().backgroundColour.g),
                   int(255.0 * drawOptions().backgroundColour.b),
