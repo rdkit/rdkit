@@ -493,7 +493,7 @@ void addNonbonded(const ROMol &mol, int confId, const AtomicParamVect &params,
 const std::string DefaultTorsionBondSmarts::ds_string =
     "[!$(*#*)&!D1]~[!$(*#*)&!D1]";
 boost::scoped_ptr<const ROMol> DefaultTorsionBondSmarts::ds_instance;
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 std::once_flag DefaultTorsionBondSmarts::ds_flag;
 #endif
 void DefaultTorsionBondSmarts::create() {
@@ -501,7 +501,7 @@ void DefaultTorsionBondSmarts::create() {
 }
 
 const ROMol *DefaultTorsionBondSmarts::query() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::call_once(ds_flag, create);
 #else
   static bool created = false;

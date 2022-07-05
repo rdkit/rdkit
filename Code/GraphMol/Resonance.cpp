@@ -13,7 +13,7 @@
 #include <GraphMol/Resonance.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/RDThreads.h>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>
 #include <future>
 #endif
@@ -1092,18 +1092,23 @@ bool ConjElectrons::popFromBeginStack(unsigned int &ai) {
 // 7) Sum of the indices of multiple bonds
 bool CEVect2::resonanceStructureCompare(const ConjElectrons *a,
                                         const ConjElectrons *b) {
-  return ((a->nbMissing() != b->nbMissing()) ? (a->nbMissing() < b->nbMissing())
+  return (
+      (a->nbMissing() != b->nbMissing())
+          ? (a->nbMissing() < b->nbMissing())
           : (a->absFormalCharges() != b->absFormalCharges())
-              ? (a->absFormalCharges() < b->absFormalCharges())
-          : (a->wtdFormalCharges() != b->wtdFormalCharges())
-              ? (a->wtdFormalCharges() < b->wtdFormalCharges())
-          : (a->fcSameSignDist() != b->fcSameSignDist())
-              ? (a->fcSameSignDist() > b->fcSameSignDist())
-          : (a->fcOppSignDist() != b->fcOppSignDist())
-              ? (a->fcOppSignDist() > b->fcOppSignDist())
-          : (a->sumFormalChargeIdxs() != b->sumFormalChargeIdxs())
-              ? (a->sumFormalChargeIdxs() < b->sumFormalChargeIdxs())
-              : (a->sumMultipleBondIdxs() < b->sumMultipleBondIdxs()));
+                ? (a->absFormalCharges() < b->absFormalCharges())
+                : (a->wtdFormalCharges() != b->wtdFormalCharges())
+                      ? (a->wtdFormalCharges() < b->wtdFormalCharges())
+                      : (a->fcSameSignDist() != b->fcSameSignDist())
+                            ? (a->fcSameSignDist() > b->fcSameSignDist())
+                            : (a->fcOppSignDist() != b->fcOppSignDist())
+                                  ? (a->fcOppSignDist() > b->fcOppSignDist())
+                                  : (a->sumFormalChargeIdxs() !=
+                                     b->sumFormalChargeIdxs())
+                                        ? (a->sumFormalChargeIdxs() <
+                                           b->sumFormalChargeIdxs())
+                                        : (a->sumMultipleBondIdxs() <
+                                           b->sumMultipleBondIdxs()));
 }
 
 CEVect2::CEVect2(const CEMap &ceMap) {
@@ -1403,7 +1408,7 @@ void ResonanceMolSupplier::enumerate() {
   if (d_numThreads == 1) {
     mainLoop(0, 1);
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
     auto functor = [this](unsigned int ti, unsigned int d_numThreads) -> void {

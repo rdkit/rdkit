@@ -114,7 +114,7 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   // Number of runs
   int gaNumberRuns = 1;
   // Sequential or parallel runs?
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   bool gaParallelRuns = true;
 #else
   bool gaParallelRuns = false;
