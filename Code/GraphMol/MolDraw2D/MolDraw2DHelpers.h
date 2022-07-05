@@ -168,7 +168,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   std::string fontFile = "";  // name of font file for freetype rendering.  If
                               // given, over-rides default
                               // (BuiltinTelexRegular).  Can also be
-                              // BuiltinFreeSans
+                              // BuiltinRobotoRegular.
   DrawColour legendColour{0, 0,
                           0};  // color to be used for the legend (if present)
   double multipleBondOffset = 0.15;  // offset (in Angstrom) for the extra lines

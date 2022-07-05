@@ -767,7 +767,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "label font.  Default=0.75.")
       .def_readwrite("fontFile", &RDKit::MolDrawOptions::fontFile,
                      "Font file for use with FreeType text drawer.  Can also be"
-                     " BuiltinTelexRegular (the default) or BuiltinFreeSans.")
+                     " BuiltinTelexRegular (the default) or BuiltinRobotoRegular.")
       .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset (in Angstroms) for the extra lines in a multiple bond")
