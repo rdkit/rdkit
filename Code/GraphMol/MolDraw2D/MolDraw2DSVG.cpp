@@ -313,6 +313,8 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 void MolDraw2DSVG::clearDrawing() {
+  MolDraw2D::clearDrawing();
+
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
   d_os << "<rect";
   d_os << " style='opacity:1.0;fill:" << col << ";stroke:none'";
