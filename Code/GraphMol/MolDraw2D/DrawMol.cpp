@@ -2730,9 +2730,10 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     // one line as normal, the 2nd truncates at the internal end only
     l1s = at1_cds;
     l1f = at2_cds;
-    Point2D perp = calcPerpendicular(at2_cds, at1_cds) * offset;
-    l2s = at1_cds + perp;
     const Atom *thirdAtom = otherNeighbor(at2, at1, 0, *drawMol_);
+    Point2D perp =
+        calcInnerPerpendicular(at1_cds, at2_cds, atCds_[thirdAtom->getIdx()]);
+    l2s = at1_cds + perp * offset;
     l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                         offset, true);
   }
