@@ -457,10 +457,8 @@ void DrawShapeDashedWedge::buildLines() {
   auto midend = (end1Cds_ + end2Cds_) * 0.5;
   points_.clear();
   lineColours_.clear();
-  auto e1 = (end1Cds_ - at1Cds_);
-  auto e2 = (end2Cds_ - at1Cds_);
-  e1.normalize();
-  e2.normalize();
+  auto e1 = at1Cds_.directionVector(end1Cds_);
+  auto e2 = at1Cds_.directionVector(end2Cds_);
   // the ACS1996 rules say the dash separation should be 2.5px.  It seems
   // like a good result for all of them.
   // It appears that this means a 2.5px gap between each line, so we need
@@ -477,18 +475,17 @@ void DrawShapeDashedWedge::buildLines() {
     // re-adjust so the last dash is on the end of the wedge.
     dashSep = centralLen / rdcast<double>(nDashes);
     // if doing one less dash, we want a shorter wedge that is just as wide
+    // at the end as it would have been.
     if (oneLessDash_) {
-      double halfEndWidth = (midend - end1Cds_).length();
-      Point2D centLine = at1Cds_.directionVector(midend);
-      midend = at1Cds_ + centLine * (centralLen - dashSep);
-      Point2D perp{-centLine.y, centLine.x};
-      perp.normalize();
-      Point2D newEnd1 = midend - perp * halfEndWidth;
-      Point2D newEnd2 = midend + perp * halfEndWidth;
-      e1 = (newEnd1 - at1Cds_);
-      e2 = (newEnd2 - at1Cds_);
-      e1.normalize();
-      e2.normalize();
+      double endlenb2 = (end1Cds_ - end2Cds_).length() / 2.0;
+      auto centralLine = at1Cds_.directionVector(midend);
+      Point2D centralPerp{-centralLine.y, centralLine.x};
+      Point2D newEnd1 = at1Cds_ + centralLine * (centralLen - dashSep) +
+                        centralPerp * endlenb2;
+      Point2D newEnd2 = at1Cds_ + centralLine * (centralLen - dashSep) -
+                        centralPerp * endlenb2;
+      e1 = at1Cds_.directionVector(newEnd1);
+      e2 = at1Cds_.directionVector(newEnd2);
     }
     // we want the separation down the sides of the triangle, so use
     // similar triangles to scale.
