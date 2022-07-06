@@ -3484,10 +3484,12 @@ M  END)molb";
     outs << text;
     outs.flush();
     outs.close();
+#if DO_TEST_ASSERT
     TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M "
                           "65.9,100.9 L 134.1,79.1'") != std::string::npos);
     TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M "
                           "69.7,107.5 L 9.1,72.5'") != std::string::npos);
+#endif
     check_file_hash("testGithub2063_1.svg");
   }
   {
@@ -3516,10 +3518,12 @@ M  END)molb";
     outs << text;
     outs.flush();
     outs.close();
+#if DO_TEST_ASSERT
     TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M "
                           "65.9,100.9 L 134.1,79.1'") != std::string::npos);
     TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M "
                           "69.7,107.5 L 9.1,72.5'") != std::string::npos);
+#endif
     check_file_hash("testGithub2063_2.svg");
   }
   std::cerr << " Done" << std::endl;
@@ -3543,8 +3547,10 @@ void testGithub2151() {
       outs << text;
       outs.flush();
       outs.close();
+#if DO_TEST_ASSERT
       TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
       TEST_ASSERT(text.find("stroke-width:3.0px") == std::string::npos);
+#endif
       check_file_hash("testGithub2151_1.svg");
     }
     {
@@ -3558,8 +3564,10 @@ void testGithub2151() {
       outs << text;
       outs.flush();
       outs.close();
+#if DO_TEST_ASSERT
       TEST_ASSERT(text.find("stroke-width:2.0px") == std::string::npos);
       TEST_ASSERT(text.find("stroke-width:8.0px") != std::string::npos);
+#endif
       check_file_hash("testGithub2151_2.svg");
     }
   }
@@ -3588,9 +3596,11 @@ void testGithub2762() {
     outs << text;
     outs.flush();
     outs.close();
+#if DO_TEST_ASSERT
     TEST_ASSERT(text.find("font-size:0px") == std::string::npos);
     TEST_ASSERT(text.find("'bond-0' d='M 0.0,200.0 L 0.0,200.0'") ==
                 std::string::npos);
+#endif
     check_file_hash("testGithub2762.svg");
   }
   std::cerr << " Done" << std::endl;
@@ -4172,7 +4182,9 @@ void testGithub3305() {
     outs << text;
     outs.flush();
     outs.close();
+#if DO_TEST_ASSERT
     TEST_ASSERT(text.find("stroke-width:4.1px") != std::string::npos);
+#endif
     check_file_hash(nameBase + "3.svg");
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -4433,7 +4445,9 @@ void testGithub4156() {
     // this is the start of the radical spot.
     regex qry(
         "<path class='atom-1' d='M 21.[0-9]*,75.[0-9]* L 21.[0-9]*,75.[0-9]*");
+#if DO_TEST_ASSERT
     TEST_ASSERT(regex_search(text, qry));
+#endif
     check_file_hash("testGithub4156_1.svg");
   }
   {
@@ -4452,7 +4466,9 @@ void testGithub4156() {
     regex qry(
         "<path class='atom-1' d='M 271.[0-9]*,75.[0-9]* L "
         "271.[0-9]*,75.[0-9]*");
+#if DO_TEST_ASSERT
     TEST_ASSERT(regex_search(text, qry));
+#endif
     check_file_hash("testGithub4156_2.svg");
   }
 #endif
@@ -4476,14 +4492,14 @@ void test23JSONAtomColourPalette() {
     std::ofstream outs("test23_1.svg");
     outs << text;
     outs.close();
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     TEST_ASSERT(text.find("' fill='#3366E5") != std::string::npos);
     TEST_ASSERT(text.find("' fill='#E59900") != std::string::npos);
-#endif
 #else
     TEST_ASSERT(text.find("fill:#3366E5") != std::string::npos);
     TEST_ASSERT(text.find("fill:#E59900") != std::string::npos);
+#endif
 #endif
     check_file_hash("test23_1.svg");
   }
