@@ -1033,7 +1033,7 @@ void testSubstanceGroupsAndRemoveHs(const std::string &rdbase) {
 }
 
 void testKeepSpecialHsOnRemoval() {
-  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github XXXX: "
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github 5399: "
                        << "Allow removal of non-special H atoms in SGroups"
                        << std::endl;
 
