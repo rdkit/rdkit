@@ -2532,7 +2532,8 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   Atom *at2 = bond.getEndAtom();
 
   Point2D perp;
-  if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_)) {
+  if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_) ||
+      (at1->getDegree() == 1 && at2->getDegree() == 1)) {
     const Point2D &at1_cds = atCds_[at1->getIdx()];
     const Point2D &at2_cds = atCds_[at2->getIdx()];
     perp = calcPerpendicular(at1_cds, at2_cds) * offset * 0.5;
@@ -2541,7 +2542,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
     l2s = at1_cds - perp;
     l2f = at2_cds - perp;
   } else if ((at1->getDegree() == 1 || at2->getDegree() == 1)) {
-    doubleBondTerminal(at1, at2, offset, l1s, l1f, l2f, l2s);
+    doubleBondTerminal(at1, at2, offset, l1s, l1f, l2s, l2f);
   } else {
     const Point2D &at1_cds = atCds_[at1->getIdx()];
     const Point2D &at2_cds = atCds_[at2->getIdx()];
