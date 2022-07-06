@@ -2660,17 +2660,32 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
       l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(),
                           begAt->getIdx(), offset, true);
     }
-  } else if ((begAt->getDegree() > 2 && endAt->getDegree() == 2) ||
-             (begAt->getDegree() == 2 && endAt->getDegree() > 2)) {
+  } else if (begAt->getDegree() == 2 && endAt->getDegree() > 2) {
     thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
+    fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
     l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
                         offset, true);
-    fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
     bool isTrans =
         areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
                       atCds_[endAt->getIdx()], atCds_[fourthAtom->getIdx()]);
     if (isTrans) {
       fourthAtom = otherNeighbor(endAt, begAt, 1, *drawMol_);
+    }
+    l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
+                        offset, true);
+
+  } else if (begAt->getDegree() > 2 && endAt->getDegree() == 2) {
+    thirdAtom = otherNeighbor(begAt, endAt, 0, *drawMol_);
+    fourthAtom = otherNeighbor(endAt, begAt, 0, *drawMol_);
+    l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
+                        offset, true);
+    bool isTrans =
+        areBondsTrans(atCds_[thirdAtom->getIdx()], atCds_[begAt->getIdx()],
+                      atCds_[endAt->getIdx()], atCds_[fourthAtom->getIdx()]);
+    if (isTrans) {
+      thirdAtom = otherNeighbor(begAt, endAt, 1, *drawMol_);
+      l2s = doubleBondEnd(thirdAtom->getIdx(), begAt->getIdx(), endAt->getIdx(),
+                          offset, true);
     }
     l2f = doubleBondEnd(fourthAtom->getIdx(), endAt->getIdx(), begAt->getIdx(),
                         offset, true);
