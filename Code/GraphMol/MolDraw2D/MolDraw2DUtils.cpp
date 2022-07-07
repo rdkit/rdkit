@@ -513,7 +513,7 @@ std::string drawMolACS1996Cairo(
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
-  //  opts.addAtomIndices = true;
+  //    opts.addAtomIndices = true;
   //  opts.addBondIndices = true;
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
@@ -521,7 +521,7 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   // in pixels per Angstrom.
   opts.scalingFactor = 14.4 / meanBondLen;
   // offset for multiple bonds is 18% of the bond length.
-  opts.multipleBondOffset = 0.18 * meanBondLen;
+  opts.multipleBondOffset = 0.18;
   setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
 
   opts.fixedFontSize = 10;

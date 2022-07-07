@@ -601,8 +601,8 @@ void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
 }
 
 void drawArrowHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
-                     const Point2D &cds2, bool asPolygon,
-                     double frac, double angle, python::object pycol, bool rawCoords) {
+                     const Point2D &cds2, bool asPolygon, double frac,
+                     double angle, python::object pycol, bool rawCoords) {
   DrawColour col{0.0, 0.0, 0.0};
   if (pycol) {
     python::tuple pytup = python::extract<python::tuple>(pycol);
@@ -765,12 +765,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "annotationFontScale", &RDKit::MolDrawOptions::annotationFontScale,
           "Scale of font for atom and bond annotation relative to atom"
           "label font.  Default=0.75.")
-      .def_readwrite("fontFile", &RDKit::MolDrawOptions::fontFile,
-                     "Font file for use with FreeType text drawer.  Can also be"
-                     " BuiltinTelexRegular (the default) or BuiltinRobotoRegular.")
+      .def_readwrite(
+          "fontFile", &RDKit::MolDrawOptions::fontFile,
+          "Font file for use with FreeType text drawer.  Can also be"
+          " BuiltinTelexRegular (the default) or BuiltinRobotoRegular.")
       .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
-          "offset (in Angstroms) for the extra lines in a multiple bond")
+          "offset for the extra lines in a multiple bond as a fraction of mean"
+          " bond length")
       .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
                      "fraction of empty space to leave around molecule")
       .def_readwrite(
@@ -958,9 +960,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame")
       .def("DrawArrow", RDKit::drawArrowHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
-            python::arg("asPolygon") = false,
-            python::arg("frac") = 0.05, python::arg("angle") = M_PI / 6,
-            python::arg("color") = python::object(), python::arg("rawCoords") = false),
+            python::arg("asPolygon") = false, python::arg("frac") = 0.05,
+            python::arg("angle") = M_PI / 6,
+            python::arg("color") = python::object(),
+            python::arg("rawCoords") = false),
            "draws an arrow with the current drawing style. The coordinates "
            "are in the molecule frame. If asPolygon is true the head of the "
            "arrow will be drawn as a triangle, otherwise two lines are used.")
@@ -1056,7 +1059,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
-           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+           (void(RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
                RDKit::MolDraw2DSVG::addMoleculeMetadata,
            (python::arg("mol"), python::arg("confId") = -1),
            "add RDKit-specific information to the bottom of the drawing")

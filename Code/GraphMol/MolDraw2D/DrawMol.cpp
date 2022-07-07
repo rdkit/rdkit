@@ -240,14 +240,8 @@ void DrawMol::extractAtomSymbols() {
 
 // ****************************************************************************
 void DrawMol::extractBonds() {
-  double doubleBondOffset = drawOptions_.multipleBondOffset;
-  // mol files from, for example, Marvin use a bond length of 1 for just about
-  // everything. When this is the case, the default multipleBondOffset is just
-  // too much, so scale it back.
   calcMeanBondLength();
-  if (meanBondLength_ < 1.2) {
-    //    doubleBondOffset *= 0.6;
-  }
+  double doubleBondOffset = drawOptions_.multipleBondOffset * meanBondLength_;
 
   for (auto bond : drawMol_->bonds()) {
     bool isComplex = false;
@@ -1708,7 +1702,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
   Point2D perp = calcPerpendicular(at1_cds, at2_cds);
   // Set the 'fatness' of the wedge to be a fraction of the mean bond
   // length, so we should always see something.
-  Point2D disp = perp * drawOptions_.multipleBondOffset / 2.0;
+  Point2D disp = perp * drawOptions_.multipleBondOffset * meanBondLength_ / 2.0;
   Point2D t1 = end2 + disp;
   Point2D t2 = end2 - disp;
   std::vector<Point2D> pts{end1, t1, t2};
