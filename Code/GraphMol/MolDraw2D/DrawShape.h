@@ -146,6 +146,8 @@ class DrawShapeSolidWedge : public DrawShape {
   DrawShapeSolidWedge &operator=(const DrawShapeSolidWedge &) = delete;
   DrawShapeSolidWedge &operator=(DrawShapeSolidWedge &&) = delete;
   void buildTriangles();
+  void buildSingleColorTriangles();
+  void buildTwoColorTriangles();
   void myDraw(MolDraw2D &drawer) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
   // if otherBondVecs_.size() > 2, then we only want the two vecs with the

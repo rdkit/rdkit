@@ -303,6 +303,15 @@ DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> points,
 
 // ****************************************************************************
 void DrawShapeSolidWedge::buildTriangles() {
+  if (!(lineColour_ == col2_) || splitBonds_) {
+    buildTwoColorTriangles();
+  } else {
+    buildSingleColorTriangles();
+  }
+}
+
+// ****************************************************************************
+void DrawShapeSolidWedge::buildSingleColorTriangles() {
   auto point = points_[0];
   auto end1 = points_[1];
   auto end2 = points_[2];
@@ -311,63 +320,104 @@ void DrawShapeSolidWedge::buildTriangles() {
   auto adjend2 = end2;
   points_.clear();
   // adjust adjend1 and adjend2 to line up with otherBondVecs_.
-  if (otherBondVecs_.size() == 0) {
+  if (otherBondVecs_.empty()) {
     points_.push_back(point);
     points_.push_back(adjend1);
     points_.push_back(adjend2);
   } else if (otherBondVecs_.size() == 1) {
-    auto side1 = point.directionVector(end1) * 2.0;
+    auto side1 = (end1 - point) * 2.0;
     if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
                           midEnd + otherBondVecs_[0], &adjend1)) {
-      std::cout << "side1 missed" << std::endl;
       adjend1 = end1;
     }
-    auto side2 = point.directionVector(end2) * 2.0;
+    auto side2 = (end2 - point) * 2.0;
     if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[0],
                           midEnd + otherBondVecs_[0], &adjend2)) {
-      std::cout << "side2 missed" << std::endl;
       adjend2 = end2;
     }
     points_.push_back(point);
     points_.push_back(adjend1);
     points_.push_back(adjend2);
   } else if (otherBondVecs_.size() == 2) {
-    auto side1 = point.directionVector(end1) * 2.0;
+    auto side1 = (end1 - point) * 2.0;
     if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
                           midEnd + otherBondVecs_[0], &adjend1)) {
-      std::cout << "side1 missed" << std::endl;
       adjend1 = end1;
     }
     points_.push_back(point);
     points_.push_back(adjend1);
     points_.push_back(midEnd);
-    auto side2 = point.directionVector(end2) * 2.0;
+    auto side2 = (end2 - point) * 2.0;
     if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[1],
                           midEnd + otherBondVecs_[1], &adjend2)) {
-      std::cout << "side2 missed" << std::endl;
       adjend2 = end2;
     }
     points_.push_back(point);
     points_.push_back(midEnd);
     points_.push_back(adjend2);
   }
-  if (!(lineColour_ == col2_) || splitBonds_) {
-    auto e1 = end1 - point;
-    auto e2 = end2 - point;
-    auto mid1 = point + e1 * 0.5;
-    auto mid2 = point + e2 * 0.5;
-    points_.push_back(point);
+}
+
+// ****************************************************************************
+void DrawShapeSolidWedge::buildTwoColorTriangles() {
+  auto point = points_[0];
+  auto end1 = points_[1];
+  auto end2 = points_[2];
+  auto midEnd = (end1 + end2) / 2.0;
+  auto adjend1 = end1;
+  auto adjend2 = end2;
+  points_.clear();
+  auto e1 = end1 - point;
+  auto e2 = end2 - point;
+  auto mid1 = point + e1 * 0.5;
+  auto mid2 = point + e2 * 0.5;
+  points_.push_back(point);
+  points_.push_back(mid1);
+  points_.push_back(mid2);
+  if (otherBondVecs_.empty()) {
+    points_.push_back(mid1);
+    points_.push_back(adjend2);
+    points_.push_back(adjend1);
     points_.push_back(mid1);
     points_.push_back(mid2);
-    if (otherBondVecs_.empty()) {
-      points_.push_back(mid1);
-      points_.push_back(adjend2);
-      points_.push_back(adjend1);
-      points_.push_back(mid1);
-      points_.push_back(mid2);
-      points_.push_back(adjend2);
-      return;
+    points_.push_back(adjend2);
+  } else if (otherBondVecs_.size() == 1) {
+    auto side1 = (end1 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend1)) {
+      adjend1 = end1;
     }
+    auto side2 = (end2 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend2)) {
+      adjend2 = end2;
+    }
+    points_.push_back(mid1);
+    points_.push_back(adjend2);
+    points_.push_back(adjend1);
+    points_.push_back(mid1);
+    points_.push_back(mid2);
+    points_.push_back(adjend2);
+  } else if (otherBondVecs_.size() == 2) {
+    auto side1 = (end1 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend1)) {
+      adjend1 = end1;
+    }
+    auto side2 = (end2 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[1],
+                          midEnd + otherBondVecs_[1], &adjend2)) {
+      adjend2 = end2;
+    }
+    points_.push_back(mid1);
+    points_.push_back(adjend1);
+    points_.push_back(midEnd);
+    points_.push_back(midEnd);
+    points_.push_back(mid2);
+    points_.push_back(mid1);
+    points_.push_back(midEnd);
+    points_.push_back(adjend2);
+    points_.push_back(adjend1);
   }
 }
 
