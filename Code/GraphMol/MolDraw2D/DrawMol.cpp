@@ -322,8 +322,9 @@ void DrawMol::extractAttachments() {
             Point2D(at1_cds.x + perp.x * 0.5, at1_cds.y + perp.y * 0.5);
         DrawColour col(.5, .5, .5);
         std::vector<Point2D> points{p1, p2};
+        double offset = drawOptions_.multipleBondOffset * meanBondLength_ / 2.0;
         DrawShapeWavyLine *wl = new DrawShapeWavyLine(
-            points, drawOptions_.bondLineWidth, false, col, col, 0.05,
+            points, drawOptions_.bondLineWidth, false, col, col, offset,
             at2->getIdx() + activeAtmIdxOffset_);
         bonds_.emplace_back(wl);
       }
@@ -1459,7 +1460,7 @@ void DrawMol::makeStandardBond(Bond *bond, double doubleBondOffset) {
                                     bond->getBondDir() == Bond::BEGINDASH)) {
     makeWedgedBond(bond, cols);
   } else if (bt == Bond::SINGLE && bond->getBondDir() == Bond::UNKNOWN) {
-    makeWavyBond(bond, doubleBondOffset / 2.0, cols);
+    makeWavyBond(bond, doubleBondOffset, cols);
   } else if (bt == Bond::DATIVE || bt == Bond::DATIVEL || bt == Bond::DATIVER) {
     makeDativeBond(bond, cols);
   } else if (bt == Bond::ZERO) {

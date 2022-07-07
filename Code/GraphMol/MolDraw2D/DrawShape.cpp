@@ -627,9 +627,10 @@ void DrawShapeWavyLine::myDraw(MolDraw2D &drawer) const {
   // nSegments is 16 by default in MolDraw2D.
   // use a negative offset because of inverted y coords to make it look the
   // same as it used to.
-  int nsegs = int(std::round((points_[0] - points_[1]).length() / 2.0));
+  int nsegs = int(
+      std::round((points_[0] - points_[1]).length() / (offset_ * 2.0 / 3.0)));
   drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, nsegs,
-                      -offset_, true);
+                      -offset_ / 2.0, true);
 }
 
 // ****************************************************************************
