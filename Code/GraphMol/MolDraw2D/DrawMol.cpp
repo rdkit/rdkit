@@ -1503,6 +1503,9 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
   bool drawGenericQuery = false;
   int at1Idx = begAt->getIdx();
   int at2Idx = endAt->getIdx();
+  if (begAt->getAtomicNum() == 17) {
+    std::cout << "stop here" << std::endl;
+  }
   if (qry->getDescription() == "SingleOrDoubleBond") {
     at1Idx = begAt->getIdx();
     at2Idx = drawOptions_.splitBonds ? -1 : endAt->getIdx();
@@ -1633,34 +1636,30 @@ void DrawMol::makeDoubleBondLines(
   sat2 = atCds_[at2Idx];
   atCds_[at2Idx] = end2;
   calcDoubleBondLines(doubleBondOffset, *bond, l1s, l1f, l2s, l2f);
-  DrawColour col1 = cols.first;
-  DrawColour col2 = cols.second;
-  // if it's a terminal atom, we may have swapped the ends, so we need to swap
-  // the colours as well.
-  if (bond->getBeginAtom()->getDegree() > 1 &&
-      bond->getEndAtom()->getDegree() == 1) {
-    col1 = cols.second;
-    col2 = cols.first;
-  }
   int bondIdx = bond->getIdx();
-  newBondLine(l1s, l1f, col1, col2, at1Idx, at2Idx, bondIdx, noDash);
+  newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+              noDash);
   if (bond->getBondType() == Bond::AROMATIC) {
-    newBondLine(l2s, l2f, col1, col2, at1Idx, at2Idx, bondIdx, dashes);
+    newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                dashes);
   } else {
     // if it's a two colour line, then a simple line will be exactly half
     // one colour and half the other.  The second line to a terminal atom
     // in, for example, an aldehyde, such as in catch_tests.cpp's
     // testGithub_5269_2.svg, might be asymmetrically shorter, so we don't
     // want to change colour at halfway
-    if (bond->getEndAtom()->getDegree() == 1 && !(col1 == col2) &&
+    if (bond->getEndAtom()->getDegree() == 1 && !(cols.first == cols.second) &&
         fabs((l1s - l1f).lengthSq() - (l2s - l2f).lengthSq()) > 0.01) {
       double midlen = (l1s - l1f).length() / 2.0;
       Point2D lineDir = l2s.directionVector(l2f);
       Point2D notMid = l2s + lineDir * midlen;
-      newBondLine(l2s, notMid, col1, col1, at1Idx, at2Idx, bondIdx, noDash);
-      newBondLine(notMid, l2f, col2, col2, at1Idx, at2Idx, bondIdx, noDash);
+      newBondLine(l2s, notMid, cols.first, cols.first, at1Idx, at2Idx, bondIdx,
+                  noDash);
+      newBondLine(notMid, l2f, cols.second, cols.second, at1Idx, at2Idx,
+                  bondIdx, noDash);
     } else {
-      newBondLine(l2s, l2f, col1, col2, at1Idx, at2Idx, bondIdx, noDash);
+      newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                  noDash);
     }
   }
   atCds_[at1Idx] = sat1;
@@ -2722,8 +2721,10 @@ void DrawMol::bondNonRing(const Bond &bond, double offset, Point2D &l2s,
 void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
                                  Point2D &l1s, Point2D &l1f, Point2D &l2s,
                                  Point2D &l2f) const {
+  bool swapped = false;
   if (at1->getDegree() > 1 && at2->getDegree() == 1) {
     std::swap(at1, at2);
+    swapped = true;
   }
   const Point2D &at1_cds = atCds_[at1->getIdx()];
   const Point2D &at2_cds = atCds_[at2->getIdx()];
@@ -2772,6 +2773,10 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     l2s = at1_cds + perp * offset;
     l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                         offset, true);
+  }
+  if (swapped) {
+    std::swap(l1s, l1f);
+    std::swap(l2s, l2f);
   }
 }
 
