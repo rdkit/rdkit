@@ -10,6 +10,12 @@
   `{atomP}` is `O,N;D1`. The previous behavior can be restored using by setting
   the `symmetrizeConjugatedTerminalGroups` argument to false when calling
   `GetBestRMS()`
+- The following `#defines` are no longer provided in/used by the C++ code or `RDConfig.h`:
+  - `BUILD_COORDGEN_SUPPORT`: use `RDK_BUILD_COORDGEN_SUPPORT` instead
+  - `RDK_THREADSAFE_SSS`: use `RDK_BUILD_THREADSAFE_SSS` instead
+  - `USE_BUILTIN_POPCOUNT`: use `RDK_OPTIMIZE_POPCNT` instead
+
+
 
 
 ## Code removed in this release:
