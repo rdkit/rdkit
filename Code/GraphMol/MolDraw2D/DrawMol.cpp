@@ -1641,8 +1641,24 @@ void DrawMol::makeDoubleBondLines(
     newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
                 dashes);
   } else {
-    newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
-                noDash);
+    // if it's a two colour line, then a simple line will be exactly half
+    // one colour and half the other.  The second line to a terminal atom
+    // in, for example, an aldehyde, such as in catch_tests.cpp's
+    // testGithub_5269_2.svg, might be asymmetrically shorter, so we don't
+    // want to change colour at halfway
+    if (bond->getEndAtom()->getDegree() == 1 && !(cols.first == cols.second) &&
+        fabs((l1s - l1f).lengthSq() - (l2s - l2f).lengthSq()) > 0.01) {
+      double midlen = (l1s - l1f).length() / 2.0;
+      Point2D lineDir = l2s.directionVector(l2f);
+      Point2D notMid = l2s + lineDir * midlen;
+      newBondLine(l2s, notMid, cols.first, cols.first, at1Idx, at2Idx, bondIdx,
+                  noDash);
+      newBondLine(notMid, l2f, cols.second, cols.second, at1Idx, at2Idx,
+                  bondIdx, noDash);
+    } else {
+      newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                  noDash);
+    }
   }
   atCds_[at1Idx] = sat1;
   atCds_[at2Idx] = sat2;
