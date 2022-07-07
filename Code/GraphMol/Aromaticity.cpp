@@ -68,7 +68,7 @@ bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
   INT_VECT fused;
 
   // mark all rings in the system other than those in rids as done
-  for (auto nci : ringNeighs) {
+  for (const auto& nci : ringNeighs) {
     rid = nci.first;
     if (std::find(rids.begin(), rids.end(), rid) == rids.end()) {
       done[rid] = 1;
