@@ -437,6 +437,8 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
     }
     drawer.setColour(col2_);
     drawer.drawTriangle(points_[3], points_[4], points_[5], true);
+  }
+  if (points_.size() > 6) {
     drawer.drawTriangle(points_[6], points_[7], points_[8], true);
   }
 }
