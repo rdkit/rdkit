@@ -2544,7 +2544,6 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
                                   Point2D &l2f) const {
   Atom *at1 = bond.getBeginAtom();
   Atom *at2 = bond.getEndAtom();
-
   Point2D perp;
   if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_) ||
       (at1->getDegree() == 1 && at2->getDegree() == 1)) {
@@ -2728,7 +2727,15 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
   }
   const Point2D &at1_cds = atCds_[at1->getIdx()];
   const Point2D &at2_cds = atCds_[at2->getIdx()];
-  if (at2->getDegree() > 2) {
+  if (atomLabels_[at2->getIdx()]) {
+    // either side of the bond line if going ot a label
+    offset /= 2.0;
+    Point2D perp = calcPerpendicular(at1_cds, at2_cds) * offset;
+    l1s = at1_cds + perp;
+    l1f = at2_cds + perp;
+    l2s = at1_cds - perp;
+    l2f = at2_cds - perp;
+  } else if (at2->getDegree() > 2) {
     // lines either side of the bond line but at the at2 end,
     // the bonds extend to the intersection of the other bonds.
     // only need 1/2 the offset in this case.
