@@ -2792,7 +2792,7 @@ void DrawMol::calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
 // ****************************************************************************
 void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
                                 std::vector<Point2D> &otherBondVecs) const {
-  if (atom->getDegree() == 1) {
+  if (atom->getDegree() == 1 || atomLabels_[atom->getIdx()]) {
     return;
   }
   for (int i = 1; i < atom->getDegree(); ++i) {
