@@ -319,6 +319,20 @@ std::string JSMol::get_new_coords(bool useCoordGen) const {
   return MolToMolBlock(molCopy);
 }
 
+bool JSMol::set_prop(const std::string &key, const std::string &val,
+                     bool computed) {
+  if (!d_mol) return false;
+  d_mol->setProp(key, val, computed);
+  return true;
+}
+
+std::string JSMol::get_prop(const std::string &key) const {
+  if (!d_mol || !d_mol->hasProp(key)) return "";
+  std::string val;
+  d_mol->getProp(key, val);
+  return val;
+}
+
 std::string JSMol::remove_hs() const {
   if (!d_mol) return "";
 

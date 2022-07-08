@@ -196,6 +196,14 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<bool(bool)>(&JSMol::set_new_coords))
       .function("get_new_coords", select_overload<std::string(bool) const>(
                                       &JSMol::get_new_coords))
+      .function(
+          "set_prop",
+          select_overload<bool(const std::string &, const std::string &, bool)>(
+              &JSMol::set_prop))
+      .function("set_prop",
+                select_overload<bool(const std::string &, const std::string &)>(
+                    &JSMol::set_prop))
+      .function("get_prop", &JSMol::get_prop)
       .function("generate_aligned_coords",
                 select_overload<std::string(const JSMol &)>(
                     &JSMol::generate_aligned_coords))
