@@ -744,13 +744,15 @@ struct ZipBond {
                       "molzip: end atom and specified dummy connection atom "
                       "are not bonded.")
       auto bond_type_b = bnd->getBondType();
+      unsigned int bnd_idx = 0;
       if (bond_type_a != Bond::BondType::SINGLE) {
-        newmol.addBond(a, b, bond_type_a);
+        bnd_idx = newmol.addBond(a, b, bond_type_a);
       } else if (bond_type_b != Bond::BondType::SINGLE) {
-        newmol.addBond(a, b, bond_type_b);
+        bnd_idx = newmol.addBond(a, b, bond_type_b);
       } else {
-        newmol.addBond(a, b, Bond::BondType::SINGLE);
+        bnd_idx = newmol.addBond(a, b, Bond::BondType::SINGLE);
       }
+      newmol.getBondWithIdx(bnd_idx-1)->setBondDir(bnd->getBondDir());
     }
     a_dummy->setProp("__molzip_used", true);
     b_dummy->setProp("__molzip_used", true);
