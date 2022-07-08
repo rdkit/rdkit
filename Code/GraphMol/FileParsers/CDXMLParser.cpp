@@ -58,6 +58,19 @@ struct BondInfo {
         // handle aromatic bond type
         return Bond::BondType::UNSPECIFIED;
     }
+    bool validate(const std::map<unsigned int, Atom *> &ids, unsigned int num_atoms) const {
+        auto s = ids.find(start);
+        auto e = ids.find(end);
+        if (s==ids.end() || e==ids.end()) {
+            return false;
+        }
+        auto st = s->second->getIdx();
+        auto et = e->second->getIdx();
+        
+       return (st >=0 && st < num_atoms &&
+                     et >=0 && et < num_atoms &&
+                     st != et);
+    }
 };
 
 struct StereoGroupInfo {
@@ -118,15 +131,19 @@ std::vector<T> to_vec(const std::string &s) {
     return n;
 }
 
-void parse_fragment(RWMol &mol,
+bool parse_fragment(RWMol &mol,
                     ptree &frag,
 		            std::map<unsigned int, Atom *> &ids,
+                    int &missing_frag_id,
                     int external_attachment = -1) {
   // XXX Need to put the fragid on the molecule so we can properly make reactions
     
   int frag_id = frag.get<int>("<xmlattr>.id", -1);
   if(frag_id == -1) {
-      CHECK_INVARIANT(frag_id >= 0, "Invalid or missing id from CDXML fragment");
+      // ChemDraw simply assigns a new one
+      BOOST_LOG(rdErrorLog) << "Invalid or missing fragment id from CDXML fragment, assigning new one..." << std::endl;
+      frag_id = missing_frag_id;
+      missing_frag_id--;
   }
   mol.setProp<int>(CDXML_FRAG_ID, frag_id);
   int elemno = -1;
@@ -138,6 +155,7 @@ void parse_fragment(RWMol &mol,
   std::map<int, StereoGroupInfo> sgroups;
     
   // nodetypes = https://www.cambridgesoft.com/services/documentation/sdk/chemdraw/cdx/properties/Node_Type.htm
+  bool skip_fragment=false; // is there an irrecoverable error for this fragment
   for(auto &node: frag) {
     if(node.first == "n") { // atom node
       int elemno = 6; // default to carbon
@@ -148,22 +166,28 @@ void parse_fragment(RWMol &mol,
       int rgroup_num = -1;
       int isotope = 0;
       int sgroup = -1;
+      bool explicitHs = false;
       StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
       bool skipEnhancedStereo = false;
-        
       std::string query_label;
       bool has_atom_stereo = false;
       std::vector<int> bond_ordering;
+      std::vector<int> elementlist;
       std::vector<double> atom_coords;
       std::string nodetype = "";
       for(auto &attr: node.second.get_child("<xmlattr>")) {
           if(attr.first == "id") {
               atom_id = stoi(attr.second.data());
-              CHECK_INVARIANT(ids.find(atom_id) == ids.end(), "Invalid cdxml file, duplicated atom_id");
+              if(ids.find(atom_id) != ids.end()) {
+                  BOOST_LOG(rdErrorLog) << "Warning, duplicated atom id " << atom_id << " skipping fragment" << std::endl;
+                  skip_fragment = true;
+                  break;
+              }
           } else if (attr.first == "Element") {
               elemno = stoi(attr.second.data());
           } else if(attr.first == "NumHydrogens") {
               num_hydrogens = stoi(attr.second.data());
+              explicitHs = true;
           } else if (attr.first == "Charge") {
               charge = stoi(attr.second.data());
           } else if (attr.first == "Isotope") {
@@ -174,7 +198,11 @@ void parse_fragment(RWMol &mol,
                   elemno = 0;
                   atommap = atom_id;
               } else if (nodetype == "ExternalConnectionPoint") {
-                  PRECONDITION(external_attachment > 0, "External Connection Point is not set");
+                  if(external_attachment <= 0) {
+                      BOOST_LOG(rdErrorLog) << "External Connection Point is not set skipping fragment";
+                      skip_fragment=true;
+                      break;
+                  }
                   elemno = 0;
                   atommap = external_attachment;
                   mergeparent = external_attachment;
@@ -207,8 +235,10 @@ void parse_fragment(RWMol &mol,
                       }
                   }
               } else if (nodetype == "ElementList") {
-                  // query atom?
+                  query_label = "ElementList";
               }
+          } else if (attr.first == "ElementList") {
+              elementlist = to_vec<int>(attr.second.data());
           } else if (attr.first == "Geometry") {
               if (attr.second.data() == "Tetrahedral") {
                   has_atom_stereo = true;
@@ -245,6 +275,8 @@ void parse_fragment(RWMol &mol,
       Atom *rd_atom = new Atom(elemno);
       rd_atom->setFormalCharge(charge);
       rd_atom->setNumExplicitHs(num_hydrogens);
+      rd_atom->setNoImplicit(explicitHs);
+      
       rd_atom->setIsotope(isotope);
       if(rgroup_num >= 0) {
           rd_atom->setAtomMapNum(rgroup_num);
@@ -271,6 +303,18 @@ void parse_fragment(RWMol &mol,
               rd_atom = addquery(makeAAtomQuery(), query_label, mol, idx);
           } else if (query_label == "Q") {
               rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);
+          } else if (query_label == "ElementList") {
+              if(!elementlist.size()) {
+                  BOOST_LOG(rdWarningLog) << "ElementList is empty, ignoring..." << std::endl;
+              } else {
+                  auto *q = new ATOM_OR_QUERY;
+                  q->setDescription("AtomOr");
+                  for(auto atNum: elementlist) {
+                      q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(atNum)));
+                  }
+                  rd_atom = addquery(q, query_label, mol, idx);
+                  rd_atom->setAtomicNum(elementlist.front());
+              }
           } else {
               rd_atom->setProp(RDKit::common_properties::atomLabel, query_label);
           }
@@ -288,7 +332,10 @@ void parse_fragment(RWMol &mol,
       if (nodetype == "Nickname" || nodetype == "Fragment") {
           for(auto &fragment: node.second) {
               if(fragment.first == "fragment") {
-                  parse_fragment(mol, fragment.second, ids, atom_id);
+                  if(!parse_fragment(mol, fragment.second, ids, missing_frag_id, atom_id)) {
+                      skip_fragment = true;
+                      break;
+                  }
                   mol.setProp<bool>(NEEDS_FUSE, true);
                   mol.setProp<unsigned int>(CDXML_FRAG_ID, frag_id);
               }
@@ -303,7 +350,6 @@ void parse_fragment(RWMol &mol,
           for(auto &attr: node.second.get_child("<xmlattr>")) {
               if(attr.first == "id") {
                   bond_id = stoi(attr.second.data());
-                  // CHECK_INVARIANT(bond_ids.find(bond_id) == bond_ids.end(), "Invalid cdxml file, duplicated atom_id");
               } else if(attr.first == "B") {
                   start_atom = stoi(attr.second.data());
               } else if (attr.first == "E") {
@@ -314,30 +360,39 @@ void parse_fragment(RWMol &mol,
                   display = attr.second.data();
               }
           }
-        CHECK_INVARIANT(start_atom>=0 && end_atom>=0 && start_atom != end_atom, "Bad bond in CDXML");
-        bonds.push_back({bond_id, start_atom, end_atom, order, display});
+        //CHECK_INVARIANT(start_atom>=0 && end_atom>=0 && start_atom != end_atom, "Bad bond in CDXML");
+        BondInfo bond{bond_id, start_atom, end_atom, order, display};
+        if(!bond.validate(ids, mol.getNumAtoms())) {
+            BOOST_LOG(rdErrorLog) << "Bad bond in CDXML skipping fragment " << frag_id << "..." << std::endl;;
+            skip_fragment=true; // ChemDraw doesn't skip, it just ignores bad bonds...
+            break;
+        } else {
+            bonds.push_back(bond);
+        }
           
     } // end if atom or bond
   } // for node
     
   // add bonds
-  for(auto &bond: bonds) {
-      unsigned int bond_idx;
-      if(bond.display == "WedgeEnd" || bond.display == "WedgedHashEnd") {
-          // here The "END" of the bond is really our Beginning.
-          // swap atom direction
-          bond_idx = mol.addBond(ids[bond.end]->getIdx(), ids[bond.start]->getIdx(),
-                       bond.getBondType()) - 1;
-      } else {
-          bond_idx = mol.addBond(ids[bond.start]->getIdx(), ids[bond.end]->getIdx(),
-                       bond.getBondType()) - 1;
-      }
-      Bond * bnd = mol.getBondWithIdx(bond_idx);
-      bnd->setProp("CDX_BOND_ID", bond.bond_id);
-      if(bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
-          bnd->setBondDir(Bond::BondDir::BEGINDASH);
-      } else if (bond.display == "WedgedHashBegin" || bond.display == "WedgedHashEnd") {
-          bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+  if(!skip_fragment) {
+      for(auto &bond: bonds) {
+          unsigned int bond_idx;
+          if(bond.display == "WedgeEnd" || bond.display == "WedgedHashEnd") {
+              // here The "END" of the bond is really our Beginning.
+              // swap atom direction
+              bond_idx = mol.addBond(ids[bond.end]->getIdx(), ids[bond.start]->getIdx(),
+                           bond.getBondType()) - 1;
+          } else {
+              bond_idx = mol.addBond(ids[bond.start]->getIdx(), ids[bond.end]->getIdx(),
+                           bond.getBondType()) - 1;
+          }
+          Bond * bnd = mol.getBondWithIdx(bond_idx);
+          bnd->setProp("CDX_BOND_ID", bond.bond_id);
+          if(bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
+              bnd->setBondDir(Bond::BondDir::BEGINDASH);
+          } else if (bond.display == "WedgedHashBegin" || bond.display == "WedgedHashEnd") {
+              bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+          }
       }
   }
     
@@ -349,7 +404,7 @@ void parse_fragment(RWMol &mol,
       }
       mol.setStereoGroups(std::move(stereo_groups));
   }
-  
+  return !skip_fragment;
 }
 
 void set_reaction_data(std::string type,
@@ -382,7 +437,6 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
 			       std::istream &inStream,
 			       bool sanitize,
 			       bool removeHs) {
-  
   // populate tree structure pt
   using boost::property_tree::ptree;
   ptree pt;
@@ -396,7 +450,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
   molzip_params.label = MolzipLabel::AtomProperty;
   molzip_params.atomProperty = FUSE_LABEL;
   molzip_params.enforceValenceRules = false;
-  
+  int missing_frag_id = -1;
   for( auto &cdxml : pt ) {
       if(cdxml.first == "CDXML") {
           for( auto &node : cdxml.second) {
@@ -404,13 +458,23 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                   for( auto &frag: node.second ) {
                       if (frag.first == "fragment") { // chemical matter
                           std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
-                          parse_fragment(*mol, frag.second, ids);
-                          unsigned int frag_id = mol->getProp<unsigned int>(CDXML_FRAG_ID);
+                          if (!parse_fragment(*mol, frag.second, ids, missing_frag_id)) {
+                              continue;
+                          }
+                          unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
                           fragment_lookup[frag_id] = mols.size();
                           if(mol->hasProp(NEEDS_FUSE)) {
                               mol->clearProp(NEEDS_FUSE);
-                              auto fused = molzip(*mol, molzip_params);
-                              fused->setProp<unsigned int>(CDXML_FRAG_ID, frag_id);
+                              std::unique_ptr<ROMol> fused;
+                              try {
+                                  fused.reset(molzip(*mol, molzip_params).release()); // std::move?
+                              } catch (Invar::Invariant) {
+                                  BOOST_LOG(rdWarningLog) << "Failed fusion of fragment skipping... " << frag_id << std::endl;
+                                  // perhaps have an option to extract all fragments?
+                                  //mols.push_back(std::move(mol));
+                                  continue;
+                              }
+                              fused->setProp<int>(CDXML_FRAG_ID, static_cast<int>(frag_id));
                               mols.emplace_back(dynamic_cast<RWMol*>(fused.release()));
                           } else {
                               mols.push_back(std::move(mol));
@@ -434,15 +498,22 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                                   atm->clearProp(CDX_ATOM_POS);
                               }
                           }
-                          if(hasConf)
+                          if(hasConf) {
                               res->addConformer(conf);
-                          DetectAtomStereoChemistry(*res, conf);
+                              DetectAtomStereoChemistry(*res, conf);
+                          }
                           
                           if (sanitize) {
-                            if (removeHs) {
-                              MolOps::removeHs(*res, false, false);
-                            } else {
-                              MolOps::sanitizeMol(*res);
+                            try {
+                                if (removeHs) {
+                                  MolOps::removeHs(*res, false, false);
+                                } else {
+                                  MolOps::sanitizeMol(*res);
+                                }
+                            } catch (...) {
+                                BOOST_LOG(rdWarningLog) << "CDXMLParser: failed sanitizing skipping fragment " << frag_id << std::endl;
+                                mols.pop_back();
+                                continue;
                             }
                             // now that atom stereochem has been perceived, the wedging
                             // information is no longer needed, so we clear
@@ -451,7 +522,10 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                             ClearSingleBondDirFlags(*res);
                             MolOps::detectBondStereochemistry(*res);
                             MolOps::assignStereochemistry(*res, true, true, true);
-                        }
+                          } else {
+                            ClearSingleBondDirFlags(*res);
+                            MolOps::detectBondStereochemistry(*res);
+                          }
                       } else if (frag.first == "scheme") { // get the reaction info
                           int scheme_id = frag.second.get<int>("<xmlattr>.id", -1);
                           for(auto &node : frag.second) {
@@ -524,7 +598,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
               // Set the Atom Maps
               int sz = scheme.ReactionStepAtomMap.size();
               if(sz%2 == 1) {
-                  BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap has odd number of entries, skipping." << std::endl;
+                  BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap has odd number of entries, skipping schema..." << std::endl;
                   continue;
               }
               assert (sz%2 == 0);
@@ -534,13 +608,13 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                   if( atoms.find(idx1) != atoms.end() ) {
                       atoms[idx1]->setAtomMapNum(i+1);
                   } else {
-                      BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap cannot find atom with node id " << idx1 << std::endl;
+                      BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap cannot find atom with node id " << idx1 << "skipping schema..." << std::endl;
                   }
                   if( atoms.find(idx2) != atoms.end() ) {
                       atoms[idx2]->setAtomMapNum(i+1);
                   } else {
                       // XXX log error
-                      BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap cannot find atom with node id " << idx2 << std::endl;
+                      BOOST_LOG(rdWarningLog) << "CDXMLParser: Schema " << scheme.scheme_id << " step " << scheme.step_id << " ReactionStepAtomMap cannot find atom with node id " << idx2 << " skipping schema..." << std::endl;
                   }
               }
           }
