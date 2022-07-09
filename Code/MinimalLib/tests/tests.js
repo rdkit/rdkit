@@ -647,6 +647,26 @@ function test_legacy_stereochem() {
     assert.equal(mol.get_smiles(),"CC1CC2(CC[C@H](C)CC2)CC[C@@H]1C");
 }
 
+function test_prop() {
+    var mol = RDKitModule.get_mol(`
+  MJ201900
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    0.1899    1.9526    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5245    1.5401    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+M  END
+`);
+    assert.equal(mol.has_prop("test1"), false);
+    assert.equal(mol.set_prop("test1","val"), true);
+    assert.equal(mol.has_prop("test1"), true);
+    assert.equal(mol.get_prop("test1"),"val");
+    assert.equal(mol.set_prop("test2","val"), true);
+    props = mol.get_prop_list(false, false);
+    assert.equal(props.get(0), "test1");
+    assert.equal(props.get(1), "test2");
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -687,6 +707,7 @@ initRDKitModule().then(function(instance) {
     test_straighten_depiction();
     test_flexicanvas();
     test_legacy_stereochem();
+    test_prop();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
