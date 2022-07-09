@@ -424,14 +424,9 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
                     const std::map<int, DrawColour> *highlight_atom_map,
                     const std::map<int, DrawColour> *highlight_bond_map,
                     const std::map<int, double> *highlight_radii, int confId) {
-  // that's yet another copy, think about removing the need later.
-  ROMol mol_cp(mol);
-  std::string mol_name;
-  mol_cp.getProp<std::string>("_Name", mol_name);
-  std::cout << "Drawing " << mol_name << std::endl;
-  double meanBondLen = MolDraw2D_detail::meanBondLength(mol_cp, confId);
+  double meanBondLen = MolDraw2D_detail::meanBondLength(mol, confId);
   setACS1996Options(drawer.drawOptions(), meanBondLen);
-  drawer.drawMolecule(mol_cp, legend, highlight_atoms, highlight_bonds,
+  drawer.drawMolecule(mol, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
 }
@@ -579,7 +574,7 @@ void unspecifiedStereoIsUnknown(ROMol &mol, int confId) {
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-double meanBondLength(ROMol &mol, int confId) {
+double meanBondLength(const ROMol &mol, int confId) {
   double bondLen = 0.0;
   if (mol.getNumBonds()) {
     auto conf = mol.getConformer(confId);

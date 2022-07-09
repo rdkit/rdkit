@@ -219,7 +219,7 @@ void unspecifiedStereoIsUnknown(ROMol &mol, int confId = -1);
 }  // namespace MolDraw2DUtils
 
 namespace MolDraw2D_detail {
-double meanBondLength(ROMol &mol, int confId = -1);
+double meanBondLength(const ROMol &mol, int confId = -1);
 }  // namespace MolDraw2D_detail
 
 }  // namespace RDKit
