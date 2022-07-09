@@ -212,12 +212,10 @@ std::string drawMolACS1996Cairo(
     const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 #endif
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen = 1.0);
-void reapplyMolBlockWedging(ROMol &mol);
-// Use Bond::STEREOANY for any bond stereo that isn't specified but
-// could be, such as double bonds read from SMILES that don't have it
-// specified.
-void useStrictStereo(ROMol &mol, int confId = -1);
-
+// Set double bonds with unspecified stereo to STEREOANY and chiral single
+// bonds with unspecified chiraity to UNKNOWN so they are drawn crossed and
+// wavy respectively.
+void unspecifiedStereoIsUnknown(ROMol &mol, int confId = -1);
 }  // namespace MolDraw2DUtils
 
 namespace MolDraw2D_detail {

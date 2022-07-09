@@ -150,6 +150,9 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
       centerMolForDrawing(*drawMol_, confId_);
     }
   }
+  if (drawOptions_.unspecifiedStereoIsUnknown) {
+    MolDraw2DUtils::unspecifiedStereoIsUnknown(*drawMol_);
+  }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
     prepareStereoGroups(*drawMol_);

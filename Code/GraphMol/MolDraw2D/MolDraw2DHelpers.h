@@ -247,6 +247,10 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       false;  // if all specified stereocenters are in a single StereoGroup,
               // show a molecule-level annotation instead of the individual
               // labels
+  bool unspecifiedStereoIsUnknown = false;  // if true, double bonds with
+                                            // unspecified stereo are drawn
+                                            // crossed, single bonds with
+                                            // unspecified chirality are wavy
   bool singleColourWedgeBonds =
       false;                    // if true wedged and dashed bonds are drawn
                                 // using symbolColour rather than inheriting

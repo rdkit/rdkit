@@ -4652,7 +4652,7 @@ M  END)CTAB"_ctab;
 
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
-#if 1
+#if 0
     auto m1 = R"CTAB(mol1
   ChemDraw05162216032D
 
@@ -4690,7 +4690,7 @@ M  END)CTAB"_ctab;
     REQUIRE(res2);
 #endif
 #endif
-#if 1
+#if 0
     auto m2 = R"CTAB(mol2
   ChemDraw06062216302D
 
@@ -4739,7 +4739,7 @@ M  END
     REQUIRE(res4);
 #endif
 #endif
-#if 1
+#if 0
     auto m3 = R"(c1c(nc[nH]1)[C@@H](C)\C=C\C#N)"_smiles;
     m3->setProp<std::string>("_Name", "mol3");
     REQUIRE(m3);
@@ -4748,7 +4748,7 @@ M  END
                                                nullptr, nullptr);
     REQUIRE(res5);
 #endif
-#if 1
+#if 0
     auto m4 = "c1c(nc[nH]1)C(C)C=CC#N"_smiles;
     m4->setProp<std::string>("_Name", "mol4");
     REQUIRE(m4);
@@ -4757,7 +4757,7 @@ M  END
                                                nullptr, nullptr);
     REQUIRE(res6);
 #endif
-#if 1
+#if 0
     {
       auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
@@ -4768,7 +4768,7 @@ M  END
       REQUIRE(res6);
     }
 #endif
-#if 1
+#if 0
     {
       auto m = "CC(I)CC(Cl)CC(F)C"_smiles;
       m->setProp<std::string>("_Name", "mol5");
@@ -4779,7 +4779,7 @@ M  END
       REQUIRE(res6);
     }
 #endif
-#if 1
+#if 0
     {
       auto m = R"CTAB(mol7
   ChemDraw06112209342D
@@ -4866,7 +4866,7 @@ M  END
       REQUIRE(res);
     }
 #endif
-#if 1
+#if 0
     {
       auto m = R"CTAB(mol8
   ChemDraw06132212082D
@@ -4918,7 +4918,7 @@ M  END
       REQUIRE(res);
     }
 #endif
-#if 1
+#if 0
     {
       auto m = R"CTAB(mol9
   ChemDraw06192209132D
@@ -4970,7 +4970,7 @@ M  END
       REQUIRE(res);
     }
 #endif
-#if 1
+#if 0
     {
       auto m = R"CTAB(mol10
   ChemDraw06192209312D
@@ -5026,7 +5026,7 @@ M  END
       REQUIRE(res);
     }
 #endif
-#if 1
+#if 0
     {
       auto m = R"CTAB(mol11
   ChemDraw06202211162D
@@ -5062,7 +5062,7 @@ M  END
     }
 #endif
   }
-#if 1
+#if 0
   {
     auto m = R"CTAB(mol12
   ChemDraw06302210552D
@@ -5119,7 +5119,7 @@ M  END
     REQUIRE(res);
   }
 #endif
-#if 1
+#if 0
   {
     auto m = R"CTAB(mol13
   ChemDraw07042207302D
@@ -5178,7 +5178,7 @@ M  END
     REQUIRE(res);
   }
 #endif
-#if 1
+#if 0
   {
     auto m = R"CTAB(mol14
   ChemDraw06302215142D
@@ -5245,4 +5245,110 @@ M  END
     REQUIRE(res);
   }
 #endif
+#if 0
+  {
+    auto m = R"CTAB(mol15
+  ChemDraw07062213362D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.357235 -1.031250 0.000000 0
+M  V30 2 C -0.357235 -0.206250 0.000000 0
+M  V30 3 N -1.071706 0.206250 0.000000 0
+M  V30 4 O -1.786177 -0.206250 0.000000 0
+M  V30 5 C 0.357236 0.206250 0.000000 0
+M  V30 6 N 1.071706 -0.206250 0.000000 0
+M  V30 7 O 1.786177 0.206250 0.000000 0
+M  V30 8 C 0.357236 1.031250 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3 CFG=2
+M  V30 3 1 3 4
+M  V30 4 1 2 5
+M  V30 5 2 5 6 CFG=2
+M  V30 6 1 6 7
+M  V30 7 1 5 8
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_15.svg", *m, "",
+                                               nullptr, nullptr);
+    REQUIRE(res6);
+  }
+#endif
+#if 1
+  {
+    auto m = R"CTAB(bad wedging
+  ChemDraw07092209022D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.714471 0.825000 0.000000 0
+M  V30 2 C -0.714471 0.000000 0.000000 0
+M  V30 3 C -0.000000 -0.412500 0.000000 0
+M  V30 4 C 0.714471 0.000000 0.000000 0
+M  V30 5 C 0.714471 0.825000 0.000000 0
+M  V30 6 C -0.000000 1.237500 0.000000 0
+M  V30 7 C -0.000000 -1.237500 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 CFG=1
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 1
+M  V30 7 1 3 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_16.svg", *m, "",
+                                               nullptr, nullptr);
+    REQUIRE(res6);
+  }
+#endif
+}
+
+TEST_CASE("Unspecified stereochemistry means unknown.", "") {
+  auto m1 = "ClC(I)(F)C=CC"_smiles;
+  REQUIRE(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().unspecifiedStereoIsUnknown = true;
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::regex regex1("class='bond-2 atom-1 atom-3' .*M.*C");
+  std::smatch wavyMatch;
+  REQUIRE(std::regex_search(text, wavyMatch, regex1));
+  REQUIRE(wavyMatch.size() == 1);
+
+  std::regex regex2(
+      "class='bond-4 atom-4 atom-5' d='M 118\\..*,135\\..* L "
+      "68\\..*,107\\..*'");
+  std::smatch cross1Match;
+  REQUIRE(std::regex_search(text, cross1Match, regex2));
+  REQUIRE(cross1Match.size() == 1);
+
+  std::regex regex3(
+      "class='bond-4 atom-4 atom-5' d='M 117\\..*,145\\..* L "
+      "74\\..*,100\\..*'");
+  std::smatch cross2Match;
+  REQUIRE(std::regex_search(text, cross2Match, regex3));
+  REQUIRE(cross1Match.size() == 1);
+
+  std::ofstream outs("test_unspec_stereo.svg");
+  outs << text;
+  outs.flush();
 }

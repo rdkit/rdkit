@@ -210,6 +210,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(variableAtomRadius);
   PT_OPT_GET(includeChiralFlagLabel);
   PT_OPT_GET(simplifiedStereoGroupLabel);
+  PT_OPT_GET(unspecifiedStereoIsUnknown);
   PT_OPT_GET(singleColourWedgeBonds);
   PT_OPT_GET(scalingFactor);
   PT_OPT_GET(drawMolsSameScale);
@@ -430,8 +431,6 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
   std::cout << "Drawing " << mol_name << std::endl;
   double meanBondLen = MolDraw2D_detail::meanBondLength(mol_cp, confId);
   setACS1996Options(drawer.drawOptions(), meanBondLen);
-  reapplyMolBlockWedging(mol_cp);
-  useStrictStereo(mol_cp, confId);
   drawer.drawMolecule(mol_cp, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
@@ -542,7 +541,7 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
 }
 
 // ****************************************************************************
-void useStrictStereo(ROMol &mol, int confId) {
+void unspecifiedStereoIsUnknown(ROMol &mol, int confId) {
   INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
   const auto conf = mol.getConformer(confId);
   for (auto b : mol.bonds()) {
@@ -570,46 +569,6 @@ void useStrictStereo(ROMol &mol, int confId) {
         int bndIdx = pickBondToWedge(atom, mol, nChiralNbrs, resSoFar, noNbrs);
         auto bond = mol.getBondWithIdx(bndIdx);
         bond->setBondDir(Bond::UNKNOWN);
-      }
-    }
-  }
-}
-
-// ****************************************************************************
-void reapplyMolBlockWedging(ROMol &mol) {
-  for (auto b : mol.bonds()) {
-    int explicit_unknown_stereo = -1;
-    if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                 explicit_unknown_stereo) &&
-        explicit_unknown_stereo) {
-      b->setBondDir(Bond::UNKNOWN);
-    }
-    int bond_dir = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
-                                 bond_dir)) {
-      if (bond_dir == 1) {
-        b->setBondDir(Bond::BEGINWEDGE);
-      } else if (bond_dir == 6) {
-        b->setBondDir(Bond::BEGINDASH);
-      }
-    }
-    int cfg = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
-      switch (cfg) {
-        case 1:
-          b->setBondDir(Bond::BEGINWEDGE);
-          break;
-        case 2:
-          if (b->getBondType() == Bond::SINGLE) {
-            b->setBondDir(Bond::UNKNOWN);
-          } else if (b->getBondType() == Bond::DOUBLE) {
-            b->setBondDir(Bond::EITHERDOUBLE);
-            b->setStereo(Bond::STEREOANY);
-          }
-          break;
-        case 3:
-          b->setBondDir(Bond::BEGINDASH);
-          break;
       }
     }
   }

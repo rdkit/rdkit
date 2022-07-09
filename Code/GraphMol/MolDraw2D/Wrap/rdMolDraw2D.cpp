@@ -863,6 +863,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "if all specified stereocenters are in a single "
                      "StereoGroup, show a molecule-level annotation instead of "
                      "the individual labels. Default is false.")
+      .def_readwrite("unspecifiedStereoIsUnknown",
+                     &RDKit::MolDrawOptions::unspecifiedStereoIsUnknown,
+                     "if true, double bonds with unspecified stereo are drawn"
+                     " crossed, single bonds with unscpecified chirality are"
+                     " wavy.  Default is false.")
       .def_readwrite(
           "singleColourWedgeBonds",
           &RDKit::MolDrawOptions::singleColourWedgeBonds,
@@ -875,7 +880,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("drawMolsSameScale",
                      &RDKit::MolDrawOptions::drawMolsSameScale,
                      "when drawing multiple molecules with DrawMolecules,"
-                     "forces them to use the same scale.  Default is true.")
+                     " forces them to use the same scale.  Default is true.")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,
