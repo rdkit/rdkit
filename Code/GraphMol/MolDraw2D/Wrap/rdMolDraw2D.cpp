@@ -256,6 +256,23 @@ void prepareAndDrawMoleculeHelper(
   delete hbm;
   delete har;
 }
+void drawMoleculeACS1996Helper(
+    MolDraw2D &drawer, const ROMol &mol, std::string legend,
+    python::object highlight_atoms, python::object highlight_bonds,
+    python::object highlight_atom_map, python::object highlight_bond_map,
+    python::object highlight_atom_radii, int confId) {
+  std::unique_ptr<std::vector<int>> highlightAtoms =
+      pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
+  std::unique_ptr<std::vector<int>> highlightBonds =
+      pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
+  std::unique_ptr<ColourPalette> ham{pyDictToColourMap(highlight_atom_map)};
+  std::unique_ptr<ColourPalette> hbm{pyDictToColourMap(highlight_bond_map)};
+  std::unique_ptr<std::map<int, double>> har{
+      pyDictToDoubleMap(highlight_atom_radii)};
+  MolDraw2DUtils::drawMolACS1996(drawer, mol, legend, highlightAtoms.get(),
+                                 highlightBonds.get(), ham.get(), hbm.get(),
+                                 har.get(), confId);
+}
 
 void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                           python::object highlight_atoms,
@@ -639,6 +656,20 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
   drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
   drawer.finishDrawing();
   return outs.str();
+}
+std::string molToACS1996SVG(const ROMol &mol, std::string legend,
+                            python::object highlight_atoms,
+                            python::object highlight_bonds,
+                            python::object highlight_atom_map,
+                            python::object highlight_bond_map,
+                            python::object highlight_atom_radii, int confId) {
+  std::stringstream outs;
+  MolDraw2DSVG drawer(-1, -1, outs);
+  drawMoleculeACS1996Helper(drawer, mol, legend, highlight_atoms,
+                            highlight_bonds, highlight_atom_map,
+                            highlight_bond_map, highlight_atom_radii, confId);
+  drawer.finishDrawing();
+  return drawer.getDrawingText();
 }
 
 void drawStringHelper(MolDraw2D &self, std::string text, const Point2D &loc,
@@ -1119,6 +1150,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("highlightAtomRadii") = python::object(),
        python::arg("confId") = -1, python::arg("kekulize") = true),
       "Preps a molecule for drawing and actually draws it\n");
+  python::def(
+      "DrawMoleculeACS1996", &RDKit::drawMoleculeACS1996Helper,
+      (python::arg("drawer"), python::arg("mol"), python::arg("legend") = "",
+       python::arg("highlightAtoms") = python::object(),
+       python::arg("highlightBonds") = python::object(),
+       python::arg("highlightAtomColors") = python::object(),
+       python::arg("highlightBondColors") = python::object(),
+       python::arg("highlightAtomRadii") = python::object(),
+       python::arg("confId") = -1),
+      "Draws molecule in ACS 1996 mode.");
   docString = "Parameters for drawing contours";
   python::class_<RDKit::MolDraw2DUtils::ContourParams>(
       "ContourParams", docString.c_str(), python::init<>())
@@ -1227,6 +1268,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("kekulize") = true, python::arg("lineWidthMult") = 1,
        python::arg("fontSize") = 12, python::arg("includeAtomCircles") = true),
       docString.c_str());
+  docString = "Returns ACS 1996 mode svg for a molecule";
+  python::def("MolToACS1996SVG", &RDKit::molToACS1996SVG,
+              (python::arg("mol"), python::arg("legend") = "",
+               python::arg("highlightAtoms") = python::object(),
+               python::arg("highlightBonds") = python::object(),
+               python::arg("highlightAtomColors") = python::object(),
+               python::arg("highlightBondColors") = python::object(),
+               python::arg("highlightAtomRadii") = python::object(),
+               python::arg("confId") = -1),
+              docString.c_str());
 
   python::def("SetDarkMode",
               (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
