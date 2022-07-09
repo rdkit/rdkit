@@ -324,6 +324,12 @@ bool JSMol::has_prop(const std::string &key) const {
   return d_mol->hasProp(key);
 }
 
+std::vector<std::string> JSMol::get_prop_list(bool includePrivate,
+                                              bool includeComputed) const {
+  if (!d_mol) return std::vector<std::string>();
+  return d_mol->getPropList(includePrivate, includeComputed);
+}
+
 bool JSMol::set_prop(const std::string &key, const std::string &val,
                      bool computed) {
   if (!d_mol) return false;
