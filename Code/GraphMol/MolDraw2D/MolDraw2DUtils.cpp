@@ -30,6 +30,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 #include <limits>
 #include <cmath>
+#include <sys/stat.h>
 #include <Numerics/Conrec.h>
 
 namespace RDKit {
@@ -513,8 +514,6 @@ std::string drawMolACS1996Cairo(
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
-  //    opts.addAtomIndices = true;
-  //  opts.addBondIndices = true;
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
   // the guideline is for a bond length of 14.4px, and we set things up
@@ -526,9 +525,20 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
 
   opts.fixedFontSize = 10;
   opts.additionalAtomLabelPadding = 0.066;
-  std::string fName = getenv("RDBASE");
-  fName += "/Data/Fonts/Abel-Regular.ttf";
-  opts.fontFile = "BuiltinRobotoRegular";
+  // The guidelines say Arial font, which is not a free font.  A close
+  // approximation is FreeSans, but that is under GPL v3.0, so can't be
+  // embedded.  Use it if it's there, but fall back on the Roboto font
+  // which uses an Apache 2.0 license and is also fairly close to Arial.
+  const char *rdbase = getenv("RDBASE");
+  bool have_free_sans = false;
+  if (rdbase) {
+    opts.fontFile = std::string(rdbase) + "/rdkit/Chem/Draw/FreeSans.ttf";
+    struct stat buffer;
+    have_free_sans = (stat(opts.fontFile.c_str(), &buffer) == 0);
+  }
+  if (!rdbase || !have_free_sans) {
+    opts.fontFile = "BuiltinRobotoRegular";
+  }
 }
 
 // ****************************************************************************
