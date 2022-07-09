@@ -195,7 +195,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::vector<int> *confIds = nullptr);
 
   //! clears the contents of the drawing
-  virtual void clearDrawing() = 0;
+  virtual void clearDrawing() {
+    if (needs_init_) {
+      initDrawing();
+      needs_init_ = false;
+    }
+  };
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
   //! in atom coords.  If rawCoords is passed as true,
   //! the coordinates are used as is, if not they are assumed to be in
@@ -256,7 +261,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
                          bool asPolygon = false, double frac = 0.05,
                          double angle = M_PI / 6,
-			 const DrawColour &col = DrawColour(0.0, 0.0, 0.0),
+                         const DrawColour &col = DrawColour(0.0, 0.0, 0.0),
                          bool rawCoords = false);
   // draw a plus sign with lines at the given position.
   virtual void drawPlus(const Point2D &cds, int plusWidth,
