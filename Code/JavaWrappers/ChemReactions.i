@@ -42,9 +42,9 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 %}
 
-%ignore RDKit::CDXMLBlockToChemicalReactions;  //(const std::string &);
+%ignore RDKit::CDXMLToChemicalReactions;  //(const std::string &);
 %ignore RDKit::CDXMLFileToChemicalReactions; //(const std::string &);
-%ignore RDKit::CDXMLToChemicalReactions; //(std::istream &);
+%ignore RDKit::CDXMLDataStreamToChemicalReactions; //(std::istream &);
 
 %include <GraphMol/ChemReactions/Reaction.h>
 %include <GraphMol/ChemReactions/ReactionParser.h>
@@ -145,9 +145,9 @@ static RDKit::ChemicalReaction *RxnFromBinary(std::vector<int> pkl){
     return res;
   };
 
-static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLBlockToChemicalReactions(
+static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLToChemicalReactions(
   const std::string &block, bool sanitize=false, bool removeHs=false) {
-  auto reactions = RDKit::CDXMLBlockToChemicalReactions(block, sanitize, removeHs);
+  auto reactions = RDKit::CDXMLToChemicalReactions(block, sanitize, removeHs);
   std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
   for(auto &rxn : reactions) {
     result.push_back(std::shared_ptr<RDKit::ChemicalReaction>(rxn.release()));
