@@ -2610,3 +2610,25 @@ M  END
   CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
         Atom::ChiralType::CHI_UNSPECIFIED);
 }
+
+TEST_CASE(
+    "github 5403: Incorrect perception of pseudoasymmetric centers on "
+    "non-canonical molecules") {
+  auto mol1 = "N[C@@]12CC[C@@](CC1)(C2)C(F)F"_smiles;
+  REQUIRE(mol1);
+
+  bool clean = true;
+
+  auto stereoInfo1 = Chirality::findPotentialStereo(*mol1, clean);
+  REQUIRE(stereoInfo1.size() == 2);
+  REQUIRE(stereoInfo1[0].centeredOn == 1);
+  REQUIRE(stereoInfo1[1].centeredOn == 4);
+
+  auto mol2 = "C1C[C@]2(C(F)F)CC[C@@]1(N)C2"_smiles;
+  REQUIRE(mol2);
+
+  auto stereoInfo2 = Chirality::findPotentialStereo(*mol2, clean);
+  REQUIRE(stereoInfo2.size() == 2);
+  CHECK(stereoInfo2[0].centeredOn == 2);
+  CHECK(stereoInfo2[1].centeredOn == 8);
+}
