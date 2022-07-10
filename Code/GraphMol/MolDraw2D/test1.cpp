@@ -4566,8 +4566,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-  testGithub2931();
-#if 0
+#if 1
   test1();
   test2();
   test4();

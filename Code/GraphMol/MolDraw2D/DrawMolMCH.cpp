@@ -162,10 +162,6 @@ void DrawMolMCH::makeAtomHighlights() {
     double xradius, yradius;
     Point2D centre;
     int lineWidth = getHighlightBondWidth(drawOptions_, -1, nullptr);
-    if (!drawOptions_.fillHighlights) {
-      lineWidth = getHighlightBondWidth(drawOptions_, -1,
-                                        &highlightLinewidthMultipliers_);
-    }
     calcSymbolEllipse(ha.first, centre, xradius, yradius);
     if (ha.second.size() == 1) {
       Point2D offset(xradius, yradius);
@@ -227,7 +223,6 @@ void DrawMolMCH::adjustLineEndForHighlight(int at_idx, Point2D p1,
   double disc = B * B - 4.0 * A * C;
   if (disc < 0.0) {
     // no solutions, leave things as they are.  Bit crap, though.
-    std::cout << "fallback" << std::endl;
     p1 += centre;
     p2 += centre;
     return;
