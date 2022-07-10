@@ -147,9 +147,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub2151_1.svg", 3638120408U},
     {"testGithub2151_2.svg", 3354257096U},
     {"testGithub2762.svg", 168469294U},
-    {"testGithub2931_1.svg", 298969290U},
-    {"testGithub2931_2.svg", 922872904U},
-    {"testGithub2931_3.svg", 2823954159U},
+    {"testGithub2931_1.svg", 2109725713U},
+    {"testGithub2931_2.svg", 1835479975U},
+    {"testGithub2931_3.svg", 2732370976U},
+    {"testGithub2931_4.svg", 1385168253U},
     {"test20_1.svg", 2394223373U},
     {"test20_2.svg", 3739838435U},
     {"test20_3.svg", 2641474171U},
@@ -277,9 +278,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub2151_1.svg", 519358907U},
     {"testGithub2151_2.svg", 3102378492U},
     {"testGithub2762.svg", 2006115844U},
-    {"testGithub2931_1.svg", 3001628989U},
-    {"testGithub2931_2.svg", 3664574077U},
-    {"testGithub2931_3.svg", 35507527U},
+    {"testGithub2931_1.svg", 1336382290U},
+    {"testGithub2931_2.svg", 190801508U},
+    {"testGithub2931_3.svg", 3645106237U},
+    {"testGithub2931_4.svg", 314627078U},
     {"test20_1.svg", 2324941307U},
     {"test20_2.svg", 457598277U},
     {"test20_3.svg", 1187217942U},
@@ -3647,7 +3649,6 @@ void testGithub2931() {
       }
     }
   };
-
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -3760,6 +3761,38 @@ void testGithub2931() {
           std::string::npos);
 #endif
       check_file_hash("testGithub2931_3.svg");
+    }
+    {
+      MolDraw2DSVG drawer(500, 500);
+      drawer.drawOptions().fillHighlights = false;
+      drawer.drawOptions().continuousHighlight = true;
+      drawer.drawOptions().fixedFontSize = 10;
+      drawer.drawMoleculeWithHighlights(*m, "Test 4", ha_map, hb_map, h_rads,
+                                        h_lw_mult);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2931_4.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#if DO_TEST_ASSERT
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
+                  std::string::npos);
+      TEST_ASSERT(
+          text.find("<ellipse cx='242.6' cy='348.6' rx='9.9' ry='9.9' "
+                    "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
+          std::string::npos);
+#endif
+#else
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
+                  std::string::npos);
+      TEST_ASSERT(
+          text.find("<ellipse cx='242.6' cy='297.4' rx='9.8' ry='9.8' "
+                    "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
+          std::string::npos);
+#endif
+      check_file_hash("testGithub2931_4.svg");
     }
   }
   std::cerr << " Done" << std::endl;
@@ -4533,8 +4566,8 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-
-#if 1
+  testGithub2931();
+#if 0
   test1();
   test2();
   test4();

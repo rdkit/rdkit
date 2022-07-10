@@ -69,6 +69,16 @@ void DrawMolMCH::makeBondHighlights() {
           bond->getIdx(), noDash);
       highlights_.emplace_back(pl);
     };
+    auto calc_effective_centre = [&](unsigned int atIdx, Point2D &centre)-> double {
+      double xrad = 0.7 * drawOptions_.highlightRadius;
+      double yrad = xrad;
+      if (atomLabels_[atIdx]) {
+        calcSymbolEllipse(atIdx, centre, xrad, yrad);
+      } else {
+        centre = atCds_[atIdx];
+      }
+      return std::min(xrad, yrad);
+    };
 
     if (hb.second.size() < 2) {
       DrawColour col;
@@ -88,8 +98,15 @@ void DrawMolMCH::makeBondHighlights() {
             at1_idx, at2_idx, bond->getIdx(), noDash);
         highlights_.emplace_back(pl);
       } else {
-        make_adjusted_line(at1_cds + perp * rad, at2_cds + perp * rad, col);
-        make_adjusted_line(at1_cds - perp * rad, at2_cds - perp * rad, col);
+        // if the labels aren't centred on the atom coords, the lines might
+        // miss which looks messy.  So adjust.
+        Point2D atCentre1, atCentre2;
+        double rad1 = calc_effective_centre(at1_idx, atCentre1);
+        double rad2 = calc_effective_centre(at2_idx, atCentre2);
+        double thisrad = 0.7 * std::min(rad1, rad2);
+        auto perp = calcPerpendicular(atCentre1, atCentre2);
+        make_adjusted_line(atCentre1 + perp * thisrad, atCentre2 + perp * thisrad, col);
+        make_adjusted_line(atCentre1 - perp * thisrad, atCentre2 - perp * thisrad, col);
       }
     } else {
       auto col_rad = 2.0 * rad / hb.second.size();
@@ -117,13 +134,20 @@ void DrawMolMCH::makeBondHighlights() {
           cols.erase(cols.begin());
         }
         int step = 0;
+        // if the labels aren't centred on the atom coords, the lines might
+        // miss which looks messy.  So adjust.
+        Point2D atCentre1, atCentre2;
+        double rad1 = calc_effective_centre(at1_idx, atCentre1);
+        double rad2 = calc_effective_centre(at2_idx, atCentre2);
+        double thisrad = 0.7 * std::min(rad1, rad2);
+        auto perp = calcPerpendicular(atCentre1, atCentre2);
         for (size_t i = 0; i < cols.size(); ++i) {
           // draw even numbers from the bottom, odd from the top
           auto offset = perp * (rad - step * col_rad);
           if (!(i % 2)) {
-            make_adjusted_line(at1_cds - offset, at2_cds - offset, cols[i]);
+            make_adjusted_line(atCentre1- offset, atCentre2 - offset, cols[i]);
           } else {
-            make_adjusted_line(at1_cds + offset, at2_cds + offset, cols[i]);
+            make_adjusted_line(atCentre1 + offset, atCentre2 + offset, cols[i]);
             step++;
           }
         }
@@ -138,6 +162,10 @@ void DrawMolMCH::makeAtomHighlights() {
     double xradius, yradius;
     Point2D centre;
     int lineWidth = getHighlightBondWidth(drawOptions_, -1, nullptr);
+    if (!drawOptions_.fillHighlights) {
+      lineWidth = getHighlightBondWidth(drawOptions_, -1,
+                                        &highlightLinewidthMultipliers_);
+    }
     calcSymbolEllipse(ha.first, centre, xradius, yradius);
     if (ha.second.size() == 1) {
       Point2D offset(xradius, yradius);
@@ -199,6 +227,9 @@ void DrawMolMCH::adjustLineEndForHighlight(int at_idx, Point2D p1,
   double disc = B * B - 4.0 * A * C;
   if (disc < 0.0) {
     // no solutions, leave things as they are.  Bit crap, though.
+    std::cout << "fallback" << std::endl;
+    p1 += centre;
+    p2 += centre;
     return;
   } else if (fabs(disc) < 1.0e-6) {
     // 1 solution
