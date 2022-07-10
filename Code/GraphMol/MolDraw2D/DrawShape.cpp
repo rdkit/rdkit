@@ -298,6 +298,9 @@ DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> points,
   if (otherBondVecs_.size() > 2) {
     trimOtherBondVecs();
   }
+  if (otherBondVecs_.size() == 2) {
+    orderOtherBondVecs();
+  }
   buildTriangles();
 }
 
@@ -484,6 +487,19 @@ void DrawShapeSolidWedge::trimOtherBondVecs() {
   std::vector<Point2D> newVecs{otherBondVecs_[firstVec],
                                otherBondVecs_[secondVec]};
   otherBondVecs_ = newVecs;
+}
+
+// ****************************************************************************
+void DrawShapeSolidWedge::orderOtherBondVecs() {
+  if (otherBondVecs_.size() < 2) {
+    return;
+  }
+  // otherBondVecs_[0] needs to be on the same side as points_[1], which
+  // implies the larger angle between the 2 vectors.
+  auto side1 = (points_[0] - points_[1]);
+  if (side1.angleTo(otherBondVecs_[0]) < side1.angleTo(otherBondVecs_[1])) {
+    std::swap(otherBondVecs_[0], otherBondVecs_[1]);
+  }
 }
 
 // ****************************************************************************

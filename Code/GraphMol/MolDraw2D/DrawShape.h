@@ -153,6 +153,11 @@ class DrawShapeSolidWedge : public DrawShape {
   // if otherBondVecs_.size() > 2, then we only want the two vecs with the
   // widest angle between them.
   void trimOtherBondVecs();
+  // if there are 2 otherBondVecs_ (assuming we've already trimmed down to 2 if
+  // necessary) make sure the first is on the points_[1] side, the second on
+  // the points_[2] side, so that the merging of the triangles to the bond
+  // lines is correct.
+  void orderOtherBondVecs();
 
   DrawColour col2_;
   bool splitBonds_;
