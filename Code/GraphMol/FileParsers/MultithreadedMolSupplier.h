@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #ifndef MULTITHREADED_MOL_SUPPLIER
 #define MULTITHREADED_MOL_SUPPLIER
 

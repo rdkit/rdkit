@@ -106,7 +106,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
   if (compressionFormat.empty()) {
     strm = new std::ifstream(path.c_str(), std::ios::in | std::ios::binary);
   } else {
-#if RDK_USE_BOOST_IOSTREAMS 
+#if RDK_USE_BOOST_IOSTREAMS
     strm = new gzstream(path);
 #else
     throw BadFileException("Unsupported fileFormat: " + fileFormat);
@@ -115,7 +115,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
 
   //! Dispatch to the appropriate supplier
   if (fileFormat == "sdf") {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
     if (opt.numWriterThreads > 0) {
       MultithreadedSDMolSupplier* sdsup = new MultithreadedSDMolSupplier(
           strm, true, opt.sanitize, opt.removeHs, opt.strictParsing,
@@ -132,7 +132,7 @@ std::unique_ptr<MolSupplier> getSupplier(const std::string& path,
 
   else if (fileFormat == "smi" || fileFormat == "csv" || fileFormat == "txt" ||
            fileFormat == "tsv") {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
     if (opt.numWriterThreads > 0) {
       MultithreadedSmilesMolSupplier* smsup =
           new MultithreadedSmilesMolSupplier(

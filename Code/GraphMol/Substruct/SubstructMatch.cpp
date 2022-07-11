@@ -26,7 +26,7 @@
 #include <boost/serialization/array_wrapper.hpp>
 #endif
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #include <thread>
 #include <future>
@@ -444,7 +444,7 @@ struct RecursiveLocker {
   ~RecursiveLocker() {
     for (auto v : locked) {
       v->clear();
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
       v->d_mutex.unlock();
 #endif
     }
@@ -557,7 +557,7 @@ std::vector<MatchVectType> SubstructMatch(
     detail::ResSubstructMatchHelper_(args, &matches, 0,
                                      resMolSupplier.length());
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
     std::vector<std::set<MatchVectType> *> matchesThread(nt);
@@ -657,7 +657,7 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
   // std::cout << "\t\t" << typeid(*query).name() << std::endl;
   if (query->getDescription() == "RecursiveStructure") {
     auto *rsq = (RecursiveStructureQuery *)query;
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
     rsq->d_mutex.lock();
 #endif
     locked.push_back(rsq);

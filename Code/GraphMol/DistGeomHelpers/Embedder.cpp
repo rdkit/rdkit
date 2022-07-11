@@ -35,7 +35,7 @@
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #endif
 
@@ -1205,7 +1205,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params);
     }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
     else {
       std::vector<std::future<void>> tg;
       for (int tid = 0; tid < numThreads; ++tid) {

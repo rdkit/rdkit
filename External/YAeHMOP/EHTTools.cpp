@@ -4,7 +4,7 @@
 #include "EHTTools.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 #include <fstream>
@@ -21,13 +21,13 @@ const std::string _EHTChargeMatrix = "_EHTChargeMatrix";
 
 // we should only call into the C code, which uses tons of globals, from one
 // thread at a time. This mutex enforces that.
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 std::mutex yaehmop_mutex;
 #endif
 
 bool runMol(const ROMol &mol, EHTResults &results, int confId,
             bool preserveHamiltonianAndOverlapMatrices) {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::lock_guard<std::mutex> lock(yaehmop_mutex);
 #endif
 

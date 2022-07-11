@@ -2020,7 +2020,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   wrap_tdtwriter();
   wrap_pdbwriter();
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   /********************************************************
    * MultithreadedMolWriter stuff
    *******************************************************/

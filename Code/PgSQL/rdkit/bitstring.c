@@ -31,7 +31,7 @@
 
 #include <postgres.h>
 
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
 
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -72,7 +72,7 @@ void bitstringUnion(int length, uint8 *bstr1, uint8 *bstr2)
   int i;
   uint8 * bstr1_end = bstr1 + length;
   
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE * ibstr1 = (POPCNT_TYPE *) bstr1;
@@ -106,7 +106,7 @@ void bitstringIntersection(int length, uint8 *bstr1, uint8 *bstr2)
   int i;
   uint8 * bstr1_end = bstr1 + length;
   
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE * ibstr1 = (POPCNT_TYPE *) bstr1;
@@ -140,7 +140,7 @@ int bitstringWeight(int length, uint8 *bstr)
   int total_popcount = 0; 
   uint8 * bstr_end = bstr + length;
 
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE * ibstr = (POPCNT_TYPE *) bstr;
@@ -174,7 +174,7 @@ int bitstringIntersectionWeight(int length, uint8 *bstr1, uint8 *bstr2)
   int intersect_popcount = 0;
   uint8 * bstr1_end = bstr1 + length;
   
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE * ibstr1 = (POPCNT_TYPE *) bstr1;
@@ -210,7 +210,7 @@ int bitstringDifferenceWeight(int length, uint8 *bstr1, uint8 *bstr2)
   int difference = 0; 
   uint8 * bstr1_end = bstr1 + length;
   
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE ib1;
@@ -249,7 +249,7 @@ int bitstringHemDistance(int length, uint8 *bstr1, uint8 *bstr2)
   int difference = 0; 
   uint8 * bstr1_end = bstr1 + length;
   
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE * ibstr1 = (POPCNT_TYPE *) bstr1;
@@ -289,7 +289,7 @@ double bitstringTanimotoSimilarity(int length, uint8 *bstr1, uint8 *bstr2)
   
   uint8 * bstr1_end = bstr1 + length;
 
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE * ibstr1 = (POPCNT_TYPE *) bstr1;
@@ -357,7 +357,7 @@ bool bitstringContains(int length, uint8 *bstr1, uint8 *bstr2)
   bool contains = true;
   uint8 * bstr1_end = bstr1 + length;
 
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE * ibstr1 = (POPCNT_TYPE *) bstr1;
@@ -388,7 +388,7 @@ bool bitstringIntersects(int length, uint8 *bstr1, uint8 *bstr2)
   bool intersects = false;
   uint8 * bstr1_end = bstr1 + length;
 
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   int ilength = length / sizeof(POPCNT_TYPE);
 
   POPCNT_TYPE * ibstr1 = (POPCNT_TYPE *) bstr1;
@@ -420,7 +420,7 @@ bool bitstringAllTrue(int length, uint8 *bstr)
   bool allTrue = true;
   uint8 * bstr_end = bstr + length;
 
-#ifdef USE_BUILTIN_POPCOUNT
+#ifdef RDK_OPTIMIZE_POPCNT
   /* TODO consider optimizing */
 #endif
   
