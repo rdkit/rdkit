@@ -669,7 +669,10 @@ std::string molToACS1996SVG(const ROMol &mol, std::string legend,
                             highlight_bonds, highlight_atom_map,
                             highlight_bond_map, highlight_atom_radii, confId);
   drawer.finishDrawing();
-  return drawer.getDrawingText();
+  return outs.str();
+}
+void setACS1996ModeHelper(MolDrawOptions &drawOptions, double meanBondLen) {
+  MolDraw2DUtils::setACS1996Options(drawOptions, meanBondLen);
 }
 
 void drawStringHelper(MolDraw2D &self, std::string text, const Point2D &loc,
@@ -1278,7 +1281,13 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                python::arg("highlightAtomRadii") = python::object(),
                python::arg("confId") = -1),
               docString.c_str());
-
+  docString = "Sets Drawer options to use ACS 1996 mode.";
+  python::def("SetACS1996Mode", &RDKit::MolDraw2DUtils::setACS1996Options,
+              (python::arg("drawOptions"), python::arg("meanBondLength")),
+              docString.c_str());
+  python::def("MeanBondLength", &RDKit::MolDraw2DUtils::meanBondLength,
+              (python::arg("mol"), python::arg("confId") = -1),
+              "Calculate the mean bond length for the molecule.");
   python::def("SetDarkMode",
               (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
               "set dark mode for a MolDrawOptions object");
