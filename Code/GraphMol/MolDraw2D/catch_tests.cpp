@@ -4653,8 +4653,10 @@ M  END)CTAB"_ctab;
 
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
+    std::string nameBase = "acs1996_";
 #if 1
-    auto m1 = R"CTAB(mol1
+    {
+      auto m1 = R"CTAB(mol1
   ChemDraw05162216032D
 
  11 11  0  0  0  0  0  0  0  0999 V2000
@@ -4681,18 +4683,25 @@ TEST_CASE("ACS 1996 mode") {
   9 10  3  0
   6 11  1  4
 M  END)CTAB"_ctab;
-    REQUIRE(m1);
-    bool res1 = MolDraw2DUtils::drawMolACS1996("acs1996_1.svg", *m1, "",
-                                               nullptr, nullptr);
-    REQUIRE(res1);
+      REQUIRE(m1);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m1, "", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "1.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-    bool res2 = MolDraw2DUtils::drawMolACS1996("acs1996_1.png", *m1, "r",
-                                               nullptr, nullptr);
-    REQUIRE(res2);
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "1.png", *m1,
+                                                "Mol 1", nullptr, nullptr);
+      REQUIRE(res);
 #endif
+    }
 #endif
 #if 1
-    auto m2 = R"CTAB(mol2
+    {
+      auto m2 = R"CTAB(mol2
   ChemDraw06062216302D
 
   0  0  0     0  0              0 V3000
@@ -4730,59 +4739,48 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    REQUIRE(m2);
-    bool res3 = MolDraw2DUtils::drawMolACS1996("acs1996_2.svg", *m2, "",
-                                               nullptr, nullptr);
-    REQUIRE(res3);
+      REQUIRE(m2);
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "2.svg", *m2,
+                                                "Mol 2", nullptr, nullptr);
+      REQUIRE(res);
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-    bool res4 = MolDraw2DUtils::drawMolACS1996("acs1996_2.png", *m2, "",
-                                               nullptr, nullptr);
-    REQUIRE(res4);
+      bool res1 = MolDraw2DUtils::drawMolACS1996(nameBase + "2.png", *m2,
+                                                 "Mol 2", nullptr, nullptr);
+      REQUIRE(res1);
 #endif
-#endif
-#if 1
-    auto m3 = R"(c1c(nc[nH]1)[C@@H](C)\C=C\C#N)"_smiles;
-    m3->setProp<std::string>("_Name", "mol3");
-    REQUIRE(m3);
-    MolDraw2DUtils::prepareMolForDrawing(*m3);
-    bool res5 = MolDraw2DUtils::drawMolACS1996("acs1996_3.svg", *m3, "",
-                                               nullptr, nullptr);
-    REQUIRE(res5);
-#endif
-#if 1
-    auto m4 = "c1c(nc[nH]1)C(C)C=CC#N"_smiles;
-    m4->setProp<std::string>("_Name", "mol4");
-    REQUIRE(m4);
-    MolDraw2DUtils::prepareMolForDrawing(*m4);
-    bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_4.svg", *m4, "",
-                                               nullptr, nullptr);
-    REQUIRE(res6);
-#endif
-#if 1
-    {
-      auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
-      m->setProp<std::string>("_Name", "mol5");
-      REQUIRE(m);
-      MolDraw2DUtils::prepareMolForDrawing(*m);
-      bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_5.svg", *m, "",
-                                                 nullptr, nullptr);
-      REQUIRE(res6);
     }
 #endif
 #if 1
     {
-      auto m = "CC(I)CC(Cl)CC(F)C"_smiles;
-      m->setProp<std::string>("_Name", "mol5");
-      REQUIRE(m);
-      MolDraw2DUtils::prepareMolForDrawing(*m);
-      bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_6.svg", *m, "",
-                                                 nullptr, nullptr);
-      REQUIRE(res6);
+      auto m3 = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
+      m3->setProp<std::string>("_Name", "mol3");
+      REQUIRE(m3);
+      MolDraw2DUtils::prepareMolForDrawing(*m3);
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "3.svg", *m3,
+                                                "Mol 3", nullptr, nullptr);
+      REQUIRE(res);
     }
 #endif
 #if 1
     {
-      auto m = R"CTAB(mol7
+      auto m4 = "CC(I)CC(Cl)CC(F)C"_smiles;
+      m4->setProp<std::string>("_Name", "mol4");
+      REQUIRE(m4);
+      MolDraw2DUtils::prepareMolForDrawing(*m4);
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().unspecifiedStereoIsUnknown = true;
+      MolDraw2DUtils::drawMolACS1996(drawer, *m4, "Mol 4", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "4.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+    }
+#endif
+#if 1
+    {
+      auto m = R"CTAB(mol5
   ChemDraw06112209342D
 
   0  0  0     0  0              0 V3000
@@ -4862,14 +4860,14 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
       REQUIRE(m);
-      bool res = MolDraw2DUtils::drawMolACS1996("acs1996_7.svg", *m, "",
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "5.svg", *m, "Mol 5",
                                                 nullptr, nullptr);
       REQUIRE(res);
     }
 #endif
 #if 1
     {
-      auto m = R"CTAB(mol8
+      auto m = R"CTAB(mol6
   ChemDraw06132212082D
 
   0  0  0     0  0              0 V3000
@@ -4914,66 +4912,14 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
       REQUIRE(m);
-      bool res = MolDraw2DUtils::drawMolACS1996("acs1996_8.svg", *m, "",
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "6.svg", *m, "Mol 6",
                                                 nullptr, nullptr);
       REQUIRE(res);
     }
 #endif
 #if 1
     {
-      auto m = R"CTAB(mol9
-  ChemDraw06192209132D
-
-  0  0  0     0  0              0 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 16 15 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -1.432676 0.414656 0.000000 0
-M  V30 2 C -0.718205 0.827155 0.000000 0
-M  V30 3 O -2.147145 0.827155 0.000000 0
-M  V30 4 C -0.003734 0.414656 0.000000 0
-M  V30 5 C 0.710736 0.827155 0.000000 0
-M  V30 6 C 1.425206 0.414656 0.000000 0
-M  V30 7 C 0.710736 1.652154 0.000000 0
-M  V30 8 C -1.432676 -0.410344 0.000000 0
-M  V30 9 C -0.718205 -0.822844 0.000000 0
-M  V30 10 C -2.147145 -0.822844 0.000000 0
-M  V30 11 C -0.003734 -0.410344 0.000000 0
-M  V30 12 S 2.142166 0.828593 0.000000 0
-M  V30 13 C 0.713227 -0.824281 0.000000 0
-M  V30 14 C 1.430185 -0.410344 0.000000 0
-M  V30 15 C 2.147145 -0.824281 0.000000 0
-M  V30 16 C 2.147145 -1.652154 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 2 1 3
-M  V30 3 1 2 4
-M  V30 4 2 4 5
-M  V30 5 1 5 6
-M  V30 6 1 5 7
-M  V30 7 1 1 8
-M  V30 8 2 8 9 CFG=2
-M  V30 9 1 8 10
-M  V30 10 1 9 11
-M  V30 11 2 6 12
-M  V30 12 2 11 13
-M  V30 13 1 13 14
-M  V30 14 2 14 15
-M  V30 15 1 15 16
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-      REQUIRE(m);
-      bool res = MolDraw2DUtils::drawMolACS1996("acs1996_9.svg", *m, "",
-                                                nullptr, nullptr);
-      REQUIRE(res);
-    }
-#endif
-#if 1
-    {
-      auto m = R"CTAB(mol10
+      auto m = R"CTAB(mol7
   ChemDraw06192209312D
 
   0  0  0     0  0              0 V3000
@@ -5022,107 +4968,14 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
       REQUIRE(m);
-      bool res = MolDraw2DUtils::drawMolACS1996("acs1996_10.svg", *m, "",
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "7.svg", *m, "Mol 7",
                                                 nullptr, nullptr);
       REQUIRE(res);
     }
 #endif
 #if 1
     {
-      auto m = R"CTAB(mol11
-  ChemDraw06202211162D
-
-  0  0  0     0  0              0 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 7 7 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C 0.355995 -0.411068 0.000000 0
-M  V30 2 C 0.355995 0.411068 0.000000 0
-M  V30 3 C -0.355996 0.822136 0.000000 0
-M  V30 4 C -1.067986 0.411068 0.000000 0
-M  V30 5 C -1.067986 -0.411068 0.000000 0
-M  V30 6 C -0.355996 -0.822136 0.000000 0
-M  V30 7 N 1.067986 0.822136 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 2 1 2
-M  V30 2 1 2 3
-M  V30 3 2 3 4
-M  V30 4 1 4 5
-M  V30 5 2 5 6
-M  V30 6 1 6 1
-M  V30 7 1 2 7
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-      REQUIRE(m);
-      bool res = MolDraw2DUtils::drawMolACS1996("acs1996_11.svg", *m, "",
-                                                nullptr, nullptr);
-      REQUIRE(res);
-    }
-#endif
-  }
-#if 1
-  {
-    auto m = R"CTAB(mol12
-  ChemDraw06302210552D
-
-  0  0  0     0  0              0 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 17 16 0 0 1
-M  V30 BEGIN ATOM
-M  V30 1 C -2.500648 -0.206250 0.000000 0
-M  V30 2 C -1.786177 0.206250 0.000000 0
-M  V30 3 C -1.071707 -0.206250 0.000000 0
-M  V30 4 C -0.357236 0.206250 0.000000 0
-M  V30 5 C 0.357236 -0.206250 0.000000 0
-M  V30 6 C 1.071707 0.206250 0.000000 0
-M  V30 7 C 1.786177 -0.206250 0.000000 0
-M  V30 8 C 2.500648 0.206250 0.000000 0
-M  V30 9 C -1.786177 1.031250 0.000000 0
-M  V30 10 C -2.500648 1.443750 0.000000 0
-M  V30 11 C -0.357236 1.031250 0.000000 0
-M  V30 12 C -1.071707 1.443750 0.000000 0
-M  V30 13 C 0.357236 1.443750 0.000000 0
-M  V30 14 C 1.786177 -1.031250 0.000000 0
-M  V30 15 C 2.500648 -1.443750 0.000000 0
-M  V30 16 Cl 0.357236 -1.031250 0.000000 0
-M  V30 17 C -1.071707 -1.031250 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 1 2 3
-M  V30 3 1 3 4
-M  V30 4 1 4 5
-M  V30 5 1 5 6
-M  V30 6 1 6 7
-M  V30 7 1 7 8
-M  V30 8 1 2 9 CFG=1
-M  V30 9 1 9 10
-M  V30 10 1 4 11 CFG=1
-M  V30 11 1 11 12
-M  V30 12 1 11 13
-M  V30 13 1 7 14 CFG=1
-M  V30 14 2 14 15
-M  V30 15 1 5 16 CFG=1
-M  V30 16 1 3 17
-M  V30 END BOND
-M  V30 BEGIN COLLECTION
-M  V30 MDLV30/STEABS ATOMS=(4 2 4 5 7)
-M  V30 END COLLECTION
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    REQUIRE(m);
-    bool res = MolDraw2DUtils::drawMolACS1996("acs1996_12.svg", *m, "", nullptr,
-                                              nullptr);
-    REQUIRE(res);
-  }
-#endif
-#if 1
-  {
-    auto m = R"CTAB(mol13
+      auto m8 = R"CTAB(mol8
   ChemDraw07042207302D
 
   0  0  0     0  0              0 V3000
@@ -5173,15 +5026,15 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    REQUIRE(m);
-    bool res = MolDraw2DUtils::drawMolACS1996("acs1996_13.svg", *m, "", nullptr,
-                                              nullptr);
-    REQUIRE(res);
-  }
+      REQUIRE(m8);
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "8.svg", *m8,
+                                                "Mol 8", nullptr, nullptr);
+      REQUIRE(res);
+    }
 #endif
-#if 1
-  {
-    auto m = R"CTAB(mol14
+#if 9
+    {
+      auto m9 = R"CTAB(mol9
   ChemDraw06302215142D
 
   0  0  0     0  0              0 V3000
@@ -5240,15 +5093,15 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    REQUIRE(m);
-    bool res = MolDraw2DUtils::drawMolACS1996("acs1996_14.svg", *m, "", nullptr,
-                                              nullptr);
-    REQUIRE(res);
-  }
+      REQUIRE(m9);
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "9.svg", *m9,
+                                                "Mol 9", nullptr, nullptr);
+      REQUIRE(res);
+    }
 #endif
 #if 1
-  {
-    auto m = R"CTAB(mol15
+    {
+      auto m10 = R"CTAB(mol10
   ChemDraw07062213362D
 
   0  0  0     0  0              0 V3000
@@ -5276,13 +5129,45 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    REQUIRE(m);
-    MolDraw2DUtils::prepareMolForDrawing(*m);
-    bool res6 = MolDraw2DUtils::drawMolACS1996("acs1996_15.svg", *m, "",
-                                               nullptr, nullptr);
-    REQUIRE(res6);
-  }
+      REQUIRE(m10);
+      MolDraw2DUtils::prepareMolForDrawing(*m10);
+      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "10.svg", *m10,
+                                                "Mol 10", nullptr, nullptr);
+      REQUIRE(res);
+    }
 #endif
+#if 1
+    {
+      auto m11 =
+          "CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1"_smiles;
+      TEST_ASSERT(m11);
+      MolDraw2DUtils::prepareMolForDrawing(*m11);
+      std::vector<int> highlight_atoms{17, 18, 19, 20, 21, 6, 7, 8, 9, 31, 32};
+      std::map<int, DrawColour> atom_highlight_colors;
+      atom_highlight_colors[8] = DrawColour(1.0, 1.0, 0.0);
+      atom_highlight_colors[31] = DrawColour(0.0, 1.0, 1.0);
+      std::vector<int> highlight_bonds{0, 1, 2, 11, 15, 19};
+      std::map<int, DrawColour> bond_highlight_colors;
+      bond_highlight_colors[0] = DrawColour(1.0, 1.0, 0.0);
+      bond_highlight_colors[11] = DrawColour(0.0, 1.0, 1.0);
+      MolDrawOptions options;
+      options.circleAtoms = true;
+      options.highlightColour = DrawColour(1, .5, .5);
+      options.continuousHighlight = true;
+      MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions() = options;
+      MolDraw2DUtils::drawMolACS1996(drawer, *m11, "Mol 11", &highlight_atoms,
+                                     &highlight_bonds, &atom_highlight_colors,
+                                     &bond_highlight_colors);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "11.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+    }
+#endif
+  }
 }
 
 TEST_CASE("Unspecified stereochemistry means unknown.", "") {
