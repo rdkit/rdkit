@@ -424,7 +424,7 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
                     const std::map<int, DrawColour> *highlight_atom_map,
                     const std::map<int, DrawColour> *highlight_bond_map,
                     const std::map<int, double> *highlight_radii, int confId) {
-  double meanBondLen = MolDraw2D_detail::meanBondLength(mol, confId);
+  double meanBondLen = MolDraw2DUtils::meanBondLength(mol, confId);
   setACS1996Options(drawer.drawOptions(), meanBondLen);
   drawer.drawMolecule(mol, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
@@ -515,6 +515,7 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   opts.scalingFactor = 14.4 / meanBondLen;
   // offset for multiple bonds is 18% of the bond length.
   opts.multipleBondOffset = 0.18;
+  opts.highlightBondWidthMultiplier = 32;
   setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
 
   opts.fixedFontSize = 10;
@@ -569,10 +570,6 @@ void unspecifiedStereoIsUnknown(ROMol &mol, int confId) {
   }
 }
 
-}  // namespace MolDraw2DUtils
-
-namespace MolDraw2D_detail {
-
 // ****************************************************************************
 double meanBondLength(const ROMol &mol, int confId) {
   double bondLen = 0.0;
@@ -589,6 +586,5 @@ double meanBondLength(const ROMol &mol, int confId) {
   return bondLen;
 }
 
-}  // namespace MolDraw2D_detail
-
+}  // namespace MolDraw2DUtils
 }  // namespace RDKit
