@@ -173,10 +173,12 @@ RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
                           mol);
 };
 
-// Draw a molecule to file using settings to reproduce as closely as possible
-// the ACS1996 guidelines, as described at
-// https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
-// drawer.drawOptions() are changed.
+//! Draw a molecule to a MolDraw2D object according to ACS 1996 guidelines
+/*
+  The ACS1996 guidelines, as described at
+  https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+  drawer.drawOptions() are changed.
+ */
 void drawMolACS1996(
     MolDraw2D &drawer, const ROMol &mol, const std::string &legend,
     const std::vector<int> *highlight_atoms,
@@ -184,8 +186,14 @@ void drawMolACS1996(
     const std::map<int, DrawColour> *highlight_atom_map = nullptr,
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
     const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
-// Filename should end in '.png' or '.svg' and the appropriate format will be
-// selected.
+//! Draw a molecule to a file object according to ACS 1996 guidelines
+/*
+  The ACS1996 guidelines, as described at
+  https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+  drawer.drawOptions() are changed.
+  Filename should end in '.png' or '.svg' and the appropriate format will be
+  selected.
+ */
 bool drawMolACS1996(
     const std::string &outfile, const ROMol &mol, const std::string &legend,
     const std::vector<int> *highlight_atoms,
@@ -193,7 +201,13 @@ bool drawMolACS1996(
     const std::map<int, DrawColour> *highlight_atom_map = nullptr,
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
     const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
-// return string containing SVG for ACS1996 mode drawing
+//! Return string drawing molecule in SVG format according to ACS 1996
+//! guidelines
+/*
+  The ACS1996 guidelines, as described at
+  https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+  drawer.drawOptions() are changed.
+ */
 std::string drawMolACS1996SVG(
     const ROMol &mol, const std::string &legend,
     const std::vector<int> *highlight_atoms,
@@ -201,7 +215,14 @@ std::string drawMolACS1996SVG(
     const std::map<int, DrawColour> *highlight_atom_map = nullptr,
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
     const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
-// return string containing PNG for ACS1996 mode drawing
+//! Return string drawing molecule in PNG format according to ACS 1996
+//! guidelines
+/*
+  The ACS1996 guidelines, as described at
+  https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+  drawer.drawOptions() are changed.
+  Uses Cairo for the drawings.
+ */
 #ifdef RDK_BUILD_CAIRO_SUPPORT
 std::string drawMolACS1996Cairo(
     const ROMol &mol, const std::string &legend,
@@ -211,16 +232,38 @@ std::string drawMolACS1996Cairo(
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
     const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
 #endif
+//! Set the draw options to produce something as close as possible to
+//! the ACS 1996 guidelines as described at
+//! https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+/*
+ \param MolDrawOptions opt - the options what will be changed
+ \param float meanBondLength - mean bond length of the molecule
+
+ Works best if the MolDraw2D object is created with width and height -1 (a
+ flexiCanvas).
+ The mean bond length may be calculated with MolDraw2DUtils::meanBondLength.
+ it is used to calculate the offset for the lines in multiple bonds.
+
+ Options changed are:
+   bondLineWidth = 0.6
+   scaleBondWidth = false
+   scalingFactor = 14.4 / meanBondLen
+   multipleBondOffset = 0.18
+   highlightBondWidthMultiplier = 32
+   setMonochromeMode - black and white
+   fixedFontSize = 10
+   additionalAtomLabelPadding = 0.066
+   fontFile - if RDBASE is set and the file exists, uses
+              $RDBASE/Chem/Draw/FreeSans.ttf.  Otherwise uses
+              BuiltinRobotoRegular.
+ */
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen = 1.0);
 // Set double bonds with unspecified stereo to STEREOANY and chiral single
 // bonds with unspecified chiraity to UNKNOWN so they are drawn crossed and
 // wavy respectively.
 void unspecifiedStereoIsUnknown(ROMol &mol, int confId = -1);
-}  // namespace MolDraw2DUtils
-
-namespace MolDraw2D_detail {
 double meanBondLength(const ROMol &mol, int confId = -1);
-}  // namespace MolDraw2D_detail
+}  // namespace MolDraw2DUtils
 
 }  // namespace RDKit
 #endif  // MOLDRAW2DUTILS_H
