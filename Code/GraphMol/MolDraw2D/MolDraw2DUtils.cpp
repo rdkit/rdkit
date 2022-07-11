@@ -402,45 +402,5 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
                      paramsCopy);
 };
 
-// ****************************************************************************
-void reapplyMolBlockWedging(ROMol &mol) {
-  for (auto b : mol.bonds()) {
-    int explicit_unknown_stereo = -1;
-    if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                 explicit_unknown_stereo) &&
-        explicit_unknown_stereo) {
-      b->setBondDir(Bond::UNKNOWN);
-    }
-    int bond_dir = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
-                                 bond_dir)) {
-      if (bond_dir == 1) {
-        b->setBondDir(Bond::BEGINWEDGE);
-      } else if (bond_dir == 6) {
-        b->setBondDir(Bond::BEGINDASH);
-      }
-    }
-    int cfg = -1;
-    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
-      switch (cfg) {
-        case 1:
-          b->setBondDir(Bond::BEGINWEDGE);
-          break;
-        case 2:
-          if (b->getBondType() == Bond::SINGLE) {
-            b->setBondDir(Bond::UNKNOWN);
-          } else if (b->getBondType() == Bond::DOUBLE) {
-            b->setBondDir(Bond::EITHERDOUBLE);
-            b->setStereo(Bond::STEREOANY);
-          }
-          break;
-        case 3:
-          b->setBondDir(Bond::BEGINDASH);
-          break;
-      }
-    }
-  }
-}
-
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit

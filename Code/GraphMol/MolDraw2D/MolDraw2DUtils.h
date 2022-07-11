@@ -174,12 +174,6 @@ RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
                           mol);
 };
 
-//! Forces use of atom wedging from MolBlock if present.
-/*
- \param mol: molecule to have its wedges altered
- */
-void reapplyMolBlockWedging(ROMol &mol);
-
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit
 #endif  // MOLDRAW2DUTILS_H
