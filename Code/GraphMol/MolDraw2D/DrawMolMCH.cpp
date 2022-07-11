@@ -77,6 +77,9 @@ void DrawMolMCH::makeBondHighlights() {
       } else {
         centre = atCds_[atIdx];
       }
+      double disp = (atCds_[atIdx] - centre).length();
+      xrad -= disp;
+      yrad -= disp;
       return std::min(xrad, yrad);
     };
 
@@ -105,8 +108,8 @@ void DrawMolMCH::makeBondHighlights() {
         double rad2 = calc_effective_centre(at2_idx, atCentre2);
         double thisrad = 0.7 * std::min(rad1, rad2);
         auto perp = calcPerpendicular(atCentre1, atCentre2);
-        make_adjusted_line(atCentre1 + perp * thisrad, atCentre2 + perp * thisrad, col);
-        make_adjusted_line(atCentre1 - perp * thisrad, atCentre2 - perp * thisrad, col);
+        make_adjusted_line(at1_cds + perp * thisrad, at2_cds + perp * thisrad, col);
+        make_adjusted_line(at1_cds - perp * thisrad, at2_cds - perp * thisrad, col);
       }
     } else {
       auto col_rad = 2.0 * rad / hb.second.size();
@@ -145,9 +148,9 @@ void DrawMolMCH::makeBondHighlights() {
           // draw even numbers from the bottom, odd from the top
           auto offset = perp * (rad - step * col_rad);
           if (!(i % 2)) {
-            make_adjusted_line(atCentre1- offset, atCentre2 - offset, cols[i]);
+            make_adjusted_line(at1_cds - offset, at2_cds - offset, cols[i]);
           } else {
-            make_adjusted_line(atCentre1 + offset, atCentre2 + offset, cols[i]);
+            make_adjusted_line(at1_cds + offset, at2_cds + offset, cols[i]);
             step++;
           }
         }

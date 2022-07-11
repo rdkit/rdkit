@@ -147,10 +147,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub2151_1.svg", 3638120408U},
     {"testGithub2151_2.svg", 3354257096U},
     {"testGithub2762.svg", 168469294U},
-    {"testGithub2931_1.svg", 2109725713U},
+    {"testGithub2931_1.svg", 2194602666U},
     {"testGithub2931_2.svg", 1835479975U},
-    {"testGithub2931_3.svg", 2732370976U},
-    {"testGithub2931_4.svg", 1385168253U},
+    {"testGithub2931_3.svg", 100069870U},
+    {"testGithub2931_4.svg", 2053973281U},
     {"test20_1.svg", 2394223373U},
     {"test20_2.svg", 3739838435U},
     {"test20_3.svg", 2641474171U},
@@ -278,10 +278,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub2151_1.svg", 519358907U},
     {"testGithub2151_2.svg", 3102378492U},
     {"testGithub2762.svg", 2006115844U},
-    {"testGithub2931_1.svg", 1336382290U},
+    {"testGithub2931_1.svg", 349557903U},
     {"testGithub2931_2.svg", 190801508U},
-    {"testGithub2931_3.svg", 3645106237U},
-    {"testGithub2931_4.svg", 314627078U},
+    {"testGithub2931_3.svg", 4188693107U},
+    {"testGithub2931_4.svg", 639496462U},
     {"test20_1.svg", 2324941307U},
     {"test20_2.svg", 457598277U},
     {"test20_3.svg", 1187217942U},
@@ -359,7 +359,7 @@ using namespace RDKit;
 // if the generated SVG hashes to the value we're expecting, delete
 // the file.  That way, only the files that need inspection will be
 // left at the end of the run.
-static const bool DELETE_WITH_GOOD_HASH = true;
+static const bool DELETE_WITH_GOOD_HASH = false;
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
