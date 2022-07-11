@@ -2586,8 +2586,6 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
 // of the double bond.
 void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
                              Point2D &l2f) const {
-  const Point2D &at1_cds = atCds_[bond.getBeginAtomIdx()];
-  const Point2D &at2_cds = atCds_[bond.getEndAtomIdx()];
   std::vector<size_t> bond_in_rings;
   const auto &bond_rings = drawMol_->getRingInfo()->bondRings();
   for (size_t i = 0; i < bond_rings.size(); ++i) {
@@ -2802,9 +2800,9 @@ Point2D DrawMol::doubleBondEnd(int at1, int at2, int at3, double offset,
   // if there's an atom label, we don't need to step the bond end back
   // because both ends are shortened to accommodate the letters.
   if (trunc) {
-    bool ins = doLinesIntersect(atCds_[at2], atCds_[at2] + bis,
-                                atCds_[at2] + v23perp * offset,
-                                atCds_[at3] + v23perp * offset, &ip);
+    doLinesIntersect(atCds_[at2], atCds_[at2] + bis,
+                     atCds_[at2] + v23perp * offset,
+                     atCds_[at3] + v23perp * offset, &ip);
   } else {
     ip = atCds_[at2] + v23perp * offset;
   }
@@ -2832,7 +2830,7 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   if (atom->getDegree() == 1 || atomLabels_[atom->getIdx()]) {
     return;
   }
-  for (int i = 1; i < atom->getDegree(); ++i) {
+  for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
     Point2D const &at1_cds = atCds_[atom->getIdx()];
     Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];

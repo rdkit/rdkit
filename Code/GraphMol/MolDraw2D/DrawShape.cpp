@@ -472,10 +472,10 @@ void DrawShapeSolidWedge::trimOtherBondVecs() {
   if (otherBondVecs_.size() < 3) {
     return;
   }
-  int firstVec, secondVec;
-  double largestAng = -1.0;
-  for (int i = 0; i < otherBondVecs_.size() - 1; ++i) {
-    for (int j = i + 1; j < otherBondVecs_.size(); ++j) {
+  int firstVec = 0, secondVec = 1;
+  double largestAng = -361.0;
+  for (unsigned int i = 0; i < otherBondVecs_.size() - 1; ++i) {
+    for (unsigned int j = i + 1; j < otherBondVecs_.size(); ++j) {
       auto ang = otherBondVecs_[i].angleTo(otherBondVecs_[j]);
       if (ang > largestAng) {
         firstVec = i;

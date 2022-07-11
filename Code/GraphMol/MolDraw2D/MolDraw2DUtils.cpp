@@ -555,7 +555,6 @@ void unspecifiedStereoIsUnknown(ROMol &mol, int confId) {
   auto si = Chirality::findPotentialStereo(mol);
   if (si.size()) {
     std::pair<bool, INT_VECT> retVal = countChiralNbours(mol, noNbrs);
-    bool chiNbrs = retVal.first;
     INT_VECT nChiralNbrs = retVal.second;
     for (auto i : si) {
       if (i.type == Chirality::StereoType::Atom_Tetrahedral &&
@@ -577,8 +576,6 @@ double meanBondLength(const ROMol &mol, int confId) {
   if (mol.getNumBonds()) {
     auto conf = mol.getConformer(confId);
     for (auto bond : mol.bonds()) {
-      double bl = MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
-                                               bond->getEndAtomIdx());
       bondLen += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
                                               bond->getEndAtomIdx());
     }
