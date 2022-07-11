@@ -2230,6 +2230,15 @@ ARGUMENTS:\n\
 \n";
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
 
+    docString = "Set the wedging to that which was read from the original\n\
+     MolBlock, over-riding anything that was originally there.\n\
+\n\
+          ARGUMENTS:\n\
+        \n\
+            - molecule: the molecule to update\n\
+        \n\
+        \n";
+    python::def("ReapplyMolBlockWedging", reapplyMolBlockWedging, docString.c_str());
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
     python::class_<StereoBondThresholds>("StereoBondThresholds",

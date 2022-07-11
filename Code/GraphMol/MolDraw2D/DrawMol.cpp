@@ -20,6 +20,7 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
@@ -149,6 +150,9 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
     if (drawMol_->getNumConformers()) {
       centerMolForDrawing(*drawMol_, confId_);
     }
+  }
+  if (drawOptions_.useMolBlockWedging) {
+    RDKit::reapplyMolBlockWedging(*drawMol_);
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {

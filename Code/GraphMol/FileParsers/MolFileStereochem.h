@@ -56,5 +56,11 @@ RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
+//! Forces use of atom wedging from MolBlock if present.
+/*
+ \param mol: molecule to have its wedges altered
+ */
+RDKIT_FILEPARSERS_EXPORT void reapplyMolBlockWedging(ROMol &mol);
+
 }  // namespace RDKit
 #endif

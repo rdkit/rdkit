@@ -866,6 +866,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "if true wedged and dashed bonds are drawn using symbolColour "
           "rather than inheriting their colour from the atoms. "
           "Default is false.")
+      .def_readwrite("useMolBlockWedging",
+                     &RDKit::MolDrawOptions::useMolBlockWedging,
+                     "If the molecule came from a MolBlock, prefer the wedging"
+                     " information that provides.  If false, use RDKit rules."
+                     "  Default false")
       .def_readwrite("scalingFactor", &RDKit::MolDrawOptions::scalingFactor,
                      "scaling factor for pixels->angstrom when auto scaling"
                      "being used.  Default is 20.")
