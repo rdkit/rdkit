@@ -1331,7 +1331,7 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
 void DrawMol::calcMeanBondLength() {
   // meanBondLength_ initialised to 0.0 in class declaration
   if (meanBondLength_ == 0.0) {
-    meanBondLength_ = MolDraw2D_detail::meanBondLength(*drawMol_);
+    meanBondLength_ = MolDraw2DUtils::meanBondLength(*drawMol_);
   }
 }
 
@@ -1506,9 +1506,6 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
   bool drawGenericQuery = false;
   int at1Idx = begAt->getIdx();
   int at2Idx = endAt->getIdx();
-  if (begAt->getAtomicNum() == 17) {
-    std::cout << "stop here" << std::endl;
-  }
   if (qry->getDescription() == "SingleOrDoubleBond") {
     at1Idx = begAt->getIdx();
     at2Idx = drawOptions_.splitBonds ? -1 : endAt->getIdx();
