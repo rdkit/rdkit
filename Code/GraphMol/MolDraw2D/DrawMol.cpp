@@ -1360,7 +1360,6 @@ void DrawMol::extractLegend() {
   if (legend_.empty()) {
     return;
   }
-
   auto calc_legend_height = [&](const std::vector<std::string> &legend_bits,
                                 double relFontScale, double &total_width,
                                 double &total_height) {
@@ -1417,8 +1416,11 @@ void DrawMol::extractLegend() {
       calc_legend_height(legend_bits, relFontScale, total_width, total_height);
     }
   } else {
-    height_ += total_height;
-    // height_ += height_ * drawOptions_.padding;
+    // a small gap between the legend and the picture looks better,
+    // and make it at least 2 pixels.
+    double extra_padding = total_height * drawOptions_.padding;
+    extra_padding = extra_padding < 2.0 ? 2.0 : extra_padding;
+    height_ += total_height + extra_padding;
   }
 
   Point2D loc(width_ / 2 + xOffset_,
