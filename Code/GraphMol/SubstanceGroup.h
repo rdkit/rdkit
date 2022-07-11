@@ -264,7 +264,7 @@ RDKIT_GRAPHMOL_EXPORT bool isSubstanceGroupIdFree(const ROMol &mol,
 }  // namespace SubstanceGroupChecks
 
 //! \name SubstanceGroups and molecules
-//@{
+//! @{
 
 RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
     ROMol &mol);
@@ -293,7 +293,7 @@ RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingAtom(
 */
 RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingBond(
     RWMol &mol, unsigned int idx);
-//@}
+//! @}
 
 }  // namespace RDKit
 
