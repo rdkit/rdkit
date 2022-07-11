@@ -671,6 +671,22 @@ std::string molToACS1996SVG(const ROMol &mol, std::string legend,
   drawer.finishDrawing();
   return outs.str();
 }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+std::string molToACS1996Cairo(const ROMol &mol, std::string legend,
+                            python::object highlight_atoms,
+                            python::object highlight_bonds,
+                            python::object highlight_atom_map,
+                            python::object highlight_bond_map,
+                            python::object highlight_atom_radii, int confId) {
+  std::stringstream outs;
+  MolDraw2DCairo drawer(-1, -1, outs);
+  drawMoleculeACS1996Helper(drawer, mol, legend, highlight_atoms,
+                            highlight_bonds, highlight_atom_map,
+                            highlight_bond_map, highlight_atom_radii, confId);
+  drawer.finishDrawing();
+  return outs.str();
+}
+#endif
 void setACS1996ModeHelper(MolDrawOptions &drawOptions, double meanBondLen) {
   MolDraw2DUtils::setACS1996Options(drawOptions, meanBondLen);
 }
@@ -1281,7 +1297,45 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                python::arg("highlightAtomRadii") = python::object(),
                python::arg("confId") = -1),
               docString.c_str());
-  docString = "Sets Drawer options to use ACS 1996 mode.";
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  docString = "Returns ACS 1996 mode png for a molecule";
+  python::def("MolToACS1996Cairo", &RDKit::molToACS1996Cairo,
+              (python::arg("mol"), python::arg("legend") = "",
+               python::arg("highlightAtoms") = python::object(),
+               python::arg("highlightBonds") = python::object(),
+               python::arg("highlightAtomColors") = python::object(),
+               python::arg("highlightBondColors") = python::object(),
+               python::arg("highlightAtomRadii") = python::object(),
+               python::arg("confId") = -1),
+              docString.c_str());
+#endif
+
+  docString = R"DOC(Set the draw options to produce something as close as possible to
+the ACS 1996 guidelines as described at
+https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+
+ - MolDrawOptions opt - the options what will be changed
+ - float meanBondLength - mean bond length of the molecule
+
+ Works best if the MolDraw2D object is created with width and height -1 (a
+ flexiCanvas).
+ The mean bond length may be calculated with MeanBondLength.
+ It is used to calculate the offset for the lines in multiple bonds.
+
+ Options changed are:
+   bondLineWidth = 0.6
+   scaleBondWidth = false
+   scalingFactor = 14.4 / meanBondLen
+   multipleBondOffset = 0.18
+   highlightBondWidthMultiplier = 32
+   setMonochromeMode - black and white
+   fixedFontSize = 10
+   additionalAtomLabelPadding = 0.066
+   fontFile - if RDBASE is set and the file exists, uses
+              $RDBASE/Chem/Draw/FreeSans.ttf.  Otherwise uses
+              BuiltinRobotoRegular.
+ */
+)DOC";
   python::def("SetACS1996Mode", &RDKit::MolDraw2DUtils::setACS1996Options,
               (python::arg("drawOptions"), python::arg("meanBondLength")),
               docString.c_str());

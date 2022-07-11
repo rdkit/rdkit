@@ -242,7 +242,7 @@ std::string drawMolACS1996Cairo(
  Works best if the MolDraw2D object is created with width and height -1 (a
  flexiCanvas).
  The mean bond length may be calculated with MolDraw2DUtils::meanBondLength.
- it is used to calculate the offset for the lines in multiple bonds.
+ It is used to calculate the offset for the lines in multiple bonds.
 
  Options changed are:
    bondLineWidth = 0.6
