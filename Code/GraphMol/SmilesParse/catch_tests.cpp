@@ -9,7 +9,7 @@
 //
 
 #include "catch.hpp"
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #include <thread>
 #endif

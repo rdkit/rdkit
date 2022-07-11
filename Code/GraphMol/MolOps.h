@@ -245,7 +245,10 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeWithWedgedBond = true; /**< hydrogens with wedged bonds to them */
   bool removeWithQuery = false;     /**< hydrogens with queries defined */
   bool removeMapped = true;         /**< mapped hydrogens */
-  bool removeInSGroups = false;     /**< part of a SubstanceGroup */
+  bool removeInSGroups = true;      /**< part of a SubstanceGroup.
+    An H atom will only be removed if it doesn't cause any SGroup to become empty,
+    and if it doesn't play a special role in the SGroup (XBOND, attach point
+    or a CState) */
   bool showWarnings = true; /**< display warnings for Hs that are not removed */
   bool removeNonimplicit = true; /**< DEPRECATED equivalent of !implicitOnly */
   bool updateExplicitCount =
@@ -419,7 +422,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(
 RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
     const ROMol &mol, const std::vector<unsigned int> &newOrder);
 
-//@}
+//! @}
 
 //! \name Sanitization
 /// {
@@ -651,10 +654,10 @@ RDKIT_GRAPHMOL_EXPORT void setConjugation(ROMol &mol);
 //! calculates and sets the hybridization of all a molecule's Stoms
 RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
 
-// @}
+//!  @}
 
 //! \name Ring finding and SSSR
-//@{
+//! @{
 
 //! finds a molecule's Smallest Set of Smallest Rings
 /*!
@@ -745,10 +748,10 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol);
 
-//@}
+//! @}
 
 //! \name Shortest paths and other matrices
-//@{
+//! @{
 
 //! returns a molecule's adjacency matrix
 /*!
@@ -869,10 +872,10 @@ RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(
 RDKIT_GRAPHMOL_EXPORT std::list<int> getShortestPath(const ROMol &mol, int aid1,
                                                      int aid2);
 
-//@}
+//! @}
 
 //! \name Stereochemistry
-//@{
+//! @{
 
 //! removes bogus chirality markers (those on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
@@ -1002,7 +1005,7 @@ RDKIT_GRAPHMOL_EXPORT void findPotentialStereoBonds(ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromMolParity(
     ROMol &mol, bool replaceExistingTags = true);
 
-//@}
+//! @}
 
 //! returns the number of atoms which have a particular property set
 RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(

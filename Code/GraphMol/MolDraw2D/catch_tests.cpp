@@ -216,6 +216,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_5269_1.svg", 1465405815U},
     {"testGithub_5269_2.svg", 112102270U},
     {"test_classes_wavy_bonds.svg", 1548800567U},
+    {"testGithub_5383_1.svg", 1391972140U},
+    {"test_molblock_wedges.svg", 1106580037U},
     {"test_unspec_stereo.svg", 732748768U},
 };
 
@@ -4649,6 +4651,61 @@ M  END)CTAB"_ctab;
     check_file_hash("test_classes_wavy_bonds.svg");
 #endif
   }
+}
+
+TEST_CASE("GitHub #5383: cairo error when using similarity maps", "") {
+  auto m1 = "C1N[C@@H]2OCC12"_smiles;
+  REQUIRE(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  const auto conf = m1->getConformer();
+  std::vector<Point2D> cents(conf.getNumAtoms());
+  std::vector<double> weights(conf.getNumAtoms());
+  std::vector<double> widths(conf.getNumAtoms());
+  for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+    cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+    weights[i] = 1;
+    widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
+                          m1->getAtomWithIdx(i)->getAtomicNum());
+  }
+
+  SECTION("svg basics") {
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().padding = 0.1;
+
+    drawer.clearDrawing();
+    std::vector<double> levels;
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+          std::string::npos);
+    std::ofstream outs("github5383_1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5383_1.svg");
+  }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("cairo basics") {
+    MolDraw2DCairo drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().padding = 0.1;
+
+    drawer.clearDrawing();
+    std::vector<double> levels;
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    drawer.writeDrawingText("github5383_1.png");
+  }
+#endif
 }
 
 TEST_CASE("ACS 1996 mode") {

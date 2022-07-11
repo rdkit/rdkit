@@ -158,7 +158,7 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getAtomNonzeroDegree(const Atom *atom);
 RDKIT_GRAPHMOL_EXPORT INT_VECT findStereoAtoms(const Bond *bond);
 
 //! \name Non-tetrahedral stereochemistry
-//@{
+//! @{
 RDKIT_GRAPHMOL_EXPORT bool hasNonTetrahedralStereo(const Atom *center);
 RDKIT_GRAPHMOL_EXPORT Bond *getChiralAcrossBond(const Atom *center,
                                                 const Bond *qry);
@@ -168,14 +168,14 @@ RDKIT_GRAPHMOL_EXPORT Atom *getChiralAcrossAtom(const Atom *center,
                                                 const Bond *qry);
 RDKIT_GRAPHMOL_EXPORT Atom *getChiralAcrossAtom(const Atom *center,
                                                 const Atom *qry);
-// \param which: if this is -1 then the second axial bond will be returned,
-// otherwise the first
+//! \param which: if this is -1 then the second axial bond will be returned,
+//! otherwise the first
 RDKIT_GRAPHMOL_EXPORT Bond *getTrigonalBipyramidalAxialBond(const Atom *center,
                                                             int which = 0);
 RDKIT_GRAPHMOL_EXPORT Atom *getTrigonalBipyramidalAxialAtom(const Atom *center,
                                                             int which = 0);
 
-// \returns 1 if it's the first axial atom, -1 if it's the second
+//! \returns 1 if it's the first axial atom, -1 if it's the second
 RDKIT_GRAPHMOL_EXPORT int isTrigonalBipyramidalAxialBond(const Atom *center,
                                                          const Bond *qry);
 RDKIT_GRAPHMOL_EXPORT int isTrigonalBipyramidalAxialAtom(const Atom *center,
@@ -187,7 +187,7 @@ RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
 
 RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
                                                         const INT_LIST &probe);
-//@}
+//! @}
 
 std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s);
 std::ostream &operator<<(std::ostream &oss, const StereoType &s);
