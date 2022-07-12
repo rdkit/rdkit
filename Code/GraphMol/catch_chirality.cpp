@@ -2624,6 +2624,13 @@ TEST_CASE(
   REQUIRE(stereoInfo1[0].centeredOn == 1);
   REQUIRE(stereoInfo1[1].centeredOn == 4);
 
+  {
+    RWMol cp(*mol1);
+    Chirality::cleanExistingStereo(cp,true);
+    CHECK(cp.getAtomWithIdx(1)->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(cp.getAtomWithIdx(4)->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+
   auto mol2 = "C1C[C@]2(C(F)F)CC[C@@]1(N)C2"_smiles;
   REQUIRE(mol2);
 
@@ -2631,6 +2638,14 @@ TEST_CASE(
   REQUIRE(stereoInfo2.size() == 2);
   CHECK(stereoInfo2[0].centeredOn == 2);
   CHECK(stereoInfo2[1].centeredOn == 8);
+  {
+    RWMol cp(*mol2);
+    Chirality::cleanExistingStereo(cp,true);
+    CHECK(cp.getAtomWithIdx(2)->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(cp.getAtomWithIdx(8)->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+
+
 }
 
 TEST_CASE("assignStereochemistry sets bond stereo with new stereo perception") {
