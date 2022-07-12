@@ -2632,3 +2632,84 @@ TEST_CASE(
   CHECK(stereoInfo2[0].centeredOn == 2);
   CHECK(stereoInfo2[1].centeredOn == 8);
 }
+
+TEST_CASE("assignStereochemistry sets bond stereo with new stereo perception") {
+  SECTION("basics") {
+    Chirality::setUseLegacyStereoPerception(false);
+    {
+      auto m = "C/C=C/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+    {
+      auto m = "C/C=C\\C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+    {
+      auto m = "C(/C)=C/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{1, 3});
+    }
+    {
+      auto m = "FC(/C)=C/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+    {
+      auto m = "FC(/C)=C(F)/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREOCIS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+  }
+}
+
+TEST_CASE("chiral duplicates") {
+  SECTION("atom basics") {
+    auto mol = "C[C@](F)([C@H](F)Cl)[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(3)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(mol->getAtomWithIdx(6)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(mol->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("double bonds and atoms") {
+    auto mol = "C/C(O)=C([C@H](F)Cl)/[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(4)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(mol->getAtomWithIdx(7)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+  SECTION("double bonds and atoms 2") {
+    auto mol = "C/C(O)=C([C@H](F)Cl)/[C@@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getAtomWithIdx(4)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    CHECK(mol->getAtomWithIdx(7)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    CHECK(mol->getBondWithIdx(2)->getStereo() != Bond::BondStereo::STEREONONE);
+  }
+  SECTION("double bonds and double bonds") {
+    auto mol = "C/C(O)=C(/C=C/C)/C=C/C"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::BondStereo::STEREOTRANS);
+    CHECK(mol->getBondWithIdx(7)->getStereo() == Bond::BondStereo::STEREOTRANS);
+    CHECK(mol->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
+  SECTION("double bonds and double bonds 2") {
+    auto mol = "C/C(O)=C(/C=C/C)/C=C\\C"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(4)->getStereo() == Bond::BondStereo::STEREOTRANS);
+    CHECK(mol->getBondWithIdx(7)->getStereo() == Bond::BondStereo::STEREOCIS);
+    CHECK(mol->getBondWithIdx(2)->getStereo() != Bond::BondStereo::STEREONONE);
+  }
+}
