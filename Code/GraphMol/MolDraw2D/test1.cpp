@@ -1990,9 +1990,8 @@ M  END";
 #endif
 #else
     TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 125.6,110.7 "
-                          "L 173.7,76.1 L 179.6,86.4 Z' "
-                          "style='fill:#000000;fill-rule:evenodd;fill-opacity:"
-                          "1;stroke:#000000") != std::string::npos);
+                          "L 174.4,77.4 L 178.9,85.1 Z' style='fill:#000000") !=
+                std::string::npos);
 #endif
     check_file_hash("test983_1.svg");
     delete m;
@@ -2052,7 +2051,7 @@ M  END";
 #endif
 #else
     TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 105.1,114.8 "
-                          "L 74.0,97.2 L 78.4,91.0 Z' style='fill:#000000;") !=
+                          "L 73.8,95.9 L 78.6,92.4 Z' style='fill:#000000;") !=
                 std::string::npos);
 #endif
     check_file_hash("test983_2.svg");
@@ -3974,7 +3973,7 @@ void test20Annotate() {
 #endif
 #else
     // this is the (E)
-    TEST_ASSERT(text.find("<text x='260.4' y='232.0' class='note' "
+    TEST_ASSERT(text.find("<text x='260.5' y='231.8' class='note' "
                           "style='font-size:20px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >E</text>") !=
@@ -4015,7 +4014,7 @@ void test20Annotate() {
 #endif
 #else
     // f of foolish
-    TEST_ASSERT(text.find("<text x='145.2' y='181.8' class='note' "
+    TEST_ASSERT(text.find("<text x='145.3' y='181.8' class='note' "
                           "style='font-size:12px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >f</text>") !=
