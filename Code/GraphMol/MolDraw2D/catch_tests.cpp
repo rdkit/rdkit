@@ -43,7 +43,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = true;
+static const bool DELETE_WITH_GOOD_HASH = false;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
@@ -944,7 +944,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_1.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 6);
+      CHECK(tkns.size() == 10);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -970,7 +970,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_2.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 3);
+      CHECK(tkns.size() == 5);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -996,7 +996,7 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
       check_file_hash("testGithub3226_3.svg");
       std::vector<std::string> tkns;
       boost::algorithm::find_all(tkns, text, "bond-0");
-      CHECK(tkns.size() == 4);
+      CHECK(tkns.size() == 7);
     }
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -2867,10 +2867,10 @@ M  END)CTAB"));
     // we look at the two double bonds of pyrrole
     // we check that the ratio between the distance of the centroids of the
     // outer bonds and the distance of the centroids of the inner bonds is at
-    // least 1.3, otherwise the inner bonds are not actually inside the ring.
+    // least 1.275, otherwise the inner bonds are not actually inside the ring.
     float outerBondsDistance = (bond0OuterCtd - bond2OuterCtd).length();
     float innerBondsDistance = (bond0InnerCtd - bond2InnerCtd).length();
-    CHECK(outerBondsDistance / innerBondsDistance > 1.3f);
+    CHECK(outerBondsDistance / innerBondsDistance > 1.275f);
   }
 }
 
@@ -4501,7 +4501,8 @@ TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      CHECK(text.find("<path class='note' d='M 92.5 130.1") !=
+      // the 2nd note
+      CHECK(text.find("<path class='note' d='M 93.4 129.9") !=
             std::string::npos);
       check_file_hash("testGithub_5185.svg");
 #else
