@@ -25,6 +25,8 @@ class ROMol;
 
 namespace Chirality {
 
+constexpr const char *_stereoNotPossible = "_stereoNotPossible";
+
 //! double bond stereo will be ignored/removed for rings smaller than this:
 constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
 
@@ -41,6 +43,10 @@ RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
 
 RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyStereoPerception(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
+
+RDKIT_GRAPHMOL_EXPORT extern bool
+    useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
+                                //!< perception code
 
 RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
@@ -136,9 +142,15 @@ RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
 //! overload
 RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
     const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> cleanExistingStereo(ROMol &mol,
+                                                                  bool cleanIt);
 
 //! removes atoms without specified chirality from stereo groups
 RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(ROMol &mol);
+
+//! calls the approximate legacy code for assigning CIP labels
+RDKIT_GRAPHMOL_EXPORT void assignLegacyCIPLabels(
+    ROMol &mol, bool flagPossibleStereoCenters = false);
 
 /// @cond
 namespace detail {
