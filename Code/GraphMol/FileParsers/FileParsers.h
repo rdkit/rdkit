@@ -286,6 +286,13 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2BlockToMol(
     const std::string &molBlock, bool sanitize = true, bool removeHs = true,
     Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 
+// \brief construct a molecule from an xyz file
+/*!
+ *   \param fName    - string containing the file name
+ *   \param charge - the integer charge of the molecule
+ */
+RDKIT_FILEPARSERS_EXPORT RWMol *XYZFileToMol(const std::string &fName, int charge);
+
 RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const char *str,
                                               bool sanitize = true,
                                               bool removeHs = true,
