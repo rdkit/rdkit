@@ -565,21 +565,23 @@ void initFragmentCanonAtoms(const ROMol &mol,
   PRECONDITION(!bondSymbols || bondSymbols->size() == mol.getNumBonds(),
                "bad bond symbols");
   // start by initializing the atoms
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    atoms[i].atom = mol.getAtomWithIdx(i);
-    atoms[i].index = i;
+  for (const auto atom : mol.atoms()) {
+    auto i = atom->getIdx();
+    auto &atomsi = atoms[i];
+    atomsi.atom = atom;
+    atomsi.index = i;
     // we don't care about overall degree, so we start that at zero, and
     // then count the degree in the fragment itself below.
-    atoms[i].degree = 0;
+    atomsi.degree = 0;
     if (atomsInPlay[i]) {
-      atoms[i].nbrIds = (int *)calloc(atoms[i].atom->getDegree(), sizeof(int));
+      atomsi.nbrIds = (int *)calloc(atom->getDegree(), sizeof(int));
       if (atomSymbols) {
-        atoms[i].p_symbol = &(*atomSymbols)[i];
+        atomsi.p_symbol = &(*atomSymbols)[i];
       } else {
-        atoms[i].p_symbol = nullptr;
+        atomsi.p_symbol = nullptr;
       }
-      advancedInitCanonAtom(mol, atoms[i], i);
-      atoms[i].bonds.reserve(atoms[i].atom->getDegree());
+      advancedInitCanonAtom(mol, atomsi, i);
+      atomsi.bonds.reserve(4);
     }
   }
 
@@ -611,14 +613,14 @@ void initFragmentCanonAtoms(const ROMol &mol,
     if (!atomsInPlay[i]) {
       continue;
     }
+    auto &atomsi = atoms[i];
+
     // this is the fix for github #1567: we let the atom's degree
     // in the original molecule influence its degree in the fragment
-    atoms[i].totalNumHs +=
-        (mol.getAtomWithIdx(i)->getDegree() - atoms[i].degree);
+    atomsi.totalNumHs += (mol.getAtomWithIdx(i)->getDegree() - atomsi.degree);
 
     // and sort our list of neighboring bonds
-    std::sort(atoms[i].bonds.begin(), atoms[i].bonds.end(),
-              bondholder::greater);
+    std::sort(atomsi.bonds.begin(), atomsi.bonds.end(), bondholder::greater);
   }
 }
 

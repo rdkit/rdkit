@@ -16,7 +16,6 @@
 #include <RDGeneral/RDLog.h>
 
 #include <boost/dynamic_bitset.hpp>
-#include <boost/format.hpp>
 #include "Chirality.h"
 #include <GraphMol/QueryOps.h>
 
@@ -385,10 +384,10 @@ std::string getBondSymbol(const Bond *bond) {
 }
 
 namespace {
-std::string getAtomCompareSymbol(const Atom &atom) {
-  auto fmt = boost::format("%d%s_%d") % atom.getIsotope() % atom.getSymbol() %
-             atom.getFormalCharge();
-  return fmt.str();
+inline std::string getAtomCompareSymbol(const Atom &atom) {
+  // we originally tried this with boost::format, but it was WAY slower
+  return std::to_string(atom.getIsotope()) + atom.getSymbol() +
+         std::to_string(atom.getFormalCharge());
 }
 }  // namespace
 
@@ -403,8 +402,11 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
   boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
   std::vector<std::string> atomSymbols(mol.getNumAtoms());
+  std::vector<std::string> baseAtomSymbols(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
     auto aidx = atom->getIdx();
+    baseAtomSymbols[aidx] = getAtomCompareSymbol(*atom);
+    atomSymbols[aidx] = baseAtomSymbols[aidx];
     if (detail::isAtomPotentialStereoAtom(atom)) {
       auto sinfo = detail::getStereoInfo(atom);
       switch (sinfo.specified) {
@@ -423,14 +425,9 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
         // set "fake stereo"
         ochiralTypes[aidx] = atom->getChiralTag();
         atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-        atomSymbols[aidx] = (boost::format("%d%s_%d") % atom->getIsotope() %
-                             atom->getSymbol() % aidx)
-                                .str();
-      } else {
-        atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+        atomSymbols[aidx] += "_" + std::to_string(aidx);
       }
     } else {
-      atomSymbols[aidx] = getAtomCompareSymbol(*atom);
       if (cleanIt) {
         atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
       }
@@ -533,8 +530,7 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           sinfo.specified != Chirality::StereoSpecified::Unspecified) {
         possibleBonds.set(bidx);
         bondSymbols[bidx] =
-            (boost::format("%s-%d") % getBondSymbol(bond) % bond->getIdx())
-                .str();
+            getBondSymbol(bond) + "-" + std::to_string(bond->getIdx());
       } else {
         bondSymbols[bidx] = getBondSymbol(bond);
       }
@@ -597,8 +593,8 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
           res.push_back(std::move(sinfo));
         } else {
           removedStereo = true;
-          atomSymbols[aidx] = getAtomCompareSymbol(*atom);
           possibleAtoms[aidx] = 0;
+          atomSymbols[aidx] = baseAtomSymbols[aidx];
           if (cleanIt &&
               sinfo.specified != Chirality::StereoSpecified::Unspecified) {
             atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
@@ -884,7 +880,7 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
             //           std::ostream_iterator<int>(std::cerr, " "));
             // std::cerr << std::endl;
 
-            auto acs = getAtomCompareSymbol(*atom);
+            auto acs = atomSymbols[aidx];
             auto sortednbrs = nbrs;
             std::sort(sortednbrs.begin(), sortednbrs.end());
             // FIX: only works for tetrahedral at the moment

@@ -293,7 +293,6 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   }
 
   int basecomp(int i, int j) const {
-    PRECONDITION(dp_atoms, "no atoms");
     unsigned int ivi, ivj;
 
     // always start with the current class:
@@ -438,9 +437,6 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         df_useChirality(true),
         df_useChiralityRings(true) {}
   int operator()(int i, int j) const {
-    PRECONDITION(dp_atoms, "no atoms");
-    PRECONDITION(dp_mol, "no molecule");
-    PRECONDITION(i != j, "bad call");
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;
     }
