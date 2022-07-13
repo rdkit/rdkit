@@ -392,7 +392,6 @@ std::string getAtomCompareSymbol(const Atom &atom) {
 }
 }  // namespace
 
-
 std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
                                             bool flagPossible) {
   std::map<int, Atom::ChiralType> ochiralTypes;
@@ -739,16 +738,15 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
     auto half_sz = sz / 2 + ring_is_odd_sized;
 
     possibleAtomsInRing.reset();
-    for (unsigned int ai = 0; ai < aring.size(); ++ai) {
+    for (unsigned int ai = 0; ai < sz; ++ai) {
       auto aidx = aring[ai];
       if (!knownAtoms[aidx]) {
         continue;
       }
-      if (!(aring.size() % 2) || mol.getRingInfo()->numAtomRings(aidx) > 1) {
+      if (!ring_is_odd_sized) {
         // find the index of the atom on the opposite side of the even-sized
-        // ring or the equivalent position for an odd-sized ring if the atom is
-        // in more than one ring
-        auto oppositeidx = aring[(ai + sz / 2) % sz];
+        // ring
+        auto oppositeidx = aring[(ai + half_sz) % sz];
         if (knownAtoms[oppositeidx]) {
           nHere += 2;
           possibleAtomsInRing.set(aidx);
@@ -756,18 +754,27 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
           continue;
         }
       }
-      // if the atom is in more than one bond, see if there's
-      // a possible neighbor on a fusion bond
+
+      // if the atom is in more than one ring, explore the common edge to see if
+      // we can find another potentially chiral atom
       if (mol.getRingInfo()->numAtomRings(aidx) > 1) {
-        auto otheridx = aring[(ai + 1) % aring.size()];
-        if (knownAtoms[otheridx]) {
-          auto bnd = mol.getBondBetweenAtoms(aidx, otheridx);
-          CHECK_INVARIANT(bnd, "expected ring bond not found");
-          if (mol.getRingInfo()->numBondRings(bnd->getIdx()) > 1) {
+        auto previous_otheridx = aidx;
+        for (size_t step = 1; step <= half_sz; ++step) {
+          auto otheridx = aring[(ai + step) % sz];
+          auto bnd = mol.getBondBetweenAtoms(previous_otheridx, otheridx);
+          if (mol.getRingInfo()->numBondRings(bnd->getIdx()) < 2) {
+            // We reached the end of the common edge.
+            break;
+          }
+          if (knownAtoms[otheridx]) {
+            // We found another chiral atom, no need to keep
+            // searching.
             nHere += 2;
             possibleAtomsInRing.set(aidx);
             possibleAtomsInRing.set(otheridx);
+            break;
           }
+          previous_otheridx = otheridx;
         }
       }
     }
