@@ -12,7 +12,7 @@
 
 using namespace RDKit;
 
-TEST_CASE("xyz file parser") { //charge
+TEST_CASE("xyz file parser") { 
     SECTION("basics") {
         std::string rdbase = getenv("RDBASE");
         std::string fName = rdbase +
@@ -20,7 +20,7 @@ TEST_CASE("xyz file parser") { //charge
                             "acetate.xyz";
         std::unique_ptr<RWMol> mol(XYZFileToMol(fName, 0));
         REQUIRE(mol);
-        //set prop if you do it in the parser
+        
         REQUIRE(mol->getNumAtoms() == 7);
         
         size_t ind = 0;
@@ -61,7 +61,7 @@ TEST_CASE("xyz file parser") { //charge
                             "ethane.xyz";
         std::unique_ptr<RWMol> mol(XYZFileToMol(fName, 0));
         REQUIRE(mol);
-        //set prop if you do it in the parser
+        
         REQUIRE(mol->getNumAtoms() == 8);
         
         size_t ind = 0;
