@@ -2956,6 +2956,7 @@ void ProcessMolProps(RWMol *mol) {
         }
       }
     }
+    atom->clearProp(common_properties::molTotValence);
   }
   processSGroups(mol);
 }
