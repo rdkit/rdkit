@@ -100,6 +100,14 @@ RDKIT_FILEPARSERS_EXPORT RWMol *MolFileToMol(const std::string &fName,
                                              bool removeHs = true,
                                              bool strictParsing = true);
 
+// \brief construct a molecule from an xyz file
+/*!
+ *   \param fName    - string containing the file name
+ *   \param charge - the integer charge of the molecule
+ */
+RDKIT_FILEPARSERS_EXPORT RWMol *XYZFileToMol(const std::string &fName, int charge);
+// add description
+
 // \brief generates an MDL mol block for a molecule
 /*!
  *   \param mol           - the molecule in question
