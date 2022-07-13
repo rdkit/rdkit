@@ -217,6 +217,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_5269_2.svg", 112102270U},
     {"test_classes_wavy_bonds.svg", 1548800567U},
     {"testGithub_5383_1.svg", 1391972140U},
+    {"test_molblock_wedges.svg", 1106580037U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,

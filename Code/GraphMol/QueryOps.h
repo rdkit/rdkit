@@ -22,7 +22,7 @@
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #include <utility>
 #endif
@@ -789,7 +789,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
   }
   unsigned int getSerialNumber() const { return d_serialNumber; }
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::mutex d_mutex;
 #endif
  private:

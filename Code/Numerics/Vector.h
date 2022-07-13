@@ -288,7 +288,7 @@ class Vector {
   }
 
  private:
-  unsigned int d_size;  //! < our length
+  unsigned int d_size;  //!< our length
   DATA_SPTR d_data;
   Vector<TYPE> &operator=(const Vector<TYPE> &other);
 };

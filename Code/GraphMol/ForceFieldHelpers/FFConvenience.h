@@ -17,7 +17,7 @@ namespace RDKit {
 class ROMol;
 namespace ForceFieldsHelper {
 namespace detail {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 void OptimizeMoleculeConfsHelper_(ForceFields::ForceField ff, ROMol *mol,
                                   std::vector<std::pair<int, double>> *res,
                                   unsigned int threadIdx,
@@ -119,7 +119,7 @@ void OptimizeMoleculeConfs(ROMol &mol, ForceFields::ForceField &ff,
   if (numThreads == 1) {
     detail::OptimizeMoleculeConfsST(mol, ff, res, maxIters);
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     detail::OptimizeMoleculeConfsMT(mol, ff, res, numThreads, maxIters);
   }

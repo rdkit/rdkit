@@ -4979,3 +4979,57 @@ M  END
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
 }
+
+TEST_CASE("Force use of MolBlock wedges", "") {
+  SECTION("basics") {
+    auto m = R"CTAB(bad wedging
+  ChemDraw07092209022D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.714471 0.825000 0.000000 0
+M  V30 2 C -0.714471 0.000000 0.000000 0
+M  V30 3 C -0.000000 -0.412500 0.000000 0
+M  V30 4 C 0.714471 0.000000 0.000000 0
+M  V30 5 C 0.714471 0.825000 0.000000 0
+M  V30 6 C -0.000000 1.237500 0.000000 0
+M  V30 7 C -0.000000 -1.237500 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 CFG=1
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 1
+M  V30 7 1 3 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+    reapplyMolBlockWedging(*m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #5423: Parsing a Mol block/file does not clear the "
+    "\"molTotValence\" property from atoms") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -3.657143 -0.742857 0.000000 0 CHG=1 VAL=4
+M  V30 END ATOM
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+  CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::molTotValence));
+}

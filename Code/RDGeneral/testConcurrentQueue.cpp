@@ -1,4 +1,4 @@
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 

@@ -1,4 +1,4 @@
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 //
 //  Copyright (C) 2020 Shrey Aryan
 //
@@ -130,8 +130,8 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
   record = "";
   lineNum = d_line;
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
-         ( (prevStr.find_first_not_of(" \t\r\n") != std::string::npos &&
-	    prevStr.find("M  END") != 0) ||
+         ((prevStr.find_first_not_of(" \t\r\n") != std::string::npos &&
+           prevStr.find("M  END") != 0) ||
           currentStr[0] != '$' || currentStr.substr(0, 4) != "$$$$")) {
     prevStr = currentStr;
     std::getline(*dp_inStream, currentStr);

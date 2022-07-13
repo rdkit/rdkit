@@ -196,6 +196,7 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(includeChiralFlagLabel);
   PT_OPT_GET(simplifiedStereoGroupLabel);
   PT_OPT_GET(singleColourWedgeBonds);
+  PT_OPT_GET(useMolBlockWedging);
   PT_OPT_GET(scalingFactor);
   PT_OPT_GET(drawMolsSameScale);
 
@@ -400,5 +401,6 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
   contourAndDrawGrid(drawer, grid.get(), xcoords, ycoords, nContours, levels,
                      paramsCopy);
 };
+
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit

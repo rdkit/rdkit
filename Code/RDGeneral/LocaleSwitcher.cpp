@@ -44,7 +44,7 @@
 #ifdef __CYGWIN__
 #include <locale.h>
 #endif
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>
 #endif
 
@@ -70,7 +70,7 @@ const static int ResetLocale = -1;  // return to previous locale (not "C")
 //   or at least at the top locale that isn't "C".
 //
 static int recurseLocale(int state) {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static thread_local int recursion = 0;
 #else
   static int recursion = 0;
@@ -91,25 +91,25 @@ class LocaleSwitcherImpl {
 
   LocaleSwitcherImpl() {
     if (!recurseLocale(CurrentState)) {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
       _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
       old_locale = ::setlocale(LC_ALL, nullptr);
       ::setlocale(LC_ALL, "C");  // thread safe on windows
 #else
       std::setlocale(LC_ALL, "C");
-#endif  // RDK_THREADSAFE_SSS
+#endif  // RDK_BUILD_THREADSAFE_SSS
       recurseLocale(SwitchLocale);
       switched = true;
     }
   }
   ~LocaleSwitcherImpl() {
     if (switched) {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
       ::setlocale(LC_ALL, old_locale.c_str());
 #else
       // back to last (global?) locale
       std::setlocale(LC_ALL, old_locale.c_str());
-#endif  // RDK_THREADSAFE_SSS
+#endif  // RDK_BUILD_THREADSAFE_SSS
       recurseLocale(ResetLocale);
     }
   }
