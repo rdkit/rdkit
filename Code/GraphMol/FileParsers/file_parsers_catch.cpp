@@ -4826,3 +4826,21 @@ M  END
           Bond::BondStereo::STEREOANY);
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #5423: Parsing a Mol block/file does not clear the "
+    "\"molTotValence\" property from atoms") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -3.657143 -0.742857 0.000000 0 CHG=1 VAL=4
+M  V30 END ATOM
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+  CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::molTotValence));
+}
