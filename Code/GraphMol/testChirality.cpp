@@ -870,7 +870,7 @@ void testChiralityCleanup() {
   MolOps::assignStereochemistry(*mol, true, true);
   TEST_ASSERT(chiral_center->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
   TEST_ASSERT(MolToSmiles(*mol, true) ==
-              "C[C@H]1C[C@@H](C)C[C@H](N2CCc3ccc(N)cc3C2)C1");
+              "C[C@@H]1C[C@H](C)C[C@@H](N2CCc3ccc(N)cc3C2)C1");
   delete mol;
 
   // atom stereo dependent on bond stereo breaking symmetry
