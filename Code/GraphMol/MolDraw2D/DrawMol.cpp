@@ -1738,7 +1738,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
                          : drawOptions_.bondLineWidth / 2.0;
   if (Bond::BEGINWEDGE == bond->getBondDir()) {
     std::vector<Point2D> otherBondVecs;
-    findOtherSingleBondVecs(at2, at1, otherBondVecs);
+    findOtherBondVecs(at2, at1, otherBondVecs);
     s = new DrawShapeSolidWedge(pts, col1, col2, drawOptions_.splitBonds,
                                 otherBondVecs, lineWidth,
                                 at1->getIdx() + activeAtmIdxOffset_,
@@ -2824,9 +2824,8 @@ void DrawMol::calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
 }
 
 // ****************************************************************************
-void DrawMol::findOtherSingleBondVecs(
-    const Atom *atom, const Atom *otherAtom,
-    std::vector<Point2D> &otherBondVecs) const {
+void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
+                                std::vector<Point2D> &otherBondVecs) const {
   if (atom->getDegree() == 1 || atomLabels_[atom->getIdx()]) {
     return;
   }
@@ -2834,7 +2833,7 @@ void DrawMol::findOtherSingleBondVecs(
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
     auto bond =
         drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
-    if (bond->getBondType() != Bond::SINGLE) {
+    if (bond->getBondType() == Bond::DOUBLE && thirdAtom->getDegree() == 1) {
       continue;
     }
     Point2D const &at1_cds = atCds_[atom->getIdx()];

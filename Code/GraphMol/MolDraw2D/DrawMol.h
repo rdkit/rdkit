@@ -239,8 +239,8 @@ class DrawMol {
   void calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
                            Point2D &l1f, Point2D &l2s, Point2D &l2f);
   // find the vectors of any atoms singly bonded to atom that aren't otherAtom.
-  void findOtherSingleBondVecs(const Atom *atom, const Atom *otherAtom,
-                               std::vector<Point2D> &otherBondVecs) const;
+  void findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
+                         std::vector<Point2D> &otherBondVecs) const;
   void adjustBondsOnSolidWedgeEnds();
 
   const MolDrawOptions &drawOptions_;
