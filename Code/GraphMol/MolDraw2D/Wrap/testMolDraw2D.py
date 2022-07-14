@@ -766,6 +766,11 @@ M  END''')
                                           highlight_bond_cols)
         with open("testACSMode_2.svg", 'w') as f:
             f.write(svg)
+        if hasattr(Draw, 'MolDraw2DCairo'):
+            drawer = rdMolDraw2D.MolDraw2DCairo(-1, -1)
+            rdMolDraw2D.DrawMoleculeACS1996(drawer, m)
+            drawer.FinishDrawing()
+            drawer.WriteDrawingText('testACSMode_1.png')
 
 
 if __name__ == "__main__":
