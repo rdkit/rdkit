@@ -2797,6 +2797,14 @@ TEST_CASE("more findPotential") {
       auto si = Chirality::cleanExistingStereo(*m, true);
       CHECK(si.size() == 3);
     }
+    {
+      auto m = "C[CH](C=CC)C=CC"_smiles;
+      REQUIRE(m);
+      m->getBondWithIdx(2)->setStereo(Bond::BondStereo::STEREOANY);
+      m->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOANY);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
   }
   SECTION("atom impact on double bonds") {
     {
@@ -2814,6 +2822,14 @@ TEST_CASE("more findPotential") {
     {
       auto m = "CC=C([CH](F)Cl)[CH](F)Cl"_smiles;
       REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
+    {
+      auto m = "CC=C([CH](F)Cl)[CH](F)Cl"_smiles;
+      REQUIRE(m);
+      m->getBondBetweenAtoms(2, 3)->setBondDir(Bond::UNKNOWN);
+      m->getBondBetweenAtoms(2, 6)->setBondDir(Bond::UNKNOWN);
       auto si = Chirality::cleanExistingStereo(*m, true);
       CHECK(si.size() == 3);
     }

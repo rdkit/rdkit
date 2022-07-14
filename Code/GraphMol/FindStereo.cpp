@@ -683,7 +683,6 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
 
 namespace {
 void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
-                  std::map<int, Atom::ChiralType> &ochiralTypes,
                   boost::dynamic_bitset<> &knownAtoms,
                   std::vector<std::string> &atomSymbols,
                   boost::dynamic_bitset<> &possibleAtoms) {
@@ -694,10 +693,12 @@ void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
       auto sinfo = detail::getStereoInfo(atom);
       switch (sinfo.specified) {
         case Chirality::StereoSpecified::Unknown:
+          knownAtoms.set(aidx);
+          atomSymbols[aidx] += std::to_string(aidx);
+          break;
         case Chirality::StereoSpecified::Specified:
           knownAtoms.set(aidx);
           atomSymbols[aidx] += "_@";
-          ochiralTypes[aidx] = atom->getChiralTag();
           break;
         case Chirality::StereoSpecified::Unspecified:
           if (flagPossible) {
@@ -725,6 +726,9 @@ void initBondInfo(ROMol &mol, bool flagPossible, bool cleanIt,
       auto sinfo = detail::getStereoInfo(bond);
       switch (sinfo.specified) {
         case Chirality::StereoSpecified::Unknown:
+          knownBonds.set(bidx);
+          bondSymbols[bidx] += "_" + std::to_string(bidx);
+          break;
         case Chirality::StereoSpecified::Specified:
           knownBonds.set(bidx);
           bondSymbols[bidx] += "_chi";
@@ -877,7 +881,9 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
             // FIX: only works for tetrahedral at the moment
             if (sinfo.type == Chirality::StereoType::Atom_Tetrahedral) {
               auto nSwaps = countSwapsToInterconvert(nbrs, sortednbrs);
-              if (nSwaps % 2) {
+              if (nSwaps % 2 &&
+                  (sinfo.descriptor == Chirality::StereoDescriptor::Tet_CCW ||
+                   sinfo.descriptor == Chirality::StereoDescriptor::Tet_CW)) {
                 sinfo.descriptor =
                     sinfo.descriptor == Chirality::StereoDescriptor::Tet_CCW
                         ? Chirality::StereoDescriptor::Tet_CW
@@ -945,21 +951,26 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
           }
         }
         if (!haveADupe) {
-          if (needsSwap) {
+          if (needsSwap && (sinfo.descriptor == StereoDescriptor::Bond_Cis ||
+                            sinfo.descriptor == StereoDescriptor::Bond_Trans)) {
             sinfo.descriptor = sinfo.descriptor == StereoDescriptor::Bond_Cis
                                    ? StereoDescriptor::Bond_Trans
                                    : StereoDescriptor::Bond_Cis;
           }
           auto gbs = bondSymbols[bidx];
-          switch (sinfo.descriptor) {
-            case StereoDescriptor::Bond_Cis:
-              gbs += "_cis";
-              break;
-            case StereoDescriptor::Bond_Trans:
-              gbs += "_trans";
-              break;
-            default:
-              break;
+          if (sinfo.specified == StereoSpecified::Specified) {
+            switch (sinfo.descriptor) {
+              case StereoDescriptor::Bond_Cis:
+                gbs += "_cis";
+                break;
+              case StereoDescriptor::Bond_Trans:
+                gbs += "_trans";
+                break;
+              default:
+                break;
+            }
+          } else if (sinfo.specified == StereoSpecified::Unknown) {
+            gbs += "_unk";
           }
           if (bondSymbols[bidx] != gbs) {
             bondSymbols[bidx] = gbs;
@@ -1016,12 +1027,11 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool flagPossible,
     mol.updatePropertyCache(false);
   }
 
-  std::map<int, Atom::ChiralType> ochiralTypes;
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
   std::vector<std::string> atomSymbols(mol.getNumAtoms());
   boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
-  initAtomInfo(mol, flagPossible, cleanIt, ochiralTypes, knownAtoms,
-               atomSymbols, possibleAtoms);
+  initAtomInfo(mol, flagPossible, cleanIt, knownAtoms, atomSymbols,
+               possibleAtoms);
 
   // tracks the number of rings with possible ring stereo that the atom is in
   //  (only set for potential stereoatoms)
