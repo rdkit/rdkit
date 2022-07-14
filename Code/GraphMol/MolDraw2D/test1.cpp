@@ -1595,9 +1595,7 @@ void testGithub774() {
       Point2D ocoords(1.0, 2.0);
       Point2D dcoords =
           drawer.getAtomCoords(std::make_pair(ocoords.x, ocoords.y));
-      std::cout << dcoords << std::endl;
       Point2D acoords = drawer.getDrawCoords(dcoords);
-      std::cout << acoords << std::endl;
       TEST_ASSERT(feq(acoords.x, 1.0));
       TEST_ASSERT(feq(acoords.y, 2.0));
       check_file_hash(nameBase + ".svg");
