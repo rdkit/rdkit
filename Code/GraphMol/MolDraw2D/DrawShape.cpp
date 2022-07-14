@@ -439,10 +439,9 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
       drawer.setActiveAtmIdx(atom2_);
     }
     drawer.setColour(col2_);
-    drawer.drawTriangle(points_[3], points_[4], points_[5], true);
   }
-  if (points_.size() > 6) {
-    drawer.drawTriangle(points_[6], points_[7], points_[8], true);
+  for (unsigned int i = 3; i < points_.size(); i += 3) {
+    drawer.drawTriangle(points_[i], points_[i + 1], points_[i + 2], true);
   }
 }
 
