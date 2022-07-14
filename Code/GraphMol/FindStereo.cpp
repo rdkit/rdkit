@@ -681,7 +681,8 @@ std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt);
 }
 
-std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
+std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool flagPossible,
+                                            bool cleanIt) {
   std::map<int, Atom::ChiralType> ochiralTypes;
 
   if (!mol.getRingInfo()->isInitialized()) {
@@ -693,6 +694,7 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
 
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
   std::vector<std::string> atomSymbols(mol.getNumAtoms());
+  boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
     auto aidx = atom->getIdx();
     atomSymbols[aidx] = getAtomCompareSymbol(*atom);
@@ -706,6 +708,10 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
           ochiralTypes[aidx] = atom->getChiralTag();
           break;
         case Chirality::StereoSpecified::Unspecified:
+          if (flagPossible) {
+            possibleAtoms.set(aidx);
+            atomSymbols[aidx] += "_" + std::to_string(aidx);
+          }
           break;
         default:
           throw ValueErrorException("bad StereoInfo.specified type");
@@ -730,6 +736,7 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
   boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
   for (unsigned int ridx = 0; ridx < mol.getRingInfo()->atomRings().size();
        ++ridx) {
+    // FIX: deal with findPossible and ring stereo
     const auto &aring = mol.getRingInfo()->atomRings()[ridx];
     unsigned int nHere = 0;
     auto sz = aring.size();
@@ -793,6 +800,8 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
 
   std::vector<std::string> bondSymbols(mol.getNumBonds());
   boost::dynamic_bitset<> knownBonds(mol.getNumBonds());
+  boost::dynamic_bitset<> possibleBonds(mol.getNumBonds());
+
   for (const auto bond : mol.bonds()) {
     auto bidx = bond->getIdx();
     bondSymbols[bidx] = getBondSymbol(bond);
@@ -805,6 +814,10 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
           bondSymbols[bidx] += "_chi";
           break;
         case Chirality::StereoSpecified::Unspecified:
+          if (flagPossible) {
+            bondSymbols[bidx] += "_" + std::to_string(bidx);
+            possibleBonds.set(bidx);
+          }
           break;
         default:
           throw ValueErrorException("bad StereoInfo.specified type");
@@ -842,7 +855,7 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
 
     for (const auto atom : mol.atoms()) {
       auto aidx = atom->getIdx();
-      if (knownAtoms[aidx]) {
+      if (knownAtoms[aidx] || possibleAtoms[aidx]) {
         auto sinfo = detail::getStereoInfo(atom);
         if (fixedAtoms[aidx]) {
           res.push_back(std::move(sinfo));
@@ -883,22 +896,24 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
             // std::cerr << std::endl;
 
             auto acs = atomSymbols[aidx];
-            auto sortednbrs = nbrs;
-            std::sort(sortednbrs.begin(), sortednbrs.end());
-            // FIX: only works for tetrahedral at the moment
-            if (sinfo.type == Chirality::StereoType::Atom_Tetrahedral) {
-              auto nSwaps = countSwapsToInterconvert(nbrs, sortednbrs);
-              if (nSwaps % 2) {
-                sinfo.descriptor =
-                    sinfo.descriptor == Chirality::StereoDescriptor::Tet_CCW
-                        ? Chirality::StereoDescriptor::Tet_CW
-                        : Chirality::StereoDescriptor::Tet_CCW;
-              }
-              if (sinfo.descriptor == Chirality::StereoDescriptor::Tet_CW) {
-                acs += "_CW";
-              } else if (sinfo.descriptor ==
-                         Chirality::StereoDescriptor::Tet_CCW) {
-                acs += "_CCW";
+            if (!possibleAtoms[aidx]) {
+              auto sortednbrs = nbrs;
+              std::sort(sortednbrs.begin(), sortednbrs.end());
+              // FIX: only works for tetrahedral at the moment
+              if (sinfo.type == Chirality::StereoType::Atom_Tetrahedral) {
+                auto nSwaps = countSwapsToInterconvert(nbrs, sortednbrs);
+                if (nSwaps % 2) {
+                  sinfo.descriptor =
+                      sinfo.descriptor == Chirality::StereoDescriptor::Tet_CCW
+                          ? Chirality::StereoDescriptor::Tet_CW
+                          : Chirality::StereoDescriptor::Tet_CCW;
+                }
+                if (sinfo.descriptor == Chirality::StereoDescriptor::Tet_CW) {
+                  acs += "_CW";
+                } else if (sinfo.descriptor ==
+                           Chirality::StereoDescriptor::Tet_CCW) {
+                  acs += "_CCW";
+                }
               }
             }
             if (atomSymbols[aidx] != acs) {
@@ -914,7 +929,7 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
 
     for (const auto bond : mol.bonds()) {
       auto bidx = bond->getIdx();
-      if (knownBonds[bidx]) {
+      if (knownBonds[bidx] || possibleBonds[bidx]) {
         auto sinfo = detail::getStereoInfo(bond);
         ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
                          "bad controlling atoms size");
@@ -951,7 +966,7 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
                                      ? StereoDescriptor::Bond_Trans
                                      : StereoDescriptor::Bond_Cis;
             }
-            auto gbs = getBondSymbol(bond);
+            auto gbs = bondSymbols[bidx];
             switch (sinfo.descriptor) {
               case StereoDescriptor::Bond_Cis:
                 gbs += "_cis";
@@ -965,6 +980,7 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
             if (bondSymbols[bidx] != gbs) {
               bondSymbols[bidx] = gbs;
               needAnotherRound = true;
+              fixedBonds.set(bidx);
             }
             res.push_back(std::move(sinfo));
           }

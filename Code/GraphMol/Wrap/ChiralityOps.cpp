@@ -33,7 +33,8 @@ and results may change in a future release.",
         python::with_custodian_and_ward_postcall<0, 1>());
     python::def(
         "CleanExistingStereo", &Chirality::cleanExistingStereo,
-        (python::arg("mol"), python::arg("cleanIt") = true),
+        (python::arg("mol"), python::arg("flagPossible") = false,
+         python::arg("cleanIt") = true),
         "Removes invalid stereo specifications and returns the remaining valid StereoInfo objects.",
         python::with_custodian_and_ward_postcall<0, 1>());
   };

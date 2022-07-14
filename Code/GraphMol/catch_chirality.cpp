@@ -2627,7 +2627,7 @@ TEST_CASE(
 
     {
       RWMol cp(*mol1);
-      Chirality::cleanExistingStereo(cp, true);
+      Chirality::cleanExistingStereo(cp);
       CHECK(cp.getAtomWithIdx(1)->getChiralTag() !=
             Atom::ChiralType::CHI_UNSPECIFIED);
       CHECK(cp.getAtomWithIdx(4)->getChiralTag() !=
@@ -2643,7 +2643,7 @@ TEST_CASE(
     CHECK(stereoInfo2[1].centeredOn == 8);
     {
       RWMol cp(*mol2);
-      Chirality::cleanExistingStereo(cp, true);
+      Chirality::cleanExistingStereo(cp);
       CHECK(cp.getAtomWithIdx(2)->getChiralTag() !=
             Atom::ChiralType::CHI_UNSPECIFIED);
       CHECK(cp.getAtomWithIdx(8)->getChiralTag() !=
@@ -2702,6 +2702,7 @@ TEST_CASE("assignStereochemistry sets bond stereo with new stereo perception") {
 }
 
 TEST_CASE("chiral duplicates") {
+  auto oval = Chirality::getUseLegacyStereoPerception();
   Chirality::setUseLegacyStereoPerception(false);
   SECTION("atom basics") {
     auto mol = "C[C@](F)([C@H](F)Cl)[C@H](F)Cl"_smiles;
@@ -2745,4 +2746,77 @@ TEST_CASE("chiral duplicates") {
     CHECK(mol->getBondWithIdx(7)->getStereo() == Bond::BondStereo::STEREOCIS);
     CHECK(mol->getBondWithIdx(2)->getStereo() != Bond::BondStereo::STEREONONE);
   }
+  Chirality::setUseLegacyStereoPerception(oval);
+}
+
+TEST_CASE("more findPotential") {
+  auto oval = Chirality::getUseLegacyStereoPerception();
+  Chirality::setUseLegacyStereoPerception(false);
+  SECTION("basics") {
+    {
+      auto m = "O[C@H](C)CC(C)C[C@@H](C)O"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 2);
+    }
+    {
+      auto m = "O[C@H](C)CC(C)C[C@H](C)O"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
+    {
+      auto m = "O[CH](C)C[C@H](C)C[CH](C)O"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
+    {
+      auto m = "O[CH](C)C[CH](C)C[CH](C)O"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
+  }
+  SECTION("double bond impact on atoms") {
+    {
+      auto m = "C[CH](/C=C/C)/C=C\\C"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
+    {
+      auto m = "C[CH](/C=C/C)/C=C/C"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 2);
+    }
+    {
+      auto m = "C[CH](C=CC)C=CC"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
+  }
+  SECTION("atom impact on double bonds") {
+    {
+      auto m = "CC=C([C@H](F)Cl)[C@@H](F)Cl"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
+    {
+      auto m = "CC=C([C@H](F)Cl)[C@H](F)Cl"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 2);
+    }
+    {
+      auto m = "CC=C([CH](F)Cl)[CH](F)Cl"_smiles;
+      REQUIRE(m);
+      auto si = Chirality::cleanExistingStereo(*m, true);
+      CHECK(si.size() == 3);
+    }
+  }
+  Chirality::setUseLegacyStereoPerception(oval);
 }
