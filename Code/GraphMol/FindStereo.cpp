@@ -398,6 +398,9 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
   if (!mol.getRingInfo()->isInitialized()) {
     MolOps::symmetrizeSSSR(mol);
   }
+  if (mol.needsUpdatePropertyCache()) {
+    mol.updatePropertyCache(false);
+  }
 
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
   boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
@@ -842,7 +845,6 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool cleanIt) {
       if (knownAtoms[aidx]) {
         auto sinfo = detail::getStereoInfo(atom);
         if (fixedAtoms[aidx]) {
-          // FIX: should we be using fixedAtoms here?
           res.push_back(std::move(sinfo));
         } else {
           std::vector<unsigned int> nbrs;
