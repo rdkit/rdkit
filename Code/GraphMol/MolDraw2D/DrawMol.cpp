@@ -264,6 +264,7 @@ void DrawMol::extractBonds() {
       makeStandardBond(bond, doubleBondOffset);
     }
   }
+  adjustBondsOnSolidWedgeEnds();
 }
 
 // ****************************************************************************
@@ -1699,8 +1700,6 @@ void DrawMol::makeTripleBondLines(
 // ****************************************************************************
 void DrawMol::makeWedgedBond(Bond *bond,
                              const std::pair<DrawColour, DrawColour> &cols) {
-  // swap the direction if at1 has does not have stereochem set
-  // or if at2 does have stereochem set and the bond starts there
   auto at1 = bond->getBeginAtom();
   auto at2 = bond->getEndAtom();
   auto col1 = cols.first;
@@ -1739,7 +1738,7 @@ void DrawMol::makeWedgedBond(Bond *bond,
                          : drawOptions_.bondLineWidth / 2.0;
   if (Bond::BEGINWEDGE == bond->getBondDir()) {
     std::vector<Point2D> otherBondVecs;
-    findOtherBondVecs(at2, at1, otherBondVecs);
+    findOtherSingleBondVecs(at2, at1, otherBondVecs);
     s = new DrawShapeSolidWedge(pts, col1, col2, drawOptions_.splitBonds,
                                 otherBondVecs, lineWidth,
                                 at1->getIdx() + activeAtmIdxOffset_,
@@ -1804,7 +1803,7 @@ void DrawMol::makeZeroBond(Bond *bond,
 
 // ****************************************************************************
 void DrawMol::adjustBondEndsForLabels(int begAtIdx, int endAtIdx,
-                                      Point2D &begCds, Point2D &endCds) {
+                                      Point2D &begCds, Point2D &endCds) const {
   // The scale factor is empirical.
   double padding = 0.033 * meanBondLength_;
   if (drawOptions_.additionalAtomLabelPadding > 0.0) {
@@ -2825,19 +2824,93 @@ void DrawMol::calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
 }
 
 // ****************************************************************************
-void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
-                                std::vector<Point2D> &otherBondVecs) const {
+void DrawMol::findOtherSingleBondVecs(
+    const Atom *atom, const Atom *otherAtom,
+    std::vector<Point2D> &otherBondVecs) const {
   if (atom->getDegree() == 1 || atomLabels_[atom->getIdx()]) {
     return;
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
+    auto bond =
+        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
+    if (bond->getBondType() != Bond::SINGLE) {
+      continue;
+    }
     Point2D const &at1_cds = atCds_[atom->getIdx()];
     Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
     otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
   }
 }
 
+// ****************************************************************************
+void DrawMol::adjustBondsOnSolidWedgeEnds() {
+  for (auto &bond : drawMol_->bonds()) {
+    if (bond->getBondDir() == Bond::BEGINWEDGE &&
+        bond->getEndAtom()->getDegree() == 2 &&
+        !atomLabels_[bond->getEndAtomIdx()]) {
+      // find the bond at the end atom
+      auto thirdAtom =
+          otherNeighbor(bond->getEndAtom(), bond->getBeginAtom(), 0, *drawMol_);
+      auto bond1 = drawMol_->getBondBetweenAtoms(bond->getEndAtomIdx(),
+                                                 thirdAtom->getIdx());
+      DrawShape *wedge = nullptr;
+      DrawShape *bondLine = nullptr;
+      double closestDist = 1.0;
+      int nearestPoint = -1;
+      for (auto &shape : bonds_) {
+        if (shape->bond_ == bond->getIdx()) {
+          wedge = shape.get();
+        }
+        // there may be multiple lines for the bond, so we want one that
+        // has an end as close as possible to the bond end atom.
+        auto endCds = atCds_[bond->getEndAtomIdx()];
+        if (shape->bond_ == bond1->getIdx()) {
+          // only deal with simple lines, which I think should be the only
+          // case, but...
+          if (dynamic_cast<DrawShapeSimpleLine *>(shape.get()) == nullptr) {
+            continue;
+          }
+          if ((shape->points_[0] - endCds).lengthSq() < closestDist) {
+            nearestPoint = 0;
+            closestDist = (shape->points_[0] - endCds).lengthSq();
+            bondLine = shape.get();
+          }
+          if ((shape->points_[1] - endCds).lengthSq() < closestDist) {
+            nearestPoint = 1;
+            closestDist = (shape->points_[1] - endCds).lengthSq();
+            bondLine = shape.get();
+          }
+        }
+      }
+      if (wedge != nullptr && bondLine != nullptr) {
+        int p1, p2;
+        // find the points that are the top of the wedge.  Clearly, this
+        // assumes the order that the triangles are created in the
+        // DrawShapeSolidWedge.
+        if (wedge->points_.size() == 3) {
+          p1 = 1;
+          p2 = 2;
+        } else if (wedge->points_.size() == 9) {
+          p1 = 5;
+          p2 = 6;
+        }
+        // want the p1 or p2 that is furthest from the 3rd atom - make it p1
+        if ((atCds_[thirdAtom->getIdx()] - wedge->points_[p1]).lengthSq() <
+            (atCds_[thirdAtom->getIdx()] - wedge->points_[p2]).lengthSq()) {
+          std::swap(p1, p2);
+        }
+        // now make the coords of the end of the bondLine that matches p1 the
+        // same as p1
+        if (bondLine->atom1_ == wedge->atom2_) {
+          bondLine->points_[0] = wedge->points_[p1];
+        } else {
+          bondLine->points_[1] = wedge->points_[p1];
+        }
+      }
+    }
+  }
+}
 // ****************************************************************************
 void centerMolForDrawing(RWMol &mol, int confId) {
   auto &conf = mol.getConformer(confId);

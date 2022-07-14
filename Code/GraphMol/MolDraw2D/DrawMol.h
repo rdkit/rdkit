@@ -164,7 +164,7 @@ class DrawMol {
   void makeZeroBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols,
                     const DashPattern &dashPattern);
   void adjustBondEndsForLabels(int begAtIdx, int endAtIdx, Point2D &begCds,
-                               Point2D &endCds);
+                               Point2D &endCds) const;
   void newBondLine(const Point2D &pt1, const Point2D &pt2,
                    const DrawColour &col1, const DrawColour &col2, int atom1Idx,
                    int atom2Idx, int bondIdx, const DashPattern &dashPattern);
@@ -238,9 +238,10 @@ class DrawMol {
                         bool trunc) const;
   void calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
                            Point2D &l1f, Point2D &l2s, Point2D &l2f);
-  // find the vectors of any atoms bonded to atom that aren't otherAtom.
-  void findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
-                         std::vector<Point2D> &otherBondVecs) const;
+  // find the vectors of any atoms singly bonded to atom that aren't otherAtom.
+  void findOtherSingleBondVecs(const Atom *atom, const Atom *otherAtom,
+                               std::vector<Point2D> &otherBondVecs) const;
+  void adjustBondsOnSolidWedgeEnds();
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
