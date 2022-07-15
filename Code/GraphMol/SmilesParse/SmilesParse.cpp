@@ -427,7 +427,7 @@ RWMol *SmilesToMol(const std::string &smiles,
       MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
     } else {
       bool cleanIt = true, flagPossible = false;
-      Chirality::findPotentialStereo(*res, cleanIt, flagPossible);
+      Chirality::cleanExistingStereo(*res, flagPossible, cleanIt);
     }
   }
   if (res && res->hasProp(common_properties::_NeedsQueryScan)) {
