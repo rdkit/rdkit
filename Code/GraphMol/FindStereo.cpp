@@ -128,9 +128,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
 
     bool seenSquiggleBond = false;
     const auto &mol = bond->getOwningMol();
-    for (const auto &nbri :
-         boost::make_iterator_range(mol.getAtomBonds(beginAtom))) {
-      const auto &nbr = mol[nbri];
+    for (const auto nbr : mol.atomBonds(beginAtom)) {
       if (nbr->getIdx() != bond->getIdx()) {
         if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
           seenSquiggleBond = true;
@@ -142,9 +140,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
     if (beginAtom->getDegree() == 2) {
       sinfo.controllingAtoms.push_back(StereoInfo::NOATOM);
     }
-    for (const auto &nbri :
-         boost::make_iterator_range(mol.getAtomBonds(endAtom))) {
-      const auto &nbr = mol[nbri];
+    for (const auto nbr : mol.atomBonds(endAtom)) {
       if (nbr->getIdx() != bond->getIdx()) {
         if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
           seenSquiggleBond = true;
