@@ -797,12 +797,31 @@ void cleanMolStereo(ROMol &mol, boost::dynamic_bitset<> &fixedAtoms,
 
 std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                                    bool cleanIt) {
+  // This potentially does two passes of "canonicalization" to identify stereo
+  // atoms/bonds:
+  //   - if cleanIt is true we start with a pass which ignores possible stereo
+  //   atoms/bonds and which removes the stereo spec from any atom/bond which
+  //   doesn't have unique neighbors
+  //   - if flagPossible is true we do a pass where each unspecified possible
+  //   stereocenter is treated as if it were different from all others. This
+  //   allows us to identify every possible stereo atom/bond
+
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
   std::vector<std::string> atomSymbols(mol.getNumAtoms());
   boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
   initAtomInfo(mol, flagPossible, cleanIt, knownAtoms, atomSymbols,
                possibleAtoms);
+
+  std::vector<std::string> bondSymbols(mol.getNumBonds());
+  boost::dynamic_bitset<> knownBonds(mol.getNumBonds());
+  boost::dynamic_bitset<> possibleBonds(mol.getNumBonds());
+  initBondInfo(mol, flagPossible, cleanIt, knownBonds, bondSymbols,
+               possibleBonds);
+
+  // copy the original sets of possible atoms/bonds. We need them in the second
+  // pass
   auto origPossibleAtoms = possibleAtoms;
+  auto origPossibleBonds = possibleBonds;
 
   // tracks the number of rings with possible ring stereo that the atom is in
   //  (only set for potential stereoatoms)
@@ -811,20 +830,18 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   //  (set for all bonds)
   std::vector<unsigned int> possibleRingStereoBonds(mol.getNumBonds());
 
+  // identify atoms which can be involved in ring stereo
   flagRingStereo(mol, possibleRingStereoAtoms, possibleRingStereoBonds,
                  knownAtoms, cleanIt ? nullptr : &possibleAtoms);
 
-  std::vector<std::string> bondSymbols(mol.getNumBonds());
-  boost::dynamic_bitset<> knownBonds(mol.getNumBonds());
-  boost::dynamic_bitset<> possibleBonds(mol.getNumBonds());
-  initBondInfo(mol, flagPossible, cleanIt, knownBonds, bondSymbols,
-               possibleBonds);
-  auto origPossibleBonds = possibleBonds;
-
-  boost::dynamic_bitset<> fixedAtoms(mol.getNumAtoms());
-  boost::dynamic_bitset<> fixedBonds(mol.getNumBonds());
+  // our return value
   std::vector<StereoInfo> res;
 
+  // these are used to track which atoms/bonds have been altered
+  boost::dynamic_bitset<> fixedAtoms(mol.getNumAtoms());
+  boost::dynamic_bitset<> fixedBonds(mol.getNumBonds());
+
+  // used to tell rankFragmentAtoms to use all atoms:
   boost::dynamic_bitset<> atomsInPlay(mol.getNumAtoms());
   atomsInPlay.set();
   boost::dynamic_bitset<> bondsInPlay(mol.getNumBonds());
@@ -835,14 +852,7 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   while (needAnotherRound) {
     res.clear();
 
-    // std::copy(atomSymbols.begin(), atomSymbols.end(),
-    //           std::ostream_iterator<std::string>(std::cerr, " "));
-    // std::cerr << std::endl;
-    // std::copy(bondSymbols.begin(), bondSymbols.end(),
-    //           std::ostream_iterator<std::string>(std::cerr, " "));
-    // std::cerr << std::endl;
-
-    // we will use the canonicalization code
+    // find symmetry classes with the canonicalization code
     const bool breakTies = false;
     const bool includeChirality = false;
     const bool includeIsotopes = false;
@@ -850,17 +860,24 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                              &atomSymbols, &bondSymbols, breakTies,
                              includeChirality, includeIsotopes);
 
+    // check if any new atoms definitely now have stereo; do another loop if so
     needAnotherRound = updateAtoms(
         mol, aranks, atomSymbols, possibleAtoms, knownAtoms, fixedAtoms,
         possibleRingStereoAtoms, possibleRingStereoBonds, res);
+    // check if any new bonds definitely now have stereo; do another loop if so
     needAnotherRound |= updateBonds(mol, aranks, bondSymbols, possibleBonds,
                                     knownBonds, fixedBonds, res);
   }
 
   if (cleanIt) {
+    // remove stereo specs from atoms/bonds which should not have them
     cleanMolStereo(mol, fixedAtoms, knownAtoms, fixedBonds, knownBonds);
 
-    if (flagPossible) {
+    if (flagPossible && (possibleAtoms != origPossibleAtoms ||
+                         possibleBonds != origPossibleBonds)) {
+      // if we're doing "flagPossible" mode and have done some cleanup, then we
+      // need to do another iteration
+
       possibleAtoms = origPossibleAtoms;
       // flag every center/bond where we removed stereo as possible:
       for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
