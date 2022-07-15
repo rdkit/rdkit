@@ -94,18 +94,15 @@ Atom *ParseXYZFileAtomLine(std::string_view atomLine, RDGeom::Point3D &pos, unsi
         throw FileParseException(errout.str());
     }
     
-    // create atom
-    Atom *atom = new Atom;
-    
     std::string symb{atomLine.substr(delim0, delim1 - delim0)};
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
         symb[1] = static_cast<char>(tolower(symb[1]));
     }
     
+    Atom *atom;
     try {
-      atom->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
+      atom = new Atom(PeriodicTable::getTable()->getAtomicNumber(symb));
     } catch (const Invar::Invariant &e) {
-      delete atom;
       throw FileParseException(e.what());
     }
     
