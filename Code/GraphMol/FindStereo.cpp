@@ -839,12 +839,12 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   while (needAnotherRound) {
     res.clear();
 
-    std::copy(atomSymbols.begin(), atomSymbols.end(),
-              std::ostream_iterator<std::string>(std::cerr, " "));
-    std::cerr << std::endl;
-    std::copy(bondSymbols.begin(), bondSymbols.end(),
-              std::ostream_iterator<std::string>(std::cerr, " "));
-    std::cerr << std::endl;
+    // std::copy(atomSymbols.begin(), atomSymbols.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
+    // std::copy(bondSymbols.begin(), bondSymbols.end(),
+    //           std::ostream_iterator<std::string>(std::cerr, " "));
+    // std::cerr << std::endl;
 
     // we will use the canonicalization code
     const bool breakTies = false;
@@ -868,8 +868,6 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
       possibleAtoms = origPossibleAtoms;
       // flag every center/bond where we removed stereo as possible:
       for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
-        std::cerr << " ATM " << i << " " << knownAtoms[i] << "? "
-                  << fixedAtoms[i] << " " << atomSymbols[i] << std::endl;
         if (!fixedAtoms[i] && knownAtoms[i]) {
           possibleAtoms[i] = 1;
           knownAtoms[i] = 0;
@@ -896,12 +894,12 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
       while (needAnotherRound) {
         res.clear();
 
-        std::copy(atomSymbols.begin(), atomSymbols.end(),
-                  std::ostream_iterator<std::string>(std::cerr, " "));
-        std::cerr << std::endl;
-        std::copy(bondSymbols.begin(), bondSymbols.end(),
-                  std::ostream_iterator<std::string>(std::cerr, " "));
-        std::cerr << std::endl;
+        // std::copy(atomSymbols.begin(), atomSymbols.end(),
+        //           std::ostream_iterator<std::string>(std::cerr, " "));
+        // std::cerr << std::endl;
+        // std::copy(bondSymbols.begin(), bondSymbols.end(),
+        //           std::ostream_iterator<std::string>(std::cerr, " "));
+        // std::cerr << std::endl;
 
         // we will use the canonicalization code
         const bool breakTies = false;

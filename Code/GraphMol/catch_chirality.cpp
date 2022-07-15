@@ -590,7 +590,7 @@ TEST_CASE("ring stereochemistry", "[chirality]") {
     ps.sanitize = false;
     std::unique_ptr<RWMol> mol{SmilesToMol("C[C@H]1CCC(C)CC1", ps)};
     REQUIRE(mol);
-    std::cerr << "------------ 3 -------------" << std::endl;
+    // std::cerr << "------------ 3 -------------" << std::endl;
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 2);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -2494,9 +2494,7 @@ TEST_CASE("useLegacyStereoPerception feature flag") {
   }
   SECTION("use new code") {
     Chirality::setUseLegacyStereoPerception(false);
-    std::cerr << ">------------------" << std::endl;
     auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
-    std::cerr << "<------------------" << std::endl;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
@@ -2804,9 +2802,7 @@ TEST_CASE("more findPotential") {
     {
       auto m = "O[C@H](C)CC(C)C[C@H](C)O"_smiles;
       REQUIRE(m);
-      std::cerr << ">-------------------" << std::endl;
       auto si = Chirality::cleanExistingStereo(*m, true);
-      std::cerr << "<-------------------" << std::endl;
       CHECK(si.size() == 3);
     }
     {
@@ -2826,8 +2822,6 @@ TEST_CASE("more findPotential") {
     {
       auto m = "C[CH](/C=C/C)/C=C\\C"_smiles;
       REQUIRE(m);
-      m->debugMol(std::cerr);
-      std::cerr << "<----------" << std::endl;
       auto si = Chirality::cleanExistingStereo(*m, true);
       CHECK(si.size() == 3);
     }
@@ -2868,9 +2862,7 @@ TEST_CASE("more findPotential") {
     {
       auto m = "CC=C([CH](F)Cl)[CH](F)Cl"_smiles;
       REQUIRE(m);
-      std::cerr << ">-------------------" << std::endl;
       auto si = Chirality::cleanExistingStereo(*m, true);
-      std::cerr << "<-------------------" << std::endl;
       CHECK(si.size() == 3);
     }
     {
@@ -2891,9 +2883,7 @@ TEST_CASE("more findPotential and ring stereo") {
     {
       auto m = "CC1CCC(C)CC1"_smiles;
       REQUIRE(m);
-      std::cerr << ">---------" << std::endl;
       auto stereoInfo = Chirality::cleanExistingStereo(*m, true);
-      std::cerr << "<---------" << std::endl;
       REQUIRE(stereoInfo.size() == 2);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
       CHECK(stereoInfo[0].centeredOn == 1);
