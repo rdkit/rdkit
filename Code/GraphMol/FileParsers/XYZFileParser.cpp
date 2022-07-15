@@ -132,7 +132,7 @@ RWMol *XYZDataStreamToMol(std::istream &inStream) {
     if (numAtoms != 0) {
         mol = new RWMol();
         Conformer *conf = new Conformer(numAtoms);
-        if (comment != "") {
+        if (!comment.empty()) {
             mol->setProp("_FileComments", comment);
         }
         for (unsigned int i = 0; i < numAtoms; i++) {
