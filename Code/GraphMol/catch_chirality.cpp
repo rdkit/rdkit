@@ -2494,7 +2494,9 @@ TEST_CASE("useLegacyStereoPerception feature flag") {
   }
   SECTION("use new code") {
     Chirality::setUseLegacyStereoPerception(false);
+    std::cerr << ">------------------" << std::endl;
     auto m = "C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2"_smiles;
+    std::cerr << "<------------------" << std::endl;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
@@ -2866,7 +2868,9 @@ TEST_CASE("more findPotential") {
     {
       auto m = "CC=C([CH](F)Cl)[CH](F)Cl"_smiles;
       REQUIRE(m);
+      std::cerr << ">-------------------" << std::endl;
       auto si = Chirality::cleanExistingStereo(*m, true);
+      std::cerr << "<-------------------" << std::endl;
       CHECK(si.size() == 3);
     }
     {
