@@ -393,6 +393,7 @@ inline std::string getAtomCompareSymbol(const Atom &atom) {
 
 std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
                                             bool flagPossible) {
+  return cleanExistingStereo(mol, flagPossible, cleanIt);
   std::map<int, Atom::ChiralType> ochiralTypes;
 
   if (!mol.getRingInfo()->isInitialized()) {
@@ -698,7 +699,13 @@ void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
           break;
         case Chirality::StereoSpecified::Specified:
           knownAtoms.set(aidx);
-          atomSymbols[aidx] += "_@";
+          if (sinfo.descriptor == StereoDescriptor::Tet_CCW) {
+            atomSymbols[aidx] += "_CCW";
+          } else if (sinfo.descriptor == StereoDescriptor::Tet_CW) {
+            atomSymbols[aidx] += "_CW";
+          } else {
+            atomSymbols[aidx] += "_@";
+          }
           break;
         case Chirality::StereoSpecified::Unspecified:
           if (flagPossible) {
@@ -731,7 +738,13 @@ void initBondInfo(ROMol &mol, bool flagPossible, bool cleanIt,
           break;
         case Chirality::StereoSpecified::Specified:
           knownBonds.set(bidx);
-          bondSymbols[bidx] += "_chi";
+          if (sinfo.descriptor == StereoDescriptor::Bond_Cis) {
+            bondSymbols[bidx] += "_cis";
+          } else if (sinfo.descriptor == StereoDescriptor::Bond_Trans) {
+            bondSymbols[bidx] += "_trans";
+          } else {
+            bondSymbols[bidx] += "_chi";
+          }
           break;
         case Chirality::StereoSpecified::Unspecified:
           if (flagPossible) {
@@ -747,16 +760,18 @@ void initBondInfo(ROMol &mol, bool flagPossible, bool cleanIt,
     }
   }
 }
-void flagRingStereo(ROMol &mol, boost::dynamic_bitset<> &possibleAtomsInRing,
+void flagRingStereo(ROMol &mol,
                     std::vector<unsigned int> &possibleRingStereoAtoms,
                     std::vector<unsigned int> &possibleRingStereoBonds,
-                    boost::dynamic_bitset<> &knownAtoms) {
+                    boost::dynamic_bitset<> &knownAtoms,
+                    boost::dynamic_bitset<> &possibleAtoms) {
   // flag possible ring stereo cases. The relevant cases here are:
   //    1) even-sized rings with possible (or specified) atoms opposite each
   //       other, like CC1CC(C)C1 or CC1CCC(C)CC1
   //    2) atoms sharing a bond which fuses two or more rings, like the
   //    central
   //       bond in C1CCC2CCCCC2C1
+  boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
 
   for (unsigned int ridx = 0; ridx < mol.getRingInfo()->atomRings().size();
        ++ridx) {
@@ -770,14 +785,14 @@ void flagRingStereo(ROMol &mol, boost::dynamic_bitset<> &possibleAtomsInRing,
     possibleAtomsInRing.reset();
     for (unsigned int ai = 0; ai < sz; ++ai) {
       auto aidx = aring[ai];
-      if (!knownAtoms[aidx]) {
+      if (!knownAtoms[aidx] && !possibleAtoms[aidx]) {
         continue;
       }
       if (!ring_is_odd_sized) {
         // find the index of the atom on the opposite side of the even-sized
         // ring
         auto oppositeidx = aring[(ai + half_sz) % sz];
-        if (knownAtoms[oppositeidx]) {
+        if (knownAtoms[oppositeidx] || possibleAtoms[oppositeidx]) {
           nHere += 2;
           possibleAtomsInRing.set(aidx);
           possibleAtomsInRing.set(oppositeidx);
@@ -796,7 +811,7 @@ void flagRingStereo(ROMol &mol, boost::dynamic_bitset<> &possibleAtomsInRing,
             // We reached the end of the common edge.
             break;
           }
-          if (knownAtoms[otheridx]) {
+          if (knownAtoms[otheridx] || possibleAtoms[otheridx]) {
             // We found another chiral atom, no need to keep
             // searching.
             nHere += 2;
@@ -828,8 +843,8 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
                  boost::dynamic_bitset<> &possibleAtoms,
                  boost::dynamic_bitset<> &knownAtoms,
                  boost::dynamic_bitset<> &fixedAtoms,
-                 const std::vector<unsigned int> &possibleRingStereoAtoms,
-                 const std::vector<unsigned int> &possibleRingStereoBonds,
+                 std::vector<unsigned int> &possibleRingStereoAtoms,
+                 std::vector<unsigned int> &possibleRingStereoBonds,
                  std::vector<StereoInfo> &sinfos) {
   bool needAnotherRound = false;
   for (const auto atom : mol.atoms()) {
@@ -890,19 +905,53 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
                         : Chirality::StereoDescriptor::Tet_CCW;
               }
               if (sinfo.descriptor == Chirality::StereoDescriptor::Tet_CW) {
-                acs += "_CW";
+                acs = getAtomCompareSymbol(*atom) + "_CW";
               } else if (sinfo.descriptor ==
                          Chirality::StereoDescriptor::Tet_CCW) {
-                acs += "_CCW";
+                acs = getAtomCompareSymbol(*atom) + "_CCW";
               }
             }
+            fixedAtoms.set(aidx);
           }
           if (atomSymbols[aidx] != acs) {
             atomSymbols[aidx] = acs;
             needAnotherRound = true;
-            fixedAtoms.set(aidx);
           }
           sinfos.push_back(std::move(sinfo));
+        } else if (possibleAtoms[aidx]) {
+          possibleAtoms[aidx] = 0;
+          atomSymbols[aidx] = getAtomCompareSymbol(*atom);
+          needAnotherRound = true;
+
+          // if this was creating possible ring stereo, update that info now
+          if (possibleRingStereoAtoms[aidx]) {
+            --possibleRingStereoAtoms[aidx];
+            if (!possibleRingStereoAtoms[aidx]) {
+              // we're no longer in any ring with possible ring stereo. Go
+              // update all the other atoms/bonds in rings that we're in:
+              for (unsigned int ridx = 0;
+                   ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
+                const auto &aring = mol.getRingInfo()->atomRings()[ridx];
+                unsigned int nHere = 0;
+                for (auto raidx : aring) {
+                  if (possibleRingStereoAtoms[raidx]) {
+                    --possibleRingStereoAtoms[raidx];
+                    if (possibleRingStereoAtoms[raidx]) {
+                      ++nHere;
+                    }
+                  }
+                }
+                if (nHere <= 1) {
+                  // update the bondstereo counts too
+                  for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
+                    if (possibleRingStereoBonds[rbidx]) {
+                      --possibleRingStereoBonds[rbidx];
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -975,9 +1024,15 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
           if (bondSymbols[bidx] != gbs) {
             bondSymbols[bidx] = gbs;
             needAnotherRound = true;
+          }
+          if (!possibleBonds[bidx]) {
             fixedBonds.set(bidx);
           }
           sinfos.push_back(std::move(sinfo));
+        } else if (possibleBonds[bidx]) {
+          possibleBonds[bidx] = 0;
+          bondSymbols[bidx] = getBondSymbol(bond);
+          needAnotherRound = true;
         }
       }
     }
@@ -1017,16 +1072,8 @@ void cleanMolStereo(ROMol &mol, boost::dynamic_bitset<> &fixedAtoms,
   }
 }
 
-}  // namespace
-std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool flagPossible,
-                                            bool cleanIt) {
-  if (!mol.getRingInfo()->isInitialized()) {
-    MolOps::symmetrizeSSSR(mol);
-  }
-  if (mol.needsUpdatePropertyCache()) {
-    mol.updatePropertyCache(false);
-  }
-
+std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
+                                   bool cleanIt) {
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
   std::vector<std::string> atomSymbols(mol.getNumAtoms());
   boost::dynamic_bitset<> possibleAtoms(mol.getNumAtoms());
@@ -1039,10 +1086,9 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool flagPossible,
   // tracks the number of rings with possible ring stereo that the bond is in
   //  (set for all bonds)
   std::vector<unsigned int> possibleRingStereoBonds(mol.getNumBonds());
-  boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
 
-  flagRingStereo(mol, possibleAtomsInRing, possibleRingStereoAtoms,
-                 possibleRingStereoBonds, knownAtoms);
+  flagRingStereo(mol, possibleRingStereoAtoms, possibleRingStereoBonds,
+                 knownAtoms, possibleAtoms);
 
   std::vector<std::string> bondSymbols(mol.getNumBonds());
   boost::dynamic_bitset<> knownBonds(mol.getNumBonds());
@@ -1064,12 +1110,12 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool flagPossible,
   while (needAnotherRound) {
     res.clear();
 
-    // std::copy(atomSymbols.begin(), atomSymbols.end(),
-    //           std::ostream_iterator<std::string>(std::cerr, " "));
-    // std::cerr << std::endl;
-    // std::copy(bondSymbols.begin(), bondSymbols.end(),
-    //           std::ostream_iterator<std::string>(std::cerr, " "));
-    // std::cerr << std::endl;
+    std::copy(atomSymbols.begin(), atomSymbols.end(),
+              std::ostream_iterator<std::string>(std::cerr, " "));
+    std::cerr << std::endl;
+    std::copy(bondSymbols.begin(), bondSymbols.end(),
+              std::ostream_iterator<std::string>(std::cerr, " "));
+    std::cerr << std::endl;
 
     // we will use the canonicalization code
     const bool breakTies = false;
@@ -1089,7 +1135,24 @@ std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool flagPossible,
   if (cleanIt) {
     cleanMolStereo(mol, fixedAtoms, knownAtoms, fixedBonds, knownBonds);
   }
-
+  return res;
+}
+}  // namespace
+std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool flagPossible,
+                                            bool cleanIt) {
+  if (!mol.getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  if (mol.needsUpdatePropertyCache()) {
+    mol.updatePropertyCache(false);
+  }
+  std::vector<StereoInfo> res;
+  if (cleanIt || !flagPossible) {
+    res = runCleanup(mol, false, cleanIt);
+  }
+  if (flagPossible) {
+    res = runCleanup(mol, true, false);
+  }
   mol.setProp("_potentialStereo", res, true);
   return res;
 }
