@@ -2866,34 +2866,31 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
       DrawShape *wedge = nullptr;
       DrawShape *bondLine = nullptr;
       double closestDist = 1.0;
-      int nearestPoint = -1;
       for (auto &shape : bonds_) {
-        if (shape->bond_ == bond->getIdx()) {
+        if (shape->bond_ == static_cast<int>(bond->getIdx())) {
           wedge = shape.get();
         }
         // there may be multiple lines for the bond, so we want one that
         // has an end as close as possible to the bond end atom.
         auto endCds = atCds_[bond->getEndAtomIdx()];
-        if (shape->bond_ == bond1->getIdx()) {
+        if (shape->bond_ == static_cast<int>(bond1->getIdx())) {
           // only deal with simple lines, which I think should be the only
           // case, but...
           if (dynamic_cast<DrawShapeSimpleLine *>(shape.get()) == nullptr) {
             continue;
           }
           if ((shape->points_[0] - endCds).lengthSq() < closestDist) {
-            nearestPoint = 0;
             closestDist = (shape->points_[0] - endCds).lengthSq();
             bondLine = shape.get();
           }
           if ((shape->points_[1] - endCds).lengthSq() < closestDist) {
-            nearestPoint = 1;
             closestDist = (shape->points_[1] - endCds).lengthSq();
             bondLine = shape.get();
           }
         }
       }
       if (wedge != nullptr && bondLine != nullptr) {
-        int p1, p2;
+        int p1 = -1, p2 = -1;
         // find the points that are the top of the wedge.  Clearly, this
         // assumes the order that the triangles are created in the
         // DrawShapeSolidWedge.
@@ -2905,17 +2902,19 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           p2 = 6;
         }
         // want the p1 or p2 that is furthest from the 3rd atom - make it p1
-        if ((atCds_[thirdAtom->getIdx()] - wedge->points_[p1]).lengthSq() <
+        if (p1 != -1 && p2 != -1) {
+	  if((atCds_[thirdAtom->getIdx()] - wedge->points_[p1]).lengthSq() <
             (atCds_[thirdAtom->getIdx()] - wedge->points_[p2]).lengthSq()) {
           std::swap(p1, p2);
-        }
-        // now make the coords of the end of the bondLine that matches p1 the
-        // same as p1
-        if (bondLine->atom1_ == wedge->atom2_) {
-          bondLine->points_[0] = wedge->points_[p1];
-        } else {
-          bondLine->points_[1] = wedge->points_[p1];
-        }
+	  }
+	  // now make the coords of the end of the bondLine that matches p1 the
+	  // same as p1
+	  if (bondLine->atom1_ == wedge->atom2_) {
+	    bondLine->points_[0] = wedge->points_[p1];
+	  } else {
+	    bondLine->points_[1] = wedge->points_[p1];
+	  }
+	}
       }
     }
   }
@@ -2952,9 +2951,9 @@ void DrawMol::smoothBondJoins() {
         auto &sbl1 = bonds_[singleBondLines_[i]];
         int p1 = -1;
         int p2 = -1;
-        if (atom->getIdx() == sbl1->atom1_) {
+        if (static_cast<int>(atom->getIdx()) == sbl1->atom1_) {
           p1 = 0;
-        } else if (atom->getIdx() == sbl1->atom2_) {
+        } else if (static_cast<int>(atom->getIdx()) == sbl1->atom2_) {
           p1 = 1;
         }
         if (p1 != -1) {
@@ -2963,9 +2962,9 @@ void DrawMol::smoothBondJoins() {
               continue;
             }
             auto &sbl2 = bonds_[singleBondLines_[j]];
-            if (atom->getIdx() == sbl2->atom1_) {
+            if (static_cast<int>(atom->getIdx()) == sbl2->atom1_) {
               p2 = 0;
-            } else if (atom->getIdx() == sbl2->atom2_) {
+            } else if (static_cast<int>(atom->getIdx()) == sbl2->atom2_) {
               p2 = 1;
             }
             if (p2 != -1) {
