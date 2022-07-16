@@ -125,9 +125,8 @@ RWMol *XYZDataStreamToMol(std::istream &inStream) {
     
     std::string comment{getLine(inStream)};
     
-    RWMol *mol = nullptr;
-    if (numAtoms != 0) {
-        mol = new RWMol();
+    RWMol *mol = new RWMol();
+    if  (numAtoms) {
         Conformer *conf = new Conformer(numAtoms);
         if (!comment.empty()) {
             mol->setProp("_FileComments", comment);
