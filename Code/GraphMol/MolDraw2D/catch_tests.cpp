@@ -113,6 +113,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testPositionVariation-3.svg", 3729075587U},
     {"testPositionVariation-4.svg", 1108067269U},
     {"testNoAtomLabels-1.svg", 684646985U},
+    {"testNoAtomLabels-2.svg", 756565459U},
     {"testQueryBonds-1a.svg", 2738181855U},
     {"testQueryBonds-1b.svg", 2040401048U},
     {"testQueryBonds-1c.svg", 2047026108U},
@@ -2312,19 +2313,34 @@ M  END
 
 TEST_CASE("disable atom labels", "[feature]") {
   SECTION("basics") {
-    auto m = "NCC(=O)O"_smiles;
-    MolDraw2DSVG drawer(350, 300);
-    MolDraw2DUtils::prepareMolForDrawing(*m);
-    drawer.drawOptions().noAtomLabels = true;
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    auto text = drawer.getDrawingText();
-    std::ofstream outs("testNoAtomLabels-1.svg");
-    outs << text;
-    outs.close();
-    check_file_hash("testNoAtomLabels-1.svg");
-    CHECK(text.find("class='atom-0") == std::string::npos);
-    CHECK(text.find("class='atom-3") == std::string::npos);
+    {
+      auto m = "NCC(=O)O"_smiles;
+      MolDraw2DSVG drawer(350, 300);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      drawer.drawOptions().noAtomLabels = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testNoAtomLabels-1.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testNoAtomLabels-1.svg");
+      CHECK(text.find("class='atom-0") == std::string::npos);
+      CHECK(text.find("class='atom-3") == std::string::npos);
+    }
+    {
+      auto m = "F[C@H](O)C[C@@H](Cl)I"_smiles;
+      MolDraw2DSVG drawer(350, 300);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      drawer.drawOptions().noAtomLabels = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testNoAtomLabels-2.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testNoAtomLabels-2.svg");
+    }
   }
 }
 
