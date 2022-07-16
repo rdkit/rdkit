@@ -265,6 +265,7 @@ void DrawMol::extractBonds() {
     }
   }
   adjustBondsOnSolidWedgeEnds();
+  smoothBondJoins();
 }
 
 // ****************************************************************************
@@ -1842,6 +1843,9 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
         atom2Idx + activeAtmIdxOffset_, bondIdx + activeBndIdxOffset_,
         dashPattern);
     bonds_.push_back(std::unique_ptr<DrawShape>(b));
+    if (dashPattern == noDash) {
+      singleBondLines_.push_back(bonds_.size() - 1);
+    }
   } else {
     Point2D mid = (pt1 + pt2) / 2.0;
     std::vector<Point2D> pts1{pt1, mid};
@@ -1852,6 +1856,9 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
         at2Idx + activeAtmIdxOffset_, bondIdx + activeBndIdxOffset_,
         dashPattern);
     bonds_.push_back(std::unique_ptr<DrawShape>(b1));
+    if (dashPattern == noDash) {
+      singleBondLines_.push_back(bonds_.size() - 1);
+    }
     at1Idx = drawOptions_.splitBonds ? atom2Idx : atom1Idx;
     std::vector<Point2D> pts2{mid, pt2};
     DrawShape *b2 = new DrawShapeSimpleLine(
@@ -1859,6 +1866,9 @@ void DrawMol::newBondLine(const Point2D &pt1, const Point2D &pt2,
         at2Idx + activeAtmIdxOffset_, bondIdx + activeBndIdxOffset_,
         dashPattern);
     bonds_.push_back(std::unique_ptr<DrawShape>(b2));
+    if (dashPattern == noDash) {
+      singleBondLines_.push_back(bonds_.size() - 1);
+    }
   }
 }
 
@@ -2910,6 +2920,83 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
     }
   }
 }
+
+// ****************************************************************************
+void DrawMol::smoothBondJoins() {
+  // Because the bonds are drawn as individual lines rather than as paths
+  // through the molecule, they don't join up nicely.  Put a little path
+  // round the join where it's needed to hide the problem.
+  // The bonds aren't drawn as paths because in SVGs each line is given
+  // classes for the atoms and bond it involves, and people use this to
+  // identify the lines for other purposes.
+  for (auto atom : drawMol_->atoms()) {
+    bool doIt = false;
+    if (atom->getDegree() == 2) {
+      doIt = true;
+    } else if (atom->getDegree() == 3) {
+      for (const auto nbri :
+           boost::make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
+        const auto nbr = (*drawMol_)[nbri];
+        auto bond =
+            drawMol_->getBondBetweenAtoms(atom->getIdx(), nbr->getIdx());
+        if ((nbr->getDegree() == 1 && bond->getBondType() == Bond::DOUBLE) ||
+            bond->getBondDir() == Bond::BEGINDASH ||
+            bond->getBondDir() == Bond::BEGINWEDGE) {
+          doIt = true;
+        }
+      }
+    }
+    if (doIt) {
+      bool done = false;
+      for (unsigned int i = 0; i < singleBondLines_.size(); ++i) {
+        auto &sbl1 = bonds_[singleBondLines_[i]];
+        int p1 = -1;
+        int p2 = -1;
+        if (atom->getIdx() == sbl1->atom1_) {
+          p1 = 0;
+        } else if (atom->getIdx() == sbl1->atom2_) {
+          p1 = 1;
+        }
+        if (p1 != -1) {
+          for (unsigned int j = 0; j < singleBondLines_.size(); ++j) {
+            if (i == j) {
+              continue;
+            }
+            auto &sbl2 = bonds_[singleBondLines_[j]];
+            if (atom->getIdx() == sbl2->atom1_) {
+              p2 = 0;
+            } else if (atom->getIdx() == sbl2->atom2_) {
+              p2 = 1;
+            }
+            if (p2 != -1) {
+              double dist = (sbl1->points_[p1] - sbl2->points_[p2]).lengthSq();
+              if (dist < 1.0e-6) {
+                // make a small polyline to paper over the cracks.
+                int p12 = p1 == 1 ? 0 : 1;
+                int p22 = p2 == 1 ? 0 : 1;
+                Point2D dv1 = (sbl1->points_[p1] - sbl1->points_[p12]) * 0.05;
+                Point2D dv2 = (sbl1->points_[p1] - sbl2->points_[p22]) * 0.05;
+                std::vector<Point2D> pl_pts{sbl1->points_[p1] - dv1,
+                                            sbl1->points_[p1],
+                                            sbl1->points_[p1] - dv2};
+                DrawShape *pl = new DrawShapePolyLine(pl_pts, sbl1->lineWidth_,
+                                                      sbl1->scaleLineWidth_,
+                                                      sbl1->lineColour_);
+                bonds_.emplace_back(pl);
+                done = true;
+                break;
+              }
+            }
+          }
+        }
+        if (done) {
+          break;
+        }
+      }
+    }
+  }
+}
+
 // ****************************************************************************
 void centerMolForDrawing(RWMol &mol, int confId) {
   auto &conf = mol.getConformer(confId);

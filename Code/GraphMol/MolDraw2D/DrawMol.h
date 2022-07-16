@@ -242,6 +242,7 @@ class DrawMol {
   void findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
                          std::vector<Point2D> &otherBondVecs) const;
   void adjustBondsOnSolidWedgeEnds();
+  void smoothBondJoins();
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -270,6 +271,7 @@ class DrawMol {
   std::vector<std::unique_ptr<DrawAnnotation>> annotations_;
   std::vector<std::unique_ptr<DrawAnnotation>> legends_;
   std::vector<std::tuple<StringRect, OrientType, int>> radicals_;
+  std::vector<int> singleBondLines_;
 
   int width_, height_;
   // to allow for min and max font sizes, the font scale needs to be

@@ -5237,6 +5237,10 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   drawer.drawMolecule(*m1);
   drawer.finishDrawing();
   auto text = drawer.getDrawingText();
+  std::ofstream outs("test_unspec_stereo.svg");
+  outs << text;
+  outs.flush();
+
   std::regex regex1("class='bond-2 atom-1 atom-3' .*M.*C");
   std::smatch wavyMatch;
   REQUIRE(std::regex_search(text, wavyMatch, regex1));
@@ -5256,8 +5260,5 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   REQUIRE(std::regex_search(text, cross2Match, regex3));
   REQUIRE(cross1Match.size() == 1);
 
-  std::ofstream outs("test_unspec_stereo.svg");
-  outs << text;
-  outs.flush();
   check_file_hash("test_unspec_stereo.svg");
 }
