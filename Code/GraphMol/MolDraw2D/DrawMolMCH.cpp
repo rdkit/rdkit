@@ -11,6 +11,7 @@
 //
 
 #include <GraphMol/RWMol.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawMolMCH.h>
 
 namespace RDKit {
@@ -38,12 +39,25 @@ void DrawMolMCH::extractHighlights() {
 
 // ****************************************************************************
 void DrawMolMCH::extractMCHighlights() {
-  makeBondHighlights();
-  makeAtomHighlights();
+  std::vector<std::unique_ptr<DrawShape>> bondHighlights;
+  makeBondHighlights(bondHighlights);
+  std::vector<std::unique_ptr<DrawShape>> atomHighlights;
+  makeAtomHighlights(atomHighlights);
+  fixHighlightJoinProblems(atomHighlights, bondHighlights);
+
+  for (auto &it : bondHighlights) {
+    highlights_.push_back(std::move(it));
+  }
+  bondHighlights.clear();
+  for (auto &it : atomHighlights) {
+    highlights_.push_back(std::move(it));
+  }
+  atomHighlights.clear();
 }
 
 // ****************************************************************************
-void DrawMolMCH::makeBondHighlights() {
+void DrawMolMCH::makeBondHighlights(
+    std::vector<std::unique_ptr<DrawShape>> &bondHighlights) {
   for (auto hb : mcHighlightBondMap_) {
     auto bond_idx = hb.first;
     auto lineWidth = drawOptions_.bondLineWidth;
@@ -67,20 +81,7 @@ void DrawMolMCH::makeBondHighlights() {
       DrawShape *pl = new DrawShapeSimpleLine(
           pts, lineWidth, drawOptions_.scaleBondWidth, col, at1_idx, at2_idx,
           bond->getIdx(), noDash);
-      highlights_.emplace_back(pl);
-    };
-    auto calc_effective_centre = [&](unsigned int atIdx, Point2D &centre)-> double {
-      double xrad = 0.7 * drawOptions_.highlightRadius;
-      double yrad = xrad;
-      if (atomLabels_[atIdx]) {
-        calcSymbolEllipse(atIdx, centre, xrad, yrad);
-      } else {
-        centre = atCds_[atIdx];
-      }
-      double disp = (atCds_[atIdx] - centre).length();
-      xrad -= disp;
-      yrad -= disp;
-      return std::min(xrad, yrad);
+      bondHighlights.emplace_back(pl);
     };
 
     if (hb.second.size() < 2) {
@@ -99,17 +100,10 @@ void DrawMolMCH::makeBondHighlights() {
         DrawShape *pl = new DrawShapePolyLine(
             line_pts, lineWidth, drawOptions_.scaleBondWidth, col, true,
             at1_idx, at2_idx, bond->getIdx(), noDash);
-        highlights_.emplace_back(pl);
+        bondHighlights.emplace_back(pl);
       } else {
-        // if the labels aren't centred on the atom coords, the lines might
-        // miss which looks messy.  So adjust.
-        Point2D atCentre1, atCentre2;
-        double rad1 = calc_effective_centre(at1_idx, atCentre1);
-        double rad2 = calc_effective_centre(at2_idx, atCentre2);
-        double thisrad = 0.7 * std::min(rad1, rad2);
-        auto perp = calcPerpendicular(atCentre1, atCentre2);
-        make_adjusted_line(at1_cds + perp * thisrad, at2_cds + perp * thisrad, col);
-        make_adjusted_line(at1_cds - perp * thisrad, at2_cds - perp * thisrad, col);
+        make_adjusted_line(at1_cds + perp * rad, at2_cds + perp * rad, col);
+        make_adjusted_line(at1_cds - perp * rad, at2_cds - perp * rad, col);
       }
     } else {
       auto col_rad = 2.0 * rad / hb.second.size();
@@ -126,7 +120,7 @@ void DrawMolMCH::makeBondHighlights() {
           DrawShape *pl = new DrawShapePolyLine(
               line_pts, lineWidth, drawOptions_.scaleBondWidth, hb.second[i],
               true, at1_idx, at2_idx, bond->getIdx(), noDash);
-          highlights_.emplace_back(pl);
+          bondHighlights.emplace_back(pl);
           p1 += perp * col_rad;
           p2 += perp * col_rad;
         }
@@ -137,13 +131,6 @@ void DrawMolMCH::makeBondHighlights() {
           cols.erase(cols.begin());
         }
         int step = 0;
-        // if the labels aren't centred on the atom coords, the lines might
-        // miss which looks messy.  So adjust.
-        Point2D atCentre1, atCentre2;
-        double rad1 = calc_effective_centre(at1_idx, atCentre1);
-        double rad2 = calc_effective_centre(at2_idx, atCentre2);
-        double thisrad = 0.7 * std::min(rad1, rad2);
-        auto perp = calcPerpendicular(atCentre1, atCentre2);
         for (size_t i = 0; i < cols.size(); ++i) {
           // draw even numbers from the bottom, odd from the top
           auto offset = perp * (rad - step * col_rad);
@@ -160,21 +147,20 @@ void DrawMolMCH::makeBondHighlights() {
 }
 
 // ****************************************************************************
-void DrawMolMCH::makeAtomHighlights() {
+void DrawMolMCH::makeAtomHighlights(
+    std::vector<std::unique_ptr<DrawShape>> &atomHighlights) {
   for (auto &ha : mcHighlightAtomMap_) {
     double xradius, yradius;
     Point2D centre;
     int lineWidth = getHighlightBondWidth(drawOptions_, -1, nullptr);
     calcSymbolEllipse(ha.first, centre, xradius, yradius);
     if (ha.second.size() == 1) {
-      Point2D offset(xradius, yradius);
-      auto p1 = centre - offset;
-      auto p2 = centre + offset;
-      std::vector<Point2D> pts{p1, p2};
+      Point2D radii(xradius, yradius);
+      std::vector<Point2D> pts{centre, radii};
       DrawShape *ell =
           new DrawShapeEllipse(pts, lineWidth, true, ha.second.front(),
                                drawOptions_.fillHighlights, ha.first);
-      highlights_.emplace_back(ell);
+      atomHighlights.emplace_back(ell);
     } else {
       auto arc_size = 360.0 / double(ha.second.size());
       auto arc_start = 270.0;
@@ -185,7 +171,7 @@ void DrawMolMCH::makeAtomHighlights() {
         DrawShape *arc = new DrawShapeArc(
             pts, arc_start, arc_stop, lineWidth, true, ha.second[i],
             drawOptions_.fillHighlights, ha.first);
-        highlights_.emplace_back(arc);
+        atomHighlights.emplace_back(arc);
         arc_start += arc_size;
         arc_start = arc_start >= 360.0 ? arc_start - 360.0 : arc_start;
       }
@@ -205,7 +191,97 @@ void DrawMolMCH::adjustLineEndForHighlight(int at_idx, Point2D p1,
   if (xradius < 1.0e-6 || yradius < 1.0e-6) {
     return;
   }
+  adjustLineEndForEllipse(centre, xradius, yradius, p1, p2);
+}
 
+// ****************************************************************************
+void DrawMolMCH::calcSymbolEllipse(unsigned int atomIdx, Point2D &centre,
+                                   double &xradius, double &yradius) const {
+  centre = atCds_[atomIdx];
+  xradius = drawOptions_.highlightRadius;
+  yradius = xradius;
+  if (highlightRadii_.find(atomIdx) != highlightRadii_.end()) {
+    xradius = highlightRadii_.find(atomIdx)->second;
+    yradius = xradius;
+  }
+
+  if (drawOptions_.atomHighlightsAreCircles || !atomLabels_[atomIdx] ||
+      atomLabels_[atomIdx]->symbol_.empty()) {
+    return;
+  }
+
+  double x_min, y_min, x_max, y_max;
+  x_min = y_min = std::numeric_limits<double>::max();
+  x_max = y_max = std::numeric_limits<double>::lowest();
+  atomLabels_[atomIdx]->findExtremes(x_min, x_max, y_min, y_max);
+
+  static const double root_2 = sqrt(2.0);
+  xradius = std::max(xradius, root_2 * 0.5 * (x_max - x_min));
+  yradius = std::max(yradius, root_2 * 0.5 * (y_max - y_min));
+  centre.x = 0.5 * (x_max + x_min);
+  centre.y = 0.5 * (y_max + y_min);
+}
+
+// ****************************************************************************
+void DrawMolMCH::fixHighlightJoinProblems(
+    std::vector<std::unique_ptr<DrawShape>> &atomHighlights,
+    std::vector<std::unique_ptr<DrawShape>> &bondHighlights) {
+  std::vector<unsigned int> fettledAtoms;
+  for (unsigned int i = 0; i < atomHighlights.size(); ++i) {
+    auto &atomHL = atomHighlights[i];
+    for (auto &bondHL : bondHighlights) {
+      if (atomHL->atom1_ == bondHL->atom1_ ||
+          atomHL->atom1_ == bondHL->atom2_) {
+        bool ins = doesLineIntersectArc(
+            atomHL->points_[0], atomHL->points_[1].x, atomHL->points_[1].y, 0.0,
+            360.0, 0.0, bondHL->points_[0], bondHL->points_[1]);
+        if (!ins) {
+          fettledAtoms.push_back(i);
+          while (!ins) {
+            double dist1 = (atomHL->points_[0] - bondHL->points_[0]).length();
+            double dist2 = (atomHL->points_[0] - bondHL->points_[1]).length();
+            double maxrad =
+                std::max(atomHL->points_[1].x, atomHL->points_[1].y);
+            double upscaler = 1.25 * std::min(dist1, dist2) / maxrad;
+            if (upscaler <= 1.0) {
+              upscaler = 1.1;
+            }
+            atomHL->points_[1] *= upscaler;
+            ins = doesLineIntersectArc(atomHL->points_[0], atomHL->points_[1].x,
+                                       atomHL->points_[1].y, 0.0, 360, 0.0,
+                                       bondHL->points_[0], bondHL->points_[1]);
+          }
+        }
+      }
+    }
+  }
+  std::sort(fettledAtoms.begin(), fettledAtoms.end());
+  fettledAtoms.erase(std::unique(fettledAtoms.begin(), fettledAtoms.end()),
+                     fettledAtoms.end());
+  for (unsigned int i = 0; i < fettledAtoms.size(); ++i) {
+    // now adjust all the other bond highlights that end on this atom
+    auto &atomHL = atomHighlights[fettledAtoms[i]];
+    for (auto &bondHL : bondHighlights) {
+      if (atomHL->atom1_ == bondHL->atom1_ ||
+          atomHL->atom1_ == bondHL->atom2_) {
+        if ((atomHL->points_[0] - bondHL->points_[0]).lengthSq() <
+            (atomHL->points_[0] - bondHL->points_[1]).lengthSq()) {
+          adjustLineEndForEllipse(atomHL->points_[0], atomHL->points_[1].x,
+                                  atomHL->points_[1].y, bondHL->points_[1],
+                                  bondHL->points_[0]);
+        } else {
+          adjustLineEndForEllipse(atomHL->points_[0], atomHL->points_[1].x,
+                                  atomHL->points_[1].y, bondHL->points_[0],
+                                  bondHL->points_[1]);
+        }
+      }
+    }
+  }
+}
+
+// ****************************************************************************
+void adjustLineEndForEllipse(const Point2D &centre, double xradius,
+                             double yradius, Point2D p1, Point2D &p2) {
   // move everything so the ellipse is centred on the origin.
   p1 -= centre;
   p2 -= centre;
@@ -253,38 +329,12 @@ void DrawMolMCH::adjustLineEndForHighlight(int at_idx, Point2D p1,
     } else {
       // the intersections are both outside the line between p1 and p2
       // so don't do anything.
+      p1 += centre;
+      p2 += centre;
       return;
     }
     p2 = t_to_point(t);
   }
-}
-
-// ****************************************************************************
-void DrawMolMCH::calcSymbolEllipse(unsigned int atomIdx, Point2D &centre,
-                                   double &xradius, double &yradius) const {
-  centre = atCds_[atomIdx];
-  xradius = drawOptions_.highlightRadius;
-  yradius = xradius;
-  if (highlightRadii_.find(atomIdx) != highlightRadii_.end()) {
-    xradius = highlightRadii_.find(atomIdx)->second;
-    yradius = xradius;
-  }
-
-  if (drawOptions_.atomHighlightsAreCircles || !atomLabels_[atomIdx] ||
-      atomLabels_[atomIdx]->symbol_.empty()) {
-    return;
-  }
-
-  double x_min, y_min, x_max, y_max;
-  x_min = y_min = std::numeric_limits<double>::max();
-  x_max = y_max = std::numeric_limits<double>::lowest();
-  atomLabels_[atomIdx]->findExtremes(x_min, x_max, y_min, y_max);
-
-  static const double root_2 = sqrt(2.0);
-  xradius = std::max(xradius, root_2 * 0.5 * (x_max - x_min));
-  yradius = std::max(yradius, root_2 * 0.5 * (y_max - y_min));
-  centre.x = 0.5 * (x_max + x_min);
-  centre.y = 0.5 * (y_max + y_min);
 }
 
 }  // namespace MolDraw2D_detail
