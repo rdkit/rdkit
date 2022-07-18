@@ -1309,8 +1309,8 @@ https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_draw
    setMonochromeMode - black and white
    fixedFontSize = 10
    additionalAtomLabelPadding = 0.066
-   fontFile - if RDBASE is set and the file exists, uses
-              $RDBASE/Chem/Draw/FreeSans.ttf.  Otherwise uses
+   fontFile - if it isn't set already, then if RDBASE is set and the file
+              exists, uses $RDBASE/Data/Fonts/FreeSans.ttf.  Otherwise uses
               BuiltinRobotoRegular.
  */
 )DOC";

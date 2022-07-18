@@ -525,15 +525,20 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   // approximation is FreeSans, but that is under GPL v3.0, so can't be
   // embedded.  Use it if it's there, but fall back on the Roboto font
   // which uses an Apache 2.0 license and is also fairly close to Arial.
-  const char *rdbase = getenv("RDBASE");
-  bool have_free_sans = false;
-  if (rdbase) {
-    opts.fontFile = std::string(rdbase) + "/rdkit/Chem/Draw/FreeSans.ttf";
-    struct stat buffer;
-    have_free_sans = (stat(opts.fontFile.c_str(), &buffer) == 0);
-  }
-  if (!rdbase || !have_free_sans) {
-    opts.fontFile = "BuiltinRobotoRegular";
+  // It is up to the user to put the FreeSans.ttf in the right place.
+  // If the user has already specified a fontFile, assume they know
+  // what they're doing and use it.
+  if (opts.fontFile.empty()) {
+    const char *rdbase = getenv("RDBASE");
+    bool have_free_sans = false;
+    if (rdbase) {
+      opts.fontFile = std::string(rdbase) + "/Data/Fonts/FreeSans.ttf";
+      struct stat buffer;
+      have_free_sans = (stat(opts.fontFile.c_str(), &buffer) == 0);
+    }
+    if (!rdbase || !have_free_sans) {
+      opts.fontFile = "BuiltinRobotoRegular";
+    }
   }
 }
 

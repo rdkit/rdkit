@@ -253,8 +253,8 @@ std::string drawMolACS1996Cairo(
    setMonochromeMode - black and white
    fixedFontSize = 10
    additionalAtomLabelPadding = 0.066
-   fontFile - if RDBASE is set and the file exists, uses
-              $RDBASE/Chem/Draw/FreeSans.ttf.  Otherwise uses
+   fontFile - if it isn't set already, then if RDBASE is set and the file
+              exists, uses $RDBASE/Fonts/Data/FreeSans.ttf.  Otherwise uses
               BuiltinRobotoRegular.
  */
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen = 1.0);
