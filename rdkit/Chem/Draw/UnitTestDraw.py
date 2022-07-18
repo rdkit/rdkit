@@ -276,8 +276,8 @@ class TestCase(unittest.TestCase):
     svg2 = Draw._moltoSVG(m, (250, 200), ats, "", False, highlightBonds=[])
     # there are minor differences between the freetype and non-freetype versions:
     if '>O<' not in svg1:
-      self.assertIn('stroke:#FF7F7F;stroke-width:20', svg1)
-      self.assertNotIn('stroke:#FF7F7F;stroke-width:20', svg2)
+      self.assertIn('stroke:#FF7F7F;stroke-width:18', svg1)
+      self.assertNotIn('stroke:#FF7F7F;stroke-width:18', svg2)
     else:
       self.assertIn('stroke:#FF7F7F;stroke-width:18', svg1)
       self.assertNotIn('stroke:#FF7F7F;stroke-width:18', svg2)
