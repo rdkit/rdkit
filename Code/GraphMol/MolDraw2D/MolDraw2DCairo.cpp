@@ -133,9 +133,6 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                   bool rawCoords) {
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(nSegments > 1, "too few segments");
-  if (nSegments % 2) {
-    ++nSegments;  // we're going to force an even number of segments
-  }
 
   auto segments =
       MolDraw2D_detail::getWavyLineSegments(cds1, cds2, nSegments, vertOffset);
