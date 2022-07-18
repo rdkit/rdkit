@@ -359,7 +359,7 @@ using namespace RDKit;
 // if the generated SVG hashes to the value we're expecting, delete
 // the file.  That way, only the files that need inspection will be
 // left at the end of the run.
-static const bool DELETE_WITH_GOOD_HASH = false;
+static const bool DELETE_WITH_GOOD_HASH = true;
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
