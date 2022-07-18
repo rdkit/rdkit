@@ -18,26 +18,51 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include "FileParserUtils.h"
+#include <string_view>
 
 namespace RDKit {
 class RWMol;
 class Conformer;
 
 namespace FileParserUtils {
+RDKIT_FILEPARSERS_EXPORT inline std::string_view strip(
+    std::string_view orig, std::string stripChars = " \t\r\n") {
+  std::string_view res = orig;
+  auto start = res.find_first_not_of(stripChars);
+  if (start != std::string_view::npos) {
+    auto end = res.find_last_not_of(stripChars) + 1;
+    res = res.substr(start, end - start);
+  } else {
+    res = "";
+  }
+  return res;
+}
+
 template <typename T>
-T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
-  std::string trimmed = boost::trim_copy(input);
-  if (acceptSpaces && trimmed == "") {
+T stripSpacesAndCast(std::string_view input, bool acceptSpaces = false) {
+  auto trimmed = strip(input, " ");
+  if (acceptSpaces && trimmed.empty()) {
     return 0;
   } else {
     return boost::lexical_cast<T>(trimmed);
   }
+}
+template <typename T>
+T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
+  return stripSpacesAndCast<T>(std::string_view(input.c_str()), acceptSpaces);
 }
 RDKIT_FILEPARSERS_EXPORT int toInt(const std::string &input,
                                    bool acceptSpaces = true);
 RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(const std::string &input,
                                                  bool acceptSpaces = true);
 RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string &input,
+                                         bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT int toInt(const std::string_view input,
+                                   bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(std::string_view input,
+                                                 bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string_view input,
                                          bool acceptSpaces = true);
 
 // parses info from a V3000 CTAB into a molecule

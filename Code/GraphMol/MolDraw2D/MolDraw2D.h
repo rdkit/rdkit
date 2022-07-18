@@ -195,7 +195,12 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
       const std::vector<int> *confIds = nullptr);
 
   //! clears the contents of the drawing
-  virtual void clearDrawing() = 0;
+  virtual void clearDrawing() {
+    if (needs_init_) {
+      initDrawing();
+      needs_init_ = false;
+    }
+  };
   //! draws a line from \c cds1 to \c cds2 using the current drawing style
   //! in atom coords.  If rawCoords is passed as true,
   //! the coordinates are used as is, if not they are assumed to be in
@@ -211,7 +216,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! into canvas coords.
   virtual void drawPolygon(const std::vector<Point2D> &cds,
                            bool rawCoords = false) = 0;
-  //@}
+  //! @}
 
   //! A Whole bunch of drawing primitives.  They may be over-ridden
   //! by different renderers, or they may be implemented in terms of
@@ -256,7 +261,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
                          bool asPolygon = false, double frac = 0.05,
                          double angle = M_PI / 6,
-			 const DrawColour &col = DrawColour(0.0, 0.0, 0.0),
+                         const DrawColour &col = DrawColour(0.0, 0.0, 0.0),
                          bool rawCoords = false);
   // draw a plus sign with lines at the given position.
   virtual void drawPlus(const Point2D &cds, int plusWidth,
@@ -272,7 +277,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                           bool rawCoords = false);
 
   //! \name Transformations
-  //@{
+  //! @{
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates and vice versa. Note that the coordinates
   // have
@@ -299,7 +304,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the molecular coordinates of a particular atom.  at_num refers
   //! to the atom in activeMolIdx_.
   virtual Point2D getAtomCoords(int at_num) const;
-  //@}
+  //! @}
   //! returns the coordinates of the atoms of the activeMolIdx_ molecule in
   //! molecular coordinates.
   const std::vector<Point2D> &atomCoords() const;
@@ -416,7 +421,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
  private:
   //! \name Methods that must be provided by child classes
-  //@{
+  //! @{
   virtual void initDrawing() = 0;
   virtual void initTextDrawer(bool noFreetype) = 0;
 

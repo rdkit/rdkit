@@ -2414,7 +2414,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("non-tetrahedral") {
     auto m = R"CTAB(
-  Mrv2108 05252216313D          
+  Mrv2108 05252216313D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2513,4 +2513,122 @@ M  END
     CHECK(m->getAtomWithIdx(3)->getChiralTag() != Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(8)->getChiralTag() != Atom::CHI_UNSPECIFIED);
   }
+}
+
+TEST_CASE("wedgeMolBonds to aromatic rings") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 11 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.948889 -2.986305 0.000000 0
+M  V30 2 C 2.560660 -4.435194 0.000000 0
+M  V30 3 N 1.111771 -4.046965 0.000000 0
+M  V30 4 C 1.500000 -2.598076 0.000000 0
+M  V30 5 C 0.750000 -1.299038 0.000000 0
+M  V30 6 C 1.500000 0.000000 0.000000 0
+M  V30 7 C 0.750000 1.299038 0.000000 0
+M  V30 8 C -0.750000 1.299038 0.000000 0
+M  V30 9 C -1.500000 0.000000 0.000000 0
+M  V30 10 C -0.750000 -1.299038 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 
+M  V30 4 1 4 5 CFG=1
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 2 7 8
+M  V30 8 1 8 9
+M  V30 9 2 9 10
+M  V30 10 1 4 1
+M  V30 11 1 10 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  CHECK(m->getAtomWithIdx(3)->getChiralTag() !=
+        Atom::ChiralType::CHI_UNSPECIFIED);
+  CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+  CHECK(m->getBondWithIdx(3)->getBondDir() == Bond::BondDir::NONE);
+
+  SECTION("generating mol blocks") {
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("M  V30 10 1 4 1 CFG=1") == std::string::npos);
+    CHECK(mb.find("M  V30 4 1 4 5 CFG=1") != std::string::npos);
+  }
+
+  SECTION("details: pickBondsWedge()") {
+    // this is with aromatic bonds
+    auto bnds = pickBondsToWedge(*m);
+    CHECK(bnds.at(3) == 3);
+    RWMol cp(*m);
+
+    // now try kekulized:
+    MolOps::Kekulize(cp);
+    bnds = pickBondsToWedge(cp);
+    CHECK(bnds.at(3) == 3);
+  }
+}
+
+TEST_CASE("github 5307: AssignAtomChiralTagsFromStructure ignores Hydrogens") {
+  std::string mb = R"CTAB(
+     RDKit          3D
+     
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.022097 0.003215 0.016520 0
+M  V30 2 H -0.669009 0.889360 -0.100909 0
+M  V30 3 H -0.377788 -0.857752 -0.588296 0
+M  V30 4 H 0.096421 -0.315125 1.063781 0
+M  V30 5 H 0.972473 0.280302 -0.391096 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+  bool sanitize = true;
+  bool removeHs = false;
+  std::unique_ptr<RWMol> m{MolBlockToMol(mb, sanitize, removeHs)};
+  REQUIRE(m);
+  MolOps::assignChiralTypesFrom3D(*m);
+  CHECK(m->getAtomWithIdx(0)->getChiralTag() !=
+        Atom::ChiralType::CHI_UNSPECIFIED);
+  // assignStereochemistryFrom3D() actually checks:
+  MolOps::assignStereochemistryFrom3D(*m);
+  CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+        Atom::ChiralType::CHI_UNSPECIFIED);
+}
+
+TEST_CASE(
+    "github 5403: Incorrect perception of pseudoasymmetric centers on "
+    "non-canonical molecules") {
+  auto mol1 = "N[C@@]12CC[C@@](CC1)(C2)C(F)F"_smiles;
+  REQUIRE(mol1);
+
+  bool clean = true;
+
+  auto stereoInfo1 = Chirality::findPotentialStereo(*mol1, clean);
+  REQUIRE(stereoInfo1.size() == 2);
+  REQUIRE(stereoInfo1[0].centeredOn == 1);
+  REQUIRE(stereoInfo1[1].centeredOn == 4);
+
+  auto mol2 = "C1C[C@]2(C(F)F)CC[C@@]1(N)C2"_smiles;
+  REQUIRE(mol2);
+
+  auto stereoInfo2 = Chirality::findPotentialStereo(*mol2, clean);
+  REQUIRE(stereoInfo2.size() == 2);
+  CHECK(stereoInfo2[0].centeredOn == 2);
+  CHECK(stereoInfo2[1].centeredOn == 8);
 }

@@ -28,9 +28,9 @@ const int MAX_BONDTYPE = 32;  //!< used in the canonical traversal code
 
 //! used in traversals of the molecule
 typedef enum {
-  WHITE_NODE = 0,  //! not visited
-  GREY_NODE,       //! visited, but not finished
-  BLACK_NODE,      //! visited and finished
+  WHITE_NODE = 0,  //!< not visited
+  GREY_NODE,       //!< visited, but not finished
+  BLACK_NODE,      //!< visited and finished
 } AtomColors;
 
 //! used to indicate types of entries in the molecular stack:

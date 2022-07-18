@@ -183,27 +183,24 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   }
   setColour(col1);
 
-  Point2D delta = (cds2 - cds1);
-  Point2D perp(delta.y, -delta.x);
-  perp.normalize();
-  perp *= vertOffset;
-  delta /= nSegments;
-
-  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  auto segments =
+      MolDraw2D_detail::getWavyLineSegments(cds1, cds2, nSegments, vertOffset);
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
   d_os << "<path ";
   outputClasses();
+
+  auto c1 = std::get<0>(segments[0]);
+  c1 = rawCoords ? c1 : getDrawCoords(c1);
   d_os << "d='M" << c1.x << "," << c1.y;
   for (unsigned int i = 0; i < nSegments; ++i) {
-    Point2D startpt = cds1 + delta * i;
-    Point2D segpt =
-        rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
-    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
+    auto cpt1 = std::get<1>(segments[i]);
     cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
-    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    auto cpt2 = std::get<2>(segments[i]);
     cpt2 = rawCoords ? cpt2 : getDrawCoords(cpt2);
+    auto segpt = std::get<3>(segments[i]);
+    segpt = rawCoords ? segpt : getDrawCoords(segpt);
     d_os << " C" << cpt1.x << "," << cpt1.y << " " << cpt2.x << "," << cpt2.y
          << " " << segpt.x << "," << segpt.y;
   }
@@ -316,6 +313,8 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 void MolDraw2DSVG::clearDrawing() {
+  MolDraw2D::clearDrawing();
+
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
   d_os << "<rect";
   d_os << " style='opacity:1.0;fill:" << col << ";stroke:none'";

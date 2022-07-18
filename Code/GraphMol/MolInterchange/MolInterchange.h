@@ -38,15 +38,15 @@ namespace MolInterchange {
 // \brief parameters controlling parsing of MolJSON
 struct RDKIT_MOLINTERCHANGE_EXPORT JSONParseParameters {
   bool setAromaticBonds =
-      true; /*! toggles setting the BondType of aromatic bonds to Aromatic */
+      true; /*!< toggles setting the BondType of aromatic bonds to Aromatic */
   bool strictValenceCheck =
-      false; /*! toggles doing reasonable valence checks */
+      false; /*!< toggles doing reasonable valence checks */
   bool parseProperties =
-      true; /*! toggles extracting molecular properties from the JSON block */
+      true; /*!< toggles extracting molecular properties from the JSON block */
   bool parseConformers =
-      true; /*! toggles extracting conformers from the JSON block */
+      true; /*!< toggles extracting conformers from the JSON block */
   bool useHCounts =
-      true; /*! toggles using the implicit H counts for atoms from the JSON
+      true; /*!< toggles using the implicit H counts for atoms from the JSON
                block. You may want to set this to false when parsing queries. */
 };
 static JSONParseParameters defaultJSONParseParameters;

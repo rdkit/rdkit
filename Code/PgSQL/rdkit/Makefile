@@ -26,7 +26,7 @@ ifeq ($(USE_AVALON),1)
   AVALONREGRESS=avalon
 endif
 
-POPCOUNTFLAGS=-DUSE_BUILTIN_POPCOUNT -mpopcnt
+POPCOUNTFLAGS=-DRDK_OPTIMIZE_POPCNT -mpopcnt
 
 ifeq ($(USE_THREADS),1)
   THREADLIBS=-L${BOOSTHOME}/lib -lboost_thread -lboost_system

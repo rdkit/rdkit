@@ -12,6 +12,7 @@
 #include <RDGeneral/test.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/FileParseException.h>
@@ -1007,7 +1008,9 @@ void testSubstanceGroupsAndRemoveHs(const std::string &rdbase) {
   {
     std::string fName =
         rdbase + "/Code/GraphMol/test_data/sgroups_and_remove_Hs_1.mol";
-    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    bool sanitize = true;
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName, sanitize, removeHs));
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms() == 8);
     TEST_ASSERT(getSubstanceGroups(*mol).size() == 1);
@@ -1018,13 +1021,180 @@ void testSubstanceGroupsAndRemoveHs(const std::string &rdbase) {
       ps.removeInSGroups = true;
       MolOps::removeHs(mol_copy, ps);
       TEST_ASSERT(mol_copy.getNumAtoms() == 6);
-      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 0);
+      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 1);
     }
     {  // check removeAllHs() too
       RWMol mol_copy = *mol;
       MolOps::removeAllHs(mol_copy);
       TEST_ASSERT(mol_copy.getNumAtoms() == 6);
-      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 0);
+      TEST_ASSERT(getSubstanceGroups(mol_copy).size() == 1);
+    }
+  }
+}
+
+void testKeepSpecialHsOnRemoval() {
+  BOOST_LOG(rdInfoLog) << "-----------------------\n Testing github 5399: "
+                       << "Allow removal of non-special H atoms in SGroups"
+                       << std::endl;
+
+  // Keep XBOND Hydrogens
+  {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.914286 2.714286 0.000000 0
+M  V30 2 H -2.914286 2.714286 0.000000 0
+M  V30 3 H -4.247615 1.771475 0.000000 0
+M  V30 4 H -4.491638 3.530781 0.000000 0
+M  V30 5 H -4.904803 2.576897 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(3 1 3 4) XBONDS=(2 1 4) CONNECT=HT
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 3);
+
+    auto sgs = getSubstanceGroups(*mol);
+    TEST_ASSERT(sgs.size() == 1);
+    std::vector<unsigned> ref_atoms{0};
+    TEST_ASSERT(sgs[0].getAtoms() == ref_atoms);
+  }
+
+  // Keep SAP aIdx (but remove lvIdx).
+  // (This molecule is completely bogus).
+  {
+    auto molblock = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 2 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.8551 -2.605 0 0
+M  V30 2 C -0.5214 -3.375 0 0
+M  V30 3 H -0.5214 -4.9149 0 0
+M  V30 4 H 0.8123 -5.6849 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(2 3 4) SAP=(3 3 4 1) XBONDS=(1 2) LABEL="bogus"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB";
+
+    bool sanitize = false;  // One H has a weird valence
+    bool removeHs = false;
+    std::unique_ptr<RWMol> mol(MolBlockToMol(molblock, sanitize, removeHs));
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+
+    MolOps::removeAllHs(*mol);
+    TEST_ASSERT(mol->getNumAtoms() == 3);
+
+    auto sgs = getSubstanceGroups(*mol);
+    TEST_ASSERT(sgs.size() == 1);
+    std::vector<unsigned> ref_atoms{2};
+    TEST_ASSERT(sgs[0].getAtoms() == ref_atoms);
+
+    auto saps = sgs[0].getAttachPoints();
+    TEST_ASSERT(saps.size() == 1);
+    TEST_ASSERT(saps[0].lvIdx == -1);
+  }
+
+  // H atom part of a CState bond
+  {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 H 12.0001 -4.402 0 0
+M  V30 2 C 10.4601 -4.402 0 0
+M  V30 3 H 8.1485 -3.075 0 0
+M  V30 4 O 9.6883 -3.0729 0 0
+M  V30 5 O 9.6919 -5.725 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 4 3
+M  V30 3 2 2 5
+M  V30 4 1 4 2
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(4 2 3 4 5) SAP=(3 1 2 1) XBONDS=(1 1) CSTATE=(4 1 0 0.82 0) LABEL=Boc
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 4);
+
+    auto sgs = getSubstanceGroups(*mol);
+    TEST_ASSERT(sgs.size() == 1);
+
+    std::vector<unsigned> ref_atoms{{1, 2, 3}};
+    TEST_ASSERT(sgs[0].getAtoms() == ref_atoms);
+
+    auto csts = sgs[0].getCStates();
+    TEST_ASSERT(csts.size() == 1);
+    TEST_ASSERT(csts[0].bondIdx == 0);
+  }
+
+  // SGroups with only H atoms
+  {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 2 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.514286 2.200000 0.000000 0
+M  V30 2 H -2.514286 2.200000 0.000000 0
+M  V30 3 H -3.847615 1.257190 0.000000 0
+M  V30 4 H -4.091638 3.016495 0.000000 0
+M  V30 5 H -4.504803 2.062612 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 DAT 0 ATOMS=(1 4) FIELDNAME="dummy1" FIELDDATA="H1"
+M  V30 2 DAT 0 ATOMS=(1 5) FIELDNAME="dummy2" FIELDDATA="H2"
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 3);
+
+    auto sgs = getSubstanceGroups(*mol);
+    TEST_ASSERT(sgs.size() == 2);
+
+    for (unsigned i = 0; i < 2; ++i) {
+      std::vector<unsigned> ref_atoms{i + 1};
+      TEST_ASSERT(sgs[i].getAtoms() == ref_atoms);
     }
   }
 }
@@ -1037,7 +1207,6 @@ int main() {
   }
 
   RDLog::InitLogs();
-#if 1
   testCreateSubstanceGroups();
   testParseSubstanceGroups(rdbase);
   testSubstanceGroupsRoundTrip(rdbase, false);  // test V2000
@@ -1045,9 +1214,9 @@ int main() {
   testPickleSubstanceGroups();
   testModifyMol();
   testSubstanceGroupChanges(rdbase);
-#endif
   testSubstanceGroupsAndRemoveAtoms(rdbase);
   testSubstanceGroupsAndRemoveHs(rdbase);
+  testKeepSpecialHsOnRemoval();
 
   return 0;
 }

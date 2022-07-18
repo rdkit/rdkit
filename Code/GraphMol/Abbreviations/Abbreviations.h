@@ -26,8 +26,8 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationDefinition {
   std::string displayLabel;
   std::string displayLabelW;
   std::string smarts;
-  std::shared_ptr<ROMol> mol;                  //! optional
-  std::vector<unsigned int> extraAttachAtoms;  //! optional
+  std::shared_ptr<ROMol> mol;                  //!< optional
+  std::vector<unsigned int> extraAttachAtoms;  //!< optional
   bool operator==(const AbbreviationDefinition& other) const {
     return label == other.label && displayLabel == other.displayLabel &&
            displayLabelW == other.displayLabelW && smarts == other.smarts;

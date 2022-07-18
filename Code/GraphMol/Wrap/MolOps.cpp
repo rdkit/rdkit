@@ -1319,19 +1319,24 @@ struct molops_wrapper {
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
+    - A bond is only formed to the remaining atoms, if any, that were bonded \n\
+      to the first atom in the substructure query. (For finer control over\n\
+      substructure replacement, consider using ChemicalReaction.)\n\
 \n\
   EXAMPLES:\n\
 \n\
    The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
    to actually use molecules:\n\
 \n\
-    - ReplaceSubstructs('CCOC','OC','NC') -> ('CCNC',)\n\
+    - ReplaceSubstructs('CCOC','O[CH3]','NC') -> ('CCNC',)\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','NC') -> ('COCCNC','CNCCOC')\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','NC') -> ('COCCNC','CNCCOC')\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','NC',True) -> ('CNCCNC',)\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','NC',True) -> ('CNCCNC',)\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','CN',True,1) -> ('CNCCNC',)\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','CN',True,1) -> ('CNCCNC',)\n\
+\n\
+    - ReplaceSubstructs('CCOC','[CH3]O','NC') -> ('CC.CN',)\n\
 \n";
     python::def("ReplaceSubstructs", replaceSubstructures,
                 (python::arg("mol"), python::arg("query"),
@@ -1941,6 +1946,10 @@ to the terminal dummy atoms.\n\
     docString =
         "Sets the chiral tags on a molecule's atoms based on\n\
   a 3D conformation.\n\
+  NOTE that this does not check to see if atoms are chiral centers (i.e. all\n\
+  substituents are different), it merely sets the chiral type flags based on the\n\
+  coordinates and atom ordering. Use \c AssignStereochemistryFrom3D() if you\n\
+  want chiral flags only on actual stereocenters.\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -2221,6 +2230,15 @@ ARGUMENTS:\n\
 \n";
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
 
+    docString = "Set the wedging to that which was read from the original\n\
+     MolBlock, over-riding anything that was originally there.\n\
+\n\
+          ARGUMENTS:\n\
+        \n\
+            - molecule: the molecule to update\n\
+        \n\
+        \n";
+    python::def("ReapplyMolBlockWedging", reapplyMolBlockWedging, docString.c_str());
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
     python::class_<StereoBondThresholds>("StereoBondThresholds",

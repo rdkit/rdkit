@@ -20,6 +20,7 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawMol.h>
@@ -149,6 +150,9 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
     if (drawMol_->getNumConformers()) {
       centerMolForDrawing(*drawMol_, confId_);
     }
+  }
+  if (drawOptions_.useMolBlockWedging) {
+    RDKit::reapplyMolBlockWedging(*drawMol_);
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
@@ -1747,10 +1751,13 @@ void DrawMol::makeWavyBond(Bond *bond,
   auto at1 = bond->getBeginAtom();
   auto at2 = bond->getEndAtom();
   Point2D end1, end2;
+  double offset = 0.05;
   adjustBondEndsForLabels(at1->getIdx(), at2->getIdx(), end1, end2);
   std::vector<Point2D> pts{end1, end2};
-  DrawShapeWavyLine *s = new DrawShapeWavyLine(pts, drawOptions_.bondLineWidth,
-                                               false, cols.first, cols.second);
+  DrawShapeWavyLine *s = new DrawShapeWavyLine(
+      pts, drawOptions_.bondLineWidth, false, cols.first, cols.second, offset,
+      at1->getIdx() + activeAtmIdxOffset_, at2->getIdx() + activeAtmIdxOffset_,
+      bond->getIdx() + activeBndIdxOffset_);
   bonds_.push_back(std::unique_ptr<DrawShape>(s));
 }
 

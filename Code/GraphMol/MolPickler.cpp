@@ -25,7 +25,7 @@
 #include <cstdint>
 #include <boost/algorithm/string.hpp>
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 
@@ -77,7 +77,7 @@ namespace {
 static unsigned int defaultProperties = PicklerOps::NoProps;
 static CustomPropHandlerVec defaultPropHandlers = {};
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 std::mutex &propmutex_get() {
   // create on demand
   static std::mutex _mutex;
@@ -107,7 +107,7 @@ void write_sstream_to_stream(std::ostream &outStream,
 }  // namespace
 
 unsigned int MolPickler::getDefaultPickleProperties() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::lock_guard<std::mutex> lock(GetPropMutex());
 #endif
   unsigned int props = defaultProperties;
@@ -115,14 +115,14 @@ unsigned int MolPickler::getDefaultPickleProperties() {
 }
 
 void MolPickler::setDefaultPickleProperties(unsigned int props) {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::lock_guard<std::mutex> lock(GetPropMutex());
 #endif
   defaultProperties = props;
 }
 
 const CustomPropHandlerVec &MolPickler::getCustomPropHandlers() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::lock_guard<std::mutex> lock(GetPropMutex());
 #endif
   if (defaultPropHandlers.size() == 0) {
@@ -134,7 +134,7 @@ const CustomPropHandlerVec &MolPickler::getCustomPropHandlers() {
 }
 
 void MolPickler::addCustomPropHandler(const CustomPropHandler &handler) {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::lock_guard<std::mutex> lock(GetPropMutex());
 #endif
   if (defaultPropHandlers.size() == 0) {

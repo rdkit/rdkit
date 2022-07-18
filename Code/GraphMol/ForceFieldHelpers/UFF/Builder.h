@@ -15,7 +15,7 @@
 #include <string>
 #include <boost/shared_array.hpp>
 #include <boost/scoped_ptr.hpp>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 #include <boost/noncopyable.hpp>
@@ -88,7 +88,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts
   static void create();
   static const std::string ds_string;
   static boost::scoped_ptr<const ROMol> ds_instance;
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static std::once_flag ds_flag;
 #endif
 };

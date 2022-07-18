@@ -159,7 +159,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4323_2.svg", 2915352032U},
     {"testGithub4323_3.svg", 2725419149U},
     {"testGithub4323_4.svg", 3108996984U},
-    {"testGithub4238_1.svg", 3072374075U},
+    {"testGithub4238_1.svg", 1666729785U},
     {"testGithub4508_1.svg", 4261373064U},
     {"testGithub4508_1b.svg", 3090854313U},
     {"testGithub4508_2.svg", 1114092U},
@@ -215,6 +215,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_5185.svg", 1652507399U},
     {"testGithub_5269_1.svg", 1465405815U},
     {"testGithub_5269_2.svg", 112102270U},
+    {"test_classes_wavy_bonds.svg", 1548800567U},
+    {"testGithub_5383_1.svg", 1391972140U},
+    {"test_molblock_wedges.svg", 1106580037U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -242,6 +245,8 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub4764.sz1.png", 1677681492U},
     {"testGithub4764.sz2.png", 468390008U},
     {"testGithub4764.sz3.png", 552619356U},
+    {"testGithub4238_1.png", 4211452604U},
+
 };
 
 std::hash_result_t hash_file(const std::string &filename) {
@@ -3277,17 +3282,29 @@ TEST_CASE("Github #4238: prepareMolForDrawing and wavy bonds") {
     CHECK(mol2.getBondWithIdx(0)->getBondDir() == Bond::BondDir::UNKNOWN);
     CHECK(mol2.getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
 
-    MolDraw2DSVG drawer(500, 200, 250, 200);
-    // drawer.drawOptions().prepareMolsBeforeDrawing = false;
     MOL_PTR_VECT ms{mol.get(), &mol2};
-    std::vector<std::string> legends = {"before", "after"};
-    drawer.drawMolecules(ms, &legends);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs("testGithub4238_1.svg");
-    outs << text;
-    outs.flush();
-    check_file_hash("testGithub4238_1.svg");
+    {
+      MolDraw2DSVG drawer(500, 200, 250, 200);
+      // drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      std::vector<std::string> legends = {"before", "after"};
+      drawer.drawMolecules(ms, &legends);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub4238_1.svg");
+      outs << text;
+      outs.flush();
+      check_file_hash("testGithub4238_1.svg");
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    {
+      MolDraw2DCairo drawer(500, 200, 250, 200);
+      std::vector<std::string> legends = {"before", "after"};
+      drawer.drawMolecules(ms, &legends);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testGithub4238_1.png");
+      check_file_hash("testGithub4238_1.png");
+    }
+#endif
   }
 }
 
@@ -4468,8 +4485,7 @@ M  END)RXN";
   }
 }
 
-TEST_CASE(
-    "Github 5185 - don't draw atom indices between double bond") {
+TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
   SECTION("basics") {
     auto m1 = "OC(=O)CCCC(=O)O"_smiles;
     REQUIRE(m1);
@@ -4484,19 +4500,20 @@ TEST_CASE(
       outs << text;
       outs.flush();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-      CHECK(text.find("<path class='note' d='M 92.5 130.1")
-            != std::string::npos);
+      CHECK(text.find("<path class='note' d='M 92.5 130.1") !=
+            std::string::npos);
       check_file_hash("testGithub_5185.svg");
 #else
-      CHECK(text.find("<text x='90.4' y='130.3' class='note' ")
-            != std::string::npos);
+      CHECK(text.find("<text x='90.4' y='130.3' class='note' ") !=
+            std::string::npos);
 #endif
     }
   }
 }
 
 TEST_CASE(
-    "Github 5259 - drawReaction should not fail when prepareMolsBeforeDrawing is false") {
+    "Github 5259 - drawReaction should not fail when prepareMolsBeforeDrawing "
+    "is false") {
   SECTION("basics") {
     auto rxn = "[CH3:1][OH:2]>>[CH2:1]=[OH0:2]"_rxnsmarts;
     REQUIRE(rxn);
@@ -4506,8 +4523,7 @@ TEST_CASE(
   }
 }
 
-TEST_CASE(
-    "Github 5269 - bad index positions with highlights") {
+TEST_CASE("Github 5269 - bad index positions with highlights") {
   SECTION("basics") {
     auto m1 = "CC(=O)Oc1c(C(=O)O)cccc1"_smiles;
     auto q1 = "CC(=O)Oc1c(C(=O)O)cccc1"_smarts;
@@ -4517,17 +4533,17 @@ TEST_CASE(
       std::vector<int> hit_atoms;
       std::vector<MatchVectType> hits_vect;
       SubstructMatch(*m1, *q1, hits_vect);
-      for( size_t i = 0 ; i < hits_vect.size() ; ++i ) {
-        for( size_t j = 0 ; j < hits_vect[i].size() ; ++j ) {
+      for (size_t i = 0; i < hits_vect.size(); ++i) {
+        for (size_t j = 0; j < hits_vect[i].size(); ++j) {
           hit_atoms.push_back(hits_vect[i][j].second);
         }
       }
       std::vector<int> hit_bonds;
-      for(int i: hit_atoms) {
-        for(int j: hit_atoms) {
-          if(i > j) {
+      for (int i : hit_atoms) {
+        for (int j : hit_atoms) {
+          if (i > j) {
             Bond *bnd = m1->getBondBetweenAtoms(i, j);
-            if(bnd) {
+            if (bnd) {
               hit_bonds.push_back(bnd->getIdx());
             }
           }
@@ -4588,3 +4604,105 @@ TEST_CASE("drawing doesn't destroy reaction properties", "[drawing]") {
   CHECK(rxn2->getReactants()[0]->getAtomWithIdx(1)->getAtomMapNum() == 2);
 }
 #endif
+
+TEST_CASE("Class values in SVG for wavy bonds.") {
+  SECTION("basics") {
+    auto m1 = R"CTAB(mol1
+  ChemDraw05162216032D
+
+ 11 11  0  0  0  0  0  0  0  0999 V2000
+    1.1514    0.9038    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1514    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9360   -0.1762    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4209    0.4913    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.9360    1.1587    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4369   -0.3337    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2775    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9920   -0.3337    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7065    0.0788    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4209   -0.3337    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4369   -1.1587    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  1  1  0
+  2  6  1  0
+  6  7  1  0
+  7  8  2  3
+  8  9  1  0
+  9 10  3  0
+  6 11  1  4
+M  END)CTAB"_ctab;
+    REQUIRE(m1);
+    auto b10 = m1->getBondWithIdx(10);
+    b10->setBondDir(Bond::UNKNOWN);
+    MolDraw2DSVG drawer(400, 400, -1, -1);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("<path class='bond-10 atom-5 atom-10'") !=
+          std::string::npos);
+    std::ofstream outs("test_classes_wavy_bonds.svg");
+    outs << text;
+    outs.flush();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+    check_file_hash("test_classes_wavy_bonds.svg");
+#endif
+  }
+}
+
+TEST_CASE("GitHub #5383: cairo error when using similarity maps", "") {
+  auto m1 = "C1N[C@@H]2OCC12"_smiles;
+  REQUIRE(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  const auto conf = m1->getConformer();
+  std::vector<Point2D> cents(conf.getNumAtoms());
+  std::vector<double> weights(conf.getNumAtoms());
+  std::vector<double> widths(conf.getNumAtoms());
+  for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+    cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+    weights[i] = 1;
+    widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
+                          m1->getAtomWithIdx(i)->getAtomicNum());
+  }
+
+  SECTION("svg basics") {
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().padding = 0.1;
+
+    drawer.clearDrawing();
+    std::vector<double> levels;
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+          std::string::npos);
+    std::ofstream outs("github5383_1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5383_1.svg");
+  }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("cairo basics") {
+    MolDraw2DCairo drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().padding = 0.1;
+
+    drawer.clearDrawing();
+    std::vector<double> levels;
+    MolDraw2DUtils::contourAndDrawGaussians(
+        drawer, cents, weights, widths, 10, levels,
+        MolDraw2DUtils::ContourParams(), m1.get());
+
+    drawer.drawOptions().clearBackground = false;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    drawer.writeDrawingText("github5383_1.png");
+  }
+#endif
+}

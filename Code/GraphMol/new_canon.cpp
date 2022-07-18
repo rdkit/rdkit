@@ -20,6 +20,78 @@
 
 namespace RDKit {
 namespace Canon {
+
+namespace {
+void flipIfNeeded(Bond::BondStereo &st1,
+                  const canon_atom *const *controllingAtoms) {
+  CHECK_INVARIANT(controllingAtoms[0], "missing controlling atom");
+  CHECK_INVARIANT(controllingAtoms[2], "missing controlling atom");
+  bool flip = false;
+  if (controllingAtoms[1] &&
+      controllingAtoms[1]->index > controllingAtoms[0]->index) {
+    flip = !flip;
+  }
+  if (controllingAtoms[3] &&
+      controllingAtoms[3]->index > controllingAtoms[2]->index) {
+    flip = !flip;
+  }
+  if (flip) {
+    if (st1 == Bond::BondStereo::STEREOCIS) {
+      st1 = Bond::BondStereo::STEREOTRANS;
+    } else if (st1 == Bond::BondStereo::STEREOTRANS) {
+      st1 = Bond::BondStereo::STEREOCIS;
+    }
+  }
+}
+}  // namespace
+
+int bondholder::compareStereo(const bondholder &o) const {
+  auto st1 = stype;
+  auto st2 = o.stype;
+  if (st1 == Bond::BondStereo::STEREONONE) {
+    if (st2 == Bond::BondStereo::STEREONONE) {
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+  if (st2 == Bond::BondStereo::STEREONONE) {
+    return 1;
+  }
+  if (st1 == Bond::BondStereo::STEREOANY) {
+    if (st2 == Bond::BondStereo::STEREOANY) {
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+  if (st2 == Bond::BondStereo::STEREOANY) {
+    return 1;
+  }
+  // we have some kind of specified stereo on both bonds, work is required
+
+  // if both have absolute stereo labels we can compare them directly
+  if ((st1 == Bond::BondStereo::STEREOE || st1 == Bond::BondStereo::STEREOZ) &&
+      (st2 == Bond::BondStereo::STEREOE || st2 == Bond::BondStereo::STEREOZ)) {
+    if (st1 < st2) {
+      return -1;
+    } else if (st1 > st2) {
+      return 1;
+    }
+    return 0;
+  }
+
+  // check to see if we need to flip the controlling atoms due to atom ranks
+  flipIfNeeded(st1, controllingAtoms);
+  flipIfNeeded(st2, o.controllingAtoms);
+  if (st1 < st2) {
+    return -1;
+  } else if (st1 > st2) {
+    return 1;
+  }
+  return 0;
+}
+
 void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
                            canon_atom *atoms) {
   PRECONDITION(order, "bad pointer");
@@ -331,21 +403,49 @@ void getNbrs(const ROMol &mol, const Atom *at, int *ids) {
 }
 
 bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
-                          bool includeChirality) {
+                          bool includeChirality,
+                          const std::vector<Canon::canon_atom> &atoms) {
   PRECONDITION(bond, "bad pointer");
   Bond::BondStereo stereo = Bond::STEREONONE;
   if (includeChirality) {
     stereo = bond->getStereo();
-    if (stereo == Bond::STEREOANY) {
-      stereo = Bond::STEREONONE;
-    }
   }
   Bond::BondType bt =
       bond->getIsAromatic() ? Bond::AROMATIC : bond->getBondType();
-  return bondholder(bt, stereo, otherIdx, 0);
+  bondholder res(bt, stereo, otherIdx, 0);
+  if (includeChirality) {
+    res.stype = bond->getStereo();
+    if (res.stype == Bond::BondStereo::STEREOCIS ||
+        res.stype == Bond::BondStereo::STEREOTRANS) {
+      res.controllingAtoms[0] = &atoms[bond->getStereoAtoms()[0]];
+      res.controllingAtoms[2] = &atoms[bond->getStereoAtoms()[1]];
+      if (bond->getBeginAtom()->getDegree() > 2) {
+        for (const auto nbr :
+             bond->getOwningMol().atomNeighbors(bond->getBeginAtom())) {
+          if (nbr->getIdx() != bond->getEndAtomIdx() &&
+              nbr->getIdx() !=
+                  static_cast<unsigned int>(bond->getStereoAtoms()[0])) {
+            res.controllingAtoms[1] = &atoms[nbr->getIdx()];
+          }
+        }
+      }
+      if (bond->getEndAtom()->getDegree() > 2) {
+        for (const auto nbr :
+             bond->getOwningMol().atomNeighbors(bond->getEndAtom())) {
+          if (nbr->getIdx() != bond->getBeginAtomIdx() &&
+              nbr->getIdx() !=
+                  static_cast<unsigned int>(bond->getStereoAtoms()[1])) {
+            res.controllingAtoms[3] = &atoms[nbr->getIdx()];
+          }
+        }
+      }
+    }
+  }
+  return res;
 }
 void getBonds(const ROMol &mol, const Atom *at, std::vector<bondholder> &nbrs,
-              bool includeChirality) {
+              bool includeChirality,
+              const std::vector<Canon::canon_atom> &atoms) {
   PRECONDITION(at, "bad pointer");
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(at);
@@ -353,7 +453,7 @@ void getBonds(const ROMol &mol, const Atom *at, std::vector<bondholder> &nbrs,
     const Bond *bond = (mol)[*beg];
     ++beg;
     nbrs.push_back(makeBondHolder(bond, bond->getOtherAtomIdx(at->getIdx()),
-                                  includeChirality));
+                                  includeChirality, atoms));
   }
   std::sort(nbrs.begin(), nbrs.end(), bondholder::greater);
 }
@@ -449,7 +549,7 @@ void initCanonAtoms(const ROMol &mol, std::vector<Canon::canon_atom> &atoms,
     basicInitCanonAtom(mol, atoms[i], i);
     advancedInitCanonAtom(mol, atoms[i], i);
     atoms[i].bonds.reserve(atoms[i].degree);
-    getBonds(mol, atoms[i].atom, atoms[i].bonds, includeChirality);
+    getBonds(mol, atoms[i].atom, atoms[i].bonds, includeChirality, atoms);
   }
 }
 
@@ -497,9 +597,9 @@ void initFragmentCanonAtoms(const ROMol &mol,
     begAt.degree++;
     endAt.degree++;
     begAt.bonds.push_back(
-        makeBondHolder(bond, bond->getEndAtomIdx(), includeChirality));
+        makeBondHolder(bond, bond->getEndAtomIdx(), includeChirality, atoms));
     endAt.bonds.push_back(
-        makeBondHolder(bond, bond->getBeginAtomIdx(), includeChirality));
+        makeBondHolder(bond, bond->getBeginAtomIdx(), includeChirality, atoms));
     if (bondSymbols) {
       begAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
       endAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
@@ -700,7 +800,6 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   if (clearRings) {
     mol.getRingInfo()->reset();
   }
-
-}  // end of rankMolAtoms()
+}
 }  // namespace Canon
 }  // namespace RDKit
