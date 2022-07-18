@@ -19,8 +19,6 @@ The official [rdkit-js](https://github.com/rdkit/rdkit-js) repository will now b
 
 - [Introduction](#introduction)
 - [Install](#install)
-- [Using the RDKit package assets](#using-the-rdkit-package-assets)
-- [Running RDKit in your JavaScript code](#running-rdkit-in-your-javascript-code)
 - [Usage](#usage)
 - [Live demos](#live-demos)
 - [Building the MinimalLib](#building-the-minimallib)
@@ -33,13 +31,20 @@ This initial set of functionality does not cover all of RDKit's functionality, b
 
 ## Install
 
+The most popular way of installing the MinimalLib is with NPM.
+
 ```bash
 npm i @rdkit/rdkit
+# yarn add @rdkit/rdkit
 ```  
 
-## Using the RDKit package assets
+To build the MinimalLib manually, refer to [this section](#building-the-minimallib).
 
-### Option 1: Use the npm package distribution files
+## Usage  
+
+### Using the RDKit package assets
+
+#### Option 1: Use the npm package distribution files
 
 Once you have the RDKit package installed in your node modules, copy the following distribution files anywhere in your deployed assets.
 
@@ -48,16 +53,16 @@ Once you have the RDKit package installed in your node modules, copy the followi
 
 **NOTE: Both files must be copied at the same location in your deployed assets for the library to work properly.**
 
-### Option 2: Use the remote distribution files from [unpkg.com](https://unpkg.com/)
+#### Option 2: Use the remote distribution files from [unpkg.com](https://unpkg.com/)
 
 - `https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js`
 - `https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.wasm`
 
-### Option 3: Build your own distribution files
+#### Option 3: Build your own distribution files
 
 For this method, refer to [Building the MinimalLib](#building-the-minimallib).
 
-## Running RDKit in your JavaScript code
+### Running RDKit in your JavaScript code
 
 To use RDKit, load the javascript file and instantiate the wasm module inside the `head` tag of your `index.html`, before you run your application code:
 
@@ -87,18 +92,16 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 
 ```
 
-## Usage
-
-See the getting started examples at https://www.rdkitjs.com/ .
-
-Follow the examples of this page to see the various ways to use the JavaScript release of RDKit.
-
 ## Live demos
 
-- From rdkit-js website: https://www.rdkitjs.com/
-- From rdkit-js website: https://react.rdkitjs.com/
-- From the npm package: https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/GettingStartedInJS.html
-- From the npm package: https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/demo.html
+If you are using the MinimalLib for the first time, see the getting started examples at https://www.rdkitjs.com/ .
+
+### All live demos
+
+- RDKit.js website: https://www.rdkitjs.com/
+- RDKit.js usage with React.js: https://react.rdkitjs.com/
+- Legacy examples #1: https://unpkg.com/@rdkit/rdkit/dist/GettingStartedInJS.html
+- Legacy examples #2: https://unpkg.com/@rdkit/rdkit/dist/demo.html
 
 ## Building the MinimalLib
 
