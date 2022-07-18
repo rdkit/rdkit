@@ -126,8 +126,9 @@ void MolDraw2DSVG::initDrawing() {
         xmlns:rdkit='http://www.rdkit.org/xml'\n              \
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
         xml:space='preserve'\n";
-  d_os << boost::format{"width='%1%px' height='%2%px' viewBox='0 0 %1% %2%'>\n"}
-      % width() % height();
+  d_os
+      << boost::format{"width='%1%px' height='%2%px' viewBox='0 0 %1% %2%'>\n"} %
+             width() % height();
   d_os << "<!-- END OF HEADER -->\n";
 }
 
@@ -179,7 +180,7 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                 bool rawCoords) {
   PRECONDITION(nSegments > 1, "too few segments");
   if (nSegments % 2) {
-    ++nSegments;  // we're going to assume an even number of segments
+    ++nSegments;  // we're going to force an even number of segments
   }
   setColour(col1);
 
