@@ -258,10 +258,6 @@ std::string drawMolACS1996Cairo(
               BuiltinRobotoRegular.
  */
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen = 1.0);
-// Set double bonds with unspecified stereo to STEREOANY and chiral single
-// bonds with unspecified chiraity to UNKNOWN so they are drawn crossed and
-// wavy respectively.
-void unspecifiedStereoIsUnknown(ROMol &mol, int confId = -1);
 double meanBondLength(const ROMol &mol, int confId = -1);
 }  // namespace MolDraw2DUtils
 

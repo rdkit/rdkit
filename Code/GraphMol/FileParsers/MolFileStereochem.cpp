@@ -10,6 +10,7 @@
 //
 #include <list>
 #include <RDGeneral/RDLog.h>
+#include <GraphMol/Chirality.h>
 #include "MolFileStereochem.h"
 #include <Geometry/point.h>
 #include <boost/dynamic_bitset.hpp>
@@ -17,6 +18,11 @@
 #include <RDGeneral/Ranking.h>
 
 namespace RDKit {
+
+void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
+                              const Conformer *conf, int &dirCode,
+                              bool &reverse);
+
 typedef std::list<double> DOUBLE_LIST;
 
 void WedgeBond(Bond *bond, unsigned int fromAtomIdx, const Conformer *conf) {
@@ -77,7 +83,7 @@ std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
   return std::make_tuple(hasDouble, hasKnownDouble, hasAnyDouble);
 }
 
-std::pair<bool, INT_VECT> countChiralNbours(const ROMol &mol, int noNbrs) {
+std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
   // we need ring information; make sure findSSSR has been called before
   // if not call now
   if (!mol.getRingInfo()->isInitialized()) {
@@ -217,7 +223,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
     indices[i] = i;
   }
   static int noNbrs = 100;
-  std::pair<bool, INT_VECT> retVal = countChiralNbours(mol, noNbrs);
+  std::pair<bool, INT_VECT> retVal = countChiralNbrs(mol, noNbrs);
   bool chiNbrs = retVal.first;
   INT_VECT nChiralNbrs = retVal.second;
   if (chiNbrs) {
@@ -604,6 +610,38 @@ void reapplyMolBlockWedging(ROMol &mol) {
         case 3:
           b->setBondDir(Bond::BEGINDASH);
           break;
+      }
+    }
+  }
+}
+
+void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
+  INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
+  const auto conf = mol.getConformer(confId);
+  for (auto b : mol.bonds()) {
+    if (b->getBondType() == Bond::DOUBLE) {
+      int dirCode;
+      bool reverse;
+      GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode, reverse);
+      if (dirCode == 3) {
+        b->setStereo(Bond::STEREOANY);
+      }
+    }
+  }
+  static int noNbrs = 100;
+  auto si = Chirality::findPotentialStereo(mol);
+  if (si.size()) {
+    std::pair<bool, INT_VECT> retVal = countChiralNbrs(mol, noNbrs);
+    INT_VECT nChiralNbrs = retVal.second;
+    for (auto i : si) {
+      if (i.type == Chirality::StereoType::Atom_Tetrahedral &&
+          i.specified == Chirality::StereoSpecified::Unspecified) {
+        i.specified = Chirality::StereoSpecified::Unknown;
+        auto atom = mol.getAtomWithIdx(i.centeredOn);
+        INT_MAP_INT resSoFar;
+        int bndIdx = pickBondToWedge(atom, mol, nChiralNbrs, resSoFar, noNbrs);
+        auto bond = mol.getBondWithIdx(bndIdx);
+        bond->setBondDir(Bond::UNKNOWN);
       }
     }
   }
