@@ -249,17 +249,18 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
               // labels
   bool unspecifiedStereoIsUnknown = false;  // if true, double bonds with
                                             // unspecified stereo are drawn
-                                            // crossed, single bonds with
-                                            // unspecified chirality are wavy
+                                            // crossed, potential stereocenters
+                                            // with unspecified stereo are drawn
+                                            // with a wavy bond.
   bool singleColourWedgeBonds =
-      false;  // if true wedged and dashed bonds are drawn
-              // using symbolColour rather than inheriting
-              // their colour from the atoms
+      false;                        // if true wedged and dashed bonds are drawn
+                                    // using symbolColour rather than inheriting
+                                    // their colour from the atoms
   bool useMolBlockWedging = false;  // If the molecule came from a MolBlock,
                                     // prefer the wedging information that
                                     // provides.  If false, use RDKit rules.
-  double scalingFactor = 20.0;  // scaling factor used for pixels->angstrom
-                                // when auto scaling is being used
+  double scalingFactor = 20.0;      // scaling factor used for pixels->angstrom
+                                    // when auto scaling is being used
   double baseFontSize =
       -1.0;  // when > 0 this is used to set the baseFontSize used for text
              // drawing. As a reference point: the default value for
