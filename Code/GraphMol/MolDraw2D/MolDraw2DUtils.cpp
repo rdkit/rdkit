@@ -34,12 +34,6 @@
 #include <Numerics/Conrec.h>
 
 namespace RDKit {
-void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
-                              const Conformer *conf, int &dirCode,
-                              bool &reverse);
-}
-
-namespace RDKit {
 namespace MolDraw2DUtils {
 
 namespace {
@@ -538,39 +532,6 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
     }
     if (!rdbase || !have_free_sans) {
       opts.fontFile = "BuiltinRobotoRegular";
-    }
-  }
-}
-
-// ****************************************************************************
-void unspecifiedStereoIsUnknown(ROMol &mol, int confId) {
-  INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
-  const auto conf = mol.getConformer(confId);
-  for (auto b : mol.bonds()) {
-    if (b->getBondType() == Bond::DOUBLE) {
-      int dirCode;
-      bool reverse;
-      RDKit::GetMolFileBondStereoInfo(b, wedgeBonds, &conf, dirCode, reverse);
-      if (dirCode == 3) {
-        b->setStereo(Bond::STEREOANY);
-      }
-    }
-  }
-  static int noNbrs = 100;
-  auto si = Chirality::findPotentialStereo(mol);
-  if (si.size()) {
-    std::pair<bool, INT_VECT> retVal = countChiralNbours(mol, noNbrs);
-    INT_VECT nChiralNbrs = retVal.second;
-    for (auto i : si) {
-      if (i.type == Chirality::StereoType::Atom_Tetrahedral &&
-          i.specified == Chirality::StereoSpecified::Unspecified) {
-        i.specified = Chirality::StereoSpecified::Unknown;
-        auto atom = mol.getAtomWithIdx(i.centeredOn);
-        INT_MAP_INT resSoFar;
-        int bndIdx = pickBondToWedge(atom, mol, nChiralNbrs, resSoFar, noNbrs);
-        auto bond = mol.getBondWithIdx(bndIdx);
-        bond->setBondDir(Bond::UNKNOWN);
-      }
     }
   }
 }

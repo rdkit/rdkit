@@ -152,7 +152,7 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
     }
   }
   if (drawOptions_.unspecifiedStereoIsUnknown) {
-    MolDraw2DUtils::unspecifiedStereoIsUnknown(*drawMol_);
+    markUnspecifiedStereoAsUnknown(*drawMol_);
   }
   if (drawOptions_.useMolBlockWedging) {
     RDKit::reapplyMolBlockWedging(*drawMol_);
