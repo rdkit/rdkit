@@ -451,7 +451,7 @@ bool drawMolACS1996(const std::string &outfile, const ROMol &mol,
     txt = drawMolACS1996Cairo(mol, legend, highlight_atoms, highlight_bonds,
                               highlight_atom_map, highlight_bond_map,
                               highlight_radii, confId);
-    open_mode |= std::ios_base::binary;
+    open_mode = std::ios_base::out | std::ios_base::binary;
 #endif
   } else {
     BOOST_LOG(rdErrorLog) << "Failed to recognise graphics file type for"
