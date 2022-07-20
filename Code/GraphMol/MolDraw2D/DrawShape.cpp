@@ -160,18 +160,18 @@ void DrawShapeEllipse::myDraw(MolDraw2D &drawer) const {
     drawer.setLineWidth(1);
     drawer.drawOptions().scaleBondWidth = false;
   }
-  drawer.drawEllipse(points_[0], points_[1], true);
+  auto p1 = points_[0] - points_[1];
+  auto p2 = points_[0] + points_[1];
+  drawer.drawEllipse(p1, p2, true);
 }
 
 // ****************************************************************************
 void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
                                     double &ymax) const {
-  auto wb2 = (points_[1].x - points_[0].x) / 2;
-  auto hb2 = (points_[1].y - points_[0].y) / 2;
+  auto wb2 = points_[1].x;
+  auto hb2 = points_[1].y;
   auto cx = points_[0].x + wb2;
   auto cy = points_[0].y + hb2;
-  wb2 = wb2 > 0 ? wb2 : -1 * wb2;
-  hb2 = hb2 > 0 ? hb2 : -1 * hb2;
   xmin = std::min(cx - wb2, xmin);
   xmax = std::max(cx + wb2, xmax);
   ymin = std::min(cy - hb2, ymin);
@@ -179,15 +179,17 @@ void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
 }
 
 // ****************************************************************************
+void DrawShapeEllipse::move(const Point2D &trans) { points_[0] += trans; }
+// ****************************************************************************
 bool DrawShapeEllipse::doesRectClash(const StringRect &rect,
                                      double padding) const {
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
   Point2D tl, tr, br, bl;
   rect.calcCorners(tl, tr, br, bl, padding);
-  auto w = points_[1].x - points_[0].x;
-  auto h = points_[1].y - points_[0].y;
-  auto cx = points_[0].x + w / 2;
-  auto cy = points_[0].y + h / 2;
+  auto w = points_[1].x;
+  auto h = points_[1].y;
+  auto cx = points_[0].x;
+  auto cy = points_[0].y;
   w = w > 0 ? w : -1 * w;
   h = h > 0 ? h : -1 * h;
   Point2D centre{cx, cy};

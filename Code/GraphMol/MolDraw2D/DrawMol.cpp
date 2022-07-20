@@ -1599,14 +1599,14 @@ void DrawMol::makeQueryBond(Bond *bond, double doubleBondOffset) {
       } else {
         segment /= segment.length() * 10;
         auto l = segment.length();
-        Point2D p1 = midp + segment + Point2D(l, l);
-        Point2D p2 = midp + segment - Point2D(l, l);
+        Point2D p1 = midp + segment;
+        Point2D p2 = Point2D(l, l);
         std::vector<Point2D> pts{p1, p2};
         DrawShapeEllipse *ell =
             new DrawShapeEllipse(pts, 1, false, queryColour, false);
         bonds_.emplace_back(ell);
-        p1 = midp - segment + Point2D(l, l);
-        p2 = midp - segment - Point2D(l, l);
+        p1 = midp - segment;
+        p2 = Point2D(l, l);
         pts = std::vector<Point2D>{p1, p2};
         ell = new DrawShapeEllipse(pts, 1, false, queryColour, false);
         bonds_.emplace_back(ell);
@@ -1937,10 +1937,8 @@ void DrawMol::makeAtomCircleHighlights() {
       if (highlightRadii_.find(thisIdx) != highlightRadii_.end()) {
         radius = highlightRadii_.find(thisIdx)->second;
       }
-      Point2D offset(radius, radius);
-      Point2D p1 = atCds_[thisIdx] - offset;
-      Point2D p2 = atCds_[thisIdx] + offset;
-      std::vector<Point2D> pts{p1, p2};
+      Point2D radii(radius, radius);
+      std::vector<Point2D> pts{atCds_[thisIdx], radii};
       DrawShape *ell = new DrawShapeEllipse(pts, 2, false, col, true,
                                             thisIdx + activeAtmIdxOffset_);
       highlights_.push_back(std::unique_ptr<DrawShape>(ell));
@@ -1981,10 +1979,8 @@ void DrawMol::makeAtomEllipseHighlights(double lineWidth) {
         centre.x = 0.5 * (xMax + xMin);
         centre.y = 0.5 * (yMax + yMin);
       }
-      Point2D offset(xradius, yradius);
-      Point2D p1 = centre - offset;
-      Point2D p2 = centre + offset;
-      std::vector<Point2D> pts{p1, p2};
+      Point2D radii(xradius, yradius);
+      std::vector<Point2D> pts{centre, radii};
       DrawShape *ell = new DrawShapeEllipse(pts, lineWidth, true, col, true,
                                             thisIdx + activeAtmIdxOffset_);
       highlights_.push_back(std::unique_ptr<DrawShape>(ell));
@@ -2216,6 +2212,8 @@ int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
   // as opposed to the draw shapes derived from them.  Github 5185 shows
   // that sometimes atom indices can just fit between the lines of a
   // double bond.
+  // Also, no longer check if it clashes with highlights.  This frequently
+  // results in bad pictures and things look ok on top of highlights.
   for (auto bond : drawMol_->bonds()) {
     if (bond->getBondType() == Bond::DOUBLE) {
       auto at1 = bond->getBeginAtomIdx();
