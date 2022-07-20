@@ -419,87 +419,18 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
                     const std::map<int, DrawColour> *highlight_atom_map,
                     const std::map<int, DrawColour> *highlight_bond_map,
                     const std::map<int, double> *highlight_radii, int confId) {
+  if (drawer.width() != -1 || drawer.height() != -1) {
+    BOOST_LOG(rdWarningLog)
+        << "ACS drawing mode works best with a flexiCanvas i.e. a drawer"
+        << " created with width and height of -1.  The scale will be fixed,"
+        << " and that may not look great on these sizes." << std::endl;
+  }
   double meanBondLen = MolDraw2DUtils::meanBondLength(mol, confId);
   setACS1996Options(drawer.drawOptions(), meanBondLen);
   drawer.drawMolecule(mol, legend, highlight_atoms, highlight_bonds,
                       highlight_atom_map, highlight_bond_map, highlight_radii,
                       confId);
 }
-
-// ****************************************************************************
-bool drawMolACS1996(const std::string &outfile, const ROMol &mol,
-                    const std::string &legend,
-                    const std::vector<int> *highlight_atoms,
-                    const std::vector<int> *highlight_bonds,
-                    const std::map<int, DrawColour> *highlight_atom_map,
-                    const std::map<int, DrawColour> *highlight_bond_map,
-                    const std::map<int, double> *highlight_radii, int confId) {
-  std::string txt;
-  auto open_mode = std::ios_base::out;
-  if (outfile.substr(outfile.length() - 4) == ".svg") {
-    txt = drawMolACS1996SVG(mol, legend, highlight_atoms, highlight_bonds,
-                            highlight_atom_map, highlight_bond_map,
-                            highlight_radii, confId);
-  } else if (outfile.substr(outfile.length() - 4) == ".png") {
-#ifdef RDK_BUILD_CAIRO_SUPPORT
-    txt = drawMolACS1996Cairo(mol, legend, highlight_atoms, highlight_bonds,
-                              highlight_atom_map, highlight_bond_map,
-                              highlight_radii, confId);
-    open_mode = std::ios_base::out | std::ios_base::binary;
-#endif
-  } else {
-    BOOST_LOG(rdErrorLog) << "Failed to recognise graphics file type for"
-                          << outfile << " so nothing written." << std::endl;
-    return false;
-  }
-  std::ofstream outs(outfile.c_str(), open_mode);
-  if (!outs || outs.bad()) {
-    BOOST_LOG(rdErrorLog) << "Failed to write file " << outfile << std::endl;
-    return false;
-  }
-  if (open_mode & std::ios_base::binary) {
-    outs.write(txt.c_str(), txt.size());
-  } else {
-    outs << txt;
-  }
-  outs.close();
-
-  return true;
-}
-
-// ****************************************************************************
-std::string drawMolACS1996SVG(
-    const ROMol &mol, const std::string &legend,
-    const std::vector<int> *highlight_atoms,
-    const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_atom_map,
-    const std::map<int, DrawColour> *highlight_bond_map,
-    const std::map<int, double> *highlight_radii, int confId) {
-  MolDraw2DSVG drawer(-1, -1);
-  drawMolACS1996(drawer, mol, legend, highlight_atoms, highlight_bonds,
-                 highlight_atom_map, highlight_bond_map, highlight_radii,
-                 confId);
-  drawer.finishDrawing();
-  return drawer.getDrawingText();
-}
-
-#ifdef RDK_BUILD_CAIRO_SUPPORT
-// ****************************************************************************
-std::string drawMolACS1996Cairo(
-    const ROMol &mol, const std::string &legend,
-    const std::vector<int> *highlight_atoms,
-    const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_atom_map,
-    const std::map<int, DrawColour> *highlight_bond_map,
-    const std::map<int, double> *highlight_radii, int confId) {
-  MolDraw2DCairo drawer(-1, -1);
-  drawMolACS1996(drawer, mol, legend, highlight_atoms, highlight_bonds,
-                 highlight_atom_map, highlight_bond_map, highlight_radii,
-                 confId);
-  drawer.finishDrawing();
-  return drawer.getDrawingText();
-}
-#endif
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {

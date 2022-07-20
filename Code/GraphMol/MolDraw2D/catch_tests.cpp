@@ -4730,7 +4730,7 @@ TEST_CASE("ACS 1996 mode") {
     std::string nameBase = "acs1996_";
 #if 1
     {
-      auto m1 = R"CTAB(mol1
+      auto m = R"CTAB(mol1
   ChemDraw05162216032D
 
  11 11  0  0  0  0  0  0  0  0999 V2000
@@ -4757,25 +4757,32 @@ TEST_CASE("ACS 1996 mode") {
   9 10  3  0
   6 11  1  4
 M  END)CTAB"_ctab;
-      REQUIRE(m1);
-      MolDraw2DSVG drawer(-1, -1);
-      MolDraw2DUtils::drawMolACS1996(drawer, *m1, "", nullptr, nullptr);
-      drawer.finishDrawing();
-      std::string text = drawer.getDrawingText();
-      std::ofstream outs(nameBase + "1.svg");
-      outs << text;
-      outs.flush();
-      outs.close();
+      REQUIRE(m);
+      {
+        MolDraw2DSVG drawer(-1, -1);
+        MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 1", nullptr, nullptr);
+        drawer.finishDrawing();
+        std::string text = drawer.getDrawingText();
+        std::ofstream outs(nameBase + "1.svg");
+        outs << text;
+        outs.flush();
+        outs.close();
+        check_file_hash(nameBase + "1.svg");
+      }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "1.png", *m1,
-                                                "Mol 1", nullptr, nullptr);
-      REQUIRE(res);
+      {
+        MolDraw2DCairo drawer(-1, -1);
+        MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 1", nullptr, nullptr);
+        drawer.finishDrawing();
+        drawer.writeDrawingText(nameBase + "1.png");
+        check_file_hash(nameBase + "1.png");
+      }
 #endif
     }
 #endif
 #if 1
     {
-      auto m2 = R"CTAB(mol2
+      auto m = R"CTAB(mol2
   ChemDraw06062216302D
 
   0  0  0     0  0              0 V3000
@@ -4813,43 +4820,60 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-      REQUIRE(m2);
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "2.svg", *m2,
-                                                "Mol 2", nullptr, nullptr);
-      REQUIRE(res);
+      REQUIRE(m);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 2", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "2.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "2.svg");
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-      bool res1 = MolDraw2DUtils::drawMolACS1996(nameBase + "2.png", *m2,
-                                                 "Mol 2", nullptr, nullptr);
-      REQUIRE(res1);
+      {
+        MolDraw2DCairo drawer(-1, -1);
+        MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 2", nullptr, nullptr);
+        drawer.finishDrawing();
+        drawer.writeDrawingText(nameBase + "2.png");
+        check_file_hash(nameBase + "1.png");
+      }
 #endif
     }
 #endif
 #if 1
     {
-      auto m3 = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
-      m3->setProp<std::string>("_Name", "mol3");
-      REQUIRE(m3);
-      MolDraw2DUtils::prepareMolForDrawing(*m3);
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "3.svg", *m3,
-                                                "Mol 3", nullptr, nullptr);
-      REQUIRE(res);
+      auto m = "C[C@H](I)CC(Cl)C[C@@H](F)C"_smiles;
+      m->setProp<std::string>("_Name", "mol3");
+      REQUIRE(m);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 3", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "3.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "3.svg");
     }
 #endif
 #if 1
     {
-      auto m4 = "CC(I)CC(Cl)CC(F)C"_smiles;
-      m4->setProp<std::string>("_Name", "mol4");
-      REQUIRE(m4);
-      MolDraw2DUtils::prepareMolForDrawing(*m4);
+      auto m = "CC(I)CC(Cl)CC(F)C"_smiles;
+      m->setProp<std::string>("_Name", "mol4");
+      REQUIRE(m);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
       MolDraw2DSVG drawer(-1, -1);
       drawer.drawOptions().unspecifiedStereoIsUnknown = true;
-      MolDraw2DUtils::drawMolACS1996(drawer, *m4, "Mol 4", nullptr, nullptr);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 4", nullptr, nullptr);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
       std::ofstream outs(nameBase + "4.svg");
       outs << text;
       outs.flush();
       outs.close();
+      check_file_hash(nameBase + "4.svg");
     }
 #endif
 #if 1
@@ -4933,10 +4957,15 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-      REQUIRE(m);
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "5.svg", *m, "Mol 5",
-                                                nullptr, nullptr);
-      REQUIRE(res);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 5", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "5.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "5.svg");
     }
 #endif
 #if 1
@@ -4986,9 +5015,15 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
       REQUIRE(m);
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "6.svg", *m, "Mol 6",
-                                                nullptr, nullptr);
-      REQUIRE(res);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 6", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "6.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "6.svg");
     }
 #endif
 #if 1
@@ -5042,14 +5077,20 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
       REQUIRE(m);
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "7.svg", *m, "Mol 7",
-                                                nullptr, nullptr);
-      REQUIRE(res);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 7", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "7.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "7.svg");
     }
 #endif
 #if 1
     {
-      auto m8 = R"CTAB(mol8
+      auto m = R"CTAB(mol8
   ChemDraw07042207302D
 
   0  0  0     0  0              0 V3000
@@ -5100,15 +5141,21 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-      REQUIRE(m8);
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "8.svg", *m8,
-                                                "Mol 8", nullptr, nullptr);
-      REQUIRE(res);
+      REQUIRE(m);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 8", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "8.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "8.svg");
     }
 #endif
 #if 9
     {
-      auto m9 = R"CTAB(mol9
+      auto m = R"CTAB(mol9
   ChemDraw06302215142D
 
   0  0  0     0  0              0 V3000
@@ -5167,15 +5214,21 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-      REQUIRE(m9);
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "9.svg", *m9,
-                                                "Mol 9", nullptr, nullptr);
-      REQUIRE(res);
+      REQUIRE(m);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 9", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "9.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "9.svg");
     }
 #endif
 #if 1
     {
-      auto m10 = R"CTAB(mol10
+      auto m = R"CTAB(mol10
   ChemDraw07062213362D
 
   0  0  0     0  0              0 V3000
@@ -5203,19 +5256,23 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-      REQUIRE(m10);
-      MolDraw2DUtils::prepareMolForDrawing(*m10);
-      bool res = MolDraw2DUtils::drawMolACS1996(nameBase + "10.svg", *m10,
-                                                "Mol 10", nullptr, nullptr);
-      REQUIRE(res);
+      REQUIRE(m);
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 10", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "10.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "10.svg");
     }
 #endif
 #if 1
     {
-      auto m11 =
-          "CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1"_smiles;
-      TEST_ASSERT(m11);
-      MolDraw2DUtils::prepareMolForDrawing(*m11);
+      auto m = "CCOC(=O)Nc1ccc(SCC2COC(Cn3ccnc3)(c3ccc(Cl)cc3Cl)O2)cc1"_smiles;
+      REQUIRE(m);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
       std::vector<int> highlight_atoms{17, 18, 19, 20, 21, 6, 7, 8, 9, 31, 32};
       std::map<int, DrawColour> atom_highlight_colors;
       atom_highlight_colors[8] = DrawColour(1.0, 1.0, 0.0);
@@ -5230,7 +5287,7 @@ M  END
       options.continuousHighlight = true;
       MolDraw2DSVG drawer(-1, -1);
       drawer.drawOptions() = options;
-      MolDraw2DUtils::drawMolACS1996(drawer, *m11, "Mol 11", &highlight_atoms,
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 11", &highlight_atoms,
                                      &highlight_bonds, &atom_highlight_colors,
                                      &bond_highlight_colors);
       drawer.finishDrawing();
@@ -5239,6 +5296,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
+      check_file_hash(nameBase + "11.svg");
     }
 #endif
   }

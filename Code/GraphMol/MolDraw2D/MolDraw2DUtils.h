@@ -177,7 +177,11 @@ RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
 /*
   The ACS1996 guidelines, as described at
   https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
-  drawer.drawOptions() are changed.
+  A number of values in drawer.drawOptions() are changed.
+  This is designed to be used with a flexiCanvas, i.e. a MolDraw2D object
+  created with width and height -1, because it works to a fixed scale.
+  It will issue a warning if the dimensions are otherwise and the picture may
+  look sub-optimal.
  */
 void drawMolACS1996(
     MolDraw2D &drawer, const ROMol &mol, const std::string &legend,
@@ -186,52 +190,7 @@ void drawMolACS1996(
     const std::map<int, DrawColour> *highlight_atom_map = nullptr,
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
     const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
-//! Draw a molecule to a file object according to ACS 1996 guidelines
-/*
-  The ACS1996 guidelines, as described at
-  https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
-  drawer.drawOptions() are changed.
-  Filename should end in '.png' or '.svg' and the appropriate format will be
-  selected.
- */
-bool drawMolACS1996(
-    const std::string &outfile, const ROMol &mol, const std::string &legend,
-    const std::vector<int> *highlight_atoms,
-    const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_atom_map = nullptr,
-    const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
-//! Return string drawing molecule in SVG format according to ACS 1996
-//! guidelines
-/*
-  The ACS1996 guidelines, as described at
-  https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
-  drawer.drawOptions() are changed.
- */
-std::string drawMolACS1996SVG(
-    const ROMol &mol, const std::string &legend,
-    const std::vector<int> *highlight_atoms,
-    const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_atom_map = nullptr,
-    const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
-//! Return string drawing molecule in PNG format according to ACS 1996
-//! guidelines
-/*
-  The ACS1996 guidelines, as described at
-  https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
-  drawer.drawOptions() are changed.
-  Uses Cairo for the drawings.
- */
-#ifdef RDK_BUILD_CAIRO_SUPPORT
-std::string drawMolACS1996Cairo(
-    const ROMol &mol, const std::string &legend,
-    const std::vector<int> *highlight_atoms,
-    const std::vector<int> *highlight_bonds,
-    const std::map<int, DrawColour> *highlight_atom_map = nullptr,
-    const std::map<int, DrawColour> *highlight_bond_map = nullptr,
-    const std::map<int, double> *highlight_radii = nullptr, int confId = -1);
-#endif
+
 //! Set the draw options to produce something as close as possible to
 //! the ACS 1996 guidelines as described at
 //! https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
