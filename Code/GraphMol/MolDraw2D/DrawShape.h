@@ -81,7 +81,8 @@ class DrawShapeArrow : public DrawShape {
 
 class DrawShapeEllipse : public DrawShape {
  public:
-  // points are the 2 foci of the ellipse
+  // Points should be size 2 - the first entry is the centre, the second
+  // gives the x and y radii of the ellipse.
   DrawShapeEllipse(const std::vector<Point2D> &points, int lineWidth = 2,
                    bool scaleLineWidth = false,
                    DrawColour lineColour = DrawColour(0, 0, 0),
@@ -94,6 +95,7 @@ class DrawShapeEllipse : public DrawShape {
   void myDraw(MolDraw2D &drawer) const override;
   void findExtremes(double &xmin, double &xmax, double &ymin,
                     double &ymax) const override;
+  void move(const Point2D &trans) override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 };
 
