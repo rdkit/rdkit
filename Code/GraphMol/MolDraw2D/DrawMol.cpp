@@ -152,7 +152,7 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
     }
   }
   if (drawOptions_.unspecifiedStereoIsUnknown) {
-    MolDraw2DUtils::unspecifiedStereoIsUnknown(*drawMol_);
+    markUnspecifiedStereoAsUnknown(*drawMol_);
   }
   if (drawOptions_.useMolBlockWedging) {
     RDKit::reapplyMolBlockWedging(*drawMol_);
@@ -1256,8 +1256,7 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
   auto &mol = atom.getOwningMol();
   const Point2D &at1_cds = atCds_[atom.getIdx()];
   Point2D nbr_sum(0.0, 0.0);
-  for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
-    const Bond *bond = mol[nbri];
+  for (const auto bond : mol.atomBonds(&atom)) {
     const Point2D &at2_cds = atCds_[bond->getOtherAtomIdx(atom.getIdx())];
     nbr_sum += at2_cds - at1_cds;
   }
@@ -1300,8 +1299,7 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
         // orientation or up with N orientation, which puts the H on the bond.
         auto &mol = atom.getOwningMol();
         const Point2D &at1_cds = atCds_[atom.getIdx()];
-        for (const auto &nbri : make_iterator_range(mol.getAtomBonds(&atom))) {
-          const Bond *bond = mol[nbri];
+        for (const auto bond : mol.atomBonds(&atom)) {
           const Point2D &at2_cds = atCds_[bond->getOtherAtomIdx(atom.getIdx())];
           Point2D bond_vec = at2_cds - at1_cds;
           double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
@@ -1998,8 +1996,7 @@ void DrawMol::makeAtomEllipseHighlights(double lineWidth) {
 void DrawMol::makeBondHighlightLines(double lineWidth) {
   for (const auto atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
-    for (const auto &nbri : make_iterator_range(drawMol_->getAtomBonds(atom))) {
-      const Bond *bond = (*drawMol_)[nbri];
+    for (const auto bond : drawMol_->atomBonds(atom)) {
       unsigned int nbrIdx = bond->getOtherAtomIdx(thisIdx);
       if (nbrIdx < static_cast<unsigned int>(atCds_.size()) &&
           nbrIdx > thisIdx) {
@@ -2108,8 +2105,7 @@ double DrawMol::getNoteStartAngle(const Atom *atom) const {
   }
   Point2D at_cds = atCds_[atom->getIdx()];
   std::vector<Point2D> bond_vecs;
-  for (const auto &nbr :
-       make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
+  for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
     Point2D bond_vec = at_cds.directionVector(atCds_[nbr]);
     bond_vec.normalize();
     bond_vecs.push_back(bond_vec);
@@ -2609,9 +2605,7 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
   auto other_ring_atom = [&](unsigned int bondAtom, const Bond &bond,
                              const INT_VECT &ringBonds) -> int {
     auto atom = drawMol_->getAtomWithIdx(bondAtom);
-    for (const auto atBond :
-         make_iterator_range(drawMol_->getAtomBonds(atom))) {
-      const Bond *bond2 = (*drawMol_)[atBond];
+    for (const auto bond2 : drawMol_->atomBonds(atom)) {
       if (bond2->getIdx() == bond.getIdx()) {
         continue;
       }
@@ -2766,8 +2760,7 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     Point2D l2 = l2s.directionVector(l2f);
     l2f = l2s + l2 * 2.0;
     Point2D ip;
-    for (const auto &nbr :
-         make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
+    for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
       auto nbr_cds = atCds_[nbr];
       if (doLinesIntersect(l1s, l1f, at2_cds, nbr_cds, &ip)) {
         l1f = ip;
@@ -2903,18 +2896,18 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
         }
         // want the p1 or p2 that is furthest from the 3rd atom - make it p1
         if (p1 != -1 && p2 != -1) {
-	  if((atCds_[thirdAtom->getIdx()] - wedge->points_[p1]).lengthSq() <
-            (atCds_[thirdAtom->getIdx()] - wedge->points_[p2]).lengthSq()) {
-          std::swap(p1, p2);
-	  }
-	  // now make the coords of the end of the bondLine that matches p1 the
-	  // same as p1
-	  if (bondLine->atom1_ == wedge->atom2_) {
-	    bondLine->points_[0] = wedge->points_[p1];
-	  } else {
-	    bondLine->points_[1] = wedge->points_[p1];
-	  }
-	}
+          if ((atCds_[thirdAtom->getIdx()] - wedge->points_[p1]).lengthSq() <
+              (atCds_[thirdAtom->getIdx()] - wedge->points_[p2]).lengthSq()) {
+            std::swap(p1, p2);
+          }
+          // now make the coords of the end of the bondLine that matches p1 the
+          // same as p1
+          if (bondLine->atom1_ == wedge->atom2_) {
+            bondLine->points_[0] = wedge->points_[p1];
+          } else {
+            bondLine->points_[1] = wedge->points_[p1];
+          }
+        }
       }
     }
   }
@@ -2933,9 +2926,7 @@ void DrawMol::smoothBondJoins() {
     if (atom->getDegree() == 2) {
       doIt = true;
     } else if (atom->getDegree() == 3) {
-      for (const auto nbri :
-           boost::make_iterator_range(drawMol_->getAtomNeighbors(atom))) {
-        const auto nbr = (*drawMol_)[nbri];
+      for (const auto nbr : drawMol_->atomNeighbors(atom)) {
         auto bond =
             drawMol_->getBondBetweenAtoms(atom->getIdx(), nbr->getIdx());
         if ((nbr->getDegree() == 1 && bond->getBondType() == Bond::DOUBLE) ||
@@ -3050,7 +3041,7 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
     Point2D const &at1_cds = atCds[atom.getIdx()];
     ROMol const &mol = atom.getOwningMol();
     int i = 0;
-    for (const auto &nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
+    for (auto nbr : make_iterator_range(mol.getAtomNeighbors(&atom))) {
       Point2D bond_vec = at1_cds.directionVector(atCds[nbr]);
       bond_vec.normalize();
       bond_vecs[i] = bond_vec;
@@ -3256,9 +3247,7 @@ bool areBondsTrans(const Point2D &at1, const Point2D &at2, const Point2D &at3,
 const Atom *otherNeighbor(const Atom *firstAtom, const Atom *secondAtom,
                           int nborNum, const ROMol &mol) {
   int nbourCount = 0;
-  for (const auto nbri :
-       boost::make_iterator_range(mol.getAtomNeighbors(firstAtom))) {
-    const auto nbr = mol[nbri];
+  for (const auto nbr : mol.atomNeighbors(firstAtom)) {
     if (nbr->getIdx() != secondAtom->getIdx()) {
       if (nbourCount == nborNum) {
         return nbr;

@@ -1,2 +1,0 @@
-The FreeSans font is licensed under GPL v3.0 with the fonts exception.
-See https://www.gnu.org/software/freefont/license.html for details.

@@ -900,8 +900,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("unspecifiedStereoIsUnknown",
                      &RDKit::MolDrawOptions::unspecifiedStereoIsUnknown,
                      "if true, double bonds with unspecified stereo are drawn"
-                     " crossed, single bonds with unscpecified chirality are"
-                     " wavy.  Default is false.")
+                     " crossed, potential stereocenters with unspecified stereo are drawn with a wavy bond."
+                     " Default is false.")
       .def_readwrite(
           "singleColourWedgeBonds",
           &RDKit::MolDrawOptions::singleColourWedgeBonds,
