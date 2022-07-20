@@ -435,7 +435,7 @@ bool drawMolACS1996(const std::string &outfile, const ROMol &mol,
                     const std::map<int, DrawColour> *highlight_bond_map,
                     const std::map<int, double> *highlight_radii, int confId) {
   std::string txt;
-  auto open_mode = std::ios_base::out;
+  unsigned open_mode = std::ios_base::out;
   if (outfile.substr(outfile.length() - 4) == ".svg") {
     txt = drawMolACS1996SVG(mol, legend, highlight_atoms, highlight_bonds,
                             highlight_atom_map, highlight_bond_map,
