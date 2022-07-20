@@ -1891,7 +1891,7 @@ std::ostream &operator<<(std::ostream &oss, const StereoType &s) {
       oss << "Bond_Cumulene_Even";
       break;
     case StereoType::Bond_Atropisomer:
-      oss << "bond_Atropisomer";
+      oss << "Bond_Atropisomer";
       break;
   }
   return oss;

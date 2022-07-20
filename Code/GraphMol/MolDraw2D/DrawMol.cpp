@@ -2208,8 +2208,9 @@ int DrawMol::doesNoteClash(const DrawAnnotation &annot) const {
 
 // ****************************************************************************
 int DrawMol::doesRectClash(const StringRect &rect, double padding) const {
-  // No longer check if it clashes with highlights.  This frequently
-  // results in bad pictures and things look ok on top of highlights.
+  // No longer checks if it clashes with highlights.  This frequently
+  // results in bad pictures and things look ok on top of highlights
+  // (issues 5269 and 5195, PR 5272)
 
   // see if the rectangle clashes with any of the double bonds themselves,
   // as opposed to the draw shapes derived from them.  Github 5185 shows
@@ -2787,7 +2788,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
 }
 
 // ****************************************************************************
-Point2D DrawMol::doubleBondEnd(int at1, int at2, int at3, double offset,
+Point2D DrawMol::doubleBondEnd(unsigned int at1, unsigned int at2,
+                               unsigned int at3, double offset,
                                bool trunc) const {
   Point2D v21 = atCds_[at2].directionVector(atCds_[at1]);
   Point2D v23 = atCds_[at2].directionVector(atCds_[at3]);

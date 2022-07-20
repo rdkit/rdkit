@@ -166,6 +166,10 @@ class DrawShapeSolidWedge : public DrawShape {
 
 class DrawShapeDashedWedge : public DrawShape {
  public:
+  // oneLessDash means that the last dash at the fat end of the wedge
+  // isn't drawn.  The wedge will be as fat as it would have been with
+  // the extra dash.  This is so that bonds coming out of the fat end
+  // of the wedge aren't directly incident on a dash.
   DrawShapeDashedWedge(const std::vector<Point2D> points,
                        const DrawColour &col1, const DrawColour &col2,
                        bool oneLessDash = true, double lineWidth = 1.0,

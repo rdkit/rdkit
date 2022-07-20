@@ -234,8 +234,8 @@ class DrawMol {
   // to at3, find the position of the at2 end of a double bond between at2
   // and at3.  If trunc, it'll be along the vector that bisects the two bonds on
   // the inside, otherwise it's perpendicular to the bond from at1 to at2.
-  Point2D doubleBondEnd(int at1, int at2, int at3, double offset,
-                        bool trunc) const;
+  Point2D doubleBondEnd(unsigned int at1, unsigned int at2, unsigned int at3,
+                        double offset, bool trunc) const;
   void calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
                            Point2D &l1f, Point2D &l2s, Point2D &l2f);
   // find the vectors of any atoms singly bonded to atom that aren't otherAtom.
