@@ -183,7 +183,7 @@ RDKIT_MOLDRAW2D_EXPORT inline void contourAndDrawGaussians(
   It will issue a warning if the dimensions are otherwise and the picture may
   look sub-optimal.
  */
-void drawMolACS1996(
+RDKIT_MOLDRAW2D_EXPORT void drawMolACS1996(
     MolDraw2D &drawer, const ROMol &mol, const std::string &legend,
     const std::vector<int> *highlight_atoms,
     const std::vector<int> *highlight_bonds,
@@ -216,7 +216,8 @@ void drawMolACS1996(
               exists, uses $RDBASE/Fonts/Data/FreeSans.ttf.  Otherwise uses
               BuiltinRobotoRegular.
  */
-void setACS1996Options(MolDrawOptions &opts, double meanBondLen = 1.0);
+RDKIT_MOLDRAW2D_EXPORT void setACS1996Options(MolDrawOptions &opts,
+                                              double meanBondLen = 1.0);
 double meanBondLength(const ROMol &mol, int confId = -1);
 }  // namespace MolDraw2DUtils
 
