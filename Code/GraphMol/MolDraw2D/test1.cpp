@@ -147,9 +147,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub2151_1.svg", 3638120408U},
     {"testGithub2151_2.svg", 3354257096U},
     {"testGithub2762.svg", 168469294U},
-    {"testGithub2931_1.svg", 298969290U},
-    {"testGithub2931_2.svg", 922872904U},
-    {"testGithub2931_3.svg", 2823954159U},
+    {"testGithub2931_1.svg", 1680082130U},
+    {"testGithub2931_2.svg", 1398841536U},
+    {"testGithub2931_3.svg", 1556934255U},
+    {"testGithub2931_4.svg", 400761615U},
     {"test20_1.svg", 2394223373U},
     {"test20_2.svg", 3739838435U},
     {"test20_3.svg", 2641474171U},
@@ -277,9 +278,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub2151_1.svg", 519358907U},
     {"testGithub2151_2.svg", 3102378492U},
     {"testGithub2762.svg", 2006115844U},
-    {"testGithub2931_1.svg", 3001628989U},
-    {"testGithub2931_2.svg", 3664574077U},
-    {"testGithub2931_3.svg", 35507527U},
+    {"testGithub2931_1.svg", 1577747483U},
+    {"testGithub2931_2.svg", 956220378U},
+    {"testGithub2931_3.svg", 339061924U},
+    {"testGithub2931_4.svg", 252908291U},
     {"test20_1.svg", 2324941307U},
     {"test20_2.svg", 457598277U},
     {"test20_3.svg", 1187217942U},
@@ -3022,7 +3024,7 @@ void test15ContinuousHighlightingWithGrid() {
       outs.flush();
       outs.close();
       check_file_hash("test15_2.svg");
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.3px") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.4px") !=
                   std::string::npos);
     }
     for (auto &&mol : mols) {
@@ -3647,7 +3649,6 @@ void testGithub2931() {
       }
     }
   };
-
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -3685,7 +3686,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='348.6' rx='9.9' ry='10.1' "
+          text.find("<ellipse cx='240.2' cy='347.7' rx='12.3' ry='12.7' "
                     "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
@@ -3693,8 +3694,8 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='297.0' rx='9.8' ry='9.8' "
-                    "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
+          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
+                    "class='atom-5'  style='fill:none;stroke:#00FF00") !=
           std::string::npos);
 #endif
       check_file_hash("testGithub2931_1.svg");
@@ -3717,7 +3718,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='348.2' rx='9.9' ry='9.9' "
+          text.find("<ellipse cx='240.2' cy='347.6' rx='12.5' ry='12.5' "
                     "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
@@ -3725,7 +3726,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='296.7' rx='9.8' ry='9.8' "
+          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
                     "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
@@ -3755,11 +3756,45 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:40.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='297.0' rx='9.8' ry='9.8' "
+          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
                     "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
       check_file_hash("testGithub2931_3.svg");
+    }
+    {
+      MolDraw2DSVG drawer(500, 500);
+      drawer.drawOptions().fillHighlights = false;
+      drawer.drawOptions().continuousHighlight = true;
+      drawer.drawOptions().fixedFontSize = 10;
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addBondIndices = true;
+      drawer.drawMoleculeWithHighlights(*m, "Test 4", ha_map, hb_map, h_rads,
+                                        h_lw_mult);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2931_4.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#if DO_TEST_ASSERT
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
+                  std::string::npos);
+      TEST_ASSERT(
+          text.find("<ellipse cx='246.6' cy='340.2' rx='11.7' ry='11.7' "
+                    "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
+          std::string::npos);
+#endif
+#else
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
+                  std::string::npos);
+      TEST_ASSERT(
+          text.find("<ellipse cx='247.7' cy='292.7' rx='11.7' ry='11.7' "
+                    "class='atom-5'  style='fill:none;stroke:#00FF00") !=
+          std::string::npos);
+#endif
+      check_file_hash("testGithub2931_4.svg");
     }
   }
   std::cerr << " Done" << std::endl;
@@ -4533,7 +4568,6 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-
 #if 1
   test1();
   test2();
