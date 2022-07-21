@@ -682,4 +682,13 @@ TEST_CASE("CDXML") {
             CHECK(MolToSmiles(*mol) == expected[i++]);
         }
     }
+    SECTION("Malformed") {
+        auto fname = cdxmlbase + "malformed.cdxml";
+        try {
+            auto mols = CDXMLFileToMols(fname);
+            CHECK(0);
+        } catch (FileParseException &e) {
+            CHECK(std::string(e.what()) == "expected > at line: 373");
+        }
+    }
 }

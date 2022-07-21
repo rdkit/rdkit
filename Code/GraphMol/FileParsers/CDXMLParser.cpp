@@ -19,6 +19,7 @@
 #include <fstream>
 #include <sstream>
 #include "MolFileStereochem.h"
+#include <RDGeneral/FileParseException.h>
 
 // TODO
 //  I'm currently using atom map numbers to join structures
@@ -446,7 +447,17 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
   // populate tree structure pt
   using boost::property_tree::ptree;
   ptree pt;
-  read_xml(inStream, pt);
+  try {
+      read_xml(inStream, pt);
+  } catch (boost::property_tree::ptree_error &e) {
+      auto xml = dynamic_cast<boost::property_tree::file_parser_error*>(&e);
+      if(xml != nullptr) {
+          auto msg = std::string(xml->message()) + " at line: " + boost::lexical_cast<std::string>(xml->line());
+          throw FileParseException(msg);
+      }
+      
+      throw FileParseException(e.what());
+  }
   std::map<unsigned int, Atom*> ids;
   std::vector<std::unique_ptr<RWMol>> mols;
   std::map<unsigned int, size_t> fragment_lookup;
