@@ -423,7 +423,8 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
     BOOST_LOG(rdWarningLog)
         << "ACS drawing mode works best with a flexiCanvas i.e. a drawer"
         << " created with width and height of -1.  The scale will be fixed,"
-        << " and that may not look great on these sizes." << std::endl;
+        << " and that may not look great with a pre-determined size."
+        << std::endl;
   }
   double meanBondLen = MolDraw2DUtils::meanBondLength(mol, confId);
   setACS1996Options(drawer.drawOptions(), meanBondLen);
