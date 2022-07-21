@@ -16,6 +16,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BadFileException.h>
 
 using namespace RDKit;
 
@@ -433,7 +434,7 @@ TEST_CASE("CDXML") {
     }
     SECTION("Bad CDXML") {
         auto fname = cdxmlbase + "bad-cdxml.cdxml";
-        
+        // Only one passes sanitization
         {
           std::vector<std::string> expected = {"*c1ccccc1"};
           std::vector<std::string> expected_smarts = {
@@ -447,7 +448,7 @@ TEST_CASE("CDXML") {
               CHECK(MolToSmiles(*mol) == expected[i++]);
           }
         }
-        
+        // setting sanitization to false, we get both
         std::vector<std::string> expected = {
             "*C1=C([H])C([H])=C([H])C([H])=C1[H]",
             "*C1=C([H])N([H])=C([H])C([H])=C1[H]"};
@@ -501,7 +502,6 @@ TEST_CASE("CDXML") {
     }
      
     SECTION("deuterium atom") {
-        // this was hella fun to validate the stereo-chemistry...
         auto fname = cdxmlbase + "deuterium-atom.cdxml";
         auto mols = CDXMLFileToMols(fname, false, false);
         std::vector<std::string> expected = {
@@ -655,6 +655,27 @@ TEST_CASE("CDXML") {
         //  we are sanitizing
         auto mols = CDXMLFileToMols(fname);
         std::vector<std::string> expected = { "*", "C=C(C[C@H]([O])C[C@]1(O)O[C@H](C[C@@H](O)CC(=O)O)C[C@H](OC(C)=O)C1(C)C)C[Si](C)(C)C", "*.CC[Si](CC)CC"};
+        CHECK(mols.size()==expected.size());
+        int i=0;
+        for(auto &mol : mols) {
+            CHECK(MolToSmiles(*mol) == expected[i++]);
+        }
+    }
+    
+    SECTION("Missing File Name") {
+        try {
+            auto mols = CDXMLFileToMols("missing file");
+            CHECK(0); // Bad file exception not caught
+        }
+        catch (RDKit::BadFileException) {
+        
+        }
+    }
+    
+    SECTION("Aromatic ring (bondorder==4") {
+        auto fname = cdxmlbase + "aromatic.cdxml";
+        auto mols = CDXMLFileToMols(fname);
+        std::vector<std::string> expected = { "c1ccccc1" };
         CHECK(mols.size()==expected.size());
         int i=0;
         for(auto &mol : mols) {

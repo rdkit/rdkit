@@ -3,7 +3,7 @@
 <CDXML
  CreationProgram="ChemDraw 21.0.0.28"
  Name="aromatic.cdxml"
- BoundingBox="216.30 347.37 320.97 437.94"
+ BoundingBox="216.30 347.36 269.26 408.52"
  WindowPosition="0 0"
  WindowSize="0 0"
  FractionalWidths="yes"
@@ -22,7 +22,7 @@
  LabelFont="21"
  LabelSize="10"
  LabelFace="96"
- CaptionFont="20"
+ CaptionFont="21"
  CaptionSize="12"
  HashSpacing="2.70"
  MarginWidth="2"
@@ -42,7 +42,7 @@
  ResidueZigZag="yes"
  NumberResidueBlocks="no"
  PrintMargins="36 36 36 36"
- MacPrintInfo="00030000004800480000000002DE0240FFEEFFEE030602520367052803FC00020000004800480000000002DE0240000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
+ MacPrintInfo="0003000000480048000000000300024CFFF4FFF4030C02580367052803FC0002000000480048000000000300024C000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
  ChemPropName=""
  ChemPropFormula="Chemical Formula: "
  ChemPropExactMass="Exact Mass: "
@@ -102,10 +102,9 @@
 <color r="0.6000" g="0" b="0.6000"/>
 <color r="0.2000" g="1" b="0.2000"/>
 </colortable><fonttable>
-<font id="20" charset="x-mac-roman" name="Helvetica"/>
 <font id="21" charset="x-mac-roman" name="Helvetica"/>
 </fonttable><page
- id="23"
+ id="26"
  BoundingBox="0 0 540 720"
  HeaderPosition="36"
  FooterPosition="36"
@@ -114,7 +113,7 @@
  WidthPages="1"
 ><fragment
  id="5"
- BoundingBox="216.30 347.37 320.97 437.94"
+ BoundingBox="216.30 347.36 269.26 408.52"
  Z="1"
 ><n
  id="3"
@@ -146,39 +145,6 @@
  p="242.78 347.94"
  Z="7"
  AS="N"
-/><n
- id="10"
- p="294.74 407.94"
- Z="8"
- AS="N"
-/><n
- id="11"
- p="320.72 392.94"
- Z="9"
- AS="N"
-/><n
- id="12"
- p="294.74 437.94"
- Z="10"
- AS="N"
-/><b
- id="13"
- Z="11"
- B="7"
- E="10"
- BS="N"
-/><b
- id="14"
- Z="12"
- B="10"
- E="11"
- BS="N"
-/><b
- id="15"
- Z="13"
- B="10"
- E="12"
- BS="N"
 /><b
  id="16"
  Z="14"
@@ -208,7 +174,7 @@
  Display="Dash"
  Display2="Dash"
  BS="N"
- BondCircularOrdering="19 13 0 17"
+ BondCircularOrdering="19 0 0 17"
 /><b
  id="19"
  Z="17"
@@ -218,7 +184,7 @@
  Display="Dash"
  Display2="Dash"
  BS="N"
- BondCircularOrdering="20 0 13 18"
+ BondCircularOrdering="20 0 0 18"
 /><b
  id="20"
  Z="18"

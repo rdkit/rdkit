@@ -50,13 +50,10 @@ struct BondInfo {
     int bond_id;
     int start;
     int end;
-    int order;
+    Bond::BondType order;
     std::string display;
     Bond::BondType getBondType() {
-        if(order && order <= 4)
-            return static_cast<Bond::BondType>(order);
-        // handle aromatic bond type
-        return Bond::BondType::UNSPECIFIED;
+        return order;
     }
     bool validate(const std::map<unsigned int, Atom *> &ids, unsigned int num_atoms) const {
         auto s = ids.find(start);
@@ -345,7 +342,7 @@ bool parse_fragment(RWMol &mol,
           int bond_id = -1;
           int start_atom = -1;
           int end_atom = -1;
-          int order = 1;
+          Bond::BondType order = Bond::SINGLE;
           std::string display;
           for(auto &attr: node.second.get_child("<xmlattr>")) {
               if(attr.first == "id") {
@@ -355,7 +352,11 @@ bool parse_fragment(RWMol &mol,
               } else if (attr.first == "E") {
                   end_atom = stoi(attr.second.data());
               } else if (attr.first == "Order") {
-                  order = stoi(attr.second.data());
+                  if(attr.second.data() == "1.5") {
+                      order = Bond::BondType::AROMATIC;
+                  } else {
+                      order = static_cast<Bond::BondType>(stoi(attr.second.data()));
+                  }
               } else if (attr.first == "Display") { // gets wedge/hash stuff and probably more
                   display = attr.second.data();
               }
@@ -387,6 +388,11 @@ bool parse_fragment(RWMol &mol,
                            bond.getBondType()) - 1;
           }
           Bond * bnd = mol.getBondWithIdx(bond_idx);
+          if(bond.order == Bond::BondType::AROMATIC) {
+              bnd->setIsAromatic(true);
+              ids[bond.end]->setIsAromatic(true);
+              ids[bond.start]->setIsAromatic(true);
+          }
           bnd->setProp("CDX_BOND_ID", bond.bond_id);
           if(bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
               bnd->setBondDir(Bond::BondDir::BEGINDASH);
