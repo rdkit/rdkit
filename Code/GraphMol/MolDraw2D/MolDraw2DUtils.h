@@ -218,7 +218,7 @@ RDKIT_MOLDRAW2D_EXPORT void drawMolACS1996(
  */
 RDKIT_MOLDRAW2D_EXPORT void setACS1996Options(MolDrawOptions &opts,
                                               double meanBondLen = 1.0);
-double meanBondLength(const ROMol &mol, int confId = -1);
+RDKIT_MOLDRAW2D_EXPORT double meanBondLength(const ROMol &mol, int confId = -1);
 }  // namespace MolDraw2DUtils
 
 }  // namespace RDKit
