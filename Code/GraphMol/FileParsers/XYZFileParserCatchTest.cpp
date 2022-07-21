@@ -48,9 +48,9 @@ TEST_CASE("xyz file parser") {
         
         ind = 0;
         for (auto p : positions) {
-            CHECK(conf->getAtomPos(ind).x == p.x);
-            CHECK(conf->getAtomPos(ind).y == p.y);
-            CHECK(conf->getAtomPos(ind).z == p.z);
+            CHECK(conf->getAtomPos(ind).x == Approx(p.x).margin(1e-6));
+            CHECK(conf->getAtomPos(ind).y == Approx(p.y).margin(1e-6));
+            CHECK(conf->getAtomPos(ind).z == Approx(p.z).margin(1e-6));
             ind++;
         }
     }
@@ -89,10 +89,20 @@ TEST_CASE("xyz file parser") {
         
         ind = 0;
         for (auto p : positions) {
-            CHECK(conf->getAtomPos(ind).x == p.x);
-            CHECK(conf->getAtomPos(ind).y == p.y);
-            CHECK(conf->getAtomPos(ind).z == p.z);
+            CHECK(conf->getAtomPos(ind).x == Approx(p.x).margin(1e-6));
+            CHECK(conf->getAtomPos(ind).y == Approx(p.y).margin(1e-6));
+            CHECK(conf->getAtomPos(ind).z == Approx(p.z).margin(1e-6));
             ind++;
         }
+    }
+    SECTION("zero atoms") {
+        std::string rdbase = getenv("RDBASE");
+        std::string fName = rdbase +
+                            "/Code/GraphMol/FileParsers/test_data/"
+                            "nonexistant.xyz";
+        
+        std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+        REQUIRE(mol);
+        REQUIRE(mol->getNumAtoms() == 0);
     }
 }

@@ -1,3 +1,13 @@
+//
+//  Copyright (C) 2022 Sreya Gogineni and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include <boost/lexical_cast.hpp>
 
 #include "FileParsers.h"
@@ -12,89 +22,66 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <string_view>
 #include <cstdlib>
 #include <cstdio>
+#include <vector>
 
 namespace RDKit {
 
-void ParseExtraLine(std::string_view extraLine) {
-    std::string_view whitespace{" \v\t"};
-    if (extraLine.find_first_not_of(whitespace) != std::string_view::npos) {
+void ParseExtraLine(std::string extraLine) {
+    std::string whitespace{" \t"};
+    if (extraLine.find_first_not_of(whitespace) != std::string::npos) {
         std::ostringstream errout;
         errout << "More lines than expected" << std::endl;
         throw FileParseException(errout.str());
     }
 }
 
-Atom *ParseXYZFileAtomLine(std::string_view atomLine, RDGeom::Point3D &pos, unsigned int line) {
-    // find text
-    std::string_view whitespace{" \v\t"};
-    size_t delim0 = atomLine.find_first_not_of(whitespace);
-    size_t delim1 = atomLine.find_first_of(whitespace, delim0);
-    if (delim1 == std::string_view::npos) {
-        std::ostringstream errout;
-        errout << "Missing coordinates on line " << line << std::endl;
-        throw FileParseException(errout.str());
+Atom *ParseXYZFileAtomLine(std::string atomLine, RDGeom::Point3D &pos, unsigned int line) {
+    std::string whitespace{" \t"};
+    size_t delims[8];
+    size_t prev = 0;
+    for (unsigned int i = 0; i < 7; i++) {
+        if (i % 2 == 0) {
+            delims[i] = atomLine.find_first_not_of(whitespace, prev);
+        } else {
+            delims[i] = atomLine.find_first_of(whitespace, prev);
+        }
+        if (delims[i] == std::string::npos) {
+            std::ostringstream errout;
+            errout << "Missing coordinates on line " << line << std::endl;
+            throw FileParseException(errout.str());
+        }
+        prev = delims[i];
     }
-    size_t delim2 = atomLine.find_first_not_of(whitespace, delim1);
-    if (delim2 == std::string_view::npos) {
-        std::ostringstream errout;
-        errout << "Missing coordinates on line " << line << std::endl;
-        throw FileParseException(errout.str());
-    }
-    size_t delim3 = atomLine.find_first_of(whitespace, delim2);
-    if (delim3 == std::string_view::npos) {
-        std::ostringstream errout;
-        errout << "Missing coordinates on line " << line << std::endl;
-        throw FileParseException(errout.str());
-    }
-    size_t delim4 = atomLine.find_first_not_of(whitespace, delim3);
-    if (delim4 == std::string_view::npos) {
-        std::ostringstream errout;
-        errout << "Missing coordinates on line " << line << std::endl;
-        throw FileParseException(errout.str());
-    }
-    size_t delim5 = atomLine.find_first_of(whitespace, delim4);
-    if (delim5 == std::string_view::npos) {
-        std::ostringstream errout;
-        errout << "Missing coordinates on line " << line << std::endl;
-        throw FileParseException(errout.str());
-    }
-    size_t delim6 = atomLine.find_first_not_of(whitespace, delim5);
-    if (delim6 == std::string_view::npos) {
-        std::ostringstream errout;
-        errout << "Missing coordinates on line " << line << std::endl;
-        throw FileParseException(errout.str());
-    }
-    size_t delim7 = atomLine.find_last_not_of(whitespace) + 1;
+    delims[7] = atomLine.find_last_not_of(whitespace) + 1;
     
     // set conformer
     try {
-        pos.x = FileParserUtils::toDouble(atomLine.substr(delim2, delim3 - delim2), false);
+        pos.x = FileParserUtils::toDouble(atomLine.substr(delims[2], delims[3] - delims[2]), false);
     } catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert '" << atomLine.substr(delim2, delim3 - delim2) << "' to double on line " << line << std::endl;
+        errout << "Cannot convert '" << atomLine.substr(delims[2], delims[3] - delims[2]) << "' to double on line " << line << std::endl;
         throw FileParseException(errout.str());
     }
 
     try {
-        pos.y = FileParserUtils::toDouble(atomLine.substr(delim4, delim5 - delim4), false);
+        pos.y = FileParserUtils::toDouble(atomLine.substr(delims[4], delims[5] - delims[4]), false);
     } catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert '" << atomLine.substr(delim4, delim5 - delim4) << "' to double on line " << line << std::endl;
+        errout << "Cannot convert '" << atomLine.substr(delims[4], delims[5] - delims[4]) << "' to double on line " << line << std::endl;
         throw FileParseException(errout.str());
     }
     
     try {
-        pos.z = FileParserUtils::toDouble(atomLine.substr(delim6, delim7 - delim6), false);
+        pos.z = FileParserUtils::toDouble(atomLine.substr(delims[6], delims[7] - delims[6]), false);
     } catch (boost::bad_lexical_cast &) {
         std::ostringstream errout;
-        errout << "Cannot convert '" << atomLine.substr(delim6, delim7 - delim6) << "' to double on line " << line << std::endl;
+        errout << "Cannot convert '" << atomLine.substr(delims[6], delims[7] - delims[6]) << "' to double on line " << line << std::endl;
         throw FileParseException(errout.str());
     }
     
-    std::string symb{atomLine.substr(delim0, delim1 - delim0)};
+    std::string symb{atomLine.substr(delims[0], delims[1] - delims[0])};
     if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
         symb[1] = static_cast<char>(tolower(symb[1]));
     }
@@ -111,10 +98,9 @@ Atom *ParseXYZFileAtomLine(std::string_view atomLine, RDGeom::Point3D &pos, unsi
 
 
 RWMol *XYZDataStreamToMol(std::istream &inStream) {
-    PRECONDITION(inStream, "no stream");
     unsigned int numAtoms = 0;
     
-    std::string_view num{getLine(inStream)};
+    std::string num{getLine(inStream)};
     try {
         numAtoms = FileParserUtils::toUnsigned(num);
     } catch (boost::bad_lexical_cast &) {
@@ -136,24 +122,23 @@ RWMol *XYZDataStreamToMol(std::istream &inStream) {
                 throw FileParseException("EOF hit while reading atoms");
             }
             RDGeom::Point3D pos;
-            std::string_view atomLine{getLine(inStream)};
+            std::string atomLine{getLine(inStream)};
             Atom *atom = ParseXYZFileAtomLine(atomLine, pos, i + 2);
             unsigned int idx = mol->addAtom(atom, false, true);
             conf->setAtomPos(idx, pos);
-            mol->setAtomBookmark(atom, idx);
         }
         mol->addConformer(conf);
     }
     
     while (!inStream.eof()) {
-        std::string_view extraLine{getLine(inStream)};
+        std::string extraLine{getLine(inStream)};
         ParseExtraLine(extraLine);
     }
     
     return mol;
 }
 
-RWMol *XYZFileToMol(const std::string &fName, int charge=0) {
+RWMol *XYZFileToMol(const std::string &fName, int charge) {
     std::ifstream xyzFile(fName);
     if (!xyzFile || (xyzFile.bad())) {
       std::ostringstream errout;
