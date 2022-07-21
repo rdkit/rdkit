@@ -189,6 +189,11 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
                                                         const INT_LIST &probe);
 //! @}
 
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
+                                               const StereoSpecified &s);
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
+                                               const StereoType &s);
+
 }  // namespace Chirality
 }  // namespace RDKit
 #endif
