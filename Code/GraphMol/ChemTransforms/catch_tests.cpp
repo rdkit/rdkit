@@ -383,6 +383,15 @@ TEST_CASE("molzip", "[]") {
     auto b = "[*:1]-N=C"_smiles;
     auto mol = molzip(*a, *b, p);
   }
+
+  SECTION("MolZip saves bonddir") {
+    auto a = "CC[*:1]"_smiles;
+    auto b = "N[*:1]"_smiles;
+    a->getBondWithIdx(0)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    auto mol = molzip(*a, *b);
+    CHECK(MolToSmiles(*mol) == "CCN");
+    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+  }
 }
 
 TEST_CASE(
