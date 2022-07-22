@@ -16,7 +16,7 @@
 #include <cstring>
 #include <iostream>
 #include <cassert>
-#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
 namespace Canon {

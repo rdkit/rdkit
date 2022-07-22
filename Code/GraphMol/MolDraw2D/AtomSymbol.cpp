@@ -107,7 +107,7 @@ bool AtomSymbol::doesRectClash(const StringRect &rect, double padding) const {
 // ****************************************************************************
 void AtomSymbol::adjustColons() {
   if (symbol_.empty()) {
-    return; // but probably it's always got something in it.
+    return;  // but probably it's always got something in it.
   }
   size_t colonPos = symbol_.find(':');
   if (colonPos == std::string::npos) {
@@ -129,7 +129,7 @@ void AtomSymbol::adjustColons() {
   if (colonPos == std::string::npos) {
     return;
   }
-  CHECK_INVARIANT(colonPos<=rects_.size(),"bad rects_ size");
+  CHECK_INVARIANT(colonPos <= rects_.size(), "bad rects_ size");
   double leftHeight = colonPos ? rects_[colonPos - 1]->height_ : 0;
   double rightHeight =
       colonPos < symbol_.size() - 1 ? rects_[colonPos + 1]->height_ : 0;
@@ -156,5 +156,4 @@ void AtomSymbol::drawRects(MolDraw2D &molDrawer) const {
 }
 
 }  // namespace MolDraw2D_detail
-} // namespace RDKit
-
+}  // namespace RDKit

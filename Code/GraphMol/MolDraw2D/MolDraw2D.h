@@ -358,9 +358,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual const DashPattern &dash() const { return curr_dash_; }
 
   //! sets the current line width
-  virtual void setLineWidth(int width) { drawOptions().bondLineWidth = width; }
+  virtual void setLineWidth(double width) { drawOptions().bondLineWidth = width; }
   //! returns the current line width
-  virtual int lineWidth() const { return drawOptions().bondLineWidth; }
+  virtual double lineWidth() const { return drawOptions().bondLineWidth; }
 
   //! using the current scale, work out the size of the label in molecule
   //! coordinates.
@@ -534,9 +534,9 @@ inline void setMonochromeMode(MolDrawOptions &opts, const DrawColour &fgColour,
   opts.symbolColour = fgColour;
   opts.variableAttachmentColour = fgColour;
 }
-inline void setMonochromeMode(MolDraw2D &opts, const DrawColour &fgColour,
+inline void setMonochromeMode(MolDraw2D &drawer, const DrawColour &fgColour,
                               const DrawColour &bgColour) {
-  setMonochromeMode(opts.drawOptions(), fgColour, bgColour);
+  setMonochromeMode(drawer.drawOptions(), fgColour, bgColour);
 }
 
 }  // namespace RDKit

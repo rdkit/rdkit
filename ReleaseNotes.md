@@ -14,7 +14,9 @@
   - `BUILD_COORDGEN_SUPPORT`: use `RDK_BUILD_COORDGEN_SUPPORT` instead
   - `RDK_THREADSAFE_SSS`: use `RDK_BUILD_THREADSAFE_SSS` instead
   - `USE_BUILTIN_POPCOUNT`: use `RDK_OPTIMIZE_POPCNT` instead
-
+- The Python function `Chem.GetSSSR()` now returns the SSSR rings found instead
+  of just returning the count of rings. This is consistent with
+  `Chem.GetSymmSSSR()` and more useful.
 
 
 

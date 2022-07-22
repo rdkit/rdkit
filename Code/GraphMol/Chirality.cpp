@@ -1961,6 +1961,53 @@ void cleanupStereoGroups(ROMol &mol) {
   mol.setStereoGroups(std::move(newsgs));
 }
 
+// ****************************************************************************
+std::ostream &operator<<(std::ostream &oss, const StereoType &s) {
+  switch (s) {
+    case StereoType::Unspecified:
+      oss << "Unspecified";
+      break;
+    case StereoType::Atom_Tetrahedral:
+      oss << "Atom_Tetrahedral";
+      break;
+    case StereoType::Atom_SquarePlanar:
+      oss << "Atom_SquarePlanar";
+      break;
+    case StereoType::Atom_TrigonalBipyramidal:
+      oss << "Atom_TrigonalBipyramidal";
+      break;
+    case StereoType::Atom_Octahedral:
+      oss << "Atom_Octahedral";
+      break;
+    case StereoType::Bond_Double:
+      oss << "Bond_Double";
+      break;
+    case StereoType::Bond_Cumulene_Even:
+      oss << "Bond_Cumulene_Even";
+      break;
+    case StereoType::Bond_Atropisomer:
+      oss << "Bond_Atropisomer";
+      break;
+  }
+  return oss;
+}
+
+// ****************************************************************************
+std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s) {
+  switch (s) {
+    case StereoSpecified::Unspecified:
+      oss << "Unspecified";
+      break;
+    case StereoSpecified::Specified:
+      oss << "Specified";
+      break;
+    case StereoSpecified::Unknown:
+      oss << "Unknown";
+      break;
+  }
+  return oss;
+}
+
 /*
     We're going to do this iteratively:
       1) assign atom stereochemistry
