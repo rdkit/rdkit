@@ -476,7 +476,7 @@ TEST_CASE("CDXML") {
         }
     }
     
-    SECTION("ChemDraw Tempalte from the synthesis-workshop") {
+    SECTION("ChemDraw Template from the synthesis-workshop") {
         // this was hella fun to validate the stereo-chemistry...
         auto fname = cdxmlbase + "chemdraw_template1.cdxml";
         auto mols = CDXMLFileToMols(fname);
@@ -486,14 +486,14 @@ TEST_CASE("CDXML") {
             "*",
             "[C]",
             "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
-            "Cc1ccc2n1[C@@H]1C(=O)[C@@H](C)n3c(C)ccc3[C@@H]1C(=O)C=C2",
+            "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
             "Cc1ccc2ccc(=O)ccn12",
             "Cc1cccn1[C@H](C)C=O",
             "Cc1ccc2ccc([O-])cc[n+]1-2",
             "Cc1ccc2ccc(=O)ccn12",
             "Cc1cccn1[C@H](C)C(C#N)O[Si](C)(C)C",
             "CC1CCC2(O)C3(OC4(O)C[C@]2(C)C2(O)[C@H](OC(=O)c5ccc[nH]5)C(O)(C(C)C)C4(C)C32O)C1O",
-            "C=C(C)[C@H]1CC(=O)CC2=C(C1)[C@H]1C(=O)O[C@H]3C[C@@](C)(O)[C@@H](C2=O)[C@H]31"};
+            "C=C(C)[C@H]1CC(=O)CC2=C(C1)[C@H]1C(=O)O[C@H]3C[C@@](C)(O)[C@@H](C2=O)[C@@H]13"};
         CHECK(mols.size()==expected.size());
         int i=0;
         for(auto &mol : mols) {
