@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #ifndef MULTITHREADED_SD_MOL_SUPPLIER
 #define MULTITHREADED_SD_MOL_SUPPLIER
 #include "MultithreadedMolSupplier.h"
@@ -53,12 +53,12 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
                         size_t sizeInputQueue, size_t sizeOutputQueue);
 
  private:
-  bool df_end = false;  //! have we reached the end of the file?
-  int d_line = 0;       //! line number we are currently on
+  bool df_end = false;  //!< have we reached the end of the file?
+  int d_line = 0;       //!< line number we are currently on
   bool df_sanitize = true, df_removeHs = true, df_strictParsing = true;
   bool df_processPropertyLists = true;
   bool df_eofHitOnRead = false;
-  unsigned int d_currentRecordId = 1;  //! current record id
+  unsigned int d_currentRecordId = 1;  //!< current record id
 };
 }  // namespace RDKit
 #endif

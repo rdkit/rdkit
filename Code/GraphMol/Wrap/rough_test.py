@@ -346,7 +346,8 @@ class TestCase(unittest.TestCase):
     smi = Chem.MolToSmiles(mol)
     Chem.SanitizeMol(mol)
     nr = Chem.GetSymmSSSR(mol)
-
+    self.assertTrue((len(nr) == 3))
+    nr = Chem.GetSSSR(mol)
     self.assertTrue((len(nr) == 3))
 
   def test12Smarts(self):

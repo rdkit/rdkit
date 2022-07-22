@@ -15,7 +15,7 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <sstream>
 #include <locale>
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 
@@ -104,7 +104,7 @@ void PeriodicTable::initInstance() {
 }
 
 PeriodicTable *PeriodicTable::getTable() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static std::once_flag pt_init_once;
   std::call_once(pt_init_once, initInstance);
 #else

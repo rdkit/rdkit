@@ -32,7 +32,7 @@
 //
 #include "SubstructLibrary.h"
 #include <RDGeneral/RDThreads.h>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>
 #include <future>
 #endif
@@ -216,7 +216,7 @@ int internalGetMatches(const Query &query, MolHolderBase &mols,
   Bits bits(fps, query, params);
   int counter = 0;
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   if (numThreads > 1) {
     std::vector<int> counterVect(numThreads, 0);
     int maxResultsPerThread = maxResults;

@@ -34,7 +34,7 @@ struct StringRect;
 
 class DrawShape {
  public:
-  DrawShape(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShape(const std::vector<Point2D> &points, double lineWidth = 2.0,
             bool scaleLineWidth = false,
             DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
             int atom1 = -1, int atom2 = -1, int bond = -1);
@@ -53,7 +53,7 @@ class DrawShape {
   virtual bool doesRectClash(const StringRect &rect, double padding) const;
 
   std::vector<Point2D> points_;
-  int lineWidth_;
+  double lineWidth_;
   bool scaleLineWidth_;
   DrawColour lineColour_;
   bool fill_;
@@ -62,7 +62,7 @@ class DrawShape {
 
 class DrawShapeArrow : public DrawShape {
  public:
-  DrawShapeArrow(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShapeArrow(const std::vector<Point2D> &points, double lineWidth = 2.0,
                  bool scaleLineWidth = false,
                  DrawColour lineColour = DrawColour(0, 0, 0), bool fill = false,
                  int atom1 = -1, int atom2 = -1, int bond = -1,
@@ -81,8 +81,9 @@ class DrawShapeArrow : public DrawShape {
 
 class DrawShapeEllipse : public DrawShape {
  public:
-  // points are the 2 foci of the ellipse
-  DrawShapeEllipse(const std::vector<Point2D> &points, int lineWidth = 2,
+  // Points should be size 2 - the first entry is the centre, the second
+  // gives the x and y radii of the ellipse.
+  DrawShapeEllipse(const std::vector<Point2D> &points, double lineWidth = 2,
                    bool scaleLineWidth = false,
                    DrawColour lineColour = DrawColour(0, 0, 0),
                    bool fill = false, int atom1 = -1);
@@ -94,13 +95,14 @@ class DrawShapeEllipse : public DrawShape {
   void myDraw(MolDraw2D &drawer) const override;
   void findExtremes(double &xmin, double &xmax, double &ymin,
                     double &ymax) const override;
+  void move(const Point2D &trans) override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 };
 
 class DrawShapeSimpleLine : public DrawShape {
  public:
-  DrawShapeSimpleLine(const std::vector<Point2D> &points, int lineWidth = 2,
-                      bool scaleLineWidth = false,
+  DrawShapeSimpleLine(const std::vector<Point2D> &points,
+                      double lineWidth = 2.0, bool scaleLineWidth = false,
                       DrawColour lineColour = DrawColour(0, 0, 0),
                       int atom1 = -1, int atom2 = -1, int bond = -1,
                       DashPattern dashPattern = noDash);
@@ -117,7 +119,7 @@ class DrawShapeSimpleLine : public DrawShape {
 
 class DrawShapePolyLine : public DrawShape {
  public:
-  DrawShapePolyLine(const std::vector<Point2D> &points, int lineWidth = 2,
+  DrawShapePolyLine(const std::vector<Point2D> &points, double lineWidth = 2.0,
                     bool scaleLineWidth = false,
                     DrawColour lineColour = DrawColour(0, 0, 0),
                     bool fill = false, int atom1 = -1, int atom2 = -1,
@@ -136,25 +138,43 @@ class DrawShapePolyLine : public DrawShape {
 class DrawShapeSolidWedge : public DrawShape {
  public:
   DrawShapeSolidWedge(const std::vector<Point2D> points, const DrawColour &col1,
-                      const DrawColour &col2, bool splitBonds, int atom1 = -1,
-                      int atom2 = -1, int bond = -1);
+                      const DrawColour &col2, bool splitBonds,
+                      std::vector<Point2D> &otherBondVecs,
+                      double lineWidth = 1.0, int atom1 = -1, int atom2 = -1,
+                      int bond = -1);
   DrawShapeSolidWedge(const DrawShapeSolidWedge &) = delete;
   DrawShapeSolidWedge(DrawShapeSolidWedge &&) = delete;
   ~DrawShapeSolidWedge() = default;
   DrawShapeSolidWedge &operator=(const DrawShapeSolidWedge &) = delete;
   DrawShapeSolidWedge &operator=(DrawShapeSolidWedge &&) = delete;
   void buildTriangles();
+  void buildSingleColorTriangles();
+  void buildTwoColorTriangles();
   void myDraw(MolDraw2D &drawer) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
+  // if otherBondVecs_.size() > 2, then we only want the two vecs with the
+  // widest angle between them.
+  void trimOtherBondVecs();
+  // if there are 2 otherBondVecs_ (assuming we've already trimmed down to 2 if
+  // necessary) make sure the first is on the points_[1] side, the second on
+  // the points_[2] side, so that the merging of the triangles to the bond
+  // lines is correct.
+  void orderOtherBondVecs();
 
   DrawColour col2_;
   bool splitBonds_;
+  std::vector<Point2D> otherBondVecs_;
 };
 
 class DrawShapeDashedWedge : public DrawShape {
  public:
+  // oneLessDash means that the last dash at the fat end of the wedge
+  // isn't drawn.  The wedge will be as fat as it would have been with
+  // the extra dash.  This is so that bonds coming out of the fat end
+  // of the wedge aren't directly incident on a dash.
   DrawShapeDashedWedge(const std::vector<Point2D> points,
                        const DrawColour &col1, const DrawColour &col2,
+                       bool oneLessDash = true, double lineWidth = 1.0,
                        int atom1 = -1, int atom2 = -1, int bond = -1);
   DrawShapeDashedWedge(const DrawShapeDashedWedge &) = delete;
   DrawShapeDashedWedge(DrawShapeDashedWedge &&) = delete;
@@ -165,18 +185,21 @@ class DrawShapeDashedWedge : public DrawShape {
   void myDraw(MolDraw2D &drawer) const override;
   void scale(const Point2D &scale_factor) override;
   void move(const Point2D &trans) override;
+  void findExtremes(double &xmin, double &xmax, double &ymin,
+                    double &ymax) const override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
   DrawColour col2_;
+  bool oneLessDash_;
   std::vector<DrawColour> lineColours_;
-  // for when we re-create the lines when it gets too wide, this is
-  // the initial points[0] from the c'tor.
-  Point2D at1Cds_;
+  // for when we re-create the lines, such as after scaling, this is
+  // the initial points[0-2] from the c'tor.
+  Point2D at1Cds_, end1Cds_, end2Cds_;
 };
 
 class DrawShapeWavyLine : public DrawShape {
  public:
-  DrawShapeWavyLine(const std::vector<Point2D> points, int lineWidth = 2,
+  DrawShapeWavyLine(const std::vector<Point2D> points, double lineWidth = 2.0,
                     bool scaleLineWidth = false,
                     const DrawColour &col1 = DrawColour(0, 0, 0),
                     const DrawColour &col2 = DrawColour(0, 0, 0),
@@ -204,7 +227,7 @@ class DrawShapeArc : public DrawShape {
   // Points should be size 2 - the first entry is the centre, the second
   // gives the x and y radii of the ellipse.
   DrawShapeArc(const std::vector<Point2D> points, double ang1, double ang2,
-               int lineWidth = 2, bool scaleLineWidth = false,
+               double lineWidth = 2.0, bool scaleLineWidth = false,
                const DrawColour &col1 = DrawColour(0, 0, 0), bool fill = false,
                int atom1 = -1);
   DrawShapeArc(const DrawShapeArc &) = delete;

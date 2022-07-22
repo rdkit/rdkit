@@ -47,41 +47,26 @@ namespace {
 // left at the end of the run.
 static const bool DELETE_WITH_GOOD_HASH = true;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
-static const std::map<std::string, std::hash_result_t> SVG_HASHES =
-    {
-        {"rxn_test1_1.svg", 1477987745U},
-        {"rxn_test1_2.svg", 2538023343U},
-        {"rxn_test1_3.svg", 680474854U},
-        {"rxn_test1_4.svg", 2509069997U},
-        {"rxn_test1_5.svg", 3506839570U},
-        {"rxn_test1_6.svg", 1403115944U},
-        {"rxn_test1_7.svg", 2837557771U},
-        {"rxn_test2_1.svg", 2788219013U},
-        {"rxn_test2_2_1.svg", 423226601U},
-        {"rxn_test2_2_2.svg", 3888536321U},
-        {"rxn_test2_2_3.svg", 1655870507U},
-        {"rxn_test2_2_4.svg", 1301077885U},
-        {"rxn_test3_1.svg", 918050585U},
-        {"rxn_test4_1.svg", 3760324344U},
-        {"rxn_test4_2.svg", 2562939407U},
+static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
+    {"rxn_test1_1.svg", 2291771590U},   {"rxn_test1_2.svg", 1069605851U},
+    {"rxn_test1_3.svg", 3960276744U},   {"rxn_test1_4.svg", 2405209606U},
+    {"rxn_test1_5.svg", 1473628728U},   {"rxn_test1_6.svg", 3951817177U},
+    {"rxn_test1_7.svg", 1968421246U},   {"rxn_test2_1.svg", 4096727843U},
+    {"rxn_test2_2_1.svg", 928418199U},  {"rxn_test2_2_2.svg", 2519076104U},
+    {"rxn_test2_2_3.svg", 1325265594U}, {"rxn_test2_2_4.svg", 1389506061U},
+    {"rxn_test3_1.svg", 3357395138U},   {"rxn_test4_1.svg", 814261187U},
+    {"rxn_test4_2.svg", 439611184U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 750251696U},
-    {"rxn_test1_2.svg", 1034097793U},
-    {"rxn_test1_3.svg", 2608858489U},
-    {"rxn_test1_4.svg", 2268215787U},
-    {"rxn_test1_5.svg", 580358319U},
-    {"rxn_test1_6.svg", 3328371709U},
-    {"rxn_test1_7.svg", 3974929571U},
-    {"rxn_test2_1.svg", 1967050197U},
-    {"rxn_test2_2_1.svg", 3154044612U},
-    {"rxn_test2_2_2.svg", 2988162762U},
-    {"rxn_test2_2_3.svg", 2997497304U},
-    {"rxn_test2_2_4.svg", 298660385U},
-    {"rxn_test3_1.svg", 1136097145U},
-    {"rxn_test4_1.svg", 1747105692U},
-    {"rxn_test4_2.svg", 1624200008U},
+    {"rxn_test1_1.svg", 4033699709U},   {"rxn_test1_2.svg", 2349689612U},
+    {"rxn_test1_3.svg", 3370978736U},   {"rxn_test1_4.svg", 1351851371U},
+    {"rxn_test1_5.svg", 1491066078U},   {"rxn_test1_6.svg", 3302904428U},
+    {"rxn_test1_7.svg", 3505386903U},   {"rxn_test2_1.svg", 147013228U},
+    {"rxn_test2_2_1.svg", 829880341U},  {"rxn_test2_2_2.svg", 1536380435U},
+    {"rxn_test2_2_3.svg", 2758929276U}, {"rxn_test2_2_4.svg", 2378744932U},
+    {"rxn_test3_1.svg", 2555776709U},   {"rxn_test4_1.svg", 1241029054U},
+    {"rxn_test4_2.svg", 3258158175U},
 };
 #endif
 
@@ -96,21 +81,14 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"rxn_test1_1.png", 2867700423U},
-    {"rxn_test1_2.png", 2074724089U},
-    {"rxn_test1_3.png", 421271067U},
-    {"rxn_test1_4.png", 3523297494U},
-    {"rxn_test1_5.png", 3888923008U},
-    {"rxn_test1_6.png", 3767742095U},
-    {"rxn_test1_7.png", 254968254U},
-    {"rxn_test2_1.png", 432415333U},
-    {"rxn_test2_2_1.png", 519534633U},
-    {"rxn_test2_2_2.png", 1058522300U},
-    {"rxn_test2_2_3.png", 392287367U},
-    {"rxn_test2_2_4.png", 1762710408U},
-    {"rxn_test3_1.png", 3503835876U},
-    {"rxn_test4_1.png", 1845902236U},
-    {"rxn_test4_2.png", 2849520465U},
+    {"rxn_test1_1.png", 3455342699U},   {"rxn_test1_2.png", 3763855886U},
+    {"rxn_test1_3.png", 2213929201U},   {"rxn_test1_4.png", 2728922644U},
+    {"rxn_test1_5.png", 1488283846U},   {"rxn_test1_6.png", 961022019U},
+    {"rxn_test1_7.png", 1744619082U},   {"rxn_test2_1.png", 3820518641U},
+    {"rxn_test2_2_1.png", 4227253779U}, {"rxn_test2_2_2.png", 162359950U},
+    {"rxn_test2_2_3.png", 277516429U},  {"rxn_test2_2_4.png", 2359336073U},
+    {"rxn_test3_1.png", 1499411843U},   {"rxn_test4_1.png", 3367327719U},
+    {"rxn_test4_2.png", 3320057924U},
 };
 
 std::hash_result_t hash_file(const std::string &filename) {
