@@ -25,8 +25,6 @@ class ROMol;
 
 namespace Chirality {
 
-constexpr const char *_stereoNotPossible = "_stereoNotPossible";
-
 //! double bond stereo will be ignored/removed for rings smaller than this:
 constexpr unsigned int minRingSizeForDoubleBondStereo = 8;
 
