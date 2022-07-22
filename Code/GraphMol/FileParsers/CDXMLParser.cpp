@@ -74,7 +74,7 @@ struct BondInfo {
 struct StereoGroupInfo {
     int sgroup = -1;
     bool conflictingSgroupTypes = false;
-    RDKit::StereoGroupType grouptype;
+    StereoGroupType grouptype;
     std::vector<Atom*> atoms;
 };
 
@@ -105,7 +105,7 @@ void set_fuse_label(Atom*atm, unsigned int idx) {
 }
 
 template <typename Q>
-Atom * addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx) {
+Atom * addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
   PRECONDITION(qry, "bad query");
   auto *atm = mol.getAtomWithIdx(idx);
   auto *qa = new QueryAtom(*atm);
@@ -114,7 +114,7 @@ Atom * addquery(Q *qry, std::string symbol, RDKit::RWMol &mol, unsigned int idx)
   mol.replaceAtom(idx, qa);
   Atom *res =mol.getAtomWithIdx(idx);
   if (symbol != "") {
-    res->setProp(RDKit::common_properties::atomLabel,
+    res->setProp(common_properties::atomLabel,
                                      symbol);
   }
   delete qa;
@@ -165,7 +165,7 @@ bool parse_fragment(RWMol &mol,
       int isotope = 0;
       int sgroup = -1;
       bool explicitHs = false;
-      StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+      StereoGroupType grouptype = StereoGroupType::STEREO_ABSOLUTE;
       bool skipEnhancedStereo = false;
       std::string query_label;
       bool has_atom_stereo = false;
@@ -257,11 +257,11 @@ bool parse_fragment(RWMol &mol,
           } else if (attr.first == "EnhancedStereoType") {
               auto stereo_type = attr.second.data();
               if (stereo_type == "And") {
-                  grouptype = RDKit::StereoGroupType::STEREO_AND;
+                  grouptype = StereoGroupType::STEREO_AND;
               } else if (stereo_type == "Or") {
-                  grouptype = RDKit::StereoGroupType::STEREO_OR;
+                  grouptype = StereoGroupType::STEREO_OR;
               } else if (stereo_type == "Absolute") {
-                  grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
+                  grouptype = StereoGroupType::STEREO_ABSOLUTE;
               } else {
                   BOOST_LOG(rdWarningLog) << "Unhandled enhanced stereo type " << stereo_type << " ignoring" << std::endl;
                   skipEnhancedStereo = true;
@@ -314,7 +314,7 @@ bool parse_fragment(RWMol &mol,
                   rd_atom->setAtomicNum(elementlist.front());
               }
           } else {
-              rd_atom->setProp(RDKit::common_properties::atomLabel, query_label);
+              rd_atom->setProp(common_properties::atomLabel, query_label);
           }
       }
       if( sgroup!=-1 ) {
