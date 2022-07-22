@@ -142,8 +142,6 @@ RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
 //! overload
 RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
     const ROMol &mol);
-RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> cleanExistingStereo(
-    ROMol &mol, bool flagPossible = false, bool cleanIt = true);
 
 //! removes atoms without specified chirality from stereo groups
 RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(ROMol &mol);

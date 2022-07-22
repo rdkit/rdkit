@@ -6342,15 +6342,6 @@ M  END
     self.assertEqual(list(si[1].controllingAtoms),
                      [1, Chem.StereoInfo.NOATOM, 5, Chem.StereoInfo.NOATOM])
 
-    mol = Chem.MolFromSmiles('C[C@H](F)C=CC')
-    si = Chem.CleanExistingStereo(mol)
-    self.assertEqual(len(si), 1)
-    self.assertEqual(si[0].type, Chem.StereoType.Atom_Tetrahedral)
-    self.assertEqual(si[0].specified, Chem.StereoSpecified.Specified)
-    self.assertEqual(si[0].centeredOn, 1)
-    self.assertEqual(si[0].descriptor, Chem.StereoDescriptor.Tet_CCW)
-    self.assertEqual(list(si[0].controllingAtoms), [0, 2, 3])
-
   def testNewFindMolChiralCenters(self):
     mol = Chem.MolFromSmiles('C[C@H](F)C=CC(F)Cl')
     ctrs = Chem.FindMolChiralCenters(mol, useLegacyImplementation=False)

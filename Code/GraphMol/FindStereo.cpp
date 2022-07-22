@@ -387,18 +387,6 @@ inline std::string getAtomCompareSymbol(const Atom &atom) {
 }
 }  // namespace
 
-std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
-                                            bool flagPossible) {
-  return cleanExistingStereo(mol, flagPossible, cleanIt);
-}
-
-// const_casts are always ugly, but we know that findPotentialStereo() doesn't
-// modify the molecule if cleanIt is false:
-std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
-  bool cleanIt = false;
-  return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt);
-}
-
 namespace {
 void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
                   boost::dynamic_bitset<> &knownAtoms,
@@ -978,17 +966,25 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   return res;
 }
 }  // namespace
-std::vector<StereoInfo> cleanExistingStereo(ROMol &mol, bool flagPossible,
-                                            bool cleanIt) {
+
+std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
+                                            bool findPossible) {
   if (!mol.getRingInfo()->isInitialized()) {
     MolOps::symmetrizeSSSR(mol);
   }
   if (mol.needsUpdatePropertyCache()) {
     mol.updatePropertyCache(false);
   }
-  std::vector<StereoInfo> res = runCleanup(mol, flagPossible, cleanIt);
+  std::vector<StereoInfo> res = runCleanup(mol, findPossible, cleanIt);
   mol.setProp("_potentialStereo", res, true);
   return res;
+}
+
+// const_casts are always ugly, but we know that findPotentialStereo() doesn't
+// modify the molecule if cleanIt is false:
+std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
+  bool cleanIt = false;
+  return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt);
 }
 
 }  // namespace Chirality

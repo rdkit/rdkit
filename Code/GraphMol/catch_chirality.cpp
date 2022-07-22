@@ -1606,7 +1606,7 @@ TEST_CASE("Github #4215: Ring stereo being discarded in spiro systems") {
         SmilesToMol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2", ps2)};
     REQUIRE(m);
     MolOps::sanitizeMol(*m);
-    auto stereoInfo = Chirality::cleanExistingStereo(*m, true, true);
+    auto stereoInfo = Chirality::findPotentialStereo(*m, true, true);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(4)->getChiralTag() == Atom::CHI_UNSPECIFIED);
     CHECK(m->getAtomWithIdx(9)->getChiralTag() != Atom::CHI_UNSPECIFIED);
@@ -2664,15 +2664,10 @@ TEST_CASE(
     REQUIRE(stereoInfo1.size() == 2);
     REQUIRE(stereoInfo1[0].centeredOn == 1);
     REQUIRE(stereoInfo1[1].centeredOn == 4);
-
-    {
-      RWMol cp(*mol1);
-      Chirality::cleanExistingStereo(cp);
-      CHECK(cp.getAtomWithIdx(1)->getChiralTag() !=
-            Atom::ChiralType::CHI_UNSPECIFIED);
-      CHECK(cp.getAtomWithIdx(4)->getChiralTag() !=
-            Atom::ChiralType::CHI_UNSPECIFIED);
-    }
+    CHECK(mol1->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(mol1->getAtomWithIdx(4)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
 
     auto mol2 = "C1C[C@]2(C(F)F)CC[C@@]1(N)C2"_smiles;
     REQUIRE(mol2);
@@ -2683,7 +2678,7 @@ TEST_CASE(
     CHECK(stereoInfo2[1].centeredOn == 8);
     {
       RWMol cp(*mol2);
-      Chirality::cleanExistingStereo(cp);
+      Chirality::findPotentialStereo(cp, true, false);
       CHECK(cp.getAtomWithIdx(2)->getChiralTag() !=
             Atom::ChiralType::CHI_UNSPECIFIED);
       CHECK(cp.getAtomWithIdx(8)->getChiralTag() !=
@@ -2796,25 +2791,25 @@ TEST_CASE("more findPotential") {
     {
       auto m = "O[C@H](C)CC(C)C[C@@H](C)O"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 2);
     }
     {
       auto m = "O[C@H](C)CC(C)C[C@H](C)O"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
     {
       auto m = "O[CH](C)C[C@H](C)C[CH](C)O"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
     {
       auto m = "O[CH](C)C[CH](C)C[CH](C)O"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
   }
@@ -2822,19 +2817,19 @@ TEST_CASE("more findPotential") {
     {
       auto m = "C[CH](/C=C/C)/C=C\\C"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
     {
       auto m = "C[CH](/C=C/C)/C=C/C"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 2);
     }
     {
       auto m = "C[CH](C=CC)C=CC"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
     {
@@ -2842,7 +2837,7 @@ TEST_CASE("more findPotential") {
       REQUIRE(m);
       m->getBondWithIdx(2)->setStereo(Bond::BondStereo::STEREOANY);
       m->getBondWithIdx(5)->setStereo(Bond::BondStereo::STEREOANY);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
   }
@@ -2850,19 +2845,19 @@ TEST_CASE("more findPotential") {
     {
       auto m = "CC=C([C@H](F)Cl)[C@@H](F)Cl"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
     {
       auto m = "CC=C([C@H](F)Cl)[C@H](F)Cl"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 2);
     }
     {
       auto m = "CC=C([CH](F)Cl)[CH](F)Cl"_smiles;
       REQUIRE(m);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
     {
@@ -2870,7 +2865,7 @@ TEST_CASE("more findPotential") {
       REQUIRE(m);
       m->getBondBetweenAtoms(2, 3)->setBondDir(Bond::UNKNOWN);
       m->getBondBetweenAtoms(2, 6)->setBondDir(Bond::UNKNOWN);
-      auto si = Chirality::cleanExistingStereo(*m, true);
+      auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
   }
@@ -2883,7 +2878,7 @@ TEST_CASE("more findPotential and ring stereo") {
     {
       auto m = "CC1CCC(C)CC1"_smiles;
       REQUIRE(m);
-      auto stereoInfo = Chirality::cleanExistingStereo(*m, true);
+      auto stereoInfo = Chirality::findPotentialStereo(*m, true, true);
       REQUIRE(stereoInfo.size() == 2);
       CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
       CHECK(stereoInfo[0].centeredOn == 1);
