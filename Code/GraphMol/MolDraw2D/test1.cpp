@@ -51,258 +51,261 @@ using std::regex_search;
 
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"test1_1.svg", 3113938861U},
-    {"test1_2.svg", 94669297U},
-    {"test1_3.svg", 2548256503U},
-    {"test1_4.svg", 2036254482U},
-    {"test1_5.svg", 787343273U},
-    {"test1_6.svg", 2725213945U},
-    {"test1_7.svg", 923829929U},
-    {"test4_1.svg", 1830084315U},
-    {"test5_1.svg", 4218143958U},
-    {"test5_2.svg", 1453910928U},
-    {"test5_3.svg", 106799324U},
-    {"test6_1.svg", 1194058816U},
-    {"test6_2.svg", 3509581388U},
-    {"test6_3.svg", 2358886761U},
-    {"test7_1.svg", 602351070U},
-    {"test7_2.svg", 1022417818U},
-    {"testGithub781_1.svg", 3080997483U},
-    {"testGithub781_2.svg", 2164237918U},
+    {"test1_1.svg", 3171142192U},
+    {"test1_2.svg", 2604953401U},
+    {"test1_3.svg", 2470988424U},
+    {"test1_4.svg", 2096947868U},
+    {"test1_5.svg", 2964125114U},
+    {"test1_6.svg", 464012122U},
+    {"test1_7.svg", 1914039258U},
+    {"test4_1.svg", 2781258368U},
+    {"test5_1.svg", 1776640106U},
+    {"test5_2.svg", 2918416934U},
+    {"test5_3.svg", 2159444333U},
+    {"test6_1.svg", 539800814U},
+    {"test6_2.svg", 2908662366U},
+    {"test6_3.svg", 739999500U},
+    {"test7_1.svg", 650033862U},
+    {"test7_2.svg", 681303770U},
+    {"testGithub781_1.svg", 45764976U},
+    {"testGithub781_2.svg", 964035371U},
     {"testGithub781_3.svg", 3655151266U},
-    {"testGithub781_4.svg", 2963167941U},
+    {"testGithub781_4.svg", 3233389060U},
     {"testGithub781_5.svg", 2840696942U},
-    {"testGithub781_6.svg", 2469528418U},
-    {"test3_1.svg", 1621669208U},
-    {"test3_2.svg", 3739243117U},
-    {"test3_3.svg", 4209036462U},
-    {"test3_4.svg", 234934996U},
-    {"test3_5.svg", 715914516U},
-    {"test3_6.svg", 3806061398U},
-    {"test3_7.svg", 2511914961U},
-    {"test774_1.svg", 2641469654U},
-    {"test774_2.svg", 568348710U},
-    {"test9_1.svg", 1037255840U},
-    {"test852_1.svg", 158641809U},
-    {"test852_2.svg", 239253461U},
-    {"test852_2a.svg", 4270721163U},
-    {"test852_2b.svg", 786035561U},
-    {"test852_2c.svg", 263980967U},
-    {"test852_2d.svg", 3989607891U},
-    {"test860_1.svg", 150940515U},
-    {"test860_2.svg", 3354751138U},
-    {"test860_3.svg", 363558801U},
-    {"test910_1.svg", 1586190483U},
-    {"test910_2.svg", 1045945973U},
-    {"test983_1.svg", 3330975144U},
-    {"test983_2.svg", 152080733U},
-    {"testNoDeuterium.svg", 978533211U},
-    {"testNoTritium.svg", 1367911514U},
+    {"testGithub781_6.svg", 1059414825U},
+    {"test3_1.svg", 3729433965U},
+    {"test3_2.svg", 1999815883U},
+    {"test3_3.svg", 3227068980U},
+    {"test3_4.svg", 2387715470U},
+    {"test3_5.svg", 4197240353U},
+    {"test3_6.svg", 82246362U},
+    {"test3_7.svg", 4201014991U},
+    {"test774_1.svg", 4220057526U},
+    {"test774_2.svg", 1877728486U},
+    {"test9_1.svg", 3204904541U},
+    {"test852_1.svg", 3164044259U},
+    {"test852_2.svg", 976250498U},
+    {"test852_2a.svg", 3177274435U},
+    {"test852_2b.svg", 2773713261U},
+    {"test852_2c.svg", 3625563688U},
+    {"test852_2d.svg", 2207336337U},
+    {"test860_1.svg", 2159104250U},
+    {"test860_2.svg", 4267805043U},
+    {"test860_3.svg", 3834278789U},
+    {"test910_1.svg", 2870606892U},
+    {"test910_2.svg", 3036703360U},
+    {"test983_1.svg", 728841482U},
+    {"test983_2.svg", 3135719596U},
+    {"testNoDeuterium.svg", 518195165U},
+    {"testNoTritium.svg", 3883086890U},
     {"testDeuterium.svg", 4089922801U},
     {"testTritium.svg", 3762235788U},
-    {"crossed_bonds.svg", 4064206667U},
-    {"test10_1.svg", 3323929696U},
-    {"test10_2.svg", 150233603U},
-    {"test10_3.svg", 1929234659U},
-    {"test10_4.svg", 1411925001U},
-    {"test10_5.svg", 1988570733U},
-    {"test10_6.svg", 3454197083U},
-    {"test11_1.svg", 352029742U},
-    {"test11_2.svg", 2223723861U},
-    {"test12_1.svg", 3993224976U},
-    {"test12_5.svg", 1004111871U},
-    {"test12_3.svg", 195908813U},
-    {"test12_4.svg", 195908813U},
-    {"test12_2.svg", 3671149443U},
-    {"test13_1.svg", 2742552224U},
-    {"testGithub1090_1.svg", 101922948U},
+    {"crossed_bonds.svg", 2998488094U},
+    {"test10_1.svg", 277635808U},
+    {"test10_2.svg", 1184559469U},
+    {"test10_3.svg", 644957470U},
+    {"test10_4.svg", 3623438415U},
+    {"test10_5.svg", 970523066U},
+    {"test10_6.svg", 239505662U},
+    {"test11_1.svg", 1385505045U},
+    {"test11_2.svg", 1874360362U},
+    {"test12_1.svg", 259202908U},
+    {"test12_5.svg", 3040108534U},
+    {"test12_3.svg", 571458923U},
+    {"test12_4.svg", 571458923U},
+    {"test12_2.svg", 1638749392U},
+    {"test13_1.svg", 467589289U},
+    {"testGithub1090_1.svg", 2310666525U},
     {"test1271_1.svg", 3344708082U},
     {"test1271_2.svg", 3059809816U},
-    {"test1271_3.svg", 2354035380U},
-    {"test1271_4.svg", 2354035380U},
-    {"test1271_5.svg", 372064348U},
-    {"test1322_1.svg", 3135367689U},
-    {"test1322_2.svg", 4005358140U},
-    {"test14_1.svg", 3564456084U},
-    {"test14_2.svg", 3910116450U},
-    {"test15_1.svg", 1451152049U},
-    {"test15_2.svg", 897342575U},
-    {"test17_1.svg", 299659569U},
-    {"test17_2.svg", 4269918050U},
-    {"test17_3.svg", 3686942802U},
-    {"test17_4.svg", 1165258183U},
-    {"test18_1.svg", 2006926306U},
-    {"test18_2.svg", 1059521378U},
-    {"test18_3.svg", 2476234962U},
-    {"test18_4.svg", 2307905334U},
-    {"test18_5.svg", 3813135781U},
-    {"test18_6.svg", 4066225946U},
-    {"test18_7.svg", 2159645153U},
-    {"test19_1.svg", 1554391501U},
-    {"test19_2.svg", 2637911287U},
-    {"test16_1.svg", 3439177658U},
-    {"test16_2.svg", 3915356332U},
-    {"testGithub2063_1.svg", 2185501652U},
-    {"testGithub2063_2.svg", 2185501652U},
-    {"testGithub2151_1.svg", 3638120408U},
-    {"testGithub2151_2.svg", 3354257096U},
-    {"testGithub2762.svg", 168469294U},
-    {"testGithub2931_1.svg", 298969290U},
-    {"testGithub2931_2.svg", 922872904U},
-    {"testGithub2931_3.svg", 2823954159U},
-    {"test20_1.svg", 2394223373U},
-    {"test20_2.svg", 3739838435U},
-    {"test20_3.svg", 2641474171U},
-    {"test20_4.svg", 4249232030U},
-    {"test21_1.svg", 1074495878U},
-    {"test21_2.svg", 566215580U},
-    {"test22_1.svg", 2151815275U},
-    {"test22_2.svg", 2372731585U},
-    {"testGithub3112_1.svg", 2657556514U},
-    {"testGithub3112_2.svg", 2085437875U},
-    {"testGithub3112_3.svg", 1902029396U},
-    {"testGithub3112_4.svg", 3605529183U},
-    {"testGithub3305_1.svg", 2151815275U},
-    {"testGithub3305_2.svg", 3973016396U},
-    {"testGithub3305_3.svg", 1169182745U},
-    {"testGithub3305_4.svg", 715914516U},
-    {"testGithub3305_5.svg", 3377515019U},
-    {"testGithub3305_6.svg", 2803663571U},
-    {"testGithub3305_7.svg", 168127666U},
-    {"testGithub3391_1.svg", 2537248999U},
-    {"testGithub3391_2.svg", 3751504500U},
-    {"testGithub3391_3.svg", 2544939276U},
-    {"testGithub3391_4.svg", 327641375U},
-    {"testGithub4156_1.svg", 1849893282U},
-    {"testGithub4156_2.svg", 3547810764U},
-    {"test23_1.svg", 3900878023U},
-    {"testGithub4496_1.svg", 746049636U},
+    {"test1271_3.svg", 244396434U},
+    {"test1271_4.svg", 244396434U},
+    {"test1271_5.svg", 3140318398U},
+    {"test1322_1.svg", 3750722362U},
+    {"test1322_2.svg", 453662472U},
+    {"test14_1.svg", 2669342367U},
+    {"test14_2.svg", 902224808U},
+    {"test15_1.svg", 285250380U},
+    {"test15_2.svg", 2681684948U},
+    {"test17_1.svg", 3307932411U},
+    {"test17_2.svg", 2371426213U},
+    {"test17_3.svg", 72242849U},
+    {"test17_4.svg", 3052849709U},
+    {"test18_1.svg", 1105488597U},
+    {"test18_2.svg", 1889394150U},
+    {"test18_3.svg", 3432829421U},
+    {"test18_4.svg", 751331040U},
+    {"test18_5.svg", 3983014844U},
+    {"test18_6.svg", 3808740708U},
+    {"test18_7.svg", 375169230U},
+    {"test19_1.svg", 1963341786U},
+    {"test19_2.svg", 1503833738U},
+    {"test16_1.svg", 1045337478U},
+    {"test16_2.svg", 2680539197U},
+    {"testGithub2063_1.svg", 2772571399U},
+    {"testGithub2063_2.svg", 2772571399U},
+    {"testGithub2151_1.svg", 1918752877U},
+    {"testGithub2151_2.svg", 1083134500U},
+    {"testGithub2762.svg", 3596783817U},
+    {"testGithub2931_1.svg", 142684703U},
+    {"testGithub2931_2.svg", 2810684425U},
+    {"testGithub2931_3.svg", 1660359809U},
+    {"testGithub2931_4.svg", 2909499170U},
+    {"test20_1.svg", 2825906479U},
+    {"test20_2.svg", 4276100014U},
+    {"test20_3.svg", 3882533304U},
+    {"test20_4.svg", 276608742U},
+    {"test21_1.svg", 3363530709U},
+    {"test21_2.svg", 3470002858U},
+    {"test22_1.svg", 3716192373U},
+    {"test22_2.svg", 1926484323U},
+    {"testGithub3112_1.svg", 3236038294U},
+    {"testGithub3112_2.svg", 1810059147U},
+    {"testGithub3112_3.svg", 135218742U},
+    {"testGithub3112_4.svg", 2779806814U},
+    {"testGithub3305_1.svg", 3716192373U},
+    {"testGithub3305_2.svg", 3910798383U},
+    {"testGithub3305_3.svg", 2665156605U},
+    {"testGithub3305_4.svg", 4197240353U},
+    {"testGithub3305_5.svg", 1603066944U},
+    {"testGithub3305_6.svg", 145251557U},
+    {"testGithub3305_7.svg", 69534594U},
+    {"testGithub3391_1.svg", 288775907U},
+    {"testGithub3391_2.svg", 57943770U},
+    {"testGithub3391_3.svg", 1250761875U},
+    {"testGithub3391_4.svg", 2457816112U},
+    {"testGithub4156_1.svg", 1025198804U},
+    {"testGithub4156_2.svg", 1218676815U},
+    {"test23_1.svg", 3172519375U},
+    {"testGithub4496_1.svg", 177155113U},
     {"testGithub5006_1.svg", 484020409U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"test1_1.svg", 17882343U},
-    {"test1_2.svg", 2018870875U},
-    {"test1_3.svg", 3929393842U},
-    {"test1_4.svg", 669955328U},
-    {"test1_5.svg", 939765106U},
-    {"test1_6.svg", 2581265326U},
-    {"test1_7.svg", 2259213431U},
-    {"test4_1.svg", 1180178511U},
-    {"test5_1.svg", 2366643605U},
-    {"test5_2.svg", 1453910928U},
-    {"test5_3.svg", 1107383262U},
-    {"test6_1.svg", 1119388153U},
-    {"test6_2.svg", 3509581388U},
+    {"test1_1.svg", 4093812910U},
+    {"test1_2.svg", 2368670869U},
+    {"test1_3.svg", 2164179900U},
+    {"test1_4.svg", 3883861317U},
+    {"test1_5.svg", 1435228910U},
+    {"test1_6.svg", 1943912849U},
+    {"test1_7.svg", 690914976U},
+    {"test4_1.svg", 3865423440U},
+    {"test5_1.svg", 2203290391U},
+    {"test5_2.svg", 2918416934U},
+    {"test5_3.svg", 2512231660U},
+    {"test6_1.svg", 893875242U},
+    {"test6_2.svg", 2908662366U},
     {"test6_3.svg", 3890471193U},
-    {"test7_1.svg", 602351070U},
-    {"test7_2.svg", 1022417818U},
+    {"test7_1.svg", 650033862U},
+    {"test7_2.svg", 681303770U},
     {"testGithub781_1.svg", 3207306052U},
     {"testGithub781_2.svg", 654027269U},
     {"testGithub781_3.svg", 1406186712U},
     {"testGithub781_4.svg", 1077101569U},
     {"testGithub781_5.svg", 2840696942U},
     {"testGithub781_6.svg", 2700448827U},
-    {"test3_1.svg", 185347742U},
-    {"test3_2.svg", 630095031U},
-    {"test3_3.svg", 1227367667U},
-    {"test3_4.svg", 1100667496U},
-    {"test3_5.svg", 4259273141U},
-    {"test3_6.svg", 3300797533U},
-    {"test3_7.svg", 2337710286U},
-    {"test774_1.svg", 2100192513U},
-    {"test774_2.svg", 3451445580U},
-    {"test9_1.svg", 2594385297U},
-    {"test852_1.svg", 2585851230U},
-    {"test852_2.svg", 2002950078U},
-    {"test852_2a.svg", 1518484056U},
-    {"test852_2b.svg", 3993611607U},
-    {"test852_2c.svg", 1363089666U},
-    {"test852_2d.svg", 1651090742U},
-    {"test860_1.svg", 740240442U},
-    {"test860_2.svg", 3486368908U},
-    {"test860_3.svg", 3382493739U},
-    {"test910_1.svg", 727377666U},
-    {"test910_2.svg", 1953921556U},
-    {"test983_1.svg", 2884442763U},
-    {"test983_2.svg", 105610357U},
+    {"test3_1.svg", 424970231U},
+    {"test3_2.svg", 2062829244U},
+    {"test3_3.svg", 2170448228U},
+    {"test3_4.svg", 2743267505U},
+    {"test3_5.svg", 1449302246U},
+    {"test3_6.svg", 256911461U},
+    {"test3_7.svg", 66698678U},
+    {"test774_1.svg", 2029651525U},
+    {"test774_2.svg", 3280021597U},
+    {"test9_1.svg", 62470397U},
+    {"test852_1.svg", 1244633043U},
+    {"test852_2.svg", 1801003543U},
+    {"test852_2a.svg", 2362447927U},
+    {"test852_2b.svg", 227735811U},
+    {"test852_2c.svg", 3129296182U},
+    {"test852_2d.svg", 1248729545U},
+    {"test860_1.svg", 3585486213U},
+    {"test860_2.svg", 3394337328U},
+    {"test860_3.svg", 2615449172U},
+    {"test910_1.svg", 758885844U},
+    {"test910_2.svg", 1827977560U},
+    {"test983_1.svg", 3276359610U},
+    {"test983_2.svg", 2406898845U},
     {"testNoDeuterium.svg", 1004401828U},
     {"testNoTritium.svg", 2757848600U},
     {"testDeuterium.svg", 2768836206U},
     {"testTritium.svg", 1944598332U},
-    {"crossed_bonds.svg", 4064206667U},
-    {"test10_1.svg", 3330748573U},
-    {"test10_2.svg", 3864984751U},
-    {"test10_3.svg", 4107747066U},
-    {"test10_4.svg", 961927042U},
-    {"test10_5.svg", 1619495344U},
-    {"test10_6.svg", 2229853397U},
-    {"test11_1.svg", 3204552666U},
-    {"test11_2.svg", 443828916U},
-    {"test12_1.svg", 121561307U},
-    {"test12_5.svg", 2652536373U},
-    {"test12_3.svg", 2850489014U},
-    {"test12_4.svg", 2850489014U},
-    {"test12_2.svg", 1823632585U},
-    {"test13_1.svg", 3050327511U},
+    {"crossed_bonds.svg", 2998488094U},
+    {"test10_1.svg", 3056096654U},
+    {"test10_2.svg", 1635487920U},
+    {"test10_3.svg", 4029283804U},
+    {"test10_4.svg", 3515929372U},
+    {"test10_5.svg", 954495636U},
+    {"test10_6.svg", 762758720U},
+    {"test11_1.svg", 1028126625U},
+    {"test11_2.svg", 477557493U},
+    {"test12_1.svg", 2658149875U},
+    {"test12_5.svg", 2201316408U},
+    {"test12_3.svg", 1350296381U},
+    {"test12_4.svg", 1350296381U},
+    {"test12_2.svg", 3227552470U},
+    {"test13_1.svg", 3603370761U},
     {"testGithub1090_1.svg", 3202892343U},
     {"test1271_1.svg", 3344708082U},
     {"test1271_2.svg", 3059809816U},
     {"test1271_3.svg", 1332755355U},
     {"test1271_4.svg", 1332755355U},
-    {"test1271_5.svg", 2751210223U},
-    {"test1322_1.svg", 3994558723U},
-    {"test1322_2.svg", 742631954U},
-    {"test14_1.svg", 2682635437U},
-    {"test14_2.svg", 34596589U},
-    {"test15_1.svg", 3343879210U},
-    {"test15_2.svg", 1080125425U},
-    {"test17_1.svg", 2021974679U},
-    {"test17_2.svg", 1982675305U},
-    {"test17_3.svg", 2726010452U},
-    {"test17_4.svg", 669144902U},
-    {"test18_1.svg", 623880911U},
-    {"test18_2.svg", 2829021357U},
-    {"test18_3.svg", 1981527496U},
-    {"test18_4.svg", 3856599456U},
-    {"test18_5.svg", 2285263698U},
-    {"test18_6.svg", 99755875U},
-    {"test18_7.svg", 992293488U},
-    {"test19_1.svg", 1710391789U},
-    {"test19_2.svg", 725512425U},
-    {"test16_1.svg", 3097818490U},
-    {"test16_2.svg", 4078512567U},
-    {"testGithub2063_1.svg", 108931418U},
-    {"testGithub2063_2.svg", 108931418U},
-    {"testGithub2151_1.svg", 519358907U},
-    {"testGithub2151_2.svg", 3102378492U},
+    {"test1271_5.svg", 1298164254U},
+    {"test1322_1.svg", 3205602405U},
+    {"test1322_2.svg", 1382784658U},
+    {"test14_1.svg", 1475926171U},
+    {"test14_2.svg", 3223472512U},
+    {"test15_1.svg", 4168771843U},
+    {"test15_2.svg", 2507004800U},
+    {"test17_1.svg", 842656398U},
+    {"test17_2.svg", 3757523250U},
+    {"test17_3.svg", 2058438929U},
+    {"test17_4.svg", 1139264948U},
+    {"test18_1.svg", 493222951U},
+    {"test18_2.svg", 2876018791U},
+    {"test18_3.svg", 4007812293U},
+    {"test18_4.svg", 1284506858U},
+    {"test18_5.svg", 3557731891U},
+    {"test18_6.svg", 676435978U},
+    {"test18_7.svg", 763691371U},
+    {"test19_1.svg", 3328535680U},
+    {"test19_2.svg", 1269204426U},
+    {"test16_1.svg", 1272585497U},
+    {"test16_2.svg", 185163157U},
+    {"testGithub2063_1.svg", 3787940998U},
+    {"testGithub2063_2.svg", 3787940998U},
+    {"testGithub2151_1.svg", 3217916286U},
+    {"testGithub2151_2.svg", 1577439214U},
     {"testGithub2762.svg", 2006115844U},
-    {"testGithub2931_1.svg", 3001628989U},
-    {"testGithub2931_2.svg", 3664574077U},
-    {"testGithub2931_3.svg", 35507527U},
-    {"test20_1.svg", 2324941307U},
-    {"test20_2.svg", 457598277U},
-    {"test20_3.svg", 1187217942U},
-    {"test20_4.svg", 3479670855U},
-    {"test22_1.svg", 2151815275U},
-    {"test22_2.svg", 2026302466U},
-    {"testGithub3112_1.svg", 477831513U},
-    {"testGithub3112_2.svg", 1805767733U},
-    {"testGithub3112_3.svg", 3766118446U},
-    {"testGithub3112_4.svg", 244160302U},
-    {"testGithub3305_1.svg", 2151815275U},
-    {"testGithub3305_2.svg", 3973016396U},
-    {"testGithub3305_3.svg", 1169182745U},
-    {"testGithub3305_4.svg", 4259273141U},
-    {"testGithub3305_5.svg", 3128781134U},
-    {"testGithub3305_6.svg", 379495450U},
-    {"testGithub3305_7.svg", 2011619515U},
+    {"testGithub2931_1.svg", 2507461278U},
+    {"testGithub2931_2.svg", 1387494760U},
+    {"testGithub2931_3.svg", 3836523103U},
+    {"testGithub2931_4.svg", 1842593075U},
+    {"test20_1.svg", 2210504223U},
+    {"test20_2.svg", 3688247726U},
+    {"test20_3.svg", 968052569U},
+    {"test20_4.svg", 2298201486U},
+    {"test22_1.svg", 3716192373U},
+    {"test22_2.svg", 2843125073U},
+    {"testGithub3112_1.svg", 2613843920U},
+    {"testGithub3112_2.svg", 3639942551U},
+    {"testGithub3112_3.svg", 1107662781U},
+    {"testGithub3112_4.svg", 709028391U},
+    {"testGithub3305_1.svg", 3716192373U},
+    {"testGithub3305_2.svg", 3910798383U},
+    {"testGithub3305_3.svg", 2665156605U},
+    {"testGithub3305_4.svg", 1449302246U},
+    {"testGithub3305_5.svg", 2772302185U},
+    {"testGithub3305_6.svg", 3531992753U},
+    {"testGithub3305_7.svg", 1048989429U},
     {"testGithub3391_1.svg", 4243890317U},
-    {"testGithub3391_2.svg", 3058304314U},
-    {"testGithub3391_3.svg", 1146107029U},
-    {"testGithub3391_4.svg", 1343702587U},
-    {"test23_1.svg", 1351566708U},
-    {"testGithub4496_1.svg", 4130500721U},
+    {"testGithub3391_2.svg", 2715627238U},
+    {"testGithub3391_3.svg", 1135236546U},
+    {"testGithub3391_4.svg", 2831048218U},
+    {"test23_1.svg", 2647265485U},
+    {"testGithub4496_1.svg", 2982532952U},
+    {"testGithub5006_1.svg", 1549575149U},
 };
 #endif
 
@@ -316,40 +319,40 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"test2_1.png", 971078492U},
-    {"test2_2.png", 2496148757U},
+    {"test2_1.png", 787928860U},
+    {"test2_2.png", 4058920248U},
     {"test2_3.png", 2179746375U},
-    {"test3_1.png", 1170536022U},
-    {"test3_2.png", 1032821596U},
-    {"test3_3.png", 885386832U},
-    {"test3_4.png", 3688119914U},
-    {"test3_5.png", 687841644U},
-    {"test3_6.png", 777149828U},
-    {"test3_7.png", 1470346128U},
-    {"test4_1.png", 1519573413U},
-    {"test5_1.png", 4099878968U},
-    {"test5_2.png", 455957375U},
-    {"test5_3.png", 3369257680U},
-    {"test7_1.png", 1722944047U},
-    {"test7_2.png", 435326497U},
-    {"test774_1.png", 1512858255U},
-    {"test774_2.png", 1820438693U},
-    {"test852_1.png", 2239409891U},
-    {"test852_2.png", 4120574352U},
-    {"test860_1.png", 1123622564U},
-    {"test860_2.png", 821482019U},
-    {"test860_3.png", 3772870014U},
-    {"test20_1.png", 1671273091U},
-    {"test20_2.png", 4014074794U},
-    {"test20_3.png", 3118790846U},
-    {"test20_4.png", 3857678453U},
-    {"testGithub3305_1.png", 3055401857U},
-    {"testGithub3305_2.png", 1405637787U},
-    {"testGithub3305_3.png", 774264151U},
-    {"testGithub3305_4.png", 687841644U},
-    {"testGithub3305_5.png", 402607644U},
-    {"testGithub3305_6.png", 1157397108U},
-    {"testGithub3305_7.png", 2220979057U},
+    {"test4_1.png", 1842930899U},
+    {"test5_1.png", 2116545562U},
+    {"test5_2.png", 1519942634U},
+    {"test5_3.png", 2737461377U},
+    {"test7_1.png", 3331950391U},
+    {"test7_2.png", 1686496331U},
+    {"test3_1.png", 663206375U},
+    {"test3_2.png", 303052137U},
+    {"test3_3.png", 4294638881U},
+    {"test3_4.png", 3630119129U},
+    {"test3_5.png", 1264831028U},
+    {"test3_6.png", 2817453573U},
+    {"test3_7.png", 285272009U},
+    {"test774_1.png", 2404098842U},
+    {"test774_2.png", 1398436991U},
+    {"test852_1.png", 2995698912U},
+    {"test852_2.png", 3729374135U},
+    {"test860_1.png", 1000110983U},
+    {"test860_2.png", 4079976606U},
+    {"test860_3.png", 1675954369U},
+    {"test20_1.png", 221585048U},
+    {"test20_2.png", 491001781U},
+    {"test20_3.png", 1764616972U},
+    {"test20_4.png", 781264160U},
+    {"testGithub3305_1.png", 316930677U},
+    {"testGithub3305_2.png", 3520446560U},
+    {"testGithub3305_3.png", 3960184199U},
+    {"testGithub3305_4.png", 1264831028U},
+    {"testGithub3305_5.png", 825361009U},
+    {"testGithub3305_6.png", 1101832470U},
+    {"testGithub3305_7.png", 3958237058U},
 };
 
 using namespace RDKit;
@@ -1174,10 +1177,10 @@ void test6() {
 #if DO_TEST_ASSERT
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
     TEST_ASSERT(
-        txt.find("<path class='bond-0 atom-0 atom-1' d='M 191.5,116.9") !=
+        txt.find("<path class='bond-0 atom-0 atom-1' d='M 187.5,118.0") !=
         std::string::npos);
     // start of first radical spot
-    TEST_ASSERT(txt.find("<path class='atom-1' d='M 43.1,192.1 L 43.1,192.3") !=
+    TEST_ASSERT(txt.find("<path class='atom-1' d='M 43.1,190.8 L 43.1,190.9") !=
                 std::string::npos);
 #else
     TEST_ASSERT(
@@ -1405,7 +1408,7 @@ void testGithub781() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // the start of the C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 118.3 143.0") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 116.1 143.0") !=
                 std::string::npos)
     // the start of the H
     TEST_ASSERT(txt.find("<path class='atom-0' d='M 141.7 128.9") !=
@@ -1435,7 +1438,7 @@ void testGithub781() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // start of the H
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 117.1 128.9") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 114.9 128.9") !=
                 std::string::npos);
     // start of the O
     TEST_ASSERT(txt.find("<path class='atom-0' d='M 142.7 156.2") !=
@@ -1492,10 +1495,10 @@ void testGithub781() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // start of C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 34.7 194.4") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 36.2 194.0") !=
                 std::string::npos);
     // start of l
-    TEST_ASSERT(txt.find("<path class='atom-3' d='M 43.7 77.3") !=
+    TEST_ASSERT(txt.find("<path class='atom-3' d='M 45.3 77.6") !=
                 std::string::npos);
 #endif
 #else
@@ -1545,7 +1548,7 @@ void testGithub781() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // the start of the C
-    TEST_ASSERT(txt.find("<path class='atom-0' d='M 88.9 97.6") !=
+    TEST_ASSERT(txt.find("<path class='atom-0' d='M 88.1 97.6") !=
                 std::string::npos)
     // the start of the H
     TEST_ASSERT(txt.find("<path class='atom-0' d='M 97.1 92.6") !=
@@ -1595,9 +1598,7 @@ void testGithub774() {
       Point2D ocoords(1.0, 2.0);
       Point2D dcoords =
           drawer.getAtomCoords(std::make_pair(ocoords.x, ocoords.y));
-      std::cout << dcoords << std::endl;
       Point2D acoords = drawer.getDrawCoords(dcoords);
-      std::cout << acoords << std::endl;
       TEST_ASSERT(feq(acoords.x, 1.0));
       TEST_ASSERT(feq(acoords.y, 2.0));
       check_file_hash(nameBase + ".svg");
@@ -1984,15 +1985,15 @@ M  END";
     outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-    TEST_ASSERT(text.find("<path class='bond-0 atom-1 atom-0' d='M 74.0,85.5 L "
-                          "25.1,120.7 L 19.1,110.3 Z' style='fill:#000000;") !=
-                std::string::npos);
+    TEST_ASSERT(
+        text.find(
+            "<path class='bond-0 atom-1 atom-0' d='M 74.0,85.5 L 24.4,119.4 "
+            "L 19.9,111.6 Z' style='fill:#000000;") != std::string::npos);
 #endif
 #else
     TEST_ASSERT(text.find("<path class='bond-1 atom-2 atom-4' d='M 125.6,110.7 "
-                          "L 173.7,76.1 L 179.6,86.4 Z' "
-                          "style='fill:#000000;fill-rule:evenodd;fill-opacity:"
-                          "1;stroke:#000000") != std::string::npos);
+                          "L 174.4,77.4 L 178.9,85.1 Z' style='fill:#000000") !=
+                std::string::npos);
 #endif
     check_file_hash("test983_1.svg");
     delete m;
@@ -2046,13 +2047,13 @@ M  END";
     outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 104.2,117.6 "
-                          "L 72.7,99.7 L 77.2,93.5 Z' style='fill:#000000;") !=
+    TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 103.4,117.5"
+                          " L 71.9,98.4 L 76.7,94.9 Z' style='fill:#000000;") !=
                 std::string::npos);
 #endif
 #else
     TEST_ASSERT(text.find("<path class='bond-3 atom-2 atom-4' d='M 105.1,114.8 "
-                          "L 74.0,97.2 L 78.4,91.0 Z' style='fill:#000000;") !=
+                          "L 73.8,95.9 L 78.6,92.4 Z' style='fill:#000000;") !=
                 std::string::npos);
 #endif
     check_file_hash("test983_2.svg");
@@ -2619,8 +2620,8 @@ void test13JSONConfig() {
 #if DO_TEST_ASSERT
     // we'll just have to assume that this pink is for the legend
     TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 120.0,8.2 L "
-                          "163.5,83.6'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 121.1,8.2"
+                          " L 164.6,83.6'") != std::string::npos);
 #endif
 #else
     TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
@@ -3022,7 +3023,7 @@ void test15ContinuousHighlightingWithGrid() {
       outs.flush();
       outs.close();
       check_file_hash("test15_2.svg");
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.3px") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.4px") !=
                   std::string::npos);
     }
     for (auto &&mol : mols) {
@@ -3220,7 +3221,7 @@ M  END
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-8' d='M 166.6 92.6") !=
+      TEST_ASSERT(text.find("<path class='atom-8' d='M 166.8 92.6") !=
                   std::string::npos);
 #endif
 #else
@@ -3253,7 +3254,7 @@ void test18FixedScales() {
 #if DO_TEST_ASSERT
       // where it starts drawing the l is a poor surrogate for checking
       // the font size, but all we have.
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 283.2 121.9") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 262.0 135.8") !=
                   std::string::npos);
 #endif
 #else
@@ -3275,7 +3276,7 @@ void test18FixedScales() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
       // where it starts drawing the l.
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 184.7 131.6") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 179.3 135.2") !=
                   std::string::npos);
 #endif
 #else
@@ -3420,7 +3421,7 @@ void test19RotateDrawing() {
       outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("<path class='atom-0' d='M 263.0 150.8") !=
+      TEST_ASSERT(text.find("<path class='atom-0' d='M 262.0 150.8") !=
                   std::string::npos);
 #endif
 #else
@@ -3484,10 +3485,12 @@ M  END)molb";
     outs << text;
     outs.flush();
     outs.close();
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M "
-                          "65.9,100.9 L 134.1,79.1'") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M "
-                          "69.7,107.5 L 9.1,72.5'") != std::string::npos);
+#if DO_TEST_ASSERT
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 69.7,99.9 L"
+                          " 130.3,77.0'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M 69.7,112.0"
+                          " L 9.1,77.0'") != std::string::npos);
+#endif
     check_file_hash("testGithub2063_1.svg");
   }
   {
@@ -3516,10 +3519,12 @@ M  END)molb";
     outs << text;
     outs.flush();
     outs.close();
-    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M "
-                          "65.9,100.9 L 134.1,79.1'") != std::string::npos);
-    TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M "
-                          "69.7,107.5 L 9.1,72.5'") != std::string::npos);
+#if DO_TEST_ASSERT
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 69.7,99.9"
+                          " L 130.3,77.0'") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-1 atom-0 atom-2' d='M 69.7,112.0 "
+                          "L 9.1,77.0'") != std::string::npos);
+#endif
     check_file_hash("testGithub2063_2.svg");
   }
   std::cerr << " Done" << std::endl;
@@ -3543,8 +3548,10 @@ void testGithub2151() {
       outs << text;
       outs.flush();
       outs.close();
+#if DO_TEST_ASSERT
       TEST_ASSERT(text.find("stroke-width:2.0px") != std::string::npos);
       TEST_ASSERT(text.find("stroke-width:3.0px") == std::string::npos);
+#endif
       check_file_hash("testGithub2151_1.svg");
     }
     {
@@ -3558,8 +3565,9 @@ void testGithub2151() {
       outs << text;
       outs.flush();
       outs.close();
-      TEST_ASSERT(text.find("stroke-width:2.0px") == std::string::npos);
+#if DO_TEST_ASSERT
       TEST_ASSERT(text.find("stroke-width:8.0px") != std::string::npos);
+#endif
       check_file_hash("testGithub2151_2.svg");
     }
   }
@@ -3588,9 +3596,11 @@ void testGithub2762() {
     outs << text;
     outs.flush();
     outs.close();
+#if DO_TEST_ASSERT
     TEST_ASSERT(text.find("font-size:0px") == std::string::npos);
     TEST_ASSERT(text.find("'bond-0' d='M 0.0,200.0 L 0.0,200.0'") ==
                 std::string::npos);
+#endif
     check_file_hash("testGithub2762.svg");
   }
   std::cerr << " Done" << std::endl;
@@ -3647,7 +3657,6 @@ void testGithub2931() {
       }
     }
   };
-
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
@@ -3685,7 +3694,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='348.6' rx='9.9' ry='10.1' "
+          text.find("<ellipse cx='240.2' cy='347.7' rx='12.3' ry='12.7' "
                     "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
@@ -3693,8 +3702,8 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='297.0' rx='9.8' ry='9.8' "
-                    "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
+          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
+                    "class='atom-5'  style='fill:none;stroke:#00FF00") !=
           std::string::npos);
 #endif
       check_file_hash("testGithub2931_1.svg");
@@ -3717,7 +3726,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='348.2' rx='9.9' ry='9.9' "
+          text.find("<ellipse cx='240.2' cy='347.6' rx='12.5' ry='12.5' "
                     "class='atom-6'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
@@ -3725,7 +3734,7 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='296.7' rx='9.8' ry='9.8' "
+          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
                     "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
@@ -3755,11 +3764,45 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:40.0px") !=
                   std::string::npos);
       TEST_ASSERT(
-          text.find("<ellipse cx='242.6' cy='297.0' rx='9.8' ry='9.8' "
+          text.find("<ellipse cx='240.6' cy='295.4' rx='12.4' ry='12.4' "
                     "class='atom-5'  style='fill:none;stroke:#00FF00;") !=
           std::string::npos);
 #endif
       check_file_hash("testGithub2931_3.svg");
+    }
+    {
+      MolDraw2DSVG drawer(500, 500);
+      drawer.drawOptions().fillHighlights = false;
+      drawer.drawOptions().continuousHighlight = true;
+      drawer.drawOptions().fixedFontSize = 10;
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addBondIndices = true;
+      drawer.drawMoleculeWithHighlights(*m, "Test 4", ha_map, hb_map, h_rads,
+                                        h_lw_mult);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("testGithub2931_4.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#if DO_TEST_ASSERT
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
+                  std::string::npos);
+      TEST_ASSERT(
+          text.find("<ellipse cx='246.7' cy='340.2' rx='11.7' ry='11.7'"
+                    " class='atom-6'  style='fill:none;stroke:#00FF00;") !=
+          std::string::npos);
+#endif
+#else
+      TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
+                  std::string::npos);
+      TEST_ASSERT(
+          text.find("<ellipse cx='247.7' cy='292.7' rx='11.7' ry='11.7' "
+                    "class='atom-5'  style='fill:none;stroke:#00FF00") !=
+          std::string::npos);
+#endif
+      check_file_hash("testGithub2931_4.svg");
     }
   }
   std::cerr << " Done" << std::endl;
@@ -3780,8 +3823,8 @@ void testGithub3112() {
     outs.close();
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
-    // this is the b
-    TEST_ASSERT(text.find("<path class='legend' d='M 129.7 184.1") !=
+    // this is the b (4th character)
+    TEST_ASSERT(text.find("<path class='legend' d='M 130.1 184.1") !=
                 std::string::npos);
 #endif
 #else
@@ -3807,7 +3850,7 @@ void testGithub3112() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // this is the b on the 2nd line.
-    TEST_ASSERT(text.find("<path class='legend' d='M 121.3 190.2") !=
+    TEST_ASSERT(text.find("<path class='legend' d='M 121.0 190.2") !=
                 std::string::npos);
 #endif
 #else
@@ -3835,7 +3878,7 @@ void testGithub3112() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // The first letter, N.
-    TEST_ASSERT(text.find("<path class='legend' d='M 1.0 186.1") !=
+    TEST_ASSERT(text.find("<path class='legend' d='M 1.0 186.7") !=
                 std::string::npos);
 #endif
 #else
@@ -3863,7 +3906,7 @@ void testGithub3112() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // The first letter, N
-    TEST_ASSERT(text.find("<path class='legend' d='M 74.8 180.4") !=
+    TEST_ASSERT(text.find("<path class='legend' d='M 71.2 180.4") !=
                 std::string::npos);
 #endif
 #else
@@ -3920,7 +3963,7 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // first note (atom 0)
-    TEST_ASSERT(text.find("<path class='note' d='M 49.6 120.8") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 49.9 121.0") !=
                 std::string::npos);
 #endif
 #else
@@ -3959,12 +4002,12 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // last note
-    TEST_ASSERT(text.find("<path class='note' d='M 273.3 236.3") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 274.0 236.2") !=
                 std::string::npos);
 #endif
 #else
     // this is the (E)
-    TEST_ASSERT(text.find("<text x='260.4' y='232.0' class='note' "
+    TEST_ASSERT(text.find("<text x='260.5' y='231.8' class='note' "
                           "style='font-size:20px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >E</text>") !=
@@ -4000,12 +4043,12 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // first note
-    TEST_ASSERT(text.find("<path class='note' d='M 159.1 177.0") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 156.5 177.1") !=
                 std::string::npos);
 #endif
 #else
     // f of foolish
-    TEST_ASSERT(text.find("<text x='145.2' y='181.8' class='note' "
+    TEST_ASSERT(text.find("<text x='145.3' y='181.8' class='note' "
                           "style='font-size:12px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
                           "serif;text-anchor:start;fill:#000000' >f</text>") !=
@@ -4038,7 +4081,7 @@ void test20Annotate() {
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
     // first note (atom 0)
-    TEST_ASSERT(text.find("<path class='note' d='M 19.8 48.3") !=
+    TEST_ASSERT(text.find("<path class='note' d='M 19.9 48.4") !=
                 std::string::npos);
 #endif
 #else
@@ -4172,7 +4215,9 @@ void testGithub3305() {
     outs << text;
     outs.flush();
     outs.close();
-    TEST_ASSERT(text.find("stroke-width:4.1px") != std::string::npos);
+#if DO_TEST_ASSERT
+    TEST_ASSERT(text.find("stroke-width:4.2px") != std::string::npos);
+#endif
     check_file_hash(nameBase + "3.svg");
   }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -4432,8 +4477,10 @@ void testGithub4156() {
     outs.close();
     // this is the start of the radical spot.
     regex qry(
-        "<path class='atom-1' d='M 21.[0-9]*,75.[0-9]* L 21.[0-9]*,75.[0-9]*");
+        "<path class='atom-1' d='M 22.[0-9]*,75.[0-9]* L 22.[0-9]*,75.[0-9]*");
+#if DO_TEST_ASSERT
     TEST_ASSERT(regex_search(text, qry));
+#endif
     check_file_hash("testGithub4156_1.svg");
   }
   {
@@ -4450,9 +4497,11 @@ void testGithub4156() {
     outs.close();
     // this is the start of the radical spot.
     regex qry(
-        "<path class='atom-1' d='M 271.[0-9]*,75.[0-9]* L "
-        "271.[0-9]*,75.[0-9]*");
+        "<path class='atom-1' d='M 272.[0-9]*,75.[0-9]* L "
+        "272.[0-9]*,75.[0-9]*");
+#if DO_TEST_ASSERT
     TEST_ASSERT(regex_search(text, qry));
+#endif
     check_file_hash("testGithub4156_2.svg");
   }
 #endif
@@ -4476,14 +4525,14 @@ void test23JSONAtomColourPalette() {
     std::ofstream outs("test23_1.svg");
     outs << text;
     outs.close();
-#ifdef RDK_BUILD_FREETYPE_SUPPORT
 #if DO_TEST_ASSERT
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
     TEST_ASSERT(text.find("' fill='#3366E5") != std::string::npos);
     TEST_ASSERT(text.find("' fill='#E59900") != std::string::npos);
-#endif
 #else
     TEST_ASSERT(text.find("fill:#3366E5") != std::string::npos);
     TEST_ASSERT(text.find("fill:#E59900") != std::string::npos);
+#endif
 #endif
     check_file_hash("test23_1.svg");
   }
@@ -4533,7 +4582,6 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-
 #if 1
   test1();
   test2();

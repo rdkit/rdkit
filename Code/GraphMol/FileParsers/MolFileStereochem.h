@@ -62,5 +62,10 @@ RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
  */
 RDKIT_FILEPARSERS_EXPORT void reapplyMolBlockWedging(ROMol &mol);
 
+//! Set double bonds with unspecified stereo to STEREOANY and add wavy bonds to
+///  potential stereocenters with unspecified chirality
+RDKIT_FILEPARSERS_EXPORT void markUnspecifiedStereoAsUnknown(ROMol &mol,
+                                                             int confId = -1);
+
 }  // namespace RDKit
 #endif
