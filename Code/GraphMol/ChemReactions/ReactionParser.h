@@ -271,7 +271,7 @@ inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmiles(const char *text,
 
 //---------------------------------------------------------------------------
 //! \name CDXML rxn Support
-//@{
+///@{
 
 //! Parse text in CDXML rxn format into a vector of ChemicalReactions
 RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
