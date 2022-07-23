@@ -387,10 +387,10 @@ TEST_CASE("molzip", "[]") {
   SECTION("MolZip saves bonddir") {
     auto a = "CC[*:1]"_smiles;
     auto b = "N[*:1]"_smiles;
-    a->getBondWithIdx(0)->setBondDir(Bond::BondDir::BEGINWEDGE);
+    b->getBondWithIdx(0)->setBondDir(Bond::BondDir::BEGINWEDGE);
     auto mol = molzip(*a, *b);
     CHECK(MolToSmiles(*mol) == "CCN");
-    CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::BEGINWEDGE);
   }
 }
 

@@ -739,11 +739,14 @@ struct ZipBond {
                       "molzip: begin atom and specified dummy atom connection "
                       "are not bonded.")
       auto bond_type_a = bnd->getBondType();
+      auto bond_dir_a = bnd->getBondDir();
       bnd = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx());
       CHECK_INVARIANT(bnd != nullptr,
                       "molzip: end atom and specified dummy connection atom "
                       "are not bonded.")
       auto bond_type_b = bnd->getBondType();
+      auto bond_dir_b = bnd->getBondDir();
+    
       unsigned int bnd_idx = 0;
       if (bond_type_a != Bond::BondType::SINGLE) {
         bnd_idx = newmol.addBond(a, b, bond_type_a);
@@ -752,7 +755,19 @@ struct ZipBond {
       } else {
         bnd_idx = newmol.addBond(a, b, Bond::BondType::SINGLE);
       }
-      newmol.getBondWithIdx(bnd_idx-1)->setBondDir(bnd->getBondDir());
+        
+      if(bond_dir_a != Bond::NONE || bond_dir_b != Bond::NONE) {
+          auto bond_dir = Bond::NONE;
+          if (bond_dir_a != Bond::NONE) {
+              bond_dir = bond_dir_a;
+          } else if (bond_dir_b != Bond::NONE) {
+              bond_dir = bond_dir_b;
+          } else {
+              BOOST_LOG(rdWarningLog) << "imcompatible bond directions when zipping, choosing bond direction from first fragment" << std::endl;
+              bond_dir = bond_dir_a;
+          }
+          newmol.getBondWithIdx(bnd_idx-1)->setBondDir(bond_dir);
+      }
     }
     a_dummy->setProp("__molzip_used", true);
     b_dummy->setProp("__molzip_used", true);
