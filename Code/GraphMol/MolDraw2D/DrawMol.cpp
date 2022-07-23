@@ -2836,9 +2836,6 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
     auto bond =
         drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
-    if (bond->getBondType() == Bond::DOUBLE && thirdAtom->getDegree() == 1) {
-      continue;
-    }
     Point2D const &at1_cds = atCds_[atom->getIdx()];
     Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
     otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
