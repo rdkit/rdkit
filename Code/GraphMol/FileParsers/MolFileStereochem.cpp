@@ -577,6 +577,7 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
 }
 
 void reapplyMolBlockWedging(ROMol &mol) {
+  ClearSingleBondDirFlags(mol);
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
     if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,
