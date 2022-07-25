@@ -754,6 +754,7 @@ struct ZipBond {
                       "molzip: end atom and specified dummy connection atom "
                       "are not bonded.")
       auto bond_type_b = bnd->getBondType();
+
       auto bond_dir_b = bnd->getBondDir();
       auto b_is_start = bnd->getBeginAtom() == b;
       
@@ -781,9 +782,13 @@ struct ZipBond {
           }
           if(!consistent_directions) {
               BOOST_LOG(rdWarningLog) << "inconsistent bond directions when merging fragments, ignoring..." << std::endl;
-              bond_dir = Bond::BondDir::NONE;
+              bond_dir_a = bond_dir_b = Bond::BondDir::NONE;
+          } else {
+              bond_dir_b = Bond::BondDir::NONE;
           }
-      } else if (bond_dir_a != Bond::BondDir::NONE) {
+      }
+        
+      if (bond_dir_a != Bond::BondDir::NONE) {
           if(!a_is_start) {
               start = b;
               end = a;
@@ -806,6 +811,7 @@ struct ZipBond {
       }
         
       newmol.getBondWithIdx(bnd_idx-1)->setBondDir(bond_dir);
+
     }
     a_dummy->setProp("__molzip_used", true);
     b_dummy->setProp("__molzip_used", true);
