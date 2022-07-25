@@ -53,10 +53,10 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLDataStreamToChemicalReaction
           schemes[schemestep].push_back(i);
       }
   }
-  if(!schemes.size()) {
+  if(schemes.empty()) {
       return result;
   }
-  for(auto scheme: schemes) {
+  for(const auto &scheme: schemes) {
     // convert atoms to queries:
     ChemicalReaction *res = new ChemicalReaction;
     result.push_back(std::unique_ptr<ChemicalReaction>(res));
