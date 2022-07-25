@@ -691,4 +691,14 @@ TEST_CASE("CDXML") {
             CHECK(std::string(e.what()) == "expected > at line: 373");
         }
     }
+    SECTION("Lots of stereo") {
+        auto fname = cdxmlbase + "stereo.cdxml";
+        std::vector<std::string> expected = { "C[C@@H](Cl)[C@H](N)O.C[C@@H](F)[C@H](N)O.C[C@H](Br)[C@@H](N)O.C[C@H](I)[C@@H](N)O"};
+        auto mols = CDXMLFileToMols(fname);
+        CHECK(mols.size()==expected.size());
+        int i=0;
+        for(auto &mol : mols) {
+            CHECK(MolToSmiles(*mol) == expected[i++]);
+        }
+    }
 }
