@@ -227,6 +227,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           }
         } else if (attr.first == "ElementList") {
           elementlist = to_vec<int>(attr.second.data());
+
         } else if (attr.first == "p") {
           atom_coords = to_vec<double>(attr.second.data());
         } else if (attr.first == "EnhancedStereoGroupNum") {
@@ -380,6 +381,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         ids[bond.start]->setIsAromatic(true);
       }
       bnd->setProp("CDX_BOND_ID", bond.bond_id);
+      // More confusion
+      // RDKit/MolFile Wedge (up)  == CDXML WedgedHash
+      // RDKit//MolFile WedgedHash (down) == CDXML Wedge
       if (bond.display == "WedgeEnd" || bond.display == "WedgeBegin") {
         bnd->setBondDir(Bond::BondDir::BEGINDASH);
       } else if (bond.display == "WedgedHashBegin" ||
