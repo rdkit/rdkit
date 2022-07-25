@@ -29,9 +29,9 @@
 namespace RDKit {
 
 namespace {
-void make_query_atoms(RWMol *mol) {
-  for (auto &atom : mol->atoms()) {
-    QueryOps::replaceAtomWithQueryAtom(mol, atom);
+void make_query_atoms(RWMol &mol) {
+  for (auto &atom : mol.atoms()) {
+    QueryOps::replaceAtomWithQueryAtom(&mol, atom);
   }
 }
 }  // namespace
@@ -63,22 +63,19 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLDataStreamToChemicalReaction
     for(auto idx: scheme.second) {
       CHECK_INVARIANT(used.find(idx) == used.end(), "Fragment used in twice in one or more reactions, this shouldn't happen");
       if(mols[idx]->hasProp("CDX_REAGENT_ID")) {
-        RWMol *mol = mols[idx].release();
         used.insert(idx);
-        make_query_atoms(mol);
-        res->addReactantTemplate(ROMOL_SPTR(mol));
+        make_query_atoms(*mols[idx]);
+        res->addReactantTemplate(ROMOL_SPTR(std::move(mols[idx])));
       }
       else if(mols[idx]->hasProp("CDX_AGENT_ID")) {
-        RWMol *mol = mols[idx].release();
         used.insert(idx);
-        make_query_atoms(mol);
-        res->addAgentTemplate(ROMOL_SPTR(mol));
+        make_query_atoms(*mols[idx]);
+        res->addAgentTemplate(ROMOL_SPTR(std::move(mols[idx])));
       }
       else if(mols[idx]->hasProp("CDX_PRODUCT_ID")) {
-        RWMol *mol = mols[idx].release();
         used.insert(idx);
-        make_query_atoms(mol);
-        res->addProductTemplate(ROMOL_SPTR(mol));
+        make_query_atoms(*mols[idx]);
+        res->addProductTemplate(ROMOL_SPTR(std::move(mols[idx])));
       }
     }
     updateProductsStereochem(res);
