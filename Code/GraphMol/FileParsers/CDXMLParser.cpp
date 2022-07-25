@@ -516,7 +516,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                 mols.push_back(std::move(mol));
               }
               RWMol *res = mols.back().get();
-              Conformer *conf = new Conformer(res->getNumAtoms());
+              auto conf = std::make_unique<Conformer>(res->getNumAtoms());
               conf->set3D(false);
               bool hasConf = false;
               for (auto &atm : res->atoms()) {
@@ -536,8 +536,8 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                 }
               }
               if (hasConf) {
-                res->addConformer(conf);
-                DetectAtomStereoChemistry(*res, conf);
+                auto confidx = res->addConformer(conf.release());
+                DetectAtomStereoChemistry(*res, &res->getConformer(confidx));
               }
 
               if (sanitize) {
