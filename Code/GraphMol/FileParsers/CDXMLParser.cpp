@@ -21,14 +21,6 @@
 #include "MolFileStereochem.h"
 #include <RDGeneral/FileParseException.h>
 
-// TODO
-//  I'm currently using atom map numbers to join structures
-//   this is not very forward thinking as chemdraw can also have
-//   atom map numbers in addition to the ids in the xml file.
-//  [] enhance molzip to be able to zip on on an atom tag
-//  [] what happens to stereo chemistry when the fuse_frags below is called
-//    get cases in the "wild" and see what the expectation is.
-//  [] add coordinates for the atoms.  Might not work for nicknames like Boc?
 
 using boost::property_tree::ptree;
 namespace RDKit {
@@ -64,7 +56,7 @@ struct BondInfo {
     auto st = s->second->getIdx();
     auto et = e->second->getIdx();
 
-    return (st >= 0 && st < num_atoms && et >= 0 && et < num_atoms && st != et);
+    return (st < num_atoms && et < num_atoms && st != et);
   }
 };
 
@@ -142,11 +134,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
     missing_frag_id--;
   }
   mol.setProp<int>(CDXML_FRAG_ID, frag_id);
-  int elemno = -1;
-  int fragmap = 10000;
-  bool fuse_fragments = false;
   // for atom in frag
-  int atom_id;
+  int atom_id=-1;
   std::vector<BondInfo> bonds;
   std::map<int, StereoGroupInfo> sgroups;
 
@@ -273,6 +262,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         }
       }
       // add the atom
+      CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.");
       Atom *rd_atom = new Atom(elemno);
       rd_atom->setFormalCharge(charge);
       rd_atom->setNumExplicitHs(num_hydrogens);
