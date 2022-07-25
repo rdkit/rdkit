@@ -155,7 +155,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       int sgroup = -1;
       bool explicitHs = false;
       StereoGroupType grouptype = StereoGroupType::STEREO_ABSOLUTE;
-      bool skipEnhancedStereo = false;
       std::string query_label;
       bool has_atom_stereo = false;
       std::vector<int> bond_ordering;
@@ -228,20 +227,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           }
         } else if (attr.first == "ElementList") {
           elementlist = to_vec<int>(attr.second.data());
-        } else if (attr.first == "Geometry") {
-          if (attr.second.data() == "Tetrahedral") {
-            has_atom_stereo = true;
-          }
-        } else if (attr.first == "BondOrdering") {
-          std::vector<int> order = to_vec<int>(attr.second.data());
-          // remove any idx that is 0, they can appear anywhere in the
-          // BondOrdering
-          //  I really don't know why...
-          for (auto idx : order) {
-            if (idx) {
-              bond_ordering.push_back(idx);
-            }
-          }
         } else if (attr.first == "p") {
           atom_coords = to_vec<double>(attr.second.data());
         } else if (attr.first == "EnhancedStereoGroupNum") {
@@ -257,7 +242,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
           } else {
             BOOST_LOG(rdWarningLog) << "Unhandled enhanced stereo type "
                                     << stereo_type << " ignoring" << std::endl;
-            skipEnhancedStereo = true;
           }
         }
       }
@@ -276,10 +260,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       if (mergeparent > 0) {
         rd_atom->setProp<int>("MergeParent", mergeparent);
       }
-      // if(has_atom_stereo) {
-      //     rd_atom->setProp<std::vector<int>>(CDX_BOND_ORDERING,
-      //     bond_ordering);
-      // }
 
       rd_atom->setProp<std::vector<double>>(CDX_ATOM_POS, atom_coords);
       rd_atom->setProp<unsigned int>(CDX_ATOM_ID, atom_id);
