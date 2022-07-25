@@ -712,5 +712,15 @@ TEST_CASE("CDXML") {
             auto mols = CDXMLFileToMols(fname);
             CHECK(mols.size() == 0);
         }
+        {
+            auto fname = cdxmlbase + "bad-bondorder.cdxml";
+            auto mols = CDXMLFileToMols(fname);
+            CHECK(mols.size() == 0);
+        }
+        {
+            auto fname = cdxmlbase + "bad-bondorder2.cdxml";
+            auto mols = CDXMLFileToMols(fname);
+            CHECK(mols.size() == 0);
+        }
     }
 }

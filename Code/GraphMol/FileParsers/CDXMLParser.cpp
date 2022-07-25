@@ -248,7 +248,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
             }
         } catch (...) {
             BOOST_LOG(rdErrorLog) << "Failed to parse XML fragment " << frag_id
-                << " node: " << node.first << " attribute: " << attr.first << std::endl;
+                << " node: " << node.first << " attribute: " << attr.first << ": " << attr.second.data() << std::endl;
             return false;
         }
       }
@@ -344,7 +344,16 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               if (attr.second.data() == "1.5") {
                 order = Bond::BondType::AROMATIC;
               } else {
-                order = static_cast<Bond::BondType>(stoi(attr.second.data()));
+                int bond_order = stoi(attr.second.data());
+                                      
+                 switch(bond_order) {
+                    case 1: order = Bond::BondType::SINGLE; break;
+                    case 2: order = Bond::BondType::DOUBLE; break;
+                    case 3: order = Bond::BondType::TRIPLE; break;
+                    case 4: order = Bond::BondType::QUADRUPLE; break;
+                    default:
+                         throw std::invalid_argument("Unhandled bond order");
+                 }
               }
             } else if (attr.first ==
                        "Display") {  // gets wedge/hash stuff and probably more
@@ -352,7 +361,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
             }
           } catch(...) {
               BOOST_LOG(rdErrorLog) << "Failed to parse XML fragment " << frag_id
-                  << " node: " << node.first << " attribute: " << attr.first << std::endl;
+                  << " node: " << node.first << " attribute: " << attr.first << ": " << attr.second.data() << std::endl;
               return false;
           }
       }
