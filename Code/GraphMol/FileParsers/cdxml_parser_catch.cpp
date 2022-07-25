@@ -701,4 +701,16 @@ TEST_CASE("CDXML") {
             CHECK(MolToSmiles(*mol) == expected[i++]);
         }
     }
+    SECTION("Lots of stereo") {
+        {
+            auto fname = cdxmlbase + "bad-id.cdxml";
+            auto mols = CDXMLFileToMols(fname);
+            CHECK(mols.size() == 0);
+        }
+        {
+            auto fname = cdxmlbase + "bad-coords.cdxml";
+            auto mols = CDXMLFileToMols(fname);
+            CHECK(mols.size() == 0);
+        }
+    }
 }
