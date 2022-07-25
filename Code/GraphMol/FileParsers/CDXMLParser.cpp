@@ -127,13 +127,13 @@ bool parse_fragment(RWMol &mol, ptree &frag,
   int frag_id = frag.get<int>("<xmlattr>.id", -1);
   if (frag_id == -1) {
     // ChemDraw simply assigns a new one
-    BOOST_LOG(rdErrorLog)
+    BOOST_LOG(rdWarningLog)
         << "Invalid or missing fragment id from CDXML fragment, assigning new one..."
         << std::endl;
     frag_id = missing_frag_id;
     missing_frag_id--;
   }
-  mol.setProp<int>(CDXML_FRAG_ID, frag_id);
+  mol.setProp(CDXML_FRAG_ID, frag_id);
   // for atom in frag
   int atom_id=-1;
   std::vector<BondInfo> bonds;
@@ -314,7 +314,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               break;
             }
             mol.setProp<bool>(NEEDS_FUSE, true);
-            mol.setProp<unsigned int>(CDXML_FRAG_ID, frag_id);
+            // might need to reset to OUR frag_id since parse_fragment will set
+            //  it to the fragments
+            mol.setProp(CDXML_FRAG_ID, frag_id);
           }
         }
       }
