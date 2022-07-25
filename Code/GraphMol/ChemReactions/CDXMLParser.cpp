@@ -48,7 +48,7 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLDataStreamToChemicalReaction
       unsigned int step = 0;
       unsigned int scheme = 0;
       if (mols[i]->getPropIfPresent("CDX_SCHEME_ID", scheme) &&
-          mols[i]->getPropIfPresent("CDX_STEP_ID", scheme)) {
+          mols[i]->getPropIfPresent("CDX_STEP_ID", step)) {
           auto schemestep = std::pair<unsigned int, unsigned int>(scheme, step);
           schemes[schemestep].push_back(i);
       }
