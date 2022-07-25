@@ -639,7 +639,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
               << std::endl;
           continue;
         }
-        assert(sz % 2 == 0);
+        CHECK_INVARIANT(sz % 2 == 0,"bad size");
         for (int i = 0; i < sz / 2; ++i) {
           unsigned int idx1 = scheme.ReactionStepAtomMap[i * 2];
           unsigned int idx2 = scheme.ReactionStepAtomMap[i * 2 + 1];
