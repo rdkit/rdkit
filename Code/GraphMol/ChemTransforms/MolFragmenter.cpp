@@ -740,34 +740,65 @@ struct ZipBond {
                       "are not bonded.")
       auto bond_type_a = bnd->getBondType();
       auto bond_dir_a = bnd->getBondDir();
+      auto a_is_start = bnd->getBeginAtom() == a;
+    
       bnd = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx());
       CHECK_INVARIANT(bnd != nullptr,
                       "molzip: end atom and specified dummy connection atom "
                       "are not bonded.")
       auto bond_type_b = bnd->getBondType();
       auto bond_dir_b = bnd->getBondDir();
-    
+      auto b_is_start = bnd->getBeginAtom() == b;
+      
       unsigned int bnd_idx = 0;
+      // Fusion bond-dir logic table
+      // a-* b-* => a-b
+      //  < = wedge
+
+      //  a<* b-* => a<b
+      //  a>* b-* => a>b
+      //  a-* b>* => a<b
+      //  a-* b<* => a>b
+      Bond::BondDir bond_dir;
+      auto start = a;
+      auto end = b;
+      if(bond_dir_a != Bond::BondDir::NONE && bond_dir_b != Bond::BondDir::NONE) {
+          // are we consistent between the two bond orders
+          // check for the case of fragment on bonds where a<* and b>* or a>* and b<*
+          //  when < is either a hash or wedge bond but not both.
+          bool consistent_directions = false;
+          if(bond_dir_a == bond_dir_b) {
+              if((a_is_start != b_is_start)){
+                  consistent_directions = true;
+              }
+          }
+          if(!consistent_directions) {
+              BOOST_LOG(rdWarningLog) << "inconsistent bond directions when merging fragments, ignoring..." << std::endl;
+              bond_dir = Bond::BondDir::NONE;
+          }
+      } else if (bond_dir_a != Bond::BondDir::NONE) {
+          if(!a_is_start) {
+              start = b;
+              end = a;
+          }
+          bond_dir = bond_dir_a;
+      } else if (bond_dir_b != Bond::BondDir::NONE) {
+          if(b_is_start) {
+            start = b;
+            end = a;
+          }
+          bond_dir = bond_dir_b;
+      }
+    
       if (bond_type_a != Bond::BondType::SINGLE) {
-        bnd_idx = newmol.addBond(a, b, bond_type_a);
+        bnd_idx = newmol.addBond(start, end, bond_type_a);
       } else if (bond_type_b != Bond::BondType::SINGLE) {
-        bnd_idx = newmol.addBond(a, b, bond_type_b);
+        bnd_idx = newmol.addBond(start, end, bond_type_b);
       } else {
-        bnd_idx = newmol.addBond(a, b, Bond::BondType::SINGLE);
+        bnd_idx = newmol.addBond(start, end, Bond::BondType::SINGLE);
       }
         
-      if(bond_dir_a != Bond::NONE || bond_dir_b != Bond::NONE) {
-          auto bond_dir = Bond::NONE;
-          if (bond_dir_a != Bond::NONE) {
-              bond_dir = bond_dir_a;
-          } else if (bond_dir_b != Bond::NONE) {
-              bond_dir = bond_dir_b;
-          } else {
-              BOOST_LOG(rdWarningLog) << "imcompatible bond directions when zipping, choosing bond direction from first fragment" << std::endl;
-              bond_dir = bond_dir_a;
-          }
-          newmol.getBondWithIdx(bnd_idx-1)->setBondDir(bond_dir);
-      }
+      newmol.getBondWithIdx(bnd_idx-1)->setBondDir(bond_dir);
     }
     a_dummy->setProp("__molzip_used", true);
     b_dummy->setProp("__molzip_used", true);
