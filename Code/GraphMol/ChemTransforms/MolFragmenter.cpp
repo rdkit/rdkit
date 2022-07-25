@@ -640,13 +640,15 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
         return mapno ? mapno : NOLABEL;
       }
       break;
+
     case MolzipLabel::Isotope:
       if (a->getAtomicNum() == 0) {
         auto iso = a->getIsotope();
         return iso ? iso : NOLABEL;
       }
       break;
-    case MolzipLabel::AtomType: {
+
+    case MolzipLabel::AtomType:
       idx = std::distance(p.atomSymbols.begin(),
                           std::find(p.atomSymbols.begin(), p.atomSymbols.end(),
                                     a->getSymbol()));
@@ -654,14 +656,19 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
         idx = NOLABEL;
       }
       break;
-      case MolzipLabel::FragmentOnBonds:
+  
+    case MolzipLabel::FragmentOnBonds: 
         // shouldn't ever get here
         CHECK_INVARIANT(
             0, "FragmentOnBonds is not an atom label, it is an atom index");
         break;
-      default:
+	
+    case MolzipLabel::AtomProperty:
+        a->getPropIfPresent<unsigned int>(p.atomProperty, idx);
+        break;
+
+    default:
         CHECK_INVARIANT(0, "bogus MolZipLabel value in MolZip::get_label");
-    }
   }
   return idx;
 }

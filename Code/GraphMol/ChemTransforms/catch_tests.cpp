@@ -246,6 +246,21 @@ TEST_CASE("molzip", "[]") {
     }
   }
 
+  SECTION("use atom property as label") {
+    auto a = "[C@H]([*])(F)([*])"_smiles;
+    auto b = "[*]N.[*]I"_smiles;
+    a->getAtomWithIdx(1)->setProp<unsigned int>("foo", 1);
+    a->getAtomWithIdx(3)->setProp<unsigned int>("foo", 2);
+    b->getAtomWithIdx(0)->setProp<unsigned int>("foo", 1);
+    b->getAtomWithIdx(2)->setProp<unsigned int>("foo", 2);
+    MolzipParams p;
+    p.label = MolzipLabel::AtomProperty;
+    p.atomProperty = "foo";
+    auto mol = molzip(*a, *b, p);
+    // chirality is "lost" here because [C@H]([*])(F)([*]) is considered achiral
+    CHECK(MolToSmiles(*mol) == "NC(F)I");
+  }
+  
   SECTION("test bond stereo") {
     auto a = "F/C=C/[*:1]"_smiles;
     auto b = "[*:1]F"_smiles;
