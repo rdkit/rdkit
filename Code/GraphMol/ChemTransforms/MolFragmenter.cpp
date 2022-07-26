@@ -767,7 +767,7 @@ struct ZipBond {
       //  a>* b-* => a>b
       //  a-* b>* => a<b
       //  a-* b<* => a>b
-      Bond::BondDir bond_dir;
+      Bond::BondDir bond_dir = Bond::BondDir::NONE;
       auto start = a;
       auto end = b;
       if(bond_dir_a != Bond::BondDir::NONE && bond_dir_b != Bond::BondDir::NONE) {
