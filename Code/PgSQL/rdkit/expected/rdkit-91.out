@@ -1307,7 +1307,7 @@ select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adju
 (1 row)
 
 select 'C1C(C)C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegreeFlags":"bogus"}');
-ERROR:  Unknown flag value: 'BOGUS'. Flags ignored.
+ERROR:  MolAdjustQueryProperties: Unknown flag value: 'BOGUS'. Flags ignored.
 select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol);
  ?column? 
 ----------
