@@ -28,7 +28,7 @@
 
 namespace RDKit {
 
-void ParseExtraLine(std::string extraLine) {
+void ParseExtraLine(const std::string &extraLine) {
     std::string whitespace{" \t"};
     if (extraLine.find_first_not_of(whitespace) != std::string::npos) {
         std::ostringstream errout;
@@ -37,7 +37,7 @@ void ParseExtraLine(std::string extraLine) {
     }
 }
 
-Atom *ParseXYZFileAtomLine(std::string atomLine, RDGeom::Point3D &pos, unsigned int line) {
+Atom *ParseXYZFileAtomLine(const std::string &atomLine, RDGeom::Point3D &pos, unsigned int line) {
     std::string whitespace{" \t"};
     size_t delims[8];
     size_t prev = 0;
@@ -138,6 +138,18 @@ RWMol *XYZDataStreamToMol(std::istream &inStream) {
     return mol;
 }
 
+RWMol *XYZBlockToMol(const std::string &xyzBlock, int charge) {
+    std::istringstream xyz(xyzBlock);
+
+    RWMol *mol = nullptr;
+    xyz.peek();
+    if (!xyz.eof()) {
+        mol = XYZDataStreamToMol(xyz);
+    }
+
+    return mol;
+}
+
 RWMol *XYZFileToMol(const std::string &fName, int charge) {
     std::ifstream xyzFile(fName);
     if (!xyzFile || (xyzFile.bad())) {
@@ -147,6 +159,7 @@ RWMol *XYZFileToMol(const std::string &fName, int charge) {
     }
     
     RWMol *mol = nullptr;
+    xyzFile.peek();
     if (!xyzFile.eof()) {
         mol = XYZDataStreamToMol(xyzFile);
     }

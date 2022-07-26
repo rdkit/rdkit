@@ -105,4 +105,60 @@ TEST_CASE("xyz file parser") {
         REQUIRE(mol);
         REQUIRE(mol->getNumAtoms() == 0);
     }
+    SECTION("empty file") {
+        std::string rdbase = getenv("RDBASE");
+        std::string fName = rdbase +
+                            "/Code/GraphMol/FileParsers/test_data/"
+                            "empty.xyz";
+        
+        std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+        REQUIRE(!mol);
+    }
 }
+
+TEST_CASE("xyz block parser") {
+    SECTION("basics") {
+        std::string xyzblock = R"XYZ(5
+        methane
+        C      0.000000    0.000000    0.000000
+        H     -0.635000   -0.635000    0.635000
+        H     -0.635000    0.635000   -0.635000
+        H      0.635000   -0.635000   -0.635000
+        H      0.635000    0.635000    0.635000
+        )XYZ";
+        std::unique_ptr<RWMol> mol(XYZBlockToMol(xyzblock, 0));
+        REQUIRE(mol);
+        
+        REQUIRE(mol->getNumAtoms() == 5);
+        
+        size_t ind = 0;
+        for (auto a : {6u, 1u, 1u, 1u, 1u}) {
+            CHECK(mol->getAtomWithIdx(ind)->getAtomicNum() == a);
+            ind++;
+        }
+        
+        RDGeom::POINT3D_VECT positions = {
+            RDGeom::Point3D{0.000, 0.000, 0.000},
+            RDGeom::Point3D{-0.635, -0.635, 0.635},
+            RDGeom::Point3D{-0.635, 0.635, -0.635},
+            RDGeom::Point3D{0.635, -0.635, -0.635},
+            RDGeom::Point3D{0.635, 0.635, 0.635}
+        };
+        
+        CHECK(mol->hasProp("_FileComments"));
+        CHECK(mol->getProp<std::string>("_FileComments") == "        methane");
+        
+        auto conf = &mol->getConformer();
+        REQUIRE(conf);
+        REQUIRE(conf->getNumAtoms() == 5);
+        
+        ind = 0;
+        for (auto p : positions) {
+            CHECK(conf->getAtomPos(ind).x == Approx(p.x).margin(1e-6));
+            CHECK(conf->getAtomPos(ind).y == Approx(p.y).margin(1e-6));
+            CHECK(conf->getAtomPos(ind).z == Approx(p.z).margin(1e-6));
+            ind++;
+        }
+    }
+}
+    
