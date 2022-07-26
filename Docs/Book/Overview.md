@@ -113,7 +113,7 @@ a Python library for building, manipulating, analyzing and automatic design of m
 - [gpusimilarity](https://github.com/schrodinger/gpusimilarity) - A Cuda/Thrust implementation of fingerprint similarity searching
 - [Samson Connect](https://www.samson-connect.net) - Software for adaptive modeling and simulation of nanosystems
 - [mol_frame](https://github.com/apahl/mol_frame) - Chemical Structure Handling for Dask and Pandas DataFrames
-- [RDKitjs](https://github.com/cheminfo/RDKitjs) - port of RDKit functionality to JavaScript
+- [RDKit.js](https://github.com/rdkit/rdkit-js) - The official JavaScript release of RDKit
 - [DeepChem](https://deepchem.io) - python library for deep learning for chemistry
 - [mmpdb](https://github.com/rdkit/mmpdb) - Matched molecular pair database generation and analysis
 - [CheTo](https://github.com/rdkit/CheTo) ([paper](http://pubs.acs.org/doi/10.1021/acs.jcim.7b00249))- Chemical topic modeling

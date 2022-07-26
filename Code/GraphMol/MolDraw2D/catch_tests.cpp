@@ -227,7 +227,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_6.svg", 4274355858U},
     {"acs1996_7.svg", 3684177026U},
     {"acs1996_8.svg", 2032371436U},
-    {"acs1996_9.svg", 1609810716U},
+    {"acs1996_9.svg", 2784034866U},
     {"acs1996_10.svg", 786861825U},
     {"acs1996_11.svg", 3065465046U},
     {"test_unspec_stereo.svg", 599119798U},
@@ -5166,7 +5166,7 @@ M  END
       check_file_hash(nameBase + "8.svg");
     }
 #endif
-#if 9
+#if 1
     {
       auto m = R"CTAB(mol9
   ChemDraw06302215142D
@@ -5229,6 +5229,7 @@ M  END
 )CTAB"_ctab;
       REQUIRE(m);
       MolDraw2DSVG drawer(-1, -1);
+      drawer.drawOptions().useMolBlockWedging = true;
       MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 9", nullptr, nullptr);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
