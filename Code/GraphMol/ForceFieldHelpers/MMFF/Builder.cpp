@@ -609,11 +609,11 @@ void DefaultTorsionBondSmarts::create() {
   ds_instance.reset(SmartsToMol(ds_string));
 }
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 std::once_flag DefaultTorsionBondSmarts::ds_flag;
 #endif
 const ROMol *DefaultTorsionBondSmarts::query() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::call_once(ds_flag, create);
 #else
   static bool created = false;

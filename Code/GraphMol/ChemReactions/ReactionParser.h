@@ -67,7 +67,7 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
 
 //---------------------------------------------------------------------------
 //! \name Reaction SMARTS/SMILES Support
-//@{
+//! @{
 
 //! Parse a string containing "Reaction SMARTS" into a ChemicalReaction
 /*!
@@ -98,11 +98,11 @@ RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
 //! returns the reaction SMILES for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
     const ChemicalReaction &rxn, bool canonical = true);
-//@}
+//! @}
 
 //---------------------------------------------------------------------------
 //! \name Reaction Mol Support
-//@{
+//! @{
 
 //! Parse a ROMol into a ChemicalReaction, RXN role must be set before
 /*!
@@ -118,11 +118,11 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnMolToChemicalReaction(
 //! returns a ROMol with RXN roles used to describe the reaction
 RDKIT_CHEMREACTIONS_EXPORT ROMol *ChemicalReactionToRxnMol(
     const ChemicalReaction &rxn);
-//@}
+//! @}
 
 //---------------------------------------------------------------------------
 //! \name MDL rxn Support
-//@{
+//! @{
 
 //! Parse a text block in MDL rxn format into a ChemicalReaction
 RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnBlockToChemicalReaction(
@@ -161,11 +161,11 @@ RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnBlock(
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToV3KRxnBlock(
     const ChemicalReaction &rxn, bool separateAgents = false);
 
-//@}
+//! @}
 
 //---------------------------------------------------------------------------
 //! \name PNG Support
-//@{
+//! @{
 
 //! Tags used for PNG metadata
 namespace PNGData {
@@ -244,7 +244,7 @@ inline std::string addChemicalReactionToPNGFile(const ChemicalReaction &rxn,
   return addChemicalReactionToPNGStream(
       rxn, inStream, includePkl, includeSmiles, includeSmarts, includeRxn);
 }
-//@}
+//! @}
 
 inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmarts(const char *text,
                                                                size_t len) {

@@ -173,11 +173,11 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         callback(callback) {}
 };
 
-//*! update parameters from a JSON string
+//! update parameters from a JSON string
 RDKIT_DISTGEOMHELPERS_EXPORT void updateEmbedParametersFromJSON(
     EmbedParameters &params, const std::string &json);
 
-//*! Embed multiple conformations for a molecule
+//! Embed multiple conformations for a molecule
 RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(
     ROMol &mol, INT_VECT &res, unsigned int numConfs,
     const EmbedParameters &params);

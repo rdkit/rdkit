@@ -216,7 +216,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! into canvas coords.
   virtual void drawPolygon(const std::vector<Point2D> &cds,
                            bool rawCoords = false) = 0;
-  //@}
+  //! @}
 
   //! A Whole bunch of drawing primitives.  They may be over-ridden
   //! by different renderers, or they may be implemented in terms of
@@ -277,7 +277,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                           bool rawCoords = false);
 
   //! \name Transformations
-  //@{
+  //! @{
   // transform a set of coords in the molecule's coordinate system
   // to drawing system coordinates and vice versa. Note that the coordinates
   // have
@@ -304,7 +304,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! returns the molecular coordinates of a particular atom.  at_num refers
   //! to the atom in activeMolIdx_.
   virtual Point2D getAtomCoords(int at_num) const;
-  //@}
+  //! @}
   //! returns the coordinates of the atoms of the activeMolIdx_ molecule in
   //! molecular coordinates.
   const std::vector<Point2D> &atomCoords() const;
@@ -358,9 +358,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   virtual const DashPattern &dash() const { return curr_dash_; }
 
   //! sets the current line width
-  virtual void setLineWidth(int width) { drawOptions().bondLineWidth = width; }
+  virtual void setLineWidth(double width) { drawOptions().bondLineWidth = width; }
   //! returns the current line width
-  virtual int lineWidth() const { return drawOptions().bondLineWidth; }
+  virtual double lineWidth() const { return drawOptions().bondLineWidth; }
 
   //! using the current scale, work out the size of the label in molecule
   //! coordinates.
@@ -421,7 +421,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 
  private:
   //! \name Methods that must be provided by child classes
-  //@{
+  //! @{
   virtual void initDrawing() = 0;
   virtual void initTextDrawer(bool noFreetype) = 0;
 
@@ -534,9 +534,9 @@ inline void setMonochromeMode(MolDrawOptions &opts, const DrawColour &fgColour,
   opts.symbolColour = fgColour;
   opts.variableAttachmentColour = fgColour;
 }
-inline void setMonochromeMode(MolDraw2D &opts, const DrawColour &fgColour,
+inline void setMonochromeMode(MolDraw2D &drawer, const DrawColour &fgColour,
                               const DrawColour &bgColour) {
-  setMonochromeMode(opts.drawOptions(), fgColour, bgColour);
+  setMonochromeMode(drawer.drawOptions(), fgColour, bgColour);
 }
 
 }  // namespace RDKit

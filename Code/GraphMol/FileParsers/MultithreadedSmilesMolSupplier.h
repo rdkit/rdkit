@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #ifndef MULTITHREADED_SMILES_MOL_SUPPLIER
 #define MULTITHREADED_SMILES_MOL_SUPPLIER
 #include "MultithreadedMolSupplier.h"
@@ -51,15 +51,15 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
                         size_t sizeInputQueue, size_t sizeOutputQueue);
 
  private:
-  bool df_end = false;      //! have we reached the end of the file?
-  int d_line = 0;           //! line number we are currently on
-  std::string d_delim;      //! the delimiter string
-  bool df_sanitize = true;  //! sanitize molecules before returning them?
-  STR_VECT d_props;         //! vector of property names
-  bool df_title = true;     //! do we have a title line?
-  int d_smi = 0;            //! column id for the smile string
-  int d_name = 1;           //! column id for the name
-  unsigned int d_currentRecordId = 1;  //! current record id
+  bool df_end = false;      //!< have we reached the end of the file?
+  int d_line = 0;           //!< line number we are currently on
+  std::string d_delim;      //!< the delimiter string
+  bool df_sanitize = true;  //!< sanitize molecules before returning them?
+  STR_VECT d_props;         //!< vector of property names
+  bool df_title = true;     //!< do we have a title line?
+  int d_smi = 0;            //!< column id for the smile string
+  int d_name = 1;           //!< column id for the name
+  unsigned int d_currentRecordId = 1;  //!< current record id
 };
 }  // namespace RDKit
 #endif

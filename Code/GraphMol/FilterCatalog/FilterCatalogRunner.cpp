@@ -12,7 +12,7 @@
 #include "FilterMatchers.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <RDGeneral/RDThreads.h>
 #include <thread>
 #include <future>
@@ -48,7 +48,7 @@ RunFilterCatalog(const FilterCatalog &fc,
   //  There is one result per input smiles
   std::vector<std::vector<FilterCatalog::CONST_SENTRY>> results(smiles.size());
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   std::vector<std::future<void>> thread_group;
   numThreads = (int)getNumThreadsToUse(numThreads);
   for (int thread_group_idx = 0; thread_group_idx < numThreads;

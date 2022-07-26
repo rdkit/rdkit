@@ -912,7 +912,7 @@ static int byte_popcounts[] = {
 unsigned int CalcBitmapPopcount(const unsigned char* afp, unsigned int nBytes) {
   PRECONDITION(afp, "no afp");
   unsigned int popcount = 0;
-#ifndef USE_BUILTIN_POPCOUNT
+#ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
     popcount += byte_popcounts[afp[i]];
   }
@@ -935,7 +935,7 @@ unsigned int CalcBitmapNumBitsInCommon(const unsigned char* afp,
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
   unsigned int intersect_popcount = 0;
-#ifndef USE_BUILTIN_POPCOUNT
+#ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
   }
@@ -958,7 +958,7 @@ double CalcBitmapTanimoto(const unsigned char* afp, const unsigned char* bfp,
   PRECONDITION(afp, "no afp");
   PRECONDITION(bfp, "no bfp");
   unsigned int union_popcount = 0, intersect_popcount = 0;
-#ifndef USE_BUILTIN_POPCOUNT
+#ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
     union_popcount += byte_popcounts[afp[i] | bfp[i]];
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
@@ -990,7 +990,7 @@ double CalcBitmapDice(const unsigned char* afp, const unsigned char* bfp,
   PRECONDITION(bfp, "no bfp");
   unsigned int intersect_popcount = 0, a_popcount = 0, b_popcount = 0;
 
-#ifndef USE_BUILTIN_POPCOUNT
+#ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
     a_popcount += byte_popcounts[afp[i]];
     b_popcount += byte_popcounts[bfp[i]];
@@ -1026,7 +1026,7 @@ double CalcBitmapTversky(const unsigned char* afp, const unsigned char* bfp,
   PRECONDITION(bfp, "no bfp");
   unsigned int intersect_popcount = 0, acount = 0, bcount = 0;
 
-#ifndef USE_BUILTIN_POPCOUNT
+#ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
     intersect_popcount += byte_popcounts[afp[i] & bfp[i]];
     acount += byte_popcounts[afp[i]];
@@ -1062,7 +1062,7 @@ bool CalcBitmapAllProbeBitsMatch(const unsigned char* probe,
   PRECONDITION(probe, "no probe");
   PRECONDITION(ref, "no ref");
 
-#ifndef USE_BUILTIN_POPCOUNT
+#ifndef RDK_OPTIMIZE_POPCNT
   for (unsigned int i = 0; i < nBytes; i++) {
     if (byte_popcounts[probe[i] & ref[i]] != byte_popcounts[probe[i]]) {
       return false;

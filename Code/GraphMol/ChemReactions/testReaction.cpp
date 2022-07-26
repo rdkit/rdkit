@@ -5155,7 +5155,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     TEST_ASSERT(prods[0].size() == 1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@@](Cl)(Br)ONO[C@@](F)(Cl)Br";
+    smi = "F[C@](Cl)(Br)ONO[C@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5248,7 +5248,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     TEST_ASSERT(prods[0].size() == 1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@@](Cl)(Br)ONO[C@@](F)(Cl)Br";
+    smi = "F[C@](Cl)(Br)ONO[C@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5340,7 +5340,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     TEST_ASSERT(prods[0].size() == 1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@@](Cl)(Br)O[C@@](F)(Cl)Br";
+    smi = "F[C@](Cl)(Br)O[C@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -7656,8 +7656,8 @@ void testMultiTemplateRxnQueries() {
                        << std::endl;
 
   std::string rxn_smarts =
-    "[S;v1&H0,v2&H1:1].[S;v2;H0,H1:2][S;v2;H0,H1:3]>>[S:3].[S:1][S:2]";
-  ChemicalReaction* rxn = RxnSmartsToChemicalReaction(rxn_smarts);
+      "[S;v1&H0,v2&H1:1].[S;v2;H0,H1:2][S;v2;H0,H1:3]>>[S:3].[S:1][S:2]";
+  ChemicalReaction *rxn = RxnSmartsToChemicalReaction(rxn_smarts);
   TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
   TEST_ASSERT(rxn->getNumProductTemplates() == 2);
   rxn->initReactantMatchers();
@@ -7665,14 +7665,14 @@ void testMultiTemplateRxnQueries() {
   TEST_ASSERT(rxn->validate(nWarn, nError, false));
   TEST_ASSERT(nWarn == 0 && nError == 0);
 
-  ROMol* reactant = SmilesToMol("SC1=CC(CSSCC2=CC=CC=C2)=CC=C1");
-  ROMol* product = reactant;
-  ROMol* neither = SmilesToMol("c1ccccc1");
+  ROMol *reactant = SmilesToMol("SC1=CC(CSSCC2=CC=CC=C2)=CC=C1");
+  ROMol *product = reactant;
+  ROMol *neither = SmilesToMol("c1ccccc1");
 
   std::vector<unsigned int> which;
   bool is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant, which);
   TEST_ASSERT(is_reactant);
-  TEST_ASSERT(which == std::vector<unsigned int>({0,1}));
+  TEST_ASSERT(which == std::vector<unsigned int>({0, 1}));
   unsigned int first_match;
   is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant, first_match);
   TEST_ASSERT(is_reactant);
@@ -7691,7 +7691,7 @@ void testMultiTemplateRxnQueries() {
 
   bool is_product = isMoleculeProductOfReaction(*rxn, *product, which);
   TEST_ASSERT(is_product);
-  TEST_ASSERT(which == std::vector<unsigned int>({0,1}));
+  TEST_ASSERT(which == std::vector<unsigned int>({0, 1}));
   is_product = isMoleculeProductOfReaction(*rxn, *product, first_match);
   TEST_ASSERT(is_product);
   TEST_ASSERT(first_match == 0);
@@ -7718,8 +7718,8 @@ void testChemicalReactionCopyAssignment() {
                        << std::endl;
 
   std::string rxn_smarts1 =
-    "[C;$(C=O):1][OH1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[C:1][N+0:2]";
-  ChemicalReaction* rxn1 = RxnSmartsToChemicalReaction(rxn_smarts1);
+      "[C;$(C=O):1][OH1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[C:1][N+0:2]";
+  ChemicalReaction *rxn1 = RxnSmartsToChemicalReaction(rxn_smarts1);
   rxn1->setImplicitPropertiesFlag(true);
   rxn1->initReactantMatchers();
   unsigned int nWarn, nError;
@@ -7727,7 +7727,7 @@ void testChemicalReactionCopyAssignment() {
   TEST_ASSERT(nWarn == 0 && nError == 0);
 
   std::string rxn_smarts2 = "[O:1]>>[N:1]";
-  ChemicalReaction* rxn2 = RxnSmartsToChemicalReaction(rxn_smarts2);
+  ChemicalReaction *rxn2 = RxnSmartsToChemicalReaction(rxn_smarts2);
 
   *rxn2 = *rxn1;
 
@@ -7759,8 +7759,8 @@ void testChemicalReactionCopyAssignment() {
   }
 
   // Check that the reactions don't share resources
-  const RWMol& rxn1_reactant = *rxn1->getReactants().at(0);
-  const_cast<RWMol&>(rxn1_reactant).clear();
+  const RWMol &rxn1_reactant = *rxn1->getReactants().at(0);
+  const_cast<RWMol &>(rxn1_reactant).clear();
   ROMOL_SPTR rxn2_reactant = rxn2->getReactants().at(0);
   TEST_ASSERT(rxn2_reactant->getNumAtoms() > 0);
 

@@ -17,7 +17,7 @@
 #include <utility>
 #include <vector>
 #include <map>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 
@@ -26,7 +26,7 @@
 namespace RDKit {
 
 namespace detail {
-// Create a fingerprint for empty or missing R groups 
+// Create a fingerprint for empty or missing R groups
 // that is the same as a hydrogen R group
 RData dummyHydrogenFingerprint(int label) {
   static RData fp = nullptr;
@@ -220,7 +220,7 @@ double FingerprintVarianceScoreData::fingerprintVarianceGroupScore() {
   auto sum = std::accumulate(
       labelsToVarianceData.cbegin(), labelsToVarianceData.cend(), 0.0,
       [](double sum,
-             std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
+         std::pair<int, std::shared_ptr<VarianceDataForLabel>> pair) {
         auto variance = pair.second->variance();
 #ifdef DEBUG
         std::cerr << variance << ',';
@@ -260,14 +260,14 @@ VarianceDataForLabel::VarianceDataForLabel(const int &label) : label(label) {
   bitCounts = std::vector<int>(fingerprintSize, 0.0);
 }
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 static std::mutex groupMutex;
 #endif
 
 // add an rgroup structure to a bit counts array
 void VarianceDataForLabel::addRgroupData(RGroupData *rgroupData) {
   {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
     const std::lock_guard<std::mutex> lock(groupMutex);
 #endif
     if (rgroupData->fingerprint == nullptr) {
