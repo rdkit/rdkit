@@ -110,7 +110,7 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
     }
     chromosomePolicy.setMax(pos, m.size());
     unsigned long count = numPermutations * m.size();
-    numPermutations = count / m.size() == numPermutations
+    numPermutations = count < numeric_limits<unsigned int>::max() && count / m.size() == numPermutations
                           ? count
                           : numeric_limits<unsigned int>::max();
     pos++;
