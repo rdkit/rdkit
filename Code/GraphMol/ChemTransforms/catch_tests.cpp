@@ -458,7 +458,6 @@ TEST_CASE("molzip", "[]") {
          CHECK(mol->getBondWithIdx(1)->getBeginAtom()->getIdx() == 1);
        }
    }
->>>>>>> origin/master
 }
 
 TEST_CASE(
