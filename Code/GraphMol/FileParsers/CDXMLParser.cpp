@@ -173,6 +173,9 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               }
             } else if (attr.first == "Element") {
               elemno = stoi(attr.second.data());
+                if (elemno == 14) {
+                    std::cout << "here" << std::endl;
+                }
             } else if (attr.first == "NumHydrogens") {
               num_hydrogens = stoi(attr.second.data());
               explicitHs = true;
