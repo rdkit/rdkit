@@ -2733,3 +2733,22 @@ TEST_CASE("metal hybridization") {
     }
   }
 }
+
+TEST_CASE(
+    "github #5462: Invalid number of radical electrons calculated for [Pr+4]") {
+  SECTION("as reported") {
+    auto m = "[Pr+4]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+  SECTION("also reported") {
+    auto m = "[U+5]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+  SECTION("extreme") {
+    auto m = "[Fe+30]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+}
