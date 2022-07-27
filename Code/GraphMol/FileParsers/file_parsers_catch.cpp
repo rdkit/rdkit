@@ -4844,3 +4844,28 @@ M  END)CTAB"_ctab;
   REQUIRE(m);
   CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::molTotValence));
 }
+
+TEST_CASE("Github #5433: PRECONDITION error with nonsense molecule") {
+  auto m = R"CTAB(
+  SomeFailingMolFile
+
+  8  8  0  0  1  0            999 V2000
+   -0.7145    1.2375    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    0.0000    0.8250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.6500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  6  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  4  0  0  0
+  3  8  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+}
