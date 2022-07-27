@@ -429,9 +429,10 @@ bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2) {
   return dotProd < cos178 * sqrt(lsq);
 }
 
-void controllingBondFromAtom(ROMol &mol, boost::dynamic_bitset<> &needsDir,
-                             std::vector<unsigned int> &singleBondCounts,
-                             Bond *dblBond, Atom *atom, Bond *&bond,
+void controllingBondFromAtom(const ROMol &mol,
+                             const boost::dynamic_bitset<> &needsDir,
+                             const std::vector<unsigned int> &singleBondCounts,
+                             const Bond *dblBond, const Atom *atom, Bond *&bond,
                              Bond *&obond, bool &squiggleBondSeen,
                              bool &doubleBondSeen) {
   bond = nullptr;
