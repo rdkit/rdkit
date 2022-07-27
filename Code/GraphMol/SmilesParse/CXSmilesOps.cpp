@@ -1300,6 +1300,19 @@ std::string quote_string(const std::string &txt) {
   return txt;
 }
 
+std::string quote_atomprop_string(const std::string &txt) {
+  // at a bare minimum, . needs to be escaped
+  std::string res;
+  for(auto c : txt) {
+    if(c == '.') {
+      res += "&#46;";
+    } else {
+      res += c;
+    }
+  }
+  return res;
+}
+
 std::string get_enhanced_stereo_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
   if (mol.getStereoGroups().empty()) {
@@ -1735,7 +1748,7 @@ std::string get_atom_props_block(const ROMol &mol,
           res += "atomProp";
         }
         res += boost::str(boost::format(":%d.%s.%s") % which %
-                          quote_string(pn) % quote_string(pv));
+                          quote_atomprop_string(pn) % quote_atomprop_string(pv));
       }
     }
     ++which;
