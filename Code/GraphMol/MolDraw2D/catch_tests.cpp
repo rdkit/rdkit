@@ -217,6 +217,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_5269_2.svg", 112102270U},
     {"test_classes_wavy_bonds.svg", 1548800567U},
     {"testGithub_5383_1.svg", 1391972140U},
+    {"github5156_1.svg", 4229679486U},
+    {"github5156_2.svg", 2606649270U},
+    {"github5156_3.svg", 3284451122U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4704,4 +4707,60 @@ TEST_CASE("GitHub #5383: cairo error when using similarity maps", "") {
     drawer.writeDrawingText("github5383_1.png");
   }
 #endif
+}
+
+TEST_CASE("github #5156") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("c1ccnc1", ps)};
+    REQUIRE(m);
+    unsigned int failed;
+    MolOps::sanitizeMol(*m, failed,
+                        MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_KEKULIZE);
+    MolDraw2DSVG d2d(200, 200);
+    d2d.drawOptions().prepareMolsBeforeDrawing = false;
+    d2d.drawMolecule(*m);
+    d2d.finishDrawing();
+    auto text = d2d.getDrawingText();
+    // CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+    //       std::string::npos);
+    std::ofstream outs("github5156_1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5156_1.svg");
+  }
+
+  SECTION("as reported") {
+    auto m =
+        "[#6](:,-[#6]-,:[#7]-,:[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1):,-[#6]:,-[#7]:,-[#6]"_smarts;
+    REQUIRE(m);
+    MolDraw2DSVG d2d(200, 200);
+    d2d.drawOptions().prepareMolsBeforeDrawing = false;
+    d2d.drawMolecule(*m);
+    d2d.finishDrawing();
+    auto text = d2d.getDrawingText();
+    // CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+    //       std::string::npos);
+    std::ofstream outs("github5156_2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5156_2.svg");
+  }
+  SECTION("check no wedging") {
+    // if we aren't preparing molecules, we won't end up with wedging in this
+    // case
+    auto m = "C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG d2d(200, 200);
+    d2d.drawOptions().prepareMolsBeforeDrawing = false;
+    d2d.drawMolecule(*m);
+    d2d.finishDrawing();
+    auto text = d2d.getDrawingText();
+    CHECK(text.find(" Z' style='fill=#000000") == std::string::npos);
+    std::ofstream outs("github5156_3.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5156_3.svg");
+  }
 }
