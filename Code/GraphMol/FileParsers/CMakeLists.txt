@@ -50,7 +50,7 @@ rdkit_library(FileParsers
               TDTMolSupplier.cpp TDTWriter.cpp
               TplFileParser.cpp TplFileWriter.cpp
               PDBParser.cpp PDBWriter.cpp PDBSupplier.cpp
-              CMLWriter.cpp XYZFileWriter.cpp
+              CMLWriter.cpp XYZFileWriter.cpp XYZFileParser.cpp
               ${maesupplier}
               ProximityBonds.cpp
               SequenceParsers.cpp SequenceWriters.cpp
@@ -105,4 +105,7 @@ rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp
            LINK_LIBRARIES FileParsers )
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp
+           LINK_LIBRARIES FileParsers )
+
+rdkit_catch_test(XYZFileParserCatchTest XYZFileParserCatchTest.cpp
            LINK_LIBRARIES FileParsers )
