@@ -57,7 +57,7 @@ typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<double> DashPattern;
 
 //! use the RDKit's default palette r
-// 201 is for hydrogens when the H is not being drawn.
+// 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignDefaultPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
@@ -75,7 +75,7 @@ inline void assignDefaultPalette(ColourPalette &palette) {
 };
 
 //! use the color palette from the Avalon renderer
-// 201 is for hydrogens when the H is not being drawn.
+// 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignAvalonPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
@@ -97,7 +97,7 @@ inline void assignAvalonPalette(ColourPalette &palette) {
   data source:
   https://github.com/cdk/cdk/blob/master/display/render/src/main/java/org/openscience/cdk/renderer/color/CDK2DAtomColors.java
 */
-// 201 is for hydrogens when the H is not being drawn.
+// 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignCDKPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
@@ -115,7 +115,7 @@ inline void assignCDKPalette(ColourPalette &palette) {
   palette[201] = DrawColour(0.68, 0.85, 0.90);
 };
 
-// 201 is for hydrogens when the H is not being drawn.
+// 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignDarkModePalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0.8, 0.8, 0.8);
