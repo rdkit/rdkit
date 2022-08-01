@@ -1995,6 +1995,23 @@ void DrawMol::makeAtomEllipseHighlights(double lineWidth) {
 
 // ****************************************************************************
 void DrawMol::makeBondHighlightLines(double lineWidth) {
+  // find the neighbours of atom that aren't otherAtom and that are
+  // bonded to atom with a highlighted bond
+  auto findHighBondNbrs = [&](const Atom *atom, const Atom *otherAtom,
+                              std::vector<Atom *> &highNbrs) -> void {
+    for (const auto bond : drawMol_->atomBonds(atom)) {
+      auto nbr = bond->getOtherAtom(atom);
+      if (nbr == otherAtom) {
+        continue;
+      }
+      if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
+                    bond->getIdx()) != highlightBonds_.end()) {
+        highNbrs.push_back(nbr);
+      }
+    }
+  };
+
+  lineWidth /= drawOptions_.scalingFactor / drawOptions_.multipleBondOffset;
   for (const auto atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
     for (const auto bond : drawMol_->atomBonds(atom)) {
@@ -2008,11 +2025,27 @@ void DrawMol::makeBondHighlightLines(double lineWidth) {
               highlightBondMap_.end()) {
             col = highlightBondMap_.find(bond->getIdx())->second;
           }
-          std::vector<Point2D> pts{atCds_[thisIdx], atCds_[nbrIdx]};
-          DrawShape *hb = new DrawShapeSimpleLine(
-              pts, lineWidth, drawOptions_.scaleHighlightBondWidth, col,
-              thisIdx + activeAtmIdxOffset_, nbrIdx + activeAtmIdxOffset_,
-              bond->getIdx() + activeBndIdxOffset_, noDash);
+          std::vector<Atom *> thisHighNbrs, nbrHighNbrs;
+          const Atom *nbr = drawMol_->getAtomWithIdx(nbrIdx);
+          findHighBondNbrs(atom, nbr, thisHighNbrs);
+          findHighBondNbrs(nbr, atom, nbrHighNbrs);
+          std::vector<Point2D> end1points;
+          makeHighlightEnd(atom, nbr, lineWidth, thisHighNbrs, end1points);
+          std::vector<Point2D> end2points;
+          makeHighlightEnd(nbr, atom, lineWidth, nbrHighNbrs, end2points);
+          std::vector<Point2D> points(end1points);
+          if (end1points.size() > 1 && end2points.size() > 1) {
+            Point2D v1 = end1points.front().directionVector(end1points.back());
+            Point2D v2 = end2points.front().directionVector(end2points.back());
+            if (v1.dotProduct(v2) > 0.0) {
+              std::reverse(end2points.begin(), end2points.end());
+            }
+          }
+          points.insert(points.end(), end2points.begin(), end2points.end());
+          DrawShape *hb = new DrawShapePolyLine(
+              points, 0, false, col, true, thisIdx + activeAtmIdxOffset_,
+              nbrIdx + activeAtmIdxOffset_,
+              bond->getIdx() + activeBndIdxOffset_);
           highlights_.push_back(std::unique_ptr<DrawShape>(hb));
         }
       }
@@ -2966,8 +2999,8 @@ void DrawMol::smoothBondJoins() {
                 // make a small polyline to paper over the cracks.
                 int p12 = p1 == 1 ? 0 : 1;
                 int p22 = p2 == 1 ? 0 : 1;
-                Point2D dv1 = (sbl1->points_[p1] - sbl1->points_[p12]) * 0.05;
-                Point2D dv2 = (sbl1->points_[p1] - sbl2->points_[p22]) * 0.05;
+                Point2D dv1 = (sbl1->points_[p1] - sbl1->points_[p12]) * 0.025;
+                Point2D dv2 = (sbl1->points_[p1] - sbl2->points_[p22]) * 0.025;
                 std::vector<Point2D> pl_pts{sbl1->points_[p1] - dv1,
                                             sbl1->points_[p1],
                                             sbl1->points_[p1] - dv2};
@@ -2986,6 +3019,73 @@ void DrawMol::smoothBondJoins() {
         }
       }
     }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
+                               double lineWidth,
+                               const std::vector<Atom *> &end1HighNbrs,
+                               std::vector<Point2D> &points) {
+  auto innerPoint = [&](Point2D &e1, Point2D &e2, Point2D &e3,
+                        double pm) -> Point2D {
+    Point2D perp1 = calcInnerPerpendicular(e2, e1, e3);
+    Point2D perp2 = calcInnerPerpendicular(e3, e1, e2);
+    Point2D line12 = e2 + perp1 * pm * lineWidth;
+    Point2D line11 = e1 + perp1 * pm * lineWidth;
+    line11 = line12 + line12.directionVector(line11) * 2.0 * (e1 - e2).length();
+    Point2D line22 = e3 + perp2 * pm * lineWidth;
+    Point2D line21 = e1 + perp2 * pm * lineWidth;
+    line21 = line22 + line22.directionVector(line21) * 2.0 * (e1 - e3).length();
+    Point2D ins;
+    if (doLinesIntersect(line12, line11, line22, line21, &ins)) {
+      return ins;
+    } else {
+      return Point2D(e1);
+    }
+  };
+
+  auto end1Cds = atCds_[end1->getIdx()];
+  auto end2Cds = atCds_[end2->getIdx()];
+
+  if (end1HighNbrs.empty()) {
+    Point2D perp = calcPerpendicular(end1Cds, end2Cds);
+    points.push_back(end1Cds + perp * lineWidth);
+    points.push_back(end1Cds - perp * lineWidth);
+  } else if (end1HighNbrs.size() == 1) {
+    Point2D end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
+    Point2D ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
+    points.push_back(ins1);
+    Point2D ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);
+    points.push_back(ins2);
+  } else if (end1HighNbrs.size() > 1) {
+    Point2D bvec = end1Cds.directionVector(end2Cds);
+    std::vector<std::pair<int, double>> angs;
+    for (auto i = 0; i < end1HighNbrs.size(); ++i) {
+      Point2D ovec = end1Cds.directionVector(atCds_[end1HighNbrs[i]->getIdx()]);
+      double ang = bvec.signedAngleTo(ovec);
+      angs.push_back(std::make_pair(i, ang));
+    }
+    std::sort(angs.begin(), angs.end(),
+              [](const std::pair<int, double> &a1,
+                 const std::pair<int, double> &a2) -> bool {
+                return a1.second < a2.second;
+              });
+    if (angs.front().second > M_PI && angs.back().second > M_PI) {
+      std::reverse(angs.begin(), angs.end());
+    }
+    Point2D end3Cds = atCds_[end1HighNbrs[angs.front().first]->getIdx()];
+    Point2D ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
+    points.push_back(ins1);
+    points.push_back(end1Cds);
+    Point2D end4Cds = atCds_[end1HighNbrs[angs.back().first]->getIdx()];
+    double pm = 1.0;
+    if ((angs.front().second > M_PI && angs.back().second > M_PI) ||
+        (angs.front().second < M_PI && angs.back().second < M_PI)) {
+      pm = -1.0;
+    }
+    Point2D ins2 = innerPoint(end1Cds, end2Cds, end4Cds, pm);
+    points.push_back(ins2);
   }
 }
 

@@ -243,6 +243,9 @@ class DrawMol {
                          std::vector<Point2D> &otherBondVecs) const;
   void adjustBondsOnSolidWedgeEnds();
   void smoothBondJoins();
+  void makeHighlightEnd(const Atom *end1, const Atom *end2, double lineWidth,
+                        const std::vector<Atom *> &end1HighNbrs,
+                        std::vector<Point2D> &points);
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
