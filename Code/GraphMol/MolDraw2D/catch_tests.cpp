@@ -234,6 +234,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_10.svg", 786861825U},
     {"acs1996_11.svg", 3065465046U},
     {"test_unspec_stereo.svg", 599119798U},
+    {"bond_highlights_1.svg", 1222872274U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -5407,4 +5408,20 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   REQUIRE(cross1Match.size() == 1);
 
   check_file_hash("test_unspec_stereo.svg");
+}
+
+TEST_CASE("Bond Highlights", "") {
+  auto m1 = "c1ccncc1CCCC=O"_smiles;
+  REQUIRE(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+  MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+  std::vector<int> highAts{3};
+  std::vector<int> highBnds{0, 1, 2, 3, 4, 5, 7, 10};
+  drawer.drawMolecule(*m1, &highAts, &highBnds);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("bond_highlights_1.svg");
+  outs << text;
+  outs.flush();
+  check_file_hash("bond_highlights_1.svg");
 }

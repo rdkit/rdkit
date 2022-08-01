@@ -104,11 +104,11 @@ class DrawMol {
   // common bits used by createDrawObjects and setScale.
   void finishCreateDrawObjects();
   void initDrawMolecule(const ROMol &mol);
-  void extractAll();
+  void extractAll(double scale);
   void extractAtomCoords();
   void extractAtomSymbols();
   void extractBonds();
-  virtual void extractHighlights();
+  virtual void extractHighlights(double scale);
   void extractRegions();
   void extractAttachments();
   void extractMolNotes();
@@ -169,10 +169,10 @@ class DrawMol {
                    const DrawColour &col1, const DrawColour &col2, int atom1Idx,
                    int atom2Idx, int bondIdx, const DashPattern &dashPattern);
   std::pair<DrawColour, DrawColour> getBondColours(Bond *bond);
-  void makeContinuousHighlights();
+  void makeContinuousHighlights(double scale);
   void makeAtomCircleHighlights();
   void makeAtomEllipseHighlights(double lineWidth);
-  void makeBondHighlightLines(double lineWidth);
+  void makeBondHighlightLines(double lineWidth, double scale);
   void calcAnnotationPosition(const Atom *atom, DrawAnnotation &annot) const;
   void calcAnnotationPosition(const Bond *bond, DrawAnnotation &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
@@ -305,7 +305,7 @@ DrawColour getColour(int atom_idx, const MolDrawOptions &drawOptions,
                      const std::map<int, DrawColour> *highlightMap);
 DrawColour getColourByAtomicNum(int atomicNum,
                                 const MolDrawOptions &drawOptions);
-int getHighlightBondWidth(
+double getHighlightBondWidth(
     const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers);
 

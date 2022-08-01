@@ -60,7 +60,7 @@ class DrawMolMCH : public DrawMol {
   DrawMolMCH &operator=(const DrawMol &) = delete;
   DrawMolMCH &operator=(DrawMol &&) = delete;
 
-  void extractHighlights() override;
+  void extractHighlights(double scale) override;
   void extractMCHighlights();
   void makeBondHighlights(
       std::vector<std::unique_ptr<DrawShape>> &bondHighlights);

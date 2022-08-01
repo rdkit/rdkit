@@ -578,9 +578,9 @@ const std::vector<std::pair<std::string, MolDraw2D_detail::OrientType>>
 // ****************************************************************************
 double MolDraw2D::getDrawLineWidth() const {
   double width = lineWidth();
-  // This works fairly well for SVG and Cairo. 0.02 is picked by eye
   if (drawOptions().scaleBondWidth) {
-    width *= scale() * 0.02;
+    // lineWidthScaleFactor is defined in MolDraw2DHelpers.h
+    width *= scale() * lineWidthScaleFactor;
     if (width < 0.0) {
       width = 0.0;
     }

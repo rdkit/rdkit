@@ -50,23 +50,23 @@ static const bool DELETE_WITH_GOOD_HASH = true;
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"rxn_test1_1.svg", 2291771590U},   {"rxn_test1_2.svg", 1069605851U},
     {"rxn_test1_3.svg", 3960276744U},   {"rxn_test1_4.svg", 2405209606U},
-    {"rxn_test1_5.svg", 1473628728U},   {"rxn_test1_6.svg", 3951817177U},
-    {"rxn_test1_7.svg", 1968421246U},   {"rxn_test2_1.svg", 4096727843U},
+    {"rxn_test1_5.svg", 1473628728U},   {"rxn_test1_6.svg", 2616049847U},
+    {"rxn_test1_7.svg", 1835692946U},   {"rxn_test2_1.svg", 4096727843U},
     {"rxn_test2_2_1.svg", 928418199U},  {"rxn_test2_2_2.svg", 2519076104U},
     {"rxn_test2_2_3.svg", 1325265594U}, {"rxn_test2_2_4.svg", 1389506061U},
-    {"rxn_test3_1.svg", 3357395138U},   {"rxn_test4_1.svg", 814261187U},
-    {"rxn_test4_2.svg", 439611184U},
+    {"rxn_test3_1.svg", 367806471U},    {"rxn_test4_1.svg", 2295816817U},
+    {"rxn_test4_2.svg", 1857271849U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"rxn_test1_1.svg", 4033699709U},   {"rxn_test1_2.svg", 2349689612U},
     {"rxn_test1_3.svg", 3370978736U},   {"rxn_test1_4.svg", 1351851371U},
-    {"rxn_test1_5.svg", 1491066078U},   {"rxn_test1_6.svg", 3302904428U},
-    {"rxn_test1_7.svg", 3505386903U},   {"rxn_test2_1.svg", 147013228U},
+    {"rxn_test1_5.svg", 1491066078U},   {"rxn_test1_6.svg", 3915288836U},
+    {"rxn_test1_7.svg", 2033060149U},   {"rxn_test2_1.svg", 147013228U},
     {"rxn_test2_2_1.svg", 829880341U},  {"rxn_test2_2_2.svg", 1536380435U},
     {"rxn_test2_2_3.svg", 2758929276U}, {"rxn_test2_2_4.svg", 2378744932U},
-    {"rxn_test3_1.svg", 2555776709U},   {"rxn_test4_1.svg", 1241029054U},
-    {"rxn_test4_2.svg", 3258158175U},
+    {"rxn_test3_1.svg", 2568049219U},   {"rxn_test4_1.svg", 1084625794U},
+    {"rxn_test4_2.svg", 1403506164U},
 };
 #endif
 

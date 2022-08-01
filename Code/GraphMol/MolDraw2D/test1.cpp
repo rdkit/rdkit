@@ -73,11 +73,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub781_4.svg", 3233389060U},
     {"testGithub781_5.svg", 2840696942U},
     {"testGithub781_6.svg", 1059414825U},
-    {"test3_1.svg", 3729433965U},
-    {"test3_2.svg", 1999815883U},
-    {"test3_3.svg", 3227068980U},
-    {"test3_4.svg", 2387715470U},
-    {"test3_5.svg", 4197240353U},
+    {"test3_1.svg", 117069184U},
+    {"test3_2.svg", 1101788190U},
+    {"test3_3.svg", 1727802358U},
+    {"test3_4.svg", 1619875411U},
+    {"test3_5.svg", 3931270948U},
     {"test3_6.svg", 82246362U},
     {"test3_7.svg", 4201014991U},
     {"test774_1.svg", 4220057526U},
@@ -126,7 +126,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test14_1.svg", 2669342367U},
     {"test14_2.svg", 902224808U},
     {"test15_1.svg", 285250380U},
-    {"test15_2.svg", 2681684948U},
+    {"test15_2.svg", 70011832U},
     {"test17_1.svg", 3307932411U},
     {"test17_2.svg", 2371426213U},
     {"test17_3.svg", 72242849U},
@@ -166,8 +166,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_1.svg", 3716192373U},
     {"testGithub3305_2.svg", 3910798383U},
     {"testGithub3305_3.svg", 2665156605U},
-    {"testGithub3305_4.svg", 4197240353U},
-    {"testGithub3305_5.svg", 1603066944U},
+    {"testGithub3305_4.svg", 3931270948U},
+    {"testGithub3305_5.svg", 432661212U},
     {"testGithub3305_6.svg", 145251557U},
     {"testGithub3305_7.svg", 69534594U},
     {"testGithub3391_1.svg", 288775907U},
@@ -204,11 +204,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub781_4.svg", 1077101569U},
     {"testGithub781_5.svg", 2840696942U},
     {"testGithub781_6.svg", 2700448827U},
-    {"test3_1.svg", 424970231U},
-    {"test3_2.svg", 2062829244U},
-    {"test3_3.svg", 2170448228U},
-    {"test3_4.svg", 2743267505U},
-    {"test3_5.svg", 1449302246U},
+    {"test3_1.svg", 3193103060U},
+    {"test3_2.svg", 1208940926U},
+    {"test3_3.svg", 3891591336U},
+    {"test3_4.svg", 2990742555U},
+    {"test3_5.svg", 863713106U},
     {"test3_6.svg", 256911461U},
     {"test3_7.svg", 66698678U},
     {"test774_1.svg", 2029651525U},
@@ -257,7 +257,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test14_1.svg", 1475926171U},
     {"test14_2.svg", 3223472512U},
     {"test15_1.svg", 4168771843U},
-    {"test15_2.svg", 2507004800U},
+    {"test15_2.svg", 3818924583U},
     {"test17_1.svg", 842656398U},
     {"test17_2.svg", 3757523250U},
     {"test17_3.svg", 2058438929U},
@@ -295,8 +295,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_1.svg", 3716192373U},
     {"testGithub3305_2.svg", 3910798383U},
     {"testGithub3305_3.svg", 2665156605U},
-    {"testGithub3305_4.svg", 1449302246U},
-    {"testGithub3305_5.svg", 2772302185U},
+    {"testGithub3305_4.svg", 863713106U},
+    {"testGithub3305_5.svg", 1565569299U},
     {"testGithub3305_6.svg", 3531992753U},
     {"testGithub3305_7.svg", 1048989429U},
     {"testGithub3391_1.svg", 4243890317U},
@@ -3008,8 +3008,10 @@ void test15ContinuousHighlightingWithGrid() {
       outs.flush();
       outs.close();
       check_file_hash("test15_1.svg");
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px;") ==
+#if DO_TEST_ASSERT
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.0px;") ==
                   std::string::npos);
+#endif
     }
     {
       MolDraw2DSVG drawer(500, 200, 250, 200);
@@ -3023,8 +3025,10 @@ void test15ContinuousHighlightingWithGrid() {
       outs.flush();
       outs.close();
       check_file_hash("test15_2.svg");
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.4px") !=
+#if DO_TEST_ASSERT
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.0px") !=
                   std::string::npos);
+#endif
     }
     for (auto &&mol : mols) {
       delete mol;
@@ -4281,11 +4285,20 @@ void testGithub3305() {
       outs << text;
       outs.flush();
       outs.close();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7") !=
-                  std::string::npos);
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16.0px") ==
-                  std::string::npos);
+#if DO_TEST_ASSERT
+#if RDK_BUILD_FREETYPE_SUPPORT
+      std::regex regex(
+          R"regex(class='bond-6 atom-6 atom-7' d='M 138.\d+,116.\d+ L 141.\d+,116.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
+      std::smatch bondMatch;
+      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
+#else
+      std::regex regex(
+          R"regex(class='bond-6 atom-6 atom-7' d='M 139.\d+,116.\d+ L 142.\d+,116.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
+      std::smatch bondMatch;
+      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
+#endif
       check_file_hash(nameBase + "4.svg");
+#endif
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
@@ -4313,10 +4326,12 @@ void testGithub3305() {
       outs << text;
       outs.flush();
       outs.close();
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:2.7") ==
-                  std::string::npos);
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:16.0px") !=
-                  std::string::npos);
+#if DO_TEST_ASSERT
+      std::regex regex(
+          R"regex(class='bond-6 atom-6 atom-7' d='M 131.\d+,120.\d+ L 149.\d+,120.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
+      std::smatch bondMatch;
+      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
+#endif
       check_file_hash(nameBase + "5.svg");
     }
     options.continuousHighlight = false;
@@ -4342,10 +4357,12 @@ void testGithub3305() {
       outs << text;
       outs.flush();
       outs.close();
+#if DO_TEST_ASSERT
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") ==
                   std::string::npos);
+#endif
       check_file_hash(nameBase + "6.svg");
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -4370,10 +4387,12 @@ void testGithub3305() {
       outs << text;
       outs.flush();
       outs.close();
+#if DO_TEST_ASSERT
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7") ==
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") !=
                   std::string::npos);
+#endif
       check_file_hash(nameBase + "7.svg");
     }
   }

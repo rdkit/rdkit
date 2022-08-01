@@ -116,7 +116,7 @@ DrawMol::DrawMol(int width, int height, const MolDrawOptions &drawOptions,
 void DrawMol::createDrawObjects() {
   textDrawer_.setFontScale(fontScale_, true);
   partitionForLegend();
-  extractAll();
+  extractAll(scale_);
   calculateScale();
 
   bool ignoreFontLimits = drawOptions_.fixedFontSize != -1;
@@ -178,12 +178,12 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
 }
 
 // ****************************************************************************
-void DrawMol::extractAll() {
+void DrawMol::extractAll(double scale) {
   extractAtomCoords();
   extractAtomSymbols();
   extractBonds();
   extractRegions();
-  extractHighlights();
+  extractHighlights(scale);
   extractAttachments();
   extractMolNotes();
   extractAtomNotes();
@@ -274,9 +274,9 @@ void DrawMol::extractBonds() {
 }
 
 // ****************************************************************************
-void DrawMol::extractHighlights() {
+void DrawMol::extractHighlights(double scale) {
   if (drawOptions_.continuousHighlight) {
-    makeContinuousHighlights();
+    makeContinuousHighlights(scale);
   } else {
     if (drawOptions_.circleAtoms && !highlightAtoms_.empty()) {
       makeAtomCircleHighlights();
@@ -1909,17 +1909,17 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
 }
 
 // ****************************************************************************
-void DrawMol::makeContinuousHighlights() {
-  int tgt_lw = getHighlightBondWidth(drawOptions_, -1, nullptr);
-  if (tgt_lw < 2) {
-    tgt_lw = 2;
+void DrawMol::makeContinuousHighlights(double scale) {
+  double tgt_lw = getHighlightBondWidth(drawOptions_, -1, nullptr);
+  if (tgt_lw < 2.0) {
+    tgt_lw = 2.0;
   }
   if (!drawOptions_.continuousHighlight) {
-    tgt_lw /= 4;
+    tgt_lw /= 4.0;
   }
 
   if (!highlightBonds_.empty()) {
-    makeBondHighlightLines(tgt_lw);
+    makeBondHighlightLines(tgt_lw, scale);
   }
   if (!highlightAtoms_.empty()) {
     makeAtomEllipseHighlights(tgt_lw);
@@ -1994,7 +1994,7 @@ void DrawMol::makeAtomEllipseHighlights(double lineWidth) {
 }
 
 // ****************************************************************************
-void DrawMol::makeBondHighlightLines(double lineWidth) {
+void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
   // find the neighbours of atom that aren't otherAtom and that are
   // bonded to atom with a highlighted bond
   auto findHighBondNbrs = [&](const Atom *atom, const Atom *otherAtom,
@@ -2011,7 +2011,16 @@ void DrawMol::makeBondHighlightLines(double lineWidth) {
     }
   };
 
-  lineWidth /= drawOptions_.scalingFactor / drawOptions_.multipleBondOffset;
+  // this is essentially the inverse of MolDraw2D::getDrawLineWidth
+  // which ignores drawOptions_.scaleHighlightBondWidth and only
+  // uses drawOptions_.scaleBondWidth.
+  if (!drawOptions_.scaleHighlightBondWidth) {
+    // so that when we scale it up again, it comes out the right size
+    lineWidth /= scale;
+  } else {
+    // same conversion factor as in MolDraw2D::getDrawLineWidth()
+    lineWidth *= lineWidthScaleFactor;
+  }
   for (const auto atom : drawMol_->atoms()) {
     unsigned int thisIdx = atom->getIdx();
     for (const auto bond : drawMol_->atomBonds(atom)) {
@@ -2435,7 +2444,7 @@ void DrawMol::setScale(double newScale, double newFontScale,
   fontScale_ = newFontScale / newScale;
   textDrawer_.setFontScale(fontScale_, true);
 
-  extractAll();
+  extractAll(newScale);
   findExtremes();
 
   textDrawer_.setFontScale(newFontScale, ignoreFontLimits);
@@ -2456,7 +2465,7 @@ void DrawMol::setTransformation(const DrawMol &sourceMol) {
   xRange_ = sourceMol.xRange_;
   yRange_ = sourceMol.yRange_;
 
-  extractAll();
+  extractAll(scale_);
   scale_ = sourceMol.scale_;
   fontScale_ = sourceMol.fontScale_;
   textDrawer_.setFontScale(fontScale_, true);
@@ -2999,8 +3008,10 @@ void DrawMol::smoothBondJoins() {
                 // make a small polyline to paper over the cracks.
                 int p12 = p1 == 1 ? 0 : 1;
                 int p22 = p2 == 1 ? 0 : 1;
-                Point2D dv1 = (sbl1->points_[p1] - sbl1->points_[p12]) * 0.025;
-                Point2D dv2 = (sbl1->points_[p1] - sbl2->points_[p22]) * 0.025;
+                double len =
+                    sbl1->lineColour_ == sbl2->lineColour_ ? 0.05 : 0.025;
+                Point2D dv1 = (sbl1->points_[p1] - sbl1->points_[p12]) * len;
+                Point2D dv2 = (sbl1->points_[p1] - sbl2->points_[p22]) * len;
                 std::vector<Point2D> pl_pts{sbl1->points_[p1] - dv1,
                                             sbl1->points_[p1],
                                             sbl1->points_[p1] - dv2};
@@ -3027,15 +3038,19 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
                                double lineWidth,
                                const std::vector<Atom *> &end1HighNbrs,
                                std::vector<Point2D> &points) {
+  // find the intersection point of two lines parallel to lines from e2 to e1
+  // and e3 to e1 and lineWidth from them.  If pm is 1, it's inside the
+  // angle they make, if pm is -1, it's outside.
+  double halfLineWidth = lineWidth / 2.0;
   auto innerPoint = [&](Point2D &e1, Point2D &e2, Point2D &e3,
                         double pm) -> Point2D {
     Point2D perp1 = calcInnerPerpendicular(e2, e1, e3);
     Point2D perp2 = calcInnerPerpendicular(e3, e1, e2);
-    Point2D line12 = e2 + perp1 * pm * lineWidth;
-    Point2D line11 = e1 + perp1 * pm * lineWidth;
+    Point2D line12 = e2 + perp1 * pm * halfLineWidth;
+    Point2D line11 = e1 + perp1 * pm * halfLineWidth;
     line11 = line12 + line12.directionVector(line11) * 2.0 * (e1 - e2).length();
-    Point2D line22 = e3 + perp2 * pm * lineWidth;
-    Point2D line21 = e1 + perp2 * pm * lineWidth;
+    Point2D line22 = e3 + perp2 * pm * halfLineWidth;
+    Point2D line21 = e1 + perp2 * pm * halfLineWidth;
     line21 = line22 + line22.directionVector(line21) * 2.0 * (e1 - e3).length();
     Point2D ins;
     if (doLinesIntersect(line12, line11, line22, line21, &ins)) {
@@ -3050,8 +3065,8 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
 
   if (end1HighNbrs.empty()) {
     Point2D perp = calcPerpendicular(end1Cds, end2Cds);
-    points.push_back(end1Cds + perp * lineWidth);
-    points.push_back(end1Cds - perp * lineWidth);
+    points.push_back(end1Cds + perp * halfLineWidth);
+    points.push_back(end1Cds - perp * halfLineWidth);
   } else if (end1HighNbrs.size() == 1) {
     Point2D end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
     Point2D ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
@@ -3059,6 +3074,8 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     Point2D ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);
     points.push_back(ins2);
   } else if (end1HighNbrs.size() > 1) {
+    // we want the first and last bond vectors going round from the
+    // end1->end2 vector.
     Point2D bvec = end1Cds.directionVector(end2Cds);
     std::vector<std::pair<int, double>> angs;
     for (auto i = 0; i < end1HighNbrs.size(); ++i) {
@@ -3071,6 +3088,8 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
                  const std::pair<int, double> &a2) -> bool {
                 return a1.second < a2.second;
               });
+    // if both angles are on the same side as end1->end2, they need to
+    // be the other way round.
     if (angs.front().second > M_PI && angs.back().second > M_PI) {
       std::reverse(angs.begin(), angs.end());
     }
@@ -3079,6 +3098,8 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     points.push_back(ins1);
     points.push_back(end1Cds);
     Point2D end4Cds = atCds_[end1HighNbrs[angs.back().first]->getIdx()];
+    // if both angles are on the same side as end1->end2, they need to
+    // be the other way round.
     double pm = 1.0;
     if ((angs.front().second > M_PI && angs.back().second > M_PI) ||
         (angs.front().second < M_PI && angs.back().second < M_PI)) {
@@ -3201,7 +3222,7 @@ DrawColour getColourByAtomicNum(int atomic_num,
 }
 
 // ****************************************************************************
-int getHighlightBondWidth(
+double getHighlightBondWidth(
     const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers) {
   int bwm = drawOptions.highlightBondWidthMultiplier;
@@ -3220,7 +3241,7 @@ int getHighlightBondWidth(
       bwm = it->second;
     }
   }
-  int tgt_lw = drawOptions.bondLineWidth * bwm;
+  double tgt_lw = drawOptions.bondLineWidth * bwm;
 
   return tgt_lw;
 }
