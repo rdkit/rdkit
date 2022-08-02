@@ -238,8 +238,7 @@ void DrawMol::extractAtomSymbols() {
         getAtomSymbolAndOrientation(*at1);
     atomSyms_.push_back(atSym);
     if (!atSym.first.empty()) {
-      DrawColour atCol = getColour(at1->getIdx(), drawOptions_, atomicNums_,
-                                   &highlightAtoms_, &highlightAtomMap_);
+      DrawColour atCol = getColour(at1->getIdx());
       AtomSymbol *al =
           new AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
                          atCds_[at1->getIdx()], atCol, textDrawer_);
@@ -1891,11 +1890,27 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
   } else {
     if (!highlight_bond || drawOptions_.continuousHighlight) {
       int at1_idx = bond->getBeginAtomIdx();
-      col1 = getColour(at1_idx, drawOptions_, atomicNums_, &highlightAtoms_,
-                       &highlightAtomMap_);
+      col1 = getColour(at1_idx);
+      Atom *at1 = drawMol_->getAtomWithIdx(at1_idx);
+      const Bond *bond1 = atomHighlightedBond(at1);
+      if (bond1 != nullptr) {
+        DrawColour bondCol = getHighlightBondColour(
+            bond1->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
+        if (col1 == bondCol) {
+          col1 = getColourByAtomicNum(at1->getAtomicNum(), drawOptions_);
+        }
+      }
       int at2_idx = bond->getEndAtomIdx();
-      col2 = getColour(at2_idx, drawOptions_, atomicNums_, &highlightAtoms_,
-                       &highlightAtomMap_);
+      col2 = getColour(at2_idx);
+      Atom *at2 = drawMol_->getAtomWithIdx(at1_idx);
+      const Bond *bond2 = atomHighlightedBond(at1);
+      if (bond2 != nullptr) {
+        DrawColour bondCol = getHighlightBondColour(
+            bond2->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
+        if (col2 == bondCol) {
+          col2 = getColourByAtomicNum(at1->getAtomicNum(), drawOptions_);
+        }
+      }
     } else {
       if (highlightBondMap_.find(bond->getIdx()) != highlightBondMap_.end()) {
         col1 = col2 = highlightBondMap_.find(bond->getIdx())->second;
@@ -2029,11 +2044,8 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           nbrIdx > thisIdx) {
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       bond->getIdx()) != highlightBonds_.end()) {
-          DrawColour col = drawOptions_.highlightColour;
-          if (highlightBondMap_.find(bond->getIdx()) !=
-              highlightBondMap_.end()) {
-            col = highlightBondMap_.find(bond->getIdx())->second;
-          }
+          DrawColour col = getHighlightBondColour(
+              bond->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
           std::vector<Atom *> thisHighNbrs, nbrHighNbrs;
           const Atom *nbr = drawMol_->getAtomWithIdx(nbrIdx);
           findHighBondNbrs(atom, nbr, thisHighNbrs);
@@ -3111,6 +3123,75 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
 }
 
 // ****************************************************************************
+DrawColour DrawMol::getColour(int atom_idx) const {
+  PRECONDITION(atom_idx >= 0, "bad atom_idx");
+  PRECONDITION(rdcast<int>(atomicNums_.size()) > atom_idx, "bad atom_idx");
+
+  DrawColour retval = getColourByAtomicNum(atomicNums_[atom_idx], drawOptions_);
+  bool highlightedAtom = false;
+  if (!drawOptions_.circleAtoms && !drawOptions_.continuousHighlight) {
+    if (highlightAtoms_.end() !=
+        find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx)) {
+      highlightedAtom = true;
+      retval = drawOptions_.highlightColour;
+    }
+    // over-ride with explicit colour from highlightMap if there is one
+    auto p = highlightAtomMap_.find(atom_idx);
+    if (p != highlightAtomMap_.end()) {
+      highlightedAtom = true;
+      retval = p->second;
+    }
+    // if it's not a highlighted atom itself, but all the bonds off it
+    // are highlighted, I think it's better if the atom itself adopts
+    // the same highlight colour as the bonds.  It doesn't look right
+    // if only some of the bonds are highlighted, IMO.
+    if (!highlightedAtom) {
+      Atom *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
+      int numBonds = 0, numHighBonds = 0;
+      std::unique_ptr<DrawColour> highCol;
+      for (const auto &nbri :
+           boost::make_iterator_range(drawMol_->getAtomBonds(atomPtr))) {
+        ++numBonds;
+        const auto &nbr = (*drawMol_)[nbri];
+        if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
+                      nbr->getIdx()) != highlightBonds_.end() ||
+            highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
+          DrawColour hc = getHighlightBondColour(
+              nbr->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
+          if (!highCol) {
+            highCol.reset(new DrawColour(hc));
+          } else {
+            if (!(hc == *highCol)) {
+              numHighBonds = 0;
+              break;
+            }
+          }
+          ++numHighBonds;
+        }
+      }
+      if (numBonds == numHighBonds && highCol) {
+        retval = *highCol;
+      }
+    }
+  }
+  return retval;
+}
+
+// ****************************************************************************
+const Bond *DrawMol::atomHighlightedBond(const Atom *atom) const {
+  for (const auto &nbri :
+       boost::make_iterator_range(drawMol_->getAtomBonds(atom))) {
+    const auto &nbr = (*drawMol_)[nbri];
+    if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
+                  nbr->getIdx()) != highlightBonds_.end() ||
+        highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
+      return nbr;
+    }
+  }
+  return nullptr;
+}
+
+// ****************************************************************************
 void centerMolForDrawing(RWMol &mol, int confId) {
   auto &conf = mol.getConformer(confId);
   RDGeom::Transform3D tf;
@@ -3177,33 +3258,6 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
 }
 
 // ****************************************************************************
-DrawColour getColour(int atom_idx, const MolDrawOptions &drawOptions,
-                     const std::vector<int> &atomicNums,
-                     const std::vector<int> *highlightAtoms,
-                     const std::map<int, DrawColour> *highlightMap) {
-  PRECONDITION(atom_idx >= 0, "bad atom_idx");
-  PRECONDITION(rdcast<int>(atomicNums.size()) > atom_idx, "bad atom_idx");
-
-  DrawColour retval = getColourByAtomicNum(atomicNums[atom_idx], drawOptions);
-  // set contents of highlight_atoms to red
-  if (!drawOptions.circleAtoms && !drawOptions.continuousHighlight) {
-    if (highlightAtoms &&
-        highlightAtoms->end() !=
-            find(highlightAtoms->begin(), highlightAtoms->end(), atom_idx)) {
-      retval = drawOptions.highlightColour;
-    }
-    // over-ride with explicit colour from highlightMap if there is one
-    if (highlightMap) {
-      auto p = highlightMap->find(atom_idx);
-      if (p != highlightMap->end()) {
-        retval = p->second;
-      }
-    }
-  }
-  return retval;
-}
-
-// ****************************************************************************
 DrawColour getColourByAtomicNum(int atomic_num,
                                 const MolDrawOptions &drawOptions) {
   DrawColour res;
@@ -3219,6 +3273,22 @@ DrawColour getColourByAtomicNum(int atomic_num,
     res = DrawColour(0, 0, 0);
   }
   return res;
+}
+
+// ****************************************************************************
+DrawColour getHighlightBondColour(
+    int bondIdx, const MolDrawOptions &drawOptions,
+    const std::vector<int> &highlightBonds,
+    const std::map<int, DrawColour> &highlightBondMap) {
+  DrawColour col(0.0, 0.0, 0.0);
+  if (std::find(highlightBonds.begin(), highlightBonds.end(), bondIdx) !=
+      highlightBonds.end()) {
+    col = drawOptions.highlightColour;
+    if (highlightBondMap.find(bondIdx) != highlightBondMap.end()) {
+      col = highlightBondMap.find(bondIdx)->second;
+    }
+  }
+  return col;
 }
 
 // ****************************************************************************

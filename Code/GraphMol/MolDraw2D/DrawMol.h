@@ -246,6 +246,10 @@ class DrawMol {
   void makeHighlightEnd(const Atom *end1, const Atom *end2, double lineWidth,
                         const std::vector<Atom *> &end1HighNbrs,
                         std::vector<Point2D> &points);
+  DrawColour getColour(int atom_idx) const;
+  // return the pointer to a bond that is incident on atom and highlighted,
+  // or nullptr if there isn't one.
+  const Bond *atomHighlightedBond(const Atom *atom) const;
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -299,12 +303,12 @@ void centerMolForDrawing(RWMol &mol, int confId = 1);
 void prepareStereoGroups(RWMol &mol);
 bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds);
 std::string getAtomListText(const Atom &atom);
-DrawColour getColour(int atom_idx, const MolDrawOptions &drawOptions,
-                     const std::vector<int> &atomicNums,
-                     const std::vector<int> *highlightAtoms,
-                     const std::map<int, DrawColour> *highlightMap);
 DrawColour getColourByAtomicNum(int atomicNum,
                                 const MolDrawOptions &drawOptions);
+DrawColour getHighlightBondColour(
+    int bondIdx, const MolDrawOptions &drawOptions,
+    const std::vector<int> &highlightBonds,
+    const std::map<int, DrawColour> &highlightBondMap);
 double getHighlightBondWidth(
     const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers);
