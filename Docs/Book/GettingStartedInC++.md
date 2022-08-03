@@ -21,9 +21,11 @@ need a reasonably modern C++ compiler. On linux systems this will most
 likely be the GNU compiler gcc, although it could be Clang.  On Macs,
 the opposite is true, and on Windows machines it will probably be
 Visual C++.  As of the March 2018 release, RDKit uses modern C++,
-which currently means up to C++14.  You will probably need to tell
+which currently means up to C++17.  You will probably need to tell
 your compiler that you want to use the new features.  On Clang and
-gcc, use the flag `-std=c++14`.
+gcc, use the flag `-std=c++17`.  To see how we build our examples
+you can look at the ".azure-pipelines" directory in the git
+repository for more platform specific build information.
 
 C++ programs generally have quite a lot of extra verbiage in them
 compared to, for example, python scripts, that is similar or identical
