@@ -110,9 +110,7 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
     }
     chromosomePolicy.setMax(pos, m.size());
     unsigned long count = numPermutations * m.size();
-    numPermutations = count / m.size() == numPermutations
-                          ? count
-                          : numeric_limits<unsigned int>::max();
+    numPermutations = std::min(count, static_cast<unsigned long>(numeric_limits<unsigned int>::max()));
     pos++;
   }
   chromLength = pos;
