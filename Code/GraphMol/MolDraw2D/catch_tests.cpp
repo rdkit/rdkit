@@ -43,7 +43,7 @@ namespace {
 // The hand-drawn pictures will fail this frequently due to the use
 // of random numbers to draw the lines.  As well as all the testHandDrawn
 // files, this includes testBrackets-5a.svg and testPositionVariation-1b.svg
-static const bool DELETE_WITH_GOOD_HASH = true;
+static const bool DELETE_WITH_GOOD_HASH = false;
 // The expected hash code for a file may be included in these maps, or
 // provided in the call to check_file_hash().
 // These values are for a build with FreeType, so expect them all to be
@@ -234,7 +234,13 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_10.svg", 786861825U},
     {"acs1996_11.svg", 3065465046U},
     {"test_unspec_stereo.svg", 599119798U},
-    {"bond_highlights_1.svg", 1222872274U},
+    {"bond_highlights_1.svg", 1150579427U},
+    {"bond_highlights_2.svg", 2958558856U},
+    {"bond_highlights_3.svg", 3466419491U},
+    {"bond_highlights_4.svg", 3500788273U},
+    {"bond_highlights_5.svg", 3500788273U},
+    {"bond_highlights_6.svg", 3008628729U},
+    {"bond_highlights_7.svg", 4006447155U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -5561,6 +5567,24 @@ TEST_CASE("Bond Highlights", "") {
     outs << text;
     outs.flush();
     check_file_hash("bond_highlights_6.svg");
+  }
+#endif
+#if 1
+  {
+    // same as 1, but in ACS1996 mode.
+    MolDraw2DSVG drawer(-1, -1, -1, -1, NO_FREETYPE);
+    std::vector<int> highAts{};
+    std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    drawer.drawOptions().continuousHighlight = false;
+    drawer.drawOptions().circleAtoms = false;
+    MolDraw2DUtils::drawMolACS1996(drawer, *m1, "", &highAts, &highBnds);
+    drawer.drawMolecule(*m1, &highAts, &highBnds);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_7.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_7.svg");
   }
 #endif
 }
