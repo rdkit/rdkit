@@ -4534,8 +4534,8 @@ void test23JSONAtomColourPalette() {
     TEST_ASSERT(text.find("fill:#E59900") != std::string::npos);
 #endif
     std::regex regex(
-        R"regex(path d='M \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+.*)regex");
-    std::ptrdiff_t const match_count(
+        R"regex(path d='M \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+)regex");
+    auto match_count(
         std::distance(std::sregex_iterator(text.begin(), text.end(), regex),
                       std::sregex_iterator()));
     TEST_ASSERT(match_count == 3);
