@@ -162,7 +162,7 @@ def GetStereoisomerCount(m, options=StereoEnumerationOptions()):
 
 
 def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False):
-  """ returns a generator that yields possible stereoisomers for a molecule
+  r""" returns a generator that yields possible stereoisomers for a molecule
 
     Arguments:
       - m: the molecule to work with
@@ -183,21 +183,21 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
     F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
 
     Because the molecule is constrained, not all of those isomers can
     actually exist. We can check that:
@@ -210,13 +210,13 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2
 
     Or we can force the output to only give us unique isomers:
 
@@ -249,13 +249,13 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     ...     print(smi)
     ...
     F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@@]1(Cl)C[C@@H](/C=C\Br)O2
     F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2
-    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\\Br)O2
+    F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2
 
     But we can change that behavior:
 

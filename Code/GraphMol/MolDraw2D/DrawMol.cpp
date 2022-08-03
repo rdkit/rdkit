@@ -30,6 +30,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 
 namespace RDKit {
 namespace MolDraw2D_detail {
@@ -142,9 +143,13 @@ void DrawMol::finishCreateDrawObjects() {
 // ****************************************************************************
 void DrawMol::initDrawMolecule(const ROMol &mol) {
   drawMol_.reset(new RWMol(mol));
-  if (!isReactionMol_ &&
-      (drawOptions_.prepareMolsBeforeDrawing || !mol.getNumConformers())) {
-    MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
+  if (!isReactionMol_) {
+    if (drawOptions_.prepareMolsBeforeDrawing) {
+      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
+    } else if (!mol.getNumConformers()) {
+      const bool canonOrient = true;
+      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
+    }
   }
   if (drawOptions_.centreMoleculesBeforeDrawing) {
     if (drawMol_->getNumConformers()) {
@@ -3081,6 +3086,9 @@ DrawColour getColour(int atom_idx, const MolDrawOptions &drawOptions,
 DrawColour getColourByAtomicNum(int atomic_num,
                                 const MolDrawOptions &drawOptions) {
   DrawColour res;
+  if (atomic_num == 1 && drawOptions.noAtomLabels) {
+    atomic_num = 201;
+  }
   if (drawOptions.atomColourPalette.find(atomic_num) !=
       drawOptions.atomColourPalette.end()) {
     res = drawOptions.atomColourPalette.find(atomic_num)->second;

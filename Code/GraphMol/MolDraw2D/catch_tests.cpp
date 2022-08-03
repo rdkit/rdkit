@@ -217,6 +217,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_5269_2.svg", 2580783009U},
     {"test_classes_wavy_bonds.svg", 1450216116U},
     {"testGithub_5383_1.svg", 1391972140U},
+    {"github5156_1.svg", 4229679486U},
+    {"github5156_2.svg", 2606649270U},
+    {"github5156_3.svg", 3284451122U},
     {"test_molblock_wedges.svg", 1106580037U},
     {"github5383_1.svg", 4181754184U},
     {"acs1996_1.svg", 1760618253U},
@@ -231,6 +234,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_10.svg", 786861825U},
     {"acs1996_11.svg", 3065465046U},
     {"test_unspec_stereo.svg", 599119798U},
+    {"light_blue_h_no_label_1.svg", 3735371135U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -4738,6 +4742,61 @@ TEST_CASE("GitHub #5383: cairo error when using similarity maps", "") {
 #endif
 }
 
+TEST_CASE("github #5156") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("c1ccnc1", ps)};
+    REQUIRE(m);
+    unsigned int failed;
+    MolOps::sanitizeMol(*m, failed,
+                        MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_KEKULIZE);
+    MolDraw2DSVG d2d(200, 200);
+    d2d.drawOptions().prepareMolsBeforeDrawing = false;
+    d2d.drawMolecule(*m);
+    d2d.finishDrawing();
+    auto text = d2d.getDrawingText();
+    // CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+    //       std::string::npos);
+    std::ofstream outs("github5156_1.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5156_1.svg");
+  }
+  SECTION("as reported") {
+    auto m =
+        "[#6](:,-[#6]-,:[#7]-,:[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1):,-[#6]:,-[#7]:,-[#6]"_smarts;
+    REQUIRE(m);
+    MolDraw2DSVG d2d(200, 200);
+    d2d.drawOptions().prepareMolsBeforeDrawing = false;
+    d2d.drawMolecule(*m);
+    d2d.finishDrawing();
+    auto text = d2d.getDrawingText();
+    // CHECK(text.find("width='250px' height='250px' viewBox='0 0 250 250'>") !=
+    //       std::string::npos);
+    std::ofstream outs("github5156_2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5156_2.svg");
+  }
+  SECTION("check no wedging") {
+    // if we aren't preparing molecules, we won't end up with wedging in this
+    // case
+    auto m = "C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    MolDraw2DSVG d2d(200, 200);
+    d2d.drawOptions().prepareMolsBeforeDrawing = false;
+    d2d.drawMolecule(*m);
+    d2d.finishDrawing();
+    auto text = d2d.getDrawingText();
+    CHECK(text.find(" Z' style='fill=#000000") == std::string::npos);
+    std::ofstream outs("github5156_3.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("github5156_3.svg");
+  }
+}
+
 TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
     std::string nameBase = "acs1996_";
@@ -5349,4 +5408,22 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   REQUIRE(cross1Match.size() == 1);
 
   check_file_hash("test_unspec_stereo.svg");
+}
+
+TEST_CASE("Colour H light blue with no atom labels", "") {
+  auto m1 = "C[C@]12CCCC[C@H]1OCCC2"_smiles;
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().noAtomLabels = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("light_blue_h_no_label_1.svg");
+    outs << text;
+    outs.flush();
+    std::regex regex1(R"(class='bond-12 atom-6 atom-11'.*fill:#ADD8E5)");
+    std::smatch regex1Match;
+    REQUIRE(std::regex_search(text, regex1Match, regex1));
+    REQUIRE(regex1Match.size() == 1);
+    check_file_hash("light_blue_h_no_label_1.svg");
 }
