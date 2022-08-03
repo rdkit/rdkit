@@ -1070,6 +1070,7 @@ void DrawMol::resetEverything() {
   annotations_.clear();
   legends_.clear();
   radicals_.clear();
+  singleBondLines_.clear();
 }
 
 // ****************************************************************************
@@ -3261,6 +3262,9 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
 DrawColour getColourByAtomicNum(int atomic_num,
                                 const MolDrawOptions &drawOptions) {
   DrawColour res;
+  if (atomic_num == 1 && drawOptions.noAtomLabels) {
+    atomic_num = 201;
+  }
   if (drawOptions.atomColourPalette.find(atomic_num) !=
       drawOptions.atomColourPalette.end()) {
     res = drawOptions.atomColourPalette.find(atomic_num)->second;
