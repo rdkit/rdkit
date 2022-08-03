@@ -57,6 +57,7 @@ typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<double> DashPattern;
 
 //! use the RDKit's default palette r
+// 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignDefaultPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
@@ -70,9 +71,11 @@ inline void assignDefaultPalette(ColourPalette &palette) {
   palette[17] = DrawColour(0.0, 0.802, 0.0);
   palette[35] = DrawColour(0.5, 0.3, 0.1);
   palette[53] = DrawColour(0.63, 0.12, 0.94);
+  palette[201] = DrawColour(0.68, 0.85, 0.90);
 };
 
 //! use the color palette from the Avalon renderer
+// 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignAvalonPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
@@ -86,6 +89,7 @@ inline void assignAvalonPalette(ColourPalette &palette) {
   palette[17] = DrawColour(0.0, 0.498, 0.0);
   palette[35] = DrawColour(0.0, 0.498, 0.0);
   palette[53] = DrawColour(0.247, 0.0, 0.498);
+  palette[201] = DrawColour(0.68, 0.85, 0.90);
 };
 
 //! use (part of) the CDK color palette
@@ -93,6 +97,7 @@ inline void assignAvalonPalette(ColourPalette &palette) {
   data source:
   https://github.com/cdk/cdk/blob/master/display/render/src/main/java/org/openscience/cdk/renderer/color/CDK2DAtomColors.java
 */
+// 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignCDKPalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0, 0, 0);
@@ -107,8 +112,10 @@ inline void assignCDKPalette(ColourPalette &palette) {
   palette[35] = DrawColour(0.651, 0.161, 0.161);
   palette[53] = DrawColour(0.580, 0.0, 0.580);
   palette[5] = DrawColour(1.000, 0.710, 0.710);
+  palette[201] = DrawColour(0.68, 0.85, 0.90);
 };
 
+// 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignDarkModePalette(ColourPalette &palette) {
   palette.clear();
   palette[-1] = DrawColour(0.8, 0.8, 0.8);
@@ -122,6 +129,7 @@ inline void assignDarkModePalette(ColourPalette &palette) {
   palette[17] = DrawColour(0.0, 0.802, 0.0);
   palette[35] = DrawColour(0.71, 0.4, 0.07);
   palette[53] = DrawColour(0.89, 0.004, 1);
+  palette[201] = DrawColour(0.68, 0.85, 0.90);
 };
 
 inline void assignBWPalette(ColourPalette &palette) {
