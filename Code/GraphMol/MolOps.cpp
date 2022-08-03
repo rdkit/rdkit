@@ -294,6 +294,13 @@ void assignRadicals(RWMol &mol) {
       //  e.g. for transition metals, then we shouldn't be guessing. This was
       //  #3330
       auto nValence = nOuter - chg;
+      if (nValence < 0) {
+        // this was github #5462
+        nValence = 0;
+        BOOST_LOG(rdWarningLog)
+            << "Unusual charge on atom " << atom->getIdx()
+            << " number of radical electrons set to zero" << std::endl;
+      }
       atom->setNumRadicalElectrons(nValence % 2);
     }
   }
