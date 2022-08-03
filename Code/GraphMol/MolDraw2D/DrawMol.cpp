@@ -1071,6 +1071,7 @@ void DrawMol::resetEverything() {
   annotations_.clear();
   legends_.clear();
   radicals_.clear();
+  singleBondLines_.clear();
 }
 
 // ****************************************************************************
