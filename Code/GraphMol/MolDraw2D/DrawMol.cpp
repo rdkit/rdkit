@@ -3086,6 +3086,9 @@ DrawColour getColour(int atom_idx, const MolDrawOptions &drawOptions,
 DrawColour getColourByAtomicNum(int atomic_num,
                                 const MolDrawOptions &drawOptions) {
   DrawColour res;
+  if (atomic_num == 1 && drawOptions.noAtomLabels) {
+    atomic_num = 201;
+  }
   if (drawOptions.atomColourPalette.find(atomic_num) !=
       drawOptions.atomColourPalette.end()) {
     res = drawOptions.atomColourPalette.find(atomic_num)->second;

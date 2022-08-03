@@ -234,6 +234,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_10.svg", 786861825U},
     {"acs1996_11.svg", 3065465046U},
     {"test_unspec_stereo.svg", 599119798U},
+    {"light_blue_h_no_label_1.svg", 3735371135U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -5407,4 +5408,22 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
   REQUIRE(cross1Match.size() == 1);
 
   check_file_hash("test_unspec_stereo.svg");
+}
+
+TEST_CASE("Colour H light blue with no atom labels", "") {
+  auto m1 = "C[C@]12CCCC[C@H]1OCCC2"_smiles;
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().noAtomLabels = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("light_blue_h_no_label_1.svg");
+    outs << text;
+    outs.flush();
+    std::regex regex1(R"(class='bond-12 atom-6 atom-11'.*fill:#ADD8E5)");
+    std::smatch regex1Match;
+    REQUIRE(std::regex_search(text, regex1Match, regex1));
+    REQUIRE(regex1Match.size() == 1);
+    check_file_hash("light_blue_h_no_label_1.svg");
 }
