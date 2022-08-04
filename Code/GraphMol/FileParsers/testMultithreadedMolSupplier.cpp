@@ -29,13 +29,13 @@ using namespace std::chrono;
 
 // thread safe printing for debugging
 // Usage Example: PrintThread{} << "something";
-struct PrintThread : public std::stringstream {
-  inline static std::mutex cout_mutex;
-  ~PrintThread() override {
-    std::lock_guard<std::mutex> l{cout_mutex};
-    std::cout << rdbuf();
-  }
-};
+// struct PrintThread : public std::stringstream {
+//   inline static std::mutex cout_mutex;
+//   ~PrintThread() override {
+//     std::lock_guard<std::mutex> l{cout_mutex};
+//     std::cout << rdbuf();
+//   }
+// };
 
 void testSmiConcurrent(std::istream *strm, bool takeOwnership,
                        std::string delimiter, int smilesColumn, int nameColumn,
@@ -410,12 +410,12 @@ int main() {
   BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-/*
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testPerformance();
-  BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-*/
+  /*
+    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+    testPerformance();
+    BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
+    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  */
 
 #endif
 
