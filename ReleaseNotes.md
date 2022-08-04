@@ -1,3 +1,44 @@
+# Release_2022.03.5
+(Changes relative to Release_2022.03.4)
+
+## Acknowledgements
+Gabriele Balducci, Jonathan Bisson, David Cosgrove, Eisuke Kawashima, Brian
+Kelley, Ricardo Rodriguez-Schmidt, David Schaller, Jeff van Santen Paolo Tosco,
+Rachel Walker, 'sagitter'
+
+## Bug Fixes:
+  - KekulizeException of molecule from Smarts pattern with new RDKit release 
+ (github #5156 from schallerdavid)
+  - error: format not a string literal and no format arguments
+ (github #5234 from sagitter)
+  - leftover debugging code makes build of 2022_03_3 tarball fail
+ (github #5351 from balducci)
+  - Incorrect perception of pseudoasymmetric centers on non-canonical molecules
+ (github #5403 from ptosco)
+  - fix: rdkit.Chem.rdDistGeom.EmbedMultipleConfs docstring indentation
+ (github #5404 from jvansan)
+  - Fix performance issue in RingUtils::checkFused
+ (github #5410 from rachelnwalker)
+  - Multi-coloured highlights go wrong with small fonts
+ (github #5420 from DavidACosgrove)
+  - Parsing a Mol block/file does not clear the "molTotValence" property from atoms
+ (github #5423 from ricrogz)
+  - Pre-condition Violation - Failed Expression: dir == Bond::ENDUPRIGHT || dir == Bond::ENDDOWNRIGHT
+ (github #5433 from bjonnh-work)
+  - Draw option noAtomLabels and explicit hydrogen works badly
+ (github #5453 from DavidACosgrove)
+  - Fix integer overflow in RGroupDecomposition strategy GA
+ (github #5460 from bp-kelley)
+  - Invalid number of radical electrons calculated for [Pr+4]
+ (github #5462 from bjonnh-work)
+  - CXSmiles isn't properly escaping floating point properties
+ (github #5466 from bp-kelley)
+  - Fixes "DeprecationWarning: invalid escape sequence \C" when importing EnumerateStereoisomers
+ (github #5478 from ricrogz)
+  - Fix double to float downcasting warning
+ (github #5479 from ricrogz)
+
+
 # Release_2022.03.4
 (Changes relative to Release_2022.03.3)
 
