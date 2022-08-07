@@ -2651,10 +2651,22 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
   // first one
   int thirdAtom = other_ring_atom(bond.getBeginAtomIdx(), bond, *ringToUse);
   int fourthAtom = other_ring_atom(bond.getEndAtomIdx(), bond, *ringToUse);
-  l2s = doubleBondEnd(thirdAtom, bond.getBeginAtomIdx(), bond.getEndAtomIdx(),
-                      offset, !bool(atomLabels_[bond.getBeginAtomIdx()]));
-  l2f = doubleBondEnd(fourthAtom, bond.getEndAtomIdx(), bond.getBeginAtomIdx(),
-                      offset, !bool(atomLabels_[bond.getEndAtomIdx()]));
+  // As seen in #5486, bonds in rings can be trans and the default code assumes
+  // they are always cis.  If trans, treat as a non-ring bond.  It won't
+  // necessarily come out on the inside of the ring, but that's quite
+  // complicated to fix at this point.
+  int begIdx = bond.getBeginAtomIdx();
+  int endIdx = bond.getEndAtomIdx();
+  bool isTrans = areBondsTrans(atCds_[thirdAtom], atCds_[begIdx],
+                               atCds_[endIdx], atCds_[fourthAtom]);
+  if (isTrans) {
+    bondNonRing(bond, offset, l2s, l2f);
+  } else {
+    l2s = doubleBondEnd(thirdAtom, begIdx, endIdx, offset,
+                        !bool(atomLabels_[bond.getBeginAtomIdx()]));
+    l2f = doubleBondEnd(fourthAtom, endIdx, begIdx, offset,
+                        !bool(atomLabels_[bond.getEndAtomIdx()]));
+  }
 }
 
 // ****************************************************************************
