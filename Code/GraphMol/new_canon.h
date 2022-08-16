@@ -41,15 +41,23 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
       nullptr};  // if provided, this is used to order bonds
 
   bondholder(){};
+
+  // STEREOANY is a special case: it cannot be encoded in SMILES/SMARTS,
+  // so we should not allow it to decide canonicalization, or it will cause
+  // SMILES for mols with such bonds to change when roundtripped due to
+  // the loss of the STEREOANY information.
   bondholder(Bond::BondType bt, Bond::BondStereo bs, unsigned int ni,
              unsigned int nsc)
       : bondType(bt),
-        bondStereo(static_cast<unsigned int>(bs)),
+        bondStereo(bs == Bond::STEREOANY ? 0 : static_cast<unsigned int>(bs)),
         nbrSymClass(nsc),
         nbrIdx(ni) {}
   bondholder(Bond::BondType bt, unsigned int bs, unsigned int ni,
              unsigned int nsc)
-      : bondType(bt), bondStereo(bs), nbrSymClass(nsc), nbrIdx(ni) {}
+      : bondType(bt),
+        bondStereo(bs == Bond::STEREOANY ? 0 : static_cast<unsigned int>(bs)),
+        nbrSymClass(nsc),
+        nbrIdx(ni) {}
 
   int compareStereo(const bondholder &o) const;
 

@@ -48,24 +48,22 @@ void flipIfNeeded(Bond::BondStereo &st1,
 int bondholder::compareStereo(const bondholder &o) const {
   auto st1 = stype;
   auto st2 = o.stype;
-  if (st1 == Bond::BondStereo::STEREONONE) {
-    if (st2 == Bond::BondStereo::STEREONONE) {
+
+  // STEREOANY is a special case: it cannot be encoded in SMILES/SMARTS,
+  // so we should not allow it to decide canonicalization, or it will cause
+  // SMILES for mols with such bonds to change when roundtripped due to
+  // the loss of the STEREOANY information.
+  if (st1 == Bond::BondStereo::STEREONONE ||
+      st1 == Bond::BondStereo::STEREOANY) {
+    if (st2 == Bond::BondStereo::STEREONONE ||
+        st2 == Bond::BondStereo::STEREOANY) {
       return 0;
     } else {
       return -1;
     }
   }
-  if (st2 == Bond::BondStereo::STEREONONE) {
-    return 1;
-  }
-  if (st1 == Bond::BondStereo::STEREOANY) {
-    if (st2 == Bond::BondStereo::STEREOANY) {
-      return 0;
-    } else {
-      return -1;
-    }
-  }
-  if (st2 == Bond::BondStereo::STEREOANY) {
+  if (st2 == Bond::BondStereo::STEREONONE ||
+      st2 == Bond::BondStereo::STEREOANY) {
     return 1;
   }
   // we have some kind of specified stereo on both bonds, work is required
