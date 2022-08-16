@@ -180,7 +180,7 @@ TEST_CASE("double bond stereo and canonicalization") {
     std::cerr << std::endl;
     CHECK(ranks2 == ranks3);
   }
-  SECTION("STEREOANY is higher priority than STEREONONE") {
+  SECTION("STEREOANY has same priority as STEREONONE") {
     auto mol = "CC=C(F)C(B)C(F)=CC"_smiles;
     REQUIRE(mol);
     mol->getBondWithIdx(7)->setStereoAtoms(4, 9);
@@ -191,6 +191,6 @@ TEST_CASE("double bond stereo and canonicalization") {
     std::copy(ranks.begin(), ranks.end(),
               std::ostream_iterator<unsigned int>(std::cerr, " "));
     std::cerr << std::endl;
-    CHECK(ranks[0] < ranks[9]);
+    CHECK(ranks[0] == ranks[9]);
   }
 }

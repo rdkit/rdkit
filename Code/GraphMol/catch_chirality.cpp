@@ -2632,3 +2632,18 @@ TEST_CASE(
   CHECK(stereoInfo2[0].centeredOn == 2);
   CHECK(stereoInfo2[1].centeredOn == 8);
 }
+
+TEST_CASE(
+    "GitHub #5499: STEREOANY bonds lead to non-stable SMILES/SMARTS strings") {
+  int debug_parse = 0;
+  bool sanitize = false;
+  std::string smiles = "C=CCN1C(=N)N(N)C2=C1C=CC=C2";
+  std::unique_ptr<ROMol> mol{SmilesToMol(smiles, debug_parse, sanitize)};
+  REQUIRE(mol);
+
+  auto bond = mol->getBondWithIdx(4);
+  REQUIRE(bond->getBondType() == Bond::DOUBLE);
+  bond->setStereo(Bond::BondStereo::STEREOANY);
+
+  CHECK(smiles == MolToSmiles(*mol));
+}
