@@ -191,6 +191,7 @@ void MolDraw2D::drawMolecules(
   int nCols = width() / panelWidth();
   int nRows = height() / panelHeight();
 
+  size_t j = 0;
   for (size_t i = 0; i < mols.size(); ++i) {
     if (!mols[i]) {
       continue;
@@ -231,12 +232,13 @@ void MolDraw2D::drawMolecules(
     drawMols_.back()->setOffsets(col * panelWidth(), row * panelHeight());
     drawMols_.back()->createDrawObjects();
     if (drawMols_.back()->getScale() < drawMols_[minScaleMol]->getScale()) {
-      minScaleMol = i;
+      minScaleMol = j;
     }
     if (drawMols_.back()->getFontScale() <
         drawMols_[minFontScaleMol]->getFontScale()) {
-      minFontScaleMol = i;
+      minFontScaleMol = j;
     }
+    ++j;
   }
 
   for (auto &drawMol : drawMols_) {
