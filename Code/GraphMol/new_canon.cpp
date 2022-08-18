@@ -566,7 +566,7 @@ void advancedInitCanonAtom(const ROMol &mol, Canon::canon_atom &atom,
       atom.atom->hasProp(common_properties::_ringStereoAtoms);
   atom.hasRingNbr = hasRingNbr(mol, atom.atom);
 }
-}  // end anonymous namespace
+}  // namespace
 
 void initCanonAtoms(const ROMol &mol, std::vector<Canon::canon_atom> &atoms,
                     bool includeChirality, bool includeStereoGroups) {

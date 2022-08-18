@@ -646,7 +646,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
   }
   rjMol.AddMember("extensions", rjReprs, doc.GetAllocator());
 }
-}  // end of anonymous namespace
+}  // namespace
 
 template <typename T>
 std::string MolsToJSONData(const std::vector<T> &mols,
@@ -703,5 +703,5 @@ template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<const ROMol *>(
 template RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData<const RWMol *>(
     const std::vector<const RWMol *> &, const JSONWriteParameters &);
 
-}  // end of namespace MolInterchange
-}  // end of namespace RDKit
+}  // namespace MolInterchange
+}  // namespace RDKit

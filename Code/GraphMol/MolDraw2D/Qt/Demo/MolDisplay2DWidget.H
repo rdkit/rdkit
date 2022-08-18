@@ -29,50 +29,45 @@ namespace RDKit {
 class MolDraw2D;
 
 class MolDisplay2DWidget : public QWidget {
-
   Q_OBJECT
 
-public :
+ public:
+  MolDisplay2DWidget(QWidget *parent = 0, Qt::WindowFlags f = 0);
 
-  MolDisplay2DWidget( QWidget *parent = 0 , Qt::WindowFlags f = 0);
-
-  void set_display_mol( ROMOL_SPTR new_mol );
+  void set_display_mol(ROMOL_SPTR new_mol);
   ROMOL_SPTR display_mol() { return disp_mol_; }
   boost::shared_ptr<MolDraw2D> mol_drawer() { return mol_drawer_; }
   const boost::shared_ptr<MolDraw2D> mol_drawer() const { return mol_drawer_; }
 
-  void set_atom_picking( bool new_val );
+  void set_atom_picking(bool new_val);
   std::vector<int> selected_atoms() const { return picked_atoms_; }
-  void set_selected_atoms( const std::vector<int> &sa );
+  void set_selected_atoms(const std::vector<int> &sa);
 
   int pick_circle_rad() const;
 
   QSize minimumSize() const;
   QSize sizeHint() const;
 
-protected :
+ protected:
+  void paintEvent(QPaintEvent *event);
+  void mousePressEvent(QMouseEvent *event);
 
-  void paintEvent( QPaintEvent *event );
-  void mousePressEvent( QMouseEvent *event );
+  void select_atom(QMouseEvent *event);
+  void draw_molecule(QPainter &qp);
+  void add_molecule_title(QPainter &qp, const std::string &mol_name,
+                          int label_box_height);
+  void identify_selected_atoms(QPainter &qp);
 
-  void select_atom( QMouseEvent *event );
-  void draw_molecule( QPainter &qp );
-  void add_molecule_title( QPainter &qp , const std::string &mol_name ,
-                           int label_box_height );
-  void identify_selected_atoms( QPainter &qp );
-
-private :
-
+ private:
   RWMOL_SPTR disp_mol_;
   boost::shared_ptr<MolDraw2D> mol_drawer_;
   mutable int pick_circle_rad_;
   bool atom_picking_;
   std::vector<int> picked_atoms_;
 
-  int find_nearest_atom( int x_screen_pos , int y_screen_pos ) const;
-
+  int find_nearest_atom(int x_screen_pos, int y_screen_pos) const;
 };
 
-} // EO namespace RDKit
+}  // namespace RDKit
 
-#endif // MOLDISPLAY2DWIDGET_H
+#endif  // MOLDISPLAY2DWIDGET_H

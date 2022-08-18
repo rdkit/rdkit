@@ -627,7 +627,7 @@ class SVGDrawerFromDetails : public DrawerFromDetails {
   }
   std::unique_ptr<MolDraw2DSVG> d_drawer;
 };
-}  // end anonymous namespace
+}  // namespace
 
 std::string mol_to_svg(const ROMol &m, int w = -1, int h = -1,
                        const std::string &details = "") {

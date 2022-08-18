@@ -238,5 +238,5 @@ PATH_LIST uniquifyPaths(const ROMol &mol, const PATH_LIST &allPaths,
   }
   return res;
 }
-}  // end of namespace Subgraphs
-}  // end of namespace RDKit
+}  // namespace Subgraphs
+}  // namespace RDKit

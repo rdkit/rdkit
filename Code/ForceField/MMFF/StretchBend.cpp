@@ -38,7 +38,7 @@ std::pair<double, double> calcStretchBendEnergy(
   return std::make_pair(factor * forceConstants.first * deltaDist1,
                         factor * forceConstants.second * deltaDist2);
 }
-}  // end of namespace Utils
+}  // namespace Utils
 
 StretchBendContrib::StretchBendContrib(
     ForceField *owner, const unsigned int idx1, const unsigned int idx2,

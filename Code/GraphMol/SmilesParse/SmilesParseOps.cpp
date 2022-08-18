@@ -310,7 +310,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       }
     }
   }
-}  // namespace SmilesParseOps
+}
 
 Bond::BondType GetUnspecifiedBondType(const RWMol *mol, const Atom *atom1,
                                       const Atom *atom2) {
@@ -658,4 +658,4 @@ RDKit::QueryBond *getUnspecifiedQueryBond(const RDKit::Atom *a1,
   return newB;
 }
 
-}  // end of namespace SmilesParseOps
+}  // namespace SmilesParseOps

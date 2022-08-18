@@ -198,5 +198,5 @@ std::string calcMolFormula(const ROMol &mol, bool separateIsotopes,
   return res.str();
 }
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit

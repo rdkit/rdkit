@@ -228,5 +228,5 @@ void setHybridization(ROMol &mol) {
     }
   }
 }
-}  // end of namespace MolOps
-}  // end of namespace RDKit
+}  // namespace MolOps
+}  // namespace RDKit

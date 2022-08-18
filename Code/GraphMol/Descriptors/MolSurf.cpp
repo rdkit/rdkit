@@ -475,5 +475,5 @@ std::vector<double> calcCustomProp_VSA(const ROMol &mol,
 
   return res;
 }
-}  // end of namespace Descriptors
+}  // namespace Descriptors
 }  // namespace RDKit

@@ -116,7 +116,7 @@ std::unique_ptr<RWMol> constructMolFromString(
   }
 }
 
-}  // end of namespace DaylightParserUtils
+}  // namespace DaylightParserUtils
 
 namespace {
 void removeSpacesAround(std::string &text, size_t pos) {

@@ -96,7 +96,7 @@ std::string MolToJSONData(const T &mol, const JSONWriteParameters &params =
   return MolsToJSONData(ms, params);
 };
 
-}  // end of namespace MolInterchange
-}  // end of namespace RDKit
+}  // namespace MolInterchange
+}  // namespace RDKit
 
 #endif

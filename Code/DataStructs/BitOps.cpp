@@ -73,7 +73,8 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
         probeFormat = 2;
         break;
       default:
-        throw ValueErrorException("Unknown version type for the encode bit vect");
+        throw ValueErrorException(
+            "Unknown version type for the encode bit vect");
         break;
     }
     probeSize =
@@ -94,7 +95,8 @@ bool AllProbeBitsMatch(const char* probe, const char* ref) {
         refFormat = 2;
         break;
       default:
-        throw ValueErrorException("Unknown version type for the encode bit vect");
+        throw ValueErrorException(
+            "Unknown version type for the encode bit vect");
         break;
     }
     refSize =
@@ -154,7 +156,8 @@ bool AllProbeBitsMatch(const T1& probe, const std::string& pkl) {
         format = 2;
         break;
       default:
-        throw ValueErrorException("Unknown version type for the encode bit vect");
+        throw ValueErrorException(
+            "Unknown version type for the encode bit vect");
         break;
     }
     size = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(*(int*)text);

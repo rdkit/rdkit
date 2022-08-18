@@ -319,5 +319,5 @@ const std::string defaultParamData =
     "\n"
     "Me2	[#72,#73,#74,#75,#76,#77,#78,#79,#80]	-0.0025		\n";
 
-}  // end of namespace Descriptors
+}  // namespace Descriptors
 }  // namespace RDKit

@@ -47,7 +47,7 @@ class CEMetrics {
   friend class ConjElectrons;
 
  public:
-  CEMetrics(){};
+  CEMetrics() {}
   bool operator==(const CEMetrics &other) const {
     return (d_hash == other.d_hash);
   }
@@ -292,7 +292,7 @@ void fixExplicitImplicitHs(ROMol &mol) {
     (*ai)->updatePropertyCache();
   }
 }
-}  // end of namespace ResonanceUtils
+}  // namespace ResonanceUtils
 
 // object constructor
 AtomElectrons::AtomElectrons(ConjElectrons *parent, const Atom *a)

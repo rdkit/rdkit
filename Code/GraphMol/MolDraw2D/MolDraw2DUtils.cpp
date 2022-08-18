@@ -45,7 +45,7 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
          (atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
           atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
 }
-}  // end of anonymous namespace
+}  // namespace
 
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
                           bool wedgeBonds, bool forceCoords, bool wavyBonds) {

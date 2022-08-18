@@ -297,4 +297,4 @@ DiscreteValueVect operator-(const DiscreteValueVect &p1,
   return res;
 };
 
-}  // end of namespace RDKit
+}  // namespace RDKit

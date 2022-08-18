@@ -432,5 +432,5 @@ double *get3DDistanceMat(const ROMol &mol, int confId, bool useAtomWts,
   }
   return dMat;
 }
-}  // end of namespace MolOps
-}  // end of namespace RDKit
+}  // namespace MolOps
+}  // namespace RDKit

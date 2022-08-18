@@ -92,7 +92,7 @@ struct ChemicalFeatureUtils_wrapper {
  Otherwise a list of lists of atom indices is returned.\n");
   }
 };
-}  // end of namespace RDKit
+}  // namespace RDKit
 
 void wrap_ChemicalFeatureUtils() {
   RDKit::ChemicalFeatureUtils_wrapper::wrap();

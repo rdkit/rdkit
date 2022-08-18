@@ -143,6 +143,6 @@ inline std::unique_ptr<ForceFields::ForceField> createEmptyForceFieldForMol(
   }
   return res;
 }
-}  // end of namespace ForceFieldsHelper
-}  // end of namespace RDKit
+}  // namespace ForceFieldsHelper
+}  // namespace RDKit
 #endif

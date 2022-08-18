@@ -248,8 +248,7 @@ void RepeatUnitOp::initFromMol() {
     d_repeats.push_back(repeat);
   }
   dp_frame->commitBatchEdit();
-
-}  // namespace MolEnumerator
+}
 
 std::vector<size_t> RepeatUnitOp::getVariationCounts() const {
   return d_countAtEachPoint;

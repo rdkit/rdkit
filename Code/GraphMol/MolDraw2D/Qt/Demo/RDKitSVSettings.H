@@ -17,23 +17,19 @@
 // ****************************************************************************
 
 class RDKitSVSettings {
-
-public :
-
-  RDKitSVSettings( int argc , char **argv );
+ public:
+  RDKitSVSettings(int argc, char **argv);
 
   std::string usage_text() const { return usage_text_; }
   std::vector<std::string> mol_files() const { return mol_files_; }
   std::string smarts_file() const { return smarts_file_; }
 
-private :
-
+ private:
   std::string usage_text_;
   std::vector<std::string> mol_files_;
   std::string smarts_file_;
 
-  void build_program_options( boost::program_options::options_description &desc );
-
+  void build_program_options(boost::program_options::options_description &desc);
 };
 
-#endif // RDKITSVSETTINGS_H
+#endif  // RDKITSVSETTINGS_H

@@ -24,7 +24,7 @@
 namespace schrodinger {
 namespace mae {
 class Writer;
-}  // namespace mae
+}
 }  // namespace schrodinger
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 

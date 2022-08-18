@@ -68,8 +68,8 @@ std::unique_ptr<Eigen::MatrixXd> make_burden(const ROMol &m) {
 
 std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
                                  const std::vector<double> &atom_props) {
-  if(atom_props.empty()) {
-    return std::pair<double,double>(0.0,0.0);
+  if (atom_props.empty()) {
+    return std::pair<double, double>(0.0, 0.0);
   }
 
   for (unsigned int i = 0; i < atom_props.size(); ++i) {
@@ -108,8 +108,8 @@ std::pair<double, double> BCUT2D(const ROMol &m,
 
 std::vector<double> BCUT2D(const ROMol &m) {
   unsigned int num_atoms = m.getNumAtoms();
-  if(num_atoms == 0) {
-      return std::vector<double>(NUM_BCUTS, 0.0);
+  if (num_atoms == 0) {
+    return std::vector<double>(NUM_BCUTS, 0.0);
   }
 
   std::unique_ptr<ROMol> mol(MolOps::removeHs(m));

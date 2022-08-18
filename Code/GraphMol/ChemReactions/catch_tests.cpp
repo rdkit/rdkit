@@ -1308,21 +1308,23 @@ TEST_CASE("CDXML Parser") {
   }
 
   SECTION("Github #7528 CDXML Grouped Agents in Reactions") {
-    // The failing case had fragments grouped with labels, ensure the grouped cersion and the ungrouped
-    // versions have the same results
+    // The failing case had fragments grouped with labels, ensure the grouped
+    // cersion and the ungrouped versions have the same results
     auto fname = cdxmlbase + "github7467-grouped-fragments.cdxml";
     auto rxns = CDXMLFileToChemicalReactions(fname);
     CHECK(rxns.size() == 1);
     fname = cdxmlbase + "github7467-ungrouped-fragments.cdxml";
     auto rxns2 = CDXMLFileToChemicalReactions(fname);
 
-    CHECK(ChemicalReactionToRxnSmarts(*rxns[0]) == ChemicalReactionToRxnSmarts(*rxns2[0]));
+    CHECK(ChemicalReactionToRxnSmarts(*rxns[0]) ==
+          ChemicalReactionToRxnSmarts(*rxns2[0]));
 
-    // Check to see if our understanding of grouped reagents in reactions is correct
+    // Check to see if our understanding of grouped reagents in reactions is
+    // correct
     fname = cdxmlbase + "reaction-with-grouped-templates.cdxml";
     auto rxns3 = CDXMLFileToChemicalReactions(fname);
     CHECK(rxns3.size() == 1);
-        std::string rxnb = R"RXN($RXN
+    std::string rxnb = R"RXN($RXN
 
       Mrv2004  062120241319
 
@@ -1375,13 +1377,15 @@ M  END
     std::unique_ptr<ChemicalReaction> rxn_mb{RxnBlockToChemicalReaction(rxnb)};
     // CDXMLToReaction is sanitized by default, this might be a mistake...
     unsigned int failed;
-      RxnOps::sanitizeRxn(
-          *rxn_mb, failed,
-          RxnOps::SANITIZE_ADJUST_REACTANTS | RxnOps::SANITIZE_ADJUST_PRODUCTS,
-          RxnOps::MatchOnlyAtRgroupsAdjustParams());
+    RxnOps::sanitizeRxn(
+        *rxn_mb, failed,
+        RxnOps::SANITIZE_ADJUST_REACTANTS | RxnOps::SANITIZE_ADJUST_PRODUCTS,
+        RxnOps::MatchOnlyAtRgroupsAdjustParams());
 
-    CHECK(rxns3[0]->getNumReactantTemplates() == rxn_mb->getNumReactantTemplates());
-    CHECK(ChemicalReactionToRxnSmarts(*rxns3[0]) == ChemicalReactionToRxnSmarts(*rxn_mb));
+    CHECK(rxns3[0]->getNumReactantTemplates() ==
+          rxn_mb->getNumReactantTemplates());
+    CHECK(ChemicalReactionToRxnSmarts(*rxns3[0]) ==
+          ChemicalReactionToRxnSmarts(*rxn_mb));
   }
 }
 

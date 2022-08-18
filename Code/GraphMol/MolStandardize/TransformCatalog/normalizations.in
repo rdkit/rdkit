@@ -66,4 +66,4 @@ std::vector<std::pair<std::string, std::string>> defaultNormalizations = {
     {"Charge normalization", "[F,Cl,Br,I,At;-1:1]=[O:2]>>[*-0:1][O-:2]"},
     {"Charge recombination", "[N,P,As,Sb;-1:1]=[C+;v3:2]>>[*+0:1]#[C+0:2]"},
 };
-} // namespace defaults
+}  // namespace defaults

@@ -81,7 +81,7 @@ std::string mappingToJsonArray(const ROMol &mol) {
   std::string res = buffer.GetString();
   return res;
 }
-}  // end of anonymous namespace
+}  // namespace
 
 std::string JSMol::get_smiles() const {
   assert(d_mol);
@@ -640,7 +640,7 @@ bool mmpaFragmentMol(const ROMol &mol, std::vector<RDKit::ROMOL_SPTR> &cores,
   }
   return true;
 }
-}  // end of anonymous namespace
+}  // namespace
 
 std::pair<JSMolList *, JSMolList *> JSMol::get_mmpa_frags(
     unsigned int minCuts, unsigned int maxCuts,

@@ -1087,8 +1087,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1420,7 +1420,7 @@ std::vector<std::vector<unsigned int>> getMolSelfMatches(
   return res;
 }
 
-}  // end of namespace detail
+}  // namespace detail
 
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                         EmbedParameters &params) {
@@ -1591,5 +1591,5 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
 }
 
-}  // end of namespace DGeomHelpers
-}  // end of namespace RDKit
+}  // namespace DGeomHelpers
+}  // namespace RDKit

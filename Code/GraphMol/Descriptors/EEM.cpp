@@ -229,7 +229,7 @@ void getEEMs(const ROMol &mol, std::vector<double> &result,
   calculate_charges(mol, dist3D, numAtoms, EEMatoms, result);
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 void EEM(ROMol &mol, std::vector<double> &res, int confId) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers")

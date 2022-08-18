@@ -41,7 +41,7 @@ void LazyLeaderHelper(LeaderPicker *picker, T functor, unsigned int poolSize,
   res = picker->lazyPick(functor, poolSize, pickSize, firstPickVect, threshold,
                          nThreads);
 }
-}  // end of anonymous namespace
+}  // namespace
 
 RDKit::INT_VECT LazyVectorLeaderPicks(LeaderPicker *picker, python::object objs,
                                       int poolSize, double threshold,
@@ -68,7 +68,7 @@ RDKit::INT_VECT LazyLeaderPicks(LeaderPicker *picker, python::object distFunc,
   return res;
 }
 
-}  // end of namespace RDPickers
+}  // namespace RDPickers
 
 struct LeaderPicker_wrap {
   static void wrap() {

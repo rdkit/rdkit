@@ -626,7 +626,7 @@ void getMappedAtoms(T &rIt, std::map<int, const Atom *> &mappedAtoms) {
     }
   }
 }
-}  // end of anonymous namespace
+}  // namespace
 
 VECT_INT_VECT getReactingAtoms(const ChemicalReaction &rxn,
                                bool mappedAtomsOnly) {

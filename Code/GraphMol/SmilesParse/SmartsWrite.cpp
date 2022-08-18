@@ -88,7 +88,7 @@ std::string _combineChildSmarts(std::string cs1, unsigned int features1,
   features |= features2;
 
   return res;
-}  // namespace
+}
 
 template <typename T>
 void describeQuery(const T *query, std::string leader = "\t") {
@@ -392,7 +392,7 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
       res = "";
   }
   return res;
-}  // namespace
+}
 
 std::string getBondSmartsSimple(const Bond *bond,
                                 const QueryBond::QUERYBOND_QUERY *bquery,
@@ -966,7 +966,7 @@ std::string GetBondSmarts(const Bond *bond, const SmilesWriteParams &params,
   return res;
 }
 
-}  // end of namespace SmartsWrite
+}  // namespace SmartsWrite
 
 std::string MolToSmarts(const ROMol &mol, const SmilesWriteParams &ps) {
   const unsigned int nAtoms = mol.getNumAtoms();

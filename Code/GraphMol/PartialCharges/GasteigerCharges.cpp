@@ -79,7 +79,7 @@ void splitChargeConjugated(const ROMol &mol, DOUBLE_VECT &charges) {
     std::cout << "In splitter: " << " charges:" << charges[aix] << "\n";
     }*/
 }
-}  // end of namespace Gasteiger
+}  // namespace Gasteiger
 
 namespace RDKit {
 void computeGasteigerCharges(const ROMol *mol, int nIter,

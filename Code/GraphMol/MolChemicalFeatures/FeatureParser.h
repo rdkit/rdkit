@@ -54,5 +54,5 @@ RDKIT_MOLCHEMICALFEATURES_EXPORT MolChemicalFeatureDef *parseFeatureDef(
     std::istream &inStream, const std::string &inLine, unsigned int &lineNo,
     const std::map<std::string, std::string> &atomTypeDefs);
 }  // namespace Local
-}  // end of namespace RDKit
+}  // namespace RDKit
 #endif

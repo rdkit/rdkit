@@ -28,21 +28,20 @@ class MolDisplay2DWidget;
 namespace RDKitSV {
 
 class RDKitSVPanel : public QWidget {
-
   Q_OBJECT
 
-public :
+ public:
+  RDKitSVPanel(bool left_slider = true, QWidget *parent = 0,
+               Qt::WindowFlags f = 0);
 
-  RDKitSVPanel( bool left_slider = true , QWidget *parent = 0 , Qt::WindowFlags f = 0 );
-
-  void set_molecules( const std::vector<RDKit::ROMOL_SPTR> &new_mols ,
-                      const std::vector<std::vector<int> > &highlight_atoms = std::vector<std::vector<int> >() );
+  void set_molecules(const std::vector<RDKit::ROMOL_SPTR> &new_mols,
+                     const std::vector<std::vector<int>> &highlight_atoms =
+                         std::vector<std::vector<int>>());
   std::vector<RDKit::ROMOL_SPTR> get_molecules() const { return mols_; }
 
-  void set_label( const QString &new_label );
+  void set_label(const QString &new_label);
 
-private :
-
+ private:
   RDKit::MolDisplay2DWidget *mol_draw_;
   QSlider *mol_slider_;
   QLabel *label_;
@@ -50,16 +49,15 @@ private :
   std::vector<RDKit::ROMOL_SPTR> mols_;
   // highlight_atoms_ is either empty or the same size as mols_, and gives
   // for each molecule a set of atoms to be highlighted.
-  std::vector<std::vector<int> > highlight_atoms_;
+  std::vector<std::vector<int>> highlight_atoms_;
 
-  void build_widget( bool left_slider );
+  void build_widget(bool left_slider);
 
-public slots :
+ public slots:
 
   void slot_slider_changed();
-
 };
 
-} // EO namespace RDKitSV
+}  // namespace RDKitSV
 
-#endif // RDKITSVPANEL_H
+#endif  // RDKITSVPANEL_H

@@ -76,7 +76,7 @@ std::unique_ptr<SparseIntVect<std::uint32_t>> getAtomPairFingerprintInternal(
       sparse ? fpgen->getSparseCountFingerprint(*lmol, args)
              : fpgen->getCountFingerprint(*lmol, args));
 }
-}  // end of anonymous namespace
+}  // namespace
 
 SparseIntVect<std::int32_t> *getAtomPairFingerprint(
     const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
@@ -345,5 +345,5 @@ ExplicitBitVect *getHashedTopologicalTorsionFingerprintAsBitVect(
   delete sres;
   return res;
 }
-}  // end of namespace AtomPairs
-}  // end of namespace RDKit
+}  // namespace AtomPairs
+}  // namespace RDKit

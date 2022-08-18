@@ -121,7 +121,7 @@ void makeRingNeighborMap(const VECT_INT_VECT &brings,
 #endif
 }
 
-}  // end of namespace RingUtils
+}  // namespace RingUtils
 
 // local utility namespace
 namespace {
@@ -433,7 +433,7 @@ void applyHuckelToFused(
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }    // end while(1)
+  }  // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
@@ -903,7 +903,7 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
   return narom;
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 int setAromaticity(RWMol &mol, AromaticityModel model, int (*func)(RWMol &)) {
   // This function used to check if the input molecule came

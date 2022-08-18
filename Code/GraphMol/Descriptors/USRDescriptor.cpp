@@ -132,7 +132,7 @@ void calcMoments(const std::vector<double> &dist,
 
 class ss_matcher {
  public:
-  ss_matcher(){};
+  ss_matcher() {}
   ss_matcher(const std::string &pattern) {
     RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
     TEST_ASSERT(p);
@@ -181,7 +181,7 @@ void getAtomIdsForFeatures(const ROMol &mol,
   }  // end loop over features
 }
 
-}  // end namespace
+}  // namespace
 
 namespace Descriptors {
 
@@ -322,5 +322,5 @@ double calcUSRScore(const std::vector<double> &d1,
   return 1.0 / score;
 }
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit

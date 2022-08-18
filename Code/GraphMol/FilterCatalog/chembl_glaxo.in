@@ -30,8 +30,10 @@ const FilterData_t CHEMBL_Glaxo[] = {
     {"R29 Cyanophosphonates", "P(OCC)(OCC)(=O)C#N", 0, ""},
     {"R30 Azocyanamides", "[N;R0]=[N;R0]C#N", 0, ""},
     {"R31 Azoalkanals", "[N;R0]=[N;R0]CC=O", 0, ""},
-    {"I1 Aliphatic methylene chains 7 or more long", "[CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0]", 0, ""},
-    {"I2 Compounds with 4 or more acidic groups", "[C,S,P](=O)[OH].[C,S,P](=O)[OH].[C,S,P](=O)[OH].[C,S,P](=O)[OH]", 0, ""},
+    {"I1 Aliphatic methylene chains 7 or more long",
+     "[CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0][CD2;R0]", 0, ""},
+    {"I2 Compounds with 4 or more acidic groups",
+     "[C,S,P](=O)[OH].[C,S,P](=O)[OH].[C,S,P](=O)[OH].[C,S,P](=O)[OH]", 0, ""},
     {"I3 Crown ethers", "[O;R1][C;R1][C;R1][O;R1][C;R1][C;R1][O;R1]", 0, ""},
     {"I4 Disulphides", "SS", 0, ""},
     {"I5 Thiols", "[SH]", 0, ""},
@@ -52,6 +54,6 @@ const FilterData_t CHEMBL_Glaxo[] = {
     {"N4 Cytochalasin derivatives", "O=C1NCC2CCCCC21", 0, ""},
     {"N5 Cycloheximide derivatives", "O=C1CCCC(N1)=O", 0, ""},
     {"N6 Monensin derivatives", "O1CCCCC1C2CCCO2", 0, ""},
-    {"N7 Cyanidin derivatives", "[OH]c1cc([OH])cc2=[O+]C(=C([OH])Cc21)c3cc([OH])c([OH])cc3", 0, ""},
-    {"N8 Squalestatin derivatives", "C12OCCC(O1)CC2", 0, ""}
-};
+    {"N7 Cyanidin derivatives",
+     "[OH]c1cc([OH])cc2=[O+]C(=C([OH])Cc21)c3cc([OH])c([OH])cc3", 0, ""},
+    {"N8 Squalestatin derivatives", "C12OCCC(O1)CC2", 0, ""}};

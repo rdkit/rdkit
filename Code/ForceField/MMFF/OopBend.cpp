@@ -47,7 +47,7 @@ double calcOopBendEnergy(const double chi, const double koop) {
   double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
   return (0.5 * c2 * koop * chi * chi);
 }
-}  // end of namespace Utils
+}  // namespace Utils
 
 OopBendContrib::OopBendContrib(ForceField *owner, unsigned int idx1,
                                unsigned int idx2, unsigned int idx3,

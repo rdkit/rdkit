@@ -141,7 +141,7 @@ void AtomFeatVector(const RDKit::Atom* atom, const ROMol* mol,
     }
   }
 }
-}  // end of anonymous namespace
+}  // namespace
 
 // entry point
 void AtomFeatVect(const ROMol& mol, std::vector<double>& res, int atomid,

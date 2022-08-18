@@ -82,7 +82,7 @@ void addBondToMol(RWMol *mp, BondType *bond) {
     bond->getEndAtom()->setIsAromatic(true);
   }
 }
-}  // end of anonymous namespace
+}  // namespace
 
 // ------------------------------------------------------------------------------------
 //! initialize a molecule
@@ -323,6 +323,6 @@ std::string convertToString(T val) {
   return res;
 }
 
-}  // end of namespace SLNParse
-}  // end of namespace RDKit
+}  // namespace SLNParse
+}  // namespace RDKit
 #endif

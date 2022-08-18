@@ -45,7 +45,7 @@ double calcBondForceConstant(double restLength, const AtomicParams *end1Params,
                (restLength * restLength * restLength);
   return res;
 }
-}  // end of namespace Utils
+}  // namespace Utils
 
 BondStretchContrib::BondStretchContrib(ForceField *owner, unsigned int idx1,
                                        unsigned int idx2, double bondOrder,

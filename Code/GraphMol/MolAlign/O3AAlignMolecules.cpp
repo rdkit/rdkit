@@ -1716,5 +1716,5 @@ void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol, void *prbProp,
 #endif
 }
 
-}  // end of namespace MolAlign
-}  // end of namespace RDKit
+}  // namespace MolAlign
+}  // namespace RDKit

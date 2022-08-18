@@ -109,4 +109,4 @@ FilterCatalogEntry *MakeFilterCatalogEntry(const FilterData_t &data,
 
   return entry;
 }
-}  // end namespace RDKit
+}  // namespace RDKit

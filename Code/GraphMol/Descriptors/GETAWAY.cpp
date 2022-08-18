@@ -1217,7 +1217,7 @@ void GetGETAWAY(double* dist3D, double* AdjMat, std::vector<double> Vpoints,
                  precision);
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 void GETAWAY(const ROMol& mol, std::vector<double>& res, int confId,
              unsigned int precision, const std::string& customAtomPropName) {

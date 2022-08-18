@@ -227,7 +227,7 @@ void Get3Dautoone(double* dist3D, double* topologicaldistance, int numAtoms,
                                  res, customAtomPropName);
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 void AUTOCORR3D(const ROMol& mol, std::vector<double>& res, int confId,
                 const std::string& customAtomPropName) {

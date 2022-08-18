@@ -154,5 +154,5 @@ ExplicitBitVect *getFingerprintAsBitVect(
   return res;
 }
 
-}  // end of namespace MorganFingerprints
-}  // end of namespace RDKit
+}  // namespace MorganFingerprints
+}  // namespace RDKit

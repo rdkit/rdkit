@@ -68,7 +68,7 @@ int parseIntAttribVal(std::string attribName, std::string attribVal,
   }
   return iVal;
 }
-}  // end of anonymous namespace
+}  // namespace
 
 QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op, int val,
                                             int (*func)(Atom const *at),
@@ -340,7 +340,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
         }
       }
     }  // end of query processing
-  }    // end of loop over attribs
+  }  // end of loop over attribs
   if (atomQuery) {
     atom->expandQuery(atomQuery, Queries::COMPOSITE_AND);
   }

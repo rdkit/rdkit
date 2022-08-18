@@ -645,12 +645,12 @@ struct State {
       }
     } else {
       double factor = atom.elem->radius + solvrad;
-      
+
       for (const DotStruct& dot : atom.elem->dots) {
         vect[0] = atom.pos.x + factor * dot.v.x;
         vect[1] = atom.pos.y + factor * dot.v.y;
         vect[2] = atom.pos.z + factor * dot.v.z;
-        
+
         if (testPoint(vect, solvrad)) {
           surfacearea += dot.area;
         }
@@ -813,7 +813,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
   /*!
 
     \param mol: input molecule or protein
-    \param isProtein: flag to calculate burried surface area of a protein ligand 
+    \param isProtein: flag to calculate burried surface area of a protein ligand
     complex [default=false, free ligand]
     \param includeLigand: flag to trigger
     inclusion of bound ligand in surface area and volume calculations where
@@ -844,7 +844,7 @@ DoubleCubicLatticeVolume::DoubleCubicLatticeVolume(const ROMol& mol,
   }
 
   // if not protein, includeLigand should always be true
-  if (!isProtein){
+  if (!isProtein) {
     includeLigand = true;
   }
 

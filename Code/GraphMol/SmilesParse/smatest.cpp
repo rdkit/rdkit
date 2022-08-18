@@ -18,7 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+// #include <boost/log/functions.hpp>
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;
@@ -32,107 +32,48 @@ void testPass() {
   BOOST_LOG(rdInfoLog) << "Testing patterns which should parse." << std::endl;
   string smis[] = {
 #if 1
-    "C",
-    "CC",
-    "C-C",
-    "C=C",
-    "[CH2+]C[CH+2]",
-    "C1CC=1",
-    "C=1CC1",
-    "Ccc",
-    "C=C-O",
-    "C1CC1",
-    "C1NC1",
-    "C1=CC1",
-    "C1CCC1",
-    "CC(C)CC",
-    "CC(=O)O",
-    "C1C(=O)C1",
-    "C1C(N)C1",
-    "CC(O)C",
-    "OC=CCC",
-    "CC([O-])O",
-    "C1CC2C1CC2",
-    "Cl/C=C/Cl",
-    "Cl/C=C\\Cl",
-    "Cl/C=C/Cl",
-    "Cl/C=C\\Cl",
-    "C1CC.CC1",
-    "C1C(C2CC2).C2CC2C1",
-    "[Na+].[Cl-].[NH4+].[Cl-]",
-    "[$(CO)]CO",
-    "[!$(*#*)]",
-    "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]",
-    "[C;!$(C-[OH])]=O",
-    "[CH2;X4][N,O,S,F,Cl,Br,I]",
-    "C=O",
-    "[C;!$(C-[OH])]=O",
-    "[#6]-!:[#6]",
-    "[C^3]",
-    "[*^0]",
-    "[*^1]",
-    "[*^2]",
-    "[*^4]",
-    "[*^5]",
-    "[se]",
-    "[te]",
-    // test zeros as ring indices, issue 2690982:
-    "C0CC0",
-    // these used to fail before Roger Sayle's SMARTS patch:
-    "[HO]",
-    "[13]",
-    "[+]",
-    "[C:1]",
-    "[C:0]",           // issue 3525776
-    "[$([#0].[#0])]",  // sf.net issue 281
-    //"CC((C)C)", // github #102
-    "c1ccccb1",                                            // github 220
-    "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",  // new elements
-    "C->[Cu]<-C",                                          // dative bonds
-    "C%(1)CC%(1)",          // high ring closures (Github #1624)
-    "C%(10)CC%(10)",        // high ring closures (Github #1624)
-    "C%(100)CC%(100)",      // high ring closures (Github #1624)
-    "C%(1000)CC%(1000)",    // high ring closures (Github #1624)
-    "C%(10000)CC%(10000)",  // high ring closures (Github #1624)
-    "[z]",                  // cactvs heteroatom neighbor queries
-    "[z1]",
-    "[Z]",
-    "[Z1]",
-    "[D{1-3}]",  // cactvs range queries
-    "[D{-3}]",
-    "[D{1-}]",
-    "[z{1-3}]",
-    "[Z{1-3}]",
-    "[2H,13C]",  // github #1719
-    "[+{0-3}]",
+      "C", "CC", "C-C", "C=C", "[CH2+]C[CH+2]", "C1CC=1", "C=1CC1", "Ccc",
+      "C=C-O", "C1CC1", "C1NC1", "C1=CC1", "C1CCC1", "CC(C)CC", "CC(=O)O",
+      "C1C(=O)C1", "C1C(N)C1", "CC(O)C", "OC=CCC", "CC([O-])O", "C1CC2C1CC2",
+      "Cl/C=C/Cl", "Cl/C=C\\Cl", "Cl/C=C/Cl", "Cl/C=C\\Cl", "C1CC.CC1",
+      "C1C(C2CC2).C2CC2C1", "[Na+].[Cl-].[NH4+].[Cl-]", "[$(CO)]CO",
+      "[!$(*#*)]", "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]", "[C;!$(C-[OH])]=O",
+      "[CH2;X4][N,O,S,F,Cl,Br,I]", "C=O", "[C;!$(C-[OH])]=O", "[#6]-!:[#6]",
+      "[C^3]", "[*^0]", "[*^1]", "[*^2]", "[*^4]", "[*^5]", "[se]", "[te]",
+      // test zeros as ring indices, issue 2690982:
+      "C0CC0",
+      // these used to fail before Roger Sayle's SMARTS patch:
+      "[HO]", "[13]", "[+]", "[C:1]",
+      "[C:0]",           // issue 3525776
+      "[$([#0].[#0])]",  // sf.net issue 281
+      //"CC((C)C)", // github #102
+      "c1ccccb1",                                            // github 220
+      "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Uut][Fl][Uup][Lv]",  // new elements
+      "C->[Cu]<-C",                                          // dative bonds
+      "C%(1)CC%(1)",          // high ring closures (Github #1624)
+      "C%(10)CC%(10)",        // high ring closures (Github #1624)
+      "C%(100)CC%(100)",      // high ring closures (Github #1624)
+      "C%(1000)CC%(1000)",    // high ring closures (Github #1624)
+      "C%(10000)CC%(10000)",  // high ring closures (Github #1624)
+      "[z]",                  // cactvs heteroatom neighbor queries
+      "[z1]", "[Z]", "[Z1]",
+      "[D{1-3}]",  // cactvs range queries
+      "[D{-3}]", "[D{1-}]", "[z{1-3}]", "[Z{1-3}]",
+      "[2H,13C]",  // github #1719
+      "[+{0-3}]",
 #endif
-    "[-{0-3}]",
-    "[-{0-3},C]",
-    "[-{0-3},D{1-3}]",       // github #2709
-    "C%(1000)CCC%(1000)",    // github #2909
-    "C%(1000)CC(C%(1000))",  // github #2909
-    "C%(1000)CC.C%(1000)",   // github #2909
-    "[C;d2]",                // non-hydrogen degree
-    "C$C",                   // quadruple bonds
-    // extended chirality
-    "C[Fe@TH](O)(Cl)F",
-    "C[Fe@TH1](O)(Cl)F",
-    "C[Fe@SP](O)(Cl)F",
-    "C[Fe@SP1](O)(Cl)F",
-    "C[Fe@TB](O)(Cl)(Br)F",
-    "C[Fe@TB20](O)(Cl)(Br)F",
-    "C[Fe@OH](O)(Cl)(Br)(N)F",
-    "C[Fe@OH20](O)(Cl)(Br)(N)F",
-    "[@TH]",
-    "[@TH1]",
-    "[@SP]",
-    "[@SP1]",
-    "[@TB]",
-    "[@TB10]",
-    "[@OH]",
-    "[@OH20]",
-    "EOS"
-  };
+      "[-{0-3}]", "[-{0-3},C]",
+      "[-{0-3},D{1-3}]",       // github #2709
+      "C%(1000)CCC%(1000)",    // github #2909
+      "C%(1000)CC(C%(1000))",  // github #2909
+      "C%(1000)CC.C%(1000)",   // github #2909
+      "[C;d2]",                // non-hydrogen degree
+      "C$C",                   // quadruple bonds
+      // extended chirality
+      "C[Fe@TH](O)(Cl)F", "C[Fe@TH1](O)(Cl)F", "C[Fe@SP](O)(Cl)F",
+      "C[Fe@SP1](O)(Cl)F", "C[Fe@TB](O)(Cl)(Br)F", "C[Fe@TB20](O)(Cl)(Br)F",
+      "C[Fe@OH](O)(Cl)(Br)(N)F", "C[Fe@OH20](O)(Cl)(Br)(N)F", "[@TH]", "[@TH1]",
+      "[@SP]", "[@SP1]", "[@TB]", "[@TB10]", "[@OH]", "[@OH20]", "EOS"};
   while (smis[i] != "EOS") {
     string smi = smis[i];
     mol = SmartsToMol(smi);

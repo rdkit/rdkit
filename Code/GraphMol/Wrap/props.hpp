@@ -96,25 +96,23 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
         case RDTypeTag::DoubleTag:
           dict[rdvalue.key] = from_rdvalue<double>(rdvalue.val);
           break;
-        case RDTypeTag::StringTag:
-          {
-            auto value = from_rdvalue<std::string>(rdvalue.val);
-            if (autoConvertStrings) {
-              // Auto convert strings to ints and double if possible
-              int ivalue;
-              if (boost::conversion::try_lexical_convert(value, ivalue)) {
-                dict[rdvalue.key] = ivalue;
-                break;
-              }
-              double dvalue;
-              if (boost::conversion::try_lexical_convert(value, dvalue)) {
-                dict[rdvalue.key] = dvalue;
-                break;
-              }
+        case RDTypeTag::StringTag: {
+          auto value = from_rdvalue<std::string>(rdvalue.val);
+          if (autoConvertStrings) {
+            // Auto convert strings to ints and double if possible
+            int ivalue;
+            if (boost::conversion::try_lexical_convert(value, ivalue)) {
+              dict[rdvalue.key] = ivalue;
+              break;
             }
-            dict[rdvalue.key] = value;
+            double dvalue;
+            if (boost::conversion::try_lexical_convert(value, dvalue)) {
+              dict[rdvalue.key] = dvalue;
+              break;
+            }
           }
-          break;
+          dict[rdvalue.key] = value;
+        } break;
         case RDTypeTag::FloatTag:
           dict[rdvalue.key] = from_rdvalue<float>(rdvalue.val);
           break;

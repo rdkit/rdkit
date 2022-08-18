@@ -88,7 +88,7 @@ class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
 };
 RDKIT_RDGENERAL_EXPORT std::ostream& operator<<(std::ostream& s,
                                                 const Invariant& inv);
-}  // end of namespace Invar
+}  // namespace Invar
 
 #define ASSERT_INVARIANT(expr, mess) assert(expr)
 

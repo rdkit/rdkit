@@ -14040,7 +14040,7 @@ const unsigned char roboto_regular_raw_data[] = {
     0x00, 0xd0, 0x00, 0x35, 0x00, 0x01, 0x00, 0x01, 0x00, 0x4a, 0x00, 0x01,
     0x00, 0x03, 0x00, 0x4a, 0x00, 0x57, 0x00, 0x95,
 };
-}  // namespace
+}
 const std::string roboto_regular_ttf((const char *)roboto_regular_raw_data,
                                      (const char *)roboto_regular_raw_data +
                                          sizeof(roboto_regular_raw_data));

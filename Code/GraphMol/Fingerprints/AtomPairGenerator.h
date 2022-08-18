@@ -173,15 +173,15 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
 
  */
 template <typename OutputType>
-RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType>
-    *getAtomPairGenerator(
-        const unsigned int minDistance = 1,
-        const unsigned int maxDistance = maxPathLen - 1,
-        const bool includeChirality = false, const bool use2D = true,
-        AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-        const bool useCountSimulation = true, const std::uint32_t fpSize = 2048,
-        const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-        const bool ownsAtomInvGen = false);
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *
+getAtomPairGenerator(
+    const unsigned int minDistance = 1,
+    const unsigned int maxDistance = maxPathLen - 1,
+    const bool includeChirality = false, const bool use2D = true,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    const bool useCountSimulation = true, const std::uint32_t fpSize = 2048,
+    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    const bool ownsAtomInvGen = false);
 
 }  // namespace AtomPair
 }  // namespace RDKit

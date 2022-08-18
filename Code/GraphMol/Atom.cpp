@@ -601,7 +601,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   return res;
 }
 
-}  // unnamed namespace
+}  // namespace
 
 int Atom::calcExplicitValence(bool strict) {
   bool checkIt = false;

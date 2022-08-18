@@ -293,7 +293,7 @@ typedef short yytype_int16;
 #endif
 #endif
 
-#define YYSIZE_MAXIMUM ((YYSIZE_T)-1)
+#define YYSIZE_MAXIMUM ((YYSIZE_T) - 1)
 
 #ifndef YY_
 #if defined YYENABLE_NLS && YYENABLE_NLS
@@ -423,7 +423,7 @@ void *malloc(YYSIZE_T); /* INFRINGES ON USER NAME SPACE */
 #ifndef YYFREE
 #define YYFREE free
 #if !defined free && !defined EXIT_SUCCESS
-void free(void *);      /* INFRINGES ON USER NAME SPACE */
+void free(void *); /* INFRINGES ON USER NAME SPACE */
 #endif
 #endif
 #endif

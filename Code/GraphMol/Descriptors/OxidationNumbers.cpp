@@ -98,5 +98,5 @@ void calcOxidationNumbers(const ROMol &mol) {
   }
 }
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit

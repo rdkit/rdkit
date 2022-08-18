@@ -294,7 +294,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
 
   return true;
-}  // namespace RDKit
+}
 
 void RGroupDecompositionParameters::checkNonTerminal(const Atom &atom) const {
   if (allowNonTerminalRGroups || atom.getDegree() == 1) {

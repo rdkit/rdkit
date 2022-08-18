@@ -50,10 +50,10 @@ class ss_matcher {
     }
     return matches.size();
   }
-  ~ss_matcher() { delete m_matcher; };
+  ~ss_matcher() { delete m_matcher; }
 
  private:
-  ss_matcher() : m_pattern(""){};
+  ss_matcher() : m_pattern("") {}
   std::string m_pattern;
   bool m_needCopies{false};
   const RDKit::ROMol *m_matcher{nullptr};
@@ -541,5 +541,5 @@ unsigned int numUnspecifiedAtomStereoCenters(const ROMol &mol) {
   return res;
 }
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit

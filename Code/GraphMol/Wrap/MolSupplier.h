@@ -64,7 +64,7 @@ ROMol *MolSupplNext(T *suppl) {
   }
 
   return res;
-}  // namespace RDKit
+}
 
 template <typename T>
 ROMol *MolSupplGetItem(T *suppl, int idx) {

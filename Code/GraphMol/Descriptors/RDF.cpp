@@ -156,7 +156,7 @@ void GetRDFone(double* dist3D, const ROMol& mol, const Conformer& conf,
   getRDFDescCustom(dist3D, mol, conf, res, customAtomPropName);
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 void RDF(const ROMol& mol, std::vector<double>& res, int confId,
          const std::string& customAtomPropName) {

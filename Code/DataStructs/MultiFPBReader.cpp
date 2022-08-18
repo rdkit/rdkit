@@ -194,7 +194,7 @@ void get_containing_nbrs(
   std::sort(res.begin(), res.end(), pairSorter);
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 void MultiFPBReader::init() {
   unsigned int nBits = 0;

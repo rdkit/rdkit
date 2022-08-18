@@ -163,7 +163,7 @@ RDKIT_DESCRIPTORS_EXPORT unsigned numUnspecifiedAtomStereoCenters(
 
 //! Helper function to register the descriptors with the descriptor service
 RDKIT_DESCRIPTORS_EXPORT void registerDescriptors();
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit
 
 #endif

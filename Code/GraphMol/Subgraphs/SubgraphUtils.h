@@ -50,7 +50,7 @@ RDKIT_SUBGRAPHS_EXPORT ROMol *pathToSubmol(const ROMol &mol,
 RDKIT_SUBGRAPHS_EXPORT ROMol *pathToSubmol(const ROMol &mol,
                                            const PATH_TYPE &path,
                                            bool useQuery = false);
-}  // end of namespace Subgraphs
+}  // namespace Subgraphs
 }  // namespace RDKit
 
 #endif

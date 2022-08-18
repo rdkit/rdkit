@@ -62,7 +62,7 @@ typedef enum {
   NoConformers =
       0x00020000  // do not include conformers or associated properties
 } PropertyPickleOptions;
-}  // namespace PicklerOps
+}
 
 //! handles pickling (serializing) molecules
 class RDKIT_GRAPHMOL_EXPORT MolPickler {

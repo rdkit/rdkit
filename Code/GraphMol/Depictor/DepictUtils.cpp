@@ -19,7 +19,7 @@
 namespace {
 static const char *FORMER_NBR_INDICES = "__formerNbrIndices";
 static const char *FORMER_IDX = "__formerIdx";
-}  // end anonymous namespace
+}  // namespace
 
 namespace RDDepict {
 double BOND_LEN = 1.5;

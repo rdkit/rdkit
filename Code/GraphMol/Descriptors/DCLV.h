@@ -31,7 +31,7 @@ class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
   /*!
 
     \param mol: input molecule or protein
-    \param isProtein: flag to calculate burried surface area of a protein ligand 
+    \param isProtein: flag to calculate burried surface area of a protein ligand
     complex [default=false, free ligand]
     \param includeLigand: flag to trigger
     inclusion of bound ligand in surface area and volume calculations where

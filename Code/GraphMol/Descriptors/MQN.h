@@ -41,7 +41,7 @@ const std::string MQNVersion = "1.0.0";
 RDKIT_DESCRIPTORS_EXPORT std::vector<unsigned int> calcMQNs(const ROMol &mol,
                                                             bool force = false);
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit
 
 #endif

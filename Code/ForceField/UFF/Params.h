@@ -85,7 +85,7 @@ const double lambda = 0.1332;  //!< scaling factor for rBO correction
 const double G = 332.06;       //!< bond force constant prefactor
 const double amideBondOrder =
     1.41;  //!< special case bond order for amide C-N bonds.
-};         // namespace Params
+}  // namespace Params
 
 //! singleton class for retrieving UFF AtomParams
 /*!

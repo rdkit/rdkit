@@ -17,7 +17,7 @@
 
 namespace RDKit {
 class ROMol;
-}  // namespace RDKit
+}
 
 namespace ForceFields {
 namespace CrystalFF {

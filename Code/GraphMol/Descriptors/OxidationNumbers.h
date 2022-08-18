@@ -35,6 +35,6 @@ namespace Descriptors {
  */
 RDKIT_DESCRIPTORS_EXPORT void calcOxidationNumbers(const ROMol &mol);
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit
 #endif

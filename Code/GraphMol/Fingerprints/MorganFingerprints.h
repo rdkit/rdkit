@@ -206,7 +206,7 @@ RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *getFingerprintAsBitVect(
     bool onlyNonzeroInvariants = false, BitInfoMap *atomsSettingBits = nullptr,
     bool includeRedundantEnvironments = false);
 
-}  // end of namespace MorganFingerprints
+}  // namespace MorganFingerprints
 }  // namespace RDKit
 
 #endif

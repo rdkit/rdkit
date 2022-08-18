@@ -21,25 +21,20 @@ class QString;
 namespace DACLIB {
 
 class QTGet2Strings : public QDialog {
+ public:
+  QTGet2Strings(QString prompt1, QString initval1, QString prompt2,
+                QString initval2, QWidget *parent = 0, Qt::WindowFlags f = 0);
 
-public :
+  void get_values(QString &string1, QString &string2);
 
-  QTGet2Strings( QString prompt1 , QString initval1 ,
-                 QString prompt2 , QString initval2 ,
-                 QWidget *parent = 0 , Qt::WindowFlags f = 0 );
+ private:
+  QLineEdit *le1_, *le2_;
 
-  void get_values( QString &string1 , QString &string2 );
-
-private :
-
-  QLineEdit *le1_ , *le2_;
-
-  void build_widget( QString prompt1 , QString initval1 ,
-                     QString prompt2 , QString initval2 );
+  void build_widget(QString prompt1, QString initval1, QString prompt2,
+                    QString initval2);
   QWidget *build_action_box();
-
 };
 
-} // EO namespace DACLIB
+}  // namespace DACLIB
 
-#endif // QTGET2STRINGS_H
+#endif  // QTGET2STRINGS_H

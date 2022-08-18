@@ -131,7 +131,7 @@ RDKIT_DESCRIPTORS_EXPORT double calcUSRScore(
     const std::vector<double> &d1, const std::vector<double> &d2,
     const std::vector<double> &weights);
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit
 
 #endif

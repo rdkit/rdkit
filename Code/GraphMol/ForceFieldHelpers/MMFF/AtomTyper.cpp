@@ -105,7 +105,7 @@ const MMFFVdWCollection *getMMFFVdW() {
 }  // namespace DefaultParameters
 class RingMembership {
  public:
-  RingMembership(){};
+  RingMembership() {}
   bool getIsInAromaticRing() const { return d_isInAromaticRing; }
   void setIsInAromaticRing(bool isInAromaticRing) {
     d_isInAromaticRing = isInAromaticRing;

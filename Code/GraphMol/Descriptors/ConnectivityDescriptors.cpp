@@ -322,7 +322,7 @@ double kappa3Helper(double P3, int A, double alpha) {
   }
   return kappa;
 }
-}  // end of anonymous namespace
+}  // namespace
 
 double calcKappa1(const ROMol &mol) {
   double P1 = mol.getNumBonds();
@@ -359,5 +359,5 @@ double calcPhi(const ROMol &mol) {
   auto Phi = kappa1 * kappa2 / A;
   return Phi;
 }
-}  // end of namespace Descriptors
+}  // namespace Descriptors
 }  // namespace RDKit

@@ -224,7 +224,7 @@ void Get2Dautoone(const double* dist, unsigned int numAtoms, const ROMol& mol,
                   const std::string& customAtomPropName) {
   get2DautocorrelationDescCustom(dist, numAtoms, mol, res, customAtomPropName);
 }
-}  // end of anonymous namespace
+}  // namespace
 
 void AUTOCORR2D(const ROMol& mol, std::vector<double>& result,
                 const std::string& customAtomPropName) {

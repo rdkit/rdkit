@@ -8412,5 +8412,5 @@ const std::string defaultMMFFVdW =
     "97	0.35	6.0	4.0	1.4	-	CU+1	X94\n"
     "98	0.40	6.0	4.0	1.4	-	CU+2	X94\n"
     "99	0.35	3.5	4.0	1.3	-	MG+2	X94\n";
-}  // end of namespace MMFF
-}  // end of namespace ForceFields
+}  // namespace MMFF
+}  // namespace ForceFields

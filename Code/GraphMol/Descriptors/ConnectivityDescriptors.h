@@ -205,7 +205,7 @@ RDKIT_DESCRIPTORS_EXPORT void hkDeltas(const ROMol &mol,
                                        std::vector<double> &deltas, bool force);
 }
 
-}  // end of namespace Descriptors
+}  // namespace Descriptors
 }  // namespace RDKit
 
 #endif

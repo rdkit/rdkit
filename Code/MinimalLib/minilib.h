@@ -146,9 +146,7 @@ class JSMol {
   void straighten_depiction() { straighten_depiction(false); }
   std::pair<JSMolList *, std::string> get_frags(
       const std::string &details_json);
-  std::pair<JSMolList *, std::string> get_frags() {
-    return get_frags("{}");
-  }
+  std::pair<JSMolList *, std::string> get_frags() { return get_frags("{}"); }
   unsigned int get_num_atoms(bool heavyOnly) const;
   unsigned int get_num_atoms() const { return get_num_atoms(false); };
   unsigned int get_num_bonds() const;
@@ -166,8 +164,8 @@ class JSMol {
 class JSMolList {
  public:
   JSMolList(const std::vector<RDKit::ROMOL_SPTR> &mols)
-      : d_mols(mols), d_idx(0){};
-  JSMolList() : d_idx(0){};
+      : d_mols(mols), d_idx(0) {}
+  JSMolList() : d_idx(0) {}
   JSMol *next();
   size_t append(const JSMol &mol);
   size_t insert(size_t idx, const JSMol &mol);
@@ -205,9 +203,9 @@ class JSReaction {
  public:
   JSReaction() : d_rxn(new RDKit::ChemicalReaction()) {}
   JSReaction(RDKit::ChemicalReaction *rxn) : d_rxn(rxn) { assert(d_rxn); }
-  [
-      [deprecated("please check the get_rxn return value for non-nullness "
-                  "instead")]] bool
+  [[deprecated(
+      "please check the get_rxn return value for non-nullness "
+      "instead")]] bool
   is_valid() const;
 
   std::vector<JSMolList *> run_reactants(const JSMolList &reactants,
@@ -289,7 +287,9 @@ void disable_logging();
 JSLog *set_log_tee(const std::string &log_name);
 JSLog *set_log_capture(const std::string &log_name);
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
-std::string get_mcs_as_json(const JSMolList &mols, const std::string &details_json);
-std::string get_mcs_as_smarts(const JSMolList &mols, const std::string &details_json);
+std::string get_mcs_as_json(const JSMolList &mols,
+                            const std::string &details_json);
+std::string get_mcs_as_smarts(const JSMolList &mols,
+                              const std::string &details_json);
 JSMol *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
 #endif

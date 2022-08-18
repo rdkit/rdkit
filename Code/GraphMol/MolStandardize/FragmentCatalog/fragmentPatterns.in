@@ -73,4 +73,4 @@ const std::vector<std::pair<std::string, std::string>> defaultFragments = {
     {"tetrahydrofurane", "[#6]-1-[#6]-[#6]-[#8]-[#6]-1"},
     {"toluene", "[#6]-[#6]~1~[#6]~[#6]~[#6]~[#6]~[#6]~1"},
     {"xylene", "[#6]-[#6]~1~[#6](-[#6])~[#6]~[#6]~[#6]~[#6]~1"}};
-    } // namespace defaults
+}  // namespace defaults

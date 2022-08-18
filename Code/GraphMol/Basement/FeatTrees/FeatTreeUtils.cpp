@@ -375,5 +375,5 @@ void addZeroNodes(FeatTreeGraph &featGraph) {
   }
 }
 
-}  // end of namespace FeatTrees
-}  // end of namespace RDKit
+}  // namespace FeatTrees
+}  // namespace RDKit

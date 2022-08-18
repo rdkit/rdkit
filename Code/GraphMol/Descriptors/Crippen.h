@@ -131,7 +131,7 @@ class RDKIT_DESCRIPTORS_EXPORT CrippenParamCollection {
  private:
   ParamsVect d_params;  //!< the parameters
 };
-}  // end of namespace Descriptors
+}  // namespace Descriptors
 }  // namespace RDKit
 
 #endif

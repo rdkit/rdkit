@@ -308,7 +308,7 @@ double TanimotoSimilarity(const Vector<T> &v1, const Vector<T> &v2) {
   }
   return numer / denom;
 }
-}  // end of namespace RDNumeric
+}  // namespace RDNumeric
 
 //! ostream operator for Vectors
 template <typename TYPE>

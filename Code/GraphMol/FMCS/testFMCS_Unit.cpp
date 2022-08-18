@@ -3044,7 +3044,8 @@ void testGitHub6773() {
       TEST_ASSERT(mcs.NumBonds == 1);
       TEST_ASSERT(mcs.SmartsString == "[#8&!R]-&!@[#6&R]");
     }
-    mols = std::vector<ROMOL_SPTR>{"C1CC2CCC3CC2C(C1)CCCCCC3"_smiles, "C1CC2CCC3CCCC4CCC(C1)C2C34"_smiles};
+    mols = std::vector<ROMOL_SPTR>{"C1CC2CCC3CC2C(C1)CCCCCC3"_smiles,
+                                   "C1CC2CCC3CCCC4CCC(C1)C2C34"_smiles};
     {
       MCSParameters p;
       p.BondCompareParameters.MatchFusedRingsStrict = true;
@@ -3078,9 +3079,10 @@ void testGitHub6773() {
 
 void testBondCompareCompleteRingsOnly() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "test CompleteRingsOnly should work also on unsubstituted fused systems" << std::endl;
-  std::vector<ROMOL_SPTR> mols{"C1CCCC2CCCCC12"_smiles,
-                                "C1CCC2CCCC12"_smiles};
+  BOOST_LOG(rdInfoLog)
+      << "test CompleteRingsOnly should work also on unsubstituted fused systems"
+      << std::endl;
+  std::vector<ROMOL_SPTR> mols{"C1CCCC2CCCCC12"_smiles, "C1CCC2CCCC12"_smiles};
   MCSParameters p;
   p.BondCompareParameters.CompleteRingsOnly = true;
   auto mcs = findMCS(mols, &p);

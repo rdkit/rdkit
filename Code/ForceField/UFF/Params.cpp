@@ -351,5 +351,5 @@ const std::string defaultParamData =
     "3.5	3.2	1.9\n";
 // clang-format on
 
-}  // end of namespace UFF
-}  // end of namespace ForceFields
+}  // namespace UFF
+}  // namespace ForceFields

@@ -114,7 +114,7 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcCustomProp_VSA(
     const ROMol &mol, const std::string &customPropName,
     const std::vector<double> &bins, bool force = false);
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit
 
 #endif

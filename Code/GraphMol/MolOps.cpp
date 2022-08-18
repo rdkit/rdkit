@@ -101,7 +101,7 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
         break;
       }
     }  // end of loop over the first neigh
-  }    // if this atom is 5 coordinate nitrogen
+  }  // if this atom is 5 coordinate nitrogen
   // force a recalculation of the explicit valence here
   atom->setIsAromatic(aromHolder);
   atom->calcExplicitValence(false);
@@ -1174,7 +1174,7 @@ std::vector<int> hapticBondEndpoints(const Bond *bond) {
   }
   return oats;
 }
-}  // end of namespace details
+}  // namespace details
 
 namespace details {
 unsigned int addExplicitAttachmentPoint(RWMol &mol, unsigned int atomIdx,
@@ -1317,5 +1317,5 @@ void collapseAttachmentPoints(RWMol &mol, bool markedOnly) {
     mol.commitBatchEdit();
   }
 }
-}  // end of namespace MolOps
-}  // end of namespace RDKit
+}  // namespace MolOps
+}  // namespace RDKit

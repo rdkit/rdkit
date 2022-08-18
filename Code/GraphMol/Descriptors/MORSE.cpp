@@ -165,7 +165,7 @@ void GetMORSEone(double *dist3D, const ROMol &mol, const Conformer &conf,
   getMORSEDescCustom(dist3D, mol, conf, res, customAtomPropName);
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 void MORSE(const ROMol &mol, std::vector<double> &res, int confId,
            const std::string &customAtomPropName) {

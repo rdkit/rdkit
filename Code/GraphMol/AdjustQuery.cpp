@@ -330,7 +330,7 @@ void parseAdjustQueryParametersFromJSON(MolOps::AdjustQueryParameters &p,
   if (!which.empty()) {
     p.adjustRingChainFlags = parseWhichString(which);
   }
-}  // namespace MolOps
+}
 
 ROMol *adjustQueryProperties(const ROMol &mol,
                              const AdjustQueryParameters *params) {
@@ -491,7 +491,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       }
       qa->expandQuery(nq);
     }  // end of adjust ring chain
-  }    // end of loop over atoms
+  }  // end of loop over atoms
   if (params.useStereoCareForBonds) {
     for (auto bnd : mol.bonds()) {
       if (bnd->getBondType() == Bond::BondType::DOUBLE) {

@@ -36,7 +36,7 @@ RGroupDecompData::RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
   prepareCores();
 }
 
-void RGroupDecompData::addInputCore(const ROMol& inputCore) {
+void RGroupDecompData::addInputCore(const ROMol &inputCore) {
   if (params.doEnumeration) {
     if (const auto bundle = MolEnumerator::enumerate(inputCore);
         !bundle.empty()) {
@@ -46,11 +46,10 @@ void RGroupDecompData::addInputCore(const ROMol& inputCore) {
     } else {
       addCore(inputCore);
     }
-  } else  {
+  } else {
     addCore(inputCore);
   }
 }
-
 
 void RGroupDecompData::addCore(const ROMol &inputCore) {
   if (params.allowMultipleRGroupsOnUnlabelled && !params.onlyMatchAtRGroups) {

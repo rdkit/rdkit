@@ -35,7 +35,7 @@ class MolMatchFinalCheckFunctor {
         TargetTopology(target),
         d_query(querySrc),
         d_mol(mol),
-        Parameters(parameters){};
+        Parameters(parameters) {}
 
   bool operator()(const boost::detail::node_id c1[],
                   const boost::detail::node_id c2[]) const {
@@ -61,7 +61,7 @@ class AtomTableCompareFunctor {
  public:
   AtomTableCompareFunctor(const FMCS::Graph& query, const FMCS::Graph& target,
                           const FMCS::MatchTable& targetMatch)
-      : QueryTopology(query), TargetTopology(target), MatchTable(targetMatch){};
+      : QueryTopology(query), TargetTopology(target), MatchTable(targetMatch) {}
   bool operator()(unsigned int i, unsigned int j) const {
     return MatchTable.at(QueryTopology[i], TargetTopology[j]);
   }
@@ -75,7 +75,7 @@ class BondTableCompareFunctor {
  public:
   BondTableCompareFunctor(const FMCS::Graph& query, const FMCS::Graph& target,
                           const FMCS::MatchTable& targetMatch)
-      : QueryTopology(query), TargetTopology(target), MatchTable(targetMatch){};
+      : QueryTopology(query), TargetTopology(target), MatchTable(targetMatch) {}
   bool operator()(FMCS::Graph::edge_descriptor i,
                   FMCS::Graph::edge_descriptor j) const {
     return MatchTable.at(QueryTopology[i], TargetTopology[j]);
@@ -129,7 +129,7 @@ class AtomLabelFunctor {
         d_mol(mol),
         AtomCompare(atomCompare),
         Parameters(p),
-        UserData(ud){};
+        UserData(ud) {}
   bool operator()(unsigned int i, unsigned int j) const {
     return AtomCompare(Parameters, d_query, QueryTopology[i], d_mol,
                        TargetTopology[j], UserData);
@@ -156,7 +156,7 @@ class BondLabelFunctor {
         d_mol(mol),
         BondCompare(bondCompare),
         Parameters(p),
-        UserData(ud){};
+        UserData(ud) {}
 
   bool operator()(FMCS::Graph::edge_descriptor i,
                   FMCS::Graph::edge_descriptor j) const {

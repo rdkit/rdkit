@@ -80,7 +80,7 @@ RDKIT_DESCRIPTORS_EXPORT std::string calcMolFormula(
     const ROMol &mol, bool separateIsotopes = false,
     bool abbreviateHIsotopes = true);
 
-}  // end of namespace Descriptors
-}  // end of namespace RDKit
+}  // namespace Descriptors
+}  // namespace RDKit
 
 #endif

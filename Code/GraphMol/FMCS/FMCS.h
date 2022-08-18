@@ -189,7 +189,7 @@ struct MCSParametersInternal : public MCSParameters {
   MCSParametersInternal(const MCSParameters* params);
   MCSFinalMatchCheckFunction UserFinalMatchChecker = nullptr;
 };
-}  // end namespace detail
+}  // namespace detail
 
 struct RDKIT_FMCS_EXPORT MCSResult {
   unsigned int NumAtoms{0};

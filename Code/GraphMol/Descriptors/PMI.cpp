@@ -106,7 +106,7 @@ bool getMomentsFromGyration(const ROMol& mol, int confId, bool useAtomicMasses,
   return res;
 }
 
-}  // end of anonymous namespace
+}  // namespace
 
 double NPR1(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
