@@ -824,8 +824,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   friend RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
       ROMol &);
-  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
-      &getSubstanceGroups(const ROMol &);
+  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup> &
+  getSubstanceGroups(const ROMol &);
   void clearSubstanceGroups() { d_sgroups.clear(); }
 
  protected:

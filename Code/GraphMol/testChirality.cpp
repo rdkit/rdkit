@@ -3204,32 +3204,32 @@ M  END)CTAB";
 }
 
 void testGithub7115() {
-    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-    BOOST_LOG(rdInfoLog)
-    << "GitHub #7115: Quaternary nitrogens with hydrogens are not a candidate for stereo."
-    << std::endl;
-    
-    {
-        auto s = "C[C@]1(F)C[N@H+](O)C1"_smiles;
-        auto smi = MolToSmiles(*s);
-        TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
-    }
-    {
-        auto s = "C[C@]1(F)C[N@+]([H])(O)C1"_smiles;
-        auto smi = MolToSmiles(*s);
-        TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
-    }
-    {
-        auto insmi = "C[C@]1(F)C[N@+]([H])(O)C1";
-        SmilesParserParams params;
-        params.removeHs = false;
-        std::unique_ptr<RWMol> s(SmilesToMol(insmi, params));
-        auto smi = MolToSmiles(*s);
-        TEST_ASSERT(smi == "[H][N@+]1(O)C[C@](C)(F)C1");
-        // round trip
-        std::unique_ptr<RWMol> s2(SmilesToMol(smi));
-        TEST_ASSERT(MolToSmiles(*s2) == "C[C@]1(F)C[N@H+](O)C1");
-    }
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "GitHub #7115: Quaternary nitrogens with hydrogens are not a candidate for stereo."
+      << std::endl;
+
+  {
+    auto s = "C[C@]1(F)C[N@H+](O)C1"_smiles;
+    auto smi = MolToSmiles(*s);
+    TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
+  }
+  {
+    auto s = "C[C@]1(F)C[N@+]([H])(O)C1"_smiles;
+    auto smi = MolToSmiles(*s);
+    TEST_ASSERT(smi == "C[C@]1(F)C[N@H+](O)C1");
+  }
+  {
+    auto insmi = "C[C@]1(F)C[N@+]([H])(O)C1";
+    SmilesParserParams params;
+    params.removeHs = false;
+    std::unique_ptr<RWMol> s(SmilesToMol(insmi, params));
+    auto smi = MolToSmiles(*s);
+    TEST_ASSERT(smi == "[H][N@+]1(O)C[C@](C)(F)C1");
+    // round trip
+    std::unique_ptr<RWMol> s2(SmilesToMol(smi));
+    TEST_ASSERT(MolToSmiles(*s2) == "C[C@]1(F)C[N@H+](O)C1");
+  }
 }
 
 int main() {

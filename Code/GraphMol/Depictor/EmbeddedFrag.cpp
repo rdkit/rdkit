@@ -421,11 +421,12 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
 
 // find any atoms in the ring that are in trans double bonds
 // and mirror them into the ring
-static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT& ring, RDGeom::INT_POINT2D_MAP& coords)
-{
+static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
+                                 const RDKit::INT_VECT &ring,
+                                 RDGeom::INT_POINT2D_MAP &coords) {
   // a nice place for C++23 generator coroutines...
   RDKit::INT_VECT transRingAtoms;
-  for (size_t i=0; i<ring.size(); ++i) {
+  for (size_t i = 0; i < ring.size(); ++i) {
     const auto atom1 = ring[i];
     const auto atom2 = ring[(i + 1) % ring.size()];
     const auto bond = mol.getBondBetweenAtoms(atom1, atom2);
@@ -438,12 +439,14 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
     }
 
     // We care about bonds that are trans with respect to this ring
-    const auto& neighbors = bond->getStereoAtoms();
+    const auto &neighbors = bond->getStereoAtoms();
     if (neighbors.size() != 2) {
       continue;
     }
-    const auto leftIsIn = std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
-    const auto rightIsIn = std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
+    const auto leftIsIn =
+        std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
+    const auto rightIsIn =
+        std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
     bool isTrans = false;
     if (stype == RDKit::Bond::STEREOTRANS || stype == RDKit::Bond::STEREOE) {
       if (leftIsIn == rightIsIn) {
@@ -458,7 +461,6 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
       continue;
     }
 
-
     // Mirror one atom in each trans bond across the line defined by its two
     // neighbors. This bumps it into the ring
     const auto left = ring[(i + ring.size() - 1) % ring.size()];
@@ -470,8 +472,10 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
     const auto d = last - ref;
     const double a = (d.x * d.x - d.y * d.y) / d.dotProduct(d);
     const double b = 2 * d.x * d.y / d.dotProduct(d);
-    const double x = a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
-    const double y = b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
+    const double x =
+        a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
+    const double y =
+        b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
     coords[atom1] = RDGeom::Point2D(x, y);
   }
 }

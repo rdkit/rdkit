@@ -495,7 +495,7 @@ int bitstringGrayCmp(int length, uint8 *bstr1, uint8 *bstr2) {
    *
    * In contrast to the usual representation of binary numbers,
    * the code is not just positional.
-   * 
+   *
    * When we start from the leftmost position, 1 > 0. In moving
    * to right, every time a pair of 1s is found, it means the
    * remaining parts of the codes resulted from a reflection, and
@@ -513,16 +513,14 @@ int bitstringGrayCmp(int length, uint8 *bstr1, uint8 *bstr2) {
     if (bytea == byteb) {
       /* if the number of 1s is odd, higher is flipped */
       higher ^= (1 & number_of_ones[bytea]);
-    }
-    else {
+    } else {
       uint8 mask = 0x80;
       while (mask) {
         uint8 bita = (bytea & mask) ? 1 : 0;
         uint8 bitb = (byteb & mask) ? 1 : 0;
         if (bita != bitb) {
           return (bita == higher) ? 1 : -1;
-        }
-        else {
+        } else {
           /* flip higher if bita is 1 */
           higher ^= bita;
         }

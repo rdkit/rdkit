@@ -503,10 +503,10 @@ bool checkIfRingsAreClosed(const Seed& fs, bool noLoneRingAtoms) {
       if (!mcsFusedRings.test(ringIdx)) {
         continue;
       }
-      const auto &ringBondIndices = ri->bondRings().at(ringIdx);
-      if (std::all_of(ringBondIndices.begin(), ringBondIndices.end(), [&mcsBonds](const auto &bi) {
-        return mcsBonds.test(bi);
-      })) {
+      const auto& ringBondIndices = ri->bondRings().at(ringIdx);
+      if (std::all_of(
+              ringBondIndices.begin(), ringBondIndices.end(),
+              [&mcsBonds](const auto& bi) { return mcsBonds.test(bi); })) {
         return true;
       }
     }

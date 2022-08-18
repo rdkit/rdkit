@@ -206,7 +206,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
   INT_VECT delList;
 
   // now loop over the list of matches and replace them:
-  for (const auto& fgpMatche : fgpMatches) {
+  for (const auto &fgpMatche : fgpMatches) {
     INT_VECT match;  // each match onto the molecule - list of atoms ids
     for (const auto &mi : fgpMatche) {
       match.push_back(mi.second);
@@ -612,7 +612,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           dummyAtomMap[newAt] = nbrIdx;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
-          // If the connecting bond has stereo settings those cannot be preserved
+          // If the connecting bond has stereo settings those cannot be
+          // preserved
           if (bnd->getStereo() > Bond::STEREOANY) {
             bnd->setStereo(Bond::STEREOANY);
           }
@@ -625,8 +626,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           newBonds.push_back(bnd);
           allNewBonds.push_back(bnd);
 
-          // Check to see if we are breaking a stereo bond definition, by removing one of the stereo atoms
-          // If so, set to the new atom
+          // Check to see if we are breaking a stereo bond definition, by
+          // removing one of the stereo atoms If so, set to the new atom
           for (const auto bond : newMol->atomBonds(sidechainAtom)) {
             if (bond->getIdx() == connectingBond->getIdx()) {
               continue;
@@ -634,7 +635,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
             if (bond->getStereo() > Bond::STEREOANY) {
               auto &stereoAtoms = bond->getStereoAtoms();
-              for (int& stereoAtom : stereoAtoms) {
+              for (int &stereoAtom : stereoAtoms) {
                 if (stereoAtom == static_cast<int>(nbrIdx)) {
                   stereoAtom = static_cast<int>(newAt->getIdx());
                 }
@@ -757,7 +758,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   for (auto citer = mol.beginConformers(); citer != mol.endConformers();
        ++citer) {
     Conformer &newConf = newMol->getConformer((*citer)->getId());
-    for (auto& iter : dummyAtomMap) {
+    for (auto &iter : dummyAtomMap) {
       newConf.setAtomPos(iter.first->getIdx(),
                          (*citer)->getAtomPos(iter.second));
     }

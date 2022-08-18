@@ -9,7 +9,7 @@
 //  of the RDKit source tree.
 //
 #include "point.h"
-//#include <Numerics/Vector.h>
+// #include <Numerics/Vector.h>
 
 namespace RDGeom {
 double computeSignedDihedralAngle(const Point3D& pt1, const Point3D& pt2,

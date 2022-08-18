@@ -139,7 +139,7 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Uncharger {
   }
   Uncharger(const Uncharger &) = default;
   ~Uncharger() = default;
-  
+
   ROMol *uncharge(const ROMol &mol);
   void unchargeInPlace(RWMol &mol);
 

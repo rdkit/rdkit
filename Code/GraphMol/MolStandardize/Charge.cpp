@@ -248,10 +248,10 @@ void Reionizer::reionizeInPlace(RWMol &mol) {
   }  // while loop
 }
 
-std::pair<unsigned int, std::vector<unsigned int>>
-    *Reionizer::strongestProtonated(
-        const ROMol &mol,
-        const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs) {
+std::pair<unsigned int, std::vector<unsigned int>> *
+Reionizer::strongestProtonated(
+    const ROMol &mol,
+    const std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &abpairs) {
   // position is the position in the acid list.
   unsigned int position = 0;
   for (const auto &abpair : abpairs) {
@@ -382,7 +382,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     std::sort(a_atoms.begin(), a_atoms.end());
   }
 
-  // merge n_atoms and a_atoms into one single list of 
+  // merge n_atoms and a_atoms into one single list of
   // negatively charged sites that will be neutralized in
   // sequence
   std::vector<std::pair<int, int>> neg_atoms;
@@ -411,7 +411,7 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
     unsigned int idx = pair.second;
     Atom *atom = mol.getAtomWithIdx(idx);
     for (const auto &nbri :
-          boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+         boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
       const auto &nbr = (mol)[nbri];
       auto nbrIdx = nbr->getIdx();
       // if the neighbor has a positive charge,
@@ -441,8 +441,8 @@ void Uncharger::unchargeInPlace(RWMol &mol) {
   int neg_surplus = neg_atoms.size();
   if (!df_force) {
     // unless we want to fully uncharge the compound, the estimated surplus must
-    // be deduced the amount of positive charge that is not possible to neutralize
-    // and must be balanced.
+    // be deduced the amount of positive charge that is not possible to
+    // neutralize and must be balanced.
     neg_surplus -= q_matched;
   }
 

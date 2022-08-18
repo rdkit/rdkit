@@ -18,7 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+// #include <boost/log/functions.hpp>
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;
@@ -2837,13 +2837,13 @@ void testRingBondCrash() {
 
 void testGithub6730() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog)
-      << "Testing stereo inverts on first atom of SMARTS" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing stereo inverts on first atom of SMARTS"
+                       << std::endl;
   {
-    auto input    = "[C@H](F)(Cl)O"_smarts;
+    auto input = "[C@H](F)(Cl)O"_smarts;
     auto expected = "F[C@@&H1](Cl)O";
-    auto actual   = MolToSmarts(*input,true,1); // doChiral,root=F(1)
-    TEST_ASSERT(expected == actual);    
+    auto actual = MolToSmarts(*input, true, 1);  // doChiral,root=F(1)
+    TEST_ASSERT(expected == actual);
   }
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;

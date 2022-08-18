@@ -20,7 +20,7 @@
 #include <GraphMol/MolOps.h>
 #include "MMPA.h"
 
-//#define MMPA_DEBUG // enable debug info output
+// #define MMPA_DEBUG // enable debug info output
 
 namespace RDKit {
 namespace MMPA {
@@ -158,7 +158,7 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>&
     std::vector<std::vector<int>> frags;
     unsigned int nFrags = MolOps::getMolFrags(em, frags);
 
-    //#check if its a valid triple or bigger cut.  matchObj = re.search(
+    // #check if its a valid triple or bigger cut.  matchObj = re.search(
     //'\*.*\*.*\*', f)
     // check if exists a fragment with maxCut connection points (*.. *.. *)
     if (isotope >= 3) {

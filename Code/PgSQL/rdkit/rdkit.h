@@ -43,7 +43,7 @@ extern "C" {
 #if PG_VERSION_NUM >= 160000
 #include <varatt.h>
 #ifndef Abs
-#define Abs(x)  ((x) >= 0 ? (x) : -(x))
+#define Abs(x) ((x) >= 0 ? (x) : -(x))
 #endif
 #endif
 #endif

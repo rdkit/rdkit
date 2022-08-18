@@ -16,7 +16,7 @@
 #include "SmartsWrite.h"
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+// #include <boost/log/functions.hpp>
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;
@@ -4397,7 +4397,8 @@ void testGithub6349() {
     }
 
     std::string molBlock = MolToMolBlock(*molFromSmarts);
-    std::unique_ptr<ROMol> molFromBlock(MolBlockToMol(molBlock, /*sanitize =*/false, /*removeHs =*/false));
+    std::unique_ptr<ROMol> molFromBlock(
+        MolBlockToMol(molBlock, /*sanitize =*/false, /*removeHs =*/false));
     {
       std::string smi = MolToSmiles(*molFromBlock);
       TEST_ASSERT(smi == refSmi);
