@@ -159,6 +159,29 @@ typedef VECT_EDON_TYPE::const_iterator VECT_EDON_TYPE_CI;
 static bool applyHuckel(ROMol &mol, const INT_VECT &ring,
                         const VECT_EDON_TYPE &edon, unsigned int minRingSize);
 
+static void applyHuckelToSubFusedSystem(
+    ROMol &mol,                   // molecule of interest
+    const VECT_INT_VECT &srings,  // list of all ring as atom IDS
+    const VECT_INT_VECT &brings,  // list of all rings as bond ids
+    const INT_VECT &curRs,  // list of current rings in subs fused system
+    const VECT_EDON_TYPE &edon,  // electron donor state for each atom
+    unsigned int minRingSize,
+    const std::vector<Bond *> &bondsByIdx,
+    std::unordered_set<int>& aromRings,
+    std::set<unsigned int>& doneBonds
+);
+
+static void applyHuckleToFusedDenseRingSystem(
+    ROMol &mol,                   // molecule of interest
+    const VECT_INT_VECT &srings,  // list of all ring as atom IDS
+    const VECT_INT_VECT &brings,  // list of all rings as bond ids
+    const INT_VECT &fused,       // list of ring ids in the current fused system
+    const VECT_EDON_TYPE &edon,  // electron donor state for each atom
+    INT_INT_VECT_MAP &ringNeighs,
+    int &narom,  // number of aromatic ring so far
+    unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
+    unsigned int minRingSize = 0);
+
 static void applyHuckelToFused(
     ROMol &mol,                   // molecule of interest
     const VECT_INT_VECT &srings,  // list of all ring as atom IDS
@@ -341,10 +364,27 @@ void applyHuckelToFused(
   // with the individual rings in the system and then proceeds to
   // check for larger system i.e. if we have a 3 ring fused system,
   // huckel rule checked first on all the 1 ring subsystems then 2
-  // rung subsystems etc.
+  // ring subsystems etc.
+
+  // do not continue for extremely large/dense ring systems
+  auto nrings = rdcast<unsigned int>(fused.size());
+  if (nrings > 500) {
+    applyHuckleToFusedDenseRingSystem(
+      mol,
+      srings,
+      brings,
+      fused,
+      edon,
+      ringNeighs,
+      narom,
+      maxNumFusedRings,
+      bondsByIdx,
+      minRingSize
+    );
+    return;
+  }
 
   std::unordered_set<int> aromRings;
-  auto nrings = rdcast<unsigned int>(fused.size());
   INT_VECT curRs;
   curRs.push_back(fused.front());
   int pos = -1;
@@ -424,6 +464,144 @@ void applyHuckelToFused(
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
   }    // end while(1)
+  narom += rdcast<int>(aromRings.size());
+}
+
+void applyHuckelToSubFusedSystem(
+    ROMol &mol,                   // molecule of interest
+    const VECT_INT_VECT &srings,  // list of all ring as atom IDS
+    const VECT_INT_VECT &brings,  // list of all rings as bond ids
+    const INT_VECT &curRs,  // list of current rings in subs fused system
+    const VECT_EDON_TYPE &edon,  // electron donor state for each atom
+    unsigned int minRingSize,
+    const std::vector<Bond *> &bondsByIdx,
+    std::unordered_set<int>& aromRings,
+    std::set<unsigned int>& doneBonds
+) {
+
+    // check aromaticity on the current fused system
+    INT_VECT atsInRingSystem(mol.getNumAtoms(), 0);
+    for (auto ridx : curRs) {
+      for (auto rid : srings[ridx]) {
+        ++atsInRingSystem[rid];
+      }
+    }
+    INT_VECT unon;
+    for (unsigned int i = 0; i < atsInRingSystem.size(); ++i) {
+      // condition for inclusion of an atom in the aromaticity of a fused ring
+      // system is that it's present in one or two of the rings. this was #2895:
+      // the central atom in acepentalene was being included in the count of
+      // aromatic atoms
+      if (atsInRingSystem[i] == 1 || atsInRingSystem[i] == 2) {
+        unon.push_back(i);
+      }
+    }
+    if (applyHuckel(mol, unon, edon, minRingSize)) {
+      // mark the atoms and bonds in these rings to be aromatic
+      markAtomsBondsArom(mol, srings, brings, curRs, doneBonds, bondsByIdx);
+
+      // add the ring IDs to the aromatic rings found so far
+      // avoid duplicates
+      std::copy(curRs.begin(), curRs.end(),
+                std::inserter(aromRings, aromRings.begin()));
+    }  // end check huckel rule
+}
+
+//// WORK IN PROGRESS ///
+void applyHuckleToFusedDenseRingSystem(
+    ROMol &mol,                   // molecule of interest
+    const VECT_INT_VECT &srings,  // list of all ring as atom IDS
+    const VECT_INT_VECT &brings,  // list of all rings as bond ids
+    const INT_VECT &fused,       // list of ring ids in the current fused system
+    const VECT_EDON_TYPE &edon,  // electron donor state for each atom
+    INT_INT_VECT_MAP &ringNeighs,  // list of neighbors for each candidate ring
+    int &narom,                    // number of aromatic ring so far
+    unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
+    unsigned int minRingSize) {
+
+  std::unordered_set<int> aromRings;
+  auto nrings = rdcast<unsigned int>(fused.size());
+
+  size_t nRingBonds;
+  {
+    boost::dynamic_bitset<> fusedBonds(mol.getNumBonds());
+    for (auto ridx : fused) {
+      for (auto bidx : brings[ridx]) {
+        fusedBonds[bidx] = true;
+      }
+    }
+    nRingBonds = rdcast<unsigned int>(fusedBonds.count());
+  }
+  std::set<unsigned int> doneBonds;
+
+  // start off with a single ring subsystem
+  std::vector<std::vector<int>> currentRingPaths;
+  for (auto& rid : fused) {
+    currentRingPaths.push_back({rid});
+  }
+
+  // first check single rings
+  for (auto& singleRing : currentRingPaths) {
+    applyHuckelToSubFusedSystem(mol,
+      srings,
+      brings,
+      singleRing,
+      edon,
+      minRingSize,
+      bondsByIdx,
+      aromRings,
+      doneBonds
+    );
+  }
+
+  // check if we even have to try larger combinations
+  if (doneBonds.size() >= nRingBonds) {
+    narom += rdcast<int>(aromRings.size());
+    return;
+  }
+
+  std::vector<std::vector<int>> nextRingPaths;
+  unsigned int currentSize = 1;
+  while (currentSize < maxNumFusedRings) {
+    for (const auto& path : currentRingPaths) {
+      auto currentRingId = path.back();
+      for (auto neighRingId : ringNeighs[currentRingId]) {
+        if (std::find(path.begin(),path.end(),neighRingId) == path.end()) {
+          INT_VECT curRs (path);
+          curRs.push_back(neighRingId);
+          nextRingPaths.push_back(curRs);
+
+          // avoid duplicate paths -- we still need these in the future but
+          // we don't need to process them twice
+          if (curRs.begin() > curRs.end()) {
+            continue;
+          }
+
+          applyHuckelToSubFusedSystem(mol,
+            srings,
+            brings,
+            curRs,
+            edon,
+            minRingSize,
+            bondsByIdx,
+            aromRings,
+            doneBonds
+          );
+
+          // we are done
+          if (doneBonds.size() >= nRingBonds) {
+            narom += rdcast<int>(aromRings.size());
+            return;
+          }
+        }
+      }
+    }
+    currentRingPaths = nextRingPaths;
+    nextRingPaths.clear();
+    ++currentSize;
+  }
+
+  // we did not complete all bonds
   narom += rdcast<int>(aromRings.size());
 }
 
