@@ -21,19 +21,55 @@ TEST_CASE("Determine Connectivity") {
             "/Code/GraphMol/DetermineBonds/test_data/"
             + "test" + std::to_string(i) + ".xyz";
             std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+            REQUIRE(mol);
             std::string smiles = mol->getProp<std::string>("_FileComments");
             std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+            REQUIRE(orig);
 
             determineConnectivity(*mol, false, 0);
             MolOps::removeAllHs(*mol, false);
 
-            unsigned int numAtoms = mol->getNumAtoms();
+            auto numAtoms = mol->getNumAtoms();
             
             REQUIRE(orig->getNumAtoms() == numAtoms);
             for (unsigned int i = 0; i < numAtoms; i++) {
                 for (unsigned int j = i + 1; j < numAtoms; j++) {
-                    Bond *origBond = orig->getBondBetweenAtoms(i, j);
-                    Bond *molBond = mol->getBondBetweenAtoms(i, j);
+                    const auto origBond = orig->getBondBetweenAtoms(i, j);
+                    const auto molBond = mol->getBondBetweenAtoms(i, j);
+                    if (origBond) {
+                        CHECK(molBond);
+                    } else {
+                        CHECK(!molBond);
+                    }
+                }
+            }
+        }
+    } // SECTION
+    
+    SECTION("Huckel") {
+        unsigned int numTests = 39;
+        for (unsigned int i = 0; i < numTests; i++) {
+            std::string rdbase = getenv("RDBASE");
+            std::string fName = rdbase +
+            "/Code/GraphMol/DetermineBonds/test_data/"
+            + "test" + std::to_string(i) + ".xyz";
+            std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+            REQUIRE(mol);
+            std::string smiles = mol->getProp<std::string>("_FileComments");
+            std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+            REQUIRE(orig);
+            int charge = MolOps::getFormalCharge(*orig);
+
+            determineConnectivity(*mol, true, charge);
+            MolOps::removeAllHs(*mol, false);
+
+            auto numAtoms = mol->getNumAtoms();
+            
+            REQUIRE(orig->getNumAtoms() == numAtoms);
+            for (unsigned int i = 0; i < numAtoms; i++) {
+                for (unsigned int j = i + 1; j < numAtoms; j++) {
+                    const auto origBond = orig->getBondBetweenAtoms(i, j);
+                    const auto molBond = mol->getBondBetweenAtoms(i, j);
                     if (origBond) {
                         CHECK(molBond);
                     } else {
