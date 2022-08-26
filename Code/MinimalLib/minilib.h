@@ -146,6 +146,20 @@ class JSMol {
   bool set_new_coords() { return set_new_coords(false); }
   std::string get_new_coords(bool useCoordGen) const;
   std::string get_new_coords() const { return get_new_coords(false); }
+  bool has_prop(const std::string &key) const;
+  std::vector<std::string> get_prop_list(bool includePrivate,
+                                         bool includeComputed) const;
+  std::vector<std::string> get_prop_list(bool includePrivate) const {
+    return get_prop_list(includePrivate, true);
+  }
+  std::vector<std::string> get_prop_list() const {
+    return get_prop_list(true, true);
+  }
+  bool set_prop(const std::string &key, const std::string &val, bool computed);
+  bool set_prop(const std::string &key, const std::string &val) {
+    return set_prop(key, val, false);
+  }
+  std::string get_prop(const std::string &key) const;
   std::string remove_hs() const;
   std::string add_hs() const;
   double normalize_depiction(int canonicalize, double scaleFactor);

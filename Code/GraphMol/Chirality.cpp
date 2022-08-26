@@ -429,6 +429,52 @@ bool isLinearArrangement(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2) {
   return dotProd < cos178 * sqrt(lsq);
 }
 
+void controllingBondFromAtom(const ROMol &mol,
+                             const boost::dynamic_bitset<> &needsDir,
+                             const std::vector<unsigned int> &singleBondCounts,
+                             const Bond *dblBond, const Atom *atom, Bond *&bond,
+                             Bond *&obond, bool &squiggleBondSeen,
+                             bool &doubleBondSeen) {
+  bond = nullptr;
+  obond = nullptr;
+  for (const auto tBond : mol.atomBonds(atom)) {
+    if (tBond == dblBond) {
+      continue;
+    }
+    if (tBond->getBondType() == Bond::SINGLE ||
+        tBond->getBondType() == Bond::AROMATIC) {
+      // prefer bonds that already have their directionality set
+      // or that are adjacent to more double bonds:
+      if (!bond) {
+        bond = tBond;
+      } else if (needsDir[tBond->getIdx()]) {
+        if (singleBondCounts[tBond->getIdx()] >
+            singleBondCounts[bond->getIdx()]) {
+          obond = bond;
+          bond = tBond;
+        } else {
+          obond = tBond;
+        }
+      } else {
+        obond = bond;
+        bond = tBond;
+      }
+    } else if (tBond->getBondType() == Bond::DOUBLE) {
+      doubleBondSeen = true;
+    }
+    int explicit_unknown_stereo;
+    if ((tBond->getBondType() == Bond::SINGLE ||
+         tBond->getBondType() == Bond::AROMATIC) &&
+        (tBond->getBondDir() == Bond::UNKNOWN ||
+         ((tBond->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                        explicit_unknown_stereo) &&
+           explicit_unknown_stereo)))) {
+      squiggleBondSeen = true;
+      break;
+    }
+  }
+}
+
 void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
                                boost::dynamic_bitset<> &needsDir,
                                std::vector<unsigned int> &singleBondCounts,
@@ -454,95 +500,33 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
   Bond *bond1 = nullptr, *obond1 = nullptr;
   bool squiggleBondSeen = false;
   bool doubleBondSeen = false;
-  for (const auto tBond : mol.atomBonds(dblBond->getBeginAtom())) {
-    if (tBond == dblBond) {
-      continue;
-    }
-    if (tBond->getBondType() == Bond::SINGLE ||
-        tBond->getBondType() == Bond::AROMATIC) {
-      // prefer bonds that already have their directionality set
-      // or that are adjacent to more double bonds:
-      if (!bond1) {
-        bond1 = tBond;
-      } else if (needsDir[tBond->getIdx()]) {
-        if (singleBondCounts[tBond->getIdx()] >
-            singleBondCounts[bond1->getIdx()]) {
-          obond1 = bond1;
-          bond1 = tBond;
-        } else {
-          obond1 = tBond;
-        }
-      } else {
-        obond1 = bond1;
-        bond1 = tBond;
-      }
-    } else if (tBond->getBondType() == Bond::DOUBLE) {
-      doubleBondSeen = true;
-    }
-    int explicit_unknown_stereo;
-    if ((tBond->getBondType() == Bond::SINGLE ||
-         tBond->getBondType() == Bond::AROMATIC) &&
-        (tBond->getBondDir() == Bond::UNKNOWN ||
-         ((tBond->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                        explicit_unknown_stereo) &&
-           explicit_unknown_stereo)))) {
-      squiggleBondSeen = true;
-      break;
-    }
-  }
+
+  controllingBondFromAtom(mol, needsDir, singleBondCounts, dblBond,
+                          dblBond->getBeginAtom(), bond1, obond1,
+                          squiggleBondSeen, doubleBondSeen);
+
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (!bond1 || squiggleBondSeen || doubleBondSeen) {
     if (!doubleBondSeen) {
       // FIX: This is the fix for #2649, but it will need to be modified once we
-      // decide to properly handle allenese
+      // decide to properly handle allenes
       dblBond->setBondDir(Bond::EITHERDOUBLE);
     }
     return;
   }
 
   Bond *bond2 = nullptr, *obond2 = nullptr;
-  for (const auto tBond : mol.atomBonds(dblBond->getEndAtom())) {
-    if (tBond == dblBond) {
-      continue;
-    }
-    if (tBond->getBondType() == Bond::SINGLE ||
-        tBond->getBondType() == Bond::AROMATIC) {
-      if (!bond2) {
-        bond2 = tBond;
-      } else if (needsDir[tBond->getIdx()]) {
-        if (singleBondCounts[tBond->getIdx()] >
-            singleBondCounts[bond2->getIdx()]) {
-          obond2 = bond2;
-          bond2 = tBond;
-        } else {
-          obond2 = tBond;
-        }
-      } else {
-        // we already had a bond2 and we don't need to set the direction
-        // on the new one, so swap.
-        obond2 = bond2;
-        bond2 = tBond;
-      }
-    } else if (tBond->getBondType() == Bond::DOUBLE) {
-      doubleBondSeen = true;
-    }
-    int explicit_unknown_stereo;
-    if (tBond->getBondType() == Bond::SINGLE &&
-        (tBond->getBondDir() == Bond::UNKNOWN ||
-         ((tBond->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                        explicit_unknown_stereo) &&
-           explicit_unknown_stereo)))) {
-      squiggleBondSeen = true;
-      break;
-    }
-  }
+  controllingBondFromAtom(mol, needsDir, singleBondCounts, dblBond,
+                          dblBond->getEndAtom(), bond2, obond2,
+                          squiggleBondSeen, doubleBondSeen);
+
   // Don't do any direction setting if we've seen a squiggle bond, but do mark
   // the double bond as a crossed bond and return
   if (!bond2 || squiggleBondSeen || doubleBondSeen) {
     if (!doubleBondSeen) {
       // FIX: This is the fix for #2649, but it will need to be modified once we
-      // decide to properly handle allenese
+      // decide to properly handle allenes
       dblBond->setBondDir(Bond::EITHERDOUBLE);
     }
     return;
@@ -783,7 +767,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 namespace Chirality {
 
 #if _MSC_VER
-int setenv(const char *name, const char *value, int ) {
+int setenv(const char *name, const char *value, int) {
   return _putenv_s(name, value);
 }
 #endif
@@ -1866,6 +1850,53 @@ void cleanupStereoGroups(ROMol &mol) {
   mol.setStereoGroups(std::move(newsgs));
 }
 
+// ****************************************************************************
+std::ostream &operator<<(std::ostream &oss, const StereoType &s) {
+  switch (s) {
+    case StereoType::Unspecified:
+      oss << "Unspecified";
+      break;
+    case StereoType::Atom_Tetrahedral:
+      oss << "Atom_Tetrahedral";
+      break;
+    case StereoType::Atom_SquarePlanar:
+      oss << "Atom_SquarePlanar";
+      break;
+    case StereoType::Atom_TrigonalBipyramidal:
+      oss << "Atom_TrigonalBipyramidal";
+      break;
+    case StereoType::Atom_Octahedral:
+      oss << "Atom_Octahedral";
+      break;
+    case StereoType::Bond_Double:
+      oss << "Bond_Double";
+      break;
+    case StereoType::Bond_Cumulene_Even:
+      oss << "Bond_Cumulene_Even";
+      break;
+    case StereoType::Bond_Atropisomer:
+      oss << "Bond_Atropisomer";
+      break;
+  }
+  return oss;
+}
+
+// ****************************************************************************
+std::ostream &operator<<(std::ostream &oss, const StereoSpecified &s) {
+  switch (s) {
+    case StereoSpecified::Unspecified:
+      oss << "Unspecified";
+      break;
+    case StereoSpecified::Specified:
+      oss << "Specified";
+      break;
+    case StereoSpecified::Unknown:
+      oss << "Unknown";
+      break;
+  }
+  return oss;
+}
+
 }  // namespace Chirality
 
 namespace MolOps {
@@ -2620,8 +2651,8 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
     int anum = atom->getAtomicNum();
     if (anum != 16 && anum != 34 &&  // S or Se are special
                                      // (just using the InChI list for now)
-        (tnzDegree != 4 ||           // not enough total neighbors
-         atom->getTotalNumHs(true) > 1)) {
+        tnzDegree != 4               // not enough total neighbors
+    ) {
       continue;
     }
 

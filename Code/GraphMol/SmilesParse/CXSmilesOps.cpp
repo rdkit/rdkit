@@ -272,36 +272,14 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
     // we tried... nothing more we can do
     return;
   }
-  // bondIndexMap uses the position in the vector for the SMILES index and
-  // the value in that position as the actual bond index.
-  std::vector<int> bondIndexMap(mol.getNumBonds(), -1);
-  for (const auto bond : mol.bonds()) {
-    unsigned int smilesIdx;
-    if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx)) {
-      bondIndexMap[smilesIdx] = bond->getIdx();
-    }
-  }
-  for (auto &smilesIdx : headCrossings) {
-    int bondIdx = bondIndexMap[smilesIdx];
-    if (bondIdx < 0) {
-      throw RDKit::SmilesParseException(
-          "could not find SGroup bond index in molecule");
-    }
+
+  for (auto &bondIdx : headCrossings) {
     sgroup.addBondWithIdx(bondIdx);
-    // and replace the original value
-    smilesIdx = bondIdx;
   }
   sgroup.setProp("XBHEAD", headCrossings);
 
-  for (auto &smilesIdx : tailCrossings) {
-    int bondIdx = bondIndexMap[smilesIdx];
-    if (bondIdx < 0) {
-      throw RDKit::SmilesParseException(
-          "could not find SGroup bond index in molecule");
-    }
+  for (auto &bondIdx : tailCrossings) {
     sgroup.addBondWithIdx(bondIdx);
-    // and replace the original value
-    smilesIdx = bondIdx;
   }
 
   // now we can setup XBCORR
@@ -1322,6 +1300,19 @@ std::string quote_string(const std::string &txt) {
   return txt;
 }
 
+std::string quote_atomprop_string(const std::string &txt) {
+  // at a bare minimum, . needs to be escaped
+  std::string res;
+  for(auto c : txt) {
+    if(c == '.') {
+      res += "&#46;";
+    } else {
+      res += c;
+    }
+  }
+  return res;
+}
+
 std::string get_enhanced_stereo_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
   if (mol.getStereoGroups().empty()) {
@@ -1757,7 +1748,7 @@ std::string get_atom_props_block(const ROMol &mol,
           res += "atomProp";
         }
         res += boost::str(boost::format(":%d.%s.%s") % which %
-                          quote_string(pn) % quote_string(pv));
+                          quote_atomprop_string(pn) % quote_atomprop_string(pv));
       }
     }
     ++which;

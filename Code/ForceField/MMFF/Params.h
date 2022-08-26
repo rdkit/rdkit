@@ -323,10 +323,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFChgCollection {
            std::map<const unsigned int, std::map<const unsigned int, MMFFChg>>>
       d_params;  //!< the parameter 3D-map
 #else
-  std::vector<MMFFChg> d_params;          //! the parameter vector
-  std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
-  std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
-  std::vector<std::uint8_t> d_bondType;   //! bond type vector for bond i-j
+  std::vector<MMFFChg> d_params;          //!< the parameter vector
+  std::vector<std::uint8_t> d_iAtomType;  //!< atom type vector for atom i
+  std::vector<std::uint8_t> d_jAtomType;  //!< atom type vector for atom j
+  std::vector<std::uint8_t> d_bondType;   //!< bond type vector for bond i-j
 #endif
 };
 
@@ -397,9 +397,9 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBondCollection {
       d_params;  //!< the parameter 3D-map
 #else
   std::vector<MMFFBond> d_params;         //!< the parameter vector
-  std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
-  std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
-  std::vector<std::uint8_t> d_bondType;   //! bond type vector for bond i-j
+  std::vector<std::uint8_t> d_iAtomType;  //!< atom type vector for atom i
+  std::vector<std::uint8_t> d_jAtomType;  //!< atom type vector for atom j
+  std::vector<std::uint8_t> d_bondType;   //!< bond type vector for bond i-j
 #endif
 };
 
@@ -455,8 +455,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFBndkCollection {
       d_params;  //!< the parameter 2D-map
 #else
   std::vector<MMFFBond> d_params;          //!< the parameter vector
-  std::vector<std::uint8_t> d_iAtomicNum;  //! atomic number vector for atom i
-  std::vector<std::uint8_t> d_jAtomicNum;  //! atomic number vector for atom j
+  std::vector<std::uint8_t> d_iAtomicNum;  //!< atomic number vector for atom i
+  std::vector<std::uint8_t> d_jAtomicNum;  //!< atomic number vector for atom j
 #endif
 };
 
@@ -512,8 +512,8 @@ class RDKIT_FORCEFIELD_EXPORT MMFFHerschbachLaurieCollection {
       d_params;  //!< the parameter 2D-map
 #else
   std::vector<MMFFHerschbachLaurie> d_params;  //!< the parameter vector
-  std::vector<std::uint8_t> d_iRow;  //! periodic row number vector for atom i
-  std::vector<std::uint8_t> d_jRow;  //! periodic row number vector for atom j
+  std::vector<std::uint8_t> d_iRow;  //!< periodic row number vector for atom i
+  std::vector<std::uint8_t> d_jRow;  //!< periodic row number vector for atom j
 #endif
 };
 
@@ -658,10 +658,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFAngleCollection {
       d_params;  //!< the parameter 4D-map
 #else
   std::vector<MMFFAngle> d_params;        //!< the parameter vector
-  std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
-  std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
-  std::vector<std::uint8_t> d_kAtomType;  //! atom type vector for atom k
-  std::vector<std::uint8_t> d_angleType;  //! angle type vector for angle i-j-k
+  std::vector<std::uint8_t> d_iAtomType;  //!< atom type vector for atom i
+  std::vector<std::uint8_t> d_jAtomType;  //!< atom type vector for atom j
+  std::vector<std::uint8_t> d_kAtomType;  //!< atom type vector for atom k
+  std::vector<std::uint8_t> d_angleType;  //!< angle type vector for angle i-j-k
 #endif
 };
 
@@ -757,11 +757,11 @@ class RDKIT_FORCEFIELD_EXPORT MMFFStbnCollection {
       d_params;  //!< the parameter 4D-map
 #else
   std::vector<MMFFStbn> d_params;         //!< the parameter vector
-  std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
-  std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
-  std::vector<std::uint8_t> d_kAtomType;  //! atom type vector for atom k
+  std::vector<std::uint8_t> d_iAtomType;  //!< atom type vector for atom i
+  std::vector<std::uint8_t> d_jAtomType;  //!< atom type vector for atom j
+  std::vector<std::uint8_t> d_kAtomType;  //!< atom type vector for atom k
   std::vector<std::uint8_t>
-      d_stretchBendType;  //! stretch-bend type vector for angle i-j-k
+      d_stretchBendType;  //!< stretch-bend type vector for angle i-j-k
 #endif
 };
 
@@ -914,10 +914,10 @@ class RDKIT_FORCEFIELD_EXPORT MMFFOopCollection {
       d_params;  //!< the parameter 4D-map
 #else
   std::vector<MMFFOop> d_params;          //!< the parameter vector
-  std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
-  std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
-  std::vector<std::uint8_t> d_kAtomType;  //! atom type vector for atom k
-  std::vector<std::uint8_t> d_lAtomType;  //! atom type vector for atom l
+  std::vector<std::uint8_t> d_iAtomType;  //!< atom type vector for atom i
+  std::vector<std::uint8_t> d_jAtomType;  //!< atom type vector for atom j
+  std::vector<std::uint8_t> d_kAtomType;  //!< atom type vector for atom k
+  std::vector<std::uint8_t> d_lAtomType;  //!< atom type vector for atom l
 #endif
 };
 
@@ -1081,12 +1081,12 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
       d_params;  //!< the parameter 5D-map
 #else
   std::vector<MMFFTor> d_params;          //!< the parameter vector
-  std::vector<std::uint8_t> d_iAtomType;  //! atom type vector for atom i
-  std::vector<std::uint8_t> d_jAtomType;  //! atom type vector for atom j
-  std::vector<std::uint8_t> d_kAtomType;  //! atom type vector for atom k
-  std::vector<std::uint8_t> d_lAtomType;  //! atom type vector for atom l
+  std::vector<std::uint8_t> d_iAtomType;  //!< atom type vector for atom i
+  std::vector<std::uint8_t> d_jAtomType;  //!< atom type vector for atom j
+  std::vector<std::uint8_t> d_kAtomType;  //!< atom type vector for atom k
+  std::vector<std::uint8_t> d_lAtomType;  //!< atom type vector for atom l
   std::vector<std::uint8_t>
-      d_torType;  //! torsion type vector for angle i-j-k-l
+      d_torType;  //!< torsion type vector for angle i-j-k-l
 #endif
 };
 
@@ -1125,7 +1125,7 @@ class RDKIT_FORCEFIELD_EXPORT MMFFVdWCollection {
   std::map<const unsigned int, MMFFVdW> d_params;  //!< the parameter map
 #else
   std::vector<MMFFVdW> d_params;         //!< the parameter vector
-  std::vector<std::uint8_t> d_atomType;  //! atom type vector
+  std::vector<std::uint8_t> d_atomType;  //!< atom type vector
 #endif
 };
 }  // namespace MMFF

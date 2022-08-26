@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2013 Greg Landrum, Rational Discovery LLC
+//  Copyright (C) 2002-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,13 +8,14 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_FILEPARSERS_H
-#define _RD_FILEPARSERS_H
+#ifndef RD_FILEPARSERS_H
+#define RD_FILEPARSERS_H
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
 
 #include <string>
+#include <string_view>
 #include <iostream>
 #include <vector>
 #include <exception>
@@ -233,7 +234,7 @@ RDKIT_FILEPARSERS_EXPORT void MolToTPLFile(
 //-----
 
 typedef enum {
-  CORINA = 0  //! supports output from Corina and some dbtranslate output
+  CORINA = 0  //!< supports output from Corina and some dbtranslate output
 } Mol2Type;
 
 // \brief construct a molecule from a Tripos mol2 file

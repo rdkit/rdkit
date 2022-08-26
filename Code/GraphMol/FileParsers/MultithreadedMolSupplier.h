@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #ifndef MULTITHREADED_MOL_SUPPLIER
 #define MULTITHREADED_MOL_SUPPLIER
 
@@ -80,23 +80,23 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
                                        unsigned int lineNum) = 0;
 
  private:
-  std::atomic<unsigned int> d_threadCounter{1};  //! thread counter
-  std::vector<std::thread> d_writerThreads;      //! vector writer threads
-  std::thread d_readerThread;                    //! single reader thread
+  std::atomic<unsigned int> d_threadCounter{1};  //!< thread counter
+  std::vector<std::thread> d_writerThreads;      //!< vector writer threads
+  std::thread d_readerThread;                    //!< single reader thread
 
  protected:
   std::atomic<unsigned int> d_lastRecordId =
-      0;                                     //! stores last extracted record id
-  std::string d_lastItemText;                //! stores last extracted record
-  const unsigned int d_numReaderThread = 1;  //! number of reader thread
-  unsigned int d_numWriterThreads;           //! number of writer threads
-  size_t d_sizeInputQueue;                   //! size of input queue
-  size_t d_sizeOutputQueue;                  //! size of output queue
+      0;                       //!< stores last extracted record id
+  std::string d_lastItemText;  //!< stores last extracted record
+  const unsigned int d_numReaderThread = 1;  //!< number of reader thread
+  unsigned int d_numWriterThreads;           //!< number of writer threads
+  size_t d_sizeInputQueue;                   //!< size of input queue
+  size_t d_sizeOutputQueue;                  //!< size of output queue
 
   ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>
-      *d_inputQueue;  //! concurrent input queue
+      *d_inputQueue;  //!< concurrent input queue
   ConcurrentQueue<std::tuple<ROMol *, std::string, unsigned int>>
-      *d_outputQueue;  //! concurrent output queue
+      *d_outputQueue;  //!< concurrent output queue
 };
 }  // namespace RDKit
 #endif

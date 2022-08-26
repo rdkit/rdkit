@@ -774,7 +774,7 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
     try {
       MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
     } catch (const ValueErrorException &e) {
-      elog(ERROR, e.what());
+      elog(ERROR, "MolAdjustQueryProperties: %s", e.what());
     } catch (...) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
