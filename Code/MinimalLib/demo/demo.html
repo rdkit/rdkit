@@ -108,7 +108,7 @@
   }
   function rxn_callback(text, details) {
     details = details || {};
-    var rxn = RDKitModule.get_reaction(text, JSON.stringify(details));
+    var rxn = RDKitModule.get_rxn(text, JSON.stringify(details));
     var svg = "";
     try {
       svg = rxn.get_svg(798, 198);

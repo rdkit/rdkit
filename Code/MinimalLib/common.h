@@ -25,6 +25,10 @@
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/AtomPairs.h>
+#ifdef RDK_BUILD_AVALON_SUPPORT
+#include <External/AvalonTools/AvalonTools.h>
+#endif
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
@@ -587,6 +591,133 @@ std::unique_ptr<RWMol> do_fragment_parent(RWMol &mol,
       MolStandardize::fragmentParent(mol, ps, skipStandardize));
   return res;
 }
+
+std::unique_ptr<ExplicitBitVect> morgan_fp_as_bitvect(
+    const RWMol &mol, const char *details_json) {
+  size_t radius = 2;
+  size_t nBits = 2048;
+  bool useChirality = false;
+  bool useBondTypes = true;
+  bool includeRedundantEnvironments = false;
+  bool onlyNonzeroInvariants = false;
+  if (details_json && strlen(details_json)) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(radius);
+    LPT_OPT_GET(nBits);
+    LPT_OPT_GET(useChirality);
+    LPT_OPT_GET(useBondTypes);
+    LPT_OPT_GET(includeRedundantEnvironments);
+    LPT_OPT_GET(onlyNonzeroInvariants);
+  }
+  auto fp = MorganFingerprints::getFingerprintAsBitVect(
+      mol, radius, nBits, nullptr, nullptr, useChirality, useBondTypes,
+      onlyNonzeroInvariants, nullptr, includeRedundantEnvironments);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+
+std::unique_ptr<ExplicitBitVect> rdkit_fp_as_bitvect(const RWMol &mol,
+                                                     const char *details_json) {
+  unsigned int minPath = 1;
+  unsigned int maxPath = 7;
+  unsigned int nBits = 2048;
+  unsigned int nBitsPerHash = 2;
+  bool useHs = true;
+  bool branchedPaths = true;
+  bool useBondOrder = true;
+  if (details_json && strlen(details_json)) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(minPath);
+    LPT_OPT_GET(maxPath);
+    LPT_OPT_GET(nBits);
+    LPT_OPT_GET(nBitsPerHash);
+    LPT_OPT_GET(useHs);
+    LPT_OPT_GET(branchedPaths);
+    LPT_OPT_GET(useBondOrder);
+  }
+  auto fp = RDKFingerprintMol(mol, minPath, maxPath, nBits, nBitsPerHash, useHs,
+                              0, 128, branchedPaths, useBondOrder);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+
+std::unique_ptr<ExplicitBitVect> pattern_fp_as_bitvect(
+    const RWMol &mol, const char *details_json) {
+  unsigned int nBits = 2048;
+  bool tautomericFingerprint = false;
+  if (details_json && strlen(details_json)) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(nBits);
+    LPT_OPT_GET(tautomericFingerprint);
+  }
+  auto fp = PatternFingerprintMol(mol, nBits, nullptr, nullptr,
+                                  tautomericFingerprint);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+
+std::unique_ptr<ExplicitBitVect> topological_torsion_fp_as_bitvect(
+    const RWMol &mol, const char *details_json) {
+  unsigned int nBits = 2048;
+  if (details_json && strlen(details_json)) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(nBits);
+  }
+  auto fp =
+      AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(mol, nBits);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+
+std::unique_ptr<ExplicitBitVect> atom_pair_fp_as_bitvect(
+    const RWMol &mol, const char *details_json) {
+  unsigned int nBits = 2048;
+  unsigned int minLength = 1;
+  unsigned int maxLength = 30;
+  if (details_json && strlen(details_json)) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(nBits);
+    LPT_OPT_GET(minLength);
+    LPT_OPT_GET(maxLength);
+  }
+  auto fp = AtomPairs::getHashedAtomPairFingerprintAsBitVect(
+      mol, nBits, minLength, maxLength);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+
+#ifdef RDK_BUILD_AVALON_SUPPORT
+std::unique_ptr<ExplicitBitVect> avalon_fp_as_bitvect(
+    const RWMol &mol, const char *details_json) {
+  unsigned int nBits = 512;
+  if (details_json && strlen(details_json)) {
+    // FIX: this should eventually be moved somewhere else
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(nBits);
+  }
+  std::unique_ptr<ExplicitBitVect> fp(new ExplicitBitVect(nBits));
+  AvalonTools::getAvalonFP(mol, *fp, nBits);
+  return fp;
+}
+#endif
 
 }  // namespace MinimalLib
 }  // namespace RDKit
