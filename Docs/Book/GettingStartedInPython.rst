@@ -506,12 +506,12 @@ More detail about the smallest set of smallest rings (SSSR) is available:
   >>> list(ssr[1])
   [4, 5, 2, 3]
 
-As the name indicates, this is a symmetrized SSSR; if you are interested in the number of “true” SSSR, use the GetSSSR function.
+As the name indicates, this is a symmetrized SSSR; if you are interested in the number of “true” SSSR, use the GetSSSR function (note that in this case there's no difference).
 
 
 .. doctest::
 
-  >>> Chem.GetSSSR(m)
+  >>> len(Chem.GetSSSR(m))
   2
 
 The distinction between symmetrized and non-symmetrized SSSR is discussed in more detail below in the section `The SSSR Problem`_.
@@ -3047,20 +3047,25 @@ more efficient way to remove multiple atoms or bonds at once.
   >>> mw.RemoveBond(1,2)  #<- these are the begin and end atoms of the bond
 
 None of the changes actually happen until we "commit" them:
+
 .. doctest::
->>> Chem.MolToSmiles(mw)
-'C=CC=CC(C)=O'
->>> mw.CommitBatchEdit()
->>> Chem.MolToSmiles(mw)
-'C=CC.CC.O'
+
+  >>> Chem.MolToSmiles(mw)
+  'C=CC=CC(C)=O'
+  >>> mw.CommitBatchEdit()
+  >>> Chem.MolToSmiles(mw)
+  'C=CC.CC.O'
 
 You can make this more concise using a context manager, which takes care of the commit for you:
->>> with Chem.RWMol(m) as mw:
-...     mw.RemoveAtom(3)
-...     mw.RemoveBond(1,2)
-... 
->>> Chem.MolToSmiles(mw)
-'C=CC.CC.O'
+
+.. doctest::
+
+  >>> with Chem.RWMol(m) as mw:
+  ...     mw.RemoveAtom(3)
+  ...     mw.RemoveBond(1,2)
+  ... 
+  >>> Chem.MolToSmiles(mw)
+  'C=CC.CC.O'
 
 It is even easier to generate nonsense using the RWMol than it
 is with standard molecules.  If you need chemically reasonable

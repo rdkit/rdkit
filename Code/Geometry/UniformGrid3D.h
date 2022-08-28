@@ -188,12 +188,13 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
                 RDKit::DiscreteValueVect::DiscreteValueType valType,
                 const RDGeom::Point3D &offSet,
                 RDKit::DiscreteValueVect *data = nullptr);
-  unsigned int d_numX, d_numY,
-      d_numZ;        //! number of grid points along x, y, z axes
-  double d_spacing;  //! grid spacing
-  Point3D d_offSet;  //! the grid offset (from the origin)
+  unsigned int d_numX;  //!< number of grid points along x axis
+  unsigned int d_numY;  //!< number of grid points along y axis
+  unsigned int d_numZ;  //!< number of grid points along z axis
+  double d_spacing;  //!< grid spacing
+  Point3D d_offSet;  //!< the grid offset (from the origin)
   RDKit::DiscreteValueVect
-      *dp_storage;  //! storage for values at each grid point
+      *dp_storage;  //!< storage for values at each grid point
 
   //! \brief construct from a pickle
   void initFromText(const char *pkl, const unsigned int length);

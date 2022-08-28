@@ -14,6 +14,7 @@ rdkit_library(GraphMol
               Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
               Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
               new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
+              NontetrahedralStereo.cpp
               SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS} )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
@@ -161,17 +162,20 @@ rdkit_test(testSGroup testSGroup.cpp LINK_LIBRARIES FileParsers GraphMol)
 
 rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol )
 
-rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp catch_main.cpp
+rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp 
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
 
-rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  catch_main.cpp
+rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  
            LINK_LIBRARIES SmilesParse FileParsers GraphMol )
 
-rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp catch_main.cpp
+rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp 
            LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
            
-rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp catch_main.cpp
+rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp 
            LINK_LIBRARIES FileParsers SmilesParse GraphMol )
 
-rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp catch_main.cpp
+rdkit_catch_test(canonTestsCatch catch_canon.cpp 
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol )
+
+rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp 
            LINK_LIBRARIES SubstructMatch SmilesParse GraphMol )

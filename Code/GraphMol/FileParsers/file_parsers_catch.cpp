@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -1380,7 +1381,7 @@ TEST_CASE("CML writer", "[CML][writer]") {
     mol->addConformer(conf);
 
     mol->updatePropertyCache();
-    MolOps::assignChiralTypesFrom3D(*mol);
+    MolOps::assignStereochemistryFrom3D(*mol);
 
     const std::string cmlblock = MolToCMLBlock(*mol);
     const std::string cmlblock_expected =
@@ -4604,7 +4605,7 @@ TEST_CASE(
                         "/Code/GraphMol/FileParsers/test_data/"
                         "mol_with_enhanced_stereo_2_And_groups.sdf";
     SDMolSupplier suppl(fName);
-    ROMol *mol = suppl.next();
+    std::unique_ptr<ROMol> mol{suppl.next()};
     REQUIRE(mol);
     auto groups = mol->getStereoGroups();
     REQUIRE(groups.size() == 2);
@@ -4617,7 +4618,7 @@ TEST_CASE(
     std::string fName =
         rdbase + "/Code/GraphMol/FileParsers/test_data/m_with_enh_stereo.sdf";
     SDMolSupplier suppl(fName);
-    ROMol *mol = suppl.next();
+    std::unique_ptr<ROMol> mol{suppl.next()};
     REQUIRE(mol);
     auto groups = mol->getStereoGroups();
     REQUIRE(groups.size() == 2);
@@ -4625,6 +4626,7 @@ TEST_CASE(
     CHECK(groups[1].getGroupType() == RDKit::StereoGroupType::STEREO_AND);
   }
 }
+
 TEST_CASE("POL atoms in CTABS") {
   SECTION("V3000") {
     auto mol = R"CTAB(
@@ -4680,4 +4682,429 @@ M  END
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "*CC |$Mod_p;;$|");
   }
+}
+
+TEST_CASE("PDB ACE caps bond order") {
+  auto mol = R"DATA(HEADER TEST
+ATOM      1  H1  ACE     1      25.950  25.179  24.582  1.00  0.00           H
+ATOM      2  CH3 ACE     1      25.986  26.176  24.145  1.00  0.00           C
+ATOM      3  H2  ACE     1      25.332  26.843  24.703  1.00  0.00           H
+ATOM      4  H3  ACE     1      25.673  26.131  23.104  1.00  0.00           H
+ATOM      5  C   ACE     1      27.405  26.691  24.218  1.00  0.00           C
+ATOM      6  O   ACE     1      28.285  25.999  24.713  1.00  0.00           O
+ATOM      7  N   ALA     2      27.621  27.909  23.728  1.00  0.00           N
+ATOM      8  H   ALA     2      26.838  28.435  23.370  1.00  0.00           H
+ATOM      9  CA  ALA     2      28.916  28.589  23.730  1.00  0.00           C
+ATOM     10  HA  ALA     2      29.471  28.288  24.620  1.00  0.00           H
+ATOM     11  CB  ALA     2      29.710  28.153  22.489  1.00  0.00           C
+ATOM     12  HB1 ALA     2      29.172  28.440  21.584  1.00  0.00           H
+ATOM     13  HB2 ALA     2      30.691  28.627  22.488  1.00  0.00           H
+ATOM     14  HB3 ALA     2      29.844  27.070  22.499  1.00  0.00           H
+ATOM     15  C   ALA     2      28.737  30.119  23.778  1.00  0.00           C
+ATOM     16  O   ALA     2      27.675  30.634  23.429  1.00  0.00           O
+ATOM     17  N   NME     3      29.784  30.841  24.197  1.00  0.00           N
+ATOM     18  H   NME     3      30.622  30.348  24.461  1.00  0.00           H
+ATOM     19  CH3 NME     3      29.784  32.300  24.293  1.00  0.00           C
+ATOM     20 HH31 NME     3      28.951  32.628  24.918  1.00  0.00           H
+ATOM     21 HH32 NME     3      30.720  32.652  24.729  1.00  0.00           H
+ATOM     22 HH33 NME     3      29.663  32.734  23.299  1.00  0.00           H
+TER      23      NME     3
+END
+)DATA"_pdb;
+  REQUIRE(mol);
+  // Oxygen in ACE (3rd heavy atom in mol) should be C=O, i.e. not OH
+  CHECK(mol->getAtomWithIdx(2)->getTotalNumHs() == 0);
+  CHECK(mol->getAtomWithIdx(2)->getTotalDegree() == 1);
+  auto bond = mol->getBondBetweenAtoms(1, 2);
+  REQUIRE(bond);
+  CHECK(bond->getBondType() == Bond::BondType::DOUBLE);
+}
+
+TEST_CASE(
+    "github #5327: MolFromMolBlock should correctly assign stereochemistry "
+    "to 3D molecules") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("wiggly bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=2
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("3D as 2D") {
+    // here we lie to the RDKit and tell it that a 3D conformer is 2D,
+    //  the code detects that and still sets the conformer to be 3D and
+    //  assigns stereo:
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.900794 -0.086835 0.009340 0
+M  V30 2 C -0.552652 0.319534 0.077502 0
+M  V30 3 F -0.861497 0.413307 1.437370 0
+M  V30 4 Cl -0.784572 1.925710 -0.672698 0
+M  V30 5 O -1.402227 -0.583223 -0.509512 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+  }
+  SECTION("2D as 3D") {
+    // here we lie to the RDKit and tell it that a 2D conformer is 3D,
+    //  there's no chiral volume, so we don't end up with a chiral center
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.299038 -0.750000 0.000000 0
+M  V30 2 C 0.000000 -0.000000 0.000000 0
+M  V30 3 F 0.750000 -1.299038 0.000000 0
+M  V30 4 Cl -0.750000 1.299038 0.000000 0
+M  V30 5 O 1.299038 0.750000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("double bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOTRANS);
+  }
+  SECTION("double bond, crossed") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3 CFG=2
+M  V30 3 1 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOANY);
+  }
+  SECTION("double bond, wiggly bond") {
+    auto m = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.911935 -0.058147 -0.007384 0
+M  V30 2 C 0.477913 -0.091130 -0.413392 0
+M  V30 3 C -0.494810 0.079132 0.449979 0
+M  V30 4 C -1.932350 0.037738 -0.006356 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4 CFG=2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(Chirality::translateEZLabelToCisTrans(
+              m->getBondWithIdx(1)->getStereo()) ==
+          Bond::BondStereo::STEREOANY);
+  }
+  SECTION("non-tetrahedral") {
+    auto m = R"CTAB(
+  Mrv2108 05252216313D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.7191 0.2488 -3.5085 0
+M  V30 2 As -1.0558 1.9209 -2.6345 0
+M  V30 3 F -0.4636 3.422 -1.7567 0
+M  V30 4 O -2.808 2.4243 -2.1757 0
+M  V30 5 Cl -0.1145 2.6609 -4.5048 0
+M  V30 6 Br 0.2255 0.6458 -1.079 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5
+M  V30 5 1 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL);
+  }
+  SECTION("non-tetrahedral, wiggly") {
+    auto m = R"CTAB(
+  Mrv2108 05252216313D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.7191 0.2488 -3.5085 0
+M  V30 2 As -1.0558 1.9209 -2.6345 0
+M  V30 3 F -0.4636 3.422 -1.7567 0
+M  V30 4 O -2.808 2.4243 -2.1757 0
+M  V30 5 Cl -0.1145 2.6609 -4.5048 0
+M  V30 6 Br 0.2255 0.6458 -1.079 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5 CFG=2
+M  V30 5 1 2 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
+
+TEST_CASE("Force use of MolBlock wedges", "") {
+  SECTION("basics") {
+    auto m = R"CTAB(bad wedging
+  ChemDraw07092209022D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 7 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.714471 0.825000 0.000000 0
+M  V30 2 C -0.714471 0.000000 0.000000 0
+M  V30 3 C -0.000000 -0.412500 0.000000 0
+M  V30 4 C 0.714471 0.000000 0.000000 0
+M  V30 5 C 0.714471 0.825000 0.000000 0
+M  V30 6 C -0.000000 1.237500 0.000000 0
+M  V30 7 C -0.000000 -1.237500 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4 CFG=1
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 1
+M  V30 7 1 3 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+    reapplyMolBlockWedging(*m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+  }
+  SECTION("GitHub5448") {
+    {
+      auto m = R"CTAB(
+  ChemDraw07232208492D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.151421 0.903801 0.000000 0
+M  V30 2 C 1.151421 0.078801 0.000000 0
+M  V30 3 N 1.936021 -0.176200 0.000000 0
+M  V30 4 C 2.420921 0.491301 0.000000 0
+M  V30 5 N 1.936021 1.158699 0.000000 0
+M  V30 6 C 0.436921 -0.333699 0.000000 0
+M  V30 7 C -0.277478 0.078801 0.000000 0
+M  V30 8 C -0.991978 -0.333699 0.000000 0
+M  V30 9 C 0.436921 -1.158699 0.000000 0
+M  V30 10 C -1.706442 0.078813 0.000000 0
+M  V30 11 C -2.420921 -0.333674 0.000000 0
+M  V30 12 F -1.706428 0.903813 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 1
+M  V30 6 1 2 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8 CFG=2
+M  V30 9 1 6 9 CFG=2
+M  V30 10 1 8 10
+M  V30 11 1 10 11
+M  V30 12 1 10 12 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 10)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+      REQUIRE(m);
+      WedgeMolBonds(*m, &m->getConformer());
+      CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
+      reapplyMolBlockWedging(*m);
+      CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    }
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #5423: Parsing a Mol block/file does not clear the "
+    "\"molTotValence\" property from atoms") {
+  auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -3.657143 -0.742857 0.000000 0 CHG=1 VAL=4
+M  V30 END ATOM
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(m);
+  CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::molTotValence));
+}
+
+TEST_CASE("Github #5433: PRECONDITION error with nonsense molecule") {
+  auto m = R"CTAB(
+  SomeFailingMolFile
+
+  8  8  0  0  1  0            999 V2000
+   -0.7145    1.2375    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    0.0000    0.8250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.6500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  6  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  4  0  0  0
+  3  8  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+M  END)CTAB"_ctab;
+  REQUIRE(m);
 }

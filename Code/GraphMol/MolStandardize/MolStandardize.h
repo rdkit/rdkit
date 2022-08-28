@@ -48,34 +48,34 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT CleanupParameters {
   std::string acidbaseFile;
   std::string fragmentFile;
   std::string tautomerTransforms;
-  int maxRestarts{200};  //! The maximum number of times to attempt to apply the
-                         //! series of normalizations (default 200).
-  bool preferOrganic{false};  //! Whether to prioritize organic fragments when
-                              //! choosing fragment parent (default False).
-  bool doCanonical{true};     //! Whether to apply normalizations in a
-                              //! canonical order
-  int maxTautomers{1000};     //! The maximum number of tautomers to enumerate
-                              //! (default 1000).
-  int maxTransforms{1000};    //! The maximum number of tautomer transformations
-                              //! to apply (default 1000).
+  int maxRestarts{200};  //!< The maximum number of times to attempt to apply
+                         //!< the series of normalizations (default 200).
+  bool preferOrganic{false};  //!< Whether to prioritize organic fragments when
+                              //!< choosing fragment parent (default False).
+  bool doCanonical{true};     //!< Whether to apply normalizations in a
+                              //!< canonical order
+  int maxTautomers{1000};     //!< The maximum number of tautomers to enumerate
+                              //!< (default 1000).
+  int maxTransforms{1000};    //!< The maximum number of tautomer
+                              //!< transformations to apply (default 1000).
   bool tautomerRemoveSp3Stereo{
-      true};  //! Whether to remove stereochemistry from sp3
-              //! centers involved in tautomerism (defaults to true)
+      true};  //!< Whether to remove stereochemistry from sp3 centers involved
+              //!< in tautomerism (defaults to true)
   bool tautomerRemoveBondStereo{
-      true};  //! Whether to remove stereochemistry from double
-              //! bonds involved in tautomerism (defaults to true)
+      true};  //!< Whether to remove stereochemistry from double bonds involved
+              //!< in tautomerism (defaults to true)
   bool tautomerRemoveIsotopicHs{
-      true};  //! Whether to remove isotopic Hs from centers
-              //! involved in tautomerism (defaults to true)
+      true};  //!< Whether to remove isotopic Hs from centers involved in
+              //!< tautomerism (defaults to true)
   bool tautomerReassignStereo{
-      true};  //! Whether enumerate() should call assignStereochemistry
-              //! on all generated tautomers (defaults to true)
+      true};  //!< Whether enumerate() should call assignStereochemistry on all
+              //!< generated tautomers (defaults to true)
   bool largestFragmentChooserUseAtomCount{
-      true};  //! Whether LargestFragmentChooser should use atom
-              //! count as main criterion before MW (defaults to true)
+      true};  //!< Whether LargestFragmentChooser should use atom count as main
+              //!< criterion before MW (defaults to true)
   bool largestFragmentChooserCountHeavyAtomsOnly{
-      false};  //! Whether LargestFragmentChooser should only count
-               //! heavy atoms (defaults to false)
+      false};  //!< Whether LargestFragmentChooser should only count heavy atoms
+               //!< (defaults to false)
   std::vector<std::pair<std::string, std::string>> normalizationData;
   std::vector<std::pair<std::string, std::string>> fragmentData;
   std::vector<std::tuple<std::string, std::string, std::string>> acidbaseData;

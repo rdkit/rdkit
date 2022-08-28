@@ -1,4 +1,4 @@
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 //
 //  Copyright (C) 2020 Shrey Aryan
 //

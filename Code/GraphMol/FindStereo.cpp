@@ -27,6 +27,90 @@ const unsigned StereoInfo::NOATOM = std::numeric_limits<unsigned>::max();
 #endif
 namespace detail {
 
+bool isAtomPotentialNontetrahedralCenter(const Atom *atom) {
+  PRECONDITION(atom, "atom is null");
+  auto tnzdegree =
+      Chirality::detail::getAtomNonzeroDegree(atom) + atom->getTotalNumHs();
+  if (atom->getAtomicNum() < 15 || tnzdegree > 6 || tnzdegree < 2) {
+    return false;
+  }
+  auto chiralType = atom->getChiralTag();
+  if (chiralType >= Atom::ChiralType::CHI_SQUAREPLANAR &&
+      chiralType <= Atom::ChiralType::CHI_OCTAHEDRAL) {
+    return true;
+  }
+
+  // with at least four neighbors but nothing specified we can start to imagine
+  // that it might be enhanced stereo
+  if (chiralType == Atom::ChiralType::CHI_UNSPECIFIED && tnzdegree >= 4) {
+    return true;
+  }
+
+  return false;
+}
+bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
+  PRECONDITION(atom, "atom is null");
+  auto nzDegree = getAtomNonzeroDegree(atom);
+  auto tnzDegree = nzDegree + atom->getTotalNumHs();
+  if (tnzDegree > 4) {
+    return false;
+  } else {
+    const auto &mol = atom->getOwningMol();
+    if (nzDegree == 4) {
+      // chirality is always possible with 4 nbrs
+      return true;
+    } else if (nzDegree == 1) {
+      // chirality is never possible with 1 nbr
+      return false;
+    } else if (nzDegree < 3 &&
+               (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
+      // less than three neighbors is never stereogenic
+      // unless it is a phosphine/arsine with implicit H
+      return false;
+    } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
+      // from logical flow: degree is 2 or 3 (implicit H)
+      // Since InChI Software v. 1.02-standard (2009), phosphines and arsines
+      // are always treated as stereogenic even with H atom neighbors.
+      // Accept automatically.
+      return true;
+    } else if (nzDegree == 3) {
+      // three-coordinate with a single H we'll accept automatically:
+      if (atom->getTotalNumHs() == 1) {
+        return true;
+      } else {
+        // otherwise we default to not being a legal center
+        bool legalCenter = false;
+        // but there are a few special cases we'll accept
+        // sulfur or selenium with either a positive charge or a double
+        // bond:
+        if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) &&
+            (atom->getExplicitValence() == 4 ||
+             (atom->getExplicitValence() == 3 &&
+              atom->getFormalCharge() == 1))) {
+          legalCenter = true;
+        } else if (atom->getAtomicNum() == 7) {
+          // three-coordinate N additional requirements:
+          //   in a ring of size 3  (from InChI)
+          // OR
+          /// is a bridgehead atom (RDKit extension)
+          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
+              queryIsAtomBridgehead(atom)) {
+            legalCenter = true;
+          }
+        }
+        return legalCenter;
+      }
+    } else {
+      return false;
+    }
+  }
+}
+
+bool isAtomPotentialStereoAtom(const Atom *atom) {
+  return isAtomPotentialTetrahedralCenter(atom) ||
+         isAtomPotentialNontetrahedralCenter(atom);
+}
+
 StereoInfo getStereoInfo(const Bond *bond) {
   PRECONDITION(bond, "bond is null");
   StereoInfo sinfo;
@@ -173,9 +257,48 @@ StereoInfo getStereoInfo(const Atom *atom) {
         default:
           UNDER_CONSTRUCTION("unrecognized chiral flag");
       }
+    } else if (isAtomPotentialNontetrahedralCenter(atom)) {
+      if (stereo == Atom::CHI_UNSPECIFIED) {
+        switch (atom->getTotalDegree()) {
+          case 4:
+            stereo = Atom::ChiralType::CHI_SQUAREPLANAR;
+            break;
+          case 5:
+            stereo = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL;
+            break;
+          case 6:
+            stereo = Atom::ChiralType::CHI_OCTAHEDRAL;
+            break;
+          default:
+            break;
+        }
+      }
+      sinfo.descriptor = StereoDescriptor::None;
+      switch (stereo) {
+        case Atom::ChiralType::CHI_SQUAREPLANAR:
+          sinfo.type = StereoType::Atom_SquarePlanar;
+          break;
+        case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+          sinfo.type = StereoType::Atom_TrigonalBipyramidal;
+          break;
+        case Atom::ChiralType::CHI_OCTAHEDRAL:
+          sinfo.type = StereoType::Atom_Octahedral;
+          break;
+        default:
+          break;
+      }
+      unsigned int permutation;
+      if (atom->getPropIfPresent(common_properties::_chiralPermutation,
+                                 permutation)) {
+        sinfo.permutation = permutation;
+        if (!permutation) {
+          // a permutation of zero is an explicit statement that the chirality
+          // is unknown
+          sinfo.specified = Chirality::StereoSpecified::Unknown;
+        }
+      }
     }
   }
-
   return sinfo;
 }
 
@@ -189,7 +312,8 @@ bool isBondPotentialStereoBond(const Bond *bond) {
   // each of the beginning and end neighbors must have at least 2 heavy atom
   // neighbors i.e. C/C=N/[H] is not a possible stereo bond but no more than 3
   // total neighbors.
-  // if it's a ring bond, the smallest ring it's in must have at least 8 members
+  // if it's a ring bond, the smallest ring it's in must have at least 8
+  // members
   //  (this is common with InChI)
   const auto beginAtom = bond->getBeginAtom();
   auto begHeavyDegree =
@@ -211,67 +335,6 @@ bool isBondPotentialStereoBond(const Bond *bond) {
   } else {
     return false;
   }
-}
-
-bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
-  PRECONDITION(atom, "atom is null");
-  auto nzDegree = getAtomNonzeroDegree(atom);
-  auto tnzDegree = nzDegree + atom->getTotalNumHs();
-  if (tnzDegree > 4) {
-    return false;
-  } else {
-    const auto &mol = atom->getOwningMol();
-    if (nzDegree == 4) {
-      // chirality is always possible with 4 nbrs
-      return true;
-    } else if (nzDegree == 1) {
-      // chirality is never possible with 1 nbr
-      return false;
-    } else if (nzDegree < 3 &&
-               (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
-      // less than three neighbors is never stereogenic
-      // unless it is a phosphine/arsine with implicit H
-      return false;
-    } else if (atom->getAtomicNum() == 15 || atom->getAtomicNum() == 33) {
-      // from logical flow: degree is 2 or 3 (implicit H)
-      // Since InChI Software v. 1.02-standard (2009), phosphines and arsines
-      // are always treated as stereogenic even with H atom neighbors.
-      // Accept automatically.
-      return true;
-    } else if (nzDegree == 3) {
-      // three-coordinate with a single H we'll accept automatically:
-      if (atom->getTotalNumHs() == 1) {
-        return true;
-      } else {
-        // otherwise we default to not being a legal center
-        bool legalCenter = false;
-        // but there are a few special cases we'll accept
-        // sulfur or selenium with either a positive charge or a double
-        // bond:
-        if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) &&
-            (atom->getExplicitValence() == 4 ||
-             (atom->getExplicitValence() == 3 &&
-              atom->getFormalCharge() == 1))) {
-          legalCenter = true;
-        } else if (atom->getAtomicNum() == 7) {
-          // three-coordinate N additional requirements:
-          //   in a ring of size 3  (from InChI)
-          // OR
-          /// is a bridgehead atom (RDKit extension)
-          if (mol.getRingInfo()->isAtomInRingOfSize(atom->getIdx(), 3) ||
-              queryIsAtomBridgehead(atom)) {
-            legalCenter = true;
-          }
-        }
-        return legalCenter;
-      }
-    } else {
-      return false;
-    }
-  }
-}
-bool isAtomPotentialStereoAtom(const Atom *atom) {
-  return isAtomPotentialTetrahedralCenter(atom);
 }
 }  // namespace detail
 
@@ -373,32 +436,46 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
     const auto &aring = mol.getRingInfo()->atomRings()[ridx];
     unsigned int nHere = 0;
     auto sz = aring.size();
+    bool ring_is_odd_sized = sz % 2;
+    auto half_sz = sz / 2 + ring_is_odd_sized;
+
     possibleAtomsInRing.reset();
-    for (unsigned int ai = 0; ai < aring.size(); ++ai) {
+    for (unsigned int ai = 0; ai < sz; ++ai) {
       auto aidx = aring[ai];
-      if (!(aring.size() % 2)) {
+      if (!possibleAtoms[aidx] && !knownAtoms[aidx]) {
+        continue;
+      }
+
+      if (!ring_is_odd_sized) {
         // find the index of the atom on the opposite side of the even-sized
         // ring
-        auto oppositeidx = aring[(ai + sz / 2) % sz];
-        if ((possibleAtoms[aidx] || knownAtoms[aidx]) &&
-            (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx])) {
+        auto oppositeidx = aring[(ai + half_sz) % sz];
+        if (possibleAtoms[oppositeidx] || knownAtoms[oppositeidx]) {
           ++nHere;
           possibleAtomsInRing.set(aidx);
           continue;
         }
       }
-      // if the atom is in more than one bond, see if there's
-      // a possible neighbor on a fusion bond
+      // if the atom is in more than one ring, explore the common edge to see if
+      // we can find another potentially chiral atom
       if (mol.getRingInfo()->numAtomRings(aidx) > 1) {
-        auto otheridx = aring[(ai + 1) % aring.size()];
-        if (possibleAtoms[otheridx] || knownAtoms[otheridx]) {
-          auto bnd = mol.getBondBetweenAtoms(aidx, otheridx);
-          CHECK_INVARIANT(bnd, "expected ring bond not found");
-          if (mol.getRingInfo()->numBondRings(bnd->getIdx()) > 1) {
+        auto previous_otheridx = aidx;
+        for (size_t step = 1; step <= half_sz; ++step) {
+          auto otheridx = aring[(ai + step) % sz];
+          auto bnd = mol.getBondBetweenAtoms(previous_otheridx, otheridx);
+          if (mol.getRingInfo()->numBondRings(bnd->getIdx()) < 2) {
+            // We reached the end of the common edge.
+            break;
+          }
+          if (possibleAtoms[otheridx] || knownAtoms[otheridx]) {
+            // We found another potentially chiral atom, no need to keep
+            // searching.
             nHere += 2;
             possibleAtomsInRing.set(aidx);
             possibleAtomsInRing.set(otheridx);
+            break;
           }
+          previous_otheridx = otheridx;
         }
       }
     }

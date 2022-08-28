@@ -70,7 +70,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static const std::int32_t versionMajor;  //!< mark the pickle major version
   static const std::int32_t versionMinor;  //!< mark the pickle minor version
   static const std::int32_t versionPatch;  //!< mark the pickle patch version
-  static const std::int32_t endianId;  //! mark the endian-ness of the pickle
+  static const std::int32_t endianId;  //!< mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,

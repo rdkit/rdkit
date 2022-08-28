@@ -74,24 +74,22 @@ extern int yysmarts_debug;
     HASH_TOKEN = 280,
     MINUS_TOKEN = 281,
     PLUS_TOKEN = 282,
-    CHIRAL_MARKER_TOKEN = 283,
-    CHI_CLASS_TOKEN = 284,
-    CHI_CLASS_OH_TOKEN = 285,
-    H_TOKEN = 286,
-    AT_TOKEN = 287,
-    PERCENT_TOKEN = 288,
-    ATOM_OPEN_TOKEN = 289,
-    ATOM_CLOSE_TOKEN = 290,
-    NOT_TOKEN = 291,
-    AND_TOKEN = 292,
-    OR_TOKEN = 293,
-    SEMI_TOKEN = 294,
-    BEGIN_RECURSE = 295,
-    END_RECURSE = 296,
-    COLON_TOKEN = 297,
-    UNDERSCORE_TOKEN = 298,
-    BOND_TOKEN = 299,
-    EOS_TOKEN = 300
+    H_TOKEN = 283,
+    AT_TOKEN = 284,
+    PERCENT_TOKEN = 285,
+    ATOM_OPEN_TOKEN = 286,
+    ATOM_CLOSE_TOKEN = 287,
+    NOT_TOKEN = 288,
+    AND_TOKEN = 289,
+    OR_TOKEN = 290,
+    SEMI_TOKEN = 291,
+    BEGIN_RECURSE = 292,
+    END_RECURSE = 293,
+    COLON_TOKEN = 294,
+    UNDERSCORE_TOKEN = 295,
+    BOND_TOKEN = 296,
+    CHI_CLASS_TOKEN = 297,
+    EOS_TOKEN = 298
   };
 #endif
 
@@ -104,9 +102,10 @@ union YYSTYPE
   int                      moli;
   RDKit::QueryAtom * atom;
   RDKit::QueryBond * bond;
+  RDKit::Atom::ChiralType chiraltype;
   int                      ival;
 
-#line 110 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
+#line 109 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -123,6 +122,6 @@ int yysmarts_parse (const char *input, std::vector<RDKit::RWMol *> *molList, RDK
 #define YY_DECL int yylex \
                (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
 
-#line 127 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
+#line 126 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.hpp"
 
 #endif /* !YY_YYSMARTS_SCRATCH_RDKIT_GIT_CODE_GRAPHMOL_SMILESPARSE_SMARTS_TAB_HPP_INCLUDED  */

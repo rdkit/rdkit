@@ -292,7 +292,7 @@ extern "C" char *get_qmol(const char *input, size_t *pkl_sz,
   return str_to_c(pkl, pkl_sz);
 }
 extern "C" char *version() { return str_to_c(rdkitVersion); }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 std::atomic_int logging_needs_init{1};
 #else
 short logging_needs_init = 1;
@@ -306,7 +306,7 @@ extern "C" void enable_logging() {
 }
 
 extern "C" void disable_logging() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static std::atomic_int needs_init{1};
 #else
   static short needs_init = 1;

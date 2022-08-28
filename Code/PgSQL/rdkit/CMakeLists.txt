@@ -23,7 +23,7 @@ endif()
 find_package(PostgreSQL REQUIRED)
 
 if(RDK_OPTIMIZE_POPCNT)
-  add_definitions(-DUSE_BUILTIN_POPCOUNT)
+  add_definitions(-DRDK_OPTIMIZE_POPCNT)
 endif(RDK_OPTIMIZE_POPCNT)
 
 set(EXTENSION rdkit)

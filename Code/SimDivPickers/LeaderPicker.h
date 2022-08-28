@@ -119,7 +119,7 @@ class LeaderPicker : public DistPicker {
   }
 };
 
-#if defined(RDK_THREADSAFE_SSS)
+#if defined(RDK_BUILD_THREADSAFE_SSS)
 #if defined(unix) || defined(__unix__) || defined(__unix)
 #define USE_THREADED_LEADERPICKER
 #endif

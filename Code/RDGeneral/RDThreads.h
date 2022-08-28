@@ -14,7 +14,7 @@
 
 #include <RDGeneral/Invariant.h>
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>
 
 namespace RDKit {

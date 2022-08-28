@@ -427,6 +427,7 @@ struct atom_wrapper {
         .value("SP", Atom::SP)
         .value("SP2", Atom::SP2)
         .value("SP3", Atom::SP3)
+        .value("SP2D", Atom::SP2D)
         .value("SP3D", Atom::SP3D)
         .value("SP3D2", Atom::SP3D2)
         .value("OTHER", Atom::OTHER);
@@ -435,6 +436,11 @@ struct atom_wrapper {
         .value("CHI_TETRAHEDRAL_CW", Atom::CHI_TETRAHEDRAL_CW)
         .value("CHI_TETRAHEDRAL_CCW", Atom::CHI_TETRAHEDRAL_CCW)
         .value("CHI_OTHER", Atom::CHI_OTHER)
+        .value("CHI_TETRAHEDRAL", Atom::CHI_TETRAHEDRAL)
+        .value("CHI_ALLENE", Atom::CHI_ALLENE)
+        .value("CHI_SQUAREPLANAR", Atom::CHI_SQUAREPLANAR)
+        .value("CHI_TRIGONALBIPYRAMIDAL", Atom::CHI_TRIGONALBIPYRAMIDAL)
+        .value("CHI_OCTAHEDRAL", Atom::CHI_OCTAHEDRAL)
         .export_values();
     ;
 

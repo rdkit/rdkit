@@ -272,36 +272,14 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
     // we tried... nothing more we can do
     return;
   }
-  // bondIndexMap uses the position in the vector for the SMILES index and
-  // the value in that position as the actual bond index.
-  std::vector<int> bondIndexMap(mol.getNumBonds(), -1);
-  for (const auto bond : mol.bonds()) {
-    unsigned int smilesIdx;
-    if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx)) {
-      bondIndexMap[smilesIdx] = bond->getIdx();
-    }
-  }
-  for (auto &smilesIdx : headCrossings) {
-    int bondIdx = bondIndexMap[smilesIdx];
-    if (bondIdx < 0) {
-      throw RDKit::SmilesParseException(
-          "could not find SGroup bond index in molecule");
-    }
+
+  for (auto &bondIdx : headCrossings) {
     sgroup.addBondWithIdx(bondIdx);
-    // and replace the original value
-    smilesIdx = bondIdx;
   }
   sgroup.setProp("XBHEAD", headCrossings);
 
-  for (auto &smilesIdx : tailCrossings) {
-    int bondIdx = bondIndexMap[smilesIdx];
-    if (bondIdx < 0) {
-      throw RDKit::SmilesParseException(
-          "could not find SGroup bond index in molecule");
-    }
+  for (auto &bondIdx : tailCrossings) {
     sgroup.addBondWithIdx(bondIdx);
-    // and replace the original value
-    smilesIdx = bondIdx;
   }
 
   // now we can setup XBCORR
@@ -1322,6 +1300,19 @@ std::string quote_string(const std::string &txt) {
   return txt;
 }
 
+std::string quote_atomprop_string(const std::string &txt) {
+  // at a bare minimum, . needs to be escaped
+  std::string res;
+  for(auto c : txt) {
+    if(c == '.') {
+      res += "&#46;";
+    } else {
+      res += c;
+    }
+  }
+  return res;
+}
+
 std::string get_enhanced_stereo_block(
     const ROMol &mol, const std::vector<unsigned int> &atomOrder) {
   if (mol.getStereoGroups().empty()) {
@@ -1624,12 +1615,9 @@ std::string get_sgroup_data_block(const ROMol &mol,
 std::string get_atomlabel_block(const ROMol &mol,
                                 const std::vector<unsigned int> &atomOrder) {
   std::string res = "";
-  bool first = true;
   for (auto idx : atomOrder) {
-    if (!first) {
+    if (idx != atomOrder.front()) {
       res += ";";
-    } else {
-      first = false;
     }
     std::string lbl;
     const auto atom = mol.getAtomWithIdx(idx);
@@ -1645,6 +1633,11 @@ std::string get_atomlabel_block(const ROMol &mol,
     } else if (atom->getPropIfPresent(common_properties::atomLabel, lbl)) {
       res += quote_string(lbl);
     }
+  }
+  // if we didn't find anything return an empty string
+  if (std::find_if_not(res.begin(), res.end(),
+                       [](const auto c) { return c == ';'; }) == res.end()) {
+    res.clear();
   }
   return res;
 }
@@ -1755,7 +1748,7 @@ std::string get_atom_props_block(const ROMol &mol,
           res += "atomProp";
         }
         res += boost::str(boost::format(":%d.%s.%s") % which %
-                          quote_string(pn) % quote_string(pv));
+                          quote_atomprop_string(pn) % quote_atomprop_string(pv));
       }
     }
     ++which;
@@ -1833,10 +1826,13 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     res += "(" + get_coords_block(mol, atomOrder) + ")";
   }
   if ((flags & SmilesWrite::CXSmilesFields::CX_ATOM_LABELS) && needLabels) {
-    if (res.size() > 1) {
-      res += ",";
+    auto lbls = get_atomlabel_block(mol, atomOrder);
+    if (!lbls.empty()) {
+      if (res.size() > 1) {
+        res += ",";
+      }
+      res += "$" + lbls + "$";
     }
-    res += "$" + get_atomlabel_block(mol, atomOrder) + "$";
   }
   if ((flags & SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES) && needValues) {
     if (res.size() > 1) {

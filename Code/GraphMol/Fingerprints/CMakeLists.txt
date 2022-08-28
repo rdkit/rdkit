@@ -30,7 +30,7 @@ rdkit_test(testMHFPFingerprint testMHFPFingerprint.cpp LINK_LIBRARIES
 rdkit_test(testFingerprintGenerators testFingerprintGenerators.cpp LINK_LIBRARIES 
            Fingerprints FileParsers )
 
-rdkit_catch_test(fpTestCatch ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES Fingerprints FileParsers)
+rdkit_catch_test(fpTestCatch catch_tests.cpp LINK_LIBRARIES Fingerprints FileParsers)
 
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

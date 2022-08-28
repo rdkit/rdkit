@@ -274,6 +274,8 @@ emscripten::val get_avalon_fp_as_uint8array(const JSMol &self) {
 
 using namespace emscripten;
 EMSCRIPTEN_BINDINGS(RDKit_minimal) {
+  register_vector<std::string>("StringList");
+
   class_<JSMol>("Mol")
       .function("is_valid", &JSMol::is_valid)
       .function("has_coords", &JSMol::has_coords)
@@ -413,6 +415,26 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<bool(bool)>(&JSMol::set_new_coords))
       .function("get_new_coords", select_overload<std::string(bool) const>(
                                       &JSMol::get_new_coords))
+      .function("has_prop", &JSMol::has_prop)
+      .function("get_prop_list",
+                select_overload<std::vector<std::string>(
+                    bool includePrivate, bool includeComputed) const>(
+                    &JSMol::get_prop_list))
+      .function(
+          "get_prop_list",
+          select_overload<std::vector<std::string>(bool includePrivate) const>(
+              &JSMol::get_prop_list))
+      .function("get_prop_list",
+                select_overload<std::vector<std::string>() const>(
+                    &JSMol::get_prop_list))
+      .function(
+          "set_prop",
+          select_overload<bool(const std::string &, const std::string &, bool)>(
+              &JSMol::set_prop))
+      .function("set_prop",
+                select_overload<bool(const std::string &, const std::string &)>(
+                    &JSMol::set_prop))
+      .function("get_prop", &JSMol::get_prop)
       .function("generate_aligned_coords",
                 select_overload<std::string(const JSMol &)>(
                     &JSMol::generate_aligned_coords))
@@ -481,6 +503,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 
   function("version", &version);
   function("prefer_coordgen", &prefer_coordgen);
+  function("use_legacy_stereo_perception", &use_legacy_stereo_perception);
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
   function("get_mol", &get_mol, allow_raw_pointers());
   function("get_mol", &get_mol_no_details, allow_raw_pointers());

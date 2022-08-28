@@ -110,6 +110,7 @@ import re
 import logging
 
 import numpy as np
+import rdkit
 from rdkit import Chem
 from rdkit import DataStructs
 from rdkit.Chem import AllChem
@@ -117,10 +118,12 @@ from rdkit.Chem import Draw
 from rdkit.Chem import SDWriter
 from rdkit.Chem import rdchem
 from rdkit.Chem.Scaffolds import MurckoScaffold
-try:
-  from rdkit.Chem.Draw.IPythonConsole import InteractiveRenderer
-except ImportError:
-  InteractiveRenderer = None
+InteractiveRenderer = None
+if hasattr(rdkit, 'IPythonConsole'):
+  try:
+    from rdkit.Chem.Draw.IPythonConsole import InteractiveRenderer
+  except ImportError:
+    pass
 
 from io import BytesIO
 from xml.dom import minidom
@@ -218,19 +221,19 @@ def patchPandasrepr(self, **kwargs):
   global defPandasGetAdjustment
 
   import pandas.io.formats.html
-  if not hasattr(pandas.io.formats.html.HTMLFormatter, "_rdkitpatched"):
-    defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
-    pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
-    pandas.io.formats.html.HTMLFormatter._rdkitpatched = True
-  get_adjustment_attr = getAdjustmentAttr()
-  if get_adjustment_attr:
-    defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
-    setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
-  res = defPandasRepr(self, **kwargs)
-  if get_adjustment_attr:
-    setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
-  pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
-  return res
+  defHTMLFormatter_write_cell = pd.io.formats.html.HTMLFormatter._write_cell
+  pd.io.formats.html.HTMLFormatter._write_cell = _patched_HTMLFormatter_write_cell
+  try:
+    get_adjustment_attr = getAdjustmentAttr()
+    if get_adjustment_attr:
+      defPandasGetAdjustment = getattr(pd.io.formats.format, get_adjustment_attr)
+      setattr(pd.io.formats.format, get_adjustment_attr, _patched_get_adjustment)
+    res = defPandasRepr(self, **kwargs)
+    if get_adjustment_attr:
+      setattr(pd.io.formats.format, get_adjustment_attr, defPandasGetAdjustment)
+    return res
+  finally:
+    pd.io.formats.html.HTMLFormatter._write_cell = defHTMLFormatter_write_cell
 
 
 def patchPandasHTMLrepr(self, **kwargs):

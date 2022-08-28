@@ -10,6 +10,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_ABBREVIATIONS_H
 #define RD_ABBREVIATIONS_H
+#include <GraphMol/Substruct/SubstructMatch.h>
 #include <utility>
 #include <vector>
 #include <string>
@@ -25,8 +26,8 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationDefinition {
   std::string displayLabel;
   std::string displayLabelW;
   std::string smarts;
-  std::shared_ptr<ROMol> mol;                  //! optional
-  std::vector<unsigned int> extraAttachAtoms;  //! optional
+  std::shared_ptr<ROMol> mol;                  //!< optional
+  std::vector<unsigned int> extraAttachAtoms;  //!< optional
   bool operator==(const AbbreviationDefinition& other) const {
     return label == other.label && displayLabel == other.displayLabel &&
            displayLabelW == other.displayLabelW && smarts == other.smarts;
@@ -36,7 +37,7 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationDefinition {
   }
 };
 struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationMatch {
-  std::vector<std::pair<int, int>> match;
+  MatchVectType match;
   AbbreviationDefinition abbrev;
   AbbreviationMatch(std::vector<std::pair<int, int>> matchArg,
                     AbbreviationDefinition abbrevArg)
@@ -51,6 +52,8 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationMatch {
 };
 namespace common_properties {
 RDKIT_ABBREVIATIONS_EXPORT extern const std::string numDummies;
+RDKIT_ABBREVIATIONS_EXPORT extern const std::string origAtomMapping;
+RDKIT_ABBREVIATIONS_EXPORT extern const std::string origBondMapping;
 }
 namespace Utils {
 //! returns the default set of abbreviation definitions

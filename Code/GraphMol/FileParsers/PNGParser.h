@@ -33,7 +33,7 @@ RDKIT_FILEPARSERS_EXPORT extern const std::string pklTag;
 }  // namespace PNGData
 
 //! \name metadata to/from PNG
-//@{
+//! @{
 
 //! \brief returns the metadata (tEXt and zTXt chunks) from PNG data
 RDKIT_FILEPARSERS_EXPORT std::vector<std::pair<std::string, std::string>>
@@ -88,10 +88,10 @@ inline std::string addMetadataToPNGFile(
   std::ifstream inStream(fname.c_str(), std::ios::binary);
   return addMetadataToPNGStream(inStream, metadata, compressed);
 }
-//@}
+//! @}
 
 //! \name molecules to/from PNG
-//@{
+//! @{
 
 //! \brief constructs an ROMol from the metadata in a PNG stream
 /*!
@@ -196,7 +196,7 @@ inline std::string addMolToPNGFile(const ROMol &mol, const std::string &fname,
   return addMolToPNGStream(mol, inStream, includePkl, includeSmiles,
                            includeMol);
 }
-//@}
+//! @}
 
 }  // namespace RDKit
 

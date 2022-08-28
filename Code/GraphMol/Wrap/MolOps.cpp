@@ -21,6 +21,7 @@
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Wrap/substructmethods.h>
@@ -33,12 +34,14 @@
 #include <RDBoost/PySequenceHolder.h>
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
+#include <GraphMol/Chirality.h>
 
 #include <sstream>
 namespace python = boost::python;
 using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
+
 python::tuple fragmentOnSomeBondsHelper(const ROMol &mol,
                                         python::object pyBondIndices,
                                         unsigned int nToBreak, bool addDummies,
@@ -302,10 +305,11 @@ ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
                              addResidueInfo);
   return res;
 }
-int getSSSR(ROMol &mol) {
+
+VECT_INT_VECT getSSSR(ROMol &mol) {
   VECT_INT_VECT rings;
-  int nr = MolOps::findSSSR(mol, rings);
-  return nr;
+  MolOps::findSSSR(mol, rings);
+  return rings;
 }
 
 PyObject *replaceSubstructures(const ROMol &orig, const ROMol &query,
@@ -913,14 +917,13 @@ void setDoubleBondNeighborDirectionsHelper(ROMol &mol, python::object confObj) {
 void setAtomSymbols(MolzipParams &p, python::object symbols) {
   p.atomSymbols.clear();
   if (symbols) {
-    unsigned int nVs =
-        python::extract<unsigned int>(symbols.attr("__len__")());
+    unsigned int nVs = python::extract<unsigned int>(symbols.attr("__len__")());
     for (unsigned int i = 0; i < nVs; ++i) {
       p.atomSymbols.push_back(python::extract<std::string>(symbols[i]));
     }
   }
 }
-  
+
 ROMol *molzip_new(const ROMol &a, const ROMol &b, const MolzipParams &p) {
   return molzip(a, b, p).release();
 }
@@ -1209,6 +1212,11 @@ struct molops_wrapper {
                        &MolOps::RemoveHsParameters::removeHydrides,
                        "hydrogens with formal charge -1")
         .def_readwrite(
+            "removeNontetrahedralNeighbors",
+            &MolOps::RemoveHsParameters::removeNontetrahedralNeighbors,
+            "hydrogens with neighbors that have non-tetrahedral "
+            "stereochemistry")
+        .def_readwrite(
             "showWarnings", &MolOps::RemoveHsParameters::showWarnings,
             "display warning messages for some classes of removed Hs")
         .def_readwrite("updateExplicitCount",
@@ -1312,19 +1320,24 @@ struct molops_wrapper {
   NOTES:\n\
 \n\
     - The original molecule is *not* modified.\n\
+    - A bond is only formed to the remaining atoms, if any, that were bonded \n\
+      to the first atom in the substructure query. (For finer control over\n\
+      substructure replacement, consider using ChemicalReaction.)\n\
 \n\
   EXAMPLES:\n\
 \n\
    The following examples substitute SMILES/SMARTS strings for molecules, you'd have\n\
    to actually use molecules:\n\
 \n\
-    - ReplaceSubstructs('CCOC','OC','NC') -> ('CCNC',)\n\
+    - ReplaceSubstructs('CCOC','O[CH3]','NC') -> ('CCNC',)\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','NC') -> ('COCCNC','CNCCOC')\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','NC') -> ('COCCNC','CNCCOC')\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','NC',True) -> ('CNCCNC',)\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','NC',True) -> ('CNCCNC',)\n\
 \n\
-    - ReplaceSubstructs('COCCOC','OC','CN',True,1) -> ('CNCCNC',)\n\
+    - ReplaceSubstructs('COCCOC','O[CH3]','CN',True,1) -> ('CNCCNC',)\n\
+\n\
+    - ReplaceSubstructs('CCOC','[CH3]O','NC') -> ('CC.CN',)\n\
 \n";
     python::def("ReplaceSubstructs", replaceSubstructures,
                 (python::arg("mol"), python::arg("query"),
@@ -1934,6 +1947,10 @@ to the terminal dummy atoms.\n\
     docString =
         "Sets the chiral tags on a molecule's atoms based on\n\
   a 3D conformation.\n\
+  NOTE that this does not check to see if atoms are chiral centers (i.e. all\n\
+  substituents are different), it merely sets the chiral type flags based on the\n\
+  coordinates and atom ordering. Use \c AssignStereochemistryFrom3D() if you\n\
+  want chiral flags only on actual stereocenters.\n\
 \n\
   ARGUMENTS:\n\
 \n\
@@ -2214,6 +2231,17 @@ ARGUMENTS:\n\
 \n";
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
 
+    docString =
+        "Set the wedging to that which was read from the original\n\
+     MolBlock, over-riding anything that was originally there.\n\
+\n\
+          ARGUMENTS:\n\
+        \n\
+            - molecule: the molecule to update\n\
+        \n\
+        \n";
+    python::def("ReapplyMolBlockWedging", reapplyMolBlockWedging,
+                docString.c_str());
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
     python::class_<StereoBondThresholds>("StereoBondThresholds",
@@ -2500,12 +2528,13 @@ EXAMPLES:\n\n\
                                  python::init<>())
         .def_readwrite("label", &MolzipParams::label,
                        "Set the atom labelling system to zip together")
-        .def_readwrite("enforceValenceRules", &MolzipParams::enforceValenceRules,
-		       "If true (default) enforce valences after zipping\n\
+        .def_readwrite("enforceValenceRules",
+                       &MolzipParams::enforceValenceRules,
+                       "If true (default) enforce valences after zipping\n\
 Setting this to false allows assembling chemically incorrect fragments.")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
-             "Set the atom symbols used to zip mols together when using AtomType labeling")
-      ;
+             "Set the atom symbols used to zip mols together when using "
+             "AtomType labeling");
 
     docString =
         "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
@@ -2718,6 +2747,21 @@ A note on the flags controlling which atoms/bonds are modified:
     python::def("ConvertGenericQueriesToSubstanceGroups",
                 GenericGroups::convertGenericQueriesToSubstanceGroups,
                 python::arg("mol"), "documentation");
+    python::def(
+        "SetAllowNontetrahedralChirality",
+        Chirality::setAllowNontetrahedralChirality,
+        "toggles recognition of non-tetrahedral chirality from 3D structures");
+    python::def("GetAllowNontetrahedralChirality",
+                Chirality::getAllowNontetrahedralChirality,
+                "returns whether or not recognition of non-tetrahedral "
+                "chirality from 3D structures is enabled");
+    python::def("SetUseLegacyStereoPerception",
+                Chirality::setUseLegacyStereoPerception,
+                "toggles usage of the legacy stereo perception code");
+    python::def("GetUseLegacyStereoPerception",
+                Chirality::getUseLegacyStereoPerception,
+                "returns whether or not the legacy stereo perception code is "
+                "being used");
   }
 };
 }  // namespace RDKit
