@@ -70,11 +70,16 @@ function test_basics() {
         assert.equal((fp1.match(/1/g)||[]).length, 11);
         var fp1Uint8Array = mol.get_morgan_fp_as_uint8array();
         checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-        var fp2 = mol.get_morgan_fp(0, 512);
+        var fp2 = mol.get_morgan_fp(JSON.stringify({ radius: 0, nBits: 512 }));
         assert.equal(fp2.length, 512);
         assert.equal((fp2.match(/1/g)||[]).length, 3);
-        var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
+        var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(JSON.stringify({ radius: 0, nBits: 512 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+        var fp3 = mol.get_morgan_fp(0, 512);
+        assert.equal(fp3.length, 512);
+        assert.equal((fp3.match(/1/g)||[]).length, 3);
+        var fp3Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
+        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
     }
 
     {
@@ -83,11 +88,16 @@ function test_basics() {
         assert.equal((fp1.match(/1/g)||[]).length, 73);
         var fp1Uint8Array = mol.get_pattern_fp_as_uint8array();
         checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-        var fp2 = mol.get_pattern_fp(256);
+        var fp2 = mol.get_pattern_fp(JSON.stringify({ nBits: 256 }));
         assert.equal(fp2.length, 256);
         assert.equal((fp2.match(/1/g)||[]).length, 65);
-        var fp2Uint8Array = mol.get_pattern_fp_as_uint8array(256);
+        var fp2Uint8Array = mol.get_pattern_fp_as_uint8array(JSON.stringify({ nBits: 256 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+        var fp3 = mol.get_pattern_fp(256);
+        assert.equal(fp3.length, 256);
+        assert.equal((fp3.match(/1/g)||[]).length, 65);
+        var fp3Uint8Array = mol.get_pattern_fp_as_uint8array(256);
+        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
     }
 
     {
@@ -96,33 +106,33 @@ function test_basics() {
         assert.equal((fp1.match(/1/g)||[]).length, 8);
         var fp1Uint8Array = mol.get_topological_torsion_fp_as_uint8array();
         checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-        var fp2 = mol.get_topological_torsion_fp(512);
+        var fp2 = mol.get_topological_torsion_fp(JSON.stringify({ nBits: 512 }));
         assert.equal(fp2.length, 512);
         assert.equal((fp2.match(/1/g)||[]).length, 8);
-        var fp2Uint8Array = mol.get_topological_torsion_fp_as_uint8array(512);
+        var fp2Uint8Array = mol.get_topological_torsion_fp_as_uint8array(JSON.stringify({ nBits: 512 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
     }
 
     {
-        var fp1 = mol.get_rdk_fp();
+        var fp1 = mol.get_rdkit_fp();
         assert.equal(fp1.length, 2048);
         assert.equal((fp1.match(/1/g)||[]).length, 38);
-        var fp1Uint8Array = mol.get_rdk_fp_as_uint8array();
+        var fp1Uint8Array = mol.get_rdkit_fp_as_uint8array();
         checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-        var fp2 = mol.get_rdk_fp(512);
+        var fp2 = mol.get_rdkit_fp(JSON.stringify({ nBits: 512 }));
         assert.equal(fp2.length, 512);
         assert.equal((fp2.match(/1/g)||[]).length, 37);
-        var fp2Uint8Array = mol.get_rdk_fp_as_uint8array(512);
+        var fp2Uint8Array = mol.get_rdkit_fp_as_uint8array(JSON.stringify({ nBits: 512 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
-        var fp3 = mol.get_rdk_fp(512, 2);
+        var fp3 = mol.get_rdkit_fp(JSON.stringify({ nBits: 512, minPath: 2 }));
         assert.equal(fp3.length, 512);
         assert.equal((fp3.match(/1/g)||[]).length, 34);
-        var fp3Uint8Array = mol.get_rdk_fp_as_uint8array(512, 2);
+        var fp3Uint8Array = mol.get_rdkit_fp_as_uint8array(JSON.stringify({ nBits: 512, minPath: 2 }));
         checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
-        var fp4 = mol.get_rdk_fp(512, 2, 4);
+        var fp4 = mol.get_rdkit_fp(JSON.stringify({ nBits: 512, minPath: 2, maxPath: 4 }));
         assert.equal(fp4.length, 512);
         assert.equal((fp4.match(/1/g)||[]).length, 16);
-        var fp4Uint8Array = mol.get_rdk_fp_as_uint8array(512, 2, 4);
+        var fp4Uint8Array = mol.get_rdkit_fp_as_uint8array(JSON.stringify({ nBits: 512, minPath: 2, maxPath: 4 }));
         checkStringBinaryFpIdentity(fp4, fp4Uint8Array);
     }
 
@@ -132,20 +142,20 @@ function test_basics() {
         assert.equal((fp1.match(/1/g)||[]).length, 19);
         var fp1Uint8Array = mol.get_atom_pair_fp_as_uint8array();
         checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-        var fp2 = mol.get_atom_pair_fp(512);
+        var fp2 = mol.get_atom_pair_fp(JSON.stringify({ nBits: 512 }));
         assert.equal(fp2.length, 512);
         assert.equal((fp2.match(/1/g)||[]).length, 19);
-        var fp2Uint8Array = mol.get_atom_pair_fp_as_uint8array(512);
+        var fp2Uint8Array = mol.get_atom_pair_fp_as_uint8array(JSON.stringify({ nBits: 512 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
-        var fp3 = mol.get_atom_pair_fp(512, 2);
+        var fp3 = mol.get_atom_pair_fp(JSON.stringify({ nBits: 512, minLength: 2 }));
         assert.equal(fp3.length, 512);
         assert.equal((fp3.match(/1/g)||[]).length, 13);
-        var fp3Uint8Array = mol.get_atom_pair_fp_as_uint8array(512, 2);
+        var fp3Uint8Array = mol.get_atom_pair_fp_as_uint8array(JSON.stringify({ nBits: 512, minLength: 2 }));
         checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
-        var fp4 = mol.get_atom_pair_fp(512, 2, 3);
+        var fp4 = mol.get_atom_pair_fp(JSON.stringify({ nBits: 512, minLength: 2, maxLength: 3 }));
         assert.equal(fp4.length, 512);
         assert.equal((fp4.match(/1/g)||[]).length, 12);
-        var fp4Uint8Array = mol.get_atom_pair_fp_as_uint8array(512, 2, 3);
+        var fp4Uint8Array = mol.get_atom_pair_fp_as_uint8array(JSON.stringify({ nBits: 512, minLength: 2, maxLength: 3 }));
         checkStringBinaryFpIdentity(fp4, fp4Uint8Array);
     }
 
@@ -155,10 +165,10 @@ function test_basics() {
         assert.equal((fp1.match(/1/g)||[]).length, 19);
         var fp1Uint8Array = mol.get_avalon_fp_as_uint8array();
         checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-        var fp2 = mol.get_avalon_fp(2048);
+        var fp2 = mol.get_avalon_fp(JSON.stringify({ nBits: 2048 }));
         assert.equal(fp2.length, 2048);
         assert.equal((fp2.match(/1/g)||[]).length, 20);
-        var fp2Uint8Array = mol.get_avalon_fp_as_uint8array(2048);
+        var fp2Uint8Array = mol.get_avalon_fp_as_uint8array(JSON.stringify({ nBits: 2048 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
     }
 
@@ -599,7 +609,7 @@ M  END
     assert(cxsmarts == "[#6]1:[#6]:[#6]:[#6]:[#6](:[#6]:1-&!@*)-&!@* |" +
         "(-1.0491,1.5839,;-1.7635,1.1714,;-1.7635,0.3463,;-1.0491,-0.0661,;" +
         "-0.3346,0.3463,;-0.3346,1.1714,;0.3798,1.5839,;0.3798,-0.0661,)," +
-        "$;;;;;;;$,atomProp:6.dummyLabel.R1:7.dummyLabel.R2|");
+        "atomProp:6.dummyLabel.R1:7.dummyLabel.R2|");
 }
 
 function test_normalize_depiction() {
@@ -712,10 +722,10 @@ function test_flexicanvas() {
 
 function test_rxn_drawing() {
     {
-        var rxn = RDKitModule.get_reaction("[CH3:1][OH:2]>>[CH2:1]=[OH0:2]");
+        var rxn = RDKitModule.get_rxn("[CH3:1][OH:2]>>[CH2:1]=[OH0:2]");
         var svg = rxn.get_svg();
         assert(svg.search("svg") > 0);
-        var rxn_from_block = RDKitModule.get_reaction(`$RXN
+        var rxn_from_block = RDKitModule.get_rxn(`$RXN
 
       RDKit
 
@@ -748,7 +758,7 @@ M  END`);
         assert(svg.match(/<path/g).length === svg_from_block.match(/<path/g).length);
     }
     {
-        var rxn = RDKitModule.get_reaction("[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])[N:13]=[N+:14]=[N-:15]",
+        var rxn = RDKitModule.get_rxn("[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])[N:13]=[N+:14]=[N-:15]",
                                         JSON.stringify({ useSmiles: true }));
         {
             var svg = rxn.get_svg();
@@ -792,7 +802,7 @@ M  END`);
         rxn.delete();
     }
     {
-        var rxn = RDKitModule.get_reaction("[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])[N:13]=[N+:14]=[N-:15]");
+        var rxn = RDKitModule.get_rxn("[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])[N:13]=[N+:14]=[N-:15]");
         var hasThrown = false;
         var isAromatic = false;
         // if the code is built with exception support it will not throw
@@ -817,7 +827,7 @@ function test_legacy_stereochem() {
     RDKitModule.use_legacy_stereo_perception(false);
     mol = RDKitModule.get_mol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2");
     assert.equal(mol.is_valid(),1);
-    assert.equal(mol.get_smiles(),"CC1CC2(CC[C@H](C)CC2)CC[C@@H]1C");
+    //assert.equal(mol.get_smiles(),"CC1CC2(CC[C@H](C)CC2)CC[C@@H]1C");
 }
 
 function test_prop() {

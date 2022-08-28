@@ -27,11 +27,6 @@
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
-#include <GraphMol/Fingerprints/MorganFingerprints.h>
-#include <GraphMol/Fingerprints/AtomPairs.h>
-#ifdef RDK_BUILD_AVALON_SUPPORT
-#include <External/AvalonTools/AvalonTools.h>
-#endif
 #include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
@@ -208,134 +203,121 @@ std::string JSMol::get_descriptors() const {
   return MinimalLib::get_descriptors(*d_mol);
 }
 
-std::string JSMol::get_morgan_fp(unsigned int radius,
-                                 unsigned int fplen) const {
+std::string JSMol::get_morgan_fp(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(
-      MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen));
+  auto fp = MinimalLib::morgan_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
 }
 
-std::string JSMol::get_morgan_fp_as_binary_text(unsigned int radius,
-                                                unsigned int fplen) const {
+std::string JSMol::get_morgan_fp_as_binary_text(
+    const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(
-      MorganFingerprints::getFingerprintAsBitVect(*d_mol, radius, fplen));
+  auto fp = MinimalLib::morgan_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
-std::string JSMol::get_pattern_fp(unsigned int fplen) const {
+std::string JSMol::get_pattern_fp(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(PatternFingerprintMol(*d_mol, fplen));
+  auto fp = MinimalLib::pattern_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
 }
 
-std::string JSMol::get_pattern_fp_as_binary_text(unsigned int fplen) const {
+std::string JSMol::get_pattern_fp_as_binary_text(
+    const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(PatternFingerprintMol(*d_mol, fplen));
+  auto fp = MinimalLib::pattern_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
-std::string JSMol::get_topological_torsion_fp(unsigned int fplen) const {
+std::string JSMol::get_topological_torsion_fp(
+    const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(
-      AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(*d_mol,
-                                                                 fplen));
+  auto fp =
+      MinimalLib::topological_torsion_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
 }
 
 std::string JSMol::get_topological_torsion_fp_as_binary_text(
-    unsigned int fplen) const {
+    const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(
-      AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(*d_mol,
-                                                                 fplen));
+  auto fp =
+      MinimalLib::topological_torsion_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
-std::string JSMol::get_rdk_fp(unsigned int fplen, int minPath,
-                              int maxPath) const {
+std::string JSMol::get_rdkit_fp(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(
-      RDKFingerprintMol(*d_mol, minPath, maxPath, fplen));
+  auto fp = MinimalLib::rdkit_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
 }
 
-std::string JSMol::get_rdk_fp_as_binary_text(unsigned int fplen, int minPath,
-                                             int maxPath) const {
+std::string JSMol::get_rdkit_fp_as_binary_text(
+    const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(
-      RDKFingerprintMol(*d_mol, minPath, maxPath, fplen));
+  auto fp = MinimalLib::rdkit_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
-std::string JSMol::get_atom_pair_fp(unsigned int fplen, int minDistance,
-                                    int maxDistance) const {
+std::string JSMol::get_atom_pair_fp(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(
-      AtomPairs::getHashedAtomPairFingerprintAsBitVect(
-          *d_mol, fplen, minDistance, maxDistance));
+  auto fp = MinimalLib::atom_pair_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
 }
 
-std::string JSMol::get_atom_pair_fp_as_binary_text(unsigned int fplen,
-                                                   int minDistance,
-                                                   int maxDistance) const {
+std::string JSMol::get_atom_pair_fp_as_binary_text(
+    const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(
-      AtomPairs::getHashedAtomPairFingerprintAsBitVect(
-          *d_mol, fplen, minDistance, maxDistance));
+  auto fp = MinimalLib::atom_pair_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
 
 #ifdef RDK_BUILD_AVALON_SUPPORT
-std::string get_avalon_fp(unsigned int fplen) const {
+std::string get_avalon_fp(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(new ExplicitBitVect(fplen));
-  AvalonTools::getAvalonFP(mol, *fp, fplen);
+  auto fp = MinimalLib::avalon_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToText(*fp);
   return res;
 }
 
-std::string get_avalon_fp_as_binary_text(unsigned int fplen) const {
+std::string get_avalon_fp_as_binary_text(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  std::unique_ptr<ExplicitBitVect> fp(new ExplicitBitVect(fplen));
-  AvalonTools::getAvalonFP(mol, *fp, fplen);
+  auto fp = MinimalLib::avalon_fp_as_bitvect(*d_mol, details.c_str());
   std::string res = BitVectToBinaryText(*fp);
+  return res;
 }
 #endif
 
@@ -720,8 +702,7 @@ JSMol *get_qmol(const std::string &input) {
   return new JSMol(mol);
 }
 
-JSReaction *get_reaction(const std::string &input,
-                         const std::string &details_json) {
+JSReaction *get_rxn(const std::string &input, const std::string &details_json) {
   auto rxn = MinimalLib::rxn_from_input(input, details_json);
   return new JSReaction(rxn);
 }

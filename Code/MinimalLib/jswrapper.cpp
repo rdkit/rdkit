@@ -179,94 +179,131 @@ JSMol *get_mol_from_uint8array(const emscripten::val &pklAsUInt8Array) {
   return get_mol_from_pickle(pklAsUInt8Array.as<std::string>());
 }
 
-JSReaction *get_reaction_no_details(const std::string &input) {
-  return get_reaction(input, std::string());
+JSReaction *get_rxn_no_details(const std::string &input) {
+  return get_rxn(input, std::string());
+}
+
+std::string parse_morgan_fp_param(unsigned int radius, unsigned int fplen,
+                                  const std::string &funcName) {
+  static std::unordered_set<std::string> deprecationMsgShown;
+  if (deprecationMsgShown.find(funcName) == deprecationMsgShown.end()) {
+    deprecationMsgShown.insert(funcName);
+    std::cerr << funcName << "(radius, fplen) is deprecated, use " << funcName
+              << "(details) instead" << std::endl;
+  }
+  std::stringstream ss;
+  ss << "{\"radius\":" << radius << ",\"nBits\":" << fplen << "}";
+  return ss.str();
+}
+
+// DEPRECATED
+std::string get_morgan_fp_deprecated(const JSMol &self, unsigned int radius,
+                                     unsigned int fplen) {
+  return self.get_morgan_fp(
+      parse_morgan_fp_param(radius, fplen, "get_morgan_fp"));
 }
 
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
-                                            unsigned int radius,
-                                            unsigned int fplen) {
-  std::string fp = self.get_morgan_fp_as_binary_text(radius, fplen);
+                                            const std::string &details) {
+  auto fp = self.get_morgan_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
-  return get_morgan_fp_as_uint8array(self, 2, 2048);
+  return get_morgan_fp_as_uint8array(self, "{}");
 }
 
-emscripten::val get_pattern_fp_as_uint8array(const JSMol &self,
-                                             unsigned int fplen) {
-  std::string fp = self.get_pattern_fp_as_binary_text(fplen);
+// DEPRECATED
+emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
+                                            unsigned int radius,
+                                            unsigned int fplen) {
+  auto fp = self.get_morgan_fp_as_binary_text(
+      parse_morgan_fp_param(radius, fplen, "get_morgan_fp_as_uint8array"));
+  return binary_string_to_uint8array(fp);
+}
+
+std::string parse_pattern_fp_param(const emscripten::val &param,
+                                   const std::string &funcName) {
+  static std::unordered_set<std::string> deprecationMsgShown;
+  std::string details;
+  if (param.typeOf().as<std::string>() == "number") {
+    unsigned int fplen = param.as<unsigned int>();
+    if (deprecationMsgShown.find(funcName) == deprecationMsgShown.end()) {
+      deprecationMsgShown.insert(funcName);
+      std::cerr << funcName << "(fplen) is deprecated, use " << funcName
+                << "(details) instead" << std::endl;
+    }
+    std::stringstream ss;
+    ss << "{\"nBits\":" << fplen << "}";
+    details = ss.str();
+  } else if (param.typeOf().as<std::string>() == "string") {
+    details = param.as<std::string>();
+  } else {
+    throw std::runtime_error(
+        (funcName +
+         "get_pattern_fp expects a JSON string or an unsigned int as parameter")
+            .c_str());
+  }
+  return details;
+}
+
+std::string get_pattern_fp_helper(const JSMol &self,
+                                  const emscripten::val &param) {
+  auto details = parse_pattern_fp_param(param, "get_pattern_fp");
+  return self.get_pattern_fp(details);
+}
+
+emscripten::val get_pattern_fp_as_uint8array_helper(
+    const JSMol &self, const emscripten::val &param) {
+  auto details = parse_pattern_fp_param(param, "get_pattern_fp_as_uint8array");
+  auto fp = self.get_pattern_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
 emscripten::val get_pattern_fp_as_uint8array(const JSMol &self) {
-  return get_pattern_fp_as_uint8array(self, 2048);
+  auto fp = self.get_pattern_fp_as_binary_text("{}");
+  return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_topological_torsion_fp_as_uint8array(const JSMol &self,
-                                                         unsigned int fplen) {
-  std::string fp = self.get_topological_torsion_fp_as_binary_text(fplen);
+emscripten::val get_topological_torsion_fp_as_uint8array(
+    const JSMol &self, const std::string &details) {
+  auto fp = self.get_topological_torsion_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
 emscripten::val get_topological_torsion_fp_as_uint8array(const JSMol &self) {
-  return get_topological_torsion_fp_as_uint8array(self, 2048);
+  return get_topological_torsion_fp_as_uint8array(self, "{}");
 }
 
-emscripten::val get_rdk_fp_as_uint8array(const JSMol &self, unsigned int fplen,
-                                         int minPath, int maxPath) {
-  std::string fp = self.get_rdk_fp_as_binary_text(fplen, minPath, maxPath);
+emscripten::val get_rdkit_fp_as_uint8array(const JSMol &self,
+                                           const std::string &details) {
+  auto fp = self.get_rdkit_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_rdk_fp_as_uint8array(const JSMol &self, unsigned int fplen,
-                                         int minPath) {
-  return get_rdk_fp_as_uint8array(self, fplen, minPath, 30);
-}
-
-emscripten::val get_rdk_fp_as_uint8array(const JSMol &self,
-                                         unsigned int fplen) {
-  return get_rdk_fp_as_uint8array(self, fplen, 1, 30);
-}
-
-emscripten::val get_rdk_fp_as_uint8array(const JSMol &self) {
-  return get_rdk_fp_as_uint8array(self, 2048, 1, 30);
+emscripten::val get_rdkit_fp_as_uint8array(const JSMol &self) {
+  return get_rdkit_fp_as_uint8array(self, "{}");
 }
 
 emscripten::val get_atom_pair_fp_as_uint8array(const JSMol &self,
-                                               unsigned int fplen,
-                                               int minDistance,
-                                               int maxDistance) {
-  std::string fp =
-      self.get_atom_pair_fp_as_binary_text(fplen, minDistance, maxDistance);
+                                               const std::string &details) {
+  auto fp = self.get_atom_pair_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
-}
-
-emscripten::val get_atom_pair_fp_as_uint8array(const JSMol &self,
-                                               unsigned int fplen,
-                                               int minDistance) {
-  return get_atom_pair_fp_as_uint8array(self, fplen, minDistance, 30);
-}
-
-emscripten::val get_atom_pair_fp_as_uint8array(const JSMol &self,
-                                               unsigned int fplen) {
-  return get_atom_pair_fp_as_uint8array(self, fplen, 1, 30);
 }
 
 emscripten::val get_atom_pair_fp_as_uint8array(const JSMol &self) {
-  return get_atom_pair_fp_as_uint8array(self, 2048, 1, 30);
+  return get_atom_pair_fp_as_uint8array(self, "{}");
 }
 
 #ifdef RDK_BUILD_AVALON_SUPPORT
 emscripten::val get_avalon_fp_as_uint8array(const JSMol &self,
-                                            unsigned int fplen) {
-  std::string fp = self.get_avalon_fp_as_binary_text(fplen);
+                                            const std::string &details) {
+  auto fp = self.get_avalon_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
 emscripten::val get_avalon_fp_as_uint8array(const JSMol &self) {
-  return get_avalon_fp_as_uint8array(self, 512);
+  return get_avalon_fp_as_uint8array(self, "{}");
 }
 #endif
 
@@ -302,57 +339,55 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_morgan_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
                     get_morgan_fp_as_uint8array))
+      .function(
+          "get_morgan_fp_as_uint8array",
+          select_overload<emscripten::val(const JSMol &, const std::string &)>(
+              get_morgan_fp_as_uint8array))
+      // DEPRECATED
       .function("get_morgan_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &, unsigned int,
                                                 unsigned int)>(
                     get_morgan_fp_as_uint8array))
+      .function(
+          "get_pattern_fp",
+          select_overload<std::string(const JSMol &, const emscripten::val &)>(
+              get_pattern_fp_helper))
       .function("get_pattern_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
                     get_pattern_fp_as_uint8array))
       .function("get_pattern_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &, unsigned int)>(
-                    get_pattern_fp_as_uint8array))
+                select_overload<emscripten::val(const JSMol &,
+                                                const emscripten::val &)>(
+                    get_pattern_fp_as_uint8array_helper))
       .function("get_topological_torsion_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
                     get_topological_torsion_fp_as_uint8array))
-      .function("get_topological_torsion_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &, unsigned int)>(
-                    get_topological_torsion_fp_as_uint8array))
-      .function("get_rdk_fp_as_uint8array",
+      .function(
+          "get_topological_torsion_fp_as_uint8array",
+          select_overload<emscripten::val(const JSMol &, const std::string &)>(
+              get_topological_torsion_fp_as_uint8array))
+      .function("get_rdkit_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
-                    get_rdk_fp_as_uint8array))
-      .function("get_rdk_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &, unsigned int)>(
-                    get_rdk_fp_as_uint8array))
+                    get_rdkit_fp_as_uint8array))
       .function(
-          "get_rdk_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, unsigned int, int)>(
-              get_rdk_fp_as_uint8array))
-      .function(
-          "get_rdk_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, unsigned int, int,
-                                          int)>(get_rdk_fp_as_uint8array))
+          "get_rdkit_fp_as_uint8array",
+          select_overload<emscripten::val(const JSMol &, const std::string &)>(
+              get_rdkit_fp_as_uint8array))
       .function("get_atom_pair_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
-                    get_atom_pair_fp_as_uint8array))
-      .function("get_atom_pair_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &, unsigned int)>(
                     get_atom_pair_fp_as_uint8array))
       .function(
           "get_atom_pair_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, unsigned int, int)>(
+          select_overload<emscripten::val(const JSMol &, const std::string &)>(
               get_atom_pair_fp_as_uint8array))
-      .function(
-          "get_atom_pair_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, unsigned int, int,
-                                          int)>(get_atom_pair_fp_as_uint8array))
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
                     get_avalon_fp_as_uint8array))
-      .function("get_avalon_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &, unsigned int)>(
-                    get_avalon_fp_as_uint8array))
+      .function(
+          "get_avalon_fp_as_uint8array",
+          select_overload<emscripten::val(const JSMol &, const std::string &)>(
+              get_avalon_fp_as_uint8array))
 #endif
 #endif
       .function("get_substruct_match", &JSMol::get_substruct_match)
@@ -361,45 +396,33 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_morgan_fp",
                 select_overload<std::string() const>(&JSMol::get_morgan_fp))
       .function("get_morgan_fp",
-                select_overload<std::string(unsigned int, unsigned int) const>(
+                select_overload<std::string(const std::string &) const>(
                     &JSMol::get_morgan_fp))
+      // DEPRECATED
+      .function("get_morgan_fp", get_morgan_fp_deprecated)
       .function("get_pattern_fp",
                 select_overload<std::string() const>(&JSMol::get_pattern_fp))
-      .function("get_pattern_fp",
-                select_overload<std::string(unsigned int) const>(
-                    &JSMol::get_pattern_fp))
       .function("get_topological_torsion_fp",
                 select_overload<std::string() const>(
                     &JSMol::get_topological_torsion_fp))
       .function("get_topological_torsion_fp",
-                select_overload<std::string(unsigned int) const>(
+                select_overload<std::string(const std::string &) const>(
                     &JSMol::get_topological_torsion_fp))
-      .function("get_rdk_fp",
-                select_overload<std::string() const>(&JSMol::get_rdk_fp))
-      .function("get_rdk_fp", select_overload<std::string(unsigned int) const>(
-                                  &JSMol::get_rdk_fp))
-      .function("get_rdk_fp",
-                select_overload<std::string(unsigned int, int) const>(
-                    &JSMol::get_rdk_fp))
-      .function("get_rdk_fp",
-                select_overload<std::string(unsigned int, int, int) const>(
-                    &JSMol::get_rdk_fp))
+      .function("get_rdkit_fp",
+                select_overload<std::string() const>(&JSMol::get_rdkit_fp))
+      .function("get_rdkit_fp",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMol::get_rdkit_fp))
       .function("get_atom_pair_fp",
                 select_overload<std::string() const>(&JSMol::get_atom_pair_fp))
       .function("get_atom_pair_fp",
-                select_overload<std::string(unsigned int) const>(
-                    &JSMol::get_atom_pair_fp))
-      .function("get_atom_pair_fp",
-                select_overload<std::string(unsigned int, int) const>(
-                    &JSMol::get_atom_pair_fp))
-      .function("get_atom_pair_fp",
-                select_overload<std::string(unsigned int, int, int) const>(
+                select_overload<std::string(const std::string &) const>(
                     &JSMol::get_atom_pair_fp))
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp",
                 select_overload<std::string() const>(&JSMol::get_avalon_fp))
       .function("get_avalon_fp",
-                select_overload<std::string(unsigned int) const>(
+                select_overload<std::string(const std::string &) const>(
                     &JSMol::get_avalon_fp))
 #endif
 
@@ -511,6 +534,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
            allow_raw_pointers());
   function("get_mol_copy", &get_mol_copy, allow_raw_pointers());
   function("get_qmol", &get_qmol, allow_raw_pointers());
-  function("get_reaction", &get_reaction, allow_raw_pointers());
-  function("get_reaction", &get_reaction_no_details, allow_raw_pointers());
+  function("get_rxn", &get_rxn, allow_raw_pointers());
+  function("get_rxn", &get_rxn_no_details, allow_raw_pointers());
 }
