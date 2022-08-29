@@ -236,7 +236,6 @@ void test_rxn_svg() {
   assert(strstr(svg, "width='350px'"));
   assert(strstr(svg, "height='300px'"));
   assert(strstr(svg, "</svg>"));
-  printf("*** svg ***\n%s\n\n", svg);
   free(pkl);
 
   pkl = get_rxn(
@@ -273,7 +272,6 @@ M  END",
   assert(count_occurrences(svg, "<path") > 0);
   assert(count_occurrences(svg, "<path") ==
          count_occurrences(svg_from_block, "<path"));
-  printf("*** svg_from_block ***\n%s\n\n", svg_from_block);
   free(svg);
   free(svg_from_block);
   free(pkl);
