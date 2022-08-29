@@ -1664,7 +1664,7 @@ void DrawMol::makeDoubleBondLines(
     auto l2 = (l2s - l2f).lengthSq();
     if ((bond->getBeginAtom()->getDegree() == 1 ||
          bond->getEndAtom()->getDegree() == 1) &&
-        !(cols.first == cols.second) && fabs(l1 - l2) > 0.01) {
+        cols.first != cols.second && fabs(l1 - l2) > 0.01) {
       double midlen = sqrt(l1) / 2.0;
       Point2D notMid;
       if (bond->getBeginAtom()->getDegree() == 1) {
