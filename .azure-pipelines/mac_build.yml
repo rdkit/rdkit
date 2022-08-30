@@ -17,7 +17,7 @@ steps:
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda create --name rdkit_build $(compiler) cmake \
+    conda create --name rdkit_build -c conda-forge $(compiler) cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         qt \
         numpy matplotlib cairo pillow eigen pandas  \

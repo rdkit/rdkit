@@ -24,7 +24,7 @@ jobs:
     compiler: clangxx_osx-64
     boost_version: 1.76.0
     number_of_cores: sysctl -n hw.ncpu
-    python_name: python38
+    python_name: python39
     target_platform: 10.9
   steps:
   - template: .azure-pipelines/mac_build.yml
