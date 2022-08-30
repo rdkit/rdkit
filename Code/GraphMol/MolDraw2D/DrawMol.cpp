@@ -1890,28 +1890,8 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
     col2 = bondColours_[bond->getIdx()].second;
   } else {
     if (!highlight_bond || drawOptions_.continuousHighlight) {
-      int at1_idx = bond->getBeginAtomIdx();
-      col1 = getColour(at1_idx);
-      Atom *at1 = drawMol_->getAtomWithIdx(at1_idx);
-      const Bond *bond1 = atomHighlightedBond(at1);
-      if (bond1 != nullptr) {
-        DrawColour bondCol = getHighlightBondColour(
-            bond1->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
-        if (col1 == bondCol) {
-          col1 = getColourByAtomicNum(at1->getAtomicNum(), drawOptions_);
-        }
-      }
-      int at2_idx = bond->getEndAtomIdx();
-      col2 = getColour(at2_idx);
-      Atom *at2 = drawMol_->getAtomWithIdx(at1_idx);
-      const Bond *bond2 = atomHighlightedBond(at1);
-      if (bond2 != nullptr) {
-        DrawColour bondCol = getHighlightBondColour(
-            bond2->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
-        if (col2 == bondCol) {
-          col2 = getColourByAtomicNum(at1->getAtomicNum(), drawOptions_);
-        }
-      }
+      col1 = getColour(bond->getBeginAtomIdx());
+      col2 = getColour(bond->getEndAtomIdx());
     } else {
       if (highlightBondMap_.find(bond->getIdx()) != highlightBondMap_.end()) {
         col1 = col2 = highlightBondMap_.find(bond->getIdx())->second;
