@@ -22,7 +22,7 @@ jobs:
     vmImage: macos-latest
   variables:
     compiler: clangxx_osx-64
-    boost_version: 1.71.0
+    boost_version: 1.76.0
     number_of_cores: sysctl -n hw.ncpu
     python_name: python38
     target_platform: 10.9
