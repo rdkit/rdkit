@@ -2025,6 +2025,13 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           nbrIdx > thisIdx) {
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       bond->getIdx()) != highlightBonds_.end()) {
+          // This bond is to be highlighted by drawing a 4-6-sided
+          // polygon underneath it.  If it is an isolated highlight, it
+          // will be a rectangle underneath the bond.  If it joins
+          // another highlighted bond, it will be mitred so the two join
+          // without gaps.
+          // These effects can be seen in bond_highlights_8.svg produced
+          // by catch_tests.cpp.
           DrawColour col = getHighlightBondColour(
               bond->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
           std::vector<Atom *> thisHighNbrs;
@@ -2038,6 +2045,8 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           makeHighlightEnd(nbr, atom, lineWidth, nbrHighNbrs, end2points);
           std::vector<Point2D> points(end1points);
           if (end1points.size() > 1 && end2points.size() > 1) {
+            // If the two ends of the polygon point in opposite
+            // directions swap the 2nd end so the path runs correctly.
             auto v1 = end1points.front().directionVector(end1points.back());
             auto v2 = end2points.front().directionVector(end2points.back());
             if (v1.dotProduct(v2) > 0.0) {
@@ -3037,10 +3046,11 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
                                double lineWidth,
                                const std::vector<Atom *> &end1HighNbrs,
                                std::vector<Point2D> &points) {
+  double halfLineWidth = lineWidth / 2.0;
   // find the intersection point of two lines parallel to lines from e2 to e1
   // and e3 to e1 and lineWidth from them.  If pm is 1, it's inside the
-  // angle they make, if pm is -1, it's outside.
-  double halfLineWidth = lineWidth / 2.0;
+  // angle they make, if pm is -1, it's outside.  If the lines don't
+  // intersect, it returns e1.
   auto innerPoint = [&](Point2D &e1, Point2D &e2, Point2D &e3,
                         double pm) -> Point2D {
     auto perp1 = calcInnerPerpendicular(e2, e1, e3);
@@ -3063,18 +3073,26 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
   auto end2Cds = atCds_[end2->getIdx()];
 
   if (end1HighNbrs.empty()) {
+    // If end1 doesn't have any highlighted neighbour bonds, then
+    // it's a flat end.
     auto perp = calcPerpendicular(end1Cds, end2Cds);
     points.push_back(end1Cds + perp * halfLineWidth);
     points.push_back(end1Cds - perp * halfLineWidth);
   } else if (end1HighNbrs.size() == 1) {
+    // There is only 1 intersection to deal with, which is easier - just
+    // a slanted end.
     auto end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
     auto ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
     points.push_back(ins1);
     auto ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);
     points.push_back(ins2);
   } else if (end1HighNbrs.size() > 1) {
-    // we want the first and last bond vectors going round from the
-    // end1->end2 vector.
+    // In this case, it needs a triangular end, as it's a junction
+    // of at least 3 highlights.  The point of the triangle is
+    // end1. The other points are defined by the first and last bond
+    // vectors going round from the end1->end2 vector, so sort the
+    // neighbours in order of increasing angle made with the end2->end1
+    // vector.
     auto bvec = end1Cds.directionVector(end2Cds);
     std::vector<std::pair<int, double>> angs;
     for (auto i = 0; i < end1HighNbrs.size(); ++i) {

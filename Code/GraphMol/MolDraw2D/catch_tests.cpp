@@ -242,6 +242,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"bond_highlights_5.svg", 3500788273U},
     {"bond_highlights_6.svg", 3008628729U},
     {"bond_highlights_7.svg", 2936856212U},
+    {"bond_highlights_8.svg", 64473502U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -5606,4 +5607,28 @@ TEST_CASE("Bond Highlights", "") {
     check_file_hash("bond_highlights_7.svg");
   }
 #endif
+  {
+    // check 3- and 4-way intersections of continuous highlights are ok
+    auto m = "c1c(C(C)(C)C)cccc1"_smiles;
+    REQUIRE(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().continuousHighlight = true;
+    drawer.drawOptions().addBondIndices = true;
+    std::vector<int> highBnds{0, 1, 2, 3, 4, 5, 6};
+    std::map<int, DrawColour> bond_highlight_colors;
+    bond_highlight_colors[0] = DrawColour(1.0, 0.0, 0.0);
+    bond_highlight_colors[1] = DrawColour(0.0, 1.0, 0.0);
+    bond_highlight_colors[3] = DrawColour(1.0, 0.0, 0.0);
+    bond_highlight_colors[4] = DrawColour(0.0, 1.0, 0.0);
+    bond_highlight_colors[5] = DrawColour(0.0, 0.0, 1.0);
+    drawer.drawMolecule(*m, nullptr, &highBnds, nullptr,
+                        &bond_highlight_colors);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_8.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_8.svg");
+  }
 }

@@ -172,6 +172,8 @@ class DrawMol {
   void makeContinuousHighlights(double scale);
   void makeAtomCircleHighlights();
   void makeAtomEllipseHighlights(double lineWidth);
+  // These are the lines for continuous highlights, that are
+  // now filled trapezoids rather than fat simple lines.
   void makeBondHighlightLines(double lineWidth, double scale);
   void calcAnnotationPosition(const Atom *atom, DrawAnnotation &annot) const;
   void calcAnnotationPosition(const Bond *bond, DrawAnnotation &annot) const;
@@ -243,6 +245,10 @@ class DrawMol {
                          std::vector<Point2D> &otherBondVecs) const;
   void adjustBondsOnSolidWedgeEnds();
   void smoothBondJoins();
+  // If doing a continuous highlight, add to points the 2 or 3 points that
+  // will be for the end1 end of the highlight.  The final highlight will
+  // be a 4-6 sided polygon formed by calling this twice, with the ends in
+  // opposite order the second time.
   void makeHighlightEnd(const Atom *end1, const Atom *end2, double lineWidth,
                         const std::vector<Atom *> &end1HighNbrs,
                         std::vector<Point2D> &points);
