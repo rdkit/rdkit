@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 project (RDKit)
 
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.19.0")
    cmake_policy(SET CMP0111 NEW)
 endif()
 
