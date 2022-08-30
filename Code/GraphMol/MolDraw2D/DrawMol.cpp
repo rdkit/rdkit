@@ -2018,7 +2018,7 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
     lineWidth *= lineWidthScaleFactor;
   }
   for (const auto atom : drawMol_->atoms()) {
-    unsigned int thisIdx = atom->getIdx();
+    auto thisIdx = atom->getIdx();
     for (const auto bond : drawMol_->atomBonds(atom)) {
       unsigned int nbrIdx = bond->getOtherAtomIdx(thisIdx);
       if (nbrIdx < static_cast<unsigned int>(atCds_.size()) &&
@@ -2027,8 +2027,9 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
                       bond->getIdx()) != highlightBonds_.end()) {
           DrawColour col = getHighlightBondColour(
               bond->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
-          std::vector<Atom *> thisHighNbrs, nbrHighNbrs;
-          const Atom *nbr = drawMol_->getAtomWithIdx(nbrIdx);
+          std::vector<Atom *> thisHighNbrs;
+          std::vector<Atom *> nbrHighNbrs;
+          auto nbr = drawMol_->getAtomWithIdx(nbrIdx);
           findHighBondNbrs(atom, nbr, thisHighNbrs);
           findHighBondNbrs(nbr, atom, nbrHighNbrs);
           std::vector<Point2D> end1points;
@@ -2037,8 +2038,8 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           makeHighlightEnd(nbr, atom, lineWidth, nbrHighNbrs, end2points);
           std::vector<Point2D> points(end1points);
           if (end1points.size() > 1 && end2points.size() > 1) {
-            Point2D v1 = end1points.front().directionVector(end1points.back());
-            Point2D v2 = end2points.front().directionVector(end2points.back());
+            auto v1 = end1points.front().directionVector(end1points.back());
+            auto v2 = end2points.front().directionVector(end2points.back());
             if (v1.dotProduct(v2) > 0.0) {
               std::reverse(end2points.begin(), end2points.end());
             }
@@ -3001,6 +3002,11 @@ void DrawMol::smoothBondJoins() {
                 // make a small polyline to paper over the cracks.
                 int p12 = p1 == 1 ? 0 : 1;
                 int p22 = p2 == 1 ? 0 : 1;
+                // If the lines are different colours, make the line round
+                // the corner shorter so that one colour doesn't extend
+                // into the other one.  If they're the same colour, it's
+                // better if they go round the corner a bit further to hide
+                // the join better.  The numbers are empirical.
                 double len =
                     sbl1->lineColour_ == sbl2->lineColour_ ? 0.05 : 0.025;
                 Point2D dv1 = (sbl1->points_[p1] - sbl1->points_[p12]) * len;
@@ -3037,13 +3043,13 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
   double halfLineWidth = lineWidth / 2.0;
   auto innerPoint = [&](Point2D &e1, Point2D &e2, Point2D &e3,
                         double pm) -> Point2D {
-    Point2D perp1 = calcInnerPerpendicular(e2, e1, e3);
-    Point2D perp2 = calcInnerPerpendicular(e3, e1, e2);
-    Point2D line12 = e2 + perp1 * pm * halfLineWidth;
-    Point2D line11 = e1 + perp1 * pm * halfLineWidth;
+    auto perp1 = calcInnerPerpendicular(e2, e1, e3);
+    auto perp2 = calcInnerPerpendicular(e3, e1, e2);
+    auto line12 = e2 + perp1 * pm * halfLineWidth;
+    auto line11 = e1 + perp1 * pm * halfLineWidth;
     line11 = line12 + line12.directionVector(line11) * 2.0 * (e1 - e2).length();
-    Point2D line22 = e3 + perp2 * pm * halfLineWidth;
-    Point2D line21 = e1 + perp2 * pm * halfLineWidth;
+    auto line22 = e3 + perp2 * pm * halfLineWidth;
+    auto line21 = e1 + perp2 * pm * halfLineWidth;
     line21 = line22 + line22.directionVector(line21) * 2.0 * (e1 - e3).length();
     Point2D ins;
     if (doLinesIntersect(line12, line11, line22, line21, &ins)) {
@@ -3057,23 +3063,23 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
   auto end2Cds = atCds_[end2->getIdx()];
 
   if (end1HighNbrs.empty()) {
-    Point2D perp = calcPerpendicular(end1Cds, end2Cds);
+    auto perp = calcPerpendicular(end1Cds, end2Cds);
     points.push_back(end1Cds + perp * halfLineWidth);
     points.push_back(end1Cds - perp * halfLineWidth);
   } else if (end1HighNbrs.size() == 1) {
-    Point2D end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
-    Point2D ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
+    auto end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
+    auto ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
     points.push_back(ins1);
-    Point2D ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);
+    auto ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);
     points.push_back(ins2);
   } else if (end1HighNbrs.size() > 1) {
     // we want the first and last bond vectors going round from the
     // end1->end2 vector.
-    Point2D bvec = end1Cds.directionVector(end2Cds);
+    auto bvec = end1Cds.directionVector(end2Cds);
     std::vector<std::pair<int, double>> angs;
     for (auto i = 0; i < end1HighNbrs.size(); ++i) {
-      Point2D ovec = end1Cds.directionVector(atCds_[end1HighNbrs[i]->getIdx()]);
-      double ang = bvec.signedAngleTo(ovec);
+      auto ovec = end1Cds.directionVector(atCds_[end1HighNbrs[i]->getIdx()]);
+      auto ang = bvec.signedAngleTo(ovec);
       angs.push_back(std::make_pair(i, ang));
     }
     std::sort(angs.begin(), angs.end(),
@@ -3086,11 +3092,11 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     if (angs.front().second > M_PI && angs.back().second > M_PI) {
       std::reverse(angs.begin(), angs.end());
     }
-    Point2D end3Cds = atCds_[end1HighNbrs[angs.front().first]->getIdx()];
-    Point2D ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
+    auto end3Cds = atCds_[end1HighNbrs[angs.front().first]->getIdx()];
+    auto ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
     points.push_back(ins1);
     points.push_back(end1Cds);
-    Point2D end4Cds = atCds_[end1HighNbrs[angs.back().first]->getIdx()];
+    auto end4Cds = atCds_[end1HighNbrs[angs.back().first]->getIdx()];
     // if both angles are on the same side as end1->end2, they need to
     // be the other way round.
     double pm = 1.0;
@@ -3098,7 +3104,7 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
         (angs.front().second < M_PI && angs.back().second < M_PI)) {
       pm = -1.0;
     }
-    Point2D ins2 = innerPoint(end1Cds, end2Cds, end4Cds, pm);
+    auto ins2 = innerPoint(end1Cds, end2Cds, end4Cds, pm);
     points.push_back(ins2);
   }
 }
