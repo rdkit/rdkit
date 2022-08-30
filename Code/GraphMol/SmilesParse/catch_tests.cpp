@@ -1985,3 +1985,27 @@ TEST_CASE("Github #5372: errors with fragments and doRandom=True") {
     CHECK(smi == "C.C");
   }
 }
+
+TEST_CASE("github #5466 writing floating point atom props cxsmiles", "[smiles][cxsmiles]") {
+  SECTION("simple") {
+    auto mol = "C"_smiles;
+    REQUIRE(mol);
+    
+    mol->getAtomWithIdx(0)->setProp<std::string>("foo", "7.6");
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "C |atomProp:0.foo.7&#46;6|");
+
+    // 7.5 is exactly representable in IEEE so this helps :)
+    mol->getAtomWithIdx(0)->setProp<double>("foo", 7.5);
+    smi = MolToCXSmiles(*mol);
+    CHECK(smi == "C |atomProp:0.foo.7&#46;5|");
+  }
+  SECTION("label with .") {
+    auto mol = "C"_smiles;
+    REQUIRE(mol);
+    
+    mol->getAtomWithIdx(0)->setProp<int>("foo.foo", 7);
+    auto smi = MolToCXSmiles(*mol);
+    CHECK(smi == "C |atomProp:0.foo&#46;foo.7|");
+  }
+}
