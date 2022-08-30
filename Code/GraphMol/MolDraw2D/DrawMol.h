@@ -247,9 +247,6 @@ class DrawMol {
                         const std::vector<Atom *> &end1HighNbrs,
                         std::vector<Point2D> &points);
   DrawColour getColour(int atom_idx) const;
-  // return the pointer to a bond that is incident on atom and highlighted,
-  // or nullptr if there isn't one.
-  const Bond *atomHighlightedBond(const Atom *atom) const;
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;

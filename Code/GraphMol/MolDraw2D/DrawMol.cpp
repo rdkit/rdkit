@@ -3165,20 +3165,6 @@ DrawColour DrawMol::getColour(int atom_idx) const {
 }
 
 // ****************************************************************************
-const Bond *DrawMol::atomHighlightedBond(const Atom *atom) const {
-  for (const auto &nbri :
-       boost::make_iterator_range(drawMol_->getAtomBonds(atom))) {
-    const auto &nbr = (*drawMol_)[nbri];
-    if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
-                  nbr->getIdx()) != highlightBonds_.end() ||
-        highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
-      return nbr;
-    }
-  }
-  return nullptr;
-}
-
-// ****************************************************************************
 void centerMolForDrawing(RWMol &mol, int confId) {
   auto &conf = mol.getConformer(confId);
   RDGeom::Transform3D tf;
