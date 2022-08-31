@@ -15,22 +15,21 @@
 
 namespace RDKit {
 
-void connectivityHuckel(RWMol &mol, int charge) {
+void connectivityHueckel(RWMol &mol, int charge) {
     auto numAtoms = mol.getNumAtoms();
     mol.getAtomWithIdx(0)->setFormalCharge(charge);
     EHTTools::EHTResults res;
     bool success = runMol(mol, res);
+    // as of this writing runMol() always returns true, so we ignore the return value.
     double *mat = res.reducedOverlapPopulationMatrix.get();
     int matInd = 0;
-    int range = 1;
     for (unsigned int i = 0; i < numAtoms; i++) {
-        for (unsigned int j = 0; j < range; j++) {
-            if (mat[matInd] >= 0.15 && i != j) {
+        for (unsigned int j = 0; j < i + 1; j++) {
+            if (i != j && mat[matInd] >= 0.15) {
                 mol.addBond(i, j, Bond::BondType::SINGLE);
             }
             matInd++;
         }
-        range++;
     }
 }
 
@@ -51,7 +50,7 @@ void connectivityVdW(RWMol &mol, double covFactor) {
     }
 }
 
-void determineConnectivity(RWMol &mol, bool useHuckel, int charge, double covFactor) {
+void determineConnectivity(RWMol &mol, bool useHueckel, int charge, double covFactor) {
     auto numAtoms = mol.getNumAtoms();
     for (unsigned int i = 0; i < numAtoms; i++) {
         for (unsigned int j = i + 1; j < numAtoms; j++) {
@@ -60,8 +59,8 @@ void determineConnectivity(RWMol &mol, bool useHuckel, int charge, double covFac
             mol.getAtomWithIdx(j)->setNoImplicit(true);
         }
     }
-    if (useHuckel) {
-        connectivityHuckel(mol, charge);
+    if (useHueckel) {
+        connectivityHueckel(mol, charge);
     } else {
         connectivityVdW(mol, covFactor);
     }

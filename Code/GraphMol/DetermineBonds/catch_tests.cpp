@@ -9,6 +9,7 @@
 #include <GraphMol/AddHs.cpp>
 #include <iostream>
 #include <fstream>
+#include <Resonance.h>
 
 using namespace RDKit;
 
@@ -26,7 +27,7 @@ TEST_CASE("Determine Connectivity") {
             std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
             REQUIRE(orig);
 
-            determineConnectivity(*mol, false, 0);
+            determineConnectivity(*mol, false);
             MolOps::removeAllHs(*mol, false);
 
             auto numAtoms = mol->getNumAtoms();
@@ -46,7 +47,7 @@ TEST_CASE("Determine Connectivity") {
         }
     } // SECTION
     
-    SECTION("Huckel") {
+    SECTION("Hueckel") {
         unsigned int numTests = 39;
         for (unsigned int i = 0; i < numTests; i++) {
             std::string rdbase = getenv("RDBASE");

@@ -1,3 +1,4 @@
+# FIX: there's probably a better way to do this
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../External/YAeHMOP/src/yaehmop_project-build)
 
 rdkit_library(DetermineBonds DetermineBonds.cpp

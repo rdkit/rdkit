@@ -17,11 +17,11 @@ namespace RDKit {
 // ! assigns atomic connectivity to a molecule using atomic coordinates, disregarding pre-existing bonds
 /*!
     \param mol is the molecule of interest; it must have a 3D conformer
-    \param useHuckel (optional) if this is  \c true, the extended Huckel theorem will be used to determine connectivity rather than the van der Waals method
-    \param charge (optional) the charge of the molecule; it must be provided if the Huckel method is used and charge is non-zero
+    \param useHueckel (optional) if this is  \c true, the extended Hueckel theorem will be used to determine connectivity rather than the van der Waals method
+    \param charge (optional) the charge of the molecule; it must be provided if the Hueckel method is used and charge is non-zero
     \param covFactor (optional) the factor with which to multiply each covalent radius if the van der Waals method is used
  */
-void determineConnectivity(RWMol &mol, bool useHuckel=false, int charge=0, double covFactor=1.3);
+void determineConnectivity(RWMol &mol, bool useHueckel=false, int charge=0, double covFactor=1.3);
 
 }
 
