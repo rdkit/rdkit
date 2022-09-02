@@ -277,6 +277,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
     target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
+
+    set(Boost_USE_STATIC_LIBS OFF)
   endif()
   
   find_package(NumPy REQUIRED)
