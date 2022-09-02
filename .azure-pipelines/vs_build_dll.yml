@@ -4,8 +4,8 @@ steps:
 - script: |
     conda config --set always_yes yes --set changeps1 no
     conda info -a
-    conda create --name rdkit_build ^
-        boost-cpp=$(boost_version) boost=$(boost_version) ^
+    conda create -c main --name rdkit_build ^
+        python=3.9 boost-cpp=$(boost_version) boost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas
     call activate rdkit_build
     conda install -c conda-forge cmake nbval
