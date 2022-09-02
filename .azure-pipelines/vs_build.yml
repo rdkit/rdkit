@@ -3,9 +3,8 @@ steps:
   displayName: Setup build environment
 - script: |
     conda config --set always_yes yes --set changeps1 no
-    conda install -c conda-forge mamba
     conda info -a
-    mamba create -c main --name rdkit_build ^
+    conda create -c conda-forge --name rdkit_build ^
         python=3.9 boost-cpp=$(boost_version) boost=$(boost_version) ^
         numpy matplotlib cairo pillow eigen pandas ^
         sphinx=3.1.2 recommonmark
