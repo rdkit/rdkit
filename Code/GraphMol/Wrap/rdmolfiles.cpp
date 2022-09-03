@@ -1925,6 +1925,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      RETURNS:
        a Mol object, None on failure.)DOC";
+  
+  std::string cdxml_notes =
+    R"DOC()DOC";
+
   python::def(
       "MolFromPNGFile", MolFromPNGFile,
       (python::arg("filename"), python::arg("params") = python::object()),
@@ -1939,12 +1943,48 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg("filename"), python::arg("tag") = PNGData::pklTag,
                python::arg("params") = python::object()),
               "returns a tuple of molecules constructed from the PNG file");
+
+  docString =
+      R"DOC(Construct a molecule from a cdxml file.
+
+     Note that the CDXML format is large and complex, the RDKit doesn't support
+     full functionality, just the base ones required for molecule and
+     reaction parsing.
+
+     ARGUMENTS:
+
+       - filename: the cdxml filename
+
+       - sanitize: if True, sanitize the molecules [default True]
+
+     RETURNS:
+       an iterator of parsed Mol objects.)DOC";
+  
   python::def("MolsFromCDXMLFile", MolsFromCDXMLFile,
 	      (python::arg("filename"), python::arg("sanitize")=true, python::arg("removeHs")=true),
-	      "returns a tuple of molecules constructed from a CDXML file");
+	      docString.c_str()
+);
+  
+  docString =
+      R"DOC(Construct a molecule from a cdxml string.
+
+     Note that the CDXML format is large and complex, the RDKit doesn't support
+     full functionality, just the base ones required for molecule and
+     reaction parsing.
+
+     ARGUMENTS:
+
+       - filename: the cdxml string
+
+       - sanitize: if True, sanitize the molecules [default True]
+
+     RETURNS:
+       an iterator of parsed Mol objects.)DOC";
+  
   python::def("MolsFromCDXML", MolsFromCDXML,
 	      (python::arg("cdxml"), python::arg("sanitize")=true, python::arg("removeHs")=true),
-	      "returns a tuple of molecules constructed from a CDXML string");
+	      docString.c_str()
+	      );
   
   docString =
       R"DOC(Adds molecular metadata to PNG data read from a file.

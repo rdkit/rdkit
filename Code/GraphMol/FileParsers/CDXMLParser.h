@@ -19,7 +19,10 @@
 namespace RDKit {
 class RWMol;
 
-// \brief construct molecules from a CDXML file
+//! \brief construct molecules from a CDXML file
+//! Note that the CDXML format is large and complex, the RDKit doesn't support
+//!  full functionality, just the base ones required for molecule and
+//!  reaction parsing.
 /*!
  *   \param inStream - string containing the mol block
  *   \param sanitize - toggles sanitization and stereochemistry
@@ -32,7 +35,10 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMo
 			       std::istream &inStream,
 			       bool sanitize = true,
 			       bool removeHs = true);
-// \brief construct molecules from a CDXML file
+//! \brief construct molecules from a CDXML file
+//! Note that the CDXML format is large and complex, the RDKit doesn't support
+//!  full functionality, just the base ones required for molecule and
+//!  reaction parsing.
 /*!
  *   \param fileName - cdxml fileName
  *   \param sanitize - toggles sanitization and stereochemistry
@@ -46,7 +52,10 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> CDXMLFileToMols(
 			       bool sanitize = true,
 			       bool removeHs = true);
 
-// \brief construct molecules from a CDXML file
+//! \brief construct molecules from a CDXML file
+//! Note that the CDXML format is large and complex, the RDKit doesn't support
+//!  full functionality, just the base ones required for molecule and
+//!  reaction parsing.
 /*!
  *   \param cdxml - string containing the mol block
  *   \param sanitize - toggles sanitization and stereochemistry
