@@ -2840,8 +2840,6 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
-    auto bond =
-        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
     Point2D const &at1_cds = atCds_[atom->getIdx()];
     Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
     otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
