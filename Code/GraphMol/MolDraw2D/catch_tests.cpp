@@ -5413,17 +5413,141 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
 TEST_CASE("Colour H light blue with no atom labels", "") {
   auto m1 = "C[C@]12CCCC[C@H]1OCCC2"_smiles;
   MolDraw2DUtils::prepareMolForDrawing(*m1);
-    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().noAtomLabels = true;
-    drawer.drawMolecule(*m1);
-    drawer.finishDrawing();
-    auto text = drawer.getDrawingText();
-    std::ofstream outs("light_blue_h_no_label_1.svg");
-    outs << text;
-    outs.flush();
-    std::regex regex1(R"(class='bond-12 atom-6 atom-11'.*fill:#ADD8E5)");
-    std::smatch regex1Match;
-    REQUIRE(std::regex_search(text, regex1Match, regex1));
-    REQUIRE(regex1Match.size() == 1);
-    check_file_hash("light_blue_h_no_label_1.svg");
+  MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().noAtomLabels = true;
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("light_blue_h_no_label_1.svg");
+  outs << text;
+  outs.flush();
+  std::regex regex1(R"(class='bond-12 atom-6 atom-11'.*fill:#ADD8E5)");
+  std::smatch regex1Match;
+  REQUIRE(std::regex_search(text, regex1Match, regex1));
+  REQUIRE(regex1Match.size() == 1);
+  check_file_hash("light_blue_h_no_label_1.svg");
+}
+
+TEST_CASE("Github5534") {
+  std::string nameBase = "test_github_5534_";
+  {
+    auto m = R"CTAB(
+  INFOCHEM          2D 1   1.00000     0.00000     0
+
+ 45 45  0  0  0  0  0  0  0  0999 V2000
+   -1.3388    1.6804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0303    1.6804    0.0000 Si  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0303    1.9890    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0303    1.3609    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0496   -0.6997    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0496   -0.3581    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0496   -0.0386    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0496    0.2810    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0496    0.6116    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0826    0.9532    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0496   -1.0193    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0496   -1.3499    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0496   -1.6694    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116   -0.6997    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116   -0.3581    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116   -0.0386    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116    0.2810    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116    0.6116    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116    0.9532    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116   -1.0193    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116   -1.3499    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6116   -1.6694    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0303    1.6804    0.0000 Si  0  0  0  0  0  0  0  0  0  0  0  0
+    1.0303    2.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0303    1.3609    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3388    1.6804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810   -0.6997    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810   -0.3581    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810   -0.0386    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810    0.2810    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810    0.6116    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810    0.9532    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3361    1.2948    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1708    1.4601    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3581    1.6804    0.0000 Si  0  0  0  0  0  0  0  0  0  0  0  0
+    0.0275    1.6804    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3581    1.9890    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810   -1.0193    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810   -1.3499    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810   -1.6694    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2810   -2.0000    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6997    1.6804    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3691    1.6804    0.0000 Si  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3691    1.9890    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3691    1.3609    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1 23  1  0  0  0  0
+  1 35  1  0  0  0  0
+  2  3  1  0  0  0  0
+  2  4  1  0  0  0  0
+  2 42  1  0  0  0  0
+  5 27  1  0  0  0  0
+  6 28  1  0  0  0  0
+  7 29  1  0  0  0  0
+  8 30  1  0  0  0  0
+  9 31  1  0  0  0  0
+ 10 32  1  0  0  0  0
+ 11 38  1  0  0  0  0
+ 12 39  1  0  0  0  0
+ 13 40  1  0  0  0  0
+ 14 27  1  0  0  0  0
+ 15 28  1  0  0  0  0
+ 16 29  1  0  0  0  0
+ 17 30  1  0  0  0  0
+ 18 31  1  0  0  0  0
+ 19 32  1  0  0  0  0
+ 20 38  1  0  0  0  0
+ 21 39  1  0  0  0  0
+ 22 40  1  0  0  0  0
+ 23 24  1  0  0  0  0
+ 23 25  1  0  0  0  0
+ 23 26  1  0  0  0  0
+ 27 28  1  0  0  0  0
+ 27 38  1  0  0  0  0
+ 28 29  1  0  0  0  0
+ 29 30  1  0  0  0  0
+ 30 31  1  0  0  0  0
+ 31 32  1  0  0  0  0
+ 32 33  1  0  0  0  0
+ 33 34  1  0  0  0  0
+ 34 35  1  0  0  0  0
+ 35 36  1  0  0  0  0
+ 35 37  1  0  0  0  0
+ 36 43  1  0  0  0  0
+ 38 39  1  0  0  0  0
+ 39 40  1  0  0  0  0
+ 40 41  1  0  0  0  0
+ 42 43  1  0  0  0  0
+ 43 44  1  0  0  0  0
+ 43 45  1  0  0  0  0
+M  STY  2   1 GEN   2 GEN
+M  SAL   1 15  27  28  29  30  31  32  33  34  35  36  37  38  39  40  41
+M  SBL   1 15   7  16   8  17   9  18  10  19  11  20  12  21   3  39  13
+M  SBL   1  5  22  14  23  15  24
+M  SDI   1  4   -0.0386    2.0661   -0.0386    1.1846
+M  SDI   1  4    0.4683    2.0661    0.4683    1.1846
+M  SAL   2  4  42  43  44  45
+M  SBL   2  2   6  39
+M  SDI   2  4   -0.7658    2.0661   -0.7658    1.1846
+M  SDI   2  4   -0.2149    2.0661   -0.2149    1.1846
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(-1, -1);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 1", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "1.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      check_file_hash(nameBase + "1.svg");
+    }
+  }
 }
