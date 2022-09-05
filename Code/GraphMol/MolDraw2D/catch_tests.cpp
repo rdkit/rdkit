@@ -235,6 +235,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_11.svg", 3667521405U},
     {"test_unspec_stereo.svg", 599119798U},
     {"light_blue_h_no_label_1.svg", 3735371135U},
+    {"test_github_5534.svg", 574501211U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -5429,7 +5430,7 @@ TEST_CASE("Colour H light blue with no atom labels", "") {
 }
 
 TEST_CASE("Github5534") {
-  std::string nameBase = "test_github_5534_";
+  std::string nameBase = "test_github_5534";
   {
     auto m = R"CTAB(
   INFOCHEM          2D 1   1.00000     0.00000     0
@@ -5539,15 +5540,15 @@ M  END
 )CTAB"_ctab;
     REQUIRE(m);
     {
-      MolDraw2DSVG drawer(-1, -1);
-      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 1", nullptr, nullptr);
+      MolDraw2DSVG drawer(300, 300, 300, 300, NO_FREETYPE);
+      drawer.drawMolecule(*m);
       drawer.finishDrawing();
       std::string text = drawer.getDrawingText();
-      std::ofstream outs(nameBase + "1.svg");
+      std::ofstream outs(nameBase + ".svg");
       outs << text;
       outs.flush();
       outs.close();
-      check_file_hash(nameBase + "1.svg");
+      check_file_hash(nameBase + ".svg");
     }
   }
 }
