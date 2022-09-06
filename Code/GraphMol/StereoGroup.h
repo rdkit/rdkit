@@ -18,6 +18,7 @@
 #ifndef RD_StereoGroup_092018
 #define RD_StereoGroup_092018
 
+#include <iostream>
 #include <vector>
 
 namespace RDKit {
@@ -70,5 +71,9 @@ RDKIT_GRAPHMOL_EXPORT void removeGroupsWithAtoms(
     const std::vector<Atom*>& atoms, std::vector<StereoGroup>& groups);
 
 }  // namespace RDKit
+
+//! allows StereoGroup objects to be dumped to streams
+RDKIT_GRAPHMOL_EXPORT std::ostream& operator<<(std::ostream& target,
+                                               const RDKit::StereoGroup& stg);
 
 #endif

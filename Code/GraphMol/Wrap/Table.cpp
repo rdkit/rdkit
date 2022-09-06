@@ -35,6 +35,8 @@ std::string periodicTableClassDoc =
 \n\
     - GetElementSymbol\n\
 \n\
+    - GetElementName\n\
+\n\
     - GetRvdw (van der Waals radius)\n\
 \n\
     - GetRCovalent (covalent radius)\n\
@@ -73,6 +75,8 @@ struct table_wrapper {
                  PeriodicTable::getAtomicNumber)
         .def("GetElementSymbol", (std::string(PeriodicTable::*)(UINT) const) &
                                      PeriodicTable::getElementSymbol)
+        .def("GetElementName", (std::string(PeriodicTable::*)(UINT) const) &
+                                     PeriodicTable::getElementName)
         .def("GetRvdw",
              (double (PeriodicTable::*)(UINT) const) & PeriodicTable::getRvdw)
         .def("GetRvdw", (double (PeriodicTable::*)(const std::string &) const) &

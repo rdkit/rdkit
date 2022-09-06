@@ -236,6 +236,15 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_12.svg", 2233727631U},
     {"test_unspec_stereo.svg", 599119798U},
     {"light_blue_h_no_label_1.svg", 3735371135U},
+    {"bond_highlights_1.svg", 1150579427U},
+    {"bond_highlights_2.svg", 2958558856U},
+    {"bond_highlights_3.svg", 3466419491U},
+    {"bond_highlights_4.svg", 3500788273U},
+    {"bond_highlights_5.svg", 3500788273U},
+    {"bond_highlights_6.svg", 3008628729U},
+    {"bond_highlights_7.svg", 2936856212U},
+    {"bond_highlights_8.svg", 64473502U},
+    {"testGithub5486_1.svg", 1149144091U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -5458,17 +5467,294 @@ TEST_CASE("Unspecified stereochemistry means unknown.", "") {
 TEST_CASE("Colour H light blue with no atom labels", "") {
   auto m1 = "C[C@]12CCCC[C@H]1OCCC2"_smiles;
   MolDraw2DUtils::prepareMolForDrawing(*m1);
+  MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().noAtomLabels = true;
+  drawer.drawMolecule(*m1);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("light_blue_h_no_label_1.svg");
+  outs << text;
+  outs.flush();
+  std::regex regex1(R"(class='bond-12 atom-6 atom-11'.*fill:#ADD8E5)");
+  std::smatch regex1Match;
+  REQUIRE(std::regex_search(text, regex1Match, regex1));
+  REQUIRE(regex1Match.size() == 1);
+  check_file_hash("light_blue_h_no_label_1.svg");
+}
+
+TEST_CASE("Bond Highlights", "") {
+  auto m1 = "c1c(OCC)cncc1CCCC=O"_smiles;
+  REQUIRE(m1);
+  MolDraw2DUtils::prepareMolForDrawing(*m1);
+#if 1
+  {
+    // only bonds highlighted, continuous highlighting, highlights
+    // joining neatly.
     MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().noAtomLabels = true;
-    drawer.drawMolecule(*m1);
+    std::vector<int> highAts{};
+    std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    drawer.drawMolecule(*m1, &highAts, &highBnds);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
-    std::ofstream outs("light_blue_h_no_label_1.svg");
+    std::ofstream outs("bond_highlights_1.svg");
     outs << text;
     outs.flush();
-    std::regex regex1(R"(class='bond-12 atom-6 atom-11'.*fill:#ADD8E5)");
-    std::smatch regex1Match;
-    REQUIRE(std::regex_search(text, regex1Match, regex1));
-    REQUIRE(regex1Match.size() == 1);
-    check_file_hash("light_blue_h_no_label_1.svg");
+    check_file_hash("bond_highlights_1.svg");
+  }
+#endif
+#if 1
+  {
+    // same as 1, but with highlighting as coloured bonds.  The O for
+    // atom 2 is red because it is not highlighted, though bond 1 from
+    // the pyridyl is.
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    std::vector<int> highAts{};
+    std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    drawer.drawOptions().continuousHighlight = false;
+    drawer.drawOptions().circleAtoms = false;
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m1, &highAts, &highBnds);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_2.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_2.svg");
+  }
+#endif
+#if 1
+  {
+    // same bonds highlighted, but some atoms highlighted with
+    // different colours.  Where an atom and a bond off it are
+    // highlighted in different colours, the bond colour takes
+    // precedence and the atom highlight is lost unless it has
+    // an atom symbol drawn or there's a non-highlighted bond
+    // off it.  Thus half of bond 8 should be green, as is
+    // the N of atom 6 and the two half bonds off atom 10.
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    std::vector<int> highAts{0, 1, 5, 6, 7, 8, 10};
+    std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    std::map<int, DrawColour> atom_highlight_colors;
+    atom_highlight_colors[0] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[5] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[6] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[7] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[8] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[10] = DrawColour(0.0, 1.0, 0.0);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawOptions().continuousHighlight = false;
+    drawer.drawOptions().circleAtoms = false;
+    drawer.drawMolecule(*m1, &highAts, &highBnds, &atom_highlight_colors);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_3.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_3.svg");
+  }
+#endif
+#if 1
+  {
+    // same as 3, except that the N on atom 6 isn't highlighted,
+    // but both bonds off it are, so it gets the highlight colour.
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    std::vector<int> highAts{0, 1, 5, 7, 8, 10};
+    std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    std::map<int, DrawColour> atom_highlight_colors;
+    atom_highlight_colors[0] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[5] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[7] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[8] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[10] = DrawColour(0.0, 1.0, 0.0);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawOptions().continuousHighlight = false;
+    drawer.drawOptions().circleAtoms = false;
+    drawer.drawMolecule(*m1, &highAts, &highBnds, &atom_highlight_colors);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_4.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_4.svg");
+  }
+#endif
+#if 1
+  {
+    // same as 4, except that atom 6 has a highlight colour assigned
+    // in the map, but isn't highlighted.  It just happens that it's
+    // the default highlight colour.
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    std::vector<int> highAts{0, 1, 5, 7, 8, 10};
+    std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    std::map<int, DrawColour> atom_highlight_colors;
+    atom_highlight_colors[0] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[5] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[6] = drawer.drawOptions().highlightColour;
+    atom_highlight_colors[7] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[8] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[10] = DrawColour(0.0, 1.0, 0.0);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawOptions().continuousHighlight = false;
+    drawer.drawOptions().circleAtoms = false;
+    drawer.drawMolecule(*m1, &highAts, &highBnds, &atom_highlight_colors);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_5.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_5.svg");
+  }
+#endif
+#if 1
+  {
+    // same as 3, but showing that atom circles can be used
+    // to rescue the missing atom highlights.
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    std::vector<int> highAts{0, 1, 5, 6, 7, 8, 10};
+    std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    std::map<int, DrawColour> atom_highlight_colors;
+    atom_highlight_colors[0] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[5] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[6] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[7] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[8] = DrawColour(0.0, 1.0, 0.0);
+    atom_highlight_colors[10] = DrawColour(0.0, 1.0, 0.0);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawOptions().continuousHighlight = false;
+    drawer.drawOptions().circleAtoms = true;
+    drawer.drawMolecule(*m1, &highAts, &highBnds, &atom_highlight_colors);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_6.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_6.svg");
+  }
+#endif
+#if 1
+  {
+    // same as 1, but in ACS1996 mode.
+    MolDraw2DSVG drawer(-1, -1, -1, -1, NO_FREETYPE);
+    std::vector<int> highAts{};
+    std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    drawer.drawOptions().continuousHighlight = false;
+    drawer.drawOptions().circleAtoms = false;
+    MolDraw2DUtils::drawMolACS1996(drawer, *m1, "", &highAts, &highBnds);
+    drawer.drawMolecule(*m1, &highAts, &highBnds);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_7.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_7.svg");
+  }
+#endif
+  {
+    // check 3- and 4-way intersections of continuous highlights are ok
+    auto m = "c1c(C(C)(C)C)cccc1"_smiles;
+    REQUIRE(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().continuousHighlight = true;
+    drawer.drawOptions().addBondIndices = true;
+    std::vector<int> highBnds{0, 1, 2, 3, 4, 5, 6};
+    std::map<int, DrawColour> bond_highlight_colors;
+    bond_highlight_colors[0] = DrawColour(1.0, 0.0, 0.0);
+    bond_highlight_colors[1] = DrawColour(0.0, 1.0, 0.0);
+    bond_highlight_colors[3] = DrawColour(1.0, 0.0, 0.0);
+    bond_highlight_colors[4] = DrawColour(0.0, 1.0, 0.0);
+    bond_highlight_colors[5] = DrawColour(0.0, 0.0, 1.0);
+    drawer.drawMolecule(*m, nullptr, &highBnds, nullptr,
+                        &bond_highlight_colors);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_8.svg");
+    outs << text;
+    outs.flush();
+    check_file_hash("bond_highlights_8.svg");
+  }
+}
+
+TEST_CASE("drawMolecules should not crash on null molecules",
+          "[drawing][bug]") {
+  auto m1 = "c1ccccc1"_smiles;
+  auto m2 = "c1ccncc1"_smiles;
+  REQUIRE(m1);
+  REQUIRE(m2);
+  MolDraw2DSVG drawer(1000, 200, 100, 100, NO_FREETYPE);
+  RWMol dm1(*m1);
+  RWMol dm2(*m2);
+  MOL_PTR_VECT ms{&dm1,    nullptr, nullptr, nullptr, nullptr, nullptr,
+                  nullptr, nullptr, nullptr, nullptr, &dm2};
+  drawer.drawMolecules(ms);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::regex regex1("<path d=");
+  auto nMatches =
+      std::distance(std::sregex_iterator(text.begin(), text.end(), regex1),
+                    std::sregex_iterator());
+  REQUIRE(nMatches == 11);
+}
+
+TEST_CASE("Crossed bonds in transdecene") {
+  SECTION("basics") {
+    std::string nameBase = "testGithub5486_";
+    {
+      auto m = R"CTAB(
+  ChemDraw08042214332D
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.4289    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4289   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  5  6  2  0
+  6  1  1  0
+  4  7  1  0
+  7  8  1  0
+  8  9  1  0
+  9 10  1  0
+ 10  5  1  0
+M  END)CTAB"_ctab;
+      REQUIRE(m);
+      {
+        MolDraw2DSVG drawer(300, 300);
+        drawer.drawMolecule(*m);
+        drawer.finishDrawing();
+        std::string text = drawer.getDrawingText();
+        std::ofstream outs(nameBase + "1.svg");
+        outs << text;
+        outs.flush();
+        outs.close();
+        std::regex regex1(
+            R"(class='bond-3 atom-4 atom-5' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*)')");
+        auto match_begin =
+            std::sregex_iterator(text.begin(), text.end(), regex1);
+        auto match_end = std::sregex_iterator();
+        std::vector<Point2D> ends;
+        for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+          std::smatch match = *i;
+          ends.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
+          ends.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
+        }
+        REQUIRE(ends.size() == 4);
+        REQUIRE(!MolDraw2D_detail::doLinesIntersect(ends[0], ends[1], ends[2],
+                                                    ends[3], nullptr));
+        check_file_hash(nameBase + "1.svg");
+      }
+    }
+  }
 }

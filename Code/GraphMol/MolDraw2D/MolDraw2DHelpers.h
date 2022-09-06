@@ -56,6 +56,11 @@ struct DrawColour {
 typedef std::map<int, DrawColour> ColourPalette;
 typedef std::vector<double> DashPattern;
 
+// This is used to convert the line width into something that SVG and
+// Cairo use.  It was picked by eye, and was formerly hidden in
+// MolDraw2D::getDrawLineWidth().
+static const double lineWidthScaleFactor = 0.02;
+
 //! use the RDKit's default palette r
 // 201 is for hydrogens when atom symbols are not being drawn.
 inline void assignDefaultPalette(ColourPalette &palette) {
