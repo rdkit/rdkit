@@ -113,10 +113,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testPositionVariation-4.svg", 886758688U},
     {"testNoAtomLabels-1.svg", 2648234379U},
     {"testNoAtomLabels-2.svg", 3213096674U},
-    {"testQueryBonds-1a.svg", 3288272531U},
-    {"testQueryBonds-1b.svg", 1706839957U},
-    {"testQueryBonds-1c.svg", 333519907U},
-    {"testQueryBonds-2.svg", 69341882U},
+    {"testQueryBonds-1a.svg", 674261460U},
+    {"testQueryBonds-1b.svg", 1450309284U},
+    {"testQueryBonds-1c.svg", 74333858U},
+    {"testQueryBonds-2.svg", 1873442183U},
     {"testLinkNodes-2-0.svg", 2952965907U},
     {"testLinkNodes-2-30.svg", 4117540200U},
     {"testLinkNodes-2-60.svg", 520576199U},
@@ -203,9 +203,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testFlexiCanvas.7b.svg", 4094511140U},
     {"testFlexiCanvas.7c.svg", 918094125U},
     {"testFlexiCanvas.7d.svg", 918094125U},
-    {"testGithub4764.sz1.svg", 493786705U},
-    {"testGithub4764.sz2.svg", 2704253898U},
-    {"testGithub4764.sz3.svg", 1328896014U},
+    {"testGithub4764.sz1.svg", 2369071854U},
+    {"testGithub4764.sz2.svg", 39314673U},
+    {"testGithub4764.sz3.svg", 901101991U},
     {"testDrawArc1.svg", 4039810147U},
     {"testMetalWedges.svg", 3278785383U},
     {"testVariableLegend_1.svg", 3914441319U},
@@ -213,8 +213,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testVariableLegend_3.svg", 1996551457U},
     {"testGithub_5061.svg", 1947248304U},
     {"testGithub_5185.svg", 2944445711U},
-    {"testGithub_5269_1.svg", 2368496794U},
-    {"testGithub_5269_2.svg", 567813292U},
+    {"testGithub_5269_1.svg", 3660737449U},
+    {"testGithub_5269_2.svg", 2580783009U},
     {"test_classes_wavy_bonds.svg", 1271445012U},
     {"testGithub_5383_1.svg", 1391972140U},
     {"github5156_1.svg", 695855770U},
@@ -232,7 +232,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_8.svg", 2032371436U},
     {"acs1996_9.svg", 2589221154U},
     {"acs1996_10.svg", 4037187899U},
-    {"acs1996_11.svg", 404268206U},
+    {"acs1996_11.svg", 3667521405U},
     {"test_unspec_stereo.svg", 599119798U},
     {"light_blue_h_no_label_1.svg", 3735371135U},
     {"bond_highlights_1.svg", 1150579427U},
@@ -243,6 +243,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"bond_highlights_6.svg", 3008628729U},
     {"bond_highlights_7.svg", 2936856212U},
     {"bond_highlights_8.svg", 64473502U},
+    {"testGithub5486_1.svg", 1149144091U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -267,9 +268,9 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub4323_3.png", 2300228708U},
     {"testFlexiCanvas.2a.png", 3618977786U},
     {"testFlexiCanvas.2b.png", 2780757414U},
-    {"testGithub4764.sz1.png", 2320783268U},
-    {"testGithub4764.sz2.png", 3297570843U},
-    {"testGithub4764.sz3.png", 2178018272U},
+    {"testGithub4764.sz1.png", 3594553035U},
+    {"testGithub4764.sz2.png", 1203143863U},
+    {"testGithub4764.sz3.png", 310017790U},
     {"testGithub4238_1.png", 458925131U},
     {"github5383_1.png", 2963331215U},
     {"acs1996_1.png", 2814011866U},
@@ -5652,4 +5653,63 @@ TEST_CASE("drawMolecules should not crash on null molecules",
       std::distance(std::sregex_iterator(text.begin(), text.end(), regex1),
                     std::sregex_iterator());
   REQUIRE(nMatches == 11);
+}
+
+TEST_CASE("Crossed bonds in transdecene") {
+  SECTION("basics") {
+    std::string nameBase = "testGithub5486_";
+    {
+      auto m = R"CTAB(
+  ChemDraw08042214332D
+
+ 10 10  0  0  0  0  0  0  0  0999 V2000
+   -1.4289    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4289   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  5  6  2  0
+  6  1  1  0
+  4  7  1  0
+  7  8  1  0
+  8  9  1  0
+  9 10  1  0
+ 10  5  1  0
+M  END)CTAB"_ctab;
+      REQUIRE(m);
+      {
+        MolDraw2DSVG drawer(300, 300);
+        drawer.drawMolecule(*m);
+        drawer.finishDrawing();
+        std::string text = drawer.getDrawingText();
+        std::ofstream outs(nameBase + "1.svg");
+        outs << text;
+        outs.flush();
+        outs.close();
+        std::regex regex1(
+            R"(class='bond-3 atom-4 atom-5' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*)')");
+        auto match_begin =
+            std::sregex_iterator(text.begin(), text.end(), regex1);
+        auto match_end = std::sregex_iterator();
+        std::vector<Point2D> ends;
+        for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+          std::smatch match = *i;
+          ends.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
+          ends.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
+        }
+        REQUIRE(ends.size() == 4);
+        REQUIRE(!MolDraw2D_detail::doLinesIntersect(ends[0], ends[1], ends[2],
+                                                    ends[3], nullptr));
+        check_file_hash(nameBase + "1.svg");
+      }
+    }
+  }
 }
