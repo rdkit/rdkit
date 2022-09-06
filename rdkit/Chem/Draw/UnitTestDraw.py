@@ -7,7 +7,9 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
+import re
 import os
+import pathlib
 import sys
 import tempfile
 import unittest
@@ -274,14 +276,18 @@ class TestCase(unittest.TestCase):
     ats = [1, 2, 3]
     svg1 = Draw._moltoSVG(m, (250, 200), ats, "", False)
     svg2 = Draw._moltoSVG(m, (250, 200), ats, "", False, highlightBonds=[])
-    # there are minor differences between the freetype and non-freetype versions:
-    if '>O<' not in svg1:
-      self.assertIn('stroke:#FF7F7F;stroke-width:18', svg1)
-      self.assertNotIn('stroke:#FF7F7F;stroke-width:18', svg2)
-    else:
-      self.assertIn('stroke:#FF7F7F;stroke-width:18', svg1)
-      self.assertNotIn('stroke:#FF7F7F;stroke-width:18', svg2)
+    with open('testGithub_3762_1.svg', 'w') as f:
+      f.write(svg1)
+    with open('testGithub_3762_2.svg', 'w') as f:
+      f.write(svg2)
 
-
+    re_str = r"path class='bond-\d atom-\d atom-\d' d='M \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ Z' style='fill:#FF7F7F;"
+    patt = re.compile(re_str)
+    self.assertEqual(len(patt.findall(svg1)), 2)
+    self.assertEqual(len(patt.findall(svg2)), 0)
+    
+    pathlib.Path('testGithub_3762_1.svg').unlink()
+    pathlib.Path('testGithub_3762_2.svg').unlink()
+    
 if __name__ == '__main__':
   unittest.main()
