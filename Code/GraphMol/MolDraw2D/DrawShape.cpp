@@ -521,8 +521,6 @@ DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
 
 // ****************************************************************************
 void DrawShapeDashedWedge::buildLines() {
-  // assumes this is the starting configuration, where the 3 points define
-  // the enclosing triangle of the wedge.
   auto midend = (end1Cds_ + end2Cds_) * 0.5;
   points_.clear();
   lineColours_.clear();
