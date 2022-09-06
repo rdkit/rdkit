@@ -25,6 +25,7 @@
 namespace RDKit {
 RDKIT_GRAPHMOL_EXPORT extern const std::string periodicTableAtomData;
 RDKIT_GRAPHMOL_EXPORT extern const std::string isotopesAtomData[];
+RDKIT_GRAPHMOL_EXPORT extern const std::vector<std::string> elementNames;
 namespace constants {
 RDKIT_GRAPHMOL_EXPORT extern const double electronMass;
 }
@@ -45,6 +46,8 @@ class RDKIT_GRAPHMOL_EXPORT atomicData {
 
   std::string Symbol() const { return symb; }
 
+  std::string Name() const { return name; }
+
   double Rcov() const { return rCov; }
 
   double Rb0() const { return rB0; }
@@ -63,6 +66,7 @@ class RDKIT_GRAPHMOL_EXPORT atomicData {
  private:
   int anum;                // atomic number
   std::string symb;        // atomic symbol
+  std::string name;        // atomic name
   double rCov, rB0, rVdw;  // radii
   INT_VECT valence;        // list of all valences, the first one is the default
   // valence, -1 at the end signifies that any upper valence
