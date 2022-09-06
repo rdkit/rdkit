@@ -5632,3 +5632,24 @@ TEST_CASE("Bond Highlights", "") {
     check_file_hash("bond_highlights_8.svg");
   }
 }
+
+TEST_CASE("drawMolecules should not crash on null molecules",
+          "[drawing][bug]") {
+  auto m1 = "c1ccccc1"_smiles;
+  auto m2 = "c1ccncc1"_smiles;
+  REQUIRE(m1);
+  REQUIRE(m2);
+  MolDraw2DSVG drawer(1000, 200, 100, 100, NO_FREETYPE);
+  RWMol dm1(*m1);
+  RWMol dm2(*m2);
+  MOL_PTR_VECT ms{&dm1,    nullptr, nullptr, nullptr, nullptr, nullptr,
+                  nullptr, nullptr, nullptr, nullptr, &dm2};
+  drawer.drawMolecules(ms);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::regex regex1("<path d=");
+  auto nMatches =
+      std::distance(std::sregex_iterator(text.begin(), text.end(), regex1),
+                    std::sregex_iterator());
+  REQUIRE(nMatches == 11);
+}

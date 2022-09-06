@@ -213,7 +213,7 @@ void MolDraw2D::drawMolecules(
       MolDraw2D_detail::getBondHighlightsForAtoms(
           *mols[i], (*highlight_atoms)[i], *lhighlight_bonds);
     };
-
+    auto prevSize = drawMols_.size();
     drawMols_.emplace_back(new MolDraw2D_detail::DrawMol(
         *mols[i], legend, panelWidth(), panelHeight(), drawOptions(),
         *text_drawer_, ha, lhighlight_bonds.get(), ham, hbm, nullptr, hr,
@@ -231,11 +231,11 @@ void MolDraw2D::drawMolecules(
     drawMols_.back()->setOffsets(col * panelWidth(), row * panelHeight());
     drawMols_.back()->createDrawObjects();
     if (drawMols_.back()->getScale() < drawMols_[minScaleMol]->getScale()) {
-      minScaleMol = i;
+      minScaleMol = prevSize;
     }
     if (drawMols_.back()->getFontScale() <
         drawMols_[minFontScaleMol]->getFontScale()) {
-      minFontScaleMol = i;
+      minFontScaleMol = prevSize;
     }
   }
 
