@@ -101,6 +101,8 @@ add_subdirectory(Trajectory)
 add_subdirectory(SubstructLibrary)
 add_subdirectory(RGroupDecomposition)
 
+add_subdirectory(DetermineBonds)
+
 if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 add_subdirectory(MolInterchange)
 endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
