@@ -23,6 +23,14 @@ namespace RDKit {
  */
 void determineConnectivity(RWMol &mol, bool useHueckel=false, int charge=0, double covFactor=1.3);
 
+// ! assigns bond ordering to a molecule that has atomic connectivity defined
+/*!
+    \param mol is the molecule of interest; it must have single bonds corresponding to the atomic connectivity
+    \param charge (optional) the charge of the molecule; it must be provided if charge is non-zero
+    \param allowChargedFragments (optional) if this is  \c true, formal charges will be placed on atoms according to their valency; otherwise, radical electrons will be placed on the atoms
+    \param embedChiral (optional) if this is \c true, chirality information will be embedded into the molecule
+    \param useAtomMap (optional) if this is \c true, an atom map will be created for the molecule
+ */
 void determineBondOrder(RWMol &mol, int charge=0, bool allowChargedFragments=true, bool embedChiral=true, bool useAtomMap=false);
 
 }
