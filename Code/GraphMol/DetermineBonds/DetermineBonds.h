@@ -23,6 +23,8 @@ namespace RDKit {
  */
 void determineConnectivity(RWMol &mol, bool useHueckel=false, int charge=0, double covFactor=1.3);
 
+void determineBondOrder(RWMol &mol, int charge=0, bool allowChargedFragments=true, bool embedChiral=true, bool useAtomMap=false);
+
 }
 
 #endif
