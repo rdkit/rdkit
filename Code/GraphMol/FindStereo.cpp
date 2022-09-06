@@ -409,7 +409,7 @@ void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
           } else if (sinfo.descriptor == StereoDescriptor::Tet_CW) {
             atomSymbols[aidx] += "_CW";
           } else {
-            atomSymbols[aidx] += "_@";
+            atomSymbols[aidx] += "_STEREO";
           }
           break;
         case Chirality::StereoSpecified::Unspecified:
@@ -450,7 +450,7 @@ void initBondInfo(ROMol &mol, bool flagPossible, bool cleanIt,
           } else if (sinfo.descriptor == StereoDescriptor::Bond_Trans) {
             bondSymbols[bidx] += "_trans";
           } else {
-            bondSymbols[bidx] += "_chi";
+            bondSymbols[bidx] += "_STEREO";
           }
           break;
         case Chirality::StereoSpecified::Unspecified:
