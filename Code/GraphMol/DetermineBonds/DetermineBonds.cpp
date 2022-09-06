@@ -79,14 +79,12 @@ std::vector<int> possibleValences(Atom *atom, std::unordered_map<int,
     int atomNum = atom->getAtomicNum();
     int numBonds = atom->getDegree();
     std::vector<int> valences = atomicValence[atomNum];
-    auto smallest = valences.begin();
+    std::vector<int> possible;
     for (auto &valence : valences) {
-        if (valence >= numBonds) {
-            break;
+        if (numBonds <= valence) {
+            possible.push_back(valence);
         }
-        smallest++;
     }
-    std::vector<int> possible(smallest, valences.end());
     return possible;
 }
 
@@ -99,11 +97,11 @@ void valenceCombinations(RWMol &mol, std::vector<std::vector<int>> &possible,
         {5, {3,4}},
         {6, {4}},
         {7, {3,4}},
-        {8, {1,2,3}},
+        {8, {2,1,3}},
         {9, {1}},
         {14, {4}},
-        {15, {3,5}},
-        {16, {2,3,6}},
+        {15, {5,3}},
+        {16, {6,3,2}},
         {17, {1}},
         {32, {4}},
         {35, {1}},
