@@ -113,10 +113,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testPositionVariation-4.svg", 886758688U},
     {"testNoAtomLabels-1.svg", 2648234379U},
     {"testNoAtomLabels-2.svg", 3213096674U},
-    {"testQueryBonds-1a.svg", 674261460U},
-    {"testQueryBonds-1b.svg", 1450309284U},
-    {"testQueryBonds-1c.svg", 74333858U},
-    {"testQueryBonds-2.svg", 1873442183U},
+    {"testQueryBonds-1a.svg", 3288272531U},
+    {"testQueryBonds-1b.svg", 1706839957U},
+    {"testQueryBonds-1c.svg", 333519907U},
+    {"testQueryBonds-2.svg", 69341882U},
     {"testLinkNodes-2-0.svg", 2952965907U},
     {"testLinkNodes-2-30.svg", 4117540200U},
     {"testLinkNodes-2-60.svg", 520576199U},
@@ -203,9 +203,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testFlexiCanvas.7b.svg", 4094511140U},
     {"testFlexiCanvas.7c.svg", 918094125U},
     {"testFlexiCanvas.7d.svg", 918094125U},
-    {"testGithub4764.sz1.svg", 2369071854U},
-    {"testGithub4764.sz2.svg", 39314673U},
-    {"testGithub4764.sz3.svg", 901101991U},
+    {"testGithub4764.sz1.svg", 493786705U},
+    {"testGithub4764.sz2.svg", 2704253898U},
+    {"testGithub4764.sz3.svg", 1328896014U},
     {"testDrawArc1.svg", 4039810147U},
     {"testMetalWedges.svg", 3278785383U},
     {"testVariableLegend_1.svg", 3914441319U},
@@ -213,8 +213,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testVariableLegend_3.svg", 1996551457U},
     {"testGithub_5061.svg", 1947248304U},
     {"testGithub_5185.svg", 2944445711U},
-    {"testGithub_5269_1.svg", 3660737449U},
-    {"testGithub_5269_2.svg", 2580783009U},
+    {"testGithub_5269_1.svg", 2368496794U},
+    {"testGithub_5269_2.svg", 567813292U},
     {"test_classes_wavy_bonds.svg", 1271445012U},
     {"testGithub_5383_1.svg", 1391972140U},
     {"github5156_1.svg", 695855770U},
@@ -232,7 +232,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_8.svg", 939325262U},
     {"acs1996_9.svg", 2607143500U},
     {"acs1996_10.svg", 199499735U},
-    {"acs1996_11.svg", 3667521405U},
+    {"acs1996_11.svg", 2121789178U},
     {"acs1996_12.svg", 2233727631U},
     {"test_unspec_stereo.svg", 599119798U},
     {"light_blue_h_no_label_1.svg", 3735371135U},
@@ -242,7 +242,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"bond_highlights_4.svg", 3500788273U},
     {"bond_highlights_5.svg", 3500788273U},
     {"bond_highlights_6.svg", 3008628729U},
-    {"bond_highlights_7.svg", 2936856212U},
+    {"bond_highlights_7.svg", 3900018634U},
     {"bond_highlights_8.svg", 64473502U},
     {"testGithub5486_1.svg", 1149144091U},
 };
@@ -269,13 +269,13 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub4323_3.png", 2300228708U},
     {"testFlexiCanvas.2a.png", 3618977786U},
     {"testFlexiCanvas.2b.png", 2780757414U},
-    {"testGithub4764.sz1.png", 3594553035U},
-    {"testGithub4764.sz2.png", 1203143863U},
-    {"testGithub4764.sz3.png", 310017790U},
+    {"testGithub4764.sz1.png", 2320783268U},
+    {"testGithub4764.sz2.png", 3297570843U},
+    {"testGithub4764.sz3.png", 2178018272U},
     {"testGithub4238_1.png", 458925131U},
     {"github5383_1.png", 2963331215U},
-    {"acs1996_1.png", 2814011866U},
-    {"acs1996_2.png", 3118288179U}};
+    {"acs1996_1.png", 2674458798U},
+    {"acs1996_2.png", 83755168U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
@@ -5380,7 +5380,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-//      check_file_hash(nameBase + "11.svg");
+      check_file_hash(nameBase + "11.svg");
     }
 #endif
 #if 1
