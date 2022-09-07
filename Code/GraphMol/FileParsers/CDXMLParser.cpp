@@ -156,7 +156,6 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       bool explicitHs = false;
       StereoGroupType grouptype = StereoGroupType::STEREO_ABSOLUTE;
       std::string query_label;
-      bool has_atom_stereo = false;
       std::vector<int> bond_ordering;
       std::vector<int> elementlist;
       std::vector<double> atom_coords;
@@ -499,7 +498,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                 try {
                   fused.reset(
                       molzip(*mol, molzip_params).release());  // std::move?
-                } catch (Invar::Invariant) {
+                } catch (Invar::Invariant &) {
                   BOOST_LOG(rdWarningLog)
                       << "Failed fusion of fragment skipping... " << frag_id
                       << std::endl;
