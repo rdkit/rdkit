@@ -186,7 +186,9 @@ M  END""")
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText()
     # 4 molecules, 6 bonds each:
-    self.assertEqual(svg.count('fill:none;fill-rule:evenodd;stroke:#FF7F7F'), 24)
+    re_str = r"path class='bond-\d+ atom-\d+ atom-\d+' d='M \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ Z' style='fill:#FF7F7F;"
+    patt = re.compile(re_str)
+    self.assertEqual(len(patt.findall(svg)), 24)
     # 4 molecules, one atom each:
     self.assertEqual(svg.count('fill:#DB2D2B;fill-rule:evenodd;stroke:#DB2D2B'), 4)
 

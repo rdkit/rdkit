@@ -273,6 +273,11 @@ def FindMCS(mols,
             threshold=None, ):
   """Find the maximum common substructure of a set of molecules
 
+    ***************************************************
+    NB: rdkit.Chem.MCS module is deprecated; please use
+    rdkit.Chem.rdFMCS instead.
+    ***************************************************
+
     In the simplest case, pass in a list of molecules and get back
     an MCSResult object which describes the MCS:
 

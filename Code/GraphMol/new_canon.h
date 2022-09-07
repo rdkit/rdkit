@@ -39,17 +39,23 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
   const canon_atom *controllingAtoms[4]{nullptr, nullptr, nullptr, nullptr};
   const std::string *p_symbol{
       nullptr};  // if provided, this is used to order bonds
+  unsigned int bondIdx{0};
 
   bondholder(){};
   bondholder(Bond::BondType bt, Bond::BondStereo bs, unsigned int ni,
-             unsigned int nsc)
+             unsigned int nsc, unsigned int bidx)
       : bondType(bt),
         bondStereo(static_cast<unsigned int>(bs)),
         nbrSymClass(nsc),
-        nbrIdx(ni) {}
+        nbrIdx(ni),
+        bondIdx(bidx) {}
   bondholder(Bond::BondType bt, unsigned int bs, unsigned int ni,
-             unsigned int nsc)
-      : bondType(bt), bondStereo(bs), nbrSymClass(nsc), nbrIdx(ni) {}
+             unsigned int nsc, unsigned int bidx)
+      : bondType(bt),
+        bondStereo(bs),
+        nbrSymClass(nsc),
+        nbrIdx(ni),
+        bondIdx(bidx) {}
 
   int compareStereo(const bondholder &o) const;
 
@@ -293,7 +299,6 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   }
 
   int basecomp(int i, int j) const {
-    PRECONDITION(dp_atoms, "no atoms");
     unsigned int ivi, ivj;
 
     // always start with the current class:
@@ -438,9 +443,6 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         df_useChirality(true),
         df_useChiralityRings(true) {}
   int operator()(int i, int j) const {
-    PRECONDITION(dp_atoms, "no atoms");
-    PRECONDITION(dp_mol, "no molecule");
-    PRECONDITION(i != j, "bad call");
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;
     }
@@ -796,6 +798,24 @@ RDKIT_GRAPHMOL_EXPORT void chiralRankMolAtoms(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void initCanonAtoms(const ROMol &mol,
                                           std::vector<Canon::canon_atom> &atoms,
                                           bool includeChirality = true);
+
+namespace detail {
+void initFragmentCanonAtoms(const ROMol &mol,
+                            std::vector<Canon::canon_atom> &atoms,
+                            bool includeChirality,
+                            const std::vector<std::string> *atomSymbols,
+                            const std::vector<std::string> *bondSymbols,
+                            const boost::dynamic_bitset<> &atomsInPlay,
+                            const boost::dynamic_bitset<> &bondsInPlay,
+                            bool needsInit);
+void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms);
+template <typename T>
+void rankWithFunctor(T &ftor, bool breakTies, int *order,
+                     bool useSpecial = false, bool useChirality = false,
+                     const boost::dynamic_bitset<> *atomsInPlay = nullptr,
+                     const boost::dynamic_bitset<> *bondsInPlay = nullptr);
+
+}  // namespace detail
 
 }  // namespace Canon
 }  // namespace RDKit
