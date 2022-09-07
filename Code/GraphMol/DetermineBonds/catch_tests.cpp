@@ -110,7 +110,6 @@ TEST_CASE("Determine Connectivity") {
             ResonanceMolSupplier resMolSuppl(*mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS | ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
             bool valid = false;
             for (unsigned int i = 0; i < resMolSuppl.length(); i++) {
-                
                 std::unique_ptr<ROMol> firstResMol(resMolSuppl[i]);
                 std::unique_ptr<RWMol> resMol(new RWMol(*firstResMol));
                 MolOps::setAromaticity(*resMol);
@@ -123,7 +122,6 @@ TEST_CASE("Determine Connectivity") {
                 }
             }
             if (!valid) {
-                // TODO:: more informative way of using CHECK?
                 CHECK(false);
             }
         }

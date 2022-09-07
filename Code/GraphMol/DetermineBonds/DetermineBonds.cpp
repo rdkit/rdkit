@@ -74,13 +74,20 @@ void determineConnectivity(RWMol &mol, bool useHueckel, int charge, double covFa
     }
 }
 
-std::vector<int> possibleValences(Atom *atom, std::unordered_map<int,
-                                  std::vector<int>> &atomicValence) {
-    int atomNum = atom->getAtomicNum();
-    int numBonds = atom->getDegree();
-    std::vector<int> valences = atomicValence[atomNum];
-    std::vector<int> possible;
-    for (auto &valence : valences) {
+std::vector<unsigned int> possibleValences(const Atom *atom, const std::unordered_map<int,
+                                  std::vector<unsigned int>> &atomicValence) {
+    auto atomNum = atom->getAtomicNum();
+    auto numBonds = atom->getDegree();
+    std::vector<unsigned int> valences;
+    try {
+        valences = atomicValence.at(atomNum);
+    } catch (const std::out_of_range &) {
+        std::stringstream ss;
+        ss << "determineBondOrdering() does not work with element " << PeriodicTable::getTable()->getElementSymbol(atomNum);
+        throw ValueErrorException(ss.str());
+    }
+    std::vector<unsigned int> possible;
+    for (const auto &valence : valences) {
         if (numBonds <= valence) {
             possible.push_back(valence);
         }
@@ -88,10 +95,10 @@ std::vector<int> possibleValences(Atom *atom, std::unordered_map<int,
     return possible;
 }
 
-void valenceCombinations(RWMol &mol, std::vector<std::vector<int>> &possible,
-                         std::vector<std::vector<int>> &combos) {
-    int numAtoms = mol.getNumAtoms();
-    std::unordered_map<int, std::vector<int>> atomicValence =
+void valenceCombinations(const RWMol &mol, std::vector<std::vector<unsigned int>> &possible,
+                         std::vector<std::vector<unsigned int>> &combos) {
+    auto numAtoms = mol.getNumAtoms();
+    const std::unordered_map<int, std::vector<unsigned int>> atomicValence =
     {
         {1, {1}},
         {5, {3,4}},
@@ -109,29 +116,29 @@ void valenceCombinations(RWMol &mol, std::vector<std::vector<int>> &possible,
     };
 
     possible.resize(numAtoms);
-    int numCombos = 1;
-    for (int i = 0; i < numAtoms; i++) {
+    unsigned int numCombos = 1;
+    for (unsigned int i = 0; i < numAtoms; i++) {
         possible[i] = possibleValences(mol.getAtomWithIdx(i), atomicValence);
-        if (possible[i].size() != 0) {
+        if (!possible[i].empty()) {
             numCombos *= possible[i].size();
         } else {
-            auto atom = mol.getAtomWithIdx(i);
-            std::vector<int> valences = atomicValence[atom->getAtomicNum()];
+            const auto atom = mol.getAtomWithIdx(i);
+            std::vector<unsigned int> valences = atomicValence.at(atom->getAtomicNum());
             std::stringstream ss;
             ss << "Valence of atom " << i << " is " << atom->getDegree()
             << ", which is larger than the allowed maximum, "
             << valences[valences.size() - 1];
-            throw std::runtime_error(ss.str());
+            throw ValueErrorException(ss.str());
         }
     }
 
-    int orig = numCombos;
-    combos.resize(numCombos, std::vector<int>(numAtoms));
-    for (int i = 0; i < numAtoms; i++) {
-         int seg = numCombos / possible[i].size();
-         for (int p = 0; p < orig / numCombos; p++) {
-           for (int j = 0; j < possible[i].size(); j++) {
-             for (int k = 0; k < seg; k++) {
+    unsigned int orig = numCombos;
+    combos.resize(numCombos, std::vector<unsigned int>(numAtoms));
+    for (unsigned int i = 0; i < numAtoms; i++) {
+         unsigned int seg = numCombos / possible[i].size();
+         for (unsigned int p = 0; p < orig / numCombos; p++) {
+           for (unsigned int j = 0; j < possible[i].size(); j++) {
+             for (unsigned int k = 0; k < seg; k++) {
                  combos[p*possible[i].size()*seg + j*seg + k][i] = possible[i][j];
              }
            }
@@ -140,20 +147,19 @@ void valenceCombinations(RWMol &mol, std::vector<std::vector<int>> &possible,
      }
 }
 
-void getUnsaturated(std::vector<int> &order, std::vector<int> &valency,
-                    std::vector<int> &unsat) {
-    for (int i = 0; i < order.size(); i++) {
-        int leftover = order[i] - valency[i];
-        if (leftover > 0) {
+void getUnsaturated(const std::vector<unsigned int> &order, const std::vector<unsigned int> &valency,
+                    std::vector<unsigned int> &unsat) {
+    for (unsigned int i = 0; i < order.size(); i++) {
+        if (order[i] > valency[i]) {
             unsat.push_back(i);
         }
     }
 }
 
-void getUnsaturatedPairs(std::vector<std::vector<int>> &ordMat, std::vector<int> &unsat,
-                         std::vector<std::pair<int, int>> &unsatPairs) {
-    for (int i = 0; i < unsat.size(); i++) {
-        for (int j = i + 1; j < unsat.size(); j++) {
+void getUnsaturatedPairs(const std::vector<std::vector<unsigned int>> &ordMat, const std::vector<unsigned int> &unsat,
+                         std::vector<std::pair<unsigned int, unsigned int>> &unsatPairs) {
+    for (unsigned int i = 0; i < unsat.size(); i++) {
+        for (unsigned int j = i + 1; j < unsat.size(); j++) {
             if (ordMat[unsat[i]][unsat[j]]) {
                 unsatPairs.push_back(std::make_pair(unsat[i], unsat[j]));
             }
@@ -161,8 +167,8 @@ void getUnsaturatedPairs(std::vector<std::vector<int>> &ordMat, std::vector<int>
     }
 }
 
-bool checkValency(std::vector<int> &order, std::vector<int> &valency) {
-    for (int i = 0; i < valency.size(); i++) {
+bool checkValency(const std::vector<unsigned int> &order, const std::vector<unsigned int> &valency) {
+    for (unsigned int i = 0; i < valency.size(); i++) {
         if (valency[i] > order[i]) {
             return false;
         }
@@ -170,7 +176,7 @@ bool checkValency(std::vector<int> &order, std::vector<int> &valency) {
     return true;
 }
 
-int getAtomicCharge(int atom, int valence) {
+int getAtomicCharge(int atom, unsigned int valence) {
     if (atom == 1) {
         return 1 - valence;
     } else if (atom == 5) {
@@ -184,10 +190,10 @@ int getAtomicCharge(int atom, int valence) {
     }
 }
 
-bool checkCharge(RWMol &mol, std::vector<int> &valency, int charge) {
+bool checkCharge(RWMol &mol, const std::vector<unsigned int> &valency, int charge) {
     int molCharge = 0;
-    for (int i = 0; i < mol.getNumAtoms(); i++) {
-        auto atom = mol.getAtomWithIdx(i);
+    for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
+        const auto atom = mol.getAtomWithIdx(i);
         int atomCharge = getAtomicCharge(atom->getAtomicNum(), valency[i]);
         molCharge += atomCharge;
         if (atom->getAtomicNum() == 6) {
@@ -203,9 +209,9 @@ bool checkCharge(RWMol &mol, std::vector<int> &valency, int charge) {
     return molCharge == charge;
 }
 
-void setAtomicCharges(RWMol &mol, std::vector<int> &valency, int charge) {
+void setAtomicCharges(RWMol &mol, const std::vector<unsigned int> &valency, int charge) {
     int molCharge = 0;
-    for (int i = 0; i < mol.getNumAtoms(); i++) {
+    for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
         auto atom = mol.getAtomWithIdx(i);
         int atomCharge = getAtomicCharge(atom->getAtomicNum(), valency[i]);
         molCharge += atomCharge;
@@ -224,8 +230,8 @@ void setAtomicCharges(RWMol &mol, std::vector<int> &valency, int charge) {
     }
 }
 
-void setAtomicRadicals(RWMol &mol, std::vector<int> &valency, int charge) {
-    for (int i = 0; i < mol.getNumAtoms(); i++) {
+void setAtomicRadicals(RWMol &mol, const std::vector<unsigned int> &valency, int charge) {
+    for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
         auto atom = mol.getAtomWithIdx(i);
         int atomCharge = getAtomicCharge(atom->getAtomicNum(), valency[i]);
         if (atomCharge != 0) {
@@ -234,18 +240,14 @@ void setAtomicRadicals(RWMol &mol, std::vector<int> &valency, int charge) {
     }
 }
 
-bool checkSaturation(std::vector<int> &order, std::vector<int> &valency) {
-    std::vector<int> unsat;
+bool checkSaturation(const std::vector<unsigned int> &order, const std::vector<unsigned int> &valency) {
+    std::vector<unsigned int> unsat;
     getUnsaturated(order, valency, unsat);
-    if (unsat.size() == 0) {
-        return true;
-    } else {
-        return false;
-    }
+    return unsat.empty();
 }
 
 void setAtomMap(RWMol &mol) {
-    for (int i = 0; i < mol.getNumAtoms(); i++) {
+    for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
         auto atom = mol.getAtomWithIdx(i);
         atom->setAtomMapNum(i + 1);
     }
@@ -258,22 +260,21 @@ void setChirality(RWMol &mol) {
     MolOps::assignChiralTypesFrom3D(mol);
 }
 
-void addBondOrdering(RWMol &mol, std::vector<std::vector<int>> &ordMat,
-                     std::vector<int> &valency, bool allowChargedFragments,
+void addBondOrdering(RWMol &mol, const std::vector<std::vector<unsigned int>> &ordMat,
+                     const std::vector<unsigned int> &valency, bool allowChargedFragments,
                      bool embedChiral, bool useAtomMap, int charge) {
-    for (int i = 0; i < mol.getNumAtoms(); i++) {
-        for (int j = i + 1; j < mol.getNumAtoms(); j++) {
+    auto numAtoms = mol.getNumAtoms();
+    
+    for (unsigned int i = 0; i < numAtoms; i++) {
+        for (unsigned int j = i + 1; j < numAtoms; j++) {
             if (ordMat[i][j] == 0 || ordMat[i][j] == 1) {
                 continue;
             } else if (ordMat[i][j] == 2) {
-                mol.removeBond(i, j);
-                mol.addBond(i, j, Bond::BondType::DOUBLE);
+                mol.getBondBetweenAtoms(i,j)->setBondType(Bond::BondType::DOUBLE);
             } else if (ordMat[i][j] == 3) {
-                mol.removeBond(i, j);
-                mol.addBond(i, j, Bond::BondType::TRIPLE);
+                mol.getBondBetweenAtoms(i,j)->setBondType(Bond::BondType::TRIPLE);
             } else {
-                mol.removeBond(i, j);
-                mol.addBond(i, j, Bond::BondType::SINGLE);
+                mol.getBondBetweenAtoms(i,j)->setBondType(Bond::BondType::SINGLE);
             }
         }
     }
@@ -300,12 +301,12 @@ void addBondOrdering(RWMol &mol, std::vector<std::vector<int>> &ordMat,
 
 void determineBondOrder(RWMol &mol, int charge, bool allowChargedFragments,
                         bool embedChiral, bool useAtomMap) {
-    int numAtoms = mol.getNumAtoms();
+    auto numAtoms = mol.getNumAtoms();
     
-    std::vector<std::vector<int>> conMat(numAtoms, std::vector<int>(numAtoms, 0));
-    std::vector<int> origValency(numAtoms, 0);
-    for (int i = 0; i < numAtoms; i++) {
-        for (int j = i + 1; j < numAtoms; j++) {
+    std::vector<std::vector<unsigned int>> conMat(numAtoms, std::vector<unsigned int>(numAtoms, 0));
+    std::vector<unsigned int> origValency(numAtoms, 0);
+    for (unsigned int i = 0; i < numAtoms; i++) {
+        for (unsigned int j = i + 1; j < numAtoms; j++) {
             if (mol.getBondBetweenAtoms(i, j)) {
                 conMat[i][j]++;
                 origValency[i]++;
@@ -314,23 +315,23 @@ void determineBondOrder(RWMol &mol, int charge, bool allowChargedFragments,
         }
     }
     
-    std::vector<std::vector<int>> best(conMat);
-    std::vector<int> bestValency(origValency);
+    std::vector<std::vector<unsigned int>> best(conMat);
+    std::vector<unsigned int> bestValency(origValency);
     int bestSum = std::accumulate(origValency.begin(), origValency.end(), 0);
 
-    std::vector<std::vector<int>> possible;
-    std::vector<std::vector<int>> orders;
+    std::vector<std::vector<unsigned int>> possible;
+    std::vector<std::vector<unsigned int>> orders;
     valenceCombinations(mol, possible, orders);
 
     bool valencyValid = false;
     bool chargeValid = false;
     bool saturationValid = false;
   
-    for (auto &order : orders) {
-        std::vector<int> unsat;
+    for (const auto &order : orders) {
+        std::vector<unsigned int> unsat;
         getUnsaturated(order, origValency, unsat);
         // checks whether the atomic connectivity is valid for the current set of atomic valences
-        if (unsat.size() == 0) {
+        if (unsat.empty()) {
             valencyValid = checkValency(order, origValency);
             chargeValid = checkCharge(mol, origValency, charge);
             saturationValid = checkSaturation(order, origValency);
@@ -344,17 +345,17 @@ void determineBondOrder(RWMol &mol, int charge, bool allowChargedFragments,
             }
         }
         
-        std::vector<std::vector<int>> ordMat(conMat);
-        std::vector<int> valency(origValency);
+        std::vector<std::vector<unsigned int>> ordMat(conMat);
+        std::vector<unsigned int> valency(origValency);
         bool newBonds = false;
         do {
             newBonds = false;
-            std::vector<int> unsat;
+            std::vector<unsigned int> unsat;
             getUnsaturated(order, valency, unsat);
-            std::vector<std::pair<int, int>> unsatPairs;
+            std::vector<std::pair<unsigned int, unsigned int>> unsatPairs;
             getUnsaturatedPairs(conMat, unsat, unsatPairs);
             
-            if (unsatPairs.size() > 0) {
+            if (!unsatPairs.empty()) {
                 Graph graph(unsatPairs.begin(), unsatPairs.end(), numAtoms);
                 std::vector<boost::graph_traits<Graph>::vertex_descriptor> mate(numAtoms);
                 edmonds_maximum_cardinality_matching(graph, &mate[0]);
