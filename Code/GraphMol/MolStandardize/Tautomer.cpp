@@ -28,8 +28,6 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #endif
 
-using namespace RDKit;
-
 namespace RDKit {
 
 namespace MolStandardize {
@@ -342,8 +340,10 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #ifdef VERBOSE_ENUMERATION
         std::string name;
         (transform.Mol)->getProp(common_properties::_Name, name);
+        SmilesWriteParams smilesWriteParams;
+        smilesWriteParams.allBondsExplicit = true;
         std::cout << "kmol for " << smilesTautomerPair.first << " : "
-                  << MolToSmiles(*kmol) << std::endl;
+                  << MolToSmiles(*kmol, smilesWriteParams) << std::endl;
         std::cout << "transform mol: " << MolToSmarts(*(transform.Mol))
                   << std::endl;
 
@@ -426,6 +426,14 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
                                     transform.Charges[ci++]);
             }
           }
+#ifdef VERBOSE_ENUMERATION
+          {
+            SmilesWriteParams smilesWriteParams;
+            smilesWriteParams.allBondsExplicit = true;
+            std::cout << "pre-sanitize: "
+                      << MolToSmiles(*product, smilesWriteParams) << std::endl;
+          }
+#endif
 
           unsigned int failedOp;
           MolOps::sanitizeMol(*product, failedOp,
@@ -435,8 +443,10 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
                                   MolOps::SANITIZE_SETHYBRIDIZATION |
                                   MolOps::SANITIZE_ADJUSTHS);
 #ifdef VERBOSE_ENUMERATION
-          std::cout << "pre-setTautomerStereo: " << MolToSmiles(*product, true)
-                    << std::endl;
+          SmilesWriteParams smilesWriteParams;
+          smilesWriteParams.allBondsExplicit = true;
+          std::cout << "pre-setTautomerStereo: "
+                    << MolToSmiles(*product, smilesWriteParams) << std::endl;
 #endif
           setTautomerStereoAndIsoHs(mol, *product, res);
           tsmiles = MolToSmiles(*product, true);
@@ -474,7 +484,8 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
             std::cout << "New tautomer replaced for ";
           }
           std::cout << tsmiles << ", taut: " << MolToSmiles(*product)
-                    << ", kek: " << MolToSmiles(*kekulized_product, true, true)
+                    << ", kek: "
+                    << MolToSmiles(*kekulized_product, smilesWriteParams)
                     << std::endl;
 #endif
           // BOOST_LOG(rdInfoLog)
