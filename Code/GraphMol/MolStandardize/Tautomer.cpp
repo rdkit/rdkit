@@ -385,9 +385,11 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
           last->setNoImplicit(true);
           // Adjust bond orders
           unsigned int bi = 0;
-          for (size_t i = 0; i < match.size() - 1; ++i) {
-            Bond *bond = product->getBondBetweenAtoms(match[i].second,
-                                                      match[i + 1].second);
+          for (size_t i = 0; i < transform.Mol->getNumBonds(); ++i) {
+            const auto tbond = transform.Mol->getBondWithIdx(i);
+            Bond *bond = product->getBondBetweenAtoms(
+                match[tbond->getBeginAtomIdx()].second,
+                match[tbond->getEndAtomIdx()].second);
             ASSERT_INVARIANT(bond, "required bond not found");
             // check if bonds is specified in tautomer.in file
             if (!transform.BondTypes.empty()) {
