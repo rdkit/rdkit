@@ -712,7 +712,7 @@ void testCanonicalize() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -734,7 +734,7 @@ void testPickCanonical() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -759,7 +759,7 @@ void testCustomScoreFunc() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -828,7 +828,7 @@ void testEnumerationProblems() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 #if 1
@@ -860,7 +860,7 @@ void testPickCanonical2() {
   auto tautparams =
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
@@ -894,7 +894,7 @@ void testEnumerateDetails() {
   auto tautparams =
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     auto mol = "c1ccccc1CN=c1[nH]cccc1"_smiles;
@@ -950,7 +950,7 @@ void testGithub2990() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     // atom stereo
