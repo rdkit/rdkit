@@ -123,8 +123,10 @@ bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
 bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
                           double start_ang, double stop_ang, double padding,
                           const Point2D &end1, const Point2D &end2);
-bool doLinesIntersect(const Point2D &l1s, const Point2D &l1f,
-                      const Point2D &l2s, const Point2D &l2f, Point2D *ip);
+RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
+                                             const Point2D &l1f,
+                                             const Point2D &l2s,
+                                             const Point2D &l2f, Point2D *ip);
 // This uses the barycentric coordinate system method from
 // http://totologic.blogspot.com/2014/01/accurate-point-in-triangle-test.html
 // where it notes and provides a solution for instabilities when the point
