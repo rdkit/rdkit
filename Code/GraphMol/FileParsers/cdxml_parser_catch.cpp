@@ -667,7 +667,7 @@ TEST_CASE("CDXML") {
             auto mols = CDXMLFileToMols("missing file");
             CHECK(0); // Bad file exception not caught
         }
-        catch (RDKit::BadFileException) {
+        catch (RDKit::BadFileException &) {
         
         }
     }
