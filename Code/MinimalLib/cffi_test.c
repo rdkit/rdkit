@@ -211,6 +211,75 @@ void test_svg() {
   printf("--------------------------\n");
 }
 
+unsigned int count_occurrences(const char *str, const char *substr) {
+  unsigned int count = 0;
+  const char *from = str;
+  while (from = strstr(from, substr)) {
+    ++count;
+    ++from;
+  }
+  return count;
+}
+
+void test_rxn_svg() {
+  char *pkl;
+  size_t pkl_size;
+
+  printf("--------------------------\n");
+  printf("  test_rxn_svg\n");
+
+  pkl = get_rxn("[CH3:1][OH:2]>>[CH2:1]=[OH0:2]", &pkl_size, "");
+  assert(pkl);
+  assert(pkl_size > 0);
+
+  char *svg = get_rxn_svg(pkl, pkl_size, "{\"width\":350,\"height\":300}");
+  assert(strstr(svg, "width='350px'"));
+  assert(strstr(svg, "height='300px'"));
+  assert(strstr(svg, "</svg>"));
+  free(pkl);
+
+  pkl = get_rxn(
+      "$RXN\n\
+\n\
+      RDKit\n\
+\n\
+  1  1\n\
+$MOL\n\
+\n\
+     RDKit          2D\n\
+\n\
+  2  1  0  0  0  0  0  0  0  0999 V2000\n\
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n\
+    1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  2  0  0\n\
+  1  2  6  0\n\
+V    1 [C&H3:1]\n\
+V    2 [O&H1:2]\n\
+M  END\n\
+$MOL\n\
+\n\
+     RDKit          2D\n\
+\n\
+  2  1  0  0  0  0  0  0  0  0999 V2000\n\
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0\n\
+    1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  2  0  0\n\
+  1  2  2  0\n\
+V    1 [C&H2:1]\n\
+V    2 [O&H0:2]\n\
+M  END",
+      &pkl_size, "");
+  char *svg_from_block = get_rxn_svg(pkl, pkl_size, "");
+  assert(strstr(svg, "</svg>"));
+  assert(count_occurrences(svg, "<path") > 0);
+  assert(count_occurrences(svg, "<path") ==
+         count_occurrences(svg_from_block, "<path"));
+  free(svg);
+  free(svg_from_block);
+  free(pkl);
+
+  printf("  done\n");
+  printf("--------------------------\n");
+}
+
 void test_flexicanvas() {
   char *pkl;
   size_t pkl_size;
@@ -297,6 +366,7 @@ void test_fingerprints() {
   printf("--------------------------\n");
   printf("  test_fingerprints\n");
 
+  assert(!get_morgan_fp(NULL, 0, NULL));
   char *mpkl;
   size_t mpkl_size;
   mpkl = get_mol("c1nccc(O)c1", &mpkl_size, "");
@@ -313,11 +383,13 @@ void test_fingerprints() {
       fp, "0011000000100000010000100000000000001001010000000010000010100001"));
   free(fp);
   size_t nbytes;
+  assert(!get_morgan_fp_as_bytes(NULL, 0, &nbytes, NULL));
   fp = get_morgan_fp_as_bytes(mpkl, mpkl_size, &nbytes,
                               "{\"radius\":2,\"nBits\":64}");
   assert(nbytes == 8);
   free(fp);
 
+  assert(!get_rdkit_fp(NULL, 0, NULL));
   fp = get_rdkit_fp(mpkl, mpkl_size, "{\"nBits\":64}");
   assert(!strcmp(
       fp, "1111011000111100011011011111011001111111110010000111000011111111"));
@@ -326,14 +398,17 @@ void test_fingerprints() {
   assert(!strcmp(
       fp, "1111011000110000010001010111000001101011100010000001000011100011"));
   free(fp);
+  assert(!get_rdkit_fp_as_bytes(NULL, 0, &nbytes, NULL));
   fp = get_rdkit_fp_as_bytes(mpkl, mpkl_size, &nbytes, "{\"nBits\":64}");
   assert(nbytes == 8);
   free(fp);
 
+  assert(!get_pattern_fp(NULL, 0, NULL));
   fp = get_pattern_fp(mpkl, mpkl_size, "{\"nBits\":64}");
   assert(!strcmp(
       fp, "1011111111111111110011011111011001011110111101111110101111010011"));
   free(fp);
+  assert(!get_pattern_fp_as_bytes(NULL, 0, &nbytes, NULL));
   fp = get_pattern_fp_as_bytes(mpkl, mpkl_size, &nbytes, "{\"nBits\":64}");
   assert(nbytes == 8);
   free(fp);
@@ -343,6 +418,47 @@ void test_fingerprints() {
   assert(!strcmp(
       fp, "1011111111111111110011111111011101011111111101111111111111011011"));
   free(fp);
+
+  assert(!get_topological_torsion_fp(NULL, 0, NULL));
+  fp = get_topological_torsion_fp(mpkl, mpkl_size, "{\"nBits\":64}");
+  assert(!strcmp(
+      fp, "1100000000000000000000000000000000000000000011000000000011001100"));
+  free(fp);
+  assert(!get_topological_torsion_fp_as_bytes(NULL, 0, &nbytes, NULL));
+  fp = get_topological_torsion_fp_as_bytes(mpkl, mpkl_size, &nbytes,
+                                           "{\"nBits\":64}");
+  assert(nbytes == 8);
+  free(fp);
+
+  assert(!get_atom_pair_fp(NULL, 0, NULL));
+  fp = get_atom_pair_fp(mpkl, mpkl_size, "{\"nBits\":64}");
+  assert(!strcmp(
+      fp, "0000000000000000000000001110111011101100000000000000000011001100"));
+  free(fp);
+  fp = get_atom_pair_fp(mpkl, mpkl_size, "{\"nBits\":64,\"minLength\":2}");
+  assert(!strcmp(
+      fp, "0000000000000000000000001000111011100000000000000000000011001100"));
+  free(fp);
+  fp = get_atom_pair_fp(mpkl, mpkl_size, "{\"nBits\":64,\"maxLength\":2}");
+  assert(!strcmp(
+      fp, "0000000000000000000000001110111011001100000000000000000011000000"));
+  free(fp);
+  assert(!get_atom_pair_fp_as_bytes(NULL, 0, &nbytes, NULL));
+  fp = get_atom_pair_fp_as_bytes(mpkl, mpkl_size, &nbytes, "{\"nBits\":64}");
+  assert(nbytes == 8);
+  free(fp);
+
+#ifdef RDK_BUILD_AVALON_SUPPORT
+  assert(!get_avalon_fp(NULL, 0, NULL));
+  fp = get_avalon_fp(mpkl, mpkl_size, "{\"nBits\":64}");
+  assert(!strcmp(
+      fp, "0001000001100011110001011100011100000110100010001110110001110011"));
+  free(fp);
+  assert(!get_avalon_fp_as_bytes(NULL, 0, nbytes, NULL));
+  fp = get_avalon_fp_as_bytes(mpkl, mpkl_size, &nbytes, "{\"nBits\":64}");
+  assert(nbytes == 8);
+  free(fp);
+#endif
 
   free(mpkl);
   mpkl = NULL;
@@ -538,6 +654,7 @@ int main() {
 
   test_io();
   test_svg();
+  test_rxn_svg();
   test_flexicanvas();
   test_substruct();
   test_descriptors();

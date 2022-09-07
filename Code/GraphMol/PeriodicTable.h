@@ -100,6 +100,12 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
     return byanum[atomicNumber].Symbol();
   }
 
+  //! returns the full element name
+  std::string getElementName(UINT atomicNumber) const {
+    PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
+    return byanum[atomicNumber].Name();
+  }
+
   //! returns the atom's van der Waals radius
   double getRvdw(UINT atomicNumber) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
