@@ -165,6 +165,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(tbl.GetRb0(6), 0.77))
     self.assertTrue(feq(tbl.GetRb0("C"), 0.77))
     self.assertTrue(tbl.GetElementSymbol(6) == 'C')
+    self.assertTrue(tbl.GetElementName(6) == 'Carbon')
 
   def test2Atom(self):
     atom = Chem.Atom(6)
@@ -6905,7 +6906,7 @@ CAS<~>
 
     Chem.SetUseLegacyStereoPerception(False)
     m = Chem.MolFromSmiles("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2")
-    self.assertNotEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
     self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
 
     Chem.SetUseLegacyStereoPerception(origVal)

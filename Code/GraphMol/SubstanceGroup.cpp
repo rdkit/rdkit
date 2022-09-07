@@ -24,7 +24,7 @@ void remove_element(std::vector<T> &container, unsigned int element) {
     container.erase(pos);
   }
 }
-}
+}  // namespace
 
 SubstanceGroup::SubstanceGroup(ROMol *owning_mol, const std::string &type)
     : RDProps(), dp_mol(owning_mol) {
@@ -448,5 +448,48 @@ std::ostream &operator<<(std::ostream &target,
                          const RDKit::SubstanceGroup &sgroup) {
   target << sgroup.getIndexInMol() << ' '
          << sgroup.getProp<std::string>("TYPE");
+
+  auto brackets = sgroup.getBrackets();
+  if (!brackets.empty()) {
+    target << " Brk: " << brackets.size();
+  }
+
+  auto cstates = sgroup.getCStates();
+  if (!cstates.empty()) {
+    target << " CSt: " << cstates.size();
+  }
+
+  auto attachpts = sgroup.getAttachPoints();
+  if (!attachpts.empty()) {
+    target << " AtPt: " << attachpts.size();
+  }
+
+  auto atoms = sgroup.getAtoms();
+  if (!atoms.empty()) {
+    target << " Atoms: { ";
+    for (auto atom_idx : atoms) {
+      target << atom_idx << ' ';
+    }
+    target << '}';
+  }
+
+  auto patoms = sgroup.getParentAtoms();
+  if (!patoms.empty()) {
+    target << " PAtoms: { ";
+    for (auto atom_idx : patoms) {
+      target << atom_idx << ' ';
+    }
+    target << '}';
+  }
+
+  auto bonds = sgroup.getBonds();
+  if (!bonds.empty()) {
+    target << " Bonds: { ";
+    for (auto bond_idx : bonds) {
+      target << bond_idx << ' ';
+    }
+    target << '}';
+  }
+
   return target;
 }
