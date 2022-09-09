@@ -525,17 +525,14 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       }
     }
   }
-  // if there are no rings to consider, we can return
-  if (bondsToUse.none()) {
-    return;
-  }
 
   // before everything do implicit valence calculation and store them
   // we will repeat after kekulization and compare for the sake of error
   // checking
   auto numAtoms = mol.getNumAtoms();
   INT_VECT valences(numAtoms);
-  boost::dynamic_bitset<> dummyAts(mol.getNumAtoms());
+  boost::dynamic_bitset<> dummyAts(numAtoms);
+
   for (auto atom : mol.atoms()) {
     if (!atomsToUse[atom->getIdx()]) {
       continue;
@@ -552,89 +549,91 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   if (!foundAromatic || atomsToUse.none()) {
     return;
   }
+  // if any bonds to kekulize then give it a try:
+  if (bondsToUse.any()) {
+    // A bit on the state of the molecule at this point
+    // - aromatic and non aromatic atoms and bonds may be mixed up
 
-  // A bit on the state of the molecule at this point
-  // - aromatic and non aromatic atoms and bonds may be mixed up
+    // - for all aromatic bonds it is assumed that that both the following
+    //   are true:
+    //       - getIsAromatic returns true
+    //       - getBondType return aromatic
+    // - all aromatic atoms return true for "getIsAromatic"
 
-  // - for all aromatic bonds it is assumed that that both the following
-  //   are true:
-  //       - getIsAromatic returns true
-  //       - getBondType return aromatic
-  // - all aromatic atoms return true for "getIsAromatic"
-
-  // first find all the simple rings in the molecule that are not
-  // completely composed of dummy atoms
-  VECT_INT_VECT allringsSSSR;
-  if (!mol.getRingInfo()->isInitialized()) {
-    MolOps::findSSSR(mol, allringsSSSR);
-  }
-  const VECT_INT_VECT &allrings =
-      allringsSSSR.empty() ? mol.getRingInfo()->atomRings() : allringsSSSR;
-  VECT_INT_VECT arings;
-  arings.reserve(allrings.size());
-  auto copyAtomRingsWithinFragmentUnlessAllDummy =
-      [&atomsToUse, &dummyAts](const INT_VECT &ring) {
-        bool ringOk = false;
-        for (auto ai : ring) {
-          if (!atomsToUse[ai]) {
-            return false;
-          }
-          if (!dummyAts[ai]) {
-            ringOk = true;
-          }
-        }
-        return ringOk;
-      };
-  std::copy_if(allrings.begin(), allrings.end(), std::back_inserter(arings),
-               copyAtomRingsWithinFragmentUnlessAllDummy);
-
-  VECT_INT_VECT allbrings;
-  RingUtils::convertToBonds(arings, allbrings, mol);
-  VECT_INT_VECT brings;
-  brings.reserve(allbrings.size());
-  auto copyBondRingsWithinFragment = [&bondsToUse](const INT_VECT &ring) {
-    return std::all_of(ring.begin(), ring.end(),
-                       [&bondsToUse](const int bi) { return bondsToUse[bi]; });
-  };
-  VECT_INT_VECT aringsRemaining;
-  aringsRemaining.reserve(arings.size());
-  for (unsigned i = 0; i < allbrings.size(); ++i) {
-    if (copyBondRingsWithinFragment(allbrings[i])) {
-      brings.push_back(allbrings[i]);
-      aringsRemaining.push_back(arings[i]);
+    // first find all the simple rings in the molecule that are not
+    // completely composed of dummy atoms
+    VECT_INT_VECT allringsSSSR;
+    if (!mol.getRingInfo()->isInitialized()) {
+      MolOps::findSSSR(mol, allringsSSSR);
     }
-  }
-  arings = std::move(aringsRemaining);
+    const VECT_INT_VECT &allrings =
+        allringsSSSR.empty() ? mol.getRingInfo()->atomRings() : allringsSSSR;
+    VECT_INT_VECT arings;
+    arings.reserve(allrings.size());
+    auto copyAtomRingsWithinFragmentUnlessAllDummy =
+        [&atomsToUse, &dummyAts](const INT_VECT &ring) {
+          bool ringOk = false;
+          for (auto ai : ring) {
+            if (!atomsToUse[ai]) {
+              return false;
+            }
+            if (!dummyAts[ai]) {
+              ringOk = true;
+            }
+          }
+          return ringOk;
+        };
+    std::copy_if(allrings.begin(), allrings.end(), std::back_inserter(arings),
+                 copyAtomRingsWithinFragmentUnlessAllDummy);
 
-  // make a neighbor map for the rings i.e. a ring is a
-  // neighbor to another candidate ring if it shares at least
-  // one bond
-  // useful to figure out fused systems
-  INT_INT_VECT_MAP neighMap;
-  RingUtils::makeRingNeighborMap(brings, neighMap);
+    VECT_INT_VECT allbrings;
+    RingUtils::convertToBonds(arings, allbrings, mol);
+    VECT_INT_VECT brings;
+    brings.reserve(allbrings.size());
+    auto copyBondRingsWithinFragment = [&bondsToUse](const INT_VECT &ring) {
+      return std::all_of(ring.begin(), ring.end(), [&bondsToUse](const int bi) {
+        return bondsToUse[bi];
+      });
+    };
+    VECT_INT_VECT aringsRemaining;
+    aringsRemaining.reserve(arings.size());
+    for (unsigned i = 0; i < allbrings.size(); ++i) {
+      if (copyBondRingsWithinFragment(allbrings[i])) {
+        brings.push_back(allbrings[i]);
+        aringsRemaining.push_back(arings[i]);
+      }
+    }
+    arings = std::move(aringsRemaining);
 
-  int curr = 0;
-  int cnrs = rdcast<int>(arings.size());
-  boost::dynamic_bitset<> fusDone(cnrs);
-  while (curr < cnrs) {
-    INT_VECT fused;
-    RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-    VECT_INT_VECT frings(fused.size());
-    std::transform(fused.begin(), fused.end(), frings.begin(),
-                   [&arings](const int ri) { return arings[ri]; });
-    kekulizeFused(mol, frings, maxBackTracks);
-    int rix;
-    for (rix = 0; rix < cnrs; ++rix) {
-      if (!fusDone[rix]) {
-        curr = rix;
+    // make a neighbor map for the rings i.e. a ring is a
+    // neighbor to another candidate ring if it shares at least
+    // one bond
+    // useful to figure out fused systems
+    INT_INT_VECT_MAP neighMap;
+    RingUtils::makeRingNeighborMap(brings, neighMap);
+
+    int curr = 0;
+    int cnrs = rdcast<int>(arings.size());
+    boost::dynamic_bitset<> fusDone(cnrs);
+    while (curr < cnrs) {
+      INT_VECT fused;
+      RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
+      VECT_INT_VECT frings(fused.size());
+      std::transform(fused.begin(), fused.end(), frings.begin(),
+                     [&arings](const int ri) { return arings[ri]; });
+      kekulizeFused(mol, frings, maxBackTracks);
+      int rix;
+      for (rix = 0; rix < cnrs; ++rix) {
+        if (!fusDone[rix]) {
+          curr = rix;
+          break;
+        }
+      }
+      if (rix == cnrs) {
         break;
       }
     }
-    if (rix == cnrs) {
-      break;
-    }
   }
-
   if (markAtomsBonds) {
     // if we want the atoms and bonds to be marked non-aromatic do
     // that here.

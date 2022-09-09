@@ -2796,4 +2796,11 @@ TEST_CASE(
     REQUIRE(m1->getBondWithIdx(0)->hasQuery());
     REQUIRE(m1->getBondWithIdx(0)->getBondType() != Bond::BondType::AROMATIC);
   }
+  SECTION("make sure single-atom molecules and mols without rings still fail") {
+    std::vector<std::string> expectedFailures = {"p", "c:c"};
+    for (const auto &smi : expectedFailures) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
+    }
+  }
 }
