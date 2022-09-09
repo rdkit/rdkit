@@ -503,20 +503,30 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
 namespace MolOps {
 namespace details {
 void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
-                      const boost::dynamic_bitset<> &bondsToUse,
+                      const boost::dynamic_bitset<> &inBondsToUse,
                       bool markAtomsBonds, unsigned int maxBackTracks) {
   PRECONDITION(atomsToUse.size() == mol.getNumAtoms(),
                "atomsToUse is wrong size");
-  PRECONDITION(bondsToUse.size() == mol.getNumBonds(),
+  PRECONDITION(inBondsToUse.size() == mol.getNumBonds(),
                "bondsToUse is wrong size");
 
-  // there's no point doing kekulization if there are no aromatic bonds:
+  boost::dynamic_bitset<> bondsToUse = inBondsToUse;
+  // there's no point doing kekulization if there are no aromatic bonds
+  // without queries:
   bool foundAromatic = false;
   for (const auto bond : mol.bonds()) {
-    if (bondsToUse[bond->getIdx()] && bond->getIsAromatic()) {
-      foundAromatic = true;
-      break;
+    if (bondsToUse[bond->getIdx()]) {
+      if (bond->hasQuery()) {
+        // we don't kekulize query bonds
+        bondsToUse[bond->getIdx()] = 0;
+      } else if (bond->getIsAromatic()) {
+        foundAromatic = true;
+      }
     }
+  }
+  // if there are no rings to consider, we can return
+  if (bondsToUse.none()) {
+    return;
   }
 
   // before everything do implicit valence calculation and store them
@@ -538,7 +548,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       dummyAts[atom->getIdx()] = 1;
     }
   }
-  if (!foundAromatic) {
+  if (!foundAromatic || atomsToUse.none()) {
     return;
   }
 
@@ -585,8 +595,15 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     return std::all_of(ring.begin(), ring.end(),
                        [&bondsToUse](const int bi) { return bondsToUse[bi]; });
   };
-  std::copy_if(allbrings.begin(), allbrings.end(), std::back_inserter(brings),
-               copyBondRingsWithinFragment);
+  VECT_INT_VECT aringsRemaining;
+  aringsRemaining.reserve(arings.size());
+  for (unsigned i = 0; i < allbrings.size(); ++i) {
+    if (copyBondRingsWithinFragment(allbrings[i])) {
+      brings.push_back(allbrings[i]);
+      aringsRemaining.push_back(arings[i]);
+    }
+  }
+  arings = std::move(aringsRemaining);
 
   // make a neighbor map for the rings i.e. a ring is a
   // neighbor to another candidate ring if it shares at least

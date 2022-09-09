@@ -2752,3 +2752,33 @@ TEST_CASE(
     CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
   }
 }
+
+TEST_CASE(
+    "github #5505: Running kekulization on mols with query bonds will either fail or return incorrect results") {
+  SECTION("as reported") {
+    auto m = "[#6]-c1cccc(-[#6])c1"_smarts;
+    REQUIRE(m);
+    REQUIRE(m->getBondWithIdx(2)->hasQuery());
+    REQUIRE(m->getBondWithIdx(2)->getBondType() == Bond::BondType::AROMATIC);
+    MolOps::Kekulize(*m);
+    REQUIRE(m->getBondWithIdx(2)->hasQuery());
+    REQUIRE(m->getBondWithIdx(2)->getBondType() == Bond::BondType::AROMATIC);
+  }
+  SECTION("partial kekulization works") {
+    auto m1 = "c1ccccc1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1ccccc1"_smarts;
+    REQUIRE(m2);
+    m1->insertMol(*m2);
+    MolOps::findSSSR(*m1);
+    REQUIRE(!m1->getBondWithIdx(1)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(1)->getBondType() == Bond::BondType::AROMATIC);
+    REQUIRE(m1->getBondWithIdx(6)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(6)->getBondType() == Bond::BondType::AROMATIC);
+    MolOps::Kekulize(*m1);
+    REQUIRE(!m1->getBondWithIdx(1)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(1)->getBondType() != Bond::BondType::AROMATIC);
+    REQUIRE(m1->getBondWithIdx(6)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(6)->getBondType() == Bond::BondType::AROMATIC);
+  }
+}
