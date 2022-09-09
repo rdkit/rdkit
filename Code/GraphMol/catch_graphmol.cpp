@@ -18,6 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -2780,5 +2781,19 @@ TEST_CASE(
     REQUIRE(m1->getBondWithIdx(1)->getBondType() != Bond::BondType::AROMATIC);
     REQUIRE(m1->getBondWithIdx(6)->hasQuery());
     REQUIRE(m1->getBondWithIdx(6)->getBondType() == Bond::BondType::AROMATIC);
+  }
+  SECTION("kekulization with non-bond-type queries works") {
+    auto m1 = "c1ccccc1"_smiles;
+    REQUIRE(m1);
+    QueryBond qbond;
+    qbond.setBondType(Bond::BondType::AROMATIC);
+    qbond.setIsAromatic(true);
+    qbond.setQuery(makeBondIsInRingQuery());
+    m1->replaceBond(0, &qbond);
+    REQUIRE(m1->getBondWithIdx(0)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(0)->getBondType() == Bond::BondType::AROMATIC);
+    MolOps::Kekulize(*m1);
+    REQUIRE(m1->getBondWithIdx(0)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(0)->getBondType() != Bond::BondType::AROMATIC);
   }
 }

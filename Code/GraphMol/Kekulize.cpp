@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/Rings.h>
 #include <GraphMol/SanitException.h>
@@ -516,8 +517,8 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   bool foundAromatic = false;
   for (const auto bond : mol.bonds()) {
     if (bondsToUse[bond->getIdx()]) {
-      if (bond->hasQuery()) {
-        // we don't kekulize query bonds
+      if (QueryOps::hasBondTypeQuery(*bond)) {
+        // we don't kekulize bonds with bond type queries
         bondsToUse[bond->getIdx()] = 0;
       } else if (bond->getIsAromatic()) {
         foundAromatic = true;
