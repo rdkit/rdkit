@@ -150,7 +150,7 @@ static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLToChemicalReactions(
   auto reactions = RDKit::CDXMLToChemicalReactions(block, sanitize, removeHs);
   std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
   for(auto &rxn : reactions) {
-    result.push_back(std::shared_ptr<RDKit::ChemicalReaction>(rxn.release()));
+    result.emplace_back(rxn.release());
   }
   return result;
 }
@@ -160,7 +160,7 @@ static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLFileToChemicalReactio
   auto reactions = RDKit::CDXMLFileToChemicalReactions(filename, sanitize, removeHs);
   std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
   for(auto &rxn : reactions) {
-    result.push_back(std::shared_ptr<RDKit::ChemicalReaction>(rxn.release()));
+    result.emplace_back(rxn.relase());
   }
   return result;
 }
