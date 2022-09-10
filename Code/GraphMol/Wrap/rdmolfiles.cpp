@@ -1956,6 +1956,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        - filename: the cdxml filename
 
        - sanitize: if True, sanitize the molecules [default True]
+       - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
 
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
@@ -1977,6 +1978,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        - filename: the cdxml string
 
        - sanitize: if True, sanitize the molecules [default True]
+       - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
+
 
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
