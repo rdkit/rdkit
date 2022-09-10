@@ -17,7 +17,8 @@ namespace RDKit {
 // ! assigns atomic connectivity to a molecule using atomic coordinates, disregarding pre-existing bonds
 /*!
     \param mol is the molecule of interest; it must have a 3D conformer
-    \param useHueckel (optional) if this is  \c true, the extended Hueckel theorem will be used to determine connectivity rather than the van der Waals method
+    \param useHueckel (optional) if this is  \c true, the extended Hueckel theorem will be used to determine connectivity
+            rather than the van der Waals method
     \param charge (optional) the charge of the molecule; it must be provided if the Hueckel method is used and charge is non-zero
     \param covFactor (optional) the factor with which to multiply each covalent radius if the van der Waals method is used
  */
@@ -28,13 +29,31 @@ void determineConnectivity(RWMol &mol, bool useHueckel=false, int charge=0, doub
 /*!
     \param mol is the molecule of interest; it must have single bonds corresponding to the atomic connectivity
     \param charge (optional) the charge of the molecule; it must be provided if charge is non-zero
-    \param allowChargedFragments (optional) if this is  \c true, formal charges will be placed on atoms according to their valency; otherwise, radical electrons will be placed on the atoms
-    \param embedChiral (optional) if this is \c true, chirality information will be embedded into the molecule; the function calls sanitizeMol() when this is true
+    \param allowChargedFragments (optional) if this is  \c true, formal charges will be placed on atoms according to their valency;
+            otherwise, radical electrons will be placed on the atoms
+    \param embedChiral (optional) if this is \c true, chirality information will be embedded into the molecule;
+            the function calls sanitizeMol() when this is true
     \param useAtomMap (optional) if this is \c true, an atom map will be created for the molecule
  */
-void determineBondOrder(RWMol &mol, int charge=0, bool allowChargedFragments=true, bool embedChiral=true, bool useAtomMap=false);
+void determineBondOrder(RWMol &mol, int charge=0,
+                        bool allowChargedFragments=true, bool embedChiral=true, bool useAtomMap=false);
 
-
+// ! assigns atomic connectivity to a molecule using atomic coordinates, disregarding pre-existing bonds;
+//   it is recommended to sanitize the molecule after calling this function if embedChiral is not set to true
+/*!
+    \param mol is the molecule of interest; it must have a 3D conformer
+    \param useHueckel (optional) if this is  \c true, the extended Hueckel theorem will be used to determine connectivity
+            rather than the van der Waals method
+    \param charge (optional) the charge of the molecule; it must be provided if charge is non-zero
+    \param covFactor (optional) the factor with which to multiply each covalent radius if the van der Waals method is used
+    \param allowChargedFragments (optional) if this is  \c true, formal charges will be placed on atoms according to their valency;
+            otherwise, radical electrons will be placed on the atoms
+    \param embedChiral (optional) if this is \c true, chirality information will be embedded into the molecule;
+            the function calls sanitizeMol() when this is true
+    \param useAtomMap (optional) if this is \c true, an atom map will be created for the molecule
+ */
+void determineBonds(RWMol &mol, bool useHueckel=false, int charge=0, double covFactor=1.3,
+                    bool allowChargedFragments=true, bool embedChiral=true, bool useAtomMap=false);
 
 }
 

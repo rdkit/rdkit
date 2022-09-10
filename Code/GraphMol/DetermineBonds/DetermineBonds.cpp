@@ -39,7 +39,7 @@ void connectivityHueckel(RWMol &mol, int charge) {
             matInd++;
         }
     }
-}
+} // connectivityHueckel()
 
 void connectivityVdW(RWMol &mol, double covFactor) {
     auto numAtoms = mol.getNumAtoms();
@@ -56,7 +56,7 @@ void connectivityVdW(RWMol &mol, double covFactor) {
             }
         }
     }
-}
+} // connectivityVdW()
 
 void determineConnectivity(RWMol &mol, bool useHueckel, int charge, double covFactor) {
     auto numAtoms = mol.getNumAtoms();
@@ -72,7 +72,7 @@ void determineConnectivity(RWMol &mol, bool useHueckel, int charge, double covFa
     } else {
         connectivityVdW(mol, covFactor);
     }
-}
+} // determineConnectivity()
 
 std::vector<unsigned int> possibleValences(const Atom *atom, const std::unordered_map<int,
                                   std::vector<unsigned int>> &atomicValence) {
@@ -401,6 +401,13 @@ void determineBondOrder(RWMol &mol, int charge, bool allowChargedFragments,
                     embedChiral, useAtomMap, charge);
     return;
 } // determineBondOrdering()
+
+void determineBonds(RWMol &mol, bool useHueckel, int charge, double covFactor,
+                    bool allowChargedFragments, bool embedChiral, bool useAtomMap) {
+    
+    determineConnectivity(mol, useHueckel, charge, covFactor);
+    determineBondOrder(mol, charge, allowChargedFragments, embedChiral, useAtomMap);
+}
 
 } // namespace RDKit
 

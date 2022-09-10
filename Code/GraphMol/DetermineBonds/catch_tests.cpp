@@ -82,7 +82,7 @@ TEST_CASE("Determine Connectivity") {
         }
     } // SECTION
     
-    SECTION("DetermineBonds using charged fragments") {
+    SECTION("DetermineBondOrdering using charged fragments") {
         unsigned int numTests = 38;
         for (unsigned int i = 0; i < numTests; i++) {
             std::string rdbase = getenv("RDBASE");
@@ -98,9 +98,7 @@ TEST_CASE("Determine Connectivity") {
             std::string canonSmiles = MolToSmiles(*orig, params);
             int charge = MolOps::getFormalCharge(*orig);
 
-            determineConnectivity(*mol, false, charge);
-            determineBondOrder(*mol, charge);
-            
+            determineBonds(*mol, false, charge);
             MolOps::removeAllHs(*mol, false);
 
             auto numAtoms = mol->getNumAtoms();
@@ -126,7 +124,7 @@ TEST_CASE("Determine Connectivity") {
         }
     } // SECTION
     
-    SECTION("DetermineBonds using radicals") {
+    SECTION("DetermineBondOrdering using radicals") {
         unsigned int numTests = 10;
         for (unsigned int i = 0; i < numTests; i++) {
             std::string rdbase = getenv("RDBASE");
@@ -142,9 +140,7 @@ TEST_CASE("Determine Connectivity") {
             std::string canonSmiles = MolToSmiles(*orig, params);
             int charge = MolOps::getFormalCharge(*orig);
 
-            determineConnectivity(*mol, false, charge);
-            determineBondOrder(*mol, charge, false);
-            
+            determineBonds(*mol, false, charge, 1.3, false);
             MolOps::removeAllHs(*mol, false);
 
             auto numAtoms = mol->getNumAtoms();
@@ -169,6 +165,7 @@ TEST_CASE("Determine Connectivity") {
             }
         }
     } // SECTION
+    
 }
 
 //        std::string smiles[] = {
