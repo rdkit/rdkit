@@ -101,7 +101,7 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLFileToChemicalReactions(
   std::ifstream inStream(fName.c_str());
   std::vector<std::unique_ptr<ChemicalReaction>> res;;
     
-  if (!inStream) {
+  if (!inStream || inStream.bad()) {
     return res;
   }
   if (!inStream.eof()) {
