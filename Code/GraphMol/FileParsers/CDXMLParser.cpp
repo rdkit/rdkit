@@ -97,7 +97,7 @@ template <typename Q>
 Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
   PRECONDITION(qry, "bad query");
   auto *atm = mol.getAtomWithIdx(idx);
-  auto *qa = new QueryAtom(*atm);
+  auto *qa = std::make_unique<QueryAtom>(*atm);
   qa->setQuery(qry);
   qa->setNoImplicit(true);
   mol.replaceAtom(idx, qa);
@@ -105,7 +105,6 @@ Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
   if (symbol != "") {
     res->setProp(common_properties::atomLabel, symbol);
   }
-  delete qa;
   return res;
 }
 
