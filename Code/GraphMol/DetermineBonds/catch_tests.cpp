@@ -20,7 +20,7 @@ TEST_CASE("Determine Connectivity") {
         for (unsigned int i = 0; i < numTests; i++) {
             std::string rdbase = getenv("RDBASE");
             std::string fName = rdbase +
-            "/Code/GraphMol/DetermineBonds/test_data/"
+            "/Code/GraphMol/DetermineBonds/test_data/connectivity/"
             + "test" + std::to_string(i) + ".xyz";
             std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
             REQUIRE(mol);
@@ -53,7 +53,7 @@ TEST_CASE("Determine Connectivity") {
         for (unsigned int i = 0; i < numTests; i++) {
             std::string rdbase = getenv("RDBASE");
             std::string fName = rdbase +
-            "/Code/GraphMol/DetermineBonds/test_data/"
+            "/Code/GraphMol/DetermineBonds/test_data/connectivity/"
             + "test" + std::to_string(i) + ".xyz";
             std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
             REQUIRE(mol);
@@ -82,12 +82,12 @@ TEST_CASE("Determine Connectivity") {
         }
     } // SECTION
     
-    SECTION("DetermineBonds") {
-        unsigned int numTests = 39;
+    SECTION("DetermineBonds using charged fragments") {
+        unsigned int numTests = 38;
         for (unsigned int i = 0; i < numTests; i++) {
             std::string rdbase = getenv("RDBASE");
             std::string fName = rdbase +
-            "/Code/GraphMol/DetermineBonds/test_data/"
+            "/Code/GraphMol/DetermineBonds/test_data/charged_fragments/"
             + "test" + std::to_string(i) + ".xyz";
             std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
             REQUIRE(mol);
@@ -96,11 +96,54 @@ TEST_CASE("Determine Connectivity") {
             REQUIRE(orig);
             SmilesWriteParams params = {false, false, true, false, false, false, -1};
             std::string canonSmiles = MolToSmiles(*orig, params);
-
             int charge = MolOps::getFormalCharge(*orig);
 
             determineConnectivity(*mol, false, charge);
             determineBondOrder(*mol, charge);
+            
+            MolOps::removeAllHs(*mol, false);
+
+            auto numAtoms = mol->getNumAtoms();
+            REQUIRE(orig->getNumAtoms() == numAtoms);
+            
+            ResonanceMolSupplier resMolSuppl(*mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS | ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
+            bool valid = false;
+            for (unsigned int i = 0; i < resMolSuppl.length(); i++) {
+                std::unique_ptr<ROMol> firstResMol(resMolSuppl[i]);
+                std::unique_ptr<RWMol> resMol(new RWMol(*firstResMol));
+                MolOps::setAromaticity(*resMol);
+                
+                std::string molSmiles = MolToSmiles(*resMol, params);
+                if (molSmiles == canonSmiles) {
+                    CHECK(true);
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid) {
+                CHECK(false);
+            }
+        }
+    } // SECTION
+    
+    SECTION("DetermineBonds using radicals") {
+        unsigned int numTests = 10;
+        for (unsigned int i = 0; i < numTests; i++) {
+            std::string rdbase = getenv("RDBASE");
+            std::string fName = rdbase +
+            "/Code/GraphMol/DetermineBonds/test_data/radicals/"
+            + "test" + std::to_string(i) + ".xyz";
+            std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+            REQUIRE(mol);
+            std::string smiles = mol->getProp<std::string>("_FileComments");
+            std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+            REQUIRE(orig);
+            SmilesWriteParams params = {false, false, true, false, false, false, -1};
+            std::string canonSmiles = MolToSmiles(*orig, params);
+            int charge = MolOps::getFormalCharge(*orig);
+
+            determineConnectivity(*mol, false, charge);
+            determineBondOrder(*mol, charge, false);
             
             MolOps::removeAllHs(*mol, false);
 

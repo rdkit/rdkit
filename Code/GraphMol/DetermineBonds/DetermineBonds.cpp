@@ -285,6 +285,12 @@ void addBondOrdering(RWMol &mol, const std::vector<std::vector<unsigned int>> &o
         setAtomicRadicals(mol, valency, charge);
     }
     
+    if (MolOps::getFormalCharge(mol) != charge) {
+        std::stringstream ss;
+        ss << "Final molecular charge does not match input; could not find valid bond ordering";
+        throw ValueErrorException(ss.str());
+    }
+    
     if (useAtomMap) {
         setAtomMap(mol);
     }
@@ -292,11 +298,6 @@ void addBondOrdering(RWMol &mol, const std::vector<std::vector<unsigned int>> &o
     if (embedChiral) {
         setChirality(mol);
     }
-    
-    int successKek = MolOps::KekulizeIfPossible(mol);
-    // TODO:: what to do if this fails?
-    int successArom = MolOps::setAromaticity(mol);
-    // TODO:: what to do if this fails?
 }
 
 void determineBondOrder(RWMol &mol, int charge, bool allowChargedFragments,
