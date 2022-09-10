@@ -504,14 +504,17 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
 namespace MolOps {
 namespace details {
 void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
-                      const boost::dynamic_bitset<> &inBondsToUse,
-                      bool markAtomsBonds, unsigned int maxBackTracks) {
+                      boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds,
+                      unsigned int maxBackTracks) {
   PRECONDITION(atomsToUse.size() == mol.getNumAtoms(),
                "atomsToUse is wrong size");
-  PRECONDITION(inBondsToUse.size() == mol.getNumBonds(),
+  PRECONDITION(bondsToUse.size() == mol.getNumBonds(),
                "bondsToUse is wrong size");
+  // if there are no atoms to use we can directly return
+  if (atomsToUse.none()) {
+    return;
+  }
 
-  boost::dynamic_bitset<> bondsToUse = inBondsToUse;
   // there's no point doing kekulization if there are no aromatic bonds
   // without queries:
   bool foundAromatic = false;
@@ -546,7 +549,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       dummyAts[atom->getIdx()] = 1;
     }
   }
-  if (!foundAromatic || atomsToUse.none()) {
+  if (!foundAromatic) {
     return;
   }
   // if any bonds to kekulize then give it a try:
