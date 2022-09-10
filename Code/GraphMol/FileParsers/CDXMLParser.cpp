@@ -496,8 +496,7 @@ std::vector<std::unique_ptr<RWMol>> CDXMLDataStreamToMols(
                 mol->clearProp(NEEDS_FUSE);
                 std::unique_ptr<ROMol> fused;
                 try {
-                  fused.reset(
-                      molzip(*mol, molzip_params).release());  // std::move?
+                  fused = std::move(molzip(*mol, molzip_params));
                 } catch (Invar::Invariant &) {
                   BOOST_LOG(rdWarningLog)
                       << "Failed fusion of fragment skipping... " << frag_id
