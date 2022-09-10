@@ -79,7 +79,7 @@ std::vector<std::unique_ptr<ChemicalReaction>> CDXMLDataStreamToChemicalReaction
       }
     }
     updateProductsStereochem(res);
-    // RXN-based reactions do not have implicit properties
+    // CDXML-based reactions do not have implicit properties
     res->setImplicitPropertiesFlag(false);
 
     if (!sanitize) { // we still need to fix the reaction for smarts style matching
