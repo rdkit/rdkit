@@ -4,7 +4,7 @@
 ### Student: Sreya Gogineni
 ### Mentors: Greg Landrum, Joey Storer, Jan H. Jensen
 
-This summer, I worked on integrating 'xyz2mol' into the RDKit, an opensource cheminformatics library. '[xyz2mol](https://github.com/jensengroup/xyz2mol)' was originally developed by Professor Jan H. Jensen's research group at the Unversity of Copenhagen, based off of the work published in [this paper](https://onlinelibrary.wiley.com/doi/10.1002/bkcs.10334) (DOI: 10.1002/bkcs.10334). 
+This summer, I worked on integrating 'xyz2mol' into the RDKit, an open source cheminformatics library. '[xyz2mol](https://github.com/jensengroup/xyz2mol)' was originally developed by Professor Jan H. Jensen's research group at the University of Copenhagen, based off of the work published in [this paper](https://onlinelibrary.wiley.com/doi/10.1002/bkcs.10334) (DOI: 10.1002/bkcs.10334). 
 
 The program, given a molecule's charge and the spatial location of each atom, could predict the molecule's most favorable set of bonds.  A user would would pass in the molecule's XYZ file, a file format often used in computational chemistry that delivers each atom's coordinates, and would in return get an RDKit molecule object with predicted bonds in place.
 
