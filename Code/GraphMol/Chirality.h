@@ -46,6 +46,10 @@ RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
                                 //!< perception code
 
+RDKIT_GRAPHMOL_EXPORT extern bool
+    useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
+                                //!< perception code
+
 /// @cond
 /*!
   \param mol the molecule to be altered
@@ -140,6 +144,10 @@ RDKIT_GRAPHMOL_EXPORT std::vector<StereoInfo> findPotentialStereo(
 //! removes atoms without specified chirality from stereo groups
 RDKIT_GRAPHMOL_EXPORT void cleanupStereoGroups(ROMol &mol);
 
+//! calls the approximate legacy code for assigning CIP labels
+RDKIT_GRAPHMOL_EXPORT void assignLegacyCIPLabels(
+    ROMol &mol, bool flagPossibleStereoCenters = false);
+
 /// @cond
 namespace detail {
 RDKIT_GRAPHMOL_EXPORT bool isAtomPotentialNontetrahedralCenter(
@@ -188,6 +196,11 @@ RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
 RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
                                                         const INT_LIST &probe);
 //! @}
+
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
+                                               const StereoSpecified &s);
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
+                                               const StereoType &s);
 
 }  // namespace Chirality
 }  // namespace RDKit

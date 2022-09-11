@@ -250,11 +250,12 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
   }
 }
 
+namespace detail {
 template <typename T>
-void rankWithFunctor(T &ftor, bool breakTies, int *order,
-                     bool useSpecial = false, bool useChirality = false,
-                     const boost::dynamic_bitset<> *atomsInPlay = nullptr,
-                     const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
+void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
+                     bool useChirality,
+                     const boost::dynamic_bitset<> *atomsInPlay,
+                     const boost::dynamic_bitset<> *bondsInPlay) {
   PRECONDITION(order, "bad pointer");
   const ROMol &mol = *ftor.dp_mol;
   canon_atom *atoms = ftor.dp_atoms;
@@ -377,7 +378,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
   free(touched);
   free(changed);
 }
-
+}  // namespace detail
 namespace {
 bool hasRingNbr(const ROMol &mol, const Atom *at) {
   PRECONDITION(at, "bad pointer");
@@ -412,7 +413,7 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
   }
   Bond::BondType bt =
       bond->getIsAromatic() ? Bond::AROMATIC : bond->getBondType();
-  bondholder res(bt, stereo, otherIdx, 0);
+  bondholder res(bt, stereo, otherIdx, 0, bond->getIdx());
   if (includeChirality) {
     res.stype = bond->getStereo();
     if (res.stype == Bond::BondStereo::STEREOCIS ||
@@ -506,7 +507,8 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
     }
     unsigned int symclass =
         nbr->getAtomicNum() * ATNUM_CLASS_OFFSET + nbrIdx + 1;
-    bondholder bh(bondholder(Bond::SINGLE, stereo, nbrIdx, symclass));
+    bondholder bh(
+        bondholder(Bond::SINGLE, stereo, nbrIdx, symclass, bond->getIdx()));
     auto iPos = std::lower_bound(nbrs.begin(), nbrs.end(), bh);
     nbrs.insert(iPos, nReps, bh);
   }
@@ -515,9 +517,9 @@ void getChiralBonds(const ROMol &mol, const Atom *at,
   if (!at->needsUpdatePropertyCache()) {
     for (unsigned int ii = 0; ii < at->getTotalNumHs(); ++ii) {
       nbrs.emplace_back(Bond::SINGLE, Bond::STEREONONE, ATNUM_CLASS_OFFSET,
-                        ATNUM_CLASS_OFFSET);
+                        ATNUM_CLASS_OFFSET, 0);
       nbrs.emplace_back(Bond::SINGLE, Bond::STEREONONE, ATNUM_CLASS_OFFSET,
-                        ATNUM_CLASS_OFFSET);
+                        ATNUM_CLASS_OFFSET, 0);
     }
   }
 }
@@ -552,6 +554,7 @@ void initCanonAtoms(const ROMol &mol, std::vector<Canon::canon_atom> &atoms,
     getBonds(mol, atoms[i].atom, atoms[i].bonds, includeChirality, atoms);
   }
 }
+namespace detail {
 
 void initFragmentCanonAtoms(const ROMol &mol,
                             std::vector<Canon::canon_atom> &atoms,
@@ -559,50 +562,65 @@ void initFragmentCanonAtoms(const ROMol &mol,
                             const std::vector<std::string> *atomSymbols,
                             const std::vector<std::string> *bondSymbols,
                             const boost::dynamic_bitset<> &atomsInPlay,
-                            const boost::dynamic_bitset<> &bondsInPlay) {
+                            const boost::dynamic_bitset<> &bondsInPlay,
+                            bool needsInit) {
+  needsInit = true;
   PRECONDITION(!atomSymbols || atomSymbols->size() == mol.getNumAtoms(),
                "bad atom symbols");
   PRECONDITION(!bondSymbols || bondSymbols->size() == mol.getNumBonds(),
                "bad bond symbols");
   // start by initializing the atoms
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    atoms[i].atom = mol.getAtomWithIdx(i);
-    atoms[i].index = i;
+  for (const auto atom : mol.atoms()) {
+    auto i = atom->getIdx();
+    auto &atomsi = atoms[i];
+    atomsi.atom = atom;
+    atomsi.index = i;
     // we don't care about overall degree, so we start that at zero, and
     // then count the degree in the fragment itself below.
-    atoms[i].degree = 0;
+    atomsi.degree = 0;
     if (atomsInPlay[i]) {
-      atoms[i].nbrIds = (int *)calloc(atoms[i].atom->getDegree(), sizeof(int));
       if (atomSymbols) {
-        atoms[i].p_symbol = &(*atomSymbols)[i];
+        atomsi.p_symbol = &(*atomSymbols)[i];
       } else {
-        atoms[i].p_symbol = nullptr;
+        atomsi.p_symbol = nullptr;
       }
-      advancedInitCanonAtom(mol, atoms[i], i);
-      atoms[i].bonds.reserve(atoms[i].atom->getDegree());
+      if (needsInit) {
+        atomsi.nbrIds = (int *)calloc(atom->getDegree(), sizeof(int));
+        advancedInitCanonAtom(mol, atomsi, i);
+        atomsi.bonds.reserve(4);
+      }
     }
   }
 
   // now deal with the bonds in the fragment.
   // these set the atomic degrees and update the neighbor lists
-  for (const auto bond : mol.bonds()) {
-    if (!bondsInPlay[bond->getIdx()] || !atomsInPlay[bond->getBeginAtomIdx()] ||
-        !atomsInPlay[bond->getEndAtomIdx()]) {
-      continue;
+  if (needsInit) {
+    for (const auto bond : mol.bonds()) {
+      if (!bondsInPlay[bond->getIdx()] ||
+          !atomsInPlay[bond->getBeginAtomIdx()] ||
+          !atomsInPlay[bond->getEndAtomIdx()]) {
+        continue;
+      }
+      Canon::canon_atom &begAt = atoms[bond->getBeginAtomIdx()];
+      Canon::canon_atom &endAt = atoms[bond->getEndAtomIdx()];
+      begAt.nbrIds[begAt.degree++] = bond->getEndAtomIdx();
+      endAt.nbrIds[endAt.degree++] = bond->getBeginAtomIdx();
+      begAt.bonds.push_back(
+          makeBondHolder(bond, bond->getEndAtomIdx(), includeChirality, atoms));
+      endAt.bonds.push_back(makeBondHolder(bond, bond->getBeginAtomIdx(),
+                                           includeChirality, atoms));
+      if (bondSymbols) {
+        begAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
+        endAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
+      }
     }
-    Canon::canon_atom &begAt = atoms[bond->getBeginAtomIdx()];
-    Canon::canon_atom &endAt = atoms[bond->getEndAtomIdx()];
-    begAt.nbrIds[begAt.degree] = bond->getEndAtomIdx();
-    endAt.nbrIds[endAt.degree] = bond->getBeginAtomIdx();
-    begAt.degree++;
-    endAt.degree++;
-    begAt.bonds.push_back(
-        makeBondHolder(bond, bond->getEndAtomIdx(), includeChirality, atoms));
-    endAt.bonds.push_back(
-        makeBondHolder(bond, bond->getBeginAtomIdx(), includeChirality, atoms));
+  } else {
     if (bondSymbols) {
-      begAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
-      endAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
+      for (auto &atom : atoms) {
+        for (auto &bond : atom.bonds) {
+          bond.p_symbol = &(*bondSymbols)[bond.bondIdx];
+        }
+      }
     }
   }
 
@@ -611,14 +629,15 @@ void initFragmentCanonAtoms(const ROMol &mol,
     if (!atomsInPlay[i]) {
       continue;
     }
-    // this is the fix for github #1567: we let the atom's degree
-    // in the original molecule influence its degree in the fragment
-    atoms[i].totalNumHs +=
-        (mol.getAtomWithIdx(i)->getDegree() - atoms[i].degree);
+    auto &atomsi = atoms[i];
+    if (needsInit) {
+      // this is the fix for github #1567: we let the atom's degree
+      // in the original molecule influence its degree in the fragment
+      atomsi.totalNumHs += (mol.getAtomWithIdx(i)->getDegree() - atomsi.degree);
+    }
 
     // and sort our list of neighboring bonds
-    std::sort(atoms[i].bonds.begin(), atoms[i].bonds.end(),
-              bondholder::greater);
+    std::sort(atomsi.bonds.begin(), atomsi.bonds.end(), bondholder::greater);
   }
 }
 
@@ -638,7 +657,7 @@ void freeCanonAtoms(std::vector<Canon::canon_atom> &atoms) {
     }
   }
 }
-
+}  // namespace detail
 void updateAtomNeighborIndex(canon_atom *atoms, std::vector<bondholder> &nbrs) {
   PRECONDITION(atoms, "bad pointer");
   for (auto &nbr : nbrs) {
@@ -711,13 +730,13 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
 
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
   PRECONDITION(order, "bad pointer");
-  rankWithFunctor(ftor, breakTies, order, true, includeChirality);
+  detail::rankWithFunctor(ftor, breakTies, order, true, includeChirality);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
   free(order);
-  freeCanonAtoms(atoms);
+  detail::freeCanonAtoms(atoms);
 
   if (clearRings) {
     mol.getRingInfo()->reset();
@@ -750,23 +769,23 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   res.resize(mol.getNumAtoms());
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
-  initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols, bondSymbols,
-                         atomsInPlay, bondsInPlay);
+  detail::initFragmentCanonAtoms(mol, atoms, includeChirality, atomSymbols,
+                                 bondSymbols, atomsInPlay, bondsInPlay, true);
 
   AtomCompareFunctor ftor(&atoms.front(), mol, &atomsInPlay, &bondsInPlay);
   ftor.df_useIsotopes = includeIsotopes;
   ftor.df_useChirality = includeChirality;
 
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
-  PRECONDITION(order, "bad pointer");
-  rankWithFunctor(ftor, breakTies, order, true, includeChirality, &atomsInPlay,
-                  &bondsInPlay);
+  CHECK_INVARIANT(order, "bad pointer");
+  detail::rankWithFunctor(ftor, breakTies, order, true, includeChirality,
+                          &atomsInPlay, &bondsInPlay);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
   free(order);
-  freeCanonAtoms(atoms);
+  detail::freeCanonAtoms(atoms);
   if (clearRings) {
     mol.getRingInfo()->reset();
   }
@@ -785,18 +804,18 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   res.resize(mol.getNumAtoms());
 
   std::vector<Canon::canon_atom> atoms(mol.getNumAtoms());
-  initChiralCanonAtoms(mol, atoms);
+  detail::initChiralCanonAtoms(mol, atoms);
   ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
 
   int *order = (int *)malloc(mol.getNumAtoms() * sizeof(int));
   PRECONDITION(order, "bad pointer");
-  rankWithFunctor(ftor, false, order);
+  detail::rankWithFunctor(ftor, false, order);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
   }
   free(order);
-  freeCanonAtoms(atoms);
+  detail::freeCanonAtoms(atoms);
   if (clearRings) {
     mol.getRingInfo()->reset();
   }

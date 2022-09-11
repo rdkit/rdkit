@@ -22,7 +22,7 @@ namespace RDKit {
 namespace CoordGen {
 
 struct CoordGenParams {
-  const float sketcherCoarsePrecision = 0.01;
+  const float sketcherCoarsePrecision = 0.01f;
   const float sketcherStandardPrecision = SKETCHER_STANDARD_PRECISION;
   const float sketcherBestPrecision = SKETCHER_BEST_PRECISION;
   const float sketcherQuickPrecision = SKETCHER_QUICK_PRECISION;

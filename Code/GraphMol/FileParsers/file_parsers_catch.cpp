@@ -5014,6 +5014,56 @@ M  END
     reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
   }
+  SECTION("GitHub5448") {
+    {
+      auto m = R"CTAB(
+  ChemDraw07232208492D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C 1.151421 0.903801 0.000000 0
+M  V30 2 C 1.151421 0.078801 0.000000 0
+M  V30 3 N 1.936021 -0.176200 0.000000 0
+M  V30 4 C 2.420921 0.491301 0.000000 0
+M  V30 5 N 1.936021 1.158699 0.000000 0
+M  V30 6 C 0.436921 -0.333699 0.000000 0
+M  V30 7 C -0.277478 0.078801 0.000000 0
+M  V30 8 C -0.991978 -0.333699 0.000000 0
+M  V30 9 C 0.436921 -1.158699 0.000000 0
+M  V30 10 C -1.706442 0.078813 0.000000 0
+M  V30 11 C -2.420921 -0.333674 0.000000 0
+M  V30 12 F -1.706428 0.903813 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 1
+M  V30 6 1 2 6
+M  V30 7 1 6 7
+M  V30 8 2 7 8 CFG=2
+M  V30 9 1 6 9 CFG=2
+M  V30 10 1 8 10
+M  V30 11 1 10 11
+M  V30 12 1 10 12 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 10)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+      REQUIRE(m);
+      WedgeMolBonds(*m, &m->getConformer());
+      CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+      CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::NONE);
+      reapplyMolBlockWedging(*m);
+      CHECK(m->getBondWithIdx(10)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(m->getBondWithIdx(11)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    }
+  }
 }
 
 TEST_CASE(
@@ -5032,4 +5082,29 @@ M  V30 END CTAB
 M  END)CTAB"_ctab;
   REQUIRE(m);
   CHECK(!m->getAtomWithIdx(0)->hasProp(common_properties::molTotValence));
+}
+
+TEST_CASE("Github #5433: PRECONDITION error with nonsense molecule") {
+  auto m = R"CTAB(
+  SomeFailingMolFile
+
+  8  8  0  0  1  0            999 V2000
+   -0.7145    1.2375    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    0.0000    0.8250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7145   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   -1.6500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -1.2375    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  6  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  4  0  0  0
+  3  8  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+M  END)CTAB"_ctab;
+  REQUIRE(m);
 }

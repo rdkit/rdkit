@@ -305,10 +305,11 @@ ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
                              addResidueInfo);
   return res;
 }
-int getSSSR(ROMol &mol) {
+
+VECT_INT_VECT getSSSR(ROMol &mol) {
   VECT_INT_VECT rings;
-  int nr = MolOps::findSSSR(mol, rings);
-  return nr;
+  MolOps::findSSSR(mol, rings);
+  return rings;
 }
 
 PyObject *replaceSubstructures(const ROMol &orig, const ROMol &query,
@@ -1948,7 +1949,7 @@ to the terminal dummy atoms.\n\
   a 3D conformation.\n\
   NOTE that this does not check to see if atoms are chiral centers (i.e. all\n\
   substituents are different), it merely sets the chiral type flags based on the\n\
-  coordinates and atom ordering. Use \c AssignStereochemistryFrom3D() if you\n\
+  coordinates and atom ordering. Use AssignStereochemistryFrom3D() if you\n\
   want chiral flags only on actual stereocenters.\n\
 \n\
   ARGUMENTS:\n\
@@ -2230,7 +2231,8 @@ ARGUMENTS:\n\
 \n";
     python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
 
-    docString = "Set the wedging to that which was read from the original\n\
+    docString =
+        "Set the wedging to that which was read from the original\n\
      MolBlock, over-riding anything that was originally there.\n\
 \n\
           ARGUMENTS:\n\
@@ -2238,7 +2240,8 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
         \n\
         \n";
-    python::def("ReapplyMolBlockWedging", reapplyMolBlockWedging, docString.c_str());
+    python::def("ReapplyMolBlockWedging", reapplyMolBlockWedging,
+                docString.c_str());
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";
     python::class_<StereoBondThresholds>("StereoBondThresholds",

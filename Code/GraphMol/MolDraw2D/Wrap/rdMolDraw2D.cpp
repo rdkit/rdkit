@@ -256,6 +256,23 @@ void prepareAndDrawMoleculeHelper(
   delete hbm;
   delete har;
 }
+void drawMoleculeACS1996Helper(
+    MolDraw2D &drawer, const ROMol &mol, std::string legend,
+    python::object highlight_atoms, python::object highlight_bonds,
+    python::object highlight_atom_map, python::object highlight_bond_map,
+    python::object highlight_atom_radii, int confId) {
+  std::unique_ptr<std::vector<int>> highlightAtoms =
+      pythonObjectToVect(highlight_atoms, static_cast<int>(mol.getNumAtoms()));
+  std::unique_ptr<std::vector<int>> highlightBonds =
+      pythonObjectToVect(highlight_bonds, static_cast<int>(mol.getNumBonds()));
+  std::unique_ptr<ColourPalette> ham{pyDictToColourMap(highlight_atom_map)};
+  std::unique_ptr<ColourPalette> hbm{pyDictToColourMap(highlight_bond_map)};
+  std::unique_ptr<std::map<int, double>> har{
+      pyDictToDoubleMap(highlight_atom_radii)};
+  MolDraw2DUtils::drawMolACS1996(drawer, mol, legend, highlightAtoms.get(),
+                                 highlightBonds.get(), ham.get(), hbm.get(),
+                                 har.get(), confId);
+}
 
 void drawMoleculesHelper2(MolDraw2D &self, python::object pmols,
                           python::object highlight_atoms,
@@ -601,8 +618,8 @@ void drawWavyLineHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
 }
 
 void drawArrowHelper(RDKit::MolDraw2D &self, const Point2D &cds1,
-                     const Point2D &cds2, bool asPolygon,
-                     double frac, double angle, python::object pycol, bool rawCoords) {
+                     const Point2D &cds2, bool asPolygon, double frac,
+                     double angle, python::object pycol, bool rawCoords) {
   DrawColour col{0.0, 0.0, 0.0};
   if (pycol) {
     python::tuple pytup = python::extract<python::tuple>(pycol);
@@ -639,6 +656,23 @@ std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
   drawer.drawMolecule(mol, highlightAtoms.get(), nullptr, nullptr, confId);
   drawer.finishDrawing();
   return outs.str();
+}
+std::string molToACS1996SVG(const ROMol &mol, std::string legend,
+                            python::object highlight_atoms,
+                            python::object highlight_bonds,
+                            python::object highlight_atom_map,
+                            python::object highlight_bond_map,
+                            python::object highlight_atom_radii, int confId) {
+  std::stringstream outs;
+  MolDraw2DSVG drawer(-1, -1, outs);
+  drawMoleculeACS1996Helper(drawer, mol, legend, highlight_atoms,
+                            highlight_bonds, highlight_atom_map,
+                            highlight_bond_map, highlight_atom_radii, confId);
+  drawer.finishDrawing();
+  return outs.str();
+}
+void setACS1996ModeHelper(MolDrawOptions &drawOptions, double meanBondLen) {
+  MolDraw2DUtils::setACS1996Options(drawOptions, meanBondLen);
 }
 
 void drawStringHelper(MolDraw2D &self, std::string text, const Point2D &loc,
@@ -765,11 +799,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "annotationFontScale", &RDKit::MolDrawOptions::annotationFontScale,
           "Scale of font for atom and bond annotation relative to atom"
           "label font.  Default=0.75.")
-      .def_readwrite("fontFile", &RDKit::MolDrawOptions::fontFile,
-                     "Font file for use with FreeType text drawer.")
+      .def_readwrite(
+          "fontFile", &RDKit::MolDrawOptions::fontFile,
+          "Font file for use with FreeType text drawer.  Can also be"
+          " BuiltinTelexRegular (the default) or BuiltinRobotoRegular.")
       .def_readwrite(
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
-          "offset (in Angstroms) for the extra lines in a multiple bond")
+          "offset for the extra lines in a multiple bond as a fraction of mean"
+          " bond length")
       .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
                      "fraction of empty space to leave around molecule")
       .def_readwrite(
@@ -860,6 +897,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "if all specified stereocenters are in a single "
                      "StereoGroup, show a molecule-level annotation instead of "
                      "the individual labels. Default is false.")
+      .def_readwrite("unspecifiedStereoIsUnknown",
+                     &RDKit::MolDrawOptions::unspecifiedStereoIsUnknown,
+                     "if true, double bonds with unspecified stereo are drawn"
+                     " crossed, potential stereocenters with unspecified stereo"
+                     " are drawn with a wavy bond. Default is false.")
       .def_readwrite(
           "singleColourWedgeBonds",
           &RDKit::MolDrawOptions::singleColourWedgeBonds,
@@ -877,7 +919,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite("drawMolsSameScale",
                      &RDKit::MolDrawOptions::drawMolsSameScale,
                      "when drawing multiple molecules with DrawMolecules,"
-                     "forces them to use the same scale.  Default is true.")
+                     " forces them to use the same scale.  Default is true.")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,
@@ -962,9 +1004,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "are in the molecule frame")
       .def("DrawArrow", RDKit::drawArrowHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
-            python::arg("asPolygon") = false,
-            python::arg("frac") = 0.05, python::arg("angle") = M_PI / 6,
-            python::arg("color") = python::object(), python::arg("rawCoords") = false),
+            python::arg("asPolygon") = false, python::arg("frac") = 0.05,
+            python::arg("angle") = M_PI / 6,
+            python::arg("color") = python::object(),
+            python::arg("rawCoords") = false),
            "draws an arrow with the current drawing style. The coordinates "
            "are in the molecule frame. If asPolygon is true the head of the "
            "arrow will be drawn as a triangle, otherwise two lines are used.")
@@ -1060,7 +1103,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("FinishDrawing", &RDKit::MolDraw2DSVG::finishDrawing,
            "add the last bits of SVG to finish the drawing")
       .def("AddMoleculeMetadata",
-           (void (RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
+           (void(RDKit::MolDraw2DSVG::*)(const RDKit::ROMol &, int) const) &
                RDKit::MolDraw2DSVG::addMoleculeMetadata,
            (python::arg("mol"), python::arg("confId") = -1),
            "add RDKit-specific information to the bottom of the drawing")
@@ -1115,6 +1158,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("highlightAtomRadii") = python::object(),
        python::arg("confId") = -1, python::arg("kekulize") = true),
       "Preps a molecule for drawing and actually draws it\n");
+  python::def(
+      "DrawMoleculeACS1996", &RDKit::drawMoleculeACS1996Helper,
+      (python::arg("drawer"), python::arg("mol"), python::arg("legend") = "",
+       python::arg("highlightAtoms") = python::object(),
+       python::arg("highlightBonds") = python::object(),
+       python::arg("highlightAtomColors") = python::object(),
+       python::arg("highlightBondColors") = python::object(),
+       python::arg("highlightAtomRadii") = python::object(),
+       python::arg("confId") = -1),
+      "Draws molecule in ACS 1996 mode.");
   docString = "Parameters for drawing contours";
   python::class_<RDKit::MolDraw2DUtils::ContourParams>(
       "ContourParams", docString.c_str(), python::init<>())
@@ -1223,7 +1276,50 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("kekulize") = true, python::arg("lineWidthMult") = 1,
        python::arg("fontSize") = 12, python::arg("includeAtomCircles") = true),
       docString.c_str());
+  docString = "Returns ACS 1996 mode svg for a molecule";
+  python::def("MolToACS1996SVG", &RDKit::molToACS1996SVG,
+              (python::arg("mol"), python::arg("legend") = "",
+               python::arg("highlightAtoms") = python::object(),
+               python::arg("highlightBonds") = python::object(),
+               python::arg("highlightAtomColors") = python::object(),
+               python::arg("highlightBondColors") = python::object(),
+               python::arg("highlightAtomRadii") = python::object(),
+               python::arg("confId") = -1),
+              docString.c_str());
 
+  docString =
+      R"DOC(Set the draw options to produce something as close as possible to
+the ACS 1996 guidelines as described at
+https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_drawing
+
+ - MolDrawOptions opt - the options what will be changed
+ - float meanBondLength - mean bond length of the molecule
+
+ Works best if the MolDraw2D object is created with width and height -1 (a
+ flexiCanvas).
+ The mean bond length may be calculated with MeanBondLength.
+ It is used to calculate the offset for the lines in multiple bonds.
+
+ Options changed are:
+   bondLineWidth = 0.6
+   scaleBondWidth = false
+   scalingFactor = 14.4 / meanBondLen
+   multipleBondOffset = 0.18
+   highlightBondWidthMultiplier = 32
+   setMonochromeMode - black and white
+   fixedFontSize = 10
+   additionalAtomLabelPadding = 0.066
+   fontFile - if it isn't set already, then if RDBASE is set and the file
+              exists, uses $RDBASE/Data/Fonts/FreeSans.ttf.  Otherwise uses
+              BuiltinRobotoRegular.
+ */
+)DOC";
+  python::def("SetACS1996Mode", &RDKit::MolDraw2DUtils::setACS1996Options,
+              (python::arg("drawOptions"), python::arg("meanBondLength")),
+              docString.c_str());
+  python::def("MeanBondLength", &RDKit::MolDraw2DUtils::meanBondLength,
+              (python::arg("mol"), python::arg("confId") = -1),
+              "Calculate the mean bond length for the molecule.");
   python::def("SetDarkMode",
               (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
               "set dark mode for a MolDrawOptions object");

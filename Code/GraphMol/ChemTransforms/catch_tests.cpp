@@ -246,6 +246,21 @@ TEST_CASE("molzip", "[]") {
     }
   }
 
+  SECTION("use atom property as label") {
+    auto a = "[C@H]([*])(F)([*])"_smiles;
+    auto b = "[*]N.[*]I"_smiles;
+    a->getAtomWithIdx(1)->setProp<unsigned int>("foo", 1);
+    a->getAtomWithIdx(3)->setProp<unsigned int>("foo", 2);
+    b->getAtomWithIdx(0)->setProp<unsigned int>("foo", 1);
+    b->getAtomWithIdx(2)->setProp<unsigned int>("foo", 2);
+    MolzipParams p;
+    p.label = MolzipLabel::AtomProperty;
+    p.atomProperty = "foo";
+    auto mol = molzip(*a, *b, p);
+    // chirality is "lost" here because [C@H]([*])(F)([*]) is considered achiral
+    CHECK(MolToSmiles(*mol) == "NC(F)I");
+  }
+  
   SECTION("test bond stereo") {
     auto a = "F/C=C/[*:1]"_smiles;
     auto b = "[*:1]F"_smiles;
@@ -383,6 +398,54 @@ TEST_CASE("molzip", "[]") {
     auto b = "[*:1]-N=C"_smiles;
     auto mol = molzip(*a, *b, p);
   }
+
+  SECTION("MolZip saves bonddir") {
+      { // a-* b<*
+         auto a = "CC[*:1]"_smiles;
+         auto b = "N[*:1]"_smiles;
+         b->getBondWithIdx(0)->setBondDir(Bond::BondDir::BEGINWEDGE);
+         auto mol = molzip(*a, *b);
+         CHECK(MolToSmiles(*mol) == "CCN");
+         CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+         CHECK(mol->getBondWithIdx(1)->getBeginAtom()->getIdx() == 2);
+       }
+       { // a>* b-*
+         auto a = "[*:1]CC"_smiles;
+         auto b = "N[*:1]"_smiles;
+         a->getBondWithIdx(0)->setBondDir(Bond::BondDir::BEGINWEDGE);
+         auto mol = molzip(*a, *b);
+         CHECK(MolToSmiles(*mol) == "CCN");
+         CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+         CHECK(mol->getBondWithIdx(1)->getBeginAtom()->getIdx() == 2);
+       }
+       { // a<* b-*
+         auto a = "CC[*:1]"_smiles;
+         auto b = "N[*:1]"_smiles;
+         a->getBondWithIdx(1)->setBondDir(Bond::BondDir::BEGINWEDGE);
+         auto mol = molzip(*a, *b);
+         CHECK(MolToSmiles(*mol) == "CCN");
+         CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+         CHECK(mol->getBondWithIdx(1)->getBeginAtom()->getIdx() == 1);
+       }
+       { // a>* b-*
+         auto a = "[*:1]CC"_smiles;
+         auto b = "N[*:1]"_smiles;
+         a->getBondWithIdx(0)->setBondDir(Bond::BondDir::BEGINWEDGE);
+         auto mol = molzip(*a, *b);
+         CHECK(MolToSmiles(*mol) == "CCN");
+         CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+         CHECK(mol->getBondWithIdx(1)->getBeginAtom()->getIdx() == 2);
+       }
+       { // a-* b<*
+         auto a = "CC[*:1]"_smiles;
+         auto b = "[*:1]N"_smiles;
+         b->getBondWithIdx(0)->setBondDir(Bond::BondDir::BEGINWEDGE);
+         auto mol = molzip(*a, *b);
+         CHECK(MolToSmiles(*mol) == "CCN");
+         CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+         CHECK(mol->getBondWithIdx(1)->getBeginAtom()->getIdx() == 1);
+       }
+   }
 }
 
 TEST_CASE(

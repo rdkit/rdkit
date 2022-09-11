@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <utility>
 #include "StereoGroup.h"
+#include "Atom.h"
 
 namespace RDKit {
 
@@ -39,3 +40,24 @@ void removeGroupsWithAtoms(const std::vector<Atom *> &atoms,
 }
 
 }  // namespace RDKit
+
+std::ostream &operator<<(std::ostream &target, const RDKit::StereoGroup &stg) {
+  switch (stg.getGroupType()) {
+    case RDKit::StereoGroupType::STEREO_ABSOLUTE:
+      target << "ABS";
+      break;
+    case RDKit::StereoGroupType::STEREO_OR:
+      target << "OR";
+      break;
+    case RDKit::StereoGroupType::STEREO_AND:
+      target << "AND";
+      break;
+  }
+  target << " Atoms: { ";
+  for (auto atom : stg.getAtoms()) {
+    target << atom->getIdx() << ' ';
+  }
+  target << '}';
+
+  return target;
+}

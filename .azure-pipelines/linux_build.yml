@@ -10,7 +10,7 @@ steps:
         boost-cpp=$(boost_version) \
         py-boost=$(boost_version) \
         numpy pillow eigen pandas matplotlib-base \
-        qt cairo
+        qt=5.9.7 cairo
     conda activate rdkit_build
     conda install -c conda-forge nbval ipykernel>=6.0
   displayName: Setup build environment

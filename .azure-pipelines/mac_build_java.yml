@@ -17,7 +17,7 @@ steps:
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda create --name rdkit_build $(compiler) cmake \
+    conda create --name rdkit_build  $(compiler)=$(compiler_version) libcxx=$(compiler_version) cmake=3.19.6 \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
         cairo eigen swig=3

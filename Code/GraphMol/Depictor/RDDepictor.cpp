@@ -515,6 +515,9 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                              unsigned int nFlipsPerSample,
                              unsigned int nSamples, int sampleSeed,
                              bool permuteDeg4Nodes, bool forceRDKit) {
+  if (mol.needsUpdatePropertyCache()) {
+    mol.updatePropertyCache(false);
+  }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   // default to use CoordGen if we have it installed
   if (!forceRDKit && preferCoordGen) {

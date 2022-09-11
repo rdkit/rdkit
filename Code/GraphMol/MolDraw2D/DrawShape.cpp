@@ -10,6 +10,8 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <cmath>
+
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawShape.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
@@ -20,7 +22,7 @@ namespace RDKit {
 namespace MolDraw2D_detail {
 
 // ****************************************************************************
-DrawShape::DrawShape(const std::vector<Point2D> &points, int lineWidth,
+DrawShape::DrawShape(const std::vector<Point2D> &points, double lineWidth,
                      bool scaleLineWidth, DrawColour lineColour, bool fill,
                      int atom1, int atom2, int bond)
     : points_(points),
@@ -89,7 +91,7 @@ bool DrawShape::doesRectClash(const StringRect &, double) const {
 
 // ****************************************************************************
 DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
-                               int lineWidth, bool scaleLineWidth,
+                               double lineWidth, bool scaleLineWidth,
                                DrawColour lineColour, bool fill, int atom1,
                                int atom2, int bond, double frac, double angle)
     : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill, atom1,
@@ -146,7 +148,7 @@ bool DrawShapeArrow::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapeEllipse::DrawShapeEllipse(const std::vector<Point2D> &points,
-                                   int lineWidth, bool scaleLineWidth,
+                                   double lineWidth, bool scaleLineWidth,
                                    DrawColour lineColour, bool fill, int atom1)
     : DrawShape(points, lineWidth, scaleLineWidth, lineColour, fill, atom1) {
   PRECONDITION(points_.size() == 2, "ellipse wrong points");
@@ -158,18 +160,18 @@ void DrawShapeEllipse::myDraw(MolDraw2D &drawer) const {
     drawer.setLineWidth(1);
     drawer.drawOptions().scaleBondWidth = false;
   }
-  drawer.drawEllipse(points_[0], points_[1], true);
+  auto p1 = points_[0] - points_[1];
+  auto p2 = points_[0] + points_[1];
+  drawer.drawEllipse(p1, p2, true);
 }
 
 // ****************************************************************************
 void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
                                     double &ymax) const {
-  auto wb2 = (points_[1].x - points_[0].x) / 2;
-  auto hb2 = (points_[1].y - points_[0].y) / 2;
+  auto wb2 = points_[1].x;
+  auto hb2 = points_[1].y;
   auto cx = points_[0].x + wb2;
   auto cy = points_[0].y + hb2;
-  wb2 = wb2 > 0 ? wb2 : -1 * wb2;
-  hb2 = hb2 > 0 ? hb2 : -1 * hb2;
   xmin = std::min(cx - wb2, xmin);
   xmax = std::max(cx + wb2, xmax);
   ymin = std::min(cy - hb2, ymin);
@@ -177,15 +179,17 @@ void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
 }
 
 // ****************************************************************************
+void DrawShapeEllipse::move(const Point2D &trans) { points_[0] += trans; }
+// ****************************************************************************
 bool DrawShapeEllipse::doesRectClash(const StringRect &rect,
                                      double padding) const {
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
   Point2D tl, tr, br, bl;
   rect.calcCorners(tl, tr, br, bl, padding);
-  auto w = points_[1].x - points_[0].x;
-  auto h = points_[1].y - points_[0].y;
-  auto cx = points_[0].x + w / 2;
-  auto cy = points_[0].y + h / 2;
+  auto w = points_[1].x;
+  auto h = points_[1].y;
+  auto cx = points_[0].x;
+  auto cy = points_[0].y;
   w = w > 0 ? w : -1 * w;
   h = h > 0 ? h : -1 * h;
   Point2D centre{cx, cy};
@@ -206,7 +210,7 @@ bool DrawShapeEllipse::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapeSimpleLine::DrawShapeSimpleLine(const std::vector<Point2D> &points,
-                                         int lineWidth, bool scaleLineWidth,
+                                         double lineWidth, bool scaleLineWidth,
                                          DrawColour lineColour, int atom1,
                                          int atom2, int bond,
                                          DashPattern dashPattern)
@@ -250,7 +254,7 @@ bool DrawShapeSimpleLine::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapePolyLine::DrawShapePolyLine(const std::vector<Point2D> &points,
-                                     int lineWidth, bool scaleLineWidth,
+                                     double lineWidth, bool scaleLineWidth,
                                      DrawColour lineColour, bool fill,
                                      int atom1, int atom2, int bond,
                                      DashPattern dashPattern)
@@ -283,35 +287,142 @@ bool DrawShapePolyLine::doesRectClash(const StringRect &rect,
 DrawShapeSolidWedge::DrawShapeSolidWedge(const std::vector<Point2D> points,
                                          const DrawColour &col1,
                                          const DrawColour &col2,
-                                         bool splitBonds, int atom1, int atom2,
+                                         bool splitBonds,
+                                         std::vector<Point2D> &otherBondVecs,
+                                         double lineWidth, int atom1, int atom2,
                                          int bond)
-    : DrawShape(points, 1, false, col1, false, atom1, atom2, bond),
+    : DrawShape(points, lineWidth / 2.0, false, col1, false, atom1, atom2,
+                bond),
       col2_(col2),
-      splitBonds_(splitBonds) {
+      splitBonds_(splitBonds),
+      otherBondVecs_(otherBondVecs) {
   PRECONDITION(points_.size() == 3, "solid wedge wrong points");
+  if (otherBondVecs_.size() > 2) {
+    trimOtherBondVecs();
+  }
+  if (otherBondVecs_.size() == 2) {
+    orderOtherBondVecs();
+  }
   buildTriangles();
 }
 
 // ****************************************************************************
 void DrawShapeSolidWedge::buildTriangles() {
   if (!(lineColour_ == col2_) || splitBonds_) {
-    auto point = points_[0];
-    auto end1 = points_[1];
-    auto end2 = points_[2];
-    points_.clear();
-    auto e1 = end1 - point;
-    auto e2 = end2 - point;
-    auto mid1 = point + e1 * 0.5;
-    auto mid2 = point + e2 * 0.5;
+    buildTwoColorTriangles();
+  } else {
+    buildSingleColorTriangles();
+  }
+}
+
+// ****************************************************************************
+void DrawShapeSolidWedge::buildSingleColorTriangles() {
+  auto point = points_[0];
+  auto end1 = points_[1];
+  auto end2 = points_[2];
+  auto midEnd = (end1 + end2) / 2.0;
+  auto adjend1 = end1;
+  auto adjend2 = end2;
+  points_.clear();
+  // adjust adjend1 and adjend2 to line up with otherBondVecs_.
+  if (otherBondVecs_.empty()) {
     points_.push_back(point);
+    points_.push_back(adjend1);
+    points_.push_back(adjend2);
+  } else if (otherBondVecs_.size() == 1) {
+    auto side1 = (end1 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend1)) {
+      adjend1 = end1;
+    }
+    auto side2 = (end2 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend2)) {
+      adjend2 = end2;
+    }
+    points_.push_back(point);
+    points_.push_back(adjend1);
+    points_.push_back(adjend2);
+  } else if (otherBondVecs_.size() == 2) {
+    auto side1 = (end1 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend1)) {
+      adjend1 = end1;
+    }
+    points_.push_back(point);
+    points_.push_back(adjend1);
+    points_.push_back(midEnd);
+    auto side2 = (end2 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[1],
+                          midEnd + otherBondVecs_[1], &adjend2)) {
+      adjend2 = end2;
+    }
+    points_.push_back(point);
+    points_.push_back(midEnd);
+    points_.push_back(adjend2);
+  }
+}
+
+// ****************************************************************************
+void DrawShapeSolidWedge::buildTwoColorTriangles() {
+  auto point = points_[0];
+  auto end1 = points_[1];
+  auto end2 = points_[2];
+  auto midEnd = (end1 + end2) / 2.0;
+  auto adjend1 = end1;
+  auto adjend2 = end2;
+  points_.clear();
+  auto e1 = end1 - point;
+  auto e2 = end2 - point;
+  auto mid1 = point + e1 * 0.5;
+  auto mid2 = point + e2 * 0.5;
+  points_.push_back(point);
+  points_.push_back(mid1);
+  points_.push_back(mid2);
+  if (otherBondVecs_.empty()) {
+    points_.push_back(mid1);
+    points_.push_back(adjend2);
+    points_.push_back(adjend1);
     points_.push_back(mid1);
     points_.push_back(mid2);
+    points_.push_back(adjend2);
+  } else if (otherBondVecs_.size() == 1) {
+    auto side1 = (end1 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend1)) {
+      adjend1 = end1;
+    }
+    auto side2 = (end2 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend2)) {
+      adjend2 = end2;
+    }
     points_.push_back(mid1);
-    points_.push_back(end2);
-    points_.push_back(end1);
+    points_.push_back(adjend2);
+    points_.push_back(adjend1);
     points_.push_back(mid1);
     points_.push_back(mid2);
-    points_.push_back(end2);
+    points_.push_back(adjend2);
+  } else if (otherBondVecs_.size() == 2) {
+    auto side1 = (end1 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side1, midEnd - otherBondVecs_[0],
+                          midEnd + otherBondVecs_[0], &adjend1)) {
+      adjend1 = end1;
+    }
+    auto side2 = (end2 - point) * 2.0;
+    if (!doLinesIntersect(point, point + side2, midEnd - otherBondVecs_[1],
+                          midEnd + otherBondVecs_[1], &adjend2)) {
+      adjend2 = end2;
+    }
+    points_.push_back(mid1);
+    points_.push_back(adjend1);
+    points_.push_back(midEnd);
+    points_.push_back(midEnd);
+    points_.push_back(mid2);
+    points_.push_back(mid1);
+    points_.push_back(midEnd);
+    points_.push_back(adjend2);
+    points_.push_back(adjend1);
   }
 }
 
@@ -330,8 +441,9 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
       drawer.setActiveAtmIdx(atom2_);
     }
     drawer.setColour(col2_);
-    drawer.drawTriangle(points_[3], points_[4], points_[5], true);
-    drawer.drawTriangle(points_[6], points_[7], points_[8], true);
+  }
+  for (unsigned int i = 3; i < points_.size(); i += 3) {
+    drawer.drawTriangle(points_[i], points_[i + 1], points_[i + 2], true);
   }
 }
 
@@ -357,48 +469,105 @@ bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
 }
 
 // ****************************************************************************
+void DrawShapeSolidWedge::trimOtherBondVecs() {
+  if (otherBondVecs_.size() < 3) {
+    return;
+  }
+  int firstVec = 0, secondVec = 1;
+  double largestAng = -361.0;
+  for (unsigned int i = 0; i < otherBondVecs_.size() - 1; ++i) {
+    for (unsigned int j = i + 1; j < otherBondVecs_.size(); ++j) {
+      auto ang = otherBondVecs_[i].angleTo(otherBondVecs_[j]);
+      if (ang > largestAng) {
+        firstVec = i;
+        secondVec = j;
+        largestAng = ang;
+      }
+    }
+  }
+  std::vector<Point2D> newVecs{otherBondVecs_[firstVec],
+                               otherBondVecs_[secondVec]};
+  otherBondVecs_ = newVecs;
+}
+
+// ****************************************************************************
+void DrawShapeSolidWedge::orderOtherBondVecs() {
+  if (otherBondVecs_.size() < 2) {
+    return;
+  }
+  // otherBondVecs_[0] needs to be on the same side as points_[1], which
+  // implies the larger angle between the 2 vectors.
+  auto side1 = (points_[0] - points_[1]);
+  if (side1.angleTo(otherBondVecs_[0]) < side1.angleTo(otherBondVecs_[1])) {
+    std::swap(otherBondVecs_[0], otherBondVecs_[1]);
+  }
+}
+
+// ****************************************************************************
 DrawShapeDashedWedge::DrawShapeDashedWedge(const std::vector<Point2D> points,
                                            const DrawColour &col1,
-                                           const DrawColour &col2, int atom1,
-                                           int atom2, int bond)
-    : DrawShape(points, 1, false, col1, false, atom1, atom2, bond),
-      col2_(col2) {
+                                           const DrawColour &col2,
+                                           bool oneLessDash, double lineWidth,
+                                           int atom1, int atom2, int bond)
+    : DrawShape(points, lineWidth, false, col1, false, atom1, atom2, bond),
+      col2_(col2),
+      oneLessDash_(oneLessDash) {
   PRECONDITION(points_.size() == 3, "dashed wedge wrong points");
   at1Cds_ = points[0];
+  end1Cds_ = points[1];
+  end2Cds_ = points[2];
   buildLines();
 }
 
 // ****************************************************************************
 void DrawShapeDashedWedge::buildLines() {
-  // assumes this is the starting configuration, where the 3 points define
-  // the enclosing triangle of the wedge.
-  auto point = points_[0];
-  auto end1 = points_[1];
-  auto end2 = points_[2];
+  auto midend = (end1Cds_ + end2Cds_) * 0.5;
   points_.clear();
   lineColours_.clear();
-  auto e1 = end1 - point;
-  auto e2 = end2 - point;
-
-  unsigned int nDashes = 6;
-  double sideLen = e1.length();
-  double dashSep = sideLen / nDashes;
-  // don't have the dashes too far apart or too close together.
-  if (dashSep > 20.0) {
-    nDashes = sideLen / 20;
-  } else if (dashSep < 5.0) {
-    nDashes = sideLen / 5;
-    nDashes = nDashes < 3 ? 3 : nDashes;
-  }
-  for (unsigned int i = 1; i < nDashes + 1; ++i) {
-    auto e11 = point + e1 * (rdcast<double>(i) / nDashes);
-    auto e22 = point + e2 * (rdcast<double>(i) / nDashes);
-    points_.push_back(e11);
-    points_.push_back(e22);
-    if (i > nDashes / 2) {
-      lineColours_.push_back(col2_);
-    } else {
-      lineColours_.push_back(lineColour_);
+  auto e1 = at1Cds_.directionVector(end1Cds_);
+  auto e2 = at1Cds_.directionVector(end2Cds_);
+  // the ACS1996 rules say the dash separation should be 2.5px.  It seems
+  // like a good result for all of them.
+  // It appears that this means a 2.5px gap between each line, so we need
+  // to take the line width into account.  Each line that the gap is
+  // between will contribute half a width.
+  double dashSep = 2.5 + lineWidth_;
+  double centralLen = (at1Cds_ - midend).length();
+  unsigned int nDashes = rdcast<unsigned int>(std::round(centralLen / dashSep));
+  if (!nDashes) {
+    points_.push_back(end1Cds_);
+    points_.push_back(end2Cds_);
+    lineColours_.push_back(lineColour_);
+  } else {
+    // re-adjust so the last dash is on the end of the wedge.
+    dashSep = centralLen / rdcast<double>(nDashes);
+    // if doing one less dash, we want a shorter wedge that is just as wide
+    // at the end as it would have been.
+    if (oneLessDash_) {
+      double endlenb2 = (end1Cds_ - end2Cds_).length() / 2.0;
+      auto centralLine = at1Cds_.directionVector(midend);
+      Point2D centralPerp{-centralLine.y, centralLine.x};
+      Point2D newEnd1 = at1Cds_ + centralLine * (centralLen - dashSep) +
+                        centralPerp * endlenb2;
+      Point2D newEnd2 = at1Cds_ + centralLine * (centralLen - dashSep) -
+                        centralPerp * endlenb2;
+      e1 = at1Cds_.directionVector(newEnd1);
+      e2 = at1Cds_.directionVector(newEnd2);
+    }
+    // we want the separation down the sides of the triangle, so use
+    // similar triangles to scale.
+    dashSep *= (end1Cds_ - at1Cds_).length() / centralLen;
+    int extra = oneLessDash_ ? 0 : 1;
+    for (unsigned int i = 1; i < nDashes + extra; ++i) {
+      auto e11 = at1Cds_ + e1 * rdcast<double>(i) * dashSep;
+      auto e22 = at1Cds_ + e2 * rdcast<double>(i) * dashSep;
+      points_.push_back(e11);
+      points_.push_back(e22);
+      if (i > nDashes / 2) {
+        lineColours_.push_back(col2_);
+      } else {
+        lineColours_.push_back(lineColour_);
+      }
     }
   }
 }
@@ -426,11 +595,10 @@ void DrawShapeDashedWedge::scale(const Point2D &scale_factor) {
   DrawShape::scale(scale_factor);
   at1Cds_.x *= scale_factor.x;
   at1Cds_.y *= scale_factor.y;
-
-  // We may want to adjust the number of lines, so set everything up like
-  // the original triangle was passed in and rebuild.
-  points_ = std::vector<Point2D>{at1Cds_, points_[points_.size() - 1],
-                                 points_[points_.size() - 2]};
+  end1Cds_.x *= scale_factor.x;
+  end1Cds_.y *= scale_factor.y;
+  end2Cds_.x *= scale_factor.x;
+  end2Cds_.y *= scale_factor.y;
   buildLines();
 }
 
@@ -438,20 +606,29 @@ void DrawShapeDashedWedge::scale(const Point2D &scale_factor) {
 void DrawShapeDashedWedge::move(const Point2D &trans) {
   DrawShape::move(trans);
   at1Cds_ += trans;
+  end1Cds_ += trans;
+  end2Cds_ += trans;
+}
+
+// ****************************************************************************
+void DrawShapeDashedWedge::findExtremes(double &xmin, double &xmax,
+                                        double &ymin, double &ymax) const {
+  xmin = std::min({at1Cds_.x, end1Cds_.x, end2Cds_.x, xmin});
+  xmax = std::max({at1Cds_.x, end1Cds_.x, end2Cds_.x, xmax});
+  ymin = std::min({at1Cds_.y, end1Cds_.y, end2Cds_.y, ymin});
+  ymax = std::max({at1Cds_.y, end1Cds_.y, end2Cds_.y, ymax});
 }
 
 // ****************************************************************************
 bool DrawShapeDashedWedge::doesRectClash(const StringRect &rect,
                                          double padding) const {
-  size_t last_point = points_.size() - 1;
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
-  return doesTriangleIntersect(rect, at1Cds_, points_[last_point],
-                               points_[last_point - 1], padding);
+  return doesTriangleIntersect(rect, at1Cds_, end1Cds_, end2Cds_, padding);
 }
 
 // ****************************************************************************
 DrawShapeWavyLine::DrawShapeWavyLine(const std::vector<Point2D> points,
-                                     int lineWidth, bool scaleLineWidth,
+                                     double lineWidth, bool scaleLineWidth,
                                      const DrawColour &col1,
                                      const DrawColour &col2, double offset,
                                      int atom1, int atom2, int bond)
@@ -467,8 +644,10 @@ void DrawShapeWavyLine::myDraw(MolDraw2D &drawer) const {
   // nSegments is 16 by default in MolDraw2D.
   // use a negative offset because of inverted y coords to make it look the
   // same as it used to.
-  drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, 16, -offset_,
-                      true);
+  int nsegs = int(
+      std::round((points_[0] - points_[1]).length() / (offset_ * 2.0 / 3.0)));
+  drawer.drawWavyLine(points_[0], points_[1], lineColour_, col2_, nsegs,
+                      -offset_ / 2.0, true);
 }
 
 // ****************************************************************************
@@ -487,7 +666,7 @@ bool DrawShapeWavyLine::doesRectClash(const StringRect &rect,
 
 // ****************************************************************************
 DrawShapeArc::DrawShapeArc(const std::vector<Point2D> points, double ang1,
-                           double ang2, int lineWidth, bool scaleLineWidth,
+                           double ang2, double lineWidth, bool scaleLineWidth,
                            const DrawColour &col1, bool fill, int atom1)
     : DrawShape(points, lineWidth, scaleLineWidth, col1, fill, atom1),
       ang1_(ang1),

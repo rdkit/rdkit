@@ -186,7 +186,9 @@ M  END""")
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText()
     # 4 molecules, 6 bonds each:
-    self.assertEqual(svg.count('fill:none;fill-rule:evenodd;stroke:#FF7F7F'), 24)
+    re_str = r"path class='bond-\d+ atom-\d+ atom-\d+' d='M \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ Z' style='fill:#FF7F7F;"
+    patt = re.compile(re_str)
+    self.assertEqual(len(patt.findall(svg)), 24)
     # 4 molecules, one atom each:
     self.assertEqual(svg.count('fill:#DB2D2B;fill-rule:evenodd;stroke:#DB2D2B'), 4)
 
@@ -214,7 +216,7 @@ M  END""")
     txt = d.GetDrawingText()
     self.assertTrue(txt.find("<svg") != -1)
     self.assertTrue(txt.find("</svg>") != -1)
-    #print(txt,file=open('blah1.svg','w+'))
+    # print(txt,file=open('blah1.svg','w+'))
 
   def testReaction2(self):
     rxn = AllChem.ReactionFromSmarts(
@@ -226,7 +228,7 @@ M  END""")
     txt = d.GetDrawingText()
     self.assertTrue(txt.find("<svg") != -1)
     self.assertTrue(txt.find("</svg>") != -1)
-    #print(txt,file=open('blah2.svg','w+'))
+    # print(txt,file=open('blah2.svg','w+'))
 
   def testReaction3(self):
     rxn = AllChem.ReactionFromSmarts(
@@ -701,31 +703,31 @@ M  END''')
     d2d.DrawMolecule(m)
     d2d.FinishDrawing()
     text = d2d.GetDrawingText()
-    self.assertIn("<rect style='opacity:1.0;fill:#000000;stroke:none'",text)
+    self.assertIn("<rect style='opacity:1.0;fill:#000000;stroke:none'", text)
 
     d2d = Draw.MolDraw2DSVG(300, 300)
-    rdMolDraw2D.SetMonochromeMode(d2d,(1,1,1),(.5,.5,.5))
+    rdMolDraw2D.SetMonochromeMode(d2d, (1, 1, 1), (.5, .5, .5))
     d2d.DrawMolecule(m)
     d2d.FinishDrawing()
     text = d2d.GetDrawingText()
-    self.assertIn("<rect style='opacity:1.0;fill:#7F7F7F;stroke:none'",text)
-    self.assertIn("stroke:#FFFFFF;stroke-width:2",text)
+    self.assertIn("<rect style='opacity:1.0;fill:#7F7F7F;stroke:none'", text)
+    self.assertIn("stroke:#FFFFFF;stroke-width:2", text)
 
     d2d = Draw.MolDraw2DSVG(300, 300)
     d2d.drawOptions().useAvalonAtomPalette()
     d2d.DrawMolecule(m)
     d2d.FinishDrawing()
     text = d2d.GetDrawingText()
-    self.assertIn("<rect style='opacity:1.0;fill:#FFFFFF;stroke:none'",text)
-    self.assertIn("stroke:#007E00;stroke-width:2",text)
+    self.assertIn("<rect style='opacity:1.0;fill:#FFFFFF;stroke:none'", text)
+    self.assertIn("stroke:#007E00;stroke-width:2", text)
 
     d2d = Draw.MolDraw2DSVG(300, 300)
     d2d.drawOptions().useCDKAtomPalette()
     d2d.DrawMolecule(m)
     d2d.FinishDrawing()
     text = d2d.GetDrawingText()
-    self.assertIn("<rect style='opacity:1.0;fill:#FFFFFF;stroke:none'",text)
-    self.assertIn("stroke:#2F50F7;stroke-width:2",text)
+    self.assertIn("<rect style='opacity:1.0;fill:#FFFFFF;stroke:none'", text)
+    self.assertIn("stroke:#2F50F7;stroke-width:2", text)
 
   def testGithub4838(self):
     m = Chem.MolFromSmiles("CCCC")
@@ -741,6 +743,35 @@ M  END''')
   def testGithub5298(self):
     with self.assertRaises(RuntimeError):
       rdMolDraw2D.PrepareMolForDrawing(None)
+
+  def testACS1996Mode(self):
+    m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+]")
+    AllChem.Compute2DCoords(m)
+    rdMolDraw2D.PrepareMolForDrawing(m)
+    svg = rdMolDraw2D.MolToACS1996SVG(m, "ACS Mode")
+    with open("testACSMode_1.svg", 'w') as f:
+      f.write(svg)
+
+    highlight_atoms = [0, 2, 4, 6, 8]
+    highlight_bonds = [1, 3, 5, 7, 9]
+    highlight_atom_cols = {
+      0: (1.0, 1.0, 0.0),
+      8: (1.0, 0.0, 1.0),
+    }
+    highlight_bond_cols = {
+      0: (0.0, 1.0, 1.0),
+      8: (0.0, 0.0, 1.0),
+    }
+
+    svg = rdMolDraw2D.MolToACS1996SVG(m, "Highlights", highlight_atoms, highlight_bonds,
+                                      highlight_atom_cols, highlight_bond_cols)
+    with open("testACSMode_2.svg", 'w') as f:
+      f.write(svg)
+    if hasattr(Draw, 'MolDraw2DCairo'):
+      drawer = rdMolDraw2D.MolDraw2DCairo(-1, -1)
+      rdMolDraw2D.DrawMoleculeACS1996(drawer, m)
+      drawer.FinishDrawing()
+      drawer.WriteDrawingText('testACSMode_1.png')
 
 
 if __name__ == "__main__":
