@@ -122,10 +122,8 @@ M  END
     self.assertTrue(sgs[0].HasProp("FIELDNAME"))
     self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
 
-    self.assertEqual(sorted(sgs[0].GetPropNames()), [
-      'DATAFIELDS', 'FIELDDISP', 'FIELDNAME', 'ID', 
-      'TYPE', 'index'
-    ])
+    self.assertEqual(sorted(sgs[0].GetPropNames()),
+                     ['DATAFIELDS', 'FIELDDISP', 'FIELDNAME', 'ID', 'TYPE', 'index'])
     dd = sgs[0].GetPropsAsDict()
     self.assertTrue("TYPE" in dd)
     self.assertEqual(dd["TYPE"], "DAT")
@@ -154,10 +152,8 @@ M  END
     self.assertTrue(sgs[0].HasProp("FIELDNAME"))
     self.assertEqual(sgs[0].GetProp("FIELDNAME"), "pH")
 
-    self.assertEqual(sorted(sgs[0].GetPropNames()), [
-      'DATAFIELDS', 'FIELDDISP', 'FIELDNAME',
-      'TYPE', 'index'
-    ])
+    self.assertEqual(sorted(sgs[0].GetPropNames()),
+                     ['DATAFIELDS', 'FIELDDISP', 'FIELDNAME', 'TYPE', 'index'])
     dd = sgs[0].GetPropsAsDict()
     self.assertTrue("TYPE" in dd)
     self.assertEqual(dd["TYPE"], "DAT")
@@ -598,6 +594,15 @@ M  END''')
     self.assertEqual(len(sgs[0].GetAttachPoints()), 1)
     sgs[0].ClearAttachPoints()
     self.assertEqual(len(sgs[0].GetAttachPoints()), 0)
+
+  def testCreateDataSGroup(self):
+    mol = Chem.MolFromSmiles('CC(=O)O')
+    sg = Chem.CreateMolDataSubstanceGroup(mol, "pKa", "4.5")
+    sg.SetAtoms([1, 2, 3])
+    sg = Chem.GetMolSubstanceGroups(mol)[0]
+    self.assertEqual(sg.GetProp("TYPE"), "DAT")
+    self.assertEqual(sg.GetProp("FIELDNAME"), "pKa")
+    self.assertEqual(sg.GetStringVectProp("DATAFIELDS")[0], "4.5")
 
 
 if __name__ == '__main__':
