@@ -17,7 +17,7 @@ namespace RDKit {
 // ! assigns atomic connectivity to a molecule using atomic coordinates, disregarding pre-existing bonds
 /*!
     \param mol is the molecule of interest; it must have a 3D conformer
-    \param useHueckel (optional) if this is  \c true, the extended Hueckel theorem will be used to determine connectivity
+    \param useHueckel (optional) if this is  \c true, extended Hueckel theory will be used to determine connectivity
             rather than the van der Waals method
     \param charge (optional) the charge of the molecule; it must be provided if the Hueckel method is used and charge is non-zero
     \param covFactor (optional) the factor with which to multiply each covalent radius if the van der Waals method is used
@@ -42,7 +42,7 @@ void determineBondOrder(RWMol &mol, int charge=0,
 //   it is recommended to sanitize the molecule after calling this function if embedChiral is not set to true
 /*!
     \param mol is the molecule of interest; it must have a 3D conformer
-    \param useHueckel (optional) if this is  \c true, the extended Hueckel theorem will be used to determine connectivity
+    \param useHueckel (optional) if this is  \c true, extended Hueckel theory will be used to determine connectivity
             rather than the van der Waals method
     \param charge (optional) the charge of the molecule; it must be provided if charge is non-zero
     \param covFactor (optional) the factor with which to multiply each covalent radius if the van der Waals method is used
