@@ -11,10 +11,10 @@ The program, given a molecule's charge and the spatial location of each atom, co
 As the original program was written in Python, the nucleus of this project was translation into C++, the language of the RDKit core. 
 
 Integrating xyz2mol into the RDKit required 
-    * adding an XYZ file parser,
-    * implementing atomic connectivity determination (knowing which atoms are bonded to each other),
-    * implementing bond order determination (knowing whether each bond is single, double, or triple), and
-    * adding Python and Java bindings. 
+- adding an XYZ file parser,
+- implementing atomic connectivity determination (knowing which atoms are bonded to each other),
+- implementing bond order determination (knowing whether each bond is single, double, or triple), and
+- adding Python and Java bindings. 
     
 As of the end of the GSOC coding period, the first 3 steps have been completed. The final step, adding bindings to make the features available to RDKit Python and Java users, remains to be finished. 
 
