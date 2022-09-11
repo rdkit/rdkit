@@ -11,16 +11,16 @@ The program, given a molecule's charge and the spatial location of each atom, co
 As the original program was written in Python, the nucleus of this project was translation into C++, the language of the RDKit core. 
 
 Integrating xyz2mol into the RDKit required 
-    A) adding an XYZ file parser,
-    B) implementing atomic connectivity determination (knowing which atoms are bonded to each other),
-    C) implementing bond order determination (knowing whether each bond is single, double, or triple), and
-    D) adding Python and Java bindings 
+    * adding an XYZ file parser,
+    * implementing atomic connectivity determination (knowing which atoms are bonded to each other),
+    * implementing bond order determination (knowing whether each bond is single, double, or triple), and
+    * adding Python and Java bindings. 
     
 As of the end of the GSOC coding period, the first 3 steps have been completed. The final step, adding bindings to make the features available to RDKit Python and Java users, remains to be finished. 
 
 ## The XYZ File Parser
 
-As with other RDKit file parsers (such as the Mol file parser), the XYZ parser contructs an RDKit molecule from the file data. Since the only information an XYZ file contains is the element and location of each atom, the molecule built from the parser contained only atoms and not bonds, as well as a conformer containing the atomic coordinates. The function ```XYZFileToMol()``` calls the file parser.
+As with other RDKit file parsers (such as the Mol file parser), the XYZ parser contructs an RDKit molecule from the file data. Since the only information an XYZ file contains is the element and location of each atom, the molecule built from the parser contains only atoms and not bonds, as well as a conformer containing the atomic coordinates. The function ```XYZFileToMol()``` calls the file parser.
 
 ## Atomic Connectivity Determination
 
@@ -30,9 +30,9 @@ These two methods were made available through the function ```determineConnectiv
 
 ## Bond Order Determination
 
-Determining bond order (whether a bond is single, double, or triple) was the largest part of this project. Given a molecule object with bonds corresponding to atomic connectivity, the function, ```determineBondOrdering()``` further modifes the molecule to have a favorable bond ordering. Also added, the function ```determineBonds()``` calls both ```determineConnectivity()``` and ```determineBonds()``` and give users of the original xyz2mol the ability to use a similar workflow. 
+Determining bond order (whether a bond is single, double, or triple) was the largest part of this project. Given a molecule object with bonds corresponding to atomic connectivity, the function, ```determineBondOrdering()``` further modifes the molecule to have a favorable bond ordering. Also added, the function ```determineBonds()``` calls both ```determineConnectivity()``` and ```determineBondOrdering()``` and gives users of the original xyz2mol the ability to use a similar workflow. 
 
-Some interesting tasks while implementing the function included writing an algorithm to calculate the cartesian product with an arbitrary number of input vectors of arbitrary size and using the Boost graph library.
+Some interesting tasks while implementing the function included writing an algorithm to calculate the Cartesian product with an arbitrary number of input vectors of arbitrary size and using the Boost graph library.
 
 ## Looking Ahead
 

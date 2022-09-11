@@ -407,7 +407,7 @@ void determineBonds(RWMol &mol, bool useHueckel, int charge, double covFactor,
     
     determineConnectivity(mol, useHueckel, charge, covFactor);
     determineBondOrder(mol, charge, allowChargedFragments, embedChiral, useAtomMap);
-}
+} // determineBonds()
 
 } // namespace RDKit
 
