@@ -110,19 +110,23 @@ inline std::string formatDouble(double val) {
   return boost::str(boost::format("%.1f") % val);
 }
 
-bool doesLineIntersect(const StringRect &rect, const Point2D &end1,
-                       const Point2D &end2, double padding);
+RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersect(const StringRect &rect,
+                                              const Point2D &end1,
+                                              const Point2D &end2,
+                                              double padding);
 // returns true if any corner of triangle is inside the rectangle.
-bool doesTriangleIntersect(const StringRect &rect, const Point2D &pt1,
-                           const Point2D &pt2, const Point2D &pt3,
-                           double padding);
-bool doesLineIntersectEllipse(const Point2D &centre, double xradius,
-                              double yradius, double padding,
-                              const Point2D &end1, const Point2D &end2);
+RDKIT_MOLDRAW2D_EXPORT bool doesTriangleIntersect(const StringRect &rect,
+                                                  const Point2D &pt1,
+                                                  const Point2D &pt2,
+                                                  const Point2D &pt3,
+                                                  double padding);
+RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectEllipse(
+    const Point2D &centre, double xradius, double yradius, double padding,
+    const Point2D &end1, const Point2D &end2);
 // angles expected in degrees, between 0 and 360.
-bool doesLineIntersectArc(const Point2D &centre, double xradius, double yradius,
-                          double start_ang, double stop_ang, double padding,
-                          const Point2D &end1, const Point2D &end2);
+RDKIT_MOLDRAW2D_EXPORT bool doesLineIntersectArc(
+    const Point2D &centre, double xradius, double yradius, double start_ang,
+    double stop_ang, double padding, const Point2D &end1, const Point2D &end2);
 RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
                                              const Point2D &l1f,
                                              const Point2D &l2s,
@@ -135,8 +139,10 @@ RDKIT_MOLDRAW2D_EXPORT bool doLinesIntersect(const Point2D &l1s,
 // issue when, for example, two triangles share an edge and the point is on that
 // edge, when it might give the disappointing result that the point is in
 // neither triangle.
-bool isPointInTriangle(const Point2D &pt, const Point2D &t1, const Point2D &t2,
-                       const Point2D &t3);
+RDKIT_MOLDRAW2D_EXPORT bool isPointInTriangle(const Point2D &pt,
+                                              const Point2D &t1,
+                                              const Point2D &t2,
+                                              const Point2D &t3);
 
 // returns a vector of p1,c1,c2,p2 tuples for bezier curves
 RDKIT_MOLDRAW2D_EXPORT
