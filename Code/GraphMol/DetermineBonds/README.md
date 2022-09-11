@@ -26,7 +26,7 @@ As with other RDKit file parsers (such as the Mol file parser), the XYZ parser c
 
 The original xyz2mol offers two methods of predicting connectivity: 'the van der Waals' method and 'Hueckel' method. The former considers atoms' covalent radii to predict bonding, while the Hueckel method uses extended Hueckel theory. 
 
-These two methods were made available through the function ```determineConnectivity()```, which modifies a passed in molecule object in place and adds single bonds whereever a bond is predicted.
+These two methods were made available through the function ```determineConnectivity()```, which modifies a passed in molecule object in place and adds single bonds wherever a bond is predicted.
 
 ## Bond Order Determination
 
