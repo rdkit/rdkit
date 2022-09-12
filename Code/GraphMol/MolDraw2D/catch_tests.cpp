@@ -86,8 +86,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHandDrawn-2.svg", 2605087576U},
     {"testHandDrawn-3.svg", 1015633173U},
     {"testHandDrawn-4.svg", 830784921U},
-    {"testHandDrawn-5a.svg", 3582113444U},
-    {"testHandDrawn-5b.svg", 2974975931U},
+    {"testHandDrawn-5a.svg", 2845825621U},
+    {"testHandDrawn-5b.svg", 476521352U},
     {"testBrackets-1a.svg", 3257646535U},
     {"testBrackets-1b.svg", 776088825U},
     {"testBrackets-1c.svg", 3257646535U},
@@ -97,10 +97,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testBrackets-2b.svg", 1408188695U},
     {"testBrackets-2c.svg", 728321376U},
     {"testBrackets-2d.svg", 1408188695U},
-    {"testBrackets-3a.svg", 630742918U},
+    {"testBrackets-3a.svg", 791450653U},
     {"testBrackets-4a.svg", 769125635U},
     {"testBrackets-4b.svg", 4066682338U},
-    {"testBrackets-5a.svg", 2845825621U},
+    {"testBrackets-5a.svg", 1388227932U},
     {"testSGroupData-1a.svg", 1463366807U},
     {"testSGroupData-1b.svg", 223883202U},
     {"testSGroupData-2a.svg", 3547547260U},
@@ -174,8 +174,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub4519_2.svg", 2515716875U},
     {"testGithub4519_3.svg", 1017109741U},
     {"testGithub4519_4.svg", 645908829U},
-    {"testBaseFontSize.1a.svg", 3213010239U},
-    {"testBaseFontSize.1b.svg", 1147057058U},
+    {"testBaseFontSize.1a.svg", 3939288880U},
+    {"testBaseFontSize.1b.svg", 2617787443U},
     {"testBaseFontSize.2a.svg", 1031690455U},
     {"testBaseFontSize.2b.svg", 3440038194U},
     {"testFlexiCanvas.1a.svg", 3145560884U},
@@ -214,7 +214,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_5061.svg", 1947248304U},
     {"testGithub_5185.svg", 2944445711U},
     {"testGithub_5269_1.svg", 3660737449U},
-    {"testGithub_5269_2.svg", 2580783009U},
+    {"testGithub_5269_2.svg", 3987247770U},
     {"test_classes_wavy_bonds.svg", 1271445012U},
     {"testGithub_5383_1.svg", 1391972140U},
     {"github5156_1.svg", 695855770U},
@@ -228,7 +228,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_4.svg", 55815911U},
     {"acs1996_5.svg", 362495488U},
     {"acs1996_6.svg", 4274355858U},
-    {"acs1996_7.svg", 729001900U},
+    {"acs1996_7.svg", 3993278473U},
     {"acs1996_8.svg", 2032371436U},
     {"acs1996_9.svg", 2589221154U},
     {"acs1996_10.svg", 4037187899U},
@@ -244,6 +244,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"bond_highlights_7.svg", 2936856212U},
     {"bond_highlights_8.svg", 64473502U},
     {"testGithub5486_1.svg", 1149144091U},
+    {"testGithub5511_1.svg", 940106456U},
+    {"testGithub5511_2.svg", 1448975272U}
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -263,7 +265,7 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testHandDrawn-2.png", 2979412913U},
     {"testHandDrawn-3.png", 1765396301U},
     {"testHandDrawn-4.png", 2989933219U},
-    {"testHandDrawn-5.png", 3794840403U},
+    {"testHandDrawn-5.png", 1526220279U},
     {"testGithub4323_1.png", 3711520691U},
     {"testGithub4323_3.png", 2300228708U},
     {"testFlexiCanvas.2a.png", 3618977786U},
@@ -5711,5 +5713,65 @@ M  END)CTAB"_ctab;
         check_file_hash(nameBase + "1.svg");
       }
     }
+  }
+}
+
+TEST_CASE("Bad O position in aldehydes", "") {
+  std::string nameBase("testGithub5511_");
+  {
+    auto m1 = "O=Cc1cccc(C=O)c1"_smiles;
+    REQUIRE(m1);
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string filename = nameBase + "1.svg";
+    std::ofstream outs(filename);
+    outs << text;
+    outs.flush();
+    check_file_hash(filename);
+  }
+  {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 11 11  0  0  0  0  0  0  0  0999 V2000
+   -4.2885    0.5445    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9895    1.2945    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6818    0.5394    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3738    1.2945    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9342    0.5394    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2422    1.2945    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2422    2.7945    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9342   -0.9708    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3738   -1.7262    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6818   -0.9708    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9895   -1.7262    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  1  0
+  6  7  2  0
+  5  8  2  0
+  8  9  1  0
+  9 10  2  0
+ 10 11  1  0
+ 10  3  1  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(250, 250, -1, -1);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::string filename = nameBase + "2.svg";
+    std::ofstream outs(filename);
+    outs << text;
+    outs.flush();
+    check_file_hash(filename);
   }
 }
