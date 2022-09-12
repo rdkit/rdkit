@@ -100,7 +100,7 @@ Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
   auto qa = std::make_unique<QueryAtom>(*atm);
   qa->setQuery(qry);
   qa->setNoImplicit(true);
-  mol.replaceAtom(idx, qa);
+  mol.replaceAtom(idx, qa.get());
   Atom *res = mol.getAtomWithIdx(idx);
   if (symbol != "") {
     res->setProp(common_properties::atomLabel, symbol);
