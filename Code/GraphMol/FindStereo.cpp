@@ -841,7 +841,6 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   ftor.df_useIsotopes = false;
   ftor.df_useChirality = false;
   auto atomOrder = new int[mol.getNumAtoms()];
-  bool needsInit = true;
   std::vector<unsigned int> aranks(mol.getNumAtoms());
   bool needAnotherRound = true;
   while (needAnotherRound) {

@@ -494,9 +494,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // for their coordinates
   unsigned int numAddHyds = 0;
   for (auto at : mol.atoms()) {
-    if (!onlyOnAtoms ||
-        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), at->getIdx()) !=
-            onlyOnAtoms->end()) {
+    if (!onlyOnAtoms || std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
+                                  at->getIdx()) != onlyOnAtoms->end()) {
       numAddHyds += at->getNumExplicitHs();
       if (!explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
@@ -514,9 +513,8 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
 
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    if (onlyOnAtoms &&
-        std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(), aidx) ==
-            onlyOnAtoms->end()) {
+    if (onlyOnAtoms && std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
+                                 aidx) == onlyOnAtoms->end()) {
       continue;
     }
 
@@ -767,7 +765,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
     sg.removeParentAtomWithIdx(idx);
 
     for (auto &sap : sg.getAttachPoints()) {
-      if (sap.lvIdx == idx) {
+      if (sap.lvIdx == static_cast<int>(idx)) {
         sap.lvIdx = -1;
       }
     }
@@ -928,8 +926,9 @@ void filter_sgroup_emptying_hydrogens(const ROMol &mol,
     auto no_atoms = atoms.empty() ||
                     std::all_of(atoms.begin(), atoms.end(), would_remove_atom);
     if (no_atoms) {
-      auto no_patoms = patoms.empty() || std::all_of(patoms.begin(), patoms.end(),
-                                                     would_remove_atom);
+      auto no_patoms =
+          patoms.empty() ||
+          std::all_of(patoms.begin(), patoms.end(), would_remove_atom);
       if (no_patoms) {
         for (auto atom : atoms) {
           atomsToRemove.set(atom, false);
@@ -981,9 +980,9 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
 
   // Once we know which H atoms would be removed, filter out those that
   // would cause any SGroups to become empty
-  if (ps.removeInSGroups)  {
+  if (ps.removeInSGroups) {
     filter_sgroup_emptying_hydrogens(mol, atomsToRemove);
- }
+  }
 
   // now that we know which atoms need to be removed, go ahead and remove them
   // NOTE: there's too much complexity around stereochemistry here
