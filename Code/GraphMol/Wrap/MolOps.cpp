@@ -1495,20 +1495,28 @@ to the terminal dummy atoms.\n\
 
     // ------------------------------------------------------------------------
     docString =
-        "Kekulizes the molecule\n\
-\n\
-  ARGUMENTS:\n\
-\n\
-    - mol: the molecule to use\n\
-\n\
-    - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the \n\
-      molecule will be marked non-aromatic following the kekulization.\n\
-      Default value is False.\n\
-\n\
-  NOTES:\n\
-\n\
-    - The molecule is modified in place.\n\
-\n";
+        R"DOC(Kekulizes the molecule
+
+  ARGUMENTS:
+
+    - mol: the molecule to use
+
+    - clearAromaticFlags: (optional) if this toggle is set, all atoms and bonds in the
+      molecule will be marked non-aromatic following the kekulization.
+      Default value is False.
+
+  NOTES:
+
+    - The molecule is modified in place.
+
+    - this does not modify query bonds which have bond type queries (like those
+      which come from SMARTS) or rings containing them.
+
+    - even if clearAromaticFlags is False the BondType for all modified
+      aromatic bonds will be changed from AROMATIC to SINGLE or DOUBLE
+      Kekulization.
+
+)DOC";
     python::def("Kekulize", kekulizeMol,
                 (python::arg("mol"), python::arg("clearAromaticFlags") = false),
                 docString.c_str());
