@@ -595,9 +595,7 @@ void DrawMol::extractBrackets() {
     }
 
     std::vector<std::pair<Point2D, Point2D>> sgBondSegments;
-    int numBrackets = 0;
     for (auto bndIdx : sg.getBonds()) {
-      ++numBrackets;
       const auto bnd = drawMol_->getBondWithIdx(bndIdx);
       if (std::find(sg.getAtoms().begin(), sg.getAtoms().end(),
                     bnd->getBeginAtomIdx()) != sg.getAtoms().end()) {
@@ -610,9 +608,11 @@ void DrawMol::extractBrackets() {
             atCds_[bnd->getEndAtomIdx()], atCds_[bnd->getBeginAtomIdx()]));
       }
     }
+    int numBrackets = 0;
     for (const auto &brk : sg.getBrackets()) {
       // the atom coords have been inverted in y, so the bracket coords
       // must be, too.
+      ++numBrackets;
       Point2D p1{brk[0].x, -brk[0].y};
       Point2D p2{brk[1].x, -brk[1].y};
       trans.TransformPoint(p1);
