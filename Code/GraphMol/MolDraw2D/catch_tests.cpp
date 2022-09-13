@@ -113,10 +113,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testPositionVariation-4.svg", 886758688U},
     {"testNoAtomLabels-1.svg", 2648234379U},
     {"testNoAtomLabels-2.svg", 3213096674U},
-    {"testQueryBonds-1a.svg", 674261460U},
-    {"testQueryBonds-1b.svg", 1450309284U},
-    {"testQueryBonds-1c.svg", 74333858U},
-    {"testQueryBonds-2.svg", 1873442183U},
+    {"testQueryBonds-1a.svg", 3288272531U},
+    {"testQueryBonds-1b.svg", 1706839957U},
+    {"testQueryBonds-1c.svg", 333519907U},
+    {"testQueryBonds-2.svg", 69341882U},
     {"testLinkNodes-2-0.svg", 2952965907U},
     {"testLinkNodes-2-30.svg", 4117540200U},
     {"testLinkNodes-2-60.svg", 520576199U},
@@ -203,9 +203,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testFlexiCanvas.7b.svg", 4094511140U},
     {"testFlexiCanvas.7c.svg", 918094125U},
     {"testFlexiCanvas.7d.svg", 918094125U},
-    {"testGithub4764.sz1.svg", 2369071854U},
-    {"testGithub4764.sz2.svg", 39314673U},
-    {"testGithub4764.sz3.svg", 901101991U},
+    {"testGithub4764.sz1.svg", 493786705U},
+    {"testGithub4764.sz2.svg", 2704253898U},
+    {"testGithub4764.sz3.svg", 1328896014U},
     {"testDrawArc1.svg", 4039810147U},
     {"testMetalWedges.svg", 3278785383U},
     {"testVariableLegend_1.svg", 3914441319U},
@@ -213,8 +213,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testVariableLegend_3.svg", 1996551457U},
     {"testGithub_5061.svg", 1947248304U},
     {"testGithub_5185.svg", 2944445711U},
-    {"testGithub_5269_1.svg", 3660737449U},
-    {"testGithub_5269_2.svg", 3987247770U},
+    {"testGithub_5269_1.svg", 2368496794U},
+    {"testGithub_5269_2.svg", 567813292U},
     {"test_classes_wavy_bonds.svg", 1271445012U},
     {"testGithub_5383_1.svg", 1391972140U},
     {"github5156_1.svg", 695855770U},
@@ -222,17 +222,18 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"github5156_3.svg", 3284451122U},
     {"test_molblock_wedges.svg", 1106580037U},
     {"github5383_1.svg", 2353351393U},
-    {"acs1996_1.svg", 773284691U},
-    {"acs1996_2.svg", 2884688866U},
-    {"acs1996_3.svg", 2540534250U},
-    {"acs1996_4.svg", 55815911U},
-    {"acs1996_5.svg", 362495488U},
-    {"acs1996_6.svg", 4274355858U},
-    {"acs1996_7.svg", 3993278473U},
-    {"acs1996_8.svg", 2032371436U},
-    {"acs1996_9.svg", 2589221154U},
-    {"acs1996_10.svg", 4037187899U},
-    {"acs1996_11.svg", 3667521405U},
+    {"acs1996_1.svg", 51426601U},
+    {"acs1996_2.svg", 833573044U},
+    {"acs1996_3.svg", 4007912653U},
+    {"acs1996_4.svg", 3372558370U},
+    {"acs1996_5.svg", 2883542240U},
+    {"acs1996_6.svg", 1380727178U},
+    {"acs1996_7.svg", 763391533U},
+    {"acs1996_8.svg", 939325262U},
+    {"acs1996_9.svg", 2607143500U},
+    {"acs1996_10.svg", 199499735U},
+    {"acs1996_11.svg", 2121789178U},
+    {"acs1996_12.svg", 2233727631U},
     {"test_unspec_stereo.svg", 599119798U},
     {"light_blue_h_no_label_1.svg", 3735371135U},
     {"bond_highlights_1.svg", 1150579427U},
@@ -241,7 +242,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"bond_highlights_4.svg", 3500788273U},
     {"bond_highlights_5.svg", 3500788273U},
     {"bond_highlights_6.svg", 3008628729U},
-    {"bond_highlights_7.svg", 2936856212U},
+    {"bond_highlights_7.svg", 3900018634U},
     {"bond_highlights_8.svg", 64473502U},
     {"testGithub5486_1.svg", 1149144091U},
     {"testGithub5511_1.svg", 940106456U},
@@ -270,13 +271,13 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"testGithub4323_3.png", 2300228708U},
     {"testFlexiCanvas.2a.png", 3618977786U},
     {"testFlexiCanvas.2b.png", 2780757414U},
-    {"testGithub4764.sz1.png", 3594553035U},
-    {"testGithub4764.sz2.png", 1203143863U},
-    {"testGithub4764.sz3.png", 310017790U},
+    {"testGithub4764.sz1.png", 2320783268U},
+    {"testGithub4764.sz2.png", 3297570843U},
+    {"testGithub4764.sz3.png", 2178018272U},
     {"testGithub4238_1.png", 458925131U},
     {"github5383_1.png", 2963331215U},
-    {"acs1996_1.png", 2814011866U},
-    {"acs1996_2.png", 3118288179U}};
+    {"acs1996_1.png", 2674458798U},
+    {"acs1996_2.png", 83755168U}};
 
 std::hash_result_t hash_file(const std::string &filename) {
   std::ifstream ifs(filename, std::ios_base::binary);
@@ -4812,6 +4813,7 @@ TEST_CASE("ACS 1996 mode") {
   SECTION("basics") {
     std::string nameBase = "acs1996_";
 #if 1
+
     {
       auto m = R"CTAB(mol1
   ChemDraw05162216032D
@@ -5381,6 +5383,49 @@ M  END
       outs.flush();
       outs.close();
       check_file_hash(nameBase + "11.svg");
+    }
+#endif
+#if 1
+    auto drawnBondLength = [&](const std::string &r1,
+                               const std::string &t) -> double {
+      std::regex regex1(r1);
+      auto match_begin =
+          std::sregex_iterator(t.begin(), t.end(), regex1);
+      auto match_end = std::sregex_iterator();
+      std::vector<Point2D> ends;
+      for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+        std::smatch match = *i;
+        ends.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
+        ends.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
+      }
+      return (ends[0]-ends[1]).length();
+    };
+
+    {
+      // make sure it also works with an arbitrarily sized drawer.
+      auto m = "c1ccccc1"_smiles;
+      REQUIRE(m);
+      MolDraw2DUtils::prepareMolForDrawing(*m);
+      MolDraw2DSVG drawer(500, 500);
+      MolDraw2DUtils::drawMolACS1996(drawer, *m, "Mol 12", nullptr, nullptr);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "12.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+
+      std::string regex =
+          R"(class='bond-0 atom-0 atom-1' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*)')";
+      double dbl = drawnBondLength(regex, text);
+      // the bonds should all be 14.4 long, but the SVG is only written
+      // to 1 decimal place, so rounding errors are largish.
+      REQUIRE(dbl == Approx(14.4253));
+      regex =
+          R"(class='bond-1 atom-1 atom-2' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*)')";
+      dbl = drawnBondLength(regex, text);
+      REQUIRE(dbl == Approx(14.4));
+      check_file_hash(nameBase + "12.svg");
     }
 #endif
   }
