@@ -61,7 +61,9 @@ void alignMolConfs(ROMol &mol, python::object atomIds, python::object confIds,
   }
 }
 
-PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
+PyObject *generateRmsdTransMatchPyTuple(double rmsd,
+                                        const RDGeom::Transform3D &trans,
+                                        const MatchVectType *match = nullptr) {
   npy_intp dims[2];
   dims[0] = 4;
   dims[1] = 4;
@@ -75,10 +77,18 @@ PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
       resData[itab + j] = tdata[itab + j];
     }
   }
-  PyObject *resTup = PyTuple_New(2);
+  PyObject *resTup = PyTuple_New(2 + (match ? 1 : 0));
   PyObject *rmsdItem = PyFloat_FromDouble(rmsd);
   PyTuple_SetItem(resTup, 0, rmsdItem);
   PyTuple_SetItem(resTup, 1, PyArray_Return(res));
+  if (match) {
+    python::list pairList;
+    for (const auto &pair : *match) {
+      pairList.append(python::make_tuple(pair.first, pair.second));
+    }
+    auto pairTup = new python::tuple(pairList);
+    PyTuple_SetItem(resTup, 2, pairTup->ptr());
+  }
   return resTup;
 }
 
@@ -115,7 +125,45 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
     delete wtsVec;
   }
 
-  return generateRmsdTransPyTuple(rmsd, trans);
+  return generateRmsdTransMatchPyTuple(rmsd, trans);
+}
+
+PyObject *getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
+                                   int prbCid = -1, int refCid = -1,
+                                   python::object map = python::list(),
+                                   int maxMatches = 1000000,
+                                   bool symmetrizeTerminalGroups = true,
+                                   python::object weights = python::list(),
+                                   bool reflect = false,
+                                   unsigned int maxIters = 50) {
+  std::vector<MatchVectType> aMapVec;
+  unsigned int nAtms = 0;
+  if (map != python::object()) {
+    aMapVec = translateAtomMapSeq(map);
+    if (!aMapVec.empty()) {
+      nAtms = aMapVec.front().size();
+    }
+  }
+  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  if (wtsVec) {
+    if (wtsVec->size() != nAtms) {
+      throw_value_error("Incorrect number of weights specified");
+    }
+  }
+  RDGeom::Transform3D bestTrans;
+  MatchVectType bestMatch;
+  double rmsd;
+  {
+    NOGIL gil;
+    rmsd = MolAlign::getBestAlignmentTransform(
+        prbMol, refMol, bestTrans, bestMatch, prbCid, refCid, aMapVec,
+        maxMatches, symmetrizeTerminalGroups, wtsVec, reflect, maxIters);
+  }
+  if (wtsVec) {
+    delete wtsVec;
+  }
+
+  return generateRmsdTransMatchPyTuple(rmsd, bestTrans, &bestMatch);
 }
 
 double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
@@ -153,23 +201,25 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
 
 double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
                   python::object map, int maxMatches,
-                  bool symmetrizeTerminalGroups) {
+                  bool symmetrizeTerminalGroups,
+                  python::object weights = python::list()) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
   }
-
+  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
   double rmsd;
   {
     NOGIL gil;
     rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec,
-                                maxMatches, symmetrizeTerminalGroups);
+                                maxMatches, symmetrizeTerminalGroups, wtsVec);
   }
   return rmsd;
 }
 
 double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
                python::object map, int maxMatches,
+               bool symmetrizeTerminalGroups,
                python::object weights = python::list()) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
@@ -180,7 +230,7 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
   {
     NOGIL gil;
     rmsd = MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec,
-                             maxMatches, wtsVec);
+                             maxMatches, symmetrizeTerminalGroups, wtsVec);
   }
   return rmsd;
 }
@@ -195,7 +245,7 @@ class PyO3A {
   PyObject *trans() {
     RDGeom::Transform3D trans;
     double rmsd = o3a.get()->trans(trans);
-    return RDKit::generateRmsdTransPyTuple(rmsd, trans);
+    return RDKit::generateRmsdTransMatchPyTuple(rmsd, trans);
   };
   double score() { return o3a.get()->score(); };
   boost::python::list matches() {
@@ -577,7 +627,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        substructure matching\n\
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
-      - maxIters  maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters  maximum number of iterations used in minimizing the RMSD\n\
        \n\
       RETURNS\n\
       a tuple of (RMSD value, transform matrix) \n\
@@ -586,6 +636,50 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       "GetAlignmentTransform", RDKit::getMolAlignTransform,
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbCid") = -1,
        python::arg("refCid") = -1, python::arg("atomMap") = python::list(),
+       python::arg("weights") = python::list(), python::arg("reflect") = false,
+       python::arg("maxIters") = 50),
+      docString.c_str());
+
+  docString =
+      "Compute the optimal RMS, transformation and atom map for aligning\n\
+      two molecules, taking symmetry into account. Molecule coordinates\n\
+      are left unaltered.\n\
+    \n\
+      This function will attempt to align all permutations of matching atom\n\
+      orders in both molecules, for some molecules it will lead to 'combinatorial\n\
+      explosion' especially if hydrogens are present.\n\
+      Use 'GetAlignmentTransform' to align molecules without changing the atom order.\n\
+    \n\
+     ARGUMENTS\n\
+      - prbMol      molecule that is to be aligned\n\
+      - refMol      molecule used as the reference for the alignment\n\
+      - prbCid      ID of the conformation in the probe to be used \n\
+                    for the alignment (defaults to first conformation)\n\
+      - refCid      ID of the conformation in the ref molecule to which \n\
+                    the alignment is computed (defaults to first conformation)\n\
+      - map:        (optional) a list of lists of (probeAtomId, refAtomId)\n\
+                    tuples with the atom-atom mappings of the two\n\
+                    molecules. If not provided, these will be generated\n\
+                    using a substructure search.\n\
+      - maxMatches  (optional) if atomMap is empty, this will be the max number of\n\
+                    matches found in a SubstructMatch().\n\
+      - symmetrizeConjugatedTerminalGroups (optional) if set, conjugated\n\
+                    terminal functional groups (like nitro or carboxylate)\n\
+                    will be considered symmetrically.\n\
+      - weights     Optionally specify weights for each of the atom pairs\n\
+      - reflect     if true reflect the conformation of the probe molecule\n\
+      - maxIters    maximum number of iterations used in minimizing the RMSD\n\
+       \n\
+      RETURNS\n\
+      a tuple of (RMSD value, best transform matrix, best atom map)\n\
+    \n";
+
+  python::def(
+      "GetBestAlignmentTransform", RDKit::getBestMolAlignTransform,
+      (python::arg("prbMol"), python::arg("refMol"), python::arg("prbCid") = -1,
+       python::arg("refCid") = -1, python::arg("map") = python::list(),
+       python::arg("maxMatches") = 1000000,
+       python::arg("symmetrizeConjugatedTerminalGroups") = true,
        python::arg("weights") = python::list(), python::arg("reflect") = false,
        python::arg("maxIters") = 50),
       docString.c_str());
@@ -611,7 +705,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        substructure matching\n\
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
-      - maxIters  maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters  maximum number of iterations used in minimizing the RMSD\n\
        \n\
       RETURNS\n\
       RMSD value\n\
@@ -650,6 +744,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
         - symmetrizeConjugatedTerminalGroups:  (optional) if set, conjugated\n\
                        terminal functional groups (like nitro or carboxylate)\n\
                        will be considered symmetrically\n\
+        - weights:     (optional) weights for mapping\n\
        \n\
       RETURNS\n\
       The best RMSD found\n\
@@ -659,31 +754,37 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
        python::arg("maxMatches") = 1000000,
-       python::arg("symmetrizeConjugatedTerminalGroups") = true),
+       python::arg("symmetrizeConjugatedTerminalGroups") = true,
+       python::arg("weights") = python::list()),
       docString.c_str());
 
   docString =
       "Returns the RMS between two molecules, taking symmetry into account.\n\
+       In contrast to getBestRMS, the RMS is computed 'in place', i.e.\n\
+       probe molecules are not aligned to the reference ahead of the\n\
+       RMS calculation. This is useful, for example, to compute\n\
+       the RMSD between docking poses and the co-crystallized ligand.\n\
       \n\
        Note:\n\
-       This function will attempt to align all permutations of matching atom\n\
+       This function will attempt to match all permutations of matching atom\n\
        orders in both molecules, for some molecules it will lead to\n\
        'combinatorial explosion' especially if hydrogens are present.\n\
-       Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing\n\
-       the atom order.\n\
       \n\
        ARGUMENTS\n\
         - prbMol:      the molecule to be aligned to the reference\n\
         - refMol:      the reference molecule\n\
-        - prbId:       (optional) probe conformation to use\n\
-        - refId:       (optional) reference conformation to use\n\
-        - map:         (optional) a list of lists of (probeAtomId,refAtomId)\n\
+        - prbCId:      (optional) probe conformation to use\n\
+        - refCId:      (optional) reference conformation to use\n\
+        - map:         (optional) a list of lists of (probeAtomId, refAtomId)\n\
                        tuples with the atom-atom mappings of the two\n\
                        molecules. If not provided, these will be generated\n\
                        using a substructure search.\n\
         - maxMatches:  (optional) if map isn't specified, this will be\n\
                        the max number of matches found in a SubstructMatch()\n\
-        - weights:     (optional) weights for mapping \n\
+        - symmetrizeConjugatedTerminalGroups:  (optional) if set, conjugated\n\
+                       terminal functional groups (like nitro or carboxylate)\n\
+                       will be considered symmetrically\n\
+        - weights:     (optional) weights for mapping\n\
        \n\
       RETURNS\n\
       The best RMSD found\n\
@@ -693,11 +794,12 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
        python::arg("maxMatches") = 1000000,
+       python::arg("symmetrizeConjugatedTerminalGroups") = false,
        python::arg("weights") = python::list()),
       docString.c_str());
 
   docString =
-      "Alignment conformations in a molecule to each other\n\
+      "Align conformations in a molecule to each other\n\
      \n\
       The first conformation in the molecule is used as the reference\n\
      \n\
@@ -707,7 +809,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - confIds      Ids of conformations to align - defaults to all conformers \n\
       - weights      Optionally specify weights for each of the atom pairs\n\
       - reflect      if true reflect the conformation of the probe molecule\n\
-      - maxIters     maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters     maximum number of iterations used in minimizing the RMSD\n\
       - RMSlist      if provided, fills in the RMS values between the reference\n\
 		     conformation and the other aligned conformations\n\
        \n\
@@ -769,7 +871,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
                                  (defaults to false)\n\
-      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters                 maximum number of iterations used in minimizing the RMSD\n\
                                  (defaults to 50)\n\
       - options                  least 2 significant bits encode accuracy\n\
                                  (0: maximum, 3: minimum; defaults to 0)\n\
@@ -814,7 +916,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
                                  (defaults to false)\n\
-      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters                 maximum number of iterations used in minimizing the RMSD\n\
                                  (defaults to 50)\n\
       - options                  least 2 significant bits encode accuracy\n\
                                  (0: maximum, 3: minimum; defaults to 0)\n\
@@ -859,7 +961,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
                                  (defaults to false)\n\
-      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters                 maximum number of iterations used in minimizing the RMSD\n\
                                  (defaults to 50)\n\
       - options                  least 2 significant bits encode accuracy\n\
                                  (0: maximum, 3: minimum; defaults to 0)\n\
@@ -904,7 +1006,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
                                  (defaults to false)\n\
-      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters                 maximum number of iterations used in minimizing the RMSD\n\
                                  (defaults to 50)\n\
       - options                  least 2 significant bits encode accuracy\n\
                                  (0: maximum, 3: minimum; defaults to 0)\n\

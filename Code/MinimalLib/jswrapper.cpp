@@ -183,6 +183,53 @@ JSReaction *get_rxn_no_details(const std::string &input) {
   return get_rxn(input, std::string());
 }
 
+std::string generate_aligned_coords_deprecated(JSMol &self,
+                                               const JSMol &templateMol,
+                                               bool useCoordGen,
+                                               bool allowOptionalAttachments,
+                                               bool acceptFailure) {
+  static bool deprecationMsgShown = false;
+  if (!deprecationMsgShown) {
+    deprecationMsgShown = true;
+    std::cerr
+        << "generate_aligned_coords(templateMol, useCoordGen, allowOptionalAttachments, acceptFailure) is deprecated, use generate_aligned_coords(templateMol, details) instead"
+        << std::endl;
+  }
+  std::stringstream ss;
+  ss << "{\"useCoordGen\":" << (useCoordGen ? "true" : "false")
+     << ",\"allowRGroups\":" << (allowOptionalAttachments ? "true" : "false")
+     << ",\"acceptFailure\":" << (acceptFailure ? "true" : "false") << "}";
+  return self.generate_aligned_coords(templateMol, ss.str());
+}
+
+std::string generate_aligned_coords_deprecated(JSMol &self,
+                                               const JSMol &templateMol,
+                                               bool useCoordGen,
+                                               bool allowOptionalAttachments) {
+  return generate_aligned_coords_deprecated(self, templateMol, useCoordGen,
+                                            allowOptionalAttachments, true);
+}
+
+std::string generate_aligned_coords_deprecated(JSMol &self,
+                                               const JSMol &templateMol,
+                                               bool useCoordGen) {
+  return generate_aligned_coords_deprecated(self, templateMol, useCoordGen,
+                                            false, true);
+}
+
+std::string generate_aligned_coords_helper(JSMol &self,
+                                           const JSMol &templateMol,
+                                           const emscripten::val &param) {
+  if (param.typeOf().as<std::string>() == "boolean") {
+    return generate_aligned_coords_deprecated(self, templateMol,
+                                              param.as<bool>());
+  } else if (param.typeOf().as<std::string>() != "string") {
+    throw std::runtime_error(
+        "generate_aligned_coords expects a JSON string or a bool as parameter");
+  }
+  return self.generate_aligned_coords(templateMol, param.as<std::string>());
+}
+
 std::string parse_morgan_fp_param(unsigned int radius, unsigned int fplen,
                                   const std::string &funcName) {
   static std::unordered_set<std::string> deprecationMsgShown;
@@ -336,6 +383,10 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("draw_to_canvas", &draw_to_canvas)
       .function("draw_to_canvas_with_highlights",
                 &draw_to_canvas_with_highlights)
+      .function("generate_aligned_coords",
+                select_overload<std::string(JSMol &, const JSMol &,
+                                            const emscripten::val &)>(
+                    generate_aligned_coords_helper))
       .function("get_morgan_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
                     get_morgan_fp_as_uint8array))
@@ -461,15 +512,16 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("generate_aligned_coords",
                 select_overload<std::string(const JSMol &)>(
                     &JSMol::generate_aligned_coords))
+      // DEPRECATED
+      .function(
+          "generate_aligned_coords",
+          select_overload<std::string(JSMol &, const JSMol &, bool, bool)>(
+              generate_aligned_coords_deprecated))
+      // DEPRECATED
       .function("generate_aligned_coords",
-                select_overload<std::string(const JSMol &, bool)>(
-                    &JSMol::generate_aligned_coords))
-      .function("generate_aligned_coords",
-                select_overload<std::string(const JSMol &, bool, bool)>(
-                    &JSMol::generate_aligned_coords))
-      .function("generate_aligned_coords",
-                select_overload<std::string(const JSMol &, bool, bool, bool)>(
-                    &JSMol::generate_aligned_coords))
+                select_overload<std::string(JSMol &, const JSMol &, bool, bool,
+                                            bool)>(
+                    generate_aligned_coords_deprecated))
       .function("condense_abbreviations",
                 select_overload<std::string()>(&JSMol::condense_abbreviations))
       .function("condense_abbreviations",
@@ -483,7 +535,8 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<double(int)>(&JSMol::normalize_depiction))
       .function("normalize_depiction", select_overload<double(int, double)>(
                                            &JSMol::normalize_depiction))
-      .function("straighten_depiction", &JSMol::straighten_depiction);
+      .function("straighten_depiction", select_overload<void()>(&JSMol::straighten_depiction))
+      .function("straighten_depiction", select_overload<void(bool)>(&JSMol::straighten_depiction));
 
   class_<JSReaction>("Reaction")
 #ifdef __EMSCRIPTEN__
