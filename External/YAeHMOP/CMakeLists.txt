@@ -33,12 +33,15 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 
+# bring in the eHT code, but skip the targets (we'll get yaehmop_eht anyway because it's a dependency)
+add_subdirectory(yaehmop/tightbind EXCLUDE_FROM_ALL True)
 
-add_subdirectory(yaehmop/tightbind)
-
+# set install dir for the yaehmop library:
 INSTALL(TARGETS yaehmop_eht EXPORT rdkit-targets
         DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
         COMPONENT runtime )
+
+
 
 
 set(EHT_PARAM_FILE ${CMAKE_CURRENT_SOURCE_DIR}/yaehmop/tightbind/eht_parms.dat )
