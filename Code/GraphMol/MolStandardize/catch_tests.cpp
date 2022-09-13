@@ -978,3 +978,50 @@ TEST_CASE("Github #5320: cleanup() and stereochemistry") {
     CHECK(MolToSmiles(*m2) == "O=C([O-])C(O)(O)Cl");
   }
 }
+
+TEST_CASE("Github #5402: order dependence of tautomer transforms") {
+  SECTION("as-reported") {
+    MolStandardize::TautomerEnumerator te;
+
+    auto m1 = "c1ccc([C@@H](CC2=NCCN2)c2ccccn2)cc1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C([C@H](C1=CC=CC=C1)C2=NC=CC=C2)C3=NCCN3"_smiles;
+    REQUIRE(m2);
+    std::cerr << " * - * - * - * m1" << std::endl;
+    std::unique_ptr<ROMol> res1{te.canonicalize(*m1)};
+    REQUIRE(res1);
+    std::cerr << " * - * - * - * m2" << std::endl;
+    std::unique_ptr<ROMol> res2{te.canonicalize(*m2)};
+    REQUIRE(res2);
+    CHECK(MolToSmiles(*res1) == MolToSmiles(*res2));
+  }
+  SECTION("zoom") {
+    MolStandardize::CleanupParameters params;
+    const std::vector<
+        std::tuple<std::string, std::string, std::string, std::string>>
+        tTransforms{
+            std::make_tuple(std::string("special imine r1"),
+                            std::string("[Cz0R0X4!H0]-[c]=[nz0]"),
+                            std::string(""), std::string("")),
+            std::make_tuple(std::string("special imine r2"),
+                            std::string("[Cz0R0X4!H0]-[c](=c)-[nz0]"),
+                            std::string("==-"), std::string("")),
+        };
+
+    params.tautomerTransformData = tTransforms;
+    MolStandardize::TautomerEnumerator te(params);
+
+    auto m1 = "c1ccc([C@@H](CC2=NCCN2)c2ccccn2)cc1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C([C@H](C1=CC=CC=C1)C2=NC=CC=C2)C3=NCCN3"_smiles;
+    REQUIRE(m2);
+
+    std::cerr << " * - * - * - * m1" << std::endl;
+    std::unique_ptr<ROMol> res1{te.canonicalize(*m1)};
+    REQUIRE(res1);
+    std::cerr << " * - * - * - * m2" << std::endl;
+    std::unique_ptr<ROMol> res2{te.canonicalize(*m2)};
+    REQUIRE(res2);
+    CHECK(MolToSmiles(*res1) == MolToSmiles(*res2));
+  }
+}

@@ -32,8 +32,8 @@ DrawMolMCH::DrawMolMCH(
       highlightLinewidthMultipliers_(highlight_linewidth_multipliers) {}
 
 // ****************************************************************************
-void DrawMolMCH::extractHighlights() {
-  DrawMol::extractHighlights();
+void DrawMolMCH::extractHighlights(double scale) {
+  DrawMol::extractHighlights(scale);
   extractMCHighlights();
 }
 

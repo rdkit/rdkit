@@ -440,6 +440,10 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   // the guideline is for a bond length of 14.4px, and we set things up
   // in pixels per Angstrom.
   opts.scalingFactor = 14.4 / meanBondLen;
+  // setting the fixedBondLength means the drawing won't be scaled
+  // up in a drawer of defined size, so the bond length won't exceed
+  // 14.4 pixels.
+  opts.fixedBondLength = 14.4 / meanBondLen;
   // offset for multiple bonds is 18% of the bond length.
   opts.multipleBondOffset = 0.18;
   opts.highlightBondWidthMultiplier = 32;

@@ -54,7 +54,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"rxn_test1_7.svg", 3483485271U},   {"rxn_test2_1.svg", 409647324U},
     {"rxn_test2_2_1.svg", 1275078201U}, {"rxn_test2_2_2.svg", 2689198952U},
     {"rxn_test2_2_3.svg", 3750657998U}, {"rxn_test2_2_4.svg", 844519751U},
-    {"rxn_test3_1.svg", 2642962178U},   {"rxn_test4_1.svg", 1276626023U},
+    {"rxn_test3_1.svg", 2642962178U},   {"rxn_test4_1.svg", 2201210664U},
     {"rxn_test4_2.svg", 3875105540U},
 };
 #else
@@ -65,7 +65,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"rxn_test1_7.svg", 2526900298U},   {"rxn_test2_1.svg", 2821179072U},
     {"rxn_test2_2_1.svg", 1304295583U}, {"rxn_test2_2_2.svg", 1361778996U},
     {"rxn_test2_2_3.svg", 2608405344U}, {"rxn_test2_2_4.svg", 574045696U},
-    {"rxn_test3_1.svg", 2373233565U},   {"rxn_test4_1.svg", 2107417213U},
+    {"rxn_test3_1.svg", 2373233565U},   {"rxn_test4_1.svg", 1661501846U},
     {"rxn_test4_2.svg", 638174091U},
 };
 #endif
@@ -87,7 +87,7 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"rxn_test1_7.png", 3834655428U},  {"rxn_test2_1.png", 2654417911U},
     {"rxn_test2_2_1.png", 997060634U}, {"rxn_test2_2_2.png", 2090979640U},
     {"rxn_test2_2_3.png", 857100114U}, {"rxn_test2_2_4.png", 610638635U},
-    {"rxn_test3_1.png", 2130633490U},  {"rxn_test4_1.png", 1579189880U},
+    {"rxn_test3_1.png", 2130633490U},  {"rxn_test4_1.png", 2917597113U},
     {"rxn_test4_2.png", 3031850382U},
 };
 

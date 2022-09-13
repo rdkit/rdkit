@@ -46,6 +46,16 @@ SubstanceGroup *createMolSubstanceGroup(ROMol &mol, std::string type) {
   return &(getSubstanceGroups(mol).back());
 }
 
+SubstanceGroup *createMolDataSubstanceGroup(ROMol &mol, std::string fieldName,
+                                            std::string value) {
+  SubstanceGroup sg(&mol, "DAT");
+  sg.setProp("FIELDNAME", fieldName);
+  STR_VECT dataFields{value};
+  sg.setProp("DATAFIELDS", dataFields);
+  addSubstanceGroup(mol, sg);
+  return &(getSubstanceGroups(mol).back());
+}
+
 SubstanceGroup *addMolSubstanceGroup(ROMol &mol, const SubstanceGroup &sgroup) {
   addSubstanceGroup(mol, sgroup);
   return &(getSubstanceGroups(mol).back());
@@ -279,6 +289,14 @@ struct sgroup_wrap {
                 python::return_value_policy<
                     python::reference_existing_object,
                     python::with_custodian_and_ward_postcall<0, 1>>());
+    python::def(
+        "CreateMolDataSubstanceGroup", &createMolDataSubstanceGroup,
+        (python::arg("mol"), python::arg("fieldName"), python::arg("value")),
+        "creates a new DATA SubstanceGroup associated with a molecule, "
+        "returns the new SubstanceGroup",
+        python::return_value_policy<
+            python::reference_existing_object,
+            python::with_custodian_and_ward_postcall<0, 1>>());
     python::def("AddMolSubstanceGroup", &addMolSubstanceGroup,
                 (python::arg("mol"), python::arg("sgroup")),
                 "adds a copy of a SubstanceGroup to a molecule, returns the "
