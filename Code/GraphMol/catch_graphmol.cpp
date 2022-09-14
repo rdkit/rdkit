@@ -18,6 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -2750,5 +2751,56 @@ TEST_CASE(
     auto m = "[Fe+30]"_smiles;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+}
+
+TEST_CASE(
+    "github #5505: Running kekulization on mols with query bonds will either fail or return incorrect results") {
+  SECTION("as reported") {
+    auto m = "[#6]-c1cccc(-[#6])c1"_smarts;
+    REQUIRE(m);
+    REQUIRE(m->getBondWithIdx(2)->hasQuery());
+    REQUIRE(m->getBondWithIdx(2)->getBondType() == Bond::BondType::AROMATIC);
+    MolOps::Kekulize(*m);
+    REQUIRE(m->getBondWithIdx(2)->hasQuery());
+    REQUIRE(m->getBondWithIdx(2)->getBondType() == Bond::BondType::AROMATIC);
+  }
+  SECTION("partial kekulization works") {
+    auto m1 = "c1ccccc1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1ccccc1"_smarts;
+    REQUIRE(m2);
+    m1->insertMol(*m2);
+    MolOps::findSSSR(*m1);
+    REQUIRE(!m1->getBondWithIdx(1)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(1)->getBondType() == Bond::BondType::AROMATIC);
+    REQUIRE(m1->getBondWithIdx(6)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(6)->getBondType() == Bond::BondType::AROMATIC);
+    MolOps::Kekulize(*m1);
+    REQUIRE(!m1->getBondWithIdx(1)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(1)->getBondType() != Bond::BondType::AROMATIC);
+    REQUIRE(m1->getBondWithIdx(6)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(6)->getBondType() == Bond::BondType::AROMATIC);
+  }
+  SECTION("kekulization with non-bond-type queries works") {
+    auto m1 = "c1ccccc1"_smiles;
+    REQUIRE(m1);
+    QueryBond qbond;
+    qbond.setBondType(Bond::BondType::AROMATIC);
+    qbond.setIsAromatic(true);
+    qbond.setQuery(makeBondIsInRingQuery());
+    m1->replaceBond(0, &qbond);
+    REQUIRE(m1->getBondWithIdx(0)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(0)->getBondType() == Bond::BondType::AROMATIC);
+    MolOps::Kekulize(*m1);
+    REQUIRE(m1->getBondWithIdx(0)->hasQuery());
+    REQUIRE(m1->getBondWithIdx(0)->getBondType() != Bond::BondType::AROMATIC);
+  }
+  SECTION("make sure single-atom molecules and mols without rings still fail") {
+    std::vector<std::string> expectedFailures = {"p", "c:c"};
+    for (const auto &smi : expectedFailures) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
+    }
   }
 }
