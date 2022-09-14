@@ -565,9 +565,9 @@ void flagRingStereo(ROMol &mol,
         auto opposite_atom = mol.getAtomWithIdx(oppositeidx);
         for (auto bond : mol.atomBonds(opposite_atom)) {
           auto bidx = bond->getIdx();
-          if (std::find(bring.begin(), bring.end(), bidx) == bring.end() &&
-              (knownBonds[bidx] ||
-               (possibleBonds && possibleBonds->test(bidx)))) {
+          if ( (knownBonds[bidx] ||
+               (possibleBonds && possibleBonds->test(bidx))) &&
+               std::find(bring.begin(), bring.end(), bidx) == bring.end()) {
             to_atom_opposite_possible = true;
             break;
           }
