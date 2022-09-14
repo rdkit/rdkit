@@ -41,3 +41,7 @@
 #cmakedefine RDK_BUILD_FREETYPE_SUPPORT
 
 #cmakedefine RDK_USE_URF
+
+#cmakedefine RDK_BUILD_YAEHMOP_SUPPORT
+
+#cmakedefine RDK_BUILD_XYZ2MOL_SUPPORT
