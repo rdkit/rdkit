@@ -3119,7 +3119,7 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     // vector.
     auto bvec = end1Cds.directionVector(end2Cds);
     std::vector<std::pair<int, double>> angs;
-    for (auto i = 0; i < end1HighNbrs.size(); ++i) {
+    for (unsigned i = 0; i < end1HighNbrs.size(); ++i) {
       auto ovec = end1Cds.directionVector(atCds_[end1HighNbrs[i]->getIdx()]);
       auto ang = bvec.signedAngleTo(ovec);
       angs.push_back(std::make_pair(i, ang));

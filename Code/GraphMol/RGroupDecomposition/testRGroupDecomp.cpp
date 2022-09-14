@@ -2858,7 +2858,7 @@ M  END
   RGroupDecompositionParameters params;
   params.matchingStrategy = GreedyChunks;
   RGroupDecomposition decomp(*core, params);
-  for (const auto smiles : smiArray) {
+  for (const auto &smiles : smiArray) {
     ROMol *mol = SmilesToMol(smiles);
     int res = decomp.add(*mol);
     TEST_ASSERT(res >= 0);
@@ -2869,7 +2869,7 @@ M  END
   std::cerr << "Best mapping" << std::endl;
   RGroupRows rows = decomp.getRGroupsAsRows();
   TEST_ASSERT(rows.size() == 11);
-  for (const auto row : rows) {
+  for (const auto &row : rows) {
     TEST_ASSERT(row.size() == 2);
     TEST_ASSERT(row.count("Core") == 1);
     TEST_ASSERT(row.count("R1") == 1);
