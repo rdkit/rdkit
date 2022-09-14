@@ -386,29 +386,29 @@ inline std::string getAtomCompareSymbol(const Atom &atom) {
          std::to_string(atom.getFormalCharge());
 }
 
-bool are_stereobond_controlling_atoms_dupes(
-    const ROMol &mol, const Bond &bond, unsigned controlling_atom1,
-    unsigned controlling_atom2, const std::vector<unsigned> &atom_ranks,
+bool areStereobondControllingAtomsDupes(
+    const ROMol &mol, const Bond &bond, unsigned controllingAtom1,
+    unsigned controllingAtom2, const std::vector<unsigned> &atomRanks,
     const boost::dynamic_bitset<> &possibleAtoms,
     const boost::dynamic_bitset<> &knownAtoms) {
-  PRECONDITION(controlling_atom1 != Chirality::StereoInfo::NOATOM &&
-                   controlling_atom2 != Chirality::StereoInfo::NOATOM,
+  PRECONDITION(controllingAtom1 != Chirality::StereoInfo::NOATOM &&
+                   controllingAtom2 != Chirality::StereoInfo::NOATOM,
                "Missing a controlling atom");
 
-  if (atom_ranks[controlling_atom1] != atom_ranks[controlling_atom2]) {
+  if (atomRanks[controllingAtom1] != atomRanks[controllingAtom2]) {
     return false;
   }
 
   // Now that we know we have 2 neighbors with the same rank, check whether
   // there is a common even sized ring between the controlling atoms in which
   // the atom opposite of the bond may be chiral, which would break the tie
-  auto ring_info = mol.getRingInfo();
-  auto atom1_members = ring_info->atomMembers(controlling_atom1);
-  auto atom2_members = ring_info->atomMembers(controlling_atom2);
+  auto ringInfo = mol.getRingInfo();
+  auto atom1Members = ringInfo->atomMembers(controllingAtom1);
+  auto atom2Members = ringInfo->atomMembers(controllingAtom2);
 
-  auto it1 = atom1_members.begin();
-  auto it2 = atom2_members.begin();
-  while (it1 != atom1_members.end() && it2 != atom2_members.end()) {
+  auto it1 = atom1Members.begin();
+  auto it2 = atom2Members.begin();
+  while (it1 != atom1Members.end() && it2 != atom2Members.end()) {
     if (*it1 < *it2) {
       ++it1;
       continue;
@@ -417,20 +417,20 @@ bool are_stereobond_controlling_atoms_dupes(
       continue;
     }
 
-    auto ring = ring_info->atomRings().at(*it1);
+    auto ring = ringInfo->atomRings().at(*it1);
     if (ring.size() % 2) {
       // Ring is odd-sized
       continue;
     }
 
-    for (auto bond_end : {bond.getBeginAtomIdx(), bond.getEndAtomIdx()}) {
-      auto bond_end_pos_itr = std::find(ring.begin(), ring.end(), bond_end);
-      if (bond_end_pos_itr != ring.end()) {
-        auto bond_end_pos = bond_end_pos_itr - ring.begin();
-        auto opposite_pos = (bond_end_pos + ring.size() / 2) % ring.size();
+    for (auto bondEnd : {bond.getBeginAtomIdx(), bond.getEndAtomIdx()}) {
+      auto bondEndPosItr = std::find(ring.begin(), ring.end(), bondEnd);
+      if (bondEndPosItr != ring.end()) {
+        auto bondEndPos = bondEndPosItr - ring.begin();
+        auto oppositePos = (bondEndPos + ring.size() / 2) % ring.size();
 
-        auto opposite_idx = ring[opposite_pos];
-        if (possibleAtoms[opposite_idx] || knownAtoms[opposite_idx]) {
+        auto oppositeIdx = ring[oppositePos];
+        if (possibleAtoms[oppositeIdx] || knownAtoms[oppositeIdx]) {
           return false;
         }
       }
@@ -541,15 +541,15 @@ void flagRingStereo(ROMol &mol,
   //    central
   //       bond in C1CCC2CCCCC2C1
 
-  auto ring_info = mol.getRingInfo();
+  auto ringInfo = mol.getRingInfo();
   boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
-  for (unsigned int ridx = 0; ridx < ring_info->atomRings().size(); ++ridx) {
-    const auto &aring = ring_info->atomRings()[ridx];
-    const auto &bring = ring_info->bondRings()[ridx];
+  for (unsigned int ridx = 0; ridx < ringInfo->atomRings().size(); ++ridx) {
+    const auto &aring = ringInfo->atomRings()[ridx];
+    const auto &bring = ringInfo->bondRings()[ridx];
     unsigned int nHere = 0;
     auto sz = aring.size();
-    bool ring_is_odd_sized = sz % 2;
-    auto half_sz = sz / 2 + ring_is_odd_sized;
+    bool ringIsOddSized = sz % 2;
+    auto halfSize = sz / 2 + ringIsOddSized;
 
     possibleAtomsInRing.reset();
     for (unsigned int ai = 0; ai < sz; ++ai) {
@@ -557,53 +557,53 @@ void flagRingStereo(ROMol &mol,
       if (!knownAtoms[aidx] && (!possibleAtoms || !possibleAtoms->test(aidx))) {
         continue;
       }
-      if (!ring_is_odd_sized) {
+      if (!ringIsOddSized) {
         // find the index of the atom on the opposite side of the even-sized
         // ring
-        auto oppositeidx = aring[(ai + half_sz) % sz];
-        bool to_atom_opposite_possible = false;
-        auto opposite_atom = mol.getAtomWithIdx(oppositeidx);
-        for (auto bond : mol.atomBonds(opposite_atom)) {
+        auto oppositeIdx = aring[(ai + halfSize) % sz];
+        bool toAtomOppositePossible = false;
+        auto oppositeAtom = mol.getAtomWithIdx(oppositeIdx);
+        for (auto bond : mol.atomBonds(oppositeAtom)) {
           auto bidx = bond->getIdx();
-          if ( (knownBonds[bidx] ||
+          if ((knownBonds[bidx] ||
                (possibleBonds && possibleBonds->test(bidx))) &&
-               std::find(bring.begin(), bring.end(), bidx) == bring.end()) {
-            to_atom_opposite_possible = true;
+              std::find(bring.begin(), bring.end(), bidx) == bring.end()) {
+            toAtomOppositePossible = true;
             break;
           }
         }
 
-        if (knownAtoms[oppositeidx] ||
-            (possibleAtoms && possibleAtoms->test(oppositeidx)) ||
-            to_atom_opposite_possible) {
-          nHere += 1 + to_atom_opposite_possible;
+        if (knownAtoms[oppositeIdx] ||
+            (possibleAtoms && possibleAtoms->test(oppositeIdx)) ||
+            toAtomOppositePossible) {
+          nHere += 1 + toAtomOppositePossible;
           possibleAtomsInRing.set(aidx);
-          possibleAtomsInRing.set(oppositeidx);
+          possibleAtomsInRing.set(oppositeIdx);
           continue;
         }
       }
 
       // if the atom is in more than one ring, explore the common edge to see
       // if we can find another potentially chiral atom
-      if (ring_info->numAtomRings(aidx) > 1) {
-        auto previous_otheridx = aidx;
-        for (size_t step = 1; step <= half_sz; ++step) {
-          auto otheridx = aring[(ai + step) % sz];
-          auto bnd = mol.getBondBetweenAtoms(previous_otheridx, otheridx);
-          if (ring_info->numBondRings(bnd->getIdx()) < 2) {
+      if (ringInfo->numAtomRings(aidx) > 1) {
+        auto previousOtherIdx = aidx;
+        for (size_t step = 1; step <= halfSize; ++step) {
+          auto otherIdx = aring[(ai + step) % sz];
+          auto bnd = mol.getBondBetweenAtoms(previousOtherIdx, otherIdx);
+          if (ringInfo->numBondRings(bnd->getIdx()) < 2) {
             // We reached the end of the common edge.
             break;
           }
-          if (knownAtoms[otheridx] ||
-              (possibleAtoms && possibleAtoms->test(otheridx))) {
+          if (knownAtoms[otherIdx] ||
+              (possibleAtoms && possibleAtoms->test(otherIdx))) {
             // We found another chiral atom, no need to keep
             // searching.
             nHere += 2;
             possibleAtomsInRing.set(aidx);
-            possibleAtomsInRing.set(otheridx);
+            possibleAtomsInRing.set(otherIdx);
             break;
           }
-          previous_otheridx = otheridx;
+          previousOtherIdx = otherIdx;
         }
       }
     }
@@ -765,7 +765,7 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
         bool needsSwap = false;
         if (sinfo.controllingAtoms[0] != Chirality::StereoInfo::NOATOM &&
             sinfo.controllingAtoms[1] != Chirality::StereoInfo::NOATOM) {
-          if (are_stereobond_controlling_atoms_dupes(
+          if (areStereobondControllingAtomsDupes(
                   mol, *bond, sinfo.controllingAtoms[0],
                   sinfo.controllingAtoms[1], aranks, possibleAtoms,
                   knownAtoms)) {
@@ -778,7 +778,7 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
         }
         if (sinfo.controllingAtoms[2] != Chirality::StereoInfo::NOATOM &&
             sinfo.controllingAtoms[3] != Chirality::StereoInfo::NOATOM) {
-          if (are_stereobond_controlling_atoms_dupes(
+          if (areStereobondControllingAtomsDupes(
                   mol, *bond, sinfo.controllingAtoms[2],
                   sinfo.controllingAtoms[3], aranks, possibleAtoms,
                   knownAtoms)) {
