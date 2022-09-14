@@ -615,8 +615,10 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
    double bond if we hit a wall in the kekulization process
 
    <b>Notes:</b>
-     - even if \c markAtomsBonds is \c false the \c BondType for all aromatic
-       bonds will be changed from \c RDKit::Bond::AROMATIC to \c
+     - this does not modify query bonds which have bond type queries (like those
+       which come from SMARTS) or rings containing them.
+     - even if \c markAtomsBonds is \c false the \c BondType for all modified
+       aromatic bonds will be changed from \c RDKit::Bond::AROMATIC to \c
        RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
 
 */
@@ -1018,7 +1020,7 @@ namespace details {
 //! not recommended for use in other code
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
     RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
-    const boost::dynamic_bitset<> &bondsToUse, bool markAtomsBonds = true,
+    boost::dynamic_bitset<> bondsToUse, bool markAtomsBonds = true,
     unsigned int maxBackTracks = 100);
 }  // namespace details
 
