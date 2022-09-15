@@ -1986,11 +1986,12 @@ TEST_CASE("Github #5372: errors with fragments and doRandom=True") {
   }
 }
 
-TEST_CASE("github #5466 writing floating point atom props cxsmiles", "[smiles][cxsmiles]") {
+TEST_CASE("github #5466 writing floating point atom props cxsmiles",
+          "[smiles][cxsmiles]") {
   SECTION("simple") {
     auto mol = "C"_smiles;
     REQUIRE(mol);
-    
+
     mol->getAtomWithIdx(0)->setProp<std::string>("foo", "7.6");
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "C |atomProp:0.foo.7&#46;6|");
@@ -2003,9 +2004,163 @@ TEST_CASE("github #5466 writing floating point atom props cxsmiles", "[smiles][c
   SECTION("label with .") {
     auto mol = "C"_smiles;
     REQUIRE(mol);
-    
+
     mol->getAtomWithIdx(0)->setProp<int>("foo.foo", 7);
     auto smi = MolToCXSmiles(*mol);
     CHECK(smi == "C |atomProp:0.foo&#46;foo.7|");
   }
+}
+
+TEST_CASE("bond configuration in CXSMILES") {
+  SECTION("basic reading/writing") {
+    auto m = "CC(O)F |w:1.2|"_smiles;
+    REQUIRE(m);
+    unsigned int bondcfg;
+    CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+    // make sure we end up with a wiggly bond in output mol blocks:
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") != std::string::npos);
+    // make sure we end up with the wiggly bond in the output CXSMILES:
+    auto cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi == "CC(O)F |w:1.2|");
+    // but we can turn that off
+    SmilesWriteParams ps;
+    cxsmi =
+        MolToCXSmiles(*m, ps, SmilesWrite::CX_ALL ^ SmilesWrite::CX_BOND_CFG);
+    CHECK(cxsmi == "CC(O)F");
+  }
+
+  SECTION("make sure order gets reversed when needed") {
+    auto m = "CC(O)Cl |w:1.0|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getBeginAtomIdx() == 1);
+    unsigned int bondcfg;
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+  }
+
+  SECTION("writing examples") {
+    auto m = "OC(C)Cl"_smiles;
+    REQUIRE(m);
+    {
+      ROMol nm(*m);
+      nm.getBondWithIdx(1)->setBondDir(Bond::BondDir::UNKNOWN);
+      auto cxsmi = MolToCXSmiles(nm);
+      CHECK(cxsmi == "CC(O)Cl |w:1.0|");
+    }
+    {
+      ROMol nm(*m);
+      nm.getBondWithIdx(1)->setProp(common_properties::_MolFileBondCfg, 2);
+      auto cxsmi = MolToCXSmiles(nm);
+      CHECK(cxsmi == "CC(O)Cl |w:1.0|");
+    }
+  }
+
+  SECTION("writing wedges and dashes") {
+    auto m = R"CTAB(
+  RDKit             2D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl -5.25 3.1667 0 0
+M  V30 2 C -3.9163 3.9367 0 0
+M  V30 3 O -2.5826 3.1667 0 0
+M  V30 4 C -3.9163 5.4767 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi.find("wU:1.0") != std::string::npos);
+    SmilesWriteParams ps;
+    cxsmi =
+        MolToCXSmiles(*m, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(cxsmi.find("wU:1.0") == std::string::npos);
+    // change the bond dir. This also tests that the wedging overrides the
+    // CFG property
+    m->getBondWithIdx(2)->setBondDir(Bond::BondDir::BEGINDASH);
+    cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi.find("wD:1.0") != std::string::npos);
+    cxsmi =
+        MolToCXSmiles(*m, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(cxsmi.find("wD:1.0") == std::string::npos);
+    m->getBondWithIdx(2)->setBondDir(Bond::BondDir::UNKNOWN);
+    cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi.find("w:1.0") != std::string::npos);
+    // wiggly bonds get written even if we don't output coords:
+    cxsmi =
+        MolToCXSmiles(*m, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(cxsmi.find("w:1.0") != std::string::npos);
+  }
+#if 0  
+  SECTION("Github #5499") {
+    auto m = R"CTAB(7643724
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 2.776307 0.296081 0.000000 0
+M  V30 2 N 2.708144 -1.320684 0.000000 0
+M  V30 3 N 2.976836 -2.283790 0.000000 0
+M  V30 4 N 4.328520 -0.579106 0.000000 0
+M  V30 5 C 1.812993 0.027197 0.000000 0
+M  V30 6 C 1.770944 -0.971719 0.000000 0
+M  V30 7 C 3.329205 -0.537040 0.000000 0
+M  V30 8 C 3.124872 1.233298 0.000000 0
+M  V30 9 C 0.968792 0.563284 0.000000 0
+M  V30 10 C 0.884677 -1.434947 0.000000 0
+M  V30 11 C 0.082334 0.100263 0.000000 0
+M  V30 12 C 0.040268 -0.899052 0.000000 0
+M  V30 13 C 2.487521 2.003850 0.000000 0
+M  V30 14 C 2.836086 2.941066 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 1 1 7
+M  V30 3 1 1 8
+M  V30 4 1 2 3
+M  V30 5 1 2 6
+M  V30 6 1 2 7
+M  V30 7 2 4 7 CFG=2
+M  V30 8 2 5 6
+M  V30 9 1 5 9
+M  V30 10 1 6 10
+M  V30 11 1 8 13
+M  V30 12 2 9 11
+M  V30 13 2 10 12
+M  V30 14 1 11 12
+M  V30 15 2 13 14
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$)CTAB"_ctab;
+    REQUIRE(m);
+    SmilesWriteParams ps;
+    m->debugMol(std::cerr);
+    auto cxsmi1 =
+        MolToCXSmiles(*m, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    std::cerr << cxsmi1 << std::endl;
+    CHECK(cxsmi1 == "C=CCn1c(=N)n(N)c2ccccc21 |w:5.5|");
+    std::unique_ptr<RWMol> m2{SmilesToMol(cxsmi1)};
+    REQUIRE(m2);
+    CHECK(m2->getBondWithIdx(4)->getBeginAtomIdx() == 5);
+    CHECK(m2->getBondWithIdx(4)->getBondDir() == Bond::BondDir::EITHERDOUBLE);
+    CHECK(m2->getBondWithIdx(4)->getStereo() == Bond::BondStereo::STEREOANY);
+    m2->debugMol(std::cerr);
+    auto cxsmi2 =
+        MolToCXSmiles(*m2, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    CHECK(cxsmi1 == cxsmi2);
+  }
+#endif
 }
