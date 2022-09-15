@@ -57,7 +57,8 @@ RDKIT_SMILESPARSE_EXPORT bool checkChiralPermutation(int chiralTag,
                                                      int permutation);
 namespace detail {
 constexpr auto _needsDetectBondStereo = "_needsDetectBondStereo";
-}
+constexpr auto _needsDetectAtomStereo = "_needsDetectAtomStereo";
+}  // namespace detail
 }  // namespace SmilesParseOps
 
 #endif

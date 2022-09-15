@@ -409,6 +409,22 @@ RWMol *SmilesToMol(const std::string &smiles,
   res = toMol(lsmiles, smiles_parse, lsmiles);
   handleCXPartAndName(res, params, cxPart, name);
   if (res && (params.sanitize || params.removeHs)) {
+    if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
+      // we encountered either a wedged bond in the CXSMILES,
+      // these need to be handled the same way they were in mol files
+      res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
+      if (res->getNumConformers()) {
+        const auto &conf = res->getConformer();
+        if (!conf.is3D()) {
+          MolOps::assignChiralTypesFromBondDirs(*res, conf.getId());
+        }
+      }
+    }
+    // if we read a 3D conformer, set the stereo:
+    if (res->getNumConformers() && res->getConformer().is3D()) {
+      res->updatePropertyCache(false);
+      MolOps::assignChiralTypesFrom3D(*res, res->getConformer().getId(), true);
+    }
     try {
       if (params.removeHs) {
         bool implicitOnly = false, updateExplicitCount = true;
@@ -422,7 +438,7 @@ RWMol *SmilesToMol(const std::string &smiles,
       throw;
     }
     if (res->hasProp(SmilesParseOps::detail::_needsDetectBondStereo)) {
-      // we encountered either a wedged or wiggly bond in the CXSMILES,
+      // we encountered either wiggly bond in the CXSMILES,
       // these need to be handled the same way they were in mol files
       res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
       MolOps::clearSingleBondDirFlags(*res);

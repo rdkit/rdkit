@@ -2012,6 +2012,26 @@ TEST_CASE("github #5466 writing floating point atom props cxsmiles",
   }
 }
 
+TEST_CASE("CXSMILES and 3d conformers") {
+  SECTION("detect 3d and perceive stereo") {
+    auto m =
+        "CC(O)(F)Cl |(0.856693,-0.0843716,-0.11692;-0.539611,0.360041,0.18126;-1.47941,-0.628083,-0.170155;-0.665621,0.560167,1.55524;-0.999017,1.83232,-0.693661)|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 1);
+    CHECK(m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("detect 2d") {
+    auto m =
+        "CC(O)Cl |(-3.9163,5.4767,;-3.9163,3.9367,;-2.5826,3.1667,;-5.25,3.1667,)|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 1);
+    CHECK(!m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+}
 TEST_CASE("bond configuration in CXSMILES") {
   SECTION("basic reading/writing") {
     auto m = "CC(O)F |w:1.2|"_smiles;
@@ -2057,6 +2077,18 @@ TEST_CASE("bond configuration in CXSMILES") {
     unsigned int bondcfg;
     CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
+  }
+
+  SECTION("make sure wedging gets applied when coordinates are there") {
+    auto m =
+        "CC(O)Cl |(-3.9163,5.4767,;-3.9163,3.9367,;-2.5826,3.1667,;-5.25,3.1667,),wU:1.0|"_smiles;
+    REQUIRE(m);
+    unsigned int bondcfg;
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 1);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    m->debugMol(std::cerr);
   }
 
   SECTION("writing examples") {

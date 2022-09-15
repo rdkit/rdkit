@@ -408,6 +408,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
   mol.addConformer(conf);
   ++first;
   unsigned int atIdx = 0;
+  bool is3D = false;
   while (first <= last && *first != ')') {
     RDGeom::Point3D pt;
     std::string tkn = read_text_to(first, last, ";)");
@@ -423,6 +424,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
         }
         if (tokens.size() >= 3 && tokens[2].size()) {
           pt.z = boost::lexical_cast<double>(tokens[2]);
+          is3D = true;
         }
       }
 
@@ -433,6 +435,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
       ++first;
     }
   }
+  conf->set3D(is3D);
   if (first >= last || *first != ')') {
     return false;
   }
@@ -1082,8 +1085,12 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     bond->setBondDir(state);
     if (cfg == 2 && bond->getBondType() == Bond::BondType::SINGLE) {
       bond->getBeginAtom()->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+      mol.setProp(detail::_needsDetectBondStereo, 1);
     }
-    mol.setProp(detail::_needsDetectBondStereo, 1);
+    if ((cfg == 1 || cfg == 3) &&
+        bond->getBondType() == Bond::BondType::SINGLE) {
+      mol.setProp(detail::_needsDetectAtomStereo, 1);
+    }
     if (first < last && *first == ',') {
       ++first;
     }
