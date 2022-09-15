@@ -23,6 +23,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 
 using namespace RDKit;
 
@@ -2019,6 +2020,7 @@ TEST_CASE("bond configuration in CXSMILES") {
     CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
     // make sure we end up with a wiggly bond in output mol blocks:
+    reapplyMolBlockWedging(*m);
     auto mb = MolToV3KMolBlock(*m);
     CHECK(mb.find("CFG=2") != std::string::npos);
     // make sure we end up with the wiggly bond in the output CXSMILES:
@@ -2031,6 +2033,23 @@ TEST_CASE("bond configuration in CXSMILES") {
     CHECK(cxsmi == "CC(O)F");
   }
 
+  SECTION("CXSMILES wiggly bond over-rides atomic stereo") {
+    auto m = "C[C@H](O)F |w:1.2|"_smiles;
+    REQUIRE(m);
+    unsigned int bondcfg;
+    CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+
+    // make sure we end up with a wiggly bond in output mol blocks:
+    reapplyMolBlockWedging(*m);
+    auto mb = MolToV3KMolBlock(*m);
+    CHECK(mb.find("CFG=2") != std::string::npos);
+    // make sure we end up with the wiggly bond in the output CXSMILES:
+    auto cxsmi = MolToCXSmiles(*m);
+    CHECK(cxsmi == "CC(O)F |w:1.2|");
+  }
   SECTION("make sure order gets reversed when needed") {
     auto m = "CC(O)Cl |w:1.0|"_smiles;
     REQUIRE(m);
@@ -2101,7 +2120,36 @@ M  END
         MolToCXSmiles(*m, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
     CHECK(cxsmi.find("w:1.0") != std::string::npos);
   }
-#if 0  
+
+  SECTION("double bond stereo") {
+    auto m_from_ctab = R"CTAB(
+  Mrv2211 09152216122D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.125 -12.0417 0 0
+M  V30 2 C -5.7913 -11.2717 0 0
+M  V30 3 C -4.4576 -12.0417 0 0
+M  V30 4 C -8.4587 -11.2717 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3 CFG=2
+M  V30 3 1 1 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m_from_ctab);
+    auto m = "CC=CC |w:2.2|"_smiles;
+    REQUIRE(m);
+    unsigned int bondcfg;
+    CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+  }
+#if 0
   SECTION("Github #5499") {
     auto m = R"CTAB(7643724
      RDKit          2D
@@ -2152,15 +2200,15 @@ $$$$)CTAB"_ctab;
         MolToCXSmiles(*m, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
     std::cerr << cxsmi1 << std::endl;
     CHECK(cxsmi1 == "C=CCn1c(=N)n(N)c2ccccc21 |w:5.5|");
-    std::unique_ptr<RWMol> m2{SmilesToMol(cxsmi1)};
-    REQUIRE(m2);
-    CHECK(m2->getBondWithIdx(4)->getBeginAtomIdx() == 5);
-    CHECK(m2->getBondWithIdx(4)->getBondDir() == Bond::BondDir::EITHERDOUBLE);
-    CHECK(m2->getBondWithIdx(4)->getStereo() == Bond::BondStereo::STEREOANY);
-    m2->debugMol(std::cerr);
-    auto cxsmi2 =
-        MolToCXSmiles(*m2, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
-    CHECK(cxsmi1 == cxsmi2);
+    // std::unique_ptr<RWMol> m2{SmilesToMol(cxsmi1)};
+    // REQUIRE(m2);
+    // CHECK(m2->getBondWithIdx(4)->getBeginAtomIdx() == 5);
+    // CHECK(m2->getBondWithIdx(4)->getBondDir() ==
+    // Bond::BondDir::EITHERDOUBLE); CHECK(m2->getBondWithIdx(4)->getStereo() ==
+    // Bond::BondStereo::STEREOANY); m2->debugMol(std::cerr); auto cxsmi2 =
+    //     MolToCXSmiles(*m2, ps,
+    //     SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    // CHECK(cxsmi1 == cxsmi2);
   }
 #endif
 }

@@ -421,6 +421,13 @@ RWMol *SmilesToMol(const std::string &smiles,
       delete res;
       throw;
     }
+    if (res->hasProp(SmilesParseOps::detail::_needsDetectBondStereo)) {
+      // we encountered either a wedged or wiggly bond in the CXSMILES,
+      // these need to be handled the same way they were in mol files
+      res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
+      MolOps::clearSingleBondDirFlags(*res);
+      MolOps::detectBondStereochemistry(*res);
+    }
     // figure out stereochemistry:
     if (params.useLegacyStereo) {
       bool cleanIt = true, force = true, flagPossible = true;

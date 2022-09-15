@@ -1080,7 +1080,10 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     }
     bond->setProp(common_properties::_MolFileBondCfg, cfg);
     bond->setBondDir(state);
-
+    if (cfg == 2 && bond->getBondType() == Bond::BondType::SINGLE) {
+      bond->getBeginAtom()->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    mol.setProp(detail::_needsDetectBondStereo, 1);
     if (first < last && *first == ',') {
       ++first;
     }
