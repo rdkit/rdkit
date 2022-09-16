@@ -506,6 +506,8 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             });
   std::vector<std::pair<int, Atom *>> dummies;
 
+
+  std::list<Bond *> allNewBonds;
   for (const auto &match : matches) {
     const auto &mappingInfo = match.second;
 
@@ -587,6 +589,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             bnd->setBeginAtomIdx(newAt->getIdx());
           }
           newBonds.push_back(bnd);
+          allNewBonds.push_back(bnd);
 
           // we may be changing the bond ordering at the atom.
           // e.g. replacing the N in C[C@](Cl)(N)F gives an atom ordering of
@@ -634,21 +637,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       for (auto &newBond : newBonds) {
         newBond->setProp(replaceCoreDummyBond, 1);
         newMol->addBond(newBond, true);
-        auto beginAtom = newBond->getBeginAtom();
-        auto endAtom = newBond->getEndAtom();
-        CHECK_INVARIANT(
-            beginAtom->getDegree() == 1 || endAtom->getDegree() == 1,
-            "neither atom has degree one");
-        if (newMol->getNumConformers()) {
-          if (endAtom->getAtomicNum() == 0 && endAtom->getDegree() == 1) {
-            MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
-                                          beginAtom->getIdx());
-          } else {
-            MolOps::setTerminalAtomCoords(*newMol, beginAtom->getIdx(),
-                                          endAtom->getIdx());
-          }
-        }
-      }
+     }
     }
   }
 
@@ -705,7 +694,26 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   // the resulting molecule, but allow unhappiness:
   newMol->clearComputedProps(true);
   newMol->updatePropertyCache(false);
-
+  
+  // Update any terminal dummy atom coordinates after removing atoms not in the keeplist
+  for (auto &newBond : allNewBonds) {
+    auto beginAtom = newBond->getBeginAtom();
+    auto endAtom = newBond->getEndAtom();
+    CHECK_INVARIANT(beginAtom->getDegree() == 1 || endAtom->getDegree() == 1,
+                    "neither atom has degree one");
+    if (newMol->getNumConformers()) {
+      if (endAtom->getAtomicNum() == 0 && endAtom->getDegree() == 1) {
+        MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
+                                      beginAtom->getIdx());
+        auto point = newMol->getConformer(0).getAtomPos(endAtom->getIdx());
+      } else {
+        MolOps::setTerminalAtomCoords(*newMol, beginAtom->getIdx(),
+                                      endAtom->getIdx());
+        auto point = newMol->getConformer(0).getAtomPos(beginAtom->getIdx());
+      }
+    }
+  }
+  
   return static_cast<ROMol *>(newMol);
 }
 
