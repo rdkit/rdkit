@@ -485,7 +485,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   auto *newMol = new RWMol(mol);
   std::vector<Atom *> keepList;
-  std::map<int, Atom *> dummyAtomMap;
+  std::map<Atom *, int> dummyAtomMap;
 
   // go through the matches in query order, not target molecule
   //  order
@@ -578,7 +578,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           }
 
           newMol->addAtom(newAt, false, true);
-          dummyAtomMap[nbrIdx] = newAt;
+          dummyAtomMap[newAt] = nbrIdx;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
           if (bnd->getBeginAtomIdx() ==
@@ -700,10 +700,10 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   for (auto citer = mol.beginConformers(); citer != mol.endConformers();
        ++citer) {
     Conformer &newConf = newMol->getConformer((*citer)->getId());
-    for (std::map<int, Atom *>::const_iterator iter = dummyAtomMap.begin();
+    for (auto iter = dummyAtomMap.begin();
          iter != dummyAtomMap.end(); ++iter) {
-      newConf.setAtomPos(iter->second->getIdx(),
-                         (*citer)->getAtomPos(iter->first));
+      newConf.setAtomPos(iter->first->getIdx(),
+                         (*citer)->getAtomPos(iter->second));
     }
   }
   

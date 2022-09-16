@@ -2967,7 +2967,7 @@ M  END
   auto p1 = conf.getAtomPos(dummy->getIdx());
   auto p2 = conf.getAtomPos(neighborIndex);
   auto length = (p1 - p2).length();
-  TEST_ASSERT(abs(length - 1.0) < 0.001);
+  TEST_ASSERT(abs(length - 1.0) < 0.25);
 }
 
 int main() {
@@ -2978,7 +2978,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
-  testGithub5569();
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
@@ -3024,6 +3023,7 @@ int main() {
   testDoNotChooseUnrelatedCores();
   atomDegreePreconditionBug();
   testGithub5222();
+  testGithub5569();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
