@@ -2978,6 +2978,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
+  testGithub5569();
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
@@ -3023,7 +3024,6 @@ int main() {
   testDoNotChooseUnrelatedCores();
   atomDegreePreconditionBug();
   testGithub5222();
-  testGithub5569();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
