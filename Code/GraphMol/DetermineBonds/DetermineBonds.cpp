@@ -45,7 +45,7 @@ void connectivityVdW(RWMol &mol, double covFactor) {
     auto numAtoms = mol.getNumAtoms();
     double *distMat = MolOps::get3DDistanceMat(mol);
     
-    double rcov[numAtoms];
+    std::vector<double> rcov(numAtoms);
     for (unsigned int i = 0; i < numAtoms; i++) {
         rcov[i] = covFactor * PeriodicTable::getTable()->getRcovalent(mol.getAtomWithIdx(i)->getAtomicNum());
     }
