@@ -1745,7 +1745,6 @@ TEST_CASE("Github #4582 continued: double bonds and ring closures") {
 M  END)CTAB"_ctab;
     REQUIRE(mol);
     auto csmiles = MolToSmiles(*mol);
-    std::cerr << csmiles << std::endl;
     CHECK(csmiles == "C/N=C/C1=C/CCCCCC1");
   }
   SECTION("github #3967 part 1") {
@@ -1861,7 +1860,6 @@ M  END)CTAB"_ctab;
 M  END)CTAB"_ctab;
     REQUIRE(mol);
     auto csmiles = MolToSmiles(*mol);
-    std::cerr << csmiles << std::endl;
     // clang-format off
     CHECK(
         csmiles ==
@@ -2088,7 +2086,6 @@ TEST_CASE("bond configuration in CXSMILES") {
     CHECK(bondcfg == 1);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-    m->debugMol(std::cerr);
   }
 
   SECTION("writing examples") {
