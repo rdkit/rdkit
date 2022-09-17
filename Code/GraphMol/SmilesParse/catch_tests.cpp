@@ -2086,6 +2086,12 @@ TEST_CASE("bond configuration in CXSMILES") {
     CHECK(bondcfg == 1);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    m = "CC(O)Cl |(-3.9163,5.4767,;-3.9163,3.9367,;-2.5826,3.1667,;-5.25,3.1667,),wD:1.0|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 3);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
   }
 
   SECTION("writing examples") {
