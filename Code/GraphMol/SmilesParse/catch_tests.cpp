@@ -2030,7 +2030,8 @@ TEST_CASE("CXSMILES and 3d conformers") {
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
 }
-TEST_CASE("bond configuration in CXSMILES") {
+
+TEST_CASE("wiggly and wedged bonds in CXSMILES") {
   SECTION("basic reading/writing") {
     auto m = "CC(O)F |w:1.2|"_smiles;
     REQUIRE(m);
@@ -2184,4 +2185,25 @@ M  END
     CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
   }
+}
+
+TEST_CASE("ring bond stereochemistry in CXSMILES") {
+  SECTION("basic reading") {
+    std::vector<std::pair<std::string, Bond::BondStereo>> tests = {
+        {"C1CCCC/C=C/CCC1 |t:5|", Bond::BondStereo::STEREOTRANS},
+        {"C1CCCCC=CCCC1 |t:5|", Bond::BondStereo::STEREOTRANS},
+        {"C1CCCCC=CCCC1 |c:5|", Bond::BondStereo::STEREOCIS},
+        {"C1CCCCC=CCCC1 |ctu:5|", Bond::BondStereo::STEREOANY},
+        {"C1CCCC/C=C/CCC1 |ctu:5|", Bond::BondStereo::STEREOANY}};
+    for (const auto [smi, val] : tests) {
+      SmilesParserParams ps;
+      ps.useLegacyStereo = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      INFO(smi);
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(5)->getBondType() == Bond::BondType::DOUBLE);
+      CHECK(m->getBondWithIdx(5)->getStereo() == val);
+    }
+  }
+  SECTION("basic writing") {}
 }
