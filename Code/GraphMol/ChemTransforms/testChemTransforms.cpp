@@ -2164,6 +2164,21 @@ void testGithub4019() {
   }
 }
 
+void testRGroupMolzip() {
+    BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+    BOOST_LOG(rdInfoLog)
+        << "Testing molzip of RGroupDecompositions " << std::endl;
+    SmilesParserParams params;
+    params.sanitize = false;
+    
+    auto mol = SmilesToMol("Cc[*:1].c(cccc:[*:1]):[*:1]", params);
+    MolzipParams molzip_params;
+    molzip_params.label = MolzipLabel::RGroupDecomposition;
+    auto zipped = molzip(*mol, molzip_params);
+    auto smi = MolToSmiles(*zipped, true);
+    TEST_ASSERT(smi == "Cc1ccccc1");
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -2206,6 +2221,7 @@ int main() {
   testGithub1734();
   testGithub3206();
   testGithub4019();
+  testRGroupMolzip();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
   return (0);

@@ -635,6 +635,7 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
   unsigned int idx = NOLABEL;
   switch (p.label) {
     case MolzipLabel::AtomMapNumber:
+    case MolzipLabel::RGroupDecomposition: 
       if (a->getAtomicNum() == 0) {
         auto mapno = a->getAtomMapNum();
         return mapno ? mapno : NOLABEL;
@@ -656,16 +657,16 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
         idx = NOLABEL;
       }
       break;
-
+  
     case MolzipLabel::FragmentOnBonds:
-      // shouldn't ever get here
-      CHECK_INVARIANT(
-          0, "FragmentOnBonds is not an atom label, it is an atom index");
-      break;
-
+        // shouldn't ever get here
+        CHECK_INVARIANT(
+            0, "FragmentOnBonds is not an atom label, it is an atom index");
+        break;
+	
     case MolzipLabel::AtomProperty:
-      a->getPropIfPresent<unsigned int>(p.atomProperty, idx);
-      break;
+        a->getPropIfPresent<unsigned int>(p.atomProperty, idx);
+        break;
 
     default:
       CHECK_INVARIANT(0, "bogus MolZipLabel value in MolZip::get_label");
@@ -733,7 +734,7 @@ struct ZipBond {
     }
 
     // Fragment on bonds allows multiple links to the same atom
-    // i.e. C.[1C].[1C]
+    // i.e. '*N[2*].[1*]C.[1*]O' here the isotope is the index of the atom to link to
     //  otherwise throw an invariant error
     CHECK_INVARIANT(
         params.label == MolzipLabel::FragmentOnBonds ||
@@ -918,6 +919,77 @@ struct ZipBond {
     }
   }
 };
+
+bool fix_core_labels(RWMol &mol) {
+  if (!mol.getNumAtoms())
+    return false;
+    
+  INT_VECT frags;
+  auto nfrags = MolOps::getMolFrags(mol, frags);
+    
+  std::map<unsigned int, unsigned int> atommaps;
+  std::map<unsigned int, unsigned int> counts;
+  unsigned int next_atom_map=0;
+  for(size_t idx=0; idx < frags.size(); ++idx) {
+    if(frags[idx] != 0)
+        continue;  // not the core;
+    auto atom = mol.getAtomWithIdx(idx
+                                   );
+    unsigned int atommap = atom->getAtomMapNum();
+    if (atommap) {
+      if (atommap > next_atom_map)
+          next_atom_map = atommap;
+      if (atommaps.find(atommap) != atommaps.end())
+        // can't have dupes in the core
+        return false;
+        
+      atommaps[atommap] = atom->getIdx();
+      ++counts[atommap];
+    }
+  }
+  
+  if(!atommaps.size())
+    return true;
+  
+  ++next_atom_map;
+  std::vector<std::pair<unsigned int, unsigned int>> change_atommaps;
+    
+  for(size_t idx=0; idx < frags.size(); ++idx) {
+    if (frags[idx] == 0)
+        continue;
+    auto atom = mol.getAtomWithIdx(idx);
+    unsigned int atommap = atom->getAtomMapNum();
+    if(atommap) {
+        ++counts[atommap];
+        unsigned int count = counts[atommap];
+        if (count > 2) {
+            atom->setAtomMapNum(next_atom_map);
+            change_atommaps.push_back(std::make_pair(atommaps[atommap], next_atom_map));
+            ++next_atom_map;
+        }
+      }
+    }
+
+  for(auto &add_atom : change_atommaps) {
+    auto atom = mol.getAtomWithIdx(add_atom.first);
+    unsigned int bondIdx = 0;
+    int count = 0;
+    for (auto nbrIdx : boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
+        bondIdx = nbrIdx;
+        ++count;
+    }
+    if(count == 1) {
+      auto bond = mol.getBondWithIdx(bondIdx);
+      auto oatom = bond->getOtherAtom(atom);
+      auto xatom = new Atom(0);
+      unsigned int idx = mol.addAtom(xatom, true, true);
+      xatom->setAtomMapNum(add_atom.second);
+      mol.addBond(oatom->getIdx(), xatom->getIdx(), Bond::BondType::SINGLE);
+    }
+  }
+  return true;
+}
+
 }  // namespace
 
 std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
@@ -929,6 +1001,16 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
     newmol.reset(new RWMol(a));
   }
 
+  if(params.label == MolzipLabel::RGroupDecomposition) {
+      if (!fix_core_labels(*newmol)) {
+          BOOST_LOG(rdErrorLog)
+              << "Cannot prepare core labels from RGRoupDecomposition zipping"
+              << std::endl;
+          return std::unique_ptr<ROMol>();
+          // throw error
+      }
+  }
+  
   std::map<unsigned int, ZipBond> mappings;
   std::map<Atom *, std::vector<const ZipBond *>> mappings_by_atom;
   std::vector<Atom *> deletions;

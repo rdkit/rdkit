@@ -102,7 +102,7 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
 }  // namespace MolFragmenter
 
 // n.b. AtomProperty must resolve to an unsigned integer value on an atom property
-enum class MolzipLabel { AtomMapNumber, Isotope, FragmentOnBonds, AtomType, AtomProperty };
+enum class MolzipLabel { AtomMapNumber, Isotope, FragmentOnBonds, AtomType, AtomProperty, RGroupDecomposition };
 
 struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   MolzipLabel label = MolzipLabel::AtomMapNumber;
