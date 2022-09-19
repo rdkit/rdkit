@@ -2943,8 +2943,17 @@ M  END
   RGroupRows rows = decomp.getRGroupsAsRows();
   TEST_ASSERT(rows.size() == 1)
   
-  auto r1 = rows[0]["R1"];
-  std::cerr << MolToSmiles(*r1) << std::endl;
+  auto row = rows[0];
+  for(auto group = row.begin(); group != row.end(); group++) {
+      std::cerr << group->first << " : " << MolToSmiles(*group->second) << std::endl;
+  }
+  
+  std::string expected("Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]");
+  RGroupRows::const_iterator it = rows.begin();
+  CHECK_RGROUP(it, expected);
+
+  // auto r1 = rows[0]["R1"];
+  // std::cerr << MolToSmiles(*r1) << std::endl;
 }
 
 int main() {

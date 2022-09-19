@@ -462,9 +462,9 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       break;
     }
     if (nbrAtom) {
-      bool isUserDefinedLabel = usedLabelMap.isUserDefined(label);
+      bool isUserDefinedLabel = usedLabelMap.has(label) && usedLabelMap.isUserDefined(label);
       auto numExplicitHs = nbrAtom->getNumExplicitHs();
-      if (usedLabelMap.getIsUsed(label)) {
+      if (usedLabelMap.has(label) && usedLabelMap.getIsUsed(label)) {
         if (numExplicitHs) {
           nbrAtom->setNumExplicitHs(numExplicitHs - 1);
         }

@@ -147,6 +147,7 @@ class UsedLabelMap {
       d_map[rl.second] = std::make_pair(false, (rl.first > 0));
     }
   }
+  bool has(int label) const { return d_map.count(label > 0); }
   bool getIsUsed(int label) const { return d_map.at(label).first; }
   void setIsUsed(int label) { d_map[label].first = true; }
   bool isUserDefined(int label) const { return d_map.at(label).second; }

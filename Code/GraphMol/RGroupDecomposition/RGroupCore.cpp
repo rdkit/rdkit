@@ -67,7 +67,7 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     if (atom->getAtomicNum() == 0) {
       hasCoreDummies = true;
     }
-    if (isAtomWithMultipleNeighborsOrNotUserRLabel(*atom)) {
+    if (isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(*atom)) {
       auto molAtom = mol.getAtomWithIdx(p.second);
       replaceCoreAtom(*coreReplacedAtoms, *atom, *molAtom);
     }
@@ -163,7 +163,8 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
     auto templateAtom = coreReplacedAtoms.getAtomWithIdx(atomIdx);
     auto unlabelledCoreAtom = core->getAtomWithIdx(atomIdx);
     if (templateAtom->getAtomicNum() > 0 &&
-        isAtomWithMultipleNeighborsOrNotUserRLabel(*unlabelledCoreAtom)) {
+        isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(
+            *unlabelledCoreAtom)) {
       replaceCoreAtom(*finalCore, *coreAtom, *templateAtom);
     }
   }
@@ -221,7 +222,7 @@ void RCore::buildMatchingMol() {
     // keep track of the original core index in the matching molecule atom
     atom->setProp<int>(RLABEL_CORE_INDEX, atom->getIdx());
     if (atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
-        isUserRLabel(*atom)) {
+        isDummyRGroupAttachment(*atom)) {
       // remove terminal user R groups and save core atom index and mapping to
       // heavy neighbor
       atomsToRemove.push_back(atom);

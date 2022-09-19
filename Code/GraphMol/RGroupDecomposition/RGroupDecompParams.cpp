@@ -344,16 +344,18 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
         hasTerminalDummyNeighbor = true;
         break;
       }
+      ++nbrIdx;
     }
     if (!hasTerminalDummyNeighbor) {
       unlabelledCoreAtoms.push_back(atom);
-      atom->setProp<bool>(UNLABELLED_CORE_ATTACHMENT, true);
     }
   }
 
   for (const auto atom : unlabelledCoreAtoms) {
     auto atomIndex = atom->getIdx();
-    auto newIdx = core.addAtom(new Atom(0), false, true);
+    auto newAtom = new Atom(0);
+    newAtom->setProp<bool>(UNLABELLED_CORE_ATTACHMENT, true);
+    auto newIdx = core.addAtom(newAtom, false, true);
     core.addBond(atomIndex, newIdx, Bond::SINGLE);
     auto dummy = core.getAtomWithIdx(newIdx);
     dummy->updatePropertyCache();
