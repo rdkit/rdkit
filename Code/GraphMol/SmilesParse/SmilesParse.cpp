@@ -422,13 +422,13 @@ RWMol *SmilesToMol(const std::string &smiles,
       throw;
     }
     // figure out stereochemistry:
-    if (params.useLegacyStereo) {
-      bool cleanIt = true, force = true, flagPossible = true;
-      MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
-    } else {
-      bool cleanIt = true, flagPossible = false;
-      Chirality::findPotentialStereo(*res, cleanIt, flagPossible);
+    bool oVal = Chirality::getUseLegacyStereoPerception();
+    if (!params.useLegacyStereo) {
+      Chirality::setUseLegacyStereoPerception(false);
     }
+    bool cleanIt = true, force = true, flagPossible = true;
+    MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
+    Chirality::setUseLegacyStereoPerception(oVal);
   }
   if (res && res->hasProp(common_properties::_NeedsQueryScan)) {
     res->clearProp(common_properties::_NeedsQueryScan);

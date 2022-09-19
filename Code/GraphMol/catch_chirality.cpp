@@ -718,7 +718,6 @@ TEST_CASE("tricky recursive example from Dan Nealschneider", "[chirality]") {
     REQUIRE(mol);
     mol->updatePropertyCache();
     MolOps::setBondStereoFromDirections(*mol);
-    std::cerr << "------------ 1 -------------" << std::endl;
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 2);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -738,7 +737,6 @@ TEST_CASE("tricky recursive example from Dan Nealschneider", "[chirality]") {
     REQUIRE(mol);
     mol->updatePropertyCache();
     MolOps::setBondStereoFromDirections(*mol);
-    std::cerr << "------------ 2 -------------" << std::endl;
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 2);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -752,7 +750,6 @@ TEST_CASE("tricky recursive example from Dan Nealschneider", "[chirality]") {
   SECTION("unspecified") {
     auto mol = "CC=C1C[CH](O)C1"_smiles;
     REQUIRE(mol);
-    std::cerr << "------------ 3 -------------" << std::endl;
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 2);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -3022,6 +3019,43 @@ TEST_CASE(
       REQUIRE(mol);
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       CHECK(stereoInfo.empty());
+    }
+  }
+}
+
+TEST_CASE("double bond stereo with new chirality perception") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception;
+  Chirality::setUseLegacyStereoPerception(false);
+  SECTION("chain bonds") {
+    {
+      auto m = "C/C=C/C"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+    {
+      SmilesParserParams ps;
+      ps.useLegacyStereo = false;
+      std::unique_ptr<RWMol> m{SmilesToMol("C/C=C/C", ps)};
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+  }
+  SECTION("ring bonds") {
+    {
+      auto m = "C1/C=C/CCCCCCC1"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
+    {
+      SmilesParserParams ps;
+      ps.useLegacyStereo = false;
+      std::unique_ptr<RWMol> m{SmilesToMol("C1/C=C/CCCCCCC1", ps)};
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREOTRANS);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
     }
   }
 }

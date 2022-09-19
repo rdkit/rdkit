@@ -31,7 +31,8 @@
   `rdkit.rdBase.LogErrorMsg()`.
 
 ## Deprecated code (to be removed in a future release):
-
+- The `SmilesParserParams` option `useLegacyStereo` is deprecated. Please use
+  `SetLegacyStereoPerception()` instead.
 
 
 # Release_2022.03.1
