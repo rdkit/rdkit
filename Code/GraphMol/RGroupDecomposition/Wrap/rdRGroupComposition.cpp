@@ -306,6 +306,9 @@ struct rgroupdecomp_wrapper {
         .def_readwrite("removeAllHydrogenRGroupsAndLabels",
                        &RDKit::RGroupDecompositionParameters::
                            removeAllHydrogenRGroupsAndLabels)
+        .def_readwrite("allowMultipleRGroupsOnUnlabelled",
+                       &RDKit::RGroupDecompositionParameters::
+                           allowMultipleRGroupsOnUnlabelled)
         .def_readonly(
             "substructMatchParams",
             &RDKit::RGroupDecompositionParameters::substructmatchParams);

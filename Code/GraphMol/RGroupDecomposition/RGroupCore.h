@@ -65,8 +65,8 @@ struct RCore {
       const SubstructMatchParameters &sssParams) const;
 
   inline bool isTerminalRGroupWithUserLabel(const int idx) const {
-    return terminalRGroupAtomsWithUserLabels.find(idx) !=
-           terminalRGroupAtomsWithUserLabels.end();
+    return terminalRGroupAtomsWithUserLabel.find(idx) !=
+           terminalRGroupAtomsWithUserLabel.end();
   }
 
   /*
@@ -79,8 +79,10 @@ struct RCore {
       const MatchVectType &mapping) const;
 
  private:
-  // The set of atom indices in the core for terminal R groups with atom indices
-  std::set<int> terminalRGroupAtomsWithUserLabels;
+  // The set of atom indices in the core for terminal R groups with user label
+  std::set<int> terminalRGroupAtomsWithUserLabel;
+  // The set of atom indices in the core for terminal R groups with atom indices with or without user labels
+  std::set<int> terminalRGroupAtoms;
   // An atom index map of terminal R groups to their heavy atom neighbor
   std::map<int, int> terminalRGroupAtomToNeighbor;
 
@@ -91,6 +93,9 @@ struct RCore {
 
   // Build the matching molecule (core minus user R groups)
   void buildMatchingMol();
+  
+  // Add attachement points to unlabelled R Groups
+  void addDummyAtomsToUnlabelledCoreAtoms();
 };
 
 }  // namespace RDKit

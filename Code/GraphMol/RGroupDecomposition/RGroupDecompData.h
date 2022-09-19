@@ -57,7 +57,7 @@ struct RGroupDecompData {
   RGroupDecompData(const RWMol &inputCore,
                    RGroupDecompositionParameters inputParams)
       : params(std::move(inputParams)) {
-    cores[0] = RCore(inputCore);
+    initMol(0, inputCore);
     prepareCores();
   }
 
@@ -65,9 +65,19 @@ struct RGroupDecompData {
                    RGroupDecompositionParameters inputParams)
       : params(std::move(inputParams)) {
     for (size_t i = 0; i < inputCores.size(); ++i) {
-      cores[i] = RCore(*inputCores[i]);
+      initMol(i, *inputCores[i]);
     }
     prepareCores();
+  }
+
+  void initMol(size_t position, const ROMol &inputCore) {
+    if (params.allowMultipleRGroupsOnUnlabelled) {
+      RWMol core(inputCore);
+      params.addDummyAtomsToUnlabelledCoreAtoms(core);
+      cores[position] = RCore(core);
+    } else {
+      cores[position] = RCore(inputCore);
+    }
   }
 
   void prepareCores() {

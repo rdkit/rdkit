@@ -2879,6 +2879,74 @@ M  END
   }
 }
 
+void testMultipleGroupsToUnlabelledCoreAtom() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that Github5573 is fixed" << std::endl;
+  auto core = R"CTAB(
+  Mrv2008 09172211422D          
+
+  8  8  0  0  0  0            999 V2000
+   -7.2098   -3.1928    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.9243   -3.6053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.9243   -4.4304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.2098   -4.8429    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.4954   -4.4304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.4954   -3.6053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.7809   -4.8429    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.0664   -4.4304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+  
+  auto test = R"CTAB(
+  Mrv2008 09172211422D          
+
+ 10 10  0  0  0  0            999 V2000
+   -2.6437    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6438    0.1125    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1730    1.4791    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5085    2.1612    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2148    0.1125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5004    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  1  1  0  0  0  0
+  2  7  1  0  0  0  0
+  2  8  1  0  0  0  0
+  5  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  RGroupDecomposition decomp(*core, params);
+  decomp.add(*test);
+
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  
+  auto r1 = rows[0]["R1"];
+  std::cerr << MolToSmiles(*r1) << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -2886,6 +2954,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
+  testMultipleGroupsToUnlabelledCoreAtom();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();

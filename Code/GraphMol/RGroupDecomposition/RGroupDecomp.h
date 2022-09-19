@@ -91,6 +91,8 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool removeHydrogensPostMatch = true;
   //! allow labelled Rgroups of degree 2 or more
   bool allowNonTerminalRGroups = false;
+  // unlabelled core atoms can have multiple rgroups
+  bool allowMultipleRGroupsOnUnlabelled = false;
 
   double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
 
@@ -99,6 +101,9 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
 
   // Prepare the core for substructure searching and rgroup assignment
   bool prepareCore(RWMol &, const RWMol *alignCore);
+  
+  // Add r groups to unlabelled atoms if allowMultipleRGroupsOnUnlabelled is set
+  void addDummyAtomsToUnlabelledCoreAtoms(RWMol & core);
 
   // Parameters specific to GA
 

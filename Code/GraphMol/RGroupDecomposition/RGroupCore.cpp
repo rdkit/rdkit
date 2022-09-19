@@ -56,7 +56,7 @@ void RCore::findIndicesWithRLabel() {
 
 // Return a copy of core where dummy atoms are replaced by
 // the respective matching atom in mol, while other atoms have
-// their aromatic flag and formal charge copied from 
+// their aromatic flag and formal charge copied from
 // the respective matching atom in mol
 ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match) const {
@@ -99,15 +99,15 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
   std::cerr << "Dummy replaced core smarts  " << MolToSmarts(*coreReplacedAtoms)
             << std::endl;
 #endif
-  
+
   if (mol.getNumConformers() > 0) {
     // if the input structure has coordinates copy them to the core
     if (!coreReplacedAtoms->getNumConformers()) {
       coreReplacedAtoms->addConformer(
           new Conformer(coreReplacedAtoms->getNumAtoms()));
     }
-    auto & replacedConformer = coreReplacedAtoms->getConformer();
-    auto & molConformer = mol.getConformer();
+    auto &replacedConformer = coreReplacedAtoms->getConformer();
+    auto &molConformer = mol.getConformer();
 
     for (const auto &p : match) {
       auto molPoint = molConformer.getAtomPos(p.second);
@@ -117,7 +117,7 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     // otherwise, delete all core coordinates from the replaced core
     coreReplacedAtoms->clearConformers();
   }
-  
+
   return coreReplacedAtoms;
 }
 
@@ -178,15 +178,14 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
       finalCore->replaceBond(bondIdx, &newBond, true);
     }
   }
-  
+
   // update core coordinates to input structures
   if (coreReplacedAtoms.getNumConformers() && finalCore->getNumConformers()) {
-    auto & replacedConformer = coreReplacedAtoms.getConformer();
-    auto & finalConformer = finalCore->getConformer();
+    auto &replacedConformer = coreReplacedAtoms.getConformer();
+    auto &finalConformer = finalCore->getConformer();
 
     size_t atomIdx = 0;
-    for (; atomIdx < coreReplacedAtoms.getNumAtoms();
-         ++atomIdx) {
+    for (; atomIdx < coreReplacedAtoms.getNumAtoms(); ++atomIdx) {
       auto molPoint = replacedConformer.getAtomPos(atomIdx);
       finalConformer.setAtomPos(atomIdx, molPoint);
     }
@@ -196,8 +195,7 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
       const int neighborIdx = *finalCore->getAtomNeighbors(atom).first;
       MolOps::setTerminalAtomCoords(*finalCore, atomIdx, neighborIdx);
     }
-    
-  } 
+  }
 
   finalCore->updatePropertyCache(false);
   return finalCore;
@@ -216,7 +214,7 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
 // removed Also creates the data structures used in matching the R groups
 void RCore::buildMatchingMol() {
   matchingMol = boost::make_shared<RWMol>(*core);
-  terminalRGroupAtomsWithUserLabels.clear();
+  terminalRGroupAtomsWithUserLabel.clear();
   terminalRGroupAtomToNeighbor.clear();
   RWMol::ATOM_PTR_VECT atomsToRemove;
   for (auto atom : matchingMol->atoms()) {
@@ -227,7 +225,7 @@ void RCore::buildMatchingMol() {
       // remove terminal user R groups and save core atom index and mapping to
       // heavy neighbor
       atomsToRemove.push_back(atom);
-      terminalRGroupAtomsWithUserLabels.insert(atom->getIdx());
+      terminalRGroupAtomsWithUserLabel.insert(atom->getIdx());
       const int neighborIdx = *matchingMol->getAtomNeighbors(atom).first;
       terminalRGroupAtomToNeighbor.emplace(atom->getIdx(), neighborIdx);
     }
@@ -255,7 +253,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::map<int, int> matchMap(match.cbegin(), match.cend());
 
   std::vector<MatchVectType> allMappings;
-  if (terminalRGroupAtomsWithUserLabels.size() == 0) {
+  if (terminalRGroupAtomsWithUserLabel.size() == 0) {
     allMappings.push_back(match);
     return allMappings;
   }
@@ -276,7 +274,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // Loop over all the user terminal R groups and see if they can be included
   // in the match and, if so, record the target atoms that the R group can
   // be mapped to.
-  for (const auto dummyIdx : terminalRGroupAtomsWithUserLabels) {
+  for (const auto dummyIdx : terminalRGroupAtomsWithUserLabel) {
     // find the heavy atom in the core attached to the dummy
     const int neighborIdx = terminalRGroupAtomToNeighbor.find(dummyIdx)->second;
     const auto coreBond = core->getBondBetweenAtoms(dummyIdx, neighborIdx);

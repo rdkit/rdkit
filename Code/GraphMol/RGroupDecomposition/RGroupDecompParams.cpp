@@ -250,7 +250,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       }
 
       if (!found && (autoLabels & DummyAtomLabels) &&
-          atom->getAtomicNum() == 0 && atom->getDegree() == 1) {
+          atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
+          !atom->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
         const bool forceRelabellingWithDummies = true;
         int defaultDummyStartLabel = maxLabel;
         if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
@@ -302,6 +303,64 @@ void RGroupDecompositionParameters::checkNonTerminal(const Atom &atom) const {
          "in RGroupDecompositionParameters"
       << std::endl;
   throw ValueErrorException("Non terminal R group defined.");
+}
+
+void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
+    RWMol &core) {
+  if (!allowMultipleRGroupsOnUnlabelled) {
+    return;
+  }
+
+  // add a single rgroup substitution to any atom with free valance that doesn't
+  // have a terminal dummy neighbor
+
+  RWMol::ADJ_ITER nbrIdx, endNbrs;
+  std::vector<Atom *> unlabelledCoreAtoms{};
+  for (const auto atom : core.atoms()) {
+    if (atom->getAtomicNum() == 1) {
+      continue;
+    }
+    // TODO - I do this before preparCore which determines if this atom is
+    // really an rgroup or not.  Here I just assume it is
+    if (atom->getAtomicNum() == 0 && atom->getDegree() == 1) {
+      continue;
+    }
+
+    // should we use maximum valence instead?
+    // auto defaultValence = (double)
+    // PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum());
+    // atom->calcExplicitValence()
+    // maybe this will work best-
+    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() == 0) {
+      continue;
+    }
+
+    boost::tie(nbrIdx, endNbrs) = core.getAtomNeighbors(atom);
+    bool hasTerminalDummyNeighbor = false;
+
+    while (nbrIdx != endNbrs) {
+      const auto neighbor = core.getAtomWithIdx(*nbrIdx);
+      if (neighbor->getAtomicNum() == 0 && neighbor->getDegree() == 1) {
+        hasTerminalDummyNeighbor = true;
+        break;
+      }
+    }
+    if (!hasTerminalDummyNeighbor) {
+      unlabelledCoreAtoms.push_back(atom);
+      atom->setProp<bool>(UNLABELLED_CORE_ATTACHMENT, true);
+    }
+  }
+
+  for (const auto atom : unlabelledCoreAtoms) {
+    auto atomIndex = atom->getIdx();
+    auto newIdx = core.addAtom(new Atom(0), false, true);
+    core.addBond(atomIndex, newIdx, Bond::SINGLE);
+    auto dummy = core.getAtomWithIdx(newIdx);
+    dummy->updatePropertyCache();
+    if (core.getNumConformers() > 0) {
+      MolOps::setTerminalAtomCoords(core, newIdx, atomIndex);
+    }
+  }
 }
 
 }  // namespace RDKit
