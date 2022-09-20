@@ -1137,7 +1137,7 @@ bool isQueryH(const Atom *atom) {
 //   - By default all hydrogens are removed, however if
 //     merge_unmapped_only is true, any hydrogen participating
 //     in an atom map will be retained
-void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
+void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
   std::vector<unsigned int> atomsToRemove;
 
   boost::dynamic_bitset<> hatoms(mol.getNumAtoms());
@@ -1155,8 +1155,11 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
       while (begin != end) {
         if (hatoms[*begin]) {
           Atom &bgn = *mol.getAtomWithIdx(*begin);
-          if (!mergeUnmappedOnly ||
-              !bgn.hasProp(common_properties::molAtomMapNumber)) {
+          bool checkUnmapped =
+              !mergeUnmappedOnly ||
+              !bgn.hasProp(common_properties::molAtomMapNumber);
+          bool checkIsotope = mergeIsotopes || bgn.getIsotope() == 0;
+          if (checkUnmapped && checkIsotope) {
             atomsToRemove.push_back(rdcast<unsigned int>(*begin));
             ++numHsToRemove;
           }
@@ -1201,7 +1204,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           auto *rsq = dynamic_cast<RecursiveStructureQuery *>(atom->getQuery());
           CHECK_INVARIANT(rsq, "could not convert recursive structure query");
           RWMol *rqm = new RWMol(*rsq->getQueryMol());
-          mergeQueryHs(*rqm, mergeUnmappedOnly);
+          mergeQueryHs(*rqm, mergeUnmappedOnly, mergeIsotopes);
           rsq->setQueryMol(rqm);
         }
 
@@ -1215,7 +1218,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
             auto *rsq = dynamic_cast<RecursiveStructureQuery *>(qry.get());
             CHECK_INVARIANT(rsq, "could not convert recursive structure query");
             RWMol *rqm = new RWMol(*rsq->getQueryMol());
-            mergeQueryHs(*rqm, mergeUnmappedOnly);
+            mergeQueryHs(*rqm, mergeUnmappedOnly, mergeIsotopes);
             rsq->setQueryMol(rqm);
           } else if (qry->beginChildren() != qry->endChildren()) {
             childStack.insert(childStack.end(), qry->beginChildren(),
@@ -1232,9 +1235,9 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
   }
   mol.commitBatchEdit();
 };
-ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
+ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
   auto *res = new RWMol(mol);
-  mergeQueryHs(*res, mergeUnmappedOnly);
+  mergeQueryHs(*res, mergeUnmappedOnly, mergeIsotopes);
   return static_cast<ROMol *>(res);
 };
 
