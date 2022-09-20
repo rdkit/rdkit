@@ -36,7 +36,6 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <boost/dynamic_bitset.hpp>
@@ -44,7 +43,7 @@
 #include <utility>
 #include <vector>
 
-#define VERBOSE 1
+// #define VERBOSE 1
 
 namespace RDKit {
 
