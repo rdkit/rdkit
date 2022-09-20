@@ -1,5 +1,6 @@
+
 rdkit_library(DetermineBonds DetermineBonds.cpp
-              LINK_LIBRARIES GenericGroups GraphMol RDGeneral FileParsers EHTLib)
+              LINK_LIBRARIES EHTLib GraphMol RDGeneral)
 
 target_compile_definitions(DetermineBonds PRIVATE RDKIT_DETERMINEBONDS_BUILD)
 
