@@ -2186,24 +2186,3 @@ M  END
     CHECK(bondcfg == 2);
   }
 }
-
-TEST_CASE("ring bond stereochemistry in CXSMILES") {
-  SECTION("basic reading") {
-    std::vector<std::pair<std::string, Bond::BondStereo>> tests = {
-        {"C1CCCC/C=C/CCC1 |t:5|", Bond::BondStereo::STEREOTRANS},
-        {"C1CCCCC=CCCC1 |t:5|", Bond::BondStereo::STEREOTRANS},
-        {"C1CCCCC=CCCC1 |c:5|", Bond::BondStereo::STEREOCIS},
-        {"C1CCCCC=CCCC1 |ctu:5|", Bond::BondStereo::STEREOANY},
-        {"C1CCCC/C=C/CCC1 |ctu:5|", Bond::BondStereo::STEREOANY}};
-    for (const auto [smi, val] : tests) {
-      SmilesParserParams ps;
-      ps.useLegacyStereo = false;
-      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
-      INFO(smi);
-      REQUIRE(m);
-      CHECK(m->getBondWithIdx(5)->getBondType() == Bond::BondType::DOUBLE);
-      CHECK(m->getBondWithIdx(5)->getStereo() == val);
-    }
-  }
-  SECTION("basic writing") {}
-}
