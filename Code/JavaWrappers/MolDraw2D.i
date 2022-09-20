@@ -60,7 +60,7 @@
 %template(Float_Pair_Vect) std::vector< std::pair<float,float> >;
 %template(ROMol_Ptr_Vect) std::vector<RDKit::ROMol*>;
 %template(Point2D_Vect) std::vector<RDGeom::Point2D *>;
-%template(ColorPalette_Vect) std::vector< std::map< int, RDKit::DrawColour > >;
+%template(ColourPalette_Vect) std::vector< std::map< int, RDKit::DrawColour > >;
 
 %ignore RDKit::MolDraw2DSVG::MolDraw2DSVG(int,int,std::ostream &);
 %ignore RDKit::MolDraw2DUtils::contourAndDrawGaussians(
