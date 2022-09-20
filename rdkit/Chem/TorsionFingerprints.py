@@ -566,20 +566,18 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
   tfd = []
   if useWeights:
     weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)
-    for t1 in torsions1:
-      for t2 in torsions2:
-        tfd.append(CalculateTFD(t1, t2, weights=weights))
   else:
-    for t1 in torsions1:
-      for t2 in torsions2:
-        tfd.append(CalculateTFD(t1, t2))
+    weights = None
+  for t1 in torsions1:
+    for t2 in torsions2:
+      tfd.append(CalculateTFD(t1, t2, weights=weights))
   return tfd
 
 
 def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, maxDev='equal',
                            symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the TFD between two molecules.
-      Important: The two molecules must be instances of the same molecule
+      Important: The two molecules must be isomorphic
 
       Arguments:
       - mol1:     first instance of the molecule of interest
@@ -611,9 +609,9 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, 
   torsion2 = CalculateTorsionAngles(mol2, tl, tlr, confId=confId2)
   if useWeights:
     weights = CalculateTorsionWeights(mol1, ignoreColinearBonds=ignoreColinearBonds)
-    tfd = CalculateTFD(torsion1, torsion2, weights=weights)
   else:
-    tfd = CalculateTFD(torsion1, torsion2)
+    weights = None
+  tfd = CalculateTFD(torsion1, torsion2, weights=weights)
   return tfd
 
 
