@@ -646,12 +646,12 @@ def GetBestTFDBetweenMolecules(mol1, mol2, confId1=-1, useWeights=True, maxDev='
   torsion1 = CalculateTorsionAngles(mol1, tl, tlr, confId=confId1)
   if useWeights:
     weights = CalculateTorsionWeights(mol1, ignoreColinearBonds=ignoreColinearBonds)
+  else:
+    weights = None
   best = 1e8
   for conf in mol2.GetConformers():
     # second molecule
     torsion2 = CalculateTorsionAngles(mol2, tl, tlr, confId=conf.GetId())
-    if not useWeights:
-      weights = None
     tfd = CalculateTFD(torsion1, torsion2, weights=weights)
     best = min(best,tfd)
   return best
