@@ -1120,13 +1120,42 @@ bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
       return false;
     }
     if (!VALID_BNDIDX(bondIdx)) {
-      BOOST_LOG(rdWarningLog) << "bad bond index in c/t/ctu block" << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "bad bond index in c/t/ctu block " << bondIdx << std::endl;
       return false;
     }
     auto bond = mol.getBondWithIdx(bondIdx + startBondIdx);
 
-    // do some work
-
+    // the cis/trans/unknown marker is relative to the lowest numbered atom
+    // connected to the lowest numbered double bond atom and the
+    // highest-numbered atom connected to the highest-numbered double bond atom
+    // find those
+    auto begAtom = bond->getBeginAtom();
+    auto endAtom = bond->getEndAtom();
+    if (begAtom->getIdx() > endAtom->getIdx()) {
+      std::swap(begAtom, endAtom);
+    }
+    if (begAtom->getDegree() > 1 && endAtom->getDegree() > 1) {
+      unsigned int begControl = mol.getNumAtoms();
+      for (auto nbr : mol.atomNeighbors(begAtom)) {
+        if (nbr == endAtom) {
+          continue;
+        }
+        begControl = std::min(nbr->getIdx(), begControl);
+      }
+      unsigned int endControl = mol.getNumAtoms();
+      for (auto nbr : mol.atomNeighbors(endAtom)) {
+        if (nbr == begAtom) {
+          continue;
+        }
+        endControl = std::min(nbr->getIdx(), endControl);
+      }
+      if (begAtom != bond->getBeginAtom()) {
+        std::swap(begControl, endControl);
+      }
+      bond->setStereoAtoms(begControl, endControl);
+      bond->setStereo(stereo);
+    }
     if (first < last && *first == ',') {
       ++first;
     }
@@ -1399,15 +1428,15 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
       if (!parse_wedged_bonds(first, last, mol, startAtomIdx, startBondIdx)) {
         return false;
       }
-    } else if (*first == 'c' && (first + 1 >= last || first[1] == ':')) {
-      if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
-                                   Bond::BondStereo::STEREOCIS)) {
-        return false;
-      }
     } else if (*first == 'c' && first + 2 < last && first[1] == 't' &&
                first[2] == 'u') {
       if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
                                    Bond::BondStereo::STEREOANY)) {
+        return false;
+      }
+    } else if (*first == 'c') {
+      if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
+                                   Bond::BondStereo::STEREOCIS)) {
         return false;
       }
     } else if (*first == 't') {
