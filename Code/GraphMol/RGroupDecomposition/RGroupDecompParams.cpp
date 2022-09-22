@@ -32,7 +32,7 @@ bool hasLabel(const Atom *atom, unsigned int autoLabels) {
     atomHasLabel |= (atom->getAtomMapNum() > 0);
   }
   if (autoLabels & DummyAtomLabels) {
-    atomHasLabel |= (atom->getAtomicNum() == 0);
+    atomHasLabel |= (atom->getAtomicNum() == 0 && atom->getDegree() == 1);
   }
   // don't match negative rgroups as these are used by AtomIndexRLabels which
   // are set for the template core before the MCS and after the MCS for the
@@ -120,32 +120,6 @@ bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
   atom1HasLabel |= hasAttachedLabels(mol1, a1, autoLabels);
   atom2HasLabel |= hasAttachedLabels(mol2, a2, autoLabels);
   return !(atom1HasLabel != atom2HasLabel);
-}
-
-bool RGroupDecompositionParameters::checkCoreAtomForLabel(const Atom & atom) const {
-  unsigned int autoLabels = labels;
-
-  if (atom.getAtomicNum() == 0) {
-    if (autoLabels & MDLRGroupLabels) {
-      if (atom.hasProp(common_properties::_MolFileRLabel)) {
-        return true;
-      }
-    }
-
-    if ((autoLabels & IsotopeLabels) && atom.getIsotope() > 0) {
-      return true;
-    }
-
-    if ((autoLabels & AtomMapLabels) && atom.getAtomMapNum() > 0) {
-      return true;
-    }
-
-    if ((autoLabels & DummyAtomLabels) && atom.getDegree() == 1) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 bool RGroupDecompositionParameters::prepareCore(RWMol &core,
@@ -346,7 +320,7 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
       continue;
     }
     
-    if (checkCoreAtomForLabel(*atom)) {
+    if (hasLabel(atom, labels)) {
       continue;
     }
 

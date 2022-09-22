@@ -132,7 +132,6 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
  private:
   int indexOffset{-1};
   void checkNonTerminal(const Atom &atom) const;
-  bool checkCoreAtomForLabel(const Atom & atom) const;
 };
 
 typedef std::map<std::string, ROMOL_SPTR> RGroupRow;
