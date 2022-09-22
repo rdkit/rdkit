@@ -122,6 +122,32 @@ bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
   return !(atom1HasLabel != atom2HasLabel);
 }
 
+bool RGroupDecompositionParameters::checkCoreAtomForLabel(const Atom & atom) const {
+  unsigned int autoLabels = labels;
+
+  if (atom.getAtomicNum() == 0) {
+    if (autoLabels & MDLRGroupLabels) {
+      if (atom.hasProp(common_properties::_MolFileRLabel)) {
+        return true;
+      }
+    }
+
+    if ((autoLabels & IsotopeLabels) && atom.getIsotope() > 0) {
+      return true;
+    }
+
+    if ((autoLabels & AtomMapLabels) && atom.getAtomMapNum() > 0) {
+      return true;
+    }
+
+    if ((autoLabels & DummyAtomLabels) && atom.getDegree() == 1) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 bool RGroupDecompositionParameters::prepareCore(RWMol &core,
                                                 const RWMol *alignCore) {
   const bool relabel = labels & RelabelDuplicateLabels;
@@ -249,8 +275,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
         }
       }
 
-      if (!found && (autoLabels & DummyAtomLabels) &&
-          atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
+      if (!found && (autoLabels & DummyAtomLabels) && atom->getDegree() == 1 &&
           !atom->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
         const bool forceRelabellingWithDummies = true;
         int defaultDummyStartLabel = maxLabel;
@@ -320,9 +345,8 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     if (atom->getAtomicNum() == 1) {
       continue;
     }
-    // TODO - I do this before preparCore which determines if this atom is
-    // really an rgroup or not.  Here I just assume it is
-    if (atom->getAtomicNum() == 0 && atom->getDegree() == 1) {
+    
+    if (checkCoreAtomForLabel(*atom)) {
       continue;
     }
 
