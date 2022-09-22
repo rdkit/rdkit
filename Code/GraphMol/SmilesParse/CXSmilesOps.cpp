@@ -1099,6 +1099,42 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
 }
 
 template <typename Iterator>
+bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                             unsigned int startAtomIdx,
+                             unsigned int startBondIdx,
+                             Bond::BondStereo stereo) {
+  // these look like: C1CCCC/C=C/CCC1 |ctu:5|
+  // also c and t for cis or trans
+  //
+  while (first < last && *first != ':') {
+    ++first;
+  }
+  if (first >= last || *first != ':') {
+    return false;
+  }
+  ++first;
+
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int bondIdx;
+    if (!read_int(first, last, bondIdx)) {
+      return false;
+    }
+    if (!VALID_BNDIDX(bondIdx)) {
+      BOOST_LOG(rdWarningLog) << "bad bond index in c/t/ctu block" << std::endl;
+      return false;
+    }
+    auto bond = mol.getBondWithIdx(bondIdx + startBondIdx);
+
+    // do some work
+
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  return true;
+}
+
+template <typename Iterator>
 bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol,
                         unsigned int startAtomIdx) {
   if (first >= last || *first != 's' || first + 1 >= last ||
@@ -1361,6 +1397,22 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
     } else if (*first == 'w') {
       if (!parse_wedged_bonds(first, last, mol, startAtomIdx, startBondIdx)) {
+        return false;
+      }
+    } else if (*first == 'c' && (first + 1 >= last || first[1] == ':')) {
+      if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
+                                   Bond::BondStereo::STEREOCIS)) {
+        return false;
+      }
+    } else if (*first == 'c' && first + 2 < last && first[1] == 't' &&
+               first[2] == 'u') {
+      if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
+                                   Bond::BondStereo::STEREOANY)) {
+        return false;
+      }
+    } else if (*first == 't') {
+      if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
+                                   Bond::BondStereo::STEREOTRANS)) {
         return false;
       }
     } else {
