@@ -2029,6 +2029,15 @@ TEST_CASE("CXSMILES and 3d conformers") {
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
+  SECTION("detect 2d when z coords are all zero") {
+    auto m =
+        "CC(O)Cl |(-3.9163,5.4767,0;-3.9163,3.9367,0;-2.5826,3.1667,0;-5.25,3.1667,0)|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 1);
+    CHECK(!m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
 }
 
 TEST_CASE("wiggly and wedged bonds in CXSMILES") {
