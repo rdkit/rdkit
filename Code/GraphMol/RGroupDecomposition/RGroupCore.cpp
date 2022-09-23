@@ -327,7 +327,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // the size of the final mapping
   size_t size = allAvailableMappings[0].size() + match.size();
   // these indices are needed for the whole molecule match check functor
-  
+
   std::unique_ptr<RWMol> checkCore = nullptr;
   std::map<uint, uint> coreToCheck;
   std::string indexProp("__core_index__");
@@ -337,12 +337,13 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       atom->setProp(indexProp, atom->getIdx());
     }
     checkCore = std::make_unique<RWMol>(*core);
-    std::sort(missingDummies.begin(), missingDummies.end(), std::greater<int>());
-    for (int index: missingDummies) {
+    std::sort(missingDummies.begin(), missingDummies.end(),
+              std::greater<int>());
+    for (int index : missingDummies) {
       checkCore->removeAtom(index);
     }
     uint index = 0U;
-    for (const auto atom: checkCore->atoms()) {
+    for (const auto atom : checkCore->atoms()) {
       auto coreIndex = atom->getProp<int>(indexProp);
       coreToCheck[coreIndex] = index;
       ++index;
@@ -351,7 +352,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       atom->clearProp(indexProp);
     }
   }
-  
+
   auto queryIndices = new std::uint32_t[size];
   auto targetIndices = new std::uint32_t[size];
   for (size_t position = 0; position < match.size(); position++) {
@@ -360,7 +361,9 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     targetIndices[position] = pair.second;
   }
 
-  MolMatchFinalCheckFunctor molMatchFunctor(*core, target, sssParams);
+  auto queryMatchingMol = hasMissing ? checkCore.get() : core.get();
+  MolMatchFinalCheckFunctor molMatchFunctor(*queryMatchingMol, target,
+                                            sssParams);
   boost::dynamic_bitset<> targetBondsPresent(target.getNumBonds());
 
   // Filter all available mappings removing those that contain duplicates,
@@ -372,7 +375,9 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     targetBondsPresent.reset();
     for (size_t i = 0; i < dummyMapping.size(); i++) {
       size_t position = match.size() + i;
-      queryIndices[position] = dummiesWithMapping[i];
+      auto queryIndex = hasMissing ? coreToCheck[dummiesWithMapping[i]]
+                                   : dummiesWithMapping[i];
+      queryIndices[position] = queryIndex;
       targetIndices[position] = dummyMapping[i];
       const int neighborIdx =
           terminalRGroupAtomToNeighbor.find(dummiesWithMapping[i])->second;
