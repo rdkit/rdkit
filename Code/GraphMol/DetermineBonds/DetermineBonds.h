@@ -45,7 +45,7 @@ RDKIT_DETERMINEBONDS_EXPORT void determineConnectivity(RWMol &mol,
    sanitizeMol() when this is true \param useAtomMap (optional) if this is \c
    true, an atom map will be created for the molecule
  */
-RDKIT_DETERMINEBONDS_EXPORT void determineBondOrder(
+RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
     RWMol &mol, int charge = 0, bool allowChargedFragments = true,
     bool embedChiral = true, bool useAtomMap = false);
 

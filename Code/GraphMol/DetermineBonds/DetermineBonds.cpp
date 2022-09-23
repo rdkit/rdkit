@@ -300,7 +300,7 @@ void addBondOrdering(RWMol &mol, const std::vector<std::vector<unsigned int>> &o
     }
 }
 
-void determineBondOrder(RWMol &mol, int charge, bool allowChargedFragments,
+void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
                         bool embedChiral, bool useAtomMap) {
     auto numAtoms = mol.getNumAtoms();
     
@@ -406,7 +406,7 @@ void determineBonds(RWMol &mol, bool useHueckel, int charge, double covFactor,
                     bool allowChargedFragments, bool embedChiral, bool useAtomMap) {
     
     determineConnectivity(mol, useHueckel, charge, covFactor);
-    determineBondOrder(mol, charge, allowChargedFragments, embedChiral, useAtomMap);
+    determineBondOrders(mol, charge, allowChargedFragments, embedChiral, useAtomMap);
 } // determineBonds()
 
 } // namespace RDKit
