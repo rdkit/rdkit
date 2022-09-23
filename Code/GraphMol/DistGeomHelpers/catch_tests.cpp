@@ -13,6 +13,8 @@
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
@@ -411,5 +413,51 @@ M  END)CTAB"_ctab;
     ps.randomSeed = 0xf00d;
     auto cid = DGeomHelpers::EmbedMolecule(*thiaz, ps);
     CHECK(cid >= 0);
+  }
+  SECTION("bulk") {
+    // run a bunch of molecules with S-containing aromatic heterocycles
+    std::vector<std::string> smileses = {
+        "[O-][S+](c1ccccn1)c1cncs1",
+        "Cn1cccc1C(=O)Nc1nccs1",
+        "Cc1csc(=N)n1-c1ccc(Cl)cc1",
+        "Nc1ncc([S+]([O-])c2ncccn2)s1",
+        "CCCN1CCC=C(c2csc(N)n2)C1",
+        "CNc1ncc([S+]([O-])c2ccccn2)s1",
+        "Cn1nnnc1SCc1nc2ccccc2s1",
+        "CCCC(C(=O)Nc1nccs1)c1ccccc1",
+        "Cc1ccc(NC(=O)c2sc(Cl)nc2C)c(C)c1",
+        "CCc1nc(-c2ccc(Cl)cc2)sc1C(=O)OC",
+        "Cc1nc(CNS(=O)(=O)c2ccc(Cl)cc2)cs1",
+        "Cc1ccc2sc(C)[n+](CCC(C)S(=O)(=O)[O-])c2c1",
+        "Nc1nc2c(s1)-c1ccccc1Sc1ccccc1-2",
+        "COc1ccccc1OCC(=O)Nc1nc(C)c(C)s1",
+        "COc1ccc(NC(=O)Nc2sc(=S)n(C)c2C)cc1",
+        "C=CCNc1nc(-c2c[nH]c3c(CC)cccc23)cs1",
+    };
+    auto patt = "[s]1*c[!#6]c1"_smarts;
+    REQUIRE(patt);
+    for (const auto &smi : smileses) {
+      INFO(smi);
+      std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
+      REQUIRE(mol);
+      MolOps::addHs(*mol);
+      DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+      ps.randomSeed = 0xf00d;
+      auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+      REQUIRE(cid >= 0);
+      UFF::UFFOptimizeMolecule(*mol);
+
+      auto match = SubstructMatch(*mol, *patt);
+      REQUIRE(match.size() >= 1);
+
+      const auto conf = mol->getConformer();
+      std::map<int, RDGeom::Point3D> cmap;
+      for (auto &mi : match[0]) {
+        cmap[mi.second] = conf.getAtomPos(mi.second);
+      }
+      ps.coordMap = &cmap;
+      auto cid2 = DGeomHelpers::EmbedMolecule(*mol, ps);
+      CHECK(cid2 >= 0);
+    }
   }
 }
