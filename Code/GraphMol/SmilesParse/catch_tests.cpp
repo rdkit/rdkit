@@ -1317,6 +1317,16 @@ TEST_CASE("smilesBondOutputOrder") {
     m->getProp(common_properties::_smilesBondOutputOrder, order);
     CHECK(order == std::vector<unsigned int>{3, 4, 2, 1, 0});
   }
+  SECTION("Github #5585: incorrect ordering for ring closures") {
+    auto m = "OC1CCCN1"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "OC1CCCN1");
+    std::vector<unsigned int> order;
+    m->getProp(common_properties::_smilesAtomOutputOrder, order);
+    CHECK(order == std::vector<unsigned int>{0, 1, 2, 3, 4, 5});
+    m->getProp(common_properties::_smilesBondOutputOrder, order);
+    CHECK(order == std::vector<unsigned int>{0, 1, 2, 3, 4, 5});
+  }
 }
 
 TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
