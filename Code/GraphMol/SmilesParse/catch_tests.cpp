@@ -2194,4 +2194,13 @@ M  END
     CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
   }
+
+  SECTION("some invalid cxsmiles") {
+    std::vector<std::string> smileses = {"CC(O)Cl |wU:0.0,wU:1.0|",
+                                         "CC(O)Cl |wUP:1.0|", "CC(O)Cl |wU:1|"};
+    for (const auto smi : smileses) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), SmilesParseException);
+    }
+  }
 }

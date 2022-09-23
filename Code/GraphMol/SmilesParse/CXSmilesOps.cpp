@@ -1075,6 +1075,14 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     auto atom = mol.getAtomWithIdx(atomIdx + startAtomIdx);
     auto bond = mol.getBondWithIdx(bondIdx + startBondIdx);
 
+    // we can't set wedging twice:
+    if (bond->hasProp(common_properties::_MolFileBondCfg)) {
+      BOOST_LOG(rdWarningLog)
+          << "w block attempts to set wedging on bond " << bond->getIdx()
+          << " more than once." << std::endl;
+      return false;
+    }
+
     // first things first, the atom needs to be the start atom of the bond for
     // any of this to make sense
     if (atom->getIdx() != bond->getBeginAtomIdx()) {
