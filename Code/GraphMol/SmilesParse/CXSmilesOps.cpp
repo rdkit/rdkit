@@ -20,6 +20,7 @@
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/MolEnumerator/LinkNode.h>
+#include <GraphMol/Chirality.h>
 
 namespace SmilesParseOps {
 using namespace RDKit;
@@ -2004,6 +2005,93 @@ std::string get_bond_config_block(const ROMol &mol,
   return w + wU + wD;
 }
 
+std::string get_ringbond_cistrans_block(
+    const ROMol &mol, const std::vector<unsigned int> &atomOrder,
+    const std::vector<unsigned int> &bondOrder) {
+  if (!mol.getRingInfo()->isInitialized()) {
+    return "";
+  }
+
+  const auto rinfo = mol.getRingInfo();
+  std::string c = "", t = "", ctu = "";
+  for (unsigned int i = 0; i < bondOrder.size(); ++i) {
+    auto idx = bondOrder[i];
+    if (!rinfo->numBondRings(idx) ||
+        rinfo->minBondRingSize(idx) <
+            Chirality::minRingSizeForDoubleBondStereo) {
+      // we only do ring bonds of a minimum size
+      continue;
+    }
+    const auto bond = mol.getBondWithIdx(idx);
+    if (bond->getBondType() != Bond::BondType::DOUBLE &&
+        bond->getBondType() != Bond::BondType::AROMATIC) {
+      continue;
+    }
+    Bond::BondStereo bstereo = bond->getStereo();
+    if (bstereo != Bond::BondStereo::STEREOANY &&
+        bstereo != Bond::BondStereo::STEREOCIS &&
+        bstereo != Bond::BondStereo::STEREOTRANS) {
+      continue;
+    }
+
+    auto label = boost::str(boost::format("%d") % i);
+
+    if (bstereo == Bond::BondStereo::STEREOANY) {
+      // this one's easy because we don't care about the atom order.
+      if (ctu.empty()) {
+        ctu += "ctu:";
+      } else {
+        ctu += ",";
+      }
+      ctu += label;
+    } else {
+      Atom *begAtom = bond->getBeginAtom();
+      Atom *endAtom = bond->getEndAtom();
+      bool needSwap = false;
+      if (begAtom->getDegree() > 2) {
+        unsigned int o1 = atomOrder[bond->getStereoAtoms()[0]];
+        for (const auto nbr : mol.atomNeighbors(begAtom)) {
+          if (nbr == endAtom || nbr->getIdx() == bond->getStereoAtoms()[0]) {
+            continue;
+          }
+          if (atomOrder[nbr->getIdx() < o1]) {
+            // this neighbor came first, we need to swap:
+            needSwap = !needSwap;
+          }
+        }
+      }
+      if (endAtom->getDegree() > 2) {
+        unsigned int o1 = atomOrder[bond->getStereoAtoms()[1]];
+        for (const auto nbr : mol.atomNeighbors(endAtom)) {
+          if (nbr == begAtom || nbr->getIdx() == bond->getStereoAtoms()[1]) {
+            continue;
+          }
+          if (atomOrder[nbr->getIdx() < o1]) {
+            // this neighbor came first, we need to swap:
+            needSwap = !needSwap;
+          }
+        }
+      }
+      if (bstereo == Bond::BondStereo::STEREOCIS || needSwap) {
+        if (c.empty()) {
+          c += "c:";
+        } else {
+          c += ",";
+        }
+        c += label;
+      } else {
+        if (t.empty()) {
+          t += "t:";
+        } else {
+          t += ",";
+        }
+        t += label;
+      }
+    }
+  }
+  return c + t + ctu;
+}
+
 std::string get_linknodes_block(const ROMol &mol,
                                 const std::vector<unsigned int> &atomOrder) {
   bool strict = false;
@@ -2112,6 +2200,9 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     const auto cfgblock =
         get_bond_config_block(mol, atomOrder, bondOrder, includeCoords);
     appendToCXExtension(cfgblock, res);
+    const auto cistransblock =
+        get_ringbond_cistrans_block(mol, atomOrder, bondOrder);
+    appendToCXExtension(cistransblock, res);
   }
 
   if (flags & SmilesWrite::CXSmilesFields::CX_LINKNODES) {

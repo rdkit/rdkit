@@ -2205,7 +2205,8 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
         {"C1CCCCC=CCCC1 |c:5|", Bond::BondStereo::STEREOCIS},
         {"C1CCCC/C=C/CCC1 |c:5|", Bond::BondStereo::STEREOCIS},
         {"C1CCCCC=CCCC1 |ctu:5|", Bond::BondStereo::STEREOANY},
-        {"C1CCCC/C=C/CCC1 |ctu:5|", Bond::BondStereo::STEREOANY}};
+        {"C1CCCC/C=C/CCC1 |ctu:5|", Bond::BondStereo::STEREOANY},
+    };
     for (const auto [smi, val] : tests) {
       SmilesParserParams ps;
       ps.useLegacyStereo = false;
@@ -2225,5 +2226,41 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
     CHECK(m->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREOTRANS);
     CHECK(m->getBondWithIdx(9)->getBondType() == Bond::BondType::DOUBLE);
     CHECK(m->getBondWithIdx(9)->getStereo() == Bond::BondStereo::STEREOTRANS);
+  }
+  SECTION("skip small rings") {
+    std::vector<std::pair<std::string, Bond::BondStereo>> tests = {
+        {"C1=CCCCC1 |ctu:0|", Bond::BondStereo::STEREONONE},
+        {"C1=CCCCC1 |c:0|", Bond::BondStereo::STEREONONE}};
+    for (const auto [smi, val] : tests) {
+      SmilesParserParams ps;
+      ps.useLegacyStereo = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      INFO(smi);
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(0)->getBondType() == Bond::BondType::DOUBLE);
+      CHECK(m->getBondWithIdx(0)->getStereo() == val);
+    }
+  }
+  SECTION("basic writing") {
+    std::vector<std::pair<std::string, std::string>> tests = {
+        {"C1CCCC/C=C/CCC1 |t:5|", "C1=C/CCCCCCCC/1 |t:0|"},
+        {"C1CCCCC=CCCC1 |t:5|", "C1=CCCCCCCCC1 |t:0|"},
+        {"C1CCCCC=CCCC1 |c:5|", "C1=CCCCCCCCC1 |c:0|"},
+        {"C1CCCC/C=C/CCC1 |c:5|", "C1=C/CCCCCCCC/1 |c:0|"},
+        {"C1=CCCCCCCCC1 |ctu:0|", "C1=CCCCCCCCC1 |ctu:0|"},
+        {"C=CCCCCCCCC |ctu:0|",
+         "C=CCCCCCCCC"}  // we don't write the markers for non-ring bonds
+    };
+    for (const auto [smi, val] : tests) {
+      SmilesParserParams ps;
+      ps.useLegacyStereo = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      INFO(smi);
+      REQUIRE(m);
+      SmilesWriteParams ops;
+      auto cxsmi = MolToCXSmiles(
+          *m, ops, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+      CHECK(cxsmi == val);
+    }
   }
 }
