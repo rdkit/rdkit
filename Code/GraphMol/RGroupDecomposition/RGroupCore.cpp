@@ -215,7 +215,7 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
 // removed Also creates the data structures used in matching the R groups
 void RCore::buildMatchingMol() {
   matchingMol = boost::make_shared<RWMol>(*core);
-  terminalRGroupAtomsWithUserLabel.clear();
+  terminalRGroupDummyAtoms.clear();
   terminalRGroupAtomToNeighbor.clear();
   RWMol::ATOM_PTR_VECT atomsToRemove;
   for (auto atom : matchingMol->atoms()) {
@@ -226,7 +226,7 @@ void RCore::buildMatchingMol() {
       // remove terminal user R groups and save core atom index and mapping to
       // heavy neighbor
       atomsToRemove.push_back(atom);
-      terminalRGroupAtomsWithUserLabel.insert(atom->getIdx());
+      terminalRGroupDummyAtoms.insert(atom->getIdx());
       const int neighborIdx = *matchingMol->getAtomNeighbors(atom).first;
       terminalRGroupAtomToNeighbor.emplace(atom->getIdx(), neighborIdx);
     }
@@ -254,7 +254,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::map<int, int> matchMap(match.cbegin(), match.cend());
 
   std::vector<MatchVectType> allMappings;
-  if (terminalRGroupAtomsWithUserLabel.size() == 0) {
+  if (terminalRGroupDummyAtoms.size() == 0) {
     allMappings.push_back(match);
     return allMappings;
   }
@@ -267,7 +267,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       [](const std::pair<int, int> &mapping) { return mapping.second; });
 
   // User R groups that can possibly be incorporated into the match
-  std::vector<int> dummiesWithMapping;
+  std::vector<int> dummiesWithMapping, missingDummies;
   // For each of those user R groups in dummiesWithMapping list of possible
   // target atoms that the R group can map to
   std::vector<std::vector<int>> availableMappingsForDummy;
@@ -275,7 +275,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // Loop over all the user terminal R groups and see if they can be included
   // in the match and, if so, record the target atoms that the R group can
   // be mapped to.
-  for (const auto dummyIdx : terminalRGroupAtomsWithUserLabel) {
+  for (const auto dummyIdx : terminalRGroupDummyAtoms) {
     // find the heavy atom in the core attached to the dummy
     const int neighborIdx = terminalRGroupAtomToNeighbor.find(dummyIdx)->second;
     const auto coreBond = core->getBondBetweenAtoms(dummyIdx, neighborIdx);
@@ -306,7 +306,12 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       // However, the code below will fail at the molMatchFunctor check as all
       // query atoms are not matched to the target- the query would need to be
       // edited before passing to the molMatchFunctor.
-      return allMappings;
+      const auto dummy = core->getAtomWithIdx(dummyIdx);
+      if (dummy->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
+        missingDummies.push_back(dummyIdx);
+      } else {
+        return allMappings;
+      }
     }
   }
   if (availableMappingsForDummy.size() == 0) {
@@ -322,6 +327,31 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // the size of the final mapping
   size_t size = allAvailableMappings[0].size() + match.size();
   // these indices are needed for the whole molecule match check functor
+  
+  std::unique_ptr<RWMol> checkCore = nullptr;
+  std::map<uint, uint> coreToCheck;
+  std::string indexProp("__core_index__");
+  bool hasMissing = missingDummies.size() > 0;
+  if (hasMissing > 0) {
+    for (auto atom : core->atoms()) {
+      atom->setProp(indexProp, atom->getIdx());
+    }
+    checkCore = std::make_unique<RWMol>(*core);
+    std::sort(missingDummies.begin(), missingDummies.end(), std::greater<int>());
+    for (int index: missingDummies) {
+      checkCore->removeAtom(index);
+    }
+    uint index = 0U;
+    for (const auto atom: checkCore->atoms()) {
+      auto coreIndex = atom->getProp<int>(indexProp);
+      coreToCheck[coreIndex] = index;
+      ++index;
+    }
+    for (auto atom : core->atoms()) {
+      atom->clearProp(indexProp);
+    }
+  }
+  
   auto queryIndices = new std::uint32_t[size];
   auto targetIndices = new std::uint32_t[size];
   for (size_t position = 0; position < match.size(); position++) {

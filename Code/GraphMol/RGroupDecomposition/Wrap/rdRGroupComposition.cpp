@@ -244,7 +244,7 @@ struct rgroupdecomp_wrapper {
         "decomposition\n"
         "                        RGroupLabels.AtomMap - store rgroups as atom "
         "maps (for smiles)\n"
-        "                        RGroupLabels.Isotope - stroe rgroups on the "
+        "                        RGroupLabels.Isotope - store rgroups on the "
         "isotope\n"
         "                        RGroupLabels.MDLRGroup - store rgroups as mdl "
         "rgroups (for molblocks)\n"

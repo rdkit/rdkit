@@ -3052,6 +3052,21 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Test unlabelled core atom issues" << std::endl;
+  
+  
+  {
+    // Check that wildcards with no free valance match correctly
+    auto core = "[#6]-[#8]-[#6]-1-[#7]-[#6]-[#6]-[#6]-[*]-1"_smarts;
+    std::vector<std::string> smilesVec {"COC1NCC(C)(C)CO1"};
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    RGroupDecomposition decomp(*core, params);
+    for (auto smiles: smilesVec) {
+      auto mol = SmilesToMol(smiles);
+      auto result =  decomp.add(*mol);
+      std::cerr << "Result is " << result << std::endl ;
+    }
+  }
 }
 
 int main() {
@@ -3063,7 +3078,6 @@ int main() {
 
   testMultipleGroupsToUnlabelledCoreAtom();
   testMultipleGroupsToUnlabelledCoreAtomGithub5573();
-  testGithub5569();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();

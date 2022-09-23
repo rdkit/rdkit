@@ -65,8 +65,7 @@ struct RCore {
       const SubstructMatchParameters &sssParams) const;
 
   inline bool isTerminalRGroupWithUserLabel(const int idx) const {
-    return terminalRGroupAtomsWithUserLabel.find(idx) !=
-           terminalRGroupAtomsWithUserLabel.end();
+    return terminalRGroupDummyAtoms.find(idx) != terminalRGroupDummyAtoms.end();
   }
 
   /*
@@ -80,7 +79,7 @@ struct RCore {
 
  private:
   // The set of atom indices in the core for terminal R groups with user label
-  std::set<int> terminalRGroupAtomsWithUserLabel;
+  std::set<int> terminalRGroupDummyAtoms;
   // The set of atom indices in the core for terminal R groups with atom indices with or without user labels
   std::set<int> terminalRGroupAtoms;
   // An atom index map of terminal R groups to their heavy atom neighbor
