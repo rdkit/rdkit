@@ -375,3 +375,41 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
   }
 #endif
 }
+
+TEST_CASE("problems with bounds matrix smoothing and aromatic sulfur") {
+  SECTION("basics") {
+    auto core = R"CTAB(test structure - renumbered
+     RDKit          3D
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   48.6842  -14.8137    0.1450 C   0  0  0  0  0  0  0  0  0  0  0  0
+   48.0829  -13.5569    0.6868 C   0  0  0  0  0  0  0  0  0  0  0  0
+   48.0162  -12.0909   -0.1327 S   0  0  0  0  0  0  0  0  0  0  0  0
+   47.1565  -11.3203    1.0899 C   0  0  0  0  0  0  0  0  0  0  0  0
+   46.9350  -12.2470    2.1088 C   0  0  0  0  0  0  0  0  0  0  0  0
+   46.1942  -11.9293    3.3432 C   0  0  0  0  0  0  0  0  0  0  0  0
+   47.4440  -13.4879    1.8745 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  7  2  0
+  2  3  1  0
+  7  5  1  0
+  5  4  2  0
+  5  6  1  0
+  4  3  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(core);
+    auto thiaz = "Cc1scc(C)n1"_smiles;
+    REQUIRE(thiaz);
+    MolOps::addHs(*thiaz);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    const auto conf = core->getConformer();
+    std::map<int, RDGeom::Point3D> cmap;
+    for (unsigned i = 0; i < core->getNumAtoms(); ++i) {
+      cmap[i] = conf.getAtomPos(i);
+    }
+    ps.coordMap = &cmap;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*thiaz, ps);
+    CHECK(cid >= 0);
+  }
+}

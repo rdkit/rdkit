@@ -215,28 +215,45 @@ void set12Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   CHECK_INVARIANT(atomParams.size() == mol.getNumAtoms(),
                   "parameter vector size mismatch");
 
-  ROMol::ConstBondIterator bi;
-  unsigned int begId, endId;
-  double bl;
-  for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
-    begId = (*bi)->getBeginAtomIdx();
-    endId = (*bi)->getEndAtomIdx();
-    auto bOrder = (*bi)->getBondTypeAsDouble();
+  boost::dynamic_bitset<> squishAtoms(mol.getNumAtoms());
+  // find larger heteroatoms in conjugated 5 rings, because we need to add a bit
+  // of extra flex for them
+  for (const auto bond : mol.bonds()) {
+    if (bond->getIsConjugated() &&
+        (bond->getBeginAtom()->getAtomicNum() > 10 ||
+         bond->getEndAtom()->getAtomicNum() > 10) &&
+        mol.getRingInfo() && mol.getRingInfo()->isInitialized() &&
+        mol.getRingInfo()->isBondInRingOfSize(bond->getIdx(), 5)) {
+      squishAtoms.set(bond->getBeginAtomIdx());
+      squishAtoms.set(bond->getEndAtomIdx());
+    }
+  }
+
+  for (const auto bond : mol.bonds()) {
+    auto begId = bond->getBeginAtomIdx();
+    auto endId = bond->getEndAtomIdx();
+    auto bOrder = bond->getBondTypeAsDouble();
     if (atomParams[begId] && atomParams[endId] && bOrder > 0) {
-      bl = ForceFields::UFF::Utils::calcBondRestLength(
+      auto bl = ForceFields::UFF::Utils::calcBondRestLength(
           bOrder, atomParams[begId], atomParams[endId]);
-      accumData.bondLengths[(*bi)->getIdx()] = bl;
-      mmat->setUpperBound(begId, endId, bl + DIST12_DELTA);
-      mmat->setLowerBound(begId, endId, bl - DIST12_DELTA);
+
+      double extraSquish = 0.0;
+      if (squishAtoms[begId] || squishAtoms[endId]) {
+        extraSquish = 0.2;  // empirical
+      }
+
+      accumData.bondLengths[bond->getIdx()] = bl;
+      mmat->setUpperBound(begId, endId, bl + extraSquish + DIST12_DELTA);
+      mmat->setLowerBound(begId, endId, bl - extraSquish - DIST12_DELTA);
     } else {
-      // we don't have parameters for one of the atoms... so we're forced to use
-      // very crude bounds:
-      double vw1 = PeriodicTable::getTable()->getRvdw(
+      // we don't have parameters for one of the atoms... so we're forced to
+      // use very crude bounds:
+      auto vw1 = PeriodicTable::getTable()->getRvdw(
           mol.getAtomWithIdx(begId)->getAtomicNum());
-      double vw2 = PeriodicTable::getTable()->getRvdw(
+      auto vw2 = PeriodicTable::getTable()->getRvdw(
           mol.getAtomWithIdx(endId)->getAtomicNum());
-      double bl = (vw1 + vw2) / 2;
-      accumData.bondLengths[(*bi)->getIdx()] = bl;
+      auto bl = (vw1 + vw2) / 2;
+      accumData.bondLengths[bond->getIdx()] = bl;
       mmat->setUpperBound(begId, endId, 1.5 * bl);
       mmat->setLowerBound(begId, endId, .5 * bl);
     }
