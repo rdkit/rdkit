@@ -15,157 +15,161 @@
 using namespace RDKit;
 
 TEST_CASE("Determine Connectivity") {
-    SECTION("Van der Waals") {
-        unsigned int numTests = 39;
-        for (unsigned int i = 0; i < numTests; i++) {
-            std::string rdbase = getenv("RDBASE");
-            std::string fName = rdbase +
-            "/Code/GraphMol/DetermineBonds/test_data/connectivity/"
-            + "test" + std::to_string(i) + ".xyz";
-            std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
-            REQUIRE(mol);
-            std::string smiles = mol->getProp<std::string>("_FileComments");
-            std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
-            REQUIRE(orig);
+  SECTION("Van der Waals") {
+    unsigned int numTests = 39;
+    for (unsigned int i = 0; i < numTests; i++) {
+      std::string rdbase = getenv("RDBASE");
+      std::string fName =
+          rdbase + "/Code/GraphMol/DetermineBonds/test_data/connectivity/" +
+          "test" + std::to_string(i) + ".xyz";
+      std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+      REQUIRE(mol);
+      std::string smiles = mol->getProp<std::string>("_FileComments");
+      std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+      REQUIRE(orig);
 
-            determineConnectivity(*mol, false);
-            MolOps::removeAllHs(*mol, false);
+      determineConnectivity(*mol, false);
+      MolOps::removeAllHs(*mol, false);
 
-            auto numAtoms = mol->getNumAtoms();
+      auto numAtoms = mol->getNumAtoms();
 
-            REQUIRE(orig->getNumAtoms() == numAtoms);
-            for (unsigned int i = 0; i < numAtoms; i++) {
-                for (unsigned int j = i + 1; j < numAtoms; j++) {
-                    const auto origBond = orig->getBondBetweenAtoms(i, j);
-                    const auto molBond = mol->getBondBetweenAtoms(i, j);
-                    if (origBond) {
-                        CHECK(molBond);
-                    } else {
-                        CHECK(!molBond);
-                    }
-                }
-            }
+      REQUIRE(orig->getNumAtoms() == numAtoms);
+      for (unsigned int i = 0; i < numAtoms; i++) {
+        for (unsigned int j = i + 1; j < numAtoms; j++) {
+          const auto origBond = orig->getBondBetweenAtoms(i, j);
+          const auto molBond = mol->getBondBetweenAtoms(i, j);
+          if (origBond) {
+            CHECK(molBond);
+          } else {
+            CHECK(!molBond);
+          }
         }
-    } // SECTION
+      }
+    }
+  }  // SECTION
 
-    SECTION("Hueckel") {
-        unsigned int numTests = 39;
-        for (unsigned int i = 0; i < numTests; i++) {
-            std::string rdbase = getenv("RDBASE");
-            std::string fName = rdbase +
-            "/Code/GraphMol/DetermineBonds/test_data/connectivity/"
-            + "test" + std::to_string(i) + ".xyz";
-            std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
-            REQUIRE(mol);
-            std::string smiles = mol->getProp<std::string>("_FileComments");
-            std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
-            REQUIRE(orig);
-            int charge = MolOps::getFormalCharge(*orig);
+  SECTION("Hueckel") {
+    unsigned int numTests = 39;
+    for (unsigned int i = 0; i < numTests; i++) {
+      std::string rdbase = getenv("RDBASE");
+      std::string fName =
+          rdbase + "/Code/GraphMol/DetermineBonds/test_data/connectivity/" +
+          "test" + std::to_string(i) + ".xyz";
+      std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+      REQUIRE(mol);
+      std::string smiles = mol->getProp<std::string>("_FileComments");
+      std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+      REQUIRE(orig);
+      int charge = MolOps::getFormalCharge(*orig);
 
-            determineConnectivity(*mol, true, charge);
-            MolOps::removeAllHs(*mol, false);
+      determineConnectivity(*mol, true, charge);
+      MolOps::removeAllHs(*mol, false);
 
-            auto numAtoms = mol->getNumAtoms();
+      auto numAtoms = mol->getNumAtoms();
 
-            REQUIRE(orig->getNumAtoms() == numAtoms);
-            for (unsigned int i = 0; i < numAtoms; i++) {
-                for (unsigned int j = i + 1; j < numAtoms; j++) {
-                    const auto origBond = orig->getBondBetweenAtoms(i, j);
-                    const auto molBond = mol->getBondBetweenAtoms(i, j);
-                    if (origBond) {
-                        CHECK(molBond);
-                    } else {
-                        CHECK(!molBond);
-                    }
-                }
-            }
+      REQUIRE(orig->getNumAtoms() == numAtoms);
+      for (unsigned int i = 0; i < numAtoms; i++) {
+        for (unsigned int j = i + 1; j < numAtoms; j++) {
+          const auto origBond = orig->getBondBetweenAtoms(i, j);
+          const auto molBond = mol->getBondBetweenAtoms(i, j);
+          if (origBond) {
+            CHECK(molBond);
+          } else {
+            CHECK(!molBond);
+          }
         }
-    } // SECTION
-    
-    SECTION("DetermineBondOrdering using charged fragments") {
-        unsigned int numTests = 38;
-        for (unsigned int i = 0; i < numTests; i++) {
-            std::string rdbase = getenv("RDBASE");
-            std::string fName = rdbase +
-            "/Code/GraphMol/DetermineBonds/test_data/charged_fragments/"
-            + "test" + std::to_string(i) + ".xyz";
-            std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
-            REQUIRE(mol);
-            std::string smiles = mol->getProp<std::string>("_FileComments");
-            std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
-            REQUIRE(orig);
-            SmilesWriteParams params = {false, false, true, false, false, false, -1};
-            std::string canonSmiles = MolToSmiles(*orig, params);
-            int charge = MolOps::getFormalCharge(*orig);
+      }
+    }
+  }  // SECTION
 
-            determineBonds(*mol, false, charge);
-            MolOps::removeAllHs(*mol, false);
+  SECTION("DetermineBondOrdering using charged fragments") {
+    unsigned int numTests = 38;
+    for (unsigned int i = 0; i < numTests; i++) {
+      std::string rdbase = getenv("RDBASE");
+      std::string fName =
+          rdbase +
+          "/Code/GraphMol/DetermineBonds/test_data/charged_fragments/" +
+          "test" + std::to_string(i) + ".xyz";
+      std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+      REQUIRE(mol);
+      std::string smiles = mol->getProp<std::string>("_FileComments");
+      std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+      REQUIRE(orig);
+      SmilesWriteParams params = {false, false, true, false, false, false, -1};
+      std::string canonSmiles = MolToSmiles(*orig, params);
+      int charge = MolOps::getFormalCharge(*orig);
 
-            auto numAtoms = mol->getNumAtoms();
-            REQUIRE(orig->getNumAtoms() == numAtoms);
-            
-            ResonanceMolSupplier resMolSuppl(*mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS | ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
-            bool valid = false;
-            for (unsigned int i = 0; i < resMolSuppl.length(); i++) {
-                std::unique_ptr<ROMol> firstResMol(resMolSuppl[i]);
-                std::unique_ptr<RWMol> resMol(new RWMol(*firstResMol));
-                MolOps::setAromaticity(*resMol);
-                
-                std::string molSmiles = MolToSmiles(*resMol, params);
-                if (molSmiles == canonSmiles) {
-                    CHECK(true);
-                    valid = true;
-                    break;
-                }
-            }
-            if (!valid) {
-                CHECK(false);
-            }
+      determineBonds(*mol, false, charge);
+      MolOps::removeAllHs(*mol, false);
+
+      auto numAtoms = mol->getNumAtoms();
+      REQUIRE(orig->getNumAtoms() == numAtoms);
+
+      ResonanceMolSupplier resMolSuppl(
+          *mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
+                    ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
+      bool valid = false;
+      for (unsigned int i = 0; i < resMolSuppl.length(); i++) {
+        std::unique_ptr<ROMol> firstResMol(resMolSuppl[i]);
+        std::unique_ptr<RWMol> resMol(new RWMol(*firstResMol));
+        MolOps::setAromaticity(*resMol);
+
+        std::string molSmiles = MolToSmiles(*resMol, params);
+        if (molSmiles == canonSmiles) {
+          CHECK(true);
+          valid = true;
+          break;
         }
-    } // SECTION
-    
-    SECTION("DetermineBondOrdering using radicals") {
-        unsigned int numTests = 10;
-        for (unsigned int i = 0; i < numTests; i++) {
-            std::string rdbase = getenv("RDBASE");
-            std::string fName = rdbase +
-            "/Code/GraphMol/DetermineBonds/test_data/radicals/"
-            + "test" + std::to_string(i) + ".xyz";
-            std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
-            REQUIRE(mol);
-            std::string smiles = mol->getProp<std::string>("_FileComments");
-            std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
-            REQUIRE(orig);
-            SmilesWriteParams params = {false, false, true, false, false, false, -1};
-            std::string canonSmiles = MolToSmiles(*orig, params);
-            int charge = MolOps::getFormalCharge(*orig);
+      }
+      if (!valid) {
+        CHECK(false);
+      }
+    }
+  }  // SECTION
 
-            determineBonds(*mol, false, charge, 1.3, false);
-            MolOps::removeAllHs(*mol, false);
+  SECTION("DetermineBondOrdering using radicals") {
+    unsigned int numTests = 10;
+    for (unsigned int i = 0; i < numTests; i++) {
+      std::string rdbase = getenv("RDBASE");
+      std::string fName = rdbase +
+                          "/Code/GraphMol/DetermineBonds/test_data/radicals/" +
+                          "test" + std::to_string(i) + ".xyz";
+      std::unique_ptr<RWMol> mol(XYZFileToMol(fName));
+      REQUIRE(mol);
+      std::string smiles = mol->getProp<std::string>("_FileComments");
+      std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
+      REQUIRE(orig);
+      SmilesWriteParams params = {false, false, true, false, false, false, -1};
+      std::string canonSmiles = MolToSmiles(*orig, params);
+      int charge = MolOps::getFormalCharge(*orig);
 
-            auto numAtoms = mol->getNumAtoms();
-            REQUIRE(orig->getNumAtoms() == numAtoms);
-            
-            ResonanceMolSupplier resMolSuppl(*mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS | ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
-            bool valid = false;
-            for (unsigned int i = 0; i < resMolSuppl.length(); i++) {
-                std::unique_ptr<ROMol> firstResMol(resMolSuppl[i]);
-                std::unique_ptr<RWMol> resMol(new RWMol(*firstResMol));
-                MolOps::setAromaticity(*resMol);
-                
-                std::string molSmiles = MolToSmiles(*resMol, params);
-                if (molSmiles == canonSmiles) {
-                    CHECK(true);
-                    valid = true;
-                    break;
-                }
-            }
-            if (!valid) {
-                CHECK(false);
-            }
+      determineBonds(*mol, false, charge, 1.3, false);
+      MolOps::removeAllHs(*mol, false);
+
+      auto numAtoms = mol->getNumAtoms();
+      REQUIRE(orig->getNumAtoms() == numAtoms);
+
+      ResonanceMolSupplier resMolSuppl(
+          *mol, ResonanceMolSupplier::UNCONSTRAINED_CATIONS |
+                    ResonanceMolSupplier::UNCONSTRAINED_ANIONS);
+      bool valid = false;
+      for (unsigned int i = 0; i < resMolSuppl.length(); i++) {
+        std::unique_ptr<ROMol> firstResMol(resMolSuppl[i]);
+        std::unique_ptr<RWMol> resMol(new RWMol(*firstResMol));
+        MolOps::setAromaticity(*resMol);
+
+        std::string molSmiles = MolToSmiles(*resMol, params);
+        if (molSmiles == canonSmiles) {
+          CHECK(true);
+          valid = true;
+          break;
         }
-    } // SECTION
-    
+      }
+      if (!valid) {
+        CHECK(false);
+      }
+    }
+  }  // SECTION
 }
 
 //        std::string smiles[] = {
