@@ -3035,36 +3035,56 @@ M  END
   TEST_ASSERT(rows.size() == 1)
 
   auto row = rows[0];
-  for (auto group = row.begin(); group != row.end(); group++) {
-    std::cerr << group->first << " : " << MolToSmiles(*group->second)
-              << std::endl;
-  }
 
   std::string expected("Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]");
   RGroupRows::const_iterator it = rows.begin();
   CHECK_RGROUP(it, expected);
 
-  // auto r1 = rows[0]["R1"];
-  // std::cerr << MolToSmiles(*r1) << std::endl;
+}
+
+void testGithub4505() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test GitHub 4505 is fixed" << std::endl;
+  
+  auto core ="[*]1([*:1])cc([*:2])ccc1"_smarts;
+  auto mol = "n1cc(OC)ccc1"_smiles;
+
+  RGroupDecompositionParameters params;
+  RGroupDecomposition decomp(*core, params);
+
+  auto result = decomp.add(*mol);
+  std::cerr << "4505 result " << result << std::endl;
 }
 
 void testMultipleGroupsToUnlabelledCoreAtom() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Test unlabelled core atom issues" << std::endl;
-  
-  
+
   {
     // Check that wildcards with no free valance match correctly
     auto core = "[#6]-[#8]-[#6]-1-[#7]-[#6]-[#6]-[#6]-[*]-1"_smarts;
-    std::vector<std::string> smilesVec {"COC1NCC(C)(C)CO1"};
+    std::vector<std::string> smilesVec{"COC1CCC(C)(C)CN1", "COC1NCC(C)(C)CO1",
+                                       "COC1NCC(C)(C)CN1"};
     RGroupDecompositionParameters params;
     params.allowMultipleRGroupsOnUnlabelled = true;
     RGroupDecomposition decomp(*core, params);
-    for (auto smiles: smilesVec) {
+    for (auto smiles : smilesVec) {
       auto mol = SmilesToMol(smiles);
-      auto result =  decomp.add(*mol);
-      std::cerr << "Result is " << result << std::endl ;
+      auto result = decomp.add(*mol);
+      TEST_ASSERT(result > -1);
+    }
+    decomp.process();
+    auto rows = decomp.getRGroupsAsRows();
+    std::vector<std::string> expected{
+        "Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]",
+        "Core:COC1NCC([*:1])([*:2])CO1 R1:C[*:1] R2:C[*:2]",
+        "Core:COC1NCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]"};
+    TEST_ASSERT(rows.size() == expected.size());
+    int i = 0;
+    for (auto row = rows.cbegin(); row != rows.cend(); ++row, ++i) {
+      CHECK_RGROUP(row, expected[i]);
     }
   }
 }
@@ -3076,6 +3096,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
+  testGithub4505(); 
   testMultipleGroupsToUnlabelledCoreAtom();
   testMultipleGroupsToUnlabelledCoreAtomGithub5573();
 #if 1

@@ -307,9 +307,14 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       // query atoms are not matched to the target- the query would need to be
       // edited before passing to the molMatchFunctor.
       const auto dummy = core->getAtomWithIdx(dummyIdx);
+      const auto neighbor = core->getAtomWithIdx(neighborIdx);
       if (dummy->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
         missingDummies.push_back(dummyIdx);
-      } else {
+      } else if (isUserRLabel(*dummy) && (neighbor->getAtomicNum() == 0 || neighbor->hasQuery())) {
+        // https://github.com/rdkit/rdkit/issues/4505
+        missingDummies.push_back(dummyIdx);
+      }
+      else {
         return allMappings;
       }
     }
@@ -357,7 +362,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   auto targetIndices = new std::uint32_t[size];
   for (size_t position = 0; position < match.size(); position++) {
     const auto &pair = match[position];
-    queryIndices[position] = pair.first;
+    auto queryIndex = hasMissing ? coreToCheck[pair.first] : pair.first;
+    queryIndices[position] = queryIndex;
     targetIndices[position] = pair.second;
   }
 
