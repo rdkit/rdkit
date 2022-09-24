@@ -935,8 +935,12 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 //! Sets bond directions based on double bond stereochemistry
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
+//! removes directions from single bonds. Wiggly bonds will have the property
+//! _UnknownStereo set on them
+RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol);
 
-//! Assign CIS/TRANS bond stereochemistry tags based on neighboring directions
+//! Assign CIS/TRANS bond stereochemistry tags based on neighboring
+//! directions
 RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);
 
 //! Assign stereochemistry tags to atoms (i.e. R/S) and bonds (i.e. Z/E)

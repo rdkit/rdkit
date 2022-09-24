@@ -50,7 +50,9 @@ enum CXSmilesFields : uint32_t {
   CX_ENHANCEDSTEREO = 1 << 6,
   CX_SGROUPS = 1 << 7,
   CX_POLYMER = 1 << 8,
-  CX_ALL = 0x7fffffff
+  CX_BOND_CFG = 1 << 9,
+  CX_ALL = 0x7fffffff,
+  CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS
 };
 
 //! \brief returns the cxsmiles data for a molecule
