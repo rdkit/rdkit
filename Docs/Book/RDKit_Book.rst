@@ -255,10 +255,13 @@ The features which are parsed include:
 - radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
 - linknodes ``LN``
-- multi-center attachments ``m``
+- variable/multi-center attachments ``m``
 - ring bond count specifications ``rb``
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
+- wedged bonds (only when atomic coordinates are present): ``wU``, ``wD``
+- wiggly bonds ``w``
+- double bond stereo (only for ring bonds) ``c``, ``t``, ``ctu``
 - SGroup Data ``SgD``
 - polymer SGroups ``Sg``
 - SGroup Hierarchy ``SgH``
@@ -273,7 +276,10 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic properties
 - radicals
 - enhanced stereo
-- linknodes 
+- linknodes
+- wedged bonds (only when atomic coordinates are also written) 
+- wiggly bonds
+- double bond stereo (only for ring bonds)
 - SGroup Data
 - polymer SGroups
 - SGroup Hierarchy
