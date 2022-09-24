@@ -1,12 +1,10 @@
 """unit testing code for chirality and enantiomer stuff
 
 """
-from rdkit import RDConfig
 import unittest, os
 import sys
 import random
 from rdkit import Chem
-from rdkit.Chem import AllChem
 from rdkit.Chem import MolChiral
 
 class TestCase(unittest.TestCase):
