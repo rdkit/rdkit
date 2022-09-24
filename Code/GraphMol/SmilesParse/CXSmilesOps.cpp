@@ -436,7 +436,12 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
       ++first;
     }
   }
-  conf->set3D(is3D);
+  // make sure that the conformer really is 3D!
+  if (is3D && hasNonZeroZCoords(*conf)) {
+    conf->set3D(true);
+  } else {
+    conf->set3D(false);
+  }
   if (first >= last || *first != ')') {
     return false;
   }
@@ -1059,15 +1064,25 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     }
 
     if (!VALID_ATIDX(atomIdx)) {
-      BOOST_LOG(rdWarningLog) << "bad atom index in w block" << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "bad atom index, " << atomIdx << ", in w block" << std::endl;
       return false;
     }
     if (!VALID_BNDIDX(bondIdx)) {
-      BOOST_LOG(rdWarningLog) << "bad bond index in w block" << std::endl;
+      BOOST_LOG(rdWarningLog)
+          << "bad bond index, " << bondIdx << ", in w block" << std::endl;
       return false;
     }
     auto atom = mol.getAtomWithIdx(atomIdx + startAtomIdx);
     auto bond = mol.getBondWithIdx(bondIdx + startBondIdx);
+
+    // we can't set wedging twice:
+    if (bond->hasProp(common_properties::_MolFileBondCfg)) {
+      BOOST_LOG(rdWarningLog)
+          << "w block attempts to set wedging on bond " << bond->getIdx()
+          << " more than once." << std::endl;
+      return false;
+    }
 
     // first things first, the atom needs to be the start atom of the bond for
     // any of this to make sense

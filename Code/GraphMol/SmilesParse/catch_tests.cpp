@@ -2039,6 +2039,15 @@ TEST_CASE("CXSMILES and 3d conformers") {
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_UNSPECIFIED);
   }
+  SECTION("detect 2d when z coords are all zero") {
+    auto m =
+        "CC(O)Cl |(-3.9163,5.4767,0;-3.9163,3.9367,0;-2.5826,3.1667,0;-5.25,3.1667,0)|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getNumConformers() == 1);
+    CHECK(!m->getConformer().is3D());
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
 }
 
 TEST_CASE("wiggly and wedged bonds in CXSMILES") {
@@ -2194,6 +2203,15 @@ M  END
     unsigned int bondcfg;
     CHECK(m->getBondWithIdx(2)->getPropIfPresent("_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
+  }
+
+  SECTION("some invalid cxsmiles") {
+    std::vector<std::string> smileses = {"CC(O)Cl |wU:0.0,wU:1.0|",
+                                         "CC(O)Cl |wUP:1.0|", "CC(O)Cl |wU:1|"};
+    for (const auto smi : smileses) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), SmilesParseException);
+    }
   }
 }
 

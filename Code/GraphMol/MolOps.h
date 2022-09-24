@@ -301,11 +301,13 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeAllHs(const ROMol &mol,
 
 */
 RDKIT_GRAPHMOL_EXPORT ROMol *mergeQueryHs(const ROMol &mol,
-                                          bool mergeUnmappedOnly = false);
+                                          bool mergeUnmappedOnly = false,
+                                          bool mergeIsotopes = false);
 //! \overload
 /// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
-                                        bool mergeUnmappedOnly = false);
+                                        bool mergeUnmappedOnly = false,
+                                        bool mergeIsotopes = false);
 
 typedef enum {
   ADJUST_IGNORENONE = 0x0,

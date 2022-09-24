@@ -410,7 +410,7 @@ RWMol *SmilesToMol(const std::string &smiles,
   handleCXPartAndName(res, params, cxPart, name);
   if (res && (params.sanitize || params.removeHs)) {
     if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
-      // we encountered either a wedged bond in the CXSMILES,
+      // we encountered a wedged bond in the CXSMILES,
       // these need to be handled the same way they were in mol files
       res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
       if (res->getNumConformers()) {
