@@ -595,9 +595,7 @@ void DrawMol::extractBrackets() {
     }
 
     std::vector<std::pair<Point2D, Point2D>> sgBondSegments;
-    int numBrackets = 0;
     for (auto bndIdx : sg.getBonds()) {
-      ++numBrackets;
       const auto bnd = drawMol_->getBondWithIdx(bndIdx);
       if (std::find(sg.getAtoms().begin(), sg.getAtoms().end(),
                     bnd->getBeginAtomIdx()) != sg.getAtoms().end()) {
@@ -610,9 +608,11 @@ void DrawMol::extractBrackets() {
             atCds_[bnd->getEndAtomIdx()], atCds_[bnd->getBeginAtomIdx()]));
       }
     }
+    int numBrackets = 0;
     for (const auto &brk : sg.getBrackets()) {
       // the atom coords have been inverted in y, so the bracket coords
       // must be, too.
+      ++numBrackets;
       Point2D p1{brk[0].x, -brk[0].y};
       Point2D p2{brk[1].x, -brk[1].y};
       trans.TransformPoint(p1);
@@ -1659,11 +1659,20 @@ void DrawMol::makeDoubleBondLines(
     // in, for example, an aldehyde, such as in catch_tests.cpp's
     // testGithub_5269_2.svg, might be asymmetrically shorter, so we don't
     // want to change colour at halfway
-    if (bond->getEndAtom()->getDegree() == 1 && !(cols.first == cols.second) &&
-        fabs((l1s - l1f).lengthSq() - (l2s - l2f).lengthSq()) > 0.01) {
-      double midlen = (l1s - l1f).length() / 2.0;
-      Point2D lineDir = l2s.directionVector(l2f);
-      Point2D notMid = l2s + lineDir * midlen;
+    auto l1 = (l1s - l1f).lengthSq();
+    auto l2 = (l2s - l2f).lengthSq();
+    if ((bond->getBeginAtom()->getDegree() == 1 ||
+         bond->getEndAtom()->getDegree() == 1) &&
+        cols.first != cols.second && fabs(l1 - l2) > 0.01) {
+      double midlen = sqrt(l1) / 2.0;
+      Point2D notMid;
+      if (bond->getBeginAtom()->getDegree() == 1) {
+        Point2D lineDir = l2s.directionVector(l2f);
+        notMid = l2s + lineDir * midlen;
+      } else {
+        Point2D lineDir = l2f.directionVector(l2s);
+        notMid = l2f + lineDir * midlen;
+      }
       newBondLine(l2s, notMid, cols.first, cols.first, at1Idx, at2Idx, bondIdx,
                   noDash);
       newBondLine(notMid, l2f, cols.second, cols.second, at1Idx, at2Idx,
@@ -2840,6 +2849,11 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     l2s = at1_cds + perp * offset;
     l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                         offset, true);
+    // if at1 has a label, need to move it so it's centred in between the
+    // two lines (Github 5511).
+    if (atomLabels_[at1->getIdx()]) {
+      atomLabels_[at1->getIdx()]->cds_ += perp * offset * 0.5;
+    }
   }
   if (swapped) {
     std::swap(l1s, l1f);
@@ -2896,8 +2910,6 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
-    auto bond =
-        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
     Point2D const &at1_cds = atCds_[atom->getIdx()];
     Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
     otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
@@ -3107,7 +3119,7 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     // vector.
     auto bvec = end1Cds.directionVector(end2Cds);
     std::vector<std::pair<int, double>> angs;
-    for (auto i = 0; i < end1HighNbrs.size(); ++i) {
+    for (unsigned i = 0; i < end1HighNbrs.size(); ++i) {
       auto ovec = end1Cds.directionVector(atCds_[end1HighNbrs[i]->getIdx()]);
       auto ang = bvec.signedAngleTo(ovec);
       angs.push_back(std::make_pair(i, ang));
