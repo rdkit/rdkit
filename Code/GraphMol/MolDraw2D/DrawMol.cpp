@@ -2054,12 +2054,18 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           makeHighlightEnd(nbr, atom, lineWidth, nbrHighNbrs, end2points);
           std::vector<Point2D> points(end1points);
           points.insert(points.end(), end2points.begin(), end2points.end());
-          // the end points are sometimes swapped round, such that a
+          // The end points are sometimes swapped round, such that a
           // butterfly-type shape is produced rather than a rectangle
           // (see Github5592).  Make a convex hull, using a simplified
           // form of Graham's scan algorithm - all the points
-          // are in the convex hull so it's easier.
-          // sort so the lowest y point is first, with lowest x as tie-breaker
+          // are in the convex hull so it's easier.  Grahsm's scan normally
+	  // has a second step that removes inner points, and this takes
+	  // care of any problems with floating point errors in the
+	  // comparisons below.  The shapes here are at most hexagons with
+	  // sharp angles so such issues have been deemed unlikely to
+	  // occur in practice.
+          // Sort so the lowest y point is first, with lowest x as
+	  // tie-breaker.
           std::sort(points.begin(), points.end(),
                     [](Point2D &p1, Point2D &p2) -> bool {
                       if (p1.y < p2.y) {
@@ -2069,7 +2075,7 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
                       }
                       return false;
                     });
-          // now sort points 1 -> end so they are all anti-clockwise
+          // Now sort points 1 -> end so they are all anti-clockwise
           // around points[0] by checking cross products.
           std::sort(points.begin() + 1, points.end(),
                     [&](Point2D &p1, Point2D &p2) -> bool {
