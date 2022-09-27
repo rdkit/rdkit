@@ -873,10 +873,14 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
     thetaBin.thetaValues.push_back(theta);
   }
   CHECK_INVARIANT(!thetaBins.empty(), "");
-  std::for_each(thetaBins.begin(), thetaBins.end(), [](auto &it) {
+  double d_thetaSmallest = std::numeric_limits<double>::max();
+  for (auto &it : thetaBins) {
     auto &thetaBin = it.second;
     thetaBin.d_thetaAvg /= static_cast<double>(thetaBin.thetaValues.size());
-  });
+    if (fabs(thetaBin.d_thetaAvg) < fabs(d_thetaSmallest)) {
+      d_thetaSmallest = thetaBin.d_thetaAvg;
+    }
+  }
   const auto &minRotationBin =
       std::max_element(
           thetaBins.begin(), thetaBins.end(),
@@ -903,11 +907,15 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
     if (count60vs30[0] > count60vs30[1]) {
       d_thetaMin -= DepictorLocal::copySign(30.0, d_thetaMin, ALMOST_ZERO);
     }
+  } else if (fabs(d_thetaSmallest) < ALMOST_ZERO || (fabs(d_thetaSmallest) < fabs(d_thetaMin) && fabs(d_thetaMin) > 7.5)) {
+    d_thetaMin = d_thetaSmallest;
   }
-  d_thetaMin *= DEG2RAD;
-  RDGeom::Transform3D trans;
-  trans.SetRotation(d_thetaMin, RDGeom::Z_Axis);
-  MolTransforms::transformConformer(conf, trans);
+  if (fabs(d_thetaMin) > ALMOST_ZERO) {
+    d_thetaMin *= DEG2RAD;
+    RDGeom::Transform3D trans;
+    trans.SetRotation(d_thetaMin, RDGeom::Z_Axis);
+    MolTransforms::transformConformer(conf, trans);
+  }
 }
 
 double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
