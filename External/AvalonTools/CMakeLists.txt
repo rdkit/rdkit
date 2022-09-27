@@ -43,7 +43,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
 endif()
 if (MSVC)
   add_definitions("/D_CRT_SECURE_NO_WARNINGS")
-  add_compile_options(/wd4716 /wd4477 /wd4018 /wd4996 /wd4101 /nologo)
+  add_compile_options(/wd4018 /wd4101 /wd4146 /wd4334 /wd4477 /wd4715 /wd4716 /wd4996 /nologo)
 endif(MSVC)
 
 set(avalon_clib_srcs ${AVALON_COMMON_PATH}/layout.c
