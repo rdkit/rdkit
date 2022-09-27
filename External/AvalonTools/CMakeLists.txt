@@ -35,9 +35,15 @@ if(needDownload)
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  add_compile_options(-Wno-format-security -Wformat=0 -Wstringop-overflow=0 -Wformat-overflow=0 -Wno-unused-result )
+endif()
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  add_compile_options(-Wno-absolute-value -Wno-return-type -Wno-tautological-overlap-compare)
+endif()
 if (MSVC)
   add_definitions("/D_CRT_SECURE_NO_WARNINGS")
-  add_compile_options(/wd4224 /wd4101 /wd4018 /wd4996 /wd4244 /wd4305 /wd4013 /wd4146 /wd4334 /wd4715 /wd4715 /nologo)
+  add_compile_options(/wd4716 /wd4477 /nologo)
 endif(MSVC)
 
 set(avalon_clib_srcs ${AVALON_COMMON_PATH}/layout.c
