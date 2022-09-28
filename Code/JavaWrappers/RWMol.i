@@ -41,6 +41,8 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 %}
 
+%template(RWMol_Vect) std::vector< boost::shared_ptr<RDKit::RWMol> >;
+
 // ignore the methods that allow the molecule to take ownership of atoms/Bonds
 // (instead of copying them). This just leads to memory problems with Java
 %ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel,bool takeOwnership);
@@ -126,6 +128,27 @@ static RDKit::RWMOL_SPTR MolFromHELM(std::string text,
   RDKit::RWMol *mol=0;
   mol=RDKit::HELMToMol(text,sanitize);
   return RDKit::RWMOL_SPTR(mol);
+}
+
+static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXML(std::string text,
+						     bool sanitize=true){
+  auto res = RDKit::CDXMLToMols(text, sanitize);
+  std::vector<RDKit::RWMOL_SPTR> mols;
+  for(auto &mol: res) {
+    mols.emplace_back(mol.release());
+  }
+  return mols;
+
+}
+
+static std::vector<RDKit::RWMOL_SPTR> MolsFromCDXMLFile(std::string text,
+							 bool sanitize=true){
+  auto res = RDKit::CDXMLFileToMols(text, sanitize);
+  std::vector<RDKit::RWMOL_SPTR> mols;
+  for(auto &mol: res) {
+    mols.emplace_back(mol.release());
+  }
+  return mols;
 }
 
 

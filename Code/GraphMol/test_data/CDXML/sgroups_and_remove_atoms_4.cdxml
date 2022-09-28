@@ -2,8 +2,8 @@
 <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
 <CDXML
  CreationProgram="ChemDraw 21.0.0.28"
- Name="chain3.cdxml"
- BoundingBox="-26.23 -15.58 52.21 3.89"
+ Name="sgroups_and_remove_atoms_4.cdxml"
+ BoundingBox="215.57 314.93 324.43 405.07"
  WindowPosition="0 0"
  WindowSize="0 0"
  FractionalWidths="yes"
@@ -19,7 +19,6 @@
  ShowTerminalCarbonLabels="no"
  ShowNonTerminalCarbonLabels="no"
  HideImplicitHydrogens="no"
- Magnification="120"
  LabelFont="21"
  LabelSize="10"
  LabelFace="96"
@@ -82,7 +81,7 @@
 <font id="20" charset="x-mac-roman" name="Helvetica"/>
 <font id="21" charset="x-mac-roman" name="Helvetica"/>
 </fonttable><page
- id="13"
+ id="20"
  BoundingBox="0 0 540 720"
  HeaderPosition="36"
  FooterPosition="36"
@@ -90,52 +89,118 @@
  HeightPages="1"
  WidthPages="1"
 ><fragment
- id="11"
- BoundingBox="-26.23 -15.58 52.21 3.89"
+ id="1"
+ BoundingBox="215.57 314.93 324.43 405.07"
  Z="1"
 ><n
- id="1"
- p="-25.98 -15"
+ id="2"
+ p="215.82 351.43"
  Z="2"
  AS="N"
 /><n
- id="2"
- p="0 0"
+ id="3"
+ p="241.80 336.43"
  Z="3"
- Element="8"
+ AS="N"
+/><n
+ id="4"
+ p="267.78 351.43"
+ Z="4"
+ Element="7"
  NumHydrogens="0"
  NeedsClean="yes"
  AS="N"
 ><t
- p="-3.89 3.68"
- BoundingBox="-3.50 -3.68 3.49 3.89"
+ p="264.17 355.02"
+ BoundingBox="264.93 347.85 270.62 355.02"
  LabelJustification="Left"
-><s font="21" size="10" color="0" face="96">O</s></t></n><n
- id="3"
- p="25.98 -15"
- Z="4"
- AS="N"
-/><n
- id="4"
- p="51.96 0"
+><s font="21" size="10" color="0" face="96">N</s></t></n><n
+ id="5"
+ p="293.76 336.43"
  Z="5"
  AS="N"
-/><b
- id="5"
- Z="6"
- B="1"
- E="2"
- BS="N"
-/><b
+/><n
  id="6"
+ p="324.18 354"
+ Z="6"
+ AS="N"
+/><n
+ id="7"
+ p="267.78 381.43"
  Z="7"
+ AS="N"
+/><b
+ id="8"
+ Z="8"
  B="2"
  E="3"
  BS="N"
 /><b
- id="7"
- Z="8"
+ id="9"
+ Z="9"
+ B="4"
+ E="5"
+ BS="N"
+/><b
+ id="10"
+ Z="10"
+ B="4"
+ E="7"
+ BS="N"
+/><b
+ id="11"
+ Z="11"
  B="3"
  E="4"
  BS="N"
-/></fragment></page></CDXML>
+/><b
+ id="12"
+ Z="12"
+ B="6"
+ E="5"
+ BS="N"
+/><graphic
+ id="14"
+ BoundingBox="252.78 402.43 252.78 315.43"
+ Z="13"
+ GraphicType="Bracket"
+ BracketType="Square"
+ LipSize="60"
+/><graphic
+ id="18"
+ BoundingBox="308.59 315.43 308.59 402.43"
+ Z="14"
+ GraphicType="Bracket"
+ BracketType="Square"
+ LipSize="60"
+ BracketUsage="MultipleGroup"
+ PolymerFlipType="NoFlip"
+><objecttag
+ TagType="String"
+ Name="bracketusage"
+ Value="2"
+><t
+ p="312.10 405.07"
+ BoundingBox="312.34 399.80 315.96 405.07"
+ CaptionLineHeight="variable"
+><s font="21" size="7.5" color="0">2</s></t></objecttag></graphic></fragment><bracketedgroup
+ id="21"
+ BracketedObjectIDs="4 5 7"
+ BracketUsage="MultipleGroup"
+ PolymerFlipType="NoFlip"
+ RepeatCount="2"
+><bracketattachment
+ id="22"
+ GraphicID="14"
+><crossingbond
+ id="23"
+ BondID="11"
+ InnerAtomID="4"
+/></bracketattachment><bracketattachment
+ id="24"
+ GraphicID="18"
+><crossingbond
+ id="25"
+ BondID="12"
+ InnerAtomID="5"
+/></bracketattachment></bracketedgroup></page></CDXML>
