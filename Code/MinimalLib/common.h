@@ -33,6 +33,7 @@
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
@@ -759,14 +760,54 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
   if (alignOnly) {
     RDGeom::Transform3D trans;
     std::vector<MatchVectType> matches;
-    if (SubstructMatch(mol, templateMol, matches, false)) {
-      if (!mol.getNumConformers()) {
-        RDDepict::compute2DCoords(mol);
+    std::unique_ptr<ROMol> molHs;
+    ROMol *prbMol = &mol;
+    if (allowRGroups) {
+      allowRGroups = std::any_of(templateMol.atoms().begin(), templateMol.atoms().end(), [](const auto atom) {
+        return (atom->getAtomicNum() == 0 && atom->getDegree() == 1);
+      });
+    }
+    if (allowRGroups) {
+      molHs.reset(MolOps::addHs(mol));
+      prbMol = molHs.get();
+    }
+    if (SubstructMatch(*prbMol, templateMol, matches, false)) {
+      if (allowRGroups) {
+        matches = sortMatchesByDegreeOfCoreSubstitution(*prbMol, templateMol, matches);
+        int maxMatchedHeavies = -1;
+        std::vector<MatchVectType> prunedMatches;
+        prunedMatches.reserve(matches.size());
+        for (const auto &match : matches) {
+          int nMatchedHeavies = 0;
+          MatchVectType prunedMatch;
+          prunedMatch.reserve(match.size());
+          for (const auto &pair : match) {
+            const auto templateAtom = templateMol.getAtomWithIdx(pair.first);
+            const auto prbAtom = prbMol->getAtomWithIdx(pair.second);
+            bool isRGroup = templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1;
+            if (isRGroup && prbAtom->getAtomicNum() > 1) {
+              prunedMatch.push_back(std::move(pair));
+              ++nMatchedHeavies;
+            } else if (!isRGroup) {
+              prunedMatch.push_back(std::move(pair));
+            }
+          }
+          if (nMatchedHeavies < maxMatchedHeavies) {
+            break;
+          } else {
+            prunedMatches.push_back(std::move(prunedMatch));
+            maxMatchedHeavies = nMatchedHeavies;
+          }
+        }
+        matches = std::move(prunedMatches);
       }
       std::for_each(matches.begin(), matches.end(), [](auto &match) {
         std::for_each(match.begin(), match.end(),
                       [](auto &pair) { std::swap(pair.first, pair.second); });
       });
+      if (!mol.getNumConformers()) {
+        RDDepict::compute2DCoords(mol);
+      }
       MolAlign::getBestAlignmentTransform(mol, templateMol, trans, match,
                                           confId, confId, matches, MAX_MATCHES);
       std::for_each(match.begin(), match.end(),
