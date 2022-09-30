@@ -466,17 +466,19 @@ M  END`;
     var phenyl = RDKitModule.get_mol(phenyl_smiles);
     assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
         template_ref, false, true)).atoms.length, 9);
-    var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true })
-    assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
-        template_ref, opts)).atoms.length, 9);
-    assert.equal(JSON.parse(ortho.generate_aligned_coords(
-        template_ref, opts)).atoms.length, 8);
-    assert.equal(JSON.parse(meta.generate_aligned_coords(
-        template_ref, opts)).atoms.length, 8);
-    assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
-        template_ref, opts)).atoms.length, 7);
-    assert.equal(JSON.parse(phenyl.generate_aligned_coords(
-        template_ref, opts)).atoms.length, 6);
+    [ true, false ].forEach(alignOnly => {
+        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly })
+        assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 9);
+        assert.equal(JSON.parse(ortho.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(meta.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 7);
+        assert.equal(JSON.parse(phenyl.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 6);
+    });
 }
 
 function test_generate_aligned_coords_accept_failure() {

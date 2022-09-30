@@ -763,9 +763,13 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     std::unique_ptr<ROMol> molHs;
     ROMol *prbMol = &mol;
     if (allowRGroups) {
-      allowRGroups = std::any_of(templateMol.atoms().begin(), templateMol.atoms().end(), [](const auto atom) {
-        return (atom->getAtomicNum() == 0 && atom->getDegree() == 1);
-      });
+      allowRGroups = false;
+      for (const auto templateAtom : templateMol.atoms()) {
+        if (templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1) {
+          allowRGroups = true;
+          break;
+        }
+      }
     }
     if (allowRGroups) {
       molHs.reset(MolOps::addHs(mol));
