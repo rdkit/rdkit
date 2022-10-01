@@ -506,7 +506,6 @@ class TestCase(unittest.TestCase):
     self.assertEqual(str(type(bestTrans)), "<class 'numpy.ndarray'>")
     self.assertAlmostEqual(rmsd, rmsdCopy, 3)
     self.assertEqual(len(bestMatch), len(scaffoldMatch))
-    self.assertTrue(all(len(tup) == 2 for tup in bestMatch))
     weights = [100.0 if bit else 1.0 for bit in scaffoldIndicesBitSet]
     rmsdInPlace = rdMolAlign.CalcRMS(prbCopy3, ref, map=matches, weights=weights)
     self.assertAlmostEqual(rmsdInPlace, 17.7959, 3)

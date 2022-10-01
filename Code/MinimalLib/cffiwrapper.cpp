@@ -582,7 +582,7 @@ extern "C" void prefer_coordgen(short val) {
 #endif
 };
 
-extern "C" short has_2d_coords(char *mol_pkl, size_t mol_pkl_sz) {
+extern "C" short has_coords(char *mol_pkl, size_t mol_pkl_sz) {
   short res = 0;
   if (mol_pkl && mol_pkl_sz) {
     auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);

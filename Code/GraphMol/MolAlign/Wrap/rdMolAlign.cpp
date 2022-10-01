@@ -31,33 +31,23 @@ namespace RDKit {
 void alignMolConfs(ROMol &mol, python::object atomIds, python::object confIds,
                    python::object weights, bool reflect, unsigned int maxIters,
                    python::object RMSlist) {
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
-  std::vector<unsigned int> *aIds = translateIntSeq(atomIds);
-  std::vector<unsigned int> *cIds = translateIntSeq(confIds);
-  std::vector<double> *RMSvector = nullptr;
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
+  std::unique_ptr<std::vector<unsigned int>> aIds(translateIntSeq(atomIds));
+  std::unique_ptr<std::vector<unsigned int>> cIds(translateIntSeq(confIds));
+  std::unique_ptr<std::vector<double>> RMSvector;
   if (RMSlist != python::object()) {
-    RMSvector = new std::vector<double>();
+    RMSvector.reset(new std::vector<double>());
   }
   {
     NOGIL gil;
-    MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters,
-                                 RMSvector);
-  }
-  if (wtsVec) {
-    delete wtsVec;
-  }
-  if (aIds) {
-    delete aIds;
-  }
-  if (cIds) {
-    delete cIds;
+    MolAlign::alignMolConformers(mol, aIds.get(), cIds.get(), wtsVec.get(),
+                                 reflect, maxIters, RMSvector.get());
   }
   if (RMSvector) {
     auto &pyl = static_cast<python::list &>(RMSlist);
-    for (double &i : (*RMSvector)) {
+    for (double i : *RMSvector) {
       pyl.append(i);
     }
-    delete RMSvector;
   }
 }
 
@@ -98,14 +88,14 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
                                python::object weights = python::list(),
                                bool reflect = false,
                                unsigned int maxIters = 50) {
-  MatchVectType *aMap = translateAtomMap(atomMap);
+  std::unique_ptr<MatchVectType> aMap(translateAtomMap(atomMap));
   unsigned int nAtms;
   if (aMap) {
     nAtms = aMap->size();
   } else {
     nAtms = prbMol.getNumAtoms();
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   if (wtsVec) {
     if (wtsVec->size() != nAtms) {
       throw_value_error("Incorrect number of weights specified");
@@ -115,14 +105,9 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::getAlignmentTransform(
-        prbMol, refMol, trans, prbCid, refCid, aMap, wtsVec, reflect, maxIters);
-  }
-  if (aMap) {
-    delete aMap;
-  }
-  if (wtsVec) {
-    delete wtsVec;
+    rmsd = MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid,
+                                           refCid, aMap.get(), wtsVec.get(),
+                                           reflect, maxIters);
   }
 
   return generateRmsdTransMatchPyTuple(rmsd, trans);
@@ -144,7 +129,7 @@ PyObject *getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
       nAtms = aMapVec.front().size();
     }
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   if (wtsVec) {
     if (wtsVec->size() != nAtms) {
       throw_value_error("Incorrect number of weights specified");
@@ -157,10 +142,7 @@ PyObject *getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
     NOGIL gil;
     rmsd = MolAlign::getBestAlignmentTransform(
         prbMol, refMol, bestTrans, bestMatch, prbCid, refCid, aMapVec,
-        maxMatches, symmetrizeTerminalGroups, wtsVec, reflect, maxIters);
-  }
-  if (wtsVec) {
-    delete wtsVec;
+        maxMatches, symmetrizeTerminalGroups, wtsVec.get(), reflect, maxIters);
   }
 
   return generateRmsdTransMatchPyTuple(rmsd, bestTrans, &bestMatch);
@@ -170,14 +152,14 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
                      int refCid = -1, python::object atomMap = python::list(),
                      python::object weights = python::list(),
                      bool reflect = false, unsigned int maxIters = 50) {
-  MatchVectType *aMap = translateAtomMap(atomMap);
+  std::unique_ptr<MatchVectType> aMap(translateAtomMap(atomMap));
   unsigned int nAtms;
   if (aMap) {
     nAtms = aMap->size();
   } else {
     nAtms = prbMol.getNumAtoms();
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   if (wtsVec) {
     if (wtsVec->size() != nAtms) {
       throw_value_error("Incorrect number of weights specified");
@@ -187,14 +169,8 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, wtsVec,
-                              reflect, maxIters);
-  }
-  if (aMap) {
-    delete aMap;
-  }
-  if (wtsVec) {
-    delete wtsVec;
+    rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap.get(),
+                              wtsVec.get(), reflect, maxIters);
   }
   return rmsd;
 }
@@ -207,12 +183,13 @@ double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec,
-                                maxMatches, symmetrizeTerminalGroups, wtsVec);
+    rmsd =
+        MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec, maxMatches,
+                             symmetrizeTerminalGroups, wtsVec.get());
   }
   return rmsd;
 }
@@ -279,18 +256,20 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
                   unsigned int options = 0,
                   python::list constraintMap = python::list(),
                   python::list constraintWeights = python::list()) {
-  MatchVectType *cMap =
-      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
-  RDNumeric::DoubleVector *cWts = nullptr;
+  std::unique_ptr<MatchVectType> cMap;
+  if (python::len(constraintMap)) {
+    cMap.reset(translateAtomMap(constraintMap));
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> cWts;
   if (cMap) {
-    cWts = translateDoubleSeq(constraintWeights);
+    cWts.reset(translateDoubleSeq(constraintWeights));
     if (cWts) {
-      if ((*cMap).size() != (*cWts).size()) {
+      if (cMap->size() != cWts->size()) {
         throw_value_error(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto &i : (*cMap)) {
+    for (const auto &i : *cMap) {
       if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
@@ -301,54 +280,42 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
       }
     }
   }
-  ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties = nullptr;
-  MMFF::MMFFMolProperties *prbMolProps = nullptr;
-  ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties = nullptr;
-  MMFF::MMFFMolProperties *refMolProps = nullptr;
+  std::unique_ptr<MMFF::MMFFMolProperties> prbMolProps;
+  MMFF::MMFFMolProperties *prbMolPropsPtr = nullptr;
+  std::unique_ptr<MMFF::MMFFMolProperties> refMolProps;
+  MMFF::MMFFMolProperties *refMolPropsPtr = nullptr;
 
   if (prbProps != python::object()) {
-    prbPyMMFFMolProperties =
+    ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(prbProps);
-    prbMolProps = prbPyMMFFMolProperties->mmffMolProperties.get();
+    prbMolPropsPtr = prbPyMMFFMolProperties->mmffMolProperties.get();
   } else {
-    prbMolProps = new MMFF::MMFFMolProperties(prbMol);
+    prbMolProps.reset(new MMFF::MMFFMolProperties(prbMol));
     if (!prbMolProps->isValid()) {
       throw_value_error("missing MMFF94 parameters for probe molecule");
     }
+    prbMolPropsPtr = prbMolProps.get();
   }
   if (refProps != python::object()) {
-    refPyMMFFMolProperties =
+    ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
-    refMolProps = refPyMMFFMolProperties->mmffMolProperties.get();
+    refMolPropsPtr = refPyMMFFMolProperties->mmffMolProperties.get();
   } else {
-    refMolProps = new MMFF::MMFFMolProperties(refMol);
+    refMolProps.reset(new MMFF::MMFFMolProperties(refMol));
     if (!refMolProps->isValid()) {
       throw_value_error("missing MMFF94 parameters for reference molecule");
     }
+    refMolPropsPtr = refMolProps.get();
   }
   O3A *o3a;
   {
     NOGIL gil;
-    o3a = new MolAlign::O3A(prbMol, refMol, prbMolProps, refMolProps,
+    o3a = new MolAlign::O3A(prbMol, refMol, prbMolPropsPtr, refMolPropsPtr,
                             MolAlign::O3A::MMFF94, prbCid, refCid, reflect,
-                            maxIters, options, cMap, cWts);
-  }
-  auto *pyO3A = new PyO3A(o3a);
-
-  if (!prbPyMMFFMolProperties) {
-    delete prbMolProps;
-  }
-  if (!refPyMMFFMolProperties) {
-    delete refMolProps;
-  }
-  if (cMap) {
-    delete cMap;
-  }
-  if (cWts) {
-    delete cWts;
+                            maxIters, options, cMap.get(), cWts.get());
   }
 
-  return pyO3A;
+  return new PyO3A(o3a);
 }
 
 python::tuple getMMFFO3AForConfs(
@@ -357,18 +324,20 @@ python::tuple getMMFFO3AForConfs(
     unsigned int maxIters = 50, unsigned int options = 0,
     python::list constraintMap = python::list(),
     python::list constraintWeights = python::list()) {
-  MatchVectType *cMap =
-      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
-  RDNumeric::DoubleVector *cWts = nullptr;
+  std::unique_ptr<MatchVectType> cMap;
+  if (python::len(constraintMap)) {
+    cMap.reset(translateAtomMap(constraintMap));
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> cWts;
   if (cMap) {
-    cWts = translateDoubleSeq(constraintWeights);
+    cWts.reset(translateDoubleSeq(constraintWeights));
     if (cWts) {
-      if ((*cMap).size() != (*cWts).size()) {
+      if (cMap->size() != cWts->size()) {
         throw_value_error(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto &i : (*cMap)) {
+    for (const auto &i : *cMap) {
       if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
@@ -379,55 +348,44 @@ python::tuple getMMFFO3AForConfs(
       }
     }
   }
-  ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties = nullptr;
-  MMFF::MMFFMolProperties *prbMolProps = nullptr;
-  ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties = nullptr;
-  MMFF::MMFFMolProperties *refMolProps = nullptr;
+  std::unique_ptr<MMFF::MMFFMolProperties> prbMolProps;
+  MMFF::MMFFMolProperties *prbMolPropsPtr = nullptr;
+  std::unique_ptr<MMFF::MMFFMolProperties> refMolProps;
+  MMFF::MMFFMolProperties *refMolPropsPtr = nullptr;
 
   if (prbProps != python::object()) {
-    prbPyMMFFMolProperties =
+    ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(prbProps);
-    prbMolProps = prbPyMMFFMolProperties->mmffMolProperties.get();
+    prbMolPropsPtr = prbPyMMFFMolProperties->mmffMolProperties.get();
   } else {
-    prbMolProps = new MMFF::MMFFMolProperties(prbMol);
+    prbMolProps.reset(new MMFF::MMFFMolProperties(prbMol));
     if (!prbMolProps->isValid()) {
       throw_value_error("missing MMFF94 parameters for probe molecule");
     }
+    prbMolPropsPtr = prbMolProps.get();
   }
   if (refProps != python::object()) {
-    refPyMMFFMolProperties =
+    ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
-    refMolProps = refPyMMFFMolProperties->mmffMolProperties.get();
+    refMolPropsPtr = refPyMMFFMolProperties->mmffMolProperties.get();
   } else {
-    refMolProps = new MMFF::MMFFMolProperties(refMol);
+    refMolProps.reset(new MMFF::MMFFMolProperties(refMol));
     if (!refMolProps->isValid()) {
       throw_value_error("missing MMFF94 parameters for reference molecule");
     }
+    refMolPropsPtr = refMolProps.get();
   }
   std::vector<boost::shared_ptr<O3A>> res;
   {
     NOGIL gil;
-    getO3AForProbeConfs(prbMol, refMol, prbMolProps, refMolProps, res,
+    getO3AForProbeConfs(prbMol, refMol, prbMolPropsPtr, refMolPropsPtr, res,
                         numThreads, MolAlign::O3A::MMFF94, refCid, reflect,
-                        maxIters, options, cMap, cWts);
+                        maxIters, options, cMap.get(), cWts.get());
   }
 
   python::list pyres;
   for (auto &i : res) {
     pyres.append(new PyO3A(i));
-  }
-
-  if (!prbPyMMFFMolProperties) {
-    delete prbMolProps;
-  }
-  if (!refPyMMFFMolProperties) {
-    delete refMolProps;
-  }
-  if (cMap) {
-    delete cMap;
-  }
-  if (cWts) {
-    delete cWts;
   }
 
   return python::tuple(pyres);
@@ -440,18 +398,20 @@ PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
                      unsigned int maxIters = 50, unsigned int options = 0,
                      python::list constraintMap = python::list(),
                      python::list constraintWeights = python::list()) {
-  MatchVectType *cMap =
-      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
-  RDNumeric::DoubleVector *cWts = nullptr;
+  std::unique_ptr<MatchVectType> cMap;
+  if (python::len(constraintMap)) {
+    cMap.reset(translateAtomMap(constraintMap));
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> cWts;
   if (cMap) {
-    cWts = translateDoubleSeq(constraintWeights);
+    cWts.reset(translateDoubleSeq(constraintWeights));
     if (cWts) {
-      if ((*cMap).size() != (*cWts).size()) {
+      if (cMap->size() != cWts->size()) {
         throw_value_error(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto &i : (*cMap)) {
+    for (const auto &i : *cMap) {
       if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
@@ -502,17 +462,10 @@ PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
     NOGIL gil;
     o3a = new MolAlign::O3A(prbMol, refMol, &prbLogpContribs, &refLogpContribs,
                             MolAlign::O3A::CRIPPEN, prbCid, refCid, reflect,
-                            maxIters, options, cMap, cWts);
-  }
-  auto *pyO3A = new PyO3A(o3a);
-  if (cMap) {
-    delete cMap;
-  }
-  if (cWts) {
-    delete cWts;
+                            maxIters, options, cMap.get(), cWts.get());
   }
 
-  return pyO3A;
+  return new PyO3A(o3a);
 }
 
 python::tuple getCrippenO3AForConfs(
@@ -521,18 +474,20 @@ python::tuple getCrippenO3AForConfs(
     int refCid = -1, bool reflect = false, unsigned int maxIters = 50,
     unsigned int options = 0, python::list constraintMap = python::list(),
     python::list constraintWeights = python::list()) {
-  MatchVectType *cMap =
-      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
-  RDNumeric::DoubleVector *cWts = nullptr;
+  std::unique_ptr<MatchVectType> cMap;
+  if (python::len(constraintMap)) {
+    cMap.reset(translateAtomMap(constraintMap));
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> cWts;
   if (cMap) {
-    cWts = translateDoubleSeq(constraintWeights);
+    cWts.reset(translateDoubleSeq(constraintWeights));
     if (cWts) {
-      if ((*cMap).size() != (*cWts).size()) {
+      if (cMap->size() != cWts->size()) {
         throw_value_error(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto &i : (*cMap)) {
+    for (const auto &i : *cMap) {
       if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
@@ -583,18 +538,11 @@ python::tuple getCrippenO3AForConfs(
     NOGIL gil;
     getO3AForProbeConfs(prbMol, refMol, &prbLogpContribs, &refLogpContribs, res,
                         numThreads, MolAlign::O3A::CRIPPEN, refCid, reflect,
-                        maxIters, options, cMap, cWts);
+                        maxIters, options, cMap.get(), cWts.get());
   }
   python::list pyres;
   for (auto &re : res) {
     pyres.append(new PyO3A(re));
-  }
-
-  if (cMap) {
-    delete cMap;
-  }
-  if (cWts) {
-    delete cWts;
   }
 
   return python::tuple(pyres);
@@ -794,7 +742,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
        python::arg("maxMatches") = 1000000,
-       python::arg("symmetrizeConjugatedTerminalGroups") = false,
+       python::arg("symmetrizeConjugatedTerminalGroups") = true,
        python::arg("weights") = python::list()),
       docString.c_str());
 

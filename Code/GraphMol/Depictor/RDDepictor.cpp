@@ -852,6 +852,9 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
   constexpr double RAD2DEG = 180. / M_PI;
   constexpr double DEG2RAD = M_PI / 180.;
   constexpr double ALMOST_ZERO = 1.e-5;
+  constexpr double INCR_DEG = 30.;
+  constexpr double HALF_INCR_DEG = 0.5 * INCR_DEG;
+  constexpr double QUARTER_INCR_DEG = 0.25 * INCR_DEG;
   auto &conf = mol.getConformer(confId);
   auto &pos = conf.getPositions();
   std::unordered_map<int, DepictorLocal::ThetaBin> thetaBins;
@@ -862,9 +865,9 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
     bv.x = (bv.x < 0.) ? std::min(-ALMOST_ZERO, bv.x)
                        : std::max(ALMOST_ZERO, bv.x);
     auto theta = RAD2DEG * atan(bv.y / bv.x);
-    auto d_theta = fmod(-theta, 30.0);
-    if (fabs(d_theta) > 15.0) {
-      d_theta -= DepictorLocal::copySign(30.0, d_theta, ALMOST_ZERO);
+    auto d_theta = fmod(-theta, INCR_DEG);
+    if (fabs(d_theta) > HALF_INCR_DEG) {
+      d_theta -= DepictorLocal::copySign(INCR_DEG, d_theta, ALMOST_ZERO);
     }
     int thetaKey = static_cast<int>(
         d_theta + DepictorLocal::copySign(0.5, d_theta, ALMOST_ZERO));
@@ -900,14 +903,16 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
     unsigned int count60vs30[2] = {0, 0};
     for (auto theta : minRotationBin.thetaValues) {
       theta += d_thetaMin;
-      auto idx = static_cast<unsigned int>((fabs(theta) + 0.5) / 30.0) % 2;
+      auto idx = static_cast<unsigned int>((fabs(theta) + 0.5) / INCR_DEG) % 2;
       CHECK_INVARIANT(idx < 2, "");
       ++count60vs30[idx];
     }
     if (count60vs30[0] > count60vs30[1]) {
-      d_thetaMin -= DepictorLocal::copySign(30.0, d_thetaMin, ALMOST_ZERO);
+      d_thetaMin -= DepictorLocal::copySign(INCR_DEG, d_thetaMin, ALMOST_ZERO);
     }
-  } else if (fabs(d_thetaSmallest) < ALMOST_ZERO || (fabs(d_thetaSmallest) < fabs(d_thetaMin) && fabs(d_thetaMin) > 7.5)) {
+  } else if (fabs(d_thetaSmallest) < ALMOST_ZERO ||
+             (fabs(d_thetaSmallest) < fabs(d_thetaMin) &&
+              fabs(d_thetaMin) > QUARTER_INCR_DEG)) {
     d_thetaMin = d_thetaSmallest;
   }
   if (fabs(d_thetaMin) > ALMOST_ZERO) {

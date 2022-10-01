@@ -238,7 +238,7 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(
     bool forceRDKit = false);
 
 //! \brief Rotate the 2D depiction such that the majority of bonds have an
-//! angle with the X axis multiple of 30 degrees.
+//! angle with the X axis which is a multiple of 30 degrees.
 /*!
 
   ARGUMENTS:
@@ -248,8 +248,8 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(
   is rotated such that the majority of bonds have an angle with the
   X axis of 30 or 90 degrees. If true, the minimum rotation is applied
   such that the majority of bonds have an angle with the X axis of
-  0, 30, 60, or 90 degrees, with the goal of altering as little as
-  possible the initial orientation.
+  0, 30, 60, or 90 degrees, with the goal of altering the initial
+  orientation as little as possible .
 */
 
 RDKIT_DEPICTOR_EXPORT void straightenDepiction(RDKit::ROMol &mol,

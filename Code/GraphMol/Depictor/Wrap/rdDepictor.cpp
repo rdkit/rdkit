@@ -333,8 +333,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                      with the X axis of 30 or 90 degrees. If True, the minimum\n\
                      rotation is applied such that the majority of bonds have\n\
                      an angle with the X axis of 0, 30, 60, or 90 degrees,\n\
-                     with the goal of altering as little as possible the\n\
-                     initial orientation.";
+                     with the goal of altering the initial orientation as\n\
+                     little as possible .";
 
   python::def("StraightenDepiction", RDDepict::straightenDepiction,
               (python::arg("mol"), python::arg("confId") = -1,

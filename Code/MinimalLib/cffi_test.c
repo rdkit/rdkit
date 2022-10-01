@@ -754,7 +754,7 @@ M  END\n",
   for (i = 0; i < 2; ++i) {
     // this has no initial coordinates and matches the template
     mpkl_smi = get_mol("C1CC2CCC1N2C1CNC1N1C2CCC1CC2", &mpkl_smi_size, "");
-    assert(!has_2d_coords(mpkl_smi, mpkl_smi_size));
+    assert(!has_coords(mpkl_smi, mpkl_smi_size));
     memset(details, 0, 200);
     sprintf(details, "{\"acceptFailure\":false,\"allowRGroups\":true,\"alignOnly\":%s}", align_only_choices[i]);
     assert(set_2d_coords_aligned(
@@ -762,7 +762,7 @@ M  END\n",
     assert(!strcmp(match_json, "{\"atoms\":[11,10,7,8,9,6],\"bonds\":[10,18,7,8,9,6]}"));
     free(match_json);
     // coordinates should be present as alignment has taken place anyway
-    assert(has_2d_coords(mpkl_smi, mpkl_smi_size));
+    assert(has_coords(mpkl_smi, mpkl_smi_size));
     free(mpkl_smi);
 
     mpkl2_size = mpkl_size;
@@ -797,29 +797,29 @@ M  END\n",
     sprintf(details, "{\"useCoordGen\":true,\"acceptFailure\":false,\"allowRGroups\":true,\"alignOnly\":%s}", align_only_choices[i]);
     // this has no initial coordinates and does not match the template
     mpkl_smi = get_mol("C1CC2CCC1N2C1CCNC1N1C2CCC1CC2", &mpkl_smi_size, "");
-    assert(!has_2d_coords(mpkl_smi, mpkl_smi_size));
+    assert(!has_coords(mpkl_smi, mpkl_smi_size));
     // This should fail
     assert(!set_2d_coords_aligned(
         &mpkl_smi, &mpkl_smi_size, tpkl, tpkl_size, details, &match_json));
     assert(!match_json);
     // coordinates should be absent since alignment has not taken place
-    assert(!has_2d_coords(mpkl_smi, mpkl_smi_size));
+    assert(!has_coords(mpkl_smi, mpkl_smi_size));
 
     // this has initial coordinates and does not match the template
     mpkl2_size = mpkl_smi_size;
     mpkl2 = malloc(mpkl2_size);
     assert(mpkl2);
     memcpy(mpkl2, mpkl_smi, mpkl2_size);
-    assert(!has_2d_coords(mpkl2, mpkl2_size));
+    assert(!has_coords(mpkl2, mpkl2_size));
     set_2d_coords(&mpkl2, &mpkl2_size);
-    assert(has_2d_coords(mpkl2, mpkl2_size));
+    assert(has_coords(mpkl2, mpkl2_size));
     mpkl2_molblock_before = get_molblock(mpkl2, mpkl2_size, "");
     // This should fail
     assert(!set_2d_coords_aligned(
         &mpkl2, &mpkl2_size, tpkl, tpkl_size, details, &match_json));
     assert(!match_json);
     // coordinates should be unchanged since alignment has not taken place
-    assert(has_2d_coords(mpkl2, mpkl2_size));
+    assert(has_coords(mpkl2, mpkl2_size));
     mpkl2_molblock_after = get_molblock(mpkl2, mpkl2_size, "");
     assert(!strcmp(mpkl2_molblock_before, mpkl2_molblock_after));
     free(mpkl2_molblock_after);
@@ -832,7 +832,7 @@ M  END\n",
     assert(!strcmp(match_json, "{}"));
     free(match_json);
     // coordinates should have changed since coordinate generation has taken place anyway using CoordGen
-    assert(has_2d_coords(mpkl2, mpkl2_size));
+    assert(has_coords(mpkl2, mpkl2_size));
     mpkl2_molblock_after = get_molblock(mpkl2, mpkl2_size, "");
     assert(strcmp(mpkl2_molblock_before, mpkl2_molblock_after));
     free(mpkl2_molblock_before);
@@ -845,7 +845,7 @@ M  END\n",
     assert(!strcmp(match_json, "{}"));
     free(match_json);
     // coordinates should be present since coordinate generation has taken place anyway using CoordGen
-    assert(has_2d_coords(mpkl_smi, mpkl_smi_size));
+    assert(has_coords(mpkl_smi, mpkl_smi_size));
     free(mpkl_smi);
   }
 
