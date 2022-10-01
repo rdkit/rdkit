@@ -33,7 +33,7 @@
 package org.RDKit;
 
 import static org.junit.Assert.*;
-
+import java.io.*;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -326,6 +326,26 @@ public class WrapperTests extends GraphMolTest {
         assertEquals(TEST_MESSAGE, e.getMessage());
         uInt_Vect.delete();
         e.delete();
+    }
+
+    @Test
+    public void cdxmlReader() {
+	String rdpath = System.getenv("RDBASE");
+	if (rdpath == null)
+	    org.junit.Assert.fail("No definition for RDBASE");
+	File base = new File(rdpath);
+	File testFile = new File(base, "Code" + File.separator + "GraphMol"
+				 + File.separator + "test_data" + File.separator +
+				 "CDXML" + File.separator + "beta-cypermethrin.cdxml");
+	String fn = testFile.getAbsolutePath();
+	RWMol_Vect prods = RWMol.MolsFromCDXMLFile(fn);
+	assertEquals(prods.size(), 1);
+	for(int idx = 0; idx < prods.size(); idx++) {
+	    if(idx == 0) {
+		assertEquals(prods.get(idx).MolToSmiles(true), "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1");
+	    }
+	}
+
     }
     
     public static void main(String args[]) {

@@ -2,8 +2,8 @@
 <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
 <CDXML
  CreationProgram="ChemDraw 21.0.0.28"
- Name="chain3.cdxml"
- BoundingBox="-26.23 -15.58 52.21 3.89"
+ Name="chemdraw_template2.cdxml"
+ BoundingBox="54.16 108.31 1053.80 719.64"
  WindowPosition="0 0"
  WindowSize="0 0"
  FractionalWidths="yes"
@@ -19,18 +19,17 @@
  ShowTerminalCarbonLabels="no"
  ShowNonTerminalCarbonLabels="no"
  HideImplicitHydrogens="no"
- Magnification="120"
  LabelFont="21"
- LabelSize="10"
+ LabelSize="14.45"
  LabelFace="96"
- CaptionFont="20"
- CaptionSize="12"
- HashSpacing="2.70"
- MarginWidth="2"
- LineWidth="1"
- BoldWidth="4"
- BondLength="30"
- BondSpacing="12"
+ CaptionFont="21"
+ CaptionSize="14.45"
+ HashSpacing="3.62"
+ MarginWidth="2.32"
+ LineWidth="1.77"
+ BoldWidth="3.67"
+ BondLength="20.83"
+ BondSpacing="18"
  ChainAngle="120"
  LabelJustification="Auto"
  CaptionJustification="Left"
@@ -43,7 +42,7 @@
  ResidueZigZag="yes"
  NumberResidueBlocks="no"
  PrintMargins="36 36 36 36"
- MacPrintInfo="00030000004800480000000002DE0240FFEEFFEE030602520367052803FC00020000004800480000000002DE0240000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
+ MacPrintInfo="0003000000480048000000000300024CFFF4FFF4030C02580367052803FC0002000000480048000000000300024C000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
  ChemPropName=""
  ChemPropFormula="Chemical Formula: "
  ChemPropExactMass="Exact Mass: "
@@ -78,64 +77,50 @@
 <color r="0" g="1" b="1"/>
 <color r="0" g="0" b="1"/>
 <color r="1" g="0" b="1"/>
+<color r="0.0471" g="0.7059" b="0.0706"/>
+<color r="0" g="0" b="0.5020"/>
+<color r="0.9804" g="0.8353" b="0.3608"/>
+<color r="0.6471" g="0.3804" b="0.8157"/>
+<color r="0.2353" g="0.6157" b="1"/>
+<color r="1" g="0.3059" b="0.3255"/>
+<color r="0.5020" g="0" b="0"/>
+<color r="0.8000" g="0.8000" b="0.8000"/>
 </colortable><fonttable>
-<font id="20" charset="x-mac-roman" name="Helvetica"/>
 <font id="21" charset="x-mac-roman" name="Helvetica"/>
+<font id="67" charset="Unknown" name="Apple Symbols"/>
+<font id="368" charset="x-mac-roman" name="Helvetica Oblique"/>
+<font id="371" charset="x-mac-roman" name="Helvetica Bold"/>
 </fonttable><page
- id="13"
- BoundingBox="0 0 540 720"
+ id="80114"
+ BoundingBox="0 0 1080 720"
  HeaderPosition="36"
  FooterPosition="36"
  PrintTrimMarks="yes"
  HeightPages="1"
- WidthPages="1"
+ WidthPages="2"
 ><fragment
- id="11"
- BoundingBox="-26.23 -15.58 52.21 3.89"
- Z="1"
+ id="33855"
+ BoundingBox="898.89 108.31 1053.80 245.19"
+ Z="1484"
 ><n
- id="1"
- p="-25.98 -15"
- Z="2"
- AS="N"
-/><n
- id="2"
- p="0 0"
- Z="3"
- Element="8"
+ id="33956"
+ p="942.75 164.71"
+ Z="1558"
+ color="11"
+ IgnoreWarnings="yes"
+ Warning="An atom in this label has an invalid valence."
+ MarginWidth="1.46"
+ Element="1"
  NumHydrogens="0"
+ Isotope="2"
  NeedsClean="yes"
  AS="N"
 ><t
- p="-3.89 3.68"
- BoundingBox="-3.50 -3.68 3.49 3.89"
+ p="939.46 167.98"
+ BoundingBox="940.16 161.44 945.70 167.98"
+ color="11"
  LabelJustification="Left"
-><s font="21" size="10" color="0" face="96">O</s></t></n><n
- id="3"
- p="25.98 -15"
- Z="4"
- AS="N"
-/><n
- id="4"
- p="51.96 0"
- Z="5"
- AS="N"
-/><b
- id="5"
- Z="6"
- B="1"
- E="2"
- BS="N"
-/><b
- id="6"
- Z="7"
- B="2"
- E="3"
- BS="N"
-/><b
- id="7"
- Z="8"
- B="3"
- E="4"
- BS="N"
-/></fragment></page></CDXML>
+ LabelLineHeight="auto"
+ LineHeight="auto"
+><s font="371" size="9.1" color="11" face="1">D</s></t></n></fragment>
+</page></CDXML>

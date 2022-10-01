@@ -2,8 +2,8 @@
 <!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
 <CDXML
  CreationProgram="ChemDraw 21.0.0.28"
- Name="chain3.cdxml"
- BoundingBox="-26.23 -15.58 52.21 3.89"
+ Name="Untitled Document-11"
+ BoundingBox="167.75 93.32 234.70 142.43"
  WindowPosition="0 0"
  WindowSize="0 0"
  FractionalWidths="yes"
@@ -19,7 +19,6 @@
  ShowTerminalCarbonLabels="no"
  ShowNonTerminalCarbonLabels="no"
  HideImplicitHydrogens="no"
- Magnification="120"
  LabelFont="21"
  LabelSize="10"
  LabelFace="96"
@@ -82,7 +81,7 @@
 <font id="20" charset="x-mac-roman" name="Helvetica"/>
 <font id="21" charset="x-mac-roman" name="Helvetica"/>
 </fonttable><page
- id="13"
+ id="28"
  BoundingBox="0 0 540 720"
  HeaderPosition="36"
  FooterPosition="36"
@@ -90,52 +89,42 @@
  HeightPages="1"
  WidthPages="1"
 ><fragment
- id="11"
- BoundingBox="-26.23 -15.58 52.21 3.89"
- Z="1"
+ id="18"
+ BoundingBox="167.75 93.32 234.70 142.43"
+ Z="17"
 ><n
- id="1"
- p="-25.98 -15"
- Z="2"
+ id="17"
+ p="168 142"
+ Z="16"
  AS="N"
 /><n
- id="2"
- p="0 0"
- Z="3"
- Element="8"
- NumHydrogens="0"
+ id="19"
+ p="193.98 127"
+ Z="18"
+ AS="N"
+/><n
+ id="21"
+ p="193.98 97"
+ Z="20"
+ NodeType="ElementList"
  NeedsClean="yes"
  AS="N"
+ ElementList="6 7 8 16"
 ><t
- p="-3.89 3.68"
- BoundingBox="-3.50 -3.68 3.49 3.89"
+ p="192.59 100.68"
+ BoundingBox="193.22 93.32 234.70 102.65"
  LabelJustification="Left"
-><s font="21" size="10" color="0" face="96">O</s></t></n><n
- id="3"
- p="25.98 -15"
- Z="4"
- AS="N"
-/><n
- id="4"
- p="51.96 0"
- Z="5"
- AS="N"
-/><b
- id="5"
- Z="6"
- B="1"
- E="2"
+ LabelAlignment="Left"
+><s font="21" size="10" color="0" face="96">[C,N,O,S]</s></t></n><b
+ id="20"
+ Z="19"
+ B="17"
+ E="19"
  BS="N"
 /><b
- id="6"
- Z="7"
- B="2"
- E="3"
- BS="N"
-/><b
- id="7"
- Z="8"
- B="3"
- E="4"
+ id="22"
+ Z="21"
+ B="19"
+ E="21"
  BS="N"
 /></fragment></page></CDXML>
