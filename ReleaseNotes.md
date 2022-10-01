@@ -17,8 +17,10 @@
 - The Python function `Chem.GetSSSR()` now returns the SSSR rings found instead
   of just returning the count of rings. This is consistent with
   `Chem.GetSymmSSSR()` and more useful.
-
-
+- The CFFI function `set_2d_coords_aligned()` now takes an additional `char **match_json`
+  parameter; if `match_json` is not not `NULL`, `*match_json` will point to a
+  JSON string containing the atoms and bonds which are part of the match.
+  It is up to the user to free this string.
 
 ## Code removed in this release:
 - The C++ class `RDLog::BlockLogs` has been removed. Please use the class `RDLog::LogStateSetter`. The Python class rdBase.BlockLogs() is still available and supported.
