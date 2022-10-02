@@ -329,7 +329,9 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     // PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum());
     // atom->calcExplicitValence()
     // maybe this will work best-
-    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() == 0) {
+
+    //  TODO debug this
+    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() <= 1) {
       continue;
     }
 

@@ -324,6 +324,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     return allMappings;
   }
 
+  // TODO atom pair duplicate thing on common neighbor
+  
   // enumerate over all available atoms using a cartesian product.
   // this is not the most ideal way to do things as the straightforward product
   // will allow duplicates.  In the unlikely evert that there is a performance
