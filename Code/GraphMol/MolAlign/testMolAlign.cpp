@@ -20,6 +20,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <ForceField/ForceField.h>
 #include <GraphMol/ForceFieldHelpers/UFF/Builder.h>
@@ -69,16 +70,74 @@ void test1GetBestRMS() {
   std::string fname =
       rdbase + "/Code/GraphMol/MolAlign/test_data/probe_mol.sdf";
   SDMolSupplier supplier(fname, true, false);
-  ROMol *m1 = supplier[1];
-  ROMol *m2 = supplier[2];
+  std::unique_ptr<ROMol> prb(supplier[1]);
+  std::unique_ptr<ROMol> ref(supplier[2]);
+  std::unique_ptr<ROMol> prbCopy1(new ROMol(*prb));
+  std::unique_ptr<ROMol> prbCopy2(new ROMol(*prb));
+  std::unique_ptr<ROMol> prbCopy3(new ROMol(*prb));
+  RDGeom::Transform3D bestTrans;
+  MatchVectType bestMatch;
 
   // alignMol() would return this for the rms: 2.50561
   // But the best rms is: 2.43449
-  double rmsd = MolAlign::getBestRMS(*m1, *m2);
-
+  double rmsdInPlace = MolAlign::CalcRMS(*prbCopy1, *ref);
+  TEST_ASSERT(RDKit::feq(rmsdInPlace, 2.6026));
+  double rmsd = MolAlign::getBestRMS(*prb, *ref);
   TEST_ASSERT(RDKit::feq(rmsd, 2.43449));
-  delete m1;
-  delete m2;
+  double rmsdCopy = MolAlign::getBestAlignmentTransform(*prbCopy1, *ref,
+                                                        bestTrans, bestMatch);
+  TEST_ASSERT(RDKit::feq(rmsd, rmsdCopy));
+  TEST_ASSERT(bestMatch.size() == ref->getNumAtoms());
+
+  SmilesParserParams params;
+  params.removeHs = false;
+  ROMOL_SPTR scaffold(SmilesToMol(
+      "N1C([H])([H])C([H])([H])C([H])([H])[N+]([H])([H])C([H])([H])C1([H])[H]",
+      params));
+  MatchVectType scaffoldMatch;
+  TEST_ASSERT(SubstructMatch(*ref, *scaffold, scaffoldMatch));
+  boost::dynamic_bitset<> scaffoldIndices(ref->getNumAtoms());
+  for (const auto &pair : scaffoldMatch) {
+    scaffoldIndices.set(pair.second);
+  }
+  std::vector<MatchVectType> matches;
+  TEST_ASSERT(SubstructMatch(*ref, *prb, matches, false));
+  std::vector<MatchVectType> matchesPruned(matches.size());
+  std::transform(matches.begin(), matches.end(), matchesPruned.begin(),
+                 [&scaffoldIndices](const auto &match) {
+                   MatchVectType matchPruned;
+                   std::copy_if(match.begin(), match.end(),
+                                std::back_inserter(matchPruned),
+                                [&scaffoldIndices](const auto &pair) {
+                                  return scaffoldIndices.test(pair.second);
+                                });
+                   return matchPruned;
+                 });
+  rmsdInPlace = MolAlign::CalcRMS(*prbCopy2, *ref, -1, -1, matchesPruned);
+  TEST_ASSERT(RDKit::feq(rmsdInPlace, 2.5672));
+  rmsd = MolAlign::getBestRMS(*prb, *ref, -1, -1, matchesPruned);
+  TEST_ASSERT(RDKit::feq(rmsd, 1.14329));
+  rmsdCopy = MolAlign::getBestAlignmentTransform(
+      *prbCopy2, *ref, bestTrans, bestMatch, -1, -1, matchesPruned);
+  TEST_ASSERT(RDKit::feq(rmsd, rmsdCopy));
+  TEST_ASSERT(bestMatch.size() == scaffoldMatch.size());
+  RDNumeric::DoubleVector weights(scaffoldIndices.size(), 1.0);
+  for (unsigned int i = 0; i < scaffoldIndices.size(); ++i) {
+    if (scaffoldIndices.test(i)) {
+      weights.setVal(i, 100.0);
+    }
+  }
+  rmsdInPlace =
+      MolAlign::CalcRMS(*prbCopy3, *ref, -1, -1, matches, 1000, true, &weights);
+  TEST_ASSERT(RDKit::feq(rmsdInPlace, 17.7959));
+  rmsd =
+      MolAlign::getBestRMS(*prb, *ref, -1, -1, matches, 1000, true, &weights);
+  TEST_ASSERT(RDKit::feq(rmsd, 10.9681));
+  rmsdCopy = MolAlign::getBestAlignmentTransform(*prbCopy3, *ref, bestTrans,
+                                                 bestMatch, -1, -1, matches,
+                                                 1000, true, &weights);
+  TEST_ASSERT(RDKit::feq(rmsd, rmsdCopy));
+  TEST_ASSERT(bestMatch.size() == ref->getNumAtoms());
 }
 
 void test1MolWithQueryAlign() {

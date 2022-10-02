@@ -84,21 +84,9 @@ class JSMol {
                                                double maxCoverage,
                                                bool areLinkers);
   std::string generate_aligned_coords(const JSMol &templateMol,
-                                      bool useCoordGen,
-                                      bool allowOptionalAttachments,
-                                      bool acceptFailure);
-  std::string generate_aligned_coords(const JSMol &templateMol,
-                                      bool useCoordGen,
-                                      bool allowOptionalAttachments) {
-    return generate_aligned_coords(templateMol, useCoordGen,
-                                   allowOptionalAttachments, true);
-  };
-  std::string generate_aligned_coords(const JSMol &templateMol,
-                                      bool useCoordGen) {
-    return generate_aligned_coords(templateMol, useCoordGen, false, true);
-  }
+                                      const std::string &details);
   std::string generate_aligned_coords(const JSMol &templateMol) {
-    return generate_aligned_coords(templateMol, false, false, true);
+    return generate_aligned_coords(templateMol, "{}");
   }
   bool is_valid() const { return d_mol.get() != nullptr; }
   bool has_coords() const {
@@ -133,7 +121,8 @@ class JSMol {
     return normalize_depiction(canonicalize, -1.);
   }
   double normalize_depiction() { return normalize_depiction(1, -1.); }
-  void straighten_depiction();
+  void straighten_depiction(bool minimizeRotation);
+  void straighten_depiction() { straighten_depiction(false); }
 
   std::unique_ptr<RDKit::RWMol> d_mol;
   static constexpr int d_defaultWidth = 250;

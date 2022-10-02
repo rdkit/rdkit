@@ -422,7 +422,7 @@ class TestCase(unittest.TestCase):
     prbMol = tms[0]
     for tm in tms[1:]:
       prbMol.AddConformer(tm.GetConformer(), True)
-    self.failUnlessEqual(prbMol.GetNumConformers(), 50)
+    self.assertEqual(prbMol.GetNumConformers(), 50)
 
     refParams = ChemicalForceFields.MMFFGetMoleculeProperties(refMol)
     prbParams = ChemicalForceFields.MMFFGetMoleculeProperties(prbMol)
@@ -431,16 +431,16 @@ class TestCase(unittest.TestCase):
     for i in range(prbMol.GetNumConformers()):
       cp2 = Chem.Mol(prbMol)
       o3 = rdMolAlign.GetO3A(cp2, refMol, prbParams, refParams, prbCid=i)
-      self.failUnlessAlmostEqual(o3s[i].Align(), o3.Align(), 6)
-      self.failUnlessAlmostEqual(o3s[i].Score(), o3.Score(), 6)
+      self.assertAlmostEqual(o3s[i].Align(), o3.Align(), 6)
+      self.assertAlmostEqual(o3s[i].Score(), o3.Score(), 6)
 
     cp = Chem.Mol(prbMol)
     o3s = rdMolAlign.GetCrippenO3AForProbeConfs(cp, refMol)
     for i in range(prbMol.GetNumConformers()):
       cp2 = Chem.Mol(prbMol)
       o3 = rdMolAlign.GetCrippenO3A(cp2, refMol, prbCid=i)
-      self.failUnlessAlmostEqual(o3s[i].Align(), o3.Align(), 6)
-      self.failUnlessAlmostEqual(o3s[i].Score(), o3.Score(), 6)
+      self.assertAlmostEqual(o3s[i].Align(), o3.Align(), 6)
+      self.assertAlmostEqual(o3s[i].Score(), o3.Score(), 6)
 
   def test16MultithreadBug(self):
     " test multi-conf alignment "
@@ -465,20 +465,56 @@ class TestCase(unittest.TestCase):
         numThreads=4  #,prbPyMMFFMolProperties=prbParams,
         #refPyMMFFMolProperties=refParams
       )
-      self.failUnlessEqual(len(algs), nConfs)
+      self.assertEqual(len(algs), nConfs)
 
   def test17GetBestRMS(self):
     sdf = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolAlign', 'test_data',
                        'probe_mol.sdf')
     molS = Chem.SDMolSupplier(sdf, True, False)
-    mol1 = molS[1]
-    mol2 = molS[2]
+    prb = molS[1]
+    prbCopy1 = Chem.Mol(prb)
+    prbCopy2 = Chem.Mol(prb)
+    prbCopy3 = Chem.Mol(prb)
+    ref = molS[2]
 
+    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy1, ref)
+    self.assertAlmostEqual(rmsdInPlace, 2.6026, 3)
     # AlignMol() would return this for the rms: 2.50561
     # But the best rms is: 2.43449
-    rmsd = rdMolAlign.GetBestRMS(mol1, mol2)
+    rmsd = rdMolAlign.GetBestRMS(prb, ref)
+    self.assertAlmostEqual(rmsd, 2.43449, 3)
+    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(prbCopy1, ref)
+    self.assertEqual(str(type(bestTrans)), "<class 'numpy.ndarray'>")
+    self.assertAlmostEqual(rmsd, rmsdCopy, 3)
+    self.assertEqual(len(bestMatch), ref.GetNumAtoms())
 
-    self.failUnlessAlmostEqual(rmsd, 2.43449209)
+    params = Chem.SmilesParserParams()
+    params.removeHs = False
+    scaffold = Chem.MolFromSmiles("N1C([H])([H])C([H])([H])C([H])([H])[N+]([H])([H])C([H])([H])C1([H])[H]", params)
+    scaffoldMatch = ref.GetSubstructMatch(scaffold)
+    scaffoldIndicesBitSet = [0] * ref.GetNumAtoms()
+    for idx in scaffoldMatch:
+      scaffoldIndicesBitSet[idx] = 1
+    matches = tuple(tuple(enumerate(match)) for match in ref.GetSubstructMatches(prb, uniquify=False))
+    self.assertGreater(len(matches), 0)
+    matchesPruned = tuple(tuple(filter(lambda tup: scaffoldIndicesBitSet[tup[1]], match)) for match in matches)
+    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy2, ref, map=matchesPruned)
+    self.assertAlmostEqual(rmsdInPlace, 2.5672, 3)
+    rmsd = rdMolAlign.GetBestRMS(prb, ref, map=matchesPruned)
+    self.assertAlmostEqual(rmsd, 1.14329, 3)
+    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(prbCopy2, ref, map=matchesPruned);
+    self.assertEqual(str(type(bestTrans)), "<class 'numpy.ndarray'>")
+    self.assertAlmostEqual(rmsd, rmsdCopy, 3)
+    self.assertEqual(len(bestMatch), len(scaffoldMatch))
+    weights = [100.0 if bit else 1.0 for bit in scaffoldIndicesBitSet]
+    rmsdInPlace = rdMolAlign.CalcRMS(prbCopy3, ref, map=matches, weights=weights)
+    self.assertAlmostEqual(rmsdInPlace, 17.7959, 3)
+    rmsd = rdMolAlign.GetBestRMS(prb, ref, map=matches, weights=weights)
+    self.assertAlmostEqual(rmsd, 10.9681, 3)
+    rmsdCopy, bestTrans, bestMatch = rdMolAlign.GetBestAlignmentTransform(prbCopy3, ref, map=matches, weights=weights)
+    self.assertAlmostEqual(rmsd, rmsdCopy, 3)
+    self.assertEqual(len(bestMatch), ref.GetNumAtoms())
+    self.assertTrue(all(len(tup) == 2 for tup in bestMatch))
 
   def test18GetBestRMSAndConjugatedGroups(self):
     mol = Chem.MolFromSmiles(
@@ -489,10 +525,10 @@ class TestCase(unittest.TestCase):
     )
 
     rmsd = rdMolAlign.GetBestRMS(qry, mol)
-    self.failUnlessAlmostEqual(rmsd, 0, 3)
+    self.assertAlmostEqual(rmsd, 0, 3)
 
     rmsd = rdMolAlign.GetBestRMS(qry, mol, symmetrizeConjugatedTerminalGroups=False)
-    self.failUnlessAlmostEqual(rmsd, 0.747, 3)
+    self.assertAlmostEqual(rmsd, 0.747, 3)
 
 
 if __name__ == '__main__':

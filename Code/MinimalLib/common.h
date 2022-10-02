@@ -24,12 +24,17 @@
 #include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #ifdef RDK_BUILD_AVALON_SUPPORT
 #include <External/AvalonTools/AvalonTools.h>
 #endif
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/Conformer.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
 #include <DataStructs/BitOps.h>
@@ -718,6 +723,139 @@ std::unique_ptr<ExplicitBitVect> avalon_fp_as_bitvect(
   return fp;
 }
 #endif
+
+std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
+                                    const char *details_json) {
+  std::string res;
+  if (!templateMol.getNumConformers()) {
+    return res;
+  }
+  constexpr int MAX_MATCHES = 1000;
+  bool useCoordGen = false;
+  bool allowRGroups = false;
+  bool acceptFailure = true;
+  bool alignOnly = false;
+  if (details_json && strlen(details_json)) {
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(useCoordGen);
+    LPT_OPT_GET(allowRGroups);
+    LPT_OPT_GET(acceptFailure);
+    LPT_OPT_GET(alignOnly);
+  }
+  MatchVectType match;
+  int confId = -1;
+  std::unique_ptr<Conformer> origConformer;
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  bool oprefer = RDDepict::preferCoordGen;
+  RDDepict::preferCoordGen = useCoordGen;
+#endif
+  // store the original conformer so it can be restored
+  // if alignment fails and acceptFailure is false
+  if (!acceptFailure && mol.getNumConformers()) {
+    origConformer.reset(new Conformer(mol.getConformer()));
+  }
+  if (alignOnly) {
+    RDGeom::Transform3D trans;
+    std::vector<MatchVectType> matches;
+    std::unique_ptr<ROMol> molHs;
+    ROMol *prbMol = &mol;
+    if (allowRGroups) {
+      allowRGroups = false;
+      for (const auto templateAtom : templateMol.atoms()) {
+        if (templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1) {
+          allowRGroups = true;
+          break;
+        }
+      }
+    }
+    if (allowRGroups) {
+      molHs.reset(MolOps::addHs(mol));
+      prbMol = molHs.get();
+    }
+    if (SubstructMatch(*prbMol, templateMol, matches, false)) {
+      if (allowRGroups) {
+        matches = sortMatchesByDegreeOfCoreSubstitution(*prbMol, templateMol, matches);
+        int maxMatchedHeavies = -1;
+        std::vector<MatchVectType> prunedMatches;
+        prunedMatches.reserve(matches.size());
+        for (const auto &match : matches) {
+          int nMatchedHeavies = 0;
+          MatchVectType prunedMatch;
+          prunedMatch.reserve(match.size());
+          for (const auto &pair : match) {
+            const auto templateAtom = templateMol.getAtomWithIdx(pair.first);
+            const auto prbAtom = prbMol->getAtomWithIdx(pair.second);
+            bool isRGroup = templateAtom->getAtomicNum() == 0 && templateAtom->getDegree() == 1;
+            if (isRGroup && prbAtom->getAtomicNum() > 1) {
+              prunedMatch.push_back(std::move(pair));
+              ++nMatchedHeavies;
+            } else if (!isRGroup) {
+              prunedMatch.push_back(std::move(pair));
+            }
+          }
+          if (nMatchedHeavies < maxMatchedHeavies) {
+            break;
+          } else {
+            prunedMatches.push_back(std::move(prunedMatch));
+            maxMatchedHeavies = nMatchedHeavies;
+          }
+        }
+        matches = std::move(prunedMatches);
+      }
+      std::for_each(matches.begin(), matches.end(), [](auto &match) {
+        std::for_each(match.begin(), match.end(),
+                      [](auto &pair) { std::swap(pair.first, pair.second); });
+      });
+      if (!mol.getNumConformers()) {
+        RDDepict::compute2DCoords(mol);
+      }
+      MolAlign::getBestAlignmentTransform(mol, templateMol, trans, match,
+                                          confId, confId, matches, MAX_MATCHES);
+      std::for_each(match.begin(), match.end(),
+                    [](auto &pair) { std::swap(pair.first, pair.second); });
+      MolTransforms::transformConformer(mol.getConformer(), trans);
+    } else if (acceptFailure) {
+      RDDepict::compute2DCoords(mol);
+    }
+  } else {
+    const RDKit::ROMol *refPattern = nullptr;
+    // always accept failure in the original call because
+    // we detect it afterwards and, in case, restore the
+    // original conformation
+    const bool acceptOrigFailure = true;
+    match = RDDepict::generateDepictionMatching2DStructure(
+        mol, templateMol, confId, refPattern, acceptOrigFailure, false,
+        allowRGroups);
+  }
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  RDDepict::preferCoordGen = oprefer;
+#endif
+  if (match.empty()) {
+    if (acceptFailure) {
+      res = "{}";
+    } else {
+      if (mol.getNumConformers()) {
+        mol.removeConformer(mol.getConformer().getId());
+      }
+      if (origConformer) {
+        mol.addConformer(origConformer.release());
+      }
+      res = "";
+    }
+  } else {
+    rj::Document doc;
+    doc.SetObject();
+    MinimalLib::get_sss_json(mol, templateMol, match, doc, doc);
+    rj::StringBuffer buffer;
+    rj::Writer<rj::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    res = buffer.GetString();
+  }
+  return res;
+}
 
 }  // namespace MinimalLib
 }  // namespace RDKit

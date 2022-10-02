@@ -42,6 +42,7 @@ if(RDK_USE_BOOST_REGEX)
 endif()
 
 rdkit_library(FileParsers
+              CDXMLParser.cpp
               Mol2FileParser.cpp MolFileParser.cpp
               MolSGroupParsing.cpp MolSGroupWriting.cpp
               MolFileStereochem.cpp MolFileWriter.cpp
@@ -58,10 +59,11 @@ rdkit_library(FileParsers
 							MultithreadedMolSupplier.cpp
 							MultithreadedSmilesMolSupplier.cpp
 							MultithreadedSDMolSupplier.cpp
-              LINK_LIBRARIES GenericGroups Depictor SmilesParse GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams} ${zlib_lib})
+              LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams} ${zlib_lib})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
-rdkit_headers(FileParsers.h
+rdkit_headers(CDXMLParser.h
+              FileParsers.h
               FileParserUtils.h
               MolFileStereochem.h
               MolSupplier.h
@@ -105,4 +107,7 @@ rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp
            LINK_LIBRARIES FileParsers )
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp
+           LINK_LIBRARIES FileParsers )
+
+rdkit_catch_test(cdxmlParserCatchTest cdxml_parser_catch.cpp
            LINK_LIBRARIES FileParsers )
