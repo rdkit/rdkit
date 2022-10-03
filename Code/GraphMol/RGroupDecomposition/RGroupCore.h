@@ -50,7 +50,7 @@ struct RCore {
 
   // Return a copy of core where dummy atoms are replaced by
   // the respective matching atom in mol, while other atoms have
-  // their aromatic flag and formal charge copied from from
+  // their aromatic flag and formal charge copied from 
   // the respective matching atom in mol
   ROMOL_SPTR replaceCoreAtomsWithMolMatches(bool &hasCoreDummies,
                                             const ROMol &mol,

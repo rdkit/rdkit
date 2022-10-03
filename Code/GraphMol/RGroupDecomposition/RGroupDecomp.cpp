@@ -476,8 +476,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
         if (isUserDefinedLabel && nbrAtom->getIsAromatic()) {
           nbrAtom->updatePropertyCache(false);
           if (!numExplicitHs) {
-            nbrAtom->setNumExplicitHs(nbrAtom->getExplicitValence() -
-                                      nbrAtom->getDegree());
+            nbrAtom->setNumExplicitHs(nbrAtom->getImplicitValence());
           }
         }
       }

@@ -324,14 +324,7 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
       continue;
     }
 
-    // should we use maximum valence instead?
-    // auto defaultValence = (double)
-    // PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum());
-    // atom->calcExplicitValence()
-    // maybe this will work best-
-
-    //  TODO debug this
-    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() <= 1) {
+    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() <= 1 && !atom->hasQuery()) {
       continue;
     }
 

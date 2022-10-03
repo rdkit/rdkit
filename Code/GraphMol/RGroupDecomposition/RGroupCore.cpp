@@ -266,11 +266,11 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       std::inserter(mappedTargetIdx, mappedTargetIdx.begin()),
       [](const std::pair<int, int> &mapping) { return mapping.second; });
 
-  // User R groups that can possibly be incorporated into the match
-  std::vector<int> dummiesWithMapping, missingDummies;
-  // For each of those user R groups in dummiesWithMapping list of possible
+  // Dummy atoms/r group attachments that cannot be mapped to target atoms
+  std::vector<int> missingDummies;
+  // A map of terminal dummies/R group attachment points to a list of possible
   // target atoms that the R group can map to
-  std::vector<std::vector<int>> availableMappingsForDummy;
+  std::map<int, std::vector<int>> availableMappingsForDummyMap;
 
   // Loop over all the user terminal R groups and see if they can be included
   // in the match and, if so, record the target atoms that the R group can
@@ -299,33 +299,82 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     }
 
     if (available.size()) {
-      dummiesWithMapping.push_back(dummyIdx);
-      availableMappingsForDummy.push_back(available);
+      availableMappingsForDummyMap[dummyIdx] = available;
     } else {
-      // We could continue here and allow a userR group to be unmapped
-      // However, the code below will fail at the molMatchFunctor check as all
-      // query atoms are not matched to the target- the query would need to be
-      // edited before passing to the molMatchFunctor.
+      // We can't map this dummy to a target atom.  That is OK if it is an
+      // unlabelled core attachment atom or a user R label connected to a 
+      // query or wildcard atom
       const auto dummy = core->getAtomWithIdx(dummyIdx);
       const auto neighbor = core->getAtomWithIdx(neighborIdx);
       if (dummy->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
         missingDummies.push_back(dummyIdx);
-      } else if (isUserRLabel(*dummy) && (neighbor->getAtomicNum() == 0 || neighbor->hasQuery())) {
+      } else if (isUserRLabel(*dummy) &&
+                 (neighbor->getAtomicNum() == 0 || neighbor->hasQuery())) {
         // https://github.com/rdkit/rdkit/issues/4505
         missingDummies.push_back(dummyIdx);
-      }
-      else {
+      } else {
         return allMappings;
       }
     }
   }
-  if (availableMappingsForDummy.size() == 0) {
+  if (availableMappingsForDummyMap.size() == 0) {
     allMappings.push_back(match);
     return allMappings;
   }
 
-  // TODO atom pair duplicate thing on common neighbor
-  
+  // find singleton duplicate mappings. This can happen if there are 2 user
+  // specified R groups attached to a query atom and only one of the R groups
+  // can match (see second case in https://github.com/rdkit/rdkit/issues/4505)
+  // We remove the R group with the highest label
+  for (auto mapping = availableMappingsForDummyMap.begin();
+       mapping != availableMappingsForDummyMap.end();) {
+    auto values = mapping->second;
+    bool erased = false;
+    if (values.size() == 1) {
+      const auto dummy = core->getAtomWithIdx(mapping->first);
+      ROMol::ADJ_ITER nbrIter, endNbrs;
+      boost::tie(nbrIter, endNbrs) = core->getAtomNeighbors(dummy);
+      auto heavyNeighbor = core->getAtomWithIdx(*nbrIter);
+      bool userQueryDummy =
+          isUserRLabel(*dummy) &&
+          (heavyNeighbor->getAtomicNum() == 0 || heavyNeighbor->hasQuery());
+      if (userQueryDummy) {
+        boost::tie(nbrIter, endNbrs) = core->getAtomNeighbors(heavyNeighbor);
+        while (nbrIter != endNbrs) {
+          int otherIdx = *nbrIter;
+          if (otherIdx != mapping->first) {
+            auto mappingIter = availableMappingsForDummyMap.find(otherIdx);
+            if (mappingIter != availableMappingsForDummyMap.end() &&
+                mappingIter->second.size() == 1 &&
+                mappingIter->second[0] == values[0]) {
+              auto otherDummy = core->getAtomWithIdx(otherIdx);
+              bool remove = isUserRLabel(*otherDummy) &&
+                            dummy->getProp<int>(RLABEL) >
+                                otherDummy->getProp<int>(RLABEL);
+              if (remove) {
+                missingDummies.push_back(mapping->first);
+                availableMappingsForDummyMap.erase(mapping++);
+                erased = true;
+                break;
+              }
+            }
+          }
+          nbrIter++;
+        }
+      }
+    }
+    if (!erased) {
+      ++mapping;
+    }
+  }
+
+  std::vector<int> dummiesWithMapping;
+  std::vector<std::vector<int>> availableMappingsForDummy;
+  for (auto &mapping : availableMappingsForDummyMap) {
+    dummiesWithMapping.push_back(mapping.first);
+    availableMappingsForDummy.push_back(mapping.second);
+  }
+
   // enumerate over all available atoms using a cartesian product.
   // this is not the most ideal way to do things as the straightforward product
   // will allow duplicates.  In the unlikely evert that there is a performance
@@ -340,6 +389,9 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::string indexProp("__core_index__");
   bool hasMissing = missingDummies.size() > 0;
   if (hasMissing > 0) {
+    // if there are dummies that we can map these need to be removed from the query
+    // before atom-by-atom matching.  Create a copy of the query for that 
+    // and use properties to map atoms back to the core
     for (auto atom : core->atoms()) {
       atom->setProp(indexProp, atom->getIdx());
     }
@@ -347,7 +399,11 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     std::sort(missingDummies.begin(), missingDummies.end(),
               std::greater<int>());
     for (int index : missingDummies) {
+      RWMol::ADJ_ITER nbrIdx, endNbrs;
+      boost::tie(nbrIdx, endNbrs) = checkCore->getAtomNeighbors(checkCore->getAtomWithIdx(index));
+      auto neighborAtom = checkCore->getAtomWithIdx(*nbrIdx);
       checkCore->removeAtom(index);
+      neighborAtom->updatePropertyCache(false);
     }
     uint index = 0U;
     for (const auto atom : checkCore->atoms()) {

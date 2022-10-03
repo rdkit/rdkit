@@ -2144,12 +2144,17 @@ void testSingleAtomBridge() {
   it = rows.begin();
   CHECK_RGROUP(it, expected);
 
+  // Now that issue 4505 (Cores with query atoms may fail to R-group-decompose
+  // molecules) is resolved this will match with no substitution for R3
   core = "C1([*:1])C([*:2])*([*:3])C1"_smiles;
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp5(*core, params);
   mol = "C1OC2NC12"_smiles;
   res = decomp5.add(*mol);
-  TEST_ASSERT(res == -1);
+  TEST_ASSERT(res == 0);
+  TEST_ASSERT(rows.size() == 1)
+  it = rows.begin();
+  CHECK_RGROUP(it, expected);
 }
 
 void testAddedRGroupsHaveCoords() {
@@ -3028,33 +3033,58 @@ M  END
   params.matchingStrategy = GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   RGroupDecomposition decomp(*core, params);
-  decomp.add(*test);
-
+  auto result = decomp.add(*test);
+  TEST_ASSERT(result == 0);
   decomp.process();
   RGroupRows rows = decomp.getRGroupsAsRows();
   TEST_ASSERT(rows.size() == 1)
-
   auto row = rows[0];
-
   std::string expected("Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]");
   RGroupRows::const_iterator it = rows.begin();
   CHECK_RGROUP(it, expected);
-
 }
 
 void testGithub4505() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Test GitHub 4505 is fixed" << std::endl;
-  
-  auto core ="[*]1([*:1])cc([*:2])ccc1"_smarts;
-  auto mol = "n1cc(OC)ccc1"_smiles;
-
-  RGroupDecompositionParameters params;
-  RGroupDecomposition decomp(*core, params);
-
-  auto result = decomp.add(*mol);
-  std::cerr << "4505 result " << result << std::endl;
+  {
+    // this is the first example from issue 5505- I have changed it so that the
+    // molecule is not an exact match to the core (if no sidechains are found
+    // the decomposition fails)
+    auto core = "[n]1([*:1])cc([*:2])ccc1"_smarts;
+    auto mol = "n1cc(OC)ccc1"_smiles;
+    RGroupDecompositionParameters params;
+    params.removeAllHydrogenRGroups = false;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected("Core:c1cncc([*:2])c1 R2:CO[*:2]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+  }
+  {
+    // This is the second example from issue 5505.  The core is not listed in
+    // the example code so this is my guess
+    auto core = "[#6]([*:1])([*:2])~1~[#6]~[#6]~[#6]~[#6]~[#6]~1"_smarts;
+    auto mol = "C=1(C)CCCCC1"_smiles;
+    RGroupDecompositionParameters params;
+    params.removeAllHydrogenRGroups = false;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected("Core:C1=C([*:1])CCCC1 R1:C[*:1]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+  }
 }
 
 void testMultipleGroupsToUnlabelledCoreAtom() {
@@ -3063,12 +3093,89 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
   BOOST_LOG(rdInfoLog) << "Test unlabelled core atom issues" << std::endl;
 
   {
-    // Check that wildcards with no free valance match correctly
+    // Smiles/smarts version of github 5573
+    auto core = "[#6]-[#8]-[#6]-1-[#6]-[#6]-[#6]-[#6]-[#7]-1"_smarts;
+    auto mol = "COC1CCC(C)(C)CN1"_smiles;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected("Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+  }
+  {
+    // Check that sidechains cluster properly
     auto core = "[#6]-[#8]-[#6]-1-[#7]-[#6]-[#6]-[#6]-[*]-1"_smarts;
     std::vector<std::string> smilesVec{"COC1CCC(C)(C)CN1", "COC1NCC(C)(C)CO1",
                                        "COC1NCC(C)(C)CN1"};
     RGroupDecompositionParameters params;
     params.allowMultipleRGroupsOnUnlabelled = true;
+    params.matchingStrategy = Exhaustive;
+    params.scoreMethod = FingerprintVariance;
+    RGroupDecomposition decomp(*core, params);
+    for (auto smiles : smilesVec) {
+      auto mol = SmilesToMol(smiles);
+      auto result = decomp.add(*mol);
+      TEST_ASSERT(result > -1);
+    }
+    decomp.process();
+    auto rows = decomp.getRGroupsAsRows();
+    std::vector<std::string> expected{
+        "Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]",
+        "Core:COC1NCC([*:1])([*:2])CO1 R1:C[*:1] R2:C[*:2]",
+        "Core:COC1NCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]"};
+    TEST_ASSERT(rows.size() == expected.size());
+    int i = 0;
+    for (auto row = rows.cbegin(); row != rows.cend(); ++row, ++i) {
+      CHECK_RGROUP(row, expected[i]);
+    }
+  }
+  {
+    // Check core with terminal wildcard - dummy atom labels allowed
+    auto core = "[*]-[#8]-[#6]-1-[#6]-[#6]-[#6]-[#6]-[#7]-1"_smarts;
+    auto mol = "COC1CCC(C)(C)CN1"_smiles;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.labels = DummyAtomLabels;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected(
+        "Core:C1CC([*:2])([*:3])CNC1O[*:1] R1:C[*:1] R2:C[*:2] R3:C[*:3]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+    // Check core with terminal wildcard - dummy atom labels not allowed
+    params.labels = IsotopeLabels;
+    RGroupDecomposition decomp2(*core, params);
+    result = decomp2.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp2.process();
+    rows = decomp2.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    row = rows[0];
+    std::string expected2("Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]");
+    it = rows.begin();
+    CHECK_RGROUP(it, expected2);
+  }
+  {
+    // Check core with wildcard in ring
+    auto core = "[#6]-[#8]-[#6]-1-[#7]-[#6]-[#6]-[#6]-[*]-1"_smarts;
+    std::vector<std::string> smilesVec{"COC1CCC(C)(C)CN1", "COC1NCC(C)(C)CO1",
+                                       "COC1NCC(C)(C)CN1"};
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.matchingStrategy = Exhaustive;
+    params.scoreMethod = FingerprintVariance;
     RGroupDecomposition decomp(*core, params);
     for (auto smiles : smilesVec) {
       auto mol = SmilesToMol(smiles);
@@ -3096,7 +3203,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testGithub4505(); 
+  testGithub4505();
   testMultipleGroupsToUnlabelledCoreAtom();
   testMultipleGroupsToUnlabelledCoreAtomGithub5573();
 #if 1
