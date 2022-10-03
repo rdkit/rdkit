@@ -170,7 +170,7 @@ RDKIT_MOLALIGN_EXPORT double getBestAlignmentTransform(
   Best RMSD value found
 */
 RDKIT_MOLALIGN_EXPORT double getBestRMS(
-    ROMol &prbMol, ROMol &refMol, int prbCid = -1, int refCid = -1,
+    ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
     const std::vector<MatchVectType> &map = std::vector<MatchVectType>(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr);

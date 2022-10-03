@@ -245,6 +245,17 @@ typedef unsigned long long int	uintmax_t;
 %template(Point2D_Vect) std::vector<RDGeom::Point2D *>;
 %template(Point3D_Vect) std::vector<RDGeom::Point3D *>;
 %template(Atomic_Params_Vect) std::vector<const ForceFields::UFF::AtomicParams *>;
+/*
+%include <Numerics/Vector.h>
+%extend RDNumeric::DoubleVector {
+  double getVal(int i) {
+    return ($self)->getVal(i);
+  }
+  void setVal(int i, double v) {
+    ($self)->setVal(i, v);
+  }
+}
+*/
 
 /* pair */
 %template(Int_Pair) std::pair<boost::int32_t, int >;

@@ -31,7 +31,9 @@ endif(APPLE)
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap")
+  SET(PLATFORM "x86")
 else()
+  SET(PLATFORM "x64")
   if (WIN32)
     SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap")
   else()
@@ -89,7 +91,7 @@ if(NOT MSVC)
      COMMAND ${CMAKE_COMMAND} -E make_directory swig_csharp
 
      ## 1. run this custom command only after swig has been run.
-     COMMAND ${GMCS_EXE} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
+     COMMAND ${GMCS_EXE} -platform:${PLATFORM} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
      DEPENDS "${swig_generated_file_fullname}"
    )

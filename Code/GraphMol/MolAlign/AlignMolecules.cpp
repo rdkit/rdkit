@@ -212,7 +212,7 @@ double getBestAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
   return bestRMS;
 }
 
-double getBestRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
+double getBestRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                   const std::vector<MatchVectType> &map, int maxMatches,
                   bool symmetrizeConjugatedTerminalGroups,
                   const RDNumeric::DoubleVector *weights) {
