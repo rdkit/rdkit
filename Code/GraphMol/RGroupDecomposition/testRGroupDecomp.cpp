@@ -3203,9 +3203,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testGithub4505();
-  testMultipleGroupsToUnlabelledCoreAtom();
-  testMultipleGroupsToUnlabelledCoreAtomGithub5573();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -3253,6 +3250,9 @@ int main() {
   atomDegreePreconditionBug();
   testGithub5222();
   testGithub5569();
+  testGithub4505();
+  testMultipleGroupsToUnlabelledCoreAtomGithub5573();
+  testMultipleGroupsToUnlabelledCoreAtom();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
