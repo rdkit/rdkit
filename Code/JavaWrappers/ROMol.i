@@ -546,7 +546,7 @@ void setPreferCoordGen(bool);
     const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr) {
-    return RDKit::MolAlign::calcRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
+    return RDKit::MolAlign::CalcRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
   }
 
   double getBestRMS(
