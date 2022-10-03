@@ -225,11 +225,11 @@ public class Chemv2Tests extends GraphMolTest {
             Conformer conformer0 = noradrenalineMJCopy.getConformer(0);
             Conformer conformer1 = new Conformer(conformer0);
             noradrenalineMJCopy.addConformer(conformer1, true);
-            assertTrue(noradrenalineMJ.CalcRMS(noradrenalineMJCopy, 0, 0) < 1.e-5);
-            assertTrue(noradrenalineMJ.CalcRMS(noradrenalineMJCopy, 0, 1) < 1.e-5);
+            assertTrue(noradrenalineMJ.calcRMS(noradrenalineMJCopy, 0, 0) < 1.e-5);
+            assertTrue(noradrenalineMJ.calcRMS(noradrenalineMJCopy, 0, 1) < 1.e-5);
             double scalingFactor = noradrenalineMJCopy.normalizeDepiction(1);
-            assertTrue(noradrenalineMJ.CalcRMS(noradrenalineMJCopy, 0, 0) < 1.e-5);
-            assertTrue(noradrenalineMJ.CalcRMS(noradrenalineMJCopy, 0, 1) > 1.e-5);
+            assertTrue(noradrenalineMJ.calcRMS(noradrenalineMJCopy, 0, 0) < 1.e-5);
+            assertTrue(noradrenalineMJ.calcRMS(noradrenalineMJCopy, 0, 1) > 1.e-5);
             assertEquals(scalingFactor, 1.875, 1.e-3);
             Conformer conformer2 = new Conformer(conformer1);
             noradrenalineMJCopy.addConformer(conformer2, true);
@@ -263,8 +263,8 @@ public class Chemv2Tests extends GraphMolTest {
             Conformer conformer1 = new Conformer(conformer0);
             noradrenalineMJCopy.addConformer(conformer1, true);
             double scalingFactor = noradrenalineMJCopy.normalizeDepiction(1, -1);
-            assertTrue(noradrenalineMJ.CalcRMS(noradrenalineMJCopy, 0, 0) < 1.e-5);
-            assertTrue(noradrenalineMJ.CalcRMS(noradrenalineMJCopy, 0, 1) > 1.e-5);
+            assertTrue(noradrenalineMJ.calcRMS(noradrenalineMJCopy, 0, 0) < 1.e-5);
+            assertTrue(noradrenalineMJ.calcRMS(noradrenalineMJCopy, 0, 1) > 1.e-5);
             assertEquals(scalingFactor, 1.875, 1.e-3);
             Conformer conformer2 = new Conformer(conformer1);
             noradrenalineMJCopy.addConformer(conformer2, true);
@@ -292,8 +292,8 @@ public class Chemv2Tests extends GraphMolTest {
             Conformer conformer1 = new Conformer(conformer0);
             noradrenalineMJCopy.addConformer(conformer1, true);
             double scalingFactor = noradrenalineMJCopy.normalizeDepiction(1, 0, 3.0);
-            assertTrue(noradrenalineMJ.CalcRMS(noradrenalineMJCopy, 0, 0) < 1.e-5);
-            assertTrue(noradrenalineMJ.CalcRMS(noradrenalineMJCopy, 0, 1) > 1.e-5);
+            assertTrue(noradrenalineMJ.calcRMS(noradrenalineMJCopy, 0, 0) < 1.e-5);
+            assertTrue(noradrenalineMJ.calcRMS(noradrenalineMJCopy, 0, 1) > 1.e-5);
             assertEquals(scalingFactor, 3.0, 1.e-3);
             Conformer conformer2 = new Conformer(conformer1);
             noradrenalineMJCopy.addConformer(conformer2, true);
@@ -350,7 +350,7 @@ public class Chemv2Tests extends GraphMolTest {
 
         // alignMol() would return this for the rms: 2.50561
         // But the best rms is: 2.43449
-        double rmsdInPlace = prbCopy1.CalcRMS(ref);
+        double rmsdInPlace = prbCopy1.calcRMS(ref);
         assertEquals(rmsdInPlace, 2.6026, 1.e-3);
         double rmsd = prb.getBestRMS(ref);
         assertEquals(rmsd, 2.43449, 1.e-3);
@@ -384,7 +384,7 @@ public class Chemv2Tests extends GraphMolTest {
             matchesPruned.set(i, matchPruned);
             matchPruned.delete();
         }
-        rmsdInPlace = prbCopy2.CalcRMS(ref, -1, -1, matchesPruned);
+        rmsdInPlace = prbCopy2.calcRMS(ref, -1, -1, matchesPruned);
         assertEquals(rmsdInPlace, 2.5672, 1.e-3);
         rmsd = prb.getBestRMS(ref, -1, -1, matchesPruned);
         assertEquals(rmsd, 1.14329, 1.e-3);
@@ -397,7 +397,7 @@ public class Chemv2Tests extends GraphMolTest {
                 weights.setVal(i, 100.0);
             }
         }
-        rmsdInPlace = prbCopy3.CalcRMS(ref, -1, -1, matches, 1000, true, weights);
+        rmsdInPlace = prbCopy3.calcRMS(ref, -1, -1, matches, 1000, true, weights);
         assertEquals(rmsdInPlace, 17.7959, 1.e-3);
         rmsd = prb.getBestRMS(ref, -1, -1, matches, 1000, true, weights);
         assertEquals(rmsd, 10.9681, 1.e-3);

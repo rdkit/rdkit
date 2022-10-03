@@ -541,12 +541,12 @@ void setPreferCoordGen(bool);
       prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights, reflect, maxIters);
   }
 
-  double CalcRMS(
+  double calcRMS(
     const ROMol &refMol, int prbCid = -1, int refCid = -1,
     const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
     int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
     const RDNumeric::DoubleVector *weights = nullptr) {
-    return RDKit::MolAlign::CalcRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
+    return RDKit::MolAlign::calcRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
   }
 
   double getBestRMS(
