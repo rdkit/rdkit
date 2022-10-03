@@ -460,4 +460,35 @@ M  END)CTAB"_ctab;
       CHECK(cid2 >= 0);
     }
   }
+  SECTION("phosphorous") {
+    std::vector<std::string> smileses = {
+        "CCOC(=O)c1pc(P(Cl)Cl)c2n1[C@@H](C)C(=O)Nc1ccc(C)cc1-2",
+        "N(c1c(O)ccc2c(P(Cl)Cl)pc(C(=O)O)n12)[N+](=O)[O-]",
+    };
+    auto patt = "[p]1*c[!#6]c1"_smarts;
+    REQUIRE(patt);
+    for (const auto &smi : smileses) {
+      INFO(smi);
+      std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
+      REQUIRE(mol);
+      MolOps::addHs(*mol);
+      DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+      ps.randomSeed = 0xf00d;
+      auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
+      REQUIRE(cid >= 0);
+      UFF::UFFOptimizeMolecule(*mol);
+
+      auto match = SubstructMatch(*mol, *patt);
+      REQUIRE(match.size() >= 1);
+
+      const auto conf = mol->getConformer();
+      std::map<int, RDGeom::Point3D> cmap;
+      for (auto &mi : match[0]) {
+        cmap[mi.second] = conf.getAtomPos(mi.second);
+      }
+      ps.coordMap = &cmap;
+      auto cid2 = DGeomHelpers::EmbedMolecule(*mol, ps);
+      CHECK(cid2 >= 0);
+    }
+  }
 }
