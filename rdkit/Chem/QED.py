@@ -255,7 +255,7 @@ def properties(mol):
     HBD=rdmd.CalcNumHBD(mol),
     PSA=MolSurf.TPSA(mol),
     ROTB=rdmd.CalcNumRotatableBonds(mol, rdmd.NumRotatableBondsOptions.Strict),
-    AROM=Chem.GetSSSR(Chem.DeleteSubstructs(Chem.Mol(mol), AliphaticRings)),
+    AROM=len(Chem.GetSSSR(Chem.DeleteSubstructs(Chem.Mol(mol), AliphaticRings))),
     ALERTS=sum(1 for alert in StructuralAlerts if mol.HasSubstructMatch(alert)),
   )
   # The replacement

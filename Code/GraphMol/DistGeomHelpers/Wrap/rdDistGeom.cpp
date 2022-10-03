@@ -310,26 +310,26 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   - pruneRmsThresh : Retain only the conformations out of 'numConfs' \n\
                     after embedding that are at least \n\
                     this far apart from each other. \n\
-          RMSD is computed on the heavy atoms. \n\
-          Pruning is greedy; i.e. the first embedded conformation\n\
-          is retained and from then on only those that are at\n\
-          least pruneRmsThresh away from all retained conformations\n\
-          are kept. The pruning is done after embedding and \n\
-          bounds violation minimization. No pruning by default.\n\
-    - coordMap : a dictionary mapping atom IDs->coordinates. Use this to \n\
-                 require some atoms to have fixed coordinates in the resulting \n\
-                 conformation.\n\
-    - forceTol : tolerance to be used during the force-field minimization with \n\
-                 the distance geometry force field.\n\
-    - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
-                 of the bounds matrix fails.\n\
-    - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
-    - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
-                 was built with multi-thread support.\n\
-                If set to zero, the max supported by the system will be used.\n\
-    - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
-    - useBasicKnowledge : impose basic knowledge such as flat rings\n\
-    - printExpTorsionAngles : print the output from the experimental torsion angles\n\
+                    RMSD is computed on the heavy atoms. \n\
+                    Pruning is greedy; i.e. the first embedded conformation\n\
+                    is retained and from then on only those that are at\n\
+                    least pruneRmsThresh away from all retained conformations\n\
+                    are kept. The pruning is done after embedding and \n\
+                    bounds violation minimization. No pruning by default.\n\
+  - coordMap : a dictionary mapping atom IDs->coordinates. Use this to \n\
+               require some atoms to have fixed coordinates in the resulting \n\
+               conformation.\n\
+  - forceTol : tolerance to be used during the force-field minimization with \n\
+               the distance geometry force field.\n\
+  - ignoreSmoothingFailures : try to embed the molecule even if triangle smoothing\n\
+               of the bounds matrix fails.\n\
+  - enforceChirality : enforce the correct chirality if chiral centers are present.\n\
+  - numThreads : number of threads to use while embedding. This only has an effect if the RDKit\n\
+               was built with multi-thread support.\n\
+              If set to zero, the max supported by the system will be used.\n\
+  - useExpTorsionAnglePrefs : impose experimental torsion angle preferences\n\
+  - useBasicKnowledge : impose basic knowledge such as flat rings\n\
+  - printExpTorsionAngles : print the output from the experimental torsion angles\n\
  RETURNS:\n\n\
     List of new conformation IDs \n\
 \n";

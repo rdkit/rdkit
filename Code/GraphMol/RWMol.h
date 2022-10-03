@@ -57,7 +57,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void insertMol(const ROMol &other);
 
   //! \name Atoms
-  //@{
+  //! @{
 
   //! adds an empty Atom to our collection
   /*!
@@ -115,10 +115,10 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   //! \overload
   void removeAtom(Atom *atom);
 
-  //@}
+  //! @}
 
   //! \name Bonds
-  //@{
+  //! @{
 
   //! adds a Bond between the indicated Atoms
   /*!
@@ -196,7 +196,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void replaceBond(unsigned int idx, Bond *bond, bool preserveProps = false,
                    bool keepSGroups = true);
 
-  //@}
+  //! @}
 
     //! removes all atoms, bonds, properties, bookmarks, etc.
   void clear() {

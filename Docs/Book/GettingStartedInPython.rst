@@ -506,12 +506,12 @@ More detail about the smallest set of smallest rings (SSSR) is available:
   >>> list(ssr[1])
   [4, 5, 2, 3]
 
-As the name indicates, this is a symmetrized SSSR; if you are interested in the number of “true” SSSR, use the GetSSSR function.
+As the name indicates, this is a symmetrized SSSR; if you are interested in the number of “true” SSSR, use the GetSSSR function (note that in this case there's no difference).
 
 
 .. doctest::
 
-  >>> Chem.GetSSSR(m)
+  >>> len(Chem.GetSSSR(m))
   2
 
 The distinction between symmetrized and non-symmetrized SSSR is discussed in more detail below in the section `The SSSR Problem`_.

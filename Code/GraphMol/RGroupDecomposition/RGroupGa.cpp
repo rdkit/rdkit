@@ -10,7 +10,7 @@
 
 #include <ctime>
 #include <limits>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #endif
 #include <assert.h>
@@ -110,9 +110,7 @@ RGroupGa::RGroupGa(const RGroupDecompData& rGroupData,
     }
     chromosomePolicy.setMax(pos, m.size());
     unsigned long count = numPermutations * m.size();
-    numPermutations = count / m.size() == numPermutations
-                          ? count
-                          : numeric_limits<unsigned int>::max();
+    numPermutations = std::min(count, static_cast<unsigned long>(numeric_limits<unsigned int>::max()));
     pos++;
   }
   chromLength = pos;
@@ -311,7 +309,7 @@ GaResult RGroupGa::run(int runNumber) {
 vector<GaResult> RGroupGa::runBatch() {
   int numberRuns = rGroupData.params.gaNumberRuns;
   bool gaParallelRuns = rGroupData.params.gaParallelRuns;
-#ifndef RDK_TEST_MULTITHREADED
+#ifndef RDK_BUILD_THREADSAFE_SSS
   if (gaParallelRuns) {
     gaParallelRuns = false;
     BOOST_LOG(rdWarningLog)
@@ -323,7 +321,7 @@ vector<GaResult> RGroupGa::runBatch() {
   results.reserve(numberRuns);
 
   if (gaParallelRuns) {
-#ifdef RDK_TEST_MULTITHREADED
+#ifdef RDK_BUILD_THREADSAFE_SSS
     vector<future<GaResult>> tasks;
     tasks.reserve(numberRuns);
     for (int n = 0; n < numberRuns; n++) {

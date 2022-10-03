@@ -258,6 +258,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   */
   template <typename T>
   void setVal(const std::string &what, T &val) {
+    static_assert(! std::is_same_v<T, std::string_view>,
+                  "T cannot be string_view");
     _hasNonPodData = true;
     for (auto &&data : _data) {
       if (data.key == what) {
@@ -271,6 +273,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
   template <typename T>
   void setPODVal(const std::string &what, T val) {
+    static_assert(! std::is_same_v<T, std::string_view>,
+                  "T cannot be string_view");
     // don't change the hasNonPodData status
     for (auto &&data : _data) {
       if (data.key == what) {

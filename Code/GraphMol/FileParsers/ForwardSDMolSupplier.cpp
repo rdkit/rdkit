@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2009-2019 Greg Landrum
+//  Copyright (C) 2009-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -66,15 +66,16 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
   d_line++;
   bool hasProp = false;
   bool warningIssued = false;
-  std::string tempStr;
   std::string dlabel = "";
-  std::getline(*dp_inStream, tempStr);
+  std::string inl;
+  std::getline(*dp_inStream, inl);
+  std::string_view tempStr = inl;
 
   // FIX: report files missing the $$$$ marker
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
          (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
-    tempStr = strip(tempStr);
-    if (tempStr != "") {
+    tempStr = FileParserUtils::strip(tempStr);
+    if (!tempStr.empty()) {
       if (tempStr[0] == '>') {  // data header line: start of a data item
         // ignore all other crap and seek for for a data label enclosed
         // by '<' and '>'
@@ -84,7 +85,7 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
         // situation - so ignore such data items for now
         hasProp = true;
         warningIssued = false;
-        tempStr.erase(0, 1);            // remove the first ">" sign
+        tempStr = tempStr.substr(1);    // remove the first ">" sign
         size_t sl = tempStr.find("<");  // begin datalabel
         size_t se = tempStr.find(">");  // end datalabel
         if ((sl == std::string::npos) || (se == std::string::npos) ||
@@ -93,11 +94,13 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           // no data label ignore until next data item
           // i.e. until we hit a blank line
           d_line++;
-          std::getline(*dp_inStream, tempStr);
-          std::string stmp = strip(tempStr);
+          std::getline(*dp_inStream, inl);
+          tempStr = inl;
+          auto stmp = FileParserUtils::strip(tempStr);
           while (stmp.length() != 0) {
             d_line++;
-            std::getline(*dp_inStream, tempStr);
+            std::getline(*dp_inStream, inl);
+            tempStr = inl;
             if (dp_inStream->eof()) {
               throw FileParseException("End of data field name not found");
             }
@@ -107,10 +110,11 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           // we know the label - now read in the relevant properties
           // until we hit a blank line
           d_line++;
-          std::getline(*dp_inStream, tempStr);
+          std::getline(*dp_inStream, inl);
+          tempStr = inl;
 
           std::string prop = "";
-          std::string stmp = strip(tempStr);
+          auto stmp = FileParserUtils::strip(tempStr);
           int nplines = 0;  // number of lines for this property
           while (stmp.length() != 0 || tempStr[0] == ' ' ||
                  tempStr[0] == '\t') {
@@ -119,17 +123,18 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
               prop += "\n";
             }
             // take off \r if it's still in the property:
-            if (tempStr[tempStr.length() - 1] == '\r') {
-              tempStr.erase(tempStr.length() - 1);
+            if (tempStr.back() == '\r') {
+              tempStr = tempStr.substr(0, tempStr.size() - 1);
             }
             prop += tempStr;
             d_line++;
-            // erase tempStr in case the file does not end with a carrier
+            // erase inl in case the file does not end with a carriage
             // return (we will end up in an infinite loop if we don't do
             // this and we do not check for EOF in this while loop body)
-            tempStr.erase();
-            std::getline(*dp_inStream, tempStr);
-            stmp = strip(tempStr);
+            inl.erase();
+            std::getline(*dp_inStream, inl);
+            tempStr = inl;
+            stmp = FileParserUtils::strip(tempStr);
           }
           mol->setProp(dlabel, prop);
           if (df_processPropertyLists) {
@@ -165,7 +170,8 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
       }
     }
     d_line++;
-    std::getline(*dp_inStream, tempStr);
+    std::getline(*dp_inStream, inl);
+    tempStr = inl;
   }
 }
 

@@ -181,7 +181,7 @@ class PyGILStateHolder {
   PyGILState_STATE d_gstate;
 };
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 // Release the Global Interpreter lock at certain places
 //  on construction - release the lock
 //  on destruction - grab the lock

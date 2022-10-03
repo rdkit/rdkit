@@ -97,7 +97,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
   void setDescription(const std::string &description);
 
   //! \name Properties
-  //@{
+  //! @{
 
   //! returns a list with the names of our \c properties
   STR_VECT getPropList() const { return d_props.keys(); }

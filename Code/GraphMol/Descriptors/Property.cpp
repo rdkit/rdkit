@@ -38,7 +38,7 @@
 #include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/Descriptors/MolSurf.h>
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 
@@ -95,7 +95,7 @@ void _registerDescriptors() {
 }  // namespace
 
 void registerDescriptors() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static std::once_flag once;
   std::call_once(once, _registerDescriptors);
 #else

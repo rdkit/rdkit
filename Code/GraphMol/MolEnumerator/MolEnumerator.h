@@ -213,8 +213,8 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
   }
 
   size_t d_defaultRepeatCount =
-      4;  //! from mol files we typically don't know the repeat count. This is
-          //! what we use instead
+      4;  //!< from mol files we typically don't know the repeat count. This is
+          //!< what we use instead
  private:
   std::shared_ptr<ROMol> dp_mol{nullptr};
   std::shared_ptr<RWMol> dp_frame{nullptr};

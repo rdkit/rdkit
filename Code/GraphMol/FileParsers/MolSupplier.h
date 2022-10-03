@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2021 greg landrum, Rational Discovery LLC
+//  Copyright (C) 2002-2022 greg landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +14,7 @@
 #include <RDGeneral/types.h>
 
 #include <string>
+#include <string_view>
 #include <list>
 #include <memory>
 #include <vector>

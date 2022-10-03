@@ -94,11 +94,11 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     CHI_TETRAHEDRAL_CCW,  //!< tetrahedral: counter-clockwise rotation (SMILES
                           //\@)
     CHI_OTHER,            //!< some unrecognized type of chirality
-    CHI_TETRAHEDRAL,      //! tetrahedral, use permutation flag
-    CHI_ALLENE,           //! allene, use permutation flag
-    CHI_SQUAREPLANAR,     //! square planar, use permutation flag
-    CHI_TRIGONALBIPYRAMIDAL,  //! trigonal bipyramidal, use permutation flag
-    CHI_OCTAHEDRAL            //! octahedral, use permutation flag
+    CHI_TETRAHEDRAL,      //!< tetrahedral, use permutation flag
+    CHI_ALLENE,           //!< allene, use permutation flag
+    CHI_SQUAREPLANAR,     //!< square planar, use permutation flag
+    CHI_TRIGONALBIPYRAMIDAL,  //!< trigonal bipyramidal, use permutation flag
+    CHI_OCTAHEDRAL            //!< octahedral, use permutation flag
   } ChiralType;
 
   Atom();

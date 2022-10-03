@@ -2004,6 +2004,7 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
         "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&1:1,&2:5,r|"_smiles;
     REQUIRE(mol);
     REQUIRE(mol->getStereoGroups().size() == 4);
+
     std::vector<unsigned int> aindices(mol->getNumAtoms());
     std::iota(aindices.begin(), aindices.end(), 0);
     std::reverse(aindices.begin(), aindices.end());
@@ -2015,7 +2016,7 @@ TEST_CASE("github #4071: StereoGroups not preserved by RenumberAtoms()",
             mol->getStereoGroups()[i].getGroupType());
     }
     CHECK(MolToCXSmiles(*nmol) ==
-          "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |o1:1,&1:3,&2:5,&3:7|");
+          "C[C@H]([C@@H](C)[C@@H](C)O)[C@@H](C)O |o1:7,&1:1,&2:2,&3:4|");
   }
 }
 
@@ -2730,5 +2731,24 @@ TEST_CASE("metal hybridization") {
       CHECK(m->getAtomWithIdx(1)->getHybridization() ==
             Atom::HybridizationType::SP3D);
     }
+  }
+}
+
+TEST_CASE(
+    "github #5462: Invalid number of radical electrons calculated for [Pr+4]") {
+  SECTION("as reported") {
+    auto m = "[Pr+4]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+  SECTION("also reported") {
+    auto m = "[U+5]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
+  }
+  SECTION("extreme") {
+    auto m = "[Fe+30]"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(0)->getNumRadicalElectrons() == 0);
   }
 }
