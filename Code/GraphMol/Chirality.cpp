@@ -766,7 +766,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 namespace Chirality {
 
-#if _MSC_VER
+#ifdef _WIN32
 int setenv(const char *name, const char *value, int) {
   return _putenv_s(name, value);
 }
