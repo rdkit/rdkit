@@ -31,7 +31,6 @@ import logging
 import re
 from typing import Iterable
 from typing import Optional
-from xml.etree.ElementTree import canonicalize
 
 from rdkit import Chem
 from rdkit.Chem import EnumerateStereoisomers
