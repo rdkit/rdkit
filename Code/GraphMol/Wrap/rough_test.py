@@ -454,6 +454,23 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m2.GetNumAtoms(), 2)
     self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
 
+    # test merging of isotopes, by default deuterium will not be merged
+    m = Chem.MolFromSmiles('CC[2H]', False)
+    self.assertEqual(m.GetNumAtoms(), 3)
+    m2 = Chem.MergeQueryHs(m)
+    self.assertTrue(m2 is not None)
+    self.assertEqual(m2.GetNumAtoms(), 3)
+    self.assertFalse(m2.GetAtomWithIdx(1).HasQuery())
+
+    # here deuterium is merged
+    # should be the same as merging all hydrogens
+    m = Chem.MolFromSmiles('CC[2H]', False)
+    self.assertEqual(m.GetNumAtoms(), 3)
+    m2 = Chem.MergeQueryHs(m, mergeIsotopes=True)
+    self.assertTrue(m2 is not None)
+    self.assertEqual(m2.GetNumAtoms(), 2)
+    self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
+    
     # test github758
     m = Chem.MolFromSmiles('CCC')
     self.assertEqual(m.GetNumAtoms(), 3)
