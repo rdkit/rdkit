@@ -925,6 +925,7 @@ void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
 
 double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
                           double scaleFactor) {
+  constexpr double SCALE_FACTOR_THRESHOLD = 1.e-5;
   if (!mol.getNumBonds()) {
     return -1.;
   }
@@ -950,7 +951,7 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
         mostCommonBondLengthInt = it->first;
       }
     }
-    if (mostCommonBondLengthInt != -1) {
+    if (mostCommonBondLengthInt > 0) {
       double mostCommonBondLength =
           static_cast<double>(mostCommonBondLengthInt) * 0.1;
       scaleFactor = RDKIT_BOND_LEN / mostCommonBondLength;
@@ -966,7 +967,8 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
       *canonTrans *= rotate90;
     }
   }
-  if (scaleFactor > 0. && fabs(scaleFactor - 1.0) > 1.e-5) {
+  bool isScaleFactorSane = (scaleFactor > SCALE_FACTOR_THRESHOLD);
+  if (isScaleFactorSane && fabs(scaleFactor - 1.0) > SCALE_FACTOR_THRESHOLD) {
     RDGeom::Transform3D trans;
     trans.setVal(0, 0, scaleFactor);
     trans.setVal(1, 1, scaleFactor);
@@ -976,6 +978,9 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
     MolTransforms::transformConformer(conf, trans);
   } else if (canonTrans) {
     MolTransforms::transformConformer(conf, *canonTrans);
+  }
+  if (!isScaleFactorSane) {
+    scaleFactor = -1.;
   }
   return scaleFactor;
 }
