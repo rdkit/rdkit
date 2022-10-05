@@ -304,6 +304,9 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
 #define VALID_ATIDX(_atidx_) \
   ((_atidx_) >= startAtomIdx && (_atidx_) < startAtomIdx + mol.getNumAtoms())
 
+#define VALID_BNDIDX(_bidx_) \
+  ((_bidx_) >= startBondIdx && (_bidx_) < startBondIdx + mol.getNumBonds())
+
 template <typename Iterator>
 bool parse_atom_values(Iterator &first, Iterator last, RDKit::RWMol &mol,
                        unsigned int startAtomIdx) {
@@ -405,6 +408,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
   mol.addConformer(conf);
   ++first;
   unsigned int atIdx = 0;
+  bool is3D = false;
   while (first <= last && *first != ')') {
     RDGeom::Point3D pt;
     std::string tkn = read_text_to(first, last, ";)");
@@ -420,6 +424,7 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
         }
         if (tokens.size() >= 3 && tokens[2].size()) {
           pt.z = boost::lexical_cast<double>(tokens[2]);
+          is3D = true;
         }
       }
 
@@ -429,6 +434,12 @@ bool parse_coords(Iterator &first, Iterator last, RDKit::RWMol &mol,
     if (first <= last && *first != ')') {
       ++first;
     }
+  }
+  // make sure that the conformer really is 3D!
+  if (is3D && hasNonZeroZCoords(*conf)) {
+    conf->set3D(true);
+  } else {
+    conf->set3D(false);
   }
   if (first >= last || *first != ')') {
     return false;
@@ -996,6 +1007,112 @@ bool parse_variable_attachments(Iterator &first, Iterator last,
   }
   return true;
 }
+
+template <typename Iterator>
+bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                        unsigned int startAtomIdx, unsigned int startBondIdx) {
+  // these look like: CC(O)Cl |w:1.0|
+  // also wD and wU for down and up wedges.
+  //
+  // We do not end up using this to set stereochemistry, but the relevant bond
+  // properties are set in case client code wants to do something with the
+  // information.
+  if (first >= last || *first != 'w' || first + 1 >= last) {
+    return false;
+  }
+  ++first;
+  Bond::BondDir state = Bond::BondDir::NONE;
+  unsigned int cfg = 0;
+  switch (*first) {
+    case ':':
+      state = Bond::BondDir::UNKNOWN;
+      cfg = 2;
+      break;
+    case 'U':
+      state = Bond::BondDir::BEGINWEDGE;
+      cfg = 1;
+      ++first;
+      break;
+    case 'D':
+      state = Bond::BondDir::BEGINDASH;
+      cfg = 3;
+      ++first;
+      break;
+    default:
+      break;
+  }
+  if (state == Bond::BondDir::NONE || first >= last || first + 1 >= last ||
+      *first != ':') {
+    return false;
+  }
+  ++first;
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int atomIdx;
+    if (!read_int(first, last, atomIdx)) {
+      return false;
+    }
+    if (first < last && *first == '.') {
+      ++first;
+    } else {
+      BOOST_LOG(rdWarningLog) << "improperly formatted w block" << std::endl;
+      return false;
+    }
+    unsigned int bondIdx;
+    if (!read_int(first, last, bondIdx)) {
+      return false;
+    }
+
+    if (!VALID_ATIDX(atomIdx)) {
+      BOOST_LOG(rdWarningLog)
+          << "bad atom index, " << atomIdx << ", in w block" << std::endl;
+      return false;
+    }
+    if (!VALID_BNDIDX(bondIdx)) {
+      BOOST_LOG(rdWarningLog)
+          << "bad bond index, " << bondIdx << ", in w block" << std::endl;
+      return false;
+    }
+    auto atom = mol.getAtomWithIdx(atomIdx + startAtomIdx);
+    auto bond = mol.getBondWithIdx(bondIdx + startBondIdx);
+
+    // we can't set wedging twice:
+    if (bond->hasProp(common_properties::_MolFileBondCfg)) {
+      BOOST_LOG(rdWarningLog)
+          << "w block attempts to set wedging on bond " << bond->getIdx()
+          << " more than once." << std::endl;
+      return false;
+    }
+
+    // first things first, the atom needs to be the start atom of the bond for
+    // any of this to make sense
+    if (atom->getIdx() != bond->getBeginAtomIdx()) {
+      if (atom->getIdx() != bond->getEndAtomIdx()) {
+        BOOST_LOG(rdWarningLog)
+            << "atom " << atomIdx << " is not associated with bond " << bondIdx
+            << " in w block" << std::endl;
+        return false;
+      }
+      auto eidx = bond->getBeginAtomIdx();
+      bond->setBeginAtomIdx(atom->getIdx());
+      bond->setEndAtomIdx(eidx);
+    }
+    bond->setProp(common_properties::_MolFileBondCfg, cfg);
+    bond->setBondDir(state);
+    if (cfg == 2 && bond->getBondType() == Bond::BondType::SINGLE) {
+      bond->getBeginAtom()->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+      mol.setProp(detail::_needsDetectBondStereo, 1);
+    }
+    if ((cfg == 1 || cfg == 3) &&
+        bond->getBondType() == Bond::BondType::SINGLE) {
+      mol.setProp(detail::_needsDetectAtomStereo, 1);
+    }
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  return true;
+}
+
 template <typename Iterator>
 bool parse_substitution(Iterator &first, Iterator last, RDKit::RWMol &mol,
                         unsigned int startAtomIdx) {
@@ -1257,6 +1374,10 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
       if (!parse_variable_attachments(first, last, mol, startAtomIdx)) {
         return false;
       }
+    } else if (*first == 'w') {
+      if (!parse_wedged_bonds(first, last, mol, startAtomIdx, startBondIdx)) {
+        return false;
+      }
     } else {
       ++first;
     }
@@ -1303,8 +1424,8 @@ std::string quote_string(const std::string &txt) {
 std::string quote_atomprop_string(const std::string &txt) {
   // at a bare minimum, . needs to be escaped
   std::string res;
-  for(auto c : txt) {
-    if(c == '.') {
+  for (auto c : txt) {
+    if (c == '.') {
       res += "&#46;";
     } else {
       res += c;
@@ -1744,16 +1865,77 @@ std::string get_atom_props_block(const ROMol &mol,
           // it's a pseudoatom, skip it
           continue;
         }
-        if (res.size() == 0) {
+        if (res.empty()) {
           res += "atomProp";
         }
-        res += boost::str(boost::format(":%d.%s.%s") % which %
-                          quote_atomprop_string(pn) % quote_atomprop_string(pv));
+        res +=
+            boost::str(boost::format(":%d.%s.%s") % which %
+                       quote_atomprop_string(pn) % quote_atomprop_string(pv));
       }
     }
     ++which;
   }
   return res;
+}
+
+std::string get_bond_config_block(const ROMol &mol,
+                                  const std::vector<unsigned int> &atomOrder,
+                                  const std::vector<unsigned int> &bondOrder,
+                                  bool coordsIncluded) {
+  std::string w = "", wU = "", wD = "";
+  for (unsigned int i = 0; i < bondOrder.size(); ++i) {
+    auto idx = bondOrder[i];
+    const auto bond = mol.getBondWithIdx(idx);
+    // when figuring out what to output for the bond, favor the wedge state:
+    Bond::BondDir bd = bond->getBondDir();
+    switch (bd) {
+      case Bond::BondDir::BEGINDASH:
+      case Bond::BondDir::BEGINWEDGE:
+      case Bond::BondDir::UNKNOWN:
+        break;
+      default:
+        bd = Bond::BondDir::NONE;
+    }
+    unsigned int cfg = 0;
+    if (bd == Bond::BondDir::NONE) {
+      bond->getPropIfPresent(common_properties::_MolFileBondCfg, cfg);
+    }
+    if (cfg == 2 || bd == Bond::BondDir::UNKNOWN) {
+      auto begAtomOrder = std::find(atomOrder.begin(), atomOrder.end(),
+                                    bond->getBeginAtomIdx()) -
+                          atomOrder.begin();
+      if (w.empty()) {
+        w += "w:";
+      } else {
+        w += ",";
+      }
+      w += boost::str(boost::format("%d.%d") % begAtomOrder % i);
+    } else if (coordsIncluded) {
+      // we only do wedgeUp and wedgeDown if coordinates are being output
+      if (cfg == 1 || bd == Bond::BondDir::BEGINWEDGE) {
+        auto begAtomOrder = std::find(atomOrder.begin(), atomOrder.end(),
+                                      bond->getBeginAtomIdx()) -
+                            atomOrder.begin();
+        if (wU.empty()) {
+          wU += "wU:";
+        } else {
+          wU += ",";
+        }
+        wU += boost::str(boost::format("%d.%d") % begAtomOrder % i);
+      } else if (cfg == 3 || bd == Bond::BondDir::BEGINDASH) {
+        auto begAtomOrder = std::find(atomOrder.begin(), atomOrder.end(),
+                                      bond->getBeginAtomIdx()) -
+                            atomOrder.begin();
+        if (wD.empty()) {
+          wD += "wD:";
+        } else {
+          wD += ",";
+        }
+        wD += boost::str(boost::format("%d.%d") % begAtomOrder % i);
+      }
+    }
+  }
+  return w + wU + wD;
 }
 
 std::string get_linknodes_block(const ROMol &mol,
@@ -1856,6 +2038,14 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   if (flags & SmilesWrite::CXSmilesFields::CX_ATOM_PROPS) {
     const auto atomblock = get_atom_props_block(mol, atomOrder);
     appendToCXExtension(atomblock, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_BOND_CFG) {
+    bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
+                         mol.getNumConformers();
+    const auto cfgblock =
+        get_bond_config_block(mol, atomOrder, bondOrder, includeCoords);
+    appendToCXExtension(cfgblock, res);
   }
 
   if (flags & SmilesWrite::CXSmilesFields::CX_LINKNODES) {

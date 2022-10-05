@@ -41,7 +41,7 @@ void determineBondsHelper(ROMol &mol, bool useHueckel, int charge,
 
 BOOST_PYTHON_MODULE(rdDetermineBonds) {
   python::scope().attr("__doc__") =
-      "Module containing a C++ implementation of the xyz2mol algorithm";
+      "Module containing a C++ implementation of the xyz2mol algorithm. This is based on xyz2mol: https://github.com/jensengroup/xyz2mol";
 
   std::string docs;
   docs =
