@@ -73,6 +73,23 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     }
   }
 
+  // look for dummy rgroup attachment points in core that are not in mapping
+  // there is no r group for these guys.  I've marked them as missing.
+  // It might be better to delete them coreReplaceAtoms, but I'm not sure of the
+  // implications of that.
+  for (auto atom : coreReplacedAtoms->atoms()) {
+    if (atom->getAtomicNum() == 0 && atom->hasProp(RLABEL)) {
+      auto missing = std::find_if(match.cbegin(), match.cend(),
+                                  [atom](const std::pair<int, int> &p) {
+                                    return static_cast<unsigned int>(p.first) ==
+                                           atom->getIdx();
+                                  }) == match.end();
+      if (missing) {
+        atom->setProp<bool>(MISSING_RGROUP, true);
+      }
+    }
+  }
+
   std::map<int, int> matchLookup(match.cbegin(), match.cend());
   for (auto bond : coreReplacedAtoms->bonds()) {
     if (bond->hasQuery()) {
@@ -197,6 +214,17 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
       MolOps::setTerminalAtomCoords(*finalCore, atomIdx, neighborIdx);
     }
   }
+  
+  // Remove unmapped dummies
+  std::vector<Atom *> atomsToRemove;
+  for (auto atom: coreReplacedAtoms.atoms()) {
+    if (atom->getAtomicNum() == 0 && atom->hasProp(MISSING_RGROUP)) {
+      atomsToRemove.push_back(finalCore->getAtomWithIdx(atom->getIdx()));
+    }
+  }
+  for (auto atom: atomsToRemove) {
+    finalCore->removeAtom(atom);
+  }
 
   finalCore->updatePropertyCache(false);
   return finalCore;
@@ -302,7 +330,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       availableMappingsForDummyMap[dummyIdx] = available;
     } else {
       // We can't map this dummy to a target atom.  That is OK if it is an
-      // unlabelled core attachment atom or a user R label connected to a 
+      // unlabelled core attachment atom or a user R label connected to a
       // query or wildcard atom
       const auto dummy = core->getAtomWithIdx(dummyIdx);
       const auto neighbor = core->getAtomWithIdx(neighborIdx);
@@ -389,8 +417,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::string indexProp("__core_index__");
   bool hasMissing = missingDummies.size() > 0;
   if (hasMissing > 0) {
-    // if there are dummies that we can map these need to be removed from the query
-    // before atom-by-atom matching.  Create a copy of the query for that 
+    // if there are dummies that we can map these need to be removed from the
+    // query before atom-by-atom matching.  Create a copy of the query for that
     // and use properties to map atoms back to the core
     for (auto atom : core->atoms()) {
       atom->setProp(indexProp, atom->getIdx());
@@ -400,7 +428,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
               std::greater<int>());
     for (int index : missingDummies) {
       RWMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) = checkCore->getAtomNeighbors(checkCore->getAtomWithIdx(index));
+      boost::tie(nbrIdx, endNbrs) =
+          checkCore->getAtomNeighbors(checkCore->getAtomWithIdx(index));
       auto neighborAtom = checkCore->getAtomWithIdx(*nbrIdx);
       checkCore->removeAtom(index);
       neighborAtom->updatePropertyCache(false);

@@ -60,6 +60,7 @@ const std::string CORE = "Core";
 const std::string RPREFIX = "R";
 const std::string _rgroupInputDummy = "_rgroupInputDummy";
 const std::string UNLABELLED_CORE_ATTACHMENT = "unlabeledCoreAttachment";
+const std::string MISSING_RGROUP = "missingRGroup";
 
 namespace {
 void ADD_MATCH(R_DECOMP &match, int rlabel) {
@@ -454,6 +455,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       continue;
     }
     auto label = data->getRlabel(atom);
+    auto missingRGroup = atom->hasProp(MISSING_RGROUP);
     Atom *nbrAtom = nullptr;
     for (const auto &nbri :
          boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
@@ -461,7 +463,8 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       break;
     }
     if (nbrAtom) {
-      bool isUserDefinedLabel = usedLabelMap.has(label) && usedLabelMap.isUserDefined(label);
+      bool isUserDefinedLabel =
+          usedLabelMap.has(label) && usedLabelMap.isUserDefined(label);
       auto numExplicitHs = nbrAtom->getNumExplicitHs();
       if (usedLabelMap.has(label) && usedLabelMap.getIsUsed(label)) {
         if (numExplicitHs) {
@@ -473,10 +476,11 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
         // if we remove an unused label from an aromatic atom,
         // we need to check whether we need to adjust its explicit
         // H count, or it will fail to kekulize
-        if (isUserDefinedLabel && nbrAtom->getIsAromatic()) {
+        if (isUserDefinedLabel && nbrAtom->getIsAromatic() && !missingRGroup) {
           nbrAtom->updatePropertyCache(false);
           if (!numExplicitHs) {
-            nbrAtom->setNumExplicitHs(nbrAtom->getImplicitValence());
+            nbrAtom->setNumExplicitHs(nbrAtom->getExplicitValence() -
+                                      nbrAtom->getDegree());
           }
         }
       }

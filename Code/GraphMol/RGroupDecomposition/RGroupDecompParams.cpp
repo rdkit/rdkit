@@ -310,7 +310,7 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     return;
   }
 
-  // add a single rgroup substitution to any atom with free valance that doesn't
+  // add a single rgroup substitution to any atom with free valence that doesn't
   // have a terminal dummy neighbor
 
   RWMol::ADJ_ITER nbrIdx, endNbrs;
