@@ -2,14 +2,14 @@
 (Changes relative to Release_2022.03.1)
 
 ## Backwards incompatible changes
-- `GetBestRMS()` by default now treats terminal conjugated functional groups
-  like carboxylate and nitro symmetrically. For example, the group
+- `GetBestRMS() and CalcRMS()` by default now treat terminal conjugated functional
+  groups like carboxylate and nitro symmetrically. For example, the group
   `C(=[O:1])[O-:2]` can match in either orientation. The SMARTS pattern which is
   used to recognize affected groups is:
   `[{atomP};$([{atomP}]-[*]=[{atomP}]),$([{atomP}]=[*]-[{atomP}])]~[*]` where
   `{atomP}` is `O,N;D1`. The previous behavior can be restored using by setting
   the `symmetrizeConjugatedTerminalGroups` argument to false when calling
-  `GetBestRMS()`
+  `GetBestRMS() and CalcRMS()`
 - The following `#defines` are no longer provided in/used by the C++ code or `RDConfig.h`:
   - `BUILD_COORDGEN_SUPPORT`: use `RDK_BUILD_COORDGEN_SUPPORT` instead
   - `RDK_THREADSAFE_SSS`: use `RDK_BUILD_THREADSAFE_SSS` instead
@@ -17,8 +17,10 @@
 - The Python function `Chem.GetSSSR()` now returns the SSSR rings found instead
   of just returning the count of rings. This is consistent with
   `Chem.GetSymmSSSR()` and more useful.
-
-
+- The CFFI function `set_2d_coords_aligned()` now takes an additional `char **match_json`
+  parameter; if `match_json` is not not `NULL`, `*match_json` will point to a
+  JSON string containing the atoms and bonds which are part of the match.
+  It is up to the user to free this string.
 
 ## Code removed in this release:
 - The C++ class `RDLog::BlockLogs` has been removed. Please use the class `RDLog::LogStateSetter`. The Python class rdBase.BlockLogs() is still available and supported.
@@ -31,8 +33,15 @@
   `rdkit.rdBase.LogErrorMsg()`.
 
 ## Deprecated code (to be removed in a future release):
-
-
+- The following JS methods:
+  * generate_aligned_coords()
+  * get_morgan_fp()
+  * get_morgan_fp_as_uint8array()
+  * get_pattern_fp()
+  * get_pattern_fp_as_uint8array()
+  which used to take several individual parameters now take a single JSON string parameter.
+  The overloads taking several individual parameters are now deprecated and will be
+  removed in a future release.
 
 # Release_2022.03.1
 (Changes relative to Release_2021.09.1)

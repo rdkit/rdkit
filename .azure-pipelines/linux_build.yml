@@ -10,7 +10,7 @@ steps:
         boost-cpp=$(boost_version) \
         py-boost=$(boost_version) \
         numpy pillow eigen pandas matplotlib-base \
-        qt cairo
+        qt=5.9.7 cairo
     conda activate rdkit_build
     conda install -c conda-forge nbval ipykernel>=6.0
   displayName: Setup build environment
@@ -32,6 +32,7 @@ steps:
     -DRDK_BUILD_FREESASA_SUPPORT=ON \
     -DRDK_BUILD_AVALON_SUPPORT=ON \
     -DRDK_BUILD_INCHI_SUPPORT=ON \
+    -DRDK_BUILD_YAEHMOP_SUPPORT=ON \
     -DRDK_BUILD_CAIRO_SUPPORT=ON \
     -DRDK_BUILD_QT_SUPPORT=ON \
     -DQt5_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \

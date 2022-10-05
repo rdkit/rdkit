@@ -54,7 +54,7 @@ INT_VECT addConformersFromList(ROMol &mol,
   }
   // loop over the conformers
   INT_VECT confIds;
-  for (unsigned int i = 0; i < numConf; ++i) {
+  for (int i = 0; i < numConf; ++i) {
     if (coords[i].size() != numCoordPerConf) {
       throw ValueErrorException("Wrong number of coordinates");
     }

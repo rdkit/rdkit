@@ -4,7 +4,7 @@
 <head>
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="Author" content="greg Landrum">
+  <meta name="Author" content="Greg Landrum">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
 
   <style>
@@ -25,6 +25,7 @@
     console.log('smiles: ' + m1.get_smiles());
     m1.delete();
     callback("CC(=O)Oc1ccccc1C(=O)O");
+    rxn_callback("[C:1](=[O:2])-O.[N:3]>>[O:2]=[C:1]-[N:3]");
   });
   function form_to_details(details) {
     var controls = ["addAtomIndices", "addBondIndices", "explicitMethyl", "addStereoAnnotation"];
@@ -105,6 +106,21 @@
     mol.delete();
     qmol.delete();
   }
+  function rxn_callback(text, details) {
+    details = details || {};
+    var rxn = RDKitModule.get_rxn(text, JSON.stringify(details));
+    var svg = "";
+    try {
+      svg = rxn.get_svg(798, 198);
+    } catch {}
+    if (svg == "") {
+      return;
+    }
+    var ob = document.getElementById("drawing_reaction");
+    ob.innerHTML = svg;
+    var canvas = document.getElementById("rdkit-rxn-canvas");
+    rxn.draw_to_canvas(canvas, -1, -1);
+  }
   function option_changed(cb) {
     var smi = document.getElementById('smiles_input').value;
     var sma = document.getElementById('smarts_input').value;
@@ -180,8 +196,17 @@
     <br>
     <textarea id="template_input" cols="80" rows="20" value="" onkeyup="template_callback(this.value)"></textarea>
     </div>
+    <h1>Reactions</h1>
+    SMARTS: <input id="reaction_smarts_input" type="text" value="[C:1](=[O:2])-O.[N:3]>>[O:2]=[C:1]-[N:3]" onkeyup="rxn_callback(this.value)">
+    SMILES: <input id="reaction_smiles_input" type="text" value="[CH:1](=[O:2])-[OH].[NH3:3]>>[O:2]=[CH:1]-[NH2:3]" onkeyup="rxn_callback(this.value, { useSmiles: true })">
+    <br>
+    <h3>SVG render</h3>
+    <div id="drawing_reaction" style="width:800px; height:200px; border:1px solid #000000;"></div>
+    <br>
+    <h3>Canvas render</h3>
+    <canvas id="rdkit-rxn-canvas" width="800" height="200" style="border:1px solid #000000;">
+    </canvas>
   </div>
-
 </body>
 
 </html>

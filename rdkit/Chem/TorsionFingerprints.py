@@ -566,20 +566,18 @@ def GetTFDBetweenConformers(mol, confIds1, confIds2, useWeights=True, maxDev='eq
   tfd = []
   if useWeights:
     weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)
-    for t1 in torsions1:
-      for t2 in torsions2:
-        tfd.append(CalculateTFD(t1, t2, weights=weights))
   else:
-    for t1 in torsions1:
-      for t2 in torsions2:
-        tfd.append(CalculateTFD(t1, t2))
+    weights = None
+  for t1 in torsions1:
+    for t2 in torsions2:
+      tfd.append(CalculateTFD(t1, t2, weights=weights))
   return tfd
 
 
 def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, maxDev='equal',
                            symmRadius=2, ignoreColinearBonds=True):
   """ Wrapper to calculate the TFD between two molecules.
-      Important: The two molecules must be instances of the same molecule
+      Important: The two molecules must be isomorphic
 
       Arguments:
       - mol1:     first instance of the molecule of interest
@@ -611,10 +609,53 @@ def GetTFDBetweenMolecules(mol1, mol2, confId1=-1, confId2=-1, useWeights=True, 
   torsion2 = CalculateTorsionAngles(mol2, tl, tlr, confId=confId2)
   if useWeights:
     weights = CalculateTorsionWeights(mol1, ignoreColinearBonds=ignoreColinearBonds)
-    tfd = CalculateTFD(torsion1, torsion2, weights=weights)
   else:
-    tfd = CalculateTFD(torsion1, torsion2)
+    weights = None
+  tfd = CalculateTFD(torsion1, torsion2, weights=weights)
   return tfd
+
+def GetBestTFDBetweenMolecules(mol1, mol2, confId1=-1, useWeights=True, maxDev='equal',
+                           symmRadius=2, ignoreColinearBonds=True):
+  """ Wrapper to calculate the best TFD between a single conformer of mol1 and all the conformers of mol2
+      Important: The two molecules must be isomorphic
+
+      Arguments:
+      - mol1:     first instance of the molecule of interest
+      - mol2:     second instance the molecule of interest
+      - confId1:  conformer index for mol1 (default: first conformer)
+      - useWeights: flag for using torsion weights in the TFD calculation
+      - maxDev:   maximal deviation used for normalization
+                  'equal': all torsions are normalized using 180.0 (default)
+                  'spec':  each torsion is normalized using its specific
+                           maximal deviation as given in the paper
+      - symmRadius: radius used for calculating the atom invariants
+                    (default: 2)
+      - ignoreColinearBonds: if True (default), single bonds adjacent to
+                             triple bonds are ignored
+                             if False, alternative not-covalently bound
+                             atoms are used to define the torsion
+
+      Return: TFD value
+  """
+  if (Chem.MolToSmiles(mol1) != Chem.MolToSmiles(mol2)):
+    raise ValueError("The two molecules must be instances of the same molecule!")
+  mol2 = _getSameAtomOrder(mol1, mol2)
+  tl, tlr = CalculateTorsionLists(mol1, maxDev=maxDev, symmRadius=symmRadius,
+                                  ignoreColinearBonds=ignoreColinearBonds)
+  # first molecule
+  torsion1 = CalculateTorsionAngles(mol1, tl, tlr, confId=confId1)
+  if useWeights:
+    weights = CalculateTorsionWeights(mol1, ignoreColinearBonds=ignoreColinearBonds)
+  else:
+    weights = None
+  best = 1e8
+  for conf in mol2.GetConformers():
+    # second molecule
+    torsion2 = CalculateTorsionAngles(mol2, tl, tlr, confId=conf.GetId())
+    tfd = CalculateTFD(torsion1, torsion2, weights=weights)
+    best = min(best,tfd)
+  return best
+
 
 
 def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColinearBonds=True):
@@ -652,11 +693,10 @@ def GetTFDMatrix(mol, useWeights=True, maxDev='equal', symmRadius=2, ignoreColin
   tfdmat = []
   if useWeights:
     weights = CalculateTorsionWeights(mol, ignoreColinearBonds=ignoreColinearBonds)
-    for i in range(0, numconf):
-      for j in range(0, i):
-        tfdmat.append(CalculateTFD(torsions[i], torsions[j], weights=weights))
   else:
-    for i in range(0, numconf):
-      for j in range(0, i):
-        tfdmat.append(CalculateTFD(torsions[i], torsions[j]))
+    weights = None
+  for i in range(0, numconf):
+    for j in range(0, i):
+      tfdmat.append(CalculateTFD(torsions[i], torsions[j], weights=weights))
+
   return tfdmat

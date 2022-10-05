@@ -165,6 +165,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(tbl.GetRb0(6), 0.77))
     self.assertTrue(feq(tbl.GetRb0("C"), 0.77))
     self.assertTrue(tbl.GetElementSymbol(6) == 'C')
+    self.assertTrue(tbl.GetElementName(6) == 'Carbon')
 
   def test2Atom(self):
     atom = Chem.Atom(6)
@@ -453,6 +454,23 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m2.GetNumAtoms(), 2)
     self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
 
+    # test merging of isotopes, by default deuterium will not be merged
+    m = Chem.MolFromSmiles('CC[2H]', False)
+    self.assertEqual(m.GetNumAtoms(), 3)
+    m2 = Chem.MergeQueryHs(m)
+    self.assertTrue(m2 is not None)
+    self.assertEqual(m2.GetNumAtoms(), 3)
+    self.assertFalse(m2.GetAtomWithIdx(1).HasQuery())
+
+    # here deuterium is merged
+    # should be the same as merging all hydrogens
+    m = Chem.MolFromSmiles('CC[2H]', False)
+    self.assertEqual(m.GetNumAtoms(), 3)
+    m2 = Chem.MergeQueryHs(m, mergeIsotopes=True)
+    self.assertTrue(m2 is not None)
+    self.assertEqual(m2.GetNumAtoms(), 2)
+    self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
+    
     # test github758
     m = Chem.MolFromSmiles('CCC')
     self.assertEqual(m.GetNumAtoms(), 3)
@@ -6905,7 +6923,7 @@ CAS<~>
 
     Chem.SetUseLegacyStereoPerception(False)
     m = Chem.MolFromSmiles("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2")
-    self.assertNotEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+    self.assertEqual(m.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
     self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
 
     Chem.SetUseLegacyStereoPerception(origVal)

@@ -269,6 +269,19 @@ inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmiles(const char *text,
   return std::unique_ptr<ChemicalReaction>(ptr);
 }
 
-}  // namespace RDKit
+//---------------------------------------------------------------------------
+//! \name CDXML rxn Support
+///@{
 
+//! Parse text in CDXML rxn format into a vector of ChemicalReactions
+RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+CDXMLToChemicalReactions(const std::string &rxnBlock, bool sanitize = false, bool removeHs = false);
+//! Parse a file in CDXML rxn format into a vector of ChemicalReactions
+RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+CDXMLFileToChemicalReactions(const std::string &fileName, bool sanitize = false, bool removeHs = false);
+//! Parse a text stream in CDXML rxn format into a vector of ChemicalReactions
+RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+CDXMLDataStreamToChemicalReactions(std::istream &rxnStream, bool sanitize = false, bool removeHs = false);
+
+}  // namespace RDKit
 #endif

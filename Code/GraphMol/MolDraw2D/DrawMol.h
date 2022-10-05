@@ -104,11 +104,11 @@ class DrawMol {
   // common bits used by createDrawObjects and setScale.
   void finishCreateDrawObjects();
   void initDrawMolecule(const ROMol &mol);
-  void extractAll();
+  void extractAll(double scale);
   void extractAtomCoords();
   void extractAtomSymbols();
   void extractBonds();
-  virtual void extractHighlights();
+  virtual void extractHighlights(double scale);
   void extractRegions();
   void extractAttachments();
   void extractMolNotes();
@@ -169,10 +169,12 @@ class DrawMol {
                    const DrawColour &col1, const DrawColour &col2, int atom1Idx,
                    int atom2Idx, int bondIdx, const DashPattern &dashPattern);
   std::pair<DrawColour, DrawColour> getBondColours(Bond *bond);
-  void makeContinuousHighlights();
+  void makeContinuousHighlights(double scale);
   void makeAtomCircleHighlights();
   void makeAtomEllipseHighlights(double lineWidth);
-  void makeBondHighlightLines(double lineWidth);
+  // These are the lines for continuous highlights, that are
+  // now filled trapezoids rather than fat simple lines.
+  void makeBondHighlightLines(double lineWidth, double scale);
   void calcAnnotationPosition(const Atom *atom, DrawAnnotation &annot) const;
   void calcAnnotationPosition(const Bond *bond, DrawAnnotation &annot) const;
   double getNoteStartAngle(const Atom *atom) const;
@@ -243,6 +245,14 @@ class DrawMol {
                          std::vector<Point2D> &otherBondVecs) const;
   void adjustBondsOnSolidWedgeEnds();
   void smoothBondJoins();
+  // If doing a continuous highlight, add to points the 2 or 3 points that
+  // will be for the end1 end of the highlight.  The final highlight will
+  // be a 4-6 sided polygon formed by calling this twice, with the ends in
+  // opposite order the second time.
+  void makeHighlightEnd(const Atom *end1, const Atom *end2, double lineWidth,
+                        const std::vector<Atom *> &end1HighNbrs,
+                        std::vector<Point2D> &points);
+  DrawColour getColour(int atom_idx) const;
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
@@ -296,21 +306,21 @@ void centerMolForDrawing(RWMol &mol, int confId = 1);
 void prepareStereoGroups(RWMol &mol);
 bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds);
 std::string getAtomListText(const Atom &atom);
-DrawColour getColour(int atom_idx, const MolDrawOptions &drawOptions,
-                     const std::vector<int> &atomicNums,
-                     const std::vector<int> *highlightAtoms,
-                     const std::map<int, DrawColour> *highlightMap);
 DrawColour getColourByAtomicNum(int atomicNum,
                                 const MolDrawOptions &drawOptions);
-int getHighlightBondWidth(
+DrawColour getHighlightBondColour(
+    int bondIdx, const MolDrawOptions &drawOptions,
+    const std::vector<int> &highlightBonds,
+    const std::map<int, DrawColour> &highlightBondMap);
+double getHighlightBondWidth(
     const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers);
 
 Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
                                const Point2D &cds3);
-// return a point that is end1 moved so as not to clash with any of the
-// rects of a label.  end1 to end2 and the coords of 2 ends of a bond.
+// return a point that is moveEnd moved so as not to clash with any of the
+// rects of a label.  moveEnd to end2 are the coords of 2 ends of a bond.
 void adjustBondEndForString(
     const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd);

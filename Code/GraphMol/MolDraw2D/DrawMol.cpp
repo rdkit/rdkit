@@ -116,7 +116,7 @@ DrawMol::DrawMol(int width, int height, const MolDrawOptions &drawOptions,
 void DrawMol::createDrawObjects() {
   textDrawer_.setFontScale(fontScale_, true);
   partitionForLegend();
-  extractAll();
+  extractAll(scale_);
   calculateScale();
 
   bool ignoreFontLimits = drawOptions_.fixedFontSize != -1;
@@ -178,12 +178,12 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
 }
 
 // ****************************************************************************
-void DrawMol::extractAll() {
+void DrawMol::extractAll(double scale) {
   extractAtomCoords();
   extractAtomSymbols();
   extractBonds();
   extractRegions();
-  extractHighlights();
+  extractHighlights(scale);
   extractAttachments();
   extractMolNotes();
   extractAtomNotes();
@@ -238,8 +238,7 @@ void DrawMol::extractAtomSymbols() {
         getAtomSymbolAndOrientation(*at1);
     atomSyms_.push_back(atSym);
     if (!atSym.first.empty()) {
-      DrawColour atCol = getColour(at1->getIdx(), drawOptions_, atomicNums_,
-                                   &highlightAtoms_, &highlightAtomMap_);
+      DrawColour atCol = getColour(at1->getIdx());
       AtomSymbol *al =
           new AtomSymbol(atSym.first, at1->getIdx(), atSym.second,
                          atCds_[at1->getIdx()], atCol, textDrawer_);
@@ -274,9 +273,9 @@ void DrawMol::extractBonds() {
 }
 
 // ****************************************************************************
-void DrawMol::extractHighlights() {
+void DrawMol::extractHighlights(double scale) {
   if (drawOptions_.continuousHighlight) {
-    makeContinuousHighlights();
+    makeContinuousHighlights(scale);
   } else {
     if (drawOptions_.circleAtoms && !highlightAtoms_.empty()) {
       makeAtomCircleHighlights();
@@ -596,9 +595,7 @@ void DrawMol::extractBrackets() {
     }
 
     std::vector<std::pair<Point2D, Point2D>> sgBondSegments;
-    int numBrackets = 0;
     for (auto bndIdx : sg.getBonds()) {
-      ++numBrackets;
       const auto bnd = drawMol_->getBondWithIdx(bndIdx);
       if (std::find(sg.getAtoms().begin(), sg.getAtoms().end(),
                     bnd->getBeginAtomIdx()) != sg.getAtoms().end()) {
@@ -611,9 +608,11 @@ void DrawMol::extractBrackets() {
             atCds_[bnd->getEndAtomIdx()], atCds_[bnd->getBeginAtomIdx()]));
       }
     }
+    int numBrackets = 0;
     for (const auto &brk : sg.getBrackets()) {
       // the atom coords have been inverted in y, so the bracket coords
       // must be, too.
+      ++numBrackets;
       Point2D p1{brk[0].x, -brk[0].y};
       Point2D p2{brk[1].x, -brk[1].y};
       trans.TransformPoint(p1);
@@ -1660,11 +1659,20 @@ void DrawMol::makeDoubleBondLines(
     // in, for example, an aldehyde, such as in catch_tests.cpp's
     // testGithub_5269_2.svg, might be asymmetrically shorter, so we don't
     // want to change colour at halfway
-    if (bond->getEndAtom()->getDegree() == 1 && !(cols.first == cols.second) &&
-        fabs((l1s - l1f).lengthSq() - (l2s - l2f).lengthSq()) > 0.01) {
-      double midlen = (l1s - l1f).length() / 2.0;
-      Point2D lineDir = l2s.directionVector(l2f);
-      Point2D notMid = l2s + lineDir * midlen;
+    auto l1 = (l1s - l1f).lengthSq();
+    auto l2 = (l2s - l2f).lengthSq();
+    if ((bond->getBeginAtom()->getDegree() == 1 ||
+         bond->getEndAtom()->getDegree() == 1) &&
+        cols.first != cols.second && fabs(l1 - l2) > 0.01) {
+      double midlen = sqrt(l1) / 2.0;
+      Point2D notMid;
+      if (bond->getBeginAtom()->getDegree() == 1) {
+        Point2D lineDir = l2s.directionVector(l2f);
+        notMid = l2s + lineDir * midlen;
+      } else {
+        Point2D lineDir = l2f.directionVector(l2s);
+        notMid = l2f + lineDir * midlen;
+      }
       newBondLine(l2s, notMid, cols.first, cols.first, at1Idx, at2Idx, bondIdx,
                   noDash);
       newBondLine(notMid, l2f, cols.second, cols.second, at1Idx, at2Idx,
@@ -1891,12 +1899,8 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
     col2 = bondColours_[bond->getIdx()].second;
   } else {
     if (!highlight_bond || drawOptions_.continuousHighlight) {
-      int at1_idx = bond->getBeginAtomIdx();
-      col1 = getColour(at1_idx, drawOptions_, atomicNums_, &highlightAtoms_,
-                       &highlightAtomMap_);
-      int at2_idx = bond->getEndAtomIdx();
-      col2 = getColour(at2_idx, drawOptions_, atomicNums_, &highlightAtoms_,
-                       &highlightAtomMap_);
+      col1 = getColour(bond->getBeginAtomIdx());
+      col2 = getColour(bond->getEndAtomIdx());
     } else {
       if (highlightBondMap_.find(bond->getIdx()) != highlightBondMap_.end()) {
         col1 = col2 = highlightBondMap_.find(bond->getIdx())->second;
@@ -1910,17 +1914,17 @@ std::pair<DrawColour, DrawColour> DrawMol::getBondColours(Bond *bond) {
 }
 
 // ****************************************************************************
-void DrawMol::makeContinuousHighlights() {
-  int tgt_lw = getHighlightBondWidth(drawOptions_, -1, nullptr);
-  if (tgt_lw < 2) {
-    tgt_lw = 2;
+void DrawMol::makeContinuousHighlights(double scale) {
+  double tgt_lw = getHighlightBondWidth(drawOptions_, -1, nullptr);
+  if (tgt_lw < 2.0) {
+    tgt_lw = 2.0;
   }
   if (!drawOptions_.continuousHighlight) {
-    tgt_lw /= 4;
+    tgt_lw /= 4.0;
   }
 
   if (!highlightBonds_.empty()) {
-    makeBondHighlightLines(tgt_lw);
+    makeBondHighlightLines(tgt_lw, scale);
   }
   if (!highlightAtoms_.empty()) {
     makeAtomEllipseHighlights(tgt_lw);
@@ -1995,25 +1999,101 @@ void DrawMol::makeAtomEllipseHighlights(double lineWidth) {
 }
 
 // ****************************************************************************
-void DrawMol::makeBondHighlightLines(double lineWidth) {
+void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
+  // find the neighbours of atom that aren't otherAtom and that are
+  // bonded to atom with a highlighted bond
+  auto findHighBondNbrs = [&](const Atom *atom, const Atom *otherAtom,
+                              std::vector<Atom *> &highNbrs) -> void {
+    for (const auto bond : drawMol_->atomBonds(atom)) {
+      auto nbr = bond->getOtherAtom(atom);
+      if (nbr == otherAtom) {
+        continue;
+      }
+      if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
+                    bond->getIdx()) != highlightBonds_.end()) {
+        highNbrs.push_back(nbr);
+      }
+    }
+  };
+
+  // this is essentially the inverse of MolDraw2D::getDrawLineWidth
+  // which ignores drawOptions_.scaleHighlightBondWidth and only
+  // uses drawOptions_.scaleBondWidth.
+  if (!drawOptions_.scaleHighlightBondWidth) {
+    // so that when we scale it up again, it comes out the right size
+    lineWidth /= scale;
+  } else {
+    // same conversion factor as in MolDraw2D::getDrawLineWidth()
+    lineWidth *= lineWidthScaleFactor;
+  }
   for (const auto atom : drawMol_->atoms()) {
-    unsigned int thisIdx = atom->getIdx();
+    auto thisIdx = atom->getIdx();
     for (const auto bond : drawMol_->atomBonds(atom)) {
       unsigned int nbrIdx = bond->getOtherAtomIdx(thisIdx);
       if (nbrIdx < static_cast<unsigned int>(atCds_.size()) &&
           nbrIdx > thisIdx) {
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       bond->getIdx()) != highlightBonds_.end()) {
-          DrawColour col = drawOptions_.highlightColour;
-          if (highlightBondMap_.find(bond->getIdx()) !=
-              highlightBondMap_.end()) {
-            col = highlightBondMap_.find(bond->getIdx())->second;
-          }
-          std::vector<Point2D> pts{atCds_[thisIdx], atCds_[nbrIdx]};
-          DrawShape *hb = new DrawShapeSimpleLine(
-              pts, lineWidth, drawOptions_.scaleHighlightBondWidth, col,
-              thisIdx + activeAtmIdxOffset_, nbrIdx + activeAtmIdxOffset_,
-              bond->getIdx() + activeBndIdxOffset_, noDash);
+          // This bond is to be highlighted by drawing a 4-6-sided
+          // polygon underneath it.  If it is an isolated highlight, it
+          // will be a rectangle underneath the bond.  If it joins
+          // another highlighted bond, it will be mitred so the two join
+          // without gaps.
+          // These effects can be seen in bond_highlights_8.svg produced
+          // by catch_tests.cpp.
+          DrawColour col = getHighlightBondColour(
+              bond->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
+          std::vector<Atom *> thisHighNbrs;
+          std::vector<Atom *> nbrHighNbrs;
+          auto nbr = drawMol_->getAtomWithIdx(nbrIdx);
+          findHighBondNbrs(atom, nbr, thisHighNbrs);
+          findHighBondNbrs(nbr, atom, nbrHighNbrs);
+          std::vector<Point2D> end1points;
+          makeHighlightEnd(atom, nbr, lineWidth, thisHighNbrs, end1points);
+          std::vector<Point2D> end2points;
+          makeHighlightEnd(nbr, atom, lineWidth, nbrHighNbrs, end2points);
+          std::vector<Point2D> points(end1points);
+          points.insert(points.end(), end2points.begin(), end2points.end());
+          // The end points are sometimes swapped round, such that a
+          // butterfly-type shape is produced rather than a rectangle
+          // (see Github5592).  Make a convex hull, using a simplified
+          // form of Graham's scan algorithm - all the points
+          // are in the convex hull so it's easier.  Grahsm's scan normally
+	  // has a second step that removes inner points, and this takes
+	  // care of any problems with floating point errors in the
+	  // comparisons below.  The shapes here are at most hexagons with
+	  // sharp angles so such issues have been deemed unlikely to
+	  // occur in practice.
+          // Sort so the lowest y point is first, with lowest x as
+	  // tie-breaker.
+          std::sort(points.begin(), points.end(),
+                    [](Point2D &p1, Point2D &p2) -> bool {
+                      if (p1.y < p2.y) {
+                        return true;
+                      } else if (p1.y == p2.y) {
+                        return p1.x < p2.x;
+                      }
+                      return false;
+                    });
+          // Now sort points 1 -> end so they are all anti-clockwise
+          // around points[0] by checking cross products.
+          std::sort(points.begin() + 1, points.end(),
+                    [&](Point2D &p1, Point2D &p2) -> bool {
+                      auto &p0 = points.front();
+                      auto val = (p1.y - p0.y) * (p2.x - p1.x) -
+                                 (p1.x - p0.x) * (p2.y - p1.y);
+                      if (val == 0.0) {
+                        return (p0 - p2).lengthSq() < (p0 - p1).lengthSq();
+                      } else if (val < 0.0) {
+                        return true;
+                      } else {
+                        return false;
+                      }
+                    });
+          DrawShape *hb = new DrawShapePolyLine(
+              points, 0, false, col, true, thisIdx + activeAtmIdxOffset_,
+              nbrIdx + activeAtmIdxOffset_,
+              bond->getIdx() + activeBndIdxOffset_);
           highlights_.push_back(std::unique_ptr<DrawShape>(hb));
         }
       }
@@ -2403,7 +2483,7 @@ void DrawMol::setScale(double newScale, double newFontScale,
   fontScale_ = newFontScale / newScale;
   textDrawer_.setFontScale(fontScale_, true);
 
-  extractAll();
+  extractAll(newScale);
   findExtremes();
 
   textDrawer_.setFontScale(newFontScale, ignoreFontLimits);
@@ -2424,7 +2504,7 @@ void DrawMol::setTransformation(const DrawMol &sourceMol) {
   xRange_ = sourceMol.xRange_;
   yRange_ = sourceMol.yRange_;
 
-  extractAll();
+  extractAll(scale_);
   scale_ = sourceMol.scale_;
   fontScale_ = sourceMol.fontScale_;
   textDrawer_.setFontScale(fontScale_, true);
@@ -2651,10 +2731,22 @@ void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
   // first one
   int thirdAtom = other_ring_atom(bond.getBeginAtomIdx(), bond, *ringToUse);
   int fourthAtom = other_ring_atom(bond.getEndAtomIdx(), bond, *ringToUse);
-  l2s = doubleBondEnd(thirdAtom, bond.getBeginAtomIdx(), bond.getEndAtomIdx(),
-                      offset, !bool(atomLabels_[bond.getBeginAtomIdx()]));
-  l2f = doubleBondEnd(fourthAtom, bond.getEndAtomIdx(), bond.getBeginAtomIdx(),
-                      offset, !bool(atomLabels_[bond.getEndAtomIdx()]));
+  // As seen in #5486, bonds in rings can be trans and the default code assumes
+  // they are always cis.  If trans, treat as a non-ring bond.  It won't
+  // necessarily come out on the inside of the ring, but that's quite
+  // complicated to fix at this point.
+  int begIdx = bond.getBeginAtomIdx();
+  int endIdx = bond.getEndAtomIdx();
+  bool isTrans = areBondsTrans(atCds_[thirdAtom], atCds_[begIdx],
+                               atCds_[endIdx], atCds_[fourthAtom]);
+  if (isTrans) {
+    bondNonRing(bond, offset, l2s, l2f);
+  } else {
+    l2s = doubleBondEnd(thirdAtom, begIdx, endIdx, offset,
+                        !bool(atomLabels_[bond.getBeginAtomIdx()]));
+    l2f = doubleBondEnd(fourthAtom, endIdx, begIdx, offset,
+                        !bool(atomLabels_[bond.getEndAtomIdx()]));
+  }
 }
 
 // ****************************************************************************
@@ -2784,6 +2876,11 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     l2s = at1_cds + perp * offset;
     l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                         offset, true);
+    // if at1 has a label, need to move it so it's centred in between the
+    // two lines (Github 5511).
+    if (atomLabels_[at1->getIdx()]) {
+      atomLabels_[at1->getIdx()]->cds_ += perp * offset * 0.5;
+    }
   }
   if (swapped) {
     std::swap(l1s, l1f);
@@ -2840,8 +2937,6 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
-    auto bond =
-        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
     Point2D const &at1_cds = atCds_[atom->getIdx()];
     Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
     otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
@@ -2967,8 +3062,15 @@ void DrawMol::smoothBondJoins() {
                 // make a small polyline to paper over the cracks.
                 int p12 = p1 == 1 ? 0 : 1;
                 int p22 = p2 == 1 ? 0 : 1;
-                Point2D dv1 = (sbl1->points_[p1] - sbl1->points_[p12]) * 0.05;
-                Point2D dv2 = (sbl1->points_[p1] - sbl2->points_[p22]) * 0.05;
+                // If the lines are different colours, make the line round
+                // the corner shorter so that one colour doesn't extend
+                // into the other one.  If they're the same colour, it's
+                // better if they go round the corner a bit further to hide
+                // the join better.  The numbers are empirical.
+                double len =
+                    sbl1->lineColour_ == sbl2->lineColour_ ? 0.05 : 0.025;
+                Point2D dv1 = (sbl1->points_[p1] - sbl1->points_[p12]) * len;
+                Point2D dv2 = (sbl1->points_[p1] - sbl2->points_[p22]) * len;
                 std::vector<Point2D> pl_pts{sbl1->points_[p1] - dv1,
                                             sbl1->points_[p1],
                                             sbl1->points_[p1] - dv2};
@@ -2988,6 +3090,147 @@ void DrawMol::smoothBondJoins() {
       }
     }
   }
+}
+
+// ****************************************************************************
+void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
+                               double lineWidth,
+                               const std::vector<Atom *> &end1HighNbrs,
+                               std::vector<Point2D> &points) {
+  double halfLineWidth = lineWidth / 2.0;
+  // find the intersection point of two lines parallel to lines from e2 to e1
+  // and e3 to e1 and lineWidth from them.  If pm is 1, it's inside the
+  // angle they make, if pm is -1, it's outside.  If the lines don't
+  // intersect, it returns e1.
+  auto innerPoint = [&](Point2D &e1, Point2D &e2, Point2D &e3,
+                        double pm) -> Point2D {
+    auto perp1 = calcInnerPerpendicular(e2, e1, e3);
+    auto perp2 = calcInnerPerpendicular(e3, e1, e2);
+    auto line12 = e2 + perp1 * pm * halfLineWidth;
+    auto line11 = e1 + perp1 * pm * halfLineWidth;
+    line11 = line12 + line12.directionVector(line11) * 2.0 * (e1 - e2).length();
+    auto line22 = e3 + perp2 * pm * halfLineWidth;
+    auto line21 = e1 + perp2 * pm * halfLineWidth;
+    line21 = line22 + line22.directionVector(line21) * 2.0 * (e1 - e3).length();
+    Point2D ins;
+    if (doLinesIntersect(line12, line11, line22, line21, &ins)) {
+      return ins;
+    } else {
+      return Point2D(e1);
+    }
+  };
+
+  auto end1Cds = atCds_[end1->getIdx()];
+  auto end2Cds = atCds_[end2->getIdx()];
+
+  if (end1HighNbrs.empty()) {
+    // If end1 doesn't have any highlighted neighbour bonds, then
+    // it's a flat end.
+    auto perp = calcPerpendicular(end1Cds, end2Cds);
+    points.push_back(end1Cds + perp * halfLineWidth);
+    points.push_back(end1Cds - perp * halfLineWidth);
+  } else if (end1HighNbrs.size() == 1) {
+    // There is only 1 intersection to deal with, which is easier - just
+    // a slanted end.
+    auto end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
+    auto ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
+    points.push_back(ins1);
+    auto ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);
+    points.push_back(ins2);
+  } else if (end1HighNbrs.size() > 1) {
+    // In this case, it needs a triangular end, as it's a junction
+    // of at least 3 highlights.  The point of the triangle is
+    // end1. The other points are defined by the first and last bond
+    // vectors going round from the end1->end2 vector, so sort the
+    // neighbours in order of increasing angle made with the end2->end1
+    // vector.
+    auto bvec = end1Cds.directionVector(end2Cds);
+    std::vector<std::pair<int, double>> angs;
+    for (unsigned i = 0; i < end1HighNbrs.size(); ++i) {
+      auto ovec = end1Cds.directionVector(atCds_[end1HighNbrs[i]->getIdx()]);
+      auto ang = bvec.signedAngleTo(ovec);
+      angs.push_back(std::make_pair(i, ang));
+    }
+    std::sort(angs.begin(), angs.end(),
+              [](const std::pair<int, double> &a1,
+                 const std::pair<int, double> &a2) -> bool {
+                return a1.second < a2.second;
+              });
+    // if both angles are on the same side as end1->end2, they need to
+    // be the other way round.
+    if (angs.front().second > M_PI && angs.back().second > M_PI) {
+      std::reverse(angs.begin(), angs.end());
+    }
+    auto end3Cds = atCds_[end1HighNbrs[angs.front().first]->getIdx()];
+    auto ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
+    points.push_back(ins1);
+    points.push_back(end1Cds);
+    auto end4Cds = atCds_[end1HighNbrs[angs.back().first]->getIdx()];
+    // if both angles are on the same side as end1->end2, they need to
+    // be the other way round.
+    double pm = 1.0;
+    if ((angs.front().second > M_PI && angs.back().second > M_PI) ||
+        (angs.front().second < M_PI && angs.back().second < M_PI)) {
+      pm = -1.0;
+    }
+    auto ins2 = innerPoint(end1Cds, end2Cds, end4Cds, pm);
+    points.push_back(ins2);
+  }
+}
+
+// ****************************************************************************
+DrawColour DrawMol::getColour(int atom_idx) const {
+  PRECONDITION(atom_idx >= 0, "bad atom_idx");
+  PRECONDITION(rdcast<int>(atomicNums_.size()) > atom_idx, "bad atom_idx");
+
+  DrawColour retval = getColourByAtomicNum(atomicNums_[atom_idx], drawOptions_);
+  bool highlightedAtom = false;
+  if (!drawOptions_.circleAtoms && !drawOptions_.continuousHighlight) {
+    if (highlightAtoms_.end() !=
+        find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx)) {
+      highlightedAtom = true;
+      retval = drawOptions_.highlightColour;
+    }
+    // over-ride with explicit colour from highlightMap if there is one
+    auto p = highlightAtomMap_.find(atom_idx);
+    if (p != highlightAtomMap_.end()) {
+      highlightedAtom = true;
+      retval = p->second;
+    }
+    // if it's not a highlighted atom itself, but all the bonds off it
+    // are highlighted, I think it's better if the atom itself adopts
+    // the same highlight colour as the bonds.  It doesn't look right
+    // if only some of the bonds are highlighted, IMO.
+    if (!highlightedAtom) {
+      Atom *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
+      int numBonds = 0, numHighBonds = 0;
+      std::unique_ptr<DrawColour> highCol;
+      for (const auto &nbri :
+           boost::make_iterator_range(drawMol_->getAtomBonds(atomPtr))) {
+        ++numBonds;
+        const auto &nbr = (*drawMol_)[nbri];
+        if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
+                      nbr->getIdx()) != highlightBonds_.end() ||
+            highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
+          DrawColour hc = getHighlightBondColour(
+              nbr->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
+          if (!highCol) {
+            highCol.reset(new DrawColour(hc));
+          } else {
+            if (!(hc == *highCol)) {
+              numHighBonds = 0;
+              break;
+            }
+          }
+          ++numHighBonds;
+        }
+      }
+      if (numBonds == numHighBonds && highCol) {
+        retval = *highCol;
+      }
+    }
+  }
+  return retval;
 }
 
 // ****************************************************************************
@@ -3057,33 +3300,6 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
 }
 
 // ****************************************************************************
-DrawColour getColour(int atom_idx, const MolDrawOptions &drawOptions,
-                     const std::vector<int> &atomicNums,
-                     const std::vector<int> *highlightAtoms,
-                     const std::map<int, DrawColour> *highlightMap) {
-  PRECONDITION(atom_idx >= 0, "bad atom_idx");
-  PRECONDITION(rdcast<int>(atomicNums.size()) > atom_idx, "bad atom_idx");
-
-  DrawColour retval = getColourByAtomicNum(atomicNums[atom_idx], drawOptions);
-  // set contents of highlight_atoms to red
-  if (!drawOptions.circleAtoms && !drawOptions.continuousHighlight) {
-    if (highlightAtoms &&
-        highlightAtoms->end() !=
-            find(highlightAtoms->begin(), highlightAtoms->end(), atom_idx)) {
-      retval = drawOptions.highlightColour;
-    }
-    // over-ride with explicit colour from highlightMap if there is one
-    if (highlightMap) {
-      auto p = highlightMap->find(atom_idx);
-      if (p != highlightMap->end()) {
-        retval = p->second;
-      }
-    }
-  }
-  return retval;
-}
-
-// ****************************************************************************
 DrawColour getColourByAtomicNum(int atomic_num,
                                 const MolDrawOptions &drawOptions) {
   DrawColour res;
@@ -3105,7 +3321,23 @@ DrawColour getColourByAtomicNum(int atomic_num,
 }
 
 // ****************************************************************************
-int getHighlightBondWidth(
+DrawColour getHighlightBondColour(
+    int bondIdx, const MolDrawOptions &drawOptions,
+    const std::vector<int> &highlightBonds,
+    const std::map<int, DrawColour> &highlightBondMap) {
+  DrawColour col(0.0, 0.0, 0.0);
+  if (std::find(highlightBonds.begin(), highlightBonds.end(), bondIdx) !=
+      highlightBonds.end()) {
+    col = drawOptions.highlightColour;
+    if (highlightBondMap.find(bondIdx) != highlightBondMap.end()) {
+      col = highlightBondMap.find(bondIdx)->second;
+    }
+  }
+  return col;
+}
+
+// ****************************************************************************
+double getHighlightBondWidth(
     const MolDrawOptions &drawOptions, int bond_idx,
     const std::map<int, int> *highlight_linewidth_multipliers) {
   int bwm = drawOptions.highlightBondWidthMultiplier;
@@ -3124,7 +3356,7 @@ int getHighlightBondWidth(
       bwm = it->second;
     }
   }
-  int tgt_lw = drawOptions.bondLineWidth * bwm;
+  double tgt_lw = drawOptions.bondLineWidth * bwm;
 
   return tgt_lw;
 }

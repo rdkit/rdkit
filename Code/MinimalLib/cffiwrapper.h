@@ -42,6 +42,8 @@ RDKIT_RDKITCFFI_EXPORT char *get_inchi(const char *pkl, size_t pkl_sz,
 RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab,
                                                     const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_inchikey_for_inchi(const char *inchi);
+RDKIT_RDKITCFFI_EXPORT char *get_rxn(const char *input, size_t *mol_sz,
+                                     const char *details_json);
 
 // substructure
 RDKIT_RDKITCFFI_EXPORT char *get_substruct_match(const char *mol_pkl,
@@ -58,6 +60,8 @@ RDKIT_RDKITCFFI_EXPORT char *get_substruct_matches(const char *mol_pkl,
 // Drawing
 RDKIT_RDKITCFFI_EXPORT char *get_svg(const char *pkl, size_t pkl_sz,
                                      const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_rxn_svg(const char *pkl, size_t pkl_sz,
+                                         const char *details_json);
 
 // Calculators
 RDKIT_RDKITCFFI_EXPORT char *get_descriptors(const char *pkl, size_t pkl_sz);
@@ -79,6 +83,22 @@ RDKIT_RDKITCFFI_EXPORT char *get_pattern_fp_as_bytes(const char *pkl,
                                                      size_t pkl_sz,
                                                      size_t *nbytes,
                                                      const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_topological_torsion_fp(
+    const char *pkl, size_t pkl_sz, const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_topological_torsion_fp_as_bytes(
+    const char *pkl, size_t pkl_sz, size_t *nbytes, const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_atom_pair_fp(const char *pkl, size_t pkl_sz,
+                                              const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_atom_pair_fp_as_bytes(
+    const char *pkl, size_t pkl_sz, size_t *nbytes, const char *details_json);
+#ifdef RDK_BUILD_AVALON_SUPPORT
+RDKIT_RDKITCFFI_EXPORT char *get_avalon_fp(const char *pkl, size_t pkl_sz,
+                                           const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_avalon_fp_as_bytes(const char *pkl,
+                                                    size_t pkl_sz,
+                                                    size_t *nbytes,
+                                                    const char *details_json);
+#endif
 
 // modification
 RDKIT_RDKITCFFI_EXPORT short add_hs(char **pkl, size_t *pkl_sz);
@@ -102,13 +122,15 @@ RDKIT_RDKITCFFI_EXPORT short fragment_parent(char **pkl, size_t *pkl_sz,
 
 // coordinates
 RDKIT_RDKITCFFI_EXPORT void prefer_coordgen(short val);
+RDKIT_RDKITCFFI_EXPORT short has_coords(char *mol_pkl, size_t mol_pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords(char **pkl, size_t *pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short set_3d_coords(char **pkl, size_t *pkl_sz,
                                            const char *params_json);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords_aligned(char **pkl, size_t *pkl_sz,
                                                    const char *template_pkl,
                                                    size_t template_sz,
-                                                   const char *details_json);
+                                                   const char *details_json,
+                                                   char **match_json);
 
 // housekeeping
 RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);

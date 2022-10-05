@@ -64,27 +64,113 @@ function test_basics() {
         }
     };
 
-    var fp1 = mol.get_morgan_fp();
-    assert.equal(fp1.length,2048);
-    assert.equal((fp1.match(/1/g)||[]).length,11);
-    var fp1Uint8Array = mol.get_morgan_fp_as_uint8array();
-    checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-    var fp2 = mol.get_morgan_fp(0,512);
-    assert.equal(fp2.length,512);
-    assert.equal((fp2.match(/1/g)||[]).length,3);
-    var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
-    checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+    {
+        var fp1 = mol.get_morgan_fp();
+        assert.equal(fp1.length, 2048);
+        assert.equal((fp1.match(/1/g)||[]).length, 11);
+        var fp1Uint8Array = mol.get_morgan_fp_as_uint8array();
+        checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
+        var fp2 = mol.get_morgan_fp(JSON.stringify({ radius: 0, nBits: 512 }));
+        assert.equal(fp2.length, 512);
+        assert.equal((fp2.match(/1/g)||[]).length, 3);
+        var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(JSON.stringify({ radius: 0, nBits: 512 }));
+        checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+        var fp3 = mol.get_morgan_fp(0, 512);
+        assert.equal(fp3.length, 512);
+        assert.equal((fp3.match(/1/g)||[]).length, 3);
+        var fp3Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
+        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
+    }
 
-    fp1 = mol.get_pattern_fp();
-    assert.equal(fp1.length,2048);
-    assert.equal((fp1.match(/1/g)||[]).length,73);
-    fp1Uint8Array = mol.get_pattern_fp_as_uint8array();
-    checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
-    fp2 = mol.get_pattern_fp(256);
-    assert.equal(fp2.length,256);
-    assert.equal((fp2.match(/1/g)||[]).length,65);
-    fp2Uint8Array = mol.get_pattern_fp_as_uint8array(256);
-    checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+    {
+        var fp1 = mol.get_pattern_fp();
+        assert.equal(fp1.length, 2048);
+        assert.equal((fp1.match(/1/g)||[]).length, 73);
+        var fp1Uint8Array = mol.get_pattern_fp_as_uint8array();
+        checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
+        var fp2 = mol.get_pattern_fp(JSON.stringify({ nBits: 256 }));
+        assert.equal(fp2.length, 256);
+        assert.equal((fp2.match(/1/g)||[]).length, 65);
+        var fp2Uint8Array = mol.get_pattern_fp_as_uint8array(JSON.stringify({ nBits: 256 }));
+        checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+        var fp3 = mol.get_pattern_fp(256);
+        assert.equal(fp3.length, 256);
+        assert.equal((fp3.match(/1/g)||[]).length, 65);
+        var fp3Uint8Array = mol.get_pattern_fp_as_uint8array(256);
+        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
+    }
+
+    {
+        var fp1 = mol.get_topological_torsion_fp();
+        assert.equal(fp1.length, 2048);
+        assert.equal((fp1.match(/1/g)||[]).length, 8);
+        var fp1Uint8Array = mol.get_topological_torsion_fp_as_uint8array();
+        checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
+        var fp2 = mol.get_topological_torsion_fp(JSON.stringify({ nBits: 512 }));
+        assert.equal(fp2.length, 512);
+        assert.equal((fp2.match(/1/g)||[]).length, 8);
+        var fp2Uint8Array = mol.get_topological_torsion_fp_as_uint8array(JSON.stringify({ nBits: 512 }));
+        checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+    }
+
+    {
+        var fp1 = mol.get_rdkit_fp();
+        assert.equal(fp1.length, 2048);
+        assert.equal((fp1.match(/1/g)||[]).length, 38);
+        var fp1Uint8Array = mol.get_rdkit_fp_as_uint8array();
+        checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
+        var fp2 = mol.get_rdkit_fp(JSON.stringify({ nBits: 512 }));
+        assert.equal(fp2.length, 512);
+        assert.equal((fp2.match(/1/g)||[]).length, 37);
+        var fp2Uint8Array = mol.get_rdkit_fp_as_uint8array(JSON.stringify({ nBits: 512 }));
+        checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+        var fp3 = mol.get_rdkit_fp(JSON.stringify({ nBits: 512, minPath: 2 }));
+        assert.equal(fp3.length, 512);
+        assert.equal((fp3.match(/1/g)||[]).length, 34);
+        var fp3Uint8Array = mol.get_rdkit_fp_as_uint8array(JSON.stringify({ nBits: 512, minPath: 2 }));
+        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
+        var fp4 = mol.get_rdkit_fp(JSON.stringify({ nBits: 512, minPath: 2, maxPath: 4 }));
+        assert.equal(fp4.length, 512);
+        assert.equal((fp4.match(/1/g)||[]).length, 16);
+        var fp4Uint8Array = mol.get_rdkit_fp_as_uint8array(JSON.stringify({ nBits: 512, minPath: 2, maxPath: 4 }));
+        checkStringBinaryFpIdentity(fp4, fp4Uint8Array);
+    }
+
+    {
+        var fp1 = mol.get_atom_pair_fp();
+        assert.equal(fp1.length, 2048);
+        assert.equal((fp1.match(/1/g)||[]).length, 19);
+        var fp1Uint8Array = mol.get_atom_pair_fp_as_uint8array();
+        checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
+        var fp2 = mol.get_atom_pair_fp(JSON.stringify({ nBits: 512 }));
+        assert.equal(fp2.length, 512);
+        assert.equal((fp2.match(/1/g)||[]).length, 19);
+        var fp2Uint8Array = mol.get_atom_pair_fp_as_uint8array(JSON.stringify({ nBits: 512 }));
+        checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+        var fp3 = mol.get_atom_pair_fp(JSON.stringify({ nBits: 512, minLength: 2 }));
+        assert.equal(fp3.length, 512);
+        assert.equal((fp3.match(/1/g)||[]).length, 13);
+        var fp3Uint8Array = mol.get_atom_pair_fp_as_uint8array(JSON.stringify({ nBits: 512, minLength: 2 }));
+        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
+        var fp4 = mol.get_atom_pair_fp(JSON.stringify({ nBits: 512, minLength: 2, maxLength: 3 }));
+        assert.equal(fp4.length, 512);
+        assert.equal((fp4.match(/1/g)||[]).length, 12);
+        var fp4Uint8Array = mol.get_atom_pair_fp_as_uint8array(JSON.stringify({ nBits: 512, minLength: 2, maxLength: 3 }));
+        checkStringBinaryFpIdentity(fp4, fp4Uint8Array);
+    }
+
+    if (typeof Object.getPrototypeOf(mol).get_avalon_fp === 'function') {
+        var fp1 = mol.get_avalon_fp();
+        assert.equal(fp1.length, 512);
+        assert.equal((fp1.match(/1/g)||[]).length, 19);
+        var fp1Uint8Array = mol.get_avalon_fp_as_uint8array();
+        checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
+        var fp2 = mol.get_avalon_fp(JSON.stringify({ nBits: 2048 }));
+        assert.equal(fp2.length, 2048);
+        assert.equal((fp2.match(/1/g)||[]).length, 20);
+        var fp2Uint8Array = mol.get_avalon_fp_as_uint8array(JSON.stringify({ nBits: 2048 }));
+        checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
+    }
 
     var svg = mol.get_svg();
     assert(svg.search("svg")>0);
@@ -380,17 +466,22 @@ M  END`;
     var phenyl = RDKitModule.get_mol(phenyl_smiles);
     assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
         template_ref, false, true)).atoms.length, 9);
-    assert.equal(JSON.parse(ortho.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 8);
-    assert.equal(JSON.parse(meta.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 8);
-    assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 7);
-    assert.equal(JSON.parse(phenyl.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 6);
+    [ true, false ].forEach(alignOnly => {
+        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly })
+        assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 9);
+        assert.equal(JSON.parse(ortho.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(meta.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 7);
+        assert.equal(JSON.parse(phenyl.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 6);
+    });
 }
 
-function test_accept_failure() {
+function test_generate_aligned_coords_accept_failure() {
     var template_molblock = `
      RDKit          2D
 
@@ -442,14 +533,146 @@ M  END
 `;
     var template_ref = RDKitModule.get_mol(template_molblock);
     var mol = RDKitModule.get_mol(mol_molblock);
-    var hasThrown = false;
-    try {
-        mol.generate_aligned_coords(template_ref, false, true, false);
-    } catch (e) {
-        hasThrown = true;
-    }
-    assert(hasThrown);
+    var res = mol.generate_aligned_coords(template_ref, false, true, false);
+    assert(res === "");
     assert.equal(mol.get_molblock(), mol_molblock);
+    res = mol.generate_aligned_coords(template_ref, JSON.stringify({
+        useCoordGen: false,
+        allowRGroups: true,
+        acceptFailure: false,
+    }));
+    assert(res === "");
+    assert.equal(mol.get_molblock(), mol_molblock);
+    res = mol.generate_aligned_coords(template_ref, JSON.stringify({
+        useCoordGen: false,
+        allowRGroups: true,
+        acceptFailure: true,
+    }));
+    assert(res === "{}");
+    assert.notEqual(mol.get_molblock(), mol_molblock);
+    var molNoCoords = RDKitModule.get_mol(mol.get_smiles());
+    assert(!molNoCoords.has_coords());
+    res = molNoCoords.generate_aligned_coords(template_ref, JSON.stringify({
+        useCoordGen: false,
+        allowRGroups: true,
+        acceptFailure: false,
+    }));
+    assert(res === "");
+    assert(!molNoCoords.has_coords());
+    res = molNoCoords.generate_aligned_coords(template_ref, JSON.stringify({
+        useCoordGen: false,
+        allowRGroups: true,
+        acceptFailure: true,
+    }));
+    assert(res === "{}");
+    assert(molNoCoords.has_coords());
+}
+
+function test_generate_aligned_coords_align_only() {
+    const template_molblock = `
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+  -13.7477    6.3036    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  -13.7477    4.7567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.6540    3.6628    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.7477    2.5691    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.8414    3.6628    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  -11.1071    3.6628    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  2  5  1  0
+  3  6  1  0
+M  RGP  2   1   1   6   2
+M  END
+`;
+    const mol_molblock = `
+     RDKit          2D
+
+ 18 22  0  0  0  0  0  0  0  0999 V2000
+    4.3922   -1.5699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9211   -2.0479    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5995   -0.5349    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3731    0.8046    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.8441    1.2825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0704   -0.0568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8666    0.7748    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7736   -0.3197    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7749   -1.8666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7718   -1.8679    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7731   -0.3208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8679    0.7718    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0718   -0.0598    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3933   -1.5729    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9222   -2.0509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6008   -0.5379    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3744    0.8016    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.8454    1.2795    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  9 10  1  0
+ 11 10  1  0
+ 11  8  1  0
+  8  9  1  0
+  4  5  1  0
+  6  5  1  0
+  7  6  1  0
+  3  4  1  0
+  3  7  1  0
+  1  6  1  0
+  2  3  1  0
+  2  1  1  0
+ 17 18  1  0
+ 13 18  1  0
+ 12 13  1  0
+ 16 17  1  0
+ 16 12  1  0
+ 14 13  1  0
+ 15 16  1  0
+ 15 14  1  0
+ 12 11  1  0
+  8  7  1  0
+M  END
+`;
+    const getCoordArray = (mol) => {
+        const molblock = mol.get_molblock().split("\n");
+        const numHeavyAtoms = parseInt(molblock[3].substr(0, 3));
+        return molblock.filter((_, idx) => idx > 3 && idx < 4 + numHeavyAtoms).map(
+            line => [0, 1, 2].map(i => parseFloat(line.substr(i * 10, (i + 1) * 10)))
+        );
+    };
+    const arraySum = (a) => {
+        const s = 0.;
+        return a.reduce((prev, curr) => prev + curr, s);
+    };
+    const sqDist = (xyz1, xyz2) => arraySum(xyz1.map((c, i) => (c - xyz2[i]) * (c - xyz2[i])))
+
+    const template_ref = RDKitModule.get_mol(template_molblock);
+    const mol = RDKitModule.get_mol(mol_molblock);
+    const molCoords = getCoordArray(mol);
+    const bondLength11_12 = Math.sqrt(sqDist(molCoords[11], molCoords[12]));
+    const bondLength5_6 = Math.sqrt(sqDist(molCoords[5], molCoords[6]));
+    assert(Math.abs(bondLength11_12 - bondLength5_6) < 1.e-4);
+    assert(bondLength11_12 > 2.3);
+    [ false, true ].forEach(alignOnly => {
+        const mol = RDKitModule.get_mol(mol_molblock);
+        const res = JSON.parse(mol.generate_aligned_coords(template_ref, JSON.stringify({ allowRGroups: true, alignOnly })));
+        assert([ 11, 10, 7, 8, 9, 6 ].every((idx, i) => res.atoms[i] === idx));
+        assert(mol.get_smiles() === "C1CC2CCC1N2C1CNC1N1C2CCC1CC2");
+        const molAliCoords = getCoordArray(mol);
+        const templateCoords = getCoordArray(template_ref);
+        res.atoms.forEach((molIdx, templateIdx) => {
+            assert(sqDist(molAliCoords[molIdx], templateCoords[templateIdx]) < 1.e-4);
+        });
+        const bondLengthAli11_12 = Math.sqrt(sqDist(molAliCoords[11], molAliCoords[12]));
+        const bondLengthAli5_6 = Math.sqrt(sqDist(molAliCoords[5], molAliCoords[6]));
+        assert(Math.abs(bondLengthAli11_12 - bondLengthAli5_6) < 1.e-4);
+        if (alignOnly) {
+            assert(bondLengthAli11_12 > 2.3);
+        } else {
+            assert(bondLengthAli11_12 < 1.6);
+        }
+    });
 }
 
 function test_get_mol_no_kekulize() {
@@ -576,10 +799,15 @@ M  END
 M  END
 `);
     mol1.normalize_depiction();
+    mol1Copy1 = RDKitModule.get_mol_copy(mol1)
+    mol1Copy2 = RDKitModule.get_mol_copy(mol1)
     mol1.straighten_depiction();
     mol2.normalize_depiction();
     mol2.straighten_depiction();
     assert(mol1.get_molblock() === mol2.get_molblock());
+    mol1Copy1.straighten_depiction(true);
+    assert(mol1Copy1.get_molblock() !== mol2.get_molblock());
+    assert(mol1Copy1.get_molblock() === mol1Copy2.get_molblock());
 }
 
 function test_has_coords() {
@@ -625,7 +853,6 @@ function test_sanitize() {
 }
 
 function test_flexicanvas() {
-
     var mol = RDKitModule.get_mol("CCCC");
     assert.equal(mol.is_valid(),1);
 
@@ -633,6 +860,104 @@ function test_flexicanvas() {
     assert(svg.search("svg")>0);
     assert(svg.search("width='95px'")>0);
     assert(svg.search("height='21px'")>0);
+}
+
+function test_rxn_drawing() {
+    {
+        var rxn = RDKitModule.get_rxn("[CH3:1][OH:2]>>[CH2:1]=[OH0:2]");
+        var svg = rxn.get_svg();
+        assert(svg.search("svg") > 0);
+        var rxn_from_block = RDKitModule.get_rxn(`$RXN
+
+      RDKit
+
+  1  1
+$MOL
+
+     RDKit          2D
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+    1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  2  0  0
+  1  2  6  0
+V    1 [C&H3:1]
+V    2 [O&H1:2]
+M  END
+$MOL
+
+     RDKit          2D
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+    1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  2  0  0
+  1  2  2  0
+V    1 [C&H2:1]
+V    2 [O&H0:2]
+M  END`);
+        var svg_from_block = rxn_from_block.get_svg();
+        assert(svg_from_block.search("svg") > 0);
+        assert(svg.match(/<path/g).length > 0);
+        assert(svg.match(/<path/g).length === svg_from_block.match(/<path/g).length);
+    }
+    {
+        var rxn = RDKitModule.get_rxn("[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])[N:13]=[N+:14]=[N-:15]",
+                                        JSON.stringify({ useSmiles: true }));
+        {
+            var svg = rxn.get_svg();
+            assert(svg.search("svg") > 0);
+            assert(svg.search("stroke-dasharray" < 0));
+            assert(svg.search("ellipse") < 0);
+        }
+        {
+            var svg = rxn.get_svg_with_highlights(JSON.stringify({ kekulize: false }));
+            assert(svg.search("svg") > 0);
+            assert(svg.search("stroke-dasharray" > 0));
+            assert(svg.search("ellipse") < 0);
+        }
+        {
+            var svg = rxn.get_svg_with_highlights(JSON.stringify({ highlightByReactant: true }));
+            assert(svg.search("svg") > 0);
+            assert(svg.search("stroke-dasharray" < 0));
+            assert(svg.search("ellipse") > 0);
+            assert(svg.search("#BCD6ED") < 0);
+            assert(svg.search("#A8D08D") < 0);
+        }
+        {
+            var svg = rxn.get_svg_with_highlights(JSON.stringify({
+                highlightColorsReactants: [[.741, .843, .933], [.659, .816, .553]]
+            }));
+            assert(svg.search("svg") > 0);
+            assert(svg.search("stroke-dasharray" < 0));
+            assert(svg.search("ellipse") < 0);
+        }
+        {
+            var svg = rxn.get_svg_with_highlights(JSON.stringify({
+                highlightByReactant: true,
+                highlightColorsReactants: [[.741, .843, .933], [.659, .816, .553]]
+            }));
+            assert(svg.search("svg") > 0);
+            assert(svg.search("stroke-dasharray" < 0));
+            assert(svg.search("ellipse") > 0);
+            assert(svg.search("#BCD6ED") > 0);
+            assert(svg.search("#A8D08D") > 0);
+        }
+        rxn.delete();
+    }
+    {
+        var rxn = RDKitModule.get_rxn("[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])[N:13]=[N+:14]=[N-:15]");
+        var hasThrown = false;
+        var isAromatic = false;
+        // if the code is built with exception support it will not throw
+        // but rather display molecules in their aromatic form rather
+        // than kekulized
+        try {
+            var svg = rxn.get_svg();
+            isAromatic = svg.search("stroke-dasharray" > 0);
+        } catch {
+            hasThrown = true;
+        }
+        assert(isAromatic || hasThrown);
+    }
 }
 
 function test_legacy_stereochem() {
@@ -644,7 +969,7 @@ function test_legacy_stereochem() {
     RDKitModule.use_legacy_stereo_perception(false);
     mol = RDKitModule.get_mol("C[C@H]1CCC2(CC1)CC[C@H](C)C(C)C2");
     assert.equal(mol.is_valid(),1);
-    assert.equal(mol.get_smiles(),"CC1CC2(CC[C@H](C)CC2)CC[C@@H]1C");
+    //assert.equal(mol.get_smiles(),"CC1CC2(CC[C@H](C)CC2)CC[C@@H]1C");
 }
 
 function test_prop() {
@@ -696,7 +1021,8 @@ initRDKitModule().then(function(instance) {
     test_generate_aligned_coords();
     test_isotope_labels();
     test_generate_aligned_coords_allow_rgroups();
-    test_accept_failure();
+    test_generate_aligned_coords_accept_failure();
+    test_generate_aligned_coords_align_only();
     test_get_mol_no_kekulize();
     test_get_smarts();
     test_get_cxsmarts();
@@ -706,6 +1032,7 @@ initRDKitModule().then(function(instance) {
     test_normalize_depiction();
     test_straighten_depiction();
     test_flexicanvas();
+    test_rxn_drawing();
     test_legacy_stereochem();
     test_prop();
     waitAllTestsFinished().then(() =>

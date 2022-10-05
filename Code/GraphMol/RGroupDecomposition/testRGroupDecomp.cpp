@@ -2858,7 +2858,7 @@ M  END
   RGroupDecompositionParameters params;
   params.matchingStrategy = GreedyChunks;
   RGroupDecomposition decomp(*core, params);
-  for (const auto smiles : smiArray) {
+  for (const auto &smiles : smiArray) {
     ROMol *mol = SmilesToMol(smiles);
     int res = decomp.add(*mol);
     TEST_ASSERT(res >= 0);
@@ -2869,7 +2869,7 @@ M  END
   std::cerr << "Best mapping" << std::endl;
   RGroupRows rows = decomp.getRGroupsAsRows();
   TEST_ASSERT(rows.size() == 11);
-  for (const auto row : rows) {
+  for (const auto &row : rows) {
     TEST_ASSERT(row.size() == 2);
     TEST_ASSERT(row.count("Core") == 1);
     TEST_ASSERT(row.count("R1") == 1);
@@ -2877,6 +2877,97 @@ M  END
     auto groupSmiles = MolToSmiles(*mol);
     TEST_ASSERT(groupSmiles == "CO[*:1]");
   }
+}
+
+void testGithub5569() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that Github5269 is fixed" << std::endl;
+  auto core = R"CTAB(
+ChemDraw09152209202D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    0.0001    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7144    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7144   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0001   -0.8250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7144   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7144    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0      
+  2  3  1  0      
+  3  4  1  0      
+  4  5  1  0      
+  5  6  1  0      
+  6  1  1  0      
+M  END
+)CTAB"_ctab;
+
+  auto test = R"CTAB(
+     RDKit          2D
+
+ 20 21  0  0  0  0  0  0  0  0999 V2000
+   -2.6437    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6438    0.1125    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2148    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5003    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2141    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9286    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3692    2.3459    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7975    2.3459    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6438   -0.7125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582   -1.1250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582   -1.9500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6438   -2.3625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293   -1.9500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293   -1.1250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2271   -2.9459    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0604   -2.9459    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  1  1  0
+  6  7  1  0
+  7  8  1  0
+  8  9  1  0
+  9 10  1  0
+  9 11  1  0
+  9 12  1  0
+  4 13  1  0
+ 13 14  1  0
+ 14 15  1  0
+ 15 16  1  0
+ 16 17  1  0
+ 17 18  1  0
+ 18 13  1  0
+ 16 19  1  0
+ 16 20  1  0
+M  END
+)CTAB"_ctab;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  RGroupDecomposition decomp(*core, params);
+  decomp.add(*test);
+
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  auto r2 = rows[0]["R2"];
+  auto match = std::find_if(r2->atoms().begin(), r2->atoms().end(),
+                            [](Atom *a) { return a->getAtomicNum() == 0; });
+  auto dummy = *match;
+  int neighborIndex = *r2->getAtomNeighbors(dummy).first;
+  auto conf = r2->getConformer();
+  auto p1 = conf.getAtomPos(dummy->getIdx());
+  auto p2 = conf.getAtomPos(neighborIndex);
+  auto length = (p1 - p2).length();
+  TEST_ASSERT(abs(length - 1.0) < 0.25);
 }
 
 int main() {
@@ -2932,6 +3023,7 @@ int main() {
   testDoNotChooseUnrelatedCores();
   atomDegreePreconditionBug();
   testGithub5222();
+  testGithub5569();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
