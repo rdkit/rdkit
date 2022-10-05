@@ -413,10 +413,10 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // these indices are needed for the whole molecule match check functor
 
   std::unique_ptr<RWMol> checkCore = nullptr;
-  std::map<uint, uint> coreToCheck;
+  std::map<size_t, size_t> coreToCheck;
   std::string indexProp("__core_index__");
   bool hasMissing = missingDummies.size() > 0;
-  if (hasMissing > 0) {
+  if (hasMissing) {
     // if there are dummies that we can map these need to be removed from the
     // query before atom-by-atom matching.  Create a copy of the query for that
     // and use properties to map atoms back to the core
@@ -434,7 +434,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       checkCore->removeAtom(index);
       neighborAtom->updatePropertyCache(false);
     }
-    uint index = 0U;
+    size_t index = 0U;
     for (const auto atom : checkCore->atoms()) {
       auto coreIndex = atom->getProp<int>(indexProp);
       coreToCheck[coreIndex] = index;
