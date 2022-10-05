@@ -17,6 +17,9 @@ namespace RDKit {
 // ! assigns atomic connectivity to a molecule using atomic coordinates,
 // disregarding pre-existing bonds
 /*!
+
+   This is based on xyz2mol: https://github.com/jensengroup/xyz2mol
+
    \param mol is the molecule of interest; it must have a 3D conformer
    \param useHueckel (optional) if this is  \c true, extended Hueckel theory
    will be used to determine connectivity rather than the van der Waals method
@@ -34,6 +37,9 @@ RDKIT_DETERMINEBONDS_EXPORT void determineConnectivity(RWMol &mol,
 // it is recommended to sanitize the molecule after calling this function if
 // embedChiral is not set to true
 /*!
+
+   This is based on xyz2mol: https://github.com/jensengroup/xyz2mol
+
    \param mol is the molecule of interest; it must have single bonds
    corresponding to the atomic connectivity
    \param charge (optional) the charge
@@ -55,6 +61,9 @@ RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
 // disregarding pre-existing bonds; it is recommended to sanitize the molecule
 // after calling this function if embedChiral is not set to true
 /*!
+
+   This is based on xyz2mol: https://github.com/jensengroup/xyz2mol
+
    \param mol is the molecule of interest; it must have a 3D conformer
    \param useHueckel (optional) if this is  \c true, extended Hueckel theory
    will be used to determine connectivity rather than the van der Waals method

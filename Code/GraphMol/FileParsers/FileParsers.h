@@ -286,9 +286,6 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2BlockToMol(
     const std::string &molBlock, bool sanitize = true, bool removeHs = true,
     Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 
-RDKIT_FILEPARSERS_EXPORT Atom *ParseXYZFileAtomLine(const std::string &atomLine,
-                                                    RDGeom::Point3D &pos,
-                                                    unsigned int line);
 RDKIT_FILEPARSERS_EXPORT RWMol *XYZDataStreamToMol(std::istream &inStream);
 // \brief construct a molecule from an xyz block
 /*!
