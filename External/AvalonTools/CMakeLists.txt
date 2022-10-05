@@ -2,8 +2,9 @@ if(NOT RDK_BUILD_AVALON_SUPPORT)
   return()
 endif(NOT RDK_BUILD_AVALON_SUPPORT)
 
+set(AVALON_VERSION "2.0.2")
 if(NOT DEFINED AVALONTOOLS_DIR)
-  set(AVALONTOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ava-formake-AvalonToolkit_2.0.1")
+  set(AVALONTOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ava-formake-AvalonToolkit_${AVALON_VERSION}")
   set(fileToCheck "${AVALONTOOLS_DIR}/src/main/C/common/reaccsio.c")
   set(needDownload "TRUE")
   if(EXISTS "${fileToCheck}")
@@ -21,17 +22,17 @@ set(AVALON_PROGRAMS_PATH "${AVALON_SRC_PATH}/programs")
 
 if(needDownload)
   if(NOT DEFINED AVALONTOOLS_URL)
-    set(AVALONTOOLS_URL "https://github.com/rohdebe1/ava-formake/archive/refs/tags/AvalonToolkit_2.0.1.tar.gz")
+    set(AVALONTOOLS_URL "https://github.com/rohdebe1/ava-formake/archive/refs/tags/AvalonToolkit_${AVALON_VERSION}.tar.gz")
   endif()
   if(NOT DEFINED AVALONTOOLS_MD5SUM)
-    set(AVALONTOOLS_MD5SUM "e2a2dd77dbdbf42b232e5b5c2b3a34ad")
+    set(AVALONTOOLS_MD5SUM "fc188383a8896802e948c977b73dbe71")
   endif()
   if(NOT DEFINED AVALONTOOLS_BASE)
     string(REGEX REPLACE "^.*/" "" AVALONTOOLS_BASE "${AVALONTOOLS_URL}")
   endif()
   downloadAndCheckMD5(${AVALONTOOLS_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${AVALONTOOLS_BASE}" ${AVALONTOOLS_MD5SUM})
   execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf
-    ${CMAKE_CURRENT_SOURCE_DIR}/AvalonToolkit_2.0.1.tar.gz
+    ${CMAKE_CURRENT_SOURCE_DIR}/AvalonToolkit_${AVALON_VERSION}.tar.gz
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
