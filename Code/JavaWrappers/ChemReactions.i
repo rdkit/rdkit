@@ -42,6 +42,10 @@
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 %}
 
+%ignore RDKit::CDXMLToChemicalReactions;  //(const std::string &);
+%ignore RDKit::CDXMLFileToChemicalReactions; //(const std::string &);
+%ignore RDKit::CDXMLDataStreamToChemicalReactions; //(std::istream &);
+
 %include <GraphMol/ChemReactions/Reaction.h>
 %include <GraphMol/ChemReactions/ReactionParser.h>
 %ignore RDKit::ChemicalReaction::validate(unsigned int &,unsigned int &,bool);
@@ -50,6 +54,7 @@
                                             unsigned int &);
 %ignore RDKit::isMoleculeProductOfReaction(const ChemicalReaction &r,const ROMol &,
                                             unsigned int &);
+
 
 %newobject ReactionFromSmarts;
 %newobject ReactionFromRxnBlock;
@@ -139,5 +144,25 @@ static RDKit::ChemicalReaction *RxnFromBinary(std::vector<int> pkl){
     bool res=$self->validate(nErr,nWarn);
     return res;
   };
+
+static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLToChemicalReactions(
+  const std::string &block, bool sanitize=false, bool removeHs=false) {
+  auto reactions = RDKit::CDXMLToChemicalReactions(block, sanitize, removeHs);
+  std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
+  for(auto &rxn : reactions) {
+    result.emplace_back(rxn.release());
+  }
+  return result;
+}
+
+static std::vector<std::shared_ptr<ChemicalReaction>> CDXMLFileToChemicalReactions(
+  const std::string &filename, bool sanitize=false, bool removeHs=false) {
+  auto reactions = RDKit::CDXMLFileToChemicalReactions(filename, sanitize, removeHs);
+  std::vector<std::shared_ptr<RDKit::ChemicalReaction>> result;
+  for(auto &rxn : reactions) {
+    result.emplace_back(rxn.release());
+  }
+  return result;
+}
 
 }

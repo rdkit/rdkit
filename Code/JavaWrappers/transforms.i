@@ -53,6 +53,7 @@
 %template(IntSymmMatrix) RDNumeric::SymmMatrix<int>;
 %template(DoubleSymmMatrix) RDNumeric::SymmMatrix<double>;
 %template(DoubleSquareMatrix) RDNumeric::SquareMatrix<double>;
+%template(DoubleVector) RDNumeric::Vector<double>;
 
 %include <Geometry/Transform.h>
 %include <Geometry/Transform2D.h>

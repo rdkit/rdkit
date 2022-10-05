@@ -237,17 +237,24 @@ RDKIT_DEPICTOR_EXPORT void generateDepictionMatching3DStructure(
     RDKit::ROMol *referencePattern = nullptr, bool acceptFailure = false,
     bool forceRDKit = false);
 
-//! \brief Rotate the 2D depiction such that the majority of bonds have a
-//! 30-degree angle with the X axis.
+//! \brief Rotate the 2D depiction such that the majority of bonds have an
+//! angle with the X axis which is a multiple of 30 degrees.
 /*!
 
   ARGUMENTS:
   \param mol - the molecule to be rotated
   \param confId - (optional) the id of the reference conformation to use
+  \param minimizeRotation - (optional) if false (the default), the molecule
+  is rotated such that the majority of bonds have an angle with the
+  X axis of 30 or 90 degrees. If true, the minimum rotation is applied
+  such that the majority of bonds have an angle with the X axis of
+  0, 30, 60, or 90 degrees, with the goal of altering the initial
+  orientation as little as possible .
 */
 
 RDKIT_DEPICTOR_EXPORT void straightenDepiction(RDKit::ROMol &mol,
-                                               int confId = -1);
+                                               int confId = -1,
+                                               bool minimizeRotation = false);
 
 //! \brief Normalizes the 2D depiction.
 /*!
