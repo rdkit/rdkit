@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -146,6 +146,29 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   try {
     newM =
         MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<ROMol *>(newM);
+}
+
+ROMol *MolFromXYZFile(const char *xyzFilename) {
+  RWMol *newM = nullptr;
+  try {
+    newM = XYZFileToMol(xyzFilename);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<ROMol *>(newM);
+}
+
+ROMol *MolFromXYZBlock(python::object ixyzBlock) {
+  std::istringstream inStream(pyObjectToString(ixyzBlock));
+  RWMol *newM = nullptr;
+  try {
+    newM = XYZDataStreamToMol(inStream);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -773,6 +796,34 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       python::return_value_policy<python::manage_new_object>());
 
   docString =
+      "Construct a molecule from an XYZ file.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - xyzname: name of the file to read\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";
+  python::def("MolFromXYZFile", RDKit::MolFromXYZFile,
+              (python::arg("xyzFileName")), docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct a molecule from an XYZ string.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - xyzBlock: the XYZ data to read\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";
+  python::def("MolFromXYZBlock", RDKit::MolFromXYZBlock,
+              (python::arg("xyzFileName")), docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
       "Construct a molecule from an RDKit-generate SVG string.\n\n\
   ARGUMENTS:\n\
 \n\
@@ -1034,8 +1085,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg{"mol"}, python::arg{"filename"},
                python::arg{"confId"} = -1, python::arg{"kekulize"} = true),
               docString.c_str());
-
-  //
 
   docString =
       "Returns a XYZ block for a molecule\n\

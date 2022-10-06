@@ -286,6 +286,18 @@ RDKIT_FILEPARSERS_EXPORT RWMol *Mol2BlockToMol(
     const std::string &molBlock, bool sanitize = true, bool removeHs = true,
     Mol2Type variant = CORINA, bool cleanupSubstructures = true);
 
+RDKIT_FILEPARSERS_EXPORT RWMol *XYZDataStreamToMol(std::istream &inStream);
+// \brief construct a molecule from an xyz block
+/*!
+ *   \param xyzBlock    - string containing the xyz block
+ */
+RDKIT_FILEPARSERS_EXPORT RWMol *XYZBlockToMol(const std::string &xyzBlock);
+// \brief construct a molecule from an xyz file
+/*!
+ *   \param fName    - string containing the file name
+ */
+RDKIT_FILEPARSERS_EXPORT RWMol *XYZFileToMol(const std::string &fName);
+
 RDKIT_FILEPARSERS_EXPORT RWMol *PDBBlockToMol(const char *str,
                                               bool sanitize = true,
                                               bool removeHs = true,
