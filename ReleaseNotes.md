@@ -17,6 +17,9 @@
 - The Python function `Chem.GetSSSR()` now returns the SSSR rings found instead
   of just returning the count of rings. This is consistent with
   `Chem.GetSymmSSSR()` and more useful.
+- The SMILES parser will ignore the value of
+  `SmilesParserParams.useLegacyStereo` unless it is set to `false`. See the
+  deprecation note about `useLegacyStereo` below for more information.
 - The CFFI function `set_2d_coords_aligned()` now takes an additional `char **match_json`
   parameter; if `match_json` is not not `NULL`, `*match_json` will point to a
   JSON string containing the atoms and bonds which are part of the match.
@@ -33,6 +36,12 @@
   `rdkit.rdBase.LogErrorMsg()`.
 
 ## Deprecated code (to be removed in a future release):
+- The `SmilesParserParams` option `useLegacyStereo` is deprecated and will be
+  removed in the 2023.03 release. Please use `SetUseLegacyStereoPerception()`
+  instead. In the meantime the SMILES parser will use only use the value of
+  `SmilesParserParams.useLegacyStereo` if it is set to `false`, otherwise the
+  value of the global `useLegacyStereoPerception` parameter will control the
+  behavior of the SMILES parser.
 - The following JS methods:
   * generate_aligned_coords()
   * get_morgan_fp()
