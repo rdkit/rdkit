@@ -222,9 +222,11 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
       atomsToRemove.push_back(finalCore->getAtomWithIdx(atom->getIdx()));
     }
   }
+  finalCore->beginBatchEdit();
   for (auto atom: atomsToRemove) {
     finalCore->removeAtom(atom);
   }
+  finalCore->commitBatchEdit();
 
   finalCore->updatePropertyCache(false);
   return finalCore;
