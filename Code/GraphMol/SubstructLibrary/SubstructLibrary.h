@@ -429,7 +429,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      basic usage:
      \code
      SubstructLibrary lib;
-     lib.addMol(mol);
+     lib.addCore(mol);
      std::vector<unsigned int> results = lib.getMatches(query);
      for(std::vector<unsigned int>::const_iterator matchIndex=results.begin();
              matchIndex != results.end();
@@ -447,7 +447,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
         boost::make_shared<PatternHolder>();
 
      SubstructLibrary lib(molHolder, patternHolder);
-     lib.addMol(mol);
+     lib.addCore(mol);
      \endcode
 
      Cached molecule holders create molecules on demand.  There are currently
@@ -465,7 +465,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      smiles do not have ring information (although this is created
      in the molecule being searched if necessary).
 
-     When loading from external data, as opposed to using the "addMol" API,
+     When loading from external data, as opposed to using the "addCore" API,
      care must be taken to ensure that the pattern fingerprints and smiles
      are synchronized.
 

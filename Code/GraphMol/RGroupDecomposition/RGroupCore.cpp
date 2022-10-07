@@ -214,17 +214,19 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
       MolOps::setTerminalAtomCoords(*finalCore, atomIdx, neighborIdx);
     }
   }
-  
+
   // Remove unmapped dummies
   std::vector<Atom *> atomsToRemove;
-  for (auto atom: coreReplacedAtoms.atoms()) {
+  for (auto atom : coreReplacedAtoms.atoms()) {
     if (atom->getAtomicNum() == 0 && atom->hasProp(MISSING_RGROUP)) {
       atomsToRemove.push_back(finalCore->getAtomWithIdx(atom->getIdx()));
     }
   }
-  for (auto atom: atomsToRemove) {
+  finalCore->beginBatchEdit();
+  for (auto atom : atomsToRemove) {
     finalCore->removeAtom(atom);
   }
+  finalCore->commitBatchEdit();
 
   finalCore->updatePropertyCache(false);
   return finalCore;
@@ -360,8 +362,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     bool erased = false;
     if (values.size() == 1) {
       const auto dummy = core->getAtomWithIdx(mapping->first);
-      ROMol::ADJ_ITER nbrIter, endNbrs;
-      boost::tie(nbrIter, endNbrs) = core->getAtomNeighbors(dummy);
+      auto [nbrIter, endNbrs] = core->getAtomNeighbors(dummy);
       auto heavyNeighbor = core->getAtomWithIdx(*nbrIter);
       bool userQueryDummy =
           isUserRLabel(*dummy) &&
@@ -415,7 +416,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::unique_ptr<RWMol> checkCore = nullptr;
   std::map<size_t, size_t> coreToCheck;
   std::string indexProp("__core_index__");
-  bool hasMissing = missingDummies.size() > 0;
+  bool hasMissing = !missingDummies.empty();
   if (hasMissing) {
     // if there are dummies that we can map these need to be removed from the
     // query before atom-by-atom matching.  Create a copy of the query for that
@@ -427,8 +428,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     std::sort(missingDummies.begin(), missingDummies.end(),
               std::greater<int>());
     for (int index : missingDummies) {
-      RWMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) =
+      auto [nbrIdx, endNbrs] =
           checkCore->getAtomNeighbors(checkCore->getAtomWithIdx(index));
       auto neighborAtom = checkCore->getAtomWithIdx(*nbrIdx);
       checkCore->removeAtom(index);
