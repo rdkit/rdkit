@@ -313,7 +313,6 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
   // add a single rgroup substitution to any atom with free valence that doesn't
   // have a terminal dummy neighbor
 
-  RWMol::ADJ_ITER nbrIdx, endNbrs;
   std::vector<Atom *> unlabelledCoreAtoms{};
   for (const auto atom : core.atoms()) {
     if (atom->getAtomicNum() == 1) {
