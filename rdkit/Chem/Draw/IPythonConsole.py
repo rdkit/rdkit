@@ -43,6 +43,7 @@ bgcolor_3d = '0xeeeeee'
 drawOptions = rdMolDraw2D.MolDrawOptions()
 InteractiveRenderer._defaultDrawOptions = drawOptions
 
+
 def addMolToView(mol, view, confId=-1, drawAs=None):
   if mol.GetNumAtoms() >= 999 or drawAs == 'cartoon':
     # py3DMol is happier with TER and MASTER records present
@@ -92,15 +93,15 @@ def _toJSON(mol):
 
 
 def _wrapHTMLIntoTable(html):
-  return InteractiveRenderer.injectHTMLHeaderBeforeTable(f'<div><table><tbody><tr><td style="width: {molSize[0]}px; ' +
-                                     f'height: {molSize[1]}px; text-align: center;">' +
-                                     html.replace(" scoped", "") +
-                                     '</td></tr></tbody></table></div>')
+  return InteractiveRenderer.injectHTMLHeaderBeforeTable(
+    f'<div><table><tbody><tr><td style="width: {molSize[0]}px; ' +
+    f'height: {molSize[1]}px; text-align: center;">' + html.replace(" scoped", "") +
+    '</td></tr></tbody></table></div>')
 
 
 def _toHTML(mol):
   useInteractiveRenderer = InteractiveRenderer.isEnabled(mol)
-  if _canUse3D and ipython_3d and mol.GetNumConformers():
+  if _canUse3D and ipython_3d and mol.GetNumConformers() and mol.GetConformer().Is3D():
     return _toJSON(mol)
   props = mol.GetPropsAsDict()
   if not ipython_showProperties or not props:
