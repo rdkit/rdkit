@@ -20,6 +20,7 @@
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/MolEnumerator/LinkNode.h>
+#include <GraphMol/Chirality.h>
 
 namespace SmilesParseOps {
 using namespace RDKit;
@@ -980,15 +981,14 @@ bool parse_variable_attachments(Iterator &first, Iterator last,
         return false;
       }
       if (VALID_ATIDX(aidx)) {
-        others.push_back(
-            (boost::format("%d") % (aidx - startAtomIdx + 1)).str());
+        others.push_back(std::to_string(aidx - startAtomIdx + 1));
       }
       if (first < last && *first == '.') {
         ++first;
       }
     }
     if (VALID_ATIDX(at1idx)) {
-      std::string endPts = (boost::format("(%d") % others.size()).str();
+      std::string endPts = "(" + std::to_string(others.size());
       for (auto idx : others) {
         endPts += " " + idx;
       }
@@ -1062,49 +1062,102 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
       return false;
     }
 
-    if (!VALID_ATIDX(atomIdx)) {
-      BOOST_LOG(rdWarningLog)
-          << "bad atom index, " << atomIdx << ", in w block" << std::endl;
-      return false;
-    }
-    if (!VALID_BNDIDX(bondIdx)) {
-      BOOST_LOG(rdWarningLog)
-          << "bad bond index, " << bondIdx << ", in w block" << std::endl;
-      return false;
-    }
-    auto atom = mol.getAtomWithIdx(atomIdx + startAtomIdx);
-    auto bond = mol.getBondWithIdx(bondIdx + startBondIdx);
+    if (VALID_ATIDX(atomIdx) && VALID_BNDIDX(bondIdx)) {
+      auto atom = mol.getAtomWithIdx(atomIdx - startAtomIdx);
+      auto bond = mol.getBondWithIdx(bondIdx - startBondIdx);
 
-    // we can't set wedging twice:
-    if (bond->hasProp(common_properties::_MolFileBondCfg)) {
-      BOOST_LOG(rdWarningLog)
-          << "w block attempts to set wedging on bond " << bond->getIdx()
-          << " more than once." << std::endl;
-      return false;
-    }
-
-    // first things first, the atom needs to be the start atom of the bond for
-    // any of this to make sense
-    if (atom->getIdx() != bond->getBeginAtomIdx()) {
-      if (atom->getIdx() != bond->getEndAtomIdx()) {
+      // we can't set wedging twice:
+      if (bond->hasProp(common_properties::_MolFileBondCfg)) {
         BOOST_LOG(rdWarningLog)
-            << "atom " << atomIdx << " is not associated with bond " << bondIdx
-            << " in w block" << std::endl;
+            << "w block attempts to set wedging on bond " << bond->getIdx()
+            << " more than once." << std::endl;
         return false;
       }
-      auto eidx = bond->getBeginAtomIdx();
-      bond->setBeginAtomIdx(atom->getIdx());
-      bond->setEndAtomIdx(eidx);
+
+      // first things first, the atom needs to be the start atom of the bond for
+      // any of this to make sense
+      if (atom->getIdx() != bond->getBeginAtomIdx()) {
+        if (atom->getIdx() != bond->getEndAtomIdx()) {
+          BOOST_LOG(rdWarningLog)
+              << "atom " << atomIdx << " is not associated with bond "
+              << bondIdx << " in w block" << std::endl;
+          return false;
+        }
+        auto eidx = bond->getBeginAtomIdx();
+        bond->setBeginAtomIdx(atom->getIdx());
+        bond->setEndAtomIdx(eidx);
+      }
+      bond->setProp(common_properties::_MolFileBondCfg, cfg);
+      bond->setBondDir(state);
+      if (cfg == 2 && bond->getBondType() == Bond::BondType::SINGLE) {
+        bond->getBeginAtom()->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+        mol.setProp(detail::_needsDetectBondStereo, 1);
+      }
+      if ((cfg == 1 || cfg == 3) &&
+          bond->getBondType() == Bond::BondType::SINGLE) {
+        mol.setProp(detail::_needsDetectAtomStereo, 1);
+      }
     }
-    bond->setProp(common_properties::_MolFileBondCfg, cfg);
-    bond->setBondDir(state);
-    if (cfg == 2 && bond->getBondType() == Bond::BondType::SINGLE) {
-      bond->getBeginAtom()->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
-      mol.setProp(detail::_needsDetectBondStereo, 1);
+    if (first < last && *first == ',') {
+      ++first;
     }
-    if ((cfg == 1 || cfg == 3) &&
-        bond->getBondType() == Bond::BondType::SINGLE) {
-      mol.setProp(detail::_needsDetectAtomStereo, 1);
+  }
+  return true;
+}
+
+template <typename Iterator>
+bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
+                             unsigned int, unsigned int startBondIdx,
+                             Bond::BondStereo stereo) {
+  // these look like: C1CCCC/C=C/CCC1 |ctu:5|
+  // also c and t for cis or trans
+  //
+  while (first < last && *first != ':') {
+    ++first;
+  }
+  if (first >= last || *first != ':') {
+    return false;
+  }
+  ++first;
+
+  while (first < last && *first >= '0' && *first <= '9') {
+    unsigned int bondIdx;
+    if (!read_int(first, last, bondIdx)) {
+      return false;
+    }
+    if (VALID_BNDIDX(bondIdx)) {
+      auto bond = mol.getBondWithIdx(bondIdx - startBondIdx);
+
+      // the cis/trans/unknown marker is relative to the lowest numbered atom
+      // connected to the lowest numbered double bond atom and the
+      // highest-numbered atom connected to the highest-numbered double bond
+      // atom find those
+      auto begAtom = bond->getBeginAtom();
+      auto endAtom = bond->getEndAtom();
+      if (begAtom->getIdx() > endAtom->getIdx()) {
+        std::swap(begAtom, endAtom);
+      }
+      if (begAtom->getDegree() > 1 && endAtom->getDegree() > 1) {
+        unsigned int begControl = mol.getNumAtoms();
+        for (auto nbr : mol.atomNeighbors(begAtom)) {
+          if (nbr == endAtom) {
+            continue;
+          }
+          begControl = std::min(nbr->getIdx(), begControl);
+        }
+        unsigned int endControl = 0;
+        for (auto nbr : mol.atomNeighbors(endAtom)) {
+          if (nbr == begAtom) {
+            continue;
+          }
+          endControl = std::max(nbr->getIdx(), endControl);
+        }
+        if (begAtom != bond->getBeginAtom()) {
+          std::swap(begControl, endControl);
+        }
+        bond->setStereoAtoms(begControl, endControl);
+        bond->setStereo(stereo);
+      }
     }
     if (first < last && *first == ',') {
       ++first;
@@ -1376,6 +1429,22 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
     } else if (*first == 'w') {
       if (!parse_wedged_bonds(first, last, mol, startAtomIdx, startBondIdx)) {
+        return false;
+      }
+    } else if (*first == 'c' && first + 2 < last && first[1] == 't' &&
+               first[2] == 'u') {
+      if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
+                                   Bond::BondStereo::STEREOANY)) {
+        return false;
+      }
+    } else if (*first == 'c') {
+      if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
+                                   Bond::BondStereo::STEREOCIS)) {
+        return false;
+      }
+    } else if (*first == 't') {
+      if (!parse_doublebond_stereo(first, last, mol, startAtomIdx, startBondIdx,
+                                   Bond::BondStereo::STEREOTRANS)) {
         return false;
       }
     } else {
@@ -1938,6 +2007,97 @@ std::string get_bond_config_block(const ROMol &mol,
   return w + wU + wD;
 }
 
+std::string get_ringbond_cistrans_block(
+    const ROMol &mol, const std::vector<unsigned int> &atomOrder,
+    const std::vector<unsigned int> &bondOrder) {
+  if (!mol.getRingInfo()->isInitialized()) {
+    return "";
+  }
+
+  const auto rinfo = mol.getRingInfo();
+  std::string c = "", t = "", ctu = "";
+  for (unsigned int i = 0; i < bondOrder.size(); ++i) {
+    auto idx = bondOrder[i];
+    if (!rinfo->numBondRings(idx) ||
+        rinfo->minBondRingSize(idx) <
+            Chirality::minRingSizeForDoubleBondStereo) {
+      // we only do ring bonds of a minimum size
+      continue;
+    }
+    const auto bond = mol.getBondWithIdx(idx);
+    if (bond->getBondType() != Bond::BondType::DOUBLE &&
+        bond->getBondType() != Bond::BondType::AROMATIC) {
+      continue;
+    }
+    Bond::BondStereo bstereo = bond->getStereo();
+    if (bstereo != Bond::BondStereo::STEREOANY &&
+        bstereo != Bond::BondStereo::STEREOCIS &&
+        bstereo != Bond::BondStereo::STEREOTRANS) {
+      continue;
+    }
+
+    auto label = std::to_string(i);
+
+    if (bstereo == Bond::BondStereo::STEREOANY) {
+      // this one's easy because we don't care about the atom order.
+      if (ctu.empty()) {
+        ctu += "ctu:";
+      } else {
+        ctu += ",";
+      }
+      ctu += label;
+    } else {
+      Atom *begAtom = bond->getBeginAtom();
+      Atom *endAtom = bond->getEndAtom();
+      bool needSwap = false;
+      if (begAtom->getDegree() > 2) {
+        unsigned int o1 = atomOrder[bond->getStereoAtoms()[0]];
+        for (const auto nbr : mol.atomNeighbors(begAtom)) {
+          if (nbr == endAtom ||
+              nbr->getIdx() ==
+                  static_cast<unsigned>(bond->getStereoAtoms()[0])) {
+            continue;
+          }
+          if (atomOrder[nbr->getIdx() < o1]) {
+            // this neighbor came first, we need to swap:
+            needSwap = !needSwap;
+          }
+        }
+      }
+      if (endAtom->getDegree() > 2) {
+        unsigned int o1 = atomOrder[bond->getStereoAtoms()[1]];
+        for (const auto nbr : mol.atomNeighbors(endAtom)) {
+          if (nbr == begAtom ||
+              nbr->getIdx() ==
+                  static_cast<unsigned>(bond->getStereoAtoms()[1])) {
+            continue;
+          }
+          if (atomOrder[nbr->getIdx() < o1]) {
+            // this neighbor came first, we need to swap:
+            needSwap = !needSwap;
+          }
+        }
+      }
+      if (bstereo == Bond::BondStereo::STEREOCIS || needSwap) {
+        if (c.empty()) {
+          c += "c:";
+        } else {
+          c += ",";
+        }
+        c += label;
+      } else {
+        if (t.empty()) {
+          t += "t:";
+        } else {
+          t += ",";
+        }
+        t += label;
+      }
+    }
+  }
+  return c + t + ctu;
+}
+
 std::string get_linknodes_block(const ROMol &mol,
                                 const std::vector<unsigned int> &atomOrder) {
   bool strict = false;
@@ -2046,6 +2206,9 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
     const auto cfgblock =
         get_bond_config_block(mol, atomOrder, bondOrder, includeCoords);
     appendToCXExtension(cfgblock, res);
+    const auto cistransblock =
+        get_ringbond_cistrans_block(mol, atomOrder, bondOrder);
+    appendToCXExtension(cistransblock, res);
   }
 
   if (flags & SmilesWrite::CXSmilesFields::CX_LINKNODES) {

@@ -1317,6 +1317,16 @@ TEST_CASE("smilesBondOutputOrder") {
     m->getProp(common_properties::_smilesBondOutputOrder, order);
     CHECK(order == std::vector<unsigned int>{3, 4, 2, 1, 0});
   }
+  SECTION("Github #5585: incorrect ordering for ring closures") {
+    auto m = "OC1CCCN1"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) == "OC1CCCN1");
+    std::vector<unsigned int> order;
+    m->getProp(common_properties::_smilesAtomOutputOrder, order);
+    CHECK(order == std::vector<unsigned int>{0, 1, 2, 3, 4, 5});
+    m->getProp(common_properties::_smilesBondOutputOrder, order);
+    CHECK(order == std::vector<unsigned int>{0, 1, 2, 3, 4, 5});
+  }
 }
 
 TEST_CASE("Github #4320: Support toggling components of CXSMILES output") {
@@ -2201,6 +2211,74 @@ M  END
     for (const auto smi : smileses) {
       INFO(smi);
       CHECK_THROWS_AS(SmilesToMol(smi), SmilesParseException);
+    }
+  }
+}
+
+TEST_CASE("ring bond stereochemistry in CXSMILES") {
+  SECTION("basic reading") {
+    std::vector<std::pair<std::string, Bond::BondStereo>> tests = {
+        {"C1CCCC/C=C/CCC1 |t:5|", Bond::BondStereo::STEREOTRANS},
+        {"C1CCCCC=CCCC1 |t:5|", Bond::BondStereo::STEREOTRANS},
+        {"C1CCCCC=CCCC1 |c:5|", Bond::BondStereo::STEREOCIS},
+        {"C1CCCC/C=C/CCC1 |c:5|", Bond::BondStereo::STEREOCIS},
+        {"C1CCCCC=CCCC1 |ctu:5|", Bond::BondStereo::STEREOANY},
+        {"C1CCCC/C=C/CCC1 |ctu:5|", Bond::BondStereo::STEREOANY},
+    };
+    for (const auto [smi, val] : tests) {
+      SmilesParserParams ps;
+      ps.useLegacyStereo = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      INFO(smi);
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(5)->getBondType() == Bond::BondType::DOUBLE);
+      CHECK(m->getBondWithIdx(5)->getStereo() == val);
+    }
+  }
+  SECTION("read multiple values") {
+    SmilesParserParams ps;
+    ps.useLegacyStereo = false;
+    std::unique_ptr<RWMol> m{SmilesToMol("C1CCCCC=CCCC=1 |t:5,9|", ps)};
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(5)->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(m->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREOTRANS);
+    CHECK(m->getBondWithIdx(9)->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(m->getBondWithIdx(9)->getStereo() == Bond::BondStereo::STEREOTRANS);
+  }
+  SECTION("skip small rings") {
+    std::vector<std::pair<std::string, Bond::BondStereo>> tests = {
+        {"C1=CCCCC1 |ctu:0|", Bond::BondStereo::STEREONONE},
+        {"C1=CCCCC1 |c:0|", Bond::BondStereo::STEREONONE}};
+    for (const auto [smi, val] : tests) {
+      SmilesParserParams ps;
+      ps.useLegacyStereo = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      INFO(smi);
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(0)->getBondType() == Bond::BondType::DOUBLE);
+      CHECK(m->getBondWithIdx(0)->getStereo() == val);
+    }
+  }
+  SECTION("basic writing") {
+    std::vector<std::pair<std::string, std::string>> tests = {
+        {"C1CCCC/C=C/CCC1 |t:5|", "C1=C/CCCCCCCC/1 |t:0|"},
+        {"C1CCCCC=CCCC1 |t:5|", "C1=CCCCCCCCC1 |t:0|"},
+        {"C1CCCCC=CCCC1 |c:5|", "C1=CCCCCCCCC1 |c:0|"},
+        {"C1CCCC/C=C/CCC1 |c:5|", "C1=C/CCCCCCCC/1 |c:0|"},
+        {"C1=CCCCCCCCC1 |ctu:0|", "C1=CCCCCCCCC1 |ctu:0|"},
+        {"C=CCCCCCCCC |ctu:0|",
+         "C=CCCCCCCCC"}  // we don't write the markers for non-ring bonds
+    };
+    for (const auto [smi, val] : tests) {
+      SmilesParserParams ps;
+      ps.useLegacyStereo = false;
+      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      INFO(smi);
+      REQUIRE(m);
+      SmilesWriteParams ops;
+      auto cxsmi = MolToCXSmiles(
+          *m, ops, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+      CHECK(cxsmi == val);
     }
   }
 }
