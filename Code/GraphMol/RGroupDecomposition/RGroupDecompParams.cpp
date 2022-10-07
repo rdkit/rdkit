@@ -327,7 +327,7 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
       continue;
     }
 
-    boost::tie(nbrIdx, endNbrs) = core.getAtomNeighbors(atom);
+    auto [nbrIdx, endNbrs] = core.getAtomNeighbors(atom);
     bool hasTerminalDummyNeighbor = false;
 
     while (nbrIdx != endNbrs) {
