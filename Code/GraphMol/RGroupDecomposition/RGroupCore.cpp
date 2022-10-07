@@ -428,8 +428,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     std::sort(missingDummies.begin(), missingDummies.end(),
               std::greater<int>());
     for (int index : missingDummies) {
-      RWMol::ADJ_ITER nbrIdx, endNbrs;
-      boost::tie(nbrIdx, endNbrs) =
+      auto [nbrIdx, endNbrs] =
           checkCore->getAtomNeighbors(checkCore->getAtomWithIdx(index));
       auto neighborAtom = checkCore->getAtomWithIdx(*nbrIdx);
       checkCore->removeAtom(index);
