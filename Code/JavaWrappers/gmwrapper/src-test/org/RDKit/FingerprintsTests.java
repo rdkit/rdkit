@@ -159,7 +159,7 @@ public class FingerprintsTests extends GraphMolTest {
         ExplicitBitVect qfp2 = RDKFuncs.PatternFingerprintMol(q2, 2048);
 		MolBundle bndl = new MolBundle();
 		bndl.addMol(q1);
-		bndl.addCore(q2);
+		bndl.addMol(q2);
 		
 		ExplicitBitVect bndlfp = RDKFuncs.PatternFingerprintMol(bndl,2048);
         Int_Vect fpBits = bndlfp.getOnBits();

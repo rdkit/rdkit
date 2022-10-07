@@ -215,7 +215,7 @@ public class SubstructLibraryTests extends GraphMolTest {
             mol = RWMol.MolFromSmiles("c1ccccc1");
             // mol holder
             SubstructLibrary lib = new SubstructLibrary(mh, pat);
-            lib.addCore(mol);
+            lib.addMol(mol);
             
             UInt_Vect matches = lib.getMatches(mol);
             assertEquals(1, matches.size());
