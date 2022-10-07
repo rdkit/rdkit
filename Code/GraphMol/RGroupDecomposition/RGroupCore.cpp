@@ -360,8 +360,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     bool erased = false;
     if (values.size() == 1) {
       const auto dummy = core->getAtomWithIdx(mapping->first);
-      ROMol::ADJ_ITER nbrIter, endNbrs;
-      boost::tie(nbrIter, endNbrs) = core->getAtomNeighbors(dummy);
+      auto [nbrIter, endNbrs] = core->getAtomNeighbors(dummy);
       auto heavyNeighbor = core->getAtomWithIdx(*nbrIter);
       bool userQueryDummy =
           isUserRLabel(*dummy) &&
