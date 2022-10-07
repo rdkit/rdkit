@@ -3222,7 +3222,7 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
       // now that atom stereochem has been perceived, the wedging
       // information is no longer needed, so we clear
       // single bond dir flags:
-      ClearSingleBondDirFlags(*res);
+      MolOps::clearSingleBondDirFlags(*res);
 
       // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
       // here after sanitization because we need the ring information:

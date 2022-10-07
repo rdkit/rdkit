@@ -51,6 +51,7 @@ RDKIT_FILEPARSERS_EXPORT void addWavyBondsForStereoAny(
 //! picks the bonds which should be wedged
 /// \returns a map from bond idx -> controlling atom idx
 RDKIT_FILEPARSERS_EXPORT INT_MAP_INT pickBondsToWedge(const ROMol &mol);
+//! deprecated, please use MolOps::clearSingleBondDirFlags instead
 RDKIT_FILEPARSERS_EXPORT void ClearSingleBondDirFlags(ROMol &mol);
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);

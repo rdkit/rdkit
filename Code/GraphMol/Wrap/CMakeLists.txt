@@ -90,3 +90,6 @@ endif (RDK_TEST_MULTITHREADED)
 
 add_pytest(pyTestPropertyLists
          ${CMAKE_CURRENT_SOURCE_DIR}/testPropertyLists.py)
+
+add_pytest(pyCDXMLTest
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_cdxml.py)

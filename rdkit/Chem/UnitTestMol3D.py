@@ -100,6 +100,11 @@ class TestCase(unittest.TestCase):
     tfd = TorsionFingerprints.GetTFDBetweenMolecules(mol, mol2)
     self.assertAlmostEqual(tfd, 0.0691, 4)
 
+    # exactly equivalent to the above since the mols each only have one conformer
+    tfd = TorsionFingerprints.GetBestTFDBetweenMolecules(mol2,mol)
+    self.assertAlmostEqual(tfd,0.0691,4)
+
+
     mol.AddConformer(mol2.GetConformer(), assignId=True)
     mol.AddConformer(mol2.GetConformer(), assignId=True)
     tfd = TorsionFingerprints.GetTFDBetweenConformers(mol, confIds1=[0], confIds2=[1, 2])
@@ -108,6 +113,10 @@ class TestCase(unittest.TestCase):
 
     tfdmat = TorsionFingerprints.GetTFDMatrix(mol)
     self.assertEqual(len(tfdmat), 3)
+
+    tfd = TorsionFingerprints.GetBestTFDBetweenMolecules(mol2,mol)
+    self.assertAlmostEqual(tfd,0,4)
+
 
   def testTorsionFingerprintsAtomReordering(self):
     # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD

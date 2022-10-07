@@ -101,6 +101,10 @@ add_subdirectory(Trajectory)
 add_subdirectory(SubstructLibrary)
 add_subdirectory(RGroupDecomposition)
 
+if(RDK_BUILD_XYZ2MOL_SUPPORT)
+  add_subdirectory(DetermineBonds)
+endif()
+
 if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 add_subdirectory(MolInterchange)
 endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)

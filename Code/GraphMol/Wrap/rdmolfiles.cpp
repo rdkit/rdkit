@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -146,6 +146,29 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   try {
     newM =
         MolDataStreamToMol(inStream, line, sanitize, removeHs, strictParsing);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<ROMol *>(newM);
+}
+
+ROMol *MolFromXYZFile(const char *xyzFilename) {
+  RWMol *newM = nullptr;
+  try {
+    newM = XYZFileToMol(xyzFilename);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return static_cast<ROMol *>(newM);
+}
+
+ROMol *MolFromXYZBlock(python::object ixyzBlock) {
+  std::istringstream inStream(pyObjectToString(ixyzBlock));
+  RWMol *newM = nullptr;
+  try {
+    newM = XYZDataStreamToMol(inStream);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -573,6 +596,37 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
   return python::tuple(res);
 }
 
+python::object MolsFromCDXMLFile(const char *filename, bool sanitize, bool removeHs) {
+  std::vector<std::unique_ptr<RWMol>> mols;
+  try {
+    mols = CDXMLFileToMols(filename, sanitize, removeHs);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  python::list res;
+  for (auto &mol : mols) {
+    // take ownership of the data from the unique_ptr
+    ROMOL_SPTR sptr(static_cast<ROMol*>(mol.release()));
+    res.append(sptr);
+  }
+  return python::tuple(res);
+}
+
+python::tuple MolsFromCDXML(python::object cdxml, bool sanitize, bool removeHs) {
+  auto mols = CDXMLToMols(pyObjectToString(cdxml), sanitize, removeHs);
+  python::list res;
+  for (auto &mol : mols) {
+    // take ownership of the data from the unique_ptr
+    ROMOL_SPTR sptr(static_cast<ROMol*>(mol.release()));
+    res.append(sptr);
+  }
+  return python::tuple(res);
+}
+
 namespace {
 python::dict translateMetadata(
     const std::vector<std::pair<std::string, std::string>> &metadata) {
@@ -740,6 +794,34 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("removeHs") = true, python::arg("strictParsing") = true),
       docString.c_str(),
       python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct a molecule from an XYZ file.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - xyzname: name of the file to read\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";
+  python::def("MolFromXYZFile", RDKit::MolFromXYZFile,
+              (python::arg("xyzFileName")), docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct a molecule from an XYZ string.\n\n\
+  ARGUMENTS:\n\
+\n\
+    - xyzBlock: the XYZ data to read\n\
+\n\
+  RETURNS:\n\
+\n\
+    a Mol object, None on failure.\n\
+\n";
+  python::def("MolFromXYZBlock", RDKit::MolFromXYZBlock,
+              (python::arg("xyzFileName")), docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Construct a molecule from an RDKit-generate SVG string.\n\n\
@@ -1003,8 +1085,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (python::arg{"mol"}, python::arg{"filename"},
                python::arg{"confId"} = -1, python::arg{"kekulize"} = true),
               docString.c_str());
-
-  //
 
   docString =
       "Returns a XYZ block for a molecule\n\
@@ -1894,6 +1974,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      RETURNS:
        a Mol object, None on failure.)DOC";
+  
+  std::string cdxml_notes =
+    R"DOC()DOC";
+
   python::def(
       "MolFromPNGFile", MolFromPNGFile,
       (python::arg("filename"), python::arg("params") = python::object()),
@@ -1909,6 +1993,51 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                python::arg("params") = python::object()),
               "returns a tuple of molecules constructed from the PNG file");
 
+  docString =
+      R"DOC(Construct a molecule from a cdxml file.
+
+     Note that the CDXML format is large and complex, the RDKit doesn't support
+     full functionality, just the base ones required for molecule and
+     reaction parsing.
+
+     ARGUMENTS:
+
+       - filename: the cdxml filename
+
+       - sanitize: if True, sanitize the molecules [default True]
+       - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
+
+     RETURNS:
+       an iterator of parsed Mol objects.)DOC";
+  
+  python::def("MolsFromCDXMLFile", MolsFromCDXMLFile,
+	      (python::arg("filename"), python::arg("sanitize")=true, python::arg("removeHs")=true),
+	      docString.c_str()
+);
+  
+  docString =
+      R"DOC(Construct a molecule from a cdxml string.
+
+     Note that the CDXML format is large and complex, the RDKit doesn't support
+     full functionality, just the base ones required for molecule and
+     reaction parsing.
+
+     ARGUMENTS:
+
+       - filename: the cdxml string
+
+       - sanitize: if True, sanitize the molecules [default True]
+       - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
+
+
+     RETURNS:
+       an iterator of parsed Mol objects.)DOC";
+  
+  python::def("MolsFromCDXML", MolsFromCDXML,
+	      (python::arg("cdxml"), python::arg("sanitize")=true, python::arg("removeHs")=true),
+	      docString.c_str()
+	      );
+  
   docString =
       R"DOC(Adds molecular metadata to PNG data read from a file.
 

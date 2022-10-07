@@ -22,6 +22,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/Conformer.h>
 #include <Geometry/point.h>
 #include <Geometry/Transform3D.h>
@@ -1296,18 +1297,6 @@ void testNormalizeStraighten() {
       << "-----------------------\n Test normalize and straighten depiction"
       << std::endl;
 
-  struct Rmsd {
-    static double compute(const Conformer &c1, const Conformer &c2) {
-      TEST_ASSERT(c1.getNumAtoms() == c2.getNumAtoms());
-      double msd = 0.0;
-      for (unsigned int i = 0; i < c1.getNumAtoms(); ++i) {
-        msd += (c1.getAtomPos(i) - c2.getAtomPos(i)).lengthSq();
-      }
-      msd /= static_cast<double>(c1.getNumAtoms());
-      return sqrt(msd);
-    }
-  };
-
   auto noradrenalineMJ = R"RES(
   MJ201100                      
 
@@ -1340,91 +1329,142 @@ M  END)RES"_ctab;
   {
     auto noradrenalineMJCopy =
         std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
-    auto conformerCopy = new Conformer(noradrenalineMJCopy->getConformer());
-    noradrenalineMJCopy->addConformer(conformerCopy, true);
-    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
-                              noradrenalineMJCopy->getConformer(0)) < 1.e-5);
-    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
-                              noradrenalineMJCopy->getConformer(1)) < 1.e-5);
+    const auto &conformer0 = noradrenalineMJCopy->getConformer(0);
+    auto conformer1 = new Conformer(conformer0);
+    noradrenalineMJCopy->addConformer(conformer1, true);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  0) < 1.e-5);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  1) < 1.e-5);
     auto scalingFactor = RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1);
-    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
-                              noradrenalineMJCopy->getConformer(0)) < 1.e-5);
-    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
-                              noradrenalineMJCopy->getConformer(1)) > 1.e-5);
-    TEST_ASSERT(static_cast<int>(std::round(scalingFactor * 1.e3)) == 1875);
-    auto bond10_11Conf0 = noradrenalineMJCopy->getConformer(0).getAtomPos(11) -
-                          noradrenalineMJCopy->getConformer(0).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.x * 1.e3)) == 825);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.y * 1.e3)) == 0);
-    auto bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                          noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 1513);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == -321);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  0) < 1.e-5);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  1) > 1.e-5);
+    TEST_ASSERT(RDKit::feq(scalingFactor, 1.875, 1.e-3));
+    auto conformer2 = new Conformer(*conformer1);
+    noradrenalineMJCopy->addConformer(conformer2, true);
+    auto bond10_11Conf0 = conformer0.getAtomPos(11) - conformer0.getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.x, 0.825, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.y, 0.0, 1.e-3));
+    auto bond10_11Conf1 =
+        conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 1.513, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, -0.321, 1.e-3));
     RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
-    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 1340);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == -773);
-    auto bond4_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                         noradrenalineMJCopy->getConformer(1).getAtomPos(4);
-    TEST_ASSERT(static_cast<int>(std::round(bond4_11Conf1.x * 1.e3)) == 0);
-    TEST_ASSERT(static_cast<int>(std::round(bond4_11Conf1.y * 1.e3)) == 1547);
+    bond10_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 1.340, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, -0.773, 1.e-3));
+    auto bond4_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(4);
+    TEST_ASSERT(RDKit::feq(bond4_11Conf1.x, 0.0, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond4_11Conf1.y, 1.547, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 2, true);
+    auto bond10_11Conf2 =
+        conformer2->getAtomPos(11) - conformer2->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.x, 1.547, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.y, 0.0, 1.e-3));
+    auto bond4_11Conf2 = conformer2->getAtomPos(11) - conformer2->getAtomPos(4);
+    TEST_ASSERT(RDKit::feq(bond4_11Conf2.x, -0.773, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond4_11Conf2.y, 1.339, 1.e-3));
   }
   {
     auto noradrenalineMJCopy =
         std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
-    auto conformerCopy = new Conformer(noradrenalineMJCopy->getConformer());
-    noradrenalineMJCopy->addConformer(conformerCopy, true);
+    const auto &conformer0 = noradrenalineMJCopy->getConformer(0);
+    auto conformer1 = new Conformer(conformer0);
+    noradrenalineMJCopy->addConformer(conformer1, true);
     auto scalingFactor =
         RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, -1);
-    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
-                              noradrenalineMJCopy->getConformer(0)) < 1.e-5);
-    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
-                              noradrenalineMJCopy->getConformer(1)) > 1.e-5);
-    TEST_ASSERT(static_cast<int>(std::round(scalingFactor * 1.e3)) == 1875);
-    auto bond10_11Conf0 = noradrenalineMJCopy->getConformer(0).getAtomPos(11) -
-                          noradrenalineMJCopy->getConformer(0).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.x * 1.e3)) == 825);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.y * 1.e3)) == 0);
-    auto bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                          noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 321);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 1513);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  0) < 1.e-5);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  1) > 1.e-5);
+    TEST_ASSERT(RDKit::feq(scalingFactor, 1.875, 1.e-3));
+    auto conformer2 = new Conformer(*conformer1);
+    noradrenalineMJCopy->addConformer(conformer2, true);
+    auto bond10_11Conf0 = conformer0.getAtomPos(11) - conformer0.getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.x, 0.825, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.y, 0.0, 1.e-3));
+    auto bond10_11Conf1 =
+        conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 0.321, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, 1.513, 1.e-3));
     RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
-    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 0);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 1547);
+    bond10_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 0.0, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, 1.547, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 2, true);
+    auto bond10_11Conf2 =
+        conformer2->getAtomPos(11) - conformer2->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.x, bond10_11Conf1.x, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.y, bond10_11Conf1.y, 1.e-3));
   }
   {
     auto noradrenalineMJCopy =
         std::unique_ptr<RWMol>(new RWMol(*noradrenalineMJ));
-    auto conformerCopy = new Conformer(noradrenalineMJCopy->getConformer());
-    noradrenalineMJCopy->addConformer(conformerCopy, true);
+    const auto &conformer0 = noradrenalineMJCopy->getConformer(0);
+    auto conformer1 = new Conformer(conformer0);
+    noradrenalineMJCopy->addConformer(conformer1, true);
     auto scalingFactor =
         RDDepict::normalizeDepiction(*noradrenalineMJCopy, 1, 0, 3.0);
-    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
-                              noradrenalineMJCopy->getConformer(0)) < 1.e-5);
-    TEST_ASSERT(Rmsd::compute(noradrenalineMJ->getConformer(0),
-                              noradrenalineMJCopy->getConformer(1)) > 1.e-5);
-    TEST_ASSERT(static_cast<int>(std::round(scalingFactor * 1.e3)) == 3000);
-    auto bond10_11Conf0 = noradrenalineMJCopy->getConformer(0).getAtomPos(11) -
-                          noradrenalineMJCopy->getConformer(0).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.x * 1.e3)) == 825);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf0.y * 1.e3)) == 0);
-    auto bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                          noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 2475);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == 0);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  0) < 1.e-5);
+    TEST_ASSERT(MolAlign::CalcRMS(*noradrenalineMJ, *noradrenalineMJCopy, 0,
+                                  1) > 1.e-5);
+    TEST_ASSERT(RDKit::feq(scalingFactor, 3.0, 1.e-3));
+    auto conformer2 = new Conformer(*conformer1);
+    noradrenalineMJCopy->addConformer(conformer2, true);
+    auto conformer3 = new Conformer(*conformer1);
+    noradrenalineMJCopy->addConformer(conformer3, true);
+    auto bond10_11Conf0 = conformer0.getAtomPos(11) - conformer0.getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.x, 0.825, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf0.y, 0.0, 1.e-3));
+    auto bond10_11Conf1 =
+        conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 2.475, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, 0.0, 1.e-3));
     RDDepict::straightenDepiction(*noradrenalineMJCopy, 1);
-    bond10_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                     noradrenalineMJCopy->getConformer(1).getAtomPos(10);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.x * 1.e3)) == 2143);
-    TEST_ASSERT(static_cast<int>(std::round(bond10_11Conf1.y * 1.e3)) == -1237);
-    auto bond4_11Conf1 = noradrenalineMJCopy->getConformer(1).getAtomPos(11) -
-                         noradrenalineMJCopy->getConformer(1).getAtomPos(4);
-    TEST_ASSERT(static_cast<int>(std::round(bond4_11Conf1.x * 1.e3)) == 0);
-    TEST_ASSERT(static_cast<int>(std::round(bond4_11Conf1.y * 1.e3)) == 2475);
+    bond10_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.x, 2.143, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf1.y, -1.237, 1.e-3));
+    auto bond4_11Conf1 = conformer1->getAtomPos(11) - conformer1->getAtomPos(4);
+    TEST_ASSERT(RDKit::feq(bond4_11Conf1.x, 0.0, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond4_11Conf1.y, 2.475, 1.e-3));
+    RDDepict::straightenDepiction(*noradrenalineMJCopy, 2, true);
+    auto bond10_11Conf2 =
+        conformer2->getAtomPos(11) - conformer2->getAtomPos(10);
+    auto bond10_11Conf3 =
+        conformer3->getAtomPos(11) - conformer3->getAtomPos(10);
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.x, bond10_11Conf3.x, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond10_11Conf2.y, bond10_11Conf3.y, 1.e-3));
+    auto bond4_11Conf2 = conformer2->getAtomPos(11) - conformer2->getAtomPos(4);
+    auto bond4_11Conf3 = conformer3->getAtomPos(11) - conformer3->getAtomPos(4);
+    TEST_ASSERT(RDKit::feq(bond4_11Conf2.x, bond4_11Conf3.x, 1.e-3));
+    TEST_ASSERT(RDKit::feq(bond4_11Conf2.y, bond4_11Conf3.y, 1.e-3));
+  }
+  {
+    std::string zeroCoordCTab = R"RES(
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
+M  END
+)RES";
+    std::unique_ptr<RWMol> zeroCoordBenzene(MolBlockToMol(zeroCoordCTab));
+    auto res = RDDepict::normalizeDepiction(*zeroCoordBenzene);
+    TEST_ASSERT(res < 0.);
+    TEST_ASSERT(MolToMolBlock(*zeroCoordBenzene) == zeroCoordCTab);
   }
 }
 
