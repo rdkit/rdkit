@@ -416,7 +416,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::unique_ptr<RWMol> checkCore = nullptr;
   std::map<size_t, size_t> coreToCheck;
   std::string indexProp("__core_index__");
-  bool hasMissing = missingDummies.size() > 0;
+  bool hasMissing = !missingDummies.empty();
   if (hasMissing) {
     // if there are dummies that we can map these need to be removed from the
     // query before atom-by-atom matching.  Create a copy of the query for that
