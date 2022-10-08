@@ -118,20 +118,9 @@ Conversion to html is quite easy:
 >>> str(htm[:36])
 '<table border="1" class="dataframe">'
 
-In order to support rendering the molecules as images in the HTML export of the dataframe,
-the __str__ method is monkey-patched to return a base64 encoded PNG:
-
->>> molX = Chem.MolFromSmiles('Fc1cNc2ccccc12')
->>> print(molX) # doctest: +SKIP
-<img src="data:image/png;base64,..." alt="Mol"/>
-This can be reverted using the ChangeMoleculeRendering method
->>> ChangeMoleculeRendering(renderer='String')
->>> print(molX) # doctest: +SKIP
-<rdkit.Chem.rdchem.Mol object at 0x10d179440>
->>> ChangeMoleculeRendering(renderer='PNG')
->>> print(molX) # doctest: +SKIP
-<img src="data:image/png;base64,..." alt="Mol"/>
-
+In order to support rendering the molecules as images in the HTML export of the
+dataframe, we use a custom formatter for columns containing RDKit molecules,
+and also disable escaping of HTML where needed.
 '''
 
 from base64 import b64encode

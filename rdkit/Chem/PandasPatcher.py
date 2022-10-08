@@ -142,12 +142,11 @@ def patched_to_html(self, *args, **kwargs):
   frame = None
   if self.__class__.__name__ == "DataFrameRenderer":
     fmt = self.fmt
-    frame = fmt.frame
   elif self.__class__.__name__ == "DataFrameFormatter":
     fmt = self
-    frame = fmt.frame
   else:
     raise ValueError(f"patched_to_html: unexpected class {self.__class__.__name__}")
+  frame = fmt.frame
   if not check_rdk_attr(frame, RDK_MOLS_AS_IMAGE_ATTR):
     return orig_to_html(self, *args, **kwargs)
   orig_formatters = fmt.formatters

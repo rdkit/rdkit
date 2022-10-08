@@ -8,6 +8,7 @@
 #  of the RDKit source tree.
 #
 import base64
+import html
 import copy
 import warnings
 from io import BytesIO
@@ -101,7 +102,7 @@ def _wrapHTMLIntoTable(html):
 
 def _toHTML(mol):
   def escape_special_chars(s):
-    return str(s).replace('"', '&quot;').replace("'", "&apos;").replace("<", "&lt;").replace(">", "&gt;").replace("&", "&amp;")
+    return html.escape(str(s)).replace("&", "&amp;")
 
   useInteractiveRenderer = InteractiveRenderer.isEnabled(mol)
   if _canUse3D and ipython_3d and mol.GetNumConformers() and mol.GetConformer().Is3D():
