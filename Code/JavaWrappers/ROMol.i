@@ -387,6 +387,15 @@ void setPreferCoordGen(bool);
            &referencePattern,acceptFailure,forceRDKit);
   }
 
+  double normalizeDepiction(int confId=-1, int canonicalize=1,
+                            double scaleFactor=-1.0) {
+    return RDDepict::normalizeDepiction(*($self), confId, canonicalize, scaleFactor);
+  }
+
+  void straightenDepiction(int confId=-1, bool minimizeRotation=false) {
+    RDDepict::straightenDepiction(*($self), confId, minimizeRotation);
+  }
+
   /* From FindRings.cpp, MolOps.h */
   int findSSSR(RDKit::VECT_INT_VECT &res) {
     return RDKit::MolOps::findSSSR(*($self), res);
@@ -518,7 +527,34 @@ void setPreferCoordGen(bool);
                              int refCid = -1, const std::vector<std::pair<int,int> > *atomMap = 0,
                              const RDNumeric::DoubleVector *weights = 0,
                              bool reflect = false, unsigned int maxIters = 50){
-     return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters);
+    return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters);
+  }
+
+  double getBestAlignmentTransform(
+    const RDKit::ROMol &refMol, RDGeom::Transform3D &bestTrans,
+    std::vector<std::pair<int,int> > &bestMatch, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
+    unsigned int maxIters = 50) {
+    return RDKit::MolAlign::getBestAlignmentTransform(*($self), refMol, bestTrans, bestMatch,
+      prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights, reflect, maxIters);
+  }
+
+  double calcRMS(
+    const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr) {
+    return RDKit::MolAlign::CalcRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
+  }
+
+  double getBestRMS(
+    const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr) {
+    return RDKit::MolAlign::getBestRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
   }
 
   /* From GraphMol/MolAlign/AlignMolecules */
