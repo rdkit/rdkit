@@ -293,15 +293,14 @@ balducci, GLPG-GT
  (github pull #5580 from jones-gareth)
   - small changes to get the RDKit to build with C++20
  (github pull #5581 from greglandrum)
-  - Support ring-bond stereo flags in CXSMILES
- (github pull #5595 from greglandrum)
   - Improvements to 2D depiction and alignment/RMSD calculation
  (github pull #5598 from ptosco)
   - Expose additional functionality to SWIG wrappers
  (github pull #5614 from ptosco)
   - Add an RGroupDecomp aware  molzip to the FreeWilson Contribution
  (github pull #5615 from bp-kelley)
-
+  - PandasTools and InteractiveRenderer improvements
+ (github pull #5628 from ptosco)
 
 ## Code removed in this release:
 - The C++ class `RDLog::BlockLogs` has been removed. Please use the class `RDLog::LogStateSetter`. The Python class rdBase.BlockLogs() is still available and supported.
