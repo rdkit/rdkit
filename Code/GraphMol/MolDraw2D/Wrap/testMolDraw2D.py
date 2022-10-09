@@ -631,13 +631,23 @@ M  END''')
     nm = Chem.MolFromPNGString(txt)
     self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(nm))
 
-  def testUpdateParamsFromJSON(self):
+  def testUpdateMolDrawOptionsAndDrawerParamsFromJSON(self):
     m = Chem.MolFromSmiles('c1ccccc1NC(=O)C1COC1')
     d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
     d2d.DrawMolecule(m)
     d2d.FinishDrawing()
     txt = d2d.GetDrawingText()
     self.assertFalse('>8</text>' in txt)
+
+    drawOptions = rdMolDraw2D.MolDrawOptions()
+    Draw.UpdateMolDrawOptionsFromJSON(drawOptions, '{"addAtomIndices": 1}')
+    self.assertTrue(drawOptions.addAtomIndices)
+    d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
+    d2d.SetDrawOptions(drawOptions)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    txt = d2d.GetDrawingText()
+    self.assertTrue('>8</text>' in txt)
 
     d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
     Draw.UpdateDrawerParamsFromJSON(d2d, '{"addAtomIndices": 1}')
