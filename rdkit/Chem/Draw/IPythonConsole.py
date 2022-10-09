@@ -101,9 +101,6 @@ def _wrapHTMLIntoTable(html):
 
 
 def _toHTML(mol):
-  def escape_special_chars(s):
-    return html.escape(str(s)).replace("&", "&amp;")
-
   useInteractiveRenderer = InteractiveRenderer.isEnabled(mol)
   if _canUse3D and ipython_3d and mol.GetNumConformers() and mol.GetConformer().Is3D():
     return _toJSON(mol)
@@ -139,7 +136,7 @@ def _toHTML(mol):
         '<tr><td colspan="2" style="text-align: center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>'
       )
       break
-    pv = escape_special_chars(pv)
+    pv = html.escape(str(pv))
     res.append(
       f'<tr><th style="text-align: right">{pn}</th><td style="text-align: left">{pv}</td></tr>')
   res = '\n'.join(res)
