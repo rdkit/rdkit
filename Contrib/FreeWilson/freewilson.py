@@ -45,7 +45,7 @@ And do the decomposition:
 
 ```
 
-Scores need to be in an appropriate form for regrerssion analysis, i.e. pIC50s as opposed to IC50s.
+Scores need to be in an appropriate form for regression analysis, i.e. pIC50s as opposed to IC50s.
 Enumerations are a lot faster if you know a prediction cutoff or molecular weight cutoff.
 
 Scaffolds can be any scaffold or smarts pattern or list of either.  The system automatically 
@@ -133,7 +133,6 @@ input structures
 
 ```
 """
-
 from rdkit.Chem import rdRGroupDecomposition as rgd
 from rdkit.Chem import molzip, Descriptors
 from rdkit import rdBase
@@ -156,6 +155,58 @@ FreeWilsonPrediction = namedtuple("FreeWilsonPrediction", ['prediction', 'smiles
 
 # match dummy atoms in a smiles string to extract atom maps 
 dummypat = re.compile(r"\*:([0-9]+)")
+
+# molzip doesn't handle some of the forms that the RGroupDecomposition
+#  returns, this solves these issues.
+def molzip_smi(smiles):
+    """Fix a rgroup smiles for molzip, note that the core MUST come first
+    in the smiles string, ala core.rgroup1.rgroup2 ...
+    """
+    dupes = set()
+    sl = []
+    for s in smiles.split("."):
+        if s.count("*") >= 1:
+            if s in dupes:
+                continue
+            else:
+                dupes.add(s)
+        sl.append(s)
+        
+    smiles = ".".join(sl)
+    m = Chem.RWMol(Chem.MolFromSmiles(smiles, sanitize=False))
+    frags = Chem.GetMolFrags(m)
+    core = frags[0]
+    atommaps = {}
+    counts = defaultdict(int)
+    for idx in core:
+        atommap = m.GetAtomWithIdx(idx).GetAtomMapNum()
+        if atommap:
+            atommaps[atommap] = idx
+            counts[atommap] += 1
+    
+    next_atommap = max(atommaps) + 1
+    add_atommap = []
+    for fragment in frags[1:]:
+        for idx in fragment:
+            atommap = m.GetAtomWithIdx(idx).GetAtomMapNum()
+            if atommap:
+                count = counts[atommap] = counts[atommap] + 1
+                if count > 2:
+                    m.GetAtomWithIdx(idx).SetAtomMapNum(next_atommap)
+                    add_atommap.append((atommaps[atommap], next_atommap))
+                    next_atommap += 1
+                  
+    for atomidx, atommap in add_atommap:
+        atom = m.GetAtomWithIdx(atomidx)
+        bonds = list(atom.GetBonds())
+        if len(bonds) == 1:
+            oatom = bonds[0].GetOtherAtom(atom)
+            xatom = Chem.Atom(0)
+            idx = m.AddAtom(xatom)
+            xatom = m.GetAtomWithIdx(idx)
+            xatom.SetAtomMapNum(atommap)
+            m.AddBond(oatom.GetIdx(), xatom.GetIdx(), Chem.BondType.SINGLE)
+    return Chem.molzip(m)
 
 class RGroup:
     """FreeWilson RGroup
@@ -214,15 +265,22 @@ class FreeWilsonDecomposition:
       r2 - regression r squared
       descriptors - set of the descriptors for molecules in the training set
                     used to not enumerate existing molecules
+      row_decomposition - original rgroup decomposition (With row key 'molecule' is an rdkit molecule)
     """
                       
-    def __init__(self, rgroups, rgroup_to_descriptor_idx, fitter, r2, descriptors):
+    def __init__(self,
+                 rgroups, rgroup_to_descriptor_idx, fitter,
+                 r2, descriptors, row_decomposition,
+                 num_training, num_reconstructed):
         self.rgroups = rgroups # dictionary 'Core':[core1, core1], 'R1': [rgroup1, rgroup2], ...
         self.rgroup_to_descriptor_idx = rgroup_to_descriptor_idx # dictionary {smi:descriptor_idx}
         self.fitter = fitter # fitter rgroup indices -> prediction
         self.N = len(rgroup_to_descriptor_idx)
         self.r2 = r2
         self.descriptors = set([tuple(d) for d in descriptors])
+        self.row_decomposition = row_decomposition
+        self.num_training = num_training
+        self.num_reconstructed = num_reconstructed
 
 
 default_decomp_params = rgd.RGroupDecompositionParameters()
@@ -238,6 +296,8 @@ default_decomp_params.onlyMatchAtRGroups = False
 # use the fingerprint variance method for scoring
 default_decomp_params.scoreMethod = rgd.RGroupScore.FingerprintVariance
 
+# we need to keep hydrogens so molzip will work
+default_decomp_params.removeHydrogensPostMatch = False
 def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) -> FreeWilsonDecomposition:
     """
     Perform a free wilson analysis
@@ -266,8 +326,9 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
 
     For an easy way to report predictions see 
 
+       >>> from freewilson import FWBuild, predictions_to_csv
        >>> import sys
-       >>> predictions_to_csv(sys.stdout, fw, FWBuild(fw))
+       >>> predictions_to_csv(sys.stdout, FWBuild(fw))
 
    
     See FWBuild docs to see how to filter predictions, molecular weight or molecular properties.
@@ -283,34 +344,61 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
     # decompose the rgroups
     logger.info(f"Decomposing {len(mols)} molecules...")
     decomposer = rgd.RGroupDecomposition(scaffolds, decomp_params)
-    for mol, score in tqdm(zip(mols, scores)):
+    matched = []
+    matched_indices = []
+    for i,(mol, score) in enumerate(tqdm(zip(mols, scores))):
         if decomposer.Add(mol) >= 0:
             matched_scores.append(score)
+            matched.append(mol)
+            matched_indices.append(i)
+
     decomposer.Process()
     logger.info(f"Matched {len(matched_scores)} out of {len(mols)}")
     if not(matched_scores):
         logger.error("No scaffolds matched the input molecules")
         return
 
-    decomposition = decomposition = decomposer.GetRGroupsAsRows(asSmiles=True)
+    decomposition = decomposer.GetRGroupsAsRows(asSmiles=True)
+
     logger.info("Get unique rgroups...")
+    blocker = rdBase.BlockLogs()
     rgroup_counts = defaultdict(int)
-    for row in decomposition:
+    num_reconstructed = 0
+    for num_mols, (row, idx) in enumerate(zip(decomposition, matched_indices)):
+        row_smiles = []
         for rgroup,smiles in row.items():
+            row_smiles.append(smiles)
             rgroup_counts[smiles] += 1
             if smiles not in rgroup_idx:
                 rgroup_idx[smiles] = len(rgroup_idx)
                 rgroups[rgroup].append(RGroup(smiles, rgroup, 0, 0))
+        row['original_idx'] = idx
+        reconstructed = ".".join(row_smiles)
+        try:
+            blocker = rdBase.BlockLogs()
+            mol = molzip_smi(reconstructed)
+            num_reconstructed += 1
+        except:
+            print("failed:", Chem.MolToSmiles(matched[num_mols]), reconstructed)
+        
 
     logger.info(f"Descriptor size {len(rgroup_idx)}")
+    logger.info(f"Reconstructed {num_reconstructed} out of {num_mols}")
+
     # get the descriptors list, one-hot encoding per rgroup
-    for row in decomposition:
+    if num_reconstructed == 0:
+        logging.warning("Could only reconstruct %s out of %s training molecules",
+                        num_mols, num_reconstructed)
+
+    for mol, row in zip(matched, decomposition):
+        row['molecule'] = mol
         descriptor = [0] * len(rgroup_idx)
         descriptors.append(descriptor)
         for smiles in row.values():
             if smiles in rgroup_idx:
                 descriptor[rgroup_idx[smiles]] = 1
 
+        
     assert len(descriptors) == len(matched_scores), f"Number of descriptors({len(descriptors)}) doesn't match number of matcved scores({len(matched_scores)})"
 
     # Perform the Ridge Regression
@@ -328,7 +416,9 @@ def FWDecompose(scaffolds, mols, scores, decomp_params=default_decomp_params) ->
             rgroup.coefficient = lm.coef_[rgroup_idx[rgroup.smiles]]
             rgroup.idx = rgroup_idx[rgroup.smiles]
 
-    return FreeWilsonDecomposition(rgroups, rgroup_idx, lm, r2, descriptors)
+    return FreeWilsonDecomposition(rgroups, rgroup_idx, lm,
+                                   r2, descriptors, decomposition,
+                                   num_mols, num_reconstructed)
 
 def _enumerate(rgroups, fw, 
                mw_filter=None, hvy_filter=None, pred_filter=None, mol_filter=None):
@@ -391,8 +481,8 @@ def _enumerate(rgroups, fw,
         smiles = set([g.smiles for g in groups]) # remove dupes
         smi = ".".join(set([g.smiles for g in groups]))
         try:
-            mol = molzip(Chem.MolFromSmiles(smi))
-        except Exception:
+            mol = molzip_smi(smi)
+        except:
             rejected_bad += 1
             continue
             
@@ -429,12 +519,17 @@ def FWBuild(fw: FreeWilsonDecomposition,
     cycles = set()
     rgroups_no_cycles = defaultdict(list)
     rgroup_cycles = defaultdict(list)
+
+    # we can handle cycles now?
     for key, rgroup in fw.rgroups.items():
         if key == 'Core':
             rgroups_no_cycles[key] = rgroup
             continue
         no_cycles = rgroups_no_cycles[key]
         for g in rgroup:
+            no_cycles.append(g)
+            continue
+        
             if len(g.dummies) > 1:
                 cycles.add(g.dummies)
                 rgroup_cycles[g.dummies].append(g)
@@ -507,15 +602,17 @@ def predictions_to_csv(outstream, decomposition: FreeWilsonDecomposition, predic
             lookup = {}
             for i, rg in enumerate(rgroups):
                 lookup[rg] = i
-    
             writer = csv.writer(outstream)
-            writer.writerow(['smiles', 'prediction'] + [f"{rg}_smiles" for rg in list(rgroups)])
+            header = ['smiles', 'prediction'] + [f"{rg}_smiles" for rg in list(rgroups)]
+            writer.writerow(header)
         rg = [""] * len(lookup)
         for s in pred.rgroups:
             rg[lookup[s.rgroup]] = s.smiles
+
         row = [pred.smiles, repr(pred.prediction)] + rg
         writer.writerow(row)
-
+    return header
+            
 def test_freewilson():
     # some simple tests
     from rdkit import Chem

@@ -237,18 +237,18 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_unspec_stereo.svg", 599119798U},
     {"light_blue_h_no_label_1.svg", 3735371135U},
     {"test_github_5534.svg", 574501211U},
-    {"bond_highlights_1.svg", 1150579427U},
-    {"bond_highlights_2.svg", 2958558856U},
-    {"bond_highlights_3.svg", 3466419491U},
-    {"bond_highlights_4.svg", 3500788273U},
-    {"bond_highlights_5.svg", 3500788273U},
-    {"bond_highlights_6.svg", 3008628729U},
-    {"bond_highlights_7.svg", 3900018634U},
-    {"bond_highlights_8.svg", 64473502U},
+    {"bond_highlights_1.svg", 1426179967U},
+    {"bond_highlights_2.svg", 3654242474U},
+    {"bond_highlights_3.svg", 2068128924U},
+    {"bond_highlights_4.svg", 4115973245U},
+    {"bond_highlights_5.svg", 4115973245U},
+    {"bond_highlights_6.svg", 1566801788U},
+    {"bond_highlights_7.svg", 2101261688U},
+    {"bond_highlights_8.svg", 3826056528U},
+    {"bond_highlights_9.svg", 2915809284U},
     {"testGithub5486_1.svg", 1149144091U},
     {"testGithub5511_1.svg", 940106456U},
-    {"testGithub5511_2.svg", 1448975272U}
-};
+    {"testGithub5511_2.svg", 1448975272U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -5390,8 +5390,7 @@ M  END
     auto drawnBondLength = [&](const std::string &r1,
                                const std::string &t) -> double {
       std::regex regex1(r1);
-      auto match_begin =
-          std::sregex_iterator(t.begin(), t.end(), regex1);
+      auto match_begin = std::sregex_iterator(t.begin(), t.end(), regex1);
       auto match_end = std::sregex_iterator();
       std::vector<Point2D> ends;
       for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
@@ -5399,7 +5398,7 @@ M  END
         ends.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
         ends.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
       }
-      return (ends[0]-ends[1]).length();
+      return (ends[0] - ends[1]).length();
     };
 
     {
@@ -5494,8 +5493,10 @@ TEST_CASE("Bond Highlights", "") {
     // only bonds highlighted, continuous highlighting, highlights
     // joining neatly.
     MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addBondIndices = true;
     std::vector<int> highAts{};
     std::vector<int> highBnds{0, 1, 4, 5, 6, 7, 13};
+    //    std::vector<int> highBnds{0, 1, 4};
     drawer.drawMolecule(*m1, &highAts, &highBnds);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -5656,6 +5657,7 @@ TEST_CASE("Bond Highlights", "") {
     check_file_hash("bond_highlights_7.svg");
   }
 #endif
+#if 1
   {
     // check 3- and 4-way intersections of continuous highlights are ok
     auto m = "c1c(C(C)(C)C)cccc1"_smiles;
@@ -5680,6 +5682,52 @@ TEST_CASE("Bond Highlights", "") {
     outs.flush();
     check_file_hash("bond_highlights_8.svg");
   }
+#endif
+#if 1
+  {
+    // cyclopropane (Github5592)
+    auto m = "CC1CC1"_smiles;
+    REQUIRE(m);
+    MolDraw2DUtils::prepareMolForDrawing(*m);
+    std::vector<int> highBnds{1, 2, 3};
+    std::map<int, DrawColour> bond_highlight_colors;
+    bond_highlight_colors[1] = DrawColour(1.0, 0.0, 0.0);
+    bond_highlight_colors[2] = DrawColour(0.0, 1.0, 0.0);
+    bond_highlight_colors[3] = DrawColour(0.0, 0.0, 1.0);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().continuousHighlight = true;
+    drawer.drawMolecule(*m, nullptr, &highBnds, nullptr,
+                        &bond_highlight_colors);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("bond_highlights_9.svg");
+    outs << text;
+    std::regex regex1(
+        R"(class='bond-[\d*] atom-[\d] atom-[\d]' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z')");
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), regex1);
+    auto match_end = std::sregex_iterator();
+    std::vector<Point2D> ends;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      // with this result, match[0] is the whole string that matched,
+      // match[1] is the 1st float (the x coord of the M), match[2]
+      // is the 2nd float, etc.
+      std::smatch match = *i;
+      ends.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
+      ends.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
+      ends.push_back(Point2D(std::stod(match[5]), std::stod(match[6])));
+      ends.push_back(Point2D(std::stod(match[7]), std::stod(match[8])));
+    }
+    REQUIRE(ends.size() == 12);
+    // When this had a bug in it, it drew a butterfly-type motif, because
+    // ends 2 and 3 were the wrong way round.
+    for (int i = 0; i < 12; i += 4) {
+      REQUIRE(!MolDraw2D_detail::doLinesIntersect(
+          ends[i], ends[i + 3], ends[i + 1], ends[i + 2], nullptr));
+    }
+    outs.flush();
+    check_file_hash("bond_highlights_9.svg");
+  }
+#endif
 }
 
 TEST_CASE("drawMolecules should not crash on null molecules",
