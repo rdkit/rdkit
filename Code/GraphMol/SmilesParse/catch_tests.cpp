@@ -2261,10 +2261,10 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
   }
   SECTION("basic writing") {
     std::vector<std::pair<std::string, std::string>> tests = {
-        {"C1CCCC/C=C/CCC1 |t:5|", "C1=CCCCCCCCC1 |t:0|"},
-        {"C1CCCCC=CCCC1 |t:5|", "C1=CCCCCCCCC1 |t:0|"},
-        {"C1CCCCC=CCCC1 |c:5|", "C1=CCCCCCCCC1 |c:0|"},
-        {"C1CCCC/C=C/CCC1 |c:5|", "C1=CCCCCCCCC1 |c:0|"},
+        {"C1CCCC/C=C/CCC1 |t:5|", "C1=C/CCCCCCCC/1 |t:0|"},
+        {"C1CCCCC=CCCC1 |t:5|", "C1=C/CCCCCCCC/1 |t:0|"},
+        {"C1CCCCC=CCCC1 |c:5|", "C1=C\\CCCCCCCC/1 |c:0|"},
+        {"C1CCCC/C=C/CCC1 |c:5|", "C1=C\\CCCCCCCC/1 |c:0|"},
         {"C1=CCCCCCCCC1 |ctu:0|", "C1=CCCCCCCCC1 |ctu:0|"},
         {"C=CCCCCCCCC |ctu:0|",
          "C=CCCCCCCCC"}  // we don't write the markers for non-ring bonds
