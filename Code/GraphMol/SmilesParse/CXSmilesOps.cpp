@@ -1157,6 +1157,7 @@ bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
         }
         bond->setStereoAtoms(begControl, endControl);
         bond->setStereo(stereo);
+        mol.setProp(SmilesParseOps::detail::_needsDetectBondStereo, 1);
       }
     }
     if (first < last && *first == ',') {
