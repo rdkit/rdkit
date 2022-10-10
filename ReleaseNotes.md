@@ -51,6 +51,9 @@
   which used to take several individual parameters now take a single JSON string parameter.
   The overloads taking several individual parameters are now deprecated and will be
   removed in a future release.
+- The `PrintAsBase64PNGString` function in `PandasTools` is deprecated and replaced
+  by `PrintAsImageString`, which has a more appropriate name given it actually supports
+  both PNG and SVG images.
 
 # Release_2022.03.1
 (Changes relative to Release_2021.09.1)
