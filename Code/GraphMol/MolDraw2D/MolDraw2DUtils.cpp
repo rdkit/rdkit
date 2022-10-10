@@ -104,10 +104,16 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
   drawer.drawOptions().prepareMolsBeforeDrawing = old_prep_mol;
 }
 
-void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
+void updateMolDrawOptionsFromJSON(MolDrawOptions &opts, const char *json) {
   PRECONDITION(json, "no parameter string");
-  updateDrawerParamsFromJSON(drawer, std::string(json));
+  updateMolDrawOptionsFromJSON(opts, std::string(json));
 };
+
+RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
+                                                       const char *json) {
+  updateMolDrawOptionsFromJSON(drawer.drawOptions(), json);
+}
+
 #define PT_OPT_GET(opt) opts.opt = pt.get(#opt, opts.opt)
 
 void get_rgba(const boost::property_tree::ptree &node, DrawColour &colour) {
@@ -150,13 +156,13 @@ void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
   }
 }
 
-void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
+void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
+                                  const std::string &json) {
   if (json == "") {
     return;
   }
   std::istringstream ss;
   ss.str(json);
-  MolDrawOptions &opts = drawer.drawOptions();
   boost::property_tree::ptree pt;
   boost::property_tree::read_json(ss, pt);
   PT_OPT_GET(atomLabelDeuteriumTritium);
@@ -224,6 +230,11 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
           item.second.get_value<std::string>();
     }
   }
+}
+
+RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(
+    MolDraw2D &drawer, const std::string &json) {
+  updateMolDrawOptionsFromJSON(drawer.drawOptions(), json);
 }
 
 void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,

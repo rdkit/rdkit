@@ -636,8 +636,12 @@ void setDrawerColour(RDKit::MolDraw2D &self, python::tuple tpl) {
   self.setColour(pyTupleToDrawColour(tpl));
 }
 
-void updateParamsHelper(MolDraw2D *obj, std::string json) {
-  MolDraw2DUtils::updateDrawerParamsFromJSON(*obj, json);
+void updateMolDrawOptionsHelper(RDKit::MolDrawOptions &obj, std::string json) {
+  MolDraw2DUtils::updateMolDrawOptionsFromJSON(obj, json);
+}
+
+void updateDrawerParamsHelper(RDKit::MolDraw2D &obj, std::string json) {
+  MolDraw2DUtils::updateDrawerParamsFromJSON(obj, json);
 }
 
 std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
@@ -1263,7 +1267,9 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
        python::arg("mol") = python::object()),
       docString.c_str());
 
-  python::def("UpdateDrawerParamsFromJSON", RDKit::updateParamsHelper,
+  python::def("UpdateMolDrawOptionsFromJSON", RDKit::updateMolDrawOptionsHelper,
+              (python::arg("opts"), python::arg("json")));
+  python::def("UpdateDrawerParamsFromJSON", RDKit::updateDrawerParamsHelper,
               (python::arg("drawer"), python::arg("json")));
 
   // ------------------------------------------------------------------------

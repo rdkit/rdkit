@@ -2601,14 +2601,14 @@ void test12DrawMols() {
 
 void test13JSONConfig() {
   std::cerr << " ----------------- Test JSON Configuration" << std::endl;
+  auto m = "CCO"_smiles;
+  TEST_ASSERT(m);
+  const char *json =
+      "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
+      "\"bondLineWidth\": 5}";
+  MolDraw2DUtils::prepareMolForDrawing(*m);
   {
-    auto m = "CCO"_smiles;
-    TEST_ASSERT(m);
-    MolDraw2DUtils::prepareMolForDrawing(*m);
     MolDraw2DSVG drawer(250, 200);
-    const char *json =
-        "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
-        "\"bondLineWidth\": 5}";
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
     drawer.drawMolecule(*m, "foo");
     drawer.finishDrawing();
@@ -2633,6 +2633,31 @@ void test13JSONConfig() {
     // drawing, and at this size this comes out as 5px.
     TEST_ASSERT(text.find("stroke-width:5.0px") != std::string::npos);
     check_file_hash("test13_1.svg");
+  }
+  {
+    MolDraw2DSVG drawer(250, 200);
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+    drawer.drawOptions() = opts;
+    drawer.drawMolecule(*m, "foo");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#if DO_TEST_ASSERT
+    // we'll just have to assume that this pink is for the legend
+    TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 121.1,8.2"
+                          " L 164.6,83.6'") != std::string::npos);
+#endif
+#else
+    TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
+                std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.8,8.2"
+                          " L 162.1,81.5'") != std::string::npos);
+#endif
+    // these days the bond line width scales with the rest of the
+    // drawing, and at this size this comes out as 5px.
+    TEST_ASSERT(text.find("stroke-width:5.0px") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
