@@ -301,6 +301,8 @@ balducci, GLPG-GT
  (github pull #5615 from bp-kelley)
   - PandasTools and InteractiveRenderer improvements
  (github pull #5628 from ptosco)
+  - Add updateMolDrawOptionsFromJSON()
+ (github pull #5630 from ptosco)
 
 ## Code removed in this release:
 - The C++ class `RDLog::BlockLogs` has been removed. Please use the class `RDLog::LogStateSetter`. The Python class rdBase.BlockLogs() is still available and supported.
