@@ -16,7 +16,7 @@ import json
 import re
 import logging
 from . import rdMolDraw2D
-from IPython.display import HTML
+from IPython.display import HTML, display
 from rdkit import Chem
 from rdkit.Chem import Draw
 
@@ -77,23 +77,28 @@ def filterDefaultDrawOpts(molDrawOptions):
   }
 
 
-def setEnabled():
+def setEnabled(shouldEnable=True, quiet=False):
   """ Enable interactive molecule rendering """
 
-  def _wrapMsgIntoDiv(uuid, msg):
+  def _wrapMsgIntoDiv(uuid, msg, quiet):
     return ('<div '
       'class="lm-Widget p-Widget jp-RenderedText jp-mod-trusted jp-OutputArea-output"'
-      f'id="{uuid}">{msg}</div>')
+      f'id="{uuid}">{"" if quiet else msg}</div>')
 
   global _enabled_div_uuid
   loadingMsg = "Loading rdkit-structure-renderer.js..."
   failedToLoadMsg = "Failed to load rdkit-structure-renderer.js:"
-  renderingAvailableMsg = "Interactive molecule rendering is available in this Jupyter Notebook."
-  renderingUnavailableMsg = "Interactive molecule rendering will not be available in this Jupyter Notebook."
+  renderingMsg = "Interactive molecule rendering is {0:s} in this Jupyter Notebook."
+  renderingUnavailableMsg = renderingMsg.format("not available")
+  renderingEnabledMsg = renderingMsg.format("enabled")
+  renderingDisabledMsg = renderingMsg.format("disabled")
+  if not shouldEnable:
+    _enabled_div_uuid = None
+    return display(HTML(_wrapMsgIntoDiv("", renderingDisabledMsg, quiet)))
   if _enabled_div_uuid:
-    return HTML(_wrapMsgIntoDiv(_enabled_div_uuid, renderingAvailableMsg))
+    return display(HTML(_wrapMsgIntoDiv(_enabled_div_uuid, renderingEnabledMsg, quiet)))
   _enabled_div_uuid = str(uuid.uuid1())
-  return HTML(_wrapMsgIntoDiv(_enabled_div_uuid, loadingMsg) +
+  return display(HTML(_wrapMsgIntoDiv(_enabled_div_uuid, loadingMsg, quiet) +
 f"""<script type="module">
 const jsLoader = document.getElementById('{_enabled_div_uuid}') || {{}};
 const setError = (e, resolve) => {{
@@ -105,7 +110,7 @@ const setError = (e, resolve) => {{
   resolve && resolve();
 }};
 if (window.rdkStrRnr) {{
-  jsLoader.innerHTML = '{renderingAvailableMsg}';
+  jsLoader.innerHTML = '{renderingEnabledMsg}';
 }} else {{
   window.rdkStrRnr = new Promise(resolve => {{
     try {{
@@ -116,7 +121,7 @@ if (window.rdkStrRnr) {{
               const res = Renderer.init('{minimalLibJsUrl}');
               return res.then(
                 Renderer => {{
-                  jsLoader.innerHTML = '{renderingAvailableMsg}';
+                  jsLoader.innerHTML = '{renderingEnabledMsg}';
                   resolve(Renderer);
                 }}
               ).catch(
@@ -137,7 +142,7 @@ if (window.rdkStrRnr) {{
     }}
   }});
 }}
-</script>""")
+</script>"""))
 
 
 def isEnabled(mol=None):
