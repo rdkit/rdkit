@@ -2887,7 +2887,7 @@ M  END
 void testGithub5569() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test that Github5569 is fixed" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test that Github5269 is fixed" << std::endl;
   auto core = R"CTAB(
 ChemDraw09152209202D
 
