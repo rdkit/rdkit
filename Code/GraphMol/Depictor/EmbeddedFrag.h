@@ -15,6 +15,7 @@
 #include <Geometry/Transform2D.h>
 #include <Geometry/point.h>
 #include "DepictUtils.h"
+#include "Templates.h"
 #include <boost/smart_ptr.hpp>
 
 namespace RDKit {
@@ -367,6 +368,9 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
  private:
   double totalDensity();
+
+  // returns true if fused rings found a template
+  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsigned int ring_count);
 
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings);
 
