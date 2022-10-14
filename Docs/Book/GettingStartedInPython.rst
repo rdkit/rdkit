@@ -3379,6 +3379,86 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 | Acidic   | ``[$([C,S](=[O,S,P])-[O;H1,-1])]``                                                                                                                                     |
 +----------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
+Filtering Molecular Datasets
+*****************************
+Several sets of rules exist for estimating the liklihood of a molecule exhibiting drug like behaviour. It's worth noting that these are rules of thumb, and that many examples of approved small molecule drugs exist that disobey these rules. 
+
+Lipinski Rule of 5
+==================
+Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavailability of molecules. Poor absorption is likely if the molecule violates more than one of the following conditions: 
+
+* Molecular Weight <= 500 Da
+* No. Hydrogen Bond Donors <= 10
+* No. Hydrogen Bond Acceptors <= 5
+* LogP <= 5
+
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem import Descriptors
+  >>> mol = Chem.MolFromSmiles('CC(=O)Nc1ccc(O)cc1')  # e.g. Paracetamol
+  >>> # Ro5 descriptors
+  >>> MW = Descriptors.MolWt(mol)
+  >>> HBA = Descriptors.NumHAcceptors(mol)
+  >>> HBD = Descriptors.NumHDonors(mol)
+  >>> LogP = Descriptors.MolLogP(mol)
+  >>> conditions = [MW <= 500, HBA <= 10, HBD <= 5, LogP <= 5]
+  >>> if conditions.count(True) >= 3:
+      ... pass_ro5 = True  # ro5 compliant
+  >>> else:
+      ... pass_ro5 = False  # fails ro5
+  >>> print(pass_ro5)
+
+Filtering Unwanted Substructures
+================================
+Pan Assay Interference Compounds (or PAINS) [#pains]_ are molecules that display non-specific binding, leading to unwanted side effects and false-positives in virtual screening. Common PAINS motifs include toxoflavin, isothiazolones, hydroxyphenyl hydrazones, curcumin, phenolsulfonamides, rhodanines, enones, quinones, and catechols. 
+
+The Brenk filter [#brenk]_ removes molecules containing substructures with undesirable pharmacokinetics or toxicity. These include sulfates and phosphates that contribute to unfavourable pharmacokinetics, nitro groups which are mutagenic and 2-halopyridines and thiols which are both reactive.
+
+The NIH filter [#jadhav]_, [#doveston]_ defined a list of functional groups with undesirable properties. These are split into those with reactive functionalities (including Michael acceptors, aldehydes, epoxides, alkyl halides, metals, 2-halo pyridines, phosphorus nitrogen bonds, α-chloroketones and β-lactams) and medicinal chemistry exclusions (including oximes, crown ethers, hydrazines, flavanoids, polyphenols, primary halide sulfates and multiple nitro groups).
+
+.. doctest::
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
+  
+  >>> mol = Chem.MolFromSmiles('CC1=C(C=C(C=C1)N2C(=O)C(=C(N2)C)N=NC3=CC=CC(=C3O)C4=CC(=CC=C4)C(=O)O)C')  # e.g. Eltrombopag
+  <BLANKLINE>
+  >>> # PAINS flag
+  >>> params_pains = FilterCatalogParams()
+  >>> params_pains.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
+  >>> catalog_pains = FilterCatalog(params_pains)
+  
+  >>> entry = catalog_pains.GetFirstMatch(mol)  # Get the first matching PAINS
+  >>> if entry is not None:
+      ... flag = True  # true if mol contains filter
+  >>> else:
+      ... flag = False  # false if not
+  >>> print("PAINs: ", flag)
+  <BLANKLINE>
+  >>> # Brenk Flag
+  >>> params_unwanted = FilterCatalogParams()
+  >>> params_unwanted.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
+  >>> catalog_unwanted = FilterCatalog(params_unwanted)
+
+  >>> entry = catalog_unwanted.GetFirstMatch(mol)  # Get the first matching PAINS
+  >>> if entry is not None:
+      ... flag = True  # true if mol contains filter
+  >>> else:
+      ... flag = False  # false if not
+  >>> print("Brenk: ", flag)
+  <BLANKLINE>
+  >>> # NIH Flag
+  >>> params_nih = FilterCatalogParams()
+  >>> params_nih.AddCatalog(FilterCatalogParams.FilterCatalogs.NIH)
+  >>> catalog_nih = FilterCatalog(params_nih)
+
+  >>> entry = catalog_nih.GetFirstMatch(mol)  # Get the first matching PAINS
+  >>> if entry is not None:
+      ... flag = True  # true if mol contains filter
+  >>> else:
+      ... flag = False  # false if not
+  >>> print("NIH: ", flag)
+  
 .. rubric:: Footnotes
 
 .. [#blaney] Blaney, J. M.; Dixon, J. S. "Distance Geometry in Molecular Modeling".  *Reviews in Computational Chemistry*; VCH: New York, 1994.
@@ -3399,8 +3479,11 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 .. [#mmffs] Halgren, T. A. "MMFF VI. MMFF94s option for energy minimization studies." *J. Comp. Chem.* **20**:720–9 (1999).
 .. [#riniker] Riniker, S.; Landrum, G. A. "Similarity Maps - A Visualization Strategy for Molecular Fingerprints and Machine-Learning Methods" *J. Cheminf.* **5**:43 (2013).
 .. [#riniker2] Riniker, S.; Landrum, G. A. "Better Informed Distance Geometry: Using What We Know To Improve Conformation Generation" *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015)
-
-
+.. [#lipinski] Lipinski, C. A.; Lombardo, F.; Dominy, B. W.; Feeney, P. J. "Experimental and Computational Approaches to Estimate Solubility and Permeability in Drug Discovery and Development Settings" *Adv. Drug Deliv. Rev.* **23**:3–25 (1997)
+.. [#pains] Baell, J. B.; Holloway, G. A. "New Substructure Filters for Removal of Pan Assay Interference Compounds (PAINS) from Screening Libraries and for Their Exclusion in Bioassays" *J. Med. Chem.* **53**:2719–2740 (2010)
+.. [#brenk] Brenk, R.; Schipani, A.; James, D.; Krasowski, A.; Gilbert, I. H.; Frearson, J.; Wyatt, P. G. "Lessons Learnt from Assembling Screening Libraries for Drug Discovery for Neglected Diseases." *ChemMedChem* **3**:435–444 (2008)
+.. [#jadhav] Jadhav, A.; Ferreira, R. S.; Klumpp, C.; Mott, B. T.; Austin, C. P.; Inglese, J.; Thomas, C. J.; Maloney, D. J.; Shoichet, B. K.; Simeonov, A. "Quantitative Analyses of Aggregation, Autofluorescence, and Reactivity Artifacts in a Screen for Inhibitors of a Thiol Protease." *J. Med. Chem.* **53**:37–51 (2010)
+.. [#doveston] Doveston, R. G.; Tosatti, P.; Dow, M.; Foley, D. J.; Li, H. Y.; Campbell, A. J.; House, D.; Churcher, I.; Marsden, S. P.; Nelson, A. "A Unified Lead-Oriented Synthesis of over Fifty Molecular Scaffolds." *Org. Biomol. Chem.* **13**:859–865. (2014)
 
 
 License
