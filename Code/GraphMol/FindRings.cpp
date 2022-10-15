@@ -258,7 +258,8 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
       }
     }
 
-    // std::cerr<<">>> "<<i<<" "<<consider.count()<<std::endl;
+    // optimization - don't reallocate a new one each loop
+    boost::dynamic_bitset<> workspace(mol.getNumBonds());
     while (consider.count()) {
       unsigned int bestJ = i + 1;
       int bestOverlap = -1;
@@ -271,7 +272,9 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
         if (!consider[j] || !availRings[j]) {
           continue;
         }
-        int overlap = rdcast<int>((bitBrings[j] & munion).count());
+        workspace = bitBrings[j];
+        workspace &= munion;
+        int overlap = rdcast<int>(workspace.count());
         if (overlap > bestOverlap) {
           bestOverlap = overlap;
           bestJ = j;
