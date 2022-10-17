@@ -419,8 +419,9 @@ bool areStereobondControllingAtomsDupes(
 
     auto ring = ringInfo->atomRings().at(*it1);
     if (ring.size() % 2) {
-      // Ring is odd-sized
-      continue;
+      // The common ring is odd-sized, so we can't have a tie-breaking atom
+      // directly across the ring
+      return true;
     }
 
     for (auto bondEnd : {bond.getBeginAtomIdx(), bond.getEndAtomIdx()}) {

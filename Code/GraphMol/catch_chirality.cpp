@@ -3153,11 +3153,22 @@ TEST_CASE(
     }
   }
 
-  SECTION("Stereo not possible") {
+  SECTION("Stereo not possible: symmetric opposite atom") {
     for (auto use_legacy : {false, true}) {
       Chirality::setUseLegacyStereoPerception(use_legacy);
 
       auto mol = R"SMI(CCC=C1CC(O)(O)C1)SMI"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      CHECK(stereoInfo.empty());
+    }
+  }
+
+  SECTION("Stereo not possible: odd-sized ring") {
+    for (auto use_legacy : {false, true}) {
+      Chirality::setUseLegacyStereoPerception(use_legacy);
+
+      auto mol = R"SMI(CCC=C1CCCC1)SMI"_smiles;
       REQUIRE(mol);
       auto stereoInfo = Chirality::findPotentialStereo(*mol);
       CHECK(stereoInfo.empty());
