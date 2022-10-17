@@ -1015,15 +1015,12 @@ function test_highlights() {
             6: 0.1,
         }, atoms: [0, 1, 2, 3, 4, 5, 6],  bonds: [2], width: 127
     }));
-    console.log(`***SVG***\n${svg}`);
-    /*
-    assert(svg.includes('fill:#FF7F7F'));
+    assert(!svg.includes('fill:#FF7F7F'));
     assert(svg.includes('fill:#FF0000'));
     assert(svg.includes('fill:#00FF00'));
     assert(svg.includes('fill:#00B2E5'));
     assert(svg.includes("width='127px'"));
     assert(svg.includes('</svg>'));
-    */
 }
 
 initRDKitModule().then(function(instance) {
