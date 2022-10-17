@@ -373,18 +373,26 @@ void setPreferCoordGen(bool);
 
   }
 
-  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+  void generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
+                                          const RDKit::MatchVectType &refMatchVect,
                                           int confId=-1,
-                                           bool acceptFailure=false, bool forceRDKit=false) {
-    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,nullptr,
-            acceptFailure,forceRDKit);
+                                          bool forceRDKit=false) {
+    RDDepict::generateDepictionMatching2DStructure(*($self),reference,refMatchVect,confId,forceRDKit);
   }
-  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+  RDKit::MatchVectType generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
+                                          int confId=-1,
+                                          bool acceptFailure=false, bool forceRDKit=false,
+                                          bool allowOptionalAttachments=false) {
+    return RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,nullptr,
+            acceptFailure,forceRDKit,allowOptionalAttachments);
+  }
+  RDKit::MatchVectType generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
                                           int confId,
-                                          RDKit::ROMol referencePattern,
-                                          bool acceptFailure=false, bool forceRDKit=false) {
-    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,
-           &referencePattern,acceptFailure,forceRDKit);
+                                          const RDKit::ROMol &referencePattern,
+                                          bool acceptFailure=false, bool forceRDKit=false,
+                                          bool allowOptionalAttachments=false) {
+    return RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,
+           &referencePattern,acceptFailure,forceRDKit,allowOptionalAttachments);
   }
 
   double normalizeDepiction(int confId=-1, int canonicalize=1,

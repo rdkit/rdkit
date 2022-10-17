@@ -139,7 +139,13 @@ public class Chemv2Tests extends GraphMolTest {
         template.compute2DCoords();
         ROMol m = RWMol.MolFromSmiles("c1cccc2ncn3cccc3c21");
         ROMol patt = RWMol.MolFromSmarts("*1****2*1***2");
-        m.generateDepictionMatching2DStructure(template,-1,patt);
+        Match_Vect mv = m.generateDepictionMatching2DStructure(template,-1,patt);
+        assertTrue(mv.size() == 9);
+        int[] expected = new int[]{ 6, 5, 4, 12, 11, 7, 8, 9, 10 };
+        for (int i = 0; i < mv.size(); ++i) {
+            assertTrue(mv.get(i).getFirst() == i);
+            assertTrue(mv.get(i).getSecond() == expected[i]);
+        }
 
         // System.out.print(template.MolToMolBlock());
         // System.out.print(m.MolToMolBlock());
