@@ -992,6 +992,40 @@ M  END
     assert.equal(props.get(1), "test2");
 }
 
+function test_highlights() {
+    var mol = RDKitModule.get_mol('c1cc(O)ccc1');
+    var svg = mol.get_svg_with_highlights(JSON.stringify({
+        highlightAtomColors: {
+            0: [1.0, 0.0, 0.0],
+            1: [1.0, 0.0, 0.0],
+            2: [1.0, 0.0, 0.0],
+            3: [0.0, 1.0, 0.0],
+            4: [1.0, 0.0, 0.0],
+            5: [1.0, 0.0, 0.0],
+            6: [1.0, 0.0, 0.0],
+        }, highlightBondColors: {
+            2: [0.0, 0.7, 0.9],
+        }, highlightAtomRadii: {
+            0: 0.1,
+            1: 0.1,
+            2: 0.1,
+            3: 0.8,
+            4: 0.1,
+            5: 0.1,
+            6: 0.1,
+        }, atoms: [0, 1, 2, 3, 4, 5, 6],  bonds: [2], width: 127
+    }));
+    console.log(`***SVG***\n${svg}`);
+    /*
+    assert(svg.includes('fill:#FF7F7F'));
+    assert(svg.includes('fill:#FF0000'));
+    assert(svg.includes('fill:#00FF00'));
+    assert(svg.includes('fill:#00B2E5'));
+    assert(svg.includes("width='127px'"));
+    assert(svg.includes('</svg>'));
+    */
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -1035,6 +1069,7 @@ initRDKitModule().then(function(instance) {
     test_rxn_drawing();
     test_legacy_stereochem();
     test_prop();
+    test_highlights();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

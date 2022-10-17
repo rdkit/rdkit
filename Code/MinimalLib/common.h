@@ -256,40 +256,87 @@ ChemicalReaction *rxn_from_input(const std::string &input,
   return rxn_from_input(input, json);
 }
 
-std::string process_details(const std::string &details, int &width, int &height,
-                            int &offsetx, int &offsety, std::string &legend,
-                            std::vector<int> &atomIds,
+std::string parse_int_array(const rj::Document &doc, std::vector<int> &intVec,
+                            const std::string &keyName,
+                            const std::string &valueName) {
+  const auto it = doc.FindMember(keyName.c_str());
+  if (it != doc.MemberEnd()) {
+    if (!it->value.IsArray()) {
+      return "JSON contains '" + keyName + "' field, but it is not an array";
+    }
+    for (const auto &val : it->value.GetArray()) {
+      if (!val.IsInt()) {
+        return valueName + " should be integers";
+      }
+      intVec.push_back(val.GetInt());
+    }
+  }
+  return "";
+}
+
+std::string parse_rgba_array(const rj::Value &val, DrawColour &color,
+                             const std::string &keyName) {
+  if (!val.IsArray() || val.Size() < 3 || val.Size() > 4) {
+    return "JSON contains '" + keyName +
+           "' field, but the "
+           "colors are not R,G,B[,A] arrays";
+  }
+  std::vector<double> rgba(4, 1.0);
+  unsigned int i = 0;
+  for (const auto &component : val.GetArray()) {
+    if (!component.IsNumber()) {
+      return "JSON contains '" + keyName +
+             "' field, but the "
+             "R,G,B[,A] arrays contain non-float values";
+    }
+    CHECK_INVARIANT(i < 4, "");
+    rgba[i++] = component.GetDouble();
+  }
+  color.r = rgba[0];
+  color.g = rgba[1];
+  color.b = rgba[2];
+  color.a = rgba[3];
+  return "";
+}
+
+std::string parse_highlight_colors(const rj::Document &doc,
+                                   std::map<int, DrawColour> &colorMap,
+                                   const std::string &keyName) {
+  const auto it = doc.FindMember(keyName.c_str());
+  if (it != doc.MemberEnd()) {
+    if (!it->value.IsObject()) {
+      return "JSON contains '" + keyName + "' field, but it is not an object";
+    }
+    for (const auto &entry : it->value.GetObject()) {
+      DrawColour color;
+      auto problems = parse_rgba_array(entry.value, color, keyName);
+      if (!problems.empty()) {
+        return problems;
+      }
+      int idx = std::atoi(entry.name.GetString());
+      colorMap[idx] = std::move(color);
+    }
+  }
+  return "";
+}
+
+std::string process_details(rj::Document &doc, const std::string &details,
+                            int &width, int &height, int &offsetx, int &offsety,
+                            std::string &legend, std::vector<int> &atomIds,
                             std::vector<int> &bondIds, bool &kekulize) {
-  rj::Document doc;
   doc.Parse(details.c_str());
   if (!doc.IsObject()) {
     return "Invalid JSON";
   }
-
-  const auto atomsIt = doc.FindMember("atoms");
-  if (atomsIt != doc.MemberEnd()) {
-    if (!atomsIt->value.IsArray()) {
-      return "JSON contains 'atoms' field, but it is not an array";
-    }
-    for (const auto &molval : atomsIt->value.GetArray()) {
-      if (!molval.IsInt()) {
-        return ("Atom IDs should be integers");
-      }
-      atomIds.push_back(molval.GetInt());
-    }
+  std::string problems;
+  problems = parse_int_array(doc, atomIds, "atoms", "Atom IDs");
+  if (!problems.empty()) {
+    return problems;
   }
 
-  const auto bondsIt = doc.FindMember("bonds");
-  if (bondsIt != doc.MemberEnd()) {
-    if (!bondsIt->value.IsArray()) {
-      return "JSON contains 'bonds' field, but it is not an array";
-    }
-    for (const auto &molval : bondsIt->value.GetArray()) {
-      if (!molval.IsInt()) {
-        return ("Bond IDs should be integers");
-      }
-      bondIds.push_back(molval.GetInt());
-    }
+  problems = parse_int_array(doc, bondIds, "bonds", "Bond IDs");
+  if (!problems.empty()) {
+    return problems;
   }
 
   const auto widthIt = doc.FindMember("width");
@@ -345,20 +392,58 @@ std::string process_details(const std::string &details, int &width, int &height,
   return "";
 }
 
+std::string process_mol_details(const std::string &details, int &width,
+                                int &height, int &offsetx, int &offsety,
+                                std::string &legend, std::vector<int> &atomIds,
+                                std::vector<int> &bondIds,
+                                std::map<int, DrawColour> &atomMap,
+                                std::map<int, DrawColour> &bondMap,
+                                std::map<int, double> &radiiMap,
+                                bool &kekulize) {
+  rj::Document doc;
+  auto problems = process_details(doc, details, width, height, offsetx, offsety,
+                                  legend, atomIds, bondIds, kekulize);
+  if (!problems.empty()) {
+    return problems;
+  }
+
+  problems = parse_highlight_colors(doc, atomMap, "highlightAtomColors");
+  if (!problems.empty()) {
+    return problems;
+  }
+
+  problems = parse_highlight_colors(doc, bondMap, "highlightBondColors");
+  if (!problems.empty()) {
+    return problems;
+  }
+
+  const auto radiiMapit = doc.FindMember("highlightAtomRadii");
+  if (radiiMapit != doc.MemberEnd()) {
+    if (!radiiMapit->value.IsObject()) {
+      return "JSON contains 'highlightAtomRadii' field, but it is not an object";
+    }
+    for (const auto &entry : radiiMapit->value.GetObject()) {
+      if (!entry.value.IsNumber()) {
+        return "JSON contains 'highlightAtomRadii' field, but the radii"
+               "are not floats";
+      }
+      int idx = std::atoi(entry.name.GetString());
+      radiiMap[idx] = entry.value.GetDouble();
+    }
+  }
+  return "";
+}
+
 std::string process_rxn_details(
     const std::string &details, int &width, int &height, int &offsetx,
     int &offsety, std::string &legend, std::vector<int> &atomIds,
     std::vector<int> &bondIds, bool &kekulize, bool &highlightByReactant,
     std::vector<DrawColour> &highlightColorsReactants) {
-  auto problems = process_details(details, width, height, offsetx, offsety,
+  rj::Document doc;
+  auto problems = process_details(doc, details, width, height, offsetx, offsety,
                                   legend, atomIds, bondIds, kekulize);
   if (!problems.empty()) {
     return problems;
-  }
-  rj::Document doc;
-  doc.Parse(details.c_str());
-  if (!doc.IsObject()) {
-    return "Invalid JSON";
   }
   auto highlightByReactantIt = doc.FindMember("highlightByReactant");
   if (highlightByReactantIt != doc.MemberEnd()) {
@@ -375,22 +460,13 @@ std::string process_rxn_details(
       return "JSON contains 'highlightColorsReactants' field, but it is not an "
              "array";
     }
-    for (const auto &color : highlightColorsReactantsIt->value.GetArray()) {
-      if (!color.IsArray() || color.Size() < 3 || color.Size() > 4) {
-        return "JSON contains 'highlightColorsReactants' array, but the "
-               "elements are not R,G,B[,A] arrays";
+    for (const auto &rgbaArray : highlightColorsReactantsIt->value.GetArray()) {
+      DrawColour color;
+      problems = parse_rgba_array(rgbaArray, color, "highlightColorsReactants");
+      if (!problems.empty()) {
+        return problems;
       }
-      std::vector<double> rgba(4, 1.0);
-      unsigned int i = 0;
-      for (const auto &component : color.GetArray()) {
-        if (!component.IsDouble()) {
-          return "JSON contains 'highlightColorsReactants' array, but the "
-                 "R,G,B[,A] arrays contain non-float values";
-        }
-        CHECK_INVARIANT(i < 4, "");
-        rgba[i++] = component.GetDouble();
-      }
-      highlightColorsReactants.emplace_back(rgba[0], rgba[1], rgba[2], rgba[3]);
+      highlightColorsReactants.push_back(std::move(color));
     }
   }
   return "";
@@ -426,18 +502,22 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
                        const std::string &details = "") {
   std::vector<int> atomIds;
   std::vector<int> bondIds;
+  std::map<int, DrawColour> atomMap;
+  std::map<int, DrawColour> bondMap;
+  std::map<int, double> radiiMap;
   std::string legend = "";
+  std::string problems;
   int offsetx = 0;
   int offsety = 0;
   bool kekulize = true;
   if (!details.empty()) {
-    auto problems = process_details(details, w, h, offsetx, offsety, legend,
-                                    atomIds, bondIds, kekulize);
+    problems =
+        process_mol_details(details, w, h, offsetx, offsety, legend, atomIds,
+                            bondIds, atomMap, bondMap, radiiMap, kekulize);
     if (!problems.empty()) {
       return problems;
     }
   }
-
   MolDraw2DSVG drawer(w, h);
   if (!details.empty()) {
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, details);
@@ -445,8 +525,10 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
   drawer.setOffset(offsetx, offsety);
 
   MolDraw2DUtils::prepareAndDrawMolecule(drawer, m, legend, &atomIds, &bondIds,
-                                         nullptr, nullptr, nullptr, -1,
-                                         kekulize);
+                                         atomMap.empty() ? nullptr : &atomMap,
+                                         bondMap.empty() ? nullptr : &bondMap,
+                                         radiiMap.empty() ? nullptr : &radiiMap,
+                                         -1, kekulize);
   drawer.finishDrawing();
 
   return drawer.getDrawingText();
