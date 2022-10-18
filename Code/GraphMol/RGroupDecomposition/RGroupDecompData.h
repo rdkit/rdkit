@@ -64,7 +64,7 @@ struct RGroupDecompData {
   RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
                    RGroupDecompositionParameters inputParams)
       : params(std::move(inputParams)) {
-    for (auto & core : inputCores) {
+    for (const auto &core : inputCores) {
       addCore(*core);
     }
     prepareCores();
