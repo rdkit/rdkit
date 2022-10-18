@@ -124,7 +124,7 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
           new Conformer(coreReplacedAtoms->getNumAtoms()));
     }
     auto &replacedConformer = coreReplacedAtoms->getConformer();
-    auto &molConformer = mol.getConformer();
+    const auto &molConformer = mol.getConformer();
 
     for (const auto &p : match) {
       auto molPoint = molConformer.getAtomPos(p.second);
@@ -199,7 +199,7 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
 
   // update core coordinates to input structures
   if (coreReplacedAtoms.getNumConformers() && finalCore->getNumConformers()) {
-    auto &replacedConformer = coreReplacedAtoms.getConformer();
+    const auto &replacedConformer = coreReplacedAtoms.getConformer();
     auto &finalConformer = finalCore->getConformer();
 
     size_t atomIdx = 0;
@@ -217,7 +217,7 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
 
   // Remove unmapped dummies
   std::vector<Atom *> atomsToRemove;
-  for (auto atom : coreReplacedAtoms.atoms()) {
+  for (const auto atom : coreReplacedAtoms.atoms()) {
     if (atom->getAtomicNum() == 0 && atom->hasProp(MISSING_RGROUP)) {
       atomsToRemove.push_back(finalCore->getAtomWithIdx(atom->getIdx()));
     }
@@ -284,7 +284,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::map<int, int> matchMap(match.cbegin(), match.cend());
 
   std::vector<MatchVectType> allMappings;
-  if (terminalRGroupDummyAtoms.size() == 0) {
+  if (terminalRGroupDummyAtoms.empty()) {
     allMappings.push_back(match);
     return allMappings;
   }
@@ -347,7 +347,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       }
     }
   }
-  if (availableMappingsForDummyMap.size() == 0) {
+  if (availableMappingsForDummyMap.empty()) {
     allMappings.push_back(match);
     return allMappings;
   }
@@ -399,7 +399,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
 
   std::vector<int> dummiesWithMapping;
   std::vector<std::vector<int>> availableMappingsForDummy;
-  for (auto &mapping : availableMappingsForDummyMap) {
+  for (const auto &mapping : availableMappingsForDummyMap) {
     dummiesWithMapping.push_back(mapping.first);
     availableMappingsForDummy.push_back(mapping.second);
   }
@@ -413,9 +413,9 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   size_t size = allAvailableMappings[0].size() + match.size();
   // these indices are needed for the whole molecule match check functor
 
-  std::unique_ptr<RWMol> checkCore = nullptr;
+  std::unique_ptr<RWMol> checkCore;
   std::map<size_t, size_t> coreToCheck;
-  std::string indexProp("__core_index__");
+  const std::string indexProp("__core_index__");
   bool hasMissing = !missingDummies.empty();
   if (hasMissing) {
     // if there are dummies that we can map these need to be removed from the
@@ -437,8 +437,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     size_t index = 0U;
     for (const auto atom : checkCore->atoms()) {
       auto coreIndex = atom->getProp<int>(indexProp);
-      coreToCheck[coreIndex] = index;
-      ++index;
+      coreToCheck[coreIndex] = index++;
     }
     for (auto atom : core->atoms()) {
       atom->clearProp(indexProp);
