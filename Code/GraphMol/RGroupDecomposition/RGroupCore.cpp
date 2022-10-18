@@ -413,7 +413,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   size_t size = allAvailableMappings[0].size() + match.size();
   // these indices are needed for the whole molecule match check functor
 
-  std::unique_ptr<RWMol> checkCore = nullptr;
+  std::unique_ptr<RWMol> checkCore;
   std::map<size_t, size_t> coreToCheck;
   std::string indexProp("__core_index__");
   bool hasMissing = !missingDummies.empty();
