@@ -101,9 +101,9 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
 
   // Prepare the core for substructure searching and rgroup assignment
   bool prepareCore(RWMol &, const RWMol *alignCore);
-  
+
   // Add r groups to unlabelled atoms if allowMultipleRGroupsOnUnlabelled is set
-  void addDummyAtomsToUnlabelledCoreAtoms(RWMol & core);
+  void addDummyAtomsToUnlabelledCoreAtoms(RWMol &core);
 
   // Parameters specific to GA
 

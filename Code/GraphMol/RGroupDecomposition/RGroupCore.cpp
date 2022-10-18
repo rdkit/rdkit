@@ -223,7 +223,7 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
     }
   }
   finalCore->beginBatchEdit();
-  for (auto atom: atomsToRemove) {
+  for (auto atom : atomsToRemove) {
     finalCore->removeAtom(atom);
   }
   finalCore->commitBatchEdit();
