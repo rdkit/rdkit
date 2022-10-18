@@ -217,7 +217,7 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
 
   // Remove unmapped dummies
   std::vector<Atom *> atomsToRemove;
-  for (auto atom : coreReplacedAtoms.atoms()) {
+  for (const auto atom : coreReplacedAtoms.atoms()) {
     if (atom->getAtomicNum() == 0 && atom->hasProp(MISSING_RGROUP)) {
       atomsToRemove.push_back(finalCore->getAtomWithIdx(atom->getIdx()));
     }
