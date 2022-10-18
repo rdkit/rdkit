@@ -415,7 +415,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
 
   std::unique_ptr<RWMol> checkCore;
   std::map<size_t, size_t> coreToCheck;
-  std::string indexProp("__core_index__");
+  const std::string indexProp("__core_index__");
   bool hasMissing = !missingDummies.empty();
   if (hasMissing) {
     // if there are dummies that we can map these need to be removed from the
