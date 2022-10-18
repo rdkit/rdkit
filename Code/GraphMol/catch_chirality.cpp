@@ -3153,6 +3153,65 @@ TEST_CASE(
     }
   }
 
+  SECTION("More than one ring (1)") {
+    for (auto use_legacy : {false, true}) {
+      Chirality::setUseLegacyStereoPerception(use_legacy);
+
+      auto mol = R"SMI(CC\C=C/1C2CCC1[C@H]2O)SMI"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 4);
+      CHECK(stereoInfo[0].centeredOn == 4);
+      CHECK(stereoInfo[0].type == StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == StereoSpecified::Unspecified);
+      CHECK(stereoInfo[1].centeredOn == 7);
+      CHECK(stereoInfo[1].type == StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[1].specified == StereoSpecified::Unspecified);
+      CHECK(stereoInfo[2].centeredOn == 8);
+      CHECK(stereoInfo[2].type == StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[2].specified == (use_legacy
+                                            ? StereoSpecified::Unspecified
+                                            : StereoSpecified::Specified));
+      CHECK(stereoInfo[3].centeredOn == 2);
+      CHECK(stereoInfo[3].type == StereoType::Bond_Double);
+      CHECK(stereoInfo[3].specified == (use_legacy
+                                            ? StereoSpecified::Unspecified
+                                            : StereoSpecified::Specified));
+    }
+  }
+
+  SECTION("More than one ring (2)") {
+    for (auto use_legacy : {false, true}) {
+      Chirality::setUseLegacyStereoPerception(use_legacy);
+
+      // This is the same structure as previos section, but
+      // the rings are defined in the opposite order
+      auto mol = R"SMI(CC\C=C/1C2[C@H](O)C1CC2)SMI"_smiles;
+      REQUIRE(mol);
+      auto stereoInfo = Chirality::findPotentialStereo(*mol);
+      REQUIRE(stereoInfo.size() == 4);
+      CHECK(stereoInfo[0].centeredOn == 4);
+      CHECK(stereoInfo[0].type == StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[0].specified == StereoSpecified::Unspecified);
+
+      CHECK(stereoInfo[1].centeredOn == 5);
+      CHECK(stereoInfo[1].type == StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[1].specified == (use_legacy
+                                            ? StereoSpecified::Unspecified
+                                            : StereoSpecified::Specified));
+
+      CHECK(stereoInfo[2].centeredOn == 7);
+      CHECK(stereoInfo[2].type == StereoType::Atom_Tetrahedral);
+      CHECK(stereoInfo[2].specified == StereoSpecified::Unspecified);
+
+      CHECK(stereoInfo[3].centeredOn == 2);
+      CHECK(stereoInfo[3].type == StereoType::Bond_Double);
+      CHECK(stereoInfo[3].specified == (use_legacy
+                                            ? StereoSpecified::Unspecified
+                                            : StereoSpecified::Specified));
+    }
+  }
+
   SECTION("Stereo not possible: symmetric opposite atom") {
     for (auto use_legacy : {false, true}) {
       Chirality::setUseLegacyStereoPerception(use_legacy);
