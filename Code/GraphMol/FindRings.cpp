@@ -235,6 +235,9 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
   boost::dynamic_bitset<> keepRings(res.size());
   boost::dynamic_bitset<> munion(mol.getNumBonds());
 
+  // optimization - don't reallocate a new one each loop
+  boost::dynamic_bitset<> workspace(mol.getNumBonds());
+
   for (unsigned int i = 0; i < res.size(); ++i) {
     // skip this ring if we've already seen all of its bonds
     if (bitBrings[i].is_subset_of(munion)) {
@@ -258,16 +261,14 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
       }
     }
 
-    // optimization - don't reallocate a new one each loop
-    boost::dynamic_bitset<> workspace(mol.getNumBonds());
-    while (consider.count()) {
+    while (consider.any()) {
       unsigned int bestJ = i + 1;
       int bestOverlap = -1;
       // loop over the available other rings in consideration and pick the one
       // that has the most overlapping bonds with what we've done so far.
       // this is the fix to github #526
       for (unsigned int j = i + 1;
-           j < res.size() && bitBrings[j].count() == bitBrings[i].count();
+           j < res.size() && brings[j].size() == brings[i].size();
            ++j) {
         if (!consider[j] || !availRings[j]) {
           continue;
