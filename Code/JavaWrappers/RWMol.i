@@ -70,15 +70,13 @@
     return RDKit::RWMOL_SPTR(RDKit::SmartsToMol(sma, debugParse, mergeHs,replacements));
   }
 static RDKit::RWMOL_SPTR MolFromMolBlock(const std::string &molB,
-                                  bool sanitize=true,bool removeHs=true){
-  RDKit::RWMol *mol=0;
-    mol=RDKit::MolBlockToMol(molB,sanitize,removeHs);
+                                  bool sanitize=true,bool removeHs=true,bool strictParsing=true){
+  RDKit::RWMol *mol=RDKit::MolBlockToMol(molB,sanitize,removeHs,strictParsing);
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromMolFile(const std::string &filename,
-                                 bool sanitize=true,bool removeHs=true){
-  RDKit::RWMol *mol=0;
-    mol=RDKit::MolFileToMol(filename,sanitize,removeHs);
+                                 bool sanitize=true,bool removeHs=true,bool strictParsing=true){
+  RDKit::RWMol *mol=RDKit::MolFileToMol(filename,sanitize,removeHs,strictParsing);
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromTPLFile(const std::string &fName,bool sanitize=true,

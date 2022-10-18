@@ -139,7 +139,13 @@ public class Chemv2Tests extends GraphMolTest {
         template.compute2DCoords();
         ROMol m = RWMol.MolFromSmiles("c1cccc2ncn3cccc3c21");
         ROMol patt = RWMol.MolFromSmarts("*1****2*1***2");
-        m.generateDepictionMatching2DStructure(template,-1,patt);
+        Match_Vect mv = m.generateDepictionMatching2DStructure(template,-1,patt);
+        assertTrue(mv.size() == 9);
+        int[] expected = new int[]{ 6, 5, 4, 12, 11, 7, 8, 9, 10 };
+        for (int i = 0; i < mv.size(); ++i) {
+            assertTrue(mv.get(i).getFirst() == i);
+            assertTrue(mv.get(i).getSecond() == expected[i]);
+        }
 
         // System.out.print(template.MolToMolBlock());
         // System.out.print(m.MolToMolBlock());
@@ -485,6 +491,53 @@ public class Chemv2Tests extends GraphMolTest {
         drawer.finishDrawing();
         String svg = drawer.getDrawingText();
         System.out.print(svg);
+    }
+
+    @Test
+    public void testStrictParsing() {
+        String badMolBlock = "\n" +
+            "  MJ201100                      \n" +
+            "\n" +
+            "  3  2  0  0  0  0  0  0  0  0999 V2000\n" +
+            "   -0.3572   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+            "    0.3572    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+            "    1.0717    0.6187    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+            "  1  2  1  0  0  0  0\n" +
+            "  2  3  3  0  0  0  0\n" +
+            "M  STY  1   1 SUP\n" +
+            "M  SAL   1  2   2   3\n" +
+            "M  SMT   1 CN\n" +
+            "M  SBL   1  1   1\n" +
+            "M  SAP   1  1   2\n" +
+            "M  END\n";
+        boolean exceptionThrown = false;
+        boolean molIsValid = false;
+        ROMol mol = null;
+        try {
+            mol = RWMol.MolFromMolBlock(badMolBlock);
+        } catch(Exception e) {
+            exceptionThrown = true;
+        } finally {
+            if (mol != null) {
+                molIsValid = true;
+                mol.delete();
+            }
+        }
+        assertTrue(exceptionThrown);
+        assertFalse(molIsValid);
+        exceptionThrown = false;
+        try {
+            mol = RWMol.MolFromMolBlock(badMolBlock, true, true, false);
+        } catch(Exception e) {
+            exceptionThrown = true;
+        } finally {
+            if (mol != null) {
+                molIsValid = true;
+                mol.delete();
+            }
+        }
+        assertFalse(exceptionThrown);
+        assertTrue(molIsValid);
     }
 
     public static void main(String args[]) {
