@@ -199,7 +199,7 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
 
   // update core coordinates to input structures
   if (coreReplacedAtoms.getNumConformers() && finalCore->getNumConformers()) {
-    auto &replacedConformer = coreReplacedAtoms.getConformer();
+    const auto &replacedConformer = coreReplacedAtoms.getConformer();
     auto &finalConformer = finalCore->getConformer();
 
     size_t atomIdx = 0;
