@@ -284,7 +284,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::map<int, int> matchMap(match.cbegin(), match.cend());
 
   std::vector<MatchVectType> allMappings;
-  if (terminalRGroupDummyAtoms.size() == 0) {
+  if (terminalRGroupDummyAtoms.empty()) {
     allMappings.push_back(match);
     return allMappings;
   }
