@@ -399,7 +399,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
 
   std::vector<int> dummiesWithMapping;
   std::vector<std::vector<int>> availableMappingsForDummy;
-  for (auto &mapping : availableMappingsForDummyMap) {
+  for (const auto &mapping : availableMappingsForDummyMap) {
     dummiesWithMapping.push_back(mapping.first);
     availableMappingsForDummy.push_back(mapping.second);
   }
