@@ -437,8 +437,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     size_t index = 0U;
     for (const auto atom : checkCore->atoms()) {
       auto coreIndex = atom->getProp<int>(indexProp);
-      coreToCheck[coreIndex] = index;
-      ++index;
+      coreToCheck[coreIndex] = index++;
     }
     for (auto atom : core->atoms()) {
       atom->clearProp(indexProp);
