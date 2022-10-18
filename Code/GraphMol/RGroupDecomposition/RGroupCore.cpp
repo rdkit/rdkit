@@ -347,7 +347,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       }
     }
   }
-  if (availableMappingsForDummyMap.size() == 0) {
+  if (availableMappingsForDummyMap.empty()) {
     allMappings.push_back(match);
     return allMappings;
   }
