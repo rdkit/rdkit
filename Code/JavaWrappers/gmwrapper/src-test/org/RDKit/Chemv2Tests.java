@@ -493,6 +493,53 @@ public class Chemv2Tests extends GraphMolTest {
         System.out.print(svg);
     }
 
+    @Test
+    public void testStrictParsing() {
+        String badMolBlock = "\n" +
+            "  MJ201100                      \n" +
+            "\n" +
+            "  3  2  0  0  0  0  0  0  0  0999 V2000\n" +
+            "   -0.3572   -0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+            "    0.3572    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+            "    1.0717    0.6187    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n" +
+            "  1  2  1  0  0  0  0\n" +
+            "  2  3  3  0  0  0  0\n" +
+            "M  STY  1   1 SUP\n" +
+            "M  SAL   1  2   2   3\n" +
+            "M  SMT   1 CN\n" +
+            "M  SBL   1  1   1\n" +
+            "M  SAP   1  1   2\n" +
+            "M  END\n";
+        boolean exceptionThrown = false;
+        boolean molIsValid = false;
+        ROMol mol = null;
+        try {
+            mol = RWMol.MolFromMolBlock(badMolBlock);
+        } catch(Exception e) {
+            exceptionThrown = true;
+        } finally {
+            if (mol != null) {
+                molIsValid = true;
+                mol.delete();
+            }
+        }
+        assertTrue(exceptionThrown);
+        assertFalse(molIsValid);
+        exceptionThrown = false;
+        try {
+            mol = RWMol.MolFromMolBlock(badMolBlock, true, true, false);
+        } catch(Exception e) {
+            exceptionThrown = true;
+        } finally {
+            if (mol != null) {
+                molIsValid = true;
+                mol.delete();
+            }
+        }
+        assertFalse(exceptionThrown);
+        assertTrue(molIsValid);
+    }
+
     public static void main(String args[]) {
         org.junit.runner.JUnitCore.main("org.RDKit.Chemv2Tests");
     }
