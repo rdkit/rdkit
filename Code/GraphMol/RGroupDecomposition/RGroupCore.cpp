@@ -124,7 +124,7 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
           new Conformer(coreReplacedAtoms->getNumAtoms()));
     }
     auto &replacedConformer = coreReplacedAtoms->getConformer();
-    auto &molConformer = mol.getConformer();
+    const auto &molConformer = mol.getConformer();
 
     for (const auto &p : match) {
       auto molPoint = molConformer.getAtomPos(p.second);
