@@ -540,6 +540,85 @@ public class Chemv2Tests extends GraphMolTest {
         assertTrue(molIsValid);
     }
 
+    @Test
+    public void testMostSubstitutedCoreMatch() {
+        RWMol core = RWMol.MolFromSmarts("[*:1]c1cc([*:2])ccc1[*:3]");
+        RWMol orthoMeta = RWMol.MolFromSmiles("c1ccc(-c2ccc(-c3ccccc3)c(-c3ccccc3)c2)cc1");
+        RWMol ortho = RWMol.MolFromSmiles("c1ccc(-c2ccccc2-c2ccccc2)cc1");
+        RWMol meta = RWMol.MolFromSmiles("c1ccc(-c2cccc(-c3ccccc3)c2)cc1");
+        RWMol biphenyl = RWMol.MolFromSmiles("c1ccccc1-c1ccccc1");
+        RWMol phenyl = RWMol.MolFromSmiles("c1ccccc1");
+
+        class NumHsMatchingDummies {
+            public int get(RWMol mol, RWMol core, Match_Vect match) {
+                int count = 0;
+                for (int i = 0; i < match.size(); ++i) {
+                    Int_Pair pair = match.get(i);
+                    if (core.getAtomWithIdx(pair.getFirst()).getAtomicNum() == 0 &&
+                        mol.getAtomWithIdx(pair.getSecond()).getAtomicNum() == 1) {
+                        ++count;
+                    }
+                }
+                return count;
+            }
+        };
+
+        NumHsMatchingDummies numHsMatchingDummies = new NumHsMatchingDummies();
+        RWMol_Vect mols = new RWMol_Vect(5);
+        mols.set(0, orthoMeta);
+        mols.set(1, ortho);
+        mols.set(2, meta);
+        mols.set(3, biphenyl);
+        mols.set(4, phenyl);
+        int[] expected = new int[]{ 0, 1, 1, 2, 3 };
+        assertTrue(mols.size() == expected.length);
+        for (int i = 0; i < expected.length; ++i) {
+            RWMol mol = mols.get(i);
+            int res = expected[i];
+            RDKFuncs.addHs(mol);
+            Match_Vect_Vect matches = mol.getSubstructMatches(core);
+            Match_Vect bestMatch = mol.getMostSubstitutedCoreMatch(core, matches);
+            assertTrue(numHsMatchingDummies.get(mol, core, bestMatch) == res);
+            int[] ctrlCounts = new int[(int)matches.size()];
+            for (int j = 0; j < ctrlCounts.length; ++j) {
+                ctrlCounts[j] = numHsMatchingDummies.get(mol, core, matches.get(j));
+            }
+            Arrays.sort(ctrlCounts);
+            int[] sortedCounts = new int[ctrlCounts.length];
+            Match_Vect_Vect sortedMatches = mol.sortMatchesByDegreeOfCoreSubstitution(core, matches);
+            for (int j = 0; j < sortedMatches.size(); ++j) {
+                sortedCounts[j] = numHsMatchingDummies.get(mol, core, sortedMatches.get(j));
+            }
+            assertTrue(Arrays.equals(ctrlCounts, sortedCounts));
+            matches.delete();
+            sortedMatches.delete();
+        }
+        Match_Vect_Vect emptyMatches = new Match_Vect_Vect();
+        boolean raised = false;
+        try {
+            orthoMeta.getMostSubstitutedCoreMatch(core, emptyMatches);
+        } catch (Exception e) {
+            raised = true;
+        }
+        assertTrue(raised);
+        raised = false;
+        try {
+            orthoMeta.sortMatchesByDegreeOfCoreSubstitution(core, emptyMatches);
+        } catch (Exception e) {
+            raised = true;
+        }
+        assertTrue(raised);
+        emptyMatches.delete();
+        mols.delete();
+        core.delete();
+        orthoMeta.delete();
+        ortho.delete();
+        meta.delete();
+        biphenyl.delete();
+        phenyl.delete();
+    }
+
+
     public static void main(String args[]) {
         org.junit.runner.JUnitCore.main("org.RDKit.Chemv2Tests");
     }
