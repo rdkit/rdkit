@@ -40,6 +40,7 @@
 #include <GraphMol/Conformer.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -287,6 +288,17 @@ void setPreferCoordGen(bool);
 
   RDKit::ROMol *replaceCore(const RDKit::ROMol &coreQuery, bool replaceDummies=true,bool labelByIndex=false) {
     return RDKit::replaceCore(*($self), coreQuery, replaceDummies, labelByIndex);
+  };
+
+  /* Methods from SubstructUtils.h */
+  const RDKit::MatchVectType &getMostSubstitutedCoreMatch(const RDKit::ROMol& core,
+    const std::vector<RDKit::MatchVectType>& matches) {
+    return RDKit::getMostSubstitutedCoreMatch(*($self), core, matches);
+  };
+
+  std::vector<RDKit::MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
+    const RDKit::ROMol& core, const std::vector<RDKit::MatchVectType>& matches) {
+    return RDKit::sortMatchesByDegreeOfCoreSubstitution(*($self), core, matches);
   };
 
   /* Methods from MolFileStereoChem.h */
