@@ -91,6 +91,8 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool removeHydrogensPostMatch = true;
   //! allow labelled Rgroups of degree 2 or more
   bool allowNonTerminalRGroups = false;
+  // unlabelled core atoms can have multiple rgroups
+  bool allowMultipleRGroupsOnUnlabelled = false;
 
   double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
 
@@ -99,6 +101,9 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
 
   // Prepare the core for substructure searching and rgroup assignment
   bool prepareCore(RWMol &, const RWMol *alignCore);
+
+  // Add r groups to unlabelled atoms if allowMultipleRGroupsOnUnlabelled is set
+  void addDummyAtomsToUnlabelledCoreAtoms(RWMol &core);
 
   // Parameters specific to GA
 
@@ -142,6 +147,7 @@ class UsedLabelMap {
       d_map[rl.second] = std::make_pair(false, (rl.first > 0));
     }
   }
+  bool has(int label) const { return d_map.find(label) != d_map.end(); }
   bool getIsUsed(int label) const { return d_map.at(label).first; }
   void setIsUsed(int label) { d_map[label].first = true; }
   bool isUserDefined(int label) const { return d_map.at(label).second; }

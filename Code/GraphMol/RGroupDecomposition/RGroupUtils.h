@@ -21,6 +21,10 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL_TYPE;
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL_CORE_INDEX;
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string SIDECHAIN_RLABELS;
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string done;
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string
+    UNLABELLED_CORE_ATTACHMENT;
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string
+    MISSING_RGROUP;
 
 const unsigned int EMPTY_CORE_LABEL = -100000;
 
@@ -55,10 +59,14 @@ bool hasDummy(const RWMol &core);
 //! Returns true if the core atom is either an atom with multiple
 /// connections or an atom with a single connection that has no user
 /// defined rgroup label
-bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom);
+bool isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(const Atom &atom);
 
 //! Return true if the atom has a user-defined R group label
 bool isUserRLabel(const Atom &atom);
+
+// ! Return true if the atom is a terminal dummy R group (user labelled or
+// unlabelled)
+bool isDummyRGroupAttachment(const Atom &atom);
 
 //! Returns true if the core atom is either a dummy atom with multiple
 /// connections or a dummy atom with a single connection that has no user
@@ -67,7 +75,7 @@ inline bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
   if (atom.getAtomicNum()) {
     return false;
   }
-  return isAtomWithMultipleNeighborsOrNotUserRLabel(atom);
+  return isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(atom);
 }
 
 //! Returns a JSON form
