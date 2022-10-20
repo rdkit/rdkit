@@ -27,7 +27,9 @@ sys.path.insert(0, os.path.abspath('exts'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'recommonmark']  # , 'extapi']
+extensions = [
+  'sphinx.ext.autodoc', 'sphinx.ext.doctest', 'recommonmark', 'sphinx.ext.autosectionlabel'
+]  # , 'extapi']
 #autosummary_generate = True
 doctest_test_doctest_blocks = ""
 
