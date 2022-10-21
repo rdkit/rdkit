@@ -1134,11 +1134,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "being returned")
       .def_readwrite("removeHs", &RDKit::SmilesParserParams::removeHs,
                      "controls whether or not Hs are removed before the "
-                     "molecule is returned")
-      .def_readwrite(
-          "useLegacyStereo", &RDKit::SmilesParserParams::useLegacyStereo,
-          "controls whether or not the legacy stereochemistry "
-          "perception code is used. DEPRECATED: Please use Chem.SetUseLegacyStereoPerception() instead.");
+                     "molecule is returned");
   python::class_<RDKit::SmartsParserParams, boost::noncopyable>(
       "SmartsParserParams", "Parameters controlling SMARTS Parsing")
       .def_readwrite("debugParse", &RDKit::SmartsParserParams::debugParse,

@@ -115,7 +115,6 @@ RWMol *mol_from_input(const std::string &input,
       ps.sanitize = false;
       ps.removeHs = removeHs;
       LPT_OPT_GET2(ps, strictCXSMILES);
-      LPT_OPT_GET2(ps, useLegacyStereo);
       res = SmilesToMol(input, ps);
     }
   } catch (...) {
