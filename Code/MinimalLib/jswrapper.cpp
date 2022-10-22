@@ -542,8 +542,10 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<double(int)>(&JSMol::normalize_depiction))
       .function("normalize_depiction", select_overload<double(int, double)>(
                                            &JSMol::normalize_depiction))
-      .function("straighten_depiction", select_overload<void()>(&JSMol::straighten_depiction))
-      .function("straighten_depiction", select_overload<void(bool)>(&JSMol::straighten_depiction));
+      .function("straighten_depiction",
+                select_overload<void()>(&JSMol::straighten_depiction))
+      .function("straighten_depiction",
+                select_overload<void(bool)>(&JSMol::straighten_depiction));
 
   class_<JSReaction>("Reaction")
 #ifdef __EMSCRIPTEN__

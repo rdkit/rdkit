@@ -68,7 +68,7 @@ bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
   INT_VECT fused;
 
   // mark all rings in the system other than those in rids as done
-  for (const auto& nci : ringNeighs) {
+  for (const auto &nci : ringNeighs) {
     rid = nci.first;
     if (std::find(rids.begin(), rids.end(), rid) == rids.end()) {
       done[rid] = 1;
@@ -365,10 +365,12 @@ void applyHuckelToFused(
   std::set<unsigned int> doneBonds;
   while (1) {
     if (pos == -1) {
-      // If a ring system has more than 300 rings and a ring combination search larger than 2 is reached,
-      // the calculation becomes exponentially longer, in some case it never completes.
+      // If a ring system has more than 300 rings and a ring combination search
+      // larger than 2 is reached, the calculation becomes exponentially longer,
+      // in some case it never completes.
       if ((curSize == 2) && (nrings > 300)) {
-        BOOST_LOG(rdWarningLog) << "Ring system too large for aromaticity detection." << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "Ring system too large for aromaticity detection." << std::endl;
         break;
       }
 

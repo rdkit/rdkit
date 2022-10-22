@@ -90,7 +90,7 @@ struct conformer_wrapper {
         .def("SetAtomPosition", SetAtomPos,
              "Set the position of the specified atom\n")
         .def("SetAtomPosition",
-             (void (Conformer::*)(unsigned int, const RDGeom::Point3D &)) &
+             (void(Conformer::*)(unsigned int, const RDGeom::Point3D &)) &
                  Conformer::setAtomPos,
              "Set the position of the specified atom\n")
 
