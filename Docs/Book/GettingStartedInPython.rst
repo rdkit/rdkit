@@ -3399,8 +3399,8 @@ Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavail
   >>> mol = Chem.MolFromSmiles('CC(=O)Nc1ccc(O)cc1')  # e.g. Paracetamol
   >>> # Ro5 descriptors
   >>> MW = Descriptors.MolWt(mol)
-  >>> HBA = Descriptors.NumHAcceptors(mol)
-  >>> HBD = Descriptors.NumHDonors(mol)
+  >>> HBA = Descriptors.NOCount(mol)
+  >>> HBD = Descriptors.NHOHCount(mol)
   >>> LogP = Descriptors.MolLogP(mol)
   >>> conditions = [MW <= 500, HBA <= 10, HBD <= 5, LogP <= 5]
   >>> if conditions.count(True) >= 3:
