@@ -63,6 +63,7 @@ Submodules
    rdkit.Chem.Randomize
    rdkit.Chem.Recap
    rdkit.Chem.ReducedGraphs
+   rdkit.Chem.RegistrationHash
    rdkit.Chem.SATIS
    rdkit.Chem.SaltRemover
    rdkit.Chem.ShowMols

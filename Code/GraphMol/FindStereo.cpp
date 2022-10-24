@@ -339,8 +339,9 @@ bool isBondPotentialStereoBond(const Bond *bond) {
     // check rings
     const auto ri = bond->getOwningMol().getRingInfo();
     for (const auto &bring : ri->bondRings()) {
-      if (bring.size() < 8 && std::find(bring.begin(), bring.end(),
-                                        bond->getIdx()) != bring.end()) {
+      if (bring.size() < minRingSizeForDoubleBondStereo &&
+          std::find(bring.begin(), bring.end(), bond->getIdx()) !=
+              bring.end()) {
         return false;
       }
     }
@@ -418,8 +419,12 @@ bool areStereobondControllingAtomsDupes(
     }
 
     auto ring = ringInfo->atomRings().at(*it1);
+    ++it1;
+    ++it2;
+
     if (ring.size() % 2) {
-      // Ring is odd-sized
+      // The common ring is odd-sized, so we can't have a tie-breaking atom
+      // directly across the ring, so skip this ring.
       continue;
     }
 
@@ -435,9 +440,6 @@ bool areStereobondControllingAtomsDupes(
         }
       }
     }
-
-    ++it1;
-    ++it2;
   }
 
   return true;

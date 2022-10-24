@@ -206,6 +206,35 @@ void test_svg() {
   assert(strstr(svg, "</svg>"));
   free(svg);
 
+  svg = get_svg(
+      pkl, pkl_size,
+      "{\"highlightAtomColors\":{"
+      "\"0\": [1.0, 0.0, 0.0],"
+      "\"1\": [1.0, 0.0, 0.0],"
+      "\"2\": [1.0, 0.0, 0.0],"
+      "\"3\": [0.0, 1.0, 0.0],"
+      "\"4\": [1.0, 0.0, 0.0],"
+      "\"5\": [1.0, 0.0, 0.0],"
+      "\"6\": [1.0, 0.0, 0.0]"
+      "}, \"highlightBondColors\":{"
+      "\"2\": [0.0, 0.7, 0.9]"
+      "}, \"highlightAtomRadii\":{"
+      "\"0\": 0.1,"
+      "\"1\": 0.1,"
+      "\"2\": 0.1,"
+      "\"3\": 0.8,"
+      "\"4\": 0.1,"
+      "\"5\": 0.1,"
+      "\"6\": 0.1"
+      "}, \"atoms\": [0, 1, 2, 3, 4, 5, 6],  \"bonds\": [2], \"width\":127}");
+  assert(!strstr(svg, "fill:#FF7F7F"));
+  assert(strstr(svg, "fill:#FF0000"));
+  assert(strstr(svg, "fill:#00FF00"));
+  assert(strstr(svg, "fill:#00B2E5"));
+  assert(strstr(svg, "width='127px'"));
+  assert(strstr(svg, "</svg>"));
+  free(svg);
+
   free(pkl);
   pkl = NULL;
   printf("  done\n");
