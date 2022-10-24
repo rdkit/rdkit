@@ -3342,6 +3342,15 @@ void testHybridization() {
     delete m;
   }
 
+  {
+    RWMol *m;
+    std::string smi = "[Pd]<-[C]1N(C)CCN(C)1";
+    m = SmilesToMol(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getAtomWithIdx(1)->getHybridization() == Atom::SP2);
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
