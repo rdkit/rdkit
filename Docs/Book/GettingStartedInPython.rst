@@ -3403,10 +3403,7 @@ Lipinski's "Rule of 5" [#lipinski]_ was introduced to estimate the oral bioavail
   >>> HBD = Descriptors.NHOHCount(mol)
   >>> LogP = Descriptors.MolLogP(mol)
   >>> conditions = [MW <= 500, HBA <= 10, HBD <= 5, LogP <= 5]
-  >>> if conditions.count(True) >= 3:
-      ... pass_ro5 = True  # ro5 compliant
-  >>> else:
-      ... pass_ro5 = False  # fails ro5
+  >>> pass_ro5 = conditions.count(True) >= 3
   >>> print(pass_ro5)
 
 Filtering Unwanted Substructures
