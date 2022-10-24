@@ -3381,7 +3381,7 @@ These are adapted from the definitions in Gobbi, A. & Poppinger, D. “Genetic o
 
 Filtering Molecular Datasets
 *****************************
-Several sets of rules exist for estimating the liklihood of a molecule exhibiting drug like behaviour. It's worth noting that these are rules of thumb, and that many examples of approved small molecule drugs exist that disobey these rules. 
+Several sets of rules exist for estimating the likelihood of a molecule exhibiting drug-like behaviour. It's worth noting that these are rules of thumb, and that many examples of approved small molecule drugs exist that disobey these rules. 
 
 Lipinski Rule of 5
 ==================
