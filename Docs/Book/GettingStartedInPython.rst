@@ -3433,11 +3433,7 @@ The NIH filter [#jadhav]_, [#doveston]_ defined a list of functional groups with
   >>> params_unwanted.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
   >>> catalog_unwanted = FilterCatalog(params_unwanted)
 
-  >>> entry = catalog_unwanted.GetFirstMatch(mol)  # Get the first matching PAINS
-  >>> if entry is not None:
-      ... flag = True  # true if mol contains filter
-  >>> else:
-      ... flag = False  # false if not
+  >>> flag = catalog_unwanted.HasMatch(mol)  # Checks if there is a matching unwanted substructure
   >>> print("Brenk: ", flag)
   <BLANKLINE>
   >>> # NIH Flag
@@ -3445,12 +3441,25 @@ The NIH filter [#jadhav]_, [#doveston]_ defined a list of functional groups with
   >>> params_nih.AddCatalog(FilterCatalogParams.FilterCatalogs.NIH)
   >>> catalog_nih = FilterCatalog(params_nih)
 
-  >>> entry = catalog_nih.GetFirstMatch(mol)  # Get the first matching PAINS
-  >>> if entry is not None:
-      ... flag = True  # true if mol contains filter
-  >>> else:
-      ... flag = False  # false if not
+  >>> flag = catalog_nih.HasMatch(mol)  # Checks if there is a matching NIH
   >>> print("NIH: ", flag)
+
+All of the available filters can also be considered at once. Additional information such as the class and description of the unwanted substructures can be obtained using the FilterCatalogEntry object:
+
+.. doctest::
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
+  
+  >>> mol = Chem.MolFromSmiles('CC1=C(C=C(C=C1)N2C(=O)C(=C(N2)C)N=NC3=CC=CC(=C3O)C4=CC(=CC=C4)C(=O)O)C')  # e.g. Eltrombopag
+  <BLANKLINE>
+  >>> # ALL Filters
+  >>> params_all = FilterCatalogParams()
+  >>> params_all.AddCatalog(FilterCatalogParams.FilterCatalogs.ALL)
+  >>> catalog_all = FilterCatalog(params_all)
+  
+  >>> print([entry.GetProp('FilterSet') for entry in catalog_all.GetMatches(mol)])
+  >>> print([entry.GetDescription() for entry in catalog_all.GetMatches(mol)])
+  
   
 .. rubric:: Footnotes
 
