@@ -3425,11 +3425,7 @@ The NIH filter [#jadhav]_, [#doveston]_ defined a list of functional groups with
   >>> params_pains.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)
   >>> catalog_pains = FilterCatalog(params_pains)
   
-  >>> entry = catalog_pains.GetFirstMatch(mol)  # Get the first matching PAINS
-  >>> if entry is not None:
-      ... flag = True  # true if mol contains filter
-  >>> else:
-      ... flag = False  # false if not
+  >>> flag = catalog_pains.HasMatch(mol)  # Checks if there is a matching PAINS
   >>> print("PAINs: ", flag)
   <BLANKLINE>
   >>> # Brenk Flag
