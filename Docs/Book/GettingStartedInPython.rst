@@ -3422,7 +3422,7 @@ The NIH filter [#jadhav]_, [#doveston]_ defined a list of functional groups with
   <BLANKLINE>
   >>> # PAINS flag
   >>> params_pains = FilterCatalogParams()
-  >>> params_pains.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
+  >>> params_pains.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS_A)
   >>> catalog_pains = FilterCatalog(params_pains)
   
   >>> entry = catalog_pains.GetFirstMatch(mol)  # Get the first matching PAINS
