@@ -258,6 +258,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     const bool labelByIndex = true;
     const bool requireDummyMatch = false;
     bool hasCoreDummies = false;
+    // TODO see if we need relaceCoreWithMolMatches or can just use rcore->core
     auto coreCopy =
         rcore->replaceCoreAtomsWithMolMatches(hasCoreDummies, mol, tmatche);
     tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
@@ -377,9 +378,13 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             rcore->numberUserRGroups - numberUserGroupsInMatch;
         CHECK_INVARIANT(numberMissingUserGroups >= 0,
                         "Data error in missing user rgroup count");
+        auto extractedCore =
+            rcore->extractCoreFromMolMatch(hasCoreDummies, mol, tmatche);
+        std::cerr << "extracted Core: " << MolToSmarts(*extractedCore) << std::endl;
         potentialMatches.emplace_back(
             core_idx, numberMissingUserGroups, match,
-            hasCoreDummies || !data->params.onlyMatchAtRGroups ? coreCopy
+            // TODO not sure that the onlyMatchAtRGroups makes any sense here.
+            hasCoreDummies || !data->params.onlyMatchAtRGroups ? extractedCore
                                                                : nullptr);
       }
     }
@@ -448,7 +453,9 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
   if (!match.matchedCore) {
     return core.labelledCore;
   }
-  auto coreWithMatches = core.coreWithMatches(*match.matchedCore);
+  // auto coreWithMatches = core.coreWithMatches(*match.matchedCore);
+  auto coreWithMatches = match.matchedCore;
+  std::cerr << "output core mol1 " << MolToSmarts(*coreWithMatches) << std::endl;
   for (auto atomIdx = coreWithMatches->getNumAtoms(); atomIdx--;) {
     auto atom = coreWithMatches->getAtomWithIdx(atomIdx);
     if (atom->getAtomicNum()) {
@@ -487,6 +494,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       nbrAtom->updatePropertyCache(false);
     }
   }
+  std::cerr << "output core mol2 " << MolToSmarts(*coreWithMatches) << std::endl;
   return coreWithMatches;
 }
 

@@ -3196,6 +3196,32 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
   }
 }
 
+void testGithub5613() {
+  {
+    // Check core with terminal wildcard - dummy atom labels allowed
+    auto core = "[*:1]C(=O)NC1CCN([*:3])C1"_smarts;
+    auto mol = "Cc1c(c(c([nH]1)C(=O)N[C@H]2CCN(C2)c3cc(nc(n3)Cl)C(=O)O)Cl)Cl"_smiles;
+    RGroupDecompositionParameters params;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected(
+        "Core:C1CC([*:2])([*:3])CNC1O[*:1] R1:C[*:1] R2:C[*:2] R3:C[*:3]");
+    RGroupRows::const_iterator it = rows.begin();
+
+    auto rdgCore = rows[0]["Core"];
+    std::cerr << "Core smarts " << MolToSmarts(*rdgCore) << std::endl;
+    std::cerr << "Core smiles " << MolToSmiles(*rdgCore) << std::endl;
+
+
+    CHECK_RGROUP(it, expected);
+ }
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -3203,6 +3229,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
+  // testGithub5613();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();

@@ -54,6 +54,69 @@ void RCore::findIndicesWithRLabel() {
   }
 }
 
+RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
+                                          const ROMol &mol,
+                                          const MatchVectType &match) const {
+  auto extractedCore = boost::make_shared<RWMol>(mol);
+  std::set<int> atomIndicesToKeep;
+  // Add dummy atoms to explicit rgroups
+  for (auto pair : match) {
+    auto queryAtom = core->getAtomWithIdx(pair.first);
+    if (queryAtom->getAtomicNum() == 0) {
+      hasCoreDummies = true;
+    }
+    if (queryAtom->getAtomicNum() == 0 && queryAtom->hasProp(RLABEL) &&
+        queryAtom->getDegree() == 1) {
+      // terminal R Group
+      auto newDummy = new Atom(*queryAtom);
+      // newDummy->setOwningMol(*extractedCore);
+      auto newDummyIdx = extractedCore->addAtom(newDummy);
+      atomIndicesToKeep.insert(newDummyIdx);
+      auto queryNeighbor = *core->atomNeighbors(queryAtom).begin();
+      auto mapping = std::find_if(
+          match.begin(), match.end(), [queryNeighbor](std::pair<int, int> p) {
+            return p.first == static_cast<int>(queryNeighbor->getIdx());
+          });
+      auto targetNeighborIndex = (*mapping).second;
+      extractedCore->removeBond(pair.second, targetNeighborIndex);
+      auto targetNeighbor = extractedCore->getAtomWithIdx(targetNeighborIndex);
+      // TODO test chriality- see molFragmenter.cpp
+      extractedCore->addBond(targetNeighborIndex, newDummyIdx,
+                             Bond::BondType::SINGLE);
+    } else {
+      atomIndicesToKeep.insert(pair.second);
+      auto targetAtom = extractedCore->getAtomWithIdx(pair.second);
+      int rLabel, rLabelType;
+      if (queryAtom->getPropIfPresent(RLABEL, rLabel)) {
+        targetAtom->setProp(RLABEL, rLabel);
+      }
+      if (queryAtom->getPropIfPresent(RLABEL_TYPE, rLabelType)) {
+        targetAtom->setProp(RLABEL_TYPE, rLabelType);
+      }
+      if (queryAtom->getNumExplicitHs() > 0 && targetAtom->getNumExplicitHs() < queryAtom->getNumExplicitHs()) {
+        targetAtom->setNumExplicitHs(queryAtom->getNumExplicitHs());
+      }
+    }
+  }
+
+  // Now delete atom's that are not in the core.
+  std::vector<Atom *> atomsToRemove;
+  for (auto atom : extractedCore->atoms()) {
+    if (atomIndicesToKeep.find(atom->getIdx()) == atomIndicesToKeep.end()) {
+      atomsToRemove.push_back(atom);
+      // TODO remove chirality from any neighbor atoms in core
+    }
+  }
+
+  extractedCore->beginBatchEdit();
+  for (auto atom : atomsToRemove) {
+    extractedCore->removeAtom(atom);
+  }
+  extractedCore->commitBatchEdit();
+
+  return extractedCore;
+}
+
 // Return a copy of core where dummy atoms are replaced by
 // the respective matching atom in mol, while other atoms have
 // their aromatic flag and formal charge copied from
@@ -75,8 +138,8 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
 
   // look for dummy rgroup attachment points in core that are not in mapping
   // there is no r group for these guys.  I've marked them as missing.
-  // It might be better to delete them coreReplaceAtoms, but I'm not sure of the
-  // implications of that.
+  // It might be better to delete them in coreReplaceAtoms, but I'm not sure of
+  // the implications of that.
   for (auto atom : coreReplacedAtoms->atoms()) {
     if (atom->getAtomicNum() == 0 && atom->hasProp(RLABEL)) {
       auto missing = std::find_if(match.cbegin(), match.cend(),

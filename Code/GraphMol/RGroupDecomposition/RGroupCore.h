@@ -56,6 +56,9 @@ struct RCore {
                                             const ROMol &mol,
                                             const MatchVectType &match) const;
 
+  RWMOL_SPTR extractCoreFromMolMatch(bool &hasCoreDummies, const ROMol &mol,
+                                     const MatchVectType &match) const;
+
   // Final core returned to user with dummy atoms and bonds set to those in the
   // match
   RWMOL_SPTR coreWithMatches(const ROMol &coreReplacedAtoms) const;
