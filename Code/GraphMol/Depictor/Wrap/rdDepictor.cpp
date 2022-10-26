@@ -142,6 +142,15 @@ void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
   RDDepict::generateDepictionMatching3DStructure(
       mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
 }
+
+bool isCoordGenSupportAvailable() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  return true;
+#else
+  return false;
+#endif
+}
+
 void setPreferCoordGen(bool value) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = value;
@@ -187,6 +196,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
       &rdDepictExceptionTranslator);
 
   rdkit_import_array();
+
+  python::def("IsCoordGenSupportAvailable", isCoordGenSupportAvailable,
+              "Returns whether RDKit was built with CoordGen support.");
 
   python::def("SetPreferCoordGen", setPreferCoordGen, python::arg("val"),
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
