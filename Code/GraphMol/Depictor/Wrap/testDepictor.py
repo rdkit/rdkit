@@ -1,4 +1,3 @@
-
 # Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
 import os
@@ -561,5 +560,4 @@ M  END)""")
 
 
 if __name__ == '__main__':
-    rdDepictor.SetPreferCoordGen(False)
     unittest.main()
