@@ -28,7 +28,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-
 '''
 Importing pandasTools enables several features that allow for using RDKit molecules as columns of a
 Pandas dataframe.
@@ -153,7 +152,8 @@ _originalSettings = {}
 highlightSubstructures = True
 molRepresentation = "png"  # supports also SVG
 molSize = (200, 200)
-molJustify = "center" # supports also left, right
+molJustify = "center"  # supports also left, right
+
 
 def _molge(x, y):
   """Allows for substructure check using the >= operator (X has substructure Y -> X >= Y) by
@@ -177,12 +177,14 @@ def _molge(x, y):
   else:
     return False
 
+
 def PrintAsBase64PNGString(x):
   """Deprecated, use PrintAsImageString instead"""
   if not hasattr(PrintAsBase64PNGString, "warning_shown"):
     setattr(PrintAsBase64PNGString, "warning_shown", True)
     log.warning("PrintAsBase64PNGString is deprecated - use PrintAsImageString instead")
   return PrintAsImageString(x)
+
 
 def PrintAsImageString(x):
   """Returns the molecules as base64 encoded PNG image or as SVG"""
@@ -204,16 +206,16 @@ def PrintAsImageString(x):
       svg.attributes['data-content'] = 'rdkit/molecule'
       return svg.toxml()
     else:
-      data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True, drawOptions=drawOptions)
+      data = Draw._moltoimg(x, molSize, highlightAtoms, "", returnPNG=True, kekulize=True,
+                            drawOptions=drawOptions)
       return (
         f'<div style="width: {molSize[0]}px; height: {molSize[1]}px" data-content="rdkit/molecule">'
-         '<img src="data:image/png;base64,%s" alt="Mol"/>'
-         '</div>' % _get_image(data)
-      )
+        '<img src="data:image/png;base64,%s" alt="Mol"/>'
+        '</div>' % _get_image(data))
 
 
 try:
-  from . import PandasPatcher
+  import PandasPatcher
   PandasPatcher.PrintAsImageString = PrintAsImageString
   PandasPatcher.molJustify = molJustify
   PandasPatcher.InteractiveRenderer = InteractiveRenderer
@@ -239,6 +241,7 @@ try:
 except ImportError:
   pass
 else:
+
   def LoadSDF(filename, idName='ID', molColName='ROMol', includeFingerprints=False,
               isomericSmiles=True, smilesName=None, embedProps=False, removeHs=True,
               strictParsing=True):
@@ -289,7 +292,6 @@ else:
     df = pd.DataFrame(records, index=indices)
     ChangeMoleculeRendering(df)
     return df
-
 
   def RGroupDecompositionToFrame(groups, mols, include_core=False, redraw_sidechains=False):
     """ returns a dataframe with the results of R-Group Decomposition
@@ -633,7 +635,6 @@ def _runDoctests(verbose=None):  # pragma: nocover
 
 InstallPandasTools()
 
-
 if __name__ == '__main__':  # pragma: nocover
   import unittest
   try:
@@ -642,6 +643,7 @@ if __name__ == '__main__':  # pragma: nocover
     xlsxwriter = None
   try:
     import pandas as pd
+
     def _getPandasVersion():
       """ Get the pandas version as a tuple """
       import re
