@@ -301,6 +301,9 @@ else:
     >>> scaffold = Chem.MolFromSmiles('c1ccccn1')
     >>> mols = [Chem.MolFromSmiles(smi) for smi in 'c1c(F)cccn1 c1c(Cl)c(C)ccn1 c1c(O)cccn1 c1c(F)c(C)ccn1 c1cc(Cl)c(F)cn1'.split()]
     >>> groups,_ = rdRGroupDecomposition.RGroupDecompose([scaffold],mols,asSmiles=False,asRows=False)
+    >>> df = PandasTools.RGroupDecompositionToFrame(groups,mols,include_core=False)
+    >>> list(df.columns)
+    ['Mol', 'R1', 'R2']
     >>> df = PandasTools.RGroupDecompositionToFrame(groups,mols,include_core=True)
     >>> list(df.columns)
     ['Mol', 'Core', 'R1', 'R2']
@@ -318,6 +321,7 @@ else:
     memory usage: *...*
 
     """
+    groups = groups.copy()
     cols = ['Mol'] + list(groups.keys())
     if redraw_sidechains:
       from rdkit.Chem import rdDepictor
