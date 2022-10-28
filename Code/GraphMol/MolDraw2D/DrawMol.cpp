@@ -2042,7 +2042,8 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           // These effects can be seen in bond_highlights_8.svg produced
           // by catch_tests.cpp.
           DrawColour col = getHighlightBondColour(
-              bond->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
+              bond, drawOptions_, highlightBonds_, highlightBondMap_,
+              highlightAtoms_, highlightAtomMap_);
           std::vector<Atom *> thisHighNbrs;
           std::vector<Atom *> nbrHighNbrs;
           auto nbr = drawMol_->getAtomWithIdx(nbrIdx);
@@ -2059,13 +2060,13 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           // (see Github5592).  Make a convex hull, using a simplified
           // form of Graham's scan algorithm - all the points
           // are in the convex hull so it's easier.  Grahsm's scan normally
-	  // has a second step that removes inner points, and this takes
-	  // care of any problems with floating point errors in the
-	  // comparisons below.  The shapes here are at most hexagons with
-	  // sharp angles so such issues have been deemed unlikely to
-	  // occur in practice.
+          // has a second step that removes inner points, and this takes
+          // care of any problems with floating point errors in the
+          // comparisons below.  The shapes here are at most hexagons with
+          // sharp angles so such issues have been deemed unlikely to
+          // occur in practice.
           // Sort so the lowest y point is first, with lowest x as
-	  // tie-breaker.
+          // tie-breaker.
           std::sort(points.begin(), points.end(),
                     [](Point2D &p1, Point2D &p2) -> bool {
                       if (p1.y < p2.y) {
@@ -3213,7 +3214,8 @@ DrawColour DrawMol::getColour(int atom_idx) const {
                       nbr->getIdx()) != highlightBonds_.end() ||
             highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
           DrawColour hc = getHighlightBondColour(
-              nbr->getIdx(), drawOptions_, highlightBonds_, highlightBondMap_);
+              nbr, drawOptions_, highlightBonds_, highlightBondMap_,
+              highlightAtoms_, highlightAtomMap_);
           if (!highCol) {
             highCol.reset(new DrawColour(hc));
           } else {
@@ -3322,15 +3324,36 @@ DrawColour getColourByAtomicNum(int atomic_num,
 
 // ****************************************************************************
 DrawColour getHighlightBondColour(
-    int bondIdx, const MolDrawOptions &drawOptions,
+    const Bond *bond, const MolDrawOptions &drawOptions,
     const std::vector<int> &highlightBonds,
-    const std::map<int, DrawColour> &highlightBondMap) {
+    const std::map<int, DrawColour> &highlightBondMap,
+    const std::vector<int> &highlightAtoms,
+    const std::map<int, DrawColour> &highlightAtomMap) {
+  PRECONDITION(bond, "no bond provided");
+  RDUNUSED_PARAM(highlightAtoms);
+
   DrawColour col(0.0, 0.0, 0.0);
-  if (std::find(highlightBonds.begin(), highlightBonds.end(), bondIdx) !=
+  if (std::find(highlightBonds.begin(), highlightBonds.end(), bond->getIdx()) !=
       highlightBonds.end()) {
     col = drawOptions.highlightColour;
-    if (highlightBondMap.find(bondIdx) != highlightBondMap.end()) {
-      col = highlightBondMap.find(bondIdx)->second;
+    if (highlightBondMap.find(bond->getIdx()) != highlightBondMap.end()) {
+      col = highlightBondMap.find(bond->getIdx())->second;
+    } else {
+      // the highlight color of the bond is not explicitly provided. What about
+      // the highlight colors of the begin/end atoms? Ideally these will both be
+      // the same, but we want to set the coloring even if that's not the
+      // case, so we'll use:
+      //  - begin atom color if that is set
+      //  - end atom color if that is set
+      //  - the default highlight color otherwise
+      if (highlightAtomMap.find(bond->getBeginAtomIdx()) !=
+          highlightAtomMap.end()) {
+        col = highlightAtomMap.find(bond->getBeginAtomIdx())->second;
+
+      } else if (highlightAtomMap.find(bond->getEndAtomIdx()) !=
+                 highlightAtomMap.end()) {
+        col = highlightAtomMap.find(bond->getEndAtomIdx())->second;
+      }
     }
   }
   return col;
