@@ -834,6 +834,7 @@ bool ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
   bool ok = true;
   bool changed = true;
   while (changed) {
+    changed = false;
     for (auto it = ceMap.begin(); it != ceMap.end();) {
       if (!it->second->checkMetrics(ceStats, changed)) {
         auto it2 = ceDegCount.find(it->second->hash());

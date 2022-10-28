@@ -53,6 +53,7 @@ void cmpFormalChargeBondOrder(const ROMol *mol1, const ROMol *mol2) {
 void testBaseFunctionality() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n"
                        << "testBaseFunctionality" << std::endl;
+
   ResonanceMolSupplier *resMolSuppl;
   RWMol *mol;
   mol = SmilesToMol("CC");
@@ -960,6 +961,19 @@ void testGitHub3349() {
   delete mol;
 }
 
+void testGitHub5406() {
+    BOOST_LOG(rdInfoLog) << "-----------------------\n"
+                         << "testGitHub5406 and 4884" << std::endl;
+    for (auto smiles_string : {"CC=[N+]=[N-]", "O=[N+][O-]"}) {
+        std::unique_ptr<RWMol> mol(SmilesToMol(smiles_string));
+        MolOps::addHs(*mol);
+        std::unique_ptr<ResonanceMolSupplier> suppl = std::make_unique<ResonanceMolSupplier>(
+                                (ROMol &)*mol);
+        TEST_ASSERT(suppl->length() == 0);
+    }
+}
+
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -984,6 +998,7 @@ int main() {
   testGitHub3048();
   testGitHub2597();
   testGitHub3349();
+  testGitHub5406();
 #endif
   return 0;
 }
