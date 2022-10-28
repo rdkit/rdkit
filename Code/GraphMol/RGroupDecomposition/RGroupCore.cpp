@@ -9,6 +9,7 @@
 //  of the RDKit source tree.
 //
 #include "RGroupCore.h"
+#include "GraphMol/SmilesParse/SmilesWrite.h"
 #include <GraphMol/Substruct/SubstructUtils.h>
 
 namespace RDKit {
@@ -59,7 +60,6 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
                                           const MatchVectType &match) const {
   auto extractedCore = boost::make_shared<RWMol>(mol);
   std::set<int> atomIndicesToKeep;
-  // Add dummy atoms to explicit rgroups
   for (auto pair : match) {
     auto queryAtom = core->getAtomWithIdx(pair.first);
     if (queryAtom->getAtomicNum() == 0) {
@@ -67,22 +67,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
     }
     if (queryAtom->getAtomicNum() == 0 && queryAtom->hasProp(RLABEL) &&
         queryAtom->getDegree() == 1) {
-      // terminal R Group
-      auto newDummy = new Atom(*queryAtom);
-      // newDummy->setOwningMol(*extractedCore);
-      auto newDummyIdx = extractedCore->addAtom(newDummy);
-      atomIndicesToKeep.insert(newDummyIdx);
-      auto queryNeighbor = *core->atomNeighbors(queryAtom).begin();
-      auto mapping = std::find_if(
-          match.begin(), match.end(), [queryNeighbor](std::pair<int, int> p) {
-            return p.first == static_cast<int>(queryNeighbor->getIdx());
-          });
-      auto targetNeighborIndex = (*mapping).second;
-      extractedCore->removeBond(pair.second, targetNeighborIndex);
-      auto targetNeighbor = extractedCore->getAtomWithIdx(targetNeighborIndex);
-      // TODO test chriality- see molFragmenter.cpp
-      extractedCore->addBond(targetNeighborIndex, newDummyIdx,
-                             Bond::BondType::SINGLE);
+      continue;
     } else {
       atomIndicesToKeep.insert(pair.second);
       auto targetAtom = extractedCore->getAtomWithIdx(pair.second);
@@ -93,8 +78,80 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
       if (queryAtom->getPropIfPresent(RLABEL_TYPE, rLabelType)) {
         targetAtom->setProp(RLABEL_TYPE, rLabelType);
       }
-      if (queryAtom->getNumExplicitHs() > 0 && targetAtom->getNumExplicitHs() < queryAtom->getNumExplicitHs()) {
-        targetAtom->setNumExplicitHs(queryAtom->getNumExplicitHs());
+      if (queryAtom->getAtomicNum() == 0) {
+        targetAtom->setNoImplicit(true);
+        auto targetNeighbors = extractedCore->atomNeighbors(targetAtom);
+        int numHs = std::count_if(
+            targetNeighbors.begin(), targetNeighbors.end(),
+            [](Atom *neighbor) { return neighbor->getAtomicNum() == 1; });
+        targetAtom->setNumExplicitHs(numHs + targetAtom->getTotalNumHs());
+        targetAtom->updatePropertyCache(false);
+      }
+
+      int neighborNumber = 0;
+      std::vector<Bond *> newBonds;
+      // collect neighbors in vector, so we can add atoms while looping
+      std::vector<Atom *> targetNeighborAtoms;
+      for (auto targetNeighborAtom : extractedCore->atomNeighbors(targetAtom)) {
+        targetNeighborAtoms.push_back(targetNeighborAtom);
+      }
+      for (auto targetNeighborAtom : targetNeighborAtoms) {
+        auto targetNeighborIndex = targetNeighborAtom->getIdx();
+        auto queryNeighborMapping = std::find_if(
+            match.begin(), match.end(),
+            [this, targetNeighborIndex, pair](const std::pair<int, int> &p) {
+              return p.second == static_cast<int>(targetNeighborIndex) &&
+                     core->getBondBetweenAtoms(pair.first, p.first);
+            });
+        if (queryNeighborMapping == match.end()) {
+          continue;
+        }
+        auto queryNeighbor =
+            core->getAtomWithIdx((*queryNeighborMapping).first);
+        if (queryNeighbor->getAtomicNum() == 0 &&
+            queryNeighbor->hasProp(RLABEL) && queryNeighbor->getDegree() == 1) {
+          auto newDummy = new Atom(*queryNeighbor);
+          newDummy->clearComputedProps();
+          auto newDummyIdx = extractedCore->addAtom(newDummy, false, true);
+          atomIndicesToKeep.insert(newDummyIdx);
+          auto connectingBond =
+              extractedCore
+                  ->getBondBetweenAtoms(pair.second, targetNeighborIndex)
+                  ->copy();
+
+          if (connectingBond->getBeginAtomIdx() == targetNeighborIndex) {
+            connectingBond->setBeginAtomIdx(newDummyIdx);
+          } else {
+            connectingBond->setEndAtomIdx(newDummyIdx);
+          }
+          newBonds.push_back(connectingBond);
+
+          // Chirality parity stuff see RDKit::replaceCore in
+          // Code/GraphMol/ChemTransforms/ChemTransforms.cpp
+          if (targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
+              targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
+            bool switchIt = false;
+            switch (extractedCore->getAtomDegree(targetAtom)) {
+              case 4:
+                if (!(neighborNumber % 2)) {
+                  switchIt = true;
+                }
+                break;
+              case 3:
+                if (neighborNumber == 1) {
+                  switchIt = true;
+                }
+                break;
+            }
+            if (switchIt) {
+              targetAtom->invertChirality();
+            }
+          }
+        }
+        ++neighborNumber;
+      }
+      for (auto newBond : newBonds) {
+        extractedCore->addBond(newBond, true);
       }
     }
   }
@@ -104,7 +161,6 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
   for (auto atom : extractedCore->atoms()) {
     if (atomIndicesToKeep.find(atom->getIdx()) == atomIndicesToKeep.end()) {
       atomsToRemove.push_back(atom);
-      // TODO remove chirality from any neighbor atoms in core
     }
   }
 
@@ -114,6 +170,12 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
   }
   extractedCore->commitBatchEdit();
 
+  extractedCore->clearComputedProps(true);
+  extractedCore->updatePropertyCache(false);
+  std::cerr << "Extracted core smiles " << MolToSmiles(*extractedCore)
+            << std::endl;
+  std::cerr << "Extracted core smiles " << MolToSmarts(*extractedCore)
+            << std::endl;
   return extractedCore;
 }
 
