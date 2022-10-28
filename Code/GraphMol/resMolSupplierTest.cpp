@@ -963,16 +963,16 @@ void testGitHub3349() {
 
 void testGitHub5406() {
     BOOST_LOG(rdInfoLog) << "-----------------------\n"
-                         << "testGitHub5406" << std::endl;
-    RWMol *mol;
-    mol = SmilesToMol("CC=[N+]=[N-]");
-    MolOps::addHs(*mol);
-    auto *suppl = new ResonanceMolSupplier((ROMol &)*mol);
-    auto length = suppl->length();
-    TEST_ASSERT(length == 0);
-    delete mol;
-    delete suppl;
+                         << "testGitHub5406 and 4884" << std::endl;
+    for (auto smiles_string : {"CC=[N+]=[N-]", "O=[N+][O-]"}) {
+        std::unique_ptr<RWMol> mol(SmilesToMol("CC=[N+]=[N-]"));
+        MolOps::addHs(*mol);
+        std::unique_ptr<ResonanceMolSupplier> suppl = std::make_unique<ResonanceMolSupplier>(
+                                (ROMol &)*mol);
+        TEST_ASSERT(suppl->length() == 0);
+    }
 }
+
 
 int main() {
   RDLog::InitLogs();
