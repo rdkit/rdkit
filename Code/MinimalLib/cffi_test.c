@@ -485,7 +485,7 @@ void test_fingerprints() {
   free(fp);
   assert(!get_maccs_fp_as_bytes(NULL, 0, &nbytes, NULL));
   fp = get_maccs_fp_as_bytes(mpkl, mpkl_size, &nbytes, NULL);
-  assert(nbytes == 24);
+  assert(nbytes == 21);
   free(fp);
 #ifdef RDK_BUILD_AVALON_SUPPORT
   assert(!get_avalon_fp(NULL, 0, NULL));
