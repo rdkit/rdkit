@@ -10,6 +10,7 @@
 //
 #include "RGroupCore.h"
 #include "GraphMol/SmilesParse/SmilesWrite.h"
+#include "GraphMol/ChemTransforms/ChemTransforms.h"
 #include <GraphMol/Substruct/SubstructUtils.h>
 
 namespace RDKit {
@@ -60,6 +61,8 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
                                           const MatchVectType &match) const {
   auto extractedCore = boost::make_shared<RWMol>(mol);
   std::set<int> atomIndicesToKeep;
+  std::vector<Bond *> newBonds;
+  std::map<Atom *, int> dummyAtomMap;
   for (auto pair : match) {
     auto queryAtom = core->getAtomWithIdx(pair.first);
     if (queryAtom->getAtomicNum() == 0) {
@@ -89,7 +92,6 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
       }
 
       int neighborNumber = 0;
-      std::vector<Bond *> newBonds;
       // collect neighbors in vector, so we can add atoms while looping
       std::vector<Atom *> targetNeighborAtoms;
       for (auto targetNeighborAtom : extractedCore->atomNeighbors(targetAtom)) {
@@ -111,6 +113,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
         if (queryNeighbor->getAtomicNum() == 0 &&
             queryNeighbor->hasProp(RLABEL) && queryNeighbor->getDegree() == 1) {
           auto newDummy = new Atom(*queryNeighbor);
+          dummyAtomMap[newDummy] = targetNeighborIndex;
           newDummy->clearComputedProps();
           auto newDummyIdx = extractedCore->addAtom(newDummy, false, true);
           atomIndicesToKeep.insert(newDummyIdx);
@@ -150,25 +153,50 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
         }
         ++neighborNumber;
       }
-      for (auto newBond : newBonds) {
-        extractedCore->addBond(newBond, true);
-      }
     }
+  }
+  for (auto newBond : newBonds) {
+    extractedCore->addBond(newBond, true);
   }
 
   // Now delete atom's that are not in the core.
-  std::vector<Atom *> atomsToRemove;
+  extractedCore->beginBatchEdit();
+  boost::dynamic_bitset<> removedAtoms(mol.getNumAtoms());
   for (auto atom : extractedCore->atoms()) {
     if (atomIndicesToKeep.find(atom->getIdx()) == atomIndicesToKeep.end()) {
-      atomsToRemove.push_back(atom);
+      extractedCore->removeAtom(atom);
+      removedAtoms.set(atom->getIdx());
+    }
+  }
+  extractedCore->commitBatchEdit();
+
+  // Copy molecule coordinates to extracted core
+  updateSubMolConfs(mol, *extractedCore, removedAtoms);
+  for (auto citer = mol.beginConformers(); citer != mol.endConformers();
+       ++citer) {
+    Conformer &newConf = extractedCore->getConformer((*citer)->getId());
+    for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end(); ++iter) {
+      newConf.setAtomPos(iter->first->getIdx(),
+                         (*citer)->getAtomPos(iter->second));
     }
   }
 
-  extractedCore->beginBatchEdit();
-  for (auto atom : atomsToRemove) {
-    extractedCore->removeAtom(atom);
+  // If the molecule has no coordinates, but the core does copy those over
+  if (!mol.getNumConformers() && core->getNumConformers()) {
+    ROMol molCopy(mol);
+    for (auto citer = core->beginConformers(); citer != core->endConformers();
+         ++citer) {
+      auto newConf = new Conformer(mol.getNumAtoms());
+      newConf->setId((*citer)->getId());
+      newConf->set3D((*citer)->is3D());
+      for (const auto &pair : match) {
+        newConf->setAtomPos(pair.second, (*citer)->getAtomPos(pair.first));
+      }
+      molCopy.addConformer(newConf);
+    }
+    updateSubMolConfs(molCopy, *extractedCore, removedAtoms);
+    molCopy.clearConformers();
   }
-  extractedCore->commitBatchEdit();
 
   extractedCore->clearComputedProps(true);
   extractedCore->updatePropertyCache(false);

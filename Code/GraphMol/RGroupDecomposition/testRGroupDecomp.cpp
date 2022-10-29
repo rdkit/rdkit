@@ -3237,8 +3237,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  // testAddedRGroupsHaveCoords();
-  // testRingMatching2();
+  testDoNotChooseUnrelatedCores();
   // testGithub5613();
 #if 1
   testSymmetryMatching(FingerprintVariance);
@@ -3273,7 +3272,7 @@ int main() {
   testGeminalRGroups();
   testMatchOnAnyAtom();
   testNoAlignmentAndSymmetry();
-  // testAddedRGroupsHaveCoords();
+  testAddedRGroupsHaveCoords();
   testUserMatchTypes();
   testUnlabelledRGroupsOnAromaticNitrogen();
   testAddHsDoesNotFail();

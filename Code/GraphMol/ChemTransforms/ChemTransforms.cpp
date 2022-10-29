@@ -32,7 +32,6 @@
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 namespace RDKit {
-namespace {
 void updateSubMolConfs(const ROMol &mol, RWMol &res,
                        boost::dynamic_bitset<> &removedAtoms) {
   // update conformer information:
@@ -53,6 +52,7 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
   }
 }
 
+namespace {
 struct SideChainMapping {
   int molIndex;
   int coreIndex;
