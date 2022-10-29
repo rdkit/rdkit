@@ -72,14 +72,12 @@ void ADD_MATCH(R_DECOMP &match, int rlabel) {
 
 RGroupDecomposition::RGroupDecomposition(
     const ROMol &inputCore, const RGroupDecompositionParameters &params)
-    : data(new RGroupDecompData(inputCore, params)) {
-}
+    : data(new RGroupDecompData(inputCore, params)) {}
 
 RGroupDecomposition::RGroupDecomposition(
     const std::vector<ROMOL_SPTR> &cores,
     const RGroupDecompositionParameters &params)
-    : data(new RGroupDecompData(cores, params)) {
-}
+    : data(new RGroupDecompData(cores, params)) {}
 
 RGroupDecomposition::~RGroupDecomposition() { delete data; }
 

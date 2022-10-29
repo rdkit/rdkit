@@ -3437,12 +3437,7 @@ M  END
     auto &conf = coreRgd->getConformer();
     auto &dummyPoint = conf.getAtomPos(dummy->getIdx());
     // R2 dummy should be over input chiral oxygen, which is first oxygen of degree 2 in input mol block
-    auto oIter = std::find_if(
-        mol2->atoms().begin(), mol2->atoms().end(), [](const Atom *a) {
-          return a->getAtomicNum() == 8 && a->getDegree() == 2;
-        });
-    TEST_ASSERT(oIter != mol2->atoms().end());
-    auto &inputPoint = mol2->getConformer(0).getAtomPos((*oIter)->getIdx());
+    auto &inputPoint = mol2->getConformer(0).getAtomPos(15);
     TEST_ASSERT(abs(dummyPoint.x - inputPoint.x) < 0.05);
     TEST_ASSERT(abs(dummyPoint.y - inputPoint.y) < 0.05);
   }
