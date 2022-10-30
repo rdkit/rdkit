@@ -45,7 +45,7 @@ class TestFixtureTemplate : public boost::noncopyable {
     if (m_env_var_set) {
       (*m_setter_func)(m_flag_state);
     } else {
-#if _MSC_VER
+#ifdef _WIN32
       _putenv_s(m_var.c_str(), "");
 #else
       unsetenv(m_var.c_str());
