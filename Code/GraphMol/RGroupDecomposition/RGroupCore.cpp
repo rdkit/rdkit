@@ -11,7 +11,7 @@
 #include "RGroupCore.h"
 #include "GraphMol/SmilesParse/SmilesWrite.h"
 #include "GraphMol/ChemTransforms/ChemTransforms.h"
-#include <GraphMol/Substruct/SubstructUtils.h>
+#include "GraphMol/Substruct/SubstructUtils.h"
 
 namespace RDKit {
 
@@ -80,6 +80,13 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
       }
       if (queryAtom->getPropIfPresent(RLABEL_TYPE, rLabelType)) {
         targetAtom->setProp(RLABEL_TYPE, rLabelType);
+        // Can't handle stereochemistry if we are using unlabelled indexed
+        // RGroups on heavy atoms
+        if (static_cast<Labelling>(rLabelType) == Labelling::INDEX_LABELS &&
+            (targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+             targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW)) {
+          targetAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        }
       }
       if (queryAtom->getAtomicNum() == 0) {
         targetAtom->setNoImplicit(true);
@@ -200,10 +207,17 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
 
   extractedCore->clearComputedProps(true);
   extractedCore->updatePropertyCache(false);
+
   std::cerr << "Extracted core smiles " << MolToSmiles(*extractedCore)
             << std::endl;
   std::cerr << "Extracted core smiles " << MolToSmarts(*extractedCore)
             << std::endl;
+  unsigned int failed;
+  try {
+    MolOps::sanitizeMol(*extractedCore, failed,
+                        MolOps::SANITIZE_SYMMRINGS | MolOps::SANITIZE_CLEANUP);
+  } catch (const MolSanitizeException &) {
+  }
   return extractedCore;
 }
 

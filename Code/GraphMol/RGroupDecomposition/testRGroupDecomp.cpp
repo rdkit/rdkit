@@ -2731,7 +2731,7 @@ void testDoNotChooseUnrelatedCores() {
       TEST_ASSERT(decomp.add(*m) == 0);
       TEST_ASSERT(decomp.process());
       auto cols = decomp.getRGroupsAsColumns();
-      const auto &core = cols["Core"];
+      auto &core = cols["Core"];
       TEST_ASSERT(core.size() == 1);
       TEST_ASSERT(
           core.front()->getRingInfo()->atomRings().front().size() ==
@@ -3237,7 +3237,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testDoNotChooseUnrelatedCores();
+  testRingMatching2();
   // testGithub5613();
 #if 1
   testSymmetryMatching(FingerprintVariance);
@@ -3282,7 +3282,7 @@ int main() {
   testCoreWithAlsRecords();
   testAlignOutputCoreToMolecule();
   testWildcardInInput();
-  // testDoNotChooseUnrelatedCores();
+  testDoNotChooseUnrelatedCores();
   atomDegreePreconditionBug();
   testGithub5222();
   testGithub5569();
