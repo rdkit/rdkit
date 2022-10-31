@@ -35,10 +35,12 @@ python::list ExplicitToList(const ExplicitBitVect &sv) {
     l.append(0);
     l *= count;
     auto pos = sv.dp_bits->find_first();
-    l[pos] = 1;
-    while ((pos = sv.dp_bits->find_next(pos)) !=
-           boost::dynamic_bitset<>::npos) {
+    if (pos != boost::dynamic_bitset<>::npos) {
       l[pos] = 1;
+      while ((pos = sv.dp_bits->find_next(pos)) !=
+	     boost::dynamic_bitset<>::npos) {
+	l[pos] = 1;
+      }
     }
   }
   return l;
