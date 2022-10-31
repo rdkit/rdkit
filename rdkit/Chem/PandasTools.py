@@ -215,7 +215,7 @@ def PrintAsImageString(x):
 
 
 try:
-  import PandasPatcher
+  from rdkit.Chem import PandasPatcher
   PandasPatcher.PrintAsImageString = PrintAsImageString
   PandasPatcher.molJustify = molJustify
   PandasPatcher.InteractiveRenderer = InteractiveRenderer
