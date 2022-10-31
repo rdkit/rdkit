@@ -20,7 +20,7 @@
 
 // RDKit export macro definitions
 #ifdef RDKIT_DYN_LINK
-#if defined(WIN32) && defined(BOOST_HAS_DECLSPEC)
+#if defined(_WIN32) && defined(BOOST_HAS_DECLSPEC)
 #define RDKIT_EXPORT_API __declspec(dllexport)
 #define RDKIT_IMPORT_API __declspec(dllimport)
 #elif __GNUC__ >= 4 || defined(__clang__)
