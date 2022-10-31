@@ -1,18 +1,19 @@
 # Automatically adapted for numpy.oldnumeric Jun 27, 2008 by -c
 
+import os
+import sys
 #
 #  $Id: testDepictor.py 2112 2012-07-02 09:47:45Z glandrum $
 #
 # pylint:disable=E1101,C0111,C0103,R0904
 import unittest
-import os
-import sys
-import numpy as np
 
+import numpy as np
 from rdkit import Chem
-from rdkit.Chem import rdDepictor, rdMolAlign
 from rdkit import Geometry
 from rdkit import RDConfig
+from rdkit.Chem import rdDepictor
+from rdkit.Chem import rdMolAlign
 from rdkit.Chem.ChemUtils import AlignDepict
 
 
@@ -532,6 +533,31 @@ M  END)""")
         self.assertAlmostEqual(bond4_11Conf2.x, bond4_11Conf3.x, 3)
         self.assertAlmostEqual(bond4_11Conf2.y, bond4_11Conf3.y, 3)
 
+    @unittest.skipIf(not rdDepictor.IsCoordGenSupportAvailable(), "CoordGen not available, skipping")
+    def testUsingCoordGenCtxtMgr(self):
+        default_status = rdDepictor.GetPreferCoordGen()
+
+        # This is the default; we shouldn't have changed it
+        self.assertEqual(default_status, False)
+
+        with rdDepictor.UsingCoordGen(True):
+            current_status = rdDepictor.GetPreferCoordGen()
+            self.assertEqual(current_status, True)
+
+        current_status = rdDepictor.GetPreferCoordGen()
+        self.assertEqual(current_status, False)
+
+        rdDepictor.SetPreferCoordGen(True)
+
+        with rdDepictor.UsingCoordGen(False):
+            current_status = rdDepictor.GetPreferCoordGen()
+            self.assertEqual(current_status, False)
+
+        current_status = rdDepictor.GetPreferCoordGen()
+        self.assertEqual(current_status, True)
+
+        rdDepictor.SetPreferCoordGen(default_status)
+
+
 if __name__ == '__main__':
-    rdDepictor.SetPreferCoordGen(False)
     unittest.main()
