@@ -339,6 +339,7 @@ else:
       del groups['Core']
     groups['Mol'] = mols
     frame = pd.DataFrame(groups, columns=cols)
+    ChangeMoleculeRendering(frame)
     return frame
 
 
