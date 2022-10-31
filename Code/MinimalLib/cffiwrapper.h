@@ -91,6 +91,11 @@ RDKIT_RDKITCFFI_EXPORT char *get_atom_pair_fp(const char *pkl, size_t pkl_sz,
                                               const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_atom_pair_fp_as_bytes(
     const char *pkl, size_t pkl_sz, size_t *nbytes, const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_maccs_fp(const char *pkl, size_t pkl_sz,
+                                              const char *details_json);
+RDKIT_RDKITCFFI_EXPORT char *get_maccs_fp_as_bytes(
+    const char *pkl, size_t pkl_sz, size_t *nbytes, const char *details_json);
+
 #ifdef RDK_BUILD_AVALON_SUPPORT
 RDKIT_RDKITCFFI_EXPORT char *get_avalon_fp(const char *pkl, size_t pkl_sz,
                                            const char *details_json);
