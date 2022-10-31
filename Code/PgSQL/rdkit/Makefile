@@ -103,7 +103,7 @@ CC = $(CXX)
 	$(CXX) $(CPLUSPLUSFLAGS) $(CPPFLAGS) -fPIC -c -o $@ $<
 
 
-COMPILE.cxx.bc = $(CLANG) -xc++ -Wno-ignored-attributes $(BITCODE_CXXFLAGS) $(CPPFLAGS) -emit-llvm -c
+COMPILE.cxx.bc = $(CLANG) -std=c++17 -xc++ -Wno-ignored-attributes $(BITCODE_CXXFLAGS) $(CPPFLAGS) -emit-llvm -c
 
 %.bc : %.cpp
 	$(COMPILE.cxx.bc) -o $@ $<

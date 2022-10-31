@@ -788,6 +788,12 @@ std::unique_ptr<ExplicitBitVect> atom_pair_fp_as_bitvect(
   return std::unique_ptr<ExplicitBitVect>{fp};
 }
 
+std::unique_ptr<ExplicitBitVect> maccs_fp_as_bitvect(
+    const RWMol &mol, const char *details_json) {
+  auto fp = MACCSFingerprints::getFingerprintAsBitVect(mol);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+
 #ifdef RDK_BUILD_AVALON_SUPPORT
 std::unique_ptr<ExplicitBitVect> avalon_fp_as_bitvect(
     const RWMol &mol, const char *details_json) {
