@@ -1,4 +1,4 @@
-file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py 
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py
 "import os
 # unset so to trigger exceptions and track use: RDBaseDir=os.environ['RDBASE']
 RDCodeDir=os.path.join(r'${PYTHON_INSTDIR}','rdkit')
@@ -9,7 +9,7 @@ RDDocsDir=os.path.join(_share,'Docs')
 RDProjDir=os.path.join(_share,'Projects')
 RDContribDir=os.path.join(_share,'Contrib')
 ")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py
   DESTINATION ${RDKit_PythonDir}
   COMPONENT python)
 
@@ -29,3 +29,15 @@ add_pytest(pythonTestSping
          ${CMAKE_CURRENT_SOURCE_DIR}/Chem/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/sping )
 
 add_subdirectory(Chem)
+
+if(RDK_GENERATE_PYTHON_STUBS)
+  # Check the `stubgen` command exists and fails otherwise.
+  find_program(STUBGEN_PATH "stubgen" REQUIRED)
+
+  # Execute `stubgen ...` after the installation of the RDKit Python library.
+  # It will generate the `*.pyi` stub files directly in the Python install directory.
+  set(STUBGEN_CMD stubgen -p rdkit --quiet --output ${PYTHON_INSTDIR})
+  install(CODE "execute_process(COMMAND ${STUBGEN_CMD})"
+    COMPONENT python
+    )
+endif(RDK_GENERATE_PYTHON_STUBS)

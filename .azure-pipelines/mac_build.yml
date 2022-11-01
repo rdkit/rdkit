@@ -22,7 +22,7 @@ steps:
         py-boost=$(boost_version) libboost=$(boost_version) \
         qt \
         numpy matplotlib cairo pillow eigen pandas  \
-        sphinx=3.1.2 recommonmark jupyter
+        sphinx=3.1.2 recommonmark jupyter mypy
     conda activate rdkit_build
     conda install -c conda-forge nbval
   displayName: Setup build environment
