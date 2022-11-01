@@ -177,15 +177,6 @@ def _molge(x, y):
   else:
     return False
 
-
-def PrintAsBase64PNGString(x):
-  """Deprecated, use PrintAsImageString instead"""
-  if not hasattr(PrintAsBase64PNGString, "warning_shown"):
-    setattr(PrintAsBase64PNGString, "warning_shown", True)
-    log.warning("PrintAsBase64PNGString is deprecated - use PrintAsImageString instead")
-  return PrintAsImageString(x)
-
-
 def PrintAsImageString(x):
   """Returns the molecules as base64 encoded PNG image or as SVG"""
   if highlightSubstructures and hasattr(x, '__sssAtoms'):

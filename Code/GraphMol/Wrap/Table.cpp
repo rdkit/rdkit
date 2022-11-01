@@ -65,31 +65,31 @@ struct table_wrapper {
   static void wrap() {
     python::class_<PeriodicTable>(
         "PeriodicTable", periodicTableClassDoc.c_str(), python::no_init)
-        .def("GetAtomicWeight", (double (PeriodicTable::*)(UINT) const) &
+        .def("GetAtomicWeight", (double(PeriodicTable::*)(UINT) const) &
                                     PeriodicTable::getAtomicWeight)
         .def("GetAtomicWeight",
-             (double (PeriodicTable::*)(const std::string &) const) &
+             (double(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getAtomicWeight)
         .def("GetAtomicNumber",
-             (int (PeriodicTable::*)(const std::string &) const) &
+             (int(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getAtomicNumber)
         .def("GetElementSymbol", (std::string(PeriodicTable::*)(UINT) const) &
                                      PeriodicTable::getElementSymbol)
         .def("GetElementName", (std::string(PeriodicTable::*)(UINT) const) &
-                                     PeriodicTable::getElementName)
+                                   PeriodicTable::getElementName)
         .def("GetRvdw",
-             (double (PeriodicTable::*)(UINT) const) & PeriodicTable::getRvdw)
-        .def("GetRvdw", (double (PeriodicTable::*)(const std::string &) const) &
+             (double(PeriodicTable::*)(UINT) const) & PeriodicTable::getRvdw)
+        .def("GetRvdw", (double(PeriodicTable::*)(const std::string &) const) &
                             PeriodicTable::getRvdw)
-        .def("GetRcovalent", (double (PeriodicTable::*)(UINT) const) &
+        .def("GetRcovalent", (double(PeriodicTable::*)(UINT) const) &
                                  PeriodicTable::getRcovalent)
         .def("GetRcovalent",
-             (double (PeriodicTable::*)(const std::string &) const) &
+             (double(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getRcovalent)
-        .def("GetDefaultValence", (int (PeriodicTable::*)(UINT) const) &
+        .def("GetDefaultValence", (int(PeriodicTable::*)(UINT) const) &
                                       PeriodicTable::getDefaultValence)
         .def("GetDefaultValence",
-             (int (PeriodicTable::*)(const std::string &) const) &
+             (int(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getDefaultValence)
         .def("GetValenceList",
              (const INT_VECT &(PeriodicTable::*)(UINT) const) &
@@ -99,37 +99,36 @@ struct table_wrapper {
              (const INT_VECT &(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getValenceList,
              python::return_value_policy<python::copy_const_reference>())
-        .def("GetNOuterElecs", (int (PeriodicTable::*)(UINT) const) &
+        .def("GetNOuterElecs", (int(PeriodicTable::*)(UINT) const) &
                                    PeriodicTable::getNouterElecs)
         .def("GetNOuterElecs",
-             (int (PeriodicTable::*)(const std::string &) const) &
+             (int(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getNouterElecs)
-        .def("GetMostCommonIsotope", (int (PeriodicTable::*)(UINT) const) &
+        .def("GetMostCommonIsotope", (int(PeriodicTable::*)(UINT) const) &
                                          PeriodicTable::getMostCommonIsotope)
         .def("GetMostCommonIsotope",
-             (int (PeriodicTable::*)(const std::string &) const) &
+             (int(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getMostCommonIsotope)
         .def("GetMostCommonIsotopeMass",
-             (double (PeriodicTable::*)(UINT) const) &
+             (double(PeriodicTable::*)(UINT) const) &
                  PeriodicTable::getMostCommonIsotopeMass)
         .def("GetMostCommonIsotopeMass",
-             (double (PeriodicTable::*)(const std::string &) const) &
+             (double(PeriodicTable::*)(const std::string &) const) &
                  PeriodicTable::getMostCommonIsotopeMass)
         .def("GetRb0",
-             (double (PeriodicTable::*)(UINT) const) & PeriodicTable::getRb0)
-        .def("GetRb0", (double (PeriodicTable::*)(const std::string &) const) &
+             (double(PeriodicTable::*)(UINT) const) & PeriodicTable::getRb0)
+        .def("GetRb0", (double(PeriodicTable::*)(const std::string &) const) &
                            PeriodicTable::getRb0)
         .def("GetAbundanceForIsotope",
-             (double (PeriodicTable::*)(UINT, UINT) const) &
+             (double(PeriodicTable::*)(UINT, UINT) const) &
                  PeriodicTable::getAbundanceForIsotope)
         .def("GetAbundanceForIsotope",
-             (double (PeriodicTable::*)(const std::string &, UINT) const) &
+             (double(PeriodicTable::*)(const std::string &, UINT) const) &
                  PeriodicTable::getAbundanceForIsotope)
+        .def("GetMassForIsotope", (double(PeriodicTable::*)(UINT, UINT) const) &
+                                      PeriodicTable::getMassForIsotope)
         .def("GetMassForIsotope",
-             (double (PeriodicTable::*)(UINT, UINT) const) &
-                 PeriodicTable::getMassForIsotope)
-        .def("GetMassForIsotope",
-             (double (PeriodicTable::*)(const std::string &, UINT) const) &
+             (double(PeriodicTable::*)(const std::string &, UINT) const) &
                  PeriodicTable::getMassForIsotope);
 
     python::def(

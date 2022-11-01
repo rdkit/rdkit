@@ -2059,13 +2059,13 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           // (see Github5592).  Make a convex hull, using a simplified
           // form of Graham's scan algorithm - all the points
           // are in the convex hull so it's easier.  Grahsm's scan normally
-	  // has a second step that removes inner points, and this takes
-	  // care of any problems with floating point errors in the
-	  // comparisons below.  The shapes here are at most hexagons with
-	  // sharp angles so such issues have been deemed unlikely to
-	  // occur in practice.
+          // has a second step that removes inner points, and this takes
+          // care of any problems with floating point errors in the
+          // comparisons below.  The shapes here are at most hexagons with
+          // sharp angles so such issues have been deemed unlikely to
+          // occur in practice.
           // Sort so the lowest y point is first, with lowest x as
-	  // tie-breaker.
+          // tie-breaker.
           std::sort(points.begin(), points.end(),
                     [](Point2D &p1, Point2D &p2) -> bool {
                       if (p1.y < p2.y) {

@@ -1238,7 +1238,7 @@ struct molops_wrapper {
                 python::return_value_policy<python::manage_new_object>());
     python::def("MergeQueryHs",
                 (ROMol * (*)(const ROMol &, bool, bool)) & MolOps::mergeQueryHs,
-                (python::arg("mol"), python::arg("mergeUnmappedOnly") = false, 
+                (python::arg("mol"), python::arg("mergeUnmappedOnly") = false,
                  python::arg("mergeIsotopes") = false),
                 "merges hydrogens into their neighboring atoms as queries",
                 python::return_value_policy<python::manage_new_object>());
