@@ -31,13 +31,21 @@ add_pytest(pythonTestSping
 add_subdirectory(Chem)
 
 if(RDK_GENERATE_PYTHON_STUBS)
+
   # Check the `stubgen` command exists and fails otherwise.
   find_program(STUBGEN_PATH "stubgen" REQUIRED)
 
   # Execute `stubgen ...` after the installation of the RDKit Python library.
   # It will generate the `*.pyi` stub files directly in the Python install directory.
-  set(STUBGEN_CMD stubgen -p rdkit --quiet --output ${PYTHON_INSTDIR})
+
+  if(RDK_INSTALL_INTREE)
+    set(STUBGEN_CMD stubgen -p rdkit --quiet --output ${CMAKE_SOURCE_DIR})
+  else(RDK_INSTALL_INTREE)
+    set(STUBGEN_CMD stubgen -p rdkit --quiet --output ${PYTHON_INSTDIR})
+  endif(RDK_INSTALL_INTREE)
+
   install(CODE "execute_process(COMMAND ${STUBGEN_CMD})"
     COMPONENT python
     )
+
 endif(RDK_GENERATE_PYTHON_STUBS)
