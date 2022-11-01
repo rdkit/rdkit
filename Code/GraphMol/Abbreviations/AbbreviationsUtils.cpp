@@ -23,7 +23,7 @@ namespace common_properties {
 const std::string numDummies = "_numDummies";
 const std::string origAtomMapping = "_origAtomMapping";
 const std::string origBondMapping = "_origBondMapping";
-}
+}  // namespace common_properties
 
 namespace Utils {
 namespace data {

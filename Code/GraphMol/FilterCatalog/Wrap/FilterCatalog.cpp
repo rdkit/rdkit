@@ -172,13 +172,13 @@ class PythonFilterMatch : public FilterMatcherBase {
 
   bool getMatches(const ROMol &mol,
                   std::vector<FilterMatch> &matchVect) const override {
-    PyGILStateHolder h;    
+    PyGILStateHolder h;
     return python::call_method<bool>(functor, "GetMatches", boost::ref(mol),
                                      boost::ref(matchVect));
   }
 
   bool hasMatch(const ROMol &mol) const override {
-    PyGILStateHolder h;    
+    PyGILStateHolder h;
     return python::call_method<bool>(functor, "HasMatch", boost::ref(mol));
   }
 
@@ -306,7 +306,9 @@ python::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
 }
 
 std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>>
-RunFilterCatalogWrapper(const FilterCatalog &fc, const std::vector<std::string> &smiles, int numThreads) {
+RunFilterCatalogWrapper(const FilterCatalog &fc,
+                        const std::vector<std::string> &smiles,
+                        int numThreads) {
   NOGIL nogil;
   return RunFilterCatalog(fc, smiles, numThreads);
 }
@@ -364,12 +366,12 @@ struct filtercat_wrapper {
 
         .def("IsValid", &SmartsMatcher::isValid,
              "Returns True if the SmartsMatcher is valid")
+        .def(
+            "SetPattern",
+            (void(SmartsMatcher::*)(const ROMol &)) & SmartsMatcher::setPattern,
+            "Set the pattern molecule for the SmartsMatcher")
         .def("SetPattern",
-             (void (SmartsMatcher::*)(const ROMol &)) &
-                 SmartsMatcher::setPattern,
-             "Set the pattern molecule for the SmartsMatcher")
-        .def("SetPattern",
-             (void (SmartsMatcher::*)(const std::string &)) &
+             (void(SmartsMatcher::*)(const std::string &)) &
                  SmartsMatcher::setPattern,
              "Set the smarts pattern for the Smarts Matcher (warning: "
              "MinimumCount is not reset)")
@@ -436,12 +438,12 @@ struct filtercat_wrapper {
         .def("Serialize", &FilterCatalogEntry_Serialize)
         .def("GetPropList", &FilterCatalogEntry::getPropList)
         .def("SetProp",
-             (void (FilterCatalogEntry::*)(const std::string &, std::string)) &
+             (void(FilterCatalogEntry::*)(const std::string &, std::string)) &
                  FilterCatalogEntry::setProp<std::string>)
         .def("GetProp",
              (std::string(FilterCatalogEntry::*)(const std::string &) const) &
                  FilterCatalogEntry::getProp<std::string>)
-        .def("ClearProp", (void (FilterCatalogEntry::*)(const std::string &)) &
+        .def("ClearProp", (void(FilterCatalogEntry::*)(const std::string &)) &
                               FilterCatalogEntry::clearProp);
 
     python::register_ptr_to_python<boost::shared_ptr<FilterCatalogEntry>>();
