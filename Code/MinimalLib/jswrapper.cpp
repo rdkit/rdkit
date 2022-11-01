@@ -190,49 +190,12 @@ JSReaction *get_rxn_no_details(const std::string &input) {
   return get_rxn(input, std::string());
 }
 
-std::string generate_aligned_coords_deprecated(JSMol &self,
-                                               const JSMol &templateMol,
-                                               bool useCoordGen,
-                                               bool allowOptionalAttachments,
-                                               bool acceptFailure) {
-  static bool deprecationMsgShown = false;
-  if (!deprecationMsgShown) {
-    deprecationMsgShown = true;
-    std::cerr
-        << "generate_aligned_coords(templateMol, useCoordGen, allowOptionalAttachments, acceptFailure) is deprecated, use generate_aligned_coords(templateMol, details) instead"
-        << std::endl;
-  }
-  std::stringstream ss;
-  ss << "{\"useCoordGen\":" << (useCoordGen ? "true" : "false")
-     << ",\"allowRGroups\":" << (allowOptionalAttachments ? "true" : "false")
-     << ",\"acceptFailure\":" << (acceptFailure ? "true" : "false") << "}";
-  return self.generate_aligned_coords(templateMol, ss.str());
-}
-
-std::string generate_aligned_coords_deprecated(JSMol &self,
-                                               const JSMol &templateMol,
-                                               bool useCoordGen,
-                                               bool allowOptionalAttachments) {
-  return generate_aligned_coords_deprecated(self, templateMol, useCoordGen,
-                                            allowOptionalAttachments, true);
-}
-
-std::string generate_aligned_coords_deprecated(JSMol &self,
-                                               const JSMol &templateMol,
-                                               bool useCoordGen) {
-  return generate_aligned_coords_deprecated(self, templateMol, useCoordGen,
-                                            false, true);
-}
-
 std::string generate_aligned_coords_helper(JSMol &self,
                                            const JSMol &templateMol,
                                            const emscripten::val &param) {
-  if (param.typeOf().as<std::string>() == "boolean") {
-    return generate_aligned_coords_deprecated(self, templateMol,
-                                              param.as<bool>());
-  } else if (param.typeOf().as<std::string>() != "string") {
+  if (param.typeOf().as<std::string>() != "string") {
     throw std::runtime_error(
-        "generate_aligned_coords expects a JSON string or a bool as parameter");
+        "generate_aligned_coords expects a JSON string parameter");
   }
   return self.generate_aligned_coords(templateMol, param.as<std::string>());
 }
@@ -250,13 +213,6 @@ std::string parse_morgan_fp_param(unsigned int radius, unsigned int fplen,
   return ss.str();
 }
 
-// DEPRECATED
-std::string get_morgan_fp_deprecated(const JSMol &self, unsigned int radius,
-                                     unsigned int fplen) {
-  return self.get_morgan_fp(
-      parse_morgan_fp_param(radius, fplen, "get_morgan_fp"));
-}
-
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
                                             const std::string &details) {
   auto fp = self.get_morgan_fp_as_binary_text(details);
@@ -267,35 +223,15 @@ emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
   return get_morgan_fp_as_uint8array(self, "{}");
 }
 
-// DEPRECATED
-emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
-                                            unsigned int radius,
-                                            unsigned int fplen) {
-  auto fp = self.get_morgan_fp_as_binary_text(
-      parse_morgan_fp_param(radius, fplen, "get_morgan_fp_as_uint8array"));
-  return binary_string_to_uint8array(fp);
-}
-
 std::string parse_pattern_fp_param(const emscripten::val &param,
                                    const std::string &funcName) {
   static std::unordered_set<std::string> deprecationMsgShown;
   std::string details;
-  if (param.typeOf().as<std::string>() == "number") {
-    unsigned int fplen = param.as<unsigned int>();
-    if (deprecationMsgShown.find(funcName) == deprecationMsgShown.end()) {
-      deprecationMsgShown.insert(funcName);
-      std::cerr << funcName << "(fplen) is deprecated, use " << funcName
-                << "(details) instead" << std::endl;
-    }
-    std::stringstream ss;
-    ss << "{\"nBits\":" << fplen << "}";
-    details = ss.str();
-  } else if (param.typeOf().as<std::string>() == "string") {
+  if (param.typeOf().as<std::string>() == "string") {
     details = param.as<std::string>();
   } else {
     throw std::runtime_error(
-        (funcName +
-         "get_pattern_fp expects a JSON string or an unsigned int as parameter")
+        (funcName + "get_pattern_fp expects a JSON string as parameter")
             .c_str());
   }
   return details;
@@ -401,11 +337,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
           "get_morgan_fp_as_uint8array",
           select_overload<emscripten::val(const JSMol &, const std::string &)>(
               get_morgan_fp_as_uint8array))
-      // DEPRECATED
-      .function("get_morgan_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &, unsigned int,
-                                                unsigned int)>(
-                    get_morgan_fp_as_uint8array))
       .function(
           "get_pattern_fp",
           select_overload<std::string(const JSMol &, const emscripten::val &)>(
@@ -457,7 +388,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_morgan_fp))
       // DEPRECATED
-      .function("get_morgan_fp", get_morgan_fp_deprecated)
       .function("get_pattern_fp",
                 select_overload<std::string() const>(&JSMol::get_pattern_fp))
       .function("get_topological_torsion_fp",
@@ -519,16 +449,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("generate_aligned_coords",
                 select_overload<std::string(const JSMol &)>(
                     &JSMol::generate_aligned_coords))
-      // DEPRECATED
-      .function(
-          "generate_aligned_coords",
-          select_overload<std::string(JSMol &, const JSMol &, bool, bool)>(
-              generate_aligned_coords_deprecated))
-      // DEPRECATED
-      .function("generate_aligned_coords",
-                select_overload<std::string(JSMol &, const JSMol &, bool, bool,
-                                            bool)>(
-                    generate_aligned_coords_deprecated))
       .function("condense_abbreviations",
                 select_overload<std::string()>(&JSMol::condense_abbreviations))
       .function("condense_abbreviations",

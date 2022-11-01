@@ -445,13 +445,8 @@ RWMol *SmilesToMol(const std::string &smiles,
       MolOps::detectBondStereochemistry(*res);
     }
     // figure out stereochemistry:
-    bool oVal = Chirality::getUseLegacyStereoPerception();
-    if (!params.useLegacyStereo) {
-      Chirality::setUseLegacyStereoPerception(false);
-    }
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
-    Chirality::setUseLegacyStereoPerception(oVal);
   }
   if (res && res->hasProp(common_properties::_NeedsQueryScan)) {
     res->clearProp(common_properties::_NeedsQueryScan);

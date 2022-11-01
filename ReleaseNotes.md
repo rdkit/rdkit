@@ -14,6 +14,21 @@
 ## New Features and Enhancements:
 
 ## Code removed in this release:
+- The `SmilesParserParams` option `useLegacyStereo` has been removed. Please use
+  `SetUseLegacyStereoPerception()` instead. 
+- The following JS methods:
+  * generate_aligned_coords()
+  * get_morgan_fp()
+  * get_morgan_fp_as_uint8array()
+  * get_pattern_fp()
+  * get_pattern_fp_as_uint8array()
+  which used to take several individual parameters have been removed. 
+  Please use the versions which take a single JSON string parameter.
+- The `PrintAsBase64PNGString` function in `PandasTools` has been removed.
+  Please use `PrintAsImageString` instead.
+
+
+
 
 ## Deprecated code (to be removed in a future release):
 
