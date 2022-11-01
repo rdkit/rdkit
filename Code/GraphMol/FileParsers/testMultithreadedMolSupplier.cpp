@@ -410,12 +410,12 @@ int main() {
   BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-/*
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testPerformance();
-  BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-*/
+  /*
+    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+    testPerformance();
+    BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
+    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  */
 
 #endif
 

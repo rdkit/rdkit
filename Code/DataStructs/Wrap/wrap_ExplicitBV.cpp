@@ -69,21 +69,21 @@ struct EBV_wrapper {
         "ExplicitBitVect", ebvClassDoc.c_str(), python::init<unsigned int>())
         .def(python::init<std::string>())
         .def(python::init<unsigned int, bool>(python::args("size", "bitsSet")))
-        .def("SetBit", (bool (EBV::*)(unsigned int)) & EBV::setBit,
+        .def("SetBit", (bool(EBV::*)(unsigned int)) & EBV::setBit,
              "Turns on a particular bit.  Returns the original state of the "
              "bit.\n")
         .def("SetBitsFromList",
              (void (*)(EBV *, python::object))SetBitsFromList,
              "Turns on a set of bits.  The argument should be a tuple or list "
              "of bit ids.\n")
-        .def("UnSetBit", (bool (EBV::*)(unsigned int)) & EBV::unsetBit,
+        .def("UnSetBit", (bool(EBV::*)(unsigned int)) & EBV::unsetBit,
              "Turns off a particular bit.  Returns the original state of the "
              "bit.\n")
         .def("UnSetBitsFromList",
              (void (*)(EBV *, python::object))UnSetBitsFromList,
              "Turns off a set of bits.  The argument should be a tuple or list "
              "of bit ids.\n")
-        .def("GetBit", (bool (EBV::*)(unsigned int) const) & EBV::getBit,
+        .def("GetBit", (bool(EBV::*)(unsigned int) const) & EBV::getBit,
              "Returns the value of a bit.\n")
         .def("GetNumBits", &EBV::getNumBits,
              "Returns the number of bits in the vector (the vector's size).\n")

@@ -211,7 +211,8 @@ void RGroupScorer::breakTies(
   orderedLabels.reserve(labels.size());
   std::copy_if(labels.begin(), labels.end(), std::back_inserter(orderedLabels),
                [](const int &i) { return !(i < 0); });
-  std::copy_if(labels.rbegin(), labels.rend(), std::back_inserter(orderedLabels),
+  std::copy_if(labels.rbegin(), labels.rend(),
+               std::back_inserter(orderedLabels),
                [](const int &i) { return (i < 0); });
   // We only care about the sign of the ordered labels,
   // not about their value, so we convert the ordered map

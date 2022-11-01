@@ -115,7 +115,6 @@ RWMol *mol_from_input(const std::string &input,
       ps.sanitize = false;
       ps.removeHs = removeHs;
       LPT_OPT_GET2(ps, strictCXSMILES);
-      LPT_OPT_GET2(ps, useLegacyStereo);
       res = SmilesToMol(input, ps);
     }
   } catch (...) {
@@ -785,6 +784,12 @@ std::unique_ptr<ExplicitBitVect> atom_pair_fp_as_bitvect(
   }
   auto fp = AtomPairs::getHashedAtomPairFingerprintAsBitVect(
       mol, nBits, minLength, maxLength);
+  return std::unique_ptr<ExplicitBitVect>{fp};
+}
+
+std::unique_ptr<ExplicitBitVect> maccs_fp_as_bitvect(
+    const RWMol &mol, const char *details_json) {
+  auto fp = MACCSFingerprints::getFingerprintAsBitVect(mol);
   return std::unique_ptr<ExplicitBitVect>{fp};
 }
 
