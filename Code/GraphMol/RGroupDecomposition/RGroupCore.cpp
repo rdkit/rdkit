@@ -19,15 +19,18 @@ namespace {
 // From answer 12 in
 // https://stackoverflow.com/questions/5279051/how-can-i-create-cartesian-product-of-vector-of-vectors
 // by anumi
-static std::vector<std::vector<int>> cartesianProduct(
+// modified to exclude duplicates
+static std::vector<std::vector<int>> cartesianProductWithoutDuplicates(
     const std::vector<std::vector<int>> &v) {
   std::vector<std::vector<int>> s = {{}};
   for (const auto &u : v) {
     std::vector<std::vector<int>> r;
     for (const auto &x : s) {
       for (const auto y : u) {
-        r.push_back(x);
-        r.back().push_back(y);
+        if (std::find(x.begin(), x.end(), y) == x.end()) {
+          r.push_back(x);
+          r.back().push_back(y);
+        }
       }
     }
     s = std::move(r);
@@ -208,10 +211,12 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
   extractedCore->clearComputedProps(true);
   extractedCore->updatePropertyCache(false);
 
+  /*
   std::cerr << "Extracted core smiles " << MolToSmiles(*extractedCore)
             << std::endl;
   std::cerr << "Extracted core smiles " << MolToSmarts(*extractedCore)
             << std::endl;
+            */
   unsigned int failed;
   try {
     MolOps::sanitizeMol(*extractedCore, failed,
@@ -418,6 +423,8 @@ void RCore::buildMatchingMol() {
   for (auto atom : matchingMol->atoms()) {
     // keep track of the original core index in the matching molecule atom
     atom->setProp<int>(RLABEL_CORE_INDEX, atom->getIdx());
+    // TODO for unlabelled core attachments if the heavy neighbor is not dummy
+    // then keep one attachment
     if (atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
         isDummyRGroupAttachment(*atom)) {
       // remove terminal user R groups and save core atom index and mapping to
@@ -469,48 +476,164 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // target atoms that the R group can map to
   std::map<int, std::vector<int>> availableMappingsForDummyMap;
 
-  // Loop over all the user terminal R groups and see if they can be included
-  // in the match and, if so, record the target atoms that the R group can
-  // be mapped to.
-  for (const auto dummyIdx : terminalRGroupDummyAtoms) {
-    // find the heavy atom in the core attached to the dummy
-    const int neighborIdx = terminalRGroupAtomToNeighbor.find(dummyIdx)->second;
-    const auto coreBond = core->getBondBetweenAtoms(dummyIdx, neighborIdx);
-    // find the atom in the target mapped to the neighbor in the core
-    const int targetIdx = matchMap[neighborIdx];
-    const auto targetAtom = target.getAtomWithIdx(targetIdx);
-    ROMol::ADJ_ITER nbrIter, endNbrs;
-    std::vector<int> available;
-    // now look for neighbors of that target atom that are not mapped to a core
-    // atom- the dummy atom can potentially be mapped to each of those
-    boost::tie(nbrIter, endNbrs) = target.getAtomNeighbors(targetAtom);
-    while (nbrIter != endNbrs) {
-      if (mappedTargetIdx.find(*nbrIter) == mappedTargetIdx.end()) {
-        const auto targetBond = target.getBondBetweenAtoms(targetIdx, *nbrIter);
-        // check for bond compatibility
-        if (bondCompat(coreBond, targetBond, sssParams)) {
-          available.push_back(*nbrIter);
+  std::set<int> symmetricHydrogens;
+
+  if (false) {
+    for (const auto coreAtom : core->atoms()) {
+      if (coreAtom->getAtomicNum() == 1) {
+        continue;
+      }
+      if (terminalRGroupDummyAtoms.find(coreAtom->getIdx()) !=
+          terminalRGroupDummyAtoms.end()) {
+        continue;
+      }
+      std::vector<int> dummyIndexes;
+      for (auto neighbor : core->atomNeighbors(coreAtom)) {
+        if (terminalRGroupDummyAtoms.find(neighbor->getIdx()) !=
+            terminalRGroupDummyAtoms.end()) {
+          dummyIndexes.push_back(neighbor->getIdx());
         }
       }
-      ++nbrIter;
-    }
+      if (dummyIndexes.empty()) {
+        continue;
+      }
 
-    if (available.size()) {
-      availableMappingsForDummyMap[dummyIdx] = available;
-    } else {
-      // We can't map this dummy to a target atom.  That is OK if it is an
-      // unlabelled core attachment atom or a user R label connected to a
-      // query or wildcard atom
-      const auto dummy = core->getAtomWithIdx(dummyIdx);
-      const auto neighbor = core->getAtomWithIdx(neighborIdx);
-      if (dummy->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
-        missingDummies.push_back(dummyIdx);
-      } else if (isUserRLabel(*dummy) &&
-                 (neighbor->getAtomicNum() == 0 || neighbor->hasQuery())) {
-        // https://github.com/rdkit/rdkit/issues/4505
-        missingDummies.push_back(dummyIdx);
+      // Sort dummies based on user RLABEL (ascending) then unlabelled (descending as they are negative)
+      std::sort(dummyIndexes.begin(), dummyIndexes.end(), [this](int a, int b) {
+        auto dummy = core->getAtomWithIdx(a);
+        auto otherDummy = core->getAtomWithIdx(b);
+        auto l1 = dummy->getProp<int>(RLABEL);
+        auto l2 = otherDummy->getProp<int>(RLABEL);
+        return l1 > 0 && l2 > 0 ? l1 < l2 : l1 > l2;
+      });
+
+      // Find what target atoms will bond to these dummies
+      std::vector<std::vector<int>> neighborDummyLists;
+      for (auto dummyIndex : dummyIndexes) {
+        const int neighborIdx =
+            terminalRGroupAtomToNeighbor.find(dummyIndex)->second;
+        const auto coreBond =
+            core->getBondBetweenAtoms(dummyIndex, neighborIdx);
+        // find the atom in the target mapped to the neighbor in the core
+        const int targetIdx = matchMap[neighborIdx];
+        const auto targetAtom = target.getAtomWithIdx(targetIdx);
+        ROMol::ADJ_ITER nbrIter, endNbrs;
+        std::vector<int> available;
+        // now look for neighbors of that target atom that are not mapped to a
+        // core atom- the dummy atom can potentially be mapped to each of those
+        boost::tie(nbrIter, endNbrs) = target.getAtomNeighbors(targetAtom);
+        while (nbrIter != endNbrs) {
+          if (mappedTargetIdx.find(*nbrIter) == mappedTargetIdx.end()) {
+            const auto targetBond =
+                target.getBondBetweenAtoms(targetIdx, *nbrIter);
+            // check for bond compatibility
+            if (bondCompat(coreBond, targetBond, sssParams)) {
+              available.push_back(*nbrIter);
+            }
+          }
+          ++nbrIter;
+        }
+
+        if (available.size()) {
+          bool allHydrogens = std::all_of(
+              available.begin(), available.end(), [&target](const int idx) {
+                return target.getAtomWithIdx(idx)->getAtomicNum() == 1;
+              });
+          if (allHydrogens && available.size() > 100) {
+            // If all neighbors are hydrogens we don't need to iterate through
+            // them- just assign the first free hydrogen. Could extend to cover
+            // symmetric groups in general
+            auto hydrogen =
+                std::find_if(available.begin(), available.end(),
+                             [&symmetricHydrogens](const int idx) {
+                               return symmetricHydrogens.find(idx) ==
+                                      symmetricHydrogens.end();
+                             });
+            if (hydrogen == available.end()) {
+              std::cerr << "hello" << std::endl;
+            }
+            int singleHydrogen =
+                hydrogen == available.end() ? *available.begin() : *hydrogen;
+            std::vector<int> hydrogenVec{singleHydrogen};
+            available = hydrogenVec;
+            symmetricHydrogens.insert(singleHydrogen);
+          }
+        }
+        neighborDummyLists.push_back(available);
+      }
+
+      // Now search through all the dummies and see if we need to exclude any as
+      // it may not be possible to assign target atoms to all R groups.  If that
+      // is the case exclude R Groups with higher labels
+
+    }
+  }
+else {
+    // Loop over all the user terminal R groups and see if they can be included
+    // in the match and, if so, record the target atoms that the R group can
+    // be mapped to.
+    for (const auto dummyIdx : terminalRGroupDummyAtoms) {
+      // find the heavy atom in the core attached to the dummy
+      const int neighborIdx =
+          terminalRGroupAtomToNeighbor.find(dummyIdx)->second;
+      const auto coreBond = core->getBondBetweenAtoms(dummyIdx, neighborIdx);
+      // find the atom in the target mapped to the neighbor in the core
+      const int targetIdx = matchMap[neighborIdx];
+      const auto targetAtom = target.getAtomWithIdx(targetIdx);
+      ROMol::ADJ_ITER nbrIter, endNbrs;
+      std::vector<int> available;
+      // now look for neighbors of that target atom that are not mapped to a core atom- the dummy atom can potentially be mapped to each of those
+      boost::tie(nbrIter, endNbrs) = target.getAtomNeighbors(targetAtom);
+      while (nbrIter != endNbrs) {
+        if (mappedTargetIdx.find(*nbrIter) == mappedTargetIdx.end()) {
+          const auto targetBond =
+              target.getBondBetweenAtoms(targetIdx, *nbrIter);
+          // check for bond compatibility
+          if (bondCompat(coreBond, targetBond, sssParams)) {
+            available.push_back(*nbrIter);
+          }
+        }
+        ++nbrIter;
+      }
+
+      if (available.size()) {
+        bool allHydrogens = std::all_of(
+            available.begin(), available.end(), [&target](const int idx) {
+              return target.getAtomWithIdx(idx)->getAtomicNum() == 1;
+            });
+        if (allHydrogens && available.size() > 1) {
+          // If all neighbors are hydrogens we don't need to iterate through them- just assign the first free hydrogen. Could extend to cover symmetric groups in general
+          auto hydrogen = std::find_if(available.begin(), available.end(),
+                                       [&symmetricHydrogens](const int idx) {
+                                         return symmetricHydrogens.find(idx) ==
+                                                symmetricHydrogens.end();
+                                       });
+          if (hydrogen == available.end()) {
+            std::cerr << "hello" << std::endl;
+          }
+          int singleHydrogen =
+              hydrogen == available.end() ? *available.begin() : *hydrogen;
+          std::vector<int> hydrogenVec{singleHydrogen};
+          availableMappingsForDummyMap[dummyIdx] = hydrogenVec;
+          symmetricHydrogens.insert(singleHydrogen);
+        } else {
+          availableMappingsForDummyMap[dummyIdx] = available;
+        }
       } else {
-        return allMappings;
+        // We can't map this dummy to a target atom.  That is OK if it is an
+        // unlabelled core attachment atom or a user R label connected to a
+        // query or wildcard atom
+        const auto dummy = core->getAtomWithIdx(dummyIdx);
+        const auto neighbor = core->getAtomWithIdx(neighborIdx);
+        if (dummy->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
+          missingDummies.push_back(dummyIdx);
+        } else if (isUserRLabel(*dummy) &&
+                   (neighbor->getAtomicNum() == 0 || neighbor->hasQuery())) {
+          // https://github.com/rdkit/rdkit/issues/4505
+          missingDummies.push_back(dummyIdx);
+        } else {
+          return allMappings;
+        }
       }
     }
   }
@@ -519,10 +642,16 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     return allMappings;
   }
 
-  // find singleton duplicate mappings. This can happen if there are 2 user
-  // specified R groups attached to a query atom and only one of the R groups
+  // find singleton duplicate mappings. This can happen if there are
+  // R groups attached to a query atom and only one of the R groups
   // can match (see second case in https://github.com/rdkit/rdkit/issues/4505)
-  // We remove the R group with the highest label
+  // We remove the R group with the highest label (or the lowest if either is
+  // negative)
+  // TODO: for a terminal wildcard with 3 possible r groups we could have only 2
+  // neighbors so now we need to look for duplicate mapping pairs over 3
+  // dummies- a better solution is to identify in general when there are more
+  // dummies that r groups for a particular heavy atom and edit out particular
+  // dummies.
   for (auto mapping = availableMappingsForDummyMap.begin();
        mapping != availableMappingsForDummyMap.end();) {
     auto values = mapping->second;
@@ -532,7 +661,8 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       auto [nbrIter, endNbrs] = core->getAtomNeighbors(dummy);
       auto heavyNeighbor = core->getAtomWithIdx(*nbrIter);
       bool userQueryDummy =
-          isUserRLabel(*dummy) &&
+          (isUserRLabel(*dummy) ||
+           dummy->hasProp(UNLABELLED_CORE_ATTACHMENT)) &&
           (heavyNeighbor->getAtomicNum() == 0 || heavyNeighbor->hasQuery());
       if (userQueryDummy) {
         boost::tie(nbrIter, endNbrs) = core->getAtomNeighbors(heavyNeighbor);
@@ -544,9 +674,9 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
                 mappingIter->second.size() == 1 &&
                 mappingIter->second[0] == values[0]) {
               auto otherDummy = core->getAtomWithIdx(otherIdx);
-              bool remove = isUserRLabel(*otherDummy) &&
-                            dummy->getProp<int>(RLABEL) >
-                                otherDummy->getProp<int>(RLABEL);
+              auto l1 = dummy->getProp<int>(RLABEL);
+              auto l2 = otherDummy->getProp<int>(RLABEL);
+              bool remove = l1 > 0 && l2 > 0 ? l1 > l2 : l1 < l2;
               if (remove) {
                 missingDummies.push_back(mapping->first);
                 availableMappingsForDummyMap.erase(mapping++);
@@ -575,7 +705,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // this is not the most ideal way to do things as the straightforward product
   // will allow duplicates.  In the unlikely evert that there is a performance
   // issue a custom enumerator will be needed
-  const auto allAvailableMappings = cartesianProduct(availableMappingsForDummy);
+  const auto allAvailableMappings = cartesianProductWithoutDuplicates(availableMappingsForDummy);
   // the size of the final mapping
   size_t size = allAvailableMappings[0].size() + match.size();
   // these indices are needed for the whole molecule match check functor
@@ -625,8 +755,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
                                             sssParams);
   boost::dynamic_bitset<> targetBondsPresent(target.getNumBonds());
 
-  // Filter all available mappings removing those that contain duplicates,
-  // or violate chirality
+  // Filter all available mappings removing those that violate chirality or have duplicate bonds
   for (const auto &dummyMapping : allAvailableMappings) {
     CHECK_INVARIANT(match.size() + dummyMapping.size() == size,
                     "Size error in dummy mapping");

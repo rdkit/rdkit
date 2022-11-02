@@ -123,7 +123,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       // a substructure match for the molecule if a single molecule atom matches
       // 2 RGroup attachments (see https://github.com/rdkit/rdkit/pull/4002)
 
-      // match the reduced represenation:
+      // match the reduced representation:
       std::vector<MatchVectType> baseMatches =
           SubstructMatch(mol, *core.second.matchingMol, sssparams);
       tmatches.clear();
@@ -380,7 +380,6 @@ int RGroupDecomposition::add(const ROMol &inmol) {
                         "Data error in missing user rgroup count");
         auto extractedCore =
             rcore->extractCoreFromMolMatch(hasCoreDummies, mol, tmatche);
-        std::cerr << "extracted Core: " << MolToSmarts(*extractedCore) << std::endl;
         potentialMatches.emplace_back(
             core_idx, numberMissingUserGroups, match,
             // TODO not sure that the onlyMatchAtRGroups makes any sense here.
@@ -455,7 +454,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
   }
   // auto coreWithMatches = core.coreWithMatches(*match.matchedCore);
   auto coreWithMatches = match.matchedCore;
-  std::cerr << "output core mol1 " << MolToSmarts(*coreWithMatches) << std::endl;
+  // std::cerr << "output core mol1 " << MolToSmarts(*coreWithMatches) << std::endl;
   for (auto atomIdx = coreWithMatches->getNumAtoms(); atomIdx--;) {
     auto atom = coreWithMatches->getAtomWithIdx(atomIdx);
     if (atom->getAtomicNum()) {
@@ -503,7 +502,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       }
     }
   }
-  std::cerr << "output core mol2 " << MolToSmarts(*coreWithMatches) << std::endl;
+  // std::cerr << "output core mol2 " << MolToSmarts(*coreWithMatches) << std::endl;
   return coreWithMatches;
 }
 

@@ -532,9 +532,9 @@ struct RGroupDecompData {
       for (auto &rgroup : it.rgroups) {
         relabelRGroup(*rgroup.second, finalRlabelMapping);
       }
-      std::cerr << "relabel core mol1 " << MolToSmarts(*it.matchedCore) << std::endl;
+      // std::cerr << "relabel core mol1 " << MolToSmarts(*it.matchedCore) << std::endl;
       relabelCore(*it.matchedCore, finalRlabelMapping, used_labels, indexLabels, extraAtomRLabels);
-      std::cerr << "relabel core mol2 " << MolToSmarts(*it.matchedCore) << std::endl;
+      // std::cerr << "relabel core mol2 " << MolToSmarts(*it.matchedCore) << std::endl;
     }
 
     std::set<int> uniqueMappedValues;

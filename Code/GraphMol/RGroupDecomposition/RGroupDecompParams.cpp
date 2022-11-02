@@ -14,6 +14,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FMCS/FMCS.h>
+#include <GraphMol/QueryBond.h>
 #include <set>
 
 namespace RDKit {
@@ -265,11 +266,14 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     //  we have used (note that these are negative since they are
     //  potential rgroups and haven't been assigned yet)
     if (!found && (autoLabels & AtomIndexLabels)) {
-      if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
-                   relabel, Labelling::INDEX_LABELS)) {
-        nextOffset++;
+      if (!allowMultipleRGroupsOnUnlabelled ||
+          atom->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
+        if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
+                     relabel, Labelling::INDEX_LABELS)) {
+          nextOffset++;
+        }
+        found = true;
       }
-      found = true;
     }
 
     clearInputLabels(atom);
@@ -318,15 +322,28 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     if (atom->getAtomicNum() == 1) {
       continue;
     }
-    
+
     if (hasLabel(atom, labels)) {
       continue;
     }
 
-    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() <= 1 && !atom->hasQuery()) {
+    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() == 0 &&
+        !atom->hasQuery()) {
       continue;
     }
 
+    if (atom->calcImplicitValence() < 0 && atom->getAtomicNum() &&
+        !atom->hasQuery()) {
+      std::cerr << "hello" << std::endl;
+    }
+    if (atom->calcImplicitValence() < 0) {
+      std::cerr << "hello" << std::endl;
+    }
+    if (atom->getAtomicNum() == 0) {
+      std::cerr << "hello" << std::endl;
+    }
+
+    /*
     auto [nbrIdx, endNbrs] = core.getAtomNeighbors(atom);
     bool hasTerminalDummyNeighbor = false;
 
@@ -341,18 +358,34 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     if (!hasTerminalDummyNeighbor) {
       unlabelledCoreAtoms.push_back(atom);
     }
+     */
+    unlabelledCoreAtoms.push_back(atom);
   }
 
   for (const auto atom : unlabelledCoreAtoms) {
     auto atomIndex = atom->getIdx();
-    auto newAtom = new Atom(0);
-    newAtom->setProp<bool>(UNLABELLED_CORE_ATTACHMENT, true);
-    auto newIdx = core.addAtom(newAtom, false, true);
-    core.addBond(atomIndex, newIdx, Bond::SINGLE);
-    auto dummy = core.getAtomWithIdx(newIdx);
-    dummy->updatePropertyCache();
-    if (core.getNumConformers() > 0) {
-      MolOps::setTerminalAtomCoords(core, newIdx, atomIndex);
+    auto dummiesToAdd =
+        atom->getAtomicNum() == 0 ? 2 : atom->getImplicitValence();
+    std::cerr << "atom " << atomIndex << " # dummies " << dummiesToAdd << std::endl;
+    std::vector<int> newIndices;
+    for (int i = 0; i < dummiesToAdd; i++) {
+      auto newAtom = new Atom(0);
+      newAtom->setProp<bool>(UNLABELLED_CORE_ATTACHMENT, true);
+      auto newIdx = core.addAtom(newAtom, false, true);
+      newIndices.push_back(newIdx);
+      auto *qb = new QueryBond();
+      qb->setQuery(makeBondNullQuery());
+      qb->setBeginAtomIdx(atomIndex);
+      qb->setEndAtomIdx(newIdx);
+      core.addBond(qb, true);
+      auto dummy = core.getAtomWithIdx(newIdx);
+      dummy->updatePropertyCache();
+    }
+    atom->updatePropertyCache(false);
+    for (auto newIdx : newIndices) {
+      if (core.getNumConformers() > 0) {
+        MolOps::setTerminalAtomCoords(core, newIdx, atomIndex);
+      }
     }
   }
 }
