@@ -87,7 +87,7 @@ class CaptureLogger(logging.Handler):
 
 class CaptureOutput:
   """Helper class that captures all output"""
-  timeexpr = re.compile('^\[.*?\]')
+  timeexpr = re.compile(r'^\[.*?\]')
   timereplacement = '[timestamp]'
 
   def __init__(self):
