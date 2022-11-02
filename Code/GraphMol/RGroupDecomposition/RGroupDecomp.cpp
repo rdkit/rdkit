@@ -463,6 +463,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
     }
     auto label = data->getRlabel(atom);
     auto missingRGroup = atom->hasProp(MISSING_RGROUP);
+    bool atomRemoved = false;
     Atom *nbrAtom = nullptr;
     for (const auto &nbri :
          boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
@@ -480,6 +481,7 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       } else if (!isUserDefinedLabel ||
                  data->params.removeAllHydrogenRGroupsAndLabels) {
         coreWithMatches->removeAtom(atomIdx);
+        atomRemoved = true;
         // if we remove an unused label from an aromatic atom,
         // we need to check whether we need to adjust its explicit
         // H count, or it will fail to kekulize
@@ -492,6 +494,13 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
         }
       }
       nbrAtom->updatePropertyCache(false);
+      if (!atomRemoved && coreWithMatches->getNumConformers() > 0) {
+        auto iter = match.rgroups.find(label);
+        if (iter != match.rgroups.end() && iter->second->is_hydrogen) {
+          MolOps::setTerminalAtomCoords(*coreWithMatches, atomIdx,
+                                        nbrAtom->getIdx());
+        }
+      }
     }
   }
   std::cerr << "output core mol2 " << MolToSmarts(*coreWithMatches) << std::endl;
