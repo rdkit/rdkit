@@ -52,7 +52,7 @@ function test_basics() {
     assert.equal(descrs.amw,94.11299);
 
     var checkStringBinaryFpIdentity = (stringFp, binaryFp) => {
-        assert.equal(binaryFp.length, stringFp.length / 8);
+        assert.equal(binaryFp.length, Math.ceil(stringFp.length / 8));
         for (var i = 0, c = 0; i < binaryFp.length; ++i) {
             var byte = 0;
             for (var j = 0; j < 8; ++j, ++c) {
@@ -147,6 +147,14 @@ function test_basics() {
         assert.equal((fp4.match(/1/g)||[]).length, 12);
         var fp4Uint8Array = mol.get_atom_pair_fp_as_uint8array(JSON.stringify({ nBits: 512, minLength: 2, maxLength: 3 }));
         checkStringBinaryFpIdentity(fp4, fp4Uint8Array);
+    }
+
+    {
+        var fp1 = mol.get_maccs_fp();
+        assert.equal(fp1.length, 167);
+        assert.equal((fp1.match(/1/g)||[]).length, 10);
+        var fp1Uint8Array = mol.get_maccs_fp_as_uint8array();
+        checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
     }
 
     if (typeof Object.getPrototypeOf(mol).get_avalon_fp === 'function') {
@@ -393,7 +401,7 @@ function test_generate_aligned_coords() {
     var mol = RDKitModule.get_mol(smiles);
     var template = "CC";
     var qmol = RDKitModule.get_mol(template);
-    assert.equal(mol.generate_aligned_coords(qmol, true), "");
+    assert.equal(mol.generate_aligned_coords(qmol, JSON.stringify({useCoordGen: true})), "");
 }
 
 function test_isotope_labels() {
@@ -455,7 +463,7 @@ M  END`;
     var biphenyl = RDKitModule.get_mol(biphenyl_smiles);
     var phenyl = RDKitModule.get_mol(phenyl_smiles);
     assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 9);
+        template_ref, JSON.stringify({ useCoordGen: false, allowRGroups: true}))).atoms.length, 9);
     [ true, false ].forEach(alignOnly => {
         var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly })
         assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
@@ -523,13 +531,10 @@ M  END
 `;
     var template_ref = RDKitModule.get_mol(template_molblock);
     var mol = RDKitModule.get_mol(mol_molblock);
-    var res = mol.generate_aligned_coords(template_ref, false, true, false);
-    assert(res === "");
-    assert.equal(mol.get_molblock(), mol_molblock);
-    res = mol.generate_aligned_coords(template_ref, JSON.stringify({
+    var res = mol.generate_aligned_coords(template_ref, JSON.stringify({
         useCoordGen: false,
         allowRGroups: true,
-        acceptFailure: false,
+        acceptFailure: false
     }));
     assert(res === "");
     assert.equal(mol.get_molblock(), mol_molblock);

@@ -27,6 +27,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Fingerprints/MACCS.h>
 #ifdef RDK_BUILD_AVALON_SUPPORT
 #include <External/AvalonTools/AvalonTools.h>
 #endif
@@ -322,7 +323,9 @@ std::string parse_highlight_colors(const rj::Document &doc,
 std::string process_details(rj::Document &doc, const std::string &details,
                             int &width, int &height, int &offsetx, int &offsety,
                             std::string &legend, std::vector<int> &atomIds,
-                            std::vector<int> &bondIds, bool &kekulize) {
+                            std::vector<int> &bondIds, bool &kekulize,
+                            bool &addChiralHs, bool &wedgeBonds,
+                            bool &forceCoords, bool &wavyBonds) {
   doc.Parse(details.c_str());
   if (!doc.IsObject()) {
     return "Invalid JSON";
@@ -388,6 +391,46 @@ std::string process_details(rj::Document &doc, const std::string &details,
     kekulize = true;
   }
 
+  const auto addChiralHsIt = doc.FindMember("addChiralHs");
+  if (addChiralHsIt != doc.MemberEnd()) {
+    if (!addChiralHsIt->value.IsBool()) {
+      return "JSON contains 'addChiralHs' field, but it is not a bool";
+    }
+    addChiralHs = addChiralHsIt->value.GetBool();
+  } else {
+    addChiralHs = true;
+  }
+
+  const auto wedgeBondsIt = doc.FindMember("wedgeBonds");
+  if (wedgeBondsIt != doc.MemberEnd()) {
+    if (!wedgeBondsIt->value.IsBool()) {
+      return "JSON contains 'wedgeBonds' field, but it is not a bool";
+    }
+    wedgeBonds = wedgeBondsIt->value.GetBool();
+  } else {
+    wedgeBonds = true;
+  }
+
+  const auto forceCoordsIt = doc.FindMember("forceCoords");
+  if (forceCoordsIt != doc.MemberEnd()) {
+    if (!forceCoordsIt->value.IsBool()) {
+      return "JSON contains 'forceCoords' field, but it is not a bool";
+    }
+    forceCoords = forceCoordsIt->value.GetBool();
+  } else {
+    forceCoords = false;
+  }
+
+  const auto wavyBondsIt = doc.FindMember("wavyBonds");
+  if (wavyBondsIt != doc.MemberEnd()) {
+    if (!wavyBondsIt->value.IsBool()) {
+      return "JSON contains 'wavyBonds' field, but it is not a bool";
+    }
+    wavyBonds = wavyBondsIt->value.GetBool();
+  } else {
+    wavyBonds = false;
+  }
+
   return "";
 }
 
@@ -397,11 +440,13 @@ std::string process_mol_details(const std::string &details, int &width,
                                 std::vector<int> &bondIds,
                                 std::map<int, DrawColour> &atomMap,
                                 std::map<int, DrawColour> &bondMap,
-                                std::map<int, double> &radiiMap,
-                                bool &kekulize) {
+                                std::map<int, double> &radiiMap, bool &kekulize,
+                                bool &addChiralHs, bool &wedgeBonds,
+                                bool &forceCoords, bool &wavyBonds) {
   rj::Document doc;
-  auto problems = process_details(doc, details, width, height, offsetx, offsety,
-                                  legend, atomIds, bondIds, kekulize);
+  auto problems = process_details(
+      doc, details, width, height, offsetx, offsety, legend, atomIds, bondIds,
+      kekulize, addChiralHs, wedgeBonds, forceCoords, wavyBonds);
   if (!problems.empty()) {
     return problems;
   }
@@ -439,8 +484,13 @@ std::string process_rxn_details(
     std::vector<int> &bondIds, bool &kekulize, bool &highlightByReactant,
     std::vector<DrawColour> &highlightColorsReactants) {
   rj::Document doc;
-  auto problems = process_details(doc, details, width, height, offsetx, offsety,
-                                  legend, atomIds, bondIds, kekulize);
+  bool addChiralHs;
+  bool wedgeBonds;
+  bool forceCoords;
+  bool wavyBonds;
+  auto problems = process_details(
+      doc, details, width, height, offsetx, offsety, legend, atomIds, bondIds,
+      kekulize, addChiralHs, wedgeBonds, forceCoords, wavyBonds);
   if (!problems.empty()) {
     return problems;
   }
@@ -509,10 +559,15 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
   int offsetx = 0;
   int offsety = 0;
   bool kekulize = true;
+  bool addChiralHs = true;
+  bool wedgeBonds = true;
+  bool forceCoords = false;
+  bool wavyBonds = false;
   if (!details.empty()) {
     problems =
         process_mol_details(details, w, h, offsetx, offsety, legend, atomIds,
-                            bondIds, atomMap, bondMap, radiiMap, kekulize);
+                            bondIds, atomMap, bondMap, radiiMap, kekulize,
+                            addChiralHs, wedgeBonds, forceCoords, wavyBonds);
     if (!problems.empty()) {
       return problems;
     }
@@ -527,7 +582,8 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
                                          atomMap.empty() ? nullptr : &atomMap,
                                          bondMap.empty() ? nullptr : &bondMap,
                                          radiiMap.empty() ? nullptr : &radiiMap,
-                                         -1, kekulize);
+                                         -1, kekulize, addChiralHs, wedgeBonds,
+                                         forceCoords, wavyBonds);
   drawer.finishDrawing();
 
   return drawer.getDrawingText();
@@ -787,8 +843,7 @@ std::unique_ptr<ExplicitBitVect> atom_pair_fp_as_bitvect(
   return std::unique_ptr<ExplicitBitVect>{fp};
 }
 
-std::unique_ptr<ExplicitBitVect> maccs_fp_as_bitvect(
-    const RWMol &mol, const char *details_json) {
+std::unique_ptr<ExplicitBitVect> maccs_fp_as_bitvect(const RWMol &mol) {
   auto fp = MACCSFingerprints::getFingerprintAsBitVect(mol);
   return std::unique_ptr<ExplicitBitVect>{fp};
 }
