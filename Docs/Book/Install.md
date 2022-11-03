@@ -177,10 +177,15 @@ Note: Older versions of RDKit might be available at the [`rdkit-pypi`](https://p
 
 ### Installation from repositories
 
-#### Ubuntu 12.04 and later
+#### Debian and Ubuntu
 
-Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu repositories. To install:
+Thanks to the efforts of the Debichem team, RDKit is available in the Debian and Ubuntu repositories. The releases of RDKit used to build these packages however may differ (see https://tracker.debian.org/pkg/rdkit, https://packages.ubuntu.com/). On systems running Python 3, call
 
+```shellsession
+$ sudo apt-get install python3-rdkit librdkit1 rdkit-data
+```
+
+On legacy systems running Python 2.7 (e.g., Xubuntu 18.04.4 LTS and earlier), run
 ```shellsession
 $ sudo apt-get install python-rdkit librdkit1 rdkit-data
 ```
