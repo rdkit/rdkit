@@ -302,7 +302,7 @@ This generator supports the following \c AdditionalOutput types:
 
  */
 template <typename OutputType>
-RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getMorganGenerator(
+FingerprintGenerator<OutputType> *getMorganGenerator(
     unsigned int radius, bool countSimulation = false,
     bool includeChirality = false, bool useBondTypes = true,
     bool onlyNonzeroInvariants = false,
