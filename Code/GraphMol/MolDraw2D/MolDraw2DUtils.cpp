@@ -92,9 +92,11 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             const std::map<int, DrawColour> *highlight_atom_map,
                             const std::map<int, DrawColour> *highlight_bond_map,
                             const std::map<int, double> *highlight_radii,
-                            int confId, bool kekulize) {
+                            int confId, bool kekulize, bool addChiralHs,
+                            bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   RWMol cpy(mol);
-  prepareMolForDrawing(cpy, kekulize);
+  prepareMolForDrawing(cpy, kekulize, addChiralHs, wedgeBonds, forceCoords,
+                       wavyBonds);
   // having done the prepare, we don't want to do it again in drawMolecule.
   bool old_prep_mol = drawer.drawOptions().prepareMolsBeforeDrawing;
   drawer.drawOptions().prepareMolsBeforeDrawing = false;
