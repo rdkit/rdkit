@@ -298,6 +298,17 @@ void finalizePolymerSGroup(RWMol &mol, SubstanceGroup &sgroup) {
   sgroup.setProp("XBCORR", xbcorr);
 }
 
+Bond *get_bond_with_smiles_idx(const ROMol &mol, unsigned idx) {
+  for (auto bnd : mol.bonds()) {
+    unsigned int smilesIdx;
+    if (bnd->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
+        smilesIdx == idx) {
+      return bnd;
+    }
+  }
+  return nullptr;
+}
+
 }  // end of anonymous namespace
 
 // we use this pattern a lot and it's a long function call, but a very short
@@ -465,17 +476,8 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     unsigned int aidx;
     unsigned int bidx;
     if (read_int_pair(first, last, aidx, bidx)) {
-      if (VALID_ATIDX(aidx) && bidx >= startBondIdx &&
-          bidx < startBondIdx + mol.getNumBonds()) {
-        Bond *bnd = nullptr;
-        for (auto bond : mol.bonds()) {
-          unsigned int smilesIdx;
-          if (bond->getPropIfPresent("_cxsmilesBondIdx", smilesIdx) &&
-              smilesIdx + startBondIdx == bidx) {
-            bnd = bond;
-            break;
-          }
-        }
+      if (VALID_ATIDX(aidx) && VALID_BNDIDX(bidx)) {
+        auto bnd = get_bond_with_smiles_idx(mol, bidx - startBondIdx);
         if (!bnd || (bnd->getBeginAtomIdx() != aidx - startAtomIdx &&
                      bnd->getEndAtomIdx() != aidx - startAtomIdx)) {
           BOOST_LOG(rdWarningLog) << "BOND NOT FOUND! " << bidx
@@ -1064,7 +1066,14 @@ bool parse_wedged_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
 
     if (VALID_ATIDX(atomIdx) && VALID_BNDIDX(bondIdx)) {
       auto atom = mol.getAtomWithIdx(atomIdx - startAtomIdx);
-      auto bond = mol.getBondWithIdx(bondIdx - startBondIdx);
+      auto bond = get_bond_with_smiles_idx(mol, bondIdx - startBondIdx);
+
+      if (!bond) {
+        BOOST_LOG(rdWarningLog)
+            << "bond " << bondIdx << " not found, wedge from atom " << atomIdx
+            << " cannot be applied." << std::endl;
+        return false;
+      }
 
       // we can't set wedging twice:
       if (bond->hasProp(common_properties::_MolFileBondCfg)) {
@@ -1126,7 +1135,14 @@ bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
       return false;
     }
     if (VALID_BNDIDX(bondIdx)) {
-      auto bond = mol.getBondWithIdx(bondIdx - startBondIdx);
+      auto bond = get_bond_with_smiles_idx(mol, bondIdx - startBondIdx);
+
+      if (!bond) {
+        BOOST_LOG(rdWarningLog)
+            << "bond " << bondIdx
+            << " not found, cannot mark as stereo double bond." << std::endl;
+        return false;
+      }
 
       // the cis/trans/unknown marker is relative to the lowest numbered atom
       // connected to the lowest numbered double bond atom and the
