@@ -476,7 +476,7 @@ bool parse_coordinate_bonds(Iterator &first, Iterator last, RDKit::RWMol &mol,
     unsigned int aidx;
     unsigned int bidx;
     if (read_int_pair(first, last, aidx, bidx)) {
-      if (VALID_ATIDX(aidx) && VALID_BNDIDX(bondIdx)) {
+      if (VALID_ATIDX(aidx) && VALID_BNDIDX(bidx)) {
         auto bnd = get_bond_with_smiles_idx(mol, bidx - startBondIdx);
         if (!bnd || (bnd->getBeginAtomIdx() != aidx - startAtomIdx &&
                      bnd->getEndAtomIdx() != aidx - startAtomIdx)) {
