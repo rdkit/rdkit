@@ -251,7 +251,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       }
 
       if (!found && (autoLabels & DummyAtomLabels) && atom->getDegree() == 1 &&
-          !atom->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
+          !atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
         const bool forceRelabellingWithDummies = true;
         int defaultDummyStartLabel = maxLabel;
         if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
@@ -267,7 +267,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     //  potential rgroups and haven't been assigned yet)
     if (!found && (autoLabels & AtomIndexLabels)) {
       if (!allowMultipleRGroupsOnUnlabelled ||
-          atom->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
+          atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
         if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
                      relabel, Labelling::INDEX_LABELS)) {
           nextOffset++;
@@ -314,75 +314,69 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     return;
   }
 
-  // add a single rgroup substitution to any atom with free valence that doesn't
-  // have a terminal dummy neighbor
-
-  std::vector<Atom *> unlabelledCoreAtoms{};
+  // add R group substitutions to fill atomic valence
+  std::vector<Atom *> unlabeledCoreAtoms{};
   for (const auto atom : core.atoms()) {
     if (atom->getAtomicNum() == 1) {
       continue;
     }
-
     if (hasLabel(atom, labels)) {
       continue;
     }
-
-    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() == 0 &&
-        !atom->hasQuery()) {
-      continue;
-    }
-
-    if (atom->calcImplicitValence() < 0 && atom->getAtomicNum() &&
-        !atom->hasQuery()) {
-      std::cerr << "hello" << std::endl;
-    }
-    if (atom->calcImplicitValence() < 0) {
-      std::cerr << "hello" << std::endl;
-    }
-    if (atom->getAtomicNum() == 0) {
-      std::cerr << "hello" << std::endl;
-    }
-
-    /*
-    auto [nbrIdx, endNbrs] = core.getAtomNeighbors(atom);
-    bool hasTerminalDummyNeighbor = false;
-
-    while (nbrIdx != endNbrs) {
-      const auto neighbor = core.getAtomWithIdx(*nbrIdx);
-      if (neighbor->getAtomicNum() == 0 && neighbor->getDegree() == 1) {
-        hasTerminalDummyNeighbor = true;
-        break;
-      }
-      ++nbrIdx;
-    }
-    if (!hasTerminalDummyNeighbor) {
-      unlabelledCoreAtoms.push_back(atom);
-    }
-     */
-    unlabelledCoreAtoms.push_back(atom);
+    unlabeledCoreAtoms.push_back(atom);
   }
 
-  for (const auto atom : unlabelledCoreAtoms) {
-    auto atomIndex = atom->getIdx();
-    auto dummiesToAdd =
-        atom->getAtomicNum() == 0 ? 2 : atom->getImplicitValence();
-    std::cerr << "atom " << atomIndex << " # dummies " << dummiesToAdd << std::endl;
+  for (const auto atom : unlabeledCoreAtoms) {
+    atom->calcImplicitValence(false);
+    const auto atomIndex = atom->getIdx();
+    int dummiesToAdd;
+    int maxNumDummies = 4 - static_cast<int>(atom->getDegree());
+
+    // figure out the number of dummies to add
+    if (atom->getAtomicNum() == 0) {
+      dummiesToAdd = maxNumDummies;
+    } else {
+      bool hasQueryBonds = false;
+      double bondOrder = 0;
+      for (const auto bond : core.atomBonds(atom)) {
+        auto contrib = bond->getValenceContrib(atom);
+        if (contrib == 0.0 && bond->hasQuery()) {
+          hasQueryBonds = true;
+          contrib = 1.0;
+        }
+        bondOrder += contrib;
+      }
+
+      if (hasQueryBonds) {
+        auto valances =
+            PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+        auto valence = *std::max_element(valances.begin(), valances.end());
+        // round up aromatic contributions
+        dummiesToAdd = valence - (int)(bondOrder + .51);
+        if (dummiesToAdd > maxNumDummies) {
+          dummiesToAdd = maxNumDummies;
+        }
+      } else {
+        dummiesToAdd = atom->getImplicitValence();
+      }
+    }
+
     std::vector<int> newIndices;
     for (int i = 0; i < dummiesToAdd; i++) {
-      auto newAtom = new Atom(0);
-      newAtom->setProp<bool>(UNLABELLED_CORE_ATTACHMENT, true);
-      auto newIdx = core.addAtom(newAtom, false, true);
+      const auto newAtom = new Atom(0);
+      newAtom->setProp<bool>(UNLABELED_CORE_ATTACHMENT, true);
+      const auto newIdx = core.addAtom(newAtom, false, true);
       newIndices.push_back(newIdx);
       auto *qb = new QueryBond();
       qb->setQuery(makeBondNullQuery());
       qb->setBeginAtomIdx(atomIndex);
       qb->setEndAtomIdx(newIdx);
       core.addBond(qb, true);
-      auto dummy = core.getAtomWithIdx(newIdx);
+      const auto dummy = core.getAtomWithIdx(newIdx);
       dummy->updatePropertyCache();
     }
     atom->updatePropertyCache(false);
-    for (auto newIdx : newIndices) {
+    for (const auto newIdx : newIndices) {
       if (core.getNumConformers() > 0) {
         MolOps::setTerminalAtomCoords(core, newIdx, atomIndex);
       }

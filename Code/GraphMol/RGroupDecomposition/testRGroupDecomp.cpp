@@ -3240,6 +3240,7 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
 }
 
 void testGithub5613() {
+  /*
   {
     // Check core with terminal wildcard - dummy atom labels allowed
     auto core = "[*:1]C(=O)NC1CCN([*:3])C1"_smarts;
@@ -3263,11 +3264,13 @@ void testGithub5613() {
 
     // CHECK_RGROUP(it, expected);
   }
+  */
   {
     auto core = "[1*]C(=O)*C1~C~C~*([3*])~*~C~1[2*]"_smarts;
     auto mol =
         "CO[C@H]1CN(c2nc(-c3cnc(OCCN4CCN(C)CC4)cn3)c(C(=O)O)s2)CC[C@H]1NC(=O)c1[nH]c(C)c(Cl)c1Cl"_smiles;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = false;
     RGroupDecomposition decomp(*core, params);
     auto result = decomp.add(*mol);
     TEST_ASSERT(result == 0)
@@ -3542,9 +3545,9 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  // testMultipleGroupsToUnlabelledCoreAtomGithub5573();
-  testMultipleGroupsToUnlabelledCoreAtom();
   testGithub5613();
+  testMultipleGroupsToUnlabelledCoreAtomGithub5573();
+  testMultipleGroupsToUnlabelledCoreAtom();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();

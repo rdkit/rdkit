@@ -59,7 +59,7 @@ const std::string done = "RLABEL_PROCESSED";
 const std::string CORE = "Core";
 const std::string RPREFIX = "R";
 const std::string _rgroupInputDummy = "_rgroupInputDummy";
-const std::string UNLABELLED_CORE_ATTACHMENT = "unlabeledCoreAttachment";
+const std::string UNLABELED_CORE_ATTACHMENT = "unlabeledCoreAttachment";
 const std::string MISSING_RGROUP = "missingRGroup";
 
 namespace {

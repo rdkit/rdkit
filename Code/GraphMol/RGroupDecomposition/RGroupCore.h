@@ -56,12 +56,9 @@ struct RCore {
                                             const ROMol &mol,
                                             const MatchVectType &match) const;
 
+  // Final core returned to user, created by extracting core from target molecule
   RWMOL_SPTR extractCoreFromMolMatch(bool &hasCoreDummies, const ROMol &mol,
                                      const MatchVectType &match) const;
-
-  // Final core returned to user with dummy atoms and bonds set to those in the
-  // match
-  RWMOL_SPTR coreWithMatches(const ROMol &coreReplacedAtoms) const;
 
   std::vector<MatchVectType> matchTerminalUserRGroups(
       const RWMol &target, MatchVectType match,
@@ -96,7 +93,7 @@ struct RCore {
   // Build the matching molecule (core minus user R groups)
   void buildMatchingMol();
   
-  // Add attachement points to unlabelled R Groups
+  // Add attachment points to unlabelled R Groups
   void addDummyAtomsToUnlabelledCoreAtoms();
 };
 

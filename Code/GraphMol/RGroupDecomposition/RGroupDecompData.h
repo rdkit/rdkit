@@ -382,6 +382,15 @@ struct RGroupDecompData {
       atom->clearProp(RLABEL);
       atom->clearProp(RLABEL_TYPE);
     }
+
+    if (params.removeHydrogensPostMatch) {
+      RDLog::LogStateSetter blocker;
+      bool implicitOnly = false;
+      bool updateExplicitCount = false;
+      bool sanitize = false;
+      MolOps::removeHs(core, implicitOnly, updateExplicitCount, sanitize);
+    }
+    
     core.updatePropertyCache(false);  // this was github #1550
   }
 
