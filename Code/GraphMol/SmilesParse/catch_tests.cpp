@@ -2279,7 +2279,9 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
   Chirality::setUseLegacyStereoPerception(oval);
 }
 
-TEST_CASE("Github #5683", "[SMILES][bug]") {
+TEST_CASE(
+    "Github #5722: check w/c/t/ctu CX labels use bond positions from SMILES",
+    "[SMILES][bug]") {
   SECTION("'w:' label") {
     auto m = "CC1CN1C=CC1CC1 |w:4.5|"_smiles;
     REQUIRE(m);
