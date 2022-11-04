@@ -259,7 +259,12 @@ def xmlToNewline(xmlblock):
 
 
 def toDataMol(mol):
-  return "pkl_" + base64.b64encode(mol.ToBinary()).decode("utf-8")
+  return "pkl_" + base64.b64encode(mol.ToBinary(
+    Chem.PropertyPickleOptions.MolProps
+    | Chem.PropertyPickleOptions.AtomProps
+    | Chem.PropertyPickleOptions.BondProps
+    | Chem.PropertyPickleOptions.PrivateProps
+  )).decode("utf-8")
 
 
 def _dashLower(m):
