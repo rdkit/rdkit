@@ -145,7 +145,9 @@ std::string JSMol::get_pickle() const {
     return "";
   }
   std::string pickle;
-  MolPickler::pickleMol(*d_mol, pickle, PicklerOps::AllProps);
+  MolPickler::pickleMol(*d_mol, pickle,
+                        PicklerOps::MolProps | PicklerOps::AtomProps |
+                            PicklerOps::BondProps | PicklerOps::PrivateProps);
   return pickle;
 }
 
