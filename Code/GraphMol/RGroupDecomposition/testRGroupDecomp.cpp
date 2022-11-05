@@ -305,16 +305,9 @@ void testRingMatching() {
 }
 
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
-/*
- * Working on issue Github5613 these core smiles no longer work- however the
- * replacements are for the same structures
 const char *ringDataRes2[3] = {"Core:c1cc(C[*:2])co1 R2:Cl[*:2]",
                                "Core:c1cc(C[*:2])c[nH]1 R2:I[*:2]",
                                "Core:c1cc(C[*:2])cs1 R2:F[*:2]"};
-*/
-const char *ringDataRes2[3] = {"Core:C(c1ccoc1)[*:2] R2:Cl[*:2]",
-                               "Core:C(c1cc[nH]c1)[*:2] R2:I[*:2]",
-                               "Core:C(c1ccsc1)[*:2] R2:F[*:2]"};
 
 void testRingMatching2() {
   BOOST_LOG(rdInfoLog)
@@ -1006,9 +999,9 @@ $$$$)CTAB";
         "R6:[H][*:6]",
         "Core:C1SC2NC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
         "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
-        "Core:C1SC2CC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
+        "Core:C1C2SCC([*:6])C2C(N([*:2])[*:4])NC1[*:1] "
         "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
-        "Core:C1C([*:1])NC(N([*:2])[*:4])C2C1N([*:5])CN2[*:6] R1:O[*:1] "
+        "Core:C1C2C(C(N([*:2])[*:4])NC1[*:1])N([*:6])CN2[*:5] R1:O[*:1] "
         "R2:[H][*:2] R4:[H][*:4] R5:C[*:5] R6:[H][*:6]"};
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
@@ -3536,7 +3529,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testRingMatching2();
+  testGithub1550();
   testGithub5613();
   testMultipleGroupsToUnlabelledCoreAtomGithub5573();
   testMultipleGroupsToUnlabelledCoreAtom();
@@ -3551,7 +3544,7 @@ int main() {
   testRemoveHs();
 
   testMatchOnlyAtRgroupHs();
-  // testRingMatching2();
+  testRingMatching2();
   testGitHubIssue1705();
   testGithub2332();
   testSDFGRoupMultiCoreNoneShouldMatch();

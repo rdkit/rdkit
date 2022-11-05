@@ -227,12 +227,10 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
   extractedCore->clearComputedProps(true);
   extractedCore->updatePropertyCache(false);
 
-  /*
   std::cerr << "Extracted core smiles " << MolToSmiles(*extractedCore)
             << std::endl;
   std::cerr << "Extracted core smarts " << MolToSmarts(*extractedCore)
             << std::endl;
- */
 
   try {
     unsigned int failed;

@@ -380,11 +380,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
                         "Data error in missing user rgroup count");
         auto extractedCore =
             rcore->extractCoreFromMolMatch(hasCoreDummies, mol, tmatche);
-        potentialMatches.emplace_back(
-            core_idx, numberMissingUserGroups, match,
-            // TODO not sure that the onlyMatchAtRGroups makes any sense here.
-            hasCoreDummies || !data->params.onlyMatchAtRGroups ? extractedCore
-                                                               : nullptr);
+        potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
+                                      extractedCore);
       }
     }
   }
@@ -448,21 +445,27 @@ std::vector<std::string> RGroupDecomposition::getRGroupLabels() const {
 
 RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
     const RGroupMatch &match, const UsedLabelMap &usedLabelMap) const {
+  // this routine could probably be merged into RGroupDecompData::relabelCore
+
   const auto &core = data->cores[match.core_idx];
   if (!match.matchedCore) {
     return core.labelledCore;
   }
-  // auto coreWithMatches = core.coreWithMatches(*match.matchedCore);
   auto coreWithMatches = match.matchedCore;
-  // std::cerr << "output core mol1 " << MolToSmarts(*coreWithMatches) << std::endl;
+  // std::cerr << "output core mol1 " << MolToSmarts(*coreWithMatches) <<
+  // std::endl;
+  std::map<Atom *, int> retainedRGroups;
   for (auto atomIdx = coreWithMatches->getNumAtoms(); atomIdx--;) {
     auto atom = coreWithMatches->getAtomWithIdx(atomIdx);
     if (atom->getAtomicNum()) {
       continue;
     }
     auto label = data->getRlabel(atom);
+    // only convert to hydrogen when removing RGroup if the match is present in the decomposition
     auto missingRGroup = atom->hasProp(MISSING_RGROUP);
-    bool atomRemoved = false;
+    if (!missingRGroup) {
+      missingRGroup = match.rgroups.find(label) == match.rgroups.end();
+    }
     Atom *nbrAtom = nullptr;
     for (const auto &nbri :
          boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
@@ -472,37 +475,54 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
     if (nbrAtom) {
       bool isUserDefinedLabel =
           usedLabelMap.has(label) && usedLabelMap.isUserDefined(label);
-      auto numExplicitHs = nbrAtom->getNumExplicitHs();
-      if (usedLabelMap.has(label) && usedLabelMap.getIsUsed(label)) {
-        if (numExplicitHs) {
-          nbrAtom->setNumExplicitHs(numExplicitHs - 1);
+      bool isUsedLabel =
+          usedLabelMap.has(label) && usedLabelMap.getIsUsed(label);
+      if (!isUsedLabel && (!isUserDefinedLabel ||
+                           data->params.removeAllHydrogenRGroupsAndLabels)) {
+        if (missingRGroup) {
+          coreWithMatches->removeAtom(atomIdx);
+        } else {
+          atom->setAtomicNum(1);
+          atom->updatePropertyCache(false);
         }
-      } else if (!isUserDefinedLabel ||
-                 data->params.removeAllHydrogenRGroupsAndLabels) {
-        coreWithMatches->removeAtom(atomIdx);
-        atomRemoved = true;
         // if we remove an unused label from an aromatic atom,
         // we need to check whether we need to adjust its explicit
         // H count, or it will fail to kekulize
         if (isUserDefinedLabel && nbrAtom->getIsAromatic() && !missingRGroup) {
           nbrAtom->updatePropertyCache(false);
-          if (!numExplicitHs) {
-            nbrAtom->setNumExplicitHs(nbrAtom->getExplicitValence() -
-                                      nbrAtom->getDegree());
-          }
         }
+      } else {
+        retainedRGroups[atom] = label;
       }
       nbrAtom->updatePropertyCache(false);
-      if (!atomRemoved && coreWithMatches->getNumConformers() > 0) {
-        auto iter = match.rgroups.find(label);
-        if (iter != match.rgroups.end() && iter->second->is_hydrogen) {
-          MolOps::setTerminalAtomCoords(*coreWithMatches, atomIdx,
-                                        nbrAtom->getIdx());
+    }
+  }
+
+  if (data->params.removeHydrogensPostMatch) {
+    RDLog::LogStateSetter blocker;
+    bool implicitOnly = false;
+    bool updateExplicitCount = false;
+    bool sanitize = false;
+    MolOps::removeHs(*coreWithMatches, implicitOnly, updateExplicitCount,
+                     sanitize);
+
+    if (coreWithMatches->getNumConformers() > 0) {
+      for (const auto [atom, label] : retainedRGroups) {
+        const auto neighbor = *coreWithMatches->atomNeighbors(atom).begin();
+        const auto &mapping = data->finalRlabelMapping;
+        auto oldLabel = std::find_if(mapping.begin(), mapping.end(),
+                                     [label] (const auto &p) {return p.second == label;});
+        if (auto iter = match.rgroups.find(oldLabel->first);
+            iter != match.rgroups.end() && iter->second->is_hydrogen) {
+          MolOps::setTerminalAtomCoords(*coreWithMatches, atom->getIdx(),
+                                        neighbor->getIdx());
         }
       }
     }
   }
-  // std::cerr << "output core mol2 " << MolToSmarts(*coreWithMatches) << std::endl;
+
+  // std::cerr << "output core mol2 " << MolToSmarts(*coreWithMatches) <<
+  // std::endl;
   return coreWithMatches;
 }
 

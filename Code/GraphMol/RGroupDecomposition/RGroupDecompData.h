@@ -244,9 +244,10 @@ struct RGroupDecompData {
       }
     }
 
-    for (auto &position: results) {
-      for (auto atom: position.matchedCore->atoms()) {
-        if (int atomLabel; atom->getAtomicNum() == 0 && atom->getPropIfPresent(RLABEL, atomLabel)) {
+    for (auto &position : results) {
+      for (auto atom : position.matchedCore->atoms()) {
+        if (int atomLabel; atom->getAtomicNum() == 0 &&
+                           atom->getPropIfPresent(RLABEL, atomLabel)) {
           if (labelsToErase.find(atomLabel) != labelsToErase.end()) {
             atom->setAtomicNum(1);
             atom->clearProp(RLABEL);
@@ -309,7 +310,8 @@ struct RGroupDecompData {
 
   void relabelCore(RWMol &core, std::map<int, int> &mappings,
                    UsedLabels &used_labels, const std::set<int> &indexLabels,
-                   const std::map<int, std::vector<int>> &extraAtomRLabels) {
+                   const std::map<int, std::vector<int>> &extraAtomRLabels,
+                   const RGroupMatch *const match = nullptr) {
     // Now remap to proper rlabel ids
     //  if labels are positive, they come from User labels
     //  if they are negative, they come from indices and should be
@@ -325,7 +327,6 @@ struct RGroupDecompData {
     // a sidechain atom has a vector of the attachments back to the
     //  core that takes the place of numBondsToRlabel
 
-    std::map<int, std::vector<int>> bondsToCore;
     std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
 
     // Deal with user supplied labels
@@ -342,6 +343,13 @@ struct RGroupDecompData {
           atom->getDegree() == 1) {  // add to existing dummy/rlabel
         setRlabel(atom, userLabel);
       } else {  // adds new rlabel
+        bool addNew = true;
+        if (match != nullptr) {
+          auto test = match->rgroups.find(userLabel);
+          if (test != match->rgroups.end()) {
+            std::cerr << "hello" << std::endl;
+          }
+        }
         auto *newAt = new Atom(0);
         setRlabel(newAt, userLabel);
         atomsToAdd.emplace_back(atom, newAt);
@@ -371,9 +379,30 @@ struct RGroupDecompData {
               *atom)) {  // add to dummy
         setRlabel(atom, rlabel);
       } else {
-        auto *newAt = new Atom(0);
-        setRlabel(newAt, rlabel);
-        atomsToAdd.emplace_back(atom, newAt);
+        bool addNew = true;
+        if (match != nullptr) {
+          // if the R group is just a hydrogen then the attachment point should
+          // replace an existing hydrogen neighbor since all hydrogen neighbors
+          // are copied from the input molecule to the extracted core.
+          if (const auto group = match->rgroups.find(newLabel);
+              group != match->rgroups.end()) {
+            if (group->second->is_hydrogen) {
+              for (auto &neighbor : core.atomNeighbors(atom)) {
+                if (neighbor->getAtomicNum() == 1) {
+                  addNew = false;
+                  neighbor->setAtomicNum(0);
+                  setRlabel(neighbor, rlabel);
+                  break;
+                }
+              }
+            }
+          }
+        }
+        if (addNew) {
+          auto *newAt = new Atom(0);
+          setRlabel(newAt, rlabel);
+          atomsToAdd.emplace_back(atom, newAt);
+        }
       }
     }
 
@@ -404,13 +433,9 @@ struct RGroupDecompData {
       atom->clearProp(RLABEL_TYPE);
     }
 
-    if (params.removeHydrogensPostMatch) {
-      RDLog::LogStateSetter blocker;
-      bool implicitOnly = false;
-      bool updateExplicitCount = false;
-      bool sanitize = false;
-      MolOps::removeHs(core, implicitOnly, updateExplicitCount, sanitize);
-    }
+    // Delay removing hydrogens from core until outputCoreMolecule is called,
+    // If hydrogens are removed now and more dummies removed in
+    // outputCoreMolecule then aromaticity perception in the core may be broken.
 
     core.updatePropertyCache(false);  // this was github #1550
   }
@@ -562,9 +587,12 @@ struct RGroupDecompData {
       for (auto &rgroup : it.rgroups) {
         relabelRGroup(*rgroup.second, finalRlabelMapping);
       }
-      // std::cerr << "relabel core mol1 " << MolToSmarts(*it.matchedCore) << std::endl;
-      relabelCore(*it.matchedCore, finalRlabelMapping, used_labels, indexLabels, extraAtomRLabels);
-      // std::cerr << "relabel core mol2 " << MolToSmarts(*it.matchedCore) << std::endl;
+      std::cerr << "relabel core mol1 " << MolToSmiles(*it.matchedCore)
+                << std::endl;
+      relabelCore(*it.matchedCore, finalRlabelMapping, used_labels, indexLabels,
+                  extraAtomRLabels, &it);
+      std::cerr << "relabel core mol2 " << MolToSmiles(*it.matchedCore)
+                << std::endl;
     }
 
     std::set<int> uniqueMappedValues;
