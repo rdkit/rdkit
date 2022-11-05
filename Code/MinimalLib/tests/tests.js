@@ -75,11 +75,6 @@ function test_basics() {
         assert.equal((fp2.match(/1/g)||[]).length, 3);
         var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(JSON.stringify({ radius: 0, nBits: 512 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
-        var fp3 = mol.get_morgan_fp(0, 512);
-        assert.equal(fp3.length, 512);
-        assert.equal((fp3.match(/1/g)||[]).length, 3);
-        var fp3Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
-        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
     }
 
     {
@@ -93,12 +88,7 @@ function test_basics() {
         assert.equal((fp2.match(/1/g)||[]).length, 65);
         var fp2Uint8Array = mol.get_pattern_fp_as_uint8array(JSON.stringify({ nBits: 256 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
-        var fp3 = mol.get_pattern_fp(256);
-        assert.equal(fp3.length, 256);
-        assert.equal((fp3.match(/1/g)||[]).length, 65);
-        var fp3Uint8Array = mol.get_pattern_fp_as_uint8array(256);
-        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
-    }
+   }
 
     {
         var fp1 = mol.get_topological_torsion_fp();

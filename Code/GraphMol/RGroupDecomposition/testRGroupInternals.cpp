@@ -110,25 +110,13 @@ void testRingMatching3Score() {
       << "Test scoring function for RingMatching3- see GitHub ##3924"
       << std::endl;
 
-  R_DECOMP decomp1Mol1 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]"),
-      makeRData(1, "*C([H])([H])C")
-  };
-  R_DECOMP decomp1Mol2 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]"),
-      makeRData(1, "*C([H])([H])I")
-  };
-  R_DECOMP decomp1Mol3 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]"),
-      makeRData(1, "*C([H])([H])F")
-  };
+  R_DECOMP decomp1Mol1 = {makeRData(-4, "*[H]"), makeRData(-2, "*[H]"),
+                          makeRData(-1, "*[H]"), makeRData(1, "*C([H])([H])C")};
+  R_DECOMP decomp1Mol2 = {makeRData(-4, "*[H]"), makeRData(-3, "*[H]"),
+                          makeRData(-2, "*[H]"), makeRData(-1, "*[H]"),
+                          makeRData(1, "*C([H])([H])I")};
+  R_DECOMP decomp1Mol3 = {makeRData(-4, "*[H]"), makeRData(-2, "*[H]"),
+                          makeRData(-1, "*[H]"), makeRData(1, "*C([H])([H])F")};
   RGroupMatch match1Mol1(0, 0, decomp1Mol1, nullptr);
   RGroupMatch match1Mol2(0, 0, decomp1Mol2, nullptr);
   RGroupMatch match1Mol3(0, 0, decomp1Mol3, nullptr);
@@ -140,19 +128,11 @@ void testRingMatching3Score() {
       matches1Mol1, matches1Mol2, matches1Mol3};
   std::vector<size_t> permutation{0, 0, 0};
 
-  R_DECOMP decomp2Mol1 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*C([H])([H])C"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]")
-  };
-  R_DECOMP decomp2Mol2 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]"),
-      makeRData(1, "*C([H])([H])I")
-  };
+  R_DECOMP decomp2Mol1 = {makeRData(-4, "*[H]"), makeRData(-3, "*C([H])([H])C"),
+                          makeRData(-2, "*[H]"), makeRData(-1, "*[H]")};
+  R_DECOMP decomp2Mol2 = {makeRData(-4, "*[H]"), makeRData(-3, "*[H]"),
+                          makeRData(-2, "*[H]"), makeRData(-1, "*[H]"),
+                          makeRData(1, "*C([H])([H])I")};
   R_DECOMP decomp2Mol3 = {makeRData(-4, "*[H]"), makeRData(-2, "*[H]"),
                           makeRData(-1, "*[H]"), makeRData(1, "*C([H])([H])F")};
   RGroupMatch match2Mol1(0, 1, decomp2Mol1, nullptr);

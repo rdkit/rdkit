@@ -18,6 +18,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -2216,6 +2217,8 @@ M  END
 }
 
 TEST_CASE("ring bond stereochemistry in CXSMILES") {
+  auto oval = Chirality::getUseLegacyStereoPerception();
+  Chirality::setUseLegacyStereoPerception(false);
   SECTION("basic reading") {
     std::vector<std::pair<std::string, Bond::BondStereo>> tests = {
         {"C1CCCC/C=C/CCC1 |t:5|", Bond::BondStereo::STEREOTRANS},
@@ -2226,9 +2229,7 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
         {"C1CCCC/C=C/CCC1 |ctu:5|", Bond::BondStereo::STEREOANY},
     };
     for (const auto &[smi, val] : tests) {
-      SmilesParserParams ps;
-      ps.useLegacyStereo = false;
-      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
       INFO(smi);
       REQUIRE(m);
       CHECK(m->getBondWithIdx(5)->getBondType() == Bond::BondType::DOUBLE);
@@ -2236,9 +2237,7 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
     }
   }
   SECTION("read multiple values") {
-    SmilesParserParams ps;
-    ps.useLegacyStereo = false;
-    std::unique_ptr<RWMol> m{SmilesToMol("C1CCCCC=CCCC=1 |t:5,9|", ps)};
+    std::unique_ptr<RWMol> m{SmilesToMol("C1CCCCC=CCCC=1 |t:5,9|")};
     REQUIRE(m);
     CHECK(m->getBondWithIdx(5)->getBondType() == Bond::BondType::DOUBLE);
     CHECK(m->getBondWithIdx(5)->getStereo() == Bond::BondStereo::STEREOTRANS);
@@ -2250,9 +2249,7 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
         {"C1=CCCCC1 |ctu:0|", Bond::BondStereo::STEREONONE},
         {"C1=CCCCC1 |c:0|", Bond::BondStereo::STEREONONE}};
     for (const auto &[smi, val] : tests) {
-      SmilesParserParams ps;
-      ps.useLegacyStereo = false;
-      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
       INFO(smi);
       REQUIRE(m);
       CHECK(m->getBondWithIdx(0)->getBondType() == Bond::BondType::DOUBLE);
@@ -2270,9 +2267,7 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
          "C=CCCCCCCCC"}  // we don't write the markers for non-ring bonds
     };
     for (const auto &[smi, val] : tests) {
-      SmilesParserParams ps;
-      ps.useLegacyStereo = false;
-      std::unique_ptr<RWMol> m{SmilesToMol(smi, ps)};
+      std::unique_ptr<RWMol> m{SmilesToMol(smi)};
       INFO(smi);
       REQUIRE(m);
       SmilesWriteParams ops;
@@ -2280,5 +2275,49 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
           *m, ops, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
       CHECK(cxsmi == val);
     }
+  }
+  Chirality::setUseLegacyStereoPerception(oval);
+}
+
+TEST_CASE(
+    "Github #5722: check w/c/t/ctu CX labels use bond positions from SMILES",
+    "[SMILES][bug]") {
+  SECTION("'w:' label") {
+    auto m = "CC1CN1C=CC1CC1 |w:4.5|"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(4);
+    REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(b->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("'ctu:' label") {
+    auto m = "CC1CN1C=CC1CC1 |ctu:5|"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(4);
+    REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(b->getStereo() == Bond::STEREOANY);
+  }
+  SECTION("'c:' label") {
+    auto oval = Chirality::getUseLegacyStereoPerception();
+    Chirality::setUseLegacyStereoPerception(false);
+
+    auto m = "CC1CN1C=CC1CC1 |c:5|"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(4);
+    REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(b->getStereo() == Bond::STEREOCIS);
+
+    Chirality::setUseLegacyStereoPerception(oval);
+  }
+  SECTION("'t:' label") {
+    auto oval = Chirality::getUseLegacyStereoPerception();
+    Chirality::setUseLegacyStereoPerception(false);
+
+    auto m = "CC1CN1C=CC1CC1 |t:5|"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(4);
+    REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(b->getStereo() == Bond::STEREOTRANS);
+
+    Chirality::setUseLegacyStereoPerception(oval);
   }
 }

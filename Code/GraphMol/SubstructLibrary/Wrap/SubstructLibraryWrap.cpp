@@ -43,33 +43,41 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 
-// Because we need to release the GIL before we launch a thread, we need to make a thin stub
-//  for every function that does this.  This stub exists Because I couldn't quite figure out
-// how to make a release GIL call_guard to work with the complexity of the functions here.
+// Because we need to release the GIL before we launch a thread, we need to make
+// a thin stub
+//  for every function that does this.  This stub exists Because I couldn't
+//  quite figure out
+// how to make a release GIL call_guard to work with the complexity of the
+// functions here.
 //
-// We could have made helper functions, but this was easier in the end as all we needed
+// We could have made helper functions, but this was easier in the end as all we
+// needed
 //  to do was replace SubstructLibrary with SubstructLibraryWrap in the existing
 //  boost::python wrap below.
 class SubstructLibraryWrap {
-public:
+ public:
   SubstructLibrary ss;
 
   SubstructLibraryWrap() : ss() {}
-  SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules) : ss(molecules) {}
+  SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules)
+      : ss(molecules) {}
   SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules,
-                   boost::shared_ptr<FPHolderBase> fingerprints) : ss(molecules, fingerprints) {}
+                       boost::shared_ptr<FPHolderBase> fingerprints)
+      : ss(molecules, fingerprints) {}
   SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules,
-                   boost::shared_ptr<KeyHolderBase> keys) : ss(molecules, keys) {}
+                       boost::shared_ptr<KeyHolderBase> keys)
+      : ss(molecules, keys) {}
   SubstructLibraryWrap(boost::shared_ptr<MolHolderBase> molecules,
-                   boost::shared_ptr<FPHolderBase> fingerprints,
-                   boost::shared_ptr<KeyHolderBase> keys) : ss(molecules, fingerprints, keys) {}
+                       boost::shared_ptr<FPHolderBase> fingerprints,
+                       boost::shared_ptr<KeyHolderBase> keys)
+      : ss(molecules, fingerprints, keys) {}
   SubstructLibraryWrap(const std::string &pickle) : ss(pickle) {}
 
   boost::shared_ptr<MolHolderBase> &getMolHolder() { return ss.getMolHolder(); }
   boost::shared_ptr<FPHolderBase> &getFpHolder() { return ss.getFpHolder(); }
   boost::shared_ptr<KeyHolderBase> &getKeyHolder() { return ss.getKeyHolder(); }
   unsigned int addMol(const ROMol &mol) { return ss.addMol(mol); }
-   
+
   template <class Query>
   std::vector<unsigned int> getMatches(const Query &query,
                                        bool recursionPossible = true,
@@ -78,7 +86,8 @@ public:
                                        int numThreads = -1,
                                        int maxResults = -1) const {
     NOGIL h;
-    return ss.getMatches(query, recursionPossible, useChirality, useQueryQueryMatches, numThreads, maxResults);
+    return ss.getMatches(query, recursionPossible, useChirality,
+                         useQueryQueryMatches, numThreads, maxResults);
   }
   template <class Query>
   std::vector<unsigned int> getMatches(const Query &query,
@@ -96,8 +105,9 @@ public:
       bool useQueryQueryMatches = false, int numThreads = -1,
       int maxResults = -1) const {
     NOGIL h;
-    return ss.getMatches(query, startIdx, endIdx, recursionPossible, useChirality, useQueryQueryMatches,
-			 numThreads, maxResults);
+    return ss.getMatches(query, startIdx, endIdx, recursionPossible,
+                         useChirality, useQueryQueryMatches, numThreads,
+                         maxResults);
   };
 
   std::vector<unsigned int> getMatches(const ROMol &query,
@@ -107,7 +117,8 @@ public:
                                        int numThreads = -1,
                                        int maxResults = -1) const {
     NOGIL h;
-    return ss.getMatches(query, startIdx, endIdx, params, numThreads, maxResults);
+    return ss.getMatches(query, startIdx, endIdx, params, numThreads,
+                         maxResults);
   }
 
   std::vector<unsigned int> getMatches(const MolBundle &query,
@@ -117,7 +128,8 @@ public:
                                        int numThreads = -1,
                                        int maxResults = -1) const {
     NOGIL h;
-    return ss.getMatches(query, startIdx, endIdx, params, numThreads, maxResults);
+    return ss.getMatches(query, startIdx, endIdx, params, numThreads,
+                         maxResults);
   }
   //! overload
   std::vector<unsigned int> getMatches(const TautomerQuery &query,
@@ -127,8 +139,8 @@ public:
                                        int numThreads = -1,
                                        int maxResults = -1) const {
     NOGIL h;
-    return ss.getMatches(query, startIdx, endIdx, params,
-			 numThreads, maxResults);
+    return ss.getMatches(query, startIdx, endIdx, params, numThreads,
+                         maxResults);
   }
 
   template <class Query>
@@ -137,8 +149,8 @@ public:
                             bool useQueryQueryMatches = false,
                             int numThreads = -1) const {
     NOGIL h;
-    return ss.countMatches(query, 0, size(), recursionPossible, useChirality, useQueryQueryMatches,
-			   numThreads);
+    return ss.countMatches(query, 0, size(), recursionPossible, useChirality,
+                           useQueryQueryMatches, numThreads);
   }
 
   template <class Query>
@@ -156,8 +168,8 @@ public:
                             bool useQueryQueryMatches = false,
                             int numThreads = -1) const {
     NOGIL h;
-    return countMatches(query, startIdx, endIdx, recursionPossible, useChirality, useQueryQueryMatches,
-			numThreads);
+    return countMatches(query, startIdx, endIdx, recursionPossible,
+                        useChirality, useQueryQueryMatches, numThreads);
   };
 
   unsigned int countMatches(const ROMol &query, unsigned int startIdx,
@@ -189,8 +201,8 @@ public:
                 bool useChirality = true, bool useQueryQueryMatches = false,
                 int numThreads = -1) const {
     NOGIL h;
-    return ss.hasMatch(query, 0, size(), recursionPossible, useChirality, useQueryQueryMatches,
-		       numThreads);
+    return ss.hasMatch(query, 0, size(), recursionPossible, useChirality,
+                       useQueryQueryMatches, numThreads);
   }
 
   template <class Query>
@@ -204,8 +216,8 @@ public:
                 bool recursionPossible = true, bool useChirality = true,
                 bool useQueryQueryMatches = false, int numThreads = -1) const {
     NOGIL h;
-    return ss.hasMatch(query, startIdx, endIdx, recursionPossible, useChirality, useQueryQueryMatches,
-		       numThreads);
+    return ss.hasMatch(query, startIdx, endIdx, recursionPossible, useChirality,
+                       useQueryQueryMatches, numThreads);
   };
 
   bool hasMatch(const ROMol &query, unsigned int startIdx, unsigned int endIdx,
@@ -224,12 +236,14 @@ public:
 
   bool hasMatch(const MolBundle &query, unsigned int startIdx,
                 unsigned int endIdx, const SubstructMatchParameters &params,
-                int numThreads = -1) const     {
+                int numThreads = -1) const {
     NOGIL h;
     return ss.hasMatch(query, startIdx, endIdx, params, numThreads);
   }
 
-  boost::shared_ptr<ROMol> getMol(unsigned int idx) const { return ss.getMol(idx); }
+  boost::shared_ptr<ROMol> getMol(unsigned int idx) const {
+    return ss.getMol(idx);
+  }
   unsigned int size() const { return ss.size(); }
 };
 
@@ -458,7 +472,8 @@ python::tuple getSearchOrderHelper(const SubstructLibraryWrap &sslib) {
   }
   return python::tuple(res);
 }
-void setSearchOrderHelper(SubstructLibraryWrap &sslib, const python::object &seq) {
+void setSearchOrderHelper(SubstructLibraryWrap &sslib,
+                          const python::object &seq) {
   std::unique_ptr<std::vector<unsigned int>> sorder =
       pythonObjectToVect<unsigned int>(seq);
   if (sorder) {
@@ -468,24 +483,23 @@ void setSearchOrderHelper(SubstructLibraryWrap &sslib, const python::object &seq
   }
 }
 
-void addPatternsHelper(SubstructLibraryWrap &sslib, boost::shared_ptr<FPHolderBase> patterns,
-		       int numThreads) {
+void addPatternsHelper(SubstructLibraryWrap &sslib,
+                       boost::shared_ptr<FPHolderBase> patterns,
+                       int numThreads) {
   NOGIL gil;
   addPatterns(sslib.ss, patterns, numThreads);
 }
 
-void addPatternsHelper(SubstructLibraryWrap &sslib,
-		       int numThreads) {
+void addPatternsHelper(SubstructLibraryWrap &sslib, int numThreads) {
   NOGIL gil;
   addPatterns(sslib.ss, numThreads);
 }
- 
 
 #define LARGE_DEF(_tname_)                                                     \
   .def("GetMatches",                                                           \
-       (std::vector<unsigned int>(SubstructLibraryWrap::*)(                        \
+       (std::vector<unsigned int>(SubstructLibraryWrap::*)(                    \
            const _tname_ &, bool, bool, bool, int, int) const) &               \
-           SubstructLibraryWrap::getMatches,                                       \
+           SubstructLibraryWrap::getMatches,                                   \
        (python::arg("query"), python::arg("recursionPossible") = true,         \
         python::arg("useChirality") = true,                                    \
         python::arg("useQueryQueryMatches") = false,                           \
@@ -496,10 +510,10 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
        "  - numThreads: number of threads to use, -1 means all threads\n"      \
        "  - maxResults: maximum number of results to return")                  \
       .def("GetMatches",                                                       \
-           (std::vector<unsigned int>(SubstructLibraryWrap::*)(                    \
+           (std::vector<unsigned int>(SubstructLibraryWrap::*)(                \
                const _tname_ &, unsigned int, unsigned int, bool, bool, bool,  \
                int, int) const) &                                              \
-               SubstructLibraryWrap::getMatches,                                   \
+               SubstructLibraryWrap::getMatches,                               \
            (python::arg("query"), python::arg("startIdx"),                     \
             python::arg("endIdx"), python::arg("recursionPossible") = true,    \
             python::arg("useChirality") = true,                                \
@@ -513,9 +527,9 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
            "  - numThreads: number of threads to use, -1 means all threads\n"  \
            "  - maxResults: maximum number of results to return")              \
       .def("CountMatches",                                                     \
-           (unsigned int (SubstructLibraryWrap::*)(const _tname_ &, bool, bool,    \
-                                               bool, int) const) &             \
-               SubstructLibraryWrap::countMatches,                                 \
+           (unsigned int (SubstructLibraryWrap::*)(const _tname_ &, bool,      \
+                                                   bool, bool, int) const) &   \
+               SubstructLibraryWrap::countMatches,                             \
            (python::arg("query"), python::arg("recursionPossible") = true,     \
             python::arg("useChirality") = true,                                \
             python::arg("useQueryQueryMatches") = false,                       \
@@ -525,10 +539,10 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
            "  - query:      substructure query\n"                              \
            "  - numThreads: number of threads to use, -1 means all threads\n") \
       .def("CountMatches",                                                     \
-           (unsigned int (SubstructLibraryWrap::*)(const _tname_ &, unsigned int,  \
-                                               unsigned int, bool, bool, bool, \
-                                               int) const) &                   \
-               SubstructLibraryWrap::countMatches,                                 \
+           (unsigned int (SubstructLibraryWrap::*)(                            \
+               const _tname_ &, unsigned int, unsigned int, bool, bool, bool,  \
+               int) const) &                                                   \
+               SubstructLibraryWrap::countMatches,                             \
            (python::arg("query"), python::arg("startIdx"),                     \
             python::arg("endIdx"), python::arg("recursionPossible") = true,    \
             python::arg("useChirality") = true,                                \
@@ -541,9 +555,9 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
            "  - endIdx:     index (non-inclusize) to search to\n"              \
            "  - numThreads: number of threads to use, -1 means all threads\n") \
       .def("HasMatch",                                                         \
-           (bool (SubstructLibraryWrap::*)(const _tname_ &, bool, bool, bool, int) \
-                const) &                                                       \
-               SubstructLibraryWrap::hasMatch,                                     \
+           (bool(SubstructLibraryWrap::*)(const _tname_ &, bool, bool, bool,   \
+                                          int) const) &                        \
+               SubstructLibraryWrap::hasMatch,                                 \
            (python::arg("query"), python::arg("recursionPossible") = true,     \
             python::arg("useChirality") = true,                                \
             python::arg("useQueryQueryMatches") = false,                       \
@@ -553,10 +567,10 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
            "  - query:      substructure query\n"                              \
            "  - numThreads: number of threads to use, -1 means all threads\n") \
       .def("HasMatch",                                                         \
-           (bool (SubstructLibraryWrap::*)(const _tname_ &, unsigned int,          \
-                                       unsigned int, bool, bool, bool, int)    \
+           (bool(SubstructLibraryWrap::*)(const _tname_ &, unsigned int,       \
+                                          unsigned int, bool, bool, bool, int) \
                 const) &                                                       \
-               SubstructLibraryWrap::hasMatch,                                     \
+               SubstructLibraryWrap::hasMatch,                                 \
            (python::arg("query"), python::arg("startIdx"),                     \
             python::arg("endIdx"), python::arg("recursionPossible") = true,    \
             python::arg("useChirality") = true,                                \
@@ -569,10 +583,10 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
            "  - endIdx:     index (non-inclusize) to search to\n"              \
            "  - numThreads: number of threads to use, -1 means all threads\n") \
       .def("GetMatches",                                                       \
-           (std::vector<unsigned int>(SubstructLibraryWrap::*)(                    \
+           (std::vector<unsigned int>(SubstructLibraryWrap::*)(                \
                const _tname_ &, const SubstructMatchParameters &, int, int)    \
                 const) &                                                       \
-               SubstructLibraryWrap::getMatches,                                   \
+               SubstructLibraryWrap::getMatches,                               \
            (python::arg("query"), python::arg("parameters"),                   \
             python::arg("numThreads") = -1, python::arg("maxResults") = 1000), \
            "Get the matches for the query.\n\n"                                \
@@ -581,10 +595,10 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
            "  - numThreads: number of threads to use, -1 means all threads\n"  \
            "  - maxResults: maximum number of results to return")              \
       .def("GetMatches",                                                       \
-           (std::vector<unsigned int>(SubstructLibraryWrap::*)(                    \
+           (std::vector<unsigned int>(SubstructLibraryWrap::*)(                \
                const _tname_ &, unsigned int, unsigned int,                    \
                const SubstructMatchParameters &, int, int) const) &            \
-               SubstructLibraryWrap::getMatches,                                   \
+               SubstructLibraryWrap::getMatches,                               \
            (python::arg("query"), python::arg("startIdx"),                     \
             python::arg("endIdx"), python::arg("parameters"),                  \
             python::arg("numThreads") = -1, python::arg("maxResults") = 1000), \
@@ -597,9 +611,9 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
            "  - maxResults: maximum number of results to return")              \
       .def(                                                                    \
           "CountMatches",                                                      \
-          (unsigned int (SubstructLibraryWrap::*)(                                 \
+          (unsigned int (SubstructLibraryWrap::*)(                             \
               const _tname_ &, const SubstructMatchParameters &, int) const) & \
-              SubstructLibraryWrap::countMatches,                                  \
+              SubstructLibraryWrap::countMatches,                              \
           (python::arg("query"), python::arg("parameters"),                    \
            python::arg("numThreads") = -1),                                    \
           "Get the matches for the query.\n\n"                                 \
@@ -607,10 +621,10 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
           "  - query:      substructure query\n"                               \
           "  - numThreads: number of threads to use, -1 means all threads\n")  \
       .def("CountMatches",                                                     \
-           (unsigned int (SubstructLibraryWrap::*)(                                \
+           (unsigned int (SubstructLibraryWrap::*)(                            \
                const _tname_ &, unsigned int, unsigned int,                    \
                const SubstructMatchParameters &, int) const) &                 \
-               SubstructLibraryWrap::countMatches,                                 \
+               SubstructLibraryWrap::countMatches,                             \
            (python::arg("query"), python::arg("startIdx"),                     \
             python::arg("endIdx"), python::arg("parameters"),                  \
             python::arg("numThreads") = -1),                                   \
@@ -622,9 +636,9 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
            "  - numThreads: number of threads to use, -1 means all threads\n") \
       .def(                                                                    \
           "HasMatch",                                                          \
-          (bool (SubstructLibraryWrap::*)(                                         \
+          (bool(SubstructLibraryWrap::*)(                                      \
               const _tname_ &, const SubstructMatchParameters &, int) const) & \
-              SubstructLibraryWrap::hasMatch,                                      \
+              SubstructLibraryWrap::hasMatch,                                  \
           (python::arg("query"), python::arg("parameters"),                    \
            python::arg("numThreads") = -1),                                    \
           "Get the matches for the query.\n\n"                                 \
@@ -632,10 +646,10 @@ void addPatternsHelper(SubstructLibraryWrap &sslib,
           "  - query:      substructure query\n"                               \
           "  - numThreads: number of threads to use, -1 means all threads\n")  \
       .def("HasMatch",                                                         \
-           (bool (SubstructLibraryWrap::*)(                                        \
+           (bool(SubstructLibraryWrap::*)(                                     \
                const _tname_ &, unsigned int, unsigned int,                    \
                const SubstructMatchParameters &, int) const) &                 \
-               SubstructLibraryWrap::hasMatch,                                     \
+               SubstructLibraryWrap::hasMatch,                                 \
            (python::arg("query"), python::arg("startIdx"),                     \
             python::arg("endIdx"), python::arg("parameters"),                  \
             python::arg("numThreads") = -1),                                   \
@@ -848,7 +862,8 @@ struct substructlibrary_wrapper {
 
     python::def(
         "AddPatterns",
-        (void (*)(SubstructLibraryWrap &, boost::shared_ptr<FPHolderBase>, int)) &
+        (void (*)(SubstructLibraryWrap &, boost::shared_ptr<FPHolderBase>,
+                  int)) &
             addPatternsHelper,
         "Add pattern fingerprints to the given library, use numThreads=-1 to "
         "use all available cores",

@@ -2332,7 +2332,7 @@ int testForwardSDSupplier() {
     }
     TEST_ASSERT(i == 1663);
   }
-#if RDK_USE_BOOST_IOSTREAMS  
+#if RDK_USE_BOOST_IOSTREAMS
   {
     gzstream strm(maefname2);
 
