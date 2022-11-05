@@ -3529,7 +3529,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testGithub1550();
   testGithub5613();
   testMultipleGroupsToUnlabelledCoreAtomGithub5573();
   testMultipleGroupsToUnlabelledCoreAtom();

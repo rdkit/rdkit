@@ -308,6 +308,27 @@ struct RGroupDecompData {
     }
   }
 
+  bool replaceHydrogenCoreDummy(const RGroupMatch &match, RWMol &core,
+                                const Atom &atom, const int currentLabel,
+                                const int rLabel) {
+    // if the R group is just a hydrogen then the attachment point should
+    // replace an existing hydrogen neighbor since all hydrogen neighbors
+    // are copied from the input molecule to the extracted core.
+    if (const auto group = match.rgroups.find(currentLabel);
+        group != match.rgroups.end()) {
+      if (group->second->is_hydrogen) {
+        for (auto &neighbor : core.atomNeighbors(&atom)) {
+          if (neighbor->getAtomicNum() == 1) {
+            neighbor->setAtomicNum(0);
+            setRlabel(neighbor, rLabel);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   void relabelCore(RWMol &core, std::map<int, int> &mappings,
                    UsedLabels &used_labels, const std::set<int> &indexLabels,
                    const std::map<int, std::vector<int>> &extraAtomRLabels,
@@ -342,17 +363,20 @@ struct RGroupDecompData {
       if (atom->getAtomicNum() == 0 &&
           atom->getDegree() == 1) {  // add to existing dummy/rlabel
         setRlabel(atom, userLabel);
-      } else {  // adds new rlabel
+      } else {
+        // A non-terminal RGroup. Create a dummy by replacing an existing
+        // hydrogen for hydrogen side chains, or a new dummy atom for heavy side
+        // chains.
         bool addNew = true;
         if (match != nullptr) {
-          auto test = match->rgroups.find(userLabel);
-          if (test != match->rgroups.end()) {
-            std::cerr << "hello" << std::endl;
-          }
+          addNew = !replaceHydrogenCoreDummy(*match, core, *atom, userLabel,
+                                             userLabel);
         }
-        auto *newAt = new Atom(0);
-        setRlabel(newAt, userLabel);
-        atomsToAdd.emplace_back(atom, newAt);
+        if (addNew) {
+          auto *newAt = new Atom(0);
+          setRlabel(newAt, userLabel);
+          atomsToAdd.emplace_back(atom, newAt);
+        }
       }
     }
 
@@ -381,22 +405,8 @@ struct RGroupDecompData {
       } else {
         bool addNew = true;
         if (match != nullptr) {
-          // if the R group is just a hydrogen then the attachment point should
-          // replace an existing hydrogen neighbor since all hydrogen neighbors
-          // are copied from the input molecule to the extracted core.
-          if (const auto group = match->rgroups.find(newLabel);
-              group != match->rgroups.end()) {
-            if (group->second->is_hydrogen) {
-              for (auto &neighbor : core.atomNeighbors(atom)) {
-                if (neighbor->getAtomicNum() == 1) {
-                  addNew = false;
-                  neighbor->setAtomicNum(0);
-                  setRlabel(neighbor, rlabel);
-                  break;
-                }
-              }
-            }
-          }
+          addNew =
+              !replaceHydrogenCoreDummy(*match, core, *atom, newLabel, rlabel);
         }
         if (addNew) {
           auto *newAt = new Atom(0);

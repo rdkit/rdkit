@@ -60,7 +60,6 @@ const std::string CORE = "Core";
 const std::string RPREFIX = "R";
 const std::string _rgroupInputDummy = "_rgroupInputDummy";
 const std::string UNLABELED_CORE_ATTACHMENT = "unlabeledCoreAttachment";
-const std::string MISSING_RGROUP = "missingRGroup";
 
 namespace {
 void ADD_MATCH(R_DECOMP &match, int rlabel) {
@@ -461,11 +460,9 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       continue;
     }
     auto label = data->getRlabel(atom);
-    // only convert to hydrogen when removing RGroup if the match is present in the decomposition
-    auto missingRGroup = atom->hasProp(MISSING_RGROUP);
-    if (!missingRGroup) {
-      missingRGroup = match.rgroups.find(label) == match.rgroups.end();
-    }
+    // only convert to hydrogen when removing RGroup if the match is present in
+    // the decomposition
+    auto missingRGroup = match.rgroups.find(label) == match.rgroups.end();
     Atom *nbrAtom = nullptr;
     for (const auto &nbri :
          boost::make_iterator_range(coreWithMatches->getAtomNeighbors(atom))) {
@@ -485,16 +482,10 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
           atom->setAtomicNum(1);
           atom->updatePropertyCache(false);
         }
-        // if we remove an unused label from an aromatic atom,
-        // we need to check whether we need to adjust its explicit
-        // H count, or it will fail to kekulize
-        if (isUserDefinedLabel && nbrAtom->getIsAromatic() && !missingRGroup) {
-          nbrAtom->updatePropertyCache(false);
-        }
+        nbrAtom->updatePropertyCache(false);
       } else {
         retainedRGroups[atom] = label;
       }
-      nbrAtom->updatePropertyCache(false);
     }
   }
 
@@ -510,8 +501,9 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       for (const auto [atom, label] : retainedRGroups) {
         const auto neighbor = *coreWithMatches->atomNeighbors(atom).begin();
         const auto &mapping = data->finalRlabelMapping;
-        auto oldLabel = std::find_if(mapping.begin(), mapping.end(),
-                                     [label] (const auto &p) {return p.second == label;});
+        auto oldLabel =
+            std::find_if(mapping.begin(), mapping.end(),
+                         [label](const auto &p) { return p.second == label; });
         if (auto iter = match.rgroups.find(oldLabel->first);
             iter != match.rgroups.end() && iter->second->is_hydrogen) {
           MolOps::setTerminalAtomCoords(*coreWithMatches, atom->getIdx(),

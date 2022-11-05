@@ -261,23 +261,6 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     }
   }
 
-  // look for dummy rgroup attachment points in core that are not in mapping
-  // there is no r group for these guys.  I've marked them as missing.
-  // It might be better to delete them in coreReplaceAtoms, but I'm not sure of
-  // the implications of that.
-  for (auto atom : coreReplacedAtoms->atoms()) {
-    if (atom->getAtomicNum() == 0 && atom->hasProp(RLABEL)) {
-      auto missing = std::find_if(match.cbegin(), match.cend(),
-                                  [atom](const std::pair<int, int> &p) {
-                                    return static_cast<unsigned int>(p.first) ==
-                                           atom->getIdx();
-                                  }) == match.end();
-      if (missing) {
-        atom->setProp<bool>(MISSING_RGROUP, true);
-      }
-    }
-  }
-
   std::map<int, int> matchLookup(match.cbegin(), match.cend());
   for (auto bond : coreReplacedAtoms->bonds()) {
     if (bond->hasQuery()) {
