@@ -989,28 +989,27 @@ $$$$)CTAB";
     /*
      * Working on issue Github5613 these core smiles no longer work- however the
      * replacements are for the same structures
-        const char *expected[4] = {
-            "Core:C1C([*:6])C2C(N([*:2])[*:4])NC([*:1])NC2N1[*:5] "
-            "R1:[H][*:1] R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:[H][*:5] "
-            "R6:[H][*:6]",
-            "Core:C1SC2NC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
-            "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
-            "Core:C1SC2CC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
-            "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
-            "Core:C1C2C(C(N([*:2])[*:4])NC1[*:1])N([*:6])CN2[*:5] R1:O[*:1] "
-            "R2:[H][*:2] R4:[H][*:4] R5:C[*:5] R6:[H][*:6]"};
-            */
     const char *expected[4] = {
         "Core:C1C([*:6])C2C(N([*:2])[*:4])NC([*:1])NC2N1[*:5] "
         "R1:[H][*:1] R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:[H][*:5] "
         "R6:[H][*:6]",
         "Core:C1SC2NC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
         "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
-        "Core:C1C2SCC([*:6])C2C(N([*:2])[*:4])NC1[*:1] "
+        "Core:C1SC2CC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
         "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
         "Core:C1C2C(C(N([*:2])[*:4])NC1[*:1])N([*:6])CN2[*:5] R1:O[*:1] "
         "R2:[H][*:2] R4:[H][*:4] R5:C[*:5] R6:[H][*:6]"};
-
+     */
+    const char *expected[4] = {
+        "Core:C1C([*:6])C2C(N([*:2])[*:4])NC([*:1])NC2N1[*:5] "
+        "R1:[H][*:1] R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:[H][*:5] "
+        "R6:[H][*:6]",
+        "Core:C1SC2NC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
+        "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
+        "Core:C1SC2CC([*:1])NC(N([*:2])[*:4])C2C1[*:6] "
+        "R1:[H][*:1] R2:C[*:2] R4:[H][*:4] R6:CC(C)[*:6]",
+        "Core:C1C([*:1])NC(N([*:2])[*:4])C2C1N([*:5])CN2[*:6] R1:O[*:1] "
+        "R2:[H][*:2] R4:[H][*:4] R5:C[*:5] R6:[H][*:6]"};
     int i = 0;
     for (RGroupRows::const_iterator it = rows.begin(); it != rows.end();
          ++it, ++i) {
@@ -1677,9 +1676,6 @@ $$$$
     cores.emplace_back(sdsup.next());
   }
 
-  /*
-   * Working on issue Github5613 these core smiles no longer work- however the
-   * replacements are for the same structures
     std::vector<std::string> expectedRows{
         "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
         "Core:c1cc2ccc([*:2])nc2nc1[*:1] R1:F[*:1] R2:Br[*:2]"};
@@ -1689,7 +1685,7 @@ $$$$
         {"CN[*:1]", "F[*:1]"},
         {"CC[*:2]", "Br[*:2]"},
     };
-    */
+    /*
   std::vector<std::string> expectedRows{
       "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
       "Core:c1cc2ccc([*:1])nc2nc1[*:2] R1:F[*:1] R2:Br[*:2]"};
@@ -1699,6 +1695,7 @@ $$$$
       {"CN[*:1]", "F[*:1]"},
       {"CC[*:2]", "Br[*:2]"},
   };
+     */
   std::vector<std::string> expectedLabels{"Core", "R1", "R2"};
 
   RGroupDecompositionParameters params;
@@ -3116,12 +3113,7 @@ void testGithub4505() {
     RGroupRows rows = decomp.getRGroupsAsRows();
     TEST_ASSERT(rows.size() == 1)
     auto row = rows[0];
-    /*
-     * Working on issue Github5613 these core smiles no longer work- however the
-     * replacements are for the same structures
     std::string expected("Core:C1=C([*:1])CCCC1 R1:C[*:1]");
-     */
-    std::string expected("Core:C1CCC([*:1])=CC1 R1:C[*:1]");
     RGroupRows::const_iterator it = rows.begin();
     CHECK_RGROUP(it, expected);
   }
@@ -3171,8 +3163,7 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
         "Core:COC1CCC([*:1])([*:2])CN1 R1:CC[*:1] R2:C[*:2]",
         "Core:COC1CCC([*:1])([*:2])CN1 R1:COC[*:1] R2:C[*:2]",
         "Core:COC1CCC([*:1])([*:2])CN1 R1:CO[*:1] R2:C[*:2]",
-        "Core:COC1CCC([*:1])([*:2])CN1 R1:CCC[*:1] R2:C[*:2]"
-    };
+        "Core:COC1CCC([*:1])([*:2])CN1 R1:CCC[*:1] R2:C[*:2]"};
     TEST_ASSERT(rows.size() == expected.size());
     int i = 0;
     for (auto row = rows.cbegin(); row != rows.cend(); ++row, ++i) {
@@ -3545,6 +3536,7 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
+  testRingMatching2();
   testGithub5613();
   testMultipleGroupsToUnlabelledCoreAtomGithub5573();
   testMultipleGroupsToUnlabelledCoreAtom();
@@ -3559,7 +3551,7 @@ int main() {
   testRemoveHs();
 
   testMatchOnlyAtRgroupHs();
-  testRingMatching2();
+  // testRingMatching2();
   testGitHubIssue1705();
   testGithub2332();
   testSDFGRoupMultiCoreNoneShouldMatch();

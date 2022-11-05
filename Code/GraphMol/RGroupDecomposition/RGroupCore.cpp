@@ -89,24 +89,9 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
       continue;
     } else {
       atomIndicesToKeep.insert(pair.second);
-
-      /*
-      if (queryAtom->getAtomicNum() == 0) {
-        // not sure what happens if the matching target atom is also chiral
-        targetAtom->setNoImplicit(true);
-        auto targetNeighbors = extractedCore->atomNeighbors(targetAtom);
-        const int numHs = std::count_if(
-            targetNeighbors.begin(), targetNeighbors.end(),
-            [](Atom *neighbor) { return neighbor->getAtomicNum() == 1; });
-        targetAtom->setNumExplicitHs(numHs + targetAtom->getTotalNumHs());
-        targetAtom->updatePropertyCache(false);
-      }
-       */
-
       int neighborNumber = -1;
-
-      std::cerr << "Atom Chirality In " << targetAtom->getChiralTag()
-                << std::endl;
+      // std::cerr << "Atom Chirality In " << targetAtom->getChiralTag()
+      //          << std::endl;
       bool isChiral = targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
                       targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW;
 
@@ -179,6 +164,10 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
                 }
                 break;
             }
+            // because this neighbor will be moved at the end of the neighbor
+            // list, we need to decrement the neighbor number in case additional
+            // dummy atoms are to be connected to the targetAtom
+            --neighborNumber;
             if (switchIt) {
               targetAtom->invertChirality();
             }
@@ -188,8 +177,8 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
       for (const int index : hydrogensToAdd) {
         atomIndicesToKeep.insert(index);
       }
-      std::cerr << "Atom Chirality Out " << targetAtom->getChiralTag()
-                << std::endl;
+      // std::cerr << "Atom Chirality Out " << targetAtom->getChiralTag()
+      //          << std::endl;
     }
   }
   for (const auto newBond : newBonds) {
@@ -238,10 +227,12 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
   extractedCore->clearComputedProps(true);
   extractedCore->updatePropertyCache(false);
 
+  /*
   std::cerr << "Extracted core smiles " << MolToSmiles(*extractedCore)
             << std::endl;
   std::cerr << "Extracted core smarts " << MolToSmarts(*extractedCore)
             << std::endl;
+ */
 
   try {
     unsigned int failed;

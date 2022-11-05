@@ -219,6 +219,7 @@ struct RGroupDecompData {
       }
     }
 
+    std::set<int> labelsToErase;
     for (int label : labels) {
       if (label > 0 && !removeAllHydrogenRGroups) {
         continue;
@@ -236,11 +237,31 @@ struct RGroupDecompData {
       }
 
       if (allH) {
+        labelsToErase.insert(label);
         for (auto &position : results) {
           position.rgroups.erase(label);
         }
       }
     }
+
+    for (auto &position: results) {
+      for (auto atom: position.matchedCore->atoms()) {
+        if (int atomLabel; atom->getAtomicNum() == 0 && atom->getPropIfPresent(RLABEL, atomLabel)) {
+          if (labelsToErase.find(atomLabel) != labelsToErase.end()) {
+            atom->setAtomicNum(1);
+            atom->clearProp(RLABEL);
+            if (atom->hasProp(RLABEL_TYPE)) {
+              atom->clearProp(RLABEL_TYPE);
+            }
+            if (atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
+              atom->clearProp(UNLABELED_CORE_ATTACHMENT);
+            }
+            atom->updatePropertyCache(false);
+          }
+        }
+      }
+    }
+
     return results;
   }
 
@@ -390,7 +411,7 @@ struct RGroupDecompData {
       bool sanitize = false;
       MolOps::removeHs(core, implicitOnly, updateExplicitCount, sanitize);
     }
-    
+
     core.updatePropertyCache(false);  // this was github #1550
   }
 
