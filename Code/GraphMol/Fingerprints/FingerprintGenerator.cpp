@@ -117,29 +117,25 @@ std::string FingerprintGenerator<OutputType>::infoString() const {
 template <typename OutputType>
 SparseIntVect<OutputType>
     *FingerprintGenerator<OutputType>::getFingerprintHelper(
-        const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-        const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-        const AdditionalOutput *additionalOutput,
-        const std::vector<std::uint32_t> *customAtomInvariants,
-        const std::vector<std::uint32_t> *customBondInvariants,
+        const ROMol &mol, const FingerprintFuncArguments &args,
         const std::uint64_t fpSize) const {
-  if (additionalOutput) {
-    if (additionalOutput->atomCounts) {
-      additionalOutput->atomCounts->resize(mol.getNumAtoms());
-      std::fill(additionalOutput->atomCounts->begin(),
-                additionalOutput->atomCounts->end(), 0);
+  if (args.additionalOutput) {
+    if (args.additionalOutput->atomCounts) {
+      args.additionalOutput->atomCounts->resize(mol.getNumAtoms());
+      std::fill(args.additionalOutput->atomCounts->begin(),
+                args.additionalOutput->atomCounts->end(), 0);
     }
-    if (additionalOutput->atomToBits) {
-      additionalOutput->atomToBits->resize(mol.getNumAtoms());
-      std::fill(additionalOutput->atomToBits->begin(),
-                additionalOutput->atomToBits->end(),
+    if (args.additionalOutput->atomToBits) {
+      args.additionalOutput->atomToBits->resize(mol.getNumAtoms());
+      std::fill(args.additionalOutput->atomToBits->begin(),
+                args.additionalOutput->atomToBits->end(),
                 std::vector<std::uint64_t>());
     }
-    if (additionalOutput->bitInfoMap) {
-      additionalOutput->bitInfoMap->clear();
+    if (args.additionalOutput->bitInfoMap) {
+      args.additionalOutput->bitInfoMap->clear();
     }
-    if (additionalOutput->bitPaths) {
-      additionalOutput->bitPaths->clear();
+    if (args.additionalOutput->bitPaths) {
+      args.additionalOutput->bitPaths->clear();
     }
   }
   bool hashResults = false;
@@ -148,15 +144,15 @@ SparseIntVect<OutputType>
   }
 
   std::vector<std::uint32_t> *atomInvariants = nullptr;
-  if (customAtomInvariants) {
-    atomInvariants = new std::vector<std::uint32_t>(*customAtomInvariants);
+  if (args.customAtomInvariants) {
+    atomInvariants = new std::vector<std::uint32_t>(*args.customAtomInvariants);
   } else if (dp_atomInvariantsGenerator) {
     atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(mol);
   }
 
   std::vector<std::uint32_t> *bondInvariants = nullptr;
-  if (customBondInvariants) {
-    bondInvariants = new std::vector<std::uint32_t>(*customBondInvariants);
+  if (args.customBondInvariants) {
+    bondInvariants = new std::vector<std::uint32_t>(*args.customBondInvariants);
   } else if (dp_bondInvariantsGenerator) {
     bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(mol);
   }
@@ -165,8 +161,9 @@ SparseIntVect<OutputType>
   // up the fingerprint
   std::vector<AtomEnvironment<OutputType> *> atomEnvironments =
       dp_atomEnvironmentGenerator->getEnvironments(
-          mol, dp_fingerprintArguments, fromAtoms, ignoreAtoms, confId,
-          additionalOutput, atomInvariants, bondInvariants, hashResults);
+          mol, dp_fingerprintArguments, args.fromAtoms, args.ignoreAtoms,
+          args.confId, args.additionalOutput, atomInvariants, bondInvariants,
+          hashResults);
 
   // allocate the result
   SparseIntVect<OutputType> *res = nullptr;
@@ -210,7 +207,7 @@ SparseIntVect<OutputType>
   for (auto it = atomEnvironments.begin(); it != atomEnvironments.end(); it++) {
     OutputType seed =
         (*it)->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
-                        additionalOutput, hashResults, fpSize);
+                        args.additionalOutput, hashResults, fpSize);
 
     auto bitId = seed;
     if (fpSize != 0) {
@@ -243,9 +240,7 @@ template <typename OutputType>
 SparseIntVect<OutputType>
     *FingerprintGenerator<OutputType>::getSparseCountFingerprint(
         const ROMol &mol, const FingerprintFuncArguments &args) const {
-  return getFingerprintHelper(
-      mol, args.fromAtoms, args.ignoreAtoms, args.confId, args.additionalOutput,
-      args.customAtomInvariants, args.customBondInvariants);
+  return getFingerprintHelper(mol, args);
 }
 
 // todo getSparseFingerprint does not completely produce the same output as
@@ -267,9 +262,7 @@ SparseBitVect *FingerprintGenerator<OutputType>::getSparseFingerprint(
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();
   }
 
-  SparseIntVect<OutputType> *tempResult = getFingerprintHelper(
-      mol, args.fromAtoms, args.ignoreAtoms, args.confId, args.additionalOutput,
-      args.customAtomInvariants, args.customBondInvariants);
+  SparseIntVect<OutputType> *tempResult = getFingerprintHelper(mol, args);
 
   auto *result = new SparseBitVect(resultSize);
 
@@ -298,10 +291,8 @@ template <typename OutputType>
 SparseIntVect<std::uint32_t>
     *FingerprintGenerator<OutputType>::getCountFingerprint(
         const ROMol &mol, const FingerprintFuncArguments &args) const {
-  SparseIntVect<OutputType> *tempResult = getFingerprintHelper(
-      mol, args.fromAtoms, args.ignoreAtoms, args.confId, args.additionalOutput,
-      args.customAtomInvariants, args.customBondInvariants,
-      dp_fingerprintArguments->d_fpSize);
+  SparseIntVect<OutputType> *tempResult =
+      getFingerprintHelper(mol, args, dp_fingerprintArguments->d_fpSize);
 
   auto *result =
       new SparseIntVect<std::uint32_t>(dp_fingerprintArguments->d_fpSize);
@@ -322,9 +313,8 @@ ExplicitBitVect *FingerprintGenerator<OutputType>::getFingerprint(
     // count simulation
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();
   }
-  SparseIntVect<OutputType> *tempResult = getFingerprintHelper(
-      mol, args.fromAtoms, args.ignoreAtoms, args.confId, args.additionalOutput,
-      args.customAtomInvariants, args.customBondInvariants, effectiveSize);
+  SparseIntVect<OutputType> *tempResult =
+      getFingerprintHelper(mol, args, effectiveSize);
 
   auto *result = new ExplicitBitVect(dp_fingerprintArguments->d_fpSize);
   for (auto val : tempResult->getNonzeroElements()) {

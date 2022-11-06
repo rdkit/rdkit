@@ -300,11 +300,7 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
   const bool df_ownsBondInvGenerator;
 
   SparseIntVect<OutputType> *getFingerprintHelper(
-      const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
-      const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
-      const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
-      const std::vector<std::uint32_t> *customBondInvariants = nullptr,
+      const ROMol &mol, const FingerprintFuncArguments &args,
       const std::uint64_t fpSize = 0) const;
 
  public:
