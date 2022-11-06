@@ -242,14 +242,10 @@ SparseIntVect<OutputType>
 template <typename OutputType>
 SparseIntVect<OutputType>
     *FingerprintGenerator<OutputType>::getSparseCountFingerprint(
-        const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-        const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-        const AdditionalOutput *additionalOutput,
-        const std::vector<std::uint32_t> *customAtomInvariants,
-        const std::vector<std::uint32_t> *customBondInvariants) const {
-  return getFingerprintHelper(mol, fromAtoms, ignoreAtoms, confId,
-                              additionalOutput, customAtomInvariants,
-                              customBondInvariants);
+        const ROMol &mol, const FingerprintFuncArguments &args) const {
+  return getFingerprintHelper(
+      mol, args.fromAtoms, args.ignoreAtoms, args.confId, args.additionalOutput,
+      args.customAtomInvariants, args.customBondInvariants);
 }
 
 // todo getSparseFingerprint does not completely produce the same output as
@@ -258,11 +254,7 @@ SparseIntVect<OutputType>
 // changed if there is another way to avoid the size limitation of SparseBitVect
 template <typename OutputType>
 SparseBitVect *FingerprintGenerator<OutputType>::getSparseFingerprint(
-    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
-    const std::vector<std::uint32_t> *customAtomInvariants,
-    const std::vector<std::uint32_t> *customBondInvariants) const {
+    const ROMol &mol, const FingerprintFuncArguments &args) const {
   // make sure the result will fit into SparseBitVect
   std::uint32_t resultSize =
       std::min((std::uint64_t)std::numeric_limits<std::uint32_t>::max(),
@@ -276,8 +268,8 @@ SparseBitVect *FingerprintGenerator<OutputType>::getSparseFingerprint(
   }
 
   SparseIntVect<OutputType> *tempResult = getFingerprintHelper(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants, effectiveSize);
+      mol, args.fromAtoms, args.ignoreAtoms, args.confId, args.additionalOutput,
+      args.customAtomInvariants, args.customBondInvariants);
 
   auto *result = new SparseBitVect(resultSize);
 
@@ -305,14 +297,10 @@ SparseBitVect *FingerprintGenerator<OutputType>::getSparseFingerprint(
 template <typename OutputType>
 SparseIntVect<std::uint32_t>
     *FingerprintGenerator<OutputType>::getCountFingerprint(
-        const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-        const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-        const AdditionalOutput *additionalOutput,
-        const std::vector<std::uint32_t> *customAtomInvariants,
-        const std::vector<std::uint32_t> *customBondInvariants) const {
+        const ROMol &mol, const FingerprintFuncArguments &args) const {
   SparseIntVect<OutputType> *tempResult = getFingerprintHelper(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants,
+      mol, args.fromAtoms, args.ignoreAtoms, args.confId, args.additionalOutput,
+      args.customAtomInvariants, args.customBondInvariants,
       dp_fingerprintArguments->d_fpSize);
 
   auto *result =
@@ -327,11 +315,7 @@ SparseIntVect<std::uint32_t>
 
 template <typename OutputType>
 ExplicitBitVect *FingerprintGenerator<OutputType>::getFingerprint(
-    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
-    const std::vector<std::uint32_t> *customAtomInvariants,
-    const std::vector<std::uint32_t> *customBondInvariants) const {
+    const ROMol &mol, const FingerprintFuncArguments &args) const {
   std::uint32_t effectiveSize = dp_fingerprintArguments->d_fpSize;
   if (dp_fingerprintArguments->d_countSimulation) {
     // effective size needs to be smaller than result size to compansate for
@@ -339,8 +323,8 @@ ExplicitBitVect *FingerprintGenerator<OutputType>::getFingerprint(
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();
   }
   SparseIntVect<OutputType> *tempResult = getFingerprintHelper(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants, effectiveSize);
+      mol, args.fromAtoms, args.ignoreAtoms, args.confId, args.additionalOutput,
+      args.customAtomInvariants, args.customBondInvariants, effectiveSize);
 
   auto *result = new ExplicitBitVect(dp_fingerprintArguments->d_fpSize);
   for (auto val : tempResult->getNonzeroElements()) {
@@ -366,67 +350,35 @@ ExplicitBitVect *FingerprintGenerator<OutputType>::getFingerprint(
 
 template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t>
     *FingerprintGenerator<std::uint32_t>::getSparseCountFingerprint(
-        const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-        const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-        const AdditionalOutput *additionalOutput,
-        const std::vector<std::uint32_t> *customAtomInvariants,
-        const std::vector<std::uint32_t> *customBondInvariants) const;
+        const ROMol &mol, const FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint64_t>
     *FingerprintGenerator<std::uint64_t>::getSparseCountFingerprint(
-        const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-        const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-        const AdditionalOutput *additionalOutput,
-        const std::vector<std::uint32_t> *customAtomInvariants,
-        const std::vector<std::uint32_t> *customBondInvariants) const;
+        const ROMol &mol, const FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT SparseBitVect *
 FingerprintGenerator<std::uint32_t>::getSparseFingerprint(
-    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
-    const std::vector<std::uint32_t> *customAtomInvariants,
-    const std::vector<std::uint32_t> *customBondInvariants) const;
+    const ROMol &mol, const FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT SparseBitVect *
 FingerprintGenerator<std::uint64_t>::getSparseFingerprint(
-    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
-    const std::vector<std::uint32_t> *customAtomInvariants,
-    const std::vector<std::uint32_t> *customBondInvariants) const;
+    const ROMol &mol, const FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t>
     *FingerprintGenerator<std::uint32_t>::getCountFingerprint(
-        const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-        const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-        const AdditionalOutput *additionalOutput,
-        const std::vector<std::uint32_t> *customAtomInvariants,
-        const std::vector<std::uint32_t> *customBondInvariants) const;
+        const ROMol &mol, const FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t>
     *FingerprintGenerator<std::uint64_t>::getCountFingerprint(
-        const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-        const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-        const AdditionalOutput *additionalOutput,
-        const std::vector<std::uint32_t> *customAtomInvariants,
-        const std::vector<std::uint32_t> *customBondInvariants) const;
+        const ROMol &mol, const FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 FingerprintGenerator<std::uint32_t>::getFingerprint(
-    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
-    const std::vector<std::uint32_t> *customAtomInvariants,
-    const std::vector<std::uint32_t> *customBondInvariants) const;
+    const ROMol &mol, const FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 FingerprintGenerator<std::uint64_t>::getFingerprint(
-    const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms,
-    const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
-    const AdditionalOutput *additionalOutput,
-    const std::vector<std::uint32_t> *customAtomInvariants,
-    const std::vector<std::uint32_t> *customBondInvariants) const;
+    const ROMol &mol, const FingerprintFuncArguments &args) const;
 
 SparseIntVect<std::uint64_t> *getSparseCountFP(const ROMol &mol,
                                                FPType fPType) {
