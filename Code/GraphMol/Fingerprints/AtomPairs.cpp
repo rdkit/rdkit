@@ -153,8 +153,7 @@ SparseIntVect<std::int32_t> *getHashedAtomPairFingerprint(
   args.ignoreAtoms = ignoreAtoms;
   args.customAtomInvariants = atomInvariants;
   args.confId = confId;
-  std::unique_ptr<SparseIntVect<std::uint32_t>> siv(
-      fpgen->getCountFingerprint(*lmol, args));
+  auto siv = fpgen->getCountFingerprint(*lmol, args);
   auto *res = new SparseIntVect<std::int32_t>(nBits);
   for (auto v : siv->getNonzeroElements()) {
     res->setVal(v.first, v.second);
@@ -331,8 +330,7 @@ void TorsionFpCalc(T *res, const ROMol &mol, unsigned int nBits,
   args.fromAtoms = fromAtoms;
   args.ignoreAtoms = ignoreAtoms;
   args.customAtomInvariants = atomInvariants;
-  std::unique_ptr<SparseIntVect<std::uint32_t>> siv(
-      fpgen->getCountFingerprint(*lmol, args));
+  auto siv = fpgen->getCountFingerprint(*lmol, args);
   for (auto v : siv->getNonzeroElements()) {
     res->setVal(v.first, v.second);
   }

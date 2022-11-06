@@ -2008,7 +2008,7 @@ void testPairsAndTorsionsOptions() {
   {
     FingerprintGenerator<std::uint64_t> *generator =
         TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-            false, 4, nullptr, true, {1, 2, 4, 8}, 1024);
+            false, 4, nullptr, true, 1024, {1, 2, 4, 8});
     std::string smi = "C1=CC=CC=C1";
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
@@ -2037,7 +2037,7 @@ void testPairsAndTorsionsOptions() {
   {
     FingerprintGenerator<std::uint64_t> *generator =
         TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-            false, 4, nullptr, true, {1, 2, 4, 8}, 1024);
+            false, 4, nullptr, true, 1024, {1, 2, 4, 8});
     std::string smi = "C1=CC=CC=C1";
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
@@ -2076,10 +2076,10 @@ void testChiralTorsions() {
   // 4000 size
   FingerprintGenerator<std::uint64_t> *generator =
       TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-          false, 4, nullptr, true, {1, 2, 4, 8}, 4096);
+          false, 4, nullptr, true, 4096, {1, 2, 4, 8});
   FingerprintGenerator<std::uint64_t> *generatorChirality =
       TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-          true, 4, nullptr, true, {1, 2, 4, 8}, 4096);
+          true, 4, nullptr, true, 4096, {1, 2, 4, 8});
 
   ROMol *m1, *m2, *m3;
 
@@ -2201,7 +2201,7 @@ void testGitHubIssue25() {
   {
     FingerprintGenerator<std::uint64_t> *generator =
         TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-            false, 4, nullptr, true, {1, 2, 4, 8}, 1000);
+            false, 4, nullptr, true, 1000, {1, 2, 4, 8});
     ROMol *m1 = SmilesToMol("CCCCO");
     TEST_ASSERT(m1);
     SparseIntVect<std::uint32_t> *fp1;

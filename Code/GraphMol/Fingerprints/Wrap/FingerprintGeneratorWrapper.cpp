@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -108,14 +108,15 @@ SparseIntVect<OutputType> *getSparseCountFingerprint(
     additionalOutput = python::extract<AdditionalOutput *>(py_additionalOutput);
   }
 
-  SparseIntVect<OutputType> *result = fpGen->getSparseCountFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants);
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+  auto result = fpGen->getSparseCountFingerprint(mol, args);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
-  return result;
+  return result.release();
 }
 
 template <typename OutputType>
@@ -136,14 +137,15 @@ SparseBitVect *getSparseFingerprint(
     additionalOutput = python::extract<AdditionalOutput *>(py_additionalOutput);
   }
 
-  SparseBitVect *result = fpGen->getSparseFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants);
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+  auto result = fpGen->getSparseFingerprint(mol, args);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
-  return result;
+  return result.release();
 }
 
 template <typename OutputType>
@@ -164,14 +166,15 @@ SparseIntVect<std::uint32_t> *getCountFingerprint(
     additionalOutput = python::extract<AdditionalOutput *>(py_additionalOutput);
   }
 
-  SparseIntVect<std::uint32_t> *result = fpGen->getCountFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants);
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+  auto result = fpGen->getCountFingerprint(mol, args);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
-  return result;
+  return result.release();
 }
 
 template <typename OutputType>
@@ -193,14 +196,15 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
     additionalOutput = python::extract<AdditionalOutput *>(py_additionalOutput);
   }
 
-  ExplicitBitVect *result = fpGen->getFingerprint(
-      mol, fromAtoms, ignoreAtoms, confId, additionalOutput,
-      customAtomInvariants, customBondInvariants);
+  FingerprintFuncArguments args(fromAtoms, ignoreAtoms, confId,
+                                additionalOutput, customAtomInvariants,
+                                customBondInvariants);
+  auto result = fpGen->getFingerprint(mol, args);
 
   delete fromAtoms;
   delete ignoreAtoms;
 
-  return result;
+  return result.release();
 }
 
 template <typename OutputType>
