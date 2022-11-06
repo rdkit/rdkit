@@ -270,6 +270,7 @@ struct FingerprintFuncArguments {
   const AdditionalOutput *additionalOutput = nullptr;
   const std::vector<std::uint32_t> *customAtomInvariants = nullptr;
   const std::vector<std::uint32_t> *customBondInvariants = nullptr;
+  FingerprintFuncArguments() = default;
   FingerprintFuncArguments(
       const std::vector<std::uint32_t> *fromAtoms_arg,
       const std::vector<std::uint32_t> *ignoreAtoms_arg, int confId_arg,

@@ -168,10 +168,10 @@ std::string TopologicalTorsionEnvGenerator<OutputType>::infoString() const {
 
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
-    const bool includeChirality, const uint32_t torsionAtomCount,
-    AtomInvariantsGenerator *atomInvariantsGenerator,
-    const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    const std::uint32_t fpSize, const bool ownsAtomInvGen) {
+    bool includeChirality, uint32_t torsionAtomCount,
+    AtomInvariantsGenerator *atomInvariantsGenerator, bool countSimulation,
+    std::uint32_t fpSize, std::vector<std::uint32_t> countBounds,
+    bool ownsAtomInvGen) {
   auto *envGenerator = new TopologicalTorsionEnvGenerator<OutputType>();
 
   auto *arguments = new TopologicalTorsionArguments<OutputType>(
@@ -192,13 +192,11 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
 // Topological torsion fingerprint does not support 32 bit output yet
 
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
-getTopologicalTorsionGenerator(const bool includeChirality,
-                               const uint32_t torsionAtomCount,
+getTopologicalTorsionGenerator(bool includeChirality, uint32_t torsionAtomCount,
                                AtomInvariantsGenerator *atomInvariantsGenerator,
-                               const bool countSimulation,
-                               const std::vector<std::uint32_t> countBounds,
-                               const std::uint32_t fpSize,
-                               const bool ownsAtomInvGen);
+                               bool countSimulation, std::uint32_t fpSize,
+                               std::vector<std::uint32_t> countBounds,
+                               bool ownsAtomInvGen);
 
 }  // namespace TopologicalTorsion
 }  // namespace RDKit
