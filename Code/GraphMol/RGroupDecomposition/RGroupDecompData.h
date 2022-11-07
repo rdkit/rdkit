@@ -248,6 +248,9 @@ struct RGroupDecompData {
       for (auto atom : position.matchedCore->atoms()) {
         if (int atomLabel; atom->getAtomicNum() == 0 &&
                            atom->getPropIfPresent(RLABEL, atomLabel)) {
+          if (atomLabel > 0 && !params.removeAllHydrogenRGroupsAndLabels) {
+            continue;
+          }
           if (labelsToErase.find(atomLabel) != labelsToErase.end()) {
             atom->setAtomicNum(1);
             atom->clearProp(RLABEL);
@@ -371,6 +374,12 @@ struct RGroupDecompData {
         if (match != nullptr) {
           addNew = !replaceHydrogenCoreDummy(*match, core, *atom, userLabel,
                                              userLabel);
+          // If we can't replace a hydrogen only add the dummy if it exists in
+          // the decomp This is unexpected.
+          if (addNew &&
+              match->rgroups.find(userLabel) == match->rgroups.end()) {
+            addNew = false;
+          }
         }
         if (addNew) {
           auto *newAt = new Atom(0);
@@ -407,6 +416,11 @@ struct RGroupDecompData {
         if (match != nullptr) {
           addNew =
               !replaceHydrogenCoreDummy(*match, core, *atom, newLabel, rlabel);
+          // If we can't replace a hydrogen only add the dummy if it exists in
+          // the decomp This is unexpected.
+          if (addNew && match->rgroups.find(newLabel) == match->rgroups.end()) {
+            addNew = false;
+          }
         }
         if (addNew) {
           auto *newAt = new Atom(0);
@@ -597,12 +611,16 @@ struct RGroupDecompData {
       for (auto &rgroup : it.rgroups) {
         relabelRGroup(*rgroup.second, finalRlabelMapping);
       }
+#ifdef VERBOSE
       std::cerr << "relabel core mol1 " << MolToSmiles(*it.matchedCore)
                 << std::endl;
+#endif
       relabelCore(*it.matchedCore, finalRlabelMapping, used_labels, indexLabels,
                   extraAtomRLabels, &it);
+#ifdef VERBOSE
       std::cerr << "relabel core mol2 " << MolToSmiles(*it.matchedCore)
                 << std::endl;
+#endif
     }
 
     std::set<int> uniqueMappedValues;

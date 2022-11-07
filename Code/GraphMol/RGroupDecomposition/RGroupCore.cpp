@@ -90,8 +90,10 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
     } else {
       atomIndicesToKeep.insert(pair.second);
       int neighborNumber = -1;
-      // std::cerr << "Atom Chirality In " << targetAtom->getChiralTag()
-      //          << std::endl;
+#ifdef VERBOSE
+      std::cerr << "Atom Chirality In " << targetAtom->getChiralTag()
+                << std::endl;
+#endif
       bool isChiral = targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
                       targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW;
 
@@ -102,12 +104,12 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
       }
       // explicit hydrogens to keep in extracted core to preserve chiralty
       std::vector<int> hydrogensToAdd;
-      for (auto targetNeighborAtom : targetNeighborAtoms) {
+      for (const auto targetNeighborAtom : targetNeighborAtoms) {
         ++neighborNumber;
         auto targetNeighborIndex = targetNeighborAtom->getIdx();
         auto queryNeighborMapping = std::find_if(
             match.begin(), match.end(),
-            [this, targetNeighborIndex, pair](const std::pair<int, int> &p) {
+            [this, targetNeighborIndex, pair](const auto &p) {
               return p.second == static_cast<int>(targetNeighborIndex) &&
                      core->getBondBetweenAtoms(pair.first, p.first);
             });
@@ -115,12 +117,15 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
           if (targetNeighborAtom->getAtomicNum() == 1) {
             // Hydrogen needed to define chirality is present in target but
             // not mapped to core.  Copy it to the extracted core
-            hydrogensToAdd.push_back(targetNeighborIndex);
+            hydrogensToAdd.push_back(static_cast<int>(targetNeighborIndex));
           } else if (isChiral) {
             // There is a heavy sidechain in the decomp that is connected to
             // the core by an unknown bond (onlyMatchAtRGroups = False and
-            // allowMultipleRGroupsOnUnlabelled = False).  This makes the
-            // chirality undefined
+            // allowMultipleRGroupsOnUnlabelled = False).
+            // As there is no explicit target bond chriality is not preserved.
+            // In some cases we could handle chirality, but that has not been
+            // implemented (if there is only one free bond on the query that
+            // would be easy- or we could arbitrarily assign bonds).
             isChiral = false;
             targetAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
           }
@@ -177,8 +182,10 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
       for (const int index : hydrogensToAdd) {
         atomIndicesToKeep.insert(index);
       }
-      // std::cerr << "Atom Chirality Out " << targetAtom->getChiralTag()
-      //          << std::endl;
+#ifdef VERBOSE
+      std::cerr << "Atom Chirality Out " << targetAtom->getChiralTag()
+                << std::endl;
+#endif
     }
   }
   for (const auto newBond : newBonds) {
@@ -198,12 +205,13 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
 
   // Copy molecule coordinates to extracted core
   updateSubMolConfs(mol, *extractedCore, removedAtoms);
+
   for (auto citer = mol.beginConformers(); citer != mol.endConformers();
        ++citer) {
-    Conformer &newConf = extractedCore->getConformer((*citer)->getId());
-    for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end(); ++iter) {
-      newConf.setAtomPos(iter->first->getIdx(),
-                         (*citer)->getAtomPos(iter->second));
+    Conformer &newConf =
+        extractedCore->getConformer(static_cast<int>((*citer)->getId()));
+    for (const auto &[fst, snd] : dummyAtomMap) {
+      newConf.setAtomPos(fst->getIdx(), (*citer)->getAtomPos(snd));
     }
   }
 
@@ -215,8 +223,8 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
       const auto newConf = new Conformer(mol.getNumAtoms());
       newConf->setId((*citer)->getId());
       newConf->set3D((*citer)->is3D());
-      for (const auto &pair : match) {
-        newConf->setAtomPos(pair.second, (*citer)->getAtomPos(pair.first));
+      for (const auto &[fst, snd] : match) {
+        newConf->setAtomPos(snd, (*citer)->getAtomPos(fst));
       }
       molCopy.addConformer(newConf);
     }
@@ -227,10 +235,12 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
   extractedCore->clearComputedProps(true);
   extractedCore->updatePropertyCache(false);
 
+#ifdef VERBOSE
   std::cerr << "Extracted core smiles " << MolToSmiles(*extractedCore)
             << std::endl;
   std::cerr << "Extracted core smarts " << MolToSmarts(*extractedCore)
             << std::endl;
+#endif
 
   try {
     unsigned int failed;
@@ -238,7 +248,6 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
                         MolOps::SANITIZE_SYMMRINGS | MolOps::SANITIZE_CLEANUP);
   } catch (const MolSanitizeException &) {
   }
-  // MolOps::removeAllHs(*extractedCore, false);
   return extractedCore;
 }
 
@@ -487,9 +496,6 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
                                          return symmetricHydrogens.find(idx) ==
                                                 symmetricHydrogens.end();
                                        });
-          if (hydrogen == available.end()) {
-            std::cerr << "hello" << std::endl;
-          }
           int singleHydrogen =
               hydrogen == available.end() ? *available.begin() : *hydrogen;
           std::vector<int> hydrogenVec{singleHydrogen};

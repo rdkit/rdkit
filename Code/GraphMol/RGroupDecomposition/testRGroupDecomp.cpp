@@ -75,8 +75,6 @@ void CHECK_RGROUP(RGroupRows::const_iterator &it, const std::string &expected,
     }
     // rlabel:smiles
     str << rgroups->first << ":" << MolToSmiles(*rgroups->second.get());
-    std::cerr << rgroups->first << ":" << MolToSmarts(*rgroups->second.get())
-              << std::endl;
   }
   std::string result = str.str();
 
@@ -1669,26 +1667,26 @@ $$$$
     cores.emplace_back(sdsup.next());
   }
 
-    std::vector<std::string> expectedRows{
-        "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
-        "Core:c1cc2ccc([*:2])nc2nc1[*:1] R1:F[*:1] R2:Br[*:2]"};
-
-    std::vector<std::vector<std::string>> expectedItems{
-        {"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:2])nc2nc1[*:1]"},
-        {"CN[*:1]", "F[*:1]"},
-        {"CC[*:2]", "Br[*:2]"},
-    };
-    /*
   std::vector<std::string> expectedRows{
       "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
-      "Core:c1cc2ccc([*:1])nc2nc1[*:2] R1:F[*:1] R2:Br[*:2]"};
+      "Core:c1cc2ccc([*:2])nc2nc1[*:1] R1:F[*:1] R2:Br[*:2]"};
 
   std::vector<std::vector<std::string>> expectedItems{
-      {"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:1])nc2nc1[*:2]"},
+      {"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:2])nc2nc1[*:1]"},
       {"CN[*:1]", "F[*:1]"},
       {"CC[*:2]", "Br[*:2]"},
   };
-     */
+  /*
+std::vector<std::string> expectedRows{
+    "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
+    "Core:c1cc2ccc([*:1])nc2nc1[*:2] R1:F[*:1] R2:Br[*:2]"};
+
+std::vector<std::vector<std::string>> expectedItems{
+    {"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:1])nc2nc1[*:2]"},
+    {"CN[*:1]", "F[*:1]"},
+    {"CC[*:2]", "Br[*:2]"},
+};
+   */
   std::vector<std::string> expectedLabels{"Core", "R1", "R2"};
 
   RGroupDecompositionParameters params;
@@ -3115,7 +3113,24 @@ void testGithub4505() {
 void testMultipleGroupsToUnlabelledCoreAtom() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
-  BOOST_LOG(rdInfoLog) << "Test unlabelled core atom issues" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Test unlabeled core atom issues" << std::endl;
+  {
+    // Sulfonamide example
+    auto core = "[#6]-1-[#6]-[#6]-[#6]-[#7]-[#16]-1"_smarts;
+    auto mol = "O=S1(=O)CCCCN1"_smiles;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected("Core:C1CCS(=[*:1])(=[*:2])NC1 R1:O=[*:1] R2:O=[*:2]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+  }
   {
     // Smiles/smarts version of github 5573
     auto core = "[#6]-[#8]-[#6]-1-[#6]-[#6]-[#6]-[#6]-[#7]-1"_smarts;
@@ -3224,13 +3239,13 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
 }
 
 void testGithub5613() {
-  /*
   {
-    // Check core with terminal wildcard - dummy atom labels allowed
+    // Original issue from 5613
     auto core = "[*:1]C(=O)NC1CCN([*:3])C1"_smarts;
     auto mol =
         "Cc1c(c(c([nH]1)C(=O)N[C@H]2CCN(C2)c3cc(nc(n3)Cl)C(=O)O)Cl)Cl"_smiles;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = false;
     RGroupDecomposition decomp(*core, params);
     auto result = decomp.add(*mol);
     TEST_ASSERT(result == 0)
@@ -3239,16 +3254,12 @@ void testGithub5613() {
     TEST_ASSERT(rows.size() == 1)
     auto row = rows[0];
     std::string expected(
-        "Core:C1CC([*:2])([*:3])CNC1O[*:1] R1:C[*:1] R2:C[*:2] R3:C[*:3]");
+        "Core:O=C(N[C@H]1CCN([*:3])C1)[*:1] "
+        "R1:Cc1[nH]c([*:1])c(Cl)c1Cl "
+        "R3:O=C(O)c1cc([*:3])nc(Cl)n1");
     RGroupRows::const_iterator it = rows.begin();
-
-    auto rdgCore = rows[0]["Core"];
-    std::cerr << "Core smarts " << MolToSmarts(*rdgCore) << std::endl;
-    std::cerr << "Core smiles " << MolToSmiles(*rdgCore) << std::endl;
-
-    // CHECK_RGROUP(it, expected);
+    CHECK_RGROUP(it, expected);
   }
-  */
   {
     auto core = "[1*]C(=O)*C1~C~C~*([3*])~*~C~1[2*]"_smarts;
     auto mol =
@@ -3263,14 +3274,31 @@ void testGithub5613() {
     TEST_ASSERT(rows.size() == 1)
     auto row = rows[0];
     std::string expected(
-        "Core:C1CC([*:2])([*:3])CNC1O[*:1] R1:C[*:1] R2:C[*:2] R3:C[*:3]");
+        "Core:O=C(N[C@@H]1CCN([*:3])C[C@@H]1[*:2])[*:1] "
+        "R1:Cc1[nH]c([*:1])c(Cl)c1Cl R2:CO[*:2] "
+        "R3:CN1CCN(CCOc2cnc(-c3nc([*:3])sc3C(=O)O)cn2)CC1");
     RGroupRows::const_iterator it = rows.begin();
-
-    auto rdgCore = rows[0]["Core"];
-    std::cerr << "Core smarts " << MolToSmarts(*rdgCore) << std::endl;
-    std::cerr << "Core smiles " << MolToSmiles(*rdgCore) << std::endl;
-
-    // CHECK_RGROUP(it, expected);
+    CHECK_RGROUP(it, expected);
+  }
+  {
+    auto core = "C(=O)*C1~C~C~*~*~C~1"_smarts;
+    auto mol =
+        "CO[C@H]1CN(c2nc(-c3cnc(OCCN4CCN(C)CC4)cn3)c(C(=O)O)s2)CC[C@H]1NC(=O)c1[nH]c(C)c(Cl)c1Cl"_smiles;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected(
+        "Core:O=C(N[C@@H]1CCN([*:1])C[C@@H]1[*:2])[*:3] "
+        "R1:CN1CCN(CCOc2cnc(-c3nc([*:1])sc3C(=O)O)cn2)CC1 "
+        "R2:CO[*:2] R3:Cc1[nH]c([*:3])c(Cl)c1Cl");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
   }
 }
 
@@ -3529,8 +3557,9 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
+  testDoNotChooseUnrelatedCores();
   testGithub5613();
-  testMultipleGroupsToUnlabelledCoreAtomGithub5573();
+  // testMultipleGroupsToUnlabelledCoreAtomGithub5573();
   testMultipleGroupsToUnlabelledCoreAtom();
 #if 1
   testSymmetryMatching(FingerprintVariance);

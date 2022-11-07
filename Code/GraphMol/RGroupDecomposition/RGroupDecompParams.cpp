@@ -266,14 +266,14 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     //  we have used (note that these are negative since they are
     //  potential rgroups and haven't been assigned yet)
     if (!found && (autoLabels & AtomIndexLabels)) {
-      if (!allowMultipleRGroupsOnUnlabelled ||
-          atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
-        if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
-                     relabel, Labelling::INDEX_LABELS)) {
-          nextOffset++;
-        }
-        found = true;
+      // we should not need these on (non r group) core atoms when
+      // allowMultipleRGroupsOnUnlabelled is set, but it is useful in case
+      // insufficient dummy groups are added to the core
+      if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
+                   relabel, Labelling::INDEX_LABELS)) {
+        nextOffset++;
       }
+      found = true;
     }
 
     clearInputLabels(atom);
@@ -336,28 +336,22 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     if (atom->getAtomicNum() == 0) {
       dummiesToAdd = maxNumDummies;
     } else {
-      bool hasQueryBonds = false;
       double bondOrder = 0;
       for (const auto bond : core.atomBonds(atom)) {
         auto contrib = bond->getValenceContrib(atom);
         if (contrib == 0.0 && bond->hasQuery()) {
-          hasQueryBonds = true;
           contrib = 1.0;
         }
         bondOrder += contrib;
       }
 
-      if (hasQueryBonds) {
-        auto valances =
-            PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
-        auto valence = *std::max_element(valances.begin(), valances.end());
-        // round up aromatic contributions
-        dummiesToAdd = valence - (int)(bondOrder + .51);
-        if (dummiesToAdd > maxNumDummies) {
-          dummiesToAdd = maxNumDummies;
-        }
-      } else {
-        dummiesToAdd = atom->getImplicitValence();
+      auto valances =
+          PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+      auto valence = *std::max_element(valances.begin(), valances.end());
+      // round up aromatic contributions
+      dummiesToAdd = valence - (int)(bondOrder + .51);
+      if (dummiesToAdd > maxNumDummies) {
+        dummiesToAdd = maxNumDummies;
       }
     }
 
