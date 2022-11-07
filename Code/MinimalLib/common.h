@@ -67,6 +67,20 @@
 #pragma GCC diagnostic pop
 #endif
 #endif
+
+#define GET_JSON_VALUE(doc, key, type)                                     \
+  const auto key##It = doc.FindMember(#key);                               \
+  if (key##It != doc.MemberEnd()) {                                        \
+    if (!key##It->value.Is##type()) {                                      \
+      return "JSON contains '" #key "' field, but its type is not '" #type \
+             "'";                                                          \
+    }                                                                      \
+    key = key##It->value.Get##type();                                      \
+  }
+
+#define GET_JSON_VALUE_WITH_DEFAULT(doc, key, type, defaultValue) \
+  GET_JSON_VALUE(doc, key, type) else key = defaultValue;
+
 namespace rj = rapidjson;
 
 namespace RDKit {
@@ -341,95 +355,16 @@ std::string process_details(rj::Document &doc, const std::string &details,
     return problems;
   }
 
-  const auto widthIt = doc.FindMember("width");
-  if (widthIt != doc.MemberEnd()) {
-    if (!widthIt->value.IsInt()) {
-      return "JSON contains 'width' field, but it is not an int";
-    }
-    width = widthIt->value.GetInt();
-  }
-
-  const auto heightIt = doc.FindMember("height");
-  if (heightIt != doc.MemberEnd()) {
-    if (!heightIt->value.IsInt()) {
-      return "JSON contains 'height' field, but it is not an int";
-    }
-    height = heightIt->value.GetInt();
-  }
-
-  const auto offsetxIt = doc.FindMember("offsetx");
-  if (offsetxIt != doc.MemberEnd()) {
-    if (!offsetxIt->value.IsInt()) {
-      return "JSON contains 'offsetx' field, but it is not an int";
-    }
-    offsetx = offsetxIt->value.GetInt();
-  }
-
-  const auto offsetyIt = doc.FindMember("offsety");
-  if (offsetyIt != doc.MemberEnd()) {
-    if (!offsetyIt->value.IsInt()) {
-      return "JSON contains 'offsety' field, but it is not an int";
-    }
-    offsety = offsetyIt->value.GetInt();
-  }
-
-  const auto legendIt = doc.FindMember("legend");
-  if (legendIt != doc.MemberEnd()) {
-    if (!legendIt->value.IsString()) {
-      return "JSON contains 'legend' field, but it is not a string";
-    }
-    legend = legendIt->value.GetString();
-  }
-
-  const auto kekulizeIt = doc.FindMember("kekulize");
-  if (kekulizeIt != doc.MemberEnd()) {
-    if (!kekulizeIt->value.IsBool()) {
-      return "JSON contains 'kekulize' field, but it is not a bool";
-    }
-    kekulize = kekulizeIt->value.GetBool();
-  } else {
-    kekulize = true;
-  }
-
-  const auto addChiralHsIt = doc.FindMember("addChiralHs");
-  if (addChiralHsIt != doc.MemberEnd()) {
-    if (!addChiralHsIt->value.IsBool()) {
-      return "JSON contains 'addChiralHs' field, but it is not a bool";
-    }
-    addChiralHs = addChiralHsIt->value.GetBool();
-  } else {
-    addChiralHs = true;
-  }
-
-  const auto wedgeBondsIt = doc.FindMember("wedgeBonds");
-  if (wedgeBondsIt != doc.MemberEnd()) {
-    if (!wedgeBondsIt->value.IsBool()) {
-      return "JSON contains 'wedgeBonds' field, but it is not a bool";
-    }
-    wedgeBonds = wedgeBondsIt->value.GetBool();
-  } else {
-    wedgeBonds = true;
-  }
-
-  const auto forceCoordsIt = doc.FindMember("forceCoords");
-  if (forceCoordsIt != doc.MemberEnd()) {
-    if (!forceCoordsIt->value.IsBool()) {
-      return "JSON contains 'forceCoords' field, but it is not a bool";
-    }
-    forceCoords = forceCoordsIt->value.GetBool();
-  } else {
-    forceCoords = false;
-  }
-
-  const auto wavyBondsIt = doc.FindMember("wavyBonds");
-  if (wavyBondsIt != doc.MemberEnd()) {
-    if (!wavyBondsIt->value.IsBool()) {
-      return "JSON contains 'wavyBonds' field, but it is not a bool";
-    }
-    wavyBonds = wavyBondsIt->value.GetBool();
-  } else {
-    wavyBonds = false;
-  }
+  GET_JSON_VALUE(doc, width, Int)
+  GET_JSON_VALUE(doc, height, Int)
+  GET_JSON_VALUE(doc, offsetx, Int)
+  GET_JSON_VALUE(doc, offsety, Int)
+  GET_JSON_VALUE(doc, legend, String)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, kekulize, Bool, true)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, addChiralHs, Bool, true)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, wedgeBonds, Bool, true)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, forceCoords, Bool, false)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, wavyBonds, Bool, false)
 
   return "";
 }
@@ -494,15 +429,7 @@ std::string process_rxn_details(
   if (!problems.empty()) {
     return problems;
   }
-  auto highlightByReactantIt = doc.FindMember("highlightByReactant");
-  if (highlightByReactantIt != doc.MemberEnd()) {
-    if (!highlightByReactantIt->value.IsBool()) {
-      return "JSON contains 'highlightByReactant' field, but it is not a bool";
-    }
-    highlightByReactant = highlightByReactantIt->value.GetBool();
-  } else {
-    highlightByReactant = false;
-  }
+  GET_JSON_VALUE_WITH_DEFAULT(doc, highlightByReactant, Bool, false)
   auto highlightColorsReactantsIt = doc.FindMember("highlightColorsReactants");
   if (highlightColorsReactantsIt != doc.MemberEnd()) {
     if (!highlightColorsReactantsIt->value.IsArray()) {
