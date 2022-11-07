@@ -27,6 +27,7 @@
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Fingerprints/MACCS.h>
 #ifdef RDK_BUILD_AVALON_SUPPORT
 #include <External/AvalonTools/AvalonTools.h>
 #endif
@@ -787,8 +788,7 @@ std::unique_ptr<ExplicitBitVect> atom_pair_fp_as_bitvect(
   return std::unique_ptr<ExplicitBitVect>{fp};
 }
 
-std::unique_ptr<ExplicitBitVect> maccs_fp_as_bitvect(
-    const RWMol &mol, const char *details_json) {
+std::unique_ptr<ExplicitBitVect> maccs_fp_as_bitvect(const RWMol &mol) {
   auto fp = MACCSFingerprints::getFingerprintAsBitVect(mol);
   return std::unique_ptr<ExplicitBitVect>{fp};
 }
