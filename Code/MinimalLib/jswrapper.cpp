@@ -292,6 +292,11 @@ emscripten::val get_atom_pair_fp_as_uint8array(const JSMol &self) {
   return get_atom_pair_fp_as_uint8array(self, "{}");
 }
 
+emscripten::val get_maccs_fp_as_uint8array(const JSMol &self) {
+  auto fp = self.get_maccs_fp_as_binary_text();
+  return binary_string_to_uint8array(fp);
+}
+
 #ifdef RDK_BUILD_AVALON_SUPPORT
 emscripten::val get_avalon_fp_as_uint8array(const JSMol &self,
                                             const std::string &details) {
@@ -376,6 +381,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
           "get_atom_pair_fp_as_uint8array",
           select_overload<emscripten::val(const JSMol &, const std::string &)>(
               get_atom_pair_fp_as_uint8array))
+      .function("get_maccs_fp_as_uint8array", &get_maccs_fp_as_uint8array)
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
@@ -413,6 +419,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_atom_pair_fp",
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_atom_pair_fp))
+      .function("get_maccs_fp", &JSMol::get_maccs_fp)
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp",
                 select_overload<std::string() const>(&JSMol::get_avalon_fp))
@@ -453,9 +460,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<bool(const std::string &, const std::string &)>(
                     &JSMol::set_prop))
       .function("get_prop", &JSMol::get_prop)
-      .function("generate_aligned_coords",
-                select_overload<std::string(const JSMol &)>(
-                    &JSMol::generate_aligned_coords))
       .function("condense_abbreviations",
                 select_overload<std::string()>(&JSMol::condense_abbreviations))
       .function("condense_abbreviations",

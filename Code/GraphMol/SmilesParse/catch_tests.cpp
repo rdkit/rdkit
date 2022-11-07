@@ -2278,3 +2278,46 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
   }
   Chirality::setUseLegacyStereoPerception(oval);
 }
+
+TEST_CASE(
+    "Github #5722: check w/c/t/ctu CX labels use bond positions from SMILES",
+    "[SMILES][bug]") {
+  SECTION("'w:' label") {
+    auto m = "CC1CN1C=CC1CC1 |w:4.5|"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(4);
+    REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(b->getBondDir() == Bond::BondDir::UNKNOWN);
+  }
+  SECTION("'ctu:' label") {
+    auto m = "CC1CN1C=CC1CC1 |ctu:5|"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(4);
+    REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(b->getStereo() == Bond::STEREOANY);
+  }
+  SECTION("'c:' label") {
+    auto oval = Chirality::getUseLegacyStereoPerception();
+    Chirality::setUseLegacyStereoPerception(false);
+
+    auto m = "CC1CN1C=CC1CC1 |c:5|"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(4);
+    REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(b->getStereo() == Bond::STEREOCIS);
+
+    Chirality::setUseLegacyStereoPerception(oval);
+  }
+  SECTION("'t:' label") {
+    auto oval = Chirality::getUseLegacyStereoPerception();
+    Chirality::setUseLegacyStereoPerception(false);
+
+    auto m = "CC1CN1C=CC1CC1 |t:5|"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondWithIdx(4);
+    REQUIRE(b->getBondType() == Bond::BondType::DOUBLE);
+    CHECK(b->getStereo() == Bond::STEREOTRANS);
+
+    Chirality::setUseLegacyStereoPerception(oval);
+  }
+}

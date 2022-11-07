@@ -13,6 +13,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/Chirality.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/utils.h>
@@ -37,6 +38,53 @@ bool inOrganicSubset(int atomicNumber) {
   return atomicSmiles[idx] == atomicNumber;
 }
 
+namespace {
+std::string getAtomChiralityInfo(const Atom *atom) {
+  auto allowNontet = Chirality::getAllowNontetrahedralChirality();
+  std::string atString;
+  switch (atom->getChiralTag()) {
+    case Atom::CHI_TETRAHEDRAL_CW:
+      atString = "@@";
+      break;
+    case Atom::CHI_TETRAHEDRAL_CCW:
+      atString = "@";
+      break;
+    default:
+      break;
+  }
+  if (atString.empty() && allowNontet) {
+    switch (atom->getChiralTag()) {
+      case Atom::CHI_SQUAREPLANAR:
+        atString = "@SP";
+        break;
+      case Atom::CHI_TRIGONALBIPYRAMIDAL:
+        atString = "@TB";
+        break;
+      case Atom::CHI_OCTAHEDRAL:
+        atString = "@OH";
+        break;
+      default:
+        break;
+    }
+    if (!atString.empty()) {
+      // we added info about non-tetrahedral stereo, so check whether or not
+      // we need to also add permutation info
+      int permutation = 0;
+      if (atom->getChiralTag() > Atom::ChiralType::CHI_OTHER &&
+          atom->getPropIfPresent(common_properties::_chiralPermutation,
+                                 permutation) &&
+          !SmilesParseOps::checkChiralPermutation(atom->getChiralTag(),
+                                                  permutation)) {
+        throw ValueErrorException("bad chirality spec");
+      } else if (permutation) {
+        atString += std::to_string(permutation);
+      }
+    }
+  }
+  return atString;
+}
+}  // namespace
+
 std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
                           bool allHsExplicit, bool isomericSmiles) {
   PRECONDITION(atom, "bad atom");
@@ -54,46 +102,15 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
   }
 
   // check for atomic stereochemistry
-  std::string atString = "";
+  std::string atString;
   if (isomericSmiles ||
       (atom->hasOwningMol() &&
        atom->getOwningMol().hasProp(common_properties::_doIsoSmiles))) {
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         !atom->hasProp(common_properties::_brokenChirality)) {
-      int permutation = 0;
-      std::string permText;
-      if (atom->getChiralTag() > Atom::ChiralType::CHI_OTHER &&
-          atom->getPropIfPresent(common_properties::_chiralPermutation,
-                                 permutation) &&
-          !SmilesParseOps::checkChiralPermutation(atom->getChiralTag(),
-                                                  permutation)) {
-        throw ValueErrorException("bad chirality spec");
-      } else if (permutation) {
-        permText = (boost::format("%d") % permutation).str();
-      }
-      switch (atom->getChiralTag()) {
-        case Atom::CHI_TETRAHEDRAL_CW:
-          atString = "@@";
-          break;
-        case Atom::CHI_TETRAHEDRAL_CCW:
-          atString = "@";
-          break;
-        case Atom::CHI_SQUAREPLANAR:
-          atString = "@SP";
-          break;
-        case Atom::CHI_TRIGONALBIPYRAMIDAL:
-          atString = "@TB";
-          break;
-        case Atom::CHI_OCTAHEDRAL:
-          atString = "@OH";
-          break;
-        default:
-          break;
-      }
-      atString += permText;
+      atString = getAtomChiralityInfo(atom);
     }
   }
-
   if (!allHsExplicit && inOrganicSubset(num)) {
     // it's a member of the organic subset
 
