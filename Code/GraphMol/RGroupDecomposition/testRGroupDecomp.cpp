@@ -303,6 +303,7 @@ void testRingMatching() {
 }
 
 const char *ringData2[3] = {"c1cocc1CCl", "c1c[nH]cc1CI", "c1cscc1CF"};
+
 const char *ringDataRes2[3] = {"Core:c1cc(C[*:2])co1 R2:Cl[*:2]",
                                "Core:c1cc(C[*:2])c[nH]1 R2:I[*:2]",
                                "Core:c1cc(C[*:2])cs1 R2:F[*:2]"};
@@ -978,8 +979,9 @@ $$$$)CTAB";
     RGroupRows rows = decomp.getRGroupsAsRows();
 
     /*
-     * Working on issue Github5613 these core smiles no longer work- however the
-     * replacements are for the same structures
+     * Working on issue Github5613 these core smiles for the 3rd target no
+     * longer works, however the replacement is for the same core structure
+     *
     const char *expected[4] = {
         "Core:C1C([*:6])C2C(N([*:2])[*:4])NC([*:1])NC2N1[*:5] "
         "R1:[H][*:1] R2:C(CC[*:2])CC[*:4] R4:C(CC[*:2])CC[*:4] R5:[H][*:5] "
@@ -1676,17 +1678,7 @@ $$$$
       {"CN[*:1]", "F[*:1]"},
       {"CC[*:2]", "Br[*:2]"},
   };
-  /*
-std::vector<std::string> expectedRows{
-    "Core:O=C(c1cncn1[*:2])[*:1] R1:CN[*:1] R2:CC[*:2]",
-    "Core:c1cc2ccc([*:1])nc2nc1[*:2] R1:F[*:1] R2:Br[*:2]"};
 
-std::vector<std::vector<std::string>> expectedItems{
-    {"O=C(c1cncn1[*:2])[*:1]", "c1cc2ccc([*:1])nc2nc1[*:2]"},
-    {"CN[*:1]", "F[*:1]"},
-    {"CC[*:2]", "Br[*:2]"},
-};
-   */
   std::vector<std::string> expectedLabels{"Core", "R1", "R2"};
 
   RGroupDecompositionParameters params;
@@ -2746,7 +2738,7 @@ void testDoNotChooseUnrelatedCores() {
       TEST_ASSERT(decomp.add(*m) == 0);
       TEST_ASSERT(decomp.process());
       auto cols = decomp.getRGroupsAsColumns();
-      auto &core = cols["Core"];
+      const auto &core = cols["Core"];
       TEST_ASSERT(core.size() == 1);
       TEST_ASSERT(
           core.front()->getRingInfo()->atomRings().front().size() ==
@@ -3557,10 +3549,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-  testDoNotChooseUnrelatedCores();
-  testGithub5613();
-  // testMultipleGroupsToUnlabelledCoreAtomGithub5573();
-  testMultipleGroupsToUnlabelledCoreAtom();
 #if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
@@ -3612,6 +3600,7 @@ int main() {
   testMultipleGroupsToUnlabelledCoreAtomGithub5573();
   testMultipleGroupsToUnlabelledCoreAtom();
   testGitHub5631();
+  testGithub5613();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;
