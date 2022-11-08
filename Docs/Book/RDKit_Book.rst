@@ -255,10 +255,13 @@ The features which are parsed include:
 - radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
 - linknodes ``LN``
-- multi-center attachments ``m``
+- variable/multi-center attachments ``m``
 - ring bond count specifications ``rb``
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
+- wedged bonds (only when atomic coordinates are present): ``wU``, ``wD``
+- wiggly bonds ``w``
+- double bond stereo (only for ring bonds) ``c``, ``t``, ``ctu``
 - SGroup Data ``SgD``
 - polymer SGroups ``Sg``
 - SGroup Hierarchy ``SgH``
@@ -273,7 +276,10 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic properties
 - radicals
 - enhanced stereo
-- linknodes 
+- linknodes
+- wedged bonds (only when atomic coordinates are also written) 
+- wiggly bonds
+- double bond stereo (only for ring bonds)
 - SGroup Data
 - polymer SGroups
 - SGroup Hierarchy
@@ -531,14 +537,15 @@ Stereochemistry
 Types of stereochemistry supported
 ----------------------------------
 
-The RDKit currently supports tetrahedral atomic stereochemistry and cis/trans
-stereochemistry at double bonds. We plan to add support for additional types of
-stereochemistry in the future.
+The RDKit currently fully supports tetrahedral atomic stereochemistry and
+cis/trans stereochemistry at double bonds. There is partial support for
+non-tetrahedral stereochemistry, see the section :ref:`Support for non-tetrahedral atomic stereochemistry`.
 
 Identification of potential stereoatoms/stereobonds
 ---------------------------------------------------
 
-As of the 2020.09 release the RDKit has two different ways of identifying potential stereoatoms/stereobonds:
+As of the 2020.09 release the RDKit has two different ways of identifying
+potential stereoatoms/stereobonds:
 
    1. The legacy approach: ``AssignStereochemistry()``.
       This approach does a reasonable job of recognizing potential
@@ -654,6 +661,54 @@ Brief description of the ``findPotentialStereo()`` algorithm
    9. Add any potential stereogenic atom which does not have two identically
       ranked atoms attached to either end [#eitherend]_ to the results
    10. Return the results
+
+Sources of information about stereochemistry
+--------------------------------------------
+
+From SMILES
+^^^^^^^^^^^
+
+Atomic stereochemistry can be specified using ``@``, ``@@``, ``@SP``, etc.
+Potential stereocenters with no information provided are
+``ChiralType::CHI_UNSPECIFIED``.
+
+Double-bond stereochemistry is specfied using ``/`` and ``\`` to indicate the
+directionality of the neighboring single bonds. Double bonds with no stereo
+information provided are ``BondStereo::STEREONONE``. 
+
+
+From Mol
+^^^^^^^^
+
+Atomic stereochemistry can be specified using wedged bonds if 2D coordinates are
+present. If 3D coordinates are present, they are used to set the stereochemistry
+for stereogenic atoms. Wiggly bonds (``CFG=2`` in V3000 mol blocks) set the
+chiral tag of stereogenic start atom to ``ChiralType::CHI_UNSPECIFIED``.
+
+Double-bond stereochemistry is automatically set using the atomic coordinates;
+this is true for both 2D and 3D coordinates. If a stereogenic double bound is
+crossed (``CFG=2`` in V3000 mol blocks) or has an adjacent wiggly single bond
+(``CFG=2`` in V3000 mol blocks), then it will be ``BondStereo::STEREOANY``.
+
+
+From CXSMILES
+^^^^^^^^^^^^^
+
+An initial stereochemistry assignment is done following the SMILES rules (see above).
+
+A ``w:`` (wiggly bond) specification will set the stereochemistry of the start
+atom to ``ChiralType::CHI_UNSPECIFIED`` and double bonds to
+``BondStereo::STEREOANY``. Stereochemistry of ring bonds can be set using ``t``,
+``c``, or ``ctu``.
+
+If 2D coordinates are present in the CXSMILES, atomic stereo can be set using
+```wU``` or ```wD``` to create wedged bonds.
+
+If 3D coordinates are present in the CXSMILES, they are used to set the
+stereochemistry for stereogenic atoms and bonds. This supersedes other
+specifications in the CXSMILES except for ``ctu`` and ``w``.
+
+
 
 Support for non-tetrahedral atomic stereochemistry
 ==================================================

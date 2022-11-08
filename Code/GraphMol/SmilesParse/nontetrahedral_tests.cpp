@@ -35,6 +35,7 @@ void inorganicSanitize(RDKit::RWMol &mol) {
 }
 
 TEST_CASE("bulk parse test") {
+  Chirality::setAllowNontetrahedralChirality(true);
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/SmilesParse/test_data/inorganic_stereo.smi";
   std::ifstream ins(pathName);
@@ -72,6 +73,7 @@ TEST_CASE("bulk parse test") {
 }
 
 TEST_CASE("TH and @ are equivalent") {
+  Chirality::setAllowNontetrahedralChirality(true);
   SECTION("@TH") {
     auto m = "F[C@THH](C)O"_smiles;
     REQUIRE(m);
@@ -90,6 +92,7 @@ TEST_CASE("TH and @ are equivalent") {
 }
 
 TEST_CASE("non-canonical non-tetrahedral output") {
+  Chirality::setAllowNontetrahedralChirality(true);
   SECTION("no reordering") {
     // clang-format off
     std::vector<std::string> data = {
@@ -126,6 +129,7 @@ TEST_CASE("non-canonical non-tetrahedral output") {
 }
 
 TEST_CASE("SP getChiralAcrossBond et al.") {
+  Chirality::setAllowNontetrahedralChirality(true);
   SECTION("basics") {
     {
       auto m = "C[Pt@SP1](F)(O)Cl"_smiles;
@@ -209,6 +213,7 @@ TEST_CASE("SP getChiralAcrossBond et al.") {
   }
 }
 TEST_CASE("getChiralAcross edges") {
+  Chirality::setAllowNontetrahedralChirality(true);
   SECTION("central atom isn't chiral") {
     auto m = "C[Pt](F)(O)CC"_smiles;
     REQUIRE(m);
@@ -235,6 +240,7 @@ TEST_CASE("getChiralAcross edges") {
 }
 
 TEST_CASE("hasNonTetrahedralStereo") {
+  Chirality::setAllowNontetrahedralChirality(true);
   std::vector<std::pair<std::string, bool>> data = {
       {"C[Pt@SP1](F)(O)CC", true},     {"C[Pt@SP](F)(O)CC", true},
       {"C[Pt](F)(O)CC", false},        {"C[Pt@](F)(O)CC", false},
@@ -250,6 +256,7 @@ TEST_CASE("hasNonTetrahedralStereo") {
 }
 
 TEST_CASE("zero permutation is in SMILES") {
+  Chirality::setAllowNontetrahedralChirality(true);
   std::vector<std::string> smis = {"CC[Pt@SP](C)(O)F", "C[Pt@TB](N)(F)(Cl)Br",
                                    "C[Pt@OH](N)(F)(Cl)(Br)I"};
   for (auto smi : smis) {
@@ -260,10 +267,31 @@ TEST_CASE("zero permutation is in SMILES") {
 }
 
 TEST_CASE("do not write bogus permutation values") {
+  Chirality::setAllowNontetrahedralChirality(true);
   auto m = "CC[Pt@SP](C)(O)F"_smiles;
   REQUIRE(m);
   m->getAtomWithIdx(2)->setProp(common_properties::_chiralPermutation, 10);
   CHECK_THROWS_AS(MolToSmiles(*m), ValueErrorException);
   m->getAtomWithIdx(2)->setProp(common_properties::_chiralPermutation, -1);
   CHECK_THROWS_AS(MolToSmiles(*m), ValueErrorException);
+}
+
+TEST_CASE("do not read from/write to SMILES when disabled") {
+  Chirality::setAllowNontetrahedralChirality(false);
+  SECTION("parsing") {
+    auto m = "CC[Pt@SP](C)(O)F"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(
+        !m->getAtomWithIdx(2)->hasProp(common_properties::_chiralPermutation));
+  }
+  SECTION("writing") {
+    auto m = "CC[Pt](C)(O)F"_smiles;
+    REQUIRE(m);
+    m->getAtomWithIdx(2)->setChiralTag(Atom::ChiralType::CHI_SQUAREPLANAR);
+    m->getAtomWithIdx(2)->setProp(common_properties::_chiralPermutation, 1);
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "CC[Pt](C)(O)F");
+  }
 }

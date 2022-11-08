@@ -24,7 +24,8 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     bool useBondTypes, bool onlyNonzeroInvariants,
     bool,  // includeRingMembership
     python::object &py_countBounds, std::uint32_t fpSize,
-    python::object &py_atomInvGen, python::object &py_bondInvGen) {
+    python::object &py_atomInvGen, python::object &py_bondInvGen,
+    bool includeRedundantEnvironments) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
@@ -46,8 +47,9 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
 
   return MorganFingerprint::getMorganGenerator<OutputType>(
       radius, countSimulation, includeChirality, useBondTypes,
-      onlyNonzeroInvariants, atomInvariantsGenerator, bondInvariantsGenerator,
-      fpSize, countBounds, true, true);
+      onlyNonzeroInvariants, includeRedundantEnvironments,
+      atomInvariantsGenerator, bondInvariantsGenerator, fpSize, countBounds,
+      true, true);
 }
 
 AtomInvariantsGenerator *getMorganAtomInvGen(const bool includeRingMembership) {
@@ -83,7 +85,8 @@ void exportMorgan() {
        python::arg("countBounds") = python::object(),
        python::arg("fpSize") = 2048,
        python::arg("atomInvariantsGenerator") = python::object(),
-       python::arg("bondInvariantsGenerator") = python::object()),
+       python::arg("bondInvariantsGenerator") = python::object(),
+       python::arg("includeRedundantEnvironments") = false),
       "Get a morgan fingerprint generator\n\n"
       "  ARGUMENTS:\n"
       "    - radius:  the number of iterations to grow the fingerprint\n"

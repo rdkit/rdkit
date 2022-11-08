@@ -261,6 +261,13 @@ class TestCase(unittest.TestCase):
     for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
       bv = cls(nbits)
       l = [0]*2048
+
+      # test no bits set
+      l2 = list(bv)
+      l3 = bv.ToList()
+      self.assertEqual(l, l2)
+      self.assertEqual(l, l3)
+      
       for j in range(nbits):
         x = random.randrange(0, nbits)
         l[x] = 1

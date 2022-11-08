@@ -71,7 +71,7 @@ struct RGroupDecompData {
   }
 
   void addCore(const ROMol &inputCore) {
-    if (params.allowMultipleRGroupsOnUnlabelled) {
+    if (params.allowMultipleRGroupsOnUnlabelled && !params.onlyMatchAtRGroups) {
       RWMol core(inputCore);
       params.addDummyAtomsToUnlabelledCoreAtoms(core);
       cores[cores.size()] = RCore(core);

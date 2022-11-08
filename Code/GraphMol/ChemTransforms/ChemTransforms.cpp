@@ -694,24 +694,24 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
                                       endAtom->getIdx());
       }
     }
- 
-  // make a guess at the position of the dummy atoms showing the attachment
-  // point:
-  for (auto citer = mol.beginConformers(); citer != mol.endConformers();
-       ++citer) {
-    Conformer &newConf = newMol->getConformer((*citer)->getId());
-    for (auto iter = dummyAtomMap.begin();
-         iter != dummyAtomMap.end(); ++iter) {
-      newConf.setAtomPos(iter->first->getIdx(),
-                         (*citer)->getAtomPos(iter->second));
+
+    // make a guess at the position of the dummy atoms showing the attachment
+    // point:
+    for (auto citer = mol.beginConformers(); citer != mol.endConformers();
+         ++citer) {
+      Conformer &newConf = newMol->getConformer((*citer)->getId());
+      for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end();
+           ++iter) {
+        newConf.setAtomPos(iter->first->getIdx(),
+                           (*citer)->getAtomPos(iter->second));
+      }
     }
+
+    // clear computed props and do basic updates on
+    // the resulting molecule, but allow unhappiness:
+    newMol->clearComputedProps(true);
+    newMol->updatePropertyCache(false);
   }
-  
-  // clear computed props and do basic updates on
-  // the resulting molecule, but allow unhappiness:
-  newMol->clearComputedProps(true);
-  newMol->updatePropertyCache(false);
- }
 
   return static_cast<ROMol *>(newMol);
 }

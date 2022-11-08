@@ -318,12 +318,13 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     if (atom->getAtomicNum() == 1) {
       continue;
     }
-    
+
     if (hasLabel(atom, labels)) {
       continue;
     }
 
-    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() <= 1 && !atom->hasQuery()) {
+    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() <= 1 &&
+        !atom->hasQuery()) {
       continue;
     }
 

@@ -62,21 +62,21 @@ struct SBV_wrapper {
     python::class_<SparseBitVect, boost::shared_ptr<SparseBitVect>>(
         "SparseBitVect", sbvClassDoc.c_str(), python::init<unsigned int>())
         .def(python::init<std::string>())
-        .def("SetBit", (bool (SBV::*)(unsigned int)) & SBV::setBit,
+        .def("SetBit", (bool(SBV::*)(unsigned int)) & SBV::setBit,
              "Turns on a particular bit.  Returns the original state of the "
              "bit.\n")
         .def("SetBitsFromList",
              (void (*)(SBV *, python::object))SetBitsFromList,
              "Turns on a set of bits.  The argument should be a tuple or list "
              "of bit ids.\n")
-        .def("UnSetBit", (bool (SBV::*)(unsigned int)) & SBV::unsetBit,
+        .def("UnSetBit", (bool(SBV::*)(unsigned int)) & SBV::unsetBit,
              "Turns off a particular bit.  Returns the original state of the "
              "bit.\n")
         .def("UnSetBitsFromList",
              (void (*)(SBV *, python::object))UnSetBitsFromList,
              "Turns off a set of bits.  The argument should be a tuple or list "
              "of bit ids.\n")
-        .def("GetBit", (bool (SBV::*)(unsigned int) const) & SBV::getBit,
+        .def("GetBit", (bool(SBV::*)(unsigned int) const) & SBV::getBit,
              "Returns the value of a bit.\n")
         .def("GetNumBits", &SBV::getNumBits,
              "Returns the number of bits in the vector (the vector's size).\n")
