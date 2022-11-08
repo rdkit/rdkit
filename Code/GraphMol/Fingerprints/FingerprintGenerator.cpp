@@ -257,9 +257,9 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();
   }
 
-  auto tempResult = getFingerprintHelper(mol, args);
+  auto tempResult = getFingerprintHelper(mol, args, effectiveSize);
 
-  auto result = std::make_unique<SparseBitVect>(effectiveSize);
+  auto result = std::make_unique<SparseBitVect>(resultSize);
 
   for (auto val : tempResult->getNonzeroElements()) {
     if (dp_fingerprintArguments->d_countSimulation) {
