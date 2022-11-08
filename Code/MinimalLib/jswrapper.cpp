@@ -25,7 +25,8 @@ extern std::string process_mol_details(
     int &offsety, std::string &legend, std::vector<int> &atomIds,
     std::vector<int> &bondIds, std::map<int, DrawColour> &atomMap,
     std::map<int, DrawColour> &bondMap, std::map<int, double> &radiiMap,
-    bool &kekulize);
+    bool &kekulize, bool &addChiralHs, bool &wedgeBonds, bool &forceCoords,
+    bool &wavyBonds);
 extern std::string process_rxn_details(
     const std::string &details, int &width, int &height, int &offsetx,
     int &offsety, std::string &legend, std::vector<int> &atomIds,
@@ -77,10 +78,15 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   int offsetx = 0;
   int offsety = 0;
   bool kekulize = true;
+  bool addChiralHs = true;
+  bool wedgeBonds = true;
+  bool forceCoords = false;
+  bool wavyBonds = false;
   if (!details.empty()) {
     auto problems = MinimalLib::process_mol_details(
         details, w, h, offsetx, offsety, legend, atomIds, bondIds, atomMap,
-        bondMap, radiiMap, kekulize);
+        bondMap, radiiMap, kekulize, addChiralHs, wedgeBonds, forceCoords,
+        wavyBonds);
     if (!problems.empty()) {
       return problems;
     }
@@ -96,7 +102,8 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
       *d2d, *self.d_mol, legend, &atomIds, &bondIds,
       atomMap.empty() ? nullptr : &atomMap,
       bondMap.empty() ? nullptr : &bondMap,
-      radiiMap.empty() ? nullptr : &radiiMap, -1, kekulize);
+      radiiMap.empty() ? nullptr : &radiiMap, -1, kekulize, addChiralHs,
+      wedgeBonds, forceCoords, wavyBonds);
   return "";
 }
 

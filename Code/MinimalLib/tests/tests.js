@@ -1018,6 +1018,50 @@ function test_highlights() {
     assert(svg.includes('</svg>'));
 }
 
+function test_add_chiral_hs() {
+    var mol = RDKitModule.get_mol(`
+  MJ201100                      
+
+  9 10  0  0  1  0  0  0  0  0999 V2000
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1  0  0  0
+  2  3  1  0  0  0  0
+  4  3  1  0  0  0  0
+  4  5  1  0  0  0  0
+  6  5  1  0  0  0  0
+  6  7  1  1  0  0  0
+  6  8  1  0  0  0  0
+  8  9  1  1  0  0  0
+  8  2  1  0  0  0  0
+  4  9  1  1  0  0  0
+M  END
+`);
+    var svg1 = mol.get_svg_with_highlights(JSON.stringify({width: 350, height: 300}));
+    assert(svg1.includes("width='350px'"));
+    assert(svg1.includes("height='300px'"));
+    assert(svg1.includes("</svg>"));
+    assert(svg1.includes("atom-8"));
+    assert(svg1.includes("atom-9"));
+    assert(svg1.includes("atom-10"));
+    var svg2 = mol.get_svg_with_highlights(JSON.stringify({
+        width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
+    }));
+    assert(svg2.includes("width='350px'"));
+    assert(svg2.includes("height='300px'"));
+    assert(svg2.includes("</svg>"));
+    assert(svg2.includes("atom-8"));
+    assert(!svg2.includes("atom-9"));
+    assert(!svg2.includes("atom-10"));
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -1062,6 +1106,7 @@ initRDKitModule().then(function(instance) {
     test_legacy_stereochem();
     test_prop();
     test_highlights();
+    test_add_chiral_hs();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
