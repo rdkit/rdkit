@@ -123,25 +123,28 @@ std::string MorganArguments<OutputType>::infoString() const {
 }
 
 template <typename OutputType>
+void MorganAtomEnv<OutputType>::updateAdditionalOutput(
+    AdditionalOutput *additionalOutput, size_t bitId) const {
+  PRECONDITION(additionalOutput, "bad output pointer");
+  if (additionalOutput->bitInfoMap) {
+    (*additionalOutput->bitInfoMap)[bitId].emplace_back(d_atomId, d_layer);
+  }
+  if (additionalOutput->atomCounts) {
+    (*additionalOutput->atomCounts)[d_atomId]++;
+  }
+  if (additionalOutput->atomToBits) {
+    (*additionalOutput->atomToBits)[d_atomId].push_back(bitId);
+  }
+}
+
+template <typename OutputType>
 OutputType MorganAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
-    const std::vector<std::uint32_t> *,                    // atomInvariants
-    const std::vector<std::uint32_t> *,                    // bondInvariants
-    const AdditionalOutput *additionalOutput, const bool,  // hashResults
+    const std::vector<std::uint32_t> *,              // atomInvariants
+    const std::vector<std::uint32_t> *,              // bondInvariants
+    AdditionalOutput *additionalOutput, const bool,  // hashResults
     const std::uint64_t fpSize) const {
   PRECONDITION(arguments, "bad arguments");
-  if (additionalOutput) {
-    OutputType bit_id = fpSize ? (d_code % fpSize) : d_code;
-    if (additionalOutput->bitInfoMap) {
-      (*additionalOutput->bitInfoMap)[bit_id].emplace_back(d_atomId, d_layer);
-    }
-    if (additionalOutput->atomCounts) {
-      (*additionalOutput->atomCounts)[d_atomId]++;
-    }
-    if (additionalOutput->atomToBits) {
-      (*additionalOutput->atomToBits)[d_atomId].push_back(bit_id);
-    }
-  }
   return d_code;
 }
 

@@ -103,9 +103,11 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomEnv
   OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
-                      const AdditionalOutput *additionalOutput,
+                      AdditionalOutput *additionalOutput,
                       const bool hashResults = false,
                       const std::uint64_t fpSize = 0) const override;
+  void updateAdditionalOutput(AdditionalOutput *output,
+                              size_t bitId) const override;
 
   /*!
     \brief construct a new AtomPairAtomEnv object

@@ -89,33 +89,36 @@ RDKitFPArguments<OutputType>::RDKitFPArguments(
 }
 
 template <typename OutputType>
-OutputType RDKitFPAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *,                    // arguments
-    const std::vector<std::uint32_t> *,                    // atomInvariants
-    const std::vector<std::uint32_t> *,                    // bondInvariants
-    const AdditionalOutput *additionalOutput, const bool,  // hashResults
-    const std::uint64_t fpSize) const {
-  if (additionalOutput) {
-    OutputType bit_id = d_bitId;
-    if (fpSize) {
-      bit_id %= fpSize;
-    }
-    if (additionalOutput->bitPaths) {
-      (*additionalOutput->bitPaths)[bit_id].push_back(d_bondPath);
-    }
-    if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
-      for (size_t i = 0; i < d_atomsInPath.size(); ++i) {
-        if (d_atomsInPath[i]) {
-          if (additionalOutput->atomToBits) {
-            additionalOutput->atomToBits->at(i).push_back(bit_id);
+void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
+    AdditionalOutput *additionalOutput, size_t bitId) const {
+  PRECONDITION(additionalOutput, "bad output pointer");
+  if (additionalOutput->bitPaths) {
+    (*additionalOutput->bitPaths)[bitId].push_back(d_bondPath);
+  }
+  if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
+    for (size_t i = 0; i < d_atomsInPath.size(); ++i) {
+      if (d_atomsInPath[i]) {
+        if (additionalOutput->atomToBits) {
+          auto &alist = additionalOutput->atomToBits->at(i);
+          if (std::find(alist.begin(), alist.end(), bitId) == alist.end()) {
+            alist.push_back(bitId);
           }
-          if (additionalOutput->atomCounts) {
-            additionalOutput->atomCounts->at(i)++;
-          }
+        }
+        if (additionalOutput->atomCounts) {
+          additionalOutput->atomCounts->at(i)++;
         }
       }
     }
   }
+}
+
+template <typename OutputType>
+OutputType RDKitFPAtomEnv<OutputType>::getBitId(
+    FingerprintArguments<OutputType> *,              // arguments
+    const std::vector<std::uint32_t> *,              // atomInvariants
+    const std::vector<std::uint32_t> *,              // bondInvariants
+    AdditionalOutput *additionalOutput, const bool,  // hashResults
+    const std::uint64_t fpSize) const {
   return d_bitId;
 }
 

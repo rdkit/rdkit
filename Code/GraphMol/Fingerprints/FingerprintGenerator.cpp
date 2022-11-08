@@ -122,7 +122,7 @@ std::string FingerprintGenerator<OutputType>::infoString() const {
 template <typename OutputType>
 std::unique_ptr<SparseIntVect<OutputType>>
 FingerprintGenerator<OutputType>::getFingerprintHelper(
-    const ROMol &mol, const FingerprintFuncArguments &args,
+    const ROMol &mol, FingerprintFuncArguments &args,
     const std::uint64_t fpSize) const {
   const ROMol *lmol = &mol;
   std::unique_ptr<ROMol> tmol;
@@ -222,6 +222,9 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
       bitId %= fpSize;
     }
     res->setVal(bitId, res->getVal(bitId) + 1);
+    if (args.additionalOutput) {
+      (*it)->updateAdditionalOutput(args.additionalOutput, bitId);
+    }
     // do the additional bits if required:
     if (dp_fingerprintArguments->d_numBitsPerFeature > 1) {
       generator->seed(static_cast<rng_type::result_type>(seed));
@@ -233,6 +236,9 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
           bitId %= fpSize;
         }
         res->setVal(bitId, res->getVal(bitId) + 1);
+        if (args.additionalOutput) {
+          (*it)->updateAdditionalOutput(args.additionalOutput, bitId);
+        }
       }
     }
     delete (*it);
@@ -247,7 +253,7 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
 template <typename OutputType>
 std::unique_ptr<SparseIntVect<OutputType>>
 FingerprintGenerator<OutputType>::getSparseCountFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const {
+    const ROMol &mol, FingerprintFuncArguments &args) const {
   return getFingerprintHelper(mol, args);
 }
 
@@ -258,7 +264,7 @@ FingerprintGenerator<OutputType>::getSparseCountFingerprint(
 template <typename OutputType>
 std::unique_ptr<SparseBitVect>
 FingerprintGenerator<OutputType>::getSparseFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const {
+    const ROMol &mol, FingerprintFuncArguments &args) const {
   // make sure the result will fit into SparseBitVect
   std::uint32_t resultSize =
       std::min((std::uint64_t)std::numeric_limits<std::uint32_t>::max(),
@@ -298,7 +304,7 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
 template <typename OutputType>
 std::unique_ptr<SparseIntVect<std::uint32_t>>
 FingerprintGenerator<OutputType>::getCountFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const {
+    const ROMol &mol, FingerprintFuncArguments &args) const {
   auto tempResult =
       getFingerprintHelper(mol, args, dp_fingerprintArguments->d_fpSize);
 
@@ -314,7 +320,7 @@ FingerprintGenerator<OutputType>::getCountFingerprint(
 template <typename OutputType>
 std::unique_ptr<ExplicitBitVect>
 FingerprintGenerator<OutputType>::getFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const {
+    const ROMol &mol, FingerprintFuncArguments &args) const {
   std::uint32_t effectiveSize = dp_fingerprintArguments->d_fpSize;
   if (dp_fingerprintArguments->df_countSimulation) {
     // effective size needs to be smaller than result size to compansate for
@@ -347,35 +353,35 @@ FingerprintGenerator<OutputType>::getFingerprint(
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<SparseIntVect<std::uint32_t>>
 FingerprintGenerator<std::uint32_t>::getSparseCountFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const;
+    const ROMol &mol, FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<SparseIntVect<std::uint64_t>>
 FingerprintGenerator<std::uint64_t>::getSparseCountFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const;
+    const ROMol &mol, FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<SparseBitVect>
 FingerprintGenerator<std::uint32_t>::getSparseFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const;
+    const ROMol &mol, FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<SparseBitVect>
 FingerprintGenerator<std::uint64_t>::getSparseFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const;
+    const ROMol &mol, FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<SparseIntVect<std::uint32_t>>
 FingerprintGenerator<std::uint32_t>::getCountFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const;
+    const ROMol &mol, FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<SparseIntVect<std::uint32_t>>
 FingerprintGenerator<std::uint64_t>::getCountFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const;
+    const ROMol &mol, FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<ExplicitBitVect>
 FingerprintGenerator<std::uint32_t>::getFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const;
+    const ROMol &mol, FingerprintFuncArguments &args) const;
 
 template RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<ExplicitBitVect>
 FingerprintGenerator<std::uint64_t>::getFingerprint(
-    const ROMol &mol, const FingerprintFuncArguments &args) const;
+    const ROMol &mol, FingerprintFuncArguments &args) const;
 
 SparseIntVect<std::uint64_t> *getSparseCountFP(const ROMol &mol,
                                                FPType fPType) {

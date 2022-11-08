@@ -76,11 +76,29 @@ std::string AtomPairArguments<OutputType>::infoString() const {
 }
 
 template <typename OutputType>
+void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
+    AdditionalOutput *additionalOutput, size_t bitId) const {
+  PRECONDITION(additionalOutput, "bad output pointer");
+  if (additionalOutput->bitInfoMap) {
+    (*additionalOutput->bitInfoMap)[bitId].emplace_back(d_atomIdFirst,
+                                                        d_atomIdSecond);
+  }
+  if (additionalOutput->atomToBits) {
+    additionalOutput->atomToBits->at(d_atomIdFirst).push_back(bitId);
+    additionalOutput->atomToBits->at(d_atomIdSecond).push_back(bitId);
+  }
+  if (additionalOutput->atomCounts) {
+    additionalOutput->atomCounts->at(d_atomIdFirst)++;
+    additionalOutput->atomCounts->at(d_atomIdSecond)++;
+  }
+}
+
+template <typename OutputType>
 OutputType AtomPairAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
-    const AdditionalOutput *additionalOutput, const bool hashResults,
+    AdditionalOutput *additionalOutput, const bool hashResults,
     const std::uint64_t fpSize) const {
   PRECONDITION((atomInvariants->size() >= d_atomIdFirst) &&
                    (atomInvariants->size() >= d_atomIdSecond),
@@ -110,24 +128,6 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
                             atomPairArguments->df_includeChirality);
   }
 
-  if (additionalOutput) {
-    std::uint32_t tBitId = bitId;
-    if (fpSize) {
-      tBitId = tBitId % fpSize;
-    }
-    if (additionalOutput->bitInfoMap) {
-      (*additionalOutput->bitInfoMap)[tBitId].emplace_back(d_atomIdFirst,
-                                                           d_atomIdSecond);
-    }
-    if (additionalOutput->atomToBits) {
-      additionalOutput->atomToBits->at(d_atomIdFirst).push_back(tBitId);
-      additionalOutput->atomToBits->at(d_atomIdSecond).push_back(tBitId);
-    }
-    if (additionalOutput->atomCounts) {
-      additionalOutput->atomCounts->at(d_atomIdFirst)++;
-      additionalOutput->atomCounts->at(d_atomIdSecond)++;
-    }
-  }
   return bitId;
 }
 

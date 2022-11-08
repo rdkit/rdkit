@@ -38,34 +38,35 @@ std::string TopologicalTorsionArguments<OutputType>::infoString() const {
   return "TopologicalTorsionArguments torsionAtomCount=" +
          std::to_string(d_torsionAtomCount);
 };
+
+template <typename OutputType>
+void TopologicalTorsionAtomEnv<OutputType>::updateAdditionalOutput(
+    AdditionalOutput *additionalOutput, size_t bitId) const {
+  PRECONDITION(additionalOutput, "bad output pointer");
+
+  if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
+    for (auto aid : d_atomPath) {
+      if (additionalOutput->atomToBits) {
+        additionalOutput->atomToBits->at(aid).push_back(bitId);
+      }
+      if (additionalOutput->atomCounts) {
+        additionalOutput->atomCounts->at(aid)++;
+      }
+    }
+  }
+  if (additionalOutput->bitPaths) {
+    (*additionalOutput->bitPaths)[bitId].push_back(d_atomPath);
+  }
+}
+
 template <typename OutputType>
 OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(
     FingerprintArguments<OutputType> *,  // arguments
     const std::vector<std::uint32_t> *,  // atomInvariants
     const std::vector<std::uint32_t> *,  // bondInvariants
-    const AdditionalOutput *additionalOutput,
+    AdditionalOutput *additionalOutput,
     const bool,  // hashResults
     const std::uint64_t fpSize) const {
-  if (additionalOutput) {
-    OutputType bitId = d_bitId;
-    if (fpSize) {
-      bitId %= fpSize;
-    }
-    if (additionalOutput->atomToBits || additionalOutput->atomCounts) {
-      for (auto aid : d_atomPath) {
-        if (additionalOutput->atomToBits) {
-          additionalOutput->atomToBits->at(aid).push_back(bitId);
-        }
-        if (additionalOutput->atomCounts) {
-          additionalOutput->atomCounts->at(aid)++;
-        }
-      }
-    }
-    if (additionalOutput->bitPaths) {
-      (*additionalOutput->bitPaths)[bitId].push_back(d_atomPath);
-    }
-  }
-
   return d_bitId;
 };
 

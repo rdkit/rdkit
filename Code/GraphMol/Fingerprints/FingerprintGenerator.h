@@ -139,9 +139,11 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironment : private boost::noncopyable {
   virtual OutputType getBitId(FingerprintArguments<OutputType> *arguments,
                               const std::vector<std::uint32_t> *atomInvariants,
                               const std::vector<std::uint32_t> *bondInvariants,
-                              const AdditionalOutput *AdditionalOutput,
+                              AdditionalOutput *AdditionalOutput,
                               const bool hashResults = false,
                               const std::uint64_t fpSize = 0) const = 0;
+  virtual void updateAdditionalOutput(AdditionalOutput *AdditionalOutput,
+                                      size_t bitId) const = 0;
 
   virtual ~AtomEnvironment() {}
 };
@@ -269,14 +271,14 @@ struct FingerprintFuncArguments {
   const std::vector<std::uint32_t> *fromAtoms = nullptr;
   const std::vector<std::uint32_t> *ignoreAtoms = nullptr;
   int confId = -1;
-  const AdditionalOutput *additionalOutput = nullptr;
+  AdditionalOutput *additionalOutput = nullptr;
   const std::vector<std::uint32_t> *customAtomInvariants = nullptr;
   const std::vector<std::uint32_t> *customBondInvariants = nullptr;
   FingerprintFuncArguments() = default;
   FingerprintFuncArguments(
       const std::vector<std::uint32_t> *fromAtoms_arg,
       const std::vector<std::uint32_t> *ignoreAtoms_arg, int confId_arg,
-      const AdditionalOutput *additionalOutput_arg,
+      AdditionalOutput *additionalOutput_arg,
       const std::vector<std::uint32_t> *customAtomInvariants_arg,
       const std::vector<std::uint32_t> *customBondInvariants_arg)
       : fromAtoms(fromAtoms_arg),
@@ -303,7 +305,7 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
   const bool df_ownsBondInvGenerator;
 
   std::unique_ptr<SparseIntVect<OutputType>> getFingerprintHelper(
-      const ROMol &mol, const FingerprintFuncArguments &args,
+      const ROMol &mol, FingerprintFuncArguments &args,
       const std::uint64_t fpSize = 0) const;
 
  public:
@@ -317,67 +319,63 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
   ~FingerprintGenerator();
 
   std::unique_ptr<SparseIntVect<OutputType>> getSparseCountFingerprint(
-      const ROMol &mol, const FingerprintFuncArguments &args) const;
+      const ROMol &mol, FingerprintFuncArguments &args) const;
 
   std::unique_ptr<SparseBitVect> getSparseFingerprint(
-      const ROMol &mol, const FingerprintFuncArguments &args) const;
+      const ROMol &mol, FingerprintFuncArguments &args) const;
 
   std::unique_ptr<SparseIntVect<std::uint32_t>> getCountFingerprint(
-      const ROMol &mol, const FingerprintFuncArguments &args) const;
+      const ROMol &mol, FingerprintFuncArguments &args) const;
 
   std::unique_ptr<ExplicitBitVect> getFingerprint(
-      const ROMol &mol, const FingerprintFuncArguments &args) const;
+      const ROMol &mol, FingerprintFuncArguments &args) const;
 
   SparseIntVect<OutputType> *getSparseCountFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const int confId = -1, AdditionalOutput *additionalOutput = nullptr,
       const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
       const std::vector<std::uint32_t> *customBondInvariants = nullptr) const {
-    return getSparseCountFingerprint(
-               mol, FingerprintFuncArguments(
-                        fromAtoms, ignoreAtoms, confId, additionalOutput,
-                        customAtomInvariants, customBondInvariants))
-        .release();
+    FingerprintFuncArguments ffa(fromAtoms, ignoreAtoms, confId,
+                                 additionalOutput, customAtomInvariants,
+                                 customBondInvariants);
+    return getSparseCountFingerprint(mol, ffa).release();
   };
 
   SparseBitVect *getSparseFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const int confId = -1, AdditionalOutput *additionalOutput = nullptr,
       const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
       const std::vector<std::uint32_t> *customBondInvariants = nullptr) const {
-    return getSparseFingerprint(
-               mol, FingerprintFuncArguments(
-                        fromAtoms, ignoreAtoms, confId, additionalOutput,
-                        customAtomInvariants, customBondInvariants))
-        .release();
+    FingerprintFuncArguments ffa(fromAtoms, ignoreAtoms, confId,
+                                 additionalOutput, customAtomInvariants,
+                                 customBondInvariants);
+    return getSparseFingerprint(mol, ffa).release();
   };
 
   SparseIntVect<std::uint32_t> *getCountFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const int confId = -1, AdditionalOutput *additionalOutput = nullptr,
       const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
       const std::vector<std::uint32_t> *customBondInvariants = nullptr) const {
-    return getCountFingerprint(
-               mol, FingerprintFuncArguments(
-                        fromAtoms, ignoreAtoms, confId, additionalOutput,
-                        customAtomInvariants, customBondInvariants))
-        .release();
+    FingerprintFuncArguments ffa(fromAtoms, ignoreAtoms, confId,
+                                 additionalOutput, customAtomInvariants,
+                                 customBondInvariants);
+    return getCountFingerprint(mol, ffa).release();
   };
 
   ExplicitBitVect *getFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
-      const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
+      const int confId = -1, AdditionalOutput *additionalOutput = nullptr,
       const std::vector<std::uint32_t> *customAtomInvariants = nullptr,
       const std::vector<std::uint32_t> *customBondInvariants = nullptr) const {
-    return getFingerprint(mol,
-                          FingerprintFuncArguments(
-                              fromAtoms, ignoreAtoms, confId, additionalOutput,
-                              customAtomInvariants, customBondInvariants))
-        .release();
+    FingerprintFuncArguments ffa(fromAtoms, ignoreAtoms, confId,
+                                 additionalOutput, customAtomInvariants,
+                                 customBondInvariants);
+    return getFingerprint(mol, ffa).release();
   };
 
   std::string infoString() const;
