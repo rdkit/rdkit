@@ -108,7 +108,6 @@ template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT MorganArguments
     : public FingerprintArguments<OutputType> {
  public:
-  const bool df_includeChirality = false;
   const bool df_onlyNonzeroInvariants = false;
   const unsigned int d_radius = 3;
   const bool df_includeRedundantEnvironments = false;
@@ -140,8 +139,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments
                   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
                   std::uint32_t fpSize = 2048,
                   bool includeRedundantEnvironments = false)
-      : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
-        df_includeChirality(includeChirality),
+      : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize,
+                                         1, includeChirality),
         df_onlyNonzeroInvariants(onlyNonzeroInvariants),
         d_radius(radius),
         df_includeRedundantEnvironments(includeRedundantEnvironments){};

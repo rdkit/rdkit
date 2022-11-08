@@ -39,9 +39,7 @@ std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
 }
 
 std::string AtomPairAtomInvGenerator::infoString() const {
-  return "AtomPairInvariantGenerator includeChirality=" +
-         std::to_string(df_includeChirality) +
-         " topologicalTorsionCorrection=" +
+  return "AtomPairInvariantGenerator topologicalTorsionCorrection=" +
          std::to_string(df_topologicalTorsionCorrection);
 }
 
@@ -54,7 +52,7 @@ template <typename OutputType>
 OutputType AtomPairArguments<OutputType>::getResultSize() const {
   OutputType result = 1;
   return (result << (numAtomPairFingerprintBits +
-                     2 * (df_includeChirality ? numChiralBits : 0)));
+                     2 * (this->df_includeChirality ? numChiralBits : 0)));
 }
 
 template <typename OutputType>
@@ -62,8 +60,8 @@ AtomPairArguments<OutputType>::AtomPairArguments(
     const bool countSimulation, const bool includeChirality, const bool use2D,
     const unsigned int minDistance, const unsigned int maxDistance,
     const std::vector<std::uint32_t> countBounds, const std::uint32_t fpSize)
-    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize),
-      df_includeChirality(includeChirality),
+    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize, 1,
+                                       includeChirality),
       df_use2D(use2D),
       d_minDistance(minDistance),
       d_maxDistance(maxDistance) {
@@ -72,9 +70,7 @@ AtomPairArguments<OutputType>::AtomPairArguments(
 
 template <typename OutputType>
 std::string AtomPairArguments<OutputType>::infoString() const {
-  return "AtomPairArguments includeChirality=" +
-         std::to_string(df_includeChirality) +
-         " use2D=" + std::to_string(df_use2D) +
+  return "AtomPairArguments use2D=" + std::to_string(df_use2D) +
          " minDistance=" + std::to_string(d_minDistance) +
          " maxDistance=" + std::to_string(d_maxDistance);
 }

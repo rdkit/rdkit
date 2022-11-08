@@ -117,9 +117,8 @@ OutputType MorganArguments<OutputType>::getResultSize() const {
 
 template <typename OutputType>
 std::string MorganArguments<OutputType>::infoString() const {
-  return "MorganArguments includeChirality=" +
-         std::to_string(df_includeChirality) +
-         " onlyNonzeroInvariants=" + std::to_string(df_onlyNonzeroInvariants) +
+  return "MorganArguments onlyNonzeroInvariants=" +
+         std::to_string(df_onlyNonzeroInvariants) +
          " radius=" + std::to_string(d_radius);
 }
 

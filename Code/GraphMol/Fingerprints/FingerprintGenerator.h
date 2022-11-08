@@ -83,8 +83,10 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
   FingerprintArguments(bool countSimulation,
                        const std::vector<std::uint32_t> countBounds,
                        std::uint32_t fpSize,
-                       std::uint32_t numBitsPerFeature = 1);
-  const bool d_countSimulation;
+                       std::uint32_t numBitsPerFeature = 1,
+                       bool includeChirality = false);
+  const bool df_countSimulation;
+  const bool df_includeChirality;
   const std::vector<std::uint32_t> d_countBounds;
   const std::uint32_t d_fpSize;
   const std::uint32_t d_numBitsPerFeature;

@@ -3910,6 +3910,7 @@ M  END)CTAB";
   std::unique_ptr<ROMol> mol{MolBlockToMol(molblock)};
 
   TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0), 0, false) == 486);
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

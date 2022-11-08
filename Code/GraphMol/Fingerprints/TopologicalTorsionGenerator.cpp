@@ -35,9 +35,8 @@ OutputType TopologicalTorsionArguments<OutputType>::getResultSize() const {
 
 template <typename OutputType>
 std::string TopologicalTorsionArguments<OutputType>::infoString() const {
-  return "TopologicalTorsionArguments includeChirality=" +
-         std::to_string(df_includeChirality) +
-         " torsionAtomCount=" + std::to_string(d_torsionAtomCount);
+  return "TopologicalTorsionArguments torsionAtomCount=" +
+         std::to_string(d_torsionAtomCount);
 };
 template <typename OutputType>
 OutputType TopologicalTorsionAtomEnv<OutputType>::getBitId(

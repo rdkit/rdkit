@@ -25,8 +25,10 @@ namespace RDKit {
 template <typename OutputType>
 FingerprintArguments<OutputType>::FingerprintArguments(
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize, std::uint32_t numBitsPerFeature)
-    : d_countSimulation(countSimulation),
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+    bool includeChirality)
+    : df_countSimulation(countSimulation),
+      df_includeChirality(includeChirality),
       d_countBounds(countBounds),
       d_fpSize(fpSize),
       d_numBitsPerFeature(numBitsPerFeature) {
@@ -37,18 +39,21 @@ FingerprintArguments<OutputType>::FingerprintArguments(
 
 template FingerprintArguments<std::uint32_t>::FingerprintArguments(
     bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize, std::uint32_t numBitsPerFeature);
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+    bool includeChirality);
 
 template FingerprintArguments<std::uint64_t>::FingerprintArguments(
     bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize, std::uint32_t numBitsPerFeature);
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+    bool includeChirality);
 
 template <typename OutputType>
 std::string FingerprintArguments<OutputType>::commonArgumentsString() const {
   return "Common arguments : countSimulation=" +
-         std::to_string(d_countSimulation) +
+         std::to_string(df_countSimulation) +
          " fpSize=" + std::to_string(d_fpSize) +
-         " bitsPerFeature=" + std::to_string(d_numBitsPerFeature);
+         " bitsPerFeature=" + std::to_string(d_numBitsPerFeature) +
+         " includeChirality=" + std::to_string(df_includeChirality);
 }
 
 template <typename OutputType>
@@ -119,14 +124,23 @@ std::unique_ptr<SparseIntVect<OutputType>>
 FingerprintGenerator<OutputType>::getFingerprintHelper(
     const ROMol &mol, const FingerprintFuncArguments &args,
     const std::uint64_t fpSize) const {
+  const ROMol *lmol = &mol;
+  std::unique_ptr<ROMol> tmol;
+  if (dp_fingerprintArguments->df_includeChirality &&
+      !mol.hasProp(common_properties::_StereochemDone)) {
+    tmol = std::unique_ptr<ROMol>(new ROMol(mol));
+    MolOps::assignStereochemistry(*tmol);
+    lmol = tmol.get();
+  }
+
   if (args.additionalOutput) {
     if (args.additionalOutput->atomCounts) {
-      args.additionalOutput->atomCounts->resize(mol.getNumAtoms());
+      args.additionalOutput->atomCounts->resize(lmol->getNumAtoms());
       std::fill(args.additionalOutput->atomCounts->begin(),
                 args.additionalOutput->atomCounts->end(), 0);
     }
     if (args.additionalOutput->atomToBits) {
-      args.additionalOutput->atomToBits->resize(mol.getNumAtoms());
+      args.additionalOutput->atomToBits->resize(lmol->getNumAtoms());
       std::fill(args.additionalOutput->atomToBits->begin(),
                 args.additionalOutput->atomToBits->end(),
                 std::vector<std::uint64_t>());
@@ -161,7 +175,7 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
   // up the fingerprint
   std::vector<AtomEnvironment<OutputType> *> atomEnvironments =
       dp_atomEnvironmentGenerator->getEnvironments(
-          mol, dp_fingerprintArguments, args.fromAtoms, args.ignoreAtoms,
+          *lmol, dp_fingerprintArguments, args.fromAtoms, args.ignoreAtoms,
           args.confId, args.additionalOutput, atomInvariants, bondInvariants,
           hashResults);
 
@@ -251,7 +265,7 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
                (std::uint64_t)dp_fingerprintArguments->getResultSize());
 
   std::uint32_t effectiveSize = resultSize;
-  if (dp_fingerprintArguments->d_countSimulation) {
+  if (dp_fingerprintArguments->df_countSimulation) {
     // effective size needs to be smaller than result size to compansate for
     // count simulation
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();
@@ -262,7 +276,7 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
   auto result = std::make_unique<SparseBitVect>(resultSize);
 
   for (auto val : tempResult->getNonzeroElements()) {
-    if (dp_fingerprintArguments->d_countSimulation) {
+    if (dp_fingerprintArguments->df_countSimulation) {
       for (unsigned int i = 0;
            i < dp_fingerprintArguments->d_countBounds.size(); ++i) {
         // for every bound in the d_countBounds in dp_fingerprintArguments, set
@@ -302,7 +316,7 @@ std::unique_ptr<ExplicitBitVect>
 FingerprintGenerator<OutputType>::getFingerprint(
     const ROMol &mol, const FingerprintFuncArguments &args) const {
   std::uint32_t effectiveSize = dp_fingerprintArguments->d_fpSize;
-  if (dp_fingerprintArguments->d_countSimulation) {
+  if (dp_fingerprintArguments->df_countSimulation) {
     // effective size needs to be smaller than result size to compansate for
     // count simulation
     effectiveSize /= dp_fingerprintArguments->d_countBounds.size();
@@ -312,7 +326,7 @@ FingerprintGenerator<OutputType>::getFingerprint(
   auto result =
       std::make_unique<ExplicitBitVect>(dp_fingerprintArguments->d_fpSize);
   for (auto val : tempResult->getNonzeroElements()) {
-    if (dp_fingerprintArguments->d_countSimulation) {
+    if (dp_fingerprintArguments->df_countSimulation) {
       for (unsigned int i = 0;
            i < dp_fingerprintArguments->d_countBounds.size(); ++i) {
         // for every bound in the d_countBounds in dp_fingerprintArguments, set

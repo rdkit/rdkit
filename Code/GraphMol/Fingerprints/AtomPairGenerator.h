@@ -51,7 +51,6 @@ template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT AtomPairArguments
     : public FingerprintArguments<OutputType> {
  public:
-  const bool df_includeChirality;
   const bool df_use2D;
   const unsigned int d_minDistance;
   const unsigned int d_maxDistance;
