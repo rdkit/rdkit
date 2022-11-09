@@ -12,8 +12,8 @@ def _GetEnantiomer(m, forceHs: bool = False, silent: bool = False):
    m2 = Chem.MolFromMolBlock(m_b)
 
    # If an enantiomer does not exist, return None
-   m1_str = Chem.MolToSmiles(m1)
-   m2_str = Chem.MolToSmiles(Chem.AddHs(m2)) if forceHs else Chem.MolToSmiles(m2)
+   m1_str = Chem.MolToInchi(m1)
+   m2_str = Chem.MolToInchi(Chem.AddHs(m2)) if forceHs else Chem.MolToSmiles(m2)
 
    if m1_str == m2_str:
       if not silent:
