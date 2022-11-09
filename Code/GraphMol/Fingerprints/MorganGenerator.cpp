@@ -139,14 +139,15 @@ void MorganAtomEnv<OutputType>::updateAdditionalOutput(
 
 template <typename OutputType>
 OutputType MorganAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *arguments,
-    const std::vector<std::uint32_t> *,              // atomInvariants
-    const std::vector<std::uint32_t> *,              // bondInvariants
-    AdditionalOutput *additionalOutput, const bool,  // hashResults
-    const std::uint64_t fpSize) const {
-  PRECONDITION(arguments, "bad arguments");
+    FingerprintArguments<OutputType> *,  // arguments
+    const std::vector<std::uint32_t> *,  // atomInvariants
+    const std::vector<std::uint32_t> *,  // bondInvariants
+    AdditionalOutput *,                  // additional Output
+    const bool,                          // hashResults
+    const std::uint64_t                  // fpSize
+) const {
   return d_code;
-}
+}  // namespace MorganFingerprint
 
 template <typename OutputType>
 MorganAtomEnv<OutputType>::MorganAtomEnv(const std::uint32_t code,

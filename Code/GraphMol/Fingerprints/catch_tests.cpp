@@ -289,11 +289,16 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
   SECTION("folded bitInfo") {
     // clang-format off
     AdditionalOutput::bitPathsType expected = {
+          {562, {{2}}},
+          {709, {{0, 1}}},
+          {1118, {{0, 1, 2}}},
+          {1183, {{1, 2}}},
           {1233, {{0, 1, 2}}},
           {1308, {{0}, {1}}},
           {1339, {{2}}},
           {1728, {{1, 2}}},
-          {1813, {{0, 1}}}
+          {1772, {{0}, {1}}},
+          {1813, {{0, 1}}},
         };
     // clang-format on
 
@@ -302,6 +307,7 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
       ao.allocateBitPaths();
       std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(
           *m1, fromAtoms, ignoreAtoms, confId, &ao));
+
       CHECK(*ao.bitPaths == expected);
     }
     {
@@ -316,11 +322,11 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
 
   SECTION("folded atomToBits atomCounts") {
     AdditionalOutput::atomToBitsType expected1 = {
-        {1308, 1813, 1233},
-        {1308, 1308, 1813, 1728, 1233},
-        {1308, 1339, 1813, 1728, 1233},
-        {1339, 1728, 1233}};
-    AdditionalOutput::atomCountsType expected2 = {3, 5, 5, 3};
+        {1308, 1772, 1813, 709, 1233, 1118},
+        {1308, 1772, 1813, 709, 1728, 1183, 1233, 1118},
+        {1308, 1772, 1339, 562, 1813, 709, 1728, 1183, 1233, 1118},
+        {1339, 562, 1728, 1183, 1233, 1118}};
+    AdditionalOutput::atomCountsType expected2 = {6, 10, 10, 6};
 
     {
       AdditionalOutput ao;
@@ -346,11 +352,16 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
   SECTION("unfolded bitInfo") {
     // clang-format off
     AdditionalOutput::bitPathsType expected = {
-        {3977409745, {{0, 1, 2}}},
-        {4275705116, {{0}, {1}}},
-        {4274652475, {{2}}},
+        {54413874, {{2}}},
+        {257418334, {{0, 1, 2}}},
+        {986785516, {{0}, {1}}},
+        {1135572127, {{1, 2}}},
+        {1433230021, {{0, 1}}},
         {1524090560, {{1, 2}}},
-        {1940446997, {{0, 1}}}
+        {1940446997, {{0, 1}}},
+        {3977409745, {{0, 1, 2}}},
+        {4274652475, {{2}}},
+        {4275705116, {{0}, {1}}},
       };
     // clang-format on
 
@@ -373,11 +384,13 @@ TEST_CASE("RDKitGenerator bit info", "[fpgenerator][RDKit]") {
 
   SECTION("unfolded atomToBits atomCounts") {
     AdditionalOutput::atomToBitsType expected1 = {
-        {4275705116, 1940446997, 3977409745},
-        {4275705116, 4275705116, 1940446997, 1524090560, 3977409745},
-        {4275705116, 4274652475, 1940446997, 1524090560, 3977409745},
-        {4274652475, 1524090560, 3977409745}};
-    AdditionalOutput::atomCountsType expected2 = {3, 5, 5, 3};
+        {4275705116, 986785516, 1940446997, 1433230021, 3977409745, 257418334},
+        {4275705116, 986785516, 1940446997, 1433230021, 1524090560, 1135572127,
+         3977409745, 257418334},
+        {4275705116, 986785516, 4274652475, 54413874, 1940446997, 1433230021,
+         1524090560, 1135572127, 3977409745, 257418334},
+        {4274652475, 54413874, 1524090560, 1135572127, 3977409745, 257418334}};
+    AdditionalOutput::atomCountsType expected2 = {6, 10, 10, 6};
 
     {
       AdditionalOutput ao;
