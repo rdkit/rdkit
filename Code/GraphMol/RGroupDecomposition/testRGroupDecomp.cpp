@@ -3155,6 +3155,7 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
       auto mol = SmilesToMol(smiles);
       auto result = decomp.add(*mol);
       TEST_ASSERT(result > -1);
+      delete mol;
     }
     decomp.process();
     auto rows = decomp.getRGroupsAsRows();
@@ -3215,6 +3216,7 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
       auto mol = SmilesToMol(smiles);
       auto result = decomp.add(*mol);
       TEST_ASSERT(result > -1);
+      delete mol;
     }
     decomp.process();
     auto rows = decomp.getRGroupsAsRows();

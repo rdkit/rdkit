@@ -64,9 +64,9 @@ void RCore::findIndicesWithRLabel() {
   }
 }
 
-RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
-                                          const ROMol &mol,
-                                          const MatchVectType &match) const {
+RWMOL_SPTR RCore::extractCoreFromMolMatch(
+    bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match,
+    const RGroupDecompositionParameters &params) const {
   auto extractedCore = boost::make_shared<RWMol>(mol);
   std::set<int> atomIndicesToKeep;
   std::vector<Bond *> newBonds;
@@ -96,7 +96,11 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(bool &hasCoreDummies,
 #endif
       bool isChiral = targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
                       targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW;
-
+      if (isChiral && !params.substructmatchParams.useChirality) {
+        // if we're not doing chiral matching don't copy chirality to the extracted core.
+        targetAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
+        isChiral = false;
+      }
       // collect neighbors in vector, so we can add atoms while looping
       std::vector<Atom *> targetNeighborAtoms;
       for (auto targetNeighborAtom : extractedCore->atomNeighbors(targetAtom)) {

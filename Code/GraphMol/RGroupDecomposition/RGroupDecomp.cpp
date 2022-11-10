@@ -378,7 +378,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         CHECK_INVARIANT(numberMissingUserGroups >= 0,
                         "Data error in missing user rgroup count");
         auto extractedCore =
-            rcore->extractCoreFromMolMatch(hasCoreDummies, mol, tmatche);
+            rcore->extractCoreFromMolMatch(hasCoreDummies, mol, tmatche, params());
         potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
                                       extractedCore);
       }
