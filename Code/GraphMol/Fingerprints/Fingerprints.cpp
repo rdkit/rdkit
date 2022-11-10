@@ -534,97 +534,36 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
   PRECONDITION(!atomBits || atomBits->size() >= mol.getNumAtoms(),
                "bad atomBits size");
 
-  // build default atom invariants if need be:
-  std::vector<std::uint32_t> lAtomInvariants;
-  if (!atomInvariants) {
-    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
-                                                             lAtomInvariants);
-    atomInvariants = &lAtomInvariants;
+  std::uint32_t numBitsPerFeature = 1;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpgen(
+      RDKit::RDKitFP::getRDKitFPGenerator<std::uint64_t>(
+          minPath, maxPath, useHs, branchedPaths, useBondOrder, nullptr, false,
+          {1, 2, 4, 8}, 2048, numBitsPerFeature));
+
+  FingerprintFuncArguments args;
+  args.customAtomInvariants = atomInvariants;
+  args.fromAtoms = fromAtoms;
+
+  AdditionalOutput ao;
+  if (atomBits) {
+    args.additionalOutput = &ao;
+    ao.allocateAtomToBits();
+  }
+  if (bitInfo) {
+    args.additionalOutput = &ao;
+    ao.allocateBitPaths();
   }
 
-  // get all paths
-  INT_PATH_LIST_MAP allPaths;
-  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths,
-                                  useHs, minPath, maxPath);
-
-  // identify query bonds
-  std::vector<short> isQueryBond(mol.getNumBonds(), 0);
-  std::vector<const Bond *> bondCache;
-  RDKitFPUtils::identifyQueryBonds(mol, bondCache, isQueryBond);
+  auto fp = fpgen->getSparseCountFingerprint(mol, args);
 
   if (atomBits) {
-    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-      (*atomBits)[i].clear();
-    }
+    *atomBits = *ao.atomToBits;
   }
 
-  std::map<unsigned int, unsigned int> bitMap;
-
-  boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
-  for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
-       paths++) {
-    for (const auto &path : paths->second) {
-      // the bond hashes of the path
-      std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
-          mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,
-          atomInvariants);
-      if (!bondHashes.size()) {
-        continue;
-      }
-
-      // hash the path to generate a seed:
-      unsigned long seed;
-      if (path.size() > 1) {
-        std::sort(bondHashes.begin(), bondHashes.end());
-
-        // finally, we will add the number of distinct atoms in the path at the
-        // end
-        // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-        bondHashes.push_back(static_cast<unsigned int>(atomsInPath.count()));
-        seed = gboost::hash_range(bondHashes.begin(), bondHashes.end());
-      } else {
-        seed = bondHashes[0];
-      }
-
-      unsigned int bit = seed;
-
-      // count-based FP
-      if (bitMap.find(bit) != bitMap.end()) {
-        bitMap[bit]++;
-      } else {
-        bitMap.insert(std::make_pair(bit, 1));
-      }
-
-      if (atomBits) {
-        boost::dynamic_bitset<>::size_type aIdx = atomsInPath.find_first();
-        while (aIdx != boost::dynamic_bitset<>::npos) {
-          if (std::find((*atomBits)[aIdx].begin(), (*atomBits)[aIdx].end(),
-                        bit) == (*atomBits)[aIdx].end()) {
-            (*atomBits)[aIdx].push_back(bit);
-          }
-          aIdx = atomsInPath.find_next(aIdx);
-        }
-      }
-
-      if (bitInfo) {
-        std::vector<int> p;
-        for (int i : path) {
-          p.push_back(i);
-        }
-        (*bitInfo)[bit].push_back(p);
-      }
-    }
+  if (bitInfo) {
+    *bitInfo = *ao.bitPaths;
   }
 
-  // technically the upper limit here could be std::uint32_t since `bitMap` uses
-  // unsigned ints, but that could change in the future and saying that the
-  // sparse vector is bigger than it actually is doesn't hurt anything
-  auto *res = new SparseIntVect<std::uint64_t>(
-      std::numeric_limits<std::uint64_t>::max());
-  for (const auto &pr : bitMap) {
-    res->setVal(pr.first, pr.second);
-  }
-
-  return res;
+  return fp.release();
 }
 }  // namespace RDKit
