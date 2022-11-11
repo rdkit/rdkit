@@ -32,28 +32,20 @@ TEST_CASE("includeRedundantEnvironments") {
   auto mol = "CC(=O)O"_smiles;
   REQUIRE(mol);
   SECTION("basics") {
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2)};
+    REQUIRE(fpgen);
     {
-      std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
-          MorganFingerprint::getMorganGenerator<std::uint32_t>(2)};
-      REQUIRE(fpgen);
       std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
           fpgen->getCountFingerprint(*mol)};
       REQUIRE(fp);
       CHECK(fp->getTotalVal() == 8);
     }
+    // turn on inclusion of redundant bits
+    dynamic_cast<MorganFingerprint::MorganArguments<std::uint32_t> *>(
+        fpgen->getOptions())
+        ->df_includeRedundantEnvironments = true;
     {
-      // turn on inclusion of redundant bits
-      unsigned int radius = 2;
-      bool countSimulation = false;
-      bool includeChirality = false;
-      bool useBondTypes = true;
-      bool onlyNonzeroInvariants = false;
-      bool includeRedundantEnvironments = true;
-      std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
-          MorganFingerprint::getMorganGenerator<std::uint32_t>(
-              radius, countSimulation, includeChirality, useBondTypes,
-              onlyNonzeroInvariants, includeRedundantEnvironments)};
-      REQUIRE(fpgen);
       std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
           fpgen->getCountFingerprint(*mol)};
       REQUIRE(fp);
