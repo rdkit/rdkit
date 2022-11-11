@@ -329,5 +329,7 @@ typedef unsigned long long int	uintmax_t;
 
 %{
 #include <RDGeneral/versions.h>
+#include <RDGeneral/RDLog.h>
 %}
 %include <RDGeneral/versions.h>
+%include <RDGeneral/RDLog.h>
