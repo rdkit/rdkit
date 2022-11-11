@@ -195,8 +195,8 @@ ExplicitBitVect *RDKFingerprintMol(
   std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen(
       RDKit::RDKitFP::getRDKitFPGenerator<std::uint32_t>(
           minPath, maxPath, useHs, branchedPaths, useBondOrder));
-  fpgen->getArguments()->d_fpSize = fpSize;
-  fpgen->getArguments()->d_numBitsPerFeature = nBitsPerHash;
+  fpgen->getOptions()->d_fpSize = fpSize;
+  fpgen->getOptions()->d_numBitsPerFeature = nBitsPerHash;
 
   FingerprintFuncArguments args;
   args.customAtomInvariants = atomInvariants;
@@ -538,7 +538,7 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpgen(
       RDKit::RDKitFP::getRDKitFPGenerator<std::uint64_t>(
           minPath, maxPath, useHs, branchedPaths, useBondOrder));
-  fpgen->getArguments()->d_numBitsPerFeature = 1;
+  fpgen->getOptions()->d_numBitsPerFeature = 1;
   FingerprintFuncArguments args;
   args.customAtomInvariants = atomInvariants;
   args.fromAtoms = fromAtoms;

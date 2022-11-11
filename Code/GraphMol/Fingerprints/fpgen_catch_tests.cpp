@@ -51,7 +51,7 @@ TEST_CASE("includeRedundantEnvironments") {
       bool includeRedundantEnvironments = true;
       std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
           MorganFingerprint::getMorganGenerator<std::uint32_t>(
-              2, countSimulation, includeChirality, useBondTypes,
+              radius, countSimulation, includeChirality, useBondTypes,
               onlyNonzeroInvariants, includeRedundantEnvironments)};
       REQUIRE(fpgen);
       std::unique_ptr<SparseIntVect<std::uint32_t>> fp{

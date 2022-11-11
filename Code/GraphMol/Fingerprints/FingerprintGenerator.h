@@ -318,10 +318,10 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
 
   ~FingerprintGenerator();
 
-  FingerprintArguments<OutputType> *getArguments() {
+  FingerprintArguments<OutputType> *getOptions() {
     return dp_fingerprintArguments;
   };
-  const FingerprintArguments<OutputType> *getArguments() const {
+  const FingerprintArguments<OutputType> *getOptions() const {
     return dp_fingerprintArguments;
   };
 

@@ -99,7 +99,7 @@ TEST_CASE("RDKit bits per feature", "[fpgenerator][rdkit]") {
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
         RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
     REQUIRE(fpGenerator);
-    fpGenerator->getArguments()->d_numBitsPerFeature = 1;
+    fpGenerator->getOptions()->d_numBitsPerFeature = 1;
     std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp);
     CHECK(fp->getNumBits() == 2048);
@@ -726,12 +726,12 @@ TEST_CASE("RDKit set countBounds", "[fpgenerator][rdkit]") {
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
         RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
     REQUIRE(fpGenerator);
-    fpGenerator->getArguments()->df_countSimulation = true;
+    fpGenerator->getOptions()->df_countSimulation = true;
     std::unique_ptr<ExplicitBitVect> fp1(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp1);
     CHECK(fp1->getNumBits() == 2048);
 
-    fpGenerator->getArguments()->d_countBounds = {2, 8, 16, 32};
+    fpGenerator->getOptions()->d_countBounds = {2, 8, 16, 32};
     std::unique_ptr<ExplicitBitVect> fp2(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp2);
     CHECK(fp2->getNumBits() == 2048);

@@ -197,13 +197,13 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
-  MorganArguments<OutputType> *getArguments() {
+  MorganArguments<OutputType> *getOptions() {
     return dynamic_cast<MorganArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getArguments());
+        FingerprintGenerator<OutputType>::getOptions());
   };
-  const MorganArguments<OutputType> *getArguments() const {
+  const MorganArguments<OutputType> *getOptions() const {
     return dynamic_cast<const MorganArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getArguments());
+        FingerprintGenerator<OutputType>::getOptions());
   };
 };
 

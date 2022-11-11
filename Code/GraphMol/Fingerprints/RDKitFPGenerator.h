@@ -113,13 +113,13 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
       bool hashResults = false) const override;
 
   std::string infoString() const override;
-  RDKitFPArguments<OutputType> *getArguments() {
+  RDKitFPArguments<OutputType> *getOptions() {
     return dynamic_cast<RDKitFPArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getArguments());
+        FingerprintGenerator<OutputType>::getOptions());
   };
-  const RDKitFPArguments<OutputType> *getArguments() const {
+  const RDKitFPArguments<OutputType> *getOptions() const {
     return dynamic_cast<const RDKitFPArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getArguments());
+        FingerprintGenerator<OutputType>::getOptions());
   };
 };  // namespace RDKitFP
 

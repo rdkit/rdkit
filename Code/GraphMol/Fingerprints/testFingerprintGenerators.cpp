@@ -128,7 +128,7 @@ void testAtomPairArgs() {
 
   atomPairGenerator =
       AtomPair::getAtomPairGenerator<std::uint32_t>(1, 30, true);
-  atomPairGenerator->getArguments()->df_countSimulation = false;
+  atomPairGenerator->getOptions()->df_countSimulation = false;
   fp = atomPairGenerator->getSparseCountFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 3);
   TEST_ASSERT(fp->getNonzeroElements().size() == 2);
@@ -141,7 +141,7 @@ void testAtomPairArgs() {
 
   delete fp;
 
-  atomPairGenerator->getArguments()->df_includeChirality = false;
+  atomPairGenerator->getOptions()->df_includeChirality = false;
   fp = atomPairGenerator->getSparseCountFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 3);
   TEST_ASSERT(fp->getNonzeroElements().size() == 2);

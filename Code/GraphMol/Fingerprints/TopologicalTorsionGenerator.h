@@ -86,13 +86,13 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
-  TopologicalTorsionArguments<OutputType> *getArguments() {
+  TopologicalTorsionArguments<OutputType> *getOptions() {
     return dynamic_cast<TopologicalTorsionArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getArguments());
+        FingerprintGenerator<OutputType>::getOptions());
   };
-  const TopologicalTorsionArguments<OutputType> *getArguments() const {
+  const TopologicalTorsionArguments<OutputType> *getOptions() const {
     return dynamic_cast<const TopologicalTorsionArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getArguments());
+        FingerprintGenerator<OutputType>::getOptions());
   };
 };
 

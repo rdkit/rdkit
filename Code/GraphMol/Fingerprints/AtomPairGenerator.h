@@ -138,13 +138,13 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
-  AtomPairArguments<OutputType> *getArguments() {
+  AtomPairArguments<OutputType> *getOptions() {
     return dynamic_cast<AtomPairArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getArguments());
+        FingerprintGenerator<OutputType>::getOptions());
   };
-  const AtomPairArguments<OutputType> *getArguments() const {
+  const AtomPairArguments<OutputType> *getOptions() const {
     return dynamic_cast<const AtomPairArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getArguments());
+        FingerprintGenerator<OutputType>::getOptions());
   };
 };
 
