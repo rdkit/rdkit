@@ -516,6 +516,9 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
     }
   }
 
+  if (!coreWithMatches->getRingInfo()->isInitialized()) {
+    MolOps::symmetrizeSSSR(*coreWithMatches);
+  }
 #ifdef VERBOSE
   std::cerr << "output core mol3 " << MolToSmiles(*coreWithMatches)
             << std::endl;
