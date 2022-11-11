@@ -519,6 +519,16 @@ void testGithub4330() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testNoAtomCTAB() {
+  BOOST_LOG(rdInfoLog) << "testing CTAB with no atoms"
+                       << std::endl;
+  std::string data = "NullMol\r\n  ChemDraw04291110502D\r\n\r\n  0  0  0  0  0  0  0  0  0  0999 V2000\r\nM  END";
+  bool isSmiles = false;
+  int flags = 0x01 | 0x02 | 0x20;
+  auto res = AvalonTools::getCanonSmiles(data, isSmiles, flags);
+  TEST_ASSERT(res.empty());
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -538,6 +548,7 @@ int main() {
 #endif
   testGithub4075();
   testGithub4330();
+  testNoAtomCTAB();
 
   return 0;
 }
