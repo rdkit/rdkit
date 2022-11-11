@@ -21,11 +21,11 @@ template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments
     : public FingerprintArguments<OutputType> {
  public:
-  const unsigned int d_minPath;
-  const unsigned int d_maxPath;
-  const bool df_useHs;
-  const bool df_branchedPaths;
-  const bool df_useBondOrder;
+  unsigned int d_minPath;
+  unsigned int d_maxPath;
+  bool df_useHs;
+  bool df_branchedPaths;
+  bool df_useBondOrder;
 
   OutputType getResultSize() const override;
 
@@ -113,7 +113,15 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPEnvGenerator
       bool hashResults = false) const override;
 
   std::string infoString() const override;
-};
+  RDKitFPArguments<OutputType> *getArguments() {
+    return dynamic_cast<RDKitFPArguments<OutputType> *>(
+        FingerprintGenerator<OutputType>::getArguments());
+  };
+  const RDKitFPArguments<OutputType> *getArguments() const {
+    return dynamic_cast<const RDKitFPArguments<OutputType> *>(
+        FingerprintGenerator<OutputType>::getArguments());
+  };
+};  // namespace RDKitFP
 
 /**
  \brief Get a RDKit fingerprint generator with given parameters

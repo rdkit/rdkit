@@ -108,9 +108,9 @@ template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT MorganArguments
     : public FingerprintArguments<OutputType> {
  public:
-  const bool df_onlyNonzeroInvariants = false;
-  const unsigned int d_radius = 3;
-  const bool df_includeRedundantEnvironments = false;
+  bool df_onlyNonzeroInvariants = false;
+  unsigned int d_radius = 3;
+  bool df_includeRedundantEnvironments = false;
 
   OutputType getResultSize() const override;
 
@@ -197,6 +197,14 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  MorganArguments<OutputType> *getArguments() {
+    return dynamic_cast<MorganArguments<OutputType> *>(
+        FingerprintGenerator<OutputType>::getArguments());
+  };
+  const MorganArguments<OutputType> *getArguments() const {
+    return dynamic_cast<const MorganArguments<OutputType> *>(
+        FingerprintGenerator<OutputType>::getArguments());
+  };
 };
 
 /**

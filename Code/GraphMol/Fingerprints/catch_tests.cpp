@@ -94,25 +94,12 @@ TEST_CASE("RDKit bits per feature", "[fpgenerator][rdkit]") {
           std::string::npos);
   }
   SECTION("change numBitsPerFeature") {
-    // I won't lie: having to do this makes my head hurt, but fixing it to
-    // create a ctor that takes a Parameters object is more effort than I can
-    // devote at the moment
     unsigned int minPath = 1;
     unsigned int maxPath = 2;
-    bool useHs = true;
-    bool branchedPaths = true;
-    bool useBondOrder = true;
-    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
-    bool countSimulation = false;
-    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-    std::uint32_t fpSize = 2048;
-    std::uint32_t numBitsPerFeature = 1;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
-        RDKitFP::getRDKitFPGenerator<std::uint64_t>(
-            minPath, maxPath, useHs, branchedPaths, useBondOrder,
-            atomInvariantsGenerator, countSimulation, countBounds, fpSize,
-            numBitsPerFeature));
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
     REQUIRE(fpGenerator);
+    fpGenerator->getArguments()->d_numBitsPerFeature = 1;
     std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp);
     CHECK(fp->getNumBits() == 2048);
@@ -736,30 +723,15 @@ TEST_CASE("RDKit set countBounds", "[fpgenerator][rdkit]") {
   SECTION("change countBounds") {
     unsigned int minPath = 1;
     unsigned int maxPath = 7;
-    bool useHs = true;
-    bool branchedPaths = true;
-    bool useBondOrder = true;
-    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
-    bool countSimulation = true;
-    std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-    std::uint32_t fpSize = 2048;
-    std::uint32_t numBitsPerFeature = 2;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
-        RDKitFP::getRDKitFPGenerator<std::uint64_t>(
-            minPath, maxPath, useHs, branchedPaths, useBondOrder,
-            atomInvariantsGenerator, countSimulation, countBounds, fpSize,
-            numBitsPerFeature));
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>(minPath, maxPath));
     REQUIRE(fpGenerator);
+    fpGenerator->getArguments()->df_countSimulation = true;
     std::unique_ptr<ExplicitBitVect> fp1(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp1);
     CHECK(fp1->getNumBits() == 2048);
 
-    countBounds = {2, 8, 16, 32};
-    fpGenerator.reset(RDKitFP::getRDKitFPGenerator<std::uint64_t>(
-        minPath, maxPath, useHs, branchedPaths, useBondOrder,
-        atomInvariantsGenerator, countSimulation, countBounds, fpSize,
-        numBitsPerFeature));
-    REQUIRE(fpGenerator);
+    fpGenerator->getArguments()->d_countBounds = {2, 8, 16, 32};
     std::unique_ptr<ExplicitBitVect> fp2(fpGenerator->getFingerprint(*m1));
     REQUIRE(fp2);
     CHECK(fp2->getNumBits() == 2048);

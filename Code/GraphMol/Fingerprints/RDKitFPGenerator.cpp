@@ -144,17 +144,15 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
-  auto *rDKitFPArguments =
-      dynamic_cast<RDKitFPArguments<OutputType> *>(arguments);
+  auto *fpArguments = dynamic_cast<RDKitFPArguments<OutputType> *>(arguments);
 
   std::vector<AtomEnvironment<OutputType> *> result;
 
   // get all paths
   INT_PATH_LIST_MAP allPaths;
   RDKitFPUtils::enumerateAllPaths(
-      mol, allPaths, fromAtoms, rDKitFPArguments->df_branchedPaths,
-      rDKitFPArguments->df_useHs, rDKitFPArguments->d_minPath,
-      rDKitFPArguments->d_maxPath);
+      mol, allPaths, fromAtoms, fpArguments->df_branchedPaths,
+      fpArguments->df_useHs, fpArguments->d_minPath, fpArguments->d_maxPath);
 
   // identify query bonds
   std::vector<short> isQueryBond(mol.getNumBonds(), 0);
@@ -168,7 +166,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
       // the bond hashes of the path
       std::vector<std::uint32_t> bondHashes = RDKitFPUtils::generateBondHashes(
           mol, atomsInPath, bondCache, isQueryBond, path,
-          rDKitFPArguments->df_useBondOrder, atomInvariants);
+          fpArguments->df_useBondOrder, atomInvariants);
       if (!bondHashes.size()) {
         continue;
       }

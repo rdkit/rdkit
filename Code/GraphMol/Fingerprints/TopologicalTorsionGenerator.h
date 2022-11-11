@@ -22,8 +22,8 @@ template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionArguments
     : public FingerprintArguments<OutputType> {
  public:
-  const bool df_includeChirality;
-  const uint32_t d_torsionAtomCount;
+  bool df_includeChirality;
+  uint32_t d_torsionAtomCount;
 
   OutputType getResultSize() const override;
 
@@ -86,6 +86,14 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  TopologicalTorsionArguments<OutputType> *getArguments() {
+    return dynamic_cast<TopologicalTorsionArguments<OutputType> *>(
+        FingerprintGenerator<OutputType>::getArguments());
+  };
+  const TopologicalTorsionArguments<OutputType> *getArguments() const {
+    return dynamic_cast<const TopologicalTorsionArguments<OutputType> *>(
+        FingerprintGenerator<OutputType>::getArguments());
+  };
 };
 
 /**

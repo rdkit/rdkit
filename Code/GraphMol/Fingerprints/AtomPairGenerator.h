@@ -51,9 +51,9 @@ template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT AtomPairArguments
     : public FingerprintArguments<OutputType> {
  public:
-  const bool df_use2D;
-  const unsigned int d_minDistance;
-  const unsigned int d_maxDistance;
+  bool df_use2D;
+  unsigned int d_minDistance;
+  unsigned int d_maxDistance;
 
   OutputType getResultSize() const override;
 
@@ -138,6 +138,14 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  AtomPairArguments<OutputType> *getArguments() {
+    return dynamic_cast<AtomPairArguments<OutputType> *>(
+        FingerprintGenerator<OutputType>::getArguments());
+  };
+  const AtomPairArguments<OutputType> *getArguments() const {
+    return dynamic_cast<const AtomPairArguments<OutputType> *>(
+        FingerprintGenerator<OutputType>::getArguments());
+  };
 };
 
 /*!

@@ -85,11 +85,11 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
                        std::uint32_t fpSize,
                        std::uint32_t numBitsPerFeature = 1,
                        bool includeChirality = false);
-  const bool df_countSimulation;
-  const bool df_includeChirality;
-  const std::vector<std::uint32_t> d_countBounds;
-  const std::uint32_t d_fpSize;
-  const std::uint32_t d_numBitsPerFeature;
+  bool df_countSimulation;
+  bool df_includeChirality;
+  std::vector<std::uint32_t> d_countBounds;
+  std::uint32_t d_fpSize;
+  std::uint32_t d_numBitsPerFeature;
 
   /*!
     \brief Returns the size of the fingerprint based on arguments
@@ -318,6 +318,13 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
 
   ~FingerprintGenerator();
 
+  FingerprintArguments<OutputType> *getArguments() {
+    return dp_fingerprintArguments;
+  };
+  const FingerprintArguments<OutputType> *getArguments() const {
+    return dp_fingerprintArguments;
+  };
+
   std::unique_ptr<SparseIntVect<OutputType>> getSparseCountFingerprint(
       const ROMol &mol, FingerprintFuncArguments &args) const;
 
@@ -383,7 +390,8 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
 
 enum class FPType { AtomPairFP, MorganFP, RDKitFP, TopologicalTorsionFP };
 
-//! used to indicate errors for unimplemented fp types in convenience functions
+//! used to indicate errors for unimplemented fp types in convenience
+//! functions
 class RDKIT_FINGERPRINTS_EXPORT UnimplementedFPException
     : public std::exception {
  public:
