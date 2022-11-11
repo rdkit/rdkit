@@ -58,12 +58,11 @@ RDKitFPAtomInvGenerator *RDKitFPAtomInvGenerator::clone() const {
 }
 
 template <typename OutputType>
-OutputType RDKitFPArguments<OutputType>::getResultSize() const {
+OutputType RDKitFPEnvGenerator<OutputType>::getResultSize() const {
   return std::numeric_limits<OutputType>::max();
 }
 
-template <typename OutputType>
-std::string RDKitFPArguments<OutputType>::infoString() const {
+std::string RDKitFPArguments::infoString() const {
   return "RDKitFPArguments minPath=" + std::to_string(d_minPath) +
          " maxPath=" + std::to_string(d_maxPath) +
          " useHs=" + std::to_string(df_useHs) +
@@ -71,14 +70,14 @@ std::string RDKitFPArguments<OutputType>::infoString() const {
          " useBondOrder=" + std::to_string(df_useBondOrder);
 }
 
-template <typename OutputType>
-RDKitFPArguments<OutputType>::RDKitFPArguments(
-    unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
-    bool useBondOrder, bool countSimulation,
-    const std::vector<std::uint32_t> countBounds, std::uint32_t fpSize,
-    std::uint32_t numBitsPerFeature)
-    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize,
-                                       numBitsPerFeature),
+RDKitFPArguments::RDKitFPArguments(unsigned int minPath, unsigned int maxPath,
+                                   bool useHs, bool branchedPaths,
+                                   bool useBondOrder, bool countSimulation,
+                                   const std::vector<std::uint32_t> countBounds,
+                                   std::uint32_t fpSize,
+                                   std::uint32_t numBitsPerFeature)
+    : FingerprintArguments(countSimulation, countBounds, fpSize,
+                           numBitsPerFeature),
       d_minPath(minPath),
       d_maxPath(maxPath),
       df_useHs(useHs),
@@ -114,7 +113,7 @@ void RDKitFPAtomEnv<OutputType>::updateAdditionalOutput(
 
 template <typename OutputType>
 OutputType RDKitFPAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *,  // arguments
+    FingerprintArguments *,              // arguments
     const std::vector<std::uint32_t> *,  // atomInvariants
     const std::vector<std::uint32_t> *,  // bondInvariants
     AdditionalOutput *,                  // additional Output
@@ -132,7 +131,7 @@ std::string RDKitFPEnvGenerator<OutputType>::infoString() const {
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>
 RDKitFPEnvGenerator<OutputType>::getEnvironments(
-    const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+    const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *,  // ignoreAtoms
     const int,                           // confId
@@ -144,7 +143,7 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
   PRECONDITION(!atomInvariants || atomInvariants->size() >= mol.getNumAtoms(),
                "bad atomInvariants size");
 
-  auto *fpArguments = dynamic_cast<RDKitFPArguments<OutputType> *>(arguments);
+  auto *fpArguments = dynamic_cast<RDKitFPArguments *>(arguments);
 
   std::vector<AtomEnvironment<OutputType> *> result;
 
@@ -200,12 +199,10 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
     bool countSimulation, const std::vector<std::uint32_t> countBounds,
     std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
     bool ownsAtomInvGen) {
-  AtomEnvironmentGenerator<OutputType> *envGenerator =
-      new RDKitFPEnvGenerator<OutputType>();
-  FingerprintArguments<OutputType> *arguments =
-      new RDKitFPArguments<OutputType>(minPath, maxPath, useHs, branchedPaths,
-                                       useBondOrder, countSimulation,
-                                       countBounds, fpSize, numBitsPerFeature);
+  auto *envGenerator = new RDKitFPEnvGenerator<OutputType>();
+  auto *arguments = new RDKitFPArguments(
+      minPath, maxPath, useHs, branchedPaths, useBondOrder, countSimulation,
+      countBounds, fpSize, numBitsPerFeature);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {

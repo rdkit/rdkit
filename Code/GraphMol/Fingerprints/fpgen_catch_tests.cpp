@@ -42,8 +42,7 @@ TEST_CASE("includeRedundantEnvironments") {
       CHECK(fp->getTotalVal() == 8);
     }
     // turn on inclusion of redundant bits
-    dynamic_cast<MorganFingerprint::MorganArguments<std::uint32_t> *>(
-        fpgen->getOptions())
+    dynamic_cast<MorganFingerprint::MorganArguments *>(fpgen->getOptions())
         ->df_includeRedundantEnvironments = true;
     {
       std::unique_ptr<SparseIntVect<std::uint32_t>> fp{

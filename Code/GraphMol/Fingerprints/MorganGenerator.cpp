@@ -111,12 +111,11 @@ MorganBondInvGenerator *MorganBondInvGenerator::clone() const {
 }
 
 template <typename OutputType>
-OutputType MorganArguments<OutputType>::getResultSize() const {
+OutputType MorganEnvGenerator<OutputType>::getResultSize() const {
   return std::numeric_limits<OutputType>::max();
 }
 
-template <typename OutputType>
-std::string MorganArguments<OutputType>::infoString() const {
+std::string MorganArguments::infoString() const {
   return "MorganArguments onlyNonzeroInvariants=" +
          std::to_string(df_onlyNonzeroInvariants) +
          " radius=" + std::to_string(d_radius);
@@ -139,7 +138,7 @@ void MorganAtomEnv<OutputType>::updateAdditionalOutput(
 
 template <typename OutputType>
 OutputType MorganAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *,  // arguments
+    FingerprintArguments *,              // arguments
     const std::vector<std::uint32_t> *,  // atomInvariants
     const std::vector<std::uint32_t> *,  // bondInvariants
     AdditionalOutput *,                  // additional Output
@@ -158,7 +157,7 @@ MorganAtomEnv<OutputType>::MorganAtomEnv(const std::uint32_t code,
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>
 MorganEnvGenerator<OutputType>::getEnvironments(
-    const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+    const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *,  // ignoreAtoms
     const int,                           // confId
@@ -174,8 +173,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
   unsigned int nAtoms = mol.getNumAtoms();
   std::vector<AtomEnvironment<OutputType> *> result =
       std::vector<AtomEnvironment<OutputType> *>();
-  auto *morganArguments =
-      dynamic_cast<MorganArguments<OutputType> *>(arguments);
+  auto *morganArguments = dynamic_cast<MorganArguments *>(arguments);
 
   std::vector<OutputType> currentInvariants(atomInvariants->size());
   std::copy(atomInvariants->begin(), atomInvariants->end(),
@@ -388,10 +386,9 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
 ) {
   AtomEnvironmentGenerator<OutputType> *morganEnvGenerator =
       new MorganEnvGenerator<OutputType>();
-  FingerprintArguments<OutputType> *morganArguments =
-      new MorganArguments<OutputType>(radius, countSimulation, includeChirality,
-                                      onlyNonzeroInvariants, countBounds,
-                                      fpSize, includeRedundantEnvironments);
+  FingerprintArguments *morganArguments = new MorganArguments(
+      radius, countSimulation, includeChirality, onlyNonzeroInvariants,
+      countBounds, fpSize, includeRedundantEnvironments);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {

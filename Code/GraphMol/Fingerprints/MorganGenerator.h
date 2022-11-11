@@ -104,15 +104,11 @@ class RDKIT_FINGERPRINTS_EXPORT MorganBondInvGenerator
  \brief Class for holding Morgan fingerprint specific arguments
 
  */
-template <typename OutputType>
-class RDKIT_FINGERPRINTS_EXPORT MorganArguments
-    : public FingerprintArguments<OutputType> {
+class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
  public:
   bool df_onlyNonzeroInvariants = false;
   unsigned int d_radius = 3;
   bool df_includeRedundantEnvironments = false;
-
-  OutputType getResultSize() const override;
 
   std::string infoString() const override;
 
@@ -139,8 +135,8 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments
                   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
                   std::uint32_t fpSize = 2048,
                   bool includeRedundantEnvironments = false)
-      : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize,
-                                         1, includeChirality),
+      : FingerprintArguments(countSimulation, countBounds, fpSize, 1,
+                             includeChirality),
         df_onlyNonzeroInvariants(onlyNonzeroInvariants),
         d_radius(radius),
         df_includeRedundantEnvironments(includeRedundantEnvironments){};
@@ -159,7 +155,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomEnv
   const unsigned int d_layer;
 
  public:
-  OutputType getBitId(FingerprintArguments<OutputType> *arguments,
+  OutputType getBitId(FingerprintArguments *arguments,
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       AdditionalOutput *additionalOutput,
@@ -188,7 +184,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
     : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
-      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+      const ROMol &mol, FingerprintArguments *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
@@ -197,14 +193,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
-  MorganArguments<OutputType> *getOptions() {
-    return dynamic_cast<MorganArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getOptions());
-  };
-  const MorganArguments<OutputType> *getOptions() const {
-    return dynamic_cast<const MorganArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getOptions());
-  };
+  OutputType getResultSize() const override;
 };
 
 /**

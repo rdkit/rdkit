@@ -49,27 +49,27 @@ AtomPairAtomInvGenerator *AtomPairAtomInvGenerator::clone() const {
 }
 
 template <typename OutputType>
-OutputType AtomPairArguments<OutputType>::getResultSize() const {
+OutputType AtomPairEnvGenerator<OutputType>::getResultSize() const {
   OutputType result = 1;
   return (result << (numAtomPairFingerprintBits +
-                     2 * (this->df_includeChirality ? numChiralBits : 0)));
+                     2 * (this->dp_fingerprintArguments->df_includeChirality
+                              ? numChiralBits
+                              : 0)));
 }
 
-template <typename OutputType>
-AtomPairArguments<OutputType>::AtomPairArguments(
+AtomPairArguments::AtomPairArguments(
     const bool countSimulation, const bool includeChirality, const bool use2D,
     const unsigned int minDistance, const unsigned int maxDistance,
     const std::vector<std::uint32_t> countBounds, const std::uint32_t fpSize)
-    : FingerprintArguments<OutputType>(countSimulation, countBounds, fpSize, 1,
-                                       includeChirality),
+    : FingerprintArguments(countSimulation, countBounds, fpSize, 1,
+                           includeChirality),
       df_use2D(use2D),
       d_minDistance(minDistance),
       d_maxDistance(maxDistance) {
   PRECONDITION(minDistance <= maxDistance, "bad distances provided");
 }
 
-template <typename OutputType>
-std::string AtomPairArguments<OutputType>::infoString() const {
+std::string AtomPairArguments::infoString() const {
   return "AtomPairArguments use2D=" + std::to_string(df_use2D) +
          " minDistance=" + std::to_string(d_minDistance) +
          " maxDistance=" + std::to_string(d_maxDistance);
@@ -95,7 +95,7 @@ void AtomPairAtomEnv<OutputType>::updateAdditionalOutput(
 
 template <typename OutputType>
 OutputType AtomPairAtomEnv<OutputType>::getBitId(
-    FingerprintArguments<OutputType> *arguments,
+    FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *atomInvariants,
     const std::vector<std::uint32_t> *,  // bondInvariants
     AdditionalOutput *,                  // additionalOutput,
@@ -106,8 +106,7 @@ OutputType AtomPairAtomEnv<OutputType>::getBitId(
                    (atomInvariants->size() >= d_atomIdSecond),
                "bad atom invariants size");
 
-  auto *atomPairArguments =
-      dynamic_cast<AtomPairArguments<OutputType> *>(arguments);
+  auto *atomPairArguments = dynamic_cast<AtomPairArguments *>(arguments);
 
   std::uint32_t codeSizeLimit =
       (1 << (codeSize +
@@ -144,7 +143,7 @@ AtomPairAtomEnv<OutputType>::AtomPairAtomEnv(const unsigned int atomIdFirst,
 template <typename OutputType>
 std::vector<AtomEnvironment<OutputType> *>
 AtomPairEnvGenerator<OutputType>::getEnvironments(
-    const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+    const ROMol &mol, FingerprintArguments *arguments,
     const std::vector<std::uint32_t> *fromAtoms,
     const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
     const AdditionalOutput *additionalOutput,
@@ -157,8 +156,7 @@ AtomPairEnvGenerator<OutputType>::getEnvironments(
                    additionalOutput->atomToBits->size() == atomCount,
                "bad atomToBits size in AdditionalOutput");
 
-  auto *atomPairArguments =
-      dynamic_cast<AtomPairArguments<OutputType> *>(arguments);
+  auto *atomPairArguments = dynamic_cast<AtomPairArguments *>(arguments);
   std::vector<AtomEnvironment<OutputType> *> result =
       std::vector<AtomEnvironment<OutputType> *>();
   const double *distanceMatrix;
@@ -218,10 +216,9 @@ FingerprintGenerator<OutputType> *getAtomPairGenerator(
     const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen) {
   AtomEnvironmentGenerator<OutputType> *atomPairEnvGenerator =
       new AtomPair::AtomPairEnvGenerator<OutputType>();
-  FingerprintArguments<OutputType> *atomPairArguments =
-      new AtomPair::AtomPairArguments<OutputType>(
-          useCountSimulation, includeChirality, use2D, minDistance, maxDistance,
-          countBounds, fpSize);
+  FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
+      useCountSimulation, includeChirality, use2D, minDistance, maxDistance,
+      countBounds, fpSize);
 
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {

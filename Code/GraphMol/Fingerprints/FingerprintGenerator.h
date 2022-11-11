@@ -76,7 +76,6 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   hold fingerprint type specific arguments
 
  */
-template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
     : private boost::noncopyable {
  public:
@@ -90,13 +89,6 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
   std::vector<std::uint32_t> d_countBounds;
   std::uint32_t d_fpSize;
   std::uint32_t d_numBitsPerFeature;
-
-  /*!
-    \brief Returns the size of the fingerprint based on arguments
-
-    \return OutputType size of the fingerprint
-   */
-  virtual OutputType getResultSize() const = 0;
 
   /**
    \brief method that returns information string about the fingerprint specific
@@ -136,7 +128,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironment : private boost::noncopyable {
 
     \return OutputType  calculated bit id for this environment
    */
-  virtual OutputType getBitId(FingerprintArguments<OutputType> *arguments,
+  virtual OutputType getBitId(FingerprintArguments *arguments,
                               const std::vector<std::uint32_t> *atomInvariants,
                               const std::vector<std::uint32_t> *bondInvariants,
                               AdditionalOutput *AdditionalOutput,
@@ -184,7 +176,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironmentGenerator
     this molecule
    */
   virtual std::vector<AtomEnvironment<OutputType> *> getEnvironments(
-      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+      const ROMol &mol, FingerprintArguments *arguments,
       const std::vector<std::uint32_t> *fromAtoms = nullptr,
       const std::vector<std::uint32_t> *ignoreAtoms = nullptr,
       const int confId = -1, const AdditionalOutput *additionalOutput = nullptr,
@@ -199,6 +191,14 @@ class RDKIT_FINGERPRINTS_EXPORT AtomEnvironmentGenerator
    \return std::string information string
    */
   virtual std::string infoString() const = 0;
+  /*!
+    \brief Returns the size of the fingerprint based on arguments
+
+    \return OutputType size of the fingerprint
+   */
+  virtual OutputType getResultSize() const = 0;
+
+  const FingerprintArguments *dp_fingerprintArguments;
 
   virtual ~AtomEnvironmentGenerator() {}
 };
@@ -297,7 +297,7 @@ struct FingerprintFuncArguments {
 template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
     : private boost::noncopyable {
-  FingerprintArguments<OutputType> *dp_fingerprintArguments;
+  FingerprintArguments *dp_fingerprintArguments;
   AtomEnvironmentGenerator<OutputType> *dp_atomEnvironmentGenerator;
   AtomInvariantsGenerator *dp_atomInvariantsGenerator;
   BondInvariantsGenerator *dp_bondInvariantsGenerator;
@@ -311,17 +311,15 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
  public:
   FingerprintGenerator(
       AtomEnvironmentGenerator<OutputType> *atomEnvironmentGenerator,
-      FingerprintArguments<OutputType> *fingerprintArguments,
+      FingerprintArguments *fingerprintArguments,
       AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
       BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
       bool ownsAtomInvGenerator = false, bool ownsBondInvGenerator = false);
 
   ~FingerprintGenerator();
 
-  FingerprintArguments<OutputType> *getOptions() {
-    return dp_fingerprintArguments;
-  };
-  const FingerprintArguments<OutputType> *getOptions() const {
+  FingerprintArguments *getOptions() { return dp_fingerprintArguments; };
+  const FingerprintArguments *getOptions() const {
     return dp_fingerprintArguments;
   };
 

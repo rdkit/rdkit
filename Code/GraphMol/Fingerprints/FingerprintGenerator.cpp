@@ -22,8 +22,7 @@
 
 namespace RDKit {
 
-template <typename OutputType>
-FingerprintArguments<OutputType>::FingerprintArguments(
+FingerprintArguments::FingerprintArguments(
     const bool countSimulation, const std::vector<std::uint32_t> countBounds,
     std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
     bool includeChirality)
@@ -37,18 +36,7 @@ FingerprintArguments<OutputType>::FingerprintArguments(
   PRECONDITION(d_numBitsPerFeature > 0, "numBitsPerFeature must be >0");
 }
 
-template FingerprintArguments<std::uint32_t>::FingerprintArguments(
-    bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-    bool includeChirality);
-
-template FingerprintArguments<std::uint64_t>::FingerprintArguments(
-    bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-    bool includeChirality);
-
-template <typename OutputType>
-std::string FingerprintArguments<OutputType>::commonArgumentsString() const {
+std::string FingerprintArguments::commonArgumentsString() const {
   return "Common arguments : countSimulation=" +
          std::to_string(df_countSimulation) +
          " fpSize=" + std::to_string(d_fpSize) +
@@ -59,13 +47,16 @@ std::string FingerprintArguments<OutputType>::commonArgumentsString() const {
 template <typename OutputType>
 FingerprintGenerator<OutputType>::FingerprintGenerator(
     AtomEnvironmentGenerator<OutputType> *atomEnvironmentGenerator,
-    FingerprintArguments<OutputType> *fingerprintArguments,
+    FingerprintArguments *fingerprintArguments,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator, bool ownsAtomInvGenerator,
     bool ownsBondInvGenerator)
     : df_ownsAtomInvGenerator(ownsAtomInvGenerator),
       df_ownsBondInvGenerator(ownsBondInvGenerator) {
   this->dp_atomEnvironmentGenerator = atomEnvironmentGenerator;
+  this->dp_atomEnvironmentGenerator->dp_fingerprintArguments =
+      fingerprintArguments;
+
   this->dp_fingerprintArguments = fingerprintArguments;
   this->dp_atomInvariantsGenerator = atomInvariantsGenerator;
   this->dp_bondInvariantsGenerator = bondInvariantsGenerator;
@@ -73,14 +64,14 @@ FingerprintGenerator<OutputType>::FingerprintGenerator(
 
 template FingerprintGenerator<std::uint32_t>::FingerprintGenerator(
     AtomEnvironmentGenerator<std::uint32_t> *atomEnvironmentGenerator,
-    FingerprintArguments<std::uint32_t> *fingerprintArguments,
+    FingerprintArguments *fingerprintArguments,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator, bool ownsAtomInvGenerator,
     bool ownsBondInvGenerator);
 
 template FingerprintGenerator<std::uint64_t>::FingerprintGenerator(
     AtomEnvironmentGenerator<std::uint64_t> *atomEnvironmentGenerator,
-    FingerprintArguments<std::uint64_t> *fingerprintArguments,
+    FingerprintArguments *fingerprintArguments,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator, bool ownsAtomInvGenerator,
     bool ownsBondInvGenerator);
@@ -181,7 +172,7 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
 
   // allocate the result
   auto res = std::make_unique<SparseIntVect<OutputType>>(
-      fpSize ? fpSize : dp_fingerprintArguments->getResultSize());
+      fpSize ? fpSize : dp_atomEnvironmentGenerator->getResultSize());
 
   // define a mersenne twister with customized parameters.
   // The standard parameters (used to create boost::mt19937)
@@ -268,7 +259,7 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
   // make sure the result will fit into SparseBitVect
   std::uint32_t resultSize =
       std::min((std::uint64_t)std::numeric_limits<std::uint32_t>::max(),
-               (std::uint64_t)dp_fingerprintArguments->getResultSize());
+               (std::uint64_t)dp_atomEnvironmentGenerator->getResultSize());
 
   std::uint32_t effectiveSize = resultSize;
   if (dp_fingerprintArguments->df_countSimulation) {

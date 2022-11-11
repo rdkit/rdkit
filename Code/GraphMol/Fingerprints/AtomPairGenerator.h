@@ -47,15 +47,12 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomInvGenerator
   \brief class that holds atom-pair fingerprint specific arguments
 
  */
-template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT AtomPairArguments
-    : public FingerprintArguments<OutputType> {
+    : public FingerprintArguments {
  public:
   bool df_use2D;
   unsigned int d_minDistance;
   unsigned int d_maxDistance;
-
-  OutputType getResultSize() const override;
 
   std::string infoString() const override;
 
@@ -100,7 +97,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomEnv
   const unsigned int d_distance;
 
  public:
-  OutputType getBitId(FingerprintArguments<OutputType> *arguments,
+  OutputType getBitId(FingerprintArguments *arguments,
                       const std::vector<std::uint32_t> *atomInvariants,
                       const std::vector<std::uint32_t> *bondInvariants,
                       AdditionalOutput *additionalOutput,
@@ -129,7 +126,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
     : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
-      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+      const ROMol &mol, FingerprintArguments *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
@@ -138,14 +135,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
-  AtomPairArguments<OutputType> *getOptions() {
-    return dynamic_cast<AtomPairArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getOptions());
-  };
-  const AtomPairArguments<OutputType> *getOptions() const {
-    return dynamic_cast<const AtomPairArguments<OutputType> *>(
-        FingerprintGenerator<OutputType>::getOptions());
-  };
+  OutputType getResultSize() const override;
 };
 
 /*!
