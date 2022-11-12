@@ -471,9 +471,9 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
       break;
     }
     if (nbrAtom) {
-      bool isUserDefinedLabel =
+      const bool isUserDefinedLabel =
           usedLabelMap.has(label) && usedLabelMap.isUserDefined(label);
-      bool isUsedLabel =
+      const bool isUsedLabel =
           usedLabelMap.has(label) && usedLabelMap.getIsUsed(label);
       if (!isUsedLabel && (!isUserDefinedLabel ||
                            data->params.removeAllHydrogenRGroupsAndLabels)) {
@@ -493,21 +493,21 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
 #endif
   if (data->params.removeHydrogensPostMatch) {
     RDLog::LogStateSetter blocker;
-    bool implicitOnly = false;
-    bool updateExplicitCount = false;
-    bool sanitize = false;
+    constexpr bool implicitOnly = false;
+    constexpr bool updateExplicitCount = false;
+    constexpr bool sanitize = false;
     MolOps::removeHs(*coreWithMatches, implicitOnly, updateExplicitCount,
                      sanitize);
     coreWithMatches->updatePropertyCache(false);
   }
 
   if (coreWithMatches->getNumConformers() > 0) {
-    for (const auto [atom, label] : retainedRGroups) {
+    for (const auto & [atom, label] : retainedRGroups) {
       const auto neighbor = *coreWithMatches->atomNeighbors(atom).begin();
       const auto &mapping = data->finalRlabelMapping;
       const auto oldLabel =
           std::find_if(mapping.begin(), mapping.end(),
-                       [label](const auto &p) { return p.second == label; });
+                       [label = label](const auto &p) { return p.second == label; });
       if (auto iter = match.rgroups.find(oldLabel->first);
           iter != match.rgroups.end() && iter->second->is_hydrogen) {
         MolOps::setTerminalAtomCoords(*coreWithMatches, atom->getIdx(),
