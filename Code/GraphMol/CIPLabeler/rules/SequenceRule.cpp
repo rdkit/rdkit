@@ -49,6 +49,11 @@ const Sort *SequenceRule::getSorter() const {
 }
 
 int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
+  
+  if (!CIPLabeler::decrementRemainingCallCountAndCheck()){
+    throw MaxIterationsExceeded();
+  }
+
   int cmp = compare(a, b);
   if (cmp != 0) {
     return cmp;
