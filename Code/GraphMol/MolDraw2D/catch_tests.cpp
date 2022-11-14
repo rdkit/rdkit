@@ -5993,3 +5993,86 @@ M  END
     }
   }
 }
+
+TEST_CASE(
+    "Github5704: set bond highlight color when atom highlight color changes") {
+  std::string nameBase = "test_github5704";
+
+  auto m =
+      "CCCO |(-1.97961,-0.1365,;-0.599379,0.450827,;0.599379,-0.450827,;1.97961,0.1365,)|"_smiles;
+  REQUIRE(m);
+  std::regex redline(R"RE(<path .*fill:#FF7F7F)RE");
+  std::regex blueline(R"RE(<path .*fill:#4C4CFF)RE");
+
+  SECTION("no atom colors specified, default behavior") {
+    MolDraw2DSVG drawer(300, 300, 300, 300, NO_FREETYPE);
+    std::vector<int> aids{0, 1, 2};
+    drawer.drawMolecule(*m, "red bond highlight", &aids);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+
+    std::smatch rematch;
+    CHECK(std::regex_search(text, rematch, redline));
+    CHECK(!std::regex_search(text, rematch, blueline));
+
+    std::ofstream outs(nameBase + "_1.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+  }
+
+  SECTION("both ends specified") {
+    MolDraw2DSVG drawer(300, 300, 300, 300, NO_FREETYPE);
+    std::vector<int> aids{0, 1, 2};
+    std::map<int, DrawColour> acolors{
+        {0, {.3, .3, 1}}, {1, {.3, .3, 1}}, {2, {.3, .3, 1}}};
+    drawer.drawMolecule(*m, "blue bond highlight", &aids, &acolors);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+
+    std::smatch rematch;
+    CHECK(!std::regex_search(text, rematch, redline));
+    CHECK(std::regex_search(text, rematch, blueline));
+
+    std::ofstream outs(nameBase + "_2.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+  }
+
+  SECTION("color just on begin") {
+    MolDraw2DSVG drawer(300, 300, 300, 300, NO_FREETYPE);
+    std::vector<int> aids{0, 1};
+    std::map<int, DrawColour> acolors{{0, {.3, .3, 1}}};
+    drawer.drawMolecule(*m, "blue bond highlight", &aids, &acolors);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+
+    std::smatch rematch;
+    CHECK(!std::regex_search(text, rematch, redline));
+    CHECK(std::regex_search(text, rematch, blueline));
+
+    std::ofstream outs(nameBase + "_3.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+  }
+  SECTION("color just on end") {
+    MolDraw2DSVG drawer(300, 300, 300, 300, NO_FREETYPE);
+    std::vector<int> aids{0, 1};
+    std::map<int, DrawColour> acolors{{1, {.3, .3, 1}}};
+    drawer.drawMolecule(*m, "blue bond highlight", &aids, &acolors);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+
+    std::smatch rematch;
+
+    CHECK(!std::regex_search(text, rematch, redline));
+    CHECK(std::regex_search(text, rematch, blueline));
+
+    std::ofstream outs(nameBase + "_4.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+  }
+}
