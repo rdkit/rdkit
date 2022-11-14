@@ -322,8 +322,10 @@ std::string getCanonSmiles(const std::string &data, bool isSmiles, int flags) {
     if (mp) {
       smiles = MOLToSMI(mp, ISOMERIC_SMILES);
       FreeMolecule(mp);
-      canSmiles = CanSmiles(smiles, flags);
-      MyFree(smiles);
+      if (smiles) {
+        canSmiles = CanSmiles(smiles, flags);
+        MyFree(smiles);
+      }
     }
   } else {
     canSmiles = CanSmiles((char *)data.c_str(), flags);
