@@ -658,7 +658,7 @@ TEST_CASE("dative bonds", "[drawing][organometallics]") {
     outs.close();
     check_file_hash("testDativeBonds_1.svg");
 
-    CHECK(text.find("d='M 122.5,88.4 L 85.6,88.4' "
+    CHECK(text.find("d='M 77.7,88.0 L 113.4,88.0' "
                     "style='fill:none;fill-rule:evenodd;stroke:#0000FF") !=
           std::string::npos);
   }
