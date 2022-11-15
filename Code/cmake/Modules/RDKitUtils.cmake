@@ -217,7 +217,7 @@ endmacro(add_pytest)
 
 function(add_jupytertest testname workingdir notebook)
   if(RDK_BUILD_PYTHON_WRAPPERS AND RDK_NBVAL_AVAILABLE)
-    add_test(NAME ${testname}  COMMAND ${PYTHON_EXECUTABLE} -m py.test --nbval ${notebook}
+    add_test(NAME ${testname}  COMMAND ${PYTHON_EXECUTABLE} -m pytest --nbval ${notebook}
        WORKING_DIRECTORY ${workingdir} )
     SET(RDKIT_JUPYTERTEST_CACHE "${testname};${RDKIT_JUPYTERTEST_CACHE}" CACHE INTERNAL "Global list of jupyter tests")
   endif()

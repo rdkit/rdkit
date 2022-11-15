@@ -145,7 +145,8 @@ std::string JSMol::get_pickle() const {
     return "";
   }
   std::string pickle;
-  MolPickler::pickleMol(*d_mol, pickle);
+  MolPickler::pickleMol(*d_mol, pickle,
+                        PicklerOps::AllProps ^ PicklerOps::ComputedProps);
   return pickle;
 }
 
@@ -296,6 +297,24 @@ std::string JSMol::get_atom_pair_fp_as_binary_text(
     return "";
   }
   auto fp = MinimalLib::atom_pair_fp_as_bitvect(*d_mol, details.c_str());
+  std::string res = BitVectToBinaryText(*fp);
+  return res;
+}
+
+std::string JSMol::get_maccs_fp() const {
+  if (!d_mol) {
+    return "";
+  }
+  auto fp = MinimalLib::maccs_fp_as_bitvect(*d_mol);
+  std::string res = BitVectToText(*fp);
+  return res;
+}
+
+std::string JSMol::get_maccs_fp_as_binary_text() const {
+  if (!d_mol) {
+    return "";
+  }
+  auto fp = MinimalLib::maccs_fp_as_bitvect(*d_mol);
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }

@@ -239,7 +239,7 @@ struct resmolsup_wrap {
              "the atom belongs to, or -1 if it is not conjugated.\n")
         .def(
             "SetNumThreads",
-            (void (ResonanceMolSupplier::*)(unsigned int)) &
+            (void(ResonanceMolSupplier::*)(unsigned int)) &
                 ResonanceMolSupplier::setNumThreads,
             "Sets the number of threads to be used to enumerate resonance\n"
             "structures (defaults to 1; 0 selects the number of concurrent\n"

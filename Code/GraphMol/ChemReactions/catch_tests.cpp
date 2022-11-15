@@ -1180,10 +1180,33 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
           "(3 6 8 7)");
   }
 #endif
+  SECTION("cis/trans markers") {
+    auto rxn =
+        "C1C=CC=CCC=CC=C1>>C1C=CC=CNC=CC=C1 |c:1,3,6,8,11,13,16,18|"_rxnsmiles;
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 1);
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(rxn->getReactants()[0]->getBondWithIdx(1)->getStereo() ==
+          Bond::BondStereo::STEREOCIS);
+    CHECK(rxn->getProducts()[0]->getBondWithIdx(1)->getStereo() ==
+          Bond::BondStereo::STEREOCIS);
+  }
+  SECTION("wedged bonds") {
+    auto rxn = "CC(O)(F)Cl>>CC(N)(F)Cl |w:1.0,6.5|"_rxnsmiles;
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 1);
+    CHECK(rxn->getProducts().size() == 1);
+    unsigned int bondcfg;
+    CHECK(rxn->getReactants()[0]->getBondWithIdx(0)->getPropIfPresent(
+        "_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+    CHECK(rxn->getProducts()[0]->getBondWithIdx(1)->getPropIfPresent(
+        "_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+  }
 }
 
 TEST_CASE("V3K rxn blocks") {
-    
   SECTION("writing basics") {
     // clang-format off
     auto rxn =

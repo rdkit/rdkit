@@ -29,6 +29,7 @@
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Fingerprints/MACCS.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Abbreviations/Abbreviations.h>
@@ -547,6 +548,25 @@ extern "C" char *get_atom_pair_fp_as_bytes(const char *mol_pkl,
   }
   auto fp = MinimalLib::atom_pair_fp_as_bitvect(
       mol_from_pkl(mol_pkl, mol_pkl_sz), details_json);
+  auto res = BitVectToBinaryText(*fp);
+  return str_to_c(res, nbytes);
+}
+
+extern "C" char *get_maccs_fp(const char *mol_pkl, size_t mol_pkl_sz) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  auto fp = MinimalLib::maccs_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz));
+  auto res = BitVectToText(*fp);
+  return str_to_c(res);
+}
+
+extern "C" char *get_maccs_fp_as_bytes(const char *mol_pkl, size_t mol_pkl_sz,
+                                       size_t *nbytes) {
+  if (!mol_pkl || !mol_pkl_sz) {
+    return nullptr;
+  }
+  auto fp = MinimalLib::maccs_fp_as_bitvect(mol_from_pkl(mol_pkl, mol_pkl_sz));
   auto res = BitVectToBinaryText(*fp);
   return str_to_c(res, nbytes);
 }

@@ -1,4 +1,39 @@
-# Release_2022.09.1b1
+# Release_2023.03.1
+(Changes relative to Release_2022.09.1)
+
+## Acknowledgements
+
+## Highlights
+
+## Backwards incompatible changes
+
+## Bug Fixes:
+
+## Cleanup work:
+
+## New Features and Enhancements:
+
+## Code removed in this release:
+- The `SmilesParserParams` option `useLegacyStereo` has been removed. Please use
+  `SetUseLegacyStereoPerception()` instead. 
+- The following JS methods:
+  * generate_aligned_coords()
+  * get_morgan_fp()
+  * get_morgan_fp_as_uint8array()
+  * get_pattern_fp()
+  * get_pattern_fp_as_uint8array()
+  which used to take several individual parameters have been removed. 
+  Please use the versions which take a single JSON string parameter.
+- The `PrintAsBase64PNGString` function in `PandasTools` has been removed.
+  Please use `PrintAsImageString` instead.
+
+
+
+
+## Deprecated code (to be removed in a future release):
+
+
+# Release_2022.09.1
 (Changes relative to Release_2022.03.1)
 
 ## Acknowledgements
@@ -8,13 +43,22 @@ Gedeck, Mosè Giordano, Sreya Gogineni, Emanuele Guidotti, Hyeonki Hong, Gareth
 Jones, Per Johnsson, Maria Kadukova, Eisuke Kawashima, Brian Kelley, Alan
 Kerstjens, Michel Moreau, Dan Nealschneider, Santeri Puranen, Ricardo
 Rodriguez-Schmidt, Guy Rosin Jeff van Santen, David Schaller, David W.H.
-Swenson, Paolo Tosco, Antonio Trande, Ivan Tubert-Brohman, Rachel Walker,
-balducci, GLPG-GT
+Swenson, Paolo Tosco, Antonio Trande, Ivan Tubert-Brohman, Alexandra Wahab,
+Rachel Walker, balducci, GLPG-GT
 
 ## Highlights
-
+- The new RegistrationHash module provides one of the last pieces required to
+  build a registration system with the RDKit.
+- This release includes an initial version of a C++ implementation of the
+  xyz2mol algorithm for assigning bonds and bond orders based on atomic
+  positions. This work was done as part of the 2022 Google Summer of Code.
+- A collection of new functionality has been added to minimallib and is now
+  accessible from JavaScript and other programming languages.
 
 ## Backwards incompatible changes
+- Changes to the way atomic chirality is used in the canonicalization algorithm
+  mean that canonical atom ranking and canonical SMILES generated with this
+  RDKit version can be different from those generated with previous versions
 - `GetBestRMS() and CalcRMS()` by default now treat terminal conjugated functional
   groups like carboxylate and nitro symmetrically. For example, the group
   `C(=[O:1])[O-:2]` can match in either orientation. The SMARTS pattern which is
@@ -37,6 +81,8 @@ balducci, GLPG-GT
   parameter; if `match_json` is not not `NULL`, `*match_json` will point to a
   JSON string containing the atoms and bonds which are part of the match.
   It is up to the user to free this string.
+- The aliphatic imine rule used in tautomer enumeration has been changed to more
+  closely match the definition in the original paper.
 
 ## Bug Fixes:
   - H atoms in SGroups cause RDKit to clear SGroups after parsing
@@ -45,6 +91,8 @@ balducci, GLPG-GT
  (github issue #2984 from d-b-w)
   - DrawMorganBit returns empty image for "isolated" fingerprints
  (github issue #4242 from eguidotti)
+  - Cores with query atoms may fail to R-group-decompose molecules
+ (github issue #4505 from ptosco)
   - Unable to serialize coordinates as floats in combination with *Props
  (github issue #4621 from santeripuranen)
   - Image Generation: Highlighting looks off when bondLineWidth is increased for PNG generation
@@ -183,6 +231,8 @@ balducci, GLPG-GT
  (github pull #5619 from ptosco)
   - Allow properties to be displayed in jupyter when 3D rendering is enabled
  (github pull #5624 from greglandrum)
+  - Checking whether double bond's controlling atoms are duplicate may cause an infinite loop.
+ (github issue #5659 from ricrogz)
 
 ## Cleanup work:
   - update release notes, do deprecations
@@ -303,6 +353,22 @@ balducci, GLPG-GT
  (github pull #5628 from ptosco)
   - Add updateMolDrawOptionsFromJSON()
  (github pull #5630 from ptosco)
+  - InteractiveRenderer.setEnabled() improvements
+ (github pull #5635 from ptosco)
+  - Support stereo for double bonds in rings from CXSMILES
+ (github pull #5636 from greglandrum)
+  - add stop condition for arom calc of large ringysystems
+ (github pull #5648 from alexwahab)
+  - Speed up ring detection by reducing allocations
+ (github pull #5654 from d-b-w)
+  - Expose highlighAtomColors, highlighBondColors and highlightAtomRadii to CFFI and JS
+ (github pull #5657 from ptosco)
+  - Update obsolete SWIG definitions
+ (github pull #5658 from ptosco)
+  - Speed up ring detection by reducing count() calls
+ (github pull #5663 from d-b-w)
+  - Expose two SubstructUtils functions to SWIG wrappers
+ (github pull #5666 from ptosco)
 
 ## Code removed in this release:
 - The C++ class `RDLog::BlockLogs` has been removed. Please use the class `RDLog::LogStateSetter`. The Python class rdBase.BlockLogs() is still available and supported.

@@ -390,7 +390,7 @@ void SmilesMolSupplier::moveTo(unsigned int idx) {
 
   // the stream pointer is now at the last thing we read in
   while (d_molpos.size() <= idx) {
-    int nextP = this->skipComments();
+    std::streampos nextP = this->skipComments();
     if (nextP < 0) {
       std::ostringstream errout;
       errout << "ERROR: Index error (idx = " << idx << "): "

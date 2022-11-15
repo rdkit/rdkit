@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/Chirality.h>
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <list>
@@ -609,6 +610,24 @@ void CleanupAfterParsing(RWMol *mol) {
   }
   for (auto sg : RDKit::getSubstanceGroups(*mol)) {
     sg.clearProp("_cxsmilesindex");
+  }
+  if (!Chirality::getAllowNontetrahedralChirality()) {
+    bool needWarn = false;
+    for (auto atom : mol->atoms()) {
+      if (atom->hasProp(common_properties::_chiralPermutation)) {
+        needWarn = true;
+        atom->clearProp(common_properties::_chiralPermutation);
+      }
+      if (atom->getChiralTag() > Atom::ChiralType::CHI_OTHER) {
+        needWarn = true;
+        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+      }
+    }
+    if (needWarn) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring non-tetrahedral stereo specification since setAllowNontetrahedralChirality() is false."
+          << std::endl;
+    }
   }
 }
 

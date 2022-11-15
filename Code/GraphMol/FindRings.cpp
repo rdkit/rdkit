@@ -268,8 +268,7 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
       // that has the most overlapping bonds with what we've done so far.
       // this is the fix to github #526
       for (unsigned int j = i + 1;
-           j < res.size() && brings[j].size() == brings[i].size();
-           ++j) {
+           j < res.size() && brings[j].size() == brings[i].size(); ++j) {
         if (!consider[j] || !availRings[j]) {
           continue;
         }

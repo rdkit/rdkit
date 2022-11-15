@@ -68,6 +68,8 @@ class JSMol {
   std::string get_atom_pair_fp_as_binary_text() const {
     return get_atom_pair_fp_as_binary_text("{}");
   }
+  std::string get_maccs_fp() const;
+  std::string get_maccs_fp_as_binary_text() const;
 #ifdef RDK_BUILD_AVALON_SUPPORT
   std::string get_avalon_fp(const std::string &details) const;
   std::string get_avalon_fp() const { return get_avalon_fp("{}"); }

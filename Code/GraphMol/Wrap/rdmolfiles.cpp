@@ -596,7 +596,8 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
   return python::tuple(res);
 }
 
-python::object MolsFromCDXMLFile(const char *filename, bool sanitize, bool removeHs) {
+python::object MolsFromCDXMLFile(const char *filename, bool sanitize,
+                                 bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = CDXMLFileToMols(filename, sanitize, removeHs);
@@ -610,18 +611,19 @@ python::object MolsFromCDXMLFile(const char *filename, bool sanitize, bool remov
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(static_cast<ROMol*>(mol.release()));
+    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
   return python::tuple(res);
 }
 
-python::tuple MolsFromCDXML(python::object cdxml, bool sanitize, bool removeHs) {
+python::tuple MolsFromCDXML(python::object cdxml, bool sanitize,
+                            bool removeHs) {
   auto mols = CDXMLToMols(pyObjectToString(cdxml), sanitize, removeHs);
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
-    ROMOL_SPTR sptr(static_cast<ROMol*>(mol.release()));
+    ROMOL_SPTR sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
   return python::tuple(res);
@@ -1134,11 +1136,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "being returned")
       .def_readwrite("removeHs", &RDKit::SmilesParserParams::removeHs,
                      "controls whether or not Hs are removed before the "
-                     "molecule is returned")
-      .def_readwrite(
-          "useLegacyStereo", &RDKit::SmilesParserParams::useLegacyStereo,
-          "controls whether or not the legacy stereochemistry "
-          "perception code is used. DEPRECATED: Please use Chem.SetUseLegacyStereoPerception() instead.");
+                     "molecule is returned");
   python::class_<RDKit::SmartsParserParams, boost::noncopyable>(
       "SmartsParserParams", "Parameters controlling SMARTS Parsing")
       .def_readwrite("debugParse", &RDKit::SmartsParserParams::debugParse,
@@ -1974,9 +1972,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      RETURNS:
        a Mol object, None on failure.)DOC";
-  
-  std::string cdxml_notes =
-    R"DOC()DOC";
+
+  std::string cdxml_notes = R"DOC()DOC";
 
   python::def(
       "MolFromPNGFile", MolFromPNGFile,
@@ -2009,12 +2006,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
-  
+
   python::def("MolsFromCDXMLFile", MolsFromCDXMLFile,
-	      (python::arg("filename"), python::arg("sanitize")=true, python::arg("removeHs")=true),
-	      docString.c_str()
-);
-  
+              (python::arg("filename"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str());
+
   docString =
       R"DOC(Construct a molecule from a cdxml string.
 
@@ -2032,12 +2029,12 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
-  
+
   python::def("MolsFromCDXML", MolsFromCDXML,
-	      (python::arg("cdxml"), python::arg("sanitize")=true, python::arg("removeHs")=true),
-	      docString.c_str()
-	      );
-  
+              (python::arg("cdxml"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str());
+
   docString =
       R"DOC(Adds molecular metadata to PNG data read from a file.
 
