@@ -236,7 +236,55 @@ void test_svg() {
   free(svg);
 
   free(pkl);
-  pkl = NULL;
+
+  pkl = get_mol(
+      "\n\
+  MJ201100                      \n\
+\n\
+  9 10  0  0  1  0  0  0  0  0999 V2000\n\
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+  4  3  1  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  6  5  1  0  0  0  0\n\
+  6  7  1  1  0  0  0\n\
+  6  8  1  0  0  0  0\n\
+  8  9  1  1  0  0  0\n\
+  8  2  1  0  0  0  0\n\
+  4  9  1  1  0  0  0\n\
+M  END\n",
+      &pkl_size, "");
+  assert(pkl);
+  assert(pkl_size > 0);
+  char *svg1 = get_svg(pkl, pkl_size, "{\"width\":350,\"height\":300}");
+  assert(strstr(svg1, "width='350px'"));
+  assert(strstr(svg1, "height='300px'"));
+  assert(strstr(svg1, "</svg>"));
+  assert(strstr(svg1, "atom-8"));
+  assert(strstr(svg1, "atom-9"));
+  assert(strstr(svg1, "atom-10"));
+  char *svg2 = get_svg(
+      pkl, pkl_size,
+      "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":false,\"addChiralHs\":false}");
+  assert(strstr(svg2, "width='350px'"));
+  assert(strstr(svg2, "height='300px'"));
+  assert(strstr(svg2, "</svg>"));
+  assert(strstr(svg2, "atom-8"));
+  assert(!strstr(svg2, "atom-9"));
+  assert(!strstr(svg2, "atom-10"));
+  free(svg1);
+  free(svg2);
+
+  free(pkl);
   printf("  done\n");
   printf("--------------------------\n");
 }
@@ -478,13 +526,13 @@ void test_fingerprints() {
   assert(nbytes == 8);
   free(fp);
 
-  assert(!get_maccs_fp(NULL, 0, NULL));
-  fp = get_maccs_fp(mpkl, mpkl_size, NULL);
+  assert(!get_maccs_fp(NULL, 0));
+  fp = get_maccs_fp(mpkl, mpkl_size);
   assert(!strcmp(
       fp, "00000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000001100000000000000100000001000001000000000101000100000000100001000111110"));
   free(fp);
-  assert(!get_maccs_fp_as_bytes(NULL, 0, &nbytes, NULL));
-  fp = get_maccs_fp_as_bytes(mpkl, mpkl_size, &nbytes, NULL);
+  assert(!get_maccs_fp_as_bytes(NULL, 0, &nbytes));
+  fp = get_maccs_fp_as_bytes(mpkl, mpkl_size, &nbytes);
   assert(nbytes == 21);
   free(fp);
 #ifdef RDK_BUILD_AVALON_SUPPORT
