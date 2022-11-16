@@ -739,7 +739,7 @@ TEST_CASE("CDXML") {
       int i = 0;
       for (auto &mol : mols) {
           CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
-          CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::UNKNOWN);
+          CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
           CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
           CHECK(MolToSmiles(*mol) == expected[i++]);
       }
