@@ -5169,7 +5169,7 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
               common_properties::dummyLabel) == "R");
   }
-  SECTION("V3000 with #") {
+  SECTION("V3000 with number") {
     auto m = R"CTAB(
   Mrv1810 02111915102D          
 
@@ -5191,5 +5191,26 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
     CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
               common_properties::dummyLabel) == "R98");
+  }
+  SECTION("R# does not get the tag") {
+    auto m = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 R# -4.2503 3.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(!m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
   }
 }
