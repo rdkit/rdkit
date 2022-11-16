@@ -423,15 +423,19 @@ bool parse_fragment(RWMol &mol, ptree &frag,
                  bond.display == "WedgedHashEnd") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
       } else if (bond.display == "Wavy") {
-	switch(bond.getBondType()) {
-	case Bond::BondType::DOUBLE:
-	  bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
-	  break;
-	default:
-	  BOOST_LOG(rdWarningLog)
-	    << "ignoring Wavy bond set on a non double bond id: "
-	    << bond.bond_id  << std::endl;
-	}
+        switch(bond.getBondType()) {
+            case Bond::BondType::SINGLE:
+              bnd->setBondDir(Bond::BondDir::UNKNOWN);
+              break;
+            case Bond::BondType::DOUBLE:
+              bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
+              bnd->setStereo(Bond::STEREOANY);
+              break;
+            default:
+              BOOST_LOG(rdWarningLog)
+                << "ignoring Wavy bond set on a non double bond id: "
+                << bond.bond_id  << std::endl;
+        }
       }
     }
   }

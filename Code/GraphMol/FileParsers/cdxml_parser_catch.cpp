@@ -729,6 +729,21 @@ TEST_CASE("CDXML") {
           
       }
     }
+    {
+      auto fname = cdxmlbase + "wavy-single.cdxml";
+      std::vector<std::string> expected = {
+          "CCCC"
+      };
+      auto mols = CDXMLFileToMols(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+          CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
+          CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::UNKNOWN);
+          CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+          CHECK(MolToSmiles(*mol) == expected[i++]);
+      }
+    }
   }
   SECTION("Lots of bad stereo") {
     {
