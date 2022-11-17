@@ -5108,3 +5108,109 @@ TEST_CASE("Github #5433: PRECONDITION error with nonsense molecule") {
 M  END)CTAB"_ctab;
   REQUIRE(m);
 }
+
+TEST_CASE("Github #5765: R label information lost") {
+  SECTION("just R") {
+    auto m = R"CTAB(
+  MJ221900                      
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    2.1433    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289    2.0625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8578    2.0625    0.0000 R   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1433    0.8250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  4  1  2  0  0  0  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R");
+  }
+  SECTION("R with number") {
+    auto m = R"CTAB(
+  MJ221900                      
+
+  4  3  0  0  0  0  0  0  0  0999 V2000
+    2.1433    1.6500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4289    2.0625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8578    2.0625    0.0000 R95 0  0  0  0  0  0  0  0  0  0  0  0
+    2.1433    0.8250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  4  1  2  0  0  0  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R95");
+  }
+  SECTION("V3000") {
+    auto m = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 R -4.2503 3.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R");
+  }
+  SECTION("V3000 with number") {
+    auto m = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 R98 -4.2503 3.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R98");
+  }
+  SECTION("R# does not get the tag") {
+    auto m = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 R# -4.2503 3.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(!m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+  }
+}

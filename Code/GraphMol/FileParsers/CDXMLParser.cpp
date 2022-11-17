@@ -39,9 +39,9 @@ const std::string CDX_BOND_ID("_CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
 
 struct BondInfo {
-  int bond_id;
-  int start;
-  int end;
+  int bond_id = -1;
+  int start = -1;
+  int end = -1;
   Bond::BondType order;
   std::string display;
   Bond::BondType getBondType() { return order; }
@@ -388,8 +388,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       } else {
         bonds.push_back(bond);
       }
-
-    }  // end if atom or bond
+      // end if atom or bond 
+    } 
   }    // for node
 
   // add bonds
@@ -422,6 +422,20 @@ bool parse_fragment(RWMol &mol, ptree &frag,
       } else if (bond.display == "WedgedHashBegin" ||
                  bond.display == "WedgedHashEnd") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+      } else if (bond.display == "Wavy") {
+        switch(bond.getBondType()) {
+            case Bond::BondType::SINGLE:
+              bnd->setBondDir(Bond::BondDir::UNKNOWN);
+              break;
+            case Bond::BondType::DOUBLE:
+              bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
+              bnd->setStereo(Bond::STEREOANY);
+              break;
+            default:
+              BOOST_LOG(rdWarningLog)
+                << "ignoring Wavy bond set on a non double bond id: "
+                << bond.bond_id  << std::endl;
+        }
       }
     }
   }
