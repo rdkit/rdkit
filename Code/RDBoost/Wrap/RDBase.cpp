@@ -114,10 +114,10 @@ void LogToPythonLogger() {
   static PyLogStream warning("warning");
   static PyLogStream error("error");
 
-  rdDebugLog = std::make_shared<logging::rdLogger>(&debug);
-  rdInfoLog = std::make_shared<logging::rdLogger>(&info);
-  rdWarningLog = std::make_shared<logging::rdLogger>(&warning);
-  rdErrorLog = std::make_shared<logging::rdLogger>(&error);
+  rdDebugLog = boost::make_shared<logging::rdLogger>(&debug);
+  rdInfoLog = boost::make_shared<logging::rdLogger>(&info);
+  rdWarningLog = boost::make_shared<logging::rdLogger>(&warning);
+  rdErrorLog = boost::make_shared<logging::rdLogger>(&error);
 }
 
 void LogToPythonStderr() {
@@ -126,10 +126,10 @@ void LogToPythonStderr() {
   static PyErrStream warning;
   static PyErrStream error;
 
-  rdDebugLog = std::make_shared<logging::rdLogger>(&debug);
-  rdInfoLog = std::make_shared<logging::rdLogger>(&info);
-  rdWarningLog = std::make_shared<logging::rdLogger>(&warning);
-  rdErrorLog = std::make_shared<logging::rdLogger>(&error);
+  rdDebugLog = boost::make_shared<logging::rdLogger>(&debug);
+  rdInfoLog = boost::make_shared<logging::rdLogger>(&info);
+  rdWarningLog = boost::make_shared<logging::rdLogger>(&warning);
+  rdErrorLog = boost::make_shared<logging::rdLogger>(&error);
 }
 
 void WrapLogs() {

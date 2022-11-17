@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <string>
+#include <iostream>
+#include <fstream>
 #include <sstream>
 #include "catch.hpp"
 #include "RDLog.h"
@@ -110,4 +112,14 @@ TEST_CASE("GitHub Issue #5172", "[bug][logging]") {
 
   rdErrorLog->ClearTee();
   rdWarningLog->ClearTee();
+}
+
+TEST_CASE("Tee to file") {
+  const std::string filename = "error_log.txt";
+  rdErrorLog->SetTee(filename);
+  BOOST_LOG(rdErrorLog) << "should not be silent" << std::endl;
+  std::ifstream istrm(filename);
+  std::string txt;
+  CHECK(std::getline(istrm, txt));
+  CHECK(txt.find("should") != std::string::npos);
 }

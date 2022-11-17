@@ -16,11 +16,12 @@
 #include "BoostStartInclude.h"
 #include <boost/iostreams/tee.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/shared_ptr.hpp>
 #include "BoostEndInclude.h"
 #include <iostream>
+#include <fstream>
 #include <vector>
 
-#include <vector>
 namespace boost {
 namespace logging {
 
@@ -30,8 +31,10 @@ typedef boost::iostreams::stream<RDTee> RDTeeStream;
 class RDKIT_RDGENERAL_EXPORT rdLogger {
  public:
   std::ostream *dp_dest;
-  bool df_owner, df_enabled;
+  bool df_owner;
+  bool df_enabled;
 
+  std::ofstream *helperstream;
   RDTee *tee;
   RDTeeStream *teestream;
 
@@ -39,21 +42,41 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
       : dp_dest(dest),
         df_owner(owner),
         df_enabled(true),
+        helperstream(nullptr),
         tee(nullptr),
         teestream(nullptr) {}
 
   //! Sets a stream to tee the output to.
   void SetTee(std::ostream &stream) {
     if (dp_dest) {
-      delete teestream;
-      delete tee;
+      ClearTee();
       tee = new RDTee(*dp_dest, stream);
       teestream = new RDTeeStream(*tee);
     }
   }
+
+  //! Sets a filename to tee the output to.
+  void SetTee(const char *filename) {
+    if (dp_dest) {
+      auto s = new std::ofstream(filename);
+      SetTee(*s);
+      helperstream = s;
+    }
+  }
+
+  //! Sets a filename to tee the output to.
+  void SetTee(const std::string &filename) {
+    return SetTee(filename.c_str());
+  }
+
   //! Remove our tee if it's set.
   void ClearTee() {
     if (dp_dest) {
+      if (helperstream) {
+        helperstream->close();
+        delete helperstream;
+        helperstream = nullptr;
+      }
       delete teestream;
       delete tee;
       tee = nullptr;
@@ -63,15 +86,12 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
   ~rdLogger() {
     if (dp_dest) {
       dp_dest->flush();
+      ClearTee();
       if (df_owner) {
         delete dp_dest;
       }
       dp_dest = nullptr;
     }
-    delete teestream;
-    teestream = nullptr;
-    delete tee;
-    tee = nullptr;
   }
 
  private:
@@ -94,7 +114,7 @@ RDKIT_RDGENERAL_EXPORT std::ostream &toStream(std::ostream &);
   RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)  \
                                        : *(__arg__->dp_dest))
 
-using RDLogger = std::shared_ptr<boost::logging::rdLogger>;
+using RDLogger = boost::shared_ptr<boost::logging::rdLogger>;
 
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdAppLog;
 RDKIT_RDGENERAL_EXPORT extern RDLogger rdDebugLog;

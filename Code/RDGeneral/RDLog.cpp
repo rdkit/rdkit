@@ -10,6 +10,7 @@
 #include "RDLog.h"
 
 #if 1
+#include <boost/make_shared.hpp>
 #include <iomanip>
 #include <string>
 #include <ctime>
@@ -141,12 +142,12 @@ std::string log_status() {
 
 namespace RDLog {
 void InitLogs() {
-  rdDebugLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
+  rdDebugLog = boost::make_shared<boost::logging::rdLogger>(&std::cerr);
   rdDebugLog->df_enabled = false;
-  rdInfoLog = std::make_shared<boost::logging::rdLogger>(&std::cout);
+  rdInfoLog = boost::make_shared<boost::logging::rdLogger>(&std::cout);
   rdInfoLog->df_enabled = false;
-  rdWarningLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
-  rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
+  rdWarningLog = boost::make_shared<boost::logging::rdLogger>(&std::cerr);
+  rdErrorLog = boost::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
 
 std::ostream &toStream(std::ostream &logstrm) {
