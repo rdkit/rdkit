@@ -278,7 +278,7 @@ typedef unsigned long long int	uintmax_t;
 %template(Flagged_Atomic_Params_Vect) std::pair<std::vector<const ForceFields::UFF::AtomicParams *>,bool>;
 %template(Shared_Int_Array) boost::shared_array<int>;
 %template(Shared_Double_Array) boost::shared_array<double>;
-%template(RDLogger) boost::shared_ptr<boost::logging::rdLogger>;
+%template(RDLogger_Shared_Ptr) boost::shared_ptr<boost::logging::rdLogger>;
 
 // Needed to access logger methods
 %extend boost::shared_ptr<boost::logging::rdLogger> {
