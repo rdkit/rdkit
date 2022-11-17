@@ -72,15 +72,15 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
   //! Remove our tee if it's set.
   void ClearTee() {
     if (dp_dest) {
+      delete teestream;
+      delete tee;
+      tee = nullptr;
+      teestream = nullptr;
       if (helperstream) {
         helperstream->close();
         delete helperstream;
         helperstream = nullptr;
       }
-      delete teestream;
-      delete tee;
-      tee = nullptr;
-      teestream = nullptr;
     }
   }
   ~rdLogger() {
