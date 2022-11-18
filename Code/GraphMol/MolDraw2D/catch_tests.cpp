@@ -101,6 +101,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testBrackets-4a.svg", 769125635U},
     {"testBrackets-4b.svg", 4066682338U},
     {"testBrackets-5a.svg", 1388227932U},
+    {"testBrackets-5768.svg", 3070888879U},
     {"testSGroupData-1a.svg", 1463366807U},
     {"testSGroupData-1b.svg", 223883202U},
     {"testSGroupData-2a.svg", 3547547260U},
@@ -1893,6 +1894,76 @@ M  END
       outs << text;
       outs.close();
       check_file_hash("testBrackets-5a.svg");
+    }
+  }
+  SECTION("Github5768 - rightmost bracket wrong way round.)") {
+    auto m = R"CTAB(
+  Marvin  10140911012D
+
+ 19 18  0  0  0  0            999 V2000
+   -2.0296    1.6372    0.0000 Si  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0296    2.4622    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0296    0.8122    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8546    1.6372    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2046    1.6372    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3796    1.6372    0.0000 Si  0  0  0  0  0  0  0  0  0  0  0  0
+    0.4454    1.6372    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3796    0.8122    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3796    2.4622    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3349    0.3997    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0494    0.8122    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7638    0.3997    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2704    1.6372    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4783    0.8122    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1928    0.3996    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9072    0.8121    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6217    0.3996    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3362    0.8120    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.0506    0.3995    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  6  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+  7 13  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 16 17  1  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  1  0  0  0  0
+M  STY  2   1 SRU   2 SRU
+M  SCN  1   1 HT
+M  SAL   1  4   1   2   3   5
+M  SDI   1  4   -0.8649    2.0497   -0.8649    1.2247
+M  SDI   1  4   -2.3693    1.2247   -2.3693    2.0497
+M  SBL   1  2   3   5
+M  SMT   1 n
+M  SCN  1   2 HT
+M  SAL   2 13   6   7   8   9  10  11  12  14  15  16  17  18  19
+M  SDI   2  4    0.7851    2.0497    0.7851    1.2247
+M  SDI   2  4   -0.7193    1.2247   -0.7193    2.0497
+M  SBL   2  2   5  11
+M  SMT   2 m
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-5768.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testBrackets-5768.svg");
     }
   }
 }
