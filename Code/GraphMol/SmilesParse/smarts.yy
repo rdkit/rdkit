@@ -186,24 +186,12 @@ mol: atomd {
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom($2,true,true);
 
-  QueryBond *newB;
-  // this is a bit of a hack to try and get nicer "SMILES" from
-  // a SMARTS molecule:
-  if(!(a1->getIsAromatic() && $2->getIsAromatic())){
-    newB = new QueryBond(Bond::SINGLE);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  } else {
-    newB = new QueryBond(Bond::AROMATIC);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  }
-  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(a1,mp->getAtomWithIdx(atomIdx2));
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
   newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  mp->addBond(newB);
-  delete newB;
-  //delete $2;
+  mp->addBond(newB,true);
 }
 
 | mol bond_expr atomd  {
@@ -236,17 +224,7 @@ mol: atomd {
   RWMol * mp = (*molList)[$$];
   Atom *atom=mp->getActiveAtom();
 
-  // this is a bit of a hack to try and get nicer "SMILES" from
-  // a SMARTS molecule:
-  QueryBond * newB;
-  if(!atom->getIsAromatic()){
-    newB = new QueryBond(Bond::SINGLE);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  } else {
-    newB = new QueryBond(Bond::AROMATIC);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  }
-  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(atom, nullptr);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,$2);
@@ -293,18 +271,7 @@ mol: atomd {
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom($3,true,true);
 
-
-  QueryBond *newB;
-  // this is a bit of a hack to try and get nicer "SMILES" from
-  // a SMARTS molecule:
-  if(!(a1->getIsAromatic() && $3->getIsAromatic())){
-    newB = new QueryBond(Bond::SINGLE);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  } else {
-    newB = new QueryBond(Bond::AROMATIC);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  }
-  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(a1,mp->getAtomWithIdx(atomIdx2));
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
