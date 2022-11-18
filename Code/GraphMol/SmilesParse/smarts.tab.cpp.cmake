@@ -614,18 +614,18 @@ static const yytype_int8 yytranslate[] =
 static const yytype_int16 yyrline[] =
 {
        0,   124,   124,   127,   131,   134,   137,   141,   145,   148,
-     153,   156,   164,   165,   166,   167,   175,   183,   209,   230,
-     235,   269,   290,   318,   341,   355,   356,   357,   361,   384,
-     388,   393,   399,   408,   414,   422,   430,   443,   449,   456,
-     462,   485,   488,   494,   495,   499,   516,   540,   541,   546,
-     547,   552,   553,   558,   559,   560,   561,   562,   563,   564,
-     567,   570,   573,   576,   579,   582,   588,   594,   601,   609,
-     617,   623,   629,   635,   641,   647,   654,   661,   662,   669,
-     670,   673,   676,   679,   682,   685,   690,   698,   710,   715,
-     720,   724,   728,   732,   735,   736,   743,   744,   750,   756,
-     762,   767,   774,   775,   776,   777,   778,   779,   783,   784,
-     785,   786,   787,   788,   789,   794,   795,   799,   800,   809,
-     810
+     153,   156,   164,   165,   166,   167,   175,   183,   197,   218,
+     223,   247,   268,   285,   308,   322,   323,   324,   328,   351,
+     355,   360,   366,   375,   381,   389,   397,   410,   416,   423,
+     429,   452,   455,   461,   462,   466,   483,   507,   508,   513,
+     514,   519,   520,   525,   526,   527,   528,   529,   530,   531,
+     534,   537,   540,   543,   546,   549,   555,   561,   568,   576,
+     584,   590,   596,   602,   608,   614,   621,   628,   629,   636,
+     637,   640,   643,   646,   649,   652,   657,   665,   677,   682,
+     687,   691,   695,   699,   702,   703,   710,   711,   717,   723,
+     729,   734,   741,   742,   743,   744,   745,   746,   750,   751,
+     752,   753,   754,   755,   756,   761,   762,   766,   767,   776,
+     777
 };
 #endif
 
@@ -1667,30 +1667,18 @@ yyreduce:
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom((yyvsp[0].atom),true,true);
 
-  QueryBond *newB;
-  // this is a bit of a hack to try and get nicer "SMILES" from
-  // a SMARTS molecule:
-  if(!(a1->getIsAromatic() && (yyvsp[0].atom)->getIsAromatic())){
-    newB = new QueryBond(Bond::SINGLE);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  } else {
-    newB = new QueryBond(Bond::AROMATIC);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  }
-  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(a1,mp->getAtomWithIdx(atomIdx2));
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
   newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  mp->addBond(newB);
-  delete newB;
-  //delete $2;
+  mp->addBond(newB,true);
 }
-#line 1690 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1678 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 18: /* mol: mol bond_expr atomd  */
-#line 209 "smarts.yy"
+#line 197 "smarts.yy"
                        {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1711,35 +1699,25 @@ yyreduce:
   mp->addBond((yyvsp[-1].bond));
   delete (yyvsp[-1].bond);
 }
-#line 1715 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1703 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 19: /* mol: mol SEPARATOR_TOKEN atomd  */
-#line 230 "smarts.yy"
+#line 218 "smarts.yy"
                             {
   RWMol *mp = (*molList)[(yyval.moli)];
   mp->addAtom((yyvsp[0].atom),true,true);
 }
-#line 1724 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1712 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 20: /* mol: mol ring_number  */
-#line 235 "smarts.yy"
+#line 223 "smarts.yy"
                   {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
 
-  // this is a bit of a hack to try and get nicer "SMILES" from
-  // a SMARTS molecule:
-  QueryBond * newB;
-  if(!atom->getIsAromatic()){
-    newB = new QueryBond(Bond::SINGLE);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  } else {
-    newB = new QueryBond(Bond::AROMATIC);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  }
-  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(atom, nullptr);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,(yyvsp[0].ival));
@@ -1758,11 +1736,11 @@ yyreduce:
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 
 }
-#line 1762 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1740 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 21: /* mol: mol bond_expr ring_number  */
-#line 269 "smarts.yy"
+#line 247 "smarts.yy"
                             {
   RWMol * mp = (*molList)[(yyval.moli)];
   Atom *atom=mp->getActiveAtom();
@@ -1783,29 +1761,18 @@ yyreduce:
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 
 }
-#line 1787 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1765 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 22: /* mol: mol GROUP_OPEN_TOKEN atomd  */
-#line 290 "smarts.yy"
+#line 268 "smarts.yy"
                              {
   RWMol *mp = (*molList)[(yyval.moli)];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom((yyvsp[0].atom),true,true);
 
-
-  QueryBond *newB;
-  // this is a bit of a hack to try and get nicer "SMILES" from
-  // a SMARTS molecule:
-  if(!(a1->getIsAromatic() && (yyvsp[0].atom)->getIsAromatic())){
-    newB = new QueryBond(Bond::SINGLE);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  } else {
-    newB = new QueryBond(Bond::AROMATIC);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  }
-  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(a1,mp->getAtomWithIdx(atomIdx2));
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
@@ -1815,11 +1782,11 @@ yyreduce:
 
   branchPoints->push_back(atomIdx1);
 }
-#line 1819 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1786 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 23: /* mol: mol GROUP_OPEN_TOKEN bond_expr atomd  */
-#line 318 "smarts.yy"
+#line 285 "smarts.yy"
                                         {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
@@ -1841,11 +1808,11 @@ yyreduce:
   branchPoints->push_back(atomIdx1);
 
 }
-#line 1845 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1812 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 24: /* mol: mol GROUP_CLOSE_TOKEN  */
-#line 341 "smarts.yy"
+#line 308 "smarts.yy"
                         {
   if(branchPoints->empty()){
      yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
@@ -1856,56 +1823,56 @@ yyreduce:
   mp->setActiveAtom(branchPoints->back());
   branchPoints->pop_back();
 }
-#line 1860 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1827 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 27: /* atomd: ATOM_OPEN_TOKEN atom_expr ATOM_CLOSE_TOKEN  */
-#line 358 "smarts.yy"
+#line 325 "smarts.yy"
 {
   (yyval.atom) = (yyvsp[-1].atom);
 }
-#line 1868 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1835 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 28: /* atomd: ATOM_OPEN_TOKEN atom_expr COLON_TOKEN number ATOM_CLOSE_TOKEN  */
-#line 362 "smarts.yy"
+#line 329 "smarts.yy"
 {
   (yyval.atom) = (yyvsp[-3].atom);
   (yyval.atom)->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 }
-#line 1877 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1844 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 29: /* hydrogen_atom: ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN  */
-#line 385 "smarts.yy"
+#line 352 "smarts.yy"
 {
   (yyval.atom) = new QueryAtom(1);
 }
-#line 1885 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1852 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 30: /* hydrogen_atom: ATOM_OPEN_TOKEN H_TOKEN COLON_TOKEN number ATOM_CLOSE_TOKEN  */
-#line 389 "smarts.yy"
+#line 356 "smarts.yy"
 {
   (yyval.atom) = new QueryAtom(1);
   (yyval.atom)->setProp(RDKit::common_properties::molAtomMapNumber,(yyvsp[-1].ival));
 }
-#line 1894 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1861 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 31: /* hydrogen_atom: ATOM_OPEN_TOKEN number H_TOKEN ATOM_CLOSE_TOKEN  */
-#line 393 "smarts.yy"
+#line 360 "smarts.yy"
                                                   {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope((yyvsp[-2].ival));
   newQ->expandQuery(makeAtomIsotopeQuery((yyvsp[-2].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=newQ;
 }
-#line 1905 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1872 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 32: /* hydrogen_atom: ATOM_OPEN_TOKEN number H_TOKEN COLON_TOKEN number ATOM_CLOSE_TOKEN  */
-#line 399 "smarts.yy"
+#line 366 "smarts.yy"
                                                                      {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope((yyvsp[-4].ival));
@@ -1914,22 +1881,22 @@ yyreduce:
 
   (yyval.atom)=newQ;
 }
-#line 1918 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1885 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 33: /* hydrogen_atom: ATOM_OPEN_TOKEN H_TOKEN charge_spec ATOM_CLOSE_TOKEN  */
-#line 408 "smarts.yy"
+#line 375 "smarts.yy"
                                                        {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge((yyvsp[-1].ival));
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=newQ;
 }
-#line 1929 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1896 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 34: /* hydrogen_atom: ATOM_OPEN_TOKEN H_TOKEN charge_spec COLON_TOKEN number ATOM_CLOSE_TOKEN  */
-#line 414 "smarts.yy"
+#line 381 "smarts.yy"
                                                                           {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setFormalCharge((yyvsp[-3].ival));
@@ -1938,11 +1905,11 @@ yyreduce:
 
   (yyval.atom)=newQ;
 }
-#line 1942 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1909 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 35: /* hydrogen_atom: ATOM_OPEN_TOKEN number H_TOKEN charge_spec ATOM_CLOSE_TOKEN  */
-#line 422 "smarts.yy"
+#line 389 "smarts.yy"
                                                               {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope((yyvsp[-3].ival));
@@ -1951,11 +1918,11 @@ yyreduce:
   newQ->expandQuery(makeAtomFormalChargeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=newQ;
 }
-#line 1955 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1922 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 36: /* hydrogen_atom: ATOM_OPEN_TOKEN number H_TOKEN charge_spec COLON_TOKEN number ATOM_CLOSE_TOKEN  */
-#line 430 "smarts.yy"
+#line 397 "smarts.yy"
                                                                                  {
   QueryAtom *newQ = new QueryAtom(1);
   newQ->setIsotope((yyvsp[-5].ival));
@@ -1966,22 +1933,22 @@ yyreduce:
 
   (yyval.atom)=newQ;
 }
-#line 1970 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1937 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 37: /* atom_expr: atom_expr AND_TOKEN atom_expr  */
-#line 443 "smarts.yy"
+#line 410 "smarts.yy"
                                          {
   (yyvsp[-2].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[-2].atom));
   delete (yyvsp[0].atom);
 }
-#line 1981 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1948 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 38: /* atom_expr: atom_expr OR_TOKEN atom_expr  */
-#line 449 "smarts.yy"
+#line 416 "smarts.yy"
                                {
   (yyvsp[-2].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
@@ -1989,22 +1956,22 @@ yyreduce:
   (yyvsp[-2].atom)->setAtomicNum(0);
   delete (yyvsp[0].atom);
 }
-#line 1993 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1960 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 39: /* atom_expr: atom_expr SEMI_TOKEN atom_expr  */
-#line 456 "smarts.yy"
+#line 423 "smarts.yy"
                                  {
   (yyvsp[-2].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if((yyvsp[-2].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-2].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[-2].atom));
   delete (yyvsp[0].atom);
 }
-#line 2004 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1971 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 40: /* atom_expr: atom_expr point_query  */
-#line 462 "smarts.yy"
+#line 429 "smarts.yy"
                         {
   (yyvsp[-1].atom)->expandQuery((yyvsp[0].atom)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   if((yyvsp[-1].atom)->getChiralTag()==Atom::CHI_UNSPECIFIED) (yyvsp[-1].atom)->setChiralTag((yyvsp[0].atom)->getChiralTag());
@@ -2028,22 +1995,22 @@ yyreduce:
   }
   delete (yyvsp[0].atom);
 }
-#line 2032 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 1999 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 42: /* point_query: NOT_TOKEN point_query  */
-#line 488 "smarts.yy"
+#line 455 "smarts.yy"
                                    {
   (yyvsp[0].atom)->getQuery()->setNegation(!((yyvsp[0].atom)->getQuery()->getNegation()));
   (yyvsp[0].atom)->setAtomicNum(0);
   SmilesParseOps::ClearAtomChemicalProps((yyvsp[0].atom));
   (yyval.atom) = (yyvsp[0].atom);
 }
-#line 2043 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2010 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 45: /* recursive_query: BEGIN_RECURSE mol END_RECURSE  */
-#line 499 "smarts.yy"
+#line 466 "smarts.yy"
                                                {
   // this is a recursive SMARTS expression
   QueryAtom *qA = new QueryAtom();
@@ -2061,11 +2028,11 @@ yyreduce:
   }
   (yyval.atom) = qA;
 }
-#line 2065 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2032 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 46: /* recursive_query: BEGIN_RECURSE mol END_RECURSE UNDERSCORE_TOKEN nonzero_number  */
-#line 516 "smarts.yy"
+#line 483 "smarts.yy"
                                                                 {
   // UNDOCUMENTED EXTENSION:
   // this is a recursive SMARTS expression with a serial number
@@ -2087,117 +2054,117 @@ yyreduce:
   }
   (yyval.atom) = qA;
 }
-#line 2091 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2058 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 48: /* atom_query: number simple_atom  */
-#line 541 "smarts.yy"
+#line 508 "smarts.yy"
                      {
   (yyvsp[0].atom)->setIsotope((yyvsp[-1].ival));
   (yyvsp[0].atom)->expandQuery(makeAtomIsotopeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=(yyvsp[0].atom);
 }
-#line 2101 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2068 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 50: /* atom_query: number ATOM_TOKEN  */
-#line 547 "smarts.yy"
+#line 514 "smarts.yy"
                     {
   (yyvsp[0].atom)->setIsotope((yyvsp[-1].ival));
   (yyvsp[0].atom)->expandQuery(makeAtomIsotopeQuery((yyvsp[-1].ival)),Queries::COMPOSITE_AND,true);
   (yyval.atom)=(yyvsp[0].atom);
 }
-#line 2111 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2078 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 51: /* atom_query: HASH_TOKEN number  */
-#line 552 "smarts.yy"
+#line 519 "smarts.yy"
                     { (yyval.atom) = new QueryAtom((yyvsp[0].ival)); }
-#line 2117 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2084 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 52: /* atom_query: number HASH_TOKEN number  */
-#line 553 "smarts.yy"
+#line 520 "smarts.yy"
                            {
   (yyval.atom) = new QueryAtom((yyvsp[0].ival));
   (yyval.atom)->setIsotope((yyvsp[-2].ival));
   (yyval.atom)->expandQuery(makeAtomIsotopeQuery((yyvsp[-2].ival)),Queries::COMPOSITE_AND,true);
 }
-#line 2127 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2094 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 59: /* atom_query: COMPLEX_ATOM_QUERY_TOKEN number  */
-#line 564 "smarts.yy"
+#line 531 "smarts.yy"
                                   {
   static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-1].atom)->getQuery())->setVal((yyvsp[0].ival));
 }
-#line 2135 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2102 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 60: /* atom_query: HETERONEIGHBOR_ATOM_QUERY_TOKEN number  */
-#line 567 "smarts.yy"
+#line 534 "smarts.yy"
                                          {
   (yyvsp[-1].atom)->setQuery(makeAtomNumHeteroatomNbrsQuery((yyvsp[0].ival)));
 }
-#line 2143 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2110 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 61: /* atom_query: ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN number  */
-#line 570 "smarts.yy"
+#line 537 "smarts.yy"
                                                   {
   (yyvsp[-1].atom)->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery((yyvsp[0].ival)));
 }
-#line 2151 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2118 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 62: /* atom_query: RINGSIZE_ATOM_QUERY_TOKEN number  */
-#line 573 "smarts.yy"
+#line 540 "smarts.yy"
                                    {
   (yyvsp[-1].atom)->setQuery(makeAtomMinRingSizeQuery((yyvsp[0].ival)));
 }
-#line 2159 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2126 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 63: /* atom_query: RINGBOND_ATOM_QUERY_TOKEN number  */
-#line 576 "smarts.yy"
+#line 543 "smarts.yy"
                                    {
   (yyvsp[-1].atom)->setQuery(makeAtomRingBondCountQuery((yyvsp[0].ival)));
 }
-#line 2167 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2134 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 64: /* atom_query: IMPLICIT_H_ATOM_QUERY_TOKEN number  */
-#line 579 "smarts.yy"
+#line 546 "smarts.yy"
                                      {
   (yyvsp[-1].atom)->setQuery(makeAtomImplicitHCountQuery((yyvsp[0].ival)));
 }
-#line 2175 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2142 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 65: /* atom_query: possible_range_query RANGE_OPEN_TOKEN MINUS_TOKEN number RANGE_CLOSE_TOKEN  */
-#line 582 "smarts.yy"
+#line 549 "smarts.yy"
                                                                              {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-4].atom)->getQuery());
   ATOM_GREATEREQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_GREATEREQUAL_QUERY>((yyvsp[-1].ival),oq->getDataFunc(),
     std::string("greater_")+oq->getDescription());
   (yyvsp[-4].atom)->setQuery(nq);
 }
-#line 2186 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2153 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 66: /* atom_query: possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN RANGE_CLOSE_TOKEN  */
-#line 588 "smarts.yy"
+#line 555 "smarts.yy"
                                                                              {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-4].atom)->getQuery());
   ATOM_LESSEQUAL_QUERY *nq = makeAtomSimpleQuery<ATOM_LESSEQUAL_QUERY>((yyvsp[-2].ival),oq->getDataFunc(),
     std::string("less_")+oq->getDescription());
   (yyvsp[-4].atom)->setQuery(nq);
 }
-#line 2197 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2164 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 67: /* atom_query: possible_range_query RANGE_OPEN_TOKEN number MINUS_TOKEN number RANGE_CLOSE_TOKEN  */
-#line 594 "smarts.yy"
+#line 561 "smarts.yy"
                                                                                     {
   ATOM_EQUALS_QUERY *oq = static_cast<ATOM_EQUALS_QUERY *>((yyvsp[-5].atom)->getQuery());
   ATOM_RANGE_QUERY *nq = makeAtomRangeQuery((yyvsp[-3].ival),(yyvsp[-1].ival),false,false,
@@ -2205,11 +2172,11 @@ yyreduce:
     std::string("range_")+oq->getDescription());
   (yyvsp[-5].atom)->setQuery(nq);
 }
-#line 2209 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2176 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 68: /* atom_query: number H_TOKEN  */
-#line 601 "smarts.yy"
+#line 568 "smarts.yy"
                  {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[-1].ival)));
@@ -2218,11 +2185,11 @@ yyreduce:
   newQ->setNumExplicitHs(1);
   (yyval.atom)=newQ;
 }
-#line 2222 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2189 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 69: /* atom_query: number H_TOKEN number  */
-#line 609 "smarts.yy"
+#line 576 "smarts.yy"
                         {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[-2].ival)));
@@ -2231,66 +2198,66 @@ yyreduce:
   newQ->setNumExplicitHs((yyvsp[0].ival));
   (yyval.atom)=newQ;
 }
-#line 2235 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2202 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 70: /* atom_query: H_TOKEN number  */
-#line 617 "smarts.yy"
+#line 584 "smarts.yy"
                  {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery((yyvsp[0].ival)));
   newQ->setNumExplicitHs((yyvsp[0].ival));
   (yyval.atom)=newQ;
 }
-#line 2246 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2213 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 71: /* atom_query: H_TOKEN  */
-#line 623 "smarts.yy"
+#line 590 "smarts.yy"
           {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomHCountQuery(1));
   newQ->setNumExplicitHs(1);
   (yyval.atom)=newQ;
 }
-#line 2257 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2224 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 72: /* atom_query: charge_spec  */
-#line 629 "smarts.yy"
+#line 596 "smarts.yy"
               {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery((yyvsp[0].ival)));
   newQ->setFormalCharge((yyvsp[0].ival));
   (yyval.atom)=newQ;
 }
-#line 2268 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2235 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 73: /* atom_query: AT_TOKEN AT_TOKEN  */
-#line 635 "smarts.yy"
+#line 602 "smarts.yy"
                     {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
   newQ->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
   (yyval.atom)=newQ;
 }
-#line 2279 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2246 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 74: /* atom_query: AT_TOKEN  */
-#line 641 "smarts.yy"
+#line 608 "smarts.yy"
            {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
   newQ->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
   (yyval.atom)=newQ;
 }
-#line 2290 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2257 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 75: /* atom_query: CHI_CLASS_TOKEN  */
-#line 647 "smarts.yy"
+#line 614 "smarts.yy"
                   {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
@@ -2298,11 +2265,11 @@ yyreduce:
   newQ->setProp(common_properties::_chiralPermutation,0);
   (yyval.atom)=newQ;
 }
-#line 2302 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2269 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 76: /* atom_query: CHI_CLASS_TOKEN number  */
-#line 654 "smarts.yy"
+#line 621 "smarts.yy"
                          {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNullQuery());
@@ -2310,81 +2277,81 @@ yyreduce:
   newQ->setProp(common_properties::_chiralPermutation,(yyvsp[0].ival));
   (yyval.atom)=newQ;
 }
-#line 2314 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2281 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 78: /* atom_query: number  */
-#line 662 "smarts.yy"
+#line 629 "smarts.yy"
          {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomIsotopeQuery((yyvsp[0].ival)));
   (yyval.atom)=newQ;
 }
-#line 2324 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2291 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 80: /* possible_range_query: HETERONEIGHBOR_ATOM_QUERY_TOKEN  */
-#line 670 "smarts.yy"
+#line 637 "smarts.yy"
                                   {
   (yyvsp[0].atom)->setQuery(makeAtomNumHeteroatomNbrsQuery(0));
 }
-#line 2332 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2299 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 81: /* possible_range_query: ALIPHATICHETERONEIGHBOR_ATOM_QUERY_TOKEN  */
-#line 673 "smarts.yy"
+#line 640 "smarts.yy"
                                            {
   (yyvsp[0].atom)->setQuery(makeAtomNumAliphaticHeteroatomNbrsQuery(0));
 }
-#line 2340 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2307 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 82: /* possible_range_query: RINGSIZE_ATOM_QUERY_TOKEN  */
-#line 676 "smarts.yy"
+#line 643 "smarts.yy"
                             {
   (yyvsp[0].atom)->setQuery(makeAtomMinRingSizeQuery(5)); // this is going to be ignored anyway
 }
-#line 2348 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2315 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 83: /* possible_range_query: RINGBOND_ATOM_QUERY_TOKEN  */
-#line 679 "smarts.yy"
+#line 646 "smarts.yy"
                             {
   (yyvsp[0].atom)->setQuery(makeAtomRingBondCountQuery(0));
 }
-#line 2356 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2323 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 84: /* possible_range_query: IMPLICIT_H_ATOM_QUERY_TOKEN  */
-#line 682 "smarts.yy"
+#line 649 "smarts.yy"
                               {
   (yyvsp[0].atom)->setQuery(makeAtomImplicitHCountQuery(0));
 }
-#line 2364 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2331 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 85: /* possible_range_query: PLUS_TOKEN  */
-#line 685 "smarts.yy"
+#line 652 "smarts.yy"
              {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomFormalChargeQuery(0));
   (yyval.atom) = newQ;
 }
-#line 2374 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2341 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 86: /* possible_range_query: MINUS_TOKEN  */
-#line 690 "smarts.yy"
+#line 657 "smarts.yy"
               {
   QueryAtom *newQ = new QueryAtom();
   newQ->setQuery(makeAtomNegativeFormalChargeQuery(0));
   (yyval.atom) = newQ;
 }
-#line 2384 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2351 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 87: /* simple_atom: ORGANIC_ATOM_TOKEN  */
-#line 698 "smarts.yy"
+#line 665 "smarts.yy"
                                    {
   //
   // This construction (and some others) may seem odd, but the
@@ -2397,181 +2364,181 @@ yyreduce:
   (yyval.atom) = new QueryAtom((yyvsp[0].ival));
   (yyval.atom)->setQuery(makeAtomTypeQuery((yyvsp[0].ival),false));
 }
-#line 2401 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2368 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 88: /* simple_atom: AROMATIC_ATOM_TOKEN  */
-#line 710 "smarts.yy"
+#line 677 "smarts.yy"
                       {
   (yyval.atom) = new QueryAtom((yyvsp[0].ival));
   (yyval.atom)->setIsAromatic(true);
   (yyval.atom)->setQuery(makeAtomTypeQuery((yyvsp[0].ival),true));
 }
-#line 2411 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2378 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 90: /* bond_expr: bond_expr AND_TOKEN bond_expr  */
-#line 720 "smarts.yy"
+#line 687 "smarts.yy"
                                         {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
 }
-#line 2420 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2387 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 91: /* bond_expr: bond_expr OR_TOKEN bond_expr  */
-#line 724 "smarts.yy"
+#line 691 "smarts.yy"
                                {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_OR,true);
   delete (yyvsp[0].bond);
 }
-#line 2429 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2396 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 92: /* bond_expr: bond_expr SEMI_TOKEN bond_expr  */
-#line 728 "smarts.yy"
+#line 695 "smarts.yy"
                                  {
   (yyvsp[-2].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
 }
-#line 2438 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2405 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 95: /* bond_query: bond_query bondd  */
-#line 736 "smarts.yy"
+#line 703 "smarts.yy"
                    {
   (yyvsp[-1].bond)->expandQuery((yyvsp[0].bond)->getQuery()->copy(),Queries::COMPOSITE_AND,true);
   delete (yyvsp[0].bond);
 }
-#line 2447 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2414 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 97: /* bondd: MINUS_TOKEN  */
-#line 744 "smarts.yy"
+#line 711 "smarts.yy"
               {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::SINGLE);
   newB->setQuery(makeBondOrderEqualsQuery(Bond::SINGLE));
   (yyval.bond) = newB;
 }
-#line 2458 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2425 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 98: /* bondd: HASH_TOKEN  */
-#line 750 "smarts.yy"
+#line 717 "smarts.yy"
              {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::TRIPLE);
   newB->setQuery(makeBondOrderEqualsQuery(Bond::TRIPLE));
   (yyval.bond) = newB;
 }
-#line 2469 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2436 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 99: /* bondd: COLON_TOKEN  */
-#line 756 "smarts.yy"
+#line 723 "smarts.yy"
               {
   QueryBond *newB= new QueryBond();
   newB->setBondType(Bond::AROMATIC);
   newB->setQuery(makeBondOrderEqualsQuery(Bond::AROMATIC));
   (yyval.bond) = newB;
 }
-#line 2480 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2447 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 100: /* bondd: AT_TOKEN  */
-#line 762 "smarts.yy"
+#line 729 "smarts.yy"
            {
   QueryBond *newB= new QueryBond();
   newB->setQuery(makeBondIsInRingQuery());
   (yyval.bond) = newB;
 }
-#line 2490 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2457 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 101: /* bondd: NOT_TOKEN bondd  */
-#line 767 "smarts.yy"
+#line 734 "smarts.yy"
                   {
   (yyvsp[0].bond)->getQuery()->setNegation(!((yyvsp[0].bond)->getQuery()->getNegation()));
   (yyval.bond) = (yyvsp[0].bond);
 }
-#line 2499 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2466 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 102: /* charge_spec: PLUS_TOKEN PLUS_TOKEN  */
-#line 774 "smarts.yy"
+#line 741 "smarts.yy"
                                    { (yyval.ival)=2; }
-#line 2505 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2472 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 103: /* charge_spec: PLUS_TOKEN number  */
-#line 775 "smarts.yy"
+#line 742 "smarts.yy"
                     { (yyval.ival)=(yyvsp[0].ival); }
-#line 2511 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2478 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 104: /* charge_spec: PLUS_TOKEN  */
-#line 776 "smarts.yy"
+#line 743 "smarts.yy"
              { (yyval.ival)=1; }
-#line 2517 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2484 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 105: /* charge_spec: MINUS_TOKEN MINUS_TOKEN  */
-#line 777 "smarts.yy"
+#line 744 "smarts.yy"
                           { (yyval.ival)=-2; }
-#line 2523 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2490 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 106: /* charge_spec: MINUS_TOKEN number  */
-#line 778 "smarts.yy"
+#line 745 "smarts.yy"
                      { (yyval.ival)=-(yyvsp[0].ival); }
-#line 2529 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2496 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 107: /* charge_spec: MINUS_TOKEN  */
-#line 779 "smarts.yy"
+#line 746 "smarts.yy"
               { (yyval.ival)=-1; }
-#line 2535 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2502 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 109: /* ring_number: PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit  */
-#line 784 "smarts.yy"
+#line 751 "smarts.yy"
                                           { (yyval.ival) = (yyvsp[-1].ival)*10+(yyvsp[0].ival); }
-#line 2541 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2508 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 110: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit GROUP_CLOSE_TOKEN  */
-#line 785 "smarts.yy"
+#line 752 "smarts.yy"
                                                          { (yyval.ival) = (yyvsp[-1].ival); }
-#line 2547 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2514 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 111: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit GROUP_CLOSE_TOKEN  */
-#line 786 "smarts.yy"
+#line 753 "smarts.yy"
                                                                { (yyval.ival) = (yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 2553 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2520 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 112: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit GROUP_CLOSE_TOKEN  */
-#line 787 "smarts.yy"
+#line 754 "smarts.yy"
                                                                      { (yyval.ival) = (yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 2559 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2526 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 113: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit GROUP_CLOSE_TOKEN  */
-#line 788 "smarts.yy"
+#line 755 "smarts.yy"
                                                                            { (yyval.ival) = (yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 2565 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2532 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 114: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit digit GROUP_CLOSE_TOKEN  */
-#line 789 "smarts.yy"
+#line 756 "smarts.yy"
                                                                                  { (yyval.ival) = (yyvsp[-5].ival)*10000+(yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
-#line 2571 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2538 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
   case 118: /* nonzero_number: nonzero_number digit  */
-#line 800 "smarts.yy"
+#line 767 "smarts.yy"
                        { 
     if((yyvsp[-1].ival) >= std::numeric_limits<std::int32_t>::max()/10 || 
      (yyvsp[-1].ival)*10 >= std::numeric_limits<std::int32_t>::max()-(yyvsp[0].ival) ){
@@ -2579,11 +2546,11 @@ yyreduce:
      YYABORT;
   }
   (yyval.ival) = (yyvsp[-1].ival)*10 + (yyvsp[0].ival); }
-#line 2583 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2550 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
     break;
 
 
-#line 2587 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
+#line 2554 "/scratch/RDKit_git/Code/GraphMol/SmilesParse/smarts.tab.cpp"
 
       default: break;
     }
@@ -2776,5 +2743,5 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 813 "smarts.yy"
+#line 780 "smarts.yy"
 
