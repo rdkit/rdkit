@@ -2813,8 +2813,7 @@ void testSmartsStereoBonds() {
   {
     // A weird way of writing C/C=C/O:
     const auto mol = R"([#6](=[#6]/[#8])\[#6])"_smarts;
-
-    const Bond *bnd = mol->getBondWithIdx(1);
+    const Bond *bnd = mol->getBondWithIdx(0);
 
     TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({3, 2}));
     TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);

@@ -2321,3 +2321,13 @@ TEST_CASE(
     Chirality::setUseLegacyStereoPerception(oval);
   }
 }
+
+TEST_CASE("Github #5683: SMARTS bond ordering should be the same as SMILES") {
+  SECTION("basics") {
+    auto m = "C(OC)C"_smarts;
+    REQUIRE(m);
+    CHECK(m->getBondBetweenAtoms(0, 1)->getIdx() == 0);
+    CHECK(m->getBondBetweenAtoms(1, 2)->getIdx() == 1);
+    CHECK(m->getBondBetweenAtoms(0, 3)->getIdx() == 2);
+  }
+}
