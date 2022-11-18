@@ -1062,6 +1062,49 @@ M  END
     assert(!svg2.includes("atom-10"));
 }
 
+function test_get_frags() {
+    {
+        var mol = RDKitModule.get_mol("n1ccccc1.CC(C)C.OCCCN");
+        var expectedFragSmiles = ["c1ccncc1", "CC(C)C", "NCCCO"];
+        var expectedFragSmilesNonSanitized = ["CN(C)(C)C", "c1ccc1"];
+        var expectedMappings = {
+            frags: [0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],
+            fragsMolAtomMapping: [[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]],
+        };
+        var { molIterator, mappings } = mol.get_frags();
+        assert(molIterator.size() === 3);
+        assert(JSON.stringify(JSON.parse(mappings)) === JSON.stringify(expectedMappings));
+        var i = 0;
+        while (!molIterator.atEnd()) {
+            var mol = molIterator.next();
+            assert(mol.get_smiles() === expectedFragSmiles[i++]);
+            mol.delete();
+        }
+        assert(!molIterator.next());
+        molIterator.delete();
+    }
+    {
+        var mol = RDKitModule.get_mol("N(C)(C)(C)C.c1ccc1", JSON.stringify({sanitize: false}));
+        var exceptionThrown = false;
+        try {
+            mol.get_frags();
+        } catch (e) {
+            exceptionThrown = true;
+        }
+        assert(exceptionThrown);
+        var { molIterator, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
+        assert(molIterator.size() === 2);
+        var i = 0;
+        while (!molIterator.atEnd()) {
+            var mol = molIterator.next();
+            assert(mol.get_smiles() === expectedFragSmilesNonSanitized[i++]);
+            mol.delete();
+        }
+        assert(!molIterator.next());
+        molIterator.delete();
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -1107,6 +1150,7 @@ initRDKitModule().then(function(instance) {
     test_prop();
     test_highlights();
     test_add_chiral_hs();
+    test_get_frags();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
