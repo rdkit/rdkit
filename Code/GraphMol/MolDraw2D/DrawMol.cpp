@@ -10,6 +10,7 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <algorithm>
 #include <iostream>
 #include <limits>
 
@@ -668,10 +669,11 @@ void DrawMol::extractBrackets() {
         }
         annotations_.emplace_back(da);
       }
-      std::string label;
-      if (sg.getPropIfPresent("LABEL", label)) {
+      // function to draw a label at the bottom of the bracket.
+      auto drawBottomLabel = [&](const std::string &label,
+                                 const DrawShape &brkShp,
+                                 bool horizontal) -> DrawAnnotation * {
         // annotations go on the last bracket of an sgroup
-        const auto &brkShp = *postShapes_[labelBrk];
         // LABEL goes at the bottom which is now the top
         auto topPt = brkShp.points_[1];
         auto brkPt = brkShp.points_[0];
@@ -684,6 +686,24 @@ void DrawMol::extractBrackets() {
             label, TextAlignType::MIDDLE, "connect",
             drawOptions_.annotationFontScale, topPt + (topPt - brkPt),
             DrawColour(0.0, 0.0, 0.0), textDrawer_);
+        if (brkPt.x < topPt.x) {
+          da->align_ = TextAlignType::START;
+        }
+        return da;
+      };
+
+      std::string label;
+      if (sg.getPropIfPresent("LABEL", label)) {
+        auto da = drawBottomLabel(label, *postShapes_[labelBrk], horizontal);
+        annotations_.emplace_back(da);
+      } else if (sg.getPropIfPresent("TYPE", label)) {
+        if (label == "GEN") {
+          // ChemDraw doesn't draw the GEN (type=generic) label.
+          continue;
+        }
+        // draw the lowercase type if there's no label to go there.
+        std::transform(label.begin(), label.end(), label.begin(), ::tolower);
+        auto da = drawBottomLabel(label, *postShapes_[labelBrk], horizontal);
         annotations_.emplace_back(da);
       }
     }
