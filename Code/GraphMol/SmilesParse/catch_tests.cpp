@@ -2330,4 +2330,8 @@ TEST_CASE("Github #5683: SMARTS bond ordering should be the same as SMILES") {
     CHECK(m->getBondBetweenAtoms(1, 2)->getIdx() == 1);
     CHECK(m->getBondBetweenAtoms(0, 3)->getIdx() == 2);
   }
+  SECTION("as reported: SMARTS which should generate an exception") {
+    auto sma = "O=C(C=CCC1CCCCC1)N1N=Cc2ccccc2C1c1ccccc1 |w:3.1|";
+    CHECK_THROWS_AS(SmartsToMol(sma), SmilesParseException);
+  }
 }
