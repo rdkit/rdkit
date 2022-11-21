@@ -156,7 +156,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
 
   int maxLabel = 1;
-  if (alignCore && (alignment & MCS)) {
+  // makes no sense to do MCS alignment if we are only matching at user defined R-Groups
+  if (alignCore && !onlyMatchAtRGroups && (alignment & MCS)) {
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
