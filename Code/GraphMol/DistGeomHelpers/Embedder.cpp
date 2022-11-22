@@ -241,6 +241,8 @@ struct EmbedArgs {
   DistGeom::BoundsMatPtr mmat;
   DistGeom::VECT_CHIRALSET const *chiralCenters;
   DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
+  std::vector<std::pair<std::vector<unsigned int>, int>> const
+      *stereoDoubleBonds;
   ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails;
 };
 }  // namespace detail
@@ -636,6 +638,56 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   return planar;
 }
 
+bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
+                            const detail::EmbedArgs &eargs,
+                            const EmbedParameters &) {
+  for (const auto &itm : *eargs.stereoDoubleBonds) {
+    auto a0 = itm.first[0];
+    auto a1 = itm.first[1];
+    auto a2 = itm.first[2];
+    auto a3 = itm.first[3];
+    RDGeom::Point3D p0((*positions[a0])[0], (*positions[a0])[1],
+                       (*positions[a0])[2]);
+    RDGeom::Point3D p1((*positions[a1])[0], (*positions[a1])[1],
+                       (*positions[a1])[2]);
+    RDGeom::Point3D p2((*positions[a2])[0], (*positions[a2])[1],
+                       (*positions[a2])[2]);
+    RDGeom::Point3D p3((*positions[a3])[0], (*positions[a3])[1],
+                       (*positions[a3])[2]);
+
+    // check for linear arrangements
+    auto v1 = p1 - p0;
+    v1.normalize();
+    auto v2 = p1 - p2;
+    v2.normalize();
+    if (v1.dotProduct(v2) + 1.0 < 1e-3) {
+      // std::cerr << "linear1 " << a0 << "-" << a1 << "=" << a2 << ": "
+      //           << v1.dotProduct(v2) << std::endl;
+      return false;
+    }
+    v1 = p2 - p3;
+    v1.normalize();
+    v2 = p2 - p1;
+    v2.normalize();
+    if (v1.dotProduct(v2) + 1.0 < 1e-3) {
+      // std::cerr << "linear2 " << a0 << "-" << a1 << "=" << a2 << ": "
+      //           << v1.dotProduct(v2) << std::endl;
+      return false;
+    }
+
+    // check the dihedral and be super permissive
+    auto dihedral = RDGeom::computeDihedralAngle(p0, p1, p2, p3);
+    if ((dihedral - M_PI_2) * itm.second < 0) {
+      // they are pointing in different directions
+      // std::cerr << "  !!! " << a0 << " " << a1 << " " << a2 << " " << a3 << "
+      // "
+      //           << dihedral << " " << itm.second << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+
 bool finalChiralChecks(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
                        const EmbedParameters &) {
@@ -749,11 +801,16 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
         gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
                                                           embedParams);
       }
-      // test if chirality is correct
-      if (embedParams.enforceChirality && gotCoords &&
-          (eargs.chiralCenters->size() > 0)) {
-        gotCoords =
-            EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
+      // test if stereo is correct
+      if (embedParams.enforceChirality && gotCoords) {
+        if (!eargs.chiralCenters->empty()) {
+          gotCoords =
+              EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
+        }
+        if (gotCoords && !eargs.stereoDoubleBonds->empty()) {
+          gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
+                                                           embedParams);
+        }
       }
     }  // if(gotCoords)
   }    // while
@@ -765,6 +822,33 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   return gotCoords;
 }
 
+void findStereoDoubleBonds(
+    const ROMol &mol,
+    std::vector<std::pair<std::vector<unsigned int>, int>> &stereoDoubleBonds,
+    const std::map<int, RDGeom::Point3D> *coordMap) {
+  for (const auto bnd : mol.bonds()) {
+    if (bnd->getBondType() == Bond::BondType::DOUBLE &&
+        bnd->getStereo() > Bond::BondStereo::STEREOANY) {
+      // only do this if the controlling atoms aren't in the coord map
+      if (coordMap &&
+          coordMap->find(bnd->getStereoAtoms()[0]) != coordMap->end() &&
+          coordMap->find(bnd->getStereoAtoms()[1]) != coordMap->end()) {
+        continue;
+      }
+      int sign = 1;
+      if (bnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+          bnd->getStereo() == Bond::BondStereo::STEREOZ) {
+        sign = -1;
+      }
+      std::pair<std::vector<unsigned int>, int> elem{
+          {static_cast<unsigned>(bnd->getStereoAtoms()[0]),
+           bnd->getBeginAtomIdx(), bnd->getEndAtomIdx(),
+           static_cast<unsigned>(bnd->getStereoAtoms()[1])},
+          sign};
+      stereoDoubleBonds.push_back(std::move(elem));
+    }
+  }
+}
 void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
                     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
                     const std::map<int, RDGeom::Point3D> *coordMap) {
@@ -1190,8 +1274,13 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
 
-    // if we have any chiral centers or are using random coordinates, we will
-    // first embed the molecule in four dimensions, otherwise we will use 3D
+    // find double bonds with specified stereo
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    EmbeddingOps::findStereoDoubleBonds(*piece, stereoDoubleBonds, coordMap);
+
+    // if we have any chiral centers or are using random coordinates, we
+    // will first embed the molecule in four dimensions, otherwise we will
+    // use 3D
     bool fourD = false;
     if (params.useRandomCoords || chiralCenters.size() > 0) {
       fourD = true;
@@ -1199,9 +1288,16 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     int numThreads = getNumThreadsToUse(params.numThreads);
 
     // do the embedding, using multiple threads if requested
-    detail::EmbedArgs eargs = {
-        &confsOk, fourD,          &fragMapping,        &confs,       fragIdx,
-        mmat,     &chiralCenters, &tetrahedralCarbons, &etkdgDetails};
+    detail::EmbedArgs eargs = {&confsOk,
+                               fourD,
+                               &fragMapping,
+                               &confs,
+                               fragIdx,
+                               mmat,
+                               &chiralCenters,
+                               &tetrahedralCarbons,
+                               &stereoDoubleBonds,
+                               &etkdgDetails};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params);
     }
