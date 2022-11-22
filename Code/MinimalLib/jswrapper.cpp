@@ -501,7 +501,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   class_<JSMolIterator>("MolIterator")
       .function("next", &JSMolIterator::next, allow_raw_pointers())
       .function("reset", &JSMolIterator::reset)
-      .function("atEnd", &JSMolIterator::atEnd)
+      .function("at_end", &JSMolIterator::at_end)
       .function("size", &JSMolIterator::size);
 
   class_<JSReaction>("Reaction")

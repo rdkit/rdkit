@@ -1075,7 +1075,7 @@ function test_get_frags() {
         assert(molIterator.size() === 3);
         assert(JSON.stringify(JSON.parse(mappings)) === JSON.stringify(expectedMappings));
         var i = 0;
-        while (!molIterator.atEnd()) {
+        while (!molIterator.at_end()) {
             var mol = molIterator.next();
             assert(mol.get_smiles() === expectedFragSmiles[i++]);
             mol.delete();
@@ -1095,7 +1095,7 @@ function test_get_frags() {
         var { molIterator, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
         assert(molIterator.size() === 2);
         var i = 0;
-        while (!molIterator.atEnd()) {
+        while (!molIterator.at_end()) {
             var mol = molIterator.next();
             assert(mol.get_smiles() === expectedFragSmilesNonSanitized[i++]);
             mol.delete();

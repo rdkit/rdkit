@@ -148,7 +148,7 @@ class JSMolIterator {
                 : nullptr);
   }
   void reset() { d_idx = 0; }
-  bool atEnd() { return d_idx == d_mols.size(); }
+  bool at_end() { return d_idx == d_mols.size(); }
   size_t size() { return d_mols.size(); }
 
  private:
