@@ -17,7 +17,7 @@
 #include <RDGeneral/StreamOps.h>
 
 #include <sstream>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -305,7 +305,7 @@ void test5() {
   MatchVectType mv;
   std::string inText;
   FeatSPtrList featSPtrs;
-  boost::shared_ptr<MolChemicalFeature> featSPtr;
+  std::shared_ptr<MolChemicalFeature> featSPtr;
 
   MolChemicalFeatureFactory *factory;
 
@@ -390,7 +390,7 @@ void test6() {
   Conformer *conf;
   std::string inText;
   FeatSPtrList featSPtrs;
-  boost::shared_ptr<MolChemicalFeature> featSPtr;
+  std::shared_ptr<MolChemicalFeature> featSPtr;
 
   MolChemicalFeatureFactory *factory;
 
@@ -668,7 +668,7 @@ void testIssue347() {
   MolChemicalFeatureDef::CollectionType::const_iterator featDefIt;
   MolChemicalFeatureDef::CollectionType::value_type featDef;
   FeatSPtrList featSPtrs;
-  boost::shared_ptr<MolChemicalFeature> featSPtr;
+  std::shared_ptr<MolChemicalFeature> featSPtr;
 
   std::string fdef;
 
@@ -819,7 +819,7 @@ void testGithub252() {
   ROMol *testMol;
   MolChemicalFeatureFactory *factory;
   FeatSPtrList featSPtrs;
-  boost::shared_ptr<MolChemicalFeature> featSPtr;
+  std::shared_ptr<MolChemicalFeature> featSPtr;
 
   std::string fdef =
       "DefineFeature CTriplet [C][C][C]\n"
@@ -863,7 +863,7 @@ void testGithub2077() {
   Conformer *conf;
   std::string inText;
   FeatSPtrList featSPtrs;
-  boost::shared_ptr<MolChemicalFeature> featSPtr;
+  std::shared_ptr<MolChemicalFeature> featSPtr;
 
   MolChemicalFeatureFactory *factory;
 
