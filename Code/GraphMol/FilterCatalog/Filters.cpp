@@ -532,7 +532,7 @@ const FilterData_t *GetFilterData(FilterCatalogParams::FilterCatalogs catalog) {
     case FilterCatalogParams::CHEMBL_LINT:
       return CHEMBL_LINT;
     default:
-      return 0;
+      return nullptr;
   }
 }
 
@@ -599,7 +599,7 @@ const FilterProperty_t *GetFilterProperties(
     case FilterCatalogParams::CHEMBL_LINT:
       return CHEMBL_LINT_PROPS;
     default:
-      return 0;
+      return nullptr;
   }
 }
 }  // namespace RDKit
