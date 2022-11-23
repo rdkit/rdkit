@@ -104,7 +104,7 @@ double getTaniHelper(const FPBReader *self, unsigned int which,
   return self->getTanimoto(which, bv);
 }
 python::tuple getItemHelper(const FPBReader *self, unsigned int which) {
-  std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> v = (*self)[which];
+  std::pair<std::shared_ptr<ExplicitBitVect>, std::string> v = (*self)[which];
   return python::make_tuple(v.first, v.second);
 }
 double getTverskyHelper(const FPBReader *self, unsigned int which,

@@ -848,7 +848,7 @@ class RDKIT_GRAPHMOL_EXPORT RecursiveStructureQuery
   std::mutex d_mutex;
 #endif
  private:
-  boost::shared_ptr<const ROMol> dp_queryMol;
+  std::shared_ptr<const ROMol> dp_queryMol;
   unsigned int d_serialNumber{0};
   bool df_initialized{false};
 };

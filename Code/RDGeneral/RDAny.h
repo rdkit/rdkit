@@ -63,7 +63,7 @@ namespace RDKit {
 //   rdany_cast<std::vector<double>(v).push_back(4.)
 //
 //   Falls back to std::any for non registered types
-//   v = boost::shared_ptr<ROMol>(new ROMol(m));
+//   v = std::shared_ptr<ROMol>(new ROMol(m));
 //
 
 // Safe container for RDValue -- cleans up memory and copy constructs
@@ -78,7 +78,7 @@ struct RDAny {
   template <class T>
   explicit RDAny(std::vector<T> *v) : m_value(v) {}
   template <class T>
-  explicit RDAny(const boost::shared_ptr<T> &v) : m_value(v) {}
+  explicit RDAny(const std::shared_ptr<T> &v) : m_value(v) {}
   */
   RDAny(const RDAny &rhs) { copy_rdvalue(m_value, rhs.m_value); }
 

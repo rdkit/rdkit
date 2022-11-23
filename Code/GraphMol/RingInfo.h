@@ -19,7 +19,6 @@
 #include <vector>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/shared_ptr.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <RingDecomposerLib.h>
 
@@ -474,7 +473,7 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   bool d_fusedRingsInitialized{false};
 
  public:
-  boost::shared_ptr<RDL_data> dp_urfData;
+  std::shared_ptr<RDL_data> dp_urfData;
 };
 
 }  // namespace RDKit
