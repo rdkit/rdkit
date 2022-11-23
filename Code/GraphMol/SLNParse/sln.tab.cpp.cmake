@@ -1945,7 +1945,7 @@ yyreduce:
       (yyval.attriblist_T)
           ->push_back(std::make_pair(
               SLNParse::AttribAnd,
-              boost::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
+              std::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
     }
 #line 2029 "/home/rodrigue/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SLNParse/sln.tab.cpp" /* yacc.c:1651  */
     break;
@@ -1956,7 +1956,7 @@ yyreduce:
       (yyval.attriblist_T)
           ->push_back(std::make_pair(
               SLNParse::AttribOr,
-              boost::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
+              std::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
     }
 #line 2038 "/home/rodrigue/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SLNParse/sln.tab.cpp" /* yacc.c:1651  */
     break;
@@ -1967,7 +1967,7 @@ yyreduce:
       (yyval.attriblist_T)
           ->push_back(std::make_pair(
               SLNParse::AttribLowPriAnd,
-              boost::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
+              std::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
     }
 #line 2047 "/home/rodrigue/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SLNParse/sln.tab.cpp" /* yacc.c:1651  */
     break;
@@ -1979,7 +1979,7 @@ yyreduce:
       (yyval.attriblist_T)
           ->push_back(std::make_pair(
               SLNParse::AttribLowPriAnd,
-              boost::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
+              std::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
     }
 #line 2057 "/home/rodrigue/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SLNParse/sln.tab.cpp" /* yacc.c:1651  */
     break;
@@ -1991,7 +1991,7 @@ yyreduce:
       (yyval.attriblist_T)
           ->push_back(std::make_pair(
               SLNParse::AttribAnd,
-              boost::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
+              std::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
     }
 #line 2067 "/home/rodrigue/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SLNParse/sln.tab.cpp" /* yacc.c:1651  */
     break;
@@ -2002,7 +2002,7 @@ yyreduce:
       (yyval.attriblist_T)
           ->push_back(std::make_pair(
               SLNParse::AttribAnd,
-              boost::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
+              std::shared_ptr<SLNParse::AttribType>((yyvsp[0].attrib_T))));
     }
 #line 2076 "/home/rodrigue/Documents/code/rdkit_builder/rdkit/Code/GraphMol/SLNParse/sln.tab.cpp" /* yacc.c:1651  */
     break;
