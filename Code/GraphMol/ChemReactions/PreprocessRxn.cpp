@@ -34,7 +34,7 @@
 #include "ReactionParser.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 

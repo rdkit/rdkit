@@ -23,7 +23,7 @@ namespace RDKit {
             [default 1]
 */
 RDKIT_SUBSTRUCTLIBRARY_EXPORT void addPatterns(
-    SubstructLibrary &sslib, boost::shared_ptr<FPHolderBase> patterns,
+    SubstructLibrary &sslib, std::shared_ptr<FPHolderBase> patterns,
     int numThreads = 1);
 
 //! Create default pattern fingerprints for the given substructure library

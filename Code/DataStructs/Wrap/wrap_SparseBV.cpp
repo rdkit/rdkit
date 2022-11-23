@@ -59,7 +59,7 @@ or by indexing (i.e. bv[i] = 1 or if bv[i]).\n\
 \n";
 struct SBV_wrapper {
   static void wrap() {
-    python::class_<SparseBitVect, boost::shared_ptr<SparseBitVect>>(
+    python::class_<SparseBitVect, std::shared_ptr<SparseBitVect>>(
         "SparseBitVect", sbvClassDoc.c_str(),
         python::init<unsigned int>(python::args("self", "size")))
         .def(python::init<std::string>(python::args("self", "pkl")))
