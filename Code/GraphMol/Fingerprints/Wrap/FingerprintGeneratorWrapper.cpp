@@ -215,7 +215,7 @@ python::tuple mtgetFingerprints(FuncType func, python::object mols,
   }
   python::list result;
   for (auto &fp : fps) {
-    result.append(boost::shared_ptr<ReturnType>(fp.release()));
+    result.append(std::shared_ptr<ReturnType>(fp.release()));
   }
   return python::tuple(result);
 }
@@ -344,7 +344,7 @@ python::list getSparseCountFPBulkPy(python::list &py_molVect, FPType fPType) {
   python::list result;
 
   for (auto &it : *tempResult) {
-    result.append(boost::shared_ptr<SparseIntVect<std::uint64_t>>(it));
+    result.append(std::shared_ptr<SparseIntVect<std::uint64_t>>(it));
   }
   delete tempResult;
   return result;
@@ -357,9 +357,9 @@ python::list getSparseFPBulkPy(python::list &py_molVect, FPType fpType) {
   python::list result;
 
   for (auto &it : *tempResult) {
-    // todo every other bulk method casts results to boost::shared_ptr, except
-    // this one. It should also be boost::shared_ptr
-    result.append(boost::shared_ptr<SparseBitVect>(it));
+    // todo every other bulk method casts results to std::shared_ptr, except
+    // this one. It should also be std::shared_ptr
+    result.append(std::shared_ptr<SparseBitVect>(it));
   }
   delete tempResult;
   return result;
@@ -372,7 +372,7 @@ python::list getCountFPBulkPy(python::list &py_molVect, FPType fPType) {
   python::list result;
 
   for (auto &it : *tempResult) {
-    result.append(boost::shared_ptr<SparseIntVect<std::uint32_t>>(it));
+    result.append(std::shared_ptr<SparseIntVect<std::uint32_t>>(it));
   }
   delete tempResult;
   return result;
@@ -385,7 +385,7 @@ python::list getFPBulkPy(python::list &py_molVect, FPType fPType) {
   python::list result;
 
   for (auto &it : *tempResult) {
-    result.append(boost::shared_ptr<ExplicitBitVect>(it));
+    result.append(std::shared_ptr<ExplicitBitVect>(it));
   }
   delete tempResult;
   return result;

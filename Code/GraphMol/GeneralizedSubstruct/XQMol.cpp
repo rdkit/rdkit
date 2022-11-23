@@ -137,7 +137,7 @@ ExtendedQueryMol createExtendedQueryMol(const RWMol &mol, bool doEnumeration,
   }
   if (bndl.empty()) {
     // nothing enumerated, just add the input molecule
-    bndl.addMol(boost::shared_ptr<ROMol>(new ROMol(mol)));
+    bndl.addMol(std::shared_ptr<ROMol>(new ROMol(mol)));
   }
 
   if (bndl.size() == 1) {
@@ -165,7 +165,7 @@ ExtendedQueryMol createExtendedQueryMol(const RWMol &mol, bool doEnumeration,
     MolBundle lbndl;
     for (auto &bmol : bndl.getMols()) {
       if (adjustQueryProperties) {
-        boost::shared_ptr<ROMol> lmol(
+        std::shared_ptr<ROMol> lmol(
             MolOps::adjustQueryProperties(*bmol, &params));
         lbndl.addMol(lmol);
       } else {
