@@ -122,7 +122,7 @@ void test_largest_fragment() {
   // Multiple organic fragments of different sizes.
   smi2 = "O=C(O)c1ccccc1.O=C(O)c1ccccc1.O=C(O)c1ccccc1";
   //	std::shared_ptr<ROMol> m2( SmilesToMol(smi2) );
-  //	boost::shared_ptr<ROMol> lfrag2 = lfragchooser.choose(*m2);
+  //	std::shared_ptr<ROMol> lfrag2 = lfragchooser.choose(*m2);
   //	std::cout << MolToSmiles(*lfrag2) << std::endl;
   //	TEST_ASSERT(MolToSmiles(*lfrag2) == "O=C(O)c1ccccc1");
   std::shared_ptr<RWMol> m2(SmilesToMol(smi2));

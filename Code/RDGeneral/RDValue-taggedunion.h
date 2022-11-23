@@ -72,7 +72,7 @@ namespace RDKit {
 //   rdany_cast<std::vector<double>(v).push_back(4.)
 //
 //   Falls back to std::any for non registered types
-//   v = boost::shared_ptr<ROMol>(new ROMol(m));
+//   v = std::shared_ptr<ROMol>(new ROMol(m));
 //
 
 // RDValue does not manange memory of non-pod data
