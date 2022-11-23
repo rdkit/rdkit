@@ -23,10 +23,10 @@ class TautomerQuery;
 
 //! RCore is the core common to a series of molecules
 struct RCore {
-  boost::shared_ptr<RWMol> core;
+  std::shared_ptr<RWMol> core;
   // core with terminal user R groups stripped for matching
-  boost::shared_ptr<RWMol> matchingMol;
-  boost::shared_ptr<RWMol> labelledCore;
+  std::shared_ptr<RWMol> matchingMol;
+  std::shared_ptr<RWMol> labelledCore;
 
   // Bitset: indices corresponding to atoms bearing user-defined labels are 1
   boost::dynamic_bitset<> core_atoms_with_user_labels;
