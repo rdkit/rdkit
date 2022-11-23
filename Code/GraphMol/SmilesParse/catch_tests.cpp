@@ -18,6 +18,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
