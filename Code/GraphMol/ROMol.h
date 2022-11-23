@@ -874,7 +874,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 };
 
 typedef std::vector<ROMol> MOL_VECT;
-typedef boost::shared_ptr<ROMol> ROMOL_SPTR;
+typedef std::shared_ptr<ROMol> ROMOL_SPTR;
 typedef std::vector<ROMol *> MOL_PTR_VECT;
 typedef std::vector<ROMOL_SPTR> MOL_SPTR_VECT;
 

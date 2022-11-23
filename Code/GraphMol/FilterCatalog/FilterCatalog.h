@@ -122,11 +122,11 @@ typedef RDCatalog::Catalog<FilterCatalogEntry, FilterCatalogParams> FCatalog;
 class RDKIT_FILTERCATALOG_EXPORT FilterCatalog : public FCatalog {
  public:
   // syntactic sugar for getMatch(es) return values.
-  typedef boost::shared_ptr<FilterCatalogEntry> SENTRY;
+  typedef std::shared_ptr<FilterCatalogEntry> SENTRY;
 
   // If boost::python can support shared_ptr of const objects
   //  we can enable support for this feature
-  typedef boost::shared_ptr<const entryType_t> CONST_SENTRY;
+  typedef std::shared_ptr<const entryType_t> CONST_SENTRY;
 
   FilterCatalog() : FCatalog(), d_entries() {}
 
@@ -262,7 +262,7 @@ RDKIT_FILTERCATALOG_EXPORT bool FilterCatalogCanSerialize();
 
 */
 RDKIT_FILTERCATALOG_EXPORT
-std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>>
+std::vector<std::vector<std::shared_ptr<const FilterCatalogEntry>>>
 RunFilterCatalog(const FilterCatalog &filterCatalog,
                  const std::vector<std::string> &smiles, int numThreads = 1);
 }  // namespace RDKit

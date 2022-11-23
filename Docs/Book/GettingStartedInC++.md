@@ -581,7 +581,7 @@ std::ostringstream oss;
 // takeOwnership must be false for this, as we don't want the SDWriter trying
 // to delete the std::ostringstream.
 takeOwnership = false;
-boost::shared_ptr<RDKit::SDWriter> sdf_writer( new RDKit::SDWriter( &oss , takeOwnership ) );
+std::shared_ptr<RDKit::SDWriter> sdf_writer( new RDKit::SDWriter( &oss , takeOwnership ) );
 for( auto mol: mols ) {
   sdf_writer->write( *(*it) );
 }

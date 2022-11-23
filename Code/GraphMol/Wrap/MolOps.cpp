@@ -223,13 +223,13 @@ python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
     }
   }
-  std::map<std::string, boost::shared_ptr<ROMol>> res =
+  std::map<std::string, std::shared_ptr<ROMol>> res =
       MolOps::getMolFragsWithQuery(mol, getResidue, false, whiteList,
                                    negateList);
   delete whiteList;
 
   python::dict pyres;
-  for (std::map<std::string, boost::shared_ptr<ROMol>>::const_iterator iter =
+  for (std::map<std::string, std::shared_ptr<ROMol>>::const_iterator iter =
            res.begin();
        iter != res.end(); ++iter) {
     pyres[iter->first] = iter->second;
@@ -246,13 +246,13 @@ python::dict splitMolByPDBChainId(const ROMol &mol, python::object pyWhiteList,
       (*whiteList)[i] = python::extract<std::string>(pyWhiteList[i]);
     }
   }
-  std::map<std::string, boost::shared_ptr<ROMol>> res =
+  std::map<std::string, std::shared_ptr<ROMol>> res =
       MolOps::getMolFragsWithQuery(mol, getChainId, false, whiteList,
                                    negateList);
   delete whiteList;
 
   python::dict pyres;
-  for (std::map<std::string, boost::shared_ptr<ROMol>>::const_iterator iter =
+  for (std::map<std::string, std::shared_ptr<ROMol>>::const_iterator iter =
            res.begin();
        iter != res.end(); ++iter) {
     pyres[iter->first] = iter->second;
@@ -586,7 +586,7 @@ python::tuple GetMolFragsWithMapping(
   } else {
     std::vector<std::vector<int>> fragsMolAtomMappingVec;
     std::vector<int> fragsVec;
-    std::vector<boost::shared_ptr<ROMol>> molFrags;
+    std::vector<std::shared_ptr<ROMol>> molFrags;
     auto &fragsList = reinterpret_cast<python::list &>(frags);
     auto &fragsMolAtomMappingList =
         reinterpret_cast<python::list &>(fragsMolAtomMapping);
@@ -901,7 +901,7 @@ python::tuple detectChemistryProblemsHelper(const ROMol &mol,
   auto probs = MolOps::detectChemistryProblems(mol, sanitizeOps);
   python::list res;
   for (const auto &exc_ptr : probs) {
-    res.append(boost::shared_ptr<MolSanitizeException>(exc_ptr->copy()));
+    res.append(std::shared_ptr<MolSanitizeException>(exc_ptr->copy()));
   }
   return python::tuple(res);
 }

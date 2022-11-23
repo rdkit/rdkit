@@ -458,31 +458,31 @@ onebond: MINUS_TOKEN {
 
 attriblist: attriblist AND_TOKEN attrib{
   $$->push_back(std::make_pair(SLNParse::AttribAnd,
-                               boost::shared_ptr<SLNParse::AttribType>($3)));
+                               std::shared_ptr<SLNParse::AttribType>($3)));
 }
 | attriblist OR_TOKEN attrib{
   $$->push_back(std::make_pair(SLNParse::AttribOr,
-                               boost::shared_ptr<SLNParse::AttribType>($3)));
+                               std::shared_ptr<SLNParse::AttribType>($3)));
 }
 | attriblist SEMI_TOKEN attrib{
   $$->push_back(std::make_pair(SLNParse::AttribLowPriAnd,
-                               boost::shared_ptr<SLNParse::AttribType>($3)));
+                               std::shared_ptr<SLNParse::AttribType>($3)));
 }
 | attrib {
   $$ = new SLNParse::AttribListType();
   $$->push_back(std::make_pair(SLNParse::AttribLowPriAnd,
-                               boost::shared_ptr<SLNParse::AttribType>($1)));
+                               std::shared_ptr<SLNParse::AttribType>($1)));
 }
 ;
 
 ctabattriblist: ctabattrib {
   $$ = new SLNParse::AttribListType();
   $$->push_back(std::make_pair(SLNParse::AttribAnd,
-                               boost::shared_ptr<SLNParse::AttribType>($1)));
+                               std::shared_ptr<SLNParse::AttribType>($1)));
 }
 | ctabattriblist SEMI_TOKEN ctabattrib {
   $$->push_back(std::make_pair(SLNParse::AttribAnd,
-                               boost::shared_ptr<SLNParse::AttribType>($3)));
+                               std::shared_ptr<SLNParse::AttribType>($3)));
 }
 ;
 

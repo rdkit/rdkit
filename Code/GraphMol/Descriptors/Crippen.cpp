@@ -181,7 +181,7 @@ CrippenParamCollection::CrippenParamCollection(const std::string &paramData) {
         paramObj.mr = 0.0;
       }
       paramObj.dp_pattern =
-          boost::shared_ptr<const ROMol>(SmartsToMol(paramObj.smarts));
+          std::shared_ptr<const ROMol>(SmartsToMol(paramObj.smarts));
       d_params.push_back(paramObj);
     }
     inLine = RDKit::getLine(inStream);
