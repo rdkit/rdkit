@@ -913,7 +913,7 @@ int registerPropertyHelper(python::object o) {
   // and the (static) registry can share ownership.
 
   python::incref(o.ptr());
-  python::extract<boost::shared_ptr<PythonPropertyFunctor>> ptr(o);
+  python::extract<std::shared_ptr<PythonPropertyFunctor>> ptr(o);
   return RDKit::Descriptors::Properties::registerProperty(ptr());
 }
 
@@ -1618,7 +1618,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "See rdkit.Chem.rdMolDescriptor.Properties.GetProperty and \n"
       "rdkit.Chem.Descriptor.Properties.PropertyFunctor for creating new ones";
   python::class_<RDKit::Descriptors::PropertyFunctor,
-                 boost::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
+                 std::shared_ptr<RDKit::Descriptors::PropertyFunctor>,
                  boost::noncopyable>("PropertyFunctor", docString.c_str(),
                                      python::no_init)
       .def("__call__", &RDKit::Descriptors::PropertyFunctor::operator(),
@@ -1648,7 +1648,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "";
 
   python::class_<RDKit::Descriptors::Properties,
-                 boost::shared_ptr<RDKit::Descriptors::Properties>>(
+                 std::shared_ptr<RDKit::Descriptors::Properties>>(
       "Properties", docString.c_str(), python::init<>(python::args("self")))
       .def(python::init<const std::vector<std::string> &>(
           python::args("self", "propNames")))
