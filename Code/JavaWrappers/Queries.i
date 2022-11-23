@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-%include <boost_shared_ptr.i>
+%include <std_shared_ptr.i>
 %shared_ptr(RDKit::QueryAtom)
 %shared_ptr(RDKit::QueryBond)
 
@@ -36,8 +36,8 @@
  %define QAFUNC1(funcname, func, type)
  %inline %{
 
-   boost::shared_ptr<RDKit::QueryAtom> funcname ## EqualsQueryAtom(type val, bool negate=false) {
-    boost::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
+   std::shared_ptr<RDKit::QueryAtom> funcname ## EqualsQueryAtom(type val, bool negate=false) {
+    std::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
     res->setQuery(RDKit:: ## func(val));
     if (negate) {
       res->getQuery()->setNegation(true);
@@ -45,8 +45,8 @@
     return res;
   }
 
-  boost::shared_ptr<RDKit::QueryAtom> funcname ## LessQueryAtom(type val, bool negate=false) {
-    boost::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
+  std::shared_ptr<RDKit::QueryAtom> funcname ## LessQueryAtom(type val, bool negate=false) {
+    std::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
     res->setQuery(
         RDKit:: ## func <RDKit::ATOM_GREATER_QUERY>(val, std::string( # funcname "Less")));
     if (negate) {
@@ -55,8 +55,8 @@
     return res;
   }
 
-  boost::shared_ptr<RDKit::QueryAtom> funcname ## GreaterQueryAtom(type val, bool negate=false) {
-    boost::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
+  std::shared_ptr<RDKit::QueryAtom> funcname ## GreaterQueryAtom(type val, bool negate=false) {
+    std::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
     res->setQuery(
         RDKit:: ## func <RDKit::ATOM_LESS_QUERY>(val, std::string(# funcname "Greater")));
     if (negate) {
@@ -69,8 +69,8 @@
 
 %define QAFUNC2(funcname, func, type)
 %inline %{
-  boost::shared_ptr<RDKit::QueryAtom> funcname(bool negate=false) {
-    boost::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
+  std::shared_ptr<RDKit::QueryAtom> funcname(bool negate=false) {
+    std::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
     res->setQuery(RDKit:: ## func());
     if (negate) {
       res->getQuery()->setNegation(true);
@@ -118,8 +118,8 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
 %{
 
   template <class Ob, class Ret, class T>
-  boost::shared_ptr<Ret> PropQuery(const std::string &propname, const T &v, bool negate) {
-	boost::shared_ptr<Ret> res(new Ret());
+  std::shared_ptr<Ret> PropQuery(const std::string &propname, const T &v, bool negate) {
+	std::shared_ptr<Ret> res(new Ret());
 	res->setQuery(RDKit::makePropQuery<Ob, T>(propname, v));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
@@ -128,9 +128,9 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
   }
 
   template <class Ob, class Ret, class T>
-  boost::shared_ptr<Ret> PropQueryWithTol(const std::string &propname, const T &v, bool negate,
+  std::shared_ptr<Ret> PropQueryWithTol(const std::string &propname, const T &v, bool negate,
 						const T &tol = T()) {
-	boost::shared_ptr<Ret> res(new Ret());
+	std::shared_ptr<Ret> res(new Ret());
 	res->setQuery(RDKit::makePropQuery<Ob, T>(propname, v, tol));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
@@ -139,9 +139,9 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
   }
 
   template <class Ob, class Ret>
-  boost::shared_ptr<Ret> PropQueryWithTol(const std::string &propname, const ExplicitBitVect &v,
+  std::shared_ptr<Ret> PropQueryWithTol(const std::string &propname, const ExplicitBitVect &v,
 						bool negate=false, float tol = 0.0) {
-	boost::shared_ptr<Ret> res(new Ret());
+	std::shared_ptr<Ret> res(new Ret());
 	res->setQuery(RDKit::makePropQuery<Ob>(propname, v, tol));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
@@ -149,8 +149,8 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
 	return res;
   }
 
-  boost::shared_ptr<RDKit::QueryAtom> HasPropQueryAtom(const std::string &propname, bool negate=false) {
-	boost::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
+  std::shared_ptr<RDKit::QueryAtom> HasPropQueryAtom(const std::string &propname, bool negate=false) {
+	std::shared_ptr<RDKit::QueryAtom> res(new RDKit::QueryAtom());
 	res->setQuery(RDKit::makeHasPropQuery<RDKit::Atom>(propname));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
@@ -158,28 +158,28 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
 	return res;
   }
 
-  boost::shared_ptr<RDKit::QueryAtom> HasIntPropWithValueQueryAtom(const std::string &propname, int val, bool negate=false) {
+  std::shared_ptr<RDKit::QueryAtom> HasIntPropWithValueQueryAtom(const std::string &propname, int val, bool negate=false) {
  	return PropQuery<RDKit::Atom, RDKit::QueryAtom, int>(propname, val, negate);
   }
 
-  boost::shared_ptr<RDKit::QueryAtom> HasBoolPropWithValueQueryAtom(const std::string &propname, bool val, bool negate=false) {
+  std::shared_ptr<RDKit::QueryAtom> HasBoolPropWithValueQueryAtom(const std::string &propname, bool val, bool negate=false) {
 	return PropQuery<RDKit::Atom, RDKit::QueryAtom, bool>(propname, val, negate);
   }
 
-  boost::shared_ptr<RDKit::QueryAtom> HasStringPropWithValueQueryAtom(const std::string &propname, const std::string &val, bool negate=false) {
+  std::shared_ptr<RDKit::QueryAtom> HasStringPropWithValueQueryAtom(const std::string &propname, const std::string &val, bool negate=false) {
 	return PropQuery<RDKit::Atom, RDKit::QueryAtom, std::string>(propname, val, negate);
   }
 
-  boost::shared_ptr<RDKit::QueryAtom> HasDoublePropWithValueQueryAtom(const std::string &propname, double val, bool negate=false, double tol=0) {
+  std::shared_ptr<RDKit::QueryAtom> HasDoublePropWithValueQueryAtom(const std::string &propname, double val, bool negate=false, double tol=0) {
 	return PropQueryWithTol<RDKit::Atom, RDKit::QueryAtom, double>(propname, val, negate, tol);
   }
 
-  boost::shared_ptr<RDKit::QueryAtom> HasBitVectPropWithValueQueryAtom(const std::string  &propname, const ExplicitBitVect &val, bool negate=false, float tol=0) {
+  std::shared_ptr<RDKit::QueryAtom> HasBitVectPropWithValueQueryAtom(const std::string  &propname, const ExplicitBitVect &val, bool negate=false, float tol=0) {
 	return PropQueryWithTol<RDKit::Atom, RDKit::QueryAtom>(propname, val, negate, tol);
   }
 
-  boost::shared_ptr<RDKit::QueryBond> HasPropQueryBond(const std::string &propname, bool negate=false) {
-	boost::shared_ptr<RDKit::QueryBond> res(new RDKit::QueryBond());
+  std::shared_ptr<RDKit::QueryBond> HasPropQueryBond(const std::string &propname, bool negate=false) {
+	std::shared_ptr<RDKit::QueryBond> res(new RDKit::QueryBond());
 	res->setQuery(RDKit::makeHasPropQuery<RDKit::Bond>(propname));
 	if (negate) {
 	  res->getQuery()->setNegation(true);
@@ -187,36 +187,36 @@ QAFUNC2(MHAtomQueryAtom, makeMHAtomQuery, int);
 	return res;
   }
 
-  boost::shared_ptr<RDKit::QueryBond> HasIntPropWithValueQueryBond(const std::string &propname, int val, bool negate=false) {
+  std::shared_ptr<RDKit::QueryBond> HasIntPropWithValueQueryBond(const std::string &propname, int val, bool negate=false) {
     return PropQuery<RDKit::Bond, RDKit::QueryBond, int>(propname, val, negate);
   }
 
-  boost::shared_ptr<RDKit::QueryBond> HasBoolPropWithValueQueryBond(const std::string &propname, bool val, bool negate=false) {
+  std::shared_ptr<RDKit::QueryBond> HasBoolPropWithValueQueryBond(const std::string &propname, bool val, bool negate=false) {
     return PropQuery<RDKit::Bond, RDKit::QueryBond, bool>(propname, val, negate);
   }
 
-  boost::shared_ptr<RDKit::QueryBond> HasStringPropWithValueQueryBond(const std::string &propname, const std::string &val, bool negate=false) {
+  std::shared_ptr<RDKit::QueryBond> HasStringPropWithValueQueryBond(const std::string &propname, const std::string &val, bool negate=false) {
     return PropQuery<RDKit::Bond, RDKit::QueryBond, std::string>(propname, val, negate);
   }
 
-  boost::shared_ptr<RDKit::QueryBond> HasDoublePropWithValueQueryBond(const std::string &propname, double val, bool negate=false, double tol=0) {
+  std::shared_ptr<RDKit::QueryBond> HasDoublePropWithValueQueryBond(const std::string &propname, double val, bool negate=false, double tol=0) {
     return PropQueryWithTol<RDKit::Bond, RDKit::QueryBond, double>(propname, val, negate, tol);
   }
 
 %}
 
-boost::shared_ptr<RDKit::QueryAtom> HasPropQueryAtom(const std::string &propname, bool negate=false);
-boost::shared_ptr<RDKit::QueryBond> HasPropQueryBond(const std::string &propname, bool negate=false);
-boost::shared_ptr<RDKit::QueryAtom> HasIntPropWithValueQueryAtom(const std::string &propname, int val, bool negate=false);
-boost::shared_ptr<RDKit::QueryAtom> HasBoolPropWithValueQueryAtom(const std::string &propname, bool val, bool negate=false);
-boost::shared_ptr<RDKit::QueryAtom> HasStringPropWithValueQueryAtom(const std::string &propname, const std::string &val, bool negate=false);
-boost::shared_ptr<RDKit::QueryAtom> HasDoublePropWithValueQueryAtom(const std::string &propname, double val, bool negate=false, double tol=0);
-boost::shared_ptr<RDKit::QueryAtom> HasBitVectPropWithValueQueryAtom(const std::string  &propname, const ExplicitBitVect &val, bool negate=false, float tol=0);
-boost::shared_ptr<RDKit::QueryBond> HasPropQueryBond(const std::string &propname, bool negate=false);
-boost::shared_ptr<RDKit::QueryBond> HasIntPropWithValueQueryBond(const std::string &propname, int val, bool negate=false);
-boost::shared_ptr<RDKit::QueryBond> HasBoolPropWithValueQueryBond(const std::string &propname, bool val, bool negate=false);
-boost::shared_ptr<RDKit::QueryBond> HasStringPropWithValueQueryBond(const std::string &propname, const std::string &val, bool negate=false);
-boost::shared_ptr<RDKit::QueryBond> HasDoublePropWithValueQueryBond(const std::string &propname, double val, bool negate=false, double tol=0);
+std::shared_ptr<RDKit::QueryAtom> HasPropQueryAtom(const std::string &propname, bool negate=false);
+std::shared_ptr<RDKit::QueryBond> HasPropQueryBond(const std::string &propname, bool negate=false);
+std::shared_ptr<RDKit::QueryAtom> HasIntPropWithValueQueryAtom(const std::string &propname, int val, bool negate=false);
+std::shared_ptr<RDKit::QueryAtom> HasBoolPropWithValueQueryAtom(const std::string &propname, bool val, bool negate=false);
+std::shared_ptr<RDKit::QueryAtom> HasStringPropWithValueQueryAtom(const std::string &propname, const std::string &val, bool negate=false);
+std::shared_ptr<RDKit::QueryAtom> HasDoublePropWithValueQueryAtom(const std::string &propname, double val, bool negate=false, double tol=0);
+std::shared_ptr<RDKit::QueryAtom> HasBitVectPropWithValueQueryAtom(const std::string  &propname, const ExplicitBitVect &val, bool negate=false, float tol=0);
+std::shared_ptr<RDKit::QueryBond> HasPropQueryBond(const std::string &propname, bool negate=false);
+std::shared_ptr<RDKit::QueryBond> HasIntPropWithValueQueryBond(const std::string &propname, int val, bool negate=false);
+std::shared_ptr<RDKit::QueryBond> HasBoolPropWithValueQueryBond(const std::string &propname, bool val, bool negate=false);
+std::shared_ptr<RDKit::QueryBond> HasStringPropWithValueQueryBond(const std::string &propname, const std::string &val, bool negate=false);
+std::shared_ptr<RDKit::QueryBond> HasDoublePropWithValueQueryBond(const std::string &propname, double val, bool negate=false, double tol=0);
 
 %extend RDKit::QueryAtom {
   void ExpandQuery(const RDKit::QueryAtom *other, Queries::CompositeQueryType how=Queries::COMPOSITE_AND, bool maintainOrder=true) {

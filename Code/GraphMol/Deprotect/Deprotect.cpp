@@ -115,7 +115,7 @@ std::unique_ptr<ROMol> deprotect(
   std::vector<std::string> deprotections_used;
 
   bool something_happened = true;
-  auto m = boost::make_shared<ROMol>(mol);
+  auto m = std::make_shared<ROMol>(mol);
   while (something_happened) {
     something_happened = false;
     for (auto &deprotect : deprotections) {

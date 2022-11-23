@@ -20,7 +20,7 @@
 #include <vector>
 #include <exception>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace RDKit {
 

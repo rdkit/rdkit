@@ -104,7 +104,7 @@ class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
   }
 };
 
-typedef boost::shared_ptr<BoundsMatrix> BoundsMatPtr;
+typedef std::shared_ptr<BoundsMatrix> BoundsMatPtr;
 }  // namespace DistGeom
 
 #endif
