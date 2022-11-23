@@ -23,7 +23,7 @@ namespace RDKit {
 python::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
   python::list pyres;
   for (auto &r : res.getHitMolecules()) {
-    pyres.append(boost::make_shared<ROMol>(*r));
+    pyres.append(std::make_shared<ROMol>(*r));
   }
   return pyres;
 }
@@ -104,7 +104,7 @@ struct CallbackAdapter {
   bool operator()(std::vector<std::unique_ptr<ROMol>> &results) const {
     python::list pyres;
     for (auto &mol : results) {
-      pyres.append(boost::shared_ptr<ROMol>(mol.release()));
+      pyres.append(std::shared_ptr<ROMol>(mol.release()));
     }
     return bool(py_callable(pyres));
   }

@@ -703,7 +703,7 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
     combinedMol = std::accumulate(
         mols.begin(), mols.end(), decomposition[0],
         [](const auto &combined, const auto &mol) {
-          return boost::shared_ptr<ROMol>(combineMols(*combined, *mol));
+          return std::shared_ptr<ROMol>(combineMols(*combined, *mol));
         });
   }
   const static ROMol b;
