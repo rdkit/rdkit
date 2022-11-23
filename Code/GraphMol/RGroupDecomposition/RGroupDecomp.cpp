@@ -66,7 +66,7 @@ const std::string UNLABELED_CORE_ATTACHMENT = "unlabeledCoreAttachment";
 namespace {
 void ADD_MATCH(R_DECOMP &match, int rlabel) {
   if (match.find(rlabel) == match.end()) {
-    match[rlabel] = boost::make_shared<RGroupData>();
+    match[rlabel] = std::make_shared<RGroupData>();
   }
 }
 }  // namespace
@@ -334,7 +334,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       std::set<int> coreAtomAnyMatched;
       for (size_t i = 0; i < fragments.size(); ++i) {
         std::vector<int> attachments;
-        boost::shared_ptr<ROMol> &newMol = fragments[i];
+        std::shared_ptr<ROMol> &newMol = fragments[i];
         newMol->setProp<int>("core", core_idx);
         newMol->setProp<int>("idx", data->matches.size());
         newMol->setProp<int>("frag_idx", i);
@@ -437,7 +437,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       if (match.size()) {
         auto numberUserGroupsInMatch = std::accumulate(
             match.begin(), match.end(), 0,
-            [](int sum, std::pair<int, boost::shared_ptr<RGroupData>> p) {
+            [](int sum, std::pair<int, std::shared_ptr<RGroupData>> p) {
               return p.first > 0 && !p.second->is_hydrogen ? ++sum : sum;
             });
         int numberMissingUserGroups =
@@ -666,7 +666,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
     for (const auto &realLabel : data->finalRlabelMapping) {
       if (!Rs_seen.getIsUsed(realLabel.second)) {
         std::string r = RPREFIX + std::to_string(realLabel.second);
-        groups[r].push_back(boost::make_shared<RWMol>());
+        groups[r].push_back(std::make_shared<RWMol>());
       }
     }
   }

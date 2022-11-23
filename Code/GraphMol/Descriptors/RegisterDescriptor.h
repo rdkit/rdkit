@@ -35,7 +35,7 @@
 #define RDKIT_REGISTER_DESCRIPTOR_H
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <RDGeneral/BoostEndInclude.h>
 #include "Property.h"
 

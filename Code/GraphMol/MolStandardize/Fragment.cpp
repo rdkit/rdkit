@@ -94,7 +94,7 @@ void FragmentRemover::removeInPlace(RWMol &mol) {
   std::vector<std::vector<int>> atomFragMapping;
 
   // track original fragment index with the fragment itself
-  std::vector<std::pair<boost::shared_ptr<ROMol>, unsigned int>> frags;
+  std::vector<std::pair<std::shared_ptr<ROMol>, unsigned int>> frags;
   for (const auto &frag :
        MolOps::getMolFrags(mol, sanitizeFrags, nullptr, &atomFragMapping)) {
     frags.emplace_back(frag, frags.size());
@@ -107,15 +107,16 @@ void FragmentRemover::removeInPlace(RWMol &mol) {
     }
     auto tfrags = frags;
     // remove any fragments that this
-    frags.erase(std::remove_if(
-                    frags.begin(), frags.end(),
-                    [&fgci](const std::pair<boost::shared_ptr<ROMol>,
-                                            unsigned int> &frag) -> bool {
-                      return fgci->getNumAtoms() == frag.first->getNumAtoms() &&
-                             fgci->getNumBonds() == frag.first->getNumBonds() &&
-                             SubstructMatch(*frag.first, *fgci).size() > 0;
-                    }),
-                frags.end());
+    frags.erase(
+        std::remove_if(
+            frags.begin(), frags.end(),
+            [&fgci](const std::pair<std::shared_ptr<ROMol>, unsigned int> &frag)
+                -> bool {
+              return fgci->getNumAtoms() == frag.first->getNumAtoms() &&
+                     fgci->getNumBonds() == frag.first->getNumBonds() &&
+                     SubstructMatch(*frag.first, *fgci).size() > 0;
+            }),
+        frags.end());
     if (this->LEAVE_LAST && !this->SKIP_IF_ALL_MATCH && frags.empty()) {
       // All the remaining fragments match this pattern - leave them all
       frags = tfrags;
@@ -185,7 +186,7 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
   if (!mol.getNumAtoms()) {
     return new ROMol(mol);
   }
-  std::vector<boost::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
+  std::vector<std::shared_ptr<ROMol>> frags = MolOps::getMolFrags(mol);
   LargestFragmentChooser::Largest l;
 
   for (const auto &frag : frags) {
@@ -250,7 +251,7 @@ ROMol *LargestFragmentChooser::choose(const ROMol &mol) {
 LargestFragmentChooser::Largest::Largest() : Smiles(""), Fragment(nullptr) {}
 
 LargestFragmentChooser::Largest::Largest(std::string &smiles,
-                                         boost::shared_ptr<ROMol> fragment,
+                                         std::shared_ptr<ROMol> fragment,
                                          unsigned int &numatoms, double &weight,
                                          bool &organic)
     : Smiles(smiles),

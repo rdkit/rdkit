@@ -169,17 +169,17 @@ void IsotopeValidation::run(const ROMol &mol, bool reportAllFailures,
 
 // constructor
 MolVSValidation::MolVSValidation() {
-  std::vector<boost::shared_ptr<MolVSValidations>> validations = {
-      boost::make_shared<NoAtomValidation>(),
-      boost::make_shared<FragmentValidation>(),
-      boost::make_shared<NeutralValidation>(),
-      boost::make_shared<IsotopeValidation>()};
+  std::vector<std::shared_ptr<MolVSValidations>> validations = {
+      std::make_shared<NoAtomValidation>(),
+      std::make_shared<FragmentValidation>(),
+      std::make_shared<NeutralValidation>(),
+      std::make_shared<IsotopeValidation>()};
   this->d_validations = validations;
 }
 
 // overloaded constructor
 MolVSValidation::MolVSValidation(
-    const std::vector<boost::shared_ptr<MolVSValidations>> validations) {
+    const std::vector<std::shared_ptr<MolVSValidations>> validations) {
   this->d_validations = validations;
 }
 

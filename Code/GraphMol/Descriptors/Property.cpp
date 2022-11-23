@@ -107,11 +107,11 @@ void registerDescriptors() {
 #endif
 }
 
-std::vector<boost::shared_ptr<PropertyFunctor>> Properties::registry;
+std::vector<std::shared_ptr<PropertyFunctor>> Properties::registry;
 int Properties::registerProperty(PropertyFunctor *prop) {
   for (size_t i = 0; i < Properties::registry.size(); ++i) {
     if (registry[i]->getName() == prop->getName()) {
-      Properties::registry[i] = boost::shared_ptr<PropertyFunctor>(prop);
+      Properties::registry[i] = std::shared_ptr<PropertyFunctor>(prop);
       return i;
     }
   }
@@ -129,7 +129,7 @@ std::vector<std::string> Properties::getAvailableProperties() {
   return names;
 }
 
-boost::shared_ptr<PropertyFunctor> Properties::getProperty(
+std::shared_ptr<PropertyFunctor> Properties::getProperty(
     const std::string &name) {
   registerDescriptors();
   for (auto prop : Properties::registry) {
