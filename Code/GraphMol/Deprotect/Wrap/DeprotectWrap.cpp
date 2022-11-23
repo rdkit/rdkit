@@ -15,8 +15,8 @@
 namespace python = boost::python;
 namespace RDKit {
 
-boost::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol,
-                                       const python::object &iterable) {
+std::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol,
+                                     const python::object &iterable) {
   if (iterable != python::object()) {
     std::vector<Deprotect::DeprotectData> deprotections;
     pythonObjectToVect<Deprotect::DeprotectData>(iterable, deprotections);
