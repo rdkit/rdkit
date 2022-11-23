@@ -10,7 +10,7 @@
 #include "ScaffoldNetwork.h"
 #include "detail.h"
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
@@ -204,9 +204,9 @@ void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
   if (params.includeNames && mol.hasProp("_Name")) {
     ismi += ' ' + mol.getProp<std::string>("_Name");
   }
-  boost::shared_ptr<ROMol> fmol(flattenMol(mol, params));
+  std::shared_ptr<ROMol> fmol(flattenMol(mol, params));
   if (params.pruneBeforeFragmenting) {
-    boost::shared_ptr<ROMol> pmol(pruneMol(*fmol, params));
+    std::shared_ptr<ROMol> pmol(pruneMol(*fmol, params));
     fmol.swap(pmol);
   }
   std::set<size_t> entriesFromMol;
@@ -381,11 +381,6 @@ void updateScaffoldNetwork(const T &mols, ScaffoldNetwork &network,
   }
 }
 
-template RDKIT_SCAFFOLDNETWORK_EXPORT void updateScaffoldNetwork(
-    const std::vector<ROMOL_SPTR> &ms, ScaffoldNetwork &network,
-    const ScaffoldNetworkParams &params);
-template RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork createScaffoldNetwork(
-    const std::vector<ROMOL_SPTR> &ms, const ScaffoldNetworkParams &params);
 template RDKIT_SCAFFOLDNETWORK_EXPORT void updateScaffoldNetwork(
     const std::vector<std::shared_ptr<ROMol>> &ms, ScaffoldNetwork &network,
     const ScaffoldNetworkParams &params);

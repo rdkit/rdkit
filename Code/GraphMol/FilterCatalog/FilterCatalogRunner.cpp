@@ -20,10 +20,9 @@
 
 namespace RDKit {
 namespace {
-boost::shared_ptr<FilterCatalogEntry> &makeBadSmilesEntry() {
-  static boost::shared_ptr<FilterCatalogEntry> bad_smiles(
-      new FilterCatalogEntry("no valid RDKit molecule",
-                             boost::shared_ptr<FilterMatcherBase>()));
+std::shared_ptr<FilterCatalogEntry> &makeBadSmilesEntry() {
+  static std::shared_ptr<FilterCatalogEntry> bad_smiles(new FilterCatalogEntry(
+      "no valid RDKit molecule", std::shared_ptr<FilterMatcherBase>()));
   return bad_smiles;
 }
 void CatalogSearcher(
@@ -41,7 +40,7 @@ void CatalogSearcher(
 }
 }  // namespace
 
-std::vector<std::vector<boost::shared_ptr<const FilterCatalogEntry>>>
+std::vector<std::vector<std::shared_ptr<const FilterCatalogEntry>>>
 RunFilterCatalog(const FilterCatalog &fc,
                  const std::vector<std::string> &smiles, int numThreads) {
   // preallocate results so the threads don't move the vector around in memory

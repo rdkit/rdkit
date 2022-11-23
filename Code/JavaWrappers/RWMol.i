@@ -42,7 +42,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 %}
 
-%template(RWMol_Vect) std::vector< boost::shared_ptr<RDKit::RWMol> >;
+%template(RWMol_Vect) std::vector< std::shared_ptr<RDKit::RWMol> >;
 
 // ignore the methods that allow the molecule to take ownership of atoms/Bonds
 // (instead of copying them). This just leads to memory problems with Java

@@ -74,7 +74,7 @@ void load(Archive &ar, RDKit::MolHolder &molholder,
           const unsigned int version) {
   ar &boost::serialization::base_object<RDKit::MolHolderBase>(molholder);
 
-  std::vector<boost::shared_ptr<RDKit::ROMol>> &mols = molholder.getMols();
+  std::vector<std::shared_ptr<RDKit::ROMol>> &mols = molholder.getMols();
   mols.clear();
 
   if (version < 2) {
@@ -84,7 +84,7 @@ void load(Archive &ar, RDKit::MolHolder &molholder,
     for (std::int64_t i = 0; i < pkl_count; ++i) {
       std::string pkl;
       ar >> pkl;
-      mols.push_back(boost::make_shared<RDKit::ROMol>(pkl));
+      mols.push_back(std::make_shared<RDKit::ROMol>(pkl));
     }
   } else {
     ar & mols;

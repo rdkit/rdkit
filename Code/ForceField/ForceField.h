@@ -41,7 +41,7 @@ computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
 namespace ForceFields {
 class ForceFieldContrib;
 typedef std::vector<int> INT_VECT;
-typedef boost::shared_ptr<const ForceFieldContrib> ContribPtr;
+typedef std::shared_ptr<const ForceFieldContrib> ContribPtr;
 typedef std::vector<ContribPtr> ContribPtrVect;
 
 //-------------------------------------------------------
