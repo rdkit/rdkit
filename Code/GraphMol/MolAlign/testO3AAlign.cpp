@@ -644,7 +644,7 @@ void testGetO3AForProbeConfs() {
   }
 
   {
-    std::vector<boost::shared_ptr<MolAlign::O3A>> o3s;
+    std::vector<std::shared_ptr<MolAlign::O3A>> o3s;
     MolAlign::getO3AForProbeConfs(*prbMol, *refMol, &prbMP, &refMP, o3s);
     TEST_ASSERT(o3s.size() == prbMol->getNumConformers());
     for (unsigned int i = 0; i < prbMol->getNumConformers(); ++i) {
@@ -662,7 +662,7 @@ void testGetO3AForProbeConfs() {
       }
     }
 
-    std::vector<boost::shared_ptr<MolAlign::O3A>> o3s;
+    std::vector<std::shared_ptr<MolAlign::O3A>> o3s;
     MolAlign::getO3AForProbeConfs(prbMol2, *refMol, &prbMP, &refMP, o3s, 4);
     TEST_ASSERT(o3s.size() == prbMol2.getNumConformers());
     for (unsigned int i = 0; i < prbMol2.getNumConformers(); ++i) {
@@ -724,7 +724,7 @@ void testO3AMultiThreadBug() {
       }
 
       ROMol prbMol2 = *mol;
-      std::vector<boost::shared_ptr<MolAlign::O3A>> o3s;
+      std::vector<std::shared_ptr<MolAlign::O3A>> o3s;
       MolAlign::getO3AForProbeConfs(prbMol2, *refMol, &prbMP, &refMP, o3s, 0);
       TEST_ASSERT(o3s.size() == prbMol2.getNumConformers());
       for (unsigned int i = 0; i < prbMol2.getNumConformers(); ++i) {
