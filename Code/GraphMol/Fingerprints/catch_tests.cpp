@@ -111,9 +111,9 @@ TEST_CASE("RDKit bits per feature", "[fpgenerator][rdkit]") {
 
 TEST_CASE("pattern fingerprints for MolBundles", "[patternfp]") {
   SECTION("basics") {
-    boost::shared_ptr<ROMol> q1{SmilesToMol("OCCO")};
+    std::shared_ptr<ROMol> q1{SmilesToMol("OCCO")};
     REQUIRE(q1);
-    boost::shared_ptr<ROMol> q2{SmilesToMol("OCCCO")};
+    std::shared_ptr<ROMol> q2{SmilesToMol("OCCCO")};
     REQUIRE(q2);
     std::unique_ptr<ExplicitBitVect> pfp1{PatternFingerprintMol(*q1)};
     REQUIRE(pfp1);

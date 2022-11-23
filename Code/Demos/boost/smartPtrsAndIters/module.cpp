@@ -6,7 +6,7 @@
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python/detail/api_placeholder.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <vector>
 
@@ -20,7 +20,7 @@ class DemoKlass {
  private:
   int val_;
 };
-typedef boost::shared_ptr<DemoKlass> DemoKlassSPtr;
+typedef std::shared_ptr<DemoKlass> DemoKlassSPtr;
 typedef std::vector<DemoKlass *> DemoKlassPtrVect;
 typedef std::vector<DemoKlassSPtr> DemoKlassSPtrVect;
 

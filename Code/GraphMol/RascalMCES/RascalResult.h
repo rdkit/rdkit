@@ -126,7 +126,7 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
 
   // Assuming the frags are all part of the original MCES, just cut it
   // down to what's in the frags.
-  void rebuildFromFrags(const std::vector<boost::shared_ptr<ROMol>> &frags);
+  void rebuildFromFrags(const std::vector<std::shared_ptr<ROMol>> &frags);
 
   std::string createSmartsString() const;
 

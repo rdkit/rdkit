@@ -25,7 +25,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 
 #include <cstdint>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/shared_array.hpp>
 
 namespace RDKit {
@@ -39,7 +39,7 @@ struct FPBReader_impl;
   \code
   FPBReader reader("foo.fpb");
   reader.init();
-  boost::shared_ptr<ExplicitBitVect> ebv = reader.getFP(95);
+  std::shared_ptr<ExplicitBitVect> ebv = reader.getFP(95);
   std::vector<std::pair<double, unsigned int> > nbrs =
       reader.getTanimotoNeighbors(*ebv.get(), 0.70);
   \endcode
@@ -123,14 +123,14 @@ class RDKIT_DATASTRUCTS_EXPORT FPBReader {
     df_init = false;
   }
   //! returns the requested fingerprint as an \c ExplicitBitVect
-  boost::shared_ptr<ExplicitBitVect> getFP(unsigned int idx) const;
+  std::shared_ptr<ExplicitBitVect> getFP(unsigned int idx) const;
   //! returns the requested fingerprint as an array of bytes
   boost::shared_array<std::uint8_t> getBytes(unsigned int idx) const;
 
   //! returns the id of the requested fingerprint
   std::string getId(unsigned int idx) const;
   //! returns the fingerprint and id of the requested fingerprint
-  std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> operator[](
+  std::pair<std::shared_ptr<ExplicitBitVect>, std::string> operator[](
       unsigned int idx) const {
     return std::make_pair(getFP(idx), getId(idx));
   }

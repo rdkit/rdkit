@@ -14,11 +14,11 @@
 #include <Catalogs/CatalogParams.h>
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace RDKit {
 class ROMol;
-typedef std::vector<boost::shared_ptr<ROMol>> MOL_SPTR_VECT;
+typedef std::vector<std::shared_ptr<ROMol>> MOL_SPTR_VECT;
 
 //! container for user parameters used to create a fragment catalog
 class RDKIT_FRAGCATALOG_EXPORT FragCatParams : public RDCatalog::CatalogParams {

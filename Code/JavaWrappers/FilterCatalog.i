@@ -32,7 +32,7 @@
 //%import "ROMol.i"
 %include "std_string.i"
 %include "std_vector.i"
-%include <boost_shared_ptr.i>
+%include <std_shared_ptr.i>
 %shared_ptr(RDKit::FilterCatalogEntry)
 
 %{
@@ -49,8 +49,8 @@ typedef RDCatalog::Catalog<RDKit::FilterCatalogEntry, RDKit::FilterCatalogParams
 typedef std::vector<std::string> STR_VECT;
 %}
 
-%template(FilterCatalogEntry_Vect) std::vector< boost::shared_ptr<RDKit::FilterCatalogEntry> >;
-%template(FilterCatalogEntry_VectVect) std::vector<std::vector< boost::shared_ptr<const RDKit::FilterCatalogEntry> > >;
+%template(FilterCatalogEntry_Vect) std::vector< std::shared_ptr<RDKit::FilterCatalogEntry> >;
+%template(FilterCatalogEntry_VectVect) std::vector<std::vector< std::shared_ptr<const RDKit::FilterCatalogEntry> > >;
 
 %template(FilterCatalogEntryVect) std::vector< const RDKit::FilterCatalogEntry* >;
 %template(UChar_Vect) std::vector<unsigned char>;
@@ -112,41 +112,36 @@ typedef std::vector<std::string> STR_VECT;
     return RDKit::FilterCatalogCanSerialize();
   }
 
-  // boost does a bad job of wrapping shared_ptr<const T> so we will do the
-  //  unthinkable and cast away const.
-  //  Also we can't use FilterCatalog::SENTRY because swig thinks it is a new
-  //   type.  Bad swig!
-  boost::shared_ptr<RDKit::FilterCatalogEntry> getFirstMatch(const ROMol &mol) {
+  std::shared_ptr<RDKit::FilterCatalogEntry> getFirstMatch(const ROMol &mol) {
     RDKit::FilterCatalog::CONST_SENTRY res = self->getFirstMatch(mol);
-    return boost::const_pointer_cast<RDKit::FilterCatalogEntry>(res);
+    return std::const_pointer_cast<RDKit::FilterCatalogEntry>(res);
   }
 
-  std::vector<boost::shared_ptr<RDKit::FilterCatalogEntry> > getMatches(const ROMol &mol) {
+  std::vector<std::shared_ptr<RDKit::FilterCatalogEntry> > getMatches(const ROMol &mol) {
     std::vector<RDKit::FilterCatalog::CONST_SENTRY> matches = self->getMatches(mol);
     std::vector<RDKit::FilterCatalog::SENTRY> res;
     res.reserve(matches.size());
     for (size_t i=0; i< matches.size(); ++i) {
-      res.push_back( boost::const_pointer_cast<RDKit::FilterCatalogEntry>(matches[i]) );
+      res.push_back( std::const_pointer_cast<RDKit::FilterCatalogEntry>(matches[i]) );
     }
     return res;
  }
 
   // re-wrap swig is making duplicate entries for some strange reason
-  unsigned int addEntry(boost::shared_ptr<RDKit::FilterCatalogEntry> entry) {
+  unsigned int addEntry(std::shared_ptr<RDKit::FilterCatalogEntry> entry) {
     return self->addEntry(entry);
   }
 
-  bool removeEntry(boost::shared_ptr<RDKit::FilterCatalogEntry> entry) {
+  bool removeEntry(std::shared_ptr<RDKit::FilterCatalogEntry> entry) {
     return self->removeEntry(entry);
   }
 
-  // swig const-ptr shenanigans again
-  boost::shared_ptr<RDKit::FilterCatalogEntry> getEntry(unsigned int idx) const {
-    return boost::const_pointer_cast<RDKit::FilterCatalogEntry>(
+  std::shared_ptr<RDKit::FilterCatalogEntry> getEntry(unsigned int idx) const {
+    return std::const_pointer_cast<RDKit::FilterCatalogEntry>(
       self->getEntry(idx));
   }
 
-  unsigned int getIdxForEntry(const boost::shared_ptr<FilterCatalogEntry> &entry) const {
+  unsigned int getIdxForEntry(const std::shared_ptr<FilterCatalogEntry> &entry) const {
     return self->getIdxForEntry(entry);
   }
 }

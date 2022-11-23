@@ -66,7 +66,7 @@ static const std::string TARGET_ATOM_IDX = "__rgdTargetAtomIdx";
 static const std::string TARGET_BOND_IDX = "__rgdTargetBondIdx";
 void ADD_MATCH(R_DECOMP &match, int rlabel) {
   if (match.find(rlabel) == match.end()) {
-    match[rlabel] = boost::make_shared<RGroupData>();
+    match[rlabel] = std::make_shared<RGroupData>();
   }
 }
 }  // namespace
@@ -571,7 +571,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
           auto numberUserGroupsInMatch = std::accumulate(
               match.begin(), match.end(), 0,
               [](int sum,
-                 const std::pair<int, boost::shared_ptr<RGroupData>> &p) {
+                 const std::pair<int, std::shared_ptr<RGroupData>> &p) {
                 return p.first > 0 && !p.second->is_hydrogen ? ++sum : sum;
               });
           int numberMissingUserGroups =
@@ -816,7 +816,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
     for (const auto &realLabel : data->finalRlabelMapping) {
       if (!Rs_seen.getIsUsed(realLabel.second)) {
         auto r = RGroupData::getRGroupLabel(realLabel.second);
-        groups[r].push_back(boost::make_shared<RWMol>());
+        groups[r].push_back(std::make_shared<RWMol>());
       }
     }
   }
