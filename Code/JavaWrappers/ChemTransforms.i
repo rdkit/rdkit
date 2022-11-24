@@ -70,6 +70,8 @@ RDKit::ROMol * new_molzip(
 
 %}
 
+%include "std_string.i"
+
 %newobject deleteSubstructs;
 %newobject replaceSidechains;
 %newobject replaceCores;
