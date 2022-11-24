@@ -529,6 +529,30 @@ void testNoAtomCTAB() {
   TEST_ASSERT(res.empty());
 }
 
+void testBigMoleculeNoNewlineInInitString() {
+    BOOST_LOG(rdInfoLog) << "testing molecule with >150 atoms when "
+                            "init string has no newline"
+                       << std::endl;
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Data/struchk/";
+    std::stringstream struchk_init;
+    struchk_init << "-ta " << pathName << "checkfgs.trn\n"
+        << "-tm\n"
+        "-or\n"
+        "-ca " << pathName << "checkfgs.chk\n"
+        << "-cc\n"
+        "-cl 3\n"
+        "-cs\n"
+        "-cn 999";
+    int errs = AvalonTools::initCheckMol(struchk_init.str());
+    TEST_ASSERT(!errs);
+    std::string bigMol =
+        "CC(C)CC(C(=O)NC(CCSC)C(=O)NC(CC(=O)N)C(=O)NC(C(C)O)C(=O)O)NC(=O)C(CC1=CNC2=CC=CC=C21)NC(=O)C(CCC(=O)N)NC(=O)C(C(C)C)NC(=O)C(CC3=CC=CC=C3)NC(=O)C(CC(=O)O)NC(=O)C(CCC(=O)N)NC(=O)C(C)NC(=O)C(CCCNC(=N)N)NC(=O)C(CCCNC(=N)N)NC(=O)C(CO)NC(=O)C(CC(=O)O)NC(=O)C(CC(C)C)NC(=O)C(CC4=CC=C(C=C4)O)NC(=O)C(CCCCN)NC(=O)C(CO)NC(=O)C(CC5=CC=C(C=C5)O)NC(=O)C(CC(=O)O)NC(=O)C(CO)NC(=O)C(C(C)O)NC(=O)C(CC6=CC=CC=C6)NC(=O)C(C(C)O)NC(=O)CNC(=O)C(CCC(=O)N)NC(=O)C(CO)NC(=O)C(CC7=CN=CN7)N";
+    RDKit::ROMOL_SPTR m = AvalonTools::checkMol(errs, bigMol, true);
+    AvalonTools::closeCheckMolFiles();
+    TEST_ASSERT(errs == 0);
+}
+
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -549,6 +573,7 @@ int main() {
   testGithub4075();
   testGithub4330();
   testNoAtomCTAB();
+  testBigMoleculeNoNewlineInInitString();
 
   return 0;
 }
