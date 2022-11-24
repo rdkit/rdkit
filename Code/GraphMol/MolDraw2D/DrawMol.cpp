@@ -588,10 +588,43 @@ void DrawMol::extractBrackets() {
 
     if (!sg.getAtoms().empty()) {
       // use the average position of the atoms in the sgroup
-      for (auto aidx : sg.getAtoms()) {
-        refPt += atCds_[aidx];
+      // Github5768 shows that this is a bit simplistic in some cases.  In
+      // that molecule, there is a long chain that stretches outside the
+      // bracket area that turns the last bracket the wrong way.
+      // Just pick out the SGroup atoms that are inside brackets, rather
+      // crudely.
+      double xMin = std::numeric_limits<double>::max() / 2.0;
+      double yMin = std::numeric_limits<double>::max() / 2.0;
+      double xMax = std::numeric_limits<double>::lowest() / 2.0;
+      double yMax = std::numeric_limits<double>::lowest() / 2.0;
+      for (const auto &brk : sg.getBrackets()) {
+        Point2D p1{brk[0].x, -brk[0].y};
+        Point2D p2{brk[1].x, -brk[1].y};
+        trans.TransformPoint(p1);
+        trans.TransformPoint(p2);
+        xMin = std::min({xMin, p1.x, p2.x});
+        yMin = std::min({yMin, p1.y, p2.y});
+        xMax = std::max({xMax, p1.x, p2.x});
+        yMax = std::max({yMax, p1.y, p2.y});
       }
-      refPt /= sg.getAtoms().size();
+
+      int numIn = 0;
+      for (auto aidx : sg.getAtoms()) {
+        if (atCds_[aidx].x >= xMin && atCds_[aidx].x <= xMax &&
+            atCds_[aidx].y >= yMin && atCds_[aidx].y <= yMax) {
+          refPt += atCds_[aidx];
+          ++numIn;
+        }
+      }
+      if (numIn) {
+        refPt /= numIn;
+      } else {
+        // we'll have to go with all of them, and live with the consequences
+        for (auto aidx : sg.getAtoms()) {
+          refPt += atCds_[aidx];
+        }
+        refPt /= sg.getAtoms().size();
+      }
     }
 
     std::vector<std::pair<Point2D, Point2D>> sgBondSegments;
