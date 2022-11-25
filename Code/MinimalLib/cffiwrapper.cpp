@@ -296,7 +296,7 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz,
   std::unique_ptr<RWMol> mol{MinimalLib::mol_from_input(input, details_json)};
   if (!mol) {
     *pkl_sz = 0;
-    return NULL;
+    return nullptr;
   }
   unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
                            PicklerOps::PropertyPickleOptions::ComputedProps;
@@ -323,13 +323,61 @@ extern "C" char *get_rxn(const char *input, size_t *pkl_sz,
       MinimalLib::rxn_from_input(input, details_json)};
   if (!rxn) {
     *pkl_sz = 0;
-    return NULL;
+    return nullptr;
   }
   unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
                            PicklerOps::PropertyPickleOptions::ComputedProps;
   std::string pkl;
   ReactionPickler::pickleReaction(*rxn, pkl, propFlags);
   return str_to_c(pkl, pkl_sz);
+}
+
+extern "C" char **get_mol_frags(const char *pkl, size_t pkl_sz,
+                                size_t **frags_pkl_sz_array, size_t *num_frags,
+                                const char *details_json,
+                                char **mappings_json) {
+  if (!pkl || !pkl_sz || !frags_pkl_sz_array || !num_frags) {
+    return nullptr;
+  }
+  *frags_pkl_sz_array = nullptr;
+  *num_frags = 0;
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  std::vector<int> frags;
+  std::vector<std::vector<int>> fragsMolAtomMapping;
+  bool sanitizeFrags = true;
+  bool copyConformers = true;
+  if (details_json) {
+    std::string json = details_json;
+    MinimalLib::get_mol_frags_details(json, sanitizeFrags, copyConformers);
+  }
+  std::vector<ROMOL_SPTR> molFrags;
+  try {
+    molFrags = MolOps::getMolFrags(mol, sanitizeFrags, &frags,
+                                   &fragsMolAtomMapping, copyConformers);
+  } catch (...) {
+  }
+  if (molFrags.empty()) {
+    return nullptr;
+  }
+  char **molPklArray = (char **)malloc(sizeof(char *) * molFrags.size());
+  if (!molPklArray) {
+    return nullptr;
+  }
+  *frags_pkl_sz_array = (size_t *)malloc(sizeof(size_t) * molFrags.size());
+  if (!*frags_pkl_sz_array) {
+    free(molPklArray);
+    return nullptr;
+  }
+  memset(molPklArray, 0, sizeof(char *) * molFrags.size());
+  *num_frags = molFrags.size();
+  for (size_t i = 0; i < molFrags.size(); ++i) {
+    mol_to_pkl(*molFrags[i], &molPklArray[i], &(*frags_pkl_sz_array)[i]);
+  }
+  if (mappings_json) {
+    auto res = MinimalLib::get_mol_frags_mappings(frags, fragsMolAtomMapping);
+    *mappings_json = str_to_c(res);
+  }
+  return molPklArray;
 }
 
 extern "C" char *version() { return str_to_c(rdkitVersion); }

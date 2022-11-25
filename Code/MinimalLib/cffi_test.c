@@ -1010,6 +1010,97 @@ void test_standardize() {
   printf("--------------------------\n");
 }
 
+void test_get_mol_frags() {
+  printf("--------------------------\n");
+  printf("  test_get_mol_frags\n");
+  char *mpkl;
+  char *smi;
+  size_t mpkl_size;
+  size_t *frags_pkl_sz_array = NULL;
+  size_t num_frags = 0;
+  char **frags_mpkl_array = NULL;
+  char *mappings_json = NULL;
+  size_t i;
+
+  mpkl = get_mol("n1ccccc1.CC(C)C.OCCCN", &mpkl_size, "");
+  const char *expected_frag_smiles[] = {"c1ccncc1", "CC(C)C", "NCCCO"};
+  const char *expected_frag_smiles_non_sanitized[] = {"CN(C)(C)C", "c1ccc1"};
+  const char *expected_mappings =
+      "{\"frags\":[0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],\"fragsMolAtomMapping\":[[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]]}";
+
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags, "", NULL);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(num_frags == 3);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+
+  frags_mpkl_array = get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array,
+                                   &num_frags, "", &mappings_json);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(mappings_json);
+  assert(num_frags == 3);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+  assert(!strcmp(mappings_json, expected_mappings));
+  free(mappings_json);
+  mappings_json = NULL;
+  free(mpkl);
+  mpkl = NULL;
+
+  mpkl = get_mol("N(C)(C)(C)C.c1ccc1", &mpkl_size, "{\"sanitize\":false}");
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags, "", NULL);
+  assert(!frags_mpkl_array);
+  assert(!frags_pkl_sz_array);
+  assert(num_frags == 0);
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags,
+                    "{\"sanitizeFrags\":false}", NULL);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(num_frags == 2);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles_non_sanitized[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+  free(mpkl);
+  mpkl = NULL;
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -1026,5 +1117,6 @@ int main() {
   test_modifications();
   test_coords();
   test_standardize();
+  test_get_mol_frags();
   return 0;
 }
