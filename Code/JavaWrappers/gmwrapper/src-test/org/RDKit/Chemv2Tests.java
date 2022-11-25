@@ -125,7 +125,7 @@ public class Chemv2Tests extends GraphMolTest {
         ROMol m = RWMol.MolFromSmiles("C[C@H]1CO1");
         Atom a0 = m.getAtomWithIdx(0);
         Int_Point2D_Map coords = new Int_Point2D_Map();
-        coords.set((int) a0.getIdx(), new Point2D(1.0, 1.5));
+        coords.set((int)a0.getIdx(), new Point2D(1.0, 1.5));
         RDKFuncs.setPreferCoordGen(false);
         long confIdx = m.compute2DCoords(coords);
         Conformer c = m.getConformer((int) confIdx);

@@ -25,7 +25,7 @@
     vector(size_type count) { return new std::vector< T >(count); }
 }
 
-%include <std_vector.i>
+%include "std_vector.i"
 
 
 
