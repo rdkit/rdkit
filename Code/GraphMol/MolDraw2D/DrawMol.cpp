@@ -568,6 +568,31 @@ void DrawMol::extractVariableBonds() {
 }
 
 // ****************************************************************************
+namespace {
+// function to draw a label at the bottom of the bracket.
+DrawAnnotation *drawBottomLabel(const std::string &label,
+                                const DrawShape &brkShp,
+                                const MolDrawOptions &drawOptions,
+                                DrawText &textDrawer, bool horizontal) {
+  // annotations go on the last bracket of an sgroup
+  // LABEL goes at the bottom which is now the top
+  auto topPt = brkShp.points_[1];
+  auto brkPt = brkShp.points_[0];
+  if ((!horizontal && brkShp.points_[2].y > topPt.y) ||
+      (horizontal && brkShp.points_[2].x < topPt.x)) {
+    topPt = brkShp.points_[2];
+    brkPt = brkShp.points_[3];
+  }
+  DrawAnnotation *da = new DrawAnnotation(
+      label, TextAlignType::MIDDLE, "connect", drawOptions.annotationFontScale,
+      topPt + (topPt - brkPt), DrawColour(0.0, 0.0, 0.0), textDrawer);
+  if (brkPt.x < topPt.x) {
+    da->align_ = TextAlignType::START;
+  }
+  return da;
+}
+}  // namespace
+
 void DrawMol::extractBrackets() {
   auto &sgs = getSubstanceGroups(*drawMol_);
   if (sgs.empty()) {
@@ -669,32 +694,11 @@ void DrawMol::extractBrackets() {
         }
         annotations_.emplace_back(da);
       }
-      // function to draw a label at the bottom of the bracket.
-      auto drawBottomLabel = [&](const std::string &label,
-                                 const DrawShape &brkShp,
-                                 bool horizontal) -> DrawAnnotation * {
-        // annotations go on the last bracket of an sgroup
-        // LABEL goes at the bottom which is now the top
-        auto topPt = brkShp.points_[1];
-        auto brkPt = brkShp.points_[0];
-        if ((!horizontal && brkShp.points_[2].y > topPt.y) ||
-            (horizontal && brkShp.points_[2].x < topPt.x)) {
-          topPt = brkShp.points_[2];
-          brkPt = brkShp.points_[3];
-        }
-        DrawAnnotation *da = new DrawAnnotation(
-            label, TextAlignType::MIDDLE, "connect",
-            drawOptions_.annotationFontScale, topPt + (topPt - brkPt),
-            DrawColour(0.0, 0.0, 0.0), textDrawer_);
-        if (brkPt.x < topPt.x) {
-          da->align_ = TextAlignType::START;
-        }
-        return da;
-      };
 
       std::string label;
       if (sg.getPropIfPresent("LABEL", label)) {
-        auto da = drawBottomLabel(label, *postShapes_[labelBrk], horizontal);
+        auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
+                                  textDrawer_, horizontal);
         annotations_.emplace_back(da);
       } else if (sg.getPropIfPresent("TYPE", label)) {
         if (label == "GEN") {
@@ -703,7 +707,8 @@ void DrawMol::extractBrackets() {
         }
         // draw the lowercase type if there's no label to go there.
         std::transform(label.begin(), label.end(), label.begin(), ::tolower);
-        auto da = drawBottomLabel(label, *postShapes_[labelBrk], horizontal);
+        auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
+                                  textDrawer_, horizontal);
         annotations_.emplace_back(da);
       }
     }
