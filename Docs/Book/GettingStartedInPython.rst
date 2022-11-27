@@ -4,7 +4,7 @@ Getting Started with the RDKit in Python
 Important note
 **************
 
-Beginning with the 2019.03 release, the RDKit is no longer supporting Python 2.
+Hi! Beginning with the 2019.03 release, the RDKit is no longer supporting Python 2.
 If you need to continue using Python 2, please stick with a release from the 2018.09
 release cycle.
 
@@ -23,8 +23,8 @@ do something that doesn't appear to be documented please contribute by writing
 it up for this document. Contributing to the documentation is a great service
 both to the RDKit community and to your future self.
 
-Reading and Writing Molecules
-*****************************
+Reading, Drawing, and Writing Molecules
+***************************************
 
 Reading single molecules
 ========================
@@ -64,9 +64,17 @@ or None on failure:
 
 .. doctest::
 
-  >>> m = Chem.MolFromMolFile('data/invalid.mol')
-  >>> m is None
+  >>> m_invalid = Chem.MolFromMolFile('data/invalid.mol')
+  >>> m_invalid is None
   True
+
+An :py:class:`rdkit.Chem.rdchem.Mol` object can be displayed graphically using :py:func:`rdkit.Chem.Draw.MolToImage`:
+
+.. doctest::
+
+  >>> Draw.MolToImage(m)
+
+.. image:: images/Cc1ccccc1.png
 
 An attempt is made to provide sensible error messages:
 
