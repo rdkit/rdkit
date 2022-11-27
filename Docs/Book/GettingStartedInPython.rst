@@ -4,7 +4,7 @@ Getting Started with the RDKit in Python
 Important note
 **************
 
-Hi! Beginning with the 2019.03 release, the RDKit is no longer supporting Python 2.
+Beginning with the 2019.03 release, the RDKit is no longer supporting Python 2.
 If you need to continue using Python 2, please stick with a release from the 2018.09
 release cycle.
 
