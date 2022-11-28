@@ -121,17 +121,17 @@ std::string JSMol::get_inchi() const {
   ExtraInchiReturnValues rv;
   return MolToInchi(*d_mol, rv);
 }
-std::string JSMol::get_molblock() const {
+std::string JSMol::get_molblock(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  return MolToMolBlock(*d_mol);
+  return MinimalLib::molblock_helper(*d_mol, details.c_str(), false);
 }
-std::string JSMol::get_v3Kmolblock() const {
+std::string JSMol::get_v3Kmolblock(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  return MolToV3KMolBlock(*d_mol);
+  return MinimalLib::molblock_helper(*d_mol, details.c_str(), true);
 }
 std::string JSMol::get_json() const {
   if (!d_mol) {

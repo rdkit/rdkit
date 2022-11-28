@@ -1060,6 +1060,8 @@ M  END
     assert(svg2.includes("atom-8"));
     assert(!svg2.includes("atom-9"));
     assert(!svg2.includes("atom-10"));
+    assert(mol.get_molblock().includes("4  3  1  6"));
+    assert(!mol.get_molblock(JSON.stringify({ useMolBlockWedging: true })).includes("4  3  1  6"));
 }
 
 function test_get_frags() {

@@ -17,6 +17,31 @@
 #endif
 #include <assert.h>
 
+static const char molblock_native_wedging[] = "\n\
+  MJ201100                      \n\
+\n\
+  9 10  0  0  1  0  0  0  0  0999 V2000\n\
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+  4  3  1  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  6  5  1  0  0  0  0\n\
+  6  7  1  1  0  0  0\n\
+  6  8  1  0  0  0  0\n\
+  8  9  1  1  0  0  0\n\
+  8  2  1  0  0  0  0\n\
+  4  9  1  1  0  0  0\n\
+M  END\n";
+
 void test_io() {
   char *pkl;
   size_t pkl_size;
@@ -123,6 +148,17 @@ M  END",
   pkl2 = NULL;
   free(molblock);
   molblock = NULL;
+
+  pkl2 = get_mol(molblock_native_wedging, &pkl2_size, "");
+  assert(pkl2);
+  assert(pkl2_size > 0);
+  molblock = get_molblock(pkl2, pkl2_size, NULL);
+  assert(strstr(molblock, "4  3  1  6"));
+  free(molblock);
+  molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
+  assert(!strstr(molblock, "4  3  1  6"));
+  free(molblock);
+  free(pkl2);
 
   molblock = get_v3kmolblock(pkl, pkl_size, NULL);
   pkl2 = get_mol(molblock, &pkl2_size, "");
@@ -237,32 +273,7 @@ void test_svg() {
 
   free(pkl);
 
-  pkl = get_mol(
-      "\n\
-  MJ201100                      \n\
-\n\
-  9 10  0  0  1  0  0  0  0  0999 V2000\n\
-    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-  2  1  1  1  0  0  0\n\
-  2  3  1  0  0  0  0\n\
-  4  3  1  0  0  0  0\n\
-  4  5  1  0  0  0  0\n\
-  6  5  1  0  0  0  0\n\
-  6  7  1  1  0  0  0\n\
-  6  8  1  0  0  0  0\n\
-  8  9  1  1  0  0  0\n\
-  8  2  1  0  0  0  0\n\
-  4  9  1  1  0  0  0\n\
-M  END\n",
-      &pkl_size, "");
+  pkl = get_mol(molblock_native_wedging, &pkl_size, "");
   assert(pkl);
   assert(pkl_size > 0);
   char *svg1 = get_svg(pkl, pkl_size, "{\"width\":350,\"height\":300}");
