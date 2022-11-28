@@ -26,7 +26,7 @@ jobs:
     boost_version: 1.71.0
     number_of_cores: sysctl -n hw.ncpu
     python_name: python38
-    target_platform: 10.9
+    target_platform: 10.13
   steps:
   - template: .azure-pipelines/mac_build.yml
 - job: Windows_VS2022_x64
@@ -70,7 +70,7 @@ jobs:
     boost_version: 1.71.0
     number_of_cores: sysctl -n hw.ncpu
     python_name: python38
-    target_platform: 10.9
+    target_platform: 10.13
   steps:
   - template: .azure-pipelines/mac_build_java.yml
 - job: Ubuntu_x64_cartridge
