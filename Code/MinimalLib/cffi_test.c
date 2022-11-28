@@ -154,9 +154,14 @@ M  END",
   assert(pkl2_size > 0);
   molblock = get_molblock(pkl2, pkl2_size, NULL);
   assert(strstr(molblock, "4  3  1  6"));
+  assert(!strstr(molblock, "H  "));
   free(molblock);
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
   assert(!strstr(molblock, "4  3  1  6"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  molblock = get_molblock(pkl2, pkl2_size, "{\"addChiralHs\":true}");
+  assert(strstr(molblock, "H  "));
   free(molblock);
   free(pkl2);
 
