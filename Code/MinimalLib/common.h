@@ -926,6 +926,44 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
   return res;
 }
 
+void get_mol_frags_details(const std::string &details_json, bool &sanitizeFrags,
+                           bool &copyConformers) {
+  boost::property_tree::ptree pt;
+  if (!details_json.empty()) {
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(sanitizeFrags);
+    LPT_OPT_GET(copyConformers);
+  }
+}
+
+std::string get_mol_frags_mappings(
+    const std::vector<int> &frags,
+    const std::vector<std::vector<int>> &fragsMolAtomMapping) {
+  rj::Document doc;
+  doc.SetObject();
+  rj::Value rjFrags(rj::kArrayType);
+  for (int fragIdx : frags) {
+    rjFrags.PushBack(fragIdx, doc.GetAllocator());
+  }
+  doc.AddMember("frags", rjFrags, doc.GetAllocator());
+  rj::Value rjFragsMolAtomMapping(rj::kArrayType);
+  for (const auto &atomIdxVec : fragsMolAtomMapping) {
+    rj::Value rjAtomIndices(rj::kArrayType);
+    for (int atomIdx : atomIdxVec) {
+      rjAtomIndices.PushBack(atomIdx, doc.GetAllocator());
+    }
+    rjFragsMolAtomMapping.PushBack(rjAtomIndices, doc.GetAllocator());
+  }
+  doc.AddMember("fragsMolAtomMapping", rjFragsMolAtomMapping,
+                doc.GetAllocator());
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
+}
+
 }  // namespace MinimalLib
 }  // namespace RDKit
 #undef LPT_OPT_GET
