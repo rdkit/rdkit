@@ -16,6 +16,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -446,6 +447,30 @@ std::string process_rxn_details(
     }
   }
   return "";
+}
+
+std::string molblock_helper(RWMol &mol, const char *details_json, bool forceV3000) {
+  bool includeStereo = true;
+  bool kekulize = true;
+  bool useMolBlockWedging = false;
+  bool addChiralHs = false;
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(includeStereo);
+    LPT_OPT_GET(kekulize);
+    LPT_OPT_GET(useMolBlockWedging);
+    LPT_OPT_GET(addChiralHs);
+  }
+  if (useMolBlockWedging) {
+    reapplyMolBlockWedging(mol);
+  }
+  if (addChiralHs) {
+    MolDraw2DUtils::prepareMolForDrawing(mol, false, true, false, false, false);
+  }
+  return MolToMolBlock(mol, includeStereo, -1, kekulize, forceV3000);
 }
 
 void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,

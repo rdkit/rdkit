@@ -153,27 +153,6 @@ std::string cxsmiles_helper(const char *pkl, size_t pkl_sz,
   auto data = MolToCXSmiles(mol, params);
   return data;
 }
-
-std::string molblock_helper(const char *pkl, size_t pkl_sz,
-                            const char *details_json, bool forceV3000) {
-  if (!pkl || !pkl_sz) {
-    return "";
-  }
-  auto mol = mol_from_pkl(pkl, pkl_sz);
-  bool includeStereo = true;
-  bool kekulize = true;
-  if (details_json && strlen(details_json)) {
-    boost::property_tree::ptree pt;
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::read_json(ss, pt);
-    PT_OPT_GET(includeStereo);
-    PT_OPT_GET(kekulize);
-  }
-  auto data = MolToMolBlock(mol, includeStereo, -1, kekulize, forceV3000);
-  return data;
-}
-
 }  // namespace
 extern "C" char *get_smiles(const char *pkl, size_t pkl_sz,
                             const char *details_json) {
@@ -195,12 +174,20 @@ extern "C" char *get_cxsmiles(const char *pkl, size_t pkl_sz,
 }
 extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
                               const char *details_json) {
-  auto data = molblock_helper(pkl, pkl_sz, details_json, false);
+  if (!pkl || !pkl_sz) {
+    return "";
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  auto data = MinimalLib::molblock_helper(mol, details_json, false);
   return str_to_c(data);
 }
 extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
                                  const char *details_json) {
-  auto data = molblock_helper(pkl, pkl_sz, details_json, true);
+  if (!pkl || !pkl_sz) {
+    return "";
+  }
+  auto mol = mol_from_pkl(pkl, pkl_sz);
+  auto data = MinimalLib::molblock_helper(mol, details_json, true);
   return str_to_c(data);
 }
 extern "C" char *get_json(const char *pkl, size_t pkl_sz, const char *) {

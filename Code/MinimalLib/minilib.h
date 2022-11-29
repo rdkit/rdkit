@@ -24,8 +24,14 @@ class JSMol {
   std::string get_cxsmiles() const;
   std::string get_smarts() const;
   std::string get_cxsmarts() const;
-  std::string get_molblock() const;
-  std::string get_v3Kmolblock() const;
+  std::string get_molblock(const std::string &details) const;
+  std::string get_molblock() const {
+    return get_molblock("{}");
+  }
+  std::string get_v3Kmolblock(const std::string &details) const;
+  std::string get_v3Kmolblock() const {
+    return get_v3Kmolblock("{}");
+  }
   std::string get_pickle() const;
   std::string get_inchi() const;
   std::string get_json() const;
