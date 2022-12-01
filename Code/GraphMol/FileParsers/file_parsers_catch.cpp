@@ -5212,5 +5212,7 @@ M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R#");    
   }
 }
