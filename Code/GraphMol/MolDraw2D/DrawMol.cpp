@@ -10,6 +10,7 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <algorithm>
 #include <iostream>
 #include <limits>
 
@@ -567,6 +568,31 @@ void DrawMol::extractVariableBonds() {
 }
 
 // ****************************************************************************
+namespace {
+// function to draw a label at the bottom of the bracket.
+DrawAnnotation *drawBottomLabel(const std::string &label,
+                                const DrawShape &brkShp,
+                                const MolDrawOptions &drawOptions,
+                                DrawText &textDrawer, bool horizontal) {
+  // annotations go on the last bracket of an sgroup
+  // LABEL goes at the bottom which is now the top
+  auto topPt = brkShp.points_[1];
+  auto brkPt = brkShp.points_[0];
+  if ((!horizontal && brkShp.points_[2].y > topPt.y) ||
+      (horizontal && brkShp.points_[2].x < topPt.x)) {
+    topPt = brkShp.points_[2];
+    brkPt = brkShp.points_[3];
+  }
+  DrawAnnotation *da = new DrawAnnotation(
+      label, TextAlignType::MIDDLE, "connect", drawOptions.annotationFontScale,
+      topPt + (topPt - brkPt), DrawColour(0.0, 0.0, 0.0), textDrawer);
+  if (brkPt.x < topPt.x) {
+    da->align_ = TextAlignType::START;
+  }
+  return da;
+}
+}  // namespace
+
 void DrawMol::extractBrackets() {
   auto &sgs = getSubstanceGroups(*drawMol_);
   if (sgs.empty()) {
@@ -588,10 +614,43 @@ void DrawMol::extractBrackets() {
 
     if (!sg.getAtoms().empty()) {
       // use the average position of the atoms in the sgroup
-      for (auto aidx : sg.getAtoms()) {
-        refPt += atCds_[aidx];
+      // Github5768 shows that this is a bit simplistic in some cases.  In
+      // that molecule, there is a long chain that stretches outside the
+      // bracket area that turns the last bracket the wrong way.
+      // Just pick out the SGroup atoms that are inside brackets, rather
+      // crudely.
+      double xMin = std::numeric_limits<double>::max() / 2.0;
+      double yMin = std::numeric_limits<double>::max() / 2.0;
+      double xMax = std::numeric_limits<double>::lowest() / 2.0;
+      double yMax = std::numeric_limits<double>::lowest() / 2.0;
+      for (const auto &brk : sg.getBrackets()) {
+        Point2D p1{brk[0].x, -brk[0].y};
+        Point2D p2{brk[1].x, -brk[1].y};
+        trans.TransformPoint(p1);
+        trans.TransformPoint(p2);
+        xMin = std::min({xMin, p1.x, p2.x});
+        yMin = std::min({yMin, p1.y, p2.y});
+        xMax = std::max({xMax, p1.x, p2.x});
+        yMax = std::max({yMax, p1.y, p2.y});
       }
-      refPt /= sg.getAtoms().size();
+
+      int numIn = 0;
+      for (auto aidx : sg.getAtoms()) {
+        if (atCds_[aidx].x >= xMin && atCds_[aidx].x <= xMax &&
+            atCds_[aidx].y >= yMin && atCds_[aidx].y <= yMax) {
+          refPt += atCds_[aidx];
+          ++numIn;
+        }
+      }
+      if (numIn) {
+        refPt /= numIn;
+      } else {
+        // we'll have to go with all of them, and live with the consequences
+        for (auto aidx : sg.getAtoms()) {
+          refPt += atCds_[aidx];
+        }
+        refPt /= sg.getAtoms().size();
+      }
     }
 
     std::vector<std::pair<Point2D, Point2D>> sgBondSegments;
@@ -668,22 +727,21 @@ void DrawMol::extractBrackets() {
         }
         annotations_.emplace_back(da);
       }
+
       std::string label;
       if (sg.getPropIfPresent("LABEL", label)) {
-        // annotations go on the last bracket of an sgroup
-        const auto &brkShp = *postShapes_[labelBrk];
-        // LABEL goes at the bottom which is now the top
-        auto topPt = brkShp.points_[1];
-        auto brkPt = brkShp.points_[0];
-        if ((!horizontal && brkShp.points_[2].y > topPt.y) ||
-            (horizontal && brkShp.points_[2].x < topPt.x)) {
-          topPt = brkShp.points_[2];
-          brkPt = brkShp.points_[3];
+        auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
+                                  textDrawer_, horizontal);
+        annotations_.emplace_back(da);
+      } else if (sg.getPropIfPresent("TYPE", label)) {
+        if (label == "GEN") {
+          // ChemDraw doesn't draw the GEN (type=generic) label.
+          continue;
         }
-        DrawAnnotation *da = new DrawAnnotation(
-            label, TextAlignType::MIDDLE, "connect",
-            drawOptions_.annotationFontScale, topPt + (topPt - brkPt),
-            DrawColour(0.0, 0.0, 0.0), textDrawer_);
+        // draw the lowercase type if there's no label to go there.
+        std::transform(label.begin(), label.end(), label.begin(), ::tolower);
+        auto da = drawBottomLabel(label, *postShapes_[labelBrk], drawOptions_,
+                                  textDrawer_, horizontal);
         annotations_.emplace_back(da);
       }
     }

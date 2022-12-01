@@ -297,6 +297,19 @@ emscripten::val get_maccs_fp_as_uint8array(const JSMol &self) {
   return binary_string_to_uint8array(fp);
 }
 
+emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
+  auto res = self.get_frags(details);
+  auto obj = emscripten::val::object();
+  auto molArray = emscripten::val::object();
+  obj.set("molIterator", res.first);
+  obj.set("mappings", res.second);
+  return obj;
+}
+
+emscripten::val get_frags_helper(JSMol &self) {
+  return get_frags_helper(self, "{}");
+}
+
 #ifdef RDK_BUILD_AVALON_SUPPORT
 emscripten::val get_avalon_fp_as_uint8array(const JSMol &self,
                                             const std::string &details) {
@@ -322,8 +335,10 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_cxsmiles", &JSMol::get_cxsmiles)
       .function("get_smarts", &JSMol::get_smarts)
       .function("get_cxsmarts", &JSMol::get_cxsmarts)
-      .function("get_molblock", &JSMol::get_molblock)
-      .function("get_v3Kmolblock", &JSMol::get_v3Kmolblock)
+      .function("get_molblock", select_overload<std::string() const>(&JSMol::get_molblock))
+      .function("get_molblock", select_overload<std::string(const std::string &) const>(&JSMol::get_molblock))
+      .function("get_v3Kmolblock", select_overload<std::string() const>(&JSMol::get_v3Kmolblock))
+      .function("get_v3Kmolblock", select_overload<std::string(const std::string &) const>(&JSMol::get_v3Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
       .function("get_inchi", &JSMol::get_inchi)
       .function("get_json", &JSMol::get_json)
@@ -382,6 +397,13 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
           select_overload<emscripten::val(const JSMol &, const std::string &)>(
               get_atom_pair_fp_as_uint8array))
       .function("get_maccs_fp_as_uint8array", &get_maccs_fp_as_uint8array)
+      .function("get_frags",
+                select_overload<emscripten::val(JSMol &, const std::string &)>(
+                    get_frags_helper),
+                allow_raw_pointers())
+      .function("get_frags",
+                select_overload<emscripten::val(JSMol &)>(get_frags_helper),
+                allow_raw_pointers())
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
@@ -477,6 +499,12 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<void()>(&JSMol::straighten_depiction))
       .function("straighten_depiction",
                 select_overload<void(bool)>(&JSMol::straighten_depiction));
+
+  class_<JSMolIterator>("MolIterator")
+      .function("next", &JSMolIterator::next, allow_raw_pointers())
+      .function("reset", &JSMolIterator::reset)
+      .function("at_end", &JSMolIterator::at_end)
+      .function("size", &JSMolIterator::size);
 
   class_<JSReaction>("Reaction")
 #ifdef __EMSCRIPTEN__

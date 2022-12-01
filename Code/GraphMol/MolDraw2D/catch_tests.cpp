@@ -101,6 +101,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testBrackets-4a.svg", 769125635U},
     {"testBrackets-4b.svg", 4066682338U},
     {"testBrackets-5a.svg", 1388227932U},
+    {"testBrackets-5768.svg", 3070888879U},
     {"testSGroupData-1a.svg", 1463366807U},
     {"testSGroupData-1b.svg", 223883202U},
     {"testSGroupData-2a.svg", 3547547260U},
@@ -248,7 +249,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"bond_highlights_9.svg", 2915809284U},
     {"testGithub5486_1.svg", 1149144091U},
     {"testGithub5511_1.svg", 940106456U},
-    {"testGithub5511_2.svg", 1448975272U}};
+    {"testGithub5511_2.svg", 1448975272U},
+    {"test_github5767.svg", 3153964439U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -1893,6 +1895,76 @@ M  END
       outs << text;
       outs.close();
       check_file_hash("testBrackets-5a.svg");
+    }
+  }
+  SECTION("Github5768 - rightmost bracket wrong way round.)") {
+    auto m = R"CTAB(
+  Marvin  10140911012D
+
+ 19 18  0  0  0  0            999 V2000
+   -2.0296    1.6372    0.0000 Si  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0296    2.4622    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0296    0.8122    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8546    1.6372    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2046    1.6372    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3796    1.6372    0.0000 Si  0  0  0  0  0  0  0  0  0  0  0  0
+    0.4454    1.6372    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3796    0.8122    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3796    2.4622    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3349    0.3997    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0494    0.8122    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7638    0.3997    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2704    1.6372    0.0000 *   0  0  0  0  0  0  0  0  0  0  0  0
+    2.4783    0.8122    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1928    0.3996    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9072    0.8121    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6217    0.3996    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3362    0.8120    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.0506    0.3995    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  6  9  1  0  0  0  0
+  8 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+  7 13  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 16 17  1  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  1  0  0  0  0
+M  STY  2   1 SRU   2 SRU
+M  SCN  1   1 HT
+M  SAL   1  4   1   2   3   5
+M  SDI   1  4   -0.8649    2.0497   -0.8649    1.2247
+M  SDI   1  4   -2.3693    1.2247   -2.3693    2.0497
+M  SBL   1  2   3   5
+M  SMT   1 n
+M  SCN  1   2 HT
+M  SAL   2 13   6   7   8   9  10  11  12  14  15  16  17  18  19
+M  SDI   2  4    0.7851    2.0497    0.7851    1.2247
+M  SDI   2  4   -0.7193    1.2247   -0.7193    2.0497
+M  SBL   2  2   5  11
+M  SMT   2 m
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(350, 300);
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawMolecule(*m);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testBrackets-5768.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testBrackets-5768.svg");
     }
   }
 }
@@ -6074,5 +6146,67 @@ TEST_CASE(
     outs << text;
     outs.flush();
     outs.close();
+  }
+}
+
+TEST_CASE("Github5767: monomer label missing for MON SGroups ") {
+  std::string nameBase = "test_github5767";
+  auto m = R"CTAB(
+  Marvin  06091012252D
+
+ 13 11  0  0  0  0            999 V2000
+   -3.5063    2.1509    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.7918    2.5634    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0773    2.1509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3628    2.5634    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6484    2.1509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0661    2.5634    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7806    2.1509    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9984   -0.4714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2839   -0.0589    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5695   -0.4714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8550   -0.0589    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9984    0.3536    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6777   -0.1775    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+  9 12  1  0  0  0  0
+ 12  8  1  0  0  0  0
+M  STY  2   1 MON   2 MON
+M  SAL   1  7   1   2   3   4   5   6   7
+M  SDI   1  4   -3.9263    1.7309   -3.9263    2.9834
+M  SDI   1  4    1.2006    2.9834    1.2006    1.7309
+M  SAL   2  5   8   9  10  11  12
+M  SDI   2  4   -3.4184   -0.8914   -3.4184    0.7736
+M  SDI   2  4   -0.4350    0.7736   -0.4350   -0.8914
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  {
+    MolDraw2DSVG drawer(300, 300, 300, 300, true);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    // there should be 2 each of " >[mon]</text>"
+    std::vector<std::string> needed{" >m</text>", " >o</text>", " >n</text>"};
+    for (const auto &n : needed) {
+      std::regex rn(n);
+      std::ptrdiff_t const match_count(
+          std::distance(std::sregex_iterator(text.begin(), text.end(), rn),
+                        std::sregex_iterator()));
+      REQUIRE(match_count == 2);
+    }
+    check_file_hash(nameBase + ".svg");
   }
 }
