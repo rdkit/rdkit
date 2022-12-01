@@ -5192,7 +5192,7 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
               common_properties::dummyLabel) == "R98");
   }
-  SECTION("R# does not get the tag") {
+  SECTION("R# also gets the tag (was #5810)") {
     auto m = R"CTAB(
   Mrv1810 02111915102D          
 
@@ -5211,6 +5211,8 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(m);
-    CHECK(!m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R#");    
   }
 }

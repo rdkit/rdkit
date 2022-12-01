@@ -2151,9 +2151,9 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
           res->setIsotope(rnumber);
         }
       }
-      if (token[0] == 'R' && token != "R#") {
-        // we're skipping R# here because that really should be handled by an
-        // RGP spec
+      if (token[0] == 'R') {
+        // we used to skip R# here because that really should be handled by an
+        // RGP spec, but that turned out to not be permissive enough... <sigh>
         setRGPProps(token, res);
       }
     } else if (token == "D") {  // mol blocks support "D" and "T" as
