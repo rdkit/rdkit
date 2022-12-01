@@ -2840,6 +2840,7 @@ void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
       query = new RecursiveStructureQuery(m.release());
     }
     at->setQuery(query);
+    at->setProp(common_properties::MRV_SMA, sma);
     at->setProp(common_properties::_MolFileAtomQuery, 1);
   }
 }

@@ -5242,5 +5242,6 @@ M  END")CTAB"_ctab;
     CHECK(m->getAtomWithIdx(1)->hasQuery());
     auto ctab = MolToV3KMolBlock(*m);
     CHECK(ctab.find("SMARTSQ") != std::string::npos);
+    CHECK(ctab.find("[#6;R]") != std::string::npos);
   }
 }
