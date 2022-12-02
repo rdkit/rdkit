@@ -81,7 +81,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
       targetAtom->setProp(RLABEL_TYPE, rLabelType);
     }
 
-    if (queryAtom->getAtomicNum() == 0) {
+    if (!hasCoreDummies && queryAtom->getAtomicNum() == 0) {
       hasCoreDummies = true;
     }
     if (queryAtom->getAtomicNum() == 0 && queryAtom->hasProp(RLABEL) &&
