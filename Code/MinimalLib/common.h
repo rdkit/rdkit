@@ -16,6 +16,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -67,6 +68,20 @@
 #pragma GCC diagnostic pop
 #endif
 #endif
+
+#define GET_JSON_VALUE(doc, key, type)                                     \
+  const auto key##It = doc.FindMember(#key);                               \
+  if (key##It != doc.MemberEnd()) {                                        \
+    if (!key##It->value.Is##type()) {                                      \
+      return "JSON contains '" #key "' field, but its type is not '" #type \
+             "'";                                                          \
+    }                                                                      \
+    key = key##It->value.Get##type();                                      \
+  }
+
+#define GET_JSON_VALUE_WITH_DEFAULT(doc, key, type, defaultValue) \
+  GET_JSON_VALUE(doc, key, type) else key = defaultValue;
+
 namespace rj = rapidjson;
 
 namespace RDKit {
@@ -323,7 +338,9 @@ std::string parse_highlight_colors(const rj::Document &doc,
 std::string process_details(rj::Document &doc, const std::string &details,
                             int &width, int &height, int &offsetx, int &offsety,
                             std::string &legend, std::vector<int> &atomIds,
-                            std::vector<int> &bondIds, bool &kekulize) {
+                            std::vector<int> &bondIds, bool &kekulize,
+                            bool &addChiralHs, bool &wedgeBonds,
+                            bool &forceCoords, bool &wavyBonds) {
   doc.Parse(details.c_str());
   if (!doc.IsObject()) {
     return "Invalid JSON";
@@ -339,55 +356,16 @@ std::string process_details(rj::Document &doc, const std::string &details,
     return problems;
   }
 
-  const auto widthIt = doc.FindMember("width");
-  if (widthIt != doc.MemberEnd()) {
-    if (!widthIt->value.IsInt()) {
-      return "JSON contains 'width' field, but it is not an int";
-    }
-    width = widthIt->value.GetInt();
-  }
-
-  const auto heightIt = doc.FindMember("height");
-  if (heightIt != doc.MemberEnd()) {
-    if (!heightIt->value.IsInt()) {
-      return "JSON contains 'height' field, but it is not an int";
-    }
-    height = heightIt->value.GetInt();
-  }
-
-  const auto offsetxIt = doc.FindMember("offsetx");
-  if (offsetxIt != doc.MemberEnd()) {
-    if (!offsetxIt->value.IsInt()) {
-      return "JSON contains 'offsetx' field, but it is not an int";
-    }
-    offsetx = offsetxIt->value.GetInt();
-  }
-
-  const auto offsetyIt = doc.FindMember("offsety");
-  if (offsetyIt != doc.MemberEnd()) {
-    if (!offsetyIt->value.IsInt()) {
-      return "JSON contains 'offsety' field, but it is not an int";
-    }
-    offsety = offsetyIt->value.GetInt();
-  }
-
-  const auto legendIt = doc.FindMember("legend");
-  if (legendIt != doc.MemberEnd()) {
-    if (!legendIt->value.IsString()) {
-      return "JSON contains 'legend' field, but it is not a string";
-    }
-    legend = legendIt->value.GetString();
-  }
-
-  const auto kekulizeIt = doc.FindMember("kekulize");
-  if (kekulizeIt != doc.MemberEnd()) {
-    if (!kekulizeIt->value.IsBool()) {
-      return "JSON contains 'kekulize' field, but it is not a bool";
-    }
-    kekulize = kekulizeIt->value.GetBool();
-  } else {
-    kekulize = true;
-  }
+  GET_JSON_VALUE(doc, width, Int)
+  GET_JSON_VALUE(doc, height, Int)
+  GET_JSON_VALUE(doc, offsetx, Int)
+  GET_JSON_VALUE(doc, offsety, Int)
+  GET_JSON_VALUE(doc, legend, String)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, kekulize, Bool, true)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, addChiralHs, Bool, true)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, wedgeBonds, Bool, true)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, forceCoords, Bool, false)
+  GET_JSON_VALUE_WITH_DEFAULT(doc, wavyBonds, Bool, false)
 
   return "";
 }
@@ -398,11 +376,13 @@ std::string process_mol_details(const std::string &details, int &width,
                                 std::vector<int> &bondIds,
                                 std::map<int, DrawColour> &atomMap,
                                 std::map<int, DrawColour> &bondMap,
-                                std::map<int, double> &radiiMap,
-                                bool &kekulize) {
+                                std::map<int, double> &radiiMap, bool &kekulize,
+                                bool &addChiralHs, bool &wedgeBonds,
+                                bool &forceCoords, bool &wavyBonds) {
   rj::Document doc;
-  auto problems = process_details(doc, details, width, height, offsetx, offsety,
-                                  legend, atomIds, bondIds, kekulize);
+  auto problems = process_details(
+      doc, details, width, height, offsetx, offsety, legend, atomIds, bondIds,
+      kekulize, addChiralHs, wedgeBonds, forceCoords, wavyBonds);
   if (!problems.empty()) {
     return problems;
   }
@@ -440,20 +420,17 @@ std::string process_rxn_details(
     std::vector<int> &bondIds, bool &kekulize, bool &highlightByReactant,
     std::vector<DrawColour> &highlightColorsReactants) {
   rj::Document doc;
-  auto problems = process_details(doc, details, width, height, offsetx, offsety,
-                                  legend, atomIds, bondIds, kekulize);
+  bool addChiralHs;
+  bool wedgeBonds;
+  bool forceCoords;
+  bool wavyBonds;
+  auto problems = process_details(
+      doc, details, width, height, offsetx, offsety, legend, atomIds, bondIds,
+      kekulize, addChiralHs, wedgeBonds, forceCoords, wavyBonds);
   if (!problems.empty()) {
     return problems;
   }
-  auto highlightByReactantIt = doc.FindMember("highlightByReactant");
-  if (highlightByReactantIt != doc.MemberEnd()) {
-    if (!highlightByReactantIt->value.IsBool()) {
-      return "JSON contains 'highlightByReactant' field, but it is not a bool";
-    }
-    highlightByReactant = highlightByReactantIt->value.GetBool();
-  } else {
-    highlightByReactant = false;
-  }
+  GET_JSON_VALUE_WITH_DEFAULT(doc, highlightByReactant, Bool, false)
   auto highlightColorsReactantsIt = doc.FindMember("highlightColorsReactants");
   if (highlightColorsReactantsIt != doc.MemberEnd()) {
     if (!highlightColorsReactantsIt->value.IsArray()) {
@@ -470,6 +447,30 @@ std::string process_rxn_details(
     }
   }
   return "";
+}
+
+std::string molblock_helper(RWMol &mol, const char *details_json, bool forceV3000) {
+  bool includeStereo = true;
+  bool kekulize = true;
+  bool useMolBlockWedging = false;
+  bool addChiralHs = false;
+  if (details_json && strlen(details_json)) {
+    boost::property_tree::ptree pt;
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(includeStereo);
+    LPT_OPT_GET(kekulize);
+    LPT_OPT_GET(useMolBlockWedging);
+    LPT_OPT_GET(addChiralHs);
+  }
+  if (useMolBlockWedging) {
+    reapplyMolBlockWedging(mol);
+  }
+  if (addChiralHs) {
+    MolDraw2DUtils::prepareMolForDrawing(mol, false, true, false, false, false);
+  }
+  return MolToMolBlock(mol, includeStereo, -1, kekulize, forceV3000);
 }
 
 void get_sss_json(const ROMol &d_mol, const ROMol &q_mol,
@@ -510,10 +511,15 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
   int offsetx = 0;
   int offsety = 0;
   bool kekulize = true;
+  bool addChiralHs = true;
+  bool wedgeBonds = true;
+  bool forceCoords = false;
+  bool wavyBonds = false;
   if (!details.empty()) {
     problems =
         process_mol_details(details, w, h, offsetx, offsety, legend, atomIds,
-                            bondIds, atomMap, bondMap, radiiMap, kekulize);
+                            bondIds, atomMap, bondMap, radiiMap, kekulize,
+                            addChiralHs, wedgeBonds, forceCoords, wavyBonds);
     if (!problems.empty()) {
       return problems;
     }
@@ -528,7 +534,8 @@ std::string mol_to_svg(const ROMol &m, int w, int h,
                                          atomMap.empty() ? nullptr : &atomMap,
                                          bondMap.empty() ? nullptr : &bondMap,
                                          radiiMap.empty() ? nullptr : &radiiMap,
-                                         -1, kekulize);
+                                         -1, kekulize, addChiralHs, wedgeBonds,
+                                         forceCoords, wavyBonds);
   drawer.finishDrawing();
 
   return drawer.getDrawingText();
@@ -942,6 +949,44 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     res = buffer.GetString();
   }
   return res;
+}
+
+void get_mol_frags_details(const std::string &details_json, bool &sanitizeFrags,
+                           bool &copyConformers) {
+  boost::property_tree::ptree pt;
+  if (!details_json.empty()) {
+    std::istringstream ss;
+    ss.str(details_json);
+    boost::property_tree::read_json(ss, pt);
+    LPT_OPT_GET(sanitizeFrags);
+    LPT_OPT_GET(copyConformers);
+  }
+}
+
+std::string get_mol_frags_mappings(
+    const std::vector<int> &frags,
+    const std::vector<std::vector<int>> &fragsMolAtomMapping) {
+  rj::Document doc;
+  doc.SetObject();
+  rj::Value rjFrags(rj::kArrayType);
+  for (int fragIdx : frags) {
+    rjFrags.PushBack(fragIdx, doc.GetAllocator());
+  }
+  doc.AddMember("frags", rjFrags, doc.GetAllocator());
+  rj::Value rjFragsMolAtomMapping(rj::kArrayType);
+  for (const auto &atomIdxVec : fragsMolAtomMapping) {
+    rj::Value rjAtomIndices(rj::kArrayType);
+    for (int atomIdx : atomIdxVec) {
+      rjAtomIndices.PushBack(atomIdx, doc.GetAllocator());
+    }
+    rjFragsMolAtomMapping.PushBack(rjAtomIndices, doc.GetAllocator());
+  }
+  doc.AddMember("fragsMolAtomMapping", rjFragsMolAtomMapping,
+                doc.GetAllocator());
+  rj::StringBuffer buffer;
+  rj::Writer<rj::StringBuffer> writer(buffer);
+  doc.Accept(writer);
+  return buffer.GetString();
 }
 
 }  // namespace MinimalLib

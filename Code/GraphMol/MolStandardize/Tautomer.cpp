@@ -436,12 +436,16 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
 #endif
 
           unsigned int failedOp;
-          MolOps::sanitizeMol(*product, failedOp,
-                              MolOps::SANITIZE_KEKULIZE |
-                                  MolOps::SANITIZE_SETAROMATICITY |
-                                  MolOps::SANITIZE_SETCONJUGATION |
-                                  MolOps::SANITIZE_SETHYBRIDIZATION |
-                                  MolOps::SANITIZE_ADJUSTHS);
+          try {
+            MolOps::sanitizeMol(*product, failedOp,
+                                MolOps::SANITIZE_KEKULIZE |
+                                    MolOps::SANITIZE_SETAROMATICITY |
+                                    MolOps::SANITIZE_SETCONJUGATION |
+                                    MolOps::SANITIZE_SETHYBRIDIZATION |
+                                    MolOps::SANITIZE_ADJUSTHS);
+          } catch (const KekulizeException &ke) {
+            continue;
+          }
 #ifdef VERBOSE_ENUMERATION
           SmilesWriteParams smilesWriteParams;
           smilesWriteParams.allBondsExplicit = true;
