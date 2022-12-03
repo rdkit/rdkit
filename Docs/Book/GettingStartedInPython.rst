@@ -1555,11 +1555,17 @@ fingerprints and using them to calculate molecular similarity.
 
 The most straightforward and consistent way to get fingerprints is to create a
 FingeprintGenerator object for your fingerprint type of interest and then use
-that to calculate fingerprints.
+that to calculate fingerprints. Fingerprint generators provide a consistent
+interface to all the supported fingerprinting methods and allow easy generation
+of fingerprints as either bit vectors (sparse or explicit) or count vectors
+(sparse or explicit).
+
+Note that there are older, legacy methods of generating fingerprints with the
+RDKit which are still supported, but these will not be covered here.
 
 
-Topological Fingerprints
-========================
+RDKit (Topological) Fingerprints
+================================
 
 .. doctest::
 
@@ -1611,9 +1617,9 @@ The standard form is as fingerprint including counts for each bit instead of jus
 
 .. doctest::
 
-  >>> from rdkit.Chem.AtomPairs import Pairs
   >>> ms = [Chem.MolFromSmiles('C1CCC1OCC'),Chem.MolFromSmiles('CC(C)OCC'),Chem.MolFromSmiles('CCOCC')]
-  >>> pairFps = [Pairs.GetAtomPairFingerprint(x) for x in ms]
+  >>> fpgen = AllChem.GetAtomPairGenerator()
+  >>> pairFps = [fpgen.GetSparseCountFingerprint(x) for x in ms]
 
 Because the space of bits that can be included in atom-pair fingerprints is
 huge, they are stored in a sparse manner. We can get the list of bits and their
@@ -1621,16 +1627,14 @@ counts for each fingerprint as a dictionary:
 
 .. doctest::
 
-  >>> d = pairFps[-1].GetNonzeroElements()
-  >>> d[541732]
-  1
-  >>> d[1606690]
-  2
+  >>> pairFps[-1].GetNonzeroElements()
+  {541732: 1, 558113: 2, 558115: 2, 558146: 1, 1606690: 2, 1606721: 2}
 
-Descriptions of the bits are also available:
+Unlike most other fingerprint types, descriptions of the bits are directly available:
 
 .. doctest::
 
+  >>> from rdkit.Chem.AtomPairs import Pairs
   >>> Pairs.ExplainPairScore(558115)
   (('C', 1, 0), 3, ('C', 2, 0))
 
@@ -1649,39 +1653,47 @@ The usual metric for similarity between atom-pair fingerprints is Dice similarit
   >>> DataStructs.DiceSimilarity(pairFps[1],pairFps[2])
   0.56
 
-It's also possible to get atom-pair descriptors encoded as a standard
-bit vector fingerprint (ignoring the count information):
+It's also possible to get atom-pair descriptors encoded as a standard bit vector
+fingerprint. 
 
 .. doctest::
 
-  >>> pairFps = [Pairs.GetAtomPairFingerprintAsBitVect(x) for x in ms]
-
-Since these are standard bit vectors, the :py:mod:`rdkit.DataStructs`
-module can be used for similarity:
-
-.. doctest::
-
-  >>> from rdkit import DataStructs
+  >>> pairFps = [fpgen.GetFingerprint(x) for x in ms]
   >>> DataStructs.DiceSimilarity(pairFps[0],pairFps[1])
-  0.48
+  0.352...
   >>> DataStructs.DiceSimilarity(pairFps[0],pairFps[2])
-  0.380...
+  0.266...
+  >>> DataStructs.DiceSimilarity(pairFps[1],pairFps[2])
+  0.583...
+
+
+By default the atom pair bit vector fingerprints use a scheme which simulates counts in the bit
+vectors (described in detail in the "RDKit Book"), but this can be disabled:
+
+.. doctest::
+
+  >>> fpgen = AllChem.GetAtomPairGenerator(countSimulation=False)
+  >>> pairFps = [fpgen.GetFingerprint(x) for x in ms]
+  >>> DataStructs.DiceSimilarity(pairFps[0],pairFps[1])
+  0.5
+  >>> DataStructs.DiceSimilarity(pairFps[0],pairFps[2])
+  0.4
   >>> DataStructs.DiceSimilarity(pairFps[1],pairFps[2])
   0.625
+
 
 Topological torsion descriptors [#nilakantan]_ are calculated in
 essentially the same way:
 
 .. doctest::
 
-  >>> from rdkit.Chem.AtomPairs import Torsions
-  >>> tts = [Torsions.GetTopologicalTorsionFingerprintAsIntVect(x) for x in ms]
+  >>> fpgen = AllChem.GetTopologicalTorsionGenerator()
+  >>> tts = [fpgen.GetSparseCountFingerprint(x) for x in ms]
   >>> DataStructs.DiceSimilarity(tts[0],tts[1])
   0.166...
 
-At the time of this writing, topological torsion fingerprints have too many bits
-to be encodeable using the BitVector machinery, so there is no
-GetTopologicalTorsionFingerprintAsBitVect function.
+Topological torsion fingerprints, like atom-pair fingerprints, use a count
+simulation scheme by default when generating bit vector fingerprints
 
 
 Morgan Fingerprints (Circular Fingerprints)
@@ -1759,8 +1771,9 @@ fingerprints compare the topology of molecules:
 
   >>> m1 = Chem.MolFromSmiles('Cc1ccccc1')
   >>> m2 = Chem.MolFromSmiles('Cc1ncncn1')
-  >>> fp1 = AllChem.GetMorganFingerprint(m1,2,invariants=[1]*m1.GetNumAtoms())
-  >>> fp2 = AllChem.GetMorganFingerprint(m2,2,invariants=[1]*m2.GetNumAtoms())
+  >>> fpgen = AllChem.GetMorganGenerator(radius=2)
+  >>> fp1 = fpgen.GetFingerprint(m1,customAtomInvariants=[1]*m1.GetNumAtoms())
+  >>> fp2 = fpgen.GetFingerprint(m2,customAtomInvariants=[1]*m2.GetNumAtoms())
   >>> fp1==fp2
   True
 
@@ -1769,7 +1782,7 @@ Note that bond order is by default still considered:
 .. doctest::
 
   >>> m3 = Chem.MolFromSmiles('CC1CCCCC1')
-  >>> fp3 = AllChem.GetMorganFingerprint(m3,2,invariants=[1]*m3.GetNumAtoms())
+  >>> fp3 = fpgen.GetFingerprint(m3,customAtomInvariants=[1]*m3.GetNumAtoms())
   >>> fp1==fp3
   False
 
@@ -1777,31 +1790,68 @@ But this can also be turned off:
 
 .. doctest::
 
-  >>> fp1 = AllChem.GetMorganFingerprint(m1,2,invariants=[1]*m1.GetNumAtoms(),
-  ... useBondTypes=False)
-  >>> fp3 = AllChem.GetMorganFingerprint(m3,2,invariants=[1]*m3.GetNumAtoms(),
-  ... useBondTypes=False)
+  >>> fpgen = AllChem.GetMorganGenerator(radius=2,useBondTypes=False)
+  >>> fp1 = fpgen.GetFingerprint(m1,customAtomInvariants=[1]*m1.GetNumAtoms())
+  >>> fp3 = fpgen.GetFingerprint(m3,customAtomInvariants=[1]*m3.GetNumAtoms())
   >>> fp1==fp3
   True
 
+MACCS Keys
+==========
 
-Explaining bits from Morgan Fingerprints
-----------------------------------------
+There is a SMARTS-based implementation of the 166 public MACCS keys. This is not currently supported by the RDKit's fingerprint generators
 
-Information is available about the atoms that contribute to particular
-bits in the Morgan fingerprint via the bitInfo argument.  The
-dictionary provided is populated with one entry per bit set in the
-fingerprint, the keys are the bit ids, the values are lists of (atom
-index, radius) tuples.
+
+.. doctest::
+
+  >>> from rdkit.Chem import MACCSkeys
+  >>> ms = [Chem.MolFromSmiles('CCOC'), Chem.MolFromSmiles('CCO'),
+  ... Chem.MolFromSmiles('COC')]
+  >>> fps = [MACCSkeys.GenMACCSKeys(x) for x in ms]
+  >>> DataStructs.TanimotoSimilarity(fps[0],fps[1])
+  0.5
+  >>> DataStructs.TanimotoSimilarity(fps[0],fps[2])
+  0.538...
+  >>> DataStructs.TanimotoSimilarity(fps[1],fps[2])
+  0.214...
+
+The MACCS keys were critically evaluated and compared to other MACCS
+implementations in Q3 2008. In cases where the public keys are fully defined,
+things looked pretty good.
+
+
+
+Explaining bits from fingerprints
+=================================
+
+The fingerprint generators can collect information about the atoms/bonds
+involved in setting bits when a fingerprint is generated. This information is
+quite useful for understanding which parts of a molecule were involved in each
+bit.
+
+Each fingerprinting method provides different information, but this is all
+accessed using the additionalOutput argument to the fingerprinting functions.
+
+
+Morgan Fingerprints
+-------------------
+
+Information is available about the atoms that contribute to particular bits in
+the Morgan fingerprint via the bit info map.  This is a dictionary with one
+entry per bit set in the fingerprint, the keys are the bit ids, the values are
+lists of (atom index, radius) tuples.
 
 
 .. doctest::
 
   >>> m = Chem.MolFromSmiles('c1cccnc1C')
-  >>> info={}
-  >>> fp = AllChem.GetMorganFingerprint(m,2,bitInfo=info)
+  >>> fpgen = AllChem.GetMorganGenerator(radius=2)
+  >>> ao = AllChem.AdditionalOutput()
+  >>> ao.CollectBitInfoMap()
+  >>> fp = fpgen.GetSparseCountFingerprint(m,additionalOutput=ao)
   >>> len(fp.GetNonzeroElements())
   16
+  >>> info = ao.GetBitInfoMap()
   >>> len(info)
   16
   >>> info[98513984]
@@ -1853,28 +1903,49 @@ approach to do the same thing, using the function :py:func:`rdkit.Chem.MolFragme
   >>> Chem.MolFragmentToSmiles(m,atomsToUse=list(atoms),bondsToUse=env,rootedAtAtom=5)
   'c(C)(cc)nc'
 
+RDKit Fingerprints
+------------------
 
-MACCS Keys
-==========
+Information is available about the bond paths that contribute to particular bits in
+the RDKit fingerprint via the bit info map.  This is a dictionary with one
+entry per bit set in the fingerprint, the keys are the bit ids, the values are
+tuples of tuples containing bond indices.
 
-There is a SMARTS-based implementation of the 166 public MACCS keys.
 
 .. doctest::
 
-  >>> from rdkit.Chem import MACCSkeys
-  >>> ms = [Chem.MolFromSmiles('CCOC'), Chem.MolFromSmiles('CCO'),
-  ... Chem.MolFromSmiles('COC')]
-  >>> fps = [MACCSkeys.GenMACCSKeys(x) for x in ms]
-  >>> DataStructs.TanimotoSimilarity(fps[0],fps[1])
-  0.5
-  >>> DataStructs.TanimotoSimilarity(fps[0],fps[2])
-  0.538...
-  >>> DataStructs.TanimotoSimilarity(fps[1],fps[2])
-  0.214...
+  >>> m = Chem.MolFromSmiles('CCO')
+  >>> fpgen = AllChem.GetRDKitFPGenerator()
+  >>> ao = AllChem.AdditionalOutput()
+  >>> ao.CollectBitPaths()
+  >>> fp = fpgen.GetSparseCountFingerprint(m,additionalOutput=ao)
+  >>> len(fp.GetNonzeroElements())
+  6
+  >>> paths = ao.GetBitPaths()
+  >>> len(paths)
+  6
+  >>> paths[54413874]
+  ((1,),)
+  >>> paths[1135572127]
+  ((0, 1),)
+  >>> paths[1524090560] 
+  ((0, 1),)
 
-The MACCS keys were critically evaluated and compared to other MACCS
-implementations in Q3 2008. In cases where the public keys are fully defined,
-things looked pretty good.
+Those last two examples, which each correspond to the path containing bonds 0
+and 1, demonstrate that by default each path sets two bits in the RDKit
+fingerprint. We can, of course, create a fingerprint generator which does not do this:
+
+.. doctest::
+
+  >>> fpgen = AllChem.GetRDKitFPGenerator(numBitsPerFeature=1)
+  >>> ao = AllChem.AdditionalOutput()
+  >>> ao.CollectBitPaths()
+  >>> fp = fpgen.GetSparseCountFingerprint(m,additionalOutput=ao)
+  >>> len(fp.GetNonzeroElements())
+  3
+  >>> ao.GetBitPaths()
+  {1524090560: ((0, 1),), 4274652475: ((1,),), 4275705116: ((0,),)}
+
 
 
 Generating images of fingerprint bits
@@ -1888,15 +1959,21 @@ the atom environment that defines the bit using the functions
 
   >>> from rdkit.Chem import Draw
   >>> mol = Chem.MolFromSmiles('c1ccccc1CC1CC1')
-  >>> bi = {}
-  >>> fp = AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, bitInfo=bi)
+  >>> fpgen = AllChem.GetMorganGenerator(radius=2)
+  >>> ao = AllChem.AdditionalOutput()
+  >>> ao.CollectBitInfoMap()
+  >>> fp = fpgen.GetFingerprint(mol,additionalOutput=ao)
+  >>> bi = ao.GetBitInfoMap()
   >>> bi[872]
   ((6, 2),)
   >>> mfp2_svg = Draw.DrawMorganBit(mol, 872, bi, useSVG=True)
-  >>> rdkbi = {}
-  >>> rdkfp = Chem.RDKFingerprint(mol, maxPath=5, bitInfo=rdkbi)
+  >>> fpgen = AllChem.GetRDKitFPGenerator()
+  >>> ao = AllChem.AdditionalOutput()
+  >>> ao.CollectBitPaths()
+  >>> fp = fpgen.GetFingerprint(mol,additionalOutput=ao)
+  >>> rdkbi = ao.GetBitPaths()
   >>> rdkbi[1553]
-  [[0, 1, 9, 5, 4], [2, 3, 4, 9, 5]]
+  ((0, 1, 9, 5, 4), (2, 3, 4, 9, 5))
   >>> rdk_svg = Draw.DrawRDKitBit(mol, 1553, rdkbi, useSVG=True)
 
 Producing these images:
