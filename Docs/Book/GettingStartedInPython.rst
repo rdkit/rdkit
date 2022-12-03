@@ -1557,8 +1557,12 @@ The most straightforward and consistent way to get fingerprints is to create a
 FingeprintGenerator object for your fingerprint type of interest and then use
 that to calculate fingerprints. Fingerprint generators provide a consistent
 interface to all the supported fingerprinting methods and allow easy generation
-of fingerprints as either bit vectors (sparse or explicit) or count vectors
-(sparse or explicit).
+of fingerprints as:
+
+- bit vectors : ``fpgen.GetFingerprint``
+- sparse (unfolded) bit vectors : ``fpgen.GetSparseFingerprint``
+- count vectors : ``fpgen.GetCountFingerprint``
+- sparse (unfolded) count vectors : ``fpgen.GetSparseCountFingerprint``
 
 Note that there are older, legacy methods of generating fingerprints with the
 RDKit which are still supported, but these will not be covered here.
@@ -1593,6 +1597,7 @@ Available similarity metrics include Tanimoto, Dice, Cosine, Sokal, Russel, Kulc
 More details about the algorithm used for the RDKit fingerprint can be found in the "RDKit Book".
 
 The default set of parameters used by the fingerprinter is:
+
 - minimum path size: 1 bond
 - maximum path size: 7 bonds
 - fingerprint size: 2048 bits
@@ -1762,8 +1767,7 @@ fingerprints take a radius parameter.  So the examples above, with
 radius=2, are roughly equivalent to ECFP4 and FCFP4.
 
 The user can also provide their own atom invariants using the optional
-invariants argument to
-:py:func:`rdkit.Chem.rdMolDescriptors.GetMorganFingerprint`.  Here's a
+``customAtomInvariants`` argument to the ``GetFingerprint()`` call. Here's a
 simple example that uses a constant for the invariant; the resulting
 fingerprints compare the topology of molecules:
 
@@ -1799,7 +1803,8 @@ But this can also be turned off:
 MACCS Keys
 ==========
 
-There is a SMARTS-based implementation of the 166 public MACCS keys. This is not currently supported by the RDKit's fingerprint generators
+There is a SMARTS-based implementation of the 166 public MACCS keys. This is not
+currently supported by the RDKit's fingerprint generators, so you have to use a different interface.
 
 
 .. doctest::
@@ -1946,6 +1951,22 @@ fingerprint. We can, of course, create a fingerprint generator which does not do
   >>> ao.GetBitPaths()
   {1524090560: ((0, 1),), 4274652475: ((1,),), 4275705116: ((0,),)}
 
+Here we can also use the bond path information to create submolecules:
+
+.. doctest::
+
+  >>> envs = ao.GetBitPaths()[4274652475]
+  >>> envs
+  ((1,),)
+  >>> env = envs[0]
+  >>> atoms=set()
+  >>> for bidx in env:
+  ...     atoms.add(m.GetBondWithIdx(bidx).GetBeginAtomIdx())
+  ...     atoms.add(m.GetBondWithIdx(bidx).GetEndAtomIdx())
+  ...
+  >>> Chem.MolFragmentToSmiles(m,atomsToUse=list(atoms),bondsToUse=env)
+  'CO'
+
 
 
 Generating images of fingerprint bits
@@ -2025,12 +2046,13 @@ Start by reading in a set of molecules and generating Morgan fingerprints:
 .. doctest::
 
   >>> from rdkit import Chem
-  >>> from rdkit.Chem.rdMolDescriptors import GetMorganFingerprint
+  >>> from rdkit.Chem import rdFingerprintGenerators
+  >>> fpgen = rdFingerprintGenerators.GetMorganGenerator(radius=3)
   >>> from rdkit import DataStructs
   >>> from rdkit.SimDivFilters.rdSimDivPickers import MaxMinPicker
   >>> with Chem.SDMolSupplier('data/actives_5ht3.sdf') as suppl:
   ...   ms = [x for x in suppl if x is not None]
-  >>> fps = [GetMorganFingerprint(x,3) for x in ms]
+  >>> fps = [fpgen.GetFingerprint(x) for x in ms]
   >>> nfps = len(fps)
 
 The algorithm requires a function to calculate distances between
