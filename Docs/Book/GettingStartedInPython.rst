@@ -2046,8 +2046,8 @@ Start by reading in a set of molecules and generating Morgan fingerprints:
 .. doctest::
 
   >>> from rdkit import Chem
-  >>> from rdkit.Chem import rdFingerprintGenerators
-  >>> fpgen = rdFingerprintGenerators.GetMorganGenerator(radius=3)
+  >>> from rdkit.Chem import rdFingerprintGenerator
+  >>> fpgen = rdFingerprintGenerator.GetMorganGenerator(radius=3)
   >>> from rdkit import DataStructs
   >>> from rdkit.SimDivFilters.rdSimDivPickers import MaxMinPicker
   >>> with Chem.SDMolSupplier('data/actives_5ht3.sdf') as suppl:
@@ -2055,22 +2055,14 @@ Start by reading in a set of molecules and generating Morgan fingerprints:
   >>> fps = [fpgen.GetFingerprint(x) for x in ms]
   >>> nfps = len(fps)
 
-The algorithm requires a function to calculate distances between
-objects, we'll do that using DiceSimilarity:
-
-.. doctest::
-
-  >>> def distij(i,j,fps=fps):
-  ...   return 1-DataStructs.DiceSimilarity(fps[i],fps[j])
-
 Now create a picker and grab a set of 10 diverse molecules:
 
 .. doctest::
 
   >>> picker = MaxMinPicker()
-  >>> pickIndices = picker.LazyPick(distij,nfps,10,seed=23)
+  >>> pickIndices = picker.LazyBitVectorPick(fps,nfps,10,seed=23)
   >>> list(pickIndices)
-  [93, 109, 154, 6, 95, 135, 151, 61, 137, 139]
+  [93, 137, 135, 109, 18, 150, 142, 12, 6, 160]
 
 Note that the picker just returns indices of the fingerprints; we can
 get the molecules themselves as follows:
@@ -2078,6 +2070,22 @@ get the molecules themselves as follows:
 .. doctest::
 
   >>> picks = [ms[x] for x in pickIndices]
+
+
+If we aren't working with bit vector fingerprints, we can also do a diversity
+pick by providing our own distance matrix to the algorithm. This is less
+efficient than the above approach, but still works quite quickly:
+
+.. doctest::
+  
+  >>> fps = [fpgen.GetSparseCountFingerprint(x) for x in ms]
+  >>> def distij(i,j,fps=fps):
+  ...   return 1-DataStructs.DiceSimilarity(fps[i],fps[j])
+  >>> picker = MaxMinPicker()
+  >>> pickIndices = picker.LazyPick(distij,nfps,10,seed=23)
+  >>> list(pickIndices)
+  [93, 109, 154, 6, 95, 135, 151, 61, 137, 139]
+
 
 Generating Similarity Maps Using Fingerprints
 =============================================
