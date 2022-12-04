@@ -73,7 +73,7 @@ An :py:class:`rdkit.Chem.rdchem.Mol` object can be displayed graphically using :
 .. doctest::
 
   >>> from rdkit.Chem import Draw
-  >>> Draw.MolToImage(m)
+  >>> img = Draw.MolToImage(m)
 
 .. image:: images/Cc1ccccc1.png
 
