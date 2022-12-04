@@ -483,13 +483,22 @@ def SaveSMILESFromFrame(frame, outFile, molCol='ROMol', NamesCol='', isomericSmi
     w.close()
 
 
-def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
+def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=None):
   """
       Saves pandas DataFrame as a xlsx file with embedded images.
+      molCol can be either a single column label or a list of column labels.
       It maps numpy data types to excel cell types:
       int, float -> number
       datetime -> datetime
       object -> string (limited to 32k character - xlsx limitations)
+
+      The formats parameter can be optionally set to a dict of XlsxWriter
+      formats (https://xlsxwriter.readthedocs.io/format.html#format), e.g.:
+      {
+        'write_string':  {'text_wrap': True}
+      }
+      Currently supported keys for the formats dict are:
+      'write_string', 'write_number', 'write_datetime'.
 
       Cells with compound images are a bit larger than images due to excel.
       Column width weirdness explained (from xlsxwriter docs):
@@ -502,44 +511,50 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300)):
   import xlsxwriter  # don't want to make this a RDKit dependency
 
   cols = list(frame.columns)
-  cols.remove(molCol)
+  if isinstance(molCol, Chem.Mol):
+    molCol = [molCol]
+  molCol = list(set(molCol))
   dataTypes = dict(frame.dtypes)
+  molCol_indices = [cols.index(mc) for mc in molCol]
 
   workbook = xlsxwriter.Workbook(outFile)  # New workbook
+  cell_formats = {}
+  formats = formats or {}
+  for key in ['write_string', 'write_number', 'write_datetime']:
+    format = formats.get(key, None)
+    if format is not None:
+      format = workbook.add_format(format)
+    cell_formats[key] = format
   worksheet = workbook.add_worksheet()  # New work sheet
-  worksheet.set_column('A:A', size[0] / 6.)  # column width
 
   # Write first row with column names
-  c2 = 1
-  for x in cols:
-    worksheet.write_string(0, c2, x)
-    c2 += 1
+  for col_idx, col in enumerate(cols):
+    worksheet.write_string(0, col_idx, col)
 
-  c = 1
-  for _, row in frame.iterrows():
-    image_data = BytesIO()
-    img = Draw.MolToImage(row[molCol], size=size)
-    img.save(image_data, format='PNG')
+  for row_idx, (_, row) in enumerate(frame.iterrows()):
+    row_idx_actual = row_idx + 1
 
-    worksheet.set_row(c, height=size[1])  # looks like height is not in px?
-    worksheet.insert_image(c, 0, "f", {'image_data': image_data})
+    worksheet.set_row(row_idx_actual, height=size[1])  # looks like height is not in px?
 
-    c2 = 1
-    for x in cols:
-      if str(dataTypes[x]) == "object":
+    for col_idx, col in enumerate(cols):
+      if col_idx in molCol_indices:
+        image_data = BytesIO()
+        m = row[col]
+        img = Draw.MolToImage(m if isinstance(m, Chem.Mol) else Chem.Mol(), size=size)
+        img.save(image_data, format='PNG')
+        worksheet.insert_image(row_idx_actual, col_idx, "f", {'image_data': image_data})
+        worksheet.set_column(col_idx, col_idx, width=size[0] / 6.)  # looks like height is not in px?
+      elif str(dataTypes[col]) == "object":
         # string length is limited in xlsx
-        worksheet.write_string(c, c2, str(row[x])[:32000])
-      elif ('float' in str(dataTypes[x])) or ('int' in str(dataTypes[x])):
-        if (row[x] != np.nan) or (row[x] != np.inf):
-          worksheet.write_number(c, c2, row[x])
-      elif 'datetime' in str(dataTypes[x]):
-        worksheet.write_datetime(c, c2, row[x])
-      c2 += 1
-    c += 1
+        worksheet.write_string(row_idx_actual, col_idx, str(row[col])[:32000], cell_formats['write_string'])
+      elif ('float' in str(dataTypes[col])) or ('int' in str(dataTypes[col])):
+        if (row[col] != np.nan) or (row[col] != np.inf):
+          worksheet.write_number(row_idx_actual, col_idx, row[col], cell_formats['write_number'])
+      elif 'datetime' in str(dataTypes[col]):
+        worksheet.write_datetime(row_idx_actual, col_idx, row[col], cell_formats['write_datetime'])
 
   workbook.close()
   image_data.close()
-
 
 def FrameToGridImage(frame, column='ROMol', legendsCol=None, **kwargs):
   '''
@@ -656,7 +671,7 @@ if __name__ == '__main__':  # pragma: nocover
       from rdkit import RDConfig
       sdfFile = os.path.join(RDConfig.RDDataDir, 'NCI/first_200.props.sdf')
       frame = LoadSDF(sdfFile)
-      SaveXlsxFromFrame(frame, 'foo.xlsx')
+      SaveXlsxFromFrame(frame, 'foo.xlsx', formats={ 'write_string': {'text_wrap': True} })
 
     @unittest.skipIf(pd is None, 'pandas not installed')
     def testGithub3701(self):
