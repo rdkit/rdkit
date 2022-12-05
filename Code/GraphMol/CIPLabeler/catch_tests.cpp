@@ -658,15 +658,7 @@ M  END
   
   auto mol = std::unique_ptr<RDKit::RWMol>(MolBlockToMol(molBlock,true, false));
   REQUIRE(mol);
-  bool caughtIt = false;
-  try {
-    CIPLabeler::assignCIPLabels(*mol, 100000);
-  }
-  catch(const CIPLabeler::MaxIterationsExceeded &e)
-  {
-    caughtIt = true;
-  } 
-  CHECK(caughtIt);
+  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000), CIPLabeler::MaxIterationsExceeded);
 
   // try a second call to test that the timer is reset
 
