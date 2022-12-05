@@ -170,10 +170,11 @@ thread_local unsigned int remainingCallCount=0;
 void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
                      const boost::dynamic_bitset<> &bonds, unsigned int maxRecursiveIterations) {
 
-  if (maxRecursiveIterations != 0)
+  if (maxRecursiveIterations != 0) {
     remainingCallCount  = maxRecursiveIterations;
-  else
+  } else {
     remainingCallCount = UINT_MAX;  // really big - will never be hit
+  }
   
 
   CIPMol cipmol{mol};
