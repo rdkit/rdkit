@@ -662,14 +662,5 @@ M  END
 
   // try a second call to test that the timer is reset
 
-  caughtIt = false;   
-  try {
-    CIPLabeler::assignCIPLabels(*mol, 100000);
-  }
-  catch(const CIPLabeler::MaxIterationsExceeded &e)
-  {
-    caughtIt = true;
-  }    
-
-  CHECK(caughtIt);
+  CHECK_THROWS_AS(CIPLabeler::assignCIPLabels(*mol, 100000), CIPLabeler::MaxIterationsExceeded);
 }
