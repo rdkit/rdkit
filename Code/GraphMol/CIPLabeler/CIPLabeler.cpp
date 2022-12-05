@@ -190,8 +190,7 @@ void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations) {
   assignCIPLabels(mol, atoms, bonds, maxRecursiveIterations);
 }
 
-bool decrementRemainingCallCountAndCheck()
-{
+bool decrementRemainingCallCountAndCheck() {
   return (--remainingCallCount) >0 ;
 }
 
