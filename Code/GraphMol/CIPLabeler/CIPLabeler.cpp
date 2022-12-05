@@ -190,9 +190,16 @@ void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations) {
   assignCIPLabels(mol, atoms, bonds, maxRecursiveIterations);
 }
 
-bool decrementRemainingCallCountAndCheck() {
-  return (--remainingCallCount) >0 ;
+}  // namespace CIPLabeler
+
+namespace CIPLabeler_detail
+{
+  
+
+bool decrementRemainingCallCountAndCheck()
+{
+  return (--CIPLabeler::remainingCallCount) >0 ;
 }
 
-}  // namespace CIPLabeler
+}  // namespace CIPLabeler_detail
 }  // namespace RDKit

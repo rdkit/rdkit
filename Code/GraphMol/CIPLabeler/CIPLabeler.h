@@ -18,9 +18,12 @@ namespace RDKit {
 
 class ROMol;
 
-namespace CIPLabeler {
 
+namespace CIPLabeler_detail {
 RDKIT_CIPLABELER_EXPORT bool decrementRemainingCallCountAndCheck();
+}
+
+namespace CIPLabeler {
 
 /*
   Some very symmetrical mols can cause pseudo infinite processing
