@@ -30,7 +30,7 @@ RDKIT_CIPLABELER_EXPORT bool decrementRemainingCallCountAndCheck();
   If that maximum value is exceeded, the following error is thrown
 */
 
-class MaxIterationsExceeded : public std::runtime_error {
+class RDKIT_CIPLABELER_EXPORT MaxIterationsExceeded : public std::runtime_error {
  public:
   explicit MaxIterationsExceeded()
       : std::runtime_error("MaxIterationsExceeded"){};
