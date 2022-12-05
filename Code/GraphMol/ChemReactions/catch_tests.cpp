@@ -1180,10 +1180,33 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
           "(3 6 8 7)");
   }
 #endif
+  SECTION("cis/trans markers") {
+    auto rxn =
+        "C1C=CC=CCC=CC=C1>>C1C=CC=CNC=CC=C1 |c:1,3,6,8,11,13,16,18|"_rxnsmiles;
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 1);
+    CHECK(rxn->getProducts().size() == 1);
+    CHECK(rxn->getReactants()[0]->getBondWithIdx(1)->getStereo() ==
+          Bond::BondStereo::STEREOCIS);
+    CHECK(rxn->getProducts()[0]->getBondWithIdx(1)->getStereo() ==
+          Bond::BondStereo::STEREOCIS);
+  }
+  SECTION("wedged bonds") {
+    auto rxn = "CC(O)(F)Cl>>CC(N)(F)Cl |w:1.0,6.5|"_rxnsmiles;
+    REQUIRE(rxn);
+    CHECK(rxn->getReactants().size() == 1);
+    CHECK(rxn->getProducts().size() == 1);
+    unsigned int bondcfg;
+    CHECK(rxn->getReactants()[0]->getBondWithIdx(0)->getPropIfPresent(
+        "_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+    CHECK(rxn->getProducts()[0]->getBondWithIdx(1)->getPropIfPresent(
+        "_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+  }
 }
 
 TEST_CASE("V3K rxn blocks") {
-    
   SECTION("writing basics") {
     // clang-format off
     auto rxn =
@@ -1202,17 +1225,47 @@ TEST_CASE("V3K rxn blocks") {
     CHECK(rxn->getNumReactantTemplates()==rxn2->getNumReactantTemplates());
     CHECK(rxn->getNumProductTemplates()==rxn2->getNumProductTemplates());   
   }
-     
+
   SECTION("github5324") {
-    // Test sgroup in a ring - this example failed with improperr tail crossings
-    auto mol = "C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"_smarts;
-    MolOps::findSSSR(*mol);
-    auto mbk = FileParserUtils::getV3000CTAB(*mol, -1);
-    CHECK(mbk.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)")!=std::string::npos);
-    std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
-      				          ">>C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"));
-    auto rxnb = ChemicalReactionToV3KRxnBlock(*rxn);
-    CHECK(rxnb.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)")!=std::string::npos);
-  }
+      // Test sgroup in a ring - this example failed with improperr tail crossings
+      auto mol = "C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"_smarts;
+      MolOps::findSSSR(*mol);
+      auto mbk = FileParserUtils::getV3000CTAB(*mol, -1);
+      CHECK(mbk.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)")!=std::string::npos);
+      std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+                                  ">>C-1-C-C-C-C-O-1 |Sg:n:4:n:ht|"));
+      auto rxnb = ChemicalReactionToV3KRxnBlock(*rxn);
+      CHECK(rxnb.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)")!=std::string::npos);
+    }
 }
 
+TEST_CASE("CDXML Parser") {
+  std::string cdxmlbase = std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("CDXML REACTION") {
+      auto fname = cdxmlbase + "rxn2.cdxml";
+      std::vector<std::string> expected = {"Cl[c:1]1[cH:4][cH:3][cH:2][cH:6][cH:5]1",
+           "OC(O)B[c:7]1[cH:8][cH:9][cH:10][cH:11][cH:12]1",
+           "[CH:1]1=[CH:5][C:6]([C:7]2=[CH:12][CH:11]=[CH:10][CH:9]=[CH:8]2)=[CH:2][CH:3]=[CH:4]1"};
+      
+       auto rxns = CDXMLFileToChemicalReactions(fname);
+       CHECK(rxns.size() == 1);
+       int i=0;
+       int count = 0;
+       for(auto &mol : rxns[0]->getReactants()) {
+           CHECK(mol->getProp<unsigned int>("CDX_SCHEME_ID") == 397);
+           CHECK(mol->getProp<unsigned int>("CDX_STEP_ID") == 398);
+           CHECK(mol->getProp<unsigned int>("CDX_REAGENT_ID") == i++);
+           CHECK(MolToSmiles(*mol) == expected[count++]);
+       }
+       i = 0;
+       for(auto &mol : rxns[0]->getProducts()) {
+           CHECK(mol->getProp<unsigned int>("CDX_SCHEME_ID") == 397);
+           CHECK(mol->getProp<unsigned int>("CDX_STEP_ID") == 398);
+           CHECK(mol->getProp<unsigned int>("CDX_PRODUCT_ID") == i++);
+           CHECK(MolToSmiles(*mol) == expected[count++]);
+       }
+   
+       auto smarts = ChemicalReactionToRxnSmarts(*rxns[0]);
+       CHECK(smarts == "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6:1]1=[#6:5]-[#6:6](=[#6:2]-[#6:3]=[#6:4]-1)-[#6:7]1-[#6:8]=[#6:9]-[#6:10]=[#6:11]-[#6:12]=1");
+  }
+}

@@ -56,7 +56,7 @@ void RCore::findIndicesWithRLabel() {
 
 // Return a copy of core where dummy atoms are replaced by
 // the respective matching atom in mol, while other atoms have
-// their aromatic flag and formal charge copied from 
+// their aromatic flag and formal charge copied from
 // the respective matching atom in mol
 ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match) const {
@@ -67,9 +67,26 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     if (atom->getAtomicNum() == 0) {
       hasCoreDummies = true;
     }
-    if (isAtomWithMultipleNeighborsOrNotUserRLabel(*atom)) {
+    if (isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(*atom)) {
       auto molAtom = mol.getAtomWithIdx(p.second);
       replaceCoreAtom(*coreReplacedAtoms, *atom, *molAtom);
+    }
+  }
+
+  // look for dummy rgroup attachment points in core that are not in mapping
+  // there is no r group for these guys.  I've marked them as missing.
+  // It might be better to delete them coreReplaceAtoms, but I'm not sure of the
+  // implications of that.
+  for (auto atom : coreReplacedAtoms->atoms()) {
+    if (atom->getAtomicNum() == 0 && atom->hasProp(RLABEL)) {
+      auto missing = std::find_if(match.cbegin(), match.cend(),
+                                  [atom](const std::pair<int, int> &p) {
+                                    return static_cast<unsigned int>(p.first) ==
+                                           atom->getIdx();
+                                  }) == match.end();
+      if (missing) {
+        atom->setProp<bool>(MISSING_RGROUP, true);
+      }
     }
   }
 
@@ -99,15 +116,15 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
   std::cerr << "Dummy replaced core smarts  " << MolToSmarts(*coreReplacedAtoms)
             << std::endl;
 #endif
-  
+
   if (mol.getNumConformers() > 0) {
     // if the input structure has coordinates copy them to the core
     if (!coreReplacedAtoms->getNumConformers()) {
       coreReplacedAtoms->addConformer(
           new Conformer(coreReplacedAtoms->getNumAtoms()));
     }
-    auto & replacedConformer = coreReplacedAtoms->getConformer();
-    auto & molConformer = mol.getConformer();
+    auto &replacedConformer = coreReplacedAtoms->getConformer();
+    const auto &molConformer = mol.getConformer();
 
     for (const auto &p : match) {
       auto molPoint = molConformer.getAtomPos(p.second);
@@ -117,7 +134,7 @@ ROMOL_SPTR RCore::replaceCoreAtomsWithMolMatches(
     // otherwise, delete all core coordinates from the replaced core
     coreReplacedAtoms->clearConformers();
   }
-  
+
   return coreReplacedAtoms;
 }
 
@@ -163,7 +180,8 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
     auto templateAtom = coreReplacedAtoms.getAtomWithIdx(atomIdx);
     auto unlabelledCoreAtom = core->getAtomWithIdx(atomIdx);
     if (templateAtom->getAtomicNum() > 0 &&
-        isAtomWithMultipleNeighborsOrNotUserRLabel(*unlabelledCoreAtom)) {
+        isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(
+            *unlabelledCoreAtom)) {
       replaceCoreAtom(*finalCore, *coreAtom, *templateAtom);
     }
   }
@@ -178,15 +196,14 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
       finalCore->replaceBond(bondIdx, &newBond, true);
     }
   }
-  
+
   // update core coordinates to input structures
   if (coreReplacedAtoms.getNumConformers() && finalCore->getNumConformers()) {
-    auto & replacedConformer = coreReplacedAtoms.getConformer();
-    auto & finalConformer = finalCore->getConformer();
+    const auto &replacedConformer = coreReplacedAtoms.getConformer();
+    auto &finalConformer = finalCore->getConformer();
 
     size_t atomIdx = 0;
-    for (; atomIdx < coreReplacedAtoms.getNumAtoms();
-         ++atomIdx) {
+    for (; atomIdx < coreReplacedAtoms.getNumAtoms(); ++atomIdx) {
       auto molPoint = replacedConformer.getAtomPos(atomIdx);
       finalConformer.setAtomPos(atomIdx, molPoint);
     }
@@ -196,8 +213,20 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
       const int neighborIdx = *finalCore->getAtomNeighbors(atom).first;
       MolOps::setTerminalAtomCoords(*finalCore, atomIdx, neighborIdx);
     }
-    
-  } 
+  }
+
+  // Remove unmapped dummies
+  std::vector<Atom *> atomsToRemove;
+  for (const auto atom : coreReplacedAtoms.atoms()) {
+    if (atom->getAtomicNum() == 0 && atom->hasProp(MISSING_RGROUP)) {
+      atomsToRemove.push_back(finalCore->getAtomWithIdx(atom->getIdx()));
+    }
+  }
+  finalCore->beginBatchEdit();
+  for (auto atom : atomsToRemove) {
+    finalCore->removeAtom(atom);
+  }
+  finalCore->commitBatchEdit();
 
   finalCore->updatePropertyCache(false);
   return finalCore;
@@ -216,18 +245,18 @@ RWMOL_SPTR RCore::coreWithMatches(const ROMol &coreReplacedAtoms) const {
 // removed Also creates the data structures used in matching the R groups
 void RCore::buildMatchingMol() {
   matchingMol = boost::make_shared<RWMol>(*core);
-  terminalRGroupAtomsWithUserLabels.clear();
+  terminalRGroupDummyAtoms.clear();
   terminalRGroupAtomToNeighbor.clear();
   RWMol::ATOM_PTR_VECT atomsToRemove;
   for (auto atom : matchingMol->atoms()) {
     // keep track of the original core index in the matching molecule atom
     atom->setProp<int>(RLABEL_CORE_INDEX, atom->getIdx());
     if (atom->getAtomicNum() == 0 && atom->getDegree() == 1 &&
-        isUserRLabel(*atom)) {
+        isDummyRGroupAttachment(*atom)) {
       // remove terminal user R groups and save core atom index and mapping to
       // heavy neighbor
       atomsToRemove.push_back(atom);
-      terminalRGroupAtomsWithUserLabels.insert(atom->getIdx());
+      terminalRGroupDummyAtoms.insert(atom->getIdx());
       const int neighborIdx = *matchingMol->getAtomNeighbors(atom).first;
       terminalRGroupAtomToNeighbor.emplace(atom->getIdx(), neighborIdx);
     }
@@ -255,7 +284,7 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   std::map<int, int> matchMap(match.cbegin(), match.cend());
 
   std::vector<MatchVectType> allMappings;
-  if (terminalRGroupAtomsWithUserLabels.size() == 0) {
+  if (terminalRGroupDummyAtoms.empty()) {
     allMappings.push_back(match);
     return allMappings;
   }
@@ -267,16 +296,16 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
       std::inserter(mappedTargetIdx, mappedTargetIdx.begin()),
       [](const std::pair<int, int> &mapping) { return mapping.second; });
 
-  // User R groups that can possibly be incorporated into the match
-  std::vector<int> dummiesWithMapping;
-  // For each of those user R groups in dummiesWithMapping list of possible
+  // Dummy atoms/r group attachments that cannot be mapped to target atoms
+  std::vector<int> missingDummies;
+  // A map of terminal dummies/R group attachment points to a list of possible
   // target atoms that the R group can map to
-  std::vector<std::vector<int>> availableMappingsForDummy;
+  std::map<int, std::vector<int>> availableMappingsForDummyMap;
 
   // Loop over all the user terminal R groups and see if they can be included
   // in the match and, if so, record the target atoms that the R group can
   // be mapped to.
-  for (const auto dummyIdx : terminalRGroupAtomsWithUserLabels) {
+  for (const auto dummyIdx : terminalRGroupDummyAtoms) {
     // find the heavy atom in the core attached to the dummy
     const int neighborIdx = terminalRGroupAtomToNeighbor.find(dummyIdx)->second;
     const auto coreBond = core->getBondBetweenAtoms(dummyIdx, neighborIdx);
@@ -300,19 +329,79 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     }
 
     if (available.size()) {
-      dummiesWithMapping.push_back(dummyIdx);
-      availableMappingsForDummy.push_back(available);
+      availableMappingsForDummyMap[dummyIdx] = available;
     } else {
-      // We could continue here and allow a userR group to be unmapped
-      // However, the code below will fail at the molMatchFunctor check as all
-      // query atoms are not matched to the target- the query would need to be
-      // edited before passing to the molMatchFunctor.
-      return allMappings;
+      // We can't map this dummy to a target atom.  That is OK if it is an
+      // unlabelled core attachment atom or a user R label connected to a
+      // query or wildcard atom
+      const auto dummy = core->getAtomWithIdx(dummyIdx);
+      const auto neighbor = core->getAtomWithIdx(neighborIdx);
+      if (dummy->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
+        missingDummies.push_back(dummyIdx);
+      } else if (isUserRLabel(*dummy) &&
+                 (neighbor->getAtomicNum() == 0 || neighbor->hasQuery())) {
+        // https://github.com/rdkit/rdkit/issues/4505
+        missingDummies.push_back(dummyIdx);
+      } else {
+        return allMappings;
+      }
     }
   }
-  if (availableMappingsForDummy.size() == 0) {
+  if (availableMappingsForDummyMap.empty()) {
     allMappings.push_back(match);
     return allMappings;
+  }
+
+  // find singleton duplicate mappings. This can happen if there are 2 user
+  // specified R groups attached to a query atom and only one of the R groups
+  // can match (see second case in https://github.com/rdkit/rdkit/issues/4505)
+  // We remove the R group with the highest label
+  for (auto mapping = availableMappingsForDummyMap.begin();
+       mapping != availableMappingsForDummyMap.end();) {
+    auto values = mapping->second;
+    bool erased = false;
+    if (values.size() == 1) {
+      const auto dummy = core->getAtomWithIdx(mapping->first);
+      auto [nbrIter, endNbrs] = core->getAtomNeighbors(dummy);
+      auto heavyNeighbor = core->getAtomWithIdx(*nbrIter);
+      bool userQueryDummy =
+          isUserRLabel(*dummy) &&
+          (heavyNeighbor->getAtomicNum() == 0 || heavyNeighbor->hasQuery());
+      if (userQueryDummy) {
+        boost::tie(nbrIter, endNbrs) = core->getAtomNeighbors(heavyNeighbor);
+        while (nbrIter != endNbrs) {
+          int otherIdx = *nbrIter;
+          if (otherIdx != mapping->first) {
+            auto mappingIter = availableMappingsForDummyMap.find(otherIdx);
+            if (mappingIter != availableMappingsForDummyMap.end() &&
+                mappingIter->second.size() == 1 &&
+                mappingIter->second[0] == values[0]) {
+              auto otherDummy = core->getAtomWithIdx(otherIdx);
+              bool remove = isUserRLabel(*otherDummy) &&
+                            dummy->getProp<int>(RLABEL) >
+                                otherDummy->getProp<int>(RLABEL);
+              if (remove) {
+                missingDummies.push_back(mapping->first);
+                availableMappingsForDummyMap.erase(mapping++);
+                erased = true;
+                break;
+              }
+            }
+          }
+          nbrIter++;
+        }
+      }
+    }
+    if (!erased) {
+      ++mapping;
+    }
+  }
+
+  std::vector<int> dummiesWithMapping;
+  std::vector<std::vector<int>> availableMappingsForDummy;
+  for (const auto &mapping : availableMappingsForDummyMap) {
+    dummiesWithMapping.push_back(mapping.first);
+    availableMappingsForDummy.push_back(mapping.second);
   }
 
   // enumerate over all available atoms using a cartesian product.
@@ -323,15 +412,50 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
   // the size of the final mapping
   size_t size = allAvailableMappings[0].size() + match.size();
   // these indices are needed for the whole molecule match check functor
+
+  std::unique_ptr<RWMol> checkCore;
+  std::map<size_t, size_t> coreToCheck;
+  const std::string indexProp("__core_index__");
+  bool hasMissing = !missingDummies.empty();
+  if (hasMissing) {
+    // if there are dummies that we can map these need to be removed from the
+    // query before atom-by-atom matching.  Create a copy of the query for that
+    // and use properties to map atoms back to the core
+    for (auto atom : core->atoms()) {
+      atom->setProp(indexProp, atom->getIdx());
+    }
+    checkCore = std::make_unique<RWMol>(*core);
+    std::sort(missingDummies.begin(), missingDummies.end(),
+              std::greater<int>());
+    for (int index : missingDummies) {
+      auto [nbrIdx, endNbrs] =
+          checkCore->getAtomNeighbors(checkCore->getAtomWithIdx(index));
+      auto neighborAtom = checkCore->getAtomWithIdx(*nbrIdx);
+      checkCore->removeAtom(index);
+      neighborAtom->updatePropertyCache(false);
+    }
+    size_t index = 0U;
+    for (const auto atom : checkCore->atoms()) {
+      auto coreIndex = atom->getProp<int>(indexProp);
+      coreToCheck[coreIndex] = index++;
+    }
+    for (auto atom : core->atoms()) {
+      atom->clearProp(indexProp);
+    }
+  }
+
   auto queryIndices = new std::uint32_t[size];
   auto targetIndices = new std::uint32_t[size];
   for (size_t position = 0; position < match.size(); position++) {
     const auto &pair = match[position];
-    queryIndices[position] = pair.first;
+    auto queryIndex = hasMissing ? coreToCheck[pair.first] : pair.first;
+    queryIndices[position] = queryIndex;
     targetIndices[position] = pair.second;
   }
 
-  MolMatchFinalCheckFunctor molMatchFunctor(*core, target, sssParams);
+  auto queryMatchingMol = hasMissing ? checkCore.get() : core.get();
+  MolMatchFinalCheckFunctor molMatchFunctor(*queryMatchingMol, target,
+                                            sssParams);
   boost::dynamic_bitset<> targetBondsPresent(target.getNumBonds());
 
   // Filter all available mappings removing those that contain duplicates,
@@ -343,7 +467,9 @@ std::vector<MatchVectType> RCore::matchTerminalUserRGroups(
     targetBondsPresent.reset();
     for (size_t i = 0; i < dummyMapping.size(); i++) {
       size_t position = match.size() + i;
-      queryIndices[position] = dummiesWithMapping[i];
+      auto queryIndex = hasMissing ? coreToCheck[dummiesWithMapping[i]]
+                                   : dummiesWithMapping[i];
+      queryIndices[position] = queryIndex;
       targetIndices[position] = dummyMapping[i];
       const int neighborIdx =
           terminalRGroupAtomToNeighbor.find(dummiesWithMapping[i])->second;

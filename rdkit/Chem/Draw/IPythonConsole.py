@@ -8,6 +8,7 @@
 #  of the RDKit source tree.
 #
 import base64
+import html
 import copy
 import warnings
 from io import BytesIO
@@ -42,6 +43,7 @@ drawing_type_3d = 'stick'  # default drawing type for 3d structures
 bgcolor_3d = '0xeeeeee'
 drawOptions = rdMolDraw2D.MolDrawOptions()
 InteractiveRenderer._defaultDrawOptions = drawOptions
+
 
 def addMolToView(mol, view, confId=-1, drawAs=None):
   if mol.GetNumAtoms() >= 999 or drawAs == 'cartoon':
@@ -92,21 +94,21 @@ def _toJSON(mol):
 
 
 def _wrapHTMLIntoTable(html):
-  return InteractiveRenderer.injectHTMLHeaderBeforeTable(f'<div><table><tbody><tr><td style="width: {molSize[0]}px; ' +
-                                     f'height: {molSize[1]}px; text-align: center;">' +
-                                     html.replace(" scoped", "") +
-                                     '</td></tr></tbody></table></div>')
+  return InteractiveRenderer.injectHTMLFooterAfterTable(
+    f'<div><table><tbody><tr><td style="width: {molSize[0]}px; ' +
+    f'height: {molSize[1]}px; text-align: center;">' + html.replace(" scoped", "") +
+    '</td></tr></tbody></table></div>')
 
 
 def _toHTML(mol):
   useInteractiveRenderer = InteractiveRenderer.isEnabled(mol)
-  if _canUse3D and ipython_3d and mol.GetNumConformers():
+  if _canUse3D and ipython_3d and mol.GetNumConformers() and mol.GetConformer().Is3D():
     return _toJSON(mol)
   props = mol.GetPropsAsDict()
   if not ipython_showProperties or not props:
     if useInteractiveRenderer:
       return _wrapHTMLIntoTable(
-        InteractiveRenderer.generateHTMLBody(ipython_useSVG, mol, molSize, drawOptions))
+        InteractiveRenderer.generateHTMLBody(mol, molSize, useSVG=ipython_useSVG))
     else:
       return _toSVG(mol)
   if mol.HasProp('_Name'):
@@ -116,29 +118,31 @@ def _toHTML(mol):
 
   res = []
   if useInteractiveRenderer:
-    content = InteractiveRenderer.generateHTMLBody(ipython_useSVG, mol, molSize)
+    content = InteractiveRenderer.generateHTMLBody(mol, molSize, legend=nm, useSVG=ipython_useSVG)
   else:
     if not ipython_useSVG:
-      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, drawOptions=drawOptions)
+      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True,
+                           kekulize=kekulizeStructures, drawOptions=drawOptions)
       png = base64.b64encode(png)
       content = f'<image src="data:image/png;base64,{png.decode()}">'
     else:
       content = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures,
                                drawOptions=drawOptions)
-  res.append(f'<tr><td colspan=2 style="text-align:center">{content}</td></tr>')
+  res.append(f'<tr><td colspan="2" style="text-align: center;">{content}</td></tr>')
 
   for i, (pn, pv) in enumerate(props.items()):
     if ipython_maxProperties >= 0 and i >= ipython_maxProperties:
       res.append(
-        '<tr><td colspan=2 style="text-align:center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>'
+        '<tr><td colspan="2" style="text-align: center">Property list truncated.<br />Increase IPythonConsole.ipython_maxProperties (or set it to -1) to see more properties.</td></tr>'
       )
       break
+    pv = html.escape(str(pv))
     res.append(
-      f'<tr><th style="text-align:right">{pn}</th><td style="text-align:left">{pv}</td></tr>')
+      f'<tr><th style="text-align: right">{pn}</th><td style="text-align: left">{pv}</td></tr>')
   res = '\n'.join(res)
   res = f'<table>{res}</table>'
   if useInteractiveRenderer:
-    res = InteractiveRenderer.injectHTMLHeaderBeforeTable(res)
+    res = InteractiveRenderer.injectHTMLFooterAfterTable(res)
   return res
 
 
@@ -243,7 +247,9 @@ def ShowMols(mols, maxMols=50, **kwargs):
     kwargs['useSVG'] = ipython_useSVG
   if 'returnPNG' not in kwargs:
     kwargs['returnPNG'] = True
-  if _MolsToGridImageSaved is not None:
+  if InteractiveRenderer.isEnabled():
+    fn = InteractiveRenderer.MolsToHTMLTable
+  elif _MolsToGridImageSaved is not None:
     fn = _MolsToGridImageSaved
   else:
     fn = Draw.MolsToGridImage
@@ -260,9 +266,11 @@ def ShowMols(mols, maxMols=50, **kwargs):
     kwargs["drawOptions"] = drawOptions
 
   res = fn(mols, **kwargs)
-  if kwargs['useSVG']:
+  if InteractiveRenderer.isEnabled():
+    return HTML(res)
+  elif kwargs['useSVG']:
     return SVG(res)
-  if kwargs['returnPNG']:
+  elif kwargs['returnPNG']:
     return display.Image(data=res, format='png')
   return res
 

@@ -70,12 +70,17 @@ RDKIT_MOLDRAW2D_EXPORT void prepareAndDrawMolecule(
     const std::map<int, DrawColour> *highlight_atom_map = nullptr,
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
     const std::map<int, double> *highlight_radii = nullptr, int confId = -1,
-    bool kekulize = true);
+    bool kekulize = true, bool addChiralHs = true, bool wedgeBonds = true,
+    bool forceCoords = false, bool wavyBonds = false);
 
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const char *json);
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const std::string &json);
+RDKIT_MOLDRAW2D_EXPORT void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
+                                                         const char *json);
+RDKIT_MOLDRAW2D_EXPORT void updateMolDrawOptionsFromJSON(
+    MolDrawOptions &opts, const std::string &json);
 
 struct ContourParams {
   bool setScale = true;           // assumes the grid is drawn first

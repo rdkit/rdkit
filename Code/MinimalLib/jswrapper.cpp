@@ -20,11 +20,13 @@ using namespace RDKit;
 
 namespace RDKit {
 namespace MinimalLib {
-extern std::string process_details(const std::string &details, int &width,
-                                   int &height, int &offsetx, int &offsety,
-                                   std::string &legend,
-                                   std::vector<int> &atomIds,
-                                   std::vector<int> &bondIds, bool &kekulize);
+extern std::string process_mol_details(
+    const std::string &details, int &width, int &height, int &offsetx,
+    int &offsety, std::string &legend, std::vector<int> &atomIds,
+    std::vector<int> &bondIds, std::map<int, DrawColour> &atomMap,
+    std::map<int, DrawColour> &bondMap, std::map<int, double> &radiiMap,
+    bool &kekulize, bool &addChiralHs, bool &wedgeBonds, bool &forceCoords,
+    bool &wavyBonds);
 extern std::string process_rxn_details(
     const std::string &details, int &width, int &height, int &offsetx,
     int &offsety, std::string &legend, std::vector<int> &atomIds,
@@ -69,13 +71,22 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   int h = canvas["height"].as<int>();
   std::vector<int> atomIds;
   std::vector<int> bondIds;
+  std::map<int, DrawColour> atomMap;
+  std::map<int, DrawColour> bondMap;
+  std::map<int, double> radiiMap;
   std::string legend = "";
   int offsetx = 0;
   int offsety = 0;
   bool kekulize = true;
+  bool addChiralHs = true;
+  bool wedgeBonds = true;
+  bool forceCoords = false;
+  bool wavyBonds = false;
   if (!details.empty()) {
-    auto problems = MinimalLib::process_details(
-        details, w, h, offsetx, offsety, legend, atomIds, bondIds, kekulize);
+    auto problems = MinimalLib::process_mol_details(
+        details, w, h, offsetx, offsety, legend, atomIds, bondIds, atomMap,
+        bondMap, radiiMap, kekulize, addChiralHs, wedgeBonds, forceCoords,
+        wavyBonds);
     if (!problems.empty()) {
       return problems;
     }
@@ -87,9 +98,12 @@ std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
   }
   d2d->setOffset(offsetx, offsety);
 
-  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *self.d_mol, legend, &atomIds,
-                                         &bondIds, nullptr, nullptr, nullptr,
-                                         -1, kekulize);
+  MolDraw2DUtils::prepareAndDrawMolecule(
+      *d2d, *self.d_mol, legend, &atomIds, &bondIds,
+      atomMap.empty() ? nullptr : &atomMap,
+      bondMap.empty() ? nullptr : &bondMap,
+      radiiMap.empty() ? nullptr : &radiiMap, -1, kekulize, addChiralHs,
+      wedgeBonds, forceCoords, wavyBonds);
   return "";
 }
 
@@ -183,6 +197,16 @@ JSReaction *get_rxn_no_details(const std::string &input) {
   return get_rxn(input, std::string());
 }
 
+std::string generate_aligned_coords_helper(JSMol &self,
+                                           const JSMol &templateMol,
+                                           const emscripten::val &param) {
+  if (param.typeOf().as<std::string>() != "string") {
+    throw std::runtime_error(
+        "generate_aligned_coords expects a JSON string parameter");
+  }
+  return self.generate_aligned_coords(templateMol, param.as<std::string>());
+}
+
 std::string parse_morgan_fp_param(unsigned int radius, unsigned int fplen,
                                   const std::string &funcName) {
   static std::unordered_set<std::string> deprecationMsgShown;
@@ -196,13 +220,6 @@ std::string parse_morgan_fp_param(unsigned int radius, unsigned int fplen,
   return ss.str();
 }
 
-// DEPRECATED
-std::string get_morgan_fp_deprecated(const JSMol &self, unsigned int radius,
-                                     unsigned int fplen) {
-  return self.get_morgan_fp(
-      parse_morgan_fp_param(radius, fplen, "get_morgan_fp"));
-}
-
 emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
                                             const std::string &details) {
   auto fp = self.get_morgan_fp_as_binary_text(details);
@@ -213,35 +230,15 @@ emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
   return get_morgan_fp_as_uint8array(self, "{}");
 }
 
-// DEPRECATED
-emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
-                                            unsigned int radius,
-                                            unsigned int fplen) {
-  auto fp = self.get_morgan_fp_as_binary_text(
-      parse_morgan_fp_param(radius, fplen, "get_morgan_fp_as_uint8array"));
-  return binary_string_to_uint8array(fp);
-}
-
 std::string parse_pattern_fp_param(const emscripten::val &param,
                                    const std::string &funcName) {
   static std::unordered_set<std::string> deprecationMsgShown;
   std::string details;
-  if (param.typeOf().as<std::string>() == "number") {
-    unsigned int fplen = param.as<unsigned int>();
-    if (deprecationMsgShown.find(funcName) == deprecationMsgShown.end()) {
-      deprecationMsgShown.insert(funcName);
-      std::cerr << funcName << "(fplen) is deprecated, use " << funcName
-                << "(details) instead" << std::endl;
-    }
-    std::stringstream ss;
-    ss << "{\"nBits\":" << fplen << "}";
-    details = ss.str();
-  } else if (param.typeOf().as<std::string>() == "string") {
+  if (param.typeOf().as<std::string>() == "string") {
     details = param.as<std::string>();
   } else {
     throw std::runtime_error(
-        (funcName +
-         "get_pattern_fp expects a JSON string or an unsigned int as parameter")
+        (funcName + "get_pattern_fp expects a JSON string as parameter")
             .c_str());
   }
   return details;
@@ -295,6 +292,24 @@ emscripten::val get_atom_pair_fp_as_uint8array(const JSMol &self) {
   return get_atom_pair_fp_as_uint8array(self, "{}");
 }
 
+emscripten::val get_maccs_fp_as_uint8array(const JSMol &self) {
+  auto fp = self.get_maccs_fp_as_binary_text();
+  return binary_string_to_uint8array(fp);
+}
+
+emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
+  auto res = self.get_frags(details);
+  auto obj = emscripten::val::object();
+  auto molArray = emscripten::val::object();
+  obj.set("molIterator", res.first);
+  obj.set("mappings", res.second);
+  return obj;
+}
+
+emscripten::val get_frags_helper(JSMol &self) {
+  return get_frags_helper(self, "{}");
+}
+
 #ifdef RDK_BUILD_AVALON_SUPPORT
 emscripten::val get_avalon_fp_as_uint8array(const JSMol &self,
                                             const std::string &details) {
@@ -320,8 +335,10 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_cxsmiles", &JSMol::get_cxsmiles)
       .function("get_smarts", &JSMol::get_smarts)
       .function("get_cxsmarts", &JSMol::get_cxsmarts)
-      .function("get_molblock", &JSMol::get_molblock)
-      .function("get_v3Kmolblock", &JSMol::get_v3Kmolblock)
+      .function("get_molblock", select_overload<std::string() const>(&JSMol::get_molblock))
+      .function("get_molblock", select_overload<std::string(const std::string &) const>(&JSMol::get_molblock))
+      .function("get_v3Kmolblock", select_overload<std::string() const>(&JSMol::get_v3Kmolblock))
+      .function("get_v3Kmolblock", select_overload<std::string(const std::string &) const>(&JSMol::get_v3Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
       .function("get_inchi", &JSMol::get_inchi)
       .function("get_json", &JSMol::get_json)
@@ -336,6 +353,10 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("draw_to_canvas", &draw_to_canvas)
       .function("draw_to_canvas_with_highlights",
                 &draw_to_canvas_with_highlights)
+      .function("generate_aligned_coords",
+                select_overload<std::string(JSMol &, const JSMol &,
+                                            const emscripten::val &)>(
+                    generate_aligned_coords_helper))
       .function("get_morgan_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
                     get_morgan_fp_as_uint8array))
@@ -343,11 +364,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
           "get_morgan_fp_as_uint8array",
           select_overload<emscripten::val(const JSMol &, const std::string &)>(
               get_morgan_fp_as_uint8array))
-      // DEPRECATED
-      .function("get_morgan_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &, unsigned int,
-                                                unsigned int)>(
-                    get_morgan_fp_as_uint8array))
       .function(
           "get_pattern_fp",
           select_overload<std::string(const JSMol &, const emscripten::val &)>(
@@ -380,6 +396,14 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
           "get_atom_pair_fp_as_uint8array",
           select_overload<emscripten::val(const JSMol &, const std::string &)>(
               get_atom_pair_fp_as_uint8array))
+      .function("get_maccs_fp_as_uint8array", &get_maccs_fp_as_uint8array)
+      .function("get_frags",
+                select_overload<emscripten::val(JSMol &, const std::string &)>(
+                    get_frags_helper),
+                allow_raw_pointers())
+      .function("get_frags",
+                select_overload<emscripten::val(JSMol &)>(get_frags_helper),
+                allow_raw_pointers())
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp_as_uint8array",
                 select_overload<emscripten::val(const JSMol &)>(
@@ -399,7 +423,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_morgan_fp))
       // DEPRECATED
-      .function("get_morgan_fp", get_morgan_fp_deprecated)
       .function("get_pattern_fp",
                 select_overload<std::string() const>(&JSMol::get_pattern_fp))
       .function("get_topological_torsion_fp",
@@ -418,6 +441,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
       .function("get_atom_pair_fp",
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_atom_pair_fp))
+      .function("get_maccs_fp", &JSMol::get_maccs_fp)
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp",
                 select_overload<std::string() const>(&JSMol::get_avalon_fp))
@@ -458,18 +482,6 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<bool(const std::string &, const std::string &)>(
                     &JSMol::set_prop))
       .function("get_prop", &JSMol::get_prop)
-      .function("generate_aligned_coords",
-                select_overload<std::string(const JSMol &)>(
-                    &JSMol::generate_aligned_coords))
-      .function("generate_aligned_coords",
-                select_overload<std::string(const JSMol &, bool)>(
-                    &JSMol::generate_aligned_coords))
-      .function("generate_aligned_coords",
-                select_overload<std::string(const JSMol &, bool, bool)>(
-                    &JSMol::generate_aligned_coords))
-      .function("generate_aligned_coords",
-                select_overload<std::string(const JSMol &, bool, bool, bool)>(
-                    &JSMol::generate_aligned_coords))
       .function("condense_abbreviations",
                 select_overload<std::string()>(&JSMol::condense_abbreviations))
       .function("condense_abbreviations",
@@ -483,7 +495,16 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<double(int)>(&JSMol::normalize_depiction))
       .function("normalize_depiction", select_overload<double(int, double)>(
                                            &JSMol::normalize_depiction))
-      .function("straighten_depiction", &JSMol::straighten_depiction);
+      .function("straighten_depiction",
+                select_overload<void()>(&JSMol::straighten_depiction))
+      .function("straighten_depiction",
+                select_overload<void(bool)>(&JSMol::straighten_depiction));
+
+  class_<JSMolIterator>("MolIterator")
+      .function("next", &JSMolIterator::next, allow_raw_pointers())
+      .function("reset", &JSMolIterator::reset)
+      .function("at_end", &JSMolIterator::at_end)
+      .function("size", &JSMolIterator::size);
 
   class_<JSReaction>("Reaction")
 #ifdef __EMSCRIPTEN__

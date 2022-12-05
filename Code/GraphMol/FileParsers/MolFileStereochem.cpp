@@ -558,15 +558,7 @@ void DetectAtomStereoChemistry(RWMol &mol, const Conformer *conf) {
 }
 
 void ClearSingleBondDirFlags(ROMol &mol) {
-  for (RWMol::BondIterator bondIt = mol.beginBonds(); bondIt != mol.endBonds();
-       ++bondIt) {
-    if ((*bondIt)->getBondType() == Bond::SINGLE) {
-      if ((*bondIt)->getBondDir() == Bond::UNKNOWN) {
-        (*bondIt)->setProp(common_properties::_UnknownStereo, 1);
-      }
-      (*bondIt)->setBondDir(Bond::NONE);
-    }
-  }
+  MolOps::clearSingleBondDirFlags(mol);
 }
 
 void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
@@ -577,7 +569,7 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
 }
 
 void reapplyMolBlockWedging(ROMol &mol) {
-  ClearSingleBondDirFlags(mol);
+  MolOps::clearSingleBondDirFlags(mol);
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
     if (b->getPropIfPresent<int>(common_properties::_UnknownStereo,

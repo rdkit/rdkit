@@ -1370,6 +1370,16 @@ void convertComplexNameToQuery(Atom *query, std::string_view symb) {
   }
 }
 
+namespace {
+void setRGPProps(const std::string_view symb, Atom *res) {
+  PRECONDITION(res, "bad atom pointer");
+  // set the dummy label so that this is shown correctly
+  // in other pieces of the code :
+  std::string symbc(symb);
+  res->setProp(common_properties::dummyLabel, symbc);
+}
+}  // namespace
+
 Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
                            unsigned int line, bool strictParsing) {
   std::string symb;
@@ -1463,6 +1473,11 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
           res->setIsotope(rnumber);
         }
       }
+    }
+    if (symb[0] == 'R' && symb != "R#") {
+      // we're skipping R# here because that really should be handled by an RGP
+      // spec
+      setRGPProps(symb, res);
     }
   } else if (symb == "D") {  // mol blocks support "D" and "T" as shorthand...
                              // handle that.
@@ -2135,6 +2150,11 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line) {
         if (rnumber >= 0) {
           res->setIsotope(rnumber);
         }
+      }
+      if (token[0] == 'R') {
+        // we used to skip R# here because that really should be handled by an
+        // RGP spec, but that turned out to not be permissive enough... <sigh>
+        setRGPProps(token, res);
       }
     } else if (token == "D") {  // mol blocks support "D" and "T" as
                                 // shorthand... handle that.
@@ -2820,6 +2840,7 @@ void processSMARTSQ(RWMol &mol, const SubstanceGroup &sg) {
       query = new RecursiveStructureQuery(m.release());
     }
     at->setQuery(query);
+    at->setProp(common_properties::MRV_SMA, sma);
     at->setProp(common_properties::_MolFileAtomQuery, 1);
   }
 }
@@ -3222,7 +3243,7 @@ void finishMolProcessing(RWMol *res, bool chiralityPossible, bool sanitize,
       // now that atom stereochem has been perceived, the wedging
       // information is no longer needed, so we clear
       // single bond dir flags:
-      ClearSingleBondDirFlags(*res);
+      MolOps::clearSingleBondDirFlags(*res);
 
       // unlike DetectAtomStereoChemistry we call detectBondStereochemistry
       // here after sanitization because we need the ring information:

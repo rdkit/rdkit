@@ -10,11 +10,37 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "cffiwrapper.h"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
 #include <assert.h>
+
+static const char molblock_native_wedging[] = "\n\
+  MJ201100                      \n\
+\n\
+  9 10  0  0  1  0  0  0  0  0999 V2000\n\
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+  4  3  1  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  6  5  1  0  0  0  0\n\
+  6  7  1  1  0  0  0\n\
+  6  8  1  0  0  0  0\n\
+  8  9  1  1  0  0  0\n\
+  8  2  1  0  0  0  0\n\
+  4  9  1  1  0  0  0\n\
+M  END\n";
 
 void test_io() {
   char *pkl;
@@ -123,6 +149,22 @@ M  END",
   free(molblock);
   molblock = NULL;
 
+  pkl2 = get_mol(molblock_native_wedging, &pkl2_size, "");
+  assert(pkl2);
+  assert(pkl2_size > 0);
+  molblock = get_molblock(pkl2, pkl2_size, NULL);
+  assert(strstr(molblock, "4  3  1  6"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
+  assert(!strstr(molblock, "4  3  1  6"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  molblock = get_molblock(pkl2, pkl2_size, "{\"addChiralHs\":true}");
+  assert(strstr(molblock, "H  "));
+  free(molblock);
+  free(pkl2);
+
   molblock = get_v3kmolblock(pkl, pkl_size, NULL);
   pkl2 = get_mol(molblock, &pkl2_size, "");
   assert(pkl2);
@@ -205,8 +247,60 @@ void test_svg() {
   assert(strstr(svg, "</svg>"));
   free(svg);
 
+  svg = get_svg(
+      pkl, pkl_size,
+      "{\"highlightAtomColors\":{"
+      "\"0\": [1.0, 0.0, 0.0],"
+      "\"1\": [1.0, 0.0, 0.0],"
+      "\"2\": [1.0, 0.0, 0.0],"
+      "\"3\": [0.0, 1.0, 0.0],"
+      "\"4\": [1.0, 0.0, 0.0],"
+      "\"5\": [1.0, 0.0, 0.0],"
+      "\"6\": [1.0, 0.0, 0.0]"
+      "}, \"highlightBondColors\":{"
+      "\"2\": [0.0, 0.7, 0.9]"
+      "}, \"highlightAtomRadii\":{"
+      "\"0\": 0.1,"
+      "\"1\": 0.1,"
+      "\"2\": 0.1,"
+      "\"3\": 0.8,"
+      "\"4\": 0.1,"
+      "\"5\": 0.1,"
+      "\"6\": 0.1"
+      "}, \"atoms\": [0, 1, 2, 3, 4, 5, 6],  \"bonds\": [2], \"width\":127}");
+  assert(!strstr(svg, "fill:#FF7F7F"));
+  assert(strstr(svg, "fill:#FF0000"));
+  assert(strstr(svg, "fill:#00FF00"));
+  assert(strstr(svg, "fill:#00B2E5"));
+  assert(strstr(svg, "width='127px'"));
+  assert(strstr(svg, "</svg>"));
+  free(svg);
+
   free(pkl);
-  pkl = NULL;
+
+  pkl = get_mol(molblock_native_wedging, &pkl_size, "");
+  assert(pkl);
+  assert(pkl_size > 0);
+  char *svg1 = get_svg(pkl, pkl_size, "{\"width\":350,\"height\":300}");
+  assert(strstr(svg1, "width='350px'"));
+  assert(strstr(svg1, "height='300px'"));
+  assert(strstr(svg1, "</svg>"));
+  assert(strstr(svg1, "atom-8"));
+  assert(strstr(svg1, "atom-9"));
+  assert(strstr(svg1, "atom-10"));
+  char *svg2 = get_svg(
+      pkl, pkl_size,
+      "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":false,\"addChiralHs\":false}");
+  assert(strstr(svg2, "width='350px'"));
+  assert(strstr(svg2, "height='300px'"));
+  assert(strstr(svg2, "</svg>"));
+  assert(strstr(svg2, "atom-8"));
+  assert(!strstr(svg2, "atom-9"));
+  assert(!strstr(svg2, "atom-10"));
+  free(svg1);
+  free(svg2);
+
+  free(pkl);
   printf("  done\n");
   printf("--------------------------\n");
 }
@@ -448,6 +542,15 @@ void test_fingerprints() {
   assert(nbytes == 8);
   free(fp);
 
+  assert(!get_maccs_fp(NULL, 0));
+  fp = get_maccs_fp(mpkl, mpkl_size);
+  assert(!strcmp(
+      fp, "00000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000001100000000000000100000001000001000000000101000100000000100001000111110"));
+  free(fp);
+  assert(!get_maccs_fp_as_bytes(NULL, 0, &nbytes));
+  fp = get_maccs_fp_as_bytes(mpkl, mpkl_size, &nbytes);
+  assert(nbytes == 21);
+  free(fp);
 #ifdef RDK_BUILD_AVALON_SUPPORT
   assert(!get_avalon_fp(NULL, 0, NULL));
   fp = get_avalon_fp(mpkl, mpkl_size, "{\"nBits\":64}");
@@ -489,6 +592,78 @@ void test_modifications() {
   printf("--------------------------\n");
 }
 
+float **_get_coord_array(char *mpkl, size_t mpkl_size) {
+  char *molblock = get_molblock(mpkl, mpkl_size, NULL);
+  assert(molblock);
+  size_t molblock_len = strlen(molblock);
+  char *line_start = molblock;
+  char *line_end = strpbrk(line_start, "\n");
+  int line_num = 0;
+  float **res = NULL;
+  unsigned int i;
+  unsigned int j;
+  unsigned int s;
+  unsigned int e;
+  unsigned int atom_num = 0;
+  int n_atoms = 0;
+  while (line_end) {
+    *line_end = '\0';
+    if (line_num == 3) {
+      assert(strlen(line_start) > 3);
+      line_start[3] = '\0';
+      sscanf(line_start, "%d", &n_atoms);
+      if (n_atoms) {
+        res = (float **)malloc((n_atoms + 1) * sizeof(float *));
+        assert(res);
+        res[n_atoms] = NULL;
+        for (i = 0; i < n_atoms; ++i) {
+          res[i] = (float *)malloc(3 * sizeof(float));
+          assert(res[i]);
+        }
+      }
+    } else if (line_num > 3 && line_num < 4 + n_atoms && res) {
+      for (i = 0; i < 3; ++i) {
+        j = 2 - i;
+        s = j * 10;
+        e = (j + 1) * 10;
+        line_start[e] = '\0';
+        sscanf(&line_start[s], "%f", &res[atom_num][j]);
+      }
+      ++atom_num;
+    }
+    line_start = line_end + 1;
+    if (line_start >= molblock + molblock_len) {
+      break;
+    }
+    line_end = strpbrk(line_start, "\n");
+    if (!line_end) {
+      line_end = molblock + molblock_len;
+    }
+    ++line_num;
+  }
+  free(molblock);
+  return res;
+}
+
+void _free_coord_array(float **coord_array) {
+  size_t i = 0;
+  if (coord_array) {
+    while (coord_array[i]) {
+      free(coord_array[i++]);
+    }
+    free(coord_array);
+  }
+}
+
+float _sq_dist(float *xyz1, float *xyz2) {
+  float sqd = 0.;
+  unsigned int i;
+  for (i = 0; i < 3; ++i) {
+    sqd += (xyz1[i] - xyz2[i]) * (xyz1[i] - xyz2[i]);
+  }
+  return sqd;
+}
+
 void test_coords() {
   printf("--------------------------\n");
   printf("  test_coords\n");
@@ -509,6 +684,7 @@ void test_coords() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   prefer_coordgen(1);
   set_2d_coords(&mpkl, &mpkl_size);
+  prefer_coordgen(0);
   char *cxsmi2 = get_cxsmiles(mpkl, mpkl_size, NULL);
   assert(strstr(cxsmi2, "|"));
   assert(strcmp(cxsmi, cxsmi2));
@@ -546,16 +722,24 @@ M  V30 END CTAB\n\
 M  END\n",
       &tpkl_size, "");
   assert(!set_2d_coords_aligned(&mpkl, &mpkl_size, tpkl, tpkl_size,
-                                "{\"acceptFailure\":false}"));
-  assert(
-      set_2d_coords_aligned(&mpkl, &mpkl_size, tpkl, tpkl_size,
-                            "{\"allowRGroups\":true,\"acceptFailure\":false}"));
+                                "{\"acceptFailure\":false}", NULL));
+  char *match_json;
+  assert(set_2d_coords_aligned(
+      &mpkl, &mpkl_size, tpkl, tpkl_size,
+      "{\"allowRGroups\":true,\"acceptFailure\":false}", &match_json));
+  assert(!strcmp(match_json, "{\"atoms\":[4,3,0,1,2],\"bonds\":[3,5,0,1,2]}"));
+  free(match_json);
+  assert(set_2d_coords_aligned(
+      &mpkl, &mpkl_size, tpkl, tpkl_size,
+      "{\"allowRGroups\":true,\"acceptFailure\":false,\"alignOnly\":true}", &match_json));
+  assert(!strcmp(match_json, "{\"atoms\":[4,3,0,1,2],\"bonds\":[3,5,0,1,2]}"));
+  free(match_json);
   free(tpkl);
 
   // Github #4121: set_2d_coords_aligned crashes if template mol has no
   // conformer
   tpkl = get_mol("C1CNC1", &tpkl_size, NULL);
-  assert(!set_2d_coords_aligned(&mpkl, &mpkl_size, tpkl, tpkl_size, ""));
+  assert(!set_2d_coords_aligned(&mpkl, &mpkl_size, tpkl, tpkl_size, "", NULL));
   free(tpkl);
 
   // 3D
@@ -576,6 +760,202 @@ M  END\n",
 
   free(mpkl);
   mpkl = NULL;
+
+  // test set_2d_coords_aligned
+  tpkl = get_mol(
+      "\n\
+     RDKit          2D\n\
+\n\
+  6  6  0  0  0  0  0  0  0  0999 V2000\n\
+  -13.7477    6.3036    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0\n\
+  -13.7477    4.7567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  -12.6540    3.6628    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  -13.7477    2.5691    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  -14.8414    3.6628    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  -11.1071    3.6628    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  1  0\n\
+  2  3  1  0\n\
+  3  4  1  0\n\
+  4  5  1  0\n\
+  2  5  1  0\n\
+  3  6  1  0\n\
+M  RGP  2   1   1   6   2\n\
+M  END\n",
+      &tpkl_size, "");
+  mpkl = get_mol(
+      "\n\
+     RDKit          2D\n\
+\n\
+ 18 22  0  0  0  0  0  0  0  0999 V2000\n\
+    4.3922   -1.5699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.9211   -2.0479    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.5995   -0.5349    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.3731    0.8046    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.8441    1.2825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.0704   -0.0568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.8666    0.7748    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.7736   -0.3197    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.7749   -1.8666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.7718   -1.8679    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.7731   -0.3208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.8679    0.7718    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -4.0718   -0.0598    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -4.3933   -1.5729    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.9222   -2.0509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.6008   -0.5379    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.3744    0.8016    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -4.8454    1.2795    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  9 10  1  0\n\
+ 11 10  1  0\n\
+ 11  8  1  0\n\
+  8  9  1  0\n\
+  4  5  1  0\n\
+  6  5  1  0\n\
+  7  6  1  0\n\
+  3  4  1  0\n\
+  3  7  1  0\n\
+  1  6  1  0\n\
+  2  3  1  0\n\
+  2  1  1  0\n\
+ 17 18  1  0\n\
+ 13 18  1  0\n\
+ 12 13  1  0\n\
+ 16 17  1  0\n\
+ 16 12  1  0\n\
+ 14 13  1  0\n\
+ 15 16  1  0\n\
+ 15 14  1  0\n\
+ 12 11  1  0\n\
+  8  7  1  0\n\
+M  END\n",
+      &mpkl_size, "");
+  float **mol_coords = _get_coord_array(mpkl, mpkl_size);
+  assert(mol_coords);
+  float bond_length11_12 = sqrt(_sq_dist(mol_coords[11], mol_coords[12]));
+  float bond_length5_6 = sqrt(_sq_dist(mol_coords[5], mol_coords[6]));
+  assert(fabs(bond_length11_12 - bond_length5_6) < 1.e-4);
+  assert(bond_length11_12 > 2.3);
+  float bond_length_ali11_12;
+  float bond_length_ali5_6;
+  float **tpl_coords = _get_coord_array(tpkl, tpkl_size);
+  assert(tpl_coords);
+  float **mol_ali_coords = NULL;
+  unsigned int mol_indices[] = {11, 10, 7, 8, 9, 6};
+  unsigned int mol_idx;
+  unsigned int tpl_idx;
+  unsigned int i;
+  char details[200];
+  char *align_only_choices[] = { "false", "true" };
+  char *mpkl2_molblock_before = NULL;
+  char *mpkl2_molblock_after = NULL;
+  char *mpkl_smi = NULL;
+  size_t mpkl_smi_size;
+  char *mpkl2 = NULL;
+  size_t mpkl2_size;
+
+  for (i = 0; i < 2; ++i) {
+    // this has no initial coordinates and matches the template
+    mpkl_smi = get_mol("C1CC2CCC1N2C1CNC1N1C2CCC1CC2", &mpkl_smi_size, "");
+    assert(!has_coords(mpkl_smi, mpkl_smi_size));
+    memset(details, 0, 200);
+    sprintf(details, "{\"acceptFailure\":false,\"allowRGroups\":true,\"alignOnly\":%s}", align_only_choices[i]);
+    assert(set_2d_coords_aligned(
+        &mpkl_smi, &mpkl_smi_size, tpkl, tpkl_size, details, &match_json));
+    assert(!strcmp(match_json, "{\"atoms\":[11,10,7,8,9,6],\"bonds\":[10,18,7,8,9,6]}"));
+    free(match_json);
+    // coordinates should be present as alignment has taken place anyway
+    assert(has_coords(mpkl_smi, mpkl_smi_size));
+    free(mpkl_smi);
+
+    mpkl2_size = mpkl_size;
+    mpkl2 = malloc(mpkl2_size);
+    assert(mpkl2);
+    memcpy(mpkl2, mpkl, mpkl2_size);
+    memset(details, 0, 200);
+    sprintf(details, "{\"allowRGroups\":true,\"alignOnly\":%s}", align_only_choices[i]);
+    assert(set_2d_coords_aligned(
+        &mpkl2, &mpkl2_size, tpkl, tpkl_size, details, &match_json));
+    assert(!strcmp(match_json,
+                  "{\"atoms\":[11,10,7,8,9,6],\"bonds\":[20,2,3,0,1,21]}"));
+    free(match_json);
+    mol_ali_coords = _get_coord_array(mpkl2, mpkl2_size);
+    for (tpl_idx = 0; tpl_idx < sizeof(mol_indices) / sizeof(mol_indices[0]);
+        ++tpl_idx) {
+      mol_idx = mol_indices[tpl_idx];
+      assert(_sq_dist(tpl_coords[tpl_idx], mol_ali_coords[mol_idx]) < 1.e-4);
+    }
+    bond_length_ali11_12 = sqrt(_sq_dist(mol_ali_coords[11], mol_ali_coords[12]));
+    bond_length_ali5_6 = sqrt(_sq_dist(mol_ali_coords[5], mol_ali_coords[6]));
+    assert(fabs(bond_length_ali11_12 - bond_length_ali5_6) < 1.e-4);
+    if (i) {
+      assert(bond_length_ali11_12 > 2.3);
+    } else {
+      assert(bond_length_ali11_12 < 1.6);
+    }
+    _free_coord_array(mol_ali_coords);
+    free(mpkl2);
+
+    memset(details, 0, 200);
+    sprintf(details, "{\"useCoordGen\":true,\"acceptFailure\":false,\"allowRGroups\":true,\"alignOnly\":%s}", align_only_choices[i]);
+    // this has no initial coordinates and does not match the template
+    mpkl_smi = get_mol("C1CC2CCC1N2C1CCNC1N1C2CCC1CC2", &mpkl_smi_size, "");
+    assert(!has_coords(mpkl_smi, mpkl_smi_size));
+    // This should fail
+    assert(!set_2d_coords_aligned(
+        &mpkl_smi, &mpkl_smi_size, tpkl, tpkl_size, details, &match_json));
+    assert(!match_json);
+    // coordinates should be absent since alignment has not taken place
+    assert(!has_coords(mpkl_smi, mpkl_smi_size));
+
+    // this has initial coordinates and does not match the template
+    mpkl2_size = mpkl_smi_size;
+    mpkl2 = malloc(mpkl2_size);
+    assert(mpkl2);
+    memcpy(mpkl2, mpkl_smi, mpkl2_size);
+    assert(!has_coords(mpkl2, mpkl2_size));
+    set_2d_coords(&mpkl2, &mpkl2_size);
+    assert(has_coords(mpkl2, mpkl2_size));
+    mpkl2_molblock_before = get_molblock(mpkl2, mpkl2_size, "");
+    // This should fail
+    assert(!set_2d_coords_aligned(
+        &mpkl2, &mpkl2_size, tpkl, tpkl_size, details, &match_json));
+    assert(!match_json);
+    // coordinates should be unchanged since alignment has not taken place
+    assert(has_coords(mpkl2, mpkl2_size));
+    mpkl2_molblock_after = get_molblock(mpkl2, mpkl2_size, "");
+    assert(!strcmp(mpkl2_molblock_before, mpkl2_molblock_after));
+    free(mpkl2_molblock_after);
+
+    memset(details, 0, 200);
+    sprintf(details, "{\"useCoordGen\":true,\"acceptFailure\":true,\"allowRGroups\":true,\"alignOnly\":%s}", align_only_choices[i]);
+    // This should do a simple coordinate generation, no alignment
+    assert(set_2d_coords_aligned(
+        &mpkl2, &mpkl2_size, tpkl, tpkl_size, details, &match_json));
+    assert(!strcmp(match_json, "{}"));
+    free(match_json);
+    // coordinates should have changed since coordinate generation has taken place anyway using CoordGen
+    assert(has_coords(mpkl2, mpkl2_size));
+    mpkl2_molblock_after = get_molblock(mpkl2, mpkl2_size, "");
+    assert(strcmp(mpkl2_molblock_before, mpkl2_molblock_after));
+    free(mpkl2_molblock_before);
+    free(mpkl2_molblock_after);
+    free(mpkl2);
+
+    // this has no initial coordinates and does not match the template
+    assert(set_2d_coords_aligned(
+        &mpkl_smi, &mpkl_smi_size, tpkl, tpkl_size, details, &match_json));
+    assert(!strcmp(match_json, "{}"));
+    free(match_json);
+    // coordinates should be present since coordinate generation has taken place anyway using CoordGen
+    assert(has_coords(mpkl_smi, mpkl_smi_size));
+    free(mpkl_smi);
+  }
+
+  _free_coord_array(mol_coords);
+  _free_coord_array(tpl_coords);
+  free(mpkl);
+  free(tpkl);
+
   printf("  done\n");
   printf("--------------------------\n");
 }
@@ -646,6 +1026,97 @@ void test_standardize() {
   printf("--------------------------\n");
 }
 
+void test_get_mol_frags() {
+  printf("--------------------------\n");
+  printf("  test_get_mol_frags\n");
+  char *mpkl;
+  char *smi;
+  size_t mpkl_size;
+  size_t *frags_pkl_sz_array = NULL;
+  size_t num_frags = 0;
+  char **frags_mpkl_array = NULL;
+  char *mappings_json = NULL;
+  size_t i;
+
+  mpkl = get_mol("n1ccccc1.CC(C)C.OCCCN", &mpkl_size, "");
+  const char *expected_frag_smiles[] = {"c1ccncc1", "CC(C)C", "NCCCO"};
+  const char *expected_frag_smiles_non_sanitized[] = {"CN(C)(C)C", "c1ccc1"};
+  const char *expected_mappings =
+      "{\"frags\":[0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],\"fragsMolAtomMapping\":[[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]]}";
+
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags, "", NULL);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(num_frags == 3);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+
+  frags_mpkl_array = get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array,
+                                   &num_frags, "", &mappings_json);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(mappings_json);
+  assert(num_frags == 3);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+  assert(!strcmp(mappings_json, expected_mappings));
+  free(mappings_json);
+  mappings_json = NULL;
+  free(mpkl);
+  mpkl = NULL;
+
+  mpkl = get_mol("N(C)(C)(C)C.c1ccc1", &mpkl_size, "{\"sanitize\":false}");
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags, "", NULL);
+  assert(!frags_mpkl_array);
+  assert(!frags_pkl_sz_array);
+  assert(num_frags == 0);
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags,
+                    "{\"sanitizeFrags\":false}", NULL);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(num_frags == 2);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles_non_sanitized[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+  free(mpkl);
+  mpkl = NULL;
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -662,5 +1133,6 @@ int main() {
   test_modifications();
   test_coords();
   test_standardize();
+  test_get_mol_frags();
   return 0;
 }

@@ -24,14 +24,27 @@ else()
   SET(COPY_CMD cp -p ${COPY_SOURCE} ${COPY_DEST})
 endif()
 
-# Coax SWIG into playing nicely with Apple environments
-if(APPLE)
+# Coax SWIG into playing nicely with Apple/ARM environments
+set(HAS_ARM_PROC FALSE)
+string(TOLOWER ${CMAKE_SYSTEM_PROCESSOR} LOWERCASE_SYS_PROC)
+if(LOWERCASE_SYS_PROC MATCHES "arm")
+  set(HAS_ARM_PROC TRUE)
+endif()
+# Based on https://github.com/mono/mono/blob/5d2e3bc3b3c8184d35b2f7801e88d96470d367c4/mcs/mcs/settings.cs#L54
+# Mono seems to only support 32-bit ARM
+if(APPLE OR HAS_ARM_PROC)
   SET(CMAKE_SIZEOF_VOID_P 4)
-endif(APPLE)
+endif()
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap")
+  if(HAS_ARM_PROC)
+    SET(PLATFORM "arm")
+  else()
+    SET(PLATFORM "x86")
+  endif()
 else()
+  SET(PLATFORM "x64")
   if (WIN32)
     SET(CMAKE_SWIG_FLAGS -namespace "GraphMolWrap")
   else()
@@ -89,7 +102,7 @@ if(NOT MSVC)
      COMMAND ${CMAKE_COMMAND} -E make_directory swig_csharp
 
      ## 1. run this custom command only after swig has been run.
-     COMMAND ${GMCS_EXE} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
+     COMMAND ${GMCS_EXE} -platform:${PLATFORM} -out:RDKit2DotNet.dll -t:library "swig_csharp/*.cs"
        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
      DEPENDS "${swig_generated_file_fullname}"
    )

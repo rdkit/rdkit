@@ -383,6 +383,11 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
 double copySign(double to, double from, double tol) {
   return (from < -tol ? -fabs(to) : fabs(to));
 }
+
+struct ThetaBin {
+  double d_thetaAvg = 0.0;
+  std::vector<double> thetaValues;
+};
 }  // namespace DepictorLocal
 
 void computeInitialCoords(RDKit::ROMol &mol,
@@ -840,18 +845,19 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
                                         25, true, forceRDKit);
 }
 
-void straightenDepiction(RDKit::ROMol &mol, int confId) {
+void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
+  if (!mol.getNumBonds()) {
+    return;
+  }
   constexpr double RAD2DEG = 180. / M_PI;
   constexpr double DEG2RAD = M_PI / 180.;
+  constexpr double ALMOST_ZERO = 1.e-5;
   constexpr double INCR_DEG = 30.;
   constexpr double HALF_INCR_DEG = 0.5 * INCR_DEG;
-  constexpr double TOL_DEG = 5.0;
-  constexpr double ALMOST_ZERO = 1.e-5;
+  constexpr double QUARTER_INCR_DEG = 0.25 * INCR_DEG;
   auto &conf = mol.getConformer(confId);
   auto &pos = conf.getPositions();
-  std::unordered_map<int, std::pair<unsigned int, double>> thetaBins;
-  std::vector<double> thetaValues;
-  thetaValues.reserve(mol.getNumBonds());
+  std::unordered_map<int, DepictorLocal::ThetaBin> thetaBins;
   for (const auto b : mol.bonds()) {
     auto bi = b->getBeginAtomIdx();
     auto ei = b->getEndAtomIdx();
@@ -865,60 +871,64 @@ void straightenDepiction(RDKit::ROMol &mol, int confId) {
     }
     int thetaKey = static_cast<int>(
         d_theta + DepictorLocal::copySign(0.5, d_theta, ALMOST_ZERO));
-    auto it = thetaBins.find(thetaKey);
-    if (it == thetaBins.end()) {
-      it = thetaBins.emplace(thetaKey, std::make_pair(0U, 0.0)).first;
-    }
-    ++it->second.first;
-    it->second.second += d_theta;
-    thetaValues.push_back(theta);
+    auto &thetaBin = thetaBins[thetaKey];
+    thetaBin.d_thetaAvg += d_theta;
+    thetaBin.thetaValues.push_back(theta);
   }
-  unsigned int maxCount = 0;
-  double d_thetaMin = 0.;
-  for (const auto &it : thetaBins) {
-    const auto count = it.second.first;
-    const auto d_thetaAvg = it.second.second / static_cast<double>(count);
-    if (count > maxCount ||
-        (count == maxCount && fabs(d_thetaAvg) < fabs(d_thetaMin))) {
-      maxCount = count;
-      d_thetaMin = d_thetaAvg;
+  CHECK_INVARIANT(!thetaBins.empty(), "");
+  double d_thetaSmallest = std::numeric_limits<double>::max();
+  for (auto &it : thetaBins) {
+    auto &thetaBin = it.second;
+    thetaBin.d_thetaAvg /= static_cast<double>(thetaBin.thetaValues.size());
+    if (fabs(thetaBin.d_thetaAvg) < fabs(d_thetaSmallest)) {
+      d_thetaSmallest = thetaBin.d_thetaAvg;
     }
   }
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-lambda-capture"
-#endif
-  unsigned int n30 =
-      std::count_if(thetaValues.begin(), thetaValues.end(),
-                    [d_thetaMin, INCR_DEG, TOL_DEG](double theta) {
-                      theta += d_thetaMin;
-                      return (fabs(fmod(theta, INCR_DEG)) < TOL_DEG);
-                    });
-  unsigned int n60 = std::count_if(
-      thetaValues.begin(), thetaValues.end(),
-      [d_thetaMin, INCR_DEG, TOL_DEG, ALMOST_ZERO](double theta) {
-        theta += d_thetaMin;
-        return (fabs(fmod(theta, INCR_DEG)) < TOL_DEG &&
-                !(abs(static_cast<int>(
-                      theta / INCR_DEG +
-                      DepictorLocal::copySign(0.5, theta, ALMOST_ZERO))) %
-                  2));
-      });
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-  bool shouldRotate = (n60 > n30 / 2);
-  if (shouldRotate) {
-    d_thetaMin -= DepictorLocal::copySign(INCR_DEG, d_thetaMin, ALMOST_ZERO);
+  const auto &minRotationBin =
+      std::max_element(
+          thetaBins.begin(), thetaBins.end(),
+          [](const auto &a, const auto &b) {
+            const auto &aBin = a.second;
+            const auto &bBin = b.second;
+            return (aBin.thetaValues.size() < bBin.thetaValues.size() ||
+                    (aBin.thetaValues.size() == bBin.thetaValues.size() &&
+                     fabs(aBin.d_thetaAvg) > fabs(bBin.d_thetaAvg)));
+          })
+          ->second;
+  double d_thetaMin = minRotationBin.d_thetaAvg;
+  // unless we want to preserve as much as possible the initial orientation,
+  // we try to orient the molecule such that the majority of bonds have
+  // an angle of 30 or 90 degrees with the X axis
+  if (!minimizeRotation) {
+    unsigned int count60vs30[2] = {0, 0};
+    for (auto theta : minRotationBin.thetaValues) {
+      theta += d_thetaMin;
+      auto idx = static_cast<unsigned int>((fabs(theta) + 0.5) / INCR_DEG) % 2;
+      CHECK_INVARIANT(idx < 2, "");
+      ++count60vs30[idx];
+    }
+    if (count60vs30[0] > count60vs30[1]) {
+      d_thetaMin -= DepictorLocal::copySign(INCR_DEG, d_thetaMin, ALMOST_ZERO);
+    }
+  } else if (fabs(d_thetaSmallest) < ALMOST_ZERO ||
+             (fabs(d_thetaSmallest) < fabs(d_thetaMin) &&
+              fabs(d_thetaMin) > QUARTER_INCR_DEG)) {
+    d_thetaMin = d_thetaSmallest;
   }
-  d_thetaMin *= DEG2RAD;
-  RDGeom::Transform3D trans;
-  trans.SetRotation(d_thetaMin, RDGeom::Z_Axis);
-  MolTransforms::transformConformer(conf, trans);
+  if (fabs(d_thetaMin) > ALMOST_ZERO) {
+    d_thetaMin *= DEG2RAD;
+    RDGeom::Transform3D trans;
+    trans.SetRotation(d_thetaMin, RDGeom::Z_Axis);
+    MolTransforms::transformConformer(conf, trans);
+  }
 }
 
 double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
                           double scaleFactor) {
+  constexpr double SCALE_FACTOR_THRESHOLD = 1.e-5;
+  if (!mol.getNumBonds()) {
+    return -1.;
+  }
   auto &conf = mol.getConformer(confId);
   if (scaleFactor < 0.0) {
     constexpr double RDKIT_BOND_LEN = 1.5;
@@ -941,7 +951,7 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
         mostCommonBondLengthInt = it->first;
       }
     }
-    if (!binnedBondLengths.empty()) {
+    if (mostCommonBondLengthInt > 0) {
       double mostCommonBondLength =
           static_cast<double>(mostCommonBondLengthInt) * 0.1;
       scaleFactor = RDKIT_BOND_LEN / mostCommonBondLength;
@@ -957,7 +967,8 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
       *canonTrans *= rotate90;
     }
   }
-  if (scaleFactor > 0. && fabs(scaleFactor - 1.0) > 1.e-5) {
+  bool isScaleFactorSane = (scaleFactor > SCALE_FACTOR_THRESHOLD);
+  if (isScaleFactorSane && fabs(scaleFactor - 1.0) > SCALE_FACTOR_THRESHOLD) {
     RDGeom::Transform3D trans;
     trans.setVal(0, 0, scaleFactor);
     trans.setVal(1, 1, scaleFactor);
@@ -967,6 +978,9 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
     MolTransforms::transformConformer(conf, trans);
   } else if (canonTrans) {
     MolTransforms::transformConformer(conf, *canonTrans);
+  }
+  if (!isScaleFactorSane) {
+    scaleFactor = -1.;
   }
   return scaleFactor;
 }

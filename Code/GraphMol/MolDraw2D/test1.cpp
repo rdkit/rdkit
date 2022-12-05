@@ -73,11 +73,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub781_4.svg", 3233389060U},
     {"testGithub781_5.svg", 2840696942U},
     {"testGithub781_6.svg", 1059414825U},
-    {"test3_1.svg", 117069184U},
-    {"test3_2.svg", 1101788190U},
-    {"test3_3.svg", 1727802358U},
-    {"test3_4.svg", 1619875411U},
-    {"test3_5.svg", 3399123485U},
+    {"test3_1.svg", 221601591U},
+    {"test3_2.svg", 2826777428U},
+    {"test3_3.svg", 3967096277U},
+    {"test3_4.svg", 1410409071U},
+    {"test3_5.svg", 2728740111U},
     {"test3_6.svg", 82246362U},
     {"test3_7.svg", 4201014991U},
     {"test774_1.svg", 4220057526U},
@@ -126,7 +126,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test14_1.svg", 2669342367U},
     {"test14_2.svg", 902224808U},
     {"test15_1.svg", 1167031482U},
-    {"test15_2.svg", 3445914843U},
+    {"test15_2.svg", 1530255989U},
     {"test17_1.svg", 1112286411U},
     {"test17_2.svg", 2371426213U},
     {"test17_3.svg", 1602313633U},
@@ -158,7 +158,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test21_1.svg", 3363530709U},
     {"test21_2.svg", 3470002858U},
     {"test22_1.svg", 3716192373U},
-    {"test22_2.svg", 1926484323U},
+    {"test22_2.svg", 3812042529U},
     {"testGithub3112_1.svg", 3236038294U},
     {"testGithub3112_2.svg", 1810059147U},
     {"testGithub3112_3.svg", 135218742U},
@@ -166,8 +166,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_1.svg", 3716192373U},
     {"testGithub3305_2.svg", 3910798383U},
     {"testGithub3305_3.svg", 2665156605U},
-    {"testGithub3305_4.svg", 3399123485U},
-    {"testGithub3305_5.svg", 145752240U},
+    {"testGithub3305_4.svg", 2728740111U},
+    {"testGithub3305_5.svg", 1179617427U},
     {"testGithub3305_6.svg", 1519168307U},
     {"testGithub3305_7.svg", 1630290653U},
     {"testGithub3391_1.svg", 288775907U},
@@ -204,11 +204,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub781_4.svg", 1077101569U},
     {"testGithub781_5.svg", 2840696942U},
     {"testGithub781_6.svg", 2700448827U},
-    {"test3_1.svg", 3193103060U},
-    {"test3_2.svg", 1208940926U},
-    {"test3_3.svg", 3891591336U},
-    {"test3_4.svg", 2990742555U},
-    {"test3_5.svg", 835322792U},
+    {"test3_1.svg", 1363605249U},
+    {"test3_2.svg", 2318238862U},
+    {"test3_3.svg", 4168477373U},
+    {"test3_4.svg", 1709145620U},
+    {"test3_5.svg", 964166328U},
     {"test3_6.svg", 256911461U},
     {"test3_7.svg", 66698678U},
     {"test774_1.svg", 2029651525U},
@@ -257,7 +257,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test14_1.svg", 1475926171U},
     {"test14_2.svg", 3223472512U},
     {"test15_1.svg", 325436032U},
-    {"test15_2.svg", 331787094U},
+    {"test15_2.svg", 352325982U},
     {"test17_1.svg", 1811940907U},
     {"test17_2.svg", 3757523250U},
     {"test17_3.svg", 2059010246U},
@@ -287,7 +287,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test20_3.svg", 968052569U},
     {"test20_4.svg", 2298201486U},
     {"test22_1.svg", 3716192373U},
-    {"test22_2.svg", 2843125073U},
+    {"test22_2.svg", 3258508270U},
     {"testGithub3112_1.svg", 2613843920U},
     {"testGithub3112_2.svg", 3639942551U},
     {"testGithub3112_3.svg", 1107662781U},
@@ -295,7 +295,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub3305_1.svg", 3716192373U},
     {"testGithub3305_2.svg", 3910798383U},
     {"testGithub3305_3.svg", 2665156605U},
-    {"testGithub3305_4.svg", 835322792U},
+    {"testGithub3305_4.svg", 964166328U},
     {"testGithub3305_5.svg", 4136341695U},
     {"testGithub3305_6.svg", 427385222U},
     {"testGithub3305_7.svg", 4144134285U},
@@ -319,13 +319,13 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"test2_1.png", 787928860U},
+    {"test2_1.png", 2505713963U},
     {"test2_2.png", 4058920248U},
     {"test2_3.png", 2179746375U},
     {"test4_1.png", 1924202631U},
     {"test5_1.png", 2116545562U},
     {"test5_2.png", 1519942634U},
-    {"test5_3.png", 2737461377U},
+    {"test5_3.png", 3266389887U},
     {"test7_1.png", 3331950391U},
     {"test7_2.png", 1686496331U},
     {"test3_1.png", 1578780280U},
@@ -335,15 +335,15 @@ static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
     {"test3_5.png", 411486117U},
     {"test3_6.png", 2817453573U},
     {"test3_7.png", 285272009U},
-    {"test774_1.png", 2404098842U},
-    {"test774_2.png", 1398436991U},
-    {"test852_1.png", 2995698912U},
-    {"test852_2.png", 3729374135U},
+    {"test774_1.png", 930347428U},
+    {"test774_2.png", 1089219024U},
+    {"test852_1.png", 4140960740U},
+    {"test852_2.png", 4294133823U},
     {"test860_1.png", 1000110983U},
     {"test860_2.png", 4079976606U},
     {"test860_3.png", 1675954369U},
     {"test20_1.png", 221585048U},
-    {"test20_2.png", 491001781U},
+    {"test20_2.png", 1113799362U},
     {"test20_3.png", 1764616972U},
     {"test20_4.png", 781264160U},
     {"testGithub3305_1.png", 316930677U},
@@ -2601,14 +2601,14 @@ void test12DrawMols() {
 
 void test13JSONConfig() {
   std::cerr << " ----------------- Test JSON Configuration" << std::endl;
+  auto m = "CCO"_smiles;
+  TEST_ASSERT(m);
+  const char *json =
+      "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
+      "\"bondLineWidth\": 5}";
+  MolDraw2DUtils::prepareMolForDrawing(*m);
   {
-    auto m = "CCO"_smiles;
-    TEST_ASSERT(m);
-    MolDraw2DUtils::prepareMolForDrawing(*m);
     MolDraw2DSVG drawer(250, 200);
-    const char *json =
-        "{\"legendColour\":[1.0,0.5,1.0], \"rotate\": 90, "
-        "\"bondLineWidth\": 5}";
     MolDraw2DUtils::updateDrawerParamsFromJSON(drawer, json);
     drawer.drawMolecule(*m, "foo");
     drawer.finishDrawing();
@@ -2633,6 +2633,31 @@ void test13JSONConfig() {
     // drawing, and at this size this comes out as 5px.
     TEST_ASSERT(text.find("stroke-width:5.0px") != std::string::npos);
     check_file_hash("test13_1.svg");
+  }
+  {
+    MolDraw2DSVG drawer(250, 200);
+    MolDrawOptions opts;
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
+    drawer.drawOptions() = opts;
+    drawer.drawMolecule(*m, "foo");
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+#if DO_TEST_ASSERT
+    // we'll just have to assume that this pink is for the legend
+    TEST_ASSERT(text.find("' fill='#FF7FFF") != std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 121.1,8.2"
+                          " L 164.6,83.6'") != std::string::npos);
+#endif
+#else
+    TEST_ASSERT(text.find("sans-serif;text-anchor:start;fill:#FF7FFF") !=
+                std::string::npos);
+    TEST_ASSERT(text.find("<path class='bond-0 atom-0 atom-1' d='M 119.8,8.2"
+                          " L 162.1,81.5'") != std::string::npos);
+#endif
+    // these days the bond line width scales with the rest of the
+    // drawing, and at this size this comes out as 5px.
+    TEST_ASSERT(text.find("stroke-width:5.0px") != std::string::npos);
   }
   std::cerr << " Done" << std::endl;
 }
@@ -4327,12 +4352,20 @@ void testGithub3305() {
       outs.flush();
       outs.close();
 #if DO_TEST_ASSERT
+#if RDK_BUILD_FREETYPE_SUPPORT
+      // the new convex hull algorithm for the highlights puts the points out
+      // in a different order with FT and no FT, rather irritatingly.  The
+      // shape is the same.
       std::regex regex(
           R"regex(class='bond-6 atom-6 atom-7' d='M 131.\d+,120.\d+ L 149.\d+,120.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
+#else
+      std::regex regex(
+          R"regex(class='bond-6 atom-6 atom-7' d='M 149.\d+,120.\d+ L 138.\d+,139.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
+#endif
       std::smatch bondMatch;
       TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
 #endif
-      check_file_hash(nameBase + "5.svg");
+      //      check_file_hash(nameBase + "5.svg");
     }
     options.continuousHighlight = false;
 #ifdef RDK_BUILD_CAIRO_SUPPORT

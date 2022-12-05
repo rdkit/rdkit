@@ -2144,12 +2144,17 @@ void testSingleAtomBridge() {
   it = rows.begin();
   CHECK_RGROUP(it, expected);
 
+  // Now that issue 4505 (Cores with query atoms may fail to R-group-decompose
+  // molecules) is resolved this will match with no substitution for R3
   core = "C1([*:1])C([*:2])*([*:3])C1"_smiles;
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp5(*core, params);
   mol = "C1OC2NC12"_smiles;
   res = decomp5.add(*mol);
-  TEST_ASSERT(res == -1);
+  TEST_ASSERT(res == 0);
+  TEST_ASSERT(rows.size() == 1)
+  it = rows.begin();
+  CHECK_RGROUP(it, expected);
 }
 
 void testAddedRGroupsHaveCoords() {
@@ -2858,7 +2863,7 @@ M  END
   RGroupDecompositionParameters params;
   params.matchingStrategy = GreedyChunks;
   RGroupDecomposition decomp(*core, params);
-  for (const auto smiles : smiArray) {
+  for (const auto &smiles : smiArray) {
     ROMol *mol = SmilesToMol(smiles);
     int res = decomp.add(*mol);
     TEST_ASSERT(res >= 0);
@@ -2869,13 +2874,572 @@ M  END
   std::cerr << "Best mapping" << std::endl;
   RGroupRows rows = decomp.getRGroupsAsRows();
   TEST_ASSERT(rows.size() == 11);
-  for (const auto row : rows) {
+  for (const auto &row : rows) {
     TEST_ASSERT(row.size() == 2);
     TEST_ASSERT(row.count("Core") == 1);
     TEST_ASSERT(row.count("R1") == 1);
     auto mol = row.at("R1");
     auto groupSmiles = MolToSmiles(*mol);
     TEST_ASSERT(groupSmiles == "CO[*:1]");
+  }
+}
+
+void testGithub5569() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that Github5269 is fixed" << std::endl;
+  auto core = R"CTAB(
+ChemDraw09152209202D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+    0.0001    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7144    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7144   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0001   -0.8250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7144   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7144    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0      
+  2  3  1  0      
+  3  4  1  0      
+  4  5  1  0      
+  5  6  1  0      
+  6  1  1  0      
+M  END
+)CTAB"_ctab;
+
+  auto test = R"CTAB(
+     RDKit          2D
+
+ 20 21  0  0  0  0  0  0  0  0999 V2000
+   -2.6437    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6438    0.1125    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2148    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5003    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2141    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9286    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3692    2.3459    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7975    2.3459    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6438   -0.7125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582   -1.1250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582   -1.9500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6438   -2.3625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293   -1.9500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293   -1.1250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2271   -2.9459    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0604   -2.9459    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  1  1  0
+  6  7  1  0
+  7  8  1  0
+  8  9  1  0
+  9 10  1  0
+  9 11  1  0
+  9 12  1  0
+  4 13  1  0
+ 13 14  1  0
+ 14 15  1  0
+ 15 16  1  0
+ 16 17  1  0
+ 17 18  1  0
+ 18 13  1  0
+ 16 19  1  0
+ 16 20  1  0
+M  END
+)CTAB"_ctab;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  RGroupDecomposition decomp(*core, params);
+  decomp.add(*test);
+
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  auto r2 = rows[0]["R2"];
+  auto match = std::find_if(r2->atoms().begin(), r2->atoms().end(),
+                            [](Atom *a) { return a->getAtomicNum() == 0; });
+  auto dummy = *match;
+  int neighborIndex = *r2->getAtomNeighbors(dummy).first;
+  auto conf = r2->getConformer();
+  auto p1 = conf.getAtomPos(dummy->getIdx());
+  auto p2 = conf.getAtomPos(neighborIndex);
+  auto length = (p1 - p2).length();
+  TEST_ASSERT(abs(length - 1.0) < 0.25);
+}
+
+void testMultipleGroupsToUnlabelledCoreAtomGithub5573() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test that Github5573 is fixed" << std::endl;
+  auto core = R"CTAB(
+  Mrv2008 09172211422D          
+
+  8  8  0  0  0  0            999 V2000
+   -7.2098   -3.1928    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.9243   -3.6053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.9243   -4.4304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.2098   -4.8429    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.4954   -4.4304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.4954   -3.6053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.7809   -4.8429    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.0664   -4.4304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+  auto test = R"CTAB(
+  Mrv2008 09172211422D          
+
+ 10 10  0  0  0  0            999 V2000
+   -2.6437    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3582    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6438    0.1125    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9293    1.3500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.1730    1.4791    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5085    2.1612    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2148    0.1125    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5004    0.5250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  1  1  0  0  0  0
+  2  7  1  0  0  0  0
+  2  8  1  0  0  0  0
+  5  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = true;
+  RGroupDecomposition decomp(*core, params);
+  auto result = decomp.add(*test);
+  TEST_ASSERT(result == 0);
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 1)
+  auto row = rows[0];
+  std::string expected("Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]");
+  RGroupRows::const_iterator it = rows.begin();
+  CHECK_RGROUP(it, expected);
+}
+
+void testGithub4505() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test GitHub 4505 is fixed" << std::endl;
+  {
+    // this is the first example from issue 5505- I have changed it so that the
+    // molecule is not an exact match to the core (if no sidechains are found
+    // the decomposition fails)
+    auto core = "[n]1([*:1])cc([*:2])ccc1"_smarts;
+    auto mol = "n1cc(OC)ccc1"_smiles;
+    RGroupDecompositionParameters params;
+    params.removeAllHydrogenRGroups = false;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected("Core:c1cncc([*:2])c1 R2:CO[*:2]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+  }
+  {
+    // This is the second example from issue 5505.  The core is not listed in
+    // the example code so this is my guess
+    auto core = "[#6]([*:1])([*:2])~1~[#6]~[#6]~[#6]~[#6]~[#6]~1"_smarts;
+    auto mol = "C=1(C)CCCCC1"_smiles;
+    RGroupDecompositionParameters params;
+    params.removeAllHydrogenRGroups = false;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected("Core:C1=C([*:1])CCCC1 R1:C[*:1]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+  }
+}
+
+void testMultipleGroupsToUnlabelledCoreAtom() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog) << "Test unlabelled core atom issues" << std::endl;
+
+  {
+    // Smiles/smarts version of github 5573
+    auto core = "[#6]-[#8]-[#6]-1-[#6]-[#6]-[#6]-[#6]-[#7]-1"_smarts;
+    auto mol = "COC1CCC(C)(C)CN1"_smiles;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected("Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+  }
+  {
+    // Check that sidechains cluster properly
+    auto core = "[#6]-[#8]-[#6]-1-[#7]-[#6]-[#6]-[#6]-[*]-1"_smarts;
+    std::vector<std::string> smilesVec{"COC1CCC(C)(C)CN1", "COC1NCC(C)(C)CO1",
+                                       "COC1NCC(C)(C)CN1"};
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.matchingStrategy = Exhaustive;
+    params.scoreMethod = FingerprintVariance;
+    RGroupDecomposition decomp(*core, params);
+    for (auto smiles : smilesVec) {
+      auto mol = SmilesToMol(smiles);
+      auto result = decomp.add(*mol);
+      TEST_ASSERT(result > -1);
+    }
+    decomp.process();
+    auto rows = decomp.getRGroupsAsRows();
+    std::vector<std::string> expected{
+        "Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]",
+        "Core:COC1NCC([*:1])([*:2])CO1 R1:C[*:1] R2:C[*:2]",
+        "Core:COC1NCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]"};
+    TEST_ASSERT(rows.size() == expected.size());
+    int i = 0;
+    for (auto row = rows.cbegin(); row != rows.cend(); ++row, ++i) {
+      CHECK_RGROUP(row, expected[i]);
+    }
+  }
+  {
+    // Check core with terminal wildcard - dummy atom labels allowed
+    auto core = "[*]-[#8]-[#6]-1-[#6]-[#6]-[#6]-[#6]-[#7]-1"_smarts;
+    auto mol = "COC1CCC(C)(C)CN1"_smiles;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.labels = DummyAtomLabels;
+    RGroupDecomposition decomp(*core, params);
+    auto result = decomp.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp.process();
+    RGroupRows rows = decomp.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    auto row = rows[0];
+    std::string expected(
+        "Core:C1CC([*:2])([*:3])CNC1O[*:1] R1:C[*:1] R2:C[*:2] R3:C[*:3]");
+    RGroupRows::const_iterator it = rows.begin();
+    CHECK_RGROUP(it, expected);
+    // Check core with terminal wildcard - dummy atom labels not allowed
+    params.labels = IsotopeLabels;
+    RGroupDecomposition decomp2(*core, params);
+    result = decomp2.add(*mol);
+    TEST_ASSERT(result == 0)
+    decomp2.process();
+    rows = decomp2.getRGroupsAsRows();
+    TEST_ASSERT(rows.size() == 1)
+    row = rows[0];
+    std::string expected2("Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]");
+    it = rows.begin();
+    CHECK_RGROUP(it, expected2);
+  }
+  {
+    // Check core with wildcard in ring
+    auto core = "[#6]-[#8]-[#6]-1-[#7]-[#6]-[#6]-[#6]-[*]-1"_smarts;
+    std::vector<std::string> smilesVec{"COC1CCC(C)(C)CN1", "COC1NCC(C)(C)CO1",
+                                       "COC1NCC(C)(C)CN1"};
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.matchingStrategy = Exhaustive;
+    params.scoreMethod = FingerprintVariance;
+    RGroupDecomposition decomp(*core, params);
+    for (auto smiles : smilesVec) {
+      auto mol = SmilesToMol(smiles);
+      auto result = decomp.add(*mol);
+      TEST_ASSERT(result > -1);
+    }
+    decomp.process();
+    auto rows = decomp.getRGroupsAsRows();
+    std::vector<std::string> expected{
+        "Core:COC1CCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]",
+        "Core:COC1NCC([*:1])([*:2])CO1 R1:C[*:1] R2:C[*:2]",
+        "Core:COC1NCC([*:1])([*:2])CN1 R1:C[*:1] R2:C[*:2]"};
+    TEST_ASSERT(rows.size() == expected.size());
+    int i = 0;
+    for (auto row = rows.cbegin(); row != rows.cend(); ++row, ++i) {
+      CHECK_RGROUP(row, expected[i]);
+    }
+  }
+}
+
+void testGitHub5631() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test that Github563 (proper placement of core R groups) is fixed"
+      << std::endl;
+  auto core = R"CTAB(
+     RDKit          2D
+
+ 12 12  0  0  0  0  0  0  0  0999 V2000
+   -3.4154    3.2137    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5903    3.2137    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1778    3.9282    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5903    4.6427    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.4154    4.6427    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8278    3.9282    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.6528    3.9282    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8278    2.4993    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3528    3.9282    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+   -5.0654    4.6427    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.6528    5.3572    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8904    4.6427    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  5  6  8  0
+  4  5  8  0
+  3  4  8  0
+  2  3  8  0
+  1  2  8  0
+  1  6  8  0
+  6  7  1  0
+  1  8  1  0
+  3  9  1  0
+  7 10  1  0
+ 10 11  2  0
+ 10 12  1  0
+M  ISO  3   8   2   9   3  12   1
+M  RGP  3   8   2   9   3  12   1
+M  END
+)CTAB"_ctab;
+
+  auto mol1 = R"CTAB(
+  -OEChem-02051811442D
+
+ 25 27  0     0  0  0  0  0  0999 V2000
+   -0.8675    0.4975    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8675    0.4975    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8675    1.5027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0000    2.0104    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8675    1.5027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7350    2.0001    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6070    1.5001    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4790    2.0002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4790    3.0002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6159    3.5053    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7439    3.0052    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3465    3.4976    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.3495    4.4976    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.4849    5.0002    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2170    4.9951    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1281    4.5828    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8007    5.3248    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.3049    6.1952    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3214    5.9901    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    6.7160    7.1067    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    7.7947    5.2157    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    1.7328   -0.0038    0.0000 N   0  3  0  0  0  0  0  0  0  0  0  0
+    1.7313   -1.0038    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5995    0.4950    0.0000 O   0  5  0  0  0  0  0  0  0  0  0  0
+  1  6  2  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  4  7  1  0  0  0  0
+  7 12  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 10 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  2  0  0  0  0
+ 14 16  1  0  0  0  0
+ 16 20  1  0  0  0  0
+ 16 17  2  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  2  0  0  0  0
+ 19 20  1  0  0  0  0
+ 19 21  1  0  0  0  0
+ 18 22  1  0  0  0  0
+  3 23  1  0  0  0  0
+ 23 24  2  0  0  0  0
+ 23 25  1  0  0  0  0
+M  CHG  2  23   1  25  -1
+M  END
+$$$$
+)CTAB"_ctab;
+
+  auto mol2 = R"CTAB(
+  -OEChem-02051811442D
+
+ 45 49  0     1  0  0  0  0  0999 V2000
+   -2.9472   -3.8597    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8765   -2.8622    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.6440   -2.2211    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2684   -1.2927    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2691   -1.3606    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0260   -2.3354    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6270   -0.5940    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9700    0.3454    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6420   -0.7667    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    0.0000    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    1.1236   -1.3417    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8675    0.4975    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8675    1.5027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    2.0104    0.0000 N   0  0  3  0  0  0  0  0  0  0  0  0
+    0.8675    1.5027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8675    0.4975    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    1.2077   -0.4429    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8525    0.6702    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1954    1.6096    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.0104    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8098    3.5999    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5017    4.5529    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4983    4.5516    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8122    3.6017    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0846    5.3617    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0793    5.2591    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6762    6.2745    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0895    5.3618    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0889    5.2537    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6768    6.0627    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2755    6.9786    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2762    7.0868    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.6781    6.2789    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.8669    7.7850    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8610    7.6760    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.4524    8.4824    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.4465    8.3734    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.0457    9.1803    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.0449    9.0708    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.4449    8.1542    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.8558    7.3461    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.8566    7.4557    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.4389    8.0452    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7990   -0.4450    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -4.6141   -2.4639    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  6  1  0  0  0  0
+  2  3  2  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  2  0  0  0  0
+  5  6  1  0  0  0  0
+  5  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+  7  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10 11  1  1  0  0  0
+ 10 16  1  0  0  0  0
+ 10 12  1  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 16 17  1  1  0  0  0
+ 16 18  1  0  0  0  0
+ 18 19  1  0  0  0  0
+ 14 20  1  0  0  0  0
+ 20 24  1  0  0  0  0
+ 20 21  2  0  0  0  0
+ 21 22  1  0  0  0  0
+ 22 23  2  0  0  0  0
+ 23 24  1  0  0  0  0
+ 23 25  1  0  0  0  0
+ 25 26  2  0  0  0  0
+ 25 27  1  0  0  0  0
+ 22 28  1  0  0  0  0
+ 28 33  2  0  0  0  0
+ 28 29  1  0  0  0  0
+ 29 30  2  0  0  0  0
+ 30 31  1  0  0  0  0
+ 31 32  2  0  0  0  0
+ 32 33  1  0  0  0  0
+ 31 34  1  0  0  0  0
+ 34 35  1  0  0  0  0
+ 35 36  1  0  0  0  0
+ 36 37  1  0  0  0  0
+ 37 42  1  0  0  0  0
+ 37 38  1  0  0  0  0
+ 38 39  1  0  0  0  0
+ 39 40  1  0  0  0  0
+ 40 41  1  0  0  0  0
+ 41 42  1  0  0  0  0
+ 40 43  1  0  0  0  0
+  4 44  1  0  0  0  0
+  3 45  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = false;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp(*core, params);
+  auto result = decomp.add(*mol1);
+  TEST_ASSERT(result == 0);
+  result = decomp.add(*mol2);
+  TEST_ASSERT(result == 1);
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  TEST_ASSERT(rows.size() == 2) {
+    auto coreRgd = rows[0]["Core"];
+    auto match = std::find_if(
+        coreRgd->atoms().begin(), coreRgd->atoms().end(), [](Atom *a) {
+          return a->getAtomicNum() == 0 && a->getAtomMapNum() == 2;
+        });
+    TEST_ASSERT(match != coreRgd->atoms().end());
+    auto dummy = *match;
+    auto neighbor = *coreRgd->atomNeighbors(dummy).begin();
+    auto &conf = coreRgd->getConformer();
+    auto &dummyPoint = conf.getAtomPos(dummy->getIdx());
+    auto &neighborPoint = conf.getAtomPos(neighbor->getIdx());
+    auto length = (dummyPoint - neighborPoint).length();
+    TEST_ASSERT(abs(length - 1.0) < 0.005);
+    // R2 dummy should be directly above neighbor
+    TEST_ASSERT(abs(dummyPoint.x - neighborPoint.x) < 0.05);
+  }
+
+  {
+    auto coreRgd = rows[1]["Core"];
+    auto match = std::find_if(
+        coreRgd->atoms().begin(), coreRgd->atoms().end(), [](const Atom *a) {
+          return a->getAtomicNum() == 0 && a->getAtomMapNum() == 2;
+        });
+    TEST_ASSERT(match != coreRgd->atoms().end());
+    auto dummy = *match;
+    auto &conf = coreRgd->getConformer();
+    auto &dummyPoint = conf.getAtomPos(dummy->getIdx());
+    // R2 dummy should be over input chiral oxygen, which is first oxygen of degree 2 in input mol block
+    auto &inputPoint = mol2->getConformer(0).getAtomPos(15);
+    TEST_ASSERT(abs(dummyPoint.x - inputPoint.x) < 0.05);
+    TEST_ASSERT(abs(dummyPoint.y - inputPoint.y) < 0.05);
   }
 }
 
@@ -2932,6 +3496,11 @@ int main() {
   testDoNotChooseUnrelatedCores();
   atomDegreePreconditionBug();
   testGithub5222();
+  testGithub5569();
+  testGithub4505();
+  testMultipleGroupsToUnlabelledCoreAtomGithub5573();
+  testMultipleGroupsToUnlabelledCoreAtom();
+  testGitHub5631();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

@@ -186,7 +186,7 @@ M  END""")
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText()
     # 4 molecules, 6 bonds each:
-    re_str = r"path class='bond-\d+ atom-\d+ atom-\d+' d='M \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ Z' style='fill:#FF7F7F;"
+    re_str = r"path class='bond-\d+ atom-\d+ atom-\d+' d='M \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ Z' style='fill:"
     patt = re.compile(re_str)
     self.assertEqual(len(patt.findall(svg)), 24)
     # 4 molecules, one atom each:
@@ -631,13 +631,23 @@ M  END''')
     nm = Chem.MolFromPNGString(txt)
     self.assertEqual(Chem.MolToSmiles(m), Chem.MolToSmiles(nm))
 
-  def testUpdateParamsFromJSON(self):
+  def testUpdateMolDrawOptionsAndDrawerParamsFromJSON(self):
     m = Chem.MolFromSmiles('c1ccccc1NC(=O)C1COC1')
     d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
     d2d.DrawMolecule(m)
     d2d.FinishDrawing()
     txt = d2d.GetDrawingText()
     self.assertFalse('>8</text>' in txt)
+
+    drawOptions = rdMolDraw2D.MolDrawOptions()
+    Draw.UpdateMolDrawOptionsFromJSON(drawOptions, '{"addAtomIndices": 1}')
+    self.assertTrue(drawOptions.addAtomIndices)
+    d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
+    d2d.SetDrawOptions(drawOptions)
+    d2d.DrawMolecule(m)
+    d2d.FinishDrawing()
+    txt = d2d.GetDrawingText()
+    self.assertTrue('>8</text>' in txt)
 
     d2d = Draw.MolDraw2DSVG(250, 200, -1, -1, True)
     Draw.UpdateDrawerParamsFromJSON(d2d, '{"addAtomIndices": 1}')

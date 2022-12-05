@@ -2,12 +2,29 @@ if(NOT RDK_BUILD_YAEHMOP_SUPPORT)
   return()
 endif(NOT RDK_BUILD_YAEHMOP_SUPPORT)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 add_definitions(-DRDK_BUILD_YAEHMOP_SUPPORT)
 
-include(ExternalProject)
+if(NOT DEFINED YAEHMOP_DIR)
+  set(YAEHMOP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/yaehmop")
+endif()
+
+if(NOT EXISTS "${YAEHMOP_DIR}/tightbind/bind.h")
+    set(RELEASE_NO "2022.09.1")
+    set(MD5 "2d5ee5b6b130529544565240597c602a")
+    downloadAndCheckMD5("https://github.com/greglandrum/yaehmop/archive/refs/tags/v${RELEASE_NO}.tar.gz"
+          "${CMAKE_CURRENT_SOURCE_DIR}/yaehmop-${RELEASE_NO}.tar.gz" ${MD5})
+    execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
+      ${CMAKE_CURRENT_SOURCE_DIR}/yaehmop-${RELEASE_NO}.tar.gz
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+    file(RENAME "yaehmop-${RELEASE_NO}" "${YAEHMOP_DIR}")
+else()
+  message("-- Found YAeHMOP source in ${YAEHMOP_DIR}")
+endif()
+
+set(yaehmop_INCLUDE_DIRS ${YAEHMOP_DIR}/..
+     CACHE STRING "yaehmop Include File" FORCE)
+include_directories(${yaehmop_INCLUDE_DIRS})
 
 if(CMAKE_COMPILER_IS_GNUCXX AND NOT CYGWIN)
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
@@ -16,34 +33,24 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
 endif()
 
-include_directories( ${RDKit_ExternalDir}/YAeHMOP )
+# bring in the eHT code, but skip the targets (we'll get yaehmop_eht anyway because it's a dependency)
+add_subdirectory(yaehmop/tightbind EXCLUDE_FROM_ALL True)
 
-ExternalProject_Add(yaehmop_project
-  GIT_REPOSITORY https://github.com/greglandrum/yaehmop.git
-  GIT_TAG master
-  UPDATE_COMMAND ""
-  PATCH_COMMAND ""
-  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}
-  SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/yaehmop"
-  SOURCE_SUBDIR "tightbind"
-  CMAKE_ARGS -DUSE_BLAS_LAPACK=OFF -DCMAKE_INSTALL_PREFIX=${PROJECT_BINARY_DIR} -DCMAKE_C_FLAGS=${CMAKE_C_FLAGS} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-  TEST_COMMAND "")
+# set install dir for the yaehmop library:
+INSTALL(TARGETS yaehmop_eht EXPORT rdkit-targets
+        DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
+        COMPONENT runtime )
 
-include_directories(${PROJECT_BINARY_DIR}/include)
-link_directories(${PROJECT_BINARY_DIR}/lib)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/yaehmop_project-build)
+
+
 
 set(EHT_PARAM_FILE ${CMAKE_CURRENT_SOURCE_DIR}/yaehmop/tightbind/eht_parms.dat )
 install(FILES ${EHT_PARAM_FILE}
         DESTINATION ${RDKit_ShareDir}/Data
         COMPONENT data)
 
-message("YAeHMOP include_dirs: ${PROJECT_BINARY_DIR}/include")
-message("YAeHMOP link_dirs: ${PROJECT_BINARY_DIR}/lib ${CMAKE_CURRENT_SOURCE_DIR}/src/yaehmop_project-build")
-
 rdkit_library(EHTLib EHTTools.cpp SHARED LINK_LIBRARIES yaehmop_eht GraphMol )
 target_compile_definitions(EHTLib PRIVATE RDKIT_EHTLIB_BUILD)
-add_dependencies(EHTLib yaehmop_project)
 rdkit_headers(EHTTools.h DEST GraphMol)
 rdkit_catch_test(testEHTLib1 test1.cpp
            LINK_LIBRARIES EHTLib FileParsers SmilesParse )

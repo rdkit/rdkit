@@ -53,6 +53,7 @@ option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 option(RDK_BUILD_MAEPARSER_SUPPORT "build the rdkit MAE parser wrapper" ON )
 option(RDK_BUILD_MOLINTERCHANGE_SUPPORT "build in support for CommonChem molecule interchange" ON )
 option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
+option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementation of xyz2mol (in the DetermineBonds library)" OFF )
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_USE_URF "Build support for Florian Flachsenberg's URF library" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
@@ -126,8 +127,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2022")
-set(RDKit_Month "09")
+set(RDKit_Year "2023")
+set(RDKit_Month "03")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
@@ -204,6 +205,17 @@ if(RDK_USE_URF)
   endif()
   include_directories(${RDKit_ExternalDir}/RingFamilies/RingDecomposerLib/src/RingDecomposerLib)
 endif()
+
+if(RDK_BUILD_XYZ2MOL_SUPPORT)
+    if(NOT RDK_BUILD_YAEHMOP_SUPPORT)
+        message("Enabling YAeHMOP support because xyz2mol is being built")
+        set(RDK_BUILD_YAEHMOP_SUPPORT ON)
+    endif()
+    add_definitions(-DRDK_BUILD_XYZ2MOL_SUPPORT)
+    include_directories(${RDKit_ExternalDir})
+endif()
+
+
 
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)

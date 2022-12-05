@@ -656,19 +656,19 @@ unsigned int get_label(const Atom *a, const MolzipParams &p) {
         idx = NOLABEL;
       }
       break;
-  
-    case MolzipLabel::FragmentOnBonds: 
-        // shouldn't ever get here
-        CHECK_INVARIANT(
-            0, "FragmentOnBonds is not an atom label, it is an atom index");
-        break;
-	
+
+    case MolzipLabel::FragmentOnBonds:
+      // shouldn't ever get here
+      CHECK_INVARIANT(
+          0, "FragmentOnBonds is not an atom label, it is an atom index");
+      break;
+
     case MolzipLabel::AtomProperty:
-        a->getPropIfPresent<unsigned int>(p.atomProperty, idx);
-        break;
+      a->getPropIfPresent<unsigned int>(p.atomProperty, idx);
+      break;
 
     default:
-        CHECK_INVARIANT(0, "bogus MolZipLabel value in MolZip::get_label");
+      CHECK_INVARIANT(0, "bogus MolZipLabel value in MolZip::get_label");
   }
   return idx;
 }
@@ -693,7 +693,9 @@ int num_swaps_to_interconvert(std::vector<unsigned int> &orders) {
       auto j = i;
       while (orders[j] != i) {
         j = orders[j];
-        CHECK_INVARIANT(j < orders.size(), "molzip: bond index outside of number of bonds for atom")
+        CHECK_INVARIANT(
+            j < orders.size(),
+            "molzip: bond index outside of number of bonds for atom")
         seen[j] = true;
         nswaps++;
       }
@@ -729,15 +731,15 @@ struct ZipBond {
           << "Incomplete atom labelling, cannot make bond" << std::endl;
       return false;
     }
-    
+
     // Fragment on bonds allows multiple links to the same atom
     // i.e. C.[1C].[1C]
     //  otherwise throw an invariant error
-    CHECK_INVARIANT(params.label == MolzipLabel::FragmentOnBonds || !a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx()),
-                  "molzip: zipped Bond already exists, perhaps labels are duplicated");
+    CHECK_INVARIANT(
+        params.label == MolzipLabel::FragmentOnBonds ||
+            !a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx()),
+        "molzip: zipped Bond already exists, perhaps labels are duplicated");
 
-
-    
     if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
       CHECK_INVARIANT(&a->getOwningMol() == &newmol,
                       "Owning mol is not the combined molecule!!");
@@ -748,7 +750,7 @@ struct ZipBond {
       auto bond_type_a = bnd->getBondType();
       auto bond_dir_a = bnd->getBondDir();
       auto a_is_start = bnd->getBeginAtom() == a;
-    
+
       bnd = newmol.getBondBetweenAtoms(b->getIdx(), b_dummy->getIdx());
       CHECK_INVARIANT(bnd != nullptr,
                       "molzip: end atom and specified dummy connection atom "
@@ -757,7 +759,7 @@ struct ZipBond {
 
       auto bond_dir_b = bnd->getBondDir();
       auto b_is_start = bnd->getBeginAtom() == b;
-      
+
       unsigned int bnd_idx = 0;
       // Fusion bond-dir logic table
       // a-* b-* => a-b
@@ -767,41 +769,44 @@ struct ZipBond {
       //  a>* b-* => a>b
       //  a-* b>* => a<b
       //  a-* b<* => a>b
-      Bond::BondDir bond_dir;
+      Bond::BondDir bond_dir{Bond::BondDir::NONE};
       auto start = a;
       auto end = b;
-      if(bond_dir_a != Bond::BondDir::NONE && bond_dir_b != Bond::BondDir::NONE) {
-          // are we consistent between the two bond orders
-          // check for the case of fragment on bonds where a<* and b>* or a>* and b<*
-          //  when < is either a hash or wedge bond but not both.
-          bool consistent_directions = false;
-          if(bond_dir_a == bond_dir_b) {
-              if((a_is_start != b_is_start)){
-                  consistent_directions = true;
-              }
+      if (bond_dir_a != Bond::BondDir::NONE &&
+          bond_dir_b != Bond::BondDir::NONE) {
+        // are we consistent between the two bond orders check for the case of
+        // fragment on bonds where a<* and b>* or a>* and b<* when < is either a
+        // hash or wedge bond but not both.
+        bool consistent_directions = false;
+        if (bond_dir_a == bond_dir_b) {
+          if ((a_is_start != b_is_start)) {
+            consistent_directions = true;
           }
-          if(!consistent_directions) {
-              BOOST_LOG(rdWarningLog) << "inconsistent bond directions when merging fragments, ignoring..." << std::endl;
-              bond_dir_a = bond_dir_b = Bond::BondDir::NONE;
-          } else {
-              bond_dir_b = Bond::BondDir::NONE;
-          }
+        }
+        if (!consistent_directions) {
+          BOOST_LOG(rdWarningLog)
+              << "inconsistent bond directions when merging fragments, ignoring..."
+              << std::endl;
+          bond_dir_a = bond_dir_b = Bond::BondDir::NONE;
+        } else {
+          bond_dir_b = Bond::BondDir::NONE;
+        }
       }
-        
+
       if (bond_dir_a != Bond::BondDir::NONE) {
-          if(!a_is_start) {
-              start = b;
-              end = a;
-          }
-          bond_dir = bond_dir_a;
+        if (!a_is_start) {
+          start = b;
+          end = a;
+        }
+        bond_dir = bond_dir_a;
       } else if (bond_dir_b != Bond::BondDir::NONE) {
-          if(b_is_start) {
-            start = b;
-            end = a;
-          }
-          bond_dir = bond_dir_b;
+        if (b_is_start) {
+          start = b;
+          end = a;
+        }
+        bond_dir = bond_dir_b;
       }
-    
+
       if (bond_type_a != Bond::BondType::SINGLE) {
         bnd_idx = newmol.addBond(start, end, bond_type_a);
       } else if (bond_type_b != Bond::BondType::SINGLE) {
@@ -809,9 +814,8 @@ struct ZipBond {
       } else {
         bnd_idx = newmol.addBond(start, end, Bond::BondType::SINGLE);
       }
-        
-      newmol.getBondWithIdx(bnd_idx-1)->setBondDir(bond_dir);
 
+      newmol.getBondWithIdx(bnd_idx - 1)->setBondDir(bond_dir);
     }
     a_dummy->setProp("__molzip_used", true);
     b_dummy->setProp("__molzip_used", true);

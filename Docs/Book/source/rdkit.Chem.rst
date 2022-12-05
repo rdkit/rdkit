@@ -35,7 +35,6 @@ Submodules
    rdkit.Chem.ChemicalFeatures
    rdkit.Chem.ChemicalForceFields
    rdkit.Chem.Crippen
-   rdkit.Chem.DSViewer
    rdkit.Chem.Descriptors
    rdkit.Chem.Descriptors3D
    rdkit.Chem.EnumerateHeterocycles
@@ -63,6 +62,7 @@ Submodules
    rdkit.Chem.Randomize
    rdkit.Chem.Recap
    rdkit.Chem.ReducedGraphs
+   rdkit.Chem.RegistrationHash
    rdkit.Chem.SATIS
    rdkit.Chem.SaltRemover
    rdkit.Chem.ShowMols
@@ -97,7 +97,6 @@ Submodules
    rdkit.Chem.rdSubstructLibrary
    rdkit.Chem.rdfiltercatalog
    rdkit.Chem.rdfragcatalog
-   rdkit.Chem.rdStructChecker
    rdkit.Chem.rdMolDescriptors
    rdkit.Chem.rdFingerprintGenerator
    rdkit.Chem.rdMHFPFingerprint
@@ -108,6 +107,7 @@ Submodules
    rdkit.Chem.rdCIPLabeler
    rdkit.Chem.rdTautomerQuery
    rdkit.Chem.rdEHTTools
+   rdkit.Chem.rdDetermineBonds
 
 Module contents
 ---------------

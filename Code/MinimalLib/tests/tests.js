@@ -52,7 +52,7 @@ function test_basics() {
     assert.equal(descrs.amw,94.11299);
 
     var checkStringBinaryFpIdentity = (stringFp, binaryFp) => {
-        assert.equal(binaryFp.length, stringFp.length / 8);
+        assert.equal(binaryFp.length, Math.ceil(stringFp.length / 8));
         for (var i = 0, c = 0; i < binaryFp.length; ++i) {
             var byte = 0;
             for (var j = 0; j < 8; ++j, ++c) {
@@ -75,11 +75,6 @@ function test_basics() {
         assert.equal((fp2.match(/1/g)||[]).length, 3);
         var fp2Uint8Array = mol.get_morgan_fp_as_uint8array(JSON.stringify({ radius: 0, nBits: 512 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
-        var fp3 = mol.get_morgan_fp(0, 512);
-        assert.equal(fp3.length, 512);
-        assert.equal((fp3.match(/1/g)||[]).length, 3);
-        var fp3Uint8Array = mol.get_morgan_fp_as_uint8array(0, 512);
-        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
     }
 
     {
@@ -93,12 +88,7 @@ function test_basics() {
         assert.equal((fp2.match(/1/g)||[]).length, 65);
         var fp2Uint8Array = mol.get_pattern_fp_as_uint8array(JSON.stringify({ nBits: 256 }));
         checkStringBinaryFpIdentity(fp2, fp2Uint8Array);
-        var fp3 = mol.get_pattern_fp(256);
-        assert.equal(fp3.length, 256);
-        assert.equal((fp3.match(/1/g)||[]).length, 65);
-        var fp3Uint8Array = mol.get_pattern_fp_as_uint8array(256);
-        checkStringBinaryFpIdentity(fp3, fp3Uint8Array);
-    }
+   }
 
     {
         var fp1 = mol.get_topological_torsion_fp();
@@ -157,6 +147,14 @@ function test_basics() {
         assert.equal((fp4.match(/1/g)||[]).length, 12);
         var fp4Uint8Array = mol.get_atom_pair_fp_as_uint8array(JSON.stringify({ nBits: 512, minLength: 2, maxLength: 3 }));
         checkStringBinaryFpIdentity(fp4, fp4Uint8Array);
+    }
+
+    {
+        var fp1 = mol.get_maccs_fp();
+        assert.equal(fp1.length, 167);
+        assert.equal((fp1.match(/1/g)||[]).length, 10);
+        var fp1Uint8Array = mol.get_maccs_fp_as_uint8array();
+        checkStringBinaryFpIdentity(fp1, fp1Uint8Array);
     }
 
     if (typeof Object.getPrototypeOf(mol).get_avalon_fp === 'function') {
@@ -403,7 +401,7 @@ function test_generate_aligned_coords() {
     var mol = RDKitModule.get_mol(smiles);
     var template = "CC";
     var qmol = RDKitModule.get_mol(template);
-    assert.equal(mol.generate_aligned_coords(qmol, true), "");
+    assert.equal(mol.generate_aligned_coords(qmol, JSON.stringify({useCoordGen: true})), "");
 }
 
 function test_isotope_labels() {
@@ -465,18 +463,23 @@ M  END`;
     var biphenyl = RDKitModule.get_mol(biphenyl_smiles);
     var phenyl = RDKitModule.get_mol(phenyl_smiles);
     assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 9);
-    assert.equal(JSON.parse(ortho.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 8);
-    assert.equal(JSON.parse(meta.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 8);
-    assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 7);
-    assert.equal(JSON.parse(phenyl.generate_aligned_coords(
-        template_ref, false, true)).atoms.length, 6);
+        template_ref, JSON.stringify({ useCoordGen: false, allowRGroups: true}))).atoms.length, 9);
+    [ true, false ].forEach(alignOnly => {
+        var opts = JSON.stringify({ useCoordGen: false, allowRGroups: true, alignOnly })
+        assert.equal(JSON.parse(ortho_meta.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 9);
+        assert.equal(JSON.parse(ortho.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(meta.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 8);
+        assert.equal(JSON.parse(biphenyl.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 7);
+        assert.equal(JSON.parse(phenyl.generate_aligned_coords(
+            template_ref, opts)).atoms.length, 6);
+    });
 }
 
-function test_accept_failure() {
+function test_generate_aligned_coords_accept_failure() {
     var template_molblock = `
      RDKit          2D
 
@@ -528,14 +531,143 @@ M  END
 `;
     var template_ref = RDKitModule.get_mol(template_molblock);
     var mol = RDKitModule.get_mol(mol_molblock);
-    var hasThrown = false;
-    try {
-        mol.generate_aligned_coords(template_ref, false, true, false);
-    } catch (e) {
-        hasThrown = true;
-    }
-    assert(hasThrown);
+    var res = mol.generate_aligned_coords(template_ref, JSON.stringify({
+        useCoordGen: false,
+        allowRGroups: true,
+        acceptFailure: false
+    }));
+    assert(res === "");
     assert.equal(mol.get_molblock(), mol_molblock);
+    res = mol.generate_aligned_coords(template_ref, JSON.stringify({
+        useCoordGen: false,
+        allowRGroups: true,
+        acceptFailure: true,
+    }));
+    assert(res === "{}");
+    assert.notEqual(mol.get_molblock(), mol_molblock);
+    var molNoCoords = RDKitModule.get_mol(mol.get_smiles());
+    assert(!molNoCoords.has_coords());
+    res = molNoCoords.generate_aligned_coords(template_ref, JSON.stringify({
+        useCoordGen: false,
+        allowRGroups: true,
+        acceptFailure: false,
+    }));
+    assert(res === "");
+    assert(!molNoCoords.has_coords());
+    res = molNoCoords.generate_aligned_coords(template_ref, JSON.stringify({
+        useCoordGen: false,
+        allowRGroups: true,
+        acceptFailure: true,
+    }));
+    assert(res === "{}");
+    assert(molNoCoords.has_coords());
+}
+
+function test_generate_aligned_coords_align_only() {
+    const template_molblock = `
+     RDKit          2D
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+  -13.7477    6.3036    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  -13.7477    4.7567    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.6540    3.6628    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.7477    2.5691    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.8414    3.6628    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  -11.1071    3.6628    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  2  5  1  0
+  3  6  1  0
+M  RGP  2   1   1   6   2
+M  END
+`;
+    const mol_molblock = `
+     RDKit          2D
+
+ 18 22  0  0  0  0  0  0  0  0999 V2000
+    4.3922   -1.5699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9211   -2.0479    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5995   -0.5349    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.3731    0.8046    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.8441    1.2825    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0704   -0.0568    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8666    0.7748    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7736   -0.3197    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7749   -1.8666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7718   -1.8679    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7731   -0.3208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8679    0.7718    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0718   -0.0598    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.3933   -1.5729    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9222   -2.0509    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6008   -0.5379    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3744    0.8016    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.8454    1.2795    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  9 10  1  0
+ 11 10  1  0
+ 11  8  1  0
+  8  9  1  0
+  4  5  1  0
+  6  5  1  0
+  7  6  1  0
+  3  4  1  0
+  3  7  1  0
+  1  6  1  0
+  2  3  1  0
+  2  1  1  0
+ 17 18  1  0
+ 13 18  1  0
+ 12 13  1  0
+ 16 17  1  0
+ 16 12  1  0
+ 14 13  1  0
+ 15 16  1  0
+ 15 14  1  0
+ 12 11  1  0
+  8  7  1  0
+M  END
+`;
+    const getCoordArray = (mol) => {
+        const molblock = mol.get_molblock().split("\n");
+        const numHeavyAtoms = parseInt(molblock[3].substr(0, 3));
+        return molblock.filter((_, idx) => idx > 3 && idx < 4 + numHeavyAtoms).map(
+            line => [0, 1, 2].map(i => parseFloat(line.substr(i * 10, (i + 1) * 10)))
+        );
+    };
+    const arraySum = (a) => {
+        const s = 0.;
+        return a.reduce((prev, curr) => prev + curr, s);
+    };
+    const sqDist = (xyz1, xyz2) => arraySum(xyz1.map((c, i) => (c - xyz2[i]) * (c - xyz2[i])))
+
+    const template_ref = RDKitModule.get_mol(template_molblock);
+    const mol = RDKitModule.get_mol(mol_molblock);
+    const molCoords = getCoordArray(mol);
+    const bondLength11_12 = Math.sqrt(sqDist(molCoords[11], molCoords[12]));
+    const bondLength5_6 = Math.sqrt(sqDist(molCoords[5], molCoords[6]));
+    assert(Math.abs(bondLength11_12 - bondLength5_6) < 1.e-4);
+    assert(bondLength11_12 > 2.3);
+    [ false, true ].forEach(alignOnly => {
+        const mol = RDKitModule.get_mol(mol_molblock);
+        const res = JSON.parse(mol.generate_aligned_coords(template_ref, JSON.stringify({ allowRGroups: true, alignOnly })));
+        assert([ 11, 10, 7, 8, 9, 6 ].every((idx, i) => res.atoms[i] === idx));
+        assert(mol.get_smiles() === "C1CC2CCC1N2C1CNC1N1C2CCC1CC2");
+        const molAliCoords = getCoordArray(mol);
+        const templateCoords = getCoordArray(template_ref);
+        res.atoms.forEach((molIdx, templateIdx) => {
+            assert(sqDist(molAliCoords[molIdx], templateCoords[templateIdx]) < 1.e-4);
+        });
+        const bondLengthAli11_12 = Math.sqrt(sqDist(molAliCoords[11], molAliCoords[12]));
+        const bondLengthAli5_6 = Math.sqrt(sqDist(molAliCoords[5], molAliCoords[6]));
+        assert(Math.abs(bondLengthAli11_12 - bondLengthAli5_6) < 1.e-4);
+        if (alignOnly) {
+            assert(bondLengthAli11_12 > 2.3);
+        } else {
+            assert(bondLengthAli11_12 < 1.6);
+        }
+    });
 }
 
 function test_get_mol_no_kekulize() {
@@ -662,10 +794,15 @@ M  END
 M  END
 `);
     mol1.normalize_depiction();
+    mol1Copy1 = RDKitModule.get_mol_copy(mol1)
+    mol1Copy2 = RDKitModule.get_mol_copy(mol1)
     mol1.straighten_depiction();
     mol2.normalize_depiction();
     mol2.straighten_depiction();
     assert(mol1.get_molblock() === mol2.get_molblock());
+    mol1Copy1.straighten_depiction(true);
+    assert(mol1Copy1.get_molblock() !== mol2.get_molblock());
+    assert(mol1Copy1.get_molblock() === mol1Copy2.get_molblock());
 }
 
 function test_has_coords() {
@@ -850,6 +987,126 @@ M  END
     assert.equal(props.get(1), "test2");
 }
 
+function test_highlights() {
+    var mol = RDKitModule.get_mol('c1cc(O)ccc1');
+    var svg = mol.get_svg_with_highlights(JSON.stringify({
+        highlightAtomColors: {
+            0: [1.0, 0.0, 0.0],
+            1: [1.0, 0.0, 0.0],
+            2: [1.0, 0.0, 0.0],
+            3: [0.0, 1.0, 0.0],
+            4: [1.0, 0.0, 0.0],
+            5: [1.0, 0.0, 0.0],
+            6: [1.0, 0.0, 0.0],
+        }, highlightBondColors: {
+            2: [0.0, 0.7, 0.9],
+        }, highlightAtomRadii: {
+            0: 0.1,
+            1: 0.1,
+            2: 0.1,
+            3: 0.8,
+            4: 0.1,
+            5: 0.1,
+            6: 0.1,
+        }, atoms: [0, 1, 2, 3, 4, 5, 6],  bonds: [2], width: 127
+    }));
+    assert(!svg.includes('fill:#FF7F7F'));
+    assert(svg.includes('fill:#FF0000'));
+    assert(svg.includes('fill:#00FF00'));
+    assert(svg.includes('fill:#00B2E5'));
+    assert(svg.includes("width='127px'"));
+    assert(svg.includes('</svg>'));
+}
+
+function test_add_chiral_hs() {
+    var mol = RDKitModule.get_mol(`
+  MJ201100                      
+
+  9 10  0  0  1  0  0  0  0  0999 V2000
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1  0  0  0
+  2  3  1  0  0  0  0
+  4  3  1  0  0  0  0
+  4  5  1  0  0  0  0
+  6  5  1  0  0  0  0
+  6  7  1  1  0  0  0
+  6  8  1  0  0  0  0
+  8  9  1  1  0  0  0
+  8  2  1  0  0  0  0
+  4  9  1  1  0  0  0
+M  END
+`);
+    var svg1 = mol.get_svg_with_highlights(JSON.stringify({width: 350, height: 300}));
+    assert(svg1.includes("width='350px'"));
+    assert(svg1.includes("height='300px'"));
+    assert(svg1.includes("</svg>"));
+    assert(svg1.includes("atom-8"));
+    assert(svg1.includes("atom-9"));
+    assert(svg1.includes("atom-10"));
+    var svg2 = mol.get_svg_with_highlights(JSON.stringify({
+        width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
+    }));
+    assert(svg2.includes("width='350px'"));
+    assert(svg2.includes("height='300px'"));
+    assert(svg2.includes("</svg>"));
+    assert(svg2.includes("atom-8"));
+    assert(!svg2.includes("atom-9"));
+    assert(!svg2.includes("atom-10"));
+    assert(mol.get_molblock().includes("4  3  1  6"));
+    assert(!mol.get_molblock(JSON.stringify({ useMolBlockWedging: true })).includes("4  3  1  6"));
+}
+
+function test_get_frags() {
+    {
+        var mol = RDKitModule.get_mol("n1ccccc1.CC(C)C.OCCCN");
+        var expectedFragSmiles = ["c1ccncc1", "CC(C)C", "NCCCO"];
+        var expectedFragSmilesNonSanitized = ["CN(C)(C)C", "c1ccc1"];
+        var expectedMappings = {
+            frags: [0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],
+            fragsMolAtomMapping: [[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]],
+        };
+        var { molIterator, mappings } = mol.get_frags();
+        assert(molIterator.size() === 3);
+        assert(JSON.stringify(JSON.parse(mappings)) === JSON.stringify(expectedMappings));
+        var i = 0;
+        while (!molIterator.at_end()) {
+            var mol = molIterator.next();
+            assert(mol.get_smiles() === expectedFragSmiles[i++]);
+            mol.delete();
+        }
+        assert(!molIterator.next());
+        molIterator.delete();
+    }
+    {
+        var mol = RDKitModule.get_mol("N(C)(C)(C)C.c1ccc1", JSON.stringify({sanitize: false}));
+        var exceptionThrown = false;
+        try {
+            mol.get_frags();
+        } catch (e) {
+            exceptionThrown = true;
+        }
+        assert(exceptionThrown);
+        var { molIterator, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
+        assert(molIterator.size() === 2);
+        var i = 0;
+        while (!molIterator.at_end()) {
+            var mol = molIterator.next();
+            assert(mol.get_smiles() === expectedFragSmilesNonSanitized[i++]);
+            mol.delete();
+        }
+        assert(!molIterator.next());
+        molIterator.delete();
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -879,7 +1136,8 @@ initRDKitModule().then(function(instance) {
     test_generate_aligned_coords();
     test_isotope_labels();
     test_generate_aligned_coords_allow_rgroups();
-    test_accept_failure();
+    test_generate_aligned_coords_accept_failure();
+    test_generate_aligned_coords_align_only();
     test_get_mol_no_kekulize();
     test_get_smarts();
     test_get_cxsmarts();
@@ -892,6 +1150,9 @@ initRDKitModule().then(function(instance) {
     test_rxn_drawing();
     test_legacy_stereochem();
     test_prop();
+    test_highlights();
+    test_add_chiral_hs();
+    test_get_frags();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

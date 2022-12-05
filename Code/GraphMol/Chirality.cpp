@@ -766,7 +766,7 @@ const Atom *findHighestCIPNeighbor(const Atom *atom, const Atom *skipAtom) {
 
 namespace Chirality {
 
-#if _MSC_VER
+#ifdef _WIN32
 int setenv(const char *name, const char *value, int) {
   return _putenv_s(name, value);
 }
@@ -3036,6 +3036,17 @@ void detectBondStereochemistry(ROMol &mol, int confId) {
   }
   const Conformer &conf = mol.getConformer(confId);
   setDoubleBondNeighborDirections(mol, &conf);
+}
+
+void clearSingleBondDirFlags(ROMol &mol) {
+  for (auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::SINGLE) {
+      if (bond->getBondDir() == Bond::UNKNOWN) {
+        bond->setProp(common_properties::_UnknownStereo, 1);
+      }
+      bond->setBondDir(Bond::NONE);
+    }
+  }
 }
 
 void setBondStereoFromDirections(ROMol &mol) {

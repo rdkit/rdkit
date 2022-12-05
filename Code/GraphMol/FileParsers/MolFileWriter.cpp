@@ -1057,8 +1057,28 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
   }
 }
 
+namespace {
+void createSMARTSQSubstanceGroups(ROMol &mol) {
+  for (const auto atom : mol.atoms()) {
+    std::string sma;
+    if (atom->hasQuery() &&
+        atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
+        !sma.empty()) {
+      SubstanceGroup sg(&mol, "DAT");
+      sg.setProp("QUERYTYPE", "SMARTSQ");
+      sg.setProp("QUERYOP", "=");
+      std::vector<std::string> dataFields{sma};
+      sg.setProp("DATAFIELDS", dataFields);
+      sg.addAtomWithIdx(atom->getIdx());
+      addSubstanceGroup(mol, sg);
+    }
+  }
+}
+}  // namespace
+
 void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
+  createSMARTSQSubstanceGroups(mol);
 }
 
 const std::string GetV3000MolFileBondLine(const Bond *bond,

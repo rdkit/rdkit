@@ -142,11 +142,50 @@ void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
   RDDepict::generateDepictionMatching3DStructure(
       mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
 }
+
+bool isCoordGenSupportAvailable() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  return true;
+#else
+  return false;
+#endif
+}
+
 void setPreferCoordGen(bool value) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = value;
 #endif
 }
+bool getPreferCoordGen() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  return RDDepict::preferCoordGen;
+#else
+  return false;
+#endif
+}
+
+class UsingCoordGen : public boost::noncopyable {
+ public:
+  UsingCoordGen() = delete;
+  UsingCoordGen(bool temp_state)
+      : m_initial_state{getPreferCoordGen()}, m_temp_state(temp_state) {}
+  ~UsingCoordGen() = default;
+
+  void enter() { setPreferCoordGen(m_temp_state); }
+
+  void exit(python::object exc_type, python::object exc_val,
+            python::object traceback) {
+    RDUNUSED_PARAM(exc_type);
+    RDUNUSED_PARAM(exc_val);
+    RDUNUSED_PARAM(traceback);
+    setPreferCoordGen(m_initial_state);
+  }
+
+ private:
+  bool m_initial_state;
+  bool m_temp_state;
+};
+
 }  // namespace RDDepict
 
 BOOST_PYTHON_MODULE(rdDepictor) {
@@ -158,6 +197,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
 
   rdkit_import_array();
 
+  python::def("IsCoordGenSupportAvailable", isCoordGenSupportAvailable,
+              "Returns whether RDKit was built with CoordGen support.");
+
   python::def("SetPreferCoordGen", setPreferCoordGen, python::arg("val"),
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
               "Sets whether or not the CoordGen library should be preferred to "
@@ -166,6 +208,23 @@ BOOST_PYTHON_MODULE(rdDepictor) {
               "Has no effect (CoordGen support not enabled)"
 #endif
   );
+  python::def(
+      "GetPreferCoordGen", getPreferCoordGen,
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+      "Return whether or not the CoordGen library is used for coordinate "
+      "generation in the RDKit depiction library."
+#else
+      "Always returns False (CoordGen support not enabled)"
+#endif
+  );
+
+  python::class_<UsingCoordGen, boost::noncopyable>(
+      "UsingCoordGen",
+      "Context manager to temporarily set CoordGen library preference in RDKit depiction.",
+      python::init<bool>("Constructor"))
+      .def("__enter__", &UsingCoordGen::enter)
+      .def("__exit__", &UsingCoordGen::exit);
+
   std::string docString;
   docString =
       "Compute 2D coordinates for a molecule. \n\
@@ -326,11 +385,19 @@ BOOST_PYTHON_MODULE(rdDepictor) {
       "Rotate the 2D depiction such that the majority of bonds have a\n\
   30-degree angle with the X axis.\n\
   ARGUMENTS:\n\n\
-  mol -    the molecule to be rotated.\n\
-  confId -       (optional) the id of the reference conformation to use";
+  mol              - the molecule to be rotated.\n\
+  confId           - (optional) the id of the reference conformation to use.\n\
+  minimizeRotation - (optional) if False (the default), the molecule\n\
+                     is rotated such that the majority of bonds have an angle\n\
+                     with the X axis of 30 or 90 degrees. If True, the minimum\n\
+                     rotation is applied such that the majority of bonds have\n\
+                     an angle with the X axis of 0, 30, 60, or 90 degrees,\n\
+                     with the goal of altering the initial orientation as\n\
+                     little as possible .";
 
   python::def("StraightenDepiction", RDDepict::straightenDepiction,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("minimizeRotation") = false),
               docString.c_str());
 
   docString =

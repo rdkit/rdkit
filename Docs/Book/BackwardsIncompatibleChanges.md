@@ -8,6 +8,50 @@ generally include changes in results that arise due to bug fixes; we try to call
 those out in the release notes. The release notes, in general, contain a more
 comprehensive version of this list.
 
+## Release 2022.09
+
+### Changes in canonicalization
+
+Changes to the way atomic chirality is used in the canonicalization algorithm
+mean that canonical atom ranking and canonical SMILES generated with this RDKit
+version can be different from those generated with previous versions
+
+### Improvements to GetBestRMS() and CalcRMS()
+
+`GetBestRMS() and CalcRMS()` by default now treat terminal conjugated functional
+groups like carboxylate and nitro symmetrically. For example, the group
+`C(=[O:1])[O-:2]` can match in either orientation. The SMARTS pattern which is
+used to recognize affected groups is:
+`[{atomP};$([{atomP}]-[*]=[{atomP}]),$([{atomP}]=[*]-[{atomP}])]~[*]` where
+`{atomP}` is `O,N;D1`. The previous behavior can be restored using by setting
+the `symmetrizeConjugatedTerminalGroups` argument to false when calling
+`GetBestRMS() and CalcRMS()`
+
+
+## Release 2022.03
+
+### Changes to the handling of dummy atoms and aromaticity
+
+The rules for aromaticity in rings containing dummy atoms have been changed. The
+general intention of the new handling is that aromaticity will not be perceived
+for rings containing dummy atoms unless it's clear that the dummies should be
+aromatic. As an example: the SMILES `C1=C*2=CC=CC=*2C=C1` is perceived to be
+aromatic while the SMILES `C1=C*2C=CC=C*2C=C1` (which does not have any double
+bonds to the dummy atoms) is not; in previous RDKit releases both of these
+structures were aromatic. There's more information about this in the discussion
+of PR #4722 (https://github.com/rdkit/rdkit/pull/4722) and Issue #4721
+(https://github.com/rdkit/rdkit/issues/4721).
+
+### Tautomer enumeration improvements
+
+The rules for tautomer enumeration in `MolStandardize` have been updated to more
+closely match the rules in the original publication. These changes primarily
+consist of making the rules more specific; the consequence is that less
+tautomers will be generated with this version. The previous rules can still be
+accessed via the function `GetV1TautomerEnumerator()` (Python) or
+`getV1TautomerEnumerator()` (C++)
+
+
 ## Release 2021.03
 
 ### Changes to conformer generation

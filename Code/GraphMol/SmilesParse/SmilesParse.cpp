@@ -58,6 +58,7 @@ namespace {
 int smarts_parse_helper(const std::string &inp,
                         std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
                         Bond *&bond, int start_tok) {
+  std::list<unsigned int> branchPoints;
   void *scanner;
   int res = 1;  // initialize with fail code
 
@@ -67,7 +68,8 @@ int smarts_parse_helper(const std::string &inp,
     unsigned numAtomsParsed = 0;
     unsigned numBondsParsed = 0;
     res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, scanner, start_tok);
+                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
+                         start_tok);
   } catch (...) {
     yysmarts_lex_destroy(scanner);
     throw;
@@ -78,6 +80,9 @@ int smarts_parse_helper(const std::string &inp,
     std::stringstream errout;
     errout << "Failed parsing SMARTS '" << inp << "'";
     throw SmilesParseException(errout.str());
+  }
+  if (!branchPoints.empty()) {
+    throw SmilesParseException("extra open parentheses");
   }
 
   return res;
@@ -409,6 +414,22 @@ RWMol *SmilesToMol(const std::string &smiles,
   res = toMol(lsmiles, smiles_parse, lsmiles);
   handleCXPartAndName(res, params, cxPart, name);
   if (res && (params.sanitize || params.removeHs)) {
+    if (res->hasProp(SmilesParseOps::detail::_needsDetectAtomStereo)) {
+      // we encountered a wedged bond in the CXSMILES,
+      // these need to be handled the same way they were in mol files
+      res->clearProp(SmilesParseOps::detail::_needsDetectAtomStereo);
+      if (res->getNumConformers()) {
+        const auto &conf = res->getConformer();
+        if (!conf.is3D()) {
+          MolOps::assignChiralTypesFromBondDirs(*res, conf.getId());
+        }
+      }
+    }
+    // if we read a 3D conformer, set the stereo:
+    if (res->getNumConformers() && res->getConformer().is3D()) {
+      res->updatePropertyCache(false);
+      MolOps::assignChiralTypesFrom3D(*res, res->getConformer().getId(), true);
+    }
     try {
       if (params.removeHs) {
         bool implicitOnly = false, updateExplicitCount = true;
@@ -421,14 +442,16 @@ RWMol *SmilesToMol(const std::string &smiles,
       delete res;
       throw;
     }
-    // figure out stereochemistry:
-    if (params.useLegacyStereo) {
-      bool cleanIt = true, force = true, flagPossible = true;
-      MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
-    } else {
-      bool cleanIt = true, flagPossible = false;
-      Chirality::findPotentialStereo(*res, cleanIt, flagPossible);
+    if (res->hasProp(SmilesParseOps::detail::_needsDetectBondStereo)) {
+      // we encountered either wiggly bond in the CXSMILES,
+      // these need to be handled the same way they were in mol files
+      res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
+      MolOps::clearSingleBondDirFlags(*res);
+      MolOps::detectBondStereochemistry(*res);
     }
+    // figure out stereochemistry:
+    bool cleanIt = true, force = true, flagPossible = true;
+    MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);
   }
   if (res && res->hasProp(common_properties::_NeedsQueryScan)) {
     res->clearProp(common_properties::_NeedsQueryScan);

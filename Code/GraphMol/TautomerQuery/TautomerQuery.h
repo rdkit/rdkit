@@ -120,7 +120,7 @@ class RDKIT_TAUTOMERQUERY_EXPORT TautomerQuery {
   void save(Archive &ar, const unsigned int version) const {
     RDUNUSED_PARAM(version);
     std::vector<std::string> pkls;
-    for (const auto taut : d_tautomers) {
+    for (const auto &taut : d_tautomers) {
       std::string pkl;
       MolPickler::pickleMol(*taut, pkl);
       pkls.push_back(pkl);

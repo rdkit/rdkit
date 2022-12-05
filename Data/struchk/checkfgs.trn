@@ -79,7 +79,7 @@
 /*F123*/ "C(-C)(-O-1)(-N+1)"     -->  "C(-C)(-O)(-N+1)"         prot.
 /*F203*/ "C(=C)(-N-1)(-C,N)"     -->  "C(=C)(-N)(-C,N)"         prot.
 /*F213*/ "C(=C)(-O,S-1)(-C)"     -->  "C(=C)(-O,S)(-C)"         prot. enol C
-/*F223*/ "C(=C)(-O-1)(-N,O,S)"   -->  "C(-C)(=O)(-N,O,S)"       prot. enol Het.
+/*F223*/ "!@C(=C)(-O-1)(-N,O,S)"   -->  "C(-C)(=O)(-N,O,S)"       prot. enol Het.
 /*F233*/ "C(=C)(-S-1)(-N,S)"     -->  "C(-C)(=S)(-N,S)"         prot. enol
 /*F243*/ "C(=C)(-O-1)(-N+1)"     -->  "C(-C)(=O)(-N+1)"         prot. enol
 /*F303*/ "C(=N)(-C,N,O,S-1)(-C,N,O,S)" --> "C(=N)(-C,N,O,S)(-C,N,O,S)"  prot.

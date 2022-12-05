@@ -92,9 +92,11 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             const std::map<int, DrawColour> *highlight_atom_map,
                             const std::map<int, DrawColour> *highlight_bond_map,
                             const std::map<int, double> *highlight_radii,
-                            int confId, bool kekulize) {
+                            int confId, bool kekulize, bool addChiralHs,
+                            bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   RWMol cpy(mol);
-  prepareMolForDrawing(cpy, kekulize);
+  prepareMolForDrawing(cpy, kekulize, addChiralHs, wedgeBonds, forceCoords,
+                       wavyBonds);
   // having done the prepare, we don't want to do it again in drawMolecule.
   bool old_prep_mol = drawer.drawOptions().prepareMolsBeforeDrawing;
   drawer.drawOptions().prepareMolsBeforeDrawing = false;
@@ -104,10 +106,16 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
   drawer.drawOptions().prepareMolsBeforeDrawing = old_prep_mol;
 }
 
-void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
+void updateMolDrawOptionsFromJSON(MolDrawOptions &opts, const char *json) {
   PRECONDITION(json, "no parameter string");
-  updateDrawerParamsFromJSON(drawer, std::string(json));
+  updateMolDrawOptionsFromJSON(opts, std::string(json));
 };
+
+RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
+                                                       const char *json) {
+  updateMolDrawOptionsFromJSON(drawer.drawOptions(), json);
+}
+
 #define PT_OPT_GET(opt) opts.opt = pt.get(#opt, opts.opt)
 
 void get_rgba(const boost::property_tree::ptree &node, DrawColour &colour) {
@@ -150,13 +158,13 @@ void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
   }
 }
 
-void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
+void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
+                                  const std::string &json) {
   if (json == "") {
     return;
   }
   std::istringstream ss;
   ss.str(json);
-  MolDrawOptions &opts = drawer.drawOptions();
   boost::property_tree::ptree pt;
   boost::property_tree::read_json(ss, pt);
   PT_OPT_GET(atomLabelDeuteriumTritium);
@@ -224,6 +232,11 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
           item.second.get_value<std::string>();
     }
   }
+}
+
+RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(
+    MolDraw2D &drawer, const std::string &json) {
+  updateMolDrawOptionsFromJSON(drawer.drawOptions(), json);
 }
 
 void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
@@ -440,6 +453,10 @@ void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
   // the guideline is for a bond length of 14.4px, and we set things up
   // in pixels per Angstrom.
   opts.scalingFactor = 14.4 / meanBondLen;
+  // setting the fixedBondLength means the drawing won't be scaled
+  // up in a drawer of defined size, so the bond length won't exceed
+  // 14.4 pixels.
+  opts.fixedBondLength = 14.4 / meanBondLen;
   // offset for multiple bonds is 18% of the bond length.
   opts.multipleBondOffset = 0.18;
   opts.highlightBondWidthMultiplier = 32;

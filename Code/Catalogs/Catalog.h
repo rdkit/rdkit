@@ -159,18 +159,18 @@ class HierarchCatalog : public Catalog<entryType, paramType> {
   typedef std::pair<DOWN_ENT_ITER, DOWN_ENT_ITER> DOWN_ENT_ITER_PAIR;
 
   //------------------------------------
-  HierarchCatalog<entryType, paramType, orderType>(){};
+  HierarchCatalog(){};
 
   //------------------------------------
   //! Construct by making a copy of the input \c params object
-  HierarchCatalog<entryType, paramType, orderType>(const paramType *params)
+  HierarchCatalog(const paramType *params)
       : Catalog<entryType, paramType>() {
     this->setCatalogParams(params);
   }
 
   //------------------------------------
   //! Construct from a \c pickle (a serialized form of the HierarchCatalog)
-  HierarchCatalog<entryType, paramType, orderType>(const std::string &pickle) {
+  HierarchCatalog(const std::string &pickle) {
     this->initFromString(pickle);
   }
 

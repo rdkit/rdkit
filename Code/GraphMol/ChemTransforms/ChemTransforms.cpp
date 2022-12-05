@@ -485,7 +485,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   auto *newMol = new RWMol(mol);
   std::vector<Atom *> keepList;
-  std::map<int, Atom *> dummyAtomMap;
+  std::map<Atom *, int> dummyAtomMap;
 
   // go through the matches in query order, not target molecule
   //  order
@@ -506,6 +506,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             });
   std::vector<std::pair<int, Atom *>> dummies;
 
+  std::list<Bond *> allNewBonds;
   for (const auto &match : matches) {
     const auto &mappingInfo = match.second;
 
@@ -577,7 +578,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
           }
 
           newMol->addAtom(newAt, false, true);
-          dummyAtomMap[nbrIdx] = newAt;
+          dummyAtomMap[newAt] = nbrIdx;
           keepList.push_back(newAt);
           Bond *bnd = connectingBond->copy();
           if (bnd->getBeginAtomIdx() ==
@@ -587,6 +588,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             bnd->setBeginAtomIdx(newAt->getIdx());
           }
           newBonds.push_back(bnd);
+          allNewBonds.push_back(bnd);
 
           // we may be changing the bond ordering at the atom.
           // e.g. replacing the N in C[C@](Cl)(N)F gives an atom ordering of
@@ -634,20 +636,6 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
       for (auto &newBond : newBonds) {
         newBond->setProp(replaceCoreDummyBond, 1);
         newMol->addBond(newBond, true);
-        auto beginAtom = newBond->getBeginAtom();
-        auto endAtom = newBond->getEndAtom();
-        CHECK_INVARIANT(
-            beginAtom->getDegree() == 1 || endAtom->getDegree() == 1,
-            "neither atom has degree one");
-        if (newMol->getNumConformers()) {
-          if (endAtom->getAtomicNum() == 0 && endAtom->getDegree() == 1) {
-            MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
-                                          beginAtom->getIdx());
-          } else {
-            MolOps::setTerminalAtomCoords(*newMol, beginAtom->getIdx(),
-                                          endAtom->getIdx());
-          }
-        }
       }
     }
   }
@@ -690,21 +678,40 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 
   updateSubMolConfs(mol, *newMol, removedAtoms);
 
-  // make a guess at the position of the dummy atoms showing the attachment
-  // point:
-  for (auto citer = mol.beginConformers(); citer != mol.endConformers();
-       ++citer) {
-    Conformer &newConf = newMol->getConformer((*citer)->getId());
-    for (std::map<int, Atom *>::const_iterator iter = dummyAtomMap.begin();
-         iter != dummyAtomMap.end(); ++iter) {
-      newConf.setAtomPos(iter->second->getIdx(),
-                         (*citer)->getAtomPos(iter->first));
+  // Update any terminal dummy atom coordinates after removing atoms not in the
+  // keeplist and calling updateSubMolConfs
+  for (auto &newBond : allNewBonds) {
+    auto beginAtom = newBond->getBeginAtom();
+    auto endAtom = newBond->getEndAtom();
+    CHECK_INVARIANT(beginAtom->getDegree() == 1 || endAtom->getDegree() == 1,
+                    "neither atom has degree one");
+    if (newMol->getNumConformers()) {
+      if (endAtom->getAtomicNum() == 0 && endAtom->getDegree() == 1) {
+        MolOps::setTerminalAtomCoords(*newMol, endAtom->getIdx(),
+                                      beginAtom->getIdx());
+      } else {
+        MolOps::setTerminalAtomCoords(*newMol, beginAtom->getIdx(),
+                                      endAtom->getIdx());
+      }
     }
+
+    // make a guess at the position of the dummy atoms showing the attachment
+    // point:
+    for (auto citer = mol.beginConformers(); citer != mol.endConformers();
+         ++citer) {
+      Conformer &newConf = newMol->getConformer((*citer)->getId());
+      for (auto iter = dummyAtomMap.begin(); iter != dummyAtomMap.end();
+           ++iter) {
+        newConf.setAtomPos(iter->first->getIdx(),
+                           (*citer)->getAtomPos(iter->second));
+      }
+    }
+
+    // clear computed props and do basic updates on
+    // the resulting molecule, but allow unhappiness:
+    newMol->clearComputedProps(true);
+    newMol->updatePropertyCache(false);
   }
-  // clear computed props and do basic updates on
-  // the resulting molecule, but allow unhappiness:
-  newMol->clearComputedProps(true);
-  newMol->updatePropertyCache(false);
 
   return static_cast<ROMol *>(newMol);
 }

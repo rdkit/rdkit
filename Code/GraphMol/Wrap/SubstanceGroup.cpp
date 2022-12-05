@@ -46,6 +46,16 @@ SubstanceGroup *createMolSubstanceGroup(ROMol &mol, std::string type) {
   return &(getSubstanceGroups(mol).back());
 }
 
+SubstanceGroup *createMolDataSubstanceGroup(ROMol &mol, std::string fieldName,
+                                            std::string value) {
+  SubstanceGroup sg(&mol, "DAT");
+  sg.setProp("FIELDNAME", fieldName);
+  STR_VECT dataFields{value};
+  sg.setProp("DATAFIELDS", dataFields);
+  addSubstanceGroup(mol, sg);
+  return &(getSubstanceGroups(mol).back());
+}
+
 SubstanceGroup *addMolSubstanceGroup(ROMol &mol, const SubstanceGroup &sgroup) {
   addSubstanceGroup(mol, sgroup);
   return &(getSubstanceGroups(mol).back());
@@ -184,38 +194,37 @@ struct sgroup_wrap {
         .def("ClearAttachPoints", &SubstanceGroup::clearAttachPoints)
 
         .def("SetProp",
-             (void (RDProps::*)(const std::string &, std::string, bool) const) &
+             (void(RDProps::*)(const std::string &, std::string, bool) const) &
                  SubstanceGroup::setProp<std::string>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("SetDoubleProp",
-             (void (RDProps::*)(const std::string &, double, bool) const) &
+             (void(RDProps::*)(const std::string &, double, bool) const) &
                  SubstanceGroup::setProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("SetIntProp",
-             (void (RDProps::*)(const std::string &, int, bool) const) &
+             (void(RDProps::*)(const std::string &, int, bool) const) &
                  SubstanceGroup::setProp<int>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
-        .def(
-            "SetUnsignedProp",
-            (void (RDProps::*)(const std::string &, unsigned int, bool) const) &
-                SubstanceGroup::setProp<unsigned int>,
-            (python::arg("self"), python::arg("key"), python::arg("val"),
-             python::arg("computed") = false),
-            "sets the value of a particular property")
+        .def("SetUnsignedProp",
+             (void(RDProps::*)(const std::string &, unsigned int, bool) const) &
+                 SubstanceGroup::setProp<unsigned int>,
+             (python::arg("self"), python::arg("key"), python::arg("val"),
+              python::arg("computed") = false),
+             "sets the value of a particular property")
         .def("SetBoolProp",
-             (void (RDProps::*)(const std::string &, bool, bool) const) &
+             (void(RDProps::*)(const std::string &, bool, bool) const) &
                  SubstanceGroup::setProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val"),
               python::arg("computed") = false),
              "sets the value of a particular property")
         .def("HasProp",
-             (bool (RDProps::*)(const std::string &) const) &
+             (bool(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::hasProp,
              "returns whether or not a particular property exists")
         .def("GetProp",
@@ -223,7 +232,7 @@ struct sgroup_wrap {
                  SubstanceGroup::getProp<std::string>,
              "returns the value of a particular property")
         .def("GetIntProp",
-             (int (RDProps::*)(const std::string &) const) &
+             (int(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<int>,
              "returns the value of a particular property")
         .def("GetUnsignedProp",
@@ -231,11 +240,11 @@ struct sgroup_wrap {
                  SubstanceGroup::getProp<unsigned int>,
              "returns the value of a particular property")
         .def("GetDoubleProp",
-             (double (RDProps::*)(const std::string &) const) &
+             (double(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<double>,
              "returns the value of a particular property")
         .def("GetBoolProp",
-             (bool (RDProps::*)(const std::string &) const) &
+             (bool(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<bool>,
              "returns the value of a particular property")
         .def(
@@ -259,7 +268,7 @@ struct sgroup_wrap {
              "SubstanceGroup.\n"
              " n.b. some properties cannot be converted to python types.\n")
         .def("ClearProp",
-             (void (RDProps::*)(const std::string &) const) &
+             (void(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::clearProp,
              "Removes a particular property (does nothing if not set).\n\n");
 
@@ -279,6 +288,14 @@ struct sgroup_wrap {
                 python::return_value_policy<
                     python::reference_existing_object,
                     python::with_custodian_and_ward_postcall<0, 1>>());
+    python::def(
+        "CreateMolDataSubstanceGroup", &createMolDataSubstanceGroup,
+        (python::arg("mol"), python::arg("fieldName"), python::arg("value")),
+        "creates a new DATA SubstanceGroup associated with a molecule, "
+        "returns the new SubstanceGroup",
+        python::return_value_policy<
+            python::reference_existing_object,
+            python::with_custodian_and_ward_postcall<0, 1>>());
     python::def("AddMolSubstanceGroup", &addMolSubstanceGroup,
                 (python::arg("mol"), python::arg("sgroup")),
                 "adds a copy of a SubstanceGroup to a molecule, returns the "
