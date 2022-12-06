@@ -3544,6 +3544,86 @@ M  END
   }
 }
 
+void testRGroupCoordinatesAddedToCore() {
+  BOOST_LOG(rdInfoLog)
+      << "********************************************************\n";
+  BOOST_LOG(rdInfoLog)
+      << "Test that cordinates for R groups are properly added to core when the core has coordinates and the target does not"
+      << std::endl;
+  auto core = R"CTAB(ACS Document 1996
+  ChemDraw05202112262D
+
+ 17 17  0  0  0  0  0  0  0  0999 V2000
+    1.9511    0.6607    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2362    1.0726    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5214    1.4844    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8244    0.3577    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2375   -0.3563    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8256   -1.0712    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0006   -1.0719    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4113   -1.7868    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4125   -0.3578    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0006    0.3570    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2375   -0.3585    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0625   -0.3592    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6481    1.7875    0.0000 R1  0  0  0  0  0  0  0  0  0  0  0  0
+    1.2387   -1.7853    0.0000 R2  0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2363   -1.7875    0.0000 R3  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4137    1.0711    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0625   -0.3556    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  2  0
+  2  4  1  0
+  4 10  1  0
+  4  5  2  0
+  5  6  1  0
+  6  7  2  0
+  7  8  1  0
+  7  9  1  0
+  9 10  2  0
+  9 11  1  0
+ 11 12  3  0
+  2 13  1  0
+  6 14  1  0
+  8 15  1  0
+ 10 16  1  0
+  5 17  1  0
+M  END
+)CTAB"_ctab;
+  auto mol =
+      "Brc1cc(Br)c(Oc2ccc(cc2C#N)S(=O)(=O)Nc3ncc(Br)s3)c(c1)c4ccccc4"_smiles;
+  RGroupDecompositionParameters params;
+  params.matchingStrategy = GreedyChunks;
+  params.allowMultipleRGroupsOnUnlabelled = false;
+  params.onlyMatchAtRGroups = false;
+  RGroupDecomposition decomp(*core, params);
+  auto result = decomp.add(*mol);
+  TEST_ASSERT(result == 0);
+  decomp.process();
+  RGroupRows rows = decomp.getRGroupsAsRows();
+  auto coreRgd = rows[0]["Core"];
+  auto numberGroups = 0;
+  for (const auto atom : coreRgd->atoms()) {
+    if (int rGroupNum = atom->getAtomMapNum(); rGroupNum > 0) {
+      auto coreAtoms = core->atoms();
+      auto originalAtom = std::find_if(
+          coreAtoms.begin(), coreAtoms.end(), [rGroupNum](const auto &a) {
+              return static_cast<int>(a->getIsotope()) == rGroupNum;
+          });
+      TEST_ASSERT(originalAtom != coreAtoms.end());
+      const auto &originalPoint =
+          core->getConformer(0).getAtomPos((*originalAtom)->getIdx());
+      const auto &outputPoint =
+          coreRgd->getConformer(0).getAtomPos(atom->getIdx());
+      TEST_ASSERT(originalPoint.x == outputPoint.x);
+      TEST_ASSERT(originalPoint.y == outputPoint.y);
+      TEST_ASSERT(originalPoint.z == outputPoint.z);
+      numberGroups++;
+    }
+  }
+  TEST_ASSERT(numberGroups == 2);
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
@@ -3603,6 +3683,7 @@ int main() {
   testMultipleGroupsToUnlabelledCoreAtom();
   testGitHub5631();
   testGithub5613();
+  testRGroupCoordinatesAddedToCore();
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   return 0;

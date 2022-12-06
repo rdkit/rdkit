@@ -503,13 +503,17 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
 
   if (coreWithMatches->getNumConformers() > 0) {
     for (const auto & [atom, label] : retainedRGroups) {
+      if (usedLabelMap.has(label) && usedLabelMap.isUserDefined(label)) {
+        // coordinates of user defined R groups should already be copied over
+        continue;
+      }
       const auto neighbor = *coreWithMatches->atomNeighbors(atom).begin();
       const auto &mapping = data->finalRlabelMapping;
       const auto oldLabel =
           std::find_if(mapping.begin(), mapping.end(),
                        [label = label](const auto &p) { return p.second == label; });
       if (auto iter = match.rgroups.find(oldLabel->first);
-          iter != match.rgroups.end() && iter->second->is_hydrogen) {
+          iter != match.rgroups.end()) {
         MolOps::setTerminalAtomCoords(*coreWithMatches, atom->getIdx(),
                                       neighbor->getIdx());
       }

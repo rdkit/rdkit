@@ -97,7 +97,8 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
       bool isChiral = targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
                       targetAtom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW;
       if (isChiral && !params.substructmatchParams.useChirality) {
-        // if we're not doing chiral matching don't copy chirality to the extracted core.
+        // if we're not doing chiral matching don't copy chirality to the
+        // extracted core.
         targetAtom->setChiralTag(Atom::CHI_UNSPECIFIED);
         isChiral = false;
       }
@@ -234,6 +235,23 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
     }
     updateSubMolConfs(molCopy, *extractedCore, removedAtoms);
     molCopy.clearConformers();
+
+    for (const auto atom : extractedCore->atoms()) {
+      if (isUserRLabel(*atom)) {
+        int rLabel = atom->getProp<int>(RLABEL);
+        for (const auto coreAtom : core->atoms()) {
+          if (int l; coreAtom->getPropIfPresent(RLABEL, l) && l == rLabel) {
+            int i = 0;
+            for (auto citer = core->beginConformers();
+                 citer != core->endConformers(); ++citer, ++i) {
+              extractedCore->getConformer(i).setAtomPos(
+                  atom->getIdx(), (*citer)->getAtomPos(coreAtom->getIdx()));
+            }
+            break;
+          }
+        }
+      }
+    }
   }
 
   extractedCore->clearComputedProps(true);
