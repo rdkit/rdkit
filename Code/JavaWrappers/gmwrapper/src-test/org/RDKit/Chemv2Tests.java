@@ -467,7 +467,9 @@ public class Chemv2Tests extends GraphMolTest {
         assertTrue(svg.indexOf("fill:#FF00FF;") > -1);
         assertTrue(svg.indexOf("fill:#00FFFF;") > -1);
         // default line color:
-        assertTrue(svg.indexOf("stroke:#FF7F7F;") > -1);
+        assertTrue(svg.indexOf("stroke:#FF7F7F;") == -1);
+        assertTrue(svg.indexOf("stroke:#FFFF00;") > -1);
+        assertTrue(svg.indexOf("stroke:#FF00FF;") > -1);
     }
 
     @Test

@@ -121,17 +121,17 @@ std::string JSMol::get_inchi() const {
   ExtraInchiReturnValues rv;
   return MolToInchi(*d_mol, rv);
 }
-std::string JSMol::get_molblock() const {
+std::string JSMol::get_molblock(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  return MolToMolBlock(*d_mol);
+  return MinimalLib::molblock_helper(*d_mol, details.c_str(), false);
 }
-std::string JSMol::get_v3Kmolblock() const {
+std::string JSMol::get_v3Kmolblock(const std::string &details) const {
   if (!d_mol) {
     return "";
   }
-  return MolToV3KMolBlock(*d_mol);
+  return MinimalLib::molblock_helper(*d_mol, details.c_str(), true);
 }
 std::string JSMol::get_json() const {
   if (!d_mol) {
@@ -145,7 +145,8 @@ std::string JSMol::get_pickle() const {
     return "";
   }
   std::string pickle;
-  MolPickler::pickleMol(*d_mol, pickle);
+  MolPickler::pickleMol(*d_mol, pickle,
+                        PicklerOps::AllProps ^ PicklerOps::ComputedProps);
   return pickle;
 }
 
@@ -300,21 +301,20 @@ std::string JSMol::get_atom_pair_fp_as_binary_text(
   return res;
 }
 
-std::string JSMol::get_maccs_fp(const std::string &details) const {
+std::string JSMol::get_maccs_fp() const {
   if (!d_mol) {
     return "";
   }
-  auto fp = MinimalLib::maccs_fp_as_bitvect(*d_mol, details.c_str());
+  auto fp = MinimalLib::maccs_fp_as_bitvect(*d_mol);
   std::string res = BitVectToText(*fp);
   return res;
 }
 
-std::string JSMol::get_maccs_fp_as_binary_text(
-    const std::string &details) const {
+std::string JSMol::get_maccs_fp_as_binary_text() const {
   if (!d_mol) {
     return "";
   }
-  auto fp = MinimalLib::maccs_fp_as_bitvect(*d_mol, details.c_str());
+  auto fp = MinimalLib::maccs_fp_as_bitvect(*d_mol);
   std::string res = BitVectToBinaryText(*fp);
   return res;
 }
@@ -569,6 +569,24 @@ void JSMol::straighten_depiction(bool minimizeRotation) {
     return;
   }
   RDDepict::straightenDepiction(*d_mol, -1, minimizeRotation);
+}
+
+std::pair<JSMolIterator *, std::string> JSMol::get_frags(
+    const std::string &details_json) {
+  if (!d_mol) {
+    return std::make_pair(nullptr, "");
+  }
+  std::vector<int> frags;
+  std::vector<std::vector<int>> fragsMolAtomMapping;
+  bool sanitizeFrags = true;
+  bool copyConformers = true;
+  MinimalLib::get_mol_frags_details(details_json, sanitizeFrags,
+                                    copyConformers);
+  auto molFrags = MolOps::getMolFrags(*d_mol, sanitizeFrags, &frags,
+                                      &fragsMolAtomMapping, copyConformers);
+  return std::make_pair(
+      new JSMolIterator(molFrags),
+      MinimalLib::get_mol_frags_mappings(frags, fragsMolAtomMapping));
 }
 
 std::string JSReaction::get_svg(int w, int h) const {

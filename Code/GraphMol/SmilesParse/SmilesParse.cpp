@@ -58,6 +58,7 @@ namespace {
 int smarts_parse_helper(const std::string &inp,
                         std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
                         Bond *&bond, int start_tok) {
+  std::list<unsigned int> branchPoints;
   void *scanner;
   int res = 1;  // initialize with fail code
 
@@ -67,7 +68,8 @@ int smarts_parse_helper(const std::string &inp,
     unsigned numAtomsParsed = 0;
     unsigned numBondsParsed = 0;
     res = yysmarts_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, scanner, start_tok);
+                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
+                         start_tok);
   } catch (...) {
     yysmarts_lex_destroy(scanner);
     throw;
@@ -78,6 +80,9 @@ int smarts_parse_helper(const std::string &inp,
     std::stringstream errout;
     errout << "Failed parsing SMARTS '" << inp << "'";
     throw SmilesParseException(errout.str());
+  }
+  if (!branchPoints.empty()) {
+    throw SmilesParseException("extra open parentheses");
   }
 
   return res;

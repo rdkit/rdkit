@@ -17,6 +17,31 @@
 #endif
 #include <assert.h>
 
+static const char molblock_native_wedging[] = "\n\
+  MJ201100                      \n\
+\n\
+  9 10  0  0  1  0  0  0  0  0999 V2000\n\
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  1  1  1  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+  4  3  1  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  6  5  1  0  0  0  0\n\
+  6  7  1  1  0  0  0\n\
+  6  8  1  0  0  0  0\n\
+  8  9  1  1  0  0  0\n\
+  8  2  1  0  0  0  0\n\
+  4  9  1  1  0  0  0\n\
+M  END\n";
+
 void test_io() {
   char *pkl;
   size_t pkl_size;
@@ -123,6 +148,22 @@ M  END",
   pkl2 = NULL;
   free(molblock);
   molblock = NULL;
+
+  pkl2 = get_mol(molblock_native_wedging, &pkl2_size, "");
+  assert(pkl2);
+  assert(pkl2_size > 0);
+  molblock = get_molblock(pkl2, pkl2_size, NULL);
+  assert(strstr(molblock, "4  3  1  6"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
+  assert(!strstr(molblock, "4  3  1  6"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  molblock = get_molblock(pkl2, pkl2_size, "{\"addChiralHs\":true}");
+  assert(strstr(molblock, "H  "));
+  free(molblock);
+  free(pkl2);
 
   molblock = get_v3kmolblock(pkl, pkl_size, NULL);
   pkl2 = get_mol(molblock, &pkl2_size, "");
@@ -236,7 +277,30 @@ void test_svg() {
   free(svg);
 
   free(pkl);
-  pkl = NULL;
+
+  pkl = get_mol(molblock_native_wedging, &pkl_size, "");
+  assert(pkl);
+  assert(pkl_size > 0);
+  char *svg1 = get_svg(pkl, pkl_size, "{\"width\":350,\"height\":300}");
+  assert(strstr(svg1, "width='350px'"));
+  assert(strstr(svg1, "height='300px'"));
+  assert(strstr(svg1, "</svg>"));
+  assert(strstr(svg1, "atom-8"));
+  assert(strstr(svg1, "atom-9"));
+  assert(strstr(svg1, "atom-10"));
+  char *svg2 = get_svg(
+      pkl, pkl_size,
+      "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":false,\"addChiralHs\":false}");
+  assert(strstr(svg2, "width='350px'"));
+  assert(strstr(svg2, "height='300px'"));
+  assert(strstr(svg2, "</svg>"));
+  assert(strstr(svg2, "atom-8"));
+  assert(!strstr(svg2, "atom-9"));
+  assert(!strstr(svg2, "atom-10"));
+  free(svg1);
+  free(svg2);
+
+  free(pkl);
   printf("  done\n");
   printf("--------------------------\n");
 }
@@ -478,13 +542,13 @@ void test_fingerprints() {
   assert(nbytes == 8);
   free(fp);
 
-  assert(!get_maccs_fp(NULL, 0, NULL));
-  fp = get_maccs_fp(mpkl, mpkl_size, NULL);
+  assert(!get_maccs_fp(NULL, 0));
+  fp = get_maccs_fp(mpkl, mpkl_size);
   assert(!strcmp(
       fp, "00000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000001100000000000000100000001000001000000000101000100000000100001000111110"));
   free(fp);
-  assert(!get_maccs_fp_as_bytes(NULL, 0, &nbytes, NULL));
-  fp = get_maccs_fp_as_bytes(mpkl, mpkl_size, &nbytes, NULL);
+  assert(!get_maccs_fp_as_bytes(NULL, 0, &nbytes));
+  fp = get_maccs_fp_as_bytes(mpkl, mpkl_size, &nbytes);
   assert(nbytes == 21);
   free(fp);
 #ifdef RDK_BUILD_AVALON_SUPPORT
@@ -962,6 +1026,97 @@ void test_standardize() {
   printf("--------------------------\n");
 }
 
+void test_get_mol_frags() {
+  printf("--------------------------\n");
+  printf("  test_get_mol_frags\n");
+  char *mpkl;
+  char *smi;
+  size_t mpkl_size;
+  size_t *frags_pkl_sz_array = NULL;
+  size_t num_frags = 0;
+  char **frags_mpkl_array = NULL;
+  char *mappings_json = NULL;
+  size_t i;
+
+  mpkl = get_mol("n1ccccc1.CC(C)C.OCCCN", &mpkl_size, "");
+  const char *expected_frag_smiles[] = {"c1ccncc1", "CC(C)C", "NCCCO"};
+  const char *expected_frag_smiles_non_sanitized[] = {"CN(C)(C)C", "c1ccc1"};
+  const char *expected_mappings =
+      "{\"frags\":[0,0,0,0,0,0,1,1,1,1,2,2,2,2,2],\"fragsMolAtomMapping\":[[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]]}";
+
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags, "", NULL);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(num_frags == 3);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+
+  frags_mpkl_array = get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array,
+                                   &num_frags, "", &mappings_json);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(mappings_json);
+  assert(num_frags == 3);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+  assert(!strcmp(mappings_json, expected_mappings));
+  free(mappings_json);
+  mappings_json = NULL;
+  free(mpkl);
+  mpkl = NULL;
+
+  mpkl = get_mol("N(C)(C)(C)C.c1ccc1", &mpkl_size, "{\"sanitize\":false}");
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags, "", NULL);
+  assert(!frags_mpkl_array);
+  assert(!frags_pkl_sz_array);
+  assert(num_frags == 0);
+  frags_mpkl_array =
+      get_mol_frags(mpkl, mpkl_size, &frags_pkl_sz_array, &num_frags,
+                    "{\"sanitizeFrags\":false}", NULL);
+  assert(frags_mpkl_array);
+  assert(frags_pkl_sz_array);
+  assert(num_frags == 2);
+  for (i = 0; i < num_frags; ++i) {
+    assert(frags_pkl_sz_array[i]);
+    smi = get_smiles(frags_mpkl_array[i], frags_pkl_sz_array[i], NULL);
+    assert(smi);
+    assert(!strcmp(smi, expected_frag_smiles_non_sanitized[i]));
+    free(smi);
+    free(frags_mpkl_array[i]);
+    frags_mpkl_array[i] = NULL;
+  }
+  free(frags_mpkl_array);
+  frags_mpkl_array = NULL;
+  free(frags_pkl_sz_array);
+  frags_pkl_sz_array = NULL;
+  free(mpkl);
+  mpkl = NULL;
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -978,5 +1133,6 @@ int main() {
   test_modifications();
   test_coords();
   test_standardize();
+  test_get_mol_frags();
   return 0;
 }

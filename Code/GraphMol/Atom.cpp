@@ -398,7 +398,8 @@ int Atom::calcExplicitValence(bool strict) {
     }
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    int maxValence = *(valens.rbegin());
+
+    int maxValence = valens.back();
     // maxValence == -1 signifies that we'll take anything at the high end
     if (maxValence > 0 && effectiveValence > maxValence) {
       // the explicit valence is greater than any
@@ -500,6 +501,7 @@ int Atom::calcImplicitValence(bool strict) {
   // only default valences
   const INT_VECT &valens =
       PeriodicTable::getTable()->getValenceList(d_atomicNum);
+
   int explicitPlusRadV = getExplicitValence() + getNumRadicalElectrons();
   int chg = getFormalCharge();
 
@@ -583,7 +585,7 @@ int Atom::calcImplicitValence(bool strict) {
       }
     }
     if (res < 0) {
-      if (strict) {
+      if (strict && valens.back() != -1) {
         // this means that the explicit valence is greater than any
         // allowed valence for the atoms - raise an error
         std::ostringstream errout;

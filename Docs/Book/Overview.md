@@ -7,6 +7,7 @@
 -   Core data structures and algorithms in C++
 -   Python 3.x wrappers generated using Boost.Python
 -   Java and C\# wrappers generated with SWIG
+-   JavaScript wrappers of most-important functionality
 -   2D and 3D molecular operations
 -   Descriptor generation for machine learning
 -   Molecular database cartridge for PostgreSQL
@@ -20,13 +21,11 @@
     - Homepage: http://www.rdkit.org
       Documentation, links
     - Github (https://github.com/rdkit)
-      Downloads, bug tracker, git repository
+      Downloads, discussion, bug tracker, git repository
     - Sourceforge (http://sourceforge.net/projects/rdkit)
       Mailing lists
-    - Blog (https://rdkit.blogspot.com)
+    - Blog (https://greglandrum.github.io/rdkit-blog/)
       Tips, tricks, random stuff
-    - Tutorials (https://github.com/rdkit/rdkit-tutorials)
-      Jupyter-based tutorials for using the RDKit
     - KNIME integration (https://github.com/rdkit/knime-rdkit)
       RDKit nodes for KNIME
 - Mailing lists at https://sourceforge.net/p/rdkit/mailman/, searchable archives available for [rdkit-discuss](http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/) and [rdkit-devel](http://www.mail-archive.com/rdkit-devel@lists.sourceforge.net/)
@@ -99,7 +98,7 @@ Simply copy the code from one of the markup languages below and paste it in your
 - [PostgreSQL](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Cartridge.rst): Extensible relational database
 - [Django](http://django-rdkit.readthedocs.org/en/latest/): "The web framework for perfectionists with deadlines"
 - [SQLite](https://github.com/rvianello/chemicalite): "The most used database engine in the world"
-- [Lucene](https://github.com/rdkit/org.rdkit.lucene): Text-search engine [1](#footnote1)
+- [Lucene](https://github.com/rdkit/org.rdkit.lucene): Text-search engine [^footnote1]
 
 ## Usage by other open-source projects
 This will, inevitably, be out of date. If you know of others, please let us know or submit a pull request!
@@ -140,14 +139,12 @@ a Python library for building, manipulating, analyzing and automatic design of m
 The Contrib directory, part of the standard RDKit distribution, includes code that has been contributed by members of the community.
 
 
-## Footnotes
-
-<a name="footnote1">1</a>: These implementations are functional but are not necessarily the best, fastest, or most complete.
+[^footnote1]: These implementations are functional but are not necessarily the best, fastest, or most complete.
 
 
 ## License
 
-This document is copyright (C) 2013-2018 by Greg Landrum
+This document is copyright (C) 2013-2022 by Greg Landrum
 
 This work is licensed under the Creative Commons Attribution-ShareAlike 4.0 License. To view a copy of this license, visit <http://creativecommons.org/licenses/by-sa/4.0/> or send a letter to Creative Commons, 543 Howard Street, 5th Floor, San Francisco, California, 94105, USA.
 

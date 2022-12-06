@@ -701,17 +701,51 @@ TEST_CASE("CDXML") {
     }
   }
   SECTION("Lots of stereo") {
-    auto fname = cdxmlbase + "stereo.cdxml";
-    std::vector<std::string> expected = {
+    {
+      auto fname = cdxmlbase + "stereo.cdxml";
+      std::vector<std::string> expected = {
         "C[C@@H](Cl)[C@H](N)O.C[C@@H](F)[C@H](N)O.C[C@H](Br)[C@@H](N)O.C[C@H](I)[C@@H](N)O"};
-    auto mols = CDXMLFileToMols(fname);
-    CHECK(mols.size() == expected.size());
-    int i = 0;
-    for (auto &mol : mols) {
-      CHECK(MolToSmiles(*mol) == expected[i++]);
+      auto mols = CDXMLFileToMols(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+	CHECK(MolToSmiles(*mol) == expected[i++]);
+      }
+    }
+    {
+      auto fname = cdxmlbase + "wavy.cdxml";
+      std::vector<std::string> expected = {
+        "Cc1cccc(C)c1NC(=O)N=C1CCCN1C",
+        "Cc1cccc(C)c1NC(=O)/N=C1\\CCCN1C"
+      };
+      auto mols = CDXMLFileToMols(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+          if (i == 0) {
+              CHECK(mol->getBondWithIdx(11)->getBondDir() == Bond::BondDir::EITHERDOUBLE);
+          }
+          CHECK(MolToSmiles(*mol) == expected[i++]);
+          
+      }
+    }
+    {
+      auto fname = cdxmlbase + "wavy-single.cdxml";
+      std::vector<std::string> expected = {
+          "CCCC"
+      };
+      auto mols = CDXMLFileToMols(fname);
+      CHECK(mols.size() == expected.size());
+      int i = 0;
+      for (auto &mol : mols) {
+          CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
+          CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+          CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+          CHECK(MolToSmiles(*mol) == expected[i++]);
+      }
     }
   }
-  SECTION("Lots of stereo") {
+  SECTION("Lots of bad stereo") {
     {
       auto fname = cdxmlbase + "bad-id.cdxml";
       auto mols = CDXMLFileToMols(fname);
