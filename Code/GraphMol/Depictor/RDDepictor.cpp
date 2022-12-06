@@ -244,7 +244,8 @@ void embedNontetrahedralStereo(const RDKit::ROMol &mol,
 // arings: indices of atoms in rings
 void embedFusedSystems(const RDKit::ROMol &mol,
                        const RDKit::VECT_INT_VECT &arings,
-                       std::list<EmbeddedFrag> &efrags) {
+                       std::list<EmbeddedFrag> &efrags,
+                       bool useRingTemplates) {
   RDKit::INT_INT_VECT_MAP neighMap;
   RingUtils::makeRingNeighborMap(arings, neighMap);
 
@@ -261,7 +262,7 @@ void embedFusedSystems(const RDKit::ROMol &mol,
     for (auto rid : fused) {
       frings.push_back(arings.at(rid));
     }
-    EmbeddedFrag efrag(&mol, frings);
+    EmbeddedFrag efrag(&mol, frings, useRingTemplates);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);
     size_t rix;
@@ -392,7 +393,8 @@ struct ThetaBin {
 
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
-                          std::list<EmbeddedFrag> &efrags) {
+                          std::list<EmbeddedFrag> &efrags,
+                          bool useRingTemplates) {
   std::vector<int> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
@@ -420,7 +422,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   if (arings.size() > 0) {
     // first deal with the fused rings
-    DepictorLocal::embedFusedSystems(mol, arings, efrags);
+    DepictorLocal::embedFusedSystems(mol, arings, efrags, useRingTemplates);
   }
 
   // do non-tetrahedral stereo
@@ -519,7 +521,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                              bool canonOrient, bool clearConfs,
                              unsigned int nFlipsPerSample,
                              unsigned int nSamples, int sampleSeed,
-                             bool permuteDeg4Nodes, bool forceRDKit) {
+                             bool permuteDeg4Nodes, bool forceRDKit,
+                             bool useRingTemplates) {
   if (mol.needsUpdatePropertyCache()) {
     mol.updatePropertyCache(false);
   }
@@ -536,7 +539,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
 #endif
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, coordMap, efrags);
+  computeInitialCoords(mol, coordMap, efrags, useRingTemplates);
 
 #if 1
   // perform random sampling here to improve the density
@@ -639,7 +642,7 @@ unsigned int compute2DCoordsMimicDistMat(
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, nullptr, efrags);
+  computeInitialCoords(mol, nullptr, efrags, false);
 
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat

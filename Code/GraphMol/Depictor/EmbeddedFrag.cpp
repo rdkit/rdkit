@@ -58,12 +58,13 @@ EmbeddedFrag::EmbeddedFrag(unsigned int aid, const RDKit::ROMol *mol) {
 }
 
 EmbeddedFrag::EmbeddedFrag(const RDKit::ROMol *mol,
-                           const RDKit::VECT_INT_VECT &fusedRings) {
+                           const RDKit::VECT_INT_VECT &fusedRings,
+                           bool useRingTemplates) {
   PRECONDITION(mol, "");
   dp_mol = mol;
   d_eatoms.clear();
   d_attachPts.clear();
-  this->embedFusedRings(fusedRings);
+  this->embedFusedRings(fusedRings, useRingTemplates);
   d_done = false;
 }
 
@@ -441,7 +442,7 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
 // NOTE: the individual rings in fusedRings must appear in traversal order.
 //    This is what is provided by the current ring-finding code.
 //
-void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings) {
+void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings, bool useRingTemplates) {
   PRECONDITION(dp_mol, "");
   // ok this is what we are going to do here
   // embed each of the individual rings. Then
@@ -452,7 +453,7 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings) {
   RDKit::INT_VECT funion;
   RDKit::Union(fusedRings, funion);
 
-  if (fusedRings.size() > 1) {
+  if (useRingTemplates && fusedRings.size() > 1) {
     bool found_template = matchToTemplate(funion, fusedRings.size());
     if (found_template) {
       return;

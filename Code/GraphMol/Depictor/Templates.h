@@ -42,7 +42,9 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
  private:
   CoordinateTemplates() {
     // load templates into m_templates map by atom count
-    std::ifstream cxsmiles_templates ("templates.smi");
+    std::string rdbase = getenv("RDBASE");
+    std::string fpath = rdbase + "/Code/GraphMol/Depictor/templates.smi";
+    std::ifstream cxsmiles_templates (fpath);
     std::string smiles;
     while(std::getline(cxsmiles_templates, smiles)) {
         auto mol = RDKit::SmilesToMol(smiles);

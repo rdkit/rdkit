@@ -77,7 +77,8 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
     RDKit::ROMol &mol, const RDGeom::INT_POINT2D_MAP *coordMap = nullptr,
     bool canonOrient = false, bool clearConfs = true,
     unsigned int nFlipsPerSample = 0, unsigned int nSamples = 0,
-    int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false);
+    int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false,
+    bool useRingTemplates = false);
 
 //! \brief Compute the 2D coordinates such the interatom distances
 ///  mimic those in a distance matrix

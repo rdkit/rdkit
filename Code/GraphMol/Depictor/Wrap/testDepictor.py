@@ -559,5 +559,54 @@ M  END)""")
         rdDepictor.SetPreferCoordGen(default_status)
 
 
+    def molMatchesTemplate(self, mol, template):
+        """
+        Determines if the shape/layout of the template and mol are the same. It
+        is ok if the mol and template are not centered at the same place, or if
+        the mol and template have different orientations.
+        """
+        match = mol.GetSubstructMatch(template)
+        if not match or mol.GetNumAtoms() != template.GetNumAtoms():
+            return False
+
+        # get positions of atoms with centroid at origin, it is ok if the
+        # template or mol is not centered
+        center = sum(mol.GetConformer().GetPositions()) / mol.GetNumAtoms()
+        template_center = sum(template.GetConformer().GetPositions()) / template.GetNumAtoms()
+        positions = [p - center for p in mol.GetConformer().GetPositions()]
+        template_positions = [p - template_center for p in template.GetConformer().GetPositions()]
+
+        # the mol may match the template but be slightly rotated about the centroid
+        rotations = []
+        for idx, template_idx in enumerate(match):
+            v1 = positions[idx]
+            v2 = template_positions[template_idx]
+            val = round(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)), 4)
+            rotations.append(np.arccos(val))
+        return np.all(np.allclose(rotations, rotations[0], atol=.01))
+
+
+    def testUseRingSystemTemplates(self):
+        prefer_coordgen_status = rdDepictor.GetPreferCoordGen()
+        rdDepictor.SetPreferCoordGen(False)
+
+        # test that all templates match themselves
+        fpath = os.environ['RDBASE'] + "/Code/GraphMol/Depictor/templates.smi"
+        with open(fpath) as f:
+            templates = [Chem.MolFromSmiles(smi) for smi in f.readlines()]
+
+        for template in templates:
+            mol = Chem.Mol(template)
+            mol.RemoveAllConformers()
+            rdDepictor.Compute2DCoords(mol)
+            assert not self.molMatchesTemplate(mol, template)
+
+            mol.RemoveAllConformers()
+            rdDepictor.Compute2DCoords(mol,useRingTemplates=True)
+            assert self.molMatchesTemplate(mol, template)
+
+        rdDepictor.SetPreferCoordGen(prefer_coordgen_status)
+
+
 if __name__ == '__main__':
     unittest.main()

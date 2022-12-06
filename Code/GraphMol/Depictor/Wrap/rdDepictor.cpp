@@ -36,7 +36,8 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              unsigned int nSamples = 100, int sampleSeed = 100,
                              bool permuteDeg4Nodes = false,
                              double bondLength = -1.0,
-                             bool forceRDKit = false) {
+                             bool forceRDKit = false,
+                             bool useRingTemplates = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
@@ -55,7 +56,7 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
   unsigned int res;
   res = RDDepict::compute2DCoords(mol, &cMap, canonOrient, clearConfs,
                                   nFlipsPerSample, nSamples, sampleSeed,
-                                  permuteDeg4Nodes, forceRDKit);
+                                  permuteDeg4Nodes, forceRDKit, useRingTemplates);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -245,7 +246,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                  node during the sampling process \n\
      bondLength - change the default bond length for depiction \n\
      forceRDKit - use RDKit to generate coordinates even if \n\
-                  preferCoordGen is set to true\n\n\
+                  preferCoordGen is set to true\n\
+     useRingTemplates - use templates to generate coordinates of complicated\n\
+                  ring systems\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -255,7 +258,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("coordMap") = python::dict(),
        python::arg("nFlipsPerSample") = 0, python::arg("nSample") = 0,
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
-       python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false),
+       python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false,
+       python::arg("useRingTemplates") = false),
       docString.c_str());
 
   docString =
