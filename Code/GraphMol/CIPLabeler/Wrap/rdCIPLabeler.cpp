@@ -21,6 +21,12 @@
 namespace python = boost::python;
 using RDKit::CIPLabeler::assignCIPLabels;
 
+void rdMaxIterationsExceededTranslator(RDKit::CIPLabeler::MaxIterationsExceeded const &x) {
+  std::ostringstream ss;
+  ss << x.what();
+  PyErr_SetString(PyExc_RuntimeError, ss.str().c_str());
+}
+
 void assignCIPLabelsWrapHelper(RDKit::ROMol &mol,
                                const python::object &atomsToLabel,
                                const python::object &bondsToLabel,
@@ -47,6 +53,9 @@ BOOST_PYTHON_MODULE(rdCIPLabeler) {
       "A., Redkin, D.\nAlgorithmic Analysis of Cahn--Ingold--Prelog Rules of "
       "Stereochemistry:\nProposals for Revised Rules and a Guide for Machine "
       "Implementation.\nJ. Chem. Inf. Model. 2018, 58, 1755-1765.\n";
+
+   python::register_exception_translator<RDKit::CIPLabeler::MaxIterationsExceeded>(
+       &rdMaxIterationsExceededTranslator);      
 
   std::string docString =
       "New implementation of Stereo assignment using a true CIP ranking.\n"
