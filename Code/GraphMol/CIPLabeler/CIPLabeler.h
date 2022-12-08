@@ -36,7 +36,7 @@ namespace CIPLabeler {
 class RDKIT_CIPLABELER_EXPORT MaxIterationsExceeded : public std::runtime_error {
  public:
   explicit MaxIterationsExceeded()
-      : std::runtime_error("MaxIterationsExceeded"){};
+      : std::runtime_error("Max Iterations Exceeded in CIP label calculation"){};
 };
 
 
