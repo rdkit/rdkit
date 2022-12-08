@@ -1,7 +1,5 @@
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,10 +8,10 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_UFFINVERSION_H__
-#define __RD_UFFINVERSION_H__
+#ifndef RD_UFFINVERSION_H
+#define RD_UFFINVERSION_H
 #include <ForceField/Contrib.h>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <Geometry/point.h>
 
 namespace ForceFields {
@@ -73,7 +71,7 @@ RDKIT_FORCEFIELD_EXPORT double calculateCosY(const RDGeom::Point3D &iPoint,
   \return the force constant
 
 */
-RDKIT_FORCEFIELD_EXPORT boost::tuple<double, double, double, double>
+RDKIT_FORCEFIELD_EXPORT std::tuple<double, double, double, double>
 calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO);
 }  // namespace Utils
 }  // namespace UFF

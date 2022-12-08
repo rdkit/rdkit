@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include <boost/tuple/tuple_comparison.hpp>
-
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDThreads.h>
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -29,14 +27,14 @@ std::uint8_t *bitsetToBytes(const boost::dynamic_bitset<> &bitset);
 namespace {
 auto tplSorter = [](const MultiFPBReader::ResultTuple &v1,
                     const MultiFPBReader::ResultTuple &v2) {
-  if (v1.get<0>() == v2.get<0>()) {
-    if (v1.get<2>() == v2.get<2>()) {
-      return v1.get<1>() < v2.get<1>();
+  if (std::get<0>(v1) == std::get<0>(v2)) {
+    if (std::get<2>(v1) == std::get<2>(v2)) {
+      return std::get<1>(v1) < std::get<1>(v2);
     } else {
-      return v1.get<2>() < v2.get<2>();
+      return std::get<2>(v1) < std::get<2>(v2);
     }
   } else {
-    return v1.get<0>() > v2.get<0>();
+    return std::get<0>(v1) > std::get<0>(v2);
   }
 };
 

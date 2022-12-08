@@ -1,8 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2022 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -35,10 +32,10 @@ double calcTorsionCosPhi(const RDGeom::Point3D &iPoint,
   return cosPhi;
 }
 
-boost::tuple<double, double, double> calcTorsionForceConstant(
+std::tuple<double, double, double> calcTorsionForceConstant(
     const MMFFTor *mmffTorParams) {
-  return boost::make_tuple(mmffTorParams->V1, mmffTorParams->V2,
-                           mmffTorParams->V3);
+  return std::make_tuple(mmffTorParams->V1, mmffTorParams->V2,
+                         mmffTorParams->V3);
 }
 
 double calcTorsionEnergy(const double V1, const double V2, const double V3,

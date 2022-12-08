@@ -44,7 +44,6 @@
 #include <memory>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/tuple/tuple_comparison.hpp>
 #include <boost/assign/list_of.hpp>
 #include <boost/format.hpp>
 

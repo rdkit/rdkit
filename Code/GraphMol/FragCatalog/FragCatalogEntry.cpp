@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2009 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -22,6 +21,7 @@
 #include <fstream>
 #include <cstdint>
 #include <RDGeneral/hash/hash.hpp>
+#include <tuple>
 
 namespace RDKit {
 
@@ -127,23 +127,12 @@ bool FragCatalogEntry::match(const FragCatalogEntry *other, double tol) const {
   Subgraphs::DiscrimTuple tdiscs, odiscs;
   odiscs = other->getDiscrims();
 
-  // double x1 = boost::tuples::get<0>(odiscs);
-  // std::cout << x1 << "\n";
   tdiscs = this->getDiscrims();
-#if 0
-    std::cout << "DISCRIMS: " << d_descrip  << " ";
-    std::cout << tdiscs.get<0>() << " " << tdiscs.get<1>() << " " << tdiscs.get<2>();
-    std::cout << "  -- "<<odiscs.get<0>() << " " << odiscs.get<1>() << " " << odiscs.get<2>();
-    std::cout << std::endl;
-#endif
   // REVIEW: need an overload of feq that handles tuples in MolOps, or wherever
   // DiscrimTuple is defined
-  if (!(feq(boost::tuples::get<0>(tdiscs), boost::tuples::get<0>(odiscs),
-            tol)) ||
-      !(feq(boost::tuples::get<1>(tdiscs), boost::tuples::get<1>(odiscs),
-            tol)) ||
-      !(feq(boost::tuples::get<2>(tdiscs), boost::tuples::get<2>(odiscs),
-            tol))) {
+  if (!(feq(std::get<0>(tdiscs), std::get<0>(odiscs), tol)) ||
+      !(feq(std::get<1>(tdiscs), std::get<1>(odiscs), tol)) ||
+      !(feq(std::get<2>(tdiscs), std::get<2>(odiscs), tol))) {
     return false;
   }
 

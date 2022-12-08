@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,11 +8,11 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_CANON_H_
-#define _RD_CANON_H_
+#ifndef RD_CANON_H
+#define RD_CANON_H
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -95,7 +95,7 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
 typedef std::vector<MolStackElem> MolStack;
 
 //! used to represent possible branches from an atom
-typedef boost::tuple<int, int, Bond *> PossibleType;
+typedef std::tuple<int, int, Bond *> PossibleType;
 
 //! constructs the canonical traversal order for a molecular fragment
 /*!

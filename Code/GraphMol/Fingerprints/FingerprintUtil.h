@@ -16,7 +16,7 @@
 #include <DataStructs/SparseIntVect.h>
 #include <DataStructs/BitVects.h>
 #include <cstdint>
-
+#include <tuple>
 #include <vector>
 #include <map>
 #include <DataStructs/ExplicitBitVect.h>
@@ -95,8 +95,7 @@ class RDKIT_FINGERPRINTS_EXPORT ss_matcher {
   RDKit::ROMOL_SPTR m_matcher;
 };
 
-typedef boost::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int>
-    AccumTuple;
+typedef std::tuple<boost::dynamic_bitset<>, uint32_t, unsigned int> AccumTuple;
 
 RDKIT_FINGERPRINTS_EXPORT extern std::vector<std::string> defaultFeatureSmarts;
 

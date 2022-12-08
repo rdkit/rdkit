@@ -41,8 +41,6 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_comparison.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <algorithm>
@@ -245,8 +243,8 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
         }
         roundInvariants[atomIdx] = static_cast<uint32_t>(invar);
         neighborhoodsThisRound.push_back(
-            boost::make_tuple(roundAtomNeighborhoods[atomIdx],
-                              static_cast<uint32_t>(invar), atomIdx));
+            std::make_tuple(roundAtomNeighborhoods[atomIdx],
+                            static_cast<uint32_t>(invar), atomIdx));
         if (!includeRedundantEnvironments &&
             std::find(neighborhoods.begin(), neighborhoods.end(),
                       roundAtomNeighborhoods[atomIdx]) != neighborhoods.end()) {
@@ -265,28 +263,28 @@ void calcFingerprint(const ROMol &mol, unsigned int radius,
       // fingerprint:
       if (includeRedundantEnvironments ||
           std::find(neighborhoods.begin(), neighborhoods.end(),
-                    iter->get<0>()) == neighborhoods.end()) {
-        if (!onlyNonzeroInvariants || invariantCpy[iter->get<2>()]) {
-          if (includeAtoms[iter->get<2>()]) {
-            uint32_t bit = updateElement(res, iter->get<1>(), useCounts);
+                    std::get<0>(*iter)) == neighborhoods.end()) {
+        if (!onlyNonzeroInvariants || invariantCpy[std::get<2>(*iter)]) {
+          if (includeAtoms[std::get<2>(*iter)]) {
+            uint32_t bit = updateElement(res, std::get<1>(*iter), useCounts);
             if (atomsSettingBits) {
               (*atomsSettingBits)[bit].push_back(
-                  std::make_pair(iter->get<2>(), layer + 1));
+                  std::make_pair(std::get<2>(*iter), layer + 1));
             }
           }
           if (!fromAtoms || std::find(fromAtoms->begin(), fromAtoms->end(),
-                                      iter->get<2>()) != fromAtoms->end()) {
-            neighborhoods.push_back(iter->get<0>());
+                                      std::get<2>(*iter)) != fromAtoms->end()) {
+            neighborhoods.push_back(std::get<0>(*iter));
           }
         }
-        // std::cerr<<" layer: "<<layer<<" atom: "<<iter->get<2>()<<" "
-        // <<iter->get<0>()<< " " << iter->get<1>() << " " <<
-        // deadAtoms[iter->get<2>()]<<std::endl;
+        // std::cerr<<" layer: "<<layer<<" atom: "<<std::get<2>(*iter)<<" "
+        // <<std::get<0>(*iter)<< " " << std::get<1>(*iter) << " " <<
+        // deadAtoms[std::get<2>(*iter)]<<std::endl;
       } else {
         // we have seen this exact environment before, this atom
         // is now out of consideration:
-        // std::cerr<<"   atom: "<< iter->get<2>()<<" is dead."<<std::endl;
-        deadAtoms[iter->get<2>()] = 1;
+        // std::cerr<<"   atom: "<< std::get<2>(*iter)<<" is dead."<<std::endl;
+        deadAtoms[std::get<2>(*iter)] = 1;
       }
     }
 
