@@ -1,3 +1,32 @@
+# Release_2022.09.3
+(Changes relative to Release_2022.09.2)
+
+## Acknowledgements
+David Cosgrove, Eloy Félix, Michel Moreau, Rocco Moretti, Dan Nealschneider, Paolo Tosco
+
+## Bug Fixes:
+ - Missing monomer labels when depicting `MON` SGroups
+ (github #5767 from eloyfelix)
+  - Wrongly oriented SGroup bracket
+ (github #5768 from eloyfelix)
+  - Adjust LocaleSwitcher on Windows when RDK_BUILD_THREADSAFE_SSS not set
+ (github #5783 from roccomoretti)
+  - KekulizationException in tautomer canonicalization
+ (github #5784 from d-b-w)
+  - extend the allowed valences of the alkali earths
+ (github #5786 from greglandrum)
+  - Minimallib build (rdkit-js) not working for release 2022.09.2
+ (github #5792 from MichelML)
+  - Remove dependency on MSVC runtime DLL in MinGW builds
+ (github #5800 from ptosco)
+  - Update macOS target platform to 10.13
+ (github #5802 from ptosco)
+  - `R#` atom label information lost in molfile if not handled by the `RGP` spec
+ (github #5810 from eloyfelix)
+  - Stop using recommonmark in the documentation
+ (github #5812 from greglandrum)
+
+
 # Release_2022.09.2
 (Changes relative to Release_2022.09.1)
 
