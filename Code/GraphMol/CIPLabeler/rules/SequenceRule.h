@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <memory>
 #include <vector>
+#include "../CIPLabeler.h"
 
 #include "../Descriptor.h"
 #include "../Edge.h"
@@ -33,6 +34,7 @@ inline int three_way_comparison(const T &x, const T &y) {
 }  // namespace
 
 class SequenceRule {
+
  public:
   SequenceRule();
 
