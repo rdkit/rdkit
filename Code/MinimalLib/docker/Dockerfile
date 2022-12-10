@@ -9,8 +9,7 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
   g++ \
   libeigen3-dev \
   git \
-  nodejs \
-  libfreetype6-dev
+  nodejs
 
 ENV LANG C
 
@@ -27,8 +26,8 @@ RUN git clone https://github.com/emscripten-core/emsdk.git
 
 WORKDIR /opt/emsdk
 RUN ./emsdk update-tags && \
-  ./emsdk install 3.1.3 && \
-  ./emsdk activate 3.1.3
+  ./emsdk install latest && \
+  ./emsdk activate latest
 
 #RUN source ./emsdk_env.sh
 
@@ -52,10 +51,10 @@ RUN emcmake cmake -DBoost_INCLUDE_DIR=/opt/boost/include -DRDK_BUILD_FREETYPE_SU
   -DRDK_BUILD_DESCRIPTORS3D=OFF -DRDK_TEST_MULTITHREADED=OFF \
   -DRDK_BUILD_MAEPARSER_SUPPORT=OFF -DRDK_BUILD_COORDGEN_SUPPORT=ON \
   -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_USE_BOOST_IOSTREAMS=OFF \
-  -DFREETYPE_INCLUDE_DIRS=/usr/include/freetype2 \
-  -DFREETYPE_LIBRARY=/usr/lib/x86_64-linux-gnu/libfreetype.so.6 \
-  -DCMAKE_CXX_FLAGS="-s DISABLE_EXCEPTION_CATCHING=0" \
-  -DCMAKE_C_FLAGS="-DCOMPILE_ANSI_ONLY" \
+  -DFREETYPE_INCLUDE_DIRS=/opt/emsdk/upstream/emscripten/cache/sysroot/include/freetype2 \
+  -DFREETYPE_LIBRARY=/opt/emsdk/upstream/emscripten/cache/sysroot/lib/wasm32-emscripten/libfreetype.a \
+  -DCMAKE_CXX_FLAGS="-Wno-enum-constexpr-conversion -s DISABLE_EXCEPTION_CATCHING=0" \
+  -DCMAKE_C_FLAGS="-Wno-enum-constexpr-conversion -DCOMPILE_ANSI_ONLY" \
   -DCMAKE_EXE_LINKER_FLAGS="-s MODULARIZE=1 -s EXPORT_NAME=\"'initRDKitModule'\"" ..
 
 # "patch" to make the InChI code work with emscripten:
