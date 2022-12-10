@@ -245,7 +245,7 @@ public class AtomPairsTests extends GraphMolTest {
 		Match_Vect nz1 = fp1.getNonzero();
 		assertTrue(nz1.size() > 0);
 
-		roots.add(0);
+		roots.add(0L);
 		fp2 = RDKFuncs.getAtomPairFingerprint(mol, roots);
 		Match_Vect nz2 = fp2.getNonzero();
 		assertTrue(nz2.size() > 0);
@@ -263,7 +263,7 @@ public class AtomPairsTests extends GraphMolTest {
 		
 		ROMol mol = RWMol.MolFromSmiles("OCCCC");
 		UInt_Vect roots = new UInt_Vect();
-		roots.add(0);
+		roots.add(0L);
 		
 		fp1 = RDKFuncs.getTopologicalTorsionFingerprint(mol);
 		Long_Pair_Vect nz1 = fp1.getNonzero();
