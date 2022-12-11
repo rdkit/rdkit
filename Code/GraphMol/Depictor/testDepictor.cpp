@@ -20,6 +20,7 @@
 #include "RDDepictor.h"
 #include "DepictUtils.h"
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
@@ -1468,6 +1469,22 @@ M  END
   }
 }
 
+
+void testUseRingTemplates() {
+  ROMol* mol = SmilesToMol("C1CCC2C(C1)C1CCN2NN1");
+  RDDepict::compute2DCoords(*mol);
+  auto diff = mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
+  // when templates are not used, bond from 10-11 is very short
+  TEST_ASSERT(RDKit::feq(diff.length(), 0.116, .1));
+
+  bool useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol, nullptr, false, true, 0, 0, 0, false, false, useRingTemplates);
+  diff = mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
+  TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
+
+  delete mol;
+}
+
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
@@ -1671,6 +1688,7 @@ int main() {
   testGenerate2DDepictionRefPatternMatchVect();
   testGenerate2DDepictionAllowRGroups();
   testNormalizeStraighten();
+  testUseRingTemplates();
 
   return (0);
 }

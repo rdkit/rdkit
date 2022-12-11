@@ -1,8 +1,14 @@
-
 //
-//  Copyright ...
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
 
-#include <RDGeneral/export.h>
+
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/MolOps.h>
@@ -11,7 +17,7 @@
 #include <fstream>
 #include <unordered_map>
 
-class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
+class CoordinateTemplates {
  public:
   //! returns a reference to the singleton CoordinateTemplates
   /*
@@ -48,7 +54,6 @@ class RDKIT_DEPICTOR_EXPORT CoordinateTemplates {
     std::string smiles;
     while(std::getline(cxsmiles_templates, smiles)) {
         auto mol = RDKit::SmilesToMol(smiles);
-        RDKit::MolOps::symmetrizeSSSR(*mol);
         unsigned int atom_count = mol->getNumAtoms();
         if (m_templates.find(atom_count) == m_templates.end()) {
             m_templates[atom_count] = {mol};

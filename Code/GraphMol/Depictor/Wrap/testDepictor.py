@@ -583,6 +583,8 @@ M  END)""")
             v2 = template_positions[template_idx]
             val = round(np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2)), 4)
             rotations.append(np.arccos(val))
+
+        # if all the rotations are similar, then the shape is the same
         return np.all(np.allclose(rotations, rotations[0], atol=.01))
 
 
@@ -610,3 +612,5 @@ M  END)""")
 
 if __name__ == '__main__':
     unittest.main()
+    # m = Chem.MolFromSmiles("Cc1(~C2CC3C4CCN(NN4)C3CC2~c2(C)ccccc2)ccccc1")
+    # Chem.rdDepictor.Compute2DCoords(m, useRingTemplates=True)

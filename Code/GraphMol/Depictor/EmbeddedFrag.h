@@ -376,6 +376,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
 
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings, bool useRingTemplates);
 
+  void setupAttachmentPoints();
+
   //! \brief Find a transform to join a ring to the current embedded frag when
   /// we
   //! have only on common atom
