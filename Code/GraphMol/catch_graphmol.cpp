@@ -2846,3 +2846,28 @@ TEST_CASE("extended valences for alkali earths") {
     REQUIRE(m);
   }
 }
+
+TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
+  SECTION("as reported") {
+    std::vector<std::string> smis = {
+        "c1c(ccc2NC(CN=c(c21)(C)C)=O)O",
+        "c1c(c2n(C(NC(Oc2cc1)C)c1c[nH]cn1)=O)O",
+        "c1c2C(c4c(cc(c(C(=O)O)c4)O)O)Oc(c2c(c(O)c1O)O)(=O)O",
+        "c12C(CN(C)C)CCCCN=c(c2cc2c1cc[nH]c2)(C)C"};
+    for (const auto &smi : smis) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
+    }
+  }
+  SECTION("edge cases") {
+    std::vector<std::string> smis = {
+        "c1c(ccc2NC(CN=c(c21)=C)=O)O",     // exocyclic double bond
+        "c1c(ccc2NC(Cn=c(c21)(C)C)=O)O",   // even more bogus aromatic atoms
+        "c1c(ccc2NC(CN=c(c21)(:c)C)=O)O",  // even more bogus aromatic atoms
+    };
+    for (const auto &smi : smis) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), AtomValenceException);
+    }
+  }
+}

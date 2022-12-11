@@ -181,19 +181,18 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
 }  // namespace
 
 void cleanUp(RWMol &mol) {
-  ROMol::AtomIterator ai;
-  for (ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
-    switch ((*ai)->getAtomicNum()) {
+  for (auto atom : mol.atoms()) {
+    switch (atom->getAtomicNum()) {
       case 7:
-        nitrogenCleanup(mol, *ai);
+        nitrogenCleanup(mol, atom);
         break;
       case 15:
-        phosphorusCleanup(mol, *ai);
+        phosphorusCleanup(mol, atom);
         break;
       case 17:
       case 35:
       case 53:
-        halogenCleanup(mol, *ai);
+        halogenCleanup(mol, atom);
         break;
     }
   }
@@ -210,12 +209,12 @@ void adjustHs(RWMol &mol) {
   //  sanitized, aromaticity has been perceived, and the implicit
   //  valence of everything has been calculated.
   //
-  for (ROMol::AtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms(); ++ai) {
-    int origImplicitV = (*ai)->getImplicitValence();
-    (*ai)->calcExplicitValence(false);
-    int origExplicitV = (*ai)->getNumExplicitHs();
+  for (auto atom : mol.atoms()) {
+    int origImplicitV = atom->getImplicitValence();
+    atom->calcExplicitValence(false);
+    int origExplicitV = atom->getNumExplicitHs();
 
-    int newImplicitV = (*ai)->calcImplicitValence(false);
+    int newImplicitV = atom->calcImplicitValence(false);
     //
     //  Case 1: The disappearing Hydrogen
     //    Smiles:  O=C1NC=CC2=C1C=CC=C2
@@ -233,8 +232,8 @@ void adjustHs(RWMol &mol) {
     //    <phew> that takes way longer to comment than it does to
     //    write:
     if (newImplicitV < origImplicitV) {
-      (*ai)->setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
-      (*ai)->calcExplicitValence(false);
+      atom->setNumExplicitHs(origExplicitV + (origImplicitV - newImplicitV));
+      atom->calcExplicitValence(false);
     }
   }
 }
@@ -384,6 +383,12 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
     adjustHs(mol);
   }
 
+  // now that everything has been cleaned up, go through and check/update the
+  // computed valences on atoms and bonds one more time
+  operationThatFailed = SANITIZE_PROPERTIES;
+  if (sanitizeOps & operationThatFailed) {
+    mol.updatePropertyCache(true);
+  }
   operationThatFailed = 0;
 }
 
@@ -781,9 +786,8 @@ int getFormalCharge(const ROMol &mol) {
 
 unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   unsigned numPropAtoms = 0;
-  for (ROMol::ConstAtomIterator ai = mol.beginAtoms(); ai != mol.endAtoms();
-       ++ai) {
-    if ((*ai)->hasProp(prop)) {
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasProp(prop)) {
       ++numPropAtoms;
     }
   }
