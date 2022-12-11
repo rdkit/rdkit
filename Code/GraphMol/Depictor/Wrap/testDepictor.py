@@ -612,5 +612,3 @@ M  END)""")
 
 if __name__ == '__main__':
     unittest.main()
-    # m = Chem.MolFromSmiles("Cc1(~C2CC3C4CCN(NN4)C3CC2~c2(C)ccccc2)ccccc1")
-    # Chem.rdDepictor.Compute2DCoords(m, useRingTemplates=True)
