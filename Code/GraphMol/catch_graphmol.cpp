@@ -2367,6 +2367,7 @@ TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
   ps.sanitize = false;
   SECTION("kekulization") {
     for (const auto &pr : tests) {
+      INFO(pr.first);
       std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
       REQUIRE(m);
       m->updatePropertyCache(false);
@@ -2376,6 +2377,7 @@ TEST_CASE("allow 5 valent N/P/As to kekulize", "[kekulization]") {
   }
   SECTION("sanitization") {
     for (const auto &pr : tests) {
+      INFO(pr.first);
       std::unique_ptr<RWMol> m{SmilesToMol(pr.first, ps)};
       REQUIRE(m);
       m->updatePropertyCache(false);
@@ -2848,6 +2850,15 @@ TEST_CASE("extended valences for alkali earths") {
 }
 
 TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
+  SECTION("basics") {
+    std::vector<std::string> smis = {
+        "Cc1(C)=NCCCC1",  // one bogus aromatic atom
+    };
+    for (const auto &smi : smis) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), AtomValenceException);
+    }
+  }
   SECTION("as reported") {
     std::vector<std::string> smis = {
         "c1c(ccc2NC(CN=c(c21)(C)C)=O)O",
@@ -2859,7 +2870,7 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
       CHECK_THROWS_AS(SmilesToMol(smi), MolSanitizeException);
     }
   }
-  SECTION("edge cases") {
+  SECTION("edge cases atoms") {
     std::vector<std::string> smis = {
         "c1c(ccc2NC(CN=c(c21)=C)=O)O",     // exocyclic double bond
         "c1c(ccc2NC(Cn=c(c21)(C)C)=O)O",   // even more bogus aromatic atoms
@@ -2868,6 +2879,19 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
     for (const auto &smi : smis) {
       INFO(smi);
       CHECK_THROWS_AS(SmilesToMol(smi), AtomValenceException);
+    }
+  }
+  SECTION("edge cases kekulization") {
+    std::vector<std::string> smis = {
+        "c12ccccc1=NCCC2",  // adjacent to an actual aromatic ring
+        "Cc1(C)=NCCCc1",    // two bogus aromatic atoms
+        "Cc1(C)nCCCC=1",    // two bogus aromatic atoms
+        "Cc1(C)nCCCc1",     // three bogus aromatic atoms
+        "Cc:1(C):nCCCc:1",  // three bogus aromatic atoms
+    };
+    for (const auto &smi : smis) {
+      INFO(smi);
+      CHECK_THROWS_AS(SmilesToMol(smi), KekulizeException);
     }
   }
 }
