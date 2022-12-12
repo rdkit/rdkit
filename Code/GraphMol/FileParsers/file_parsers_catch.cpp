@@ -5216,6 +5216,23 @@ M  END)CTAB"_ctab;
               common_properties::dummyLabel) == "R#");    
   }
 }
+SECTION("R# also gets the tag (V2000, #5810)") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+   -2.9167    3.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5830    3.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2503    3.7700    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  3  1  0
+  1  2  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R#");    
+  }
+}
 
 TEST_CASE("github #5718: ") {
   SECTION("as reported") {
