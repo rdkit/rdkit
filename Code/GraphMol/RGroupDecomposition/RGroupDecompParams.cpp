@@ -346,7 +346,7 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
         bondOrder += contrib;
       }
 
-      auto valances =
+      const auto &valances =
           PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
       auto valence = *std::max_element(valances.begin(), valances.end());
       // round up aromatic contributions
