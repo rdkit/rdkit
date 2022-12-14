@@ -5193,6 +5193,45 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
               common_properties::dummyLabel) == "R98");
   }
+  SECTION("R# also gets the tag (was #5810)") {
+    auto m = R"CTAB(
+  Mrv1810 02111915102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.9167 3 0 0
+M  V30 2 C -1.583 3.77 0 0
+M  V30 3 R# -4.2503 3.77 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 3
+M  V30 2 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R#");
+  }
+  SECTION("R# also gets the tag (V2000, #5810)") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+   -2.9167    3.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5830    3.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2503    3.7700    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  3  1  0
+  1  2  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R#");
+  }
 }
 
 TEST_CASE("github #5827: do not write properties with new lines to SDF") {
