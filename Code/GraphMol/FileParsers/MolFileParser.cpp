@@ -1474,9 +1474,9 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
         }
       }
     }
-    if (symb[0] == 'R' && symb != "R#") {
-      // we're skipping R# here because that really should be handled by an RGP
-      // spec
+    if (symb[0] == 'R') {
+      // we used to skip R# here because that really should be handled by an
+      // RGP spec, but that turned out to not be permissive enough... <sigh>
       setRGPProps(symb, res);
     }
   } else if (symb == "D") {  // mol blocks support "D" and "T" as shorthand...
