@@ -265,15 +265,12 @@ RDKIT_CHEMTRANSFORMS_EXPORT void parseQueryDefText(
     std::map<std::string, ROMOL_SPTR> &queryDefs, bool standardize = true,
     const std::string &delimiter = "\t", const std::string &comment = "//",
     unsigned int nameColumn = 0, unsigned int smartsColumn = 1);
-//! \brief Updates conformer coordinates in res from those in mol
-/*!
- *
- * @param mol Molecule with coordinates
- * @param res A sub-molecule of mol
- * @param removedAtoms The atoms that have been removed from mol to create res
- */
-RDKIT_CHEMTRANSFORMS_EXPORT void updateSubMolConfs(const ROMol &mol, RWMol &res,
-                       boost::dynamic_bitset<> &removedAtoms);
+
+namespace details {
+//! not recommended for use in other code
+RDKIT_CHEMTRANSFORMS_EXPORT void updateSubMolConfs(
+    const ROMol &mol, RWMol &res, boost::dynamic_bitset<> &removedAtoms);
+}  // namespace details
 
 }  // namespace RDKit
 #endif

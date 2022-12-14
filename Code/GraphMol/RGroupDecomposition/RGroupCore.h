@@ -58,8 +58,8 @@ struct RCore {
 
   // Final core returned to user, created by extracting core from target
   // molecule
-  RWMOL_SPTR extractCoreFromMolMatch(
-      bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match,
+  std::pair<RWMOL_SPTR, bool> extractCoreFromMolMatch(
+      const ROMol &mol, const MatchVectType &match,
       const RGroupDecompositionParameters &params) const;
 
   std::vector<MatchVectType> matchTerminalUserRGroups(

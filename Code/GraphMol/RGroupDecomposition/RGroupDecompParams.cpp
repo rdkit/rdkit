@@ -351,7 +351,7 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
       auto valence = *std::max_element(valances.begin(), valances.end());
       // round up aromatic contributions
       dummiesToAdd = valence - (int)(bondOrder + .51);
-      dummiesToAdd = std::min(dumiesToAdd,maxNumDummies);
+      dummiesToAdd = std::min(dummiesToAdd,maxNumDummies);
     }
 
     std::vector<int> newIndices;

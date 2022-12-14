@@ -377,8 +377,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             rcore->numberUserRGroups - numberUserGroupsInMatch;
         CHECK_INVARIANT(numberMissingUserGroups >= 0,
                         "Data error in missing user rgroup count");
-        auto extractedCore =
-            rcore->extractCoreFromMolMatch(hasCoreDummies, mol, tmatche, params());
+        const auto [extractedCore, hasDummies] =
+            rcore->extractCoreFromMolMatch(mol, tmatche, params());
+        hasCoreDummies = hasDummies;
         potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
                                       extractedCore);
       }
@@ -502,20 +503,22 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
   }
 
   if (coreWithMatches->getNumConformers() > 0) {
-    for (const auto & [atom, label] : retainedRGroups) {
+    for (const auto &[atom, label] : retainedRGroups) {
       if (usedLabelMap.has(label) && usedLabelMap.isUserDefined(label)) {
         // coordinates of user defined R groups should already be copied over
         continue;
       }
       const auto neighbor = *coreWithMatches->atomNeighbors(atom).begin();
       const auto &mapping = data->finalRlabelMapping;
-      const auto oldLabel =
-          std::find_if(mapping.begin(), mapping.end(),
-                       [label = label](const auto &p) { return p.second == label; });
-      if (auto iter = match.rgroups.find(oldLabel->first);
-          iter != match.rgroups.end()) {
-        MolOps::setTerminalAtomCoords(*coreWithMatches, atom->getIdx(),
-                                      neighbor->getIdx());
+      if (const auto oldLabel = std::find_if(
+              mapping.begin(), mapping.end(),
+              [label = label](const auto &p) { return p.second == label; });
+          oldLabel != mapping.end()) {
+        if (auto iter = match.rgroups.find(oldLabel->first);
+            iter != match.rgroups.end()) {
+          MolOps::setTerminalAtomCoords(*coreWithMatches, atom->getIdx(),
+                                        neighbor->getIdx());
+        }
       }
     }
   }

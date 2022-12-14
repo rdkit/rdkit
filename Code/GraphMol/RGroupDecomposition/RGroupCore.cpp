@@ -64,13 +64,14 @@ void RCore::findIndicesWithRLabel() {
   }
 }
 
-RWMOL_SPTR RCore::extractCoreFromMolMatch(
-    bool &hasCoreDummies, const ROMol &mol, const MatchVectType &match,
+std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
+    const ROMol &mol, const MatchVectType &match,
     const RGroupDecompositionParameters &params) const {
   auto extractedCore = boost::make_shared<RWMol>(mol);
   std::set<int> atomIndicesToKeep;
   std::vector<Bond *> newBonds;
   std::map<Atom *, int> dummyAtomMap;
+  bool hasCoreDummies = false;
   for (auto &pair : match) {
     const auto queryAtom = core->getAtomWithIdx(pair.first);
     auto const targetAtom = extractedCore->getAtomWithIdx(pair.second);
@@ -209,7 +210,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
   extractedCore->commitBatchEdit();
 
   // Copy molecule coordinates to extracted core
-  updateSubMolConfs(mol, *extractedCore, removedAtoms);
+  details::updateSubMolConfs(mol, *extractedCore, removedAtoms);
 
   for (auto citer = mol.beginConformers(); citer != mol.endConformers();
        ++citer) {
@@ -233,7 +234,7 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
       }
       molCopy.addConformer(newConf);
     }
-    updateSubMolConfs(molCopy, *extractedCore, removedAtoms);
+    details::updateSubMolConfs(molCopy, *extractedCore, removedAtoms);
     molCopy.clearConformers();
 
     for (const auto atom : extractedCore->atoms()) {
@@ -270,7 +271,9 @@ RWMOL_SPTR RCore::extractCoreFromMolMatch(
                         MolOps::SANITIZE_SYMMRINGS | MolOps::SANITIZE_CLEANUP);
   } catch (const MolSanitizeException &) {
   }
-  return extractedCore;
+
+  std::pair rtn(extractedCore, hasCoreDummies);
+  return rtn;
 }
 
 // Return a copy of core where dummy atoms are replaced by
