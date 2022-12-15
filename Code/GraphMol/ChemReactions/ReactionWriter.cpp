@@ -119,18 +119,17 @@ std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
 //! returns an RXN block for a reaction
 std::string ChemicalReactionToV3KRxnBlock(const ChemicalReaction &rxn,
                                           bool separateAgents) {
-  if (separateAgents) {
-    // V3000 doesn't seem to support agent blocks
-    BOOST_LOG(rdWarningLog)
-        << "V3000 RXN blocks do not support separating agents. Agents will be "
-           "written to the reactants block"
-        << std::endl;
-  }
   std::ostringstream res;
   res << "$RXN V3000\n\n      RDKit\n\n";
-  res << "M  V30 COUNTS "
-      << rxn.getNumReactantTemplates() + rxn.getNumAgentTemplates() << " "
-      << rxn.getNumProductTemplates();
+
+  if (separateAgents) {
+    res << "M  V30 COUNTS " << rxn.getNumReactantTemplates() << " "
+        << rxn.getNumProductTemplates() << " " << rxn.getNumAgentTemplates();
+  } else {
+    res << "M  V30 COUNTS "
+        << rxn.getNumReactantTemplates() + rxn.getNumAgentTemplates() << " "
+        << rxn.getNumProductTemplates();
+  }
   res << "\n";
 
   res << "M  V30 BEGIN REACTANT\n";
@@ -140,11 +139,13 @@ std::string ChemicalReactionToV3KRxnBlock(const ChemicalReaction &rxn,
     MolOps::findSSSR(*rt);
     res << FileParserUtils::getV3000CTAB(*rt, -1);
   }
-  for (const auto &rt : boost::make_iterator_range(rxn.beginAgentTemplates(),
-                                                   rxn.endAgentTemplates())) {
-    // to write the mol block, we need ring information:
-    MolOps::findSSSR(*rt);
-    res << FileParserUtils::getV3000CTAB(*rt, -1);
+  if (!separateAgents) {
+    for (const auto &rt : boost::make_iterator_range(rxn.beginAgentTemplates(),
+                                                     rxn.endAgentTemplates())) {
+      // to write the mol block, we need ring information:
+      MolOps::findSSSR(*rt);
+      res << FileParserUtils::getV3000CTAB(*rt, -1);
+    }
   }
   res << "M  V30 END REACTANT\n";
   res << "M  V30 BEGIN PRODUCT\n";
@@ -155,6 +156,17 @@ std::string ChemicalReactionToV3KRxnBlock(const ChemicalReaction &rxn,
     res << FileParserUtils::getV3000CTAB(*rt, -1);
   }
   res << "M  V30 END PRODUCT\n";
+  if (separateAgents) {
+    res << "M  V30 BEGIN AGENT\n";
+    for (const auto &rt : boost::make_iterator_range(rxn.beginAgentTemplates(),
+                                                     rxn.endAgentTemplates())) {
+      // to write the mol block, we need ring information:
+      MolOps::findSSSR(*rt);
+      res << FileParserUtils::getV3000CTAB(*rt, -1);
+    }
+    res << "M  V30 END AGENT\n";
+  }
+
   res << "M  END\n";
   return res.str();
 }
