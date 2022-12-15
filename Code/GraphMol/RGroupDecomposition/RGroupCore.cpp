@@ -151,6 +151,11 @@ std::pair<RWMOL_SPTR, bool> RCore::extractCoreFromMolMatch(
               extractedCore
                   ->getBondBetweenAtoms(pair.second, targetNeighborIndex)
                   ->copy();
+          if (connectingBond->getStereo() > Bond::BondStereo::STEREOANY) {
+            // TODO: how to handle bond stereo on rgroups connected to core by
+            // stereo double bonds
+            connectingBond->setStereo(Bond::BondStereo::STEREOANY);
+          }
 
           if (connectingBond->getBeginAtomIdx() == targetNeighborIndex) {
             connectingBond->setBeginAtomIdx(newDummyIdx);

@@ -302,6 +302,15 @@ int RGroupDecomposition::add(const ROMol &inmol) {
 
                 data->labels.insert(rlabel);  // keep track of all labels used
                 attachments.push_back(rlabel);
+                if (const auto [bondIdx, end] = newMol->getAtomBonds(at); bondIdx != end) {
+                  auto connectingBond = (*newMol)[*bondIdx];
+                  if (connectingBond->getStereo() > Bond::BondStereo::STEREOANY) {
+                    // TODO: how to handle bond stereo on rgroups connected to core by
+                    // stereo double bonds
+                    connectingBond->setStereo(Bond::BondStereo::STEREOANY);
+                  }
+                }
+
               }
             } else {
               // restore input wildcard
