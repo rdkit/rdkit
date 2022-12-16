@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2015-2020 Greg Landrum
+//  Copyright (C) 2015-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,7 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <boost/format.hpp>
 
 // ****************************************************************************

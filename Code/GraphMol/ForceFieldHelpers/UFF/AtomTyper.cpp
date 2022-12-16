@@ -703,10 +703,10 @@ bool getUFFInversionParams(const ROMol &mol, unsigned int idx1,
   }
   if (res) {
     isBoundToSP2O = (isBoundToSP2O && (at2AtomicNum == 6));
-    boost::tuple<double, double, double, double> invCoeffForceCon =
+    auto invCoeffForceCon =
         UFF::Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
                                                               isBoundToSP2O);
-    uffInversionParams.K = boost::tuples::get<0>(invCoeffForceCon);
+    uffInversionParams.K = std::get<0>(invCoeffForceCon);
   }
   return res;
 }

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2003-2006 Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -104,9 +103,9 @@ DOUBLE_VECT GetBitDiscrims(const FragCatalog *self, unsigned int idx) {
   DOUBLE_VECT res;
   const FragCatalogEntry *entry = self->getEntryWithBitId(idx);
   Subgraphs::DiscrimTuple tmp = entry->getDiscrims();
-  res.push_back(tmp.get<0>());
-  res.push_back(tmp.get<1>());
-  res.push_back(tmp.get<2>());
+  res.push_back(std::get<0>(tmp));
+  res.push_back(std::get<1>(tmp));
+  res.push_back(std::get<2>(tmp));
   return res;
 }
 

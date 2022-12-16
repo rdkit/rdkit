@@ -17,8 +17,7 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/tuple/tuple.hpp>
-#include <boost/tuple/tuple_comparison.hpp>
+#include <tuple>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
@@ -320,8 +319,8 @@ MorganEnvGenerator<OutputType>::getEnvironments(
         // store the environment that generated this bit id along with the bit
         // id and the atom id
         allNeighborhoodsThisRound.push_back(
-            boost::make_tuple(roundAtomNeighborhoods[atomIdx],
-                              static_cast<OutputType>(invar), atomIdx));
+            std::make_tuple(roundAtomNeighborhoods[atomIdx],
+                            static_cast<OutputType>(invar), atomIdx));
         if (std::find(neighborhoods.begin(), neighborhoods.end(),
                       roundAtomNeighborhoods[atomIdx]) != neighborhoods.end()) {
           // we have seen this exact environment before, this atom
@@ -340,19 +339,19 @@ MorganEnvGenerator<OutputType>::getEnvironments(
       // result
       if (morganArguments->df_includeRedundantEnvironments ||
           std::find(neighborhoods.begin(), neighborhoods.end(),
-                    iter->get<0>()) == neighborhoods.end()) {
+                    std::get<0>(*iter)) == neighborhoods.end()) {
         if (!morganArguments->df_onlyNonzeroInvariants ||
-            (*atomInvariants)[iter->get<2>()]) {
-          if (includeAtoms[iter->get<2>()]) {
+            (*atomInvariants)[std::get<2>(*iter)]) {
+          if (includeAtoms[std::get<2>(*iter)]) {
             result.push_back(new MorganAtomEnv<OutputType>(
-                iter->get<1>(), iter->get<2>(), layer + 1));
-            neighborhoods.push_back(iter->get<0>());
+                std::get<1>(*iter), std::get<2>(*iter), layer + 1));
+            neighborhoods.push_back(std::get<0>(*iter));
           }
         }
       } else {
         // we have seen this exact environment before, this atom
         // is now out of consideration:
-        deadAtoms[iter->get<2>()] = 1;
+        deadAtoms[std::get<2>(*iter)] = 1;
       }
     }
 
