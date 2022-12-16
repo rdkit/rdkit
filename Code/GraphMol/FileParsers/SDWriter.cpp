@@ -91,7 +91,8 @@ void _writePropToStream(std::ostream *dp_ostream, const ROMol &mol,
         << " because the name includes a newline" << std::endl;
     return;
   }
-  if (pval.find("\n\n") != std::string::npos) {
+  if (pval.find("\r\n\r\n") != std::string::npos ||
+      pval.find("\n\n") != std::string::npos) {
     BOOST_LOG(rdWarningLog)
         << "WARNING: Skipping property " << name
         << " because the value includes an illegal blank line" << std::endl;

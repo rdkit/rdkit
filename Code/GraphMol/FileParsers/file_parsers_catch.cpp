@@ -5266,8 +5266,7 @@ M  END")CTAB"_ctab;
 }
 
 TEST_CASE("github #5827: do not write properties with new lines to SDF") {
-  SECTION("basics") {
-    auto m = R"CTAB(
+  auto m = R"CTAB(
   Mrv2211 12152210292D          
 
   0  0  0     0  0            999 V3000
@@ -5283,10 +5282,13 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    REQUIRE(m);
+  REQUIRE(m);
+  SECTION("basics") {
     m->setProp("foo", "fooprop");
     m->setProp("bar", "foo\n\nprop");
+    m->setProp("baz", "foo\r\n\r\nprop");
     m->setProp("bletch\nnope", "fooprop");
+    m->setProp("bletch\r\nnope2", "fooprop");
     std::ostringstream oss;
     SDWriter sdw(&oss);
     sdw.write(*m);
@@ -5294,6 +5296,7 @@ M  END
     auto sdf = oss.str();
     CHECK(sdf.find("<foo>") != std::string::npos);
     CHECK(sdf.find("<bar>") == std::string::npos);
+    CHECK(sdf.find("<baz>") == std::string::npos);
     CHECK(sdf.find("<bletch") == std::string::npos);
   }
 }
