@@ -20,10 +20,10 @@ struct RGroupMatch {
   size_t core_idx;  // index of the matching core
   size_t numberMissingUserRGroups;
   R_DECOMP rgroups;        // rlabel->RGroupData mapping
-  ROMOL_SPTR matchedCore;  // Core with dummy or query atoms and bonds matched
+  RWMOL_SPTR matchedCore;  // Core with dummy or query atoms and bonds matched
 
   RGroupMatch(size_t core_index, size_t numberMissingUserRGroups,
-              R_DECOMP input_rgroups, ROMOL_SPTR matchedCore)
+              R_DECOMP input_rgroups, RWMOL_SPTR matchedCore)
       : core_idx(core_index),
         numberMissingUserRGroups(numberMissingUserRGroups),
         rgroups(std::move(input_rgroups)),

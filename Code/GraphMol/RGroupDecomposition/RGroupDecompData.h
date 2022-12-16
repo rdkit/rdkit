@@ -219,6 +219,7 @@ struct RGroupDecompData {
       }
     }
 
+    std::set<int> labelsToErase;
     for (int label : labels) {
       if (label > 0 && !removeAllHydrogenRGroups) {
         continue;
@@ -236,11 +237,35 @@ struct RGroupDecompData {
       }
 
       if (allH) {
+        labelsToErase.insert(label);
         for (auto &position : results) {
           position.rgroups.erase(label);
         }
       }
     }
+
+    for (auto &position : results) {
+      for (auto atom : position.matchedCore->atoms()) {
+        if (int atomLabel; atom->getAtomicNum() == 0 &&
+                           atom->getPropIfPresent(RLABEL, atomLabel)) {
+          if (atomLabel > 0 && !params.removeAllHydrogenRGroupsAndLabels) {
+            continue;
+          }
+          if (labelsToErase.find(atomLabel) != labelsToErase.end()) {
+            atom->setAtomicNum(1);
+            atom->clearProp(RLABEL);
+            if (atom->hasProp(RLABEL_TYPE)) {
+              atom->clearProp(RLABEL_TYPE);
+            }
+            if (atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
+              atom->clearProp(UNLABELED_CORE_ATTACHMENT);
+            }
+            atom->updatePropertyCache(false);
+          }
+        }
+      }
+    }
+
     return results;
   }
 
@@ -286,9 +311,31 @@ struct RGroupDecompData {
     }
   }
 
+  bool replaceHydrogenCoreDummy(const RGroupMatch &match, RWMol &core,
+                                const Atom &atom, const int currentLabel,
+                                const int rLabel) {
+    // if the R group is just a hydrogen then the attachment point should
+    // replace an existing hydrogen neighbor since all hydrogen neighbors
+    // are copied from the input molecule to the extracted core.
+    if (const auto group = match.rgroups.find(currentLabel);
+        group != match.rgroups.end()) {
+      if (group->second->is_hydrogen) {
+        for (auto &neighbor : core.atomNeighbors(&atom)) {
+          if (neighbor->getAtomicNum() == 1) {
+            neighbor->setAtomicNum(0);
+            setRlabel(neighbor, rLabel);
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   void relabelCore(RWMol &core, std::map<int, int> &mappings,
                    UsedLabels &used_labels, const std::set<int> &indexLabels,
-                   const std::map<int, std::vector<int>> &extraAtomRLabels) {
+                   const std::map<int, std::vector<int>> &extraAtomRLabels,
+                   const RGroupMatch *const match = nullptr) {
     // Now remap to proper rlabel ids
     //  if labels are positive, they come from User labels
     //  if they are negative, they come from indices and should be
@@ -304,7 +351,6 @@ struct RGroupDecompData {
     // a sidechain atom has a vector of the attachments back to the
     //  core that takes the place of numBondsToRlabel
 
-    std::map<int, std::vector<int>> bondsToCore;
     std::vector<std::pair<Atom *, Atom *>> atomsToAdd;  // adds -R if necessary
 
     // Deal with user supplied labels
@@ -320,10 +366,26 @@ struct RGroupDecompData {
       if (atom->getAtomicNum() == 0 &&
           atom->getDegree() == 1) {  // add to existing dummy/rlabel
         setRlabel(atom, userLabel);
-      } else {  // adds new rlabel
-        auto *newAt = new Atom(0);
-        setRlabel(newAt, userLabel);
-        atomsToAdd.emplace_back(atom, newAt);
+      } else {
+        // A non-terminal RGroup. Create a dummy by replacing an existing
+        // hydrogen for hydrogen side chains, or a new dummy atom for heavy side
+        // chains.
+        bool addNew = true;
+        if (match != nullptr) {
+          addNew = !replaceHydrogenCoreDummy(*match, core, *atom, userLabel,
+                                             userLabel);
+          // If we can't replace a hydrogen only add the dummy if it exists in
+          // the decomp This is unexpected.
+          if (addNew &&
+              match->rgroups.find(userLabel) == match->rgroups.end()) {
+            addNew = false;
+          }
+        }
+        if (addNew) {
+          auto *newAt = new Atom(0);
+          setRlabel(newAt, userLabel);
+          atomsToAdd.emplace_back(atom, newAt);
+        }
       }
     }
 
@@ -350,9 +412,21 @@ struct RGroupDecompData {
               *atom)) {  // add to dummy
         setRlabel(atom, rlabel);
       } else {
-        auto *newAt = new Atom(0);
-        setRlabel(newAt, rlabel);
-        atomsToAdd.emplace_back(atom, newAt);
+        bool addNew = true;
+        if (match != nullptr) {
+          addNew =
+              !replaceHydrogenCoreDummy(*match, core, *atom, newLabel, rlabel);
+          // If we can't replace a hydrogen only add the dummy if it exists in
+          // the decomp This is unexpected.
+          if (addNew && match->rgroups.find(newLabel) == match->rgroups.end()) {
+            addNew = false;
+          }
+        }
+        if (addNew) {
+          auto *newAt = new Atom(0);
+          setRlabel(newAt, rlabel);
+          atomsToAdd.emplace_back(atom, newAt);
+        }
       }
     }
 
@@ -382,6 +456,11 @@ struct RGroupDecompData {
       atom->clearProp(RLABEL);
       atom->clearProp(RLABEL_TYPE);
     }
+
+    // Delay removing hydrogens from core until outputCoreMolecule is called,
+    // If hydrogens are removed now and more dummies removed in
+    // outputCoreMolecule then aromaticity perception in the core may be broken.
+
     core.updatePropertyCache(false);  // this was github #1550
   }
 
@@ -532,6 +611,16 @@ struct RGroupDecompData {
       for (auto &rgroup : it.rgroups) {
         relabelRGroup(*rgroup.second, finalRlabelMapping);
       }
+#ifdef VERBOSE
+      std::cerr << "relabel core mol1 " << MolToSmiles(*it.matchedCore)
+                << std::endl;
+#endif
+      relabelCore(*it.matchedCore, finalRlabelMapping, used_labels, indexLabels,
+                  extraAtomRLabels, &it);
+#ifdef VERBOSE
+      std::cerr << "relabel core mol2 " << MolToSmiles(*it.matchedCore)
+                << std::endl;
+#endif
     }
 
     std::set<int> uniqueMappedValues;

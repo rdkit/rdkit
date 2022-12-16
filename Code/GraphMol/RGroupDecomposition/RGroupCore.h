@@ -50,15 +50,17 @@ struct RCore {
 
   // Return a copy of core where dummy atoms are replaced by
   // the respective matching atom in mol, while other atoms have
-  // their aromatic flag and formal charge copied from 
+  // their aromatic flag and formal charge copied from
   // the respective matching atom in mol
   ROMOL_SPTR replaceCoreAtomsWithMolMatches(bool &hasCoreDummies,
                                             const ROMol &mol,
                                             const MatchVectType &match) const;
 
-  // Final core returned to user with dummy atoms and bonds set to those in the
-  // match
-  RWMOL_SPTR coreWithMatches(const ROMol &coreReplacedAtoms) const;
+  // Final core returned to user, created by extracting core from target
+  // molecule
+  std::pair<RWMOL_SPTR, bool> extractCoreFromMolMatch(
+      const ROMol &mol, const MatchVectType &match,
+      const RGroupDecompositionParameters &params) const;
 
   std::vector<MatchVectType> matchTerminalUserRGroups(
       const RWMol &target, MatchVectType match,
@@ -80,7 +82,8 @@ struct RCore {
  private:
   // The set of atom indices in the core for terminal R groups with user label
   std::set<int> terminalRGroupDummyAtoms;
-  // The set of atom indices in the core for terminal R groups with atom indices with or without user labels
+  // The set of atom indices in the core for terminal R groups with atom indices
+  // with or without user labels
   std::set<int> terminalRGroupAtoms;
   // An atom index map of terminal R groups to their heavy atom neighbor
   std::map<int, int> terminalRGroupAtomToNeighbor;
@@ -92,8 +95,8 @@ struct RCore {
 
   // Build the matching molecule (core minus user R groups)
   void buildMatchingMol();
-  
-  // Add attachement points to unlabelled R Groups
+
+  // Add attachment points to unlabelled R Groups
   void addDummyAtomsToUnlabelledCoreAtoms();
 };
 
