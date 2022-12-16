@@ -152,12 +152,15 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
   //   the first bond that is not yet picked by any other chiral centers
   // we use the orders calculated above to determine which order to do the
   // wedging
-  RDKit::ROMol::OBOND_ITER_PAIR atomBonds = mol.getAtomBonds(atom);
-  std::vector<std::pair<int, int>> nbrScores;
-  while (atomBonds.first != atomBonds.second) {
-    const Bond *bond = mol[*atomBonds.first];
-    ++atomBonds.first;
 
+  // If we call wedgeMolBonds() on a fragment, it can happen that we end up with
+  // atoms that don't have enough neighbors. Those are going to cause problems,
+  // so just bail here.
+  // if (atom->getDegree() < 3) {
+  //   return -1;
+  // }
+  std::vector<std::pair<int, int>> nbrScores;
+  for (const auto bond : mol.atomBonds(atom)) {
     // can only wedge single bonds:
     if (bond->getBondType() != Bond::SINGLE) {
       continue;
@@ -205,12 +208,14 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
   }
   // There's still one situation where this whole thing can fail: an unlucky
   // situation where all neighbors of all neighbors of an atom are chiral and
-  // that atom ends up being the last one picked for stereochem assignment.
+  // that atom ends up being the last one picked for stereochem assignment. This
+  // also happens in cases where the chiral atom doesn't have all of its
+  // neighbors (like when working with partially sanitized fragments)
   //
-  // We'll catch that as an error here and hope that it's as unlikely to occur
-  // as it seems like it is. (I'm going into this knowing that it's bound to
-  // happen; I'll kick myself and do the hard solution at that point.)
-  CHECK_INVARIANT(nbrScores.size(), "no eligible neighbors for chiral center");
+  // We'll bail here by returning -1
+  if (nbrScores.empty()) {
+    return -1;
+  }
   std::sort(nbrScores.begin(), nbrScores.end(), Rankers::pairLess);
   return nbrScores[0].second;
 }
@@ -255,7 +260,9 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol) {
       break;
     }
     int bnd = pickBondToWedge(atom, mol, nChiralNbrs, res, noNbrs);
-    res[bnd] = idx;
+    if (bnd >= 0) {
+      res[bnd] = idx;
+    }
   }
   return res;
 }
