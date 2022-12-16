@@ -530,9 +530,12 @@ bool hasNonDefaultValence(const Atom *atom) {
   if (atom->getNumRadicalElectrons() != 0) {
     return true;
   }
-  if (atom->hasQuery()) {
+  // for queries and atoms which don't have computed properties, the answer is
+  // always no:
+  if (atom->hasQuery() || atom->needsUpdatePropertyCache()) {
     return false;
   }
+
   if (atom->getAtomicNum() == 1 ||
       SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
