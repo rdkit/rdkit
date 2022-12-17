@@ -111,17 +111,15 @@ a file containing a pickled composite model and _filename_ is a QDAT file.
 
 
 import os
+import pickle
 import sys
 
 import numpy
-
 from rdkit import DataStructs
 from rdkit.Dbase import DbModule
 from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import CompositeRun
 from rdkit.ML.Data import DataUtils, SplitData
-import pickle
-
 
 try:
   from PIL import Image, ImageDraw
@@ -145,9 +143,9 @@ def message(msg, noRet=0):
 
   """
   if noRet:
-    sys.stdout.write('%s ' % (msg))
+    sys.stdout.write(f'{msg} ')
   else:
-    sys.stdout.write('%s\n' % (msg))
+    sys.stdout.write(f'{msg}\n')
 
 
 def error(msg):
@@ -159,7 +157,7 @@ def error(msg):
       - msg: the string to be displayed
 
   """
-  sys.stderr.write('ERROR: %s\n' % (msg))
+  sys.stderr.write(f'ERROR: {msg}\n')
 
 
 def CalcEnrichment(mat, tgt=1):
@@ -167,13 +165,13 @@ def CalcEnrichment(mat, tgt=1):
     return 0
   nPts = float(sum(sum(mat)))
   nTgtPred = float(sum(mat[:, tgt]))
+  
   if nTgtPred:
     pctCorrect = mat[tgt, tgt] / nTgtPred
     nTgtReal = float(sum(mat[tgt, :]))
     pctOverall = nTgtReal / nPts
-  else:
-    return 0.0
-  return pctCorrect / pctOverall
+    return pctCorrect / pctOverall
+  return 0.0
 
 
 def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0, errorEstimate=0):
@@ -218,7 +216,7 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
 
   for j in range(len(composite)):
     tmp = composite.GetModel(j)
-    if hasattr(tmp, '_trainIndices') and type(tmp._trainIndices) != dict:
+    if hasattr(tmp, '_trainIndices') and not isinstance(tmp._trainIndices, dict):
       tis = {}
       if hasattr(tmp, '_trainIndices'):
         for v in tmp._trainIndices:
@@ -238,6 +236,7 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
           use.append(j)
     else:
       use = None
+      
     # print('IDX:',idx,'use:',use  )
     pred, conf = composite.ClassifyExample(example, appendExample=appendExamples, onlyModels=use)
     if composite.GetActivityQuantBounds():
@@ -247,6 +246,7 @@ def CollectResults(indices, dataSet, composite, callback=None, appendExamples=0,
     res[i] = answer, pred, conf
     if callback:
       callback(i)
+      
   return res
 
 
@@ -426,7 +426,7 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
     print('average correct confidence:   % 6.4f' % avgGood)
     print('average incorrect confidence: % 6.4f' % avgBad)
 
-  voteTab = numpy.zeros((nResultCodes, nResultCodes), numpy.int)
+  voteTab = numpy.zeros((nResultCodes, nResultCodes), dtype=numpy.int_)
   for res in goodRes:
     voteTab[res, res] += 1
   for ans, res, conf, idx in badVotes:
@@ -529,19 +529,19 @@ def ScreenIt(composite, indices, data, partialVote=0, voteTol=0.0, verbose=1, sc
 
   nGood = len(goodVotes)
   goodAccum = 0.
-  for res, pred, conf, idx in goodVotes:
+  for _, _, conf, _ in goodVotes:
     goodAccum += conf
 
   misCount = len(badVotes)
   badAccum = 0.
-  for res, pred, conf, idx in badVotes:
+  for _, _, conf, _ in badVotes:
     badAccum += conf
 
   nSkipped = len(noVotes)
   goodSkipped = 0
   badSkipped = 0
   skipAccum = 0.
-  for ans, pred, conf, idx in noVotes:
+  for ans, pred, conf, _ in noVotes:
     skipAccum += conf
     if ans != pred:
       badSkipped += 1
@@ -597,7 +597,6 @@ def _processVoteList(votes, data):
   for i in range(len(votes)):
     ans, pred, conf, idx = votes[i]
     votes[i] = (ans, pred, conf, data[idx])
-
 
 def PrepareDataFromDetails(model, details, data, verbose=0):
   if (hasattr(details, 'doHoldout') and details.doHoldout) or \
@@ -706,12 +705,13 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
                                 pickleClass=DataStructs.ExplicitBitVect)
     else:
       data = details.GetDataSet()
+  
   if details.threshold > 0.0:
     details.partialVote = 1
   else:
     details.partialVote = 0
 
-  if type(models) not in [list, tuple]:
+  if not isinstance(models, (list, tuple)):
     models = (models, )
 
   nModels = len(models)
@@ -719,12 +719,12 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
   if setup is not None:
     setup(nModels * data.GetNPts())
 
-  nGood = numpy.zeros(nModels, numpy.float)
-  nBad = numpy.zeros(nModels, numpy.float)
-  nSkip = numpy.zeros(nModels, numpy.float)
-  confGood = numpy.zeros(nModels, numpy.float)
-  confBad = numpy.zeros(nModels, numpy.float)
-  confSkip = numpy.zeros(nModels, numpy.float)
+  nGood = numpy.zeros(nModels, dtype=numpy.float64)
+  nBad = numpy.zeros(nModels, dtype=numpy.float64)
+  nSkip = numpy.zeros(nModels, dtype=numpy.float64)
+  confGood = numpy.zeros(nModels, dtype=numpy.float64)
+  confBad = numpy.zeros(nModels, dtype=numpy.float64)
+  confSkip = numpy.zeros(nModels, dtype=numpy.float64)
   voteTab = None
   if goodVotes is None:
     goodVotes = []
@@ -776,32 +776,35 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
       message('******  WARNING: Random model being screened with non-random data.')
       message('*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*!*')
 
-    trainIdx, testIdx = PrepareDataFromDetails(model, details, data)
+    _, testIdx = PrepareDataFromDetails(model, details, data)
 
     nPossible = model.GetQuantBounds()[1]
+    cb = None
     if callback:
       cb = lambda x, y=callback, z=i * data.GetNPts(): y(x + z)
-    else:
-      cb = None
+    
     if not hasattr(details, 'errorEstimate') or not details.errorEstimate:
       errorEstimate = 0
     else:
       errorEstimate = 1
+      
     g, b, s, aG, aB, aS, vT = ShowVoteResults(
       testIdx, data, model, nPossible[-1], details.threshold, verbose=0, callback=cb,
       appendExamples=appendExamples, goodVotes=goodVotes, badVotes=badVotes, noVotes=noVotes,
       errorEstimate=errorEstimate)
     if voteTab is None:
-      voteTab = numpy.zeros(vT.shape, numpy.float)
+      voteTab = numpy.zeros(vT.shape, dtype=numpy.float64)
+      
     if hasattr(details, 'errorAnalysis') and details.errorAnalysis:
-      for a, p, c, idx in badVotes:
+      for a, _, _, idx in badVotes:
         label = testIdx[idx]
         if hasattr(details, 'enrichTgt') and details.enrichTgt >= 0:
           if a == details.enrichTgt:
             badVoteDict[label] = badVoteDict.get(label, 0) + 1
         else:
           badVoteDict[label] = badVoteDict.get(label, 0) + 1
-      for a, p, c, idx in noVotes:
+          
+      for a, _, _, idx in noVotes:
         label = testIdx[idx]
         if hasattr(details, 'enrichTgt') and details.enrichTgt >= 0:
           if a == details.enrichTgt:
@@ -822,31 +825,31 @@ def ScreenFromDetails(models, details, callback=None, setup=None, appendExamples
 
   if nModels == 1:
     return g, b, s, aG, aB, aS, vT
-  else:
-    voteTab /= nModels
+  
+  voteTab /= nModels
+  
+  avgNBad = sum(nBad) / nModels
+  devNBad = numpy.sqrt(sum((nBad - avgNBad)**2) / (nModels - 1))
 
-    avgNBad = sum(nBad) / nModels
-    devNBad = numpy.sqrt(sum((nBad - avgNBad)**2) / (nModels - 1))
+  # bestIdx = numpy.argsort(nBad)[0]
+  avgNGood = sum(nGood) / nModels
+  devNGood = numpy.sqrt(sum((nGood - avgNGood)**2) / (nModels - 1))
 
-    # bestIdx = numpy.argsort(nBad)[0]
+  avgNSkip = sum(nSkip) / nModels
+  devNSkip = numpy.sqrt(sum((nSkip - avgNSkip)**2) / (nModels - 1))
 
-    avgNGood = sum(nGood) / nModels
-    devNGood = numpy.sqrt(sum((nGood - avgNGood)**2) / (nModels - 1))
+  avgConfBad = sum(confBad) / nModels
+  devConfBad = numpy.sqrt(sum((confBad - avgConfBad)**2) / (nModels - 1))
 
-    avgNSkip = sum(nSkip) / nModels
-    devNSkip = numpy.sqrt(sum((nSkip - avgNSkip)**2) / (nModels - 1))
+  avgConfGood = sum(confGood) / nModels
+  devConfGood = numpy.sqrt(sum((confGood - avgConfGood)**2) / (nModels - 1))
 
-    avgConfBad = sum(confBad) / nModels
-    devConfBad = numpy.sqrt(sum((confBad - avgConfBad)**2) / (nModels - 1))
-
-    avgConfGood = sum(confGood) / nModels
-    devConfGood = numpy.sqrt(sum((confGood - avgConfGood)**2) / (nModels - 1))
-
-    avgConfSkip = sum(confSkip) / nModels
-    devConfSkip = numpy.sqrt(sum((confSkip - avgConfSkip)**2) / (nModels - 1))
-    return ((avgNGood, devNGood), (avgNBad, devNBad), (avgNSkip, devNSkip),
-            (avgConfGood, devConfGood), (avgConfBad, devConfBad), (avgConfSkip, devConfSkip),
-            voteTab)
+  avgConfSkip = sum(confSkip) / nModels
+  devConfSkip = numpy.sqrt(sum((confSkip - avgConfSkip)**2) / (nModels - 1))
+    
+  return ((avgNGood, devNGood), (avgNBad, devNBad), (avgNSkip, devNSkip),
+          (avgConfGood, devConfGood), (avgConfBad, devConfBad), (avgConfSkip, devConfSkip),
+          voteTab)
 
 
 def GetScreenImage(nGood, nBad, nRej, size=None):
@@ -944,8 +947,8 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
   nPoss = len(voteTable)
   pureCounts = numpy.sum(voteTable, 1)
   accCounts = numpy.sum(voteTable, 0)
-  pureVect = numpy.zeros(nPoss, numpy.float)
-  accVect = numpy.zeros(nPoss, numpy.float)
+  pureVect = numpy.zeros(nPoss, dtype=numpy.float64)
+  accVect = numpy.zeros(nPoss, dtype=numpy.float64)
   for i in range(nPoss):
     if pureCounts[i]:
       pureVect[i] = float(voteTable[i, i]) / pureCounts[i]
@@ -973,10 +976,12 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
         else:
           outTxt.append('<td>%.2f</td>' % (voteTable[j, i]))
     outTxt.append('<td>%4.2f</td</tr>' % (100.0 * accVect[i]))
+    
     if i == 0:
       outTxt.append('<th rowspan=%d>Predicted</th></tr>' % (nPoss))
     else:
       outTxt.append('</tr>')
+      
   outTxt.append('<tr><th>% Pure</th>')
   for i in range(nPoss):
     outTxt.append('<td>%4.2f</td>' % (100.0 * pureVect[i]))
@@ -987,10 +992,7 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
   if not multModels:
     nTotal = nBad + nGood + nRej
     nClass = nBad + nGood
-    if nClass:
-      pctErr = 100. * float(nBad) / nClass
-    else:
-      pctErr = 0.0
+    pctErr = (100. * float(nBad) / nClass) if nClass else 0.0
 
     outTxt.append('<p>%d of %d examples were misclassified (%%%4.2f)' %
                   (nBad, nGood + nBad, pctErr))
@@ -1002,12 +1004,12 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
     if nGood != 0:
       outTxt.append('<p>The correctly classified examples had an average confidence of %6.4f' %
                     avgGood)
-
     if nBad != 0:
       outTxt.append('<p>The incorrectly classified examples had an average confidence of %6.4f' %
                     avgBad)
     if nRej != 0:
       outTxt.append('<p>The rejected examples had an average confidence of %6.4f' % avgSkip)
+      
   else:
     nTotal = nBad[0] + nGood[0] + nRej[0]
     nClass = nBad[0] + nGood[0]
@@ -1033,7 +1035,6 @@ def ScreenToHtml(nGood, nBad, nRej, avgGood, avgBad, avgSkip, voteTable, imgDir=
     if nGood != 0:
       outTxt.append(
         '<p>The correctly classified examples had an average confidence of %6.4f(%.4f)' % avgGood)
-
     if nBad != 0:
       outTxt.append(
         '<p>The incorrectly classified examples had an average confidence of %6.4f(%.4f)' % avgBad)
@@ -1119,14 +1120,15 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
     idx = ptIds.index(ID)
     acts[idx] = act
   outF.write('#ID Pred Conf %s\n' % (actColName))
-  for ans, pred, conf, idx in goodVotes:
+  for _, pred, conf, idx in goodVotes:
     act = acts[idx]
     if act != 'None':
       act = float(act)
     else:
       act = 0
     outF.write('%s %d %.4f %f\n' % (ptIds[idx], pred, conf, act))
-  for ans, pred, conf, idx in badVotes:
+  
+  for _, pred, conf, idx in badVotes:
     act = acts[idx]
     if act != 'None':
       act = float(act)
@@ -1134,10 +1136,12 @@ def MakePredPlot(details, indices, data, goodVotes, badVotes, nRes, idCol=0, ver
       act = 0
     outF.write('%s %d %.4f %f\n' % (ptIds[idx], pred, conf, act))
   outF.close()
+  
   if not hasattr(details, 'predLogScale') or not details.predLogScale:
     actLabel = actColName
   else:
     actLabel = 'log(%s)' % (actColName)
+    
   actLabel = actLabel.replace('_', ' ')
   gnuHdr = """# Generated by ScreenComposite.py version: %s
   set size square 0.7
@@ -1397,14 +1401,14 @@ if __name__ == '__main__':
       if len(details.screenVoteTol) > 1:
         message('\n-----*****-----*****-----*****-----*****-----*****-----*****-----\n')
         message('Tolerance: %f' % tol)
-      nGood = numpy.zeros(nModels, numpy.float)
-      nBad = numpy.zeros(nModels, numpy.float)
-      nSkip = numpy.zeros(nModels, numpy.float)
-      confGood = numpy.zeros(nModels, numpy.float)
-      confBad = numpy.zeros(nModels, numpy.float)
-      confSkip = numpy.zeros(nModels, numpy.float)
+      nGood = numpy.zeros(nModels, dtype=numpy.float64)
+      nBad = numpy.zeros(nModels, dtype=numpy.float64)
+      nSkip = numpy.zeros(nModels, dtype=numpy.float64)
+      confGood = numpy.zeros(nModels, dtype=numpy.float64)
+      confBad = numpy.zeros(nModels, dtype=numpy.float64)
+      confSkip = numpy.zeros(nModels, dtype=numpy.float64)
       if details.enrichTgt >= 0:
-        enrichments = numpy.zeros(nModels, numpy.float)
+        enrichments = numpy.zeros(nModels, dtype=numpy.float64)
       goodVoteDict = {}
       badVoteDict = {}
       noVoteDict = {}
@@ -1434,7 +1438,7 @@ if __name__ == '__main__':
             badVotes=badVotes, noVotes=noVotes, goodVotes=goodVotes,
             errorEstimate=details.errorEstimate)
           if voteTab is None:
-            voteTab = numpy.zeros(vT.shape, numpy.float)
+            voteTab = numpy.zeros(vT.shape, dtype=numpy.float64)
           if details.errorAnalysis:
             for a, p, c, idx in badVotes:
               label = testIdx[idx]

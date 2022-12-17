@@ -200,19 +200,18 @@ a QDAT file.
 """
 
 
+import pickle
+import random
 import sys
 import time
 
 import numpy
-
 from rdkit import DataStructs
 from rdkit.Dbase import DbModule
-from rdkit.ML import CompositeRun
-from rdkit.ML import ScreenComposite
-from rdkit.ML.Composite import Composite, BayesComposite
+from rdkit.ML import CompositeRun, ScreenComposite
+from rdkit.ML.Composite import BayesComposite, Composite
 from rdkit.ML.Data import DataUtils, SplitData
 from rdkit.utils import listutils
-import pickle
 
 # # from ML.SVM import SVMClassificationModel as SVM
 _runDetails = CompositeRun.CompositeRun()
@@ -232,7 +231,7 @@ def message(msg):
 
   """
   if _verbose:
-    sys.stdout.write('%s\n' % (msg))
+    sys.stdout.write(f'{msg}\n')
 
 
 def testall(composite, examples, badExamples=[]):
@@ -389,7 +388,6 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   if details.lockRandom:
     seed = details.randomSeed
   else:
-    import random
     seed = (random.randint(0, 1e6), random.randint(0, 1e6))
   DataUtils.InitRandomNumbers(seed)
   testExamples = []
@@ -452,7 +450,7 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     for k in ks:
       message(str((k, counts[k])))
   nExamples = len(trainExamples)
-  message('Training with %d examples' % (nExamples))
+  message(f'Training with {nExamples} examples')
 
   nVars = data.GetNVars()
   attrs = list(range(1, nVars + 1))
@@ -471,7 +469,6 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
     composite = BayesComposite.BayesComposite()
   else:
     composite = Composite.Composite()
-
   composite._randomSeed = seed
   composite._splitFrac = details.splitFrac
   composite._shuffleActivities = details.shuffleActivities
@@ -495,8 +492,10 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
   else:
     composite.SetDescriptorNames(data.GetVarNames())
   composite.SetActivityQuantBounds(details.activityBounds)
+  
   if details.nModels == 1:
     details.internalHoldoutFrac = 0.0
+    
   if details.useTrees:
     from rdkit.ML.DecTree import CrossValidate, PruneTree
     if details.qBounds != []:
@@ -555,9 +554,9 @@ def RunOnData(details, data, progressCallback=None, saveIt=1, setDescNames=0):
 
     driver = CrossValidate.CrossValidationDriver
     dfunc = ''
-    if (details.knnDistFunc == "Euclidean"):
+    if details.knnDistFunc == "Euclidean":
       dfunc = DistFunctions.EuclideanDist
-    elif (details.knnDistFunc == "Tanimoto"):
+    elif details.knnDistFunc == "Tanimoto":
       dfunc = DistFunctions.TanimotoDist
     else:
       assert 0, "Bad KNN distance metric value"
@@ -749,9 +748,8 @@ def RunIt(details, progressCallback=None, saveIt=1, setDescNames=0):
                                    user=details.dbUser,
                                    password=details.dbPassword)
 
-  composite = RunOnData(details, data, progressCallback=progressCallback, saveIt=saveIt,
-                        setDescNames=setDescNames)
-  return composite
+  return RunOnData(details, data, progressCallback=progressCallback, saveIt=saveIt, 
+                   setDescNames=setDescNames)
 
 
 def ShowVersion(includeArgs=0):

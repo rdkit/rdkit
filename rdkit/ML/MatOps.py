@@ -15,8 +15,6 @@
 
 """
 
-
-
 import sys
 
 from rdkit.ML import files
