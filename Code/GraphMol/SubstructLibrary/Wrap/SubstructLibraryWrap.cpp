@@ -393,6 +393,7 @@ const char *SubstructLibraryDoc =
     "Finally, the KeyFromPropHolder can be used to use external keys such as\n"
     "compound names.  By default the holder uses the '_Name' property but can\n"
     "be changed to any property.\n"
+    "\n"
     ">>> library = "
     "rdSubstructLibrary.SubstructLibrary(rdSubstructLibrary.MolHolder(), "
     "rdSubstructLibrary.KeyFromPropHolder())\n"
