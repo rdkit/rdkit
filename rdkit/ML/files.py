@@ -60,7 +60,7 @@ class ReFile:
     self.inFile = open(fileName, mode)
 
 
-def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
+def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=float):
   """ read in the data file and return a tuple of two Numeric arrays:
   (independent variables, dependant variables).
 
@@ -85,7 +85,7 @@ def ReadDataFile(fileName, comment=r'#', depVarCol=0, dataType=numpy.float):
   dataLines = inFile.readlines()
   nPts = len(dataLines)
 
-  if dataType in [numpy.float, numpy.float32, numpy.float64]:
+  if dataType in [float, numpy.float32, numpy.float64]:
     _convfunc = float
   else:
     _convfunc = int
