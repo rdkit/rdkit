@@ -100,13 +100,13 @@ def _pyHallKierAlpha(m):
 # HallKierAlpha.version="1.0.2"
 
 
-def Ipc(mol, avg=0, dMat=None, forceDMat=0):
+def Ipc(mol, avg=False, dMat=None, forceDMat=False):
   """This returns the information content of the coefficients of the characteristic
     polynomial of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
 
-    'avg = 1' returns the information content divided by the total population.
+    'avg = True' returns the information content divided by the total population.
 
-    From D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
+    From Eq 6 of D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
 
   """
   if forceDMat or dMat is None:
@@ -129,6 +129,17 @@ def Ipc(mol, avg=0, dMat=None, forceDMat=0):
 
 
 Ipc.version = "1.0.0"
+
+def AvgIpc(mol, dMat=None, forceDMat=False):
+  """This returns the average information content of the coefficients of the characteristic
+    polynomial of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
+
+    From Eq 7 of D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
+
+  """
+  return Ipc(mol,avg=True,dMat=dMat,forceDMat=forceDMat)
+
+AvgIpc.version = "1.0.0"
 
 
 def _pyKappa1(mol):
