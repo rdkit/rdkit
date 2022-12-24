@@ -2050,6 +2050,37 @@ centralized :py:mod:`rdkit.Chem.Descriptors` module :
   >>> Descriptors.MolLogP(m)
   1.3848
 
+Calculating All Descriptors
+===========================
+
+The :py:mod:`rdkit.Chem.Descriptors` module provides a convenience function, ``CalcMolDescriptors()``, to calculate all available descriptors for a molecule. ``CalcMolDescriptors()`` returns a dictionary with descriptor names as the keys and descriptor values as the values:
+
+.. doctest::
+
+  >>> vals = Descriptors.CalcMolDescriptors(m)
+  >>> vals['TPSA']
+  37.3
+  >>> vals['NumHDonors']
+  1
+
+``CalcMolDescriptors()`` makes it easy to generate descriptors for a set of molecules and get the values into a pandas DataFrame:
+
+  >>> descrs = [Descriptors.CalcMolDescriptors(mol) for mol in mols]
+  >>> df = pandas.DataFrame(descrs)
+  >>> df.head()
+  >>> df.head(3)
+    MaxEStateIndex  MinEStateIndex  MaxAbsEStateIndex  ...  fr_thiophene  fr_unbrch_alkane  fr_urea
+  0        8.361111       -0.115741           8.361111  ...             0                 0        0
+  1        8.361111       -0.115741           8.361111  ...             0                 0        0
+  2        8.334769        0.329861           8.334769  ...             0                 0        0
+
+  [3 rows x 208 columns]
+
+
+
+Calculating Partial Charges
+===========================
+
 Partial charges are handled a bit differently:
 
 .. doctest::
@@ -2058,7 +2089,6 @@ Partial charges are handled a bit differently:
   >>> AllChem.ComputeGasteigerCharges(m)
   >>> m.GetAtomWithIdx(0).GetDoubleProp('_GasteigerCharge')
   -0.047...
-
 
 Visualization of Descriptors
 ============================
