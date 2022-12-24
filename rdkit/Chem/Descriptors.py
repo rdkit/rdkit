@@ -267,6 +267,25 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
   def __call__(self, mol):
     raise NotImplementedError("Please implement the __call__ method")
 
+# machinery to add all the descriptors here to the Properties interface:
+def _propCtor(self,name,func):
+  PropertyFunctor.__init__(self,name,getattr(func,'version','1.0.0'))
+  self._func = func
+
+def _registerDescriptorsAsProperties():
+  # the cases in property names are sometimes weird, so normalize that
+  ps = rdMolDescriptors.Properties()
+  allProps = [x.lower() for x in ps.GetPropertyNames()]  
+  for nm,func in _descList:
+    if nm.lower() in allProps:
+      continue
+    cls = type("_"+nm+"Prop",(PropertyFunctor,),
+        {'__init__':lambda self,name=nm,func=func:_propCtor(self,name,func),
+         '__call__':lambda self,mol:self._func(mol)})
+    rdMolDescriptors.Properties.RegisterProperty(cls())    
+
+_registerDescriptorsAsProperties()
+
 def CalcMolDescriptors(mol, missingVal=None, silent=True):
     ''' calculate the full set of descriptors for a molecule
     
