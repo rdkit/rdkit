@@ -45,7 +45,7 @@ def EuclideanDistance(inData):
 
   """
   nObjs = len(inData)
-  res = numpy.zeros((nObjs * (nObjs - 1) / 2), numpy.float)
+  res = numpy.zeros((nObjs * (nObjs - 1) / 2), float)
   nSoFar = 0
   for col in range(1, nObjs):
     for row in range(col):
