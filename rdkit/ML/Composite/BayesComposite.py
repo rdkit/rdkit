@@ -51,11 +51,11 @@ class BayesComposite(Composite.Composite):
     # FIX: this is wrong because it doesn't take the counts of each model into account
     nModels = len(self)
     nResults = self.nPossibleVals[-1]
-    self.resultProbs = numpy.zeros(nResults, numpy.float)
+    self.resultProbs = numpy.zeros(nResults, float)
     self.condProbs = [None] * nModels
 
     for i in range(nModels):
-      self.condProbs[i] = numpy.zeros((nResults, nResults), numpy.float)
+      self.condProbs[i] = numpy.zeros((nResults, nResults), float)
     # FIX: this is a quick hack which may slow things down a lot
     for example in data:
       act = self.QuantizeActivity(example)[-1]
