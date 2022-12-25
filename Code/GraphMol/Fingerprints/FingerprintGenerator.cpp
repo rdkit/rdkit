@@ -203,10 +203,10 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
 
   // iterate over every atom environment and generate bit-ids that will make up
   // the fingerprint
-  for (auto it = atomEnvironments.begin(); it != atomEnvironments.end(); it++) {
+  for (const auto env : atomEnvironments) {
     OutputType seed =
-        (*it)->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
-                        args.additionalOutput, hashResults, fpSize);
+        env->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
+                      args.additionalOutput, hashResults, fpSize);
 
     auto bitId = seed;
     if (fpSize != 0) {
@@ -214,7 +214,7 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
     }
     res->setVal(bitId, res->getVal(bitId) + 1);
     if (args.additionalOutput) {
-      (*it)->updateAdditionalOutput(args.additionalOutput, bitId);
+      env->updateAdditionalOutput(args.additionalOutput, bitId);
     }
     // do the additional bits if required:
     if (dp_fingerprintArguments->d_numBitsPerFeature > 1) {
@@ -228,11 +228,11 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
         }
         res->setVal(bitId, res->getVal(bitId) + 1);
         if (args.additionalOutput) {
-          (*it)->updateAdditionalOutput(args.additionalOutput, bitId);
+          env->updateAdditionalOutput(args.additionalOutput, bitId);
         }
       }
     }
-    delete (*it);
+    delete env;
   }
 
   delete atomInvariants;

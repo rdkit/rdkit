@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2006-2017  greg Landrum and Rational Discovery LLC
+#  Copyright (C) 2006-2022  greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -34,6 +34,7 @@ from rdkit.Chem.rdReducedGraphs import *
 from rdkit.Chem.rdShapeHelpers import *
 from rdkit.Chem.rdqueries import *
 from rdkit.Chem.rdMolEnumerator import *
+from rdkit.Chem.rdFingerprintGenerator import *
 from rdkit.Geometry import rdGeometry
 from rdkit.RDLogger import logger
 from rdkit.Chem.EnumerateStereoisomers import StereoEnumerationOptions, EnumerateStereoisomers

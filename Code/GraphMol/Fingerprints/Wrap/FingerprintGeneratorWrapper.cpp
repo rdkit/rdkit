@@ -399,10 +399,26 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
       "BondInvariantsGenerator", python::no_init);
 
   python::class_<AdditionalOutput, boost::noncopyable>("AdditionalOutput")
-      .def("AllocateAtomToBits", &AdditionalOutput::allocateAtomToBits)
-      .def("AllocateBitInfoMap", &AdditionalOutput::allocateBitInfoMap)
-      .def("AllocateBitPaths", &AdditionalOutput::allocateBitPaths)
-      .def("AllocateAtomCounts", &AdditionalOutput::allocateAtomCounts)
+      .def("AllocateAtomToBits", &AdditionalOutput::allocateAtomToBits,
+           "synonym for CollectAtomToBits()")
+      .def("AllocateBitInfoMap", &AdditionalOutput::allocateBitInfoMap,
+           "synonym for CollectBitInfoMap()")
+      .def("AllocateBitPaths", &AdditionalOutput::allocateBitPaths,
+           "synonym for CollectBitPaths()")
+      .def("AllocateAtomCounts", &AdditionalOutput::allocateAtomCounts,
+           "synonym for CollectAtomCounts()")
+      .def(
+          "CollectAtomToBits", &AdditionalOutput::allocateAtomToBits,
+          "toggle collection of information mapping each atom to the bits it is involved in.")
+      .def(
+          "CollectBitInfoMap", &AdditionalOutput::allocateBitInfoMap,
+          "toggles collection of information mapping each atom to more detail about the atom environment (not available from all fingerprints)")
+      .def(
+          "CollectBitPaths", &AdditionalOutput::allocateBitPaths,
+          "toggles collection of information matching each atom to information about the paths it is involved in (not available from all fingerprints).")
+      .def(
+          "CollectAtomCounts", &AdditionalOutput::allocateAtomCounts,
+          "toggles collection of information about the number of bits each atom is involved in")
       .def("GetAtomToBits", &getAtomToBitsHelper)
       .def("GetBitInfoMap", &getBitInfoMapHelper)
       .def("GetBitPaths", &getBitPathsHelper)
