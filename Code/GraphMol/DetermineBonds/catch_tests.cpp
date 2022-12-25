@@ -172,44 +172,57 @@ TEST_CASE("Determine Connectivity") {
   }  // SECTION
 }
 
-//        std::string smiles[] = {
-//            "C[C-](c1ccccc1)C",
-//            "C[C-](C)c1ccccc1",
-//            "C=C([O-])CC",
-//            "C=C([NH3+])CC",
-//            "CC(=O)[O-]",
-//            "C[N+](=O)[O-]",
-//            "CS(CC)(=O)=O",
-//            "CS([O-])(=O)=O",
-//            "C=C(C)CC",
-//            "CC(C)CC",
-//            "C=C(N)CC",
-//            "C=C(C)C=C",
-//            "C#CC=C",
-//            "c1ccccc1",
-//            "c1ccccc1c1ccccc1",
-//            "[NH3+]CS([O-])(=O)=O",
-//            "CC(NC)=O",
-//            "[O-]c1ccccc1",
-//            "O=C(C=C1)C=CC1=CCC([O-])=O",
-//            "C#CC#C",
-//            "Cc1ccc(cc1)C1C=CC2C(C=CC2(C#N)C#N)=CC=1",
-//            "C[NH+]=C([O-])CC[NH+]=C([O-])C",
-//            "C[NH+]=CC=C([O-])C",
-//            "[C+](C)(C)CC[C-](C)(C)",
-//            "O=C(C=C1)C=CC1=CCC([O-])=O",
-//            "O=C([CH-]C=CC(C([O-])=O)=O)[O-]",
-//            "[O-]c1ccccc1",
-//            "CNC(C(C)=[NH+][CH-]CC(O)=O)=O",
-//            "[CH2][CH2][CH]=[CH][CH2]",
-//            "Cc1ccc(cc1)C1C=CC2C(C=CC2(C#N)C#N)=CC=1",
-//            "CC1C=CC2C(C=CC2(C)C)=CC=1",
-//            "CC1=CC=C(C=CC2)C2C=C1",
-//            "CC1=CC=C(C2=CC=CC=C2)C=C1",
-//            "C1(CC2=CC=CC=C2)=CC=CC=C1",
-//            "[O-]c1ccccc1[O-]",
-//            "C[N+](=O)[O-]",
-//            "N#CC(C#N)=CC=C1C=CC=CC(=C1)c1ccc(cc1)[N+](=O)[O-]",
-//            "CNC([O-])=C([NH+]=C/CC(O)=O)C",
-//            "Cc1cn(C2CC(O)C(COP(=O)([O-])OP(=O)([O-])OC3OC(C)C([NH3+])C(O)C3O)O2)c(=O)[nH]c1=O"
-//        };
+TEST_CASE("Github #5894: extra stereocenters assigned") {
+  SECTION("as reported") {
+    std::string xyz = R"XYZ(24
+
+C	  -2.321570	  -2.154410	   0.000001
+N	  -1.361840	  -1.072025	   0.000000
+C	  -0.022813	  -1.380036	   0.000000
+O	   0.540584	  -2.460253	  -0.000001
+C	   0.939066	  -0.223023	   0.000000
+C	   0.424348	   1.032682	  -0.000001
+N	   1.421181	   1.964870	   0.000000
+C	   2.538290	   1.259598	   0.000003
+N	   2.287404	  -0.088227	   0.000001
+C	   3.264961	  -1.144161	  -0.000001
+N	  -0.930470	   1.289618	  -0.000003
+C	  -1.392807	   2.667466	  -0.000002
+C	  -1.856929	   0.240323	   0.000000
+O	  -3.074555	   0.448852	   0.000002
+H	  -2.955990	  -2.068408	  -0.888068
+H	  -2.955969	  -2.068422	   0.888087
+H	  -1.835402	  -3.133634	  -0.000012
+H	   3.539988	   1.670786	   0.000006
+H	   3.124842	  -1.749165	   0.899229
+H	   4.268839	  -0.711765	  -0.000003
+H	   3.124838	  -1.749164	  -0.899232
+H	  -1.013179	   3.171571	  -0.894505
+H	  -2.483808	   2.734391	  -0.000015
+H	  -1.013199	   3.171563	   0.894514
+)XYZ";
+    std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
+    REQUIRE(m);
+    determineBonds(*m);
+    CHECK(m->getAtomWithIdx(0)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
+  }
+  SECTION("make sure chirality does still get assigned when appropriate") {
+    std::string xyz = R"XYZ(8
+
+C     -0.817192   -0.078725   -0.028772
+C      0.680862    0.048830    0.076987
+F      0.990227    0.019664    1.437282
+Cl     1.147716    1.625471   -0.563047
+Br     1.617608   -1.365187   -0.810838
+H     -1.246798    0.864941    0.386221
+H     -1.184702   -0.165336   -1.061440
+H     -1.187721   -0.949657    0.563607
+)XYZ";
+    std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
+    REQUIRE(m);
+    determineBonds(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+  }
+}

@@ -263,7 +263,6 @@ void setChirality(RWMol &mol) {
   MolOps::sanitizeMol(mol);
   MolOps::setDoubleBondNeighborDirections(mol, &mol.getConformer());
   MolOps::assignStereochemistryFrom3D(mol);
-  MolOps::assignChiralTypesFrom3D(mol);
 }
 
 void addBondOrdering(RWMol &mol,
