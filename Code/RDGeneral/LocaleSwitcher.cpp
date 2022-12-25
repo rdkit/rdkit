@@ -96,6 +96,7 @@ class LocaleSwitcherImpl {
       old_locale = ::setlocale(LC_ALL, nullptr);
       ::setlocale(LC_ALL, "C");  // thread safe on windows
 #else
+      old_locale = std::setlocale(LC_ALL, nullptr);
       std::setlocale(LC_ALL, "C");
 #endif  // RDK_BUILD_THREADSAFE_SSS
       recurseLocale(SwitchLocale);

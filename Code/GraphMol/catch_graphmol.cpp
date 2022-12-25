@@ -2804,3 +2804,45 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("extended valences for alkali earths") {
+  SECTION("valence of 2") {
+    // make sure the valence of two works
+    std::vector<std::pair<std::string, unsigned int>> cases{
+        {"C[Be]", 1},  {"C[Mg]", 1},  {"C[Ca]", 1},  {"C[Sr]", 1},
+        {"C[Ba]", 1},  {"C[Ra]", 1},  {"C[Be]C", 0}, {"C[Mg]C", 0},
+        {"C[Ca]C", 0}, {"C[Sr]C", 0}, {"C[Ba]C", 0}, {"C[Ra]C", 0}};
+
+    for (const auto &pr : cases) {
+      INFO(pr.first);
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first)};
+      REQUIRE(m);
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      m->getAtomWithIdx(1)->setNumRadicalElectrons(0);
+      MolOps::sanitizeMol(*m);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == pr.second);
+    }
+  }
+  SECTION("higher valence") {
+    // make sure the valence of two works
+    std::vector<std::pair<std::string, unsigned int>> cases{{"C[Mg](C)C", 0},
+                                                            {"C[Ca](C)C", 0},
+                                                            {"C[Sr](C)C", 0},
+                                                            {"C[Ba](C)C", 0},
+                                                            {"C[Ra](C)C", 0}};
+
+    for (const auto &pr : cases) {
+      INFO(pr.first);
+      std::unique_ptr<RWMol> m{SmilesToMol(pr.first)};
+      REQUIRE(m);
+      m->getAtomWithIdx(1)->setNoImplicit(false);
+      m->getAtomWithIdx(1)->setNumRadicalElectrons(0);
+      MolOps::sanitizeMol(*m);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs() == pr.second);
+    }
+  }
+  SECTION("everybody loves grignards") {
+    auto m = "CC(C)O[Mg](Cl)(<-O1CCCC1)<-O1CCCC1"_smiles;
+    REQUIRE(m);
+  }
+}

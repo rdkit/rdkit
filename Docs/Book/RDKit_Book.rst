@@ -539,7 +539,7 @@ Types of stereochemistry supported
 
 The RDKit currently fully supports tetrahedral atomic stereochemistry and
 cis/trans stereochemistry at double bonds. There is partial support for
-non-tetrahedral stereochemistry, see the section :ref:`Support for non-tetrahedral atomic stereochemistry`.
+non-tetrahedral stereochemistry, see the section :ref:`Non-tetrahedral-stereo`.
 
 Identification of potential stereoatoms/stereobonds
 ---------------------------------------------------
@@ -709,6 +709,7 @@ stereochemistry for stereogenic atoms and bonds. This supersedes other
 specifications in the CXSMILES except for ``ctu`` and ``w``.
 
 
+.. _Non-tetrahedral-stereo:
 
 Support for non-tetrahedral atomic stereochemistry
 ==================================================

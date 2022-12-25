@@ -307,6 +307,7 @@ TEST_CASE("substructure parameters and RGD: chirality") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
       CHECK(n == mols.size());
@@ -315,17 +316,17 @@ TEST_CASE("substructure parameters and RGD: chirality") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1CC([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"C1CC([*:1])([*:2])N1",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"O[*:2]"
   },
   {
-    "Core":"C1CC([*:1])([*:2])N1",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
@@ -370,6 +371,7 @@ TEST_CASE("substructure parameters and RGD: chirality") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     params.substructmatchParams.useChirality = false;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
@@ -447,6 +449,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
       CHECK(n == mols.size() - 1);
@@ -454,27 +457,27 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(unmatched.size() == mols.size() - n);
       // std::cerr << toJSON(rows) << std::endl;
 
-      // the core output here is SMARTS because the CXSMILES parser replaces the
-      // dummy atom with a query
+      // the core output no longer is SMARTS as the core output is the portion
+      // of the target that matches the core query.
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"O[*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"[H][*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -488,27 +491,27 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(unmatched.size() == 1);
       // std::cerr << toJSON(rows) << std::endl;
 
-      // the core output here is SMARTS because the CXSMILES parser replaces the
-      // dummy atom with a query
+      // the core output no longer is SMARTS as the core output is the portion
+      // of the target that matches the core query.
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"O[*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"[H][*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -521,6 +524,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     params.substructmatchParams.useEnhancedStereo = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
@@ -528,22 +532,22 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(rows.size() == n);
       CHECK(unmatched.size() == mols.size() - n);
       // std::cerr << toJSON(rows) << std::endl;
-      // the core output here is SMARTS because the CXSMILES parser replaces the
-      // dummy atom with a query
+      // the core output no longer is SMARTS as the core output is the portion
+      // of the target that matches the core query.
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"O[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   }
@@ -556,27 +560,27 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(rows.size() == n);
       CHECK(unmatched.size() == 1);
       // std::cerr << toJSON(rows) << std::endl;
-      // the core output here is SMARTS because the CXSMILES parser replaces the
-      // dummy atom with a query
+      // the core output no longer is SMARTS as the core output is the portion
+      // of the target that matches the core query.
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"O[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -615,6 +619,7 @@ TEST_CASE("rgroupLabelling") {
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
     params.rgroupLabelling = RGroupLabelling::Isotope;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
       CHECK(n == mols.size());
@@ -623,17 +628,17 @@ TEST_CASE("rgroupLabelling") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[1*]C1([2*])CCN1",
+    "Core": "[1*][C@@]1([2*])CCN1",
     "R1":"[1*]F",
     "R2":"[2*][H]"
   },
   {
-    "Core":"[1*]C1([2*])CCN1",
+    "Core": "[1*][C@]1([2*])CCN1",
     "R1":"[1*]F",
     "R2":"[2*]O"
   },
   {
-    "Core":"[1*]C1([2*])CCN1",
+    "Core":"[1*][C@]1([2*])CCN1",
     "R1":"[1*]F",
     "R2":"[2*][H]"
   },
@@ -651,12 +656,16 @@ TEST_CASE("rgroupLabelling") {
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
     params.rgroupLabelling = RGroupLabelling::MDLRGroup;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
       CHECK(n == mols.size());
       CHECK(rows.size() == n);
       CHECK(unmatched.empty());
       // in this case the labels don't show up in the output SMILES
+      // Presumably the dummy atoms are no longer distinguishable without
+      // the isotope labels as the smiles no longer contains chiralty.
+      // Chirality is present in the core SMARTS
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
@@ -687,6 +696,7 @@ TEST_CASE("rgroupLabelling") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     params.rgroupLabelling =
         RGroupLabelling::Isotope | RGroupLabelling::AtomMap;
     {
@@ -698,17 +708,17 @@ TEST_CASE("rgroupLabelling") {
 
 [
   {
-    "Core":"C1CC([1*:1])([2*:2])N1",
+    "Core":"C1C[C@@]([1*:1])([2*:2])N1",
     "R1":"F[1*:1]",
     "R2":"[H][2*:2]"
   },
   {
-    "Core":"C1CC([1*:1])([2*:2])N1",
+    "Core":"C1C[C@]([1*:1])([2*:2])N1",
     "R1":"F[1*:1]",
     "R2":"O[2*:2]"
   },
   {
-    "Core":"C1CC([1*:1])([2*:2])N1",
+    "Core":"C1C[C@]([1*:1])([2*:2])N1",
     "R1":"F[1*:1]",
     "R2":"[H][2*:2]"
   },

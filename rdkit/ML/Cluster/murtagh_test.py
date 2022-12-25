@@ -5,7 +5,7 @@ import numpy
 from rdkit.ML.Cluster import Murtagh
 
 print('1')
-d = numpy.array([[10.0, 5.0], [20.0, 20.0], [30.0, 10.0], [30.0, 15.0], [5.0, 10.0]], numpy.float)
+d = numpy.array([[10.0, 5.0], [20.0, 20.0], [30.0, 10.0], [30.0, 15.0], [5.0, 10.0]], float)
 print('2')
 # clusters = Murtagh.ClusterData(d,len(d),Murtagh.WARDS)
 # for i in range(len(clusters)):

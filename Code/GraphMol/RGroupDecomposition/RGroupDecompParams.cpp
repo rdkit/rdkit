@@ -14,6 +14,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FMCS/FMCS.h>
+#include <GraphMol/QueryBond.h>
 #include <set>
 
 namespace RDKit {
@@ -155,7 +156,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
 
   int maxLabel = 1;
-  if (alignCore && (alignment & MCS)) {
+  // makes no sense to do MCS alignment if we are only matching at user defined R-Groups
+  if (alignCore && !onlyMatchAtRGroups && (alignment & MCS)) {
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
@@ -250,7 +252,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       }
 
       if (!found && (autoLabels & DummyAtomLabels) && atom->getDegree() == 1 &&
-          !atom->hasProp(UNLABELLED_CORE_ATTACHMENT)) {
+          !atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
         const bool forceRelabellingWithDummies = true;
         int defaultDummyStartLabel = maxLabel;
         if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
@@ -265,6 +267,9 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     //  we have used (note that these are negative since they are
     //  potential rgroups and haven't been assigned yet)
     if (!found && (autoLabels & AtomIndexLabels)) {
+      // we should not need these on (non r group) core atoms when
+      // allowMultipleRGroupsOnUnlabelled is set, but it is useful in case
+      // insufficient dummy groups are added to the core
       if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
                    relabel, Labelling::INDEX_LABELS)) {
         nextOffset++;
@@ -310,50 +315,64 @@ void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
     return;
   }
 
-  // add a single rgroup substitution to any atom with free valence that doesn't
-  // have a terminal dummy neighbor
-
-  std::vector<Atom *> unlabelledCoreAtoms{};
+  // add R group substitutions to fill atomic valence
+  std::vector<Atom *> unlabeledCoreAtoms{};
   for (const auto atom : core.atoms()) {
     if (atom->getAtomicNum() == 1) {
       continue;
     }
-
     if (hasLabel(atom, labels)) {
       continue;
     }
-
-    if (atom->getAtomicNum() > 0 && atom->calcImplicitValence() <= 1 &&
-        !atom->hasQuery()) {
-      continue;
-    }
-
-    auto [nbrIdx, endNbrs] = core.getAtomNeighbors(atom);
-    bool hasTerminalDummyNeighbor = false;
-
-    while (nbrIdx != endNbrs) {
-      const auto neighbor = core.getAtomWithIdx(*nbrIdx);
-      if (neighbor->getAtomicNum() == 0 && neighbor->getDegree() == 1) {
-        hasTerminalDummyNeighbor = true;
-        break;
-      }
-      ++nbrIdx;
-    }
-    if (!hasTerminalDummyNeighbor) {
-      unlabelledCoreAtoms.push_back(atom);
-    }
+    unlabeledCoreAtoms.push_back(atom);
   }
 
-  for (const auto atom : unlabelledCoreAtoms) {
-    auto atomIndex = atom->getIdx();
-    auto newAtom = new Atom(0);
-    newAtom->setProp<bool>(UNLABELLED_CORE_ATTACHMENT, true);
-    auto newIdx = core.addAtom(newAtom, false, true);
-    core.addBond(atomIndex, newIdx, Bond::SINGLE);
-    auto dummy = core.getAtomWithIdx(newIdx);
-    dummy->updatePropertyCache();
-    if (core.getNumConformers() > 0) {
-      MolOps::setTerminalAtomCoords(core, newIdx, atomIndex);
+  for (const auto atom : unlabeledCoreAtoms) {
+    atom->calcImplicitValence(false);
+    const auto atomIndex = atom->getIdx();
+    int dummiesToAdd;
+    int maxNumDummies = 4 - static_cast<int>(atom->getDegree());
+
+    // figure out the number of dummies to add
+    if (atom->getAtomicNum() == 0) {
+      dummiesToAdd = maxNumDummies;
+    } else {
+      double bondOrder = 0;
+      for (const auto bond : core.atomBonds(atom)) {
+        auto contrib = bond->getValenceContrib(atom);
+        if (contrib == 0.0 && bond->hasQuery()) {
+          contrib = 1.0;
+        }
+        bondOrder += contrib;
+      }
+
+      const auto &valances =
+          PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+      auto valence = *std::max_element(valances.begin(), valances.end());
+      // round up aromatic contributions
+      dummiesToAdd = valence - (int)(bondOrder + .51);
+      dummiesToAdd = std::min(dummiesToAdd,maxNumDummies);
+    }
+
+    std::vector<int> newIndices;
+    for (int i = 0; i < dummiesToAdd; i++) {
+      const auto newAtom = new Atom(0);
+      newAtom->setProp<bool>(UNLABELED_CORE_ATTACHMENT, true);
+      const auto newIdx = core.addAtom(newAtom, false, true);
+      newIndices.push_back(newIdx);
+      auto *qb = new QueryBond();
+      qb->setQuery(makeBondNullQuery());
+      qb->setBeginAtomIdx(atomIndex);
+      qb->setEndAtomIdx(newIdx);
+      core.addBond(qb, true);
+      const auto dummy = core.getAtomWithIdx(newIdx);
+      dummy->updatePropertyCache();
+    }
+    atom->updatePropertyCache(false);
+    for (const auto newIdx : newIndices) {
+      if (core.getNumConformers() > 0) {
+        MolOps::setTerminalAtomCoords(core, newIdx, atomIndex);
+      }
     }
   }
 }

@@ -13,7 +13,7 @@
 #define MOLDRAW2DUTILS_H
 #include <GraphMol/RWMol.h>
 
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 
 // ****************************************************************************
 
@@ -70,7 +70,8 @@ RDKIT_MOLDRAW2D_EXPORT void prepareAndDrawMolecule(
     const std::map<int, DrawColour> *highlight_atom_map = nullptr,
     const std::map<int, DrawColour> *highlight_bond_map = nullptr,
     const std::map<int, double> *highlight_radii = nullptr, int confId = -1,
-    bool kekulize = true);
+    bool kekulize = true, bool addChiralHs = true, bool wedgeBonds = true,
+    bool forceCoords = false, bool wavyBonds = false);
 
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
                                                        const char *json);

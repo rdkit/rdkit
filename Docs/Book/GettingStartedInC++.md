@@ -504,7 +504,7 @@ RDKit::MMFF::MMFFOptimizeMolecule( *mol3 , 1000 , "MMFF94s" );
 std::shared_ptr<RDKit::RWMol> mol4( new RDKit::RWMol( *mol3 ) );
 RDKit::MolOps::addHs( *mol4 );
 ```
-
+(two-add-hs)=
 Note that there are 2 overloaded versions of
 addHs. The first takes an
 ROMol and, because that can't be edited, returns a pointer to a new
@@ -764,7 +764,8 @@ gives
 ```
 The distinction between symmetrized and non-symmetrized SSSR is
 discussed in more detail below in the section
-[The SSSR Problem](#TheSSSRProblem).
+[The SSSR Problem](the-sssr-problem).
+
 
 ### Modifying molecules
 
@@ -786,7 +787,7 @@ Number of atoms : 3
 Number of atoms : 9
 ```
 Recall that there are two versions of `RDKit::MolOps::addHs`, as
-described [above](#twoAddHs).
+described [above](two-add-hs).
 The Hs can be removed again using the `RDKit::MolOps::RemoveHs`
 function, which again has two forms
 [(example8)](./C++Examples/example8.cpp):
@@ -937,7 +938,7 @@ incorporated in December 2016.
 ### Working with 3D Molecules
 
 The RDKit can generate conformations for molecules using two different
-methods.  The original method uses distance geometry [[1]](#blaney).
+methods.  The original method uses distance geometry [^blaney].
 The algorithm followed is:
 
 1. The molecule's distance bounds matrix is calculated based on the
@@ -958,10 +959,10 @@ The algorithm followed is:
 Note that the conformations that result from this procedure tend to be
 fairly ugly. They should be cleaned up using a force field.
 This can be done within the RDKit using its implementation of the
-Universal Force Field UFF[[2]](#rappe).
+Universal Force Field UFF[^rappe].
 
 More recently, there is an implementation of the method of Riniker and
-Landrum [[3]](#riniker2) which uses torsion angle preferences from the
+Landrum [^riniker2] which uses torsion angle preferences from the
 Cambridge Structural Database (CSD) to correct the conformers after
 distance geometry has been used to generate them.  With this method,
 there should be no need to use a minimisation step to clean up the
@@ -1000,8 +1001,7 @@ which is initialised to the default values on construction, and whose
 individual values can be varied as desired.
 
 The RDKit also has an implementation of the MMFF94 force field
-available [[4]](#mmff1), [[5]](#mmff2), [[6]](#mmff3),
-[[7]](#mmff4), [[8]](#mmffs).
+available [^mmff1], [^mmff2], [^mmff3], [^mmff4], [^mmffs].
 [(example11.cpp)](./C++Examples/example11.cpp):
 ```c++
 #include <GraphMol/ForceFieldHelpers/MMFF/MMFF.h>
@@ -1473,7 +1473,7 @@ It is possible to attach indices to the atoms in the SMARTS
 pattern. This is most often done in reaction SMARTS (see Chemical
 Reactions), but is more general than that. For example, in the SMARTS
 patterns for torsion angle analysis published by Guba et
-al. [[9]](#guba) indices are used to define the four atoms of the
+al. [^guba] indices are used to define the four atoms of the
 torsion of interest. This allows additional atoms to be used to define
 the environment of the four torsion atoms, as in
 `[cH0:1][c:2]([cH0])!@[CX3!r:3]=[NX2!r:4]` for an aromatic C=N
@@ -1527,8 +1527,8 @@ gives
 ```
 Match 1 : 1 7 8 10
 ```
-
-## <a name="TheSSSRProblem"></a>The SSSR Problem
+(the-sssr-problem)=
+## The SSSR Problem
 
 As others have ranted about with more energy and eloquence than I
 intend to, the definition of a molecule's smallest set of smallest
@@ -1544,33 +1544,32 @@ are present in the molecule, there is a
 `rdkit.Chem.rdmolops.GetSSSR` function, but this only returns the
 SSSR count, not the potentially non-unique set of rings.
 
-## Footnotes
-1. <a name="blaney"></a>Blaney, J. M.; Dixon, J. S. "Distance Geometry
+[^blaney]: Blaney, J. M.; Dixon, J. S. "Distance Geometry
 in Molecular Modeling".  *Reviews in Computational Chemistry*; VCH:
 New York, 1994.
-2. <a name="rappe"></a>Rappé, A. K.; Casewit, C. J.; Colwell, K. S.;
+[^rappe]: Rappé, A. K.; Casewit, C. J.; Colwell, K. S.;
 Goddard III, W. A.; Skiff, W. M. "UFF, a full periodic table force
 field for molecular mechanics and molecular dynamics
 simulations". *J. Am. Chem. Soc.* **114**:10024-35 (1992) .
-3. <a name="riniker2"></a>Riniker, S.; Landrum, G. A. "Better Informed
+[^riniker2]: Riniker, S.; Landrum, G. A. "Better Informed
 Distance Geometry: Using What We Know To Improve Conformation
 Generation" *J. Chem. Inf. Comp. Sci.* **55**:2562-74 (2015)
-4. <a name="mmff1"></a>Halgren, T. A. "Merck molecular force
+[^mmff1]: Halgren, T. A. "Merck molecular force
 field. I. Basis, form, scope, parameterization, and performance of
 MMFF94." *J. Comp. Chem.* **17**:490–19 (1996).
-5. <a name="mmff2"></a>Halgren, T. A. "Merck molecular force
+[^mmff2]: Halgren, T. A. "Merck molecular force
 field. II. MMFF94 van der Waals and electrostatic parameters for
 intermolecular interactions." *J. Comp. Chem.* **17**:520–52 (1996).
-6. <a name="mmff3"></a>Halgren, T. A. "Merck molecular force
+[^mmff3]: Halgren, T. A. "Merck molecular force
 field. III. Molecular geometries and vibrational frequencies for
 MMFF94." *J. Comp. Chem.* **17**:553–86 (1996).
-7. <a name="mmff4"></a>Halgren, T. A. & Nachbar, R. B. "Merck
+[^mmff4]: Halgren, T. A. & Nachbar, R. B. "Merck
 molecular force field. IV. conformational energies and geometries
 for MMFF94." *J. Comp. Chem.* **17**:587-615 (1996).
-8. <a name="mmffs"></a>Halgren, T. A. "MMFF VI. MMFF94s option for
+[^mmffs]: Halgren, T. A. "MMFF VI. MMFF94s option for
 energy minimization studies." *J. Comp. Chem.* **20**:720–9
 (1999).
-9. <a name="guba"></a>Guba, W.; Meyder, A.; Rarey, M.; Hert,
+[^guba]: Guba, W.; Meyder, A.; Rarey, M.; Hert,
 J. "Torsion Library Reloaded: A New Version of Expert-Derived
 SMARTS Rules for Assessing Conformations of Small
 Molecules". *J. Chem. Inf. Model.* ** 56**:1-5 (2016)

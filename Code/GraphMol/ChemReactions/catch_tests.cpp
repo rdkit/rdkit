@@ -1269,3 +1269,107 @@ TEST_CASE("CDXML Parser") {
        CHECK(smarts == "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6:1]1=[#6:5]-[#6:6](=[#6:2]-[#6:3]=[#6:4]-1)-[#6:7]1-[#6:8]=[#6:9]-[#6:10]=[#6:11]-[#6:12]=1");
   }
 }
+
+TEST_CASE("Github #5785: separateAgents ignored for V3000 RXN files") {
+  SECTION("general separateAgents parse testing: V2000"){
+    std::string rxnb = R"RXN($RXN
+
+      RDKit
+
+  1  1  1
+$MOL
+
+     RDKit          2D
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+    1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  2  0  0
+  1  2  1  0
+M  END
+$MOL
+
+     RDKit          2D
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  1  0  0
+    1.2990    0.7500    0.0000 O   0  0  0  0  0  0  0  0  0  2  0  0
+  1  2  2  0
+M  END
+$MOL
+
+     RDKit          2D
+
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 Pt  0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+)RXN";
+    std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnb));
+    REQUIRE(rxn);
+    CHECK(rxn->getNumReactantTemplates()==1);
+    CHECK(rxn->getNumProductTemplates()==1);
+    CHECK(rxn->getNumAgentTemplates()==1);
+
+    auto orxn = ChemicalReactionToRxnBlock(*rxn,true);
+    CHECK(orxn.find("  1  1  1") != std::string::npos);
+    
+  }
+  SECTION("general separateAgents parse testing: V3000"){
+    std::string rxnb = R"RXN($RXN V3000
+
+      Mrv2211  121520220816
+
+M  V30 COUNTS 1 1 1
+M  V30 BEGIN REACTANT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.8977 -0.385 0 1
+M  V30 2 O -3.564 0.385 0 2
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 END REACTANT
+M  V30 BEGIN PRODUCT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 4.444 -0.385 0 1
+M  V30 2 O 5.7777 0.385 0 2
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 END PRODUCT
+M  V30 BEGIN AGENT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Pt 0 1.54 0 0
+M  V30 END ATOM
+M  V30 END CTAB
+M  V30 END AGENT
+M  END
+)RXN";
+std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnb));
+    REQUIRE(rxn);
+    CHECK(rxn->getNumReactantTemplates()==1);
+    CHECK(rxn->getNumProductTemplates()==1);
+    CHECK(rxn->getNumAgentTemplates()==1);
+   
+    {    // with separate agents
+      auto orxn = ChemicalReactionToV3KRxnBlock(*rxn,true);
+      CHECK(orxn.find("COUNTS 1 1 1") != std::string::npos);
+      CHECK(orxn.find("BEGIN AGENT") != std::string::npos);
+      CHECK(orxn.find("END AGENT") != std::string::npos);
+    }
+    {    // without separate agents
+      auto orxn = ChemicalReactionToV3KRxnBlock(*rxn,false);
+      CHECK(orxn.find("COUNTS 2 1") != std::string::npos);
+      CHECK(orxn.find("BEGIN AGENT") == std::string::npos);
+      CHECK(orxn.find("END AGENT") == std::string::npos);
+    }
+  }
+}

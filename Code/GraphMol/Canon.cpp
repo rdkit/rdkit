@@ -80,7 +80,7 @@ bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
 }
 
 auto _possibleCompare = [](const PossibleType &arg1, const PossibleType &arg2) {
-  return (arg1.get<0>() < arg2.get<0>());
+  return (std::get<0>(arg1) < std::get<0>(arg2));
 };
 
 bool checkBondsInSameBranch(MolStack &molStack, Bond *dblBnd, Bond *dirBnd) {
@@ -654,16 +654,16 @@ void dfsFindCycles(ROMol &mol, int atomIdx, int inBondIdx,
   std::sort(possibles.begin(), possibles.end(), _possibleCompare);
   // if (possibles.size())
   //   std::cerr << " aIdx1: " << atomIdx
-  //             << " first: " << possibles.front().get<0>() << " "
-  //             << possibles.front().get<1>() << std::endl;
+  //             << " first: " << possibles.front()std:std::get<0>() << " "
+  //             << possibles.front()std:std::get<1>() << std::endl;
   // // ---------------------
   //
   //  Now work the children
   //
   // ---------------------
   for (auto &possible : possibles) {
-    int possibleIdx = possible.get<1>();
-    Bond *bond = possible.get<2>();
+    int possibleIdx = std::get<1>(possible);
+    Bond *bond = std::get<2>(possible);
     switch (colors[possibleIdx]) {
       case WHITE_NODE:
         // -----
@@ -825,8 +825,8 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   std::sort(possibles.begin(), possibles.end(), _possibleCompare);
   // if (possibles.size())
   //   std::cerr << " aIdx2: " << atomIdx
-  //             << " first: " << possibles.front().get<0>() << " "
-  //             << possibles.front().get<1>() << std::endl;
+  //             << " first: " << possibles.front()std:std::get<0>() << " "
+  //             << possibles.front()std:std::get<1>() << std::endl;
 
   // ---------------------
   //
@@ -835,14 +835,14 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
   // ---------------------
   for (auto possiblesIt = possibles.begin(); possiblesIt != possibles.end();
        possiblesIt++) {
-    int possibleIdx = possiblesIt->get<1>();
+    int possibleIdx = std::get<1>(*possiblesIt);
     if (colors[possibleIdx] != WHITE_NODE) {
       // we're either done or it's a ring-closure, which we already processed...
       // this test isn't strictly required, because we only added WHITE notes to
       // the possibles list, but it seems logical to document it
       continue;
     }
-    Bond *bond = possiblesIt->get<2>();
+    Bond *bond = std::get<2>(*possiblesIt);
     Atom *otherAtom = mol.getAtomWithIdx(possibleIdx);
     // ww might have some residual data from earlier calls, clean that up:
     otherAtom->clearProp(common_properties::_TraversalBondIndexOrder);

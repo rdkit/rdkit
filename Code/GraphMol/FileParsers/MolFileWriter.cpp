@@ -530,9 +530,12 @@ bool hasNonDefaultValence(const Atom *atom) {
   if (atom->getNumRadicalElectrons() != 0) {
     return true;
   }
-  if (atom->hasQuery()) {
+  // for queries and atoms which don't have computed properties, the answer is
+  // always no:
+  if (atom->hasQuery() || atom->needsUpdatePropertyCache()) {
     return false;
   }
+
   if (atom->getAtomicNum() == 1 ||
       SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
@@ -1057,8 +1060,28 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
   }
 }
 
+namespace {
+void createSMARTSQSubstanceGroups(ROMol &mol) {
+  for (const auto atom : mol.atoms()) {
+    std::string sma;
+    if (atom->hasQuery() &&
+        atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
+        !sma.empty()) {
+      SubstanceGroup sg(&mol, "DAT");
+      sg.setProp("QUERYTYPE", "SMARTSQ");
+      sg.setProp("QUERYOP", "=");
+      std::vector<std::string> dataFields{sma};
+      sg.setProp("DATAFIELDS", dataFields);
+      sg.addAtomWithIdx(atom->getIdx());
+      addSubstanceGroup(mol, sg);
+    }
+  }
+}
+}  // namespace
+
 void moveAdditionalPropertiesToSGroups(RWMol &mol) {
   GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
+  createSMARTSQSubstanceGroups(mol);
 }
 
 const std::string GetV3000MolFileBondLine(const Bond *bond,

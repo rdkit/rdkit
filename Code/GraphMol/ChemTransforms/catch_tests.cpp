@@ -503,3 +503,12 @@ TEST_CASE(
     CHECK(caught);
   }
 }
+
+TEST_CASE("ReplaceCore handles chiral center with multiple bonds from core to chiral center", "[]") {
+  auto structure = "C1CSCN[C@@]12(NCCCO2)"_smiles;
+  auto core = "NCSCC"_smarts;
+  std::unique_ptr<ROMol> res{replaceCore(*structure, *core, true, true)};
+  REQUIRE(res);
+  auto resultSmiles = MolToSmiles(*res);
+  REQUIRE(resultSmiles == "*[C@]1([4*])NCCCO1");
+}

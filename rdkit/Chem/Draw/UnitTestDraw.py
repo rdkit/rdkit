@@ -289,5 +289,16 @@ class TestCase(unittest.TestCase):
     pathlib.Path('testGithub_3762_1.svg').unlink()
     pathlib.Path('testGithub_3762_2.svg').unlink()
     
+  def testGithub5863(self):
+    smiles = "C[C@]12C[C@H](O)[C@H]3[C@@H](CCC4=CC(=O)C=C[C@@]43C)[C@@H]1CC[C@]2(O)C(=O)CO"
+    mol = Chem.MolFromSmiles(smiles)
+
+    info = {}
+    rdMolDescriptors.GetMorganFingerprint(mol, radius=2, bitInfo=info, useChirality=True)
+    bitId = 1236726849
+    # this should run without generating an exception:
+    Draw.DrawMorganBit(mol, bitId, info)
+
+
 if __name__ == '__main__':
   unittest.main()

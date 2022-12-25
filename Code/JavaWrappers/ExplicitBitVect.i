@@ -65,7 +65,7 @@
      UChar_Vect vec = new UChar_Vect();
      vec.reserve(fp.length);
      for (int size=0;size<fp.length;++size) {
-       vec.add(fp[size]);
+       vec.add((short)fp[size]);
      }
      return new ExplicitBitVect(vec);
    }

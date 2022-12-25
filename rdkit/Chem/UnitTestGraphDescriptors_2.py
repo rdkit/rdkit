@@ -114,6 +114,9 @@ class TestCase(unittest.TestCase):
       self.assertAlmostEqual(Ipc_avg, res1, delta=1e-3,
                              msg='mol %s (Ipc_avg=%f) should have Ipc_avg=%f' % (smi, Ipc_avg,
                                                                                  res1))
+      avgIpc = GraphDescriptors.AvgIpc(m, forceDMat=1)
+      self.assertEqual(Ipc_avg,avgIpc)
+      
       self.assertAlmostEqual(Ipc, res2, delta=1e-3,
                              msg='mol %s (Ipc=%f) should have Ipc=%f' % (smi, Ipc, res2))
 

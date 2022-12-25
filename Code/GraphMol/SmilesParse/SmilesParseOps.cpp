@@ -631,4 +631,19 @@ void CleanupAfterParsing(RWMol *mol) {
   }
 }
 
+RDKit::QueryBond *getUnspecifiedQueryBond(const RDKit::Atom *a1,
+                                          const RDKit::Atom *a2) {
+  PRECONDITION(a1, "bad atom pointer");
+  QueryBond *newB;
+  if (!a1->getIsAromatic() || (a2 && !a2->getIsAromatic())) {
+    newB = new QueryBond(Bond::SINGLE);
+    newB->setQuery(makeSingleOrAromaticBondQuery());
+  } else {
+    newB = new QueryBond(Bond::AROMATIC);
+    newB->setQuery(makeSingleOrAromaticBondQuery());
+  }
+  newB->setProp(RDKit::common_properties::_unspecifiedOrder, 1);
+  return newB;
+}
+
 }  // end of namespace SmilesParseOps
