@@ -205,11 +205,5 @@ class TestCase(unittest.TestCase):
     self.assertTrue('MolLogP' in descs)
     self.assertEqual(descs['NumHDonors'],1)
   
-  def testRegisterPythonProperties(self):
-    ps = rdMolDescriptors.Properties()
-    self.assertIn('MaxEStateIndex',ps.GetPropertyNames())
-
-
-
 if __name__ == '__main__':
   unittest.main()
