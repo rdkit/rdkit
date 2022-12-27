@@ -1,6 +1,5 @@
-# $Id$
 #
-# Copyright (C) 2001-2008 greg landrum and rational discovery llc
+# Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
