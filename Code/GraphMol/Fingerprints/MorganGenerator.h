@@ -155,12 +155,14 @@ class RDKIT_FINGERPRINTS_EXPORT MorganAtomEnv
   const unsigned int d_layer;
 
  public:
-  OutputType getBitId(FingerprintArguments *arguments,
-                      const std::vector<std::uint32_t> *atomInvariants,
-                      const std::vector<std::uint32_t> *bondInvariants,
-                      AdditionalOutput *additionalOutput,
-                      const bool hashResults = false,
-                      const std::uint64_t fpSize = 0) const override;
+  OutputType getBitId(
+      FingerprintArguments *arguments,                   // unused
+      const std::vector<std::uint32_t> *atomInvariants,  // unused
+      const std::vector<std::uint32_t> *bondInvariants,  // unused
+      AdditionalOutput *additionalOutput,                // unused
+      const bool hashResults = false,                    // unused
+      const std::uint64_t fpSize = 0                     // unused
+  ) const override;
   void updateAdditionalOutput(AdditionalOutput *output,
                               size_t bitId) const override;
 
