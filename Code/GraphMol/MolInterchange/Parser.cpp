@@ -213,7 +213,7 @@ void readBondStereo(Bond *bnd, const rj::Value &bondVal,
   if (stereo == "unspecified") {
     return;
   }
-  if (stereolookup.find(stereo) == stereolookup.end()) {
+  if (stereoBondlookup.find(stereo) == stereoBondlookup.end()) {
     throw FileParseException("Bad Format: bond stereo value for bond");
   }
   const auto &miter = bondVal.FindMember("stereoAtoms");
@@ -224,7 +224,7 @@ void readBondStereo(Bond *bnd, const rj::Value &bondVal,
     throw FileParseException(
         "Bad Format: bond stereo provided without stereoAtoms");
   }
-  bnd->setStereo(stereolookup.find(stereo)->second);
+  bnd->setStereo(stereoBondlookup.find(stereo)->second);
 }  // namespace
 
 void readConformer(Conformer *conf, const rj::Value &confVal) {
@@ -749,14 +749,22 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
   if (!doc.IsObject()) {
     throw FileParseException("Bad Format: JSON should be an object");
   }
-  if (!doc.HasMember("commonchem")) {
+  if (doc.HasMember("commonchem")) {
+    if (!doc["commonchem"].HasMember("version")) {
+      throw FileParseException("Bad Format: missing version in JSON");
+    }
+    if (doc["commonchem"]["version"].GetInt() != currentMolJSONVersion) {
+      throw FileParseException("Bad Format: bad version in JSON");
+    }
+  } else if (doc.HasMember("rdkitjson")) {
+    if (!doc["rdkitjson"].HasMember("version")) {
+      throw FileParseException("Bad Format: missing version in JSON");
+    }
+    if (doc["rdkitjson"]["version"].GetInt() != currentRDKitJSONVersion) {
+      throw FileParseException("Bad Format: bad version in JSON");
+    }
+  } else {
     throw FileParseException("Bad Format: missing header in JSON");
-  }
-  if (!doc["commonchem"].HasMember("version")) {
-    throw FileParseException("Bad Format: missing version in JSON");
-  }
-  if (doc["commonchem"]["version"].GetInt() != currentMolJSONVersion) {
-    throw FileParseException("Bad Format: bad version in JSON");
   }
 
   rj::Value atomDefaults_;

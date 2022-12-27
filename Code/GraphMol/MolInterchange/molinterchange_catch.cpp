@@ -76,3 +76,46 @@ M  END
     CHECK(mb.find("TOPO=2") != std::string::npos);
   }
 }
+
+TEST_CASE("StereoGroups") {
+  auto ormol = "C[C@H](O)C[C@@H](C)F |o1:1,4|"_smiles;
+  REQUIRE(ormol);
+  auto andmol = "C[C@H](O)C[C@@H](C)F |&1:1,4|"_smiles;
+  REQUIRE(andmol);
+  auto absmol = "CC(O)C[C@@H](C)F |a:4|"_smiles;
+  REQUIRE(absmol);
+  MolInterchange::JSONWriteParameters commonChemPs;
+  commonChemPs.useRDKitExtensions = false;
+  SECTION("writing") {
+    {
+      auto json = MolInterchange::MolToJSONData(*ormol);
+      CHECK(json.find("stereoGroups") != std::string::npos);
+      CHECK(json.find("\"or\"") != std::string::npos);
+      CHECK(json.find("[1,4]") != std::string::npos);
+      json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
+      CHECK(json.find("stereogroups") == std::string::npos);
+      CHECK(json.find("\"or\"") == std::string::npos);
+      CHECK(json.find("[1,4]") == std::string::npos);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*andmol);
+      CHECK(json.find("stereoGroups") != std::string::npos);
+      CHECK(json.find("\"and\"") != std::string::npos);
+      CHECK(json.find("[1,4]") != std::string::npos);
+      json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
+      CHECK(json.find("stereogroups") == std::string::npos);
+      CHECK(json.find("\"and\"") == std::string::npos);
+      CHECK(json.find("[1,4]") == std::string::npos);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*absmol);
+      CHECK(json.find("stereoGroups") != std::string::npos);
+      CHECK(json.find("\"abs\"") != std::string::npos);
+      CHECK(json.find("[4]") != std::string::npos);
+      json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
+      CHECK(json.find("stereogroups") == std::string::npos);
+      CHECK(json.find("\"abs\"") == std::string::npos);
+      CHECK(json.find("[4]") == std::string::npos);
+    }
+  }
+}
