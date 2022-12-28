@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2009-2010, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2009-2022, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,283 +36,52 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
-#include <RDGeneral/hash/hash.hpp>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/dynamic_bitset.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-
-#include <algorithm>
-
-#include <GraphMol/Fingerprints/FingerprintUtil.h>
-#include <RDGeneral/Exceptions.h>
-
-namespace {
-class ss_matcher {
- public:
-  ss_matcher(){};
-  ss_matcher(const std::string &pattern) {
-    RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
-    TEST_ASSERT(p);
-    m_matcher.reset(p);
-  };
-
-  // const RDKit::ROMOL_SPTR &getMatcher() const { return m_matcher; };
-  const RDKit::ROMol *getMatcher() const { return m_matcher.get(); };
-
- private:
-  RDKit::ROMOL_SPTR m_matcher;
-};
-}  // namespace
+#include <GraphMol/Fingerprints/FingerprintGenerator.h>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
 
 namespace RDKit {
 namespace MorganFingerprints {
-
-uint32_t updateElement(SparseIntVect<uint32_t> &v, unsigned int elem,
-                       bool counting) {
-  uint32_t bit = elem % v.getLength();
-  if (counting) {
-    v.setVal(bit, v.getVal(bit) + 1);
-  } else {
-    v.setVal(bit, 1);
-  }
-  return bit;
-}
-uint32_t updateElement(ExplicitBitVect &v, unsigned int elem, bool) {
-  uint32_t bit = elem % v.getNumBits();
-  v.setBit(bit);
-  return bit;
-}
-
-template <typename T>
-void calcFingerprint(const ROMol &mol, unsigned int radius,
-                     std::vector<uint32_t> *invariants,
-                     const std::vector<uint32_t> *fromAtoms, bool useChirality,
-                     bool useBondTypes, bool useCounts,
-                     bool onlyNonzeroInvariants, BitInfoMap *atomsSettingBits,
-                     bool includeRedundantEnvironments, T &res) {
-  const ROMol *lmol = &mol;
-  std::unique_ptr<ROMol> tmol;
-  if (useChirality && !mol.hasProp(common_properties::_StereochemDone)) {
-    tmol = std::unique_ptr<ROMol>(new ROMol(mol));
-    MolOps::assignStereochemistry(*tmol);
-    lmol = tmol.get();
-  }
-  unsigned int nAtoms = lmol->getNumAtoms();
-  bool owner = false;
-  if (!invariants) {
-    invariants = new std::vector<uint32_t>(nAtoms);
-    owner = true;
-    getConnectivityInvariants(*lmol, *invariants);
-  }
-  // Make a copy of the invariants:
-  std::vector<uint32_t> invariantCpy(nAtoms);
-  std::copy(invariants->begin(), invariants->end(), invariantCpy.begin());
-
-  // add the round 0 invariants to the result:
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    if (!fromAtoms || std::find(fromAtoms->begin(), fromAtoms->end(), i) !=
-                          fromAtoms->end()) {
-      if (!onlyNonzeroInvariants || (*invariants)[i]) {
-        uint32_t bit = updateElement(res, (*invariants)[i], useCounts);
-        if (atomsSettingBits) {
-          (*atomsSettingBits)[bit].push_back(std::make_pair(i, 0));
-        }
-      }
-    }
-  }
-
-  boost::dynamic_bitset<> chiralAtoms(nAtoms);
-
-  // these are the neighborhoods that have already been added
-  // to the fingerprint
-  std::vector<boost::dynamic_bitset<>> neighborhoods;
-  // these are the environments around each atom:
-  std::vector<boost::dynamic_bitset<>> atomNeighborhoods(
-      nAtoms, boost::dynamic_bitset<>(mol.getNumBonds()));
-  boost::dynamic_bitset<> deadAtoms(nAtoms);
-
-  boost::dynamic_bitset<> includeAtoms(nAtoms);
-  if (fromAtoms) {
-    for (auto idx : *fromAtoms) {
-      includeAtoms.set(idx, 1);
-    }
-  } else {
-    includeAtoms.set();
-  }
-
-  std::vector<unsigned int> atomOrder(nAtoms);
-  if (onlyNonzeroInvariants) {
-    std::vector<std::pair<int32_t, uint32_t>> ordering;
-    for (unsigned int i = 0; i < nAtoms; ++i) {
-      if (!(*invariants)[i]) {
-        ordering.emplace_back(1, i);
-      } else {
-        ordering.emplace_back(0, i);
-      }
-    }
-    std::sort(ordering.begin(), ordering.end());
-    for (unsigned int i = 0; i < nAtoms; ++i) {
-      atomOrder[i] = ordering[i].second;
-    }
-  } else {
-    for (unsigned int i = 0; i < nAtoms; ++i) {
-      atomOrder[i] = i;
-    }
-  }
-  // now do our subsequent rounds:
-  for (unsigned int layer = 0; layer < radius; ++layer) {
-    std::vector<uint32_t> roundInvariants(nAtoms);
-    std::vector<boost::dynamic_bitset<>> roundAtomNeighborhoods =
-        atomNeighborhoods;
-    std::vector<AccumTuple> neighborhoodsThisRound;
-
-    for (auto atomIdx : atomOrder) {
-      if (!deadAtoms[atomIdx]) {
-        const Atom *tAtom = lmol->getAtomWithIdx(atomIdx);
-        if (!tAtom->getDegree()) {
-          deadAtoms.set(atomIdx, 1);
-          continue;
-        }
-        std::vector<std::pair<int32_t, uint32_t>> nbrs;
-        ROMol::OEDGE_ITER beg, end;
-        boost::tie(beg, end) = lmol->getAtomBonds(tAtom);
-        while (beg != end) {
-          const Bond *bond = mol[*beg];
-          roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
-
-          unsigned int oIdx = bond->getOtherAtomIdx(atomIdx);
-          roundAtomNeighborhoods[atomIdx] |= atomNeighborhoods[oIdx];
-
-          int32_t bt = 1;
-          if (useBondTypes) {
-            if (!useChirality || bond->getBondType() != Bond::DOUBLE ||
-                bond->getStereo() == Bond::STEREONONE) {
-              bt = static_cast<int32_t>(bond->getBondType());
-            } else {
-              const int32_t stereoOffset = 100;
-              const int32_t bondTypeOffset = 10;
-              bt = stereoOffset +
-                   bondTypeOffset * static_cast<int32_t>(bond->getBondType()) +
-                   static_cast<int32_t>(bond->getStereo());
-            }
-          }
-          nbrs.emplace_back(bt, (*invariants)[oIdx]);
-
-          ++beg;
-        }
-
-        // sort the neighbor list:
-        std::sort(nbrs.begin(), nbrs.end());
-        // and now calculate the new invariant and test if the atom is newly
-        // "chiral"
-        std::uint32_t invar = layer;
-        gboost::hash_combine(invar, (*invariants)[atomIdx]);
-        bool looksChiral = (tAtom->getChiralTag() != Atom::CHI_UNSPECIFIED);
-        for (std::vector<std::pair<int32_t, uint32_t>>::const_iterator it =
-                 nbrs.begin();
-             it != nbrs.end(); ++it) {
-          // add the contribution to the new invariant:
-          gboost::hash_combine(invar, *it);
-
-          // std::cerr<<"     "<<atomIdx<<": "<<it->first<<" "<<it->second<<" ->
-          // "<<invar<<std::endl;
-
-          // update our "chirality":
-          if (useChirality && looksChiral && chiralAtoms[atomIdx]) {
-            if (it->first != static_cast<int32_t>(Bond::SINGLE)) {
-              looksChiral = false;
-            } else if (it != nbrs.begin() && it->second == (it - 1)->second) {
-              looksChiral = false;
-            }
-          }
-        }
-        if (useChirality && looksChiral) {
-          chiralAtoms[atomIdx] = 1;
-          // add an extra value to the invariant to reflect chirality:
-          std::string cip = "";
-          tAtom->getPropIfPresent(common_properties::_CIPCode, cip);
-          if (cip == "R") {
-            gboost::hash_combine(invar, 3);
-          } else if (cip == "S") {
-            gboost::hash_combine(invar, 2);
-          } else {
-            gboost::hash_combine(invar, 1);
-          }
-        }
-        roundInvariants[atomIdx] = static_cast<uint32_t>(invar);
-        neighborhoodsThisRound.push_back(
-            std::make_tuple(roundAtomNeighborhoods[atomIdx],
-                            static_cast<uint32_t>(invar), atomIdx));
-        if (!includeRedundantEnvironments &&
-            std::find(neighborhoods.begin(), neighborhoods.end(),
-                      roundAtomNeighborhoods[atomIdx]) != neighborhoods.end()) {
-          // we have seen this exact environment before, this atom
-          // is now out of consideration:
-          deadAtoms[atomIdx] = 1;
-          // std::cerr<<"   atom: "<< atomIdx <<" is dead."<<std::endl;
-        }
-      }
-    }
-    std::sort(neighborhoodsThisRound.begin(), neighborhoodsThisRound.end());
-    for (std::vector<AccumTuple>::const_iterator iter =
-             neighborhoodsThisRound.begin();
-         iter != neighborhoodsThisRound.end(); ++iter) {
-      // if we haven't seen this exact environment before, update the
-      // fingerprint:
-      if (includeRedundantEnvironments ||
-          std::find(neighborhoods.begin(), neighborhoods.end(),
-                    std::get<0>(*iter)) == neighborhoods.end()) {
-        if (!onlyNonzeroInvariants || invariantCpy[std::get<2>(*iter)]) {
-          if (includeAtoms[std::get<2>(*iter)]) {
-            uint32_t bit = updateElement(res, std::get<1>(*iter), useCounts);
-            if (atomsSettingBits) {
-              (*atomsSettingBits)[bit].push_back(
-                  std::make_pair(std::get<2>(*iter), layer + 1));
-            }
-          }
-          if (!fromAtoms || std::find(fromAtoms->begin(), fromAtoms->end(),
-                                      std::get<2>(*iter)) != fromAtoms->end()) {
-            neighborhoods.push_back(std::get<0>(*iter));
-          }
-        }
-        // std::cerr<<" layer: "<<layer<<" atom: "<<std::get<2>(*iter)<<" "
-        // <<std::get<0>(*iter)<< " " << std::get<1>(*iter) << " " <<
-        // deadAtoms[std::get<2>(*iter)]<<std::endl;
-      } else {
-        // we have seen this exact environment before, this atom
-        // is now out of consideration:
-        // std::cerr<<"   atom: "<< std::get<2>(*iter)<<" is dead."<<std::endl;
-        deadAtoms[std::get<2>(*iter)] = 1;
-      }
-    }
-
-    // the invariants from this round become the global invariants:
-    std::copy(roundInvariants.begin(), roundInvariants.end(),
-              invariants->begin());
-
-    atomNeighborhoods = roundAtomNeighborhoods;
-  }
-
-  if (owner) {
-    delete invariants;
-  }
-}
 
 SparseIntVect<uint32_t> *getFingerprint(
     const ROMol &mol, unsigned int radius, std::vector<uint32_t> *invariants,
     const std::vector<uint32_t> *fromAtoms, bool useChirality,
     bool useBondTypes, bool useCounts, bool onlyNonzeroInvariants,
     BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
+  bool countSimulation = false;
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen(
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(
+          radius, countSimulation, useChirality, useBondTypes,
+          onlyNonzeroInvariants, includeRedundantEnvironments));
+  RDKit::FingerprintFuncArguments args;
+  args.fromAtoms = fromAtoms;
+  args.customAtomInvariants = invariants;
+  AdditionalOutput ao;
+  if (atomsSettingBits) {
+    args.additionalOutput = &ao;
+    ao.allocateBitInfoMap();
+  }
+
   SparseIntVect<uint32_t> *res;
-  res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
-  calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
-                  useBondTypes, useCounts, onlyNonzeroInvariants,
-                  atomsSettingBits, includeRedundantEnvironments, *res);
+  if (!useCounts) {
+    auto tmp = fpgen->getSparseFingerprint(mol, args);
+    res = new SparseIntVect<uint32_t>(std::numeric_limits<uint32_t>::max());
+    for (auto idx : *(tmp->dp_bits)) {
+      res->setVal(idx, 1);
+    }
+  } else {
+    res = fpgen->getSparseCountFingerprint(mol, args).release();
+  }
+
+  if (atomsSettingBits) {
+    atomsSettingBits->clear();
+    for (const auto &pr : *(ao.bitInfoMap)) {
+      (*atomsSettingBits)[pr.first] = pr.second;
+    }
+  }
+
   return res;
 }
+
 SparseIntVect<uint32_t> *getHashedFingerprint(
     const ROMol &mol, unsigned int radius, unsigned int nBits,
     std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
@@ -320,11 +90,31 @@ SparseIntVect<uint32_t> *getHashedFingerprint(
   if (nBits == 0) {
     throw ValueErrorException("nBits can not be zero");
   }
-  SparseIntVect<uint32_t> *res;
-  res = new SparseIntVect<uint32_t>(nBits);
-  calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
-                  useBondTypes, true, onlyNonzeroInvariants, atomsSettingBits,
-                  includeRedundantEnvironments, *res);
+
+  bool countSimulation = false;
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen(
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(
+          radius, countSimulation, useChirality, useBondTypes,
+          onlyNonzeroInvariants, includeRedundantEnvironments, nullptr, nullptr,
+          nBits));
+  RDKit::FingerprintFuncArguments args;
+  args.fromAtoms = fromAtoms;
+  args.customAtomInvariants = invariants;
+  AdditionalOutput ao;
+  if (atomsSettingBits) {
+    args.additionalOutput = &ao;
+    ao.allocateBitInfoMap();
+  }
+
+  auto res = fpgen->getCountFingerprint(mol, args).release();
+
+  if (atomsSettingBits) {
+    atomsSettingBits->clear();
+    for (const auto &pr : *(ao.bitInfoMap)) {
+      (*atomsSettingBits)[pr.first] = pr.second;
+    }
+  }
+
   return res;
 }
 
@@ -333,10 +123,34 @@ ExplicitBitVect *getFingerprintAsBitVect(
     std::vector<uint32_t> *invariants, const std::vector<uint32_t> *fromAtoms,
     bool useChirality, bool useBondTypes, bool onlyNonzeroInvariants,
     BitInfoMap *atomsSettingBits, bool includeRedundantEnvironments) {
-  auto *res = new ExplicitBitVect(nBits);
-  calcFingerprint(mol, radius, invariants, fromAtoms, useChirality,
-                  useBondTypes, false, onlyNonzeroInvariants, atomsSettingBits,
-                  includeRedundantEnvironments, *res);
+  if (nBits == 0) {
+    throw ValueErrorException("nBits can not be zero");
+  }
+
+  bool countSimulation = false;
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen(
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(
+          radius, countSimulation, useChirality, useBondTypes,
+          onlyNonzeroInvariants, includeRedundantEnvironments, nullptr, nullptr,
+          nBits));
+  RDKit::FingerprintFuncArguments args;
+  args.fromAtoms = fromAtoms;
+  args.customAtomInvariants = invariants;
+  AdditionalOutput ao;
+  if (atomsSettingBits) {
+    args.additionalOutput = &ao;
+    ao.allocateBitInfoMap();
+  }
+
+  auto res = fpgen->getFingerprint(mol, args).release();
+
+  if (atomsSettingBits) {
+    atomsSettingBits->clear();
+    for (const auto &pr : *(ao.bitInfoMap)) {
+      (*atomsSettingBits)[pr.first] = pr.second;
+    }
+  }
+
   return res;
 }
 
