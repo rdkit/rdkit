@@ -367,7 +367,7 @@ if __name__ == '__main__':
     descs = dataSet.GetVarNames()
     nPts = dataSet.GetNPts()
     message('npts: %d\n' % (nPts))
-    final = numpy.zeros((nPts, 2), numpy.float)
+    final = numpy.zeros((nPts, 2), float)
     counts = numpy.zeros(nPts, numpy.integer)
     selPts = [None] * nPts
 

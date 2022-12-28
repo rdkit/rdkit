@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -39,7 +39,7 @@ FingerprintGenerator<OutputType> *getTopologicalTorsionFPGenerator(
 
   return TopologicalTorsion::getTopologicalTorsionGenerator<OutputType>(
       includeChirality, torsionAtomCount, atomInvariantsGenerator,
-      countSimulation, countBounds, fpSize, false);
+      countSimulation, fpSize, countBounds, false);
 }
 
 void exportTopologicalTorsion() {

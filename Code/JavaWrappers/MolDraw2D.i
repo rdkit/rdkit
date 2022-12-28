@@ -29,11 +29,10 @@
 * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
-%include "boost_tuple.i"
 %include "std_vector.i"
 %include "std_map.i"
 %include "std_pair.i"
-%include "boost_tuple.i"
+%include "std_tuple.i"
 %{
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolDraw2D/MolDraw2DHelpers.h>

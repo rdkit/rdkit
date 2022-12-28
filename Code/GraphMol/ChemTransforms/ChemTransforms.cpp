@@ -32,7 +32,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 namespace RDKit {
-namespace {
+namespace details {
 void updateSubMolConfs(const ROMol &mol, RWMol &res,
                        boost::dynamic_bitset<> &removedAtoms) {
   // update conformer information:
@@ -52,7 +52,9 @@ void updateSubMolConfs(const ROMol &mol, RWMol &res,
     res.addConformer(newConf, false);
   }
 }
+}  // namespace details
 
+namespace {
 struct SideChainMapping {
   int molIndex;
   int coreIndex;
@@ -136,7 +138,7 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
   res->commitBatchEdit();
   // if we removed any atoms, clear the computed properties:
   if (delList.size()) {
-    updateSubMolConfs(mol, *res, removedAtoms);
+    details::updateSubMolConfs(mol, *res, removedAtoms);
 
     res->clearComputedProps(true);
     // update our properties, but allow unhappiness:
@@ -242,7 +244,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
     // clear conformers and computed props and do basic updates
     // on the resulting molecules, but allow unhappiness:
     for (auto &re : res) {
-      updateSubMolConfs(mol, *(RWMol *)re.get(), removedAtoms);
+      details::updateSubMolConfs(mol, *(RWMol *)re.get(), removedAtoms);
       re->clearComputedProps(true);
       re->updatePropertyCache(false);
     }
@@ -327,7 +329,7 @@ ROMol *replaceSidechains(const ROMol &mol, const ROMol &coreQuery,
   }
   newMol->commitBatchEdit();
 
-  updateSubMolConfs(mol, *newMol, removedAtoms);
+  details::updateSubMolConfs(mol, *newMol, removedAtoms);
 
   // clear computed props and do basic updates on the
   // the resulting molecule, but allow unhappiness:
@@ -628,6 +630,10 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
             if (switchIt) {
               sidechainAtom->invertChirality();
             }
+            // the neighbor count needs to be decremented, in case an additional
+            // bond to the core is present at this chiral center (unlikely!),
+            // because this bond will now be at the end of the neighbor list.
+            --whichNbr;
           }
         }
         ++whichNbr;
@@ -676,7 +682,7 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   }
   newMol->commitBatchEdit();
 
-  updateSubMolConfs(mol, *newMol, removedAtoms);
+  details::updateSubMolConfs(mol, *newMol, removedAtoms);
 
   // Update any terminal dummy atom coordinates after removing atoms not in the
   // keeplist and calling updateSubMolConfs
@@ -795,7 +801,7 @@ ROMol *MurckoDecompose(const ROMol &mol) {
   }
   res->commitBatchEdit();
 
-  updateSubMolConfs(mol, *res, removedAtoms);
+  details::updateSubMolConfs(mol, *res, removedAtoms);
   res->clearComputedProps();
 
   return (ROMol *)res;

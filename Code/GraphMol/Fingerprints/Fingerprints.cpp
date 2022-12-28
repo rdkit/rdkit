@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,6 +27,8 @@
 #include <algorithm>
 #include <boost/dynamic_bitset.hpp>
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include <GraphMol/Fingerprints/FingerprintGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 
 //#define VERBOSE_FINGERPRINTING 1
 //#define REPORT_FP_STATS 1
@@ -190,221 +192,44 @@ ExplicitBitVect *RDKFingerprintMol(
   PRECONDITION(!atomBits || atomBits->size() >= mol.getNumAtoms(),
                "bad atomBits size");
 
-  // create a mersenne twister with customized parameters.
-  // The standard parameters (used to create boost::mt19937)
-  // result in an RNG that's much too computationally intensive
-  // to seed.
-  typedef boost::random::mersenne_twister<std::uint32_t, 32, 4, 2, 31,
-                                          0x9908b0df, 11, 7, 0x9d2c5680, 15,
-                                          0xefc60000, 18, 3346425566U>
-      rng_type;
-  typedef boost::uniform_int<> distrib_type;
-  typedef boost::variate_generator<rng_type &, distrib_type> source_type;
-  rng_type generator(42u);
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen(
+      RDKit::RDKitFP::getRDKitFPGenerator<std::uint32_t>(
+          minPath, maxPath, useHs, branchedPaths, useBondOrder));
+  fpgen->getOptions()->d_fpSize = fpSize;
+  fpgen->getOptions()->d_numBitsPerFeature = nBitsPerHash;
 
-  //
-  // if we generate arbitrarily sized ints then mod them down to the
-  // appropriate size, we can guarantee that a fingerprint of
-  // size x has the same bits set as one of size 2x that's been folded
-  // in half.  This is a nice guarantee to have.
-  //
-  distrib_type dist(0, INT_MAX);
-  source_type randomSource(generator, dist);
+  FingerprintFuncArguments args;
+  args.customAtomInvariants = atomInvariants;
+  args.fromAtoms = fromAtoms;
 
-  // build default atom invariants if need be:
-  std::vector<std::uint32_t> lAtomInvariants;
-  if (!atomInvariants) {
-    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
-                                                             lAtomInvariants);
-    atomInvariants = &lAtomInvariants;
+  AdditionalOutput ao;
+  if (atomBits) {
+    args.additionalOutput = &ao;
+    ao.allocateAtomToBits();
+  }
+  if (bitInfo) {
+    args.additionalOutput = &ao;
+    ao.allocateBitPaths();
   }
 
-  auto *res = new ExplicitBitVect(fpSize);
-
-  // get all paths
-  INT_PATH_LIST_MAP allPaths;
-  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths,
-                                  useHs, minPath, maxPath);
-
-  // identify query bonds
-  std::vector<short> isQueryBond(mol.getNumBonds(), 0);
-  std::vector<const Bond *> bondCache;
-  RDKitFPUtils::identifyQueryBonds(mol, bondCache, isQueryBond);
+  auto res = fpgen->getFingerprint(mol, args).release();
 
   if (atomBits) {
-    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-      (*atomBits)[i].clear();
+    atomBits->clear();
+    for (const auto &abl : *ao.atomToBits) {
+      std::vector<std::uint32_t> uv;
+      uv.reserve(abl.size());
+      for (auto l : abl) {
+        uv.push_back(static_cast<std::uint32_t>(l));
+      }
+      atomBits->emplace_back(std::move(uv));
     }
   }
-#ifdef VERBOSE_FINGERPRINTING
-  std::cerr << " n path sets: " << allPaths.size() << std::endl;
-  for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
-       paths++) {
-    std::cerr << "  " << paths->first << " " << paths->second.size()
-              << std::endl;
-  }
-#endif
 
-#ifdef REPORT_FP_STATS
-  std::map<std::uint32_t, std::set<std::string>> bitSmiles;
-#endif
-  boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
-  for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
-       paths++) {
-    for (const auto &path : paths->second) {
-#ifdef REPORT_FP_STATS
-      std::vector<int> atomsToUse;
-#endif
-#ifdef VERBOSE_FINGERPRINTING
-      std::cerr << "Path: ";
-      std::copy(path.begin(), path.end(),
-                std::ostream_iterator<int>(std::cerr, ", "));
-      std::cerr << std::endl;
-#endif
-#if 1
-      // the bond hashes of the path
-      std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
-          mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,
-          atomInvariants);
-      if (!bondHashes.size()) {
-        continue;
-      }
-
-      // hash the path to generate a seed:
-      unsigned long seed;
-      if (path.size() > 1) {
-        std::sort(bondHashes.begin(), bondHashes.end());
-
-        // finally, we will add the number of distinct atoms in the path at the
-        // end
-        // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-        bondHashes.push_back(static_cast<unsigned int>(atomsInPath.count()));
-        seed = gboost::hash_range(bondHashes.begin(), bondHashes.end());
-      } else {
-        seed = bondHashes[0];
-      }
-#else
-      if (atomBits) {
-        atomsInPath.reset();
-        for (unsigned int i = 0; i < path.size(); ++i) {
-          const Bond *bi = bondCache[path[i]];
-          atomsInPath.set(bi->getBeginAtomIdx());
-          atomsInPath.set(bi->getEndAtomIdx());
-        }
-      }
-
-      std::vector<unsigned int> bondInvariants(path.size());
-      std::vector<unsigned int> bondDegrees(path.size(), 0);
-      std::vector<unsigned int> atomDegrees(mol.getNumAtoms(), 0);
-      for (unsigned int i = 0; i < path.size(); ++i) {
-        const Bond *bi = bondCache[path[i]];
-        atomDegrees[bi->getBeginAtomIdx()]++;
-        atomDegrees[bi->getEndAtomIdx()]++;
-        for (unsigned int j = i; j < path.size(); ++j) {
-          const Bond *bj = bondCache[path[j]];
-          if (bi->getBeginAtomIdx() == bj->getBeginAtomIdx() ||
-              bi->getBeginAtomIdx() == bj->getEndAtomIdx() ||
-              bi->getEndAtomIdx() == bj->getBeginAtomIdx() ||
-              bi->getEndAtomIdx() == bj->getEndAtomIdx()) {
-            bondDegrees[i]++;
-            bondDegrees[j]++;
-          }
-        }
-#ifdef REPORT_FP_STATS
-        if (std::find(atomsToUse.begin(), atomsToUse.end(),
-                      bi->getBeginAtomIdx()) == atomsToUse.end()) {
-          atomsToUse.push_back(bi->getBeginAtomIdx());
-        }
-        if (std::find(atomsToUse.begin(), atomsToUse.end(),
-                      bi->getEndAtomIdx()) == atomsToUse.end()) {
-          atomsToUse.push_back(bi->getEndAtomIdx());
-        }
-#endif
-      }
-
-      for (unsigned int i = 0; i < path.size(); ++i) {
-        bondInvariants[i] = hashBond(bondCache[path[i]], *atomInvariants,
-                                     atomDegrees, bondDegrees[i], useBondOrder);
-      }
-
-      unsigned long seed =
-          canonicalPathHash(path, mol, bondCache, bondInvariants);
-#endif
-#ifdef VERBOSE_FINGERPRINTING
-      std::cerr << " hash: " << seed << std::endl;
-#endif
-
-      unsigned int bit = seed % fpSize;
-      // std::cerr<<"bit: "<<bit<<" hash: "<<seed<<std::endl;
-
-#ifdef REPORT_FP_STATS
-      std::string fsmi = MolFragmentToSmiles(mol, atomsToUse, &path);
-      // if(bitSmiles[bit].size()==0){
-      //   std::cerr<<"   SET: "<<bit<<" "<<fsmi<<" ";
-      //   std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,",
-      //   "));
-      //   std::cerr<<" || ";
-      //   std::copy(atomsToUse.begin(),atomsToUse.end(),std::ostream_iterator<int>(std::cerr,",
-      //   "));
-      //   std::cerr<<std::endl;
-      // }
-      bitSmiles[bit].insert(fsmi);
-// if(bitSmiles[bit].size()>1){
-//   std::cerr<<"  DUPE: "<<bit<<" "<<fsmi<<" ";
-//   std::copy(path.begin(),path.end(),std::ostream_iterator<int>(std::cerr,",
-//   "));
-//   std::cerr<<" || ";
-//   std::copy(atomsToUse.begin(),atomsToUse.end(),std::ostream_iterator<int>(std::cerr,",
-//   "));
-//   std::cerr<<std::endl;
-// }
-#endif
-
-      res->setBit(bit);
-      if (atomBits) {
-        boost::dynamic_bitset<>::size_type aIdx = atomsInPath.find_first();
-        while (aIdx != boost::dynamic_bitset<>::npos) {
-          if (std::find((*atomBits)[aIdx].begin(), (*atomBits)[aIdx].end(),
-                        bit) == (*atomBits)[aIdx].end()) {
-            (*atomBits)[aIdx].push_back(bit);
-          }
-          aIdx = atomsInPath.find_next(aIdx);
-        }
-      }
-#ifdef VERBOSE_FINGERPRINTING
-      std::cerr << "   bit: " << 0 << " " << bit << " " << atomsInPath
-                << std::endl;
-#endif
-
-      if (bitInfo) {
-        (*bitInfo)[bit].push_back(path);
-      }
-      if (nBitsPerHash > 1) {
-        generator.seed(static_cast<rng_type::result_type>(seed));
-        for (unsigned int i = 1; i < nBitsPerHash; i++) {
-          bit = randomSource();
-          bit %= fpSize;
-          res->setBit(bit);
-          if (atomBits) {
-            boost::dynamic_bitset<>::size_type aIdx = atomsInPath.find_first();
-            while (aIdx != boost::dynamic_bitset<>::npos) {
-              if (std::find((*atomBits)[aIdx].begin(), (*atomBits)[aIdx].end(),
-                            bit) == (*atomBits)[aIdx].end()) {
-                (*atomBits)[aIdx].push_back(bit);
-              }
-              aIdx = atomsInPath.find_next(aIdx);
-            }
-          }
-          if (bitInfo) {
-            (*bitInfo)[bit].push_back(path);
-          }
-
-#ifdef VERBOSE_FINGERPRINTING
-          std::cerr << "   bit: " << i << " " << bit << " " << atomsInPath
-                    << std::endl;
-#endif
-        }
-      }
+  if (bitInfo) {
+    bitInfo->clear();
+    for (const auto &abl : *ao.bitPaths) {
+      (*bitInfo)[static_cast<std::uint32_t>(abl.first)] = abl.second;
     }
   }
 
@@ -420,19 +245,6 @@ ExplicitBitVect *RDKFingerprintMol(
       res = tmpV;
     }
   }
-#ifdef REPORT_FP_STATS
-  std::cerr << "BIT STATS" << std::endl;
-  if (fpSize == res->size()) {
-    for (unsigned int i = 0; i < fpSize; ++i) {
-      if ((*res)[i] && (bitSmiles[i].size() > 1)) {
-        std::cerr << i << "\t" << bitSmiles[i].size() << std::endl;
-        for (const auto &smi : bitSmiles[i]) {
-          std::cerr << "   " << smi << std::endl;
-        }
-      }
-    }
-  }
-#endif
   return res;
 }
 
@@ -723,97 +535,34 @@ SparseIntVect<boost::uint64_t> *getUnfoldedRDKFingerprintMol(
   PRECONDITION(!atomBits || atomBits->size() >= mol.getNumAtoms(),
                "bad atomBits size");
 
-  // build default atom invariants if need be:
-  std::vector<std::uint32_t> lAtomInvariants;
-  if (!atomInvariants) {
-    RDKitFPUtils::buildDefaultRDKitFingerprintAtomInvariants(mol,
-                                                             lAtomInvariants);
-    atomInvariants = &lAtomInvariants;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpgen(
+      RDKit::RDKitFP::getRDKitFPGenerator<std::uint64_t>(
+          minPath, maxPath, useHs, branchedPaths, useBondOrder));
+  fpgen->getOptions()->d_numBitsPerFeature = 1;
+  FingerprintFuncArguments args;
+  args.customAtomInvariants = atomInvariants;
+  args.fromAtoms = fromAtoms;
+
+  AdditionalOutput ao;
+  if (atomBits) {
+    args.additionalOutput = &ao;
+    ao.allocateAtomToBits();
+  }
+  if (bitInfo) {
+    args.additionalOutput = &ao;
+    ao.allocateBitPaths();
   }
 
-  // get all paths
-  INT_PATH_LIST_MAP allPaths;
-  RDKitFPUtils::enumerateAllPaths(mol, allPaths, fromAtoms, branchedPaths,
-                                  useHs, minPath, maxPath);
-
-  // identify query bonds
-  std::vector<short> isQueryBond(mol.getNumBonds(), 0);
-  std::vector<const Bond *> bondCache;
-  RDKitFPUtils::identifyQueryBonds(mol, bondCache, isQueryBond);
+  auto fp = fpgen->getSparseCountFingerprint(mol, args);
 
   if (atomBits) {
-    for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-      (*atomBits)[i].clear();
-    }
+    *atomBits = *ao.atomToBits;
   }
 
-  std::map<unsigned int, unsigned int> bitMap;
-
-  boost::dynamic_bitset<> atomsInPath(mol.getNumAtoms());
-  for (INT_PATH_LIST_MAP_CI paths = allPaths.begin(); paths != allPaths.end();
-       paths++) {
-    for (const auto &path : paths->second) {
-      // the bond hashes of the path
-      std::vector<unsigned int> bondHashes = RDKitFPUtils::generateBondHashes(
-          mol, atomsInPath, bondCache, isQueryBond, path, useBondOrder,
-          atomInvariants);
-      if (!bondHashes.size()) {
-        continue;
-      }
-
-      // hash the path to generate a seed:
-      unsigned long seed;
-      if (path.size() > 1) {
-        std::sort(bondHashes.begin(), bondHashes.end());
-
-        // finally, we will add the number of distinct atoms in the path at the
-        // end
-        // of the vect. This allows us to distinguish C1CC1 from CC(C)C
-        bondHashes.push_back(static_cast<unsigned int>(atomsInPath.count()));
-        seed = gboost::hash_range(bondHashes.begin(), bondHashes.end());
-      } else {
-        seed = bondHashes[0];
-      }
-
-      unsigned int bit = seed;
-
-      // count-based FP
-      if (bitMap.find(bit) != bitMap.end()) {
-        bitMap[bit]++;
-      } else {
-        bitMap.insert(std::make_pair(bit, 1));
-      }
-
-      if (atomBits) {
-        boost::dynamic_bitset<>::size_type aIdx = atomsInPath.find_first();
-        while (aIdx != boost::dynamic_bitset<>::npos) {
-          if (std::find((*atomBits)[aIdx].begin(), (*atomBits)[aIdx].end(),
-                        bit) == (*atomBits)[aIdx].end()) {
-            (*atomBits)[aIdx].push_back(bit);
-          }
-          aIdx = atomsInPath.find_next(aIdx);
-        }
-      }
-
-      if (bitInfo) {
-        std::vector<int> p;
-        for (int i : path) {
-          p.push_back(i);
-        }
-        (*bitInfo)[bit].push_back(p);
-      }
-    }
+  if (bitInfo) {
+    *bitInfo = *ao.bitPaths;
   }
 
-  // technically the upper limit here could be std::uint32_t since `bitMap` uses
-  // unsigned ints, but that could change in the future and saying that the
-  // sparse vector is bigger than it actually is doesn't hurt anything
-  auto *res = new SparseIntVect<std::uint64_t>(
-      std::numeric_limits<std::uint64_t>::max());
-  for (const auto &pr : bitMap) {
-    res->setVal(pr.first, pr.second);
-  }
-
-  return res;
+  return fp.release();
 }
 }  // namespace RDKit

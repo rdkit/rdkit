@@ -23,6 +23,7 @@
 #include <GraphMol/FileParsers/SequenceWriters.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/FileParsers/MolWriters.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -5213,7 +5214,23 @@ M  END)CTAB"_ctab;
     REQUIRE(m);
     CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
     CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
-              common_properties::dummyLabel) == "R#");    
+              common_properties::dummyLabel) == "R#");
+  }
+  SECTION("R# also gets the tag (V2000, #5810)") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  3  2  0  0  0  0  0  0  0  0999 V2000
+   -2.9167    3.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5830    3.7700    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.2503    3.7700    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  3  1  0
+  1  2  1  0
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(2)->hasProp(common_properties::dummyLabel));
+    CHECK(m->getAtomWithIdx(2)->getProp<std::string>(
+              common_properties::dummyLabel) == "R#");
   }
 }
 
@@ -5245,5 +5262,93 @@ M  END")CTAB"_ctab;
     auto ctab = MolToV3KMolBlock(*m);
     CHECK(ctab.find("SMARTSQ") != std::string::npos);
     CHECK(ctab.find("[#6;R]") != std::string::npos);
+  }
+}
+
+TEST_CASE("github #5827: do not write properties with new lines to SDF") {
+  auto m = R"CTAB(
+  Mrv2211 12152210292D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.5 6.0833 0 0
+M  V30 2 O 1.8337 6.8533 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  SECTION("basics") {
+    m->setProp("foo", "fooprop");
+    m->setProp("bar", "foo\n\nprop");
+    m->setProp("baz", "foo\r\n\r\nprop");
+    m->setProp("bletch\nnope", "fooprop");
+    m->setProp("bletch\r\nnope2", "fooprop");
+    std::ostringstream oss;
+    SDWriter sdw(&oss);
+    sdw.write(*m);
+    sdw.flush();
+    auto sdf = oss.str();
+    CHECK(sdf.find("<foo>") != std::string::npos);
+    CHECK(sdf.find("<bar>") == std::string::npos);
+    CHECK(sdf.find("<baz>") == std::string::npos);
+    CHECK(sdf.find("<bletch") == std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "accept unrecognized atom names in CTABs when strictParsing is false") {
+  SECTION("V3000") {
+    std::string mb = R"CTAB(
+  Mrv2211 12152210292D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 2 1 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.5 6.0833 0 0
+M  V30 2 ARY 1.8337 6.8533 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+    std::unique_ptr<RWMol> m;
+    CHECK_THROWS_AS(m.reset(MolBlockToMol(mb)), FileParseException);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(mb, sanitize, removeHs, strictParsing));
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getAtomicNum() == 0);
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::dummyLabel));
+  }
+
+  SECTION("V2000") {
+    std::string mb = R"CTAB(
+  Mrv1810 02111915042D          
+
+  2  1  0  0  0  0            999 V2000
+   -1.5625    1.6071    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8480    2.0196    0.0000 ARY 0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+      )CTAB";
+    std::unique_ptr<RWMol> m;
+    CHECK_THROWS_AS(m.reset(MolBlockToMol(mb)), FileParseException);
+    bool sanitize = true;
+    bool removeHs = true;
+    bool strictParsing = false;
+    m.reset(MolBlockToMol(mb, sanitize, removeHs, strictParsing));
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getAtomicNum() == 0);
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::dummyLabel));
   }
 }

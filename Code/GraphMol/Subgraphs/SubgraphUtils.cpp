@@ -17,7 +17,6 @@
 #include <iostream>
 #include <algorithm>
 #include <map>
-#include <boost/tuple/tuple_comparison.hpp>
 #include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
@@ -218,7 +217,7 @@ DiscrimTuple calcPathDiscriminators(const ROMol &mol, const PATH_TYPE &path,
 
   // also include the path size (bond count) and number of atoms
   // in the discriminator
-  return boost::make_tuple(pathInvar, path.size(), nAtoms);
+  return std::make_tuple(pathInvar, path.size(), nAtoms);
 }
 
 //
