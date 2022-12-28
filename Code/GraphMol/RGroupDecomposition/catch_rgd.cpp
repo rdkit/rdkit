@@ -722,3 +722,50 @@ TEST_CASE("rgroupLabelling") {
     }
   }
 }
+
+TEST_CASE("MDL R labels from original core") {
+  std::vector<std::string> smis = {"C1CN[C@H]1F", "C1CN[C@]1(O)F",
+                                   "C1CN[C@@H]1F", "C1CN[CH]1F"};
+  auto mols = smisToMols(smis);
+  std::vector<std::string> csmis = {"[*]C1CCN1 |$_R1;;;;$|"};
+  auto cores = smisToMols(csmis);
+  SECTION("Map") {
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.rgroupLabelling = RGroupLabelling::AtomMap;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->getAtomicNum() == 0);
+      CHECK(!rows[0]["Core"]->getAtomWithIdx(4)->hasProp(
+          common_properties::dummyLabel));
+      CHECK(rows[0]["Core"]->getAtomWithIdx(5)->getAtomicNum() == 0);
+      CHECK(!rows[0]["Core"]->getAtomWithIdx(5)->hasProp(
+          common_properties::dummyLabel));
+    }
+  }
+  SECTION("Map | MDL") {
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.rgroupLabelling =
+        RGroupLabelling::AtomMap | RGroupLabelling::MDLRGroup;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->getAtomicNum() == 0);
+      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->hasProp(
+          common_properties::dummyLabel));
+      CHECK(rows[0]["Core"]->getAtomWithIdx(5)->getAtomicNum() == 0);
+      CHECK(rows[0]["Core"]->getAtomWithIdx(5)->hasProp(
+          common_properties::dummyLabel));
+    }
+  }
+}
