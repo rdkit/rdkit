@@ -445,8 +445,7 @@ typedef enum {
 } SanitizeFlags;
 
 //! \brief carries out a collection of tasks for cleaning up a molecule and
-/// ensuring
-//! that it makes "chemical sense"
+//! ensuring that it makes "chemical sense"
 /*!
    This functions calls the following in sequence
      -# MolOps::cleanUp()
@@ -459,6 +458,7 @@ typedef enum {
      -# MolOps::setHybridization()
      -# MolOps::cleanupChirality()
      -# MolOps::adjustHs()
+     -# mol.updatePropertyCache()
 
    \param mol : the RWMol to be cleaned
 

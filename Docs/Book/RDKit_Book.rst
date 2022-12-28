@@ -1633,6 +1633,12 @@ Here are the steps involved, in order.
       This is typically needed for heteroatoms in aromatic rings. The classic
       example is the nitrogen atom in pyrrole.
 
+  12. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
+     all atoms. This generates exceptions for atoms in higher-than-allowed
+     valence states. This step is required to catch some edge cases where input 
+     atoms with non-physical valences are accepted if they are flagged as aromatic.
+
+
 The individual steps can be toggled on or off when calling
 ``MolOps::sanitizeMol`` or ``Chem.SanitizeMol``.
 
