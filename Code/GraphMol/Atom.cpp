@@ -322,9 +322,7 @@ int Atom::calcExplicitValence(bool strict) {
   // FIX: contributions of bonds to valence are being done at best
   // approximately
   double accum = 0;
-  for (const auto &nbri :
-       boost::make_iterator_range(getOwningMol().getAtomBonds(this))) {
-    const auto bnd = getOwningMol()[nbri];
+  for (const auto bnd : getOwningMol().atomBonds(this)) {
     accum += bnd->getValenceContrib(this);
   }
   accum += getNumExplicitHs();
@@ -353,8 +351,11 @@ int Atom::calcExplicitValence(bool strict) {
     int pval = dv + chr;
     const INT_VECT &valens =
         PeriodicTable::getTable()->getValenceList(d_atomicNum);
-    for (auto vi = valens.begin(); vi != valens.end() && *vi != -1; ++vi) {
-      int val = (*vi) + chr;
+    for (auto val : valens) {
+      if (val == -1) {
+        break;
+      }
+      val += chr;
       if (val > accum) {
         break;
       } else {
