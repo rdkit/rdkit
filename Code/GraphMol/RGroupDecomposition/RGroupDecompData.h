@@ -100,6 +100,8 @@ struct RGroupDecompData {
       std::string dLabel = "R" + std::to_string(rlabel);
       atom->setProp(common_properties::dummyLabel, dLabel);
       setAtomRLabel(atom, rlabel);
+    } else {
+      atom->clearProp(common_properties::dummyLabel);
     }
 
     if (params.rgroupLabelling & Isotope) {
