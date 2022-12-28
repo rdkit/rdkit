@@ -205,6 +205,30 @@ void readBond(RWMol *mol, const rj::Value &bondVal,
   }
 }
 
+void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
+  PRECONDITION(mol, "no mol");
+
+  std::vector<StereoGroup> molSGs(mol->getStereoGroups());
+  for (const auto &sgVal : sgVals.GetArray()) {
+    if (MolInterchange::stereoGrouplookup.find(sgVal["type"].GetString()) ==
+        MolInterchange::stereoGrouplookup.end()) {
+      throw FileParseException("Bad Format: bad stereogroup type");
+    }
+    const auto typ =
+        MolInterchange::stereoGrouplookup.at(sgVal["type"].GetString());
+    const auto &aids = sgVal["atoms"].GetArray();
+    std::vector<Atom *> atoms;
+    for (const auto &aid : aids) {
+      atoms.push_back(mol->getAtomWithIdx(aid.GetUint()));
+    }
+
+    if (!atoms.empty()) {
+      molSGs.emplace_back(typ, std::move(atoms));
+    }
+  }
+  mol->setStereoGroups(std::move(molSGs));
+}
+
 void readBondStereo(Bond *bnd, const rj::Value &bondVal,
                     const DefaultValueCache &bondDefaults) {
   PRECONDITION(bnd, "no bond");
@@ -702,6 +726,10 @@ void processMol(RWMol *mol, const rj::Value &molval,
       readBondStereo(bnd, bondVal, bondDefaults);
     }
   }
+
+  if (molval.HasMember("stereoGroups")) {
+    readStereoGroups(mol, molval["stereoGroups"]);
+  }
   if (params.parseConformers && molval.HasMember("conformers")) {
     for (const auto &confVal : molval["conformers"].GetArray()) {
       auto *conf = new Conformer(mol->getNumAtoms());
@@ -760,6 +788,7 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
     if (!doc["rdkitjson"].HasMember("version")) {
       throw FileParseException("Bad Format: missing version in JSON");
     }
+    // FIX: we want to be backwards compatible
     if (doc["rdkitjson"]["version"].GetInt() != currentRDKitJSONVersion) {
       throw FileParseException("Bad Format: bad version in JSON");
     }

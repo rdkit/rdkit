@@ -118,4 +118,61 @@ TEST_CASE("StereoGroups") {
       CHECK(json.find("[4]") == std::string::npos);
     }
   }
+  SECTION("reading") {
+    {
+      auto json = MolInterchange::MolToJSONData(*ormol);
+      auto mols = MolInterchange::JSONDataToMols(json);
+      REQUIRE(mols.size() == 1);
+      auto sgs = mols[0]->getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_OR);
+      auto ats = sgs[0].getAtoms();
+      REQUIRE(ats.size() == 2);
+      CHECK(ats[0]->getIdx() == 1);
+      CHECK(ats[1]->getIdx() == 4);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*andmol);
+      auto mols = MolInterchange::JSONDataToMols(json);
+      REQUIRE(mols.size() == 1);
+      auto sgs = mols[0]->getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_AND);
+      auto ats = sgs[0].getAtoms();
+      REQUIRE(ats.size() == 2);
+      CHECK(ats[0]->getIdx() == 1);
+      CHECK(ats[1]->getIdx() == 4);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*absmol);
+      auto mols = MolInterchange::JSONDataToMols(json);
+      REQUIRE(mols.size() == 1);
+      auto sgs = mols[0]->getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+      auto ats = sgs[0].getAtoms();
+      REQUIRE(ats.size() == 1);
+      CHECK(ats[0]->getIdx() == 4);
+    }
+  }
+  SECTION("multiple groups") {
+    auto mol =
+        "C[C@H]1OC([C@H](O)F)[C@@H](C)[C@@H](C)C1[C@@H](O)F |a:1,o1:4,12,&1:7,&2:9|"_smiles;
+    REQUIRE(mol);
+    auto json = MolInterchange::MolToJSONData(*mol);
+    CHECK(json.find("stereoGroups") != std::string::npos);
+    CHECK(json.find("\"abs\"") != std::string::npos);
+    CHECK(json.find("\"or\"") != std::string::npos);
+    CHECK(json.find("\"and\"") != std::string::npos);
+
+    auto mols = MolInterchange::JSONDataToMols(json);
+    REQUIRE(mols.size() == 1);
+    auto sgs = mols[0]->getStereoGroups();
+    REQUIRE(sgs.size() == 4);
+    // rather than worry about group order here, just check the CXSMILES:
+    auto smi = MolToCXSmiles(*mols[0]);
+    CHECK(
+        smi ==
+        "C[C@@H]1C([C@H](O)F)O[C@H](C)C([C@@H](O)F)[C@@H]1C |a:7,o1:3,10,&1:1,&2:13|");
+  }
 }
