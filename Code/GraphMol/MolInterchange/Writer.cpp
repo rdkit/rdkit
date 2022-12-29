@@ -15,6 +15,8 @@
 #include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/SubstanceGroup.h>
+#include <GraphMol/StereoGroup.h>
 
 #include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/MolInterchange/details.h>
@@ -251,6 +253,33 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
   }
 }
 
+template <typename T>
+void addProperties(const T &obj, const std::vector<std::string> &propNames,
+                   rj::Value &properties, rj::Document &doc) {
+  for (const auto &pN : propNames) {
+    rj::Value rjv;
+    try {
+      auto val = obj.getProp<int>(pN);
+      rjv = val;
+    } catch (const boost::bad_any_cast &) {
+      try {
+        auto val = obj.getProp<double>(pN);
+        rjv = val;
+      } catch (const boost::bad_any_cast &) {
+        try {
+          auto val = obj.getProp<std::string>(pN);
+          rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
+        } catch (const boost::bad_any_cast &) {
+          continue;
+        }
+      }
+    }
+    rj::Value rjpN;
+    rjpN.SetString(pN.c_str(), pN.size(), doc.GetAllocator());
+    properties.AddMember(rjpN, rjv, doc.GetAllocator());
+  }
+}
+
 void addStereoGroup(const StereoGroup &sg, rj::Value &rjSG, rj::Document &doc,
                     const JSONWriteParameters &params) {
   if (inv_stereoGrouplookup.find(sg.getGroupType()) ==
@@ -264,6 +293,90 @@ void addStereoGroup(const StereoGroup &sg, rj::Value &rjSG, rj::Document &doc,
     rjAtoms.PushBack(v1, doc.GetAllocator());
   }
   rjSG.AddMember("atoms", rjAtoms, doc.GetAllocator());
+}
+
+void addSubstanceGroup(const SubstanceGroup &sg, rj::Value &rjSG,
+                       rj::Document &doc, const JSONWriteParameters &params) {
+  bool includePrivate = false, includeComputed = false;
+  auto propNames = sg.getPropList(includePrivate, includeComputed);
+  if (propNames.size()) {
+    rj::Value properties(rj::kObjectType);
+    addProperties(sg, propNames, properties, doc);
+    rjSG.AddMember("properties", properties, doc.GetAllocator());
+  }
+
+  if (!sg.getAtoms().empty()) {
+    rj::Value rjArr(rj::kArrayType);
+    for (const auto idx : sg.getAtoms()) {
+      rj::Value v1(static_cast<int>(idx));
+      rjArr.PushBack(v1, doc.GetAllocator());
+    }
+    rjSG.AddMember("atoms", rjArr, doc.GetAllocator());
+  }
+  if (!sg.getBonds().empty()) {
+    rj::Value rjArr(rj::kArrayType);
+    for (const auto idx : sg.getBonds()) {
+      rj::Value v1(static_cast<int>(idx));
+      rjArr.PushBack(v1, doc.GetAllocator());
+    }
+    rjSG.AddMember("bonds", rjArr, doc.GetAllocator());
+  }
+  if (!sg.getParentAtoms().empty()) {
+    rj::Value rjArr(rj::kArrayType);
+    for (const auto idx : sg.getParentAtoms()) {
+      rj::Value v1(static_cast<int>(idx));
+      rjArr.PushBack(v1, doc.GetAllocator());
+    }
+    rjSG.AddMember("parentAtoms", rjArr, doc.GetAllocator());
+  }
+  if (!sg.getBrackets().empty()) {
+    rj::Value rjArr(rj::kArrayType);
+    for (const auto &brk : sg.getBrackets()) {
+      rj::Value rjBrk(rj::kArrayType);
+      for (const auto &pt : brk) {
+        rj::Value rjPos(rj::kArrayType);
+        rjPos.PushBack(pt.x, doc.GetAllocator());
+        rjPos.PushBack(pt.y, doc.GetAllocator());
+        rjPos.PushBack(pt.z, doc.GetAllocator());
+        rjBrk.PushBack(rjPos, doc.GetAllocator());
+      }
+      rjArr.PushBack(rjBrk, doc.GetAllocator());
+    }
+    rjSG.AddMember("brackets", rjArr, doc.GetAllocator());
+  }
+
+  if (!sg.getCStates().empty()) {
+    rj::Value rjArr(rj::kArrayType);
+    for (const auto &cs : sg.getCStates()) {
+      rj::Value rjCS(rj::kObjectType);
+      rjCS.AddMember("bond", cs.bondIdx, doc.GetAllocator());
+      if ("SUP" == sg.getProp<std::string>("TYPE")) {
+        rj::Value rjLoc(rj::kArrayType);
+        rjLoc.PushBack(cs.vector.x, doc.GetAllocator());
+        rjLoc.PushBack(cs.vector.y, doc.GetAllocator());
+        rjLoc.PushBack(cs.vector.z, doc.GetAllocator());
+        rjCS.AddMember("vector", rjLoc, doc.GetAllocator());
+      }
+      rjArr.PushBack(rjCS, doc.GetAllocator());
+    }
+    rjSG.AddMember("cstates", rjArr, doc.GetAllocator());
+  }
+
+  if (!sg.getAttachPoints().empty()) {
+    rj::Value rjArr(rj::kArrayType);
+    for (const auto &ap : sg.getAttachPoints()) {
+      rj::Value rjAP(rj::kObjectType);
+      rjAP.AddMember("aIdx", ap.aIdx, doc.GetAllocator());
+      if (ap.lvIdx != -1) {
+        rjAP.AddMember("lvIdx", ap.lvIdx, doc.GetAllocator());
+      }
+      if (!ap.id.empty()) {
+        addStringVal(rjAP, "id", ap.id, doc);
+      }
+      rjArr.PushBack(rjAP, doc.GetAllocator());
+    }
+    rjSG.AddMember("attachPoints", rjArr, doc.GetAllocator());
+  }
 }
 
 void addConformer(const Conformer &conf, rj::Value &rjConf, rj::Document &doc,
@@ -346,6 +459,16 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
     rjMol.AddMember("stereoGroups", rjStereoGroups, doc.GetAllocator());
   }
 
+  if (params.useRDKitExtensions && !getSubstanceGroups(mol).empty()) {
+    rj::Value rjSubstanceGroups(rj::kArrayType);
+    for (const auto &sg : getSubstanceGroups(mol)) {
+      rj::Value rjSG(rj::kObjectType);
+      addSubstanceGroup(sg, rjSG, doc, params);
+      rjSubstanceGroups.PushBack(rjSG, doc.GetAllocator());
+    }
+    rjMol.AddMember("substanceGroups", rjSubstanceGroups, doc.GetAllocator());
+  }
+
   if (mol.getNumConformers()) {
     rj::Value rjConfs(rj::kArrayType);
     for (auto conf = mol.beginConformers(); conf != mol.endConformers();
@@ -362,28 +485,7 @@ void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
   auto propNames = mol.getPropList(includePrivate, includeComputed);
   if (propNames.size()) {
     rj::Value properties(rj::kObjectType);
-    for (const auto &pN : propNames) {
-      rj::Value rjv;
-      try {
-        auto val = mol.getProp<int>(pN);
-        rjv = val;
-      } catch (const boost::bad_any_cast &) {
-        try {
-          auto val = mol.getProp<double>(pN);
-          rjv = val;
-        } catch (const boost::bad_any_cast &) {
-          try {
-            auto val = mol.getProp<std::string>(pN);
-            rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
-          } catch (const boost::bad_any_cast &) {
-            continue;
-          }
-        }
-      }
-      rj::Value rjpN;
-      rjpN.SetString(pN.c_str(), pN.size(), doc.GetAllocator());
-      properties.AddMember(rjpN, rjv, doc.GetAllocator());
-    }
+    addProperties(mol, propNames, properties, doc);
     rjMol.AddMember("properties", properties, doc.GetAllocator());
   }
 
