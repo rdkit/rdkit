@@ -360,50 +360,59 @@ With Abbreviations
 
 .. testcode::
 
-   # See available abbreviations
+   # See available abbreviations and their SMILES
+   # where * is the dummy atom that the group would attach to
    abbrevs = rdAbbreviations.GetDefaultAbbreviations()
+   labels = ["Abbrev", "SMILES"]
+   line = '--------'
+
+   print(f"{labels[0]:<10} {labels[1]}")
+   print(f"{line:<10} {line}")
    for a in abbrevs:
-       print(a.label)
+      print(f"{a.label:<10} {Chem.MolToSmiles(a.mol)}")
 
 .. testoutput::
 
-   CO2Et
-   COOEt
-   OiBu
-   nDec
-   nNon
-   nOct
-   nHept
-   nHex
-   nPent
-   iPent
-   tBu
-   iBu
-   nBu
-   iPr
-   nPr
-   Et
-   NCF3
-   CF3
-   CCl3
-   CN
-   NC
-   N(OH)CH3
-   NO2
-   NO
-   SO3H
-   CO2H
-   COOH
-   OEt
-   OAc
-   NHAc
-   Ac
-   CHO
-   NMe
-   SMe
-   OMe
-   CO2-
-   COO-
+   Abbrev     SMILES
+   --------   --------
+   CO2Et      *C(=O)OCC
+   COOEt      *C(=O)OCC
+   OiBu       *OCC(C)C
+   nDec       *CCCCCCCCCC
+   nNon       *CCCCCCCCC
+   nOct       *CCCCCCCC
+   nHept      *CCCCCCC
+   nHex       *CCCCCC
+   nPent      *CCCCC
+   iPent      *C(C)CCC
+   tBu        *C(C)(C)C
+   iBu        *C(C)CC
+   nBu        *CCCC
+   iPr        *C(C)C
+   nPr        *CCC
+   Et         *CC
+   NCF3       *NC(F)(F)F
+   CF3        *C(F)(F)F
+   CCl3       *C(Cl)(Cl)Cl
+   CN         *C#N
+   NC         *[N+]#[C-]
+   N(OH)CH3   *N(C)[OH]
+   NO2        *[N+](=O)[O-]
+   NO         *N=O
+   SO3H       *S(=O)(=O)[OH]
+   CO2H       *C(=O)[OH]
+   COOH       *C(=O)[OH]
+   OEt        *OCC
+   OAc        *OC(C)=O
+   NHAc       *NC(C)=O
+   Ac         *C(C)=O
+   CHO        *C=O
+   NMe        *NC
+   SMe        *SC
+   OMe        *OC
+   CO2-       *C(=O)[O-]
+   COO-       *C(=O)[O-]
+
 
 Using CoordGen Library
 ========================
