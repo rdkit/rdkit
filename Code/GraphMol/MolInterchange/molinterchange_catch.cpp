@@ -80,7 +80,7 @@ M  END
 TEST_CASE("StereoGroups") {
   auto ormol = "C[C@H](O)C[C@@H](C)F |o1:1,4|"_smiles;
   REQUIRE(ormol);
-  auto andmol = "C[C@H](O)C[C@@H](C)F |&1:1,4|"_smiles;
+  auto andmol = "C[C@H](O)CC[C@@H](C)F |&1:1,5|"_smiles;
   REQUIRE(andmol);
   auto absmol = "CC(O)C[C@@H](C)F |a:4|"_smiles;
   REQUIRE(absmol);
@@ -93,7 +93,7 @@ TEST_CASE("StereoGroups") {
       CHECK(json.find("\"or\"") != std::string::npos);
       CHECK(json.find("[1,4]") != std::string::npos);
       json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
-      CHECK(json.find("stereogroups") == std::string::npos);
+      CHECK(json.find("stereoGroups") == std::string::npos);
       CHECK(json.find("\"or\"") == std::string::npos);
       CHECK(json.find("[1,4]") == std::string::npos);
     }
@@ -101,11 +101,11 @@ TEST_CASE("StereoGroups") {
       auto json = MolInterchange::MolToJSONData(*andmol);
       CHECK(json.find("stereoGroups") != std::string::npos);
       CHECK(json.find("\"and\"") != std::string::npos);
-      CHECK(json.find("[1,4]") != std::string::npos);
+      CHECK(json.find("[1,5]") != std::string::npos);
       json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
-      CHECK(json.find("stereogroups") == std::string::npos);
+      CHECK(json.find("stereoGroups") == std::string::npos);
       CHECK(json.find("\"and\"") == std::string::npos);
-      CHECK(json.find("[1,4]") == std::string::npos);
+      CHECK(json.find("[1,5]") == std::string::npos);
     }
     {
       auto json = MolInterchange::MolToJSONData(*absmol);
@@ -113,7 +113,7 @@ TEST_CASE("StereoGroups") {
       CHECK(json.find("\"abs\"") != std::string::npos);
       CHECK(json.find("[4]") != std::string::npos);
       json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
-      CHECK(json.find("stereogroups") == std::string::npos);
+      CHECK(json.find("stereoGroups") == std::string::npos);
       CHECK(json.find("\"abs\"") == std::string::npos);
       CHECK(json.find("[4]") == std::string::npos);
     }
@@ -141,7 +141,7 @@ TEST_CASE("StereoGroups") {
       auto ats = sgs[0].getAtoms();
       REQUIRE(ats.size() == 2);
       CHECK(ats[0]->getIdx() == 1);
-      CHECK(ats[1]->getIdx() == 4);
+      CHECK(ats[1]->getIdx() == 5);
     }
     {
       auto json = MolInterchange::MolToJSONData(*absmol);
@@ -174,5 +174,16 @@ TEST_CASE("StereoGroups") {
     CHECK(
         smi ==
         "C[C@@H]1C([C@H](O)F)O[C@H](C)C([C@@H](O)F)[C@@H]1C |a:7,o1:3,10,&1:1,&2:13|");
+  }
+  SECTION("writing multiple mols") {
+    std::vector<ROMol *> mols{ormol.get(), andmol.get()};
+    auto json = MolInterchange::MolsToJSONData(mols);
+    CHECK(json.find("stereoGroups") != std::string::npos);
+    CHECK(json.find("\"or\"") != std::string::npos);
+    CHECK(json.find("[1,4]") != std::string::npos);
+    CHECK(json.find("\"and\"") != std::string::npos);
+    CHECK(json.find("[1,5]") != std::string::npos);
+    json = MolInterchange::MolsToJSONData(mols, commonChemPs);
+    CHECK(json.find("stereoGroups") == std::string::npos);
   }
 }
