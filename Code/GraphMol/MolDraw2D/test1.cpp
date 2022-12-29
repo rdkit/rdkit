@@ -4304,15 +4304,13 @@ void testGithub3305() {
     auto check_corners = [](const std::string &text, std::regex &regex,
                             const std::vector<Point2D> &expected) -> void {
       auto match_begin = std::sregex_iterator(text.begin(), text.end(), regex);
-      auto match_end = std::sregex_iterator();
       std::vector<Point2D> actual;
-      for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
-        std::smatch match = *i;
-        actual.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
-        actual.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
-        actual.push_back(Point2D(std::stod(match[5]), std::stod(match[6])));
-        actual.push_back(Point2D(std::stod(match[7]), std::stod(match[8])));
-      }
+      std::smatch match = *match_begin;
+      actual.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
+      actual.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
+      actual.push_back(Point2D(std::stod(match[5]), std::stod(match[6])));
+      actual.push_back(Point2D(std::stod(match[7]), std::stod(match[8])));
+
       int num_matched = 0;
       for (const auto e : expected) {
         for (const auto a : actual) {
@@ -4383,7 +4381,7 @@ void testGithub3305() {
           Point2D(129.3, 123.8)};
       check_corners(text, regex, expected);
 #endif
-      //      check_file_hash(nameBase + "5.svg");
+      check_file_hash(nameBase + "5.svg");
     }
     options.continuousHighlight = false;
 #ifdef RDK_BUILD_CAIRO_SUPPORT
