@@ -15,7 +15,6 @@
 #include <Geometry/Transform2D.h>
 #include <Geometry/point.h>
 #include "DepictUtils.h"
-#include "Templates.h"
 #include <boost/smart_ptr.hpp>
 
 namespace RDKit {

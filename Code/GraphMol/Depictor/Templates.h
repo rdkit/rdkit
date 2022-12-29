@@ -41,7 +41,7 @@ class CoordinateTemplates {
     return false;
   }
 
-  const std::vector<RDKit::ROMol*>& getMatchingTemplates(unsigned int atom_count) {
+  const std::vector<std::shared_ptr<RDKit::ROMol>>& getMatchingTemplates(unsigned int atom_count) {
     return m_templates[atom_count];
   }
 
@@ -49,11 +49,11 @@ class CoordinateTemplates {
   CoordinateTemplates() {
     // load templates into m_templates map by atom count
     std::string rdbase = getenv("RDBASE");
-    std::string fpath = rdbase + "/Code/GraphMol/Depictor/templates.smi";
+    std::string fpath = rdbase + "/Data/ring_system_templates.smi";
     std::ifstream cxsmiles_templates (fpath);
     std::string smiles;
     while(std::getline(cxsmiles_templates, smiles)) {
-        auto mol = RDKit::SmilesToMol(smiles);
+        std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
         unsigned int atom_count = mol->getNumAtoms();
         if (m_templates.find(atom_count) == m_templates.end()) {
             m_templates[atom_count] = {mol};
@@ -68,11 +68,10 @@ class CoordinateTemplates {
   CoordinateTemplates& operator= (const CoordinateTemplates&) = delete;
   ~CoordinateTemplates() {
     for (auto& [atom_cout, romols] : m_templates) {
-        for (auto& romol : romols) {
-            delete romol;
-        }
+      romols.clear();
     }
+    m_templates.clear();
   }
 
-  std::unordered_map<unsigned int, std::vector<RDKit::ROMol*>> m_templates;
+  std::unordered_map<unsigned int, std::vector<std::shared_ptr<RDKit::ROMol>>> m_templates;
 };

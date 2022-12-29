@@ -207,3 +207,17 @@ TEST_CASE("octahedral", "[nontetrahedral]") {
     CHECK(v1.length() > v6.length());
   }
 }
+
+TEST_CASE("use ring system templates") {
+  auto mol = "C1CCC2C(C1)C1CCN2NN1"_smiles;
+  RDDepict::Compute2DCoordParameters params;
+  RDDepict::compute2DCoords(*mol, params);
+  auto diff = mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
+  // when templates are not used, bond from 10-11 is very short
+  TEST_ASSERT(RDKit::feq(diff.length(), 0.116, .1));
+
+  params.useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol, params);
+  diff = mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
+  TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
+}

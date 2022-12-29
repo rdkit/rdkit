@@ -16,6 +16,7 @@
 #include <Geometry/Transform2D.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
+#include "Templates.h"
 #include <iostream>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Bond.h>
@@ -378,7 +379,7 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
 
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
-  RDKit::ROMol* template_mol = nullptr;
+  std::shared_ptr<RDKit::ROMol> template_mol(nullptr);
   for (const auto mol : coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
     // To reduce how often we have to do substructure matches, check ring info and
     // bond count first
@@ -397,7 +398,7 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms, unsig
     }
   }
 
-  if (template_mol == nullptr) {
+  if (!template_mol) {
     return false;
   }
 
