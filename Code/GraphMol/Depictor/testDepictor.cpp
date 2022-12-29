@@ -1469,7 +1469,6 @@ M  END
   }
 }
 
-
 int main() {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = false;
