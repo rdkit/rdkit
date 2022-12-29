@@ -54,12 +54,7 @@ class CoordinateTemplates {
     std::string smiles;
     while(std::getline(cxsmiles_templates, smiles)) {
         std::shared_ptr<RDKit::ROMol> mol(RDKit::SmilesToMol(smiles));
-        unsigned int atom_count = mol->getNumAtoms();
-        if (m_templates.find(atom_count) == m_templates.end()) {
-            m_templates[atom_count] = {mol};
-        } else {
-            m_templates[atom_count].push_back(mol);
-        }
+        m_templates[mol->getNumAtoms()].push_back(mol);
     }
     cxsmiles_templates.close();
   }
