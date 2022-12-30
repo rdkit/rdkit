@@ -318,3 +318,15 @@ M  END)CTAB"_ctab;
     CHECK(sgs[0].getAttachPoints()[0].id == "1");
   }
 }
+
+TEST_CASE("do not crash with null molecules") {
+  SECTION("only null") {
+    std::vector<ROMol *> mols{nullptr};
+    CHECK_THROWS_AS(MolInterchange::MolsToJSONData(mols), ValueErrorException);
+  }
+  SECTION("not just null") {
+    auto tmol = "CCC"_smiles;
+    std::vector<ROMol *> mols{tmol.get(), nullptr};
+    CHECK_THROWS_AS(MolInterchange::MolsToJSONData(mols), ValueErrorException);
+  }
+}

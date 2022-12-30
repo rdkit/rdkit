@@ -663,6 +663,9 @@ std::string MolsToJSONData(const std::vector<T> &mols,
 
   rj::Value rjMols(rj::kArrayType);
   for (const auto &mol : mols) {
+    if (!mol) {
+      throw ValueErrorException("null molecule passed to MolsToJSONData");
+    }
     rj::Value rjMol(rj::kObjectType);
     // write mol;
     addMol(*mol, rjMol, doc, *rj::GetValueByPointer(doc, "/defaults/atom"),
