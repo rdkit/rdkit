@@ -284,7 +284,6 @@ M  END)CTAB"_ctab;
     }
     {
       auto json = MolInterchange::MolToJSONData(*supmol);
-      std::cerr << json << std::endl;
       CHECK(json.find("substanceGroups") != std::string::npos);
       CHECK(json.find("\"TYPE\":\"SUP\"") != std::string::npos);
       CHECK(json.find("\"atoms\":[7,8,9,10,11,12,13]") != std::string::npos);
@@ -316,6 +315,9 @@ M  END)CTAB"_ctab;
     CHECK(sgs[0].getAttachPoints()[0].aIdx == 12);
     CHECK(sgs[0].getAttachPoints()[0].lvIdx == 5);
     CHECK(sgs[0].getAttachPoints()[0].id == "1");
+    std::string pval;
+    CHECK(sgs[0].getPropIfPresent("LABEL", pval));
+    CHECK(pval == "Boc");
   }
 }
 
