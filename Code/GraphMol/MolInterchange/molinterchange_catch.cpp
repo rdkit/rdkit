@@ -270,8 +270,8 @@ M  END)CTAB"_ctab;
   SECTION("writing") {
     {
       auto json = MolInterchange::MolToJSONData(*polymol);
-      std::cerr << json << std::endl;
       CHECK(json.find("substanceGroups") != std::string::npos);
+      CHECK(json.find("\"TYPE\":\"SRU\"") != std::string::npos);
       CHECK(json.find("\"atoms\":[2,1,4]") != std::string::npos);
       CHECK(json.find("\"bonds\":[2,0]") != std::string::npos);
       CHECK(json.find("\"brackets\"") != std::string::npos);
@@ -286,6 +286,7 @@ M  END)CTAB"_ctab;
       auto json = MolInterchange::MolToJSONData(*supmol);
       std::cerr << json << std::endl;
       CHECK(json.find("substanceGroups") != std::string::npos);
+      CHECK(json.find("\"TYPE\":\"SUP\"") != std::string::npos);
       CHECK(json.find("\"atoms\":[7,8,9,10,11,12,13]") != std::string::npos);
       CHECK(json.find("\"bonds\":[8]") != std::string::npos);
       CHECK(json.find("\"brackets\"") != std::string::npos);
@@ -296,5 +297,24 @@ M  END)CTAB"_ctab;
       CHECK(json.find("{\"aIdx\":12,\"lvIdx\":5,\"id\":\"1\"}") !=
             std::string::npos);
     }
+  }
+  SECTION("parsing") {
+    auto json = MolInterchange::MolToJSONData(*supmol);
+    auto mols = MolInterchange::JSONDataToMols(json);
+    REQUIRE(mols.size() == 1);
+    auto sgs = getSubstanceGroups(*mols[0]);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getAtoms() == std::vector<unsigned>{7, 8, 9, 10, 11, 12, 13});
+    CHECK(sgs[0].getBonds() == std::vector<unsigned>{8});
+    REQUIRE(sgs[0].getBrackets().size() == 1);
+    REQUIRE(sgs[0].getBrackets()[0].size() == 3);
+    CHECK(sgs[0].getBrackets()[0][0].x == Approx(6.24).margin(0.01));
+    REQUIRE(sgs[0].getCStates().size() == 1);
+    CHECK(sgs[0].getCStates()[0].bondIdx == 8);
+    CHECK(sgs[0].getCStates()[0].vector.y == Approx(0.82).margin(0.01));
+    REQUIRE(sgs[0].getAttachPoints().size() == 1);
+    CHECK(sgs[0].getAttachPoints()[0].aIdx == 12);
+    CHECK(sgs[0].getAttachPoints()[0].lvIdx == 5);
+    CHECK(sgs[0].getAttachPoints()[0].id == "1");
   }
 }

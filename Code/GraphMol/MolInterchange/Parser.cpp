@@ -15,6 +15,8 @@
 #include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
+#include <GraphMol/SubstanceGroup.h>
+#include <GraphMol/StereoGroup.h>
 
 #include <GraphMol/MolInterchange/MolInterchange.h>
 #include <GraphMol/MolInterchange/details.h>
@@ -205,6 +207,19 @@ void readBond(RWMol *mol, const rj::Value &bondVal,
   }
 }
 
+template <typename T>
+void parseProperties(T &obj, const rj::Value &propsVal) {
+  for (const auto &propVal : propsVal.GetObject()) {
+    if (propVal.value.IsInt()) {
+      obj.setProp(propVal.name.GetString(), propVal.value.GetInt());
+    } else if (propVal.value.IsDouble()) {
+      obj.setProp(propVal.name.GetString(), propVal.value.GetDouble());
+    } else if (propVal.value.IsString()) {
+      obj.setProp(propVal.name.GetString(), propVal.value.GetString());
+    }
+  }
+}
+
 void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
   PRECONDITION(mol, "no mol");
 
@@ -227,6 +242,106 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
     }
   }
   mol->setStereoGroups(std::move(molSGs));
+}
+
+void readSubstanceGroups(RWMol *mol, const rj::Value &sgVals) {
+  PRECONDITION(mol, "no mol");
+
+  for (const auto &sgVal : sgVals.GetArray()) {
+    if (!sgVal.HasMember("properties") ||
+        !sgVal["properties"].HasMember("TYPE")) {
+      throw FileParseException(
+          "Bad Format: substance group does not have TYPE property");
+    }
+
+    auto sgType = sgVal["properties"]["TYPE"].GetString();
+    SubstanceGroup sg(mol, sgType);
+
+    if (sgVal.HasMember("properties")) {
+      parseProperties(sg, sgVal["properties"]);
+    }
+
+    if (sgVal.HasMember("atoms")) {
+      const auto &aids = sgVal["atoms"].GetArray();
+      std::vector<unsigned int> atoms;
+      for (const auto &aid : aids) {
+        atoms.push_back(aid.GetUint());
+      }
+      sg.setAtoms(atoms);
+    }
+
+    if (sgVal.HasMember("bonds")) {
+      const auto &aids = sgVal["bonds"].GetArray();
+      std::vector<unsigned int> bonds;
+      for (const auto &aid : aids) {
+        bonds.push_back(aid.GetUint());
+      }
+      sg.setBonds(bonds);
+    }
+
+    if (sgVal.HasMember("parentAtoms")) {
+      const auto &aids = sgVal["parentAtoms"].GetArray();
+      std::vector<unsigned int> atoms;
+      for (const auto &aid : aids) {
+        atoms.push_back(aid.GetUint());
+      }
+      sg.setParentAtoms(atoms);
+    }
+
+    if (sgVal.HasMember("brackets")) {
+      const auto &brks = sgVal["brackets"].GetArray();
+      for (const auto &brk : brks) {
+        SubstanceGroup::Bracket bracket;
+        unsigned int idx = 0;
+        for (const auto &pt : brk.GetArray()) {
+          const auto &pta = pt.GetArray();
+          if (pta.Size() != 3) {
+            throw FileParseException(
+                "Bad Format: bracket point doesn't have three coordinates");
+          }
+          RDGeom::Point3D loc(pta[0].GetDouble(), pta[1].GetDouble(),
+                              pta[2].GetDouble());
+          bracket[idx++] = std::move(loc);
+        }
+        sg.getBrackets().push_back(std::move(bracket));
+      }
+    }
+
+    if (sgVal.HasMember("cstates")) {
+      const auto &cstats = sgVal["cstates"].GetArray();
+      for (const auto &cstat : cstats) {
+        SubstanceGroup::CState cstate;
+        cstate.bondIdx = cstat["bond"].GetUint();
+        if (cstat.HasMember("vector")) {
+          const auto &pta = cstat["vector"].GetArray();
+          if (pta.Size() != 3) {
+            throw FileParseException(
+                "Bad Format: cstate vector doesn't have three coordinates");
+          }
+          RDGeom::Point3D loc(pta[0].GetDouble(), pta[1].GetDouble(),
+                              pta[2].GetDouble());
+          cstate.vector = std::move(loc);
+        }
+        sg.getCStates().push_back(std::move(cstate));
+      }
+    }
+
+    if (sgVal.HasMember("attachPoints")) {
+      const auto &aps = sgVal["attachPoints"].GetArray();
+      for (const auto &ap : aps) {
+        SubstanceGroup::AttachPoint attach;
+        attach.aIdx = ap["aIdx"].GetUint();
+        if (ap.HasMember("lvIdx")) {
+          attach.lvIdx = ap["lvIdx"].GetUint();
+        }
+        if (ap.HasMember("id")) {
+          attach.id = ap["id"].GetString();
+        }
+        sg.getAttachPoints().push_back(std::move(attach));
+      }
+    }
+    addSubstanceGroup(*mol, sg);
+  }
 }
 
 void readBondStereo(Bond *bnd, const rj::Value &bondVal,
@@ -730,6 +845,9 @@ void processMol(RWMol *mol, const rj::Value &molval,
   if (molval.HasMember("stereoGroups")) {
     readStereoGroups(mol, molval["stereoGroups"]);
   }
+  if (molval.HasMember("substanceGroups")) {
+    readSubstanceGroups(mol, molval["substanceGroups"]);
+  }
   if (params.parseConformers && molval.HasMember("conformers")) {
     for (const auto &confVal : molval["conformers"].GetArray()) {
       auto *conf = new Conformer(mol->getNumAtoms());
@@ -739,15 +857,7 @@ void processMol(RWMol *mol, const rj::Value &molval,
   }
 
   if (params.parseProperties && molval.HasMember("properties")) {
-    for (const auto &propVal : molval["properties"].GetObject()) {
-      if (propVal.value.IsInt()) {
-        mol->setProp(propVal.name.GetString(), propVal.value.GetInt());
-      } else if (propVal.value.IsDouble()) {
-        mol->setProp(propVal.name.GetString(), propVal.value.GetDouble());
-      } else if (propVal.value.IsString()) {
-        mol->setProp(propVal.name.GetString(), propVal.value.GetString());
-      }
-    }
+    parseProperties(*mol, molval["properties"]);
   }
 
   if (molval.HasMember("extensions")) {
