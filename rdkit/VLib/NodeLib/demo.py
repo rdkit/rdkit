@@ -46,10 +46,9 @@ dupeFilter.AddParent(atsFilter)
 # should be 4 here
 print('post-dupes:', len([x for x in dupeFilter]))
 
-import StringIO
-
+from io import StringIO
 # a StringIO object acts like a file:
-io = StringIO.StringIO()
+io = StringIO()
 output = SmilesOutput.OutputNode(dest=io, delim=', ', idField='Name')
 output.AddParent(dupeFilter)
 print('post-output:', len([x for x in output]))
