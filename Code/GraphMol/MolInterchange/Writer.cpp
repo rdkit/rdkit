@@ -259,15 +259,15 @@ void addProperties(const T &obj, const std::vector<std::string> &propNames,
   for (const auto &pN : propNames) {
     rj::Value rjv;
     try {
-      auto val = obj.getProp<int>(pN);
+      auto val = obj.template getProp<int>(pN);
       rjv = val;
     } catch (const boost::bad_any_cast &) {
       try {
-        auto val = obj.getProp<double>(pN);
+        auto val = obj.template getProp<double>(pN);
         rjv = val;
       } catch (const boost::bad_any_cast &) {
         try {
-          auto val = obj.getProp<std::string>(pN);
+          auto val = obj.template getProp<std::string>(pN);
           rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
         } catch (const boost::bad_any_cast &) {
           continue;
