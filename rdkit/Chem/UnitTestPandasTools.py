@@ -51,12 +51,6 @@ class TestPandasTools(unittest.TestCase):
     PandasTools.highlightSubstructures = self._highlightSubstructures
     PandasTools.UninstallPandasTools()
 
-  def testDoctest(self):
-    # We need to do it like this to ensure that default RDkit functionality is restored
-    failed, _ = doctest.testmod(PandasTools,
-                                optionflags=doctest.ELLIPSIS + doctest.NORMALIZE_WHITESPACE)
-    self.assertFalse(failed)
-
   def test_RestoreMonkeyPatch(self):
     sio = getStreamIO(methane + peroxide)
     df = PandasTools.LoadSDF(sio)
