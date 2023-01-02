@@ -18,7 +18,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py
 add_pytest(pythonTestSping
          ${CMAKE_CURRENT_SOURCE_DIR}/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/sping )
 
-add_test(NAME pythonSourceTests COMMAND ${PYTHON_EXECUTABLE} -m pytest 
-       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+add_pythonpytest(pythonSourceTests ${CMAKE_CURRENT_SOURCE_DIR} )
 
 add_subdirectory(Chem)

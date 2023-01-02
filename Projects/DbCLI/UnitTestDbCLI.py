@@ -11,9 +11,15 @@ import unittest
 
 from rdkit import RDConfig
 from rdkit.Dbase.DbConnection import DbConnect
+import sys
+import pytest
 
 
 class TestCase(unittest.TestCase):
+  # pytest fixture to make sure we're working in the source dir
+  @pytest.fixture(autouse=True)
+  def change_test_dir(self, request, monkeypatch):
+    monkeypatch.chdir(request.fspath.dirname)
 
   def test1Create(self):
     p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr',
