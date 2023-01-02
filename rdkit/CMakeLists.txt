@@ -13,19 +13,12 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/RDPaths.py
   DESTINATION ${RDKit_PythonDir}
   COMPONENT python)
 
-add_pytest(pythonTestDirRoot
-         ${CMAKE_CURRENT_SOURCE_DIR}/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR} )
-add_pytest(pythonTestDirML
-         ${CMAKE_CURRENT_SOURCE_DIR}/ML/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/ML )
-add_pytest(pythonTestDirDataStructs
-         ${CMAKE_CURRENT_SOURCE_DIR}/DataStructs/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/DataStructs )
-add_pytest(pythonTestDirDbase
-         ${CMAKE_CURRENT_SOURCE_DIR}/Dbase/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/Dbase )
-add_pytest(pythonTestDirSimDivFilters
-         ${CMAKE_CURRENT_SOURCE_DIR}/SimDivFilters/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/SimDivFilters )
-add_pytest(pythonTestDirVLib
-         ${CMAKE_CURRENT_SOURCE_DIR}/VLib/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/VLib )
+# we aren't testing the sping stuff with pytest, so use the old method for as
+# long as sping is still around
 add_pytest(pythonTestSping
-         ${CMAKE_CURRENT_SOURCE_DIR}/Chem/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/sping )
+         ${CMAKE_CURRENT_SOURCE_DIR}/test_list.py --testDir ${CMAKE_CURRENT_SOURCE_DIR}/sping )
+
+add_test(NAME pythonSourceTests COMMAND ${PYTHON_EXECUTABLE} -m pytest 
+       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
 
 add_subdirectory(Chem)
