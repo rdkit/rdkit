@@ -66,7 +66,7 @@ void test_io() {
   smiles = NULL;
 
   char *json = get_json(pkl, pkl_size, NULL);
-  assert(strstr(json, "commonchem"));
+  assert(strstr(json, "rdkitjson"));
 
   pkl2 = get_mol(json, &pkl2_size, "");
   assert(pkl2);
