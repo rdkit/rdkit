@@ -238,15 +238,15 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
    */
   static double Distance(const std::vector<uint32_t>& a,
                          const std::vector<uint32_t>& b) {
-    size_t matches = 0;
+    size_t mismatches = 0;
 
     for (size_t i = 0; i < a.size(); i++) {
-      if (a[i] == b[i]) {
-        matches++;
+      if (a[i] != b[i]) {
+        mismatches++;
       }
     }
 
-    return matches / (double)a.size();
+    return mismatches / (double)a.size();
   }
 
  private:
