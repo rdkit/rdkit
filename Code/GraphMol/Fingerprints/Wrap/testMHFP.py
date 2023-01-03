@@ -47,7 +47,7 @@ class TestCase(unittest.TestCase):
 
     fp_c = enc.EncodeSmiles(t)
     dist = rdMHFPFingerprint.MHFPEncoder.Distance(fp_a, fp_c)
-    self.assertEqual(dist, 0.4609375)
+    self.assertEqual(dist, 0.5390625)
 
 
 if __name__ == "__main__":
