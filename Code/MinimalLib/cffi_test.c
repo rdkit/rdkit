@@ -1115,6 +1115,9 @@ void test_get_mol_frags() {
   frags_pkl_sz_array = NULL;
   free(mpkl);
   mpkl = NULL;
+
+  printf("  done\n");
+  printf("--------------------------\n");
 }
 
 int main() {
