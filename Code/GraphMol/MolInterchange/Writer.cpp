@@ -270,6 +270,9 @@ void addProperties(const T &obj, const std::vector<std::string> &propNames,
           auto val = obj.template getProp<std::string>(pN);
           rjv.SetString(val.c_str(), val.size(), doc.GetAllocator());
         } catch (const boost::bad_any_cast &) {
+          BOOST_LOG(rdWarningLog)
+              << "Warning: Could not convert property " << pN
+              << " to a recognized type. Skipping it." << std::endl;
           continue;
         }
       }

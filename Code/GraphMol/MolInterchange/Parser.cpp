@@ -225,6 +225,12 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
 
   std::vector<StereoGroup> molSGs(mol->getStereoGroups());
   for (const auto &sgVal : sgVals.GetArray()) {
+    if (!sgVal.HasMember("type")) {
+      throw FileParseException("Bad Format: stereogroup does not have a type");
+    }
+    if (!sgVal.HasMember("atoms")) {
+      throw FileParseException("Bad Format: stereogroup does not have atoms");
+    }
     if (MolInterchange::stereoGrouplookup.find(sgVal["type"].GetString()) ==
         MolInterchange::stereoGrouplookup.end()) {
       throw FileParseException("Bad Format: bad stereogroup type");
@@ -255,10 +261,32 @@ void readSubstanceGroups(RWMol *mol, const rj::Value &sgVals) {
     }
 
     auto sgType = sgVal["properties"]["TYPE"].GetString();
+    if (!SubstanceGroupChecks::isValidType(sgType)) {
+      throw FileParseException(
+          (boost::format(
+               "Bad Format: substance group TYPE '%s' not recognized") %
+           sgType)
+              .str());
+    }
     SubstanceGroup sg(mol, sgType);
 
-    if (sgVal.HasMember("properties")) {
-      parseProperties(sg, sgVal["properties"]);
+    parseProperties(sg, sgVal["properties"]);
+    std::string pval;
+    if (sg.getPropIfPresent("SUBTYPE", pval) &&
+        !SubstanceGroupChecks::isValidSubType(pval)) {
+      throw FileParseException(
+          (boost::format(
+               "Bad Format: substance group SUBTYPE '%s' not recognized") %
+           pval)
+              .str());
+    }
+    if (sg.getPropIfPresent("CONNECT", pval) &&
+        !SubstanceGroupChecks::isValidConnectType(pval)) {
+      throw FileParseException(
+          (boost::format(
+               "Bad Format: substance group CONNECT type '%s' not recognized") %
+           pval)
+              .str());
     }
 
     if (sgVal.HasMember("atoms")) {
