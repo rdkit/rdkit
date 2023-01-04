@@ -52,7 +52,7 @@
 
 
 import csv
-import random
+from rdkit import RDRandom as random
 import re
 
 import numpy
@@ -65,7 +65,7 @@ from rdkit.utils import fileutils
 
 def permutation(nToDo):
     res = list(range(nToDo))
-    random.shuffle(res, random=random.random)
+    random.shuffle(res)
     return res
 
 
@@ -486,10 +486,7 @@ def InitRandomNumbers(seed):
         Python _random_ module
 
     """
-    from rdkit import RDRandom
-    RDRandom.seed(seed[0])
     random.seed(seed[0])
-
 
 def FilterData(inData, val, frac, col=-1, indicesToUse=None, indicesOnly=0):
     """
@@ -652,7 +649,7 @@ def RandomizeActivities(dataSet, shuffle=0, runDetails=None):
         acts = dataSet.GetResults()[:]
         # While the random argument is the default, removing it will cause the shuffle
         # tests in UnitTestScreenComposite to fail.
-        random.shuffle(acts, random=random.random)
+        random.shuffle(acts)
     else:  # This part of the code isn't working as examples is not defined
         if runDetails:
             runDetails.randomized = 1

@@ -4,9 +4,8 @@
 #
 
 
-import random
+import rdkit.RDRandom as random
 
-from rdkit import RDRandom
 
 SeqTypes = (list, tuple)
 
@@ -53,15 +52,15 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> test,train = SplitIndices(10,.5)
   >>> test
-  [1, 5, 6, 4, 2]
+  [7, 8, 5, 6, 3]
   >>> train
-  [3, 0, 7, 8, 9]
+  [2, 9, 0, 1, 4]
 
   >>> test,train = SplitIndices(10,.5)
   >>> test
-  [5, 2, 9, 8, 7]
+  [7, 9, 5, 6, 1]
   >>> train
-  [6, 0, 3, 1, 4]
+  [0, 8, 4, 3, 2]
 
 
   The legacy approach can return varying numbers, but still has no
@@ -103,7 +102,7 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
     resData = [None] * nTrain
     resTest = []
     for i in range(nTrain):
-      val = int(RDRandom.random() * nPts)
+      val = int(random.random() * nPts)
       if val == nPts:
         val = nPts - 1
       resData[i] = val
@@ -114,14 +113,14 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
     resData = []
     resTest = []
     for i in range(nPts):
-      val = RDRandom.random()
+      val = random.random()
       if val < frac:
         resData.append(i)
       else:
         resTest.append(i)
   else:
     perm = list(range(nPts))
-    random.shuffle(perm, random=random.random)
+    random.shuffle(perm)
     nTrain = int(nPts * frac)
 
     resData = list(perm[:nTrain])
@@ -207,13 +206,13 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,1./3.,'basic_2class')
   >>> [str(x) for x in train]
-  ['id-7', 'id-6', 'id-2', 'id-8']
+  ['id-8', 'id-10', 'id-6', 'id-11']
 
   ...take 50% of actives and 50% of inactives:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,.5,'basic_2class',useActs=1)
   >>> [str(x) for x in train]
-  ['id-5', 'id-3', 'id-1', 'id-4', 'id-10', 'id-8']
+  ['id-7', 'id-3', 'id-11', 'id-4', 'id-10', 'id-2']
 
 
   Notice how the results came out sorted by activity
@@ -222,14 +221,14 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,[.5,1./3.],'basic_2class',useActs=1)
   >>> [str(x) for x in train]
-  ['id-5', 'id-3', 'id-1', 'id-4', 'id-10']
+  ['id-7', 'id-3', 'id-11', 'id-4', 'id-10']
 
   And we can pull from tables with non-quantized activities by providing
   activity quantization bounds:
   >>> DataUtils.InitRandomNumbers((23,42))
   >>> train,test = SplitDbData(conn,.5,'float_2class',useActs=1,actBounds=[1.0])
   >>> [str(x) for x in train]
-  ['id-5', 'id-3', 'id-1', 'id-4', 'id-10', 'id-8']
+  ['id-7', 'id-3', 'id-11', 'id-4', 'id-10', 'id-2']
 
   """
   if not table:
@@ -305,4 +304,5 @@ def _runDoctests(verbose=None):  # pragma: nocover
 
 
 if __name__ == '__main__':  # pragma: nocover
+  print("Running doc tests")
   _runDoctests()

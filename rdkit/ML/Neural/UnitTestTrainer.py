@@ -8,7 +8,7 @@
 """
 
 
-import random
+import rdkit.RDRandom as random
 import unittest
 
 from rdkit.ML.Neural import Network, Trainers
@@ -37,24 +37,24 @@ class TrainerTestCase(unittest.TestCase):
     def testBackpropOr(self):
         # " testing backprop training on or "
         _, errs = self._trainExamples(self.orExamples)
-        assert max(errs) < self.trainTol, 'net did not converge properly on or'
+        assert max(errs) < self.trainTol, f'net did not converge properly on or {errs}'
 
     def testBackpropAnd(self):
         # " testing backprop training on and "
         _, errs = self._trainExamples(self.andExamples)
-        assert max(errs) < self.trainTol, 'net did not converge properly on and'
+        assert max(errs) < self.trainTol, f'net did not converge properly on and {errs}'
 
     def testBackpropLin(self):
         # " testing backprop training on a linear function "
         _, errs = self._trainExamples(self.linExamples, arch=[1, 2, 1])
-        assert max(errs) < self.trainTol, 'net did not converge properly on linear fit'
+        assert max(errs) < self.trainTol, f'net did not converge properly on linear fit {errs}'
 
         _, errs = self._trainExamples(self.linExamples, arch=[1, 2, 1], useAvgErr=True)
-        assert max(errs) < 0.4, 'net did not converge properly on or'
+        assert max(errs) < 0.4, 'net did not converge properly on or %s'%errs
 
     def test_multipleHiddenLayers(self):
         _, errs = self._trainExamples(self.linExamples, arch=[1, 1, 2, 1])
-        assert max(errs) < self.trainTol, 'net did not converge properly on linear fit'
+        assert max(errs) < self.trainTol, f'net did not converge properly on linear fit {errs}'
 
     def test_CrossValidate(self):
         # We just check here that the code works

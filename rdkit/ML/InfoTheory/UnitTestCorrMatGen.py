@@ -2,7 +2,7 @@ from rdkit.ML.InfoTheory import rdInfoTheory
 from rdkit.ML.Data import DataUtils
 from rdkit import DataStructs
 import unittest
-import random
+import rdkit.RDRandom as random
 
 
 try:
@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
         for _ in range(self.nfp):
             fp = DataStructs.ExplicitBitVect(self.nbits)
             obits = list(range(self.nbits // 2))
-            random.shuffle(obits, random=random.random)
+            random.shuffle(obits)
             for bit in obits[0:self.d]:
                 fp.SetBit(bit)
                 fp.SetBit(bit + self.nbits // 2)
@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase):
             navr += getValLTM(i, i + 1, corrMat)
 
         self.assertEqual(2 * avr / self.nbits, 400.0)
-        self.assertEqual(2 * navr / self.nbits, 158.3)
+        self.assertEqual(2 * navr / self.nbits, 157.79)
 
     @unittest.skipIf(BitClusterer is None, 'Cannot import BitClusterer')
     def test1Cluster(self):

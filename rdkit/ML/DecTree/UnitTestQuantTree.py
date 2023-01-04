@@ -189,7 +189,7 @@ class TestCase(unittest.TestCase):
 
     def test8RandomForest(self):
         # """ try random forests descriptors """
-        import random
+        import rdkit.RDRandom as random
         random.seed(23)
         nAttrs = 100
         nPts = 10
@@ -203,9 +203,9 @@ class TestCase(unittest.TestCase):
         boundsPerVar = [0] * nAttrs + [0]
         self.t1 = BuildQuantTree.QuantTreeBoot(examples, attrs, nPossibleVals, boundsPerVar, maxDepth=1,
                                                recycleVars=1, randomDescriptors=3)
-        self.assertEqual(self.t1.GetLabel(), 49)
-        self.assertEqual(self.t1.GetChildren()[0].GetLabel(), 3)
-        self.assertEqual(self.t1.GetChildren()[1].GetLabel(), 54)
+        self.assertEqual(self.t1.GetLabel(), 38)
+        self.assertEqual(self.t1.GetChildren()[0].GetLabel(), 0)
+        self.assertEqual(self.t1.GetChildren()[1].GetLabel(), 13)
 
     def test_exampleCode(self):
         f = StringIO()

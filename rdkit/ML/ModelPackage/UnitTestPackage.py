@@ -3,7 +3,7 @@
 #
 """ unit tests for the model and descriptor packager """
 import os
-import random
+import rdkit.RDRandom as random
 import unittest
 from xml.dom import minidom
 from xml.etree import ElementTree as ET
@@ -98,7 +98,7 @@ class TestCase(unittest.TestCase):
 
             for _ in range(5):
                 perm = list(names)
-                random.shuffle(perm, random=random.random)
+                random.shuffle(perm)
 
                 m = Chem.MolFromSmiles(smi)
                 for desc in perm:
@@ -114,7 +114,7 @@ class TestCase(unittest.TestCase):
         names = calc.GetDescriptorNames()
         DataUtils.InitRandomNumbers((23, 42))
         perm = list(names)
-        random.shuffle(perm, random=random.random)
+        random.shuffle(perm)
         calc.simpleList = perm
         calc.descriptorNames = perm
         pkg.Init()

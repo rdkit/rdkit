@@ -247,7 +247,7 @@ if __name__ == '__main__':  # pragma: nocover
     return net
 
   def runProfile(command):
-    import random
+    import rdkit.RDRandom as random
     random.seed(23)
     import profile
     import pstats

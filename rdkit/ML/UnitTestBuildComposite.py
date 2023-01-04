@@ -20,11 +20,14 @@ from rdkit.Dbase.DbConnection import DbConnect
 from rdkit.ML import BuildComposite
 import pickle
 
+VERSION = 2
+SAVE = False
 
 class TestCase(unittest.TestCase):
 
     def setUp(self):
         self.baseDir = os.path.join(RDConfig.RDCodeDir, 'ML', 'test_data')
+        self.baseDir = os.path.join(os.path.dirname(__file__), 'test_data')
         self.dbName = RDConfig.RDTestDatabase
 
         self.details = BuildComposite.SetDefaults()
@@ -54,6 +57,22 @@ class TestCase(unittest.TestCase):
         else:
             self.details.qBounds = refCompos.GetQuantBounds()[0]
 
+    def _load(self, refComposName):
+        if VERSION == 1:
+            with open(os.path.join(self.baseDir, refComposName), 'r') as pklTF:
+                buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
+                pklTF.close()
+            with io.BytesIO(buf) as pklF:
+                return pickle.load(pklF)
+        else:
+            with open(os.path.join(self.baseDir,refComposName), 'rb') as buf:
+                return pickle.load(buf)
+
+    def _save(self, compos, refComposName):
+        if SAVE:
+            with open(os.path.join(self.baseDir,refComposName), 'wb') as buf:
+                pickle.dump(compos,buf)
+        
     def compare(self, compos, refCompos):
         self.assertEqual(len(compos), len(refCompos))
         cs = []
@@ -75,70 +94,46 @@ class TestCase(unittest.TestCase):
         # """ basics """
         self.details.tableName = 'ferro_quant'
         refComposName = 'ferromag_quant_10.pkl'
-
-        with open(os.path.join(self.baseDir, refComposName), 'r') as pklTF:
-            buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
-            pklTF.close()
-        with io.BytesIO(buf) as pklF:
-            refCompos = pickle.load(pklF)
+        refCompos = self._load(refComposName)
 
         # first make sure the data are intact
         self._init(refCompos)
         compos = BuildComposite.RunIt(self.details, saveIt=0)
 
-        # pickle.dump(compos,open(os.path.join(self.baseDir,refComposName), 'wb'))
-        # with open(os.path.join(self.baseDir,refComposName), 'rb') as pklF:
-        #   refCompos = pickle.load(pklF)
-
+        self._save(compos, refComposName)
         self.compare(compos, refCompos)
 
     def test2_depth_limit(self):
         # """ depth limit """
         self.details.tableName = 'ferro_quant'
         refComposName = 'ferromag_quant_10_3.pkl'
-
-        with open(os.path.join(self.baseDir, refComposName), 'r') as pklTF:
-            buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
-            pklTF.close()
-        with io.BytesIO(buf) as pklF:
-            refCompos = pickle.load(pklF)
-
+        refCompos = self._load(refComposName)
         # first make sure the data are intact
         self._init(refCompos)
         self.details.limitDepth = 3
         compos = BuildComposite.RunIt(self.details, saveIt=0)
-
+        self._save(compos, refComposName)        
         self.compare(compos, refCompos)
 
     def test3_depth_limit_less_greedy(self):
         # """ depth limit + less greedy """
         self.details.tableName = 'ferro_quant'
         refComposName = 'ferromag_quant_10_3_lessgreedy.pkl'
-
-        with open(os.path.join(self.baseDir, refComposName), 'r') as pklTF:
-            buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
-            pklTF.close()
-        with io.BytesIO(buf) as pklF:
-            refCompos = pickle.load(pklF)
+        refCompos = self._load(refComposName)
 
         # first make sure the data are intact
         self._init(refCompos)
         self.details.limitDepth = 3
         self.details.lessGreedy = 1
         compos = BuildComposite.RunIt(self.details, saveIt=0)
-
+        self._save(compos, refComposName)
         self.compare(compos, refCompos)
 
     def test4_more_trees(self):
         # """ more trees """
         self.details.tableName = 'ferro_quant'
         refComposName = 'ferromag_quant_50_3.pkl'
-
-        with open(os.path.join(self.baseDir, refComposName), 'r') as pklTF:
-            buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
-            pklTF.close()
-        with io.BytesIO(buf) as pklF:
-            refCompos = pickle.load(pklF)
+        refCompos = self._load(refComposName)
 
         # first make sure the data are intact
         self._init(refCompos)
@@ -146,18 +141,14 @@ class TestCase(unittest.TestCase):
         self.details.nModels = 50
         compos = BuildComposite.RunIt(self.details, saveIt=0)
 
+        self._save(compos, refComposName)
         self.compare(compos, refCompos)
 
     def test5_auto_bounds(self):
         # """ auto bounds """
         self.details.tableName = 'ferro_noquant'
         refComposName = 'ferromag_auto_10_3.pkl'
-
-        with open(os.path.join(self.baseDir, refComposName), 'r') as pklTF:
-            buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
-            pklTF.close()
-        with io.BytesIO(buf) as pklF:
-            refCompos = pickle.load(pklF)
+        refCompos = self._load(refComposName)
 
         # first make sure the data are intact
         self._init(refCompos, copyBounds=1)
@@ -165,18 +156,14 @@ class TestCase(unittest.TestCase):
         self.details.nModels = 10
         compos = BuildComposite.RunIt(self.details, saveIt=0)
 
+        self._save(compos, refComposName)
         self.compare(compos, refCompos)
 
     def test6_auto_bounds_real_activity(self):
         # """ auto bounds with a real valued activity"""
         self.details.tableName = 'ferro_noquant_realact'
         refComposName = 'ferromag_auto_10_3.pkl'
-
-        with open(os.path.join(self.baseDir, refComposName), 'r') as pklTF:
-            buf = pklTF.read().replace('\r\n', '\n').encode('utf-8')
-            pklTF.close()
-        with io.BytesIO(buf) as pklF:
-            refCompos = pickle.load(pklF)
+        refCompos = self._load(refComposName)
 
         # first make sure the data are intact
         self._init(refCompos, copyBounds=1)
@@ -185,17 +172,15 @@ class TestCase(unittest.TestCase):
         self.details.activityBounds = [0.5]
         compos = BuildComposite.RunIt(self.details, saveIt=0)
 
+        self._save(compos, refComposName)
         self.compare(compos, refCompos)
 
     def test7_composite_naiveBayes(self):
         # """ Test composite of naive bayes"""
         self.details.tableName = 'ferro_noquant'
         refComposName = 'ferromag_NaiveBayes.pkl'
-        with open(os.path.join(self.baseDir, refComposName), 'r') as pklTFile:
-            buf = pklTFile.read().replace('\r\n', '\n').encode('utf-8')
-            pklTFile.close()
-        with io.BytesIO(buf) as pklFile:
-            refCompos = pickle.load(pklFile)
+        refCompos = self._load(refComposName)
+
         self._init(refCompos, copyBounds=1)
         self.details.useTrees = 0
         self.details.useNaiveBayes = 1
@@ -203,6 +188,7 @@ class TestCase(unittest.TestCase):
         self.details.qBounds = [0] + [2] * 6 + [0]
         compos = BuildComposite.RunIt(self.details, saveIt=0)
 
+        self._save(compos, refComposName)        
         self.compare(compos, refCompos)
 
 

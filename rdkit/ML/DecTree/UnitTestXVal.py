@@ -14,7 +14,8 @@ from rdkit.ML.DecTree import randomtest
 from rdkit.TestRunner import redirect_stdout
 from io import BytesIO, StringIO
 import pickle
-
+VERSION = 2
+SAVE = False
 
 class XValTestCase(unittest.TestCase):
 
@@ -45,11 +46,19 @@ class XValTestCase(unittest.TestCase):
         tree, frac = CrossValidate.CrossValidationDriver(examples, attrs, nPossibleVals, silent=1)
         self.assertGreater(frac, 0)
 
-        with open(self.origTreeName, 'r') as inTFile:
-            buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
-            inTFile.close()
-        inFile = BytesIO(buf)
-        oTree = pickle.load(inFile)
+        if SAVE:
+            with open(self.origTreeName, 'wb') as inTFile:
+                pickle.dump(tree, inTFile)
+
+        if VERSION == 1:
+            with open(self.origTreeName, 'r') as inTFile:
+                buf = inTFile.read().replace('\r\n', '\n').encode('utf-8')
+                inTFile.close()
+            inFile = BytesIO(buf)
+            oTree = pickle.load(inFile)
+        else:
+            with open(self.origTreeName, 'rb') as buf:
+                oTree = pickle.load(buf)
 
         assert oTree == tree, 'Random CrossValidation test failed'
 
@@ -61,7 +70,7 @@ class XValTestCase(unittest.TestCase):
         tree, frac = CrossValidate.CrossValidationDriver(examples, attrs, nPossibleVals, silent=1,
                                                          replacementSelection=1)
         self.assertTrue(tree)
-        self.assertAlmostEqual(frac, 0.01666, 4)
+        self.assertAlmostEqual(frac, 0.05, 4)
 
     def test_TestRun(self):
         try:

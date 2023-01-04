@@ -8,7 +8,7 @@
 """
 
 import numpy
-import random
+import rdkit.RDRandom as random
 from rdkit.ML.DecTree import QuantTree, ID3
 from rdkit.ML.InfoTheory import entropy
 from rdkit.ML.Data import Quantize
@@ -31,7 +31,7 @@ def FindBest(resCodes, examples, nBoundsPerVar, nPossibleRes, nPossibleVals, att
         nAttrs = len(attrs)
         if nToTake < nAttrs:
             ids = list(range(nAttrs))
-            random.shuffle(ids, random=random.random)
+            random.shuffle(ids)
             tmp = [attrs[x] for x in ids[:nToTake]]
             attrs = tmp
 

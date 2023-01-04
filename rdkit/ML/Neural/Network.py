@@ -21,7 +21,7 @@
 """
 
 import numpy
-import random
+import rdkit.RDRandom as random
 
 from rdkit.ML.Neural import NetNode, ActFuncs
 
