@@ -14,7 +14,8 @@ from rdkit.Chem import ChemicalFeatures
 class FeatMapPoint(ChemicalFeatures.FreeChemicalFeature):
   weight = 0.0
   featDirs = None
-
+  __getstate_manages_dict__ = False
+  
   def __init__(self, *args, **kwargs):
     ChemicalFeatures.FreeChemicalFeature.__init__(self, *args, **kwargs)
     self.featDirs = []

@@ -92,6 +92,7 @@ class TestDescriptors(unittest.TestCase):
         calculator.CalcDescriptors(mol)
 
         # This should not raise a pickling exception
+        print(mol.__dict__)
         pickle.dumps(mol)
 
 

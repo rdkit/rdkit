@@ -82,6 +82,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
 
     """
     res = [-666] * len(self.simpleList)
+    mol.__getstate_manages_dict__ = False # this should be part of the pickle suite???
     for i, nm in enumerate(self.simpleList):
       fn = getattr(DescriptorsMod, nm, lambda x: 777)
       try:
@@ -89,6 +90,7 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       except Exception:
         import traceback
         traceback.print_exc()
+    print(2, mol.__dict__)
     return tuple(res)
 
   def GetDescriptorNames(self):

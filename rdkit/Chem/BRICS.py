@@ -29,7 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, Nov 2008
-import random
+import rdkit.RDRandom as random
 import copy
 """ Implementation of the BRICS algorithm from Degen et al. ChemMedChem *3* 1503-7 (2008)
 
@@ -288,7 +288,7 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
     indices = list(range(len(bondMatchers)))
     bondsDone = set()
     if randomizeOrder:
-        random.shuffle(indices, random=random.random)
+        random.shuffle(indices)
 
     envMatches = {}
     for env, patt in environMatchers.items():
@@ -296,7 +296,7 @@ def FindBRICSBonds(mol, randomizeOrder=False, silent=True):
     for gpIdx in indices:
         if randomizeOrder:
             compats = bondMatchers[gpIdx][:]
-            random.shuffle(compats, random=random.random)
+            random.shuffle(compats)
         else:
             compats = bondMatchers[gpIdx]
         for i1, i2, bType, patt in compats:
@@ -535,10 +535,10 @@ def BRICSBuild(fragments, onlyCompleteMols=True, seeds=None, uniquify=True, scra
         seeds = list(fragments)
     if scrambleReagents:
         seeds = list(seeds)
-        random.shuffle(seeds, random=random.random)
+        random.shuffle(seeds)
     if scrambleReagents:
         tempReactions = list(reverseReactions)
-        random.shuffle(tempReactions, random=random.random)
+        random.shuffle(tempReactions)
     else:
         tempReactions = reverseReactions
     for seed in seeds:

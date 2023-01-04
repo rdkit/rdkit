@@ -8,7 +8,7 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import random
+import rdkit.RDRandom as random
 from rdkit import Chem
 
 
@@ -26,7 +26,7 @@ def RandomizeMolBlock(molB):
     atLines = splitB[idx:idx + nAts]
 
     order = list(range(nAts))
-    random.shuffle(order, random=random.random)
+    random.shuffle(order)
 
     for i in order:
         res.append(atLines[i])
