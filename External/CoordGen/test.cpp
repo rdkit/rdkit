@@ -109,6 +109,20 @@ void test1() {
     delete m;
   }
 
+  {
+    SmilesParserParams params;
+    params.removeHs = false;
+    ROMol* m = SmilesToMol("[H]C([H])=C1C#C/C2=C(/C#C/C3=C(\\C#CC2=C([H])[H])C(=C([H])[H])C#CCC(=C=O)C#C3)C(=C([H])[H])C#CC(=O)C1=C([H])[H]", params);
+    TEST_ASSERT(m);
+    m->setProp("_Name", "github 4845 - nan coordinates but no crash");
+
+    TEST_ASSERT(CoordGen::addCoords(*m) == 0);
+    TEST_ASSERT(m->getNumConformers() == 1);
+    auto mb = MolToMolBlock(*m);
+    std::cerr << mb << std::endl;
+    delete m;
+  }
+
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
