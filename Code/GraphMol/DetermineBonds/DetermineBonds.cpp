@@ -18,9 +18,104 @@
 #include <unordered_map>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/max_cardinality_matching.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
     Graph;
+using boost::multiprecision::uint1024_t;
+
+namespace {
+
+
+// see http://phrogz.net/lazy-cartesian-product
+template <typename T>
+struct LazyCartesianProduct {
+  std::vector<std::vector<T>> listOfLists;
+  std::vector<uint1024_t> divs;
+  std::vector<uint1024_t> mods;
+  uint1024_t max_size;
+  uint1024_t currentPos;
+
+  explicit LazyCartesianProduct(std::vector<std::vector<T>> &input)
+      : listOfLists(input), currentPos(0) {
+    unsigned int size = listOfLists.size();
+    divs.resize(size);
+    mods.resize(size);
+    max_size = 1;
+
+    for (int i = size - 1; i >= 0; --i) {
+      uint1024_t items(listOfLists[i].size());
+      divs[i] = max_size;
+      mods[i] = items;
+      max_size *= items;
+    }
+  }
+
+  std::vector<T> entry_at(uint1024_t pos) const;
+  std::vector<T> next() { return entry_at(currentPos++); }
+  bool atEnd() const { return currentPos >= max_size; }
+};
+
+template <typename T>
+std::vector<T> LazyCartesianProduct<T>::entry_at(uint1024_t pos) const {
+  auto length = listOfLists.size();
+  std::vector<T> res(length);
+  for (auto i = 0; i < length; ++i) {
+    res[i] = listOfLists[i][(unsigned long long)((uint1024_t)(pos / divs[i]) %
+                                                 mods[i])];
+  }
+  return res;
+}
+
+std::vector<unsigned int> possibleValences(
+    const RDKit::Atom *atom,
+    const std::unordered_map<int, std::vector<unsigned int>> &atomicValence) {
+  auto atomNum = atom->getAtomicNum();
+  auto numBonds = atom->getDegree();
+  std::vector<unsigned int> valences;
+  try {
+    valences = atomicValence.at(atomNum);
+  } catch (const std::out_of_range &) {
+    std::stringstream ss;
+    ss << "determineBondOrdering() does not work with element "
+       << RDKit::PeriodicTable::getTable()->getElementSymbol(atomNum);
+    throw ValueErrorException(ss.str());
+  }
+  std::vector<unsigned int> possible;
+  for (const auto &valence : valences) {
+    if (numBonds <= valence) {
+      possible.push_back(valence);
+    }
+  }
+  return possible;
+}
+
+LazyCartesianProduct<unsigned int> getValenceCombinations(
+    const RDKit::RWMol &mol) {
+  auto numAtoms = mol.getNumAtoms();
+  const std::unordered_map<int, std::vector<unsigned int>> atomicValence = {
+      {1, {1}},  {5, {3, 4}}, {6, {4}},     {7, {3, 4}},     {8, {2, 1, 3}},
+      {9, {1}},  {14, {4}},   {15, {5, 3}}, {16, {6, 3, 2}}, {17, {1}},
+      {32, {4}}, {35, {1}},   {53, {1}}};
+  std::vector<std::vector<unsigned int>> possible(numAtoms);
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    possible[i] = possibleValences(mol.getAtomWithIdx(i), atomicValence);
+    if (possible[i].empty()) {
+      const auto atom = mol.getAtomWithIdx(i);
+      std::vector<unsigned int> valences =
+          atomicValence.at(atom->getAtomicNum());
+      std::stringstream ss;
+      ss << "Valence of atom " << i << " is " << atom->getDegree()
+         << ", which is larger than the allowed maximum, "
+         << valences[valences.size() - 1];
+      throw ValueErrorException(ss.str());
+    }
+  }
+
+  return LazyCartesianProduct<unsigned int>(possible);
+}
+
+}  // namespace
 
 namespace RDKit {
 
@@ -78,72 +173,6 @@ void determineConnectivity(RWMol &mol, bool useHueckel, int charge,
     connectivityVdW(mol, covFactor);
   }
 }  // determineConnectivity()
-
-std::vector<unsigned int> possibleValences(
-    const Atom *atom,
-    const std::unordered_map<int, std::vector<unsigned int>> &atomicValence) {
-  auto atomNum = atom->getAtomicNum();
-  auto numBonds = atom->getDegree();
-  std::vector<unsigned int> valences;
-  try {
-    valences = atomicValence.at(atomNum);
-  } catch (const std::out_of_range &) {
-    std::stringstream ss;
-    ss << "determineBondOrdering() does not work with element "
-       << PeriodicTable::getTable()->getElementSymbol(atomNum);
-    throw ValueErrorException(ss.str());
-  }
-  std::vector<unsigned int> possible;
-  for (const auto &valence : valences) {
-    if (numBonds <= valence) {
-      possible.push_back(valence);
-    }
-  }
-  return possible;
-}
-
-void valenceCombinations(const RWMol &mol,
-                         std::vector<std::vector<unsigned int>> &possible,
-                         std::vector<std::vector<unsigned int>> &combos) {
-  auto numAtoms = mol.getNumAtoms();
-  const std::unordered_map<int, std::vector<unsigned int>> atomicValence = {
-      {1, {1}},  {5, {3, 4}}, {6, {4}},     {7, {3, 4}},     {8, {2, 1, 3}},
-      {9, {1}},  {14, {4}},   {15, {5, 3}}, {16, {6, 3, 2}}, {17, {1}},
-      {32, {4}}, {35, {1}},   {53, {1}}};
-
-  possible.resize(numAtoms);
-  unsigned int numCombos = 1;
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    possible[i] = possibleValences(mol.getAtomWithIdx(i), atomicValence);
-    if (!possible[i].empty()) {
-      numCombos *= possible[i].size();
-    } else {
-      const auto atom = mol.getAtomWithIdx(i);
-      std::vector<unsigned int> valences =
-          atomicValence.at(atom->getAtomicNum());
-      std::stringstream ss;
-      ss << "Valence of atom " << i << " is " << atom->getDegree()
-         << ", which is larger than the allowed maximum, "
-         << valences[valences.size() - 1];
-      throw ValueErrorException(ss.str());
-    }
-  }
-
-  unsigned int orig = numCombos;
-  combos.resize(numCombos, std::vector<unsigned int>(numAtoms));
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    unsigned int seg = numCombos / possible[i].size();
-    for (unsigned int p = 0; p < orig / numCombos; p++) {
-      for (unsigned int j = 0; j < possible[i].size(); j++) {
-        for (unsigned int k = 0; k < seg; k++) {
-          combos[p * possible[i].size() * seg + j * seg + k][i] =
-              possible[i][j];
-        }
-      }
-    }
-    numCombos /= possible[i].size();
-  }
-}
 
 void getUnsaturated(const std::vector<unsigned int> &order,
                     const std::vector<unsigned int> &valency,
@@ -328,15 +357,14 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
   std::vector<unsigned int> bestValency(origValency);
   int bestSum = std::accumulate(origValency.begin(), origValency.end(), 0);
 
-  std::vector<std::vector<unsigned int>> possible;
-  std::vector<std::vector<unsigned int>> orders;
-  valenceCombinations(mol, possible, orders);
+  auto valenceCombos = getValenceCombinations(mol);
 
   bool valencyValid = false;
   bool chargeValid = false;
   bool saturationValid = false;
 
-  for (const auto &order : orders) {
+  while (!valenceCombos.atEnd()) {
+    auto order = valenceCombos.next();
     std::vector<unsigned int> unsat;
     getUnsaturated(order, origValency, unsat);
     // checks whether the atomic connectivity is valid for the current set of
