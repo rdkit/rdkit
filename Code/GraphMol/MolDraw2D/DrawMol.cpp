@@ -2117,7 +2117,7 @@ void DrawMol::makeBondHighlightLines(double lineWidth, double scale) {
           // butterfly-type shape is produced rather than a rectangle
           // (see Github5592).  Make a convex hull, using a simplified
           // form of Graham's scan algorithm - all the points
-          // are in the convex hull so it's easier.  Grahsm's scan normally
+          // are in the convex hull so it's easier.  Graham's scan normally
           // has a second step that removes inner points, and this takes
           // care of any problems with floating point errors in the
           // comparisons below.  The shapes here are at most hexagons with

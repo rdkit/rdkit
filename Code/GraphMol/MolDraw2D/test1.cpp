@@ -4299,6 +4299,30 @@ void testGithub3305() {
       check_file_hash(nameBase + "4.png");
     }
 #endif
+    // check that the regex digs out a rectangle with the expected corners,
+    // within a tolerance.  Used by the next 2 tests.
+    auto check_corners = [](const std::string &text, std::regex &regex,
+                            const std::vector<Point2D> &expected) -> void {
+      auto match_begin = std::sregex_iterator(text.begin(), text.end(), regex);
+      std::vector<Point2D> actual;
+      std::smatch match = *match_begin;
+      actual.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
+      actual.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
+      actual.push_back(Point2D(std::stod(match[5]), std::stod(match[6])));
+      actual.push_back(Point2D(std::stod(match[7]), std::stod(match[8])));
+
+      int num_matched = 0;
+      for (const auto e : expected) {
+        for (const auto a : actual) {
+          if ((e - a).lengthSq() <= 1.0) {
+            num_matched++;
+            break;
+          }
+        }
+      }
+      TEST_ASSERT(num_matched == 4);
+    };
+
     {
       MolDraw2DSVG drawer(200, 200);
       options.scaleHighlightBondWidth = true;
@@ -4311,17 +4335,15 @@ void testGithub3305() {
       outs.flush();
       outs.close();
 #if DO_TEST_ASSERT
-#if RDK_BUILD_FREETYPE_SUPPORT
+      // as seen in Github5899, we don't always get the rectangle corners
+      // in the same order.  Make sure they all turn up, within a tolerance.
+      // This seems to work for Freetype and non-Freetype builds.
       std::regex regex(
-          R"regex(class='bond-6 atom-6 atom-7' d='M 138.\d+,116.\d+ L 141.\d+,116.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
-      std::smatch bondMatch;
-      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
-#else
-      std::regex regex(
-          R"regex(class='bond-6 atom-6 atom-7' d='M 139.\d+,116.\d+ L 142.\d+,116.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
-      std::smatch bondMatch;
-      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
-#endif
+          R"(class='bond-6 atom-6 atom-7' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z' style='fill:#FF7F7F;)");
+      std::vector<Point2D> expected{
+          Point2D(138.7, 116.8), Point2D(141.9, 116.8), Point2D(134.7, 129.2),
+          Point2D(133.1, 126.5)};
+      check_corners(text, regex, expected);
       check_file_hash(nameBase + "4.svg");
 #endif
     }
@@ -4352,20 +4374,14 @@ void testGithub3305() {
       outs.flush();
       outs.close();
 #if DO_TEST_ASSERT
-#if RDK_BUILD_FREETYPE_SUPPORT
-      // the new convex hull algorithm for the highlights puts the points out
-      // in a different order with FT and no FT, rather irritatingly.  The
-      // shape is the same.
       std::regex regex(
-          R"regex(class='bond-6 atom-6 atom-7' d='M 131.\d+,120.\d+ L 149.\d+,120.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
-#else
-      std::regex regex(
-          R"regex(class='bond-6 atom-6 atom-7' d='M 149.\d+,120.\d+ L 138.\d+,139.\d+.* Z' .*FF7F7F.*stroke-width:0.0px)regex");
+          R"(class='bond-6 atom-6 atom-7' d='M ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) L ([\d.]*),([\d.]*) Z' style='fill:#FF7F7F;)");
+      std::vector<Point2D> expected{
+          Point2D(131.1, 120.8), Point2D(149.5, 120.8), Point2D(138.5, 139.8),
+          Point2D(129.3, 123.8)};
+      check_corners(text, regex, expected);
 #endif
-      std::smatch bondMatch;
-      TEST_ASSERT(std::regex_search(text, bondMatch, regex) == 1);
-#endif
-      //      check_file_hash(nameBase + "5.svg");
+      check_file_hash(nameBase + "5.svg");
     }
     options.continuousHighlight = false;
 #ifdef RDK_BUILD_CAIRO_SUPPORT
