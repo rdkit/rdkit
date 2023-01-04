@@ -66,7 +66,7 @@ void test_io() {
   smiles = NULL;
 
   char *json = get_json(pkl, pkl_size, NULL);
-  assert(strstr(json, "commonchem"));
+  assert(strstr(json, "rdkitjson"));
 
   pkl2 = get_mol(json, &pkl2_size, "");
   assert(pkl2);
@@ -1115,6 +1115,9 @@ void test_get_mol_frags() {
   frags_pkl_sz_array = NULL;
   free(mpkl);
   mpkl = NULL;
+
+  printf("  done\n");
+  printf("--------------------------\n");
 }
 
 int main() {

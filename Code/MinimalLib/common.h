@@ -115,7 +115,8 @@ RWMol *mol_from_input(const std::string &input,
       bool strictParsing = false;
       LPT_OPT_GET(strictParsing);
       res = MolBlockToMol(input, false, removeHs, strictParsing);
-    } else if (input.find("commonchem") != std::string::npos) {
+    } else if (input.find("commonchem") != std::string::npos ||
+               input.find("rdkitjson") != std::string::npos) {
       auto ps = MolInterchange::defaultJSONParseParameters;
       LPT_OPT_GET2(ps, setAromaticBonds);
       LPT_OPT_GET2(ps, strictValenceCheck);
@@ -183,7 +184,8 @@ RWMol *qmol_from_input(const std::string &input,
     bool strictParsing = false;
     LPT_OPT_GET(strictParsing);
     res = MolBlockToMol(input, false, removeHs, strictParsing);
-  } else if (input.find("commonchem") != std::string::npos) {
+  } else if (input.find("commonchem") != std::string::npos ||
+             input.find("rdkitjson") != std::string::npos) {
     auto ps = MolInterchange::defaultJSONParseParameters;
     LPT_OPT_GET2(ps, setAromaticBonds);
     LPT_OPT_GET2(ps, strictValenceCheck);

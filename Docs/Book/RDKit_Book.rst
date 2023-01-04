@@ -1643,6 +1643,62 @@ Here are the steps involved, in order.
 The individual steps can be toggled on or off when calling
 ``MolOps::sanitizeMol`` or ``Chem.SanitizeMol``.
 
+JSON Support
+************
+
+The RDKit supports writing to/reading from two closely related JSON formats: 
+commonchem (https://github.com/CommonChem/CommonChem) and rdkitjson. commonchem is a well-documented format designed to be used for efficient interchange between molecular toolkits. rdkitjson is an extension to commonchem which includes additional features allowing RDKit molecules to be serialized to JSON. The extensions in rdkitjson - enhanced stereo and substance groups - are generally useful, so it's easy to imagine them being integrated into commonchem at some point in the future.
+
+Lists of molecules can be converted to JSON with ``MolInterchange::MolsToJSONData()`` (C++) or ``Chem.MolsToJSONData()`` (Python). Those calls take an optional parameters object which can be used to specify whether commonchem or rdkitjson is generated. The default is to generate rdkitjson.
+
+JSON data can be converted back to RDKit molecules using ``MolInterchange::JSONDataToMols()`` (C++) or ``Chem.JSONDataToMols()`` (Python). The parser will automatically determine whether or not its working with commonchem or rdkitjson.
+
+rdkitjson format
+================
+
+Enhanced stereo 
+---------------
+
+Here's the rdkitjson representation of the stereo groups from the molecule ``C[C@@H]1C([C@H](O)F)O[C@H](C)C([C@@H](O)F)[C@@H]1C |a:7,o1:3,10,&1:1,&2:13|``::
+
+   'stereoGroups': [{'type': 'abs', 'atoms': [7]},
+    {'type': 'or', 'atoms': [3, 10]},
+    {'type': 'and', 'atoms': [1]},
+    {'type': 'and', 'atoms': [13]}],
+
+Substance groups 
+----------------
+
+Here's the rdkitjson representation of a ``SUP`` substance group::
+
+   'substanceGroups': [{'properties': {'TYPE': 'SUP',
+      'index': 1,
+      'LABEL': 'Boc',
+      'DATAFIELDS': '[]'},
+     'atoms': [7, 8, 9, 10, 11, 12, 13],
+     'bonds': [8],
+     'brackets': [[[6.24, -2.9, 0.0], [6.24, -2.9, 0.0], [0.0, 0.0, 0.0]]],
+     'cstates': [{'bond': 8, 'vector': [0.0, 0.82, 0.0]}],
+     'attachPoints': [{'aIdx': 12, 'lvIdx': 5, 'id': '1'}]}],
+
+
+and one for an ``SRU`` group::
+ 
+   'substanceGroups': [{'properties': {'TYPE': 'SRU',
+      'index': 1,
+      'CONNECT': 'HT',
+      'LABEL': 'n',
+      'DATAFIELDS': '[]'},
+     'atoms': [2, 1, 4],
+     'bonds': [2, 0],
+     'brackets': [[[-3.9538, 4.3256, 0.0],
+                   [-3.0298, 2.7252, 0.0],
+                   [0.0, 0.0, 0.0]],
+                  [[-5.4618, 2.8611, 0.0], 
+                   [-6.3858, 4.4615, 0.0], 
+                   [0.0, 0.0, 0.0]]]}],
+ 
+
 Implementation Details
 **********************
 
