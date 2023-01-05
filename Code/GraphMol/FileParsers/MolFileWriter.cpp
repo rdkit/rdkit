@@ -400,6 +400,7 @@ const std::string AtomGetMolFileSymbol(
             static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() ==
                 1))) {
         res = "A";
+        queryListAtoms.set(atom->getIdx());
       } else if (atom->hasQuery() &&
                  (atom->getQuery()->getTypeLabel() == "Q" ||
                   (atom->getQuery()->getNegation() &&
@@ -1382,7 +1383,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
   if (trwmol.needsUpdatePropertyCache()) {
     trwmol.updatePropertyCache(false);
   }
-  if (kekulize) {
+  if (kekulize && mol.getNumBonds()) {
     MolOps::Kekulize(trwmol);
   }
 
