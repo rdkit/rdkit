@@ -2533,7 +2533,6 @@ set of fragments to create new molecules:
   >>> import random
   >>> random.seed(127)
   >>> fragms = [Chem.MolFromSmiles(x) for x in sorted(allfrags)]
-  >>> random.seed(0xf00d)
   >>> ms = BRICS.BRICSBuild(fragms)
 
 The result is a generator object:
@@ -2559,11 +2558,11 @@ The molecules have not been sanitized, so it's a good idea to at least update th
   ...     prod.UpdatePropertyCache(strict=False)
   ...  
   >>> Chem.MolToSmiles(prods[0],True)
-  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccc3ncsc3c21'
+  'O=C1Nc2ccc3ncsc3c2/C1=C/Nc1ccccn1'
   >>> Chem.MolToSmiles(prods[1],True)
-  'CC(C)C(=O)N/C=C1\\C(=O)Nc2ccccc21'
+  'O=C1Nc2ccccc2/C1=C/Nc1ccccn1'
   >>> Chem.MolToSmiles(prods[2],True)
-  'CNC(=O)C(C)C'
+  'CNc1ccccn1'
 
 
 By default those results come back in a random order (technically the example
