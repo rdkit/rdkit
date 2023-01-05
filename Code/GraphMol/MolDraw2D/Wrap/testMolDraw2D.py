@@ -758,7 +758,9 @@ M  END''')
     m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+]")
     AllChem.Compute2DCoords(m)
     rdMolDraw2D.PrepareMolForDrawing(m)
+    print('prepped')
     svg = rdMolDraw2D.MolToACS1996SVG(m, "ACS Mode")
+    print(svg)
     with open("testACSMode_1.svg", 'w') as f:
       f.write(svg)
 
@@ -783,6 +785,20 @@ M  END''')
       drawer.FinishDrawing()
       drawer.WriteDrawingText('testACSMode_1.png')
 
+  def testIndexOffset(self):
+    m = Chem.MolFromSmiles('CCc1ccccc1')
+    AllChem.Compute2DCoords(m)
+    rdMolDraw2D.PrepareMolForDrawing(m)
+    d2d = Draw.MolDraw2DSVG(300, 300, 500, 500, True)
+    d2d.drawOptions().addAtomIndices = True
+    d2d.drawOptions().atomIndexOffset = 11
+    d2d.drawOptions().addBondIndices = True
+    d2d.drawOptions().bondIndexOffset = 1
+    d2d.DrawMolecule(m)
+    svg = d2d.GetDrawingText()
+    re_str = r">0</text>"
+    patt = re.compile(re_str)
+    self.assertEqual(len(patt.findall(svg)), 0)
 
 if __name__ == "__main__":
   unittest.main()

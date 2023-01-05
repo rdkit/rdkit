@@ -250,7 +250,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub5486_1.svg", 1149144091U},
     {"testGithub5511_1.svg", 940106456U},
     {"testGithub5511_2.svg", 1448975272U},
-    {"test_github5767.svg", 3153964439U}};
+    {"test_github5767.svg", 3153964439U},
+    {"indexOffsets_1.svg", 3071987767U},
+    {"indexOffsets_2.svg", 3207690302U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6208,5 +6210,50 @@ M  END
       REQUIRE(match_count == 2);
     }
     check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE("Add offset to atom and bond indices") {
+  std::string nameBase("indexOffsets_");
+  std::regex zeroes(">0</text>");
+  SECTION("Default") {
+    auto m1 = "CCc1ccccc1"_smiles;
+    REQUIRE(m1);
+    MolDraw2DSVG drawer(500, 500, 500, 500, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "1.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(nameBase + "1.svg");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), zeroes),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 2);
+  }
+  SECTION("Test") {
+    auto m1 = "CCc1ccccc1"_smiles;
+    REQUIRE(m1);
+    MolDraw2DSVG drawer(500, 500, 500, 500, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().atomIndexOffset = 11;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawOptions().bondIndexOffset = 1;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "2.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash(nameBase + "2.svg");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), zeroes),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 0);
   }
 }

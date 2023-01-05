@@ -198,7 +198,9 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(fixedBondLength);
   PT_OPT_GET(rotate);
   PT_OPT_GET(addAtomIndices);
+  PT_OPT_GET(atomIndexOffset);
   PT_OPT_GET(addBondIndices);
+  PT_OPT_GET(bondIndexOffset);
   PT_OPT_GET(isotopeLabels);
   PT_OPT_GET(dummyIsotopeLabels);
   PT_OPT_GET(addStereoAnnotation);

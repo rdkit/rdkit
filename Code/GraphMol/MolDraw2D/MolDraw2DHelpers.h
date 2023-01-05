@@ -228,10 +228,12 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                         // 0.0, fixedScale wins.
   double rotate = 0.0;  // angle in degrees to rotate coords by about centre
                         // before drawing.
-  bool addAtomIndices = false;     // adds atom indices to drawings.
-  bool addBondIndices = false;     // adds bond indices to drawings.
-  bool isotopeLabels = true;       // adds isotope to non-dummy atoms.
-  bool dummyIsotopeLabels = true;  // adds isotope labels to dummy atoms.
+  bool addAtomIndices = false;       // adds atom indices to drawings.
+  unsigned int atomIndexOffset = 0;  // offset for the atom indices
+  bool addBondIndices = false;       // adds bond indices to drawings.
+  unsigned int bondIndexOffset = 0;  // offset for the atom indices
+  bool isotopeLabels = true;         // adds isotope to non-dummy atoms.
+  bool dummyIsotopeLabels = true;    // adds isotope labels to dummy atoms.
 
   bool addStereoAnnotation = false;       // adds E/Z and R/S to drawings.
   bool atomHighlightsAreCircles = false;  // forces atom highlights always to be

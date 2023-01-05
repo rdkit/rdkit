@@ -171,10 +171,10 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
     addStereoAnnotation(*drawMol_);
   }
   if (drawOptions_.addAtomIndices) {
-    addAtomIndices(*drawMol_);
+    addAtomIndices(*drawMol_, drawOptions_.atomIndexOffset);
   }
   if (drawOptions_.addBondIndices) {
-    addBondIndices(*drawMol_);
+    addBondIndices(*drawMol_, drawOptions_.bondIndexOffset);
   }
 }
 
