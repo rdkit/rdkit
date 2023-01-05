@@ -25,7 +25,6 @@ class TestCase(unittest.TestCase):
 
     def setUp(self):
         self.baseDir = os.path.join(RDConfig.RDCodeDir, 'ML', 'test_data')
-        self.baseDir = os.path.join(os.path.dirname(__file__), 'test_data')
         self.dbName = RDConfig.RDTestDatabase
         self.details = ScreenComposite.SetDefaults()
         self.details.dbName = self.dbName
