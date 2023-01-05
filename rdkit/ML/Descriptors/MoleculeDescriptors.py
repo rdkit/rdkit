@@ -90,7 +90,6 @@ class MolecularDescriptorCalculator(Descriptors.DescriptorCalculator):
       except Exception:
         import traceback
         traceback.print_exc()
-    print(2, mol.__dict__)
     return tuple(res)
 
   def GetDescriptorNames(self):
