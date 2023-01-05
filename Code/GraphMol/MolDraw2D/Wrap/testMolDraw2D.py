@@ -758,9 +758,7 @@ M  END''')
     m = Chem.MolFromSmiles("CS(=O)(=O)COC(=N)c1cc(Cl)cnc1[NH3+]")
     AllChem.Compute2DCoords(m)
     rdMolDraw2D.PrepareMolForDrawing(m)
-    print('prepped')
     svg = rdMolDraw2D.MolToACS1996SVG(m, "ACS Mode")
-    print(svg)
     with open("testACSMode_1.svg", 'w') as f:
       f.write(svg)
 
