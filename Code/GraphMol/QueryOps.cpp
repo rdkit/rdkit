@@ -806,9 +806,9 @@ bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
 }
 
 template <typename T>
-bool _atomListQueryHelper(const T query) {
+bool _atomListQueryHelper(const T query, bool ignoreNegation) {
   PRECONDITION(query, "no query");
-  if (query->getNegation()) {
+  if (!ignoreNegation && query->getNegation()) {
     return false;
   }
   if (query->getDescription() == "AtomAtomicNum" ||
@@ -818,7 +818,7 @@ bool _atomListQueryHelper(const T query) {
   if (query->getDescription() == "AtomOr") {
     for (const auto &child : boost::make_iterator_range(query->beginChildren(),
                                                         query->endChildren())) {
-      if (!_atomListQueryHelper(child)) {
+      if (!_atomListQueryHelper(child, ignoreNegation)) {
         return false;
       }
     }
@@ -835,10 +835,15 @@ bool isAtomListQuery(const Atom *a) {
   if (a->getQuery()->getDescription() == "AtomOr") {
     for (const auto &child : boost::make_iterator_range(
              a->getQuery()->beginChildren(), a->getQuery()->endChildren())) {
-      if (!_atomListQueryHelper(child)) {
+      if (!_atomListQueryHelper(child, false)) {
         return false;
       }
     }
+    return true;
+  } else if (a->getQuery()->getNegation() &&
+             _atomListQueryHelper(a->getQuery(), true)) {
+    // this was github #5930: negated list queries containing a single atom were
+    // being lost on output
     return true;
   }
   return false;
@@ -849,7 +854,6 @@ void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
   // list queries are series of nested ors of AtomAtomicNum queries
   PRECONDITION(q, "bad query");
   auto descr = q->getDescription();
-  PRECONDITION(descr == "AtomOr", "bad query");
   if (descr == "AtomOr") {
     for (const auto &child :
          boost::make_iterator_range(q->beginChildren(), q->endChildren())) {
@@ -874,6 +878,18 @@ void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
         vals.push_back(v);
       }
     }
+  } else if (descr == "AtomAtomicNum") {
+    vals.push_back(static_cast<const ATOM_EQUALS_QUERY *>(q)->getVal());
+  } else if (descr == "AtomType") {
+    auto v = static_cast<const ATOM_EQUALS_QUERY *>(q)->getVal();
+    // aromatic AtomType queries add 1000 to the atomic number;
+    // correct for that:
+    if (v >= 1000) {
+      v -= 1000;
+    }
+    vals.push_back(v);
+  } else {
+    CHECK_INVARIANT(0, "bad query type");
   }
 }
 
