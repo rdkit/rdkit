@@ -5230,3 +5230,82 @@ M  END
     CHECK(sdf.find("<bletch") == std::string::npos);
   }
 }
+
+TEST_CASE(
+    "Github #5930: single-element atom list queries not output to mol blocks") {
+  SECTION("as reported") {
+    auto m = R"CTAB(
+  Mrv2211 01052305042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 "NOT [N]" -3.0413 6.2283 0 0
+M  V30 END ATOM
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getNegation());
+    auto mb = MolToV3KMolBlock(*m);
+    {
+      INFO(mb);
+      CHECK(mb.find("NOT [N]") != std::string::npos);
+    }
+  }
+  SECTION("don't output the query if it's not negated") {
+    auto m = R"CTAB(
+  Mrv2211 01052305042D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 1 0 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 "[N]" -3.0413 6.2283 0 0
+M  V30 END ATOM
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(!m->getAtomWithIdx(0)->getQuery()->getNegation());
+    auto mb = MolToV3KMolBlock(*m);
+    {
+      INFO(mb);
+      CHECK(mb.find("[N]") == std::string::npos);
+    }
+  }
+  SECTION("v2000") {
+    auto m = R"CTAB(
+  Mrv2211 01052305142D          
+
+  1  0  1  0  0  0            999 V2000
+   -1.6293    3.3366    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1 T    1   7
+M  ALS   1  1 T N   
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    REQUIRE(m->getAtomWithIdx(0)->hasQuery());
+    CHECK(m->getAtomWithIdx(0)->getQuery()->getNegation());
+    auto mb = MolToMolBlock(*m);
+    {
+      INFO(mb);
+      CHECK(mb.find("M  ALS   1  1 T N") != std::string::npos);
+    }
+  }
+  SECTION("broader consequences") {
+    std::vector<std::string> smas{"[!N]", "[!#7]", "[!n]"};
+    for (const auto &sma : smas) {
+      INFO(sma);
+      std::unique_ptr<RWMol> m(SmartsToMol(sma));
+      REQUIRE(m);
+      REQUIRE(m->getAtomWithIdx(0)->hasQuery());
+      CHECK(m->getAtomWithIdx(0)->getQuery()->getNegation());
+      auto mb = MolToV3KMolBlock(*m);
+      CHECK(mb.find("NOT [N]") != std::string::npos);
+    }
+  }
+}
