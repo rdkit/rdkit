@@ -36,7 +36,7 @@ struct LazyCartesianProduct {
   uint1024_t d_maxSize;
   uint1024_t d_currentPos;
 
-  explicit LazyCartesianProduct(std::vector<std::vector<T>> &input)
+  explicit LazyCartesianProduct(const std::vector<std::vector<T>> &input)
       : d_listOfLists(input), d_currentPos(0) {
     auto size = d_listOfLists.size();
     d_divs.resize(size);
