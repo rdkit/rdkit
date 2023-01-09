@@ -30,39 +30,39 @@ namespace {
 // see http://phrogz.net/lazy-cartesian-product
 template <typename T>
 struct LazyCartesianProduct {
-  std::vector<std::vector<T>> listOfLists;
-  std::vector<uint1024_t> divs;
-  std::vector<uint1024_t> mods;
-  uint1024_t max_size;
-  uint1024_t currentPos;
+  std::vector<std::vector<T>> d_listOfLists;
+  std::vector<uint1024_t> d_divs;
+  std::vector<uint1024_t> d_mods;
+  uint1024_t d_maxSize;
+  uint1024_t d_currentPos;
 
   explicit LazyCartesianProduct(std::vector<std::vector<T>> &input)
-      : listOfLists(input), currentPos(0) {
-    unsigned int size = listOfLists.size();
-    divs.resize(size);
-    mods.resize(size);
-    max_size = 1;
+      : d_listOfLists(input), d_currentPos(0) {
+    auto size = d_listOfLists.size();
+    d_divs.resize(size);
+    d_mods.resize(size);
+    d_maxSize = 1;
 
     for (int i = size - 1; i >= 0; --i) {
-      uint1024_t items(listOfLists[i].size());
-      divs[i] = max_size;
-      mods[i] = items;
-      max_size *= items;
+      uint1024_t items(d_listOfLists[i].size());
+      d_divs[i] = d_maxSize;
+      d_mods[i] = items;
+      d_maxSize *= items;
     }
   }
 
-  std::vector<T> entry_at(uint1024_t pos) const;
-  std::vector<T> next() { return entry_at(currentPos++); }
-  bool atEnd() const { return currentPos >= max_size; }
+  std::vector<T> entryAt(uint1024_t pos) const;
+  std::vector<T> next() { return entryAt(d_currentPos++); }
+  bool atEnd() const { return d_currentPos >= d_maxSize; }
 };
 
 template <typename T>
-std::vector<T> LazyCartesianProduct<T>::entry_at(uint1024_t pos) const {
-  auto length = listOfLists.size();
+std::vector<T> LazyCartesianProduct<T>::entryAt(uint1024_t pos) const {
+  auto length = d_listOfLists.size();
   std::vector<T> res(length);
   for (auto i = 0; i < length; ++i) {
-    res[i] = listOfLists[i][(unsigned long long)((uint1024_t)(pos / divs[i]) %
-                                                 mods[i])];
+    res[i] = d_listOfLists[i][static_cast<size_t>(static_cast<uint1024_t>(pos / d_divs[i]) %
+                                                 d_mods[i])];
   }
   return res;
 }
@@ -72,17 +72,16 @@ std::vector<unsigned int> possibleValences(
     const std::unordered_map<int, std::vector<unsigned int>> &atomicValence) {
   auto atomNum = atom->getAtomicNum();
   auto numBonds = atom->getDegree();
-  std::vector<unsigned int> valences;
-  try {
-    valences = atomicValence.at(atomNum);
-  } catch (const std::out_of_range &) {
+
+  auto valences = atomicValence.find(atomNum);
+  if(valences == atomicValence.end()){
     std::stringstream ss;
     ss << "determineBondOrdering() does not work with element "
        << RDKit::PeriodicTable::getTable()->getElementSymbol(atomNum);
     throw ValueErrorException(ss.str());
   }
   std::vector<unsigned int> possible;
-  for (const auto &valence : valences) {
+  for (const auto &valence : valences->second) {
     if (numBonds <= valence) {
       possible.push_back(valence);
     }
