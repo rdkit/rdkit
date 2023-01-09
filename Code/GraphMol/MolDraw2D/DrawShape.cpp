@@ -100,18 +100,11 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
       angle_(angle) {
   PRECONDITION(points_.size() == 2, "arrow bad points size");
 
-  // the two ends of the arrowhead are used for collision detection so they
+  // the two ends of the arrowhead are used for collision detection so we
   // may as well store them.
-  auto delta = points_[0] - points_[1];
-  auto cos_angle = std::cos(angle_), sin_angle = std::sin(angle_);
-  auto p1 = points_[0];
-  p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
-  p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
+  Point2D ab(points_[1]), p1, p2;
+  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[0], fill_, frac_, angle_);
   points_.push_back(p1);
-
-  auto p2 = points_[1];
-  p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
-  p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
   points_.push_back(p2);
 }
 

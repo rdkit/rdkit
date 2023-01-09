@@ -6210,3 +6210,90 @@ M  END
     check_file_hash(nameBase + ".svg");
   }
 }
+
+TEST_CASE("Github5949: fixed size for dative arrow heads") {
+  std::string nameBase = "test_github5949";
+  auto m = R"CTAB(ferrocene
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.619616 1.206807 0.000000 0 CHG=-1
+M  V30 2 C 0.211483 1.768553 0.000000 0
+M  V30 3 C -1.283936 1.861329 0.000000 0
+M  V30 4 C -1.796429 1.358429 0.000000 0
+M  V30 5 C -0.634726 0.966480 0.000000 0
+M  V30 6 C 0.654379 -1.415344 0.000000 0 CHG=-1
+M  V30 7 C 0.249886 -0.858607 0.000000 0
+M  V30 8 C -1.232145 -0.766661 0.000000 0
+M  V30 9 C -1.740121 -1.265073 0.000000 0
+M  V30 10 C -0.580425 -1.662922 0.000000 0
+M  V30 11 C 1.759743 0.755930 0.000000 0
+M  V30 12 C 1.796429 -1.861329 0.000000 0
+M  V30 13 Fe -0.554442 0.032137 0.000000 0 VAL=2
+M  V30 14 * -0.601210 1.478619 0.000000 0
+M  V30 15 * -0.537835 -1.172363 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 2 4 5
+M  V30 3 1 4 3
+M  V30 4 2 2 3
+M  V30 5 1 1 2
+M  V30 6 1 6 10
+M  V30 7 2 9 10
+M  V30 8 1 9 8
+M  V30 9 2 7 8
+M  V30 10 1 6 7
+M  V30 11 1 1 11
+M  V30 12 1 6 12
+M  V30 13 9 14 13 ENDPTS=(5 1 2 3 4 5) ATTACH=ANY
+M  V30 14 9 15 13 ENDPTS=(5 9 10 7 8 6) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  {
+    MolDraw2DSVG drawer(300, 300, 300, 300, false);
+    drawer.drawOptions().additionalAtomLabelPadding = 0.0;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(nameBase + ".svg");
+  }
+  {
+    auto ma = "[NH2]->[Fe]"_smiles;
+    MolDraw2DUtils::prepareMolForDrawing(*ma);
+    MolDraw2DSVG drawer(300, 300, 300, 300, false);
+    drawer.drawOptions().additionalAtomLabelPadding = 0.0;
+    drawer.drawMolecule(*ma);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_a.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(nameBase + ".svg");
+  }
+  {
+    auto mb = "*->[Fe]"_smiles;
+    MolDraw2DUtils::prepareMolForDrawing(*mb);
+    MolDraw2DSVG drawer(300, 300, 300, 300, false);
+    drawer.drawOptions().additionalAtomLabelPadding = 0.0;
+    drawer.drawMolecule(*mb);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_b.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    //    check_file_hash(nameBase + ".svg");
+  }
+}
