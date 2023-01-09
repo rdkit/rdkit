@@ -2661,7 +2661,7 @@ TEST_CASE("molecule annotations", "[extra]") {
   bool noFreeType = false;
   SECTION("basics") {
     auto m = "NCC(=O)O"_smiles;
-    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+    MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
     MolDraw2DUtils::prepareMolForDrawing(*m);
     m->setProp(common_properties::molNote, "molecule note");
     drawer.drawMolecule(*m, "with note");
@@ -2704,7 +2704,7 @@ M  V30 END CTAB
 M  END
 )CTAB"_ctab;
     {
-      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawMolecule(*m, "chiral flag set, option disabled");
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
@@ -2715,7 +2715,7 @@ M  END
       CHECK(text.find("class='note'") == std::string::npos);
     }
     {
-      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().includeChiralFlagLabel = true;
       drawer.drawMolecule(*m, "chiral flag set, option enabled");
       drawer.finishDrawing();
@@ -2727,7 +2727,7 @@ M  END
       CHECK(text.find("class='note'") != std::string::npos);
     }
     {
-      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       drawer.drawOptions().includeChiralFlagLabel = true;
       m->clearProp(common_properties::_MolFileChiralFlag);
       drawer.drawMolecule(*m, "chiral flag not set, option enabled");
@@ -2743,7 +2743,7 @@ M  END
   SECTION("simplified stereo 1") {
     {
       auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,1|"_smiles;
-      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       MolDraw2DUtils::prepareMolForDrawing(*m);
       drawer.drawOptions().addStereoAnnotation = true;
       drawer.drawMolecule(*m, "enhanced no flag");
@@ -2756,7 +2756,7 @@ M  END
     }
     {
       auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,1|"_smiles;
-      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       MolDraw2DUtils::prepareMolForDrawing(*m);
       drawer.drawOptions().addStereoAnnotation = true;
       drawer.drawOptions().simplifiedStereoGroupLabel = true;
@@ -2770,7 +2770,7 @@ M  END
     }
     {
       auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |&1:3,5,1|"_smiles;
-      MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+      MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
       MolDraw2DUtils::prepareMolForDrawing(*m);
       drawer.drawOptions().addStereoAnnotation = true;
       drawer.drawOptions().simplifiedStereoGroupLabel = true;
@@ -2785,7 +2785,7 @@ M  END
   }
   SECTION("simplified stereo 2") {
     auto m = "C[C@H](F)[C@@H](F)[C@@H](C)Cl |o1:3,5,o2:1|"_smiles;
-    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+    MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
     drawer.drawOptions().addStereoAnnotation = true;
     drawer.drawOptions().simplifiedStereoGroupLabel = true;
     MolDraw2DUtils::prepareMolForDrawing(*m);
@@ -2845,7 +2845,7 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
-    MolDraw2DSVG drawer(350, 300, panelHeight, panelWidth, noFreeType);
+    MolDraw2DSVG drawer(350, 300, panelWidth, panelHeight, noFreeType);
     drawer.drawOptions().addStereoAnnotation = true;
     drawer.drawOptions().simplifiedStereoGroupLabel = true;
     drawer.drawMolecule(*m, "label crowding");
