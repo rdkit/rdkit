@@ -538,7 +538,7 @@ void DrawMol::extractVariableBonds() {
         auto center = atCds_[oat];
         Point2D offset{drawOptions_.variableAtomRadius,
                        drawOptions_.variableAtomRadius};
-        std::vector<Point2D> points{center + offset, center - offset};
+        std::vector<Point2D> points{center, offset};
         DrawShapeEllipse *ell = new DrawShapeEllipse(
             points, 1, true, drawOptions_.variableAttachmentColour, true, oat);
         preShapes_.emplace_back(ell);
