@@ -20,7 +20,7 @@ class TestCase(unittest.TestCase):
   def testMHFPDistance(self):
     s = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
     enc = rdMHFPFingerprint.MHFPEncoder(128, 42)
-    fp = enc.EncodeSmiles(m)
+    fp = enc.EncodeSmiles(s)
     dist = enc.Distance(fp, fp)
     self.assertEqual(dist, 0.0)
 
