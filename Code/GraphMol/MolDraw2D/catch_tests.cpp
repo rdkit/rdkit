@@ -250,17 +250,17 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub5486_1.svg", 1149144091U},
     {"testGithub5511_1.svg", 940106456U},
     {"testGithub5511_2.svg", 1448975272U},
-    {"test_github5767.svg", 3153964439U},
     {"test_github5704_1.svg", 2803704016U},
     {"test_github5704_2.svg", 2000837483U},
     {"test_github5704_3.svg", 2359820445U},
     {"test_github5704_4.svg", 2033407805U},
     {"test_github5943.svg", 1111951851U},
     {"test_github5947.svg", 2858910387U},
-    {"test_github5767.svg", 3153964439U},
     {"test_github5949.svg", 1324215728U},
     {"test_github5974.svg", 394879876U},
-    {"test_github5963.svg", 582369551U}};
+    {"test_github5963.svg", 582369551U},
+    {"test_github5767.svg", 3153964439U},
+    {"test_github5943.svg", 3591000538U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6382,8 +6382,8 @@ TEST_CASE("Github5963: bond end wrong on wedge") {
   std::string nameBase = "test_github5963";
   {
     auto m = "COc1ccc([S@@](=O)Cc2ccccc2)cc1"_smiles;
-    MolDraw2DSVG drawer(300, 300, 300, 300, true);
     RDDepict::compute2DCoords(*m);
+    MolDraw2DSVG drawer(300, 300, 300, 300, true);
     drawer.drawOptions().addBondIndices = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
