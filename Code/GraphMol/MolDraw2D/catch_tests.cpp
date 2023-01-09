@@ -250,7 +250,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub5486_1.svg", 1149144091U},
     {"testGithub5511_1.svg", 940106456U},
     {"testGithub5511_2.svg", 1448975272U},
-    {"test_github5767.svg", 3153964439U}};
+    {"test_github5767.svg", 3153964439U},
+    {"test_github5949.svg", 215754974U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6258,7 +6259,7 @@ M  END
   REQUIRE(m);
   {
     MolDraw2DSVG drawer(300, 300, 300, 300, false);
-    drawer.drawOptions().additionalAtomLabelPadding = 0.0;
+    drawer.drawOptions().addAtomIndices = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
@@ -6266,34 +6267,42 @@ M  END
     outs << text;
     outs.flush();
     outs.close();
-    //    check_file_hash(nameBase + ".svg");
-  }
-  {
-    auto ma = "[NH2]->[Fe]"_smiles;
-    MolDraw2DUtils::prepareMolForDrawing(*ma);
-    MolDraw2DSVG drawer(300, 300, 300, 300, false);
-    drawer.drawOptions().additionalAtomLabelPadding = 0.0;
-    drawer.drawMolecule(*ma);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(nameBase + "_a.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    //    check_file_hash(nameBase + ".svg");
-  }
-  {
-    auto mb = "*->[Fe]"_smiles;
-    MolDraw2DUtils::prepareMolForDrawing(*mb);
-    MolDraw2DSVG drawer(300, 300, 300, 300, false);
-    drawer.drawOptions().additionalAtomLabelPadding = 0.0;
-    drawer.drawMolecule(*mb);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(nameBase + "_b.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    //    check_file_hash(nameBase + ".svg");
+
+    auto extract_ends = [](const std::string &text, const std::regex &r,
+                           std::vector<Point2D> &ends) -> void {
+      auto match_begin = std::sregex_iterator(text.begin(), text.end(), r);
+      auto match_end = std::sregex_iterator();
+      for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+        std::smatch match = *i;
+        ends.push_back(Point2D(std::stod(match[1]), std::stod(match[2])));
+        ends.push_back(Point2D(std::stod(match[3]), std::stod(match[4])));
+        ends.push_back(Point2D(std::stod(match[5]), std::stod(match[6])));
+      }
+    };
+    std::regex head1(
+        "atom-13 atom-12' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) Z'");
+    std::vector<Point2D> ends1;
+    extract_ends(text, head1, ends1);
+    REQUIRE(ends1.size() == 3);
+
+    std::regex head2(
+        "atom-14 atom-12' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) Z'");
+    std::vector<Point2D> ends2;
+    extract_ends(text, head2, ends2);
+    REQUIRE(ends2.size() == 3);
+
+    auto h1s1 = (ends1[0] - ends1[1]).length();
+    auto h2s1 = (ends2[0] - ends2[1]).length();
+    // there's still a small difference in size of arrow head because the
+    // allowance for mitring is done as a fraction of the overall arrow
+    // length.
+    REQUIRE_THAT(h1s1, Catch::Matchers::WithinAbs(h2s1, 0.1));
+    auto h1s2 = (ends1[0] - ends1[2]).length();
+    auto h2s2 = (ends2[0] - ends2[2]).length();
+    REQUIRE_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.1));
+
+    check_file_hash(nameBase + ".svg");
   }
 }
