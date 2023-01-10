@@ -56,13 +56,13 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"contourMol_2.svg", 2353351393U},
     {"contourMol_3.svg", 3493070184U},
     {"contourMol_4.svg", 764999893U},
-    {"testDativeBonds_1.svg", 221028862U},
-    {"testDativeBonds_2.svg", 852819536U},
-    {"testDativeBonds_3.svg", 2438158464U},
-    {"testDativeBonds_2a.svg", 625232974U},
-    {"testDativeBonds_2b.svg", 2879476699U},
-    {"testDativeBonds_2c.svg", 388074377U},
-    {"testDativeBonds_2d.svg", 1004854048U},
+    {"testDativeBonds_1.svg", 555607912U},
+    {"testDativeBonds_2.svg", 93109626U},
+    {"testDativeBonds_3.svg", 3944956974U},
+    {"testDativeBonds_2a.svg", 1026259021U},
+    {"testDativeBonds_2b.svg", 3842058701U},
+    {"testDativeBonds_2c.svg", 1000280203U},
+    {"testDativeBonds_2d.svg", 3605527201U},
     {"testZeroOrderBonds_1.svg", 582365640U},
     {"testFoundations_1.svg", 767448647U},
     {"testFoundations_2.svg", 1248494165U},
@@ -83,11 +83,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testLegendsAndDrawing-1.svg", 1693176512U},
     {"testGithub3577-1.svg", 3974438540U},
     {"testHandDrawn-1.svg", 799391905U},
-    {"testHandDrawn-2.svg", 2605087576U},
-    {"testHandDrawn-3.svg", 1015633173U},
-    {"testHandDrawn-4.svg", 830784921U},
-    {"testHandDrawn-5a.svg", 2845825621U},
-    {"testHandDrawn-5b.svg", 476521352U},
+    {"testHandDrawn-2.svg", 1696668329U},
+    {"testHandDrawn-3.svg", 3293983707U},
+    {"testHandDrawn-4.svg", 3348972281U},
+    {"testHandDrawn-5a.svg", 1171105985U},
+    {"testHandDrawn-5b.svg", 1165866976U},
     {"testBrackets-1a.svg", 3257646535U},
     {"testBrackets-1b.svg", 776088825U},
     {"testBrackets-1c.svg", 3257646535U},
@@ -107,16 +107,16 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testSGroupData-2a.svg", 3547547260U},
     {"testSGroupData-2b.svg", 2573013307U},
     {"testSGroupData-3a.svg", 2220120573U},
-    {"testPositionVariation-1.svg", 4185441744U},
-    {"testPositionVariation-1b.svg", 2588110577U},
-    {"testPositionVariation-2.svg", 2026425280U},
-    {"testPositionVariation-3.svg", 56671878U},
-    {"testPositionVariation-4.svg", 886758688U},
+    {"testPositionVariation-1.svg", 444914699U},
+    {"testPositionVariation-1b.svg", 3646629289U},
+    {"testPositionVariation-2.svg", 624353208U},
+    {"testPositionVariation-3.svg", 3408717052U},
+    {"testPositionVariation-4.svg", 4125874052U},
     {"testNoAtomLabels-1.svg", 2648234379U},
     {"testNoAtomLabels-2.svg", 3213096674U},
-    {"testQueryBonds-1a.svg", 3288272531U},
-    {"testQueryBonds-1b.svg", 1706839957U},
-    {"testQueryBonds-1c.svg", 333519907U},
+    {"testQueryBonds-1a.svg", 713354870U},
+    {"testQueryBonds-1b.svg", 2517713542U},
+    {"testQueryBonds-1c.svg", 3119135647U},
     {"testQueryBonds-2.svg", 69341882U},
     {"testLinkNodes-2-0.svg", 2952965907U},
     {"testLinkNodes-2-30.svg", 4117540200U},
@@ -153,8 +153,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHydrogenBonds2.svg", 2044702263U},
     {"testGithub3912.1.svg", 3081580881U},
     {"testGithub3912.2.svg", 1662866562U},
-    {"testGithub2976.svg", 703667023U},
-    {"testReactionCoords.svg", 2325796920U},
+    {"testGithub2976.svg", 971026582U},
+    {"testReactionCoords.svg", 4128536127U},
     {"testAnnotationColors.svg", 445523422U},
     {"testGithub4323_1.svg", 1993234598U},
     {"testGithub4323_2.svg", 2933922429U},
@@ -187,7 +187,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testSemiFlexiCanvas.1a.svg", 414967968U},
     {"testSemiFlexiCanvas.1b.svg", 367831852U},
     {"testSemiFlexiCanvas.1c.svg", 316673185U},
-    {"testFlexiCanvas.3.svg", 1164132085U},
+    {"testFlexiCanvas.3.svg", 3822475112U},
     {"testFlexiCanvas.4a.svg", 438150211U},
     {"testFlexiCanvas.4b.svg", 2015277207U},
     {"testFlexiCanvas.4c.svg", 3138663789U},
@@ -212,14 +212,14 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testVariableLegend_1.svg", 3914441319U},
     {"testVariableLegend_2.svg", 3458084009U},
     {"testVariableLegend_3.svg", 1996551457U},
-    {"testGithub_5061.svg", 1947248304U},
+    {"testGithub_5061.svg", 2698477851U},
     {"testGithub_5185.svg", 2944445711U},
     {"testGithub_5269_1.svg", 2884233026U},
     {"testGithub_5269_2.svg", 2987891082U},
     {"test_classes_wavy_bonds.svg", 1271445012U},
     {"testGithub_5383_1.svg", 1391972140U},
     {"github5156_1.svg", 695855770U},
-    {"github5156_2.svg", 2606649270U},
+    {"github5156_2.svg", 1130781980U},
     {"github5156_3.svg", 3284451122U},
     {"test_molblock_wedges.svg", 1106580037U},
     {"github5383_1.svg", 2353351393U},
@@ -251,10 +251,14 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub5511_1.svg", 940106456U},
     {"testGithub5511_2.svg", 1448975272U},
     {"test_github5767.svg", 3153964439U},
-    {"test_github5943.svg", 3591000538U},
+    {"test_github5704_1.svg", 2803704016U},
+    {"test_github5704_2.svg", 2000837483U},
+    {"test_github5704_3.svg", 2359820445U},
+    {"test_github5704_4.svg", 2033407805U},
+    {"test_github5943.svg", 1111951851U},
     {"test_github5947.svg", 2858910387U},
     {"test_github5767.svg", 3153964439U},
-    {"test_github5949.svg", 215754974U}};
+    {"test_github5949.svg", 1324215728U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6095,6 +6099,7 @@ TEST_CASE(
     outs << text;
     outs.flush();
     outs.close();
+    check_file_hash(nameBase + "_1.svg");
   }
 
   SECTION("both ends specified") {
@@ -6114,6 +6119,7 @@ TEST_CASE(
     outs << text;
     outs.flush();
     outs.close();
+    check_file_hash(nameBase + "_2.svg");
   }
 
   SECTION("color just on begin") {
@@ -6132,6 +6138,7 @@ TEST_CASE(
     outs << text;
     outs.flush();
     outs.close();
+    check_file_hash(nameBase + "_3.svg");
   }
   SECTION("color just on end") {
     MolDraw2DSVG drawer(300, 300, 300, 300, NO_FREETYPE);
@@ -6150,6 +6157,7 @@ TEST_CASE(
     outs << text;
     outs.flush();
     outs.close();
+    check_file_hash(nameBase + "_4.svg");
   }
 }
 
