@@ -161,14 +161,11 @@ void DrawShapeEllipse::myDraw(MolDraw2D &drawer) const {
 // ****************************************************************************
 void DrawShapeEllipse::findExtremes(double &xmin, double &xmax, double &ymin,
                                     double &ymax) const {
-  auto wb2 = points_[1].x;
-  auto hb2 = points_[1].y;
-  auto cx = points_[0].x + wb2;
-  auto cy = points_[0].y + hb2;
-  xmin = std::min(cx - wb2, xmin);
-  xmax = std::max(cx + wb2, xmax);
-  ymin = std::min(cy - hb2, ymin);
-  ymax = std::max(cy + hb2, ymax);
+  // points_[0] is the centre, points_[1] the radii
+  xmin = std::min(points_[0].x - points_[1].x, xmin);
+  xmax = std::max(points_[0].x + points_[1].x, xmax);
+  ymin = std::min(points_[0].y - points_[1].y, ymin);
+  ymax = std::max(points_[0].y + points_[1].y, ymax);
 }
 
 // ****************************************************************************
