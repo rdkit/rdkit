@@ -204,9 +204,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testFlexiCanvas.7b.svg", 4094511140U},
     {"testFlexiCanvas.7c.svg", 918094125U},
     {"testFlexiCanvas.7d.svg", 918094125U},
-    {"testGithub4764.sz1.svg", 493786705U},
-    {"testGithub4764.sz2.svg", 2704253898U},
-    {"testGithub4764.sz3.svg", 1328896014U},
+    {"testGithub4764.sz1.svg", 1112373450U},
+    {"testGithub4764.sz2.svg", 3676136052U},
+    {"testGithub4764.sz3.svg", 2565894452U},
     {"testDrawArc1.svg", 4039810147U},
     {"testMetalWedges.svg", 3278785383U},
     {"testVariableLegend_1.svg", 3914441319U},
@@ -214,8 +214,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testVariableLegend_3.svg", 1996551457U},
     {"testGithub_5061.svg", 1947248304U},
     {"testGithub_5185.svg", 2944445711U},
-    {"testGithub_5269_1.svg", 2368496794U},
-    {"testGithub_5269_2.svg", 567813292U},
+    {"testGithub_5269_1.svg", 2884233026U},
+    {"testGithub_5269_2.svg", 2987891082U},
     {"test_classes_wavy_bonds.svg", 1271445012U},
     {"testGithub_5383_1.svg", 1391972140U},
     {"github5156_1.svg", 695855770U},
@@ -229,11 +229,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"acs1996_4.svg", 3372558370U},
     {"acs1996_5.svg", 2883542240U},
     {"acs1996_6.svg", 1380727178U},
-    {"acs1996_7.svg", 763391533U},
+    {"acs1996_7.svg", 2718384395U},
     {"acs1996_8.svg", 939325262U},
     {"acs1996_9.svg", 2607143500U},
     {"acs1996_10.svg", 199499735U},
-    {"acs1996_11.svg", 2121789178U},
+    {"acs1996_11.svg", 3821838912U},
     {"acs1996_12.svg", 2233727631U},
     {"test_unspec_stereo.svg", 599119798U},
     {"light_blue_h_no_label_1.svg", 3735371135U},
@@ -241,7 +241,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"bond_highlights_1.svg", 1426179967U},
     {"bond_highlights_2.svg", 3654242474U},
     {"bond_highlights_3.svg", 2068128924U},
-    {"bond_highlights_4.svg", 4115973245U},
+    {"bond_highlights_4.svg", 2068128924U},
     {"bond_highlights_5.svg", 4115973245U},
     {"bond_highlights_6.svg", 1566801788U},
     {"bond_highlights_7.svg", 2101261688U},
@@ -250,7 +250,9 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub5486_1.svg", 1149144091U},
     {"testGithub5511_1.svg", 940106456U},
     {"testGithub5511_2.svg", 1448975272U},
-    {"test_github5767.svg", 3153964439U}};
+    {"test_github5767.svg", 3153964439U},
+    {"test_github5944.svg", 2858910387U},
+    {"test_github5943.svg", 3591000538U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6206,6 +6208,115 @@ M  END
           std::distance(std::sregex_iterator(text.begin(), text.end(), rn),
                         std::sregex_iterator()));
       REQUIRE(match_count == 2);
+    }
+    check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE("Github5944: Ellipse extremes not calculated correctly.") {
+  std::string nameBase = "test_github5944";
+  auto m = "c1ccccn1"_smiles;
+  TEST_ASSERT(m);
+  RDDepict::compute2DCoords(*m);
+  std::vector<int> highlight_atoms{0, 1, 2, 3, 4, 5};
+  MolDraw2DSVG drawer(400, 400);
+  drawer.drawOptions().highlightRadius = 1.0;
+  drawer.drawMolecule(*m, &highlight_atoms);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs(nameBase + ".svg");
+  outs << text;
+  outs.flush();
+  outs.close();
+  std::regex r1("<ellipse cx=.*rx='(\\d+\\.\\d+)' ry='(\\d+\\.\\d+)'");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), r1),
+                    std::sregex_iterator()));
+  REQUIRE(match_count == 6);
+  // all the ellipses should have a radius of roughly 28.8
+  auto match_begin = std::sregex_iterator(text.begin(), text.end(), r1);
+  auto match_end = std::sregex_iterator();
+  for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+    std::smatch match = *i;
+    REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(72.7, 0.1));
+    REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(72.7, 0.1));
+  }
+
+  // check that the first ellipse is in the right place
+  std::regex r2("<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'");
+  auto ell1 = *std::sregex_iterator(text.begin(), text.end(), r2);
+  REQUIRE_THAT(stod(ell1[1]), Catch::Matchers::WithinAbs(309.1, 0.1));
+  REQUIRE_THAT(stod(ell1[2]), Catch::Matchers::WithinAbs(200.0, 0.1));
+  check_file_hash(nameBase + ".svg");
+}
+
+TEST_CASE("Github5943: bad ellipses for atom end points") {
+  std::string nameBase = "test_github5943";
+  auto m = R"CTAB(ferrocene
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 14 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.619616 1.206807 0.000000 0 CHG=-1
+M  V30 2 C 0.211483 1.768553 0.000000 0
+M  V30 3 C -1.283936 1.861329 0.000000 0
+M  V30 4 C -1.796429 1.358429 0.000000 0
+M  V30 5 C -0.634726 0.966480 0.000000 0
+M  V30 6 C 0.654379 -1.415344 0.000000 0 CHG=-1
+M  V30 7 C 0.249886 -0.858607 0.000000 0
+M  V30 8 C -1.232145 -0.766661 0.000000 0
+M  V30 9 C -1.740121 -1.265073 0.000000 0
+M  V30 10 C -0.580425 -1.662922 0.000000 0
+M  V30 11 C 1.759743 0.755930 0.000000 0
+M  V30 12 C 1.796429 -1.861329 0.000000 0
+M  V30 13 Fe -0.554442 0.032137 0.000000 0 VAL=2
+M  V30 14 * -0.601210 1.478619 0.000000 0
+M  V30 15 * -0.537835 -1.172363 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 2 4 5
+M  V30 3 1 4 3
+M  V30 4 2 2 3
+M  V30 5 1 1 2
+M  V30 6 1 6 10
+M  V30 7 2 9 10
+M  V30 8 1 9 8
+M  V30 9 2 7 8
+M  V30 10 1 6 7
+M  V30 11 1 1 11
+M  V30 12 1 6 12
+M  V30 13 9 14 13 ENDPTS=(5 1 2 3 4 5) ATTACH=ANY
+M  V30 14 9 15 13 ENDPTS=(5 9 10 7 8 6) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(m);
+  {
+    MolDraw2DSVG drawer(300, 300, 300, 300, true);
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    std::regex r("<ellipse cx=.*rx='(\\d+\\.\\d+)' ry='(\\d+\\.\\d+)'");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), r),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 10);
+
+    // all the ellipses should have a radius of roughly 25.2.
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), r);
+    auto match_end = std::sregex_iterator();
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      REQUIRE_THAT(stod(match[1]), Catch::Matchers::WithinAbs(25.2, 0.1));
+      REQUIRE_THAT(stod(match[2]), Catch::Matchers::WithinAbs(25.2, 0.1));
     }
     check_file_hash(nameBase + ".svg");
   }
