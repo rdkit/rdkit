@@ -251,8 +251,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub5511_1.svg", 940106456U},
     {"testGithub5511_2.svg", 1448975272U},
     {"test_github5767.svg", 3153964439U},
-    {"test_github5944.svg", 2858910387U},
     {"test_github5943.svg", 3591000538U},
+    {"test_github5947.svg", 2858910387U},
     {"test_github5767.svg", 3153964439U},
     {"test_github5949.svg", 215754974U}};
 
@@ -6215,8 +6215,8 @@ M  END
   }
 }
 
-TEST_CASE("Github5944: Ellipse extremes not calculated correctly.") {
-  std::string nameBase = "test_github5944";
+TEST_CASE("Github5947: Ellipse extremes not calculated correctly.") {
+  std::string nameBase = "test_github5947";
   auto m = "c1ccccn1"_smiles;
   TEST_ASSERT(m);
   RDDepict::compute2DCoords(*m);
