@@ -509,10 +509,6 @@ TEST_CASE("tracking failure causes") {
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
 
-    std::cerr << "fails: ";
-    std::copy(ps.failures.begin(), ps.failures.end(),
-              std::ostream_iterator<unsigned int>(std::cerr, " "));
-    std::cerr << std::endl;
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
 
@@ -557,10 +553,6 @@ M  END
     ps.maxIterations = 50;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    std::cerr << "fails: ";
-    std::copy(ps.failures.begin(), ps.failures.end(),
-              std::ostream_iterator<unsigned int>(std::cerr, " "));
-    std::cerr << std::endl;
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >
           10);
