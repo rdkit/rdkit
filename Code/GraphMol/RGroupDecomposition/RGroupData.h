@@ -34,9 +34,6 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupData {
   bool is_linker = false;
   bool labelled = false;
 
- private:
-  RGroupData(const RGroupData &rhs);
-
  public:
   RGroupData() {}
 
