@@ -119,8 +119,9 @@ ROMOL_SPTR Normalizer::normalizeFragment(
     const ROMol &mol,
     const std::vector<std::shared_ptr<ChemicalReaction>> &transforms) const {
   ROMOL_SPTR nfrag(new ROMol(mol));
-  MolOps::fastFindRings(
-      *nfrag);  // this doesn't do anything if rings are already there
+  if (!nfrag->getRingInfo()->isInitialized()) {
+    MolOps::fastFindRings(*nfrag);
+  }
   std::set<std::string> seenProductSmiles;
   for (unsigned int i = 0; i < MAX_RESTARTS; ++i) {
     bool loop_break = false;
