@@ -147,12 +147,6 @@ TEST_CASE(
       }
       std::vector<unsigned int> atomCounts{2, 3, 3, 3, 3, 3, 3, 2};
       CHECK(*ao.atomCounts == atomCounts);
-      for (auto i = 0u; i < m->getNumAtoms(); ++i) {
-        std::cerr << " {";
-        std::copy(ao.atomToBits->at(i).begin(), ao.atomToBits->at(i).end(),
-                  std::ostream_iterator<int>(std::cerr, ", "));
-        std::cerr << " }," << std::endl;
-      }
       std::vector<std::vector<std::uint64_t>> atomToBits = {
           {888, 1180},
           {320, 321, 322, 424, 1892},
@@ -177,27 +171,34 @@ TEST_CASE(
       CHECK(fp->getNumOnBits() == ao.bitInfoMap->size());
       std::vector<int> obl;
       fp->getOnBits(obl);
-      for (const auto bid : obl) {
-        INFO(bid);
-        CHECK(ao.bitInfoMap->find(bid) != ao.bitInfoMap->end());
+      // there's an unfortunate bit of information loss happening here
+      // due to the fact that the SparseBitVect uses ints, so we have to
+      // do this test backwards:
+      for (auto pr : *ao.bitInfoMap) {
+        INFO(pr.first);
+        CHECK(std::find(obl.begin(), obl.end(), (int)(pr.first)) != obl.end());
       }
-      for (auto i = 0u; i < m->getNumAtoms(); ++i) {
-        std::cerr << " {";
-        std::copy(ao.atomToBits->at(i).begin(), ao.atomToBits->at(i).end(),
-                  std::ostream_iterator<int>(std::cerr, ", "));
-        std::cerr << " }," << std::endl;
-      }
+      // for (auto i = 0u; i < m->getNumAtoms(); ++i) {
+      //   std::cerr << " {";
+      //   std::copy(ao.atomToBits->at(i).begin(), ao.atomToBits->at(i).end(),
+      //             std::ostream_iterator<std::uint64_t>(std::cerr, ", "));
+      //   std::cerr << " }," << std::endl;
+      // }
       std::vector<unsigned int> atomCounts{2, 3, 3, 3, 3, 3, 3, 2};
       CHECK(*ao.atomCounts == atomCounts);
       std::vector<std::vector<std::uint64_t>> atomToBits = {
-          {1046732804},
-          {1046732804, 1046733088, 1046733089},
-          {1046732804, 1046733088, 1046733089},
-          {1046732804, 1046733088, 1046733089},
-          {1046733088, 1046733089, 1046733188},
-          {1046733088, 1046733089, 1046733188},
-          {1046733088, 1046733089, 1046733188},
-          {1046733188}};
+          {1845699452, 3458649244},
+          {391602504, 391602505, 391602506, 3018396076, 3209717616},
+          {391602504, 391602505, 391602506, 1746877920, 1746877921, 1746877922,
+           3245328504},
+          {391602504, 391602505, 391602506, 647852508, 647852509, 1746877920,
+           1746877921, 1746877922},
+          {391602504, 391602505, 391602506, 647852508, 647852509, 1746877920,
+           1746877921, 1746877922},
+          {391602504, 391602505, 391602506, 1746877920, 1746877921, 1746877922,
+           4225765616},
+          {10672060, 391602504, 391602505, 391602506, 3149364416},
+          {1781206876, 3391828556}};
       CHECK(*ao.atomToBits == atomToBits);
     }
   }
