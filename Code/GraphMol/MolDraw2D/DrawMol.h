@@ -159,7 +159,7 @@ class DrawMol {
                       const std::pair<DrawColour, DrawColour> &cols);
   void makeWavyBond(Bond *bond, double offset,
                     const std::pair<DrawColour, DrawColour> &cols);
-  void makeDativeBond(Bond *bond,
+  void makeDativeBond(Bond *bond, double offset,
                       const std::pair<DrawColour, DrawColour> &cols);
   void makeZeroBond(Bond *bond, const std::pair<DrawColour, DrawColour> &cols,
                     const DashPattern &dashPattern);
