@@ -110,7 +110,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void setActiveAtom(Atom *atom);
   //! \overload
   void setActiveAtom(unsigned int idx);
-  //! removes an Atom from the molecule
+  //! removes an Atom from the molecule and any associated Bonds
   void removeAtom(unsigned int idx);
   //! \overload
   void removeAtom(Atom *atom);
