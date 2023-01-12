@@ -640,38 +640,33 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
 bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
                             const detail::EmbedArgs &eargs,
-                            const EmbedParameters &) {
+                            const EmbedParameters &, double linearTol = 1e-3) {
   for (const auto &itm : *eargs.stereoDoubleBonds) {
-    auto a0 = itm.first[0];
-    auto a1 = itm.first[1];
-    auto a2 = itm.first[2];
-    auto a3 = itm.first[3];
-    RDGeom::Point3D p0((*positions[a0])[0], (*positions[a0])[1],
-                       (*positions[a0])[2]);
-    RDGeom::Point3D p1((*positions[a1])[0], (*positions[a1])[1],
-                       (*positions[a1])[2]);
-    RDGeom::Point3D p2((*positions[a2])[0], (*positions[a2])[1],
-                       (*positions[a2])[2]);
-    RDGeom::Point3D p3((*positions[a3])[0], (*positions[a3])[1],
-                       (*positions[a3])[2]);
+    const auto &a0 = *positions[itm.first[0]];
+    const auto &a1 = *positions[itm.first[1]];
+    const auto &a2 = *positions[itm.first[2]];
+    RDGeom::Point3D p0(a0[0], a0[1], a0[2]);
+    RDGeom::Point3D p1(a1[0], a1[1], a1[2]);
+    RDGeom::Point3D p2(a2[0], a2[1], a2[2]);
 
     // check for linear arrangements
     auto v1 = p1 - p0;
     v1.normalize();
     auto v2 = p1 - p2;
     v2.normalize();
-    if (v1.dotProduct(v2) + 1.0 < 1e-3) {
-      // std::cerr << "linear1 " << a0 << "-" << a1 << "=" << a2 << ": "
-      //           << v1.dotProduct(v2) << std::endl;
+    if (v1.dotProduct(v2) + 1.0 < linearTol) {
+      std::cerr << "f1" << std::endl;
       return false;
     }
+
+    const auto &a3 = *positions[itm.first[3]];
+    RDGeom::Point3D p3(a3[0], a3[1], a3[2]);
     v1 = p2 - p3;
     v1.normalize();
     v2 = p2 - p1;
     v2.normalize();
-    if (v1.dotProduct(v2) + 1.0 < 1e-3) {
-      // std::cerr << "linear2 " << a0 << "-" << a1 << "=" << a2 << ": "
-      //           << v1.dotProduct(v2) << std::endl;
+    if (v1.dotProduct(v2) + 1.0 < linearTol) {
+      std::cerr << "f2" << std::endl;
       return false;
     }
 
@@ -679,9 +674,7 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     auto dihedral = RDGeom::computeDihedralAngle(p0, p1, p2, p3);
     if ((dihedral - M_PI_2) * itm.second < 0) {
       // they are pointing in different directions
-      // std::cerr << "  !!! " << a0 << " " << a1 << " " << a2 << " " << a3 << "
-      // "
-      //           << dihedral << " " << itm.second << std::endl;
+      std::cerr << "f3" << std::endl;
       return false;
     }
   }
@@ -746,8 +739,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   }
 
   RDKit::double_source_type *rng = nullptr;
-  RDKit::rng_type *generator;
-  RDKit::uniform_double *distrib;
+  RDKit::rng_type *generator = nullptr;
+  RDKit::uniform_double *distrib = nullptr;
   CHECK_INVARIANT(seed >= -1,
                   "random seed must either be positive, zero, or negative one");
   if (seed > -1) {
