@@ -7,6 +7,8 @@
 
 ## Backwards incompatible changes
 
+- The ring-finding functions will now run even if the molecule already has ring information. Older versions of the RDKit would return whatever ring information was present, even if it had been generated using a different algorithm.
+
 ## Bug Fixes:
 
 ## Cleanup work:

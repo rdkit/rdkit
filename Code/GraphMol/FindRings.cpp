@@ -858,14 +858,10 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT *res) {
 
 int findSSSR(const ROMol &mol, VECT_INT_VECT &res) {
   res.resize(0);
-  // check if SSSR's are already on the molecule
   if (mol.getRingInfo()->isInitialized()) {
-    res = mol.getRingInfo()->atomRings();
-    return rdcast<int>(res.size());
-  } else {
-    mol.getRingInfo()->initialize();
+    mol.getRingInfo()->reset();
   }
-
+  mol.getRingInfo()->initialize();
   RINGINVAR_SET invars;
 
   unsigned int nats = mol.getNumAtoms();
@@ -1132,11 +1128,7 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res) {
 
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
-  if (!mol.getRingInfo()->isInitialized()) {
-    findSSSR(mol, sssrs);
-  } else {
-    sssrs = mol.getRingInfo()->atomRings();
-  }
+  findSSSR(mol, sssrs);
 
   res.reserve(sssrs.size());
   for (const auto &r : sssrs) {
@@ -1265,13 +1257,12 @@ void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
 }
 }  // end of anonymous namespace
 void fastFindRings(const ROMol &mol) {
-  // std::cerr<<"ffr"<<std::endl;
-  // check if SSSR's are already on the molecule
   if (mol.getRingInfo()->isInitialized()) {
-    return;
-  } else {
-    mol.getRingInfo()->initialize();
+    mol.getRingInfo()->reset();
   }
+
+  mol.getRingInfo()->initialize();
+
   VECT_INT_VECT res;
   res.resize(0);
 
