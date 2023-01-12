@@ -2895,3 +2895,20 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
     }
   }
 }
+
+TEST_CASE("Stop caching ring finding results") {
+  SECTION("basics") {
+    auto m = "C1C2CC1CCC2"_smiles;
+    REQUIRE(m);
+    // symmetrized result
+    CHECK(m->getRingInfo()->numRings() == 3);
+    auto rcount = MolOps::findSSSR(*m);
+    CHECK(rcount == 2);
+    CHECK(m->getRingInfo()->numRings() == 2);
+    rcount = MolOps::symmetrizeSSSR(*m);
+    CHECK(rcount == 3);
+    CHECK(m->getRingInfo()->numRings() == 3);
+    MolOps::fastFindRings(*m);
+    CHECK(m->getRingInfo()->numRings() == 2);
+  }
+}
