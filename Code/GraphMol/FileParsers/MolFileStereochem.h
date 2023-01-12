@@ -57,11 +57,22 @@ RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);
 RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
     const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
-//! Forces use of atom wedging from MolBlock if present.
-/*
+//! Apply atom wedging from MolBlock.
+/*!
  \param mol: molecule to have its wedges altered
+ \returns true if MolBlock atom wedging information was found, false if not
  */
-RDKIT_FILEPARSERS_EXPORT void reapplyMolBlockWedging(ROMol &mol);
+RDKIT_FILEPARSERS_EXPORT bool reapplyMolBlockWedging(ROMol &mol);
+//! Remove atom wedging information from MolBlock.
+/*!
+ \param mol: molecule to have its atom wedging information from MolBlock cleared
+ */
+RDKIT_FILEPARSERS_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
+//! Remove atom wedging information from MolBlock.
+/*!
+ \param mol: molecule to have its atom wedging information from MolBlock cleared
+ */
+RDKIT_FILEPARSERS_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 
 //! Set double bonds with unspecified stereo to STEREOANY and add wavy bonds to
 ///  potential stereocenters with unspecified chirality
