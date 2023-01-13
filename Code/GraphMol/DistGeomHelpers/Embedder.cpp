@@ -642,6 +642,8 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
                             const detail::EmbedArgs &eargs,
                             const EmbedParameters &, double linearTol = 1e-3) {
   for (const auto &itm : *eargs.stereoDoubleBonds) {
+    // itm is a pair with [controlling_atoms], sign
+    // where the sign tells us about cis/trans
     const auto &a0 = *positions[itm.first[0]];
     const auto &a1 = *positions[itm.first[1]];
     const auto &a2 = *positions[itm.first[2]];
@@ -650,12 +652,17 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     RDGeom::Point3D p2(a2[0], a2[1], a2[2]);
 
     // check for linear arrangements
+
     auto v1 = p1 - p0;
     v1.normalize();
     auto v2 = p1 - p2;
     v2.normalize();
+    // this is:
+    //
+    //               a3
+    //              /
+    //   ao - a1 = a2
     if (v1.dotProduct(v2) + 1.0 < linearTol) {
-      std::cerr << "f1" << std::endl;
       return false;
     }
 
@@ -665,8 +672,12 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     v1.normalize();
     v2 = p2 - p1;
     v2.normalize();
+    // this is:
+    //
+    //    a1 = a2 - a3
+    //   /
+    //  a0
     if (v1.dotProduct(v2) + 1.0 < linearTol) {
-      std::cerr << "f2" << std::endl;
       return false;
     }
 
@@ -674,7 +685,6 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     auto dihedral = RDGeom::computeDihedralAngle(p0, p1, p2, p3);
     if ((dihedral - M_PI_2) * itm.second < 0) {
       // they are pointing in different directions
-      std::cerr << "f3" << std::endl;
       return false;
     }
   }
@@ -838,7 +848,7 @@ void findStereoDoubleBonds(
            bnd->getBeginAtomIdx(), bnd->getEndAtomIdx(),
            static_cast<unsigned>(bnd->getStereoAtoms()[1])},
           sign};
-      stereoDoubleBonds.push_back(std::move(elem));
+      stereoDoubleBonds.push_back(elem);
     }
   }
 }
