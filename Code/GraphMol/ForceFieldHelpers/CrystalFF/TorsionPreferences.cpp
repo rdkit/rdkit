@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2017 Sereina Riniker
+//  Copyright (C) 2017-2023 Sereina Riniker and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -49,15 +49,6 @@ const unsigned int MIN_MACROCYCLE_SIZE = 9;
 #include "torsionPreferences_v2.in"
 #include "torsionPreferences_smallrings.in"
 #include "torsionPreferences_macrocycles.in"
-
-//! A structure used to the experimental torsion patterns
-struct ExpTorsionAngle {
-  std::string smarts;
-  std::vector<double> V;
-  std::vector<int> signs;
-  std::unique_ptr<const ROMol> dp_pattern;
-  unsigned int idx[4];
-};
 
 // class to store the experimental torsion angles
 class ExpTorsionAngleCollection {
@@ -148,10 +139,12 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
   //    << d_params[d_params.size()-1].smarts << std::endl;
 }
 
-void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
-                             bool useExpTorsions, bool useSmallRingTorsions,
-                             bool useMacrocycleTorsions, bool useBasicKnowledge,
-                             unsigned int version, bool verbose) {
+void getExperimentalTorsions(
+    const RDKit::ROMol &mol, CrystalFFDetails &details,
+    std::vector<std::pair<unsigned int, const ExpTorsionAngle *>> &torsionBonds,
+    bool useExpTorsions, bool useSmallRingTorsions, bool useMacrocycleTorsions,
+    bool useBasicKnowledge, unsigned int version, bool verbose) {
+  torsionBonds.clear();
   unsigned int nb = mol.getNumBonds();
   unsigned int na = mol.getNumAtoms();
   if (!na) {
@@ -234,6 +227,7 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           doneBonds[bid2] = 1;
         }
         if (!doneBonds[bid2]) {
+          torsionBonds.emplace_back(bid2, &param);
           doneBonds[bid2] = 1;
           std::vector<int> atoms(4);
           atoms[0] = aid1;
@@ -247,11 +241,11 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
             // extra formatting provided by the logger after every entry;
             std::stringstream sstr;
             sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
-                 << " " << aid4 << ", (";
+                 << " " << aid4 << ", [";
             for (unsigned int i = 0; i < param.V.size() - 1; ++i) {
-              sstr << param.V[i] << ", ";
+              sstr << "(" << param.signs[i] << " " << param.V[i] << "), ";
             }
-            sstr << param.V[param.V.size() - 1] << ") ";
+            sstr << "(" << param.signs.back() << " " << param.V.back() << ")] ";
             BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
           }
         }  // if not donePaths
@@ -283,8 +277,8 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           unsigned int isBoundToSP2O = 0;  // false
           for (const auto atomX : mol.atomNeighbors(atom2)) {
             atoms[i] = atomX->getIdx();
-            // if the central atom is sp2 carbon and is bound to sp2 oxygen, set
-            // a flag
+            // if the central atom is sp2 carbon and is bound to sp2 oxygen,
+            // set a flag
             if (!isBoundToSP2O) {
               isBoundToSP2O =
                   ((at2AtomicNum == 6) && (atomX->getAtomicNum() == 8) &&
@@ -299,8 +293,8 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           atoms.push_back(isBoundToSP2O);
           details.improperAtoms.push_back(atoms);
           /*if (verbose) {
-            std::cout << "out-of-plane bend: " << atoms[0] << " " << atoms[1] <<
-          " "
+            std::cout << "out-of-plane bend: " << atoms[0] << " " << atoms[1]
+          << " "
                 << atoms[2] << " " << atoms[3] << std::endl;
           }*/
         }
@@ -346,8 +340,8 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
           fconsts[1] = 100.0;  // 7.0 is MMFF force constants for aromatic rings
           details.expTorsionAngles.emplace_back(signs, fconsts);
           /*if (verbose) {
-            std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 << "
-          " << aid4 << std::endl;
+            std::cout << "SP2 ring: " << aid1 << " " << aid2 << " " << aid3 <<
+          " " << aid4 << std::endl;
           }*/
         }
 
@@ -356,6 +350,16 @@ void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
   }      // if useBasicKnowledge
 
 }  // end function
+
+void getExperimentalTorsions(const RDKit::ROMol &mol, CrystalFFDetails &details,
+                             bool useExpTorsions, bool useSmallRingTorsions,
+                             bool useMacrocycleTorsions, bool useBasicKnowledge,
+                             unsigned int version, bool verbose) {
+  std::vector<std::pair<unsigned int, const ExpTorsionAngle *>> torsionBonds;
+  getExperimentalTorsions(mol, details, torsionBonds, useExpTorsions,
+                          useSmallRingTorsions, useMacrocycleTorsions,
+                          useBasicKnowledge, version, verbose);
+}
 
 }  // namespace CrystalFF
 }  // namespace ForceFields

@@ -664,6 +664,14 @@ class TestCase(unittest.TestCase):
             a1,a2,a3,a4 = [conf.GetAtomPosition(i) for i in torsion]
             self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1,a2,a3,a4)), 3.14, delta = 0.1)
 
+    def testGetTorsionBonds(self):
+        m = Chem.AddHs(Chem.MolFromSmiles('CCCC'))
+        ts = rdDistGeom.GetExperimentalTorsions(m)
+        self.assertEqual(len(ts),1)
+        self.assertEqual(ts[0][0],1)
+        self.assertEqual(ts[0][1]["smarts"],'[!#1:1][CX4H2:2]!@;-[CX4H2:3][!#1:4]')
+        self.assertEqual(list(ts[0][1]["V"]),[0.0, 0.0, 4.0, 0.0, 0.0, 0.0])
+        self.assertEqual(list(ts[0][1]["signs"]),[1, 1, 1, 1, 1, 1])
 
 if __name__ == '__main__':
     unittest.main()
