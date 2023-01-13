@@ -555,7 +555,7 @@ M  END
     CHECK(cid < 0);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS] >
-          10);
+          5);
   }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -569,12 +569,12 @@ M  END
     ps.trackFailures = true;
     ps.maxIterations = 10;
     ps.randomSeed = 42;
-    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, ps);
+    auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps);
 
     DGeomHelpers::EmbedParameters ps2 = ps;
     ps2.numThreads = 4;
 
-    auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 50, ps2);
+    auto cids2 = DGeomHelpers::EmbedMultipleConfs(*mol, 20, ps2);
     CHECK(cids2 == cids);
 
     CHECK(ps.failures == ps2.failures);

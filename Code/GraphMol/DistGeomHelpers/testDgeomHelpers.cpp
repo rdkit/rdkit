@@ -928,11 +928,11 @@ void testRandomCoords() {
       const Conformer &conf1 = m->getConformer(0);
       const Conformer &conf2 = m2->getConformer(0);
 #if 0
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m2) << std::endl;
-      BOOST_LOG(rdInfoLog) << "---" << std::endl;
-      BOOST_LOG(rdInfoLog) << MolToMolBlock(*m) << std::endl;
-      BOOST_LOG(rdInfoLog) << "-----------------------" << std::endl;
+      BOOST_LOG(rdWarningLog) << "-----------------------" << std::endl;
+      BOOST_LOG(rdWarningLog) << MolToMolBlock(*m2) << std::endl;
+      BOOST_LOG(rdWarningLog) << "---" << std::endl;
+      BOOST_LOG(rdWarningLog) << MolToMolBlock(*m) << std::endl;
+      BOOST_LOG(rdWarningLog) << "-----------------------" << std::endl;
 #endif
       for (unsigned int i = 0; i < nat; i++) {
         RDGeom::Point3D pt1i = conf1.getAtomPos(i);

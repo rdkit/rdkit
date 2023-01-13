@@ -772,17 +772,17 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
           embedParams.failures[EmbedFailureCauses::FIRST_MINIMIZATION]++;
-        } else {
-          gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs,
-                                                            embedParams);
-          if (!gotCoords) {
-            if (embedParams.trackFailures) {
+        }
+      } else {
+        gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs,
+                                                          embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
-              std::lock_guard<std::mutex> lock(GetFailMutex());
+            std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-              embedParams
-                  .failures[EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS]++;
-            }
+            embedParams
+                .failures[EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS]++;
           }
         }
       }
@@ -840,7 +840,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       }
     }
 
-  }    // while
+  }  // while
   if (seed > -1) {
     delete rng;
     delete generator;
