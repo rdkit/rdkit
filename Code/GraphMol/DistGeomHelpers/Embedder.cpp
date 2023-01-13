@@ -41,16 +41,21 @@
 
 //#define DEBUG_EMBEDDING 1
 
+#ifdef M_PI_2
+#undef M_PI_2
+#endif
+
 namespace {
-const double ERROR_TOL = 0.00001;
+constexpr double M_PI_2 = 1.57079632679489661923;
+constexpr double ERROR_TOL = 0.00001;
 // these tolerances, all to detect and filter out bogus conformations, are a
 // delicate balance between sensitive enough to detect obviously bad
 // conformations but not so sensitive that a bunch of ok conformations get
 // filtered out, which slows down the whole conformation generation process
-const double MAX_MINIMIZED_E_PER_ATOM = 0.05;
-const double MAX_MINIMIZED_E_CONTRIB = 0.20;
-const double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
-const double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
+constexpr double MAX_MINIMIZED_E_PER_ATOM = 0.05;
+constexpr double MAX_MINIMIZED_E_CONTRIB = 0.20;
+constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
+constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 }  // namespace
 
 namespace RDKit {
