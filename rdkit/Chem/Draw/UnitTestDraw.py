@@ -211,6 +211,37 @@ class TestCase(unittest.TestCase):
     self.assertIn("class='note'", svg)
 
   def testMolsMatrixToLinear(self):
+
+    # TODO Move to Draw/__init__.py when get dev env set up
+    def _MolsMatrixToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix):
+      # Check that each item in mols is a list
+      # TODO Extend to other matrix inputs
+      for mol_row in mols_matrix:
+        if not isinstance(mol_row, list):
+          raise ValueError("Each element in mols_matrix must be a list.")
+      
+      # TODO Check that other matrices (if provided) are same length,
+      #      and each element (sub-list) is the same length, as mols_matrix
+
+      # Convert mols_matrix to 1D list
+      def longest_row(matrix):
+        return max(len(row) for row in matrix)
+
+      molsPerRow = longest_row(mols_matrix)
+
+      def pad_list(input_list, length_should_be, pad_with = ""):
+        length = len(input_list)
+        padding_count = length_should_be - length
+        padded_list = input_list + [pad_with] * padding_count
+        return padded_list
+
+      def pad_matrix(input_matrix, pad_with = ""):
+          row_length = longest_row(input_matrix)
+          padded_matrix = [pad_list(row, row_length, pad_with) for row in input_matrix]
+          return padded_matrix
+
+      return mols, molsPerRow, legends, highlightAtomLists, highlightBondLists
+
     s = "NC(C)C(=O)"
     mol = Chem.MolFromSmiles(s)
     natoms = mol.GetNumAtoms()
