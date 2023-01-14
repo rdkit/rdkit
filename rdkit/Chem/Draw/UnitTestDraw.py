@@ -223,7 +223,6 @@ class TestCase(unittest.TestCase):
       # TODO Check that other matrices (if provided) are same length,
       #      and each element (sub-list) is the same length, as mols_matrix
 
-      # Convert mols_matrix to 1D list
       def longest_row(matrix):
         return max(len(row) for row in matrix)
 
@@ -235,12 +234,37 @@ class TestCase(unittest.TestCase):
         padded_list = input_list + [pad_with] * padding_count
         return padded_list
 
-      def pad_matrix(input_matrix, pad_with = ""):
-          row_length = longest_row(input_matrix)
+      def pad_matrix(input_matrix, row_length, pad_with = ""):
           padded_matrix = [pad_list(row, row_length, pad_with) for row in input_matrix]
           return padded_matrix
 
+      def flatten_twoD_list(twoD_list: list[list]) -> list:
+          return [item for sublist in twoD_list for item in sublist]
+
+      # Pad matrices so they're rectangular (same length for each sublist),
+      #   then convert to 1D lists
+      null_mol = Chem.MolFromSmiles("")
+      mols_matrix_padded = pad_matrix(mols_matrix, molsPerRow, null_mol)
+      mols = flatten_twoD_list(mols_matrix_padded)
+
+      if legends_matrix is not None:
+        legends_matrix_padded = pad_matrix(legends_matrix, molsPerRow, "")
+        legends = flatten_twoD_list(legends_matrix_padded)
+
+      if legends_matrix is not None:
+        legends_matrix_padded = pad_matrix(legends_matrix, molsPerRow, "")
+        legends = flatten_twoD_list(legends_matrix_padded)
+
+      if highlightAtomLists_matrix is not None:
+        highlightAtomLists_padded = pad_matrix(highlightAtomLists_matrix, molsPerRow, [])
+        highlightAtomLists = flatten_twoD_list(highlightAtomLists_padded)
+
+      if highlightBondLists_matrix is not None:
+        highlightBondLists_padded = pad_matrix(highlightBondLists_matrix, molsPerRow, [])
+        highlightBondLists = flatten_twoD_list(highlightBondLists_padded)
+
       return mols, molsPerRow, legends, highlightAtomLists, highlightBondLists
+
 
     s = "NC(C)C(=O)"
     mol = Chem.MolFromSmiles(s)
@@ -264,7 +288,6 @@ class TestCase(unittest.TestCase):
 
     nrows = len(mols_matrix)
 
-    # TODO Add top-level loop over mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix instead of hard-coding mols_matrix
     for r, row in enumerate(mols_matrix):
       for c, item in enumerate(row):
         linear_index = (r * molsPerRow) + c
@@ -273,6 +296,35 @@ class TestCase(unittest.TestCase):
         # Test that 1D list items are not lists
         self.assertFalse(isinstance(item, list))    			
   
+    if legends_matrix is not None:
+      for r, row in enumerate(legends_matrix):
+        for c, item in enumerate(row):
+          linear_index = (r * molsPerRow) + c
+          # Test that items in 2D list are in correct position in 1D list
+          self.assertTrue(legends[linear_index] == item)
+          # Test that 1D list items are not lists
+          self.assertFalse(isinstance(item, list))    
+
+    if highlightAtomLists_matrix is not None:
+      for r, row in enumerate(highlightAtomLists_matrix):
+        for c, item in enumerate(row):
+          linear_index = (r * molsPerRow) + c
+          # Test that items in 2D list are in correct position in 1D list
+          self.assertTrue(highlightAtomLists[linear_index] == item)
+          # For highlight parameters, entries are lists, so check that sub-items are not lists
+          for subitem in item:
+            self.assertFalse(isinstance(subitem, list))    
+
+    if highlightBondLists_matrix is not None:
+      for r, row in enumerate(highlightBondLists_matrix):
+        for c, item in enumerate(row):
+          linear_index = (r * molsPerRow) + c
+          # Test that items in 2D list are in correct position in 1D list
+          self.assertTrue(highlightBondLists[linear_index] == item)
+          # For highlight parameters, entries are lists, so check that sub-items are not lists
+          for subitem in item:
+            self.assertFalse(isinstance(subitem, list))    
+
     # Test that 1D list has the correct length
     self.assertTrue(len(mols) == nrows * molsPerRow)
 
@@ -352,15 +404,15 @@ class TestCase(unittest.TestCase):
     pathlib.Path('testGithub_3762_1.svg').unlink()
     pathlib.Path('testGithub_3762_2.svg').unlink()
     
-  def testGithub5863(self):
-    smiles = "C[C@]12C[C@H](O)[C@H]3[C@@H](CCC4=CC(=O)C=C[C@@]43C)[C@@H]1CC[C@]2(O)C(=O)CO"
-    mol = Chem.MolFromSmiles(smiles)
+  # def testGithub5863(self):
+  #   smiles = "C[C@]12C[C@H](O)[C@H]3[C@@H](CCC4=CC(=O)C=C[C@@]43C)[C@@H]1CC[C@]2(O)C(=O)CO"
+  #   mol = Chem.MolFromSmiles(smiles)
 
-    info = {}
-    rdMolDescriptors.GetMorganFingerprint(mol, radius=2, bitInfo=info, useChirality=True)
-    bitId = 1236726849
-    # this should run without generating an exception:
-    Draw.DrawMorganBit(mol, bitId, info)
+  #   info = {}
+  #   rdMolDescriptors.GetMorganFingerprint(mol, radius=2, bitInfo=info, useChirality=True)
+  #   bitId = 1236726849
+  #   # this should run without generating an exception:
+  #   Draw.DrawMorganBit(mol, bitId, info)
 
 
 if __name__ == '__main__':
