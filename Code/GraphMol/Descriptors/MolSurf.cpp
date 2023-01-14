@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007-2018 Greg Landrum
+//  Copyright (C) 2007-2023 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
 #include <vector>
 #include <algorithm>
+#include <boost/format.hpp>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -103,9 +104,15 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
                            bool force, bool includeSandP) {
   TEST_ASSERT(Vi.size() >= mol.getNumAtoms());
   double res = 0;
-  if (!force && mol.hasProp(common_properties::_tpsaAtomContribs)) {
-    mol.getProp(common_properties::_tpsaAtomContribs, Vi);
-    mol.getProp(common_properties::_tpsa, res);
+  std::string pname =
+      (boost::format("%s-%s") % common_properties::_tpsa % includeSandP).str();
+  std::string contribsName =
+      (boost::format("%s-%s") % common_properties::_tpsaAtomContribs %
+       includeSandP)
+          .str();
+  if (!force && mol.hasProp(contribsName)) {
+    mol.getProp(contribsName, Vi);
+    mol.getProp(pname, res);
     return res;
   }
   unsigned int nAtoms = mol.getNumAtoms();
@@ -333,14 +340,16 @@ double getTPSAAtomContribs(const ROMol &mol, std::vector<double> &Vi,
     res += tmp;
   }
 
-  mol.setProp(common_properties::_tpsaAtomContribs, Vi, true);
-  mol.setProp(common_properties::_tpsa, res, true);
+  mol.setProp(contribsName, Vi, true);
+  mol.setProp(pname, res, true);
   return res;
 }
 double calcTPSA(const ROMol &mol, bool force, bool includeSandP) {
-  if (!force && mol.hasProp(common_properties::_tpsa)) {
+  std::string pname =
+      (boost::format("%s-%s") % common_properties::_tpsa % includeSandP).str();
+  if (!force && mol.hasProp(pname)) {
     double res;
-    mol.getProp(common_properties::_tpsa, res);
+    mol.getProp(pname, res);
     return res;
   }
   std::vector<double> contribs;
