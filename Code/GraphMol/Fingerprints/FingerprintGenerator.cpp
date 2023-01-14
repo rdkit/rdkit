@@ -283,6 +283,24 @@ void duplicateAdditionalOutputBit(AdditionalOutput &oldAO,
     }
   }
 }
+
+void setupTempAdditionalOutput(RDKit::FingerprintFuncArguments &args,
+                               AdditionalOutput &countSimulationOutput,
+                               size_t numAtoms) {
+  if (args.additionalOutput->atomToBits) {
+    countSimulationOutput.allocateAtomToBits();
+  }
+  if (args.additionalOutput->atomCounts) {
+    countSimulationOutput.allocateAtomCounts();
+  }
+  if (args.additionalOutput->bitInfoMap) {
+    countSimulationOutput.allocateBitInfoMap();
+  }
+  if (args.additionalOutput->bitPaths) {
+    countSimulationOutput.allocateBitPaths();
+  }
+  reinitAdditionalOutput(*args.additionalOutput, numAtoms);
+}
 }  // namespace
 
 template <typename OutputType>
@@ -315,18 +333,7 @@ FingerprintGenerator<OutputType>::getSparseFingerprint(
   AdditionalOutput countSimulationOutput;
   AdditionalOutput *origAO = nullptr;
   if (dp_fingerprintArguments->df_countSimulation && args.additionalOutput) {
-    if (args.additionalOutput->atomToBits) {
-      countSimulationOutput.allocateAtomToBits();
-    }
-    if (args.additionalOutput->atomCounts) {
-      countSimulationOutput.allocateAtomCounts();
-    }
-    if (args.additionalOutput->bitInfoMap) {
-      countSimulationOutput.allocateBitInfoMap();
-    }
-    if (args.additionalOutput->bitPaths) {
-      countSimulationOutput.allocateBitPaths();
-    }
+    setupTempAdditionalOutput(args, countSimulationOutput, mol.getNumAtoms());
     origAO = args.additionalOutput;
     args.additionalOutput = &countSimulationOutput;
   }
@@ -397,21 +404,7 @@ FingerprintGenerator<OutputType>::getFingerprint(
   AdditionalOutput countSimulationOutput;
   AdditionalOutput *origAO = nullptr;
   if (dp_fingerprintArguments->df_countSimulation && args.additionalOutput) {
-    if (args.additionalOutput->atomToBits) {
-      countSimulationOutput.allocateAtomToBits();
-    }
-    if (args.additionalOutput->atomCounts) {
-      countSimulationOutput.allocateAtomCounts();
-    }
-    if (args.additionalOutput->bitInfoMap) {
-      countSimulationOutput.allocateBitInfoMap();
-    }
-    if (args.additionalOutput->bitPaths) {
-      countSimulationOutput.allocateBitPaths();
-    }
-    reinitAdditionalOutput(countSimulationOutput, mol.getNumAtoms());
-    reinitAdditionalOutput(*args.additionalOutput, mol.getNumAtoms());
-
+    setupTempAdditionalOutput(args, countSimulationOutput, mol.getNumAtoms());
     origAO = args.additionalOutput;
     args.additionalOutput = &countSimulationOutput;
   }
