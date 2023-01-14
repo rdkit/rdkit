@@ -258,7 +258,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github5943.svg", 1111951851U},
     {"test_github5947.svg", 2858910387U},
     {"test_github5767.svg", 3153964439U},
-    {"test_github5949.svg", 1324215728U}};
+    {"test_github5949.svg", 1324215728U},
+    {"test_github5963.svg", 582369551U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6427,111 +6428,44 @@ M  END
   }
 }
 
-TEST_CASE("Github5963: wrong bond end on wedge") {
+TEST_CASE("Github5963: bond end wrong on wedge") {
   std::string nameBase = "test_github5963";
-  auto m = R"CTAB(S-MeOPh-benzyl-sulfoxide
-  TEST    09202213353D
-
-  0  0  0     0               999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 31 32 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 H 0.196641 -3.231362 -1.275853 0
-M  V30 2 C 0.973113 -2.604889 -0.845277 0
-M  V30 3 C 1.847067 -3.128677 0.106455 0
-M  V30 4 H 1.754109 -4.164755 0.420270 0
-M  V30 5 C 2.845742 -2.321288 0.647379 0
-M  V30 6 H 3.533853 -2.726819 1.384112 0
-M  V30 7 C 2.968949 -0.994892 0.242774 0
-M  V30 8 H 3.752968 -0.368401 0.659016 0
-M  V30 9 C 2.092088 -0.459547 -0.707867 0
-M  V30 10 C 2.182272 0.972547 -1.088004 0
-M  V30 11 C 1.091993 -1.278564 -1.246251 0
-M  V30 12 H 0.405267 -0.868972 -1.983370 0
-M  V30 13 H -0.047664 0.197905 1.871936 0
-M  V30 14 C -0.725661 0.437131 1.057415 0
-M  V30 15 C -0.331049 1.333587 0.076647 0
-M  V30 16 C -1.186023 1.669476 -0.974122 0
-M  V30 17 H -0.877638 2.383935 -1.734156 0
-M  V30 18 C -2.435271 1.079305 -1.050264 0
-M  V30 19 H -3.117739 1.320322 -1.859764 0
-M  V30 20 C -2.840633 0.163867 -0.066533 0
-M  V30 21 O -4.085639 -0.352836 -0.228955 0
-M  V30 22 C -1.985732 -0.153642 0.994275 0
-M  V30 23 H -2.281669 -0.852730 1.767733 0
-M  V30 24 H 3.207665 1.356530 -1.081448 0
-M  V30 25 H 1.708344 1.201171 -2.048311 0
-M  V30 26 S 1.305074 2.096004 0.164211 0
-M  V30 27 O 1.881505 1.740943 1.536027 0
-M  V30 28 C -4.554597 -1.290776 0.751308 0
-M  V30 29 H -5.556241 -1.576585 0.428703 0
-M  V30 30 H -3.910361 -2.177249 0.785950 0
-M  V30 31 H -4.604059 -0.827826 1.744021 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 4 2 3
-M  V30 3 4 2 11
-M  V30 4 1 3 4
-M  V30 5 4 3 5
-M  V30 6 1 5 6
-M  V30 7 4 5 7
-M  V30 8 1 7 8
-M  V30 9 4 7 9
-M  V30 10 1 9 10
-M  V30 11 4 9 11
-M  V30 12 1 10 24
-M  V30 13 1 10 25
-M  V30 14 1 10 26
-M  V30 15 1 11 12
-M  V30 16 1 13 14
-M  V30 17 4 14 15
-M  V30 18 4 14 22
-M  V30 19 4 15 16
-M  V30 20 1 15 26
-M  V30 21 1 16 17
-M  V30 22 4 16 18
-M  V30 23 1 18 19
-M  V30 24 4 18 20
-M  V30 25 1 20 21
-M  V30 26 4 20 22
-M  V30 27 1 21 28
-M  V30 28 1 22 23
-M  V30 29 2 26 27
-M  V30 30 1 28 29
-M  V30 31 1 28 30
-M  V30 32 1 28 31
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-  REQUIRE(m);
   {
-    MolDraw2DSVG drawer(300, 300, 300, 300, false);
+    auto m = "COc1ccc([S@@](=O)Cc2ccccc2)cc1"_smiles;
+    MolDraw2DSVG drawer(300, 300, 300, 300, true);
     RDDepict::compute2DCoords(*m);
-    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     std::string text = drawer.getDrawingText();
-    std::ofstream outs(nameBase + "_1.svg");
+    std::ofstream outs(nameBase + ".svg");
     outs << text;
     outs.flush();
     outs.close();
-    std::cout << RDKit::MolToSmiles(*m) << std::endl;
-    //    check_file_hash(nameBase + ".svg");
-  }
-  {
-    auto m = "COc1ccc([S@](=O)Cc2ccccc2)cc1"_smiles;
-    MolDraw2DSVG drawer(300, 300, 300, 300, false);
-    RDDepict::compute2DCoords(*m);
-    drawer.drawOptions().addAtomIndices = true;
-    drawer.drawMolecule(*m);
-    drawer.finishDrawing();
-    std::string text = drawer.getDrawingText();
-    std::ofstream outs(nameBase + "_2.svg");
-    outs << text;
-    outs.flush();
-    outs.close();
-    std::cout << RDKit::MolToSmiles(*m) << std::endl;
+    std::regex bond7(
+        "'bond-7 atom-6 atom-8' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) Z'");
+    // there should be 3 matches for bond7, of which we are interested in the
+    // 2nd
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond7),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 3);
+    auto bond7_match = std::sregex_iterator(text.begin(), text.end(), bond7);
+    ++bond7_match;
+    std::smatch match7 = *bond7_match;
+    std::regex bond8(
+        "'bond-8 atom-8 atom-9' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)'");
+    // only 1 bond8 match
+    auto bond8_match = std::sregex_iterator(text.begin(), text.end(), bond8);
+    std::smatch match8 = *bond8_match;
+    // the middle point of the triangle should be the same as the start of the
+    // line
+    Point2D midtri(std::stod(match7[3]), std::stod(match7[4]));
+    Point2D startline(std::stod(match8[1]), std::stod(match8[2]));
+    REQUIRE_THAT((midtri - startline).length(),
+                 Catch::Matchers::WithinAbs(0.0, 0.1));
+    check_file_hash(nameBase + ".svg");
   }
 }
