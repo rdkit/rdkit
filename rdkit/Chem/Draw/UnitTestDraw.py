@@ -7,18 +7,15 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-import re
 import os
 import pathlib
+import re
 import sys
 import tempfile
 import unittest
 
 from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit.Chem import Draw
-from rdkit.Chem import rdDepictor
-from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import AllChem, Draw, rdDepictor, rdMolDescriptors
 
 try:
   from rdkit.Chem.Draw import IPythonConsole
@@ -212,6 +209,41 @@ class TestCase(unittest.TestCase):
     svg = Draw.MolsToGridImage(mols, legends=legends, molsPerRow=3, subImgSize=(300, 300),
                                useSVG=True, drawOptions=dopts)
     self.assertIn("class='note'", svg)
+
+  def testMolsMatrixToLinear(self):
+    s = "NC(C)C(=O)"
+    mol = Chem.MolFromSmiles(s)
+    natoms = mol.GetNumAtoms()
+    nbonds = mol.GetNumBonds()
+
+    # Set up matrix with oligimer count for the molecules
+    repeats = [[1], [0, 2], [3, 0, 4]]
+    mols_matrix = [[Chem.MolFromSmiles(s * count) for count in row] for row in repeats]
+    legends_matrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
+
+    def ith_item_list(nunits, items_per_unit, i = 0):
+        return [((n * items_per_unit) + i) for n in range(nunits)]
+
+    highlightAtomLists_matrix = [[ith_item_list(count, natoms, 0) for count in row] for row in repeats]
+    # Another bond is created when molecule is oligomerized, so to keep the bond type consistent,
+    #   so make items per unit one more than the number of bonds
+    highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
+
+    mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsMatrixToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
+
+    nrows = len(mols_matrix)
+
+    # TODO Add top-level loop over mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix instead of hard-coding mols_matrix
+    for r, row in enumerate(mols_matrix):
+      for c, item in enumerate(row):
+        linear_index = (r * molsPerRow) + c
+        # Test that items in 2D list are in correct position in 1D list
+        self.assertTrue(mols[linear_index] == item)
+        # Test that 1D list items are not lists
+        self.assertFalse(isinstance(item, list))    			
+  
+    # Test that 1D list has the correct length
+    self.assertTrue(len(mols) == nrows * molsPerRow)
 
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
