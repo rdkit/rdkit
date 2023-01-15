@@ -213,7 +213,7 @@ class TestCase(unittest.TestCase):
   def testMolsMatrixToLinear(self):
 
     # TODO Move to Draw/__init__.py when get dev env set up
-    def _MolsMatrixToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix):
+    def _MolsNestedToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix):
       # Check that each item in mols is a list
       # TODO Extend to other matrix inputs
       for mol_row in mols_matrix:
@@ -327,7 +327,7 @@ class TestCase(unittest.TestCase):
     #   make items per unit one more than the number of bonds
     highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
 
-    mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsMatrixToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
+    mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
 
     nrows = len(mols_matrix)
 
