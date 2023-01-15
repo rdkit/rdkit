@@ -3055,8 +3055,8 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           p1 = 1;
           p2 = 2;
         } else if (wedge->points_.size() == 9) {
-          p1 = 5;
-          p2 = 6;
+          p1 = 4;
+          p2 = 5;
         }
         // want the p1 or p2 that is furthest from the 3rd atom - make it p1
         if (p1 != -1 && p2 != -1) {
