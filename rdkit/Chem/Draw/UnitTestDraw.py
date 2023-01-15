@@ -324,7 +324,7 @@ class TestCase(unittest.TestCase):
     highlightAtomLists_matrix = [[ith_item_list(count, natoms, 0) for count in row] for row in repeats]
 
     # Another bond is created when molecule is oligomerized, so to keep the bond type consistent,
-    #   so make items per unit one more than the number of bonds
+    #   make items per unit one more than the number of bonds
     highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
 
     mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsMatrixToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
