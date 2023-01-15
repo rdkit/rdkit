@@ -229,3 +229,22 @@ TEST_CASE(
               *m1, Descriptors::NumRotatableBondsOptions::StrictLinkages) == 3);
   }
 }
+
+TEST_CASE("TPSA caching ignores options") {
+  SECTION("with force") {
+    auto m = "OCCS"_smiles;
+    REQUIRE(m);
+    bool force = true;
+    double tv1 = Descriptors::calcTPSA(*m, force, false);
+    double tv2 = Descriptors::calcTPSA(*m, force, true);
+    CHECK(tv2 > tv1);
+  }
+  SECTION("no force") {
+    auto m = "OCCS"_smiles;
+    REQUIRE(m);
+    bool force = false;
+    double tv1 = Descriptors::calcTPSA(*m, force, false);
+    double tv2 = Descriptors::calcTPSA(*m, force, true);
+    CHECK(tv2 > tv1);
+  }
+}

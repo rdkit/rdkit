@@ -258,7 +258,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github5943.svg", 1111951851U},
     {"test_github5947.svg", 2858910387U},
     {"test_github5767.svg", 3153964439U},
-    {"test_github5949.svg", 1324215728U}};
+    {"test_github5949.svg", 1324215728U},
+    {"test_github5963.svg", 582369551U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6423,6 +6424,48 @@ M  END
     auto h2s2 = (ends2[0] - ends2[2]).length();
     REQUIRE_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.1));
 
+    check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE("Github5963: bond end wrong on wedge") {
+  std::string nameBase = "test_github5963";
+  {
+    auto m = "COc1ccc([S@@](=O)Cc2ccccc2)cc1"_smiles;
+    MolDraw2DSVG drawer(300, 300, 300, 300, true);
+    RDDepict::compute2DCoords(*m);
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    std::regex bond7(
+        "'bond-7 atom-6 atom-8' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+) Z'");
+    // there should be 3 matches for bond7, of which we are interested in the
+    // 2nd
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond7),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 3);
+    auto bond7_match = std::sregex_iterator(text.begin(), text.end(), bond7);
+    ++bond7_match;
+    std::smatch match7 = *bond7_match;
+    std::regex bond8(
+        "'bond-8 atom-8 atom-9' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)'");
+    // only 1 bond8 match
+    auto bond8_match = std::sregex_iterator(text.begin(), text.end(), bond8);
+    std::smatch match8 = *bond8_match;
+    // the middle point of the triangle should be the same as the start of the
+    // line
+    Point2D midtri(std::stod(match7[3]), std::stod(match7[4]));
+    Point2D startline(std::stod(match8[1]), std::stod(match8[2]));
+    REQUIRE_THAT((midtri - startline).length(),
+                 Catch::Matchers::WithinAbs(0.0, 0.1));
     check_file_hash(nameBase + ".svg");
   }
 }
