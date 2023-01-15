@@ -657,7 +657,7 @@ class TestCase(unittest.TestCase):
         smiles_mol = Chem.MolFromSmiles(smiles)
         mol = Chem.AddHs(smiles_mol)
         params = AllChem.ETKDGv3()
-        params.randomSeen = 42
+        params.randomSeed = 42
         AllChem.EmbedMolecule(mol, params)
         conf = mol.GetConformer(0)
         for torsion in get_atom_mapping(mol):
