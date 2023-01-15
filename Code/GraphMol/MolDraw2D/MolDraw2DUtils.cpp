@@ -51,6 +51,7 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
                           bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   if (kekulize) {
+    RDLog::LogStateSetter blocker;
     MolOps::KekulizeIfPossible(
         mol, false);  // kekulize, but keep the aromatic flags!
   }
