@@ -1,7 +1,7 @@
-// $Id: Mol2FileParser.cpp 1457 2009-04-03 09:05:17Z landrgr1 $
 //
-//  Copyright (c) 2008, Novartis Institutes for BioMedical Research Inc.
-//  All rights reserved.
+//  Copyright (c) 2008-2023, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
+//   All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -307,7 +307,6 @@ bool cleanUpMol2Substructures(RWMol *res) {
       // negatively charged carboxylates with O.co2
       // according to Tripos, those should only appear in carboxylates and
       // phosphates,
-      // FIX: do it also for phosphates and sulphates ...
       if (at->getDegree() != 1) {
         BOOST_LOG(rdWarningLog)
             << "Warning - O.co2 with degree >1." << std::endl;
@@ -321,7 +320,7 @@ bool cleanUpMol2Substructures(RWMol *res) {
       std::string tATT;
       nbr->getProp(common_properties::_TriposAtomType, tATT);
       // carboxylates
-      if (tATT == "C.2" || tATT == "S.o2") {
+      if (tATT == "C.2" || tATT == "S.o2" || tATT == "P.3") {
         // this should return only the bond between C.2 and O.co2
         Bond *b = res->getBondBetweenAtoms(idx, *nbrIdxIt);
         if (!isFixed[*nbrIdxIt]) {
