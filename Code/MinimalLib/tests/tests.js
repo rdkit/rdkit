@@ -41,7 +41,7 @@ function test_basics() {
     assert.equal(mol2.get_smiles(),"Oc1ccccc1");
 
     var mjson = mol.get_json();
-    assert(mjson.search("commonchem")>0);
+    assert(mjson.search("rdkitjson")>0);
     var mol3 = RDKitModule.get_mol(mjson);
     assert.equal(mol3.is_valid(),1);
     assert.equal(mol3.get_smiles(),"Oc1ccccc1");
@@ -985,6 +985,10 @@ M  END
     props = mol.get_prop_list(false, false);
     assert.equal(props.get(0), "test1");
     assert.equal(props.get(1), "test2");
+    assert.equal(mol.clear_prop("test3"), false);
+    assert.equal(mol.has_prop("test2"), true);
+    assert.equal(mol.clear_prop("test2"), true);
+    assert.equal(mol.has_prop("test2"), false);
 }
 
 function test_highlights() {
@@ -1022,17 +1026,25 @@ function test_add_chiral_hs() {
     var mol = RDKitModule.get_mol(`
   MJ201100                      
 
-  9 10  0  0  1  0  0  0  0  0999 V2000
-    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  2  1  1  1  0  0  0
+ 18 21  0  0  1  0  0  0  0  0999 V2000
+   -0.8540   -1.4441    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3019   -0.8310    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5185   -0.9172    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8540   -0.1635    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6825    0.6434    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.1379    0.7296    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5504    1.4441    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4734   -0.0239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2409    0.3885    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6609   -1.2726    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2130   -1.8857    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.9580   -2.6703    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1511   -2.8419    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.5990   -2.2287    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0201   -1.7143    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.5720   -2.3275    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3171   -3.1121    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5100   -3.2835    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
   2  3  1  0  0  0  0
   4  3  1  0  0  0  0
   4  5  1  0  0  0  0
@@ -1042,26 +1054,71 @@ function test_add_chiral_hs() {
   8  9  1  1  0  0  0
   8  2  1  0  0  0  0
   4  9  1  1  0  0  0
+  2  1  1  1  0  0  0
+ 10 11  1  0  0  0  0
+ 11 12  2  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 14  2  0  0  0  0
+  1 10  2  0  0  0  0
+  1 14  1  0  0  0  0
+ 15 16  2  0  0  0  0
+ 16 17  1  0  0  0  0
+ 11 15  1  0  0  0  0
+ 17 18  2  0  0  0  0
+ 12 18  1  0  0  0  0
+M  END
+`);
+    var quinoline_scaffold = RDKitModule.get_mol(`
+  MJ201100                      
+
+ 10 11  0  0  1  0  0  0  0  0999 V2000
+   -8.1001    2.8219    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.8145    2.4094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.8145    1.5843    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -8.1001    1.1718    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3856    1.5843    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.3856    2.4094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6711    1.1718    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.9566    1.5842    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.9566    2.4092    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.6711    2.8218    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  7  8  2  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  2  0  0  0  0
+  5  7  1  0  0  0  0
+ 10  6  1  0  0  0  0
+  1  2  2  0  0  0  0
+  6  1  1  0  0  0  0
 M  END
 `);
     var svg1 = mol.get_svg_with_highlights(JSON.stringify({width: 350, height: 300}));
     assert(svg1.includes("width='350px'"));
     assert(svg1.includes("height='300px'"));
     assert(svg1.includes("</svg>"));
-    assert(svg1.includes("atom-8"));
-    assert(svg1.includes("atom-9"));
-    assert(svg1.includes("atom-10"));
+    assert(svg1.includes("atom-17"));
+    assert(svg1.includes("atom-18"));
+    assert(svg1.includes("atom-19"));
     var svg2 = mol.get_svg_with_highlights(JSON.stringify({
         width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
     }));
     assert(svg2.includes("width='350px'"));
     assert(svg2.includes("height='300px'"));
     assert(svg2.includes("</svg>"));
-    assert(svg2.includes("atom-8"));
-    assert(!svg2.includes("atom-9"));
-    assert(!svg2.includes("atom-10"));
+    assert(svg2.includes("atom-17"));
+    assert(!svg2.includes("atom-18"));
+    assert(!svg2.includes("atom-19"));
     assert(mol.get_molblock().includes("4  3  1  6"));
-    assert(!mol.get_molblock(JSON.stringify({ useMolBlockWedging: true })).includes("4  3  1  6"));
+    var molblock = mol.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(!molblock.includes("4  3  1  6"));
+    assert(molblock.includes("6  7  1  1"));
+    assert(JSON.parse(mol.generate_aligned_coords(quinoline_scaffold, JSON.stringify({ acceptFailure: false, alignOnly: true }))));
+    molblock = mol.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(!molblock.includes("4  3  1  6"));
+    assert(molblock.includes("6  7  1  6"));
 }
 
 function test_get_frags() {

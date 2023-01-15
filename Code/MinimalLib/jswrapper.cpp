@@ -482,6 +482,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<bool(const std::string &, const std::string &)>(
                     &JSMol::set_prop))
       .function("get_prop", &JSMol::get_prop)
+      .function("clear_prop", &JSMol::clear_prop)
       .function("condense_abbreviations",
                 select_overload<std::string()>(&JSMol::condense_abbreviations))
       .function("condense_abbreviations",

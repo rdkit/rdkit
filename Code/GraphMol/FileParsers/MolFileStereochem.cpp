@@ -575,8 +575,7 @@ void DetectBondStereoChemistry(ROMol &mol, const Conformer *conf) {
   MolOps::detectBondStereochemistry(mol, conf->getId());
 }
 
-bool reapplyMolBlockWedging(ROMol &mol) {
-  bool hasMolBlockWedging = false;
+void reapplyMolBlockWedging(ROMol &mol) {
   MolOps::clearSingleBondDirFlags(mol);
   for (auto b : mol.bonds()) {
     int explicit_unknown_stereo = -1;
@@ -588,7 +587,6 @@ bool reapplyMolBlockWedging(ROMol &mol) {
     int bond_dir = -1;
     if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
                                  bond_dir)) {
-      hasMolBlockWedging = true;
       if (bond_dir == 1) {
         b->setBondDir(Bond::BEGINWEDGE);
       } else if (bond_dir == 6) {
@@ -597,7 +595,6 @@ bool reapplyMolBlockWedging(ROMol &mol) {
     }
     int cfg = -1;
     if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
-      hasMolBlockWedging = true;
       switch (cfg) {
         case 1:
           b->setBondDir(Bond::BEGINWEDGE);
@@ -616,15 +613,14 @@ bool reapplyMolBlockWedging(ROMol &mol) {
       }
     }
   }
-  return hasMolBlockWedging;
 }
 
 void clearMolBlockWedgingInfo(ROMol &mol) {
   for (auto b : mol.bonds()) {
     if (b->hasProp(common_properties::_MolFileBondStereo)) {
-      b->clearProp(common_properties::_MolFileBondCfg);
+      b->clearProp(common_properties::_MolFileBondStereo);
     }
-    if (b->hasProp(common_properties::_MolFileBondStereo)) {
+    if (b->hasProp(common_properties::_MolFileBondCfg)) {
       b->clearProp(common_properties::_MolFileBondCfg);
     }
   }

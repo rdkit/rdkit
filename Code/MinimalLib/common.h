@@ -467,10 +467,10 @@ std::string molblock_helper(RWMol &mol, const char *details_json, bool forceV300
     LPT_OPT_GET(addChiralHs);
   }
   if (useMolBlockWedging) {
-    useMolBlockWedging = reapplyMolBlockWedging(mol);
+    reapplyMolBlockWedging(mol);
   }
   if (addChiralHs) {
-    MolDraw2DUtils::prepareMolForDrawing(mol, false, true, !useMolBlockWedging, false, false);
+    MolDraw2DUtils::prepareMolForDrawing(mol, false, true, false, false, false);
   }
   return MolToMolBlock(mol, includeStereo, -1, kekulize, forceV3000);
 }
@@ -914,7 +914,7 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
                     [](auto &pair) { std::swap(pair.first, pair.second); });
       MolTransforms::transformConformer(mol.getConformer(), trans);
       auto zRot = trans.getVal(2, 2);
-      if (zRot > -1.00001 && zRot < -0.99999) {
+      if (zRot < 0.0 && fabs(zRot) > 0.99) {
         invertMolBlockWedgingInfo(mol);
       }
     } else if (acceptFailure) {

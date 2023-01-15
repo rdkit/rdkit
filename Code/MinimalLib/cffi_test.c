@@ -20,17 +20,25 @@
 static const char molblock_native_wedging[] = "\n\
   MJ201100                      \n\
 \n\
-  9 10  0  0  1  0  0  0  0  0999 V2000\n\
-    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
-  2  1  1  1  0  0  0\n\
+ 18 21  0  0  1  0  0  0  0  0999 V2000\n\
+   -0.8540   -1.4441    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.3019   -0.8310    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.5185   -0.9172    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.8540   -0.1635    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.6825    0.6434    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.1379    0.7296    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.5504    1.4441    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.4734   -0.0239    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    0.2409    0.3885    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.6609   -1.2726    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.2130   -1.8857    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.9580   -2.6703    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.1511   -2.8419    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.5990   -2.2287    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.0201   -1.7143    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.5720   -2.3275    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -3.3171   -3.1121    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.5100   -3.2835    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
   2  3  1  0  0  0  0\n\
   4  3  1  0  0  0  0\n\
   4  5  1  0  0  0  0\n\
@@ -40,6 +48,45 @@ static const char molblock_native_wedging[] = "\n\
   8  9  1  1  0  0  0\n\
   8  2  1  0  0  0  0\n\
   4  9  1  1  0  0  0\n\
+  2  1  1  1  0  0  0\n\
+ 10 11  1  0  0  0  0\n\
+ 11 12  2  0  0  0  0\n\
+ 12 13  1  0  0  0  0\n\
+ 13 14  2  0  0  0  0\n\
+  1 10  2  0  0  0  0\n\
+  1 14  1  0  0  0  0\n\
+ 15 16  2  0  0  0  0\n\
+ 16 17  1  0  0  0  0\n\
+ 11 15  1  0  0  0  0\n\
+ 17 18  2  0  0  0  0\n\
+ 12 18  1  0  0  0  0\n\
+M  END\n";
+
+static const char quinoline_scaffold[] = "\n\
+  MJ201100                      \n\
+\n\
+ 10 11  0  0  1  0  0  0  0  0999 V2000\n\
+   -8.1001    2.8219    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -8.8145    2.4094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -8.8145    1.5843    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -8.1001    1.1718    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -7.3856    1.5843    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -7.3856    2.4094    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -6.6711    1.1718    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -5.9566    1.5842    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -5.9566    2.4092    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -6.6711    2.8218    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+  3  4  2  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  5  6  2  0  0  0  0\n\
+  7  8  2  0  0  0  0\n\
+  8  9  1  0  0  0  0\n\
+  9 10  2  0  0  0  0\n\
+  5  7  1  0  0  0  0\n\
+ 10  6  1  0  0  0  0\n\
+  1  2  2  0  0  0  0\n\
+  6  1  1  0  0  0  0\n\
 M  END\n";
 
 void test_io() {
@@ -158,11 +205,22 @@ M  END",
   free(molblock);
   molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
   assert(!strstr(molblock, "4  3  1  6"));
+  assert(strstr(molblock, "6  7  1  1"));
   assert(!strstr(molblock, "H  "));
   free(molblock);
   molblock = get_molblock(pkl2, pkl2_size, "{\"addChiralHs\":true}");
   assert(strstr(molblock, "H  "));
   free(molblock);
+  size_t scaffold_pkl_size;
+  char *scaffold = get_mol(quinoline_scaffold, &scaffold_pkl_size, NULL);
+  assert(set_2d_coords_aligned(&pkl2, &pkl2_size, scaffold, scaffold_pkl_size,
+                                "{\"acceptFailure\":false,\"alignOnly\":true}", NULL));
+  molblock = get_molblock(pkl2, pkl2_size, "{\"useMolBlockWedging\":true}");
+  assert(!strstr(molblock, "4  3  1  6"));
+  assert(strstr(molblock, "6  7  1  6"));
+  assert(!strstr(molblock, "H  "));
+  free(molblock);
+  free(scaffold);
   free(pkl2);
 
   molblock = get_v3kmolblock(pkl, pkl_size, NULL);
@@ -285,18 +343,18 @@ void test_svg() {
   assert(strstr(svg1, "width='350px'"));
   assert(strstr(svg1, "height='300px'"));
   assert(strstr(svg1, "</svg>"));
-  assert(strstr(svg1, "atom-8"));
-  assert(strstr(svg1, "atom-9"));
-  assert(strstr(svg1, "atom-10"));
+  assert(strstr(svg1, "atom-17"));
+  assert(strstr(svg1, "atom-18"));
+  assert(strstr(svg1, "atom-19"));
   char *svg2 = get_svg(
       pkl, pkl_size,
       "{\"width\":350,\"height\":300,\"useMolBlockWedging\":true,\"wedgeBonds\":false,\"addChiralHs\":false}");
   assert(strstr(svg2, "width='350px'"));
   assert(strstr(svg2, "height='300px'"));
   assert(strstr(svg2, "</svg>"));
-  assert(strstr(svg2, "atom-8"));
-  assert(!strstr(svg2, "atom-9"));
-  assert(!strstr(svg2, "atom-10"));
+  assert(strstr(svg2, "atom-17"));
+  assert(!strstr(svg2, "atom-18"));
+  assert(!strstr(svg2, "atom-19"));
   free(svg1);
   free(svg2);
 
