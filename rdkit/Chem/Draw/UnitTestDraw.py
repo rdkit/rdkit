@@ -214,11 +214,18 @@ class TestCase(unittest.TestCase):
 
     # TODO Move to Draw/__init__.py when get dev env set up
     def _MolsNestedToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix):
-      # Check that each item in mols is a list
-      # TODO Extend to other matrix inputs
-      for mol_row in mols_matrix:
-        if not isinstance(mol_row, list):
-          raise ValueError("Each element in mols_matrix must be a list.")
+      # Check that each item in nested lists is a list
+
+      def check_elements_are_lists(nested_list, nested_list_name = ""):
+        for mol_row in nested_list:
+          if not isinstance(mol_row, list):
+            err = f"Each element in nested list {nested_list_name} must be a list."
+            raise ValueError(err)
+
+      check_elements_are_lists(mols_matrix, "mols_matrix")
+      check_elements_are_lists(legends_matrix, "legends_matrix")
+      check_elements_are_lists(highlightAtomLists_matrix, "highlightAtomLists_matrix")
+      check_elements_are_lists(highlightBondLists_matrix, "highlightBondLists_matrix")
       
       # Check that other matrices (if provided) are same length,
       #   and each element (sub-list) is the same length, as mols_matrix
