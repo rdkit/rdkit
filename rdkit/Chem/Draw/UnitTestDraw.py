@@ -220,16 +220,16 @@ class TestCase(unittest.TestCase):
         if not isinstance(mol_row, list):
           raise ValueError("Each element in mols_matrix must be a list.")
       
-      # TODO Check that other matrices (if provided) are same length,
-      #      and each element (sub-list) is the same length, as mols_matrix
+      # Check that other matrices (if provided) are same length,
+      #   and each element (sub-list) is the same length, as mols_matrix
 
       n_mols_rows = len(legends_matrix)
 
       if legends_matrix is not None:
-        n_legends_rows = len(mols_matrix)
+        n_legends_rows = len(legends_matrix)
         if n_legends_rows != n_mols_rows:
           err = f"If legends_matrix is provided it must be the same length (have the same number "
-          err += f"of sub-lists) as mols_matrix {n_mols_rows}; its length is {n_legends_rows}."
+          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_legends_rows}."
           raise ValueError(err)
         for row_index, row in enumerate(legends_matrix):
           if len(row) != len(mols_matrix[row_index]):
@@ -240,12 +240,32 @@ class TestCase(unittest.TestCase):
             raise ValueError(err)
 
       if highlightAtomLists_matrix is not None:
-        highlightAtomLists_padded = pad_matrix(highlightAtomLists_matrix, molsPerRow, [])
-        highlightAtomLists = flatten_twoD_list(highlightAtomLists_padded)
+        n_highlightAtomLists_rows = len(highlightAtomLists_matrix)
+        if n_highlightAtomLists_rows != n_mols_rows:
+          err = f"If highlightAtomLists_matrix is provided it must be the same length (have the same number "
+          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightAtomLists_rows}."
+          raise ValueError(err)
+        for row_index, row in enumerate(highlightAtomLists_matrix):
+          if len(row) != len(mols_matrix[row_index]):
+            err = f"If highlightAtomLists_matrix is provided each of its sub-lists must be the same length "
+            err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
+            err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
+            err += f"while its length in highlightAtomLists_matrix is {len(row)}."
+            raise ValueError(err)
 
       if highlightBondLists_matrix is not None:
-        highlightBondLists_padded = pad_matrix(highlightBondLists_matrix, molsPerRow, [])
-        highlightBondLists = flatten_twoD_list(highlightBondLists_padded)
+        n_highlightBondLists_rows = len(highlightBondLists_matrix)
+        if n_highlightBondLists_rows != n_mols_rows:
+          err = f"If highlightBondLists_matrix is provided it must be the same length (have the same number "
+          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightBondLists_rows}."
+          raise ValueError(err)
+        for row_index, row in enumerate(highlightBondLists_matrix):
+          if len(row) != len(mols_matrix[row_index]):
+            err = f"If highlightBondLists_matrix is provided each of its sub-lists must be the same length "
+            err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
+            err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
+            err += f"while its length in highlightBondLists_matrix is {len(row)}."
+            raise ValueError(err)
 
 
       def longest_row(matrix):
@@ -296,16 +316,13 @@ class TestCase(unittest.TestCase):
     repeats = [[1], [0, 2], [3, 0, 4]]
     mols_matrix = [[Chem.MolFromSmiles(s * count) for count in row] for row in repeats]
 
-    # Commenting out for debugging only!
-    # legends_matrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
-
-    legends_matrix = [["hi"], [], []]
-    print(f"{legends_matrix=}, {len(legends_matrix)=}")
+    legends_matrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
 
     def ith_item_list(nunits, items_per_unit, i = 0):
         return [((n * items_per_unit) + i) for n in range(nunits)]
 
     highlightAtomLists_matrix = [[ith_item_list(count, natoms, 0) for count in row] for row in repeats]
+
     # Another bond is created when molecule is oligomerized, so to keep the bond type consistent,
     #   so make items per unit one more than the number of bonds
     highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
