@@ -232,10 +232,11 @@ python::tuple getExpTorsHelper(const RDKit::ROMol &mol,
   python::list result;
   for (const auto &pr : torsionBonds) {
     python::dict d;
+    d["index"] = pr.first;
     d["smarts"] = pr.second->smarts;
     d["V"] = pr.second->V;
     d["signs"] = pr.second->signs;
-    result.append(python::make_tuple(pr.first, d));
+    result.append(d);
   }
   return python::tuple(result);
 }
