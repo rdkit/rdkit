@@ -133,13 +133,13 @@ void testTorsionPrefs() {
   TEST_ASSERT(details.expTorsionAngles[0].second.size() == 6);
 
   std::vector<
-      std::pair<unsigned int, const ForceFields::CrystalFF::ExpTorsionAngle *>>
+      std::tuple<unsigned int, std::vector<unsigned int>, const ForceFields::CrystalFF::ExpTorsionAngle *>>
       torsionBonds;
   ForceFields::CrystalFF::getExperimentalTorsions(
       *mol, details, torsionBonds, true, false, false, false, 1, false);
   TEST_ASSERT(torsionBonds.size() == 1);
-  TEST_ASSERT(torsionBonds[0].first == 1);
-  TEST_ASSERT(torsionBonds[0].second->smarts ==
+  TEST_ASSERT(std::get<0>(torsionBonds[0]) == 1);
+  TEST_ASSERT(std::get<2>(torsionBonds[0])->smarts ==
               "[!#1:1][CX4H2:2]!@;-[CX4H2:3][!#1:4]");
 
   delete mol;
@@ -151,8 +151,8 @@ void testTorsionPrefs() {
   TEST_ASSERT(details.expTorsionAtoms.size() == 2);
   TEST_ASSERT(details.expTorsionAngles.size() == 2);
   TEST_ASSERT(torsionBonds.size() == 2);
-  TEST_ASSERT(torsionBonds[0].first == 1);
-  TEST_ASSERT(torsionBonds[1].first == 2);
+  TEST_ASSERT(std::get<0>(torsionBonds[0]) == 1);
+  TEST_ASSERT(std::get<0>(torsionBonds[1]) == 2);
   delete mol;
 }
 

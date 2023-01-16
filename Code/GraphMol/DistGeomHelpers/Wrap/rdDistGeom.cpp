@@ -224,7 +224,7 @@ python::tuple getExpTorsHelper(const RDKit::ROMol &mol,
                                unsigned int version = 1, bool verbose = false) {
   ForceFields::CrystalFF::CrystalFFDetails details;
   std::vector<
-      std::pair<unsigned int, const ForceFields::CrystalFF::ExpTorsionAngle *>>
+      std::tuple<unsigned int, std::vector<unsigned int>, const ForceFields::CrystalFF::ExpTorsionAngle *>>
       torsionBonds;
   ForceFields::CrystalFF::getExperimentalTorsions(
       mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
@@ -232,11 +232,12 @@ python::tuple getExpTorsHelper(const RDKit::ROMol &mol,
   python::list result;
   for (const auto &pr : torsionBonds) {
     python::dict d;
-    d["bondIndex"] = pr.first;
-    d["torsionIndex"] = pr.second->torsionIdx;
-    d["smarts"] = pr.second->smarts;
-    d["V"] = pr.second->V;
-    d["signs"] = pr.second->signs;
+    d["bondIndex"] = std::get<0>(pr);
+    d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
+    d["smarts"] = std::get<2>(pr)->smarts;
+    d["V"] = std::get<2>(pr)->V;
+    d["signs"] = std::get<2>(pr)->signs;
+    d["atomIndices"] = std::get<1>(pr);
     result.append(d);
   }
   return python::tuple(result);

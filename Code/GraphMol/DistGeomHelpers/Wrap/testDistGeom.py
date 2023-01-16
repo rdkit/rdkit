@@ -667,6 +667,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(ts[0]["smarts"], '[!#1:1][CX4H2:2]!@;-[CX4H2:3][!#1:4]')
     self.assertEqual(list(ts[0]["V"]), [0.0, 0.0, 4.0, 0.0, 0.0, 0.0])
     self.assertEqual(list(ts[0]["signs"]), [1, 1, 1, 1, 1, 1])
+    self.assertEqual(list(ts[0]["atomIndices"]), [0, 1, 2, 3])
     params = rdDistGeom.ETKDGv3()
     ts = rdDistGeom.GetExperimentalTorsions(m, params)
     self.assertEqual(len(ts), 1)
@@ -675,6 +676,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(ts[0]["torsionIndex"], 229)
     self.assertEqual(list(ts[0]["V"]), [0.0, 0.0, 4.0, 0.0, 0.0, 0.0])
     self.assertEqual(list(ts[0]["signs"]), [1, 1, 1, 1, 1, 1])
+    self.assertEqual(list(ts[0]["atomIndices"]), [0, 1, 2, 3])
 
 
 if __name__ == '__main__':
