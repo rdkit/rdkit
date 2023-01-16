@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2019-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -259,6 +259,7 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github5947.svg", 2858910387U},
     {"test_github5767.svg", 3153964439U},
     {"test_github5949.svg", 1324215728U},
+    {"test_github5974.svg", 394879876U},
     {"test_github5963.svg", 582369551U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -6425,6 +6426,27 @@ M  END
     REQUIRE_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.1));
 
     check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE("Github5974: drawing code should not generate kekulization errors") {
+  SECTION("basics") {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    std::unique_ptr<RWMol> mol(SmilesToMol("c1nccc1", ps));
+    REQUIRE(mol);
+    mol->updatePropertyCache();
+    MolDraw2DSVG drawer(300, 300, -1, -1, false);
+    // the test here is really just that calling drawMolecule() doesn't throw an
+    // exception
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs("test_github5974.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    check_file_hash("test_github5974.svg");
   }
 }
 
