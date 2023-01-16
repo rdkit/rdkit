@@ -241,6 +241,13 @@ python::tuple getExpTorsHelper(const RDKit::ROMol &mol,
   return python::tuple(result);
 }
 
+python::tuple getExpTorsHelper2(
+    const RDKit::ROMol &mol, const RDKit::DGeomHelpers::EmbedParameters &ps) {
+  return getExpTorsHelper(mol, ps.useExpTorsionAnglePrefs,
+                          ps.useSmallRingTorsions, ps.useMacrocycleTorsions,
+                          ps.useBasicKnowledge, ps.ETversion, ps.verbose);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -259,6 +266,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("useMacrocycleTorsions") = true,
        python::arg("useBasicKnowledge") = true, python::arg("ETversion") = 2,
        python::arg("printExpTorsionAngles") = false),
+      "returns information about the bonds corresponding to experimental torsions");
+  python::def(
+      "GetExperimentalTorsions", RDKit::getExpTorsHelper2,
+      (python::arg("mol"), python::arg("embedParams")),
       "returns information about the bonds corresponding to experimental torsions");
 
   std::string docString =
