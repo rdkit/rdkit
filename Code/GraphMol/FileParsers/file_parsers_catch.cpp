@@ -5431,3 +5431,75 @@ M  END
     }
   }
 }
+
+TEST_CASE("Github #3246: O.co2 types around P not correctly handled") {
+  SECTION("as reported") {
+    std::string mol2 = R"MOL2(#       Name: temp
+#       Creating user name:     baliuste
+#       Creation time:  12. 03. 2021 13:50
+
+#       Modifying user name:    baliuste
+#       Modification time:      12. 03. 2021 13:50
+#       Program:        corina 4.3.0 0026  30.10.2019
+
+# @<TRIPOS>ENERGY
+#       0.00
+
+# @<TRIPOS>FOOTER
+# DeltaE 0.0
+@<TRIPOS>MOLECULE
+temp
+  20   21    0    0    0
+SMALL
+NO_CHARGES
+
+
+@<TRIPOS>ATOM
+   1 C1            -1.2321    -0.8688     0.0096 C.3
+   2 C2             0.0021    -0.0041     0.0020 C.2
+   3 N3             1.1984    -0.4572    -0.0118 N.2
+   4 C4             2.2083     0.4335    -0.0167 C.ar
+   5 C5             3.6010     0.2154    -0.0311 C.ar
+   6 C6             4.4640     1.2688    -0.0342 C.ar
+   7 C7             3.9918     2.5739    -0.0227 C.ar
+   8 C8             2.6369     2.8170    -0.0080 C.ar
+   9 C9             1.7390     1.7516    -0.0051 C.ar
+  10 S10           -0.0211     1.7022     0.0114 S.3
+  11 P11            5.1612     3.9606    -0.0264 P.3
+  12 O12            6.4827     3.5313     0.6973 O.co2
+  13 O13            5.4837     4.3678    -1.5044 O.co2
+  14 O14            4.5270     5.1805     0.7248 O.co2
+  15 H15           -1.5398    -1.0718    -1.0162 H
+  16 H16           -1.0139    -1.8089     0.5163 H
+  17 H17           -2.0352    -0.3512     0.5342 H
+  18 H18            3.9859    -0.7936    -0.0402 H
+  19 H19            5.5284     1.0865    -0.0460 H
+  20 H20            2.2703     3.8328     0.0010 H
+@<TRIPOS>BOND
+   1    1    2 1
+   2    1   15 1
+   3    1   16 1
+   4    1   17 1
+   5    2   10 1
+   6    2    3 2
+   7    3    4 1
+   8    4    9 ar
+   9    4    5 ar
+  10    5    6 ar
+  11    5   18 1
+  12    6    7 ar
+  13    6   19 1
+  14    7    8 ar
+  15    7   11 1
+  16    8    9 ar
+  17    8   20 1
+  18    9   10 1
+  19   11   12 ar
+  20   11   13 ar
+  21   11   14 ar
+
+#       End of record)MOL2";
+    std::unique_ptr<RWMol> m(Mol2BlockToMol(mol2));
+    REQUIRE(m);
+  }
+}
