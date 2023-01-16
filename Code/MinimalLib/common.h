@@ -930,6 +930,9 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     match = RDDepict::generateDepictionMatching2DStructure(
         mol, templateMol, confId, refPattern, acceptOrigFailure, false,
         allowRGroups);
+    if (!match.empty()) {
+      clearMolBlockWedgingInfo(mol);
+    }
   }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = oprefer;
@@ -947,7 +950,6 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
       res = "";
     }
   } else {
-    clearMolBlockWedgingInfo(mol);
     rj::Document doc;
     doc.SetObject();
     MinimalLib::get_sss_json(mol, templateMol, match, doc, doc);
