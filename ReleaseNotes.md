@@ -1,3 +1,71 @@
+# Release_2022.09.4
+(Changes relative to Release_2022.09.3)
+
+## Acknowledgements
+Jason Biggs, Jacob Bloom, David Cosgrove, Eloy Félix, Peter Gedeck, 
+Emanuele Guidotti, Gareth Jones, Maria Kadukova, Brian Kelley, Chris Kuenneth, 
+Lucas Morin, Dan Nealschneider, Ricardo Rodriguez-Schmidt. Vincent F. Scalfani,
+Georgi Stoychev, Paolo Tosco, Patrick Walters, josh-collaborationspharma 
+
+## Bug Fixes:
+  - MolFromMol2File: O.co2 atom type correctness check ignores phosphate groups
+ (github #3246 from chmnk)
+  - Segfault with coordgen v3.0.0
+ (github #4845 from lucasmorin222)
+   - Update CoordGen version
+ (github pull #5927 from jasondbiggs)
+  - ChemicalReactionToRxnBlock ignores separateAgents if forceV3000 is true
+ (github #5785 from jacobbloom)
+  - Properties with new lines can create invalid SDFiles
+ (github #5827 from bp-kelley)
+  - Allow building PgSQL RPM and DEB packages
+ (github #5836 from ptosco)
+  - Explicit valence check fails for certain SMILES
+ (github #5849 from josh-collaborationspharma)
+  - Set emsdk path for freetype in emscripten builds
+ (github #5857 from ptosco)
+  - DrawMorganBit fails by default 
+ (github #5863 from eguidotti)
+  - Fix #5810 in V2000 mol files.
+ (github #5864 from eloyfelix)
+  - Chemical drawings should be automatically enabled on Colab
+ (github #5868 from kuelumbus)
+  - use enhanced stereo when uniquifying in SimpleEnum
+ (github #5874 from greglandrum)
+  - Fix documentation example for KeyFromPropHolder
+ (github #5886 from gedeck)
+  - Allow unrecognized atom types when strictParsing=False
+ (github #5891 from greglandrum)
+  - DetermineBonds assigning methyl carbon as tetrahedral center
+ (github #5894 from jasondbiggs)
+  - numpy.float is no longer supported and causes exceptions 
+ (github #5895 from PatWalters)
+  - moldraw2DTest1 failure when building on aarch64
+ (github #5899 from vfscalfani)
+  - DetermineBondOrders running out of memory on medium-sized disconnected structure
+ (github #5902 from jasondbiggs)
+  - clear MDL Rgroup labels from core atoms when we aren't using them
+ (github #5904 from greglandrum)
+  - AvalonTools: Avoid that trailing garbage pollutes the fmemopen buffer
+ (github #5928 from ptosco)
+  - "not" queries in molfiles get inverted
+ (github #5930 from d-b-w)
+  - CalcTPSA() doesn't use options when caching
+ (github #5941 from greglandrum)
+  - Bad drawing of end points for dative bonds
+ (github #5943 from DavidACosgrove)
+  - Extremes of drawn ellipses not being calculated correctly.
+ (github #5947 from DavidACosgrove)
+  - Arrow heads of dative bonds are different sizes
+ (github #5949 from DavidACosgrove)
+  - Wrong bond endpoint when connecting to wedge bond in 2D image
+ (github #5963 from stgeo)
+  - Tiny change to get demo.html to load in legacy browsers
+ (github #5964 from ptosco)
+  - Drawing code should not generate kekulization errors
+ (github #5974 from greglandrum)
+
+
 # Release_2022.09.3
 (Changes relative to Release_2022.09.2)
 
