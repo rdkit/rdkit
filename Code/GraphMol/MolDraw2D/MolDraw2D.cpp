@@ -892,12 +892,8 @@ void MolDraw2D::makeReactionDrawMol(
     std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &mols) {
   mol.updatePropertyCache(false);
   if (drawOptions().prepareMolsBeforeDrawing) {
-    try {
-      RDLog::LogStateSetter blocker;
-      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
-    } catch (const MolSanitizeException &) {
-      // don't need to do anything
-    }
+    RDLog::LogStateSetter blocker;
+    MolOps::KekulizeIfPossible(mol, false);
     MolOps::setHybridization(mol);
   }
   if (!mol.getNumConformers()) {
