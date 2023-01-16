@@ -23,6 +23,7 @@ namespace CrystalFF {
 
 //! A structure used to the experimental torsion patterns
 struct RDKIT_FORCEFIELDHELPERS_EXPORT ExpTorsionAngle {
+  unsigned int torsionIdx;
   std::string smarts;
   std::vector<double> V;
   std::vector<int> signs;

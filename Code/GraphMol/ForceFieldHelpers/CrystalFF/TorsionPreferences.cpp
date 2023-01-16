@@ -106,12 +106,14 @@ ExpTorsionAngleCollection::ExpTorsionAngleCollection(
   std::istringstream inStream(paramData);
 
   std::string inLine = RDKit::getLine(inStream);
+  unsigned int torsionIdx=0;
   while (!inStream.eof()) {
     if (inLine[0] != '#') {
       ExpTorsionAngle angle;
       tokenizer tokens(inLine, tabSep);
       tokenizer::iterator token = tokens.begin();
       angle.smarts = *token;
+      angle.torsionIdx = torsionIdx++;
       ++token;
       for (unsigned int i = 0; i < 12; i += 2) {
         angle.signs.push_back(boost::lexical_cast<int>(*token));
