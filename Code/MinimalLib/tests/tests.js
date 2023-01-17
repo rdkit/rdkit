@@ -13,7 +13,11 @@ const assert = require('assert');
 const {
     performance
   } = require('perf_hooks');
-var initRDKitModule = require("../demo/RDKit_minimal.js");
+const legacySuffix = process.env.RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS === 'ON' ? '_legacy' : '';
+if (legacySuffix) {
+    console.log(`Loading legacy plain JS MinimalLib`);
+}
+var initRDKitModule = require(`../demo/RDKit_minimal${legacySuffix}.js`);
 var RDKitModule;
 const fs       = require('fs');
 const readline = require('readline');
