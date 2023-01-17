@@ -7,9 +7,8 @@ rdkit_library(RGroupDecomposition RGroupDecomp.cpp RGroupDecompData.cpp RGroupDa
 target_compile_definitions(RGroupDecomposition PRIVATE RDKIT_RGROUPDECOMPOSITION_BUILD)
 
 rdkit_headers(
-   RGroupDecomp.h
+   RGroupDecomp.h RGroupDecompParams.h
    DEST GraphMol/RGroupDecomposition)
-
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
@@ -24,11 +23,9 @@ rdkit_test(testRGroupDecompInternals testRGroupInternals.cpp
 rdkit_catch_test(rgroupCatchTests catch_rgd.cpp 
 		LINK_LIBRARIES RGroupDecomposition )
 
-
-
 find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS program_options)
 if(RDK_BUILD_CPP_TESTS AND Boost_FOUND)
-	add_executable(gaExample GaExample.cpp RGroupDecompParams.h)
+	add_executable(gaExample GaExample.cpp)
 	if(NOT Boost_USE_STATIC_LIBS)
 		target_compile_definitions(gaExample PUBLIC -DBOOST_PROGRAM_OPTIONS_DYN_LINK)
 	endif()
