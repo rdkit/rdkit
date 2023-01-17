@@ -52,6 +52,14 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
     NIH = (1u << 5),
     ZINC = (1u << 6),
 
+    CHEMBL_Glaxo = (1u << 7),
+    CHEMBL_Dundee = (1u << 8),
+    CHEMBL_BMS = (1u << 9),
+    CHEMBL_SureChEMBL = (1u << 10),
+    CHEMBL_MLSMR = (1u << 11),
+    CHEMBL_Inpharmatica = (1u << 12),
+    CHEMBL_LINT = (1u << 13),
+
     ALL = PAINS | BRENK | NIH | ZINC
   };
 
