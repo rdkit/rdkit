@@ -136,18 +136,19 @@ void testTorsionPrefs() {
       std::tuple<unsigned int, std::vector<unsigned int>, const ForceFields::CrystalFF::ExpTorsionAngle *>>
       torsionBonds;
   ForceFields::CrystalFF::getExperimentalTorsions(
-      *mol, details, torsionBonds, true, false, false, false, 1, false);
+      *mol, details, torsionBonds, true, false, false, false, 2, false);
   TEST_ASSERT(torsionBonds.size() == 1);
   TEST_ASSERT(std::get<0>(torsionBonds[0]) == 1);
   TEST_ASSERT(std::get<2>(torsionBonds[0])->smarts ==
               "[!#1:1][CX4H2:2]!@;-[CX4H2:3][!#1:4]");
+  TEST_ASSERT(std::get<2>(torsionBonds[0])->torsionIdx == 229);
 
   delete mol;
   mol = SmilesToMol("CCCCC");
   TEST_ASSERT(mol);
 
   ForceFields::CrystalFF::getExperimentalTorsions(
-      *mol, details, torsionBonds, true, false, false, false, 1, false);
+      *mol, details, torsionBonds, true, false, false, false, 2, false);
   TEST_ASSERT(details.expTorsionAtoms.size() == 2);
   TEST_ASSERT(details.expTorsionAngles.size() == 2);
   TEST_ASSERT(torsionBonds.size() == 2);
