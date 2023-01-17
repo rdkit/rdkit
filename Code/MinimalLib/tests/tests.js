@@ -1116,6 +1116,7 @@ function test_hs_in_place() {
         assert(`${descNoH.chi1v}` === '1');
         mol.add_hs_in_place();
         assert(!mol.has_coords());
+        assert(mol.get_smiles() === '[H]C([H])([H])C([H])([H])[H]');
         var descH = JSON.parse(mol.get_descriptors());
         assert(`${descH.chi0v}` === '1');
         assert(`${descH.chi1v}` === '0.25');
@@ -1129,6 +1130,7 @@ function test_hs_in_place() {
         assert(`${descH.chi1v}` === '0.25');
         mol.remove_hs_in_place();
         assert(!mol.has_coords());
+        assert(mol.get_smiles() === 'CC');
         var descNoH = JSON.parse(mol.get_descriptors());
         assert(`${descNoH.chi0v}` === '2');
         assert(`${descNoH.chi1v}` === '1');
@@ -1159,6 +1161,7 @@ M  END
         assert(`${descNoH.chi1v}` === '1');
         mol.add_hs_in_place();
         assert(mol.has_coords());
+        assert(mol.get_smiles() === '[H]C([H])([H])C([H])([H])[H]');
         var descH = JSON.parse(mol.get_descriptors());
         assert(`${descH.chi0v}` === '1');
         assert(`${descH.chi1v}` === '0.25');
@@ -1229,6 +1232,7 @@ M  END
         assert(`${descH.chi1v}` === '0.25');
         mol.remove_hs_in_place();
         assert(mol.has_coords());
+        assert(mol.get_smiles() === 'CC');
         var descNoH = JSON.parse(mol.get_descriptors());
         assert(`${descNoH.chi0v}` === '2');
         assert(`${descNoH.chi1v}` === '1');
