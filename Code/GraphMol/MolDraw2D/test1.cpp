@@ -3718,7 +3718,8 @@ void testGithub2931() {
       outs << text;
       outs.flush();
       outs.close();
-      std::regex r1("<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'"
+      std::regex r1(
+          "<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'"
           " rx='(\\d+\\.\\d+)' ry='(\\d+\\.\\d+)' class='atom-6'");
       std::smatch match = *std::sregex_iterator(text.begin(), text.end(), r1);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
@@ -3726,10 +3727,11 @@ void testGithub2931() {
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
                   std::string::npos);
       // it's an ellipse, so different radii
-      TEST_ASSERT(fabs(stod(match[1]) - 243.8) < 0.1);
-      TEST_ASSERT(fabs(stod(match[2]) - 348.7) < 0.1);
-      TEST_ASSERT(fabs(stod(match[3]) - 12.2) < 0.1);
-      TEST_ASSERT(fabs(stod(match[4]) - 12.5) < 0.1);
+      TEST_ASSERT(fabs(stod(match[1]) - 243) <
+                  1);  // significant variability with freetype version here
+      TEST_ASSERT(fabs(stod(match[2]) - 348.7) < 0.2);
+      TEST_ASSERT(fabs(stod(match[3]) - 12.2) < 0.2);
+      TEST_ASSERT(fabs(stod(match[4]) - 12.5) < 0.2);
 #endif
 #else
       TEST_ASSERT(text.find("stroke:#FF8C00;stroke-width:8.0px") !=
@@ -3754,7 +3756,8 @@ void testGithub2931() {
       outs << text;
       outs.flush();
       outs.close();
-      std::regex r1("<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'"
+      std::regex r1(
+          "<ellipse cx='(\\d+\\.\\d+)' cy='(\\d+\\.\\d+)'"
           " rx='(\\d+\\.\\d+)' ry='(\\d+\\.\\d+)' class='atom-6'");
       std::smatch match = *std::sregex_iterator(text.begin(), text.end(), r1);
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
