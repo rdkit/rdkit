@@ -216,15 +216,14 @@ void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
       new DistGeom::BoundsMatrix(nrows, sdata));
 }
 
-python::tuple getExpTorsHelper(const RDKit::ROMol &mol,
-                               bool useExpTorsions = false,
-                               bool useSmallRingTorsions = false,
-                               bool useMacrocycleTorsions = false,
-                               bool useBasicKnowledge = false,
-                               unsigned int version = 1, bool verbose = false) {
+python::tuple getExpTorsHelper(const RDKit::ROMol &mol, bool useExpTorsions,
+                               bool useSmallRingTorsions,
+                               bool useMacrocycleTorsions,
+                               bool useBasicKnowledge, unsigned int version,
+                               bool verbose) {
   ForceFields::CrystalFF::CrystalFFDetails details;
-  std::vector<
-      std::tuple<unsigned int, std::vector<unsigned int>, const ForceFields::CrystalFF::ExpTorsionAngle *>>
+  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
       torsionBonds;
   ForceFields::CrystalFF::getExperimentalTorsions(
       mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
