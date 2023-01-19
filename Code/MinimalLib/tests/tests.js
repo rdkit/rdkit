@@ -41,7 +41,7 @@ function test_basics() {
     assert.equal(mol2.get_smiles(),"Oc1ccccc1");
 
     var mjson = mol.get_json();
-    assert(mjson.search("commonchem")>0);
+    assert(mjson.search("rdkitjson")>0);
     var mol3 = RDKitModule.get_mol(mjson);
     assert.equal(mol3.is_valid(),1);
     assert.equal(mol3.get_smiles(),"Oc1ccccc1");
@@ -1107,6 +1107,148 @@ function test_get_frags() {
     }
 }
 
+function test_hs_in_place() {
+    {
+        var mol = RDKitModule.get_mol("CC");
+        assert(!mol.has_coords());
+        var descNoH = JSON.parse(mol.get_descriptors());
+        assert(`${descNoH.chi0v}` === '2');
+        assert(`${descNoH.chi1v}` === '1');
+        mol.add_hs_in_place();
+        assert(!mol.has_coords());
+        assert(mol.get_smiles() === '[H]C([H])([H])C([H])([H])[H]');
+        var descH = JSON.parse(mol.get_descriptors());
+        assert(`${descH.chi0v}` === '1');
+        assert(`${descH.chi1v}` === '0.25');
+        mol.delete();
+    }
+    {
+        var mol = RDKitModule.get_mol("C([H])([H])([H])C([H])([H])[H]", JSON.stringify({ removeHs: false }));
+        assert(!mol.has_coords());
+        var descH = JSON.parse(mol.get_descriptors());
+        assert(`${descH.chi0v}` === '1');
+        assert(`${descH.chi1v}` === '0.25');
+        mol.remove_hs_in_place();
+        assert(!mol.has_coords());
+        assert(mol.get_smiles() === 'CC');
+        var descNoH = JSON.parse(mol.get_descriptors());
+        assert(`${descNoH.chi0v}` === '2');
+        assert(`${descNoH.chi1v}` === '1');
+        mol.delete();
+    }
+    {
+        var mol = RDKitModule.get_mol(`
+  MJ201100                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+  -13.9955    5.1116    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.2810    5.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+M  END
+`);
+        assert(mol.has_coords());
+        assert(mol.get_molblock() === `
+     RDKit          2D
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+  -13.9955    5.1116    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.2810    5.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+M  END
+`);
+        var descNoH = JSON.parse(mol.get_descriptors());
+        assert(`${descNoH.chi0v}` === '2');
+        assert(`${descNoH.chi1v}` === '1');
+        mol.add_hs_in_place();
+        assert(mol.has_coords());
+        assert(mol.get_smiles() === '[H]C([H])([H])C([H])([H])[H]');
+        var descH = JSON.parse(mol.get_descriptors());
+        assert(`${descH.chi0v}` === '1');
+        assert(`${descH.chi1v}` === '0.25');
+        assert(mol.get_molblock().includes(`
+     RDKit          2D
+
+  8  7  0  0  0  0  0  0  0  0999 V2000
+  -13.9955    5.1116    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.2810    5.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+`));
+        assert(mol.get_molblock().includes(`  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+  2  7  1  0
+  2  8  1  0
+M  END
+`));
+        mol.delete();
+    }
+    {
+        var mol = RDKitModule.get_mol(`
+  MJ201100                      
+
+  8  7  0  0  0  0  0  0  0  0999 V2000
+  -13.9955    5.1116    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.2810    5.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.4080    5.8260    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.7100    4.6991    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.5830    4.3971    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.8685    4.8096    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.5665    5.9366    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.6935    6.2385    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  5  1  0  0  0  0
+  2  6  1  0  0  0  0
+  2  7  1  0  0  0  0
+  2  8  1  0  0  0  0
+M  END
+`, JSON.stringify({ removeHs: false }));
+        assert(mol.has_coords());
+        assert(mol.get_molblock() === `
+     RDKit          2D
+
+  8  7  0  0  0  0  0  0  0  0999 V2000
+  -13.9955    5.1116    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.2810    5.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.4080    5.8260    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.7100    4.6991    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.5830    4.3971    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.8685    4.8096    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.5665    5.9366    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.6935    6.2385    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  1  3  1  0
+  1  4  1  0
+  1  5  1  0
+  2  6  1  0
+  2  7  1  0
+  2  8  1  0
+M  END
+`);
+        var descH = JSON.parse(mol.get_descriptors());
+        assert(`${descH.chi0v}` === '1');
+        assert(`${descH.chi1v}` === '0.25');
+        mol.remove_hs_in_place();
+        assert(mol.has_coords());
+        assert(mol.get_smiles() === 'CC');
+        var descNoH = JSON.parse(mol.get_descriptors());
+        assert(`${descNoH.chi0v}` === '2');
+        assert(`${descNoH.chi1v}` === '1');
+        assert(mol.get_molblock() === `
+     RDKit          2D
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+  -13.9955    5.1116    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -13.2810    5.5241    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+M  END
+`);
+        mol.delete();
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -1153,6 +1295,7 @@ initRDKitModule().then(function(instance) {
     test_highlights();
     test_add_chiral_hs();
     test_get_frags();
+    test_hs_in_place();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

@@ -488,7 +488,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<std::string(double, bool)>(
                     &JSMol::condense_abbreviations))
       .function("add_hs", &JSMol::add_hs)
+      .function("add_hs_in_place", &JSMol::add_hs_in_place)
       .function("remove_hs", &JSMol::remove_hs)
+      .function("remove_hs_in_place", &JSMol::remove_hs_in_place)
       .function("normalize_depiction",
                 select_overload<double()>(&JSMol::normalize_depiction))
       .function("normalize_depiction",

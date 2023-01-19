@@ -499,6 +499,16 @@ std::string JSMol::remove_hs() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
+bool JSMol::remove_hs_in_place() {
+  if (!d_mol) {
+    return false;
+  }
+
+  MolOps::removeAllHs(*d_mol);
+  MolOps::assignStereochemistry(*d_mol, true, true);
+  return true;
+}
+
 std::string JSMol::add_hs() const {
   if (!d_mol) {
     return "";
@@ -511,6 +521,17 @@ std::string JSMol::add_hs() const {
   int confId = -1;
   bool kekulize = true;
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
+}
+
+bool JSMol::add_hs_in_place() {
+  if (!d_mol) {
+    return false;
+  }
+
+  bool addCoords = (d_mol->getNumConformers() > 0);
+  MolOps::addHs(*d_mol, false, addCoords);
+  MolOps::assignStereochemistry(*d_mol, true, true);
+  return true;
 }
 
 std::string JSMol::condense_abbreviations(double maxCoverage, bool useLinkers) {
