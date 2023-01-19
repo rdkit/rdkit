@@ -245,6 +245,26 @@ void testFilterCatalogThreadedRunner() {
   }
 }
 
+void testFilterCatalogCHEMBL() {
+    FilterCatalogParams params;
+    auto catalogs = {FilterCatalogParams::CHEMBL_BMS,
+        FilterCatalogParams::CHEMBL_LINT,
+        FilterCatalogParams::CHEMBL_Glaxo,
+        FilterCatalogParams::CHEMBL_MLSMR,
+        FilterCatalogParams::CHEMBL_Dundee,
+        FilterCatalogParams::CHEMBL_Inpharmatica,
+        FilterCatalogParams::CHEMBL_SureChEMBL};
+    std::vector<int> entries = {180, 57, 55, 116, 105, 91, 166};
+    int i=0;
+    for (auto catalog : catalogs) {
+        FilterCatalogParams params;
+        params.addCatalog(catalog);
+        FilterCatalog filtercat(params);
+        std::cout << entries[i] << " " <<filtercat.getNumEntries() << std::endl;
+        TEST_ASSERT(entries[i++] == filtercat.getNumEntries());
+    }
+}
+
 int main() {
   RDLog::InitLogs();
   // boost::logging::enable_logs("rdApp.debug");
@@ -252,5 +272,6 @@ int main() {
   testFilterCatalog();
   testFilterCatalogEntry();
   testFilterCatalogThreadedRunner();
+  testFilterCatalogCHEMBL();
   return 0;
 }
