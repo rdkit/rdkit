@@ -109,6 +109,7 @@ struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   std::vector<std::string> atomSymbols;
   std::string atomProperty;
   bool enforceValenceRules=true;
+  bool generateCoordinates=false;
 };
 
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
@@ -118,5 +119,7 @@ RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
     const ROMol &a, const MolzipParams &params = MolzipParams());
 
+RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
+                              const MolzipParams &params = MolzipParams());
 }  // namespace RDKit
 #endif
