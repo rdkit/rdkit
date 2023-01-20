@@ -42,3 +42,5 @@ if sys.hexversion >= 0x30b0000:
                 # pick an element in x[:i+1] with which to exchange x[i]
                 j = floor(random() * (i + 1))
                 x[i], x[j] = x[j], x[i]
+else:
+    shuffle = _random.shuffle
