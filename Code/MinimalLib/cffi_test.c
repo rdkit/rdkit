@@ -10,7 +10,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef WIN32
+#ifndef _USE_MATH_DEFINES
+#define _USE_MATH_DEFINES
+#define _DEFINED_USE_MATH_DEFINES
+#endif
+#endif
 #include <math.h>
+#ifdef _DEFINED_USE_MATH_DEFINES
+#undef _DEFINED_USE_MATH_DEFINES
+#undef _USE_MATH_DEFINES
+#endif
 #include "cffiwrapper.h"
 #ifdef NDEBUG
 #undef NDEBUG
