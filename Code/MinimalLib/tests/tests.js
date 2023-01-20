@@ -18,7 +18,19 @@ var RDKitModule;
 const fs       = require('fs');
 const readline = require('readline');
 
-// the goal here isn't to be comprehensive (the RDKit has tests for that),
+const extractBondCoords = (svg, bondDetail) => {
+    const getStartEndCoords = (bond) => {
+        const m = bond.match(/^.*\s+d='M\s+([^,]+),([^ ]+)\s+L\s+([^,]+),([^ ]+)'.*$/);
+        return [[m[1], m[2]], [m[3], m[4]]];
+    };
+    const bond = svg.split('\n').filter(line => line.includes(bondDetail));
+    assert(bond.length === 1);
+    return getStartEndCoords(bond[0]);
+}
+const angleDegBetweenVectors = (v1, v2) => 180 / Math.PI * Math.acos((v1[0] * v2[0] + v1[1] * v2[1])
+    / Math.sqrt((v1[0] * v1[0] + v1[1] * v1[1]) * (v2[0] * v2[0] + v2[1] * v2[1])));
+
+    // the goal here isn't to be comprehensive (the RDKit has tests for that),
 // just to make sure that the wrappers are working as expected
 function test_basics() {
     var bmol = null;
@@ -1115,10 +1127,413 @@ M  END
     var molblock = mol.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
     assert(!molblock.includes("4  3  1  6"));
     assert(molblock.includes("6  7  1  1"));
-    assert(JSON.parse(mol.generate_aligned_coords(quinoline_scaffold, JSON.stringify({ acceptFailure: false, alignOnly: true }))));
-    molblock = mol.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    // Here we want to test that the original molblock wedging is preserved and inverted
+    // as the coordinates are rigid-body rotated
+    var molCopy;
+    molCopy = RDKitModule.get_mol_copy(mol);
+    assert(JSON.parse(molCopy.generate_aligned_coords(quinoline_scaffold, JSON.stringify({ acceptFailure: false, alignOnly: true }))));
+    molblock = molCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  6 *$/)));
+    assert(!molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  1 *$/)));
     assert(!molblock.includes("4  3  1  6"));
     assert(molblock.includes("6  7  1  6"));
+    molCopy.delete();
+    // Here we want to test that the original molblock wedging gets cleared
+    // and hence wedging is recomputed as the coordinates are re-generated
+    molCopy = RDKitModule.get_mol_copy(mol);
+    assert(JSON.parse(molCopy.generate_aligned_coords(quinoline_scaffold, JSON.stringify({ acceptFailure: false }))));
+    molblock = molCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  6 *$/)));
+    assert(molblock.split('\n').some(line => line.match(/^ [1 ]\d [1 ]\d  [12]  1 *$/)));
+    molCopy.delete();
+    mol.delete();
+    quinoline_scaffold.delete();
+}
+
+function getWedgedMolAndInvertedWedges() {
+    const wedgedMol = RDKitModule.get_mol(`
+     RDKit          2D
+
+ 29 34  0  0  1  0  0  0  0  0999 V2000
+    1.3719    5.1304    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5985    3.7907    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9482    3.7907    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7216    5.1304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2685    5.1304    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8994    3.5835    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5597    4.3569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5597    5.9038    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8994    6.6771    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.2389    5.9038    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.5784    6.6771    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.2389    4.3569    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3719    2.4510    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5985    1.1115    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.3719   -0.2276    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9188   -0.2276    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6921    1.1115    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9188    2.4510    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2389    1.1115    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.0124   -0.2276    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2389   -1.5673    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6921   -1.5673    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8996   -5.0201    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2391   -4.2467    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5777   -6.5331    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9909   -5.9040    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.0124   -2.9070    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.3306   -6.6772    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5784   -5.0201    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  3  4  1  0
+  5  4  1  6
+  5  6  1  0
+  6  7  1  0
+  7  8  1  0
+  9  8  1  1
+  5  9  1  0
+  9 10  1  0
+ 10 11  1  1
+ 10 12  1  0
+  6 12  1  1
+  2 13  1  0
+ 13 14  2  0
+ 14 15  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 17 18  2  0
+ 13 18  1  0
+ 17 19  1  0
+ 19 20  1  0
+ 20 21  1  0
+ 21 22  1  0
+ 16 22  1  0
+ 23 24  1  0
+ 23 25  1  0
+ 25 26  1  0
+ 24 27  1  0
+ 27 26  1  0
+ 26 28  1  0
+ 24 29  1  0
+ 28 29  1  0
+ 21 27  1  0
+M  END
+`);
+
+    const invertedWedges = `  2  1  1  6
+  2  3  1  0
+  3  4  1  0
+  5  4  1  1
+  5  6  1  0
+  6  7  1  0
+  7  8  1  0
+  9  8  1  6
+  5  9  1  0
+  9 10  1  0
+ 10 11  1  6
+ 10 12  1  0
+  6 12  1  6
+  2 13  1  0
+ 13 14  2  0
+ 14 15  1  0
+ 15 16  2  0
+ 16 17  1  0
+ 17 18  2  0
+ 13 18  1  0
+ 17 19  1  0
+ 19 20  1  0
+ 20 21  1  0
+ 21 22  1  0
+ 16 22  1  0
+ 23 24  1  0
+ 23 25  1  0
+ 25 26  1  0
+ 24 27  1  0
+ 27 26  1  0
+ 26 28  1  0
+ 24 29  1  0
+ 28 29  1  0
+ 21 27  1  0
+`;
+    return { wedgedMol, invertedWedges };
+}
+
+function test_wedging_all_within_scaffold() {
+    const { wedgedMol, invertedWedges } = getWedgedMolAndInvertedWedges();
+    const scaffold = RDKitModule.get_mol(`
+     RDKit          2D
+
+ 13 14  0  0  1  0  0  0  0  0999 V2000
+   -1.6549    2.5755    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8814    1.2358    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6653    1.2358    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4385    2.5755    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9854    2.5755    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6161    1.0286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2766    1.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2766    3.3487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6161    4.1222    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9558    3.3487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.2953    4.1222    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9558    1.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6549   -0.1037    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  2  3  1  0
+  3  4  1  0
+  5  4  1  1
+  5  6  1  0
+  6  7  1  6
+  7  8  1  0
+  9  8  1  6
+  5  9  1  0
+  9 10  1  0
+ 10 11  1  6
+ 10 12  1  0
+  6 12  1  0
+  2 13  1  6
+M  END
+`);
+    // the "alignOnly" alignment should succeed and preserve molblock wedging
+    // (inverted with respect to the original molecule)
+    // it should feature a narrow angle between the bridge bonds
+    // as the original geometry of the bridge is preserved
+    let wedgedMolCopy;
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(JSON.parse(wedgedMolCopy.generate_aligned_coords(scaffold, JSON.stringify({ acceptFailure: false, alignOnly: true }))));
+    const mbAlignOnly = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    const svgAlignOnly = wedgedMolCopy.get_svg_with_highlights(JSON.stringify({
+        width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
+    }));
+    {
+        const [xy23, xy26] = extractBondCoords(svgAlignOnly, 'atom-23 atom-26');
+        const [_, xy25] = extractBondCoords(svgAlignOnly, 'atom-26 atom-25');
+        const v1 = [xy23[0] - xy26[0], xy23[1] - xy26[1]];
+        const v2 = [xy25[0] - xy26[0], xy25[1] - xy26[1]];
+        const v1v2Theta = angleDegBetweenVectors(v1, v2);
+        assert(v1v2Theta > 10 && v1v2Theta < 15);
+    }
+    assert(mbAlignOnly.includes(invertedWedges));
+    // the "rebuild" alignment should succeed and preserve molblock wedging
+    // (inverted with respect to the original molecule)
+    // it should feature a much wider angle between the bridge bonds as the
+    // bridged system is entirely rebuilt since it is not part of the scaffold
+    wedgedMolCopy.delete();
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(JSON.parse(wedgedMolCopy.generate_aligned_coords(scaffold, JSON.stringify({ acceptFailure: false }))));
+    const mbRebuild = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    const svgRebuild = wedgedMolCopy.get_svg_with_highlights(JSON.stringify({
+        width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
+    }));
+    {
+        const [xy23, xy26] = extractBondCoords(svgRebuild, 'atom-23 atom-26');
+        const [_, xy25] = extractBondCoords(svgRebuild, 'atom-26 atom-25');
+        const v1 = [xy23[0] - xy26[0], xy23[1] - xy26[1]];
+        const v2 = [xy25[0] - xy26[0], xy25[1] - xy26[1]];
+        const v1v2Theta = angleDegBetweenVectors(v1, v2);
+        assert(v1v2Theta > 105 && v1v2Theta < 110);
+    }
+    assert(mbRebuild.includes(invertedWedges));
+    // the "rebuildCoordGen" alignment should succeed and clear original wedging
+    // it should feature an even wider angle between the bridge bonds as CoordGen
+    // has a template for the bridged system.
+    // Additionally, CoordGen also rebuilds the scaffold, therefore original wedging
+    // should be cleared
+    wedgedMolCopy.delete();
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(JSON.parse(wedgedMolCopy.generate_aligned_coords(scaffold, JSON.stringify({ acceptFailure: false, useCoordGen: true }))));
+    const mbRebuildCoordGen = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    const svgRebuildCoordGen = wedgedMolCopy.get_svg_with_highlights(JSON.stringify({
+        width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
+    }));
+    {
+        const [xy23, xy26] = extractBondCoords(svgRebuildCoordGen, 'atom-23 atom-26');
+        const [_, xy25] = extractBondCoords(svgRebuildCoordGen, 'atom-26 atom-25');
+        const v1 = [xy23[0] - xy26[0], xy23[1] - xy26[1]];
+        const v2 = [xy25[0] - xy26[0], xy25[1] - xy26[1]];
+        const v1v2Theta = angleDegBetweenVectors(v1, v2);
+        assert(v1v2Theta > 145 && v1v2Theta < 150);
+    }
+    assert(!mbRebuildCoordGen.includes(invertedWedges));
+    wedgedMolCopy.delete();
+}
+
+function test_wedging_outside_scaffold() {
+    const { wedgedMol, invertedWedges } = getWedgedMolAndInvertedWedges();
+    const scaffold = RDKitModule.get_mol(`
+     RDKit          2D
+
+  9 10  0  0  1  0  0  0  0  0999 V2000
+   -0.8816    0.5663    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6651    0.5663    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2958   -0.9804    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0435   -0.2072    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0435    1.3395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2958    2.1129    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6355    1.3395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.9750    2.1129    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+    2.6355   -0.2072    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  3  4  1  6
+  4  5  1  0
+  6  5  1  6
+  2  6  1  0
+  6  7  1  0
+  7  8  1  6
+  7  9  1  0
+  3  9  1  0
+M  END
+`);
+    let wedgedMolCopy;
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    // the "alignOnly" alignment should succeed and preserve molblock wedging
+    // (inverted with respect to the original molecule)
+    // it should feature a narrow angle between the bridge bonds
+    // as the original geometry of the bridge is preserved
+    assert(JSON.parse(wedgedMolCopy.generate_aligned_coords(scaffold, JSON.stringify({ acceptFailure: false, alignOnly: true }))));
+    const mbAlignOnly = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    const svgAlignOnly = wedgedMolCopy.get_svg_with_highlights(JSON.stringify({
+        width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
+    }));
+    {
+        const [xy23, xy26] = extractBondCoords(svgAlignOnly, 'atom-23 atom-26');
+        const [_, xy25] = extractBondCoords(svgAlignOnly, 'atom-26 atom-25');
+        const v1 = [xy23[0] - xy26[0], xy23[1] - xy26[1]];
+        const v2 = [xy25[0] - xy26[0], xy25[1] - xy26[1]];
+        const v1v2Theta = angleDegBetweenVectors(v1, v2);
+        assert(v1v2Theta > 10 && v1v2Theta < 15);
+    }
+    assert(mbAlignOnly.includes(invertedWedges));
+    // the "rebuild" alignment should succeed and clear original wedging
+    // it should feature a much wider angle between the bridge bonds as the
+    // bridged system is entirely rebuilt since it is not part of the scaffold
+    wedgedMolCopy.delete();
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(JSON.parse(wedgedMolCopy.generate_aligned_coords(scaffold, JSON.stringify({ acceptFailure: false }))));
+    const mbRebuild = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    const svgRebuild = wedgedMolCopy.get_svg_with_highlights(JSON.stringify({
+        width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
+    }));
+    {
+        const [xy23, xy26] = extractBondCoords(svgRebuild, 'atom-23 atom-26');
+        const [_, xy25] = extractBondCoords(svgRebuild, 'atom-26 atom-25');
+        const v1 = [xy23[0] - xy26[0], xy23[1] - xy26[1]];
+        const v2 = [xy25[0] - xy26[0], xy25[1] - xy26[1]];
+        const v1v2Theta = angleDegBetweenVectors(v1, v2);
+        assert(v1v2Theta > 105 && v1v2Theta < 110);
+    }
+    assert(!mbRebuild.includes(invertedWedges));
+    // the "rebuildCoordGen" alignment should succeed and clear original wedging
+    // it should feature an even wider angle between the bridge bonds as CoordGen
+    // has a template for the bridged system.
+    // Additionally, CoordGen also rebuilds the scaffold, therefore original wedging
+    // should be cleared
+    wedgedMolCopy.delete();
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(JSON.parse(wedgedMolCopy.generate_aligned_coords(scaffold, JSON.stringify({ acceptFailure: false, useCoordGen: true }))));
+    const mbRebuildCoordGen = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    const svgRebuildCoordGen = wedgedMolCopy.get_svg_with_highlights(JSON.stringify({
+        width: 350, height: 300, useMolBlockWedging: true, wedgeBonds: false, addChiralHs: false
+    }));
+    {
+        const [xy23, xy26] = extractBondCoords(svgRebuildCoordGen, 'atom-23 atom-26');
+        const [_, xy25] = extractBondCoords(svgRebuildCoordGen, 'atom-26 atom-25');
+        const v1 = [xy23[0] - xy26[0], xy23[1] - xy26[1]];
+        const v2 = [xy25[0] - xy26[0], xy25[1] - xy26[1]];
+        const v1v2Theta = angleDegBetweenVectors(v1, v2);
+        assert(v1v2Theta > 145 && v1v2Theta < 150);
+    }
+    assert(!mbRebuildCoordGen.includes(invertedWedges));
+    wedgedMolCopy.delete();
+}
+
+function test_wedging_if_no_match() {
+    const { wedgedMol, invertedWedges } = getWedgedMolAndInvertedWedges();
+    const scaffoldNoMatch = RDKitModule.get_mol(`
+     RDKit          2D
+
+ 13 14  0  0  1  0  0  0  0  0999 V2000
+   -1.6549    2.5755    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8814    1.2358    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6653    1.2358    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4385    2.5755    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9854    2.5755    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6161    1.0286    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2766    1.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2766    3.3487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6161    4.1222    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.9558    3.3487    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.2953    4.1222    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+    4.9558    1.8019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6549   -0.1037    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0
+  2  3  1  0
+  3  4  1  0
+  5  4  1  1
+  5  6  1  0
+  6  7  1  6
+  7  8  1  0
+  9  8  1  6
+  5  9  1  0
+  9 10  1  0
+ 10 11  1  6
+ 10 12  1  0
+  6 12  1  0
+  2 13  1  6
+M  END
+`);
+    let wedgedMolCopy;
+    let mb;
+    const origMolBlock = wedgedMol.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    // the "alignOnly" alignment should return "" if acceptFailure is false
+    // and preserve the original coordinates
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(wedgedMolCopy.generate_aligned_coords(scaffoldNoMatch, JSON.stringify({ acceptFailure: false, alignOnly: true })) === "");
+    mb = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(mb === origMolBlock);
+    assert(!mb.includes(invertedWedges));
+    wedgedMolCopy.delete();
+    // the "alignOnly" alignment should return "{}" if acceptFailure is true
+    // and generate new coordinates, hence wedging should be cleared
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(wedgedMolCopy.generate_aligned_coords(scaffoldNoMatch, JSON.stringify({ acceptFailure: true, alignOnly: true })) === "{}");
+    mb = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(mb !== origMolBlock);
+    assert(!mb.includes(invertedWedges));
+    wedgedMolCopy.delete();
+    // the "rebuild" alignment should return "" if acceptFailure is false
+    // and preserve the original coordinates
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(wedgedMolCopy.generate_aligned_coords(scaffoldNoMatch, JSON.stringify({ acceptFailure: false })) === "");
+    mb = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(mb === origMolBlock);
+    assert(!mb.includes(invertedWedges));
+    wedgedMolCopy.delete();
+    // the "rebuild" alignment should return "{}" if acceptFailure is true
+    // and generate new coordinates, hence wedging should be cleared
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(wedgedMolCopy.generate_aligned_coords(scaffoldNoMatch, JSON.stringify({ acceptFailure: true })) === "{}");
+    mb = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(mb !== origMolBlock);
+    assert(!mb.includes(invertedWedges));
+    wedgedMolCopy.delete();
+    // the "rebuildCoordGen" alignment should return "" if acceptFailure is false
+    // and preserve the original coordinates
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(wedgedMolCopy.generate_aligned_coords(scaffoldNoMatch, JSON.stringify({ acceptFailure: false, useCoordGen: true })) === "");
+    mb = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(mb === origMolBlock);
+    assert(!mb.includes(invertedWedges));
+    wedgedMolCopy.delete();
+    // the "rebuildCoordGen" alignment should return "{}" if acceptFailure is true
+    // and generate new coordinates, hence wedging should be cleared
+    wedgedMolCopy = RDKitModule.get_mol_copy(wedgedMol);
+    assert(wedgedMolCopy.generate_aligned_coords(scaffoldNoMatch, JSON.stringify({ acceptFailure: true, useCoordGen: true })) === "{}");
+    mb = wedgedMolCopy.get_molblock(JSON.stringify({ useMolBlockWedging: true }));
+    assert(mb !== origMolBlock);
+    assert(!mb.includes(invertedWedges));
+    wedgedMolCopy.delete();
 }
 
 function test_get_frags() {
@@ -1351,6 +1766,9 @@ initRDKitModule().then(function(instance) {
     test_prop();
     test_highlights();
     test_add_chiral_hs();
+    test_wedging_all_within_scaffold();
+    test_wedging_outside_scaffold();
+    test_wedging_if_no_match();
     test_get_frags();
     test_hs_in_place();
     waitAllTestsFinished().then(() =>

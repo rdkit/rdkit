@@ -62,14 +62,14 @@ RDKIT_FILEPARSERS_EXPORT Bond::BondDir DetermineBondWedgeState(
  \param mol: molecule to have its wedges altered
  */
 RDKIT_FILEPARSERS_EXPORT void reapplyMolBlockWedging(ROMol &mol);
-//! Remove MolBlock atom wedging information from molecule.
+//! Remove MolBlock bond wedging information from molecule.
 /*!
- \param mol: molecule to have its atom wedging information from MolBlock cleared
+ \param mol: molecule to modify
  */
 RDKIT_FILEPARSERS_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
-//! Invert atom wedging information from MolBlock.
+//! Invert bond wedging information read from a mol block (if present).
 /*!
- \param mol: molecule to have its atom wedging information from MolBlock inverted
+ \param mol: molecule to modify
  */
 RDKIT_FILEPARSERS_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
 

@@ -605,6 +605,16 @@ std::unique_ptr<RWMol> standardize_func(T &mol, const std::string &details_json,
   }
   return std::unique_ptr<RWMol>(static_cast<RWMol *>(func(mol, ps)));
 }
+
+bool invertWedgingIfMolHasFlipped(ROMol &mol, const RDGeom::Transform3D &trans) {
+  constexpr double FLIP_THRESHOLD = -0.99;
+  auto zRot = trans.getVal(2, 2);
+  bool shouldFlip = zRot < FLIP_THRESHOLD;
+  if (shouldFlip) {
+    invertMolBlockWedgingInfo(mol);
+  }
+  return shouldFlip;
+}
 }  // namespace
 
 std::unique_ptr<RWMol> do_cleanup(RWMol &mol, const std::string &details_json) {
@@ -820,6 +830,15 @@ std::unique_ptr<ExplicitBitVect> avalon_fp_as_bitvect(
 }
 #endif
 
+// If alignOnly is set to true in details_json, original molblock wedging
+// information is preserved, and inverted if needed (in case the rigid-body
+// alignment required a flip around the Z axis).
+// If alignOnly is set to false in details_json or not specified, original molblock
+// wedging information is preserved if it only involves the invariant core whose
+// coordinates never change, and is cleared in case coordinates were changed.
+// If acceptFailure is set to true and no substructure match is found, coordinates
+// will be recomputed from scratch, hence molblock wedging information will
+// be cleared.
 std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
                                     const char *details_json) {
   std::string res;
@@ -827,6 +846,8 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
     return res;
   }
   constexpr int MAX_MATCHES = 1000;
+  constexpr double RMSD_THRESHOLD = 1.e-2;
+  constexpr double MSD_THRESHOLD = RMSD_THRESHOLD * RMSD_THRESHOLD;
   bool useCoordGen = false;
   bool allowRGroups = false;
   bool acceptFailure = true;
@@ -913,24 +934,76 @@ std::string generate_aligned_coords(ROMol &mol, const ROMol &templateMol,
       std::for_each(match.begin(), match.end(),
                     [](auto &pair) { std::swap(pair.first, pair.second); });
       MolTransforms::transformConformer(mol.getConformer(), trans);
-      auto zRot = trans.getVal(2, 2);
-      if (zRot < 0.0 && fabs(zRot) > 0.99) {
-        invertMolBlockWedgingInfo(mol);
-      }
+      invertWedgingIfMolHasFlipped(mol, trans);
     } else if (acceptFailure) {
       RDDepict::compute2DCoords(mol);
       clearMolBlockWedgingInfo(mol);
     }
   } else {
-    const RDKit::ROMol *refPattern = nullptr;
+    const ROMol *refPattern = nullptr;
     // always accept failure in the original call because
     // we detect it afterwards and, in case, restore the
     // original conformation
     const bool acceptOrigFailure = true;
+    std::unique_ptr<ROMol> molOrig;
+    if (mol.getNumConformers()) {
+      molOrig.reset(new ROMol(mol));
+    }
     match = RDDepict::generateDepictionMatching2DStructure(
         mol, templateMol, confId, refPattern, acceptOrigFailure, false,
         allowRGroups);
-    if (!match.empty()) {
+    // we need to clear the existing wedging information if:
+    // 1. there is no match and we accept failure; this means that
+    //    we rebuild coordinates from scratch, hence pre-existing
+    //    wedging info is not valid anymore
+    // 2. there is a match
+    // 3. the original molecle has no coordinates to start with
+    //    (in that case it should already have no wedging info either, anyway)
+    // If there is no match and we do not accept failure, we keep
+    // existing coordinates and hence also keep the wedging info
+    bool shouldNeverClearWedgingInfo = match.empty() && !acceptFailure;
+    bool shouldClearWedgingInfo = (match.empty() && acceptFailure) || !molOrig;
+    if (!shouldNeverClearWedgingInfo && !shouldClearWedgingInfo) {
+      std::set<unsigned int> molMatchIndices;
+      std::transform(match.begin(), match.end(),
+        std::inserter(molMatchIndices, molMatchIndices.begin()), [](const auto &pair) {
+        return pair.second;
+      });
+      // if any of the bonds that have wedging information from the molblock
+      // has at least one atom which is not part of the scaffold, we cannot
+      // preserve wedging information
+      auto molBonds = mol.bonds();
+      shouldClearWedgingInfo = std::any_of(molBonds.begin(), molBonds.end(), [&molMatchIndices](const auto b) {
+        return ((b->hasProp(common_properties::_MolFileBondStereo) || b->hasProp(common_properties::_MolFileBondCfg))
+          && (!molMatchIndices.count(b->getBeginAtomIdx()) || !molMatchIndices.count(b->getEndAtomIdx())));
+      });
+    }
+    if (!shouldNeverClearWedgingInfo && !shouldClearWedgingInfo) {
+      // check that scaffold coordinates have not changed, which may
+      // happen when using CoordGen
+      const auto &molPos = mol.getConformer().getPositions();
+      const auto &templatePos = templateMol.getConformer().getPositions();
+      shouldClearWedgingInfo = std::any_of(match.begin(), match.end(), [&molPos, &templatePos, MSD_THRESHOLD](const auto &pair) {
+        return (molPos.at(pair.second) - templatePos.at(pair.first)).lengthSq() > MSD_THRESHOLD;
+      });
+    }
+    // final check: we still might need to invert wedging if the molecule
+    // has flipped to match the scaffold
+    if (!shouldNeverClearWedgingInfo && !shouldClearWedgingInfo) {
+      RDGeom::Transform3D trans;
+      MatchVectType identityMatch(match.size());
+      std::transform(match.begin(), match.end(), identityMatch.begin(), [](const auto &pair) {
+        return std::make_pair(pair.second, pair.second);
+      });
+      auto rmsd = MolAlign::getAlignmentTransform(*molOrig, mol, trans, confId, confId, &identityMatch);
+      // this should not happen as we checked that previously, but we are notoriously paranoid
+      if (rmsd > RMSD_THRESHOLD) {
+        shouldClearWedgingInfo = true;
+      } else {
+        invertWedgingIfMolHasFlipped(mol, trans);
+      }
+    }
+    if (shouldClearWedgingInfo) {
       clearMolBlockWedgingInfo(mol);
     }
   }

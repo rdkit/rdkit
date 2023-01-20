@@ -617,12 +617,8 @@ void reapplyMolBlockWedging(ROMol &mol) {
 
 void clearMolBlockWedgingInfo(ROMol &mol) {
   for (auto b : mol.bonds()) {
-    if (b->hasProp(common_properties::_MolFileBondStereo)) {
-      b->clearProp(common_properties::_MolFileBondStereo);
-    }
-    if (b->hasProp(common_properties::_MolFileBondCfg)) {
-      b->clearProp(common_properties::_MolFileBondCfg);
-    }
+    b->clearProp(common_properties::_MolFileBondStereo);
+    b->clearProp(common_properties::_MolFileBondCfg);
   }
 }
 
