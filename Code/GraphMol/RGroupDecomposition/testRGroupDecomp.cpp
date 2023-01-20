@@ -36,6 +36,7 @@
 #include <iostream>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecompData.h>
 #include <GraphMol/FileParsers/FileParsers.h>

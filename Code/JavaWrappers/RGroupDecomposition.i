@@ -10,6 +10,7 @@
 *
 */
 %{
+#include <GraphMol/RGroupDecomposition/RGroupDecompParams.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 typedef std::vector<std::string> STR_VECT;
 %}
@@ -46,4 +47,5 @@ typedef std::vector<std::string> STR_VECT;
   }
 }
 
+%include <GraphMol/RGroupDecomposition/RGroupDecompParams.h>
 %include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
