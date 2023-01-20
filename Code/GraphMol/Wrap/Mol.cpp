@@ -63,30 +63,10 @@ python::object MolToBinaryWithProps(const ROMol &self, unsigned int props) {
 //  since molecules have a constructor that takes a binary string
 //  we only need to provide getinitargs()
 //
-struct mol_pickle_suite : python::pickle_suite {
+struct mol_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const ROMol &self) {
     return python::make_tuple(MolToBinary(self));
   };
-
-  static python::tuple getstate(python::object w_obj) {
-    return python::make_tuple(w_obj.attr("__dict__"));
-  }
-
-  static void setstate(python::object w_obj, python::tuple state) {
-    if (len(state) != 1) {
-      PyErr_SetObject(
-          PyExc_ValueError,
-          ("expected 1-item tuple in call to __setstate__; got %s" % state)
-              .ptr());
-      python::throw_error_already_set();
-    }
-
-    // restore the object's __dict__
-    python::dict d = python::extract<python::dict>(w_obj.attr("__dict__"))();
-    d.update(state[0]);
-  }
-
-  static bool getstate_manages_dict() { return true; }
 };
 
 bool HasSubstructMatchStr(std::string pkl, const ROMol &query,

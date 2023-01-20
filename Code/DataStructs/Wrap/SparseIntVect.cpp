@@ -31,7 +31,7 @@ python::object SIVToBinaryText(const SparseIntVect<IndexType> &siv) {
 }  // namespace
 
 template <typename IndexType>
-struct siv_pickle_suite : python::pickle_suite {
+struct siv_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const SparseIntVect<IndexType> &self) {
     return python::make_tuple(SIVToBinaryText(self));
   };
