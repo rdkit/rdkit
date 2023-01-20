@@ -31,14 +31,29 @@ namespace MolStandardize {
     -
 */
 
+struct RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnectorOptions {
+  bool splitGrignards =
+      false;  // Whether to split Grignard-type complexes. Default false.
+  bool splitAromaticC =
+      false;  // Whether to split metal-aromatic C bonds.  Default false.
+  bool adjustCharges =
+      true;  // Whether to adjust charges on ligand atoms.  Default true.
+  bool removeHapticDummies =
+      false;  // Whether to remove the dummy atoms representing
+              // haptic bonds.  Default false.  Such dummies are
+              // bonded to the metal with a bond that has the
+              // _MolFileBondEndPts prop set.
+};
+
 class RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnector {
  public:
-  MetalDisconnector();
+  MetalDisconnector(
+      const MetalDisconnectorOptions &options = MetalDisconnectorOptions());
   MetalDisconnector(const MetalDisconnector &other);
   ~MetalDisconnector();
 
-  ROMol *getMetalNof();  // {return metal_nof;}
-  ROMol *getMetalNon();  // {return metal_non;}
+  ROMol *getMetalNof();  // {return metal_nof_;}
+  ROMol *getMetalNon();  // {return metal_non_;}
   void setMetalNof(const ROMol &mol);
   void setMetalNon(const ROMol &mol);
 
@@ -64,10 +79,33 @@ accordingly.
     std::vector<int> boundMetalIndices;
   };
   int chargeAdjustment(const Atom *a, int order);
-  ROMOL_SPTR metal_nof;
-  ROMOL_SPTR metal_non;
+  ROMOL_SPTR metal_nof_;
+  ROMOL_SPTR metal_non_;
+  ROMOL_SPTR metalDummy_;
+  const MetalDisconnectorOptions &options_;
+
+  void adjust_charges(RDKit::RWMol &mol, std::map<int, NonMetal> &nonMetals,
+                      std::map<int, int> &metalChargeExcess);
+  // Remove any dummy atoms that are bonded to a metal and have the ENDPTS
+  // prop.  These are assumed to marking a haptic bond from the aotms in
+  // ENDPTS to the metal, e.g. in ferrocene.
+  void remove_haptic_dummies(RDKit::RWMol &mol);
 
 };  // class Metal
+
+//! Do a disconnection of an organometallic complex according to rules
+//! preferred by Syngenta.  All bonds to metals are broken, including
+//! covalent bonds to Group I/II metals (so including Grignards, lithium
+//! complexes etc.).  The ligands are left in the charge states they came
+//! in with.  If there are haptic bonds defined by a dummy atom bonded to
+//! a metal by a bond that has a _MolFileBondEndPts (which will contain the
+//! indices of the atoms involved in the haptic bond) then the dummy atom
+//! is removed also.
+//! Do the disconnection in place.
+void disconnectOrganometallics(RWMol &mol);
+//! As above, but returns new disconnected molecule.
+ROMol *disconnectOrganometallics(const ROMol &mol);
+
 }  // namespace MolStandardize
 }  // namespace RDKit
 #endif
