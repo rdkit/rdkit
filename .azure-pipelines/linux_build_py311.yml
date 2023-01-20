@@ -6,11 +6,11 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build $(python) cmake \
+    conda create --name rdkit_build -c conda-forge $(python) cmake \
         boost-cpp=$(boost_version) \
-        py-boost=$(boost_version) \
+        boost=$(boost_version) \
         numpy pillow eigen pandas matplotlib-base \
-        qt=5.9.7 cairo
+        qt=5 cairo
     conda activate rdkit_build
     conda install -c conda-forge nbval ipykernel>=6.0
   displayName: Setup build environment
