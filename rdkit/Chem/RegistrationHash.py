@@ -458,6 +458,13 @@ def _CanonicalizeStereoGroups(mol):
   opts.onlyStereoGroups = True
   opts.unique = False
 
+  # Before enumerating stereoisomers, we strip the bond directions to prevent
+  # an exception when enumerating centers near double bonds.
+  # Registration code sometimes handles molecules with user-defined bond directions,
+  # which may not be valid.
+  for bond in mol.GetBonds():
+    bond.SetBondDir(Chem.BondDir.NONE)
+
   resultMol = None
   resultCXSmiles = ''
   for isomer in EnumerateStereoisomers.EnumerateStereoisomers(mol, opts):
