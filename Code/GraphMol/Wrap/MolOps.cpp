@@ -2551,7 +2551,7 @@ EXAMPLES:\n\n\
 Setting this to false allows assembling chemically incorrect fragments.")
         .def_readwrite("generateCoordinates", &MolzipParams::generateCoordinates,
                        "If true will add depiction coordinates to input molecules and\n\
-zipped molecule (using molzip function with list input only)")
+zipped molecule (for molzipFragments only)")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
              "Set the atom symbols used to zip mols together when using "
              "AtomType labeling");
@@ -2596,7 +2596,7 @@ The atoms to zip can be specified with the MolzipParams class.\n\
         python::return_value_policy<python::manage_new_object>());
 
     python::def(
-        "molzip",
+        "molzipFragments",
         (ROMol * (*)(python::object &, const MolzipParams &)) & molzipHelper,
         (python::arg("mols"), python::arg("params") = MolzipParams()),
         "zip together multiple molecules using the given matching parameters",
