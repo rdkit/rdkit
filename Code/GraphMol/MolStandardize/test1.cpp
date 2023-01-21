@@ -15,6 +15,7 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ROMol.h>
@@ -33,6 +34,12 @@ void testCleanup() {
     RWMOL_SPTR m = "CCC(=O)O[Na]"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "CCC(=O)[O-].[Na+]");
+  }
+  {
+    // Github 5997
+    auto m = "CC(=O)O[Mg]OC(=O)C"_smiles;
+    auto res(MolStandardize::cleanup(*m, params));
+    TEST_ASSERT(MolToSmiles(*res) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
   }
 
   // Test metal ion is untouched during standardize.
@@ -1433,313 +1440,70 @@ Positively charged tetravalent B	[B;v4;+1:1]>>[*;-1:1])DATA";
 }
 
 void testSyngenta() {
-  std::cout << "Running Syngenta tests" << std::endl;
-  {
-    auto m = R"CTAB(Mol13
-     RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 17 18 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 N -10.857000 -5.524400 0.000000 0
-M  V30 2 C -11.621900 -5.833500 0.000000 0
-M  V30 3 C -11.564300 -6.656400 0.000000 0
-M  V30 4 N -10.763900 -6.856000 0.000000 0
-M  V30 5 Ni -10.326700 -6.156400 0.000000 0 CHG=2 VAL=4
-M  V30 6 C -11.511500 -5.022200 0.000000 0
-M  V30 7 C -10.202500 -5.022200 0.000000 0
-M  V30 8 C -11.079500 -7.618200 0.000000 0
-M  V30 9 C -10.448200 -7.618200 0.000000 0
-M  V30 10 Cl -9.743300 -5.573000 0.000000 0 CHG=-1
-M  V30 11 C -9.612200 -6.568900 0.000000 0
-M  V30 12 C -8.897800 -6.156400 0.000000 0
-M  V30 13 C -9.612200 -7.393900 0.000000 0
-M  V30 14 C -8.897800 -7.806400 0.000000 0
-M  V30 15 C -8.183300 -7.393900 0.000000 0
-M  V30 16 C -8.183300 -6.568900 0.000000 0
-M  V30 17 C -8.897800 -5.331400 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 1 2 3
-M  V30 3 1 3 4
-M  V30 4 9 4 5
-M  V30 5 9 1 5
-M  V30 6 1 1 6
-M  V30 7 1 1 7
-M  V30 8 1 4 8
-M  V30 9 1 4 9
-M  V30 10 9 10 5
-M  V30 11 1 5 11
-M  V30 12 1 13 14
-M  V30 13 2 14 15
-M  V30 14 1 15 16
-M  V30 15 2 12 16
-M  V30 16 1 12 11
-M  V30 17 2 11 13
-M  V30 18 1 12 17
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    RDKit::MolStandardize::disconnectOrganometallics(*m);
-    TEST_ASSERT(RDKit::MolToSmiles(*m) ==
-                "CN(C)CCN(C)C.Cc1ccccc1.[Cl-].[Ni+2]");
-  }
-  {
-    auto g1 = R"CTAB(
-     RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 3 2 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -0.000000 -0.412500 0.000000 0 CHG=-1
-M  V30 2 Mg 0.714471 -0.825000 0.000000 0 CHG=2 VAL=2
-M  V30 3 Cl 1.428942 -0.412500 0.000000 0 CHG=-1
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 9 1 2
-M  V30 2 9 3 2
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    RDKit::MolStandardize::disconnectOrganometallics(*g1);
-    TEST_ASSERT(RDKit::MolToSmiles(*g1) == "[CH3-].[Cl-].[Mg+2]");
-    auto g2 = R"CTAB(
-     RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 8 8 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -0.714471 -0.825000 0.000000 0
-M  V30 2 C -1.428942 -0.412500 0.000000 0
-M  V30 3 C -1.428942 0.412500 0.000000 0
-M  V30 4 C -0.714471 0.825000 0.000000 0
-M  V30 5 C -0.000000 0.412500 0.000000 0
-M  V30 6 C -0.000000 -0.412500 0.000000 0 CHG=-1
-M  V30 7 Mg 0.714471 -0.825000 0.000000 0 CHG=2 VAL=2
-M  V30 8 Cl 1.428942 -0.412500 0.000000 0 CHG=-1
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 2 1 2
-M  V30 2 1 2 3
-M  V30 3 2 3 4
-M  V30 4 1 4 5
-M  V30 5 2 5 6
-M  V30 6 1 1 6
-M  V30 7 9 6 7
-M  V30 8 9 8 7
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    std::unique_ptr<RDKit::ROMol> g2_out(
-        RDKit::MolStandardize::disconnectOrganometallics(RDKit::ROMol(*g2)));
-    TEST_ASSERT(RDKit::MolToSmiles(*g2_out) == "[Cl-].[Mg+2].[c-]1ccccc1");
-  }
-  {
-    auto f1 = R"CTAB(Ferrocene
-     RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 13 12 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -34.237900 13.261800 0.000000 0 CHG=-1
-M  V30 2 C -35.057400 14.266900 0.000000 0
-M  V30 3 C -37.855700 14.284400 0.000000 0
-M  V30 4 C -38.759100 13.293300 0.000000 0
-M  V30 5 C -36.552000 12.683200 0.000000 0
-M  V30 6 C -34.152900 8.363300 0.000000 0 CHG=-1
-M  V30 7 C -34.972400 9.368400 0.000000 0
-M  V30 8 C -37.770600 9.385900 0.000000 0
-M  V30 9 C -38.674100 8.394800 0.000000 0
-M  V30 10 C -36.450300 7.767900 0.000000 0
-M  V30 11 Fe -36.435100 10.904500 0.000000 0
-M  V30 12 * -36.522400 13.604600 0.000000 0
-M  V30 13 * -36.404100 8.656100 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 9 12 11 ENDPTS=(5 2 3 4 5 1) ATTACH=ALL
-M  V30 2 1 1 5
-M  V30 3 2 4 5
-M  V30 4 1 4 3
-M  V30 5 2 2 3
-M  V30 6 1 1 2
-M  V30 7 1 6 10
-M  V30 8 2 9 10
-M  V30 9 1 9 8
-M  V30 10 2 7 8
-M  V30 11 1 6 7
-M  V30 12 9 13 11 ENDPTS=(5 7 8 9 10 6) ATTACH=ALL
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    RDKit::MolStandardize::disconnectOrganometallics(*f1);
-    TEST_ASSERT(RDKit::MolToSmiles(*f1) == "[Fe].c1cc[cH-]c1.c1cc[cH-]c1");
-  }
-  {
-    auto li1 = R"CTAB(
-     RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 2 1 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -0.000000 -0.412500 0.000000 0 CHG=-1
-M  V30 2 Li 0.714471 -0.825000 0.000000 0 CHG=1
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 9 1 2
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    RDKit::MolStandardize::disconnectOrganometallics(*li1);
-    TEST_ASSERT(RDKit::MolToSmiles(*li1) == "[CH3-].[Li+]");
-  }
-  {
-    auto na1 = R"CTAB(sodium cyclopentadienide
-     RDKit          2D
-
-  0  0  0  0  0  0  0  0  0  0999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 7 6 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -34.237900 13.261800 0.000000 0 CHG=-1
-M  V30 2 C -35.057400 14.266900 0.000000 0
-M  V30 3 C -37.855700 14.284400 0.000000 0
-M  V30 4 C -38.759100 13.293300 0.000000 0
-M  V30 5 C -36.552000 12.683200 0.000000 0
-M  V30 6 Na -36.435100 10.904500 0.000000 0 CHG=1
-M  V30 7 * -36.522400 13.604600 0.000000 0
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 9 7 6 ENDPTS=(5 2 3 4 5 1) ATTACH=ALL
-M  V30 2 1 1 5
-M  V30 3 2 4 5
-M  V30 4 1 4 3
-M  V30 5 2 2 3
-M  V30 6 1 1 2
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    RDKit::MolStandardize::disconnectOrganometallics(*na1);
-    TEST_ASSERT(RDKit::MolToSmiles(*na1) == "[Na+].c1cc[cH-]c1");
-
-    auto na2 = R"CTAB(phenylsodium-PMDTA
-  ChemDraw01202311192D
-
-  0  0  0     0  0              0 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 38 44 0 0 0
-M  V30 BEGIN ATOM
-M  V30 1 C -2.921876 -2.726990 0.000000 0
-M  V30 2 N -2.207405 -2.314490 0.000000 0
-M  V30 3 C -1.492934 -2.726990 0.000000 0
-M  V30 4 C -2.207405 -1.489490 0.000000 0
-M  V30 5 C -0.778463 -2.314490 0.000000 0
-M  V30 6 N -0.063992 -2.726990 0.000000 0
-M  V30 7 C 0.650479 -2.314490 0.000000 0
-M  V30 8 C -0.063992 -3.551990 0.000000 0
-M  V30 9 C 1.364949 -2.726990 0.000000 0
-M  V30 10 N 2.079421 -2.314490 0.000000 0
-M  V30 11 C 2.793892 -2.726990 0.000000 0
-M  V30 12 C 2.079421 -1.489490 0.000000 0
-M  V30 13 C -2.845679 2.314488 0.000000 0
-M  V30 14 N -2.131251 2.726989 0.000000 0
-M  V30 15 C -1.416824 2.314488 0.000000 0
-M  V30 16 C -2.131251 3.551990 0.000000 0
-M  V30 17 C -0.701823 2.726989 0.000000 0
-M  V30 18 N 0.012604 2.314488 0.000000 0
-M  V30 19 C 0.727031 2.726989 0.000000 0
-M  V30 20 C 0.012604 3.551990 0.000000 0
-M  V30 21 C 1.441459 2.314488 0.000000 0
-M  V30 22 N 2.155886 2.726989 0.000000 0
-M  V30 23 C 2.870314 2.314488 0.000000 0
-M  V30 24 C 2.155886 3.551990 0.000000 0
-M  V30 25 C -6.539126 0.702872 0.000000 0
-M  V30 26 C -6.539126 -0.122128 0.000000 0
-M  V30 27 C -5.824655 -0.534628 0.000000 0
-M  V30 28 C -5.110184 -0.122128 0.000000 0
-M  V30 29 C -5.110184 0.702872 0.000000 0 CHG=-1
-M  V30 30 C -5.824655 1.115372 0.000000 0
-M  V30 31 C 5.110185 0.550095 0.000000 0
-M  V30 32 C 5.110185 -0.274905 0.000000 0 CHG=-1
-M  V30 33 C 5.824656 -0.687405 0.000000 0
-M  V30 34 C 6.539126 -0.274905 0.000000 0
-M  V30 35 C 6.539126 0.550095 0.000000 0
-M  V30 36 C 5.824656 0.962595 0.000000 0
-M  V30 37 Na 0.149580 0.611842 0.000000 0 CHG=1
-M  V30 38 Na 0.302357 -1.030519 0.000000 0 CHG=1
-M  V30 END ATOM
-M  V30 BEGIN BOND
-M  V30 1 1 1 2
-M  V30 2 1 2 3
-M  V30 3 1 2 4
-M  V30 4 1 3 5
-M  V30 5 1 5 6
-M  V30 6 1 6 7
-M  V30 7 1 6 8
-M  V30 8 1 7 9
-M  V30 9 1 9 10
-M  V30 10 1 10 11
-M  V30 11 1 10 12
-M  V30 12 1 13 14
-M  V30 13 1 14 15
-M  V30 14 1 14 16
-M  V30 15 1 15 17
-M  V30 16 1 17 18
-M  V30 17 1 18 19
-M  V30 18 1 18 20
-M  V30 19 1 19 21
-M  V30 20 1 21 22
-M  V30 21 1 22 23
-M  V30 22 1 22 24
-M  V30 23 2 25 26
-M  V30 24 1 26 27
-M  V30 25 2 27 28
-M  V30 26 1 28 29
-M  V30 27 2 29 30
-M  V30 28 1 30 25
-M  V30 29 2 31 32
-M  V30 30 1 32 33
-M  V30 31 2 33 34
-M  V30 32 1 34 35
-M  V30 33 2 35 36
-M  V30 34 1 36 31
-M  V30 35 9 14 37
-M  V30 36 9 18 37
-M  V30 37 9 22 37
-M  V30 38 9 29 37
-M  V30 39 9 29 38
-M  V30 40 9 2 38
-M  V30 41 9 6 38
-M  V30 42 9 10 38
-M  V30 43 9 32 37
-M  V30 44 9 32 38
-M  V30 END BOND
-M  V30 END CTAB
-M  END
-)CTAB"_ctab;
-    RDKit::MolStandardize::disconnectOrganometallics(*na2);
-    TEST_ASSERT(
-        RDKit::MolToSmiles(*na2) ==
-        "CN(C)CCN(C)CCN(C)C.CN(C)CCN(C)CCN(C)C.[Na+].[Na+].[c-]1ccccc1.[c-]1ccccc1");
+  BOOST_LOG(rdDebugLog)
+      << "-----------------------\n test organometallic disconnections"
+      << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  std::string test_dir = rdbase + "/Code/GraphMol/MolStandardize/test_data";
+  std::vector<std::pair<std::string, std::string>> test_files = {
+      {"MOL_00001.mol",
+       R"([Pd].c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1)"},
+      {"MOL_00002.mol",
+       R"(ClCCl.[Cl-].[Cl-].[Fe].[Pd+2].c1ccc(P(c2ccccc2)[c-]2cccc2)cc1.c1ccc(P(c2ccccc2)[c-]2cccc2)cc1)"},
+      {"MOL_00003.mol",
+       R"([Cl-].[Cl-].[Fe].[Pd+2].c1ccc(P(c2ccccc2)[c-]2cccc2)cc1.c1ccc(P(c2ccccc2)[c-]2cccc2)cc1)"},
+      {"MOL_00004.mol",
+       R"(CC(C)c1cc(C(C)C)c(-c2ccccc2P(C2CCCCC2)C2CCCCC2)c(C(C)C)c1.Nc1ccccc1-c1[c-]cccc1.[Cl-].[Pd+2])"},
+      {"MOL_00005.mol",
+       R"(CCCCP(C12CC3CC(CC(C3)C1)C2)C12CC3CC(CC(C3)C1)C2.CS(=O)(=O)[O-].Nc1ccccc1-c1[c-]cccc1.[Pd+2])"},
+      {"MOL_00006.mol",
+       R"(CCCCP(C12CC3CC(CC(C3)C1)C2)C12CC3CC(CC(C3)C1)C2.CS(=O)(=O)[O-].Nc1ccccc1-c1[c-]cccc1.[Pd+2])"},
+      {"MOL_00007.mol",
+       R"(CC(C)c1cc(C(C)C)c(-c2ccccc2P(C2CCCCC2)C2CCCCC2)c(C(C)C)c1.CS(=O)(=O)[O-].Nc1ccccc1-c1[c-]cccc1.[Pd+2])"},
+      {"MOL_00008.mol",
+       R"(CC(C)(C)P([c-]1cccc1)C(C)(C)C.CC(C)(C)P([c-]1cccc1)C(C)(C)C.[Cl-].[Cl-].[Fe].[Pd+2])"},
+      {"MOL_00009.mol",
+       R"(CN(C)c1ccc(P(C(C)(C)C)C(C)(C)C)cc1.CN(C)c1ccc(P(C(C)(C)C)C(C)(C)C)cc1.[Cl-].[Cl-].[Pd+2])"},
+      {"MOL_00010.mol",
+       R"(*.C[C-]=Cc1ccccc1.Cc1cc(C(c2ccccc2)c2ccccc2)c(N2[CH-]N(c3c(C(c4ccccc4)c4ccccc4)cc(C)cc3C(c3ccccc3)c3ccccc3)CC2)c(C(c2ccccc2)c2ccccc2)c1.[Cl-].[Pd+2])"},
+      {"MOL_00011.mol",
+       R"([Cl-].[Cl-].[Ni+2].c1ccc(P(CCCP(c2ccccc2)c2ccccc2)c2ccccc2)cc1)"},
+      {"MOL_00012.mol", R"(C1=C\CC/C=C\CC/1.CC1=C(C)C(=O)C(C)=C(C)C1=O.[Ni])"},
+      {"MOL_00013.mol", R"(CN(C)CCN(C)C.Cc1[c-]cccc1.[Cl-].[Ni+2])"},
+      {"MOL_00014.mol",
+       R"(Cc1cc(C)cc(/C=C/c2cc(C)cc(C)c2)c1.Cc1cc(C)cc(/C=C/c2cc(C)cc(C)c2)c1.Cc1cc(C)cc(/C=C/c2cc(C)cc(C)c2)c1.[Ni])"},
+      {"MOL_00015.mol",
+       R"(CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.[Ni])"},
+      {"diethylzinc.mol", R"([CH2-]CC.[CH2-]CC.[Zn+2])"},
+      {"ferrocene.mol", R"([Fe].c1cc[cH-]c1.c1cc[cH-]c1)"},
+      {"ferrocene_1.mol", R"(C[c-]1cccc1.C[c-]1cccc1.[Fe])"},
+      {"grignard_1.mol", R"([CH3-].[Cl-].[Mg+2])"},
+      {"grignard_2.mol", R"([Cl-].[Mg+2].[c-]1ccccc1)"},
+      {"lithium_1.mol", R"([CH3-].[Li+])"},
+      {"lithium_2.mol", R"([Li+].[c-]1ccccc1)"},
+      {"phenylzincbromide.mol", R"([Br-].[Zn+2].[c-]1ccccc1)"},
+      {"ruthenium.mol",
+       R"([Cl-].[Cl-].[Cl-].[Cl-].[Ru+2].[Ru+2].c1ccccc1.c1ccccc1)"},
+      {"sodium_1.mol", R"([Na+].c1cc[cH-]c1)"},
+      {"sodium_2.mol",
+       R"(CN(C)CCN(C)CCN(C)C.CN(C)CCN(C)CCN(C)C.[Na+].[Na+].[c-]1ccccc1.[c-]1ccccc1)"},
+      {"weirdzinc_1.mol",
+       R"([Zn+2].[Zn+2].[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1)"},
+      {"weirdzinc_2.mol",
+       R"([Cu+].[Cu+].[Zn+2].[Zn+2].[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1.[c-]1ccccc1)"}};
+  for (auto &test_file : test_files) {
+    std::string full_file = test_dir + "/" + test_file.first;
+    bool takeOwnership = true;
+    SDMolSupplier mol_supplier(full_file, takeOwnership);
+    std::unique_ptr<ROMol> m(mol_supplier.next());
+    std::unique_ptr<ROMol> dm(MolStandardize::disconnectOrganometallics(*m));
+    TEST_ASSERT(MolToSmiles(*dm) == test_file.second);
   }
 }
 
 int main() {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.info");
-  testSyngenta();
-#if 0
   testCleanup();
   testStandardizeSm();
   testMetalDisconnector();
@@ -1749,6 +1513,5 @@ int main() {
   testMetalDisconnectorLigandExpo();
   testEnumerateTautomerSmiles();
   testSyngenta();
-#endif
   return 0;
 }
