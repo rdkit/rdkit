@@ -56,15 +56,21 @@ struct metal_wrapper {
         "non-metals",
         python::init<>())
         .add_property("MetalNof", &getMetalNofHelper,
-                      "Mol containing the metals to disconnect if attached to "
+                      "SMARTS defining the metals to disconnect if attached to "
                       "Nitrogen, Oxygen or Fluorine")
         .add_property(
             "MetalNon", &getMetalNonHelper,
-            "Mol containing the metals to disconnect other inorganic elements")
-        .def("SetMetalNon", &setMetalNonHelper,
-             (python::arg("self"), python::arg("mol")), "")
-        .def("SetMetalNof", &setMetalNofHelper,
-             (python::arg("self"), python::arg("mol")), "")
+            "SMARTS defining the metals to disconnect other inorganic elements")
+        .def(
+            "SetMetalNon", &setMetalNonHelper,
+            (python::arg("self"), python::arg("mol")),
+            "Set the query molecule defining the metals to disconnect from other"
+            " inorganic elements.")
+        .def(
+            "SetMetalNof", &setMetalNofHelper,
+            (python::arg("self"), python::arg("mol")),
+            "Set the query molecule defining the metals to disconnect if attached"
+            " to Nitrogen, Oxygen or Fluorine.")
         .def("Disconnect", &disconnect,
              (python::arg("self"), python::arg("mol")), docString.c_str(),
              python::return_value_policy<python::manage_new_object>());
