@@ -209,6 +209,13 @@ void MetalDisconnector::adjust_charges(RDKit::RWMol &mol,
     auto currentFc = a->getFormalCharge();
     const auto &valens =
         PeriodicTable::getTable()->getValenceList(a->getAtomicNum());
+    // valens should have at least -1 in it, as the atom data is currently
+    // configured, so max_element should never return valens.end().
+    auto max_valence = *std::max_element(valens.begin(), valens.end());
+    // Don't go over the maximum real valence.
+    if (max_valence != -1 && currentFc >= max_valence) {
+      continue;
+    }
     int fcAfterCut = it->second;
     if (currentFc > 0) {
       // if the original formal charge on the metal was positive, we trust it
@@ -217,6 +224,11 @@ void MetalDisconnector::adjust_charges(RDKit::RWMol &mol,
     }
     if (!valens.empty() && valens.front() != -1) {
       for (auto v = valens.begin(); v != valens.end(); ++v) {
+        // Some metals (e.g. Mg and Ba) have -1 as a final catchall, which
+        // is unhelpful for this.
+        if (*v == -1) {
+          continue;
+        }
         if (fcAfterCut > *v) {
           auto next = v + 1;
           if (next != valens.end() && fcAfterCut >= *v) {
