@@ -47,14 +47,39 @@ struct metal_wrapper {
     python::scope().attr("__doc__") =
         "Module containing functions for molecular standardization";
 
-    std::string docString = "";
+    std::string docString = "Metal Disconnector Options";
+    python::class_<RDKit::MolStandardize::MetalDisconnectorOptions,
+                   boost::noncopyable>("MetalDisconnectorOptions",
+                                       docString.c_str(), python::init<>())
+        .def_readwrite(
+            "splitGrignards",
+            &RDKit::MolStandardize::MetalDisconnectorOptions::splitGrignards,
+            "Whether to split Grignard-type complexes. Default false.")
+        .def_readwrite(
+            "splitAromaticC",
+            &RDKit::MolStandardize::MetalDisconnectorOptions::splitAromaticC,
+            "Whether to split metal-aromatic C bonds.  Default false.")
+        .def_readwrite(
+            "adjustCharges",
+            &RDKit::MolStandardize::MetalDisconnectorOptions::adjustCharges,
+            "Whether to adjust charges on ligand atoms.  Default true.")
+        .def_readwrite("removeHapticDummies",
+                       &RDKit::MolStandardize::MetalDisconnectorOptions::
+                           removeHapticDummies,
+                       "Whether to remove the dummy atoms representing haptic"
+                       " bonds.  Such dummies are bonded to the metal with a"
+                       " bond that has the MolFileBondEndPts prop set."
+                       "  Default false.");
 
+    docString =
+        "a class to disconnect metals that are defined as covalently bonded to"
+        " non-metals";
     python::class_<RDKit::MolStandardize::MetalDisconnector,
                    boost::noncopyable>(
-        "MetalDisconnector",
-        "a class to disconnect metals that are defined as covalently bonded to "
-        "non-metals",
-        python::init<>())
+        "MetalDisconnector", docString.c_str(),
+        python::init<python::optional<
+            const RDKit::MolStandardize::MetalDisconnectorOptions &>>(
+            (python::arg("options") = python::object())))
         .add_property("MetalNof", &getMetalNofHelper,
                       "SMARTS defining the metals to disconnect if attached to "
                       "Nitrogen, Oxygen or Fluorine")
