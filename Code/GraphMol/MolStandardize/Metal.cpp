@@ -189,6 +189,11 @@ void MetalDisconnector::disconnect(RWMol &mol) {
     }
     if (!valens.empty() && valens.front() != -1) {
       for (auto v = valens.begin(); v != valens.end(); ++v) {
+        // Some metals (e.g. Mg and Ba) have -1 as a final catchall, which
+        // is unhelpful for this.
+        if (*v == -1) {
+          continue;
+        }
         if (fcAfterCut > *v) {
           auto next = v + 1;
           if (next != valens.end() && fcAfterCut >= *v) {
