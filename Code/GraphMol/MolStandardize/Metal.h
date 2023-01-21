@@ -39,10 +39,9 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnectorOptions {
   bool adjustCharges =
       true;  // Whether to adjust charges on ligand atoms.  Default true.
   bool removeHapticDummies =
-      false;  // Whether to remove the dummy atoms representing
-              // haptic bonds.  Default false.  Such dummies are
-              // bonded to the metal with a bond that has the
-              // _MolFileBondEndPts prop set.
+      false;  // Whether to remove the dummy atoms representing haptic bonds.
+              // Such dummies are bonded to the metal with a bond
+              // that has the _MolFileBondEndPts prop set.  Default false.
 };
 
 class RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnector {
@@ -92,19 +91,6 @@ accordingly.
   void remove_haptic_dummies(RDKit::RWMol &mol);
 
 };  // class Metal
-
-//! Do a disconnection of an organometallic complex according to rules
-//! preferred by Syngenta.  All bonds to metals are broken, including
-//! covalent bonds to Group I/II metals (so including Grignards, lithium
-//! complexes etc.).  The ligands are left in the charge states they came
-//! in with.  If there are haptic bonds defined by a dummy atom bonded to
-//! a metal by a bond that has a _MolFileBondEndPts (which will contain the
-//! indices of the atoms involved in the haptic bond) then the dummy atom
-//! is removed also.
-//! Do the disconnection in place.
-void disconnectOrganometallics(RWMol &mol);
-//! As above, but returns new disconnected molecule.
-ROMol *disconnectOrganometallics(const ROMol &mol);
 
 }  // namespace MolStandardize
 }  // namespace RDKit
