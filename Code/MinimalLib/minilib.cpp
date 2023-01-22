@@ -485,6 +485,15 @@ std::string JSMol::get_prop(const std::string &key) const {
   return val;
 }
 
+bool JSMol::clear_prop(const std::string &key) {
+  if (!d_mol) return false;
+  bool res = d_mol->hasProp(key);
+  if (res) {
+    d_mol->clearProp(key);
+  }
+  return res;
+}
+
 std::string JSMol::remove_hs() const {
   if (!d_mol) {
     return "";
