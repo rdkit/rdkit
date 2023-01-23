@@ -17,8 +17,8 @@
 #include <exception>
 #include <map>
 
-namespace RDKit {
-
+namespace RDKitv2 {
+namespace SmilesParse {
 struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   int debugParse = 0;   /**< enable debugging in the SMILES parser*/
   bool sanitize = true; /**< sanitize the molecule after building it */
@@ -32,8 +32,31 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool skipCleanup =
       false; /**<  skip the final cleanup stage (for internal use) */
 };
-RDKIT_SMILESPARSE_EXPORT RWMol *SmilesToMol(const std::string &smi,
-                                            const SmilesParserParams &params);
+
+struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
+  int debugParse = 0; /**< enable debugging in the SMARTS parser*/
+  std::map<std::string, std::string> *replacements =
+      nullptr;               /**< allows SMARTS "macros" */
+  bool allowCXSMILES = true; /**< recognize and parse CXSMILES extensions */
+  bool strictCXSMILES =
+      true; /**< throw an exception if the CXSMILES parsing fails */
+  bool parseName = true; /**< parse (and set) the molecule name as well */
+  bool mergeHs =
+      true; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
+  bool skipCleanup =
+      false; /**<  skip the final cleanup stage (for internal use) */
+};
+
+}  // namespace SmilesParse
+}  // namespace RDKitv2
+
+namespace RDKit {
+
+using RDKitv2::SmilesParse::SmartsParserParams;
+using RDKitv2::SmilesParse::SmilesParserParams;
+
+RDKIT_SMILESPARSE_EXPORT RDKit::RWMol *SmilesToMol(
+    const std::string &smi, const SmilesParserParams &params);
 
 RDKIT_SMILESPARSE_EXPORT Atom *SmilesToAtom(const std::string &smi);
 RDKIT_SMILESPARSE_EXPORT Bond *SmilesToBond(const std::string &smi);
@@ -81,19 +104,6 @@ inline RWMol *SmilesToMol(
   return SmilesToMol(smi, params);
 };
 
-struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
-  int debugParse = 0; /**< enable debugging in the SMARTS parser*/
-  std::map<std::string, std::string> *replacements =
-      nullptr;               /**< allows SMARTS "macros" */
-  bool allowCXSMILES = true; /**< recognize and parse CXSMILES extensions */
-  bool strictCXSMILES =
-      true; /**< throw an exception if the CXSMILES parsing fails */
-  bool parseName = true; /**< parse (and set) the molecule name as well */
-  bool mergeHs =
-      true; /**< toggles merging H atoms in the SMARTS into neighboring atoms*/
-  bool skipCleanup =
-      false; /**<  skip the final cleanup stage (for internal use) */
-};
 RDKIT_SMILESPARSE_EXPORT RWMol *SmartsToMol(const std::string &sma,
                                             const SmartsParserParams &ps);
 
@@ -154,5 +164,34 @@ inline std::unique_ptr<RDKit::RWMol> operator"" _smarts(const char *text,
 }
 
 }  // namespace RDKit
+
+namespace RDKitv2 {
+namespace SmilesParse {
+inline std::unique_ptr<RDKit::RWMol> SmilesToMol(
+    const std::string &smi,
+    const SmilesParserParams &params = SmilesParserParams()) {
+  return std::unique_ptr<RDKit::RWMol>{RDKit::SmilesToMol(smi, params)};
+};
+inline std::unique_ptr<RDKit::RWMol> SmartsToMol(
+    const std::string &sma,
+    const SmartsParserParams &params = SmartsParserParams()) {
+  return std::unique_ptr<RDKit::RWMol>{RDKit::SmartsToMol(sma, params)};
+}
+
+inline std::unique_ptr<RDKit::Atom> SmilesToAtom(const std::string &smi) {
+  return std::unique_ptr<RDKit::Atom>{RDKit::SmilesToAtom(smi)};
+}
+inline std::unique_ptr<RDKit::Bond> SmilesToBond(const std::string &smi) {
+  return std::unique_ptr<RDKit::Bond>{RDKit::SmilesToBond(smi)};
+}
+
+inline std::unique_ptr<RDKit::Atom> SmartsToAtom(const std::string &sma) {
+  return std::unique_ptr<RDKit::Atom>{RDKit::SmartsToAtom(sma)};
+}
+inline std::unique_ptr<RDKit::Bond> SmartsToBond(const std::string &sma) {
+  return std::unique_ptr<RDKit::Bond>{RDKit::SmartsToBond(sma)};
+}
+}  // namespace SmilesParse
+}  // namespace RDKitv2
 
 #endif
