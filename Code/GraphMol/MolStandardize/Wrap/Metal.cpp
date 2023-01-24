@@ -16,30 +16,54 @@
 namespace python = boost::python;
 
 namespace {
-RDKit::ROMol *disconnect(RDKit::MolStandardize::MetalDisconnector &self,
-                         RDKit::ROMol &mol) {
-  RDKit::ROMol *nm = self.disconnect(mol);
-  return nm;
-}
 
-std::string getMetalNofHelper(RDKit::MolStandardize::MetalDisconnector &self) {
+class MetalDisconnectorWrap {
+ public:
+  MetalDisconnectorWrap(python::object options = python::object()) {
+    if (options.is_none()) {
+      md_.reset(new RDKit::MolStandardize::MetalDisconnector());
+    } else {
+      RDKit::MolStandardize::MetalDisconnectorOptions md_opts;
+      md_opts.splitGrignards =
+          python::extract<bool>(options.attr("splitGrignards"));
+      md_opts.splitAromaticC =
+          python::extract<bool>(options.attr("splitAromaticC"));
+      md_opts.adjustCharges =
+          python::extract<bool>(options.attr("adjustCharges"));
+      md_opts.removeHapticDummies =
+          python::extract<bool>(options.attr("removeHapticDummies"));
+      md_.reset(new RDKit::MolStandardize::MetalDisconnector(md_opts));
+    }
+  }
+
+  RDKit::ROMol *getMetalNof() { return md_->getMetalNof(); }
+  RDKit::ROMol *getMetalNon() { return md_->getMetalNon(); }
+  void setMetalNof(const RDKit::ROMol &mol) { md_->setMetalNof(mol); }
+  void setMetalNon(const RDKit::ROMol &mol) { md_->setMetalNon(mol); }
+
+  RDKit::ROMol *disconnect(const RDKit::ROMol &mol) {
+    return md_->disconnect(mol);
+  }
+
+ private:
+  std::unique_ptr<RDKit::MolStandardize::MetalDisconnector> md_;
+};
+
+std::string getMetalNofHelper(MetalDisconnectorWrap &self) {
   return RDKit::MolToSmarts(*(self.getMetalNof()));
 }
 
-std::string getMetalNonHelper(RDKit::MolStandardize::MetalDisconnector &self) {
+std::string getMetalNonHelper(MetalDisconnectorWrap &self) {
   return RDKit::MolToSmarts(*(self.getMetalNon()));
 }
 
-void setMetalNonHelper(RDKit::MolStandardize::MetalDisconnector &self,
-                       const RDKit::ROMol &mol) {
+void setMetalNonHelper(MetalDisconnectorWrap &self, const RDKit::ROMol &mol) {
   self.setMetalNon(mol);
 }
 
-void setMetalNofHelper(RDKit::MolStandardize::MetalDisconnector &self,
-                       const RDKit::ROMol &mol) {
+void setMetalNofHelper(MetalDisconnectorWrap &self, const RDKit::ROMol &mol) {
   self.setMetalNof(mol);
 }
-
 }  // namespace
 
 struct metal_wrapper {
@@ -48,9 +72,8 @@ struct metal_wrapper {
         "Module containing functions for molecular standardization";
 
     std::string docString = "Metal Disconnector Options";
-    python::class_<RDKit::MolStandardize::MetalDisconnectorOptions,
-                   boost::noncopyable>("MetalDisconnectorOptions",
-                                       docString.c_str(), python::init<>())
+    python::class_<RDKit::MolStandardize::MetalDisconnectorOptions>(
+        "MetalDisconnectorOptions", docString.c_str(), python::init<>())
         .def_readwrite(
             "splitGrignards",
             &RDKit::MolStandardize::MetalDisconnectorOptions::splitGrignards,
@@ -74,11 +97,9 @@ struct metal_wrapper {
     docString =
         "a class to disconnect metals that are defined as covalently bonded to"
         " non-metals";
-    python::class_<RDKit::MolStandardize::MetalDisconnector,
-                   boost::noncopyable>(
+    python::class_<MetalDisconnectorWrap, boost::noncopyable>(
         "MetalDisconnector", docString.c_str(),
-        python::init<python::optional<
-            const RDKit::MolStandardize::MetalDisconnectorOptions &>>(
+        python::init<python::optional<python::object>>(
             (python::arg("options") = python::object())))
         .add_property("MetalNof", &getMetalNofHelper,
                       "SMARTS defining the metals to disconnect if attached to "
@@ -96,7 +117,7 @@ struct metal_wrapper {
             (python::arg("self"), python::arg("mol")),
             "Set the query molecule defining the metals to disconnect if attached"
             " to Nitrogen, Oxygen or Fluorine.")
-        .def("Disconnect", &disconnect,
+        .def("Disconnect", &MetalDisconnectorWrap::disconnect,
              (python::arg("self"), python::arg("mol")), docString.c_str(),
              python::return_value_policy<python::manage_new_object>());
   }
