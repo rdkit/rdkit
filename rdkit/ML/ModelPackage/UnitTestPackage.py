@@ -3,7 +3,7 @@
 #
 """ unit tests for the model and descriptor packager """
 import os
-import random
+from rdkit import RDRandom as random
 import unittest
 from xml.dom import minidom
 from xml.etree import ElementTree as ET

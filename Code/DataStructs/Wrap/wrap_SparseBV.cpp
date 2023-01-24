@@ -17,7 +17,7 @@
 namespace python = boost::python;
 
 // allows BitVects to be pickled
-struct sbv_pickle_suite : python::pickle_suite {
+struct sbv_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const SparseBitVect &self) {
     std::string res = self.toString();
     python::object retval = python::object(
