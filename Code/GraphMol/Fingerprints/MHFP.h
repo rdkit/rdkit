@@ -228,25 +228,25 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
       unsigned char min_radius = 1, size_t length = 2048);
 
   /*!
-    \brief Calculates the Jaccard / Tanimoto distance between two MHFP
+    \brief Calculates the Hamming distance between two MHFP
            fingerprints.
 
     \param a an MHFP fingerprint vector.
     \param b an MHFP fingerprint vector.
 
-    \returns the Jaccard / Tanimoto distance between the two fingerprints.
+    \returns the Hamming distance between the two fingerprints.
    */
   static double Distance(const std::vector<uint32_t>& a,
                          const std::vector<uint32_t>& b) {
-    size_t matches = 0;
+    size_t mismatches = 0;
 
     for (size_t i = 0; i < a.size(); i++) {
-      if (a[i] == b[i]) {
-        matches++;
+      if (a[i] != b[i]) {
+        mismatches++;
       }
     }
 
-    return matches / (double)a.size();
+    return mismatches / (double)a.size();
   }
 
  private:
