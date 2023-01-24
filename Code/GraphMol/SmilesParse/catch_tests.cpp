@@ -2113,6 +2113,27 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     CHECK(bondcfg == 3);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    invertMolBlockWedgingInfo(*m);
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 1);
+    reapplyMolBlockWedging(*m);
+    MolOps::assignChiralTypesFromBondDirs(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    invertMolBlockWedgingInfo(*m);
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 3);
+    reapplyMolBlockWedging(*m);
+    MolOps::assignChiralTypesFromBondDirs(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    clearMolBlockWedgingInfo(*m);
+    m->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(!m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    reapplyMolBlockWedging(*m);
+    MolOps::assignChiralTypesFromBondDirs(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
   }
 
   SECTION("writing examples") {
