@@ -43,6 +43,7 @@
 //#define DEBUG_EMBEDDING 1
 
 namespace {
+const size_t MAX_TRACKED_FAILURES = 10;
 const double ERROR_TOL = 0.00001;
 // these tolerances, all to detect and filter out bogus conformations, are a
 // delicate balance between sensitive enough to detect obviously bad
@@ -751,11 +752,6 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
-#ifdef DEBUG_EMBEDDING
-    if (!gotCoords) {
-      std::cerr << "Initial embedding failed!, Iter: " << iter << std::endl;
-    }
-#endif
     if (!gotCoords) {
       if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -832,7 +828,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           }
         }
       }
-      // test if chirality is correct
+      // test if chirality is correct. Any additional test failures
+      // will be tracked there if necessary.
       if (embedParams.enforceChirality && gotCoords &&
           (eargs.chiralCenters->size() > 0)) {
         gotCoords =
@@ -1180,7 +1177,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 #ifdef RDK_BUILD_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-    params.failures.resize(10);
+    params.failures.resize(MAX_TRACKED_FAILURES);
     std::fill(params.failures.begin(), params.failures.end(), 0);
   }
   if (!mol.getNumAtoms()) {
