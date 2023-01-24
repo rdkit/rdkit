@@ -140,6 +140,13 @@ void testMetalDisconnector() {
   }
 
   {
+    RWMOL_SPTR m("C1(CCCCC1)[Zn]Br"_smiles);
+    TEST_ASSERT(m);
+    md.disconnect(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "[Br-].[CH-]1CCCCC1.[Zn+2]");
+  }
+
+  {
     RWMOL_SPTR m("Br[Mg]c1ccccc1CCC(=O)O[Na]"_smiles);
     TEST_ASSERT(m);
     md.disconnect(*m);
@@ -1498,6 +1505,9 @@ void testSyngenta() {
     std::unique_ptr<ROMol> m(mol_supplier.next());
     std::unique_ptr<ROMol> dm(MolStandardize::disconnectOrganometallics(*m));
     TEST_ASSERT(MolToSmiles(*dm) == test_file.second);
+    std::unique_ptr<RWMol> em(new RWMol(*m));
+    MolStandardize::disconnectOrganometallics(*em);
+    TEST_ASSERT(MolToSmiles(*em) == test_file.second);
   }
 }
 
