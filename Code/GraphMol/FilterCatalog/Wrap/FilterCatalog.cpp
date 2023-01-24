@@ -42,7 +42,7 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-struct filtercatalog_pickle_suite : python::pickle_suite {
+struct filtercatalog_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const FilterCatalog &self) {
     std::string res;
     if (!FilterCatalogCanSerialize()) {

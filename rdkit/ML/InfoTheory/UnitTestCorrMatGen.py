@@ -2,7 +2,7 @@ from rdkit.ML.InfoTheory import rdInfoTheory
 from rdkit.ML.Data import DataUtils
 from rdkit import DataStructs
 import unittest
-import random
+from rdkit import RDRandom as random
 
 
 try:

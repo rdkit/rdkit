@@ -28,7 +28,7 @@ def getDistMat(mol):
     conf = mol.GetConformer()
     nat = mol.GetNumAtoms()
     nl = nat * (nat - 1) // 2
-    res = np.zeros(nl, np.float)
+    res = np.zeros(nl, float)
 
     for i in range(1, nat):
         pi = conf.GetAtomPosition(i)

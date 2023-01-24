@@ -19,7 +19,7 @@
 namespace python = boost::python;
 namespace RDKit {
 
-struct fragcatalog_pickle_suite : python::pickle_suite {
+struct fragcatalog_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const FragCatalog &self) {
     std::string res;
     res = self.Serialize();
