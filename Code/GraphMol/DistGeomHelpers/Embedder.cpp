@@ -686,10 +686,20 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
       return false;
     }
 
-    // check the dihedral and be super permissive
+    // check the dihedral and be super permissive. Here's the logic of the
+    // check: The second element of the dihedralBond item contains 1 for trans
+    // bonds
+    //   and -1 for cis bonds.
+    // The dihedral is between 0 and 180. subtracting 90 from that gives:
+    //     positive values for dihedrals > 90 (closer to trans than cis)
+    //     negative values for dihedrals < 90 (closer to cis than trans)
+    // So multiplying the result of the subtracion from the second element of
+    //   the dihedralBond element will give a positive value if the dihedral is
+    //   closer to correct than it is to incorrect and a negative value
+    //   otherwise.
     auto dihedral = RDGeom::computeDihedralAngle(p0, p1, p2, p3);
     if ((dihedral - M_PI_2) * itm.second < 0) {
-      // they are pointing in different directions
+      // closer to incorrect than correct... it's a bad geometry
       return false;
     }
   }
