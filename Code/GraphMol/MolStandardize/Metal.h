@@ -81,7 +81,8 @@ accordingly.
   ROMOL_SPTR metal_nof_;
   ROMOL_SPTR metal_non_;
   ROMOL_SPTR metalDummy_;
-  const MetalDisconnectorOptions &options_;
+
+  const MetalDisconnectorOptions options_;
 
   void adjust_charges(RDKit::RWMol &mol, std::map<int, NonMetal> &nonMetals,
                       std::map<int, int> &metalChargeExcess);
