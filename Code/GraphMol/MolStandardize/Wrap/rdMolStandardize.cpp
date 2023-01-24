@@ -265,6 +265,9 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
               (python::arg("mol"), python::arg("params") = python::object()),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
+  docString =
+      "Returns the molecule disconnected using the organometallics"
+      " rules.";
   python::def("DisconnectOrganometallics", &disconnectOrganometallicsHelper,
               (python::arg("mol")), docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
