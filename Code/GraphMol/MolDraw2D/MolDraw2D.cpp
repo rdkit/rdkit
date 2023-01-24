@@ -447,23 +447,16 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
                           bool asPolygon, double frac, double angle,
                           const DrawColour &col, bool rawCoords) {
-  auto delta = arrowBegin - arrowEnd;
-  double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
+  Point2D ae(arrowEnd), p1, p2;
+  MolDraw2D_detail::calcArrowHead(ae, p1, p2, arrowBegin, asPolygon, frac,
+                                  angle);
 
-  auto p1 = arrowEnd;
-  p1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
-  p1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);
-
-  auto p2 = arrowEnd;
-  p2.x += frac * (delta.x * cos_angle - delta.y * sin_angle);
-  p2.y += frac * (delta.y * cos_angle + delta.x * sin_angle);
-
-  drawLine(arrowBegin, arrowEnd, col, col, rawCoords);
+  drawLine(arrowBegin, ae, col, col, rawCoords);
   if (!asPolygon) {
-    drawLine(arrowEnd, p1, col, col, rawCoords);
-    drawLine(arrowEnd, p2, col, col, rawCoords);
+    drawLine(ae, p1, col, col, rawCoords);
+    drawLine(ae, p2, col, col, rawCoords);
   } else {
-    std::vector<Point2D> pts = {p1, arrowEnd, p2};
+    std::vector<Point2D> pts = {p1, ae, p2};
     bool fps = fillPolys();
     auto dc = colour();
     setFillPolys(true);
@@ -898,12 +891,8 @@ void MolDraw2D::makeReactionDrawMol(
     std::vector<std::shared_ptr<MolDraw2D_detail::DrawMol>> &mols) {
   mol.updatePropertyCache(false);
   if (drawOptions().prepareMolsBeforeDrawing) {
-    try {
-      RDLog::LogStateSetter blocker;
-      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
-    } catch (const MolSanitizeException &) {
-      // don't need to do anything
-    }
+    RDLog::LogStateSetter blocker;
+    MolOps::KekulizeIfPossible(mol, false);
     MolOps::setHybridization(mol);
   }
   if (!mol.getNumConformers()) {

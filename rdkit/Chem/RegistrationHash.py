@@ -101,7 +101,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
   """
     Generate a molecular hash using a specified set of layers.
 
-    :param mol: the molecule to generate the hash for
+    :param all_layers: a dictionary of layers
     :param hash_scheme: enum encoding information layers for the hash
     :return: hash for the given scheme constructed from the input layers
     """
@@ -457,6 +457,13 @@ def _CanonicalizeStereoGroups(mol):
   opts = EnumerateStereoisomers.StereoEnumerationOptions()
   opts.onlyStereoGroups = True
   opts.unique = False
+
+  # Before enumerating stereoisomers, we strip the bond directions to prevent
+  # an exception when enumerating centers near double bonds.
+  # Registration code sometimes handles molecules with user-defined bond directions,
+  # which may not be valid.
+  for bond in mol.GetBonds():
+    bond.SetBondDir(Chem.BondDir.NONE)
 
   resultMol = None
   resultCXSmiles = ''

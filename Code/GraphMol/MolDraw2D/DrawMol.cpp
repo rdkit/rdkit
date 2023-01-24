@@ -182,6 +182,11 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
 void DrawMol::extractAll(double scale) {
   extractAtomCoords();
   extractAtomSymbols();
+  // extractVariableBonds removes the * symbol from the end of dative bonds
+  // that are showing a haptic bond, so this needs to be done before the
+  // bonds are extracted, or it will shorten the bond so as not to clash with
+  // the * which won't be in the final picture.
+  extractVariableBonds();
   extractBonds();
   extractRegions();
   extractHighlights(scale);
@@ -191,7 +196,6 @@ void DrawMol::extractAll(double scale) {
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
-  extractVariableBonds();
   extractBrackets();
   extractLinkNodes();
 }
@@ -1534,7 +1538,7 @@ void DrawMol::makeStandardBond(Bond *bond, double doubleBondOffset) {
   } else if (bt == Bond::SINGLE && bond->getBondDir() == Bond::UNKNOWN) {
     makeWavyBond(bond, doubleBondOffset, cols);
   } else if (bt == Bond::DATIVE || bt == Bond::DATIVEL || bt == Bond::DATIVER) {
-    makeDativeBond(bond, cols);
+    makeDativeBond(bond, doubleBondOffset, cols);
   } else if (bt == Bond::ZERO) {
     makeZeroBond(bond, cols, shortDashes);
   } else if (bt == Bond::HYDROGEN) {
@@ -1841,7 +1845,7 @@ void DrawMol::makeWavyBond(Bond *bond, double offset,
 }
 
 // ****************************************************************************
-void DrawMol::makeDativeBond(Bond *bond,
+void DrawMol::makeDativeBond(Bond *bond, double offset,
                              const std::pair<DrawColour, DrawColour> &cols) {
   auto at1 = bond->getBeginAtom();
   auto at2 = bond->getEndAtom();
@@ -1853,10 +1857,13 @@ void DrawMol::makeDativeBond(Bond *bond,
   newBondLine(end1, mid, cols.first, cols.first, at1->getIdx(), atid2,
               bond->getIdx(), noDash);
   std::vector<Point2D> pts{mid, end2};
+  // Adjust the fraction of the line length that will be arrowhead so that
+  // it is a consistent number of pixels.
+  auto frac = 2.0 * offset / (end2 - end1).length();
   DrawShapeArrow *a = new DrawShapeArrow(
       pts, drawOptions_.bondLineWidth, false, cols.second, true,
       at1->getIdx() + activeAtmIdxOffset_, atid2 + activeAtmIdxOffset_,
-      bond->getIdx() + activeBndIdxOffset_, 0.2, M_PI / 6);
+      bond->getIdx() + activeBndIdxOffset_, frac, M_PI / 12);
   bonds_.push_back(std::unique_ptr<DrawShape>(a));
 }
 
@@ -3048,8 +3055,8 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           p1 = 1;
           p2 = 2;
         } else if (wedge->points_.size() == 9) {
-          p1 = 5;
-          p2 = 6;
+          p1 = 4;
+          p2 = 5;
         }
         // want the p1 or p2 that is furthest from the 3rd atom - make it p1
         if (p1 != -1 && p2 != -1) {

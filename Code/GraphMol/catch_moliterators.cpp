@@ -27,6 +27,36 @@ TEST_CASE("mol.atoms()") {
     }
   }
   CHECK(ccount == 4);
+  auto atoms = m->atoms();
+  auto hasCarbon = std::any_of(atoms.begin(), atoms.end(), [](const auto atom) {
+    return atom->getAtomicNum() == 6;
+  });
+  CHECK(hasCarbon);
+  ccount = std::count_if(atoms.begin(), atoms.end(), [](const auto atom) {
+    return atom->getAtomicNum() == 6;
+  });
+  CHECK(ccount == 4);
+}
+
+TEST_CASE("mol.bonds()") {
+  const auto m = "OC(=O)C(=O)O"_smiles;
+  REQUIRE(m);
+  unsigned int doubleBondCount = 0;
+  for (const auto bond : m->bonds()) {
+    if (bond->getBondType() == Bond::DOUBLE) {
+      ++doubleBondCount;
+    }
+  }
+  CHECK(doubleBondCount == 2);
+  auto bonds = m->bonds();
+  auto hasDoubleBond = std::any_of(bonds.begin(), bonds.end(), [](const auto bond) {
+    return bond->getBondType() == Bond::DOUBLE;
+  });
+  CHECK(hasDoubleBond);
+  doubleBondCount = std::count_if(bonds.begin(), bonds.end(), [](const auto bond) {
+    return bond->getBondType() == Bond::DOUBLE;
+  });
+  CHECK(doubleBondCount == 2);
 }
 
 TEST_CASE("mol.atomNeighbors()") {

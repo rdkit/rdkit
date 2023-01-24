@@ -43,7 +43,7 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   bitPathsType *bitPaths = nullptr;
 
   // number of paths that set bits for each atom, must have the same size as
-  // atom count for molecule
+  // atom count for molecule.
   atomCountsType *atomCounts = nullptr;
 
   void allocateAtomToBits() {

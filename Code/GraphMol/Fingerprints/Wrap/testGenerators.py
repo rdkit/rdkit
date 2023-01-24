@@ -228,7 +228,7 @@ class TestCase(unittest.TestCase):
     ao.AllocateAtomToBits()
     fp = g.GetFingerprint(m1, additionalOutput=ao)
     self.assertIsNone(ao.GetAtomCounts())
-    self.assertEqual(ao.GetAtomToBits(), ((351, 479), (351, 399), (479, 399)))
+    self.assertEqual(ao.GetAtomToBits(), ((1404, 1916), (1404, 1596), (1596, 1916)))
     self.assertIsNone(ao.GetBitInfoMap())
     self.assertIsNone(ao.GetBitPaths())
 
@@ -237,7 +237,7 @@ class TestCase(unittest.TestCase):
     fp = g.GetFingerprint(m1, additionalOutput=ao)
     self.assertIsNone(ao.GetAtomCounts())
     self.assertIsNone(ao.GetAtomToBits())
-    self.assertEqual(ao.GetBitInfoMap(), {351: ((0, 1), ), 399: ((1, 2), ), 479: ((0, 2), )})
+    self.assertEqual(ao.GetBitInfoMap(), {1404: ((0, 1), ), 1596: ((1, 2), ), 1916: ((0, 2), )})
     self.assertIsNone(ao.GetBitPaths())
 
   def testCountBounds(self):

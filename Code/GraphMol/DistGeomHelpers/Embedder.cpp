@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-//#define DEBUG_EMBEDDING 1
+// #define DEBUG_EMBEDDING 0
 #include "Embedder.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
@@ -37,6 +37,7 @@
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
+#include <mutex>
 #endif
 
 //#define DEBUG_EMBEDDING 1
@@ -48,6 +49,7 @@
 namespace {
 constexpr double M_PI_2 = 1.57079632679489661923;
 constexpr double ERROR_TOL = 0.00001;
+constexpr size_t MAX_TRACKED_FAILURES = 10;
 // these tolerances, all to detect and filter out bogus conformations, are a
 // delicate balance between sensitive enough to detect obviously bad
 // conformations but not so sensitive that a bunch of ok conformations get
@@ -57,6 +59,27 @@ constexpr double MAX_MINIMIZED_E_CONTRIB = 0.20;
 constexpr double MIN_TETRAHEDRAL_CHIRAL_VOL = 0.50;
 constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 }  // namespace
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+namespace {
+std::mutex &failmutex_get() {
+  // create on demand
+  static std::mutex _mutex;
+  return _mutex;
+}
+
+void failmutex_create() {
+  std::mutex &mutex = failmutex_get();
+  std::lock_guard<std::mutex> test_lock(mutex);
+}
+
+std::mutex &GetFailMutex() {
+  static std::once_flag flag;
+  std::call_once(flag, failmutex_create);
+  return failmutex_get();
+}
+}  // namespace
+#endif
 
 namespace RDKit {
 namespace DGeomHelpers {
@@ -708,7 +731,7 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
 
 bool finalChiralChecks(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
-                       const EmbedParameters &) {
+                       EmbedParameters &embedParams) {
   // "distance matrix" chirality test
   std::set<int> atoms;
   for (const auto &chiralSet : *eargs.chiralCenters) {
@@ -727,6 +750,13 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: "  //<< iter
                 << std::endl;
 #endif
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::FINAL_CHIRAL_BOUNDS]++;
+      }
+
       return false;
     }
   }
@@ -740,6 +770,12 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
       std::cerr << " fail3b! (" << chiralSet->d_idx0 << ") iter: "  //<< iter
                 << std::endl;
 #endif
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        embedParams.failures[EmbedFailureCauses::FINAL_CENTER_IN_VOLUME]++;
+      }
       return false;
     }
   }
@@ -748,7 +784,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
 }
 
 bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
-                 EmbedParameters embedParams, int seed) {
+                 EmbedParameters &embedParams, int seed) {
   PRECONDITION(positions, "bogus positions");
   if (embedParams.maxIterations == 0) {
     embedParams.maxIterations = 10 * positions->size();
@@ -786,17 +822,35 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
-#ifdef DEBUG_EMBEDDING
     if (!gotCoords) {
-      std::cerr << "Initial embedding failed!, Iter: " << iter << std::endl;
-    }
+      if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-    if (gotCoords) {
+        embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
+      }
+    } else {
       gotCoords =
           EmbeddingOps::firstMinimization(positions, eargs, embedParams);
-      if (gotCoords) {
+      if (!gotCoords) {
+        if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+          std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+          embedParams.failures[EmbedFailureCauses::FIRST_MINIMIZATION]++;
+        }
+      } else {
         gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs,
                                                           embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams
+                .failures[EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS]++;
+          }
+        }
       }
 
       // Check if any of our chiral centers are badly out of whack.
@@ -804,6 +858,14 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           eargs.chiralCenters->size() > 0) {
         gotCoords =
             EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS]++;
+          }
+        }
       }
       // redo the minimization if we have a chiral center
       // or have started from random coords.
@@ -811,6 +873,15 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
         gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
                                                           embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams
+                .failures[EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION]++;
+          }
+        }
       }
 
       // (ET)(K)DG
@@ -818,9 +889,19 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
                         embedParams.useBasicKnowledge)) {
         gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
                                                           embedParams);
+        if (!gotCoords) {
+          if (embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams.failures[EmbedFailureCauses::ETK_MINIMIZATION]++;
+          }
+        }
       }
       // test if stereo is correct
       if (embedParams.enforceChirality && gotCoords) {
+        // test if chirality is correct. Any additional test failures
+        // will be tracked there if necessary.
         if (!eargs.chiralCenters->empty()) {
           gotCoords =
               EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
@@ -830,8 +911,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
                                                            embedParams);
         }
       }
-    }  // if(gotCoords)
-  }    // while
+    }
+
+  }  // while
   if (seed > -1) {
     delete rng;
     delete generator;
@@ -1066,7 +1148,7 @@ bool multiplication_overflows_(T a, T b) {
 }
 
 void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
-                  const EmbedParameters *params) {
+                  EmbedParameters *params) {
   PRECONDITION(eargs, "bogus eargs");
   PRECONDITION(params, "bogus params");
   unsigned int nAtoms = eargs->mmat->numRows();
@@ -1193,7 +1275,14 @@ std::vector<std::vector<unsigned int>> getMolSelfMatches(
 }  // end of namespace detail
 
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
-                        const EmbedParameters &params) {
+                        EmbedParameters &params) {
+  if (params.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+    params.failures.resize(MAX_TRACKED_FAILURES);
+    std::fill(params.failures.begin(), params.failures.end(), 0);
+  }
   if (!mol.getNumAtoms()) {
     throw ValueErrorException("molecule has no atoms");
   }
