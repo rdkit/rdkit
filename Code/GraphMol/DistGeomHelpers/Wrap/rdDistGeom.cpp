@@ -184,6 +184,14 @@ void setCPCI(DGeomHelpers::EmbedParameters *self, python::dict &CPCIdict) {
   self->CPCI = CPCI;
 }
 
+python::tuple getFailureCounts(DGeomHelpers::EmbedParameters *self) {
+  python::list lst;
+  for (auto i = 0u; i < self->failures.size(); i++) {
+    lst.append(self->failures[i]);
+  }
+  return python::tuple(lst);
+}
+
 void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
                      python::object boundsMatArg) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
@@ -351,6 +359,25 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("ETversion") = 1),
       docString.c_str());
 
+  python::enum_<RDKit::DGeomHelpers::EmbedFailureCauses>("EmbedFailureCauses")
+      .value("INITIAL_COORDS",
+             RDKit::DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS)
+      .value("FIRST_MINIMIZATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::FIRST_MINIMIZATION)
+      .value("CHECK_TETRAHEDRAL_CENTERS",
+             RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS)
+      .value("CHECK_CHIRAL_CENTERS",
+             RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_CHIRAL_CENTERS)
+      .value("MINIMIZE_FOURTH_DIMENSION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION)
+      .value("ETK_MINIMIZATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION)
+      .value("FINAL_CHIRAL_BOUNDS",
+             RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS)
+      .value("FINAL_CENTER_IN_VOLUME",
+             RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CENTER_IN_VOLUME)
+      .export_values();
+
   python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(
       "EmbedParameters", "Parameters controlling embedding")
       .def_readwrite("maxIterations",
@@ -443,7 +470,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
            "used during structural minimisation stage")
       .def_readwrite("forceTransAmides",
                      &RDKit::DGeomHelpers::EmbedParameters::forceTransAmides,
-                     "constrain amide bonds to be trans");
+                     "constrain amide bonds to be trans")
+      .def_readwrite(
+          "trackFailures", &RDKit::DGeomHelpers::EmbedParameters::trackFailures,
+          "keep track of which checks during the embedding process fail")
+      .def("GetFailureCounts", &RDKit::getFailureCounts,
+           "returns the counts of eacu");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
