@@ -25,27 +25,27 @@
 
 TEST_CASE("v2 basics") {
   {
-    auto mol = RDKitv2::SmilesParse::SmilesToMol("CCC");
+    auto mol = RDKit::v2::SmilesParse::SmilesToMol("CCC");
     REQUIRE(mol);
   }
   {
-    auto mol = RDKitv2::SmilesParse::SmartsToMol("CC[R]");
+    auto mol = RDKit::v2::SmilesParse::SmartsToMol("CC[R]");
     REQUIRE(mol);
   }
   {
-    auto atm = RDKitv2::SmilesParse::SmilesToAtom("C");
+    auto atm = RDKit::v2::SmilesParse::SmilesToAtom("C");
     REQUIRE(atm);
   }
   {
-    auto bnd = RDKitv2::SmilesParse::SmilesToBond("-");
+    auto bnd = RDKit::v2::SmilesParse::SmilesToBond("-");
     REQUIRE(bnd);
   }
   {
-    auto atm = RDKitv2::SmilesParse::SmartsToAtom("[R]");
+    auto atm = RDKit::v2::SmilesParse::SmartsToAtom("[R]");
     REQUIRE(atm);
   }
   {
-    auto bnd = RDKitv2::SmilesParse::SmartsToBond("@");
+    auto bnd = RDKit::v2::SmilesParse::SmartsToBond("@");
     REQUIRE(bnd);
   }
 }

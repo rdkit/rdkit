@@ -53,6 +53,7 @@ int yysmarts_lex_destroy(void *);
 size_t setup_smarts_string(const std::string &text, void *);
 extern int yysmarts_debug;
 namespace RDKit {
+namespace v1 {
 namespace {
 
 int smarts_parse_helper(const std::string &inp,
@@ -525,4 +526,5 @@ RWMol *SmartsToMol(const std::string &smarts,
   }
   return res;
 };
+}  // namespace v1
 }  // namespace RDKit
