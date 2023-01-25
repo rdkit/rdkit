@@ -8,7 +8,7 @@
 #    (the build-arg arguments are all optional)
 # docker build -t rdkit-minimallib --network=host \
 #  --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
-#  --build-arg "RDKIT_BRANCH=mybranch"
+#  --build-arg "RDKIT_BRANCH=mybranch" .
 #
 # 3. create a temporary container and copy built libraries
 #    from the container to your local filesystem, then destroy
@@ -69,8 +69,7 @@ RUN git fetch --all --tags && \
 RUN mkdir build
 WORKDIR build
 
-# this is to display the emsdk_env.sh output only once per build
-RUN echo "[ -e ~/emsdk_env.log ] && source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1 || source /opt/emsdk/emsdk_env.sh 2>&1 | tee ~/emsdk_env.log" >> ~/.bashrc
+RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
 SHELL ["/bin/bash", "-c", "-l"]
 RUN emcmake cmake -DBoost_INCLUDE_DIR=/opt/boost/include -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON \
