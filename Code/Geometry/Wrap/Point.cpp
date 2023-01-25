@@ -15,17 +15,17 @@
 namespace python = boost::python;
 
 namespace {
-struct Point3D_pickle_suite : python::pickle_suite {
+struct Point3D_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(RDGeom::Point3D const &pt) {
     return python::make_tuple(pt.x, pt.y, pt.z);
   }
 };
-struct Point2D_pickle_suite : python::pickle_suite {
+struct Point2D_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(RDGeom::Point2D const &pt) {
     return python::make_tuple(pt.x, pt.y);
   }
 };
-struct PointND_pickle_suite : python::pickle_suite {
+struct PointND_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(RDGeom::PointND const &pt) {
     return python::make_tuple(pt.dimension());
   }

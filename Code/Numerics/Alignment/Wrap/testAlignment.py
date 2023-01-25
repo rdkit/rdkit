@@ -38,8 +38,8 @@ class TestCase(unittest.TestCase):
 
   def test1Basic(self):
     # passing two numeric arrays
-    refPts = np.zeros((2, 3), np.float)
-    prbPts = np.zeros((2, 3), np.float)
+    refPts = np.zeros((2, 3), float)
+    prbPts = np.zeros((2, 3), float)
 
     refPts[1, 0] = 1.0
 
@@ -68,7 +68,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(res[0], 0.0))
 
     # mix it up
-    refPts = np.zeros((2, 3), np.float)
+    refPts = np.zeros((2, 3), float)
     refPts[1, 0] = 1.0
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 0.0))
@@ -76,10 +76,10 @@ class TestCase(unittest.TestCase):
   def test2Weights(self):
     refPts = np.array([[-math.cos(math.pi / 6), -math.sin(math.pi / 6), 0.0],
                        [math.cos(math.pi / 6), -math.sin(math.pi / 6), 0.0], [0.0, 1.0, 0.0]],
-                      np.float)
+                      float)
     prbPts = np.array([[-2 * math.sin(math.pi / 6) + 3.0, 2 * math.cos(math.pi / 6), 4.0],
                        [-2 * math.sin(math.pi / 6) + 3.0, -2 * math.cos(math.pi / 6), 4.0],
-                       [5.0, 0.0, 4.0]], np.float)
+                       [5.0, 0.0, 4.0]], float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 3.0))
     target = [[-1.732, -1., 0.], [1.732, -1., 0.], [0., 2., 0.]]
@@ -88,7 +88,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(lstFeq(transformPoint(res[1], item), target[cnt]))
       cnt += 1
 
-    weights = np.array([1.0, 1.0, 2.0], np.float)
+    weights = np.array([1.0, 1.0, 2.0], float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, weights)
     self.assertTrue(feq(res[0], 3.75))
     cnt = 0
@@ -106,12 +106,12 @@ class TestCase(unittest.TestCase):
 
   def test3tetra(self):
     refPts = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-                      np.float)
-    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 3.0, 3.0]], np.float)
+                      float)
+    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 3.0, 3.0]], float)
     self.assertRaises(ValueError, lambda: rdAlg.GetAlignmentTransform(refPts, prbPts))
 
     prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 3.0, 3.0], [2.0, 2.0, 4.0]],
-                      np.float)
+                      float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 0.0))
 
@@ -124,7 +124,7 @@ class TestCase(unittest.TestCase):
 
     # test reflection
     prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 2.0, 4.0], [2.0, 3.0, 3.0]],
-                      np.float)
+                      float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts)
     self.assertTrue(feq(res[0], 1.0))
 

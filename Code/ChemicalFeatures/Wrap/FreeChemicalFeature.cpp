@@ -20,7 +20,7 @@
 namespace ChemicalFeatures {
 
 // support pickling:
-struct chemfeat_pickle_suite : python::pickle_suite {
+struct chemfeat_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const FreeChemicalFeature &self) {
     std::string res = self.toString();
     python::object retval = python::object(

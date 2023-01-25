@@ -12,7 +12,7 @@
 namespace python = boost::python;
 using namespace RDKit;
 namespace {
-struct molcatalog_pickle_suite : python::pickle_suite {
+struct molcatalog_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const MolCatalog &self) {
     std::string res;
     res = self.Serialize();
@@ -21,7 +21,7 @@ struct molcatalog_pickle_suite : python::pickle_suite {
   };
 };
 
-struct molcatalogentry_pickle_suite : python::pickle_suite {
+struct molcatalogentry_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const MolCatalogEntry &self) {
     std::string res;
     res = self.Serialize();

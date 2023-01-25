@@ -29,14 +29,13 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Created by Greg Landrum, Nov 2008
-import random
 import copy
 """ Implementation of the BRICS algorithm from Degen et al. ChemMedChem *3* 1503-7 (2008)
 
 """
 import sys
 import re
-import random
+from rdkit import RDRandom as random
 from rdkit import Chem
 from rdkit.Chem import rdChemReactions as Reactions
 

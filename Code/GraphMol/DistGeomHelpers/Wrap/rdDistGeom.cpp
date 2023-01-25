@@ -13,6 +13,7 @@
 #include "numpy/arrayobject.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
@@ -223,6 +224,39 @@ void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
       new DistGeom::BoundsMatrix(nrows, sdata));
 }
 
+python::tuple getExpTorsHelper(const RDKit::ROMol &mol, bool useExpTorsions,
+                               bool useSmallRingTorsions,
+                               bool useMacrocycleTorsions,
+                               bool useBasicKnowledge, unsigned int version,
+                               bool verbose) {
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
+      torsionBonds;
+  ForceFields::CrystalFF::getExperimentalTorsions(
+      mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+      useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+  python::list result;
+  for (const auto &pr : torsionBonds) {
+    python::dict d;
+    d["bondIndex"] = std::get<0>(pr);
+    d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
+    d["smarts"] = std::get<2>(pr)->smarts;
+    d["V"] = std::get<2>(pr)->V;
+    d["signs"] = std::get<2>(pr)->signs;
+    d["atomIndices"] = std::get<1>(pr);
+    result.append(d);
+  }
+  return python::tuple(result);
+}
+
+python::tuple getExpTorsHelperWithParams(
+    const RDKit::ROMol &mol, const RDKit::DGeomHelpers::EmbedParameters &ps) {
+  return getExpTorsHelper(mol, ps.useExpTorsionAnglePrefs,
+                          ps.useSmallRingTorsions, ps.useMacrocycleTorsions,
+                          ps.useBasicKnowledge, ps.ETversion, ps.verbose);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -233,6 +267,19 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   rdkit_import_array();
 
   // RegisterListConverter<RDKit::Atom*>();
+
+  python::def(
+      "GetExperimentalTorsions", RDKit::getExpTorsHelper,
+      (python::arg("mol"), python::arg("useExpTorsionAnglePrefs") = true,
+       python::arg("useSmallRingTorsions") = false,
+       python::arg("useMacrocycleTorsions") = true,
+       python::arg("useBasicKnowledge") = true, python::arg("ETversion") = 2,
+       python::arg("printExpTorsionAngles") = false),
+      "returns information about the bonds corresponding to experimental torsions");
+  python::def(
+      "GetExperimentalTorsions", RDKit::getExpTorsHelperWithParams,
+      (python::arg("mol"), python::arg("embedParams")),
+      "returns information about the bonds corresponding to experimental torsions");
 
   std::string docString =
       "Use distance geometry to obtain initial \n\
