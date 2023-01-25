@@ -13,11 +13,11 @@ const assert = require('assert');
 const {
     performance
   } = require('perf_hooks');
-const legacySuffix = process.env.RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS === 'ON' ? '_legacy' : '';
-if (legacySuffix) {
-    console.log(`Loading legacy plain JS MinimalLib`);
-}
-var initRDKitModule = require(`../demo/RDKit_minimal${legacySuffix}.js`);
+// the default path to RDKit_minimal.js can be overridden through
+// the RDKIT_MINIMAL_JS variable if needed
+const minimalLib = process.env.RDKIT_MINIMAL_JS || '../demo/RDKit_minimal.js';
+console.log('Loading ' + minimalLib);
+var initRDKitModule = require(minimalLib);
 var RDKitModule;
 const fs       = require('fs');
 const readline = require('readline');
@@ -34,7 +34,7 @@ const extractBondCoords = (svg, bondDetail) => {
 const angleDegBetweenVectors = (v1, v2) => 180 / Math.PI * Math.acos((v1[0] * v2[0] + v1[1] * v2[1])
     / Math.sqrt((v1[0] * v1[0] + v1[1] * v1[1]) * (v2[0] * v2[0] + v2[1] * v2[1])));
 
-    // the goal here isn't to be comprehensive (the RDKit has tests for that),
+// the goal here isn't to be comprehensive (the RDKit has tests for that),
 // just to make sure that the wrappers are working as expected
 function test_basics() {
     var bmol = null;
