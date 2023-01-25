@@ -40,6 +40,7 @@
 #define private public
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecompData.h>
+#include <GraphMol/RGroupDecomposition/RGroupGa.h>
 
 using namespace RDKit;
 

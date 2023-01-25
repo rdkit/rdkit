@@ -416,7 +416,7 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
       // clang-format off
       AdditionalOutput::bitPathsType expected = {
           {0, {{0, 1, 2, 3}}},
-          {384, {{1, 2, 3, 4}}}
+          {1536, {{1, 2, 3, 4}}}
       };
       // clang-format on
       AdditionalOutput ao;
@@ -447,7 +447,7 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
 
     {
       AdditionalOutput::atomToBitsType expected1 = {
-          {0}, {0, 384}, {0, 384}, {0, 384}, {384}};
+          {0}, {0, 1536}, {0, 1536}, {0, 1536}, {1536}};
       AdditionalOutput ao;
       ao.allocateAtomCounts();
       ao.allocateAtomToBits();
@@ -474,8 +474,8 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
     {
       // clang-format off
       AdditionalOutput::bitPathsType expected = {
-          {261685121, {{1, 2, 3, 4}}},
-          {262078465, {{0, 1, 2, 3}}},
+          {1046740484, {{1, 2, 3, 4}}},
+          {1048313860, {{0, 1, 2, 3}}},
       };
       // clang-format on
       AdditionalOutput ao;
@@ -505,11 +505,11 @@ TEST_CASE("TopologicalTorsionGenerator bit info", "[fpgenerator][TT]") {
     AdditionalOutput::atomCountsType expected2 = {1, 2, 2, 2, 1};
 
     {
-      AdditionalOutput::atomToBitsType expected1 = {{262078465},
-                                                    {262078465, 261685121},
-                                                    {262078465, 261685121},
-                                                    {262078465, 261685121},
-                                                    {261685121}};
+      AdditionalOutput::atomToBitsType expected1 = {{1048313860},
+                                                    {1046740484, 1048313860},
+                                                    {1046740484, 1048313860},
+                                                    {1046740484, 1048313860},
+                                                    {1046740484}};
       AdditionalOutput ao;
       ao.allocateAtomCounts();
       ao.allocateAtomToBits();
@@ -549,9 +549,9 @@ TEST_CASE("AtomPairGenerator bit info", "[fpgenerator][AP]") {
   SECTION("folded bitInfo") {
     {
       AdditionalOutput::bitInfoMapType expected = {
-          {351, {{0, 1}}},
-          {479, {{0, 2}}},
-          {399, {{1, 2}}},
+          {1404, {{0, 1}}},
+          {1916, {{0, 2}}},
+          {1596, {{1, 2}}},
       };
       AdditionalOutput ao;
       ao.allocateBitInfoMap();
@@ -579,9 +579,9 @@ TEST_CASE("AtomPairGenerator bit info", "[fpgenerator][AP]") {
 
     {
       AdditionalOutput::atomToBitsType expected1 = {
-          {351, 479},
-          {351, 399},
-          {479, 399},
+          {1404, 1916},
+          {1404, 1596},
+          {1596, 1916},
       };
       AdditionalOutput ao;
       ao.allocateAtomCounts();
@@ -611,9 +611,9 @@ TEST_CASE("AtomPairGenerator bit info", "[fpgenerator][AP]") {
   SECTION("unfolded bitInfo") {
     {
       AdditionalOutput::bitInfoMapType expected = {
-          {1979743, {{0, 1}}},
-          {1979871, {{0, 2}}},
-          {2016655, {{1, 2}}},
+          {7918972, {{0, 1}}},
+          {7919484, {{0, 2}}},
+          {8066620, {{1, 2}}},
       };
       AdditionalOutput ao;
       ao.allocateBitInfoMap();
@@ -641,7 +641,7 @@ TEST_CASE("AtomPairGenerator bit info", "[fpgenerator][AP]") {
 
     {
       AdditionalOutput::atomToBitsType expected1 = {
-          {1979743, 1979871}, {1979743, 2016655}, {1979871, 2016655}};
+          {7918972, 7919484}, {7918972, 8066620}, {7919484, 8066620}};
       AdditionalOutput ao;
       ao.allocateAtomCounts();
       ao.allocateAtomToBits();

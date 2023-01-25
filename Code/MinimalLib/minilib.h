@@ -124,8 +124,11 @@ class JSMol {
     return set_prop(key, val, false);
   }
   std::string get_prop(const std::string &key) const;
+  bool clear_prop(const std::string &key);
   std::string remove_hs() const;
+  bool remove_hs_in_place();
   std::string add_hs() const;
+  bool add_hs_in_place();
   double normalize_depiction(int canonicalize, double scaleFactor);
   double normalize_depiction(int canonicalize) {
     return normalize_depiction(canonicalize, -1.);

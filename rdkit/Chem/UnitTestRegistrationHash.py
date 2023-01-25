@@ -637,7 +637,54 @@ M  END
         with self.assertRaisesRegex(ValueError, expected_regex=r'does not support isotopes above 999'):
             layers = RegistrationHash.GetMolLayers(mol)
 
+    def testBadBondDir(self):
+        """"""
+        molBlock = """
+     RDKit          2D
 
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 12 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 5.192672 -7.044349 0.000000 0
+M  V30 2 C 5.272538 -5.675621 0.000000 0
+M  V30 3 C 6.415595 -5.133214 0.000000 0
+M  V30 4 C 7.487292 -5.854749 0.000000 0
+M  V30 5 C 6.572156 -3.950482 0.000000 0
+M  V30 6 C 5.935220 -2.698719 0.000000 0
+M  V30 7 C 4.531603 -2.325867 0.000000 0
+M  V30 8 C 4.159340 -0.962544 0.000000 0
+M  V30 9 C 2.686034 -0.657857 0.000000 0
+M  V30 10 C 5.166201 0.053779 0.000000 0
+M  V30 11 C 6.621450 -0.316643 0.000000 0
+M  V30 12 C 6.973858 -1.673599 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 3 5
+M  V30 5 1 6 5 CFG=3
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 8 2 8 9
+M  V30 9 1 8 10
+M  V30 10 1 11 10
+M  V30 11 1 6 12
+M  V30 12 1 11 12
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STERAC1 ATOMS=(1 6)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+$$$$
+"""
+        mol = Chem.MolFromMolBlock(molBlock)
+        # Simulate reapplying the wedging from the original molBlock
+        mol.GetBondBetweenAtoms(4, 5).SetBondDir(Chem.BondDir.BEGINWEDGE)
+        # this shouldn't throw an exception
+        RegistrationHash.GetMolLayers(mol)
 
 
 if __name__ == '__main__':  # pragma: nocover

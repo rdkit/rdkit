@@ -631,8 +631,7 @@ class TestCase(unittest.TestCase):
   def testETKDGv3amide(self):
     """
         test for a macrocycle molecule, ETKDGv3 samples trans amide
-        """
-
+    """
     def get_atom_mapping(mol, smirks="[O:1]=[C:2]@;-[NX3:3]-[H:4]"):
       qmol = Chem.MolFromSmarts(smirks)
       ind_map = {}
@@ -656,7 +655,7 @@ class TestCase(unittest.TestCase):
     conf = mol.GetConformer(0)
     for torsion in get_atom_mapping(mol):
       a1, a2, a3, a4 = [conf.GetAtomPosition(i) for i in torsion]
-      self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1, a2, a3, a4)), 3.14, delta=0.1)
+      self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1, a2, a3, a4)), 3.02, delta=0.1)
 
   def testGetTorsionBonds(self):
     m = Chem.AddHs(Chem.MolFromSmiles('CCCC'))
@@ -677,6 +676,18 @@ class TestCase(unittest.TestCase):
     self.assertEqual(list(ts[0]["V"]), [0.0, 0.0, 4.0, 0.0, 0.0, 0.0])
     self.assertEqual(list(ts[0]["signs"]), [1, 1, 1, 1, 1, 1])
     self.assertEqual(list(ts[0]["atomIndices"]), [0, 1, 2, 3])
+
+def testTrackFailures(self):
+    params = AllChem.ETKDGv3()
+    params.trackFailures = True
+    params.maxIterations = 50
+    params.randomSeed = 42
+    mol = Chem.MolFromSmiles('C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC')
+    mol = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(mol, params)
+    cnts  = params.GetFailureCounts()
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS],5)
+    self.assertGreater(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION],10)
 
 
 if __name__ == '__main__':
