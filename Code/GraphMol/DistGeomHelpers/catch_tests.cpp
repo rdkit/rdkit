@@ -493,6 +493,102 @@ M  END)CTAB"_ctab;
   }
 }
 
+TEST_CASE("double bond stereo not honored in conformer generator") {
+  SECTION("mol 1 basics") {
+    // this test used to fail
+    // from the platinum set
+    auto m = "O=C1OCC/C=C/CC/C=C/C(=N/OCC(=O)N2CCCCC2)Cc2cc(O)cc(O)c21"_smiles;
+    REQUIRE(m);
+    RWMol cp(*m);
+    MolOps::addHs(cp);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d + 81;
+    auto cid = DGeomHelpers::EmbedMolecule(cp, ps);
+    REQUIRE(cid >= 0);
+    MolOps::assignStereochemistryFrom3D(cp);
+    // std::cerr << MolToMolBlock(cp) << std::endl;
+    for (const auto bnd : cp.bonds()) {
+      if (bnd->getBondType() == Bond::BondType::DOUBLE) {
+        INFO(bnd->getIdx());
+        CHECK(bnd->getStereo() ==
+              m->getBondWithIdx(bnd->getIdx())->getStereo());
+      }
+    }
+  }
+  SECTION("mol 1 multiple loops") {
+    // from the platinum set
+    auto m = "O=C1OCC/C=C/CC/C=C/C(=N/OCC(=O)N2CCCCC2)Cc2cc(O)cc(O)c21"_smiles;
+    REQUIRE(m);
+    RWMol cp(*m);
+    MolOps::addHs(cp);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    for (unsigned int iter = 0; iter < 10; ++iter) {
+      RWMol lcp(cp);
+      ps.randomSeed = 0xf00d + iter;
+      auto cid = DGeomHelpers::EmbedMolecule(lcp, ps);
+      REQUIRE(cid >= 0);
+      MolOps::assignStereochemistryFrom3D(lcp);
+      // std::cerr << MolToMolBlock(cp) << std::endl;
+      for (const auto bnd : lcp.bonds()) {
+        if (bnd->getBondType() == Bond::BondType::DOUBLE) {
+          INFO(iter);
+          CHECK(bnd->getStereo() ==
+                m->getBondWithIdx(bnd->getIdx())->getStereo());
+        }
+      }
+    }
+  }
+
+  SECTION("github #5913") {
+    auto m = "[H]/C(F)=C([H])\\C([H])=C(/[H])Br"_smiles;
+    REQUIRE(m);
+
+    RWMol cp(*m);
+    MolOps::addHs(cp);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    for (unsigned int iter = 0; iter < 50; ++iter) {
+      RWMol lcp(cp);
+      ps.randomSeed = 0 + iter;
+      auto cid = DGeomHelpers::EmbedMolecule(lcp, ps);
+      REQUIRE(cid >= 0);
+      MolOps::assignStereochemistryFrom3D(lcp);
+      // std::cerr << MolToMolBlock(cp) << std::endl;
+      for (const auto bnd : lcp.bonds()) {
+        if (bnd->getBondType() == Bond::BondType::DOUBLE) {
+          INFO(iter);
+          CHECK(bnd->getStereo() ==
+                m->getBondWithIdx(bnd->getIdx())->getStereo());
+        }
+      }
+    }
+  }
+
+  SECTION("github #5283") {
+    auto oVal = Chirality::getUseLegacyStereoPerception();
+    Chirality::setUseLegacyStereoPerception(false);
+    auto m =
+        "Cc3nn(CC(=O)N2CCN(c1ccccc1)CC2)c(C)c3/N=N\\c6ccc(CNC(=O)CCC(=O)Nc4cccc5C(=O)NCc45)cc6"_smiles;
+    REQUIRE(m);
+    RWMol cp(*m);
+    MolOps::addHs(cp);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.enforceChirality = false;
+    for (unsigned int iter = 0; iter < 10; ++iter) {
+      INFO(iter);
+      RWMol lcp(cp);
+      ps.randomSeed = 140 + iter;
+      auto cid = DGeomHelpers::EmbedMolecule(lcp, ps);
+      REQUIRE(cid >= 0);
+      MolOps::assignStereochemistryFrom3D(lcp, cid, true);
+      auto bnd = lcp.getBondBetweenAtoms(22, 23);
+      REQUIRE(bnd);
+      REQUIRE(bnd->getBondType() == Bond::BondType::DOUBLE);
+      CHECK(bnd->getStereo() == m->getBondWithIdx(bnd->getIdx())->getStereo());
+    }
+    Chirality::setUseLegacyStereoPerception(oVal);
+  }
+}
+
 TEST_CASE("tracking failure causes") {
   SECTION("basics") {
     // auto mol = "CCNS(=O)(=O)c1ccccc1"_smiles;

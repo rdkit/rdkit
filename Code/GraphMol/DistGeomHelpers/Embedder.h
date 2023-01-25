@@ -31,7 +31,8 @@ enum EmbedFailureCauses {
   ETK_MINIMIZATION = 5,
   FINAL_CHIRAL_BOUNDS = 6,
   FINAL_CENTER_IN_VOLUME = 7,
-
+  LINEAR_DOUBLE_BOND = 8,
+  BAD_DOUBLE_BOND_STEREO = 9,
 };
 
 //! Parameter object for controlling embedding
