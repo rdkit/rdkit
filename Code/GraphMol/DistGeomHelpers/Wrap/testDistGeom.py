@@ -655,7 +655,7 @@ class TestCase(unittest.TestCase):
     conf = mol.GetConformer(0)
     for torsion in get_atom_mapping(mol):
       a1, a2, a3, a4 = [conf.GetAtomPosition(i) for i in torsion]
-      self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1, a2, a3, a4)), 3.02, delta=0.1)
+      self.assertAlmostEqual(abs(ComputeSignedDihedralAngle(a1, a2, a3, a4)), 3.14, delta=0.1)
 
   def testGetTorsionBonds(self):
     m = Chem.AddHs(Chem.MolFromSmiles('CCCC'))
