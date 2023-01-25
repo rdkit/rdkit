@@ -18,7 +18,6 @@
 #include <map>
 
 namespace RDKit {
-namespace v2 {
 namespace SmilesParse {
 struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   int debugParse = 0;   /**< enable debugging in the SMILES parser*/
@@ -49,11 +48,10 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
 };
 
 }  // namespace SmilesParse
-}  // namespace v2
 
 inline namespace v1 {
-using RDKit::v2::SmilesParse::SmartsParserParams;
-using RDKit::v2::SmilesParse::SmilesParserParams;
+using RDKit::SmilesParse::SmartsParserParams;
+using RDKit::SmilesParse::SmilesParserParams;
 
 RDKIT_SMILESPARSE_EXPORT RDKit::RWMol *SmilesToMol(
     const std::string &smi, const SmilesParserParams &params);
