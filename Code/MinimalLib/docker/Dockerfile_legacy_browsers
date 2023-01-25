@@ -20,6 +20,10 @@
 # docker create --name=rdkit-minimallib-legacy-container rdkit-minimallib-legacy:latest --entrypoint /
 # docker cp rdkit-minimallib-legacy-container:/RDKit_minimal_legacy.js ../demo
 # docker rm rdkit-minimallib-legacy-container
+#
+# To test in a legacy browser, do the following:
+# sed 's|RDKit_minimal\.js|RDKit_minimal_legacy.js|' < ../demo/demo.html > ../demo/demo_legacy.html
+# then point your browser to demo_legacy.html
 
 
 FROM rdkit-minimallib-build-stage as build-stage-legacy

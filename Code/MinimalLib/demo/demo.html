@@ -16,45 +16,17 @@
     }
   </style>
 </head>
-<script id="minimalLib"></script>
+<script src="./RDKit_minimal.js"></script>
 <script>
-  var minimalLib = document.getElementById("minimalLib");
-  if (typeof minimalLib === 'object') {
-    var haveWebAssembly = (function() {
-      try {
-        if (typeof WebAssembly === 'object'
-          && typeof WebAssembly.instantiate === 'function') {
-          var module = new WebAssembly.Module(
-            Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00)
-          );
-          if (module instanceof WebAssembly.Module) {
-            return new WebAssembly.Instance(module) instanceof WebAssembly.Instance;
-          }
-        }
-      } catch (e) {
-        // no-op
-      }
-      return false;
-    })();
-    var minimalLibName = haveWebAssembly ? "RDKit_minimal.js" : "RDKit_minimal_legacy.js";
-    minimalLib.src = "./" + minimalLibName;
-    minimalLib.onload = function() {
-      initRDKitModule().then(function(instance) {
-        RDKitModule = instance;
-        var version = RDKitModule.version();
-        var minimalLibVersion = document.getElementById("minimalLibVersion");
-        if (typeof minimalLibVersion === 'object' && minimalLibVersion.innerHTML) {
-          minimalLibVersion.innerHTML = minimalLibName + " " + version;
-        }
-        console.log('version: ' + version);
-        var m1 = RDKitModule.get_mol("c1ccccc1O");
-        console.log('smiles: ' + m1.get_smiles());
-        m1.delete();
-        callback("CC(=O)Oc1ccccc1C(=O)O");
-        rxn_callback("[C:1](=[O:2])-O.[N:3]>>[O:2]=[C:1]-[N:3]");
-      });
-    };
-  }
+  onRuntimeInitialized: initRDKitModule().then(function(instance) {
+    RDKitModule = instance;
+    console.log('version: ' + RDKitModule.version());
+    var m1 = RDKitModule.get_mol("c1ccccc1O");
+    console.log('smiles: ' + m1.get_smiles());
+    m1.delete();
+    callback("CC(=O)Oc1ccccc1C(=O)O");
+    rxn_callback("[C:1](=[O:2])-O.[N:3]>>[O:2]=[C:1]-[N:3]");
+  });
   function form_to_details(details) {
     var controls = ["addAtomIndices", "addBondIndices", "explicitMethyl", "addStereoAnnotation"];
     for (i in controls) {
@@ -125,10 +97,11 @@
     var qmol = RDKitModule.get_mol(text);
     var mol = RDKitModule.get_mol(document.getElementById("smiles_input").value);
     if (mol.is_valid() && qmol.is_valid()) {
-      var useCoordGen = document.getElementById("useCoordgen").checked;
-      var mdetails = mol.generate_aligned_coords(qmol, JSON.stringify({ useCoordGen: useCoordGen, acceptFailure: true }));
+      var mdetails = mol.get_substruct_match(qmol);
       var match = JSON.parse(mdetails);
-      draw_with_highlights(mol, match);
+      var useCoordgen = document.getElementById("useCoordgen").checked;
+      mol.generate_aligned_coords(qmol,useCoordgen);
+      if (match.atoms && match.atoms.length) draw_with_highlights(mol, match);
     }
     mol.delete();
     qmol.delete();
@@ -172,7 +145,6 @@
 <body>
   <div class="container-fluid col-md-8">
     <h1>RDKit-JS demo</h1>
-    <p id="minimalLibVersion">&nbsp;</p>
     <div id="molecule">
       <div id="drawing"></div>
       <div id="can_smiles"></div>
