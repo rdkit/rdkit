@@ -269,6 +269,8 @@ struct EmbedArgs {
   DistGeom::BoundsMatPtr mmat;
   DistGeom::VECT_CHIRALSET const *chiralCenters;
   DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
+  std::vector<std::tuple<unsigned int, unsigned int, unsigned int>> const
+      *doubleBondEnds;
   std::vector<std::pair<std::vector<unsigned int>, int>> const
       *stereoDoubleBonds;
   ForceFields::CrystalFF::CrystalFFDetails *etkdgDetails;
@@ -666,56 +668,60 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
   return planar;
 }
 
+bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
+                              const detail::EmbedArgs &eargs, EmbedParameters &,
+                              double linearTol = 1e-3) {
+  if (eargs.doubleBondEnds) {
+    for (const auto &itm : *eargs.doubleBondEnds) {
+      const auto &a0 = *positions[std::get<0>(itm)];
+      const auto &a1 = *positions[std::get<1>(itm)];
+      const auto &a2 = *positions[std::get<2>(itm)];
+      RDGeom::Point3D p0(a0[0], a0[1], a0[2]);
+      RDGeom::Point3D p1(a1[0], a1[1], a1[2]);
+      RDGeom::Point3D p2(a2[0], a2[1], a2[2]);
+
+      // check for a linear arrangement
+
+      auto v1 = p1 - p0;
+      v1.normalize();
+      auto v2 = p1 - p2;
+      v2.normalize();
+      // this is the arrangement:
+      //     a0
+      //       \
+      //        a1 = a2
+      // we want to be sure it's not actually:
+      //   ao - a1 = a2
+      if (v1.dotProduct(v2) + 1.0 < linearTol) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
-                            const detail::EmbedArgs &eargs,
-                            const EmbedParameters &, double linearTol = 1e-3) {
+                            const detail::EmbedArgs &eargs, EmbedParameters &) {
   for (const auto &itm : *eargs.stereoDoubleBonds) {
     // itm is a pair with [controlling_atoms], sign
     // where the sign tells us about cis/trans
+
     const auto &a0 = *positions[itm.first[0]];
     const auto &a1 = *positions[itm.first[1]];
     const auto &a2 = *positions[itm.first[2]];
+    const auto &a3 = *positions[itm.first[3]];
     RDGeom::Point3D p0(a0[0], a0[1], a0[2]);
     RDGeom::Point3D p1(a1[0], a1[1], a1[2]);
     RDGeom::Point3D p2(a2[0], a2[1], a2[2]);
-
-    // check for linear arrangements
-
-    auto v1 = p1 - p0;
-    v1.normalize();
-    auto v2 = p1 - p2;
-    v2.normalize();
-    // this is:
-    //
-    //               a3
-    //              /
-    //   ao - a1 = a2
-    if (v1.dotProduct(v2) + 1.0 < linearTol) {
-      return false;
-    }
-
-    const auto &a3 = *positions[itm.first[3]];
     RDGeom::Point3D p3(a3[0], a3[1], a3[2]);
-    v1 = p2 - p3;
-    v1.normalize();
-    v2 = p2 - p1;
-    v2.normalize();
-    // this is:
-    //
-    //    a1 = a2 - a3
-    //   /
-    //  a0
-    if (v1.dotProduct(v2) + 1.0 < linearTol) {
-      return false;
-    }
 
     // check the dihedral and be super permissive. Here's the logic of the
-    // check: The second element of the dihedralBond item contains 1 for trans
-    // bonds
-    //   and -1 for cis bonds.
+    // check:
+    // The second element of the dihedralBond item contains 1 for trans
+    //   bonds and -1 for cis bonds.
     // The dihedral is between 0 and 180. subtracting 90 from that gives:
-    //     positive values for dihedrals > 90 (closer to trans than cis)
-    //     negative values for dihedrals < 90 (closer to cis than trans)
+    //   positive values for dihedrals > 90 (closer to trans than cis)
+    //   negative values for dihedrals < 90 (closer to cis than trans)
     // So multiplying the result of the subtracion from the second element of
     //   the dihedralBond element will give a positive value if the dihedral is
     //   closer to correct than it is to incorrect and a negative value
@@ -898,17 +904,33 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
           }
         }
       }
+      if (gotCoords) {
+        gotCoords = EmbeddingOps::doubleBondGeometryChecks(*positions, eargs,
+                                                           embedParams);
+        if (!gotCoords && embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+          std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+          embedParams.failures[EmbedFailureCauses::LINEAR_DOUBLE_BOND]++;
+        }
+      }
       // test if stereo is correct
       if (embedParams.enforceChirality && gotCoords) {
-        // test if chirality is correct. Any additional test failures
-        // will be tracked there if necessary.
         if (!eargs.chiralCenters->empty()) {
+          // test if chirality is correct. Any additional test failures
+          // will be tracked there if necessary.
           gotCoords =
               EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
         }
         if (gotCoords && !eargs.stereoDoubleBonds->empty()) {
           gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
                                                            embedParams);
+          if (!gotCoords && embedParams.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+            std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+            embedParams.failures[EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO]++;
+          }
         }
       }
     }
@@ -922,30 +944,49 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   return gotCoords;
 }
 
-void findStereoDoubleBonds(
+void findDoubleBonds(
     const ROMol &mol,
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        &doubleBondEnds,
     std::vector<std::pair<std::vector<unsigned int>, int>> &stereoDoubleBonds,
     const std::map<int, RDGeom::Point3D> *coordMap) {
+  doubleBondEnds.clear();
+  stereoDoubleBonds.clear();
   for (const auto bnd : mol.bonds()) {
-    if (bnd->getBondType() == Bond::BondType::DOUBLE &&
-        bnd->getStereo() > Bond::BondStereo::STEREOANY) {
-      // only do this if the controlling atoms aren't in the coord map
-      if (coordMap &&
-          coordMap->find(bnd->getStereoAtoms()[0]) != coordMap->end() &&
-          coordMap->find(bnd->getStereoAtoms()[1]) != coordMap->end()) {
-        continue;
+    if (bnd->getBondType() == Bond::BondType::DOUBLE) {
+      for (const auto atm : {bnd->getBeginAtom(), bnd->getEndAtom()}) {
+        if (atm->getDegree() < 2) {
+          continue;
+        }
+        auto oatm = bnd->getOtherAtom(atm);
+        for (const auto nbr : mol.atomNeighbors(atm)) {
+          if (nbr == oatm) {
+            continue;
+          }
+          doubleBondEnds.emplace_back(nbr->getIdx(), atm->getIdx(),
+                                      oatm->getIdx());
+        }
       }
-      int sign = 1;
-      if (bnd->getStereo() == Bond::BondStereo::STEREOCIS ||
-          bnd->getStereo() == Bond::BondStereo::STEREOZ) {
-        sign = -1;
+      // if there's stereo, handle that too:
+      if (bnd->getStereo() > Bond::BondStereo::STEREOANY) {
+        // only do this if the controlling atoms aren't in the coord map
+        if (coordMap &&
+            coordMap->find(bnd->getStereoAtoms()[0]) != coordMap->end() &&
+            coordMap->find(bnd->getStereoAtoms()[1]) != coordMap->end()) {
+          continue;
+        }
+        int sign = 1;
+        if (bnd->getStereo() == Bond::BondStereo::STEREOCIS ||
+            bnd->getStereo() == Bond::BondStereo::STEREOZ) {
+          sign = -1;
+        }
+        std::pair<std::vector<unsigned int>, int> elem{
+            {static_cast<unsigned>(bnd->getStereoAtoms()[0]),
+             bnd->getBeginAtomIdx(), bnd->getEndAtomIdx(),
+             static_cast<unsigned>(bnd->getStereoAtoms()[1])},
+            sign};
+        stereoDoubleBonds.push_back(elem);
       }
-      std::pair<std::vector<unsigned int>, int> elem{
-          {static_cast<unsigned>(bnd->getStereoAtoms()[0]),
-           bnd->getBeginAtomIdx(), bnd->getEndAtomIdx(),
-           static_cast<unsigned>(bnd->getStereoAtoms()[1])},
-          sign};
-      stereoDoubleBonds.push_back(elem);
     }
   }
 }
@@ -1381,9 +1422,12 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
 
-    // find double bonds with specified stereo
+    // find double bonds
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
     std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
-    EmbeddingOps::findStereoDoubleBonds(*piece, stereoDoubleBonds, coordMap);
+    EmbeddingOps::findDoubleBonds(*piece, doubleBondEnds, stereoDoubleBonds,
+                                  coordMap);
 
     // if we have any chiral centers or are using random coordinates, we
     // will first embed the molecule in four dimensions, otherwise we will
@@ -1395,15 +1439,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     int numThreads = getNumThreadsToUse(params.numThreads);
 
     // do the embedding, using multiple threads if requested
-    detail::EmbedArgs eargs = {&confsOk,
-                               fourD,
-                               &fragMapping,
-                               &confs,
-                               fragIdx,
-                               mmat,
-                               &chiralCenters,
-                               &tetrahedralCarbons,
-                               &stereoDoubleBonds,
+    detail::EmbedArgs eargs = {&confsOk,        fourD,
+                               &fragMapping,    &confs,
+                               fragIdx,         mmat,
+                               &chiralCenters,  &tetrahedralCarbons,
+                               &doubleBondEnds, &stereoDoubleBonds,
                                &etkdgDetails};
     if (numThreads == 1) {
       detail::embedHelper_(0, 1, &eargs, &params);
