@@ -258,10 +258,10 @@ struct iterable_converter {
   ///       provided type.
   template <typename Container>
   iterable_converter &from_python() {
-    boost::python::converter::registry::push_back(
+    python::converter::registry::push_back(
         &iterable_converter::convertible,
         &iterable_converter::construct<Container>,
-        boost::python::type_id<Container>());
+        python::type_id<Container>());
 
     // Support chaining.
     return *this;
@@ -282,7 +282,7 @@ struct iterable_converter {
   template <typename Container>
   static void construct(
       PyObject *object,
-      boost::python::converter::rvalue_from_python_stage1_data *data) {
+      python::converter::rvalue_from_python_stage1_data *data) {
     namespace python = boost::python;
     // Object is a borrowed reference, so create a handle indicting it is
     // borrowed for proper reference counting.
@@ -304,6 +304,30 @@ struct iterable_converter {
                             iterator());                       // end
     data->convertible = storage;
   }
+};
+
+//
+// allows rdkit objects to be pickled.
+struct rdkit_pickle_suite : python::pickle_suite {
+  static python::tuple getstate(python::object w_obj) {
+    return python::make_tuple(w_obj.attr("__dict__"));
+  }
+
+  static void setstate(python::object w_obj, python::tuple state) {
+    if (len(state) != 1) {
+      PyErr_SetObject(
+          PyExc_ValueError,
+          ("expected 1-item tuple in call to __setstate__; got %s" % state)
+              .ptr());
+      python::throw_error_already_set();
+    }
+
+    // restore the object's __dict__
+    python::dict d = python::extract<python::dict>(w_obj.attr("__dict__"))();
+    d.update(state[0]);
+  }
+
+  static bool getstate_manages_dict() { return true; }
 };
 
 #endif

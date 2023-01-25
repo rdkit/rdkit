@@ -426,7 +426,7 @@ def ShowVoteResults(indices, data, composite, nResultCodes, threshold, verbose=1
     print('average correct confidence:   % 6.4f' % avgGood)
     print('average incorrect confidence: % 6.4f' % avgBad)
 
-  voteTab = numpy.zeros((nResultCodes, nResultCodes), numpy.int)
+  voteTab = numpy.zeros((nResultCodes, nResultCodes), numpy.int32)
   for res in goodRes:
     voteTab[res, res] += 1
   for ans, res, conf, idx in badVotes:

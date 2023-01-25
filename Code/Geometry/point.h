@@ -44,7 +44,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point {
 #ifndef _MSC_VER
 // g++ (at least as of v9.3.0) generates some spurious warnings from here.
 // disable them
-#if !defined(__clang__) and defined(__GNUC__)
+#if !defined(__clang__) && defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
@@ -523,7 +523,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
   }
 };
 #ifndef _MSC_VER
-#if !defined(__clang__) and defined(__GNUC__)
+#if !defined(__clang__) && defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 #endif

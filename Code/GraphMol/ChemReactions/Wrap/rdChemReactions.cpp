@@ -82,7 +82,7 @@ python::object ReactionToBinary(const ChemicalReaction &self) {
 //
 // allows reactions to be pickled.
 //
-struct reaction_pickle_suite : python::pickle_suite {
+struct reaction_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const ChemicalReaction &self) {
     return python::make_tuple(ReactionToBinary(self));
   };

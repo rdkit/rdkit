@@ -13,6 +13,7 @@
 #include "numpy/arrayobject.h"
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/TriangleSmooth.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
@@ -184,6 +185,14 @@ void setCPCI(DGeomHelpers::EmbedParameters *self, python::dict &CPCIdict) {
   self->CPCI = CPCI;
 }
 
+python::tuple getFailureCounts(DGeomHelpers::EmbedParameters *self) {
+  python::list lst;
+  for (auto i = 0u; i < self->failures.size(); i++) {
+    lst.append(self->failures[i]);
+  }
+  return python::tuple(lst);
+}
+
 void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
                      python::object boundsMatArg) {
   PyObject *boundsMatObj = boundsMatArg.ptr();
@@ -215,6 +224,39 @@ void setBoundsMatrix(DGeomHelpers::EmbedParameters *self,
       new DistGeom::BoundsMatrix(nrows, sdata));
 }
 
+python::tuple getExpTorsHelper(const RDKit::ROMol &mol, bool useExpTorsions,
+                               bool useSmallRingTorsions,
+                               bool useMacrocycleTorsions,
+                               bool useBasicKnowledge, unsigned int version,
+                               bool verbose) {
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  std::vector<std::tuple<unsigned int, std::vector<unsigned int>,
+                         const ForceFields::CrystalFF::ExpTorsionAngle *>>
+      torsionBonds;
+  ForceFields::CrystalFF::getExperimentalTorsions(
+      mol, details, torsionBonds, useExpTorsions, useSmallRingTorsions,
+      useMacrocycleTorsions, useBasicKnowledge, version, verbose);
+  python::list result;
+  for (const auto &pr : torsionBonds) {
+    python::dict d;
+    d["bondIndex"] = std::get<0>(pr);
+    d["torsionIndex"] = std::get<2>(pr)->torsionIdx;
+    d["smarts"] = std::get<2>(pr)->smarts;
+    d["V"] = std::get<2>(pr)->V;
+    d["signs"] = std::get<2>(pr)->signs;
+    d["atomIndices"] = std::get<1>(pr);
+    result.append(d);
+  }
+  return python::tuple(result);
+}
+
+python::tuple getExpTorsHelperWithParams(
+    const RDKit::ROMol &mol, const RDKit::DGeomHelpers::EmbedParameters &ps) {
+  return getExpTorsHelper(mol, ps.useExpTorsionAnglePrefs,
+                          ps.useSmallRingTorsions, ps.useMacrocycleTorsions,
+                          ps.useBasicKnowledge, ps.ETversion, ps.verbose);
+}
+
 }  // namespace RDKit
 
 BOOST_PYTHON_MODULE(rdDistGeom) {
@@ -225,6 +267,19 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   rdkit_import_array();
 
   // RegisterListConverter<RDKit::Atom*>();
+
+  python::def(
+      "GetExperimentalTorsions", RDKit::getExpTorsHelper,
+      (python::arg("mol"), python::arg("useExpTorsionAnglePrefs") = true,
+       python::arg("useSmallRingTorsions") = false,
+       python::arg("useMacrocycleTorsions") = true,
+       python::arg("useBasicKnowledge") = true, python::arg("ETversion") = 2,
+       python::arg("printExpTorsionAngles") = false),
+      "returns information about the bonds corresponding to experimental torsions");
+  python::def(
+      "GetExperimentalTorsions", RDKit::getExpTorsHelperWithParams,
+      (python::arg("mol"), python::arg("embedParams")),
+      "returns information about the bonds corresponding to experimental torsions");
 
   std::string docString =
       "Use distance geometry to obtain initial \n\
@@ -351,6 +406,25 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
        python::arg("ETversion") = 1),
       docString.c_str());
 
+  python::enum_<RDKit::DGeomHelpers::EmbedFailureCauses>("EmbedFailureCauses")
+      .value("INITIAL_COORDS",
+             RDKit::DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS)
+      .value("FIRST_MINIMIZATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::FIRST_MINIMIZATION)
+      .value("CHECK_TETRAHEDRAL_CENTERS",
+             RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS)
+      .value("CHECK_CHIRAL_CENTERS",
+             RDKit::DGeomHelpers::EmbedFailureCauses::CHECK_CHIRAL_CENTERS)
+      .value("MINIMIZE_FOURTH_DIMENSION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION)
+      .value("ETK_MINIMIZATION",
+             RDKit::DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION)
+      .value("FINAL_CHIRAL_BOUNDS",
+             RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CHIRAL_BOUNDS)
+      .value("FINAL_CENTER_IN_VOLUME",
+             RDKit::DGeomHelpers::EmbedFailureCauses::FINAL_CENTER_IN_VOLUME)
+      .export_values();
+
   python::class_<RDKit::DGeomHelpers::EmbedParameters, boost::noncopyable>(
       "EmbedParameters", "Parameters controlling embedding")
       .def_readwrite("maxIterations",
@@ -443,7 +517,12 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
            "used during structural minimisation stage")
       .def_readwrite("forceTransAmides",
                      &RDKit::DGeomHelpers::EmbedParameters::forceTransAmides,
-                     "constrain amide bonds to be trans");
+                     "constrain amide bonds to be trans")
+      .def_readwrite(
+          "trackFailures", &RDKit::DGeomHelpers::EmbedParameters::trackFailures,
+          "keep track of which checks during the embedding process fail")
+      .def("GetFailureCounts", &RDKit::getFailureCounts,
+           "returns the counts of eacu");
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\

@@ -21,10 +21,10 @@ using namespace std;
 using namespace RDKit;
 namespace RDKit {
 class RWMol;
+
 class ROMol;
 
 namespace MolStandardize {
-
 MetalDisconnector::MetalDisconnector()
     : metal_nof(
           SmartsToMol("[Li,Na,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,"
@@ -181,6 +181,13 @@ void MetalDisconnector::disconnect(RWMol &mol) {
     auto currentFc = a->getFormalCharge();
     const auto &valens =
         PeriodicTable::getTable()->getValenceList(a->getAtomicNum());
+    // valens should have at least -1 in it, as the atom data is currently
+    // configured, so max_element should never return valens.end().
+    auto max_valence = *std::max_element(valens.begin(), valens.end());
+    // Don't go over the maximum real valence.
+    if (max_valence != -1 && currentFc >= max_valence) {
+      continue;
+    }
     int fcAfterCut = it->second;
     if (currentFc > 0) {
       // if the original formal charge on the metal was positive, we trust it
@@ -189,6 +196,11 @@ void MetalDisconnector::disconnect(RWMol &mol) {
     }
     if (!valens.empty() && valens.front() != -1) {
       for (auto v = valens.begin(); v != valens.end(); ++v) {
+        // Some metals (e.g. Mg and Ba) have -1 as a final catchall, which
+        // is unhelpful for this.
+        if (*v == -1) {
+          continue;
+        }
         if (fcAfterCut > *v) {
           auto next = v + 1;
           if (next != valens.end() && fcAfterCut >= *v) {
@@ -211,6 +223,5 @@ void MetalDisconnector::disconnect(RWMol &mol) {
     a->updatePropertyCache();
   }
 }
-
 }  // namespace MolStandardize
 }  // namespace RDKit
