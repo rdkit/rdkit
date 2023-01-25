@@ -53,7 +53,7 @@
 
 #ifndef _MSC_VER
 // shutoff some warnings from rapidjson
-#if !defined(__clang__) and defined(__GNUC__)
+#if !defined(__clang__) && defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wclass-memaccess"
 #endif
@@ -62,7 +62,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #ifndef _MSC_VER
-#if !defined(__clang__) and defined(__GNUC__)
+#if !defined(__clang__) && defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 #endif
