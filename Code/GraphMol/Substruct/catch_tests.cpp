@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019 Greg Landrum
+//  Copyright (C) 2019-2023 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -335,4 +335,82 @@ TEST_CASE("Github #4558: GetSubstructMatches() loops at 43690 iterations",
 
   auto matches = SubstructMatch(*mol, *qry, ps);
   CHECK(matches.size() == num_mols * 2);
+}
+
+TEST_CASE(
+    "Github #888: GetSubstructMatches uniquify and maxMatches don't work well together ") {
+  SECTION("Basics") {
+    auto m = "CCCCCC"_smiles;
+    auto q = "CC"_smarts;
+    REQUIRE(m);
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    ps.uniquify = false;
+    ps.maxMatches = 4;
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 4);
+
+    ps.uniquify = true;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 4);
+
+    ps.useChirality = true;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 4);
+  }
+  SECTION("interaction with chirality") {
+    auto m = "C/C=C/C=C/C=C\\C=C/C=C/C"_smiles;
+    auto q = "C/C=C/C"_smarts;
+    REQUIRE(m);
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    ps.uniquify = false;
+    ps.maxMatches = 2;
+    auto matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 2);
+
+    ps.uniquify = true;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 2);
+
+    ps.useChirality = true;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 2);
+
+    ps.maxMatches = 1000;
+    matches = SubstructMatch(*m, *q, ps);
+    CHECK(matches.size() == 3);
+  }
+  SECTION("interactions with recursive SMARTS") {
+    {
+      auto m = "N#CC#N"_smiles;
+      REQUIRE(m);
+      auto q = "[!$(*#*)]"_smarts;
+      REQUIRE(q);
+      SubstructMatchParameters ps;
+      ps.uniquify = true;
+      ps.maxMatches = 1;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.empty());
+    }
+    {
+      auto m = "N#CC#N"_smiles;
+      REQUIRE(m);
+      auto q = "[$(*#*)&!D1]"_smarts;
+      REQUIRE(q);
+      SubstructMatchParameters ps;
+      ps.uniquify = true;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.size() == 2);
+    }
+    {
+      auto m = "N#CCC#N"_smiles;
+      REQUIRE(m);
+      auto q = "[!$(*#*)&!D1]-&!@[!$(*#*)&!D1]"_smarts;
+      REQUIRE(q);
+      SubstructMatchParameters ps;
+      auto matches = SubstructMatch(*m, *q, ps);
+      CHECK(matches.empty());
+    }
+  }
 }

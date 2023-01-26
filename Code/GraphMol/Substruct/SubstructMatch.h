@@ -13,11 +13,14 @@
 
 // std bits
 #include <vector>
+
+#include <unordered_set>
 #include <functional>
 #include <unordered_map>
 #include <cstdint>
-#include "GraphMol/StereoGroup.h"
 #include <string>
+#include <boost/dynamic_bitset.hpp>
+#include <GraphMol/StereoGroup.h>
 
 namespace RDKit {
 class ROMol;
@@ -218,13 +221,14 @@ class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
   MolMatchFinalCheckFunctor(const ROMol &query, const ROMol &mol,
                             const SubstructMatchParameters &ps);
 
-  bool operator()(const std::uint32_t q_c[], const std::uint32_t m_c[]) const;
+  bool operator()(const std::uint32_t q_c[], const std::uint32_t m_c[]);
 
  private:
   const ROMol &d_query;
   const ROMol &d_mol;
   const SubstructMatchParameters &d_params;
   std::unordered_map<unsigned int, StereoGroup const *> d_molStereoGroups;
+  std::unordered_set<boost::dynamic_bitset<>> matchesSeen;
 };
 
 }  // namespace RDKit
