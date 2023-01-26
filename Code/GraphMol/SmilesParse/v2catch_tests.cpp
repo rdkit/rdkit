@@ -23,9 +23,11 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 
+using namespace RDKit::v2;
+
 TEST_CASE("v2 basics") {
   {
-    auto mol = RDKit::v2::SmilesParse::SmilesToMol("CCC");
+    auto mol = SmilesParse::SmilesToMol("CCC");
     REQUIRE(mol);
   }
   {
