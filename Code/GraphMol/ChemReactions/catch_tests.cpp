@@ -1250,7 +1250,7 @@ TEST_CASE("CDXML Parser") {
       
        auto rxns = CDXMLFileToChemicalReactions(fname);
        CHECK(rxns.size() == 1);
-       int i=0;
+       unsigned int i=0;
        int count = 0;
        for(auto &mol : rxns[0]->getReactants()) {
            CHECK(mol->getProp<unsigned int>("CDX_SCHEME_ID") == 397);
