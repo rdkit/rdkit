@@ -1362,9 +1362,10 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
         if (reactantAtom->hasQuery()) {
           // finally: if the reactant atom is a query we should copy over the
           // query information. We need to replace the atom to do this
-          QueryAtom *newAtom = new QueryAtom(*productAtom);
-          newAtom->setQuery(reactantAtom->getQuery()->copy());
-          product->replaceAtom(productAtomIdx, newAtom);
+          QueryAtom newAtom(*productAtom);
+          newAtom.setQuery(reactantAtom->getQuery()->copy());
+          // replaceAtom copies
+          product->replaceAtom(productAtomIdx, &newAtom);
         }
       }
       // now traverse:
