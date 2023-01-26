@@ -2600,7 +2600,7 @@ The atoms to zip can be specified with the MolzipParams class.\n\
         (ROMol * (*)(python::object &, const MolzipParams &)) & molzipHelper,
         (python::arg("mols"), python::arg("params") = MolzipParams()),
         "zip together multiple molecules from an R group decomposition \n\
-using the given matching parameters.  The first molecule in \n\
+using the given matching parameters.  The first molecule in the list\n\
 must be the core",
         python::return_value_policy<python::manage_new_object>());
 
