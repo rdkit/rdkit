@@ -1377,17 +1377,39 @@ std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnb));
 
 TEST_CASE("Github #6015: Reactions do not propagate query information to products"){
   SECTION("basics, as-reported") {
-    std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction("[C:1]>>[C:1]")};
+    std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction("[C:1][O:2]>>[C:1][O:2]")};
     REQUIRE(rxn);
     rxn->initReactantMatchers();
-    std::vector<ROMOL_SPTR> reactants{ROMOL_SPTR(SmartsToMol("[C&R&X3][OR]"))};
+    std::vector<ROMOL_SPTR> reactants{ROMOL_SPTR(SmartsToMol("[C&R&X3][OR]F"))};
     REQUIRE(reactants.size()==1);
     REQUIRE(reactants[0]);
     auto products = rxn->runReactants(reactants);
     REQUIRE(products.size()==1);
     CHECK(products[0][0]->getAtomWithIdx(0)->hasQuery());
     CHECK(products[0][0]->getAtomWithIdx(1)->hasQuery());
-    CHECK(MolToSmarts(*products[0][0])=="[C&R&X3][OR]");
+    CHECK(products[0][0]->getAtomWithIdx(2)->hasQuery());
+    CHECK(products[0][0]->getBondWithIdx(0)->hasQuery());
+    CHECK(products[0][0]->getBondWithIdx(1)->hasQuery());
+    CHECK(MolToSmarts(*products[0][0])=="[C&R&X3][O&R]F");
     
+  }
+  SECTION("more complex") {
+    std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction("[C:1][O:2]>>[C:1][O:2]")};
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    std::vector<ROMOL_SPTR> reactants{ROMOL_SPTR(SmartsToMol("CC[C&R&X3](CC)[OR]NCC"))};
+    REQUIRE(reactants.size()==1);
+    REQUIRE(reactants[0]);
+    auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size()==1);
+    for(const auto atom : products[0][0]->atoms()){
+      INFO(atom->getIdx());
+      CHECK(atom->hasQuery());
+    }
+    for(const auto bond : products[0][0]->bonds()){
+      INFO(bond->getIdx());
+      CHECK(bond->hasQuery());
+    }
+   
   }
 }
