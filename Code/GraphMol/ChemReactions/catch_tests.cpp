@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
@@ -1371,5 +1372,22 @@ std::unique_ptr<ChemicalReaction> rxn(RxnBlockToChemicalReaction(rxnb));
       CHECK(orxn.find("BEGIN AGENT") == std::string::npos);
       CHECK(orxn.find("END AGENT") == std::string::npos);
     }
+  }
+}
+
+TEST_CASE("Github #6015: Reactions do not propagate query information to products"){
+  SECTION("basics, as-reported") {
+    std::unique_ptr<ChemicalReaction> rxn{RxnSmartsToChemicalReaction("[C:1]>>[C:1]")};
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    std::vector<ROMOL_SPTR> reactants{ROMOL_SPTR(SmartsToMol("[C&R&X3][OR]"))};
+    REQUIRE(reactants.size()==1);
+    REQUIRE(reactants[0]);
+    auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size()==1);
+    CHECK(products[0][0]->getAtomWithIdx(0)->hasQuery());
+    CHECK(products[0][0]->getAtomWithIdx(1)->hasQuery());
+    CHECK(MolToSmarts(*products[0][0])=="[C&R&X3][OR]");
+    
   }
 }
