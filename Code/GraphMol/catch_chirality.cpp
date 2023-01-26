@@ -3267,9 +3267,10 @@ TEST_CASE("false positives from new stereo code") {
   }
   SECTION("non-tetrahedral and implicit Hs") {
     std::vector<std::string> examples{
-        "[SiH4]",       "[SiH3]C",   "[PH5]",        "[PH4]C",
-        "[SH6]",        "[SH5]C",    "[SiH2](C)C",   "[PH3](C)C",
-        "[PH2](C)(C)C", "[SH4](C)C", "[SH3](C)(C)C", "[SH2](C)(C)(C)C"};
+        "[SiH4]",         "[SiH3]C",      "[SH4]",     "[PH5]",
+        "[PH4]C",         "[SH6]",        "[SH5]C",    "[SiH2](C)C",
+        "[PH3](C)C",      "[PH2](C)(C)C", "[SH4](C)C", "[SH3](C)(C)C",
+        "[SH2](C)(C)(C)C"};
     {
       AllowNontetrahedralChiralityFixture reset_non_tetrahedral_allowed;
       Chirality::setAllowNontetrahedralChirality(false);
