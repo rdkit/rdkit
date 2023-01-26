@@ -28,8 +28,9 @@ namespace detail {
 
 bool isAtomPotentialNontetrahedralCenter(const Atom *atom) {
   PRECONDITION(atom, "atom is null");
-  auto tnzdegree =
-      Chirality::detail::getAtomNonzeroDegree(atom) + atom->getTotalNumHs();
+  auto nzdegree = Chirality::detail::getAtomNonzeroDegree(atom);
+  auto impHDegree = atom->getTotalNumHs();
+  auto tnzdegree = nzdegree + impHDegree;
   auto anum = atom->getAtomicNum();
   if (tnzdegree > 6 || tnzdegree < 2 || (anum < 12 && anum != 4)) {
     return false;
@@ -59,8 +60,8 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
     if (nzDegree == 4) {
       // chirality is always possible with 4 nbrs
       return true;
-    } else if (nzDegree == 1) {
-      // chirality is never possible with 1 nbr
+    } else if (nzDegree <= 1) {
+      // chirality is never possible with 0 or 1 nbr
       return false;
     } else if (nzDegree < 3 &&
                (atom->getAtomicNum() != 15 && atom->getAtomicNum() != 33)) {
@@ -106,9 +107,15 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
   }
 }
 
-bool isAtomPotentialStereoAtom(const Atom *atom) {
+bool isAtomPotentialStereoAtom(const Atom *atom,
+                               bool allowNontetrahehdralStereo) {
   return isAtomPotentialTetrahedralCenter(atom) ||
-         isAtomPotentialNontetrahedralCenter(atom);
+         (allowNontetrahehdralStereo &&
+          isAtomPotentialNontetrahedralCenter(atom));
+}
+
+bool isAtomPotentialStereoAtom(const Atom *atom) {
+  return isAtomPotentialStereoAtom(atom, getAllowNontetrahedralChirality());
 }
 
 StereoInfo getStereoInfo(const Bond *bond) {
@@ -452,10 +459,11 @@ void initAtomInfo(ROMol &mol, bool flagPossible, bool cleanIt,
                   boost::dynamic_bitset<> &knownAtoms,
                   std::vector<std::string> &atomSymbols,
                   boost::dynamic_bitset<> &possibleAtoms) {
+  bool allowNontetrahedralStereo = getAllowNontetrahedralChirality();
   for (const auto atom : mol.atoms()) {
     auto aidx = atom->getIdx();
     atomSymbols[aidx] = getAtomCompareSymbol(*atom);
-    if (detail::isAtomPotentialStereoAtom(atom)) {
+    if (detail::isAtomPotentialStereoAtom(atom, allowNontetrahedralStereo)) {
       auto sinfo = detail::getStereoInfo(atom);
       switch (sinfo.specified) {
         case Chirality::StereoSpecified::Unknown:
