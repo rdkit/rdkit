@@ -619,7 +619,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
   SubstructMatchParameters lparams = params;
   // NOTE: maxMatches and recursive queries is problematic. To make this really
   // cover all cases we'd need a separate parameter for the number of possible
-  // recursive matches. We will add that for the 2022.09 release; for now
+  // recursive matches. We will add that for the 2023.03 release; for now
   // we can still fix #888 without introducing any new problems using this
   // heuristic:
   lparams.maxMatches = std::max(1000u, params.maxMatches);
