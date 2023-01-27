@@ -121,17 +121,28 @@ void MolDraw2DJS::drawEllipse(const Point2D &cds1, const Point2D &cds2,
   Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
   double w = c2.x - c1.x;
   double h = c2.y - c1.y;
-  double cx = c1.x + w / 2;
-  double cy = c1.y + h / 2;
-  w = w > 0 ? w : -1 * w;
-  h = h > 0 ? h : -1 * h;
+  double rx = 0.5 * w;
+  double ry = 0.5 * h;
+  double cx = c1.x + rx;
+  double cy = c1.y + ry;
+  rx = fabs(rx);
+  ry = fabs(ry);
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
   d_context.call<void>("beginPath");
   d_context.set("lineWidth", width);
   d_context.set("strokeStyle", col);
-  d_context.call<void>("ellipse", cx, cy, w / 2, h / 2, 0, 0, 2 * M_PI);
+#ifndef RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS
+  d_context.call<void>("ellipse", cx, cy, rx, ry, 0, 0, 2 * M_PI);
+#else
+  d_context.call<void>("save");
+  d_context.call<void>("beginPath");
+  d_context.call<void>("translate", cx - rx, cy - ry);
+  d_context.call<void>("scale", rx, ry);
+  d_context.call<void>("arc", 1, 1, 1, 0, 2 * M_PI, false);
+  d_context.call<void>("restore");
+#endif
   if (fillPolys()) {
     d_context.set("fillStyle", col);
     d_context.call<void>("fill");
