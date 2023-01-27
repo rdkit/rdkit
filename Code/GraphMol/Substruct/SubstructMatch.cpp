@@ -213,11 +213,16 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     }
   }
 
-  boost::dynamic_bitset<> match;
+  HashedStorageType match;
   if (d_params.uniquify) {
     match.resize(d_mol.getNumAtoms());
+#ifdef RDK_INTERNAL_BITSET_HAS_HASH
+    match.reset();
+#else
+    std::fill(match.begin(), match.end(), 0);
+#endif
     for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-      match.set(m_c[i]);
+      match[m_c[i]] = 1;
     }
     if (matchesSeen.find(match) != matchesSeen.end()) {
       return false;

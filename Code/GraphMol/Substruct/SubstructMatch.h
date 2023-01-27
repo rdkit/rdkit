@@ -19,7 +19,12 @@
 #include <unordered_map>
 #include <cstdint>
 #include <string>
+
 #include <boost/dynamic_bitset.hpp>
+#if BOOST_VERSION >= 107100
+#define RDK_INTERNAL_BITSET_HAS_HASH
+#endif
+
 #include <GraphMol/StereoGroup.h>
 
 namespace RDKit {
@@ -228,7 +233,14 @@ class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
   const ROMol &d_mol;
   const SubstructMatchParameters &d_params;
   std::unordered_map<unsigned int, StereoGroup const *> d_molStereoGroups;
-  std::unordered_set<boost::dynamic_bitset<>> matchesSeen;
+#ifdef RDK_INTERNAL_BITSET_HAS_HASH
+  // Boost 1.71 added support for std::hash with dynamic_bitset.
+  using HashedStorageType = boost::dynamic_bitset<>;
+#else
+  // otherwise we use a less elegant solution
+  using HashedStorageType = std::string;
+#endif
+  std::unordered_set<HashedStorageType> matchesSeen;
 };
 
 }  // namespace RDKit
