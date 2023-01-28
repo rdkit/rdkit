@@ -2706,7 +2706,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   Atom *at1 = bond.getBeginAtom();
   Atom *at2 = bond.getEndAtom();
   Point2D perp;
-  if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_) ||
+  if (isLinearAtom(*at1, atCds_, false) || isLinearAtom(*at2, atCds_, false) ||
       (at1->getDegree() == 1 && at2->getDegree() == 1)) {
     const Point2D &at1_cds = atCds_[at1->getIdx()];
     const Point2D &at2_cds = atCds_[at2->getIdx()];
