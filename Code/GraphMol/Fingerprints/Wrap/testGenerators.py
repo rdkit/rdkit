@@ -285,16 +285,25 @@ class TestCase(unittest.TestCase):
 
   def testMorganRedundantEnvironments(self):
     m = Chem.MolFromSmiles('CC(=O)O')
-   
+
     g = rdFingerprintGenerator.GetMorganGenerator(2)
     fp = g.GetSparseCountFingerprint(m)
-    self.assertEqual(fp.GetTotalVal(),8)
-   
-    g = rdFingerprintGenerator.GetMorganGenerator(2,includeRedundantEnvironments=True)
+    self.assertEqual(fp.GetTotalVal(), 8)
+
+    g = rdFingerprintGenerator.GetMorganGenerator(2, includeRedundantEnvironments=True)
     fp = g.GetSparseCountFingerprint(m)
-    self.assertEqual(fp.GetTotalVal(),12)
+    self.assertEqual(fp.GetTotalVal(), 12)
 
+  def testFingerprintOptions(self):
+    m = Chem.MolFromSmiles('CC(=O)O')
 
+    g = rdFingerprintGenerator.GetMorganGenerator(2)
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 8)
+
+    g.GetOptions().numBitsPerFeature = 2
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 16)
 
 
 if __name__ == '__main__':

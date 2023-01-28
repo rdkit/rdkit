@@ -263,6 +263,11 @@ std::string getInfoString(const FingerprintGenerator<OutputType> *fpGen) {
   return std::string(fpGen->infoString());
 }
 
+template <typename OutputType>
+FingerprintArguments *getOptions(FingerprintGenerator<OutputType> *fpGen) {
+  return fpGen->getOptions();
+}
+
 const std::vector<const ROMol *> convertPyArgumentsForBulk(
     const python::list &py_molVect) {
   std::vector<const ROMol *> molVect;
@@ -540,7 +545,14 @@ void wrapGenerator(const std::string &nm) {
       .def("GetInfoString", getInfoString<T>,
            "Returns a string containing information about the fingerprint "
            "generator\n\n"
-           "  RETURNS: an information string\n\n");
+           "  RETURNS: an information string\n\n")
+      .def("GetOptions", getOptions<T>,
+           python::return_value_policy<python::reference_existing_object>(),
+           "return the fingerprint options object");
+}
+
+void setCountBoundsHelper(FingerprintArguments &opts, python::object bounds) {
+  pythonObjectToVect(bounds, opts.d_countBounds);
 }
 }  // namespace
 
@@ -577,6 +589,22 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
       .def("GetBitInfoMap", &getBitInfoMapHelper)
       .def("GetBitPaths", &getBitPathsHelper)
       .def("GetAtomCounts", &getAtomCountsHelper);
+
+  python::class_<FingerprintArguments, boost::noncopyable>("FingerprintOptions",
+                                                           python::no_init)
+      .def_readwrite("countSimulation",
+                     &FingerprintArguments::df_countSimulation,
+                     "use count simulation")
+      .def_readwrite(
+          "includeChirality", &FingerprintArguments::df_includeChirality,
+          "include chirality in atom invariants (not for all fingerprints)")
+      .def_readwrite("fpSize", &FingerprintArguments::d_fpSize,
+                     "size of the fingerprints created")
+      .def_readwrite("numBitsPerFeature",
+                     &FingerprintArguments::d_numBitsPerFeature,
+                     "number of bits to set for each feature")
+      .def("setCountBounds", &setCountBoundsHelper,
+           "set the bins for the count bounds");
 
   wrapGenerator<std::uint32_t>("FingeprintGenerator32");
   wrapGenerator<std::uint64_t>("FingeprintGenerator64");
