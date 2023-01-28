@@ -603,7 +603,7 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
       .def_readwrite("numBitsPerFeature",
                      &FingerprintArguments::d_numBitsPerFeature,
                      "number of bits to set for each feature")
-      .def("setCountBounds", &setCountBoundsHelper,
+      .def("SetCountBounds", &setCountBoundsHelper,
            "set the bins for the count bounds");
 
   wrapGenerator<std::uint32_t>("FingeprintGenerator32");
