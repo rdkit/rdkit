@@ -1453,6 +1453,10 @@ void testSyngenta() {
   std::string rdbase = getenv("RDBASE");
   std::string test_dir = rdbase + "/Code/GraphMol/MolStandardize/test_data";
   std::vector<std::pair<std::string, std::string>> test_files = {
+      {"CPLX_0001.mol",
+       R"(O=C([O-])CN(CCN(CC(=O)[O-])CC(=O)[O-])CC(=O)[O-].[Mg+2].[Na+].[Na+])"},
+      {"CPLX_0002.mol",
+       R"(O=C([O-])CN(CCN(CC(=O)[O-])CC(=O)[O-])CC(=O)[O-].[Fe+2].[Na+].[Na+])"},
       {"MOL_00001.mol",
        R"([Pd].c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1.c1ccc(P(c2ccccc2)c2ccccc2)cc1)"},
       {"MOL_00002.mol",
@@ -1482,6 +1486,8 @@ void testSyngenta() {
       {"MOL_00015.mol",
        R"(CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.CC(C)(C)c1ccc(/C=C/c2ccc(C(C)(C)C)cc2)cc1.[Ni])"},
       {"diethylzinc.mol", R"([CH2-]CC.[CH2-]CC.[Zn+2])"},
+      {"edta_case.mol",
+       R"(O=C([O-])CN(CCN(CC(=O)[O-])CC(=O)[O-])CC(=O)[O-].[Mg+2].[Na+].[Na+])"},
       {"ferrocene.mol", R"([Fe+2].c1cc[cH-]c1.c1cc[cH-]c1)"},
       {"ferrocene_1.mol", R"(C[c-]1cccc1.C[c-]1cccc1.[Fe+2])"},
       {"grignard_1.mol", R"([CH3-].[Cl-].[Mg+2])"},
@@ -1504,6 +1510,8 @@ void testSyngenta() {
     SDMolSupplier mol_supplier(full_file, takeOwnership);
     std::unique_ptr<ROMol> m(mol_supplier.next());
     std::unique_ptr<ROMol> dm(MolStandardize::disconnectOrganometallics(*m));
+    //    std::cout << test_file.first << " : " << MolToSmiles(*dm) <<
+    //    std::endl;
     TEST_ASSERT(MolToSmiles(*dm) == test_file.second);
     std::unique_ptr<RWMol> em(new RWMol(*m));
     MolStandardize::disconnectOrganometallics(*em);
