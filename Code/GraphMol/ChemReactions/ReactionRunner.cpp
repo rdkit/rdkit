@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2014-2021, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2014-2023, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
@@ -45,6 +45,8 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
 
 namespace RDKit {
 typedef std::vector<MatchVectType> VectMatchVectType;
@@ -727,16 +729,8 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
 void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
                                         const ROMol &reactant,
                                         ReactantProductAtomMapping *mapping) {
-  ROMol::BOND_ITER_PAIR bondItP = product->getEdges();
-  while (bondItP.first != bondItP.second) {
-    Bond *pBond = (*product)[*(bondItP.first)];
-    ++bondItP.first;
-
-    if (!pBond->hasProp(common_properties::NullBond) &&
-        !pBond->hasProp(common_properties::_MolFileBondQuery)) {
-      continue;
-    }
-
+  for (unsigned int bidx = 0; bidx < product->getNumBonds(); ++bidx) {
+    auto pBond = product->getBondWithIdx(bidx);
     auto rBondBegin = mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx());
     auto rBondEnd = mapping->prodReactAtomMap.find(pBond->getEndAtomIdx());
 
@@ -751,8 +745,22 @@ void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
     if (!rBond) {
       continue;
     }
+    if (!pBond->hasProp(common_properties::NullBond) &&
+        !pBond->hasProp(common_properties::_MolFileBondQuery) &&
+        !rBond->hasQuery()) {
+      continue;
+    }
 
-    pBond->setBondType(rBond->getBondType());
+    if (!rBond->hasQuery()) {
+      pBond->setBondType(rBond->getBondType());
+    } else {
+      QueryBond qBond(rBond->getBondType());
+      qBond.setQuery(rBond->getQuery()->copy());
+      // replaceBond copies, so we are safe passing a pointer
+      // to a local:
+      product->replaceBond(bidx, &qBond);
+      pBond = product->getBondWithIdx(bidx);
+    }
     if (rBond->getBondType() == Bond::DOUBLE &&
         rBond->getBondDir() == Bond::EITHERDOUBLE) {
       pBond->setBondDir(Bond::EITHERDOUBLE);
@@ -864,6 +872,22 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   }
 }
 
+Bond *addBondToProduct(const Bond &origB, RWMol &product,
+                       unsigned int begAtomIdx, unsigned int endAtomIdx) {
+  if (!origB.hasQuery()) {
+    auto idx = product.addBond(begAtomIdx, endAtomIdx, origB.getBondType());
+    return product.getBondWithIdx(idx - 1);
+  } else {
+    QueryBond *qbond = new QueryBond(origB.getBondType());
+    qbond->setBeginAtomIdx(begAtomIdx);
+    qbond->setEndAtomIdx(endAtomIdx);
+    qbond->setQuery(origB.getQuery()->copy());
+    bool takeOwnership = true;
+    product.addBond(qbond, takeOwnership);
+    return qbond;
+  }
+}
+
 void addMissingProductBonds(const Bond &origB, RWMOL_SPTR product,
                             ReactantProductAtomMapping *mapping) {
   unsigned int begIdx = origB.getBeginAtomIdx();
@@ -874,8 +898,7 @@ void addMissingProductBonds(const Bond &origB, RWMOL_SPTR product,
   CHECK_INVARIANT(prodBeginIdxs.size() == prodEndIdxs.size(),
                   "Different number of start-end points for product bonds.");
   for (unsigned i = 0; i < prodBeginIdxs.size(); i++) {
-    product->addBond(prodBeginIdxs.at(i), prodEndIdxs.at(i),
-                     origB.getBondType());
+    addBondToProduct(origB, *product, prodBeginIdxs.at(i), prodEndIdxs.at(i));
   }
 }
 
@@ -883,7 +906,12 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
                            unsigned prodNeighborIdx, RWMOL_SPTR product,
                            const ROMol &reactant,
                            ReactantProductAtomMapping *mapping) {
-  auto *newAtom = new Atom(reactAtom);
+  Atom *newAtom = nullptr;
+  if (!reactAtom.hasQuery()) {
+    newAtom = new Atom(reactAtom);
+  } else {
+    newAtom = new QueryAtom(dynamic_cast<const QueryAtom &>(reactAtom));
+  }
   unsigned reactAtomIdx = reactAtom.getIdx();
   newAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
                                  reactAtomIdx);
@@ -893,14 +921,12 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
   // add the bonds
   const Bond *origB =
       reactant.getBondBetweenAtoms(reactNeighborIdx, reactAtomIdx);
-  unsigned int begIdx = origB->getBeginAtomIdx();
-  if (begIdx == reactNeighborIdx) {
-    product->addBond(prodNeighborIdx, productIdx, origB->getBondType());
-  } else {
-    product->addBond(productIdx, prodNeighborIdx, origB->getBondType());
+  unsigned int begIdx = productIdx;
+  unsigned int endIdx = prodNeighborIdx;
+  if (origB->getBeginAtomIdx() == reactNeighborIdx) {
+    std::swap(begIdx, endIdx);
   }
-
-  auto prodB = product->getBondBetweenAtoms(prodNeighborIdx, productIdx);
+  Bond *prodB = addBondToProduct(*origB, *product, begIdx, endIdx);
   if (origB->getBondType() == Bond::DOUBLE &&
       origB->getBondDir() == Bond::EITHERDOUBLE) {
     prodB->setBondDir(Bond::EITHERDOUBLE);
@@ -1309,7 +1335,7 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // ---------- ---------- ---------- ---------- ---------- ----------
   // Loop over the bonds in the product and look for those that have
   // the NullBond property set. These are bonds for which no information
-  // (other than their existence) was provided in the template:
+  // (other than their existence) was provided in the template
   setReactantBondPropertiesToProduct(product, *reactant, mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
@@ -1333,6 +1359,14 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
         Atom *productAtom = product->getAtomWithIdx(productAtomIdx);
         setReactantAtomPropertiesToProduct(productAtom, *reactantAtom,
                                            rxn.getImplicitPropertiesFlag());
+        if (reactantAtom->hasQuery()) {
+          // finally: if the reactant atom is a query we should copy over the
+          // query information. We need to replace the atom to do this
+          QueryAtom newAtom(*productAtom);
+          newAtom.setQuery(reactantAtom->getQuery()->copy());
+          // replaceAtom copies
+          product->replaceAtom(productAtomIdx, &newAtom);
+        }
       }
       // now traverse:
       addReactantNeighborsToProduct(*reactant, *reactantAtom, product,
@@ -1668,7 +1702,8 @@ bool updateBondsModifiedByReaction(
                                     pBond->getEndAtom()->getAtomMapNum())]
                               .second;
 
-            reactant.addBond(begIdx, endIdx, pBond->getBondType());
+            ReactionRunnerUtils::addBondToProduct(*pBond, reactant, begIdx,
+                                                  endIdx);
             molModified = true;
           } else if (bond->getBondType() != pBond->getBondType()) {
             bond->setBondType(pBond->getBondType());
