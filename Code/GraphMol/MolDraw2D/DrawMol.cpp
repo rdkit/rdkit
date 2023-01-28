@@ -2706,7 +2706,8 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   Atom *at1 = bond.getBeginAtom();
   Atom *at2 = bond.getEndAtom();
   Point2D perp;
-  if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_) ||
+
+  if (isLinearAtom(*at1, atCds_, false) || isLinearAtom(*at2, atCds_, false) ||
       (at1->getDegree() == 1 && at2->getDegree() == 1)) {
     const Point2D &at1_cds = atCds_[at1->getIdx()];
     const Point2D &at2_cds = atCds_[at2->getIdx()];
@@ -2726,6 +2727,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
       // in a ring, we need to draw the bond inside the ring
       bondInsideRing(bond, offset, l2s, l2f);
     } else {
+      std::cout << "non-ring" << std::endl;
       bondNonRing(bond, offset, l2s, l2f);
     }
     if ((Bond::EITHERDOUBLE == bond.getBondDir()) ||
@@ -2960,10 +2962,22 @@ Point2D DrawMol::doubleBondEnd(unsigned int at1, unsigned int at2,
                                bool trunc) const {
   Point2D v21 = atCds_[at2].directionVector(atCds_[at1]);
   Point2D v23 = atCds_[at2].directionVector(atCds_[at3]);
-  Point2D bis = v21 + v23;
-  bis.normalize();
   Point2D v23perp(-v23.y, v23.x);
   v23perp.normalize();
+
+  Point2D bis = v21 + v23;
+  if (bis.lengthSq() < 1.0e-6) {
+    // This should never happen, because linear groups like this should
+    // be dealt with elsewhere.  However, it's really ugly if something
+    // does slip through, because the normalized bis is a nan.  So deal
+    // with it by stepping sideways by the necessary amount.  This may
+    // result in a crossed bond because the other end may have stepped
+    // the other way, but it's better than the alternative.  This is
+    // all relevant to Github issue 6027.
+    return (atCds_[at2] - v23perp * offset);
+  }
+
+  bis.normalize();
   if (v23perp.dotProduct(bis) < 0.0) {
     v23perp = v23perp * -1.0;
   }
@@ -3347,7 +3361,8 @@ void prepareStereoGroups(RWMol &mol) {
 }
 
 // ****************************************************************************
-bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
+bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds,
+                  bool sameBondTypes) {
   if (atom.getDegree() == 2) {
     Point2D bond_vecs[2];
     Bond::BondType bts[2];
@@ -3361,7 +3376,12 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
       bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
       ++i;
     }
-    return (bts[0] == bts[1] && bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
+    if (sameBondTypes) {
+      return (bts[0] == bts[1] &&
+              bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
+    } else {
+      return (bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
+    }
   }
   return false;
 }
