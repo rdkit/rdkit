@@ -326,7 +326,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(fp.GetNumOnBits(), 7)
     g.GetOptions().SetCountBounds((1, 2, 3, 4))
     fp = g.GetFingerprint(m)
-    self.assertEqual(fp.GetNumOnBits(), 7)
+    self.assertEqual(fp.GetNumOnBits(), 10)
 
 
 if __name__ == '__main__':
