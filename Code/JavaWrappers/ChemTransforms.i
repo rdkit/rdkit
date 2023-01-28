@@ -68,9 +68,15 @@ RDKit::ROMol * new_molzip(
   return RDKit::molzip(a, params).release();
 }
 
+RDKit::ROMol * new_molzip(
+               std::vector<RDKit::ROMOL_SPTR> &mols,
+               const RDKit::MolzipParams &params=RDKit::MolzipParams()) {
+  return RDKit::molzip(mols, params).release();
+}
 %}
 
 %include "std_string.i"
+%include "std_vector.i"
 
 %newobject deleteSubstructs;
 %newobject replaceSidechains;
@@ -101,7 +107,11 @@ RDKit::ROMol * new_molzip(
 			  const RDKit::ROMol &a,
 			  const RDKit::MolzipParams &params=RDKit::MolzipParams());
 
-          
+
+RDKit::ROMol * new_molzip(
+                          std::vector<RDKit::ROMOL_SPTR> &mols,
+                          const RDKit::MolzipParams &params=RDKit::MolzipParams());
+
 %ignore fragmentOnSomeBonds;
 %ignore constructFragmenterAtomTypes;
 %ignore constructBRICSAtomTypes;
