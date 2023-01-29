@@ -3360,7 +3360,7 @@ void prepareStereoGroups(RWMol &mol) {
 
 // ****************************************************************************
 bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds,
-                  bool sameBondTypes) {
+                  bool checkSameBondType) {
   if (atom.getDegree() == 2) {
     Point2D bond_vecs[2];
     Bond::BondType bts[2];
@@ -3374,7 +3374,7 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds,
       bts[i] = mol.getBondBetweenAtoms(atom.getIdx(), nbr)->getBondType();
       ++i;
     }
-    if (sameBondTypes) {
+    if (checkSameBondType) {
       return (bts[0] == bts[1] &&
               bond_vecs[0].dotProduct(bond_vecs[1]) < -0.95);
     } else {
