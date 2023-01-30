@@ -260,7 +260,7 @@ TEST_CASE("Oxidation numbers") {
           {-2, -2}, {0, -2}, {2, -2, -2}, {6, -2, -2, -2, -2}};
       for (auto i = 0; i < smis.size(); ++i) {
         std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(smis[i]));
-        Descriptors::calculateOxidationNumbers(*mol);
+        Descriptors::calcOxidationNumbers(*mol);
         for (const auto &a : mol->atoms()) {
           CHECK(a->getProp<int>("_OxidationNumber") ==
                 expected[i][a->getIdx()]);
@@ -270,16 +270,34 @@ TEST_CASE("Oxidation numbers") {
   }
   SECTION("organometallics tests") {
     std::string fName = std::getenv("RDBASE");
-    std::string file1 =
-        fName + "/Code/GraphMol/MolStandardize/test_data/ferrocene.mol";
-    std::vector<int> expected{-2, -1, -1, -1, -1, -2, -1, -1, -1, -1, 2, 1, 1};
-    bool takeOwnership = true;
-    SDMolSupplier mol_supplier(file1, takeOwnership);
-    std::unique_ptr<ROMol> m(mol_supplier.next());
-    REQUIRE(m);
-    Descriptors::calculateOxidationNumbers(*m);
-    for (const auto &a : m->atoms()) {
-      CHECK(a->getProp<int>("_OxidationNumber") == expected[a->getIdx()]);
+    {
+      std::string file1 =
+          fName + "/Code/GraphMol/MolStandardize/test_data/ferrocene.mol";
+      std::vector<int> expected{-2, -1, -1, -1, -1, -2, -1,
+                                -1, -1, -1, 2,  1,  1};
+      bool takeOwnership = true;
+      SDMolSupplier mol_supplier(file1, takeOwnership);
+      std::unique_ptr<ROMol> m(mol_supplier.next());
+      REQUIRE(m);
+      Descriptors::calcOxidationNumbers(*m);
+      for (const auto &a : m->atoms()) {
+        CHECK(a->getProp<int>("_OxidationNumber") == expected[a->getIdx()]);
+      }
+    }
+    {
+      std::string file2 =
+          fName + "/Code/GraphMol/MolStandardize/test_data/MOL_00002.mol";
+      bool takeOwnership = true;
+      SDMolSupplier mol_supplier(file2, takeOwnership);
+      std::unique_ptr<ROMol> m(mol_supplier.next());
+      REQUIRE(m);
+      std::vector<unsigned int> ats{0, 5, 10, 13, 14, 19, 20, 21, 42, 43, 44};
+      std::vector<int> expected{-2, -2, 2, 4, 4, 2, -2, -2, -1, 0, -1};
+      for (unsigned int i = 0; i < ats.size(); ++i) {
+        auto a = m->getAtomWithIdx(ats[i]);
+        int oxNum = Descriptors::calcOxidationNumberByEN(a);
+        CHECK(oxNum == expected[i]);
+      }
     }
   }
 }
