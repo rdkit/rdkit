@@ -11,10 +11,13 @@
 #include "catch.hpp"
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
+#include <GraphMol/Descriptors/OxidationNumbers.h>
 #include <GraphMol/Descriptors/PMI.h>
 
 using namespace RDKit;
@@ -246,5 +249,37 @@ TEST_CASE("TPSA caching ignores options") {
     double tv1 = Descriptors::calcTPSA(*m, force, false);
     double tv2 = Descriptors::calcTPSA(*m, force, true);
     CHECK(tv2 > tv1);
+  }
+}
+
+TEST_CASE("Oxidation numbers") {
+  SECTION("simple tests") {
+    {
+      std::vector<std::string> smis{"CO", "C=O", "C(=O)O", "S(=O)(=O)(O)O"};
+      std::vector<std::vector<int>> expected{
+          {-2, -2}, {0, -2}, {2, -2, -2}, {6, -2, -2, -2, -2}};
+      for (auto i = 0; i < smis.size(); ++i) {
+        std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(smis[i]));
+        Descriptors::calculateOxidationNumbers(*mol);
+        for (const auto &a : mol->atoms()) {
+          CHECK(a->getProp<int>("_OxidationNumber") ==
+                expected[i][a->getIdx()]);
+        }
+      }
+    }
+  }
+  SECTION("organometallics tests") {
+    std::string fName = std::getenv("RDBASE");
+    std::string file1 =
+        fName + "/Code/GraphMol/MolStandardize/test_data/ferrocene.mol";
+    std::vector<int> expected{-2, -1, -1, -1, -1, -2, -1, -1, -1, -1, 2, 1, 1};
+    bool takeOwnership = true;
+    SDMolSupplier mol_supplier(file1, takeOwnership);
+    std::unique_ptr<ROMol> m(mol_supplier.next());
+    REQUIRE(m);
+    Descriptors::calculateOxidationNumbers(*m);
+    for (const auto &a : m->atoms()) {
+      CHECK(a->getProp<int>("_OxidationNumber") == expected[a->getIdx()]);
+    }
   }
 }
