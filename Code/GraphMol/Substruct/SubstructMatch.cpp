@@ -197,7 +197,7 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
 }
 
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
-                                           const std::uint32_t m_c[]) const {
+                                           const std::uint32_t m_c[]) {
   if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
     // EFF: we can no-doubt do better than this
     std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
@@ -212,7 +212,27 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       return false;
     }
   }
+
+  HashedStorageType match;
+  if (d_params.uniquify) {
+    match.resize(d_mol.getNumAtoms());
+#ifdef RDK_INTERNAL_BITSET_HAS_HASH
+    match.reset();
+#else
+    std::fill(match.begin(), match.end(), 0);
+#endif
+    for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
+      match[m_c[i]] = 1;
+    }
+    if (matchesSeen.find(match) != matchesSeen.end()) {
+      return false;
+    }
+  }
+
   if (!d_params.useChirality) {
+    if (d_params.uniquify) {
+      matchesSeen.insert(match);
+    }
     return true;
   }
 
@@ -356,7 +376,9 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       return false;
     }
   }
-
+  if (d_params.uniquify) {
+    matchesSeen.insert(match);
+  }
   return true;
 }
 
@@ -502,9 +524,6 @@ std::vector<MatchVectType> SubstructMatch(
       }
       matches.push_back(matchVect);
     }
-    if (params.uniquify) {
-      removeDuplicates(matches, mol.getNumAtoms());
-    }
   }
   return matches;
 }
@@ -597,16 +616,24 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
                               SUBQUERY_MAP &subqueryMap,
                               const SubstructMatchParameters &params,
                               std::vector<RecursiveStructureQuery *> &locked) {
+  SubstructMatchParameters lparams = params;
+  // NOTE: maxMatches and recursive queries is problematic. To make this really
+  // cover all cases we'd need a separate parameter for the number of possible
+  // recursive matches. We will add that for the 2023.03 release; for now
+  // we can still fix #888 without introducing any new problems using this
+  // heuristic:
+  lparams.maxMatches = std::max(1000u, params.maxMatches);
+  lparams.uniquify = false;
   ROMol::ConstAtomIterator atIt;
   for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
     if ((*atIt)->getQuery()) {
-      MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap, locked);
+      MatchSubqueries(mol, (*atIt)->getQuery(), lparams, subqueryMap, locked);
     }
   }
 
-  detail::AtomLabelFunctor atomLabeler(query, mol, params);
-  detail::BondLabelFunctor bondLabeler(query, mol, params);
-  MolMatchFinalCheckFunctor matchChecker(query, mol, params);
+  detail::AtomLabelFunctor atomLabeler(query, mol, lparams);
+  detail::BondLabelFunctor bondLabeler(query, mol, lparams);
+  MolMatchFinalCheckFunctor matchChecker(query, mol, lparams);
 
   matches.clear();
   matches.resize(0);
