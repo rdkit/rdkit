@@ -66,7 +66,7 @@
 
 namespace RDKit {
 namespace Descriptors {
-int calculateOxidationNumberByEN(const Atom *atom) {
+int calcOxidationNumberByEN(const Atom *atom) {
   const static std::map<int, float> pauling_en_map = {
       {1, 2.2},   {3, 0.98},  {4, 1.57},  {5, 2.04},  {6, 2.55},  {7, 3.04},
       {8, 3.44},  {9, 3.98},  {11, 0.93}, {12, 1.31}, {13, 1.61}, {14, 1.9},
@@ -114,12 +114,12 @@ int calculateOxidationNumberByEN(const Atom *atom) {
   return oxNum;
 }
 
-void calculateOxidationNumbers(const ROMol &mol) {
+void calcOxidationNumbers(const ROMol &mol) {
   RWMol molCp(mol);
   RDKit::MolOps::Kekulize(molCp);
   for (const auto &atom : mol.atoms()) {
     auto cpAtom = molCp.getAtomWithIdx(atom->getIdx());
-    int oxNum = calculateOxidationNumberByEN(cpAtom);
+    int oxNum = calcOxidationNumberByEN(cpAtom);
     atom->setProp<int>("_OxidationNumber", oxNum);
   }
 }

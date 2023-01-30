@@ -86,7 +86,7 @@ namespace Descriptors {
  *
  * @param mol the molecule of interest
  */
-RDKIT_DESCRIPTORS_EXPORT void calculateOxidationNumbers(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT void calcOxidationNumbers(const ROMol &mol);
 
 /*!
  * Calculate the oxidation number (state) of the atom of interest, which
@@ -94,7 +94,7 @@ RDKIT_DESCRIPTORS_EXPORT void calculateOxidationNumbers(const ROMol &mol);
  * @param atom the atom of interest
  * @return the oxidation state as an integer
  */
-RDKIT_DESCRIPTORS_EXPORT int calculateOxidationNumberByEN(const Atom *atom);
+RDKIT_DESCRIPTORS_EXPORT int calcOxidationNumberByEN(const Atom *atom);
 
 }  // end of namespace Descriptors
 }  // end of namespace RDKit
