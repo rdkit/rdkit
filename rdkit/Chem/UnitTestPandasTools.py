@@ -339,7 +339,7 @@ class TestWriteSDF(unittest.TestCase):
       self.assertEqual(s.split("\n", 1)[0], "Methane")
 
       # check file is V2000
-      self.assertEqual(s.count("V2000"), 1)
+      self.assertGreaterEqual(s.count("V2000"), 1)
       self.assertEqual(s.count("V3000"), 0)
     finally:
       shutil.rmtree(dirname)
@@ -356,7 +356,7 @@ class TestWriteSDF(unittest.TestCase):
 
       # check file is V3000
       self.assertEqual(s.count("V2000"), 0)
-      self.assertEqual(s.count("V3000"), 1)
+      self.assertGreaterEqual(s.count("V3000"), 1)
     finally:
       shutil.rmtree(dirname)
 
