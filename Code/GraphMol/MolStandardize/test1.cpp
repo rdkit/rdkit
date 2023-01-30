@@ -1517,6 +1517,12 @@ void testSyngenta() {
     MolStandardize::disconnectOrganometallics(*em);
     TEST_ASSERT(MolToSmiles(*em) == test_file.second);
   }
+  {
+    auto m("[CH2-](->[K+])c1ccccc1"_smiles);
+    TEST_ASSERT(m);
+    MolStandardize::disconnectOrganometallics(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "[CH2-]c1ccccc1.[K+]");
+  }
 }
 
 int main() {

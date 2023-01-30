@@ -38,7 +38,7 @@ MetalDisconnector::MetalDisconnector(const MetalDisconnectorOptions &options)
       "W,Re,Os,Ir,Pt,Au]~";
   std::string nonMetalList = "Si,P,As,Sb,S,Se,Te,Cl,Br,I,At]";
   if (options_.splitGrignards) {
-    metalList = "[Li,Na,Mg," + metalList;
+    metalList = "[Li,Na,Mg,K," + metalList;
   } else {
     metalList = "[" + metalList;
   }
