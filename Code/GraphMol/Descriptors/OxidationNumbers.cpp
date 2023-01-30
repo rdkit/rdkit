@@ -106,7 +106,12 @@ int calcOxidationNumberByEN(const Atom *atom) {
     auto otherAtom = bond->getOtherAtom(atom);
     if (otherAtom->getAtomicNum() > 1) {
       float en_diff = parEN - get_en(otherAtom->getAtomicNum());
-      oxNum += bond->getBondTypeAsDouble() * sf(en_diff);
+      double bondType = bond->getBondTypeAsDouble();
+      if (bondType > 1.0 && bondType < 2.0) {
+        throw ValueErrorException("Molecule appears not to be Kekulized,"
+            " oxidation number calculation fails.");
+      }
+      oxNum += bondType * sf(en_diff);
     }
   }
   oxNum += sf(parEN - get_en(1)) * atom->getTotalNumHs();
