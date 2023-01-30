@@ -707,12 +707,12 @@ class TestCase(unittest.TestCase):
             self.assertTrue("boost::bad_any_cast" in str(e))
 
     def testOxidationNumbers(self):
+        # majority of tests are in the C++ layer.  These are just to make
+        # sure the wrapper are working.
         m = Chem.MolFromSmiles("CO")
         rdMD.CalcOxidationNumbers(m)
         self.assertEqual(m.GetAtomWithIdx(0).GetProp('_OxidationNumber'), '-2')
         self.assertEqual(m.GetAtomWithIdx(1).GetProp('_OxidationNumber'), '-2')
-        for atom in m.GetAtoms():
-            print(f'{atom.GetIdx()} : {atom.GetAtomicNum()} : {atom.GetProp("_OxidationNumber")}')
 
         rdbase = environ["RDBASE"]
         ffile = Path(rdbase) / 'Code' / 'GraphMol' / 'MolStandardize' / 'test_data' / 'ferrocene.mol'
