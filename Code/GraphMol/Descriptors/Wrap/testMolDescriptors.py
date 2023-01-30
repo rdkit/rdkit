@@ -708,7 +708,7 @@ class TestCase(unittest.TestCase):
 
     def testOxidationNumbers(self):
         # majority of tests are in the C++ layer.  These are just to make
-        # sure the wrapper are working.
+        # sure the wrappers are working.
         m = Chem.MolFromSmiles("CO")
         rdMD.CalcOxidationNumbers(m)
         self.assertEqual(m.GetAtomWithIdx(0).GetProp('_OxidationNumber'), '-2')
