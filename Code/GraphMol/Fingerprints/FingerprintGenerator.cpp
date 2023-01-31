@@ -147,26 +147,26 @@ SparseIntVect<OutputType>
     hashResults = true;
   }
 
-  std::vector<std::uint32_t> *atomInvariants = nullptr;
+  std::unique_ptr<std::vector<std::uint32_t>> atomInvariants = nullptr;
   if (customAtomInvariants) {
-    atomInvariants = new std::vector<std::uint32_t>(*customAtomInvariants);
+    atomInvariants.reset(new std::vector<std::uint32_t>(*customAtomInvariants));
   } else if (dp_atomInvariantsGenerator) {
-    atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(mol);
+    atomInvariants.reset(dp_atomInvariantsGenerator->getAtomInvariants(mol));
   }
 
-  std::vector<std::uint32_t> *bondInvariants = nullptr;
+  std::unique_ptr<std::vector<std::uint32_t>> bondInvariants = nullptr;
   if (customBondInvariants) {
-    bondInvariants = new std::vector<std::uint32_t>(*customBondInvariants);
+    bondInvariants.reset(new std::vector<std::uint32_t>(*customBondInvariants));
   } else if (dp_bondInvariantsGenerator) {
-    bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(mol);
+    bondInvariants.reset(dp_bondInvariantsGenerator->getBondInvariants(mol));
   }
 
   // create all atom environments that will generate the bit-ids that will make
   // up the fingerprint
-  std::vector<AtomEnvironment<OutputType> *> atomEnvironments =
-      dp_atomEnvironmentGenerator->getEnvironments(
-          mol, dp_fingerprintArguments, fromAtoms, ignoreAtoms, confId,
-          additionalOutput, atomInvariants, bondInvariants, hashResults);
+  auto atomEnvironments = dp_atomEnvironmentGenerator->getEnvironments(
+      mol, dp_fingerprintArguments, fromAtoms, ignoreAtoms, confId,
+      additionalOutput, atomInvariants.get(), bondInvariants.get(),
+      hashResults);
 
   // allocate the result
   SparseIntVect<OutputType> *res = nullptr;
@@ -207,10 +207,10 @@ SparseIntVect<OutputType>
 
   // iterate over every atom environment and generate bit-ids that will make up
   // the fingerprint
-  for (auto it = atomEnvironments.begin(); it != atomEnvironments.end(); it++) {
-    OutputType seed =
-        (*it)->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
-                        additionalOutput, hashResults, fpSize);
+  for (const auto env : atomEnvironments) {
+    OutputType seed = env->getBitId(dp_fingerprintArguments,
+                                    atomInvariants.get(), bondInvariants.get(),
+                                    additionalOutput, hashResults, fpSize);
 
     auto bitId = seed;
     if (fpSize != 0) {
@@ -230,11 +230,7 @@ SparseIntVect<OutputType>
         res->setVal(bitId, res->getVal(bitId) + 1);
       }
     }
-    delete (*it);
   }
-
-  delete atomInvariants;
-  delete bondInvariants;
 
   return res;
 }

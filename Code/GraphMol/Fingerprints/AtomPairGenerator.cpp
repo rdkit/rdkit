@@ -25,8 +25,7 @@ AtomPairAtomInvGenerator::AtomPairAtomInvGenerator(
 
 std::vector<std::uint32_t> *AtomPairAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
-  std::vector<std::uint32_t> *atomInvariants =
-      new std::vector<std::uint32_t>(mol.getNumAtoms());
+  auto *atomInvariants = new std::vector<std::uint32_t>(mol.getNumAtoms());
 
   for (ROMol::ConstAtomIterator atomItI = mol.beginAtoms();
        atomItI != mol.endAtoms(); ++atomItI) {
