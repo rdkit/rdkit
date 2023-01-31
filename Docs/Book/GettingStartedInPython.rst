@@ -807,7 +807,7 @@ This can be used to reconstruct molecules using the Chem.Mol constructor:
   >>> Chem.MolToSmiles(m2)
   'c1ccncc1'
   >>> len(binStr)
-  127
+  130
 
 Note that this is smaller than the pickle:
 
