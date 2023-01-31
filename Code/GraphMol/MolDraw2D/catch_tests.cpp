@@ -260,7 +260,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github5974.svg", 394879876U},
     {"test_github5963.svg", 582369551U},
     {"test_github5767.svg", 3153964439U},
-    {"test_github5943.svg", 3591000538U}};
+    {"test_github5943.svg", 3591000538U},
+    {"test_github6025.svg", 1908346499U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6416,6 +6417,129 @@ TEST_CASE("Github5963: bond end wrong on wedge") {
     Point2D startline(std::stod(match8[1]), std::stod(match8[2]));
     REQUIRE_THAT((midtri - startline).length(),
                  Catch::Matchers::WithinAbs(0.0, 0.1));
+    check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE("Github6025: bad bonds on tiny canvas") {
+  std::string nameBase = "test_github6025";
+  auto m1 = R"CTAB(
+  -ISIS-  02031614092D
+
+ 35 39  0  0  0  0  0  0  0  0999 V2000
+    9.1292    9.8417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.6292    9.8417    0.0000 N   0  0  3  0  0  0  0  0  0  0  0  0
+    8.3792    8.5417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.6292    4.6417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   11.3792    3.3583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.3792    5.9417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   10.6292    2.0500    0.0000 N   0  0  3  0  0  0  0  0  0  0  0  0
+    6.8792    8.5417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1292    7.2417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.3792    8.5417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3792    5.9417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6292    7.2417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3792   11.1417    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3792    8.5417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3792    5.9417    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    9.1292    2.0500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.8792    3.3583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6292    7.2417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.8792    5.9417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    9.1292    7.2417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.8792    8.5417    0.0000 C   0  0  3  0  0  0  0  0  0  0  0  0
+   13.6292    7.2417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.3792   11.1417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8792    5.9417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.6292    4.6417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8792    8.5417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8792    5.9417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.3792    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.8792   11.1417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.6292    9.8417    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3792    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    8.3792    3.3583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8792    3.3583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.8792    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.1292    2.0500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+  3  1  1  0  0  0  0
+  4  6  1  0  0  0  0
+  5 17  1  0  0  0  0
+  6 19  2  0  0  0  0
+  7  5  1  0  0  0  0
+  8  3  1  0  0  0  0
+  9  8  2  0  0  0  0
+ 10  2  1  0  0  0  0
+ 11 20  1  0  0  0  0
+ 12  9  1  0  0  0  0
+ 13  1  2  0  0  0  0
+ 14 26  2  0  0  0  0
+ 15 27  1  0  0  0  0
+ 16  7  1  0  0  0  0
+ 17 25  2  0  0  0  0
+ 18 15  2  0  0  0  0
+ 19 22  1  0  0  0  0
+ 20  3  2  0  0  0  0
+ 21 10  1  0  0  0  0
+ 22 21  1  0  0  0  0
+ 23  2  1  0  0  0  0
+ 24 11  2  0  0  0  0
+ 25 19  1  0  0  0  0
+ 26 12  1  0  0  0  0
+ 27 12  2  0  0  0  0
+ 28  7  1  0  0  0  0
+ 29 23  1  0  0  0  0
+ 30 29  1  0  0  0  0
+ 31 16  2  0  0  0  0
+ 32 16  1  0  0  0  0
+ 33 32  2  0  0  0  0
+ 34 31  1  0  0  0  0
+ 35 33  1  0  0  0  0
+ 24  9  1  0  0  0  0
+ 30 21  1  0  0  0  0
+ 18 14  1  0  0  0  0
+  5  4  2  0  0  0  0
+ 34 35  2  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+  REQUIRE(m1);
+  {
+    MolDraw2DSVG drawer(25, 25, 25, 25, false);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + ".svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+
+    auto check_bond = [](const std::string &text, const std::regex &r) {
+      // there should be 4 matches for each regex, and all the x coords should
+      // be > 0.0. The bug manifested itself by some of them being < 0.0 and
+      // thus off the side of the picture.
+      std::ptrdiff_t const match_count(
+          std::distance(std::sregex_iterator(text.begin(), text.end(), r),
+                        std::sregex_iterator()));
+      REQUIRE(match_count == 4);
+      auto match_begin = std::sregex_iterator(text.begin(), text.end(), r);
+      auto match_end = std::sregex_iterator();
+      for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+        std::smatch match = *i;
+        REQUIRE(stod(match[1]) > 0.0);
+        REQUIRE(stod(match[3]) > 0.0);
+      }
+    };
+    std::regex bond9(
+        "'bond-9 atom-10 atom-19' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::regex bond16(
+        "'bond-16 atom-17 atom-14' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    check_bond(text, bond9);
+    check_bond(text, bond16);
     check_file_hash(nameBase + ".svg");
   }
 }

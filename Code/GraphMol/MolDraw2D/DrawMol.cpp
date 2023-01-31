@@ -2970,11 +2970,15 @@ Point2D DrawMol::doubleBondEnd(unsigned int at1, unsigned int at2,
   Point2D ip;
   // if there's an atom label, we don't need to step the bond end back
   // because both ends are shortened to accommodate the letters.
+  // likewise if the two lines don't intersect, it's already stepped
+  // back enough (github 6025).
+  bool ipAlreadySet = false;
   if (trunc) {
-    doLinesIntersect(atCds_[at2], atCds_[at2] + bis,
-                     atCds_[at2] + v23perp * offset,
-                     atCds_[at3] + v23perp * offset, &ip);
-  } else {
+    ipAlreadySet = doLinesIntersect(atCds_[at2], atCds_[at2] + bis,
+                                    atCds_[at2] + v23perp * offset,
+                                    atCds_[at3] + v23perp * offset, &ip);
+  }
+  if (!ipAlreadySet) {
     ip = atCds_[at2] + v23perp * offset;
   }
   return ip;
