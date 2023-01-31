@@ -705,7 +705,9 @@ void ROMol::load(Archive &ar, const unsigned int) {
   std::string pkl;
   ar >> pkl;
 
+  delete dp_ringInfo;
   initMol();
+
   numBonds = 0;
   MolPickler::molFromPickle(pkl, *this, PicklerOps::AllProps);
   numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
