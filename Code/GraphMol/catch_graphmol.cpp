@@ -2941,9 +2941,9 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
       {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
        "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
       {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35<-[N+]2=C1C=c1c(C)c(CCC(=O)[O-])c(n13)=CC1=[N+]->5C(=C4)C(C)=C1CCC(=O)[O-]"},
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)[O-])c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)[O-]"},
       {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35<-[N+]2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=[N+]->5C(=C4)C(C)=C1CCC(=O)O"}};
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
     RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
     TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);

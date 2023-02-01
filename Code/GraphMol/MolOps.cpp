@@ -184,8 +184,9 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
   // The IUPAC recommendation for ligand->metal coordination bonds is that they
   // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
   // heme b.  If the valence of a non-metal atom is above the maximum in the
-  // RDKit model, and there are single bonds from it to metal and it isn't
-  // positively charged, change those bonds to atom->metal dative.
+  // RDKit model, and there are single bonds from it to metal
+  // change those bonds to atom->metal dative.  Move any positive charge
+  // from the non-metal to the metal.
 
   // This is the list of not metal atoms from QueryOps.cpp
   static const std::vector<int> notMetals{1,  2,  5,  6,  7,  8,  9,  10,
@@ -203,8 +204,7 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
   }
   for (auto bond : mol.atomBonds(atom)) {
     auto otherAtom = bond->getOtherAtom(atom);
-    if (otherAtom->getFormalCharge() <= 0 &&
-        std::find(notMetals.begin(), notMetals.end(),
+    if (std::find(notMetals.begin(), notMetals.end(),
                   otherAtom->getAtomicNum()) != notMetals.end()) {
       auto ev = otherAtom->calcExplicitValence(false);
       const auto &otherValens =
@@ -213,6 +213,11 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
         bond->setBondType(RDKit::Bond::BondType::DATIVE);
         bond->setBeginAtom(otherAtom);
         bond->setEndAtom(atom);
+        if (otherAtom->getFormalCharge() > 0) {
+          atom->setFormalCharge(atom->getFormalCharge() +
+                                otherAtom->getFormalCharge());
+          otherAtom->setFormalCharge(0);
+        }
       }
     }
   }
