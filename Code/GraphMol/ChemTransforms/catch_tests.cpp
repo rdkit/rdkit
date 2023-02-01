@@ -579,9 +579,8 @@ TEST_CASE("Github #6034: FragmentOnBonds may create unexpected radicals") {
   REQUIRE(pieces);
   REQUIRE(nCutsPerAtom == std::vector<unsigned>{1, 1, 0, 0, 0, 0, 0, 0, 0});
 
-  pieces->updatePropertyCache(false);
-
   for (auto at : pieces->atoms()) {
+    INFO("atom " + std::to_string(at->getIdx()));
     if (at->getAtomicNum() == 6) {
       CHECK(at->getNoImplicit() == (at->getIdx() == 1));
       CHECK(at->getTotalValence() == 4);

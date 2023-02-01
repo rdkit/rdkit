@@ -541,6 +541,8 @@ ROMol *fragmentOnBonds(
             tatom->getNoImplicit() ||
             (tatom->getIsAromatic() && tatom->getAtomicNum() != 6)) {
           tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
+        } else {
+          tatom->updatePropertyCache(false);
         }
       }
     }
