@@ -178,10 +178,45 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
     }
   }
 }
+
+void metalBondCleanup(RWMol &mol, Atom *atom) {
+  PRECONDITION(atom, "bad atom in metalBondCleanup");
+  // The IUPAC recommendation for ligand->metal coordination bonds
+  // is that they be single.  This upsets the RDKit valence model, as
+  // seen in CHEBI:26355, heme b.  If the valence of an atom is above
+  // the maximum in the RDKit model, and there are single bonds from it
+  // to metal, change those bonds to atom->metal dative.
+
+  // This is the list of not metal atoms from QueryOps.cpp
+  static const std::vector<int> notMetals{1,  2,  5,  6,  7,  8,  9,  10,
+                                          14, 15, 16, 17, 18, 33, 34, 35,
+                                          36, 52, 53, 54, 85, 86};
+  auto ev = atom->calcExplicitValence(false);
+  const INT_VECT &valens =
+      PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+
+  int maxValence = valens.back();
+  if (maxValence > 0 && ev > maxValence) {
+    for (auto bond : mol.atomBonds(atom)) {
+      if (bond->getBondType() == Bond::SINGLE) {
+        auto otherAtom = bond->getOtherAtom(atom);
+        if (std::find(notMetals.begin(), notMetals.end(),
+                      otherAtom->getAtomicNum()) == notMetals.end()) {
+          bond->setBondType(RDKit::Bond::BondType::DATIVE);
+          if (bond->getBeginAtom() == otherAtom) {
+            bond->setBeginAtom(atom);
+            bond->setEndAtom(otherAtom);
+          }
+        }
+      }
+    }
+  }
+}
 }  // namespace
 
 void cleanUp(RWMol &mol) {
   for (auto atom : mol.atoms()) {
+    metalBondCleanup(mol, atom);
     switch (atom->getAtomicNum()) {
       case 7:
         nitrogenCleanup(mol, atom);
