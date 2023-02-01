@@ -47,6 +47,16 @@ AtomInvariantsGenerator *getAtomPairAtomInvGen(const bool includeChirality) {
 }
 
 void exportAtompair() {
+  python::class_<AtomPair::AtomPairArguments,
+                 python::bases<FingerprintArguments>, boost::noncopyable>(
+      "AtomPairFingerprintOptions", python::no_init)
+      .def_readwrite("use2D", &AtomPair::AtomPairArguments::df_use2D,
+                     "use 2D distances")
+      .def_readwrite("minDistance", &AtomPair::AtomPairArguments::d_minDistance,
+                     "minimum distance to be included")
+      .def_readwrite("maxDistance", &AtomPair::AtomPairArguments::d_maxDistance,
+                     "maximum distance to be included");
+
   python::def(
       "GetAtomPairGenerator", &getAtomPairGenerator<std::uint64_t>,
       (python::arg("minDistance") = 1,

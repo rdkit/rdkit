@@ -285,16 +285,48 @@ class TestCase(unittest.TestCase):
 
   def testMorganRedundantEnvironments(self):
     m = Chem.MolFromSmiles('CC(=O)O')
-   
+
     g = rdFingerprintGenerator.GetMorganGenerator(2)
     fp = g.GetSparseCountFingerprint(m)
-    self.assertEqual(fp.GetTotalVal(),8)
-   
-    g = rdFingerprintGenerator.GetMorganGenerator(2,includeRedundantEnvironments=True)
+    self.assertEqual(fp.GetTotalVal(), 8)
+
+    g = rdFingerprintGenerator.GetMorganGenerator(2, includeRedundantEnvironments=True)
     fp = g.GetSparseCountFingerprint(m)
-    self.assertEqual(fp.GetTotalVal(),12)
+    self.assertEqual(fp.GetTotalVal(), 12)
 
+  def testFingerprintOptions(self):
+    m = Chem.MolFromSmiles('CC(=O)O')
 
+    g = rdFingerprintGenerator.GetMorganGenerator(2)
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 8)
+
+    g.GetOptions().numBitsPerFeature = 2
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 16)
+
+    g.GetOptions().includeRedundantEnvironments = True
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 24)
+
+    m = Chem.MolFromSmiles('CC(=O)C')
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 6)
+    g.GetOptions().countSimulation = False
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 4)
+    g.GetOptions().maxDistance = 1
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 2)
+
+    m = Chem.MolFromSmiles('OC(C)(C)C')
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 7)
+    g.GetOptions().SetCountBounds((1, 2, 3, 4))
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 10)
 
 
 if __name__ == '__main__':
