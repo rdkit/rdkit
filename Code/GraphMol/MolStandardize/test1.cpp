@@ -1429,7 +1429,6 @@ Positively charged tetravalent B	[B;v4;+1:1]>>[*;-1:1])DATA";
 
   unsigned int failedOp;
   for (const auto &pair : ligandExpoSmiles) {
-    std::cout << pair.first << std::endl;
     RWMOL_SPTR rwmol(SmilesToMol(pair.first, 0, false));
     MolOps::sanitizeMol(
         *rwmol, failedOp,
@@ -1447,8 +1446,6 @@ Positively charged tetravalent B	[B;v4;+1:1]>>[*;-1:1])DATA";
     std::unique_ptr<ROMol> refmol(SmilesToMol(pair.second));
     auto refsmi = MolToSmiles(*refmol);
     auto prodsmi = MolToSmiles(static_cast<const ROMol &>(*rwmol));
-    std::cout << "prod : " << prodsmi << std::endl
-              << "ref  : " << refsmi << std::endl;
     TEST_ASSERT(prodsmi == refsmi);
   }
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
