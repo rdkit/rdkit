@@ -304,13 +304,7 @@ class DrawMol {
 
 void centerMolForDrawing(RWMol &mol, int confId = 1);
 void prepareStereoGroups(RWMol &mol);
-// Check if bonds off the atom are linear, if the atom is of degree 2.
-// If checkSameBondType is true, the 2 bonds off the atom must be of the same
-// type, if false they can be different types.  If they're the same type,
-// we show the atom symbol so it doesn't look like 1 long bond but that's
-// not necessary if they're different types.
-bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds,
-                  bool checkSameBondType = true);
+bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds);
 std::string getAtomListText(const Atom &atom);
 DrawColour getColourByAtomicNum(int atomicNum,
                                 const MolDrawOptions &drawOptions);
