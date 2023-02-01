@@ -203,3 +203,28 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("numBitsPerFeature") {
+  auto mol = "CC(=O)O"_smiles;
+  REQUIRE(mol);
+  SECTION("basics") {
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(2)};
+    REQUIRE(fpgen);
+    {
+      std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
+          fpgen->getCountFingerprint(*mol)};
+      REQUIRE(fp);
+      CHECK(fp->getTotalVal() == 8);
+    }
+    // turn on multiple bits per feature:
+    fpgen->getOptions()->d_numBitsPerFeature = 2;
+    {
+      std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
+          fpgen->getCountFingerprint(*mol)};
+      REQUIRE(fp);
+      CHECK(fp->getTotalVal() == 16);
+    }
+    CHECK(fpgen->infoString().find("bitsPerFeature=2") != std::string::npos);
+  }
+}
