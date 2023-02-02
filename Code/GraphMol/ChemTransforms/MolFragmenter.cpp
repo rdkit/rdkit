@@ -534,14 +534,15 @@ ROMol *fragmentOnBonds(
         conf->setAtomPos(idx2, conf->getAtomPos(eidx));
       }
     } else {
-      // was github issue 429
-      Atom *tatom = res->getAtomWithIdx(bidx);
-      if (tatom->getIsAromatic() && tatom->getAtomicNum() != 6) {
-        tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
-      }
-      tatom = res->getAtomWithIdx(eidx);
-      if (tatom->getIsAromatic() && tatom->getAtomicNum() != 6) {
-        tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
+      // was github issues 429, 6034
+      for (auto idx : {bidx, eidx}) {
+        if (auto tatom = res->getAtomWithIdx(idx);
+            tatom->getNoImplicit() ||
+            (tatom->getIsAromatic() && tatom->getAtomicNum() != 6)) {
+          tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
+        } else {
+          tatom->updatePropertyCache(false);
+        }
       }
     }
   }

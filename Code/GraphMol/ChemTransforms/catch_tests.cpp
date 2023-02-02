@@ -513,3 +513,29 @@ TEST_CASE(
     CHECK(caught);
   }
 }
+TEST_CASE("Github #6034: FragmentOnBonds may create unexpected radicals") {
+  auto m = "C[C@H](Cl)c1ccccc1"_smiles;
+
+  REQUIRE(m);
+  REQUIRE(m->getNumAtoms() == 9);
+
+  REQUIRE(m->getAtomWithIdx(1)->getNoImplicit() == true);
+
+  bool add_dummies = false;
+  std::vector<unsigned int> bonds = {0};
+  std::vector<std::pair<unsigned, unsigned>> *dummyLabels = nullptr;
+  const std::vector<Bond::BondType> *bondTypes = nullptr;
+  std::vector<unsigned> nCutsPerAtom(m->getNumAtoms(), 0);
+  std::unique_ptr<ROMol> pieces(MolFragmenter::fragmentOnBonds(
+      *m, bonds, add_dummies, dummyLabels, bondTypes, &nCutsPerAtom));
+  REQUIRE(pieces);
+  REQUIRE(nCutsPerAtom == std::vector<unsigned>{1, 1, 0, 0, 0, 0, 0, 0, 0});
+
+  for (auto at : pieces->atoms()) {
+    INFO("atom " + std::to_string(at->getIdx()));
+    if (at->getAtomicNum() == 6) {
+      CHECK(at->getNoImplicit() == (at->getIdx() == 1));
+      CHECK(at->getTotalValence() == 4);
+    }
+  }
+}
