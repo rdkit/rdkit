@@ -214,9 +214,8 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
         bond->setBeginAtom(otherAtom);
         bond->setEndAtom(atom);
         if (otherAtom->getFormalCharge() > 0) {
-          atom->setFormalCharge(atom->getFormalCharge() +
-                                otherAtom->getFormalCharge());
-          otherAtom->setFormalCharge(0);
+          atom->setFormalCharge(atom->getFormalCharge() + 1);
+          otherAtom->setFormalCharge(otherAtom->getFormalCharge() - 1);
         }
       }
     }
