@@ -1255,5 +1255,35 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     std::cerr<<"----------------------------------------->"<<std::endl;
 #endif
 }
+
+void canonicalizeEnhancedStereo(ROMol &mol,
+                                const std::vector<unsigned int> &atomRanks) {
+  // one thing that makes this all easier is that the stereogroups are
+  // independent of each other
+  for (auto &sg : mol.getStereoGroups()) {
+    // we don't do anything to ABS groups
+    if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      continue;
+    }
+
+    auto getAtomRank = [&atomRanks](const Atom *at1, const Atom *at2) {
+      return atomRanks[at1->getIdx()] < atomRanks[at2->getIdx()];
+    };
+    // find the reference (lowest-ranked) atom
+    auto refAtom = std::min_element(sg.getAtoms().begin(), sg.getAtoms().end(),
+                                    getAtomRank);
+
+    // we will use CCW as the "canonical" state for chirality, so if the
+    // referenceAtom is already CCW then we don't need to do anything more with
+    // this stereogroup
+    if ((*refAtom)->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW) {
+      continue;
+    }
+    // we need to flip everyone... so loop over the other atoms and flip them
+    // all:
+    std::for_each(sg.getAtoms().begin(), sg.getAtoms().end(),
+                  [](auto atom) { atom->invertChirality(); });
+  }
+}
 }  // namespace Canon
 }  // namespace RDKit

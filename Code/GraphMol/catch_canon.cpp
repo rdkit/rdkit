@@ -15,6 +15,7 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/Canon.h>
 
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
@@ -153,16 +154,10 @@ TEST_CASE("double bond stereo and canonicalization") {
     bool breakTies = false;
     std::vector<unsigned int> ranks;
     Canon::rankMolAtoms(*mol, ranks, breakTies);
-    std::copy(ranks.begin(), ranks.end(),
-              std::ostream_iterator<unsigned int>(std::cerr, " "));
-    std::cerr << std::endl;
     mol->getBondWithIdx(1)->setStereo(Bond::BondStereo::STEREOCIS);
     mol->getBondWithIdx(7)->setStereo(Bond::BondStereo::STEREOTRANS);
     std::vector<unsigned int> ranks2;
     Canon::rankMolAtoms(*mol, ranks2, breakTies);
-    std::copy(ranks2.begin(), ranks2.end(),
-              std::ostream_iterator<unsigned int>(std::cerr, " "));
-    std::cerr << std::endl;
     CHECK(ranks[0] == ranks2[9]);
     CHECK(ranks[1] == ranks2[8]);
     CHECK(ranks[2] == ranks2[6]);
@@ -175,9 +170,6 @@ TEST_CASE("double bond stereo and canonicalization") {
     mol->getBondWithIdx(7)->setStereo(Bond::BondStereo::STEREOCIS);
     std::vector<unsigned int> ranks3;
     Canon::rankMolAtoms(*mol, ranks3, breakTies);
-    std::copy(ranks3.begin(), ranks3.end(),
-              std::ostream_iterator<unsigned int>(std::cerr, " "));
-    std::cerr << std::endl;
     CHECK(ranks2 == ranks3);
   }
   SECTION("STEREOANY is higher priority than STEREONONE") {
@@ -188,9 +180,108 @@ TEST_CASE("double bond stereo and canonicalization") {
     bool breakTies = false;
     std::vector<unsigned int> ranks;
     Canon::rankMolAtoms(*mol, ranks, breakTies);
-    std::copy(ranks.begin(), ranks.end(),
-              std::ostream_iterator<unsigned int>(std::cerr, " "));
-    std::cerr << std::endl;
     CHECK(ranks[0] < ranks[9]);
+  }
+}
+
+TEST_CASE("enhanced stereo canonicalization") {
+  SECTION("simple chiral tags") {
+    std::vector<std::pair<std::string, std::string>> tests = {
+        {"C[C@H](F)Cl |&1:1|", "C[C@@H](F)Cl |&1:1|"},
+        {"C[C@H](F)Cl |o1:1|", "C[C@@H](F)Cl |o1:1|"},
+    };
+    for (const auto& [smi1, smi2] : tests) {
+      INFO(smi1 + " : " + smi2);
+      std::unique_ptr<RWMol> mol1{SmilesToMol(smi1)};
+      REQUIRE(mol1);
+      std::unique_ptr<RWMol> mol2{SmilesToMol(smi2)};
+      REQUIRE(mol2);
+
+      bool breakTies = true;
+      std::vector<unsigned int> atomRanks;
+      Canon::rankMolAtoms(*mol1, atomRanks, breakTies);
+      Canon::canonicalizeEnhancedStereo(*mol1, atomRanks);
+      Canon::rankMolAtoms(*mol2, atomRanks, breakTies);
+      Canon::canonicalizeEnhancedStereo(*mol2, atomRanks);
+
+      CHECK(mol1->getAtomWithIdx(1)->getChiralTag() ==
+            mol2->getAtomWithIdx(1)->getChiralTag());
+    }
+  }
+  SECTION("abs groups are not modified") {
+    std::vector<std::pair<std::string, std::string>> tests = {
+        {"C[C@H](F)Cl |a:1|", "C[C@@H](F)Cl |a:1|"},
+    };
+    for (const auto& [smi1, smi2] : tests) {
+      INFO(smi1 + " : " + smi2);
+      std::unique_ptr<RWMol> mol1{SmilesToMol(smi1)};
+      REQUIRE(mol1);
+      std::unique_ptr<RWMol> mol2{SmilesToMol(smi2)};
+      REQUIRE(mol2);
+
+      bool breakTies = true;
+      std::vector<unsigned int> atomRanks;
+      Canon::rankMolAtoms(*mol1, atomRanks, breakTies);
+      Canon::canonicalizeEnhancedStereo(*mol1, atomRanks);
+      Canon::rankMolAtoms(*mol2, atomRanks, breakTies);
+      Canon::canonicalizeEnhancedStereo(*mol2, atomRanks);
+
+      CHECK(mol1->getAtomWithIdx(1)->getChiralTag() !=
+            mol2->getAtomWithIdx(1)->getChiralTag());
+    }
+  }
+  SECTION("relative chiral tags") {
+    std::vector<std::pair<std::string, std::string>> tests = {
+        {"C[C@H](F)[C@H](Br)O |&1:1,3|", "C[C@@H](F)[C@@H](Br)O |&1:1,3|"},
+        {"C[C@H](F)[C@@H](Br)O |&1:1,3|", "C[C@@H](F)[C@H](Br)O |&1:1,3|"},
+        {"O[C@H](Br)[C@H](F)C |&1:1,3|", "O[C@@H](Br)[C@@H](F)C |&1:1,3|"},
+        {"O[C@H](Br)[C@@H](F)C |&1:1,3|", "O[C@@H](Br)[C@H](F)C |&1:1,3|"},
+    };
+    for (const auto& [smi1, smi2] : tests) {
+      INFO(smi1 + " : " + smi2);
+      std::unique_ptr<RWMol> mol1{SmilesToMol(smi1)};
+      REQUIRE(mol1);
+      std::unique_ptr<RWMol> mol2{SmilesToMol(smi2)};
+      REQUIRE(mol2);
+
+      bool breakTies = true;
+      std::vector<unsigned int> atomRanks;
+      Canon::rankMolAtoms(*mol1, atomRanks, breakTies);
+      Canon::canonicalizeEnhancedStereo(*mol1, atomRanks);
+      Canon::rankMolAtoms(*mol2, atomRanks, breakTies);
+      Canon::canonicalizeEnhancedStereo(*mol2, atomRanks);
+
+      CHECK(mol1->getAtomWithIdx(1)->getChiralTag() ==
+            mol2->getAtomWithIdx(1)->getChiralTag());
+      CHECK(mol1->getAtomWithIdx(3)->getChiralTag() ==
+            mol2->getAtomWithIdx(3)->getChiralTag());
+    }
+  }
+  SECTION("multiple groups") {
+    std::vector<std::pair<std::string, std::string>> tests = {
+        {"C[C@H](F)[C@H](Br)O |&1:1,o2:3|",
+         "C[C@@H](F)[C@@H](Br)O |&1:1,o2:3|"},
+        {"C[C@H](F)[C@H](Br)O |&1:1,o2:3|",
+         "C[C@@H](F)[C@@H](Br)O |o1:3,&1:1|"},
+    };
+    for (const auto& [smi1, smi2] : tests) {
+      INFO(smi1 + " : " + smi2);
+      std::unique_ptr<RWMol> mol1{SmilesToMol(smi1)};
+      REQUIRE(mol1);
+      std::unique_ptr<RWMol> mol2{SmilesToMol(smi2)};
+      REQUIRE(mol2);
+
+      bool breakTies = true;
+      std::vector<unsigned int> atomRanks;
+      Canon::rankMolAtoms(*mol1, atomRanks, breakTies);
+      Canon::canonicalizeEnhancedStereo(*mol1, atomRanks);
+      Canon::rankMolAtoms(*mol2, atomRanks, breakTies);
+      Canon::canonicalizeEnhancedStereo(*mol2, atomRanks);
+
+      CHECK(mol1->getAtomWithIdx(1)->getChiralTag() ==
+            mol2->getAtomWithIdx(1)->getChiralTag());
+      CHECK(mol1->getAtomWithIdx(3)->getChiralTag() ==
+            mol2->getAtomWithIdx(3)->getChiralTag());
+    }
   }
 }
