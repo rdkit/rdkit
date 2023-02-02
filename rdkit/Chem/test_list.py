@@ -10,6 +10,7 @@ tests = [("python", "UnitTestChem.py", {}), ("python", "UnitTestChemv2.py", {}),
          ("python", "UnitTestFunctionalGroups.py", {}), ("python", "UnitTestCrippen.py", {}),
          ("python", "UnitTestPandasTools.py", {}), ("python", "UnitTestDocTestsChem.py", {}),
          ("python", "UnitTestFeatFinderCLI.py", {}), ("python", "UnitTestQED.py", {}),
+         ("python", "BRICS.py", {}), ("python", "EnumerateStereoisomers.py", {}),
          ("python", "UnitTestSaltRemover.py", {}), ("python", "test_list.py", {
            'dir': 'AtomPairs'
          }), ("python", "test_list.py", {
