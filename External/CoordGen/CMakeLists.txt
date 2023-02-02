@@ -33,8 +33,8 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     endif()
 
     if(NOT EXISTS "${MAEPARSER_DIR}/MaeParser.hpp")
-        set(RELEASE_NO "1.2.4")
-        set(MD5 "42a0765f9ddac81d588f1dc5afc87ed4")
+        set(RELEASE_NO "1.3.1")
+        set(MD5 "cfa40e29366f4b413e4ec15f959ee139")
         downloadAndCheckMD5("https://github.com/schrodinger/maeparser/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/maeparser-v${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
@@ -87,8 +87,8 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "3.0.1")
-        set(MD5 "60951499eee3f55778ce8fe3ae190fbc")
+        set(RELEASE_NO "3.0.2")
+        set(MD5 "bc9dabbbb2b99ae426f3a1bf16c4d3cc")
         downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
               "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
