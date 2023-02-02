@@ -795,7 +795,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "fixedFontSize", &RDKit::MolDrawOptions::fixedFontSize,
           "font size in pixels. default=-1 means not fixed.  If set,"
-          " always used irrespective of scale, minFontSize and maxFontSize.")
+          " always used irrespective of scale, minFontSize and maxFontSize"
+          " unless this would obscure the bonds because the characters are\n"
+          " bigger than the bonds.  In that case, it will be reduced so that\n"
+          " at least some bond is seen.")
       .def_readwrite(
           "baseFontSize", &RDKit::MolDrawOptions::baseFontSize,
           "relative size of font.  Defaults to 0.6.  -1 means use default.")
