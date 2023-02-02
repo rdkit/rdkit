@@ -261,7 +261,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github5949.svg", 1324215728U},
     {"test_github5974.svg", 394879876U},
     {"test_github5963.svg", 582369551U},
-    {"test_github6025.svg", 1908346499U}};
+    {"test_github6025.svg", 1908346499U},
+    {"test_github5963.svg", 582369551U},
+    {"test_github6027_1.svg", 1864343362U},
+    {"test_github6027_2.svg", 330549720U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6613,5 +6616,119 @@ M  END
     check_bond(text, bond9);
     check_bond(text, bond16);
     check_file_hash(nameBase + ".svg");
+  }
+}
+
+TEST_CASE("Github6027: bad bonds with co-linear double bond") {
+  std::string nameBase = "test_github6027";
+  auto m1 = R"CTAB(
+  MJ201100
+
+ 15 16  0  0  0  0  0  0  0  0999 V2000
+   -2.6052   -0.0931    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.6052    0.7318    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3197    1.1444    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0346    0.7318    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.0347   -0.0931    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3197   -0.5055    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3197    1.9693    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3197    2.7943    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.8908   -0.5055    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1764    0.7318    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1764   -0.0931    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4620   -0.5055    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2523   -0.0931    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2524    0.7318    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4620    1.1444    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  1  1  0  0  0  0
+  3  7  1  0  0  0  0
+  7  8  2  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 10 11  1  0  0  0  0
+ 15 10  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  9  1  1  0  0  0  0
+ 11  9  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+  REQUIRE(m1);
+  {
+    MolDraw2DSVG drawer(250, 250, 250, 250, false);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_1.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+
+    std::regex bond5(
+        "'bond-5 atom-6 atom-7' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    // There are 2 bonds, and the x coords of their 2 ends should be
+    // the same, because the offending bond is exactly vertical, and their
+    // corresponding y coords should be the same.  The bug
+    // manifested itself by giving the 2nd line coords
+    // M 210.3,169.3 L 63.6,41.0.
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 2);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
+    auto match_end = std::sregex_iterator();
+    std::vector<float> ys;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      ys.push_back(stod(match[2]));
+      ys.push_back(stod(match[4]));
+      REQUIRE(match[1] == match[3]);
+    }
+    REQUIRE(ys[0] == ys[2]);
+    REQUIRE(ys[1] == ys[3]);
+    check_file_hash(nameBase + "_1.svg");
+  }
+  {
+    // make sure the double bond lines are still parallel when rotated
+    // (they weren't, the first time.)
+    MolDraw2DSVG drawer(250, 250, 250, 250, false);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().rotate = 120;
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_2.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+
+    // check that the two lines are parallel.
+    std::regex bond5(
+        "'bond-5 atom-6 atom-7' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), bond5),
+                      std::sregex_iterator()));
+    REQUIRE(match_count == 2);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond5);
+    auto match_end = std::sregex_iterator();
+    std::vector<Point2D> points;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      points.push_back(Point2D(stod(match[4]), stod(match[2])));
+      points.push_back(Point2D(stod(match[3]), stod(match[4])));
+    }
+    auto vec1 = points[0].directionVector(points[1]);
+    auto vec2 = points[2].directionVector(points[3]);
+    REQUIRE(fabs(1.0 - vec1.dotProduct(vec2)) < 1.0e-4);
+    check_file_hash(nameBase + "_2.svg");
   }
 }
