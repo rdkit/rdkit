@@ -16,7 +16,7 @@
 namespace RDKit {
 namespace MolInterchange {
 constexpr int currentMolJSONVersion = 10;
-constexpr int currentRDKitJSONVersion = 10;
+constexpr int currentRDKitJSONVersion = 11;
 constexpr int currentRDKitRepresentationVersion = 2;
 constexpr int currentChargeRepresentationVersion = 10;
 constexpr int currentQueryRepresentationVersion = 10;
