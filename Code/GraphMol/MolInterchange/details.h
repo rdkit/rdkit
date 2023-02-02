@@ -37,12 +37,14 @@ static const std::map<unsigned int, Bond::BondType> bolookup = {
     {1, Bond::SINGLE},
     {2, Bond::DOUBLE},
     {3, Bond::TRIPLE},
+    {4, Bond::QUADRUPLE},
     {17, Bond::DATIVE}};
 static const std::map<Bond::BondType, unsigned int> inv_bolookup = {
     {Bond::ZERO, 0},
     {Bond::SINGLE, 1},
     {Bond::DOUBLE, 2},
     {Bond::TRIPLE, 3},
+    {Bond::QUADRUPLE, 4},
     {Bond::DATIVE, 17}};
 
 static const std::map<std::string, Bond::BondStereo> stereoBondlookup = {
