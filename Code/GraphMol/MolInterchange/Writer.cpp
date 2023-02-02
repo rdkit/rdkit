@@ -223,8 +223,8 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
   if (inv_bolookup.find(bond.getBondType()) != inv_bolookup.end()) {
     bo = inv_bolookup.find(bond.getBondType())->second;
   } else {
-    BOOST_LOG(rdWarningLog)
-        << " unrecognized bond type set to zero while writing" << std::endl;
+    BOOST_LOG(rdWarningLog) << " unrecognized bond type " << bond.getBondType()
+                            << " set to zero while writing" << std::endl;
   }
   addIntVal(rjBond, rjDefaults, "bo", bo, doc);
   rj::Value rjAtoms(rj::kArrayType);
