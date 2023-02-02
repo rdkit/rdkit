@@ -553,6 +553,14 @@ void initCanonAtoms(const ROMol &mol, std::vector<Canon::canon_atom> &atoms,
     atoms[i].bonds.reserve(atoms[i].degree);
     getBonds(mol, atoms[i].atom, atoms[i].bonds, includeChirality, atoms);
   }
+  if (includeChirality) {
+    for (auto &sg : mol.getStereoGroups()) {
+      for (auto atom : sg.getAtoms()) {
+        atoms[atom->getIdx()].inStereoGroup = true;
+        atoms[atom->getIdx()].typeOfStereoGroup = sg.getGroupType();
+      }
+    }
+  }
 }
 namespace detail {
 

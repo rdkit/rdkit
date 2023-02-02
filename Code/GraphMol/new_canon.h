@@ -13,6 +13,7 @@
 #include <RDGeneral/hanoiSort.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RingInfo.h>
+#include <GraphMol/StereoGroup.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <cstdint>
 #include <boost/dynamic_bitset.hpp>
@@ -96,14 +97,15 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
     return 0;
   }
 };
-class RDKIT_GRAPHMOL_EXPORT canon_atom {
- public:
+struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   const Atom *atom{nullptr};
   int index{-1};
   unsigned int degree{0};
   unsigned int totalNumHs{0};
   bool hasRingNbr{false};
   bool isRingStereoAtom{false};
+  bool inStereoGroup{false};
+  StereoGroupType typeOfStereoGroup{StereoGroupType::STEREO_ABSOLUTE};
   int *nbrIds{nullptr};
   const std::string *p_symbol{
       nullptr};  // if provided, this is used to order atoms
@@ -399,6 +401,22 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
         if (ivj) {
           ivj = getChiralRank(dp_mol, dp_atoms, j);
         }
+        if (ivi < ivj) {
+          return -1;
+        } else if (ivi > ivj) {
+          return 1;
+        }
+      }
+      // look at enhanced stereo
+      ivi = dp_atoms[i].inStereoGroup;
+      ivj = dp_atoms[j].inStereoGroup;
+      if (ivi && !ivj) {
+        return 1;
+      } else if (ivj && !ivi) {
+        return -1;
+      } else if (ivi && ivj) {
+        ivi = static_cast<unsigned int>(dp_atoms[i].typeOfStereoGroup);
+        ivj = static_cast<unsigned int>(dp_atoms[j].typeOfStereoGroup);
         if (ivi < ivj) {
           return -1;
         } else if (ivi > ivj) {

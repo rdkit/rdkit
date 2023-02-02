@@ -285,3 +285,41 @@ TEST_CASE("enhanced stereo canonicalization") {
     }
   }
 }
+
+TEST_CASE("using enhanced stereo in rankMolAtoms") {
+  SECTION("basics: different ranks") {
+    std::vector<std::string> smis{
+        "C[C@H](F)[C@@H](F)C |a:1|",
+        "C[C@H](F)[C@@H](F)C |&1:1|"
+        "C[C@H](F)[C@@H](F)C |o1:1|",
+        "C[C@H](F)[C@@H](F)C |o1:1,a:3|",
+        "C[C@H](F)[C@@H](F)C |o1:1,&:3|",
+        "C[C@H](F)[C@@H](F)C |a:1,&2:3|",
+    };
+    for (auto& smi : smis) {
+      INFO(smi);
+      std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
+      REQUIRE(mol);
+      bool breakTies = false;
+      std::vector<unsigned int> atomRanks;
+      Canon::rankMolAtoms(*mol, atomRanks, breakTies);
+      CHECK(atomRanks[1] != atomRanks[3]);
+    }
+  }
+  SECTION("basics: same ranks") {
+    std::vector<std::string> smis{
+        "C[C@H](F)[C@@H](F)C |o1:1,o2:3|",
+        "C[C@H](F)[C@@H](F)C |&1:1,&2:3|",
+        "C[C@H](F)[C@@H](F)C |a:1,a:3|",
+    };
+    for (auto& smi : smis) {
+      INFO(smi);
+      std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
+      REQUIRE(mol);
+      bool breakTies = false;
+      std::vector<unsigned int> atomRanks;
+      Canon::rankMolAtoms(*mol, atomRanks, breakTies);
+      CHECK(atomRanks[1] == atomRanks[3]);
+    }
+  }
+}
