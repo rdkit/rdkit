@@ -153,27 +153,28 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
     hashResults = true;
   }
 
-  std::vector<std::uint32_t> *atomInvariants = nullptr;
+  std::unique_ptr<std::vector<std::uint32_t>> atomInvariants = nullptr;
   if (args.customAtomInvariants) {
-    atomInvariants = new std::vector<std::uint32_t>(*args.customAtomInvariants);
+    atomInvariants.reset(
+        new std::vector<std::uint32_t>(*args.customAtomInvariants));
   } else if (dp_atomInvariantsGenerator) {
-    atomInvariants = dp_atomInvariantsGenerator->getAtomInvariants(mol);
+    atomInvariants.reset(dp_atomInvariantsGenerator->getAtomInvariants(mol));
   }
 
-  std::vector<std::uint32_t> *bondInvariants = nullptr;
+  std::unique_ptr<std::vector<std::uint32_t>> bondInvariants = nullptr;
   if (args.customBondInvariants) {
-    bondInvariants = new std::vector<std::uint32_t>(*args.customBondInvariants);
+    bondInvariants.reset(
+        new std::vector<std::uint32_t>(*args.customBondInvariants));
   } else if (dp_bondInvariantsGenerator) {
-    bondInvariants = dp_bondInvariantsGenerator->getBondInvariants(mol);
+    bondInvariants.reset(dp_bondInvariantsGenerator->getBondInvariants(mol));
   }
 
   // create all atom environments that will generate the bit-ids that will make
   // up the fingerprint
-  std::vector<AtomEnvironment<OutputType> *> atomEnvironments =
-      dp_atomEnvironmentGenerator->getEnvironments(
-          *lmol, dp_fingerprintArguments, args.fromAtoms, args.ignoreAtoms,
-          args.confId, args.additionalOutput, atomInvariants, bondInvariants,
-          hashResults);
+  auto atomEnvironments = dp_atomEnvironmentGenerator->getEnvironments(
+      *lmol, dp_fingerprintArguments, args.fromAtoms, args.ignoreAtoms,
+      args.confId, args.additionalOutput, atomInvariants.get(),
+      bondInvariants.get(), hashResults);
 
   // allocate the result
   auto res = std::make_unique<SparseIntVect<OutputType>>(
@@ -209,9 +210,9 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
   // iterate over every atom environment and generate bit-ids that will make up
   // the fingerprint
   for (const auto env : atomEnvironments) {
-    OutputType seed =
-        env->getBitId(dp_fingerprintArguments, atomInvariants, bondInvariants,
-                      args.additionalOutput, hashResults, fpSize);
+    OutputType seed = env->getBitId(dp_fingerprintArguments,
+                                    atomInvariants.get(), bondInvariants.get(),
+                                    args.additionalOutput, hashResults, fpSize);
 
     auto bitId = seed;
     if (fpSize != 0) {
@@ -239,9 +240,6 @@ FingerprintGenerator<OutputType>::getFingerprintHelper(
     }
     delete env;
   }
-
-  delete atomInvariants;
-  delete bondInvariants;
 
   return res;
 }

@@ -688,7 +688,7 @@ bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
       v2.normalize();
       // this is the arrangement:
       //     a0
-      //       \
+      //       \       [intentionally left blank]
       //        a1 = a2
       // we want to be sure it's not actually:
       //   ao - a1 = a2

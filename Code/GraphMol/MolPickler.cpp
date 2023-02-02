@@ -35,7 +35,7 @@ namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 13;
 const int32_t MolPickler::versionMinor = 0;
-const int32_t MolPickler::versionPatch = 1;
+const int32_t MolPickler::versionPatch = 2;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
 void streamWrite(std::ostream &ss, MolPickler::Tags tag) {
@@ -1882,27 +1882,17 @@ template <typename T>
 void MolPickler::_pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
                              std::map<int, int> &atomIdxMap) {
   PRECONDITION(ringInfo, "missing ring info");
-  T tmpT;
-  tmpT = ringInfo->numRings();
-  streamWrite(ss, tmpT);
+  std::uint32_t nrings = ringInfo->numRings();
+  streamWrite(ss, nrings);
   for (unsigned int i = 0; i < ringInfo->numRings(); i++) {
     INT_VECT ring;
     ring = ringInfo->atomRings()[i];
-    tmpT = static_cast<T>(ring.size());
+    T tmpT = static_cast<T>(ring.size());
     streamWrite(ss, tmpT);
     for (int &j : ring) {
       tmpT = static_cast<T>(atomIdxMap[j]);
       streamWrite(ss, tmpT);
     }
-#if 0
-      ring = ringInfo->bondRings()[i];
-      tmpT = static_cast<T>(ring.size());
-      streamWrite(ss,tmpT);
-      for(unsigned int j=0;j<ring.size();j++){
-	tmpT = static_cast<T>(ring[j]);
-	streamWrite(ss,tmpT);
-      }
-#endif
   }
 }
 
@@ -1915,8 +1905,14 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
     ringInfo->initialize();
   }
 
-  T numRings;
-  streamRead(ss, numRings, version);
+  std::uint32_t numRings;
+  if (version >= 13002) {
+    streamRead(ss, numRings, version);
+  } else {
+    T tmpV;
+    streamRead(ss, tmpV, version);
+    numRings = tmpV;
+  }
 
   if (numRings > 0) {
     ringInfo->preallocate(mol->getNumAtoms(), mol->getNumBonds());
