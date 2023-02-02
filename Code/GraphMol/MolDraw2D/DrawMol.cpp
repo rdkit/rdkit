@@ -2942,6 +2942,14 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     l2s = at1_cds + perp * offset;
     l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                         offset, true);
+    // If at1->at2->at3 is a straight line, l2f may have ended up on the
+    // wrong side of the other bond from l2s because there is no inner
+    // side of the bond.  Do it again with a negative offset if so.
+    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f)) <
+             0.9999)) {
+      l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
+                          -offset, true);
+    }
     // if at1 has a label, need to move it so it's centred in between the
     // two lines (Github 5511).
     if (atomLabels_[at1->getIdx()]) {
@@ -2960,10 +2968,19 @@ Point2D DrawMol::doubleBondEnd(unsigned int at1, unsigned int at2,
                                bool trunc) const {
   Point2D v21 = atCds_[at2].directionVector(atCds_[at1]);
   Point2D v23 = atCds_[at2].directionVector(atCds_[at3]);
-  Point2D bis = v21 + v23;
-  bis.normalize();
   Point2D v23perp(-v23.y, v23.x);
   v23perp.normalize();
+
+  Point2D bis = v21 + v23;
+  if (bis.lengthSq() < 1.0e-6) {
+    // if the bonds are colinear, bis comes out as 0, and thus normalizes
+    // to NaN which gives a very ugly result (Github #6027).  It's safe
+    // to use v23perp in this case, so long as is on the right side of the
+    // bond, which will be checked on return.
+    return (atCds_[at2] - v23perp * offset);
+  }
+
+  bis.normalize();
   if (v23perp.dotProduct(bis) < 0.0) {
     v23perp = v23perp * -1.0;
   }
