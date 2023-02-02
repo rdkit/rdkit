@@ -175,8 +175,11 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                          // -1 means no max.
   int minFontSize = 6;   // likewise for -1.
   int fixedFontSize =
-      -1;  // font size to use, in pixels.  Default -1 means not fixed.  If set,
-           // always used irrespective of scale, minFontSize and maxFontSize.
+      -1;  // Font size to use, in pixels.  Default -1 means not fixed.  If set,
+           // always used irrespective of scale, minFontSize and maxFontSize
+           // unless this would obscure the bonds because the characters are
+           // bigger than the bonds.  In that case, it will be reduced so that
+           // at least some bond is seen.
   double annotationFontScale = 0.5;  // scales font relative to atom labels for
                                      // atom and bond annotation.
   std::string fontFile = "";  // name of font file for freetype rendering.  If

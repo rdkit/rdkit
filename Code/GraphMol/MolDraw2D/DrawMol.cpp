@@ -912,7 +912,14 @@ void DrawMol::calculateScale() {
   double scale_mult = newScale / scale_;
   scale_ *= scale_mult;
   if (drawOptions_.fixedFontSize != -1) {
-    fontScale_ = drawOptions_.fixedFontSize / textDrawer_.baseFontSize();
+    auto fontSize = drawOptions_.fixedFontSize;
+    // if the fixed font size if bigger than the scaled meanBondLength_
+    // the characters will completely hide the bond, so scale the font
+    // back, even though we've promised not to.
+    if (meanBondLength_ * scale_ < fontSize) {
+      fontSize = meanBondLength_ * scale_ * 0.8;
+    }
+    fontScale_ = fontSize / textDrawer_.baseFontSize();
   } else {
     fontScale_ *= scale_mult;
   }
@@ -3486,6 +3493,7 @@ void adjustBondEndForString(
     const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd) {
   Point2D labelPos = moveEnd;
+  bool didSomething = false;
   for (auto r : rects) {
     Point2D origTrans = r->trans_;
     r->trans_ += labelPos;
@@ -3498,17 +3506,24 @@ void adjustBondEndForString(
     std::unique_ptr<Point2D> ip(new Point2D);
     if (doLinesIntersect(moveEnd, end2, tl, tr, ip.get())) {
       moveEnd = *ip;
+      didSomething = true;
     }
     if (doLinesIntersect(moveEnd, end2, tr, br, ip.get())) {
+      didSomething = true;
       moveEnd = *ip;
     }
     if (doLinesIntersect(moveEnd, end2, br, bl, ip.get())) {
       moveEnd = *ip;
+      didSomething = true;
     }
     if (doLinesIntersect(moveEnd, end2, bl, tl, ip.get())) {
       moveEnd = *ip;
+      didSomething = true;
     }
     r->trans_ = origTrans;
+  }
+  if (!didSomething) {
+    moveEnd = end2;
   }
 }
 

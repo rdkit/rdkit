@@ -321,8 +321,10 @@ double getHighlightBondWidth(
 Point2D calcPerpendicular(const Point2D &cds1, const Point2D &cds2);
 Point2D calcInnerPerpendicular(const Point2D &cds1, const Point2D &cds2,
                                const Point2D &cds3);
-// return a point that is moveEnd moved so as not to clash with any of the
-// rects of a label.  moveEnd to end2 are the coords of 2 ends of a bond.
+// Move moveEnd so as not to clash with any of the rects of a label.  moveEnd to
+// end2 are the coords of 2 ends of a bond. If the line was completely inside
+// the confines of the label sets moveEnd equal to end2.  This can happen if the
+// font is fixed and too big for the drawing.
 void adjustBondEndForString(
     const Point2D &end2, double padding,
     const std::vector<std::shared_ptr<StringRect>> &rects, Point2D &moveEnd);

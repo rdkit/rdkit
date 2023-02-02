@@ -260,7 +260,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github5767.svg", 3153964439U},
     {"test_github5949.svg", 1324215728U},
     {"test_github5974.svg", 394879876U},
-    {"test_github5963.svg", 582369551U}};
+    {"test_github5963.svg", 2276774090U},
+    {"test_github6041a.svg", 582369551U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6490,4 +6491,21 @@ TEST_CASE("Github5963: bond end wrong on wedge") {
                  Catch::Matchers::WithinAbs(0.0, 0.1));
     check_file_hash(nameBase + ".svg");
   }
+}
+
+TEST_CASE("Font too large in ACS1996 mode on small canvas.") {
+  std::string nameBase = "test_github6041a";
+  auto m =
+      "CC(C)(F)c1noc(N2CCCN([C@H]3CC[C@H](COc4ccc(S(C)(=O)=O)cc4F)CC3)CC2)n1"_smiles;
+  MolDraw2DSVG drawer(125, 125);
+  RDDepict::compute2DCoords(*m);
+  MolDraw2DUtils::setACS1996Options(drawer.drawOptions(), 1.5);
+  drawer.drawMolecule(*m);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs(nameBase + ".svg");
+  outs << text;
+  outs.flush();
+  outs.close();
+  check_file_hash(nameBase + ".svg");
 }
