@@ -302,11 +302,11 @@ void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
   // atomic numbers, and x, y, and z coordinates
   const auto size = atomic_numbers->size();
   auto conf = new RDKit::Conformer(size);
-  conf->set3D(true);
   conf->setId(0);
 
   PDBInfo pdb_info(atom_block);
 
+  bool nonzeroZ = false;
   for (size_t i = 0; i < size; ++i) {
     Atom *atom = new Atom(atomic_numbers->at(i));
     mol.addAtom(atom, true, true);
@@ -319,7 +319,11 @@ void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
     pos.y = ys->at(i);
     pos.z = zs->at(i);
     conf->setAtomPos(i, pos);
+
+    nonzeroZ |= (std::abs(pos.z) > 1.e-4);
   }
+
+  conf->set3D(nonzeroZ);
   mol.addConformer(conf, false);
 }
 

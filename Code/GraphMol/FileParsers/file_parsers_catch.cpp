@@ -5664,4 +5664,32 @@ TEST_CASE("MaeMolSupplier and operator[]", "[MaeMolSupplier]") {
   CHECK_THROWS_AS(supplier[-1], FileParseException);
 }
 
+TEST_CASE("MaeMolSupplier is3D flag", "[MaeMolSupplier]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+
+  MaeMolSupplier supplier(fname1);
+
+  std::unique_ptr<ROMol> mol(supplier[0]);
+
+  std::string mol_name;
+  REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+  CHECK(mol_name == "48");
+
+  CHECK(mol->getConformer().is3D() == true);
+
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/benzene.mae";
+
+  supplier.setData(read_file(fname2));
+
+  mol.reset(supplier[0]);
+
+  REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+  CHECK(mol_name == "Structure1");
+
+  CHECK(mol->getConformer().is3D() == false);
+}
+
 #endif
