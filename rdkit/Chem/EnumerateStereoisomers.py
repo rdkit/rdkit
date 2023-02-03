@@ -355,3 +355,18 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
         break
     elif verbose:
       print("%s    failed to embed" % (Chem.MolToSmiles(isomer, isomericSmiles=True)))
+
+
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+  import doctest, sys
+  return doctest.testmod(sys.modules["__main__"])
+
+
+if __name__ == '__main__':
+  import sys
+  failed, tried = _test()
+  sys.exit(failed)
