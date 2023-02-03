@@ -119,6 +119,7 @@ struct maemolsup_wrap {
              python::return_value_policy<python::manage_new_object>())
         .def("reset", &MaeMolSupplier::reset,
              "Resets our position in the file to the beginning.\n")
+        .def("__len__", &MaeMolSupplier::length)
         .def("SetData", &MaeMolSupplier::setData, "Sets the text to be parsed",
              (python::arg("data"), python::arg("sanitize") = true,
               python::arg("removeHs") = true))

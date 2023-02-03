@@ -2927,22 +2927,26 @@ CAS<~>
     with open(fileN) as f:
       data = f.read()
 
-    suppl.setData(data)
+    suppl.SetData(data)
+
+    self.assertEqual(len(suppl), 16)
 
     for i, mol in enumerate(suppl):
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
 
-    self.assertEqual(i, 16)
+    self.assertEqual(i, 15)
 
     # Do it again, to check the reset() method
     suppl.reset()
 
+    self.assertEqual(len(suppl), 16)
+
     for i, mol in enumerate(suppl):
       self.assertTrue(mol)
       self.assertTrue(mol.GetProp("_Name") == molNames[i])
 
-    self.assertEqual(i, 16)
+    self.assertEqual(i, 15)
 
   def test66StreamSupplierIter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',

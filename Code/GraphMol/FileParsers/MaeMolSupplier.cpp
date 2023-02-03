@@ -499,7 +499,14 @@ unsigned int MaeMolSupplier::length() {
   PRECONDITION(dp_inStream, "no stream");
 
   if (d_length == 0 && !atEnd()) {
-    // Reset stream state, store current position, and rewind to beginning
+    // maeparser has an internal buffer, so we can't just iterate over
+    // block till we reach the end of the file. So we have to rewind
+    // the input stream, use it to create a separate parser, fast
+    // forward this one to the end of the data, and then get the length
+    // from that parser. Then we can restore the input stream to
+    // the position where it was before, so that it is still in
+    // sync with maeparser's internal buffer.
+
     dp_sInStream->clear();
     auto current_position = dp_sInStream->tellg();
     dp_sInStream->seekg(0, std::ios::beg);
