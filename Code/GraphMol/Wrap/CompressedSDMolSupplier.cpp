@@ -32,8 +32,12 @@ namespace io = boost::iostreams;
 namespace python = boost::python;
 
 namespace RDKit {
+
+// ForwardSDMolSupplier cannot (yet?) be reset, so we have to override
+// the template that was defined in MolSupplier.h.
 // Note that this returns a pointer to the supplier itself, so be careful
 // that it doesn't get deleted by python!
+template <>
 ForwardSDMolSupplier *MolSupplIter(ForwardSDMolSupplier *suppl) {
   return suppl;
 }
