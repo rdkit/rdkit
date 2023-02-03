@@ -7,6 +7,10 @@
 //  of the RDKit source tree.
 //
 
+#include <fstream>
+#include <string>
+#include <streambuf>
+
 #include "RDGeneral/test.h"
 #include "catch.hpp"
 #include <RDGeneral/Invariant.h>
@@ -5512,3 +5516,82 @@ NO_CHARGES
     REQUIRE(m);
   }
 }
+
+std::string read_file(const std::string &fname) {
+  std::ifstream ifs(fname);
+  return std::string(std::istreambuf_iterator<char>(ifs),
+                     std::istreambuf_iterator<char>());
+}
+
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+TEST_CASE("MaeMolSupplier setData and reset methods") {
+  std::string rdbase = getenv("RDBASE");
+
+  MaeMolSupplier supplier;
+
+  std::vector<std::string> mol_names1 = {
+      "48",  "78",  "128", "163", "164", "170", "180", "186",
+      "192", "203", "210", "211", "213", "220", "229", "256"};
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+  auto data1 = read_file(fname1);
+
+  supplier.setData(data1);
+
+  std::unique_ptr<ROMol> mol = nullptr;
+
+  // Test the reset method by iterating the same input twice
+  for (unsigned i = 0; i < 2; ++i) {
+    unsigned j = 0;
+    while (!supplier.atEnd()) {
+      INFO("First input, lap " + std::to_string(i) + ", mol " +
+           std::to_string(j));
+
+      mol.reset(supplier.next());
+      REQUIRE(mol != nullptr);
+
+      std::string mol_name;
+      REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+      REQUIRE(j < mol_names1.size());
+      CHECK(mol_name == mol_names1[j]);
+
+      ++j;
+    }
+    INFO("First input, mol count");
+    CHECK(j == 16);
+
+    supplier.reset();
+  }
+
+  // Now reuse the supplier with some different input
+  std::string fname2 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/stereochem.mae";
+  auto data2 = read_file(fname2);
+
+  supplier.setData(data2);
+
+  unsigned i = 0;
+  while (!supplier.atEnd()) {
+    INFO("Second input, mol " + std::to_string(i));
+
+    ROMol *molptr = nullptr;
+    try {
+      molptr = supplier.next();
+    } catch (const Invar::Invariant &) {
+      // the 4th structure is intentionally bad.
+    }
+
+    REQUIRE((i == 3) ^ (molptr != nullptr));
+    delete molptr;
+
+    ++i;
+  }
+  INFO("Second input, mol count");
+  CHECK(i == 5);
+
+  // Reset throws if called after close
+  INFO("Reset after close");
+  supplier.close();
+  REQUIRE_THROWS_AS(supplier.reset(), Invar::Invariant);
+}
+#endif

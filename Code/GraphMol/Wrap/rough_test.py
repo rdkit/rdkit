@@ -11,12 +11,15 @@ it's intended to be shallow, but broad
 import doctest
 import gc
 import gzip
+# Boost functions are NOT found by doctest, this "fixes" them
+#  by adding the doctests to a fake module
+import importlib.util
 import logging
 import os
+import pickle
 import sys
 import tempfile
 import unittest
-import pickle
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from io import StringIO
@@ -25,9 +28,6 @@ import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
 from rdkit.Chem import rdqueries
 
-# Boost functions are NOT found by doctest, this "fixes" them
-#  by adding the doctests to a fake module
-import importlib.util
 spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
 TestReplaceCore = importlib.util.module_from_spec(spec)
 code = """
@@ -471,7 +471,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(m2 is not None)
     self.assertEqual(m2.GetNumAtoms(), 2)
     self.assertTrue(m2.GetAtomWithIdx(1).HasQuery())
-    
+
     # test github758
     m = Chem.MolFromSmiles('CCC')
     self.assertEqual(m.GetNumAtoms(), 3)
@@ -2914,6 +2914,36 @@ CAS<~>
     self.assertFalse(suppl.atEnd())
     self.assertTrue(ok)
 
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  def testMaeFileSupplierSetData(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.mae')
+    molNames = [
+      "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+      "220", "229", "256"
+    ]
+    suppl = Chem.MaeMolSupplier()
+
+    with open(fileN) as f:
+      data = f.read()
+
+    suppl.setData(data)
+
+    for i, mol in enumerate(suppl):
+      self.assertTrue(mol)
+      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+
+    self.assertEqual(i, 16)
+
+    # Do it again, to check the reset() method
+    suppl.reset()
+
+    for i, mol in enumerate(suppl):
+      self.assertTrue(mol)
+      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+
+    self.assertEqual(i, 16)
+
   def test66StreamSupplierIter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'NCI_aids_few.sdf.gz')
@@ -3967,7 +3997,7 @@ CAS<~>
     mol = Chem.MolFromSmiles('O=[N+][O-]')
     supp = Chem.ResonanceMolSupplier(mol)
     supp.atEnd()
-    
+
   def testSubstructMatchAcetate(self):
     mol = Chem.MolFromSmiles('CC(=O)[O-]')
     query = Chem.MolFromSmarts('C(=O)[O-]')
@@ -6938,7 +6968,7 @@ CAS<~>
   def test_picklingWithAddedAttribs(self):
     m = Chem.MolFromSmiles("C")
     m.foo = 1
-    m.SetIntProp("bar",2)
+    m.SetIntProp("bar", 2)
     pkl = pickle.dumps(m)
     nm = pickle.loads(pkl)
     self.assertEqual(nm.GetIntProp("bar"), 2)

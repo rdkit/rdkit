@@ -393,14 +393,7 @@ MaeMolSupplier::MaeMolSupplier(std::shared_ptr<std::istream> inStream,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
-  d_reader.reset(new mae::Reader(dp_sInStream));
-  CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
-
-  try {
-    d_next_struct = d_reader->next(mae::CT_BLOCK);
-  } catch (const mae::read_exception &e) {
-    throw FileParseException(e.what());
-  }
+  init();
 }
 
 MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
@@ -413,14 +406,7 @@ MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
-  d_reader.reset(new mae::Reader(dp_sInStream));
-  CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
-
-  try {
-    d_next_struct = d_reader->next(mae::CT_BLOCK);
-  } catch (const mae::read_exception &e) {
-    throw FileParseException(e.what());
-  }
+  init();
 }
 
 MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
@@ -431,6 +417,11 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
+  init();
+}
+
+void MaeMolSupplier::init() {
+  PRECONDITION(dp_sInStream, "no input stream")
   d_reader.reset(new mae::Reader(dp_sInStream));
   CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
 
@@ -440,9 +431,24 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
     throw FileParseException(e.what());
   }
 }
+void MaeMolSupplier::reset() {
+  dp_inStream->clear();
+  dp_inStream->seekg(0, std::ios::beg);
 
-void MaeMolSupplier::init() {}
-void MaeMolSupplier::reset() {}
+  init();
+}
+
+void MaeMolSupplier::setData(const std::string &text, bool sanitize,
+                             bool removeHs) {
+  dp_inStream = static_cast<std::istream *>(
+      new std::istringstream(text, std::ios_base::binary));
+  dp_sInStream.reset(dp_inStream);
+  df_owner = true;  // maeparser requires ownership
+  df_sanitize = sanitize;
+  df_removeHs = removeHs;
+
+  init();
+}
 
 ROMol *MaeMolSupplier::next() {
   PRECONDITION(dp_sInStream != nullptr, "no stream");
