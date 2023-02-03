@@ -425,6 +425,9 @@ void MaeMolSupplier::init() {
   d_reader.reset(new mae::Reader(dp_sInStream));
   CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
 
+  d_position = 0;
+  d_length = 0;
+
   try {
     d_next_struct = d_reader->next(mae::CT_BLOCK);
   } catch (const mae::read_exception &e) {
@@ -435,7 +438,9 @@ void MaeMolSupplier::reset() {
   dp_inStream->clear();
   dp_inStream->seekg(0, std::ios::beg);
 
+  auto length = d_length;
   init();
+  d_length = length;
 }
 
 void MaeMolSupplier::setData(const std::string &text, bool sanitize,
@@ -479,7 +484,36 @@ void MaeMolSupplier::moveToNextBlock() {
   } catch (const mae::read_exception &e) {
     d_stored_exc = e.what();
   }
+  ++d_position;
 }
 
-bool MaeMolSupplier::atEnd() { return d_next_struct == nullptr; }
+bool MaeMolSupplier::atEnd() {
+  if (d_next_struct == nullptr) {
+    d_length = d_position;
+    return true;
+  }
+  return false;
+}
+
+unsigned int MaeMolSupplier::length() {
+  PRECONDITION(dp_inStream, "no stream");
+
+  if (d_length == 0 && !atEnd()) {
+    // Reset stream state, store current position, and rewind to beginning
+    dp_sInStream->clear();
+    auto current_position = dp_sInStream->tellg();
+    dp_sInStream->seekg(0, std::ios::beg);
+
+    MaeMolSupplier tmp_supplier(dp_sInStream);
+    while (!tmp_supplier.atEnd()) {
+      tmp_supplier.moveToNextBlock();
+    }
+
+    d_length = tmp_supplier.length();
+    dp_sInStream->seekg(current_position, std::ios::beg);
+  }
+
+  return d_length;
+}
+
 }  // namespace RDKit

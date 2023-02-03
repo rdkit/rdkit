@@ -5524,7 +5524,7 @@ std::string read_file(const std::string &fname) {
 }
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-TEST_CASE("MaeMolSupplier setData and reset methods") {
+TEST_CASE("MaeMolSupplier setData and reset methods", "[MaeMolSupplier]") {
   std::string rdbase = getenv("RDBASE");
 
   MaeMolSupplier supplier;
@@ -5594,4 +5594,45 @@ TEST_CASE("MaeMolSupplier setData and reset methods") {
   supplier.close();
   REQUIRE_THROWS_AS(supplier.reset(), Invar::Invariant);
 }
+
+TEST_CASE("MaeMolSupplier length", "[MaeMolSupplier]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+
+  std::vector<std::string> mol_names = {
+      "48",  "78",  "128", "163", "164", "170", "180", "186",
+      "192", "203", "210", "211", "213", "220", "229", "256"};
+  auto mols_in_file = mol_names.size();
+
+  MaeMolSupplier supplier(fname1);
+
+  CHECK(supplier.length() == mols_in_file);
+
+  unsigned i = 0;
+  std::unique_ptr<ROMol> mol;
+  for (; i < 2; ++i) {
+    mol.reset(supplier.next());
+
+    std::string mol_name;
+    REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+    CHECK(mol_name == mol_names[i]);
+  }
+
+  CHECK(supplier.length() == mols_in_file);
+
+  while (!supplier.atEnd()) {
+    mol.reset(supplier.next());
+
+    std::string mol_name;
+    REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+    CHECK(mol_name == mol_names[i]);
+    ++i;
+  }
+
+  CHECK(i == mols_in_file);
+  CHECK(supplier.length() == mols_in_file);
+  CHECK(supplier.atEnd());
+}
+
 #endif

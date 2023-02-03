@@ -426,6 +426,9 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   void reset() override;
   ROMol *next() override;
   bool atEnd() override;
+  void moveTo(unsigned int idx);
+  ROMol *operator[](unsigned int idx);
+  unsigned int length();
 
   void close() override { dp_sInStream.reset(); }
 
@@ -436,11 +439,14 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   void moveToNextBlock();
 
  protected:
-  bool df_sanitize, df_removeHs;
+  bool df_sanitize;
+  bool df_removeHs;
   std::shared_ptr<schrodinger::mae::Reader> d_reader;
   std::shared_ptr<schrodinger::mae::Block> d_next_struct;
   std::shared_ptr<std::istream> dp_sInStream;
   std::string d_stored_exc;
+  unsigned d_position;
+  unsigned d_length;
 };
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 }  // namespace RDKit
