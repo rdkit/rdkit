@@ -11,8 +11,6 @@ it's intended to be shallow, but broad
 import doctest
 import gc
 import gzip
-# Boost functions are NOT found by doctest, this "fixes" them
-#  by adding the doctests to a fake module
 import importlib.util
 import logging
 import os
@@ -28,6 +26,8 @@ import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
 from rdkit.Chem import rdqueries
 
+# Boost functions are NOT found by doctest, this "fixes" them
+#  by adding the doctests to a fake module
 spec = importlib.util.spec_from_loader("TestReplaceCore", loader=None)
 TestReplaceCore = importlib.util.module_from_spec(spec)
 code = """
