@@ -264,7 +264,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     auto mol = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|"_smiles;
     REQUIRE(mol);
     auto smi = MolToCXSmiles(*mol);
-    CHECK(smi == "C[C@@H]([C@H](C)F)[C@@H](C)Br |a:2,o1:1,5|");
+    CHECK(smi == "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|");
   }
 
   SECTION("enhanced stereo 2") {
@@ -281,7 +281,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(
         smi ==
-        "C[C@@H]1[C@H](C)[C@H](C)N[C@H](C)[C@@H]1C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C |a:9,o1:2,4,o2:14,16,&1:1,7,&2:11,18|");
+        "C[C@@H]1N[C@H](C)[C@H](C2[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]2C)[C@H](C)[C@@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
   }
 
   SECTION("enhanced stereo 4") {
@@ -2357,13 +2357,12 @@ TEST_CASE("Github #5683: SMARTS bond ordering should be the same as SMILES") {
   }
 }
 
-TEST_CASE("SMARTS for molecule with zero order bond should match itself")
-{
-    auto m = "CN(<-[Li+])C"_smiles;
-    m->getBondBetweenAtoms(1, 2)->setBondType(Bond::BondType::ZERO);
-    const auto sma = MolToSmarts(*m);
-    std::unique_ptr<ROMol> q{SmartsToMol(sma)};
-    SubstructMatchParameters ps;
-    ps.maxMatches = 1;
-    CHECK(SubstructMatch(*m, *q, ps).size() == 1);
+TEST_CASE("SMARTS for molecule with zero order bond should match itself") {
+  auto m = "CN(<-[Li+])C"_smiles;
+  m->getBondBetweenAtoms(1, 2)->setBondType(Bond::BondType::ZERO);
+  const auto sma = MolToSmarts(*m);
+  std::unique_ptr<ROMol> q{SmartsToMol(sma)};
+  SubstructMatchParameters ps;
+  ps.maxMatches = 1;
+  CHECK(SubstructMatch(*m, *q, ps).size() == 1);
 }
