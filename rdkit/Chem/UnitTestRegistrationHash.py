@@ -276,11 +276,14 @@ M  END
             ),
         )
         for mols_smis in groups:
+            print()
             csmis = set()
             for smi in mols_smis:
                 mol = Chem.MolFromSmiles(smi)
                 csmi, _ = RegistrationHash._CanonicalizeStereoGroups(mol)
-                csmis.add(csmi)
+                if csmi not in csmis:
+                    csmis.add(csmi)
+                    print('>>',smi,csmi)
             self.assertEqual(len(csmis), 1)
 
     def test_enhanced_stereo_canonicalizer_non_matching(self):
@@ -631,11 +634,7 @@ M  END
         """Does stereo group canonicalization mess up isotopes?"""
         mol = Chem.MolFromSmiles('CC[C@H](C)[999C@H](C)O  |o1:2,4|')
         layers = RegistrationHash.GetMolLayers(mol)
-        self.assertEqual(layers[HashLayer.CANONICAL_SMILES], 'CC[C@@H](C)[999C@@H](C)O |o1:2,4|')
-
-        mol = Chem.MolFromSmiles('CC[C@H](C)[1000C@H](C)O  |o1:2,4|')
-        with self.assertRaisesRegex(ValueError, expected_regex=r'does not support isotopes above 999'):
-            layers = RegistrationHash.GetMolLayers(mol)
+        self.assertEqual(layers[HashLayer.CANONICAL_SMILES], 'CC[C@H](C)[999C@H](C)O |o1:2,4|')
 
     def testBadBondDir(self):
         """"""

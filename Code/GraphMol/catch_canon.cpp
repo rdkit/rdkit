@@ -197,12 +197,8 @@ TEST_CASE("enhanced stereo canonicalization") {
       std::unique_ptr<RWMol> mol2{SmilesToMol(smi2)};
       REQUIRE(mol2);
 
-      bool breakTies = true;
-      std::vector<unsigned int> atomRanks;
-      Canon::rankMolAtoms(*mol1, atomRanks, breakTies);
-      Canon::canonicalizeEnhancedStereo(*mol1, atomRanks);
-      Canon::rankMolAtoms(*mol2, atomRanks, breakTies);
-      Canon::canonicalizeEnhancedStereo(*mol2, atomRanks);
+      Canon::canonicalizeEnhancedStereo(*mol1);
+      Canon::canonicalizeEnhancedStereo(*mol2);
 
       CHECK(mol1->getAtomWithIdx(1)->getChiralTag() ==
             mol2->getAtomWithIdx(1)->getChiralTag());
@@ -219,12 +215,8 @@ TEST_CASE("enhanced stereo canonicalization") {
       std::unique_ptr<RWMol> mol2{SmilesToMol(smi2)};
       REQUIRE(mol2);
 
-      bool breakTies = true;
-      std::vector<unsigned int> atomRanks;
-      Canon::rankMolAtoms(*mol1, atomRanks, breakTies);
-      Canon::canonicalizeEnhancedStereo(*mol1, atomRanks);
-      Canon::rankMolAtoms(*mol2, atomRanks, breakTies);
-      Canon::canonicalizeEnhancedStereo(*mol2, atomRanks);
+      Canon::canonicalizeEnhancedStereo(*mol1);
+      Canon::canonicalizeEnhancedStereo(*mol2);
 
       CHECK(mol1->getAtomWithIdx(1)->getChiralTag() !=
             mol2->getAtomWithIdx(1)->getChiralTag());
@@ -244,12 +236,8 @@ TEST_CASE("enhanced stereo canonicalization") {
       std::unique_ptr<RWMol> mol2{SmilesToMol(smi2)};
       REQUIRE(mol2);
 
-      bool breakTies = true;
-      std::vector<unsigned int> atomRanks;
-      Canon::rankMolAtoms(*mol1, atomRanks, breakTies);
-      Canon::canonicalizeEnhancedStereo(*mol1, atomRanks);
-      Canon::rankMolAtoms(*mol2, atomRanks, breakTies);
-      Canon::canonicalizeEnhancedStereo(*mol2, atomRanks);
+      Canon::canonicalizeEnhancedStereo(*mol1);
+      Canon::canonicalizeEnhancedStereo(*mol2);
 
       CHECK(mol1->getAtomWithIdx(1)->getChiralTag() ==
             mol2->getAtomWithIdx(1)->getChiralTag());
@@ -271,12 +259,8 @@ TEST_CASE("enhanced stereo canonicalization") {
       std::unique_ptr<RWMol> mol2{SmilesToMol(smi2)};
       REQUIRE(mol2);
 
-      bool breakTies = true;
-      std::vector<unsigned int> atomRanks;
-      Canon::rankMolAtoms(*mol1, atomRanks, breakTies);
-      Canon::canonicalizeEnhancedStereo(*mol1, atomRanks);
-      Canon::rankMolAtoms(*mol2, atomRanks, breakTies);
-      Canon::canonicalizeEnhancedStereo(*mol2, atomRanks);
+      Canon::canonicalizeEnhancedStereo(*mol1);
+      Canon::canonicalizeEnhancedStereo(*mol2);
 
       CHECK(mol1->getAtomWithIdx(1)->getChiralTag() ==
             mol2->getAtomWithIdx(1)->getChiralTag());
@@ -321,5 +305,46 @@ TEST_CASE("using enhanced stereo in rankMolAtoms") {
       Canon::rankMolAtoms(*mol, atomRanks, breakTies);
       CHECK(atomRanks[1] == atomRanks[3]);
     }
+  }
+  SECTION("more complex, include group membership") {
+    auto m1 =
+        "C[C@@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@H](C)C1 |o1:1,7,o2:5,11|"_smiles;
+    REQUIRE(m1);
+    std::vector<unsigned int> atomRanks;
+    bool breakTies = false;
+    Canon::rankMolAtoms(*m1, atomRanks, breakTies);
+    CHECK(atomRanks[11] > atomRanks[1]);
+
+    auto m2 =
+        "C[C@H](O)[C@H](C)CC1C[C@H](C)C[C@@H](C)C1 |o1:1,8;o2:3,11|"_smiles;
+    REQUIRE(m2);
+    Canon::rankMolAtoms(*m2, atomRanks, breakTies);
+    CHECK(atomRanks[11] > atomRanks[8]);
+  }
+}
+
+TEST_CASE("more enhanced stereo canonicalization") {
+  // FIX: add tests for ring stereo in an s group
+  SECTION("case 1") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)F |a:3,&1:1,7,&2:5,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)F |a:3,&1:1,7,&2:5,r|"_smiles;
+    REQUIRE(m2);
+    Canon::canonicalizeEnhancedStereo(*m1);
+    Canon::canonicalizeEnhancedStereo(*m2);
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+  SECTION("case 2") {
+    auto m1 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,o1:7,&2:1,r|"_smiles;
+    REQUIRE(m1);
+    auto m2 =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
+    REQUIRE(m2);
+    Canon::canonicalizeEnhancedStereo(*m1);
+    Canon::canonicalizeEnhancedStereo(*m2);
+
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
   }
 }

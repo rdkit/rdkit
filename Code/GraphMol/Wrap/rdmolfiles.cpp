@@ -18,6 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/Canon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
@@ -655,6 +656,10 @@ python::dict MetadataFromPNGString(python::object png) {
   std::string cstr = python::extract<std::string>(png);
   auto metadata = PNGStringToMetadata(cstr);
   return translateMetadata(metadata);
+}
+
+void CanonicalizeEnhancedStereo(ROMol &mol) {
+  Canon::canonicalizeEnhancedStereo(mol);
 }
 
 }  // namespace RDKit
@@ -1907,6 +1912,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
        python::arg("breakTies") = true, python::arg("includeChirality") = true,
        python::arg("includeIsotopes") = true),
       docString.c_str());
+
+  python::def("CanonicalizeEnhancedStereo", CanonicalizeEnhancedStereo,
+              (python::arg("mol")));
 
   python::def(
       "CreateAtomIntPropertyList", FileParserUtils::createAtomIntPropertyList,

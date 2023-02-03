@@ -104,7 +104,7 @@ struct RDKIT_GRAPHMOL_EXPORT canon_atom {
   unsigned int totalNumHs{0};
   bool hasRingNbr{false};
   bool isRingStereoAtom{false};
-  bool inStereoGroup{false};
+  unsigned int whichStereoGroup{0};
   StereoGroupType typeOfStereoGroup{StereoGroupType::STEREO_ABSOLUTE};
   int *nbrIds{nullptr};
   const std::string *p_symbol{
@@ -382,45 +382,66 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     }
     // chirality if we're using it
     if (df_useChirality) {
-      // first atom stereochem:
-      ivi = 0;
-      ivj = 0;
-      // can't actually use values here, because they are arbitrary
-      ivi = dp_atoms[i].atom->getChiralTag() != 0;
-      ivj = dp_atoms[j].atom->getChiralTag() != 0;
-      if (ivi < ivj) {
-        return -1;
-      } else if (ivi > ivj) {
-        return 1;
-      }
-      // stereo set
-      if (ivi && ivj) {
-        if (ivi) {
-          ivi = getChiralRank(dp_mol, dp_atoms, i);
-        }
-        if (ivj) {
-          ivj = getChiralRank(dp_mol, dp_atoms, j);
-        }
-        if (ivi < ivj) {
-          return -1;
-        } else if (ivi > ivj) {
-          return 1;
-        }
-      }
       // look at enhanced stereo
-      ivi = dp_atoms[i].inStereoGroup;
-      ivj = dp_atoms[j].inStereoGroup;
-      if (ivi && !ivj) {
-        return 1;
-      } else if (ivj && !ivi) {
-        return -1;
-      } else if (ivi && ivj) {
-        ivi = static_cast<unsigned int>(dp_atoms[i].typeOfStereoGroup);
-        ivj = static_cast<unsigned int>(dp_atoms[j].typeOfStereoGroup);
+      ivi = dp_atoms[i].whichStereoGroup;  // can't use the index itself, but if
+                                           // it's set then we're in an SG
+      ivj = dp_atoms[j].whichStereoGroup;
+      if (ivi || ivj) {
+        if (ivi && !ivj) {
+          return 1;
+        } else if (ivj && !ivi) {
+          return -1;
+        } else if (ivi && ivj) {
+          ivi = static_cast<unsigned int>(dp_atoms[i].typeOfStereoGroup);
+          ivj = static_cast<unsigned int>(dp_atoms[j].typeOfStereoGroup);
+          if (ivi < ivj) {
+            return -1;
+          } else if (ivi > ivj) {
+            return 1;
+          }
+          ivi = dp_atoms[i].whichStereoGroup - 1;
+          ivj = dp_atoms[j].whichStereoGroup - 1;
+          // now check the current classes of the other members of the SG
+          std::set<unsigned int> sgi;
+          for (auto sgat : dp_mol->getStereoGroups()[ivi].getAtoms()) {
+            sgi.insert(dp_atoms[sgat->getIdx()].index);
+          }
+          std::set<unsigned int> sgj;
+          for (auto sgat : dp_mol->getStereoGroups()[ivj].getAtoms()) {
+            sgj.insert(dp_atoms[sgat->getIdx()].index);
+          }
+          if (sgi < sgj) {
+            return -1;
+          } else if (sgi > sgj) {
+            return 1;
+          }
+        }
+      } else {
+        // if there's no stereogroup, then use whatever atom stereochem is
+        // specfied:
+        ivi = 0;
+        ivj = 0;
+        // can't actually use values here, because they are arbitrary
+        ivi = dp_atoms[i].atom->getChiralTag() != 0;
+        ivj = dp_atoms[j].atom->getChiralTag() != 0;
         if (ivi < ivj) {
           return -1;
         } else if (ivi > ivj) {
           return 1;
+        }
+        // stereo set
+        if (ivi && ivj) {
+          if (ivi) {
+            ivi = getChiralRank(dp_mol, dp_atoms, i);
+          }
+          if (ivj) {
+            ivj = getChiralRank(dp_mol, dp_atoms, j);
+          }
+          if (ivi < ivj) {
+            return -1;
+          } else if (ivi > ivj) {
+            return 1;
+          }
         }
       }
     }

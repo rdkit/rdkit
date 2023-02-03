@@ -127,6 +127,8 @@ def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[
   mol = _RemoveUnnecessaryHs(original_molecule, preserve_stereogenic_hs=True)
   _StripAtomMapLabels(mol)
 
+  Chem.CanonicalizeEnhancedStereo(mol)
+
   formula = rdMolHash.MolHash(mol, rdMolHash.HashFunction.MolFormula)
   cxsmiles, canonical_mol = _CanonicalizeStereoGroups(mol)
   tautomer_hash = GetStereoTautomerHash(canonical_mol)
@@ -437,8 +439,9 @@ def _CanonicalizeStereoGroups(mol):
     compare the CXSMILES of those.
     """
 
-  if not len(mol.GetStereoGroups()):
-    return Chem.MolToCXSmiles(mol), mol
+  # if not len(mol.GetStereoGroups()):
+  Chem.CanonicalizeEnhancedStereo(mol)
+  return Chem.MolToCXSmiles(mol), mol
 
   mol = Chem.Mol(mol)
 
