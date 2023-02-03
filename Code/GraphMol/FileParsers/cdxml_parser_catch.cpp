@@ -411,9 +411,9 @@ TEST_CASE("CDXML") {
   SECTION("Enhanced Stereo") {
     auto fname = cdxmlbase + "beta-cypermethrin.cdxml";
     std::vector<std::string> expected = {
-        "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
+        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
-        "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1 |&1:3,&2:8,12|"};
+        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |&1:3,&2:8,12|"};
     auto mols = CDXMLFileToMols(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -426,9 +426,9 @@ TEST_CASE("CDXML") {
   SECTION("Enhanced Stereo 2") {
     auto fname = cdxmlbase + "beta-cypermethrin-or-abs.cdxml";
     std::vector<std::string> expected = {
-        "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
+        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
-        "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1 |o1:8,12|"};
+        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |o1:8,12|"};
     auto mols = CDXMLFileToMols(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
@@ -704,44 +704,40 @@ TEST_CASE("CDXML") {
     {
       auto fname = cdxmlbase + "stereo.cdxml";
       std::vector<std::string> expected = {
-        "C[C@@H](Cl)[C@H](N)O.C[C@@H](F)[C@H](N)O.C[C@H](Br)[C@@H](N)O.C[C@H](I)[C@@H](N)O"};
+          "C[C@@H](Cl)[C@H](N)O.C[C@@H](F)[C@H](N)O.C[C@H](Br)[C@@H](N)O.C[C@H](I)[C@@H](N)O"};
       auto mols = CDXMLFileToMols(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
-	CHECK(MolToSmiles(*mol) == expected[i++]);
+        CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
     {
       auto fname = cdxmlbase + "wavy.cdxml";
-      std::vector<std::string> expected = {
-        "Cc1cccc(C)c1NC(=O)N=C1CCCN1C",
-        "Cc1cccc(C)c1NC(=O)/N=C1\\CCCN1C"
-      };
+      std::vector<std::string> expected = {"Cc1cccc(C)c1NC(=O)N=C1CCCN1C",
+                                           "Cc1cccc(C)c1NC(=O)/N=C1\\CCCN1C"};
       auto mols = CDXMLFileToMols(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
-          if (i == 0) {
-              CHECK(mol->getBondWithIdx(11)->getBondDir() == Bond::BondDir::EITHERDOUBLE);
-          }
-          CHECK(MolToSmiles(*mol) == expected[i++]);
-          
+        if (i == 0) {
+          CHECK(mol->getBondWithIdx(11)->getBondDir() ==
+                Bond::BondDir::EITHERDOUBLE);
+        }
+        CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
     {
       auto fname = cdxmlbase + "wavy-single.cdxml";
-      std::vector<std::string> expected = {
-          "CCCC"
-      };
+      std::vector<std::string> expected = {"CCCC"};
       auto mols = CDXMLFileToMols(fname);
       CHECK(mols.size() == expected.size());
       int i = 0;
       for (auto &mol : mols) {
-          CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
-          CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
-          CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
-          CHECK(MolToSmiles(*mol) == expected[i++]);
+        CHECK(mol->getBondWithIdx(0)->getBondDir() == Bond::BondDir::NONE);
+        CHECK(mol->getBondWithIdx(1)->getBondDir() == Bond::BondDir::NONE);
+        CHECK(mol->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
+        CHECK(MolToSmiles(*mol) == expected[i++]);
       }
     }
   }

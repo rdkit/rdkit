@@ -264,7 +264,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     auto mol = "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|"_smiles;
     REQUIRE(mol);
     auto smi = MolToCXSmiles(*mol);
-    CHECK(smi == "C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|");
+    CHECK(smi == "C[C@H](F)[C@@H](C)[C@H](C)Br |a:1,o1:3,5|");
   }
 
   SECTION("enhanced stereo 2") {
@@ -281,7 +281,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     auto smi = MolToCXSmiles(*mol);
     CHECK(
         smi ==
-        "C[C@@H]1N[C@H](C)[C@H](C2[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]2C)[C@H](C)[C@@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
+        "C[C@H]1N[C@H](C)[C@H](C2[C@H](C)O[C@H](C)[C@H](C)[C@@H]2C)[C@H](C)[C@H]1C |a:5,o1:1,18,o2:10,12,&1:3,16,&2:7,14|");
   }
 
   SECTION("enhanced stereo 4") {

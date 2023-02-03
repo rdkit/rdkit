@@ -241,7 +241,7 @@ TEST_CASE("MolHash with CX extensions", "[molhash]") {
       auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer);
       CHECK(
           hsh ==
-          "C[C@@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@H](C)[C@@H](C)[O]_3_0");
+          "C[C@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@@H](C)[C@H](C)[O]_3_0");
     }
     {
       RWMol cp(*mol);
@@ -250,7 +250,7 @@ TEST_CASE("MolHash with CX extensions", "[molhash]") {
           MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer, true);
       CHECK(
           hsh ==
-          "C[C@@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@H](C)[C@@H](C)[O]_3_0 |o1:1,&1:14,16|");
+          "C[C@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@@H](C)[C@H](C)[O]_3_0 |o1:1,&1:14,16|");
     }
   }
   SECTION("no coordinates please") {
