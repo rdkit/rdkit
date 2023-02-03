@@ -14,9 +14,19 @@
 
 #include <RDGeneral/types.h>
 
-#include <string>
 #include <iostream>
+#include <memory>
+#include <string>
+
 #include <GraphMol/ROMol.h>
+
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+namespace schrodinger {
+namespace mae {
+class Writer;
+}  // namespace mae
+}  // namespace schrodinger
+#endif  // RDK_BUILD_MAEPARSER_SUPPORT
 
 namespace RDKit {
 
@@ -128,7 +138,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesWriter : public MolWriter {
 class RDKIT_FILEPARSERS_EXPORT SDWriter : public MolWriter {
   /**************************************************************************************
    * A SD file ( or stream) writer - this is how it is used
-   *  - create a SDMolWriter with a output file name (or a ostream),
+   *  - create a SDWriter with a output file name (or a ostream),
    *     and a list of properties that need to be written out
    *  - then a call is made to the write function for each molecule that needs
    *to be written out
@@ -333,6 +343,58 @@ class RDKIT_FILEPARSERS_EXPORT PDBWriter : public MolWriter {
   unsigned int d_count;
   bool df_owner;
 };
+
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+
+class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
+  /**************************************************************************************
+   * A Maestro file (or stream) writer - this is how it is used
+   *  - create a MaeWriter with a output file name (or a ostream),
+   *     and a list of properties that need to be written out.
+   *  - then a call is made to the write function for each molecule
+   *     that needs to be written out.
+   *  - kekulization is mandatory, as the Maestro format does not
+   *     have the concept of an aromatic bond.
+   *  - Ownership of the output stream is mandatory, since it needs
+   *     to be managed though a shared_ptr, as this is what maeparser
+   *     uses to manage the writing.
+   **********************************************************************************************/
+ public:
+  /*!
+    \param fileName       : filename to write to (stdout is *not* supported)
+   */
+  MaeWriter(const std::string &fileName);
+
+  MaeWriter(std::ostream *outStream);
+
+  MaeWriter(std::shared_ptr<std::ostream> outStream);
+
+  ~MaeWriter() override = default;
+
+  //! \brief set a vector of property names that are need to be
+  //! written out for each molecule
+  void setProps(const STR_VECT &propNames) override;
+
+  //! \brief write a new molecule to the file
+  void write(const ROMol &mol, int confId = defaultConfId) override;
+
+  //! \brief flush the ostream
+  void flush() override;
+  //! \brief close our stream (the writer cannot be used again)
+  void close();
+
+  //! \brief get the number of molecules written so far
+  unsigned int numMols() const override { return d_molid; }
+
+ private:
+  std::shared_ptr<schrodinger::mae::Writer> dp_writer = nullptr;
+  std::shared_ptr<std::ostream> dp_ostream = nullptr;
+  unsigned d_molid = 0;  // the number of the molecules we wrote so far
+  STR_VECT d_props;      // list of property name that need to be written out
+};
+
+#endif  // RDK_BUILD_MAEPARSER_SUPPORT
+
 }  // namespace RDKit
 
 #endif
