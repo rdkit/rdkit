@@ -5635,4 +5635,33 @@ TEST_CASE("MaeMolSupplier length", "[MaeMolSupplier]") {
   CHECK(supplier.atEnd());
 }
 
+TEST_CASE("MaeMolSupplier and operator[]", "[MaeMolSupplier]") {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname1 =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+
+  std::vector<std::string> mol_names = {
+      "48",  "78",  "128", "163", "164", "170", "180", "186",
+      "192", "203", "210", "211", "213", "220", "229", "256"};
+  auto mols_in_file = mol_names.size();
+
+  MaeMolSupplier supplier(fname1);
+
+  std::string mol_name;
+  std::unique_ptr<ROMol> mol;
+  for (unsigned i = 0; i < mols_in_file; ++i) {
+    mol.reset(supplier[i]);
+    REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+    CHECK(mol_name == mol_names[i]);
+
+    auto j = mols_in_file - (i + 1);
+    mol.reset(supplier[j]);
+    REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
+    CHECK(mol_name == mol_names[j]);
+  }
+
+  CHECK_THROWS_AS(supplier[mols_in_file], FileParseException);
+  CHECK_THROWS_AS(supplier[-1], FileParseException);
+}
+
 #endif

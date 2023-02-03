@@ -113,9 +113,13 @@ struct maemolsup_wrap {
         .def("__enter__", &MolIOEnter<LocalMaeMolSupplier>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<LocalMaeMolSupplier>)
+        .def("__iter__", &FwdMolSupplIter,
+             python::return_internal_reference<1>())
         .def("__next__", &MolSupplNext<LocalMaeMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
+             python::return_value_policy<python::manage_new_object>())
+        .def("__getitem__", &MolSupplGetItem<LocalMaeMolSupplier>,
              python::return_value_policy<python::manage_new_object>())
         .def("reset", &MaeMolSupplier::reset,
              "Resets our position in the file to the beginning.\n")
@@ -124,9 +128,7 @@ struct maemolsup_wrap {
              (python::arg("data"), python::arg("sanitize") = true,
               python::arg("removeHs") = true))
         .def("atEnd", &MaeMolSupplier::atEnd,
-             "Returns whether or not we have hit EOF.\n")
-        .def("__iter__", &FwdMolSupplIter,
-             python::return_internal_reference<1>());
+             "Returns whether or not we have hit EOF.\n");
   };
 };
 }  // namespace RDKit

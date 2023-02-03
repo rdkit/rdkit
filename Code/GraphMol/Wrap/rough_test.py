@@ -2933,7 +2933,7 @@ CAS<~>
 
     for i, mol in enumerate(suppl):
       self.assertTrue(mol)
-      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+      self.assertEqual(mol.GetProp("_Name"), molNames[i])
 
     self.assertEqual(i, 15)
 
@@ -2944,9 +2944,30 @@ CAS<~>
 
     for i, mol in enumerate(suppl):
       self.assertTrue(mol)
-      self.assertTrue(mol.GetProp("_Name") == molNames[i])
+      self.assertEqual(mol.GetProp("_Name"), molNames[i])
 
     self.assertEqual(i, 15)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeMolSupplier'), "not build with MAEParser support")
+  def testMaeFileSupplierGetItem(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.mae')
+    molNames = [
+      "48", "78", "128", "163", "164", "170", "180", "186", "192", "203", "210", "211", "213",
+      "220", "229", "256"
+    ]
+    with Chem.MaeMolSupplier(fileN) as suppl:
+      num_mols = len(suppl)
+      self.assertEqual(num_mols, 16)
+
+      for i in range(num_mols):
+        self.assertEqual(suppl[i].GetProp("_Name"), molNames[i])
+
+        j = -(i + 1)
+        self.assertEqual(suppl[j].GetProp("_Name"), molNames[j])
+
+      for i in (num_mols, 2 * num_mols, -(num_mols + 1), -2 * (num_mols + 1)):
+        self.assertRaises(IndexError, lambda: suppl[i])
 
   def test66StreamSupplierIter(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',

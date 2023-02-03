@@ -382,6 +382,13 @@ void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
   MolOps::assignStereochemistry(mol, replaceExistingTags);
 }
 
+void throw_idx_error(unsigned idx) {
+  std::ostringstream errout;
+  errout << "ERROR: Index error (idx = " << idx << ") : "
+         << " we do no have enough ct blocks";
+  throw FileParseException(errout.str());
+}
+
 }  // namespace
 
 MaeMolSupplier::MaeMolSupplier(std::shared_ptr<std::istream> inStream,
@@ -521,6 +528,32 @@ unsigned int MaeMolSupplier::length() {
   }
 
   return d_length;
+}
+
+void MaeMolSupplier::moveTo(unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+
+  if (d_length > 0 && idx > d_length) {
+    throw_idx_error(idx);
+  }
+
+  if (idx < d_position) {
+    reset();
+  }
+
+  while (idx > d_position) {
+    moveToNextBlock();
+
+    if (atEnd()) {
+      throw_idx_error(idx);
+    }
+  }
+}
+
+ROMol *MaeMolSupplier::operator[](unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+  moveTo(idx);
+  return next();
 }
 
 }  // namespace RDKit
