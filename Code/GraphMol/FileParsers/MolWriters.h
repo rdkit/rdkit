@@ -386,7 +386,11 @@ class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
   //! \brief get the number of molecules written so far
   unsigned int numMols() const override { return d_molid; }
 
- private:
+ protected:
+  MaeWriter() = default;  // used in the Python wrapper
+
+  void open();
+
   std::shared_ptr<schrodinger::mae::Writer> dp_writer = nullptr;
   std::shared_ptr<std::ostream> dp_ostream = nullptr;
   unsigned d_molid = 0;  // the number of the molecules we wrote so far
