@@ -2028,8 +2028,10 @@ Use cases
 
 The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation and depiction are future goals.
 
-It is possible to enumerate the elements of a ``StereoGroup`` using the function :py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`, which also
-preserves membership in the original ``StereoGroup``.
+It is possible to enumerate the elements of a ``StereoGroup`` using the function
+:py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`. Note that
+this removes the ``StereoGroup`` information from the products since they now
+correspond to specific molecules:
 
 .. doctest ::
 
@@ -2040,7 +2042,7 @@ preserves membership in the original ``StereoGroup``.
   [1]
   >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
   >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
-  ['C[C@@H](F)C[C@H](O)Cl |&1:1|', 'C[C@H](F)C[C@H](O)Cl |&1:1|']
+  ['C[C@@H](F)C[C@H](O)Cl', 'C[C@H](F)C[C@H](O)Cl']
 
 Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
 
