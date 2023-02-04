@@ -161,7 +161,7 @@ def ScoreMolecules(suppl, catalog, maxPts=-1, actName='', acts=None, nActs=2, re
 
     """
     nBits = catalog.GetFPLength()
-    resTbl = numpy.zeros((nBits, 2, nActs), numpy.int)
+    resTbl = numpy.zeros((nBits, 2, nActs), numpy.int32)
     obls = []
 
     if not actName and not acts:
@@ -225,7 +225,7 @@ def ScoreFromLists(bitLists, suppl, catalog, maxPts=-1, actName='', acts=None, n
         nPts = maxPts
     else:
         nPts = len(bitLists)
-    resTbl = numpy.zeros((nBits, 2, nActs), numpy.int)
+    resTbl = numpy.zeros((nBits, 2, nActs), numpy.int32)
     if not actName and not acts:
         actName = suppl[0].GetPropNames()[-1]
     suppl.reset()

@@ -22,6 +22,7 @@ using namespace std;
 using namespace RDKit;
 namespace RDKit {
 class RWMol;
+
 class ROMol;
 
 namespace MolStandardize {

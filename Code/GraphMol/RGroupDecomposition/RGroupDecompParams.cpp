@@ -8,7 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "RGroupDecomp.h"
+#include "RGroupDecompParams.h"
 #include "RGroupUtils.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>

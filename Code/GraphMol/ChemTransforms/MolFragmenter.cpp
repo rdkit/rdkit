@@ -14,6 +14,7 @@
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/RDKitBase.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/tokenizer.hpp>
@@ -534,14 +535,15 @@ ROMol *fragmentOnBonds(
         conf->setAtomPos(idx2, conf->getAtomPos(eidx));
       }
     } else {
-      // was github issue 429
-      Atom *tatom = res->getAtomWithIdx(bidx);
-      if (tatom->getIsAromatic() && tatom->getAtomicNum() != 6) {
-        tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
-      }
-      tatom = res->getAtomWithIdx(eidx);
-      if (tatom->getIsAromatic() && tatom->getAtomicNum() != 6) {
-        tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
+      // was github issues 429, 6034
+      for (auto idx : {bidx, eidx}) {
+        if (auto tatom = res->getAtomWithIdx(idx);
+            tatom->getNoImplicit() ||
+            (tatom->getIsAromatic() && tatom->getAtomicNum() != 6)) {
+          tatom->setNumExplicitHs(tatom->getNumExplicitHs() + 1);
+        } else {
+          tatom->updatePropertyCache(false);
+        }
       }
     }
   }
@@ -920,8 +922,14 @@ struct ZipBond {
 };
 }  // namespace
 
-std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
-                              const MolzipParams &params) {
+static const std::string indexPropName("__zipIndex");
+
+std::unique_ptr<ROMol> molzip(
+    const ROMol &a, const ROMol &b, const MolzipParams &params,
+    std::optional<std::map<int, int>> &attachmentMapping) {
+  if (attachmentMapping) {
+    attachmentMapping->clear();
+  }
   std::unique_ptr<RWMol> newmol;
   if (b.getNumAtoms()) {
     newmol.reset(static_cast<RWMol *>(combineMols(a, b)));
@@ -958,6 +966,13 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
         }
         mappings_by_atom[atom].push_back(&bond);
         deletions.push_back(atom);
+        if (attachmentMapping) {
+          if (int otherIndex, dummyIndex;
+              atom->getPropIfPresent(indexPropName, dummyIndex) &&
+              bond.b->getPropIfPresent(indexPropName, otherIndex)) {
+            (*attachmentMapping)[dummyIndex] = otherIndex;
+          }
+        }
       }
     }
   } else {
@@ -986,6 +1001,18 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
           bond.b = attached_atom;
           bond.b_dummy = atom;
           mappings_by_atom[bond.a].push_back(&bond);
+          if (attachmentMapping) {
+            if (int otherIndex, dummyIndex;
+                bond.a_dummy->getPropIfPresent(indexPropName, dummyIndex) &&
+                bond.b->getPropIfPresent(indexPropName, otherIndex)) {
+              (*attachmentMapping)[dummyIndex] = otherIndex;
+            }
+            if (int otherIndex, dummyIndex;
+                bond.b_dummy->getPropIfPresent(indexPropName, dummyIndex) &&
+                bond.a->getPropIfPresent(indexPropName, otherIndex)) {
+              (*attachmentMapping)[dummyIndex] = otherIndex;
+            }
+          }
         }
         deletions.push_back(atom);
       }
@@ -1013,6 +1040,7 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
       bond->restore_chirality(already_checked);
     }
   }
+
   // remove all molzip tags
   for (auto *atom : newmol->atoms()) {
     auto propnames = atom->getPropList();
@@ -1035,8 +1063,75 @@ std::unique_ptr<ROMol> molzip(const ROMol &a, const ROMol &b,
   return newmol;
 }
 
+RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
+    const ROMol &a, const ROMol &b, const MolzipParams &params) {
+  std::optional<std::map<int, int>> opt(std::nullopt);
+  return molzip(a, b, params, opt);
+}
+
 std::unique_ptr<ROMol> molzip(const ROMol &a, const MolzipParams &params) {
   const static ROMol b;
   return molzip(a, b, params);
 }
+
+std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
+                              const MolzipParams &params) {
+  if (params.generateCoordinates) {
+    int index = 0;
+    for (const auto &mol : decomposition) {
+      for (const auto atom : mol->atoms()) {
+        atom->setProp(indexPropName, index++);
+      }
+    }
+  }
+
+  const auto combinedMol = std::accumulate(
+      decomposition.begin() + 1, decomposition.end(), decomposition[0],
+      [](const auto &combined, const auto &mol) {
+        auto c = combineMols(*combined, *mol);
+        ROMOL_SPTR ptr(c);
+        return ptr;
+      });
+
+  const static ROMol b;
+  std::optional attachmentMappingOption = std::map<int, int>();
+  auto zippedMol = molzip(*combinedMol, b, params, attachmentMappingOption);
+
+  if (params.generateCoordinates && zippedMol->getNumAtoms() > 0) {
+    const auto confId = RDDepict::compute2DCoords(*zippedMol);
+    const auto zippedConf = zippedMol->getConformer(confId);
+    auto attachmentMapping = *attachmentMappingOption;
+    for (auto &mol : decomposition) {
+      const auto newConf = new Conformer(mol->getNumAtoms());
+      newConf->set3D(false);
+      for (const auto atom : mol->atoms()) {
+        int zippedIndex = atom->getProp<int>(indexPropName);
+        atom->clearProp(indexPropName);
+        if (const auto attachment = attachmentMapping.find(zippedIndex);
+            attachment != attachmentMapping.end()) {
+          zippedIndex = (*attachment).second;
+        }
+        auto zipppedAtoms = zippedMol->atoms();
+        auto zippedAtom = std::find_if(
+            zipppedAtoms.begin(), zipppedAtoms.end(),
+            [zippedIndex](const Atom *zippedAtom) {
+              const auto index = zippedAtom->getProp<int>(indexPropName);
+              return index == zippedIndex;
+            });
+
+        newConf->setAtomPos(atom->getIdx(),
+                            zippedConf.getAtomPos((*zippedAtom)->getIdx()));
+      }
+      mol->addConformer(newConf, true);
+    }
+    for (const auto atom : zippedMol->atoms()) {
+      atom->clearProp(indexPropName);
+    }
+
+    return zippedMol;
+  }
+
+  return zippedMol;
+}
+
 }  // end of namespace RDKit

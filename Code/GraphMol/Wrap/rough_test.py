@@ -16,6 +16,7 @@ import os
 import sys
 import tempfile
 import unittest
+import pickle
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from io import StringIO
@@ -6933,6 +6934,15 @@ CAS<~>
     self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
 
     Chem.SetUseLegacyStereoPerception(origVal)
+
+  def test_picklingWithAddedAttribs(self):
+    m = Chem.MolFromSmiles("C")
+    m.foo = 1
+    m.SetIntProp("bar",2)
+    pkl = pickle.dumps(m)
+    nm = pickle.loads(pkl)
+    self.assertEqual(nm.GetIntProp("bar"), 2)
+    self.assertEqual(nm.foo, 1)
 
 
 if __name__ == '__main__':

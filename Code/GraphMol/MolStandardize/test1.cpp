@@ -116,6 +116,13 @@ void testMetalDisconnector() {
 
   MolStandardize::MetalDisconnector md;
   unsigned int failedOp;
+  {
+    auto m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
+    MolOps::sanitizeMol(*m, failedOp, MolOps::SANITIZE_CLEANUP);
+    TEST_ASSERT(m);
+    md.disconnect(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
+  }
 
   // testing overloaded function
   {
@@ -195,6 +202,14 @@ void testMetalDisconnector() {
     TEST_ASSERT(m);
     md.disconnect(*m);
     TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].[Na+]");
+  }
+  // make sure that -1 as a valence is dealt with (Github 5997)
+  {
+    RWMOL_SPTR m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
+    MolOps::sanitizeMol(*m, failedOp, MolOps::SANITIZE_CLEANUP);
+    TEST_ASSERT(m);
+    md.disconnect(*m);
+    TEST_ASSERT(MolToSmiles(*m) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
   }
 
   // test that badly specified dative bonds are perceived as such
@@ -1446,7 +1461,7 @@ Positively charged tetravalent B	[B;v4;+1:1]>>[*;-1:1])DATA";
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
 
-void testSyngenta() {
+void testOrganometallics() {
   BOOST_LOG(rdDebugLog)
       << "-----------------------\n test organometallic disconnections"
       << std::endl;
@@ -1536,6 +1551,6 @@ int main() {
   testCharge();
   testMetalDisconnectorLigandExpo();
   testEnumerateTautomerSmiles();
-  testSyngenta();
+  testOrganometallics();
   return 0;
 }

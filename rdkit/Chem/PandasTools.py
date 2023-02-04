@@ -511,7 +511,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=N
   import xlsxwriter  # don't want to make this a RDKit dependency
 
   cols = list(frame.columns)
-  if isinstance(molCol, Chem.Mol):
+  if isinstance(molCol, str):
     molCol = [molCol]
   molCol = list(set(molCol))
   dataTypes = dict(frame.dtypes)

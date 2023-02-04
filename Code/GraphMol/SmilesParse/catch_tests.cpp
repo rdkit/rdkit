@@ -1728,7 +1728,7 @@ M  END)CTAB"_ctab;
 TEST_CASE("Github #4582 continued: double bonds and ring closures") {
   SECTION("basics") {
     auto mol = R"CTAB(
-  Mrv2108 10072106112D          
+  Mrv2108 10072106112D
 
  11 11  0  0  0  0            999 V2000
     1.2097   -1.0517    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1958,7 +1958,7 @@ TEST_CASE("empty atom label block", "[cxsmiles]") {
   SECTION("basics") {
     auto m = R"CTAB(
   MJ201100
-                        
+
   8  8  0  0  0  0  0  0  0  0999 V2000
    -1.0491    1.5839    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
    -1.7635    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2113,6 +2113,27 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     CHECK(bondcfg == 3);
     CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    invertMolBlockWedgingInfo(*m);
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 1);
+    reapplyMolBlockWedging(*m);
+    MolOps::assignChiralTypesFromBondDirs(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+    invertMolBlockWedgingInfo(*m);
+    CHECK(m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 3);
+    reapplyMolBlockWedging(*m);
+    MolOps::assignChiralTypesFromBondDirs(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    clearMolBlockWedgingInfo(*m);
+    m->getAtomWithIdx(1)->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(!m->getBondWithIdx(0)->getPropIfPresent("_MolFileBondCfg", bondcfg));
+    reapplyMolBlockWedging(*m);
+    MolOps::assignChiralTypesFromBondDirs(*m);
+    CHECK(m->getAtomWithIdx(1)->getChiralTag() ==
+          Atom::ChiralType::CHI_UNSPECIFIED);
   }
 
   SECTION("writing examples") {
@@ -2134,7 +2155,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
 
   SECTION("writing wedges and dashes") {
     auto m = R"CTAB(
-  RDKit             2D          
+  RDKit             2D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2179,7 +2200,7 @@ M  END
 
   SECTION("double bond stereo") {
     auto m_from_ctab = R"CTAB(
-  Mrv2211 09152216122D          
+  Mrv2211 09152216122D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2334,4 +2355,15 @@ TEST_CASE("Github #5683: SMARTS bond ordering should be the same as SMILES") {
     auto sma = "O=C(C=CCC1CCCCC1)N1N=Cc2ccccc2C1c1ccccc1 |w:3.1|";
     CHECK_THROWS_AS(SmartsToMol(sma), SmilesParseException);
   }
+}
+
+TEST_CASE("SMARTS for molecule with zero order bond should match itself")
+{
+    auto m = "CN(<-[Li+])C"_smiles;
+    m->getBondBetweenAtoms(1, 2)->setBondType(Bond::BondType::ZERO);
+    const auto sma = MolToSmarts(*m);
+    std::unique_ptr<ROMol> q{SmartsToMol(sma)};
+    SubstructMatchParameters ps;
+    ps.maxMatches = 1;
+    CHECK(SubstructMatch(*m, *q, ps).size() == 1);
 }

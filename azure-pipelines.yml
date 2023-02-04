@@ -16,6 +16,18 @@ jobs:
     python_name: python38
   steps:
   - template: .azure-pipelines/linux_build.yml
+- job: Ubuntu_x64_py311
+  timeoutInMinutes: 90
+  pool:
+    vmImage: ubuntu-20.04
+  variables:
+    python: python=3.11
+    boost_version: 1.80.0
+    compiler: gxx_linux-64
+    number_of_cores: nproc
+    python_name: python311
+  steps:
+  - template: .azure-pipelines/linux_build_py311.yml
 - job: macOS_x64
   timeoutInMinutes: 90
   pool:

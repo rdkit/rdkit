@@ -23,7 +23,7 @@ namespace python = boost::python;
 using namespace RDKit;
 
 namespace RDGeom {
-struct ug3d_pickle_suite : python::pickle_suite {
+struct ug3d_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const UniformGrid3D &self) {
     std::string res = self.toString();
     python::object retval = python::object(

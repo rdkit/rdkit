@@ -932,6 +932,14 @@ ROMol *molzip_new(const ROMol &a, const MolzipParams &p) {
   return molzip(a, p).release();
 }
 
+ROMol *molzipHelper(python::object &pmols, const MolzipParams &p) {
+  auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
+  if (mols == nullptr || mols->empty()) {
+    return nullptr;
+  }
+  return molzip(*mols, p).release();
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -2541,6 +2549,9 @@ EXAMPLES:\n\n\
                        &MolzipParams::enforceValenceRules,
                        "If true (default) enforce valences after zipping\n\
 Setting this to false allows assembling chemically incorrect fragments.")
+        .def_readwrite("generateCoordinates", &MolzipParams::generateCoordinates,
+                       "If true will add depiction coordinates to input molecules and\n\
+zipped molecule (for molzipFragments only)")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
              "Set the atom symbols used to zip mols together when using "
              "AtomType labeling");
@@ -2582,6 +2593,15 @@ The atoms to zip can be specified with the MolzipParams class.\n\
         (ROMol * (*)(const ROMol &, const MolzipParams &)) & molzip_new,
         (python::arg("a"), python::arg("params") = MolzipParams()),
         "zip together two molecules using the given matching parameters",
+        python::return_value_policy<python::manage_new_object>());
+
+    python::def(
+        "molzipFragments",
+        (ROMol * (*)(python::object &, const MolzipParams &)) & molzipHelper,
+        (python::arg("mols"), python::arg("params") = MolzipParams()),
+        "zip together multiple molecules from an R group decomposition \n\
+using the given matching parameters.  The first molecule in the list\n\
+must be the core",
         python::return_value_policy<python::manage_new_object>());
 
     // ------------------------------------------------------------------------

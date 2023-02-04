@@ -426,7 +426,7 @@ python::object SubstructLibrary_Serialize(const SubstructLibraryWrap &cat) {
   return retval;
 }
 
-struct substructlibrary_pickle_suite : python::pickle_suite {
+struct substructlibrary_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const SubstructLibraryWrap &self) {
     std::string res;
     if (!SubstructLibraryCanSerialize()) {

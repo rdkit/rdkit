@@ -48,7 +48,7 @@ ScaffoldNetwork::ScaffoldNetworkParams *getBRICSParams() {
 }  // namespace
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-struct scaffoldnetwork_pickle_suite : python::pickle_suite {
+struct scaffoldnetwork_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(
       const RDKit::ScaffoldNetwork::ScaffoldNetwork &self) {
     std::stringstream oss;
@@ -60,7 +60,7 @@ struct scaffoldnetwork_pickle_suite : python::pickle_suite {
   };
 };
 #else
-struct scaffoldnetwork_pickle_suite : python::pickle_suite {
+struct scaffoldnetwork_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(
       const RDKit::ScaffoldNetwork::ScaffoldNetwork &self) {
     throw_runtime_error("Pickling of ScaffoldNetwork instances is not enabled");

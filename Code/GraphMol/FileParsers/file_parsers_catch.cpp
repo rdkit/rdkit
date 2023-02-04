@@ -5014,6 +5014,15 @@ M  END
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
     reapplyMolBlockWedging(*m);
     CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    invertMolBlockWedgingInfo(*m);
+    reapplyMolBlockWedging(*m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINDASH);
+    invertMolBlockWedgingInfo(*m);
+    reapplyMolBlockWedging(*m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::BEGINWEDGE);
+    clearMolBlockWedgingInfo(*m);
+    reapplyMolBlockWedging(*m);
+    CHECK(m->getBondWithIdx(2)->getBondDir() == Bond::BondDir::NONE);
   }
   SECTION("GitHub5448") {
     {

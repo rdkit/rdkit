@@ -4319,8 +4319,8 @@ void testGithub3305() {
       actual.push_back(Point2D(std::stod(match[7]), std::stod(match[8])));
 
       int num_matched = 0;
-      for (const auto e : expected) {
-        for (const auto a : actual) {
+      for (const auto &e : expected) {
+        for (const auto &a : actual) {
           if ((e - a).lengthSq() <= 1.0) {
             num_matched++;
             break;

@@ -615,6 +615,35 @@ void reapplyMolBlockWedging(ROMol &mol) {
   }
 }
 
+void clearMolBlockWedgingInfo(ROMol &mol) {
+  for (auto b : mol.bonds()) {
+    b->clearProp(common_properties::_MolFileBondStereo);
+    b->clearProp(common_properties::_MolFileBondCfg);
+  }
+}
+
+void invertMolBlockWedgingInfo(ROMol &mol) {
+  for (auto b : mol.bonds()) {
+    int bond_dir = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondStereo,
+                                 bond_dir)) {
+      if (bond_dir == 1) {
+        b->setProp<int>(common_properties::_MolFileBondStereo, 6);
+      } else if (bond_dir == 6) {
+        b->setProp<int>(common_properties::_MolFileBondStereo, 1);
+      }
+    }
+    int cfg = -1;
+    if (b->getPropIfPresent<int>(common_properties::_MolFileBondCfg, cfg)) {
+      if (cfg == 1) {
+        b->setProp<int>(common_properties::_MolFileBondCfg, 3);
+      } else if (cfg == 3) {
+        b->setProp<int>(common_properties::_MolFileBondCfg, 1);
+      }
+    }
+  }
+}
+
 void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
   INT_MAP_INT wedgeBonds = pickBondsToWedge(mol);
   const auto conf = mol.getConformer(confId);

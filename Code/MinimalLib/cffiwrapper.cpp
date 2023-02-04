@@ -175,7 +175,7 @@ extern "C" char *get_cxsmiles(const char *pkl, size_t pkl_sz,
 extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
                               const char *details_json) {
   if (!pkl || !pkl_sz) {
-    return "";
+    return nullptr;
   }
   auto mol = mol_from_pkl(pkl, pkl_sz);
   auto data = MinimalLib::molblock_helper(mol, details_json, false);
@@ -184,7 +184,7 @@ extern "C" char *get_molblock(const char *pkl, size_t pkl_sz,
 extern "C" char *get_v3kmolblock(const char *pkl, size_t pkl_sz,
                                  const char *details_json) {
   if (!pkl || !pkl_sz) {
-    return "";
+    return nullptr;
   }
   auto mol = mol_from_pkl(pkl, pkl_sz);
   auto data = MinimalLib::molblock_helper(mol, details_json, true);
