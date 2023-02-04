@@ -263,8 +263,7 @@ TEST_CASE("Oxidation numbers") {
         std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(smis[i]));
         Descriptors::calcOxidationNumbers(*mol);
         for (const auto &a : mol->atoms()) {
-          CHECK(a->getProp<int>("_OxidationNumber") ==
-                expected[i][a->getIdx()]);
+          CHECK(a->getProp<int>("OxidationNumber") == expected[i][a->getIdx()]);
         }
       }
     }
@@ -281,7 +280,7 @@ TEST_CASE("Oxidation numbers") {
       REQUIRE(m1);
       Descriptors::calcOxidationNumbers(*m1);
       for (const auto &a : m1->atoms()) {
-        CHECK(a->getProp<int>("_OxidationNumber") == expected[a->getIdx()]);
+        CHECK(a->getProp<int>("OxidationNumber") == expected[a->getIdx()]);
       }
     }
     {
@@ -295,10 +294,10 @@ TEST_CASE("Oxidation numbers") {
       RDKit::MolOps::Kekulize(m2);
       std::vector<unsigned int> ats{0, 5, 10, 13, 14, 19, 20, 21, 42, 43, 44};
       std::vector<int> expected{-2, -2, 2, 4, 4, 2, -2, -2, -1, 0, -1};
+      Descriptors::calcOxidationNumbers(m2);
       for (unsigned int i = 0; i < ats.size(); ++i) {
         auto a = m2.getAtomWithIdx(ats[i]);
-        int oxNum = Descriptors::calcOxidationNumberByEN(a);
-        CHECK(oxNum == expected[i]);
+        CHECK(a->getProp<int>("OxidationNumber") == expected[i]);
       }
     }
   }
@@ -514,25 +513,11 @@ TEST_CASE("Oxidation numbers") {
       //                << std::get<1>(test) << std::endl;
       std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(std::get<1>(test)));
       RDKit::MolOps::Kekulize(*mol);
+      Descriptors::calcOxidationNumbers(*mol);
       for (const auto &expected : std::get<2>(test)) {
         auto atom = mol->getAtomWithIdx(expected.first);
-        int oxNum = Descriptors::calcOxidationNumberByEN(atom);
-        CHECK(oxNum == expected.second);
+        CHECK(atom->getProp<int>("OxidationNumber") == expected.second);
       }
-    }
-  }
-
-  SECTION("test unkekulized molecule throws exception") {
-    {
-      std::string file2 =
-          rdbase + "/Code/GraphMol/MolStandardize/test_data/MOL_00002.mol";
-      bool takeOwnership = true;
-      SDMolSupplier mol_supplier(file2, takeOwnership);
-      std::unique_ptr<ROMol> m1(mol_supplier.next());
-      REQUIRE(m1);
-      RWMol m2(*m1);
-      auto a = m2.getAtomWithIdx(0);
-      REQUIRE_THROWS(Descriptors::calcOxidationNumberByEN(a));
     }
   }
 }

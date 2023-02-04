@@ -711,20 +711,15 @@ class TestCase(unittest.TestCase):
         # sure the wrappers are working.
         m = Chem.MolFromSmiles("CO")
         rdMD.CalcOxidationNumbers(m)
-        self.assertEqual(m.GetAtomWithIdx(0).GetProp('_OxidationNumber'), '-2')
-        self.assertEqual(m.GetAtomWithIdx(1).GetProp('_OxidationNumber'), '-2')
+        self.assertEqual(m.GetAtomWithIdx(0).GetProp('OxidationNumber'), '-2')
+        self.assertEqual(m.GetAtomWithIdx(1).GetProp('OxidationNumber'), '-2')
 
         rdbase = environ["RDBASE"]
         ffile = Path(rdbase) / 'Code' / 'GraphMol' / 'MolStandardize' / 'test_data' / 'ferrocene.mol'
         ferrocene = Chem.MolFromMolFile(str(ffile))
         Chem.Kekulize(ferrocene)
-        self.assertEqual(rdMD.CalcOxidationNumberByEN(ferrocene.GetAtomWithIdx(10)), 2)
-
-        # make sure it raises an exception with an unkekulized molecule.
-        mfile = Path(rdbase) / 'Code' / 'GraphMol' / 'MolStandardize' / 'test_data' / 'MOL_00002.mol'
-        mol2 = Chem.MolFromMolFile(str(mfile))
-        self.assertRaises(ValueError, rdMD.CalcOxidationNumberByEN,
-                          mol2.GetAtomWithIdx(0))
+        rdMD.CalcOxidationNumbers(ferrocene)
+        self.assertEqual(ferrocene.GetAtomWithIdx(10).GetProp('OxidationNumber'), '2')
 
 
 if __name__ == '__main__':

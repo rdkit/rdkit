@@ -66,6 +66,8 @@
 
 namespace RDKit {
 namespace Descriptors {
+
+namespace {
 int calcOxidationNumberByEN(const Atom *atom) {
   const static std::map<int, float> pauling_en_map = {
       {1, 2.2},   {3, 0.98},  {4, 1.57},  {5, 2.04},  {6, 2.55},  {7, 3.04},
@@ -107,8 +109,12 @@ int calcOxidationNumberByEN(const Atom *atom) {
     if (otherAtom->getAtomicNum() > 1) {
       float en_diff = parEN - get_en(otherAtom->getAtomicNum());
       double bondType = bond->getBondTypeAsDouble();
+      // Make sure this is a kekulized mol i.e. no bond type of 1.5.  This
+      // shouldn't happen if called from calcOxidationNumbers, but who knows
+      // what might happen in future.
       if (bondType > 1.0 && bondType < 2.0) {
-        throw ValueErrorException("Molecule appears not to be Kekulized,"
+        throw ValueErrorException(
+            "Molecule appears not to be Kekulized,"
             " oxidation number calculation fails.");
       }
       oxNum += bondType * sf(en_diff);
@@ -118,6 +124,7 @@ int calcOxidationNumberByEN(const Atom *atom) {
   oxNum += atom->getFormalCharge();
   return oxNum;
 }
+}  // namespace
 
 void calcOxidationNumbers(const ROMol &mol) {
   RWMol molCp(mol);
@@ -125,7 +132,7 @@ void calcOxidationNumbers(const ROMol &mol) {
   for (const auto &atom : mol.atoms()) {
     auto cpAtom = molCp.getAtomWithIdx(atom->getIdx());
     int oxNum = calcOxidationNumberByEN(cpAtom);
-    atom->setProp<int>("_OxidationNumber", oxNum);
+    atom->setProp<int>("OxidationNumber", oxNum);
   }
 }
 
