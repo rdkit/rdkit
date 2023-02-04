@@ -1166,7 +1166,9 @@ std::pair<std::string, OrientType> DrawMol::getAtomSymbolAndOrientation(
 // ****************************************************************************
 std::string getAtomListText(const Atom &atom) {
   PRECONDITION(atom.hasQuery(), "no query");
-  PRECONDITION(atom.getQuery()->getDescription() == "AtomOr", "bad query type");
+  PRECONDITION(atom.getQuery()->getNegation() ||
+                   atom.getQuery()->getDescription() == "AtomOr",
+               "bad query type");
 
   std::string res = "";
   if (atom.getQuery()->getNegation()) {
@@ -1183,6 +1185,17 @@ std::string getAtomListText(const Atom &atom) {
   }
 
   return res + "]";
+}
+
+std::string getComplexQueryAtomEquivalent(const std::string &query) {
+  static const std::map<std::string, std::string> mdlEquivalent = {
+      {"![H]", "A"},
+      {"![C,H]", "Q"},
+      {"![C]", "QH"},
+      {"[F,Cl,Br,I,At]", "X"},
+      {"[F,Cl,Br,I,At,H]", "XH"}};
+  auto it = mdlEquivalent.find(query);
+  return (it == mdlEquivalent.end() ? query : it->second);
 }
 
 // ****************************************************************************
@@ -1229,6 +1242,9 @@ std::string DrawMol::getAtomSymbol(const RDKit::Atom &atom,
     literal_symbol = false;
   } else if (isAtomListQuery(&atom)) {
     symbol = getAtomListText(atom);
+    if (drawOptions_.useComplexQueryAtomSymbols) {
+      symbol = getComplexQueryAtomEquivalent(symbol);
+    }
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
   } else if (drawOptions_.atomLabelDeuteriumTritium &&

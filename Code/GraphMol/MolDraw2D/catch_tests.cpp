@@ -264,7 +264,19 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github6025.svg", 1908346499U},
     {"test_github5963.svg", 582369551U},
     {"test_github6027_1.svg", 1864343362U},
-    {"test_github6027_2.svg", 330549720U}};
+    {"test_github6027_2.svg", 330549720U},
+    {"test_complex_query_atoms_1.svg", 1569543436U},
+    {"test_complex_query_atoms_2.svg", 1958885073U},
+    {"test_complex_query_atoms_3.svg", 2485432018U},
+    {"test_complex_query_atoms_4.svg", 2485432018U},
+    {"test_complex_query_atoms_5.svg", 3301518551U},
+    {"test_complex_query_atoms_6.svg", 3415494504U},
+    {"test_complex_query_atoms_7.svg", 3857334874U},
+    {"test_complex_query_atoms_8.svg", 3355019842U},
+    {"test_complex_query_atoms_9.svg", 952404505U},
+    {"test_complex_query_atoms_10.svg", 2592662841U},
+    {"test_complex_query_atoms_11.svg", 3667326374U},
+    {"test_complex_query_atoms_12.svg", 582133495U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6730,5 +6742,338 @@ M  END
     auto vec2 = points[2].directionVector(points[3]);
     REQUIRE(fabs(1.0 - vec1.dotProduct(vec2)) < 1.0e-4);
     check_file_hash(nameBase + "_2.svg");
+  }
+}
+
+TEST_CASE("Github6054: MDL query atoms should not trigger an exception") {
+  SECTION("any heavy") {
+    auto a = R"CTAB(
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(a);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*a));
+    }
+  }
+}
+
+TEST_CASE("Optionally depict complex query atoms in a more compact form") {
+  std::string nameBase = "test_complex_query_atoms";
+  auto extractQueryAtomSymbol = [](const std::string &text) {
+    std::istringstream ss(text);
+    std::string line;
+    std::regex regex("^<text[^>]*>([^<])*</text>");
+    std::smatch match;
+    std::string res;
+    while (std::getline(ss, line)) {
+      if (std::regex_match(line, match, regex)) {
+        REQUIRE(match.size() == 2);
+        res += match[1];
+      }
+    }
+    return res;
+  };
+  SECTION("any heavy") {
+    auto a = R"CTAB(
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(a);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*a));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_1.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "![H]");
+      check_file_hash(nameBase + "_1.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = true;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*a));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_2.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "A");
+      check_file_hash(nameBase + "_2.svg");
+    }
+  }
+  SECTION("any atom") {
+    auto ah = R"CTAB(
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 AH  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(ah);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*ah));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_3.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "*");
+      check_file_hash(nameBase + "_3.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = true;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*ah));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_4.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "*");
+      check_file_hash(nameBase + "_4.svg");
+    }
+  }
+  SECTION("any hetero") {
+    auto q = R"CTAB(
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 Q   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(q);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*q));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_5.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "![C,H]");
+      check_file_hash(nameBase + "_5.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = true;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*q));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_6.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "Q");
+      check_file_hash(nameBase + "_6.svg");
+    }
+  }
+  SECTION("any hetero or hydrogen") {
+    auto qh = R"CTAB(
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 QH  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(qh);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*qh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_7.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "![C]");
+      check_file_hash(nameBase + "_7.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = true;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*qh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_8.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "QH");
+      check_file_hash(nameBase + "_8.svg");
+    }
+  }
+  SECTION("any halo") {
+    auto x = R"CTAB(
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3344    0.8919    0.0000 X   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+
+    REQUIRE(x);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*x));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_9.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "[F,Cl,Br,I,At]");
+      check_file_hash(nameBase + "_9.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = true;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*x));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_10.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "X");
+      check_file_hash(nameBase + "_10.svg");
+    }
+  }
+  SECTION("any halo or hydrogen") {
+    auto xh = R"CTAB(
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3344    0.8919    0.0000 XH  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+
+    REQUIRE(xh);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*xh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_11.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "[F,Cl,Br,I,At,H]");
+      check_file_hash(nameBase + "_11.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = true;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*xh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_12.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) == "XH");
+      check_file_hash(nameBase + "_12.svg");
+    }
   }
 }
