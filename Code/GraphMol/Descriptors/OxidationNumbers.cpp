@@ -132,7 +132,7 @@ void calcOxidationNumbers(const ROMol &mol) {
   for (const auto &atom : mol.atoms()) {
     auto cpAtom = molCp.getAtomWithIdx(atom->getIdx());
     int oxNum = calcOxidationNumberByEN(cpAtom);
-    atom->setProp<int>("OxidationNumber", oxNum);
+    atom->setProp<int>(common_properties::OxidationNumber, oxNum);
   }
 }
 

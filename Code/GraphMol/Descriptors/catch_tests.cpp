@@ -263,7 +263,8 @@ TEST_CASE("Oxidation numbers") {
         std::unique_ptr<RWMol> mol(RDKit::SmilesToMol(smis[i]));
         Descriptors::calcOxidationNumbers(*mol);
         for (const auto &a : mol->atoms()) {
-          CHECK(a->getProp<int>("OxidationNumber") == expected[i][a->getIdx()]);
+          CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+                expected[i][a->getIdx()]);
         }
       }
     }
@@ -280,7 +281,8 @@ TEST_CASE("Oxidation numbers") {
       REQUIRE(m1);
       Descriptors::calcOxidationNumbers(*m1);
       for (const auto &a : m1->atoms()) {
-        CHECK(a->getProp<int>("OxidationNumber") == expected[a->getIdx()]);
+        CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+              expected[a->getIdx()]);
       }
     }
     {
@@ -297,7 +299,8 @@ TEST_CASE("Oxidation numbers") {
       Descriptors::calcOxidationNumbers(m2);
       for (unsigned int i = 0; i < ats.size(); ++i) {
         auto a = m2.getAtomWithIdx(ats[i]);
-        CHECK(a->getProp<int>("OxidationNumber") == expected[i]);
+        CHECK(a->getProp<int>(common_properties::OxidationNumber) ==
+              expected[i]);
       }
     }
   }
@@ -516,7 +519,8 @@ TEST_CASE("Oxidation numbers") {
       Descriptors::calcOxidationNumbers(*mol);
       for (const auto &expected : std::get<2>(test)) {
         auto atom = mol->getAtomWithIdx(expected.first);
-        CHECK(atom->getProp<int>("OxidationNumber") == expected.second);
+        CHECK(atom->getProp<int>(common_properties::OxidationNumber) ==
+              expected.second);
       }
     }
   }

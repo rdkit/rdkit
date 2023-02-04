@@ -133,7 +133,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereochemCand;  // chirality bool COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereoWarning;  // obsolete ?
-RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation; // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation;  // int
 
 // Smiles parsing
 RDKIT_RDGENERAL_EXPORT extern const std::string _SmilesStart;  // int
@@ -154,6 +154,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _RingClosures;  // INT_VECT smarts/smiles/canon
 RDKIT_RDGENERAL_EXPORT extern const std::string
     atomLabel;  // atom string from CXSMILES
+RDKIT_RDGENERAL_EXPORT extern const std::string OxidationNumber;  // int
 
 // MDL Style Properties (MolFileParser)
 RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;   // int
