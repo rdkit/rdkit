@@ -1166,7 +1166,7 @@ std::pair<std::string, OrientType> DrawMol::getAtomSymbolAndOrientation(
 // ****************************************************************************
 std::string getAtomListText(const Atom &atom) {
   PRECONDITION(atom.hasQuery(), "no query");
-  PRECONDITION(atom.getQuery()->getDescription() == "AtomOr", "bad query type");
+  PRECONDITION(atom.getQuery()->getNegation() || atom.getQuery()->getDescription() == "AtomOr", "bad query type");
 
   std::string res = "";
   if (atom.getQuery()->getNegation()) {
