@@ -190,15 +190,14 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
 
   auto isMetal = [](const Atom *a) -> bool {
     // This is the list of not metal atoms from QueryOps.cpp
-    static const std::vector<int> notMetals{1,  2,  5,  6,  7,  8,  9,  10,
-                                            14, 15, 16, 17, 18, 33, 34, 35,
-                                            36, 52, 53, 54, 85, 86};
-    return (std::find(notMetals.begin(), notMetals.end(), a->getAtomicNum()) ==
-            notMetals.end());
+    static const std::set<int> notMetals{1,  2,  5,  6,  7,  8,  9,  10,
+                                         14, 15, 16, 17, 18, 33, 34, 35,
+                                         36, 52, 53, 54, 85, 86};
+    return (notMetals.find(a->getAtomicNum()) == notMetals.end());
   };
   auto noDative = [](const Atom *a) -> bool {
-    static const std::vector<int> noD{1, 2, 9, 10};
-    return (std::find(noD.begin(), noD.end(), a->getAtomicNum()) != noD.end());
+    static const std::set<int> noD{1, 2, 9, 10};
+    return (noD.find(a->getAtomicNum()) != noD.end());
   };
   if (!isMetal(atom)) {
     return;
@@ -223,6 +222,9 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
       // CHEBI:26355 is an example of when this is required.
       int effAtomicNum =
           otherAtom->getAtomicNum() - otherAtom->getFormalCharge();
+      if (effAtomicNum <= 0) {
+        continue;
+      }
       const auto &otherValens =
           PeriodicTable::getTable()->getValenceList(effAtomicNum);
       if (otherValens.back() > 0 && ev > otherValens.back()) {
