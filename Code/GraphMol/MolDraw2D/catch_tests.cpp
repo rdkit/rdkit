@@ -6659,3 +6659,32 @@ M  END
     check_file_hash(nameBase + "_2.svg");
   }
 }
+
+TEST_CASE("Github6054: MDL query atoms should not trigger an exception") {
+  SECTION("any heavy") {
+    auto a = R"CTAB(
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 A   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(a);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*a));
+    }
+  }
+}
