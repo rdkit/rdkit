@@ -928,11 +928,9 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
     }
     // FIX: we want to be backwards compatible
     // Version 10 files can be read by 11, but not vice versa.
-    if (doc["rdkitjson"]["version"].GetInt() != currentRDKitJSONVersion) {
-      if (!(doc["rdkitjson"]["version"].GetInt() == 10 &&
-            currentRDKitJSONVersion == 11)) {
-        throw FileParseException("Bad Format: bad version in JSON");
-      }
+    if (int jsonVersion = doc["rdkitjson"]["version"].GetInt();
+        jsonVersion > currentRDKitJSONVersion || jsonVersion < 10) {
+      throw FileParseException("Bad Format: bad version in JSON");
     }
   } else {
     throw FileParseException("Bad Format: missing header in JSON");
