@@ -185,8 +185,7 @@ void metalBondCleanup(RWMol &mol, Atom *atom) {
   // be single.  This upsets the RDKit valence model, as seen in CHEBI:26355,
   // heme b.  If the valence of a non-metal atom is above the maximum in the
   // RDKit model, and there are single bonds from it to metal
-  // change those bonds to atom->metal dative.  Move any positive charge
-  // from the non-metal to the metal.
+  // change those bonds to atom->metal dative.
 
   auto isMetal = [](const Atom *a) -> bool {
     // This is the list of not metal atoms from QueryOps.cpp
