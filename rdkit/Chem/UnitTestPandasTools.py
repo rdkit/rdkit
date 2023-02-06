@@ -337,6 +337,26 @@ class TestWriteSDF(unittest.TestCase):
         s = f.read()
       self.assertEqual(s.count("\n$$$$\n"), 2)
       self.assertEqual(s.split("\n", 1)[0], "Methane")
+
+      # check file is V2000
+      self.assertGreaterEqual(s.count("V2000"), 1)
+      self.assertEqual(s.count("V3000"), 0)
+    finally:
+      shutil.rmtree(dirname)
+
+  def test_write_V3000_to_sdf(self):
+    dirname = tempfile.mkdtemp()
+    try:
+      filename = os.path.join(dirname, "test.sdf")
+      PandasTools.WriteSDF(self.df, filename, forceV3000=True)
+      with open(filename) as f:
+        s = f.read()
+      self.assertEqual(s.count("\n$$$$\n"), 2)
+      self.assertEqual(s.split("\n", 1)[0], "Methane")
+
+      # check file is V3000
+      self.assertEqual(s.count("V2000"), 0)
+      self.assertGreaterEqual(s.count("V3000"), 1)
     finally:
       shutil.rmtree(dirname)
 
