@@ -11,6 +11,7 @@
 #include "MolWriters.h"
 
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,6 +22,7 @@
 
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/MonomerInfo.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
@@ -31,6 +33,16 @@ using namespace schrodinger;
 namespace RDKit {
 
 namespace {
+
+const std::string MAE_ATOM_RGB_COLOR = "s_m_color_rgb";
+const std::string MAE_BOND_DATIVE_MARK = "b_sPrivate_dative_bond";
+const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
+const std::string PDB_RESIDUE_NAME = "s_m_pdb_residue_name";
+const std::string PDB_CHAIN_NAME = "s_m_chain_name";
+const std::string PDB_INSERTION_CODE = "s_m_insertion_code";
+const std::string PDB_RESIDUE_NUMBER = "i_m_residue_number";
+const std::string PDB_OCCUPANCY = "r_m_pdb_occupancy";
+const std::string PDB_TFACTOR = "r_m_pdb_tfactor";
 
 template <typename T>
 std::shared_ptr<mae::IndexedProperty<T>> getIndexedProperty(
@@ -45,11 +57,10 @@ std::shared_ptr<mae::IndexedProperty<T>> getIndexedProperty(
     return prop;
   }
 
-  std::vector<T> boolValues(numAtoms);
+  std::vector<T> values(numAtoms);
   auto nullsBitset = new boost::dynamic_bitset<>(numAtoms);
   nullsBitset->set();
-  auto newProp =
-      std::make_shared<mae::IndexedProperty<T>>(boolValues, nullsBitset);
+  auto newProp = std::make_shared<mae::IndexedProperty<T>>(values, nullsBitset);
 
   (indexedBlock.*setterFunc)(propName, newProp);
   return newProp;
@@ -119,13 +130,81 @@ getIndexedProperty<std::string>(mae::IndexedBlock& indexedBlock,
                                          &mae::IndexedBlock::setStringProperty);
 }
 
+void copyProperties(
+    const RDProps& origin, const STR_VECT& propNames, unsigned idx,
+    std::function<void(const std::string&, unsigned, bool)> boolSetter,
+    std::function<void(const std::string&, unsigned, int)> intSetter,
+    std::function<void(const std::string&, unsigned, double)> realSetter,
+    std::function<void(const std::string&, unsigned, const std::string&)>
+        stringSetter) {
+  // Map other properties, but first clear out the computed ones,
+  // since we don't want to export these.
+  origin.clearComputedProps();
+
+  for (const auto& prop : origin.getDict().getData()) {
+    // Skip the property holding the names of the computed properties
+    if (prop.key == detail::computedPropName) {
+      continue;
+    }
+
+    // Also skip the property if we have a list of properties we want to export
+    // and this one is not one of them.
+    if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
+                                         prop.key) == propNames.end())) {
+      continue;
+    }
+
+    switch (prop.val.getTag()) {
+      case RDTypeTag::BoolTag: {
+        auto propName = std::string("b_rdk_") + prop.key;
+        boolSetter(propName, idx, rdvalue_cast<bool>(prop.val));
+        break;
+      }
+
+      case RDTypeTag::IntTag:
+      case RDTypeTag::UnsignedIntTag: {
+        auto propName = std::string("i_rdk_") + prop.key;
+        intSetter(propName, idx, rdvalue_cast<int>(prop.val));
+        break;
+      }
+
+      case RDTypeTag::DoubleTag:
+      case RDTypeTag::FloatTag: {
+        auto propName = std::string("r_rdk_") + prop.key;
+        realSetter(propName, idx, rdvalue_cast<double>(prop.val));
+        break;
+      }
+
+      case RDTypeTag::StringTag: {
+        auto propName = std::string("s_rdk_") + prop.key;
+        stringSetter(propName, idx, rdvalue_cast<std::string>(prop.val));
+        break;
+      }
+      default:
+        // AnyTag, EmptyTag, any kind of Vector.
+        // Should we support vectors?
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: the property " << prop.key
+            << " has an unsupported type, and will not be exported.";
+        continue;
+    }
+  }
+}
+
+template <typename T>
+void setPropertyValue(mae::IndexedBlock& block, const std::string& propName,
+                      size_t numValues, unsigned idx, const T& value) {
+  auto property = getIndexedProperty<T>(block, propName, numValues);
+  property->set(idx, value);
+}
+
 class UnsupportedBondException : public std::runtime_error {
  public:
   UnsupportedBondException(const char* msg) : std::runtime_error(msg) {}
   UnsupportedBondException(const std::string& msg) : std::runtime_error(msg) {}
 };
 
-unsigned bondTypeToOrder(const Bond& bond) {
+int bondTypeToOrder(const Bond& bond) {
   switch (bond.getBondType()) {
     case Bond::BondType::SINGLE:
       return 1;
@@ -145,136 +224,118 @@ unsigned bondTypeToOrder(const Bond& bond) {
 
 void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
                       mae::Block& stBlock) {
-  (void)mol;
-  (void)propNames;
-  (void)stBlock;
+  // We always write a title, even if the mol doesn't have one
+  // (in such case, we add an empty string).
+  std::string molName;
+  mol.getPropIfPresent(common_properties::_Name, molName);
+  stBlock.setStringProperty(mae::CT_TITLE, molName);
+  mol.clearProp(common_properties::_Name);
 
-#if 0
-  for (auto& prop : propNames) {
-    if (!mol.hasProp(prop)) {
-      // We don't raise any warnings if we don't find a property because it
-      // might be an atom property
-      continue;
-    }
+  // TO DO: Map stereo properties
 
-    auto prop = mol.getProp(prop)
-  }
+  auto boolSetter = [&stBlock](const std::string& prop, unsigned, bool value) {
+    stBlock.setBoolProperty(prop, value);
+  };
+  auto intSetter = [&stBlock](const std::string& prop, unsigned, int value) {
+    stBlock.setIntProperty(prop, value);
+  };
+  auto realSetter = [&stBlock](const std::string& prop, unsigned,
+                               double value) {
+    stBlock.setRealProperty(prop, value);
+  };
+  auto stringSetter = [&stBlock](const std::string& prop, unsigned,
+                                 const std::string& value) {
+    stBlock.setStringProperty(prop, value);
+  };
 
-  for (const auto& propName : st.getPropertyNames(PropertyType::Bool)) {
-    stBlock.setBoolProperty(propName, st.getProperty<bool>(propName));
-  }
-  for (const auto& propName : st.getPropertyNames(PropertyType::Int)) {
-    stBlock.setIntProperty(propName, st.getProperty<int>(propName));
-  }
-  for (const auto& propName : st.getPropertyNames(PropertyType::Real)) {
-    stBlock.setRealProperty(propName, st.getProperty<double>(propName));
-  }
-  for (const auto& propName : st.getPropertyNames(PropertyType::String)) {
-    stBlock.setStringProperty(propName,
-                               st.getProperty<std::string>(propName));
-  }
-#endif
+  int fake_idx = 0;
+  copyProperties(mol, propNames, fake_idx, boolSetter, intSetter, realSetter,
+                 stringSetter);
 }
-
-void mapAtom(const Conformer& conformer, const Atom& atom,
-             const STR_VECT& propNames, mae::IndexedBlock& atomBlock,
-             size_t numAtoms) {
+void mapAtom(
+    const Conformer& conformer, const Atom& atom, const STR_VECT& propNames,
+    mae::IndexedBlock& atomBlock, size_t numAtoms,
+    std::function<void(const std::string&, unsigned, bool)> boolSetter,
+    std::function<void(const std::string&, unsigned, int)> intSetter,
+    std::function<void(const std::string&, unsigned, double)> realSetter,
+    std::function<void(const std::string&, unsigned, const std::string&)>
+        stringSetter) {
   auto idx = atom.getIdx();
   auto coordinates = conformer.getAtomPos(idx);
 
-  auto xCoord =
-      getIndexedProperty<double>(atomBlock, mae::ATOM_X_COORD, numAtoms);
-  xCoord->set(idx, coordinates.x);
+  // Required properties
+  setPropertyValue(atomBlock, mae::ATOM_X_COORD, numAtoms, idx, coordinates.x);
+  setPropertyValue(atomBlock, mae::ATOM_Y_COORD, numAtoms, idx, coordinates.y);
+  setPropertyValue(atomBlock, mae::ATOM_Z_COORD, numAtoms, idx, coordinates.z);
 
-  auto yCoord =
-      getIndexedProperty<double>(atomBlock, mae::ATOM_Y_COORD, numAtoms);
-  yCoord->set(idx, coordinates.y);
-
-  auto zCoord =
-      getIndexedProperty<double>(atomBlock, mae::ATOM_Z_COORD, numAtoms);
-  zCoord->set(idx, coordinates.z);
-
-  auto atomicNum =
-      getIndexedProperty<int>(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms);
-  atomicNum->set(idx, atom.getAtomicNum());
+  auto atomic_num = static_cast<int>(atom.getAtomicNum());
+  setPropertyValue(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms, idx, atomic_num);
 
   // Default heavy atoms to be drawn in grey in Maestro, and H atoms in white.
   std::string color = (atom.getAtomicNum() == 1 ? "FFFFFF" : "A0A0A0");
-  auto atomRgbColor =
-      getIndexedProperty<std::string>(atomBlock, "s_m_color_rgb", numAtoms);
-  atomRgbColor->set(idx, color);
+  setPropertyValue(atomBlock, MAE_ATOM_RGB_COLOR, numAtoms, idx, color);
 
-  auto formalCharge =
-      getIndexedProperty<int>(atomBlock, mae::ATOM_FORMAL_CHARGE, numAtoms);
-  formalCharge->set(idx, atom.getFormalCharge());
+  setPropertyValue(atomBlock, mae::ATOM_FORMAL_CHARGE, numAtoms, idx,
+                   atom.getFormalCharge());
 
-#if 0
-  auto residue_id = atom.getResidueId();
-  auto residue_num =
-      getIndexedProperty<int>(atomBlock, M2IO_DATA_RES_NUM, numAtoms);
-  residue_num->set(idx, residue_id.residue_number);
-  auto insertion_code = getIndexedProperty<std::string>(
-      atomBlock, M2IO_DATA_INSERTION_CODE, numAtoms);
-  insertion_code->set(idx, std::string{residue_id.insertion_code});
+  // Residue information
+  auto monomerInfo =
+      static_cast<const AtomPDBResidueInfo*>(atom.getMonomerInfo());
+  if (monomerInfo != nullptr) {
+    setPropertyValue(atomBlock, PDB_ATOM_NAME, numAtoms, idx,
+                     monomerInfo->getName());
 
-  auto mmod_residue = getIndexedProperty<std::string>(
-      atomBlock, M2IO_DATA_MMOD_RES, numAtoms);
-  mmod_residue->set(idx, std::string{atom.getMacromodelResidue()});
+    setPropertyValue(atomBlock, PDB_RESIDUE_NAME, numAtoms, idx,
+                     monomerInfo->getResidueName());
 
-  auto chain_name =
-      getIndexedProperty<std::string>(atomBlock, M2IO_DATA_CHAIN, numAtoms);
-  chain_name->set(idx, atom.getChain());
+    setPropertyValue(atomBlock, PDB_CHAIN_NAME, numAtoms, idx,
+                     monomerInfo->getChainId());
 
+    setPropertyValue(atomBlock, PDB_INSERTION_CODE, numAtoms, idx,
+                     monomerInfo->getInsertionCode());
 
-  auto pdb_residue = getIndexedProperty<std::string>(
-      atomBlock, M2IO_DATA_PDB_RES, numAtoms);
-  pdb_residue->set(idx, atom.getPDBResidue());
+    setPropertyValue(atomBlock, PDB_RESIDUE_NUMBER, numAtoms, idx,
+                     monomerInfo->getResidueNumber());
 
-  auto pdb_atom = getIndexedProperty<std::string>(
-      atomBlock, M2IO_DATA_PDB_ATOM, numAtoms);
-  pdb_atom->set(idx, atom.getPDBAtomName());
+    setPropertyValue(atomBlock, PDB_OCCUPANCY, numAtoms, idx,
+                     monomerInfo->getOccupancy());
 
-
+    setPropertyValue(atomBlock, PDB_TFACTOR, numAtoms, idx,
+                     monomerInfo->getTempFactor());
+  }
 
   // Custom properties
-  for (const auto& propName : atom.getPropertyNames(PropertyType::Bool)) {
-    auto idxd_prop = getIndexedProperty<mae::BoolProperty>(
-        atomBlock, propName, numAtoms);
-    idxd_prop->set(idx, atom.getProperty<bool>(propName));
-  }
-  for (const auto& propName : atom.getPropertyNames(PropertyType::Int)) {
-    // M2IO_DATA_ATOM_CHIRALITY should not be written to .mae files
-    // (see mmct_ct_m2io_close_atomBlock in mmct.cpp)
-    if (propName == M2IO_DATA_ATOM_CHIRALITY) {
-      continue;
-    }
-
-    auto idxd_prop =
-        getIndexedProperty<int>(atomBlock, propName, numAtoms);
-    idxd_prop->set(idx, atom.getProperty<int>(propName));
-  }
-  for (const auto& propName : atom.getPropertyNames(PropertyType::Real)) {
-    auto idxd_prop =
-        getIndexedProperty<double>(atomBlock, propName, numAtoms);
-    idxd_prop->set(idx, atom.getProperty<double>(propName));
-  }
-  for (const auto& propName : atom.getPropertyNames(PropertyType::String)) {
-    auto idxd_prop =
-        getIndexedProperty<std::string>(atomBlock, propName, numAtoms);
-    idxd_prop->set(idx, atom.getProperty<std::string>(propName));
-  }
-
-#endif
+  copyProperties(atom, propNames, idx, boolSetter, intSetter, realSetter,
+                 stringSetter);
 }
-
 void mapAtoms(const ROMol& mol, const STR_VECT& propNames, int confId,
               mae::IndexedBlockMap& indexedBlockMap) {
   auto atomBlock = std::make_shared<mae::IndexedBlock>(mae::ATOM_BLOCK);
   auto conformer = mol.getConformer(confId);
-
   auto numAtoms = mol.getNumAtoms();
+
+  auto boolSetter = [&atomBlock, &numAtoms](const std::string& prop,
+                                            unsigned idx,
+                                            mae::BoolProperty value) {
+    setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
+  };
+  auto intSetter = [&atomBlock, &numAtoms](const std::string& prop,
+                                           unsigned idx, int value) {
+    setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
+  };
+  auto realSetter = [&atomBlock, &numAtoms](const std::string& prop,
+                                            unsigned idx, double value) {
+    setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
+  };
+  auto stringSetter = [&atomBlock, &numAtoms](const std::string& prop,
+                                              unsigned idx,
+                                              const std::string& value) {
+    setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
+  };
+
   for (auto& atom : mol.atoms()) {
-    mapAtom(conformer, *atom, propNames, *atomBlock, numAtoms);
+    mapAtom(conformer, *atom, propNames, *atomBlock, numAtoms, boolSetter,
+            intSetter, realSetter, stringSetter);
   }
 
   indexedBlockMap.addIndexedBlock(mae::ATOM_BLOCK, atomBlock);
@@ -285,36 +346,60 @@ void mapBonds(const ROMol& mol, const STR_VECT& propNames,
   auto bondBlock = std::make_shared<mae::IndexedBlock>(mae::BOND_BLOCK);
 
   auto numBonds = mol.getNumBonds();
-  auto bondAtomFrom =
-      getIndexedProperty<int>(*bondBlock, mae::BOND_ATOM_1, numBonds);
-  auto bondAtomTo =
-      getIndexedProperty<int>(*bondBlock, mae::BOND_ATOM_2, numBonds);
-  auto bondOrder =
-      getIndexedProperty<int>(*bondBlock, mae::BOND_ORDER, numBonds);
 
   std::shared_ptr<mae::IndexedProperty<mae::BoolProperty>> dativeBondMark =
       nullptr;
   for (auto& bond : mol.bonds()) {
     if (bond->getBondType() == Bond::BondType::DATIVE) {
       dativeBondMark = getIndexedProperty<mae::BoolProperty>(
-          *bondBlock, "b_sPrivate_dative_bond", numBonds);
+          *bondBlock, MAE_BOND_DATIVE_MARK, numBonds);
       break;
     }
   }
 
+  auto boolSetter = [&bondBlock, &numBonds](const std::string& prop,
+                                            unsigned idx,
+                                            mae::BoolProperty value) {
+    setPropertyValue(*bondBlock, prop, numBonds, idx, value);
+  };
+  auto intSetter = [&bondBlock, &numBonds](const std::string& prop,
+                                           unsigned idx, int value) {
+    setPropertyValue(*bondBlock, prop, numBonds, idx, value);
+  };
+  auto realSetter = [&bondBlock, &numBonds](const std::string& prop,
+                                            unsigned idx, double value) {
+    setPropertyValue(*bondBlock, prop, numBonds, idx, value);
+  };
+  auto stringSetter = [&bondBlock, &numBonds](const std::string& prop,
+                                              unsigned idx,
+                                              const std::string& value) {
+    setPropertyValue(*bondBlock, prop, numBonds, idx, value);
+  };
+
   for (auto& bond : mol.bonds()) {
     auto idx = bond->getIdx();
-    bondAtomFrom->set(idx, bond->getBeginAtomIdx());
-    bondAtomTo->set(idx, bond->getEndAtomIdx());
-    bondOrder->set(idx, bondTypeToOrder(*bond));
+
+    auto bondTo = static_cast<int>(bond->getBeginAtomIdx());
+    setPropertyValue(*bondBlock, mae::BOND_ATOM_1, numBonds, idx, bondTo);
+
+    auto bondFrom = static_cast<int>(bond->getEndAtomIdx());
+    setPropertyValue(*bondBlock, mae::BOND_ATOM_2, numBonds, idx, bondFrom);
+
+    setPropertyValue(*bondBlock, mae::BOND_ORDER, numBonds, idx,
+                     bondTypeToOrder(*bond));
 
     if (dativeBondMark != nullptr) {
       dativeBondMark->set(idx, (bond->getBondType() == Bond::BondType::DATIVE));
     }
+
+    // Custom properties
+    copyProperties(*bond, propNames, idx, boolSetter, intSetter, realSetter,
+                   stringSetter);
   }
 
   indexedBlockMap.addIndexedBlock(mae::BOND_BLOCK, bondBlock);
 }
+
 }  // namespace
 
 MaeWriter::MaeWriter(const std::string& fileName) {
@@ -403,6 +488,7 @@ void MaeWriter::write(const ROMol& mol, int confId) {
 
   try {
     mapBonds(tmpMol, d_props, *indexedBlockMap);
+
   } catch (const UnsupportedBondException& exc) {
     BOOST_LOG(rdErrorLog)
         << "ERROR: " << exc.what()
