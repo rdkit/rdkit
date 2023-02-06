@@ -276,7 +276,8 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_complex_query_atoms_9.svg", 952404505U},
     {"test_complex_query_atoms_10.svg", 2592662841U},
     {"test_complex_query_atoms_11.svg", 3667326374U},
-    {"test_complex_query_atoms_12.svg", 582133495U}};
+    {"test_complex_query_atoms_12.svg", 582133495U},
+    {"test_github6041b.svg", 3485054881U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6743,6 +6744,31 @@ M  END
     REQUIRE(fabs(1.0 - vec1.dotProduct(vec2)) < 1.0e-4);
     check_file_hash(nameBase + "_2.svg");
   }
+}
+
+TEST_CASE("Down/dashed wedge not visible on small canvas..") {
+  std::string nameBase = "test_github6041b";
+  auto m =
+      "CC(C)(F)c1noc(N2CCCN([C@H]3CC[C@H](COc4ccc(S(C)(=O)=O)cc4F)CC3)CC2)n1"_smiles;
+  MolDraw2DSVG drawer(125, 125);
+  RDDepict::compute2DCoords(*m);
+  MolDraw2DUtils::setACS1996Options(drawer.drawOptions(), 1.5);
+  drawer.drawOptions().fixedFontSize = -1;
+  drawer.drawMolecule(*m);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs(nameBase + ".svg");
+  outs << text;
+  outs.flush();
+  outs.close();
+  std::regex bond12(
+      "'bond-12 atom-13 atom-12' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+      " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond12),
+                    std::sregex_iterator()));
+  REQUIRE(match_count == 3);
+  check_file_hash(nameBase + ".svg");
 }
 
 TEST_CASE("Github6054: MDL query atoms should not trigger an exception") {

@@ -58,11 +58,7 @@ void outputMetaData(const t_obj *obj, std::ostream &d_os) {
 
 std::string DrawColourToSVG(const DrawColour &col) {
   const char *convert = "0123456789ABCDEF";
-#ifndef RDK_MINIMAL_LIB_SUPPORT_LEGACY_BROWSERS
   bool hasAlpha = 1.0 - col.a > 1e-3;
-#else
-  bool hasAlpha = false;
-#endif
   std::string res(hasAlpha ? 9 : 7, ' ');
   res[0] = '#';
   unsigned int v;
