@@ -369,7 +369,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
 
   MaeWriter(std::shared_ptr<std::ostream> outStream);
 
-  ~MaeWriter() override = default;
+  ~MaeWriter() override;
 
   //! \brief set a vector of property names that are need to be
   //! written out for each molecule
