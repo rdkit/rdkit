@@ -802,12 +802,40 @@ ROMol *hapticBondsToDative(const ROMol &mol) {
   return static_cast<ROMol *>(res);
 }
 
+namespace {
+std::vector<unsigned int> parseBondEntpts(const Bond *bond) {
+  // This would ideally use ParseV3000Array but I'm buggered if I can get
+  // the linker to find it.  The issue, I think, is that it's in the
+  // FileParsers library which is built after GraphMol so not available
+  // to link in.  It can't be built first because it needs GraphMol.
+  //      std::vector<unsigned int> oats =
+  //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+  // Returns the atom indices i.e. subtracts 1 from the numbers in the prop.
+  std::vector<unsigned int> oats;
+  std::string endpts;
+  if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
+    if ('(' == endpts.front() && ')' == endpts.back()) {
+      endpts = endpts.substr(1, endpts.length() - 2);
+      boost::char_separator<char> sep(" ");
+      boost::tokenizer<boost::char_separator<char>> tokens(endpts, sep);
+      auto beg = tokens.begin();
+      ++beg;
+      std::transform(beg, tokens.end(), std::back_inserter(oats),
+                     [](const std::string &a) { return std::stod(a) - 1; });
+    }
+  }
+  return oats;
+}
+}  // namespace
+
 void hapticBondsToDative(RWMol &mol) {
   std::vector<unsigned int> dummiesToGo;
   for (const auto &bond : mol.bonds()) {
-    std::string endpts;
-    if (bond->getBondType() == Bond::BondType::DATIVE &&
-        bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
+    if (bond->getBondType() == Bond::BondType::DATIVE) {
+      auto oats = parseBondEntpts(bond);
+      if (oats.empty()) {
+        continue;
+      }
       Atom *dummy = nullptr;
       Atom *metal = nullptr;
       if (bond->getBeginAtom()->getAtomicNum() == 0) {
@@ -820,27 +848,8 @@ void hapticBondsToDative(RWMol &mol) {
       if (dummy == nullptr) {
         continue;
       }
-      // This would ideally use ParseV3000Array but I'm buggered if I can get
-      // the linker to find it.  The issue, I think, is that it's in the
-      // FileParsers library which is built after GraphMol so not available
-      // to link in.  It can't be built first because it needs GraphMol.
-      //      std::vector<unsigned int> oats =
-      //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
-      std::vector<unsigned int> oats;
-      if ('(' == endpts.front() && ')' == endpts.back()) {
-        endpts = endpts.substr(1, endpts.length() - 2);
-        boost::char_separator<char> sep(" ");
-        boost::tokenizer<boost::char_separator<char>> tokens(endpts, sep);
-        auto beg = tokens.begin();
-        ++beg;
-        std::transform(beg, tokens.end(), std::back_inserter(oats),
-                       [](const std::string &a) { return std::stod(a); });
-      } else {
-        // the ENDPTS prop didn't have the correct format.
-        continue;
-      }
       for (auto oat : oats) {
-        auto atom = mol.getAtomWithIdx(oat - 1);
+        auto atom = mol.getAtomWithIdx(oat);
         if (atom) {
           mol.addBond(atom, metal, Bond::DATIVE);
         }
