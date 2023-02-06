@@ -450,6 +450,14 @@ ROMol *hapticBondsToDativeHelper(const ROMol &mol) {
   ROMol *res = MolOps::hapticBondsToDative(mol);
   return res;
 }
+python::list hapticBondEndpointsHelper(const Bond *bond) {
+  auto res = MolOps::hapticBondEndpoints(bond);
+  python::list pyres;
+  for (const auto r : res) {
+    pyres.append(r);
+  }
+  return pyres;
+}
 }  // namespace
 
 void setHybridizationMol(ROMol &mol) {
@@ -1651,6 +1659,12 @@ ARGUMENTS:\n\
     python::def("HapticBondsToDative", hapticBondsToDativeHelper,
                 (python::arg("mol")), docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
+
+    docString =
+        "If the bond is dative, and it has a common_properties::MolFileBondEndPts prop,\n\
+returns a vector of the indices of the atoms mentioned in the prop.\n";
+    python::def("HapticBondEndpoints", hapticBondEndpointsHelper,
+                (python::arg("bond")), docString.c_str());
 
     // ------------------------------------------------------------------------
     docString =

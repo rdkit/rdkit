@@ -1039,6 +1039,14 @@ RDKIT_GRAPHMOL_EXPORT ROMol *hapticBondsToDative(const ROMol &mol);
 //! \overload modifies molecule in place.
 RDKIT_GRAPHMOL_EXPORT void hapticBondsToDative(RWMol &mol);
 
+/*!
+ * If the bond is dative, and it has a common_properties::MolFileBondEndPts
+ * prop, returns a vector of the indices of the atoms mentioned in the prop.
+ *
+ * @param bond the bond of interest
+ */
+RDKIT_GRAPHMOL_EXPORT std::vector<int> hapticBondEndpoints(const Bond *bond);
+
 namespace details {
 //! not recommended for use in other code
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(

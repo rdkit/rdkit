@@ -6952,7 +6952,9 @@ CAS<~>
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
     self.assertEqual(Chem.MolToSmiles(newfemol),
                      'c12->[Fe+2]3456789(<-c1c->3[cH-]->4c->52)<-c1c->6c->7[cH-]->8c->91')
-
+    endpts = Chem.rdmolops.HapticBondEndpoints(femol.GetBondWithIdx(0))
+    print(endpts)
+    
     
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

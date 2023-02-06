@@ -802,8 +802,7 @@ ROMol *hapticBondsToDative(const ROMol &mol) {
   return static_cast<ROMol *>(res);
 }
 
-namespace {
-std::vector<unsigned int> parseBondEndpts(const Bond *bond) {
+std::vector<int> hapticBondEndpoints(const Bond *bond) {
   // This would ideally use ParseV3000Array but I'm buggered if I can get
   // the linker to find it.  The issue, I think, is that it's in the
   // FileParsers library which is built after GraphMol so not available
@@ -811,7 +810,7 @@ std::vector<unsigned int> parseBondEndpts(const Bond *bond) {
   //      std::vector<unsigned int> oats =
   //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
   // Returns the atom indices i.e. subtracts 1 from the numbers in the prop.
-  std::vector<unsigned int> oats;
+  std::vector<int> oats;
   std::string endpts;
   if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
     if ('(' == endpts.front() && ')' == endpts.back()) {
@@ -826,13 +825,12 @@ std::vector<unsigned int> parseBondEndpts(const Bond *bond) {
   }
   return oats;
 }
-}  // namespace
 
 void hapticBondsToDative(RWMol &mol) {
   std::vector<unsigned int> dummiesToGo;
   for (const auto &bond : mol.bonds()) {
     if (bond->getBondType() == Bond::BondType::DATIVE) {
-      auto oats = parseBondEndpts(bond);
+      auto oats = hapticBondEndpoints(bond);
       if (oats.empty()) {
         continue;
       }
