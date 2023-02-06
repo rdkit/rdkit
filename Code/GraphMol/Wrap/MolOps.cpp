@@ -445,6 +445,12 @@ void assignRadicalsMol(ROMol &mol) {
   auto &wmol = static_cast<RWMol &>(mol);
   MolOps::assignRadicals(wmol);
 }
+namespace {
+ROMol *hapticBondsToDativeHelper(const ROMol &mol) {
+  ROMol *res = MolOps::hapticBondsToDative(mol);
+  return res;
+}
+}  // namespace
 
 void setHybridizationMol(ROMol &mol) {
   auto &wmol = static_cast<RWMol &>(mol);
@@ -1629,6 +1635,23 @@ to the terminal dummy atoms.\n\
     python::def("AssignRadicals", assignRadicalsMol, (python::arg("mol")),
                 docString.c_str());
 
+    docString =
+        "One way of showing haptic bonds (such as cyclopentadiene to iron in ferrocene)\n\
+is to use a dummy atom with a dative bond to the iron atom with the bond\n\
+labelled with the atoms involved in the organic end of the bond.  Another way\n\
+is to have explicit dative bonds from the atoms of the haptic group to the\n\
+metal atom.  This function converts the former representation to the latter.n\
+\n\
+ARGUMENTS:\n\
+\n\
+  - mol: the molecule to use\n\
+\n\
+\n\RETURNS: a modified copy of the molecule\n\
+\n";
+    python::def("HapticBondsToDative", hapticBondsToDativeHelper,
+                (python::arg("mol")), docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
+
     // ------------------------------------------------------------------------
     docString =
         "Finds all subgraphs of a particular length in a molecule\n\
@@ -2549,8 +2572,9 @@ EXAMPLES:\n\n\
                        &MolzipParams::enforceValenceRules,
                        "If true (default) enforce valences after zipping\n\
 Setting this to false allows assembling chemically incorrect fragments.")
-        .def_readwrite("generateCoordinates", &MolzipParams::generateCoordinates,
-                       "If true will add depiction coordinates to input molecules and\n\
+        .def_readwrite(
+            "generateCoordinates", &MolzipParams::generateCoordinates,
+            "If true will add depiction coordinates to input molecules and\n\
 zipped molecule (for molzipFragments only)")
         .def("setAtomSymbols", &RDKit::setAtomSymbols,
              "Set the atom symbols used to zip mols together when using "

@@ -6945,6 +6945,15 @@ CAS<~>
     self.assertEqual(nm.foo, 1)
 
 
+  def test_HapticBondsToDative(self):
+    fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
+                          'ferrocene.mol')
+    femol = Chem.MolFromMolFile(fefile)
+    newfemol = Chem.rdmolops.HapticBondsToDative(femol)
+    self.assertEqual(Chem.MolToSmiles(newfemol),
+                     'c12->[Fe+2]3456789(<-c1c->3[cH-]->4c->52)<-c1c->6c->7[cH-]->8c->91')
+
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

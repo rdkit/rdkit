@@ -34,7 +34,9 @@
 
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/tokenizer.hpp>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/FileParsers/MolSGroupParsing.h>
 
 const int ci_LOCAL_INF = static_cast<int>(1e8);
 
@@ -793,5 +795,64 @@ unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   }
   return numPropAtoms;
 }
+
+ROMol *hapticBondsToDative(const ROMol &mol) {
+  auto *res = new RWMol(mol);
+  hapticBondsToDative(*res);
+  return static_cast<ROMol *>(res);
+}
+
+void hapticBondsToDative(RWMol &mol) {
+  std::vector<unsigned int> dummiesToGo;
+  for (const auto &bond : mol.bonds()) {
+    std::string endpts;
+    if (bond->getBondType() == Bond::BondType::DATIVE &&
+        bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
+      Atom *dummy = nullptr;
+      Atom *metal = nullptr;
+      if (bond->getBeginAtom()->getAtomicNum() == 0) {
+        dummy = bond->getBeginAtom();
+        metal = bond->getEndAtom();
+      } else if (bond->getEndAtom()->getAtomicNum() == 0) {
+        metal = bond->getBeginAtom();
+        dummy = bond->getEndAtom();
+      }
+      if (dummy == nullptr) {
+        continue;
+      }
+      // This would ideally use ParseV3000Array but I'm buggered if I can get
+      // the linker to find it.  The issue, I think, is that it's in the
+      // FileParsers library which is built after GraphMol so not available
+      // to link in.  It can't be built first because it needs GraphMol.
+      //      std::vector<unsigned int> oats =
+      //          RDKit::SGroupParsing::ParseV3000Array<unsigned int>(endpts);
+      std::vector<unsigned int> oats;
+      if ('(' == endpts.front() && ')' == endpts.back()) {
+        endpts = endpts.substr(1, endpts.length() - 2);
+        boost::char_separator<char> sep(" ");
+        boost::tokenizer<boost::char_separator<char>> tokens(endpts, sep);
+        auto beg = tokens.begin();
+        ++beg;
+        std::transform(beg, tokens.end(), std::back_inserter(oats),
+                       [](const std::string &a) { return std::stod(a); });
+      } else {
+        // the ENDPTS prop didn't have the correct format.
+        continue;
+      }
+      for (auto oat : oats) {
+        auto atom = mol.getAtomWithIdx(oat - 1);
+        if (atom) {
+          mol.addBond(atom, metal, Bond::DATIVE);
+        }
+      }
+      dummiesToGo.push_back(dummy->getIdx());
+    }
+  }
+  sort(dummiesToGo.begin(), dummiesToGo.end(), std::greater<>());
+  for (auto d : dummiesToGo) {
+    mol.removeAtom(d);
+  }
+}
+
 };  // end of namespace MolOps
 };  // end of namespace RDKit

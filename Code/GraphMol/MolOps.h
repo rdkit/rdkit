@@ -1022,6 +1022,23 @@ RDKIT_GRAPHMOL_EXPORT unsigned getNumAtomsWithDistinctProperty(
 //! returns whether or not a molecule needs to have Hs added to it.
 RDKIT_GRAPHMOL_EXPORT bool needsHs(const ROMol &mol);
 
+//! \brief Replaces haptic bond with explicit dative bonds.
+/*!
+ *
+ * @param mol the molecule of interest
+ *
+ * One way of showing haptic bonds (such as cyclopentadiene to iron in
+ * ferrocene) is to use a dummy atom with a dative bond to the iron atom with
+ * the bond labelled with the atoms involved in the organic end of the bond.
+ * Another way is to have explicit dative bonds from the atoms of the haptic
+ * group to the metal atom.  This function converts the former representation to
+ * the latter.
+ */
+RDKIT_GRAPHMOL_EXPORT ROMol *hapticBondsToDative(const ROMol &mol);
+
+//! \overload modifies molecule in place.
+RDKIT_GRAPHMOL_EXPORT void hapticBondsToDative(RWMol &mol);
+
 namespace details {
 //! not recommended for use in other code
 RDKIT_GRAPHMOL_EXPORT void KekulizeFragment(
