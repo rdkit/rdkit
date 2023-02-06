@@ -3018,21 +3018,44 @@ TEST_CASE("convert haptic bond to explicit dative bonds") {
   bool sanitize = false;
   std::vector<std::tuple<std::string, int, int>> test_data{
       {"ferrocene.mol", 10, 10}, {"MOL_00002.mol", 14, 10}};
-  for (const auto &td : test_data) {
-    std::unique_ptr<RWMol> mol(
-        MolFileToMol(pathName + std::get<0>(td), sanitize));
-    REQUIRE(mol);
-    MolOps::hapticBondsToDative(*mol);
-    int numDats = 0, numFeDats = 0;
-    for (const auto &b : mol->bonds()) {
-      if (b->getBondType() == Bond::DATIVE) {
-        ++numDats;
-        if (b->getEndAtom()->getAtomicNum() == 26) {
-          ++numFeDats;
+  {
+    // doing in place
+    for (const auto &td : test_data) {
+      std::unique_ptr<RWMol> mol(
+          MolFileToMol(pathName + std::get<0>(td), sanitize));
+      REQUIRE(mol);
+      MolOps::hapticBondsToDative(*mol);
+      int numDats = 0, numFeDats = 0;
+      for (const auto &b : mol->bonds()) {
+        if (b->getBondType() == Bond::DATIVE) {
+          ++numDats;
+          if (b->getEndAtom()->getAtomicNum() == 26) {
+            ++numFeDats;
+          }
         }
       }
+      CHECK(numDats == std::get<1>(td));
+      CHECK(numFeDats == std::get<2>(td));
     }
-    CHECK(numDats == std::get<1>(td));
-    CHECK(numFeDats == std::get<2>(td));
+  }
+  {
+    // doing via temporary
+    for (const auto &td : test_data) {
+      std::unique_ptr<ROMol> mol(
+          MolFileToMol(pathName + std::get<0>(td), sanitize));
+      REQUIRE(mol);
+      std::unique_ptr<ROMol> newMol(MolOps::hapticBondsToDative(*mol));
+      int numDats = 0, numFeDats = 0;
+      for (const auto &b : newMol->bonds()) {
+        if (b->getBondType() == Bond::DATIVE) {
+          ++numDats;
+          if (b->getEndAtom()->getAtomicNum() == 26) {
+            ++numFeDats;
+          }
+        }
+      }
+      CHECK(numDats == std::get<1>(td));
+      CHECK(numFeDats == std::get<2>(td));
+    }
   }
 }
