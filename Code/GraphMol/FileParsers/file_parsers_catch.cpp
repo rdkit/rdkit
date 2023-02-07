@@ -5538,8 +5538,6 @@ TEST_CASE("MaeMolSupplier setData and reset methods", "[MaeMolSupplier]") {
 
   supplier.setData(data1);
 
-  std::unique_ptr<ROMol> mol = nullptr;
-
   // Test the reset method by iterating the same input twice
   for (unsigned i = 0; i < 2; ++i) {
     unsigned j = 0;
@@ -5547,7 +5545,7 @@ TEST_CASE("MaeMolSupplier setData and reset methods", "[MaeMolSupplier]") {
       INFO("First input, lap " + std::to_string(i) + ", mol " +
            std::to_string(j));
 
-      mol.reset(supplier.next());
+      std::unique_ptr<ROMol> mol(supplier.next());
       REQUIRE(mol != nullptr);
 
       std::string mol_name;
@@ -5574,15 +5572,14 @@ TEST_CASE("MaeMolSupplier setData and reset methods", "[MaeMolSupplier]") {
   while (!supplier.atEnd()) {
     INFO("Second input, mol " + std::to_string(i));
 
-    ROMol *molptr = nullptr;
+    std::unique_ptr<ROMol> molptr;
     try {
-      molptr = supplier.next();
+      molptr.reset(supplier.next());
     } catch (const Invar::Invariant &) {
       // the 4th structure is intentionally bad.
     }
 
     REQUIRE((i == 3) ^ (molptr != nullptr));
-    delete molptr;
 
     ++i;
   }
@@ -5610,9 +5607,8 @@ TEST_CASE("MaeMolSupplier length", "[MaeMolSupplier]") {
   CHECK(supplier.length() == mols_in_file);
 
   unsigned i = 0;
-  std::unique_ptr<ROMol> mol;
   for (; i < 2; ++i) {
-    mol.reset(supplier.next());
+    std::unique_ptr<ROMol> mol(supplier.next());
 
     std::string mol_name;
     REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
@@ -5622,7 +5618,7 @@ TEST_CASE("MaeMolSupplier length", "[MaeMolSupplier]") {
   CHECK(supplier.length() == mols_in_file);
 
   while (!supplier.atEnd()) {
-    mol.reset(supplier.next());
+    std::unique_ptr<ROMol> mol(supplier.next());
 
     std::string mol_name;
     REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
@@ -5635,7 +5631,7 @@ TEST_CASE("MaeMolSupplier length", "[MaeMolSupplier]") {
   CHECK(supplier.atEnd());
 }
 
-TEST_CASE("MaeMolSupplier and operator[]", "[MaeMolSupplier]") {
+TEST_CASE("MaeMolSupplier and operator[]", "[MaeMolSupplier][reader]") {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
@@ -5648,9 +5644,8 @@ TEST_CASE("MaeMolSupplier and operator[]", "[MaeMolSupplier]") {
   MaeMolSupplier supplier(fname1);
 
   std::string mol_name;
-  std::unique_ptr<ROMol> mol;
   for (unsigned i = 0; i < mols_in_file; ++i) {
-    mol.reset(supplier[i]);
+    std::unique_ptr<ROMol> mol(supplier[i]);
     REQUIRE(mol->getPropIfPresent("_Name", mol_name) == true);
     CHECK(mol_name == mol_names[i]);
 
@@ -5664,7 +5659,7 @@ TEST_CASE("MaeMolSupplier and operator[]", "[MaeMolSupplier]") {
   CHECK_THROWS_AS(supplier[-1], FileParseException);
 }
 
-TEST_CASE("MaeMolSupplier is3D flag", "[MaeMolSupplier]") {
+TEST_CASE("MaeMolSupplier is3D flag", "[MaeMolSupplier][reader]") {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
