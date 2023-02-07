@@ -391,12 +391,12 @@ void mapBonds(const ROMol& mol, const STR_VECT& propNames,
   for (auto& bond : mol.bonds()) {
     auto idx = bond->getIdx();
 
-    auto bondTo = static_cast<int>(bond->getBeginAtomIdx());
+    // Indexes in the atom block are 1-based
+    auto bondTo = static_cast<int>(bond->getBeginAtomIdx()) + 1;
+    auto bondFrom = static_cast<int>(bond->getEndAtomIdx()) + 1;
+
     setPropertyValue(*bondBlock, mae::BOND_ATOM_1, numBonds, idx, bondTo);
-
-    auto bondFrom = static_cast<int>(bond->getEndAtomIdx());
     setPropertyValue(*bondBlock, mae::BOND_ATOM_2, numBonds, idx, bondFrom);
-
     setPropertyValue(*bondBlock, mae::BOND_ORDER, numBonds, idx,
                      bondTypeToOrder(*bond));
 
