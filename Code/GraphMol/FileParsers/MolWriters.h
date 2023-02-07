@@ -348,17 +348,26 @@ class RDKIT_FILEPARSERS_EXPORT PDBWriter : public MolWriter {
 
 class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
   /**************************************************************************************
-   * A Maestro file (or stream) writer - this is how it is used
-   *  - create a MaeWriter with a output file name (or a ostream),
-   *     and a list of properties that need to be written out.
-   *  - then a call is made to the write function for each molecule
+   * A highly experimental Maestro file (or stream) writer. Many features are
+   * not supported yet, e.g. chirality and bond stereo, stereo groups, substance
+   * groups, isotopes or dummy atoms. Note that except for stereochemistry
+   * labels these aren't supported by the MaeMolSupplier either.
+   *
+   * Usage:
+   *  - create a MaeWriter with an output file name (or a ostream),
+   *     and a list of mol/atom/bond properties that need to be written out.
+   *     If no property names are specified, all properties will be exported.
+   *     Properties that are specified, but are not present will be ignored.
+   *  - then, a call is made to the write function for each molecule
    *     that needs to be written out.
+   *
+   * Notes:
    *  - kekulization is mandatory, as the Maestro format does not
    *     have the concept of an aromatic bond.
    *  - Ownership of the output stream is mandatory, since it needs
    *     to be managed though a shared_ptr, as this is what maeparser
-   *     uses to manage the writing.
-   **********************************************************************************************/
+   *     writer takes.
+   ***************************************************************************************/
  public:
   /*!
     \param fileName       : filename to write to (stdout is *not* supported)

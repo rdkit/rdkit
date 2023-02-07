@@ -46,7 +46,7 @@ class LocalMaeWriter : public MaeWriter {
 struct wrap_maewriter {
   static void wrap() {
     std::string docStr =
-        "A class for writing molecules to Maestro files.\n\
+        "An experimental class for writing molecules to Maestro files.\n\
 \n\
   Usage examples:\n\
 \n\
@@ -64,11 +64,18 @@ struct wrap_maewriter {
        >>> writer.close()\n\
        >>> outf.close()\n\
 \n\
-  By default all non-private molecular and atomic properties are written\n\
+  By default all non-private molecule, atom and bond properties are written\n\
   to the Maestro file. This can be changed using the SetProps method:\n\n\
        >>> writer = MaeWriter('out.mae')\n\
-       >>> writer.SetProps(['prop1','prop2'])\n\
-\n";
+       >>> writer.SetProps(['prop1','prop2'])\n\n\
+  Properties that are specified, but are not present will be ignored.\n\n\
+  Kekulization is mandatory, as the Maestro format does not have\n\
+  the concept of an aromatic bond\n\n\
+  As this is an experimental writer, many features are not supported yet,\n\
+  e.g. chirality and bond stereo labels, stereo groups, substance groups,\n\
+  isotopes, or even dummy atoms. Note that these aren't supported by\n\
+  MaeMolSupplier either.\n\
+\n ";
     python::class_<LocalMaeWriter, boost::noncopyable>(
         "MaeWriter", docStr.c_str(), python::no_init)
         .def(python::init<python::object &>(python::arg("fileobj")))
