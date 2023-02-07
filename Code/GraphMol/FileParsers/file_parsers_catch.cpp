@@ -5524,7 +5524,8 @@ std::string read_file(const std::string &fname) {
 }
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-TEST_CASE("MaeMolSupplier setData and reset methods", "[MaeMolSupplier]") {
+TEST_CASE("MaeMolSupplier setData and reset methods",
+          "[mae][MaeMolSupplier][reader]") {
   std::string rdbase = getenv("RDBASE");
 
   MaeMolSupplier supplier;
@@ -5592,7 +5593,7 @@ TEST_CASE("MaeMolSupplier setData and reset methods", "[MaeMolSupplier]") {
   REQUIRE_THROWS_AS(supplier.reset(), Invar::Invariant);
 }
 
-TEST_CASE("MaeMolSupplier length", "[MaeMolSupplier]") {
+TEST_CASE("MaeMolSupplier length", "[mae][MaeMolSupplier][reader]") {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
@@ -5631,7 +5632,7 @@ TEST_CASE("MaeMolSupplier length", "[MaeMolSupplier]") {
   CHECK(supplier.atEnd());
 }
 
-TEST_CASE("MaeMolSupplier and operator[]", "[MaeMolSupplier][reader]") {
+TEST_CASE("MaeMolSupplier and operator[]", "[mae][MaeMolSupplier][reader]") {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
@@ -5659,7 +5660,7 @@ TEST_CASE("MaeMolSupplier and operator[]", "[MaeMolSupplier][reader]") {
   CHECK_THROWS_AS(supplier[-1], FileParseException);
 }
 
-TEST_CASE("MaeMolSupplier is3D flag", "[MaeMolSupplier][reader]") {
+TEST_CASE("MaeMolSupplier is3D flag", "[mae][MaeMolSupplier][reader]") {
   std::string rdbase = getenv("RDBASE");
   std::string fname1 =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
