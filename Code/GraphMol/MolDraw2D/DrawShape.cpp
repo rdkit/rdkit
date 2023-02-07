@@ -524,6 +524,12 @@ void DrawShapeDashedWedge::buildLines() {
   double dashSep = 2.5 + lineWidth_;
   double centralLen = (at1Cds_ - midend).length();
   unsigned int nDashes = rdcast<unsigned int>(std::round(centralLen / dashSep));
+  // There should be at least 3 dashes so we can see which way the wedge
+  // is going (Github6041b).
+  unsigned int numDashesNeeded = oneLessDash_ ? 4 : 3;
+  if (nDashes < numDashesNeeded) {
+    nDashes = numDashesNeeded;
+  }
   if (!nDashes) {
     points_.push_back(end1Cds_);
     points_.push_back(end2Cds_);

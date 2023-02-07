@@ -365,6 +365,9 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
         res = "->";
       }
       break;
+    case Bond::ZERO:
+      res = "~"; // Actually means "any", but we use ~ for unknown bond types in SMILES,
+      break;     // and this will match a ZOB.
     default:
       res = "";
   }

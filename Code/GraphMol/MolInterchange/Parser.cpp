@@ -927,7 +927,9 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
       throw FileParseException("Bad Format: missing version in JSON");
     }
     // FIX: we want to be backwards compatible
-    if (doc["rdkitjson"]["version"].GetInt() != currentRDKitJSONVersion) {
+    // Version 10 files can be read by 11, but not vice versa.
+    if (int jsonVersion = doc["rdkitjson"]["version"].GetInt();
+        jsonVersion > currentRDKitJSONVersion || jsonVersion < 10) {
       throw FileParseException("Bad Format: bad version in JSON");
     }
   } else {

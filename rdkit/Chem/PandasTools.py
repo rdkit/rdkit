@@ -395,7 +395,7 @@ def ChangeMoleculeRendering(frame=None, renderer='image'):
     log.warning("Failed to patch pandas - unable to change molecule rendering")
 
 
-def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False):
+def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumeric=False, forceV3000=False):
   '''Write an SD file for the molecules in the dataframe. Dataframe columns can be exported as
     SDF tags if specified in the "properties" list. "properties=list(df.columns)" would export
     all columns.
@@ -412,6 +412,9 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
       close = out.close
 
   writer = SDWriter(out)
+  if forceV3000:
+    writer.SetForceV3000(True)
+
   if properties is None:
     properties = []
   else:
@@ -511,7 +514,7 @@ def SaveXlsxFromFrame(frame, outFile, molCol='ROMol', size=(300, 300), formats=N
   import xlsxwriter  # don't want to make this a RDKit dependency
 
   cols = list(frame.columns)
-  if isinstance(molCol, Chem.Mol):
+  if isinstance(molCol, str):
     molCol = [molCol]
   molCol = list(set(molCol))
   dataTypes = dict(frame.dtypes)

@@ -21,6 +21,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/MolPickler.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/SequenceParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -2910,5 +2911,45 @@ TEST_CASE("Stop caching ring finding results") {
     CHECK(m->getRingInfo()->numRings() == 3);
     MolOps::fastFindRings(*m);
     CHECK(m->getRingInfo()->numRings() == 2);
+  }
+}
+
+TEST_CASE("molecules with more than 255 rings produce a bad pickle") {
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/GraphMol/test_data/";
+  bool sanitize = false;
+  std::unique_ptr<RWMol> mol(
+      MolFileToMol(pathName + "mol_with_pickle_error.mol", sanitize));
+  REQUIRE(mol);
+  mol->updatePropertyCache(false);
+  unsigned int opThatFailed = 0;
+  MolOps::sanitizeMol(*mol, opThatFailed,
+                      MolOps::SanitizeFlags::SANITIZE_ALL ^
+                          MolOps::SanitizeFlags::SANITIZE_PROPERTIES ^
+                          MolOps::SANITIZE_KEKULIZE);
+  CHECK(mol->getRingInfo()->numRings() > 300);
+  std::string pkl;
+  MolPickler::pickleMol(*mol, pkl);
+  RWMol nMol(pkl);
+  CHECK(nMol.getRingInfo()->numRings() == mol->getRingInfo()->numRings());
+}
+
+TEST_CASE("molecules with single bond to metal atom use dative instead") {
+  // Change heme coordination from single bond to dative.
+  // Test mols are CHEBI:26355, CHEBI:60344, CHEBI:17627.  26355 should be
+  // changed (Github 6019) the other two should not be.
+  // 4th mol is one that gave other problems during testing.
+  std::vector<std::pair<std::string, std::string>> test_vals{
+      {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
+      {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25"},
+      {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)O)c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)O)=CC1=[N+]25"},
+      {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
+       "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
+  for (size_t i = 0; i < test_vals.size(); ++i) {
+    RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    TEST_ASSERT(MolToSmiles(*m) == test_vals[i].second);
   }
 }

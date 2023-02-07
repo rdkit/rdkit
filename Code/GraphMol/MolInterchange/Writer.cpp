@@ -219,12 +219,19 @@ void addQuery(const Q &query, rj::Value &rjQuery, rj::Document &doc,
 
 void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
              const rj::Value &rjDefaults, const JSONWriteParameters &params) {
-  int bo = 0;
-  if (inv_bolookup.find(bond.getBondType()) != inv_bolookup.end()) {
-    bo = inv_bolookup.find(bond.getBondType())->second;
-  } else {
-    BOOST_LOG(rdWarningLog)
-        << " unrecognized bond type set to zero while writing" << std::endl;
+  int bo = -1;
+  if (auto boIter = inv_bolookup.find(bond.getBondType());
+      boIter != inv_bolookup.end()) {
+    bo = boIter->second;
+  }
+  // commonchem only supports a few bond orders:
+  if (!params.useRDKitExtensions && bo > 3) {
+    bo = -1;
+  }
+  if (bo < 0) {
+    bo = 0;
+    BOOST_LOG(rdWarningLog) << " unrecognized bond type " << bond.getBondType()
+                            << " set to zero while writing" << std::endl;
   }
   addIntVal(rjBond, rjDefaults, "bo", bo, doc);
   rj::Value rjAtoms(rj::kArrayType);
@@ -235,9 +242,9 @@ void addBond(const Bond &bond, rj::Value &rjBond, rj::Document &doc,
   rjBond.AddMember("atoms", rjAtoms, doc.GetAllocator());
 
   std::string chi = "";
-  if (inv_stereoBondlookup.find(bond.getStereo()) !=
-      inv_stereoBondlookup.end()) {
-    chi = inv_stereoBondlookup.find(bond.getStereo())->second;
+  if (auto sbIter = inv_stereoBondlookup.find(bond.getStereo());
+      sbIter != inv_stereoBondlookup.end()) {
+    chi = sbIter->second;
   } else {
     BOOST_LOG(rdWarningLog) << " unrecognized bond stereo " << bond.getStereo()
                             << " set to default while writing" << std::endl;

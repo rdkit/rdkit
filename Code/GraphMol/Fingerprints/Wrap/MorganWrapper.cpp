@@ -75,6 +75,20 @@ BondInvariantsGenerator *getMorganBondInvGen(const bool useBondTypes,
 }
 
 void exportMorgan() {
+  python::class_<MorganFingerprint::MorganArguments,
+                 python::bases<FingerprintArguments>, boost::noncopyable>(
+      "MorganFingerprintOptions", python::no_init)
+      .def_readwrite(
+          "onlyNonzeroInvariants",
+          &MorganFingerprint::MorganArguments::df_onlyNonzeroInvariants,
+          "use include atoms which have nonzero invariants")
+      .def_readwrite("radius", &MorganFingerprint::MorganArguments::d_radius,
+                     "the radius of the fingerprints to generate")
+      .def_readwrite(
+          "includeRedundantEnvironments",
+          &MorganFingerprint::MorganArguments::df_includeRedundantEnvironments,
+          "include redundant environments in the fingerprint");
+
   python::def(
       "GetMorganGenerator", getMorganGenerator<std::uint64_t>,
       (python::arg("radius") = 3, python::arg("countSimulation") = false,

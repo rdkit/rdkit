@@ -21,7 +21,6 @@ namespace TopologicalTorsion {
 class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionArguments
     : public FingerprintArguments {
  public:
-  bool df_includeChirality;
   uint32_t d_torsionAtomCount;
 
   std::string infoString() const override;
