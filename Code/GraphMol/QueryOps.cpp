@@ -35,10 +35,26 @@ int queryIsAtomBridgehead(Atom const *at) {
   if (!ri || !ri->isInitialized()) {
     return 0;
   }
-  // track which bonds involve this atom
+#if 1
+  unsigned int numSharedRingBonds = 0;
+  for (const auto bnd : mol.atomBonds(at)) {
+    auto nBondRings = ri->numBondRings(bnd->getIdx());
+    if (nBondRings == 1) {
+      numSharedRingBonds = 0;
+      break;
+    } else if (nBondRings > 1) {
+      ++numSharedRingBonds;
+    }
+  }
+  if (numSharedRingBonds >= 3) {
+    return 1;
+  }
+  return 0;
+
+#else
+  // track which ring bonds involve this atom
   boost::dynamic_bitset<> atomRingBonds(mol.getNumBonds());
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    const auto &bnd = mol[nbri];
+  for (const auto bnd : mol.atomBonds(at)) {
     if (ri->numBondRings(bnd->getIdx())) {
       atomRingBonds.set(bnd->getIdx());
     }
@@ -79,6 +95,7 @@ int queryIsAtomBridgehead(Atom const *at) {
       }
     }
   }
+#endif
   return 0;
 }
 
