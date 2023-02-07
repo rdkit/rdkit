@@ -479,6 +479,12 @@ void MaeWriter::close() {
 void MaeWriter::write(const ROMol& mol, int confId) {
   PRECONDITION(dp_ostream, "no output stream");
 
+  if (mol.getNumAtoms() == 0) {
+    BOOST_LOG(rdErrorLog)
+        << "ERROR: molecules without atoms cannot be exported to Maestro files.\n";
+    return;
+  }
+
   RWMol tmpMol(mol);
   if (!MolOps::KekulizeIfPossible(tmpMol)) {
     BOOST_LOG(rdErrorLog)
@@ -498,14 +504,16 @@ void MaeWriter::write(const ROMol& mol, int confId) {
 
   mapAtoms(tmpMol, d_props, confId, *indexedBlockMap);
 
-  try {
-    mapBonds(tmpMol, d_props, *indexedBlockMap);
+  if (mol.getNumBonds() > 0) {
+    try {
+      mapBonds(tmpMol, d_props, *indexedBlockMap);
 
-  } catch (const UnsupportedBondException& exc) {
-    BOOST_LOG(rdErrorLog)
-        << "ERROR: " << exc.what()
-        << " The mol will not be written to the output file.\n";
-    return;
+    } catch (const UnsupportedBondException& exc) {
+      BOOST_LOG(rdErrorLog)
+          << "ERROR: " << exc.what()
+          << " The mol will not be written to the output file.\n";
+      return;
+    }
   }
 
   stBlock->setIndexedBlockMap(indexedBlockMap);
