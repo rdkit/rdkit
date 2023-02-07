@@ -20,7 +20,7 @@ namespace RDKit {
 // common general queries
 
 int queryIsAtomBridgehead(Atom const *at) {
-  // at least three ring bonds, at least one ring bond in a ring which shares at
+  // at least three ring bonds, all ring bonds in a ring which shares at
   // least two bonds with another ring involving this atom
   //
   // We can't just go with "at least three ring bonds shared between multiple
@@ -46,16 +46,15 @@ int queryIsAtomBridgehead(Atom const *at) {
     return 0;
   }
 
-  boost::dynamic_bitset<> bondsInRing(mol.getNumBonds());
-  std::vector<unsigned int> numSharedRings(mol.getNumBonds(), 0);
+  boost::dynamic_bitset<> bondsInRingI(mol.getNumBonds());
+  boost::dynamic_bitset<> ringsOverlap(ri->numRings());
   for (unsigned int i = 0; i < ri->bondRings().size(); ++i) {
-    bondsInRing.reset();
+    bondsInRingI.reset();
     bool atomInRingI = false;
     for (const auto bidx : ri->bondRings()[i]) {
-      bondsInRing.set(bidx);
+      bondsInRingI.set(bidx);
       if (atomRingBonds[bidx]) {
         atomInRingI = true;
-        break;
       }
     }
     if (!atomInRingI) {
@@ -68,18 +67,23 @@ int queryIsAtomBridgehead(Atom const *at) {
         if (atomRingBonds[bidx]) {
           atomInRingJ = true;
         }
-        if (bondsInRing[bidx]) {
+        if (bondsInRingI[bidx]) {
           ++overlap;
         }
         if (overlap >= 2 && atomInRingJ) {
           // we have two rings containing the atom which share at least two
           // bonds:
-          return 1;
+          ringsOverlap.set(i);
+          ringsOverlap.set(j);
+          break;
         }
       }
     }
+    if (!ringsOverlap[i]) {
+      return 0;
+    }
   }
-  return 0;
+  return 1;
 }
 
 //! returns a Query for matching atoms with a particular number of ring bonds
