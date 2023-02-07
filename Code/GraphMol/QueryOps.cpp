@@ -35,23 +35,6 @@ int queryIsAtomBridgehead(Atom const *at) {
   if (!ri || !ri->isInitialized()) {
     return 0;
   }
-#if 1
-  unsigned int numSharedRingBonds = 0;
-  for (const auto bnd : mol.atomBonds(at)) {
-    auto nBondRings = ri->numBondRings(bnd->getIdx());
-    if (nBondRings == 1) {
-      numSharedRingBonds = 0;
-      break;
-    } else if (nBondRings > 1) {
-      ++numSharedRingBonds;
-    }
-  }
-  if (numSharedRingBonds >= 3) {
-    return 1;
-  }
-  return 0;
-
-#else
   // track which ring bonds involve this atom
   boost::dynamic_bitset<> atomRingBonds(mol.getNumBonds());
   for (const auto bnd : mol.atomBonds(at)) {
@@ -64,14 +47,15 @@ int queryIsAtomBridgehead(Atom const *at) {
   }
 
   boost::dynamic_bitset<> bondsInRing(mol.getNumBonds());
+  std::vector<unsigned int> numSharedRings(mol.getNumBonds(), 0);
   for (unsigned int i = 0; i < ri->bondRings().size(); ++i) {
     bondsInRing.reset();
     bool atomInRingI = false;
-
     for (const auto bidx : ri->bondRings()[i]) {
       bondsInRing.set(bidx);
       if (atomRingBonds[bidx]) {
         atomInRingI = true;
+        break;
       }
     }
     if (!atomInRingI) {
@@ -95,7 +79,6 @@ int queryIsAtomBridgehead(Atom const *at) {
       }
     }
   }
-#endif
   return 0;
 }
 
