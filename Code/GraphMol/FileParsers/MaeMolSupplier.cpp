@@ -302,11 +302,11 @@ void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
   // atomic numbers, and x, y, and z coordinates
   const auto size = atomic_numbers->size();
   auto conf = new RDKit::Conformer(size);
-  conf->set3D(true);
   conf->setId(0);
 
   PDBInfo pdb_info(atom_block);
 
+  bool nonzeroZ = false;
   for (size_t i = 0; i < size; ++i) {
     Atom *atom = new Atom(atomic_numbers->at(i));
     mol.addAtom(atom, true, true);
@@ -319,7 +319,11 @@ void addAtoms(const mae::IndexedBlock &atom_block, RWMol &mol) {
     pos.y = ys->at(i);
     pos.z = zs->at(i);
     conf->setAtomPos(i, pos);
+
+    nonzeroZ |= (std::abs(pos.z) > 1.e-4);
   }
+
+  conf->set3D(nonzeroZ);
   mol.addConformer(conf, false);
 }
 
@@ -382,6 +386,13 @@ void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
   MolOps::assignStereochemistry(mol, replaceExistingTags);
 }
 
+void throw_idx_error(unsigned idx) {
+  std::ostringstream errout;
+  errout << "ERROR: Index error (idx = " << idx << ") : "
+         << " we do no have enough ct blocks";
+  throw FileParseException(errout.str());
+}
+
 }  // namespace
 
 MaeMolSupplier::MaeMolSupplier(std::shared_ptr<std::istream> inStream,
@@ -393,14 +404,7 @@ MaeMolSupplier::MaeMolSupplier(std::shared_ptr<std::istream> inStream,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
-  d_reader.reset(new mae::Reader(dp_sInStream));
-  CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
-
-  try {
-    d_next_struct = d_reader->next(mae::CT_BLOCK);
-  } catch (const mae::read_exception &e) {
-    throw FileParseException(e.what());
-  }
+  init();
 }
 
 MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
@@ -413,14 +417,7 @@ MaeMolSupplier::MaeMolSupplier(std::istream *inStream, bool takeOwnership,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
-  d_reader.reset(new mae::Reader(dp_sInStream));
-  CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
-
-  try {
-    d_next_struct = d_reader->next(mae::CT_BLOCK);
-  } catch (const mae::read_exception &e) {
-    throw FileParseException(e.what());
-  }
+  init();
 }
 
 MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
@@ -431,8 +428,16 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
   df_sanitize = sanitize;
   df_removeHs = removeHs;
 
+  init();
+}
+
+void MaeMolSupplier::init() {
+  PRECONDITION(dp_sInStream, "no input stream")
   d_reader.reset(new mae::Reader(dp_sInStream));
   CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
+
+  d_position = 0;
+  d_length = 0;
 
   try {
     d_next_struct = d_reader->next(mae::CT_BLOCK);
@@ -440,9 +445,26 @@ MaeMolSupplier::MaeMolSupplier(const std::string &fileName, bool sanitize,
     throw FileParseException(e.what());
   }
 }
+void MaeMolSupplier::reset() {
+  dp_inStream->clear();
+  dp_inStream->seekg(0, std::ios::beg);
 
-void MaeMolSupplier::init() {}
-void MaeMolSupplier::reset() {}
+  auto length = d_length;
+  init();
+  d_length = length;
+}
+
+void MaeMolSupplier::setData(const std::string &text, bool sanitize,
+                             bool removeHs) {
+  dp_inStream = static_cast<std::istream *>(
+      new std::istringstream(text, std::ios_base::binary));
+  dp_sInStream.reset(dp_inStream);
+  df_owner = true;  // maeparser requires ownership
+  df_sanitize = sanitize;
+  df_removeHs = removeHs;
+
+  init();
+}
 
 ROMol *MaeMolSupplier::next() {
   PRECONDITION(dp_sInStream != nullptr, "no stream");
@@ -473,7 +495,69 @@ void MaeMolSupplier::moveToNextBlock() {
   } catch (const mae::read_exception &e) {
     d_stored_exc = e.what();
   }
+  ++d_position;
 }
 
-bool MaeMolSupplier::atEnd() { return d_next_struct == nullptr; }
+bool MaeMolSupplier::atEnd() {
+  if (d_next_struct == nullptr) {
+    d_length = d_position;
+    return true;
+  }
+  return false;
+}
+
+unsigned int MaeMolSupplier::length() {
+  PRECONDITION(dp_inStream, "no stream");
+
+  if (d_length == 0 && !atEnd()) {
+    // maeparser has an internal buffer, so we can't just iterate over
+    // block till we reach the end of the file. So we have to rewind
+    // the input stream, use it to create a separate parser, fast
+    // forward this one to the end of the data, and then get the length
+    // from that parser. Then we can restore the input stream to
+    // the position where it was before, so that it is still in
+    // sync with maeparser's internal buffer.
+
+    dp_sInStream->clear();
+    auto current_position = dp_sInStream->tellg();
+    dp_sInStream->seekg(0, std::ios::beg);
+
+    MaeMolSupplier tmp_supplier(dp_sInStream);
+    while (!tmp_supplier.atEnd()) {
+      tmp_supplier.moveToNextBlock();
+    }
+
+    d_length = tmp_supplier.length();
+    dp_sInStream->seekg(current_position, std::ios::beg);
+  }
+
+  return d_length;
+}
+
+void MaeMolSupplier::moveTo(unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+
+  if (d_length > 0 && idx > d_length) {
+    throw_idx_error(idx);
+  }
+
+  if (idx < d_position) {
+    reset();
+  }
+
+  while (idx > d_position) {
+    moveToNextBlock();
+
+    if (atEnd()) {
+      throw_idx_error(idx);
+    }
+  }
+}
+
+ROMol *MaeMolSupplier::operator[](unsigned int idx) {
+  PRECONDITION(dp_inStream, "no stream");
+  moveTo(idx);
+  return next();
+}
+
 }  // namespace RDKit
