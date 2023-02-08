@@ -1187,6 +1187,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           msI.obj.atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !msI.obj.atom->hasProp(common_properties::_brokenChirality)) {
         if (msI.obj.atom->hasProp(common_properties::_ringStereoAtoms)) {
+          // FIX: handle stereogroups here too
           if (!ringStereoChemAdjusted[msI.obj.atom->getIdx()]) {
             msI.obj.atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
             ringStereoChemAdjusted.set(msI.obj.atom->getIdx());
@@ -1226,6 +1227,24 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
               ringStereoChemAdjusted.set(nbrIdx);
             }
           }
+        } else if (size_t sgidx;
+                   msI.obj.atom->getPropIfPresent("_stereoGroup", sgidx)) {
+          // make sure that the reference atom in the stereogroup is CCW
+          auto &sg = mol.getStereoGroups()[sgidx];
+          bool swapIt =
+              msI.obj.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW;
+          if (swapIt) {
+            msI.obj.atom->invertChirality();
+          }
+          if (swapIt || numSwapsChiralAtoms[msI.obj.atom->getIdx()]) {
+            for (auto at : sg.getAtoms()) {
+              if (at == msI.obj.atom) {
+                continue;
+              }
+              at->invertChirality();
+            }
+          }
+
         } else {
           if (msI.obj.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
               msI.obj.atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
@@ -1254,6 +1273,72 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     mol.debugMol(std::cerr);
     std::cerr<<"----------------------------------------->"<<std::endl;
 #endif
+}
+void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
+                  bool breakTies = true, bool includeChirality = true,
+                  bool includeIsotopes = true);
+void canonicalizeEnhancedStereo(ROMol &mol,
+                                const std::vector<unsigned int> *atomRanks) {
+  const auto &sgs = mol.getStereoGroups();
+  if (sgs.empty()) {
+    return;
+  }
+
+  std::vector<unsigned int> lranks;
+  if (!atomRanks) {
+    bool breakTies = true;
+    rankMolAtoms(mol, lranks, breakTies);
+    atomRanks = &lranks;
+  }
+  // one thing that makes this all easier is that the stereogroups are
+  // independent of each other
+  std::vector<StereoGroup> newSgs;
+  for (auto &sg : sgs) {
+    // we don't do anything to ABS groups
+    if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      newSgs.push_back(sg);
+      continue;
+    }
+
+    // sort the atoms by rank:
+    auto getAtomRank = [&atomRanks](const Atom *at1, const Atom *at2) {
+      return atomRanks->at(at1->getIdx()) < atomRanks->at(at2->getIdx());
+    };
+    auto sgAtoms = sg.getAtoms();
+    std::sort(sgAtoms.begin(), sgAtoms.end(), getAtomRank);
+    // find the reference (lowest-ranked) atom
+    auto refAtom = sgAtoms.front();
+
+    // we will use CCW as the "canonical" state for chirality, so if the
+    // referenceAtom is already CCW then we don't need to do anything more with
+    // this stereogroup
+    auto refState = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
+#if 0
+    INT_LIST nbrs;
+    auto [beg, end] = mol.getAtomBonds(*refAtom);
+    while (beg != end) {
+      nbrs.push_back(mol[*beg++]->getIdx());
+    }
+    std::cerr << "!!!! " << (*refAtom)->getDegree() << " " << nbrs.size()
+              << std::endl;
+    // sort the neighbor indices by atom ranks
+    nbrs.sort([&atomRanks](auto i, auto j) {
+      return atomRanks->at(i) < atomRanks->at(j);
+    });
+    if ((*refAtom)->getPerturbationOrder(nbrs) % 1) {
+      refState = Atom::ChiralType::CHI_TETRAHEDRAL_CW;
+    }
+#endif
+    if (refAtom->getChiralTag() != refState) {
+      // we need to flip everyone... so loop over the other atoms and flip them
+      // all:
+      std::for_each(sgAtoms.begin(), sgAtoms.end(),
+                    [](auto atom) { atom->invertChirality(); });
+    }
+    newSgs.emplace_back(StereoGroup(sg.getGroupType(), std::move(sgAtoms)));
+    refAtom->setProp("_stereoGroup", newSgs.size() - 1, true);
+  }
+  mol.setStereoGroups(newSgs);
 }
 }  // namespace Canon
 }  // namespace RDKit

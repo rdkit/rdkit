@@ -125,6 +125,17 @@ RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
                                                        bool isAtomFirst,
                                                        size_t numClosures);
 
+//! Canonicalizes the atom stereo labels in enhanced stereo groups
+/*!
+
+  For example, after calling this function the chiral centers in the
+  molecules `C[C@H](F)Cl |&1:1|` and `C[C@@H](F)Cl |&1:1|` will have the same
+  chiral tags.
+
+*/
+RDKIT_GRAPHMOL_EXPORT void canonicalizeEnhancedStereo(
+    ROMol &mol, const std::vector<unsigned int> *atomRanks = nullptr);
+
 }  // end of namespace Canon
 }  // end of namespace RDKit
 #endif

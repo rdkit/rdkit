@@ -366,6 +366,10 @@ std::string FragmentSmilesConstruct(
   }
   std::list<unsigned int> ringClosuresToErase;
 
+  if (params.canonical && params.doIsomericSmiles) {
+    Canon::canonicalizeEnhancedStereo(mol, &ranks);
+  }
+
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
                               params.doRandom);

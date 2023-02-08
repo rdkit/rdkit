@@ -325,7 +325,14 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     for i in range(nCenters):
       flag = bool(bitflag & (1 << i))
       flippers[i].flip(flag)
-    isomer = Chem.Mol(tm)
+
+    # from this point on we no longer need the stereogroups (if any are there), so
+    # remove them:
+    if tm.GetStereoGroups():
+      isomer = Chem.RWMol(tm)
+      isomer.SetStereoGroups([])
+    else:
+      isomer = Chem.Mol(tm)
     Chem.SetDoubleBondNeighborDirections(isomer)
     isomer.ClearComputedProps(includeRings=False)
 
@@ -355,3 +362,18 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
         break
     elif verbose:
       print("%s    failed to embed" % (Chem.MolToSmiles(isomer, isomericSmiles=True)))
+
+
+#------------------------------------
+#
+#  doctest boilerplate
+#
+def _test():
+  import doctest, sys
+  return doctest.testmod(sys.modules["__main__"])
+
+
+if __name__ == '__main__':
+  import sys
+  failed, tried = _test()
+  sys.exit(failed)

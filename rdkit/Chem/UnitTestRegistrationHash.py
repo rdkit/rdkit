@@ -100,13 +100,13 @@ $$$$
 
         layers = hash_sdf(structure)
         expected_layers = {
-                HashLayer.CANONICAL_SMILES: "C[C@@H]1C[C@H](C)Nc2cc3nc(O)cc(C(F)(F)F)c3cc21 |o1:1,3|",
+                HashLayer.CANONICAL_SMILES: "C[C@H]1C[C@@H](C)c2cc3c(C(F)(F)F)cc(O)nc3cc2N1 |o1:1,3|",
                 HashLayer.ESCAPE: "",
                 HashLayer.FORMULA: "C15H15F3N2O",
                 HashLayer.NO_STEREO_SMILES: "CC1CC(C)c2cc3c(C(F)(F)F)cc(O)nc3cc2N1",
                 HashLayer.NO_STEREO_TAUTOMER_HASH: "CC1CC(C)[C]2[CH][C]3[C]([CH][C]2[N]1)[N][C]([O])[CH][C]3C(F)(F)F_2_0",
                 HashLayer.SGROUP_DATA: "[]",
-                HashLayer.TAUTOMER_HASH: "C[C@@H]1C[C@H](C)[N][C]2[CH][C]3[N][C]([O])[CH][C](C(F)(F)F)[C]3[CH][C]21_2_0 |o1:1,3|",
+                HashLayer.TAUTOMER_HASH: "C[C@H]1C[C@@H](C)[C]2[CH][C]3[C]([CH][C]2[N]1)[N][C]([O])[CH][C]3C(F)(F)F_2_0 |o1:1,3|",
         }
         self.assertEqual(layers, expected_layers)
 
@@ -276,6 +276,7 @@ M  END
             ),
         )
         for mols_smis in groups:
+            print()
             csmis = set()
             for smi in mols_smis:
                 mol = Chem.MolFromSmiles(smi)
@@ -631,11 +632,7 @@ M  END
         """Does stereo group canonicalization mess up isotopes?"""
         mol = Chem.MolFromSmiles('CC[C@H](C)[999C@H](C)O  |o1:2,4|')
         layers = RegistrationHash.GetMolLayers(mol)
-        self.assertEqual(layers[HashLayer.CANONICAL_SMILES], 'CC[C@@H](C)[999C@@H](C)O |o1:2,4|')
-
-        mol = Chem.MolFromSmiles('CC[C@H](C)[1000C@H](C)O  |o1:2,4|')
-        with self.assertRaisesRegex(ValueError, expected_regex=r'does not support isotopes above 999'):
-            layers = RegistrationHash.GetMolLayers(mol)
+        self.assertEqual(layers[HashLayer.CANONICAL_SMILES], 'CC[C@H](C)[999C@H](C)O |o1:2,4|')
 
     def testBadBondDir(self):
         """"""

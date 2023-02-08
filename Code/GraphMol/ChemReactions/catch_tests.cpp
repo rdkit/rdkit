@@ -99,7 +99,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
     auto p = prods[0][0];
 
     clearAtomMappingProps(*p);
-    CHECK(MolToCXSmiles(*p) == "FC(Cl)[C@@H](Cl)Br |&1:3|");
+    CHECK(MolToCXSmiles(*p) == "FC(Cl)[C@H](Cl)Br |&1:3|");
   }
   SECTION("Reaction splits StereoGroup") {
     ROMOL_SPTR mol("F[C@H](Cl)[C@@H](Cl)Br |&1:1,3|"_smiles);
@@ -120,7 +120,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
     clearAtomMappingProps(*p0);
     clearAtomMappingProps(*p1);
     CHECK(MolToCXSmiles(*p0) == "O[C@H](F)Cl |&1:1|");
-    CHECK(MolToCXSmiles(*p1) == "O[C@@H](Cl)Br |&1:1|");
+    CHECK(MolToCXSmiles(*p1) == "O[C@H](Cl)Br |&1:1|");
   }
   SECTION("Reaction combines StereoGroups") {
     ROMOL_SPTR mol1("F[C@H](Cl)O |&1:1|"_smiles);

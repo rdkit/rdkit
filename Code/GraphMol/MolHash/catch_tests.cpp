@@ -233,8 +233,7 @@ TEST_CASE("Github issues", "[molhash]") {
 TEST_CASE("MolHash with CX extensions", "[molhash]") {
   SECTION("Tautomer") {
     auto mol =
-        "C[C@@H](O)[C@@H](C)[C@@H](C)C[C@H](C1=CN=CN1)C1=CNC=N1 "
-        "|o1:8,5,&1:1,3,r,c:11,18,t:9,15|"_smiles;
+        "C[C@@H](O)[C@@H](C)[C@@H](C)C[C@H](C1=CN=CN1)C1=CNC=N1 |o1:8,5,&1:1,3,r,c:11,18,t:9,15|"_smiles;
     REQUIRE(mol);
 
     {
@@ -242,7 +241,7 @@ TEST_CASE("MolHash with CX extensions", "[molhash]") {
       auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer);
       CHECK(
           hsh ==
-          "C[C@H]([C@@H](C)[O])[C@@H](C)CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1_3_0");
+          "C[C@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@@H](C)[C@H](C)[O]_3_0");
     }
     {
       RWMol cp(*mol);
@@ -251,7 +250,7 @@ TEST_CASE("MolHash with CX extensions", "[molhash]") {
           MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer, true);
       CHECK(
           hsh ==
-          "C[C@H]([C@@H](C)[O])[C@@H](C)CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1_3_0 |o1:5,&1:1,2|");
+          "C[C@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@@H](C)[C@H](C)[O]_3_0 |o1:1,&1:14,16|");
     }
   }
   SECTION("no coordinates please") {
