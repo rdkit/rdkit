@@ -26,6 +26,8 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
+#include "vf2.hpp"
+
 using namespace RDKit;
 
 void test1() {
@@ -1924,6 +1926,27 @@ void testMostSubstitutedCoreMatch() {
   TEST_ASSERT(raised);
 }
 
+void testLongRing() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test substructure matching with a pathological case "
+                        << "for symmetric SSSR"
+                        << std::endl;
+  std::string mol_smiles = "c12ccc(CCCCCCCc5ccc(C2)cc5)cc1";
+  std::string query_smiles = "c1cc2ccc1CCCCCCCc1ccc(cc1)C2";
+  ROMol *mol = SmilesToMol(mol_smiles);
+  ROMol *query = SmilesToMol(query_smiles);
+  TEST_ASSERT(MolToSmiles(*query) == MolToSmiles(*mol));
+  MatchVectType match1;
+  MatchVectType match2;
+  SubstructMatchParameters params;
+  TEST_ASSERT(
+    SubstructMatch(*mol, *query, match1));
+  TEST_ASSERT(
+    SubstructMatch(*query, *mol, match2));
+  delete query;
+  delete mol;
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   test1();
@@ -1950,6 +1973,7 @@ int main(int argc, char *argv[]) {
   testGithub2570();
   testEZVsCisTransMatch();
   testMostSubstitutedCoreMatch();
+  testLongRing();
 
   return 0;
 }
