@@ -395,6 +395,12 @@ void mapBonds(const ROMol& mol, const STR_VECT& propNames,
     auto bondTo = static_cast<int>(bond->getBeginAtomIdx()) + 1;
     auto bondFrom = static_cast<int>(bond->getEndAtomIdx()) + 1;
 
+    // There is no bond directionality in Maestro, and atom indexes
+    // in bonds are usually written in ascending order
+    if (bondFrom > bondTo) {
+      std::swap(bondFrom, bondTo);
+    }
+
     setPropertyValue(*bondBlock, mae::BOND_ATOM_1, numBonds, idx, bondTo);
     setPropertyValue(*bondBlock, mae::BOND_ATOM_2, numBonds, idx, bondFrom);
     setPropertyValue(*bondBlock, mae::BOND_ORDER, numBonds, idx,
