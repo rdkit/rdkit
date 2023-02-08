@@ -7,8 +7,10 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
 #include <fstream>
 #include <string>
+#include <string_view>
 #include <streambuf>
 
 #include "RDGeneral/test.h"
@@ -5688,4 +5690,292 @@ TEST_CASE("MaeMolSupplier is3D flag", "[mae][MaeMolSupplier][reader]") {
   CHECK(mol->getConformer().is3D() == false);
 }
 
+void check_roundtripped_properties(RDProps &original, RDProps &roundtrip) {
+  // We don't care about the computed or private props
+  original.clearComputedProps();
+  auto includePrivate = false;
+  auto originalPropNames = original.getPropList(includePrivate);
+  auto roundtripPropNames = roundtrip.getPropList(includePrivate);
+
+  // We allow the roundtrip to add extra info, but the original
+  // properties must be present
+  REQUIRE(roundtripPropNames.size() >= originalPropNames.size());
+
+  std::sort(originalPropNames.begin(), originalPropNames.end());
+  std::sort(roundtripPropNames.begin(), roundtripPropNames.end());
+
+  REQUIRE(std::includes(roundtripPropNames.begin(), roundtripPropNames.end(),
+                        originalPropNames.begin(), originalPropNames.end()));
+
+  for (const auto &o : original.getDict().getData()) {
+    if (o.key == detail::computedPropName) {
+      continue;
+    }
+
+    UNSCOPED_INFO("Checking property = " << o.key);
+
+    switch (o.val.getTag()) {
+      case RDTypeTag::BoolTag:
+        CHECK(rdvalue_cast<bool>(o.val) == roundtrip.getProp<bool>(o.key));
+        break;
+
+      case RDTypeTag::IntTag:
+      case RDTypeTag::UnsignedIntTag:
+        CHECK(rdvalue_cast<int>(o.val) == roundtrip.getProp<int>(o.key));
+        break;
+
+      case RDTypeTag::DoubleTag:
+      case RDTypeTag::FloatTag:
+        CHECK(rdvalue_cast<double>(o.val) == roundtrip.getProp<double>(o.key));
+        break;
+
+      case RDTypeTag::StringTag:
+        CHECK(rdvalue_cast<std::string>(o.val) ==
+              roundtrip.getProp<std::string>(o.key));
+        break;
+
+      default:
+        throw std::runtime_error("Unexpected property type");
+    }
+  }
+}
+
+TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
+  auto mol = "C1CCCCC1"_smiles;
+  REQUIRE(mol);
+
+  auto add_some_props = [](RDProps &obj, const std::string &prefix) {
+    obj.setProp(prefix + "_bool_prop", false);
+    obj.setProp(prefix + "_int_prop", 42);
+    obj.setProp(prefix + "_real_prop", 3.141592);
+    obj.setProp(prefix + "_string_prop", "this is just a dummy property");
+  };
+
+  add_some_props(*mol, "mol");
+  add_some_props(*mol->getAtomWithIdx(0), "atom");
+  add_some_props(*mol->getBondWithIdx(0), "bond");
+
+  SECTION("Check output") {
+    mol->setProp(common_properties::_Name, "test mol 1");
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+
+    auto mae = oss->str();
+
+    // Check for the Maestro file header
+    REQUIRE(mae.find("s_m_m2io_version") != std::string::npos);
+
+    // Check the CT header and Structure properties
+    auto ctBlockStart = mae.find("f_m_ct");
+    REQUIRE(ctBlockStart != std::string::npos);
+
+    auto atomBlockStart = mae.find("m_atom[6]");
+    REQUIRE(atomBlockStart != std::string::npos);
+
+    auto bondBlockStart = mae.find("m_bond[6]");
+    REQUIRE(bondBlockStart != std::string::npos);
+
+    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string_view atomBlock(&mae[atomBlockStart],
+                               bondBlockStart - atomBlockStart);
+    std::string_view bondBlock(&mae[bondBlockStart]);
+
+    // Check mol properties
+    CHECK(ctBlock.find("s_m_title") != std::string::npos);
+
+    CHECK(ctBlock.find("b_rdk_mol_bool_prop") != std::string::npos);
+    CHECK(ctBlock.find("i_rdk_mol_int_prop") != std::string::npos);
+    CHECK(ctBlock.find("r_rdk_mol_real_prop") != std::string::npos);
+    CHECK(ctBlock.find("s_rdk_mol_string_prop") != std::string::npos);
+
+    // Check Atom properties
+    CHECK(atomBlock.find("r_m_x_coord") != std::string::npos);
+    CHECK(atomBlock.find("r_m_y_coord") != std::string::npos);
+    CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
+    CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
+    CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
+    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
+
+    CHECK(atomBlock.find("b_rdk_atom_bool_prop") != std::string::npos);
+    CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
+    CHECK(atomBlock.find("r_rdk_atom_real_prop") != std::string::npos);
+    CHECK(atomBlock.find("s_rdk_atom_string_prop") != std::string::npos);
+
+    // Check Bond properties
+    CHECK(bondBlock.find("i_m_from") != std::string::npos);
+    CHECK(bondBlock.find("i_m_to") != std::string::npos);
+    CHECK(bondBlock.find("i_m_order") != std::string::npos);
+
+    CHECK(bondBlock.find("b_rdk_bond_bool_prop") != std::string::npos);
+    CHECK(bondBlock.find("i_rdk_bond_int_prop") != std::string::npos);
+    CHECK(bondBlock.find("r_rdk_bond_real_prop") != std::string::npos);
+    CHECK(bondBlock.find("s_rdk_bond_string_prop") != std::string::npos);
+  }
+
+  SECTION("Check Property filtering") {
+    std::vector<std::string> keptProps{
+        "b_rdk_mol_bool_prop",
+        "i_rdk_atom_int_prop",
+        "r_rdk_bond_real_prop",
+        "non_existent_property",
+    };
+
+    mol->setProp(common_properties::_Name, "test mol 2");
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+
+    w.setProps(keptProps);
+
+    w.write(*mol);
+    w.flush();
+
+    auto mae = oss->str();
+
+    // Check for the Maestro file header
+    REQUIRE(mae.find("s_m_m2io_version") != std::string::npos);
+
+    // Check the CT header and Structure properties
+    auto ctBlockStart = mae.find("f_m_ct");
+    REQUIRE(ctBlockStart != std::string::npos);
+
+    auto atomBlockStart = mae.find("m_atom[6]");
+    REQUIRE(atomBlockStart != std::string::npos);
+
+    auto bondBlockStart = mae.find("m_bond[6]");
+    REQUIRE(bondBlockStart != std::string::npos);
+
+    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string_view atomBlock(&mae[atomBlockStart],
+                               bondBlockStart - atomBlockStart);
+    std::string_view bondBlock(&mae[bondBlockStart]);
+
+    // Check mol properties
+    CHECK(ctBlock.find("s_m_title") != std::string::npos);
+
+    CHECK(ctBlock.find("b_rdk_mol_bool_prop") != std::string::npos);
+
+    CHECK(ctBlock.find("i_rdk_mol_int_prop") == std::string::npos);
+    CHECK(ctBlock.find("r_rdk_mol_real_prop") == std::string::npos);
+    CHECK(ctBlock.find("s_rdk_mol_string_prop") == std::string::npos);
+
+    // Check Atom properties
+    CHECK(atomBlock.find("r_m_x_coord") != std::string::npos);
+    CHECK(atomBlock.find("r_m_y_coord") != std::string::npos);
+    CHECK(atomBlock.find("r_m_z_coord") != std::string::npos);
+    CHECK(atomBlock.find("i_m_atomic_number") != std::string::npos);
+    CHECK(atomBlock.find("i_m_formal_charge") != std::string::npos);
+    CHECK(atomBlock.find("s_m_color_rgb") != std::string::npos);
+
+    CHECK(atomBlock.find("i_rdk_atom_int_prop") != std::string::npos);
+
+    CHECK(atomBlock.find("b_rdk_atom_bool_prop") == std::string::npos);
+    CHECK(atomBlock.find("r_rdk_atom_real_prop") == std::string::npos);
+    CHECK(atomBlock.find("s_rdk_atom_string_prop") == std::string::npos);
+
+    // Check Bond properties
+    CHECK(bondBlock.find("i_m_from") != std::string::npos);
+    CHECK(bondBlock.find("i_m_to") != std::string::npos);
+    CHECK(bondBlock.find("i_m_order") != std::string::npos);
+
+    CHECK(bondBlock.find("r_rdk_bond_real_prop") != std::string::npos);
+
+    CHECK(bondBlock.find("b_rdk_bond_bool_prop") == std::string::npos);
+    CHECK(bondBlock.find("i_rdk_bond_int_prop") == std::string::npos);
+    CHECK(bondBlock.find("s_rdk_bond_string_prop") == std::string::npos);
+  }
+
+  SECTION("Check roundtrip") {
+    mol->setProp(common_properties::_Name, "test mol 3");
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*mol);
+    w.flush();
+
+    auto iss = new std::istringstream(oss->str());
+    MaeMolSupplier r(iss);
+
+    std::unique_ptr<ROMol> roundtrip_mol(r.next());
+    REQUIRE(roundtrip_mol);
+
+    REQUIRE(MolToSmiles(*roundtrip_mol) == "C1CCCCC1");
+
+    {
+      INFO("Checking mol properties");
+      check_roundtripped_properties(*mol, *roundtrip_mol);
+    }
+    {
+      INFO("Checking atom properties");
+      for (unsigned i = 0; i < mol->getNumAtoms(); ++i) {
+        check_roundtripped_properties(*mol->getAtomWithIdx(i),
+                                      *roundtrip_mol->getAtomWithIdx(i));
+      }
+    }
+    // Maeparser does not parse bond properties, so don't check them.
+  }
+}
+
+TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer]") {
+  SECTION("No atoms") {
+    ROMol m;
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(m);
+    w.flush();
+
+    CHECK(oss->str().empty());
+  }
+  SECTION("No bonds") {
+    auto m = "C"_smiles;
+    REQUIRE(m);
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*m);
+    w.flush();
+
+    auto mae = oss->str();
+    REQUIRE(!mae.empty());
+
+    CHECK(mae.find("m_atom[1]") != std::string::npos);
+    CHECK(mae.find("m_bond[") == std::string::npos);
+  }
+  SECTION("Not kekulizable bonds") {
+    bool debug = false;
+    bool sanitize = false;
+    std::unique_ptr<ROMol> m(SmilesToMol(
+        "c1cncc1", debug, sanitize));  // This SMILES is intentionally bad!
+    REQUIRE(m);
+
+    m->getBondWithIdx(0)->setBondType(Bond::AROMATIC);
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*m);
+    w.flush();
+
+    CHECK(oss->str().empty());
+  }
+  SECTION("Unsupported bonds") {
+    auto m = "CC"_smiles;
+    REQUIRE(m);
+
+    m->getBondWithIdx(0)->setBondType(Bond::DATIVEONE);
+
+    auto oss = new std::ostringstream;
+    MaeWriter w(oss);
+    w.write(*m);
+    w.flush();
+
+    CHECK(oss->str().empty());
+  }
+}
 #endif
