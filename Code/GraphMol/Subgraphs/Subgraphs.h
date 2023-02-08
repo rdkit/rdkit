@@ -128,6 +128,7 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
     bool useBonds = true, bool useHs = false, int rootedAtAtom = -1);
 
 //! \brief Find bond subgraphs of a particular radius around an atom.
+//!        The result is a path (a vector of bond indices).
 //!        Return empty result if there is no bond at the requested radius.
 /*!
  *   \param mol - the molecule to be considered
@@ -138,16 +139,58 @@ RDKIT_SUBGRAPHS_EXPORT INT_PATH_LIST_MAP findAllPathsOfLengthsMtoN(
  *                      Hs to the graph.
  *   \param enforceSize - If false, all the bonds within the requested radius
  *                        (<= radius) is collected. Otherwise, at least one bond
- *                        located at the requested radius must be found and
- * added. \param atomMap - Optional: If provided, it will measure the minimum
- * distance of the atom from the rooted atom (start with 0 from the rooted
- * atom). The result is a pair of the atom ID and the distance. The result is a
- * path (a vector of bond indices)
+ *                        located at the asked radius must be found and added. 
+ *   \param atomMap - Optional: If provided, it will measure the minimum
+ * distance of the atom from the rooted atom (start with 0). 
+ * The result is a pair of the atom ID and the distance.
+ *   \param bondMap - Optional: If provided, it will measure the minimum 
+ * distance of the bond from the connected bond (start with 1). 
+ * The result is a pair of the bond ID and the distance.
+ *   \param assumeIsolatedHydro - Optional: If True, the speed-up is achievable by 
+ * assuming that all the hydrogen atoms (except the rooted atom) is located at the 
+ * final node of branch in the molecular graph (one connected bond only) and is 
+ * unable to traverse the graph. Default to False. 
  */
 RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findAtomEnvironmentOfRadiusN(
     const ROMol &mol, unsigned int radius, unsigned int rootedAtAtom,
     bool useHs=false, bool enforceSize=true,
-    std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr);
+    std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr, 
+    std::unordered_map<unsigned int, unsigned int> *bondMap=nullptr, 
+    bool assumeIsolatedHydro=false);
+
+//! \brief Find bond subgraphs of a particular radius around a bond. 
+//!        The result is a path (a vector of bond indices).
+//!        Return empty result if there is no bond at the requested radius.
+//!        The function is equivalent as `findAtomEnvironmentOfRadiusN` on 
+//!        two connected atoms, and uniquely aggregate together with minimal 
+//!        bond distance.
+/*!
+ *   \param mol - the molecule to be considered
+ *   \param radius - the radius of the subgraphs to be considered
+ *   \param rootedAtBond - the bond to consider
+ *   \param useHs     - if set, hydrogens in the graph will be considered
+ *                      eligible to be in paths. NOTE: this will not add
+ *                      Hs to the graph.
+ *   \param enforceSize - If false, all the bonds within the requested radius
+ *                        (<= radius) is collected. Otherwise, at least one bond
+ *                        located at the asked radius must be found and added. 
+ *   \param atomMap - Optional: If provided, it will measure the minimum
+ * distance of the atom from the connected bond (start with 0). 
+ * The result is a pair of the atom ID and the distance. 
+ *   \param bondMap - Optional: If provided, it will measure the minimum 
+ * distance of the bond from the rooted bond (start with 0). 
+ * The result is a pair of the bond ID and the distance.
+ *   \param assumeIsolatedHydro - Optional: If True, the speed-up is achievable by 
+ * assuming that all the hydrogen atoms (except the rooted atom) is located at the 
+ * final node of branch in the molecular graph (one connected bond only) and is 
+ * unable to traverse the graph. Default to False. 
+ */
+RDKIT_SUBGRAPHS_EXPORT PATH_TYPE findBondEnvironmentOfRadiusN(
+    const ROMol &mol, unsigned int radius, unsigned int rootedAtBond,
+    bool useHs=false, bool enforceSize=true,
+    std::unordered_map<unsigned int, unsigned int> *atomMap=nullptr, 
+    std::unordered_map<unsigned int, unsigned int> *bondMap=nullptr, 
+    bool assumeIsolatedHydro=false);
 
 }  // namespace RDKit
 
