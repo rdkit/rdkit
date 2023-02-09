@@ -614,3 +614,31 @@ TEST_CASE("variable attachment bonds") {
     }
   }
 }
+
+TEST_CASE("github #6050: stereogroups not combined") {
+  SECTION("basics") {
+    auto m =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o1:7,&2:1,&3:5,r|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getStereoGroups().size() == 3);
+  }
+  SECTION("duplicate indices") {
+    auto m =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,o3:7,&2:1,&3:5,r|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getStereoGroups().size() == 3);
+    CHECK(m->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(m->getStereoGroups()[0].getAtoms().size() == 2);
+    CHECK(m->getStereoGroups()[1].getGroupType() == StereoGroupType::STEREO_OR);
+    CHECK(m->getStereoGroups()[1].getAtoms().size() == 1);
+  }
+  SECTION("multiple repeats") {
+    auto m =
+        "C[C@@H](O)[C@H](C)[C@@H](C)[C@H](O)[C@@H](C)[C@H](C)[C@H](C)O |o1:7,&2:1,&3:3,5,o1:9,11,o1:13,r|"_smiles;
+    REQUIRE(m);
+    CHECK(m->getStereoGroups().size() == 3);
+    CHECK(m->getStereoGroups()[0].getGroupType() == StereoGroupType::STEREO_OR);
+    CHECK(m->getStereoGroups()[0].getAtoms().size() == 4);
+  }
+}
