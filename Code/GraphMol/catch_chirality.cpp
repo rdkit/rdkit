@@ -3313,3 +3313,15 @@ TEST_CASE("false positives from new stereo code") {
     }
   }
 }
+
+TEST_CASE(
+    "Github #6049: Cyclobutyl group in a macrocycle triggers a stereo center") {
+  SECTION("as reported") {
+    auto mol = "O=S1(=O)C=CC=C2CCCCC3CC(C3)N21"_smiles;
+    REQUIRE(mol);
+    auto stereoInfo = Chirality::findPotentialStereo(*mol);
+    for (const auto &sg : stereoInfo) {
+      CHECK(sg.centeredOn != 15);
+    }
+  }
+}
