@@ -284,7 +284,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                   // scale.  Default is true.
   bool useComplexQueryAtomSymbols =
       false;  // replace any atom, any hetero, any halo queries
-              // with complex query symbols A, Q, X, optionally followed
+              // with complex query symbols A, Q, X, M, optionally followed
               // by H if hydrogen is included (except for AH, which stays *).
               // Default is false.
 

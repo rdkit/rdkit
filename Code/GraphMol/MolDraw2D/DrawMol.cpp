@@ -1187,19 +1187,46 @@ std::string getAtomListText(const Atom &atom) {
   return res + "]";
 }
 
-std::string getComplexQueryAtomEquivalent(const std::string &query) {
-  static const std::map<std::string, std::string> mdlEquivalent = {
+const std::map<std::string, std::string> &getComplexQuerySymbolMap() {
+  static const std::map<std::string, std::string> complexQuerySymbolMap{
       {"![H]", "A"},
       {"![C,H]", "Q"},
       {"![C]", "QH"},
       {"[F,Cl,Br,I,At]", "X"},
-      {"[F,Cl,Br,I,At,H]", "XH"}};
-  auto it = mdlEquivalent.find(query);
-  return (it == mdlEquivalent.end() ? query : it->second);
+      {"[F,Cl,Br,I,At,H]", "XH"},
+      {"![He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn,H]", "M"},
+      {"![He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn]", "MH"},
+  };
+  return complexQuerySymbolMap;
+}
+
+std::set<std::string> createComplexQuerySymbolSet() {
+  std::set<std::string> complexQuerySymbolSet;
+  const auto &querySymbolMap = getComplexQuerySymbolMap();
+  std::transform(
+      querySymbolMap.begin(), querySymbolMap.end(),
+      std::inserter(complexQuerySymbolSet, complexQuerySymbolSet.begin()),
+      [](const auto &pair) { return pair.second; });
+  return complexQuerySymbolSet;
+}
+
+const std::set<std::string> &getComplexQuerySymbolSet() {
+  static const auto complexQuerySymbolSet = createComplexQuerySymbolSet();
+  return complexQuerySymbolSet;
+}
+
+bool hasSymbolQueryType(const Atom &atom) {
+  return getComplexQuerySymbolSet().count(atom.getQueryType()) > 0;
+}
+
+std::string getComplexQueryAtomEquivalent(const std::string &query) {
+  const auto &complexQuerySymbolMap = getComplexQuerySymbolMap();
+  auto it = complexQuerySymbolMap.find(query);
+  return (it == complexQuerySymbolMap.end() ? query : it->second);
 }
 
 // ****************************************************************************
-std::string DrawMol::getAtomSymbol(const RDKit::Atom &atom,
+std::string DrawMol::getAtomSymbol(const Atom &atom,
                                    OrientType orientation) const {
   if (drawOptions_.noAtomLabels) {
     return "";
@@ -1240,6 +1267,9 @@ std::string DrawMol::getAtomSymbol(const RDKit::Atom &atom,
              atom.getDegree() == 1) {
     symbol = "";
     literal_symbol = false;
+  } else if (drawOptions_.useComplexQueryAtomSymbols &&
+             hasSymbolQueryType(atom)) {
+    symbol = atom.getQueryType();
   } else if (isAtomListQuery(&atom)) {
     symbol = getAtomListText(atom);
     if (drawOptions_.useComplexQueryAtomSymbols) {

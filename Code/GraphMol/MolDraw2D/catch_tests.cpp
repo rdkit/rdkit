@@ -277,6 +277,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_complex_query_atoms_10.svg", 2592662841U},
     {"test_complex_query_atoms_11.svg", 3667326374U},
     {"test_complex_query_atoms_12.svg", 582133495U},
+    {"test_complex_query_atoms_13.svg", 2311607000U},
+    {"test_complex_query_atoms_14.svg", 3566661047U},
+    {"test_complex_query_atoms_15.svg", 288029925U},
+    {"test_complex_query_atoms_16.svg", 1980695915U},
     {"test_github6041b.svg", 3485054881U}};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -6800,6 +6804,13 @@ M  END
   }
 }
 
+// we want to test this internal function so we declare it here
+namespace RDKit {
+namespace MolDraw2D_detail {
+bool hasSymbolQueryType(const Atom &atom);
+}
+}  // namespace RDKit
+
 TEST_CASE("Optionally depict complex query atoms in a more compact form") {
   std::string nameBase = "test_complex_query_atoms";
   auto extractQueryAtomSymbol = [](const std::string &text) {
@@ -6859,6 +6870,8 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
+      CHECK(MolDraw2D_detail::hasSymbolQueryType(
+          *a->getAtomWithIdx(a->getNumAtoms() - 1)));
       CHECK(extractQueryAtomSymbol(text) == "A");
       check_file_hash(nameBase + "_2.svg");
     }
@@ -6906,6 +6919,8 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
+      CHECK(!MolDraw2D_detail::hasSymbolQueryType(
+          *ah->getAtomWithIdx(ah->getNumAtoms() - 1)));
       CHECK(extractQueryAtomSymbol(text) == "*");
       check_file_hash(nameBase + "_4.svg");
     }
@@ -6953,6 +6968,8 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
+      CHECK(MolDraw2D_detail::hasSymbolQueryType(
+          *q->getAtomWithIdx(q->getNumAtoms() - 1)));
       CHECK(extractQueryAtomSymbol(text) == "Q");
       check_file_hash(nameBase + "_6.svg");
     }
@@ -7000,6 +7017,8 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
+      CHECK(MolDraw2D_detail::hasSymbolQueryType(
+          *qh->getAtomWithIdx(qh->getNumAtoms() - 1)));
       CHECK(extractQueryAtomSymbol(text) == "QH");
       check_file_hash(nameBase + "_8.svg");
     }
@@ -7049,6 +7068,8 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
+      CHECK(MolDraw2D_detail::hasSymbolQueryType(
+          *x->getAtomWithIdx(x->getNumAtoms() - 1)));
       CHECK(extractQueryAtomSymbol(text) == "X");
       check_file_hash(nameBase + "_10.svg");
     }
@@ -7098,8 +7119,114 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
+      CHECK(MolDraw2D_detail::hasSymbolQueryType(
+          *xh->getAtomWithIdx(xh->getNumAtoms() - 1)));
       CHECK(extractQueryAtomSymbol(text) == "XH");
       check_file_hash(nameBase + "_12.svg");
+    }
+  }
+  SECTION("any metal") {
+    auto m = R"CTAB(
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3344    0.8919    0.0000 M   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+
+    REQUIRE(m);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*m));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_13.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) ==
+            "![He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn,H]");
+      check_file_hash(nameBase + "_13.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = true;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*m));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_14.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(MolDraw2D_detail::hasSymbolQueryType(
+          *m->getAtomWithIdx(m->getNumAtoms() - 1)));
+      CHECK(extractQueryAtomSymbol(text) == "M");
+      check_file_hash(nameBase + "_14.svg");
+    }
+  }
+  SECTION("any metal or hydrogen") {
+    auto mh = R"CTAB(
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -1.7633    0.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.4778   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7633   -0.7580    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488   -0.3456    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0488    0.4794    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3344    0.8919    0.0000 MH  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  1  6  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  1  0  0  0  0
+M  END
+  )CTAB"_ctab;
+
+    REQUIRE(mh);
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      REQUIRE_NOTHROW(drawer.drawMolecule(*mh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_15.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(extractQueryAtomSymbol(text) ==
+            "![He,B,C,N,O,F,Ne,Si,P,S,Cl,Ar,As,Se,Br,Kr,Te,I,Xe,At,Rn]");
+      check_file_hash(nameBase + "_15.svg");
+    }
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().useComplexQueryAtomSymbols = true;
+      REQUIRE_NOTHROW(drawer.drawMolecule(*mh));
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs(nameBase + "_16.svg");
+      outs << text;
+      outs.flush();
+      outs.close();
+      CHECK(MolDraw2D_detail::hasSymbolQueryType(
+          *mh->getAtomWithIdx(mh->getNumAtoms() - 1)));
+      CHECK(extractQueryAtomSymbol(text) == "MH");
+      check_file_hash(nameBase + "_16.svg");
     }
   }
 }
