@@ -790,7 +790,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      "maximum font size in pixels. default=40, -1 means no"
                      " maximum.")
       .def_readwrite("minFontSize", &RDKit::MolDrawOptions::minFontSize,
-                     "minimum font size in pixels. default=12, -1 means no"
+                     "minimum font size in pixels. default=6, -1 means no"
                      " minimum.")
       .def_readwrite(
           "fixedFontSize", &RDKit::MolDrawOptions::fixedFontSize,
