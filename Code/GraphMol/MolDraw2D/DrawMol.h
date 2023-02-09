@@ -342,6 +342,8 @@ bool areBondsTrans(const Point2D &at1, const Point2D &at2, const Point2D &at3,
 // find the nborNum'th neighbour of firstAtom that isn't secondAtom
 const Atom *otherNeighbor(const Atom *firstAtom, const Atom *secondAtom,
                           int nborNum, const ROMol &mol);
+// return true if the query associated to atom
+bool hasSymbolQueryType(const Atom &atom);
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

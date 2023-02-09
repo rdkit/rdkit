@@ -17,6 +17,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
+#include <GraphMol/MolDraw2D/DrawMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <boost/algorithm/string/split.hpp>
@@ -6803,13 +6804,6 @@ M  END
     }
   }
 }
-
-// we want to test this internal function so we declare it here
-namespace RDKit {
-namespace MolDraw2D_detail {
-bool hasSymbolQueryType(const Atom &atom);
-}
-}  // namespace RDKit
 
 TEST_CASE("Optionally depict complex query atoms in a more compact form") {
   std::string nameBase = "test_complex_query_atoms";

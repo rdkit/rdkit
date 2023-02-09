@@ -1187,6 +1187,7 @@ std::string getAtomListText(const Atom &atom) {
   return res + "]";
 }
 
+// ****************************************************************************
 const std::map<std::string, std::string> &getComplexQuerySymbolMap() {
   static const std::map<std::string, std::string> complexQuerySymbolMap{
       {"![H]", "A"},
@@ -1215,14 +1216,14 @@ const std::set<std::string> &getComplexQuerySymbolSet() {
   return complexQuerySymbolSet;
 }
 
-bool hasSymbolQueryType(const Atom &atom) {
-  return getComplexQuerySymbolSet().count(atom.getQueryType()) > 0;
-}
-
 std::string getComplexQueryAtomEquivalent(const std::string &query) {
   const auto &complexQuerySymbolMap = getComplexQuerySymbolMap();
   auto it = complexQuerySymbolMap.find(query);
   return (it == complexQuerySymbolMap.end() ? query : it->second);
+}
+
+bool hasSymbolQueryType(const Atom &atom) {
+  return getComplexQuerySymbolSet().count(atom.getQueryType()) > 0;
 }
 
 // ****************************************************************************
