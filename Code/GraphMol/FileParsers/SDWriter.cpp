@@ -7,18 +7,24 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+
+#include <boost/any.hpp>
+
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+#include <maeparser/Writer.hpp>
+#endif  // RDK_BUILD_MAEPARSER_SUPPORT
+
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/RDLog.h>
 
 #include "MolWriters.h"
 #include "FileParsers.h"
-
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <boost/any.hpp>
 
 namespace RDKit {
 SDWriter::SDWriter(const std::string &fileName) {
