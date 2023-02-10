@@ -31,8 +31,7 @@ ADD_DEFINITIONS("-DRDK_USE_BOOST_IOSTREAMS")
 endif(RDK_USE_BOOST_IOSTREAMS)
 
 if(RDK_BUILD_MAEPARSER_SUPPORT)
-    include_directories(${maeparser_INCLUDE_DIRS})
-    set (maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
+  set (maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
 endif()
 
 if(RDK_USE_BOOST_REGEX)
@@ -61,6 +60,10 @@ rdkit_library(FileParsers
               MultithreadedSDMolSupplier.cpp
               LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS} ${regex_lib} ${link_iostreams} ${zlib_lib})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
+
+if(RDK_BUILD_MAEPARSER_SUPPORT)
+  target_include_directories(FileParsers PUBLIC ${maeparser_INCLUDE_DIRS})
+endif()
 
 rdkit_headers(CDXMLParser.h
               FileParsers.h

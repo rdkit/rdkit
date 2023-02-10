@@ -2,7 +2,7 @@ if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
     set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
 else()
     message("== Making SubstructLibrary without boost Serialization support")
-    set(RDKit_SERIALIZATION_LIBS )
+    set(RDKit_SERIALIZATION_LIBS)
 endif()
 
 rdkit_library(GraphMol
@@ -16,7 +16,7 @@ rdkit_library(GraphMol
               new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
               NontetrahedralStereo.cpp
               SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS} )
+              LINK_LIBRARIES RDGeometryLib RDGeneral ${RDKit_SERIALIZATION_LIBS})
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if(RDK_USE_URF)
   target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
@@ -135,26 +135,23 @@ rdkit_test(graphmolcpTest cptest.cpp LINK_LIBRARIES  SmilesParse GraphMol)
 rdkit_test(graphmolqueryTest querytest.cpp LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)
 
 rdkit_test(graphmolMolOpsTest molopstest.cpp
-           LINK_LIBRARIES SubstructMatch FileParsers
-	   SmilesParse GraphMol )
+           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol)
 
 rdkit_test(graphmoltestChirality testChirality.cpp
-           LINK_LIBRARIES SmilesParse FileParsers
-	   GraphMol )
+           LINK_LIBRARIES SmilesParse FileParsers GraphMol)
 
 rdkit_test(graphmoltestPickler testPickler.cpp
-           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol )
+           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol)
 
 rdkit_test(graphmoltestPicklerGlobalSetting testPicklerGlobalSettings.cpp
-           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol )
+           LINK_LIBRARIES SmilesParse SubstructMatch FileParsers GraphMol)
 
-rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol )
+rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol)
 
 rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES
-     SubstructMatch SmilesParse FileParsers GraphMol
-      )
+     SubstructMatch SmilesParse FileParsers GraphMol)
 
-rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol )
+rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol)
 
 rdkit_test(resMolSupplierTest resMolSupplierTest.cpp
            LINK_LIBRARIES SmilesParse GraphMol SubstructMatch FileParsers)
@@ -164,22 +161,22 @@ rdkit_test(molBundleTest testMolBundle.cpp
 
 rdkit_test(testSGroup testSGroup.cpp LINK_LIBRARIES FileParsers GraphMol)
 
-rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES SmilesParse GraphMol )
+rdkit_test(test-valgrind test-valgrind.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol)
 
-rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp 
-           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
+rdkit_catch_test(graphmolTestsCatch catch_graphmol.cpp
+           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol)
 
-rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp  
-           LINK_LIBRARIES SmilesParse FileParsers GraphMol )
+rdkit_catch_test(graphmolSGroupCatch catch_sgroups.cpp
+           LINK_LIBRARIES SmilesParse FileParsers GraphMol)
 
-rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp 
-           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol )
-           
-rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp 
-           LINK_LIBRARIES FileParsers SmilesParse GraphMol )
+rdkit_catch_test(graphmolAdjustQueryCatch catch_adjustquery.cpp
+           LINK_LIBRARIES SubstructMatch FileParsers SmilesParse GraphMol)
 
-rdkit_catch_test(canonTestsCatch catch_canon.cpp 
-           LINK_LIBRARIES FileParsers SmilesParse GraphMol )
+rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol)
 
-rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp 
-           LINK_LIBRARIES SubstructMatch SmilesParse GraphMol )
+rdkit_catch_test(canonTestsCatch catch_canon.cpp
+           LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+
+rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp
+           LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)

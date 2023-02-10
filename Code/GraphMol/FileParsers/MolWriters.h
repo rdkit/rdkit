@@ -18,15 +18,11 @@
 #include <memory>
 #include <string>
 
-#include <GraphMol/ROMol.h>
-
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-namespace schrodinger {
-namespace mae {
-class Writer;
-}  // namespace mae
-}  // namespace schrodinger
+#include <maeparser/Writer.hpp>
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
+
+#include <GraphMol/ROMol.h>
 
 namespace RDKit {
 
@@ -398,10 +394,12 @@ class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
  protected:
   MaeWriter() = default;  // used in the Python wrapper
 
+  std::shared_ptr<std::ostream> dp_ostream = nullptr;
+
+ private:
   void open();
 
-  std::shared_ptr<schrodinger::mae::Writer> dp_writer = nullptr;
-  std::shared_ptr<std::ostream> dp_ostream = nullptr;
+  std::unique_ptr<schrodinger::mae::Writer> dp_writer = nullptr;
   unsigned d_molid = 0;  // the number of the molecules we wrote so far
   STR_VECT d_props;      // list of property name that need to be written out
 };
