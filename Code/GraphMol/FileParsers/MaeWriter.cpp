@@ -320,6 +320,7 @@ void mapAtom(
   copyProperties(atom, propNames, idx, boolSetter, intSetter, realSetter,
                  stringSetter);
 }
+
 void mapAtoms(const ROMol& mol, const STR_VECT& propNames, int confId,
               mae::IndexedBlockMap& indexedBlockMap) {
   auto atomBlock = std::make_shared<mae::IndexedBlock>(mae::ATOM_BLOCK);
@@ -345,12 +346,47 @@ void mapAtoms(const ROMol& mol, const STR_VECT& propNames, int confId,
     setPropertyValue(*atomBlock, prop, numAtoms, idx, value);
   };
 
-  for (auto& atom : mol.atoms()) {
+  for (auto atom : mol.atoms()) {
     mapAtom(conformer, *atom, propNames, *atomBlock, numAtoms, boolSetter,
             intSetter, realSetter, stringSetter);
   }
 
   indexedBlockMap.addIndexedBlock(mae::ATOM_BLOCK, atomBlock);
+}
+
+void mapBond(
+    const Bond& bond,
+    std::shared_ptr<mae::IndexedProperty<mae::BoolProperty>>& dativeBondMark,
+    const STR_VECT& propNames, mae::IndexedBlock& bondBlock, size_t numBonds,
+    std::function<void(const std::string&, unsigned, bool)> boolSetter,
+    std::function<void(const std::string&, unsigned, int)> intSetter,
+    std::function<void(const std::string&, unsigned, double)> realSetter,
+    std::function<void(const std::string&, unsigned, const std::string&)>
+        stringSetter) {
+  auto idx = bond.getIdx();
+
+  // Indexes in the atom block are 1-based
+  auto bondTo = static_cast<int>(bond.getBeginAtomIdx()) + 1;
+  auto bondFrom = static_cast<int>(bond.getEndAtomIdx()) + 1;
+
+  // There is no bond directionality in Maestro, and atom indexes
+  // in bonds are usually written in ascending order
+  if (bondFrom > bondTo) {
+    std::swap(bondFrom, bondTo);
+  }
+
+  setPropertyValue(bondBlock, mae::BOND_ATOM_1, numBonds, idx, bondTo);
+  setPropertyValue(bondBlock, mae::BOND_ATOM_2, numBonds, idx, bondFrom);
+  setPropertyValue(bondBlock, mae::BOND_ORDER, numBonds, idx,
+                   bondTypeToOrder(bond));
+
+  if (dativeBondMark != nullptr) {
+    dativeBondMark->set(idx, (bond.getBondType() == Bond::BondType::DATIVE));
+  }
+
+  // Custom properties
+  copyProperties(bond, propNames, idx, boolSetter, intSetter, realSetter,
+                 stringSetter);
 }
 
 void mapBonds(const ROMol& mol, const STR_VECT& propNames,
@@ -388,31 +424,9 @@ void mapBonds(const ROMol& mol, const STR_VECT& propNames,
     setPropertyValue(*bondBlock, prop, numBonds, idx, value);
   };
 
-  for (auto& bond : mol.bonds()) {
-    auto idx = bond->getIdx();
-
-    // Indexes in the atom block are 1-based
-    auto bondTo = static_cast<int>(bond->getBeginAtomIdx()) + 1;
-    auto bondFrom = static_cast<int>(bond->getEndAtomIdx()) + 1;
-
-    // There is no bond directionality in Maestro, and atom indexes
-    // in bonds are usually written in ascending order
-    if (bondFrom > bondTo) {
-      std::swap(bondFrom, bondTo);
-    }
-
-    setPropertyValue(*bondBlock, mae::BOND_ATOM_1, numBonds, idx, bondTo);
-    setPropertyValue(*bondBlock, mae::BOND_ATOM_2, numBonds, idx, bondFrom);
-    setPropertyValue(*bondBlock, mae::BOND_ORDER, numBonds, idx,
-                     bondTypeToOrder(*bond));
-
-    if (dativeBondMark != nullptr) {
-      dativeBondMark->set(idx, (bond->getBondType() == Bond::BondType::DATIVE));
-    }
-
-    // Custom properties
-    copyProperties(*bond, propNames, idx, boolSetter, intSetter, realSetter,
-                   stringSetter);
+  for (auto bond : mol.bonds()) {
+    mapBond(*bond, dativeBondMark, propNames, *bondBlock, numBonds, boolSetter,
+            intSetter, realSetter, stringSetter);
   }
 
   indexedBlockMap.addIndexedBlock(mae::BOND_BLOCK, bondBlock);

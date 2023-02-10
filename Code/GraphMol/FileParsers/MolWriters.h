@@ -372,6 +372,9 @@ class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
    */
   MaeWriter(const std::string &fileName);
 
+  /*!
+  \note Note that this takes ownership of the output stream.
+  */
   MaeWriter(std::ostream *outStream);
 
   MaeWriter(std::shared_ptr<std::ostream> outStream);
