@@ -5832,7 +5832,8 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 
     w.setProps(keptProps);
 
-    w.write(*mol);
+    std::string heavyAtomColor = "131313";
+    w.write(*mol, heavyAtomColor);
     w.flush();
 
     auto mae = oss->str();
@@ -5888,6 +5889,15 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     CHECK(bondBlock.find("b_rdk_bond_bool_prop") == std::string::npos);
     CHECK(bondBlock.find("i_rdk_bond_int_prop") == std::string::npos);
     CHECK(bondBlock.find("s_rdk_bond_string_prop") == std::string::npos);
+
+    size_t pos = 0;
+    unsigned atom_color_count = 0;
+    while (pos < std::string::npos) {
+      pos = atomBlock.find(heavyAtomColor, pos + 1);
+      atom_color_count += (pos != std::string::npos);
+    }
+
+    CHECK(atom_color_count == mol->getNumAtoms());
   }
 
   SECTION("Check roundtrip") {

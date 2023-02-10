@@ -90,13 +90,19 @@ struct wrap_maewriter {
             "Sets the atom and mol properties to be written to the output file\n\n"
             "  ARGUMENTS:\n\n"
             "    - props: a list or tuple of atom and mol property names\n\n")
-        .def("write", &LocalMaeWriter::write,
-             (python::arg("self"), python::arg("mol"),
-              python::arg("confId") = defaultConfId),
-             "Writes a molecule to the output file.\n\n"
-             "  ARGUMENTS:\n\n"
-             "    - mol: the Mol to be written\n"
-             "    - confId: (optional) ID of the conformation to write\n\n")
+        .def(
+            "write",
+            (void(LocalMaeWriter::*)(const ROMol &, const std::string &, int)) &
+                LocalMaeWriter::write,
+            (python::arg("self"), python::arg("mol"),
+             python::arg("heavyAtomColor") = defaultMaeHeavyAtomColor,
+             python::arg("confId") = defaultConfId),
+            "Writes a molecule to the output file.\n\n"
+            "  ARGUMENTS:\n\n"
+            "    - mol: the Mol to be written\n"
+            "    - heavyAtomColor: (optional) color which heavy atoms will have in Maestro\n"
+            "    - confId: (optional) ID of the conformation to write\n\n")
+
         .def("flush", &LocalMaeWriter::flush,
              "Flushes the output file (forces the disk file to be "
              "updated).\n\n")

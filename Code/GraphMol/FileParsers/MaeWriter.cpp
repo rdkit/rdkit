@@ -33,7 +33,6 @@ using namespace schrodinger;
 namespace RDKit {
 
 namespace {
-
 const std::string MAE_ATOM_RGB_COLOR = "s_m_color_rgb";
 const std::string MAE_BOND_DATIVE_MARK = "b_sPrivate_dative_bond";
 const std::string PDB_ATOM_NAME = "s_m_pdb_atom_name";
@@ -266,7 +265,8 @@ void mapMolProperties(const ROMol& mol, const STR_VECT& propNames,
 }
 void mapAtom(
     const Conformer& conformer, const Atom& atom, const STR_VECT& propNames,
-    mae::IndexedBlock& atomBlock, size_t numAtoms,
+    const std::string& heavyAtomColor, mae::IndexedBlock& atomBlock,
+    size_t numAtoms,
     std::function<void(const std::string&, unsigned, bool)> boolSetter,
     std::function<void(const std::string&, unsigned, int)> intSetter,
     std::function<void(const std::string&, unsigned, double)> realSetter,
@@ -284,7 +284,7 @@ void mapAtom(
   setPropertyValue(atomBlock, mae::ATOM_ATOMIC_NUM, numAtoms, idx, atomic_num);
 
   // Default heavy atoms to be drawn in grey in Maestro, and H atoms in white.
-  std::string color = (atom.getAtomicNum() == 1 ? "FFFFFF" : "A0A0A0");
+  std::string color = (atom.getAtomicNum() == 1 ? "FFFFFF" : heavyAtomColor);
   setPropertyValue(atomBlock, MAE_ATOM_RGB_COLOR, numAtoms, idx, color);
 
   setPropertyValue(atomBlock, mae::ATOM_FORMAL_CHARGE, numAtoms, idx,
@@ -321,7 +321,8 @@ void mapAtom(
                  stringSetter);
 }
 
-void mapAtoms(const ROMol& mol, const STR_VECT& propNames, int confId,
+void mapAtoms(const ROMol& mol, const STR_VECT& propNames,
+              const std::string& heavyAtomColor, int confId,
               mae::IndexedBlockMap& indexedBlockMap) {
   auto atomBlock = std::make_shared<mae::IndexedBlock>(mae::ATOM_BLOCK);
   auto conformer = mol.getConformer(confId);
@@ -347,8 +348,8 @@ void mapAtoms(const ROMol& mol, const STR_VECT& propNames, int confId,
   };
 
   for (auto atom : mol.atoms()) {
-    mapAtom(conformer, *atom, propNames, *atomBlock, numAtoms, boolSetter,
-            intSetter, realSetter, stringSetter);
+    mapAtom(conformer, *atom, propNames, heavyAtomColor, *atomBlock, numAtoms,
+            boolSetter, intSetter, realSetter, stringSetter);
   }
 
   indexedBlockMap.addIndexedBlock(mae::ATOM_BLOCK, atomBlock);
@@ -497,6 +498,11 @@ void MaeWriter::close() {
 }
 
 void MaeWriter::write(const ROMol& mol, int confId) {
+  write(mol, defaultMaeHeavyAtomColor, confId);
+}
+
+void MaeWriter::write(const ROMol& mol, const std::string& heavyAtomColor,
+                      int confId) {
   PRECONDITION(dp_ostream, "no output stream");
 
   if (mol.getNumAtoms() == 0) {
@@ -522,7 +528,7 @@ void MaeWriter::write(const ROMol& mol, int confId) {
 
   auto indexedBlockMap = std::make_shared<mae::IndexedBlockMap>();
 
-  mapAtoms(tmpMol, d_props, confId, *indexedBlockMap);
+  mapAtoms(tmpMol, d_props, heavyAtomColor, confId, *indexedBlockMap);
 
   if (mol.getNumBonds() > 0) {
     try {
