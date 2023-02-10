@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 
 using namespace RDKit;
 typedef std::tuple<std::string, std::string, size_t> matchCase;
@@ -412,5 +413,100 @@ TEST_CASE(
       auto matches = SubstructMatch(*m, *q, ps);
       CHECK(matches.empty());
     }
+  }
+}
+
+TEST_CASE("Github #6002: hang in substructure search with query molecule") {
+  //   SECTION("simplified") {
+  //     auto mol = R"CTAB(
+  //   Mrv2211 02092314292D
+
+  //   5  4  0  0  0  0            999 V2000
+  //     0.0000    3.6020    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  //     0.7145    4.0145    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+  //     1.4290    4.4270    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  //     1.1270    3.3001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  //     0.3020    4.7291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  //   1  2  6  0  0  0  0
+  //   2  3  2  0  0  0  0
+  //   2  4  2  0  0  0  0
+  //   2  5  6  0  0  0  0
+  // M  END
+  // )CTAB"_ctab;
+  //     REQUIRE(mol);
+  //     CHECK(SubstructMatch(*mol, *mol).empty());
+  //   }
+  SECTION("simplified 2") {
+    auto mol = R"CTAB(
+  Mrv2211 02092317102D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O 0 4.1068 0 0
+M  V30 2 O 0 5.1334 0 0
+M  V30 3 O 0 6.7238 0 0
+M  V30 4 S 1.3337 7.4938 0 0
+M  V30 5 O 2.6674 8.2638 0 0
+M  V30 6 O 2.1037 6.1601 0 0
+M  V30 7 O 0.5637 8.8276 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 6 3 4
+M  V30 2 2 4 5
+M  V30 3 2 4 6
+M  V30 4 6 4 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    std::cerr << "------------" << std::endl;
+
+    CHECK(SubstructMatch(*mol, *mol).empty());
+  }
+  SECTION("as reported") {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+ 24  8  0  0  0  0  0  0  0  0999 V2000
+    0.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    1.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    2.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    4.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    5.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    6.5490    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990    7.2990    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981    8.0490    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0490    6.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5490    8.5981    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.0000    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    8.2990    0.7500    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    9.5981    1.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.0490   -0.5490    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.5490    2.0490    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    9.5981    0.0000 Al  0  0  0  0  0  0  0  0  0  0  0  0
+   10.5981    0.0000    0.0000 K   0  0  0  0  0  0  0  0  0  0  0  0
+ 13 14  6  0
+ 14 15  2  0
+ 14 16  2  0
+ 14 17  6  0
+ 18 19  6  0
+ 19 20  2  0
+ 19 21  2  0
+ 19 22  6  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    std::cerr << "------------" << std::endl;
+    CHECK(SubstructMatch(*mol, *mol).empty());
   }
 }
