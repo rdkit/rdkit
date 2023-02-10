@@ -13,6 +13,7 @@
 #include <fstream>
 #include <functional>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -421,6 +422,52 @@ void mapBonds(const ROMol& mol, const STR_VECT& propNames,
   indexedBlockMap.addIndexedBlock(mae::BOND_BLOCK, bondBlock);
 }
 
+std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol& mol,
+                                             const std::string& heavyAtomColor,
+                                             int confId,
+                                             const STR_VECT& propNames) {
+  if (mol.getNumAtoms() == 0) {
+    BOOST_LOG(rdErrorLog)
+        << "ERROR: molecules without atoms cannot be exported to Maestro files.\n";
+    return nullptr;
+  }
+
+  RWMol tmpMol(mol);
+  if (!MolOps::KekulizeIfPossible(tmpMol)) {
+    BOOST_LOG(rdErrorLog)
+        << "ERROR: the mol cannot be kekulized, and will not be written to the output file.\n";
+    return nullptr;
+  }
+  if (mol.getNumConformers() == 0) {
+    // make sure there's at least one conformer we can write
+    RDDepict::compute2DCoords(tmpMol);
+  }
+
+  auto stBlock = std::make_shared<mae::Block>(mae::CT_BLOCK);
+
+  mapMolProperties(tmpMol, propNames, *stBlock);
+
+  auto indexedBlockMap = std::make_shared<mae::IndexedBlockMap>();
+
+  mapAtoms(tmpMol, propNames, heavyAtomColor, confId, *indexedBlockMap);
+
+  if (mol.getNumBonds() > 0) {
+    try {
+      mapBonds(tmpMol, propNames, *indexedBlockMap);
+
+    } catch (const UnsupportedBondException& exc) {
+      BOOST_LOG(rdErrorLog)
+          << "ERROR: " << exc.what()
+          << " The mol will not be written to the output file.\n";
+      return nullptr;
+    }
+  }
+
+  stBlock->setIndexedBlockMap(indexedBlockMap);
+
+  return stBlock;
+}
+
 }  // namespace
 
 MaeWriter::MaeWriter(const std::string& fileName) {
@@ -493,51 +540,28 @@ void MaeWriter::write(const ROMol& mol, const std::string& heavyAtomColor,
                       int confId) {
   PRECONDITION(dp_ostream, "no output stream");
 
-  if (mol.getNumAtoms() == 0) {
-    BOOST_LOG(rdErrorLog)
-        << "ERROR: molecules without atoms cannot be exported to Maestro files.\n";
-    return;
-  }
+  auto block = _MolToMaeCtBlock(mol, heavyAtomColor, confId, d_props);
 
-  RWMol tmpMol(mol);
-  if (!MolOps::KekulizeIfPossible(tmpMol)) {
-    BOOST_LOG(rdErrorLog)
-        << "ERROR: the mol cannot be kekulized, and will not be written to the output file.\n";
-    return;
-  }
-  if (mol.getNumConformers() == 0) {
-    // make sure there's at least one conformer we can write
-    RDDepict::compute2DCoords(tmpMol);
-  }
-
-  auto stBlock = std::make_shared<mae::Block>(mae::CT_BLOCK);
-
-  mapMolProperties(tmpMol, d_props, *stBlock);
-
-  auto indexedBlockMap = std::make_shared<mae::IndexedBlockMap>();
-
-  mapAtoms(tmpMol, d_props, heavyAtomColor, confId, *indexedBlockMap);
-
-  if (mol.getNumBonds() > 0) {
-    try {
-      mapBonds(tmpMol, d_props, *indexedBlockMap);
-
-    } catch (const UnsupportedBondException& exc) {
-      BOOST_LOG(rdErrorLog)
-          << "ERROR: " << exc.what()
-          << " The mol will not be written to the output file.\n";
-      return;
+  if (block != nullptr) {
+    if (!dp_writer) {
+      open();
     }
+
+    block->write(*dp_ostream);
+    ++d_molid;
+  }
+}
+
+std::string MaeWriter::getText(const ROMol& mol,
+                               const std::string& heavyAtomColor, int confId,
+                               const STR_VECT& propNames) {
+  std::stringstream sstr;
+  auto block = _MolToMaeCtBlock(mol, heavyAtomColor, confId, propNames);
+  if (block != nullptr) {
+    block->write(sstr);
   }
 
-  stBlock->setIndexedBlockMap(indexedBlockMap);
-
-  if (!dp_writer) {
-    open();
-  }
-
-  dp_writer->write(stBlock);
-  ++d_molid;
+  return sstr.str();
 }
 
 }  // namespace RDKit

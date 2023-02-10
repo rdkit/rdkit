@@ -7147,6 +7147,36 @@ CAS<~>
 
     self.assertEqual(Chem.MolToSmiles(roundtrip_mol), smiles)
 
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  def testMaeWriterGetText(self):
+    smiles = "C1CCCCC1"
+    mol = Chem.MolFromSmiles(smiles)
+    self.assertTrue(mol)
+
+    dummy_prop = 'dummy_prop'
+    another_dummy_prop = 'another_dummy_prop'
+    mol.SetProp(dummy_prop, dummy_prop)
+    mol.SetProp(another_dummy_prop, another_dummy_prop)
+
+    heavyAtomColor = "767676"
+
+    osio = StringIO()
+    with Chem.MaeWriter(osio) as w:
+      w.SetProps([dummy_prop])
+      w.write(mol, heavyAtomColor=heavyAtomColor)
+
+    iomae = osio.getvalue()
+
+    ctBlockStart = iomae.find('f_m_ct')
+    self.assertNotEqual(ctBlockStart, -1)
+
+    self.assertIn(dummy_prop, iomae)
+    self.assertNotIn(another_dummy_prop, iomae)
+
+    mae = Chem.MaeWriter.GetText(mol, heavyAtomColor, -1, [dummy_prop])
+
+    self.assertEqual(mae, iomae[ctBlockStart:])
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

@@ -5930,6 +5930,30 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     }
     // Maeparser does not parse bond properties, so don't check them.
   }
+
+  SECTION("getText()") {
+    mol->setProp(common_properties::_Name, "test mol 4");
+
+    // The writer always takes ownership of the stream!
+    auto oss = new std::ostringstream;
+    std::string mae;
+    {
+      MaeWriter w(oss);
+      w.write(*mol);
+      mae = oss->str();
+    }
+
+    // Check for the Maestro file header
+    REQUIRE(mae.find("s_m_m2io_version") != std::string::npos);
+
+    // Check the CT header and Structure properties
+    auto ctBlockStart = mae.find("f_m_ct");
+    REQUIRE(ctBlockStart != std::string::npos);
+
+    std::string_view ctBlock(&mae[ctBlockStart]);
+
+    CHECK(ctBlock == MaeWriter::getText(*mol));
+  }
 }
 
 TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer]") {

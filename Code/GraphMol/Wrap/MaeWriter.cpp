@@ -112,7 +112,14 @@ struct wrap_maewriter {
              "Flushes the output file and closes it. The Writer cannot be used "
              "after this.\n\n")
         .def("NumMols", &LocalMaeWriter::numMols,
-             "Returns the number of molecules written so far.\n\n");
+             "Returns the number of molecules written so far.\n\n")
+        .def("GetText", &LocalMaeWriter::getText,
+             (python::arg("mol"),
+              python::arg("heavyAtomColor") = defaultMaeHeavyAtomColor,
+              python::arg("confId") = -1,
+              python::arg("props_list") = std::vector<std::string>()),
+             "returns the Maestro ct block text for a molecule")
+        .staticmethod("GetText");
 
     iterable_converter().from_python<std::vector<std::string>>();
   };
