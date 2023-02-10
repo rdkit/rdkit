@@ -14,6 +14,8 @@
 #include <memory>
 #include <string>
 
+#include <maeparser/Writer.hpp>
+
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <RDBoost/python.h>
 #include <RDBoost/python_streambuf.h>
