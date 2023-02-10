@@ -18,6 +18,8 @@
 #include <memory>
 #include <string>
 
+#include <boost/noncopyable.hpp>
+
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 #include <maeparser/Writer.hpp>
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
@@ -27,7 +29,7 @@
 namespace RDKit {
 
 static int defaultConfId = -1;
-class RDKIT_FILEPARSERS_EXPORT MolWriter {
+class RDKIT_FILEPARSERS_EXPORT MolWriter : private boost::noncopyable {
  public:
   virtual ~MolWriter() {}
   virtual void write(const ROMol &mol, int confId = defaultConfId) = 0;
