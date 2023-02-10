@@ -148,14 +148,14 @@ void copyProperties(
 
     // Also skip the property if we have a list of properties we want to export
     // and this one is not one of them.
+    if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
+                                         prop.key) == propNames.end())) {
+      continue;
+    }
 
     switch (prop.val.getTag()) {
       case RDTypeTag::BoolTag: {
         auto propName = std::string("b_rdk_") + prop.key;
-        if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
-                                             propName) == propNames.end())) {
-          continue;
-        }
         boolSetter(propName, idx, rdvalue_cast<bool>(prop.val));
         break;
       }
@@ -163,10 +163,6 @@ void copyProperties(
       case RDTypeTag::IntTag:
       case RDTypeTag::UnsignedIntTag: {
         auto propName = std::string("i_rdk_") + prop.key;
-        if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
-                                             propName) == propNames.end())) {
-          continue;
-        }
         intSetter(propName, idx, rdvalue_cast<int>(prop.val));
         break;
       }
@@ -174,20 +170,12 @@ void copyProperties(
       case RDTypeTag::DoubleTag:
       case RDTypeTag::FloatTag: {
         auto propName = std::string("r_rdk_") + prop.key;
-        if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
-                                             propName) == propNames.end())) {
-          continue;
-        }
         realSetter(propName, idx, rdvalue_cast<double>(prop.val));
         break;
       }
 
       case RDTypeTag::StringTag: {
         auto propName = std::string("s_rdk_") + prop.key;
-        if (!propNames.empty() && (std::find(propNames.begin(), propNames.end(),
-                                             propName) == propNames.end())) {
-          continue;
-        }
         stringSetter(propName, idx, rdvalue_cast<std::string>(prop.val));
         break;
       }

@@ -5818,9 +5818,9 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 
   SECTION("Check Property filtering") {
     std::vector<std::string> keptProps{
-        "b_rdk_mol_bool_prop",
-        "i_rdk_atom_int_prop",
-        "r_rdk_bond_real_prop",
+        "mol_bool_prop",
+        "atom_int_prop",
+        "bond_real_prop",
         "non_existent_property",
     };
 
