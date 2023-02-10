@@ -6864,8 +6864,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-      CHECK(MolDraw2D_detail::hasSymbolQueryType(
-          *a->getAtomWithIdx(a->getNumAtoms() - 1)));
+      CHECK(a->getAtomWithIdx(a->getNumAtoms() - 1)->getQueryType() == "A");
       CHECK(extractQueryAtomSymbol(text) == "A");
       check_file_hash(nameBase + "_2.svg");
     }
@@ -6913,8 +6912,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-      CHECK(!MolDraw2D_detail::hasSymbolQueryType(
-          *ah->getAtomWithIdx(ah->getNumAtoms() - 1)));
+      CHECK(ah->getAtomWithIdx(ah->getNumAtoms() - 1)->getQueryType() == "AH");
       CHECK(extractQueryAtomSymbol(text) == "*");
       check_file_hash(nameBase + "_4.svg");
     }
@@ -6962,8 +6960,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-      CHECK(MolDraw2D_detail::hasSymbolQueryType(
-          *q->getAtomWithIdx(q->getNumAtoms() - 1)));
+      CHECK(q->getAtomWithIdx(q->getNumAtoms() - 1)->getQueryType() == "Q");
       CHECK(extractQueryAtomSymbol(text) == "Q");
       check_file_hash(nameBase + "_6.svg");
     }
@@ -7011,8 +7008,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-      CHECK(MolDraw2D_detail::hasSymbolQueryType(
-          *qh->getAtomWithIdx(qh->getNumAtoms() - 1)));
+      CHECK(qh->getAtomWithIdx(qh->getNumAtoms() - 1)->getQueryType() == "QH");
       CHECK(extractQueryAtomSymbol(text) == "QH");
       check_file_hash(nameBase + "_8.svg");
     }
@@ -7062,8 +7058,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-      CHECK(MolDraw2D_detail::hasSymbolQueryType(
-          *x->getAtomWithIdx(x->getNumAtoms() - 1)));
+      CHECK(x->getAtomWithIdx(x->getNumAtoms() - 1)->getQueryType() == "X");
       CHECK(extractQueryAtomSymbol(text) == "X");
       check_file_hash(nameBase + "_10.svg");
     }
@@ -7113,8 +7108,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-      CHECK(MolDraw2D_detail::hasSymbolQueryType(
-          *xh->getAtomWithIdx(xh->getNumAtoms() - 1)));
+      CHECK(xh->getAtomWithIdx(xh->getNumAtoms() - 1)->getQueryType() == "XH");
       CHECK(extractQueryAtomSymbol(text) == "XH");
       check_file_hash(nameBase + "_12.svg");
     }
@@ -7165,8 +7159,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-      CHECK(MolDraw2D_detail::hasSymbolQueryType(
-          *m->getAtomWithIdx(m->getNumAtoms() - 1)));
+      CHECK(m->getAtomWithIdx(m->getNumAtoms() - 1)->getQueryType() == "M");
       CHECK(extractQueryAtomSymbol(text) == "M");
       check_file_hash(nameBase + "_14.svg");
     }
@@ -7217,8 +7210,7 @@ M  END
       outs << text;
       outs.flush();
       outs.close();
-      CHECK(MolDraw2D_detail::hasSymbolQueryType(
-          *mh->getAtomWithIdx(mh->getNumAtoms() - 1)));
+      CHECK(mh->getAtomWithIdx(mh->getNumAtoms() - 1)->getQueryType() == "MH");
       CHECK(extractQueryAtomSymbol(text) == "MH");
       check_file_hash(nameBase + "_16.svg");
     }
