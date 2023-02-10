@@ -165,19 +165,15 @@ node_id *SortNodesByFrequency(const Graph *g) {
 
 template <class Graph>
 node_id *SortNodesByDegree(const Graph *g) {
-  std::vector<NodeInfo> vect;
+  std::vector<std::pair<unsigned int, unsigned int>> vect;
   vect.reserve(boost::num_vertices(*g));
   typename Graph::vertex_iterator bNode, eNode;
   boost::tie(bNode, eNode) = boost::vertices(*g);
   while (bNode != eNode) {
-    NodeInfo t;
-    t.id = vect.size();
-    t.in = boost::out_degree(*bNode, *g);  // <- assuming undirected graph
-    t.out = boost::out_degree(*bNode, *g);
-    vect.push_back(t);
+    vect.emplace_back(boost::out_degree(*bNode, *g), vect.size());
     ++bNode;
   }
-  std::sort(vect.begin(), vect.end(), nodeInfoComp3);
+  std::sort(vect.begin(), vect.end());
 
   // std::cerr << "1 --------------" << std::endl;
   // for (auto &ni : vect) {
@@ -187,7 +183,7 @@ node_id *SortNodesByDegree(const Graph *g) {
 
   node_id *nodes = new node_id[vect.size()];
   for (unsigned int i = 0; i < vect.size(); ++i) {
-    nodes[i] = vect[i].id;
+    nodes[i] = vect[vect.size() - 1 - i].second;
   }
 
   return nodes;
