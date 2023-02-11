@@ -203,7 +203,9 @@ RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
                                                const StereoType &s);
 
-struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {};
+struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
+  bool wedgeTwoBondsIfPossible = false;
+};
 
 namespace detail {
 RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
@@ -220,8 +222,8 @@ RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(const Atom *atom, const ROMol &mol,
 
 //! picks the bonds which should be wedged
 /// \returns a map from bond idx -> controlling atom idx
-RDKIT_GRAPHMOL_EXPORT INT_MAP_INT
-pickBondsToWedge(const ROMol &mol, BondWedgingParameters *params = nullptr);
+RDKIT_GRAPHMOL_EXPORT INT_MAP_INT pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params = nullptr);
 
 RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
     ROMol &mol, const Conformer *conf = nullptr,

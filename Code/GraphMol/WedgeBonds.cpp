@@ -8,9 +8,6 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/RDKitBase.h>
-#include <RDGeneral/Ranking.h>
-#include <GraphMol/new_canon.h>
-#include <GraphMol/QueryOps.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <set>
@@ -29,14 +26,15 @@ namespace RDKit {
 
 namespace Chirality {
 
+const BondWedgingParameters defaultWedgingParams;
+
 namespace {
 std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
     const ROMol &mol, const Atom &atom) {
   unsigned int hasDouble = 0;
   unsigned int hasKnownDouble = 0;
   unsigned int hasAnyDouble = 0;
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(&atom))) {
-    const auto bond = mol[nbri];
+  for (const auto bond : mol.atomBonds(&atom)) {
     if (bond->getBondType() == Bond::BondType::DOUBLE) {
       ++hasDouble;
       if (bond->getStereo() == Bond::BondStereo::STEREOANY) {
@@ -85,7 +83,7 @@ std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
       // std::cerr << " SKIPPING1: " << at->getIdx() << std::endl;
       continue;
     }
-    Atom::ChiralType type = at->getChiralTag();
+    auto type = at->getChiralTag();
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       continue;
     }
@@ -105,7 +103,7 @@ std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
       nChiralNbrs[at->getIdx()] -= 1;
     }
   }
-  return std::pair<bool, INT_VECT>(chiNbrs, nChiralNbrs);
+  return std::make_pair(chiNbrs, nChiralNbrs);
 }
 
 //
@@ -117,15 +115,16 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   PRECONDITION(bond, "no bond");
   PRECONDITION(bond->getBondType() == Bond::SINGLE,
                "bad bond order for wedging");
-  const ROMol *mol = &(bond->getOwningMol());
+  const auto mol = &(bond->getOwningMol());
   PRECONDITION(mol, "no mol");
 
-  Bond::BondDir res = bond->getBondDir();
+  auto res = bond->getBondDir();
   if (!conf) {
     return res;
   }
 
-  Atom *atom, *bondAtom;  // = bond->getBeginAtom();
+  Atom *atom;
+  Atom *bondAtom;
   if (bond->getBeginAtom()->getIdx() == fromAtomIdx) {
     atom = bond->getBeginAtom();
     bondAtom = bond->getEndAtom();
@@ -134,7 +133,7 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
     bondAtom = bond->getBeginAtom();
   }
 
-  Atom::ChiralType chiralType = atom->getChiralTag();
+  auto chiralType = atom->getChiralTag();
   CHECK_INVARIANT(chiralType == Atom::CHI_TETRAHEDRAL_CW ||
                       chiralType == Atom::CHI_TETRAHEDRAL_CCW,
                   "");
@@ -142,9 +141,8 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   // if we got this far, we really need to think about it:
   std::list<int> neighborBondIndices;
   std::list<double> neighborBondAngles;
-  RDGeom::Point3D centerLoc, tmpPt;
-  centerLoc = conf->getAtomPos(atom->getIdx());
-  tmpPt = conf->getAtomPos(bondAtom->getIdx());
+  auto centerLoc = conf->getAtomPos(atom->getIdx());
+  auto tmpPt = conf->getAtomPos(bondAtom->getIdx());
   centerLoc.z = 0.0;
   tmpPt.z = 0.0;
   RDGeom::Point3D refVect = centerLoc.directionVector(tmpPt);
@@ -152,16 +150,13 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   neighborBondIndices.push_back(bond->getIdx());
   neighborBondAngles.push_back(0.0);
 
-  ROMol::OEDGE_ITER beg, end;
-  boost::tie(beg, end) = mol->getAtomBonds(atom);
-  while (beg != end) {
-    const Bond *nbrBond = (*mol)[*beg];
-    Atom *otherAtom = nbrBond->getOtherAtom(atom);
+  for (const auto nbrBond : mol->atomBonds(atom)) {
+    const auto otherAtom = nbrBond->getOtherAtom(atom);
     if (nbrBond != bond) {
       tmpPt = conf->getAtomPos(otherAtom->getIdx());
       tmpPt.z = 0.0;
-      RDGeom::Point3D tmpVect = centerLoc.directionVector(tmpPt);
-      double angle = refVect.signedAngleTo(tmpVect);
+      auto tmpVect = centerLoc.directionVector(tmpPt);
+      auto angle = refVect.signedAngleTo(tmpVect);
       if (angle < 0.0) {
         angle += 2. * M_PI;
       }
@@ -176,7 +171,6 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
       neighborBondAngles.insert(angleIt, angle);
       neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
     }
-    ++beg;
   }
 
   // at this point, neighborBondIndices contains a list of bond
@@ -219,13 +213,13 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   BOOST_LOG(rdDebugLog) << std::endl;
 #endif
   if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
-    if (nSwaps % 2 == 1) {  // ^ reverse) {
+    if (nSwaps % 2 == 1) {
       res = Bond::BEGINDASH;
     } else {
       res = Bond::BEGINWEDGE;
     }
   } else {
-    if (nSwaps % 2 == 1) {  // ^ reverse) {
+    if (nSwaps % 2 == 1) {
       res = Bond::BEGINWEDGE;
     } else {
       res = Bond::BEGINDASH;
@@ -262,12 +256,6 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
   // we use the orders calculated above to determine which order to do the
   // wedging
 
-  // If we call wedgeMolBonds() on a fragment, it can happen that we end up with
-  // atoms that don't have enough neighbors. Those are going to cause problems,
-  // so just bail here.
-  // if (atom->getDegree() < 3) {
-  //   return -1;
-  // }
   std::vector<std::pair<int, int>> nbrScores;
   for (const auto bond : mol.atomBonds(atom)) {
     // can only wedge single bonds:
@@ -285,7 +273,7 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
       }
       // prefer lower atomic numbers with lower degrees and no specified
       // chirality:
-      const Atom *oatom = bond->getOtherAtom(atom);
+      auto *oatom = bond->getOtherAtom(atom);
       int nbrScore = oatom->getAtomicNum() + 100 * oatom->getDegree() +
                      1000 * ((oatom->getChiralTag() != Atom::CHI_UNSPECIFIED));
       // prefer neighbors that are nonchiral or have as few chiral neighbors
@@ -300,10 +288,7 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
       // prefer non-ring bonds;
       nbrScore += 20000 * mol.getRingInfo()->numBondRings(bid);
       // prefer bonds to atoms which don't have a double bond from them
-      unsigned int hasDoubleBond;       // is a double bond there?
-      unsigned int hasKnownDoubleBond;  // is specified stereo there?
-      unsigned int hasAnyDoubleBond;    // is STEREOANY there?
-      std::tie(hasDoubleBond, hasKnownDoubleBond, hasAnyDoubleBond) =
+      auto [hasDoubleBond, hasKnownDoubleBond, hasAnyDoubleBond] =
           getDoubleBondPresence(mol, *oatom);
       nbrScore += 11000 * hasDoubleBond;
       nbrScore += 12000 * hasKnownDoubleBond;
@@ -325,25 +310,25 @@ int pickBondToWedge(const Atom *atom, const ROMol &mol,
   if (nbrScores.empty()) {
     return -1;
   }
-  std::sort(nbrScores.begin(), nbrScores.end(), Rankers::pairLess);
-  return nbrScores[0].second;
+  auto minPr = std::min_element(nbrScores.begin(), nbrScores.end());
+  return minPr->second;
 }
 
 }  // namespace detail
 
-INT_MAP_INT pickBondsToWedge(const ROMol &mol, BondWedgingParameters *params) {
-  // returns map of bondIdx -> bond begin atom for those bonds that
-  // need wedging.
-  std::vector<unsigned int> indices(mol.getNumAtoms());
-  for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    indices[i] = i;
+// returns map of bondIdx -> bond begin atom for those bonds that
+// need wedging.
+INT_MAP_INT pickBondsToWedge(const ROMol &mol,
+                             const BondWedgingParameters *params) {
+  if (!params) {
+    params = &defaultWedgingParams;
   }
+  std::vector<unsigned int> indices(mol.getNumAtoms());
+  std::iota(indices.begin(), indices.end(), 0);
   static int noNbrs = 100;
-  std::pair<bool, INT_VECT> retVal = detail::countChiralNbrs(mol, noNbrs);
-  bool chiNbrs = retVal.first;
-  INT_VECT nChiralNbrs = retVal.second;
+  auto [chiNbrs, nChiralNbrs] = detail::countChiralNbrs(mol, noNbrs);
   if (chiNbrs) {
-    std::sort(indices.begin(), indices.end(), [&](auto i1, auto i2) {
+    std::sort(indices.begin(), indices.end(), [&nChiralNbrs](auto i1, auto i2) {
       return nChiralNbrs[i1] < nChiralNbrs[i2];
     });
   }
@@ -363,14 +348,14 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol, BondWedgingParameters *params) {
       // std::cerr << " SKIPPING2: " << idx << std::endl;
       continue;  // already have a wedged bond here
     }
-    const Atom *atom = mol.getAtomWithIdx(idx);
-    Atom::ChiralType type = atom->getChiralTag();
+    auto atom = mol.getAtomWithIdx(idx);
+    auto type = atom->getChiralTag();
     // the indices are ordered such that all chiral atoms come first. If
     // this has no chiral flag, we can stop the whole loop:
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    int bnd = detail::pickBondToWedge(atom, mol, nChiralNbrs, res, noNbrs);
+    auto bnd = detail::pickBondToWedge(atom, mol, nChiralNbrs, res, noNbrs);
     if (bnd >= 0) {
       res[bnd] = idx;
     }
@@ -386,14 +371,12 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
   }
   auto wedgeBonds = pickBondsToWedge(mol);
 
-  static BondWedgingParameters defaultWedgingParams;
   if (!params) {
     params = &defaultWedgingParams;
   }
   for (auto bond : mol.bonds()) {
     if (bond->getBondType() == Bond::SINGLE) {
-      Bond::BondDir dir =
-          detail::determineBondWedgeState(bond, wedgeBonds, conf);
+      auto dir = detail::determineBondWedgeState(bond, wedgeBonds, conf);
       if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
         bond->setBondDir(dir);
 
