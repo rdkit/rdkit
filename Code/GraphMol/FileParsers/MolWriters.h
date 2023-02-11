@@ -408,7 +408,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeWriter : public MolWriter {
   //! \brief flush the ostream
   void flush() override;
   //! \brief close our stream (the writer cannot be used again)
-  void close();
+  void close() override;
 
   //! \brief get the number of molecules written so far
   unsigned int numMols() const override { return d_molid; }
