@@ -14,6 +14,7 @@
 #include <GraphMol/AtomIterators.h>
 #include <GraphMol/BondIterators.h>
 #include <GraphMol/PeriodicTable.h>
+#include <GraphMol/RDKitQueries.h>
 
 #include <vector>
 #include <algorithm>
@@ -35,6 +36,7 @@
 #include <boost/config.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/tokenizer.hpp>
+#include <Geometry/point.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
 
@@ -873,6 +875,105 @@ ROMol *dativeBondsToHaptic(const ROMol &mol) {
   return static_cast<ROMol *>(res);
 }
 
-void dativeBondsToHaptic(RWMol &mol) {}
+namespace {
+// return sets of contiguous atoms of more than 1 atom that are in
+// allAts.
+std::vector<std::vector<unsigned int>> contiguousAtoms(
+    const ROMol &mol, const std::vector<unsigned int> &allAts) {
+  std::vector<std::vector<unsigned int>> contigAts;
+  std::vector<char> doneAts(mol.getNumAtoms(), 0);
+  std::vector<char> inAllAts(mol.getNumAtoms(), 0);
+  for (auto a : allAts) {
+    inAllAts[a] = 1;
+  }
+  for (size_t i = 0; i < allAts.size(); ++i) {
+    if (doneAts[allAts[i]]) {
+      continue;
+    }
+    contigAts.push_back(std::vector<unsigned int>());
+    std::list<const Atom *> toDo{mol.getAtomWithIdx(allAts[i])};
+    while (!toDo.empty()) {
+      auto nextAt = toDo.front();
+      toDo.pop_front();
+      if (!doneAts[nextAt->getIdx()]) {
+        doneAts[nextAt->getIdx()] = 1;
+        contigAts.back().push_back(nextAt->getIdx());
+      }
+      for (const auto &nbri :
+           boost::make_iterator_range(mol.getAtomNeighbors(nextAt))) {
+        if (inAllAts[nbri] && !doneAts[nbri]) {
+          toDo.push_back(mol.getAtomWithIdx(nbri));
+        }
+      }
+    }
+    if (contigAts.back().size() < 2) {
+      contigAts.pop_back();
+    }
+  }
+  return contigAts;
+}
+
+// add to the molecule a dummy atom in the molecule centred on the
+// atoms passed in, with a dative bond from it to the metal atom.
+void addDativeBond(RWMol &mol, unsigned int metalIdx,
+                   std::vector<unsigned int> hapticAtoms) {
+  // This rigmarole is required to get a * in the V3000 file as the symbol
+  // for the atom.
+  auto dummyAt = new QueryAtom(0);
+  auto *res = new ATOM_NULL_QUERY;
+  res->setDataFunc(nullDataFun);
+  res->setMatchFunc(nullQueryFun);
+  res->setDescription("AtomNull");
+  dummyAt->setQuery(res);
+  unsigned int dummyIdx = mol.addAtom(dummyAt);
+  RDGeom::Point3D dummyPos;
+  std::ostringstream oss;
+  for (auto ha : hapticAtoms) {
+    auto haPos = mol.getConformer().getAtomPos(ha);
+    dummyPos.x += haPos.x;
+    dummyPos.y += haPos.y;
+    oss << ha << " ";
+  }
+  dummyPos.x /= hapticAtoms.size();
+  dummyPos.y /= hapticAtoms.size();
+  mol.getConformer().setAtomPos(dummyIdx, dummyPos);
+  unsigned int numbonds = mol.addBond(dummyIdx, metalIdx, Bond::DATIVE);
+  auto bond = mol.getBondWithIdx(numbonds - 1);
+  std::string endpts = "(" + oss.str();
+  if (endpts[endpts.length() - 1] == ' ') {
+    endpts = endpts.substr(0, endpts.length() - 1);
+  }
+  endpts += ")";
+  bond->setProp(common_properties::_MolFileBondEndPts, endpts);
+}
+}  // namespace
+
+void dativeBondsToHaptic(RWMol &mol) {
+  // first collect all the atoms that have a dative bond to them.
+  std::map<unsigned int, std::vector<unsigned int>> dativeAtoms;
+  for (const auto &b : mol.bonds()) {
+    if (b->getBondType() == Bond::DATIVE) {
+      auto ins = dativeAtoms.find(b->getEndAtomIdx());
+      if (ins == dativeAtoms.end()) {
+        dativeAtoms.insert(
+            std::make_pair(b->getEndAtomIdx(),
+                           std::vector<unsigned int>{b->getBeginAtomIdx()}));
+      } else {
+        ins->second.push_back(b->getBeginAtomIdx());
+      }
+    }
+  }
+
+  for (auto &dativeSet : dativeAtoms) {
+    auto contigAtoms = contiguousAtoms(mol, dativeSet.second);
+    for (const auto &ca : contigAtoms) {
+      addDativeBond(mol, dativeSet.first, ca);
+      for (auto cat : ca) {
+        mol.removeBond(dativeSet.first, cat);
+      }
+    }
+  }
+}
+
 };  // end of namespace MolOps
 };  // end of namespace RDKit

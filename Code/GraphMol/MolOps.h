@@ -1039,6 +1039,22 @@ RDKIT_GRAPHMOL_EXPORT ROMol *hapticBondsToDative(const ROMol &mol);
 //! \overload modifies molecule in place.
 RDKIT_GRAPHMOL_EXPORT void hapticBondsToDative(RWMol &mol);
 
+//! \brief Replaces explicit dative bonds with haptic.
+/*!
+ *
+ * @param mol the molecule of interest
+ *
+ * Does the reverse of hapticBondsToDative.  If there are multiple contiguous
+ * atoms attached by dative bonds to an atom (probably a metal atom), the dative
+ * bonds will be replaced by a dummy atom in their centre attached to the
+ * (metal) atom by a dative bond, which is labelled with ENDPTS of the atoms
+ * that had the original dative bonds.
+ */
+RDKIT_GRAPHMOL_EXPORT ROMol *dativeBondsToHaptic(const ROMol &mol);
+
+//! \overload modifies molecule in place.
+RDKIT_GRAPHMOL_EXPORT void dativeBondsToHaptic(RWMol &mol);
+
 /*!
  * If the bond is dative, and it has a common_properties::MolFileBondEndPts
  * prop, returns a vector of the indices of the atoms mentioned in the prop.
