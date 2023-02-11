@@ -796,12 +796,6 @@ unsigned getNumAtomsWithDistinctProperty(const ROMol &mol, std::string prop) {
   return numPropAtoms;
 }
 
-ROMol *hapticBondsToDative(const ROMol &mol) {
-  auto *res = new RWMol(mol);
-  hapticBondsToDative(*res);
-  return static_cast<ROMol *>(res);
-}
-
 std::vector<int> hapticBondEndpoints(const Bond *bond) {
   // This would ideally use ParseV3000Array but I'm buggered if I can get
   // the linker to find it.  The issue, I think, is that it's in the
@@ -826,8 +820,15 @@ std::vector<int> hapticBondEndpoints(const Bond *bond) {
   return oats;
 }
 
+ROMol *hapticBondsToDative(const ROMol &mol) {
+  auto *res = new RWMol(mol);
+  hapticBondsToDative(*res);
+  return static_cast<ROMol *>(res);
+}
+
 void hapticBondsToDative(RWMol &mol) {
   std::vector<unsigned int> dummiesToGo;
+  std::vector<std::pair<unsigned int, unsigned int>> bondsToAdd;
   for (const auto &bond : mol.bonds()) {
     if (bond->getBondType() == Bond::BondType::DATIVE) {
       auto oats = hapticBondEndpoints(bond);
@@ -849,11 +850,16 @@ void hapticBondsToDative(RWMol &mol) {
       for (auto oat : oats) {
         auto atom = mol.getAtomWithIdx(oat);
         if (atom) {
-          mol.addBond(atom, metal, Bond::DATIVE);
+          bondsToAdd.push_back(std::make_pair(atom->getIdx(), metal->getIdx()));
         }
       }
       dummiesToGo.push_back(dummy->getIdx());
     }
+  }
+  for (const auto &b2a : bondsToAdd) {
+    auto atom = mol.getAtomWithIdx(b2a.first);
+    auto metal = mol.getAtomWithIdx(b2a.second);
+    mol.addBond(atom, metal, Bond::DATIVE);
   }
   sort(dummiesToGo.begin(), dummiesToGo.end(), std::greater<>());
   for (auto d : dummiesToGo) {
@@ -861,5 +867,12 @@ void hapticBondsToDative(RWMol &mol) {
   }
 }
 
+ROMol *dativeBondsToHaptic(const ROMol &mol) {
+  auto *res = new RWMol(mol);
+  dativeBondsToHaptic(*res);
+  return static_cast<ROMol *>(res);
+}
+
+void dativeBondsToHaptic(RWMol &mol) {}
 };  // end of namespace MolOps
 };  // end of namespace RDKit
