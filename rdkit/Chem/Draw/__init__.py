@@ -571,9 +571,8 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   return res
 
 
-def _MolsNestedToLinear(
-    mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix
-):
+def _MolsNestedToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix,
+                        highlightBondLists_matrix):
   # Check that each item in nested lists is a list
 
   def check_elements_are_lists(nested_list, nested_list_name=""):
