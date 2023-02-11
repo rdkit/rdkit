@@ -571,6 +571,111 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   return res
 
 
+def _MolsNestedToLinear(
+    mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix
+):
+  # Check that each item in nested lists is a list
+
+  def check_elements_are_lists(nested_list, nested_list_name=""):
+      for mol_row in nested_list:
+          if not isinstance(mol_row, list):
+              err = f"Each element in nested list {nested_list_name} must be a list."
+              raise ValueError(err)
+
+  check_elements_are_lists(mols_matrix, "mols_matrix")
+  check_elements_are_lists(legends_matrix, "legends_matrix")
+  check_elements_are_lists(highlightAtomLists_matrix, "highlightAtomLists_matrix")
+  check_elements_are_lists(highlightBondLists_matrix, "highlightBondLists_matrix")
+
+  # Check that other matrices (if provided) are same length,
+  #   and each element (sub-list) is the same length, as mols_matrix
+
+  n_mols_rows = len(legends_matrix)
+
+  if legends_matrix is not None:
+      n_legends_rows = len(legends_matrix)
+      if n_legends_rows != n_mols_rows:
+          err = f"If legends_matrix is provided it must be the same length (have the same number "
+          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_legends_rows}."
+          raise ValueError(err)
+      for row_index, row in enumerate(legends_matrix):
+          if len(row) != len(mols_matrix[row_index]):
+              err = f"If legends_matrix is provided each of its sub-lists must be the same length "
+              err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
+              err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
+              err += f"while its length in legends_matrix is {len(row)}."
+              raise ValueError(err)
+
+  if highlightAtomLists_matrix is not None:
+      n_highlightAtomLists_rows = len(highlightAtomLists_matrix)
+      if n_highlightAtomLists_rows != n_mols_rows:
+          err = f"If highlightAtomLists_matrix is provided it must be the same length (have the same number "
+          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightAtomLists_rows}."
+          raise ValueError(err)
+      for row_index, row in enumerate(highlightAtomLists_matrix):
+          if len(row) != len(mols_matrix[row_index]):
+              err = f"If highlightAtomLists_matrix is provided each of its sub-lists must be the same length "
+              err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
+              err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
+              err += f"while its length in highlightAtomLists_matrix is {len(row)}."
+              raise ValueError(err)
+
+  if highlightBondLists_matrix is not None:
+      n_highlightBondLists_rows = len(highlightBondLists_matrix)
+      if n_highlightBondLists_rows != n_mols_rows:
+          err = f"If highlightBondLists_matrix is provided it must be the same length (have the same number "
+          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightBondLists_rows}."
+          raise ValueError(err)
+      for row_index, row in enumerate(highlightBondLists_matrix):
+          if len(row) != len(mols_matrix[row_index]):
+              err = f"If highlightBondLists_matrix is provided each of its sub-lists must be the same length "
+              err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
+              err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
+              err += f"while its length in highlightBondLists_matrix is {len(row)}."
+              raise ValueError(err)
+
+  def longest_row(matrix):
+      return max(len(row) for row in matrix)
+
+  molsPerRow = longest_row(mols_matrix)
+
+  def pad_list(input_list, length_should_be, pad_with=""):
+      length = len(input_list)
+      padding_count = length_should_be - length
+      padded_list = input_list + [pad_with] * padding_count
+      return padded_list
+
+  def pad_matrix(input_matrix, row_length, pad_with=""):
+      padded_matrix = [pad_list(row, row_length, pad_with) for row in input_matrix]
+      return padded_matrix
+
+  def flatten_twoD_list(twoD_list: list[list]) -> list:
+      return [item for sublist in twoD_list for item in sublist]
+
+  # Pad matrices so they're rectangular (same length for each sublist),
+  #   then convert to 1D lists
+  null_mol = Chem.MolFromSmiles("")
+  mols_matrix_padded = pad_matrix(mols_matrix, molsPerRow, null_mol)
+  mols = flatten_twoD_list(mols_matrix_padded)
+
+  if legends_matrix is not None:
+      legends_matrix_padded = pad_matrix(legends_matrix, molsPerRow, "")
+      legends = flatten_twoD_list(legends_matrix_padded)
+
+  if highlightAtomLists_matrix is not None:
+      highlightAtomLists_padded = pad_matrix(
+          highlightAtomLists_matrix, molsPerRow, []
+      )
+      highlightAtomLists = flatten_twoD_list(highlightAtomLists_padded)
+
+  if highlightBondLists_matrix is not None:
+      highlightBondLists_padded = pad_matrix(
+          highlightBondLists_matrix, molsPerRow, []
+      )
+      highlightBondLists = flatten_twoD_list(highlightBondLists_padded)
+
+  return mols, molsPerRow, legends, highlightAtomLists, highlightBondLists
+
 def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, highlightAtomLists=None,
                    highlightBondLists=None, drawOptions=None, **kwargs):
   """ returns an SVG of the grid
