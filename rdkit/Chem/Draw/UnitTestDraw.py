@@ -8,6 +8,8 @@
 #  of the RDKit source tree.
 #
 import os
+import pathlib
+import re
 import sys
 import tempfile
 import unittest
@@ -40,14 +42,14 @@ except ImportError:
 class TestCase(unittest.TestCase):
   showAllImages = False
 
-  def test_interactive(self):
-    # We avoid checking in the code with development flag set
-    self.assertFalse(self.showAllImages)
-
   def setUp(self):
     if IPythonConsole is not None and Draw.MolsToGridImage == IPythonConsole.ShowMols:
       IPythonConsole.UninstallIPythonRenderer()
     self.mol = Chem.MolFromSmiles('c1c(C[15NH3+])ccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
+
+  def test_interactive(self):
+    # We avoid checking in the code with development flag set
+    self.assertFalse(self.showAllImages)
 
   def _testMolToFile(self):
     try:
@@ -102,13 +104,23 @@ class TestCase(unittest.TestCase):
 
   @unittest.skipIf(qtCanvas is None, 'Skipping Qt test')
   def testQtImage(self):
-    try:
-      from PySide import QtGui
-    except ImportError:
+    from rdkit.Chem.Draw.rdMolDraw2DQt import rdkitQtVersion
+    if rdkitQtVersion.startswith('6'):
+      try:
+        from PyQt6 import QtGui
+      except ImportError:
+        # PySide version numbers leapt at Qt6
+        from PySide6 import QtGui
+    else:
       try:
         from PyQt5 import QtGui
       except ImportError:
-        from PySide2 import QtGui
+        try:
+          from PySide import QtGui
+        except ImportError:
+          # PySide2 supports Qt >= 5.12
+          from PySide2 import QtGui
+
     _ = QtGui.QGuiApplication(sys.argv)
     img = Draw.MolToQPixmap(self.mol, size=(300, 300))
     self.assertTrue(img)
@@ -199,10 +211,9 @@ class TestCase(unittest.TestCase):
     self.assertIn("class='note'", svg)
 
   def testDrawMorgan(self):
-    from rdkit.Chem import rdMolDescriptors
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
-    fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
+    _ = rdMolDescriptors.GetMorganFingerprintAsBitVect(m, radius=2, bitInfo=bi)
     self.assertTrue(872 in bi)
 
     svg1 = Draw.DrawMorganBit(m, 872, bi)
@@ -232,7 +243,7 @@ class TestCase(unittest.TestCase):
   def testDrawRDKit(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
-    rdkfp = Chem.RDKFingerprint(m, maxPath=5, bitInfo=bi)
+    _ = Chem.RDKFingerprint(m, maxPath=5, bitInfo=bi)
     self.assertTrue(1553 in bi)
     svg1 = Draw.DrawRDKitBit(m, 1553, bi)
     path = bi[1553][0]
@@ -255,15 +266,35 @@ class TestCase(unittest.TestCase):
     rxn = AllChem.ReactionFromSmarts(
       "[c;H1:3]1:[c:4]:[c:5]:[c;H1:6]:[c:7]2:[nH:8]:[c:9]:[c;H1:1]:[c:2]:1:2.O=[C:10]1[#6;H2:11][#6;H2:12][N:13][#6;H2:14][#6;H2:15]1>>[#6;H2:12]3[#6;H1:11]=[C:10]([c:1]1:[c:9]:[n:8]:[c:7]2:[c:6]:[c:5]:[c:4]:[c:3]:[c:2]:1:2)[#6;H2:15][#6;H2:14][N:13]3"
     )
-    img = Draw.ReactionToImage(rxn)
+    _ = Draw.ReactionToImage(rxn)
 
   def testGithub3762(self):
     m = Chem.MolFromSmiles('CC(=O)O')
     ats = [1, 2, 3]
-    svg = Draw._moltoSVG(m, (250, 200), ats, "", False)
-    self.assertIn('stroke:#FF7F7F;stroke-width:2', svg)
-    svg = Draw._moltoSVG(m, (250, 200), ats, "", False, highlightBonds=[])
-    self.assertNotIn('stroke:#FF7F7F;stroke-width:2', svg)
+    svg1 = Draw._moltoSVG(m, (250, 200), ats, "", False)
+    svg2 = Draw._moltoSVG(m, (250, 200), ats, "", False, highlightBonds=[])
+    with open('testGithub_3762_1.svg', 'w') as f:
+      f.write(svg1)
+    with open('testGithub_3762_2.svg', 'w') as f:
+      f.write(svg2)
+
+    re_str = r"path class='bond-\d atom-\d atom-\d' d='M \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ L \d+.\d+,\d+.\d+ Z' style='fill:#FF7F7F;"
+    patt = re.compile(re_str)
+    self.assertEqual(len(patt.findall(svg1)), 2)
+    self.assertEqual(len(patt.findall(svg2)), 0)
+    
+    pathlib.Path('testGithub_3762_1.svg').unlink()
+    pathlib.Path('testGithub_3762_2.svg').unlink()
+    
+  def testGithub5863(self):
+    smiles = "C[C@]12C[C@H](O)[C@H]3[C@@H](CCC4=CC(=O)C=C[C@@]43C)[C@@H]1CC[C@]2(O)C(=O)CO"
+    mol = Chem.MolFromSmiles(smiles)
+
+    info = {}
+    rdMolDescriptors.GetMorganFingerprint(mol, radius=2, bitInfo=info, useChirality=True)
+    bitId = 1236726849
+    # this should run without generating an exception:
+    Draw.DrawMorganBit(mol, bitId, info)
 
 
 if __name__ == '__main__':
