@@ -134,9 +134,8 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   }
 
   auto chiralType = atom->getChiralTag();
-  CHECK_INVARIANT(chiralType == Atom::CHI_TETRAHEDRAL_CW ||
-                      chiralType == Atom::CHI_TETRAHEDRAL_CCW,
-                  "");
+  TEST_ASSERT(chiralType == Atom::CHI_TETRAHEDRAL_CW ||
+              chiralType == Atom::CHI_TETRAHEDRAL_CCW);
 
   // if we got this far, we really need to think about it:
   std::list<int> neighborBondIndices;
@@ -149,7 +148,7 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
 
   neighborBondIndices.push_back(bond->getIdx());
   neighborBondAngles.push_back(0.0);
-
+  unsigned int neighborsWithDirection = 0;
   for (const auto nbrBond : mol->atomBonds(atom)) {
     const auto otherAtom = nbrBond->getOtherAtom(atom);
     if (nbrBond != bond) {
@@ -170,6 +169,11 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
       }
       neighborBondAngles.insert(angleIt, angle);
       neighborBondIndices.insert(nbrIt, nbrBond->getIdx());
+      if (nbrBond->getBeginAtomIdx() == atom->getIdx() &&
+          (nbrBond->getBondDir() == Bond::BondDir::BEGINDASH ||
+           nbrBond->getBondDir() == Bond::BondDir::BEGINWEDGE)) {
+        ++neighborsWithDirection;
+      }
     }
   }
 
@@ -177,6 +181,11 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   // indices from the central atom.  They are arranged starting
   // at the reference bond in CCW order (based on the current
   // depiction).
+
+  // if we already have one bond with direction set, then we can use it to
+  // decide what the direction of this one is
+
+  // we're starting from scratch... do the work!
   int nSwaps = atom->getPerturbationOrder(neighborBondIndices);
 
   // in the case of three-coordinated atoms we may have to worry about
@@ -241,6 +250,12 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   unsigned int waid = wbi->second;
   return determineBondWedgeState(bond, waid, conf);
 }
+
+// Logic for two wedges at one atom (based on IUPAC stuff)
+// - at least four neighbors
+// - neighboring bonds get wedged
+// - same rules for picking which one for first
+// - not ring bonds (?)
 
 // picks a bond for atom that we will wedge when we write the mol file
 // returns idx of that bond.
@@ -355,9 +370,9 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    auto bnd = detail::pickBondToWedge(atom, mol, nChiralNbrs, res, noNbrs);
-    if (bnd >= 0) {
-      res[bnd] = idx;
+    auto bnd1 = detail::pickBondToWedge(atom, mol, nChiralNbrs, res, noNbrs);
+    if (bnd1 >= 0) {
+      res[bnd1] = idx;
     }
   }
   return res;
@@ -369,28 +384,28 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
   if (!conf) {
     conf = &mol.getConformer();
   }
-  auto wedgeBonds = pickBondsToWedge(mol);
-
   if (!params) {
     params = &defaultWedgingParams;
   }
-  for (auto bond : mol.bonds()) {
-    if (bond->getBondType() == Bond::SINGLE) {
-      auto dir = detail::determineBondWedgeState(bond, wedgeBonds, conf);
-      if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
-        bond->setBondDir(dir);
 
-        // it is possible that this
-        // wedging was determined by a chiral atom at the end of the
-        // bond (instead of at the beginning). In this case we need to
-        // reverse the begin and end atoms for the bond
-        auto wbi = wedgeBonds.find(bond->getIdx());
-        if (wbi != wedgeBonds.end() &&
-            static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
-          auto tmp = bond->getBeginAtomIdx();
-          bond->setBeginAtomIdx(bond->getEndAtomIdx());
-          bond->setEndAtomIdx(tmp);
-        }
+  auto wedgeBonds = pickBondsToWedge(mol, params);
+
+  // loop over the bonds we need to wedge:
+  for (auto wbIter = wedgeBonds.begin(); wbIter != wedgeBonds.end(); ++wbIter) {
+    auto [wbi, waid] = *wbIter;
+    auto bond = mol.getBondWithIdx(wbi);
+    auto dir = detail::determineBondWedgeState(bond, waid, conf);
+    if (dir == Bond::BEGINWEDGE || dir == Bond::BEGINDASH) {
+      bond->setBondDir(dir);
+
+      // it is possible that this
+      // wedging was determined by a chiral atom at the end of the
+      // bond (instead of at the beginning). In this case we need to
+      // reverse the begin and end atoms for the bond
+      if (static_cast<unsigned int>(waid) != bond->getBeginAtomIdx()) {
+        auto tmp = bond->getBeginAtomIdx();
+        bond->setBeginAtomIdx(bond->getEndAtomIdx());
+        bond->setEndAtomIdx(tmp);
       }
     }
   }

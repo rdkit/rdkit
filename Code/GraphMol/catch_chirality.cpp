@@ -3307,3 +3307,53 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("adding two wedges to chiral centers") {
+  SECTION("basics") {
+    auto mol = R"CTAB(
+  Mrv2219 02112315062D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 O -3.6667 2.5 0 0
+M  V30 2 C -2.333 3.27 0 0 CFG=1
+M  V30 3 F -0.9993 2.5 0 0
+M  V30 4 C -3.103 4.6037 0 0
+M  V30 5 N -1.3955 4.4918 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 2 4
+M  V30 4 1 2 5 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 5);
+    {
+      RWMol cp(*mol);
+      Chirality::wedgeMolBonds(cp);
+      CHECK(cp.getBondBetweenAtoms(1, 3)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 0)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 2)->getBondDir() == Bond::BondDir::NONE);
+    }
+    {
+      RWMol cp(*mol);
+      Chirality::BondWedgingParameters ps;
+      ps.wedgeTwoBondsIfPossible = true;
+      Chirality::wedgeMolBonds(cp, nullptr, &ps);
+      CHECK(cp.getBondBetweenAtoms(1, 3)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() != Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 4)->getBondDir() !=
+            cp.getBondBetweenAtoms(1, 3)->getBondDir());
+      CHECK(cp.getBondBetweenAtoms(1, 0)->getBondDir() == Bond::BondDir::NONE);
+      CHECK(cp.getBondBetweenAtoms(1, 2)->getBondDir() == Bond::BondDir::NONE);
+      std::cerr << MolToV3KMolBlock(cp) << std::endl;
+    }
+  }
+}
