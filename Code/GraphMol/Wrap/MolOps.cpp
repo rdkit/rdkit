@@ -450,6 +450,10 @@ ROMol *hapticBondsToDativeHelper(const ROMol &mol) {
   ROMol *res = MolOps::hapticBondsToDative(mol);
   return res;
 }
+ROMol *dativeBondsToHapticHelper(const ROMol &mol) {
+  ROMol *res = MolOps::dativeBondsToHaptic(mol);
+  return res;
+}
 python::list hapticBondEndpointsHelper(const Bond *bond) {
   auto res = MolOps::hapticBondEndpoints(bond);
   python::list pyres;
@@ -1657,6 +1661,23 @@ ARGUMENTS:\n\
 \n\RETURNS: a modified copy of the molecule\n\
 \n";
     python::def("HapticBondsToDative", hapticBondsToDativeHelper,
+                (python::arg("mol")), docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
+
+    docString =
+        "Does the reverse of hapticBondsToDative.  If there are multiple contiguous\n\
+atoms attached by dative bonds to an atom (probably a metal atom), the dative\n\
+bonds will be replaced by a dummy atom in their centre attached to the\n\
+(metal) atom by a dative bond, which is labelled with ENDPTS of the atoms\n\
+that had the original dative bonds.\n\
+\n\
+ARGUMENTS:\n\
+\n\
+  - mol: the molecule to use\n\
+\n\
+\n\RETURNS: a modified copy of the molecule\n\
+\n";
+    python::def("DativeBondsToHaptic", dativeBondsToHapticHelper,
                 (python::arg("mol")), docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
 
