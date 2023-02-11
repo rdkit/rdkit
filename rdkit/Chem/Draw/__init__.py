@@ -571,8 +571,8 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
   return res
 
 
-def _MolsNestedToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix,
-                        highlightBondLists_matrix):
+def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_matrix = None,
+                        highlightBondLists_matrix = None):
   # Check that each item in nested lists is a list
 
   def check_elements_are_lists(nested_list, nested_list_name=""):
@@ -582,56 +582,56 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix,
               raise ValueError(err)
 
   check_elements_are_lists(mols_matrix, "mols_matrix")
-  check_elements_are_lists(legends_matrix, "legends_matrix")
-  check_elements_are_lists(highlightAtomLists_matrix, "highlightAtomLists_matrix")
-  check_elements_are_lists(highlightBondLists_matrix, "highlightBondLists_matrix")
 
   # Check that other matrices (if provided) are same length,
   #   and each element (sub-list) is the same length, as mols_matrix
 
-  n_mols_rows = len(legends_matrix)
+  n_mols_rows = len(mols_matrix)
 
   if legends_matrix is not None:
-      n_legends_rows = len(legends_matrix)
-      if n_legends_rows != n_mols_rows:
-          err = f"If legends_matrix is provided it must be the same length (have the same number "
-          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_legends_rows}."
-          raise ValueError(err)
-      for row_index, row in enumerate(legends_matrix):
-          if len(row) != len(mols_matrix[row_index]):
-              err = f"If legends_matrix is provided each of its sub-lists must be the same length "
-              err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
-              err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
-              err += f"while its length in legends_matrix is {len(row)}."
-              raise ValueError(err)
+    check_elements_are_lists(legends_matrix, "legends_matrix")
+    n_legends_rows = len(legends_matrix)
+    if n_legends_rows != n_mols_rows:
+        err = f"If legends_matrix is provided it must be the same length (have the same number "
+        err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_legends_rows}."
+        raise ValueError(err)
+    for row_index, row in enumerate(legends_matrix):
+        if len(row) != len(mols_matrix[row_index]):
+            err = f"If legends_matrix is provided each of its sub-lists must be the same length "
+            err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
+            err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
+            err += f"while its length in legends_matrix is {len(row)}."
+            raise ValueError(err)
 
   if highlightAtomLists_matrix is not None:
-      n_highlightAtomLists_rows = len(highlightAtomLists_matrix)
-      if n_highlightAtomLists_rows != n_mols_rows:
-          err = f"If highlightAtomLists_matrix is provided it must be the same length (have the same number "
-          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightAtomLists_rows}."
-          raise ValueError(err)
-      for row_index, row in enumerate(highlightAtomLists_matrix):
-          if len(row) != len(mols_matrix[row_index]):
-              err = f"If highlightAtomLists_matrix is provided each of its sub-lists must be the same length "
-              err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
-              err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
-              err += f"while its length in highlightAtomLists_matrix is {len(row)}."
-              raise ValueError(err)
+    check_elements_are_lists(highlightAtomLists_matrix, "highlightAtomLists_matrix")
+    n_highlightAtomLists_rows = len(highlightAtomLists_matrix)
+    if n_highlightAtomLists_rows != n_mols_rows:
+        err = f"If highlightAtomLists_matrix is provided it must be the same length (have the same number "
+        err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightAtomLists_rows}."
+        raise ValueError(err)
+    for row_index, row in enumerate(highlightAtomLists_matrix):
+        if len(row) != len(mols_matrix[row_index]):
+            err = f"If highlightAtomLists_matrix is provided each of its sub-lists must be the same length "
+            err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
+            err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
+            err += f"while its length in highlightAtomLists_matrix is {len(row)}."
+            raise ValueError(err)
 
   if highlightBondLists_matrix is not None:
-      n_highlightBondLists_rows = len(highlightBondLists_matrix)
-      if n_highlightBondLists_rows != n_mols_rows:
-          err = f"If highlightBondLists_matrix is provided it must be the same length (have the same number "
-          err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightBondLists_rows}."
-          raise ValueError(err)
-      for row_index, row in enumerate(highlightBondLists_matrix):
-          if len(row) != len(mols_matrix[row_index]):
-              err = f"If highlightBondLists_matrix is provided each of its sub-lists must be the same length "
-              err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
-              err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
-              err += f"while its length in highlightBondLists_matrix is {len(row)}."
-              raise ValueError(err)
+    check_elements_are_lists(highlightBondLists_matrix, "highlightBondLists_matrix")
+    n_highlightBondLists_rows = len(highlightBondLists_matrix)
+    if n_highlightBondLists_rows != n_mols_rows:
+        err = f"If highlightBondLists_matrix is provided it must be the same length (have the same number "
+        err += f"of sub-lists) as mols_matrix, {n_mols_rows}; its length is {n_highlightBondLists_rows}."
+        raise ValueError(err)
+    for row_index, row in enumerate(highlightBondLists_matrix):
+        if len(row) != len(mols_matrix[row_index]):
+            err = f"If highlightBondLists_matrix is provided each of its sub-lists must be the same length "
+            err += f"as the corresponding sub-list of mols_matrix. For sub-list of index "
+            err += f"{row_index}, its length in mols_matrix is {len(mols_matrix[row_index])} "
+            err += f"while its length in highlightBondLists_matrix is {len(row)}."
+            raise ValueError(err)
 
   def longest_row(matrix):
       return max(len(row) for row in matrix)
@@ -660,18 +660,20 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix, highlightAtomLists_matrix,
   if legends_matrix is not None:
       legends_matrix_padded = pad_matrix(legends_matrix, molsPerRow, "")
       legends = flatten_twoD_list(legends_matrix_padded)
+  else:
+    legends = None
 
   if highlightAtomLists_matrix is not None:
-      highlightAtomLists_padded = pad_matrix(
-          highlightAtomLists_matrix, molsPerRow, []
-      )
+      highlightAtomLists_padded = pad_matrix(highlightAtomLists_matrix, molsPerRow, [])
       highlightAtomLists = flatten_twoD_list(highlightAtomLists_padded)
+  else:
+    highlightAtomLists = None
 
   if highlightBondLists_matrix is not None:
-      highlightBondLists_padded = pad_matrix(
-          highlightBondLists_matrix, molsPerRow, []
-      )
+      highlightBondLists_padded = pad_matrix(highlightBondLists_matrix, molsPerRow, [])
       highlightBondLists = flatten_twoD_list(highlightBondLists_padded)
+  else:
+    highlightBondLists = None
 
   return mols, molsPerRow, legends, highlightAtomLists, highlightBondLists
 

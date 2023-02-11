@@ -282,6 +282,27 @@ class TestCase(unittest.TestCase):
     # Test that 1D list has the correct length
     self.assertTrue(len(mols) == nrows * molsPerRow)
 
+    ## Test that exceptions are thrown appropriately
+
+    # Test that suppling a non-nested list raises a ValueError
+    # Set up non-nested lists = first sublist of nested lists
+    mols_not_nested = mols_matrix[0]
+    legends_not_nested = legends_matrix[0]
+    highlightAtomLists_not_nested = highlightAtomLists_matrix[0]
+    highlightBondLists_not_nested = highlightBondLists_matrix[0]
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_not_nested)
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, legends_matrix=legends_not_nested)
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightAtomLists_matrix=highlightAtomLists_not_nested)
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightBondLists_matrix=highlightBondLists_not_nested)
+
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
@@ -371,3 +392,4 @@ class TestCase(unittest.TestCase):
 
 if __name__ == '__main__':
   unittest.main()
+  # TestCase.testMolsMatrixToLinear(self)
