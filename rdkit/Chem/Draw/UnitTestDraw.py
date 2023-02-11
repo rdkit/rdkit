@@ -237,18 +237,8 @@ class TestCase(unittest.TestCase):
         [ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats
     ]
 
-    (
-        mols,
-        molsPerRow,
-        legends,
-        highlightAtomLists,
-        highlightBondLists,
-    ) = Draw._MolsNestedToLinear(
-        mols_matrix,
-        legends_matrix,
-        highlightAtomLists_matrix,
-        highlightBondLists_matrix,
-    )
+    mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = Draw._MolsNestedToLinear(
+        mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
 
     nrows = len(mols_matrix)
 
