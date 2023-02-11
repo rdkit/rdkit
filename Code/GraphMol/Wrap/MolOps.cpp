@@ -2268,7 +2268,10 @@ ARGUMENTS:\n\
     - conformer: the conformer to use to determine wedge direction\n\
 \n\
 \n";
-    python::def("WedgeMolBonds", WedgeMolBonds, docString.c_str());
+    python::def("WedgeMolBonds",
+                (void (*)(ROMol &, const Conformer *))Chirality::wedgeMolBonds,
+                (python::arg("mol"), python::arg("conformer")),
+                docString.c_str());
 
     docString =
         "Set the wedging to that which was read from the original\n\
