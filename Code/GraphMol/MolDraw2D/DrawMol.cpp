@@ -1166,7 +1166,9 @@ std::pair<std::string, OrientType> DrawMol::getAtomSymbolAndOrientation(
 // ****************************************************************************
 std::string getAtomListText(const Atom &atom) {
   PRECONDITION(atom.hasQuery(), "no query");
-  PRECONDITION(atom.getQuery()->getNegation() || atom.getQuery()->getDescription() == "AtomOr", "bad query type");
+  PRECONDITION(atom.getQuery()->getNegation() ||
+                   atom.getQuery()->getDescription() == "AtomOr",
+               "bad query type");
 
   std::string res = "";
   if (atom.getQuery()->getNegation()) {
@@ -2736,14 +2738,176 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   }
 }
 
+namespace {
+
+bool dativeBondsBothEnds(const ROMol &mol, const Bond &bond) {
+  // return true if there's a dative bond off the atoms at either end
+  // of the bond
+  for (const auto &nbr : mol.atomNeighbors(bond.getBeginAtom())) {
+    auto nbond = mol.getBondBetweenAtoms(nbr->getIdx(), bond.getBeginAtomIdx());
+    if (nbond->getBondType() == Bond::DATIVE) {
+      for (const auto &onbr : mol.atomNeighbors(bond.getEndAtom())) {
+        auto onbond =
+            mol.getBondBetweenAtoms(onbr->getIdx(), bond.getEndAtomIdx());
+        if (onbond->getBondType() == Bond::DATIVE) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+std::vector<std::vector<unsigned int>> allRingsThroughAtom(const Atom *atom) {
+  const auto &mol = atom->getOwningMol();
+  std::vector<std::vector<unsigned int>> retRings;
+  if (atom->getDegree() < 2) {
+    return retRings;
+  }
+
+  std::vector<std::vector<char>> visited;
+  std::vector<std::list<const Atom *>> paths;
+  paths.push_back(std::list<const Atom *>{atom});
+  visited.push_back(std::vector<char>(mol.getNumAtoms(), 0));
+  visited.back()[atom->getIdx()] = 1;
+  std::vector<std::vector<const Atom *>> workingRings;
+  while (!paths.empty()) {
+    std::vector<std::vector<char>> new_visited;
+    std::vector<std::list<const Atom *>> new_paths;
+    for (size_t i = 0; i < paths.size(); ++i) {
+      auto nextAt = paths[i].back();
+      for (const auto &nbr : mol.atomNeighbors(nextAt)) {
+        if (nbr == atom) {
+          if (paths[i].size() > 2) {
+            std::vector<const Atom *> newRing(paths[i].begin(), paths[i].end());
+            newRing.push_back(nbr);
+            bool foundIt = false;
+            for (const auto &r : workingRings) {
+              if (std::equal(r.begin(), r.end(), newRing.rbegin())) {
+                foundIt = true;
+                break;
+              }
+            }
+            if (!foundIt) {
+              workingRings.push_back(newRing);
+            }
+          }
+        } else {
+          if (!visited[i][nbr->getIdx()]) {
+            new_visited.push_back(visited[i]);
+            new_visited.back()[nbr->getIdx()] = 1;
+            new_paths.push_back(paths[i]);
+            new_paths.back().push_back(nbr);
+          }
+        }
+      }
+    }
+    visited = new_visited;
+    paths = new_paths;
+  }
+
+  retRings = std::vector<std::vector<unsigned int>>(
+      workingRings.size(), std::vector<unsigned int>());
+  for (size_t i = 0; i < workingRings.size(); ++i) {
+    retRings[i].reserve(workingRings[i].size());
+    for (auto a : workingRings[i]) {
+      retRings[i].push_back(a->getIdx());
+    }
+  }
+  return retRings;
+}
+
+std::vector<std::vector<unsigned int>> trim3RingsByDatives(
+    const ROMol &mol, const std::vector<std::vector<unsigned int>> &atomRings) {
+  // take out any rings of size 3 that have 2 consecutive dative bonds.
+  std::vector<std::vector<unsigned int>> trimmedRings;
+  for (auto &ring : atomRings) {
+    bool ringOk = true;
+    if (ring.size() == 4) {
+      for (size_t i = 0; i < ring.size() - 2; ++i) {
+        auto bond1 = mol.getBondBetweenAtoms(ring[i], ring[i + 1]);
+        if (bond1->getBondType() == Bond::DATIVE) {
+          auto bond2 = mol.getBondBetweenAtoms(ring[i + 1], ring[i + 2]);
+          if (bond2->getBondType() == Bond::DATIVE) {
+            if (bond1->getEndAtom() == bond2->getEndAtom()) {
+              ringOk = false;
+              break;
+            }
+          }
+        }
+      }
+    }
+    if (ringOk) {
+      trimmedRings.push_back(ring);
+    }
+  }
+  return trimmedRings;
+}
+std::vector<std::vector<unsigned int>> trimAllAtomsHaveDative(
+    const ROMol &mol, const std::vector<std::vector<unsigned int>> &atomRings) {
+  // keep only rings that have a dative bond off each atom to an atom that
+  // isn't in the ring.
+  std::vector<std::vector<unsigned int>> trimmedRings;
+  for (auto &ring : atomRings) {
+    int numDatives = 0;
+    std::vector<char> inRing(mol.getNumAtoms(), 0);
+    for (auto ra : ring) {
+      inRing[ra] = 1;
+    }
+    for (auto ra : ring) {
+      const auto atom = mol.getAtomWithIdx(ra);
+      for (auto nbr : mol.atomNeighbors(atom)) {
+        if (inRing[nbr->getIdx()]) {
+          continue;
+        }
+        auto bond = mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx());
+        if (bond->getBondType() == Bond::DATIVE) {
+          ++numDatives;
+          break;
+        }
+      }
+    }
+    if (numDatives == ring.size()) {
+      trimmedRings.push_back(ring);
+    }
+  }
+  return trimmedRings;
+}
+
+// convert the rings in terms of atoms to bonds
+VECT_INT_VECT ringAtomsToBonds(
+    const ROMol &mol, const std::vector<std::vector<unsigned int>> &ringAtoms) {
+  VECT_INT_VECT bond_rings;
+  for (const auto &atomRing : ringAtoms) {
+    bond_rings.push_back(INT_VECT());
+    for (size_t i = 0; i < atomRing.size() - 1; ++i) {
+      auto bond = mol.getBondBetweenAtoms(atomRing[i], atomRing[i + 1]);
+      bond_rings.back().push_back(bond->getIdx());
+    }
+  }
+  return bond_rings;
+}
+
+}  // namespace
+
 // ****************************************************************************
 // bond is in a ring, assumed to be double.
 // Returns in l2s and l2f the start and finish points of the inner line
 // of the double bond.
 void DrawMol::bondInsideRing(const Bond &bond, double offset, Point2D &l2s,
                              Point2D &l2f) const {
+  VECT_INT_VECT bond_rings;
+  if (dativeBondsBothEnds(*drawMol_, bond)) {
+    auto allAtomRings = allRingsThroughAtom(bond.getBeginAtom());
+    auto trimmedRings = trimAllAtomsHaveDative(*drawMol_, allAtomRings);
+    bond_rings = ringAtomsToBonds(*drawMol_, trimmedRings);
+    if (trimmedRings.empty()) {
+      bond_rings = drawMol_->getRingInfo()->bondRings();
+    }
+  } else {
+    bond_rings = drawMol_->getRingInfo()->bondRings();
+  }
   std::vector<size_t> bond_in_rings;
-  const auto &bond_rings = drawMol_->getRingInfo()->bondRings();
   for (size_t i = 0; i < bond_rings.size(); ++i) {
     if (find(bond_rings[i].begin(), bond_rings[i].end(), bond.getIdx()) !=
         bond_rings[i].end()) {

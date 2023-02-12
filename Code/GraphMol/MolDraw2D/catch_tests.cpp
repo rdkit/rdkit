@@ -265,7 +265,11 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"test_github5963.svg", 582369551U},
     {"test_github6027_1.svg", 1864343362U},
     {"test_github6027_2.svg", 330549720U},
-    {"test_github6041b.svg", 3485054881U}};
+    {"test_github6041b.svg", 3485054881U},
+    {"test_github6058_1.svg", 1415665999U},
+    {"test_github6058_2.svg", 975113873U},
+    {"test_github6058_3.svg", 1622516445U},
+};
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
 // but they can still reduce the number of drawings that need visual
@@ -6785,5 +6789,386 @@ M  END
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
       REQUIRE_NOTHROW(drawer.drawMolecule(*a));
     }
+  }
+}
+
+TEST_CASE("Github6058: bad double bonds drawn in ferrocene") {
+  auto extractBondPoints = [](const std::string &text,
+                              const std::regex &bond) -> std::vector<Point2D> {
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), bond);
+    auto match_end = std::sregex_iterator();
+    std::vector<Point2D> points;
+    for (std::sregex_iterator i = match_begin; i != match_end; ++i) {
+      std::smatch match = *i;
+      points.push_back(Point2D(stod(match[1]), stod(match[2])));
+      points.push_back(Point2D(stod(match[3]), stod(match[4])));
+    }
+    return points;
+  };
+
+  std::string nameBase = "test_github6058";
+  {
+    auto mol = R"CTAB(ferrocene
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 11 20 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -34.237900 13.261800 0.000000 0 CHG=-1
+M  V30 2 C -35.057400 14.266900 0.000000 0
+M  V30 3 C -37.855700 14.284400 0.000000 0
+M  V30 4 C -38.759100 13.293300 0.000000 0
+M  V30 5 C -36.552000 12.683200 0.000000 0
+M  V30 6 C -34.152900 8.363300 0.000000 0 CHG=-1
+M  V30 7 C -34.972400 9.368400 0.000000 0
+M  V30 8 C -37.770600 9.385900 0.000000 0
+M  V30 9 C -38.674100 8.394800 0.000000 0
+M  V30 10 C -36.450300 7.767900 0.000000 0
+M  V30 11 Fe -36.435100 10.904500 0.000000 0 CHG=2 VAL=10
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 5
+M  V30 2 2 4 5
+M  V30 3 1 4 3
+M  V30 4 2 2 3
+M  V30 5 1 1 2
+M  V30 6 1 6 10
+M  V30 7 2 9 10
+M  V30 8 1 9 8
+M  V30 9 2 7 8
+M  V30 10 1 6 7
+M  V30 11 9 2 11
+M  V30 12 9 3 11
+M  V30 13 9 4 11
+M  V30 14 9 5 11
+M  V30 15 9 1 11
+M  V30 16 9 7 11
+M  V30 17 9 8 11
+M  V30 18 9 9 11
+M  V30 19 9 10 11
+M  V30 20 9 6 11
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+
+    REQUIRE(mol);
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_1.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    std::regex bond1(
+        "'bond-1 atom-3 atom-4' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    auto points = extractBondPoints(text, bond1);
+    // if the lines are correct points[0] should be higher and to the right
+    // of points[2], and points[1] should be higher and to the left of points[3]
+    // remembering that 0,0 is at the top left.
+    REQUIRE(points[2].x > points[0].x);
+    REQUIRE(points[2].y < points[0].y);
+    REQUIRE(points[1].x < points[3].x);
+    REQUIRE(points[1].y > points[3].y);
+    check_file_hash(nameBase + "_1.svg");
+  }
+  {
+    auto mol = R"CTAB(ruthenium complex
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 18 30 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -3.082527 -1.293173 0.000000 0
+M  V30 2 C -3.082527 -2.182523 0.000000 0
+M  V30 3 C -2.312327 -2.627198 0.000000 0
+M  V30 4 C -1.542127 -2.182523 0.000000 0
+M  V30 5 C -1.542127 -1.293173 0.000000 0
+M  V30 6 C -2.312327 -0.848498 0.000000 0
+M  V30 7 C 1.653585 2.214699 0.000000 0
+M  V30 8 C 1.653585 1.389699 0.000000 0
+M  V30 9 C 2.368057 0.977199 0.000000 0
+M  V30 10 C 3.082527 1.389699 0.000000 0
+M  V30 11 C 3.082527 2.214699 0.000000 0
+M  V30 12 C 2.368057 2.627198 0.000000 0
+M  V30 13 Ru -0.496529 -0.260303 0.000000 0 CHG=2 VAL=4
+M  V30 14 Cl 0.217942 0.152197 0.000000 0 CHG=-1
+M  V30 15 Ru 0.932414 -0.260303 0.000000 0 CHG=2 VAL=4
+M  V30 16 Cl 0.349052 -0.843666 0.000000 0 CHG=-1
+M  V30 17 Cl -1.079891 0.323060 0.000000 0 CHG=-1
+M  V30 18 Cl 1.646885 -0.672803 0.000000 0 CHG=-1
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 6 1
+M  V30 7 1 7 8
+M  V30 8 2 8 9
+M  V30 9 1 9 10
+M  V30 10 2 10 11
+M  V30 11 1 11 12
+M  V30 12 2 12 7
+M  V30 13 9 14 13
+M  V30 14 9 14 15
+M  V30 15 9 16 15
+M  V30 16 9 16 13
+M  V30 17 9 17 13
+M  V30 18 9 18 15
+M  V30 19 9 3 13
+M  V30 20 9 2 13
+M  V30 21 9 4 13
+M  V30 22 9 5 13
+M  V30 23 9 6 13
+M  V30 24 9 1 13
+M  V30 25 9 12 15
+M  V30 26 9 7 15
+M  V30 27 9 8 15
+M  V30 28 9 9 15
+M  V30 29 9 10 15
+M  V30 30 9 11 15
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_2.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    std::regex bond3(
+        "'bond-3 atom-3 atom-4' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    auto points = extractBondPoints(text, bond3);
+    // the 2nd line should be to the left of the 1st
+    CHECK(points[0].x > points[2].x);
+    CHECK(points[1].x > points[3].x);
+    check_file_hash(nameBase + "_2.svg");
+  }
+  {
+    auto mol = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 82 95 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl -1.036200 2.480800 0.000000 0 CHG=-1
+M  V30 2 C 2.377300 1.320500 0.000000 0 CHG=-1
+M  V30 3 C -2.113200 0.000000 0.000000 0
+M  V30 4 N 3.697900 0.396300 0.000000 0 CHG=1
+M  V30 5 N 2.905600 2.773400 0.000000 0
+M  V30 6 C -3.301800 0.660200 0.000000 0
+M  V30 7 C 3.697900 -3.962000 0.000000 0
+M  V30 8 C 5.018400 1.320500 0.000000 0
+M  V30 9 C 2.905600 8.452500 0.000000 0
+M  V30 10 C 4.490300 2.773400 0.000000 0
+M  V30 11 C -3.301800 2.113200 0.000000 0
+M  V30 12 C -4.622300 -0.132200 0.000000 0
+M  V30 13 C 2.377300 -4.754400 0.000000 0
+M  V30 14 C 5.018400 -4.754400 0.000000 0
+M  V30 15 C 4.226100 9.244800 0.000000 0
+M  V30 16 C 1.584600 9.244800 0.000000 0
+M  V30 17 C -4.622300 2.905600 0.000000 0
+M  V30 18 C -5.943000 0.660200 0.000000 0
+M  V30 19 C 2.377300 -6.207200 0.000000 0
+M  V30 20 C -1.849000 -5.943000 0.000000 0
+M  V30 21 C 5.018400 -6.207200 0.000000 0
+M  V30 22 C 6.207200 -4.094200 0.000000 0
+M  V30 23 C 4.226100 10.697400 0.000000 0
+M  V30 24 C 5.414900 8.584500 0.000000 0
+M  V30 25 C 1.584600 10.697400 0.000000 0
+M  V30 26 C 0.396300 8.584500 0.000000 0
+M  V30 27 C -5.943000 2.113200 0.000000 0
+M  V30 28 C 3.697900 -6.999600 0.000000 0
+M  V30 29 C -3.037600 -5.282800 0.000000 0
+M  V30 30 C -1.849000 -7.263700 0.000000 0
+M  V30 31 C 7.395700 -4.754400 0.000000 0
+M  V30 32 C 6.207200 -2.773400 0.000000 0
+M  V30 33 C 2.905600 11.489800 0.000000 0
+M  V30 34 C 6.603400 9.244800 0.000000 0
+M  V30 35 C 5.414900 7.263700 0.000000 0
+M  V30 36 C -0.792400 9.244800 0.000000 0
+M  V30 37 C 0.396300 7.263700 0.000000 0
+M  V30 38 C 3.697900 -8.320200 0.000000 0
+M  V30 39 C -4.358300 -6.075200 0.000000 0
+M  V30 40 C -3.037600 -3.830000 0.000000 0
+M  V30 41 C -3.169600 -8.056100 0.000000 0
+M  V30 42 C -0.528300 -8.056100 0.000000 0
+M  V30 43 C 7.395700 -6.207200 0.000000 0
+M  V30 44 C 8.716600 -3.962000 0.000000 0
+M  V30 45 C 4.886400 -1.981000 0.000000 0
+M  V30 46 C 7.527800 -1.981000 0.000000 0
+M  V30 47 C 2.905600 12.810600 0.000000 0
+M  V30 48 C 6.603400 10.697400 0.000000 0
+M  V30 49 C 7.923900 8.452500 0.000000 0
+M  V30 50 C 4.094200 6.471300 0.000000 0
+M  V30 51 C 6.735400 6.471300 0.000000 0
+M  V30 52 C -2.113200 8.452500 0.000000 0
+M  V30 53 C -0.792400 10.697400 0.000000 0
+M  V30 54 C -0.924400 6.471300 0.000000 0
+M  V30 55 C 1.716900 6.471300 0.000000 0
+M  V30 56 C -5.678900 -5.282800 0.000000 0
+M  V30 57 C -4.358300 -3.037600 0.000000 0
+M  V30 58 C -3.169600 -9.508900 0.000000 0
+M  V30 59 C -0.528300 -9.508900 0.000000 0
+M  V30 60 C 8.716600 -6.999600 0.000000 0
+M  V30 61 C 10.037200 -4.754400 0.000000 0
+M  V30 62 C 4.886400 -0.528300 0.000000 0
+M  V30 63 C 7.527800 -0.528300 0.000000 0
+M  V30 64 C 7.923900 11.489800 0.000000 0
+M  V30 65 C 9.244800 9.244800 0.000000 0
+M  V30 66 C 4.094200 5.018400 0.000000 0
+M  V30 67 C 6.735400 5.018400 0.000000 0
+M  V30 68 C -3.433700 9.244800 0.000000 0
+M  V30 69 C -2.113200 11.489800 0.000000 0
+M  V30 70 C -0.924400 5.018400 0.000000 0
+M  V30 71 C 1.716900 5.018400 0.000000 0
+M  V30 72 C -5.678900 -3.830000 0.000000 0
+M  V30 73 C -1.849000 -10.301300 0.000000 0
+M  V30 74 C 10.037200 -6.207200 0.000000 0
+M  V30 75 C 6.207200 0.264100 0.000000 0
+M  V30 76 C 9.244800 10.697400 0.000000 0
+M  V30 77 C 5.414900 4.226100 0.000000 0
+M  V30 78 C -3.433700 10.697400 0.000000 0
+M  V30 79 C 0.396300 4.226100 0.000000 0
+M  V30 80 C -1.175700 -1.221800 0.000000 0
+M  V30 81 C 0.351100 -1.020800 0.000000 0 CHG=-1
+M  V30 82 Pd -0.083300 0.687500 0.000000 0 CHG=2 VAL=3
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 2 4
+M  V30 2 1 2 5
+M  V30 3 1 3 6
+M  V30 4 1 4 7
+M  V30 5 1 4 8
+M  V30 6 1 5 9
+M  V30 7 1 5 10
+M  V30 8 2 6 11
+M  V30 9 1 6 12
+M  V30 10 1 7 13
+M  V30 11 2 7 14
+M  V30 12 1 9 15
+M  V30 13 2 9 16
+M  V30 14 1 11 17
+M  V30 15 2 12 18
+M  V30 16 2 13 19
+M  V30 17 1 13 20
+M  V30 18 1 14 21
+M  V30 19 1 14 22
+M  V30 20 2 15 23
+M  V30 21 1 15 24
+M  V30 22 1 16 25
+M  V30 23 1 16 26
+M  V30 24 2 17 27
+M  V30 25 1 19 28
+M  V30 26 1 20 29
+M  V30 27 1 20 30
+M  V30 28 1 22 31
+M  V30 29 1 22 32
+M  V30 30 1 23 33
+M  V30 31 1 24 34
+M  V30 32 1 24 35
+M  V30 33 1 26 36
+M  V30 34 1 26 37
+M  V30 35 1 28 38
+M  V30 36 2 29 39
+M  V30 37 1 29 40
+M  V30 38 2 30 41
+M  V30 39 1 30 42
+M  V30 40 2 31 43
+M  V30 41 1 31 44
+M  V30 42 2 32 45
+M  V30 43 1 32 46
+M  V30 44 1 33 47
+M  V30 45 2 34 48
+M  V30 46 1 34 49
+M  V30 47 2 35 50
+M  V30 48 1 35 51
+M  V30 49 2 36 52
+M  V30 50 1 36 53
+M  V30 51 2 37 54
+M  V30 52 1 37 55
+M  V30 53 1 39 56
+M  V30 54 2 40 57
+M  V30 55 1 41 58
+M  V30 56 2 42 59
+M  V30 57 1 43 60
+M  V30 58 2 44 61
+M  V30 59 1 45 62
+M  V30 60 2 46 63
+M  V30 61 1 48 64
+M  V30 62 2 49 65
+M  V30 63 1 50 66
+M  V30 64 2 51 67
+M  V30 65 1 52 68
+M  V30 66 2 53 69
+M  V30 67 1 54 70
+M  V30 68 2 55 71
+M  V30 69 2 56 72
+M  V30 70 2 58 73
+M  V30 71 2 60 74
+M  V30 72 2 62 75
+M  V30 73 2 64 76
+M  V30 74 2 66 77
+M  V30 75 2 68 78
+M  V30 76 2 70 79
+M  V30 77 2 8 10
+M  V30 78 1 18 27
+M  V30 79 2 21 28
+M  V30 80 2 25 33
+M  V30 81 1 57 72
+M  V30 82 1 59 73
+M  V30 83 1 61 74
+M  V30 84 1 63 75
+M  V30 85 1 65 76
+M  V30 86 1 67 77
+M  V30 87 1 69 78
+M  V30 88 1 71 79
+M  V30 89 2 3 80
+M  V30 90 1 80 81
+M  V30 91 9 1 82
+M  V30 92 9 2 82
+M  V30 93 9 3 82
+M  V30 94 9 80 82
+M  V30 95 9 81 82
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawMolecule(*mol);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(nameBase + "_3.svg");
+    outs << text;
+    outs.flush();
+    outs.close();
+    std::regex bond88(
+        "'bond-88 atom-2 atom-79' d='M\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)"
+        " L\\s+(\\d+\\.\\d+),(\\d+\\.\\d+)");
+    auto points = extractBondPoints(text, bond88);
+    // in this one, it should fall back to the original code.  If it doesn't,
+    // it crashes.  Just check that the 2nd line is up and to the right of the
+    // 1st and parallel to it (in one iteration of fixing this, a crossed bond
+    // was produced)
+    auto line1 = points[0].directionVector(points[1]);
+    auto line2 = points[2].directionVector(points[3]);
+    CHECK(fabs(1.0 - line1.dotProduct(line2)) < 1.0e-4);
+    CHECK(points[0].x < points[2].x);
+    CHECK(points[1].y > points[3].y);
+    check_file_hash(nameBase + "_3.svg");
   }
 }
