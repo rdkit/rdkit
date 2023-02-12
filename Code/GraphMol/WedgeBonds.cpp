@@ -343,7 +343,7 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
   static int noNbrs = 100;
   auto [chiNbrs, nChiralNbrs] = detail::countChiralNbrs(mol, noNbrs);
   if (chiNbrs) {
-    std::sort(indices.begin(), indices.end(), [&nChiralNbrs](auto i1, auto i2) {
+    std::sort(indices.begin(), indices.end(), [&](auto i1, auto i2) {
       return nChiralNbrs[i1] < nChiralNbrs[i2];
     });
   }
@@ -378,6 +378,48 @@ INT_MAP_INT pickBondsToWedge(const ROMol &mol,
   return res;
 }
 
+namespace {
+void addSecondWedgeAroundAtom(ROMol &mol, Bond *refBond,
+                              const Conformer *conf) {
+  PRECONDITION(refBond, "no reference bond provided");
+  PRECONDITION(conf, "no conformer provided");
+  auto atom = refBond->getBeginAtom();
+  // we only do degree four atoms (per IUPAC recommendation)
+  if (atom->getDegree() < 4) {
+    return;
+  }
+  auto aloc = conf->getAtomPos(atom->getIdx());
+  aloc.z = 0.0;
+  auto refVect = conf->getAtomPos(refBond->getEndAtomIdx());
+  refVect.z = 0.0;
+  refVect = aloc.directionVector(refVect);
+  double minAngle = 10000.0;
+  Bond *bondToWedge = nullptr;
+  for (auto bond : mol.atomBonds(atom)) {
+    if (bond == refBond || bond->getBondType() != Bond::BondType::SINGLE ||
+        bond->getBondDir() != Bond::BondDir::NONE) {
+      continue;
+    }
+    auto bVect = conf->getAtomPos(bond->getEndAtomIdx());
+    bVect.z = 0.0;
+    bVect = aloc.directionVector(bVect);
+
+    auto angle = refVect.angleTo(bVect);
+    if (angle < minAngle) {
+      bondToWedge = bond;
+      minAngle = angle;
+    }
+  }
+  // FIX: There's more checking required here
+  // if we got a bond and the angle is < 120 degrees (quasi-arbitrary)
+  if (bondToWedge && minAngle < 2 * M_PI / 3) {
+    bondToWedge->setBondDir(refBond->getBondDir() == Bond::BondDir::BEGINDASH
+                                ? Bond::BondDir::BEGINWEDGE
+                                : Bond::BondDir::BEGINDASH);
+  }
+}
+}  // namespace
+
 void wedgeMolBonds(ROMol &mol, const Conformer *conf,
                    const BondWedgingParameters *params) {
   PRECONDITION(conf || mol.getNumConformers(), "no conformer available");
@@ -406,6 +448,9 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
         auto tmp = bond->getBeginAtomIdx();
         bond->setBeginAtomIdx(bond->getEndAtomIdx());
         bond->setEndAtomIdx(tmp);
+      }
+      if (params->wedgeTwoBondsIfPossible) {
+        addSecondWedgeAroundAtom(mol, bond, conf);
       }
     }
   }
