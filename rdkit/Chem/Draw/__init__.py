@@ -573,6 +573,8 @@ def _MolsToGridImage(mols, molsPerRow=3, subImgSize=(200, 200), legends=None,
 
 def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_matrix = None,
                         highlightBondLists_matrix = None):
+  """Converts a nested data structure (where each data substructure represents a row in mol grid image)
+  to a linear one, padding rows as needed so all rows are the length of the longest row"""
   # Check that each item in nested lists is a list
 
   def check_elements_are_lists(nested_list, nested_list_name=""):
@@ -676,6 +678,15 @@ def _MolsNestedToLinear(mols_matrix, legends_matrix = None, highlightAtomLists_m
     highlightBondLists = None
 
   return mols, molsPerRow, legends, highlightAtomLists, highlightBondLists
+
+def MolsMatrixToGridImage(mols_matrix, subImgSize=(200, 200), legends_matrix = None, 
+                          highlightAtomLists_matrix = None, highlightBondLists_matrix = None, drawOptions=None, **kwargs):
+  """Creates a mol grid image from a nested data structure (where each data substructure represents a row),
+  padding rows as needed so all rows are the length of the longest row"""
+  mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = _MolsNestedToLinear(mols_matrix,
+  legends_matrix = None, highlightAtomLists_matrix = None, highlightBondLists_matrix = None)
+  return MolsToGridImage(mols, molsPerRow, subImgSize, legends, highlightAtomLists, highlightBondLists,
+                          drawOptions, **kwargs)
 
 def _MolsToGridSVG(mols, molsPerRow=3, subImgSize=(200, 200), legends=None, highlightAtomLists=None,
                    highlightBondLists=None, drawOptions=None, **kwargs):

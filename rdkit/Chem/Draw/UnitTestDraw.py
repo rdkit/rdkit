@@ -47,6 +47,28 @@ class TestCase(unittest.TestCase):
       IPythonConsole.UninstallIPythonRenderer()
     self.mol = Chem.MolFromSmiles('c1c(C[15NH3+])ccnc1[C@](Cl)(Br)[C@](Cl)(Br)F')
 
+    # For testMolsMatrixToLinear and testMolsMatrixToLinear (which test MolsMatrixToGridImage and its helper _MolsNestedToLinear)
+    s = "NC(C)C(=O)"
+    mol = Chem.MolFromSmiles(s)
+    natoms = mol.GetNumAtoms()
+    nbonds = mol.GetNumBonds()
+
+    # Set up matrix with oligomer count for the molecules
+    repeats = [[1], [0, 2], [3, 0, 4]]
+    self.mols_matrix = [[Chem.MolFromSmiles(s * count) for count in row] for row in repeats]
+
+    self.legends_matrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
+
+    def ith_item_list(nunits, items_per_unit, i=0):
+        return [((n * items_per_unit) + i) for n in range(nunits)]
+
+    self.highlightAtomLists_matrix = [[ith_item_list(count, natoms, 0) for count in row] for row in repeats]
+
+    # Another bond is created when molecule is oligomerized, so to keep the bond type consistent,
+    #   make items per unit one more than the number of bonds
+    self.highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
+
+
   def test_interactive(self):
     # We avoid checking in the code with development flag set
     self.assertFalse(self.showAllImages)
@@ -211,31 +233,10 @@ class TestCase(unittest.TestCase):
     self.assertIn("class='note'", svg)
 
   def testMolsMatrixToLinear(self):
-    print("Starting testMolsMatrixToLinear")
-    s = "NC(C)C(=O)"
-    mol = Chem.MolFromSmiles(s)
-    natoms = mol.GetNumAtoms()
-    nbonds = mol.GetNumBonds()
-
-    # Set up matrix with oligomer count for the molecules
-    repeats = [[1], [0, 2], [3, 0, 4]]
-    mols_matrix = [[Chem.MolFromSmiles(s * count) for count in row] for row in repeats]
-
-    legends_matrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
-
-    def ith_item_list(nunits, items_per_unit, i=0):
-        return [((n * items_per_unit) + i) for n in range(nunits)]
-
-    highlightAtomLists_matrix = [[ith_item_list(count, natoms, 0) for count in row] for row in repeats]
-
-    # Another bond is created when molecule is oligomerized, so to keep the bond type consistent,
-    #   make items per unit one more than the number of bonds
-    highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
-
     mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = Draw._MolsNestedToLinear(
-        mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
+        self.mols_matrix, self.legends_matrix, self.highlightAtomLists_matrix, self.highlightBondLists_matrix)
 
-    nrows = len(mols_matrix)
+    nrows = len(self.mols_matrix)
 
     def _nestedOrder(self, mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix):
       for r, row in enumerate(mols_matrix):
@@ -279,70 +280,78 @@ class TestCase(unittest.TestCase):
       self.assertTrue(len(mols) == nrows * molsPerRow) # Correct test. Should pass.
       # self.assertFalse(len(mols) == nrows * molsPerRow) # Debugging only! Should fail.
 
-    # Parametrize nestedOrder test: In addition to supplying mols_matrix, supply
+    # Parametrize _nestedOrder test: In addition to supplying mols_matrix, supply
+    # col labels: legends_matrix,       highlightAtomLists_matrix,      highlightBondLists_matrix      
     #             Zero other matrices: 1 parameter set
-    param_sets = [(None, None, None), 
+    param_sets = [(None,                None,                           None                          ), 
                   # One other matrix: 3 parameter sets
-                  (legends_matrix, None,                      None                     ),
-                  (None,           highlightAtomLists_matrix, None                     ),
-                  (None,           None,                      highlightBondLists_matrix),
+                  (self.legends_matrix, None,                           None                          ),
+                  (None,                self.highlightAtomLists_matrix, None                          ),
+                  (None,                None,                           self.highlightBondLists_matrix),
                   # Two other matrices: 3 parameter sets
-                  (legends_matrix, highlightAtomLists_matrix, None                     ),
-                  (legends_matrix, None,                      highlightBondLists_matrix),
-                  (None,           highlightAtomLists_matrix, highlightBondLists_matrix),
+                  (self.legends_matrix, self.highlightAtomLists_matrix, None                          ),
+                  (self.legends_matrix, None,                           self.highlightBondLists_matrix),
+                  (None,                self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
                   # All three other matrices: 1 parameter set
-                  (legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix),
+                  (self.legends_matrix, self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
                   ]
     for param_set in param_sets:
-      _nestedOrder(self, mols_matrix, *param_set)
+      _nestedOrder(self, self.mols_matrix, *param_set)
 
     ## Test that exceptions are thrown appropriately
 
     # Test that supplying a non-nested list raises a ValueError
     # Set up non-nested lists = first sublist of nested lists
-    mols_not_nested = mols_matrix[0]
-    legends_not_nested = legends_matrix[0]
-    highlightAtomLists_not_nested = highlightAtomLists_matrix[0]
-    highlightBondLists_not_nested = highlightBondLists_matrix[0]
+    mols_not_nested = self.mols_matrix[0]
+    legends_not_nested = self.legends_matrix[0]
+    highlightAtomLists_not_nested = self.highlightAtomLists_matrix[0]
+    highlightBondLists_not_nested = self.highlightBondLists_matrix[0]
 
     with self.assertRaises(ValueError):
       Draw._MolsNestedToLinear(mols_not_nested)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, legends_matrix=legends_not_nested)
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, legends_matrix=legends_not_nested)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightAtomLists_matrix=highlightAtomLists_not_nested)
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, highlightAtomLists_matrix=highlightAtomLists_not_nested)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightBondLists_matrix=highlightBondLists_not_nested)
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, highlightBondLists_matrix=highlightBondLists_not_nested)
 
     # Test that raises ValueError if other matrices aren't same size (# rows) as mols_matrix
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, legends_matrix=legends_matrix[0:1])
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, legends_matrix=self.legends_matrix[0:1])
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix[0:1])
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, highlightAtomLists_matrix=self.highlightAtomLists_matrix[0:1])
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightBondLists_matrix=highlightBondLists_matrix[0:1])
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, highlightBondLists_matrix=self.highlightBondLists_matrix[0:1])
 
     # Test that raises ValueError if other matrices' rows aren't same length as mols_matrix's corresponding row
     # Remove last element from first row of each other matrix
-    legends_matrix_short_row0 = [legends_matrix[0][0:-1]] + [legends_matrix[1:]]
-    highlightAtomLists_matrix_short_row0 = [highlightAtomLists_matrix[0][0:-1]] + [highlightAtomLists_matrix[1:]]
-    highlightBondLists_matrix_short_row0 = [highlightBondLists_matrix[0][0:-1]] + [highlightBondLists_matrix[1:]]
+    legends_matrix_short_row0 = [self.legends_matrix[0][0:-1]] + [self.legends_matrix[1:]]
+    highlightAtomLists_matrix_short_row0 = [self.highlightAtomLists_matrix[0][0:-1]] + [self.highlightAtomLists_matrix[1:]]
+    highlightBondLists_matrix_short_row0 = [self.highlightBondLists_matrix[0][0:-1]] + [self.highlightBondLists_matrix[1:]]
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, legends_matrix=legends_matrix_short_row0)
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, legends_matrix=legends_matrix_short_row0)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix_short_row0)
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix_short_row0)
 
     with self.assertRaises(ValueError):
-      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightBondLists_matrix=highlightBondLists_matrix_short_row0)
+      Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, highlightBondLists_matrix=highlightBondLists_matrix_short_row0)
 
 
+  def testMolsMatrixToLinear(self):
+    subImgSize = (200, 200)
+    # dwg = Draw.MolsMatrixToGridImage(mols_matrix=self.mols_matrix, subImgSize=subImgSize, legends_matrix=self.legends_matrix, 
+    #                       highlightAtomLists_matrix=self.highlightAtomLists_matrix, highlightBondLists_matrix=self.highlightBondLists_matrix, drawOptions=drawOptions, **kwargs)
+    dwg = Draw.MolsMatrixToGridImage(mols_matrix=self.mols_matrix, legends_matrix=self.legends_matrix, 
+                          highlightAtomLists_matrix=self.highlightAtomLists_matrix, highlightBondLists_matrix=self.highlightBondLists_matrix)
+    
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
