@@ -284,7 +284,7 @@ class TestCase(unittest.TestCase):
 
     ## Test that exceptions are thrown appropriately
 
-    # Test that suppling a non-nested list raises a ValueError
+    # Test that supplying a non-nested list raises a ValueError
     # Set up non-nested lists = first sublist of nested lists
     mols_not_nested = mols_matrix[0]
     legends_not_nested = legends_matrix[0]
@@ -302,6 +302,32 @@ class TestCase(unittest.TestCase):
 
     with self.assertRaises(ValueError):
       Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightBondLists_matrix=highlightBondLists_not_nested)
+
+    # Test that raises ValueError if other matrices aren't same size (# rows) as mols_matrix
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, legends_matrix=legends_matrix[0:1])
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix[0:1])
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightBondLists_matrix=highlightBondLists_matrix[0:1])
+
+    # Test that raises ValueError if other matrices' rows aren't same length as mols_matrix's corresponding row
+    # Remove last element from first row of each other matrix
+    legends_matrix_short_row0 = [legends_matrix[0][0:-1]] + [legends_matrix[1:]]
+    highlightAtomLists_matrix_short_row0 = [highlightAtomLists_matrix[0][0:-1]] + [highlightAtomLists_matrix[1:]]
+    highlightBondLists_matrix_short_row0 = [highlightBondLists_matrix[0][0:-1]] + [highlightBondLists_matrix[1:]]
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, legends_matrix=legends_matrix_short_row0)
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix_short_row0)
+
+    with self.assertRaises(ValueError):
+      Draw._MolsNestedToLinear(mols_matrix=mols_matrix, highlightBondLists_matrix=highlightBondLists_matrix_short_row0)
+
 
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
