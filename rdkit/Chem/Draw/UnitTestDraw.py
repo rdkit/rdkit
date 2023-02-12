@@ -211,76 +211,90 @@ class TestCase(unittest.TestCase):
     self.assertIn("class='note'", svg)
 
   def testMolsMatrixToLinear(self):
+    print("Starting testMolsMatrixToLinear")
     s = "NC(C)C(=O)"
     mol = Chem.MolFromSmiles(s)
     natoms = mol.GetNumAtoms()
     nbonds = mol.GetNumBonds()
 
-    # Set up matrix with oligimer count for the molecules
+    # Set up matrix with oligomer count for the molecules
     repeats = [[1], [0, 2], [3, 0, 4]]
-    mols_matrix = [
-        [Chem.MolFromSmiles(s * count) for count in row] for row in repeats
-    ]
+    mols_matrix = [[Chem.MolFromSmiles(s * count) for count in row] for row in repeats]
 
     legends_matrix = [[str(count) + " unit(s)" for count in row] for row in repeats]
 
     def ith_item_list(nunits, items_per_unit, i=0):
         return [((n * items_per_unit) + i) for n in range(nunits)]
 
-    highlightAtomLists_matrix = [
-        [ith_item_list(count, natoms, 0) for count in row] for row in repeats
-    ]
+    highlightAtomLists_matrix = [[ith_item_list(count, natoms, 0) for count in row] for row in repeats]
 
     # Another bond is created when molecule is oligomerized, so to keep the bond type consistent,
     #   make items per unit one more than the number of bonds
-    highlightBondLists_matrix = [
-        [ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats
-    ]
+    highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
 
     mols, molsPerRow, legends, highlightAtomLists, highlightBondLists = Draw._MolsNestedToLinear(
         mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix)
 
     nrows = len(mols_matrix)
 
-    for r, row in enumerate(mols_matrix):
-        for c, item in enumerate(row):
-            linear_index = (r * molsPerRow) + c
-            # Test that items in 2D list are in correct position in 1D list
-            self.assertTrue(mols[linear_index] == item)
-            # Test that 1D list items are not lists
-            self.assertFalse(isinstance(item, list))
+    def _nestedOrder(self, mols_matrix, legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix):
+      for r, row in enumerate(mols_matrix):
+          for c, item in enumerate(row):
+              linear_index = (r * molsPerRow) + c
+              # Test that items in 2D list are in correct position in 1D list
+              self.assertTrue(mols[linear_index] == item)
+              # Test that 1D list items are not lists
+              self.assertFalse(isinstance(item, list))
 
-    if legends_matrix is not None:
-        for r, row in enumerate(legends_matrix):
-            for c, item in enumerate(row):
-                linear_index = (r * molsPerRow) + c
-                # Test that items in 2D list are in correct position in 1D list
-                self.assertTrue(legends[linear_index] == item)
-                # Test that 1D list items are not lists
-                self.assertFalse(isinstance(item, list))
+      if legends_matrix is not None:
+          for r, row in enumerate(legends_matrix):
+              for c, item in enumerate(row):
+                  linear_index = (r * molsPerRow) + c
+                  # Test that items in 2D list are in correct position in 1D list
+                  self.assertTrue(legends[linear_index] == item)
+                  # Test that 1D list items are not lists
+                  self.assertFalse(isinstance(item, list))
 
-    if highlightAtomLists_matrix is not None:
-        for r, row in enumerate(highlightAtomLists_matrix):
-            for c, item in enumerate(row):
-                linear_index = (r * molsPerRow) + c
-                # Test that items in 2D list are in correct position in 1D list
-                self.assertTrue(highlightAtomLists[linear_index] == item)
-                # For highlight parameters, entries are lists, so check that sub-items are not lists
-                for subitem in item:
-                    self.assertFalse(isinstance(subitem, list))
+      if highlightAtomLists_matrix is not None:
+          for r, row in enumerate(highlightAtomLists_matrix):
+              for c, item in enumerate(row):
+                  linear_index = (r * molsPerRow) + c
+                  # Test that items in 2D list are in correct position in 1D list
+                  self.assertTrue(highlightAtomLists[linear_index] == item)
+                  # For highlight parameters, entries are lists, so check that sub-items are not lists
+                  for subitem in item:
+                      self.assertFalse(isinstance(subitem, list))
 
-    if highlightBondLists_matrix is not None:
-        for r, row in enumerate(highlightBondLists_matrix):
-            for c, item in enumerate(row):
-                linear_index = (r * molsPerRow) + c
-                # Test that items in 2D list are in correct position in 1D list
-                self.assertTrue(highlightBondLists[linear_index] == item)
-                # For highlight parameters, entries are lists, so check that sub-items are not lists
-                for subitem in item:
-                    self.assertFalse(isinstance(subitem, list))
+      if highlightBondLists_matrix is not None:
+          for r, row in enumerate(highlightBondLists_matrix):
+              for c, item in enumerate(row):
+                  linear_index = (r * molsPerRow) + c
+                  # Test that items in 2D list are in correct position in 1D list
+                  self.assertTrue(highlightBondLists[linear_index] == item)
+                  # For highlight parameters, entries are lists, so check that sub-items are not lists
+                  for subitem in item:
+                      self.assertFalse(isinstance(subitem, list))
 
-    # Test that 1D list has the correct length
-    self.assertTrue(len(mols) == nrows * molsPerRow)
+      # Test that 1D list has the correct length
+      self.assertTrue(len(mols) == nrows * molsPerRow) # Correct test. Should pass.
+      # self.assertFalse(len(mols) == nrows * molsPerRow) # Debugging only! Should fail.
+
+    # Parametrize nestedOrder test: In addition to supplying mols_matrix, supply
+    #             Zero other matrices: 1 parameter set
+    param_sets = [(None, None, None), 
+                  # One other matrix: 3 parameter sets
+                  (legends_matrix, None,                      None                     ),
+                  (None,           highlightAtomLists_matrix, None                     ),
+                  (None,           None,                      highlightBondLists_matrix),
+                  # Two other matrices: 3 parameter sets
+                  (legends_matrix, highlightAtomLists_matrix, None                     ),
+                  (legends_matrix, None,                      highlightBondLists_matrix),
+                  (None,           highlightAtomLists_matrix, highlightBondLists_matrix),
+                  # All three other matrices: 1 parameter set
+                  (legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix),
+                  ]
+    for param_set in param_sets:
+      _nestedOrder(self, mols_matrix, *param_set)
 
     ## Test that exceptions are thrown appropriately
 
@@ -418,4 +432,3 @@ class TestCase(unittest.TestCase):
 
 if __name__ == '__main__':
   unittest.main()
-  # TestCase.testMolsMatrixToLinear(self)
