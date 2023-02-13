@@ -68,6 +68,22 @@ class TestCase(unittest.TestCase):
     #   make items per unit one more than the number of bonds
     self.highlightBondLists_matrix = [[ith_item_list(count, nbonds + 1, 1) for count in row] for row in repeats]
 
+    # Parametrize tests: In addition to supplying mols_matrix, supply 0-3 other matrices
+    # col labels: legends_matrix,       highlightAtomLists_matrix,      highlightBondLists_matrix      
+    #             Zero other matrices: 1 parameter set
+    self.param_sets = [(None,                None,                           None                          ), 
+                  # One other matrix: 3 parameter sets
+                  (self.legends_matrix, None,                           None                          ),
+                  (None,                self.highlightAtomLists_matrix, None                          ),
+                  (None,                None,                           self.highlightBondLists_matrix),
+                  # Two other matrices: 3 parameter sets
+                  (self.legends_matrix, self.highlightAtomLists_matrix, None                          ),
+                  (self.legends_matrix, None,                           self.highlightBondLists_matrix),
+                  (None,                self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
+                  # All three other matrices: 1 parameter set
+                  (self.legends_matrix, self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
+                  ]
+
 
   def test_interactive(self):
     # We avoid checking in the code with development flag set
@@ -277,25 +293,10 @@ class TestCase(unittest.TestCase):
                       self.assertFalse(isinstance(subitem, list))
 
       # Test that 1D list has the correct length
-      self.assertTrue(len(mols) == nrows * molsPerRow) # Correct test. Should pass.
-      # self.assertFalse(len(mols) == nrows * molsPerRow) # Debugging only! Should fail.
+      self.assertTrue(len(mols) == nrows * molsPerRow)
 
-    # Parametrize _nestedOrder test: In addition to supplying mols_matrix, supply
-    # col labels: legends_matrix,       highlightAtomLists_matrix,      highlightBondLists_matrix      
-    #             Zero other matrices: 1 parameter set
-    param_sets = [(None,                None,                           None                          ), 
-                  # One other matrix: 3 parameter sets
-                  (self.legends_matrix, None,                           None                          ),
-                  (None,                self.highlightAtomLists_matrix, None                          ),
-                  (None,                None,                           self.highlightBondLists_matrix),
-                  # Two other matrices: 3 parameter sets
-                  (self.legends_matrix, self.highlightAtomLists_matrix, None                          ),
-                  (self.legends_matrix, None,                           self.highlightBondLists_matrix),
-                  (None,                self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
-                  # All three other matrices: 1 parameter set
-                  (self.legends_matrix, self.highlightAtomLists_matrix, self.highlightBondLists_matrix),
-                  ]
-    for param_set in param_sets:
+    # Parametrize tests: In addition to supplying mols_matrix, supply 0-3 other matrices
+    for param_set in self.param_sets:
       _nestedOrder(self, self.mols_matrix, *param_set)
 
     ## Test that exceptions are thrown appropriately
@@ -345,13 +346,25 @@ class TestCase(unittest.TestCase):
       Draw._MolsNestedToLinear(mols_matrix=self.mols_matrix, highlightBondLists_matrix=highlightBondLists_matrix_short_row0)
 
 
-  def testMolsMatrixToLinear(self):
+  def testMolsMatrixToGridImage(self):
+    # Tests are that running Draw.MolsMatrixToGridImage doesn't give an error
+    # Parametrize tests: In addition to supplying mols_matrix, supply 0-3 other matrices
     subImgSize = (200, 200)
-    # dwg = Draw.MolsMatrixToGridImage(mols_matrix=self.mols_matrix, subImgSize=subImgSize, legends_matrix=self.legends_matrix, 
-    #                       highlightAtomLists_matrix=self.highlightAtomLists_matrix, highlightBondLists_matrix=self.highlightBondLists_matrix, drawOptions=drawOptions, **kwargs)
-    dwg = Draw.MolsMatrixToGridImage(mols_matrix=self.mols_matrix, legends_matrix=self.legends_matrix, 
-                          highlightAtomLists_matrix=self.highlightAtomLists_matrix, highlightBondLists_matrix=self.highlightBondLists_matrix)
-    
+
+    kwargs_value = Draw.rdMolDraw2D.MolDrawOptions()
+    kwargs_value.addAtomIndices = True
+
+    # test_num = 0
+    for (legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix) in self.param_sets:
+      for useSVG in (True, False):
+        for returnPNG in (True, False):
+          # legends_matrix, highlightAtomLists_matrix, highlightBondLists_matrix = param_set
+          dwg_subImgSize_nokwargs = Draw.MolsMatrixToGridImage(self.mols_matrix, subImgSize, legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=useSVG, returnPNG=returnPNG)
+          dwg_subImgSize_kwargs = Draw.MolsMatrixToGridImage(self.mols_matrix, subImgSize, legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargs_value)
+          dwg_nosubImgSize_nokwargs = Draw.MolsMatrixToGridImage(self.mols_matrix, legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=useSVG, returnPNG=returnPNG)
+          dwg_nosubImgSize_kwargs = Draw.MolsMatrixToGridImage(self.mols_matrix, legends_matrix=legends_matrix, highlightAtomLists_matrix=highlightAtomLists_matrix, highlightBondLists_matrix=highlightBondLists_matrix, useSVG=useSVG, returnPNG=returnPNG, drawOptions=kwargs_value)
+
+
   def testDrawMorgan(self):
     m = Chem.MolFromSmiles('c1ccccc1CC1CC1')
     bi = {}
